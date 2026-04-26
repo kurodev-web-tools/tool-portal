@@ -46,24 +46,24 @@ export function SuiteCard({ suite }: SuiteCardProps) {
           </div>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3 text-sm">
+        <div className="mt-5 grid items-center gap-4 sm:grid-cols-[minmax(13rem,1fr)_auto]">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <span className="font-semibold text-foreground">ツール数</span>
             <span className="font-bold text-foreground">{suite.toolCount} 個</span>
-            <span className={isAvailable ? "text-primary-strong" : "text-muted"}>
+            <span className={["whitespace-nowrap", isAvailable ? "text-primary-strong" : "text-muted"].join(" ")}>
               ● {isAvailable ? "利用可能" : "準備中"}
             </span>
           </div>
           <Link
             href={`/tools?suite=${suite.key}`}
             className={[
-              "inline-flex min-w-32 items-center justify-center gap-3 rounded-base px-4 py-2.5 text-sm font-bold transition",
+              "inline-flex min-w-28 items-center justify-center gap-2 rounded-base px-3 py-2.5 text-sm font-bold transition",
               isAvailable
                 ? "bg-primary text-white hover:bg-primary-strong"
                 : "border border-primary/60 text-primary-strong hover:bg-primary-soft/50"
             ].join(" ")}
           >
-            {isAvailable ? "開く" : "詳細を見る"}
+            {isAvailable ? "開く" : "詳細"}
             <span aria-hidden="true">→</span>
           </Link>
         </div>

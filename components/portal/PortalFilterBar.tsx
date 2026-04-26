@@ -32,12 +32,13 @@ export function PortalFilterBar({
     { value: "all", label: "すべて" },
     ...activeCategories.map((value) => ({ value, label: categoryLabels[value] }))
   ];
+  const chipWrapClass = "scrollbar-accent flex gap-3 overflow-x-auto pb-3 md:flex-wrap md:overflow-visible md:pb-0";
 
   return (
-    <section className="panel grid gap-5 p-5 xl:grid-cols-[1.15fr_1fr_auto]">
-      <div>
-        <p className="mb-3 text-sm font-bold text-foreground">スイートで絞り込む</p>
-        <div className="scrollbar-accent flex gap-3 overflow-x-auto pb-3">
+    <section className="panel space-y-5 p-5">
+      <div className="grid gap-3 lg:grid-cols-[10rem_1fr] lg:items-start">
+        <p className="pt-2 text-sm font-bold text-foreground">スイートで絞り込む</p>
+        <div className={chipWrapClass}>
           {suiteFilters.map((item) => (
             <button
               key={item.value}
@@ -55,9 +56,9 @@ export function PortalFilterBar({
           ))}
         </div>
       </div>
-      <div>
-        <p className="mb-3 text-sm font-bold text-foreground">カテゴリで絞り込む</p>
-        <div className="scrollbar-accent flex gap-3 overflow-x-auto pb-3">
+      <div className="grid gap-3 border-t border-border pt-5 lg:grid-cols-[10rem_1fr] lg:items-start">
+        <p className="pt-2 text-sm font-bold text-foreground">カテゴリで絞り込む</p>
+        <div className={chipWrapClass}>
           {categoryFilters.map((item) => (
             <button
               key={item.value}
@@ -75,9 +76,9 @@ export function PortalFilterBar({
           ))}
         </div>
       </div>
-      <div>
-        <p className="mb-3 text-sm font-bold text-foreground">実装状態で絞り込む</p>
-        <div className="scrollbar-accent flex gap-3 overflow-x-auto pb-3">
+      <div className="grid gap-3 border-t border-border pt-5 lg:grid-cols-[10rem_1fr] lg:items-start">
+        <p className="pt-2 text-sm font-bold text-foreground">実装状態で絞り込む</p>
+        <div className={chipWrapClass}>
           {statusFilters.map((item) => (
             <button
               key={item.value}

@@ -13,14 +13,18 @@ const summaryItems = [
 
 export function PortalHeroSummary() {
   return (
-    <section className="grid gap-6 lg:grid-cols-[1fr_24rem] lg:items-center">
+    <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_30rem] lg:items-center">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-primary-strong sm:text-4xl">
           ようこそ、V Streamer Tools へ！
         </h1>
         <p className="mt-5 max-w-3xl text-base leading-8 text-foreground">
-          配信活動を支えるツールを、スイートごとにまとめてご用意しました。
-          まずは、自分の活動に合ったスイートから始めてみましょう。
+          <span className="block">
+            配信活動を支えるツールを、スイートごとにまとめてご用意しました。
+          </span>
+          <span className="block">
+            まずは、自分の活動に合ったスイートから始めてみましょう。
+          </span>
         </p>
         <Link
           href="/tools"
@@ -29,13 +33,13 @@ export function PortalHeroSummary() {
           個別ツール一覧を見る
         </Link>
       </div>
-      <div className="hidden min-h-48 rounded-base border border-border bg-primary-soft/55 p-6 lg:block">
+      <div className="hidden min-h-52 rounded-base border border-border bg-primary-soft/55 p-7 lg:block">
         <div className="mx-auto grid h-28 w-28 place-items-center rounded-base border border-primary/30 bg-surface text-6xl font-black text-primary-strong shadow-panel">
           V
         </div>
-        <div className="mt-5 grid grid-cols-3 gap-3">
+        <div className="mt-6 grid grid-cols-3 gap-4">
           {summaryItems.map((item) => (
-            <div key={item.label} className="rounded-base border border-border bg-surface/80 p-3">
+            <div key={item.label} className="min-h-32 rounded-base border border-border bg-surface/80 p-4">
               <span className="text-lg font-bold text-primary-strong">{item.mark}</span>
               <p className="mt-2 text-xs font-semibold text-muted">{item.label}</p>
               <p className="mt-1 text-lg font-bold text-foreground">{item.value}</p>

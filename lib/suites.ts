@@ -51,6 +51,10 @@ export const suites: SuiteDefinition[] = [
   }
 ];
 
+export const suiteLabels = Object.fromEntries(
+  suites.map((suite) => [suite.key, suite.name])
+) as Record<SuiteKey, string>;
+
 export const suiteCount = suites.length;
 export const availableSuiteCount = suites.filter((suite) => suite.status === "available").length;
 export const plannedSuiteCount = suites.length - availableSuiteCount;

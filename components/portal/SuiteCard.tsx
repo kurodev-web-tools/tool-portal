@@ -10,7 +10,10 @@ export function SuiteCard({ suite }: SuiteCardProps) {
   const isAvailable = suite.status === "available";
 
   return (
-    <article className="panel grid gap-5 p-5 shadow-none transition hover:border-primary/45 sm:grid-cols-[7rem_1fr]">
+    <article className="panel relative grid gap-5 p-5 pr-24 shadow-none transition hover:border-primary/45 sm:grid-cols-[7rem_1fr]">
+      <div className="absolute right-5 top-5">
+        <StatusBadge status={suite.status} />
+      </div>
       <div
         className={[
           "grid h-28 w-28 place-items-center rounded-base text-4xl font-black",
@@ -30,7 +33,6 @@ export function SuiteCard({ suite }: SuiteCardProps) {
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-7 text-foreground">{suite.description}</p>
           </div>
-          <StatusBadge status={suite.status} />
         </div>
 
         <div className="mt-5">

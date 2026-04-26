@@ -56,6 +56,35 @@ function handleDateKeyDown(event: KeyboardEvent, onSelect: () => void) {
   }
 }
 
+function useMeasuredScrollbarWidth() {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) {
+      return;
+    }
+
+    const measureScrollbar = () => {
+      setScrollbarWidth(Math.max(0, scrollContainer.offsetWidth - scrollContainer.clientWidth));
+    };
+
+    measureScrollbar();
+
+    const resizeObserver = new ResizeObserver(measureScrollbar);
+    resizeObserver.observe(scrollContainer);
+    window.addEventListener("resize", measureScrollbar);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", measureScrollbar);
+    };
+  }, []);
+
+  return { scrollContainerRef, scrollbarWidth };
+}
+
 function getEventStyle(event: ScheduleEvent) {
   const start = Math.max(timelineStartMinutes, getEventStartMinutes(event));
   const duration = Math.min(timelineEndMinutes - start, getEventDurationMinutes(event));
@@ -251,30 +280,7 @@ function WeekView({
 }) {
   const days = getWeekDays(cursorDate);
   const todayKey = toDateKey(new Date());
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
-
-  useLayoutEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) {
-      return;
-    }
-
-    const measureScrollbar = () => {
-      setScrollbarWidth(Math.max(0, scrollContainer.offsetWidth - scrollContainer.clientWidth));
-    };
-
-    measureScrollbar();
-
-    const resizeObserver = new ResizeObserver(measureScrollbar);
-    resizeObserver.observe(scrollContainer);
-    window.addEventListener("resize", measureScrollbar);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", measureScrollbar);
-    };
-  }, []);
+  const { scrollContainerRef, scrollbarWidth } = useMeasuredScrollbarWidth();
 
   const weekHeaderGridStyle = {
     gridTemplateColumns: `${weekGridTemplateColumns} ${scrollbarWidth}px`
@@ -371,19 +377,30 @@ function MonthView({
 }) {
   const days = getMonthGrid(cursorDate);
   const todayKey = toDateKey(new Date());
+  const { scrollContainerRef, scrollbarWidth } = useMeasuredScrollbarWidth();
+  const monthHeaderGridStyle = {
+    gridTemplateColumns: `repeat(7, minmax(0, 1fr)) ${scrollbarWidth}px`
+  };
 
   return (
     <div className="flex h-full min-w-[720px] min-h-0 flex-col">
-      <div className="grid shrink-0 grid-cols-7 border-b border-border bg-surface-muted/70">
-        {["日", "月", "火", "水", "木", "金", "土"].map((label) => (
-          <div key={label} className="border-r border-border px-2 py-2 text-center text-xs font-bold text-muted last:border-r-0">
+      <div className="grid shrink-0 border-b border-border bg-surface-muted/70" style={monthHeaderGridStyle}>
+        {["日", "月", "火", "水", "木", "金", "土"].map((label, dayIndex) => (
+          <div
+            key={label}
+            className={[
+              "px-2 py-2 text-center text-xs font-bold text-muted",
+              dayIndex === 6 ? "" : "border-r border-border"
+            ].join(" ")}
+          >
             {label}
           </div>
         ))}
+        <div aria-hidden="true" />
       </div>
-      <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className="scrollbar-accent min-h-0 flex-1 overflow-y-auto">
         <div className="grid grid-cols-7">
-          {days.map((day) => {
+          {days.map((day, dayIndex) => {
             const key = toDateKey(day);
             const dayEvents = getEventsForDate(events, key);
             const inCurrentMonth = day.getMonth() === cursorDate.getMonth();
@@ -395,7 +412,8 @@ function MonthView({
                 onClick={() => onSelectDate(key)}
                 onKeyDown={(event) => handleDateKeyDown(event, () => onSelectDate(key))}
                 className={[
-                  "min-h-28 border-b border-r border-border p-2 text-left transition last:border-r-0 hover:bg-primary-soft/25",
+                  "min-h-28 border-b border-border p-2 text-left transition hover:bg-primary-soft/25",
+                  dayIndex % 7 === 6 ? "" : "border-r",
                   selectedDateKey === key ? "bg-primary-soft/35" : "bg-surface",
                   inCurrentMonth ? "" : "text-muted/65"
                 ].join(" ")}

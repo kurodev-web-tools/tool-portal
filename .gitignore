@@ -23,6 +23,10 @@ coverage/
 .cache/
 .npm-cache/
 .turbo/
+.eslintcache
+*.tsbuildinfo
+.wrangler/
+.worktrees/
 
 # OS / editor
 .DS_Store

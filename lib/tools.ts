@@ -1,3 +1,5 @@
+import type { SuiteKey } from "@/lib/suite-types";
+
 export type ToolStatus = "available" | "planned";
 
 export type ToolCategory =
@@ -15,6 +17,7 @@ export type ToolDefinition = {
   description: string;
   category: ToolCategory;
   status: ToolStatus;
+  suite: SuiteKey;
   href: string;
   sidebar: boolean;
   icon: string;
@@ -42,6 +45,7 @@ export const tools: ToolDefinition[] = [
     description: "配信スケジュールの作成・管理ができるカレンダーツールです。",
     category: "schedule",
     status: "available",
+    suite: "stream-workflow",
     href: "/tools/schedule-calendar",
     sidebar: true,
     icon: "SC"
@@ -52,6 +56,7 @@ export const tools: ToolDefinition[] = [
     description: "配信設定やコメント管理をまとめて行える管理ツールです。",
     category: "stream",
     status: "planned",
+    suite: "stream-workflow",
     href: "/tools/stream-manager",
     sidebar: false,
     icon: "SM"
@@ -62,6 +67,7 @@ export const tools: ToolDefinition[] = [
     description: "配信のパフォーマンスを可視化し、成長をサポートします。",
     category: "analytics",
     status: "planned",
+    suite: "stream-workflow",
     href: "/tools/analytics-dashboard",
     sidebar: false,
     icon: "AD"
@@ -72,6 +78,7 @@ export const tools: ToolDefinition[] = [
     description: "ファンとの交流を深めるためのコミュニティ管理ツールです。",
     category: "community",
     status: "planned",
+    suite: "fan-brand",
     href: "/tools/fan-community",
     sidebar: false,
     icon: "FC"
@@ -82,6 +89,7 @@ export const tools: ToolDefinition[] = [
     description: "サムネイルを簡単に作成できる画像デザインツールです。",
     category: "design",
     status: "planned",
+    suite: "fan-brand",
     href: "/tools/thumbnail-maker",
     sidebar: false,
     icon: "TM"
@@ -92,6 +100,7 @@ export const tools: ToolDefinition[] = [
     description: "動画や配信の企画・ネタ出しをサポートするツールです。",
     category: "stream",
     status: "planned",
+    suite: "stream-workflow",
     href: "/tools/content-planner",
     sidebar: false,
     icon: "CP"
@@ -102,6 +111,7 @@ export const tools: ToolDefinition[] = [
     description: "やることリストやタスクを管理して制作活動を効率化します。",
     category: "management",
     status: "planned",
+    suite: "growth-selfcare",
     href: "/tools/task-tracker",
     sidebar: false,
     icon: "TT"
@@ -112,6 +122,7 @@ export const tools: ToolDefinition[] = [
     description: "素材や画像、BGMなどを整理・管理できるライブラリです。",
     category: "design",
     status: "planned",
+    suite: "business-collab",
     href: "/tools/asset-library",
     sidebar: false,
     icon: "AL"
@@ -122,6 +133,7 @@ export const tools: ToolDefinition[] = [
     description: "新しいツールを開発中です。どうぞお楽しみに。",
     category: "other",
     status: "planned",
+    suite: "growth-selfcare",
     href: "/tools",
     sidebar: false,
     icon: "..."

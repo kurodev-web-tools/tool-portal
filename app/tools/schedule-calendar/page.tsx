@@ -3,7 +3,7 @@ import { ScheduleCalendarApp } from "@/components/schedule-calendar/ScheduleCale
 
 export default function ScheduleCalendarPage() {
   return (
-    <PortalShell>
+    <PortalShell mode="workspace">
       <ScheduleCalendarApp />
     </PortalShell>
   );

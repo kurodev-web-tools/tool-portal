@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
   addDays,
   addMonths,
@@ -35,13 +35,18 @@ const viewLabels: Record<CalendarView, string> = {
   day: "日"
 };
 
-const hourRows = Array.from({ length: 17 }, (_, index) => index + 7);
-const timelineStartMinutes = 7 * 60;
+const timeSlots = Array.from({ length: 48 }, (_, index) => index * 30);
+const timelineStartMinutes = 0;
 const timelineEndMinutes = 24 * 60;
 const timelineMinutes = timelineEndMinutes - timelineStartMinutes;
+const timeGridMinHeightClassName = "min-h-[1344px]";
+const timeSlotHeightClassName = "h-7";
+const weekGridTemplateColumns = "58px repeat(7, minmax(84px, 1fr))";
 
-function formatHour(hour: number) {
-  return `${String(hour).padStart(2, "0")}:00`;
+function formatSlot(minutes: number) {
+  const hour = Math.floor(minutes / 60);
+  const minute = minutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 function handleDateKeyDown(event: KeyboardEvent, onSelect: () => void) {
@@ -86,7 +91,7 @@ function CalendarToolbar({
   onMove: (direction: -1 | 1) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-border px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-3 border-b border-border px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
       <div>
         <h1 className="text-xl font-bold tracking-tight text-foreground">スケジュールカレンダー</h1>
         <p className="mt-1 text-sm text-muted">配信・投稿・制作などの予定を一元管理できます。</p>
@@ -133,6 +138,63 @@ function CalendarToolbar({
         </div>
       </div>
     </div>
+  );
+}
+
+function CategoryLegend() {
+  return (
+    <div className="scrollbar-accent flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border px-4 py-2 text-xs font-bold text-muted">
+      <span className="whitespace-nowrap">カテゴリ</span>
+      {categoryOptions.map((option) => (
+        <span
+          key={option.value}
+          className={["whitespace-nowrap rounded-base border px-2 py-1", categoryMeta[option.value].tone].join(" ")}
+        >
+          {option.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function TimeLabelColumn() {
+  return (
+    <div className="border-r border-border">
+      {timeSlots.map((minutes) => {
+        const isHour = minutes % 60 === 0;
+        return (
+          <div
+            key={minutes}
+            className={[
+              timeSlotHeightClassName,
+              "border-t px-2 pt-1 text-[11px] font-bold",
+              minutes === timelineEndMinutes - 30 ? "border-b" : "",
+              isHour ? "border-border/80 text-muted" : "border-border/35 text-muted/55"
+            ].join(" ")}
+          >
+            {isHour ? formatSlot(minutes) : <span className="text-[10px]">30</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TimeSlotLines() {
+  return (
+    <>
+      {timeSlots.map((minutes) => (
+        <span
+          key={minutes}
+          className={[
+            "pointer-events-none block border-t",
+            timeSlotHeightClassName,
+            minutes === timelineEndMinutes - 30 ? "border-b" : "",
+            minutes % 60 === 0 ? "border-border/80" : "border-border/35"
+          ].join(" ")}
+        />
+      ))}
+    </>
   );
 }
 
@@ -189,12 +251,43 @@ function WeekView({
 }) {
   const days = getWeekDays(cursorDate);
   const todayKey = toDateKey(new Date());
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) {
+      return;
+    }
+
+    const measureScrollbar = () => {
+      setScrollbarWidth(Math.max(0, scrollContainer.offsetWidth - scrollContainer.clientWidth));
+    };
+
+    measureScrollbar();
+
+    const resizeObserver = new ResizeObserver(measureScrollbar);
+    resizeObserver.observe(scrollContainer);
+    window.addEventListener("resize", measureScrollbar);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", measureScrollbar);
+    };
+  }, []);
+
+  const weekHeaderGridStyle = {
+    gridTemplateColumns: `${weekGridTemplateColumns} ${scrollbarWidth}px`
+  };
+  const weekBodyGridStyle = {
+    gridTemplateColumns: weekGridTemplateColumns
+  };
 
   return (
-    <div className="min-w-[860px]">
-      <div className="grid grid-cols-[64px_repeat(7,minmax(96px,1fr))] border-b border-border bg-surface-muted/70">
+    <div className="flex h-full min-w-[760px] min-h-0 flex-col">
+      <div className="grid shrink-0 border-b border-border bg-surface-muted/70" style={weekHeaderGridStyle}>
         <div className="border-r border-border px-2 py-3 text-xs font-bold text-muted">時刻</div>
-        {days.map((day) => {
+        {days.map((day, dayIndex) => {
           const key = toDateKey(day);
           return (
             <button
@@ -202,7 +295,8 @@ function WeekView({
               type="button"
               onClick={() => onSelectDate(key)}
               className={[
-                "border-r border-border px-2 py-3 text-center text-sm transition last:border-r-0 hover:bg-primary-soft/35",
+                "px-2 py-3 text-center text-sm transition hover:bg-primary-soft/35",
+                dayIndex === days.length - 1 ? "" : "border-r border-border",
                 selectedDateKey === key ? "bg-primary-soft text-primary-strong" : "text-foreground"
               ].join(" ")}
             >
@@ -218,54 +312,43 @@ function WeekView({
             </button>
           );
         })}
+        <div aria-hidden="true" />
       </div>
-      <div className="grid grid-cols-[64px_repeat(7,minmax(96px,1fr))]">
-        <div className="border-r border-border">
-          {hourRows.map((hour) => (
-            <div key={hour} className="h-16 border-b border-border px-2 pt-1 text-[11px] font-bold text-muted">
-              {formatHour(hour)}
-            </div>
-          ))}
+      <div ref={scrollContainerRef} className="scrollbar-accent min-h-0 flex-1 overflow-y-auto">
+        <div className="grid" style={weekBodyGridStyle}>
+          <TimeLabelColumn />
+          {days.map((day, dayIndex) => {
+            const key = toDateKey(day);
+            const dayEvents = getEventsForDate(events, key);
+            return (
+              <div
+                key={key}
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelectDate(key)}
+                onKeyDown={(event) => handleDateKeyDown(event, () => onSelectDate(key))}
+                className={[
+                  "relative text-left",
+                  dayIndex === days.length - 1 ? "" : "border-r border-border",
+                  timeGridMinHeightClassName,
+                  selectedDateKey === key ? "bg-primary-soft/20" : "bg-surface"
+                ].join(" ")}
+              >
+                <TimeSlotLines />
+                {dayEvents.length === 0 ? (
+                  <span className="absolute left-2 right-2 top-1 flex h-6 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-2 text-center text-[11px] font-bold text-muted">
+                    予定なし
+                  </span>
+                ) : null}
+                {dayEvents.map((event) => (
+                  <span key={event.id} className="absolute left-2 right-2 block" style={getEventStyle(event)}>
+                    <EventPill event={event} selected={selectedEventId === event.id} onSelect={onSelectEvent} />
+                  </span>
+                ))}
+              </div>
+            );
+          })}
         </div>
-        {days.map((day) => {
-          const key = toDateKey(day);
-          const dayEvents = getEventsForDate(events, key);
-          return (
-            <div
-              key={key}
-              role="button"
-              tabIndex={0}
-              onClick={() => onSelectDate(key)}
-              onKeyDown={(event) => handleDateKeyDown(event, () => onSelectDate(key))}
-              className={[
-                "relative min-h-[1088px] border-r border-border text-left last:border-r-0",
-                selectedDateKey === key ? "bg-primary-soft/20" : "bg-surface"
-              ].join(" ")}
-            >
-              {hourRows.map((hour) => (
-                <span key={hour} className="pointer-events-none block h-16 border-b border-border/80" />
-              ))}
-              {dayEvents.length === 0 ? (
-                <span className="absolute left-2 right-2 top-4 rounded-base border border-dashed border-border px-2 py-2 text-center text-xs text-muted">
-                  予定なし
-                </span>
-              ) : null}
-              {dayEvents.map((event) => (
-                <span
-                  key={event.id}
-                  className="absolute left-2 right-2 block"
-                  style={getEventStyle(event)}
-                >
-                  <EventPill
-                    event={event}
-                    selected={selectedEventId === event.id}
-                    onSelect={onSelectEvent}
-                  />
-                </span>
-              ))}
-            </div>
-          );
-        })}
       </div>
     </div>
   );
@@ -290,57 +373,59 @@ function MonthView({
   const todayKey = toDateKey(new Date());
 
   return (
-    <div className="min-w-[760px]">
-      <div className="grid grid-cols-7 border-b border-border bg-surface-muted/70">
+    <div className="flex h-full min-w-[720px] min-h-0 flex-col">
+      <div className="grid shrink-0 grid-cols-7 border-b border-border bg-surface-muted/70">
         {["日", "月", "火", "水", "木", "金", "土"].map((label) => (
           <div key={label} className="border-r border-border px-2 py-2 text-center text-xs font-bold text-muted last:border-r-0">
             {label}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7">
-        {days.map((day) => {
-          const key = toDateKey(day);
-          const dayEvents = getEventsForDate(events, key);
-          const inCurrentMonth = day.getMonth() === cursorDate.getMonth();
-          return (
-            <div
-              key={key}
-              role="button"
-              tabIndex={0}
-              onClick={() => onSelectDate(key)}
-              onKeyDown={(event) => handleDateKeyDown(event, () => onSelectDate(key))}
-              className={[
-                "min-h-32 border-b border-r border-border p-2 text-left transition last:border-r-0 hover:bg-primary-soft/25",
-                selectedDateKey === key ? "bg-primary-soft/35" : "bg-surface",
-                inCurrentMonth ? "" : "text-muted/65"
-              ].join(" ")}
-            >
-              <span
+      <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto">
+        <div className="grid grid-cols-7">
+          {days.map((day) => {
+            const key = toDateKey(day);
+            const dayEvents = getEventsForDate(events, key);
+            const inCurrentMonth = day.getMonth() === cursorDate.getMonth();
+            return (
+              <div
+                key={key}
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelectDate(key)}
+                onKeyDown={(event) => handleDateKeyDown(event, () => onSelectDate(key))}
                 className={[
-                  "inline-grid h-7 min-w-7 place-items-center rounded-base px-1 text-xs font-bold",
-                  todayKey === key ? "bg-primary text-white" : "text-foreground"
+                  "min-h-28 border-b border-r border-border p-2 text-left transition last:border-r-0 hover:bg-primary-soft/25",
+                  selectedDateKey === key ? "bg-primary-soft/35" : "bg-surface",
+                  inCurrentMonth ? "" : "text-muted/65"
                 ].join(" ")}
               >
-                {day.getDate()}
-              </span>
-              <span className="mt-2 flex flex-col gap-1">
-                {dayEvents.slice(0, 3).map((event) => (
-                  <EventPill
-                    key={event.id}
-                    event={event}
-                    selected={selectedEventId === event.id}
-                    compact
-                    onSelect={onSelectEvent}
-                  />
-                ))}
-                {dayEvents.length > 3 ? (
-                  <span className="text-xs font-bold text-muted">+{dayEvents.length - 3}件</span>
-                ) : null}
-              </span>
-            </div>
-          );
-        })}
+                <span
+                  className={[
+                    "inline-grid h-7 min-w-7 place-items-center rounded-base px-1 text-xs font-bold",
+                    todayKey === key ? "bg-primary text-white" : "text-foreground"
+                  ].join(" ")}
+                >
+                  {day.getDate()}
+                </span>
+                <span className="mt-2 flex flex-col gap-1">
+                  {dayEvents.slice(0, 3).map((event) => (
+                    <EventPill
+                      key={event.id}
+                      event={event}
+                      selected={selectedEventId === event.id}
+                      compact
+                      onSelect={onSelectEvent}
+                    />
+                  ))}
+                  {dayEvents.length > 3 ? (
+                    <span className="text-xs font-bold text-muted">+{dayEvents.length - 3}件</span>
+                  ) : null}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -360,32 +445,26 @@ function DayView({
   const dayEvents = getEventsForDate(events, selectedDateKey);
 
   return (
-    <div className="min-w-[640px]">
-      <div className="border-b border-border bg-surface-muted/70 px-4 py-3 text-sm font-bold text-foreground">
+    <div className="flex h-full min-w-[620px] min-h-0 flex-col">
+      <div className="shrink-0 border-b border-border bg-surface-muted/70 px-4 py-3 text-sm font-bold text-foreground [scrollbar-gutter:stable]">
         {getLongDateLabel(selectedDateKey)}
       </div>
-      <div className="grid grid-cols-[72px_1fr]">
-        <div className="border-r border-border">
-          {hourRows.map((hour) => (
-            <div key={hour} className="h-16 border-b border-border px-3 pt-1 text-[11px] font-bold text-muted">
-              {formatHour(hour)}
-            </div>
-          ))}
-        </div>
-        <div className="relative min-h-[1088px] bg-surface">
-          {hourRows.map((hour) => (
-            <span key={hour} className="pointer-events-none block h-16 border-b border-border/80" />
-          ))}
-          {dayEvents.length === 0 ? (
-            <div className="absolute left-4 right-4 top-5 rounded-base border border-dashed border-border bg-surface-muted/55 px-4 py-5 text-center text-sm text-muted">
-              この日の予定はまだありません。
-            </div>
-          ) : null}
-          {dayEvents.map((event) => (
-            <div key={event.id} className="absolute left-4 right-4" style={getEventStyle(event)}>
-              <EventPill event={event} selected={selectedEventId === event.id} onSelect={onSelectEvent} />
-            </div>
-          ))}
+      <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
+        <div className="grid grid-cols-[64px_1fr]">
+          <TimeLabelColumn />
+          <div className={["relative bg-surface", timeGridMinHeightClassName].join(" ")}>
+            <TimeSlotLines />
+            {dayEvents.length === 0 ? (
+              <div className="absolute left-4 right-4 top-1 flex h-6 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-3 text-center text-[11px] font-bold text-muted">
+                この日の予定はまだありません。
+              </div>
+            ) : null}
+            {dayEvents.map((event) => (
+              <div key={event.id} className="absolute left-4 right-4" style={getEventStyle(event)}>
+                <EventPill event={event} selected={selectedEventId === event.id} onSelect={onSelectEvent} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -786,113 +865,105 @@ export function ScheduleCalendarApp() {
   }
 
   if (!hydrated) {
-    return <div className="panel p-8 text-sm text-muted">スケジュールカレンダーを読み込んでいます。</div>;
+    return (
+      <div className="grid h-full place-items-center border border-border bg-surface text-sm text-muted">
+        スケジュールカレンダーを読み込んでいます。
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <section className="panel overflow-hidden">
-        <CalendarToolbar
-          view={view}
-          cursorDate={cursorDate}
-          onViewChange={setView}
-          onToday={() => selectDate(toDateKey(new Date()))}
-          onMove={movePeriod}
-        />
-        {storageError ? (
-          <div className="border-b border-border bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:bg-red-950/35 dark:text-red-200">
-            {storageError}
-          </div>
-        ) : null}
-        <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 border-b border-border xl:border-b-0 xl:border-r">
-            <div className="scrollbar-accent overflow-x-auto">
-              {view === "week" ? (
-                <WeekView
-                  events={visibleEvents}
-                  cursorDate={cursorDate}
-                  selectedDateKey={selectedDateKey}
-                  selectedEventId={selectedEventId}
-                  onSelectDate={selectDate}
-                  onSelectEvent={selectEvent}
-                />
-              ) : null}
-              {view === "month" ? (
-                <MonthView
-                  events={visibleEvents}
-                  cursorDate={cursorDate}
-                  selectedDateKey={selectedDateKey}
-                  selectedEventId={selectedEventId}
-                  onSelectDate={selectDate}
-                  onSelectEvent={selectEvent}
-                />
-              ) : null}
-              {view === "day" ? (
-                <DayView
-                  events={visibleEvents}
-                  selectedDateKey={selectedDateKey}
-                  selectedEventId={selectedEventId}
-                  onSelectEvent={selectEvent}
-                />
-              ) : null}
-            </div>
-          </div>
-          <aside className="bg-surface px-4 py-4 xl:min-h-[720px]">
-            <div className="mb-5 grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1">
-              {[
-                { id: "schedule" as PanelTab, label: "予定管理" },
-                { id: "post" as PanelTab, label: "投稿補助" }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={[
-                    "rounded-base px-3 py-2 text-sm font-bold transition",
-                    activeTab === tab.id ? "bg-surface text-primary-strong shadow-sm" : "text-muted hover:text-foreground"
-                  ].join(" ")}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            {activeTab === "schedule" ? (
-              <SchedulePanel
-                selectedDateKey={selectedDateKey}
-                selectedEvent={selectedEvent}
-                dayEvents={selectedDayEvents}
-                draft={draft}
-                statusMessage={statusMessage}
-                onDraftChange={setDraft}
-                onNew={createNewEvent}
-                onSelectEvent={selectEvent}
-                onSave={saveDraft}
-                onDelete={deleteSelectedEvent}
-              />
-            ) : (
-              <PostAssistPanel
-                selectedEvent={selectedEvent}
-                templateId={templateId}
-                postText={postText}
-                copyStatus={copyStatus}
-                onTemplateChange={setTemplateId}
-                onCopy={copyPostText}
-              />
-            )}
-          </aside>
+    <section className="flex h-full min-h-0 flex-col overflow-hidden border-b border-r border-border bg-surface">
+      <CalendarToolbar
+        view={view}
+        cursorDate={cursorDate}
+        onViewChange={setView}
+        onToday={() => selectDate(toDateKey(new Date()))}
+        onMove={movePeriod}
+      />
+      <CategoryLegend />
+      {storageError ? (
+        <div className="shrink-0 border-b border-border bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:bg-red-950/35 dark:text-red-200">
+          {storageError}
         </div>
-      </section>
-      <div className="flex flex-wrap gap-2 text-xs font-bold text-muted">
-        <span className="mr-1 py-1">カテゴリ</span>
-        {categoryOptions.map((option) => (
-          <span
-            key={option.value}
-            className={["rounded-base border px-2 py-1", categoryMeta[option.value].tone].join(" ")}
-          >
-            {option.label}
-          </span>
-        ))}
+      ) : null}
+      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(280px,42vh)] gap-0 xl:grid-cols-[minmax(0,1fr)_360px] xl:grid-rows-none">
+        <div className="min-h-0 min-w-0 border-b border-border xl:border-b-0 xl:border-r">
+          <div className="scrollbar-accent h-full overflow-x-auto overflow-y-hidden">
+            {view === "week" ? (
+              <WeekView
+                events={visibleEvents}
+                cursorDate={cursorDate}
+                selectedDateKey={selectedDateKey}
+                selectedEventId={selectedEventId}
+                onSelectDate={selectDate}
+                onSelectEvent={selectEvent}
+              />
+            ) : null}
+            {view === "month" ? (
+              <MonthView
+                events={visibleEvents}
+                cursorDate={cursorDate}
+                selectedDateKey={selectedDateKey}
+                selectedEventId={selectedEventId}
+                onSelectDate={selectDate}
+                onSelectEvent={selectEvent}
+              />
+            ) : null}
+            {view === "day" ? (
+              <DayView
+                events={visibleEvents}
+                selectedDateKey={selectedDateKey}
+                selectedEventId={selectedEventId}
+                onSelectEvent={selectEvent}
+              />
+            ) : null}
+          </div>
+        </div>
+        <aside className="scrollbar-accent min-h-0 overflow-y-auto bg-surface px-4 py-4">
+          <div className="mb-5 grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1">
+            {[
+              { id: "schedule" as PanelTab, label: "予定管理" },
+              { id: "post" as PanelTab, label: "投稿補助" }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={[
+                  "rounded-base px-3 py-2 text-sm font-bold transition",
+                  activeTab === tab.id ? "bg-surface text-primary-strong shadow-sm" : "text-muted hover:text-foreground"
+                ].join(" ")}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          {activeTab === "schedule" ? (
+            <SchedulePanel
+              selectedDateKey={selectedDateKey}
+              selectedEvent={selectedEvent}
+              dayEvents={selectedDayEvents}
+              draft={draft}
+              statusMessage={statusMessage}
+              onDraftChange={setDraft}
+              onNew={createNewEvent}
+              onSelectEvent={selectEvent}
+              onSave={saveDraft}
+              onDelete={deleteSelectedEvent}
+            />
+          ) : (
+            <PostAssistPanel
+              selectedEvent={selectedEvent}
+              templateId={templateId}
+              postText={postText}
+              copyStatus={copyStatus}
+              onTemplateChange={setTemplateId}
+              onCopy={copyPostText}
+            />
+          )}
+        </aside>
       </div>
-    </div>
+    </section>
   );
 }

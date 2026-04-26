@@ -21,6 +21,7 @@ pnpm-debug.log*
 # Coverage / caches
 coverage/
 .cache/
+.npm-cache/
 .turbo/
 
 # OS / editor

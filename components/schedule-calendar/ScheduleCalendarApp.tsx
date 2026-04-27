@@ -28,6 +28,7 @@ import {
 } from "@/lib/schedule-calendar";
 
 type PanelTab = "schedule" | "post";
+type CopyStatusKind = "idle" | "success" | "error";
 
 const viewLabels: Record<CalendarView, string> = {
   month: "月",
@@ -90,7 +91,7 @@ function getEventStyle(event: ScheduleEvent) {
   const duration = Math.min(timelineEndMinutes - start, getEventDurationMinutes(event));
   return {
     top: `${((start - timelineStartMinutes) / timelineMinutes) * 100}%`,
-    height: `${Math.max(5, (duration / timelineMinutes) * 100)}%`
+    height: `${(duration / timelineMinutes) * 100}%`
   };
 }
 
@@ -248,7 +249,7 @@ function EventPill({
         onSelect(event);
       }}
       className={[
-        "w-full rounded-base border px-2 py-1 text-left transition hover:border-primary/70 hover:shadow-sm",
+        "h-full w-full overflow-hidden rounded-base border px-2 py-1 text-left transition hover:border-primary/70 hover:shadow-sm",
         meta.tone,
         selected ? "ring-2 ring-primary/45" : ""
       ].join(" ")}
@@ -259,6 +260,37 @@ function EventPill({
         {!compact ? ` - ${event.endTime}` : ""}
       </span>
       <span className="mt-0.5 block truncate text-xs font-bold">{event.title || "無題の予定"}</span>
+    </button>
+  );
+}
+
+function MonthEventRow({
+  event,
+  selected,
+  onSelect
+}: {
+  event: ScheduleEvent;
+  selected: boolean;
+  onSelect: (event: ScheduleEvent) => void;
+}) {
+  const meta = categoryMeta[event.category];
+
+  return (
+    <button
+      type="button"
+      onClick={(detail) => {
+        detail.stopPropagation();
+        onSelect(event);
+      }}
+      className={[
+        "flex h-6 w-full items-center gap-1.5 rounded-base border px-1.5 text-left text-[11px] font-bold transition",
+        "hover:border-primary/70 hover:bg-surface-muted",
+        selected ? "border-primary bg-primary-soft/45" : "border-border bg-surface-muted/70"
+      ].join(" ")}
+    >
+      <span className={["h-1.5 w-1.5 shrink-0 rounded-full", meta.dot].join(" ")} />
+      <span className="shrink-0 text-muted">{event.startTime}</span>
+      <span className="min-w-0 truncate text-foreground">{event.title || "無題の予定"}</span>
     </button>
   );
 }
@@ -427,17 +459,18 @@ function MonthView({
                   {day.getDate()}
                 </span>
                 <span className="mt-2 flex flex-col gap-1">
-                  {dayEvents.slice(0, 3).map((event) => (
-                    <EventPill
+                  {dayEvents.slice(0, 2).map((event) => (
+                    <MonthEventRow
                       key={event.id}
                       event={event}
                       selected={selectedEventId === event.id}
-                      compact
                       onSelect={onSelectEvent}
                     />
                   ))}
-                  {dayEvents.length > 3 ? (
-                    <span className="text-xs font-bold text-muted">+{dayEvents.length - 3}件</span>
+                  {dayEvents.length > 2 ? (
+                    <span className="rounded-base bg-surface-muted/70 px-1.5 py-1 text-[11px] font-bold text-muted">
+                      他 {dayEvents.length - 2} 件
+                    </span>
                   ) : null}
                 </span>
               </div>
@@ -464,8 +497,9 @@ function DayView({
 
   return (
     <div className="flex h-full min-w-[620px] min-h-0 flex-col">
-      <div className="shrink-0 border-b border-border bg-surface-muted/70 px-4 py-3 text-sm font-bold text-foreground [scrollbar-gutter:stable]">
-        {getLongDateLabel(selectedDateKey)}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-surface-muted/70 px-4 py-3 text-sm font-bold text-foreground [scrollbar-gutter:stable]">
+        <span>{getLongDateLabel(selectedDateKey)}</span>
+        <span className="rounded-base border border-border bg-surface px-2 py-1 text-xs text-muted">予定 {dayEvents.length} 件</span>
       </div>
       <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
         <div className="grid grid-cols-[64px_1fr]">
@@ -473,8 +507,8 @@ function DayView({
           <div className={["relative bg-surface", timeGridMinHeightClassName].join(" ")}>
             <TimeSlotLines />
             {dayEvents.length === 0 ? (
-              <div className="absolute left-4 right-4 top-1 flex h-6 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-3 text-center text-[11px] font-bold text-muted">
-                この日の予定はまだありません。
+              <div className="absolute left-3 right-3 top-1 flex h-6 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-3 text-center text-[11px] font-bold text-muted">
+                この日の予定はまだありません。右パネルから追加できます。
               </div>
             ) : null}
             {dayEvents.map((event) => (
@@ -591,7 +625,7 @@ function ScheduleForm({
           placeholder="次回配信のセットリストやコラボ企画案を記録する。"
         />
       </div>
-      <div className="flex gap-2 pt-2">
+      <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
         <button type="button" onClick={onDelete} disabled={!canDelete} className="flat-control flex-1 border-red-300 px-3 py-2 text-red-600 disabled:cursor-not-allowed disabled:opacity-45">
           削除
         </button>
@@ -694,6 +728,8 @@ function PostAssistPanel({
   templateId,
   postText,
   copyStatus,
+  copyStatusKind,
+  copyFallbackText,
   onTemplateChange,
   onCopy
 }: {
@@ -701,6 +737,8 @@ function PostAssistPanel({
   templateId: string;
   postText: string;
   copyStatus: string;
+  copyStatusKind: CopyStatusKind;
+  copyFallbackText: string;
   onTemplateChange: (id: string) => void;
   onCopy: () => void;
 }) {
@@ -735,7 +773,7 @@ function PostAssistPanel({
           readOnly
           className="mt-3 min-h-44 w-full resize-none rounded-base border border-border bg-surface-muted px-3 py-3 text-sm leading-6 text-foreground"
         />
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button type="button" onClick={onCopy} className="flat-control flex-1 px-3 py-2">
             コピー
           </button>
@@ -748,10 +786,42 @@ function PostAssistPanel({
             Xで開く
           </a>
         </div>
-        {copyStatus ? <p className="mt-3 text-sm font-semibold text-primary-strong">{copyStatus}</p> : null}
+        {copyStatus ? (
+          <p
+            className={[
+              "mt-3 text-sm font-semibold",
+              copyStatusKind === "error" ? "text-red-600 dark:text-red-300" : "text-primary-strong"
+            ].join(" ")}
+          >
+            {copyStatus}
+          </p>
+        ) : null}
+        {copyFallbackText ? (
+          <div className="mt-3 rounded-base border border-dashed border-border bg-surface-muted/55 p-3">
+            <p className="text-xs font-bold text-muted">手動コピー用</p>
+            <textarea
+              value={copyFallbackText}
+              readOnly
+              onFocus={(event) => event.currentTarget.select()}
+              className="mt-2 min-h-28 w-full resize-none rounded-base border border-border bg-surface px-3 py-2 text-sm leading-6 text-foreground"
+            />
+          </div>
+        ) : null}
       </section>
     </div>
   );
+}
+
+function getClipboardFailureMessage(error: unknown) {
+  if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+    return "このブラウザでは自動コピーを利用できません。下の文面を選択してコピーしてください。";
+  }
+
+  if (error instanceof DOMException && error.name === "NotAllowedError") {
+    return "クリップボード権限が許可されていません。下の文面を選択してコピーしてください。";
+  }
+
+  return "コピーできませんでした。下の文面を選択してコピーしてください。";
 }
 
 export function ScheduleCalendarApp() {
@@ -766,6 +836,8 @@ export function ScheduleCalendarApp() {
   const [templateId, setTemplateId] = useState(postTemplates[0].id);
   const [statusMessage, setStatusMessage] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
+  const [copyStatusKind, setCopyStatusKind] = useState<CopyStatusKind>("idle");
+  const [copyFallbackText, setCopyFallbackText] = useState("");
   const [storageError, setStorageError] = useState("");
   const [hydrated, setHydrated] = useState(false);
 
@@ -808,6 +880,12 @@ export function ScheduleCalendarApp() {
   const selectedDayEvents = useMemo(() => getEventsForDate(events, selectedDateKey), [events, selectedDateKey]);
   const postText = useMemo(() => generatePostText(selectedEvent, templateId), [selectedEvent, templateId]);
   const visibleEvents = useMemo(() => sortEvents(events), [events]);
+
+  useEffect(() => {
+    setCopyStatus("");
+    setCopyStatusKind("idle");
+    setCopyFallbackText("");
+  }, [postText]);
 
   function selectDate(dateKey: string) {
     setSelectedDateKey(dateKey);
@@ -875,10 +953,20 @@ export function ScheduleCalendarApp() {
 
   async function copyPostText() {
     try {
-      await navigator.clipboard.writeText(postText);
+      const clipboard = navigator.clipboard;
+
+      if (!clipboard?.writeText) {
+        throw new Error("Clipboard API unavailable");
+      }
+
+      await clipboard.writeText(postText);
       setCopyStatus("投稿文をコピーしました。");
-    } catch {
-      setCopyStatus("コピーできませんでした。手動で選択してコピーしてください。");
+      setCopyStatusKind("success");
+      setCopyFallbackText("");
+    } catch (error) {
+      setCopyStatus(getClipboardFailureMessage(error));
+      setCopyStatusKind("error");
+      setCopyFallbackText(postText);
     }
   }
 
@@ -976,6 +1064,8 @@ export function ScheduleCalendarApp() {
               templateId={templateId}
               postText={postText}
               copyStatus={copyStatus}
+              copyStatusKind={copyStatusKind}
+              copyFallbackText={copyFallbackText}
               onTemplateChange={setTemplateId}
               onCopy={copyPostText}
             />

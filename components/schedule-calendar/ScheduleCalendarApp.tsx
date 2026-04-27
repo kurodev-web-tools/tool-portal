@@ -773,6 +773,8 @@ type MobileEventFilters = {
   period: EventPeriodFilter;
 };
 
+type SettingsSectionId = "defaults" | "data" | "templates";
+
 function MobileEventList({
   events,
   filters,
@@ -874,6 +876,42 @@ function MobileEventList({
   );
 }
 
+function SettingsAccordionSection({
+  id,
+  title,
+  summary,
+  open,
+  onToggle,
+  children
+}: {
+  id: SettingsSectionId;
+  title: string;
+  summary: string;
+  open: boolean;
+  onToggle: (id: SettingsSectionId) => void;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-base border border-border bg-surface-muted/35">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+        aria-expanded={open}
+        onClick={() => onToggle(id)}
+      >
+        <span className="min-w-0">
+          <span className="block text-sm font-bold text-foreground">{title}</span>
+          <span className="mt-1 block truncate text-xs font-bold text-muted">{summary}</span>
+        </span>
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-base border border-border bg-surface text-lg leading-none text-muted">
+          {open ? "-" : "+"}
+        </span>
+      </button>
+      {open ? <div className="space-y-3 border-t border-border px-4 py-4">{children}</div> : null}
+    </section>
+  );
+}
+
 function MobileSettingsPanel({
   settings,
   templates,
@@ -905,12 +943,31 @@ function MobileSettingsPanel({
   onImport: () => void;
   onResetAll: () => void;
 }) {
+  const [openSections, setOpenSections] = useState<Record<SettingsSectionId, boolean>>({
+    defaults: true,
+    data: false,
+    templates: false
+  });
+  const defaultTemplateName = templates.find((template) => template.id === settings.defaultTemplateId)?.name ?? "未設定";
+  const defaultViewLabel = viewLabels[settings.defaultView];
+  const weekStartsOnLabel = settings.weekStartsOn === 1 ? "月曜開始" : "日曜開始";
+
+  function toggleSection(sectionId: SettingsSectionId) {
+    setOpenSections((current) => ({ ...current, [sectionId]: !current[sectionId] }));
+  }
+
   return (
     <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto bg-surface px-4 pb-24 pt-4 sm:hidden">
       <h2 className="text-base font-bold text-foreground">設定</h2>
       {settingsStatus ? <p className="mt-3 rounded-base border border-border bg-surface-muted/55 px-3 py-2 text-sm font-bold text-primary-strong">{settingsStatus}</p> : null}
-      <div className="mt-4 space-y-3 rounded-base border border-border bg-surface-muted/35 p-4">
-        <p className="text-sm font-bold text-foreground">表示・既定値</p>
+      <div className="mt-4 space-y-3">
+      <SettingsAccordionSection
+        id="defaults"
+        title="表示・既定値"
+        summary={`${defaultViewLabel} / ${weekStartsOnLabel} / ${settings.defaultStartTime} / ${settings.defaultDurationMinutes}分`}
+        open={openSections.defaults}
+        onToggle={toggleSection}
+      >
         <div className="grid grid-cols-2 gap-3">
           <div>
             <FieldLabel>初期表示ビュー</FieldLabel>
@@ -942,9 +999,14 @@ function MobileSettingsPanel({
             </select>
           </div>
         </div>
-      </div>
-      <div className="mt-4 space-y-3 rounded-base border border-border bg-surface-muted/35 p-4">
-        <p className="text-sm font-bold text-foreground">データ管理</p>
+      </SettingsAccordionSection>
+      <SettingsAccordionSection
+        id="data"
+        title="データ管理"
+        summary="JSON保存・復元 / 全データ初期化"
+        open={openSections.data}
+        onToggle={toggleSection}
+      >
         <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={onExport} className="flat-control px-3 py-2">
             JSONエクスポート
@@ -957,9 +1019,14 @@ function MobileSettingsPanel({
         <button type="button" onClick={onResetAll} className="w-full rounded-base border border-red-300 px-3 py-2 text-sm font-bold text-red-600">
           全データ初期化
         </button>
-      </div>
-      <div className="mt-4 space-y-3 rounded-base border border-border bg-surface-muted/35 p-4">
-        <p className="text-sm font-bold text-foreground">投稿補助テンプレート</p>
+      </SettingsAccordionSection>
+      <SettingsAccordionSection
+        id="templates"
+        title="投稿補助テンプレート"
+        summary={`${templates.length}件 / 既定: ${defaultTemplateName}`}
+        open={openSections.templates}
+        onToggle={toggleSection}
+      >
         <div>
           <FieldLabel>既定テンプレート</FieldLabel>
           <select value={settings.defaultTemplateId} onChange={(event) => onSettingsChange({ ...settings, defaultTemplateId: event.target.value })} className={inputClassName()}>
@@ -998,6 +1065,7 @@ function MobileSettingsPanel({
             テンプレートを保存
           </button>
         </div>
+      </SettingsAccordionSection>
       </div>
     </div>
   );

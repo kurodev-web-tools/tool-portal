@@ -29,33 +29,34 @@ function SidebarLink({
     <Link
       href={href}
       className={[
-        "flex items-center gap-3 rounded-base px-3 py-2.5 text-sm font-semibold transition",
+        "group relative flex items-center justify-center gap-3 rounded-base px-2 py-2.5 text-sm font-semibold transition xl:justify-start xl:px-3",
         active
           ? "bg-primary-soft text-primary-strong"
           : "text-muted hover:bg-surface-muted hover:text-foreground"
       ].join(" ")}
+      title={label}
     >
-      <span className="grid h-7 w-7 place-items-center rounded-base bg-surface text-xs font-bold text-primary-strong">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-surface text-xs font-bold text-primary-strong xl:h-7 xl:w-7">
         {icon}
       </span>
-      {label}
+      <span className="hidden xl:inline">{label}</span>
     </Link>
   );
 }
 
 export function PortalSidebar() {
   return (
-    <aside className="hidden w-72 shrink-0 border-r border-border bg-surface/78 px-4 py-6 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-hidden">
-      <Link href="/" className="mb-9 flex items-center gap-3 px-2">
+    <aside className="hidden w-20 shrink-0 border-r border-border bg-surface/78 px-2 py-5 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-hidden xl:w-72 xl:px-4 xl:py-6">
+      <Link href="/" className="mb-8 flex items-center justify-center gap-3 px-1 xl:mb-9 xl:justify-start xl:px-2" title="V Streamer Tools">
         <span className="grid h-9 w-9 place-items-center rounded-base bg-primary text-lg font-black text-white">
           V
         </span>
-        <span className="text-xl font-bold tracking-tight text-foreground">V Streamer Tools</span>
+        <span className="hidden text-xl font-bold tracking-tight text-foreground xl:inline">V Streamer Tools</span>
       </Link>
 
-      <nav className="space-y-8">
+      <nav className="space-y-6 xl:space-y-8">
         <section>
-          <p className="mb-3 px-2 text-xs font-semibold text-muted">固定ナビ</p>
+          <p className="mb-3 hidden px-2 text-xs font-semibold text-muted xl:block">固定ナビ</p>
           <div className="space-y-1">
             {fixedItems.map((item) => (
               <SidebarLink key={item.href} {...item} exact={item.href === "/"} />
@@ -64,7 +65,7 @@ export function PortalSidebar() {
         </section>
 
         <section className="border-t border-border pt-6">
-          <p className="mb-3 px-2 text-xs font-semibold text-muted">実装済みツール</p>
+          <p className="mb-3 hidden px-2 text-xs font-semibold text-muted xl:block">実装済みツール</p>
           <div className="space-y-1">
             {sidebarTools.map((tool) => (
               <SidebarLink key={tool.id} href={tool.href} label={tool.name} icon="SC" />
@@ -72,7 +73,7 @@ export function PortalSidebar() {
           </div>
         </section>
 
-        <section className="border-t border-dashed border-border pt-6">
+        <section className="hidden border-t border-dashed border-border pt-6 xl:block">
           <p className="mb-3 px-2 text-xs font-semibold text-muted">将来の機能（予定）</p>
           <div className="space-y-2">
             {futureItems.map((item) => (
@@ -85,7 +86,7 @@ export function PortalSidebar() {
         </section>
       </nav>
 
-      <div className="mt-auto space-y-5 pt-8">
+      <div className="mt-auto hidden space-y-5 pt-8 xl:block">
         <div className="panel p-4 shadow-none">
           <p className="text-sm font-bold text-foreground">ログインするともっと便利に</p>
           <p className="mt-2 text-xs leading-5 text-muted">

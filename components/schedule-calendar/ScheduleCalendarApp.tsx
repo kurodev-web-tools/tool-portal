@@ -40,9 +40,9 @@ const timeSlots = Array.from({ length: 48 }, (_, index) => index * 30);
 const timelineStartMinutes = 0;
 const timelineEndMinutes = 24 * 60;
 const timelineMinutes = timelineEndMinutes - timelineStartMinutes;
-const timeGridMinHeightClassName = "min-h-[1344px]";
-const timeSlotHeightClassName = "h-7";
-const weekGridTemplateColumns = "58px repeat(7, minmax(84px, 1fr))";
+const timeGridMinHeightClassName = "min-h-[1248px] lg:min-h-[1152px] xl:min-h-[1248px]";
+const timeSlotHeightClassName = "h-6";
+const weekGridTemplateColumns = "48px repeat(7, minmax(84px, 1fr))";
 
 function formatSlot(minutes: number) {
   const hour = Math.floor(minutes / 60);
@@ -121,16 +121,16 @@ function CalendarToolbar({
   onMove: (direction: -1 | 1) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-border px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-foreground">スケジュールカレンダー</h1>
-        <p className="mt-1 text-sm text-muted">配信・投稿・制作などの予定を一元管理できます。</p>
+    <div className="flex flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+      <div className="min-w-0">
+        <h1 className="truncate text-lg font-bold tracking-tight text-foreground xl:text-xl">スケジュールカレンダー</h1>
+        <p className="mt-1 hidden text-sm text-muted md:block">配信・投稿・制作などの予定を一元管理できます。</p>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className="flat-control px-3 py-2" onClick={onToday}>
+      <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+        <button type="button" className="flat-control shrink-0 px-3 py-2" onClick={onToday}>
           今日
         </button>
-        <div className="flex items-center overflow-hidden rounded-base border border-border bg-surface">
+        <div className="flex shrink-0 items-center overflow-hidden rounded-base border border-border bg-surface">
           <button
             type="button"
             className="px-3 py-2 text-sm font-bold text-muted transition hover:bg-surface-muted hover:text-foreground"
@@ -148,10 +148,10 @@ function CalendarToolbar({
             ›
           </button>
         </div>
-        <div className="min-w-0 rounded-base border border-border bg-surface-muted px-3 py-2 text-sm font-bold text-foreground">
+        <div className="min-w-[13.5rem] flex-1 rounded-base border border-border bg-surface-muted px-3 py-2 text-center text-sm font-bold text-foreground lg:flex-none">
           {getPeriodLabel(cursorDate, view)}
         </div>
-        <div className="flex rounded-base border border-border bg-surface p-1">
+        <div className="flex shrink-0 rounded-base border border-border bg-surface p-1">
           {(Object.keys(viewLabels) as CalendarView[]).map((item) => (
             <button
               key={item}
@@ -322,9 +322,9 @@ function WeekView({
   };
 
   return (
-    <div className="flex h-full min-w-[760px] min-h-0 flex-col">
+    <div className="flex h-full min-w-[636px] min-h-0 flex-col">
       <div className="grid shrink-0 border-b border-border bg-surface-muted/70" style={weekHeaderGridStyle}>
-        <div className="border-r border-border px-2 py-3 text-xs font-bold text-muted">時刻</div>
+        <div className="border-r border-border px-1.5 py-3 text-center text-xs font-bold text-muted">時刻</div>
         {days.map((day, dayIndex) => {
           const key = toDateKey(day);
           return (
@@ -333,7 +333,7 @@ function WeekView({
               type="button"
               onClick={() => onSelectDate(key)}
               className={[
-                "px-2 py-3 text-center text-sm transition hover:bg-primary-soft/35",
+                "px-1.5 py-3 text-center text-sm transition hover:bg-primary-soft/35",
                 dayIndex === days.length - 1 ? "" : "border-r border-border",
                 selectedDateKey === key ? "bg-primary-soft text-primary-strong" : "text-foreground"
               ].join(" ")}
@@ -341,7 +341,7 @@ function WeekView({
               <span className="block text-xs font-bold text-muted">{getShortDateLabel(day).split(" ")[1]}</span>
               <span
                 className={[
-                  "mt-1 inline-grid h-8 min-w-8 place-items-center rounded-base px-2 font-bold",
+                  "mt-1 inline-grid h-8 min-w-8 place-items-center rounded-base px-1.5 font-bold",
                   todayKey === key ? "bg-primary text-white" : ""
                 ].join(" ")}
               >
@@ -993,8 +993,8 @@ export function ScheduleCalendarApp() {
           {storageError}
         </div>
       ) : null}
-      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(280px,42vh)] gap-0 xl:grid-cols-[minmax(0,1fr)_360px] xl:grid-rows-none">
-        <div className="min-h-0 min-w-0 border-b border-border xl:border-b-0 xl:border-r">
+      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(280px,42vh)] gap-0 lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-none xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-h-0 min-w-0 border-b border-border lg:border-b-0 lg:border-r">
           <div className="scrollbar-accent h-full overflow-x-auto overflow-y-hidden">
             {view === "week" ? (
               <WeekView
@@ -1026,8 +1026,8 @@ export function ScheduleCalendarApp() {
             ) : null}
           </div>
         </div>
-        <aside className="scrollbar-accent min-h-0 overflow-y-auto bg-surface px-4 py-4">
-          <div className="mb-5 grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1">
+        <aside className="scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 py-3 lg:[scrollbar-gutter:stable] xl:px-4 xl:py-4">
+          <div className="sticky top-0 z-10 mb-4 grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm">
             {[
               { id: "schedule" as PanelTab, label: "予定管理" },
               { id: "post" as PanelTab, label: "投稿補助" }

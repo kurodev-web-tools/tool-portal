@@ -15,14 +15,30 @@ export type ScheduleEvent = {
   memo: string;
 };
 
+export type ScheduleSettings = {
+  defaultView: CalendarView;
+  weekStartsOn: 0 | 1;
+  defaultStartTime: string;
+  defaultDurationMinutes: number;
+  defaultTemplateId: string;
+};
+
 export type PostTemplate = {
   id: string;
   name: string;
   description: string;
-  build: (event: ScheduleEvent | null) => string;
+  body: string;
+};
+
+export type ScheduleStoragePayload = {
+  version: 2;
+  events: ScheduleEvent[];
+  settings: ScheduleSettings;
+  postTemplates: PostTemplate[];
 };
 
 export const scheduleStorageKey = "v-streamer-tools:schedule-calendar-events:v1";
+export const scheduleStorageVersion = 2;
 
 export const categoryMeta: Record<EventCategory, { label: string; tone: string; dot: string }> = {
   stream: {
@@ -99,25 +115,26 @@ export function addMonths(date: Date, amount: number): Date {
   return next;
 }
 
-export function startOfWeek(date: Date): Date {
+export function startOfWeek(date: Date, weekStartsOn: 0 | 1 = 0): Date {
   const next = new Date(date);
   next.setHours(0, 0, 0, 0);
-  next.setDate(next.getDate() - next.getDay());
+  const offset = (next.getDay() - weekStartsOn + 7) % 7;
+  next.setDate(next.getDate() - offset);
   return next;
 }
 
-export function getWeekDays(date: Date): Date[] {
-  const start = startOfWeek(date);
+export function getWeekDays(date: Date, weekStartsOn: 0 | 1 = 0): Date[] {
+  const start = startOfWeek(date, weekStartsOn);
   return Array.from({ length: 7 }, (_, index) => addDays(start, index));
 }
 
-export function getMonthGrid(date: Date): Date[] {
+export function getMonthGrid(date: Date, weekStartsOn: 0 | 1 = 0): Date[] {
   const first = new Date(date.getFullYear(), date.getMonth(), 1);
-  const gridStart = startOfWeek(first);
+  const gridStart = startOfWeek(first, weekStartsOn);
   return Array.from({ length: 42 }, (_, index) => addDays(gridStart, index));
 }
 
-export function getPeriodLabel(date: Date, view: CalendarView): string {
+export function getPeriodLabel(date: Date, view: CalendarView, weekStartsOn: 0 | 1 = 0): string {
   if (view === "month") {
     return monthFormatter.format(date);
   }
@@ -126,7 +143,7 @@ export function getPeriodLabel(date: Date, view: CalendarView): string {
     return longDateFormatter.format(date);
   }
 
-  const days = getWeekDays(date);
+  const days = getWeekDays(date, weekStartsOn);
   const start = days[0];
   const end = days[6];
   return `${start.getFullYear()}年${start.getMonth() + 1}月${start.getDate()}日(${dayFormatter.format(start)}) - ${
@@ -168,13 +185,23 @@ export function getEventStartMinutes(event: ScheduleEvent): number {
   return hour * 60 + minute;
 }
 
-export function createEmptyEvent(dateKey: string): ScheduleEvent {
+export function createEmptyEvent(
+  dateKey: string,
+  options: { startTime?: string; durationMinutes?: number } = {}
+): ScheduleEvent {
+  const startTime = options.startTime ?? "20:00";
+  const durationMinutes = options.durationMinutes ?? 60;
+  const [startHour, startMinute] = startTime.split(":").map(Number);
+  const endTotalMinutes = Math.min(24 * 60, startHour * 60 + startMinute + durationMinutes);
+  const endHour = Math.floor(endTotalMinutes / 60);
+  const endMinute = endTotalMinutes % 60;
+
   return {
     id: `event-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     title: "",
     date: dateKey,
-    startTime: "20:00",
-    endTime: "21:00",
+    startTime,
+    endTime: `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`,
     category: "stream",
     platform: "YouTube",
     memo: ""
@@ -206,9 +233,126 @@ export function normalizeEvents(value: unknown): ScheduleEvent[] {
   );
 }
 
-export function generatePostText(event: ScheduleEvent | null, templateId: string): string {
-  const template = postTemplates.find((item) => item.id === templateId) ?? postTemplates[0];
-  return template.build(event);
+export const defaultScheduleSettings: ScheduleSettings = {
+  defaultView: "week",
+  weekStartsOn: 0,
+  defaultStartTime: "20:00",
+  defaultDurationMinutes: 60,
+  defaultTemplateId: "stream-notice"
+};
+
+function isCalendarView(value: unknown): value is CalendarView {
+  return value === "month" || value === "week" || value === "day";
+}
+
+function normalizeTime(value: unknown, fallback: string): string {
+  return typeof value === "string" && /^\d{2}:\d{2}$/.test(value) ? value : fallback;
+}
+
+export function normalizeSettings(value: unknown): ScheduleSettings {
+  if (!value || typeof value !== "object") {
+    return { ...defaultScheduleSettings };
+  }
+
+  const input = value as Partial<ScheduleSettings>;
+  const duration = Number(input.defaultDurationMinutes);
+
+  return {
+    defaultView: isCalendarView(input.defaultView) ? input.defaultView : defaultScheduleSettings.defaultView,
+    weekStartsOn: input.weekStartsOn === 1 ? 1 : 0,
+    defaultStartTime: normalizeTime(input.defaultStartTime, defaultScheduleSettings.defaultStartTime),
+    defaultDurationMinutes: [30, 45, 60, 90, 120, 180].includes(duration) ? duration : defaultScheduleSettings.defaultDurationMinutes,
+    defaultTemplateId: typeof input.defaultTemplateId === "string" ? input.defaultTemplateId : defaultScheduleSettings.defaultTemplateId
+  };
+}
+
+export function normalizePostTemplates(value: unknown): PostTemplate[] {
+  if (!Array.isArray(value)) {
+    return postTemplates;
+  }
+
+  const templates = value.filter((item): item is PostTemplate => {
+    if (!item || typeof item !== "object") {
+      return false;
+    }
+
+    const template = item as Partial<PostTemplate>;
+    return (
+      typeof template.id === "string" &&
+      typeof template.name === "string" &&
+      typeof template.description === "string" &&
+      typeof template.body === "string"
+    );
+  });
+
+  return templates.length > 0 ? templates : postTemplates;
+}
+
+export function normalizeStoragePayload(value: unknown): ScheduleStoragePayload {
+  if (Array.isArray(value)) {
+    return {
+      version: scheduleStorageVersion,
+      events: normalizeEvents(value),
+      settings: { ...defaultScheduleSettings },
+      postTemplates
+    };
+  }
+
+  if (!value || typeof value !== "object") {
+    return {
+      version: scheduleStorageVersion,
+      events: [],
+      settings: { ...defaultScheduleSettings },
+      postTemplates
+    };
+  }
+
+  const input = value as Partial<ScheduleStoragePayload>;
+  const templates = normalizePostTemplates(input.postTemplates);
+  const settings = normalizeSettings(input.settings);
+  const defaultTemplateExists = templates.some((template) => template.id === settings.defaultTemplateId);
+
+  return {
+    version: scheduleStorageVersion,
+    events: normalizeEvents(input.events),
+    settings: {
+      ...settings,
+      defaultTemplateId: defaultTemplateExists ? settings.defaultTemplateId : templates[0]?.id ?? defaultScheduleSettings.defaultTemplateId
+    },
+    postTemplates: templates
+  };
+}
+
+function getTemplateValue(event: ScheduleEvent | null, key: string): string {
+  if (!event) {
+    return "";
+  }
+
+  if (key === "date") {
+    return getLongDateLabel(event.date);
+  }
+
+  if (key === "category") {
+    return categoryMeta[event.category].label;
+  }
+
+  return String(event[key as keyof ScheduleEvent] ?? "");
+}
+
+export function renderPostTemplate(event: ScheduleEvent | null, template: PostTemplate): string {
+  if (!event) {
+    return "予定を選ぶと、ここに投稿文プレビューが表示されます。";
+  }
+
+  return template.body.replace(/\{(date|startTime|endTime|title|platform|category|memo)\}/g, (_, key: string) =>
+    getTemplateValue(event, key)
+  );
+}
+
+export function generatePostText(event: ScheduleEvent | null, templateId: string, templates: PostTemplate[] = postTemplates): string {
+  const normalizedTemplates = normalizePostTemplates(templates);
+  const template = normalizedTemplates.find((item) => item.id === templateId) ?? normalizedTemplates[0];
+  return renderPostTemplate(event, template);
 }
 
 export const postTemplates: PostTemplate[] = [
@@ -216,37 +360,18 @@ export const postTemplates: PostTemplate[] = [
     id: "stream-notice",
     name: "配信告知",
     description: "当日の配信予定を短く告知します。",
-    build: (event) => {
-      if (!event) {
-        return "本日の配信予定を準備中です。\n開始時間や配信ページが決まり次第お知らせします。";
-      }
-
-      const platform = event.platform ? ` / ${event.platform}` : "";
-      return `【配信予定】\n${getLongDateLabel(event.date)} ${event.startTime} - ${event.endTime}${platform}\n${event.title}\n\nよかったら遊びに来てください。`;
-    }
+    body: "【配信予定】\n{date} {startTime} - {endTime} / {platform}\n{title}\n\nよかったら遊びに来てください。"
   },
   {
     id: "reminder",
     name: "直前リマインド",
     description: "開始前の軽いリマインドに使います。",
-    build: (event) => {
-      if (!event) {
-        return "まもなく予定の時間です。\n準備ができ次第お知らせします。";
-      }
-
-      return `まもなく ${event.startTime} から ${event.title} です。\n${event.platform ? `${event.platform}で` : ""}お待ちしています。`;
-    }
+    body: "まもなく {startTime} から {title} です。\n{platform}でお待ちしています。"
   },
   {
     id: "after-note",
     name: "終了後メモ",
     description: "配信や投稿後のフォロー文面です。",
-    build: (event) => {
-      if (!event) {
-        return "本日の予定が完了しました。\n見に来てくれた方、ありがとうございました。";
-      }
-
-      return `${event.title}、ありがとうございました。\n次回予定もカレンダーで整理しておきます。`;
-    }
+    body: "{title}、ありがとうございました。\n次回予定もカレンダーで整理しておきます。"
   }
 ];

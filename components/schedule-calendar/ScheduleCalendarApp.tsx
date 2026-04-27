@@ -7,6 +7,7 @@ import {
   categoryMeta,
   categoryOptions,
   createEmptyEvent,
+  defaultScheduleSettings,
   generatePostText,
   getEventDurationMinutes,
   getEventsForDate,
@@ -16,7 +17,7 @@ import {
   getPeriodLabel,
   getShortDateLabel,
   getWeekDays,
-  normalizeEvents,
+  normalizeStoragePayload,
   parseDateKey,
   platformOptions,
   postTemplates,
@@ -24,12 +25,17 @@ import {
   sortEvents,
   toDateKey,
   type CalendarView,
+  type EventCategory,
+  type EventPlatform,
+  type PostTemplate,
+  type ScheduleSettings,
   type ScheduleEvent
 } from "@/lib/schedule-calendar";
 
 type PanelTab = "schedule" | "post";
 type CopyStatusKind = "idle" | "success" | "error";
 type MobileNavTab = "calendar" | "events" | "settings";
+type EventPeriodFilter = "all" | "today" | "week" | "month";
 
 const viewLabels: Record<CalendarView, string> = {
   month: "月",
@@ -111,12 +117,14 @@ function inputClassName(extra = "") {
 function CalendarToolbar({
   view,
   cursorDate,
+  weekStartsOn,
   onViewChange,
   onToday,
   onMove
 }: {
   view: CalendarView;
   cursorDate: Date;
+  weekStartsOn: 0 | 1;
   onViewChange: (view: CalendarView) => void;
   onToday: () => void;
   onMove: (direction: -1 | 1) => void;
@@ -146,7 +154,7 @@ function CalendarToolbar({
           </button>
         </div>
         <div className="min-w-0 rounded-base border border-border bg-surface-muted px-3 py-2 text-center text-xs font-bold text-foreground md:min-w-[13.5rem] md:flex-1 md:text-sm lg:flex-none">
-          {getPeriodLabel(cursorDate, view)}
+          {getPeriodLabel(cursorDate, view, weekStartsOn)}
         </div>
         <div className="col-span-3 grid grid-cols-3 rounded-base border border-border bg-surface p-1 md:col-span-1 md:flex md:shrink-0">
           {(Object.keys(viewLabels) as CalendarView[]).map((item) => (
@@ -295,6 +303,7 @@ function MonthEventRow({
 function WeekView({
   events,
   cursorDate,
+  weekStartsOn,
   selectedDateKey,
   selectedEventId,
   onSelectDate,
@@ -302,12 +311,13 @@ function WeekView({
 }: {
   events: ScheduleEvent[];
   cursorDate: Date;
+  weekStartsOn: 0 | 1;
   selectedDateKey: string;
   selectedEventId: string | null;
   onSelectDate: (dateKey: string) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
 }) {
-  const days = getWeekDays(cursorDate);
+  const days = getWeekDays(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
   const { scrollContainerRef, scrollbarWidth } = useMeasuredScrollbarWidth();
 
@@ -392,6 +402,7 @@ function WeekView({
 function MonthView({
   events,
   cursorDate,
+  weekStartsOn,
   selectedDateKey,
   selectedEventId,
   onSelectDate,
@@ -399,22 +410,24 @@ function MonthView({
 }: {
   events: ScheduleEvent[];
   cursorDate: Date;
+  weekStartsOn: 0 | 1;
   selectedDateKey: string;
   selectedEventId: string | null;
   onSelectDate: (dateKey: string) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
 }) {
-  const days = getMonthGrid(cursorDate);
+  const days = getMonthGrid(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
   const { scrollContainerRef, scrollbarWidth } = useMeasuredScrollbarWidth();
   const monthHeaderGridStyle = {
     gridTemplateColumns: `repeat(7, minmax(0, 1fr)) ${scrollbarWidth}px`
   };
+  const weekdayLabels = weekStartsOn === 1 ? ["月", "火", "水", "木", "金", "土", "日"] : ["日", "月", "火", "水", "木", "金", "土"];
 
   return (
     <div className="flex h-full min-w-[720px] min-h-0 flex-col">
       <div className="grid shrink-0 border-b border-border bg-surface-muted/70" style={monthHeaderGridStyle}>
-        {["日", "月", "火", "水", "木", "金", "土"].map((label, dayIndex) => (
+        {weekdayLabels.map((label, dayIndex) => (
           <div
             key={label}
             className={[
@@ -482,21 +495,23 @@ function MonthView({
 function MobileMonthView({
   events,
   cursorDate,
+  weekStartsOn,
   selectedDateKey,
   onSelectDate
 }: {
   events: ScheduleEvent[];
   cursorDate: Date;
+  weekStartsOn: 0 | 1;
   selectedDateKey: string;
   onSelectDate: (dateKey: string) => void;
 }) {
-  const days = getMonthGrid(cursorDate);
+  const days = getMonthGrid(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-surface">
       <div className="grid grid-cols-7 border-b border-border bg-surface-muted/70 text-center text-[11px] font-bold text-muted">
-        {["日", "月", "火", "水", "木", "金", "土"].map((label) => (
+        {(weekStartsOn === 1 ? ["月", "火", "水", "木", "金", "土", "日"] : ["日", "月", "火", "水", "木", "金", "土"]).map((label) => (
           <span key={label} className="py-2">
             {label}
           </span>
@@ -592,16 +607,18 @@ function DayView({
 
 function MobileDateStrip({
   cursorDate,
+  weekStartsOn,
   selectedDateKey,
   events,
   onSelectDate
 }: {
   cursorDate: Date;
+  weekStartsOn: 0 | 1;
   selectedDateKey: string;
   events: ScheduleEvent[];
   onSelectDate: (dateKey: string) => void;
 }) {
-  const days = getWeekDays(cursorDate);
+  const days = getWeekDays(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
 
   return (
@@ -696,6 +713,7 @@ function MobileCalendarSurface({
   view,
   events,
   cursorDate,
+  weekStartsOn,
   selectedDateKey,
   selectedEventId,
   onSelectDate,
@@ -706,6 +724,7 @@ function MobileCalendarSurface({
   view: CalendarView;
   events: ScheduleEvent[];
   cursorDate: Date;
+  weekStartsOn: 0 | 1;
   selectedDateKey: string;
   selectedEventId: string | null;
   onSelectDate: (dateKey: string) => void;
@@ -718,6 +737,7 @@ function MobileCalendarSurface({
       <MobileMonthView
         events={events}
         cursorDate={cursorDate}
+        weekStartsOn={weekStartsOn}
         selectedDateKey={selectedDateKey}
         onSelectDate={onSelectMonthDate}
       />
@@ -729,6 +749,7 @@ function MobileCalendarSurface({
       {view === "week" ? (
         <MobileDateStrip
           cursorDate={cursorDate}
+          weekStartsOn={weekStartsOn}
           selectedDateKey={selectedDateKey}
           events={events}
           onSelectDate={onSelectDate}
@@ -745,13 +766,24 @@ function MobileCalendarSurface({
   );
 }
 
+type MobileEventFilters = {
+  query: string;
+  category: EventCategory | "all";
+  platform: EventPlatform | "all";
+  period: EventPeriodFilter;
+};
+
 function MobileEventList({
   events,
+  filters,
   selectedEventId,
+  onFilterChange,
   onSelectEvent
 }: {
   events: ScheduleEvent[];
+  filters: MobileEventFilters;
   selectedEventId: string | null;
+  onFilterChange: (filters: MobileEventFilters) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
 }) {
   return (
@@ -761,6 +793,53 @@ function MobileEventList({
         <span className="rounded-base border border-border bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
           {events.length} 件
         </span>
+      </div>
+      <div className="mt-4 space-y-3 rounded-base border border-border bg-surface-muted/35 p-3">
+        <input
+          value={filters.query}
+          onChange={(event) => onFilterChange({ ...filters, query: event.target.value })}
+          className={inputClassName("mt-0")}
+          placeholder="タイトル・メモを検索"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            value={filters.category}
+            onChange={(event) => onFilterChange({ ...filters, category: event.target.value as EventCategory | "all" })}
+            className={inputClassName("mt-0")}
+            aria-label="カテゴリで絞り込み"
+          >
+            <option value="all">カテゴリすべて</option>
+            {categoryOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filters.platform}
+            onChange={(event) => onFilterChange({ ...filters, platform: event.target.value as EventPlatform | "all" })}
+            className={inputClassName("mt-0")}
+            aria-label="プラットフォームで絞り込み"
+          >
+            <option value="all">媒体すべて</option>
+            {platformOptions.map((option) => (
+              <option key={option || "none"} value={option}>
+                {option || "-"}
+              </option>
+            ))}
+          </select>
+        </div>
+        <select
+          value={filters.period}
+          onChange={(event) => onFilterChange({ ...filters, period: event.target.value as EventPeriodFilter })}
+          className={inputClassName("mt-0")}
+          aria-label="期間で絞り込み"
+        >
+          <option value="all">全期間</option>
+          <option value="today">今日以降</option>
+          <option value="week">7日以内</option>
+          <option value="month">30日以内</option>
+        </select>
       </div>
       <div className="mt-4 space-y-2">
         {events.length === 0 ? (
@@ -795,15 +874,130 @@ function MobileEventList({
   );
 }
 
-function MobileSettingsPanel() {
+function MobileSettingsPanel({
+  settings,
+  templates,
+  templateDraft,
+  importText,
+  settingsStatus,
+  onSettingsChange,
+  onTemplateDraftChange,
+  onAddTemplate,
+  onEditTemplate,
+  onDeleteTemplate,
+  onExport,
+  onImportTextChange,
+  onImport,
+  onResetAll
+}: {
+  settings: ScheduleSettings;
+  templates: PostTemplate[];
+  templateDraft: PostTemplate;
+  importText: string;
+  settingsStatus: string;
+  onSettingsChange: (settings: ScheduleSettings) => void;
+  onTemplateDraftChange: (template: PostTemplate) => void;
+  onAddTemplate: () => void;
+  onEditTemplate: (template: PostTemplate) => void;
+  onDeleteTemplate: (templateId: string) => void;
+  onExport: () => void;
+  onImportTextChange: (value: string) => void;
+  onImport: () => void;
+  onResetAll: () => void;
+}) {
   return (
-    <div className="min-h-0 flex-1 bg-surface px-4 pb-24 pt-4 sm:hidden">
+    <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto bg-surface px-4 pb-24 pt-4 sm:hidden">
       <h2 className="text-base font-bold text-foreground">設定</h2>
-      <div className="mt-4 rounded-base border border-border bg-surface-muted/50 p-4">
-        <p className="text-sm font-bold text-foreground">ローカル保存</p>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          予定はこのブラウザの localStorage に保存されます。アカウント同期や外部連携は後続フェーズで扱います。
-        </p>
+      {settingsStatus ? <p className="mt-3 rounded-base border border-border bg-surface-muted/55 px-3 py-2 text-sm font-bold text-primary-strong">{settingsStatus}</p> : null}
+      <div className="mt-4 space-y-3 rounded-base border border-border bg-surface-muted/35 p-4">
+        <p className="text-sm font-bold text-foreground">表示・既定値</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <FieldLabel>初期表示ビュー</FieldLabel>
+            <select value={settings.defaultView} onChange={(event) => onSettingsChange({ ...settings, defaultView: event.target.value as CalendarView })} className={inputClassName()}>
+              <option value="month">月</option>
+              <option value="week">週</option>
+              <option value="day">日</option>
+            </select>
+          </div>
+          <div>
+            <FieldLabel>週開始曜日</FieldLabel>
+            <select value={settings.weekStartsOn} onChange={(event) => onSettingsChange({ ...settings, weekStartsOn: Number(event.target.value) as 0 | 1 })} className={inputClassName()}>
+              <option value={0}>日曜</option>
+              <option value={1}>月曜</option>
+            </select>
+          </div>
+          <div>
+            <FieldLabel>既定開始時刻</FieldLabel>
+            <input type="time" value={settings.defaultStartTime} onChange={(event) => onSettingsChange({ ...settings, defaultStartTime: event.target.value })} className={inputClassName()} />
+          </div>
+          <div>
+            <FieldLabel>既定予定時間</FieldLabel>
+            <select value={settings.defaultDurationMinutes} onChange={(event) => onSettingsChange({ ...settings, defaultDurationMinutes: Number(event.target.value) })} className={inputClassName()}>
+              {[30, 45, 60, 90, 120, 180].map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {minutes}分
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 space-y-3 rounded-base border border-border bg-surface-muted/35 p-4">
+        <p className="text-sm font-bold text-foreground">データ管理</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={onExport} className="flat-control px-3 py-2">
+            JSONエクスポート
+          </button>
+          <button type="button" onClick={onImport} className="flat-control px-3 py-2">
+            JSONインポート
+          </button>
+        </div>
+        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-24 resize-none")} placeholder="インポートする JSON を貼り付け" />
+        <button type="button" onClick={onResetAll} className="w-full rounded-base border border-red-300 px-3 py-2 text-sm font-bold text-red-600">
+          全データ初期化
+        </button>
+      </div>
+      <div className="mt-4 space-y-3 rounded-base border border-border bg-surface-muted/35 p-4">
+        <p className="text-sm font-bold text-foreground">投稿補助テンプレート</p>
+        <div>
+          <FieldLabel>既定テンプレート</FieldLabel>
+          <select value={settings.defaultTemplateId} onChange={(event) => onSettingsChange({ ...settings, defaultTemplateId: event.target.value })} className={inputClassName()}>
+            {templates.map((template) => (
+              <option key={template.id} value={template.id}>
+                {template.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          {templates.map((template) => (
+            <div key={template.id} className="rounded-base border border-border bg-surface px-3 py-3">
+              <p className="text-sm font-bold text-foreground">{template.name}</p>
+              <p className="mt-1 text-xs text-muted">{template.description}</p>
+              <div className="mt-2 flex gap-2">
+                <button type="button" onClick={() => onEditTemplate(template)} className="flat-control px-3 py-1.5">
+                  編集
+                </button>
+                <button type="button" onClick={() => onDeleteTemplate(template.id)} className="flat-control border-red-300 px-3 py-1.5 text-red-600">
+                  削除
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-base border border-border bg-surface px-3 py-3">
+          <FieldLabel>テンプレ名</FieldLabel>
+          <input value={templateDraft.name} onChange={(event) => onTemplateDraftChange({ ...templateDraft, name: event.target.value })} className={inputClassName()} />
+          <FieldLabel>説明</FieldLabel>
+          <input value={templateDraft.description} onChange={(event) => onTemplateDraftChange({ ...templateDraft, description: event.target.value })} className={inputClassName()} />
+          <FieldLabel>本文</FieldLabel>
+          <textarea value={templateDraft.body} onChange={(event) => onTemplateDraftChange({ ...templateDraft, body: event.target.value })} className={inputClassName("min-h-28 resize-none")} />
+          <p className="mt-2 text-xs leading-5 text-muted">使用可: {"{date} {startTime} {endTime} {title} {platform} {category} {memo}"}</p>
+          <button type="button" onClick={onAddTemplate} className="mt-3 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white">
+            テンプレートを保存
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1048,6 +1242,7 @@ function SchedulePanel({
 
 function PostAssistPanel({
   selectedEvent,
+  templates,
   templateId,
   postText,
   copyStatus,
@@ -1057,6 +1252,7 @@ function PostAssistPanel({
   onCopy
 }: {
   selectedEvent: ScheduleEvent | null;
+  templates: PostTemplate[];
   templateId: string;
   postText: string;
   copyStatus: string;
@@ -1079,14 +1275,14 @@ function PostAssistPanel({
       <section className="border-t border-border pt-5">
         <FieldLabel>テンプレート</FieldLabel>
         <select value={templateId} onChange={(event) => onTemplateChange(event.target.value)} className={inputClassName()}>
-          {postTemplates.map((template) => (
+          {templates.map((template) => (
             <option key={template.id} value={template.id}>
               {template.name}
             </option>
           ))}
         </select>
         <p className="mt-2 text-sm leading-6 text-muted">
-          {postTemplates.find((template) => template.id === templateId)?.description}
+          {templates.find((template) => template.id === templateId)?.description}
         </p>
       </section>
       <section className="border-t border-border pt-5">
@@ -1147,6 +1343,15 @@ function getClipboardFailureMessage(error: unknown) {
   return "コピーできませんでした。下の文面を選択してコピーしてください。";
 }
 
+function createTemplateDraft(): PostTemplate {
+  return {
+    id: `template-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: "",
+    description: "",
+    body: "【告知】\n{date} {startTime} - {endTime}\n{title}"
+  };
+}
+
 export function ScheduleCalendarApp() {
   const fallbackDateKey = "2026-01-01";
   const [view, setView] = useState<CalendarView>("week");
@@ -1156,8 +1361,19 @@ export function ScheduleCalendarApp() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [draft, setDraft] = useState<ScheduleEvent>(() => createEmptyEvent(fallbackDateKey));
   const [activeTab, setActiveTab] = useState<PanelTab>("schedule");
-  const [templateId, setTemplateId] = useState(postTemplates[0].id);
+  const [settings, setSettings] = useState<ScheduleSettings>(defaultScheduleSettings);
+  const [userPostTemplates, setUserPostTemplates] = useState<PostTemplate[]>(postTemplates);
+  const [templateDraft, setTemplateDraft] = useState<PostTemplate>(() => createTemplateDraft());
+  const [templateId, setTemplateId] = useState(defaultScheduleSettings.defaultTemplateId);
   const [statusMessage, setStatusMessage] = useState("");
+  const [settingsStatus, setSettingsStatus] = useState("");
+  const [importText, setImportText] = useState("");
+  const [eventFilters, setEventFilters] = useState<MobileEventFilters>({
+    query: "",
+    category: "all",
+    platform: "all",
+    period: "today"
+  });
   const [copyStatus, setCopyStatus] = useState("");
   const [copyStatusKind, setCopyStatusKind] = useState<CopyStatusKind>("idle");
   const [copyFallbackText, setCopyFallbackText] = useState("");
@@ -1173,23 +1389,29 @@ export function ScheduleCalendarApp() {
     const currentDateKey = toDateKey(currentDate);
     setCursorDate(currentDate);
     setSelectedDateKey(currentDateKey);
-    setDraft(createEmptyEvent(currentDateKey));
 
     try {
       const raw = window.localStorage.getItem(scheduleStorageKey);
+      const payload = normalizeStoragePayload(raw ? JSON.parse(raw) : null);
+      setEvents(payload.events);
+      setSettings(payload.settings);
+      setUserPostTemplates(payload.postTemplates);
+      setTemplateId(payload.settings.defaultTemplateId);
+      setView(payload.settings.defaultView);
+      setDraft(
+        createEmptyEvent(currentDateKey, {
+          startTime: payload.settings.defaultStartTime,
+          durationMinutes: payload.settings.defaultDurationMinutes
+        })
+      );
       if (raw) {
-        setEvents(normalizeEvents(JSON.parse(raw)));
+        window.localStorage.setItem(scheduleStorageKey, JSON.stringify(payload));
       }
     } catch {
       setStorageError("保存済みデータを読み込めませんでした。");
+      setDraft(createEmptyEvent(currentDateKey));
     } finally {
       setHydrated(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (window.matchMedia("(max-width: 767px)").matches) {
-      setView("day");
     }
   }, []);
 
@@ -1199,24 +1421,81 @@ export function ScheduleCalendarApp() {
     }
 
     try {
-      window.localStorage.setItem(scheduleStorageKey, JSON.stringify(events));
+      window.localStorage.setItem(
+        scheduleStorageKey,
+        JSON.stringify({
+          version: 2,
+          events,
+          settings,
+          postTemplates: userPostTemplates
+        })
+      );
       setStorageError("");
     } catch {
       setStorageError("localStorage に保存できませんでした。");
     }
-  }, [events, hydrated]);
+  }, [events, hydrated, settings, userPostTemplates]);
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedEventId) ?? null,
     [events, selectedEventId]
   );
   const selectedDayEvents = useMemo(() => getEventsForDate(events, selectedDateKey), [events, selectedDateKey]);
-  const postText = useMemo(() => generatePostText(selectedEvent, templateId), [selectedEvent, templateId]);
+  const postText = useMemo(() => generatePostText(selectedEvent, templateId, userPostTemplates), [selectedEvent, templateId, userPostTemplates]);
   const visibleEvents = useMemo(() => sortEvents(events), [events]);
-  const upcomingEvents = useMemo(() => {
+  const filteredListEvents = useMemo(() => {
     const todayKey = toDateKey(new Date());
-    return visibleEvents.filter((event) => event.date >= todayKey);
-  }, [visibleEvents]);
+    const query = eventFilters.query.trim().toLowerCase();
+    const periodEndDate = new Date();
+    if (eventFilters.period === "week") {
+      periodEndDate.setDate(periodEndDate.getDate() + 7);
+    }
+    if (eventFilters.period === "month") {
+      periodEndDate.setDate(periodEndDate.getDate() + 30);
+    }
+    const periodEndKey = toDateKey(periodEndDate);
+
+    return [...visibleEvents]
+      .sort((a, b) => {
+        const aUpcoming = a.date >= todayKey;
+        const bUpcoming = b.date >= todayKey;
+        if (aUpcoming !== bUpcoming) {
+          return aUpcoming ? -1 : 1;
+        }
+
+        const dateCompare = a.date.localeCompare(b.date);
+        if (dateCompare !== 0) {
+          return aUpcoming ? dateCompare : -dateCompare;
+        }
+
+        return a.startTime.localeCompare(b.startTime);
+      })
+      .filter((event) => {
+        if (eventFilters.category !== "all" && event.category !== eventFilters.category) {
+          return false;
+        }
+
+        if (eventFilters.platform !== "all" && event.platform !== eventFilters.platform) {
+          return false;
+        }
+
+        if (eventFilters.period !== "all") {
+          if (event.date < todayKey) {
+            return false;
+          }
+
+          if ((eventFilters.period === "week" || eventFilters.period === "month") && event.date > periodEndKey) {
+            return false;
+          }
+        }
+
+        if (!query) {
+          return true;
+        }
+
+        return `${event.title} ${event.memo}`.toLowerCase().includes(query);
+      });
+  }, [eventFilters, visibleEvents]);
 
   useEffect(() => {
     setCopyStatus("");
@@ -1229,7 +1508,14 @@ export function ScheduleCalendarApp() {
     setCursorDate(parseDateKey(dateKey));
     const firstEvent = getEventsForDate(events, dateKey)[0] ?? null;
     setSelectedEventId(firstEvent?.id ?? null);
-    setDraft(firstEvent ? { ...firstEvent } : createEmptyEvent(dateKey));
+    setDraft(
+      firstEvent
+        ? { ...firstEvent }
+        : createEmptyEvent(dateKey, {
+            startTime: settings.defaultStartTime,
+            durationMinutes: settings.defaultDurationMinutes
+          })
+    );
     setStatusMessage("");
   }
 
@@ -1250,7 +1536,10 @@ export function ScheduleCalendarApp() {
   }
 
   function createNewEvent() {
-    const next = createEmptyEvent(selectedDateKey);
+    const next = createEmptyEvent(selectedDateKey, {
+      startTime: settings.defaultStartTime,
+      durationMinutes: settings.defaultDurationMinutes
+    });
     setSelectedEventId(null);
     setDraft(next);
     setActiveTab("schedule");
@@ -1261,11 +1550,14 @@ export function ScheduleCalendarApp() {
   function createEventAt(minutes: number) {
     const startHour = Math.floor(minutes / 60);
     const startMinute = minutes % 60;
-    const endMinutes = Math.min(timelineEndMinutes, minutes + 60);
+    const endMinutes = Math.min(timelineEndMinutes, minutes + settings.defaultDurationMinutes);
     const endHour = Math.floor(endMinutes / 60);
     const endMinute = endMinutes % 60;
     const next = {
-      ...createEmptyEvent(selectedDateKey),
+      ...createEmptyEvent(selectedDateKey, {
+        startTime: settings.defaultStartTime,
+        durationMinutes: settings.defaultDurationMinutes
+      }),
       startTime: `${String(startHour).padStart(2, "0")}:${String(startMinute).padStart(2, "0")}`,
       endTime: `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`
     };
@@ -1302,7 +1594,12 @@ export function ScheduleCalendarApp() {
 
     setEvents((current) => current.filter((event) => event.id !== selectedEvent.id));
     setSelectedEventId(null);
-    setDraft(createEmptyEvent(selectedDateKey));
+    setDraft(
+      createEmptyEvent(selectedDateKey, {
+        startTime: settings.defaultStartTime,
+        durationMinutes: settings.defaultDurationMinutes
+      })
+    );
     setMobileSheetOpen(false);
     setStatusMessage("予定を削除しました。");
   }
@@ -1316,6 +1613,102 @@ export function ScheduleCalendarApp() {
   function changeMobileNavTab(tab: MobileNavTab) {
     setMobileNavTab(tab);
     setMobileSheetOpen(false);
+  }
+
+  function updateSettings(nextSettings: ScheduleSettings) {
+    setSettings(nextSettings);
+    setTemplateId(nextSettings.defaultTemplateId);
+    setView(nextSettings.defaultView);
+    setSettingsStatus("設定を更新しました。");
+  }
+
+  function saveTemplateDraft() {
+    const nextTemplate = {
+      ...templateDraft,
+      name: templateDraft.name.trim() || "新しいテンプレート",
+      description: templateDraft.description.trim() || "カスタムテンプレート",
+      body: templateDraft.body.trim() || "{title}"
+    };
+    setUserPostTemplates((current) => {
+      const exists = current.some((template) => template.id === nextTemplate.id);
+      return exists ? current.map((template) => (template.id === nextTemplate.id ? nextTemplate : template)) : [...current, nextTemplate];
+    });
+    setSettings((current) => ({
+      ...current,
+      defaultTemplateId: current.defaultTemplateId || nextTemplate.id
+    }));
+    setTemplateDraft(createTemplateDraft());
+    setSettingsStatus("テンプレートを保存しました。");
+  }
+
+  function editTemplate(template: PostTemplate) {
+    setTemplateDraft({ ...template });
+    setSettingsStatus("テンプレートを編集中です。");
+  }
+
+  function deleteTemplate(templateIdToDelete: string) {
+    setUserPostTemplates((current) => {
+      const next = current.filter((template) => template.id !== templateIdToDelete);
+      return next.length > 0 ? next : postTemplates;
+    });
+    setSettings((current) => {
+      if (current.defaultTemplateId !== templateIdToDelete) {
+        return current;
+      }
+
+      const fallbackTemplateId = userPostTemplates.find((template) => template.id !== templateIdToDelete)?.id ?? postTemplates[0].id;
+      setTemplateId(fallbackTemplateId);
+      return { ...current, defaultTemplateId: fallbackTemplateId };
+    });
+    setSettingsStatus("テンプレートを削除しました。");
+  }
+
+  function exportJson() {
+    const payload = {
+      version: 2,
+      events,
+      settings,
+      postTemplates: userPostTemplates
+    };
+    setImportText(JSON.stringify(payload, null, 2));
+    setSettingsStatus("JSONを出力しました。");
+  }
+
+  function importJson() {
+    try {
+      const payload = normalizeStoragePayload(JSON.parse(importText));
+      setEvents(payload.events);
+      setSettings(payload.settings);
+      setUserPostTemplates(payload.postTemplates);
+      setTemplateId(payload.settings.defaultTemplateId);
+      setView(payload.settings.defaultView);
+      setSelectedEventId(null);
+      setDraft(
+        createEmptyEvent(selectedDateKey, {
+          startTime: payload.settings.defaultStartTime,
+          durationMinutes: payload.settings.defaultDurationMinutes
+        })
+      );
+      setSettingsStatus("JSONをインポートしました。");
+      setStorageError("");
+    } catch {
+      setSettingsStatus("JSONを読み込めませんでした。");
+    }
+  }
+
+  function resetAllData() {
+    const currentDateKey = toDateKey(new Date());
+    setEvents([]);
+    setSettings(defaultScheduleSettings);
+    setUserPostTemplates(postTemplates);
+    setTemplateId(defaultScheduleSettings.defaultTemplateId);
+    setView(defaultScheduleSettings.defaultView);
+    setSelectedDateKey(currentDateKey);
+    setCursorDate(parseDateKey(currentDateKey));
+    setSelectedEventId(null);
+    setDraft(createEmptyEvent(currentDateKey));
+    setImportText("");
+    setSettingsStatus("全データを初期化しました。");
   }
 
   function startMobileSheetDrag(event: PointerEvent<HTMLDivElement>) {
@@ -1347,7 +1740,12 @@ export function ScheduleCalendarApp() {
     setCursorDate(nextDate);
     setSelectedDateKey(nextKey);
     setSelectedEventId(null);
-    setDraft(createEmptyEvent(nextKey));
+    setDraft(
+      createEmptyEvent(nextKey, {
+        startTime: settings.defaultStartTime,
+        durationMinutes: settings.defaultDurationMinutes
+      })
+    );
     setStatusMessage("");
   }
 
@@ -1384,6 +1782,7 @@ export function ScheduleCalendarApp() {
         <CalendarToolbar
           view={view}
           cursorDate={cursorDate}
+          weekStartsOn={settings.weekStartsOn}
           onViewChange={setView}
           onToday={() => selectDate(toDateKey(new Date()))}
           onMove={movePeriod}
@@ -1402,6 +1801,7 @@ export function ScheduleCalendarApp() {
               <WeekView
                 events={visibleEvents}
                 cursorDate={cursorDate}
+                weekStartsOn={settings.weekStartsOn}
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
                 onSelectDate={selectDate}
@@ -1412,6 +1812,7 @@ export function ScheduleCalendarApp() {
               <MonthView
                 events={visibleEvents}
                 cursorDate={cursorDate}
+                weekStartsOn={settings.weekStartsOn}
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
                 onSelectDate={selectDate}
@@ -1435,6 +1836,7 @@ export function ScheduleCalendarApp() {
                 view={view}
                 events={visibleEvents}
                 cursorDate={cursorDate}
+                weekStartsOn={settings.weekStartsOn}
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
                 onSelectDate={selectDate}
@@ -1453,9 +1855,32 @@ export function ScheduleCalendarApp() {
             </>
           ) : null}
           {mobileNavTab === "events" ? (
-            <MobileEventList events={upcomingEvents} selectedEventId={selectedEventId} onSelectEvent={selectEvent} />
+            <MobileEventList
+              events={filteredListEvents}
+              filters={eventFilters}
+              selectedEventId={selectedEventId}
+              onFilterChange={setEventFilters}
+              onSelectEvent={selectEvent}
+            />
           ) : null}
-          {mobileNavTab === "settings" ? <MobileSettingsPanel /> : null}
+          {mobileNavTab === "settings" ? (
+            <MobileSettingsPanel
+              settings={settings}
+              templates={userPostTemplates}
+              templateDraft={templateDraft}
+              importText={importText}
+              settingsStatus={settingsStatus}
+              onSettingsChange={updateSettings}
+              onTemplateDraftChange={setTemplateDraft}
+              onAddTemplate={saveTemplateDraft}
+              onEditTemplate={editTemplate}
+              onDeleteTemplate={deleteTemplate}
+              onExport={exportJson}
+              onImportTextChange={setImportText}
+              onImport={importJson}
+              onResetAll={resetAllData}
+            />
+          ) : null}
         </div>
         {mobileSheetOpen ? (
           <button
@@ -1531,6 +1956,7 @@ export function ScheduleCalendarApp() {
           ) : (
             <PostAssistPanel
               selectedEvent={selectedEvent}
+              templates={userPostTemplates}
               templateId={templateId}
               postText={postText}
               copyStatus={copyStatus}

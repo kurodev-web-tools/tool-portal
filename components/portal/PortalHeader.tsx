@@ -44,11 +44,21 @@ export function PortalHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/92 px-4 backdrop-blur sm:px-8">
-      <div className="flex min-w-0 items-center gap-3 lg:hidden">
+    <>
+      <header className="sticky top-0 z-[70] flex h-16 items-center justify-between gap-3 border-b border-border bg-background/92 px-4 backdrop-blur sm:px-8">
+        <div className="flex min-w-0 items-center gap-3 lg:hidden">
+          <Link href="/" className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-primary text-sm font-black text-white">
+            V
+          </Link>
+          <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
+        </div>
+        <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span>
+        <div className="hidden sm:block">
+          <ThemeToggle />
+        </div>
         <button
           type="button"
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-base border border-border bg-surface text-foreground"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-base border border-border bg-surface text-foreground lg:hidden"
           aria-label="メニューを開く"
           aria-expanded={drawerOpen}
           onClick={() => setDrawerOpen(true)}
@@ -59,24 +69,16 @@ export function PortalHeader() {
             <span className="block h-0.5 w-5 rounded-full bg-current" />
           </span>
         </button>
-        <Link href="/" className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-primary text-sm font-black text-white">
-          V
-        </Link>
-        <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
-      </div>
-      <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span>
-      <div className="hidden sm:block">
-        <ThemeToggle />
-      </div>
+      </header>
       {drawerOpen ? (
         <>
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+            className="fixed inset-0 z-[80] bg-black/50 lg:hidden"
             aria-label="メニューを閉じる"
             onClick={() => setDrawerOpen(false)}
           />
-          <aside className="fixed bottom-0 left-0 top-0 z-50 w-[min(82vw,20rem)] border-r border-border bg-background p-4 shadow-panel lg:hidden">
+          <aside className="fixed bottom-0 right-0 top-0 z-[90] w-[min(82vw,20rem)] border-l border-border bg-surface p-4 shadow-2xl lg:hidden">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-base bg-primary text-sm font-black text-white">
@@ -99,7 +101,7 @@ export function PortalHeader() {
                 <ThemeToggle />
               </div>
             </div>
-            <nav className="mt-4 space-y-2">
+            <nav className="mt-4 space-y-2 rounded-base border border-border bg-background p-2">
               {navItems.map((item) => {
                 const active = item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
                 return (
@@ -109,7 +111,7 @@ export function PortalHeader() {
                     onClick={() => setDrawerOpen(false)}
                     className={[
                       "block rounded-base border px-3 py-3 text-sm font-bold transition",
-                      active ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface-muted/70 text-foreground hover:bg-surface-muted"
+                      active ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface-muted text-foreground hover:bg-surface"
                     ].join(" ")}
                   >
                     {item.label}
@@ -120,6 +122,6 @@ export function PortalHeader() {
           </aside>
         </>
       ) : null}
-    </header>
+    </>
   );
 }

@@ -78,7 +78,7 @@ export function PortalHeader() {
             aria-label="メニューを閉じる"
             onClick={() => setDrawerOpen(false)}
           />
-          <aside className="fixed bottom-0 right-0 top-0 z-[90] w-[min(82vw,20rem)] border-l border-border bg-surface p-4 shadow-2xl lg:hidden">
+          <aside className="fixed bottom-0 right-0 top-0 z-[90] flex w-[min(82vw,20rem)] flex-col border-l border-border bg-surface p-4 shadow-2xl lg:hidden">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-base bg-primary text-sm font-black text-white">
@@ -95,13 +95,7 @@ export function PortalHeader() {
                 ×
               </button>
             </div>
-            <div className="mt-5 rounded-base border border-border bg-surface px-3 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-bold text-foreground">表示テーマ</span>
-                <ThemeToggle />
-              </div>
-            </div>
-            <nav className="mt-4 space-y-2 rounded-base border border-border bg-background p-2">
+            <nav className="mt-6 space-y-2">
               {navItems.map((item) => {
                 const active = item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
                 return (
@@ -119,6 +113,12 @@ export function PortalHeader() {
                 );
               })}
             </nav>
+            <div className="mt-auto rounded-base border border-border bg-surface-muted/45 px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-bold text-foreground">表示テーマ</span>
+                <ThemeToggle />
+              </div>
+            </div>
           </aside>
         </>
       ) : null}

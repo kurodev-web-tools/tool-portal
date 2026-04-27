@@ -1962,12 +1962,12 @@ export function ScheduleCalendarApp() {
           className={[
             "scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 py-3 transition-transform lg:[scrollbar-gutter:stable] xl:px-4 xl:py-4",
             mobileSheetOpen
-              ? "fixed inset-x-0 bottom-16 z-40 max-h-[64vh] rounded-t-[18px] border border-b-0 border-border shadow-panel sm:static sm:z-auto sm:max-h-none sm:rounded-none sm:border-0 sm:border-t sm:shadow-none"
+              ? "fixed inset-x-0 bottom-16 z-40 max-h-[64vh] rounded-t-[18px] border border-b-0 border-border !px-0 !py-0 shadow-panel sm:static sm:z-auto sm:max-h-none sm:rounded-none sm:border-0 sm:border-t sm:!px-3 sm:!py-3 sm:shadow-none"
               : "hidden sm:block"
           ].join(" ")}
           style={mobileSheetDragOffset ? { transform: `translateY(${mobileSheetDragOffset}px)` } : undefined}
         >
-          <div className="sticky top-0 z-10 mb-4 bg-surface pb-2 sm:bg-transparent sm:pb-0">
+          <div className="sticky top-0 z-20 border-b border-border bg-surface px-3 pb-3 pt-3 shadow-sm sm:mb-4 sm:border-b-0 sm:bg-transparent sm:p-0 sm:pb-0 sm:shadow-none">
             <div className="relative mb-3 flex min-h-9 items-center justify-center sm:hidden">
               <div
                 className="grid h-9 w-24 touch-none place-items-center rounded-base text-muted"
@@ -1989,51 +1989,53 @@ export function ScheduleCalendarApp() {
                 ×
               </button>
             </div>
-          <div className="grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm">
-            {[
-              { id: "schedule" as PanelTab, label: "予定管理" },
-              { id: "post" as PanelTab, label: "投稿補助" }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={[
-                  "rounded-base px-3 py-2 text-sm font-bold transition",
-                  activeTab === tab.id ? "bg-surface text-primary-strong shadow-sm" : "text-muted hover:text-foreground"
-                ].join(" ")}
-              >
-                {tab.label}
-              </button>
-            ))}
+            <div className="grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm">
+              {[
+                { id: "schedule" as PanelTab, label: "予定管理" },
+                { id: "post" as PanelTab, label: "投稿補助" }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={[
+                    "rounded-base px-3 py-2 text-sm font-bold transition",
+                    activeTab === tab.id ? "bg-surface text-primary-strong shadow-sm" : "text-muted hover:text-foreground"
+                  ].join(" ")}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
+          <div className="px-3 py-4 pb-6 sm:p-0">
+            {activeTab === "schedule" ? (
+              <SchedulePanel
+                selectedDateKey={selectedDateKey}
+                selectedEvent={selectedEvent}
+                dayEvents={selectedDayEvents}
+                draft={draft}
+                statusMessage={statusMessage}
+                onDraftChange={setDraft}
+                onNew={createNewEvent}
+                onSelectEvent={selectEvent}
+                onSave={saveDraft}
+                onDelete={deleteSelectedEvent}
+              />
+            ) : (
+              <PostAssistPanel
+                selectedEvent={selectedEvent}
+                templates={userPostTemplates}
+                templateId={templateId}
+                postText={postText}
+                copyStatus={copyStatus}
+                copyStatusKind={copyStatusKind}
+                copyFallbackText={copyFallbackText}
+                onTemplateChange={setTemplateId}
+                onCopy={copyPostText}
+              />
+            )}
           </div>
-          {activeTab === "schedule" ? (
-            <SchedulePanel
-              selectedDateKey={selectedDateKey}
-              selectedEvent={selectedEvent}
-              dayEvents={selectedDayEvents}
-              draft={draft}
-              statusMessage={statusMessage}
-              onDraftChange={setDraft}
-              onNew={createNewEvent}
-              onSelectEvent={selectEvent}
-              onSave={saveDraft}
-              onDelete={deleteSelectedEvent}
-            />
-          ) : (
-            <PostAssistPanel
-              selectedEvent={selectedEvent}
-              templates={userPostTemplates}
-              templateId={templateId}
-              postText={postText}
-              copyStatus={copyStatus}
-              copyStatusKind={copyStatusKind}
-              copyFallbackText={copyFallbackText}
-              onTemplateChange={setTemplateId}
-              onCopy={copyPostText}
-            />
-          )}
         </aside>
         <MobileBottomTabs activeTab={mobileNavTab} onTabChange={changeMobileNavTab} />
       </div>

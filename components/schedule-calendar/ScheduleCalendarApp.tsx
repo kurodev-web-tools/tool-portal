@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 import {
   addDays,
   addMonths,
@@ -29,6 +29,7 @@ import {
 
 type PanelTab = "schedule" | "post";
 type CopyStatusKind = "idle" | "success" | "error";
+type MobileNavTab = "calendar" | "events" | "settings";
 
 const viewLabels: Record<CalendarView, string> = {
   month: "月",
@@ -121,12 +122,8 @@ function CalendarToolbar({
   onMove: (direction: -1 | 1) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
-      <div className="min-w-0">
-        <h1 className="truncate text-lg font-bold tracking-tight text-foreground xl:text-xl">スケジュールカレンダー</h1>
-        <p className="mt-1 hidden text-sm text-muted md:block">配信・投稿・制作などの予定を一元管理できます。</p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+    <div className="flex flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-end">
+      <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2 md:flex md:flex-wrap md:justify-end">
         <button type="button" className="flat-control shrink-0 px-3 py-2" onClick={onToday}>
           今日
         </button>
@@ -148,10 +145,10 @@ function CalendarToolbar({
             ›
           </button>
         </div>
-        <div className="min-w-[13.5rem] flex-1 rounded-base border border-border bg-surface-muted px-3 py-2 text-center text-sm font-bold text-foreground lg:flex-none">
+        <div className="min-w-0 rounded-base border border-border bg-surface-muted px-3 py-2 text-center text-xs font-bold text-foreground md:min-w-[13.5rem] md:flex-1 md:text-sm lg:flex-none">
           {getPeriodLabel(cursorDate, view)}
         </div>
-        <div className="flex shrink-0 rounded-base border border-border bg-surface p-1">
+        <div className="col-span-3 grid grid-cols-3 rounded-base border border-border bg-surface p-1 md:col-span-1 md:flex md:shrink-0">
           {(Object.keys(viewLabels) as CalendarView[]).map((item) => (
             <button
               key={item}
@@ -173,7 +170,7 @@ function CalendarToolbar({
 
 function CategoryLegend() {
   return (
-    <div className="scrollbar-accent flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border px-4 py-2 text-xs font-bold text-muted">
+    <div className="scrollbar-accent hidden shrink-0 items-center gap-2 overflow-x-auto border-b border-border px-4 py-2 text-xs font-bold text-muted sm:flex">
       <span className="whitespace-nowrap">カテゴリ</span>
       {categoryOptions.map((option) => (
         <span
@@ -482,6 +479,76 @@ function MonthView({
   );
 }
 
+function MobileMonthView({
+  events,
+  cursorDate,
+  selectedDateKey,
+  onSelectDate
+}: {
+  events: ScheduleEvent[];
+  cursorDate: Date;
+  selectedDateKey: string;
+  onSelectDate: (dateKey: string) => void;
+}) {
+  const days = getMonthGrid(cursorDate);
+  const todayKey = toDateKey(new Date());
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-surface">
+      <div className="grid grid-cols-7 border-b border-border bg-surface-muted/70 text-center text-[11px] font-bold text-muted">
+        {["日", "月", "火", "水", "木", "金", "土"].map((label) => (
+          <span key={label} className="py-2">
+            {label}
+          </span>
+        ))}
+      </div>
+      <div className="grid flex-1 grid-cols-7 auto-rows-fr overflow-hidden">
+        {days.map((day) => {
+          const key = toDateKey(day);
+          const dayEvents = getEventsForDate(events, key);
+          const firstEvent = dayEvents[0];
+          const inCurrentMonth = day.getMonth() === cursorDate.getMonth();
+          const selected = selectedDateKey === key;
+          const today = todayKey === key;
+
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => onSelectDate(key)}
+              className={[
+                "min-h-[4.65rem] border-b border-r border-border p-1.5 text-left transition",
+                selected ? "bg-primary-soft/55" : "bg-surface",
+                inCurrentMonth ? "text-foreground" : "text-muted/45"
+              ].join(" ")}
+              aria-label={`${getLongDateLabel(key)}を選択`}
+            >
+              <span
+                className={[
+                  "grid h-6 w-6 place-items-center rounded-base text-xs font-black",
+                  today ? "bg-primary text-white" : "",
+                  selected && !today ? "border border-primary text-primary-strong" : ""
+                ].join(" ")}
+              >
+                {day.getDate()}
+              </span>
+              {firstEvent ? (
+                <span className="mt-1 block rounded-base border border-primary/35 bg-primary-soft/50 px-1.5 py-1 text-[10px] font-bold leading-4 text-foreground">
+                  <span className="block truncate">{firstEvent.startTime}</span>
+                  <span className="block truncate">{firstEvent.title || "無題の予定"}</span>
+                </span>
+              ) : null}
+              {dayEvents.length > 1 ? (
+                <span className="mt-1 block text-[10px] font-bold text-primary-strong">+{dayEvents.length - 1}件</span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function DayView({
   events,
   selectedDateKey,
@@ -523,6 +590,258 @@ function DayView({
   );
 }
 
+function MobileDateStrip({
+  cursorDate,
+  selectedDateKey,
+  events,
+  onSelectDate
+}: {
+  cursorDate: Date;
+  selectedDateKey: string;
+  events: ScheduleEvent[];
+  onSelectDate: (dateKey: string) => void;
+}) {
+  const days = getWeekDays(cursorDate);
+  const todayKey = toDateKey(new Date());
+
+  return (
+    <div className="scrollbar-accent flex gap-2 overflow-x-auto border-b border-border bg-surface px-4 py-3">
+      {days.map((day) => {
+        const key = toDateKey(day);
+        const eventCount = getEventsForDate(events, key).length;
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onSelectDate(key)}
+            className={[
+              "grid min-w-14 place-items-center rounded-base border px-2 py-2 text-center transition",
+              selectedDateKey === key ? "border-primary bg-primary text-white" : "border-border bg-surface-muted text-foreground"
+            ].join(" ")}
+            aria-label={`${getLongDateLabel(key)}を表示`}
+          >
+            <span className={["text-[11px] font-bold", selectedDateKey === key ? "text-white/80" : "text-muted"].join(" ")}>
+              {getShortDateLabel(day).split(" ")[1]}
+            </span>
+            <span className="mt-1 text-base font-black">{day.getDate()}</span>
+            <span
+              className={[
+                "mt-1 h-1.5 w-1.5 rounded-full",
+                eventCount > 0 ? (selectedDateKey === key ? "bg-white" : "bg-primary") : "bg-transparent",
+                todayKey === key && eventCount === 0 ? "ring-2 ring-primary" : ""
+              ].join(" ")}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function MobileDayTimeline({
+  events,
+  selectedDateKey,
+  selectedEventId,
+  onSelectEvent,
+  onSelectTime
+}: {
+  events: ScheduleEvent[];
+  selectedDateKey: string;
+  selectedEventId: string | null;
+  onSelectEvent: (event: ScheduleEvent) => void;
+  onSelectTime: (minutes: number) => void;
+}) {
+  const dayEvents = getEventsForDate(events, selectedDateKey);
+
+  return (
+    <div className="min-h-0 flex-1 overflow-hidden bg-surface">
+      <div className="flex items-center justify-between border-b border-border bg-surface-muted/70 px-4 py-3 text-sm font-bold text-foreground">
+        <span>{getLongDateLabel(selectedDateKey)}</span>
+        <span className="rounded-base border border-border bg-surface px-2 py-1 text-xs text-muted">予定 {dayEvents.length} 件</span>
+      </div>
+      <div className="scrollbar-accent h-full overflow-y-auto pb-20">
+        <div className="grid grid-cols-[52px_1fr]">
+          <TimeLabelColumn />
+          <div className="relative min-h-[1152px] bg-surface">
+            <TimeSlotLines />
+            <div className="absolute inset-0 grid">
+              {timeSlots.map((minutes) => (
+                <button
+                  key={minutes}
+                  type="button"
+                  className={timeSlotHeightClassName}
+                  aria-label={`${formatSlot(minutes)}に新規予定を作成`}
+                  onClick={() => onSelectTime(minutes)}
+                />
+              ))}
+            </div>
+            {dayEvents.length === 0 ? (
+              <div className="absolute left-3 right-3 top-2 rounded-base border border-dashed border-border bg-surface-muted/70 px-3 py-3 text-center text-sm font-bold text-muted">
+                この日の予定はまだありません。下のパネルから追加できます。
+              </div>
+            ) : null}
+            {dayEvents.map((event) => (
+              <div key={event.id} className="absolute left-3 right-3" style={getEventStyle(event)}>
+                <EventPill event={event} selected={selectedEventId === event.id} onSelect={onSelectEvent} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileCalendarSurface({
+  view,
+  events,
+  cursorDate,
+  selectedDateKey,
+  selectedEventId,
+  onSelectDate,
+  onSelectMonthDate,
+  onSelectEvent,
+  onSelectTime
+}: {
+  view: CalendarView;
+  events: ScheduleEvent[];
+  cursorDate: Date;
+  selectedDateKey: string;
+  selectedEventId: string | null;
+  onSelectDate: (dateKey: string) => void;
+  onSelectMonthDate: (dateKey: string) => void;
+  onSelectEvent: (event: ScheduleEvent) => void;
+  onSelectTime: (minutes: number) => void;
+}) {
+  if (view === "month") {
+    return (
+      <MobileMonthView
+        events={events}
+        cursorDate={cursorDate}
+        selectedDateKey={selectedDateKey}
+        onSelectDate={onSelectMonthDate}
+      />
+    );
+  }
+
+  return (
+    <>
+      {view === "week" ? (
+        <MobileDateStrip
+          cursorDate={cursorDate}
+          selectedDateKey={selectedDateKey}
+          events={events}
+          onSelectDate={onSelectDate}
+        />
+      ) : null}
+      <MobileDayTimeline
+        events={events}
+        selectedDateKey={selectedDateKey}
+        selectedEventId={selectedEventId}
+        onSelectEvent={onSelectEvent}
+        onSelectTime={onSelectTime}
+      />
+    </>
+  );
+}
+
+function MobileEventList({
+  events,
+  selectedEventId,
+  onSelectEvent
+}: {
+  events: ScheduleEvent[];
+  selectedEventId: string | null;
+  onSelectEvent: (event: ScheduleEvent) => void;
+}) {
+  return (
+    <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto bg-surface px-4 pb-24 pt-4 sm:hidden">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-bold text-foreground">予定一覧</h2>
+        <span className="rounded-base border border-border bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
+          {events.length} 件
+        </span>
+      </div>
+      <div className="mt-4 space-y-2">
+        {events.length === 0 ? (
+          <div className="rounded-base border border-dashed border-border bg-surface-muted/65 px-3 py-8 text-center text-sm font-bold text-muted">
+            まだ予定がありません。
+          </div>
+        ) : (
+          events.map((event) => (
+            <button
+              key={event.id}
+              type="button"
+              onClick={() => onSelectEvent(event)}
+              className={[
+                "w-full rounded-base border px-3 py-3 text-left transition",
+                selectedEventId === event.id ? "border-primary bg-primary-soft/55" : "border-border bg-surface-muted/45"
+              ].join(" ")}
+            >
+              <span className="text-xs font-bold text-primary-strong">{getLongDateLabel(event.date)}</span>
+              <span className="mt-1 block text-xs font-bold text-muted">
+                {event.startTime} - {event.endTime}
+              </span>
+              <span className="mt-1 block text-sm font-bold text-foreground">{event.title || "無題の予定"}</span>
+              <span className="mt-2 inline-flex rounded-base bg-surface px-2 py-1 text-xs font-bold text-muted">
+                {categoryMeta[event.category].label}
+                {event.platform ? ` / ${event.platform}` : ""}
+              </span>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MobileSettingsPanel() {
+  return (
+    <div className="min-h-0 flex-1 bg-surface px-4 pb-24 pt-4 sm:hidden">
+      <h2 className="text-base font-bold text-foreground">設定</h2>
+      <div className="mt-4 rounded-base border border-border bg-surface-muted/50 p-4">
+        <p className="text-sm font-bold text-foreground">ローカル保存</p>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          予定はこのブラウザの localStorage に保存されます。アカウント同期や外部連携は後続フェーズで扱います。
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function MobileBottomTabs({
+  activeTab,
+  onTabChange
+}: {
+  activeTab: MobileNavTab;
+  onTabChange: (tab: MobileNavTab) => void;
+}) {
+  const items: Array<{ id: MobileNavTab; label: string; icon: string }> = [
+    { id: "calendar", label: "カレンダー", icon: "□" },
+    { id: "events", label: "予定一覧", icon: "☷" },
+    { id: "settings", label: "設定", icon: "⚙" }
+  ];
+
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-30 grid h-16 grid-cols-3 border-t border-border bg-surface/95 backdrop-blur sm:hidden">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => onTabChange(item.id)}
+          className={[
+            "grid place-items-center gap-0.5 text-xs font-bold transition",
+            activeTab === item.id ? "text-primary-strong" : "text-muted"
+          ].join(" ")}
+        >
+          <span className="text-lg leading-none">{item.icon}</span>
+          <span>{item.label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
 function ScheduleForm({
   draft,
   onDraftChange,
@@ -538,13 +857,13 @@ function ScheduleForm({
 }) {
   return (
     <form
-      className="space-y-3"
+      className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault();
         onSave();
       }}
     >
-      <div>
+      <div className="rounded-base border border-border bg-surface-muted/35 p-3">
         <FieldLabel>タイトル</FieldLabel>
         <input
           value={draft.title}
@@ -554,7 +873,7 @@ function ScheduleForm({
           required
         />
       </div>
-      <div>
+      <div className="rounded-base border border-border bg-surface-muted/35 p-3">
         <FieldLabel>日付</FieldLabel>
         <input
           type="date"
@@ -564,7 +883,7 @@ function ScheduleForm({
           required
         />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 rounded-base border border-border bg-surface-muted/35 p-3">
         <div>
           <FieldLabel>開始時間</FieldLabel>
           <input
@@ -586,7 +905,7 @@ function ScheduleForm({
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 rounded-base border border-border bg-surface-muted/35 p-3">
         <div>
           <FieldLabel>カテゴリ</FieldLabel>
           <select
@@ -616,7 +935,7 @@ function ScheduleForm({
           </select>
         </div>
       </div>
-      <div>
+      <div className="rounded-base border border-border bg-surface-muted/35 p-3">
         <FieldLabel>メモ・備考</FieldLabel>
         <textarea
           value={draft.memo}
@@ -625,7 +944,7 @@ function ScheduleForm({
           placeholder="次回配信のセットリストやコラボ企画案を記録する。"
         />
       </div>
-      <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
+      <div className="sticky bottom-0 z-20 -mx-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
         <button type="button" onClick={onDelete} disabled={!canDelete} className="flat-control flex-1 border-red-300 px-3 py-2 text-red-600 disabled:cursor-not-allowed disabled:opacity-45">
           削除
         </button>
@@ -661,13 +980,13 @@ function SchedulePanel({
   onDelete: () => void;
 }) {
   return (
-    <div className="space-y-5">
-      <section>
+    <div className="space-y-4">
+      <section className="hidden sm:block">
         <p className="text-xs font-bold text-muted">選択中の日付</p>
         <p className="mt-1 text-base font-bold text-foreground">{getLongDateLabel(selectedDateKey)}</p>
         <p className="mt-1 text-sm text-muted">予定 {dayEvents.length} 件</p>
       </section>
-      <section className="border-t border-border pt-5">
+      <section className="sm:border-t sm:border-border sm:pt-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-bold text-foreground">この日の予定一覧</h2>
           <button type="button" className="text-sm font-bold text-primary-strong hover:underline" onClick={onNew}>
@@ -700,11 +1019,15 @@ function SchedulePanel({
                 <span className="mt-1 block text-sm font-bold text-foreground">{event.title || "無題の予定"}</span>
                 <span className="mt-1 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
                   {categoryMeta[event.category].label}
+                  {event.platform ? ` / ${event.platform}` : ""}
                 </span>
               </button>
             ))
           )}
         </div>
+        <button type="button" className="mt-3 w-full rounded-base bg-primary px-3 py-3 text-sm font-bold text-white transition hover:bg-primary-strong sm:hidden" onClick={onNew}>
+          新しい予定を追加
+        </button>
       </section>
       <section className="border-t border-border pt-5">
         <h2 className="text-sm font-bold text-foreground">{selectedEvent ? "予定の編集" : "新しい予定"}</h2>
@@ -771,9 +1094,9 @@ function PostAssistPanel({
         <textarea
           value={postText}
           readOnly
-          className="mt-3 min-h-44 w-full resize-none rounded-base border border-border bg-surface-muted px-3 py-3 text-sm leading-6 text-foreground"
+          className="mt-3 min-h-44 w-full resize-none rounded-base border border-border bg-surface-muted px-3 py-3 text-sm leading-6 text-foreground sm:text-[13px]"
         />
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="sticky bottom-0 z-20 -mx-3 mt-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
           <button type="button" onClick={onCopy} className="flat-control flex-1 px-3 py-2">
             コピー
           </button>
@@ -840,6 +1163,10 @@ export function ScheduleCalendarApp() {
   const [copyFallbackText, setCopyFallbackText] = useState("");
   const [storageError, setStorageError] = useState("");
   const [hydrated, setHydrated] = useState(false);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [mobileSheetDragOffset, setMobileSheetDragOffset] = useState(0);
+  const [mobileNavTab, setMobileNavTab] = useState<MobileNavTab>("calendar");
+  const mobileSheetDragStartYRef = useRef<number | null>(null);
 
   useEffect(() => {
     const currentDate = new Date();
@@ -857,6 +1184,12 @@ export function ScheduleCalendarApp() {
       setStorageError("保存済みデータを読み込めませんでした。");
     } finally {
       setHydrated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      setView("day");
     }
   }, []);
 
@@ -880,6 +1213,10 @@ export function ScheduleCalendarApp() {
   const selectedDayEvents = useMemo(() => getEventsForDate(events, selectedDateKey), [events, selectedDateKey]);
   const postText = useMemo(() => generatePostText(selectedEvent, templateId), [selectedEvent, templateId]);
   const visibleEvents = useMemo(() => sortEvents(events), [events]);
+  const upcomingEvents = useMemo(() => {
+    const todayKey = toDateKey(new Date());
+    return visibleEvents.filter((event) => event.date >= todayKey);
+  }, [visibleEvents]);
 
   useEffect(() => {
     setCopyStatus("");
@@ -896,11 +1233,19 @@ export function ScheduleCalendarApp() {
     setStatusMessage("");
   }
 
+  function selectDateAndOpenSheet(dateKey: string) {
+    selectDate(dateKey);
+    setActiveTab("schedule");
+    setMobileSheetOpen(true);
+  }
+
   function selectEvent(event: ScheduleEvent) {
     setSelectedDateKey(event.date);
     setCursorDate(parseDateKey(event.date));
     setSelectedEventId(event.id);
     setDraft({ ...event });
+    setActiveTab("schedule");
+    setMobileSheetOpen(true);
     setStatusMessage("");
   }
 
@@ -909,6 +1254,25 @@ export function ScheduleCalendarApp() {
     setSelectedEventId(null);
     setDraft(next);
     setActiveTab("schedule");
+    setMobileSheetOpen(true);
+    setStatusMessage("");
+  }
+
+  function createEventAt(minutes: number) {
+    const startHour = Math.floor(minutes / 60);
+    const startMinute = minutes % 60;
+    const endMinutes = Math.min(timelineEndMinutes, minutes + 60);
+    const endHour = Math.floor(endMinutes / 60);
+    const endMinute = endMinutes % 60;
+    const next = {
+      ...createEmptyEvent(selectedDateKey),
+      startTime: `${String(startHour).padStart(2, "0")}:${String(startMinute).padStart(2, "0")}`,
+      endTime: `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`
+    };
+    setSelectedEventId(null);
+    setDraft(next);
+    setActiveTab("schedule");
+    setMobileSheetOpen(true);
     setStatusMessage("");
   }
 
@@ -927,6 +1291,7 @@ export function ScheduleCalendarApp() {
     setCursorDate(parseDateKey(nextDraft.date));
     setSelectedEventId(nextDraft.id);
     setDraft(nextDraft);
+    setMobileSheetOpen(true);
     setStatusMessage("予定を保存しました。");
   }
 
@@ -938,7 +1303,42 @@ export function ScheduleCalendarApp() {
     setEvents((current) => current.filter((event) => event.id !== selectedEvent.id));
     setSelectedEventId(null);
     setDraft(createEmptyEvent(selectedDateKey));
+    setMobileSheetOpen(false);
     setStatusMessage("予定を削除しました。");
+  }
+
+  function closeMobileSheet() {
+    setMobileSheetOpen(false);
+    setMobileSheetDragOffset(0);
+    mobileSheetDragStartYRef.current = null;
+  }
+
+  function changeMobileNavTab(tab: MobileNavTab) {
+    setMobileNavTab(tab);
+    setMobileSheetOpen(false);
+  }
+
+  function startMobileSheetDrag(event: PointerEvent<HTMLDivElement>) {
+    mobileSheetDragStartYRef.current = event.clientY;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveMobileSheetDrag(event: PointerEvent<HTMLDivElement>) {
+    if (mobileSheetDragStartYRef.current === null) {
+      return;
+    }
+
+    setMobileSheetDragOffset(Math.max(0, event.clientY - mobileSheetDragStartYRef.current));
+  }
+
+  function endMobileSheetDrag() {
+    if (mobileSheetDragOffset > 72) {
+      closeMobileSheet();
+      return;
+    }
+
+    setMobileSheetDragOffset(0);
+    mobileSheetDragStartYRef.current = null;
   }
 
   function movePeriod(direction: -1 | 1) {
@@ -980,21 +1380,23 @@ export function ScheduleCalendarApp() {
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden border-b border-r border-border bg-surface">
-      <CalendarToolbar
-        view={view}
-        cursorDate={cursorDate}
-        onViewChange={setView}
-        onToday={() => selectDate(toDateKey(new Date()))}
-        onMove={movePeriod}
-      />
-      <CategoryLegend />
+      <div className={mobileNavTab === "calendar" ? "contents" : "hidden sm:contents"}>
+        <CalendarToolbar
+          view={view}
+          cursorDate={cursorDate}
+          onViewChange={setView}
+          onToday={() => selectDate(toDateKey(new Date()))}
+          onMove={movePeriod}
+        />
+        <CategoryLegend />
+      </div>
       {storageError ? (
         <div className="shrink-0 border-b border-border bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:bg-red-950/35 dark:text-red-200">
           {storageError}
         </div>
       ) : null}
-      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(280px,42vh)] gap-0 lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-none xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-h-0 min-w-0 border-b border-border lg:border-b-0 lg:border-r">
+      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] gap-0 sm:grid-rows-[minmax(0,1fr)_minmax(300px,42vh)] lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-none xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="hidden min-h-0 min-w-0 border-b border-border sm:block lg:border-b-0 lg:border-r">
           <div className="scrollbar-accent h-full overflow-x-auto overflow-y-hidden">
             {view === "week" ? (
               <WeekView
@@ -1026,8 +1428,75 @@ export function ScheduleCalendarApp() {
             ) : null}
           </div>
         </div>
-        <aside className="scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 py-3 lg:[scrollbar-gutter:stable] xl:px-4 xl:py-4">
-          <div className="sticky top-0 z-10 mb-4 grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm">
+        <div className="relative flex min-h-0 min-w-0 flex-col border-b border-border sm:hidden">
+          {mobileNavTab === "calendar" ? (
+            <>
+              <MobileCalendarSurface
+                view={view}
+                events={visibleEvents}
+                cursorDate={cursorDate}
+                selectedDateKey={selectedDateKey}
+                selectedEventId={selectedEventId}
+                onSelectDate={selectDate}
+                onSelectMonthDate={selectDateAndOpenSheet}
+                onSelectEvent={selectEvent}
+                onSelectTime={createEventAt}
+              />
+              <button
+                type="button"
+                onClick={createNewEvent}
+                className="absolute bottom-20 right-4 z-30 grid h-14 w-14 place-items-center rounded-full bg-primary text-3xl font-light leading-none text-white shadow-panel transition hover:bg-primary-strong"
+                aria-label="新しい予定を追加"
+              >
+                +
+              </button>
+            </>
+          ) : null}
+          {mobileNavTab === "events" ? (
+            <MobileEventList events={upcomingEvents} selectedEventId={selectedEventId} onSelectEvent={selectEvent} />
+          ) : null}
+          {mobileNavTab === "settings" ? <MobileSettingsPanel /> : null}
+        </div>
+        {mobileSheetOpen ? (
+          <button
+            type="button"
+            aria-label="予定パネルを閉じる"
+            className="fixed inset-0 z-30 bg-black/35 sm:hidden"
+            onClick={closeMobileSheet}
+          />
+        ) : null}
+        <aside
+          className={[
+            "scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 py-3 transition-transform lg:[scrollbar-gutter:stable] xl:px-4 xl:py-4",
+            mobileSheetOpen
+              ? "fixed inset-x-0 bottom-16 z-40 max-h-[64vh] rounded-t-[18px] border border-b-0 border-border shadow-panel sm:static sm:z-auto sm:max-h-none sm:rounded-none sm:border-0 sm:border-t sm:shadow-none"
+              : "hidden sm:block"
+          ].join(" ")}
+          style={mobileSheetDragOffset ? { transform: `translateY(${mobileSheetDragOffset}px)` } : undefined}
+        >
+          <div className="sticky top-0 z-10 mb-4 bg-surface pb-2 sm:bg-transparent sm:pb-0">
+            <div className="relative mb-3 flex min-h-9 items-center justify-center sm:hidden">
+              <div
+                className="grid h-9 w-24 touch-none place-items-center rounded-base text-muted"
+                aria-label="下にスワイプして予定パネルを閉じる"
+                role="separator"
+                onPointerDown={startMobileSheetDrag}
+                onPointerMove={moveMobileSheetDrag}
+                onPointerUp={endMobileSheetDrag}
+                onPointerCancel={endMobileSheetDrag}
+              >
+                <span className="h-1 w-12 rounded-full bg-border" />
+              </div>
+              <button
+                type="button"
+                className="absolute right-0 top-0 grid h-9 w-9 place-items-center rounded-base text-xl font-light text-muted transition hover:bg-surface-muted"
+                aria-label="予定パネルを閉じる"
+                onClick={closeMobileSheet}
+              >
+                ×
+              </button>
+            </div>
+          <div className="grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm">
             {[
               { id: "schedule" as PanelTab, label: "予定管理" },
               { id: "post" as PanelTab, label: "投稿補助" }
@@ -1044,6 +1513,7 @@ export function ScheduleCalendarApp() {
                 {tab.label}
               </button>
             ))}
+          </div>
           </div>
           {activeTab === "schedule" ? (
             <SchedulePanel
@@ -1071,6 +1541,7 @@ export function ScheduleCalendarApp() {
             />
           )}
         </aside>
+        <MobileBottomTabs activeTab={mobileNavTab} onTabChange={changeMobileNavTab} />
       </div>
     </section>
   );

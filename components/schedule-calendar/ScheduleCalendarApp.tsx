@@ -1812,8 +1812,10 @@ export function ScheduleCalendarApp() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [mobileSheetDragOffset, setMobileSheetDragOffset] = useState(0);
   const [mobileNavTab, setMobileNavTab] = useState<MobileNavTab>("calendar");
+  const [pendingDeletedEvent, setPendingDeletedEvent] = useState<ScheduleEvent | null>(null);
   const mobileSheetDragStartYRef = useRef<number | null>(null);
   const skipNextStorageWriteRef = useRef(false);
+  const undoDeleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const currentDate = new Date();
@@ -1943,6 +1945,61 @@ export function ScheduleCalendarApp() {
     setCopyFallbackText("");
   }, [postText]);
 
+  useEffect(() => {
+    return () => {
+      if (undoDeleteTimerRef.current) {
+        clearTimeout(undoDeleteTimerRef.current);
+      }
+    };
+  }, []);
+
+  function clearUndoDeleteTimer() {
+    if (!undoDeleteTimerRef.current) {
+      return;
+    }
+
+    clearTimeout(undoDeleteTimerRef.current);
+    undoDeleteTimerRef.current = null;
+  }
+
+  function showDeleteUndoToast(event: ScheduleEvent) {
+    clearUndoDeleteTimer();
+    setPendingDeletedEvent(event);
+    undoDeleteTimerRef.current = setTimeout(() => {
+      setPendingDeletedEvent(null);
+      undoDeleteTimerRef.current = null;
+    }, 8000);
+  }
+
+  function closeDeleteUndoToast() {
+    clearUndoDeleteTimer();
+    setPendingDeletedEvent(null);
+  }
+
+  function restoreDeletedEvent() {
+    if (!pendingDeletedEvent) {
+      return;
+    }
+
+    const restoredEvent = pendingDeletedEvent;
+    clearUndoDeleteTimer();
+    setEvents((current) => {
+      if (current.some((event) => event.id === restoredEvent.id)) {
+        return current;
+      }
+
+      return sortEvents([...current, restoredEvent]);
+    });
+    setPendingDeletedEvent(null);
+    setSelectedDateKey(restoredEvent.date);
+    setCursorDate(parseDateKey(restoredEvent.date));
+    setSelectedEventId(restoredEvent.id);
+    setDraft({ ...restoredEvent });
+    setActiveTab("schedule");
+    setMobileSheetOpen(true);
+    setStatusMessage("削除した予定を元に戻しました。");
+  }
+
   function selectDate(dateKey: string) {
     setSelectedDateKey(dateKey);
     setCursorDate(parseDateKey(dateKey));
@@ -2023,7 +2080,9 @@ export function ScheduleCalendarApp() {
       return;
     }
 
+    const deletedEvent = selectedEvent;
     setEvents((current) => current.filter((event) => event.id !== selectedEvent.id));
+    showDeleteUndoToast(deletedEvent);
     setSelectedEventId(null);
     setDraft(createEventDraft(selectedDateKey, settings));
     setMobileSheetOpen(false);
@@ -2442,6 +2501,35 @@ export function ScheduleCalendarApp() {
             ) : null}
           </div>
         </aside>
+        {pendingDeletedEvent ? (
+          <div
+            className="fixed inset-x-4 bottom-20 z-50 rounded-base border border-border bg-surface px-3 py-3 shadow-panel lg:bottom-6 lg:left-auto lg:right-6 lg:w-[22rem]"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-foreground">予定を削除しました。</p>
+                <p className="mt-1 truncate text-xs font-bold text-muted">{pendingDeletedEvent.title || "無題の予定"}</p>
+              </div>
+              <button
+                type="button"
+                className="shrink-0 rounded-base border border-border px-2.5 py-1.5 text-xs font-bold text-primary-strong transition hover:bg-surface-muted"
+                onClick={restoreDeletedEvent}
+              >
+                元に戻す
+              </button>
+              <button
+                type="button"
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-base text-lg leading-none text-muted transition hover:bg-surface-muted"
+                aria-label="削除通知を閉じる"
+                onClick={closeDeleteUndoToast}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        ) : null}
         <MobileBottomTabs activeTab={mobileNavTab} onTabChange={changeMobileNavTab} />
       </div>
     </section>

@@ -53,7 +53,7 @@ export function PortalHeader() {
           <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
         </div>
         <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span>
-        <div className="hidden sm:block">
+        <div className="hidden lg:block">
           <ThemeToggle />
         </div>
         <button

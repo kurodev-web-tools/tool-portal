@@ -22,6 +22,7 @@ import {
   platformOptions,
   postTemplates,
   scheduleStorageKey,
+  scheduleStorageVersion,
   sortEvents,
   toDateKey,
   type CalendarView,
@@ -32,10 +33,11 @@ import {
   type ScheduleEvent
 } from "@/lib/schedule-calendar";
 
-type PanelTab = "schedule" | "post";
+type PanelTab = "schedule" | "post" | "events" | "settings";
 type CopyStatusKind = "idle" | "success" | "error";
 type MobileNavTab = "calendar" | "events" | "settings";
 type EventPeriodFilter = "all" | "today" | "week" | "month";
+type EventSortOrder = "upcoming" | "dateAsc" | "dateDesc";
 
 const viewLabels: Record<CalendarView, string> = {
   month: "月",
@@ -47,9 +49,21 @@ const timeSlots = Array.from({ length: 48 }, (_, index) => index * 30);
 const timelineStartMinutes = 0;
 const timelineEndMinutes = 24 * 60;
 const timelineMinutes = timelineEndMinutes - timelineStartMinutes;
+// Schedule Calendar display ranges:
+// - <= 1023px: mobile flow (includes portrait tablet 768-1023px)
+// - 1024-1279px: tablet two-pane flow
+// - >= 1280px: desktop two-pane flow
+const mobileOnlyClassName = "lg:hidden";
+const tabletUpClassName = "hidden lg:block";
+const tabletUpContentsClassName = "hidden lg:contents";
+const mobileSheetMaxHeightClassName = "max-h-[74vh]";
 const timeGridMinHeightClassName = "min-h-[1248px] lg:min-h-[1152px] xl:min-h-[1248px]";
 const timeSlotHeightClassName = "h-6";
 const weekGridTemplateColumns = "48px repeat(7, minmax(84px, 1fr))";
+const emptyEventsMessage = "予定はまだありません。";
+const emptySearchResultsMessage = "条件に一致する予定はありません。";
+const saveFailureMessage = "保存できませんでした。ブラウザの保存領域を確認してください。";
+const importFailureMessage = "JSONをインポートできませんでした。形式を確認してください。既存データは変更していません。";
 
 function formatSlot(minutes: number) {
   const hour = Math.floor(minutes / 60);
@@ -62,6 +76,19 @@ function handleDateKeyDown(event: KeyboardEvent, onSelect: () => void) {
     event.preventDefault();
     onSelect();
   }
+}
+
+function isImportableSchedulePayload(value: unknown) {
+  if (Array.isArray(value)) {
+    return true;
+  }
+
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const payload = value as Record<string, unknown>;
+  return "version" in payload || "events" in payload || "settings" in payload || "postTemplates" in payload;
 }
 
 function useMeasuredScrollbarWidth() {
@@ -178,7 +205,7 @@ function CalendarToolbar({
 
 function CategoryLegend() {
   return (
-    <div className="scrollbar-accent hidden shrink-0 items-center gap-2 overflow-x-auto border-b border-border px-4 py-2 text-xs font-bold text-muted sm:flex">
+    <div className="scrollbar-accent hidden shrink-0 items-center gap-2 overflow-x-auto border-b border-border px-4 py-2 text-xs font-bold text-muted lg:flex">
       <span className="whitespace-nowrap">カテゴリ</span>
       {categoryOptions.map((option) => (
         <span
@@ -766,14 +793,15 @@ function MobileCalendarSurface({
   );
 }
 
-type MobileEventFilters = {
+type EventListFilters = {
   query: string;
   category: EventCategory | "all";
   platform: EventPlatform | "all";
   period: EventPeriodFilter;
+  sortOrder: EventSortOrder;
 };
 
-type SettingsSectionId = "defaults" | "data" | "templates";
+type SettingsSectionId = "display" | "defaults" | "data" | "templates";
 
 function MobileEventList({
   events,
@@ -783,13 +811,13 @@ function MobileEventList({
   onSelectEvent
 }: {
   events: ScheduleEvent[];
-  filters: MobileEventFilters;
+  filters: EventListFilters;
   selectedEventId: string | null;
-  onFilterChange: (filters: MobileEventFilters) => void;
+  onFilterChange: (filters: EventListFilters) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
 }) {
   return (
-    <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto bg-surface px-4 pb-24 pt-4 sm:hidden">
+    <div className={["scrollbar-accent min-h-0 flex-1 overflow-y-auto bg-surface px-4 pb-24 pt-4", mobileOnlyClassName].join(" ")}>
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-bold text-foreground">予定一覧</h2>
         <span className="rounded-base border border-border bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
@@ -846,7 +874,9 @@ function MobileEventList({
       <div className="mt-4 space-y-2">
         {events.length === 0 ? (
           <div className="rounded-base border border-dashed border-border bg-surface-muted/65 px-3 py-8 text-center text-sm font-bold text-muted">
-            まだ予定がありません。
+            {filters.query.trim() || filters.category !== "all" || filters.platform !== "all" || filters.period !== "all"
+              ? emptySearchResultsMessage
+              : emptyEventsMessage}
           </div>
         ) : (
           events.map((event) => (
@@ -944,6 +974,7 @@ function MobileSettingsPanel({
   onResetAll: () => void;
 }) {
   const [openSections, setOpenSections] = useState<Record<SettingsSectionId, boolean>>({
+    display: true,
     defaults: true,
     data: false,
     templates: false
@@ -957,7 +988,7 @@ function MobileSettingsPanel({
   }
 
   return (
-    <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto bg-surface px-4 pb-24 pt-4 sm:hidden">
+    <div className={["scrollbar-accent min-h-0 flex-1 overflow-y-auto bg-surface px-4 pb-24 pt-4", mobileOnlyClassName].join(" ")}>
       <h2 className="text-base font-bold text-foreground">設定</h2>
       {settingsStatus ? <p className="mt-3 rounded-base border border-border bg-surface-muted/55 px-3 py-2 text-sm font-bold text-primary-strong">{settingsStatus}</p> : null}
       <div className="mt-4 space-y-3">
@@ -1071,6 +1102,309 @@ function MobileSettingsPanel({
   );
 }
 
+function DesktopEventListPanel({
+  events,
+  filters,
+  selectedEventId,
+  onFilterChange,
+  onSelectEvent
+}: {
+  events: ScheduleEvent[];
+  filters: EventListFilters;
+  selectedEventId: string | null;
+  onFilterChange: (filters: EventListFilters) => void;
+  onSelectEvent: (event: ScheduleEvent) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <section className="space-y-3 rounded-base border border-border bg-surface-muted/35 p-3">
+        <FieldLabel>検索</FieldLabel>
+        <input
+          value={filters.query}
+          onChange={(event) => onFilterChange({ ...filters, query: event.target.value })}
+          className={inputClassName("mt-0")}
+          placeholder="タイトル・メモを検索"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <FieldLabel>カテゴリ</FieldLabel>
+            <select
+              value={filters.category}
+              onChange={(event) => onFilterChange({ ...filters, category: event.target.value as EventCategory | "all" })}
+              className={inputClassName()}
+            >
+              <option value="all">すべて</option>
+              {categoryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel>媒体</FieldLabel>
+            <select
+              value={filters.platform}
+              onChange={(event) => onFilterChange({ ...filters, platform: event.target.value as EventPlatform | "all" })}
+              className={inputClassName()}
+            >
+              <option value="all">すべて</option>
+              {platformOptions.map((option) => (
+                <option key={option || "none"} value={option}>
+                  {option || "-"}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <FieldLabel>期間</FieldLabel>
+            <select
+              value={filters.period}
+              onChange={(event) => onFilterChange({ ...filters, period: event.target.value as EventPeriodFilter })}
+              className={inputClassName()}
+            >
+              <option value="all">全期間</option>
+              <option value="today">今日以降</option>
+              <option value="week">7日以内</option>
+              <option value="month">30日以内</option>
+            </select>
+          </div>
+          <div>
+            <FieldLabel>並び順</FieldLabel>
+            <select
+              value={filters.sortOrder}
+              onChange={(event) => onFilterChange({ ...filters, sortOrder: event.target.value as EventSortOrder })}
+              className={inputClassName()}
+            >
+              <option value="upcoming">直近順</option>
+              <option value="dateAsc">日付昇順</option>
+              <option value="dateDesc">日付降順</option>
+            </select>
+          </div>
+        </div>
+      </section>
+      <section>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-bold text-foreground">予定一覧</h2>
+          <span className="rounded-base border border-border bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{events.length} 件</span>
+        </div>
+        <div className="mt-3 space-y-2">
+          {events.length === 0 ? (
+            <div className="rounded-base border border-dashed border-border bg-surface-muted/60 px-3 py-8 text-center text-sm font-bold text-muted">
+              {filters.query.trim() || filters.category !== "all" || filters.platform !== "all" || filters.period !== "all"
+                ? emptySearchResultsMessage
+                : emptyEventsMessage}
+            </div>
+          ) : (
+            events.map((event) => (
+              <button
+                key={event.id}
+                type="button"
+                onClick={() => onSelectEvent(event)}
+                className={[
+                  "w-full rounded-base border px-3 py-3 text-left transition hover:border-primary/60",
+                  selectedEventId === event.id ? "border-primary bg-primary-soft/55" : "border-border bg-surface"
+                ].join(" ")}
+              >
+                <span className="text-xs font-bold text-primary-strong">{getLongDateLabel(event.date)}</span>
+                <span className="mt-1 block text-xs font-bold text-muted">
+                  {event.startTime} - {event.endTime}
+                </span>
+                <span className="mt-1 block truncate text-sm font-bold text-foreground">{event.title || "無題の予定"}</span>
+                <span className="mt-2 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
+                  {categoryMeta[event.category].label}
+                  {event.platform ? ` / ${event.platform}` : ""}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function DesktopSettingsPanel({
+  settings,
+  templates,
+  templateDraft,
+  importText,
+  settingsStatus,
+  storageError,
+  onSettingsChange,
+  onTemplateDraftChange,
+  onAddTemplate,
+  onEditTemplate,
+  onDeleteTemplate,
+  onExport,
+  onImportTextChange,
+  onImport,
+  onResetAll
+}: {
+  settings: ScheduleSettings;
+  templates: PostTemplate[];
+  templateDraft: PostTemplate;
+  importText: string;
+  settingsStatus: string;
+  storageError: string;
+  onSettingsChange: (settings: ScheduleSettings) => void;
+  onTemplateDraftChange: (template: PostTemplate) => void;
+  onAddTemplate: () => void;
+  onEditTemplate: (template: PostTemplate) => void;
+  onDeleteTemplate: (templateId: string) => void;
+  onExport: () => void;
+  onImportTextChange: (value: string) => void;
+  onImport: () => void;
+  onResetAll: () => void;
+}) {
+  const [openSections, setOpenSections] = useState<Record<SettingsSectionId, boolean>>({
+    display: true,
+    defaults: true,
+    data: false,
+    templates: false
+  });
+  const defaultTemplateName = templates.find((template) => template.id === settings.defaultTemplateId)?.name ?? "未設定";
+  const settingsStatusIsError = settingsStatus.includes("できません") || settingsStatus.includes("読み込めません");
+
+  function toggleSection(sectionId: SettingsSectionId) {
+    setOpenSections((current) => ({ ...current, [sectionId]: !current[sectionId] }));
+  }
+
+  return (
+    <div className="space-y-4">
+      {settingsStatus || storageError ? (
+        <p
+          className={[
+            "rounded-base border px-3 py-2 text-sm font-bold",
+            storageError || settingsStatusIsError
+              ? "border-red-300 bg-red-50 text-red-700 dark:bg-red-950/35 dark:text-red-200"
+              : "border-border bg-surface-muted/55 text-primary-strong"
+          ].join(" ")}
+        >
+          {storageError || settingsStatus}
+        </p>
+      ) : null}
+      <SettingsAccordionSection
+        id="display"
+        title="表示設定"
+        summary={`${viewLabels[settings.defaultView]} / ${settings.weekStartsOn === 1 ? "月曜開始" : "日曜開始"}`}
+        open={openSections.display}
+        onToggle={toggleSection}
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <FieldLabel>初期表示ビュー</FieldLabel>
+            <select value={settings.defaultView} onChange={(event) => onSettingsChange({ ...settings, defaultView: event.target.value as CalendarView })} className={inputClassName()}>
+              <option value="month">月</option>
+              <option value="week">週</option>
+              <option value="day">日</option>
+            </select>
+          </div>
+          <div>
+            <FieldLabel>週開始曜日</FieldLabel>
+            <select value={settings.weekStartsOn} onChange={(event) => onSettingsChange({ ...settings, weekStartsOn: Number(event.target.value) as 0 | 1 })} className={inputClassName()}>
+              <option value={0}>日曜</option>
+              <option value={1}>月曜</option>
+            </select>
+          </div>
+        </div>
+      </SettingsAccordionSection>
+      <SettingsAccordionSection
+        id="defaults"
+        title="既定値"
+        summary={`${settings.defaultStartTime} / ${settings.defaultDurationMinutes}分`}
+        open={openSections.defaults}
+        onToggle={toggleSection}
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <FieldLabel>既定開始時刻</FieldLabel>
+            <input type="time" value={settings.defaultStartTime} onChange={(event) => onSettingsChange({ ...settings, defaultStartTime: event.target.value })} className={inputClassName()} />
+          </div>
+          <div>
+            <FieldLabel>既定所要時間</FieldLabel>
+            <select value={settings.defaultDurationMinutes} onChange={(event) => onSettingsChange({ ...settings, defaultDurationMinutes: Number(event.target.value) })} className={inputClassName()}>
+              {[30, 45, 60, 90, 120, 180].map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {minutes}分
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </SettingsAccordionSection>
+      <SettingsAccordionSection
+        id="templates"
+        title="投稿補助設定"
+        summary={`${templates.length}件 / 既定: ${defaultTemplateName}`}
+        open={openSections.templates}
+        onToggle={toggleSection}
+      >
+        <div>
+          <FieldLabel>既定テンプレート</FieldLabel>
+          <select value={settings.defaultTemplateId} onChange={(event) => onSettingsChange({ ...settings, defaultTemplateId: event.target.value })} className={inputClassName()}>
+            {templates.map((template) => (
+              <option key={template.id} value={template.id}>
+                {template.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          {templates.map((template) => (
+            <div key={template.id} className="rounded-base border border-border bg-surface px-3 py-3">
+              <p className="text-sm font-bold text-foreground">{template.name}</p>
+              <p className="mt-1 text-xs leading-5 text-muted">{template.description}</p>
+              <div className="mt-2 flex gap-2">
+                <button type="button" onClick={() => onEditTemplate(template)} className="flat-control px-3 py-1.5">
+                  編集
+                </button>
+                <button type="button" onClick={() => onDeleteTemplate(template.id)} className="flat-control border-red-300 px-3 py-1.5 text-red-600">
+                  削除
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="rounded-base border border-border bg-surface px-3 py-3">
+          <FieldLabel>テンプレ名</FieldLabel>
+          <input value={templateDraft.name} onChange={(event) => onTemplateDraftChange({ ...templateDraft, name: event.target.value })} className={inputClassName()} />
+          <FieldLabel>説明</FieldLabel>
+          <input value={templateDraft.description} onChange={(event) => onTemplateDraftChange({ ...templateDraft, description: event.target.value })} className={inputClassName()} />
+          <FieldLabel>本文</FieldLabel>
+          <textarea value={templateDraft.body} onChange={(event) => onTemplateDraftChange({ ...templateDraft, body: event.target.value })} className={inputClassName("min-h-28 resize-none")} />
+          <p className="mt-2 text-xs leading-5 text-muted">使用可: {"{date} {startTime} {endTime} {title} {platform} {category} {memo}"}</p>
+          <button type="button" onClick={onAddTemplate} className="mt-3 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white">
+            テンプレートを保存
+          </button>
+        </div>
+      </SettingsAccordionSection>
+      <SettingsAccordionSection
+        id="data"
+        title="データ管理"
+        summary="JSON保存・復元 / 全データ削除"
+        open={openSections.data}
+        onToggle={toggleSection}
+      >
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={onExport} className="flat-control px-3 py-2">
+            JSONエクスポート
+          </button>
+          <button type="button" onClick={onImport} className="flat-control px-3 py-2">
+            JSONインポート
+          </button>
+        </div>
+        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-28 resize-none")} placeholder="インポートする JSON を貼り付け" />
+        <button type="button" onClick={onResetAll} className="w-full rounded-base border border-red-300 px-3 py-2 text-sm font-bold text-red-600">
+          全データ削除
+        </button>
+      </SettingsAccordionSection>
+    </div>
+  );
+}
+
 function MobileBottomTabs({
   activeTab,
   onTabChange
@@ -1085,7 +1419,7 @@ function MobileBottomTabs({
   ];
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 grid h-16 grid-cols-3 border-t border-border bg-surface/95 backdrop-blur sm:hidden">
+    <nav className={["fixed inset-x-0 bottom-0 z-30 grid h-16 grid-cols-3 border-t border-border bg-surface/95 backdrop-blur", mobileOnlyClassName].join(" ")}>
       {items.map((item) => (
         <button
           key={item.id}
@@ -1206,7 +1540,7 @@ function ScheduleForm({
           placeholder="次回配信のセットリストやコラボ企画案を記録する。"
         />
       </div>
-      <div className="sticky bottom-0 z-20 -mx-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+      <div className="sticky bottom-0 z-20 -mx-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
         <button type="button" onClick={onDelete} disabled={!canDelete} className="flat-control flex-1 border-red-300 px-3 py-2 text-red-600 disabled:cursor-not-allowed disabled:opacity-45">
           削除
         </button>
@@ -1243,12 +1577,12 @@ function SchedulePanel({
 }) {
   return (
     <div className="space-y-4">
-      <section className="hidden sm:block">
+      <section className={tabletUpClassName}>
         <p className="text-xs font-bold text-muted">選択中の日付</p>
         <p className="mt-1 text-base font-bold text-foreground">{getLongDateLabel(selectedDateKey)}</p>
         <p className="mt-1 text-sm text-muted">予定 {dayEvents.length} 件</p>
       </section>
-      <section className="sm:border-t sm:border-border sm:pt-5">
+      <section className="lg:border-t lg:border-border lg:pt-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-bold text-foreground">この日の予定一覧</h2>
           <button type="button" className="text-sm font-bold text-primary-strong hover:underline" onClick={onNew}>
@@ -1287,7 +1621,7 @@ function SchedulePanel({
             ))
           )}
         </div>
-        <button type="button" className="mt-3 w-full rounded-base bg-primary px-3 py-3 text-sm font-bold text-white transition hover:bg-primary-strong sm:hidden" onClick={onNew}>
+        <button type="button" className={["mt-3 w-full rounded-base bg-primary px-3 py-3 text-sm font-bold text-white transition hover:bg-primary-strong", mobileOnlyClassName].join(" ")} onClick={onNew}>
           新しい予定を追加
         </button>
       </section>
@@ -1358,9 +1692,9 @@ function PostAssistPanel({
         <textarea
           value={postText}
           readOnly
-          className="mt-3 min-h-44 w-full resize-none rounded-base border border-border bg-surface-muted px-3 py-3 text-sm leading-6 text-foreground sm:text-[13px]"
+          className="mt-3 min-h-44 w-full resize-none rounded-base border border-border bg-surface-muted px-3 py-3 text-sm leading-6 text-foreground lg:text-[13px]"
         />
-        <div className="sticky bottom-0 z-20 -mx-3 mt-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
+        <div className="sticky bottom-0 z-20 -mx-3 mt-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
           <button type="button" onClick={onCopy} className="flat-control flex-1 px-3 py-2">
             コピー
           </button>
@@ -1401,14 +1735,14 @@ function PostAssistPanel({
 
 function getClipboardFailureMessage(error: unknown) {
   if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
-    return "このブラウザでは自動コピーを利用できません。下の文面を選択してコピーしてください。";
+    return "コピーできませんでした。下の文面を選択して手動でコピーしてください。";
   }
 
   if (error instanceof DOMException && error.name === "NotAllowedError") {
-    return "クリップボード権限が許可されていません。下の文面を選択してコピーしてください。";
+    return "コピーできませんでした。下の文面を選択して手動でコピーしてください。";
   }
 
-  return "コピーできませんでした。下の文面を選択してコピーしてください。";
+  return "コピーできませんでした。下の文面を選択して手動でコピーしてください。";
 }
 
 function createTemplateDraft(): PostTemplate {
@@ -1436,11 +1770,12 @@ export function ScheduleCalendarApp() {
   const [statusMessage, setStatusMessage] = useState("");
   const [settingsStatus, setSettingsStatus] = useState("");
   const [importText, setImportText] = useState("");
-  const [eventFilters, setEventFilters] = useState<MobileEventFilters>({
+  const [eventFilters, setEventFilters] = useState<EventListFilters>({
     query: "",
     category: "all",
     platform: "all",
-    period: "today"
+    period: "today",
+    sortOrder: "upcoming"
   });
   const [copyStatus, setCopyStatus] = useState("");
   const [copyStatusKind, setCopyStatusKind] = useState<CopyStatusKind>("idle");
@@ -1451,6 +1786,7 @@ export function ScheduleCalendarApp() {
   const [mobileSheetDragOffset, setMobileSheetDragOffset] = useState(0);
   const [mobileNavTab, setMobileNavTab] = useState<MobileNavTab>("calendar");
   const mobileSheetDragStartYRef = useRef<number | null>(null);
+  const skipNextStorageWriteRef = useRef(false);
 
   useEffect(() => {
     const currentDate = new Date();
@@ -1476,7 +1812,8 @@ export function ScheduleCalendarApp() {
         window.localStorage.setItem(scheduleStorageKey, JSON.stringify(payload));
       }
     } catch {
-      setStorageError("保存済みデータを読み込めませんでした。");
+      skipNextStorageWriteRef.current = true;
+      setStorageError("保存済みデータを読み込めませんでした。既存データは保持しています。");
       setDraft(createEmptyEvent(currentDateKey));
     } finally {
       setHydrated(true);
@@ -1488,11 +1825,16 @@ export function ScheduleCalendarApp() {
       return;
     }
 
+    if (skipNextStorageWriteRef.current) {
+      skipNextStorageWriteRef.current = false;
+      return;
+    }
+
     try {
       window.localStorage.setItem(
         scheduleStorageKey,
         JSON.stringify({
-          version: 2,
+          version: scheduleStorageVersion,
           events,
           settings,
           postTemplates: userPostTemplates
@@ -1500,7 +1842,7 @@ export function ScheduleCalendarApp() {
       );
       setStorageError("");
     } catch {
-      setStorageError("localStorage に保存できませんでした。");
+      setStorageError(saveFailureMessage);
     }
   }, [events, hydrated, settings, userPostTemplates]);
 
@@ -1523,8 +1865,21 @@ export function ScheduleCalendarApp() {
     }
     const periodEndKey = toDateKey(periodEndDate);
 
+    const sortByDateAsc = (a: ScheduleEvent, b: ScheduleEvent) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      return dateCompare !== 0 ? dateCompare : a.startTime.localeCompare(b.startTime);
+    };
+
     return [...visibleEvents]
       .sort((a, b) => {
+        if (eventFilters.sortOrder === "dateAsc") {
+          return sortByDateAsc(a, b);
+        }
+
+        if (eventFilters.sortOrder === "dateDesc") {
+          return -sortByDateAsc(a, b);
+        }
+
         const aUpcoming = a.date >= todayKey;
         const bUpcoming = b.date >= todayKey;
         if (aUpcoming !== bUpcoming) {
@@ -1733,7 +2088,7 @@ export function ScheduleCalendarApp() {
 
   function exportJson() {
     const payload = {
-      version: 2,
+      version: scheduleStorageVersion,
       events,
       settings,
       postTemplates: userPostTemplates
@@ -1744,7 +2099,12 @@ export function ScheduleCalendarApp() {
 
   function importJson() {
     try {
-      const payload = normalizeStoragePayload(JSON.parse(importText));
+      const parsedPayload = JSON.parse(importText);
+      if (!isImportableSchedulePayload(parsedPayload)) {
+        throw new Error("Unsupported import payload");
+      }
+
+      const payload = normalizeStoragePayload(parsedPayload);
       setEvents(payload.events);
       setSettings(payload.settings);
       setUserPostTemplates(payload.postTemplates);
@@ -1760,7 +2120,7 @@ export function ScheduleCalendarApp() {
       setSettingsStatus("JSONをインポートしました。");
       setStorageError("");
     } catch {
-      setSettingsStatus("JSONを読み込めませんでした。");
+      setSettingsStatus(importFailureMessage);
     }
   }
 
@@ -1846,7 +2206,7 @@ export function ScheduleCalendarApp() {
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden border-b border-r border-border bg-surface">
-      <div className={mobileNavTab === "calendar" ? "contents" : "hidden sm:contents"}>
+      <div className={mobileNavTab === "calendar" ? "contents" : tabletUpContentsClassName}>
         <CalendarToolbar
           view={view}
           cursorDate={cursorDate}
@@ -1862,8 +2222,8 @@ export function ScheduleCalendarApp() {
           {storageError}
         </div>
       ) : null}
-      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] gap-0 sm:grid-rows-[minmax(0,1fr)_minmax(300px,42vh)] lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-none xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="hidden min-h-0 min-w-0 border-b border-border sm:block lg:border-b-0 lg:border-r">
+      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] gap-0 lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-none xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="hidden min-h-0 min-w-0 border-r border-border lg:block">
           <div className="scrollbar-accent h-full overflow-x-auto overflow-y-hidden">
             {view === "week" ? (
               <WeekView
@@ -1897,7 +2257,7 @@ export function ScheduleCalendarApp() {
             ) : null}
           </div>
         </div>
-        <div className="relative flex min-h-0 min-w-0 flex-col border-b border-border sm:hidden">
+        <div className={["relative min-h-0 min-w-0 flex-col border-b border-border", mobileOnlyClassName, "flex"].join(" ")}>
           {mobileNavTab === "calendar" ? (
             <>
               <MobileCalendarSurface
@@ -1954,7 +2314,7 @@ export function ScheduleCalendarApp() {
           <button
             type="button"
             aria-label="予定パネルを閉じる"
-            className="fixed inset-0 z-30 bg-black/35 sm:hidden"
+            className={["fixed inset-0 z-30 bg-black/35", mobileOnlyClassName].join(" ")}
             onClick={closeMobileSheet}
           />
         ) : null}
@@ -1962,13 +2322,17 @@ export function ScheduleCalendarApp() {
           className={[
             "scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 py-3 transition-transform lg:[scrollbar-gutter:stable] xl:px-4 xl:py-4",
             mobileSheetOpen
-              ? "fixed inset-x-0 bottom-16 z-40 max-h-[64vh] rounded-t-[18px] border border-b-0 border-border !px-0 !py-0 shadow-panel sm:static sm:z-auto sm:max-h-none sm:rounded-none sm:border-0 sm:border-t sm:!px-3 sm:!py-3 sm:shadow-none"
-              : "hidden sm:block"
+              ? [
+                  "fixed inset-x-0 bottom-16 z-40 rounded-t-[18px] border border-b-0 border-border !px-0 !py-0 shadow-panel",
+                  mobileSheetMaxHeightClassName,
+                  "lg:static lg:z-auto lg:max-h-none lg:rounded-none lg:border-0 lg:!px-3 lg:!py-3 lg:shadow-none"
+                ].join(" ")
+              : tabletUpClassName
           ].join(" ")}
           style={mobileSheetDragOffset ? { transform: `translateY(${mobileSheetDragOffset}px)` } : undefined}
         >
-          <div className="sticky top-0 z-20 border-b border-border bg-surface px-3 pb-3 pt-3 shadow-sm sm:mb-4 sm:border-b-0 sm:bg-transparent sm:p-0 sm:pb-0 sm:shadow-none">
-            <div className="relative mb-3 flex min-h-9 items-center justify-center sm:hidden">
+          <div className="sticky top-0 z-20 border-b border-border bg-surface px-3 pb-3 pt-3 shadow-sm lg:mb-4 lg:border-b-0 lg:bg-transparent lg:p-0 lg:pb-0 lg:shadow-none">
+            <div className={["relative mb-3 min-h-9 items-center justify-center", mobileOnlyClassName, "flex"].join(" ")}>
               <div
                 className="grid h-9 w-24 touch-none place-items-center rounded-base text-muted"
                 aria-label="下にスワイプして予定パネルを閉じる"
@@ -1989,7 +2353,7 @@ export function ScheduleCalendarApp() {
                 ×
               </button>
             </div>
-            <div className="grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm">
+            <div className="grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm lg:hidden">
               {[
                 { id: "schedule" as PanelTab, label: "予定管理" },
                 { id: "post" as PanelTab, label: "投稿補助" }
@@ -2007,8 +2371,28 @@ export function ScheduleCalendarApp() {
                 </button>
               ))}
             </div>
+            <div className="hidden grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm lg:grid">
+              {[
+                { id: "schedule" as PanelTab, label: "予定管理" },
+                { id: "post" as PanelTab, label: "投稿補助" },
+                { id: "events" as PanelTab, label: "予定一覧" },
+                { id: "settings" as PanelTab, label: "設定" }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={[
+                    "rounded-base px-3 py-2 text-sm font-bold transition",
+                    activeTab === tab.id ? "bg-surface text-primary-strong shadow-sm" : "text-muted hover:text-foreground"
+                  ].join(" ")}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="px-3 py-4 pb-6 sm:p-0">
+          <div className="px-3 py-4 pb-6 lg:p-0">
             {activeTab === "schedule" ? (
               <SchedulePanel
                 selectedDateKey={selectedDateKey}
@@ -2022,7 +2406,8 @@ export function ScheduleCalendarApp() {
                 onSave={saveDraft}
                 onDelete={deleteSelectedEvent}
               />
-            ) : (
+            ) : null}
+            {activeTab === "post" ? (
               <PostAssistPanel
                 selectedEvent={selectedEvent}
                 templates={userPostTemplates}
@@ -2034,7 +2419,39 @@ export function ScheduleCalendarApp() {
                 onTemplateChange={setTemplateId}
                 onCopy={copyPostText}
               />
-            )}
+            ) : null}
+            {activeTab === "events" ? (
+              <div className={tabletUpClassName}>
+                <DesktopEventListPanel
+                  events={filteredListEvents}
+                  filters={eventFilters}
+                  selectedEventId={selectedEventId}
+                  onFilterChange={setEventFilters}
+                  onSelectEvent={selectEvent}
+                />
+              </div>
+            ) : null}
+            {activeTab === "settings" ? (
+              <div className={tabletUpClassName}>
+                <DesktopSettingsPanel
+                  settings={settings}
+                  templates={userPostTemplates}
+                  templateDraft={templateDraft}
+                  importText={importText}
+                  settingsStatus={settingsStatus}
+                  storageError={storageError}
+                  onSettingsChange={updateSettings}
+                  onTemplateDraftChange={setTemplateDraft}
+                  onAddTemplate={saveTemplateDraft}
+                  onEditTemplate={editTemplate}
+                  onDeleteTemplate={deleteTemplate}
+                  onExport={exportJson}
+                  onImportTextChange={setImportText}
+                  onImport={importJson}
+                  onResetAll={resetAllData}
+                />
+              </div>
+            ) : null}
           </div>
         </aside>
         <MobileBottomTabs activeTab={mobileNavTab} onTabChange={changeMobileNavTab} />

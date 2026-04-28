@@ -192,7 +192,7 @@ export function createEmptyEvent(
   const startTime = options.startTime ?? "20:00";
   const durationMinutes = options.durationMinutes ?? 60;
   const [startHour, startMinute] = startTime.split(":").map(Number);
-  const endTotalMinutes = Math.min(24 * 60, startHour * 60 + startMinute + durationMinutes);
+  const endTotalMinutes = Math.min(24 * 60 - 1, startHour * 60 + startMinute + durationMinutes);
   const endHour = Math.floor(endTotalMinutes / 60);
   const endMinute = endTotalMinutes % 60;
 

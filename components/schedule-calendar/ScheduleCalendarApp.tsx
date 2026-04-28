@@ -1973,7 +1973,7 @@ export function ScheduleCalendarApp() {
   function createEventAt(minutes: number) {
     const startHour = Math.floor(minutes / 60);
     const startMinute = minutes % 60;
-    const endMinutes = Math.min(timelineEndMinutes, minutes + settings.defaultDurationMinutes);
+    const endMinutes = Math.min(timelineEndMinutes - 1, minutes + settings.defaultDurationMinutes);
     const endHour = Math.floor(endMinutes / 60);
     const endMinute = endMinutes % 60;
     const next = {

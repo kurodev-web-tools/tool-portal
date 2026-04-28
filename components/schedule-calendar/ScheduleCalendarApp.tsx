@@ -29,6 +29,7 @@ import {
   type EventCategory,
   type EventPlatform,
   type PostTemplate,
+  type ScheduleStoragePayload,
   type ScheduleSettings,
   type ScheduleEvent
 } from "@/lib/schedule-calendar";
@@ -64,6 +65,7 @@ const emptyEventsMessage = "予定はまだありません。";
 const emptySearchResultsMessage = "条件に一致する予定はありません。";
 const saveFailureMessage = "保存できませんでした。ブラウザの保存領域を確認してください。";
 const importFailureMessage = "JSONをインポートできませんでした。形式を確認してください。既存データは変更していません。";
+const defaultDurationMinuteOptions = [30, 45, 60, 90, 120, 180];
 
 function formatSlot(minutes: number) {
   const hour = Math.floor(minutes / 60);
@@ -89,6 +91,35 @@ function isImportableSchedulePayload(value: unknown) {
 
   const payload = value as Record<string, unknown>;
   return "version" in payload || "events" in payload || "settings" in payload || "postTemplates" in payload;
+}
+
+function createEventDraft(dateKey: string, settings: ScheduleSettings) {
+  return createEmptyEvent(dateKey, {
+    startTime: settings.defaultStartTime,
+    durationMinutes: settings.defaultDurationMinutes
+  });
+}
+
+function createScheduleStoragePayload(
+  events: ScheduleEvent[],
+  settings: ScheduleSettings,
+  templates: PostTemplate[]
+): ScheduleStoragePayload {
+  return {
+    version: scheduleStorageVersion,
+    events,
+    settings,
+    postTemplates: templates
+  };
+}
+
+function hasActiveEventListFilters(filters: EventListFilters) {
+  return (
+    Boolean(filters.query.trim()) ||
+    filters.category !== "all" ||
+    filters.platform !== "all" ||
+    filters.period !== "all"
+  );
 }
 
 function useMeasuredScrollbarWidth() {
@@ -874,9 +905,7 @@ function MobileEventList({
       <div className="mt-4 space-y-2">
         {events.length === 0 ? (
           <div className="rounded-base border border-dashed border-border bg-surface-muted/65 px-3 py-8 text-center text-sm font-bold text-muted">
-            {filters.query.trim() || filters.category !== "all" || filters.platform !== "all" || filters.period !== "all"
-              ? emptySearchResultsMessage
-              : emptyEventsMessage}
+            {hasActiveEventListFilters(filters) ? emptySearchResultsMessage : emptyEventsMessage}
           </div>
         ) : (
           events.map((event) => (
@@ -1022,7 +1051,7 @@ function MobileSettingsPanel({
           <div>
             <FieldLabel>既定予定時間</FieldLabel>
             <select value={settings.defaultDurationMinutes} onChange={(event) => onSettingsChange({ ...settings, defaultDurationMinutes: Number(event.target.value) })} className={inputClassName()}>
-              {[30, 45, 60, 90, 120, 180].map((minutes) => (
+              {defaultDurationMinuteOptions.map((minutes) => (
                 <option key={minutes} value={minutes}>
                   {minutes}分
                 </option>
@@ -1193,9 +1222,7 @@ function DesktopEventListPanel({
         <div className="mt-3 space-y-2">
           {events.length === 0 ? (
             <div className="rounded-base border border-dashed border-border bg-surface-muted/60 px-3 py-8 text-center text-sm font-bold text-muted">
-              {filters.query.trim() || filters.category !== "all" || filters.platform !== "all" || filters.period !== "all"
-                ? emptySearchResultsMessage
-                : emptyEventsMessage}
+              {hasActiveEventListFilters(filters) ? emptySearchResultsMessage : emptyEventsMessage}
             </div>
           ) : (
             events.map((event) => (
@@ -1326,7 +1353,7 @@ function DesktopSettingsPanel({
           <div>
             <FieldLabel>既定所要時間</FieldLabel>
             <select value={settings.defaultDurationMinutes} onChange={(event) => onSettingsChange({ ...settings, defaultDurationMinutes: Number(event.target.value) })} className={inputClassName()}>
-              {[30, 45, 60, 90, 120, 180].map((minutes) => (
+              {defaultDurationMinuteOptions.map((minutes) => (
                 <option key={minutes} value={minutes}>
                   {minutes}分
                 </option>
@@ -1802,12 +1829,7 @@ export function ScheduleCalendarApp() {
       setUserPostTemplates(payload.postTemplates);
       setTemplateId(payload.settings.defaultTemplateId);
       setView(payload.settings.defaultView);
-      setDraft(
-        createEmptyEvent(currentDateKey, {
-          startTime: payload.settings.defaultStartTime,
-          durationMinutes: payload.settings.defaultDurationMinutes
-        })
-      );
+      setDraft(createEventDraft(currentDateKey, payload.settings));
       if (raw) {
         window.localStorage.setItem(scheduleStorageKey, JSON.stringify(payload));
       }
@@ -1833,12 +1855,7 @@ export function ScheduleCalendarApp() {
     try {
       window.localStorage.setItem(
         scheduleStorageKey,
-        JSON.stringify({
-          version: scheduleStorageVersion,
-          events,
-          settings,
-          postTemplates: userPostTemplates
-        })
+        JSON.stringify(createScheduleStoragePayload(events, settings, userPostTemplates))
       );
       setStorageError("");
     } catch {
@@ -1934,10 +1951,7 @@ export function ScheduleCalendarApp() {
     setDraft(
       firstEvent
         ? { ...firstEvent }
-        : createEmptyEvent(dateKey, {
-            startTime: settings.defaultStartTime,
-            durationMinutes: settings.defaultDurationMinutes
-          })
+        : createEventDraft(dateKey, settings)
     );
     setStatusMessage("");
   }
@@ -1959,10 +1973,7 @@ export function ScheduleCalendarApp() {
   }
 
   function createNewEvent() {
-    const next = createEmptyEvent(selectedDateKey, {
-      startTime: settings.defaultStartTime,
-      durationMinutes: settings.defaultDurationMinutes
-    });
+    const next = createEventDraft(selectedDateKey, settings);
     setSelectedEventId(null);
     setDraft(next);
     setActiveTab("schedule");
@@ -1977,10 +1988,7 @@ export function ScheduleCalendarApp() {
     const endHour = Math.floor(endMinutes / 60);
     const endMinute = endMinutes % 60;
     const next = {
-      ...createEmptyEvent(selectedDateKey, {
-        startTime: settings.defaultStartTime,
-        durationMinutes: settings.defaultDurationMinutes
-      }),
+      ...createEventDraft(selectedDateKey, settings),
       startTime: `${String(startHour).padStart(2, "0")}:${String(startMinute).padStart(2, "0")}`,
       endTime: `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`
     };
@@ -2017,12 +2025,7 @@ export function ScheduleCalendarApp() {
 
     setEvents((current) => current.filter((event) => event.id !== selectedEvent.id));
     setSelectedEventId(null);
-    setDraft(
-      createEmptyEvent(selectedDateKey, {
-        startTime: settings.defaultStartTime,
-        durationMinutes: settings.defaultDurationMinutes
-      })
-    );
+    setDraft(createEventDraft(selectedDateKey, settings));
     setMobileSheetOpen(false);
     setStatusMessage("予定を削除しました。");
   }
@@ -2087,12 +2090,7 @@ export function ScheduleCalendarApp() {
   }
 
   function exportJson() {
-    const payload = {
-      version: scheduleStorageVersion,
-      events,
-      settings,
-      postTemplates: userPostTemplates
-    };
+    const payload = createScheduleStoragePayload(events, settings, userPostTemplates);
     setImportText(JSON.stringify(payload, null, 2));
     setSettingsStatus("JSONを出力しました。");
   }
@@ -2111,12 +2109,7 @@ export function ScheduleCalendarApp() {
       setTemplateId(payload.settings.defaultTemplateId);
       setView(payload.settings.defaultView);
       setSelectedEventId(null);
-      setDraft(
-        createEmptyEvent(selectedDateKey, {
-          startTime: payload.settings.defaultStartTime,
-          durationMinutes: payload.settings.defaultDurationMinutes
-        })
-      );
+      setDraft(createEventDraft(selectedDateKey, payload.settings));
       setSettingsStatus("JSONをインポートしました。");
       setStorageError("");
     } catch {
@@ -2168,12 +2161,7 @@ export function ScheduleCalendarApp() {
     setCursorDate(nextDate);
     setSelectedDateKey(nextKey);
     setSelectedEventId(null);
-    setDraft(
-      createEmptyEvent(nextKey, {
-        startTime: settings.defaultStartTime,
-        durationMinutes: settings.defaultDurationMinutes
-      })
-    );
+    setDraft(createEventDraft(nextKey, settings));
     setStatusMessage("");
   }
 

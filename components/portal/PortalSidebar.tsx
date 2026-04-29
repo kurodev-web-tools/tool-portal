@@ -59,7 +59,7 @@ export function PortalSidebar() {
           <p className="mb-3 hidden px-2 text-xs font-semibold text-muted xl:block">固定ナビ</p>
           <div className="space-y-1">
             {fixedItems.map((item) => (
-              <SidebarLink key={item.href} {...item} exact={item.href === "/"} />
+              <SidebarLink key={item.href} {...item} exact={item.href === "/" || item.href === "/tools"} />
             ))}
           </div>
         </section>

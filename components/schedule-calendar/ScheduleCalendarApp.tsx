@@ -46,6 +46,11 @@ type PendingUndo = {
   actionLabel: string;
   restoreEvent: ScheduleEvent;
 };
+type DragGuide = {
+  dateKey: string;
+  startMinutes: number;
+  durationMinutes: number;
+};
 
 const viewLabels: Record<CalendarView, string> = {
   month: "月",
@@ -65,7 +70,7 @@ const mobileOnlyClassName = "lg:hidden";
 const tabletUpClassName = "hidden lg:block";
 const tabletUpContentsClassName = "hidden lg:contents";
 const mobileSheetMaxHeightClassName = "max-h-[74vh]";
-const timeGridMinHeightClassName = "min-h-[1248px] lg:min-h-[1152px] xl:min-h-[1248px]";
+const timeGridMinHeightClassName = "min-h-[1152px]";
 const timeSlotHeightClassName = "h-6";
 const weekGridTemplateColumns = "48px repeat(7, minmax(84px, 1fr))";
 const emptyEventsMessage = "予定はまだありません。";
@@ -258,13 +263,45 @@ function useMeasuredScrollbarWidth() {
   return { scrollContainerRef, scrollbarWidth };
 }
 
-function getEventStyle(event: ScheduleEvent) {
-  const start = Math.max(timelineStartMinutes, getEventStartMinutes(event));
-  const duration = Math.min(timelineEndMinutes - start, getEventDurationMinutes(event));
+function getTimelineBlockStyle(startMinutes: number, durationMinutes: number) {
+  const start = Math.max(timelineStartMinutes, startMinutes);
+  const duration = Math.min(timelineEndMinutes - start, durationMinutes);
   return {
     top: `${((start - timelineStartMinutes) / timelineMinutes) * 100}%`,
     height: `${(duration / timelineMinutes) * 100}%`
   };
+}
+
+function getEventStyle(event: ScheduleEvent) {
+  return getTimelineBlockStyle(getEventStartMinutes(event), getEventDurationMinutes(event));
+}
+
+function clampTimelineStartMinutes(minutes: number) {
+  return Math.min(timelineEndMinutes - 30, Math.max(timelineStartMinutes, minutes));
+}
+
+function getDropStartMinutes(detail: DragEvent<HTMLElement>) {
+  const rect = detail.currentTarget.getBoundingClientRect();
+  const ratio = rect.height > 0 ? (detail.clientY - rect.top) / rect.height : 0;
+  const rawMinutes = timelineStartMinutes + ratio * timelineMinutes;
+  return clampTimelineStartMinutes(Math.round(rawMinutes / 30) * 30);
+}
+
+function getEndTimeFromStart(startMinutes: number, durationMinutes: number) {
+  return formatSlot(Math.min(timelineEndMinutes - 1, startMinutes + durationMinutes));
+}
+
+function DragMoveGuide({ guide }: { guide: DragGuide }) {
+  return (
+    <div
+      className="pointer-events-none absolute left-2 right-2 z-20 rounded-base border-2 border-dashed border-primary bg-primary-soft/55 px-2 py-1 text-xs font-black text-primary-strong shadow-sm"
+      style={getTimelineBlockStyle(guide.startMinutes, Math.max(30, guide.durationMinutes))}
+    >
+      <span className="block truncate">
+        ここに移動 {formatSlot(guide.startMinutes)} - {getEndTimeFromStart(guide.startMinutes, guide.durationMinutes)}
+      </span>
+    </div>
+  );
 }
 
 function FieldLabel({ children }: { children: ReactNode }) {
@@ -381,7 +418,7 @@ function TimeLabelColumn() {
               isHour ? "border-border/80 text-muted" : "border-border/35 text-muted/55"
             ].join(" ")}
           >
-            {isHour ? formatSlot(minutes) : <span className="text-[10px]">30</span>}
+            {isHour ? formatSlot(minutes) : null}
           </div>
         );
       })}
@@ -412,13 +449,15 @@ function EventPill({
   selected,
   compact = false,
   onSelect,
-  onDragStart
+  onDragStart,
+  onDragEnd
 }: {
   event: ScheduleEvent;
   selected: boolean;
   compact?: boolean;
   onSelect: (event: ScheduleEvent) => void;
   onDragStart?: (event: ScheduleEvent, detail: DragEvent<HTMLButtonElement>) => void;
+  onDragEnd?: () => void;
 }) {
   const meta = categoryMeta[event.category];
 
@@ -427,6 +466,7 @@ function EventPill({
       type="button"
       draggable={Boolean(onDragStart)}
       onDragStart={(detail) => onDragStart?.(event, detail)}
+      onDragEnd={onDragEnd}
       onClick={(detail) => {
         detail.stopPropagation();
         onSelect(event);
@@ -499,11 +539,12 @@ function WeekView({
   selectedEventId: string | null;
   onSelectDate: (dateKey: string) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
-  onMoveEventDate: (event: ScheduleEvent, dateKey: string) => void;
+  onMoveEventDate: (event: ScheduleEvent, dateKey: string, startMinutes?: number) => void;
 }) {
   const days = getWeekDays(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
   const { scrollContainerRef, scrollbarWidth } = useMeasuredScrollbarWidth();
+  const [dragGuide, setDragGuide] = useState<DragGuide | null>(null);
 
   const weekHeaderGridStyle = {
     gridTemplateColumns: `${weekGridTemplateColumns} ${scrollbarWidth}px`
@@ -549,19 +590,34 @@ function WeekView({
           {days.map((day, dayIndex) => {
             const key = toDateKey(day);
             const dayEvents = getEventsForDate(events, key);
+            const guideEvent = events.find((event) => event.id === selectedEventId);
             return (
               <div
                 key={key}
                 role="button"
                 tabIndex={0}
                 onClick={() => onSelectDate(key)}
-                onDragOver={(event) => event.preventDefault()}
+                onDragOver={(detail) => {
+                  detail.preventDefault();
+                  if (!guideEvent) {
+                    return;
+                  }
+
+                  setDragGuide({
+                    dateKey: key,
+                    startMinutes: getDropStartMinutes(detail),
+                    durationMinutes: getEventDurationMinutes(guideEvent)
+                  });
+                }}
+                onDragLeave={() => setDragGuide((current) => (current?.dateKey === key ? null : current))}
                 onDrop={(detail) => {
+                  detail.preventDefault();
                   const draggedEventId = getDraggedEventId(detail);
                   const draggedEvent = events.find((event) => event.id === draggedEventId);
                   if (draggedEvent) {
-                    onMoveEventDate(draggedEvent, key);
+                    onMoveEventDate(draggedEvent, key, getDropStartMinutes(detail));
                   }
+                  setDragGuide(null);
                 }}
                 onKeyDown={(event) => handleDateKeyDown(event, () => onSelectDate(key))}
                 className={[
@@ -572,6 +628,7 @@ function WeekView({
                 ].join(" ")}
               >
                 <TimeSlotLines />
+                {dragGuide?.dateKey === key ? <DragMoveGuide guide={dragGuide} /> : null}
                 {dayEvents.length === 0 ? (
                   <span className="absolute left-2 right-2 top-1 flex h-6 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-2 text-center text-[11px] font-bold text-muted">
                     予定なし
@@ -587,6 +644,7 @@ function WeekView({
                         setDraggedEvent(detail, draggedEvent);
                         onSelectEvent(draggedEvent);
                       }}
+                      onDragEnd={() => setDragGuide(null)}
                     />
                   </span>
                 ))}
@@ -782,14 +840,18 @@ function DayView({
   events,
   selectedDateKey,
   selectedEventId,
-  onSelectEvent
+  onSelectEvent,
+  onMoveEventDate
 }: {
   events: ScheduleEvent[];
   selectedDateKey: string;
   selectedEventId: string | null;
   onSelectEvent: (event: ScheduleEvent) => void;
+  onMoveEventDate: (event: ScheduleEvent, dateKey: string, startMinutes?: number) => void;
 }) {
   const dayEvents = getEventsForDate(events, selectedDateKey);
+  const [dragGuide, setDragGuide] = useState<DragGuide | null>(null);
+  const guideEvent = events.find((event) => event.id === selectedEventId);
 
   return (
     <div className="flex h-full min-w-[620px] min-h-0 flex-col">
@@ -800,8 +862,33 @@ function DayView({
       <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
         <div className="grid grid-cols-[64px_1fr]">
           <TimeLabelColumn />
-          <div className={["relative bg-surface", timeGridMinHeightClassName].join(" ")}>
+          <div
+            className={["relative bg-surface", timeGridMinHeightClassName].join(" ")}
+            onDragOver={(detail) => {
+              detail.preventDefault();
+              if (!guideEvent) {
+                return;
+              }
+
+              setDragGuide({
+                dateKey: selectedDateKey,
+                startMinutes: getDropStartMinutes(detail),
+                durationMinutes: getEventDurationMinutes(guideEvent)
+              });
+            }}
+            onDragLeave={() => setDragGuide(null)}
+            onDrop={(detail) => {
+              detail.preventDefault();
+              const draggedEventId = getDraggedEventId(detail);
+              const draggedEvent = events.find((event) => event.id === draggedEventId);
+              if (draggedEvent) {
+                onMoveEventDate(draggedEvent, selectedDateKey, getDropStartMinutes(detail));
+              }
+              setDragGuide(null);
+            }}
+          >
             <TimeSlotLines />
+            {dragGuide ? <DragMoveGuide guide={dragGuide} /> : null}
             {dayEvents.length === 0 ? (
               <div className="absolute left-3 right-3 top-1 flex h-6 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-3 text-center text-[11px] font-bold text-muted">
                 この日の予定はまだありません。右パネルから追加できます。
@@ -809,7 +896,16 @@ function DayView({
             ) : null}
             {dayEvents.map((event) => (
               <div key={event.id} className="absolute left-4 right-4" style={getEventStyle(event)}>
-                <EventPill event={event} selected={selectedEventId === event.id} onSelect={onSelectEvent} />
+                <EventPill
+                  event={event}
+                  selected={selectedEventId === event.id}
+                  onSelect={onSelectEvent}
+                  onDragStart={(draggedEvent, detail) => {
+                    setDraggedEvent(detail, draggedEvent);
+                    onSelectEvent(draggedEvent);
+                  }}
+                  onDragEnd={() => setDragGuide(null)}
+                />
               </div>
             ))}
           </div>
@@ -2359,12 +2455,18 @@ export function ScheduleCalendarApp() {
     setStatusMessage("予定を複製しました。");
   }
 
-  function moveEventDate(event: ScheduleEvent, dateKey: string) {
-    if (event.date === dateKey) {
+  function moveEventDate(event: ScheduleEvent, dateKey: string, startMinutes?: number) {
+    const hasTimeMove = typeof startMinutes === "number";
+    const nextStartTime = hasTimeMove ? formatSlot(clampTimelineStartMinutes(startMinutes)) : event.startTime;
+    const nextEndTime = hasTimeMove
+      ? getEndTimeFromStart(clampTimelineStartMinutes(startMinutes), getEventDurationMinutes(event))
+      : event.endTime;
+
+    if (event.date === dateKey && event.startTime === nextStartTime && event.endTime === nextEndTime) {
       return;
     }
 
-    const nextEvent = { ...event, date: dateKey };
+    const nextEvent = { ...event, date: dateKey, startTime: nextStartTime, endTime: nextEndTime };
     setEvents((current) => sortEvents(current.map((item) => (item.id === event.id ? nextEvent : item))));
     setSelectedDateKey(dateKey);
     setCursorDate(parseDateKey(dateKey));
@@ -2617,6 +2719,7 @@ export function ScheduleCalendarApp() {
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
                 onSelectEvent={selectEvent}
+                onMoveEventDate={moveEventDate}
               />
             ) : null}
           </div>

@@ -66,6 +66,16 @@ const emptySearchResultsMessage = "条件に一致する予定はありません
 const saveFailureMessage = "保存できませんでした。ブラウザの保存領域を確認してください。";
 const importFailureMessage = "JSONをインポートできませんでした。形式を確認してください。既存データは変更していません。";
 const defaultDurationMinuteOptions = [30, 45, 60, 90, 120, 180];
+const importTextMaxLength = 250_000;
+const importMaxEvents = 500;
+const importMaxTemplates = 50;
+const importMaxTextLengths = {
+  title: 120,
+  memo: 2000,
+  templateName: 80,
+  templateDescription: 240,
+  templateBody: 4000
+};
 
 function formatSlot(minutes: number) {
   const hour = Math.floor(minutes / 60);
@@ -91,6 +101,74 @@ function isImportableSchedulePayload(value: unknown) {
 
   const payload = value as Record<string, unknown>;
   return "version" in payload || "events" in payload || "settings" in payload || "postTemplates" in payload;
+}
+
+function isStringWithinLimit(value: unknown, maxLength: number) {
+  return typeof value !== "string" || value.length <= maxLength;
+}
+
+function validateImportEvents(value: unknown) {
+  if (value === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(value) || value.length > importMaxEvents) {
+    throw new Error("Import events exceeded limits");
+  }
+
+  value.forEach((item) => {
+    if (!item || typeof item !== "object") {
+      return;
+    }
+
+    const event = item as Partial<ScheduleEvent>;
+    if (
+      !isStringWithinLimit(event.title, importMaxTextLengths.title) ||
+      !isStringWithinLimit(event.memo, importMaxTextLengths.memo)
+    ) {
+      throw new Error("Import event text exceeded limits");
+    }
+  });
+}
+
+function validateImportTemplates(value: unknown) {
+  if (value === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(value) || value.length > importMaxTemplates) {
+    throw new Error("Import templates exceeded limits");
+  }
+
+  value.forEach((item) => {
+    if (!item || typeof item !== "object") {
+      return;
+    }
+
+    const template = item as Partial<PostTemplate>;
+    if (
+      !isStringWithinLimit(template.name, importMaxTextLengths.templateName) ||
+      !isStringWithinLimit(template.description, importMaxTextLengths.templateDescription) ||
+      !isStringWithinLimit(template.body, importMaxTextLengths.templateBody)
+    ) {
+      throw new Error("Import template text exceeded limits");
+    }
+  });
+}
+
+function validateImportPayloadLimits(value: unknown) {
+  if (Array.isArray(value)) {
+    validateImportEvents(value);
+    return;
+  }
+
+  if (!value || typeof value !== "object") {
+    throw new Error("Unsupported import payload");
+  }
+
+  const payload = value as Partial<ScheduleStoragePayload>;
+  validateImportEvents(payload.events);
+  validateImportTemplates(payload.postTemplates);
 }
 
 function createEventDraft(dateKey: string, settings: ScheduleSettings) {
@@ -2156,11 +2234,16 @@ export function ScheduleCalendarApp() {
 
   function importJson() {
     try {
+      if (importText.length > importTextMaxLength) {
+        throw new Error("Import text exceeded limits");
+      }
+
       const parsedPayload = JSON.parse(importText);
       if (!isImportableSchedulePayload(parsedPayload)) {
         throw new Error("Unsupported import payload");
       }
 
+      validateImportPayloadLimits(parsedPayload);
       const payload = normalizeStoragePayload(parsedPayload);
       setEvents(payload.events);
       setSettings(payload.settings);
@@ -2177,6 +2260,11 @@ export function ScheduleCalendarApp() {
   }
 
   function resetAllData() {
+    const confirmed = window.confirm("予定、設定、投稿補助テンプレートをすべて初期化します。この操作は元に戻せません。");
+    if (!confirmed) {
+      return;
+    }
+
     const currentDateKey = toDateKey(new Date());
     setEvents([]);
     setSettings(defaultScheduleSettings);

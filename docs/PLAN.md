@@ -97,11 +97,20 @@
 - 個人用アプリ領域 `/app`
 - サイドバーの `Recent / Favorites / Pinned`
 - 将来の保存先としての Cloudflare 基盤検討
+- 保存データの分類、保持、削除、エクスポート方針
+- 認証後のアクセス制御と外部連携トークンの保管方針
 
 候補技術:
 
 - Pages Functions
 - Workers + D1/KV
+
+セキュリティ前提:
+
+- 公開ポータル `/` / `/tools/...` と個人領域 `/app/...` を分ける
+- access token / refresh token / API key は localStorage に保存しない
+- 認可チェックは middleware / Pages Functions / Workers などのサーバー側境界で一元化する
+- Cloudflare 側の Secrets、D1/KV/R2、暗号化、ローテーション、監査ログの責務を導入前に決める
 
 ### Phase 4: 他ツール追加
 
@@ -185,3 +194,4 @@
 - Phase 2 では `/tools/schedule-calendar` を作業画面として実装し、週表示を主軸に月 / 日表示と投稿補助を同じUI言語で揃える
 - Phase 2 の次スプリントでは、不足実装として `設定タブ実用化`・`投稿補助テンプレート設定（CRUD + 既定選択）`・`予定一覧強化（ソート/フィルタ/検索）`・`localStorage の versioned payload 化` を優先する
 - 認証、サーバー保存、外部API連携、AI生成は後続フェーズへ送る
+- PR前のセキュリティ改善は、Cloudflare Pages 用 security headers、git 追跡対象からのローカル実行物除外、JSON import 上限、localStorage 平文保存の注意書きを優先する

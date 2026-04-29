@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PortalFilterBar } from "@/components/portal/PortalFilterBar";
 import { ToolCard } from "@/components/portal/ToolCard";
@@ -16,18 +16,11 @@ export function PortalToolsIndex() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const suiteParam = searchParams.get("suite");
-  const initialSuite = isSuiteKey(suiteParam) ? suiteParam : "all";
-  const [suite, setSuite] = useState<SuiteKey | "all">(initialSuite);
+  const suite: SuiteKey | "all" = isSuiteKey(suiteParam) ? suiteParam : "all";
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("all");
 
-  useEffect(() => {
-    setSuite(initialSuite);
-  }, [initialSuite]);
-
   const handleSuiteChange = (nextSuite: SuiteKey | "all") => {
-    setSuite(nextSuite);
-
     const params = new URLSearchParams(searchParams.toString());
     if (nextSuite === "all") {
       params.delete("suite");

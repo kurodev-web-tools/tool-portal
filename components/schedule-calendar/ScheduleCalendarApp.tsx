@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 import {
   addDays,
   addMonths,
@@ -21,6 +21,7 @@ import {
   parseDateKey,
   platformOptions,
   postTemplates,
+  recurrenceOptions,
   scheduleStorageKey,
   scheduleStorageVersion,
   sortEvents,
@@ -39,6 +40,17 @@ type CopyStatusKind = "idle" | "success" | "error";
 type MobileNavTab = "calendar" | "events" | "settings";
 type EventPeriodFilter = "all" | "today" | "week" | "month";
 type EventSortOrder = "upcoming" | "dateAsc" | "dateDesc";
+type PendingUndo = {
+  title: string;
+  detail: string;
+  actionLabel: string;
+  restoreEvent: ScheduleEvent;
+};
+type DragGuide = {
+  dateKey: string;
+  startMinutes: number;
+  durationMinutes: number;
+};
 
 const viewLabels: Record<CalendarView, string> = {
   month: "月",
@@ -58,7 +70,7 @@ const mobileOnlyClassName = "lg:hidden";
 const tabletUpClassName = "hidden lg:block";
 const tabletUpContentsClassName = "hidden lg:contents";
 const mobileSheetMaxHeightClassName = "max-h-[74vh]";
-const timeGridMinHeightClassName = "min-h-[1248px] lg:min-h-[1152px] xl:min-h-[1248px]";
+const timeGridMinHeightClassName = "min-h-[1152px]";
 const timeSlotHeightClassName = "h-6";
 const weekGridTemplateColumns = "48px repeat(7, minmax(84px, 1fr))";
 const emptyEventsMessage = "予定はまだありません。";
@@ -76,6 +88,7 @@ const importMaxTextLengths = {
   templateDescription: 240,
   templateBody: 4000
 };
+const maxRecurrenceCount = 30;
 
 function formatSlot(minutes: number) {
   const hour = Math.floor(minutes / 60);
@@ -191,6 +204,27 @@ function createScheduleStoragePayload(
   };
 }
 
+function createEventId() {
+  return `event-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function createRecurringEvents(event: ScheduleEvent) {
+  const recurrence = event.recurrence ?? "none";
+  const count = recurrence === "none" ? 1 : Math.min(maxRecurrenceCount, Math.max(1, Math.floor(event.recurrenceCount ?? 1)));
+  const stepDays = recurrence === "weekly" ? 7 : 1;
+
+  return Array.from({ length: count }, (_, index) => {
+    const date = index === 0 ? event.date : toDateKey(addDays(parseDateKey(event.date), stepDays * index));
+    return {
+      ...event,
+      id: index === 0 ? event.id : createEventId(),
+      date,
+      recurrence,
+      recurrenceCount: count
+    };
+  });
+}
+
 function hasActiveEventListFilters(filters: EventListFilters) {
   return (
     Boolean(filters.query.trim()) ||
@@ -229,17 +263,58 @@ function useMeasuredScrollbarWidth() {
   return { scrollContainerRef, scrollbarWidth };
 }
 
-function getEventStyle(event: ScheduleEvent) {
-  const start = Math.max(timelineStartMinutes, getEventStartMinutes(event));
-  const duration = Math.min(timelineEndMinutes - start, getEventDurationMinutes(event));
+function getTimelineBlockStyle(startMinutes: number, durationMinutes: number) {
+  const start = Math.max(timelineStartMinutes, startMinutes);
+  const duration = Math.min(timelineEndMinutes - start, durationMinutes);
   return {
     top: `${((start - timelineStartMinutes) / timelineMinutes) * 100}%`,
     height: `${(duration / timelineMinutes) * 100}%`
   };
 }
 
+function getEventStyle(event: ScheduleEvent) {
+  return getTimelineBlockStyle(getEventStartMinutes(event), getEventDurationMinutes(event));
+}
+
+function clampTimelineStartMinutes(minutes: number) {
+  return Math.min(timelineEndMinutes - 30, Math.max(timelineStartMinutes, minutes));
+}
+
+function getDropStartMinutes(detail: DragEvent<HTMLElement>) {
+  const rect = detail.currentTarget.getBoundingClientRect();
+  const ratio = rect.height > 0 ? (detail.clientY - rect.top) / rect.height : 0;
+  const rawMinutes = timelineStartMinutes + ratio * timelineMinutes;
+  return clampTimelineStartMinutes(Math.round(rawMinutes / 30) * 30);
+}
+
+function getEndTimeFromStart(startMinutes: number, durationMinutes: number) {
+  return formatSlot(Math.min(timelineEndMinutes - 1, startMinutes + durationMinutes));
+}
+
+function DragMoveGuide({ guide }: { guide: DragGuide }) {
+  return (
+    <div
+      className="pointer-events-none absolute left-2 right-2 z-20 rounded-base border-2 border-dashed border-primary bg-primary-soft/55 px-2 py-1 text-xs font-black text-primary-strong shadow-sm"
+      style={getTimelineBlockStyle(guide.startMinutes, Math.max(30, guide.durationMinutes))}
+    >
+      <span className="block truncate">
+        ここに移動 {formatSlot(guide.startMinutes)} - {getEndTimeFromStart(guide.startMinutes, guide.durationMinutes)}
+      </span>
+    </div>
+  );
+}
+
 function FieldLabel({ children }: { children: ReactNode }) {
   return <p className="text-xs font-bold text-muted">{children}</p>;
+}
+
+function setDraggedEvent(detail: DragEvent, event: ScheduleEvent) {
+  detail.dataTransfer.setData("text/plain", event.id);
+  detail.dataTransfer.effectAllowed = "move";
+}
+
+function getDraggedEventId(detail: DragEvent) {
+  return detail.dataTransfer.getData("text/plain");
 }
 
 function inputClassName(extra = "") {
@@ -343,7 +418,7 @@ function TimeLabelColumn() {
               isHour ? "border-border/80 text-muted" : "border-border/35 text-muted/55"
             ].join(" ")}
           >
-            {isHour ? formatSlot(minutes) : <span className="text-[10px]">30</span>}
+            {isHour ? formatSlot(minutes) : null}
           </div>
         );
       })}
@@ -373,18 +448,25 @@ function EventPill({
   event,
   selected,
   compact = false,
-  onSelect
+  onSelect,
+  onDragStart,
+  onDragEnd
 }: {
   event: ScheduleEvent;
   selected: boolean;
   compact?: boolean;
   onSelect: (event: ScheduleEvent) => void;
+  onDragStart?: (event: ScheduleEvent, detail: DragEvent<HTMLButtonElement>) => void;
+  onDragEnd?: () => void;
 }) {
   const meta = categoryMeta[event.category];
 
   return (
     <button
       type="button"
+      draggable={Boolean(onDragStart)}
+      onDragStart={(detail) => onDragStart?.(event, detail)}
+      onDragEnd={onDragEnd}
       onClick={(detail) => {
         detail.stopPropagation();
         onSelect(event);
@@ -408,17 +490,21 @@ function EventPill({
 function MonthEventRow({
   event,
   selected,
-  onSelect
+  onSelect,
+  onDragStart
 }: {
   event: ScheduleEvent;
   selected: boolean;
   onSelect: (event: ScheduleEvent) => void;
+  onDragStart?: (event: ScheduleEvent, detail: DragEvent<HTMLButtonElement>) => void;
 }) {
   const meta = categoryMeta[event.category];
 
   return (
     <button
       type="button"
+      draggable={Boolean(onDragStart)}
+      onDragStart={(detail) => onDragStart?.(event, detail)}
       onClick={(detail) => {
         detail.stopPropagation();
         onSelect(event);
@@ -443,7 +529,8 @@ function WeekView({
   selectedDateKey,
   selectedEventId,
   onSelectDate,
-  onSelectEvent
+  onSelectEvent,
+  onMoveEventDate
 }: {
   events: ScheduleEvent[];
   cursorDate: Date;
@@ -452,10 +539,12 @@ function WeekView({
   selectedEventId: string | null;
   onSelectDate: (dateKey: string) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
+  onMoveEventDate: (event: ScheduleEvent, dateKey: string, startMinutes?: number) => void;
 }) {
   const days = getWeekDays(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
   const { scrollContainerRef, scrollbarWidth } = useMeasuredScrollbarWidth();
+  const [dragGuide, setDragGuide] = useState<DragGuide | null>(null);
 
   const weekHeaderGridStyle = {
     gridTemplateColumns: `${weekGridTemplateColumns} ${scrollbarWidth}px`
@@ -501,12 +590,35 @@ function WeekView({
           {days.map((day, dayIndex) => {
             const key = toDateKey(day);
             const dayEvents = getEventsForDate(events, key);
+            const guideEvent = events.find((event) => event.id === selectedEventId);
             return (
               <div
                 key={key}
                 role="button"
                 tabIndex={0}
                 onClick={() => onSelectDate(key)}
+                onDragOver={(detail) => {
+                  detail.preventDefault();
+                  if (!guideEvent) {
+                    return;
+                  }
+
+                  setDragGuide({
+                    dateKey: key,
+                    startMinutes: getDropStartMinutes(detail),
+                    durationMinutes: getEventDurationMinutes(guideEvent)
+                  });
+                }}
+                onDragLeave={() => setDragGuide((current) => (current?.dateKey === key ? null : current))}
+                onDrop={(detail) => {
+                  detail.preventDefault();
+                  const draggedEventId = getDraggedEventId(detail);
+                  const draggedEvent = events.find((event) => event.id === draggedEventId);
+                  if (draggedEvent) {
+                    onMoveEventDate(draggedEvent, key, getDropStartMinutes(detail));
+                  }
+                  setDragGuide(null);
+                }}
                 onKeyDown={(event) => handleDateKeyDown(event, () => onSelectDate(key))}
                 className={[
                   "relative text-left",
@@ -516,6 +628,7 @@ function WeekView({
                 ].join(" ")}
               >
                 <TimeSlotLines />
+                {dragGuide?.dateKey === key ? <DragMoveGuide guide={dragGuide} /> : null}
                 {dayEvents.length === 0 ? (
                   <span className="absolute left-2 right-2 top-1 flex h-6 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-2 text-center text-[11px] font-bold text-muted">
                     予定なし
@@ -523,7 +636,16 @@ function WeekView({
                 ) : null}
                 {dayEvents.map((event) => (
                   <span key={event.id} className="absolute left-2 right-2 block" style={getEventStyle(event)}>
-                    <EventPill event={event} selected={selectedEventId === event.id} onSelect={onSelectEvent} />
+                    <EventPill
+                      event={event}
+                      selected={selectedEventId === event.id}
+                      onSelect={onSelectEvent}
+                      onDragStart={(draggedEvent, detail) => {
+                        setDraggedEvent(detail, draggedEvent);
+                        onSelectEvent(draggedEvent);
+                      }}
+                      onDragEnd={() => setDragGuide(null)}
+                    />
                   </span>
                 ))}
               </div>
@@ -542,7 +664,8 @@ function MonthView({
   selectedDateKey,
   selectedEventId,
   onSelectDate,
-  onSelectEvent
+  onSelectEvent,
+  onMoveEventDate
 }: {
   events: ScheduleEvent[];
   cursorDate: Date;
@@ -551,6 +674,7 @@ function MonthView({
   selectedEventId: string | null;
   onSelectDate: (dateKey: string) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
+  onMoveEventDate: (event: ScheduleEvent, dateKey: string) => void;
 }) {
   const days = getMonthGrid(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
@@ -588,6 +712,14 @@ function MonthView({
                 role="button"
                 tabIndex={0}
                 onClick={() => onSelectDate(key)}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(detail) => {
+                  const draggedEventId = getDraggedEventId(detail);
+                  const draggedEvent = events.find((event) => event.id === draggedEventId);
+                  if (draggedEvent) {
+                    onMoveEventDate(draggedEvent, key);
+                  }
+                }}
                 onKeyDown={(event) => handleDateKeyDown(event, () => onSelectDate(key))}
                 className={[
                   "min-h-28 border-b border-border p-2 text-left transition hover:bg-primary-soft/25",
@@ -611,6 +743,10 @@ function MonthView({
                       event={event}
                       selected={selectedEventId === event.id}
                       onSelect={onSelectEvent}
+                      onDragStart={(draggedEvent, detail) => {
+                        setDraggedEvent(detail, draggedEvent);
+                        onSelectEvent(draggedEvent);
+                      }}
                     />
                   ))}
                   {dayEvents.length > 2 ? (
@@ -704,14 +840,18 @@ function DayView({
   events,
   selectedDateKey,
   selectedEventId,
-  onSelectEvent
+  onSelectEvent,
+  onMoveEventDate
 }: {
   events: ScheduleEvent[];
   selectedDateKey: string;
   selectedEventId: string | null;
   onSelectEvent: (event: ScheduleEvent) => void;
+  onMoveEventDate: (event: ScheduleEvent, dateKey: string, startMinutes?: number) => void;
 }) {
   const dayEvents = getEventsForDate(events, selectedDateKey);
+  const [dragGuide, setDragGuide] = useState<DragGuide | null>(null);
+  const guideEvent = events.find((event) => event.id === selectedEventId);
 
   return (
     <div className="flex h-full min-w-[620px] min-h-0 flex-col">
@@ -722,8 +862,33 @@ function DayView({
       <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
         <div className="grid grid-cols-[64px_1fr]">
           <TimeLabelColumn />
-          <div className={["relative bg-surface", timeGridMinHeightClassName].join(" ")}>
+          <div
+            className={["relative bg-surface", timeGridMinHeightClassName].join(" ")}
+            onDragOver={(detail) => {
+              detail.preventDefault();
+              if (!guideEvent) {
+                return;
+              }
+
+              setDragGuide({
+                dateKey: selectedDateKey,
+                startMinutes: getDropStartMinutes(detail),
+                durationMinutes: getEventDurationMinutes(guideEvent)
+              });
+            }}
+            onDragLeave={() => setDragGuide(null)}
+            onDrop={(detail) => {
+              detail.preventDefault();
+              const draggedEventId = getDraggedEventId(detail);
+              const draggedEvent = events.find((event) => event.id === draggedEventId);
+              if (draggedEvent) {
+                onMoveEventDate(draggedEvent, selectedDateKey, getDropStartMinutes(detail));
+              }
+              setDragGuide(null);
+            }}
+          >
             <TimeSlotLines />
+            {dragGuide ? <DragMoveGuide guide={dragGuide} /> : null}
             {dayEvents.length === 0 ? (
               <div className="absolute left-3 right-3 top-1 flex h-6 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-3 text-center text-[11px] font-bold text-muted">
                 この日の予定はまだありません。右パネルから追加できます。
@@ -731,7 +896,16 @@ function DayView({
             ) : null}
             {dayEvents.map((event) => (
               <div key={event.id} className="absolute left-4 right-4" style={getEventStyle(event)}>
-                <EventPill event={event} selected={selectedEventId === event.id} onSelect={onSelectEvent} />
+                <EventPill
+                  event={event}
+                  selected={selectedEventId === event.id}
+                  onSelect={onSelectEvent}
+                  onDragStart={(draggedEvent, detail) => {
+                    setDraggedEvent(detail, draggedEvent);
+                    onSelectEvent(draggedEvent);
+                  }}
+                  onDragEnd={() => setDragGuide(null)}
+                />
               </div>
             ))}
           </div>
@@ -938,7 +1112,7 @@ function MobileEventList({
           value={filters.query}
           onChange={(event) => onFilterChange({ ...filters, query: event.target.value })}
           className={inputClassName("mt-0")}
-          placeholder="タイトル・メモを検索"
+          placeholder="タイトルを検索"
         />
         <div className="grid grid-cols-2 gap-2">
           <select
@@ -1004,6 +1178,7 @@ function MobileEventList({
               <span className="mt-2 inline-flex rounded-base bg-surface px-2 py-1 text-xs font-bold text-muted">
                 {categoryMeta[event.category].label}
                 {event.platform ? ` / ${event.platform}` : ""}
+                {event.recurrence && event.recurrence !== "none" ? ` / ${recurrenceOptions.find((option) => option.value === event.recurrence)?.label}` : ""}
               </span>
             </button>
           ))
@@ -1147,13 +1322,16 @@ function MobileSettingsPanel({
       >
         <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={onExport} className="flat-control px-3 py-2">
-            JSONエクスポート
+            バックアップ作成
           </button>
           <button type="button" onClick={onImport} className="flat-control px-3 py-2">
-            JSONインポート
+            バックアップ復元
           </button>
         </div>
-        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-24 resize-none")} placeholder="インポートする JSON を貼り付け" />
+        <p className="text-xs leading-5 text-muted">
+          作成したJSONを安全な場所に保管してください。復元に失敗した場合、既存データは変更しません。
+        </p>
+        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-24 resize-none")} placeholder="復元する JSON を貼り付け" />
         <button type="button" onClick={onResetAll} className="w-full rounded-base border border-red-300 px-3 py-2 text-sm font-bold text-red-600">
           全データ初期化
         </button>
@@ -1230,7 +1408,7 @@ function DesktopEventListPanel({
           value={filters.query}
           onChange={(event) => onFilterChange({ ...filters, query: event.target.value })}
           className={inputClassName("mt-0")}
-          placeholder="タイトル・メモを検索"
+          placeholder="タイトルを検索"
         />
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -1321,6 +1499,7 @@ function DesktopEventListPanel({
                 <span className="mt-2 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
                   {categoryMeta[event.category].label}
                   {event.platform ? ` / ${event.platform}` : ""}
+                  {event.recurrence && event.recurrence !== "none" ? ` / ${recurrenceOptions.find((option) => option.value === event.recurrence)?.label}` : ""}
                 </span>
               </button>
             ))
@@ -1495,13 +1674,16 @@ function DesktopSettingsPanel({
       >
         <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={onExport} className="flat-control px-3 py-2">
-            JSONエクスポート
+            バックアップ作成
           </button>
           <button type="button" onClick={onImport} className="flat-control px-3 py-2">
-            JSONインポート
+            バックアップ復元
           </button>
         </div>
-        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-28 resize-none")} placeholder="インポートする JSON を貼り付け" />
+        <p className="text-xs leading-5 text-muted">
+          作成したJSONを安全な場所に保管してください。復元に失敗した場合、既存データは変更しません。
+        </p>
+        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-28 resize-none")} placeholder="復元する JSON を貼り付け" />
         <button type="button" onClick={onResetAll} className="w-full rounded-base border border-red-300 px-3 py-2 text-sm font-bold text-red-600">
           全データ削除
         </button>
@@ -1548,12 +1730,16 @@ function ScheduleForm({
   onDraftChange,
   onSave,
   onDelete,
+  onDuplicate,
+  onCancel,
   canDelete
 }: {
   draft: ScheduleEvent;
   onDraftChange: (event: ScheduleEvent) => void;
   onSave: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
+  onCancel: () => void;
   canDelete: boolean;
 }) {
   return (
@@ -1645,6 +1831,53 @@ function ScheduleForm({
           placeholder="次回配信のセットリストやコラボ企画案を記録する。"
         />
       </div>
+      <div className="rounded-base border border-border bg-surface-muted/35 p-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <FieldLabel>繰り返し</FieldLabel>
+            <select
+              value={draft.recurrence ?? "none"}
+              onChange={(event) =>
+                onDraftChange({
+                  ...draft,
+                  recurrence: event.target.value as ScheduleEvent["recurrence"],
+                  recurrenceCount: event.target.value === "none" ? 1 : Math.max(2, draft.recurrenceCount ?? 4)
+                })
+              }
+              className={inputClassName()}
+            >
+              {recurrenceOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel>作成回数</FieldLabel>
+            <input
+              type="number"
+              min={1}
+              max={maxRecurrenceCount}
+              value={draft.recurrenceCount ?? 1}
+              onChange={(event) => onDraftChange({ ...draft, recurrenceCount: Number(event.target.value) })}
+              className={inputClassName()}
+              disabled={(draft.recurrence ?? "none") === "none"}
+            />
+          </div>
+        </div>
+        <p className="mt-2 text-xs leading-5 text-muted">
+          毎日 / 毎週のみ対応。例外日やシリーズ一括編集は未対応です。
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-2 rounded-base border border-border bg-surface-muted/35 p-3">
+        <button type="button" onClick={onDuplicate} disabled={!canDelete} className="flat-control px-3 py-2 disabled:cursor-not-allowed disabled:opacity-45">
+          複製
+        </button>
+        <button type="button" onClick={onCancel} className="flat-control px-3 py-2">
+          リセット
+        </button>
+      </div>
       <div className="sticky bottom-0 z-20 -mx-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
         <button type="button" onClick={onDelete} disabled={!canDelete} className="flat-control flex-1 border-red-300 px-3 py-2 text-red-600 disabled:cursor-not-allowed disabled:opacity-45">
           削除
@@ -1667,7 +1900,9 @@ function SchedulePanel({
   onNew,
   onSelectEvent,
   onSave,
-  onDelete
+  onDelete,
+  onDuplicate,
+  onCancel
 }: {
   selectedDateKey: string;
   selectedEvent: ScheduleEvent | null;
@@ -1679,6 +1914,8 @@ function SchedulePanel({
   onSelectEvent: (event: ScheduleEvent) => void;
   onSave: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
+  onCancel: () => void;
 }) {
   return (
     <div className="space-y-4">
@@ -1721,6 +1958,7 @@ function SchedulePanel({
                 <span className="mt-1 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
                   {categoryMeta[event.category].label}
                   {event.platform ? ` / ${event.platform}` : ""}
+                  {event.recurrence && event.recurrence !== "none" ? ` / ${recurrenceOptions.find((option) => option.value === event.recurrence)?.label}` : ""}
                 </span>
               </button>
             ))
@@ -1738,6 +1976,8 @@ function SchedulePanel({
             onDraftChange={onDraftChange}
             onSave={onSave}
             onDelete={onDelete}
+            onDuplicate={onDuplicate}
+            onCancel={onCancel}
             canDelete={Boolean(selectedEvent)}
           />
         </div>
@@ -1799,7 +2039,7 @@ function PostAssistPanel({
           readOnly
           className="mt-3 min-h-44 w-full resize-none rounded-base border border-border bg-surface-muted px-3 py-3 text-sm leading-6 text-foreground lg:text-[13px]"
         />
-        <div className="sticky bottom-0 z-20 -mx-3 mt-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <button type="button" onClick={onCopy} className="flat-control flex-1 px-3 py-2">
             コピー
           </button>
@@ -1890,10 +2130,10 @@ export function ScheduleCalendarApp() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [mobileSheetDragOffset, setMobileSheetDragOffset] = useState(0);
   const [mobileNavTab, setMobileNavTab] = useState<MobileNavTab>("calendar");
-  const [pendingDeletedEvent, setPendingDeletedEvent] = useState<ScheduleEvent | null>(null);
+  const [pendingUndo, setPendingUndo] = useState<PendingUndo | null>(null);
   const mobileSheetDragStartYRef = useRef<number | null>(null);
   const skipNextStorageWriteRef = useRef(false);
-  const undoDeleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const currentDate = new Date();
@@ -2013,7 +2253,7 @@ export function ScheduleCalendarApp() {
           return true;
         }
 
-        return `${event.title} ${event.memo}`.toLowerCase().includes(query);
+        return event.title.toLowerCase().includes(query);
       });
   }, [eventFilters, visibleEvents]);
 
@@ -2025,57 +2265,54 @@ export function ScheduleCalendarApp() {
 
   useEffect(() => {
     return () => {
-      if (undoDeleteTimerRef.current) {
-        clearTimeout(undoDeleteTimerRef.current);
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
       }
     };
   }, []);
 
-  function clearUndoDeleteTimer() {
-    if (!undoDeleteTimerRef.current) {
+  function clearUndoTimer() {
+    if (!undoTimerRef.current) {
       return;
     }
 
-    clearTimeout(undoDeleteTimerRef.current);
-    undoDeleteTimerRef.current = null;
+    clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = null;
   }
 
-  function showDeleteUndoToast(event: ScheduleEvent) {
-    clearUndoDeleteTimer();
-    setPendingDeletedEvent(event);
-    undoDeleteTimerRef.current = setTimeout(() => {
-      setPendingDeletedEvent(null);
-      undoDeleteTimerRef.current = null;
+  function showUndoToast(undo: PendingUndo) {
+    clearUndoTimer();
+    setPendingUndo(undo);
+    undoTimerRef.current = setTimeout(() => {
+      setPendingUndo(null);
+      undoTimerRef.current = null;
     }, 8000);
   }
 
-  function closeDeleteUndoToast() {
-    clearUndoDeleteTimer();
-    setPendingDeletedEvent(null);
+  function closeUndoToast() {
+    clearUndoTimer();
+    setPendingUndo(null);
   }
 
-  function restoreDeletedEvent() {
-    if (!pendingDeletedEvent) {
+  function restoreUndoEvent() {
+    if (!pendingUndo) {
       return;
     }
 
-    const restoredEvent = pendingDeletedEvent;
-    clearUndoDeleteTimer();
+    const restoredEvent = pendingUndo.restoreEvent;
+    clearUndoTimer();
     setEvents((current) => {
-      if (current.some((event) => event.id === restoredEvent.id)) {
-        return current;
-      }
-
-      return sortEvents([...current, restoredEvent]);
+      const exists = current.some((event) => event.id === restoredEvent.id);
+      return sortEvents(exists ? current.map((event) => (event.id === restoredEvent.id ? restoredEvent : event)) : [...current, restoredEvent]);
     });
-    setPendingDeletedEvent(null);
+    setPendingUndo(null);
     setSelectedDateKey(restoredEvent.date);
     setCursorDate(parseDateKey(restoredEvent.date));
     setSelectedEventId(restoredEvent.id);
     setDraft({ ...restoredEvent });
     setActiveTab("schedule");
     setMobileSheetOpen(true);
-    setStatusMessage("削除した予定を元に戻しました。");
+    setStatusMessage("予定を元に戻しました。");
   }
 
   function selectDate(dateKey: string) {
@@ -2140,17 +2377,43 @@ export function ScheduleCalendarApp() {
       return;
     }
 
-    const nextDraft = { ...draft, title: draft.title.trim() || "無題の予定" };
+    const normalizedRecurrence = draft.recurrence ?? "none";
+    const nextDraft = {
+      ...draft,
+      title: draft.title.trim() || "無題の予定",
+      recurrence: normalizedRecurrence,
+      recurrenceCount: normalizedRecurrence === "none" ? 1 : Math.min(maxRecurrenceCount, Math.max(2, Math.floor(draft.recurrenceCount ?? 4)))
+    };
+    const previousEvent = events.find((event) => event.id === nextDraft.id) ?? null;
     setEvents((current) => {
       const exists = current.some((event) => event.id === nextDraft.id);
-      return sortEvents(exists ? current.map((event) => (event.id === nextDraft.id ? nextDraft : event)) : [...current, nextDraft]);
+      if (exists) {
+        return sortEvents(current.map((event) => (event.id === nextDraft.id ? nextDraft : event)));
+      }
+
+      return sortEvents([...current, ...createRecurringEvents(nextDraft)]);
     });
     setSelectedDateKey(nextDraft.date);
     setCursorDate(parseDateKey(nextDraft.date));
     setSelectedEventId(nextDraft.id);
     setDraft(nextDraft);
     setMobileSheetOpen(true);
-    setStatusMessage("予定を保存しました。");
+    if (previousEvent) {
+      const moved =
+        previousEvent.date !== nextDraft.date ||
+        previousEvent.startTime !== nextDraft.startTime ||
+        previousEvent.endTime !== nextDraft.endTime;
+      showUndoToast({
+        title: moved ? "予定を移動しました。" : "予定を更新しました。",
+        detail: nextDraft.title || "無題の予定",
+        actionLabel: "元に戻す",
+        restoreEvent: previousEvent
+      });
+      setStatusMessage(moved ? "予定を移動しました。" : "予定を保存しました。");
+      return;
+    }
+
+    setStatusMessage(nextDraft.recurrence !== "none" ? `${nextDraft.recurrenceCount}件の繰り返し予定を作成しました。` : "予定を保存しました。");
   }
 
   function deleteSelectedEvent() {
@@ -2160,11 +2423,79 @@ export function ScheduleCalendarApp() {
 
     const deletedEvent = selectedEvent;
     setEvents((current) => current.filter((event) => event.id !== selectedEvent.id));
-    showDeleteUndoToast(deletedEvent);
+    showUndoToast({
+      title: "予定を削除しました。",
+      detail: deletedEvent.title || "無題の予定",
+      actionLabel: "元に戻す",
+      restoreEvent: deletedEvent
+    });
     setSelectedEventId(null);
     setDraft(createEventDraft(selectedDateKey, settings));
     setMobileSheetOpen(false);
     setStatusMessage("予定を削除しました。");
+  }
+
+  function duplicateSelectedEvent() {
+    if (!selectedEvent) {
+      return;
+    }
+
+    const duplicatedEvent = {
+      ...selectedEvent,
+      id: createEventId(),
+      title: `${selectedEvent.title || "無題の予定"} コピー`,
+      recurrence: "none" as const,
+      recurrenceCount: 1
+    };
+    setEvents((current) => sortEvents([...current, duplicatedEvent]));
+    setSelectedDateKey(duplicatedEvent.date);
+    setCursorDate(parseDateKey(duplicatedEvent.date));
+    setSelectedEventId(duplicatedEvent.id);
+    setDraft(duplicatedEvent);
+    setActiveTab("schedule");
+    setMobileSheetOpen(true);
+    setStatusMessage("予定を複製しました。");
+  }
+
+  function moveEventDate(event: ScheduleEvent, dateKey: string, startMinutes?: number) {
+    const hasTimeMove = typeof startMinutes === "number";
+    const nextStartTime = hasTimeMove ? formatSlot(clampTimelineStartMinutes(startMinutes)) : event.startTime;
+    const nextEndTime = hasTimeMove
+      ? getEndTimeFromStart(clampTimelineStartMinutes(startMinutes), getEventDurationMinutes(event))
+      : event.endTime;
+
+    if (event.date === dateKey && event.startTime === nextStartTime && event.endTime === nextEndTime) {
+      return;
+    }
+
+    const nextEvent = { ...event, date: dateKey, startTime: nextStartTime, endTime: nextEndTime };
+    setEvents((current) => sortEvents(current.map((item) => (item.id === event.id ? nextEvent : item))));
+    setSelectedDateKey(dateKey);
+    setCursorDate(parseDateKey(dateKey));
+    setSelectedEventId(event.id);
+    setDraft(nextEvent);
+    setActiveTab("schedule");
+    setMobileSheetOpen(true);
+    showUndoToast({
+      title: "予定を移動しました。",
+      detail: nextEvent.title || "無題の予定",
+      actionLabel: "元に戻す",
+      restoreEvent: event
+    });
+    setStatusMessage("予定を移動しました。");
+  }
+
+  function cancelDraftEdit() {
+    if (selectedEvent) {
+      setDraft({ ...selectedEvent });
+      setSelectedDateKey(selectedEvent.date);
+      setCursorDate(parseDateKey(selectedEvent.date));
+      setStatusMessage("編集内容を破棄しました。");
+      return;
+    }
+
+    setDraft(createEventDraft(selectedDateKey, settings));
+    setStatusMessage("新規作成を取り消しました。");
   }
 
   function closeMobileSheet() {
@@ -2229,7 +2560,7 @@ export function ScheduleCalendarApp() {
   function exportJson() {
     const payload = createScheduleStoragePayload(events, settings, userPostTemplates);
     setImportText(JSON.stringify(payload, null, 2));
-    setSettingsStatus("JSONを出力しました。");
+    setSettingsStatus("バックアップJSONを出力しました。");
   }
 
   function importJson() {
@@ -2252,7 +2583,7 @@ export function ScheduleCalendarApp() {
       setView(payload.settings.defaultView);
       setSelectedEventId(null);
       setDraft(createEventDraft(selectedDateKey, payload.settings));
-      setSettingsStatus("JSONをインポートしました。");
+      setSettingsStatus("バックアップJSONを復元しました。");
       setStorageError("");
     } catch {
       setSettingsStatus(importFailureMessage);
@@ -2369,6 +2700,7 @@ export function ScheduleCalendarApp() {
                 selectedEventId={selectedEventId}
                 onSelectDate={selectDate}
                 onSelectEvent={selectEvent}
+                onMoveEventDate={moveEventDate}
               />
             ) : null}
             {view === "month" ? (
@@ -2380,6 +2712,7 @@ export function ScheduleCalendarApp() {
                 selectedEventId={selectedEventId}
                 onSelectDate={selectDate}
                 onSelectEvent={selectEvent}
+                onMoveEventDate={moveEventDate}
               />
             ) : null}
             {view === "day" ? (
@@ -2388,6 +2721,7 @@ export function ScheduleCalendarApp() {
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
                 onSelectEvent={selectEvent}
+                onMoveEventDate={moveEventDate}
               />
             ) : null}
           </div>
@@ -2455,7 +2789,7 @@ export function ScheduleCalendarApp() {
         ) : null}
         <aside
           className={[
-            "scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 py-3 transition-transform lg:[scrollbar-gutter:stable] xl:px-4 xl:py-4",
+            "scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 pb-3 pt-0 transition-transform lg:[scrollbar-gutter:stable] xl:px-4 xl:pb-4 xl:pt-0",
             mobileSheetOpen
               ? [
                   "fixed inset-x-0 bottom-16 z-40 rounded-t-[18px] border border-b-0 border-border !px-0 !py-0 shadow-panel",
@@ -2466,7 +2800,7 @@ export function ScheduleCalendarApp() {
           ].join(" ")}
           style={mobileSheetDragOffset ? { transform: `translateY(${mobileSheetDragOffset}px)` } : undefined}
         >
-          <div className="sticky top-0 z-20 border-b border-border bg-surface px-3 pb-3 pt-3 shadow-sm lg:mb-4 lg:border-b-0 lg:bg-transparent lg:p-0 lg:pb-0 lg:shadow-none">
+          <div className="sticky top-0 z-20 border-b border-border bg-surface shadow-sm after:pointer-events-none after:absolute after:inset-x-0 after:-top-24 after:h-24 after:bg-surface lg:-mx-3 lg:mb-2 xl:-mx-4">
             <div className={["relative mb-3 min-h-9 items-center justify-center", mobileOnlyClassName, "flex"].join(" ")}>
               <div
                 className="grid h-9 w-24 touch-none place-items-center rounded-base text-muted"
@@ -2488,7 +2822,7 @@ export function ScheduleCalendarApp() {
                 ×
               </button>
             </div>
-            <div className="grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm lg:hidden">
+            <div className="grid grid-cols-2 border-t border-border bg-surface-muted lg:hidden">
               {[
                 { id: "schedule" as PanelTab, label: "予定管理" },
                 { id: "post" as PanelTab, label: "投稿補助" }
@@ -2498,15 +2832,15 @@ export function ScheduleCalendarApp() {
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={[
-                    "rounded-base px-3 py-2 text-sm font-bold transition",
-                    activeTab === tab.id ? "bg-surface text-primary-strong shadow-sm" : "text-muted hover:text-foreground"
+                    "border-r border-border px-3 py-[0.5625rem] text-sm font-bold transition last:border-r-0",
+                    activeTab === tab.id ? "bg-surface text-primary-strong" : "text-muted hover:bg-surface hover:text-foreground"
                   ].join(" ")}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
-            <div className="hidden grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm lg:grid">
+            <div className="hidden grid-cols-2 bg-surface-muted lg:grid">
               {[
                 { id: "schedule" as PanelTab, label: "予定管理" },
                 { id: "post" as PanelTab, label: "投稿補助" },
@@ -2518,8 +2852,8 @@ export function ScheduleCalendarApp() {
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={[
-                    "rounded-base px-3 py-2 text-sm font-bold transition",
-                    activeTab === tab.id ? "bg-surface text-primary-strong shadow-sm" : "text-muted hover:text-foreground"
+                    "border-r border-b border-border px-3 py-[0.5625rem] text-sm font-bold transition even:border-r-0",
+                    activeTab === tab.id ? "bg-surface text-primary-strong" : "text-muted hover:bg-surface hover:text-foreground"
                   ].join(" ")}
                 >
                   {tab.label}
@@ -2540,6 +2874,8 @@ export function ScheduleCalendarApp() {
                 onSelectEvent={selectEvent}
                 onSave={saveDraft}
                 onDelete={deleteSelectedEvent}
+                onDuplicate={duplicateSelectedEvent}
+                onCancel={cancelDraftEdit}
               />
             ) : null}
             {activeTab === "post" ? (
@@ -2589,7 +2925,7 @@ export function ScheduleCalendarApp() {
             ) : null}
           </div>
         </aside>
-        {pendingDeletedEvent ? (
+        {pendingUndo ? (
           <div
             className="fixed inset-x-4 bottom-20 z-50 rounded-base border border-border bg-surface px-3 py-3 shadow-panel lg:bottom-6 lg:left-auto lg:right-6 lg:w-[22rem]"
             role="status"
@@ -2597,21 +2933,21 @@ export function ScheduleCalendarApp() {
           >
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-foreground">予定を削除しました。</p>
-                <p className="mt-1 truncate text-xs font-bold text-muted">{pendingDeletedEvent.title || "無題の予定"}</p>
+                <p className="text-sm font-bold text-foreground">{pendingUndo.title}</p>
+                <p className="mt-1 truncate text-xs font-bold text-muted">{pendingUndo.detail}</p>
               </div>
               <button
                 type="button"
                 className="shrink-0 rounded-base border border-border px-2.5 py-1.5 text-xs font-bold text-primary-strong transition hover:bg-surface-muted"
-                onClick={restoreDeletedEvent}
+                onClick={restoreUndoEvent}
               >
-                元に戻す
+                {pendingUndo.actionLabel}
               </button>
               <button
                 type="button"
                 className="grid h-7 w-7 shrink-0 place-items-center rounded-base text-lg leading-none text-muted transition hover:bg-surface-muted"
-                aria-label="削除通知を閉じる"
-                onClick={closeDeleteUndoToast}
+                aria-label="Undo通知を閉じる"
+                onClick={closeUndoToast}
               >
                 ×
               </button>

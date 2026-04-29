@@ -3,6 +3,7 @@ export type CalendarView = "month" | "week" | "day";
 export type EventCategory = "stream" | "production" | "post" | "planning" | "prep" | "business";
 
 export type EventPlatform = "YouTube" | "Twitch" | "X" | "TikTok" | "Other" | "";
+export type EventRecurrence = "none" | "daily" | "weekly";
 
 export type ScheduleEvent = {
   id: string;
@@ -13,6 +14,8 @@ export type ScheduleEvent = {
   category: EventCategory;
   platform: EventPlatform;
   memo: string;
+  recurrence?: EventRecurrence;
+  recurrenceCount?: number;
 };
 
 export type ScheduleSettings = {
@@ -81,6 +84,11 @@ export const categoryOptions: Array<{ value: EventCategory; label: string }> = O
 );
 
 export const platformOptions: EventPlatform[] = ["YouTube", "Twitch", "X", "TikTok", "Other", ""];
+export const recurrenceOptions: Array<{ value: EventRecurrence; label: string }> = [
+  { value: "none", label: "繰り返しなし" },
+  { value: "daily", label: "毎日" },
+  { value: "weekly", label: "毎週" }
+];
 
 const dayFormatter = new Intl.DateTimeFormat("ja-JP", { weekday: "short" });
 const monthFormatter = new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "long" });
@@ -204,8 +212,23 @@ export function createEmptyEvent(
     endTime: `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`,
     category: "stream",
     platform: "YouTube",
-    memo: ""
+    memo: "",
+    recurrence: "none",
+    recurrenceCount: 1
   };
+}
+
+export function normalizeRecurrence(value: unknown): EventRecurrence {
+  return value === "daily" || value === "weekly" ? value : "none";
+}
+
+export function normalizeRecurrenceCount(value: unknown): number {
+  const count = Number(value);
+  if (!Number.isFinite(count)) {
+    return 1;
+  }
+
+  return Math.min(30, Math.max(1, Math.floor(count)));
 }
 
 export function normalizeEvents(value: unknown): ScheduleEvent[] {
@@ -220,7 +243,7 @@ export function normalizeEvents(value: unknown): ScheduleEvent[] {
       }
 
       const event = item as Partial<ScheduleEvent>;
-      return (
+      const valid = (
         typeof event.id === "string" &&
         typeof event.title === "string" &&
         typeof event.date === "string" &&
@@ -229,6 +252,14 @@ export function normalizeEvents(value: unknown): ScheduleEvent[] {
         typeof event.memo === "string" &&
         Boolean(event.category && event.category in categoryMeta)
       );
+
+      if (!valid) {
+        return false;
+      }
+
+      event.recurrence = normalizeRecurrence(event.recurrence);
+      event.recurrenceCount = normalizeRecurrenceCount(event.recurrenceCount);
+      return true;
     })
   );
 }

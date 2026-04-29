@@ -307,12 +307,26 @@
   - 既存の予定削除 undo と体験を揃える
   - 全データ初期化は undo ではなく、実行前にブラウザ標準確認を挟む方針に変更
 
+### Next.js セキュリティ更新スプリント
+
+- [x] Next.js / React / eslint-config-next / React型定義を現行安定版へ更新する
+  - Next.js 公式サポートポリシー上、14.x は unsupported、15.x は Maintenance LTS、16.x は Active LTS
+  - audit 解消と今後の保守性を優先し、Next.js 16.2.4 / React 19.2.5 へ更新
+  - `next lint` は Next.js 16 で削除されているため、`npm run lint` を ESLint CLI 実行へ切り替え
+  - `package-lock.json` はユーザー端末の npm で再生成済み
+  - production build は Turbopack の app-paths-manifest 生成不整合を避けるため、MVPでは `next build --webpack` を採用
+- [x] 更新後の検証を実施する
+  - `npm run lint`: ユーザー端末で通過
+  - `npx tsc --noEmit`: ユーザー端末で通過
+  - `npm run build`: ユーザー端末で `next build --webpack` 通過、`/`、`/_not-found`、`/tools`、`/tools/schedule-calendar` の static prerender を確認
+  - `npm run audit:prod`: ユーザー端末で `found 0 vulnerabilities` を確認
+  - `/`、`/tools`、`/tools/schedule-calendar` の主要導線はビルド後に必要に応じてブラウザ軽確認する
+- [x] Codex環境の実行制約を切り分ける
+  - この環境では `npm` / Node の HTTPS 実行時に `ncrypto::CSPRNG(nullptr, 0)` が発生し、lockfile更新と audit / build が実行できない
+  - ユーザー端末またはCIで npm コマンドを実行し、lockfile更新と検証結果をこのスプリントへ反映する
+
 ### 認証・サーバー保存導入時に必ず再設計する
 
-- [ ] Next.js 15系以上への依存更新を別バッチで検証する
-  - 推奨初手は `next@15.5.14` 以上への更新。`npm audit fix --force` は Next 16 系へ上げる破壊的更新になるため、このPRでは実行しない
-  - 更新時は `package-lock.json` もユーザー端末またはCIで再生成し、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`npm run audit:prod` を確認する
-  - 静的 export、Cloudflare Pages `_headers`、`/`、`/tools`、`/tools/schedule-calendar` のブラウザ回帰確認をセットで行う
 - [ ] 保存データの分類と保持ポリシーを決める
   - 予定、メモ、投稿テンプレート、将来の履歴 / お気に入り / 個人設定を、個人情報・機密度・削除要件で分類する
   - サーバー保存時は削除、エクスポート、端末間同期、退会時削除の仕様を先に決める

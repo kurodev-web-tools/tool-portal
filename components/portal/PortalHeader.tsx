@@ -97,7 +97,10 @@ export function PortalHeader() {
             </div>
             <nav className="mt-6 space-y-2">
               {navItems.map((item) => {
-                const active = item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
+                const active =
+                  item.href === "/" || item.href === "/tools"
+                    ? pathname === item.href
+                    : pathname.startsWith(item.href);
                 return (
                   <Link
                     key={item.href}

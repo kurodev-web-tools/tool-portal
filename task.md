@@ -245,3 +245,83 @@
   - `/tools/schedule-calendar` は凍結前提にし、共通ポータル側のレスポンシブ、一覧性、導線を整える。
 - 候補B: ログイン導入前の情報設計整理
   - 認証追加前に `/`、`/tools/...`、将来の `/app/...`、保存データの責務を整理する。
+
+## ポータル レスポンシブ最適化状況
+
+- [x] HOME / TOOLS のタブレット・モバイル最適化を実施する
+  - `~767px` はハンバーガー + ドロワー、1カラム基調、HOMEサマリーは縦型に再配置
+  - `768~1023px` はモバイル同等ナビを維持し、TOOLSフィルタは横スクロールチップを維持
+  - `1024~1279px` は左サイドを簡略 rail 表示、HOME のスイートカードは2カラム基調
+  - `1280px~` は現行PC表示を維持
+- [ ] 幅別回帰確認を実施する
+  - 対象幅: 390 / 820 / 1024 / 1280 / 1366
+  - 対象ページ: `/` / `/tools`
+  - 観点: HOME/TOOLS間遷移、Schedule Calendar導線、テーマ切替、フィルタ操作性、カード可読性
+  - Codex環境では Node 起動時の `ncrypto::CSPRNG` エラーにより lint / dev server / ブラウザ幅確認は未実施
+- [x] HOME スイートカードのレビュー指摘を修正する
+  - 1024px付近と1280〜1320px付近でカード下部ボタンがはみ出ないよう、カード内の固定右余白と下部行の横並び強制を解除
+  - 390pxモバイルでカード右側に不自然な空白カラムが残らないよう、スマホ時のアイコンとボタン幅を調整
+  - ブラウザ計測で 390 / 1024 / 1280 / 1320 / 1366 の HOME スイートカード内リンクがカード幅内に収まることを確認
+- [x] HOME スイートカードの余白と状態表示重複を追加整理する
+  - ステータスは右上バッジに集約し、下部の `● 利用可能 / 準備中` 表示を削除
+  - 説明文、タグ、ツール数行はカード幅を自然に使えるよう、本文側の固定右余白を解除
+  - 下部の `ツール数` とボタンはスマホのみ縦積み、`sm` 以上は横並びに戻して一覧性を維持
+- [x] PR前レビューで見つかった軽微なナビゲーション整合を修正する
+  - モバイルドロワーで `/tools/schedule-calendar` 表示時に `Tools` と `Schedule Calendar` が同時 active になる状態を解消
+  - 左サイドバー rail でも `/tools/schedule-calendar` 表示時に `Tools` と `SC` が同時 active になる状態を解消
+  - `/tools` のスイートフィルタ変更時に `suite` query を同期し、`すべて` 選択時は `suite` query を削除する
+
+## セキュリティ確認と改善タスク
+
+### PR前にやっておく
+
+- [x] Cloudflare Pages 向けの基本 security headers を追加する
+  - `public/_headers` を追加し、`X-Frame-Options`、`X-Content-Type-Options`、`Referrer-Policy`、`Permissions-Policy` を設定する
+  - CSP は静的MVPで壊れにくい範囲から開始し、`script-src 'self'`、`object-src 'none'`、`base-uri 'self'`、`frame-ancestors 'none'` を基本にする
+  - X 投稿 intent へ遷移するため、`form-action` / `connect-src` / `default-src` の過剰制限で導線を壊さないことを確認する
+- [x] ローカルブラウザ実行物が git に残らないよう整理する
+  - tracked されている `output/chrome/profile/Crashpad/metadata` を削除する
+  - `.gitignore` に `output/` を追加し、ブラウザ profile / crash / local storage 系が混入しないようにする
+- [x] JSONインポートの入力上限を追加する
+  - `importText` の最大文字数を決め、上限超過時は既存データを変更しない
+  - `events` / `postTemplates` の最大件数と、主要文字列（title / memo / template body など）の最大長を決める
+  - 旧形式配列と versioned payload の両方で同じ上限を通す
+- [x] localStorage 保存の利用者向け注意を明記する
+  - `docs/SCHEDULE_CALENDAR_README.md` に、予定・メモ・テンプレートは端末内のブラウザ保存領域に平文保存されることを書く
+  - 共有端末ではブラウザプロファイル分離やデータ削除を推奨する
+
+### 次スプリントでやる
+
+- [x] 依存関係のセキュリティ確認をCIまたはユーザー端末で実行可能にする
+  - Codex環境では Node 起動時の `ncrypto::CSPRNG` エラーで `npm audit` が実行できないため、GitHub Actions またはユーザー端末で `npm audit --omit=dev` を確認する
+  - `.npmrc` の `audit=false` は install 時の自動 audit を止める設定なので、明示的な audit コマンドを運用に入れる
+  - `package.json` に `npm run audit:prod` を追加済み。実行確認はユーザー端末またはCIで行う
+  - ユーザー端末で `next@14.2.35` に対する high / moderate advisory を確認済み。現構成は `output: "export"`、`images.unoptimized: true`、`rewrites` なし、`next/image` 未使用のため実害は限定的だが、audit を緑にするには Next 15.5.14 以上への別バッチ更新が必要
+- [x] build output / public artifact の公開範囲を確認する
+  - Cloudflare Pages の公開対象は `out/` とする前提で静的確認する
+  - `materials/`、`docs/archive/`、`output/`、`.next/`、`.npm-cache/` が公開成果物に入らないことを確認する
+  - `next.config.mjs` は `output: "export"`、`public/_headers` は build 時に `out/_headers` へコピーされる前提
+  - Codex環境では Node 起動時エラーにより `next build` での `out/` 再生成確認は未実施
+- [x] 全データ削除のUXを再確認する
+  - 現状は即時初期化なので、誤操作リスクが高いと判断したら確認ステップまたは undo を追加する
+  - 既存の予定削除 undo と体験を揃える
+  - 全データ初期化は undo ではなく、実行前にブラウザ標準確認を挟む方針に変更
+
+### 認証・サーバー保存導入時に必ず再設計する
+
+- [ ] Next.js 15系以上への依存更新を別バッチで検証する
+  - 推奨初手は `next@15.5.14` 以上への更新。`npm audit fix --force` は Next 16 系へ上げる破壊的更新になるため、このPRでは実行しない
+  - 更新時は `package-lock.json` もユーザー端末またはCIで再生成し、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`npm run audit:prod` を確認する
+  - 静的 export、Cloudflare Pages `_headers`、`/`、`/tools`、`/tools/schedule-calendar` のブラウザ回帰確認をセットで行う
+- [ ] 保存データの分類と保持ポリシーを決める
+  - 予定、メモ、投稿テンプレート、将来の履歴 / お気に入り / 個人設定を、個人情報・機密度・削除要件で分類する
+  - サーバー保存時は削除、エクスポート、端末間同期、退会時削除の仕様を先に決める
+- [ ] 認証後URLとアクセス制御を設計する
+  - 公開ポータル `/` / `/tools/...` と個人領域 `/app/...` を分ける
+  - middleware / Pages Functions / Workers を使う場合は、認可チェックをサーバー側で一元化する
+- [ ] 外部連携トークンの保管方針を決める
+  - Google Calendar、SNS、AI API などを導入する場合、access token / refresh token / API key を localStorage に保存しない
+  - Cloudflare 側の Secrets、D1/KV/R2、暗号化、ローテーション、監査ログの責務を決める
+- [ ] セキュリティヘッダーとCSPを本番構成に合わせて見直す
+  - Cloudflare Web Analytics、Turnstile、外部画像、API endpoint などを追加するたびに CSP を更新する
+  - Report-Only 運用や violation report の扱いを検討する

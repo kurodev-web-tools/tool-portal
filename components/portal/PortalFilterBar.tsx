@@ -32,7 +32,7 @@ export function PortalFilterBar({
     { value: "all", label: "すべて" },
     ...activeCategories.map((value) => ({ value, label: categoryLabels[value] }))
   ];
-  const chipWrapClass = "scrollbar-accent flex gap-3 overflow-x-auto pb-3 md:flex-wrap md:overflow-visible md:pb-0";
+  const chipWrapClass = "scrollbar-accent flex gap-3 overflow-x-auto pb-3 lg:flex-wrap lg:overflow-visible lg:pb-0";
 
   return (
     <section className="panel space-y-5 p-5">

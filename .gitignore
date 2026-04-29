@@ -38,4 +38,5 @@ desktop.ini
 # Local temp artifacts
 tmp/
 temp/
+output/
 *.tmp

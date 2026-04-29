@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PortalFilterBar } from "@/components/portal/PortalFilterBar";
 import { ToolCard } from "@/components/portal/ToolCard";
 import { tools } from "@/lib/tools";
@@ -12,6 +12,8 @@ function isSuiteKey(value: string | null): value is SuiteKey {
 }
 
 export function PortalToolsIndex() {
+  const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const suiteParam = searchParams.get("suite");
   const initialSuite = isSuiteKey(suiteParam) ? suiteParam : "all";
@@ -22,6 +24,20 @@ export function PortalToolsIndex() {
   useEffect(() => {
     setSuite(initialSuite);
   }, [initialSuite]);
+
+  const handleSuiteChange = (nextSuite: SuiteKey | "all") => {
+    setSuite(nextSuite);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextSuite === "all") {
+      params.delete("suite");
+    } else {
+      params.set("suite", nextSuite);
+    }
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
 
   const currentSuiteName = suite === "all" ? undefined : suiteLabels[suite];
 
@@ -57,7 +73,7 @@ export function PortalToolsIndex() {
         suite={suite}
         category={category}
         status={status}
-        onSuiteChange={setSuite}
+        onSuiteChange={handleSuiteChange}
         onCategoryChange={setCategory}
         onStatusChange={setStatus}
       />

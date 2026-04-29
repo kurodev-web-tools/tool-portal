@@ -2789,7 +2789,7 @@ export function ScheduleCalendarApp() {
         ) : null}
         <aside
           className={[
-            "scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 py-3 transition-transform lg:[scrollbar-gutter:stable] xl:px-4 xl:py-4",
+            "scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 pb-3 pt-0 transition-transform lg:[scrollbar-gutter:stable] xl:px-4 xl:pb-4 xl:pt-0",
             mobileSheetOpen
               ? [
                   "fixed inset-x-0 bottom-16 z-40 rounded-t-[18px] border border-b-0 border-border !px-0 !py-0 shadow-panel",
@@ -2800,7 +2800,7 @@ export function ScheduleCalendarApp() {
           ].join(" ")}
           style={mobileSheetDragOffset ? { transform: `translateY(${mobileSheetDragOffset}px)` } : undefined}
         >
-          <div className="sticky top-0 z-20 border-b border-border bg-surface px-3 pb-3 pt-3 shadow-sm lg:mb-4 lg:border-b-0 lg:bg-transparent lg:p-0 lg:pb-0 lg:shadow-none">
+          <div className="sticky top-0 z-20 border-b border-border bg-surface shadow-sm after:pointer-events-none after:absolute after:inset-x-0 after:-top-24 after:h-24 after:bg-surface lg:-mx-3 lg:mb-2 xl:-mx-4">
             <div className={["relative mb-3 min-h-9 items-center justify-center", mobileOnlyClassName, "flex"].join(" ")}>
               <div
                 className="grid h-9 w-24 touch-none place-items-center rounded-base text-muted"
@@ -2822,7 +2822,7 @@ export function ScheduleCalendarApp() {
                 ×
               </button>
             </div>
-            <div className="grid grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm lg:hidden">
+            <div className="grid grid-cols-2 border-t border-border bg-surface-muted lg:hidden">
               {[
                 { id: "schedule" as PanelTab, label: "予定管理" },
                 { id: "post" as PanelTab, label: "投稿補助" }
@@ -2832,15 +2832,15 @@ export function ScheduleCalendarApp() {
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={[
-                    "rounded-base px-3 py-2 text-sm font-bold transition",
-                    activeTab === tab.id ? "bg-surface text-primary-strong shadow-sm" : "text-muted hover:text-foreground"
+                    "border-r border-border px-3 py-[0.5625rem] text-sm font-bold transition last:border-r-0",
+                    activeTab === tab.id ? "bg-surface text-primary-strong" : "text-muted hover:bg-surface hover:text-foreground"
                   ].join(" ")}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
-            <div className="hidden grid-cols-2 rounded-base border border-border bg-surface-muted p-1 shadow-sm lg:grid">
+            <div className="hidden grid-cols-2 bg-surface-muted lg:grid">
               {[
                 { id: "schedule" as PanelTab, label: "予定管理" },
                 { id: "post" as PanelTab, label: "投稿補助" },
@@ -2852,8 +2852,8 @@ export function ScheduleCalendarApp() {
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={[
-                    "rounded-base px-3 py-2 text-sm font-bold transition",
-                    activeTab === tab.id ? "bg-surface text-primary-strong shadow-sm" : "text-muted hover:text-foreground"
+                    "border-r border-b border-border px-3 py-[0.5625rem] text-sm font-bold transition even:border-r-0",
+                    activeTab === tab.id ? "bg-surface text-primary-strong" : "text-muted hover:bg-surface hover:text-foreground"
                   ].join(" ")}
                 >
                   {tab.label}

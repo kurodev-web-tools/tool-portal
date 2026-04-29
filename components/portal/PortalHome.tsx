@@ -4,8 +4,8 @@ import { suites } from "@/lib/suites";
 
 export function PortalHome() {
   return (
-    <div className="space-y-8">
-      <section className="panel p-6 sm:p-8">
+    <div className="space-y-7 lg:space-y-8">
+      <section className="panel p-5 sm:p-7 lg:p-8">
         <PortalHeroSummary />
       </section>
 
@@ -18,7 +18,7 @@ export function PortalHome() {
             あなたの活動を支えるツール群を、目的に合わせてまとめました。
           </p>
         </div>
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
           {suites.map((suite) => (
             <SuiteCard key={suite.key} suite={suite} />
           ))}

@@ -33,17 +33,17 @@ export function PortalHeroSummary() {
           個別ツール一覧を見る
         </Link>
       </div>
-      <div className="hidden min-h-52 rounded-base border border-border bg-primary-soft/55 p-7 lg:block">
-        <div className="mx-auto grid h-28 w-28 place-items-center rounded-base border border-primary/30 bg-surface text-6xl font-black text-primary-strong shadow-panel">
+      <div className="min-h-52 rounded-base border border-border bg-primary-soft/55 p-4 sm:p-6 lg:p-7">
+        <div className="mx-auto grid h-20 w-20 place-items-center rounded-base border border-primary/30 bg-surface text-5xl font-black text-primary-strong shadow-panel sm:h-24 sm:w-24 lg:h-28 lg:w-28 lg:text-6xl">
           V
         </div>
-        <div className="mt-6 grid grid-cols-3 gap-4">
+        <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:mt-6 lg:gap-4">
           {summaryItems.map((item) => (
-            <div key={item.label} className="min-h-32 rounded-base border border-border bg-surface/80 p-4">
+            <div key={item.label} className="grid min-h-20 grid-cols-[2rem_1fr_auto] items-center gap-x-3 rounded-base border border-border bg-surface/80 p-3 sm:block sm:min-h-32 sm:p-4">
               <span className="text-lg font-bold text-primary-strong">{item.mark}</span>
-              <p className="mt-2 text-xs font-semibold text-muted">{item.label}</p>
-              <p className="mt-1 text-lg font-bold text-foreground">{item.value}</p>
-              <p className="text-xs text-primary-strong">{item.helper}</p>
+              <p className="text-xs font-semibold text-muted sm:mt-2">{item.label}</p>
+              <p className="text-lg font-bold text-foreground sm:mt-1">{item.value}</p>
+              <p className="col-start-2 text-xs text-primary-strong sm:col-start-auto">{item.helper}</p>
             </div>
           ))}
         </div>

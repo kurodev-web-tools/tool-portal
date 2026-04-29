@@ -1870,15 +1870,17 @@ function ScheduleForm({
           毎日 / 毎週のみ対応。例外日やシリーズ一括編集は未対応です。
         </p>
       </div>
-      <div className="sticky bottom-0 z-20 -mx-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur lg:static lg:mx-0 lg:grid-cols-4 lg:border-0 lg:bg-transparent lg:p-0">
-        <button type="button" onClick={onDelete} disabled={!canDelete} className="flat-control flex-1 border-red-300 px-3 py-2 text-red-600 disabled:cursor-not-allowed disabled:opacity-45">
-          削除
-        </button>
-        <button type="button" onClick={onDuplicate} disabled={!canDelete} className="flat-control flex-1 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-45">
+      <div className="grid grid-cols-2 gap-2 rounded-base border border-border bg-surface-muted/35 p-3">
+        <button type="button" onClick={onDuplicate} disabled={!canDelete} className="flat-control px-3 py-2 disabled:cursor-not-allowed disabled:opacity-45">
           複製
         </button>
-        <button type="button" onClick={onCancel} className="flat-control flex-1 px-3 py-2">
-          取消
+        <button type="button" onClick={onCancel} className="flat-control px-3 py-2">
+          リセット
+        </button>
+      </div>
+      <div className="sticky bottom-0 z-20 -mx-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
+        <button type="button" onClick={onDelete} disabled={!canDelete} className="flat-control flex-1 border-red-300 px-3 py-2 text-red-600 disabled:cursor-not-allowed disabled:opacity-45">
+          削除
         </button>
         <button type="submit" className="flex-1 rounded-base bg-primary px-3 py-2 text-sm font-bold text-white transition hover:bg-primary-strong">
           保存
@@ -2037,7 +2039,7 @@ function PostAssistPanel({
           readOnly
           className="mt-3 min-h-44 w-full resize-none rounded-base border border-border bg-surface-muted px-3 py-3 text-sm leading-6 text-foreground lg:text-[13px]"
         />
-        <div className="sticky bottom-0 z-20 -mx-3 mt-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <button type="button" onClick={onCopy} className="flat-control flex-1 px-3 py-2">
             コピー
           </button>

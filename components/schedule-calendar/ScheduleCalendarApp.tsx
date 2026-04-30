@@ -38,6 +38,7 @@ import {
 type PanelTab = "schedule" | "post" | "events" | "settings";
 type CopyStatusKind = "idle" | "success" | "error";
 type MobileNavTab = "calendar" | "events" | "settings";
+type MobileScheduleMode = "detail" | "edit";
 type EventPeriodFilter = "all" | "today" | "week" | "month";
 type EventSortOrder = "upcoming" | "dateAsc" | "dateDesc";
 type PendingUndo = {
@@ -50,6 +51,10 @@ type DragGuide = {
   dateKey: string;
   startMinutes: number;
   durationMinutes: number;
+};
+type EventPreviewPlacement = {
+  side: "right" | "left" | "center";
+  vertical: "below" | "above";
 };
 
 const viewLabels: Record<CalendarView, string> = {
@@ -89,6 +94,7 @@ const importMaxTextLengths = {
   templateBody: 4000
 };
 const maxRecurrenceCount = 30;
+const mobileLayoutQuery = "(max-width: 1023px)";
 
 function formatSlot(minutes: number) {
   const hour = Math.floor(minutes / 60);
@@ -276,6 +282,26 @@ function getEventStyle(event: ScheduleEvent) {
   return getTimelineBlockStyle(getEventStartMinutes(event), getEventDurationMinutes(event));
 }
 
+function getPreviewVerticalPlacement(event: ScheduleEvent): EventPreviewPlacement["vertical"] {
+  return getEventStartMinutes(event) >= 18 * 60 ? "above" : "below";
+}
+
+function getPreviewSidePlacement(index: number, total: number): EventPreviewPlacement["side"] {
+  if (index <= 1) {
+    return "right";
+  }
+
+  if (index >= total - 2) {
+    return "left";
+  }
+
+  return "center";
+}
+
+function getMonthPreviewVerticalPlacement(dayIndex: number): EventPreviewPlacement["vertical"] {
+  return Math.floor(dayIndex / 7) < 3 ? "below" : "above";
+}
+
 function clampTimelineStartMinutes(minutes: number) {
   return Math.min(timelineEndMinutes - 30, Math.max(timelineStartMinutes, minutes));
 }
@@ -300,6 +326,78 @@ function DragMoveGuide({ guide }: { guide: DragGuide }) {
       <span className="block truncate">
         ここに移動 {formatSlot(guide.startMinutes)} - {getEndTimeFromStart(guide.startMinutes, guide.durationMinutes)}
       </span>
+    </div>
+  );
+}
+
+function getEventRecurrenceLabel(event: ScheduleEvent) {
+  return recurrenceOptions.find((option) => option.value === event.recurrence)?.label ?? "繰り返しなし";
+}
+
+function EventDetailContent({ event, compact = false }: { event: ScheduleEvent; compact?: boolean }) {
+  return (
+    <div className={compact ? "space-y-2" : "space-y-4"}>
+      <div>
+        <p className={compact ? "text-xs font-bold text-primary-strong" : "text-xs font-bold text-muted"}>{getLongDateLabel(event.date)}</p>
+        <h3 className={compact ? "mt-1 text-sm font-bold text-foreground" : "mt-1 text-lg font-bold text-foreground"}>
+          {event.title || "無題の予定"}
+        </h3>
+      </div>
+      <dl className={compact ? "grid gap-1.5 text-xs" : "grid gap-3 text-sm"}>
+        <div className="flex items-center justify-between gap-3">
+          <dt className="font-bold text-muted">時間</dt>
+          <dd className="font-bold text-foreground">
+            {event.startTime} - {event.endTime}
+          </dd>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt className="font-bold text-muted">カテゴリ</dt>
+          <dd className="font-bold text-foreground">{categoryMeta[event.category].label}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt className="font-bold text-muted">プラットフォーム</dt>
+          <dd className="font-bold text-foreground">{event.platform || "-"}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt className="font-bold text-muted">繰り返し</dt>
+          <dd className="font-bold text-foreground">{getEventRecurrenceLabel(event)}</dd>
+        </div>
+      </dl>
+      <div>
+        <p className="text-xs font-bold text-muted">メモ</p>
+        <p className={compact ? "mt-1 whitespace-pre-wrap text-xs leading-5 text-foreground" : "mt-2 whitespace-pre-wrap rounded-base border border-border bg-surface-muted/45 px-3 py-3 text-sm leading-6 text-foreground"}>
+          {event.memo.trim() || "メモはありません。"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function EventHoverPreview({
+  event,
+  placement = { side: "center", vertical: "below" }
+}: {
+  event: ScheduleEvent;
+  placement?: EventPreviewPlacement;
+}) {
+  const sideClassName =
+    placement.side === "right"
+      ? "left-full ml-2"
+      : placement.side === "left"
+        ? "right-full mr-2"
+        : "left-1/2 -translate-x-1/2";
+  const verticalClassName = placement.vertical === "above" ? "bottom-full mb-2" : "top-full mt-2";
+
+  return (
+    <div
+      className={[
+        "pointer-events-none absolute z-50 hidden w-80 rounded-base border border-border bg-surface p-4 text-left shadow-panel",
+        "lg:group-hover:block lg:group-focus-within:block",
+        sideClassName,
+        verticalClassName
+      ].join(" ")}
+    >
+      <EventDetailContent event={event} compact />
     </div>
   );
 }
@@ -448,6 +546,7 @@ function EventPill({
   event,
   selected,
   compact = false,
+  previewPlacement,
   onSelect,
   onDragStart,
   onDragEnd
@@ -455,6 +554,7 @@ function EventPill({
   event: ScheduleEvent;
   selected: boolean;
   compact?: boolean;
+  previewPlacement?: EventPreviewPlacement;
   onSelect: (event: ScheduleEvent) => void;
   onDragStart?: (event: ScheduleEvent, detail: DragEvent<HTMLButtonElement>) => void;
   onDragEnd?: () => void;
@@ -462,63 +562,71 @@ function EventPill({
   const meta = categoryMeta[event.category];
 
   return (
-    <button
-      type="button"
-      draggable={Boolean(onDragStart)}
-      onDragStart={(detail) => onDragStart?.(event, detail)}
-      onDragEnd={onDragEnd}
-      onClick={(detail) => {
-        detail.stopPropagation();
-        onSelect(event);
-      }}
-      className={[
-        "h-full w-full overflow-hidden rounded-base border px-2 py-1 text-left transition hover:border-primary/70 hover:shadow-sm",
-        meta.tone,
-        selected ? "ring-2 ring-primary/45" : ""
-      ].join(" ")}
-    >
-      <span className="flex items-center gap-1.5 text-[11px] font-bold">
-        <span className={["h-1.5 w-1.5 rounded-full", meta.dot].join(" ")} />
-        {event.startTime}
-        {!compact ? ` - ${event.endTime}` : ""}
-      </span>
-      <span className="mt-0.5 block truncate text-xs font-bold">{event.title || "無題の予定"}</span>
-    </button>
+    <div className="group relative h-full w-full">
+      <button
+        type="button"
+        draggable={Boolean(onDragStart)}
+        onDragStart={(detail) => onDragStart?.(event, detail)}
+        onDragEnd={onDragEnd}
+        onClick={(detail) => {
+          detail.stopPropagation();
+          onSelect(event);
+        }}
+        className={[
+          "h-full w-full overflow-hidden rounded-base border px-2 py-1 text-left transition hover:border-primary/70 hover:shadow-sm",
+          meta.tone,
+          selected ? "ring-2 ring-primary/45" : ""
+        ].join(" ")}
+      >
+        <span className="flex items-center gap-1.5 text-[11px] font-bold">
+          <span className={["h-1.5 w-1.5 rounded-full", meta.dot].join(" ")} />
+          {event.startTime}
+          {!compact ? ` - ${event.endTime}` : ""}
+        </span>
+        <span className="mt-0.5 block truncate text-xs font-bold">{event.title || "無題の予定"}</span>
+      </button>
+      <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: getPreviewVerticalPlacement(event) }} />
+    </div>
   );
 }
 
 function MonthEventRow({
   event,
   selected,
+  previewPlacement,
   onSelect,
   onDragStart
 }: {
   event: ScheduleEvent;
   selected: boolean;
+  previewPlacement?: EventPreviewPlacement;
   onSelect: (event: ScheduleEvent) => void;
   onDragStart?: (event: ScheduleEvent, detail: DragEvent<HTMLButtonElement>) => void;
 }) {
   const meta = categoryMeta[event.category];
 
   return (
-    <button
-      type="button"
-      draggable={Boolean(onDragStart)}
-      onDragStart={(detail) => onDragStart?.(event, detail)}
-      onClick={(detail) => {
-        detail.stopPropagation();
-        onSelect(event);
-      }}
-      className={[
-        "flex h-6 w-full items-center gap-1.5 rounded-base border px-1.5 text-left text-[11px] font-bold transition",
-        "hover:border-primary/70 hover:bg-surface-muted",
-        selected ? "border-primary bg-primary-soft/45" : "border-border bg-surface-muted/70"
-      ].join(" ")}
-    >
-      <span className={["h-1.5 w-1.5 shrink-0 rounded-full", meta.dot].join(" ")} />
-      <span className="shrink-0 text-muted">{event.startTime}</span>
-      <span className="min-w-0 truncate text-foreground">{event.title || "無題の予定"}</span>
-    </button>
+    <div className="group relative">
+      <button
+        type="button"
+        draggable={Boolean(onDragStart)}
+        onDragStart={(detail) => onDragStart?.(event, detail)}
+        onClick={(detail) => {
+          detail.stopPropagation();
+          onSelect(event);
+        }}
+        className={[
+          "flex h-6 w-full items-center gap-1.5 rounded-base border px-1.5 text-left text-[11px] font-bold transition",
+          "hover:border-primary/70 hover:bg-surface-muted",
+          selected ? "border-primary bg-primary-soft/45" : "border-border bg-surface-muted/70"
+        ].join(" ")}
+      >
+        <span className={["h-1.5 w-1.5 shrink-0 rounded-full", meta.dot].join(" ")} />
+        <span className="shrink-0 text-muted">{event.startTime}</span>
+        <span className="min-w-0 truncate text-foreground">{event.title || "無題の予定"}</span>
+      </button>
+      <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: "below" }} />
+    </div>
   );
 }
 
@@ -639,6 +747,10 @@ function WeekView({
                     <EventPill
                       event={event}
                       selected={selectedEventId === event.id}
+                      previewPlacement={{
+                        side: getPreviewSidePlacement(dayIndex, days.length),
+                        vertical: getPreviewVerticalPlacement(event)
+                      }}
                       onSelect={onSelectEvent}
                       onDragStart={(draggedEvent, detail) => {
                         setDraggedEvent(detail, draggedEvent);
@@ -742,6 +854,10 @@ function MonthView({
                       key={event.id}
                       event={event}
                       selected={selectedEventId === event.id}
+                      previewPlacement={{
+                        side: getPreviewSidePlacement(dayIndex % 7, 7),
+                        vertical: getMonthPreviewVerticalPlacement(dayIndex)
+                      }}
                       onSelect={onSelectEvent}
                       onDragStart={(draggedEvent, detail) => {
                         setDraggedEvent(detail, draggedEvent);
@@ -899,6 +1015,10 @@ function DayView({
                 <EventPill
                   event={event}
                   selected={selectedEventId === event.id}
+                  previewPlacement={{
+                    side: "center",
+                    vertical: getPreviewVerticalPlacement(event)
+                  }}
                   onSelect={onSelectEvent}
                   onDragStart={(draggedEvent, detail) => {
                     setDraggedEvent(detail, draggedEvent);
@@ -1482,26 +1602,28 @@ function DesktopEventListPanel({
             </div>
           ) : (
             events.map((event) => (
-              <button
-                key={event.id}
-                type="button"
-                onClick={() => onSelectEvent(event)}
-                className={[
-                  "w-full rounded-base border px-3 py-3 text-left transition hover:border-primary/60",
-                  selectedEventId === event.id ? "border-primary bg-primary-soft/55" : "border-border bg-surface"
-                ].join(" ")}
-              >
-                <span className="text-xs font-bold text-primary-strong">{getLongDateLabel(event.date)}</span>
-                <span className="mt-1 block text-xs font-bold text-muted">
-                  {event.startTime} - {event.endTime}
-                </span>
-                <span className="mt-1 block truncate text-sm font-bold text-foreground">{event.title || "無題の予定"}</span>
-                <span className="mt-2 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
-                  {categoryMeta[event.category].label}
-                  {event.platform ? ` / ${event.platform}` : ""}
-                  {event.recurrence && event.recurrence !== "none" ? ` / ${recurrenceOptions.find((option) => option.value === event.recurrence)?.label}` : ""}
-                </span>
-              </button>
+              <div key={event.id} className="group relative">
+                <button
+                  type="button"
+                  onClick={() => onSelectEvent(event)}
+                  className={[
+                    "w-full rounded-base border px-3 py-3 text-left transition hover:border-primary/60",
+                    selectedEventId === event.id ? "border-primary bg-primary-soft/55" : "border-border bg-surface"
+                  ].join(" ")}
+                >
+                  <span className="text-xs font-bold text-primary-strong">{getLongDateLabel(event.date)}</span>
+                  <span className="mt-1 block text-xs font-bold text-muted">
+                    {event.startTime} - {event.endTime}
+                  </span>
+                  <span className="mt-1 block truncate text-sm font-bold text-foreground">{event.title || "無題の予定"}</span>
+                  <span className="mt-2 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
+                    {categoryMeta[event.category].label}
+                    {event.platform ? ` / ${event.platform}` : ""}
+                    {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event)}` : ""}
+                  </span>
+                </button>
+                <EventHoverPreview event={event} />
+              </div>
             ))
           )}
         </div>
@@ -1890,15 +2012,43 @@ function ScheduleForm({
   );
 }
 
+function MobileEventDetailView({
+  event,
+  onEdit
+}: {
+  event: ScheduleEvent;
+  onEdit: () => void;
+}) {
+  return (
+    <section className={["space-y-4", mobileOnlyClassName].join(" ")}>
+      <div>
+        <p className="text-xs font-bold text-muted">予定詳細</p>
+        <EventDetailContent event={event} />
+      </div>
+      <div className="sticky bottom-0 z-20 -mx-3 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur">
+        <button
+          type="button"
+          className="w-full rounded-base bg-primary px-3 py-3 text-sm font-bold text-white transition hover:bg-primary-strong"
+          onClick={onEdit}
+        >
+          編集する
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function SchedulePanel({
   selectedDateKey,
   selectedEvent,
   dayEvents,
   draft,
   statusMessage,
+  mobileMode,
   onDraftChange,
   onNew,
   onSelectEvent,
+  onEditSelectedEvent,
   onSave,
   onDelete,
   onDuplicate,
@@ -1909,9 +2059,11 @@ function SchedulePanel({
   dayEvents: ScheduleEvent[];
   draft: ScheduleEvent;
   statusMessage: string;
+  mobileMode: MobileScheduleMode;
   onDraftChange: (event: ScheduleEvent) => void;
   onNew: () => void;
   onSelectEvent: (event: ScheduleEvent) => void;
+  onEditSelectedEvent: () => void;
   onSave: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
@@ -1919,12 +2071,15 @@ function SchedulePanel({
 }) {
   return (
     <div className="space-y-4">
+      {selectedEvent && mobileMode === "detail" ? (
+        <MobileEventDetailView event={selectedEvent} onEdit={onEditSelectedEvent} />
+      ) : null}
       <section className={tabletUpClassName}>
         <p className="text-xs font-bold text-muted">選択中の日付</p>
         <p className="mt-1 text-base font-bold text-foreground">{getLongDateLabel(selectedDateKey)}</p>
         <p className="mt-1 text-sm text-muted">予定 {dayEvents.length} 件</p>
       </section>
-      <section className="lg:border-t lg:border-border lg:pt-5">
+      <section className={[mobileMode === "detail" && selectedEvent ? "hidden lg:block" : "", "lg:border-t lg:border-border lg:pt-5"].join(" ")}>
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-bold text-foreground">この日の予定一覧</h2>
           <button type="button" className="text-sm font-bold text-primary-strong hover:underline" onClick={onNew}>
@@ -1942,25 +2097,27 @@ function SchedulePanel({
             </button>
           ) : (
             dayEvents.map((event) => (
-              <button
-                key={event.id}
-                type="button"
-                onClick={() => onSelectEvent(event)}
-                className={[
-                  "w-full rounded-base border px-3 py-3 text-left transition hover:border-primary/60",
-                  selectedEvent?.id === event.id ? "border-primary bg-primary-soft/55" : "border-border bg-surface"
-                ].join(" ")}
-              >
-                <span className="text-xs font-bold text-primary-strong">
-                  {event.startTime} - {event.endTime}
-                </span>
-                <span className="mt-1 block text-sm font-bold text-foreground">{event.title || "無題の予定"}</span>
-                <span className="mt-1 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
-                  {categoryMeta[event.category].label}
-                  {event.platform ? ` / ${event.platform}` : ""}
-                  {event.recurrence && event.recurrence !== "none" ? ` / ${recurrenceOptions.find((option) => option.value === event.recurrence)?.label}` : ""}
-                </span>
-              </button>
+              <div key={event.id} className="group relative">
+                <button
+                  type="button"
+                  onClick={() => onSelectEvent(event)}
+                  className={[
+                    "w-full rounded-base border px-3 py-3 text-left transition hover:border-primary/60",
+                    selectedEvent?.id === event.id ? "border-primary bg-primary-soft/55" : "border-border bg-surface"
+                  ].join(" ")}
+                >
+                  <span className="text-xs font-bold text-primary-strong">
+                    {event.startTime} - {event.endTime}
+                  </span>
+                  <span className="mt-1 block text-sm font-bold text-foreground">{event.title || "無題の予定"}</span>
+                  <span className="mt-1 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
+                    {categoryMeta[event.category].label}
+                    {event.platform ? ` / ${event.platform}` : ""}
+                    {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event)}` : ""}
+                  </span>
+                </button>
+                <EventHoverPreview event={event} />
+              </div>
             ))
           )}
         </div>
@@ -1968,7 +2125,7 @@ function SchedulePanel({
           新しい予定を追加
         </button>
       </section>
-      <section className="border-t border-border pt-5">
+      <section className={[mobileMode === "detail" && selectedEvent ? "hidden lg:block" : "", "border-t border-border pt-5"].join(" ")}>
         <h2 className="text-sm font-bold text-foreground">{selectedEvent ? "予定の編集" : "新しい予定"}</h2>
         <div className="mt-3">
           <ScheduleForm
@@ -2130,6 +2287,7 @@ export function ScheduleCalendarApp() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [mobileSheetDragOffset, setMobileSheetDragOffset] = useState(0);
   const [mobileNavTab, setMobileNavTab] = useState<MobileNavTab>("calendar");
+  const [mobileScheduleMode, setMobileScheduleMode] = useState<MobileScheduleMode>("edit");
   const [pendingUndo, setPendingUndo] = useState<PendingUndo | null>(null);
   const mobileSheetDragStartYRef = useRef<number | null>(null);
   const skipNextStorageWriteRef = useRef(false);
@@ -2311,6 +2469,7 @@ export function ScheduleCalendarApp() {
     setSelectedEventId(restoredEvent.id);
     setDraft({ ...restoredEvent });
     setActiveTab("schedule");
+    setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
     setStatusMessage("予定を元に戻しました。");
   }
@@ -2325,6 +2484,7 @@ export function ScheduleCalendarApp() {
         ? { ...firstEvent }
         : createEventDraft(dateKey, settings)
     );
+    setMobileScheduleMode(firstEvent ? "detail" : "edit");
     setStatusMessage("");
   }
 
@@ -2340,6 +2500,20 @@ export function ScheduleCalendarApp() {
     setSelectedEventId(event.id);
     setDraft({ ...event });
     setActiveTab("schedule");
+    setMobileScheduleMode(typeof window !== "undefined" && window.matchMedia(mobileLayoutQuery).matches ? "detail" : "edit");
+    setMobileSheetOpen(true);
+    setStatusMessage("");
+  }
+
+  function editSelectedEvent() {
+    if (selectedEvent) {
+      setDraft({ ...selectedEvent });
+      setSelectedDateKey(selectedEvent.date);
+      setCursorDate(parseDateKey(selectedEvent.date));
+    }
+
+    setActiveTab("schedule");
+    setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
     setStatusMessage("");
   }
@@ -2349,6 +2523,7 @@ export function ScheduleCalendarApp() {
     setSelectedEventId(null);
     setDraft(next);
     setActiveTab("schedule");
+    setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
     setStatusMessage("");
   }
@@ -2367,6 +2542,7 @@ export function ScheduleCalendarApp() {
     setSelectedEventId(null);
     setDraft(next);
     setActiveTab("schedule");
+    setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
     setStatusMessage("");
   }
@@ -2397,6 +2573,7 @@ export function ScheduleCalendarApp() {
     setCursorDate(parseDateKey(nextDraft.date));
     setSelectedEventId(nextDraft.id);
     setDraft(nextDraft);
+    setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
     if (previousEvent) {
       const moved =
@@ -2431,6 +2608,7 @@ export function ScheduleCalendarApp() {
     });
     setSelectedEventId(null);
     setDraft(createEventDraft(selectedDateKey, settings));
+    setMobileScheduleMode("edit");
     setMobileSheetOpen(false);
     setStatusMessage("予定を削除しました。");
   }
@@ -2453,6 +2631,7 @@ export function ScheduleCalendarApp() {
     setSelectedEventId(duplicatedEvent.id);
     setDraft(duplicatedEvent);
     setActiveTab("schedule");
+    setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
     setStatusMessage("予定を複製しました。");
   }
@@ -2475,6 +2654,7 @@ export function ScheduleCalendarApp() {
     setSelectedEventId(event.id);
     setDraft(nextEvent);
     setActiveTab("schedule");
+    setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
     showUndoToast({
       title: "予定を移動しました。",
@@ -2869,9 +3049,11 @@ export function ScheduleCalendarApp() {
                 dayEvents={selectedDayEvents}
                 draft={draft}
                 statusMessage={statusMessage}
+                mobileMode={mobileScheduleMode}
                 onDraftChange={setDraft}
                 onNew={createNewEvent}
                 onSelectEvent={selectEvent}
+                onEditSelectedEvent={editSelectedEvent}
                 onSave={saveDraft}
                 onDelete={deleteSelectedEvent}
                 onDuplicate={duplicateSelectedEvent}

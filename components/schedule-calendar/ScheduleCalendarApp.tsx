@@ -2452,6 +2452,10 @@ export function ScheduleCalendarApp() {
     setPendingUndo(null);
   }
 
+  function isMobileLayout() {
+    return typeof window !== "undefined" && window.matchMedia(mobileLayoutQuery).matches;
+  }
+
   function restoreUndoEvent() {
     if (!pendingUndo) {
       return;
@@ -2500,7 +2504,7 @@ export function ScheduleCalendarApp() {
     setSelectedEventId(event.id);
     setDraft({ ...event });
     setActiveTab("schedule");
-    setMobileScheduleMode(typeof window !== "undefined" && window.matchMedia(mobileLayoutQuery).matches ? "detail" : "edit");
+    setMobileScheduleMode(isMobileLayout() ? "detail" : "edit");
     setMobileSheetOpen(true);
     setStatusMessage("");
   }
@@ -2574,8 +2578,8 @@ export function ScheduleCalendarApp() {
     setSelectedEventId(nextDraft.id);
     setDraft(nextDraft);
     setMobileScheduleMode("edit");
-    setMobileSheetOpen(true);
     if (previousEvent) {
+      setMobileSheetOpen(true);
       const moved =
         previousEvent.date !== nextDraft.date ||
         previousEvent.startTime !== nextDraft.startTime ||
@@ -2590,6 +2594,7 @@ export function ScheduleCalendarApp() {
       return;
     }
 
+    setMobileSheetOpen(!isMobileLayout());
     setStatusMessage(nextDraft.recurrence !== "none" ? `${nextDraft.recurrenceCount}件の繰り返し予定を作成しました。` : "予定を保存しました。");
   }
 

@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { PortalToolsIndex } from "@/components/portal/PortalToolsIndex";
+
+export const metadata: Metadata = {
+  title: "Tools",
+  description: "V Streamer Toolsのツール一覧。公開版で利用できるSchedule Calendarと準備中の候補を確認できます。"
+};
 
 export default function ToolsPage() {
   return (

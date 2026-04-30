@@ -36,7 +36,7 @@ export function SuiteCard({ suite }: SuiteCardProps) {
         </div>
 
         <div className="mt-5">
-          <p className="text-xs font-bold text-muted">代表的なツール</p>
+          <p className="text-xs font-bold text-muted">代表的な候補</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {suite.tags.map((tag) => (
               <span key={tag} className="rounded-base bg-surface-muted px-3 py-1 text-xs font-semibold text-muted">
@@ -60,7 +60,7 @@ export function SuiteCard({ suite }: SuiteCardProps) {
                 : "border border-primary/60 text-primary-strong hover:bg-primary-soft/50"
             ].join(" ")}
           >
-            {isAvailable ? "開く" : "詳細"}
+            {isAvailable ? "開く" : "準備中を見る"}
             <span aria-hidden="true">→</span>
           </Link>
         </div>

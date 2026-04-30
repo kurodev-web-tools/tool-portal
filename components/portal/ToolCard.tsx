@@ -13,7 +13,7 @@ export function ToolCard({ tool }: ToolCardProps) {
     <article
       className={[
         "panel flex min-h-52 flex-col p-5 shadow-none transition",
-        isAvailable ? "border-primary/70" : "hover:border-primary/40"
+        isAvailable ? "border-primary/70" : "opacity-85"
       ].join(" ")}
     >
       <div className="flex gap-4">
@@ -52,7 +52,7 @@ export function ToolCard({ tool }: ToolCardProps) {
           disabled
           className="mt-5 rounded-base border border-border bg-surface px-4 py-2.5 text-sm font-bold text-muted"
         >
-          詳細を見る
+          準備中
         </button>
       )}
     </article>

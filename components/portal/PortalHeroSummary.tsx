@@ -20,18 +20,26 @@ export function PortalHeroSummary() {
         </h1>
         <p className="mt-5 max-w-3xl text-base leading-8 text-foreground">
           <span className="block">
-            配信活動を支えるツールを、スイートごとにまとめてご用意しました。
+            公開版では、ポータル、ツール一覧、Schedule Calendar を最小セットとして提供します。
           </span>
           <span className="block">
-            まずは、自分の活動に合ったスイートから始めてみましょう。
+            そのほかのツールは準備中として表示し、利用できる導線と分けています。
           </span>
         </p>
-        <Link
-          href="/tools"
-          className="mt-6 inline-flex rounded-base border border-primary/50 px-4 py-2 text-sm font-bold text-primary-strong transition hover:bg-primary-soft/50"
-        >
-          個別ツール一覧を見る
-        </Link>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/tools"
+            className="inline-flex items-center justify-center rounded-base bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-strong"
+          >
+            ツール一覧を見る
+          </Link>
+          <Link
+            href="/tools/schedule-calendar"
+            className="inline-flex items-center justify-center rounded-base border border-primary/50 px-4 py-2 text-sm font-bold text-primary-strong transition hover:bg-primary-soft/50"
+          >
+            Schedule Calendar を開く
+          </Link>
+        </div>
       </div>
       <div className="min-h-52 rounded-base border border-border bg-primary-soft/55 p-4 sm:p-6 lg:p-7">
         <div className="mx-auto grid h-20 w-20 place-items-center rounded-base border border-primary/30 bg-surface text-5xl font-black text-primary-strong shadow-panel sm:h-24 sm:w-24 lg:h-28 lg:w-28 lg:text-6xl">

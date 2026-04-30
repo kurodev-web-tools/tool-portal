@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { FeedbackNotice } from "@/components/portal/FeedbackNotice";
 import { PortalFilterBar } from "@/components/portal/PortalFilterBar";
 import { ToolCard } from "@/components/portal/ToolCard";
 import { tools } from "@/lib/tools";
@@ -48,7 +49,7 @@ export function PortalToolsIndex() {
           <p className="text-sm font-bold text-primary-strong">Tools</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">ツール一覧</h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-            利用可能なツールや準備中の機能を、スイート・カテゴリ・実装状況で絞り込んで探せます。
+            公開版で利用できる個別ツールは Schedule Calendar です。準備中の候補は利用導線と分けて表示しています。
           </p>
           {currentSuiteName ? (
             <div className="mt-4 inline-flex items-center gap-2 rounded-base bg-primary-soft px-3 py-2 text-sm font-bold text-primary-strong">
@@ -70,6 +71,7 @@ export function PortalToolsIndex() {
         onCategoryChange={setCategory}
         onStatusChange={setStatus}
       />
+      <FeedbackNotice />
       <section aria-label="ツール一覧">
         {filteredTools.length > 0 ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">

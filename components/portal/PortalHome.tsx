@@ -1,4 +1,5 @@
 import { PortalHeroSummary } from "@/components/portal/PortalHeroSummary";
+import { FeedbackNotice } from "@/components/portal/FeedbackNotice";
 import { SuiteCard } from "@/components/portal/SuiteCard";
 import { suites } from "@/lib/suites";
 
@@ -15,7 +16,7 @@ export function PortalHome() {
             スイートから探す
           </h2>
           <p className="mt-2 text-sm text-muted">
-            あなたの活動を支えるツール群を、目的に合わせてまとめました。
+            公開版で使えるものと、今後の候補を分けて表示しています。
           </p>
         </div>
         <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
@@ -25,8 +26,10 @@ export function PortalHome() {
         </div>
       </section>
 
+      <FeedbackNotice />
+
       <p className="text-center text-sm text-muted">
-        ツールは今後も順次追加されていきます。最新情報はお知らせでご確認ください。
+        現在利用できる個別ツールは Schedule Calendar です。その他は準備中です。
       </p>
     </div>
   );

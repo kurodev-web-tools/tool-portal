@@ -106,12 +106,45 @@
 
 ### フェーズ2: 公開最小セット（v0）を固定する
 
-- [ ] 公開対象を `Portal + Tools Index + Schedule Calendar` に固定し、他ツールは準備中導線で統一する
-- [ ] 公開前チェックリストを作成する
+- [x] 公開対象を `Portal + Tools Index + Schedule Calendar` に固定し、他ツールは準備中導線で統一する
+  - `/` のhero文言を公開最小セット前提へ変更し、`/tools` と `/tools/schedule-calendar` への導線を明示した
+  - `/tools` の説明文と準備中カードのCTAを、利用可能導線と混同しない表記へ整理した
+  - 準備中ツールの個別URLは `/tools` に寄せ、未実装ページへ誘導しない形にした
+- [x] 公開前チェックリストを作成する
   - ページ導線、レスポンシブ、基本SEO、404/500相当の表示方針
   - Cloudflare配信時の `_headers` / 静的成果物の確認
-- [ ] フィードバック導線を追加する
+  - 追加: `docs/PRELAUNCH_CHECKLIST_V0.md`
+- [x] フィードバック導線を追加する
   - 不具合報告と要望収集の入口を `/` または `/tools` に設置する
+  - `/` と `/tools` に共通の「不具合報告 / 要望」入口を追加した
+  - 当面は宛先未固定の `mailto:` 導線として、利用者側のメールクライアントで送信先を指定できる暫定運用にした
+
+#### フェーズ2検証メモ（2026-04-30）
+
+- 実施: `git diff --check`
+  - 結果: 空白エラーなし。CRLF警告のみ
+- 実施: 文言・導線の静的確認
+  - `詳細を見る` / `どうぞお楽しみ` / `順次追加` の過剰期待を生む文言が、対象ファイル内に残っていないことを確認した
+  - 準備中ツールの `href` が `/tools` に統一されていることを確認した
+- 未実施: `npm ci` / `npm run lint` / `npx tsc --noEmit` / `npm run build`
+  - 理由: このCodex環境ではNode起動時に `Could not determine Node.js install directory` / `Assertion failed: ncrypto::CSPRNG(nullptr, 0)` で停止する
+  - 補足: バンドルNodeでも `crypto` 初期化時に同じ `ncrypto::CSPRNG(nullptr, 0)` で停止した
+- 未実施: ブラウザ実見 `/` / `/tools` / `/tools/schedule-calendar`
+  - 2026-04-30追記: ユーザー起動の dev server `http://localhost:3000/` で確認済み
+  - `/`: 新hero文言、`ツール一覧を見る`、`Schedule Calendar を開く`、`不具合報告 / 要望`、`mailto:` 導線を確認
+  - `/tools`: 新説明文、Schedule Calendar の利用可能導線、準備中カードの `準備中` CTA、フィードバック導線を確認
+  - `/tools/schedule-calendar`: URL / title / 作業画面表示を確認
+  - 主要導線: `/` -> `/tools` -> `/tools/schedule-calendar` の遷移を確認
+  - console: `/` / `/tools` / `/tools/schedule-calendar` で error / warn なし
+  - 幅別確認:
+    - `390px`: Homeの新文言と2CTA、Toolsの新説明文、Schedule Calendarのモバイル統合UI / 下部タブ / FABを確認
+    - `820px`: `~1023px` のモバイル統合UIとして、Toolsフィルタの横スクロール、Schedule Calendarの下部タブ / FABを確認
+    - `1024px`: タブレット2ペインとして、左サイドバー、Toolsフィードバック導線、Schedule Calendar右パネル4タブを確認
+    - `1366px`: PC表示として、左サイドバー、Schedule Calendar 2ペイン、右パネル、将来機能の近日対応表示を確認
+  - build / Cloudflare Pages成果物:
+    - ユーザー環境で `npm run build` 成功
+    - `out/_headers` / `out/index.html` / `out/tools/index.html` / `out/tools/schedule-calendar/index.html` の存在確認済み
+    - 補足: Next.js が workspace root 推定警告を出したが、build / static export / 必要成果物生成は成功
 
 ### フェーズ3: 2本目MVPツールを追加する
 

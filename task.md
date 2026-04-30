@@ -141,7 +141,10 @@
     - `820px`: `~1023px` のモバイル統合UIとして、Toolsフィルタの横スクロール、Schedule Calendarの下部タブ / FABを確認
     - `1024px`: タブレット2ペインとして、左サイドバー、Toolsフィードバック導線、Schedule Calendar右パネル4タブを確認
     - `1366px`: PC表示として、左サイドバー、Schedule Calendar 2ペイン、右パネル、将来機能の近日対応表示を確認
-  - 未確認範囲: `out/` 生成結果
+  - build / Cloudflare Pages成果物:
+    - ユーザー環境で `npm run build` 成功
+    - `out/_headers` / `out/index.html` / `out/tools/index.html` / `out/tools/schedule-calendar/index.html` の存在確認済み
+    - 補足: Next.js が workspace root 推定警告を出したが、build / static export / 必要成果物生成は成功
 
 ### フェーズ3: 2本目MVPツールを追加する
 

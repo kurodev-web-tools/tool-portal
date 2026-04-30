@@ -70,6 +70,10 @@
     - 週表示は端の曜日で画面外へ出にくいよう、日曜/月曜は右側、金曜/土曜は左側、18時以降は上側に表示する
     - 日表示はカレンダービュー外へ出ないよう、左右表示をやめて予定ブロック中央の上 / 下に表示する
     - 月表示は左右配置に加え、上3行は下側、下3行は上側に表示する
+    - 1023px以下では新規予定の保存成功後にボトムシートを自動で閉じるようにした
+      - 既存予定の編集保存は、継続編集や削除操作を妨げないよう従来どおり開いたままにする
+      - browser-useでページ再読み込み後の console error / warn なしを確認した
+      - 未確認: 実機幅 390 / 820px での新規保存後クローズ実操作
   - 実施: `git diff --check`（空白エラーなし。CRLF警告のみ）
   - 未実施: `npx tsc --noEmit` / `npm run lint`
     - 理由: このCodex環境ではNode起動時に `Could not determine Node.js install directory` / `Assertion failed: ncrypto::CSPRNG(nullptr, 0)` で停止する

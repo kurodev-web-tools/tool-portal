@@ -75,6 +75,14 @@
     - 理由: このCodex環境ではNode起動時に `Could not determine Node.js install directory` / `Assertion failed: ncrypto::CSPRNG(nullptr, 0)` で停止する
   - 未実施: in-app browser / Chrome DevTools 実見
     - 理由: browser-use は `failed to write kernel assets: 指定されたパスが見つかりません。`、Chrome DevTools は `Transport closed` で接続できない
+  - 2026-04-30 browser-use再確認:
+    - `http://localhost:3000/tools/schedule-calendar/` に接続でき、ページ再読み込み後の console error / warn はなし
+    - 週表示の月曜20時予定は、詳細プレビューが予定の上側かつ右寄りに表示されることを確認した
+    - 週表示の土曜20時予定は、詳細プレビューが予定の上側かつ左寄りに表示され、右パネルへはみ出さないことを確認した
+    - 日表示の20時予定は、詳細プレビューがカレンダー外の右側ではなく予定ブロック上側に表示されることを確認した
+    - 月表示の上段土曜予定は、詳細プレビューが左側かつ下側に表示されることを確認した
+    - 未確認: 月表示の下3行予定の上側表示、390 / 820pxの詳細ボトムシート
+    - 補足: 月表示下段確認用の新規予定作成を試したが、UI上は現在選択中の5/2へ追加されたように見えたため、下段配置の実見確認は未完了
 
 #### フェーズ1検証メモ（2026-04-29）
 

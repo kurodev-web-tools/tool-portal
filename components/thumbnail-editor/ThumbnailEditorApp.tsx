@@ -106,7 +106,7 @@ export function ThumbnailEditorApp() {
   const [toast, setToast] = useState<ToastState>(null);
   const [exportFormat, setExportFormat] = useState<"png" | "jpeg">("png");
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("canvas");
-  const [zoom, setZoom] = useState(getDefaultZoomForViewport);
+  const [zoom, setZoom] = useState(0.72);
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState<"preset" | "canvas" | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");

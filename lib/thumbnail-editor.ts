@@ -58,6 +58,8 @@ export type ThumbnailShapeLayer = ThumbnailBaseLayer & {
 };
 
 export type ThumbnailLayer = ThumbnailImageLayer | ThumbnailTextLayer | ThumbnailShapeLayer;
+export type ThumbnailResizeHandle = "nw" | "ne" | "sw" | "se";
+export type ThumbnailHandleKind = ThumbnailResizeHandle | "rotate";
 
 export type ThumbnailEditorDraft = {
   version: 1;
@@ -508,22 +510,36 @@ const drawText = (context: CanvasRenderingContext2D, layer: ThumbnailTextLayer) 
 };
 
 const drawSelection = (context: CanvasRenderingContext2D, layer: ThumbnailLayer) => {
+  const centerX = layer.x + layer.width / 2;
+  const centerY = layer.y + layer.height / 2;
+  const rad = (layer.rotation * Math.PI) / 180;
+  const rotateHandleOffset = Math.max(36, Math.round(context.canvas.width / 24));
+  const rotateHandleRadius = Math.max(10, Math.round(context.canvas.width / 92));
+
   context.save();
   context.strokeStyle = "#1ed7c6";
   context.lineWidth = Math.max(3, Math.round(context.canvas.width / 480));
+  context.translate(centerX, centerY);
+  context.rotate(rad);
+  context.translate(-layer.width / 2, -layer.height / 2);
   context.setLineDash([12, 8]);
-  context.strokeRect(layer.x, layer.y, layer.width, layer.height);
+  context.strokeRect(0, 0, layer.width, layer.height);
   context.setLineDash([]);
   context.fillStyle = "#ffffff";
   const handleSize = Math.max(12, Math.round(context.canvas.width / 80));
   [
-    [layer.x, layer.y],
-    [layer.x + layer.width, layer.y],
-    [layer.x, layer.y + layer.height],
-    [layer.x + layer.width, layer.y + layer.height],
-    [layer.x + layer.width / 2, layer.y],
-    [layer.x + layer.width / 2, layer.y + layer.height]
+    [0, 0],
+    [layer.width, 0],
+    [0, layer.height],
+    [layer.width, layer.height]
   ].forEach(([x, y]) => context.fillRect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize));
+  context.beginPath();
+  context.moveTo(layer.width / 2, 0);
+  context.lineTo(layer.width / 2, -rotateHandleOffset);
+  context.stroke();
+  context.beginPath();
+  context.arc(layer.width / 2, -rotateHandleOffset, rotateHandleRadius, 0, Math.PI * 2);
+  context.fill();
   context.restore();
 };
 
@@ -540,9 +556,79 @@ const roundedRect = (context: CanvasRenderingContext2D, x: number, y: number, wi
   context.quadraticCurveTo(x, y, x + safeRadius, y);
 };
 
-export const layerContainsPoint = (layer: ThumbnailLayer, point: { x: number; y: number }) =>
-  !layer.hidden &&
-  point.x >= layer.x &&
-  point.x <= layer.x + layer.width &&
-  point.y >= layer.y &&
-  point.y <= layer.y + layer.height;
+const rotatePoint = (point: { x: number; y: number }, radians: number) => {
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  return {
+    x: point.x * cos - point.y * sin,
+    y: point.x * sin + point.y * cos
+  };
+};
+
+export const getLayerCenter = (layer: ThumbnailLayer) => ({
+  x: layer.x + layer.width / 2,
+  y: layer.y + layer.height / 2
+});
+
+export const pointToLayerLocal = (layer: ThumbnailLayer, point: { x: number; y: number }) => {
+  const center = getLayerCenter(layer);
+  const rotated = rotatePoint({ x: point.x - center.x, y: point.y - center.y }, (-layer.rotation * Math.PI) / 180);
+  return {
+    x: rotated.x + layer.width / 2,
+    y: rotated.y + layer.height / 2
+  };
+};
+
+export const layerContainsPoint = (layer: ThumbnailLayer, point: { x: number; y: number }) => {
+  if (layer.hidden) {
+    return false;
+  }
+  const local = pointToLayerLocal(layer, point);
+  return local.x >= 0 && local.x <= layer.width && local.y >= 0 && local.y <= layer.height;
+};
+
+export const getLayerHandlePoints = (layer: ThumbnailLayer, rotateHandleOffset: number) => {
+  const center = getLayerCenter(layer);
+  const rad = (layer.rotation * Math.PI) / 180;
+  const toGlobal = (localX: number, localY: number) => {
+    const rotated = rotatePoint({ x: localX - layer.width / 2, y: localY - layer.height / 2 }, rad);
+    return { x: center.x + rotated.x, y: center.y + rotated.y };
+  };
+
+  return {
+    nw: toGlobal(0, 0),
+    ne: toGlobal(layer.width, 0),
+    sw: toGlobal(0, layer.height),
+    se: toGlobal(layer.width, layer.height),
+    rotate: toGlobal(layer.width / 2, -rotateHandleOffset)
+  };
+};
+
+export const hitTestLayerHandle = (
+  layer: ThumbnailLayer,
+  point: { x: number; y: number },
+  options: { handleSize: number; rotateHandleOffset: number; rotateHandleRadius: number }
+): ThumbnailHandleKind | null => {
+  const handles = getLayerHandlePoints(layer, options.rotateHandleOffset);
+  const half = options.handleSize / 2;
+  const inSquare = (target: { x: number; y: number }) =>
+    Math.abs(point.x - target.x) <= half && Math.abs(point.y - target.y) <= half;
+  const inCircle = (target: { x: number; y: number }) => Math.hypot(point.x - target.x, point.y - target.y) <= options.rotateHandleRadius;
+
+  if (inCircle(handles.rotate)) {
+    return "rotate";
+  }
+  if (inSquare(handles.nw)) {
+    return "nw";
+  }
+  if (inSquare(handles.ne)) {
+    return "ne";
+  }
+  if (inSquare(handles.sw)) {
+    return "sw";
+  }
+  if (inSquare(handles.se)) {
+    return "se";
+  }
+  return null;
+};

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   cloneThumbnailLayer,
   createDraftFromPreset,
@@ -8,12 +8,17 @@ import {
   createShapeLayer,
   createTextLayer,
   drawThumbnail,
+  getLayerCenter,
+  hitTestLayerHandle,
   layerContainsPoint,
   normalizeThumbnailDraft,
+  pointToLayerLocal,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
   thumbnailFonts,
   thumbnailPresets,
+  type ThumbnailHandleKind,
+  type ThumbnailResizeHandle,
   type ThumbnailCanvasSizeId,
   type ThumbnailEditorDraft,
   type ThumbnailLayer,
@@ -25,6 +30,18 @@ import {
 type ToastTone = "info" | "success" | "warning" | "error";
 type ToastState = { tone: ToastTone; message: string } | null;
 type MobilePanel = "canvas" | "layers" | "text" | "export";
+type CanvasInteractionMode = "drag" | "resize" | "rotate";
+type CanvasCursor = "default" | "move" | "grab" | "grabbing" | "crosshair" | "nwse-resize" | "nesw-resize";
+type CanvasInteractionState = {
+  pointerId: number;
+  layerId: string;
+  mode: CanvasInteractionMode;
+  resizeHandle?: ThumbnailResizeHandle;
+  startPointer: { x: number; y: number };
+  startLayer: ThumbnailLayer;
+  startCenter: { x: number; y: number };
+  rotateOffsetRad: number;
+};
 
 const toneClassName: Record<ToastTone, string> = {
   info: "border-sky-400/60 bg-sky-500/12 text-foreground",
@@ -39,8 +56,29 @@ const mobilePanels: { id: MobilePanel; label: string; icon: string }[] = [
   { id: "text", label: "テキスト", icon: "T" },
   { id: "export", label: "書き出し", icon: "⇧" }
 ];
+const colorSwatches = [
+  "#ffffff",
+  "#000000",
+  "#1ed7c6",
+  "#37a0ff",
+  "#8d4df5",
+  "#ff7b54",
+  "#f7b500",
+  "#e8415f"
+];
 
 const selectedLayerFallback = (layers: ThumbnailLayer[]) => layers[layers.length - 1]?.id ?? null;
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const normalizeDeg = (deg: number) => {
+  let value = deg % 360;
+  if (value > 180) {
+    value -= 360;
+  }
+  if (value < -180) {
+    value += 360;
+  }
+  return value;
+};
 
 export function ThumbnailEditorApp() {
   const [draft, setDraft] = useState<ThumbnailEditorDraft>(() => createDraftFromPreset());
@@ -50,8 +88,11 @@ export function ThumbnailEditorApp() {
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("canvas");
   const [zoom, setZoom] = useState(0.72);
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState<"preset" | "canvas" | null>(null);
+  const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const interactionRef = useRef<CanvasInteractionState | null>(null);
 
   const selectedLayer = useMemo(
     () => draft.layers.find((layer) => layer.id === draft.selectedLayerId) ?? null,
@@ -66,6 +107,9 @@ export function ThumbnailEditorApp() {
   useEffect(() => {
     setFontMenuOpen(false);
   }, [draft.selectedLayerId]);
+  useEffect(() => {
+    setHeaderMenuOpen(null);
+  }, [draft.presetId, draft.canvas.width, draft.canvas.height]);
 
   const showToast = useCallback((tone: ToastTone, message: string) => {
     setToast({ tone, message });
@@ -132,6 +176,33 @@ export function ThumbnailEditorApp() {
       layers: current.layers.map((layer) => (layer.id === current.selectedLayerId ? updater(layer) : layer))
     }));
   };
+
+  const getCanvasPointFromClient = useCallback(
+    (clientX: number, clientY: number) => {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        return null;
+      }
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: ((clientX - rect.left) / rect.width) * draft.canvas.width,
+        y: ((clientY - rect.top) / rect.height) * draft.canvas.height
+      };
+    },
+    [draft.canvas.height, draft.canvas.width]
+  );
+
+  const constrainLayer = useCallback(
+    (layer: ThumbnailLayer): ThumbnailLayer => ({
+      ...layer,
+      width: clamp(layer.width, 16, draft.canvas.width * 2),
+      height: clamp(layer.height, 16, draft.canvas.height * 2),
+      x: clamp(layer.x, -draft.canvas.width, draft.canvas.width * 2),
+      y: clamp(layer.y, -draft.canvas.height, draft.canvas.height * 2),
+      rotation: normalizeDeg(layer.rotation)
+    }),
+    [draft.canvas.height, draft.canvas.width]
+  );
 
   const applyPreset = (presetId: ThumbnailPresetId) => {
     const next = createDraftFromPreset(presetId, draft.canvas);
@@ -246,19 +317,189 @@ export function ThumbnailEditorApp() {
     }));
   };
 
-  const handleCanvasClick = (event: MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) {
+  const beginInteraction = useCallback(
+    (event: PointerEvent<HTMLCanvasElement>) => {
+      const point = getCanvasPointFromClient(event.clientX, event.clientY);
+      if (!point) {
+        return;
+      }
+
+      const selected = draft.layers.find((layer) => layer.id === draft.selectedLayerId && !layer.hidden);
+      const isTouchLike = event.pointerType === "touch" || event.pointerType === "pen";
+      const handleSize = Math.max(isTouchLike ? 18 : 12, Math.round(draft.canvas.width / 80));
+      const rotateHandleOffset = Math.max(isTouchLike ? 42 : 36, Math.round(draft.canvas.width / 24));
+      const rotateHandleRadius = Math.max(isTouchLike ? 14 : 10, Math.round(draft.canvas.width / 92));
+      const targetByPoint = [...draft.layers].reverse().find((layer) => layerContainsPoint(layer, point));
+      const target = targetByPoint ?? selected ?? null;
+      if (!target) {
+        return;
+      }
+
+      const handle = selected && !selected.locked ? hitTestLayerHandle(selected, point, { handleSize, rotateHandleOffset, rotateHandleRadius }) : null;
+      const activeLayer = handle ? selected : target;
+      if (!activeLayer) {
+        return;
+      }
+
+      setDraft((current) => ({ ...current, selectedLayerId: activeLayer.id }));
+      if (activeLayer.locked) {
+        return;
+      }
+
+      const center = getLayerCenter(activeLayer);
+      const angle = Math.atan2(point.y - center.y, point.x - center.x);
+      const rad = (activeLayer.rotation * Math.PI) / 180;
+      const mode: CanvasInteractionMode = handle === "rotate" ? "rotate" : handle ? "resize" : "drag";
+      setCanvasCursor(mode === "rotate" ? "crosshair" : mode === "resize" ? "nwse-resize" : "grabbing");
+
+      interactionRef.current = {
+        pointerId: event.pointerId,
+        layerId: activeLayer.id,
+        mode,
+        resizeHandle: handle && handle !== "rotate" ? handle : undefined,
+        startPointer: point,
+        startLayer: { ...activeLayer },
+        startCenter: center,
+        rotateOffsetRad: angle - rad
+      };
+      event.currentTarget.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    },
+    [draft.canvas.width, draft.layers, draft.selectedLayerId, getCanvasPointFromClient]
+  );
+
+  const resizeLayerFromHandle = useCallback((state: CanvasInteractionState, point: { x: number; y: number }) => {
+    const layer = state.startLayer;
+    if (state.resizeHandle === undefined) {
+      return layer;
+    }
+
+    const rad = (layer.rotation * Math.PI) / 180;
+    const toLocal = (p: { x: number; y: number }) => ({
+      x: (p.x - state.startCenter.x) * Math.cos(-rad) - (p.y - state.startCenter.y) * Math.sin(-rad),
+      y: (p.x - state.startCenter.x) * Math.sin(-rad) + (p.y - state.startCenter.y) * Math.cos(-rad)
+    });
+    const currentLocal = toLocal(point);
+    const minSize = 16;
+
+    const oppositeMap: Record<ThumbnailResizeHandle, { x: number; y: number }> = {
+      nw: { x: layer.width / 2, y: layer.height / 2 },
+      ne: { x: -layer.width / 2, y: layer.height / 2 },
+      sw: { x: layer.width / 2, y: -layer.height / 2 },
+      se: { x: -layer.width / 2, y: -layer.height / 2 }
+    };
+
+    const anchor = oppositeMap[state.resizeHandle];
+    const rawWidth = Math.abs(anchor.x - currentLocal.x);
+    const rawHeight = Math.abs(anchor.y - currentLocal.y);
+    const width = Math.max(minSize, rawWidth);
+    const height = Math.max(minSize, rawHeight);
+    const cornerByHandle: Record<ThumbnailResizeHandle, { x: number; y: number }> = {
+      nw: { x: anchor.x - width, y: anchor.y - height },
+      ne: { x: anchor.x + width, y: anchor.y - height },
+      sw: { x: anchor.x - width, y: anchor.y + height },
+      se: { x: anchor.x + width, y: anchor.y + height }
+    };
+    const corner = cornerByHandle[state.resizeHandle];
+    const centerLocal = {
+      x: (corner.x + anchor.x) / 2,
+      y: (corner.y + anchor.y) / 2
+    };
+    const centerGlobal = {
+      x: state.startCenter.x + centerLocal.x * Math.cos(rad) - centerLocal.y * Math.sin(rad),
+      y: state.startCenter.y + centerLocal.x * Math.sin(rad) + centerLocal.y * Math.cos(rad)
+    };
+
+    return {
+      ...layer,
+      x: centerGlobal.x - width / 2,
+      y: centerGlobal.y - height / 2,
+      width,
+      height
+    };
+  }, []);
+  const cursorFromHandle = useCallback((handle: ThumbnailHandleKind): CanvasCursor => {
+    if (handle === "rotate") {
+      return "crosshair";
+    }
+    if (handle === "ne" || handle === "sw") {
+      return "nesw-resize";
+    }
+    return "nwse-resize";
+  }, []);
+
+  const updateInteraction = useCallback(
+    (event: PointerEvent<HTMLCanvasElement>) => {
+      const state = interactionRef.current;
+      if (!state || state.pointerId !== event.pointerId) {
+        const point = getCanvasPointFromClient(event.clientX, event.clientY);
+        if (!point) {
+          return;
+        }
+        const selected = draft.layers.find((layer) => layer.id === draft.selectedLayerId && !layer.hidden) ?? null;
+        if (selected && !selected.locked) {
+          const handle = hitTestLayerHandle(selected, point, {
+            handleSize: Math.max(12, Math.round(draft.canvas.width / 80)),
+            rotateHandleOffset: Math.max(36, Math.round(draft.canvas.width / 24)),
+            rotateHandleRadius: Math.max(10, Math.round(draft.canvas.width / 92))
+          });
+          if (handle) {
+            setCanvasCursor(cursorFromHandle(handle));
+            return;
+          }
+        }
+        const hovered = [...draft.layers].reverse().find((layer) => layerContainsPoint(layer, point));
+        setCanvasCursor(hovered && !hovered.locked ? "grab" : "default");
+        return;
+      }
+      const point = getCanvasPointFromClient(event.clientX, event.clientY);
+      if (!point) {
+        return;
+      }
+
+      setDraft((current) => {
+        const layers = current.layers.map((layer) => {
+          if (layer.id !== state.layerId || layer.locked) {
+            return layer;
+          }
+          if (state.mode === "drag") {
+            const dx = point.x - state.startPointer.x;
+            const dy = point.y - state.startPointer.y;
+            return constrainLayer({ ...state.startLayer, x: state.startLayer.x + dx, y: state.startLayer.y + dy });
+          }
+          if (state.mode === "resize") {
+            return constrainLayer(resizeLayerFromHandle(state, point));
+          }
+          const center = getLayerCenter(state.startLayer);
+          const angle = Math.atan2(point.y - center.y, point.x - center.x);
+          const rotation = ((angle - state.rotateOffsetRad) * 180) / Math.PI;
+          return constrainLayer({ ...state.startLayer, rotation });
+        });
+        return { ...current, layers };
+      });
+      if (state.mode === "rotate") {
+        setCanvasCursor("crosshair");
+      } else if (state.mode === "resize") {
+        setCanvasCursor(state.resizeHandle ? cursorFromHandle(state.resizeHandle) : "nwse-resize");
+      } else {
+        setCanvasCursor("grabbing");
+      }
+      event.preventDefault();
+    },
+    [constrainLayer, cursorFromHandle, draft.canvas.width, draft.layers, draft.selectedLayerId, getCanvasPointFromClient, resizeLayerFromHandle]
+  );
+
+  const endInteraction = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
+    const state = interactionRef.current;
+    if (!state || state.pointerId !== event.pointerId) {
       return;
     }
-    const rect = canvas.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * draft.canvas.width;
-    const y = ((event.clientY - rect.top) / rect.height) * draft.canvas.height;
-    const target = [...draft.layers].reverse().find((layer) => layerContainsPoint(layer, { x, y }));
-    if (target) {
-      setDraft((current) => ({ ...current, selectedLayerId: target.id }));
+    interactionRef.current = null;
+    setCanvasCursor("grab");
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
     }
-  };
+  }, []);
 
   const exportImage = async () => {
     try {
@@ -290,31 +531,31 @@ export function ThumbnailEditorApp() {
           <div className="grid w-full grid-cols-2 gap-3 min-[1000px]:w-auto min-[1000px]:min-w-[29rem] xl:min-w-[38rem] xl:flex xl:items-center">
             <label className="min-w-0 text-xs font-bold text-muted">
               プリセット
-              <select
-                className="mt-1 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
-                value={draft.presetId}
-                onChange={(event) => applyPreset(event.target.value as ThumbnailPresetId)}
-              >
-                {thumbnailPresets.map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.name}
-                  </option>
-                ))}
-              </select>
+              <ListboxField
+                className="mt-1"
+                isOpen={headerMenuOpen === "preset"}
+                value={selectedPreset.name}
+                onToggle={() => setHeaderMenuOpen((current) => (current === "preset" ? null : "preset"))}
+                options={thumbnailPresets.map((preset) => ({
+                  id: preset.id,
+                  label: preset.name
+                }))}
+                onSelect={(id) => applyPreset(id as ThumbnailPresetId)}
+              />
             </label>
             <label className="min-w-0 text-xs font-bold text-muted">
               キャンバスサイズ
-              <select
-                className="mt-1 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
-                value={canvasSizeId}
-                onChange={(event) => changeCanvasSize(event.target.value as ThumbnailCanvasSizeId)}
-              >
-                {Object.entries(thumbnailCanvasSizes).map(([id, size]) => (
-                  <option key={id} value={id}>
-                    {size.label}
-                  </option>
-                ))}
-              </select>
+              <ListboxField
+                className="mt-1"
+                isOpen={headerMenuOpen === "canvas"}
+                value={thumbnailCanvasSizes[canvasSizeId].label}
+                onToggle={() => setHeaderMenuOpen((current) => (current === "canvas" ? null : "canvas"))}
+                options={Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
+                  id,
+                  label: size.label
+                }))}
+                onSelect={(id) => changeCanvasSize(id as ThumbnailCanvasSizeId)}
+              />
             </label>
           </div>
           <div className="flex w-full flex-wrap justify-end gap-2 min-[1000px]:w-auto">
@@ -353,9 +594,12 @@ export function ThumbnailEditorApp() {
               <div className="scrollbar-accent overflow-auto rounded-base bg-surface-muted p-2 [scrollbar-gutter:stable] md:p-4">
                 <canvas
                   ref={canvasRef}
-                  className="mx-auto block aspect-video max-w-none rounded-base border border-border bg-[#081117] shadow-lg"
-                  style={{ width: `${draft.canvas.width * zoom}px` }}
-                  onClick={handleCanvasClick}
+                  className="mx-auto block aspect-video max-w-none touch-none rounded-base border border-border bg-[#081117] shadow-lg"
+                  style={{ width: `${draft.canvas.width * zoom}px`, cursor: canvasCursor }}
+                  onPointerDown={beginInteraction}
+                  onPointerMove={updateInteraction}
+                  onPointerUp={endInteraction}
+                  onPointerCancel={endInteraction}
                   aria-label="サムネイル編集キャンバス"
                 />
               </div>
@@ -799,13 +1043,88 @@ function NumberField({
 }
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const normalizedValue = value.startsWith("#") ? value.slice(0, 7) : value;
   return (
     <label className="block text-xs font-bold text-muted">
       {label}
-      <div className="mt-1 flex overflow-hidden rounded-base border border-border bg-surface">
-        <input className="h-10 w-12 shrink-0 bg-transparent p-1" type="color" value={value.slice(0, 7)} onChange={(event) => onChange(event.target.value)} />
-        <input className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm font-bold text-foreground" value={value} onChange={(event) => onChange(event.target.value)} />
+      <div className="mt-1 space-y-2 rounded-base border border-border bg-surface p-2">
+        <div className="flex items-center gap-2">
+          <button
+            className="h-10 w-10 shrink-0 rounded-sm border border-border"
+            type="button"
+            style={{ backgroundColor: normalizedValue }}
+            onClick={() => setPaletteOpen((current) => !current)}
+            aria-label={`${label}の色を選ぶ`}
+          />
+          <input
+            className="min-w-0 flex-1 rounded-sm border border-border bg-transparent px-2 py-2 text-sm font-bold text-foreground"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+          />
+        </div>
+        {paletteOpen && (
+          <div className="grid grid-cols-8 gap-1">
+            {colorSwatches.map((swatch) => (
+              <button
+                key={swatch}
+                className="h-6 w-6 rounded-sm border border-border"
+                type="button"
+                style={{ backgroundColor: swatch }}
+                onClick={() => {
+                  onChange(swatch);
+                  setPaletteOpen(false);
+                }}
+                aria-label={`色 ${swatch}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </label>
+  );
+}
+
+function ListboxField({
+  value,
+  options,
+  isOpen,
+  onToggle,
+  onSelect,
+  className
+}: {
+  value: string;
+  options: { id: string; label: string }[];
+  isOpen: boolean;
+  onToggle: () => void;
+  onSelect: (id: string) => void;
+  className?: string;
+}) {
+  return (
+    <div className={`relative ${className ?? ""}`}>
+      <button
+        className="flex w-full items-center justify-between rounded-base border border-border bg-surface px-3 py-2 text-left text-sm font-bold text-foreground"
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+      >
+        <span className="truncate">{value}</span>
+        <span className="text-xs text-muted">▾</span>
+      </button>
+      {isOpen && (
+        <div className="absolute left-0 right-0 z-40 mt-1 max-h-60 overflow-auto rounded-base border border-border bg-surface shadow-lg">
+          {options.map((option) => (
+            <button
+              key={option.id}
+              className="block w-full border-b border-border/60 px-3 py-2 text-left text-sm font-bold text-foreground transition hover:bg-primary/12 last:border-b-0"
+              type="button"
+              onClick={() => onSelect(option.id)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

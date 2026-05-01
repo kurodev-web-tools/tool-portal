@@ -77,6 +77,18 @@ const colorSwatches = [
 
 const selectedLayerFallback = (layers: ThumbnailLayer[]) => layers[layers.length - 1]?.id ?? null;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const getDefaultZoomForViewport = () => {
+  if (typeof window === "undefined") {
+    return 0.72;
+  }
+  if (window.innerWidth >= 1280) {
+    return 0.72;
+  }
+  if (window.innerWidth >= 1024) {
+    return 0.56;
+  }
+  return 0.42;
+};
 const normalizeDeg = (deg: number) => {
   let value = deg % 360;
   if (value > 180) {
@@ -94,7 +106,7 @@ export function ThumbnailEditorApp() {
   const [toast, setToast] = useState<ToastState>(null);
   const [exportFormat, setExportFormat] = useState<"png" | "jpeg">("png");
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("canvas");
-  const [zoom, setZoom] = useState(0.72);
+  const [zoom, setZoom] = useState(getDefaultZoomForViewport);
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState<"preset" | "canvas" | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
@@ -104,6 +116,7 @@ export function ThumbnailEditorApp() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const interactionRef = useRef<CanvasInteractionState | null>(null);
   const panRef = useRef<CanvasPanState | null>(null);
+  const userAdjustedZoomRef = useRef(false);
 
   const selectedLayer = useMemo(
     () => draft.layers.find((layer) => layer.id === draft.selectedLayerId) ?? null,
@@ -124,6 +137,16 @@ export function ThumbnailEditorApp() {
   useEffect(() => {
     setCanvasCursor(editorMode === "pan" ? "grab" : "default");
   }, [editorMode]);
+  useEffect(() => {
+    const updateDefaultZoom = () => {
+      if (!userAdjustedZoomRef.current) {
+        setZoom(getDefaultZoomForViewport());
+      }
+    };
+    updateDefaultZoom();
+    window.addEventListener("resize", updateDefaultZoom);
+    return () => window.removeEventListener("resize", updateDefaultZoom);
+  }, []);
 
   const showToast = useCallback((tone: ToastTone, message: string) => {
     setToast({ tone, message });
@@ -189,6 +212,11 @@ export function ThumbnailEditorApp() {
       ...current,
       layers: current.layers.map((layer) => (layer.id === current.selectedLayerId ? updater(layer) : layer))
     }));
+  };
+
+  const updateZoom = (updater: (value: number) => number) => {
+    userAdjustedZoomRef.current = true;
+    setZoom(updater);
   };
 
   const getCanvasPointFromClient = useCallback(
@@ -577,12 +605,12 @@ export function ThumbnailEditorApp() {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
       <header className="shrink-0 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur md:px-5 xl:px-6">
-        <div className="flex flex-wrap items-center gap-3 min-[1000px]:flex-nowrap">
+        <div className="flex flex-wrap items-center gap-3 min-[1024px]:flex-nowrap">
           <div className="min-w-[11rem] flex-1">
             <p className="text-xs font-semibold text-primary-strong">画像・デザイン</p>
             <h1 className="whitespace-nowrap text-lg font-black tracking-normal text-foreground xl:text-xl">サムネイルエディタ</h1>
           </div>
-          <div className="grid w-full grid-cols-2 gap-3 min-[1000px]:w-auto min-[1000px]:min-w-[29rem] xl:min-w-[38rem] xl:flex xl:items-center">
+          <div className="grid w-full grid-cols-2 gap-3 min-[1024px]:w-auto min-[1024px]:min-w-[29rem] xl:min-w-[38rem] xl:flex xl:items-center">
             <label className="min-w-0 text-xs font-bold text-muted">
               プリセット
               <ListboxField
@@ -612,7 +640,7 @@ export function ThumbnailEditorApp() {
               />
             </label>
           </div>
-          <div className="flex w-full flex-wrap justify-end gap-2 min-[1000px]:w-auto">
+          <div className="flex w-full flex-wrap justify-end gap-2 min-[1024px]:w-auto">
             <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft}>
               新規作成
             </button>
@@ -627,14 +655,14 @@ export function ThumbnailEditorApp() {
       </header>
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="grid h-full min-h-0 grid-cols-1 min-[1000px]:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_28rem]">
+        <div className="grid h-full min-h-0 grid-cols-1 min-[1024px]:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_28rem]">
           <main className="scrollbar-accent min-h-0 overflow-y-auto p-4 [scrollbar-gutter:stable] md:p-5 xl:p-6">
             <section className="panel mx-auto max-w-[76rem] p-3 md:p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-bold text-foreground">{selectedPreset.name}</p>
                   <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / 16:9</p>
-                  <div className="mt-2 inline-flex rounded-base border border-border bg-surface p-1 min-[1000px]:hidden">
+                  <div className="mt-2 inline-flex rounded-base border border-border bg-surface p-1 min-[1024px]:hidden">
                     <button
                       className={`px-3 py-1 text-xs font-bold ${editorMode === "edit" ? "rounded-sm bg-primary text-white" : "text-muted"}`}
                       type="button"
@@ -651,12 +679,12 @@ export function ThumbnailEditorApp() {
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 min-[1000px]:hidden">
-                  <button className="flat-control h-9 w-9" type="button" onClick={() => setZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
+                <div className="flex items-center gap-2 min-[1024px]:hidden">
+                  <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
                     −
                   </button>
                   <span className="w-14 text-center text-sm font-bold text-muted">{Math.round(zoom * 100)}%</span>
-                  <button className="flat-control h-9 w-9" type="button" onClick={() => setZoom((value) => Math.min(1.6, value + 0.08))} title="拡大">
+                  <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.min(1.6, value + 0.08))} title="拡大">
                     +
                   </button>
                 </div>
@@ -670,9 +698,9 @@ export function ThumbnailEditorApp() {
                     onShape={() => addLayer(createShapeLayer("rect"))}
                     onImage={() => fileInputRef.current?.click()}
                   />
-                  <div ref={canvasViewportRef} className="scrollbar-accent min-w-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
+                  <div ref={canvasViewportRef} className="scrollbar-accent min-w-0 flex-1 overflow-auto [scrollbar-gutter:stable] min-[1024px]:max-h-[calc(100vh-20rem)]">
                     {editorMode === "pan" && (
-                      <div className="mb-2 inline-flex rounded-sm border border-primary/50 bg-primary/20 px-2 py-1 text-[11px] font-bold text-primary-strong min-[1000px]:hidden">
+                      <div className="mb-2 inline-flex rounded-sm border border-primary/50 bg-primary/20 px-2 py-1 text-[11px] font-bold text-primary-strong min-[1024px]:hidden">
                         表示移動中
                       </div>
                     )}
@@ -688,13 +716,13 @@ export function ThumbnailEditorApp() {
                     />
                   </div>
                 </div>
-                <div className="mt-3 hidden justify-center min-[1000px]:flex">
+                <div className="mt-3 hidden justify-center min-[1024px]:flex">
                   <div className="inline-flex items-center gap-2 rounded-base border border-border bg-surface px-2 py-2">
-                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => setZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
+                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
                       −
                     </button>
                     <span className="w-12 text-center text-xs font-bold text-muted">{Math.round(zoom * 100)}%</span>
-                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => setZoom((value) => Math.min(1.6, value + 0.08))} title="拡大">
+                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => updateZoom((value) => Math.min(1.6, value + 0.08))} title="拡大">
                       +
                     </button>
                   </div>
@@ -702,7 +730,7 @@ export function ThumbnailEditorApp() {
               </div>
             </section>
 
-            <section className="mt-4 grid gap-3 min-[1000px]:hidden">
+            <section className="mt-4 grid gap-3 min-[1024px]:hidden">
               <QuickAddBar
                 onText={() => addLayer(createTextLayer())}
                 onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
@@ -728,12 +756,12 @@ export function ThumbnailEditorApp() {
               )}
             </section>
 
-            <div className="hidden min-[1000px]:mt-4 min-[1000px]:block">
+            <div className="hidden min-[1024px]:mt-4 min-[1024px]:block">
               <PresetCards currentPresetId={draft.presetId} onApply={applyPreset} />
             </div>
           </main>
 
-          <aside className="hidden min-h-0 border-l border-border bg-surface/78 min-[1000px]:block">
+          <aside className="hidden min-h-0 border-l border-border bg-surface/78 min-[1024px]:block">
             <div className="h-full space-y-3 overflow-y-auto p-4 scrollbar-accent xl:p-5">
               <QuickAddBar
                 onText={() => addLayer(createTextLayer())}
@@ -760,7 +788,7 @@ export function ThumbnailEditorApp() {
         </div>
       </div>
 
-      <nav className="grid shrink-0 grid-cols-4 border-t border-border bg-surface/95 min-[1000px]:hidden">
+      <nav className="grid shrink-0 grid-cols-4 border-t border-border bg-surface/95 min-[1024px]:hidden">
         {mobilePanels.map((item) => (
           <button
             key={item.id}
@@ -779,7 +807,7 @@ export function ThumbnailEditorApp() {
 
       <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} />
       {toast && (
-        <div className={`fixed bottom-20 left-4 right-4 z-50 rounded-base border px-4 py-3 text-sm font-bold shadow-panel min-[1000px]:bottom-5 min-[1000px]:left-auto min-[1000px]:right-5 min-[1000px]:w-96 ${toneClassName[toast.tone]}`}>
+        <div className={`fixed bottom-20 left-4 right-4 z-50 rounded-base border px-4 py-3 text-sm font-bold shadow-panel min-[1024px]:bottom-5 min-[1024px]:left-auto min-[1024px]:right-5 min-[1024px]:w-96 ${toneClassName[toast.tone]}`}>
           {toast.message}
         </div>
       )}
@@ -836,7 +864,7 @@ function DesktopToolRail({
     ].join(" ");
 
   return (
-    <div className="hidden w-16 shrink-0 flex-col items-center gap-2 rounded-base border border-border bg-surface p-2 min-[1000px]:flex">
+    <div className="hidden w-16 shrink-0 flex-col items-center gap-2 rounded-base border border-border bg-surface p-2 min-[1024px]:flex">
       <button className={toolButtonClass(editorMode === "edit")} type="button" onClick={() => onModeChange("edit")} title="選択">
         <span className="text-lg">⌖</span>
         選択

@@ -1269,7 +1269,7 @@ function ShapeControls({ layer, onChange }: { layer: Extract<ThumbnailLayer, { t
 
   return (
     <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
-      <ColorField label="塗りつぶし" value={layer.fillColor} onChange={(fillColor) => update("fillColor", fillColor)} />
+      <ColorField label="塗りつぶし" value={layer.fillColor} popoverAlign="left" onChange={(fillColor) => update("fillColor", fillColor)} />
       <ColorField label="枠線" value={layer.strokeColor} onChange={(strokeColor) => update("strokeColor", strokeColor)} />
       <NumberField label="枠線の太さ" value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => update("strokeWidth", strokeWidth)} />
       <NumberField label="角丸" value={layer.borderRadius} min={0} max={120} onChange={(borderRadius) => update("borderRadius", borderRadius)} />
@@ -1399,7 +1399,17 @@ function NumberField({
   );
 }
 
-function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function ColorField({
+  label,
+  value,
+  popoverAlign = "right",
+  onChange
+}: {
+  label: string;
+  value: string;
+  popoverAlign?: "left" | "right";
+  onChange: (value: string) => void;
+}) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [textValue, setTextValue] = useState(normalizeHexColor(value));
   const pickerRootRef = useRef<HTMLDivElement | null>(null);
@@ -1477,7 +1487,12 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
           />
         </div>
         {paletteOpen && (
-          <div className="absolute left-0 right-0 z-50 mt-2 space-y-3 rounded-base border border-border bg-background p-3 shadow-panel">
+          <div
+            className={[
+              "absolute z-50 mt-2 w-[calc(200%+0.75rem)] max-w-[calc(100vw-2rem)] space-y-3 rounded-base border border-border bg-background p-3 shadow-panel",
+              popoverAlign === "left" ? "left-0" : "right-0"
+            ].join(" ")}
+          >
             <div
               ref={saturationRef}
               className="relative h-52 cursor-crosshair rounded-sm border border-border"

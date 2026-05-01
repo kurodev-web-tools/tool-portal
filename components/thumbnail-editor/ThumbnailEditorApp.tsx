@@ -762,7 +762,7 @@ export function ThumbnailEditorApp() {
     <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
       <header className="shrink-0 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur md:px-5 xl:px-6">
         <div className="flex flex-wrap items-center gap-3 min-[1024px]:flex-nowrap">
-          <div className="min-w-[11rem] flex-1">
+          <div className="hidden min-w-[11rem] flex-1 min-[1024px]:block">
             <p className="text-xs font-semibold text-primary-strong">画像・デザイン</p>
             <h1 className="whitespace-nowrap text-lg font-black tracking-normal text-foreground xl:text-xl">サムネイルエディタ</h1>
           </div>
@@ -1228,6 +1228,20 @@ function TextControls({
   onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void;
 }) {
   const update = <K extends keyof typeof layer>(key: K, value: (typeof layer)[K]) => onChange((item) => (item.type === "text" ? { ...item, [key]: value } : item));
+  const fontMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!fontMenuOpen) {
+      return;
+    }
+    const handlePointerDown = (event: globalThis.PointerEvent) => {
+      if (!fontMenuRef.current?.contains(event.target as Node)) {
+        onFontMenuOpenChange(false);
+      }
+    };
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [fontMenuOpen, onFontMenuOpenChange]);
 
   return (
     <div className="space-y-3 border-t border-border pt-4">
@@ -1241,7 +1255,7 @@ function TextControls({
         />
       </label>
       <div className="grid grid-cols-2 gap-3">
-        <div className="relative text-xs font-bold text-muted">
+        <div ref={fontMenuRef} className="relative text-xs font-bold text-muted">
           フォント
           <button
             type="button"

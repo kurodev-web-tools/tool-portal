@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
+import { sidebarTools } from "@/lib/tools";
 
 export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspace" }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const showTitle = mode !== "workspace";
+  const showDesktopTitle = mode !== "workspace";
   const title = useMemo(() => {
     if (pathname === "/") {
       return "V Streamer Tools";
@@ -16,6 +17,10 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
 
     if (pathname.startsWith("/tools/schedule-calendar")) {
       return "スケジュールカレンダー";
+    }
+
+    if (pathname.startsWith("/tools/thumbnail-editor")) {
+      return "サムネイルエディタ";
     }
 
     if (pathname.startsWith("/tools")) {
@@ -41,7 +46,15 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/tools", label: "Tools" },
-    { href: "/tools/schedule-calendar", label: "Schedule Calendar" }
+    ...sidebarTools.map((tool) => ({
+      href: tool.href,
+      label:
+        tool.id === "schedule-calendar"
+          ? "スケジュールカレンダー"
+          : tool.id === "thumbnail-editor"
+            ? "サムネイルエディタ"
+            : tool.name
+    }))
   ];
 
   return (
@@ -51,9 +64,9 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
           <Link href="/" className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-primary text-sm font-black text-white">
             V
           </Link>
-          {showTitle ? <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span> : null}
+          <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
         </div>
-        {showTitle ? <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span> : <span className="hidden lg:block" />}
+        {showDesktopTitle ? <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span> : <span className="hidden lg:block" />}
         <div className="hidden lg:block">
           <ThemeToggle />
         </div>

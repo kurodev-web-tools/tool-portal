@@ -322,6 +322,28 @@ export const createDraftFromPreset = (
 const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 const numberValue = (value: unknown, fallback: number) => (isFiniteNumber(value) ? value : fallback);
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const normalizeRotation = (value: number) => {
+  let normalized = value % 360;
+  if (normalized > 180) {
+    normalized -= 360;
+  }
+  if (normalized < -180) {
+    normalized += 360;
+  }
+  return normalized;
+};
+const normalizeCanvas = (canvas: Partial<ThumbnailCanvas> | undefined): ThumbnailCanvas => {
+  if (canvas?.width === 1920 && canvas.height === 1080) {
+    return { width: 1920, height: 1080 };
+  }
+  return { width: 1280, height: 720 };
+};
+const isSafeImageSource = (src: string) =>
+  src.startsWith("data:image/png;") ||
+  src.startsWith("data:image/jpeg;") ||
+  src.startsWith("data:image/svg+xml;");
+const safeText = (value: unknown, fallback: string, maxLength: number) =>
+  typeof value === "string" ? value.slice(0, maxLength) : fallback;
 
 export const normalizeThumbnailDraft = (value: unknown): ThumbnailEditorDraft | null => {
   if (!value || typeof value !== "object") {
@@ -333,13 +355,12 @@ export const normalizeThumbnailDraft = (value: unknown): ThumbnailEditorDraft | 
     return null;
   }
 
-  const canvasWidth = isFiniteNumber(draft.canvas.width) ? draft.canvas.width : 1280;
-  const canvasHeight = isFiniteNumber(draft.canvas.height) ? draft.canvas.height : 720;
+  const canvas = normalizeCanvas(draft.canvas);
   const presetId: ThumbnailPresetId = thumbnailPresets.some((preset) => preset.id === draft.presetId)
     ? (draft.presetId as ThumbnailPresetId)
     : "stream_announce";
   const normalizedLayers = draft.layers
-    .map((layer) => normalizeLayer(layer, { width: canvasWidth, height: canvasHeight }))
+    .map((layer) => normalizeLayer(layer, canvas))
     .filter((layer): layer is ThumbnailLayer => layer !== null);
 
   if (normalizedLayers.length === 0) {
@@ -352,7 +373,7 @@ export const normalizeThumbnailDraft = (value: unknown): ThumbnailEditorDraft | 
 
   return {
     version: 1,
-    canvas: { width: canvasWidth, height: canvasHeight },
+    canvas,
     presetId,
     layers: normalizedLayers,
     selectedLayerId,
@@ -371,13 +392,13 @@ const normalizeLayer = (layer: unknown, canvas: ThumbnailCanvas): ThumbnailLayer
 
   const base = {
     id: typeof item.id === "string" ? item.id : createId(item.type),
-    name: typeof item.name === "string" ? item.name : item.type,
+    name: safeText(item.name, item.type, 40),
     type: item.type,
     x: clamp(numberValue(item.x, 0), -canvas.width, canvas.width * 2),
     y: clamp(numberValue(item.y, 0), -canvas.height, canvas.height * 2),
     width: clamp(numberValue(item.width, 160), 16, canvas.width * 2),
     height: clamp(numberValue(item.height, 90), 16, canvas.height * 2),
-    rotation: numberValue(item.rotation, 0),
+    rotation: normalizeRotation(numberValue(item.rotation, 0)),
     opacity: clamp(numberValue(item.opacity, 1), 0, 1),
     blur: clamp(numberValue(item.blur, 0), 0, 24),
     locked: Boolean(item.locked),
@@ -386,7 +407,7 @@ const normalizeLayer = (layer: unknown, canvas: ThumbnailCanvas): ThumbnailLayer
 
   if (item.type === "image") {
     const image = item as Partial<ThumbnailImageLayer>;
-    return typeof image.src === "string" ? { ...base, type: "image", src: image.src } : null;
+    return typeof image.src === "string" && isSafeImageSource(image.src) ? { ...base, type: "image", src: image.src } : null;
   }
 
   if (item.type === "shape") {
@@ -406,8 +427,8 @@ const normalizeLayer = (layer: unknown, canvas: ThumbnailCanvas): ThumbnailLayer
   return {
     ...base,
     type: "text",
-    text: typeof text.text === "string" ? text.text.slice(0, 150) : "テキスト",
-    fontFamily: typeof text.fontFamily === "string" ? text.fontFamily : "Noto Sans JP",
+    text: safeText(text.text, "テキスト", 150),
+    fontFamily: typeof text.fontFamily === "string" && thumbnailFonts.includes(text.fontFamily) ? text.fontFamily : "Noto Sans JP",
     fontSize: clamp(numberValue(text.fontSize, 64), 12, 240),
     lineHeight: clamp(numberValue(text.lineHeight, 1.1), 0.8, 2),
     color: typeof text.color === "string" ? text.color : "#ffffff",

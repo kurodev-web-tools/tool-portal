@@ -5,9 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
 
-export function PortalHeader() {
+export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspace" }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const showTitle = mode !== "workspace";
   const title = useMemo(() => {
     if (pathname === "/") {
       return "V Streamer Tools";
@@ -50,9 +51,9 @@ export function PortalHeader() {
           <Link href="/" className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-primary text-sm font-black text-white">
             V
           </Link>
-          <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
+          {showTitle ? <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span> : null}
         </div>
-        <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span>
+        {showTitle ? <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span> : <span className="hidden lg:block" />}
         <div className="hidden lg:block">
           <ThemeToggle />
         </div>

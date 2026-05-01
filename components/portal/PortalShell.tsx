@@ -19,7 +19,7 @@ export function PortalShell({
     <div className={shellClassName}>
       <PortalSidebar />
       <div className="min-w-0 flex-1">
-        <PortalHeader />
+        <PortalHeader mode={mode} />
         <main className={mainClassName}>{children}</main>
       </div>
     </div>

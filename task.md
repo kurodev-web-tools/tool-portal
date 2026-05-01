@@ -192,7 +192,10 @@
 ### フェーズ3: 2本目MVPツールを追加する
 
 - Schedule Calendar のMVP後タスクは `docs/future/SCHEDULE_CALENDAR_FUTURE_TASKS.md` を参照する
-- [ ] 2本目は Schedule Calendar と連携しやすいツールを優先する（候補: サムネイルエディタ（手動編集型））
+- [x] 2本目は Schedule Calendar と連携しやすいツールを優先する（候補: サムネイルエディタ（手動編集型））
+  - 2026-05-01: サムネイルエディタ（手動編集型）のMVPを `/tools/thumbnail-editor` として実装した
+  - 画像 / テキスト / 図形レイヤー、レイヤー選択・順序変更・複製・削除、テキスト/図形/エフェクト編集、4プリセット、localStorage下書き保存/復元、PNG/JPEG書き出しを追加した
+  - `/tools` と左ナビの実装済みツールに `Thumbnail Editor` を追加した
 - [ ] 共通データモデルを先に設計する
   - 日付、カテゴリ、配信プラットフォーム、メモを共通フィールドとして定義する
 - [ ] ツール間連携の最小導線を実装する
@@ -205,13 +208,39 @@
   - `thumbnail-editor-desktop-final.png`
   - `thumbnail-editor-tablet-landscape-final.png`
   - `thumbnail-editor-mobile-final.png`
-- [ ] 実装順は `PC -> Tablet横 -> Mobile` で進める
-- [ ] タブレット縦（`~1023px`）は Mobile 統合UIとして扱う
-- [ ] レスポンシブ境界を以下で固定する
+- [x] 実装順は `PC -> Tablet横 -> Mobile` で進める
+- [x] タブレット縦（`~1023px`）は Mobile 統合UIとして扱う
+- [x] レスポンシブ境界を以下で固定する
   - `1280px~`: PC（左キャンバス + 右設定パネル）
   - `1024~1279px`: Tablet横（コンパクト2ペイン）
   - `~1023px`: Mobile統合UI（タブレット縦含む）
-- [ ] UI優先度を固定する
+- [x] UI優先度を固定する
   - 文字編集（フォント/サイズ/色/縁取り/影）を最優先
   - エフェクトはMVP最小（縁取り/影/透明度/ぼかし）
   - 保存は `localStorage`、出力は PNG/JPEG
+
+#### サムネイルエディタMVP検証メモ（2026-05-01）
+
+- 実施: `npm run lint`
+  - 結果: 成功
+- 実施: `npx tsc --noEmit`
+  - 結果: 成功
+- 実施: `npm run build`
+  - 結果: 成功。`/tools/thumbnail-editor` が static prerender 対象に追加された
+  - 補足: worktree内の追加 `package-lock.json` により Next.js の workspace root 推定警告は継続
+- 実施: ヘッドレスChromeで `390 / 820 / 1024 / 1366` 幅のスクリーンショット確認
+  - `390 / 820`: Mobile統合UI、下部タブ、キャンバス中心の縦積み表示を確認
+  - `1024`: Tablet横のコンパクト2ペイン、右設定パネル、Mobile下部タブ非表示を確認
+  - `1366`: PC 2ペイン、左ナビ、右設定パネル、プリセット一覧を確認
+- 実施: Chrome DevTools Protocolで主要導線確認
+  - プリセット適用後の自動保存を確認
+  - テキスト追加、下書き保存、localStorage復元を確認
+  - PNG書き出しで `thumbnail-YYYYMMDD-HHMM.png` のdownload発火とtoast表示を確認
+- 2026-05-01レビュー反映:
+  - workspace画面上部の親ページ名 `ツール一覧` は表示せず、ツール内ヘッダーの `画像・デザイン` / `サムネイルエディタ` を主表示にした
+  - エディタ本体とキャンバス内スクロールを `scrollbar-accent` に揃え、Windows標準スクロールバーの露出を抑えた
+  - キャンバスズーム上限を `100%` から `160%` へ拡張し、拡大時はキャンバス枠内スクロールで細部確認できるようにした
+  - フォント選択をネイティブselectからアプリ内listboxへ変更し、選択肢が画面外へ出る問題を避けた
+- 未対応 / 既知制約:
+  - キャンバス上のドラッグ移動・リサイズハンドル操作は未実装。MVPでは右パネルの数値編集とクリック選択で対応
+  - ローカルフォントimport、AI生成、有料API連携、SNS直接投稿、複数サイズ一括出力は今回非対応

@@ -84,15 +84,15 @@ export const tools: ToolDefinition[] = [
     icon: "FC"
   },
   {
-    id: "thumbnail-maker",
-    name: "Thumbnail Maker",
-    description: "画像制作を扱う候補です。公開版ではまだ利用できません。",
+    id: "thumbnail-editor",
+    name: "Thumbnail Editor",
+    description: "配信告知や切り抜き用の16:9サムネイルを手動で作成・書き出しできます。",
     category: "design",
-    status: "planned",
+    status: "available",
     suite: "fan-brand",
-    href: "/tools",
-    sidebar: false,
-    icon: "TM"
+    href: "/tools/thumbnail-editor",
+    sidebar: true,
+    icon: "TE"
   },
   {
     id: "content-planner",

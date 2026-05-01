@@ -1,0 +1,811 @@
+"use client";
+
+import { ChangeEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  cloneThumbnailLayer,
+  createDraftFromPreset,
+  createImageLayer,
+  createShapeLayer,
+  createTextLayer,
+  drawThumbnail,
+  layerContainsPoint,
+  normalizeThumbnailDraft,
+  thumbnailCanvasSizes,
+  thumbnailDraftStorageKey,
+  thumbnailFonts,
+  thumbnailPresets,
+  type ThumbnailCanvasSizeId,
+  type ThumbnailEditorDraft,
+  type ThumbnailLayer,
+  type ThumbnailPresetId,
+  type ThumbnailShapeType,
+  type ThumbnailTextAlign
+} from "@/lib/thumbnail-editor";
+
+type ToastTone = "info" | "success" | "warning" | "error";
+type ToastState = { tone: ToastTone; message: string } | null;
+type MobilePanel = "canvas" | "layers" | "text" | "export";
+
+const toneClassName: Record<ToastTone, string> = {
+  info: "border-sky-400/60 bg-sky-500/12 text-foreground",
+  success: "border-emerald-400/60 bg-emerald-500/12 text-foreground",
+  warning: "border-amber-400/60 bg-amber-500/12 text-foreground",
+  error: "border-rose-400/60 bg-rose-500/12 text-foreground"
+};
+
+const mobilePanels: { id: MobilePanel; label: string; icon: string }[] = [
+  { id: "canvas", label: "キャンバス", icon: "▧" },
+  { id: "layers", label: "レイヤー", icon: "▤" },
+  { id: "text", label: "テキスト", icon: "T" },
+  { id: "export", label: "書き出し", icon: "⇧" }
+];
+
+const selectedLayerFallback = (layers: ThumbnailLayer[]) => layers[layers.length - 1]?.id ?? null;
+
+export function ThumbnailEditorApp() {
+  const [draft, setDraft] = useState<ThumbnailEditorDraft>(() => createDraftFromPreset());
+  const [hydrated, setHydrated] = useState(false);
+  const [toast, setToast] = useState<ToastState>(null);
+  const [exportFormat, setExportFormat] = useState<"png" | "jpeg">("png");
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>("canvas");
+  const [zoom, setZoom] = useState(0.72);
+  const [fontMenuOpen, setFontMenuOpen] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const selectedLayer = useMemo(
+    () => draft.layers.find((layer) => layer.id === draft.selectedLayerId) ?? null,
+    [draft.layers, draft.selectedLayerId]
+  );
+
+  const selectedPreset = useMemo(
+    () => thumbnailPresets.find((preset) => preset.id === draft.presetId) ?? thumbnailPresets[0],
+    [draft.presetId]
+  );
+
+  useEffect(() => {
+    setFontMenuOpen(false);
+  }, [draft.selectedLayerId]);
+
+  const showToast = useCallback((tone: ToastTone, message: string) => {
+    setToast({ tone, message });
+    window.setTimeout(() => setToast(null), 3200);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(thumbnailDraftStorageKey);
+      if (!saved) {
+        setHydrated(true);
+        return;
+      }
+      const normalized = normalizeThumbnailDraft(JSON.parse(saved));
+      if (normalized) {
+        setDraft(normalized);
+        showToast("info", "前回の下書きを復元しました。");
+      } else {
+        window.localStorage.removeItem(thumbnailDraftStorageKey);
+        showToast("warning", "破損した下書きを初期化しました。");
+      }
+    } catch {
+      window.localStorage.removeItem(thumbnailDraftStorageKey);
+      showToast("warning", "破損した下書きを初期化しました。");
+    } finally {
+      setHydrated(true);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+    drawThumbnail(canvas, draft, { selectedLayerId: draft.selectedLayerId, includeSelection: true }).catch(() => {
+      showToast("error", "キャンバスの描画に失敗しました。");
+    });
+  }, [draft, showToast]);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(
+          thumbnailDraftStorageKey,
+          JSON.stringify({ ...draft, updatedAt: new Date().toISOString() })
+        );
+      } catch {
+        showToast("error", "下書きの自動保存に失敗しました。");
+      }
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [draft, hydrated, showToast]);
+
+  const updateDraft = (updater: (current: ThumbnailEditorDraft) => ThumbnailEditorDraft) => {
+    setDraft((current) => ({ ...updater(current), updatedAt: new Date().toISOString() }));
+  };
+
+  const updateSelectedLayer = (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => {
+    updateDraft((current) => ({
+      ...current,
+      layers: current.layers.map((layer) => (layer.id === current.selectedLayerId ? updater(layer) : layer))
+    }));
+  };
+
+  const applyPreset = (presetId: ThumbnailPresetId) => {
+    const next = createDraftFromPreset(presetId, draft.canvas);
+    setDraft(next);
+    setMobilePanel("canvas");
+    showToast("success", "プリセットを適用しました。");
+  };
+
+  const changeCanvasSize = (sizeId: ThumbnailCanvasSizeId) => {
+    const canvas = thumbnailCanvasSizes[sizeId];
+    setDraft(createDraftFromPreset(draft.presetId, canvas));
+    showToast("info", `${canvas.label} で新規作成しました。`);
+  };
+
+  const saveDraft = () => {
+    try {
+      window.localStorage.setItem(
+        thumbnailDraftStorageKey,
+        JSON.stringify({ ...draft, updatedAt: new Date().toISOString() })
+      );
+      showToast("success", "下書きを保存しました。");
+    } catch {
+      showToast("error", "下書き保存に失敗しました。");
+    }
+  };
+
+  const newDraft = () => {
+    setDraft(createDraftFromPreset(draft.presetId, draft.canvas));
+    setMobilePanel("canvas");
+    showToast("info", "新規キャンバスを作成しました。");
+  };
+
+  const addLayer = (layer: ThumbnailLayer) => {
+    updateDraft((current) => ({
+      ...current,
+      layers: [...current.layers, layer],
+      selectedLayerId: layer.id
+    }));
+    setMobilePanel(layer.type === "text" ? "text" : "layers");
+  };
+
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+    if (!["image/png", "image/jpeg"].includes(file.type)) {
+      showToast("error", "PNG/JPEG画像を選択してください。");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      showToast("error", "画像は20MB以下にしてください。");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        showToast("error", "画像の読み込みに失敗しました。");
+        return;
+      }
+      addLayer(createImageLayer(reader.result));
+      showToast("success", "画像レイヤーを追加しました。");
+    };
+    reader.onerror = () => showToast("error", "画像の読み込みに失敗しました。");
+    reader.readAsDataURL(file);
+  };
+
+  const moveLayer = (layerId: string, direction: "front" | "back") => {
+    updateDraft((current) => {
+      const index = current.layers.findIndex((layer) => layer.id === layerId);
+      const nextIndex = direction === "front" ? index + 1 : index - 1;
+      if (index < 0 || nextIndex < 0 || nextIndex >= current.layers.length) {
+        return current;
+      }
+      const layers = [...current.layers];
+      [layers[index], layers[nextIndex]] = [layers[nextIndex], layers[index]];
+      return { ...current, layers };
+    });
+  };
+
+  const duplicateLayer = (layerId: string) => {
+    updateDraft((current) => {
+      const layer = current.layers.find((item) => item.id === layerId);
+      if (!layer) {
+        return current;
+      }
+      const cloned = cloneThumbnailLayer(layer);
+      const index = current.layers.findIndex((item) => item.id === layerId);
+      const layers = [...current.layers];
+      layers.splice(index + 1, 0, cloned);
+      return { ...current, layers, selectedLayerId: cloned.id };
+    });
+  };
+
+  const deleteLayer = (layerId: string) => {
+    updateDraft((current) => {
+      if (current.layers.length <= 1) {
+        showToast("warning", "最低1レイヤーは残してください。");
+        return current;
+      }
+      const layers = current.layers.filter((layer) => layer.id !== layerId);
+      return { ...current, layers, selectedLayerId: selectedLayerFallback(layers) };
+    });
+  };
+
+  const toggleLayerFlag = (layerId: string, flag: "hidden" | "locked") => {
+    updateDraft((current) => ({
+      ...current,
+      layers: current.layers.map((layer) => (layer.id === layerId ? { ...layer, [flag]: !layer[flag] } : layer))
+    }));
+  };
+
+  const handleCanvasClick = (event: MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+    const rect = canvas.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * draft.canvas.width;
+    const y = ((event.clientY - rect.top) / rect.height) * draft.canvas.height;
+    const target = [...draft.layers].reverse().find((layer) => layerContainsPoint(layer, { x, y }));
+    if (target) {
+      setDraft((current) => ({ ...current, selectedLayerId: target.id }));
+    }
+  };
+
+  const exportImage = async () => {
+    try {
+      const exportCanvas = document.createElement("canvas");
+      await drawThumbnail(exportCanvas, draft, { forceJpegBackground: exportFormat === "jpeg" });
+      const mimeType = exportFormat === "png" ? "image/png" : "image/jpeg";
+      const dataUrl = exportCanvas.toDataURL(mimeType, 0.92);
+      const anchor = document.createElement("a");
+      const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 13).replace("T", "-");
+      anchor.href = dataUrl;
+      anchor.download = `thumbnail-${stamp}.${exportFormat === "png" ? "png" : "jpg"}`;
+      anchor.click();
+      showToast("success", `${exportFormat.toUpperCase()}を書き出しました。`);
+    } catch {
+      showToast("error", "書き出しに失敗しました。");
+    }
+  };
+
+  const canvasSizeId: ThumbnailCanvasSizeId = draft.canvas.width === 1920 ? "full-hd" : "hd";
+
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
+      <header className="shrink-0 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur md:px-5 xl:px-6">
+        <div className="flex flex-wrap items-center gap-3 min-[1000px]:flex-nowrap">
+          <div className="min-w-[11rem] flex-1">
+            <p className="text-xs font-semibold text-primary-strong">画像・デザイン</p>
+            <h1 className="whitespace-nowrap text-lg font-black tracking-normal text-foreground xl:text-xl">サムネイルエディタ</h1>
+          </div>
+          <div className="grid w-full grid-cols-2 gap-3 min-[1000px]:w-auto min-[1000px]:min-w-[29rem] xl:min-w-[38rem] xl:flex xl:items-center">
+            <label className="min-w-0 text-xs font-bold text-muted">
+              プリセット
+              <select
+                className="mt-1 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
+                value={draft.presetId}
+                onChange={(event) => applyPreset(event.target.value as ThumbnailPresetId)}
+              >
+                {thumbnailPresets.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="min-w-0 text-xs font-bold text-muted">
+              キャンバスサイズ
+              <select
+                className="mt-1 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
+                value={canvasSizeId}
+                onChange={(event) => changeCanvasSize(event.target.value as ThumbnailCanvasSizeId)}
+              >
+                {Object.entries(thumbnailCanvasSizes).map(([id, size]) => (
+                  <option key={id} value={id}>
+                    {size.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="flex w-full flex-wrap justify-end gap-2 min-[1000px]:w-auto">
+            <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft}>
+              新規作成
+            </button>
+            <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft}>
+              下書き保存
+            </button>
+            <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage}>
+              書き出し
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="grid h-full min-h-0 grid-cols-1 min-[1000px]:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_28rem]">
+          <main className="scrollbar-accent min-h-0 overflow-y-auto p-4 [scrollbar-gutter:stable] md:p-5 xl:p-6">
+            <section className="panel mx-auto max-w-[76rem] p-3 md:p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-bold text-foreground">{selectedPreset.name}</p>
+                  <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / 16:9</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button className="flat-control h-9 w-9" type="button" onClick={() => setZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
+                    −
+                  </button>
+                  <span className="w-14 text-center text-sm font-bold text-muted">{Math.round(zoom * 100)}%</span>
+                  <button className="flat-control h-9 w-9" type="button" onClick={() => setZoom((value) => Math.min(1.6, value + 0.08))} title="拡大">
+                    +
+                  </button>
+                </div>
+              </div>
+              <div className="scrollbar-accent overflow-auto rounded-base bg-surface-muted p-2 [scrollbar-gutter:stable] md:p-4">
+                <canvas
+                  ref={canvasRef}
+                  className="mx-auto block aspect-video max-w-none rounded-base border border-border bg-[#081117] shadow-lg"
+                  style={{ width: `${draft.canvas.width * zoom}px` }}
+                  onClick={handleCanvasClick}
+                  aria-label="サムネイル編集キャンバス"
+                />
+              </div>
+            </section>
+
+            <section className="mt-4 grid gap-3 min-[1000px]:hidden">
+              <QuickAddBar
+                onText={() => addLayer(createTextLayer())}
+                onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
+                onImage={() => fileInputRef.current?.click()}
+              />
+              {mobilePanel === "canvas" && <PresetCards currentPresetId={draft.presetId} onApply={applyPreset} />}
+              {mobilePanel === "layers" && (
+                <LayerPanel
+                  layers={draft.layers}
+                  selectedLayerId={draft.selectedLayerId}
+                  onSelect={(id) => setDraft((current) => ({ ...current, selectedLayerId: id }))}
+                  onMove={moveLayer}
+                  onDuplicate={duplicateLayer}
+                  onDelete={deleteLayer}
+                  onToggleFlag={toggleLayerFlag}
+                />
+              )}
+              {mobilePanel === "text" && selectedLayer && (
+                <PropertyPanel layer={selectedLayer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={setFontMenuOpen} onChange={updateSelectedLayer} />
+              )}
+              {mobilePanel === "export" && (
+                <ExportPanel exportFormat={exportFormat} onFormatChange={setExportFormat} onSave={saveDraft} onExport={exportImage} />
+              )}
+            </section>
+
+            <div className="hidden min-[1000px]:mt-4 min-[1000px]:block">
+              <PresetCards currentPresetId={draft.presetId} onApply={applyPreset} />
+            </div>
+          </main>
+
+          <aside className="hidden min-h-0 border-l border-border bg-surface/78 min-[1000px]:block">
+            <div className="h-full space-y-3 overflow-y-auto p-4 scrollbar-accent xl:p-5">
+              <QuickAddBar
+                onText={() => addLayer(createTextLayer())}
+                onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
+                onImage={() => fileInputRef.current?.click()}
+              />
+              <LayerPanel
+                layers={draft.layers}
+                selectedLayerId={draft.selectedLayerId}
+                onSelect={(id) => setDraft((current) => ({ ...current, selectedLayerId: id }))}
+                onMove={moveLayer}
+                onDuplicate={duplicateLayer}
+                onDelete={deleteLayer}
+                onToggleFlag={toggleLayerFlag}
+              />
+              {selectedLayer ? (
+                <PropertyPanel layer={selectedLayer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={setFontMenuOpen} onChange={updateSelectedLayer} />
+              ) : (
+                <div className="panel p-4 text-sm text-muted">編集するレイヤーを選択してください。</div>
+              )}
+              <ExportPanel exportFormat={exportFormat} onFormatChange={setExportFormat} onSave={saveDraft} onExport={exportImage} />
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <nav className="grid shrink-0 grid-cols-4 border-t border-border bg-surface/95 min-[1000px]:hidden">
+        {mobilePanels.map((item) => (
+          <button
+            key={item.id}
+            className={[
+              "flex h-16 flex-col items-center justify-center gap-1 text-xs font-bold",
+              mobilePanel === item.id ? "text-primary-strong" : "text-muted"
+            ].join(" ")}
+            type="button"
+            onClick={() => setMobilePanel(item.id)}
+          >
+            <span className="text-lg">{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} />
+      {toast && (
+        <div className={`fixed bottom-20 left-4 right-4 z-50 rounded-base border px-4 py-3 text-sm font-bold shadow-panel min-[1000px]:bottom-5 min-[1000px]:left-auto min-[1000px]:right-5 min-[1000px]:w-96 ${toneClassName[toast.tone]}`}>
+          {toast.message}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuickAddBar({
+  onText,
+  onShape,
+  onImage
+}: {
+  onText: () => void;
+  onShape: (shapeType: ThumbnailShapeType) => void;
+  onImage: () => void;
+}) {
+  return (
+    <section className="panel p-3">
+      <div className="grid grid-cols-4 gap-2">
+        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={onText}>
+          T テキスト
+        </button>
+        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={() => onShape("rect")}>
+          ▭ 矩形
+        </button>
+        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={() => onShape("circle")}>
+          ○ 円
+        </button>
+        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={onImage}>
+          ▧ 画像
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function LayerPanel({
+  layers,
+  selectedLayerId,
+  onSelect,
+  onMove,
+  onDuplicate,
+  onDelete,
+  onToggleFlag
+}: {
+  layers: ThumbnailLayer[];
+  selectedLayerId: string | null;
+  onSelect: (id: string) => void;
+  onMove: (id: string, direction: "front" | "back") => void;
+  onDuplicate: (id: string) => void;
+  onDelete: (id: string) => void;
+  onToggleFlag: (id: string, flag: "hidden" | "locked") => void;
+}) {
+  return (
+    <section className="panel p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-black text-foreground">レイヤー一覧</h2>
+        <p className="text-xs font-bold text-muted">上が前面</p>
+      </div>
+      <div className="space-y-2">
+        {[...layers].reverse().map((layer) => (
+          <div
+            key={layer.id}
+            className={[
+              "rounded-base border p-2 transition",
+              layer.id === selectedLayerId ? "border-primary bg-primary-soft/70" : "border-border bg-surface"
+            ].join(" ")}
+          >
+            <button className="flex w-full items-center gap-2 text-left" type="button" onClick={() => onSelect(layer.id)}>
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-surface-muted text-sm font-black text-primary-strong">
+                {layer.type === "text" ? "T" : layer.type === "image" ? "▧" : layer.type === "shape" && layer.shapeType === "circle" ? "●" : "■"}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">{layer.name}</span>
+              <span className="text-xs text-muted">{layer.type}</span>
+            </button>
+            <div className="mt-2 grid grid-cols-6 gap-1">
+              <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "front")} title="前面へ">
+                ↑
+              </button>
+              <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "back")} title="背面へ">
+                ↓
+              </button>
+              <button className="flat-control py-1 text-xs" type="button" onClick={() => onDuplicate(layer.id)} title="複製">
+                複
+              </button>
+              <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "hidden")} title="表示切替">
+                {layer.hidden ? "非" : "目"}
+              </button>
+              <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "locked")} title="ロック切替">
+                {layer.locked ? "錠" : "開"}
+              </button>
+              <button className="flat-control py-1 text-xs text-rose-500" type="button" onClick={() => onDelete(layer.id)} title="削除">
+                削
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PropertyPanel({
+  layer,
+  fontMenuOpen,
+  onFontMenuOpenChange,
+  onChange
+}: {
+  layer: ThumbnailLayer;
+  fontMenuOpen: boolean;
+  onFontMenuOpenChange: (open: boolean) => void;
+  onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void;
+}) {
+  return (
+    <section className="panel space-y-4 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-black text-foreground">{layer.type === "text" ? "テキスト設定" : layer.type === "shape" ? "図形設定" : "画像設定"}</h2>
+        <span className="rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{layer.name}</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <NumberField label="X" value={layer.x} min={-2000} max={4000} onChange={(x) => onChange((item) => ({ ...item, x }))} />
+        <NumberField label="Y" value={layer.y} min={-2000} max={4000} onChange={(y) => onChange((item) => ({ ...item, y }))} />
+        <NumberField label="幅" value={layer.width} min={16} max={4000} onChange={(width) => onChange((item) => ({ ...item, width }))} />
+        <NumberField label="高さ" value={layer.height} min={16} max={4000} onChange={(height) => onChange((item) => ({ ...item, height }))} />
+      </div>
+
+      {layer.type === "text" && <TextControls layer={layer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={onFontMenuOpenChange} onChange={onChange} />}
+      {layer.type === "shape" && <ShapeControls layer={layer} onChange={onChange} />}
+      <EffectControls layer={layer} onChange={onChange} />
+    </section>
+  );
+}
+
+function TextControls({
+  layer,
+  fontMenuOpen,
+  onFontMenuOpenChange,
+  onChange
+}: {
+  layer: Extract<ThumbnailLayer, { type: "text" }>;
+  fontMenuOpen: boolean;
+  onFontMenuOpenChange: (open: boolean) => void;
+  onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void;
+}) {
+  const update = <K extends keyof typeof layer>(key: K, value: (typeof layer)[K]) => onChange((item) => (item.type === "text" ? { ...item, [key]: value } : item));
+
+  return (
+    <div className="space-y-3 border-t border-border pt-4">
+      <label className="block text-xs font-bold text-muted">
+        テキスト
+        <textarea
+          className="mt-1 min-h-24 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm text-foreground"
+          maxLength={150}
+          value={layer.text}
+          onChange={(event) => update("text", event.target.value)}
+        />
+      </label>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="relative text-xs font-bold text-muted">
+          フォント
+          <button
+            type="button"
+            className="mt-1 flex w-full items-center justify-between gap-2 rounded-base border border-border bg-surface px-3 py-2 text-left text-sm font-bold text-foreground"
+            aria-haspopup="listbox"
+            aria-expanded={fontMenuOpen}
+            onClick={() => onFontMenuOpenChange(!fontMenuOpen)}
+          >
+            <span className="min-w-0 truncate">{layer.fontFamily}</span>
+            <span className="shrink-0 text-muted">⌄</span>
+          </button>
+          {fontMenuOpen ? (
+            <div className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-base border border-border bg-surface p-1 shadow-panel">
+              <div className="scrollbar-accent max-h-48 overflow-y-auto [scrollbar-gutter:stable]" role="listbox">
+                {thumbnailFonts.map((font) => (
+                  <button
+                    key={font}
+                    type="button"
+                    role="option"
+                    aria-selected={font === layer.fontFamily}
+                    className={[
+                      "block w-full rounded-base px-3 py-2 text-left text-sm font-bold",
+                      font === layer.fontFamily ? "bg-primary-soft text-primary-strong" : "text-foreground hover:bg-surface-muted"
+                    ].join(" ")}
+                    onClick={() => {
+                      update("fontFamily", font);
+                      onFontMenuOpenChange(false);
+                    }}
+                  >
+                    {font}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <NumberField label="サイズ" value={layer.fontSize} min={12} max={240} onChange={(fontSize) => update("fontSize", fontSize)} />
+        <NumberField label="行間" value={Number(layer.lineHeight.toFixed(2))} min={0.8} max={2} step={0.05} onChange={(lineHeight) => update("lineHeight", lineHeight)} />
+        <ColorField label="色" value={layer.color} onChange={(color) => update("color", color)} />
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {(["left", "center", "right"] as ThumbnailTextAlign[]).map((align) => (
+          <button
+            key={align}
+            className={`flat-control py-2 text-xs font-bold ${layer.align === align ? "border-primary bg-primary-soft text-primary-strong" : ""}`}
+            type="button"
+            onClick={() => update("align", align)}
+          >
+            {align === "left" ? "左" : align === "center" ? "中央" : "右"}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <button className={`flat-control py-2 text-sm font-black ${layer.bold ? "border-primary bg-primary-soft text-primary-strong" : ""}`} type="button" onClick={() => update("bold", !layer.bold)}>
+          B
+        </button>
+        <button className={`flat-control py-2 text-sm font-black italic ${layer.italic ? "border-primary bg-primary-soft text-primary-strong" : ""}`} type="button" onClick={() => update("italic", !layer.italic)}>
+          I
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ShapeControls({ layer, onChange }: { layer: Extract<ThumbnailLayer, { type: "shape" }>; onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void }) {
+  const update = <K extends keyof typeof layer>(key: K, value: (typeof layer)[K]) => onChange((item) => (item.type === "shape" ? { ...item, [key]: value } : item));
+
+  return (
+    <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
+      <ColorField label="塗りつぶし" value={layer.fillColor} onChange={(fillColor) => update("fillColor", fillColor)} />
+      <ColorField label="枠線" value={layer.strokeColor} onChange={(strokeColor) => update("strokeColor", strokeColor)} />
+      <NumberField label="枠線の太さ" value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => update("strokeWidth", strokeWidth)} />
+      <NumberField label="角丸" value={layer.borderRadius} min={0} max={120} onChange={(borderRadius) => update("borderRadius", borderRadius)} />
+    </div>
+  );
+}
+
+function EffectControls({ layer, onChange }: { layer: ThumbnailLayer; onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void }) {
+  return (
+    <div className="space-y-3 border-t border-border pt-4">
+      <h3 className="text-sm font-black text-foreground">エフェクト</h3>
+      <div className="grid grid-cols-2 gap-3">
+        <NumberField label="透明度" value={Math.round(layer.opacity * 100)} min={0} max={100} onChange={(value) => onChange((item) => ({ ...item, opacity: value / 100 }))} suffix="%" />
+        <NumberField label="ぼかし" value={layer.blur} min={0} max={24} onChange={(blur) => onChange((item) => ({ ...item, blur }))} />
+        {layer.type === "text" && (
+          <>
+            <NumberField label="縁取り" value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => onChange((item) => (item.type === "text" ? { ...item, strokeWidth } : item))} />
+            <ColorField label="縁取り色" value={layer.strokeColor} onChange={(strokeColor) => onChange((item) => (item.type === "text" ? { ...item, strokeColor } : item))} />
+            <NumberField label="影ぼかし" value={layer.shadowBlur} min={0} max={64} onChange={(shadowBlur) => onChange((item) => (item.type === "text" ? { ...item, shadowBlur } : item))} />
+            <ColorField label="影色" value={layer.shadowColor} onChange={(shadowColor) => onChange((item) => (item.type === "text" ? { ...item, shadowColor } : item))} />
+            <NumberField label="影X" value={layer.shadowOffsetX} min={-80} max={80} onChange={(shadowOffsetX) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetX } : item))} />
+            <NumberField label="影Y" value={layer.shadowOffsetY} min={-80} max={80} onChange={(shadowOffsetY) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetY } : item))} />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PresetCards({ currentPresetId, onApply }: { currentPresetId: ThumbnailPresetId; onApply: (id: ThumbnailPresetId) => void }) {
+  return (
+    <section className="panel p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-black text-foreground">プリセット一覧</h2>
+        <p className="text-xs font-bold text-muted">MVP 4種</p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {thumbnailPresets.map((preset) => (
+          <button
+            key={preset.id}
+            className={[
+              "rounded-base border bg-surface p-3 text-left transition hover:border-primary",
+              currentPresetId === preset.id ? "border-primary bg-primary-soft/55" : "border-border"
+            ].join(" ")}
+            type="button"
+            onClick={() => onApply(preset.id)}
+          >
+            <div className="mb-3 aspect-video rounded-base border border-border" style={{ background: `linear-gradient(135deg, #07111c, ${preset.accent})` }} />
+            <p className="text-sm font-black text-foreground">{preset.name}</p>
+            <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{preset.description}</p>
+            <span className="mt-3 inline-flex rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong">
+              このプリセットを使用
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ExportPanel({
+  exportFormat,
+  onFormatChange,
+  onSave,
+  onExport
+}: {
+  exportFormat: "png" | "jpeg";
+  onFormatChange: (format: "png" | "jpeg") => void;
+  onSave: () => void;
+  onExport: () => void;
+}) {
+  return (
+    <section className="panel space-y-3 p-4">
+      <h2 className="text-base font-black text-foreground">保存 / 書き出し</h2>
+      <div className="grid grid-cols-2 gap-2">
+        <button className={`flat-control py-2 text-sm font-bold ${exportFormat === "png" ? "border-primary bg-primary-soft text-primary-strong" : ""}`} type="button" onClick={() => onFormatChange("png")}>
+          PNG
+        </button>
+        <button className={`flat-control py-2 text-sm font-bold ${exportFormat === "jpeg" ? "border-primary bg-primary-soft text-primary-strong" : ""}`} type="button" onClick={() => onFormatChange("jpeg")}>
+          JPEG
+        </button>
+      </div>
+      <button className="flat-control w-full px-4 py-2 font-bold" type="button" onClick={onSave}>
+        下書き保存
+      </button>
+      <button className="w-full rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onExport}>
+        書き出し
+      </button>
+      <p className="text-xs leading-5 text-muted">下書きはこのブラウザの localStorage に保存されます。PNG/JPEG は表示中キャンバスと同じ描画結果で1枚出力します。</p>
+    </section>
+  );
+}
+
+function NumberField({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  suffix = "px",
+  onChange
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  suffix?: string;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label className="block text-xs font-bold text-muted">
+      {label}
+      <div className="mt-1 flex overflow-hidden rounded-base border border-border bg-surface">
+        <input
+          className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm font-bold text-foreground"
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(event) => onChange(Number(event.target.value))}
+        />
+        <span className="grid w-12 place-items-center border-l border-border text-xs text-muted">{suffix}</span>
+      </div>
+    </label>
+  );
+}
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="block text-xs font-bold text-muted">
+      {label}
+      <div className="mt-1 flex overflow-hidden rounded-base border border-border bg-surface">
+        <input className="h-10 w-12 shrink-0 bg-transparent p-1" type="color" value={value.slice(0, 7)} onChange={(event) => onChange(event.target.value)} />
+        <input className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm font-bold text-foreground" value={value} onChange={(event) => onChange(event.target.value)} />
+      </div>
+    </label>
+  );
+}

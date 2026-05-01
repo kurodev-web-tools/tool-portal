@@ -110,6 +110,7 @@ export function ThumbnailEditorApp() {
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState<"preset" | "canvas" | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
+  const [sidePanelCollapsed, setSidePanelCollapsed] = useState(false);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvasViewportRef = useRef<HTMLDivElement | null>(null);
@@ -658,22 +659,36 @@ export function ThumbnailEditorApp() {
       </header>
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="grid h-full min-h-0 grid-cols-1 min-[1024px]:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_28rem]">
+        <div
+          className={[
+            "grid h-full min-h-0 grid-cols-1",
+            sidePanelCollapsed ? "min-[1024px]:grid-cols-1" : "min-[1024px]:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_28rem]"
+          ].join(" ")}
+        >
           <main className="scrollbar-accent min-h-0 overflow-y-auto p-4 [scrollbar-gutter:stable] md:p-5 xl:p-6">
-            <section className="panel mx-auto max-w-[76rem] p-3 md:p-4">
+            <section className={["panel mx-auto p-3 md:p-4", sidePanelCollapsed ? "max-w-none" : "max-w-[76rem]"].join(" ")}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-bold text-foreground">{selectedPreset.name}</p>
                   <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / 16:9</p>
                 </div>
-                <div className="flex items-center gap-2 min-[1024px]:hidden">
-                  <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
-                    −
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    className="flat-control hidden px-3 py-2 text-xs font-bold min-[1024px]:inline-flex"
+                    type="button"
+                    onClick={() => setSidePanelCollapsed((value) => !value)}
+                  >
+                    {sidePanelCollapsed ? "パネル表示" : "パネル非表示"}
                   </button>
-                  <span className="w-14 text-center text-sm font-bold text-muted">{Math.round(zoom * 100)}%</span>
-                  <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.min(1.6, value + 0.08))} title="拡大">
-                    +
-                  </button>
+                  <div className="flex items-center gap-2 min-[1024px]:hidden">
+                    <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
+                      −
+                    </button>
+                    <span className="w-14 text-center text-sm font-bold text-muted">{Math.round(zoom * 100)}%</span>
+                    <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.min(1.6, value + 0.08))} title="拡大">
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="rounded-base bg-surface-muted p-2 md:p-4">
@@ -748,7 +763,7 @@ export function ThumbnailEditorApp() {
             </div>
           </main>
 
-          <aside className="hidden min-h-0 border-l border-border bg-surface/78 min-[1024px]:block">
+          <aside className={sidePanelCollapsed ? "hidden" : "hidden min-h-0 border-l border-border bg-surface/78 min-[1024px]:block"}>
             <div className="h-full space-y-3 overflow-y-auto p-4 scrollbar-accent xl:p-5">
               <QuickAddBar
                 onText={() => addLayer(createTextLayer())}

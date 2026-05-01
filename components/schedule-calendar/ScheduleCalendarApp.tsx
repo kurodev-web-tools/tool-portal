@@ -423,6 +423,230 @@ function inputClassName(extra = "") {
   ].join(" ");
 }
 
+function splitTimeValue(time: string) {
+  const [hour, minute] = time.split(":").map((value) => Number(value));
+  return {
+    hour: Number.isFinite(hour) ? Math.min(23, Math.max(0, hour)) : 0,
+    minute: Number.isFinite(minute) ? Math.min(59, Math.max(0, minute)) : 0
+  };
+}
+
+function composeTimeValue(hour: number, minute: number) {
+  return `${String(Math.min(23, Math.max(0, hour))).padStart(2, "0")}:${String(Math.min(59, Math.max(0, minute))).padStart(2, "0")}`;
+}
+
+function scrollToMiddleOption(element: HTMLDivElement | null, optionIndex: number, optionCount: number) {
+  if (!element || optionIndex < 0 || optionCount === 0) {
+    return;
+  }
+
+  const itemHeight = element.scrollHeight / optionCount;
+  element.scrollTop = itemHeight * optionIndex - element.clientHeight / 2 + itemHeight / 2;
+}
+
+function DateSelectControl({
+  value,
+  onChange
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState(() => parseDateKey(value));
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selectedDate = parseDateKey(value);
+  const monthDays = getMonthGrid(visibleMonth, 0);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handlePointerDown(event: globalThis.PointerEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative mt-1">
+      <button
+        type="button"
+        className="w-full rounded-base border border-border bg-surface px-3 py-2 text-left text-sm font-bold text-foreground transition hover:border-primary focus:border-primary focus:outline-none"
+        aria-expanded={open}
+        onClick={() => {
+          setVisibleMonth(selectedDate);
+          setOpen((current) => !current);
+        }}
+      >
+        {getLongDateLabel(value)}
+      </button>
+      {open ? (
+        <div className="absolute left-0 right-0 top-full z-40 mt-2 rounded-base border border-border bg-surface p-2.5 shadow-panel sm:p-3">
+          <div className="flex items-center justify-between gap-2">
+            <button type="button" className="flat-control px-2 py-1" aria-label="前の月" onClick={() => setVisibleMonth((current) => addMonths(current, -1))}>
+              ‹
+            </button>
+            <p className="text-sm font-bold text-foreground">
+              {visibleMonth.getFullYear()}年{visibleMonth.getMonth() + 1}月
+            </p>
+            <button type="button" className="flat-control px-2 py-1" aria-label="次の月" onClick={() => setVisibleMonth((current) => addMonths(current, 1))}>
+              ›
+            </button>
+          </div>
+          <div className="mt-2 grid grid-cols-7 gap-0.5 text-center text-[10px] font-bold text-muted sm:mt-3 sm:gap-1 sm:text-[11px]">
+            {["日", "月", "火", "水", "木", "金", "土"].map((label) => (
+              <span key={label}>{label}</span>
+            ))}
+          </div>
+          <div className="mt-1 grid grid-cols-7 gap-0.5 sm:gap-1">
+            {monthDays.map((day) => {
+              const dateKey = toDateKey(day);
+              const inMonth = day.getMonth() === visibleMonth.getMonth();
+              const selected = dateKey === value;
+
+              return (
+                <button
+                  key={dateKey}
+                  type="button"
+                  className={[
+                    "grid h-8 place-items-center rounded-base text-[11px] font-bold transition sm:h-9 sm:text-xs",
+                    selected ? "bg-primary text-white" : inMonth ? "text-foreground hover:bg-primary-soft" : "text-muted/45 hover:bg-surface-muted"
+                  ].join(" ")}
+                  onClick={() => {
+                    onChange(dateKey);
+                    setOpen(false);
+                  }}
+                >
+                  {day.getDate()}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TimeSelectControl({
+  value,
+  onChange,
+  align = "end"
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  align?: "start" | "end";
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const hourListRef = useRef<HTMLDivElement>(null);
+  const minuteListRef = useRef<HTMLDivElement>(null);
+  const { hour, minute } = splitTimeValue(value);
+  const hourOptions = useMemo(() => Array.from({ length: 24 }, (_, index) => index), []);
+  const minuteOptions = useMemo(
+    () => Array.from(new Set([...Array.from({ length: 12 }, (_, index) => index * 5), minute])).sort((a, b) => a - b),
+    [minute]
+  );
+  const panelAlignmentClassName = align === "start" ? "xl:left-0" : "xl:right-0";
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handlePointerDown(event: globalThis.PointerEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      scrollToMiddleOption(hourListRef.current, hourOptions.indexOf(hour), hourOptions.length);
+      scrollToMiddleOption(minuteListRef.current, minuteOptions.indexOf(minute), minuteOptions.length);
+    });
+  }, [hour, hourOptions, minute, minuteOptions, open]);
+
+  return (
+    <div ref={containerRef} className="relative mt-1">
+      <button
+        type="button"
+        className="w-full rounded-base border border-border bg-surface px-3 py-2 text-left text-sm font-bold text-foreground transition hover:border-primary focus:border-primary focus:outline-none"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        {composeTimeValue(hour, minute)}
+      </button>
+      {open ? (
+        <div className={["relative z-40 mt-2 w-full rounded-base border border-border bg-surface p-3 shadow-panel xl:absolute xl:top-full xl:w-[19rem] xl:max-w-[calc(100vw-2rem)] xl:p-4", panelAlignmentClassName].join(" ")}>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-bold text-muted">時刻を選択</p>
+            <p className="rounded-base bg-primary-soft px-2 py-1 text-xs font-bold text-primary-strong">{composeTimeValue(hour, minute)}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="mt-3 text-xs font-bold text-muted">時</p>
+              <div ref={hourListRef} className="scrollbar-accent mt-2 max-h-40 snap-y overflow-y-auto rounded-base border border-border bg-surface-muted/45 p-1 sm:max-h-44 xl:max-h-56">
+                {hourOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={[
+                      "block w-full snap-center rounded-base px-2 py-2 text-center text-xs font-bold transition sm:text-sm lg:px-3 lg:py-2.5",
+                      option === hour ? "bg-primary text-white" : "text-foreground hover:bg-primary-soft"
+                    ].join(" ")}
+                    onClick={() => onChange(composeTimeValue(option, minute))}
+                  >
+                    {String(option).padStart(2, "0")}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mt-3 text-xs font-bold text-muted">分</p>
+              <div ref={minuteListRef} className="scrollbar-accent mt-2 max-h-40 snap-y overflow-y-auto rounded-base border border-border bg-surface-muted/45 p-1 sm:max-h-44 xl:max-h-56">
+                {minuteOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={[
+                      "block w-full snap-center rounded-base px-2 py-2 text-center text-xs font-bold transition sm:text-sm lg:px-3 lg:py-2.5",
+                      option === minute ? "bg-primary text-white" : "text-foreground hover:bg-primary-soft"
+                    ].join(" ")}
+                    onClick={() => onChange(composeTimeValue(hour, option))}
+                  >
+                    {String(option).padStart(2, "0")}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="mt-3 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white transition hover:bg-primary-strong"
+            onClick={() => setOpen(false)}
+          >
+            決定
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function CalendarToolbar({
   view,
   cursorDate,
@@ -1419,7 +1643,7 @@ function MobileSettingsPanel({
           </div>
           <div>
             <FieldLabel>既定開始時刻</FieldLabel>
-            <input type="time" value={settings.defaultStartTime} onChange={(event) => onSettingsChange({ ...settings, defaultStartTime: event.target.value })} className={inputClassName()} />
+            <TimeSelectControl value={settings.defaultStartTime} onChange={(defaultStartTime) => onSettingsChange({ ...settings, defaultStartTime })} />
           </div>
           <div>
             <FieldLabel>既定予定時間</FieldLabel>
@@ -1520,6 +1744,12 @@ function DesktopEventListPanel({
   onFilterChange: (filters: EventListFilters) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
 }) {
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+
+  function toggleExpandedEvent(eventId: string) {
+    setExpandedEventId((current) => (current === eventId ? null : eventId));
+  }
+
   return (
     <div className="space-y-4">
       <section className="space-y-3 rounded-base border border-border bg-surface-muted/35 p-3">
@@ -1601,30 +1831,56 @@ function DesktopEventListPanel({
               {hasActiveEventListFilters(filters) ? emptySearchResultsMessage : emptyEventsMessage}
             </div>
           ) : (
-            events.map((event) => (
-              <div key={event.id} className="group relative">
-                <button
-                  type="button"
-                  onClick={() => onSelectEvent(event)}
+            events.map((event) => {
+              const expanded = expandedEventId === event.id;
+
+              return (
+                <article
+                  key={event.id}
                   className={[
-                    "w-full rounded-base border px-3 py-3 text-left transition hover:border-primary/60",
+                    "rounded-base border px-3 py-3 transition",
                     selectedEventId === event.id ? "border-primary bg-primary-soft/55" : "border-border bg-surface"
                   ].join(" ")}
                 >
-                  <span className="text-xs font-bold text-primary-strong">{getLongDateLabel(event.date)}</span>
-                  <span className="mt-1 block text-xs font-bold text-muted">
-                    {event.startTime} - {event.endTime}
-                  </span>
-                  <span className="mt-1 block truncate text-sm font-bold text-foreground">{event.title || "無題の予定"}</span>
-                  <span className="mt-2 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
-                    {categoryMeta[event.category].label}
-                    {event.platform ? ` / ${event.platform}` : ""}
-                    {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event)}` : ""}
-                  </span>
-                </button>
-                <EventHoverPreview event={event} />
-              </div>
-            ))
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-primary-strong">{getLongDateLabel(event.date)}</span>
+                      <span className="mt-1 block text-xs font-bold text-muted">
+                        {event.startTime} - {event.endTime}
+                      </span>
+                      <h3 className="mt-1 truncate text-sm font-bold text-foreground">{event.title || "無題の予定"}</h3>
+                      <span className="mt-2 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
+                        {categoryMeta[event.category].label}
+                        {event.platform ? ` / ${event.platform}` : ""}
+                        {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event)}` : ""}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        type="button"
+                        className="flat-control px-2.5 py-1.5 text-xs"
+                        aria-expanded={expanded}
+                        onClick={() => toggleExpandedEvent(event.id)}
+                      >
+                        {expanded ? "閉じる" : "詳細"}
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-base bg-primary px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-primary-strong"
+                        onClick={() => onSelectEvent(event)}
+                      >
+                        編集
+                      </button>
+                    </div>
+                  </div>
+                  {expanded ? (
+                    <div className="mt-3 border-t border-border pt-3">
+                      <EventDetailContent event={event} compact />
+                    </div>
+                  ) : null}
+                </article>
+              );
+            })
           )}
         </div>
       </section>
@@ -1727,7 +1983,7 @@ function DesktopSettingsPanel({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <FieldLabel>既定開始時刻</FieldLabel>
-            <input type="time" value={settings.defaultStartTime} onChange={(event) => onSettingsChange({ ...settings, defaultStartTime: event.target.value })} className={inputClassName()} />
+            <TimeSelectControl value={settings.defaultStartTime} onChange={(defaultStartTime) => onSettingsChange({ ...settings, defaultStartTime })} />
           </div>
           <div>
             <FieldLabel>既定所要時間</FieldLabel>
@@ -1884,34 +2140,16 @@ function ScheduleForm({
       </div>
       <div className="rounded-base border border-border bg-surface-muted/35 p-3">
         <FieldLabel>日付</FieldLabel>
-        <input
-          type="date"
-          value={draft.date}
-          onChange={(event) => onDraftChange({ ...draft, date: event.target.value })}
-          className={inputClassName()}
-          required
-        />
+        <DateSelectControl value={draft.date} onChange={(date) => onDraftChange({ ...draft, date })} />
       </div>
-      <div className="grid grid-cols-2 gap-3 rounded-base border border-border bg-surface-muted/35 p-3">
+      <div className="grid grid-cols-1 gap-3 rounded-base border border-border bg-surface-muted/35 p-3 xl:grid-cols-2">
         <div>
           <FieldLabel>開始時間</FieldLabel>
-          <input
-            type="time"
-            value={draft.startTime}
-            onChange={(event) => onDraftChange({ ...draft, startTime: event.target.value })}
-            className={inputClassName()}
-            required
-          />
+          <TimeSelectControl value={draft.startTime} onChange={(startTime) => onDraftChange({ ...draft, startTime })} align="start" />
         </div>
         <div>
           <FieldLabel>終了時間</FieldLabel>
-          <input
-            type="time"
-            value={draft.endTime}
-            onChange={(event) => onDraftChange({ ...draft, endTime: event.target.value })}
-            className={inputClassName()}
-            required
-          />
+          <TimeSelectControl value={draft.endTime} onChange={(endTime) => onDraftChange({ ...draft, endTime })} align="end" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 rounded-base border border-border bg-surface-muted/35 p-3">
@@ -2474,7 +2712,7 @@ export function ScheduleCalendarApp() {
     setDraft({ ...restoredEvent });
     setActiveTab("schedule");
     setMobileScheduleMode("edit");
-    setMobileSheetOpen(true);
+    setMobileSheetOpen(false);
     setStatusMessage("予定を元に戻しました。");
   }
 
@@ -2579,7 +2817,7 @@ export function ScheduleCalendarApp() {
     setDraft(nextDraft);
     setMobileScheduleMode("edit");
     if (previousEvent) {
-      setMobileSheetOpen(true);
+      setMobileSheetOpen(!isMobileLayout());
       const moved =
         previousEvent.date !== nextDraft.date ||
         previousEvent.startTime !== nextDraft.startTime ||

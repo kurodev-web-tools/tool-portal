@@ -126,10 +126,53 @@
 - 実施: 文言・導線の静的確認
   - `詳細を見る` / `どうぞお楽しみ` / `順次追加` の過剰期待を生む文言が、対象ファイル内に残っていないことを確認した
   - 準備中ツールの `href` が `/tools` に統一されていることを確認した
-- 未実施: `npm ci` / `npm run lint` / `npx tsc --noEmit` / `npm run build`
+- 実施（ユーザー環境）: `npm ci`
+  - 結果: 394 packages installed
+- 実施（ユーザー環境）: `npm run lint`
+  - 結果: `.worktrees/phase2-public-minimum-set/.next/**` 配下の生成JSをESLintが拾い、Next.js / React内部生成コードに対するlint errorで失敗した
+  - 対応: `eslint.config.mjs` の ignore に `.worktrees/**` を追加した
+  - 再実行結果: 成功
+- 実施（ユーザー環境）: `npx tsc --noEmit`
+  - 結果: 成功
+- 実施（ユーザー環境）: `npm run build`
+  - 結果: 成功。`next build --webpack` で `/` / `/_not-found` / `/tools` / `/tools/schedule-calendar` がstatic prerenderされた
+- 未実施（Codex環境）: `npm ci` / `npm run lint` / `npx tsc --noEmit` / `npm run build`
   - 理由: このCodex環境ではNode起動時に `Could not determine Node.js install directory` / `Assertion failed: ncrypto::CSPRNG(nullptr, 0)` で停止する
   - 補足: バンドルNodeでも `crypto` 初期化時に同じ `ncrypto::CSPRNG(nullptr, 0)` で停止した
-- 未実施: ブラウザ実見 `/` / `/tools` / `/tools/schedule-calendar`
+- 実施: browser-use in-app browser確認 `/` / `/tools` / `/tools/schedule-calendar`
+  - 2026-04-30追加確認: `http://localhost:3000/` のユーザー起動dev serverに接続し、browser-useで現在タブを取得できることを確認した
+  - `/` / `/tools` / `/tools/schedule-calendar` のURL、title、主要文言をDOM上で確認した
+  - `/` の `ツール一覧を見る` CTAはクリックで `/tools/` へ遷移することを確認した
+  - `/tools` から `/tools/schedule-calendar/` へ遷移できることを確認した
+  - `/tools` の準備中カードはdisabled buttonとして表示され、未実装個別URLへ遷移しないことを確認した
+  - `/tools` の `メールで送る` は `mailto:?subject=V%20Streamer%20Tools%20feedback` を指すことを確認した
+  - console: `/` / `/tools` / `/tools/schedule-calendar` で error / warn なし
+  - 未確認: browser-use本体でviewportを直接 `390 / 820 / 1024 / 1366` に変更するAPIが確認できなかったため、今回の追加確認では幅別リサイズ実見は未実施
+  - 2026-04-30追加修正:
+  - PC表示の `予定一覧` タブで、予定行hover時の詳細プレビューを削除した
+    - 理由: 右パネル内で常に下側に表示され、見切れや不要なスクロールを発生させていたため
+    - 予定カード全体クリックは廃止し、`詳細` / `閉じる` のアコーディオンボタンと `編集` ボタンを分けた
+    - `詳細` は一覧内で日時、カテゴリ、媒体、繰り返し、メモを展開し、`編集` は既存どおり予定管理へ反映する
+  - `1023px以下` で既存予定を編集保存した場合も、保存後にボトムシートを閉じるよう変更した
+    - 新規予定保存後のクローズ挙動と揃え、次の予定選択や一覧作業へ戻りやすくする
+  - 削除Undo後は、復元した予定を選択状態に戻しつつ、ボトムシートは開かないよう変更した
+    - Undoは編集導線ではなく復元操作として扱い、一覧やカレンダー上の次操作を妨げない
+  - 日付 / 時間入力を、OS依存のnative pickerからアプリ内ポップオーバーへ変更した
+    - 予定管理フォームの日付は小型カレンダーで選択する
+    - 予定管理フォームの開始時間 / 終了時間と、設定の既定開始時刻はアプリ内のロール型時刻候補パネルで選択する
+    - 分は5分刻みを基本にする
+    - 時刻パネルは入力欄幅に縛らず、時/分の2列ロールを広めのポップオーバーで表示する
+    - 開始時間は入力欄左端、終了時間は入力欄右端に合わせて表示し、開始時間パネルがカレンダー側へ隠れないようにした
+    - 無限ロール風のスクロール補正は不安定になりやすいため取りやめ、有限ロールに戻した
+    - 時刻パネルを開いた時は現在値付近へ自動スクロールする
+    - 既存データに15分刻み外の分がある場合も、現在値を分候補に含める
+    - 日付 / 時間ポップオーバーは外側クリックで閉じる
+    - `1023px以下` では日付カレンダーの余白とセル高、時刻ロールの幅と高さを抑え、`1024px以上` はPC向けサイズを維持した
+    - `1279px以下` では開始時間 / 終了時間を縦積みにし、時刻パネルをサイドパネル内の通常ブロックとしてフォーム幅いっぱいに表示する
+    - `1280px以上` では開始時間 / 終了時間の横並びと、入力欄左端 / 右端に合わせる従来のポップオーバー表示を維持した
+    - browser-useのタブレット横相当表示で、開始時間パネルが右パネル外へはみ出さず、フォーム幅で表示されることを確認した
+  - `eslint.config.mjs` に `.worktrees/**` を追加し、repo内worktreeの生成物をlint対象外にした
+  - browser-useで `/tools/schedule-calendar/` を再読み込みし、console error / warn なしを確認した
   - 2026-04-30追記: ユーザー起動の dev server `http://localhost:3000/` で確認済み
   - `/`: 新hero文言、`ツール一覧を見る`、`Schedule Calendar を開く`、`不具合報告 / 要望`、`mailto:` 導線を確認
   - `/tools`: 新説明文、Schedule Calendar の利用可能導線、準備中カードの `準備中` CTA、フィードバック導線を確認
@@ -148,6 +191,7 @@
 
 ### フェーズ3: 2本目MVPツールを追加する
 
+- Schedule Calendar のMVP後タスクは `docs/future/SCHEDULE_CALENDAR_FUTURE_TASKS.md` を参照する
 - [ ] 2本目は Schedule Calendar と連携しやすいツールを優先する（候補: Content Planner）
 - [ ] 共通データモデルを先に設計する
   - 日付、カテゴリ、配信プラットフォーム、メモを共通フィールドとして定義する

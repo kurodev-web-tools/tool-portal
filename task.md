@@ -192,8 +192,26 @@
 ### フェーズ3: 2本目MVPツールを追加する
 
 - Schedule Calendar のMVP後タスクは `docs/future/SCHEDULE_CALENDAR_FUTURE_TASKS.md` を参照する
-- [ ] 2本目は Schedule Calendar と連携しやすいツールを優先する（候補: Content Planner）
+- [ ] 2本目は Schedule Calendar と連携しやすいツールを優先する（候補: サムネイルエディタ（手動編集型））
 - [ ] 共通データモデルを先に設計する
   - 日付、カテゴリ、配信プラットフォーム、メモを共通フィールドとして定義する
 - [ ] ツール間連携の最小導線を実装する
   - 例: カレンダー予定から企画メモ作成へ遷移
+
+#### サムネイルエディタ実装方針（2026-05-01確定）
+
+- [x] 参照モック画像を `docs/mockups` に final 命名で保存する
+  - `thumbnail-editor-design-system-final.png`
+  - `thumbnail-editor-desktop-final.png`
+  - `thumbnail-editor-tablet-landscape-final.png`
+  - `thumbnail-editor-mobile-final.png`
+- [ ] 実装順は `PC -> Tablet横 -> Mobile` で進める
+- [ ] タブレット縦（`~1023px`）は Mobile 統合UIとして扱う
+- [ ] レスポンシブ境界を以下で固定する
+  - `1280px~`: PC（左キャンバス + 右設定パネル）
+  - `1024~1279px`: Tablet横（コンパクト2ペイン）
+  - `~1023px`: Mobile統合UI（タブレット縦含む）
+- [ ] UI優先度を固定する
+  - 文字編集（フォント/サイズ/色/縁取り/影）を最優先
+  - エフェクトはMVP最小（縁取り/影/透明度/ぼかし）
+  - 保存は `localStorage`、出力は PNG/JPEG

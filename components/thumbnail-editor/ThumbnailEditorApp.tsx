@@ -30,6 +30,7 @@ import {
 type ToastTone = "info" | "success" | "warning" | "error";
 type ToastState = { tone: ToastTone; message: string } | null;
 type MobilePanel = "canvas" | "layers" | "text" | "export";
+type EditorMode = "edit" | "pan";
 type CanvasInteractionMode = "drag" | "resize" | "rotate";
 type CanvasCursor = "default" | "move" | "grab" | "grabbing" | "crosshair" | "nwse-resize" | "nesw-resize";
 type CanvasInteractionState = {
@@ -41,6 +42,13 @@ type CanvasInteractionState = {
   startLayer: ThumbnailLayer;
   startCenter: { x: number; y: number };
   rotateOffsetRad: number;
+};
+type CanvasPanState = {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startScrollLeft: number;
+  startScrollTop: number;
 };
 
 const toneClassName: Record<ToastTone, string> = {
@@ -89,10 +97,13 @@ export function ThumbnailEditorApp() {
   const [zoom, setZoom] = useState(0.72);
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState<"preset" | "canvas" | null>(null);
+  const [editorMode, setEditorMode] = useState<EditorMode>("edit");
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasViewportRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const interactionRef = useRef<CanvasInteractionState | null>(null);
+  const panRef = useRef<CanvasPanState | null>(null);
 
   const selectedLayer = useMemo(
     () => draft.layers.find((layer) => layer.id === draft.selectedLayerId) ?? null,
@@ -110,6 +121,9 @@ export function ThumbnailEditorApp() {
   useEffect(() => {
     setHeaderMenuOpen(null);
   }, [draft.presetId, draft.canvas.width, draft.canvas.height]);
+  useEffect(() => {
+    setCanvasCursor(editorMode === "pan" ? "grab" : "default");
+  }, [editorMode]);
 
   const showToast = useCallback((tone: ToastTone, message: string) => {
     setToast({ tone, message });
@@ -319,6 +333,23 @@ export function ThumbnailEditorApp() {
 
   const beginInteraction = useCallback(
     (event: PointerEvent<HTMLCanvasElement>) => {
+      if (editorMode === "pan") {
+        const viewport = canvasViewportRef.current;
+        if (!viewport) {
+          return;
+        }
+        panRef.current = {
+          pointerId: event.pointerId,
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          startScrollLeft: viewport.scrollLeft,
+          startScrollTop: viewport.scrollTop
+        };
+        setCanvasCursor("grabbing");
+        event.currentTarget.setPointerCapture(event.pointerId);
+        event.preventDefault();
+        return;
+      }
       const point = getCanvasPointFromClient(event.clientX, event.clientY);
       if (!point) {
         return;
@@ -365,7 +396,7 @@ export function ThumbnailEditorApp() {
       event.currentTarget.setPointerCapture(event.pointerId);
       event.preventDefault();
     },
-    [draft.canvas.width, draft.layers, draft.selectedLayerId, getCanvasPointFromClient]
+    [draft.canvas.width, draft.layers, draft.selectedLayerId, editorMode, getCanvasPointFromClient]
   );
 
   const resizeLayerFromHandle = useCallback((state: CanvasInteractionState, point: { x: number; y: number }) => {
@@ -430,6 +461,20 @@ export function ThumbnailEditorApp() {
 
   const updateInteraction = useCallback(
     (event: PointerEvent<HTMLCanvasElement>) => {
+      const pan = panRef.current;
+      if (pan && pan.pointerId === event.pointerId) {
+        const viewport = canvasViewportRef.current;
+        if (!viewport) {
+          return;
+        }
+        const dx = event.clientX - pan.startClientX;
+        const dy = event.clientY - pan.startClientY;
+        viewport.scrollLeft = pan.startScrollLeft - dx;
+        viewport.scrollTop = pan.startScrollTop - dy;
+        setCanvasCursor("grabbing");
+        event.preventDefault();
+        return;
+      }
       const state = interactionRef.current;
       if (!state || state.pointerId !== event.pointerId) {
         const point = getCanvasPointFromClient(event.clientX, event.clientY);
@@ -490,16 +535,25 @@ export function ThumbnailEditorApp() {
   );
 
   const endInteraction = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
+    const pan = panRef.current;
+    if (pan && pan.pointerId === event.pointerId) {
+      panRef.current = null;
+      setCanvasCursor(editorMode === "pan" ? "grab" : "default");
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      return;
+    }
     const state = interactionRef.current;
     if (!state || state.pointerId !== event.pointerId) {
       return;
     }
     interactionRef.current = null;
-    setCanvasCursor("grab");
+    setCanvasCursor(editorMode === "pan" ? "grab" : "default");
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-  }, []);
+  }, [editorMode]);
 
   const exportImage = async () => {
     try {
@@ -580,8 +634,24 @@ export function ThumbnailEditorApp() {
                 <div>
                   <p className="text-sm font-bold text-foreground">{selectedPreset.name}</p>
                   <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / 16:9</p>
+                  <div className="mt-2 inline-flex rounded-base border border-border bg-surface p-1 min-[1000px]:hidden">
+                    <button
+                      className={`px-3 py-1 text-xs font-bold ${editorMode === "edit" ? "rounded-sm bg-primary text-white" : "text-muted"}`}
+                      type="button"
+                      onClick={() => setEditorMode("edit")}
+                    >
+                      編集
+                    </button>
+                    <button
+                      className={`px-3 py-1 text-xs font-bold ${editorMode === "pan" ? "rounded-sm bg-primary text-white" : "text-muted"}`}
+                      type="button"
+                      onClick={() => setEditorMode("pan")}
+                    >
+                      表示移動
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-[1000px]:hidden">
                   <button className="flat-control h-9 w-9" type="button" onClick={() => setZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
                     −
                   </button>
@@ -591,17 +661,44 @@ export function ThumbnailEditorApp() {
                   </button>
                 </div>
               </div>
-              <div className="scrollbar-accent overflow-auto rounded-base bg-surface-muted p-2 [scrollbar-gutter:stable] md:p-4">
-                <canvas
-                  ref={canvasRef}
-                  className="mx-auto block aspect-video max-w-none touch-none rounded-base border border-border bg-[#081117] shadow-lg"
-                  style={{ width: `${draft.canvas.width * zoom}px`, cursor: canvasCursor }}
-                  onPointerDown={beginInteraction}
-                  onPointerMove={updateInteraction}
-                  onPointerUp={endInteraction}
-                  onPointerCancel={endInteraction}
-                  aria-label="サムネイル編集キャンバス"
-                />
+              <div className="rounded-base bg-surface-muted p-2 md:p-4">
+                <div className="flex min-h-0 gap-3">
+                  <DesktopToolRail
+                    editorMode={editorMode}
+                    onModeChange={setEditorMode}
+                    onText={() => addLayer(createTextLayer())}
+                    onShape={() => addLayer(createShapeLayer("rect"))}
+                    onImage={() => fileInputRef.current?.click()}
+                  />
+                  <div ref={canvasViewportRef} className="scrollbar-accent min-w-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
+                    {editorMode === "pan" && (
+                      <div className="mb-2 inline-flex rounded-sm border border-primary/50 bg-primary/20 px-2 py-1 text-[11px] font-bold text-primary-strong min-[1000px]:hidden">
+                        表示移動中
+                      </div>
+                    )}
+                    <canvas
+                      ref={canvasRef}
+                      className="mx-auto block aspect-video max-w-none touch-none rounded-base border border-border bg-[#081117] shadow-lg"
+                      style={{ width: `${draft.canvas.width * zoom}px`, cursor: canvasCursor }}
+                      onPointerDown={beginInteraction}
+                      onPointerMove={updateInteraction}
+                      onPointerUp={endInteraction}
+                      onPointerCancel={endInteraction}
+                      aria-label="サムネイル編集キャンバス"
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 hidden justify-center min-[1000px]:flex">
+                  <div className="inline-flex items-center gap-2 rounded-base border border-border bg-surface px-2 py-2">
+                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => setZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
+                      −
+                    </button>
+                    <span className="w-12 text-center text-xs font-bold text-muted">{Math.round(zoom * 100)}%</span>
+                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => setZoom((value) => Math.min(1.6, value + 0.08))} title="拡大">
+                      +
+                    </button>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -716,6 +813,52 @@ function QuickAddBar({
         </button>
       </div>
     </section>
+  );
+}
+
+function DesktopToolRail({
+  editorMode,
+  onModeChange,
+  onText,
+  onShape,
+  onImage
+}: {
+  editorMode: EditorMode;
+  onModeChange: (mode: EditorMode) => void;
+  onText: () => void;
+  onShape: () => void;
+  onImage: () => void;
+}) {
+  const toolButtonClass = (active: boolean) =>
+    [
+      "flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-base border text-[11px] font-bold transition",
+      active ? "border-primary bg-primary-soft text-primary-strong" : "border-transparent text-muted hover:border-border hover:bg-surface"
+    ].join(" ");
+
+  return (
+    <div className="hidden w-16 shrink-0 flex-col items-center gap-2 rounded-base border border-border bg-surface p-2 min-[1000px]:flex">
+      <button className={toolButtonClass(editorMode === "edit")} type="button" onClick={() => onModeChange("edit")} title="選択">
+        <span className="text-lg">⌖</span>
+        選択
+      </button>
+      <button className={toolButtonClass(false)} type="button" onClick={onText} title="テキスト">
+        <span className="text-lg">T</span>
+        テキスト
+      </button>
+      <button className={toolButtonClass(false)} type="button" onClick={onShape} title="図形">
+        <span className="text-lg">◇</span>
+        図形
+      </button>
+      <button className={toolButtonClass(false)} type="button" onClick={onImage} title="画像">
+        <span className="text-lg">▧</span>
+        画像
+      </button>
+      <div className="my-1 h-px w-10 bg-border" />
+      <button className={toolButtonClass(editorMode === "pan")} type="button" onClick={() => onModeChange("pan")} title="表示移動">
+        <span className="text-lg">⌕</span>
+        ズーム
+      </button>
+    </div>
   );
 }
 

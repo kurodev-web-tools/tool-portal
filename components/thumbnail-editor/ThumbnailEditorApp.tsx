@@ -87,6 +87,70 @@ const colorSwatches = [
 
 const selectedLayerFallback = (layers: ThumbnailLayer[]) => layers[layers.length - 1]?.id ?? null;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const toHexByte = (value: number) => Math.round(clamp(value, 0, 255)).toString(16).padStart(2, "0");
+const normalizeHexColor = (value: string, fallback = "#ffffff") => {
+  const normalized = value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(normalized)) {
+    return normalized.toLowerCase();
+  }
+  if (/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    return `#${normalized.toLowerCase()}`;
+  }
+  return fallback;
+};
+const hexToRgb = (value: string) => {
+  const hex = normalizeHexColor(value).slice(1);
+  return {
+    r: parseInt(hex.slice(0, 2), 16),
+    g: parseInt(hex.slice(2, 4), 16),
+    b: parseInt(hex.slice(4, 6), 16)
+  };
+};
+const rgbToHex = (r: number, g: number, b: number) => `#${toHexByte(r)}${toHexByte(g)}${toHexByte(b)}`;
+const rgbToHsv = ({ r, g, b }: { r: number; g: number; b: number }) => {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const delta = max - min;
+  let h = 0;
+  if (delta !== 0) {
+    if (max === rn) {
+      h = 60 * (((gn - bn) / delta) % 6);
+    } else if (max === gn) {
+      h = 60 * ((bn - rn) / delta + 2);
+    } else {
+      h = 60 * ((rn - gn) / delta + 4);
+    }
+  }
+  return {
+    h: h < 0 ? h + 360 : h,
+    s: max === 0 ? 0 : (delta / max) * 100,
+    v: max * 100
+  };
+};
+const hsvToHex = (h: number, s: number, v: number) => {
+  const safeH = ((h % 360) + 360) % 360;
+  const safeS = clamp(s, 0, 100) / 100;
+  const safeV = clamp(v, 0, 100) / 100;
+  const c = safeV * safeS;
+  const x = c * (1 - Math.abs(((safeH / 60) % 2) - 1));
+  const m = safeV - c;
+  const [rp, gp, bp] =
+    safeH < 60
+      ? [c, x, 0]
+      : safeH < 120
+        ? [x, c, 0]
+        : safeH < 180
+          ? [0, c, x]
+          : safeH < 240
+            ? [0, x, c]
+            : safeH < 300
+              ? [x, 0, c]
+              : [c, 0, x];
+  return rgbToHex((rp + m) * 255, (gp + m) * 255, (bp + m) * 255);
+};
 const getDefaultZoomForViewport = () => {
   if (typeof window === "undefined") {
     return 0.72;
@@ -1337,44 +1401,129 @@ function NumberField({
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const normalizedValue = value.startsWith("#") ? value.slice(0, 7) : value;
+  const [textValue, setTextValue] = useState(normalizeHexColor(value));
+  const saturationRef = useRef<HTMLDivElement | null>(null);
+  const hueRef = useRef<HTMLDivElement | null>(null);
+  const normalizedValue = normalizeHexColor(value);
+  const hsv = useMemo(() => rgbToHsv(hexToRgb(normalizedValue)), [normalizedValue]);
+  const hueColor = hsvToHex(hsv.h, 100, 100);
+
+  useEffect(() => {
+    setTextValue(normalizedValue);
+  }, [normalizedValue]);
+
+  const commitColor = (next: string) => {
+    const normalized = normalizeHexColor(next, normalizedValue);
+    setTextValue(normalized);
+    onChange(normalized);
+  };
+
+  const updateFromSaturation = (event: PointerEvent<HTMLDivElement>) => {
+    const rect = saturationRef.current?.getBoundingClientRect();
+    if (!rect) {
+      return;
+    }
+    const s = clamp(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
+    const v = clamp(100 - ((event.clientY - rect.top) / rect.height) * 100, 0, 100);
+    commitColor(hsvToHex(hsv.h, s, v));
+  };
+
+  const updateFromHue = (event: PointerEvent<HTMLDivElement>) => {
+    const rect = hueRef.current?.getBoundingClientRect();
+    if (!rect) {
+      return;
+    }
+    const h = clamp(((event.clientX - rect.left) / rect.width) * 360, 0, 359);
+    commitColor(hsvToHex(h, hsv.s, hsv.v));
+  };
+
+  const handleHexInput = (next: string) => {
+    setTextValue(next);
+    if (/^#?[0-9a-fA-F]{6}$/.test(next.trim())) {
+      onChange(normalizeHexColor(next));
+    }
+  };
+
   return (
-    <label className="block text-xs font-bold text-muted">
-      {label}
+    <div className="block text-xs font-bold text-muted">
+      <p>{label}</p>
       <div className="mt-1 space-y-2 rounded-base border border-border bg-surface p-2">
         <div className="flex items-center gap-2">
           <button
-            className="h-10 w-10 shrink-0 rounded-sm border border-border"
+            className="h-10 w-10 shrink-0 rounded-sm border border-primary/80 shadow-[0_0_0_2px_rgba(30,215,198,0.18)]"
             type="button"
             style={{ backgroundColor: normalizedValue }}
             onClick={() => setPaletteOpen((current) => !current)}
-            aria-label={`${label}の色を選ぶ`}
+            aria-label={`${label}を選ぶ`}
           />
           <input
             className="min-w-0 flex-1 rounded-sm border border-border bg-transparent px-2 py-2 text-sm font-bold text-foreground"
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
+            value={textValue}
+            onChange={(event) => handleHexInput(event.target.value)}
+            onBlur={() => setTextValue(normalizedValue)}
           />
         </div>
         {paletteOpen && (
-          <div className="grid grid-cols-8 gap-1">
-            {colorSwatches.map((swatch) => (
-              <button
-                key={swatch}
-                className="h-6 w-6 rounded-sm border border-border"
-                type="button"
-                style={{ backgroundColor: swatch }}
-                onClick={() => {
-                  onChange(swatch);
-                  setPaletteOpen(false);
-                }}
-                aria-label={`色 ${swatch}`}
+          <div className="space-y-3 rounded-sm border border-border bg-background/70 p-3">
+            <div
+              ref={saturationRef}
+              className="relative h-36 cursor-crosshair rounded-sm border border-border"
+              style={{
+                background: `linear-gradient(to top, #000000, transparent), linear-gradient(to right, #ffffff, ${hueColor})`
+              }}
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                updateFromSaturation(event);
+              }}
+              onPointerMove={(event) => {
+                if (event.buttons === 1) {
+                  updateFromSaturation(event);
+                }
+              }}
+            >
+              <span
+                className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.75)]"
+                style={{ left: `${hsv.s}%`, top: `${100 - hsv.v}%` }}
               />
-            ))}
+            </div>
+            <div
+              ref={hueRef}
+              className="relative h-4 cursor-pointer rounded-full border border-border"
+              style={{
+                background:
+                  "linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)"
+              }}
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                updateFromHue(event);
+              }}
+              onPointerMove={(event) => {
+                if (event.buttons === 1) {
+                  updateFromHue(event);
+                }
+              }}
+            >
+              <span
+                className="absolute top-1/2 h-5 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white bg-background shadow"
+                style={{ left: `${(hsv.h / 360) * 100}%` }}
+              />
+            </div>
+            <div className="grid grid-cols-8 gap-1">
+              {colorSwatches.map((swatch) => (
+                <button
+                  key={swatch}
+                  className="h-6 w-6 rounded-sm border border-border transition hover:scale-105"
+                  type="button"
+                  style={{ backgroundColor: swatch }}
+                  onClick={() => commitColor(swatch)}
+                  aria-label={`色 ${swatch}`}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
-    </label>
+    </div>
   );
 }
 

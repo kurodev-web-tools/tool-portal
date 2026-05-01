@@ -85,9 +85,13 @@ const colorSwatches = [
   "#f7b500",
   "#e8415f"
 ];
+const imageUploadMaxBytes = 8 * 1024 * 1024;
+const allowedImageMimeTypes = new Set(["image/png", "image/jpeg"]);
+const allowedImageExtensions = new Set(["png", "jpg", "jpeg"]);
 
 const selectedLayerFallback = (layers: ThumbnailLayer[]) => layers[layers.length - 1]?.id ?? null;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const clampFinite = (value: number, min: number, max: number, fallback = min) => clamp(Number.isFinite(value) ? value : fallback, min, max);
 const toHexByte = (value: number) => Math.round(clamp(value, 0, 255)).toString(16).padStart(2, "0");
 const normalizeHexColor = (value: string, fallback = "#ffffff") => {
   const normalized = value.trim();
@@ -174,6 +178,10 @@ const normalizeDeg = (deg: number) => {
   }
   return value;
 };
+const isValidImageFile = (file: File) => {
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  return allowedImageMimeTypes.has(file.type) && allowedImageExtensions.has(extension);
+};
 
 export function ThumbnailEditorApp() {
   const [draft, setDraft] = useState<ThumbnailEditorDraft>(() => createDraftFromPreset());
@@ -243,11 +251,13 @@ export function ThumbnailEditorApp() {
         showToast("info", "前回の下書きを復元しました。");
       } else {
         window.localStorage.removeItem(thumbnailDraftStorageKey);
-        showToast("warning", "破損した下書きを初期化しました。");
+        setDraft(createDraftFromPreset());
+        showToast("warning", "破損した下書きを初期化しました。必要に応じて保存し直してください。");
       }
     } catch {
       window.localStorage.removeItem(thumbnailDraftStorageKey);
-      showToast("warning", "破損した下書きを初期化しました。");
+      setDraft(createDraftFromPreset());
+      showToast("warning", "破損した下書きを初期化しました。必要に応じて保存し直してください。");
     } finally {
       setHydrated(true);
     }
@@ -268,10 +278,15 @@ export function ThumbnailEditorApp() {
       return;
     }
     const timer = window.setTimeout(() => {
+      const normalized = normalizeThumbnailDraft(draft);
+      if (!normalized) {
+        showToast("error", "下書きデータが不正なため自動保存を中断しました。");
+        return;
+      }
       try {
         window.localStorage.setItem(
           thumbnailDraftStorageKey,
-          JSON.stringify({ ...draft, updatedAt: new Date().toISOString() })
+          JSON.stringify({ ...normalized, updatedAt: new Date().toISOString() })
         );
       } catch {
         showToast("error", "下書きの自動保存に失敗しました。");
@@ -400,10 +415,15 @@ export function ThumbnailEditorApp() {
   };
 
   const saveDraft = () => {
+    const normalized = normalizeThumbnailDraft(draft);
+    if (!normalized) {
+      showToast("error", "下書きデータが不正なため保存できません。");
+      return;
+    }
     try {
       window.localStorage.setItem(
         thumbnailDraftStorageKey,
-        JSON.stringify({ ...draft, updatedAt: new Date().toISOString() })
+        JSON.stringify({ ...normalized, updatedAt: new Date().toISOString() })
       );
       showToast("success", "下書きを保存しました。");
     } catch {
@@ -432,12 +452,12 @@ export function ThumbnailEditorApp() {
     if (!file) {
       return;
     }
-    if (!["image/png", "image/jpeg"].includes(file.type)) {
-      showToast("error", "PNG/JPEG画像を選択してください。");
+    if (!isValidImageFile(file)) {
+      showToast("error", "PNG/JPEG画像ファイルを選択してください。");
       return;
     }
-    if (file.size > 20 * 1024 * 1024) {
-      showToast("error", "画像は20MB以下にしてください。");
+    if (file.size > imageUploadMaxBytes) {
+      showToast("error", "画像は8MB以下にしてください。");
       return;
     }
 
@@ -740,11 +760,24 @@ export function ThumbnailEditorApp() {
   }, [editorMode, handleTapEditIntent]);
 
   const exportImage = async () => {
+    const normalized = normalizeThumbnailDraft(draft);
+    if (!normalized) {
+      showToast("error", "下書きデータが不正なため書き出しできません。");
+      return;
+    }
+    const hasVisibleImage = normalized.layers.some((layer) => layer.type === "image" && !layer.hidden && layer.src);
+    if (!hasVisibleImage) {
+      showToast("error", "画像レイヤーがないため書き出しできません。画像を追加してください。");
+      return;
+    }
     try {
       const exportCanvas = document.createElement("canvas");
-      await drawThumbnail(exportCanvas, draft, { forceJpegBackground: exportFormat === "jpeg" });
+      await drawThumbnail(exportCanvas, normalized, { forceJpegBackground: exportFormat === "jpeg" });
       const mimeType = exportFormat === "png" ? "image/png" : "image/jpeg";
       const dataUrl = exportCanvas.toDataURL(mimeType, 0.92);
+      if (!dataUrl || dataUrl === "data:,") {
+        throw new Error("Canvas export failed.");
+      }
       const anchor = document.createElement("a");
       const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 13).replace("T", "-");
       anchor.href = dataUrl;
@@ -799,13 +832,13 @@ export function ThumbnailEditorApp() {
           <div className="flex w-full flex-wrap items-center justify-between gap-2 min-[1024px]:w-auto min-[1024px]:justify-end">
             <ModeToggle editorMode={editorMode} onModeChange={setEditorMode} className="min-[1024px]:hidden" />
             <div className="flex flex-wrap justify-end gap-2">
-              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft}>
+              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft} aria-label="新規キャンバスを作成">
                 新規作成
               </button>
-              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft}>
+              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft} aria-label="下書きを保存">
                 下書き保存
               </button>
-              <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage}>
+              <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し">
                 書き出し
               </button>
             </div>
@@ -832,15 +865,16 @@ export function ThumbnailEditorApp() {
                     className="flat-control hidden px-3 py-2 text-xs font-bold min-[1024px]:inline-flex"
                     type="button"
                     onClick={() => setSidePanelCollapsed((value) => !value)}
+                    aria-label={sidePanelCollapsed ? "設定パネルを表示" : "設定パネルを非表示"}
                   >
                     {sidePanelCollapsed ? "パネル表示" : "パネル非表示"}
                   </button>
                   <div className="flex items-center gap-2 min-[1024px]:hidden">
-                    <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
+                    <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小" aria-label="キャンバスを縮小">
                       −
                     </button>
                     <span className="w-14 text-center text-sm font-bold text-muted">{Math.round(zoom * 100)}%</span>
-                    <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.min(1.6, value + 0.08))} title="拡大">
+                    <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.min(1.6, value + 0.08))} title="拡大" aria-label="キャンバスを拡大">
                       +
                     </button>
                   </div>
@@ -876,11 +910,11 @@ export function ThumbnailEditorApp() {
                 </div>
                 <div className="mt-3 hidden justify-center min-[1024px]:flex">
                   <div className="inline-flex items-center gap-2 rounded-base border border-border bg-surface px-2 py-2">
-                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
+                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小" aria-label="キャンバスを縮小">
                       −
                     </button>
                     <span className="w-12 text-center text-xs font-bold text-muted">{Math.round(zoom * 100)}%</span>
-                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => updateZoom((value) => Math.min(1.6, value + 0.08))} title="拡大">
+                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => updateZoom((value) => Math.min(1.6, value + 0.08))} title="拡大" aria-label="キャンバスを拡大">
                       +
                     </button>
                   </div>
@@ -963,7 +997,7 @@ export function ThumbnailEditorApp() {
         ))}
       </nav>
 
-      <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} />
+      <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} aria-label="画像ファイルを選択" />
       {toast && (
         <div className={`fixed bottom-20 left-4 right-4 z-50 rounded-base border px-4 py-3 text-sm font-bold shadow-panel min-[1024px]:bottom-5 min-[1024px]:left-auto min-[1024px]:right-5 min-[1024px]:w-96 ${toneClassName[toast.tone]}`}>
           {toast.message}
@@ -985,16 +1019,16 @@ function QuickAddBar({
   return (
     <section className="panel p-3">
       <div className="grid grid-cols-4 gap-2">
-        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={onText}>
+        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={onText} aria-label="テキストレイヤーを追加">
           T テキスト
         </button>
-        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={() => onShape("rect")}>
+        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={() => onShape("rect")} aria-label="矩形レイヤーを追加">
           ▭ 矩形
         </button>
-        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={() => onShape("circle")}>
+        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={() => onShape("circle")} aria-label="円レイヤーを追加">
           ○ 円
         </button>
-        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={onImage}>
+        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={onImage} aria-label="画像レイヤーを追加">
           ▧ 画像
         </button>
       </div>
@@ -1414,10 +1448,10 @@ function ExportPanel({
           JPEG
         </button>
       </div>
-      <button className="flat-control w-full px-4 py-2 font-bold" type="button" onClick={onSave}>
+      <button className="flat-control w-full px-4 py-2 font-bold" type="button" onClick={onSave} aria-label="下書きを保存">
         下書き保存
       </button>
-      <button className="w-full rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onExport}>
+      <button className="w-full rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onExport} aria-label="サムネイルを書き出し">
         書き出し
       </button>
       <p className="text-xs leading-5 text-muted">下書きはこのブラウザの localStorage に保存されます。PNG/JPEG は表示中キャンバスと同じ描画結果で1枚出力します。</p>
@@ -1453,7 +1487,17 @@ function NumberField({
           max={max}
           step={step}
           value={value}
-          onChange={(event) => onChange(Number(event.target.value))}
+          onChange={(event) => {
+            const parsed = Number(event.target.value);
+            if (!Number.isFinite(parsed)) {
+              return;
+            }
+            onChange(clampFinite(parsed, min, max, value));
+          }}
+          onBlur={(event) => {
+            const parsed = Number(event.target.value);
+            onChange(clampFinite(parsed, min, max, value));
+          }}
         />
         <span className="grid w-12 place-items-center border-l border-border text-xs text-muted">{suffix}</span>
       </div>
@@ -1639,6 +1683,7 @@ function ListboxField({
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
+        aria-label={`${value} の選択肢を開く`}
       >
         <span className="truncate">{value}</span>
         <span className="text-xs text-muted">▾</span>

@@ -85,13 +85,39 @@ export const thumbnailCanvasSizes: Record<ThumbnailCanvasSizeId, ThumbnailCanvas
   "full-hd": { width: 1920, height: 1080, label: "1920 x 1080 (16:9)" }
 };
 
-export const thumbnailFonts = [
-  "Noto Sans JP",
-  "M PLUS Rounded 1c",
-  "Zen Kaku Gothic New",
-  "BIZ UDPGothic",
-  "Kosugi Maru"
+export const thumbnailFontGroups = [
+  {
+    label: "日本語",
+    fonts: [
+      "Noto Sans JP",
+      "M PLUS 1p",
+      "M PLUS Rounded 1c",
+      "Zen Kaku Gothic New",
+      "BIZ UDPGothic",
+      "Kosugi Maru",
+      "Yomogi",
+      "Hachi Maru Pop",
+      "Kiwi Maru",
+      "Noto Serif JP"
+    ]
+  },
+  {
+    label: "English",
+    fonts: [
+      "Anton",
+      "Oswald",
+      "Bebas Neue",
+      "Bangers",
+      "Fredoka",
+      "Poppins",
+      "Montserrat",
+      "Playfair Display",
+      "Pacifico",
+      "Rubik"
+    ]
+  }
 ];
+export const thumbnailFonts = thumbnailFontGroups.flatMap((group) => group.fonts);
 
 const nowIso = () => new Date().toISOString();
 

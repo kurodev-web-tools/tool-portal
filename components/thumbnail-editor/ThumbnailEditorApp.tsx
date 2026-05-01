@@ -15,6 +15,7 @@ import {
   pointToLayerLocal,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
+  thumbnailFontGroups,
   thumbnailFonts,
   thumbnailPresets,
   type ThumbnailHandleKind,
@@ -851,7 +852,7 @@ export function ThumbnailEditorApp() {
                     editorMode={editorMode}
                     onModeChange={setEditorMode}
                     onText={() => addLayer(createTextLayer())}
-                    onShape={() => addLayer(createShapeLayer("rect"))}
+                    onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
                     onImage={() => fileInputRef.current?.click()}
                   />
                   <div ref={canvasViewportRef} className="scrollbar-accent min-w-0 flex-1 overflow-auto [scrollbar-gutter:stable] min-[1024px]:max-h-[calc(100vh-20rem)]">
@@ -1040,14 +1041,29 @@ function DesktopToolRail({
   editorMode: EditorMode;
   onModeChange: (mode: EditorMode) => void;
   onText: () => void;
-  onShape: () => void;
+  onShape: (shapeType: ThumbnailShapeType) => void;
   onImage: () => void;
 }) {
+  const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
+  const shapeMenuRef = useRef<HTMLDivElement | null>(null);
   const toolButtonClass = (active: boolean) =>
     [
       "flex h-14 w-14 flex-col items-center justify-center gap-1 rounded-base border text-[11px] font-bold transition",
       active ? "border-primary bg-primary-soft text-primary-strong" : "border-transparent text-muted hover:border-border hover:bg-surface"
     ].join(" ");
+
+  useEffect(() => {
+    if (!shapeMenuOpen) {
+      return;
+    }
+    const handlePointerDown = (event: globalThis.PointerEvent) => {
+      if (!shapeMenuRef.current?.contains(event.target as Node)) {
+        setShapeMenuOpen(false);
+      }
+    };
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [shapeMenuOpen]);
 
   return (
     <div className="hidden w-16 shrink-0 flex-col items-center gap-2 rounded-base border border-border bg-surface p-2 min-[1024px]:flex">
@@ -1059,10 +1075,36 @@ function DesktopToolRail({
         <span className="text-lg">T</span>
         テキスト
       </button>
-      <button className={toolButtonClass(false)} type="button" onClick={onShape} title="図形">
-        <span className="text-lg">◇</span>
-        図形
-      </button>
+      <div ref={shapeMenuRef} className="relative">
+        <button className={toolButtonClass(shapeMenuOpen)} type="button" onClick={() => setShapeMenuOpen((current) => !current)} title="図形">
+          <span className="text-lg">◇</span>
+          図形
+        </button>
+        {shapeMenuOpen && (
+          <div className="absolute left-full top-0 z-50 ml-2 w-32 rounded-base border border-border bg-surface p-1 shadow-panel">
+            <button
+              className="block w-full rounded-base px-3 py-2 text-left text-xs font-bold text-foreground hover:bg-primary-soft"
+              type="button"
+              onClick={() => {
+                onShape("rect");
+                setShapeMenuOpen(false);
+              }}
+            >
+              ▭ 矩形
+            </button>
+            <button
+              className="block w-full rounded-base px-3 py-2 text-left text-xs font-bold text-foreground hover:bg-primary-soft"
+              type="button"
+              onClick={() => {
+                onShape("circle");
+                setShapeMenuOpen(false);
+              }}
+            >
+              ○ 円
+            </button>
+          </div>
+        )}
+      </div>
       <button className={toolButtonClass(false)} type="button" onClick={onImage} title="画像">
         <span className="text-lg">▧</span>
         画像
@@ -1214,23 +1256,29 @@ function TextControls({
           {fontMenuOpen ? (
             <div className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-base border border-border bg-surface p-1 shadow-panel">
               <div className="scrollbar-accent max-h-48 overflow-y-auto [scrollbar-gutter:stable]" role="listbox">
-                {thumbnailFonts.map((font) => (
-                  <button
-                    key={font}
-                    type="button"
-                    role="option"
-                    aria-selected={font === layer.fontFamily}
-                    className={[
-                      "block w-full rounded-base px-3 py-2 text-left text-sm font-bold",
-                      font === layer.fontFamily ? "bg-primary-soft text-primary-strong" : "text-foreground hover:bg-surface-muted"
-                    ].join(" ")}
-                    onClick={() => {
-                      update("fontFamily", font);
-                      onFontMenuOpenChange(false);
-                    }}
-                  >
-                    {font}
-                  </button>
+                {thumbnailFontGroups.map((group) => (
+                  <div key={group.label}>
+                    <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-normal text-muted">{group.label}</p>
+                    {group.fonts.map((font) => (
+                      <button
+                        key={font}
+                        type="button"
+                        role="option"
+                        aria-selected={font === layer.fontFamily}
+                        className={[
+                          "block w-full rounded-base px-3 py-2 text-left text-sm font-bold",
+                          font === layer.fontFamily ? "bg-primary-soft text-primary-strong" : "text-foreground hover:bg-surface-muted"
+                        ].join(" ")}
+                        style={{ fontFamily: `"${font}", sans-serif` }}
+                        onClick={() => {
+                          update("fontFamily", font);
+                          onFontMenuOpenChange(false);
+                        }}
+                      >
+                        {font}
+                      </button>
+                    ))}
+                  </div>
                 ))}
               </div>
             </div>

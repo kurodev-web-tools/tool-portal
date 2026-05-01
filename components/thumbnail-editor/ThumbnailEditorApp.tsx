@@ -640,16 +640,19 @@ export function ThumbnailEditorApp() {
               />
             </label>
           </div>
-          <div className="flex w-full flex-wrap justify-end gap-2 min-[1024px]:w-auto">
-            <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft}>
-              新規作成
-            </button>
-            <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft}>
-              下書き保存
-            </button>
-            <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage}>
-              書き出し
-            </button>
+          <div className="flex w-full flex-wrap items-center justify-between gap-2 min-[1024px]:w-auto min-[1024px]:justify-end">
+            <ModeToggle editorMode={editorMode} onModeChange={setEditorMode} className="min-[1024px]:hidden" />
+            <div className="flex flex-wrap justify-end gap-2">
+              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft}>
+                新規作成
+              </button>
+              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft}>
+                下書き保存
+              </button>
+              <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage}>
+                書き出し
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -662,22 +665,6 @@ export function ThumbnailEditorApp() {
                 <div>
                   <p className="text-sm font-bold text-foreground">{selectedPreset.name}</p>
                   <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / 16:9</p>
-                  <div className="mt-2 inline-flex rounded-base border border-border bg-surface p-1 min-[1024px]:hidden">
-                    <button
-                      className={`px-3 py-1 text-xs font-bold ${editorMode === "edit" ? "rounded-sm bg-primary text-white" : "text-muted"}`}
-                      type="button"
-                      onClick={() => setEditorMode("edit")}
-                    >
-                      編集
-                    </button>
-                    <button
-                      className={`px-3 py-1 text-xs font-bold ${editorMode === "pan" ? "rounded-sm bg-primary text-white" : "text-muted"}`}
-                      type="button"
-                      onClick={() => setEditorMode("pan")}
-                    >
-                      表示移動
-                    </button>
-                  </div>
                 </div>
                 <div className="flex items-center gap-2 min-[1024px]:hidden">
                   <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小">
@@ -841,6 +828,35 @@ function QuickAddBar({
         </button>
       </div>
     </section>
+  );
+}
+
+function ModeToggle({
+  editorMode,
+  onModeChange,
+  className = ""
+}: {
+  editorMode: EditorMode;
+  onModeChange: (mode: EditorMode) => void;
+  className?: string;
+}) {
+  return (
+    <div className={`inline-flex rounded-base border border-border bg-surface p-1 ${className}`}>
+      <button
+        className={`px-3 py-1 text-xs font-bold ${editorMode === "edit" ? "rounded-sm bg-primary text-white" : "text-muted"}`}
+        type="button"
+        onClick={() => onModeChange("edit")}
+      >
+        編集
+      </button>
+      <button
+        className={`px-3 py-1 text-xs font-bold ${editorMode === "pan" ? "rounded-sm bg-primary text-white" : "text-muted"}`}
+        type="button"
+        onClick={() => onModeChange("pan")}
+      >
+        表示移動
+      </button>
+    </div>
   );
 }
 

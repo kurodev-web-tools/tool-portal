@@ -68,7 +68,7 @@ export function PortalSidebar() {
           <p className="mb-3 hidden px-2 text-xs font-semibold text-muted xl:block">実装済みツール</p>
           <div className="space-y-1">
             {sidebarTools.map((tool) => (
-              <SidebarLink key={tool.id} href={tool.href} label={tool.name} icon="SC" />
+              <SidebarLink key={tool.id} href={tool.href} label={tool.name} icon={tool.icon} />
             ))}
           </div>
         </section>

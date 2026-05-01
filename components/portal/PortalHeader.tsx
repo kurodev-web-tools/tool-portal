@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
+import { sidebarTools } from "@/lib/tools";
 
-export function PortalHeader() {
+export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspace" }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const showDesktopTitle = mode !== "workspace";
   const title = useMemo(() => {
     if (pathname === "/") {
       return "V Streamer Tools";
@@ -15,6 +17,10 @@ export function PortalHeader() {
 
     if (pathname.startsWith("/tools/schedule-calendar")) {
       return "スケジュールカレンダー";
+    }
+
+    if (pathname.startsWith("/tools/thumbnail-editor")) {
+      return "サムネイルエディタ";
     }
 
     if (pathname.startsWith("/tools")) {
@@ -40,7 +46,15 @@ export function PortalHeader() {
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/tools", label: "Tools" },
-    { href: "/tools/schedule-calendar", label: "Schedule Calendar" }
+    ...sidebarTools.map((tool) => ({
+      href: tool.href,
+      label:
+        tool.id === "schedule-calendar"
+          ? "スケジュールカレンダー"
+          : tool.id === "thumbnail-editor"
+            ? "サムネイルエディタ"
+            : tool.name
+    }))
   ];
 
   return (
@@ -52,7 +66,7 @@ export function PortalHeader() {
           </Link>
           <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
         </div>
-        <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span>
+        {showDesktopTitle ? <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span> : <span className="hidden lg:block" />}
         <div className="hidden lg:block">
           <ThemeToggle />
         </div>

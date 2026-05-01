@@ -1402,6 +1402,7 @@ function NumberField({
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [textValue, setTextValue] = useState(normalizeHexColor(value));
+  const pickerRootRef = useRef<HTMLDivElement | null>(null);
   const saturationRef = useRef<HTMLDivElement | null>(null);
   const hueRef = useRef<HTMLDivElement | null>(null);
   const normalizedValue = normalizeHexColor(value);
@@ -1411,6 +1412,18 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
   useEffect(() => {
     setTextValue(normalizedValue);
   }, [normalizedValue]);
+  useEffect(() => {
+    if (!paletteOpen) {
+      return;
+    }
+    const handlePointerDown = (event: globalThis.PointerEvent) => {
+      if (!pickerRootRef.current?.contains(event.target as Node)) {
+        setPaletteOpen(false);
+      }
+    };
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [paletteOpen]);
 
   const commitColor = (next: string) => {
     const normalized = normalizeHexColor(next, normalizedValue);
@@ -1445,7 +1458,7 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
   };
 
   return (
-    <div className="block text-xs font-bold text-muted">
+    <div ref={pickerRootRef} className="relative block text-xs font-bold text-muted">
       <p>{label}</p>
       <div className="mt-1 space-y-2 rounded-base border border-border bg-surface p-2">
         <div className="flex items-center gap-2">
@@ -1464,10 +1477,10 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
           />
         </div>
         {paletteOpen && (
-          <div className="space-y-3 rounded-sm border border-border bg-background/70 p-3">
+          <div className="absolute left-0 right-0 z-50 mt-2 space-y-3 rounded-base border border-border bg-background p-3 shadow-panel">
             <div
               ref={saturationRef}
-              className="relative h-36 cursor-crosshair rounded-sm border border-border"
+              className="relative h-52 cursor-crosshair rounded-sm border border-border"
               style={{
                 background: `linear-gradient(to top, #000000, transparent), linear-gradient(to right, #ffffff, ${hueColor})`
               }}
@@ -1508,11 +1521,11 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
                 style={{ left: `${(hsv.h / 360) * 100}%` }}
               />
             </div>
-            <div className="grid grid-cols-8 gap-1">
+            <div className="grid grid-cols-8 gap-2">
               {colorSwatches.map((swatch) => (
                 <button
                   key={swatch}
-                  className="h-6 w-6 rounded-sm border border-border transition hover:scale-105"
+                  className="h-7 w-full rounded-sm border border-border transition hover:scale-105"
                   type="button"
                   style={{ backgroundColor: swatch }}
                   onClick={() => commitColor(swatch)}

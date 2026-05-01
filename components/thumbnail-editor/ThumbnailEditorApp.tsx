@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, MouseEvent, PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   cloneThumbnailLayer,
   createDraftFromPreset,
@@ -35,6 +35,7 @@ type CanvasInteractionMode = "drag" | "resize" | "rotate";
 type CanvasCursor = "default" | "move" | "grab" | "grabbing" | "crosshair" | "nwse-resize" | "nesw-resize";
 type CanvasInteractionState = {
   pointerId: number;
+  pointerType: string;
   layerId: string;
   mode: CanvasInteractionMode;
   resizeHandle?: ThumbnailResizeHandle;
@@ -42,13 +43,22 @@ type CanvasInteractionState = {
   startLayer: ThumbnailLayer;
   startCenter: { x: number; y: number };
   rotateOffsetRad: number;
+  moved: boolean;
 };
 type CanvasPanState = {
   pointerId: number;
+  pointerType: string;
   startClientX: number;
   startClientY: number;
   startScrollLeft: number;
   startScrollTop: number;
+  moved: boolean;
+};
+type LastTapState = {
+  time: number;
+  clientX: number;
+  clientY: number;
+  layerId: string | null;
 };
 
 const toneClassName: Record<ToastTone, string> = {
@@ -117,6 +127,7 @@ export function ThumbnailEditorApp() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const interactionRef = useRef<CanvasInteractionState | null>(null);
   const panRef = useRef<CanvasPanState | null>(null);
+  const lastTapRef = useRef<LastTapState | null>(null);
   const userAdjustedZoomRef = useRef(false);
 
   const selectedLayer = useMemo(
@@ -233,6 +244,69 @@ export function ThumbnailEditorApp() {
       };
     },
     [draft.canvas.height, draft.canvas.width]
+  );
+
+  const openLayerPanelForPoint = useCallback(
+    (point: { x: number; y: number }) => {
+      if (typeof window === "undefined" || window.innerWidth < 1024) {
+        return null;
+      }
+      const target = [...draft.layers].reverse().find((layer) => layerContainsPoint(layer, point));
+      if (!target) {
+        return null;
+      }
+      setDraft((current) => ({ ...current, selectedLayerId: target.id }));
+      setSidePanelCollapsed(false);
+      return target.id;
+    },
+    [draft.layers]
+  );
+
+  const handleCanvasDoubleClick = useCallback(
+    (event: MouseEvent<HTMLCanvasElement>) => {
+      const point = getCanvasPointFromClient(event.clientX, event.clientY);
+      if (!point) {
+        return;
+      }
+      if (openLayerPanelForPoint(point)) {
+        event.preventDefault();
+      }
+    },
+    [getCanvasPointFromClient, openLayerPanelForPoint]
+  );
+
+  const handleTapEditIntent = useCallback(
+    (event: PointerEvent<HTMLCanvasElement>) => {
+      if (event.pointerType !== "touch" && event.pointerType !== "pen") {
+        return;
+      }
+      const point = getCanvasPointFromClient(event.clientX, event.clientY);
+      if (!point) {
+        lastTapRef.current = null;
+        return;
+      }
+      const target = [...draft.layers].reverse().find((layer) => layerContainsPoint(layer, point));
+      const now = window.performance.now();
+      const previous = lastTapRef.current;
+      const isDoubleTap =
+        Boolean(previous) &&
+        previous?.layerId === (target?.id ?? null) &&
+        now - previous.time <= 360 &&
+        Math.hypot(event.clientX - previous.clientX, event.clientY - previous.clientY) <= 28;
+
+      lastTapRef.current = {
+        time: now,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        layerId: target?.id ?? null
+      };
+
+      if (isDoubleTap && target && openLayerPanelForPoint(point)) {
+        lastTapRef.current = null;
+        event.preventDefault();
+      }
+    },
+    [draft.layers, getCanvasPointFromClient, openLayerPanelForPoint]
   );
 
   const constrainLayer = useCallback(
@@ -369,10 +443,12 @@ export function ThumbnailEditorApp() {
         }
         panRef.current = {
           pointerId: event.pointerId,
+          pointerType: event.pointerType,
           startClientX: event.clientX,
           startClientY: event.clientY,
           startScrollLeft: viewport.scrollLeft,
-          startScrollTop: viewport.scrollTop
+          startScrollTop: viewport.scrollTop,
+          moved: false
         };
         setCanvasCursor("grabbing");
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -414,13 +490,15 @@ export function ThumbnailEditorApp() {
 
       interactionRef.current = {
         pointerId: event.pointerId,
+        pointerType: event.pointerType,
         layerId: activeLayer.id,
         mode,
         resizeHandle: handle && handle !== "rotate" ? handle : undefined,
         startPointer: point,
         startLayer: { ...activeLayer },
         startCenter: center,
-        rotateOffsetRad: angle - rad
+        rotateOffsetRad: angle - rad,
+        moved: false
       };
       event.currentTarget.setPointerCapture(event.pointerId);
       event.preventDefault();
@@ -498,6 +576,9 @@ export function ThumbnailEditorApp() {
         }
         const dx = event.clientX - pan.startClientX;
         const dy = event.clientY - pan.startClientY;
+        if (Math.hypot(dx, dy) > 8) {
+          pan.moved = true;
+        }
         viewport.scrollLeft = pan.startScrollLeft - dx;
         viewport.scrollTop = pan.startScrollTop - dy;
         setCanvasCursor("grabbing");
@@ -529,6 +610,9 @@ export function ThumbnailEditorApp() {
       const point = getCanvasPointFromClient(event.clientX, event.clientY);
       if (!point) {
         return;
+      }
+      if (Math.hypot(point.x - state.startPointer.x, point.y - state.startPointer.y) > 6) {
+        state.moved = true;
       }
 
       setDraft((current) => {
@@ -571,6 +655,9 @@ export function ThumbnailEditorApp() {
       if (event.currentTarget.hasPointerCapture(event.pointerId)) {
         event.currentTarget.releasePointerCapture(event.pointerId);
       }
+      if (!pan.moved) {
+        handleTapEditIntent(event);
+      }
       return;
     }
     const state = interactionRef.current;
@@ -582,7 +669,10 @@ export function ThumbnailEditorApp() {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-  }, [editorMode]);
+    if (!state.moved) {
+      handleTapEditIntent(event);
+    }
+  }, [editorMode, handleTapEditIntent]);
 
   const exportImage = async () => {
     try {
@@ -714,6 +804,7 @@ export function ThumbnailEditorApp() {
                       onPointerMove={updateInteraction}
                       onPointerUp={endInteraction}
                       onPointerCancel={endInteraction}
+                      onDoubleClick={handleCanvasDoubleClick}
                       aria-label="サムネイル編集キャンバス"
                     />
                   </div>

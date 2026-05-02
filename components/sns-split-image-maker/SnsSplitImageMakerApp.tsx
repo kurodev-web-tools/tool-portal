@@ -58,6 +58,8 @@ const allowedImageMimeTypes = new Set(["image/png", "image/jpeg"]);
 const allowedImageExtensions = new Set(["png", "jpg", "jpeg"]);
 const imageUploadMaxBytes = 12 * 1024 * 1024;
 const postAdjustmentSnapThreshold = 32;
+const snsSplitImageDbName = "v-streamer-tools:sns-split-image-maker";
+const snsSplitImageStoreName = "images";
 const toneClassName: Record<ToastTone, string> = {
   info: "border-sky-400/60 bg-sky-500/12",
   success: "border-emerald-400/60 bg-emerald-500/12",
@@ -73,6 +75,77 @@ const clampPostOffset = (value: number) => Math.min(Math.max(Math.round(value), 
 const snapPostOffset = (value: number) => {
   const rounded = clampPostOffset(value);
   return Math.abs(rounded) <= postAdjustmentSnapThreshold ? 0 : rounded;
+};
+const stripDraftImageSources = (draft: SnsSplitDraft): SnsSplitDraft => ({
+  ...draft,
+  images: draft.images.map((image) => ({ ...image, src: null }))
+});
+const mergeStoredImageSources = (draft: SnsSplitDraft, imageSources: Map<string, string>): SnsSplitDraft => ({
+  ...draft,
+  images: draft.images.map((image) => ({ ...image, src: imageSources.get(image.id) ?? image.src }))
+});
+const openImageDatabase = () =>
+  new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open(snsSplitImageDbName, 1);
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains(snsSplitImageStoreName)) {
+        database.createObjectStore(snsSplitImageStoreName, { keyPath: "id" });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error("画像保存領域を開けませんでした。"));
+  });
+const readStoredImageSources = async () => {
+  const database = await openImageDatabase();
+  return new Promise<Map<string, string>>((resolve, reject) => {
+    const transaction = database.transaction(snsSplitImageStoreName, "readonly");
+    const request = transaction.objectStore(snsSplitImageStoreName).getAll();
+    request.onsuccess = () => {
+      const sources = new Map<string, string>();
+      (request.result as Array<{ id?: unknown; src?: unknown }>).forEach((entry) => {
+        if (typeof entry.id === "string" && typeof entry.src === "string") {
+          sources.set(entry.id, entry.src);
+        }
+      });
+      resolve(sources);
+    };
+    request.onerror = () => reject(request.error ?? new Error("保存済み画像を読み込めませんでした。"));
+    transaction.oncomplete = () => database.close();
+    transaction.onerror = () => {
+      database.close();
+      reject(transaction.error ?? new Error("保存済み画像を読み込めませんでした。"));
+    };
+  });
+};
+const writeStoredImageSource = async (id: SnsSplitImageSource["id"], src: string | null) => {
+  const database = await openImageDatabase();
+  return new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(snsSplitImageStoreName, "readwrite");
+    const store = transaction.objectStore(snsSplitImageStoreName);
+    if (src) {
+      store.put({ id, src, updatedAt: new Date().toISOString() });
+    } else {
+      store.delete(id);
+    }
+    transaction.oncomplete = () => {
+      database.close();
+      resolve();
+    };
+    transaction.onerror = () => {
+      database.close();
+      reject(transaction.error ?? new Error("画像を保存できませんでした。"));
+    };
+  });
+};
+const writeStoredImageSources = (images: SnsSplitImageSource[]) =>
+  Promise.all(images.map((image) => writeStoredImageSource(image.id, image.src))).then(() => undefined);
+const persistDraftMetadata = (draft: SnsSplitDraft) => {
+  const normalized = normalizeSnsSplitDraft({ ...stripDraftImageSources(draft), updatedAt: new Date().toISOString() });
+  if (!normalized) {
+    throw new Error("下書き保存用のデータを正規化できませんでした。");
+  }
+  localStorage.setItem(snsSplitDraftStorageKey, JSON.stringify(normalized));
 };
 const readImageFile = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -135,39 +208,67 @@ export function SnsSplitImageMakerApp() {
   );
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(snsSplitDraftStorageKey);
-      if (!raw) {
-        setHydrated(true);
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      const normalized = normalizeSnsSplitDraft(parsed);
-      if (!normalized) {
+    let active = true;
+    const hydrateDraft = async () => {
+      let restoredDraft = createSnsSplitDraft();
+      let restoredFromStorage = false;
+      try {
+        const raw = localStorage.getItem(snsSplitDraftStorageKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const normalized = normalizeSnsSplitDraft(parsed);
+          if (!normalized) {
+            localStorage.removeItem(snsSplitDraftStorageKey);
+            setToast({ tone: "warning", message: "保存データを復元できなかったため初期状態で開始しました。" });
+          } else {
+            restoredDraft = normalized;
+            restoredFromStorage = true;
+          }
+        }
+      } catch {
         localStorage.removeItem(snsSplitDraftStorageKey);
-        setToast({ tone: "warning", message: "保存データを復元できなかったため初期状態で開始しました。" });
-        setHydrated(true);
-        return;
+        if (active) {
+          setToast({ tone: "warning", message: "保存データが破損していたため安全に初期化しました。" });
+        }
       }
-      setDraft(normalized);
-      setToast({ tone: "success", message: "前回の作業状態を復元しました。" });
-    } catch {
-      localStorage.removeItem(snsSplitDraftStorageKey);
-      setToast({ tone: "warning", message: "保存データが破損していたため安全に初期化しました。" });
-    } finally {
-      setHydrated(true);
-    }
+
+      try {
+        const legacySources = restoredDraft.images.filter((image) => image.src);
+        if (legacySources.length > 0) {
+          await writeStoredImageSources(legacySources);
+          restoredDraft = stripDraftImageSources(restoredDraft);
+        }
+        const storedSources = await readStoredImageSources();
+        restoredDraft = mergeStoredImageSources(restoredDraft, storedSources);
+        if (active && (restoredFromStorage || storedSources.size > 0)) {
+          setToast({ tone: "success", message: "前回の作業状態を復元しました。" });
+        }
+      } catch {
+        if (active && restoredFromStorage) {
+          setToast({ tone: "warning", message: "設定は復元しましたが、画像の復元に失敗しました。" });
+        }
+      } finally {
+        if (active) {
+          setDraft(restoredDraft);
+          setHydrated(true);
+        }
+      }
+    };
+    void hydrateDraft();
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
     if (!hydrated) {
       return;
     }
-    const normalized = normalizeSnsSplitDraft({ ...draft, updatedAt: new Date().toISOString() });
-    if (!normalized) {
-      return;
+    try {
+      persistDraftMetadata(draft);
+    } catch {
+      setToast({ tone: "warning", message: "設定の自動保存に失敗しました。画像は編集中の画面上では維持されています。" });
     }
-    localStorage.setItem(snsSplitDraftStorageKey, JSON.stringify(normalized));
   }, [draft, hydrated]);
 
   const renderPreviews = useCallback(async () => {
@@ -284,6 +385,9 @@ export function SnsSplitImageMakerApp() {
       ...current,
       images: current.images.map((image) => (image.id === id ? { ...image, src } : image))
     }));
+    void writeStoredImageSource(id, src).catch(() => {
+      setToast({ tone: "warning", message: "画像の復元用保存に失敗しました。現在の編集画面ではそのまま利用できます。" });
+    });
   };
   const handleImageFile = async (file: File, id: SnsSplitImageSource["id"]) => {
     try {
@@ -389,14 +493,14 @@ export function SnsSplitImageMakerApp() {
       offsetY: drag.latestOffsetY
     });
   };
-  const saveDraft = () => {
-    const normalized = normalizeSnsSplitDraft({ ...draft, updatedAt: new Date().toISOString() });
-    if (!normalized) {
-      setToast({ tone: "error", message: "下書き保存用のデータを正規化できませんでした。" });
-      return;
+  const saveDraft = async () => {
+    try {
+      await writeStoredImageSources(draft.images);
+      persistDraftMetadata(draft);
+      setToast({ tone: "success", message: "作業状態を保存しました。" });
+    } catch (error) {
+      setToast({ tone: "error", message: error instanceof Error ? error.message : "作業状態の保存に失敗しました。" });
     }
-    localStorage.setItem(snsSplitDraftStorageKey, JSON.stringify(normalized));
-    setToast({ tone: "success", message: "作業状態を保存しました。" });
   };
   const exportTiles = async () => {
     if (!canExport) {

@@ -430,3 +430,22 @@
     - Chrome DevTools MCPで投稿別補正 `offsetX / offsetY / scale` が復元され、数値入力の変更が保存payloadへ反映されることを確認
     - Chrome DevTools MCPで `390 / 820 / 1024 / 1280` の横スクロール破綻なし、`1024px` は左ナビ80px、`1280px` は左ナビ288pxを確認
     - 補足: Chrome DevTools MCPの合成PointerEventではReactのpointer handlerを実操作相当に検証できなかったため、ドラッグ移動はコードパスとUI表示まで確認。実マウス操作はユーザー実見で確認予定
+  - 2026-05-02 公開前文言調整 / レビュー:
+    - 入力エリアへ「画像は16:9推奨」「異なる比率は中央基準でトリミング」「画像処理と復元用保存はブラウザ内で完結し外部送信しない」旨を追加した
+    - エクスポート設定へ「出力はブラウザのダウンロードとして4枚保存する」旨を追加し、分割用メイン画像の説明へ解像度違いは自動拡大縮小する旨を追記した
+    - レビュー結果: MVP公開を止める不具合はなし。リファクタは `SnsSplitImageMakerApp.tsx` のstorage/helper/UI分割を次PR候補とし、今回は挙動固定を優先する
+    - セキュリティ確認: PNG/JPEG MIME + 拡張子 + 12MB上限、復元時data URL種別制限、localStorageメタデータ化、IndexedDB画像保存、ファイル名サニタイズ、外部API未使用を確認
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm audit --omit=dev` / `npm run build`（成功。auditはprod依存0 vulnerabilities）
+
+#### SNS分割画像メーカーMVP後の別PR候補（2026-05-02）
+
+- [ ] 個別ツールページのPC / tablet-landscapeヘッダーからテーマ切り替えを外す
+  - ツール操作中はヘッダー右側を保存 / 出力 / 使い方などの作業アクションに寄せる
+  - `Home` / `Tools` では現状どおりヘッダー表示を維持してよい
+  - 個別ツールページではPC左サイド下部へテーマ切り替えを移す
+  - `1024~1279px` の簡略左ナビでは、下部に小さなトグルまたはアイコン操作として配置する
+  - `~1023px` のモバイルは現状どおりメニュー内 / モバイル側操作に寄せ、画面上部に常駐させない
+- [ ] SNS分割画像メーカーの保守向け分割を別PRで行う
+  - まず IndexedDB / localStorage / draft persistence helper を `SnsSplitImageMakerApp.tsx` から分離する
+  - UI section分割は `InputSection` / `PreviewPanel` / `SettingsSection` などを候補にするが、props過多にならない範囲で段階的に行う
+  - 既存挙動、保存キー、IndexedDB名、出力順、レスポンシブ境界は変更しない

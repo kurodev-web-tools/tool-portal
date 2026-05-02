@@ -95,6 +95,17 @@ export const tools: ToolDefinition[] = [
     icon: "TE"
   },
   {
+    id: "sns-split-image-maker",
+    name: "SNS分割画像メーカー",
+    description: "SNS投稿向けの4分割画像を投稿順どおりに調整・書き出しできます。",
+    category: "design",
+    status: "available",
+    suite: "fan-brand",
+    href: "/tools/sns-split-image-maker",
+    sidebar: true,
+    icon: "SS"
+  },
+  {
     id: "content-planner",
     name: "Content Planner",
     description: "企画メモや配信準備を扱う候補です。公開版ではまだ利用できません。",

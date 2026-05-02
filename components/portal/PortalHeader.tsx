@@ -23,6 +23,10 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
       return "サムネイルエディタ";
     }
 
+    if (pathname.startsWith("/tools/sns-split-image-maker")) {
+      return "SNS分割画像メーカー";
+    }
+
     if (pathname.startsWith("/tools")) {
       return "ツール一覧";
     }
@@ -53,6 +57,8 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
           ? "スケジュールカレンダー"
           : tool.id === "thumbnail-editor"
             ? "サムネイルエディタ"
+            : tool.id === "sns-split-image-maker"
+              ? "SNS分割画像メーカー"
             : tool.name
     }))
   ];

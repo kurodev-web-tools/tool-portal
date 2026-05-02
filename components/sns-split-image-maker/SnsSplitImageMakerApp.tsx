@@ -699,6 +699,8 @@ export function SnsSplitImageMakerApp() {
                       ? "1+8連結では、各投稿を「追加画像（上）/ メイン分割 / 追加画像（下）」で作成します。"
                       : "1+4差し替えでは、各フレーム画像の中央1/3へメイン分割を差し込みます。"}
                   </p>
+                  <p className="mt-2 text-xs text-muted">画像は16:9推奨です。異なる比率の画像は中央基準でトリミングされます。</p>
+                  <p className="mt-1 text-xs text-muted">画像処理と復元用保存はブラウザ内で完結し、外部へ送信しません。</p>
                 </div>
               </div>
             </ControlSection>
@@ -790,6 +792,7 @@ export function SnsSplitImageMakerApp() {
               <p className="mt-2 text-xs text-muted">
                 メイン画像: {imageStatus.baseReady ? "選択済み" : "未選択"} / 追加画像: {imageStatus.slotReady}/{imageStatus.requiredSlots}
               </p>
+              <p className="mt-1 text-xs text-muted">出力はブラウザのダウンロードとして4枚の画像を保存します。</p>
             </ControlSection>
           </aside>
         </main>
@@ -911,7 +914,7 @@ function ImagePicker({
           画像を外す
         </button>
       ) : null}
-      {prominent ? <p className="mt-3 text-xs text-muted">推奨: 16:9（例: 1920x1080）</p> : null}
+      {prominent ? <p className="mt-3 text-xs text-muted">推奨: 16:9（例: 1920x1080）。解像度違いは自動で拡大縮小します。</p> : null}
     </div>
   );
 }

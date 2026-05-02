@@ -387,3 +387,21 @@
     - Chrome DevTools MCPで `1+4差し替え` の投稿1プレビューがフレーム画像 / 中央メイン / フレーム画像の色順になることを確認
     - Chrome DevTools MCPで `390 / 820 / 1024 / 1280` の横スクロール破綻なしを確認
     - Chrome DevTools MCPで `split_1.png` -> `split_4.png` の順にdownload link clickが発火することを確認
+  - 2026-05-02 編集プレビュー化:
+    - 左の大エリアを4枚一覧から `投稿N 編集プレビュー` へ変更し、投稿1〜4の選択ボタンで編集対象を切り替える形にした
+    - 右側の `投稿プレビュー` は `全体 / 個別 / 投稿時` の3表示に切り替え可能にした
+    - 中央のメイン分割画像に投稿別補正 `offsetX / offsetY / scale` を追加し、localStorage復元にも対応した
+    - PCマウス向けに、編集プレビュー中央帯のドラッグ移動で投稿別 `offsetX / offsetY` を更新できるようにした
+    - ドラッグ移動時は中心線付近で `offsetX / offsetY` が `0px` に吸着するようにし、編集プレビュー中央帯へ縦横センターガイドを追加した
+    - ドラッグ中のstate更新をやめ、`requestAnimationFrame` で編集プレビューのみを更新し、pointer up時に投稿別補正を1回だけ保存するようにした
+    - 直接操作は中央メイン画像の移動のみに限定し、上下追加画像、回転、ハンドルリサイズ、ピンチズームは未対応
+  - 2026-05-02 編集プレビュー追加検証:
+    - `npm run lint`（成功）
+    - `npx tsc --noEmit`（成功）
+    - `npm run build`（成功）
+    - 吸着ガイド追加後に `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm run build` を再実行（成功）
+    - ドラッグ軽量化後に `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm run build` を再実行（成功）
+    - Chrome DevTools MCPで `1280px` 表示時に吸着説明文と編集プレビューcanvasが表示され、横スクロール破綻とconsole error/warnがないことを確認
+    - Chrome DevTools MCPで投稿別補正 `offsetX / offsetY / scale` が復元され、数値入力の変更が保存payloadへ反映されることを確認
+    - Chrome DevTools MCPで `390 / 820 / 1024 / 1280` の横スクロール破綻なし、`1024px` は左ナビ80px、`1280px` は左ナビ288pxを確認
+    - 補足: Chrome DevTools MCPの合成PointerEventではReactのpointer handlerを実操作相当に検証できなかったため、ドラッグ移動はコードパスとUI表示まで確認。実マウス操作はユーザー実見で確認予定

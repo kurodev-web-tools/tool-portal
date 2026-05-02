@@ -2,6 +2,7 @@ export type SnsSplitMode = "concatenate" | "replace";
 export type SnsSplitAspectRatioId = "16:27";
 export type SnsSplitExportFormat = "png" | "jpeg";
 export type SnsSplitSlotId = `slot-${number}`;
+export type SnsSplitPostIndex = 1 | 2 | 3 | 4;
 
 export type SnsSplitImageSource = {
   id: "base" | SnsSplitSlotId;
@@ -16,10 +17,17 @@ export type SnsSplitConfig = {
   offsetX: number;
   offsetY: number;
   scale: number;
+  postAdjustments: Record<SnsSplitPostIndex, SnsSplitPostAdjustment>;
   showSeam: boolean;
   showGrid: boolean;
   seamColor: string;
   seamWidth: number;
+};
+
+export type SnsSplitPostAdjustment = {
+  offsetX: number;
+  offsetY: number;
+  scale: number;
 };
 
 export type SnsSplitExportSettings = {
@@ -39,7 +47,7 @@ export type SnsSplitDraft = {
 };
 
 export type SnsSplitTile = {
-  index: 1 | 2 | 3 | 4;
+  index: SnsSplitPostIndex;
   sx: number;
   sy: number;
   sw: number;
@@ -55,6 +63,12 @@ export const snsSplitSlotCountByMode: Record<SnsSplitMode, number> = {
   replace: 4
 };
 
+export const defaultSnsSplitPostAdjustment: SnsSplitPostAdjustment = {
+  offsetX: 0,
+  offsetY: 0,
+  scale: 100
+};
+
 export const defaultSnsSplitConfig: SnsSplitConfig = {
   splitX: 50,
   splitY: 50,
@@ -62,6 +76,12 @@ export const defaultSnsSplitConfig: SnsSplitConfig = {
   offsetX: 0,
   offsetY: 0,
   scale: 100,
+  postAdjustments: {
+    1: { ...defaultSnsSplitPostAdjustment },
+    2: { ...defaultSnsSplitPostAdjustment },
+    3: { ...defaultSnsSplitPostAdjustment },
+    4: { ...defaultSnsSplitPostAdjustment }
+  },
   showSeam: true,
   showGrid: false,
   seamColor: "#00d1b2",
@@ -84,6 +104,27 @@ const safeString = (value: unknown, fallback: string, maxLength: number) =>
   typeof value === "string" ? value.slice(0, maxLength) : fallback;
 const isSafeImageSource = (src: string) => src.startsWith("data:image/png;") || src.startsWith("data:image/jpeg;");
 
+const clonePostAdjustments = (): Record<SnsSplitPostIndex, SnsSplitPostAdjustment> => ({
+  1: { ...defaultSnsSplitPostAdjustment },
+  2: { ...defaultSnsSplitPostAdjustment },
+  3: { ...defaultSnsSplitPostAdjustment },
+  4: { ...defaultSnsSplitPostAdjustment }
+});
+
+const normalizePostAdjustment = (value: unknown): SnsSplitPostAdjustment => {
+  const raw = isObject(value) ? value : {};
+  return {
+    offsetX: clamp(numberValue(raw.offsetX, defaultSnsSplitPostAdjustment.offsetX), -480, 480),
+    offsetY: clamp(numberValue(raw.offsetY, defaultSnsSplitPostAdjustment.offsetY), -480, 480),
+    scale: clamp(numberValue(raw.scale, defaultSnsSplitPostAdjustment.scale), 50, 180)
+  };
+};
+
+export const getSnsSplitPostAdjustment = (
+  config: Pick<SnsSplitConfig, "postAdjustments">,
+  postIndex: SnsSplitPostIndex
+): SnsSplitPostAdjustment => config.postAdjustments[postIndex] ?? defaultSnsSplitPostAdjustment;
+
 export const createSnsSplitImages = (mode: SnsSplitMode = "concatenate"): SnsSplitImageSource[] => [
   { id: "base", name: "分割用メイン画像", src: null },
   ...Array.from({ length: snsSplitSlotCountByMode[mode] }, (_, index) => ({
@@ -98,7 +139,7 @@ export const createSnsSplitDraft = (mode: SnsSplitMode = "concatenate"): SnsSpli
   mode,
   aspectRatio: "16:27",
   images: createSnsSplitImages(mode),
-  config: { ...defaultSnsSplitConfig },
+  config: { ...defaultSnsSplitConfig, postAdjustments: clonePostAdjustments() },
   exportSettings: { ...defaultSnsSplitExportSettings },
   updatedAt: nowIso()
 });
@@ -172,6 +213,12 @@ export const normalizeSnsSplitDraft = (value: unknown): SnsSplitDraft | null => 
       offsetX: clamp(numberValue(rawConfig.offsetX, defaultSnsSplitConfig.offsetX), -240, 240),
       offsetY: clamp(numberValue(rawConfig.offsetY, defaultSnsSplitConfig.offsetY), -240, 240),
       scale: clamp(numberValue(rawConfig.scale, defaultSnsSplitConfig.scale), 50, 180),
+      postAdjustments: {
+        1: normalizePostAdjustment(isObject(rawConfig.postAdjustments) ? rawConfig.postAdjustments[1] : null),
+        2: normalizePostAdjustment(isObject(rawConfig.postAdjustments) ? rawConfig.postAdjustments[2] : null),
+        3: normalizePostAdjustment(isObject(rawConfig.postAdjustments) ? rawConfig.postAdjustments[3] : null),
+        4: normalizePostAdjustment(isObject(rawConfig.postAdjustments) ? rawConfig.postAdjustments[4] : null)
+      },
       showSeam: booleanValue(rawConfig.showSeam, defaultSnsSplitConfig.showSeam),
       showGrid: booleanValue(rawConfig.showGrid, defaultSnsSplitConfig.showGrid),
       seamColor: safeString(rawConfig.seamColor, defaultSnsSplitConfig.seamColor, 24),
@@ -357,17 +404,19 @@ const drawSnsSplitPostImage = async (
     }
   }
 
-  context.drawImage(
-    options.baseCanvas,
-    tile.sx,
-    tile.sy,
-    tile.sw,
-    tile.sh,
-    0,
-    bandHeight,
-    snsSplitPostCanvas.width,
-    bandHeight
-  );
+  const postAdjustment = getSnsSplitPostAdjustment(draft.config, tile.index);
+  const mainScale = postAdjustment.scale / 100;
+  const mainWidth = snsSplitPostCanvas.width * mainScale;
+  const mainHeight = bandHeight * mainScale;
+  const mainX = (snsSplitPostCanvas.width - mainWidth) / 2 + postAdjustment.offsetX;
+  const mainY = bandHeight + (bandHeight - mainHeight) / 2 + postAdjustment.offsetY;
+
+  context.save();
+  context.beginPath();
+  context.rect(0, bandHeight, snsSplitPostCanvas.width, bandHeight);
+  context.clip();
+  context.drawImage(options.baseCanvas, tile.sx, tile.sy, tile.sw, tile.sh, mainX, mainY, mainWidth, mainHeight);
+  context.restore();
 
   if (options.includeGuides) {
     context.save();
@@ -379,6 +428,19 @@ const drawSnsSplitPostImage = async (
     context.lineTo(snsSplitPostCanvas.width, bandHeight);
     context.moveTo(0, bandHeight * 2);
     context.lineTo(snsSplitPostCanvas.width, bandHeight * 2);
+    context.stroke();
+    context.restore();
+
+    context.save();
+    context.strokeStyle = draft.config.seamColor;
+    context.lineWidth = 2;
+    context.globalAlpha = 0.72;
+    context.setLineDash([18, 14]);
+    context.beginPath();
+    context.moveTo(snsSplitPostCanvas.width / 2, bandHeight);
+    context.lineTo(snsSplitPostCanvas.width / 2, bandHeight * 2);
+    context.moveTo(0, bandHeight + bandHeight / 2);
+    context.lineTo(snsSplitPostCanvas.width, bandHeight + bandHeight / 2);
     context.stroke();
     context.restore();
   }

@@ -1,0 +1,16 @@
+import type { Metadata } from "next";
+import { PortalShell } from "@/components/portal/PortalShell";
+import { SnsSplitImageMakerApp } from "@/components/sns-split-image-maker/SnsSplitImageMakerApp";
+
+export const metadata: Metadata = {
+  title: "SNS分割画像メーカー",
+  description: "SNS投稿向けの4分割画像を手動調整し、投稿順どおりにPNG/JPEGで書き出せるV Streamer Toolsのツールです。"
+};
+
+export default function SnsSplitImageMakerPage() {
+  return (
+    <PortalShell mode="workspace">
+      <SnsSplitImageMakerApp />
+    </PortalShell>
+  );
+}

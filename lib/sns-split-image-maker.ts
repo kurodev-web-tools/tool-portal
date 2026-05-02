@@ -279,8 +279,10 @@ const drawBaseComposite = async (
   }
 
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = options.forceJpegBackground ? "#081117" : "#0f1921";
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  if (options.forceJpegBackground) {
+    context.fillStyle = "#081117";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
 
   const base = draft.images.find((image) => image.id === "base");
   if (base?.src) {
@@ -365,6 +367,58 @@ export const drawSnsSplitTile = async (
     includeGuides: options.includeGuides,
     forceJpegBackground: options.forceJpegBackground
   });
+};
+
+export const drawSnsSplitMainTile = async (
+  canvas: HTMLCanvasElement,
+  draft: Pick<SnsSplitDraft, "images" | "config">,
+  tile: SnsSplitTile,
+  options: { includeGuides?: boolean; forceJpegBackground?: boolean } = {}
+) => {
+  canvas.width = snsSplitPostCanvas.width;
+  canvas.height = snsSplitPostCanvas.width * 9 / 16;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Canvas 2D context is not available.");
+  }
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = options.forceJpegBackground ? "#081117" : "#0f1921";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const scratch = document.createElement("canvas");
+  await drawBaseComposite(scratch, draft, {
+    forceJpegBackground: options.forceJpegBackground
+  });
+
+  const postAdjustment = getSnsSplitPostAdjustment(draft.config, tile.index);
+  const mainScale = postAdjustment.scale / 100;
+  const mainWidth = canvas.width * mainScale;
+  const mainHeight = canvas.height * mainScale;
+  const mainX = (canvas.width - mainWidth) / 2 + postAdjustment.offsetX;
+  const mainY = (canvas.height - mainHeight) / 2 + postAdjustment.offsetY;
+
+  context.save();
+  context.beginPath();
+  context.rect(0, 0, canvas.width, canvas.height);
+  context.clip();
+  context.drawImage(scratch, tile.sx, tile.sy, tile.sw, tile.sh, mainX, mainY, mainWidth, mainHeight);
+  context.restore();
+
+  if (options.includeGuides) {
+    context.save();
+    context.strokeStyle = draft.config.seamColor;
+    context.lineWidth = 2;
+    context.globalAlpha = 0.72;
+    context.setLineDash([18, 14]);
+    context.beginPath();
+    context.moveTo(canvas.width / 2, 0);
+    context.lineTo(canvas.width / 2, canvas.height);
+    context.moveTo(0, canvas.height / 2);
+    context.lineTo(canvas.width, canvas.height / 2);
+    context.stroke();
+    context.restore();
+  }
 };
 
 const drawSnsSplitPostImage = async (

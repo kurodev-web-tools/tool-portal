@@ -8,6 +8,7 @@ import {
   defaultSnsSplitConfig,
   defaultSnsSplitPostAdjustment,
   drawSnsSplitComposite,
+  drawSnsSplitMainTile,
   drawSnsSplitTile,
   getSnsSplitPostAdjustment,
   getRequiredSlotCount,
@@ -26,8 +27,8 @@ import {
 
 type ToastTone = "info" | "success" | "warning" | "error";
 type ToastState = { tone: ToastTone; message: string } | null;
-type MobilePanel = "input" | "settings" | "export";
-type PreviewMode = "grid" | "single" | "post";
+type MobileView = "preview" | "edit";
+type PreviewMode = "edit" | "grid" | "post";
 type DragState = {
   pointerId: number;
   startClientX: number;
@@ -48,14 +49,9 @@ const modeOptions: { id: SnsSplitMode; label: string; note: string }[] = [
   { id: "concatenate", label: "1+8連結", note: "投稿ごとに上部/下部の追加画像でメイン分割を挟みます" },
   { id: "replace", label: "1+4差し替え", note: "各投稿のフレーム中央にメイン分割を差し込みます" }
 ];
-const mobilePanels: { id: MobilePanel; label: string }[] = [
-  { id: "input", label: "素材" },
-  { id: "settings", label: "調整" },
-  { id: "export", label: "出力" }
-];
 const previewModes: { id: PreviewMode; label: string }[] = [
+  { id: "edit", label: "編集" },
   { id: "grid", label: "全体" },
-  { id: "single", label: "個別" },
   { id: "post", label: "投稿時" }
 ];
 const allowedImageMimeTypes = new Set(["image/png", "image/jpeg"]);
@@ -99,11 +95,10 @@ export function SnsSplitImageMakerApp() {
   const [draft, setDraft] = useState<SnsSplitDraft>(() => createSnsSplitDraft());
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
-  const [mobilePanel, setMobilePanel] = useState<MobilePanel>("input");
+  const [mobileView, setMobileView] = useState<MobileView>("preview");
   const [selectedPost, setSelectedPost] = useState<SnsSplitPostIndex>(1);
-  const [previewMode, setPreviewMode] = useState<PreviewMode>("grid");
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("edit");
   const editorCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const singlePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const postPreviewCanvasRefs = useRef<(HTMLCanvasElement | null)[]>([]);
   const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const exportCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -181,13 +176,10 @@ export function SnsSplitImageMakerApp() {
       if (editorCanvasRef.current) {
         await drawSnsSplitTile(editorCanvasRef.current, snapshot, selectedTile, { includeGuides: snapshot.config.showSeam || snapshot.config.showGrid });
       }
-      if (singlePreviewCanvasRef.current) {
-        await drawSnsSplitTile(singlePreviewCanvasRef.current, snapshot, selectedTile, { includeGuides: snapshot.config.showSeam || snapshot.config.showGrid });
-      }
       await Promise.all(
         tiles.map((tile, index) => {
           const canvas = postPreviewCanvasRefs.current[index];
-          return canvas ? drawSnsSplitTile(canvas, snapshot, tile, { includeGuides: snapshot.config.showSeam || snapshot.config.showGrid }) : Promise.resolve();
+          return canvas ? drawSnsSplitMainTile(canvas, snapshot, tile, { includeGuides: snapshot.config.showSeam || snapshot.config.showGrid }) : Promise.resolve();
         })
       );
       if (compositeCanvasRef.current) {
@@ -430,7 +422,7 @@ export function SnsSplitImageMakerApp() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-background/72 text-foreground scrollbar-accent">
+    <div className="h-full overflow-y-auto bg-background/72 pb-20 text-foreground scrollbar-accent lg:pb-0">
       <div className="mx-auto flex min-h-full w-full max-w-[1640px] flex-col gap-4 px-4 py-4 lg:px-5 xl:px-8">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
           <div className="min-w-0">
@@ -444,7 +436,7 @@ export function SnsSplitImageMakerApp() {
             <button type="button" onClick={saveDraft} className="flat-control hidden px-4 py-2 text-xs font-bold sm:inline-flex">
               下書き保存
             </button>
-            <button type="button" onClick={exportTiles} className="rounded-base bg-primary px-4 py-2 text-sm font-black text-white shadow-panel disabled:cursor-not-allowed disabled:opacity-55" disabled={!canExport}>
+            <button type="button" onClick={exportTiles} className="hidden rounded-base bg-primary px-4 py-2 text-sm font-black text-white shadow-panel disabled:cursor-not-allowed disabled:opacity-55 sm:inline-flex" disabled={!canExport}>
               画像を保存
             </button>
           </div>
@@ -476,15 +468,32 @@ export function SnsSplitImageMakerApp() {
               <option>16:27</option>
             </select>
           </label>
-          <div className="ml-auto hidden items-center gap-2 rounded-base border border-border bg-surface px-3 py-2 text-xs text-muted lg:flex">
-            <span className="font-bold text-primary-strong">投稿順</span>
-            <span>1 → 2 → 3 → 4</span>
-          </div>
         </section>
 
-        <main className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,43%)] xl:grid-cols-[minmax(0,1fr)_minmax(440px,45%)]">
-          <section className="panel flex min-h-[560px] flex-col gap-4 overflow-hidden p-4 shadow-none">
-            <SectionTitle index="1" title={`投稿${selectedPost} 編集プレビュー`} description="中央のメイン分割画像はPCのマウス操作でドラッグ移動できます。中心線に近づくと吸着します。" />
+        <main className="grid flex-1 gap-4 lg:min-h-[760px] lg:grid-cols-[minmax(0,1fr)_minmax(360px,43%)] xl:min-h-[820px] xl:grid-cols-[minmax(0,1fr)_minmax(440px,45%)]">
+          <section className={["panel min-h-[560px] flex-col gap-4 overflow-hidden p-4 shadow-none lg:flex lg:min-h-[760px] xl:min-h-[820px]", mobileView === "preview" ? "flex" : "hidden"].join(" ")}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <SectionTitle title="プレビュー" description="編集、4枚全体、投稿時のメイン分割を切り替えて確認します。" />
+              <div className="flex items-center gap-2 rounded-base border border-border bg-surface px-3 py-2 text-xs text-muted">
+                <span className="font-bold text-primary-strong">投稿順</span>
+                <span>1 → 2 → 3 → 4</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 overflow-hidden rounded-base border border-border bg-surface">
+              {previewModes.map((mode) => (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => setPreviewMode(mode.id)}
+                  className={[
+                    "min-h-10 px-2 text-xs font-black",
+                    previewMode === mode.id ? "bg-primary text-white" : "text-muted hover:bg-surface-muted"
+                  ].join(" ")}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               {tiles.map((tile) => (
                 <button
@@ -500,18 +509,56 @@ export function SnsSplitImageMakerApp() {
                 </button>
               ))}
             </div>
-            <div className="min-h-0 flex-1 overflow-auto rounded-base border border-primary/40 bg-surface-muted p-3 scrollbar-accent">
-              <div className="mx-auto w-full max-w-[520px]">
-                <canvas
-                  ref={editorCanvasRef}
-                  className="aspect-[16/27] w-full cursor-grab rounded-base bg-background object-contain active:cursor-grabbing"
-                  aria-label={`投稿${selectedPost}の編集プレビュー`}
-                  onPointerDown={handleEditorPointerDown}
-                  onPointerMove={handleEditorPointerMove}
-                  onPointerUp={handleEditorPointerUp}
-                  onPointerCancel={handleEditorPointerUp}
-                />
-              </div>
+            <div className="min-h-[320px] flex-1 overflow-hidden rounded-base border border-primary/40 bg-surface-muted p-3 lg:min-h-[560px] xl:min-h-[640px]">
+              {previewMode === "edit" ? (
+                <div className="mx-auto flex h-full min-h-0 w-full max-w-[520px] flex-col">
+                  <p className="mb-2 shrink-0 text-xs leading-5 text-muted">投稿{selectedPost}を編集中です。中央のメイン分割画像はPCのマウス操作でドラッグ移動できます。中心線に近づくと吸着します。</p>
+                  <div className="flex min-h-0 flex-1 justify-center">
+                    <canvas
+                      ref={editorCanvasRef}
+                      className="h-full w-auto max-w-full cursor-grab rounded-base bg-background object-contain active:cursor-grabbing"
+                      aria-label={`投稿${selectedPost}の編集プレビュー`}
+                      onPointerDown={handleEditorPointerDown}
+                      onPointerMove={handleEditorPointerMove}
+                      onPointerUp={handleEditorPointerUp}
+                      onPointerCancel={handleEditorPointerUp}
+                    />
+                  </div>
+                </div>
+              ) : null}
+              {previewMode === "grid" ? (
+                <div className="mx-auto flex h-full min-h-0 w-full max-w-[720px] justify-center">
+                  <canvas ref={compositeCanvasRef} className="h-full w-auto max-w-full rounded-base bg-background object-contain" aria-label="4枚投稿の並び確認" />
+                </div>
+              ) : null}
+              {previewMode === "post" ? (
+                <div className="m-auto grid w-full overflow-hidden rounded-base border border-primary/40 sm:grid-cols-2">
+                  {tiles.map((tile, index) => (
+                    <button
+                      key={tile.index}
+                      type="button"
+                      onClick={() => setSelectedPost(tile.index)}
+                      className={[
+                        "relative flex aspect-video items-center justify-center overflow-hidden border-primary/35 bg-transparent",
+                        index % 2 === 0 ? "sm:border-r" : "",
+                        index < 2 ? "border-b" : "",
+                        selectedPost === tile.index ? "outline outline-2 outline-primary outline-offset-[-2px]" : ""
+                      ].join(" ")}
+                    >
+                      <span className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full bg-primary/80 text-xs font-black text-white">
+                        {tile.index}
+                      </span>
+                      <canvas
+                        ref={(element) => {
+                          postPreviewCanvasRefs.current[index] = element;
+                        }}
+                        className="aspect-video w-full max-h-full object-contain"
+                        aria-label={`投稿${tile.index}のメイン分割プレビュー`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-base border border-border bg-surface-muted/70 px-3 py-3 text-xs text-muted">
               <span>枠線は目安です。実際の投稿画像には含まれません。</span>
@@ -522,32 +569,14 @@ export function SnsSplitImageMakerApp() {
             </div>
           </section>
 
-          <aside className="flex flex-col gap-3">
-            <div className="lg:hidden">
-              <div className="grid grid-cols-3 overflow-hidden rounded-base border border-border bg-surface">
-                {mobilePanels.map((panel) => (
-                  <button
-                    key={panel.id}
-                    type="button"
-                    onClick={() => setMobilePanel(panel.id)}
-                    className={[
-                      "min-h-10 text-sm font-black",
-                      mobilePanel === panel.id ? "bg-primary text-white" : "text-muted"
-                    ].join(" ")}
-                  >
-                    {panel.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <ControlSection className={mobilePanel === "input" ? "" : "hidden lg:block"}>
-              <SectionTitle index="2" title="入力エリア" />
-              <div className="grid gap-3 xl:grid-cols-[1fr_1.45fr]">
+          <aside className={["flex-col gap-3 lg:sticky lg:top-4 lg:flex lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1 lg:scrollbar-accent", mobileView === "edit" ? "flex" : "hidden"].join(" ")}>
+            <ControlSection>
+              <SectionTitle index="1" title="入力エリア" />
+              <div className="grid gap-3">
                 {baseImage ? <ImagePicker image={baseImage} onChange={handleFileChange} onDropFile={handleImageFile} onRemove={setImageSource} prominent /> : null}
                 <div className="rounded-base border border-border bg-surface-muted/60 p-3">
                   <p className="text-sm font-black text-foreground">追加画像スロット（{draft.mode === "concatenate" ? "投稿別の上部/下部" : "投稿別フレーム"}）</p>
-                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {visibleSlots.map((image, index) => (
                       <ImagePicker
                         key={image.id}
@@ -571,71 +600,9 @@ export function SnsSplitImageMakerApp() {
             </ControlSection>
 
             <ControlSection>
-              <SectionTitle index="3" title="投稿プレビュー" description="全体表示、選択中の個別表示、投稿時イメージを切り替えて確認します" />
-              <div className="mt-3 grid grid-cols-3 overflow-hidden rounded-base border border-border bg-surface">
-                {previewModes.map((mode) => (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    onClick={() => setPreviewMode(mode.id)}
-                    className={[
-                      "min-h-9 px-2 text-xs font-black",
-                      previewMode === mode.id ? "bg-primary text-white" : "text-muted hover:bg-surface-muted"
-                    ].join(" ")}
-                  >
-                    {mode.label}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-3 overflow-hidden rounded-base border border-primary/40 bg-surface-muted">
-                {previewMode === "grid" ? (
-                  <canvas ref={compositeCanvasRef} className="aspect-[16/27] w-full" aria-label="4枚投稿の並び確認" />
-                ) : null}
-                {previewMode === "single" ? (
-                  <canvas ref={singlePreviewCanvasRef} className="aspect-[16/27] w-full" aria-label={`投稿${selectedPost}の個別プレビュー`} />
-                ) : null}
-                {previewMode === "post" ? (
-                  <div className="grid grid-cols-2 gap-2 p-2">
-                    {tiles.map((tile, index) => (
-                      <button
-                        key={tile.index}
-                        type="button"
-                        onClick={() => setSelectedPost(tile.index)}
-                        className={[
-                          "relative overflow-hidden rounded-base border bg-background",
-                          selectedPost === tile.index ? "border-primary" : "border-border"
-                        ].join(" ")}
-                      >
-                        <span className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full bg-primary/80 text-xs font-black text-white">
-                          {tile.index}
-                        </span>
-                        <canvas
-                          ref={(element) => {
-                            postPreviewCanvasRefs.current[index] = element;
-                          }}
-                          className="aspect-[16/27] w-full"
-                          aria-label={`投稿${tile.index}の投稿時イメージ`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </ControlSection>
-
-            <ControlSection className={mobilePanel === "settings" ? "" : "hidden lg:block"}>
-              <SectionTitle index="4" title="分割・合成設定" />
-              <div className="grid gap-3 xl:grid-cols-2">
-                <RangeControl label="メイン分割 縦位置（splitY）" value={draft.config.splitY} min={10} max={90} unit="%" onChange={(value) => updateConfig({ splitY: value })} />
-                <RangeControl label="メイン分割 横位置（splitX）" value={draft.config.splitX} min={10} max={90} unit="%" onChange={(value) => updateConfig({ splitX: value })} />
-                <RangeControl label="シーム補正" value={draft.config.seamFix} min={-80} max={80} unit="px" onChange={(value) => updateConfig({ seamFix: value })} />
-                <RangeControl label="境界線の太さ" value={draft.config.seamWidth} min={0} max={32} unit="px" onChange={(value) => updateConfig({ seamWidth: value })} />
-                <RangeControl label="Xオフセット" value={draft.config.offsetX} min={-240} max={240} unit="px" onChange={(value) => updateConfig({ offsetX: value })} />
-                <RangeControl label="Yオフセット" value={draft.config.offsetY} min={-240} max={240} unit="px" onChange={(value) => updateConfig({ offsetY: value })} />
-                <div className="xl:col-span-2">
-                  <RangeControl label="全体スケール" value={draft.config.scale} min={50} max={180} unit="%" onChange={(value) => updateConfig({ scale: value })} />
-                </div>
-                <div className="xl:col-span-2">
+              <SectionTitle index="2" title="分割・合成設定" />
+              <div className="mt-3 space-y-3">
+                <div>
                   <p className="mb-2 text-xs font-black text-primary-strong">投稿{selectedPost}の中央メイン調整</p>
                   <div className="grid gap-3 xl:grid-cols-3">
                     <RangeControl label="投稿別 X" value={selectedAdjustment.offsetX} min={-480} max={480} unit="px" onChange={(value) => updatePostAdjustment(selectedPost, { offsetX: value })} />
@@ -643,42 +610,61 @@ export function SnsSplitImageMakerApp() {
                     <RangeControl label="投稿別 拡大率" value={selectedAdjustment.scale} min={50} max={180} unit="%" onChange={(value) => updatePostAdjustment(selectedPost, { scale: value })} />
                   </div>
                 </div>
-                <label className="flex items-center gap-3 rounded-base border border-border bg-surface-muted/60 px-3 py-2 text-sm font-bold">
-                  色
-                  <input type="color" value={draft.config.seamColor} onChange={(event) => updateConfig({ seamColor: event.target.value })} className="h-8 w-10 rounded border border-border bg-surface" />
-                  <span className="font-mono text-xs text-muted">{draft.config.seamColor.toUpperCase()}</span>
-                </label>
-                <button type="button" onClick={resetConfig} className="flat-control min-h-11 px-3 py-2 font-bold">
-                  全体リセット
-                </button>
-                <button type="button" onClick={resetSelectedPostAdjustment} className="flat-control min-h-11 px-3 py-2 font-bold">
+                <button type="button" onClick={resetSelectedPostAdjustment} className="flat-control min-h-11 w-full px-3 py-2 font-bold">
                   投稿{selectedPost}リセット
                 </button>
+                <details className="rounded-base border border-border bg-surface-muted/50">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-black text-foreground marker:hidden">
+                    <span>基本分割調整</span>
+                    <span className="text-xs font-bold text-muted">開く</span>
+                  </summary>
+                  <div className="grid gap-3 border-t border-border px-3 pb-3 pt-3 xl:grid-cols-2">
+                    <RangeControl label="メイン分割 縦位置（splitY）" value={draft.config.splitY} min={10} max={90} unit="%" onChange={(value) => updateConfig({ splitY: value })} />
+                    <RangeControl label="メイン分割 横位置（splitX）" value={draft.config.splitX} min={10} max={90} unit="%" onChange={(value) => updateConfig({ splitX: value })} />
+                    <RangeControl label="シーム補正" value={draft.config.seamFix} min={-80} max={80} unit="px" onChange={(value) => updateConfig({ seamFix: value })} />
+                    <RangeControl label="境界線の太さ" value={draft.config.seamWidth} min={0} max={32} unit="px" onChange={(value) => updateConfig({ seamWidth: value })} />
+                    <RangeControl label="Xオフセット" value={draft.config.offsetX} min={-240} max={240} unit="px" onChange={(value) => updateConfig({ offsetX: value })} />
+                    <RangeControl label="Yオフセット" value={draft.config.offsetY} min={-240} max={240} unit="px" onChange={(value) => updateConfig({ offsetY: value })} />
+                    <div className="xl:col-span-2">
+                      <RangeControl label="全体スケール" value={draft.config.scale} min={50} max={180} unit="%" onChange={(value) => updateConfig({ scale: value })} />
+                    </div>
+                    <label className="flex items-center gap-3 rounded-base border border-border bg-surface-muted/60 px-3 py-2 text-sm font-bold">
+                      色
+                      <input type="color" value={draft.config.seamColor} onChange={(event) => updateConfig({ seamColor: event.target.value })} className="h-8 w-10 rounded border border-border bg-surface" />
+                      <span className="font-mono text-xs text-muted">{draft.config.seamColor.toUpperCase()}</span>
+                    </label>
+                    <button type="button" onClick={resetConfig} className="flat-control min-h-11 px-3 py-2 font-bold">
+                      全体リセット
+                    </button>
+                  </div>
+                </details>
               </div>
             </ControlSection>
 
-            <ControlSection className={mobilePanel === "export" ? "" : "hidden lg:block"}>
-              <SectionTitle index="5" title="エクスポート設定" />
-              <div className="grid gap-3 sm:grid-cols-[auto_1fr] xl:grid-cols-[auto_1fr_1.1fr]">
-                <div>
-                  <p className="mb-2 text-xs font-bold text-muted">出力形式</p>
-                  <div className="flex overflow-hidden rounded-base border border-border bg-surface">
-                    {(["png", "jpeg"] as SnsSplitExportFormat[]).map((format) => (
-                      <button
-                        key={format}
-                        type="button"
-                        onClick={() => updateExport({ format })}
-                        className={[
-                          "min-h-10 px-4 text-sm font-black uppercase",
-                          draft.exportSettings.format === format ? "bg-primary text-white" : "text-muted hover:bg-surface-muted"
-                        ].join(" ")}
-                      >
-                        {format}
-                      </button>
-                    ))}
+            <ControlSection>
+              <SectionTitle index="3" title="エクスポート設定" />
+              <div className="mt-3 space-y-3">
+                <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
+                  <div>
+                    <p className="mb-2 text-xs font-bold text-muted">出力形式</p>
+                    <div className="flex overflow-hidden rounded-base border border-border bg-surface">
+                      {(["png", "jpeg"] as SnsSplitExportFormat[]).map((format) => (
+                        <button
+                          key={format}
+                          type="button"
+                          onClick={() => updateExport({ format })}
+                          className={[
+                            "min-h-10 px-4 text-sm font-black uppercase",
+                            draft.exportSettings.format === format ? "bg-primary text-white" : "text-muted hover:bg-surface-muted"
+                          ].join(" ")}
+                        >
+                          {format}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                  <RangeControl label="画質" value={Math.round(draft.exportSettings.quality * 100)} min={50} max={100} unit="%" onChange={(value) => updateExport({ quality: value / 100 })} compact />
                 </div>
-                <RangeControl label="画質" value={Math.round(draft.exportSettings.quality * 100)} min={50} max={100} unit="%" onChange={(value) => updateExport({ quality: value / 100 })} compact />
                 <label className="block">
                   <span className="mb-2 block text-xs font-bold text-muted">ファイル名の形式</span>
                   <input
@@ -705,8 +691,34 @@ export function SnsSplitImageMakerApp() {
         </main>
       </div>
 
+      <nav className="fixed bottom-0 left-0 right-0 z-[90] grid grid-cols-[1fr_1fr_1.2fr] gap-2 border-t border-border bg-surface/96 px-3 py-3 shadow-panel backdrop-blur lg:hidden" aria-label="モバイル操作">
+        <button
+          type="button"
+          onClick={() => setMobileView("preview")}
+          className={[
+            "min-h-11 rounded-base border px-3 text-sm font-black",
+            mobileView === "preview" ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-background text-muted"
+          ].join(" ")}
+        >
+          プレビュー
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileView("edit")}
+          className={[
+            "min-h-11 rounded-base border px-3 text-sm font-black",
+            mobileView === "edit" ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-background text-muted"
+          ].join(" ")}
+        >
+          編集
+        </button>
+        <button type="button" onClick={exportTiles} disabled={!canExport} className="min-h-11 rounded-base bg-primary px-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-55">
+          保存
+        </button>
+      </nav>
+
       {toast ? (
-        <div className={["fixed bottom-4 left-4 right-4 z-[100] rounded-base border px-4 py-3 text-sm font-bold shadow-panel sm:left-auto sm:w-[360px]", toneClassName[toast.tone]].join(" ")}>
+        <div className={["fixed bottom-24 left-4 right-4 z-[100] rounded-base border px-4 py-3 text-sm font-bold shadow-panel sm:left-auto sm:w-[360px] lg:bottom-4", toneClassName[toast.tone]].join(" ")}>
           <div className="flex items-center justify-between gap-3">
             <span>{toast.message}</span>
             <button type="button" className="text-muted" onClick={() => setToast(null)} aria-label="通知を閉じる">
@@ -720,11 +732,11 @@ export function SnsSplitImageMakerApp() {
   );
 }
 
-function SectionTitle({ index, title, description }: { index: string; title: string; description?: string }) {
+function SectionTitle({ index, title, description }: { index?: string; title: string; description?: string }) {
   return (
     <div>
       <div className="flex items-center gap-2">
-        <span className="grid h-6 w-6 place-items-center rounded-full border border-primary text-xs font-black text-primary-strong">{index}</span>
+        {index ? <span className="grid h-6 w-6 place-items-center rounded-full border border-primary text-xs font-black text-primary-strong">{index}</span> : null}
         <h2 className="text-base font-black text-foreground">{title}</h2>
       </div>
       {description ? <p className="mt-1 text-xs leading-5 text-muted">{description}</p> : null}
@@ -755,13 +767,14 @@ function ImagePicker({
   onDropFile: (file: File, id: SnsSplitImageSource["id"]) => void;
   onRemove: (id: SnsSplitImageSource["id"], src: string | null) => void;
 }) {
+  const compactSlot = !prominent;
   return (
     <div className={prominent ? "rounded-base border border-border bg-surface-muted/60 p-3" : "min-w-0"}>
       {prominent ? <p className="mb-3 text-sm font-black text-foreground">分割用メイン画像（1枚）</p> : null}
       <label
         className={[
           "group relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-base border border-dashed border-border bg-surface text-center transition hover:border-primary",
-          prominent ? "min-h-36 px-3 py-5" : mode === "replace" ? "aspect-[16/27] p-2" : "aspect-video p-2"
+          prominent ? "min-h-36 px-3 py-5" : "aspect-video p-2"
         ].join(" ")}
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
@@ -774,7 +787,7 @@ function ImagePicker({
       >
         {index ? <span className="absolute left-2 top-2 text-xs font-bold text-muted">{index}</span> : null}
         {roleLabel ? (
-          <span className="absolute bottom-1 left-1 right-1 z-10 rounded bg-background/86 px-1 py-1 text-[10px] font-black leading-tight text-foreground">
+          <span className="absolute bottom-1 left-1 right-1 z-10 rounded bg-background/86 px-1 py-1 text-[9px] font-black leading-tight text-foreground">
             {roleLabel}
           </span>
         ) : null}
@@ -783,7 +796,7 @@ function ImagePicker({
         ) : (
           <>
             <span className="text-2xl text-muted">{prominent ? "⇩" : "▧"}</span>
-            <span className="mt-2 text-xs font-black text-foreground">{prominent ? "画像を選択" : "+"}</span>
+            <span className={["font-black text-foreground", compactSlot ? "mt-1 text-[10px]" : "mt-2 text-xs"].join(" ")}>{prominent ? "画像を選択" : "+"}</span>
             {prominent ? <span className="mt-1 text-xs text-muted">またはドラッグ&ドロップ</span> : null}
           </>
         )}

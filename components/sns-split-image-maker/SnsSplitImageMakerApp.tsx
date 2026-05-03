@@ -85,6 +85,73 @@ const snapPostOffset = (value: number) => {
   const rounded = clampPostOffset(value);
   return Math.abs(rounded) <= postAdjustmentSnapThreshold ? 0 : rounded;
 };
+const usesAdditionalModeLabels = (preset: SnsSplitPreset) => preset === "split-2" || preset === "split-3";
+const getPresetRatioLabel = (preset: SnsSplitPreset) => {
+  if (preset === "split-2") {
+    return "24:9";
+  }
+  if (preset === "split-3") {
+    return "24:9 / 8:13.5";
+  }
+  return "16:27";
+};
+const getPostOrderLabel = (preset: SnsSplitPreset) => {
+  if (preset === "split-2") {
+    return "1 → 2";
+  }
+  if (preset === "split-3") {
+    return "1 → 2 → 3";
+  }
+  return "1 → 2 → 3 → 4";
+};
+const getPreviewDescription = (preset: SnsSplitPreset) => {
+  if (preset === "split-2") {
+    return "編集、24:9完成画像、左右のメイン分割を切り替えて確認します。";
+  }
+  if (preset === "split-3") {
+    return "編集、上1枚+下2枚の完成画像、左大+右上下のメイン分割を切り替えて確認します。";
+  }
+  return "編集、4枚全体、投稿時のメイン分割を切り替えて確認します。";
+};
+const getSlotGroupLabel = (draft: SnsSplitDraft) => {
+  if (draft.preset === "split-2") {
+    if (draft.mode === "replace") {
+      return "投稿別フレーム";
+    }
+    return draft.config.joinType === "five" ? "投稿別の左右上下" : "投稿別の左右";
+  }
+  if (draft.preset === "split-3") {
+    return draft.mode === "replace" ? "画像別フレーム" : "画像別の左右/上下";
+  }
+  return draft.mode === "replace" ? "投稿別フレーム" : "投稿別の上部/下部";
+};
+const getSlotDescription = (draft: SnsSplitDraft) => {
+  if (draft.preset === "split-2") {
+    if (draft.mode === "replace") {
+      return "フレーム追加では、各24:9フレーム画像の中央8:9へメイン分割を差し込みます。";
+    }
+    return draft.config.joinType === "five"
+      ? "5連結では、各投稿を「左上下 / 中央メイン / 右上下」の24:9画像として作成します。"
+      : "3連結では、各投稿を「左追加 / 中央メイン / 右追加」の24:9画像として作成します。";
+  }
+  if (draft.preset === "split-3") {
+    return draft.mode === "replace"
+      ? "フレーム追加では、画像1は24:9、画像2/3は8:13.5のフレーム全面へ描画し、中央メイン領域を上書きします。"
+      : "個別追加では、画像1は左右8:9、画像2/3は上下8:4.5の追加画像でメイン分割を挟みます。";
+  }
+  return draft.mode === "concatenate"
+    ? "1+8連結では、各投稿を「追加画像（上）/ メイン分割 / 追加画像（下）」で作成します。"
+    : "1+4差し替えでは、各フレーム画像の中央1/3へメイン分割を差し込みます。";
+};
+const getFilePatternHint = (preset: SnsSplitPreset) => {
+  if (preset === "split-2") {
+    return "{n}: 1〜2、{nn}: 01〜02";
+  }
+  if (preset === "split-3") {
+    return "{n}: 1〜3、{nn}: 01〜03";
+  }
+  return "{n}: 1〜4、{nn}: 01〜04";
+};
 const getPresetFromLocation = (): SnsSplitPreset | null => {
   if (typeof window === "undefined") {
     return null;
@@ -135,9 +202,8 @@ export function SnsSplitImageMakerApp() {
   const canExport = imageStatus.baseReady;
   const selectedTile = tiles.find((tile) => tile.index === selectedPost) ?? tiles[0];
   const selectedAdjustment = getSnsSplitPostAdjustment(draft.config, selectedPost);
-  const activeModeOptions = draft.preset === "split-2" ? splitTwoModeOptions : modeOptions;
-  const splitTwoPostCount = 2;
-  const postCount = draft.preset === "split-2" ? splitTwoPostCount : 4;
+  const activeModeOptions = usesAdditionalModeLabels(draft.preset) ? splitTwoModeOptions : modeOptions;
+  const postCount = tiles.length;
   const exportButtonLabel = `画像を出力（${postCount}枚）`;
 
   useEffect(() => {
@@ -349,7 +415,7 @@ export function SnsSplitImageMakerApp() {
     setToast({
       tone: "info",
       message:
-        draft.preset === "split-2"
+        usesAdditionalModeLabels(draft.preset)
           ? `${mode === "concatenate" ? "個別追加" : "フレーム追加"}に切り替えました。`
           : mode === "concatenate"
             ? "1+8連結モードに切り替えました。"
@@ -420,7 +486,7 @@ export function SnsSplitImageMakerApp() {
       return;
     }
     const bandHeight = editorCanvasRef.current!.height / 3;
-    if (draft.preset === "split-2") {
+    if (draft.preset === "split-2" || (draft.preset === "split-3" && selectedPost === 1)) {
       const columnWidth = editorCanvasRef.current!.width / 3;
       if (point.x < columnWidth || point.x > columnWidth * 2) {
         return;
@@ -506,7 +572,7 @@ export function SnsSplitImageMakerApp() {
     }
   };
 
-  if (activePreset !== "split-2" && activePreset !== "split-4") {
+  if (activePreset !== "split-2" && activePreset !== "split-3" && activePreset !== "split-4") {
     return <SnsSplitPresetLanding hasStoredDraft={hasStoredDraft} storedPreset={draft.preset ?? defaultSnsSplitPreset} onOpenPreset={openPreset} />;
   }
 
@@ -536,7 +602,7 @@ export function SnsSplitImageMakerApp() {
 
         <section className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-black">{draft.preset === "split-2" ? "追加方式" : "モード"}</span>
+            <span className="text-sm font-black">{usesAdditionalModeLabels(draft.preset) ? "追加方式" : "モード"}</span>
             <div className="flex overflow-hidden rounded-base border border-border bg-surface">
               {activeModeOptions.map((mode) => (
                 <button
@@ -577,8 +643,8 @@ export function SnsSplitImageMakerApp() {
           ) : null}
           <label className="flex items-center gap-2 text-sm font-black">
             最終比率
-            <select className="flat-control h-10 px-4 font-bold" value={draft.preset === "split-2" ? "24:9" : draft.aspectRatio} disabled>
-              <option>{draft.preset === "split-2" ? "24:9" : "16:27"}</option>
+            <select className="flat-control h-10 px-4 font-bold" value={getPresetRatioLabel(draft.preset)} disabled>
+              <option>{getPresetRatioLabel(draft.preset)}</option>
             </select>
           </label>
         </section>
@@ -586,10 +652,10 @@ export function SnsSplitImageMakerApp() {
         <main className="grid flex-1 gap-4 lg:min-h-[760px] lg:grid-cols-[minmax(0,1fr)_minmax(360px,43%)] xl:min-h-[820px] xl:grid-cols-[minmax(0,1fr)_minmax(440px,45%)]">
           <section className={["panel min-h-[560px] flex-col gap-4 overflow-hidden p-4 shadow-none lg:flex lg:min-h-[760px] xl:min-h-[820px]", mobileView === "preview" ? "flex" : "hidden"].join(" ")}>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <SectionTitle title="プレビュー" description={draft.preset === "split-2" ? "編集、24:9完成画像、左右のメイン分割を切り替えて確認します。" : "編集、4枚全体、投稿時のメイン分割を切り替えて確認します。"} />
+              <SectionTitle title="プレビュー" description={getPreviewDescription(draft.preset)} />
               <div className="flex items-center gap-2 rounded-base border border-border bg-surface px-3 py-2 text-xs text-muted">
                 <span className="font-bold text-primary-strong">投稿順</span>
-                <span>{draft.preset === "split-2" ? "1 → 2" : "1 → 2 → 3 → 4"}</span>
+                <span>{getPostOrderLabel(draft.preset)}</span>
               </div>
             </div>
             <div className="grid grid-cols-3 overflow-hidden rounded-base border border-border bg-surface">
@@ -626,7 +692,7 @@ export function SnsSplitImageMakerApp() {
             ) : null}
             <div className="min-h-[320px] flex-1 overflow-hidden rounded-base border border-primary/40 bg-surface-muted p-3 lg:min-h-[560px] xl:min-h-[640px]">
               {previewMode === "edit" ? (
-                <div className={["mx-auto flex h-full min-h-0 w-full flex-col", draft.preset === "split-2" ? "max-w-[860px]" : "max-w-[520px]"].join(" ")}>
+                <div className={["mx-auto flex h-full min-h-0 w-full flex-col", draft.preset === "split-2" || (draft.preset === "split-3" && selectedPost === 1) ? "max-w-[860px]" : "max-w-[520px]"].join(" ")}>
                   <p className="mb-2 shrink-0 text-xs leading-5 text-muted">投稿{selectedPost}を編集中です。中央のメイン分割画像はPCのマウス操作でドラッグ移動できます。中心線に近づくと吸着します。</p>
                   <div className="flex min-h-0 flex-1 justify-center">
                     <canvas
@@ -642,38 +708,68 @@ export function SnsSplitImageMakerApp() {
                 </div>
               ) : null}
               {previewMode === "grid" ? (
-                <div className={["mx-auto flex h-full min-h-0 w-full justify-center", draft.preset === "split-2" ? "max-w-[900px]" : "max-w-[720px]"].join(" ")}>
-                  <canvas ref={compositeCanvasRef} className="h-full w-auto max-w-full rounded-base bg-background object-contain" aria-label={draft.preset === "split-2" ? "2枚投稿の並び確認" : "4枚投稿の並び確認"} />
+                <div className={["mx-auto flex h-full min-h-0 w-full justify-center", draft.preset === "split-2" ? "max-w-[900px]" : draft.preset === "split-3" ? "max-w-[760px]" : "max-w-[720px]"].join(" ")}>
+                  <canvas ref={compositeCanvasRef} className="h-full w-auto max-w-full rounded-base bg-background object-contain" aria-label={`${postCount}枚投稿の並び確認`} />
                 </div>
               ) : null}
               {previewMode === "post" ? (
-                <div className="m-auto grid w-full overflow-hidden rounded-base border border-primary/40 sm:grid-cols-2">
-                  {tiles.map((tile, index) => (
-                    <button
-                      key={tile.index}
-                      type="button"
-                      onClick={() => setSelectedPost(tile.index)}
-                      className={[
-                        "relative flex items-center justify-center overflow-hidden border-primary/35 bg-transparent",
-                        draft.preset === "split-2" ? "aspect-[8/9]" : "aspect-video",
-                        index % 2 === 0 ? "sm:border-r" : "",
-                        index < 2 ? "border-b" : "",
-                        selectedPost === tile.index ? "outline outline-2 outline-primary outline-offset-[-2px]" : ""
-                      ].join(" ")}
-                    >
-                      <span className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full bg-primary/80 text-xs font-black text-white">
-                        {tile.index}
-                      </span>
-                      <canvas
-                        ref={(element) => {
-                          postPreviewCanvasRefs.current[index] = element;
-                        }}
-                        className="aspect-video w-full max-h-full object-contain"
-                        aria-label={`投稿${tile.index}のメイン分割プレビュー`}
-                      />
-                    </button>
-                  ))}
-                </div>
+                draft.preset === "split-3" ? (
+                  <div className="m-auto grid aspect-video w-full max-w-[860px] overflow-hidden rounded-base border border-primary/40" style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr" }}>
+                    {tiles.map((tile, index) => (
+                      <button
+                        key={tile.index}
+                        type="button"
+                        onClick={() => setSelectedPost(tile.index)}
+                        className={[
+                          "relative flex items-center justify-center overflow-hidden border-primary/35 bg-transparent",
+                          tile.index === 1 ? "border-r" : "",
+                          tile.index === 2 ? "border-b" : "",
+                          selectedPost === tile.index ? "outline outline-2 outline-primary outline-offset-[-2px]" : ""
+                        ].join(" ")}
+                        style={tile.index === 1 ? { gridRow: "1 / span 2" } : undefined}
+                      >
+                        <span className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full bg-primary/80 text-xs font-black text-white">
+                          {tile.index}
+                        </span>
+                        <canvas
+                          ref={(element) => {
+                            postPreviewCanvasRefs.current[index] = element;
+                          }}
+                          className="h-full w-full object-cover"
+                          aria-label={`画像${tile.index}のメイン分割プレビュー`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="m-auto grid w-full overflow-hidden rounded-base border border-primary/40 sm:grid-cols-2">
+                    {tiles.map((tile, index) => (
+                      <button
+                        key={tile.index}
+                        type="button"
+                        onClick={() => setSelectedPost(tile.index)}
+                        className={[
+                          "relative flex items-center justify-center overflow-hidden border-primary/35 bg-transparent",
+                          draft.preset === "split-2" ? "aspect-[8/9]" : "aspect-video",
+                          index % 2 === 0 ? "sm:border-r" : "",
+                          index < 2 ? "border-b" : "",
+                          selectedPost === tile.index ? "outline outline-2 outline-primary outline-offset-[-2px]" : ""
+                        ].join(" ")}
+                      >
+                        <span className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full bg-primary/80 text-xs font-black text-white">
+                          {tile.index}
+                        </span>
+                        <canvas
+                          ref={(element) => {
+                            postPreviewCanvasRefs.current[index] = element;
+                          }}
+                          className="aspect-video w-full max-h-full object-contain"
+                          aria-label={`投稿${tile.index}のメイン分割プレビュー`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )
               ) : null}
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-base border border-border bg-surface-muted/70 px-3 py-3 text-xs text-muted">
@@ -691,19 +787,7 @@ export function SnsSplitImageMakerApp() {
               <div className="grid gap-3">
                 {baseImage ? <ImagePicker image={baseImage} onChange={handleFileChange} onDropFile={handleImageFile} onRemove={setImageSource} prominent /> : null}
                 <div className="rounded-base border border-border bg-surface-muted/60 p-3">
-                      <p className="text-sm font-black text-foreground">
-                        追加画像スロット（
-                        {draft.preset === "split-2"
-                          ? draft.mode === "concatenate"
-                            ? draft.config.joinType === "five"
-                              ? "投稿別の左右上下"
-                              : "投稿別の左右"
-                            : "投稿別フレーム"
-                          : draft.mode === "concatenate"
-                            ? "投稿別の上部/下部"
-                            : "投稿別フレーム"}
-                        ）
-                      </p>
+                    <p className="text-sm font-black text-foreground">追加画像スロット（{getSlotGroupLabel(draft)}）</p>
                   <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {visibleSlots.map((image, index) => (
                       <ImagePicker
@@ -719,15 +803,7 @@ export function SnsSplitImageMakerApp() {
                     ))}
                   </div>
                   <p className="mt-3 text-xs text-muted">
-                    {draft.preset === "split-2"
-                      ? draft.mode === "concatenate"
-                        ? draft.config.joinType === "five"
-                          ? "5連結では、各投稿を「左上下 / 中央メイン / 右上下」の24:9画像として作成します。"
-                          : "3連結では、各投稿を「左追加 / 中央メイン / 右追加」の24:9画像として作成します。"
-                        : "フレーム追加では、各24:9フレーム画像の中央8:9へメイン分割を差し込みます。"
-                      : draft.mode === "concatenate"
-                        ? "1+8連結では、各投稿を「追加画像（上）/ メイン分割 / 追加画像（下）」で作成します。"
-                        : "1+4差し替えでは、各フレーム画像の中央1/3へメイン分割を差し込みます。"}
+                    {getSlotDescription(draft)}
                   </p>
                   <p className="mt-2 text-xs text-muted">画像は16:9推奨です。異なる比率の画像は中央基準でトリミングされます。</p>
                   <p className="mt-1 text-xs text-muted">画像処理と復元用保存はブラウザ内で完結し、外部へ送信しません。</p>
@@ -808,7 +884,7 @@ export function SnsSplitImageMakerApp() {
                     onChange={(event) => updateExport({ filePattern: event.target.value })}
                     className="h-11 w-full rounded-base border border-border bg-surface px-3 text-sm font-bold text-foreground"
                   />
-                  <span className="mt-1 block text-xs text-muted">{draft.preset === "split-2" ? "{n}: 1〜2、{nn}: 01〜02" : "{n}: 1〜4、{nn}: 01〜04"}</span>
+                  <span className="mt-1 block text-xs text-muted">{getFilePatternHint(draft.preset)}</span>
                 </label>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">

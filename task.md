@@ -706,6 +706,51 @@
   - task.mdへ実装内容と検証結果を追記
   ```
 
+  - 2026-05-03実装結果:
+    - `codex/sns-split-2` ブランチ / `.worktrees/sns-split-2` で、PR #15 `codex/sns-preset-foundation` の上にstacked実装した
+    - `split-2` を編集可能プリセットにし、入口カードから `?preset=split-2` を開けるようにした
+    - `SnsSplitJoinType` と `config.joinType` を追加し、2分割の `3連結` / `5連結` を切り替えられるようにした
+    - 2分割の `個別追加` / `フレーム追加` を既存 `mode` に対応させ、slot数を以下で切り替えるようにした
+      - 3連結 + 個別追加: 4 slot
+      - 5連結 + 個別追加: 8 slot
+      - フレーム追加: 2 slot
+    - 2分割の完成出力を `24:9` x 2枚にし、中央 `8:9` にメイン画像の左右分割を差し込む描画を追加した
+    - 5連結では左右追加領域を上下2分割し、各追加画像を `8:4.5` 相当で描画するようにした
+    - 2分割の全体プレビューは `24:9` 完成画像2枚の縦並びにし、メイン分割プレビューは左右2枚の `8:9` 表示にした
+    - 2分割の出力順を `split_1` -> `split_2` にした
+    - 既存4分割の 1+8 / 1+4 表記、slot数、出力順 `split_1` -> `split_4` は維持した
+  - 2026-05-03検証:
+    - 実施: `npm run lint`（成功）
+    - 実施: `npx tsc --noEmit`（成功）
+    - 実施: `git diff --check`（空白エラーなし。CRLF警告のみ）
+    - 実施: `npm run build`（成功。`/tools/sns-split-image-maker` を含む6 routeがstatic prerender対象。既存のworktree lockfile root推定警告のみ）
+    - 実施: Chrome DevToolsで `http://localhost:3006/tools/sns-split-image-maker/` を確認
+      - 入口画面で2分割カードが利用可能になっていることを確認した
+      - `?preset=split-2` で追加方式 `個別追加` / `フレーム追加`、連結タイプ `3連結` / `5連結` が表示されることを確認した
+      - 3連結 + 個別追加で追加slotが4、5連結 + 個別追加で追加slotが8、フレーム追加で追加slotが2になることを確認した
+      - 5連結のslot labelが `投稿1 左上` / `投稿1 左下` / `投稿1 右上` / `投稿1 右下` / `投稿2 左上` / `投稿2 左下` / `投稿2 右上` / `投稿2 右下` になることを確認した
+      - 2分割の全体プレビューcanvasが `1920x1440`、出力canvasが `1920x720`、メイン分割プレビューcanvasが `640x720` x 2になることを確認した
+      - download clickをinstrumentし、2分割出力順が `split_1.png` -> `split_2.png` であることを確認した
+      - 既存split-4で `1+8連結` / `1+4差し替え`、追加slot `/8`、`画像を出力（4枚）`、出力順 `split_1.png` -> `split_4.png` を確認した
+      - 390 / 820 / 1024 / 1280 で入口画面、split-2編集画面、split-4編集画面に横スクロール破綻がないことを確認した
+      - console error / warn なしを確認した
+  - 2026-05-03目視確認前修正:
+    - `?preset=split-2` / `?preset=split-4` でSSRは入口画面、client初回renderは編集画面になり、hydration mismatch が発生していた
+    - 原因は `useState()` 初期化時に `window.location.search` を読むことで、server/clientの初回HTMLが分岐していたこと
+    - static exportを維持するため、初回renderは入口画面に揃え、mount後のeffectでquery presetを反映する形へ変更した
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
+    - 実施: Chrome DevToolsで `?preset=split-2` / `?preset=split-4` を直接開き、hydration errorが出ないことを確認した
+      - 補足: preset土台PR側の確認では既存の `/favicon.ico` 404 は出るが、hydration error / React error はなし
+  - 2026-05-03レビュー反映:
+    - `投稿時` タブのメイン分割プレビューで、各分割canvas内に個別ガイドを描いていたため、split-4では左上縦 / 右上縦 / 左下横 / 右下なし、split-2では左十字 / 右縦のように見えていた
+    - `投稿時` タブではcanvas内部ガイドを描かず、並べたタイル境界だけを分割線として見せるように変更した
+    - `編集` / `全体` プレビューのガイド表示は維持した
+    - 実施: Chrome DevToolsで split-2 / split-4 の `投稿時` タブを確認し、各メイン分割canvas中央のガイド色pixelが0であることを確認した
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
+  - 2026-05-03追加レビュー反映:
+    - 右パネル幅によって `投稿別 X` / `投稿別 Y` / `投稿別 拡大率` の3列表示でスライダーが潰れていたため、PC表示でも縦積みに変更した
+    - 実施: Chrome DevToolsで split-4 / split-2 の該当3項目が縦積みになり、横スクロールが発生しないことを確認した
+
 - 実装プロンプト3: 3分割対応
   ```text
   D:\V_streamer_tools で別ブランチを作成して作業してください。

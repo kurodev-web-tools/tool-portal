@@ -15,10 +15,10 @@ const presetCards: PresetCard[] = [
   {
     id: "split-2",
     title: "2分割",
-    status: "準備中",
+    status: "利用可能",
     description: "24:9の横長投稿を2枚作るためのプリセットです。",
-    details: ["3連結 / 5連結", "個別追加 / フレーム追加", "次PRで編集対応"],
-    available: false
+    details: ["3連結 / 5連結", "個別追加 / フレーム追加", "split_1 -> split_2"],
+    available: true
   },
   {
     id: "split-3",
@@ -55,7 +55,7 @@ export function SnsSplitPresetLanding({
             <p className="text-xs font-bold text-primary-strong">画像・デザイン</p>
             <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground lg:text-3xl">SNS分割画像メーカー</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-              投稿構成に合わせてプリセットを選択します。現在の編集対応は4分割のみで、既存の保存・出力仕様を維持しています。
+              投稿構成に合わせてプリセットを選択します。現在は2分割と4分割の編集に対応し、3分割は後続フェーズで追加します。
             </p>
           </div>
           {hasStoredDraft ? (

@@ -8,6 +8,25 @@
 - 当面は認証、サーバー保存、SNS API直接投稿、AI API依存、課金ロックを入れない
 - 直近はMVPツールを増やすより、既存3ツールを実務導線として仕上げる
 
+2026-05-03 handoff 実装メモ:
+
+- Schedule Calendar -> Thumbnail Editor / SNS分割画像メーカーの最小 handoff payload を `lib/tool-handoff.ts` に追加した
+- 方式は URL query に短い `handoff` token を載せ、本文は同一タブの `sessionStorage` 一時 payload として渡す
+- payload v1 は予定ID、タイトル、日付、開始/終了時刻、カテゴリ、プラットフォーム、告知文、ハッシュタグ、告知ステータスだけを持つ
+- 画像本体、認証、サーバー保存、SNS API投稿、AI API依存、課金ロックは入れていない
+- Thumbnail Editor は `stream_announce` プリセットの見出し / 時刻 / サブテキストへ初期反映する
+- Schedule Calendar から遷移した Thumbnail Editor では、プリセット変更 / キャンバスサイズ変更後も同じ予定テキストを再適用する
+- SNS分割画像メーカーは `preset=split-4` の編集画面を開き、告知文メモ表示とファイル名初期値へ反映する
+- payload なし、token 不一致、期限切れ、壊れた payload、対象ツール不一致は無視して通常起動する
+- 検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+- Browser確認:
+  - `out/` を `py -m http.server 3012` で配信し、`1359x927` の in-app browser で確認
+  - Schedule CalendarからThumbnail Editorへ遷移し、URL `handoff` token とサムネ初期テキスト反映を確認
+  - Thumbnail EditorでCalendar由来の遷移後にプリセットを変更しても、予定タイトルが引き継がれることを確認
+  - Schedule CalendarからSNS分割画像メーカーへ遷移し、`preset=split-4`、告知文メモ、ファイル名初期値反映を確認
+  - handoff token不一致のThumbnail Editor / SNS分割画像メーカーは通常起動し、console error / warnなし
+- 未実施: in-app browser側で viewport サイズ変更APIが使えないため、390 / 820 / 1024 / 1280 / 1366 の実画面幅別確認は未実施。既存レスポンシブ境界 class は変更していない
+
 ## 履歴参照
 
 - 2026-04までの完了済みタスクは `docs/archive/TASK_HISTORY_2026-04.md` を参照する
@@ -233,13 +252,15 @@
 
 ### ツール間連携の最小設計
 
-- [ ] 共通データモデルを先に設計する
+- [x] 共通データモデルを先に設計する
   - 日付、時刻、タイトル、カテゴリ、配信プラットフォーム、メモ、告知文を共通フィールドとして定義する
   - URL query、localStorage handoff、JSON export/import のどれで渡すかを決める
-- [ ] ツール間連携の最小導線を実装する
+- [x] ツール間連携の最小導線を実装する
   - 例: カレンダー予定からサムネ作成へ遷移
   - 例: サムネ画像をSNS分割画像メーカーのメイン画像として使う
   - 例: SNS分割画像メーカーの出力後に予定へ「告知画像作成済み」を戻す
+  - 今回は Schedule Calendar から Thumbnail Editor / SNS分割画像メーカーへのテキスト handoff のみ実装
+  - サムネ画像本体の SNS分割画像メーカー受け渡しと、Schedule Calendar への状態戻しは次PR候補
 
 ### 認証・サーバー保存導入前の設計タスク
 

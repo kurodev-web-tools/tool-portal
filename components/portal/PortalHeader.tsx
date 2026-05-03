@@ -20,7 +20,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
     }
 
     if (pathname.startsWith("/tools/thumbnail-editor")) {
-      return "サムネイルエディタ";
+      return "Thumbnail Editor";
     }
 
     if (pathname.startsWith("/tools/sns-split-image-maker")) {
@@ -56,7 +56,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
         tool.id === "schedule-calendar"
           ? "スケジュールカレンダー"
           : tool.id === "thumbnail-editor"
-            ? "サムネイルエディタ"
+            ? "Thumbnail Editor"
             : tool.id === "sns-split-image-maker"
               ? "SNS分割画像メーカー"
             : tool.name
@@ -73,7 +73,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
           <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
         </div>
         {showDesktopTitle ? <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span> : <span className="hidden lg:block" />}
-        <div className="hidden lg:block">
+        <div className={mode === "workspace" ? "hidden" : "hidden lg:block"}>
           <ThemeToggle />
         </div>
         <button

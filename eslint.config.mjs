@@ -5,6 +5,8 @@ const ignoredPaths = [
   ".worktrees/**",
   "out/**",
   "output/**",
+  "tmp/**",
+  "temp/**",
   "node_modules/**"
 ];
 

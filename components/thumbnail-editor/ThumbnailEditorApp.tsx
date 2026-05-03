@@ -194,8 +194,10 @@ export function ThumbnailEditorApp() {
   const [headerMenuOpen, setHeaderMenuOpen] = useState<"preset" | "canvas" | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
   const [sidePanelCollapsed, setSidePanelCollapsed] = useState(false);
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const mobilePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvasViewportRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const interactionRef = useRef<CanvasInteractionState | null>(null);
@@ -272,6 +274,41 @@ export function ThumbnailEditorApp() {
       showToast("error", "キャンバスの描画に失敗しました。");
     });
   }, [draft, showToast]);
+
+  useEffect(() => {
+    if (!mobilePreviewOpen) {
+      return;
+    }
+
+    const canvas = mobilePreviewCanvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    drawThumbnail(canvas, draft, { selectedLayerId: null, includeSelection: false }).catch(() => {
+      showToast("error", "全体プレビューの描画に失敗しました。");
+    });
+  }, [draft, mobilePreviewOpen, showToast]);
+
+  useEffect(() => {
+    if (!mobilePreviewOpen) {
+      return;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobilePreviewOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mobilePreviewOpen]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -793,13 +830,13 @@ export function ThumbnailEditorApp() {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
-      <header className="shrink-0 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur md:px-5 xl:px-6">
+      <header className="hidden shrink-0 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur min-[1024px]:block md:px-5 xl:px-6">
         <div className="flex flex-wrap items-center gap-3 min-[1024px]:flex-nowrap">
           <div className="hidden min-w-[11rem] flex-1 min-[1024px]:block">
             <p className="text-xs font-semibold text-primary-strong">画像・デザイン</p>
-            <h1 className="whitespace-nowrap text-lg font-black tracking-normal text-foreground xl:text-xl">サムネイルエディタ</h1>
+            <h1 className="whitespace-nowrap text-lg font-black tracking-normal text-foreground xl:text-xl">Thumbnail Editor</h1>
           </div>
-          <div className="grid w-full grid-cols-2 gap-3 min-[1024px]:w-auto min-[1024px]:min-w-[29rem] xl:min-w-[38rem] xl:flex xl:items-center">
+          <div className="grid w-full grid-cols-2 gap-3 min-[1024px]:w-auto min-[1024px]:min-w-[29rem] xl:min-w-[31rem] xl:flex xl:items-center">
             <label className="min-w-0 text-xs font-bold text-muted">
               プリセット
               <ListboxField
@@ -831,15 +868,15 @@ export function ThumbnailEditorApp() {
           </div>
           <div className="flex w-full flex-wrap items-center justify-between gap-2 min-[1024px]:w-auto min-[1024px]:justify-end">
             <ModeToggle editorMode={editorMode} onModeChange={setEditorMode} className="min-[1024px]:hidden" />
-            <div className="flex flex-wrap justify-end gap-2">
-              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft} aria-label="新規キャンバスを作成">
-                新規作成
+            <div className="flex flex-nowrap justify-end gap-2">
+              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft} aria-label="新規キャンバスを作成" title="新規キャンバスを作成">
+                新規
               </button>
-              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft} aria-label="下書きを保存">
-                下書き保存
+              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft} aria-label="下書きを保存" title="下書きを保存">
+                下書き
               </button>
-              <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し">
-                書き出し
+              <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
+                出力
               </button>
             </div>
           </div>
@@ -854,6 +891,52 @@ export function ThumbnailEditorApp() {
           ].join(" ")}
         >
           <main className="scrollbar-accent min-h-0 overflow-y-auto p-4 [scrollbar-gutter:stable] md:p-5 xl:p-6">
+            <section className="mb-4 grid gap-3 min-[1024px]:hidden">
+              <div className="grid grid-cols-2 gap-3">
+                <label className="min-w-0 text-xs font-bold text-muted">
+                  プリセット
+                  <ListboxField
+                    className="mt-1"
+                    isOpen={headerMenuOpen === "preset"}
+                    value={selectedPreset.name}
+                    onToggle={() => setHeaderMenuOpen((current) => (current === "preset" ? null : "preset"))}
+                    options={thumbnailPresets.map((preset) => ({
+                      id: preset.id,
+                      label: preset.name
+                    }))}
+                    onSelect={(id) => applyPreset(id as ThumbnailPresetId)}
+                  />
+                </label>
+                <label className="min-w-0 text-xs font-bold text-muted">
+                  キャンバスサイズ
+                  <ListboxField
+                    className="mt-1"
+                    isOpen={headerMenuOpen === "canvas"}
+                    value={thumbnailCanvasSizes[canvasSizeId].label}
+                    onToggle={() => setHeaderMenuOpen((current) => (current === "canvas" ? null : "canvas"))}
+                    options={Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
+                      id,
+                      label: size.label
+                    }))}
+                    onSelect={(id) => changeCanvasSize(id as ThumbnailCanvasSizeId)}
+                  />
+                </label>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <ModeToggle editorMode={editorMode} onModeChange={setEditorMode} />
+                <div className="flex flex-nowrap justify-end gap-2">
+                  <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft} aria-label="新規キャンバスを作成" title="新規キャンバスを作成">
+                    新規
+                  </button>
+                  <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft} aria-label="下書きを保存" title="下書きを保存">
+                    下書き
+                  </button>
+                  <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
+                    出力
+                  </button>
+                </div>
+              </div>
+            </section>
             <section className={["panel mx-auto p-3 md:p-4", sidePanelCollapsed ? "max-w-none" : "max-w-[76rem]"].join(" ")}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div>
@@ -870,6 +953,9 @@ export function ThumbnailEditorApp() {
                     {sidePanelCollapsed ? "パネル表示" : "パネル非表示"}
                   </button>
                   <div className="flex items-center gap-2 min-[1024px]:hidden">
+                    <button className="flat-control h-9 px-3 text-xs font-bold" type="button" onClick={() => setMobilePreviewOpen(true)} aria-label="サムネイル全体を確認">
+                      全体
+                    </button>
                     <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小" aria-label="キャンバスを縮小">
                       −
                     </button>
@@ -996,6 +1082,30 @@ export function ThumbnailEditorApp() {
           </button>
         ))}
       </nav>
+
+      {mobilePreviewOpen ? (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-background text-foreground min-[1024px]:hidden" role="dialog" aria-modal="true" aria-label="サムネイル全体プレビュー">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-surface/95 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-primary-strong">全体確認</p>
+              <h2 className="truncate text-base font-black text-foreground">{selectedPreset.name}</h2>
+            </div>
+            <button type="button" className="flat-control px-3 py-2 text-sm font-bold" onClick={() => setMobilePreviewOpen(false)} aria-label="全体プレビューを閉じる">
+              閉じる
+            </button>
+          </div>
+          <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
+            <canvas
+              ref={mobilePreviewCanvasRef}
+              className="aspect-video h-auto max-h-[calc(100vh-8rem)] w-full max-w-[min(100%,calc((100vh-8rem)*16/9))] rounded-base border border-border bg-[#081117] object-contain shadow-panel"
+              aria-label="サムネイル全体確認"
+            />
+          </div>
+          <p className="shrink-0 border-t border-border px-4 py-3 text-center text-xs leading-5 text-muted">
+            確認専用です。編集に戻るには閉じるを押してください。
+          </p>
+        </div>
+      ) : null}
 
       <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} aria-label="画像ファイルを選択" />
       {toast && (

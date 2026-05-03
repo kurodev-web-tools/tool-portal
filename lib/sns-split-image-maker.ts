@@ -1,4 +1,5 @@
 export type SnsSplitMode = "concatenate" | "replace";
+export type SnsSplitPreset = "split-2" | "split-3" | "split-4";
 export type SnsSplitAspectRatioId = "16:27";
 export type SnsSplitExportFormat = "png" | "jpeg";
 export type SnsSplitSlotId = `slot-${number}`;
@@ -38,6 +39,7 @@ export type SnsSplitExportSettings = {
 
 export type SnsSplitDraft = {
   version: 1;
+  preset: SnsSplitPreset;
   mode: SnsSplitMode;
   aspectRatio: SnsSplitAspectRatioId;
   images: SnsSplitImageSource[];
@@ -55,6 +57,7 @@ export type SnsSplitTile = {
 };
 
 export const snsSplitDraftStorageKey = "v-streamer-tools:sns-split-image-maker:draft:v1";
+export const defaultSnsSplitPreset: SnsSplitPreset = "split-4";
 export const snsSplitBaseCanvas = { width: 1280, height: 720 };
 export const snsSplitPostCanvas = { width: 1280, height: 2160 };
 export const snsSplitCanvas = snsSplitBaseCanvas;
@@ -103,6 +106,8 @@ const booleanValue = (value: unknown, fallback: boolean) => (typeof value === "b
 const safeString = (value: unknown, fallback: string, maxLength: number) =>
   typeof value === "string" ? value.slice(0, maxLength) : fallback;
 const isSafeImageSource = (src: string) => src.startsWith("data:image/png;") || src.startsWith("data:image/jpeg;");
+export const isSnsSplitPreset = (value: unknown): value is SnsSplitPreset =>
+  value === "split-2" || value === "split-3" || value === "split-4";
 
 const clonePostAdjustments = (): Record<SnsSplitPostIndex, SnsSplitPostAdjustment> => ({
   1: { ...defaultSnsSplitPostAdjustment },
@@ -134,8 +139,9 @@ export const createSnsSplitImages = (mode: SnsSplitMode = "concatenate"): SnsSpl
   }))
 ];
 
-export const createSnsSplitDraft = (mode: SnsSplitMode = "concatenate"): SnsSplitDraft => ({
+export const createSnsSplitDraft = (mode: SnsSplitMode = "concatenate", preset: SnsSplitPreset = defaultSnsSplitPreset): SnsSplitDraft => ({
   version: 1,
+  preset,
   mode,
   aspectRatio: "16:27",
   images: createSnsSplitImages(mode),
@@ -178,6 +184,7 @@ export const normalizeSnsSplitDraft = (value: unknown): SnsSplitDraft | null => 
   }
 
   const mode: SnsSplitMode = value.mode === "replace" ? "replace" : "concatenate";
+  const preset: SnsSplitPreset = isSnsSplitPreset(value.preset) ? value.preset : defaultSnsSplitPreset;
   const requiredSlots = getRequiredSlotCount(mode);
   const rawImages = Array.isArray(value.images) ? value.images : [];
   const imageMap = new Map<string, SnsSplitImageSource>();
@@ -193,7 +200,7 @@ export const normalizeSnsSplitDraft = (value: unknown): SnsSplitDraft | null => 
     });
   });
 
-  const fallback = createSnsSplitDraft(mode);
+  const fallback = createSnsSplitDraft(mode, preset);
   const images = fallback.images.map((image) => {
     const saved = imageMap.get(image.id);
     return saved ? { ...image, src: saved.src } : image;
@@ -203,6 +210,7 @@ export const normalizeSnsSplitDraft = (value: unknown): SnsSplitDraft | null => 
 
   return {
     version: 1,
+    preset,
     mode,
     aspectRatio: "16:27",
     images: images.slice(0, requiredSlots + 1),

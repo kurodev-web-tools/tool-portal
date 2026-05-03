@@ -500,7 +500,19 @@
       - `375 / 390 / 820`: `全体` ボタン表示、全体プレビュー開閉、1280x720 canvas描画、表示中のbody scroll停止、横スクロールなしを確認
       - `1024`: `全体` ボタン非表示、従来のPC/tablet-landscape UI維持を確認
       - 補足: `375px` で既存の `/favicon.ico` 404 がconsoleに1件出たが、全体確認UI起因のerror / warnはなし
-- [ ] SNS分割画像メーカーの保守向け分割を別PRで行う
+- [x] SNS分割画像メーカーの保守向け分割を別PRで行う
   - まず IndexedDB / localStorage / draft persistence helper を `SnsSplitImageMakerApp.tsx` から分離する
   - UI section分割は `InputSection` / `PreviewPanel` / `SettingsSection` などを候補にするが、props過多にならない範囲で段階的に行う
   - 既存挙動、保存キー、IndexedDB名、出力順、レスポンシブ境界は変更しない
+  - 2026-05-03実装:
+    - IndexedDB / localStorage / draft persistence / 画像ファイル読込バリデーションを `components/sns-split-image-maker/snsSplitDraftPersistence.ts` へ分離した
+    - 保存キー `v-streamer-tools:sns-split-image-maker:draft:v1`、IndexedDB名 `v-streamer-tools:sns-split-image-maker`、store名 `images` は変更していない
+    - `SnsSplitImageMakerApp.tsx` は復元結果に応じたtoast表示とUI state管理に絞り、保存処理の詳細を直接持たない形へ整理した
+    - UI section分割は、現状だと `draft` / 更新関数 / 保存・出力関数 / 選択中投稿などのpropsが広がるため、今回PRでは無理に進めずstorage分離までで止めた
+    - レビュー反映として、プレビュー初期表示を `全体` に変更し、`投稿1`〜`投稿4` の選択ボタンは `編集` タブ表示時だけ出すようにした
+  - 2026-05-03検証:
+    - 実施: `npm run lint`（成功）
+    - 実施: `npx tsc --noEmit`（成功）
+    - 実施: `git diff --check`（空白エラーなし。CRLF警告のみ）
+    - 実施: `npm run build`（成功。`/tools/sns-split-image-maker` を含む6 routeがstatic prerender対象。既存のworktree lockfile root推定警告のみ）
+    - 実施: browser-useで `http://localhost:3000/tools/sns-split-image-maker/` を再読み込みし、初期表示が `全体` タブ、`全体` / `投稿時` では `投稿1`〜`投稿4` 選択ボタン非表示、`編集` では選択ボタン表示、console error / warnなしを確認

@@ -14,8 +14,6 @@ import {
   getRequiredSlotCount,
   getSnsSplitSlotLabel,
   getSnsSplitTiles,
-  normalizeSnsSplitDraft,
-  snsSplitDraftStorageKey,
   type SnsSplitConfig,
   type SnsSplitDraft,
   type SnsSplitExportFormat,
@@ -24,6 +22,13 @@ import {
   type SnsSplitPostIndex,
   type SnsSplitTile
 } from "@/lib/sns-split-image-maker";
+import {
+  persistDraftMetadata,
+  readImageFile,
+  restoreDraft,
+  writeStoredImageSource,
+  writeStoredImageSources
+} from "./snsSplitDraftPersistence";
 
 type ToastTone = "info" | "success" | "warning" | "error";
 type ToastState = { tone: ToastTone; message: string } | null;
@@ -54,12 +59,7 @@ const previewModes: { id: PreviewMode; label: string }[] = [
   { id: "grid", label: "全体" },
   { id: "post", label: "投稿時" }
 ];
-const allowedImageMimeTypes = new Set(["image/png", "image/jpeg"]);
-const allowedImageExtensions = new Set(["png", "jpg", "jpeg"]);
-const imageUploadMaxBytes = 12 * 1024 * 1024;
 const postAdjustmentSnapThreshold = 32;
-const snsSplitImageDbName = "v-streamer-tools:sns-split-image-maker";
-const snsSplitImageStoreName = "images";
 const toneClassName: Record<ToastTone, string> = {
   info: "border-sky-400/60 bg-sky-500/12",
   success: "border-emerald-400/60 bg-emerald-500/12",
@@ -67,102 +67,11 @@ const toneClassName: Record<ToastTone, string> = {
   error: "border-rose-400/60 bg-rose-500/12"
 };
 
-const isValidImageFile = (file: File) => {
-  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-  return allowedImageMimeTypes.has(file.type) && allowedImageExtensions.has(extension);
-};
 const clampPostOffset = (value: number) => Math.min(Math.max(Math.round(value), -480), 480);
 const snapPostOffset = (value: number) => {
   const rounded = clampPostOffset(value);
   return Math.abs(rounded) <= postAdjustmentSnapThreshold ? 0 : rounded;
 };
-const stripDraftImageSources = (draft: SnsSplitDraft): SnsSplitDraft => ({
-  ...draft,
-  images: draft.images.map((image) => ({ ...image, src: null }))
-});
-const mergeStoredImageSources = (draft: SnsSplitDraft, imageSources: Map<string, string>): SnsSplitDraft => ({
-  ...draft,
-  images: draft.images.map((image) => ({ ...image, src: imageSources.get(image.id) ?? image.src }))
-});
-const openImageDatabase = () =>
-  new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(snsSplitImageDbName, 1);
-    request.onupgradeneeded = () => {
-      const database = request.result;
-      if (!database.objectStoreNames.contains(snsSplitImageStoreName)) {
-        database.createObjectStore(snsSplitImageStoreName, { keyPath: "id" });
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error ?? new Error("画像保存領域を開けませんでした。"));
-  });
-const readStoredImageSources = async () => {
-  const database = await openImageDatabase();
-  return new Promise<Map<string, string>>((resolve, reject) => {
-    const transaction = database.transaction(snsSplitImageStoreName, "readonly");
-    const request = transaction.objectStore(snsSplitImageStoreName).getAll();
-    request.onsuccess = () => {
-      const sources = new Map<string, string>();
-      (request.result as Array<{ id?: unknown; src?: unknown }>).forEach((entry) => {
-        if (typeof entry.id === "string" && typeof entry.src === "string") {
-          sources.set(entry.id, entry.src);
-        }
-      });
-      resolve(sources);
-    };
-    request.onerror = () => reject(request.error ?? new Error("保存済み画像を読み込めませんでした。"));
-    transaction.oncomplete = () => database.close();
-    transaction.onerror = () => {
-      database.close();
-      reject(transaction.error ?? new Error("保存済み画像を読み込めませんでした。"));
-    };
-  });
-};
-const writeStoredImageSource = async (id: SnsSplitImageSource["id"], src: string | null) => {
-  const database = await openImageDatabase();
-  return new Promise<void>((resolve, reject) => {
-    const transaction = database.transaction(snsSplitImageStoreName, "readwrite");
-    const store = transaction.objectStore(snsSplitImageStoreName);
-    if (src) {
-      store.put({ id, src, updatedAt: new Date().toISOString() });
-    } else {
-      store.delete(id);
-    }
-    transaction.oncomplete = () => {
-      database.close();
-      resolve();
-    };
-    transaction.onerror = () => {
-      database.close();
-      reject(transaction.error ?? new Error("画像を保存できませんでした。"));
-    };
-  });
-};
-const writeStoredImageSources = (images: SnsSplitImageSource[]) =>
-  Promise.all(images.map((image) => writeStoredImageSource(image.id, image.src))).then(() => undefined);
-const persistDraftMetadata = (draft: SnsSplitDraft) => {
-  const normalized = normalizeSnsSplitDraft({ ...stripDraftImageSources(draft), updatedAt: new Date().toISOString() });
-  if (!normalized) {
-    throw new Error("下書き保存用のデータを正規化できませんでした。");
-  }
-  localStorage.setItem(snsSplitDraftStorageKey, JSON.stringify(normalized));
-};
-const readImageFile = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    if (!isValidImageFile(file)) {
-      reject(new Error("PNGまたはJPEG画像を選択してください。"));
-      return;
-    }
-    if (file.size > imageUploadMaxBytes) {
-      reject(new Error("画像は12MB以下にしてください。"));
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => (typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("画像を読み込めませんでした。")));
-    reader.onerror = () => reject(new Error("画像を読み込めませんでした。"));
-    reader.readAsDataURL(file);
-  });
 
 export function SnsSplitImageMakerApp() {
   const [draft, setDraft] = useState<SnsSplitDraft>(() => createSnsSplitDraft());
@@ -170,7 +79,7 @@ export function SnsSplitImageMakerApp() {
   const [toast, setToast] = useState<ToastState>(null);
   const [mobileView, setMobileView] = useState<MobileView>("preview");
   const [selectedPost, setSelectedPost] = useState<SnsSplitPostIndex>(1);
-  const [previewMode, setPreviewMode] = useState<PreviewMode>("edit");
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("grid");
   const editorCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const postPreviewCanvasRefs = useRef<(HTMLCanvasElement | null)[]>([]);
   const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -210,48 +119,23 @@ export function SnsSplitImageMakerApp() {
   useEffect(() => {
     let active = true;
     const hydrateDraft = async () => {
-      let restoredDraft = createSnsSplitDraft();
-      let restoredFromStorage = false;
-      try {
-        const raw = localStorage.getItem(snsSplitDraftStorageKey);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          const normalized = normalizeSnsSplitDraft(parsed);
-          if (!normalized) {
-            localStorage.removeItem(snsSplitDraftStorageKey);
-            setToast({ tone: "warning", message: "保存データを復元できなかったため初期状態で開始しました。" });
-          } else {
-            restoredDraft = normalized;
-            restoredFromStorage = true;
-          }
-        }
-      } catch {
-        localStorage.removeItem(snsSplitDraftStorageKey);
+      const result = await restoreDraft();
+      if (active && result.invalidStoredDraft) {
+        setToast({ tone: "warning", message: "保存データを復元できなかったため初期状態で開始しました。" });
+      }
+      if (result.brokenStoredDraft) {
         if (active) {
           setToast({ tone: "warning", message: "保存データが破損していたため安全に初期化しました。" });
         }
       }
-
-      try {
-        const legacySources = restoredDraft.images.filter((image) => image.src);
-        if (legacySources.length > 0) {
-          await writeStoredImageSources(legacySources);
-          restoredDraft = stripDraftImageSources(restoredDraft);
-        }
-        const storedSources = await readStoredImageSources();
-        restoredDraft = mergeStoredImageSources(restoredDraft, storedSources);
-        if (active && (restoredFromStorage || storedSources.size > 0)) {
-          setToast({ tone: "success", message: "前回の作業状態を復元しました。" });
-        }
-      } catch {
-        if (active && restoredFromStorage) {
-          setToast({ tone: "warning", message: "設定は復元しましたが、画像の復元に失敗しました。" });
-        }
-      } finally {
-        if (active) {
-          setDraft(restoredDraft);
-          setHydrated(true);
-        }
+      if (active && result.imageRestoreFailed && result.restoredFromStorage) {
+        setToast({ tone: "warning", message: "設定は復元しましたが、画像の復元に失敗しました。" });
+      } else if (active && (result.restoredFromStorage || result.restoredStoredImages)) {
+        setToast({ tone: "success", message: "前回の作業状態を復元しました。" });
+      }
+      if (active) {
+        setDraft(result.draft);
+        setHydrated(true);
       }
     };
     void hydrateDraft();
@@ -598,21 +482,23 @@ export function SnsSplitImageMakerApp() {
                 </button>
               ))}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {tiles.map((tile) => (
-                <button
-                  key={tile.index}
-                  type="button"
-                  onClick={() => setSelectedPost(tile.index)}
-                  className={[
-                    "rounded-base border px-3 py-2 text-xs font-black transition",
-                    selectedPost === tile.index ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface text-muted hover:bg-surface-muted"
-                  ].join(" ")}
-                >
-                  投稿{tile.index}
-                </button>
-              ))}
-            </div>
+            {previewMode === "edit" ? (
+              <div className="flex flex-wrap items-center gap-2">
+                {tiles.map((tile) => (
+                  <button
+                    key={tile.index}
+                    type="button"
+                    onClick={() => setSelectedPost(tile.index)}
+                    className={[
+                      "rounded-base border px-3 py-2 text-xs font-black transition",
+                      selectedPost === tile.index ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface text-muted hover:bg-surface-muted"
+                    ].join(" ")}
+                  >
+                    投稿{tile.index}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <div className="min-h-[320px] flex-1 overflow-hidden rounded-base border border-primary/40 bg-surface-muted p-3 lg:min-h-[560px] xl:min-h-[640px]">
               {previewMode === "edit" ? (
                 <div className="mx-auto flex h-full min-h-0 w-full max-w-[520px] flex-col">

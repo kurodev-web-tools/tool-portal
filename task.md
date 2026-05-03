@@ -879,3 +879,32 @@
     - console error / warnなし
   - task.mdへ最終回帰結果と残課題を追記
   ```
+
+  - 2026-05-03実装結果:
+    - `codex/sns-preview-labels` ブランチ / `.worktrees/sns-preview-labels` で、最新 `main` から作業した
+    - 4分割の主表示を `個別追加` / `フレーム追加` に統一し、補足として `旧: 1+8` / `旧: 1+4` を残した
+    - プレビュータブを `編集` / `全体` / `メイン分割` に統一した
+    - 入口カード、プレビュー見出し、エクスポート説明で `split_1` からの出力順を明示した
+    - 入力エリアの説明文を、2分割 / 3分割 / 4分割それぞれの `個別追加` / `フレーム追加` と追加画像比率が分かる表現へ整理した
+    - 保存キー、IndexedDB名/store名、2分割 / 3分割 / 4分割の出力canvas仕様と出力順は変更していない
+    - UI section分割やprops構造の再編は行わず、今回の範囲は表記と回帰契約の追加に留めた
+  - 2026-05-03検証:
+    - 実施: `node scripts/sns-split-image-maker-contract.mjs`（成功）
+      - split-2 / split-3 / split-4 の既存分割契約に加え、`個別追加` / `フレーム追加`、`メイン分割` タブ、4分割入口表記の静的契約を確認した
+    - 実施: `npm run lint`（成功）
+    - 実施: `npx tsc --noEmit`（成功）
+    - 実施: `git diff --check`（空白エラーなし。CRLF警告のみ）
+    - 実施: `npm run build`（成功。`/tools/sns-split-image-maker` を含む6 routeがstatic prerender対象。既存のworktree lockfile root推定警告のみ）
+    - 実施: browser-use in-app browser `http://localhost:3010/tools/sns-split-image-maker/`
+      - 入口画面で 2分割 / 3分割 / 4分割カード、4分割の `個別追加 / フレーム追加`、`出力順 split_1 -> split_4` を確認した
+      - split-2 / split-3 / split-4 編集画面で `追加方式`、`個別追加`、`フレーム追加`、`メイン分割` タブ、出力順表示、console error / warnなしを確認した
+      - 全体プレビューcanvasは split-2 `1920x1440`、split-3 `2560x2880`、split-4 `2560x4320` を確認した
+      - メイン分割プレビューcanvasは split-2 `640x720` x2、split-3 `640x720` + `640x360` x2、split-4 `1280x720` x4 を確認した
+    - 実施: bundled Playwrightで `390 / 820 / 1024 / 1280`
+      - 入口画面、split-2 / split-3 / split-4 編集画面で横スクロール破綻なしを確認した
+      - 各幅で統一表記、全体プレビュー、メイン分割プレビュー、console error / warnなしを確認した
+      - split-2 / split-3 / split-4 のdownload発火順が `split_1.png` から順番どおりであることを確認した
+      - broken JSON localStorage は警告表示後に安全に初期化されることを確認した
+      - preset未指定のlegacy draftが `split-4` へmigrationされ、IndexedDBのbase画像が復元されることを確認した
+    - 残課題:
+      - 今回範囲ではなし

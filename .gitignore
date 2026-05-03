@@ -12,6 +12,7 @@ yarn-error.log*
 pnpm-debug.log*
 dev-server*.log
 .next-dev-*.log
+.codex-next-*.log
 
 # Env files
 .env

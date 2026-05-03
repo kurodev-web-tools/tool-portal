@@ -4,9 +4,11 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, 
 import {
   addDays,
   addMonths,
+  announcementStatusOptions,
   categoryMeta,
   categoryOptions,
   createEmptyEvent,
+  defaultHashtagSets,
   defaultScheduleSettings,
   generatePostText,
   getEventDurationMinutes,
@@ -16,19 +18,24 @@ import {
   getMonthGrid,
   getPeriodLabel,
   getShortDateLabel,
+  mergeHashtags,
   getWeekDays,
   normalizeStoragePayload,
   parseDateKey,
   platformOptions,
   postTemplates,
+  postTemplateUsageOptions,
+  postTemplateVariableOptions,
   recurrenceOptions,
   scheduleStorageKey,
   scheduleStorageVersion,
   sortEvents,
   toDateKey,
+  type AnnouncementStatus,
   type CalendarView,
   type EventCategory,
   type EventPlatform,
+  type HashtagSet,
   type PostTemplate,
   type ScheduleStoragePayload,
   type ScheduleSettings,
@@ -86,15 +93,55 @@ const defaultDurationMinuteOptions = [30, 45, 60, 90, 120, 180];
 const importTextMaxLength = 250_000;
 const importMaxEvents = 500;
 const importMaxTemplates = 50;
+const importMaxHashtagSets = 100;
 const importMaxTextLengths = {
   title: 120,
   memo: 2000,
   templateName: 80,
   templateDescription: 240,
-  templateBody: 4000
+  templateBody: 4000,
+  templateHashtags: 1000,
+  hashtagSetName: 80,
+  hashtagSetTags: 1000,
+  announcementText: 4000,
+  announcementHashtags: 1000,
+  announcementMemo: 2000
 };
 const maxRecurrenceCount = 30;
 const mobileLayoutQuery = "(max-width: 1023px)";
+const calendarViewOptions: Array<{ value: CalendarView; label: string }> = [
+  { value: "month", label: "月" },
+  { value: "week", label: "週" },
+  { value: "day", label: "日" }
+];
+const weekStartOptions: Array<{ value: 0 | 1; label: string }> = [
+  { value: 0, label: "日曜" },
+  { value: 1, label: "月曜" }
+];
+const defaultDurationOptions = defaultDurationMinuteOptions.map((minutes) => ({ value: minutes, label: `${minutes}分` }));
+const eventCategoryFilterOptions: Array<{ value: EventCategory | "all"; label: string }> = [
+  { value: "all", label: "カテゴリすべて" },
+  ...categoryOptions
+];
+const eventPlatformFilterOptions: Array<{ value: EventPlatform | "all"; label: string }> = [
+  { value: "all", label: "媒体すべて" },
+  ...platformOptions.map((option) => ({ value: option, label: option || "-" }))
+];
+const eventPeriodOptions: Array<{ value: EventPeriodFilter; label: string }> = [
+  { value: "all", label: "全期間" },
+  { value: "today", label: "今日以降" },
+  { value: "week", label: "7日以内" },
+  { value: "month", label: "30日以内" }
+];
+const eventSortOptions: Array<{ value: EventSortOrder; label: string }> = [
+  { value: "upcoming", label: "直近順" },
+  { value: "dateAsc", label: "日付昇順" },
+  { value: "dateDesc", label: "日付降順" }
+];
+const announcementStatusFilterOptions: Array<{ value: AnnouncementStatus | "all"; label: string }> = [
+  { value: "all", label: "告知すべて" },
+  ...announcementStatusOptions
+];
 
 function formatSlot(minutes: number) {
   const hour = Math.floor(minutes / 60);
@@ -119,7 +166,7 @@ function isImportableSchedulePayload(value: unknown) {
   }
 
   const payload = value as Record<string, unknown>;
-  return "version" in payload || "events" in payload || "settings" in payload || "postTemplates" in payload;
+  return "version" in payload || "events" in payload || "settings" in payload || "postTemplates" in payload || "hashtagSets" in payload;
 }
 
 function isStringWithinLimit(value: unknown, maxLength: number) {
@@ -143,7 +190,10 @@ function validateImportEvents(value: unknown) {
     const event = item as Partial<ScheduleEvent>;
     if (
       !isStringWithinLimit(event.title, importMaxTextLengths.title) ||
-      !isStringWithinLimit(event.memo, importMaxTextLengths.memo)
+      !isStringWithinLimit(event.memo, importMaxTextLengths.memo) ||
+      !isStringWithinLimit(event.announcementText, importMaxTextLengths.announcementText) ||
+      !isStringWithinLimit(event.announcementHashtags, importMaxTextLengths.announcementHashtags) ||
+      !isStringWithinLimit(event.announcementMemo, importMaxTextLengths.announcementMemo)
     ) {
       throw new Error("Import event text exceeded limits");
     }
@@ -168,9 +218,34 @@ function validateImportTemplates(value: unknown) {
     if (
       !isStringWithinLimit(template.name, importMaxTextLengths.templateName) ||
       !isStringWithinLimit(template.description, importMaxTextLengths.templateDescription) ||
-      !isStringWithinLimit(template.body, importMaxTextLengths.templateBody)
+      !isStringWithinLimit(template.body, importMaxTextLengths.templateBody) ||
+      !isStringWithinLimit(template.hashtags, importMaxTextLengths.templateHashtags)
     ) {
       throw new Error("Import template text exceeded limits");
+    }
+  });
+}
+
+function validateImportHashtagSets(value: unknown) {
+  if (value === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(value) || value.length > importMaxHashtagSets) {
+    throw new Error("Import hashtag sets exceeded limits");
+  }
+
+  value.forEach((item) => {
+    if (!item || typeof item !== "object") {
+      return;
+    }
+
+    const hashtagSet = item as Partial<HashtagSet>;
+    if (
+      !isStringWithinLimit(hashtagSet.name, importMaxTextLengths.hashtagSetName) ||
+      !isStringWithinLimit(hashtagSet.hashtags, importMaxTextLengths.hashtagSetTags)
+    ) {
+      throw new Error("Import hashtag set text exceeded limits");
     }
   });
 }
@@ -188,6 +263,7 @@ function validateImportPayloadLimits(value: unknown) {
   const payload = value as Partial<ScheduleStoragePayload>;
   validateImportEvents(payload.events);
   validateImportTemplates(payload.postTemplates);
+  validateImportHashtagSets(payload.hashtagSets);
 }
 
 function createEventDraft(dateKey: string, settings: ScheduleSettings) {
@@ -200,13 +276,15 @@ function createEventDraft(dateKey: string, settings: ScheduleSettings) {
 function createScheduleStoragePayload(
   events: ScheduleEvent[],
   settings: ScheduleSettings,
-  templates: PostTemplate[]
+  templates: PostTemplate[],
+  hashtagSets: HashtagSet[]
 ): ScheduleStoragePayload {
   return {
     version: scheduleStorageVersion,
     events,
     settings,
-    postTemplates: templates
+    postTemplates: templates,
+    hashtagSets
   };
 }
 
@@ -236,6 +314,7 @@ function hasActiveEventListFilters(filters: EventListFilters) {
     Boolean(filters.query.trim()) ||
     filters.category !== "all" ||
     filters.platform !== "all" ||
+    filters.announcementStatus !== "all" ||
     filters.period !== "all"
   );
 }
@@ -334,6 +413,14 @@ function getEventRecurrenceLabel(event: ScheduleEvent) {
   return recurrenceOptions.find((option) => option.value === event.recurrence)?.label ?? "繰り返しなし";
 }
 
+function getAnnouncementStatusLabel(status: AnnouncementStatus) {
+  return announcementStatusOptions.find((option) => option.value === status)?.label ?? "未着手";
+}
+
+function getTemplateUsageLabel(template: PostTemplate) {
+  return postTemplateUsageOptions.find((option) => option.value === template.usageCategory)?.label ?? "カスタム";
+}
+
 function EventDetailContent({ event, compact = false }: { event: ScheduleEvent; compact?: boolean }) {
   return (
     <div className={compact ? "space-y-2" : "space-y-4"}>
@@ -362,6 +449,10 @@ function EventDetailContent({ event, compact = false }: { event: ScheduleEvent; 
           <dt className="font-bold text-muted">繰り返し</dt>
           <dd className="font-bold text-foreground">{getEventRecurrenceLabel(event)}</dd>
         </div>
+        <div className="flex items-center justify-between gap-3">
+          <dt className="font-bold text-muted">告知準備</dt>
+          <dd className="font-bold text-foreground">{getAnnouncementStatusLabel(event.announcementStatus)}</dd>
+        </div>
       </dl>
       <div>
         <p className="text-xs font-bold text-muted">メモ</p>
@@ -369,6 +460,17 @@ function EventDetailContent({ event, compact = false }: { event: ScheduleEvent; 
           {event.memo.trim() || "メモはありません。"}
         </p>
       </div>
+      {!compact ? (
+        <div>
+          <p className="text-xs font-bold text-muted">告知準備メモ</p>
+          <p className="mt-2 whitespace-pre-wrap rounded-base border border-border bg-surface-muted/45 px-3 py-3 text-sm leading-6 text-foreground">
+            {event.announcementMemo.trim() || "告知準備メモはありません。"}
+          </p>
+          {event.announcementHashtags.trim() ? (
+            <p className="mt-2 text-xs font-bold text-primary-strong">{event.announcementHashtags}</p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -421,6 +523,89 @@ function inputClassName(extra = "") {
     "transition placeholder:text-muted/70 focus:border-primary focus:outline-none",
     extra
   ].join(" ");
+}
+
+function SelectMenuControl<TValue extends string | number>({
+  value,
+  options,
+  onChange,
+  ariaLabel,
+  disabled = false,
+  className = ""
+}: {
+  value: TValue;
+  options: Array<{ value: TValue; label: string; detail?: string }>;
+  onChange: (value: TValue) => void;
+  ariaLabel: string;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selectedOption = options.find((option) => option.value === value) ?? options[0];
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handlePointerDown(event: globalThis.PointerEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className={["relative mt-1", className].join(" ")}>
+      <button
+        type="button"
+        className={[
+          "flex w-full items-center justify-between gap-3 rounded-base border border-border bg-surface px-3 py-2 text-left text-sm font-bold text-foreground transition",
+          "hover:border-primary focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        ].join(" ")}
+        aria-label={ariaLabel}
+        aria-expanded={open}
+        disabled={disabled || options.length === 0}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="min-w-0 truncate">{selectedOption?.label ?? "-"}</span>
+        <span className="shrink-0 text-xs text-muted">{open ? "▲" : "▼"}</span>
+      </button>
+      {open ? (
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-56 overflow-y-auto rounded-base border border-border bg-surface p-1.5 shadow-panel">
+          {options.map((option) => {
+            const selected = option.value === value;
+
+            return (
+              <button
+                key={String(option.value || "none")}
+                type="button"
+                className={[
+                  "block w-full rounded-base px-2.5 py-2 text-left text-sm font-bold transition",
+                  selected ? "bg-primary text-white" : "text-foreground hover:bg-primary-soft"
+                ].join(" ")}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                <span className="block truncate">{option.label}</span>
+                {option.detail ? (
+                  <span className={["mt-0.5 block line-clamp-2 text-xs leading-5", selected ? "text-white/80" : "text-muted"].join(" ")}>
+                    {option.detail}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function splitTimeValue(time: string) {
@@ -1428,11 +1613,12 @@ type EventListFilters = {
   query: string;
   category: EventCategory | "all";
   platform: EventPlatform | "all";
+  announcementStatus: AnnouncementStatus | "all";
   period: EventPeriodFilter;
   sortOrder: EventSortOrder;
 };
 
-type SettingsSectionId = "display" | "defaults" | "data" | "templates";
+type SettingsSectionId = "display" | "defaults" | "data" | "templates" | "hashtags";
 
 function MobileEventList({
   events,
@@ -1463,44 +1649,37 @@ function MobileEventList({
           placeholder="タイトルを検索"
         />
         <div className="grid grid-cols-2 gap-2">
-          <select
+          <SelectMenuControl
             value={filters.category}
-            onChange={(event) => onFilterChange({ ...filters, category: event.target.value as EventCategory | "all" })}
-            className={inputClassName("mt-0")}
-            aria-label="カテゴリで絞り込み"
-          >
-            <option value="all">カテゴリすべて</option>
-            {categoryOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select
+            options={eventCategoryFilterOptions}
+            onChange={(category) => onFilterChange({ ...filters, category })}
+            ariaLabel="カテゴリで絞り込み"
+            className="mt-0"
+          />
+          <SelectMenuControl
             value={filters.platform}
-            onChange={(event) => onFilterChange({ ...filters, platform: event.target.value as EventPlatform | "all" })}
-            className={inputClassName("mt-0")}
-            aria-label="プラットフォームで絞り込み"
-          >
-            <option value="all">媒体すべて</option>
-            {platformOptions.map((option) => (
-              <option key={option || "none"} value={option}>
-                {option || "-"}
-              </option>
-            ))}
-          </select>
+            options={eventPlatformFilterOptions}
+            onChange={(platform) => onFilterChange({ ...filters, platform })}
+            ariaLabel="プラットフォームで絞り込み"
+            className="mt-0"
+          />
         </div>
-        <select
-          value={filters.period}
-          onChange={(event) => onFilterChange({ ...filters, period: event.target.value as EventPeriodFilter })}
-          className={inputClassName("mt-0")}
-          aria-label="期間で絞り込み"
-        >
-          <option value="all">全期間</option>
-          <option value="today">今日以降</option>
-          <option value="week">7日以内</option>
-          <option value="month">30日以内</option>
-        </select>
+        <div className="grid grid-cols-2 gap-2">
+          <SelectMenuControl
+            value={filters.period}
+            options={eventPeriodOptions}
+            onChange={(period) => onFilterChange({ ...filters, period })}
+            ariaLabel="期間で絞り込み"
+            className="mt-0"
+          />
+          <SelectMenuControl
+            value={filters.announcementStatus}
+            options={announcementStatusFilterOptions}
+            onChange={(announcementStatus) => onFilterChange({ ...filters, announcementStatus })}
+            ariaLabel="告知ステータスで絞り込み"
+            className="mt-0"
+          />
+        </div>
       </div>
       <div className="mt-4 space-y-2">
         {events.length === 0 ? (
@@ -1526,6 +1705,7 @@ function MobileEventList({
               <span className="mt-2 inline-flex rounded-base bg-surface px-2 py-1 text-xs font-bold text-muted">
                 {categoryMeta[event.category].label}
                 {event.platform ? ` / ${event.platform}` : ""}
+                {` / ${getAnnouncementStatusLabel(event.announcementStatus)}`}
                 {event.recurrence && event.recurrence !== "none" ? ` / ${recurrenceOptions.find((option) => option.value === event.recurrence)?.label}` : ""}
               </span>
             </button>
@@ -1572,17 +1752,150 @@ function SettingsAccordionSection({
   );
 }
 
+function TemplateDraftEditor({
+  templateDraft,
+  onTemplateDraftChange,
+  onSave
+}: {
+  templateDraft: PostTemplate;
+  onTemplateDraftChange: (template: PostTemplate) => void;
+  onSave: () => void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  function insertVariable(token: string) {
+    const textarea = textareaRef.current;
+    const start = textarea?.selectionStart ?? templateDraft.body.length;
+    const end = textarea?.selectionEnd ?? templateDraft.body.length;
+    const nextBody = `${templateDraft.body.slice(0, start)}${token}${templateDraft.body.slice(end)}`;
+    onTemplateDraftChange({ ...templateDraft, body: nextBody });
+
+    window.setTimeout(() => {
+      textarea?.focus();
+      const nextPosition = start + token.length;
+      textarea?.setSelectionRange(nextPosition, nextPosition);
+    }, 0);
+  }
+
+  return (
+    <div className="rounded-base border border-border bg-surface px-3 py-3">
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div>
+          <FieldLabel>テンプレ名</FieldLabel>
+          <input value={templateDraft.name} onChange={(event) => onTemplateDraftChange({ ...templateDraft, name: event.target.value })} className={inputClassName()} />
+        </div>
+        <div>
+          <FieldLabel>用途カテゴリ</FieldLabel>
+          <SelectMenuControl
+            value={templateDraft.usageCategory}
+            options={postTemplateUsageOptions}
+            onChange={(usageCategory) => onTemplateDraftChange({ ...templateDraft, usageCategory })}
+            ariaLabel="用途カテゴリ"
+          />
+        </div>
+        <div>
+          <FieldLabel>既定プラットフォーム</FieldLabel>
+          <SelectMenuControl
+            value={templateDraft.defaultPlatform}
+            options={platformOptions.map((option) => ({ value: option, label: option || "-" }))}
+            onChange={(defaultPlatform) => onTemplateDraftChange({ ...templateDraft, defaultPlatform })}
+            ariaLabel="既定プラットフォーム"
+          />
+        </div>
+        <div>
+          <FieldLabel>説明</FieldLabel>
+          <input value={templateDraft.description} onChange={(event) => onTemplateDraftChange({ ...templateDraft, description: event.target.value })} className={inputClassName()} />
+        </div>
+      </div>
+      <div className="mt-3">
+        <FieldLabel>本文</FieldLabel>
+        <textarea
+          ref={textareaRef}
+          value={templateDraft.body}
+          onChange={(event) => onTemplateDraftChange({ ...templateDraft, body: event.target.value })}
+          className={inputClassName("min-h-32 resize-none")}
+        />
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {postTemplateVariableOptions.map((option) => (
+            <button key={option.token} type="button" onClick={() => insertVariable(option.token)} className="flat-control px-2 py-1 text-xs">
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="mt-3">
+        <FieldLabel>ハッシュタグ</FieldLabel>
+        <textarea
+          value={templateDraft.hashtags}
+          onChange={(event) => onTemplateDraftChange({ ...templateDraft, hashtags: event.target.value })}
+          className={inputClassName("min-h-20 resize-none")}
+          placeholder="#VTuber #配信告知"
+        />
+        <p className="mt-2 text-xs leading-5 text-muted">本文とは別に保存し、コピー時に予定側のハッシュタグと結合します。</p>
+      </div>
+      <button type="button" onClick={onSave} className="mt-3 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white">
+        テンプレートを保存
+      </button>
+    </div>
+  );
+}
+
+function HashtagSetDraftEditor({
+  hashtagSetDraft,
+  onHashtagSetDraftChange,
+  onSave
+}: {
+  hashtagSetDraft: HashtagSet;
+  onHashtagSetDraftChange: (hashtagSet: HashtagSet) => void;
+  onSave: () => void;
+}) {
+  return (
+    <div className="rounded-base border border-border bg-surface px-3 py-3">
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div>
+          <FieldLabel>セット名</FieldLabel>
+          <input
+            value={hashtagSetDraft.name}
+            onChange={(event) => onHashtagSetDraftChange({ ...hashtagSetDraft, name: event.target.value })}
+            className={inputClassName()}
+            placeholder="ゲーム配信"
+          />
+        </div>
+        <div>
+          <FieldLabel>ハッシュタグ</FieldLabel>
+          <input
+            value={hashtagSetDraft.hashtags}
+            onChange={(event) => onHashtagSetDraftChange({ ...hashtagSetDraft, hashtags: event.target.value })}
+            className={inputClassName()}
+            placeholder="#ゲーム配信 #VTuber"
+          />
+        </div>
+      </div>
+      <p className="mt-2 text-xs leading-5 text-muted">よく使う組み合わせを保存し、投稿補助プレビューで任意に追加できます。</p>
+      <button type="button" onClick={onSave} className="mt-3 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white">
+        ハッシュタグセットを保存
+      </button>
+    </div>
+  );
+}
+
 function MobileSettingsPanel({
   settings,
   templates,
+  hashtagSets = [],
   templateDraft,
+  hashtagSetDraft,
   importText,
   settingsStatus,
   onSettingsChange,
   onTemplateDraftChange,
+  onHashtagSetDraftChange,
   onAddTemplate,
+  onAddHashtagSet,
   onEditTemplate,
+  onEditHashtagSet,
   onDeleteTemplate,
+  onDeleteHashtagSet,
   onExport,
   onImportTextChange,
   onImport,
@@ -1590,14 +1903,20 @@ function MobileSettingsPanel({
 }: {
   settings: ScheduleSettings;
   templates: PostTemplate[];
+  hashtagSets: HashtagSet[];
   templateDraft: PostTemplate;
+  hashtagSetDraft: HashtagSet;
   importText: string;
   settingsStatus: string;
   onSettingsChange: (settings: ScheduleSettings) => void;
   onTemplateDraftChange: (template: PostTemplate) => void;
+  onHashtagSetDraftChange: (hashtagSet: HashtagSet) => void;
   onAddTemplate: () => void;
+  onAddHashtagSet: () => void;
   onEditTemplate: (template: PostTemplate) => void;
+  onEditHashtagSet: (hashtagSet: HashtagSet) => void;
   onDeleteTemplate: (templateId: string) => void;
+  onDeleteHashtagSet: (hashtagSetId: string) => void;
   onExport: () => void;
   onImportTextChange: (value: string) => void;
   onImport: () => void;
@@ -1607,7 +1926,8 @@ function MobileSettingsPanel({
     display: true,
     defaults: true,
     data: false,
-    templates: false
+    templates: false,
+    hashtags: false
   });
   const defaultTemplateName = templates.find((template) => template.id === settings.defaultTemplateId)?.name ?? "未設定";
   const defaultViewLabel = viewLabels[settings.defaultView];
@@ -1632,18 +1952,21 @@ function MobileSettingsPanel({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <FieldLabel>初期表示ビュー</FieldLabel>
-            <select value={settings.defaultView} onChange={(event) => onSettingsChange({ ...settings, defaultView: event.target.value as CalendarView })} className={inputClassName()}>
-              <option value="month">月</option>
-              <option value="week">週</option>
-              <option value="day">日</option>
-            </select>
+            <SelectMenuControl
+              value={settings.defaultView}
+              options={calendarViewOptions}
+              onChange={(defaultView) => onSettingsChange({ ...settings, defaultView })}
+              ariaLabel="初期表示ビュー"
+            />
           </div>
           <div>
             <FieldLabel>週開始曜日</FieldLabel>
-            <select value={settings.weekStartsOn} onChange={(event) => onSettingsChange({ ...settings, weekStartsOn: Number(event.target.value) as 0 | 1 })} className={inputClassName()}>
-              <option value={0}>日曜</option>
-              <option value={1}>月曜</option>
-            </select>
+            <SelectMenuControl
+              value={settings.weekStartsOn}
+              options={weekStartOptions}
+              onChange={(weekStartsOn) => onSettingsChange({ ...settings, weekStartsOn })}
+              ariaLabel="週開始曜日"
+            />
           </div>
           <div>
             <FieldLabel>既定開始時刻</FieldLabel>
@@ -1651,13 +1974,12 @@ function MobileSettingsPanel({
           </div>
           <div>
             <FieldLabel>既定予定時間</FieldLabel>
-            <select value={settings.defaultDurationMinutes} onChange={(event) => onSettingsChange({ ...settings, defaultDurationMinutes: Number(event.target.value) })} className={inputClassName()}>
-              {defaultDurationMinuteOptions.map((minutes) => (
-                <option key={minutes} value={minutes}>
-                  {minutes}分
-                </option>
-              ))}
-            </select>
+            <SelectMenuControl
+              value={settings.defaultDurationMinutes}
+              options={defaultDurationOptions}
+              onChange={(defaultDurationMinutes) => onSettingsChange({ ...settings, defaultDurationMinutes })}
+              ariaLabel="既定予定時間"
+            />
           </div>
         </div>
       </SettingsAccordionSection>
@@ -1685,6 +2007,37 @@ function MobileSettingsPanel({
         </button>
       </SettingsAccordionSection>
       <SettingsAccordionSection
+        id="hashtags"
+        title="保存済みハッシュタグ"
+        summary={`${hashtagSets.length}件`}
+        open={openSections.hashtags}
+        onToggle={toggleSection}
+      >
+        <div className="space-y-2">
+          {hashtagSets.length === 0 ? (
+            <p className="rounded-base border border-dashed border-border bg-surface-muted/55 px-3 py-4 text-center text-sm font-bold text-muted">
+              保存済みハッシュタグはありません。
+            </p>
+          ) : (
+            hashtagSets.map((hashtagSet) => (
+              <div key={hashtagSet.id} className="rounded-base border border-border bg-surface px-3 py-3">
+                <p className="text-sm font-bold text-foreground">{hashtagSet.name}</p>
+                <p className="mt-1 text-xs leading-5 text-muted">{hashtagSet.hashtags}</p>
+                <div className="mt-2 flex gap-2">
+                  <button type="button" onClick={() => onEditHashtagSet(hashtagSet)} className="flat-control px-3 py-1.5">
+                    編集
+                  </button>
+                  <button type="button" onClick={() => onDeleteHashtagSet(hashtagSet.id)} className="flat-control border-red-300 px-3 py-1.5 text-red-600">
+                    削除
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <HashtagSetDraftEditor hashtagSetDraft={hashtagSetDraft} onHashtagSetDraftChange={onHashtagSetDraftChange} onSave={onAddHashtagSet} />
+      </SettingsAccordionSection>
+      <SettingsAccordionSection
         id="templates"
         title="投稿補助テンプレート"
         summary={`${templates.length}件 / 既定: ${defaultTemplateName}`}
@@ -1693,19 +2046,23 @@ function MobileSettingsPanel({
       >
         <div>
           <FieldLabel>既定テンプレート</FieldLabel>
-          <select value={settings.defaultTemplateId} onChange={(event) => onSettingsChange({ ...settings, defaultTemplateId: event.target.value })} className={inputClassName()}>
-            {templates.map((template) => (
-              <option key={template.id} value={template.id}>
-                {template.name}
-              </option>
-            ))}
-          </select>
+          <SelectMenuControl
+            value={settings.defaultTemplateId}
+            options={templates.map((template) => ({ value: template.id, label: template.name }))}
+            onChange={(defaultTemplateId) => onSettingsChange({ ...settings, defaultTemplateId })}
+            ariaLabel="既定テンプレート"
+          />
         </div>
         <div className="space-y-2">
           {templates.map((template) => (
             <div key={template.id} className="rounded-base border border-border bg-surface px-3 py-3">
               <p className="text-sm font-bold text-foreground">{template.name}</p>
               <p className="mt-1 text-xs text-muted">{template.description}</p>
+              <p className="mt-1 text-xs font-bold text-primary-strong">
+                {getTemplateUsageLabel(template)}
+                {template.defaultPlatform ? ` / ${template.defaultPlatform}` : ""}
+              </p>
+              {template.hashtags.trim() ? <p className="mt-1 text-xs leading-5 text-muted">{template.hashtags}</p> : null}
               <div className="mt-2 flex gap-2">
                 <button type="button" onClick={() => onEditTemplate(template)} className="flat-control px-3 py-1.5">
                   編集
@@ -1717,18 +2074,7 @@ function MobileSettingsPanel({
             </div>
           ))}
         </div>
-        <div className="rounded-base border border-border bg-surface px-3 py-3">
-          <FieldLabel>テンプレ名</FieldLabel>
-          <input value={templateDraft.name} onChange={(event) => onTemplateDraftChange({ ...templateDraft, name: event.target.value })} className={inputClassName()} />
-          <FieldLabel>説明</FieldLabel>
-          <input value={templateDraft.description} onChange={(event) => onTemplateDraftChange({ ...templateDraft, description: event.target.value })} className={inputClassName()} />
-          <FieldLabel>本文</FieldLabel>
-          <textarea value={templateDraft.body} onChange={(event) => onTemplateDraftChange({ ...templateDraft, body: event.target.value })} className={inputClassName("min-h-28 resize-none")} />
-          <p className="mt-2 text-xs leading-5 text-muted">使用可: {"{date} {startTime} {endTime} {title} {platform} {category} {memo}"}</p>
-          <button type="button" onClick={onAddTemplate} className="mt-3 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white">
-            テンプレートを保存
-          </button>
-        </div>
+        <TemplateDraftEditor templateDraft={templateDraft} onTemplateDraftChange={onTemplateDraftChange} onSave={onAddTemplate} />
       </SettingsAccordionSection>
       </div>
     </div>
@@ -1767,61 +2113,51 @@ function DesktopEventListPanel({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <FieldLabel>カテゴリ</FieldLabel>
-            <select
+            <SelectMenuControl
               value={filters.category}
-              onChange={(event) => onFilterChange({ ...filters, category: event.target.value as EventCategory | "all" })}
-              className={inputClassName()}
-            >
-              <option value="all">すべて</option>
-              {categoryOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              options={eventCategoryFilterOptions}
+              onChange={(category) => onFilterChange({ ...filters, category })}
+              ariaLabel="カテゴリ"
+            />
           </div>
           <div>
             <FieldLabel>媒体</FieldLabel>
-            <select
+            <SelectMenuControl
               value={filters.platform}
-              onChange={(event) => onFilterChange({ ...filters, platform: event.target.value as EventPlatform | "all" })}
-              className={inputClassName()}
-            >
-              <option value="all">すべて</option>
-              {platformOptions.map((option) => (
-                <option key={option || "none"} value={option}>
-                  {option || "-"}
-                </option>
-              ))}
-            </select>
+              options={eventPlatformFilterOptions}
+              onChange={(platform) => onFilterChange({ ...filters, platform })}
+              ariaLabel="媒体"
+            />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <FieldLabel>期間</FieldLabel>
-            <select
+            <SelectMenuControl
               value={filters.period}
-              onChange={(event) => onFilterChange({ ...filters, period: event.target.value as EventPeriodFilter })}
-              className={inputClassName()}
-            >
-              <option value="all">全期間</option>
-              <option value="today">今日以降</option>
-              <option value="week">7日以内</option>
-              <option value="month">30日以内</option>
-            </select>
+              options={eventPeriodOptions}
+              onChange={(period) => onFilterChange({ ...filters, period })}
+              ariaLabel="期間"
+            />
           </div>
           <div>
             <FieldLabel>並び順</FieldLabel>
-            <select
+            <SelectMenuControl
               value={filters.sortOrder}
-              onChange={(event) => onFilterChange({ ...filters, sortOrder: event.target.value as EventSortOrder })}
-              className={inputClassName()}
-            >
-              <option value="upcoming">直近順</option>
-              <option value="dateAsc">日付昇順</option>
-              <option value="dateDesc">日付降順</option>
-            </select>
+              options={eventSortOptions}
+              onChange={(sortOrder) => onFilterChange({ ...filters, sortOrder })}
+              ariaLabel="並び順"
+            />
           </div>
+        </div>
+        <div>
+          <FieldLabel>告知ステータス</FieldLabel>
+          <SelectMenuControl
+            value={filters.announcementStatus}
+            options={announcementStatusFilterOptions}
+            onChange={(announcementStatus) => onFilterChange({ ...filters, announcementStatus })}
+            ariaLabel="告知ステータス"
+          />
         </div>
       </section>
       <section>
@@ -1856,6 +2192,7 @@ function DesktopEventListPanel({
                       <span className="mt-2 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
                         {categoryMeta[event.category].label}
                         {event.platform ? ` / ${event.platform}` : ""}
+                        {` / ${getAnnouncementStatusLabel(event.announcementStatus)}`}
                         {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event)}` : ""}
                       </span>
                     </div>
@@ -1895,15 +2232,21 @@ function DesktopEventListPanel({
 function DesktopSettingsPanel({
   settings,
   templates,
+  hashtagSets = [],
   templateDraft,
+  hashtagSetDraft,
   importText,
   settingsStatus,
   storageError,
   onSettingsChange,
   onTemplateDraftChange,
+  onHashtagSetDraftChange,
   onAddTemplate,
+  onAddHashtagSet,
   onEditTemplate,
+  onEditHashtagSet,
   onDeleteTemplate,
+  onDeleteHashtagSet,
   onExport,
   onImportTextChange,
   onImport,
@@ -1911,15 +2254,21 @@ function DesktopSettingsPanel({
 }: {
   settings: ScheduleSettings;
   templates: PostTemplate[];
+  hashtagSets: HashtagSet[];
   templateDraft: PostTemplate;
+  hashtagSetDraft: HashtagSet;
   importText: string;
   settingsStatus: string;
   storageError: string;
   onSettingsChange: (settings: ScheduleSettings) => void;
   onTemplateDraftChange: (template: PostTemplate) => void;
+  onHashtagSetDraftChange: (hashtagSet: HashtagSet) => void;
   onAddTemplate: () => void;
+  onAddHashtagSet: () => void;
   onEditTemplate: (template: PostTemplate) => void;
+  onEditHashtagSet: (hashtagSet: HashtagSet) => void;
   onDeleteTemplate: (templateId: string) => void;
+  onDeleteHashtagSet: (hashtagSetId: string) => void;
   onExport: () => void;
   onImportTextChange: (value: string) => void;
   onImport: () => void;
@@ -1929,7 +2278,8 @@ function DesktopSettingsPanel({
     display: true,
     defaults: true,
     data: false,
-    templates: false
+    templates: false,
+    hashtags: false
   });
   const defaultTemplateName = templates.find((template) => template.id === settings.defaultTemplateId)?.name ?? "未設定";
   const settingsStatusIsError = settingsStatus.includes("できません") || settingsStatus.includes("読み込めません");
@@ -1962,18 +2312,21 @@ function DesktopSettingsPanel({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <FieldLabel>初期表示ビュー</FieldLabel>
-            <select value={settings.defaultView} onChange={(event) => onSettingsChange({ ...settings, defaultView: event.target.value as CalendarView })} className={inputClassName()}>
-              <option value="month">月</option>
-              <option value="week">週</option>
-              <option value="day">日</option>
-            </select>
+            <SelectMenuControl
+              value={settings.defaultView}
+              options={calendarViewOptions}
+              onChange={(defaultView) => onSettingsChange({ ...settings, defaultView })}
+              ariaLabel="初期表示ビュー"
+            />
           </div>
           <div>
             <FieldLabel>週開始曜日</FieldLabel>
-            <select value={settings.weekStartsOn} onChange={(event) => onSettingsChange({ ...settings, weekStartsOn: Number(event.target.value) as 0 | 1 })} className={inputClassName()}>
-              <option value={0}>日曜</option>
-              <option value={1}>月曜</option>
-            </select>
+            <SelectMenuControl
+              value={settings.weekStartsOn}
+              options={weekStartOptions}
+              onChange={(weekStartsOn) => onSettingsChange({ ...settings, weekStartsOn })}
+              ariaLabel="週開始曜日"
+            />
           </div>
         </div>
       </SettingsAccordionSection>
@@ -1991,15 +2344,45 @@ function DesktopSettingsPanel({
           </div>
           <div>
             <FieldLabel>既定所要時間</FieldLabel>
-            <select value={settings.defaultDurationMinutes} onChange={(event) => onSettingsChange({ ...settings, defaultDurationMinutes: Number(event.target.value) })} className={inputClassName()}>
-              {defaultDurationMinuteOptions.map((minutes) => (
-                <option key={minutes} value={minutes}>
-                  {minutes}分
-                </option>
-              ))}
-            </select>
+            <SelectMenuControl
+              value={settings.defaultDurationMinutes}
+              options={defaultDurationOptions}
+              onChange={(defaultDurationMinutes) => onSettingsChange({ ...settings, defaultDurationMinutes })}
+              ariaLabel="既定所要時間"
+            />
           </div>
         </div>
+      </SettingsAccordionSection>
+      <SettingsAccordionSection
+        id="hashtags"
+        title="保存済みハッシュタグ"
+        summary={`${hashtagSets.length}件`}
+        open={openSections.hashtags}
+        onToggle={toggleSection}
+      >
+        <div className="space-y-2">
+          {hashtagSets.length === 0 ? (
+            <p className="rounded-base border border-dashed border-border bg-surface-muted/55 px-3 py-4 text-center text-sm font-bold text-muted">
+              保存済みハッシュタグはありません。
+            </p>
+          ) : (
+            hashtagSets.map((hashtagSet) => (
+              <div key={hashtagSet.id} className="rounded-base border border-border bg-surface px-3 py-3">
+                <p className="text-sm font-bold text-foreground">{hashtagSet.name}</p>
+                <p className="mt-1 text-xs leading-5 text-muted">{hashtagSet.hashtags}</p>
+                <div className="mt-2 flex gap-2">
+                  <button type="button" onClick={() => onEditHashtagSet(hashtagSet)} className="flat-control px-3 py-1.5">
+                    編集
+                  </button>
+                  <button type="button" onClick={() => onDeleteHashtagSet(hashtagSet.id)} className="flat-control border-red-300 px-3 py-1.5 text-red-600">
+                    削除
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <HashtagSetDraftEditor hashtagSetDraft={hashtagSetDraft} onHashtagSetDraftChange={onHashtagSetDraftChange} onSave={onAddHashtagSet} />
       </SettingsAccordionSection>
       <SettingsAccordionSection
         id="templates"
@@ -2010,19 +2393,23 @@ function DesktopSettingsPanel({
       >
         <div>
           <FieldLabel>既定テンプレート</FieldLabel>
-          <select value={settings.defaultTemplateId} onChange={(event) => onSettingsChange({ ...settings, defaultTemplateId: event.target.value })} className={inputClassName()}>
-            {templates.map((template) => (
-              <option key={template.id} value={template.id}>
-                {template.name}
-              </option>
-            ))}
-          </select>
+          <SelectMenuControl
+            value={settings.defaultTemplateId}
+            options={templates.map((template) => ({ value: template.id, label: template.name }))}
+            onChange={(defaultTemplateId) => onSettingsChange({ ...settings, defaultTemplateId })}
+            ariaLabel="既定テンプレート"
+          />
         </div>
         <div className="space-y-2">
           {templates.map((template) => (
             <div key={template.id} className="rounded-base border border-border bg-surface px-3 py-3">
               <p className="text-sm font-bold text-foreground">{template.name}</p>
               <p className="mt-1 text-xs leading-5 text-muted">{template.description}</p>
+              <p className="mt-1 text-xs font-bold text-primary-strong">
+                {getTemplateUsageLabel(template)}
+                {template.defaultPlatform ? ` / ${template.defaultPlatform}` : ""}
+              </p>
+              {template.hashtags.trim() ? <p className="mt-1 text-xs leading-5 text-muted">{template.hashtags}</p> : null}
               <div className="mt-2 flex gap-2">
                 <button type="button" onClick={() => onEditTemplate(template)} className="flat-control px-3 py-1.5">
                   編集
@@ -2034,18 +2421,7 @@ function DesktopSettingsPanel({
             </div>
           ))}
         </div>
-        <div className="rounded-base border border-border bg-surface px-3 py-3">
-          <FieldLabel>テンプレ名</FieldLabel>
-          <input value={templateDraft.name} onChange={(event) => onTemplateDraftChange({ ...templateDraft, name: event.target.value })} className={inputClassName()} />
-          <FieldLabel>説明</FieldLabel>
-          <input value={templateDraft.description} onChange={(event) => onTemplateDraftChange({ ...templateDraft, description: event.target.value })} className={inputClassName()} />
-          <FieldLabel>本文</FieldLabel>
-          <textarea value={templateDraft.body} onChange={(event) => onTemplateDraftChange({ ...templateDraft, body: event.target.value })} className={inputClassName("min-h-28 resize-none")} />
-          <p className="mt-2 text-xs leading-5 text-muted">使用可: {"{date} {startTime} {endTime} {title} {platform} {category} {memo}"}</p>
-          <button type="button" onClick={onAddTemplate} className="mt-3 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white">
-            テンプレートを保存
-          </button>
-        </div>
+        <TemplateDraftEditor templateDraft={templateDraft} onTemplateDraftChange={onTemplateDraftChange} onSave={onAddTemplate} />
       </SettingsAccordionSection>
       <SettingsAccordionSection
         id="data"
@@ -2109,6 +2485,7 @@ function MobileBottomTabs({
 
 function ScheduleForm({
   draft,
+  hashtagSets = [],
   onDraftChange,
   onSave,
   onDelete,
@@ -2117,6 +2494,7 @@ function ScheduleForm({
   canDelete
 }: {
   draft: ScheduleEvent;
+  hashtagSets: HashtagSet[];
   onDraftChange: (event: ScheduleEvent) => void;
   onSave: () => void;
   onDelete: () => void;
@@ -2124,6 +2502,33 @@ function ScheduleForm({
   onCancel: () => void;
   canDelete: boolean;
 }) {
+  const eventHashtagSets = hashtagSets ?? [];
+  const [selectedEventHashtagSetId, setSelectedEventHashtagSetId] = useState("");
+  const activeEventHashtagSetId = selectedEventHashtagSetId || eventHashtagSets[0]?.id || "";
+  const categorySelectOptions = categoryOptions.map((option) => ({ value: option.value, label: option.label }));
+  const platformSelectOptions = platformOptions.map((option) => ({ value: option, label: option || "-" }));
+  const hashtagSetSelectOptions = eventHashtagSets.map((hashtagSet) => ({
+    value: hashtagSet.id,
+    label: hashtagSet.name,
+    detail: hashtagSet.hashtags
+  }));
+
+  function addHashtagSetToDraft(hashtagSet: HashtagSet) {
+    onDraftChange({
+      ...draft,
+      announcementHashtags: mergeHashtags(draft.announcementHashtags, hashtagSet.hashtags)
+    });
+  }
+
+  function addSelectedHashtagSetToDraft() {
+    const hashtagSet = eventHashtagSets.find((item) => item.id === activeEventHashtagSetId);
+    if (!hashtagSet) {
+      return;
+    }
+
+    addHashtagSetToDraft(hashtagSet);
+  }
+
   return (
     <form
       className="space-y-4"
@@ -2159,31 +2564,21 @@ function ScheduleForm({
       <div className="grid grid-cols-2 gap-3 rounded-base border border-border bg-surface-muted/35 p-3">
         <div>
           <FieldLabel>カテゴリ</FieldLabel>
-          <select
+          <SelectMenuControl
             value={draft.category}
-            onChange={(event) => onDraftChange({ ...draft, category: event.target.value as ScheduleEvent["category"] })}
-            className={inputClassName()}
-          >
-            {categoryOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            options={categorySelectOptions}
+            onChange={(category) => onDraftChange({ ...draft, category })}
+            ariaLabel="カテゴリ"
+          />
         </div>
         <div>
           <FieldLabel>プラットフォーム</FieldLabel>
-          <select
+          <SelectMenuControl
             value={draft.platform}
-            onChange={(event) => onDraftChange({ ...draft, platform: event.target.value as ScheduleEvent["platform"] })}
-            className={inputClassName()}
-          >
-            {platformOptions.map((option) => (
-              <option key={option || "none"} value={option}>
-                {option || "-"}
-              </option>
-            ))}
-          </select>
+            options={platformSelectOptions}
+            onChange={(platform) => onDraftChange({ ...draft, platform })}
+            ariaLabel="プラットフォーム"
+          />
         </div>
       </div>
       <div className="rounded-base border border-border bg-surface-muted/35 p-3">
@@ -2195,27 +2590,84 @@ function ScheduleForm({
           placeholder="次回配信のセットリストやコラボ企画案を記録する。"
         />
       </div>
+      <div className="space-y-3 rounded-base border border-border bg-surface-muted/35 p-3">
+        <div className="grid gap-3">
+          <div>
+            <FieldLabel>告知ステータス</FieldLabel>
+            <SelectMenuControl
+              value={draft.announcementStatus}
+              options={announcementStatusOptions}
+              onChange={(announcementStatus) => onDraftChange({ ...draft, announcementStatus })}
+              ariaLabel="告知ステータス"
+            />
+          </div>
+          <div>
+            <FieldLabel>告知ハッシュタグ</FieldLabel>
+            <input
+              value={draft.announcementHashtags}
+              onChange={(event) => onDraftChange({ ...draft, announcementHashtags: event.target.value })}
+              className={inputClassName()}
+              placeholder="#VTuber #配信告知"
+            />
+            {eventHashtagSets.length > 0 ? (
+              <div className="mt-2">
+                <p className="text-xs font-bold text-muted">保存済みセットから追加</p>
+                <div className="mt-1.5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <SelectMenuControl
+                    value={activeEventHashtagSetId}
+                    options={hashtagSetSelectOptions}
+                    onChange={setSelectedEventHashtagSetId}
+                    ariaLabel="予定に追加する保存済みハッシュタグセット"
+                    className="mt-0"
+                  />
+                  <button type="button" onClick={addSelectedHashtagSetToDraft} className="flat-control px-3 py-2 text-sm">
+                    追加
+                  </button>
+                </div>
+                {activeEventHashtagSetId ? (
+                  <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-muted">
+                    {eventHashtagSets.find((hashtagSet) => hashtagSet.id === activeEventHashtagSetId)?.hashtags}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div>
+          <FieldLabel>告知文メモ</FieldLabel>
+          <textarea
+            value={draft.announcementText}
+            onChange={(event) => onDraftChange({ ...draft, announcementText: event.target.value })}
+            className={inputClassName("min-h-24 resize-none")}
+            placeholder="予定固有の告知文や、テンプレートの {announcementText} に差し込む文面。"
+          />
+        </div>
+        <div>
+          <FieldLabel>準備メモ</FieldLabel>
+          <textarea
+            value={draft.announcementMemo}
+            onChange={(event) => onDraftChange({ ...draft, announcementMemo: event.target.value })}
+            className={inputClassName("min-h-20 resize-none")}
+            placeholder="サムネ素材、告知画像、投稿タイミングなど。"
+          />
+        </div>
+      </div>
       <div className="rounded-base border border-border bg-surface-muted/35 p-3">
         <div className="grid grid-cols-2 gap-3">
           <div>
             <FieldLabel>繰り返し</FieldLabel>
-            <select
+            <SelectMenuControl
               value={draft.recurrence ?? "none"}
-              onChange={(event) =>
+              options={recurrenceOptions}
+              onChange={(recurrence) =>
                 onDraftChange({
                   ...draft,
-                  recurrence: event.target.value as ScheduleEvent["recurrence"],
-                  recurrenceCount: event.target.value === "none" ? 1 : Math.max(2, draft.recurrenceCount ?? 4)
+                  recurrence,
+                  recurrenceCount: recurrence === "none" ? 1 : Math.max(2, draft.recurrenceCount ?? 4)
                 })
               }
-              className={inputClassName()}
-            >
-              {recurrenceOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              ariaLabel="繰り返し"
+            />
           </div>
           <div>
             <FieldLabel>作成回数</FieldLabel>
@@ -2285,6 +2737,7 @@ function SchedulePanel({
   selectedEvent,
   dayEvents,
   draft,
+  hashtagSets,
   statusMessage,
   mobileMode,
   onDraftChange,
@@ -2300,6 +2753,7 @@ function SchedulePanel({
   selectedEvent: ScheduleEvent | null;
   dayEvents: ScheduleEvent[];
   draft: ScheduleEvent;
+  hashtagSets: HashtagSet[];
   statusMessage: string;
   mobileMode: MobileScheduleMode;
   onDraftChange: (event: ScheduleEvent) => void;
@@ -2355,6 +2809,7 @@ function SchedulePanel({
                   <span className="mt-1 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
                     {categoryMeta[event.category].label}
                     {event.platform ? ` / ${event.platform}` : ""}
+                    {` / ${getAnnouncementStatusLabel(event.announcementStatus)}`}
                     {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event)}` : ""}
                   </span>
                 </button>
@@ -2372,6 +2827,7 @@ function SchedulePanel({
         <div className="mt-3">
           <ScheduleForm
             draft={draft}
+            hashtagSets={hashtagSets}
             onDraftChange={onDraftChange}
             onSave={onSave}
             onDelete={onDelete}
@@ -2389,25 +2845,41 @@ function SchedulePanel({
 function PostAssistPanel({
   selectedEvent,
   templates,
+  hashtagSets = [],
   templateId,
+  selectedHashtagSetIds = [],
   postText,
   copyStatus,
   copyStatusKind,
   copyFallbackText,
   onTemplateChange,
+  onSelectedHashtagSetIdsChange,
   onCopy
 }: {
   selectedEvent: ScheduleEvent | null;
   templates: PostTemplate[];
+  hashtagSets: HashtagSet[];
   templateId: string;
+  selectedHashtagSetIds: string[];
   postText: string;
   copyStatus: string;
   copyStatusKind: CopyStatusKind;
   copyFallbackText: string;
   onTemplateChange: (id: string) => void;
+  onSelectedHashtagSetIdsChange: (ids: string[]) => void;
   onCopy: () => void;
 }) {
   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(postText)}`;
+  const selectedTemplate = templates.find((template) => template.id === templateId);
+  const selectedHashtagSetIdSet = new Set(selectedHashtagSetIds);
+
+  function toggleHashtagSet(hashtagSetId: string) {
+    onSelectedHashtagSetIdsChange(
+      selectedHashtagSetIdSet.has(hashtagSetId)
+        ? selectedHashtagSetIds.filter((id) => id !== hashtagSetId)
+        : [...selectedHashtagSetIds, hashtagSetId]
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -2420,17 +2892,85 @@ function PostAssistPanel({
       </section>
       <section className="border-t border-border pt-5">
         <FieldLabel>テンプレート</FieldLabel>
-        <select value={templateId} onChange={(event) => onTemplateChange(event.target.value)} className={inputClassName()}>
-          {templates.map((template) => (
-            <option key={template.id} value={template.id}>
-              {template.name}
-            </option>
-          ))}
-        </select>
+        <SelectMenuControl
+          value={templateId}
+          options={templates.map((template) => ({ value: template.id, label: template.name }))}
+          onChange={onTemplateChange}
+          ariaLabel="テンプレート"
+        />
         <p className="mt-2 text-sm leading-6 text-muted">
-          {templates.find((template) => template.id === templateId)?.description}
+          {selectedTemplate?.description}
         </p>
+        {selectedTemplate ? (
+          <p className="mt-1 text-xs font-bold text-primary-strong">
+            {getTemplateUsageLabel(selectedTemplate)}
+            {selectedTemplate.defaultPlatform ? ` / ${selectedTemplate.defaultPlatform}` : ""}
+          </p>
+        ) : null}
+        {selectedTemplate?.hashtags.trim() ? (
+          <p className="mt-2 text-xs leading-5 text-muted">テンプレートタグ: {selectedTemplate.hashtags}</p>
+        ) : null}
       </section>
+      <section className="border-t border-border pt-5">
+        <div className="flex items-center justify-between gap-3">
+          <FieldLabel>保存済みハッシュタグ</FieldLabel>
+          {selectedHashtagSetIds.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => onSelectedHashtagSetIdsChange([])}
+              className="rounded-base border border-border px-2 py-1 text-xs font-bold text-muted transition hover:bg-surface-muted"
+            >
+              選択解除
+            </button>
+          ) : null}
+        </div>
+        {hashtagSets.length === 0 ? (
+          <p className="mt-2 rounded-base border border-dashed border-border bg-surface-muted/55 px-3 py-3 text-center text-xs font-bold text-muted">
+            設定でハッシュタグセットを追加できます。
+          </p>
+        ) : (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {hashtagSets.map((hashtagSet) => {
+              const selected = selectedHashtagSetIdSet.has(hashtagSet.id);
+
+              return (
+                <button
+                  key={hashtagSet.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => toggleHashtagSet(hashtagSet.id)}
+                  className={[
+                    "rounded-base border px-2.5 py-1.5 text-left text-xs font-bold transition",
+                    selected ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface text-muted hover:bg-surface-muted"
+                  ].join(" ")}
+                  title={hashtagSet.hashtags}
+                >
+                  {hashtagSet.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {selectedHashtagSetIds.length > 0 ? (
+          <p className="mt-2 text-xs leading-5 text-muted">
+            選択したセットはテンプレートタグ、予定タグと重複排除してプレビューへ追加します。
+          </p>
+        ) : null}
+      </section>
+      {selectedEvent ? (
+        <section className="rounded-base border border-border bg-surface-muted/45 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <FieldLabel>告知ステータス</FieldLabel>
+            <span className="text-xs font-bold text-primary-strong">{getAnnouncementStatusLabel(selectedEvent.announcementStatus)}</span>
+          </div>
+          {selectedEvent.announcementText.trim() ? (
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">{selectedEvent.announcementText}</p>
+          ) : null}
+          {selectedEvent.announcementHashtags.trim() ? (
+            <p className="mt-2 text-xs font-bold text-muted">予定タグ: {selectedEvent.announcementHashtags}</p>
+          ) : null}
+        </section>
+      ) : null}
       <section className="border-t border-border pt-5">
         <h2 className="text-sm font-bold text-foreground">投稿文プレビュー</h2>
         <textarea
@@ -2440,7 +2980,7 @@ function PostAssistPanel({
         />
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button type="button" onClick={onCopy} className="flat-control flex-1 px-3 py-2">
-            コピー
+            告知文をコピー
           </button>
           <a
             href={tweetUrl}
@@ -2451,6 +2991,15 @@ function PostAssistPanel({
             Xで開く
           </a>
         </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button type="button" disabled className="flat-control px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-45">
+            この予定のサムネを作る
+          </button>
+          <button type="button" disabled className="flat-control px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-45">
+            SNS分割画像を作る
+          </button>
+        </div>
+        <p className="mt-2 text-xs leading-5 text-muted">サムネ / 分割画像連携は次PR候補です。今回はコピー用文面の準備までを扱います。</p>
         {copyStatus ? (
           <p
             className={[
@@ -2494,7 +3043,18 @@ function createTemplateDraft(): PostTemplate {
     id: `template-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: "",
     description: "",
-    body: "【告知】\n{date} {startTime} - {endTime}\n{title}"
+    usageCategory: "custom",
+    defaultPlatform: "X",
+    body: "【告知】\n{date} {startTime} - {endTime}\n{title}",
+    hashtags: ""
+  };
+}
+
+function createHashtagSetDraft(): HashtagSet {
+  return {
+    id: `hashtag-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: "",
+    hashtags: ""
   };
 }
 
@@ -2509,8 +3069,11 @@ export function ScheduleCalendarApp() {
   const [activeTab, setActiveTab] = useState<PanelTab>("schedule");
   const [settings, setSettings] = useState<ScheduleSettings>(defaultScheduleSettings);
   const [userPostTemplates, setUserPostTemplates] = useState<PostTemplate[]>(postTemplates);
+  const [userHashtagSets, setUserHashtagSets] = useState<HashtagSet[]>(defaultHashtagSets);
   const [templateDraft, setTemplateDraft] = useState<PostTemplate>(() => createTemplateDraft());
+  const [hashtagSetDraft, setHashtagSetDraft] = useState<HashtagSet>(() => createHashtagSetDraft());
   const [templateId, setTemplateId] = useState(defaultScheduleSettings.defaultTemplateId);
+  const [selectedHashtagSetIds, setSelectedHashtagSetIds] = useState<string[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
   const [settingsStatus, setSettingsStatus] = useState("");
   const [importText, setImportText] = useState("");
@@ -2518,6 +3081,7 @@ export function ScheduleCalendarApp() {
     query: "",
     category: "all",
     platform: "all",
+    announcementStatus: "all",
     period: "today",
     sortOrder: "upcoming"
   });
@@ -2547,6 +3111,7 @@ export function ScheduleCalendarApp() {
       setEvents(payload.events);
       setSettings(payload.settings);
       setUserPostTemplates(payload.postTemplates);
+      setUserHashtagSets(payload.hashtagSets);
       setTemplateId(payload.settings.defaultTemplateId);
       setView(payload.settings.defaultView);
       setDraft(createEventDraft(currentDateKey, payload.settings));
@@ -2575,20 +3140,27 @@ export function ScheduleCalendarApp() {
     try {
       window.localStorage.setItem(
         scheduleStorageKey,
-        JSON.stringify(createScheduleStoragePayload(events, settings, userPostTemplates))
+        JSON.stringify(createScheduleStoragePayload(events, settings, userPostTemplates, userHashtagSets))
       );
       setStorageError("");
     } catch {
       setStorageError(saveFailureMessage);
     }
-  }, [events, hydrated, settings, userPostTemplates]);
+  }, [events, hydrated, settings, userHashtagSets, userPostTemplates]);
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedEventId) ?? null,
     [events, selectedEventId]
   );
   const selectedDayEvents = useMemo(() => getEventsForDate(events, selectedDateKey), [events, selectedDateKey]);
-  const postText = useMemo(() => generatePostText(selectedEvent, templateId, userPostTemplates), [selectedEvent, templateId, userPostTemplates]);
+  const selectedHashtagSets = useMemo(
+    () => userHashtagSets.filter((hashtagSet) => selectedHashtagSetIds.includes(hashtagSet.id)),
+    [selectedHashtagSetIds, userHashtagSets]
+  );
+  const postText = useMemo(
+    () => generatePostText(selectedEvent, templateId, userPostTemplates, { extraHashtags: selectedHashtagSets.map((hashtagSet) => hashtagSet.hashtags) }),
+    [selectedEvent, selectedHashtagSets, templateId, userPostTemplates]
+  );
   const visibleEvents = useMemo(() => sortEvents(events), [events]);
   const filteredListEvents = useMemo(() => {
     const todayKey = toDateKey(new Date());
@@ -2636,6 +3208,10 @@ export function ScheduleCalendarApp() {
         }
 
         if (eventFilters.platform !== "all" && event.platform !== eventFilters.platform) {
+          return false;
+        }
+
+        if (eventFilters.announcementStatus !== "all" && event.announcementStatus !== eventFilters.announcementStatus) {
           return false;
         }
 
@@ -2803,6 +3379,10 @@ export function ScheduleCalendarApp() {
     const nextDraft = {
       ...draft,
       title: draft.title.trim() || "無題の予定",
+      memo: draft.memo.trim(),
+      announcementText: draft.announcementText.trim(),
+      announcementHashtags: draft.announcementHashtags.trim(),
+      announcementMemo: draft.announcementMemo.trim(),
       recurrence: normalizedRecurrence,
       recurrenceCount: normalizedRecurrence === "none" ? 1 : Math.min(maxRecurrenceCount, Math.max(2, Math.floor(draft.recurrenceCount ?? 4)))
     };
@@ -2948,7 +3528,10 @@ export function ScheduleCalendarApp() {
       ...templateDraft,
       name: templateDraft.name.trim() || "新しいテンプレート",
       description: templateDraft.description.trim() || "カスタムテンプレート",
-      body: templateDraft.body.trim() || "{title}"
+      usageCategory: templateDraft.usageCategory,
+      defaultPlatform: templateDraft.defaultPlatform,
+      body: templateDraft.body.trim() || "{title}",
+      hashtags: templateDraft.hashtags.trim()
     };
     setUserPostTemplates((current) => {
       const exists = current.some((template) => template.id === nextTemplate.id);
@@ -2984,8 +3567,39 @@ export function ScheduleCalendarApp() {
     setSettingsStatus("テンプレートを削除しました。");
   }
 
+  function saveHashtagSetDraft() {
+    const nextHashtagSet = {
+      ...hashtagSetDraft,
+      name: hashtagSetDraft.name.trim() || "新しいハッシュタグセット",
+      hashtags: hashtagSetDraft.hashtags.trim()
+    };
+
+    setUserHashtagSets((current) => {
+      const exists = current.some((hashtagSet) => hashtagSet.id === nextHashtagSet.id);
+      return exists
+        ? current.map((hashtagSet) => (hashtagSet.id === nextHashtagSet.id ? nextHashtagSet : hashtagSet))
+        : [...current, nextHashtagSet];
+    });
+    setHashtagSetDraft(createHashtagSetDraft());
+    setSettingsStatus("ハッシュタグセットを保存しました。");
+  }
+
+  function editHashtagSet(hashtagSet: HashtagSet) {
+    setHashtagSetDraft({ ...hashtagSet });
+    setSettingsStatus("ハッシュタグセットを編集中です。");
+  }
+
+  function deleteHashtagSet(hashtagSetIdToDelete: string) {
+    setUserHashtagSets((current) => current.filter((hashtagSet) => hashtagSet.id !== hashtagSetIdToDelete));
+    setSelectedHashtagSetIds((current) => current.filter((hashtagSetId) => hashtagSetId !== hashtagSetIdToDelete));
+    if (hashtagSetDraft.id === hashtagSetIdToDelete) {
+      setHashtagSetDraft(createHashtagSetDraft());
+    }
+    setSettingsStatus("ハッシュタグセットを削除しました。");
+  }
+
   function exportJson() {
-    const payload = createScheduleStoragePayload(events, settings, userPostTemplates);
+    const payload = createScheduleStoragePayload(events, settings, userPostTemplates, userHashtagSets);
     setImportText(JSON.stringify(payload, null, 2));
     setSettingsStatus("バックアップJSONを出力しました。");
   }
@@ -3006,6 +3620,8 @@ export function ScheduleCalendarApp() {
       setEvents(payload.events);
       setSettings(payload.settings);
       setUserPostTemplates(payload.postTemplates);
+      setUserHashtagSets(payload.hashtagSets);
+      setSelectedHashtagSetIds((current) => current.filter((hashtagSetId) => payload.hashtagSets.some((hashtagSet) => hashtagSet.id === hashtagSetId)));
       setTemplateId(payload.settings.defaultTemplateId);
       setView(payload.settings.defaultView);
       setSelectedEventId(null);
@@ -3018,7 +3634,7 @@ export function ScheduleCalendarApp() {
   }
 
   function resetAllData() {
-    const confirmed = window.confirm("予定、設定、投稿補助テンプレートをすべて初期化します。この操作は元に戻せません。");
+    const confirmed = window.confirm("予定、設定、投稿補助テンプレート、保存済みハッシュタグをすべて初期化します。この操作は元に戻せません。");
     if (!confirmed) {
       return;
     }
@@ -3027,6 +3643,9 @@ export function ScheduleCalendarApp() {
     setEvents([]);
     setSettings(defaultScheduleSettings);
     setUserPostTemplates(postTemplates);
+    setUserHashtagSets(defaultHashtagSets);
+    setSelectedHashtagSetIds([]);
+    setHashtagSetDraft(createHashtagSetDraft());
     setTemplateId(defaultScheduleSettings.defaultTemplateId);
     setView(defaultScheduleSettings.defaultView);
     setSelectedDateKey(currentDateKey);
@@ -3191,14 +3810,20 @@ export function ScheduleCalendarApp() {
             <MobileSettingsPanel
               settings={settings}
               templates={userPostTemplates}
+              hashtagSets={userHashtagSets}
               templateDraft={templateDraft}
+              hashtagSetDraft={hashtagSetDraft}
               importText={importText}
               settingsStatus={settingsStatus}
               onSettingsChange={updateSettings}
               onTemplateDraftChange={setTemplateDraft}
+              onHashtagSetDraftChange={setHashtagSetDraft}
               onAddTemplate={saveTemplateDraft}
+              onAddHashtagSet={saveHashtagSetDraft}
               onEditTemplate={editTemplate}
+              onEditHashtagSet={editHashtagSet}
               onDeleteTemplate={deleteTemplate}
+              onDeleteHashtagSet={deleteHashtagSet}
               onExport={exportJson}
               onImportTextChange={setImportText}
               onImport={importJson}
@@ -3295,6 +3920,7 @@ export function ScheduleCalendarApp() {
                 selectedEvent={selectedEvent}
                 dayEvents={selectedDayEvents}
                 draft={draft}
+                hashtagSets={userHashtagSets}
                 statusMessage={statusMessage}
                 mobileMode={mobileScheduleMode}
                 onDraftChange={setDraft}
@@ -3311,12 +3937,15 @@ export function ScheduleCalendarApp() {
               <PostAssistPanel
                 selectedEvent={selectedEvent}
                 templates={userPostTemplates}
+                hashtagSets={userHashtagSets}
                 templateId={templateId}
+                selectedHashtagSetIds={selectedHashtagSetIds}
                 postText={postText}
                 copyStatus={copyStatus}
                 copyStatusKind={copyStatusKind}
                 copyFallbackText={copyFallbackText}
                 onTemplateChange={setTemplateId}
+                onSelectedHashtagSetIdsChange={setSelectedHashtagSetIds}
                 onCopy={copyPostText}
               />
             ) : null}
@@ -3336,15 +3965,21 @@ export function ScheduleCalendarApp() {
                 <DesktopSettingsPanel
                   settings={settings}
                   templates={userPostTemplates}
+                  hashtagSets={userHashtagSets}
                   templateDraft={templateDraft}
+                  hashtagSetDraft={hashtagSetDraft}
                   importText={importText}
                   settingsStatus={settingsStatus}
                   storageError={storageError}
                   onSettingsChange={updateSettings}
                   onTemplateDraftChange={setTemplateDraft}
+                  onHashtagSetDraftChange={setHashtagSetDraft}
                   onAddTemplate={saveTemplateDraft}
+                  onAddHashtagSet={saveHashtagSetDraft}
                   onEditTemplate={editTemplate}
+                  onEditHashtagSet={editHashtagSet}
                   onDeleteTemplate={deleteTemplate}
+                  onDeleteHashtagSet={deleteHashtagSet}
                   onExport={exportJson}
                   onImportTextChange={setImportText}
                   onImport={importJson}

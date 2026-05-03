@@ -4,6 +4,20 @@ export type EventCategory = "stream" | "production" | "post" | "planning" | "pre
 
 export type EventPlatform = "YouTube" | "Twitch" | "X" | "TikTok" | "Other" | "";
 export type EventRecurrence = "none" | "daily" | "weekly";
+export type AnnouncementStatus =
+  | "not-started"
+  | "preparing"
+  | "copy-ready"
+  | "image-ready"
+  | "announced"
+  | "streamed";
+export type PostTemplateUsageCategory =
+  | "x-post"
+  | "youtube-description"
+  | "reminder"
+  | "after-note"
+  | "title-ideas"
+  | "custom";
 
 export type ScheduleEvent = {
   id: string;
@@ -16,6 +30,10 @@ export type ScheduleEvent = {
   memo: string;
   recurrence?: EventRecurrence;
   recurrenceCount?: number;
+  announcementText: string;
+  announcementHashtags: string;
+  announcementMemo: string;
+  announcementStatus: AnnouncementStatus;
 };
 
 export type ScheduleSettings = {
@@ -30,7 +48,16 @@ export type PostTemplate = {
   id: string;
   name: string;
   description: string;
+  usageCategory: PostTemplateUsageCategory;
+  defaultPlatform: EventPlatform;
   body: string;
+  hashtags: string;
+};
+
+export type HashtagSet = {
+  id: string;
+  name: string;
+  hashtags: string;
 };
 
 export type ScheduleStoragePayload = {
@@ -38,6 +65,7 @@ export type ScheduleStoragePayload = {
   events: ScheduleEvent[];
   settings: ScheduleSettings;
   postTemplates: PostTemplate[];
+  hashtagSets: HashtagSet[];
 };
 
 export const scheduleStorageKey = "v-streamer-tools:schedule-calendar-events:v1";
@@ -88,6 +116,34 @@ export const recurrenceOptions: Array<{ value: EventRecurrence; label: string }>
   { value: "none", label: "繰り返しなし" },
   { value: "daily", label: "毎日" },
   { value: "weekly", label: "毎週" }
+];
+export const announcementStatusOptions: Array<{ value: AnnouncementStatus; label: string }> = [
+  { value: "not-started", label: "未着手" },
+  { value: "preparing", label: "準備中" },
+  { value: "copy-ready", label: "投稿文準備済み" },
+  { value: "image-ready", label: "告知画像作成済み" },
+  { value: "announced", label: "告知済み" },
+  { value: "streamed", label: "配信済み" }
+];
+export const postTemplateUsageOptions: Array<{ value: PostTemplateUsageCategory; label: string }> = [
+  { value: "x-post", label: "X告知" },
+  { value: "youtube-description", label: "YouTube概要欄" },
+  { value: "reminder", label: "直前リマインド" },
+  { value: "after-note", label: "終了後フォロー" },
+  { value: "title-ideas", label: "タイトル候補" },
+  { value: "custom", label: "カスタム" }
+];
+export const postTemplateVariableOptions: Array<{ token: string; label: string }> = [
+  { token: "{title}", label: "タイトル" },
+  { token: "{date}", label: "日付" },
+  { token: "{startTime}", label: "開始時刻" },
+  { token: "{endTime}", label: "終了時刻" },
+  { token: "{weekday}", label: "曜日" },
+  { token: "{category}", label: "カテゴリ" },
+  { token: "{platform}", label: "プラットフォーム" },
+  { token: "{memo}", label: "メモ" },
+  { token: "{announcementText}", label: "告知文" },
+  { token: "{hashtags}", label: "ハッシュタグ" }
 ];
 
 const dayFormatter = new Intl.DateTimeFormat("ja-JP", { weekday: "short" });
@@ -214,7 +270,11 @@ export function createEmptyEvent(
     platform: "YouTube",
     memo: "",
     recurrence: "none",
-    recurrenceCount: 1
+    recurrenceCount: 1,
+    announcementText: "",
+    announcementHashtags: "",
+    announcementMemo: "",
+    announcementStatus: "not-started"
   };
 }
 
@@ -229,6 +289,26 @@ export function normalizeRecurrenceCount(value: unknown): number {
   }
 
   return Math.min(30, Math.max(1, Math.floor(count)));
+}
+
+export function normalizeAnnouncementStatus(value: unknown): AnnouncementStatus {
+  return announcementStatusOptions.some((option) => option.value === value)
+    ? value as AnnouncementStatus
+    : "not-started";
+}
+
+function normalizePlatform(value: unknown): EventPlatform {
+  return platformOptions.includes(value as EventPlatform) ? value as EventPlatform : "";
+}
+
+function normalizeTemplateUsageCategory(value: unknown): PostTemplateUsageCategory {
+  return postTemplateUsageOptions.some((option) => option.value === value)
+    ? value as PostTemplateUsageCategory
+    : "custom";
+}
+
+function normalizeText(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
 
 export function normalizeEvents(value: unknown): ScheduleEvent[] {
@@ -259,6 +339,10 @@ export function normalizeEvents(value: unknown): ScheduleEvent[] {
 
       event.recurrence = normalizeRecurrence(event.recurrence);
       event.recurrenceCount = normalizeRecurrenceCount(event.recurrenceCount);
+      event.announcementText = normalizeText(event.announcementText);
+      event.announcementHashtags = normalizeText(event.announcementHashtags);
+      event.announcementMemo = normalizeText(event.announcementMemo);
+      event.announcementStatus = normalizeAnnouncementStatus(event.announcementStatus);
       return true;
     })
   );
@@ -271,6 +355,12 @@ export const defaultScheduleSettings: ScheduleSettings = {
   defaultDurationMinutes: 60,
   defaultTemplateId: "stream-notice"
 };
+
+export const defaultHashtagSets: HashtagSet[] = [
+  { id: "hashtag-vtuber-basic", name: "VTuber基本", hashtags: "#VTuber #配信告知" },
+  { id: "hashtag-stream-notice", name: "配信告知", hashtags: "#配信 #生配信" },
+  { id: "hashtag-youtube-basic", name: "YouTube", hashtags: "#YouTube" }
+];
 
 function isCalendarView(value: unknown): value is CalendarView {
   return value === "month" || value === "week" || value === "day";
@@ -302,21 +392,68 @@ export function normalizePostTemplates(value: unknown): PostTemplate[] {
     return postTemplates;
   }
 
-  const templates = value.filter((item): item is PostTemplate => {
+  const templates = value.reduce<PostTemplate[]>((result, item) => {
     if (!item || typeof item !== "object") {
-      return false;
+      return result;
     }
 
     const template = item as Partial<PostTemplate>;
-    return (
+    const valid = (
       typeof template.id === "string" &&
       typeof template.name === "string" &&
       typeof template.description === "string" &&
       typeof template.body === "string"
     );
-  });
+
+    if (!valid) {
+      return result;
+    }
+
+    result.push({
+      id: template.id ?? "",
+      name: template.name ?? "",
+      description: template.description ?? "",
+      usageCategory: normalizeTemplateUsageCategory(template.usageCategory),
+      defaultPlatform: normalizePlatform(template.defaultPlatform),
+      body: template.body ?? "",
+      hashtags: normalizeText(template.hashtags)
+    });
+    return result;
+  }, []);
 
   return templates.length > 0 ? templates : postTemplates;
+}
+
+export function normalizeHashtagSets(value: unknown): HashtagSet[] {
+  if (value === undefined) {
+    return defaultHashtagSets;
+  }
+
+  if (!Array.isArray(value)) {
+    return defaultHashtagSets;
+  }
+
+  return value.reduce<HashtagSet[]>((result, item) => {
+    if (!item || typeof item !== "object") {
+      return result;
+    }
+
+    const hashtagSet = item as Partial<HashtagSet>;
+    if (
+      typeof hashtagSet.id !== "string" ||
+      typeof hashtagSet.name !== "string" ||
+      typeof hashtagSet.hashtags !== "string"
+    ) {
+      return result;
+    }
+
+    result.push({
+      id: hashtagSet.id,
+      name: hashtagSet.name,
+      hashtags: normalizeText(hashtagSet.hashtags)
+    });
+    return result;
+  }, []);
 }
 
 export function normalizeStoragePayload(value: unknown): ScheduleStoragePayload {
@@ -325,7 +462,8 @@ export function normalizeStoragePayload(value: unknown): ScheduleStoragePayload 
       version: scheduleStorageVersion,
       events: normalizeEvents(value),
       settings: { ...defaultScheduleSettings },
-      postTemplates
+      postTemplates,
+      hashtagSets: defaultHashtagSets
     };
   }
 
@@ -334,13 +472,15 @@ export function normalizeStoragePayload(value: unknown): ScheduleStoragePayload 
       version: scheduleStorageVersion,
       events: [],
       settings: { ...defaultScheduleSettings },
-      postTemplates
+      postTemplates,
+      hashtagSets: defaultHashtagSets
     };
   }
 
   const input = value as Partial<ScheduleStoragePayload>;
   const templates = normalizePostTemplates(input.postTemplates);
   const settings = normalizeSettings(input.settings);
+  const hashtagSets = normalizeHashtagSets(input.hashtagSets);
   const defaultTemplateExists = templates.some((template) => template.id === settings.defaultTemplateId);
 
   return {
@@ -350,7 +490,8 @@ export function normalizeStoragePayload(value: unknown): ScheduleStoragePayload 
       ...settings,
       defaultTemplateId: defaultTemplateExists ? settings.defaultTemplateId : templates[0]?.id ?? defaultScheduleSettings.defaultTemplateId
     },
-    postTemplates: templates
+    postTemplates: templates,
+    hashtagSets
   };
 }
 
@@ -363,27 +504,75 @@ function getTemplateValue(event: ScheduleEvent | null, key: string): string {
     return getLongDateLabel(event.date);
   }
 
+  if (key === "weekday") {
+    return dayFormatter.format(parseDateKey(event.date));
+  }
+
   if (key === "category") {
     return categoryMeta[event.category].label;
+  }
+
+  if (key === "hashtags") {
+    return event.announcementHashtags;
   }
 
   return String(event[key as keyof ScheduleEvent] ?? "");
 }
 
-export function renderPostTemplate(event: ScheduleEvent | null, template: PostTemplate): string {
+function normalizeHashtag(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+}
+
+export function mergeHashtags(...values: string[]): string {
+  const seen = new Set<string>();
+  const tags = values
+    .flatMap((value) => value.split(/[\s,、]+/))
+    .map(normalizeHashtag)
+    .filter((tag) => {
+      if (!tag || seen.has(tag)) {
+        return false;
+      }
+
+      seen.add(tag);
+      return true;
+    });
+
+  return tags.join(" ");
+}
+
+export function renderPostTemplate(
+  event: ScheduleEvent | null,
+  template: PostTemplate,
+  includeHashtags = true,
+  extraHashtags: string[] = []
+): string {
   if (!event) {
     return "予定を選ぶと、ここに投稿文プレビューが表示されます。";
   }
 
-  return template.body.replace(/\{(date|startTime|endTime|title|platform|category|memo)\}/g, (_, key: string) =>
-    getTemplateValue(event, key)
+  const hashtags = includeHashtags ? mergeHashtags(template.hashtags, ...extraHashtags, event.announcementHashtags) : "";
+  const body = template.body.replace(/\{(date|startTime|endTime|title|platform|category|memo|weekday|announcementText|hashtags)\}/g, (_, key: string) =>
+    key === "hashtags" ? hashtags : getTemplateValue(event, key)
   );
+  const shouldAppendHashtags = includeHashtags && hashtags && !template.body.includes("{hashtags}");
+
+  return [body.trimEnd(), shouldAppendHashtags ? hashtags : ""].filter(Boolean).join("\n\n");
 }
 
-export function generatePostText(event: ScheduleEvent | null, templateId: string, templates: PostTemplate[] = postTemplates): string {
+export function generatePostText(
+  event: ScheduleEvent | null,
+  templateId: string,
+  templates: PostTemplate[] = postTemplates,
+  options: { includeHashtags?: boolean; extraHashtags?: string[] } = {}
+): string {
   const normalizedTemplates = normalizePostTemplates(templates);
   const template = normalizedTemplates.find((item) => item.id === templateId) ?? normalizedTemplates[0];
-  return renderPostTemplate(event, template);
+  return renderPostTemplate(event, template, options.includeHashtags ?? true, options.extraHashtags ?? []);
 }
 
 export const postTemplates: PostTemplate[] = [
@@ -391,18 +580,36 @@ export const postTemplates: PostTemplate[] = [
     id: "stream-notice",
     name: "配信告知",
     description: "当日の配信予定を短く告知します。",
-    body: "【配信予定】\n{date} {startTime} - {endTime} / {platform}\n{title}\n\nよかったら遊びに来てください。"
+    usageCategory: "x-post",
+    defaultPlatform: "X",
+    body: "【配信予定】\n{date} {startTime} - {endTime} / {platform}\n{title}\n\nよかったら遊びに来てください。",
+    hashtags: "#VTuber #配信告知"
   },
   {
     id: "reminder",
     name: "直前リマインド",
     description: "開始前の軽いリマインドに使います。",
-    body: "まもなく {startTime} から {title} です。\n{platform}でお待ちしています。"
+    usageCategory: "reminder",
+    defaultPlatform: "X",
+    body: "まもなく {startTime} から {title} です。\n{platform}でお待ちしています。",
+    hashtags: "#VTuber"
   },
   {
     id: "after-note",
     name: "終了後メモ",
     description: "配信や投稿後のフォロー文面です。",
-    body: "{title}、ありがとうございました。\n次回予定もカレンダーで整理しておきます。"
+    usageCategory: "after-note",
+    defaultPlatform: "X",
+    body: "{title}、ありがとうございました。\n次回予定もカレンダーで整理しておきます。",
+    hashtags: "#VTuber"
+  },
+  {
+    id: "youtube-description",
+    name: "YouTube概要欄メモ",
+    description: "概要欄に転記する日時と補足メモをまとめます。",
+    usageCategory: "youtube-description",
+    defaultPlatform: "YouTube",
+    body: "配信予定: {date} {startTime} - {endTime}\nタイトル: {title}\nカテゴリ: {category}\n\n{memo}",
+    hashtags: ""
   }
 ];

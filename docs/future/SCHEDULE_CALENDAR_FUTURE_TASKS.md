@@ -10,6 +10,7 @@
 - 公開v0の対象は `Portal + Tools Index + Schedule Calendar`
 - Schedule Calendar v0 は、認証やサーバー保存を使わず `localStorage` で完結する
 - 現行MVPはカレンダー管理、予定一覧、投稿補助、設定、バックアップを提供する
+- 投稿補助は、テンプレートCRUD、用途カテゴリ、既定プラットフォーム、テンプレート別ハッシュタグ、保存済みハッシュタグセット、変数挿入ボタン、予定別告知準備フィールド、告知ステータスまで対応済み
 - `materials/ideas/01_配信・動画制作/スケジュールカレンダー_*` はフル構想を含むため、公開v0との差分は将来タスクとして扱う
 
 ## Materials Diff Tasks
@@ -22,9 +23,9 @@
 - [ ] カテゴリ / プラットフォームのユーザー編集可否を決める
   - materialsでは追加・編集・削除可能だが、現行MVPは固定プリセット + `Other`
   - サーバー保存導入前にlocalStorage設定として持つか、固定運用のままにするかを決める
-- [ ] 投稿補助のテンプレート編集UIを拡張する
-  - materialsでは変数挿入ボタンとハッシュタグ管理がある
-  - 現行MVPはテンプレートCRUD、プレビュー、コピー、X投稿画面への遷移まで
+- [x] 投稿補助のテンプレート編集UIを拡張する
+  - 変数挿入ボタン、テンプレート別ハッシュタグ、用途カテゴリ、既定プラットフォームを追加済み
+  - よく使うハッシュタグをテンプレート横断で保存 / 選択する機能を追加済み
 - [ ] 削除確認ダイアログ仕様を現行UXに合わせて整理する
   - materialsでは削除前confirm、現行MVPは削除後undo toast
   - 現行UXを採用する場合はmaterials側またはREADME側に「v0ではundo方式」と明記する
@@ -40,17 +41,20 @@
 - [ ] materials内の技術スタック記述をv0実装に合わせて整理する
   - 設計書にはPostgreSQL / MongoDB、FastAPI、React Hook Form / Zod、shadcn/uiの記述がある
   - 現行MVPはNext.js App Router + TypeScript + Tailwind + React Hooks + localStorageのフロントエンド完結
-- [ ] `isCompleted` など未使用データ項目の採用可否を決める
+- [x] `isCompleted` など未使用データ項目の採用可否を決める
   - materials設計書のデータモデルには完了フラグがあるが、現行MVPには未採用
-  - 分析 / 投稿後処理と連携する段階で必要性を再評価する
+  - 現行実装では `isCompleted` ではなく、告知制作フローに合わせた `announcementStatus` を採用する
 
 ## Recommended Roadmap
 
 ### Phase A: Post Assist Polish
 
-- [ ] 変数挿入ボタンを追加する
-- [ ] よく使うハッシュタグの保存 / 選択を追加する
+- [x] 変数挿入ボタンを追加する
+- [x] よく使うハッシュタグの保存 / 選択を追加する
 - [ ] 投稿文テンプレートの既定セットを実運用向けに見直す
+- [ ] Schedule Calendar -> Thumbnail Editor / SNS Split Image Maker の handoff payload を設計する
+  - 予定ID、タイトル、日時、カテゴリ、プラットフォーム、告知文、ハッシュタグ、告知ステータスを最小候補にする
+  - 画像本体はまだ渡さず、テキスト初期値の受け渡しを先に固定する
 
 ### Phase B: Calendar Customization
 

@@ -20,6 +20,7 @@ import {
   type SnsSplitDraft,
   type SnsSplitExportFormat,
   type SnsSplitImageSource,
+  type SnsSplitJoinType,
   type SnsSplitMode,
   type SnsSplitPreset,
   type SnsSplitPostIndex,
@@ -58,6 +59,14 @@ const modeOptions: { id: SnsSplitMode; label: string; note: string }[] = [
   { id: "concatenate", label: "1+8連結", note: "投稿ごとに上部/下部の追加画像でメイン分割を挟みます" },
   { id: "replace", label: "1+4差し替え", note: "各投稿のフレーム中央にメイン分割を差し込みます" }
 ];
+const splitTwoModeOptions: { id: SnsSplitMode; label: string; note: string }[] = [
+  { id: "concatenate", label: "個別追加", note: "投稿ごとに左右または上下左右の追加画像でメイン分割を挟みます" },
+  { id: "replace", label: "フレーム追加", note: "投稿ごとの横長フレーム中央にメイン分割を差し込みます" }
+];
+const splitTwoJoinOptions: { id: SnsSplitJoinType; label: string; note: string }[] = [
+  { id: "three", label: "3連結", note: "左追加 / 中央メイン / 右追加で構成します" },
+  { id: "five", label: "5連結", note: "左上下 / 中央メイン / 右上下で構成します" }
+];
 const previewModes: { id: PreviewMode; label: string }[] = [
   { id: "edit", label: "編集" },
   { id: "grid", label: "全体" },
@@ -83,6 +92,18 @@ const getPresetFromLocation = (): SnsSplitPreset | null => {
   const preset = new URLSearchParams(window.location.search).get("preset");
   return isSnsSplitPreset(preset) ? preset : null;
 };
+const createDraftForPreset = (current: SnsSplitDraft, preset: SnsSplitPreset) => {
+  if (current.preset === preset) {
+    return current;
+  }
+  const next = createSnsSplitDraft("concatenate", preset);
+  const imageById = new Map(current.images.map((image) => [image.id, image.src]));
+  return {
+    ...next,
+    exportSettings: current.exportSettings,
+    images: next.images.map((image) => ({ ...image, src: imageById.get(image.id) ?? null }))
+  };
+};
 
 export function SnsSplitImageMakerApp() {
   const [draft, setDraft] = useState<SnsSplitDraft>(() => createSnsSplitDraft());
@@ -102,23 +123,33 @@ export function SnsSplitImageMakerApp() {
   const dragPreviewRenderingRef = useRef(false);
   const dragPreviewRequestRef = useRef<DragPreviewRequest | null>(null);
   const draftRef = useRef(draft);
-  const selectedTileRef = useRef<SnsSplitTile>(getSnsSplitTiles(draft.config)[0]);
+  const selectedTileRef = useRef<SnsSplitTile>(getSnsSplitTiles(draft.config, draft.preset)[0]);
 
-  const tiles = useMemo(() => getSnsSplitTiles(draft.config), [draft.config]);
+  const tiles = useMemo(() => getSnsSplitTiles(draft.config, draft.preset), [draft.config, draft.preset]);
   const imageStatus = useMemo(() => countReadySnsSplitImages(draft), [draft]);
   const visibleSlots = useMemo(
-    () => draft.images.filter((image) => image.id !== "base").slice(0, getRequiredSlotCount(draft.mode)),
-    [draft.images, draft.mode]
+    () => draft.images.filter((image) => image.id !== "base").slice(0, getRequiredSlotCount(draft.preset, draft.mode, draft.config.joinType)),
+    [draft.config.joinType, draft.images, draft.mode, draft.preset]
   );
   const baseImage = draft.images.find((image) => image.id === "base") ?? null;
   const canExport = imageStatus.baseReady;
   const selectedTile = tiles.find((tile) => tile.index === selectedPost) ?? tiles[0];
   const selectedAdjustment = getSnsSplitPostAdjustment(draft.config, selectedPost);
+  const activeModeOptions = draft.preset === "split-2" ? splitTwoModeOptions : modeOptions;
+  const splitTwoPostCount = 2;
+  const postCount = draft.preset === "split-2" ? splitTwoPostCount : 4;
+  const exportButtonLabel = `画像を出力（${postCount}枚）`;
 
   useEffect(() => {
     draftRef.current = draft;
     selectedTileRef.current = selectedTile;
   }, [draft, selectedTile]);
+
+  useEffect(() => {
+    if (!tiles.some((tile) => tile.index === selectedPost)) {
+      setSelectedPost(tiles[0]?.index ?? 1);
+    }
+  }, [selectedPost, tiles]);
 
   useEffect(
     () => () => {
@@ -154,7 +185,8 @@ export function SnsSplitImageMakerApp() {
         setToast({ tone: "success", message: "前回の作業状態を復元しました。" });
       }
       if (active) {
-        setDraft(result.draft);
+        const urlPreset = getPresetFromLocation();
+        setDraft(urlPreset ? createDraftForPreset(result.draft, urlPreset) : result.draft);
         setHasStoredDraft(result.restoredFromStorage || result.restoredStoredImages);
         setHydrated(true);
       }
@@ -207,6 +239,19 @@ export function SnsSplitImageMakerApp() {
   };
   const updateConfig = (partial: Partial<SnsSplitConfig>) => {
     updateDraft((current) => ({ ...current, config: { ...current.config, ...partial } }));
+  };
+  const switchJoinType = (joinType: SnsSplitJoinType) => {
+    updateDraft((current) => {
+      const next = createSnsSplitDraft(current.mode, current.preset, joinType);
+      const imageById = new Map(current.images.map((image) => [image.id, image.src]));
+      return {
+        ...next,
+        exportSettings: current.exportSettings,
+        config: { ...current.config, joinType, postAdjustments: current.config.postAdjustments },
+        images: next.images.map((image) => ({ ...image, src: imageById.get(image.id) ?? null }))
+      };
+    });
+    setToast({ tone: "info", message: `${joinType === "three" ? "3連結" : "5連結"}に切り替えました。` });
   };
   const updatePostAdjustment = (postIndex: SnsSplitPostIndex, partial: Partial<typeof defaultSnsSplitPostAdjustment>) => {
     updateDraft((current) => ({
@@ -273,6 +318,7 @@ export function SnsSplitImageMakerApp() {
     updateDraft((current) => ({ ...current, exportSettings: { ...current.exportSettings, ...partial } }));
   };
   const openPreset = (preset: SnsSplitPreset) => {
+    setDraft((current) => createDraftForPreset(current, preset));
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("preset", preset);
@@ -290,17 +336,25 @@ export function SnsSplitImageMakerApp() {
   };
   const switchMode = (mode: SnsSplitMode) => {
     updateDraft((current) => {
-      const next = createSnsSplitDraft(mode, current.preset);
+      const next = createSnsSplitDraft(mode, current.preset, current.config.joinType);
       const imageById = new Map(current.images.map((image) => [image.id, image.src]));
       return {
         ...next,
         preset: current.preset,
         exportSettings: current.exportSettings,
-        config: { ...current.config, postAdjustments: current.config.postAdjustments },
+        config: { ...current.config, joinType: current.config.joinType, postAdjustments: current.config.postAdjustments },
         images: next.images.map((image) => ({ ...image, src: imageById.get(image.id) ?? null }))
       };
     });
-    setToast({ tone: "info", message: mode === "concatenate" ? "1+8連結モードに切り替えました。" : "1+4差し替えモードに切り替えました。" });
+    setToast({
+      tone: "info",
+      message:
+        draft.preset === "split-2"
+          ? `${mode === "concatenate" ? "個別追加" : "フレーム追加"}に切り替えました。`
+          : mode === "concatenate"
+            ? "1+8連結モードに切り替えました。"
+            : "1+4差し替えモードに切り替えました。"
+    });
   };
   const setImageSource = (id: SnsSplitImageSource["id"], src: string | null) => {
     updateDraft((current) => ({
@@ -366,7 +420,12 @@ export function SnsSplitImageMakerApp() {
       return;
     }
     const bandHeight = editorCanvasRef.current!.height / 3;
-    if (point.y < bandHeight || point.y > bandHeight * 2) {
+    if (draft.preset === "split-2") {
+      const columnWidth = editorCanvasRef.current!.width / 3;
+      if (point.x < columnWidth || point.x > columnWidth * 2) {
+        return;
+      }
+    } else if (point.y < bandHeight || point.y > bandHeight * 2) {
       return;
     }
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -441,13 +500,13 @@ export function SnsSplitImageMakerApp() {
         link.download = createSnsSplitFileName(draft.exportSettings.filePattern, tile.index, draft.exportSettings.format);
         link.click();
       }
-      setToast({ tone: "success", message: "投稿順1→4で4枚を書き出しました。" });
+      setToast({ tone: "success", message: `投稿順1→${postCount}で${postCount}枚を書き出しました。` });
     } catch (error) {
       setToast({ tone: "error", message: error instanceof Error ? error.message : "画像の書き出しに失敗しました。" });
     }
   };
 
-  if (activePreset !== "split-4") {
+  if (activePreset !== "split-2" && activePreset !== "split-4") {
     return <SnsSplitPresetLanding hasStoredDraft={hasStoredDraft} storedPreset={draft.preset ?? defaultSnsSplitPreset} onOpenPreset={openPreset} />;
   }
 
@@ -477,9 +536,9 @@ export function SnsSplitImageMakerApp() {
 
         <section className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-black">モード</span>
+            <span className="text-sm font-black">{draft.preset === "split-2" ? "追加方式" : "モード"}</span>
             <div className="flex overflow-hidden rounded-base border border-border bg-surface">
-              {modeOptions.map((mode) => (
+              {activeModeOptions.map((mode) => (
                 <button
                   key={mode.id}
                   type="button"
@@ -495,10 +554,31 @@ export function SnsSplitImageMakerApp() {
               ))}
             </div>
           </div>
+          {draft.preset === "split-2" ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-black">連結タイプ</span>
+              <div className="flex overflow-hidden rounded-base border border-border bg-surface">
+                {splitTwoJoinOptions.map((joinType) => (
+                  <button
+                    key={joinType.id}
+                    type="button"
+                    onClick={() => switchJoinType(joinType.id)}
+                    className={[
+                      "min-h-10 px-4 text-sm font-black transition",
+                      draft.config.joinType === joinType.id ? "bg-primary text-white" : "text-muted hover:bg-surface-muted hover:text-foreground"
+                    ].join(" ")}
+                    title={joinType.note}
+                  >
+                    {joinType.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <label className="flex items-center gap-2 text-sm font-black">
             最終比率
-            <select className="flat-control h-10 px-4 font-bold" value={draft.aspectRatio} disabled>
-              <option>16:27</option>
+            <select className="flat-control h-10 px-4 font-bold" value={draft.preset === "split-2" ? "24:9" : draft.aspectRatio} disabled>
+              <option>{draft.preset === "split-2" ? "24:9" : "16:27"}</option>
             </select>
           </label>
         </section>
@@ -506,10 +586,10 @@ export function SnsSplitImageMakerApp() {
         <main className="grid flex-1 gap-4 lg:min-h-[760px] lg:grid-cols-[minmax(0,1fr)_minmax(360px,43%)] xl:min-h-[820px] xl:grid-cols-[minmax(0,1fr)_minmax(440px,45%)]">
           <section className={["panel min-h-[560px] flex-col gap-4 overflow-hidden p-4 shadow-none lg:flex lg:min-h-[760px] xl:min-h-[820px]", mobileView === "preview" ? "flex" : "hidden"].join(" ")}>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <SectionTitle title="プレビュー" description="編集、4枚全体、投稿時のメイン分割を切り替えて確認します。" />
+              <SectionTitle title="プレビュー" description={draft.preset === "split-2" ? "編集、24:9完成画像、左右のメイン分割を切り替えて確認します。" : "編集、4枚全体、投稿時のメイン分割を切り替えて確認します。"} />
               <div className="flex items-center gap-2 rounded-base border border-border bg-surface px-3 py-2 text-xs text-muted">
                 <span className="font-bold text-primary-strong">投稿順</span>
-                <span>1 → 2 → 3 → 4</span>
+                <span>{draft.preset === "split-2" ? "1 → 2" : "1 → 2 → 3 → 4"}</span>
               </div>
             </div>
             <div className="grid grid-cols-3 overflow-hidden rounded-base border border-border bg-surface">
@@ -546,7 +626,7 @@ export function SnsSplitImageMakerApp() {
             ) : null}
             <div className="min-h-[320px] flex-1 overflow-hidden rounded-base border border-primary/40 bg-surface-muted p-3 lg:min-h-[560px] xl:min-h-[640px]">
               {previewMode === "edit" ? (
-                <div className="mx-auto flex h-full min-h-0 w-full max-w-[520px] flex-col">
+                <div className={["mx-auto flex h-full min-h-0 w-full flex-col", draft.preset === "split-2" ? "max-w-[860px]" : "max-w-[520px]"].join(" ")}>
                   <p className="mb-2 shrink-0 text-xs leading-5 text-muted">投稿{selectedPost}を編集中です。中央のメイン分割画像はPCのマウス操作でドラッグ移動できます。中心線に近づくと吸着します。</p>
                   <div className="flex min-h-0 flex-1 justify-center">
                     <canvas
@@ -562,8 +642,8 @@ export function SnsSplitImageMakerApp() {
                 </div>
               ) : null}
               {previewMode === "grid" ? (
-                <div className="mx-auto flex h-full min-h-0 w-full max-w-[720px] justify-center">
-                  <canvas ref={compositeCanvasRef} className="h-full w-auto max-w-full rounded-base bg-background object-contain" aria-label="4枚投稿の並び確認" />
+                <div className={["mx-auto flex h-full min-h-0 w-full justify-center", draft.preset === "split-2" ? "max-w-[900px]" : "max-w-[720px]"].join(" ")}>
+                  <canvas ref={compositeCanvasRef} className="h-full w-auto max-w-full rounded-base bg-background object-contain" aria-label={draft.preset === "split-2" ? "2枚投稿の並び確認" : "4枚投稿の並び確認"} />
                 </div>
               ) : null}
               {previewMode === "post" ? (
@@ -574,7 +654,8 @@ export function SnsSplitImageMakerApp() {
                       type="button"
                       onClick={() => setSelectedPost(tile.index)}
                       className={[
-                        "relative flex aspect-video items-center justify-center overflow-hidden border-primary/35 bg-transparent",
+                        "relative flex items-center justify-center overflow-hidden border-primary/35 bg-transparent",
+                        draft.preset === "split-2" ? "aspect-[8/9]" : "aspect-video",
                         index % 2 === 0 ? "sm:border-r" : "",
                         index < 2 ? "border-b" : "",
                         selectedPost === tile.index ? "outline outline-2 outline-primary outline-offset-[-2px]" : ""
@@ -610,14 +691,26 @@ export function SnsSplitImageMakerApp() {
               <div className="grid gap-3">
                 {baseImage ? <ImagePicker image={baseImage} onChange={handleFileChange} onDropFile={handleImageFile} onRemove={setImageSource} prominent /> : null}
                 <div className="rounded-base border border-border bg-surface-muted/60 p-3">
-                  <p className="text-sm font-black text-foreground">追加画像スロット（{draft.mode === "concatenate" ? "投稿別の上部/下部" : "投稿別フレーム"}）</p>
+                      <p className="text-sm font-black text-foreground">
+                        追加画像スロット（
+                        {draft.preset === "split-2"
+                          ? draft.mode === "concatenate"
+                            ? draft.config.joinType === "five"
+                              ? "投稿別の左右上下"
+                              : "投稿別の左右"
+                            : "投稿別フレーム"
+                          : draft.mode === "concatenate"
+                            ? "投稿別の上部/下部"
+                            : "投稿別フレーム"}
+                        ）
+                      </p>
                   <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {visibleSlots.map((image, index) => (
                       <ImagePicker
                         key={image.id}
                         image={image}
                         index={index + 1}
-                        roleLabel={getSnsSplitSlotLabel(draft.mode, index + 1)}
+                        roleLabel={getSnsSplitSlotLabel(draft.mode, index + 1, draft.preset, draft.config.joinType)}
                         mode={draft.mode}
                         onChange={handleFileChange}
                         onDropFile={handleImageFile}
@@ -626,9 +719,15 @@ export function SnsSplitImageMakerApp() {
                     ))}
                   </div>
                   <p className="mt-3 text-xs text-muted">
-                    {draft.mode === "concatenate"
-                      ? "1+8連結では、各投稿を「追加画像（上）/ メイン分割 / 追加画像（下）」で作成します。"
-                      : "1+4差し替えでは、各フレーム画像の中央1/3へメイン分割を差し込みます。"}
+                    {draft.preset === "split-2"
+                      ? draft.mode === "concatenate"
+                        ? draft.config.joinType === "five"
+                          ? "5連結では、各投稿を「左上下 / 中央メイン / 右上下」の24:9画像として作成します。"
+                          : "3連結では、各投稿を「左追加 / 中央メイン / 右追加」の24:9画像として作成します。"
+                        : "フレーム追加では、各24:9フレーム画像の中央8:9へメイン分割を差し込みます。"
+                      : draft.mode === "concatenate"
+                        ? "1+8連結では、各投稿を「追加画像（上）/ メイン分割 / 追加画像（下）」で作成します。"
+                        : "1+4差し替えでは、各フレーム画像の中央1/3へメイン分割を差し込みます。"}
                   </p>
                   <p className="mt-2 text-xs text-muted">画像は16:9推奨です。異なる比率の画像は中央基準でトリミングされます。</p>
                   <p className="mt-1 text-xs text-muted">画像処理と復元用保存はブラウザ内で完結し、外部へ送信しません。</p>
@@ -709,7 +808,7 @@ export function SnsSplitImageMakerApp() {
                     onChange={(event) => updateExport({ filePattern: event.target.value })}
                     className="h-11 w-full rounded-base border border-border bg-surface px-3 text-sm font-bold text-foreground"
                   />
-                  <span className="mt-1 block text-xs text-muted">{"{n}: 1〜4、{nn}: 01〜04"}</span>
+                  <span className="mt-1 block text-xs text-muted">{draft.preset === "split-2" ? "{n}: 1〜2、{nn}: 01〜02" : "{n}: 1〜4、{nn}: 01〜04"}</span>
                 </label>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -717,13 +816,13 @@ export function SnsSplitImageMakerApp() {
                   下書き保存
                 </button>
                 <button type="button" onClick={exportTiles} disabled={!canExport} className="min-h-12 rounded-base bg-primary px-4 py-2 font-black text-white disabled:cursor-not-allowed disabled:opacity-55">
-                  画像を出力（4枚）
+                  {exportButtonLabel}
                 </button>
               </div>
               <p className="mt-2 text-xs text-muted">
                 メイン画像: {imageStatus.baseReady ? "選択済み" : "未選択"} / 追加画像: {imageStatus.slotReady}/{imageStatus.requiredSlots}
               </p>
-              <p className="mt-1 text-xs text-muted">出力はブラウザのダウンロードとして4枚の画像を保存します。</p>
+              <p className="mt-1 text-xs text-muted">出力はブラウザのダウンロードとして{postCount}枚の画像を保存します。</p>
             </ControlSection>
           </aside>
         </main>

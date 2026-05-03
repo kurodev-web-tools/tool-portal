@@ -1,5 +1,6 @@
 export type SnsSplitMode = "concatenate" | "replace";
 export type SnsSplitPreset = "split-2" | "split-3" | "split-4";
+export type SnsSplitJoinType = "three" | "five";
 export type SnsSplitAspectRatioId = "16:27";
 export type SnsSplitExportFormat = "png" | "jpeg";
 export type SnsSplitSlotId = `slot-${number}`;
@@ -18,6 +19,7 @@ export type SnsSplitConfig = {
   offsetX: number;
   offsetY: number;
   scale: number;
+  joinType: SnsSplitJoinType;
   postAdjustments: Record<SnsSplitPostIndex, SnsSplitPostAdjustment>;
   showSeam: boolean;
   showGrid: boolean;
@@ -60,11 +62,8 @@ export const snsSplitDraftStorageKey = "v-streamer-tools:sns-split-image-maker:d
 export const defaultSnsSplitPreset: SnsSplitPreset = "split-4";
 export const snsSplitBaseCanvas = { width: 1280, height: 720 };
 export const snsSplitPostCanvas = { width: 1280, height: 2160 };
+export const snsSplitWidePostCanvas = { width: 1920, height: 720 };
 export const snsSplitCanvas = snsSplitBaseCanvas;
-export const snsSplitSlotCountByMode: Record<SnsSplitMode, number> = {
-  concatenate: 8,
-  replace: 4
-};
 
 export const defaultSnsSplitPostAdjustment: SnsSplitPostAdjustment = {
   offsetX: 0,
@@ -79,6 +78,7 @@ export const defaultSnsSplitConfig: SnsSplitConfig = {
   offsetX: 0,
   offsetY: 0,
   scale: 100,
+  joinType: "three",
   postAdjustments: {
     1: { ...defaultSnsSplitPostAdjustment },
     2: { ...defaultSnsSplitPostAdjustment },
@@ -108,6 +108,7 @@ const safeString = (value: unknown, fallback: string, maxLength: number) =>
 const isSafeImageSource = (src: string) => src.startsWith("data:image/png;") || src.startsWith("data:image/jpeg;");
 export const isSnsSplitPreset = (value: unknown): value is SnsSplitPreset =>
   value === "split-2" || value === "split-3" || value === "split-4";
+const isSnsSplitJoinType = (value: unknown): value is SnsSplitJoinType => value === "three" || value === "five";
 
 const clonePostAdjustments = (): Record<SnsSplitPostIndex, SnsSplitPostAdjustment> => ({
   1: { ...defaultSnsSplitPostAdjustment },
@@ -130,27 +131,62 @@ export const getSnsSplitPostAdjustment = (
   postIndex: SnsSplitPostIndex
 ): SnsSplitPostAdjustment => config.postAdjustments[postIndex] ?? defaultSnsSplitPostAdjustment;
 
-export const createSnsSplitImages = (mode: SnsSplitMode = "concatenate"): SnsSplitImageSource[] => [
+export const getRequiredSlotCount = (
+  preset: SnsSplitPreset,
+  mode: SnsSplitMode,
+  joinType: SnsSplitJoinType = defaultSnsSplitConfig.joinType
+) => {
+  if (preset === "split-2") {
+    if (mode === "replace") {
+      return 2;
+    }
+    return joinType === "five" ? 8 : 4;
+  }
+  if (preset === "split-3") {
+    return mode === "replace" ? 3 : 6;
+  }
+  return mode === "replace" ? 4 : 8;
+};
+
+export const getSnsSplitPostCanvas = (preset: SnsSplitPreset) => (preset === "split-2" ? snsSplitWidePostCanvas : snsSplitPostCanvas);
+
+export const createSnsSplitImages = (
+  mode: SnsSplitMode = "concatenate",
+  preset: SnsSplitPreset = defaultSnsSplitPreset,
+  joinType: SnsSplitJoinType = defaultSnsSplitConfig.joinType
+): SnsSplitImageSource[] => [
   { id: "base", name: "分割用メイン画像", src: null },
-  ...Array.from({ length: snsSplitSlotCountByMode[mode] }, (_, index) => ({
+  ...Array.from({ length: getRequiredSlotCount(preset, mode, joinType) }, (_, index) => ({
     id: `slot-${index + 1}` as SnsSplitSlotId,
     name: `追加画像 ${index + 1}`,
     src: null
   }))
 ];
 
-export const createSnsSplitDraft = (mode: SnsSplitMode = "concatenate", preset: SnsSplitPreset = defaultSnsSplitPreset): SnsSplitDraft => ({
+export const createSnsSplitDraft = (
+  mode: SnsSplitMode = "concatenate",
+  preset: SnsSplitPreset = defaultSnsSplitPreset,
+  joinType: SnsSplitJoinType = defaultSnsSplitConfig.joinType
+): SnsSplitDraft => ({
   version: 1,
   preset,
   mode,
   aspectRatio: "16:27",
-  images: createSnsSplitImages(mode),
-  config: { ...defaultSnsSplitConfig, postAdjustments: clonePostAdjustments() },
+  images: createSnsSplitImages(mode, preset, joinType),
+  config: { ...defaultSnsSplitConfig, joinType, postAdjustments: clonePostAdjustments() },
   exportSettings: { ...defaultSnsSplitExportSettings },
   updatedAt: nowIso()
 });
 
-export const getSnsSplitTiles = (config: SnsSplitConfig): SnsSplitTile[] => {
+export const getSnsSplitTiles = (config: SnsSplitConfig, preset: SnsSplitPreset = defaultSnsSplitPreset): SnsSplitTile[] => {
+  if (preset === "split-2") {
+    const halfWidth = snsSplitBaseCanvas.width / 2;
+    return [
+      { index: 1, sx: 0, sy: 0, sw: halfWidth, sh: snsSplitBaseCanvas.height },
+      { index: 2, sx: halfWidth, sy: 0, sw: halfWidth, sh: snsSplitBaseCanvas.height }
+    ];
+  }
+
   const seam = clamp(config.seamFix, -80, 80);
   const splitX = clamp(Math.round((snsSplitBaseCanvas.width * clamp(config.splitX, 10, 90)) / 100 + seam), 80, snsSplitBaseCanvas.width - 80);
   const splitY = clamp(Math.round((snsSplitBaseCanvas.height * clamp(config.splitY, 10, 90)) / 100 + seam), 60, snsSplitBaseCanvas.height - 60);
@@ -168,15 +204,52 @@ export const getConcatenateSlotIdsForPost = (postIndex: SnsSplitTile["index"]) =
   bottom: `slot-${(postIndex - 1) * 2 + 2}` as SnsSplitSlotId
 });
 
-export const getSnsSplitSlotLabel = (mode: SnsSplitMode, index: number) => {
+export function getSplitTwoConcatenateSlotIdsForPost(
+  postIndex: SnsSplitTile["index"],
+  joinType: "five"
+): { leftTop: SnsSplitSlotId; leftBottom: SnsSplitSlotId; rightTop: SnsSplitSlotId; rightBottom: SnsSplitSlotId };
+export function getSplitTwoConcatenateSlotIdsForPost(
+  postIndex: SnsSplitTile["index"],
+  joinType: "three"
+): { left: SnsSplitSlotId; right: SnsSplitSlotId };
+export function getSplitTwoConcatenateSlotIdsForPost(postIndex: SnsSplitTile["index"], joinType: SnsSplitJoinType) {
+  if (joinType === "five") {
+    return {
+      leftTop: `slot-${(postIndex - 1) * 4 + 1}` as SnsSplitSlotId,
+      leftBottom: `slot-${(postIndex - 1) * 4 + 2}` as SnsSplitSlotId,
+      rightTop: `slot-${(postIndex - 1) * 4 + 3}` as SnsSplitSlotId,
+      rightBottom: `slot-${(postIndex - 1) * 4 + 4}` as SnsSplitSlotId
+    };
+  }
+  return {
+    left: `slot-${(postIndex - 1) * 2 + 1}` as SnsSplitSlotId,
+    right: `slot-${(postIndex - 1) * 2 + 2}` as SnsSplitSlotId
+  };
+}
+
+export const getSnsSplitSlotLabel = (
+  mode: SnsSplitMode,
+  index: number,
+  preset: SnsSplitPreset = defaultSnsSplitPreset,
+  joinType: SnsSplitJoinType = defaultSnsSplitConfig.joinType
+) => {
+  if (preset === "split-2") {
+    if (mode === "replace") {
+      return `投稿${index} フレーム`;
+    }
+    const postIndex = joinType === "five" ? Math.floor((index - 1) / 4) + 1 : Math.floor((index - 1) / 2) + 1;
+    if (joinType === "five") {
+      const labels = ["左上", "左下", "右上", "右下"];
+      return `投稿${postIndex} ${labels[(index - 1) % 4]}`;
+    }
+    return `投稿${postIndex} ${index % 2 === 1 ? "左" : "右"}`;
+  }
   if (mode === "replace") {
     return `投稿${index} フレーム`;
   }
   const postIndex = Math.floor((index - 1) / 2) + 1;
   return `投稿${postIndex} ${index % 2 === 1 ? "上部" : "下部"}`;
 };
-
-export const getRequiredSlotCount = (mode: SnsSplitMode) => snsSplitSlotCountByMode[mode];
 
 export const normalizeSnsSplitDraft = (value: unknown): SnsSplitDraft | null => {
   if (!isObject(value) || value.version !== 1) {
@@ -185,7 +258,9 @@ export const normalizeSnsSplitDraft = (value: unknown): SnsSplitDraft | null => 
 
   const mode: SnsSplitMode = value.mode === "replace" ? "replace" : "concatenate";
   const preset: SnsSplitPreset = isSnsSplitPreset(value.preset) ? value.preset : defaultSnsSplitPreset;
-  const requiredSlots = getRequiredSlotCount(mode);
+  const rawConfig = isObject(value.config) ? value.config : {};
+  const joinType: SnsSplitJoinType = isSnsSplitJoinType(rawConfig.joinType) ? rawConfig.joinType : defaultSnsSplitConfig.joinType;
+  const requiredSlots = getRequiredSlotCount(preset, mode, joinType);
   const rawImages = Array.isArray(value.images) ? value.images : [];
   const imageMap = new Map<string, SnsSplitImageSource>();
   rawImages.forEach((raw) => {
@@ -200,12 +275,11 @@ export const normalizeSnsSplitDraft = (value: unknown): SnsSplitDraft | null => 
     });
   });
 
-  const fallback = createSnsSplitDraft(mode, preset);
+  const fallback = createSnsSplitDraft(mode, preset, joinType);
   const images = fallback.images.map((image) => {
     const saved = imageMap.get(image.id);
     return saved ? { ...image, src: saved.src } : image;
   });
-  const rawConfig = isObject(value.config) ? value.config : {};
   const rawExport = isObject(value.exportSettings) ? value.exportSettings : {};
 
   return {
@@ -221,6 +295,7 @@ export const normalizeSnsSplitDraft = (value: unknown): SnsSplitDraft | null => 
       offsetX: clamp(numberValue(rawConfig.offsetX, defaultSnsSplitConfig.offsetX), -240, 240),
       offsetY: clamp(numberValue(rawConfig.offsetY, defaultSnsSplitConfig.offsetY), -240, 240),
       scale: clamp(numberValue(rawConfig.scale, defaultSnsSplitConfig.scale), 50, 180),
+      joinType,
       postAdjustments: {
         1: normalizePostAdjustment(isObject(rawConfig.postAdjustments) ? rawConfig.postAdjustments[1] : null),
         2: normalizePostAdjustment(isObject(rawConfig.postAdjustments) ? rawConfig.postAdjustments[2] : null),
@@ -308,12 +383,13 @@ const drawBaseComposite = async (
 
 export const drawSnsSplitComposite = async (
   canvas: HTMLCanvasElement,
-  draft: Pick<SnsSplitDraft, "images" | "config" | "mode">,
+  draft: Pick<SnsSplitDraft, "images" | "config" | "mode" | "preset">,
   options: { includeGuides?: boolean; forceJpegBackground?: boolean } = {}
 ) => {
-  const tiles = getSnsSplitTiles(draft.config);
-  canvas.width = snsSplitPostCanvas.width * 2;
-  canvas.height = snsSplitPostCanvas.height * 2;
+  const tiles = getSnsSplitTiles(draft.config, draft.preset);
+  const postCanvasSize = getSnsSplitPostCanvas(draft.preset);
+  canvas.width = draft.preset === "split-2" ? postCanvasSize.width : postCanvasSize.width * 2;
+  canvas.height = draft.preset === "split-2" ? postCanvasSize.height * 2 : postCanvasSize.height * 2;
   const context = canvas.getContext("2d");
   if (!context) {
     throw new Error("Canvas 2D context is not available.");
@@ -333,13 +409,13 @@ export const drawSnsSplitComposite = async (
       includeGuides: options.includeGuides,
       forceJpegBackground: options.forceJpegBackground
     });
-    const dx = (tile.index === 1 || tile.index === 3) ? 0 : snsSplitPostCanvas.width;
-    const dy = tile.index <= 2 ? 0 : snsSplitPostCanvas.height;
+    const dx = draft.preset === "split-2" || tile.index === 1 || tile.index === 3 ? 0 : postCanvasSize.width;
+    const dy = draft.preset === "split-2" ? (tile.index - 1) * postCanvasSize.height : tile.index <= 2 ? 0 : postCanvasSize.height;
     context.drawImage(postCanvas, dx, dy);
   }
 
   if (options.includeGuides) {
-    drawCompositeGuides(context);
+    drawCompositeGuides(context, draft.preset);
   }
 };
 
@@ -362,7 +438,7 @@ const drawImageCover = (
 
 export const drawSnsSplitTile = async (
   canvas: HTMLCanvasElement,
-  draft: Pick<SnsSplitDraft, "images" | "config" | "mode">,
+  draft: Pick<SnsSplitDraft, "images" | "config" | "mode" | "preset">,
   tile: SnsSplitTile,
   options: { includeGuides?: boolean; forceJpegBackground?: boolean } = {}
 ) => {
@@ -379,12 +455,12 @@ export const drawSnsSplitTile = async (
 
 export const drawSnsSplitMainTile = async (
   canvas: HTMLCanvasElement,
-  draft: Pick<SnsSplitDraft, "images" | "config">,
+  draft: Pick<SnsSplitDraft, "images" | "config" | "preset">,
   tile: SnsSplitTile,
   options: { includeGuides?: boolean; forceJpegBackground?: boolean } = {}
 ) => {
-  canvas.width = snsSplitPostCanvas.width;
-  canvas.height = snsSplitPostCanvas.width * 9 / 16;
+  canvas.width = draft.preset === "split-2" ? snsSplitBaseCanvas.width / 2 : snsSplitPostCanvas.width;
+  canvas.height = draft.preset === "split-2" ? snsSplitBaseCanvas.height : (snsSplitPostCanvas.width * 9) / 16;
   const context = canvas.getContext("2d");
   if (!context) {
     throw new Error("Canvas 2D context is not available.");
@@ -431,10 +507,15 @@ export const drawSnsSplitMainTile = async (
 
 const drawSnsSplitPostImage = async (
   canvas: HTMLCanvasElement,
-  draft: Pick<SnsSplitDraft, "images" | "config" | "mode">,
+  draft: Pick<SnsSplitDraft, "images" | "config" | "mode" | "preset">,
   tile: SnsSplitTile,
   options: { baseCanvas: HTMLCanvasElement; includeGuides?: boolean; forceJpegBackground?: boolean }
 ) => {
+  if (draft.preset === "split-2") {
+    await drawSnsSplitTwoPostImage(canvas, draft, tile, options);
+    return;
+  }
+
   canvas.width = snsSplitPostCanvas.width;
   canvas.height = snsSplitPostCanvas.height;
   const context = canvas.getContext("2d");
@@ -508,6 +589,107 @@ const drawSnsSplitPostImage = async (
   }
 };
 
+const drawSnsSplitTwoPostImage = async (
+  canvas: HTMLCanvasElement,
+  draft: Pick<SnsSplitDraft, "images" | "config" | "mode" | "preset">,
+  tile: SnsSplitTile,
+  options: { baseCanvas: HTMLCanvasElement; includeGuides?: boolean; forceJpegBackground?: boolean }
+) => {
+  canvas.width = snsSplitWidePostCanvas.width;
+  canvas.height = snsSplitWidePostCanvas.height;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Canvas 2D context is not available.");
+  }
+
+  const cellWidth = snsSplitWidePostCanvas.width / 3;
+  const halfHeight = snsSplitWidePostCanvas.height / 2;
+  context.fillStyle = options.forceJpegBackground ? "#081117" : "#0f1921";
+  context.fillRect(0, 0, snsSplitWidePostCanvas.width, snsSplitWidePostCanvas.height);
+
+  if (draft.mode === "replace") {
+    const frame = draft.images.find((image) => image.id === `slot-${tile.index}`);
+    if (frame?.src) {
+      const image = await loadImage(frame.src);
+      drawImageCover(context, image, 0, 0, snsSplitWidePostCanvas.width, snsSplitWidePostCanvas.height);
+    }
+  } else if (draft.config.joinType === "five") {
+    const slots = getSplitTwoConcatenateSlotIdsForPost(tile.index, "five");
+    const positions: Array<{ id: SnsSplitSlotId; x: number; y: number; width: number; height: number }> = [
+      { id: slots.leftTop, x: 0, y: 0, width: cellWidth, height: halfHeight },
+      { id: slots.leftBottom, x: 0, y: halfHeight, width: cellWidth, height: halfHeight },
+      { id: slots.rightTop, x: cellWidth * 2, y: 0, width: cellWidth, height: halfHeight },
+      { id: slots.rightBottom, x: cellWidth * 2, y: halfHeight, width: cellWidth, height: halfHeight }
+    ];
+    for (const position of positions) {
+      const source = draft.images.find((image) => image.id === position.id);
+      if (source?.src) {
+        const image = await loadImage(source.src);
+        drawImageCover(context, image, position.x, position.y, position.width, position.height);
+      }
+    }
+  } else {
+    const slots = getSplitTwoConcatenateSlotIdsForPost(tile.index, "three");
+    const left = draft.images.find((image) => image.id === slots.left);
+    const right = draft.images.find((image) => image.id === slots.right);
+    if (left?.src) {
+      const image = await loadImage(left.src);
+      drawImageCover(context, image, 0, 0, cellWidth, snsSplitWidePostCanvas.height);
+    }
+    if (right?.src) {
+      const image = await loadImage(right.src);
+      drawImageCover(context, image, cellWidth * 2, 0, cellWidth, snsSplitWidePostCanvas.height);
+    }
+  }
+
+  const postAdjustment = getSnsSplitPostAdjustment(draft.config, tile.index);
+  const mainScale = postAdjustment.scale / 100;
+  const mainWidth = cellWidth * mainScale;
+  const mainHeight = snsSplitWidePostCanvas.height * mainScale;
+  const mainX = cellWidth + (cellWidth - mainWidth) / 2 + postAdjustment.offsetX;
+  const mainY = (snsSplitWidePostCanvas.height - mainHeight) / 2 + postAdjustment.offsetY;
+
+  context.save();
+  context.beginPath();
+  context.rect(cellWidth, 0, cellWidth, snsSplitWidePostCanvas.height);
+  context.clip();
+  context.drawImage(options.baseCanvas, tile.sx, tile.sy, tile.sw, tile.sh, mainX, mainY, mainWidth, mainHeight);
+  context.restore();
+
+  if (options.includeGuides) {
+    context.save();
+    context.strokeStyle = draft.config.seamColor;
+    context.lineWidth = Math.max(2, draft.config.seamWidth / 2);
+    context.globalAlpha = 0.86;
+    context.beginPath();
+    context.moveTo(cellWidth, 0);
+    context.lineTo(cellWidth, snsSplitWidePostCanvas.height);
+    context.moveTo(cellWidth * 2, 0);
+    context.lineTo(cellWidth * 2, snsSplitWidePostCanvas.height);
+    if (draft.mode === "concatenate" && draft.config.joinType === "five") {
+      context.moveTo(0, halfHeight);
+      context.lineTo(cellWidth, halfHeight);
+      context.moveTo(cellWidth * 2, halfHeight);
+      context.lineTo(snsSplitWidePostCanvas.width, halfHeight);
+    }
+    context.stroke();
+    context.restore();
+
+    context.save();
+    context.strokeStyle = draft.config.seamColor;
+    context.lineWidth = 2;
+    context.globalAlpha = 0.72;
+    context.setLineDash([18, 14]);
+    context.beginPath();
+    context.moveTo(cellWidth + cellWidth / 2, 0);
+    context.lineTo(cellWidth + cellWidth / 2, snsSplitWidePostCanvas.height);
+    context.moveTo(cellWidth, snsSplitWidePostCanvas.height / 2);
+    context.lineTo(cellWidth * 2, snsSplitWidePostCanvas.height / 2);
+    context.stroke();
+    context.restore();
+  }
+};
+
 export const drawGuides = (context: CanvasRenderingContext2D, config: SnsSplitConfig) => {
   const tiles = getSnsSplitTiles(config);
   const splitX = tiles[1].sx;
@@ -549,15 +731,20 @@ export const drawGuides = (context: CanvasRenderingContext2D, config: SnsSplitCo
   context.restore();
 };
 
-const drawCompositeGuides = (context: CanvasRenderingContext2D) => {
+const drawCompositeGuides = (context: CanvasRenderingContext2D, preset: SnsSplitPreset) => {
   context.save();
   context.strokeStyle = "rgba(31, 178, 169, 0.72)";
   context.lineWidth = 6;
   context.beginPath();
-  context.moveTo(snsSplitPostCanvas.width, 0);
-  context.lineTo(snsSplitPostCanvas.width, snsSplitPostCanvas.height * 2);
-  context.moveTo(0, snsSplitPostCanvas.height);
-  context.lineTo(snsSplitPostCanvas.width * 2, snsSplitPostCanvas.height);
+  if (preset === "split-2") {
+    context.moveTo(0, snsSplitWidePostCanvas.height);
+    context.lineTo(snsSplitWidePostCanvas.width, snsSplitWidePostCanvas.height);
+  } else {
+    context.moveTo(snsSplitPostCanvas.width, 0);
+    context.lineTo(snsSplitPostCanvas.width, snsSplitPostCanvas.height * 2);
+    context.moveTo(0, snsSplitPostCanvas.height);
+    context.lineTo(snsSplitPostCanvas.width * 2, snsSplitPostCanvas.height);
+  }
   context.stroke();
   context.restore();
 };
@@ -571,8 +758,8 @@ export const createSnsSplitFileName = (pattern: string, index: number, format: S
   return `${base}.${format === "jpeg" ? "jpg" : "png"}`;
 };
 
-export const countReadySnsSplitImages = (draft: Pick<SnsSplitDraft, "images" | "mode">) => {
-  const requiredSlots = getRequiredSlotCount(draft.mode);
+export const countReadySnsSplitImages = (draft: Pick<SnsSplitDraft, "images" | "mode" | "preset" | "config">) => {
+  const requiredSlots = getRequiredSlotCount(draft.preset, draft.mode, draft.config.joinType);
   const baseReady = Boolean(draft.images.find((image) => image.id === "base")?.src);
   const slotReady = draft.images
     .filter((image) => image.id !== "base")

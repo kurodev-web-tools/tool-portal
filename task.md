@@ -799,6 +799,45 @@
   - task.mdへ実装内容と検証結果を追記
   ```
 
+  - 2026-05-03実装結果:
+    - `codex/sns-split-3` ブランチ / `.worktrees/sns-split-3` で、`codex/sns-split-2` の上にstacked実装した
+    - `split-3` を入口カードから利用可能にし、`?preset=split-3` の編集画面を開けるようにした
+    - 3分割のメイン切り出しを、画像1: 左半分 `8:9`、画像2: 右上 `8:4.5`、画像3: 右下 `8:4.5` に固定した
+    - 3分割の完成出力を、画像1 `24:9`、画像2/3 `8:13.5` にし、出力順を `split_1` -> `split_2` -> `split_3` にした
+    - 3分割の追加方式を `個別追加` / `フレーム追加` で切り替えられるようにした
+      - 個別追加: 追加画像6枚（画像1 左/右、画像2 上/下、画像3 上/下）
+      - フレーム追加: 追加画像3枚（画像1 24:9フレーム、画像2/3 8:13.5フレーム）
+    - 3分割の全体プレビューを、上に画像1、下に画像2/3横並びのcanvas構成にした
+    - 3分割のメイン分割プレビューを、左大 + 右上下の構図で確認できるようにした
+    - 既存の保存キー `v-streamer-tools:sns-split-image-maker:draft:v1`、IndexedDB名、store名は変更していない
+    - 2分割 / 4分割の既存コントロール、slot数、出力枚数は維持した
+    - `scripts/sns-split-image-maker-contract.mjs` を追加し、split-2 / split-3 / split-4 の分割座標、slot数、出力canvas比率、slot labelを検査できるようにした
+  - 2026-05-03検証:
+    - 実施: `node scripts/sns-split-image-maker-contract.mjs`（成功）
+      - TDD RED: split-3が既存4分割座標のままで落ちることを確認してから実装した
+      - GREEN: split-3の座標、出力canvas、slot label、split-2 / split-4の基本契約が通ることを確認した
+    - 実施: `npm run lint`（成功）
+    - 実施: `npx tsc --noEmit`（成功）
+    - 実施: `git diff --check`（空白エラーなし。CRLF警告のみ）
+    - 実施: `npm run build`（成功。`/tools/sns-split-image-maker` を含む6 routeがstatic prerender対象。既存のworktree lockfile root推定警告のみ）
+    - 実施: browser-use `http://localhost:3007/tools/sns-split-image-maker/?preset=split-3`
+      - 入口画面で3分割カードが `利用可能` になり、`split_1 -> split_3` 表示になっていることを確認した
+      - split-3編集画面で `追加方式`、`個別追加`、`フレーム追加`、`24:9 / 8:13.5`、投稿順 `1 → 2 → 3`、`画像を出力（3枚）` が表示されることを確認した
+      - 個別追加でslot labelが `画像1 左` / `画像1 右` / `画像2 上` / `画像2 下` / `画像3 上` / `画像3 下` になり、追加画像数が `0/6` になることを確認した
+      - フレーム追加でslot labelが `画像1 フレーム` / `画像2 フレーム` / `画像3 フレーム` になり、追加画像数が `0/3` になることを確認した
+      - 全体プレビューcanvasが `2560x2880` になり、スクリーンショットで上1枚 + 下2枚横並びの構図を確認した
+      - メイン分割プレビューcanvasが `640x720`、`640x360`、`640x360` になり、スクリーンショットで左大 + 右上下の構図を確認した
+      - console error / warn なしを確認した
+    - 実施: browser-useで既存split-2 / split-4のスモーク確認
+      - split-2: `3連結` / `5連結`、`個別追加` / `フレーム追加`、`画像を出力（2枚）`、console error / warnなし
+      - split-4: `1+8連結` / `1+4差し替え`、`画像を出力（4枚）`、console error / warnなし
+    - 未実施: browser上での実download発火順の直接instrument
+      - 理由: browser-useではbase画像投入に必要なブラウザ内JS実行 / data URLハーネスがsecurity policyでブロックされた。Chrome DevTools MCPは既存profile競合で起動できなかった
+      - 代替確認: `getSnsSplitTiles()` が `[1,2,3]` を返す契約テストと、`exportTiles()` がtiles順に `createSnsSplitFileName(..., tile.index, ...)` でlink clickする実装差分を確認した
+    - 未実施: browser-use / Chrome DevToolsでの `390 / 820 / 1024 / 1280` 直接リサイズ確認
+      - 理由: browser-use側に今回利用可能なviewport resize APIがなく、data URL iframeハーネスもsecurity policyでブロックされた。Chrome DevTools MCPは既存profile競合で起動できなかった
+      - 代替確認: responsive class差分が3分割専用preview内に閉じており、既存split-2 / split-4の主要UIを現行viewportで確認した
+
 - 実装プロンプト4: 表記統一 / プレビュータブ整理 / リリース前回帰
   ```text
   D:\V_streamer_tools で別ブランチを作成して作業してください。

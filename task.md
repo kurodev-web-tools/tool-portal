@@ -747,6 +747,9 @@
     - `編集` / `全体` プレビューのガイド表示は維持した
     - 実施: Chrome DevToolsで split-2 / split-4 の `投稿時` タブを確認し、各メイン分割canvas中央のガイド色pixelが0であることを確認した
     - 実施: `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
+  - 2026-05-03追加レビュー反映:
+    - 右パネル幅によって `投稿別 X` / `投稿別 Y` / `投稿別 拡大率` の3列表示でスライダーが潰れていたため、PC表示でも縦積みに変更した
+    - 実施: Chrome DevToolsで split-4 / split-2 の該当3項目が縦積みになり、横スクロールが発生しないことを確認した
 
 - 実装プロンプト3: 3分割対応
   ```text

@@ -740,7 +740,7 @@ export function SnsSplitImageMakerApp() {
               <div className="mt-3 space-y-3">
                 <div>
                   <p className="mb-2 text-xs font-black text-primary-strong">投稿{selectedPost}の中央メイン調整</p>
-                  <div className="grid gap-3 xl:grid-cols-3">
+                  <div className="grid gap-3">
                     <RangeControl label="投稿別 X" value={selectedAdjustment.offsetX} min={-480} max={480} unit="px" onChange={(value) => updatePostAdjustment(selectedPost, { offsetX: value })} />
                     <RangeControl label="投稿別 Y" value={selectedAdjustment.offsetY} min={-480} max={480} unit="px" onChange={(value) => updatePostAdjustment(selectedPost, { offsetY: value })} />
                     <RangeControl label="投稿別 拡大率" value={selectedAdjustment.scale} min={50} max={180} unit="%" onChange={(value) => updatePostAdjustment(selectedPost, { scale: value })} />

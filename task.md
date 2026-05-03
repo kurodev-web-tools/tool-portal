@@ -439,12 +439,67 @@
 
 #### SNS分割画像メーカーMVP後の別PR候補（2026-05-02）
 
-- [ ] 個別ツールページのPC / tablet-landscapeヘッダーからテーマ切り替えを外す
+- [x] 個別ツールページのPC / tablet-landscapeヘッダーからテーマ切り替えを外す
   - ツール操作中はヘッダー右側を保存 / 出力 / 使い方などの作業アクションに寄せる
   - `Home` / `Tools` では現状どおりヘッダー表示を維持してよい
   - 個別ツールページではPC左サイド下部へテーマ切り替えを移す
   - `1024~1279px` の簡略左ナビでは、下部に小さなトグルまたはアイコン操作として配置する
   - `~1023px` のモバイルは現状どおりメニュー内 / モバイル側操作に寄せ、画面上部に常駐させない
+  - 2026-05-02実装:
+    - `PortalShell mode="workspace"` の個別ツールページでは、`1024px~` の共通ヘッダーを非表示にして作業領域を `h-screen` へ広げた
+    - `Home` / `Tools` は従来どおり `1024px~` のヘッダー右側にテーマ切り替えを表示する
+    - 個別ツールページの `1280px~` は左サイド下部に通常テーマ切り替え、`1024~1279px` は左サイド下部にコンパクトトグルを表示する
+    - `~1023px` は従来どおりモバイルヘッダー + メニュー内テーマ切り替えに留め、画面上部への常駐表示は追加しない
+    - 幅別ブラウザ確認で使う `tmp/` / `temp/` は既存 `.gitignore` と同じく ESLint 対象外にした
+  - 2026-05-02検証:
+    - 実施: `npm run lint`（成功）
+    - 実施: `npx tsc --noEmit`（成功）
+    - 実施: `git diff --check`（空白エラーなし。CRLF警告のみ）
+    - 実施: `npm run build`（成功。`/` / `/tools` / 3つの個別ツールページがstatic prerender対象）
+    - 実施: browser-useで `http://localhost:3002/tools/schedule-calendar/` を開き、ページ到達を確認
+    - 実施: Chrome headless CDPで `390 / 820 / 1024 / 1280` 幅を確認
+      - `Home` / `Tools`: `1024 / 1280` でヘッダーのテーマ切り替えを維持、サイドバー側には追加表示なし
+      - `Schedule Calendar` / `Thumbnail Editor` / `SNS分割画像メーカー`: `1024 / 1280` でヘッダー非表示、左サイド下部にテーマ切り替えを表示
+      - `390 / 820`: 個別ツールページのヘッダー上にテーマ切り替えは常駐せず、モバイル導線を維持
+      - 全確認幅で横スクロール破綻なし
+      - 個別ツールページ3種の console error / warn なし
+    - 補足: `Home` 初回390px確認時のみ既存の `/favicon.ico` 404 が console に出た。今回変更対象の個別ツールページでは再現なし
+  - 2026-05-03レビュー反映:
+    - PC左サイド下部のテーマ切り替えから `表示テーマ` ラベルを削除し、操作だけを残した
+    - `Schedule Calendar` の `1024px~` 上部ツールバー左側へ、他ツールと同じくカテゴリ補足とツール名を追加した
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
+    - 実施: browser-useで `/tools/schedule-calendar/` を再読み込みし、`Schedule Calendar` 表示あり、`表示テーマ` ラベルなしを確認
+    - 実施: browser-useで `/tools/thumbnail-editor/` を開き、`表示テーマ` ラベルなしを確認
+  - 2026-05-03追加レビュー反映:
+    - PC左サイド下部のテーマ切り替えを `ログイン予定` パネルの下へ移動した
+    - ツール名表記は左サイドパネルの tool name と揃える方針とし、`Schedule Calendar` は英語表記を維持する
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
+    - 実施: browser-useで `/tools/schedule-calendar/` を再読み込みし、`Schedule Calendar` 表示あり、`表示テーマ` ラベルなし、テーマ切り替えが `ログイン予定` より後ろにあることを確認
+  - 2026-05-03サムネイルエディタ表記統一:
+    - `Thumbnail Editor` の左サイドパネル表記に合わせ、ツール内見出しとモバイルヘッダー / ドロワー表記を英語表記へ統一した
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
+    - 実施: browser-useで `/tools/thumbnail-editor/` を開き、`Thumbnail Editor` 表示あり、`サムネイルエディタ` 表示なしを確認
+  - 2026-05-03サムネイルエディタヘッダー調整:
+    - ヘッダー右側アクションがPC / tablet-landscape幅で2〜3段になりやすかったため、表示テキストを `新規` / `下書き` / `出力` に短縮した
+    - 詳しい意味は `aria-label` と `title` に残し、作成 / 下書き保存 / 書き出しの挙動は変更しない
+    - テキスト短縮のみでは `1280px` で3段が残ったため、ヘッダー中央操作の `xl` 最小幅を少し締め、右側アクションは1行維持にした
+    - 実施: Chrome headless CDPで `1024 / 1280 / 1366 / 1619` を確認し、`新規` / `下書き` / `出力` が同一行に収まることと横スクロールなしを確認
+  - 2026-05-03サムネイルエディタmobile作業領域調整:
+    - `<=1023px` ではプリセット / キャンバスサイズ / 編集モード / 新規 / 下書き / 出力を固定ヘッダーから外し、メインスクロール内の先頭へ移した
+    - `1024px~` は従来どおりツール内ヘッダーに操作を置き、PC / tablet-landscape の1行表示を維持する
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
+    - 実施: Chrome headless CDPで `375 / 390 / 820 / 1024 / 1280` を確認
+      - `375 / 390 / 820`: ツール内固定ヘッダーは非表示、プリセット / 操作ボタンは `main` 内、下部ナビ表示、横スクロールなし、console error / warnなし
+      - `1024 / 1280`: ツール内ヘッダー表示、下部ナビ非表示、横スクロールなし
+  - 2026-05-03サムネイルエディタmobile全体確認:
+    - `<=1023px` のキャンバスカードに `全体` ボタンを追加し、確認専用のフルスクリーンプレビューを開けるようにした
+    - 全体確認では選択枠やハンドルを描画せず、現在の下書き全体のみを表示する
+    - `Esc` または `閉じる` で編集画面へ戻れるようにし、表示中は背面スクロールを止める
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
+    - 実施: Chrome headless CDPで `375 / 390 / 820 / 1024` を確認
+      - `375 / 390 / 820`: `全体` ボタン表示、全体プレビュー開閉、1280x720 canvas描画、表示中のbody scroll停止、横スクロールなしを確認
+      - `1024`: `全体` ボタン非表示、従来のPC/tablet-landscape UI維持を確認
+      - 補足: `375px` で既存の `/favicon.ico` 404 がconsoleに1件出たが、全体確認UI起因のerror / warnはなし
 - [ ] SNS分割画像メーカーの保守向け分割を別PRで行う
   - まず IndexedDB / localStorage / draft persistence helper を `SnsSplitImageMakerApp.tsx` から分離する
   - UI section分割は `InputSection` / `PreviewPanel` / `SettingsSection` などを候補にするが、props過多にならない範囲で段階的に行う

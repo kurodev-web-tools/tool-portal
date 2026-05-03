@@ -663,7 +663,11 @@ function CalendarToolbar({
   onMove: (direction: -1 | 1) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-border px-4 py-3 xl:flex-row xl:items-center xl:justify-end">
+    <div className="flex flex-col gap-3 border-b border-border px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="hidden min-w-[13rem] lg:block">
+        <p className="text-xs font-bold text-primary-strong">予定・配信管理</p>
+        <h1 className="truncate text-xl font-black tracking-tight text-foreground">Schedule Calendar</h1>
+      </div>
       <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2 md:flex md:flex-wrap md:justify-end">
         <button type="button" className="flat-control shrink-0 px-3 py-2" onClick={onToday}>
           今日

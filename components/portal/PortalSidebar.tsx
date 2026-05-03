@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import { sidebarTools } from "@/lib/tools";
 
 const fixedItems = [
@@ -44,7 +45,9 @@ function SidebarLink({
   );
 }
 
-export function PortalSidebar() {
+export function PortalSidebar({ mode = "default" }: { mode?: "default" | "workspace" }) {
+  const showWorkspaceThemeToggle = mode === "workspace";
+
   return (
     <aside className="hidden w-20 shrink-0 border-r border-border bg-surface/78 px-2 py-5 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-hidden xl:w-72 xl:px-4 xl:py-6">
       <Link href="/" className="mb-8 flex items-center justify-center gap-3 px-1 xl:mb-9 xl:justify-start xl:px-2" title="V Streamer Tools">
@@ -86,6 +89,12 @@ export function PortalSidebar() {
         </section>
       </nav>
 
+      {showWorkspaceThemeToggle ? (
+        <div className="mt-auto flex justify-center pt-8 xl:hidden">
+          <ThemeToggle variant="compact" />
+        </div>
+      ) : null}
+
       <div className="mt-auto hidden space-y-5 pt-8 xl:block">
         <div className="panel p-4 shadow-none">
           <p className="text-sm font-bold text-foreground">ログインするともっと便利に</p>
@@ -96,6 +105,13 @@ export function PortalSidebar() {
             ログイン予定
           </button>
         </div>
+        {showWorkspaceThemeToggle ? (
+          <div className="panel p-4 shadow-none">
+            <div className="flex justify-center">
+              <ThemeToggle />
+            </div>
+          </div>
+        ) : null}
         <p className="px-2 text-xs text-muted">© 2026 V Streamer Tools</p>
       </div>
     </aside>

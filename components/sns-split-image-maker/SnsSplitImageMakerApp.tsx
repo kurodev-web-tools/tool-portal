@@ -86,7 +86,7 @@ const getPresetFromLocation = (): SnsSplitPreset | null => {
 
 export function SnsSplitImageMakerApp() {
   const [draft, setDraft] = useState<SnsSplitDraft>(() => createSnsSplitDraft());
-  const [activePreset, setActivePreset] = useState<SnsSplitPreset | null>(() => getPresetFromLocation());
+  const [activePreset, setActivePreset] = useState<SnsSplitPreset | null>(null);
   const [hasStoredDraft, setHasStoredDraft] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);

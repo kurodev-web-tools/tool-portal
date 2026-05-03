@@ -652,6 +652,13 @@
       - 390 / 820 / 1024 / 1280 で入口画面と `?preset=split-4` 編集画面に横スクロール破綻がないことを確認した
       - console error / warn なしを確認した
     - 実施: `git diff --check`（空白エラーなし。CRLF警告のみ）
+  - 2026-05-03目視確認前修正:
+    - `?preset=split-4` でSSRは入口画面、client初回renderは編集画面になり、hydration mismatch が発生していた
+    - 原因は `useState()` 初期化時に `window.location.search` を読むことで、server/clientの初回HTMLが分岐していたこと
+    - static exportを維持するため、初回renderは入口画面に揃え、mount後のeffectでquery presetを反映する形へ変更した
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
+    - 実施: Chrome DevToolsで `?preset=split-4` を直接開き、hydration errorが出ないことを確認した
+      - 補足: 既存の `/favicon.ico` 404 は出るが、hydration error / React error はなし
 
 - 実装プロンプト2: 2分割対応
   ```text

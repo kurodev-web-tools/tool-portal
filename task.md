@@ -741,6 +741,12 @@
     - 実施: `npm run lint` / `npx tsc --noEmit` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
     - 実施: Chrome DevToolsで `?preset=split-2` / `?preset=split-4` を直接開き、hydration errorが出ないことを確認した
       - 補足: preset土台PR側の確認では既存の `/favicon.ico` 404 は出るが、hydration error / React error はなし
+  - 2026-05-03レビュー反映:
+    - `投稿時` タブのメイン分割プレビューで、各分割canvas内に個別ガイドを描いていたため、split-4では左上縦 / 右上縦 / 左下横 / 右下なし、split-2では左十字 / 右縦のように見えていた
+    - `投稿時` タブではcanvas内部ガイドを描かず、並べたタイル境界だけを分割線として見せるように変更した
+    - `編集` / `全体` プレビューのガイド表示は維持した
+    - 実施: Chrome DevToolsで split-2 / split-4 の `投稿時` タブを確認し、各メイン分割canvas中央のガイド色pixelが0であることを確認した
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `git diff --check` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
 
 - 実装プロンプト3: 3分割対応
   ```text

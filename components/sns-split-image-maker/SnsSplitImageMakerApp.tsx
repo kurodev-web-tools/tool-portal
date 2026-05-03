@@ -217,7 +217,7 @@ export function SnsSplitImageMakerApp() {
       await Promise.all(
         tiles.map((tile, index) => {
           const canvas = postPreviewCanvasRefs.current[index];
-          return canvas ? drawSnsSplitMainTile(canvas, snapshot, tile, { includeGuides: snapshot.config.showSeam || snapshot.config.showGrid }) : Promise.resolve();
+          return canvas ? drawSnsSplitMainTile(canvas, snapshot, tile) : Promise.resolve();
         })
       );
       if (compositeCanvasRef.current) {

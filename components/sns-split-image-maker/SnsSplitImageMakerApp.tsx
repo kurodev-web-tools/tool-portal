@@ -5,6 +5,7 @@ import {
   countReadySnsSplitImages,
   createSnsSplitDraft,
   createSnsSplitFileName,
+  defaultSnsSplitPreset,
   defaultSnsSplitConfig,
   defaultSnsSplitPostAdjustment,
   drawSnsSplitComposite,
@@ -14,14 +15,17 @@ import {
   getRequiredSlotCount,
   getSnsSplitSlotLabel,
   getSnsSplitTiles,
+  isSnsSplitPreset,
   type SnsSplitConfig,
   type SnsSplitDraft,
   type SnsSplitExportFormat,
   type SnsSplitImageSource,
   type SnsSplitMode,
+  type SnsSplitPreset,
   type SnsSplitPostIndex,
   type SnsSplitTile
 } from "@/lib/sns-split-image-maker";
+import { SnsSplitPresetLanding } from "./SnsSplitPresetLanding";
 import {
   persistDraftMetadata,
   readImageFile,
@@ -72,9 +76,18 @@ const snapPostOffset = (value: number) => {
   const rounded = clampPostOffset(value);
   return Math.abs(rounded) <= postAdjustmentSnapThreshold ? 0 : rounded;
 };
+const getPresetFromLocation = (): SnsSplitPreset | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const preset = new URLSearchParams(window.location.search).get("preset");
+  return isSnsSplitPreset(preset) ? preset : null;
+};
 
 export function SnsSplitImageMakerApp() {
   const [draft, setDraft] = useState<SnsSplitDraft>(() => createSnsSplitDraft());
+  const [activePreset, setActivePreset] = useState<SnsSplitPreset | null>(null);
+  const [hasStoredDraft, setHasStoredDraft] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const [mobileView, setMobileView] = useState<MobileView>("preview");
@@ -117,6 +130,13 @@ export function SnsSplitImageMakerApp() {
   );
 
   useEffect(() => {
+    const syncPresetFromLocation = () => setActivePreset(getPresetFromLocation());
+    syncPresetFromLocation();
+    window.addEventListener("popstate", syncPresetFromLocation);
+    return () => window.removeEventListener("popstate", syncPresetFromLocation);
+  }, []);
+
+  useEffect(() => {
     let active = true;
     const hydrateDraft = async () => {
       const result = await restoreDraft();
@@ -135,6 +155,7 @@ export function SnsSplitImageMakerApp() {
       }
       if (active) {
         setDraft(result.draft);
+        setHasStoredDraft(result.restoredFromStorage || result.restoredStoredImages);
         setHydrated(true);
       }
     };
@@ -251,12 +272,29 @@ export function SnsSplitImageMakerApp() {
   const updateExport = (partial: Partial<SnsSplitDraft["exportSettings"]>) => {
     updateDraft((current) => ({ ...current, exportSettings: { ...current.exportSettings, ...partial } }));
   };
+  const openPreset = (preset: SnsSplitPreset) => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("preset", preset);
+      window.history.pushState(null, "", `${url.pathname}?${url.searchParams.toString()}`);
+    }
+    setActivePreset(preset);
+    setMobileView("preview");
+  };
+  const returnToPresetLanding = () => {
+    if (typeof window !== "undefined") {
+      window.history.pushState(null, "", window.location.pathname);
+    }
+    setActivePreset(null);
+    setMobileView("preview");
+  };
   const switchMode = (mode: SnsSplitMode) => {
     updateDraft((current) => {
-      const next = createSnsSplitDraft(mode);
+      const next = createSnsSplitDraft(mode, current.preset);
       const imageById = new Map(current.images.map((image) => [image.id, image.src]));
       return {
         ...next,
+        preset: current.preset,
         exportSettings: current.exportSettings,
         config: { ...current.config, postAdjustments: current.config.postAdjustments },
         images: next.images.map((image) => ({ ...image, src: imageById.get(image.id) ?? null }))
@@ -409,6 +447,10 @@ export function SnsSplitImageMakerApp() {
     }
   };
 
+  if (activePreset !== "split-4") {
+    return <SnsSplitPresetLanding hasStoredDraft={hasStoredDraft} storedPreset={draft.preset ?? defaultSnsSplitPreset} onOpenPreset={openPreset} />;
+  }
+
   return (
     <div className="h-full overflow-y-auto bg-background/72 pb-20 text-foreground scrollbar-accent lg:pb-0">
       <div className="mx-auto flex min-h-full w-full max-w-[1640px] flex-col gap-4 px-4 py-4 lg:px-5 xl:px-8">
@@ -418,6 +460,9 @@ export function SnsSplitImageMakerApp() {
             <h1 className="truncate text-xl font-black tracking-tight text-foreground lg:text-2xl">SNS分割画像メーカー</h1>
           </div>
           <div className="flex items-center gap-2">
+            <button type="button" onClick={returnToPresetLanding} className="flat-control px-3 py-2 text-xs font-bold">
+              プリセットを変更
+            </button>
             <button type="button" className="flat-control px-3 py-2 text-xs font-bold" disabled>
               ? 使い方
             </button>

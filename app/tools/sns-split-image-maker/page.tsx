@@ -4,7 +4,7 @@ import { SnsSplitImageMakerApp } from "@/components/sns-split-image-maker/SnsSpl
 
 export const metadata: Metadata = {
   title: "SNS分割画像メーカー",
-  description: "SNS投稿向けの4分割画像を手動調整し、投稿順どおりにPNG/JPEGで書き出せるV Streamer Toolsのツールです。"
+  description: "SNS投稿向けの分割画像プリセットを選び、4分割画像を手動調整して投稿順どおりにPNG/JPEGで書き出せるV Streamer Toolsのツールです。"
 };
 
 export default function SnsSplitImageMakerPage() {

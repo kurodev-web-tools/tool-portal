@@ -516,3 +516,282 @@
     - 実施: `git diff --check`（空白エラーなし。CRLF警告のみ）
     - 実施: `npm run build`（成功。`/tools/sns-split-image-maker` を含む6 routeがstatic prerender対象。既存のworktree lockfile root推定警告のみ）
     - 実施: browser-useで `http://localhost:3000/tools/sns-split-image-maker/` を再読み込みし、初期表示が `全体` タブ、`全体` / `投稿時` では `投稿1`〜`投稿4` 選択ボタン非表示、`編集` では選択ボタン表示、console error / warnなしを確認
+
+#### SNS分割画像メーカー 2分割 / 3分割拡張計画（2026-05-03）
+
+- 方針:
+  - PRは別々にするなら、ブランチもPRごとに分ける
+    - 同じブランチで複数PRを作ると、各PRの差分が同じになりやすく、独立レビュー / 個別マージが難しい
+    - 例: `codex/sns-preset-foundation` -> `codex/sns-split-2` -> `codex/sns-split-3` -> `codex/sns-preview-labels`
+    - stacked PRにする場合だけ、後続ブランチを前段ブランチから切って、前段マージ後にbaseを`main`へ戻す
+  - 最初は大規模一括実装にせず、既存4分割の挙動を維持したまま土台を作る
+  - 入口は `/tools/sns-split-image-maker` のプリセット選択画面にし、編集画面はqueryで開く
+    - 例: `/tools/sns-split-image-maker?preset=split-4`
+  - 入口カードは `2分割` / `3分割` / `4分割` の3つに絞る
+  - `前回の作業を開く` を入口に置き、保存済みdraftがある場合だけ使えるようにする
+  - 保存キー `v-streamer-tools:sns-split-image-maker:draft:v1` とIndexedDB名 / store名は維持する
+  - draftには `preset` を追加し、既存draftは `split-4` としてmigrationする
+  - 編集画面内では分割数の大変更はしない。`プリセットを変更` で入口へ戻す
+  - 編集画面内で切り替えるもの:
+    - 2分割: `連結タイプ` = `3連結` / `5連結`、`追加方式` = `個別追加` / `フレーム追加`
+    - 3分割: `追加方式` = `個別追加` / `フレーム追加`
+    - 4分割: `追加方式` = `個別追加` / `フレーム追加`
+  - 既存4分割の表記は統一する
+    - 旧 `1+8連結` -> `個別追加`
+    - 旧 `1+4差し替え` -> `フレーム追加`
+    - 移行直後は補足として `旧: 1+8` / `旧: 1+4` を小さく添えてよい
+  - プレビュータブ名は `編集` / `全体` / `メイン分割` に統一する
+    - `全体`: 追加画像込みの完成出力一覧
+    - `メイン分割`: メイン画像だけの分割確認
+  - 全体プレビュー:
+    - 2分割: `24:9` 完成画像2枚を縦並び
+    - 3分割: 上に画像1 `24:9`、下に画像2/3 `8:13.5` を横並び
+    - 4分割: 現状どおり2x2
+  - 出力順は常に `split_1` -> `split_2` -> `split_3` -> `split_4`
+    - 2分割は `split_1` -> `split_2`
+    - 3分割は `split_1` -> `split_2` -> `split_3`
+    - 4分割は既存どおり `split_1` -> `split_4`
+
+- 仕様:
+  - 2分割:
+    - メイン画像は16:9推奨
+    - メイン画像を左右2分割し、中央メイン領域は各 `8:9`
+    - 完成出力は `24:9` x 2枚
+    - `3連結 + 個別追加`: 投稿ごとに左追加 `8:9` / 中央メイン `8:9` / 右追加 `8:9`
+      - 追加画像は4枚: `投稿1 左` / `投稿1 右` / `投稿2 左` / `投稿2 右`
+    - `3連結 + フレーム追加`: 投稿ごとに `24:9` フレーム画像を全面描画し、中央 `8:9` をメイン分割で上書き
+      - 追加画像は2枚: `投稿1 フレーム` / `投稿2 フレーム`
+    - `5連結 + 個別追加`: 投稿ごとに左上/左下/中央メイン/右上/右下
+      - 追加画像は8枚、各 `8:4.5`
+    - `5連結 + フレーム追加`: 投稿ごとに `24:9` フレーム画像を全面描画し、中央 `8:9` をメイン分割で上書き
+      - 追加画像は2枚
+  - 3分割:
+    - メイン画像は16:9推奨
+    - 完成出力は3枚
+      - 画像1: `24:9`
+      - 画像2: `8:13.5`
+      - 画像3: `8:13.5`
+    - メイン画像の切り方:
+      - 画像1: 左半分 `8:9`
+      - 画像2: 右上 `8:4.5`
+      - 画像3: 右下 `8:4.5`
+    - `個別追加`: 追加画像6枚
+      - 画像1 左 `8:9` / 画像1 右 `8:9`
+      - 画像2 上 `8:4.5` / 画像2 下 `8:4.5`
+      - 画像3 上 `8:4.5` / 画像3 下 `8:4.5`
+    - `フレーム追加`: 追加画像3枚
+      - 画像1 フレーム `24:9`
+      - 画像2 フレーム `8:13.5`
+      - 画像3 フレーム `8:13.5`
+      - 各フレームを全面描画し、中央メイン領域を上書き
+  - 4分割:
+    - 既存挙動を維持する
+    - 完成出力は `8:13.5` x 4枚
+    - `個別追加`: 旧 `1+8連結`
+    - `フレーム追加`: 旧 `1+4差し替え`
+
+- 実装プロンプト1: preset土台 / 入口画面 / 4分割既存挙動維持
+  ```text
+  D:\V_streamer_tools で別ブランチを作成して作業してください。
+
+  目的:
+  SNS分割画像メーカーの2分割/3分割拡張に向けて、まずpreset土台と入口画面を作る。既存4分割の描画・保存・出力挙動は変えない。
+
+  対象:
+  - components/sns-split-image-maker/SnsSplitImageMakerApp.tsx
+  - components/sns-split-image-maker/snsSplitDraftPersistence.ts
+  - lib/sns-split-image-maker.ts
+  - app/tools/sns-split-image-maker/page.tsx
+  - task.md
+  - 必要なら components/sns-split-image-maker/ 配下に小さな helper/component ファイルを追加
+
+  要件:
+  - /tools/sns-split-image-maker はプリセット選択画面にする
+  - 入口カードは 2分割 / 3分割 / 4分割 の3つ
+  - 4分割カードから ?preset=split-4 の編集画面を開ける
+  - 保存済みdraftがある場合は「前回の作業を開く」を表示する
+  - draftに preset を追加し、既存draftは split-4 としてmigrationする
+  - 保存キー v-streamer-tools:sns-split-image-maker:draft:v1 は変えない
+  - IndexedDB名 / store名は変えない
+  - 既存4分割の 1+8 / 1+4、出力順 split_1 -> split_4、1+8 / 1+4 の合成仕様は変えない
+  - 編集画面内では「プリセットを変更」から入口へ戻れるようにする
+  - UI section分割はpropsが過剰にならない範囲に留める
+
+  検証:
+  - npm run lint
+  - npx tsc --noEmit
+  - git diff --check
+  - npm run build
+  - browser-useまたはChrome DevToolsで /tools/sns-split-image-maker を確認
+    - 入口カード表示
+    - 4分割編集画面へ遷移
+    - 既存4分割の出力順とlocalStorage/IndexedDB復元が壊れていないこと
+    - 390 / 820 / 1024 / 1280 の横スクロール破綻なし
+  - task.mdへ実装内容と検証結果を追記
+  ```
+
+  - 2026-05-03実装結果:
+    - `codex/sns-preset-foundation` ブランチ / `.worktrees/sns-preset-foundation` で作業した
+    - `SnsSplitPreset` と `defaultSnsSplitPreset` を追加し、draft metadata に `preset` を保存する土台を追加した
+    - 既存draftは `normalizeSnsSplitDraft()` で `split-4` としてmigrationするようにした
+    - 保存キー `v-streamer-tools:sns-split-image-maker:draft:v1`、IndexedDB名 `v-streamer-tools:sns-split-image-maker`、store名 `images` は変更していない
+    - `/tools/sns-split-image-maker` はプリセット選択画面にし、2分割 / 3分割 / 4分割カードを表示するようにした
+    - 4分割カードと `前回の作業を開く` から `?preset=split-4` の既存編集画面へ遷移できるようにした
+    - 編集画面のヘッダーに `プリセットを変更` を追加し、入口画面へ戻れるようにした
+    - 既存4分割の描画、1+8 / 1+4、出力順、合成仕様は変更していない
+  - 2026-05-03検証:
+    - 実施: `npm run lint`（成功）
+    - 実施: `npx tsc --noEmit`（成功）
+    - 実施: `npm run build`（成功。`/tools/sns-split-image-maker` を含む6 routeがstatic prerender対象。既存のworktree lockfile root推定警告のみ）
+    - 実施: Chrome DevToolsで `http://localhost:3005/tools/sns-split-image-maker/` を確認
+      - 入口画面に 2分割 / 3分割 / 4分割カードが表示されることを確認した
+      - 4分割カードから `?preset=split-4` の編集画面へ遷移することを確認した
+      - 保存済みlegacy draftをlocalStorageへ、base画像をIndexedDB `images` storeへ投入し、入口に `前回の作業を開く` が表示されることを確認した
+      - legacy draftが `preset: "split-4"` へmigrationされ、IndexedDBのbase画像が復元されることを確認した
+      - download clickをinstrumentし、4分割出力順が `split_1.png` -> `split_2.png` -> `split_3.png` -> `split_4.png` であることを確認した
+      - 390 / 820 / 1024 / 1280 で入口画面と `?preset=split-4` 編集画面に横スクロール破綻がないことを確認した
+      - console error / warn なしを確認した
+    - 実施: `git diff --check`（空白エラーなし。CRLF警告のみ）
+  - 2026-05-03目視確認前修正:
+    - `?preset=split-4` でSSRは入口画面、client初回renderは編集画面になり、hydration mismatch が発生していた
+    - 原因は `useState()` 初期化時に `window.location.search` を読むことで、server/clientの初回HTMLが分岐していたこと
+    - static exportを維持するため、初回renderは入口画面に揃え、mount後のeffectでquery presetを反映する形へ変更した
+    - 実施: `npm run lint` / `npx tsc --noEmit` / `npm run build`（成功。buildは既存のworktree lockfile root推定警告のみ）
+    - 実施: Chrome DevToolsで `?preset=split-4` を直接開き、hydration errorが出ないことを確認した
+      - 補足: 既存の `/favicon.ico` 404 は出るが、hydration error / React error はなし
+
+- 実装プロンプト2: 2分割対応
+  ```text
+  D:\V_streamer_tools で別ブランチを作成して作業してください。
+  baseはpreset土台PRのマージ後main、またはstacked PRならpreset土台ブランチにしてください。
+
+  目的:
+  SNS分割画像メーカーに2分割を追加する。完成出力は24:9 x 2枚。既存4分割挙動は変えない。
+
+  要件:
+  - preset split-2 を実装する
+  - メイン画像16:9を左右2分割し、中央メイン領域は各8:9
+  - 2分割の出力は split_1 -> split_2 の順で24:9画像2枚
+  - 編集画面内で 連結タイプ: 3連結 / 5連結 を切り替えられる
+  - 編集画面内で 追加方式: 個別追加 / フレーム追加 を切り替えられる
+  - 3連結 + 個別追加:
+    - 追加画像4枚: 投稿1 左 / 投稿1 右 / 投稿2 左 / 投稿2 右
+    - 完成構成: 左追加8:9 / 中央メイン8:9 / 右追加8:9
+  - 3連結 + フレーム追加:
+    - 追加画像2枚: 投稿1 フレーム24:9 / 投稿2 フレーム24:9
+    - フレーム全面描画後、中央8:9をメイン分割で上書き
+  - 5連結 + 個別追加:
+    - 追加画像8枚、各8:4.5
+    - 投稿ごとに左上/左下/中央メイン/右上/右下
+  - 5連結 + フレーム追加:
+    - 追加画像2枚、各24:9
+    - フレーム全面描画後、中央8:9をメイン分割で上書き
+  - 全体プレビューは24:9完成画像2枚を縦並び
+  - メイン分割プレビューはメイン画像の左右2分割を確認できること
+  - 初期値は 3連結 + 個別追加
+  - 保存キー、IndexedDB名/store名は変えない
+
+  検証:
+  - npm run lint
+  - npx tsc --noEmit
+  - git diff --check
+  - npm run build
+  - browser-useまたはChrome DevToolsでsplit-2を確認
+    - 3連結/5連結の切替
+    - 個別追加/フレーム追加の切替
+    - 24:9の全体プレビュー縦並び
+    - split_1 -> split_2 のdownload発火順
+    - 390 / 820 / 1024 / 1280 の横スクロール破綻なし
+  - 既存split-4の回帰確認
+  - task.mdへ実装内容と検証結果を追記
+  ```
+
+- 実装プロンプト3: 3分割対応
+  ```text
+  D:\V_streamer_tools で別ブランチを作成して作業してください。
+  baseは2分割PRのマージ後main、またはstacked PRなら2分割ブランチにしてください。
+
+  目的:
+  SNS分割画像メーカーに3分割を追加する。完成出力は画像1が24:9、画像2/3が8:13.5。既存2分割/4分割挙動は変えない。
+
+  要件:
+  - preset split-3 を実装する
+  - メイン画像16:9の切り方:
+    - 画像1: 左半分8:9
+    - 画像2: 右上8:4.5
+    - 画像3: 右下8:4.5
+  - 出力順は split_1 -> split_2 -> split_3
+  - split_1 は24:9
+  - split_2 / split_3 は8:13.5
+  - 編集画面内で 追加方式: 個別追加 / フレーム追加 を切り替えられる
+  - 個別追加:
+    - 追加画像6枚
+    - 画像1 左8:9 / 画像1 右8:9
+    - 画像2 上8:4.5 / 画像2 下8:4.5
+    - 画像3 上8:4.5 / 画像3 下8:4.5
+  - フレーム追加:
+    - 追加画像3枚
+    - 画像1 フレーム24:9
+    - 画像2 フレーム8:13.5
+    - 画像3 フレーム8:13.5
+    - 各フレーム全面描画後、中央メイン領域を上書き
+  - 全体プレビューは上に画像1、下に画像2/3横並び
+  - メイン分割プレビューは左大 + 右上下の構図を確認できること
+  - 初期値は個別追加
+  - 保存キー、IndexedDB名/store名は変えない
+
+  検証:
+  - npm run lint
+  - npx tsc --noEmit
+  - git diff --check
+  - npm run build
+  - browser-useまたはChrome DevToolsでsplit-3を確認
+    - 個別追加/フレーム追加の切替
+    - 全体プレビューが上1枚 + 下2枚横並び
+    - split_1 -> split_2 -> split_3 のdownload発火順
+    - 390 / 820 / 1024 / 1280 の横スクロール破綻なし
+  - 既存split-2 / split-4の回帰確認
+  - task.mdへ実装内容と検証結果を追記
+  ```
+
+- 実装プロンプト4: 表記統一 / プレビュータブ整理 / リリース前回帰
+  ```text
+  D:\V_streamer_tools で別ブランチを作成して作業してください。
+  baseは3分割PRのマージ後main、またはstacked PRなら3分割ブランチにしてください。
+
+  目的:
+  SNS分割画像メーカーの2/3/4分割対応後に、利用者向け表記とプレビュー体験を統一し、公開前の回帰確認を行う。
+
+  要件:
+  - 4分割の表示を以下へ統一する
+    - 旧 1+8連結 -> 個別追加
+    - 旧 1+4差し替え -> フレーム追加
+    - 必要なら小さく 旧: 1+8 / 旧: 1+4 を補足する
+  - プレビュータブを 編集 / 全体 / メイン分割 に統一する
+  - 全体プレビュー:
+    - 2分割: 24:9完成画像2枚を縦並び
+    - 3分割: 上に画像1、下に画像2/3横並び
+    - 4分割: 既存どおり2x2
+  - メイン分割プレビュー:
+    - 2分割: 左右2分割
+    - 3分割: 左大 + 右上下
+    - 4分割: 既存どおり2x2
+  - 入力エリアの説明文を、個別追加 / フレーム追加 / 各比率が分かる表現に整理する
+  - 出力順の説明を分割数ごとに誤解なく表示する
+  - 保存済みdraft migration、破損localStorage、IndexedDB画像復元の説明を必要に応じて更新する
+  - UIの過剰なsection分割は避け、props過多になる変更は次PR候補としてtask.mdへ残す
+
+  検証:
+  - npm run lint
+  - npx tsc --noEmit
+  - git diff --check
+  - npm run build
+  - browser-useまたはChrome DevToolsで 390 / 820 / 1024 / 1280 を確認
+    - 入口画面
+    - split-2 / split-3 / split-4 編集画面
+    - 各分割の全体 / メイン分割プレビュー
+    - 各分割の出力順
+    - localStorage復元、broken JSON保護、IndexedDB画像復元
+    - console error / warnなし
+  - task.mdへ最終回帰結果と残課題を追記
+  ```

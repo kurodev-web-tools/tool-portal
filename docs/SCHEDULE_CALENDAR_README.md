@@ -28,7 +28,7 @@
   - 投稿文プレビュー
   - テンプレート側、保存済みセット、予定側のハッシュタグを結合したクリップボードコピー
   - X 投稿画面への遷移
-  - サムネ作成 / SNS分割画像作成の準備中導線
+  - サムネ作成 / SNS分割画像作成へのブラウザ内 handoff
 - 予定管理フォーム
   - 予定ごとの告知文、告知ハッシュタグ、準備メモ、告知ステータス
   - 告知ハッシュタグ欄への保存済みハッシュタグセット追加（独自メニュー + 追加ボタン）
@@ -88,6 +88,41 @@
 
 削除 undo は一時的な React state のみで管理します。
 undo 専用履歴は `localStorage` に保存しません。
+
+## Tool Handoff
+
+Schedule Calendar から Thumbnail Editor / SNS分割画像メーカーへ進む導線は、URLに本文を載せず、短い query token と `sessionStorage` の一時 payload で渡します。
+
+保存キー接頭辞は `v-streamer-tools:tool-handoff:v1:`、URL query は `handoff` です。
+SNS分割画像メーカーへは編集画面を直接開くため、`preset=split-4` も付与します。
+
+handoff payload は version `1` で、次のテキスト情報だけを持ちます。
+
+```json
+{
+  "version": 1,
+  "source": "schedule-calendar",
+  "target": "thumbnail-editor",
+  "eventId": "event-...",
+  "title": "配信タイトル",
+  "date": "2026-05-03",
+  "startTime": "20:00",
+  "endTime": "21:00",
+  "category": "stream",
+  "categoryLabel": "配信",
+  "platform": "YouTube",
+  "announcementText": "告知文プレビュー",
+  "hashtags": "#VTuber #配信告知",
+  "announcementStatus": "copy-ready",
+  "announcementStatusLabel": "投稿文準備済み"
+}
+```
+
+画像本体は渡しません。
+payload は30分で期限切れ扱いにし、期限切れ、対象ツール不一致、壊れた JSON、token 不一致は安全に無視して通常起動します。
+Thumbnail Editor は受け取ったタイトル、時刻、告知文を配信告知プリセットのテキスト初期値へ反映します。
+Schedule Calendar から遷移してきた場合は、プリセット変更やキャンバスサイズ変更をしても同じ予定テキストを新しいプリセットへ再適用します。
+SNS分割画像メーカーは告知文メモを表示し、出力ファイル名の初期値へ日付とタイトルを反映します。
 
 繰り返し予定は保存時に複数の通常予定として作成します。
 MVP範囲は `毎日` / `毎週` のみです。例外日、繰り返し終了日の詳細指定、シリーズ一括編集は未対応です。
@@ -160,6 +195,9 @@ PR 前は最低限、次を確認します。
 - 8 秒後に undo toast が消え、削除済み状態が維持される
 - 毎日 / 毎週の繰り返し作成
 - 投稿補助コピー、コピー失敗時 fallback、X 遷移 URL
+- Schedule Calendar -> Thumbnail Editor handoff
+- Schedule Calendar -> SNS分割画像メーカー handoff
+- handoff なし / 壊れた handoff token で通常起動
 - 投稿補助テンプレート作成 / 編集 / 削除
 - 変数挿入ボタンと投稿文プレビュー
 - テンプレート側 / 保存済みセット / 予定側ハッシュタグの結合コピー

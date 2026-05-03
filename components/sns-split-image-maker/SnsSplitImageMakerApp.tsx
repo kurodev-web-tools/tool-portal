@@ -26,6 +26,7 @@ import {
   type SnsSplitPostIndex,
   type SnsSplitTile
 } from "@/lib/sns-split-image-maker";
+import { readToolHandoff, type ScheduleHandoffPayload } from "@/lib/tool-handoff";
 import { SnsSplitPresetLanding } from "./SnsSplitPresetLanding";
 import {
   persistDraftMetadata,
@@ -80,6 +81,25 @@ const clampPostOffset = (value: number) => Math.min(Math.max(Math.round(value), 
 const snapPostOffset = (value: number) => {
   const rounded = clampPostOffset(value);
   return Math.abs(rounded) <= postAdjustmentSnapThreshold ? 0 : rounded;
+};
+const sanitizeFilePatternPart = (value: string) =>
+  value
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "-")
+    .replace(/\s+/g, "-")
+    .slice(0, 32);
+const applyScheduleHandoffToSnsDraft = (draft: SnsSplitDraft, payload: ScheduleHandoffPayload): SnsSplitDraft => {
+  const titlePart = sanitizeFilePatternPart(payload.title);
+  const datePart = payload.date.replaceAll("-", "");
+
+  return {
+    ...draft,
+    exportSettings: {
+      ...draft.exportSettings,
+      filePattern: [datePart, titlePart, "{n}"].filter(Boolean).join("_")
+    },
+    updatedAt: new Date().toISOString()
+  };
 };
 const getPresetRatioLabel = (preset: SnsSplitPreset) => {
   if (preset === "split-2") {
@@ -191,6 +211,7 @@ export function SnsSplitImageMakerApp() {
   const [hasStoredDraft, setHasStoredDraft] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
+  const [handoffPayload, setHandoffPayload] = useState<ScheduleHandoffPayload | null>(null);
   const [mobileView, setMobileView] = useState<MobileView>("preview");
   const [selectedPost, setSelectedPost] = useState<SnsSplitPostIndex>(1);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("grid");
@@ -263,9 +284,15 @@ export function SnsSplitImageMakerApp() {
         setToast({ tone: "success", message: "前回の作業状態を復元しました。" });
       }
       if (active) {
+        const handoff = readToolHandoff("sns-split-image-maker");
         const urlPreset = getPresetFromLocation();
-        setDraft(urlPreset ? createDraftForPreset(result.draft, urlPreset) : result.draft);
+        const nextDraft = urlPreset ? createDraftForPreset(result.draft, urlPreset) : result.draft;
+        setDraft(handoff ? applyScheduleHandoffToSnsDraft(nextDraft, handoff) : nextDraft);
+        setHandoffPayload(handoff);
         setHasStoredDraft(result.restoredFromStorage || result.restoredStoredImages);
+        if (handoff) {
+          setToast({ tone: "success", message: "Schedule Calendarの予定から告知文メモを受け取りました。" });
+        }
         setHydrated(true);
       }
     };
@@ -394,6 +421,18 @@ export function SnsSplitImageMakerApp() {
   };
   const updateExport = (partial: Partial<SnsSplitDraft["exportSettings"]>) => {
     updateDraft((current) => ({ ...current, exportSettings: { ...current.exportSettings, ...partial } }));
+  };
+  const copyHandoffAnnouncementText = async () => {
+    if (!handoffPayload) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(handoffPayload.announcementText);
+      setToast({ tone: "success", message: "告知文をコピーしました。" });
+    } catch {
+      setToast({ tone: "warning", message: "コピーできませんでした。告知文メモから手動でコピーしてください。" });
+    }
   };
   const openPreset = (preset: SnsSplitPreset) => {
     setDraft((current) => createDraftForPreset(current, preset));
@@ -606,6 +645,31 @@ export function SnsSplitImageMakerApp() {
             </button>
           </div>
         </header>
+
+        {handoffPayload ? (
+          <section className="rounded-base border border-primary/35 bg-primary-soft/35 px-4 py-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-primary-strong">Schedule Calendarから受け取り</p>
+                <h2 className="mt-1 truncate text-base font-black text-foreground">{handoffPayload.title || "無題の予定"}</h2>
+                <p className="mt-1 text-xs font-bold text-muted">
+                  {handoffPayload.date} {handoffPayload.startTime} - {handoffPayload.endTime}
+                  {handoffPayload.platform ? ` / ${handoffPayload.platform}` : ""}
+                </p>
+              </div>
+              <button type="button" onClick={copyHandoffAnnouncementText} className="flat-control px-3 py-2 text-xs font-bold">
+                告知文コピー
+              </button>
+            </div>
+            <textarea
+              readOnly
+              value={handoffPayload.announcementText}
+              className="mt-3 min-h-24 w-full resize-none rounded-base border border-border bg-surface px-3 py-2 text-xs leading-5 text-foreground"
+              aria-label="Schedule Calendarから受け取った告知文"
+            />
+            {handoffPayload.hashtags ? <p className="mt-2 text-xs font-bold text-primary-strong">{handoffPayload.hashtags}</p> : null}
+          </section>
+        ) : null}
 
         <section className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">

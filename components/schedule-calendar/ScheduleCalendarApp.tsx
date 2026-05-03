@@ -2,6 +2,12 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent, type PointerEvent, type ReactNode } from "react";
 import {
+  buildToolHandoffUrl,
+  createScheduleHandoffPayload,
+  writeToolHandoff,
+  type ToolHandoffTarget
+} from "@/lib/tool-handoff";
+import {
   addDays,
   addMonths,
   announcementStatusOptions,
@@ -2854,7 +2860,9 @@ function PostAssistPanel({
   copyFallbackText,
   onTemplateChange,
   onSelectedHashtagSetIdsChange,
-  onCopy
+  onCopy,
+  onCreateThumbnail,
+  onCreateSnsSplit
 }: {
   selectedEvent: ScheduleEvent | null;
   templates: PostTemplate[];
@@ -2868,10 +2876,13 @@ function PostAssistPanel({
   onTemplateChange: (id: string) => void;
   onSelectedHashtagSetIdsChange: (ids: string[]) => void;
   onCopy: () => void;
+  onCreateThumbnail: () => void;
+  onCreateSnsSplit: () => void;
 }) {
   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(postText)}`;
   const selectedTemplate = templates.find((template) => template.id === templateId);
   const selectedHashtagSetIdSet = new Set(selectedHashtagSetIds);
+  const canCreateHandoff = Boolean(selectedEvent);
 
   function toggleHashtagSet(hashtagSetId: string) {
     onSelectedHashtagSetIdsChange(
@@ -2992,14 +3003,28 @@ function PostAssistPanel({
           </a>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <button type="button" disabled className="flat-control px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-45">
+          <button
+            type="button"
+            disabled={!canCreateHandoff}
+            onClick={onCreateThumbnail}
+            className="flat-control px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-45"
+          >
             この予定のサムネを作る
           </button>
-          <button type="button" disabled className="flat-control px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-45">
+          <button
+            type="button"
+            disabled={!canCreateHandoff}
+            onClick={onCreateSnsSplit}
+            className="flat-control px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-45"
+          >
             SNS分割画像を作る
           </button>
         </div>
-        <p className="mt-2 text-xs leading-5 text-muted">サムネ / 分割画像連携は次PR候補です。今回はコピー用文面の準備までを扱います。</p>
+        <p className="mt-2 text-xs leading-5 text-muted">
+          {selectedEvent
+            ? "この予定のタイトル、日時、告知文、ハッシュタグを次ツールの初期値として渡します。"
+            : "予定を選ぶと、サムネ / 分割画像ツールへ初期テキストを渡せます。"}
+        </p>
         {copyStatus ? (
           <p
             className={[
@@ -3708,6 +3733,44 @@ export function ScheduleCalendarApp() {
     }
   }
 
+  function openHandoffTarget(target: ToolHandoffTarget) {
+    if (!selectedEvent) {
+      setCopyStatus("予定を選んでから次ツールへ進んでください。");
+      setCopyStatusKind("error");
+      return;
+    }
+
+    const selectedTemplate = userPostTemplates.find((template) => template.id === templateId);
+    const handoffHashtags = mergeHashtags(
+      selectedTemplate?.hashtags ?? "",
+      ...selectedHashtagSets.map((hashtagSet) => hashtagSet.hashtags),
+      selectedEvent.announcementHashtags
+    );
+    const payload = createScheduleHandoffPayload(target, {
+      eventId: selectedEvent.id,
+      title: selectedEvent.title.trim() || "無題の予定",
+      date: selectedEvent.date,
+      startTime: selectedEvent.startTime,
+      endTime: selectedEvent.endTime,
+      category: selectedEvent.category,
+      categoryLabel: categoryMeta[selectedEvent.category].label,
+      platform: selectedEvent.platform,
+      announcementText: postText.trim() || selectedEvent.announcementText.trim(),
+      hashtags: handoffHashtags,
+      announcementStatus: selectedEvent.announcementStatus,
+      announcementStatusLabel: getAnnouncementStatusLabel(selectedEvent.announcementStatus)
+    });
+    const token = writeToolHandoff(payload);
+
+    if (!token) {
+      setCopyStatus("次ツールへ渡す一時データを保存できませんでした。");
+      setCopyStatusKind("error");
+      return;
+    }
+
+    window.location.assign(buildToolHandoffUrl(target, token));
+  }
+
   if (!hydrated) {
     return (
       <div className="grid h-full place-items-center border border-border bg-surface text-sm text-muted">
@@ -3947,6 +4010,8 @@ export function ScheduleCalendarApp() {
                 onTemplateChange={setTemplateId}
                 onSelectedHashtagSetIdsChange={setSelectedHashtagSetIds}
                 onCopy={copyPostText}
+                onCreateThumbnail={() => openHandoffTarget("thumbnail-editor")}
+                onCreateSnsSplit={() => openHandoffTarget("sns-split-image-maker")}
               />
             ) : null}
             {activeTab === "events" ? (

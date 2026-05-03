@@ -27,6 +27,7 @@ import {
   type ThumbnailShapeType,
   type ThumbnailTextAlign
 } from "@/lib/thumbnail-editor";
+import { readToolHandoff, type ScheduleHandoffPayload } from "@/lib/tool-handoff";
 
 type ToastTone = "info" | "success" | "warning" | "error";
 type ToastState = { tone: ToastTone; message: string } | null;
@@ -182,6 +183,46 @@ const isValidImageFile = (file: File) => {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
   return allowedImageMimeTypes.has(file.type) && allowedImageExtensions.has(extension);
 };
+const formatHandoffDate = (date: string) => {
+  const [, month, day] = date.split("-");
+  return month && day ? `${Number(month)}/${Number(day)}` : date;
+};
+const firstMeaningfulLine = (text: string) => text.split(/\r?\n/).map((line) => line.trim()).find(Boolean) ?? "";
+const compactLayerText = (text: string, maxLength: number) => (text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text);
+const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, payload: ScheduleHandoffPayload): ThumbnailEditorDraft => {
+  const titleText = compactLayerText(payload.title || "無題の予定", 42);
+  const timeText = compactLayerText([payload.startTime, payload.platform || "配信開始"].filter(Boolean).join("\n"), 18);
+  const subText = compactLayerText(
+    firstMeaningfulLine(payload.announcementText) ||
+      [formatHandoffDate(payload.date), payload.categoryLabel, payload.hashtags].filter(Boolean).join(" / "),
+    54
+  );
+  let selectedLayerId = draft.selectedLayerId;
+  const layers = draft.layers.map((layer) => {
+    if (layer.type !== "text") {
+      return layer;
+    }
+
+    if (layer.name.includes("見出し")) {
+      selectedLayerId = layer.id;
+      return { ...layer, text: titleText };
+    }
+
+    if (layer.name.includes("時刻")) {
+      return { ...layer, text: timeText };
+    }
+
+    if (layer.name.includes("サブ")) {
+      return { ...layer, text: subText };
+    }
+
+    return layer;
+  });
+
+  return { ...draft, layers, selectedLayerId, updatedAt: new Date().toISOString() };
+};
+const createThumbnailDraftFromHandoff = (payload: ScheduleHandoffPayload, canvas = thumbnailCanvasSizes.hd): ThumbnailEditorDraft =>
+  applyScheduleHandoffToThumbnailDraft(createDraftFromPreset("stream_announce", canvas), payload);
 
 export function ThumbnailEditorApp() {
   const [draft, setDraft] = useState<ThumbnailEditorDraft>(() => createDraftFromPreset());
@@ -195,6 +236,7 @@ export function ThumbnailEditorApp() {
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
   const [sidePanelCollapsed, setSidePanelCollapsed] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [handoffPayload, setHandoffPayload] = useState<ScheduleHandoffPayload | null>(null);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mobilePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -242,6 +284,15 @@ export function ThumbnailEditorApp() {
 
   useEffect(() => {
     try {
+      const handoffPayload = readToolHandoff("thumbnail-editor");
+      if (handoffPayload) {
+        setDraft(createThumbnailDraftFromHandoff(handoffPayload));
+        setHandoffPayload(handoffPayload);
+        showToast("success", "Schedule Calendarの予定から初期テキストを反映しました。");
+        setHydrated(true);
+        return;
+      }
+
       const saved = window.localStorage.getItem(thumbnailDraftStorageKey);
       if (!saved) {
         setHydrated(true);
@@ -440,15 +491,17 @@ export function ThumbnailEditorApp() {
 
   const applyPreset = (presetId: ThumbnailPresetId) => {
     const next = createDraftFromPreset(presetId, draft.canvas);
-    setDraft(next);
+    const nextDraft = handoffPayload ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload) : next;
+    setDraft(nextDraft);
     setMobilePanel("canvas");
-    showToast("success", "プリセットを適用しました。");
+    showToast("success", handoffPayload ? "プリセットへ予定テキストを引き継ぎました。" : "プリセットを適用しました。");
   };
 
   const changeCanvasSize = (sizeId: ThumbnailCanvasSizeId) => {
     const canvas = thumbnailCanvasSizes[sizeId];
-    setDraft(createDraftFromPreset(draft.presetId, canvas));
-    showToast("info", `${canvas.label} で新規作成しました。`);
+    const next = createDraftFromPreset(draft.presetId, canvas);
+    setDraft(handoffPayload ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload) : next);
+    showToast("info", handoffPayload ? `${canvas.label} に予定テキストを引き継ぎました。` : `${canvas.label} で新規作成しました。`);
   };
 
   const saveDraft = () => {

@@ -52,9 +52,10 @@
 - [x] 変数挿入ボタンを追加する
 - [x] よく使うハッシュタグの保存 / 選択を追加する
 - [ ] 投稿文テンプレートの既定セットを実運用向けに見直す
-- [ ] Schedule Calendar -> Thumbnail Editor / SNS Split Image Maker の handoff payload を設計する
+- [x] Schedule Calendar -> Thumbnail Editor / SNS Split Image Maker の handoff payload を設計する
   - 予定ID、タイトル、日時、カテゴリ、プラットフォーム、告知文、ハッシュタグ、告知ステータスを最小候補にする
   - 画像本体はまだ渡さず、テキスト初期値の受け渡しを先に固定する
+  - 2026-05-03: URL query token + `sessionStorage` の一時 payload として実装済み。画像本体、API、サーバー保存は未導入
 
 ### Phase B: Calendar Customization
 

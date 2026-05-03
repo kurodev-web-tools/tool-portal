@@ -6,7 +6,11 @@ import ts from "typescript";
 
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "sns-split-image-maker.ts");
+const appSourcePath = path.join(root, "components", "sns-split-image-maker", "SnsSplitImageMakerApp.tsx");
+const landingSourcePath = path.join(root, "components", "sns-split-image-maker", "SnsSplitPresetLanding.tsx");
 const source = fs.readFileSync(sourcePath, "utf8");
+const appSource = fs.readFileSync(appSourcePath, "utf8");
+const landingSource = fs.readFileSync(landingSourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -63,5 +67,13 @@ assert.equal(lib.getSnsSplitSlotLabel("concatenate", 6, "split-3"), "画像3 下
 assert.equal(lib.getSnsSplitSlotLabel("replace", 1, "split-3"), "画像1 フレーム");
 assert.equal(lib.getSnsSplitSlotLabel("replace", 2, "split-3"), "画像2 フレーム");
 assert.equal(lib.getSnsSplitSlotLabel("replace", 3, "split-3"), "画像3 フレーム");
+
+assert.match(appSource, /label: "個別追加"/, "UI labels include individual-add mode");
+assert.match(appSource, /label: "フレーム追加"/, "UI labels include frame-add mode");
+assert.match(appSource, /label: "メイン分割"/, "preview tabs expose main-split label");
+assert.doesNotMatch(appSource, /label: "投稿時"/, "preview tab label no longer says post-time");
+assert.doesNotMatch(appSource, /label: "1\+8連結"/, "primary 4-split mode label no longer uses legacy 1+8 text");
+assert.doesNotMatch(appSource, /label: "1\+4差し替え"/, "primary 4-split mode label no longer uses legacy 1+4 text");
+assert.match(landingSource, /個別追加 \/ フレーム追加/, "landing card uses unified 4-split mode labels");
 
 console.log("sns-split-image-maker contract checks passed");

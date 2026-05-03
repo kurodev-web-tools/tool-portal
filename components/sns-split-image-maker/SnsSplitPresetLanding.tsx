@@ -17,7 +17,7 @@ const presetCards: PresetCard[] = [
     title: "2分割",
     status: "利用可能",
     description: "24:9の横長投稿を2枚作るためのプリセットです。",
-    details: ["3連結 / 5連結", "個別追加 / フレーム追加", "split_1 -> split_2"],
+    details: ["3連結 / 5連結", "個別追加 / フレーム追加", "出力順 split_1 -> split_2"],
     available: true
   },
   {
@@ -25,15 +25,15 @@ const presetCards: PresetCard[] = [
     title: "3分割",
     status: "利用可能",
     description: "上に24:9を1枚、下に8:13.5を2枚並べるためのプリセットです。",
-    details: ["24:9 + 8:13.5", "個別追加 / フレーム追加", "split_1 -> split_3"],
+    details: ["24:9 + 8:13.5", "個別追加 / フレーム追加", "出力順 split_1 -> split_3"],
     available: true
   },
   {
     id: "split-4",
     title: "4分割",
     status: "利用可能",
-    description: "既存の4分割編集画面を開きます。",
-    details: ["1+8連結", "1+4差し替え", "split_1 -> split_4"],
+    description: "2x2の完成画像を4枚作るためのプリセットです。",
+    details: ["個別追加 / フレーム追加", "旧: 1+8 / 旧: 1+4", "出力順 split_1 -> split_4"],
     available: true
   }
 ];

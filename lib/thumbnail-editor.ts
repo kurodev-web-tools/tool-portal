@@ -182,6 +182,24 @@ const backgroundLayer = (name: string, title: string, from: string, to: string, 
   src: svgDataUrl(title, from, to, accent)
 });
 
+const thumbnailPresetAssetPrefix = "/assets/images/thumbnail-editor/";
+const thumbnailPhase1BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase1/`;
+
+const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
+  id: createId("image"),
+  name,
+  type: "image",
+  x: 0,
+  y: 0,
+  width: 1280,
+  height: 720,
+  rotation: 0,
+  opacity: 1,
+  blur: 0,
+  locked: true,
+  src
+});
+
 const textLayer = (partial: Partial<ThumbnailTextLayer> & Pick<ThumbnailTextLayer, "name" | "text" | "x" | "y" | "width" | "height">): ThumbnailTextLayer => ({
   id: createId("text"),
   type: "text",
@@ -203,6 +221,62 @@ const textLayer = (partial: Partial<ThumbnailTextLayer> & Pick<ThumbnailTextLaye
   shadowOffsetY: 8,
   ...partial
 });
+
+const weeklyScheduleRows = [
+  { day: "月曜", label: "MON", time: "20:00", detail: "雑談", y: 75 },
+  { day: "火曜", label: "TUE", time: "20:00", detail: "雑談", y: 159 },
+  { day: "水曜", label: "WED", time: "-", detail: "休み", y: 238 },
+  { day: "木曜", label: "THU", time: "20:00", detail: "ゲーム", y: 315 },
+  { day: "金曜", label: "FRI", time: "22:00", detail: "コラボ", y: 393 },
+  { day: "土曜", label: "SAT", time: "19:00", detail: "企画", y: 474 },
+  { day: "日曜", label: "SUN", time: "21:00", detail: "振り返り", y: 555 }
+] as const;
+
+const weeklyScheduleTextBase = {
+  height: 52,
+  fontSize: 35,
+  lineHeight: 1.64,
+  strokeColor: "#061849",
+  strokeWidth: 4,
+  shadowColor: "#02101f",
+  shadowBlur: 7,
+  shadowOffsetX: 3,
+  shadowOffsetY: 4
+} as const;
+
+const weeklyScheduleRowLayers = () =>
+  weeklyScheduleRows.flatMap((row) => [
+    textLayer({
+      ...weeklyScheduleTextBase,
+      name: `${row.day} / 曜日`,
+      text: row.label,
+      x: 670,
+      y: row.y,
+      width: 84,
+      color: "#8cf8ff",
+      align: "center"
+    }),
+    textLayer({
+      ...weeklyScheduleTextBase,
+      name: `${row.day} / 時間`,
+      text: row.time,
+      x: 770,
+      y: row.y,
+      width: 106,
+      color: "#ffffff",
+      align: "center"
+    }),
+    textLayer({
+      ...weeklyScheduleTextBase,
+      name: `${row.day} / 予定`,
+      text: row.detail,
+      x: 890,
+      y: row.y,
+      width: 330,
+      color: "#ffffff",
+      align: "left"
+    })
+  ]);
 
 const shapeLayer = (partial: Partial<ThumbnailShapeLayer> & Pick<ThumbnailShapeLayer, "name" | "shapeType" | "x" | "y" | "width" | "height">): ThumbnailShapeLayer => ({
   id: createId("shape"),
@@ -226,13 +300,14 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     description: "開始時刻と見出しを大きく見せる告知向け。",
     accent: "#1ed7c6",
     layers: [
-      backgroundLayer("画像 1（背景）", "STREAM ANNOUNCE", "#17224d", "#05121f", "#2cf4e6"),
-      shapeLayer({ name: "図形 2（ラベル帯）", shapeType: "rect", x: 86, y: 82, width: 286, height: 66, fillColor: "#1ed7c6", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "配信 / YouTube", x: 118, y: 98, width: 222, height: 38, fontSize: 30, color: "#06121f", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
-      shapeLayer({ name: "図形 1（時刻バッジ）", shapeType: "circle", x: 940, y: 456, width: 210, height: 210, fillColor: "#ff5ca8", strokeColor: "#ffffff", strokeWidth: 6 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "21:00\n配信開始", x: 966, y: 506, width: 158, height: 132, fontSize: 48, lineHeight: 1.05, align: "center", strokeWidth: 3 }),
-      textLayer({ name: "テキスト 1（見出し）", text: "初見さん\n大歓迎!", x: 90, y: 186, width: 720, height: 250, fontSize: 104, lineHeight: 1.03, color: "#ffffff", strokeWidth: 12 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "一緒に楽しくお話ししよう!", x: 160, y: 502, width: 560, height: 58, fontSize: 38, lineHeight: 1.1, strokeWidth: 5 })
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase1BackgroundAssetPrefix}stream-announce-background.png`),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 782, y: 68, width: 418, height: 598, fillColor: "#0317245c", strokeColor: "#31eaff", strokeWidth: 4, borderRadius: 34 }),
+      shapeLayer({ name: "図形 2（ラベル帯）", shapeType: "rect", x: 78, y: 54, width: 380, height: 72, fillColor: "#1ed7c6", strokeColor: "#7afcff", strokeWidth: 4, borderRadius: 18 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "配信 / YouTube", x: 112, y: 72, width: 314, height: 42, fontSize: 34, color: "#041421", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "初見さん\n大歓迎!", x: 88, y: 166, width: 650, height: 250, fontSize: 112, lineHeight: 1.02, color: "#ffffff", strokeColor: "#06112f", strokeWidth: 12, shadowColor: "#00cfff", shadowBlur: 16, shadowOffsetX: 6, shadowOffsetY: 8 }),
+      shapeLayer({ name: "図形 1（時刻バッジ）", shapeType: "rect", x: 98, y: 496, width: 526, height: 86, fillColor: "#f70e8fcc", strokeColor: "#5ef7ff", strokeWidth: 5, borderRadius: 16 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 132, y: 510, width: 456, height: 58, fontSize: 56, color: "#ffffff", strokeColor: "#5b0637", strokeWidth: 4, shadowColor: "#06111c", shadowBlur: 10, shadowOffsetX: 4, shadowOffsetY: 5 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "一緒に楽しくお話ししよう!", x: 150, y: 620, width: 560, height: 46, fontSize: 34, lineHeight: 1.1, strokeWidth: 5 })
     ]
   },
   {
@@ -243,13 +318,14 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     description: "音楽配信に合う強いコントラスト。",
     accent: "#ff4cc2",
     layers: [
-      backgroundLayer("画像 1（背景）", "KARAOKE STREAM", "#30123f", "#07121f", "#ff4cc2"),
-      shapeLayer({ name: "図形 1（帯）", shapeType: "rect", x: 70, y: 466, width: 720, height: 86, fillColor: "#07111ccc", strokeColor: "#ff4cc2", strokeWidth: 4, borderRadius: 10 }),
-      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 80, y: 84, width: 292, height: 66, fillColor: "#ff4cc2", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "歌枠 / YouTube", x: 112, y: 100, width: 228, height: 38, fontSize: 30, color: "#1b0820", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
-      textLayer({ name: "テキスト 1（見出し）", text: "歌枠\nSINGING STREAM", x: 80, y: 170, width: 820, height: 230, fontSize: 108, lineHeight: 1.0, color: "#fff3fb", strokeColor: "#1b0820", strokeWidth: 10 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 106, y: 424, width: 360, height: 44, fontSize: 34, color: "#ffd6f1", strokeWidth: 3 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "リクエスト歓迎 / 初見さん歓迎", x: 106, y: 488, width: 650, height: 52, fontSize: 36, strokeWidth: 3 })
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase1BackgroundAssetPrefix}karaoke-background.png`),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 764, y: 82, width: 404, height: 560, fillColor: "#16082675", strokeColor: "#ff9fe3", strokeWidth: 4, borderRadius: 30 }),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 94, y: 76, width: 316, height: 66, fillColor: "#ff75c8cc", strokeColor: "#ffe0fb", strokeWidth: 4, borderRadius: 18 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "歌枠 / YouTube", x: 126, y: 92, width: 252, height: 38, fontSize: 30, color: "#21071d", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "歌枠\nSINGING\nSTREAM", x: 84, y: 152, width: 560, height: 260, fontSize: 74, lineHeight: 1.0, color: "#fff4fb", strokeColor: "#31061f", strokeWidth: 10, shadowColor: "#ff4cc2", shadowBlur: 16, shadowOffsetX: 5, shadowOffsetY: 7 }),
+      shapeLayer({ name: "図形 1（時刻バッジ）", shapeType: "rect", x: 92, y: 486, width: 514, height: 78, fillColor: "#281021d9", strokeColor: "#ffb86c", strokeWidth: 4, borderRadius: 16 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 128, y: 502, width: 430, height: 52, fontSize: 48, color: "#ffe8b7", strokeColor: "#39071e", strokeWidth: 4, shadowColor: "#ff4cc2", shadowBlur: 10, shadowOffsetX: 3, shadowOffsetY: 4 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "リクエスト歓迎 / 初見さん歓迎", x: 116, y: 602, width: 620, height: 50, fontSize: 34, strokeColor: "#1b0820", strokeWidth: 4 })
     ]
   },
   {
@@ -345,13 +421,14 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     description: "今週の予定や配信枠を一覧風に見せる横長画像。",
     accent: "#4dd8ff",
     layers: [
-      backgroundLayer("画像 1（背景）", "WEEKLY SCHEDULE", "#0c2740", "#06111c", "#4dd8ff"),
-      shapeLayer({ name: "図形 1（リスト枠）", shapeType: "rect", x: 650, y: 116, width: 500, height: 456, fillColor: "#06111ce8", strokeColor: "#4dd8ff", strokeWidth: 5, borderRadius: 20 }),
-      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 86, y: 88, width: 316, height: 70, fillColor: "#4dd8ff", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "WEEKLY", x: 124, y: 104, width: 240, height: 42, fontSize: 34, color: "#04131a", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
-      textLayer({ name: "テキスト 1（見出し）", text: "今週の\n配信予定", x: 92, y: 210, width: 520, height: 222, fontSize: 88, lineHeight: 1.04, color: "#f3fcff", strokeColor: "#03111a", strokeWidth: 10 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "5/4 - 5/10", x: 112, y: 464, width: 370, height: 48, fontSize: 36, color: "#c9f5ff", strokeWidth: 3 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "予定を追加して週まとめに調整", x: 690, y: 166, width: 410, height: 300, fontSize: 34, lineHeight: 1.3, color: "#ffffff", strokeWidth: 3 })
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase1BackgroundAssetPrefix}weekly-schedule-background.png`),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 150, y: 115, width: 345, height: 60, fillColor: "#0a223acc", strokeColor: "#4dd8ff", strokeWidth: 4, borderRadius: 18 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "WEEKLY SCHEDULE", x: 190, y: 130, width: 270, height: 35, fontSize: 28, color: "#8cf8ff", strokeWidth: 0, shadowColor: "#4dd8ff", shadowBlur: 8, shadowOffsetX: 0, shadowOffsetY: 0 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "今週の\n配信予定", x: 50, y: 185, width: 530, height: 240, fontSize: 96, lineHeight: 1.04, color: "#f8feff", align: "center", bold: true, italic: true, strokeColor: "#061849", strokeWidth: 11, shadowColor: "#35e6ff", shadowBlur: 16, shadowOffsetX: 5, shadowOffsetY: 7 }),
+      shapeLayer({ name: "図形 1（週範囲バッジ）", shapeType: "rect", x: 205, y: 400, width: 220, height: 65, fillColor: "#08233ecc", strokeColor: "#4dd8ff", strokeWidth: 4, borderRadius: 18 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "5/4 - 5/10", x: 240, y: 415, width: 245, height: 40, fontSize: 34, color: "#ffffff", strokeWidth: 3 }),
+      ...weeklyScheduleRowLayers(),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 80, y: 505, width: 510, height: 155, fillColor: "#03172466", strokeColor: "#d8f8ff", strokeWidth: 3, borderRadius: 18 })
     ]
   },
   {
@@ -498,10 +575,35 @@ export const isThumbnailDraftPristineForPreset = (draft: ThumbnailEditorDraft): 
   });
 };
 
-export const cloneThumbnailLayer = (layer: ThumbnailLayer): ThumbnailLayer => ({
+export const normalizeThumbnailLayerName = (value: string, fallback: string) => {
+  const normalized = value.trim().replace(/\s+/g, " ").slice(0, 40);
+  return normalized || fallback.slice(0, 40) || "レイヤー";
+};
+
+const copySuffixPattern = /(?:\sコピー(?:\s\d+)?)+$/;
+
+export const createThumbnailDuplicateLayerName = (name: string, existingNames: string[]) => {
+  const baseName = normalizeThumbnailLayerName(name, "レイヤー").replace(copySuffixPattern, "").trim() || "レイヤー";
+  const usedNames = new Set(existingNames);
+  const firstCopy = `${baseName} コピー`;
+  if (!usedNames.has(firstCopy)) {
+    return firstCopy;
+  }
+
+  for (let index = 2; index < 100; index += 1) {
+    const candidate = `${baseName} コピー ${index}`;
+    if (!usedNames.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return `${baseName} コピー ${Date.now().toString().slice(-4)}`;
+};
+
+export const cloneThumbnailLayer = (layer: ThumbnailLayer, existingNames: string[] = []): ThumbnailLayer => ({
   ...layer,
   id: createId(layer.type),
-  name: `${layer.name} コピー`,
+  name: createThumbnailDuplicateLayerName(layer.name, existingNames),
   x: Math.min(layer.x + 24, 1180),
   y: Math.min(layer.y + 24, 620)
 } as ThumbnailLayer);
@@ -604,7 +706,8 @@ const normalizeCanvas = (canvas: Partial<ThumbnailCanvas> | undefined): Thumbnai
 const isSafeImageSource = (src: string) =>
   src.startsWith("data:image/png;") ||
   src.startsWith("data:image/jpeg;") ||
-  src.startsWith("data:image/svg+xml;");
+  src.startsWith("data:image/svg+xml;") ||
+  (src.startsWith(thumbnailPresetAssetPrefix) && /\.(png|jpe?g|webp|svg)$/i.test(src));
 const safeText = (value: unknown, fallback: string, maxLength: number) =>
   typeof value === "string" ? value.slice(0, maxLength) : fallback;
 

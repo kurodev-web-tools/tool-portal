@@ -72,7 +72,25 @@ export const readStoredImageSources = async () => {
   });
 };
 
-export const writeStoredImageSource = async (id: SnsSplitImageSource["id"], src: string | null) => {
+export const readStoredImageSource = async (id: string) => {
+  const database = await openImageDatabase();
+  return new Promise<string | null>((resolve, reject) => {
+    const transaction = database.transaction(snsSplitImageStoreName, "readonly");
+    const request = transaction.objectStore(snsSplitImageStoreName).get(id);
+    request.onsuccess = () => {
+      const result = request.result as { src?: unknown } | undefined;
+      resolve(typeof result?.src === "string" ? result.src : null);
+    };
+    request.onerror = () => reject(request.error ?? new Error("保存済み画像を読み込めませんでした。"));
+    transaction.oncomplete = () => database.close();
+    transaction.onerror = () => {
+      database.close();
+      reject(transaction.error ?? new Error("保存済み画像を読み込めませんでした。"));
+    };
+  });
+};
+
+export const writeStoredImageSource = async (id: SnsSplitImageSource["id"] | string, src: string | null) => {
   const database = await openImageDatabase();
   return new Promise<void>((resolve, reject) => {
     const transaction = database.transaction(snsSplitImageStoreName, "readwrite");
@@ -92,6 +110,8 @@ export const writeStoredImageSource = async (id: SnsSplitImageSource["id"], src:
     };
   });
 };
+
+export const deleteStoredImageSource = (id: string) => writeStoredImageSource(id, null);
 
 export const writeStoredImageSources = (images: SnsSplitImageSource[]) =>
   Promise.all(images.map((image) => writeStoredImageSource(image.id, image.src))).then(() => undefined);

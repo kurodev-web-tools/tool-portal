@@ -27,7 +27,14 @@ import {
   type ThumbnailShapeType,
   type ThumbnailTextAlign
 } from "@/lib/thumbnail-editor";
-import { readToolHandoff, type ScheduleHandoffPayload } from "@/lib/tool-handoff";
+import {
+  buildToolHandoffUrl,
+  createThumbnailToSnsHandoffPayload,
+  readToolHandoff,
+  writeToolHandoff,
+  type ScheduleHandoffPayload
+} from "@/lib/tool-handoff";
+import { writeStoredImageSource } from "@/components/sns-split-image-maker/snsSplitDraftPersistence";
 
 type ToastTone = "info" | "success" | "warning" | "error";
 type ToastState = { tone: ToastTone; message: string } | null;
@@ -189,6 +196,23 @@ const formatHandoffDate = (date: string) => {
 };
 const firstMeaningfulLine = (text: string) => text.split(/\r?\n/).map((line) => line.trim()).find(Boolean) ?? "";
 const compactLayerText = (text: string, maxLength: number) => (text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text);
+const thumbnailToSnsImageStoragePrefix = "thumbnail-handoff";
+const sanitizeFilePatternPart = (value: string) =>
+  value
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "-")
+    .replace(/\s+/g, "-")
+    .slice(0, 32);
+const getFirstTextLayerValue = (draft: ThumbnailEditorDraft, namePart: string) => {
+  const layer = draft.layers.find((item) => item.type === "text" && item.name.includes(namePart));
+  return layer?.type === "text" ? firstMeaningfulLine(layer.text) : "";
+};
+const createThumbnailToSnsImageStorageId = () => {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `${thumbnailToSnsImageStoragePrefix}-${crypto.randomUUID()}`;
+  }
+  return `${thumbnailToSnsImageStoragePrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
 const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, payload: ScheduleHandoffPayload): ThumbnailEditorDraft => {
   const titleText = compactLayerText(payload.title || "無題の予定", 42);
   const dateText = formatHandoffDate(payload.date);
@@ -886,6 +910,49 @@ export function ThumbnailEditorApp() {
     }
   };
 
+  const sendToSnsSplit = async () => {
+    const normalized = normalizeThumbnailDraft(draft);
+    if (!normalized) {
+      showToast("error", "下書きデータが不正なためSNS分割画像へ渡せません。");
+      return;
+    }
+
+    try {
+      const exportCanvas = document.createElement("canvas");
+      await drawThumbnail(exportCanvas, normalized, { forceJpegBackground: false });
+      const dataUrl = exportCanvas.toDataURL("image/png", 0.92);
+      if (!dataUrl || dataUrl === "data:,") {
+        throw new Error("Canvas export failed.");
+      }
+
+      const title = getFirstTextLayerValue(normalized, "見出し") || handoffPayload?.title || selectedPreset.name;
+      const date = handoffPayload?.date ?? "";
+      const imageStorageId = createThumbnailToSnsImageStorageId();
+      const fileNameBase = [date.replaceAll("-", ""), sanitizeFilePatternPart(title)].filter(Boolean).join("_") || "thumbnail";
+      const payload = createThumbnailToSnsHandoffPayload({
+        imageStorageId,
+        title,
+        date,
+        categoryLabel: handoffPayload?.categoryLabel ?? selectedPreset.category,
+        platform: handoffPayload?.platform ?? "",
+        announcementText: handoffPayload?.announcementText ?? getFirstTextLayerValue(normalized, "サブ"),
+        hashtags: handoffPayload?.hashtags ?? "",
+        fileNameBase
+      });
+
+      await writeStoredImageSource(imageStorageId, dataUrl);
+      const token = writeToolHandoff(payload);
+      if (!token) {
+        await writeStoredImageSource(imageStorageId, null);
+        throw new Error("Handoff token was not created.");
+      }
+
+      window.location.href = buildToolHandoffUrl("sns-split-image-maker", token);
+    } catch {
+      showToast("error", "SNS分割画像メーカーへの受け渡しに失敗しました。");
+    }
+  };
+
   const canvasSizeId: ThumbnailCanvasSizeId = draft.canvas.width === 1920 ? "full-hd" : "hd";
 
   return (
@@ -934,6 +1001,9 @@ export function ThumbnailEditorApp() {
               </button>
               <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft} aria-label="下書きを保存" title="下書きを保存">
                 下書き
+              </button>
+              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={sendToSnsSplit} aria-label="SNS分割画像メーカーで使う" title="SNS分割画像メーカーで使う">
+                SNS分割
               </button>
               <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
                 出力
@@ -990,6 +1060,9 @@ export function ThumbnailEditorApp() {
                   </button>
                   <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft} aria-label="下書きを保存" title="下書きを保存">
                     下書き
+                  </button>
+                  <button className="flat-control px-4 py-2 font-bold" type="button" onClick={sendToSnsSplit} aria-label="SNS分割画像メーカーで使う" title="SNS分割画像メーカーで使う">
+                    SNS分割
                   </button>
                   <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
                     出力
@@ -1090,7 +1163,7 @@ export function ThumbnailEditorApp() {
                 <PropertyPanel layer={selectedLayer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={setFontMenuOpen} onChange={updateSelectedLayer} />
               )}
               {mobilePanel === "export" && (
-                <ExportPanel exportFormat={exportFormat} onFormatChange={setExportFormat} onSave={saveDraft} onExport={exportImage} />
+                <ExportPanel exportFormat={exportFormat} onFormatChange={setExportFormat} onSave={saveDraft} onExport={exportImage} onSendToSns={sendToSnsSplit} />
               )}
             </section>
 
@@ -1120,7 +1193,7 @@ export function ThumbnailEditorApp() {
               ) : (
                 <div className="panel p-4 text-sm text-muted">編集するレイヤーを選択してください。</div>
               )}
-              <ExportPanel exportFormat={exportFormat} onFormatChange={setExportFormat} onSave={saveDraft} onExport={exportImage} />
+              <ExportPanel exportFormat={exportFormat} onFormatChange={setExportFormat} onSave={saveDraft} onExport={exportImage} onSendToSns={sendToSnsSplit} />
             </div>
           </aside>
         </div>
@@ -1605,12 +1678,14 @@ function ExportPanel({
   exportFormat,
   onFormatChange,
   onSave,
-  onExport
+  onExport,
+  onSendToSns
 }: {
   exportFormat: "png" | "jpeg";
   onFormatChange: (format: "png" | "jpeg") => void;
   onSave: () => void;
   onExport: () => void;
+  onSendToSns: () => void;
 }) {
   return (
     <section className="panel space-y-3 p-4">
@@ -1626,10 +1701,13 @@ function ExportPanel({
       <button className="flat-control w-full px-4 py-2 font-bold" type="button" onClick={onSave} aria-label="下書きを保存">
         下書き保存
       </button>
+      <button className="flat-control w-full px-4 py-2 font-bold" type="button" onClick={onSendToSns} aria-label="SNS分割画像メーカーで使う">
+        SNS分割画像で使う
+      </button>
       <button className="w-full rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onExport} aria-label="サムネイルを書き出し">
         書き出し
       </button>
-      <p className="text-xs leading-5 text-muted">下書きはこのブラウザの localStorage に保存されます。PNG/JPEG は表示中キャンバスと同じ描画結果で1枚出力します。</p>
+      <p className="text-xs leading-5 text-muted">下書きはこのブラウザの localStorage に保存されます。PNG/JPEG は表示中キャンバスと同じ描画結果で1枚出力します。SNS分割画像への受け渡し画像は一時的にIndexedDBへ保存します。</p>
     </section>
   );
 }

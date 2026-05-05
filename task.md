@@ -148,6 +148,27 @@
   - 390 / 820 / 1024 / 1280 / 1366px でプリセットカード9種、編集キャンバス1件、ページ全体の水平overflowなしを確認
   - console error / warn なし
 
+2026-05-05 Thumbnail Editor -> SNS分割画像メーカー handoff 実装メモ:
+
+- Thumbnail Editor に `SNS分割` / `SNS分割画像で使う` 導線を追加した
+- 表示中キャンバスをPNG相当で描画し、画像本体は `localStorage` ではなくSNS分割画像メーカー側のIndexedDB画像保存領域へ一時キーで保存する
+- URL query には短い `handoff` token と `preset=split-4` のみを載せる
+- handoff payload は `source: "thumbnail-editor"`、`target: "sns-split-image-maker"`、一時画像キー、タイトル、日付、カテゴリ、プラットフォーム、告知文、ハッシュタグ、ファイル名候補を持つ
+- SNS分割画像メーカーは token と一時画像を正しく読めた場合だけ、画像を `base` 画像として反映し、`split-4` 編集画面で開く
+- token 不一致、期限切れ、壊れた payload、対象ツール不一致、画像取得失敗は通常起動にフォールバックする
+- 既存の Schedule Calendar -> Thumbnail Editor / SNS分割画像メーカー handoff payload は維持する
+- 既存 Thumbnail Editor の通常draft / autosave と、SNS分割画像メーカーのIndexedDB画像保存 / draft復元は既存経路を維持する
+- 検証: `node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+- Browser/CDP確認:
+  - dev server は `D:\V_streamer_tools\.worktrees\thumbnail-to-sns-handoff\node_modules\next\dist\server\lib\start-server.js` から起動していることを確認
+  - 390 / 820 / 1024 / 1280 / 1366px で Thumbnail Editor / SNS分割画像メーカーの通常起動、主要導線表示、水平overflowなしを確認
+  - Thumbnail Editor -> SNS分割画像メーカー handoff 後、`Thumbnail Editorから受け取り`、base画像選択済み、`split-4` 出力順、保存ボタン有効を確認
+  - 壊れた handoff token は受け取りバナーなしで通常起動することを確認
+  - Schedule Calendar -> Thumbnail Editor handoff は token 消費と autosave draft 内の予定タイトル / 告知文反映で確認
+  - Schedule Calendar -> SNS分割画像メーカー handoff は受け取りバナー、予定タイトル、`split-4` 出力順で確認
+  - 一時Chromeプロファイルで console error / warn なし
+  - `npm run build` は PASS。worktree が親repo内にあるため Next.js の workspace root 推定 warning は表示された
+
 - [ ] ペイント系ではなく、VTuber向けサムネ組み立てツールとして再定義する
   - 白紙から作るのではなく、用途別プリセットを選んで文字と立ち絵を差し替える体験に寄せる
   - 自由描画、素材検索、Canva的な汎用デザイン機能は優先しない
@@ -221,9 +242,9 @@
   - 推奨サイズ/比率の表示
   - 出力前の投稿順確認
   - 連続ダウンロードがブロックされる場合の案内
-- [ ] Thumbnail Editor からの受け取りを設計する
-  - サムネで作った告知画像をメイン画像として渡す
-  - 必要に応じてタイトル、日付、カテゴリも引き継ぐ
+- [x] Thumbnail Editor からの受け取りを設計する
+  - [x] サムネで作った告知画像をメイン画像として渡す
+  - [x] 必要に応じてタイトル、日付、カテゴリも引き継ぐ
 - [ ] 出力後の次アクションを追加する
   - `split_1` から順に投稿する案内
   - 投稿文コピー
@@ -284,8 +305,9 @@
   - 例: カレンダー予定からサムネ作成へ遷移
   - 例: サムネ画像をSNS分割画像メーカーのメイン画像として使う
   - 例: SNS分割画像メーカーの出力後に予定へ「告知画像作成済み」を戻す
-  - 今回は Schedule Calendar から Thumbnail Editor / SNS分割画像メーカーへのテキスト handoff のみ実装
-  - サムネ画像本体の SNS分割画像メーカー受け渡しと、Schedule Calendar への状態戻しは次PR候補
+  - Schedule Calendar から Thumbnail Editor / SNS分割画像メーカーへのテキスト handoff を実装済み
+  - Thumbnail Editor から SNS分割画像メーカーへの画像 handoff を実装済み
+  - Schedule Calendar への状態戻しは次PR候補
 
 ### 認証・サーバー保存導入前の設計タスク
 

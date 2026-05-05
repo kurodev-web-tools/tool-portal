@@ -96,7 +96,7 @@ Schedule Calendar から Thumbnail Editor / SNS分割画像メーカーへ進む
 保存キー接頭辞は `v-streamer-tools:tool-handoff:v1:`、URL query は `handoff` です。
 SNS分割画像メーカーへは編集画面を直接開くため、`preset=split-4` も付与します。
 
-handoff payload は version `1` で、次のテキスト情報だけを持ちます。
+Schedule Calendar 由来の handoff payload は version `1` で、次のテキスト情報だけを持ちます。
 
 ```json
 {
@@ -118,12 +118,18 @@ handoff payload は version `1` で、次のテキスト情報だけを持ちま
 }
 ```
 
-画像本体は渡しません。
+Schedule Calendar 由来の payload では画像本体は渡しません。
 payload は30分で期限切れ扱いにし、期限切れ、対象ツール不一致、壊れた JSON、token 不一致は安全に無視して通常起動します。
 Thumbnail Editor は受け取ったタイトル、日時、告知文、カテゴリ / プラットフォームを、プリセット内の `見出し`、`時刻`、`サブ`、`ラベル` テキストへ初期反映します。
 Schedule Calendar から遷移してきた場合は、プリセット変更やキャンバスサイズ変更をしても同じ予定テキストを新しいプリセットへ再適用します。
 現時点では画像本体や編集済みテキストの高度なマージは行わず、プリセットを適用するたびに予定テキストを初期テキストとして再配置します。
 SNS分割画像メーカーは告知文メモを表示し、出力ファイル名の初期値へ日付とタイトルを反映します。
+
+Thumbnail Editor から SNS分割画像メーカーへ進む導線も、URLには短い `handoff` token と `preset=split-4` だけを載せます。
+描画済みPNG相当の画像本体は `localStorage` へ保存せず、SNS分割画像メーカーのIndexedDB画像保存領域へ一時キーで保存します。
+handoff payload には `source: "thumbnail-editor"`、`target: "sns-split-image-maker"`、`imageStorageId`、タイトル、日付、カテゴリ、プラットフォーム、告知文、ハッシュタグ、ファイル名候補を載せます。
+SNS分割画像メーカーは token と一時画像の両方を正しく読めた場合だけ、画像を `base` 画像として反映し、既定で `split-4` 編集画面を開きます。
+token 不一致、期限切れ、壊れた payload、対象ツール不一致、画像取得失敗は安全に無視して通常起動します。
 
 繰り返し予定は保存時に複数の通常予定として作成します。
 MVP範囲は `毎日` / `毎週` のみです。例外日、繰り返し終了日の詳細指定、シリーズ一括編集は未対応です。
@@ -198,6 +204,7 @@ PR 前は最低限、次を確認します。
 - 投稿補助コピー、コピー失敗時 fallback、X 遷移 URL
 - Schedule Calendar -> Thumbnail Editor handoff
 - Schedule Calendar -> SNS分割画像メーカー handoff
+- Thumbnail Editor -> SNS分割画像メーカー handoff
 - handoff なし / 壊れた handoff token で通常起動
 - 投稿補助テンプレート作成 / 編集 / 削除
 - 変数挿入ボタンと投稿文プレビュー

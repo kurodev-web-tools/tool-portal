@@ -26,11 +26,13 @@ import {
   type SnsSplitPostIndex,
   type SnsSplitTile
 } from "@/lib/sns-split-image-maker";
-import { readToolHandoff, type ScheduleHandoffPayload } from "@/lib/tool-handoff";
+import { readToolHandoff, type ScheduleHandoffPayload, type SnsSplitToolHandoffPayload, type ThumbnailToSnsHandoffPayload } from "@/lib/tool-handoff";
 import { SnsSplitPresetLanding } from "./SnsSplitPresetLanding";
 import {
+  deleteStoredImageSource,
   persistDraftMetadata,
   readImageFile,
+  readStoredImageSource,
   restoreDraft,
   writeStoredImageSource,
   writeStoredImageSources
@@ -100,6 +102,37 @@ const applyScheduleHandoffToSnsDraft = (draft: SnsSplitDraft, payload: ScheduleH
     },
     updatedAt: new Date().toISOString()
   };
+};
+const isThumbnailToSnsHandoffPayload = (payload: SnsSplitToolHandoffPayload): payload is ThumbnailToSnsHandoffPayload =>
+  payload.source === "thumbnail-editor";
+const isSafeHandoffImageSource = (src: string) => src.startsWith("data:image/png;") || src.startsWith("data:image/jpeg;");
+const applyThumbnailHandoffToSnsDraft = async (
+  draft: SnsSplitDraft,
+  payload: ThumbnailToSnsHandoffPayload
+): Promise<SnsSplitDraft | null> => {
+  try {
+    const src = await readStoredImageSource(payload.imageStorageId);
+    if (!src || !isSafeHandoffImageSource(src)) {
+      return null;
+    }
+
+    await writeStoredImageSource("base", src);
+    const filePattern = [sanitizeFilePatternPart(payload.fileNameBase), "{n}"].filter(Boolean).join("_") || "thumbnail_{n}";
+    return {
+      ...draft,
+      preset: "split-4",
+      images: draft.images.map((image) => (image.id === "base" ? { ...image, src } : image)),
+      exportSettings: {
+        ...draft.exportSettings,
+        filePattern
+      },
+      updatedAt: new Date().toISOString()
+    };
+  } catch {
+    return null;
+  } finally {
+    await deleteStoredImageSource(payload.imageStorageId).catch(() => undefined);
+  }
 };
 const getPresetRatioLabel = (preset: SnsSplitPreset) => {
   if (preset === "split-2") {
@@ -211,7 +244,7 @@ export function SnsSplitImageMakerApp() {
   const [hasStoredDraft, setHasStoredDraft] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
-  const [handoffPayload, setHandoffPayload] = useState<ScheduleHandoffPayload | null>(null);
+  const [handoffPayload, setHandoffPayload] = useState<SnsSplitToolHandoffPayload | null>(null);
   const [mobileView, setMobileView] = useState<MobileView>("preview");
   const [selectedPost, setSelectedPost] = useState<SnsSplitPostIndex>(1);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("grid");
@@ -287,11 +320,30 @@ export function SnsSplitImageMakerApp() {
         const handoff = readToolHandoff("sns-split-image-maker");
         const urlPreset = getPresetFromLocation();
         const nextDraft = urlPreset ? createDraftForPreset(result.draft, urlPreset) : result.draft;
-        setDraft(handoff ? applyScheduleHandoffToSnsDraft(nextDraft, handoff) : nextDraft);
-        setHandoffPayload(handoff);
-        setHasStoredDraft(result.restoredFromStorage || result.restoredStoredImages);
+        let appliedDraft = nextDraft;
+        let appliedHandoff: SnsSplitToolHandoffPayload | null = null;
         if (handoff) {
-          setToast({ tone: "success", message: "Schedule Calendarの予定から告知文メモを受け取りました。" });
+          if (isThumbnailToSnsHandoffPayload(handoff)) {
+            const thumbnailDraft = await applyThumbnailHandoffToSnsDraft(createDraftForPreset(nextDraft, "split-4"), handoff);
+            if (thumbnailDraft) {
+              appliedDraft = thumbnailDraft;
+              appliedHandoff = handoff;
+            }
+          } else {
+            appliedDraft = applyScheduleHandoffToSnsDraft(nextDraft, handoff);
+            appliedHandoff = handoff;
+          }
+        }
+        setDraft(appliedDraft);
+        setHandoffPayload(appliedHandoff);
+        setHasStoredDraft(result.restoredFromStorage || result.restoredStoredImages);
+        if (appliedHandoff) {
+          setToast({
+            tone: "success",
+            message: isThumbnailToSnsHandoffPayload(appliedHandoff)
+              ? "Thumbnail Editorの画像をメイン画像として受け取りました。"
+              : "Schedule Calendarの予定から告知文メモを受け取りました。"
+          });
         }
         setHydrated(true);
       }
@@ -650,10 +702,13 @@ export function SnsSplitImageMakerApp() {
           <section className="rounded-base border border-primary/35 bg-primary-soft/35 px-4 py-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-bold text-primary-strong">Schedule Calendarから受け取り</p>
+                <p className="text-xs font-bold text-primary-strong">
+                  {isThumbnailToSnsHandoffPayload(handoffPayload) ? "Thumbnail Editorから受け取り" : "Schedule Calendarから受け取り"}
+                </p>
                 <h2 className="mt-1 truncate text-base font-black text-foreground">{handoffPayload.title || "無題の予定"}</h2>
                 <p className="mt-1 text-xs font-bold text-muted">
-                  {handoffPayload.date} {handoffPayload.startTime} - {handoffPayload.endTime}
+                  {handoffPayload.date}
+                  {!isThumbnailToSnsHandoffPayload(handoffPayload) ? ` ${handoffPayload.startTime} - ${handoffPayload.endTime}` : ""}
                   {handoffPayload.platform ? ` / ${handoffPayload.platform}` : ""}
                 </p>
               </div>

@@ -3,26 +3,34 @@
 import { ChangeEvent, MouseEvent, PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   cloneThumbnailLayer,
+  createNextRecentThumbnailPresetIds,
   createDraftFromPreset,
   createImageLayer,
   createShapeLayer,
   createTextLayer,
   drawThumbnail,
+  filterThumbnailPresets,
   getLayerCenter,
   hitTestLayerHandle,
   layerContainsPoint,
+  normalizeThumbnailPresetDiscoveryState,
   normalizeThumbnailDraft,
   pointToLayerLocal,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
   thumbnailFontGroups,
   thumbnailFonts,
+  thumbnailPresetDiscoveryStorageKey,
   thumbnailPresets,
+  toggleThumbnailPresetFavorite,
   type ThumbnailHandleKind,
   type ThumbnailResizeHandle,
   type ThumbnailCanvasSizeId,
   type ThumbnailEditorDraft,
   type ThumbnailLayer,
+  type ThumbnailPreset,
+  type ThumbnailPresetCategory,
+  type ThumbnailPresetDiscoveryState,
   type ThumbnailPresetId,
   type ThumbnailShapeType,
   type ThumbnailTextAlign
@@ -207,6 +215,17 @@ const getFirstTextLayerValue = (draft: ThumbnailEditorDraft, namePart: string) =
   const layer = draft.layers.find((item) => item.type === "text" && item.name.includes(namePart));
   return layer?.type === "text" ? firstMeaningfulLine(layer.text) : "";
 };
+const defaultPresetDiscoveryState: ThumbnailPresetDiscoveryState = {
+  version: 1,
+  recentPresetIds: [],
+  favoritePresetIds: []
+};
+const thumbnailPresetCategories = Array.from(new Set(thumbnailPresets.map((preset) => preset.category))) as ThumbnailPresetCategory[];
+const thumbnailPresetUsageLabels = Array.from(new Set(thumbnailPresets.map((preset) => preset.usageLabel)));
+const getPresetsByIds = (presetIds: ThumbnailPresetId[]) =>
+  presetIds
+    .map((presetId) => thumbnailPresets.find((preset) => preset.id === presetId))
+    .filter((preset): preset is ThumbnailPreset => Boolean(preset));
 const createThumbnailToSnsImageStorageId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${thumbnailToSnsImageStoragePrefix}-${crypto.randomUUID()}`;
@@ -268,6 +287,7 @@ export function ThumbnailEditorApp() {
   const [sidePanelCollapsed, setSidePanelCollapsed] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [handoffPayload, setHandoffPayload] = useState<ScheduleHandoffPayload | null>(null);
+  const [presetDiscoveryState, setPresetDiscoveryState] = useState<ThumbnailPresetDiscoveryState>(defaultPresetDiscoveryState);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mobilePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -297,6 +317,15 @@ export function ThumbnailEditorApp() {
   useEffect(() => {
     setCanvasCursor(editorMode === "pan" ? "grab" : "default");
   }, [editorMode]);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(thumbnailPresetDiscoveryStorageKey);
+      setPresetDiscoveryState(saved ? normalizeThumbnailPresetDiscoveryState(JSON.parse(saved)) : defaultPresetDiscoveryState);
+    } catch {
+      window.localStorage.removeItem(thumbnailPresetDiscoveryStorageKey);
+      setPresetDiscoveryState(defaultPresetDiscoveryState);
+    }
+  }, []);
   useEffect(() => {
     const updateDefaultZoom = () => {
       if (!userAdjustedZoomRef.current) {
@@ -430,6 +459,38 @@ export function ThumbnailEditorApp() {
     setZoom(updater);
   };
 
+  const commitPresetDiscoveryState = useCallback((updater: (current: ThumbnailPresetDiscoveryState) => ThumbnailPresetDiscoveryState) => {
+    setPresetDiscoveryState((current) => {
+      const next = normalizeThumbnailPresetDiscoveryState(updater(current));
+      try {
+        window.localStorage.setItem(thumbnailPresetDiscoveryStorageKey, JSON.stringify(next));
+      } catch {
+        // Preset discovery data is recoverable and must not block editing.
+      }
+      return next;
+    });
+  }, []);
+
+  const recordPresetUse = useCallback(
+    (presetId: ThumbnailPresetId) => {
+      commitPresetDiscoveryState((current) => ({
+        ...current,
+        recentPresetIds: createNextRecentThumbnailPresetIds(current.recentPresetIds, presetId)
+      }));
+    },
+    [commitPresetDiscoveryState]
+  );
+
+  const togglePresetFavorite = useCallback(
+    (presetId: ThumbnailPresetId) => {
+      commitPresetDiscoveryState((current) => ({
+        ...current,
+        favoritePresetIds: toggleThumbnailPresetFavorite(current.favoritePresetIds, presetId)
+      }));
+    },
+    [commitPresetDiscoveryState]
+  );
+
   const getCanvasPointFromClient = useCallback(
     (clientX: number, clientY: number) => {
       const canvas = canvasRef.current;
@@ -521,6 +582,7 @@ export function ThumbnailEditorApp() {
   );
 
   const applyPreset = (presetId: ThumbnailPresetId) => {
+    recordPresetUse(presetId);
     const next = createDraftFromPreset(presetId, draft.canvas);
     const nextDraft = handoffPayload ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload) : next;
     setDraft(nextDraft);
@@ -1147,7 +1209,15 @@ export function ThumbnailEditorApp() {
                 onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
                 onImage={() => fileInputRef.current?.click()}
               />
-              {mobilePanel === "canvas" && <PresetCards currentPresetId={draft.presetId} onApply={applyPreset} />}
+              {mobilePanel === "canvas" && (
+                <PresetCards
+                  currentPresetId={draft.presetId}
+                  favoritePresetIds={presetDiscoveryState.favoritePresetIds}
+                  recentPresetIds={presetDiscoveryState.recentPresetIds}
+                  onApply={applyPreset}
+                  onFavoriteToggle={togglePresetFavorite}
+                />
+              )}
               {mobilePanel === "layers" && (
                 <LayerPanel
                   layers={draft.layers}
@@ -1168,7 +1238,13 @@ export function ThumbnailEditorApp() {
             </section>
 
             <div className="hidden min-[1024px]:mt-4 min-[1024px]:block">
-              <PresetCards currentPresetId={draft.presetId} onApply={applyPreset} />
+              <PresetCards
+                currentPresetId={draft.presetId}
+                favoritePresetIds={presetDiscoveryState.favoritePresetIds}
+                recentPresetIds={presetDiscoveryState.recentPresetIds}
+                onApply={applyPreset}
+                onFavoriteToggle={togglePresetFavorite}
+              />
             </div>
           </main>
 
@@ -1638,39 +1714,197 @@ function EffectControls({ layer, onChange }: { layer: ThumbnailLayer; onChange: 
   );
 }
 
-function PresetCards({ currentPresetId, onApply }: { currentPresetId: ThumbnailPresetId; onApply: (id: ThumbnailPresetId) => void }) {
+function PresetCards({
+  currentPresetId,
+  favoritePresetIds,
+  recentPresetIds,
+  onApply,
+  onFavoriteToggle
+}: {
+  currentPresetId: ThumbnailPresetId;
+  favoritePresetIds: ThumbnailPresetId[];
+  recentPresetIds: ThumbnailPresetId[];
+  onApply: (id: ThumbnailPresetId) => void;
+  onFavoriteToggle: (id: ThumbnailPresetId) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<ThumbnailPresetCategory | "all">("all");
+  const [selectedUsageLabel, setSelectedUsageLabel] = useState<string | "all">("all");
+  const filteredPresets = useMemo(
+    () =>
+      filterThumbnailPresets(thumbnailPresets, {
+        query,
+        category: selectedCategory,
+        usageLabel: selectedUsageLabel
+      }),
+    [query, selectedCategory, selectedUsageLabel]
+  );
+  const favoritePresets = useMemo(() => getPresetsByIds(favoritePresetIds), [favoritePresetIds]);
+  const recentPresets = useMemo(() => getPresetsByIds(recentPresetIds), [recentPresetIds]);
+  const hasActiveFilters = query.trim() !== "" || selectedCategory !== "all" || selectedUsageLabel !== "all";
+  const clearFilters = () => {
+    setQuery("");
+    setSelectedCategory("all");
+    setSelectedUsageLabel("all");
+  };
+
   return (
-    <section className="panel p-4">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-black text-foreground">プリセット一覧</h2>
-        <p className="text-xs font-bold text-muted">MVP {thumbnailPresets.length}種</p>
+    <section className="panel space-y-4 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-base font-black text-foreground">プリセット一覧</h2>
+          <p className="mt-1 text-xs font-bold text-muted">検索、カテゴリ、用途ラベルで絞り込みできます。</p>
+        </div>
+        <p className="text-xs font-bold text-muted">
+          {filteredPresets.length} / {thumbnailPresets.length}種
+        </p>
       </div>
+
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">
+        <label className="block text-xs font-bold text-muted">
+          検索
+          <input
+            className="mt-1 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="プリセット名・カテゴリ・用途・説明"
+          />
+        </label>
+        <button
+          className="flat-control self-end px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-45"
+          type="button"
+          onClick={clearFilters}
+          disabled={!hasActiveFilters}
+        >
+          条件クリア
+        </button>
+      </div>
+
+      <PresetFilterChips
+        label="カテゴリ"
+        value={selectedCategory}
+        options={thumbnailPresetCategories}
+        allLabel="すべて"
+        onChange={(category) => setSelectedCategory(category as ThumbnailPresetCategory | "all")}
+      />
+      <PresetFilterChips
+        label="用途ラベル"
+        value={selectedUsageLabel}
+        options={thumbnailPresetUsageLabels}
+        allLabel="すべて"
+        onChange={setSelectedUsageLabel}
+      />
+
+      {favoritePresets.length > 0 ? <PresetShortcutRow title="お気に入り" presets={favoritePresets} onApply={onApply} /> : null}
+      {recentPresets.length > 0 ? <PresetShortcutRow title="最近使った" presets={recentPresets} onApply={onApply} /> : null}
+
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-        {thumbnailPresets.map((preset) => (
-          <button
+        {filteredPresets.map((preset) => {
+          const isFavorite = favoritePresetIds.includes(preset.id);
+          return (
+          <article
             key={preset.id}
             className={[
-              "rounded-base border bg-surface p-3 text-left transition hover:border-primary",
+              "rounded-base border bg-surface p-3 text-left transition",
               currentPresetId === preset.id ? "border-primary bg-primary-soft/55" : "border-border"
             ].join(" ")}
-            type="button"
-            onClick={() => onApply(preset.id)}
-            aria-pressed={currentPresetId === preset.id}
           >
-            <div className="mb-3 aspect-video rounded-base border border-border" style={{ background: `linear-gradient(135deg, #07111c, ${preset.accent})` }} />
+            <div className="relative mb-3 aspect-video rounded-base border border-border" style={{ background: `linear-gradient(135deg, #07111c, ${preset.accent})` }}>
+              <button
+                className={[
+                  "absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full border text-sm font-black shadow-panel",
+                  isFavorite ? "border-primary bg-primary text-white" : "border-border bg-surface/88 text-muted hover:text-primary-strong"
+                ].join(" ")}
+                type="button"
+                onClick={() => onFavoriteToggle(preset.id)}
+                aria-label={isFavorite ? `${preset.name}のお気に入りを解除` : `${preset.name}をお気に入りに追加`}
+                aria-pressed={isFavorite}
+                title={isFavorite ? "お気に入りを解除" : "お気に入りに追加"}
+              >
+                {isFavorite ? "★" : "☆"}
+              </button>
+            </div>
             <div className="mb-2 flex flex-wrap gap-1.5">
               <span className="rounded-sm border border-border bg-surface-muted px-2 py-0.5 text-[11px] font-bold text-muted">{preset.category}</span>
               <span className="rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">{preset.usageLabel}</span>
             </div>
             <p className="text-sm font-black text-foreground">{preset.name}</p>
             <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{preset.description}</p>
-            <span className="mt-3 inline-flex rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong">
+            <button
+              className="mt-3 inline-flex rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong transition hover:bg-primary-soft"
+              type="button"
+              onClick={() => onApply(preset.id)}
+              aria-pressed={currentPresetId === preset.id}
+            >
               このプリセットを使用
-            </span>
+            </button>
+          </article>
+          );
+        })}
+      </div>
+      {filteredPresets.length === 0 ? (
+        <div className="rounded-base border border-dashed border-border bg-surface-muted px-4 py-5 text-sm font-bold text-muted">
+          条件に一致するプリセットがありません。
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function PresetFilterChips({
+  label,
+  value,
+  options,
+  allLabel,
+  onChange
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  allLabel: string;
+  onChange: (value: string | "all") => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-bold text-muted">{label}</p>
+      <div className="flex flex-wrap gap-2">
+        {[{ id: "all", label: allLabel }, ...options.map((option) => ({ id: option, label: option }))].map((option) => (
+          <button
+            key={option.id}
+            className={[
+              "rounded-base border px-3 py-1.5 text-xs font-bold transition",
+              value === option.id ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface text-muted hover:text-foreground"
+            ].join(" ")}
+            type="button"
+            onClick={() => onChange(option.id)}
+            aria-pressed={value === option.id}
+          >
+            {option.label}
           </button>
         ))}
       </div>
-    </section>
+    </div>
+  );
+}
+
+function PresetShortcutRow({ title, presets, onApply }: { title: string; presets: ThumbnailPreset[]; onApply: (id: ThumbnailPresetId) => void }) {
+  return (
+    <div className="space-y-2 rounded-base border border-border bg-surface-muted p-3">
+      <p className="text-xs font-black text-foreground">{title}</p>
+      <div className="flex flex-wrap gap-2">
+        {presets.map((preset) => (
+          <button
+            key={preset.id}
+            className="rounded-base border border-border bg-surface px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary hover:text-primary-strong"
+            type="button"
+            onClick={() => onApply(preset.id)}
+          >
+            {preset.name}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

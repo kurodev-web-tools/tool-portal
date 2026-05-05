@@ -91,6 +91,20 @@ export type ThumbnailPreset = {
 };
 
 export const thumbnailDraftStorageKey = "v-streamer-tools:thumbnail-editor:draft:v1";
+export const thumbnailPresetDiscoveryStorageKey = "v-streamer-tools:thumbnail-editor:preset-discovery:v1";
+export const thumbnailPresetRecentLimit = 6;
+
+export type ThumbnailPresetFilter = {
+  query: string;
+  category: ThumbnailPresetCategory | "all";
+  usageLabel: string | "all";
+};
+
+export type ThumbnailPresetDiscoveryState = {
+  version: 1;
+  recentPresetIds: ThumbnailPresetId[];
+  favoritePresetIds: ThumbnailPresetId[];
+};
 
 export const thumbnailCanvasSizes: Record<ThumbnailCanvasSizeId, ThumbnailCanvas & { label: string }> = {
   hd: { width: 1280, height: 720, label: "1280 x 720 (16:9)" },
@@ -349,6 +363,71 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     ]
   }
 ];
+
+const thumbnailPresetIds = new Set<ThumbnailPresetId>(thumbnailPresets.map((preset) => preset.id));
+const isThumbnailPresetId = (value: unknown): value is ThumbnailPresetId =>
+  typeof value === "string" && thumbnailPresetIds.has(value as ThumbnailPresetId);
+
+const uniquePresetIds = (values: unknown, limit = thumbnailPresets.length): ThumbnailPresetId[] => {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  const ids: ThumbnailPresetId[] = [];
+  for (const value of values) {
+    if (isThumbnailPresetId(value) && !ids.includes(value)) {
+      ids.push(value);
+    }
+    if (ids.length >= limit) {
+      break;
+    }
+  }
+  return ids;
+};
+
+export const normalizeThumbnailPresetDiscoveryState = (value: unknown): ThumbnailPresetDiscoveryState => {
+  if (!value || typeof value !== "object") {
+    return { version: 1, recentPresetIds: [], favoritePresetIds: [] };
+  }
+
+  const state = value as Partial<ThumbnailPresetDiscoveryState>;
+  return {
+    version: 1,
+    recentPresetIds: uniquePresetIds(state.recentPresetIds, thumbnailPresetRecentLimit),
+    favoritePresetIds: uniquePresetIds(state.favoritePresetIds)
+  };
+};
+
+export const getThumbnailPresetSearchText = (preset: ThumbnailPreset) =>
+  [preset.name, preset.category, preset.usageLabel, preset.description].join(" ").toLowerCase();
+
+export const filterThumbnailPresets = (presets: ThumbnailPreset[], filter: ThumbnailPresetFilter) => {
+  const query = filter.query.trim().toLowerCase();
+  return presets.filter((preset) => {
+    if (filter.category !== "all" && preset.category !== filter.category) {
+      return false;
+    }
+    if (filter.usageLabel !== "all" && preset.usageLabel !== filter.usageLabel) {
+      return false;
+    }
+    return query ? getThumbnailPresetSearchText(preset).includes(query) : true;
+  });
+};
+
+export const createNextRecentThumbnailPresetIds = (
+  currentPresetIds: ThumbnailPresetId[],
+  presetId: ThumbnailPresetId
+): ThumbnailPresetId[] => uniquePresetIds([presetId, ...currentPresetIds], thumbnailPresetRecentLimit);
+
+export const toggleThumbnailPresetFavorite = (
+  currentPresetIds: ThumbnailPresetId[],
+  presetId: ThumbnailPresetId
+): ThumbnailPresetId[] => {
+  if (currentPresetIds.includes(presetId)) {
+    return currentPresetIds.filter((id) => id !== presetId);
+  }
+  return uniquePresetIds([...currentPresetIds, presetId]);
+};
 
 export const cloneThumbnailLayer = (layer: ThumbnailLayer): ThumbnailLayer => ({
   ...layer,

@@ -191,12 +191,15 @@ const firstMeaningfulLine = (text: string) => text.split(/\r?\n/).map((line) => 
 const compactLayerText = (text: string, maxLength: number) => (text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text);
 const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, payload: ScheduleHandoffPayload): ThumbnailEditorDraft => {
   const titleText = compactLayerText(payload.title || "無題の予定", 42);
-  const timeText = compactLayerText([payload.startTime, payload.platform || "配信開始"].filter(Boolean).join("\n"), 18);
+  const dateText = formatHandoffDate(payload.date);
+  const timeRange = [payload.startTime, payload.endTime].filter(Boolean).join("-");
+  const timeText = compactLayerText([dateText, timeRange].filter(Boolean).join(" "), 24);
   const subText = compactLayerText(
     firstMeaningfulLine(payload.announcementText) ||
       [formatHandoffDate(payload.date), payload.categoryLabel, payload.hashtags].filter(Boolean).join(" / "),
     54
   );
+  const labelText = compactLayerText([payload.categoryLabel, payload.platform].filter(Boolean).join(" / ") || payload.announcementStatusLabel || "配信告知", 22);
   let selectedLayerId = draft.selectedLayerId;
   const layers = draft.layers.map((layer) => {
     if (layer.type !== "text") {
@@ -214,6 +217,10 @@ const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, paylo
 
     if (layer.name.includes("サブ")) {
       return { ...layer, text: subText };
+    }
+
+    if (layer.name.includes("ラベル")) {
+      return { ...layer, text: labelText };
     }
 
     return layer;
@@ -1561,11 +1568,11 @@ function EffectControls({ layer, onChange }: { layer: ThumbnailLayer; onChange: 
 function PresetCards({ currentPresetId, onApply }: { currentPresetId: ThumbnailPresetId; onApply: (id: ThumbnailPresetId) => void }) {
   return (
     <section className="panel p-4">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-black text-foreground">プリセット一覧</h2>
-        <p className="text-xs font-bold text-muted">MVP 4種</p>
+        <p className="text-xs font-bold text-muted">MVP {thumbnailPresets.length}種</p>
       </div>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {thumbnailPresets.map((preset) => (
           <button
             key={preset.id}
@@ -1575,8 +1582,13 @@ function PresetCards({ currentPresetId, onApply }: { currentPresetId: ThumbnailP
             ].join(" ")}
             type="button"
             onClick={() => onApply(preset.id)}
+            aria-pressed={currentPresetId === preset.id}
           >
             <div className="mb-3 aspect-video rounded-base border border-border" style={{ background: `linear-gradient(135deg, #07111c, ${preset.accent})` }} />
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              <span className="rounded-sm border border-border bg-surface-muted px-2 py-0.5 text-[11px] font-bold text-muted">{preset.category}</span>
+              <span className="rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">{preset.usageLabel}</span>
+            </div>
             <p className="text-sm font-black text-foreground">{preset.name}</p>
             <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{preset.description}</p>
             <span className="mt-3 inline-flex rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong">

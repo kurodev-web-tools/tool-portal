@@ -106,6 +106,15 @@ export type ThumbnailPresetDiscoveryState = {
   favoritePresetIds: ThumbnailPresetId[];
 };
 
+export const thumbnailMainTextCarryoverTargets = [
+  { id: "headline", label: "見出し", namePart: "見出し" },
+  { id: "time", label: "時刻", namePart: "時刻" },
+  { id: "sub", label: "サブ", namePart: "サブ" },
+  { id: "label", label: "ラベル", namePart: "ラベル" }
+] as const;
+export type ThumbnailMainTextCarryoverKey = (typeof thumbnailMainTextCarryoverTargets)[number]["id"];
+export type ThumbnailMainTextCarryover = Partial<Record<ThumbnailMainTextCarryoverKey, string>>;
+
 export const thumbnailCanvasSizes: Record<ThumbnailCanvasSizeId, ThumbnailCanvas & { label: string }> = {
   hd: { width: 1280, height: 720, label: "1280 x 720 (16:9)" },
   "full-hd": { width: 1920, height: 1080, label: "1920 x 1080 (16:9)" }
@@ -427,6 +436,66 @@ export const toggleThumbnailPresetFavorite = (
     return currentPresetIds.filter((id) => id !== presetId);
   }
   return uniquePresetIds([...currentPresetIds, presetId]);
+};
+
+export const getThumbnailMainTextCarryover = (draft: Pick<ThumbnailEditorDraft, "layers">): ThumbnailMainTextCarryover => {
+  const carryover: ThumbnailMainTextCarryover = {};
+  for (const target of thumbnailMainTextCarryoverTargets) {
+    const layer = draft.layers.find((item) => item.type === "text" && item.name.includes(target.namePart));
+    if (layer?.type === "text") {
+      carryover[target.id] = layer.text;
+    }
+  }
+  return carryover;
+};
+
+export const applyThumbnailMainTextCarryover = (
+  draft: ThumbnailEditorDraft,
+  carryover: ThumbnailMainTextCarryover
+): ThumbnailEditorDraft => {
+  let selectedLayerId = draft.selectedLayerId;
+  let firstChangedLayerId: string | null = null;
+  const layers = draft.layers.map((layer) => {
+    if (layer.type !== "text") {
+      return layer;
+    }
+
+    const target = thumbnailMainTextCarryoverTargets.find((item) => layer.name.includes(item.namePart));
+    const text = target ? carryover[target.id] : undefined;
+    if (!target || typeof text !== "string") {
+      return layer;
+    }
+
+    firstChangedLayerId ??= layer.id;
+    if (target.id === "headline") {
+      selectedLayerId = layer.id;
+    }
+    return { ...layer, text };
+  });
+
+  return {
+    ...draft,
+    layers,
+    selectedLayerId: selectedLayerId ?? firstChangedLayerId ?? draft.selectedLayerId,
+    updatedAt: nowIso()
+  };
+};
+
+const comparableLayer = (layer: ThumbnailLayer): Omit<ThumbnailLayer, "id"> => {
+  const { id: _id, ...rest } = layer;
+  return rest;
+};
+
+export const isThumbnailDraftPristineForPreset = (draft: ThumbnailEditorDraft): boolean => {
+  const presetDraft = createDraftFromPreset(draft.presetId, draft.canvas);
+  if (draft.layers.length !== presetDraft.layers.length) {
+    return false;
+  }
+
+  return draft.layers.every((layer, index) => {
+    const presetLayer = presetDraft.layers[index];
+    return presetLayer ? JSON.stringify(comparableLayer(layer)) === JSON.stringify(comparableLayer(presetLayer)) : false;
+  });
 };
 
 export const cloneThumbnailLayer = (layer: ThumbnailLayer): ThumbnailLayer => ({

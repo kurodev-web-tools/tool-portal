@@ -3,6 +3,7 @@
 import { ChangeEvent, MouseEvent, PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   cloneThumbnailLayer,
+  applyThumbnailMainTextCarryover,
   createNextRecentThumbnailPresetIds,
   createDraftFromPreset,
   createImageLayer,
@@ -10,8 +11,10 @@ import {
   createTextLayer,
   drawThumbnail,
   filterThumbnailPresets,
+  getThumbnailMainTextCarryover,
   getLayerCenter,
   hitTestLayerHandle,
+  isThumbnailDraftPristineForPreset,
   layerContainsPoint,
   normalizeThumbnailPresetDiscoveryState,
   normalizeThumbnailDraft,
@@ -20,10 +23,12 @@ import {
   thumbnailDraftStorageKey,
   thumbnailFontGroups,
   thumbnailFonts,
+  thumbnailMainTextCarryoverTargets,
   thumbnailPresetDiscoveryStorageKey,
   thumbnailPresets,
   toggleThumbnailPresetFavorite,
   type ThumbnailHandleKind,
+  type ThumbnailMainTextCarryover,
   type ThumbnailResizeHandle,
   type ThumbnailCanvasSizeId,
   type ThumbnailEditorDraft,
@@ -48,6 +53,7 @@ type ToastTone = "info" | "success" | "warning" | "error";
 type ToastState = { tone: ToastTone; message: string } | null;
 type MobilePanel = "canvas" | "layers" | "text" | "export";
 type EditorMode = "edit" | "pan";
+type PresetApplyMode = "plain" | "carryover" | "handoff";
 type CanvasInteractionMode = "drag" | "resize" | "rotate";
 type CanvasCursor = "default" | "move" | "grab" | "grabbing" | "crosshair" | "nwse-resize" | "nesw-resize";
 type CanvasInteractionState = {
@@ -288,6 +294,7 @@ export function ThumbnailEditorApp() {
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [handoffPayload, setHandoffPayload] = useState<ScheduleHandoffPayload | null>(null);
   const [presetDiscoveryState, setPresetDiscoveryState] = useState<ThumbnailPresetDiscoveryState>(defaultPresetDiscoveryState);
+  const [pendingPresetApplyId, setPendingPresetApplyId] = useState<ThumbnailPresetId | null>(null);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mobilePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -306,6 +313,15 @@ export function ThumbnailEditorApp() {
   const selectedPreset = useMemo(
     () => thumbnailPresets.find((preset) => preset.id === draft.presetId) ?? thumbnailPresets[0],
     [draft.presetId]
+  );
+  const pendingPreset = useMemo(
+    () => thumbnailPresets.find((preset) => preset.id === pendingPresetApplyId) ?? null,
+    [pendingPresetApplyId]
+  );
+  const currentMainTextCarryover = useMemo(() => getThumbnailMainTextCarryover(draft), [draft]);
+  const pendingPresetDefaultText = useMemo(
+    () => (pendingPreset ? getThumbnailMainTextCarryover(createDraftFromPreset(pendingPreset.id, draft.canvas)) : {}),
+    [draft.canvas, pendingPreset]
   );
 
   useEffect(() => {
@@ -420,6 +436,26 @@ export function ThumbnailEditorApp() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [mobilePreviewOpen]);
+
+  useEffect(() => {
+    if (!pendingPresetApplyId) {
+      return;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setPendingPresetApplyId(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [pendingPresetApplyId]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -581,13 +617,35 @@ export function ThumbnailEditorApp() {
     [draft.canvas.height, draft.canvas.width]
   );
 
-  const applyPreset = (presetId: ThumbnailPresetId) => {
+  const requestPresetApply = (presetId: ThumbnailPresetId) => {
+    if (!handoffPayload && isThumbnailDraftPristineForPreset(draft)) {
+      applyPreset(presetId, "plain");
+      return;
+    }
+    setPendingPresetApplyId(presetId);
+    setHeaderMenuOpen(null);
+  };
+
+  const applyPreset = (presetId: ThumbnailPresetId, mode: PresetApplyMode) => {
     recordPresetUse(presetId);
     const next = createDraftFromPreset(presetId, draft.canvas);
-    const nextDraft = handoffPayload ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload) : next;
+    const nextDraft =
+      mode === "handoff" && handoffPayload
+        ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
+        : mode === "carryover"
+          ? applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft))
+          : next;
     setDraft(nextDraft);
     setMobilePanel("canvas");
-    showToast("success", handoffPayload ? "プリセットへ予定テキストを引き継ぎました。" : "プリセットを適用しました。");
+    setPendingPresetApplyId(null);
+    showToast(
+      "success",
+      mode === "handoff"
+        ? "プリセットへ予定テキストを引き継ぎました。"
+        : mode === "carryover"
+          ? "プリセットへ主要テキストを引き継ぎました。"
+          : "プリセットを適用しました。"
+    );
   };
 
   const changeCanvasSize = (sizeId: ThumbnailCanvasSizeId) => {
@@ -1037,7 +1095,7 @@ export function ThumbnailEditorApp() {
                   id: preset.id,
                   label: preset.name
                 }))}
-                onSelect={(id) => applyPreset(id as ThumbnailPresetId)}
+                onSelect={(id) => requestPresetApply(id as ThumbnailPresetId)}
               />
             </label>
             <label className="min-w-0 text-xs font-bold text-muted">
@@ -1096,7 +1154,7 @@ export function ThumbnailEditorApp() {
                       id: preset.id,
                       label: preset.name
                     }))}
-                    onSelect={(id) => applyPreset(id as ThumbnailPresetId)}
+                    onSelect={(id) => requestPresetApply(id as ThumbnailPresetId)}
                   />
                 </label>
                 <label className="min-w-0 text-xs font-bold text-muted">
@@ -1214,7 +1272,7 @@ export function ThumbnailEditorApp() {
                   currentPresetId={draft.presetId}
                   favoritePresetIds={presetDiscoveryState.favoritePresetIds}
                   recentPresetIds={presetDiscoveryState.recentPresetIds}
-                  onApply={applyPreset}
+                  onApply={requestPresetApply}
                   onFavoriteToggle={togglePresetFavorite}
                 />
               )}
@@ -1242,7 +1300,7 @@ export function ThumbnailEditorApp() {
                 currentPresetId={draft.presetId}
                 favoritePresetIds={presetDiscoveryState.favoritePresetIds}
                 recentPresetIds={presetDiscoveryState.recentPresetIds}
-                onApply={applyPreset}
+                onApply={requestPresetApply}
                 onFavoriteToggle={togglePresetFavorite}
               />
             </div>
@@ -1314,6 +1372,19 @@ export function ThumbnailEditorApp() {
             確認専用です。編集に戻るには閉じるを押してください。
           </p>
         </div>
+      ) : null}
+
+      {pendingPreset ? (
+        <PresetApplyConfirmDialog
+          currentPresetName={selectedPreset.name}
+          targetPreset={pendingPreset}
+          currentText={currentMainTextCarryover}
+          targetText={pendingPresetDefaultText}
+          hasScheduleHandoff={Boolean(handoffPayload)}
+          onApplyPlain={() => applyPreset(pendingPreset.id, "plain")}
+          onApplyCarryover={() => applyPreset(pendingPreset.id, handoffPayload ? "handoff" : "carryover")}
+          onCancel={() => setPendingPresetApplyId(null)}
+        />
       ) : null}
 
       <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} aria-label="画像ファイルを選択" />
@@ -1709,6 +1780,77 @@ function EffectControls({ layer, onChange }: { layer: ThumbnailLayer; onChange: 
             <NumberField label="影Y" value={layer.shadowOffsetY} min={-80} max={80} onChange={(shadowOffsetY) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetY } : item))} />
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function PresetApplyConfirmDialog({
+  currentPresetName,
+  targetPreset,
+  currentText,
+  targetText,
+  hasScheduleHandoff,
+  onApplyPlain,
+  onApplyCarryover,
+  onCancel
+}: {
+  currentPresetName: string;
+  targetPreset: ThumbnailPreset;
+  currentText: ThumbnailMainTextCarryover;
+  targetText: ThumbnailMainTextCarryover;
+  hasScheduleHandoff: boolean;
+  onApplyPlain: () => void;
+  onApplyCarryover: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[110] flex items-end bg-black/58 p-3 text-foreground min-[640px]:items-center min-[640px]:justify-center" role="dialog" aria-modal="true" aria-labelledby="preset-apply-title">
+      <div className="w-full max-w-2xl rounded-base border border-border bg-background shadow-panel">
+        <div className="border-b border-border px-4 py-3 md:px-5">
+          <p className="text-xs font-bold text-primary-strong">プリセット適用の確認</p>
+          <h2 id="preset-apply-title" className="mt-1 text-lg font-black text-foreground">
+            {currentPresetName} から {targetPreset.name} へ変更
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            プリセット適用で現在のレイヤー構成は置き換わります。画像、図形、自由追加レイヤーの高度なマージは今回行いません。
+          </p>
+          {hasScheduleHandoff ? (
+            <p className="mt-2 rounded-base border border-primary/40 bg-primary-soft/35 px-3 py-2 text-xs font-bold leading-5 text-primary-strong">
+              Schedule Calendar 由来の予定テキストを優先し、新しいプリセットの見出し、時刻、サブ、ラベルへ再反映します。
+            </p>
+          ) : null}
+        </div>
+        <div className="max-h-[52vh] overflow-auto px-4 py-4 md:px-5">
+          <div className="grid gap-2">
+            {thumbnailMainTextCarryoverTargets.map((target) => (
+              <div key={target.id} className="grid gap-2 rounded-base border border-border bg-surface p-3 text-xs min-[640px]:grid-cols-[5.5rem_minmax(0,1fr)_minmax(0,1fr)]">
+                <p className="font-black text-foreground">{target.label}</p>
+                <div className="min-w-0">
+                  <p className="mb-1 font-bold text-muted">現在</p>
+                  <p className="line-clamp-2 break-words font-bold text-foreground">{currentText[target.id] || "未設定"}</p>
+                </div>
+                <div className="min-w-0">
+                  <p className="mb-1 font-bold text-muted">新プリセット初期値</p>
+                  <p className="line-clamp-2 break-words font-bold text-foreground">{targetText[target.id] || "未設定"}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col-reverse gap-2 border-t border-border px-4 py-3 min-[640px]:flex-row min-[640px]:justify-end md:px-5">
+          <button className="flat-control px-4 py-2 text-sm font-bold" type="button" onClick={onCancel}>
+            キャンセル
+          </button>
+          {!hasScheduleHandoff ? (
+            <button className="flat-control px-4 py-2 text-sm font-bold" type="button" onClick={onApplyPlain}>
+              プリセットをそのまま適用
+            </button>
+          ) : null}
+          <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onApplyCarryover}>
+            {hasScheduleHandoff ? "予定テキストを引き継いで適用" : "主要テキストを引き継いで適用"}
+          </button>
+        </div>
       </div>
     </div>
   );

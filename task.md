@@ -187,6 +187,27 @@
   - browser console error / warn なし
   - `npm run build` は PASS。worktree が親repo内にあるため Next.js の workspace root 推定 warning は表示された
 
+2026-05-05 プリセット適用安全改善メモ:
+
+- プリセット適用前に確認UIを挟み、上書き対象になる `見出し` / `時刻` / `サブ` / `ラベル` の現在値と新プリセット初期値を表示するようにした
+- 新規作成直後など、現在draftが現在プリセットの初期状態と同等の場合は確認UIを出さずに即時適用する
+- handoffなしの通常編集では `プリセットをそのまま適用` と `主要テキストを引き継いで適用` を選べるようにした
+- 主要テキスト引き継ぎは、レイヤー名に `見出し` / `時刻` / `サブ` / `ラベル` を含むテキストレイヤーだけを対象にする
+- Schedule Calendar handoff中は、確認UI上でも予定テキスト優先を明示し、既存どおり予定テキストを新プリセットへ再適用する
+- 画像レイヤー、図形レイヤー、自由追加レイヤーの高度なマージ、画像本体の保存方式、Schedule Calendar handoff payload、Thumbnail -> SNS handoff、SNS Split Image Maker の分割ロジックは変更していない
+- 最近使った / お気に入りの `localStorage` 保存は引き続き preset id のみ
+- 検証: `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+- Browser確認:
+  - `localhost:3000` は別 worktree の dev server だったため、対象 worktree は `localhost:3001` で確認した
+  - 通常起動、handoffなしの `プリセットをそのまま適用`、handoffなしの `主要テキストを引き継いで適用`、キャンセル時に draft が変わらないことを確認
+  - 新規作成直後の未編集draftでは、プリセット変更時に確認UIを出さず即時適用されることを確認
+  - テキスト編集後のdraftでは、プリセット変更時に確認UIが表示されることを確認
+  - Schedule Calendar -> Thumbnail Editor handoff 後、プリセット変更確認UIで予定テキスト優先が表示され、適用後も予定タイトルが維持されることを確認
+  - プリセット検索、最近使ったプリセット表示、お気に入り追加 / reload後の復元を確認
+  - Thumbnail Editor -> SNS分割画像メーカー handoff は、`Thumbnail Editorから受け取り`、予定タイトル、`split_1 -> split_4` 導線で確認
+  - browser console error / warn なし
+  - in-app browser 側に viewport resize API がないため、390 / 820 / 1024 / 1280 / 1366 の幅別実画面確認は未実施。今回追加UIは固定フッター型モーダルで、既存レスポンシブ境界 class は変更していない
+
 - [ ] ペイント系ではなく、VTuber向けサムネ組み立てツールとして再定義する
   - 白紙から作るのではなく、用途別プリセットを選んで文字と立ち絵を差し替える体験に寄せる
   - 自由描画、素材検索、Canva的な汎用デザイン機能は優先しない
@@ -244,6 +265,7 @@
   - 立ち絵を置くだけで破綻しにくい構図を優先する
 - [ ] プリセットの部分適用を設計する
   - 全体適用だけでなく、レイアウトのみ / 配色のみ / 文字スタイルのみ / 装飾のみを検討する
+  - [x] 初回対応として、プリセット全体適用前の確認UIと主要テキスト引き継ぎを追加する
   - 既存編集を上書きする場合は確認を入れる
   - 完成型プリセットを増やしても、ユーザーの調整済み内容を壊しにくくする
 

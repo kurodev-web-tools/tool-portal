@@ -16,8 +16,9 @@ import {
   hitTestLayerHandle,
   isThumbnailDraftPristineForPreset,
   layerContainsPoint,
-  normalizeThumbnailPresetDiscoveryState,
   normalizeThumbnailDraft,
+  normalizeThumbnailLayerName,
+  normalizeThumbnailPresetDiscoveryState,
   pointToLayerLocal,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
@@ -225,6 +226,21 @@ const defaultPresetDiscoveryState: ThumbnailPresetDiscoveryState = {
   version: 1,
   recentPresetIds: [],
   favoritePresetIds: []
+};
+const weeklyScheduleLayerGroupPattern = /^(月曜|火曜|水曜|木曜|金曜|土曜|日曜) \/ (曜日|時間|予定)$/;
+const weeklyScheduleGroupOrder = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"];
+const weeklyScheduleColumnOrder = ["曜日", "時間", "予定"];
+const getWeeklyScheduleLayerGroup = (layer: ThumbnailLayer) => {
+  const match = layer.name.match(weeklyScheduleLayerGroupPattern);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    groupId: match[1],
+    groupLabel: match[1],
+    itemLabel: match[2]
+  };
 };
 const thumbnailPresetCategories = Array.from(new Set(thumbnailPresets.map((preset) => preset.category))) as ThumbnailPresetCategory[];
 const thumbnailPresetUsageLabels = Array.from(new Set(thumbnailPresets.map((preset) => preset.usageLabel)));
@@ -734,7 +750,10 @@ export function ThumbnailEditorApp() {
       if (!layer) {
         return current;
       }
-      const cloned = cloneThumbnailLayer(layer);
+      const cloned = cloneThumbnailLayer(
+        layer,
+        current.layers.map((item) => item.name)
+      );
       const index = current.layers.findIndex((item) => item.id === layerId);
       const layers = [...current.layers];
       layers.splice(index + 1, 0, cloned);
@@ -1279,6 +1298,7 @@ export function ThumbnailEditorApp() {
               {mobilePanel === "layers" && (
                 <LayerPanel
                   layers={draft.layers}
+                  presetId={draft.presetId}
                   selectedLayerId={draft.selectedLayerId}
                   onSelect={(id) => setDraft((current) => ({ ...current, selectedLayerId: id }))}
                   onMove={moveLayer}
@@ -1315,6 +1335,7 @@ export function ThumbnailEditorApp() {
               />
               <LayerPanel
                 layers={draft.layers}
+                presetId={draft.presetId}
                 selectedLayerId={draft.selectedLayerId}
                 onSelect={(id) => setDraft((current) => ({ ...current, selectedLayerId: id }))}
                 onMove={moveLayer}
@@ -1544,6 +1565,7 @@ function DesktopToolRail({
 
 function LayerPanel({
   layers,
+  presetId,
   selectedLayerId,
   onSelect,
   onMove,
@@ -1552,6 +1574,7 @@ function LayerPanel({
   onToggleFlag
 }: {
   layers: ThumbnailLayer[];
+  presetId: ThumbnailPresetId;
   selectedLayerId: string | null;
   onSelect: (id: string) => void;
   onMove: (id: string, direction: "front" | "back") => void;
@@ -1559,50 +1582,107 @@ function LayerPanel({
   onDelete: (id: string) => void;
   onToggleFlag: (id: string, flag: "hidden" | "locked") => void;
 }) {
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const usesWeeklyGroups = presetId === "weekly_schedule";
+  const orderedLayers = useMemo(() => [...layers].reverse(), [layers]);
+  const weeklyGroups = useMemo(() => {
+    if (!usesWeeklyGroups) {
+      return [];
+    }
+
+    return weeklyScheduleGroupOrder
+      .map((dayName) => {
+        const groupLayers = layers
+          .filter((layer) => getWeeklyScheduleLayerGroup(layer)?.groupId === dayName)
+          .sort((a, b) => {
+            const aLabel = getWeeklyScheduleLayerGroup(a)?.itemLabel ?? "";
+            const bLabel = getWeeklyScheduleLayerGroup(b)?.itemLabel ?? "";
+            return weeklyScheduleColumnOrder.indexOf(aLabel) - weeklyScheduleColumnOrder.indexOf(bLabel);
+          });
+
+        return {
+          id: dayName,
+          label: dayName,
+          layers: groupLayers
+        };
+      })
+      .filter((group) => group.layers.length > 0);
+  }, [layers, usesWeeklyGroups]);
+  const groupedLayerIds = useMemo(() => new Set(weeklyGroups.flatMap((group) => group.layers.map((layer) => layer.id))), [weeklyGroups]);
+  const ungroupedLayers = usesWeeklyGroups ? orderedLayers.filter((layer) => !groupedLayerIds.has(layer.id)) : orderedLayers;
+
+  const renderLayerCard = (layer: ThumbnailLayer, compactName?: string) => (
+    <div
+      key={layer.id}
+      className={[
+        "rounded-base border p-2 transition",
+        layer.id === selectedLayerId ? "border-primary bg-primary-soft/70" : "border-border bg-surface"
+      ].join(" ")}
+    >
+      <button className="flex w-full items-center gap-2 text-left" type="button" onClick={() => onSelect(layer.id)}>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-surface-muted text-sm font-black text-primary-strong">
+          {layer.type === "text" ? "T" : layer.type === "image" ? "▧" : layer.type === "shape" && layer.shapeType === "circle" ? "●" : "■"}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">{compactName ?? layer.name}</span>
+        <span className="text-xs text-muted">{layer.type}</span>
+      </button>
+      <div className="mt-2 grid grid-cols-6 gap-1">
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "front")} title="前面へ">
+          ↑
+        </button>
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "back")} title="背面へ">
+          ↓
+        </button>
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onDuplicate(layer.id)} title="複製">
+          複
+        </button>
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "hidden")} title="表示切替">
+          {layer.hidden ? "非" : "目"}
+        </button>
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "locked")} title="ロック切替">
+          {layer.locked ? "錠" : "開"}
+        </button>
+        <button className="flat-control py-1 text-xs text-rose-500" type="button" onClick={() => onDelete(layer.id)} title="削除">
+          削
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <section className="panel p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-base font-black text-foreground">レイヤー一覧</h2>
         <p className="text-xs font-bold text-muted">上が前面</p>
       </div>
-      <div className="space-y-2">
-        {[...layers].reverse().map((layer) => (
-          <div
-            key={layer.id}
-            className={[
-              "rounded-base border p-2 transition",
-              layer.id === selectedLayerId ? "border-primary bg-primary-soft/70" : "border-border bg-surface"
-            ].join(" ")}
-          >
-            <button className="flex w-full items-center gap-2 text-left" type="button" onClick={() => onSelect(layer.id)}>
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-surface-muted text-sm font-black text-primary-strong">
-                {layer.type === "text" ? "T" : layer.type === "image" ? "▧" : layer.type === "shape" && layer.shapeType === "circle" ? "●" : "■"}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">{layer.name}</span>
-              <span className="text-xs text-muted">{layer.type}</span>
-            </button>
-            <div className="mt-2 grid grid-cols-6 gap-1">
-              <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "front")} title="前面へ">
-                ↑
-              </button>
-              <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "back")} title="背面へ">
-                ↓
-              </button>
-              <button className="flat-control py-1 text-xs" type="button" onClick={() => onDuplicate(layer.id)} title="複製">
-                複
-              </button>
-              <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "hidden")} title="表示切替">
-                {layer.hidden ? "非" : "目"}
-              </button>
-              <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "locked")} title="ロック切替">
-                {layer.locked ? "錠" : "開"}
-              </button>
-              <button className="flat-control py-1 text-xs text-rose-500" type="button" onClick={() => onDelete(layer.id)} title="削除">
-                削
-              </button>
-            </div>
-          </div>
-        ))}
+      <div className="scrollbar-accent max-h-[min(52vh,560px)] overflow-y-auto [scrollbar-gutter:stable]">
+        <div className="space-y-2 pr-1">
+          {ungroupedLayers.map((layer) => renderLayerCard(layer))}
+          {weeklyGroups.map((group) => {
+            const groupSelected = group.layers.some((layer) => layer.id === selectedLayerId);
+            const collapsed = collapsedGroups[group.id] ?? !groupSelected;
+
+            return (
+              <div key={group.id} className="rounded-base border border-border bg-surface-muted/45 p-2">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-2 rounded-base px-2 py-2 text-left text-sm font-black text-foreground hover:bg-surface-muted"
+                  aria-expanded={!collapsed}
+                  aria-label={`${group.label}グループを${collapsed ? "開く" : "閉じる"}`}
+                  onClick={() => setCollapsedGroups((current) => ({ ...current, [group.id]: !collapsed }))}
+                >
+                  <span>週間予定レイヤー / {group.label}</span>
+                  <span className="text-base font-black text-muted" aria-hidden="true">{collapsed ? "▸" : "▾"}</span>
+                </button>
+                {!collapsed ? (
+                  <div className="mt-2 space-y-2">
+                    {group.layers.map((layer) => renderLayerCard(layer, getWeeklyScheduleLayerGroup(layer)?.itemLabel ?? layer.name))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
@@ -1625,6 +1705,21 @@ function PropertyPanel({
         <h2 className="text-base font-black text-foreground">{layer.type === "text" ? "テキスト設定" : layer.type === "shape" ? "図形設定" : "画像設定"}</h2>
         <span className="rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{layer.name}</span>
       </div>
+
+      <label className="block text-xs font-bold text-muted">
+        レイヤー名
+        <input
+          className="mt-1 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
+          maxLength={40}
+          type="text"
+          value={layer.name}
+          onChange={(event) => onChange((item) => ({ ...item, name: event.target.value.slice(0, 40) }))}
+          onBlur={(event) => {
+            const fallback = layer.type === "text" ? "テキスト" : layer.type === "shape" ? "図形" : "画像";
+            onChange((item) => ({ ...item, name: normalizeThumbnailLayerName(event.target.value, fallback) }));
+          }}
+        />
+      </label>
 
       <div className="grid grid-cols-2 gap-3">
         <NumberField label="X" value={layer.x} min={-2000} max={4000} onChange={(x) => onChange((item) => ({ ...item, x }))} />

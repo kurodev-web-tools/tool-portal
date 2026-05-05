@@ -169,6 +169,24 @@
   - 一時Chromeプロファイルで console error / warn なし
   - `npm run build` は PASS。worktree が親repo内にあるため Next.js の workspace root 推定 warning は表示された
 
+2026-05-05 プリセット探索性改善メモ:
+
+- プリセット一覧へ検索、カテゴリ絞り込み、用途ラベル絞り込みを追加した
+- 検索対象はプリセット名、カテゴリ、用途ラベル、説明に限定した
+- 最近使ったプリセットとお気に入りは `preset id` の配列だけを `localStorage` の `v-streamer-tools:thumbnail-editor:preset-discovery:v1` へ保存する
+- 画像本体、Thumbnail Editor draft/autosave、Schedule Calendar handoff、Thumbnail Editor -> SNS分割画像メーカー handoff、SNS Split Image Maker の分割ロジックは変更しない
+- 手動編集済みテキストと handoff テキストの高度なマージ、立ち絵配置プリセット、プリセットの部分適用は後続候補のまま残す
+- 検証: `node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+- Browser確認:
+  - `localhost:3000` は既存の `D:\V_streamer_tools\.worktrees\thumbnail-to-sns-handoff` dev server が使用中だったため、対象 worktree は `localhost:3001` で確認した
+  - 通常起動、プリセット検索、カテゴリ / 用途ラベル絞り込み、最近使ったプリセット表示、お気に入り追加 / 解除 / reload後の復元を確認
+  - プリセット適用後の draft/autosave は、`歌枠` 適用後の reload で前回下書き復元を確認
+  - Thumbnail Editor -> SNS分割画像メーカー handoff は、`Thumbnail Editorから受け取り`、`split_1`、保存導線表示で確認
+  - Schedule Calendar -> Thumbnail Editor handoff は既存 contract と受け取り経路を維持。今回変更は preset discovery state に限定し、Schedule Calendar 側 payload / Thumbnail handoff 適用関数は未変更
+  - 390 / 820 / 1024 / 1280 / 1366px の幅別スクリーンショットで通常起動とプリセット一覧表示を確認
+  - browser console error / warn なし
+  - `npm run build` は PASS。worktree が親repo内にあるため Next.js の workspace root 推定 warning は表示された
+
 - [ ] ペイント系ではなく、VTuber向けサムネ組み立てツールとして再定義する
   - 白紙から作るのではなく、用途別プリセットを選んで文字と立ち絵を差し替える体験に寄せる
   - 自由描画、素材検索、Canva的な汎用デザイン機能は優先しない
@@ -186,9 +204,10 @@
   - X告知画像
 - [ ] プリセット一覧の表示方法を再設計する
   - [x] 初回対応として、既存カード一覧にカテゴリ / 用途ラベル / 説明を表示する
+  - [x] 検索、カテゴリ絞り込み、用途ラベル絞り込み、最近使ったプリセット、お気に入りの最小実装を追加する
   - プリセット数が増える前提で、カテゴリ選択 -> 複数プリセット表示の構成にする
   - カテゴリ候補: 配信ジャンル、告知種別、コラボ人数、画像向き、プラットフォーム
-  - プリセットの検索、絞り込み、最近使ったプリセット、お気に入りを後続候補として検討する
+  - より細かいカテゴリ階層やプリセットパック管理は後続候補として検討する
 - [ ] プリセットに持たせる情報を定義する
   - タイトル位置、立ち絵位置、日時表示、ジャンルラベル、強調ワード、背景処理、文字縁取り、影、セーフエリア
   - 配色バリエーション、フォントバリエーション、装飾ON/OFFを切り替えられるようにする

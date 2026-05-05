@@ -20,6 +20,25 @@ export type ScheduleHandoffPayload = {
   announcementStatusLabel: string;
 };
 
+export type ThumbnailToSnsHandoffPayload = {
+  version: 1;
+  source: "thumbnail-editor";
+  target: "sns-split-image-maker";
+  createdAt: string;
+  expiresAt: string;
+  imageStorageId: string;
+  title: string;
+  date: string;
+  categoryLabel: string;
+  platform: string;
+  announcementText: string;
+  hashtags: string;
+  fileNameBase: string;
+};
+
+export type SnsSplitToolHandoffPayload = ScheduleHandoffPayload | ThumbnailToSnsHandoffPayload;
+export type ToolHandoffPayload = ScheduleHandoffPayload | ThumbnailToSnsHandoffPayload;
+
 export const toolHandoffQueryParam = "handoff";
 const toolHandoffStoragePrefix = "v-streamer-tools:tool-handoff:v1:";
 const handoffTtlMs = 30 * 60 * 1000;
@@ -35,7 +54,9 @@ const maxTextLengths = {
   announcementText: 4000,
   hashtags: 1000,
   announcementStatus: 64,
-  announcementStatusLabel: 64
+  announcementStatusLabel: 64,
+  imageStorageId: 120,
+  fileNameBase: 80
 };
 
 function createHandoffToken() {
@@ -87,7 +108,30 @@ export function createScheduleHandoffPayload(
   };
 }
 
-export function writeToolHandoff(payload: ScheduleHandoffPayload) {
+export function createThumbnailToSnsHandoffPayload(
+  input: Omit<ThumbnailToSnsHandoffPayload, "version" | "source" | "target" | "createdAt" | "expiresAt">
+): ThumbnailToSnsHandoffPayload {
+  const createdAt = new Date();
+  const expiresAt = new Date(createdAt.getTime() + handoffTtlMs);
+
+  return {
+    version: 1,
+    source: "thumbnail-editor",
+    target: "sns-split-image-maker",
+    createdAt: createdAt.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+    imageStorageId: input.imageStorageId,
+    title: input.title,
+    date: input.date,
+    categoryLabel: input.categoryLabel,
+    platform: input.platform,
+    announcementText: input.announcementText,
+    hashtags: input.hashtags,
+    fileNameBase: input.fileNameBase
+  };
+}
+
+export function writeToolHandoff(payload: ToolHandoffPayload) {
   if (typeof window === "undefined") {
     return null;
   }
@@ -108,7 +152,9 @@ export function buildToolHandoffUrl(target: ToolHandoffTarget, token: string) {
   return `${pathname}?${params.toString()}`;
 }
 
-export function readToolHandoff(target: ToolHandoffTarget): ScheduleHandoffPayload | null {
+export function readToolHandoff(target: "thumbnail-editor"): ScheduleHandoffPayload | null;
+export function readToolHandoff(target: "sns-split-image-maker"): SnsSplitToolHandoffPayload | null;
+export function readToolHandoff(target: ToolHandoffTarget): ToolHandoffPayload | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -127,10 +173,25 @@ export function readToolHandoff(target: ToolHandoffTarget): ScheduleHandoffPaylo
   }
 
   try {
-    return normalizeScheduleHandoffPayload(JSON.parse(rawPayload), target);
+    return normalizeToolHandoffPayload(JSON.parse(rawPayload), target);
   } catch {
     return null;
   }
+}
+
+function normalizeToolHandoffPayload(value: unknown, target: ToolHandoffTarget): ToolHandoffPayload | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const payload = value as Partial<ToolHandoffPayload>;
+  if (payload.source === "schedule-calendar") {
+    return normalizeScheduleHandoffPayload(value, target);
+  }
+  if (payload.source === "thumbnail-editor") {
+    return normalizeThumbnailToSnsHandoffPayload(value, target);
+  }
+  return null;
 }
 
 export function normalizeScheduleHandoffPayload(value: unknown, target: ToolHandoffTarget): ScheduleHandoffPayload | null {
@@ -170,5 +231,46 @@ export function normalizeScheduleHandoffPayload(value: unknown, target: ToolHand
     hashtags: safeString(payload.hashtags, maxTextLengths.hashtags),
     announcementStatus: safeString(payload.announcementStatus, maxTextLengths.announcementStatus),
     announcementStatusLabel: safeString(payload.announcementStatusLabel, maxTextLengths.announcementStatusLabel)
+  };
+}
+
+export function normalizeThumbnailToSnsHandoffPayload(value: unknown, target: ToolHandoffTarget): ThumbnailToSnsHandoffPayload | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const payload = value as Partial<ThumbnailToSnsHandoffPayload>;
+  const expiresAt = safeString(payload.expiresAt, 64);
+  const createdAt = safeString(payload.createdAt, 64);
+  if (
+    payload.version !== 1 ||
+    payload.source !== "thumbnail-editor" ||
+    payload.target !== "sns-split-image-maker" ||
+    target !== "sns-split-image-maker" ||
+    !isValidDateTime(expiresAt) ||
+    Date.parse(expiresAt) < Date.now()
+  ) {
+    return null;
+  }
+
+  const imageStorageId = safeString(payload.imageStorageId, maxTextLengths.imageStorageId);
+  if (!imageStorageId) {
+    return null;
+  }
+
+  return {
+    version: 1,
+    source: "thumbnail-editor",
+    target: "sns-split-image-maker",
+    createdAt: isValidDateTime(createdAt) ? createdAt : new Date().toISOString(),
+    expiresAt,
+    imageStorageId,
+    title: safeString(payload.title, maxTextLengths.title),
+    date: safeString(payload.date, maxTextLengths.date),
+    categoryLabel: safeString(payload.categoryLabel, maxTextLengths.categoryLabel),
+    platform: safeString(payload.platform, maxTextLengths.platform),
+    announcementText: safeString(payload.announcementText, maxTextLengths.announcementText),
+    hashtags: safeString(payload.hashtags, maxTextLengths.hashtags),
+    fileNameBase: safeString(payload.fileNameBase, maxTextLengths.fileNameBase)
   };
 }

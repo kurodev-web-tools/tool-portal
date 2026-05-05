@@ -111,6 +111,13 @@ MVPの品質は「文字の見やすさ」で決まるため、テキスト編�
 Schedule Calendar からの handoff は、受け取った予定テキストをプリセット内の `見出し`、`時刻`、`サブ`、`ラベル` の名前を持つテキストレイヤーへ反映する。
 プリセット変更後も同じ予定テキストを再適用するが、手動編集済みテキストとの高度なマージや画像本体の受け渡しは後続候補に残す。
 
+### 2026-05 Thumbnail To SNS Split Handoff
+
+Thumbnail Editor で表示中のキャンバスをPNG相当で描画し、SNS分割画像メーカーの `base` 画像として渡せる導線を追加する。
+画像本体は `localStorage` へ保存せず、SNS分割画像メーカー側のIndexedDB画像保存方式へ寄せる。
+URL query には短い `handoff` token と `preset=split-4` だけを載せ、タイトル、日付、カテゴリ、プラットフォーム、告知文、ハッシュタグ、ファイル名候補は一時 payload として渡す。
+Schedule Calendar 由来の予定テキストがある場合は、その情報を継承する。通常起動の Thumbnail Editor から渡す場合は、見出しテキストと現在プリセット情報を最小メタデータとして使う。
+
 ## Export
 
 - 出力形式: PNG / JPEG

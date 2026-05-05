@@ -1,5 +1,15 @@
 export type ThumbnailCanvasSizeId = "hd" | "full-hd";
-export type ThumbnailPresetId = "stream_announce" | "karaoke" | "chatting" | "clip";
+export type ThumbnailPresetId =
+  | "stream_announce"
+  | "karaoke"
+  | "chatting"
+  | "clip"
+  | "game_live"
+  | "collaboration"
+  | "announcement"
+  | "weekly_schedule"
+  | "x_announcement";
+export type ThumbnailPresetCategory = "配信ジャンル" | "告知画像" | "スケジュール";
 export type ThumbnailLayerType = "image" | "text" | "shape";
 export type ThumbnailShapeType = "rect" | "circle";
 
@@ -73,6 +83,8 @@ export type ThumbnailEditorDraft = {
 export type ThumbnailPreset = {
   id: ThumbnailPresetId;
   name: string;
+  category: ThumbnailPresetCategory;
+  usageLabel: string;
   description: string;
   accent: string;
   layers: ThumbnailLayer[];
@@ -186,10 +198,14 @@ export const thumbnailPresets: ThumbnailPreset[] = [
   {
     id: "stream_announce",
     name: "配信告知",
+    category: "告知画像",
+    usageLabel: "通常告知",
     description: "開始時刻と見出しを大きく見せる告知向け。",
     accent: "#1ed7c6",
     layers: [
       backgroundLayer("画像 1（背景）", "STREAM ANNOUNCE", "#17224d", "#05121f", "#2cf4e6"),
+      shapeLayer({ name: "図形 2（ラベル帯）", shapeType: "rect", x: 86, y: 82, width: 286, height: 66, fillColor: "#1ed7c6", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "配信 / YouTube", x: 118, y: 98, width: 222, height: 38, fontSize: 30, color: "#06121f", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
       shapeLayer({ name: "図形 1（時刻バッジ）", shapeType: "circle", x: 940, y: 456, width: 210, height: 210, fillColor: "#ff5ca8", strokeColor: "#ffffff", strokeWidth: 6 }),
       textLayer({ name: "テキスト 2（時刻）", text: "21:00\n配信開始", x: 966, y: 506, width: 158, height: 132, fontSize: 48, lineHeight: 1.05, align: "center", strokeWidth: 3 }),
       textLayer({ name: "テキスト 1（見出し）", text: "初見さん\n大歓迎!", x: 90, y: 186, width: 720, height: 250, fontSize: 104, lineHeight: 1.03, color: "#ffffff", strokeWidth: 12 }),
@@ -199,30 +215,42 @@ export const thumbnailPresets: ThumbnailPreset[] = [
   {
     id: "karaoke",
     name: "歌枠",
+    category: "配信ジャンル",
+    usageLabel: "音楽配信",
     description: "音楽配信に合う強いコントラスト。",
     accent: "#ff4cc2",
     layers: [
       backgroundLayer("画像 1（背景）", "KARAOKE STREAM", "#30123f", "#07121f", "#ff4cc2"),
       shapeLayer({ name: "図形 1（帯）", shapeType: "rect", x: 70, y: 466, width: 720, height: 86, fillColor: "#07111ccc", strokeColor: "#ff4cc2", strokeWidth: 4, borderRadius: 10 }),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 80, y: 84, width: 292, height: 66, fillColor: "#ff4cc2", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "歌枠 / YouTube", x: 112, y: 100, width: 228, height: 38, fontSize: 30, color: "#1b0820", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
       textLayer({ name: "テキスト 1（見出し）", text: "歌枠\nSINGING STREAM", x: 80, y: 170, width: 820, height: 230, fontSize: 108, lineHeight: 1.0, color: "#fff3fb", strokeColor: "#1b0820", strokeWidth: 10 }),
-      textLayer({ name: "テキスト 2（サブ）", text: "リクエスト歓迎 / 初見さん歓迎", x: 106, y: 488, width: 650, height: 52, fontSize: 36, strokeWidth: 3 })
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 106, y: 424, width: 360, height: 44, fontSize: 34, color: "#ffd6f1", strokeWidth: 3 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "リクエスト歓迎 / 初見さん歓迎", x: 106, y: 488, width: 650, height: 52, fontSize: 36, strokeWidth: 3 })
     ]
   },
   {
     id: "chatting",
     name: "雑談",
+    category: "配信ジャンル",
+    usageLabel: "トーク",
     description: "トーク配信・近況報告に使いやすい余白設計。",
     accent: "#36aaff",
     layers: [
       backgroundLayer("画像 1（背景）", "CHATTING", "#102a42", "#06111c", "#36aaff"),
       shapeLayer({ name: "図形 1（コメント枠）", shapeType: "rect", x: 86, y: 130, width: 590, height: 408, fillColor: "#07111cd9", strokeColor: "#36aaff", strokeWidth: 5, borderRadius: 24 }),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 112, y: 92, width: 286, height: 62, fillColor: "#36aaff", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "雑談 / YouTube", x: 144, y: 106, width: 222, height: 36, fontSize: 28, color: "#06111c", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
       textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n雑談配信", x: 122, y: 180, width: 526, height: 206, fontSize: 88, lineHeight: 1.08, strokeWidth: 8 }),
-      textLayer({ name: "テキスト 2（サブ）", text: "今日の話題を一緒に整理しよう", x: 128, y: 430, width: 500, height: 58, fontSize: 34, color: "#cfe9ff", strokeWidth: 2 })
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 128, y: 386, width: 320, height: 42, fontSize: 32, color: "#d8f1ff", strokeWidth: 3 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "今日の話題を一緒に整理しよう", x: 128, y: 430, width: 500, height: 58, fontSize: 34, color: "#cfe9ff", strokeWidth: 2 })
     ]
   },
   {
     id: "clip",
     name: "切り抜き",
+    category: "告知画像",
+    usageLabel: "動画告知",
     description: "短い強調語と勢いを出す切り抜き向け。",
     accent: "#f59e0b",
     layers: [
@@ -230,7 +258,94 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       shapeLayer({ name: "図形 1（強調ラベル）", shapeType: "rect", x: 76, y: 76, width: 292, height: 92, fillColor: "#f59e0b", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
       textLayer({ name: "テキスト 2（ラベル）", text: "切り抜き", x: 110, y: 96, width: 224, height: 54, fontSize: 42, color: "#081117", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
       textLayer({ name: "テキスト 1（見出し）", text: "神回\nまとめ", x: 92, y: 236, width: 650, height: 224, fontSize: 112, lineHeight: 1.02, color: "#fff7dc", strokeColor: "#0b0b0b", strokeWidth: 12 }),
+      textLayer({ name: "テキスト 4（時刻）", text: "20:00 公開", x: 106, y: 464, width: 320, height: 44, fontSize: 34, color: "#ffe5aa", strokeWidth: 4 }),
       textLayer({ name: "テキスト 3（サブ）", text: "一番盛り上がった瞬間だけ", x: 110, y: 500, width: 560, height: 58, fontSize: 36, strokeWidth: 4 })
+    ]
+  },
+  {
+    id: "game_live",
+    name: "ゲーム実況",
+    category: "配信ジャンル",
+    usageLabel: "実況・参加型",
+    description: "ゲームタイトルと配信時刻を分けて見せる実況向け。",
+    accent: "#7ddf64",
+    layers: [
+      backgroundLayer("画像 1（背景）", "GAME LIVE", "#132c1e", "#07121f", "#7ddf64"),
+      shapeLayer({ name: "図形 1（ラベル帯）", shapeType: "rect", x: 74, y: 78, width: 306, height: 72, fillColor: "#7ddf64", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 10 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "GAME LIVE", x: 104, y: 96, width: 246, height: 42, fontSize: 34, color: "#07111c", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
+      shapeLayer({ name: "図形 2（時刻バッジ）", shapeType: "rect", x: 78, y: 538, width: 360, height: 78, fillColor: "#07111ce6", strokeColor: "#7ddf64", strokeWidth: 4, borderRadius: 12 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 108, y: 558, width: 300, height: 44, fontSize: 36, color: "#e8ffe2", strokeWidth: 2 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "参加型\nゲーム実況", x: 78, y: 190, width: 720, height: 238, fontSize: 104, lineHeight: 1.02, color: "#ffffff", strokeColor: "#03120a", strokeWidth: 12 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "初見さん歓迎 / 一緒に遊ぼう", x: 92, y: 452, width: 620, height: 56, fontSize: 36, color: "#dfffd8", strokeWidth: 4 })
+    ]
+  },
+  {
+    id: "collaboration",
+    name: "コラボ",
+    category: "配信ジャンル",
+    usageLabel: "2人以上",
+    description: "参加者名や企画名を載せやすいコラボ配信用。",
+    accent: "#ff7a59",
+    layers: [
+      backgroundLayer("画像 1（背景）", "COLLAB STREAM", "#38200f", "#07121f", "#ff7a59"),
+      shapeLayer({ name: "図形 1（左立ち絵スペース）", shapeType: "circle", x: 754, y: 148, width: 260, height: 260, fillColor: "#ffffff24", strokeColor: "#ffffff99", strokeWidth: 5 }),
+      shapeLayer({ name: "図形 2（右立ち絵スペース）", shapeType: "circle", x: 946, y: 256, width: 250, height: 250, fillColor: "#ffffff1f", strokeColor: "#ffb199", strokeWidth: 5 }),
+      shapeLayer({ name: "図形 3（ラベル帯）", shapeType: "rect", x: 80, y: 82, width: 310, height: 70, fillColor: "#ff7a59", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "COLLAB", x: 118, y: 98, width: 238, height: 42, fontSize: 34, color: "#130804", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "コラボ\n企画配信", x: 84, y: 206, width: 646, height: 230, fontSize: 100, lineHeight: 1.02, color: "#fff4ef", strokeColor: "#190a04", strokeWidth: 12 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "5/4 20:00", x: 92, y: 472, width: 360, height: 54, fontSize: 42, color: "#ffe0d6", strokeWidth: 4 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "ゲスト名 / 企画名を入れる", x: 96, y: 546, width: 580, height: 52, fontSize: 34, color: "#ffffff", strokeWidth: 4 })
+    ]
+  },
+  {
+    id: "announcement",
+    name: "お知らせ",
+    category: "告知画像",
+    usageLabel: "重要告知",
+    description: "配信以外の案内や大事なお知らせを読みやすく整理。",
+    accent: "#ffd34d",
+    layers: [
+      backgroundLayer("画像 1（背景）", "NEWS", "#243047", "#07121f", "#ffd34d"),
+      shapeLayer({ name: "図形 1（本文パネル）", shapeType: "rect", x: 86, y: 138, width: 730, height: 424, fillColor: "#07111ce8", strokeColor: "#ffd34d", strokeWidth: 5, borderRadius: 18 }),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 106, y: 92, width: 250, height: 64, fillColor: "#ffd34d", strokeColor: "#ffffff", strokeWidth: 3, borderRadius: 10 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "NEWS", x: 138, y: 106, width: 186, height: 38, fontSize: 30, color: "#10120d", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "大切な\nお知らせ", x: 126, y: 196, width: 650, height: 214, fontSize: 94, lineHeight: 1.02, color: "#fff8dc", strokeColor: "#171206", strokeWidth: 10 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "5/4 公開", x: 136, y: 428, width: 310, height: 48, fontSize: 36, color: "#ffe88c", strokeWidth: 3 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "詳細は本文でお知らせします", x: 138, y: 492, width: 590, height: 46, fontSize: 30, color: "#ffffff", strokeWidth: 3 })
+    ]
+  },
+  {
+    id: "weekly_schedule",
+    name: "週間予定",
+    category: "スケジュール",
+    usageLabel: "週まとめ",
+    description: "今週の予定や配信枠を一覧風に見せる横長画像。",
+    accent: "#4dd8ff",
+    layers: [
+      backgroundLayer("画像 1（背景）", "WEEKLY SCHEDULE", "#0c2740", "#06111c", "#4dd8ff"),
+      shapeLayer({ name: "図形 1（リスト枠）", shapeType: "rect", x: 650, y: 116, width: 500, height: 456, fillColor: "#06111ce8", strokeColor: "#4dd8ff", strokeWidth: 5, borderRadius: 20 }),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 86, y: 88, width: 316, height: 70, fillColor: "#4dd8ff", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "WEEKLY", x: 124, y: 104, width: 240, height: 42, fontSize: 34, color: "#04131a", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "今週の\n配信予定", x: 92, y: 210, width: 520, height: 222, fontSize: 88, lineHeight: 1.04, color: "#f3fcff", strokeColor: "#03111a", strokeWidth: 10 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "5/4 - 5/10", x: 112, y: 464, width: 370, height: 48, fontSize: 36, color: "#c9f5ff", strokeWidth: 3 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "予定を追加して週まとめに調整", x: 690, y: 166, width: 410, height: 300, fontSize: 34, lineHeight: 1.3, color: "#ffffff", strokeWidth: 3 })
+    ]
+  },
+  {
+    id: "x_announcement",
+    name: "X告知画像",
+    category: "告知画像",
+    usageLabel: "投稿添付",
+    description: "X投稿に添える短文告知画像。本文の1行目を活かしやすい。",
+    accent: "#00b7ff",
+    layers: [
+      backgroundLayer("画像 1（背景）", "X POST", "#092033", "#06111c", "#00b7ff"),
+      shapeLayer({ name: "図形 1（投稿カード）", shapeType: "rect", x: 116, y: 110, width: 770, height: 438, fillColor: "#ffffff", strokeColor: "#00b7ff", strokeWidth: 5, borderRadius: 22 }),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 154, y: 144, width: 210, height: 58, fillColor: "#07111c", strokeColor: "#00b7ff", strokeWidth: 3, borderRadius: 10 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "X告知", x: 188, y: 158, width: 142, height: 34, fontSize: 28, color: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "本日\n配信します", x: 154, y: 228, width: 650, height: 188, fontSize: 82, lineHeight: 1.0, color: "#081117", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 164, y: 426, width: 310, height: 44, fontSize: 34, color: "#005f86", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "告知文の1行目をここに入れる", x: 164, y: 486, width: 620, height: 36, fontSize: 26, color: "#25313a", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 })
     ]
   }
 ];

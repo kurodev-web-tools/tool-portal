@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400" fill="none">
+  <defs>
+    <radialGradient id="fade" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(326 204) rotate(90) scale(260 360)">
+      <stop stop-color="#ffffff" stop-opacity=".18"/>
+      <stop offset=".55" stop-color="#ffffff" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <path d="M326 204L42 0H0V36L326 204Z" fill="#fff3a3" opacity=".34"/>
+  <path d="M326 204L185 0H138L326 204Z" fill="#ffffff" opacity=".28"/>
+  <path d="M326 204L338 0H300L326 204Z" fill="#ffd329" opacity=".3"/>
+  <path d="M326 204L524 0H468L326 204Z" fill="#ffffff" opacity=".25"/>
+  <path d="M326 204L640 28V0H594L326 204Z" fill="#fff3a3" opacity=".32"/>
+  <path d="M326 204L640 174V138L326 204Z" fill="#ffffff" opacity=".2"/>
+  <path d="M326 204L640 350V304L326 204Z" fill="#ffd329" opacity=".28"/>
+  <path d="M326 204L430 400H486L326 204Z" fill="#ffffff" opacity=".22"/>
+  <path d="M326 204L220 400H268L326 204Z" fill="#fff3a3" opacity=".26"/>
+  <path d="M326 204L0 344V400H56L326 204Z" fill="#ffffff" opacity=".24"/>
+  <path d="M326 204L0 180V222L326 204Z" fill="#ffd329" opacity=".23"/>
+  <ellipse cx="326" cy="204" rx="360" ry="260" fill="url(#fade)"/>
+</svg>

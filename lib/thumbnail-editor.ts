@@ -11,7 +11,7 @@ export type ThumbnailPresetId =
   | "x_announcement";
 export type ThumbnailPresetCategory = "配信ジャンル" | "告知画像" | "スケジュール";
 export type ThumbnailLayerType = "image" | "text" | "shape";
-export type ThumbnailShapeType = "rect" | "circle";
+export type ThumbnailShapeType = "rect" | "circle" | "line" | "burst" | "frame" | "polygon";
 
 export type ThumbnailCanvas = {
   width: number;
@@ -93,6 +93,14 @@ export type ThumbnailPreset = {
 export const thumbnailDraftStorageKey = "v-streamer-tools:thumbnail-editor:draft:v1";
 export const thumbnailPresetDiscoveryStorageKey = "v-streamer-tools:thumbnail-editor:preset-discovery:v1";
 export const thumbnailPresetRecentLimit = 6;
+export const thumbnailShapeTypeLabels: Record<ThumbnailShapeType, string> = {
+  rect: "矩形",
+  circle: "円形",
+  line: "線",
+  burst: "衝撃マーク",
+  frame: "枠",
+  polygon: "多角形"
+};
 
 export type ThumbnailPresetFilter = {
   query: string;
@@ -186,6 +194,7 @@ const thumbnailPresetAssetPrefix = "/assets/images/thumbnail-editor/";
 const thumbnailPhase1BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase1/`;
 const thumbnailPhase2BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase2/`;
 const thumbnailPhase3BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase3/`;
+const thumbnailPhase4DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decorations/phase4/`;
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -200,6 +209,15 @@ const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer =>
   blur: 0,
   locked: true,
   src
+});
+
+const assetDecorationLayer = (partial: Partial<ThumbnailImageLayer> & Pick<ThumbnailImageLayer, "name" | "src" | "x" | "y" | "width" | "height">): ThumbnailImageLayer => ({
+  id: createId("image"),
+  type: "image",
+  rotation: 0,
+  opacity: 1,
+  blur: 0,
+  ...partial
 });
 
 const textLayer = (partial: Partial<ThumbnailTextLayer> & Pick<ThumbnailTextLayer, "name" | "text" | "x" | "y" | "width" | "height">): ThumbnailTextLayer => ({
@@ -339,7 +357,10 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#36aaff",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase3BackgroundAssetPrefix}chatting-background.png`),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 748, y: 78, width: 340, height: 560, fillColor: "#f3b17a2e", strokeColor: "#fff0db", strokeWidth: 3, borderRadius: 42 }),
+      assetDecorationLayer({ name: "画像 2（光粒）", src: `${thumbnailPhase4DecorationAssetPrefix}soft-light-particles.svg`, x: 34, y: 28, width: 650, height: 350, opacity: 0.72 }),
+      assetDecorationLayer({ name: "画像 3（小さなきらめき）", src: `${thumbnailPhase4DecorationAssetPrefix}sparkle-small.svg`, x: 558, y: 110, width: 132, height: 118, rotation: -8, opacity: 0.78 }),
+      shapeLayer({ name: "図形 4（やわらかい下線）", shapeType: "line", x: 108, y: 548, width: 320, height: 20, fillColor: "#f0aa66", strokeColor: "#f0aa66", strokeWidth: 8, borderRadius: 12 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 748, y: 78, width: 340, height: 560, fillColor: "#f3b17a2e", strokeColor: "#fff0db", strokeWidth: 3, borderRadius: 42 }),
       shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 92, y: 74, width: 282, height: 40, fillColor: "#070b18d4", strokeColor: "#b36dff", strokeWidth: 3, borderRadius: 20 }),
       textLayer({ name: "テキスト 4（ラベル）", text: "CHATTING / YouTube", x: 120, y: 84, width: 226, height: 24, fontSize: 20, color: "#f8f2ff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
       textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n雑談配信", x: 86, y: 142, width: 585, height: 270, fontSize: 100, lineHeight: 1.1, color: "#fff7ec", strokeColor: "#3b1632", strokeWidth: 9, shadowColor: "#f3aa72", shadowBlur: 12, shadowOffsetX: 4, shadowOffsetY: 5 }),
@@ -357,7 +378,12 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#f59e0b",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase3BackgroundAssetPrefix}clip-background.png`),
-      shapeLayer({ name: "図形 3（動画フレーム）", shapeType: "rect", x: 50, y: 126, width: 590, height: 360, rotation: -3, fillColor: "#070914d9", strokeColor: "#ffffff", strokeWidth: 7, borderRadius: 10 }),
+      assetDecorationLayer({ name: "画像 2（集中線）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-focus-rays.svg`, x: 585, y: 26, width: 620, height: 390, rotation: 2, opacity: 0.78 }),
+      assetDecorationLayer({ name: "画像 3（スピード線）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-speed-lines.svg`, x: 548, y: 558, width: 655, height: 96, opacity: 0.86 }),
+      shapeLayer({ name: "図形 5（ギザギザ強調ベース）", shapeType: "polygon", x: 386, y: 424, width: 850, height: 136, rotation: -1, fillColor: "#d233ff", strokeColor: "#050505", strokeWidth: 7, borderRadius: 0, opacity: 0.92 }),
+      shapeLayer({ name: "図形 6（衝撃マーク）", shapeType: "burst", x: 590, y: 112, width: 178, height: 138, rotation: 8, fillColor: "#ffd329", strokeColor: "#070707", strokeWidth: 6, borderRadius: 0 }),
+      assetDecorationLayer({ name: "画像 4（矢印アクセント）", src: `${thumbnailPhase4DecorationAssetPrefix}arrow-accent.svg`, x: 338, y: 92, width: 190, height: 90, rotation: -12, opacity: 0.88 }),
+      shapeLayer({ name: "図形 3（動画フレーム）", shapeType: "frame", x: 50, y: 126, width: 590, height: 360, rotation: -3, fillColor: "#070914d9", strokeColor: "#ffffff", strokeWidth: 7, borderRadius: 10 }),
       shapeLayer({ name: "図形 1（強調ラベル）", shapeType: "rect", x: 34, y: 48, width: 285, height: 76, rotation: -5, fillColor: "#08080c", strokeColor: "#d233ff", strokeWidth: 5, borderRadius: 10 }),
       textLayer({ name: "テキスト 4（ラベル）", text: "切り抜き", x: 70, y: 63, width: 220, height: 48, rotation: -5, fontSize: 44, color: "#ffffff", strokeColor: "#050505", strokeWidth: 7, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
       textLayer({ name: "テキスト 1（見出し）", text: "神回まとめ", x: 410, y: 418, width: 820, height: 130, fontSize: 116, lineHeight: 1, color: "#ffd329", strokeColor: "#060606", strokeWidth: 14, shadowColor: "#9b22ff", shadowBlur: 10, shadowOffsetX: 5, shadowOffsetY: 7 }),
@@ -449,12 +475,17 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#00b7ff",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase3BackgroundAssetPrefix}x-announcement-background.png`),
-      shapeLayer({ name: "図形 1（投稿カード）", shapeType: "rect", x: 80, y: 168, width: 740, height: 378, fillColor: "#fffffff2", strokeColor: "#c6d7f0", strokeWidth: 3, borderRadius: 28 }),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 888, y: 92, width: 250, height: 540, fillColor: "#f8fbff24", strokeColor: "#8ca5df", strokeWidth: 2, borderRadius: 42 }),
+      assetDecorationLayer({ name: "画像 2（淡い光粒）", src: `${thumbnailPhase4DecorationAssetPrefix}soft-light-particles.svg`, x: 596, y: 50, width: 520, height: 320, opacity: 0.42 }),
+      assetDecorationLayer({ name: "画像 3（角飾り）", src: `${thumbnailPhase4DecorationAssetPrefix}x-corner-ornaments.svg`, x: 58, y: 128, width: 784, height: 448, opacity: 0.7 }),
+      shapeLayer({ name: "図形 5（上品な罫線）", shapeType: "line", x: 160, y: 248, width: 548, height: 18, fillColor: "#8ca5ef", strokeColor: "#8ca5ef", strokeWidth: 3, borderRadius: 8, opacity: 0.8 }),
+      assetDecorationLayer({ name: "画像 4（丸ドット点線）", src: `${thumbnailPhase4DecorationAssetPrefix}dot-dash-row.svg`, x: 184, y: 463, width: 520, height: 34, opacity: 0.58 }),
+      shapeLayer({ name: "図形 1（投稿カード）", shapeType: "frame", x: 80, y: 168, width: 740, height: 378, fillColor: "#fffffff2", strokeColor: "#c6d7f0", strokeWidth: 3, borderRadius: 28 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 888, y: 92, width: 250, height: 540, fillColor: "#f8fbff24", strokeColor: "#8ca5df", strokeWidth: 2, borderRadius: 42 }),
       shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 306, y: 166, width: 238, height: 58, fillColor: "#8ca5efe8", strokeColor: "#fefefe", strokeWidth: 3, borderRadius: 12 }),
       textLayer({ name: "テキスト 4（ラベル）", text: "X POST", x: 342, y: 179, width: 166, height: 32, fontSize: 28, color: "#ffffff", strokeColor: "#5e73c4", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
       textLayer({ name: "テキスト 1（見出し）", text: "本日のお知らせ", x: 112, y: 274, width: 666, height: 92, fontSize: 74, lineHeight: 1, color: "#16246b", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#dce6ff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 2 }),
       textLayer({ name: "テキスト 3（サブ）", text: "配信予定と最新情報をまとめました", x: 198, y: 410, width: 500, height: 42, fontSize: 30, color: "#22306f", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#dce6ff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1 }),
+      shapeLayer({ name: "図形 6（日付バッジアクセント）", shapeType: "burst", x: 534, y: 486, width: 52, height: 52, fillColor: "#ffffff", strokeColor: "#7998f0", strokeWidth: 2, borderRadius: 0, opacity: 0.72 }),
       shapeLayer({ name: "図形 4（時刻バッジ）", shapeType: "rect", x: 300, y: 494, width: 250, height: 62, fillColor: "#7998f0e8", strokeColor: "#ffffff", strokeWidth: 3, borderRadius: 12 }),
       textLayer({ name: "テキスト 2（時刻）", text: "05.06 WED", x: 342, y: 506, width: 168, height: 38, fontSize: 34, color: "#ffffff", strokeColor: "#536ac7", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" })
     ]
@@ -631,13 +662,16 @@ export const createTextLayer = (): ThumbnailTextLayer =>
 
 export const createShapeLayer = (shapeType: ThumbnailShapeType): ThumbnailShapeLayer =>
   shapeLayer({
-    name: shapeType === "circle" ? "円形" : "矩形",
+    name: thumbnailShapeTypeLabels[shapeType],
     shapeType,
     x: shapeType === "circle" ? 840 : 150,
-    y: shapeType === "circle" ? 430 : 470,
-    width: shapeType === "circle" ? 170 : 420,
-    height: shapeType === "circle" ? 170 : 92,
-    fillColor: shapeType === "circle" ? "#ff5ca8" : "#111a22cc"
+    y: shapeType === "circle" ? 430 : shapeType === "line" ? 540 : 470,
+    width: shapeType === "circle" ? 170 : shapeType === "burst" ? 180 : 420,
+    height: shapeType === "circle" ? 170 : shapeType === "line" ? 24 : shapeType === "burst" ? 140 : 92,
+    fillColor: shapeType === "circle" ? "#ff5ca8" : shapeType === "line" ? "#f7b500" : "#111a22cc",
+    strokeColor: shapeType === "line" ? "#f7b500" : "#ffffff",
+    strokeWidth: shapeType === "line" ? 8 : 4,
+    borderRadius: shapeType === "line" ? 12 : 20
   });
 
 export const createImageLayer = (src: string): ThumbnailImageLayer => ({
@@ -721,6 +755,9 @@ const isSafeImageSource = (src: string) =>
   (src.startsWith(thumbnailPresetAssetPrefix) && /\.(png|jpe?g|webp|svg)$/i.test(src));
 const safeText = (value: unknown, fallback: string, maxLength: number) =>
   typeof value === "string" ? value.slice(0, maxLength) : fallback;
+const thumbnailShapeTypes: ThumbnailShapeType[] = ["rect", "circle", "line", "burst", "frame", "polygon"];
+const normalizeShapeType = (value: unknown): ThumbnailShapeType =>
+  typeof value === "string" && thumbnailShapeTypes.includes(value as ThumbnailShapeType) ? (value as ThumbnailShapeType) : "rect";
 
 export const normalizeThumbnailDraft = (value: unknown): ThumbnailEditorDraft | null => {
   if (!value || typeof value !== "object") {
@@ -792,7 +829,7 @@ const normalizeLayer = (layer: unknown, canvas: ThumbnailCanvas): ThumbnailLayer
     return {
       ...base,
       type: "shape",
-      shapeType: shape.shapeType === "circle" ? "circle" : "rect",
+      shapeType: normalizeShapeType(shape.shapeType),
       fillColor: typeof shape.fillColor === "string" ? shape.fillColor : "#1ed7c6",
       strokeColor: typeof shape.strokeColor === "string" ? shape.strokeColor : "#ffffff",
       strokeWidth: clamp(numberValue(shape.strokeWidth, 0), 0, 48),
@@ -895,15 +932,41 @@ const drawShape = (context: CanvasRenderingContext2D, layer: ThumbnailShapeLayer
   context.beginPath();
   if (layer.shapeType === "circle") {
     context.ellipse(layer.width / 2, layer.height / 2, layer.width / 2, layer.height / 2, 0, 0, Math.PI * 2);
+  } else if (layer.shapeType === "line") {
+    context.moveTo(0, layer.height / 2);
+    context.lineTo(layer.width, layer.height / 2);
+  } else if (layer.shapeType === "burst") {
+    burstPath(context, layer.width, layer.height);
+  } else if (layer.shapeType === "polygon") {
+    polygonPath(context, layer.width, layer.height);
   } else {
     roundedRect(context, 0, 0, layer.width, layer.height, layer.borderRadius);
   }
-  context.fillStyle = layer.fillColor;
-  context.fill();
+  if (layer.shapeType !== "line") {
+    context.fillStyle = layer.fillColor;
+    context.fill();
+  }
   if (layer.strokeWidth > 0) {
     context.lineWidth = layer.strokeWidth;
     context.strokeStyle = layer.strokeColor;
+    context.lineCap = layer.shapeType === "line" ? "round" : "butt";
+    context.lineJoin = layer.shapeType === "burst" || layer.shapeType === "polygon" ? "round" : "miter";
     context.stroke();
+    if (layer.shapeType === "frame" && layer.strokeWidth >= 4) {
+      context.beginPath();
+      const inset = layer.strokeWidth * 1.7;
+      roundedRect(
+        context,
+        inset,
+        inset,
+        Math.max(1, layer.width - inset * 2),
+        Math.max(1, layer.height - inset * 2),
+        Math.max(0, layer.borderRadius - inset)
+      );
+      context.globalAlpha *= 0.68;
+      context.lineWidth = Math.max(1, Math.round(layer.strokeWidth / 2));
+      context.stroke();
+    }
   }
 };
 
@@ -978,6 +1041,40 @@ const roundedRect = (context: CanvasRenderingContext2D, x: number, y: number, wi
   context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
   context.lineTo(x, y + safeRadius);
   context.quadraticCurveTo(x, y, x + safeRadius, y);
+};
+
+const polygonPath = (context: CanvasRenderingContext2D, width: number, height: number) => {
+  const notch = Math.min(width * 0.08, height * 0.45);
+  context.moveTo(notch, 0);
+  context.lineTo(width, 0);
+  context.lineTo(width - notch, height);
+  context.lineTo(0, height);
+  context.closePath();
+};
+
+const burstPath = (context: CanvasRenderingContext2D, width: number, height: number) => {
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const points = 18;
+  const outerX = width / 2;
+  const outerY = height / 2;
+  const innerX = width * 0.36;
+  const innerY = height * 0.34;
+
+  for (let index = 0; index < points; index += 1) {
+    const angle = -Math.PI / 2 + (index / points) * Math.PI * 2;
+    const isOuter = index % 2 === 0;
+    const radiusX = isOuter ? outerX : innerX;
+    const radiusY = isOuter ? outerY : innerY;
+    const x = centerX + Math.cos(angle) * radiusX;
+    const y = centerY + Math.sin(angle) * radiusY;
+    if (index === 0) {
+      context.moveTo(x, y);
+    } else {
+      context.lineTo(x, y);
+    }
+  }
+  context.closePath();
 };
 
 const rotatePoint = (point: { x: number; y: number }, radians: number) => {

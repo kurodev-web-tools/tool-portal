@@ -185,6 +185,7 @@ const backgroundLayer = (name: string, title: string, from: string, to: string, 
 const thumbnailPresetAssetPrefix = "/assets/images/thumbnail-editor/";
 const thumbnailPhase1BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase1/`;
 const thumbnailPhase2BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase2/`;
+const thumbnailPhase3BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase3/`;
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -337,13 +338,14 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     description: "トーク配信・近況報告に使いやすい余白設計。",
     accent: "#36aaff",
     layers: [
-      backgroundLayer("画像 1（背景）", "CHATTING", "#102a42", "#06111c", "#36aaff"),
-      shapeLayer({ name: "図形 1（コメント枠）", shapeType: "rect", x: 86, y: 130, width: 590, height: 408, fillColor: "#07111cd9", strokeColor: "#36aaff", strokeWidth: 5, borderRadius: 24 }),
-      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 112, y: 92, width: 286, height: 62, fillColor: "#36aaff", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "雑談 / YouTube", x: 144, y: 106, width: 222, height: 36, fontSize: 28, color: "#06111c", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
-      textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n雑談配信", x: 122, y: 180, width: 526, height: 206, fontSize: 88, lineHeight: 1.08, strokeWidth: 8 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 128, y: 386, width: 320, height: 42, fontSize: 32, color: "#d8f1ff", strokeWidth: 3 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "今日の話題を一緒に整理しよう", x: 128, y: 430, width: 500, height: 58, fontSize: 34, color: "#cfe9ff", strokeWidth: 2 })
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase3BackgroundAssetPrefix}chatting-background.png`),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 748, y: 78, width: 340, height: 560, fillColor: "#f3b17a2e", strokeColor: "#fff0db", strokeWidth: 3, borderRadius: 42 }),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 92, y: 74, width: 282, height: 40, fillColor: "#070b18d4", strokeColor: "#b36dff", strokeWidth: 3, borderRadius: 20 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "CHATTING / YouTube", x: 120, y: 84, width: 226, height: 24, fontSize: 20, color: "#f8f2ff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n雑談配信", x: 86, y: 142, width: 585, height: 270, fontSize: 100, lineHeight: 1.1, color: "#fff7ec", strokeColor: "#3b1632", strokeWidth: 9, shadowColor: "#f3aa72", shadowBlur: 12, shadowOffsetX: 4, shadowOffsetY: 5 }),
+      shapeLayer({ name: "図形 1（時刻バッジ）", shapeType: "rect", x: 90, y: 470, width: 402, height: 70, fillColor: "#15121fdb", strokeColor: "#f0aa66", strokeWidth: 3, borderRadius: 18 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 138, y: 486, width: 310, height: 44, fontSize: 42, color: "#fff4df", strokeColor: "#2b1630", strokeWidth: 3, shadowColor: "#000000", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "今日の話題を一緒に整理しよう", x: 94, y: 574, width: 560, height: 42, fontSize: 28, color: "#fff8ee", strokeColor: "#140b21", strokeWidth: 3, shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3 })
     ]
   },
   {
@@ -354,12 +356,14 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     description: "短い強調語と勢いを出す切り抜き向け。",
     accent: "#f59e0b",
     layers: [
-      backgroundLayer("画像 1（背景）", "CLIP HIGHLIGHT", "#2e2107", "#06111c", "#f59e0b"),
-      shapeLayer({ name: "図形 1（強調ラベル）", shapeType: "rect", x: 76, y: 76, width: 292, height: 92, fillColor: "#f59e0b", strokeColor: "#ffffff", strokeWidth: 4, borderRadius: 12 }),
-      textLayer({ name: "テキスト 2（ラベル）", text: "切り抜き", x: 110, y: 96, width: 224, height: 54, fontSize: 42, color: "#081117", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
-      textLayer({ name: "テキスト 1（見出し）", text: "神回\nまとめ", x: 92, y: 236, width: 650, height: 224, fontSize: 112, lineHeight: 1.02, color: "#fff7dc", strokeColor: "#0b0b0b", strokeWidth: 12 }),
-      textLayer({ name: "テキスト 4（時刻）", text: "20:00 公開", x: 106, y: 464, width: 320, height: 44, fontSize: 34, color: "#ffe5aa", strokeWidth: 4 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "一番盛り上がった瞬間だけ", x: 110, y: 500, width: 560, height: 58, fontSize: 36, strokeWidth: 4 })
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase3BackgroundAssetPrefix}clip-background.png`),
+      shapeLayer({ name: "図形 3（動画フレーム）", shapeType: "rect", x: 50, y: 126, width: 590, height: 360, rotation: -3, fillColor: "#070914d9", strokeColor: "#ffffff", strokeWidth: 7, borderRadius: 10 }),
+      shapeLayer({ name: "図形 1（強調ラベル）", shapeType: "rect", x: 34, y: 48, width: 285, height: 76, rotation: -5, fillColor: "#08080c", strokeColor: "#d233ff", strokeWidth: 5, borderRadius: 10 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "切り抜き", x: 70, y: 63, width: 220, height: 48, rotation: -5, fontSize: 44, color: "#ffffff", strokeColor: "#050505", strokeWidth: 7, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "神回まとめ", x: 410, y: 418, width: 820, height: 130, fontSize: 116, lineHeight: 1, color: "#ffd329", strokeColor: "#060606", strokeWidth: 14, shadowColor: "#9b22ff", shadowBlur: 10, shadowOffsetX: 5, shadowOffsetY: 7 }),
+      shapeLayer({ name: "図形 2（時刻バッジ）", shapeType: "rect", x: 898, y: 340, width: 286, height: 72, fillColor: "#07070cef", strokeColor: "#d233ff", strokeWidth: 5, borderRadius: 14 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 公開", x: 930, y: 354, width: 232, height: 44, fontSize: 38, color: "#ffd32b", strokeColor: "#050505", strokeWidth: 5, shadowColor: "#ffffff", shadowBlur: 2, shadowOffsetX: 1, shadowOffsetY: 1 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "一番盛り上がった瞬間だけ", x: 650, y: 604, width: 520, height: 44, fontSize: 34, color: "#ffffff", strokeColor: "#070707", strokeWidth: 6, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 })
     ]
   },
   {
@@ -444,13 +448,15 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     description: "X投稿に添える短文告知画像。本文の1行目を活かしやすい。",
     accent: "#00b7ff",
     layers: [
-      backgroundLayer("画像 1（背景）", "X POST", "#092033", "#06111c", "#00b7ff"),
-      shapeLayer({ name: "図形 1（投稿カード）", shapeType: "rect", x: 116, y: 110, width: 770, height: 438, fillColor: "#ffffff", strokeColor: "#00b7ff", strokeWidth: 5, borderRadius: 22 }),
-      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 154, y: 144, width: 210, height: 58, fillColor: "#07111c", strokeColor: "#00b7ff", strokeWidth: 3, borderRadius: 10 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "X告知", x: 188, y: 158, width: 142, height: 34, fontSize: 28, color: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
-      textLayer({ name: "テキスト 1（見出し）", text: "本日\n配信します", x: 154, y: 228, width: 650, height: 188, fontSize: 82, lineHeight: 1.0, color: "#081117", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 164, y: 426, width: 310, height: 44, fontSize: 34, color: "#005f86", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "告知文の1行目をここに入れる", x: 164, y: 486, width: 620, height: 36, fontSize: 26, color: "#25313a", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 })
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase3BackgroundAssetPrefix}x-announcement-background.png`),
+      shapeLayer({ name: "図形 1（投稿カード）", shapeType: "rect", x: 80, y: 168, width: 740, height: 378, fillColor: "#fffffff2", strokeColor: "#c6d7f0", strokeWidth: 3, borderRadius: 28 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 888, y: 92, width: 250, height: 540, fillColor: "#f8fbff24", strokeColor: "#8ca5df", strokeWidth: 2, borderRadius: 42 }),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 306, y: 166, width: 238, height: 58, fillColor: "#8ca5efe8", strokeColor: "#fefefe", strokeWidth: 3, borderRadius: 12 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "X POST", x: 342, y: 179, width: 166, height: 32, fontSize: 28, color: "#ffffff", strokeColor: "#5e73c4", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "本日のお知らせ", x: 112, y: 274, width: 666, height: 92, fontSize: 74, lineHeight: 1, color: "#16246b", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#dce6ff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 2 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "配信予定と最新情報をまとめました", x: 198, y: 410, width: 500, height: 42, fontSize: 30, color: "#22306f", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#dce6ff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1 }),
+      shapeLayer({ name: "図形 4（時刻バッジ）", shapeType: "rect", x: 300, y: 494, width: 250, height: 62, fillColor: "#7998f0e8", strokeColor: "#ffffff", strokeWidth: 3, borderRadius: 12 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "05.06 WED", x: 342, y: 506, width: 168, height: 38, fontSize: 34, color: "#ffffff", strokeColor: "#536ac7", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" })
     ]
   }
 ];

@@ -276,12 +276,30 @@
 - コラボは2人用の左右立ち絵ガイド、お知らせは本文パネルと右側立ち絵挿入ガイドを editable shape layer として持つ
 - 契約チェック `scripts/thumbnail-phase2-preset-assets-contract.mjs` を追加した
 
+2026-05-06 Phase 3 背景候補作成メモ:
+
+- PR #28 は Thumbnail Editor Phase 2 背景セットPRとして扱い、`ゲーム実況` / `コラボ` / `お知らせ` は今回触らない
+- 残りプリセット候補として `雑談` / `切り抜き` / `X告知画像` の背景候補を1枚ずつ作成した
+- 背景画像は「背景画像 + 編集可能なテキスト / 枠 / 立ち絵ガイド」の方針を維持し、文字、人物、ロゴ、読めるUI、権利物は入れない
+- 採用候補3枚を `docs/mockups/thumbnail-editor-phase3-candidates/` に保存した
+- 生成元は 16:9 相当だったが実寸が `1672x941` だったため、候補保存時に `1280x720` へ正規化した
+- 背景候補をもとに、方向性確認用の完成モック3枚を同じディレクトリへ保存した
+- モック内の文字、枠、動画フレーム、投稿カード風パネル、立ち絵配置ガイドは方向性確認用で、実装時は editable layer として分解する
+- 採用背景3枚を `public/assets/images/thumbnail-editor/phase3/` へ実装用 asset としてコピーした
+- `雑談` / `切り抜き` / `X告知画像` の背景レイヤーを public asset 参照へ変更し、背景レイヤーを locked 扱いにした
+- 同3プリセットへ、モックに合わせた編集可能な `見出し` / `時刻` / `サブ` / `ラベル`、立ち絵ガイド、動画フレーム、投稿カード風パネルを追加 / 調整した
+- 契約チェック `scripts/thumbnail-phase3-preset-assets-contract.mjs` を追加した
+- 検証: `node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+- 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`npm run build` PASS
+- `npm run build` は PASS。worktree が親repo内にあるため Next.js の workspace root 推定 warning は表示された
+
 - [ ] ペイント系ではなく、VTuber向けサムネ組み立てツールとして再定義する
   - 白紙から作るのではなく、用途別プリセットを選んで文字と立ち絵を差し替える体験に寄せる
   - 自由描画、素材検索、Canva的な汎用デザイン機能は優先しない
 - [ ] 用途別プリセットを追加する
   - [x] 初回追加として、ゲーム実況、コラボ、お知らせ、週間予定、X告知画像を追加する
   - [x] Phase 1 完成モック対象として、配信告知、歌枠、週間予定を選定する
+  - [x] Phase 3 背景候補として、雑談、切り抜き、X告知画像を保存する
   - 雑談配信
   - 歌枠
   - ゲーム実況
@@ -322,7 +340,42 @@
   - [x] Phase 1 採用背景3枚を `public/assets/images/thumbnail-editor/phase1/` に実装用 asset として配置する
   - [x] Phase 2 候補として `ゲーム実況` / `コラボ` / `お知らせ` の背景候補3枚を `docs/mockups/thumbnail-editor-phase2-candidates/` に保存する
   - [x] Phase 2 の完成モック3枚を作成し、同3プリセットへ背景 / ガイド / 主要テキストレイヤーを反映する
+  - [x] Phase 3 候補として `雑談` / `切り抜き` / `X告知画像` の背景候補3枚を `docs/mockups/thumbnail-editor-phase3-candidates/` に保存する
+  - [x] Phase 3 の完成モック3枚を作成し、同ディレクトリに保存する
+  - [x] Phase 3 採用背景3枚を `public/assets/images/thumbnail-editor/phase3/` に実装用 asset として配置する
+  - [x] Phase 3 の3プリセットへ背景 / ガイド / 主要テキストレイヤーを反映する
   - 生成素材は `docs/mockups` ではなく、実装用assetとして扱う場合の配置先とライセンスメモを決める
+- [ ] 枠 / パネル / 小物アセットの制作単位を決める
+  - 基本方針:
+    - 画像レイヤー系の小物は背景透過済みPNGまたはSVGとして作る
+    - 枠 / パネル / バッジ / 立ち絵ガイドは、サイズ変更しやすい editable shape layer / text layer を優先し、原則として1枚画像にしない
+    - 画像 asset は、shape だけでは表現しにくい粒子、光、集中線、手描き強調、角飾り、質感だけに絞る
+  - Phase 4 候補画像 asset:
+    - `雑談`: 光粒 / 小さなきらめき 3種、細い装飾ライン 2種、やわらかい下線 2種
+    - `切り抜き`: 集中線 3種、衝撃マーク 4種、スピード線 3種、ギザギザ強調ベース 2種
+    - `X告知画像`: 角飾り 4種、上品な罫線 3種、淡い光粒 2種、日付バッジ用アクセント 2種
+    - 共通: 小さな星 / sparkle 4種、矢印 3種、丸ドット / 点線 3種
+    - 初回は合計25〜30点程度に抑え、プリセット反映済みの3種で使うものから作る
+  - コード / shape layer で作る候補:
+    - 立ち絵ガイド枠、動画フレーム、投稿カード風パネル、本文パネル、時刻バッジ、ラベル帯
+    - 現行 `ThumbnailShapeLayer` は `rect` / `circle`、`fillColor`、`strokeColor`、`strokeWidth`、`borderRadius`、`rotation` で描画できる
+    - 次に増やすなら `shapeType` に `polygon` / `line` / `burst` / `frame` のようなプリミティブを追加する
+    - Canvas 2D 実装候補は `roundRect` 相当、stroke/fill、shadow、linear/radial gradient、Path2D、clip、globalCompositeOperation
+    - Web/CSS側の参考として、角丸グラデ枠は `border-image` より `background-clip` を使う方がよい。MDN でも `border-image` は `border-radius` が効かないため、角丸では背景レイヤー方式が推奨されている
+    - 変形枠は `clip-path` / SVG `clipPath`、透過や切り抜き表現は `mask-image` / SVG mask を参考にする
+    - ただし Thumbnail Editor は最終的に Canvas 2D 書き出しが必要なので、CSSをそのまま使うのではなく Canvas/SVG path に翻訳できる形で採用する
+  - 外部素材 / コード調査メモ:
+    - MDN `border-image`: 画像枠とグラデ枠の仕様確認。角丸との相性に注意
+    - MDN `clip-path`: polygon/path/URL clipPath を使う変形枠の参考
+    - MDN `mask-image`: alpha mask / gradient mask / SVG mask の参考。ただし file URL 制約があるため local server / public asset 前提
+    - Hero Patterns: repeatable SVG background patterns の参考。直接流用する場合はライセンス確認が必要
+    - Haikei: SVG / PNG export できる抽象波形・blob・scatter 系の参考。生成物の扱いとライセンスを確認してから使う
+    - css-doodle: CSSでパターンを生成する参考。依存追加は避け、必要なら出力SVG/PNGを参考にする程度に留める
+  - 実装順候補:
+    - 1. `shape` だけで表現する枠 / パネルを先にプリセットへ反映する
+    - 2. 透明PNG/SVGの小物 asset を `public/assets/images/thumbnail-editor/decorations/` に追加する
+    - 3. 装飾 asset の contract を作り、プリセットから参照する画像が存在すること、透明背景であること、サイズが過大でないことを確認する
+    - 4. 素材ライブラリUIへ出す前に、まずはプリセット内の初期レイヤーとしてだけ使う
 - [ ] Schedule Calendar からの受け取りを設計する
   - [x] 初回対応として、予定タイトル、日時、告知文、カテゴリ / プラットフォームを初期テキストへ反映する
   - [x] handoff後のプリセット変更 / キャンバスサイズ変更でも予定テキストを維持する

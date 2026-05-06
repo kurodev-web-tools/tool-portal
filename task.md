@@ -293,6 +293,25 @@
 - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`npm run build` PASS
 - `npm run build` は PASS。worktree が親repo内にあるため Next.js の workspace root 推定 warning は表示された
 
+2026-05-06 Phase 4 枠 / パネル / 小物アセット初回実装メモ:
+
+- PR #29 後の次単位として、`雑談` / `切り抜き` / `X告知画像` の初回装飾だけを対象にした
+- 枠 / パネル / バッジ / 立ち絵ガイドは画像化せず、`line` / `burst` / `frame` / `polygon` の shapeType と既存 text layer で扱う方針にした
+- 画像assetは背景透過SVGに限定し、`public/assets/images/thumbnail-editor/decorations/phase4/` へ配置した
+- 追加assetは、光粒、小さなきらめき、集中線、スピード線、矢印、角飾り、丸ドット点線の7点。読める文字、ロゴ、人物、キャラクター、外部画像参照は入れていない
+- `雑談` へ光粒、小さなきらめき、やわらかい下線、frame化した立ち絵ガイドを追加した
+- `切り抜き` へ集中線、スピード線、矢印アクセント、burst衝撃マーク、polygon強調ベース、frame化した動画フレームを追加した
+- `X告知画像` へ淡い光粒、角飾り、丸ドット点線、line罫線、burst日付バッジアクセント、frame化した投稿カード / 立ち絵ガイドを追加した
+- 参考調査は MDN Canvas 2D / SVG clip & mask / CSS border-image と、Hero Patterns / Haikei / css-doodle / pattern.css の生成手法とライセンス確認に留め、外部素材は直接流用していない
+- 契約チェック `scripts/thumbnail-phase4-decoration-assets-contract.mjs` を追加した
+- 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+- 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+- `npm run build` は PASS。worktree が親repo内にあるため Next.js の workspace root 推定 warning は表示された
+- Browser確認:
+  - `localhost:3002` の dev server で `雑談` / `切り抜き` / `X告知画像` のプリセット適用とキャンバス描画を確認した
+  - 390 / 820 / 1024 / 1280 / 1366px で、各プリセットのキャンバスが非blankで描画され、ページ全体の水平overflowが0であることを確認した
+  - clean reload 後の console error / warn なし。幅別確認中の `getImageData` readback warning は検証スクリプト由来
+
 - [ ] ペイント系ではなく、VTuber向けサムネ組み立てツールとして再定義する
   - 白紙から作るのではなく、用途別プリセットを選んで文字と立ち絵を差し替える体験に寄せる
   - 自由描画、素材検索、Canva的な汎用デザイン機能は優先しない
@@ -345,7 +364,7 @@
   - [x] Phase 3 採用背景3枚を `public/assets/images/thumbnail-editor/phase3/` に実装用 asset として配置する
   - [x] Phase 3 の3プリセットへ背景 / ガイド / 主要テキストレイヤーを反映する
   - 生成素材は `docs/mockups` ではなく、実装用assetとして扱う場合の配置先とライセンスメモを決める
-- [ ] 枠 / パネル / 小物アセットの制作単位を決める
+- [x] 枠 / パネル / 小物アセットの制作単位を決める
   - 基本方針:
     - 画像レイヤー系の小物は背景透過済みPNGまたはSVGとして作る
     - 枠 / パネル / バッジ / 立ち絵ガイドは、サイズ変更しやすい editable shape layer / text layer を優先し、原則として1枚画像にしない
@@ -356,10 +375,12 @@
     - `X告知画像`: 角飾り 4種、上品な罫線 3種、淡い光粒 2種、日付バッジ用アクセント 2種
     - 共通: 小さな星 / sparkle 4種、矢印 3種、丸ドット / 点線 3種
     - 初回は合計25〜30点程度に抑え、プリセット反映済みの3種で使うものから作る
+    - [x] 初回実装は7点に絞り、プリセット初期レイヤーから参照する形で追加した
   - コード / shape layer で作る候補:
     - 立ち絵ガイド枠、動画フレーム、投稿カード風パネル、本文パネル、時刻バッジ、ラベル帯
     - 現行 `ThumbnailShapeLayer` は `rect` / `circle`、`fillColor`、`strokeColor`、`strokeWidth`、`borderRadius`、`rotation` で描画できる
     - 次に増やすなら `shapeType` に `polygon` / `line` / `burst` / `frame` のようなプリミティブを追加する
+    - [x] 初回実装として `line` / `burst` / `frame` / `polygon` を追加した
     - Canvas 2D 実装候補は `roundRect` 相当、stroke/fill、shadow、linear/radial gradient、Path2D、clip、globalCompositeOperation
     - Web/CSS側の参考として、角丸グラデ枠は `border-image` より `background-clip` を使う方がよい。MDN でも `border-image` は `border-radius` が効かないため、角丸では背景レイヤー方式が推奨されている
     - 変形枠は `clip-path` / SVG `clipPath`、透過や切り抜き表現は `mask-image` / SVG mask を参考にする
@@ -372,10 +393,10 @@
     - Haikei: SVG / PNG export できる抽象波形・blob・scatter 系の参考。生成物の扱いとライセンスを確認してから使う
     - css-doodle: CSSでパターンを生成する参考。依存追加は避け、必要なら出力SVG/PNGを参考にする程度に留める
   - 実装順候補:
-    - 1. `shape` だけで表現する枠 / パネルを先にプリセットへ反映する
-    - 2. 透明PNG/SVGの小物 asset を `public/assets/images/thumbnail-editor/decorations/` に追加する
-    - 3. 装飾 asset の contract を作り、プリセットから参照する画像が存在すること、透明背景であること、サイズが過大でないことを確認する
-    - 4. 素材ライブラリUIへ出す前に、まずはプリセット内の初期レイヤーとしてだけ使う
+    - [x] 1. `shape` だけで表現する枠 / パネルを先にプリセットへ反映する
+    - [x] 2. 透明PNG/SVGの小物 asset を `public/assets/images/thumbnail-editor/decorations/` に追加する
+    - [x] 3. 装飾 asset の contract を作り、プリセットから参照する画像が存在すること、透明背景であること、サイズが過大でないことを確認する
+    - [x] 4. 素材ライブラリUIへ出す前に、まずはプリセット内の初期レイヤーとしてだけ使う
 - [ ] Schedule Calendar からの受け取りを設計する
   - [x] 初回対応として、予定タイトル、日時、告知文、カテゴリ / プラットフォームを初期テキストへ反映する
   - [x] handoff後のプリセット変更 / キャンバスサイズ変更でも予定テキストを維持する

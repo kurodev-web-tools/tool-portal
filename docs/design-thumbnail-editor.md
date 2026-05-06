@@ -196,6 +196,22 @@ PR #28 の Phase 2 背景セット完了後は、残りプリセットのうち�
 背景側へ焼き込むのは、空気感、光、奥行き、粒子、抽象装飾までに限定する。
 枠線、パネル、発光帯、バッジ、立ち絵ガイド、動画フレーム、投稿カード風UIは、後段で shape / image / text layer として分離できる前提で設計する。
 
+### 2026-05 Phase 4 Decoration Units
+
+PR #29 の Phase 3 背景反映後は、`雑談` / `切り抜き` / `X告知画像` の初期レイヤーとして使う枠、パネル、小物だけを先に追加する。
+素材ライブラリUIにはまだ出さず、プリセットを開いた時点で編集できる初期レイヤーとして扱う。
+
+制作単位は次の方針に固定する。
+
+- 枠、パネル、バッジ、立ち絵ガイド、動画フレーム、投稿カード、下線、罫線、ギザギザ強調ベースは editable shape layer / text layer を優先する。
+- 背景透過SVG asset は、光粒、きらめき、集中線、スピード線、角飾り、丸ドット/点線、矢印など、shapeだけでは手数が増える小物に限定する。
+- 初回追加の `shapeType` は `line` / `burst` / `frame` / `polygon` とし、Canvas 2D の path / stroke / fill / gradient / clipping へ翻訳しやすいプリミティブだけにする。
+- 小物assetには、読める文字、ロゴ、人物、キャラクター、外部画像参照、権利物を入れない。
+
+参考実装は、MDN の Canvas 2D `roundRect` / gradient / path / clip / compositing と、CSS/SVG の `border-image` / `background-clip` / `clipPath` / mask の考え方を確認した。
+角丸グラデ枠はCSSの `border-image` をそのまま採用せず、Canvasで再現しやすい frame shape と線レイヤーに寄せる。
+Hero Patterns、Haikei、css-doodle、pattern.css は生成手法の参考に留め、直接流用しない。外部素材を直接使う場合は、その都度ライセンスを確認してから public asset へ入れる。
+
 ### 2026-05 Layer Name And Weekly Groups
 
 レイヤー一覧の表示名は、プロパティパネルから編集できるようにする。

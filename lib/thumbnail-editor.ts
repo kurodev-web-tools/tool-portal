@@ -321,11 +321,14 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#1ed7c6",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase1BackgroundAssetPrefix}stream-announce-background.png`),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 782, y: 68, width: 418, height: 598, fillColor: "#0317245c", strokeColor: "#31eaff", strokeWidth: 4, borderRadius: 34 }),
+      assetDecorationLayer({ name: "画像 2（控えめな光粒）", src: `${thumbnailPhase4DecorationAssetPrefix}soft-light-particles.svg`, x: 550, y: 34, width: 560, height: 320, opacity: 0.38 }),
+      shapeLayer({ name: "図形 4（ラベル横ライン）", shapeType: "line", x: 470, y: 88, width: 230, height: 18, fillColor: "#7afcff", strokeColor: "#7afcff", strokeWidth: 4, borderRadius: 8, opacity: 0.78 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 782, y: 68, width: 418, height: 598, fillColor: "#0317245c", strokeColor: "#31eaff", strokeWidth: 4, borderRadius: 34 }),
       shapeLayer({ name: "図形 2（ラベル帯）", shapeType: "rect", x: 78, y: 54, width: 380, height: 72, fillColor: "#1ed7c6", strokeColor: "#7afcff", strokeWidth: 4, borderRadius: 18 }),
       textLayer({ name: "テキスト 4（ラベル）", text: "配信 / YouTube", x: 112, y: 72, width: 314, height: 42, fontSize: 34, color: "#041421", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
       textLayer({ name: "テキスト 1（見出し）", text: "初見さん\n大歓迎!", x: 88, y: 166, width: 650, height: 250, fontSize: 112, lineHeight: 1.02, color: "#ffffff", strokeColor: "#06112f", strokeWidth: 12, shadowColor: "#00cfff", shadowBlur: 16, shadowOffsetX: 6, shadowOffsetY: 8 }),
       shapeLayer({ name: "図形 1（時刻バッジ）", shapeType: "rect", x: 98, y: 496, width: 526, height: 86, fillColor: "#f70e8fcc", strokeColor: "#5ef7ff", strokeWidth: 5, borderRadius: 16 }),
+      shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 140, y: 594, width: 430, height: 18, fillColor: "#5ef7ff", strokeColor: "#5ef7ff", strokeWidth: 5, borderRadius: 8, opacity: 0.7 }),
       textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 132, y: 510, width: 456, height: 58, fontSize: 56, color: "#ffffff", strokeColor: "#5b0637", strokeWidth: 4, shadowColor: "#06111c", shadowBlur: 10, shadowOffsetX: 4, shadowOffsetY: 5 }),
       textLayer({ name: "テキスト 3（サブ）", text: "一緒に楽しくお話ししよう!", x: 150, y: 620, width: 560, height: 46, fontSize: 34, lineHeight: 1.1, strokeWidth: 5 })
     ]
@@ -339,10 +342,13 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#ff4cc2",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase1BackgroundAssetPrefix}karaoke-background.png`),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 764, y: 82, width: 404, height: 560, fillColor: "#16082675", strokeColor: "#ff9fe3", strokeWidth: 4, borderRadius: 30 }),
+      assetDecorationLayer({ name: "画像 2（音符代わりのきらめき）", src: `${thumbnailPhase4DecorationAssetPrefix}sparkle-small.svg`, x: 650, y: 92, width: 150, height: 132, rotation: -10, opacity: 0.72 }),
+      assetDecorationLayer({ name: "画像 3（淡い光粒）", src: `${thumbnailPhase4DecorationAssetPrefix}soft-light-particles.svg`, x: 720, y: 345, width: 410, height: 230, opacity: 0.38 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 764, y: 82, width: 404, height: 560, fillColor: "#16082675", strokeColor: "#ff9fe3", strokeWidth: 4, borderRadius: 30 }),
       shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 94, y: 76, width: 316, height: 66, fillColor: "#ff75c8cc", strokeColor: "#ffe0fb", strokeWidth: 4, borderRadius: 18 }),
       textLayer({ name: "テキスト 4（ラベル）", text: "歌枠 / YouTube", x: 126, y: 92, width: 252, height: 38, fontSize: 30, color: "#21071d", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
       textLayer({ name: "テキスト 1（見出し）", text: "歌枠\nSINGING\nSTREAM", x: 84, y: 152, width: 560, height: 260, fontSize: 74, lineHeight: 1.0, color: "#fff4fb", strokeColor: "#31061f", strokeWidth: 10, shadowColor: "#ff4cc2", shadowBlur: 16, shadowOffsetX: 5, shadowOffsetY: 7 }),
+      shapeLayer({ name: "図形 4（見出し下ライン）", shapeType: "line", x: 116, y: 430, width: 430, height: 18, fillColor: "#ffb86c", strokeColor: "#ffb86c", strokeWidth: 6, borderRadius: 10, opacity: 0.78 }),
       shapeLayer({ name: "図形 1（時刻バッジ）", shapeType: "rect", x: 92, y: 486, width: 514, height: 78, fillColor: "#281021d9", strokeColor: "#ffb86c", strokeWidth: 4, borderRadius: 16 }),
       textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 128, y: 502, width: 430, height: 52, fontSize: 48, color: "#ffe8b7", strokeColor: "#39071e", strokeWidth: 4, shadowColor: "#ff4cc2", shadowBlur: 10, shadowOffsetX: 3, shadowOffsetY: 4 }),
       textLayer({ name: "テキスト 3（サブ）", text: "リクエスト歓迎 / 初見さん歓迎", x: 116, y: 602, width: 620, height: 50, fontSize: 34, strokeColor: "#1b0820", strokeWidth: 4 })
@@ -401,7 +407,10 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#7ddf64",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase2BackgroundAssetPrefix}game-live-background.png`),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 775, y: 76, width: 390, height: 560, fillColor: "#03181f4e", strokeColor: "#5dffc4", strokeWidth: 5, borderRadius: 34 }),
+      assetDecorationLayer({ name: "画像 2（スピード線）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-speed-lines.svg`, x: 532, y: 532, width: 610, height: 86, opacity: 0.46 }),
+      shapeLayer({ name: "図形 5（斜め強調ベース）", shapeType: "polygon", x: 60, y: 160, width: 725, height: 246, rotation: -1, fillColor: "#071b16b8", strokeColor: "#7ddf64", strokeWidth: 5, borderRadius: 0 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 775, y: 76, width: 390, height: 560, fillColor: "#03181f4e", strokeColor: "#5dffc4", strokeWidth: 5, borderRadius: 34 }),
+      shapeLayer({ name: "図形 6（ゲーム感ライン）", shapeType: "line", x: 618, y: 112, width: 220, height: 18, fillColor: "#e1ffeb", strokeColor: "#e1ffeb", strokeWidth: 4, borderRadius: 8, opacity: 0.7 }),
       shapeLayer({ name: "図形 1（ラベル帯）", shapeType: "rect", x: 78, y: 62, width: 370, height: 66, fillColor: "#7ddf64e6", strokeColor: "#e1ffeb", strokeWidth: 4, borderRadius: 16 }),
       textLayer({ name: "テキスト 4（ラベル）", text: "GAME LIVE", x: 112, y: 78, width: 300, height: 42, fontSize: 40, color: "#04111c", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
       textLayer({ name: "テキスト 1（見出し）", text: "参加型\nゲーム実況", x: 82, y: 166, width: 680, height: 220, fontSize: 96, lineHeight: 1.16, color: "#ffffff", strokeColor: "#020e08", strokeWidth: 13, shadowColor: "#7ddf64", shadowBlur: 10, shadowOffsetX: 4, shadowOffsetY: 5 }),
@@ -419,8 +428,10 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#ff7a59",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase2BackgroundAssetPrefix}collaboration-background.png`),
-      shapeLayer({ name: "図形 1（左立ち絵ガイド）", shapeType: "rect", x: 650, y: 118, width: 270, height: 470, fillColor: "#ff7b593a", strokeColor: "#ffbe82", strokeWidth: 5, borderRadius: 38 }),
-      shapeLayer({ name: "図形 2（右立ち絵ガイド）", shapeType: "rect", x: 900, y: 138, width: 280, height: 455, fillColor: "#ff4cc23a", strokeColor: "#ffb4e6", strokeWidth: 5, borderRadius: 38 }),
+      assetDecorationLayer({ name: "画像 2（小さなきらめき）", src: `${thumbnailPhase4DecorationAssetPrefix}sparkle-small.svg`, x: 585, y: 84, width: 150, height: 128, rotation: -8, opacity: 0.62 }),
+      shapeLayer({ name: "図形 1（左立ち絵ガイド）", shapeType: "frame", x: 650, y: 118, width: 270, height: 470, fillColor: "#ff7b593a", strokeColor: "#ffbe82", strokeWidth: 5, borderRadius: 38 }),
+      shapeLayer({ name: "図形 2（右立ち絵ガイド）", shapeType: "frame", x: 900, y: 138, width: 280, height: 455, fillColor: "#ff4cc23a", strokeColor: "#ffb4e6", strokeWidth: 5, borderRadius: 38 }),
+      shapeLayer({ name: "図形 5（二人配置ライン）", shapeType: "line", x: 678, y: 612, width: 438, height: 18, fillColor: "#ffe8d8", strokeColor: "#ffe8d8", strokeWidth: 4, borderRadius: 8, opacity: 0.68 }),
       shapeLayer({ name: "図形 3（ラベル帯）", shapeType: "rect", x: 78, y: 74, width: 292, height: 66, fillColor: "#ff7a59e6", strokeColor: "#ffe8d8", strokeWidth: 4, borderRadius: 16 }),
       textLayer({ name: "テキスト 4（ラベル）", text: "COLLAB", x: 120, y: 88, width: 210, height: 42, fontSize: 44, color: "#170804", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
       textLayer({ name: "テキスト 1（見出し）", text: "コラボ\n企画配信", x: 82, y: 190, width: 585, height: 220, fontSize: 88, lineHeight: 1.12, color: "#fff5ef", strokeColor: "#1c0704", strokeWidth: 12, shadowColor: "#ff7a59", shadowBlur: 9, shadowOffsetX: 4, shadowOffsetY: 5 }),
@@ -438,8 +449,10 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#ffd34d",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase2BackgroundAssetPrefix}announcement-background.png`),
-      shapeLayer({ name: "図形 1（本文パネル）", shapeType: "rect", x: 76, y: 102, width: 640, height: 430, fillColor: "#040d1dda", strokeColor: "#e4b966", strokeWidth: 5, borderRadius: 24 }),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 800, y: 124, width: 330, height: 500, fillColor: "#ffeece2e", strokeColor: "#f4d28e", strokeWidth: 4, borderRadius: 32 }),
+      assetDecorationLayer({ name: "画像 2（角飾り）", src: `${thumbnailPhase4DecorationAssetPrefix}x-corner-ornaments.svg`, x: 54, y: 86, width: 690, height: 468, opacity: 0.52 }),
+      shapeLayer({ name: "図形 1（本文パネル）", shapeType: "frame", x: 76, y: 102, width: 640, height: 430, fillColor: "#040d1dda", strokeColor: "#e4b966", strokeWidth: 5, borderRadius: 24 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 800, y: 124, width: 330, height: 500, fillColor: "#ffeece2e", strokeColor: "#f4d28e", strokeWidth: 4, borderRadius: 32 }),
+      shapeLayer({ name: "図形 5（本文罫線）", shapeType: "line", x: 126, y: 382, width: 470, height: 16, fillColor: "#e8c369", strokeColor: "#e8c369", strokeWidth: 3, borderRadius: 8, opacity: 0.72 }),
       shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 108, y: 80, width: 245, height: 58, fillColor: "#e8c369eb", strokeColor: "#fff4cc", strokeWidth: 3, borderRadius: 14 }),
       textLayer({ name: "テキスト 4（ラベル）", text: "NEWS", x: 148, y: 93, width: 166, height: 36, fontSize: 30, color: "#0e1112", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
       textLayer({ name: "テキスト 1（見出し）", text: "大切な\nお知らせ", x: 118, y: 172, width: 548, height: 200, fontSize: 72, lineHeight: 1.34, color: "#fff8dc", strokeColor: "#12100a", strokeWidth: 10, shadowColor: "#000000", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
@@ -457,13 +470,17 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#4dd8ff",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase1BackgroundAssetPrefix}weekly-schedule-background.png`),
+      assetDecorationLayer({ name: "画像 2（丸ドット区切り）", src: `${thumbnailPhase4DecorationAssetPrefix}dot-dash-row.svg`, x: 650, y: 44, width: 548, height: 34, opacity: 0.42 }),
+      shapeLayer({ name: "図形 4（予定表フレーム）", shapeType: "frame", x: 630, y: 48, width: 610, height: 612, fillColor: "#06162eb0", strokeColor: "#4dd8ff", strokeWidth: 4, borderRadius: 22 }),
+      shapeLayer({ name: "図形 5（予定表区切り線 上）", shapeType: "line", x: 658, y: 146, width: 548, height: 16, fillColor: "#4dd8ff", strokeColor: "#4dd8ff", strokeWidth: 2, borderRadius: 4, opacity: 0.42 }),
+      shapeLayer({ name: "図形 6（予定表区切り線 下）", shapeType: "line", x: 658, y: 545, width: 548, height: 16, fillColor: "#4dd8ff", strokeColor: "#4dd8ff", strokeWidth: 2, borderRadius: 4, opacity: 0.42 }),
       shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 150, y: 115, width: 345, height: 60, fillColor: "#0a223acc", strokeColor: "#4dd8ff", strokeWidth: 4, borderRadius: 18 }),
       textLayer({ name: "テキスト 4（ラベル）", text: "WEEKLY SCHEDULE", x: 190, y: 130, width: 270, height: 35, fontSize: 28, color: "#8cf8ff", strokeWidth: 0, shadowColor: "#4dd8ff", shadowBlur: 8, shadowOffsetX: 0, shadowOffsetY: 0 }),
       textLayer({ name: "テキスト 1（見出し）", text: "今週の\n配信予定", x: 50, y: 185, width: 530, height: 240, fontSize: 96, lineHeight: 1.04, color: "#f8feff", align: "center", bold: true, italic: true, strokeColor: "#061849", strokeWidth: 11, shadowColor: "#35e6ff", shadowBlur: 16, shadowOffsetX: 5, shadowOffsetY: 7 }),
       shapeLayer({ name: "図形 1（週範囲バッジ）", shapeType: "rect", x: 205, y: 400, width: 220, height: 65, fillColor: "#08233ecc", strokeColor: "#4dd8ff", strokeWidth: 4, borderRadius: 18 }),
       textLayer({ name: "テキスト 2（時刻）", text: "5/4 - 5/10", x: 240, y: 415, width: 245, height: 40, fontSize: 34, color: "#ffffff", strokeWidth: 3 }),
       ...weeklyScheduleRowLayers(),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "rect", x: 80, y: 505, width: 510, height: 155, fillColor: "#03172466", strokeColor: "#d8f8ff", strokeWidth: 3, borderRadius: 18 })
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 80, y: 505, width: 510, height: 155, fillColor: "#03172466", strokeColor: "#d8f8ff", strokeWidth: 3, borderRadius: 18 })
     ]
   },
   {

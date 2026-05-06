@@ -312,6 +312,24 @@
   - 390 / 820 / 1024 / 1280 / 1366px で、各プリセットのキャンバスが非blankで描画され、ページ全体の水平overflowが0であることを確認した
   - clean reload 後の console error / warn なし。幅別確認中の `getImageData` readback warning は検証スクリプト由来
 
+2026-05-06 Phase 4 未反映プリセット初期装飾メモ:
+
+- PR #30 後の追加単位として、未反映だった `配信告知` / `歌枠` / `週間予定` / `ゲーム実況` / `コラボ` / `お知らせ` の6プリセットへ最低限の初期装飾を追加した
+- 新規assetは追加せず、既存の `public/assets/images/thumbnail-editor/decorations/phase4/` SVGを再利用した
+- `配信告知` は frame化した立ち絵ガイド、ラベル / 時刻周辺のline、控えめな光粒を追加した
+- `歌枠` は frame化した立ち絵ガイド、sparkle / light粒子、見出し下lineを追加した
+- `週間予定` は予定表フレーム、区切りline、軽いdot系SVGだけに抑えた
+- `ゲーム実況` は frame化した立ち絵ガイド、polygon強調ベース、line、スピード線を追加した。権利物っぽいUIやアイコンは入れていない
+- `コラボ` は左右立ち絵ガイドをframe化し、2人配置が分かるlineとsparkleを追加した
+- `お知らせ` は本文パネルと立ち絵ガイドをframe化し、角飾りと罫線lineを控えめに追加した
+- `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は全9プリセットのPhase 4 asset参照、editable shapeType、draft normalization 維持を確認する内容へ拡張した
+- 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+- 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+- Browser/CDP確認:
+  - `localhost:3003` の dev server で `配信告知` / `歌枠` / `週間予定` / `ゲーム実況` / `コラボ` / `お知らせ` のプリセット適用とキャンバス描画を確認した
+  - 390 / 820 / 1024 / 1280 / 1366px で、対象6プリセットのキャンバスが非blankで描画され、ページ全体の水平overflowが0であることを確認した
+  - console error / warn なし。幅別確認中の `getImageData` readback warning は検証スクリプト側で除外した
+
 - [ ] ペイント系ではなく、VTuber向けサムネ組み立てツールとして再定義する
   - 白紙から作るのではなく、用途別プリセットを選んで文字と立ち絵を差し替える体験に寄せる
   - 自由描画、素材検索、Canva的な汎用デザイン機能は優先しない

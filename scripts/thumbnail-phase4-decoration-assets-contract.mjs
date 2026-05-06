@@ -30,7 +30,28 @@ const expectedDecorationFiles = [
   "x-corner-ornaments.svg",
   "dot-dash-row.svg"
 ];
-const phase4PresetIds = ["chatting", "clip", "x_announcement"];
+const phase4PresetIds = [
+  "stream_announce",
+  "karaoke",
+  "chatting",
+  "clip",
+  "game_live",
+  "collaboration",
+  "announcement",
+  "weekly_schedule",
+  "x_announcement"
+];
+const phase4PresetExpectations = {
+  stream_announce: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
+  karaoke: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
+  chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
+  clip: { minDecorationImages: 2, shapeTypes: ["frame", "burst", "polygon"] },
+  game_live: { minDecorationImages: 1, shapeTypes: ["frame", "line", "polygon"] },
+  collaboration: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
+  announcement: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
+  weekly_schedule: { minDecorationImages: 1, shapeTypes: ["line", "frame"] },
+  x_announcement: { minDecorationImages: 2, shapeTypes: ["frame", "line", "burst"] }
+};
 
 for (const fileName of expectedDecorationFiles) {
   const filePath = path.join(root, "public", "assets", "images", "thumbnail-editor", "decorations", "phase4", fileName);
@@ -47,11 +68,17 @@ for (const presetId of phase4PresetIds) {
   assert.ok(preset, `${presetId} preset exists`);
 
   const decorationLayers = preset.layers.filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix));
-  assert.ok(decorationLayers.length >= 2, `${presetId} uses initial phase 4 decoration image layers`);
+  const expectation = phase4PresetExpectations[presetId];
+  assert.ok(decorationLayers.length >= expectation.minDecorationImages, `${presetId} uses initial phase 4 decoration image layers`);
 
   for (const layer of decorationLayers) {
     const filePath = path.join(root, "public", layer.src.replace(/^\//, ""));
     assert.equal(fs.existsSync(filePath), true, `${presetId} decoration layer asset exists: ${layer.src}`);
+  }
+
+  const shapeTypes = new Set(preset.layers.filter((layer) => layer.type === "shape").map((layer) => layer.shapeType));
+  for (const shapeType of expectation.shapeTypes) {
+    assert.equal(shapeTypes.has(shapeType), true, `${presetId} uses editable ${shapeType} shape layer`);
   }
 }
 
@@ -65,5 +92,16 @@ const clipDraft = lib.createDraftFromPreset("clip");
 const normalized = lib.normalizeThumbnailDraft(clipDraft);
 assert.ok(normalized?.layers.some((layer) => layer.type === "shape" && layer.shapeType === "burst"), "burst shape survives draft normalization");
 assert.ok(normalized?.layers.some((layer) => layer.type === "shape" && layer.shapeType === "polygon"), "polygon shape survives draft normalization");
+
+for (const presetId of phase4PresetIds) {
+  const draft = lib.createDraftFromPreset(presetId);
+  const normalizedDraft = lib.normalizeThumbnailDraft(draft);
+  for (const shapeType of phase4PresetExpectations[presetId].shapeTypes) {
+    assert.ok(
+      normalizedDraft?.layers.some((layer) => layer.type === "shape" && layer.shapeType === shapeType),
+      `${presetId} ${shapeType} shape survives draft normalization`
+    );
+  }
+}
 
 console.log("thumbnail phase 4 decoration asset contract checks passed");

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="320" viewBox="0 0 760 320" fill="none">
+  <defs>
+    <filter id="softGlow" x="-15%" y="-30%" width="130%" height="160%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+  <g opacity=".88" filter="url(#softGlow)">
+    <path d="M80 70H530L604 116H716L654 170H706L626 238H116L62 202H18L70 148H32L80 70Z" fill="#13dcff"/>
+  </g>
+  <path d="M80 76H530L604 122H706L646 168H694L618 230H120L68 196H28L78 148H42L80 76Z" fill="#092040" opacity=".58"/>
+  <path d="M82 82H526L600 128H682" stroke="#14eaff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M42 150L80 114M70 202L122 230M642 174L706 132M610 232L686 180" stroke="#14eaff" stroke-width="8" stroke-linecap="round" opacity=".72"/>
+  <path d="M100 92H520M92 216H592" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity=".45"/>
+</svg>

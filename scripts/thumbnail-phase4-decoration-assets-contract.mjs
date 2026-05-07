@@ -35,7 +35,21 @@ const expectedDecorationFiles = [
   "stream-title-glow-backplate.svg",
   "stream-star-sparks.svg",
   "stream-time-banner-base.svg",
-  "stream-label-band-base.svg"
+  "stream-label-band-base.svg",
+  "karaoke-label-band-base.svg",
+  "karaoke-title-glow-backplate.svg",
+  "karaoke-time-banner-base.svg",
+  "karaoke-ornate-frame.svg",
+  "karaoke-spark-field.svg",
+  "karaoke-ornament-note-pink.png",
+  "karaoke-ornament-note-cyan.png",
+  "karaoke-ornament-note-gold.png",
+  "karaoke-ornament-star-pink.png",
+  "karaoke-ornament-star-gold.png",
+  "karaoke-ornament-sparkle-cluster-pink-cyan.png",
+  "karaoke-sparkle-dust-white-gold.png",
+  "karaoke-sparkle-dust-pink-cyan.png",
+  "karaoke-glint-single-soft-white.png"
 ];
 const phase4PresetIds = [
   "stream_announce",
@@ -50,7 +64,7 @@ const phase4PresetIds = [
 ];
 const phase4PresetExpectations = {
   stream_announce: { minDecorationImages: 9, shapeTypes: ["frame", "line"] },
-  karaoke: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
+  karaoke: { minDecorationImages: 13, shapeTypes: ["frame", "line"] },
   chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
   clip: { minDecorationImages: 2, shapeTypes: ["frame", "burst", "polygon"] },
   game_live: { minDecorationImages: 1, shapeTypes: ["frame", "line", "polygon"] },
@@ -63,11 +77,17 @@ const phase4PresetExpectations = {
 for (const fileName of expectedDecorationFiles) {
   const filePath = path.join(root, "public", "assets", "images", "thumbnail-editor", "decorations", "phase4", fileName);
   assert.equal(fs.existsSync(filePath), true, `${fileName} decoration asset exists`);
-  assert.ok(fs.statSync(filePath).size < 16_000, `${fileName} stays lightweight`);
+  const maxAssetSize = fileName.endsWith(".png") ? 220_000 : 16_000;
+  assert.ok(fs.statSync(filePath).size < maxAssetSize, `${fileName} stays lightweight`);
 
-  const svg = fs.readFileSync(filePath, "utf8");
-  assert.match(svg, /<svg\b/, `${fileName} is an SVG`);
-  assert.doesNotMatch(svg, /<text\b|font-family|<image\b|href=/i, `${fileName} has no embedded readable text, image refs, or external hrefs`);
+  if (fileName.endsWith(".svg")) {
+    const svg = fs.readFileSync(filePath, "utf8");
+    assert.match(svg, /<svg\b/, `${fileName} is an SVG`);
+    assert.doesNotMatch(svg, /<text\b|font-family|<image\b|href=/i, `${fileName} has no embedded readable text, image refs, or external hrefs`);
+  } else {
+    const signature = fs.readFileSync(filePath).subarray(0, 8);
+    assert.equal(signature.equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])), true, `${fileName} is a PNG`);
+  }
 }
 
 for (const presetId of phase4PresetIds) {
@@ -108,6 +128,30 @@ for (const fileName of [
 }
 assert.equal(streamAnnounceDecorationSources.has("arrow-accent.svg"), false, "stream_announce does not reuse clip arrow accent");
 assert.equal(streamAnnounceDecorationSources.has("stream-time-banner-cap.svg"), false, "stream_announce uses a single time banner asset");
+
+const karaokePreset = lib.thumbnailPresets.find((item) => item.id === "karaoke");
+const karaokeDecorationSources = new Set(
+  karaokePreset.layers
+    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
+    .map((layer) => path.basename(layer.src))
+);
+for (const fileName of [
+  "karaoke-label-band-base.svg",
+  "karaoke-title-glow-backplate.svg",
+  "karaoke-time-banner-base.svg",
+  "karaoke-ornate-frame.svg",
+  "karaoke-spark-field.svg",
+  "karaoke-ornament-note-cyan.png",
+  "karaoke-ornament-note-gold.png",
+  "karaoke-ornament-star-pink.png",
+  "karaoke-ornament-star-gold.png",
+  "karaoke-ornament-sparkle-cluster-pink-cyan.png",
+  "karaoke-sparkle-dust-white-gold.png",
+  "karaoke-sparkle-dust-pink-cyan.png",
+  "karaoke-glint-single-soft-white.png"
+]) {
+  assert.equal(karaokeDecorationSources.has(fileName), true, `karaoke uses dedicated ${fileName}`);
+}
 
 const allShapeTypes = new Set(lib.thumbnailPresets.flatMap((preset) => preset.layers.filter((layer) => layer.type === "shape").map((layer) => layer.shapeType)));
 for (const shapeType of ["line", "burst", "frame", "polygon"]) {

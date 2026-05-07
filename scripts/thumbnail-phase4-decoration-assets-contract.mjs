@@ -28,7 +28,14 @@ const expectedDecorationFiles = [
   "clip-speed-lines.svg",
   "arrow-accent.svg",
   "x-corner-ornaments.svg",
-  "dot-dash-row.svg"
+  "dot-dash-row.svg",
+  "stream-emphasis-bursts.svg",
+  "stream-tech-corner-frame.svg",
+  "stream-tech-dash-row.svg",
+  "stream-title-glow-backplate.svg",
+  "stream-star-sparks.svg",
+  "stream-time-banner-base.svg",
+  "stream-label-band-base.svg"
 ];
 const phase4PresetIds = [
   "stream_announce",
@@ -42,7 +49,7 @@ const phase4PresetIds = [
   "x_announcement"
 ];
 const phase4PresetExpectations = {
-  stream_announce: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
+  stream_announce: { minDecorationImages: 9, shapeTypes: ["frame", "line"] },
   karaoke: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
   chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
   clip: { minDecorationImages: 2, shapeTypes: ["frame", "burst", "polygon"] },
@@ -81,6 +88,26 @@ for (const presetId of phase4PresetIds) {
     assert.equal(shapeTypes.has(shapeType), true, `${presetId} uses editable ${shapeType} shape layer`);
   }
 }
+
+const streamAnnouncePreset = lib.thumbnailPresets.find((item) => item.id === "stream_announce");
+const streamAnnounceDecorationSources = new Set(
+  streamAnnouncePreset.layers
+    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
+    .map((layer) => path.basename(layer.src))
+);
+for (const fileName of [
+  "stream-emphasis-bursts.svg",
+  "stream-tech-corner-frame.svg",
+  "stream-tech-dash-row.svg",
+  "stream-title-glow-backplate.svg",
+  "stream-star-sparks.svg",
+  "stream-time-banner-base.svg",
+  "stream-label-band-base.svg"
+]) {
+  assert.equal(streamAnnounceDecorationSources.has(fileName), true, `stream_announce uses dedicated ${fileName}`);
+}
+assert.equal(streamAnnounceDecorationSources.has("arrow-accent.svg"), false, "stream_announce does not reuse clip arrow accent");
+assert.equal(streamAnnounceDecorationSources.has("stream-time-banner-cap.svg"), false, "stream_announce uses a single time banner asset");
 
 const allShapeTypes = new Set(lib.thumbnailPresets.flatMap((preset) => preset.layers.filter((layer) => layer.type === "shape").map((layer) => layer.shapeType)));
 for (const shapeType of ["line", "burst", "frame", "polygon"]) {

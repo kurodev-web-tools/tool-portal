@@ -330,6 +330,26 @@
   - 390 / 820 / 1024 / 1280 / 1366px で、対象6プリセットのキャンバスが非blankで描画され、ページ全体の水平overflowが0であることを確認した
   - console error / warn なし。幅別確認中の `getImageData` readback warning は検証スクリプト側で除外した
 
+2026-05-06 Phase 4 polish 比較調整メモ:
+
+- 既存モックとの差分整理対象を、完成度が高い `配信告知` / `歌枠` / `週間予定` / `雑談` / `切り抜き` / `X告知画像` の6プリセットに絞った
+- `ゲーム実況` / `コラボ` / `お知らせ` は、現時点のモックを基準にしないため今回は触っていない
+- 背景asset、画像asset色変更、`tintColor`、素材ライブラリUI、装飾ON/OFF、背景への焼き込み、新規小物asset追加は行っていない
+- `配信告知` は時刻バッジを `polygon` にして斜めバナー感を最小再現し、既存 `arrow-accent.svg` と光粒/ラベル周辺lineを再配置した
+- `歌枠` は立ち絵frameの線幅/opacity、sparkle/light粒子、見出し下lineを控えめに調整した
+- `週間予定` は背景側の予定表行枠を活かし、追加の行panelは入れず、曜日別テキストレイヤー構造と座標を維持したまま予定表frame/区切りlineだけを調整した
+- `雑談` は右立ち絵guide、下線、光粒/sparkleの位置と透明度を調整し、モックの落ち着いた余白に寄せた
+- `切り抜き` は動画frameを大きくし、強調ラベル/時刻バッジを `polygon` に変更し、集中線/スピード線/矢印/衝撃マークを再配置した
+- `X告知画像` は投稿カード、角飾り、日付バッジ、立ち絵guideのopacityと線幅を抑え、文字可読性を優先した
+- 比較結果は `docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` に記録した
+- 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+- 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+- Browser/CDP確認:
+  - `localhost:3004` の dev server で対象6プリセットを確認した
+  - 390 / 820 / 1024 / 1280 / 1366px で、対象6プリセットのcanvasが非blankで描画され、ページ全体の水平overflowが0であることを確認した
+  - clean isolated contextで `/tools/thumbnail-editor` を開き、console error / warn なしを確認した
+  - canvas readback確認中の `getImageData` warning は検証スクリプト由来として除外した
+
 - [ ] ペイント系ではなく、VTuber向けサムネ組み立てツールとして再定義する
   - 白紙から作るのではなく、用途別プリセットを選んで文字と立ち絵を差し替える体験に寄せる
   - 自由描画、素材検索、Canva的な汎用デザイン機能は優先しない
@@ -538,6 +558,32 @@
 
 ## 次の整理メモ
 
+- 2026-05-06 `配信告知` preset polish:
+  - 既存 Phase 1 背景と `見出し` / `時刻` / `サブ` / `ラベル` のテキストレイヤー構造は維持する
+  - 配信告知専用の抽象SVG assetとして `stream-emphasis-bursts.svg` / `stream-tech-corner-frame.svg` / `stream-tech-dash-row.svg` を追加する
+  - `stream_announce` から切り抜き寄りの `arrow-accent.svg` 流用を外し、斜め時刻バッジ、ラベル横HUD線、見出し強調片、立ち絵枠角飾りを再配置する
+  - 背景asset、画像asset色変更、`tintColor`、素材ライブラリUI、装飾ON/OFF、背景への焼き込みは入れない
+  - 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+  - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - Browser確認: worktree dev server `localhost:3000` で `配信告知` presetを確認。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0、console error / warn なし。1024px以上では専用assetレイヤーと既存テキストレイヤーがレイヤー一覧に残ることを確認。390 / 820pxでは設定パネルの表示仕様によりレイヤー一覧が常時露出しないため、編集可能レイヤー維持はcontractで確認。
+- 2026-05-06 `配信告知` preset 2回目polish:
+  - 背景焼き込みなし、テキスト編集可能維持のまま、モック再現度をさらに上げる方針にした
+  - `stream-title-glow-backplate.svg` / `stream-time-banner-cap.svg` / `stream-star-sparks.svg` を追加し、見出し背面グロー、時刻バッジ右端、星光りを小物assetで補う
+  - `stream-emphasis-bursts.svg` は線や小粒を減らし、大きい三角アクセント寄りに調整する
+  - `stream_announce` は見出し大型化、ラベル帯の横長カプセル化、時刻バッジの横長/斜め化、右立ち絵枠の発光強化を行う
+  - 背景asset、画像asset色変更、`tintColor`、素材ライブラリUI、装飾ON/OFF、新しい `shapeType` は入れない
+  - 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+  - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - Browser確認: clean sessionで `配信告知` presetを確認。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0、console error / warn なし。1024px以上では追加小物assetと既存テキストレイヤーがレイヤー一覧に残ることを確認。canvas書き出しで、背景焼き込みなしのまま見出し/時刻/ラベル/サブの可読性と右立ち絵枠の余白を確認。
+- 2026-05-07 `配信告知` time/label SVG polish:
+  - `図形 1（時刻バッジ）` と `画像 10（時刻バッジ右端キャップ）` の分離をやめ、`stream-time-banner-base.svg` の1枚SVG土台へ置き換える
+  - `図形 2（ラベル帯）` も `stream-label-band-base.svg` の1枚SVG土台へ置き換え、ラベル文字は `テキスト 4（ラベル）` のeditable layerとして維持する
+  - 将来の色変更機能を想定し、SVGはメイン色/サブ色/白ハイライト/濃色影の役割が分かれる単純なベクター構造に留める
+  - 背景asset、画像asset色変更、`tintColor`、素材ライブラリUI、装飾ON/OFF、新しい `shapeType` は入れない
+  - SVG内のfilter依存は避け、透明度を変えた同形状の重ね描きで発光を表現する
+  - 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+  - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - Browser確認: clean localStorage状態から `配信告知` presetを確認。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0。1024px以上では `画像 10（ラベル帯）` / `画像 11（時刻バッジ）` と既存テキストレイヤーがレイヤー一覧に残ることを確認。console error / warn は通常ロード直後に0件、pixel sampling時のみChromeのCanvas readback warningが出る。
 - `task.md` は現在の作業と次アクションに絞る
 - 完了済みの実装ログ、検証ログ、PRプロンプトは月次 archive に移す
 - 3ツールの仕上げ方針を追加するときは、実装タスクとマネタイズ判断を混ぜすぎない

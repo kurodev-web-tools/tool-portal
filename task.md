@@ -558,6 +558,25 @@
 
 ## 次の整理メモ
 
+- 2026-05-07 `歌枠` preset 単体polish:
+  - `歌枠` だけを対象に、Phase 1 背景と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
+  - 専用抽象SVG assetとして `karaoke-label-band-base.svg` / `karaoke-title-glow-backplate.svg` / `karaoke-time-banner-base.svg` / `karaoke-ornate-frame.svg` / `karaoke-spark-field.svg` を追加した
+  - 専用透過PNG assetとして `imagegen` 生成素材から `karaoke-ornament-note-pink.png` / `karaoke-ornament-note-cyan.png` / `karaoke-ornament-note-gold.png` / `karaoke-ornament-star-pink.png` / `karaoke-ornament-star-gold.png` / `karaoke-ornament-sparkle-cluster-pink-cyan.png` を切り出した。`歌枠` presetでは `note-cyan` / `note-gold` / `star-pink` / `star-gold` / `sparkle-cluster-pink-cyan` を個別レイヤーとして使用する
+  - 追加の `imagegen` 生成素材から `karaoke-sparkle-dust-white-gold.png` / `karaoke-sparkle-dust-pink-cyan.png` / `karaoke-glint-single-soft-white.png` を作成し、小さい星/点のきらめきと淡い光粒の役割をPNGへ置換した
+  - 個別透過PNGは回転時に発光や粒子が見切れないよう、元シートから再切り出しして各辺に透明余白を確保し、preset上の小物レイヤー枠も同じ中心位置のまま少し拡大した
+  - 追加SVGには読める文字、ロゴ、人物、キャラクター、外部画像参照、音符・マイク・譜面などの強い記号小物、`<text>` / `font-family` / `<image>` / `href=` を入れていない
+  - ラベル帯と時刻バッジはSVG土台 + editable textへ置換し、右立ち絵frameは装飾SVG + 薄いeditable frame guideに分離した
+  - 見出し背面グロー、sparkle/light粒子、見出し下ライン、サブ文字位置を調整し、右立ち絵枠の余白を維持した
+  - `ゲーム実況` / `コラボ` / `お知らせ`、素材ライブラリUI、画像asset色変更、`tintColor`、装飾ON/OFF、背景焼き込み、新しい `shapeType`、public API / schema は変更していない
+  - 比較結果は `docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` の `歌枠` 行に記録した
+  - 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+  - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - Browser確認: clean localStorage状態から `歌枠` presetを確認。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0。1024px以上では追加小物assetと `見出し` / `時刻` / `サブ` / `ラベル` がレイヤー一覧に残ることを確認。canvas exportで見出し、時刻、ラベル、サブの可読性と右立ち絵枠の余白を確認した
+  - 補足: `out/` 静的配信では 1024px以上で Next static export のRSC prefetch `.txt?_rsc=` が404としてconsoleに出る。今回追加したSVG / 背景 / JSの読み込み失敗ではなく、390 / 820pxでは同404も出ていない
+  - 追加調整: 大きい四芒星と音符SVGがやや玩具っぽく見えたため、`karaoke-spark-field.svg` / `karaoke-title-glow-backplate.svg` / `karaoke-label-band-base.svg` / `karaoke-time-banner-base.svg` から音符記号に見えるSVG要素を外した。全面PNG overlayもまだSVG感が残ったため削除し、単体背景透過PNGの星 / 音符 / sparkle clusterを小物レイヤーとして配置する構成に変更した
+  - 追加調整2: `karaoke-spark-field.svg` から小さい星/点を外し、抽象三角片と曲線/ラインだけに絞った。`歌枠` preset内の `soft-light-particles.svg` 使用はやめ、`white-gold dust` / `pink-cyan dust` / `single glint` の背景透過PNGレイヤーへ置換した
+  - 追加調整3: 左下の白金小粒きらめきはopacityと表示枠を少し抑え、右側のピンクシアン小粒きらめきは立ち絵枠内から外周寄りへ移動した。サブテキストは下端の窮屈さを避けるため14px上げた
+  - 追加Browser確認: worktree dev server `localhost:3000` で `歌枠` の新規キャンバスを作成し、単体背景透過PNG小物込みでcanvas描画とレイヤー残存を確認。console error / warn なし。確認スクリーンショットは `output/playwright/karaoke-imagegen-ornaments-mobile-3000.png` / `output/playwright/karaoke-imagegen-dust-replacement-3000.png`
 - 2026-05-06 `配信告知` preset polish:
   - 既存 Phase 1 背景と `見出し` / `時刻` / `サブ` / `ラベル` のテキストレイヤー構造は維持する
   - 配信告知専用の抽象SVG assetとして `stream-emphasis-bursts.svg` / `stream-tech-corner-frame.svg` / `stream-tech-dash-row.svg` を追加する

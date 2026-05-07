@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none">
+  <path d="M62 254L94 314L30 290Z" fill="#ff85dc" stroke="#fff0fb" stroke-width="3" opacity=".54"/>
+  <path d="M110 306L146 374L66 344Z" fill="#d65cff" stroke="#fff0fb" stroke-width="3" opacity=".46"/>
+  <path d="M680 322L704 268L724 344Z" fill="#ff85dc" stroke="#fff0fb" stroke-width="3" opacity=".48"/>
+  <path d="M724 380L770 354L752 420Z" fill="#d65cff" stroke="#fff0fb" stroke-width="3" opacity=".42"/>
+  <g stroke-linecap="round" stroke-linejoin="round" opacity=".62">
+    <path d="M44 548C118 510 176 512 246 552" stroke="#ff8adf" stroke-width="5"/>
+    <path d="M704 316C760 286 826 292 884 334" stroke="#ffd484" stroke-width="4"/>
+    <path d="M1002 520C1064 492 1138 502 1196 548" stroke="#ff8adf" stroke-width="4"/>
+  </g>
+  <g stroke-linecap="round" opacity=".5">
+    <path d="M44 612H196" stroke="#ff79d2" stroke-width="4"/>
+    <path d="M88 634H250" stroke="#ffd484" stroke-width="3"/>
+    <path d="M936 132H1150" stroke="#ff79d2" stroke-width="3"/>
+    <path d="M986 156H1212" stroke="#ffd484" stroke-width="2"/>
+  </g>
+</svg>

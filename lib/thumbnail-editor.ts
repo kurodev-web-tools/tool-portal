@@ -523,19 +523,20 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#00b7ff",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase3BackgroundAssetPrefix}x-announcement-background.png`),
-      assetDecorationLayer({ name: "画像 2（淡い光粒）", src: `${thumbnailPhase4DecorationAssetPrefix}soft-light-particles.svg`, x: 560, y: 40, width: 560, height: 330, opacity: 0.3 }),
-      assetDecorationLayer({ name: "画像 3（角飾り）", src: `${thumbnailPhase4DecorationAssetPrefix}x-corner-ornaments.svg`, x: 58, y: 128, width: 784, height: 448, opacity: 0.48 }),
-      shapeLayer({ name: "図形 5（上品な罫線）", shapeType: "line", x: 166, y: 385, width: 500, height: 18, fillColor: "#c7a75a", strokeColor: "#c7a75a", strokeWidth: 2, borderRadius: 8, opacity: 0.78 }),
-      assetDecorationLayer({ name: "画像 4（丸ドット点線）", src: `${thumbnailPhase4DecorationAssetPrefix}dot-dash-row.svg`, x: 210, y: 498, width: 450, height: 34, opacity: 0.4 }),
-      shapeLayer({ name: "図形 1（投稿カード）", shapeType: "frame", x: 78, y: 170, width: 742, height: 376, fillColor: "#ffffffdc", strokeColor: "#c6d7f0", strokeWidth: 2, borderRadius: 28, opacity: 0.9 }),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 880, y: 92, width: 270, height: 540, fillColor: "#f8fbff14", strokeColor: "#8ca5df", strokeWidth: 2, borderRadius: 48, opacity: 0.54 }),
-      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 306, y: 166, width: 238, height: 58, fillColor: "#8ca5efe8", strokeColor: "#fefefe", strokeWidth: 3, borderRadius: 12 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "X POST", x: 342, y: 179, width: 166, height: 32, fontSize: 28, color: "#ffffff", strokeColor: "#5e73c4", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "本日のお知らせ", x: 112, y: 274, width: 666, height: 92, fontSize: 74, lineHeight: 1, color: "#16246b", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#dce6ff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 2 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "配信予定と最新情報をまとめました", x: 198, y: 410, width: 500, height: 42, fontSize: 30, color: "#22306f", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#dce6ff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1 }),
-      shapeLayer({ name: "図形 6（日付バッジアクセント）", shapeType: "burst", x: 552, y: 488, width: 48, height: 48, fillColor: "#ffffff", strokeColor: "#7998f0", strokeWidth: 2, borderRadius: 0, opacity: 0.48 }),
-      shapeLayer({ name: "図形 4（時刻バッジ）", shapeType: "rect", x: 302, y: 492, width: 252, height: 64, fillColor: "#7998f0dc", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 12 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "05.06 WED", x: 342, y: 506, width: 168, height: 38, fontSize: 34, color: "#ffffff", strokeColor: "#536ac7", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" })
+      assetDecorationLayer({ name: "画像 2（淡い光粒）", src: `${thumbnailPhase4DecorationAssetPrefix}soft-light-particles.svg`, x: 514, y: 34, width: 620, height: 350, opacity: 0.22 }),
+      assetDecorationLayer({ name: "画像 3（投稿カード土台）", src: `${thumbnailPhase4DecorationAssetPrefix}x-post-card-base.svg`, x: 64, y: 142, width: 780, height: 432, opacity: 0.98 }),
+      assetDecorationLayer({ name: "画像 4（角飾り）", src: `${thumbnailPhase4DecorationAssetPrefix}x-corner-ornaments.svg`, x: 68, y: 154, width: 760, height: 430, opacity: 0.32 }),
+      assetDecorationLayer({ name: "画像 5（立ち絵guideの細線）", src: `${thumbnailPhase4DecorationAssetPrefix}x-standee-guide-lines.svg`, x: 832, y: 78, width: 350, height: 558, opacity: 0.72 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 862, y: 100, width: 298, height: 520, fillColor: "#f8fbff08", strokeColor: "#8ca5df", strokeWidth: 2, borderRadius: 86, opacity: 0.26 }),
+      assetDecorationLayer({ name: "画像 6（ラベル帯）", src: `${thumbnailPhase4DecorationAssetPrefix}x-label-band-base.svg`, x: 296, y: 142, width: 292, height: 74, opacity: 0.96 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "X POST", x: 360, y: 165, width: 166, height: 32, fontSize: 29, color: "#ffffff", strokeColor: "#566cc4", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "本日のお知らせ", x: 110, y: 270, width: 676, height: 92, fontSize: 76, lineHeight: 1, color: "#16246b", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#cfdcff", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2 }),
+      shapeLayer({ name: "図形 5（本文罫線）", shapeType: "line", x: 120, y: 395, width: 612, height: 16, fillColor: "#d1ad58", strokeColor: "#d1ad58", strokeWidth: 2, borderRadius: 8, opacity: 0.58 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "配信予定と最新情報をまとめました", x: 162, y: 426, width: 560, height: 42, fontSize: 30, align: "center", color: "#22306f", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#dce6ff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1 }),
+      assetDecorationLayer({ name: "画像 7（丸ドット点線）", src: `${thumbnailPhase4DecorationAssetPrefix}dot-dash-row.svg`, x: 236, y: 498, width: 428, height: 32, opacity: 0.26 }),
+      assetDecorationLayer({ name: "画像 8（日付バッジ）", src: `${thumbnailPhase4DecorationAssetPrefix}x-date-badge-base.svg`, x: 278, y: 488, width: 344, height: 88, opacity: 0.98 }),
+      shapeLayer({ name: "図形 6（日付バッジ端の光）", shapeType: "burst", x: 596, y: 514, width: 34, height: 34, fillColor: "#ffffff", strokeColor: "#d9bb66", strokeWidth: 2, borderRadius: 0, opacity: 0.42 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "05.06 WED", x: 354, y: 512, width: 200, height: 42, fontSize: 38, color: "#ffffff", strokeColor: "#536ac7", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald", align: "center" })
     ]
   }
 ];

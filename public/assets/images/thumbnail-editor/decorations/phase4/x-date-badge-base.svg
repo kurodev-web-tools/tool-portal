@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="92" viewBox="0 0 360 92" fill="none">
+  <defs>
+    <linearGradient id="dateFill" x1="32" y1="12" x2="328" y2="80" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f1f5ff"/>
+      <stop offset=".18" stop-color="#8aa4f3"/>
+      <stop offset=".58" stop-color="#6f8ae8"/>
+      <stop offset="1" stop-color="#eef4ff"/>
+    </linearGradient>
+    <linearGradient id="dateStroke" x1="16" y1="46" x2="344" y2="46" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d7b765"/>
+      <stop offset=".5" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#d7b765"/>
+    </linearGradient>
+  </defs>
+  <path d="M38 8H322L352 46L322 84H38L8 46L38 8Z" fill="#ffffff" opacity=".28"/>
+  <path d="M48 14H312L338 46L312 78H48L22 46L48 14Z" fill="url(#dateFill)" stroke="url(#dateStroke)" stroke-width="2.5"/>
+  <path d="M62 24H298" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity=".62"/>
+  <path d="M72 68H288" stroke="#4d68c8" stroke-width="2" stroke-linecap="round" opacity=".34"/>
+  <g stroke="#dfbf67" stroke-linecap="round" stroke-width="2" opacity=".72">
+    <path d="M16 46H0"/>
+    <path d="M360 46H344"/>
+    <path d="M46 46H64"/>
+    <path d="M296 46H314"/>
+  </g>
+  <g fill="#fff7c4">
+    <path d="M34 46L40 40L46 46L40 52Z"/>
+    <path d="M314 46L320 40L326 46L320 52Z"/>
+  </g>
+</svg>

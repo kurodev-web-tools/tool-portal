@@ -141,6 +141,21 @@
   - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
   - Browser/Playwright確認: clean localStorage状態から `切り抜き` presetを適用。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0、console error / warn なし。1024px以上では追加小物asset `画像 2（集中線）` / `画像 3（衝撃と矢印マーク）` / `画像 4（動画フレーム装飾）` / `画像 5（矢印アクセント）` / `画像 6（スピード線）` / `画像 7（ラベル帯）` / `画像 8（時刻バッジ）` と `見出し` / `時刻` / `サブ` / `ラベル` がレイヤー一覧に残ることを確認。1366pxのフルcanvas出力で見出し、時刻、サブ、ラベルの可読性と動画フレーム/強調装飾の余白を確認した
 
+- 2026-05-08 `X告知画像` preset 単体polish:
+  - 作業前に PR #39 `切り抜き` polish が `main` に merge 済みで、local `main` / worktree が merge commit `6bf5551` を含むことを確認した
+  - `X告知画像` だけを対象に、既存 Phase 3 背景 `x-announcement-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
+  - 専用抽象SVG assetとして `x-post-card-base.svg` / `x-label-band-base.svg` / `x-date-badge-base.svg` / `x-standee-guide-lines.svg` を追加した
+  - 追加SVGには読める文字、ロゴ、人物、キャラクター、外部画像参照、`<text>` / `font-family` / `<image>` / `href=` を入れていない
+  - 投稿カード、ラベル帯、日付バッジはSVG土台 + editable textへ置換し、見出しは短い告知文として読みやすく少し大型化した
+  - 既存 `soft-light-particles.svg` / `x-corner-ornaments.svg` / `dot-dash-row.svg` は維持し、opacityと配置を抑えて背景との一体感を優先した
+  - 立ち絵guideは専用細線asset + 薄いframe guideへ分離し、右側の余白を残しながら主張を抑えた
+  - サブテキストは中央寄せで日付バッジ上へ整理し、本文罫線と日付バッジの間に余白を確保した
+  - 背景焼き込み、schema変更、public API変更、新しい `shapeType`、素材ライブラリUI変更、`tintColor` 変更、他プリセット定義は入れていない
+  - 比較結果は `docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` の `X告知画像` 行に記録した
+  - 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+  - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS。`npm run build` では worktree と root の lockfile 重複により Next.js の workspace root 推定 warning が出たが、build は成功した
+  - Browser/Chrome DevTools確認: clean isolated contextから `/tools/thumbnail-editor/` を開き、UI上で `X告知画像` presetを適用。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0、console error / warn なし。1024px以上では追加小物asset `画像 3（投稿カード土台）` / `画像 5（立ち絵guideの細線）` / `画像 6（ラベル帯）` / `画像 8（日付バッジ）` と `見出し` / `時刻` / `サブ` / `ラベル` がレイヤー一覧に残ることを確認。1366pxで見出し、時刻、サブ、ラベルの可読性と投稿カード/立ち絵guide/装飾の余白を確認した
+
 - 2026-05-08 `コラボ` preset 単体polish:
   - `コラボ` だけを対象に、既存 Phase 2 背景 `collaboration-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 専用抽象SVG assetとして `collaboration-label-band-base.svg` / `collaboration-time-badge-base.svg` / `collaboration-duo-guide-lines.svg` / `collaboration-connection-lines.svg` / `collaboration-soft-glints.svg` を追加した

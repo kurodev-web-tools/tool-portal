@@ -5,7 +5,7 @@
 - 対象: `配信告知` / `歌枠` / `週間予定` / `雑談` / `ゲーム実況` / `切り抜き` / `X告知画像` / `お知らせ` / `コラボ`
 - 対象外: なし
 - 背景asset、画像asset色変更、`tintColor`、素材ライブラリUI、装飾ON/OFF、背景への焼き込みは行わない。
-- `配信告知` / `歌枠` のみ専用小物assetを最小追加し、他プリセットは既存Phase 4 SVGと editable shape layer の再配置で寄せる。
+- 単体polish済みプリセットでは必要最小限の抽象assetを追加し、背景と editable text layer は維持する。
 
 ## Preset Review
 
@@ -19,10 +19,11 @@
 | コラボ | モックは左のカプセル型ラベル、太い白見出し、時計アイコン付きの横長時刻バッジ、下部サブの余白、右側2人分のスポットライト/円形guide、2人をつなぐ曲線と舞台感が強い。既存presetはラベル帯と時刻バッジが単純shapeで、2人guideの線幅が強く、背景のステージ光との一体感が弱かった。 | 既存 `collaboration-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` のeditable text layerを維持。専用抽象SVG `collaboration-label-band-base.svg` / `collaboration-time-badge-base.svg` / `collaboration-duo-guide-lines.svg` / `collaboration-connection-lines.svg` / `collaboration-soft-glints.svg` を追加。ラベル帯と時刻バッジはSVG土台 + editable textへ置換し、見出しを大型化。2人分の立ち絵guideは右側に薄いframeを2つ残しつつ、スポットライト/円形ステージ/点線arcをSVGで補った。サブは下部ラインの間に収め、左右または右側複数人配置の余白を優先した。 | モックの紙吹雪やリボンを大量には追加しない。人物シルエット、キャラクター、ロゴ、読める小物文字、背景焼き込み、文字ごとの完全な立体縁取りは追加しない。SVG内にも `<text>` / `font-family` / `<image>` / `href=` を含めない。 |
 | お知らせ | モックはアイボリーの上部ラベルバッジ、太めで読みやすい見出し、横長の日付バッジ、右側の薄い立ち絵guide、背景と一体化した金線/光粒が強い。既存presetは本文パネルと単純shapeバッジがやや硬く、右guideの主張も強かった。 | 既存 `announcement-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` のeditable text layerを維持。専用抽象SVG `announcement-label-band-base.svg` / `announcement-date-badge-base.svg` / `announcement-guide-lines.svg` / `announcement-soft-glints.svg` を追加し、ラベル帯と日付バッジをSVG土台 + editable textに変更。本文パネルは薄くし、見出しを大型化、時刻バッジを横長化、サブは下部余白を取って中央寄せにした。右立ち絵guideは細線asset + 薄いframe guideへ分離し、背景の金線と馴染む位置に調整。 | モックの文字ごとの立体処理、背景に焼き込まれた紙/革の細かな質感、完全な曲線フレームは追いすぎない。読める文字・人物・ロゴ・外部画像参照は追加せず、SVG内にも `<text>` / `font-family` / `<image>` / `href=` を含めない。 |
 | 切り抜き | モックは動画フレームが大きく、強調ラベルと時刻バッジがステッカー風で、集中線/スピード線/矢印/衝撃マークが一体になって短い強調語と公開時刻へ視線を誘導している。既存presetはフレーム余白がやや狭く、ラベル/時刻バッジが単純shapeで、見出しと動画フレームの重なりも強かった。 | 既存 `clip-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` のeditable text layerを維持。専用抽象SVG `clip-label-band-base.svg` / `clip-time-badge-base.svg` / `clip-video-frame-accent.svg` / `clip-impact-marks.svg` を追加し、既存 `clip-focus-rays.svg` / `clip-speed-lines.svg` / `arrow-accent.svg` と組み合わせた。動画frameは左上寄りに大きく取り、フレーム装飾をSVGで補強。ラベル帯と時刻バッジはSVG土台 + editable textへ置換し、見出しは右下に2行で大きく配置。サブは下部に逃がして、動画フレーム/強調装飾との余白を確保した。 | ブラシ塗り風のギザギザ、多重白フチ、モック内の人物・実動画サムネ・読める小物文字は追加しない。背景焼き込み、schema変更、新しい `shapeType`、`tintColor`、素材ライブラリUI変更は行わず、動画内容は利用者が後から差し込む前提の抽象フレームに留める。 |
-| X告知画像 | モックは全体が明るく、カードと立ち絵guideがかなり薄い。現行は装飾がやや強い。 | 投稿カード、角飾り、光粒、ドット点線、日付バッジ、立ち絵guideのopacityと線幅を下げ、罫線を本文下へ移動。 | モックの細い金色ラインや柔らかい紙質感は背景/asset変更なしでは追わない。 |
+| X告知画像 | モックは明るい背景上に薄い投稿カード、上部ラベル、読みやすい大見出し、細い金色罫線、横長の日付バッジ、控えめな立ち絵guideが一体化している。既存presetはカード/ラベル/日付バッジが単純shapeで、立ち絵guideと角飾りの主張が少し強く、本文と日付の余白もやや窮屈だった。 | 既存 `x-announcement-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` のeditable text layerを維持。専用抽象SVG `x-post-card-base.svg` / `x-label-band-base.svg` / `x-date-badge-base.svg` / `x-standee-guide-lines.svg` を追加し、投稿カード、ラベル帯、日付バッジ、立ち絵guide細線をSVG土台へ置換。既存 `soft-light-particles.svg` / `x-corner-ornaments.svg` / `dot-dash-row.svg` はopacityと配置を抑え、本文罫線を見出し下へ移動。見出しは少し大型化し、サブは中央寄せで日付バッジ上に余白を確保した。 | モックの読める小物文字、人物シルエット、背景に焼き込まれた紙質感、細い金線の完全再現は追いすぎない。背景焼き込み、schema変更、新しい `shapeType`、`tintColor`、素材ライブラリUI変更は行わず、立ち絵guideは利用者が後から差し込む前提の抽象線に留める。 |
 
 ## Verification Notes
 
 - `コラボ` は今回の単体polish対象。追加assetは抽象SVGのみで、背景とeditable text layerは維持する。
 - 追加した `配信告知` / `歌枠` / `ゲーム実況` 専用小物assetには、読める文字、ロゴ、人物、キャラクター、権利物、外部画像参照を含めていない。
+- `X告知画像` の追加SVGには、読める文字、ロゴ、人物、キャラクター、外部画像参照、`<text>` / `font-family` / `<image>` / `href=` を含めていない。
 - 週間予定の曜日/時間/予定テキストレイヤー構造は維持する。

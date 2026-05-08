@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" fill="none">
+  <defs>
+    <linearGradient id="cardFill" x1="62" y1="38" x2="704" y2="392" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity=".94"/>
+      <stop offset=".55" stop-color="#f8fbff" stop-opacity=".78"/>
+      <stop offset="1" stop-color="#eaf3ff" stop-opacity=".66"/>
+    </linearGradient>
+    <linearGradient id="cardStroke" x1="54" y1="36" x2="716" y2="382" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff"/>
+      <stop offset=".45" stop-color="#bed1f6"/>
+      <stop offset="1" stop-color="#87a5e8"/>
+    </linearGradient>
+    <linearGradient id="goldLine" x1="86" y1="230" x2="664" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d6b661" stop-opacity="0"/>
+      <stop offset=".16" stop-color="#d6b661" stop-opacity=".82"/>
+      <stop offset=".5" stop-color="#f5e8a6"/>
+      <stop offset=".84" stop-color="#d6b661" stop-opacity=".82"/>
+      <stop offset="1" stop-color="#d6b661" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path d="M66 12H694C724 12 748 36 748 66V314L712 392C704 404 690 410 674 410H66C36 410 12 386 12 356V66C12 36 36 12 66 12Z" fill="#f6fbff" opacity=".28"/>
+  <path d="M72 26H688C716 26 738 48 738 76V316L704 380C696 390 684 396 670 396H72C44 396 22 374 22 346V76C22 48 44 26 72 26Z" fill="url(#cardFill)" stroke="url(#cardStroke)" stroke-width="3"/>
+  <path d="M92 48H668C690 48 708 66 708 88V308L682 358C676 366 666 372 654 372H92C70 372 52 354 52 332V88C52 66 70 48 92 48Z" stroke="#ffffff" stroke-width="2" opacity=".72"/>
+  <path d="M94 230H664" stroke="url(#goldLine)" stroke-width="3" stroke-linecap="round"/>
+  <g fill="#d5b561" opacity=".9">
+    <path d="M94 230L101 223L108 230L101 237Z"/>
+    <path d="M373 230L381 222L389 230L381 238Z"/>
+    <path d="M656 230L663 223L670 230L663 237Z"/>
+  </g>
+  <g stroke="#a6bff0" stroke-linecap="round" opacity=".38">
+    <path d="M120 70H214"/>
+    <path d="M548 354H636"/>
+    <path d="M692 110V178"/>
+  </g>
+</svg>

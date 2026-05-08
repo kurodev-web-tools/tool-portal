@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 130" fill="none">
+  <defs>
+    <linearGradient id="timeStroke" x1="0" y1="22" x2="650" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff1a6"/>
+      <stop offset=".42" stop-color="#ff782a"/>
+      <stop offset="1" stop-color="#ff2f9c"/>
+    </linearGradient>
+    <linearGradient id="timeGlow" x1="66" y1="18" x2="584" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffb15b"/>
+      <stop offset="1" stop-color="#ff3c98"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="19" width="630" height="92" rx="28" fill="#070814" opacity=".82"/>
+  <rect x="4" y="13" width="642" height="104" rx="33" fill="url(#timeStroke)" opacity=".9"/>
+  <rect x="15" y="24" width="620" height="82" rx="25" fill="#080915"/>
+  <rect x="22" y="31" width="606" height="68" rx="21" stroke="url(#timeGlow)" stroke-width="4" opacity=".8"/>
+  <path d="M55 23h480c54 0 79 11 90 32C530 45 260 42 35 56c4-18 11-29 20-33Z" fill="#ffffff" opacity=".12"/>
+  <circle cx="87" cy="65" r="28" stroke="#fff0b9" stroke-width="6" opacity=".95"/>
+  <path d="M87 45v22l17 11" stroke="#fff0b9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

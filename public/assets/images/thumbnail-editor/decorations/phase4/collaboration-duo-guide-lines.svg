@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" fill="none">
+  <defs>
+    <radialGradient id="amberSpot" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(790 392) rotate(90) scale(360 210)">
+      <stop stop-color="#ff7a2b" stop-opacity=".42"/>
+      <stop offset=".62" stop-color="#ff7a2b" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#ff7a2b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pinkSpot" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1036 392) rotate(90) scale(360 220)">
+      <stop stop-color="#ff3aa6" stop-opacity=".42"/>
+      <stop offset=".62" stop-color="#ff3aa6" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#ff3aa6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <path d="M678 70C710 31 768 10 805 0h42c-45 22-91 64-111 122-36 106-36 294 28 487" stroke="#ff9c31" stroke-width="3" opacity=".28"/>
+  <path d="M1058 0c39 22 79 61 98 118 37 111 26 285-42 489" stroke="#ff4fb4" stroke-width="3" opacity=".28"/>
+  <ellipse cx="790" cy="390" rx="198" ry="226" fill="url(#amberSpot)"/>
+  <ellipse cx="1036" cy="392" rx="205" ry="228" fill="url(#pinkSpot)"/>
+  <ellipse cx="790" cy="612" rx="194" ry="36" fill="#ff7028" opacity=".18"/>
+  <ellipse cx="1038" cy="612" rx="196" ry="36" fill="#ff36aa" opacity=".18"/>
+  <ellipse cx="790" cy="612" rx="166" ry="25" stroke="#ffeaab" stroke-width="5" opacity=".8"/>
+  <ellipse cx="1038" cy="612" rx="168" ry="25" stroke="#ffd4fa" stroke-width="5" opacity=".78"/>
+  <path d="M618 372c52-106 124-158 214-156 83 2 143 56 181 151" stroke="#ffd36b" stroke-width="4" stroke-linecap="round" stroke-dasharray="6 12" opacity=".72"/>
+  <path d="M864 372c52-103 126-154 218-151 83 3 145 59 184 154" stroke="#ff86d9" stroke-width="4" stroke-linecap="round" stroke-dasharray="6 12" opacity=".72"/>
+  <path d="M606 384c58-136 141-206 248-206 101 0 177 68 228 203" stroke="#fff1bb" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 11" opacity=".55"/>
+  <path d="M848 386c60-135 146-203 256-203 99 0 174 67 224 201" stroke="#ffd0f4" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 11" opacity=".54"/>
+</svg>

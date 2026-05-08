@@ -404,18 +404,20 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#f59e0b",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase3BackgroundAssetPrefix}clip-background.png`),
-      assetDecorationLayer({ name: "画像 2（集中線）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-focus-rays.svg`, x: 568, y: 42, width: 650, height: 410, rotation: 2, opacity: 0.72 }),
-      assetDecorationLayer({ name: "画像 3（スピード線）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-speed-lines.svg`, x: 540, y: 552, width: 700, height: 104, opacity: 0.78 }),
-      shapeLayer({ name: "図形 5（ギザギザ強調ベース）", shapeType: "polygon", x: 350, y: 422, width: 890, height: 140, rotation: -1, fillColor: "#d233ff", strokeColor: "#050505", strokeWidth: 8, borderRadius: 0, opacity: 0.92 }),
-      shapeLayer({ name: "図形 6（衝撃マーク）", shapeType: "burst", x: 724, y: 96, width: 150, height: 118, rotation: 8, fillColor: "#ffd329", strokeColor: "#070707", strokeWidth: 6, borderRadius: 0 }),
-      assetDecorationLayer({ name: "画像 4（矢印アクセント）", src: `${thumbnailPhase4DecorationAssetPrefix}arrow-accent.svg`, x: 180, y: 54, width: 220, height: 104, rotation: -8, opacity: 0.92 }),
-      shapeLayer({ name: "図形 3（動画フレーム）", shapeType: "frame", x: 42, y: 112, width: 650, height: 382, rotation: -3, fillColor: "#070914d9", strokeColor: "#ffffff", strokeWidth: 8, borderRadius: 8 }),
-      shapeLayer({ name: "図形 1（強調ラベル）", shapeType: "polygon", x: 28, y: 40, width: 305, height: 82, rotation: -5, fillColor: "#08080c", strokeColor: "#d233ff", strokeWidth: 6, borderRadius: 0 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "切り抜き", x: 70, y: 62, width: 220, height: 48, rotation: -5, fontSize: 44, color: "#ffffff", strokeColor: "#050505", strokeWidth: 7, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
-      textLayer({ name: "テキスト 1（見出し）", text: "神回まとめ", x: 398, y: 418, width: 840, height: 130, fontSize: 118, lineHeight: 1, color: "#ffd329", strokeColor: "#060606", strokeWidth: 14, shadowColor: "#9b22ff", shadowBlur: 10, shadowOffsetX: 5, shadowOffsetY: 7 }),
-      shapeLayer({ name: "図形 2（時刻バッジ）", shapeType: "polygon", x: 870, y: 334, width: 318, height: 78, fillColor: "#07070cef", strokeColor: "#d233ff", strokeWidth: 5, borderRadius: 0 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "20:00 公開", x: 914, y: 352, width: 240, height: 44, fontSize: 38, color: "#ffd32b", strokeColor: "#050505", strokeWidth: 5, shadowColor: "#ffffff", shadowBlur: 2, shadowOffsetX: 1, shadowOffsetY: 1 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "一番盛り上がった瞬間だけ", x: 650, y: 604, width: 520, height: 44, fontSize: 34, color: "#ffffff", strokeColor: "#070707", strokeWidth: 6, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 })
+      assetDecorationLayer({ name: "画像 2（集中線）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-focus-rays.svg`, x: 548, y: 18, width: 690, height: 430, rotation: 2, opacity: 0.8 }),
+      assetDecorationLayer({ name: "画像 3（衝撃と矢印マーク）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-impact-marks.svg`, x: 0, y: 0, width: 1280, height: 720, opacity: 0.9 }),
+      shapeLayer({ name: "図形 3（動画フレーム）", shapeType: "frame", x: 42, y: 116, width: 690, height: 408, rotation: -3, fillColor: "#050713e3", strokeColor: "#050505", strokeWidth: 8, borderRadius: 8 }),
+      assetDecorationLayer({ name: "画像 4（動画フレーム装飾）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-video-frame-accent.svg`, x: 34, y: 102, width: 718, height: 430, rotation: -3, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 5（矢印アクセント）", src: `${thumbnailPhase4DecorationAssetPrefix}arrow-accent.svg`, x: 318, y: 492, width: 258, height: 118, rotation: 7, opacity: 0.94 }),
+      assetDecorationLayer({ name: "画像 6（スピード線）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-speed-lines.svg`, x: 524, y: 548, width: 728, height: 112, opacity: 0.82 }),
+      shapeLayer({ name: "図形 5（見出し強調ベース）", shapeType: "polygon", x: 604, y: 366, width: 608, height: 188, rotation: -2, fillColor: "#d233ff", strokeColor: "#050505", strokeWidth: 8, borderRadius: 0, opacity: 0.9 }),
+      shapeLayer({ name: "図形 6（衝撃マーク）", shapeType: "burst", x: 802, y: 96, width: 154, height: 122, rotation: 8, fillColor: "#ffd329", strokeColor: "#070707", strokeWidth: 6, borderRadius: 0 }),
+      assetDecorationLayer({ name: "画像 7（ラベル帯）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-label-band-base.svg`, x: 36, y: 40, width: 430, height: 110, rotation: -5, opacity: 0.98 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "見どころ", x: 112, y: 72, width: 238, height: 48, rotation: -5, fontSize: 44, color: "#ffffff", strokeColor: "#050505", strokeWidth: 6, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "神回\nまとめ", x: 646, y: 364, width: 520, height: 188, rotation: -2, fontSize: 90, lineHeight: 0.92, align: "center", color: "#ffd329", strokeColor: "#060606", strokeWidth: 14, shadowColor: "#9b22ff", shadowBlur: 12, shadowOffsetX: 5, shadowOffsetY: 7 }),
+      assetDecorationLayer({ name: "画像 8（時刻バッジ）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-time-badge-base.svg`, x: 770, y: 232, width: 430, height: 118, rotation: 2, opacity: 0.98 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 公開", x: 880, y: 266, width: 260, height: 50, rotation: 2, fontSize: 43, color: "#ffd32b", strokeColor: "#050505", strokeWidth: 5, shadowColor: "#ffffff", shadowBlur: 2, shadowOffsetX: 1, shadowOffsetY: 1, fontFamily: "Oswald" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "ショート動画 / プレミア公開", x: 622, y: 604, width: 590, height: 46, fontSize: 34, align: "center", color: "#ffffff", strokeColor: "#070707", strokeWidth: 6, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 })
     ]
   },
   {

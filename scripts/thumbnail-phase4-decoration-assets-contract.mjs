@@ -26,6 +26,10 @@ const expectedDecorationFiles = [
   "sparkle-small.svg",
   "clip-focus-rays.svg",
   "clip-speed-lines.svg",
+  "clip-label-band-base.svg",
+  "clip-time-badge-base.svg",
+  "clip-video-frame-accent.svg",
+  "clip-impact-marks.svg",
   "arrow-accent.svg",
   "x-corner-ornaments.svg",
   "dot-dash-row.svg",
@@ -79,7 +83,7 @@ const phase4PresetExpectations = {
   stream_announce: { minDecorationImages: 9, shapeTypes: ["frame", "line"] },
   karaoke: { minDecorationImages: 13, shapeTypes: ["frame", "line"] },
   chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
-  clip: { minDecorationImages: 2, shapeTypes: ["frame", "burst", "polygon"] },
+  clip: { minDecorationImages: 7, shapeTypes: ["frame", "burst", "polygon"] },
   game_live: { minDecorationImages: 5, shapeTypes: ["frame", "line", "polygon"] },
   collaboration: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
   announcement: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
@@ -179,6 +183,34 @@ for (const fileName of [
   "game-live-standee-guide-lines.svg"
 ]) {
   assert.equal(gameLiveDecorationSources.has(fileName), true, `game_live uses dedicated ${fileName}`);
+}
+
+const clipPreset = lib.thumbnailPresets.find((item) => item.id === "clip");
+const clipDecorationSources = new Set(
+  clipPreset.layers
+    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
+    .map((layer) => path.basename(layer.src))
+);
+for (const fileName of [
+  "clip-focus-rays.svg",
+  "clip-speed-lines.svg",
+  "clip-label-band-base.svg",
+  "clip-time-badge-base.svg",
+  "clip-video-frame-accent.svg",
+  "clip-impact-marks.svg",
+  "arrow-accent.svg"
+]) {
+  assert.equal(clipDecorationSources.has(fileName), true, `clip uses dedicated ${fileName}`);
+}
+assert.ok(
+  clipPreset.layers.some((layer) => layer.type === "image" && layer.src.endsWith("/phase3/clip-background.png") && layer.locked === true),
+  "clip keeps the locked phase 3 background"
+);
+for (const textRole of ["見出し", "時刻", "サブ", "ラベル"]) {
+  assert.ok(
+    clipPreset.layers.some((layer) => layer.type === "text" && layer.name.includes(textRole)),
+    `clip keeps editable ${textRole} text layer`
+  );
 }
 
 const collaborationPreset = lib.thumbnailPresets.find((item) => item.id === "collaboration");

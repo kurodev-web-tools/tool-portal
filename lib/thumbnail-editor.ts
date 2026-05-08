@@ -254,14 +254,15 @@ const weeklyScheduleRows = [
 
 const weeklyScheduleTextBase = {
   height: 52,
-  fontSize: 35,
-  lineHeight: 1.64,
-  strokeColor: "#061849",
-  strokeWidth: 4,
+  fontFamily: "BIZ UDPGothic",
+  fontSize: 34,
+  lineHeight: 1.62,
+  strokeColor: "#03122f",
+  strokeWidth: 3,
   shadowColor: "#02101f",
-  shadowBlur: 7,
-  shadowOffsetX: 3,
-  shadowOffsetY: 4
+  shadowBlur: 8,
+  shadowOffsetX: 2,
+  shadowOffsetY: 3
 } as const;
 
 const weeklyScheduleRowLayers = () =>
@@ -273,7 +274,7 @@ const weeklyScheduleRowLayers = () =>
       x: 670,
       y: row.y,
       width: 84,
-      color: "#8cf8ff",
+      color: "#9dfaff",
       align: "center"
     }),
     textLayer({
@@ -283,7 +284,7 @@ const weeklyScheduleRowLayers = () =>
       x: 770,
       y: row.y,
       width: 106,
-      color: "#ffffff",
+      color: "#f7feff",
       align: "center"
     }),
     textLayer({
@@ -293,7 +294,7 @@ const weeklyScheduleRowLayers = () =>
       x: 890,
       y: row.y,
       width: 330,
-      color: "#ffffff",
+      color: "#fffaf2",
       align: "left"
     })
   ]);
@@ -501,17 +502,21 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#4dd8ff",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase1BackgroundAssetPrefix}weekly-schedule-background.png`),
-      assetDecorationLayer({ name: "画像 2（丸ドット区切り）", src: `${thumbnailPhase4DecorationAssetPrefix}dot-dash-row.svg`, x: 660, y: 42, width: 540, height: 34, opacity: 0.34 }),
-      shapeLayer({ name: "図形 4（予定表フレーム）", shapeType: "frame", x: 630, y: 46, width: 610, height: 614, fillColor: "#06162e86", strokeColor: "#8cf8ff", strokeWidth: 3, borderRadius: 22, opacity: 0.88 }),
-      shapeLayer({ name: "図形 5（予定表区切り線 上）", shapeType: "line", x: 666, y: 146, width: 526, height: 16, fillColor: "#4dd8ff", strokeColor: "#4dd8ff", strokeWidth: 2, borderRadius: 4, opacity: 0.46 }),
-      shapeLayer({ name: "図形 6（予定表区切り線 下）", shapeType: "line", x: 666, y: 545, width: 526, height: 16, fillColor: "#4dd8ff", strokeColor: "#4dd8ff", strokeWidth: 2, borderRadius: 4, opacity: 0.46 }),
-      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 150, y: 115, width: 345, height: 60, fillColor: "#0a223acc", strokeColor: "#4dd8ff", strokeWidth: 4, borderRadius: 18 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "WEEKLY SCHEDULE", x: 190, y: 130, width: 270, height: 35, fontSize: 28, color: "#8cf8ff", strokeWidth: 0, shadowColor: "#4dd8ff", shadowBlur: 8, shadowOffsetX: 0, shadowOffsetY: 0 }),
-      textLayer({ name: "テキスト 1（見出し）", text: "今週の\n配信予定", x: 50, y: 185, width: 530, height: 240, fontSize: 96, lineHeight: 1.04, color: "#f8feff", align: "center", bold: true, italic: true, strokeColor: "#061849", strokeWidth: 11, shadowColor: "#35e6ff", shadowBlur: 16, shadowOffsetX: 5, shadowOffsetY: 7 }),
-      shapeLayer({ name: "図形 1（週範囲バッジ）", shapeType: "rect", x: 205, y: 400, width: 220, height: 65, fillColor: "#08233ecc", strokeColor: "#4dd8ff", strokeWidth: 4, borderRadius: 18 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "5/4 - 5/10", x: 240, y: 415, width: 245, height: 40, fontSize: 34, color: "#ffffff", strokeWidth: 3 }),
+      assetDecorationLayer({ name: "画像 2（週間予定の控えめな光）", src: `${thumbnailPhase4DecorationAssetPrefix}weekly-soft-glints.svg`, x: 0, y: 0, width: 1280, height: 720, opacity: 0.66 }),
+      assetDecorationLayer({ name: "画像 3（丸ドット区切り）", src: `${thumbnailPhase4DecorationAssetPrefix}dot-dash-row.svg`, x: 662, y: 42, width: 538, height: 34, opacity: 0.3 }),
+      assetDecorationLayer({ name: "画像 4（予定表の補助線）", src: `${thumbnailPhase4DecorationAssetPrefix}weekly-table-accent-lines.svg`, x: 630, y: 42, width: 610, height: 622, opacity: 0.9 }),
+      shapeLayer({ name: "図形 4（予定表フレーム）", shapeType: "frame", x: 630, y: 46, width: 610, height: 614, fillColor: "#04172e40", strokeColor: "#a1fbff", strokeWidth: 2, borderRadius: 22, opacity: 0.62 }),
+      shapeLayer({ name: "図形 5（予定表区切り線 上）", shapeType: "line", x: 666, y: 146, width: 526, height: 16, fillColor: "#8cf8ff", strokeColor: "#8cf8ff", strokeWidth: 2, borderRadius: 4, opacity: 0.32 }),
+      shapeLayer({ name: "図形 6（予定表区切り線 下）", shapeType: "line", x: 666, y: 545, width: 526, height: 16, fillColor: "#8cf8ff", strokeColor: "#8cf8ff", strokeWidth: 2, borderRadius: 4, opacity: 0.3 }),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 150, y: 115, width: 345, height: 60, fillColor: "#081a33d9", strokeColor: "#a8fbff", strokeWidth: 2, borderRadius: 18, opacity: 0.9 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "WEEKLY SCHEDULE", x: 190, y: 130, width: 270, height: 35, fontSize: 28, color: "#bffbff", strokeWidth: 0, shadowColor: "#4dd8ff", shadowBlur: 8, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "今週の\n配信予定", x: 50, y: 185, width: 530, height: 240, fontSize: 98, lineHeight: 1.02, color: "#f8feff", align: "center", bold: true, italic: true, strokeColor: "#04143a", strokeWidth: 10, shadowColor: "#35e6ff", shadowBlur: 18, shadowOffsetX: 4, shadowOffsetY: 6 }),
+      shapeLayer({ name: "図形 1（週範囲バッジ）", shapeType: "rect", x: 205, y: 400, width: 220, height: 65, fillColor: "#081b34b8", strokeColor: "#99fbff", strokeWidth: 2, borderRadius: 18, opacity: 0.78 }),
+      assetDecorationLayer({ name: "画像 5（週範囲バッジ土台）", src: `${thumbnailPhase4DecorationAssetPrefix}weekly-range-badge-base.svg`, x: 182, y: 390, width: 300, height: 86, opacity: 0.98 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "5/4 - 5/10", x: 240, y: 415, width: 245, height: 40, fontSize: 35, color: "#ffffff", strokeColor: "#20306d", strokeWidth: 2, shadowColor: "#8ffcff", shadowBlur: 6, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Oswald" }),
       ...weeklyScheduleRowLayers(),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 80, y: 505, width: 510, height: 155, fillColor: "#03172466", strokeColor: "#d8f8ff", strokeWidth: 3, borderRadius: 18 })
+      assetDecorationLayer({ name: "画像 6（立ち絵guideの細線）", src: `${thumbnailPhase4DecorationAssetPrefix}weekly-standee-guide-lines.svg`, x: 70, y: 494, width: 530, height: 180, opacity: 0.76 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 80, y: 505, width: 510, height: 155, fillColor: "#0317242e", strokeColor: "#d8f8ff", strokeWidth: 2, borderRadius: 18, opacity: 0.42 })
     ]
   },
   {

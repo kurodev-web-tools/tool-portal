@@ -67,6 +67,10 @@ const expectedDecorationFiles = [
   "announcement-date-badge-base.svg",
   "announcement-guide-lines.svg",
   "announcement-soft-glints.svg",
+  "weekly-table-accent-lines.svg",
+  "weekly-range-badge-base.svg",
+  "weekly-standee-guide-lines.svg",
+  "weekly-soft-glints.svg",
   "x-post-card-base.svg",
   "x-label-band-base.svg",
   "x-date-badge-base.svg",
@@ -91,7 +95,7 @@ const phase4PresetExpectations = {
   game_live: { minDecorationImages: 5, shapeTypes: ["frame", "line", "polygon"] },
   collaboration: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
   announcement: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
-  weekly_schedule: { minDecorationImages: 1, shapeTypes: ["line", "frame"] },
+  weekly_schedule: { minDecorationImages: 5, shapeTypes: ["line", "frame"] },
   x_announcement: { minDecorationImages: 7, shapeTypes: ["frame", "line", "burst"] }
 };
 
@@ -294,6 +298,40 @@ for (const textRole of ["見出し", "時刻", "サブ", "ラベル"]) {
     xAnnouncementPreset.layers.some((layer) => layer.type === "text" && layer.name.includes(textRole)),
     `x_announcement keeps editable ${textRole} text layer`
   );
+}
+
+const weeklySchedulePreset = lib.thumbnailPresets.find((item) => item.id === "weekly_schedule");
+const weeklyScheduleDecorationSources = new Set(
+  weeklySchedulePreset.layers
+    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
+    .map((layer) => path.basename(layer.src))
+);
+for (const fileName of [
+  "weekly-table-accent-lines.svg",
+  "weekly-range-badge-base.svg",
+  "weekly-standee-guide-lines.svg",
+  "weekly-soft-glints.svg",
+  "dot-dash-row.svg"
+]) {
+  assert.equal(weeklyScheduleDecorationSources.has(fileName), true, `weekly_schedule uses dedicated or shared ${fileName}`);
+}
+assert.ok(
+  weeklySchedulePreset.layers.some((layer) => layer.type === "image" && layer.src.endsWith("/phase1/weekly-schedule-background.png") && layer.locked === true),
+  "weekly_schedule keeps the locked phase 1 background"
+);
+for (const textRole of ["見出し", "時刻", "ラベル"]) {
+  assert.ok(
+    weeklySchedulePreset.layers.some((layer) => layer.type === "text" && layer.name.includes(textRole)),
+    `weekly_schedule keeps editable ${textRole} text layer`
+  );
+}
+for (const dayName of ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]) {
+  for (const columnName of ["曜日", "時間", "予定"]) {
+    assert.ok(
+      weeklySchedulePreset.layers.some((layer) => layer.type === "text" && layer.name === `${dayName} / ${columnName}`),
+      `weekly_schedule keeps editable ${dayName} ${columnName} layer`
+    );
+  }
 }
 
 const allShapeTypes = new Set(lib.thumbnailPresets.flatMap((preset) => preset.layers.filter((layer) => layer.type === "shape").map((layer) => layer.shapeType)));

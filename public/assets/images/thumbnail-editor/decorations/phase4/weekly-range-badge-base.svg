@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="86" viewBox="0 0 300 86" fill="none">
+  <defs>
+    <linearGradient id="weekly-range-fill" x1="0" y1="0" x2="300" y2="86" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#08172f" stop-opacity=".94"/>
+      <stop offset=".58" stop-color="#173e69" stop-opacity=".88"/>
+      <stop offset="1" stop-color="#4f51a5" stop-opacity=".82"/>
+    </linearGradient>
+    <linearGradient id="weekly-range-stroke" x1="8" y1="8" x2="292" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8ffcff"/>
+      <stop offset=".55" stop-color="#e5dcff"/>
+      <stop offset="1" stop-color="#a486ff"/>
+    </linearGradient>
+    <filter id="weekly-range-glow" x="-20" y="-20" width="340" height="126" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <path d="M32 8H267C281 8 292 19 292 33V53C292 67 281 78 267 78H32C18 78 8 67 8 53V33C8 19 18 8 32 8Z" fill="url(#weekly-range-fill)" stroke="url(#weekly-range-stroke)" stroke-width="2.4" filter="url(#weekly-range-glow)"/>
+  <path d="M29 18H78M222 68H270" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity=".56"/>
+  <path d="M18 31H44M256 55H282" stroke="#7ffbff" stroke-width="4" stroke-linecap="round" opacity=".76"/>
+  <circle cx="54" cy="58" r="4" fill="#8ffcff" opacity=".75"/>
+  <circle cx="246" cy="28" r="3.5" fill="#e7ddff" opacity=".7"/>
+</svg>

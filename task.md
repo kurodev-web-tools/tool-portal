@@ -156,6 +156,29 @@
   - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS。`npm run build` では worktree と root の lockfile 重複により Next.js の workspace root 推定 warning が出たが、build は成功した
   - Browser/Chrome DevTools確認: clean isolated contextから `/tools/thumbnail-editor/` を開き、UI上で `X告知画像` presetを適用。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0、console error / warn なし。1024px以上では追加小物asset `画像 3（投稿カード土台）` / `画像 5（立ち絵guideの細線）` / `画像 6（ラベル帯）` / `画像 8（日付バッジ）` と `見出し` / `時刻` / `サブ` / `ラベル` がレイヤー一覧に残ることを確認。1366pxで見出し、時刻、サブ、ラベルの可読性と投稿カード/立ち絵guide/装飾の余白を確認した
 
+- 2026-05-08 `週間予定` preset 単体polish:
+  - 作業前に PR #40 `X告知画像` polish が `main` に merge 済みで、local `main` / `origin/main` が merge commit `50bc3a6` を含むことを確認した
+  - `週間予定` だけを対象に、既存 Phase 1 背景 `weekly-schedule-background.png` と `見出し` / `時刻` / `ラベル`、曜日別の `曜日` / `時間` / `予定` editable text layerを維持した
+  - 専用抽象SVG assetとして `weekly-table-accent-lines.svg` / `weekly-range-badge-base.svg` / `weekly-standee-guide-lines.svg` / `weekly-soft-glints.svg` を追加した
+  - 追加SVGには読める文字、ロゴ、人物、キャラクター、外部画像参照、`<text>` / `font-family` / `<image>` / `href=` を入れていない
+  - 背景側の予定表行panelを活かすため、追加行panelは入れず、予定表補助線、縦罫線、角アクセント、週範囲バッジ土台、立ち絵guide細線を重ねる構成にした
+  - 曜日別テキストの既存座標は維持し、フォント、stroke、影、色だけを調整して曜日、時間、予定内容の読みやすさを上げた
+  - 週範囲バッジはSVG土台 + editable textへ補強し、立ち絵guideは細線asset + 薄いframe guideへ分離した
+  - 背景焼き込み、schema変更、public API変更、新しい `shapeType`、素材ライブラリUI変更、`tintColor` 変更、他プリセット定義は入れていない
+  - 比較結果は `docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` の `週間予定` 行に記録した
+  - 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+  - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS。`npm run build` では worktree と root の lockfile 重複により Next.js の workspace root 推定 warning が出たが、build は成功した
+  - Browser/CDP確認: clean isolated contextから `/tools/thumbnail-editor/` を開き、`週間予定` presetを確認。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0、console error / warn なし。1024px以上では日別accordionを開き、追加小物asset `画像 2（週間予定の控えめな光）` / `画像 4（予定表の補助線）` / `画像 5（週範囲バッジ土台）` / `画像 6（立ち絵guideの細線）` と `見出し` / `時刻` / `ラベル`、曜日別グループ内の `曜日` / `時間` / `予定` がレイヤー一覧に残ることを確認した
+
+2026-05-08 Phase 4 polish後の進め方メモ:
+
+- まず `週間予定` polish PR を作成し、Phase 4 全9プリセットの区切りを作る
+- 次PR候補 1: 全9プリセットの visual review 表を作り、改善候補を `配置/余白` / `文字可読性` / `asset品質` / `フォント` / `過剰装飾` に分類する
+- 次PR候補 2: review結果をもとに、画像生成を使わずに済む `配置/文字サイズ/余白/レイヤー順` の横断修正を先に行う
+- 次PR候補 3: asset品質が弱いものだけを対象に、抽象装飾PNG/SVGの高品質化を小さく実施する。画像生成を使う場合も、読める文字、ロゴ、人物、キャラクター、外部画像参照は入れない
+- 次PR候補 4: フォント追加は最後にまとめる。外部CDN依存は避け、ライセンス確認済みの self-host font を少数に絞る
+- この順にする理由: 配置と可読性を先に固定しないと、asset生成やフォント追加で問題箇所が見えづらくなるため
+
 - 2026-05-08 `コラボ` preset 単体polish:
   - `コラボ` だけを対象に、既存 Phase 2 背景 `collaboration-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 専用抽象SVG assetとして `collaboration-label-band-base.svg` / `collaboration-time-badge-base.svg` / `collaboration-duo-guide-lines.svg` / `collaboration-connection-lines.svg` / `collaboration-soft-glints.svg` を追加した

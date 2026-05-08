@@ -49,7 +49,11 @@ const expectedDecorationFiles = [
   "karaoke-ornament-sparkle-cluster-pink-cyan.png",
   "karaoke-sparkle-dust-white-gold.png",
   "karaoke-sparkle-dust-pink-cyan.png",
-  "karaoke-glint-single-soft-white.png"
+  "karaoke-glint-single-soft-white.png",
+  "announcement-label-band-base.svg",
+  "announcement-date-badge-base.svg",
+  "announcement-guide-lines.svg",
+  "announcement-soft-glints.svg"
 ];
 const phase4PresetIds = [
   "stream_announce",
@@ -69,7 +73,7 @@ const phase4PresetExpectations = {
   clip: { minDecorationImages: 2, shapeTypes: ["frame", "burst", "polygon"] },
   game_live: { minDecorationImages: 1, shapeTypes: ["frame", "line", "polygon"] },
   collaboration: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
-  announcement: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
+  announcement: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
   weekly_schedule: { minDecorationImages: 1, shapeTypes: ["line", "frame"] },
   x_announcement: { minDecorationImages: 2, shapeTypes: ["frame", "line", "burst"] }
 };
@@ -151,6 +155,21 @@ for (const fileName of [
   "karaoke-glint-single-soft-white.png"
 ]) {
   assert.equal(karaokeDecorationSources.has(fileName), true, `karaoke uses dedicated ${fileName}`);
+}
+
+const announcementPreset = lib.thumbnailPresets.find((item) => item.id === "announcement");
+const announcementDecorationSources = new Set(
+  announcementPreset.layers
+    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
+    .map((layer) => path.basename(layer.src))
+);
+for (const fileName of [
+  "announcement-label-band-base.svg",
+  "announcement-date-badge-base.svg",
+  "announcement-guide-lines.svg",
+  "announcement-soft-glints.svg"
+]) {
+  assert.equal(announcementDecorationSources.has(fileName), true, `announcement uses dedicated ${fileName}`);
 }
 
 const allShapeTypes = new Set(lib.thumbnailPresets.flatMap((preset) => preset.layers.filter((layer) => layer.type === "shape").map((layer) => layer.shapeType)));

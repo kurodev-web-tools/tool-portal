@@ -22,13 +22,11 @@ const lib = testModule.exports;
 
 const phase3Presets = new Map([
   ["chatting", "/assets/images/thumbnail-editor/phase3/chatting-background.png"],
-  ["clip", "/assets/images/thumbnail-editor/phase3/clip-background.png"],
   ["x_announcement", "/assets/images/thumbnail-editor/phase3/x-announcement-background.png"]
 ]);
 
 const mockupFiles = new Map([
   ["chatting", "chatting-mock.png"],
-  ["clip", "clip-mock.png"],
   ["x_announcement", "x-announcement-mock.png"]
 ]);
 
@@ -66,16 +64,10 @@ assert.ok(
   "chatting has an editable standee guide shape"
 );
 
-const clip = lib.thumbnailPresets.find((item) => item.id === "clip");
-assert.ok(
-  clip.layers.some((layer) => layer.type === "shape" && layer.name.includes("動画フレーム")),
-  "clip keeps the video frame editable as a shape layer"
-);
-
 const xAnnouncement = lib.thumbnailPresets.find((item) => item.id === "x_announcement");
 assert.ok(
-  xAnnouncement.layers.some((layer) => layer.type === "shape" && layer.name.includes("投稿カード")),
-  "x_announcement keeps the post card editable as a shape layer"
+  xAnnouncement.layers.some((layer) => layer.type === "image" && layer.src.endsWith("/decorations/phase4/x-post-card-base.svg")),
+  "x_announcement keeps the post card as a dedicated phase 4 asset layer"
 );
 assert.ok(
   xAnnouncement.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),

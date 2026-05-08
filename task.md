@@ -127,6 +127,19 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-08 `コラボ` preset 単体polish:
+  - `コラボ` だけを対象に、既存 Phase 2 背景 `collaboration-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
+  - 専用抽象SVG assetとして `collaboration-label-band-base.svg` / `collaboration-time-badge-base.svg` / `collaboration-duo-guide-lines.svg` / `collaboration-connection-lines.svg` / `collaboration-soft-glints.svg` を追加した
+  - 追加SVGには読める文字、ロゴ、人物、キャラクター、外部画像参照、`<text>` / `font-family` / `<image>` / `href=` を入れていない
+  - ラベル帯と時刻バッジはSVG土台 + editable textへ置換し、見出しはコラボ配信向けに大きく読みやすくした
+  - 2人分の立ち絵guideは右側に薄いframeを2つ残し、スポットライト、円形ステージ、点線arc、接続線を抽象SVGで補って背景との一体感を上げた
+  - サブテキストは下部ライン内に収め、左右または右側複数人の立ち絵を置ける余白を優先した
+  - 背景焼き込み、schema変更、public API変更、新しい `shapeType`、素材ライブラリUI変更、`tintColor` 変更、他プリセット定義は入れていない
+  - 比較結果は `docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` の `コラボ` 行に記録した
+  - 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+  - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - Browser/Playwright確認: clean localStorage状態から `コラボ` presetを適用。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0、console error / warn なし。1024px以上では追加小物asset `画像 2（コラボの控えめな光）` / `画像 3（2人立ち絵guideのスポット）` / `画像 4（接続線と下部ライン）` / `画像 6（ラベル帯）` / `画像 7（時刻バッジ）` と `見出し` / `時刻` / `サブ` / `ラベル` がレイヤー一覧に残ることを確認。canvas exportで見出し、時刻、サブ、ラベルの可読性と2人分の立ち絵guide余白を確認した
+
 2026-05-04 最小実装メモ:
 
 - 既存4プリセットに加えて、`ゲーム実況` / `コラボ` / `お知らせ` / `週間予定` / `X告知画像` の5プリセットを追加した

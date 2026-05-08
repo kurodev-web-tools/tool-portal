@@ -54,6 +54,11 @@ const expectedDecorationFiles = [
   "game-live-time-banner-base.svg",
   "game-live-hud-lines.svg",
   "game-live-standee-guide-lines.svg",
+  "collaboration-label-band-base.svg",
+  "collaboration-time-badge-base.svg",
+  "collaboration-duo-guide-lines.svg",
+  "collaboration-connection-lines.svg",
+  "collaboration-soft-glints.svg",
   "announcement-label-band-base.svg",
   "announcement-date-badge-base.svg",
   "announcement-guide-lines.svg",
@@ -76,7 +81,7 @@ const phase4PresetExpectations = {
   chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
   clip: { minDecorationImages: 2, shapeTypes: ["frame", "burst", "polygon"] },
   game_live: { minDecorationImages: 5, shapeTypes: ["frame", "line", "polygon"] },
-  collaboration: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
+  collaboration: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
   announcement: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
   weekly_schedule: { minDecorationImages: 1, shapeTypes: ["line", "frame"] },
   x_announcement: { minDecorationImages: 2, shapeTypes: ["frame", "line", "burst"] }
@@ -174,6 +179,32 @@ for (const fileName of [
   "game-live-standee-guide-lines.svg"
 ]) {
   assert.equal(gameLiveDecorationSources.has(fileName), true, `game_live uses dedicated ${fileName}`);
+}
+
+const collaborationPreset = lib.thumbnailPresets.find((item) => item.id === "collaboration");
+const collaborationDecorationSources = new Set(
+  collaborationPreset.layers
+    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
+    .map((layer) => path.basename(layer.src))
+);
+for (const fileName of [
+  "collaboration-label-band-base.svg",
+  "collaboration-time-badge-base.svg",
+  "collaboration-duo-guide-lines.svg",
+  "collaboration-connection-lines.svg",
+  "collaboration-soft-glints.svg"
+]) {
+  assert.equal(collaborationDecorationSources.has(fileName), true, `collaboration uses dedicated ${fileName}`);
+}
+assert.ok(
+  collaborationPreset.layers.some((layer) => layer.type === "image" && layer.src.endsWith("/phase2/collaboration-background.png") && layer.locked === true),
+  "collaboration keeps the locked phase 2 background"
+);
+for (const textRole of ["見出し", "時刻", "サブ", "ラベル"]) {
+  assert.ok(
+    collaborationPreset.layers.some((layer) => layer.type === "text" && layer.name.includes(textRole)),
+    `collaboration keeps editable ${textRole} text layer`
+  );
 }
 
 const announcementPreset = lib.thumbnailPresets.find((item) => item.id === "announcement");

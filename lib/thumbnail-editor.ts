@@ -451,16 +451,19 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#ff7a59",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase2BackgroundAssetPrefix}collaboration-background.png`),
-      assetDecorationLayer({ name: "画像 2（小さなきらめき）", src: `${thumbnailPhase4DecorationAssetPrefix}sparkle-small.svg`, x: 585, y: 84, width: 150, height: 128, rotation: -8, opacity: 0.62 }),
-      shapeLayer({ name: "図形 1（左立ち絵ガイド）", shapeType: "frame", x: 650, y: 118, width: 270, height: 470, fillColor: "#ff7b593a", strokeColor: "#ffbe82", strokeWidth: 5, borderRadius: 38 }),
-      shapeLayer({ name: "図形 2（右立ち絵ガイド）", shapeType: "frame", x: 900, y: 138, width: 280, height: 455, fillColor: "#ff4cc23a", strokeColor: "#ffb4e6", strokeWidth: 5, borderRadius: 38 }),
-      shapeLayer({ name: "図形 5（二人配置ライン）", shapeType: "line", x: 678, y: 612, width: 438, height: 18, fillColor: "#ffe8d8", strokeColor: "#ffe8d8", strokeWidth: 4, borderRadius: 8, opacity: 0.68 }),
-      shapeLayer({ name: "図形 3（ラベル帯）", shapeType: "rect", x: 78, y: 74, width: 292, height: 66, fillColor: "#ff7a59e6", strokeColor: "#ffe8d8", strokeWidth: 4, borderRadius: 16 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "COLLAB", x: 120, y: 88, width: 210, height: 42, fontSize: 44, color: "#170804", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "コラボ\n企画配信", x: 82, y: 190, width: 585, height: 220, fontSize: 88, lineHeight: 1.12, color: "#fff5ef", strokeColor: "#1c0704", strokeWidth: 12, shadowColor: "#ff7a59", shadowBlur: 9, shadowOffsetX: 4, shadowOffsetY: 5 }),
-      shapeLayer({ name: "図形 4（時刻バッジ）", shapeType: "rect", x: 92, y: 456, width: 360, height: 70, fillColor: "#17080fde", strokeColor: "#ffb278", strokeWidth: 4, borderRadius: 15 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "5/5 20:00", x: 122, y: 470, width: 300, height: 48, fontSize: 42, color: "#ffe3d6", strokeColor: "#280906", strokeWidth: 3 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "ゲスト名 / 企画名を入れる", x: 96, y: 552, width: 560, height: 48, fontSize: 34, color: "#ffffff", strokeColor: "#1e080e", strokeWidth: 4 })
+      assetDecorationLayer({ name: "画像 2（コラボの控えめな光）", src: `${thumbnailPhase4DecorationAssetPrefix}collaboration-soft-glints.svg`, x: 0, y: 0, width: 1280, height: 720, opacity: 0.78 }),
+      assetDecorationLayer({ name: "画像 3（2人立ち絵guideのスポット）", src: `${thumbnailPhase4DecorationAssetPrefix}collaboration-duo-guide-lines.svg`, x: 0, y: 0, width: 1280, height: 720, opacity: 0.94 }),
+      assetDecorationLayer({ name: "画像 4（接続線と下部ライン）", src: `${thumbnailPhase4DecorationAssetPrefix}collaboration-connection-lines.svg`, x: 0, y: 0, width: 1280, height: 720, opacity: 0.84 }),
+      assetDecorationLayer({ name: "画像 5（小さなきらめき）", src: `${thumbnailPhase4DecorationAssetPrefix}sparkle-small.svg`, x: 502, y: 330, width: 142, height: 122, rotation: -8, opacity: 0.48 }),
+      shapeLayer({ name: "図形 1（左立ち絵ガイド）", shapeType: "frame", x: 660, y: 158, width: 285, height: 448, fillColor: "#ff7b5918", strokeColor: "#ffd28c", strokeWidth: 2, borderRadius: 72, opacity: 0.54 }),
+      shapeLayer({ name: "図形 2（右立ち絵ガイド）", shapeType: "frame", x: 912, y: 158, width: 295, height: 448, fillColor: "#ff4cc218", strokeColor: "#ffc4f0", strokeWidth: 2, borderRadius: 72, opacity: 0.54 }),
+      shapeLayer({ name: "図形 5（二人配置ライン）", shapeType: "line", x: 686, y: 620, width: 484, height: 16, fillColor: "#ffe8d8", strokeColor: "#ffe8d8", strokeWidth: 3, borderRadius: 8, opacity: 0.5 }),
+      assetDecorationLayer({ name: "画像 6（ラベル帯）", src: `${thumbnailPhase4DecorationAssetPrefix}collaboration-label-band-base.svg`, x: 76, y: 62, width: 420, height: 98, opacity: 0.98 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "GUEST", x: 156, y: 92, width: 230, height: 42, fontSize: 42, color: "#fff8ec", strokeColor: "#7d2307", strokeWidth: 2, shadowColor: "#25050b", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Oswald", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "コラボ\n配信", x: 70, y: 170, width: 590, height: 250, fontSize: 116, lineHeight: 0.96, color: "#fff8ef", strokeColor: "#330804", strokeWidth: 14, shadowColor: "#ff4d31", shadowBlur: 12, shadowOffsetX: 5, shadowOffsetY: 7 }),
+      assetDecorationLayer({ name: "画像 7（時刻バッジ）", src: `${thumbnailPhase4DecorationAssetPrefix}collaboration-time-badge-base.svg`, x: 86, y: 452, width: 470, height: 96, opacity: 0.98 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 174, y: 476, width: 310, height: 52, fontSize: 46, color: "#fff2c2", strokeColor: "#23050a", strokeWidth: 3, shadowColor: "#ff3b86", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Oswald" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "ゲスト名 / 企画名", x: 102, y: 584, width: 470, height: 50, fontSize: 36, align: "center", color: "#fffdf7", strokeColor: "#180610", strokeWidth: 4, shadowColor: "#ff7a2b", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3 })
     ]
   },
   {

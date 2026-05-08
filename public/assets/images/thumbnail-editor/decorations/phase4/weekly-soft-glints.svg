@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none">
+  <defs>
+    <radialGradient id="weekly-glow-a" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(370 412) rotate(90) scale(220 310)">
+      <stop stop-color="#89f9ff" stop-opacity=".36"/>
+      <stop offset=".55" stop-color="#89f9ff" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#89f9ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="weekly-glow-b" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1040 150) rotate(90) scale(260 240)">
+      <stop stop-color="#c698ff" stop-opacity=".28"/>
+      <stop offset=".62" stop-color="#c698ff" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#c698ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="370" cy="412" rx="310" ry="220" fill="url(#weekly-glow-a)"/>
+  <ellipse cx="1040" cy="150" rx="240" ry="260" fill="url(#weekly-glow-b)"/>
+  <path d="M92 122L104 150L132 162L104 174L92 202L80 174L52 162L80 150L92 122Z" fill="#f4f8ff" opacity=".4"/>
+  <path d="M610 92L618 110L637 118L618 126L610 144L602 126L583 118L602 110L610 92Z" fill="#8ffcff" opacity=".32"/>
+  <path d="M1174 306L1184 328L1206 338L1184 348L1174 370L1164 348L1142 338L1164 328L1174 306Z" fill="#ffffff" opacity=".3"/>
+  <circle cx="710" cy="616" r="3.5" fill="#9ffbff" opacity=".62"/>
+  <circle cx="748" cy="640" r="2.4" fill="#e1c6ff" opacity=".52"/>
+  <circle cx="560" cy="554" r="2.8" fill="#ffffff" opacity=".45"/>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="530" height="180" viewBox="0 0 530 180" fill="none">
+  <defs>
+    <linearGradient id="weekly-guide-line" x1="0" y1="0" x2="530" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9ffbff" stop-opacity=".7"/>
+      <stop offset=".48" stop-color="#ffffff" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#c18dff" stop-opacity=".5"/>
+    </linearGradient>
+    <filter id="weekly-guide-glow" x="-24" y="-24" width="578" height="228" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect x="10" y="14" width="510" height="152" rx="22" stroke="url(#weekly-guide-line)" stroke-width="2" opacity=".48" filter="url(#weekly-guide-glow)"/>
+  <path d="M44 134C126 78 193 76 264 128C342 185 421 123 486 62" stroke="url(#weekly-guide-line)" stroke-width="2.6" stroke-linecap="round" opacity=".5"/>
+  <path d="M60 44H166M362 44H470M52 66V120M478 62V132" stroke="#8ffcff" stroke-width="2.4" stroke-linecap="round" opacity=".44"/>
+  <path d="M82 142H454" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="9 12" opacity=".42"/>
+  <circle cx="186" cy="82" r="38" stroke="#b9faff" stroke-width="1.6" opacity=".22"/>
+  <circle cx="354" cy="92" r="48" stroke="#d1b5ff" stroke-width="1.5" opacity=".22"/>
+</svg>

@@ -127,6 +127,20 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-08 `切り抜き` preset 単体polish:
+  - `切り抜き` だけを対象に、既存 Phase 3 背景 `clip-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
+  - 専用抽象SVG assetとして `clip-label-band-base.svg` / `clip-time-badge-base.svg` / `clip-video-frame-accent.svg` / `clip-impact-marks.svg` を追加した
+  - 追加SVGには読める文字、ロゴ、人物、キャラクター、外部画像参照、`<text>` / `font-family` / `<image>` / `href=` を入れていない
+  - 既存 `clip-focus-rays.svg` / `clip-speed-lines.svg` / `arrow-accent.svg` は維持し、集中線、スピード線、矢印、衝撃マークの一体感が出るように再配置した
+  - 動画フレームは左上寄りに大きく取り、`clip-video-frame-accent.svg` で白黒フレーム、角飾り、再生ガイド、下部バーを補った
+  - ラベル帯と時刻バッジはSVG土台 + editable textへ置換し、見出しは右下に2行配置して短い強調語として読みやすくした
+  - サブテキストは下部に逃がし、動画フレーム、見出し、時刻バッジと重なりすぎない余白を確保した
+  - 背景焼き込み、schema変更、public API変更、新しい `shapeType`、素材ライブラリUI変更、`tintColor` 変更、他プリセット定義は入れていない
+  - 比較結果は `docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` の `切り抜き` 行に記録した
+  - 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+  - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - Browser/Playwright確認: clean localStorage状態から `切り抜き` presetを適用。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0、console error / warn なし。1024px以上では追加小物asset `画像 2（集中線）` / `画像 3（衝撃と矢印マーク）` / `画像 4（動画フレーム装飾）` / `画像 5（矢印アクセント）` / `画像 6（スピード線）` / `画像 7（ラベル帯）` / `画像 8（時刻バッジ）` と `見出し` / `時刻` / `サブ` / `ラベル` がレイヤー一覧に残ることを確認。1366pxのフルcanvas出力で見出し、時刻、サブ、ラベルの可読性と動画フレーム/強調装飾の余白を確認した
+
 - 2026-05-08 `コラボ` preset 単体polish:
   - `コラボ` だけを対象に、既存 Phase 2 背景 `collaboration-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 専用抽象SVG assetとして `collaboration-label-band-base.svg` / `collaboration-time-badge-base.svg` / `collaboration-duo-guide-lines.svg` / `collaboration-connection-lines.svg` / `collaboration-soft-glints.svg` を追加した

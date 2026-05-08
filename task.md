@@ -558,6 +558,19 @@
 
 ## 次の整理メモ
 
+- 2026-05-08 `お知らせ` preset 単体polish:
+  - `お知らせ` だけを対象に、既存 Phase 2 背景 `announcement-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
+  - 専用抽象SVG assetとして `announcement-label-band-base.svg` / `announcement-date-badge-base.svg` / `announcement-guide-lines.svg` / `announcement-soft-glints.svg` を追加した
+  - 追加SVGには読める文字、ロゴ、人物、キャラクター、外部画像参照、`<text>` / `font-family` / `<image>` / `href=` を入れていない
+  - ラベル帯と日付バッジはSVG土台 + editable textへ置換し、見出しは公式告知向けに読みやすく大型化した
+  - 右立ち絵guideは専用細線assetと薄いframe guideへ分離し、fill / stroke の主張を下げて背景の金線と馴染む配置にした
+  - サブテキストは日付バッジ下に余白を取って中央寄せにし、下線は控えめな金線にした
+  - 背景焼き込み、schema変更、public API変更、新しい `shapeType`、素材ライブラリUI変更、`tintColor` 変更、他プリセット定義は入れていない
+  - 比較結果は `docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` の `お知らせ` 行に記録した
+  - 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+  - 補助検証: `node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS
+  - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - Browser/Playwright確認: clean localStorage状態から `お知らせ` presetを適用。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0、console error / warn なし。1024px以上では追加小物asset `画像 2（控えめな金色グリント）` / `画像 3（右立ち絵guideの細線）` / `画像 5（ラベル帯）` / `画像 6（日付バッジ）` と `見出し` / `時刻` / `サブ` / `ラベル` がレイヤー一覧に残ることを確認。42% zoomの全体表示で見出し、時刻、サブ、ラベルの可読性と右立ち絵枠の余白を確認した
 - 2026-05-08 `雑談` preset 単体polish:
   - `雑談` だけを対象に、既存 Phase 3 背景と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 新規assetは追加せず、既存 `soft-light-particles.svg` / `sparkle-small.svg` の配置とopacityだけを控えめに調整した

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <path d="M834 646V278C834 168 910 90 1016 90C1122 90 1198 168 1198 278V646Z" fill="none" stroke="#f4cc82" stroke-width="3" opacity=".42"/>
+  <path d="M862 626V292C862 196 925 126 1016 126C1107 126 1170 196 1170 292V626" fill="none" stroke="#ffe9b0" stroke-width="2" stroke-dasharray="10 10" opacity=".34"/>
+  <path d="M880 648H1214" fill="none" stroke="#f4cc82" stroke-width="3" stroke-linecap="round" opacity=".38"/>
+  <path d="M886 602C1000 520 1076 430 1196 312" fill="none" stroke="#ffe9b0" stroke-width="2" opacity=".24"/>
+  <path d="M850 360C982 258 1062 190 1190 116" fill="none" stroke="#f0bf70" stroke-width="2" opacity=".2"/>
+  <path d="M1016 62l12 36l36 12l-36 12l-12 36l-12-36l-36-12l36-12Z" fill="#fff5ce" opacity=".72"/>
+  <path d="M834 272l10 29l29 10l-29 10l-10 29l-10-29l-29-10l29-10Z" fill="#ffe1a0" opacity=".64"/>
+  <path d="M1198 298l8 24l24 8l-24 8l-8 24l-8-24l-24-8l24-8Z" fill="#fff0c0" opacity=".58"/>
+  <path d="M1198 602l8 24l24 8l-24 8l-8 24l-8-24l-24-8l24-8Z" fill="#f3c778" opacity=".54"/>
+</svg>

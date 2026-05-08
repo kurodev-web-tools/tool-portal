@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="112" viewBox="0 0 620 112">
+  <defs>
+    <linearGradient id="badgeFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#09111f" stop-opacity=".96"/>
+      <stop offset=".58" stop-color="#142139" stop-opacity=".93"/>
+      <stop offset="1" stop-color="#070d18" stop-opacity=".96"/>
+    </linearGradient>
+    <linearGradient id="badgeStroke" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8d5e2c"/>
+      <stop offset=".5" stop-color="#ffe2a1"/>
+      <stop offset="1" stop-color="#9b6730"/>
+    </linearGradient>
+  </defs>
+  <path d="M36 56H584" fill="none" stroke="#2b1b0f" stroke-width="18" stroke-linecap="round" opacity=".38"/>
+  <path d="M76 18H544L568 40V72L544 94H76L52 72V40Z" fill="url(#badgeFill)" stroke="url(#badgeStroke)" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M88 28H532L550 44V68L532 84H88L70 68V44Z" fill="none" stroke="#d7a65a" stroke-width="2" opacity=".76"/>
+  <path d="M112 36H508" fill="none" stroke="#fff2c7" stroke-width="2" stroke-linecap="round" opacity=".32"/>
+  <path d="M112 76H508" fill="none" stroke="#7c5126" stroke-width="2" stroke-linecap="round" opacity=".46"/>
+  <path d="M14 56l12-12l12 12l-12 12Z" fill="#fff3c8" stroke="#bd823d" stroke-width="2"/>
+  <path d="M582 56l12-12l12 12l-12 12Z" fill="#fff3c8" stroke="#bd823d" stroke-width="2"/>
+  <path d="M52 56l8-8l8 8l-8 8Z" fill="#f6c978"/>
+  <path d="M552 56l8-8l8 8l-8 8Z" fill="#f6c978"/>
+</svg>

@@ -427,16 +427,19 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#7ddf64",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase2BackgroundAssetPrefix}game-live-background.png`),
-      assetDecorationLayer({ name: "画像 2（スピード線）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-speed-lines.svg`, x: 532, y: 532, width: 610, height: 86, opacity: 0.46 }),
-      shapeLayer({ name: "図形 5（斜め強調ベース）", shapeType: "polygon", x: 60, y: 160, width: 725, height: 246, rotation: -1, fillColor: "#071b16b8", strokeColor: "#7ddf64", strokeWidth: 5, borderRadius: 0 }),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 775, y: 76, width: 390, height: 560, fillColor: "#03181f4e", strokeColor: "#5dffc4", strokeWidth: 5, borderRadius: 34 }),
-      shapeLayer({ name: "図形 6（ゲーム感ライン）", shapeType: "line", x: 618, y: 112, width: 220, height: 18, fillColor: "#e1ffeb", strokeColor: "#e1ffeb", strokeWidth: 4, borderRadius: 8, opacity: 0.7 }),
-      shapeLayer({ name: "図形 1（ラベル帯）", shapeType: "rect", x: 78, y: 62, width: 370, height: 66, fillColor: "#7ddf64e6", strokeColor: "#e1ffeb", strokeWidth: 4, borderRadius: 16 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "GAME LIVE", x: 112, y: 78, width: 300, height: 42, fontSize: 40, color: "#04111c", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "参加型\nゲーム実況", x: 82, y: 166, width: 680, height: 220, fontSize: 96, lineHeight: 1.16, color: "#ffffff", strokeColor: "#020e08", strokeWidth: 13, shadowColor: "#7ddf64", shadowBlur: 10, shadowOffsetX: 4, shadowOffsetY: 5 }),
-      shapeLayer({ name: "図形 2（時刻バッジ）", shapeType: "rect", x: 94, y: 505, width: 430, height: 78, fillColor: "#051219e1", strokeColor: "#7ddf64", strokeWidth: 5, borderRadius: 16 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 128, y: 520, width: 365, height: 52, fontSize: 42, color: "#e6ffde", strokeColor: "#001008", strokeWidth: 3, shadowColor: "#000000", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "初見さん歓迎 / 一緒に遊ぼう", x: 104, y: 612, width: 610, height: 48, fontSize: 34, color: "#dcffda", strokeColor: "#01110a", strokeWidth: 4 })
+      assetDecorationLayer({ name: "画像 2（ゲームHUDの線）", src: `${thumbnailPhase4DecorationAssetPrefix}game-live-hud-lines.svg`, x: 0, y: 0, width: 1280, height: 720, opacity: 0.88 }),
+      assetDecorationLayer({ name: "画像 3（下部スピード線）", src: `${thumbnailPhase4DecorationAssetPrefix}clip-speed-lines.svg`, x: 508, y: 538, width: 665, height: 100, opacity: 0.46 }),
+      assetDecorationLayer({ name: "画像 4（右立ち絵guideのHUD枠）", src: `${thumbnailPhase4DecorationAssetPrefix}game-live-standee-guide-lines.svg`, x: 770, y: 38, width: 470, height: 642, opacity: 0.9 }),
+      shapeLayer({ name: "図形 5（斜め強調ベース）", shapeType: "polygon", x: 48, y: 158, width: 725, height: 252, rotation: -1, fillColor: "#020c12b8", strokeColor: "#39faff", strokeWidth: 3, borderRadius: 0, opacity: 0.78 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 818, y: 112, width: 330, height: 492, fillColor: "#07192424", strokeColor: "#dffeff", strokeWidth: 2, borderRadius: 66, opacity: 0.5 }),
+      shapeLayer({ name: "図形 6（ゲーム感ライン）", shapeType: "line", x: 514, y: 102, width: 250, height: 16, fillColor: "#66fff0", strokeColor: "#66fff0", strokeWidth: 4, borderRadius: 8, opacity: 0.68 }),
+      assetDecorationLayer({ name: "画像 5（ラベル帯）", src: `${thumbnailPhase4DecorationAssetPrefix}game-live-label-band-base.svg`, x: 58, y: 60, width: 500, height: 106, opacity: 0.98 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "GAME LIVE", x: 122, y: 92, width: 310, height: 46, fontSize: 43, color: "#b9ffbe", strokeColor: "#06120e", strokeWidth: 2, shadowColor: "#42ff6f", shadowBlur: 8, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Oswald", italic: true }),
+      textLayer({ name: "テキスト 1（見出し）", text: "参加型\nゲーム実況", x: 72, y: 156, width: 720, height: 292, fontSize: 116, lineHeight: 0.98, color: "#ffffff", strokeColor: "#051016", strokeWidth: 15, shadowColor: "#2dfaff", shadowBlur: 12, shadowOffsetX: 6, shadowOffsetY: 8 }),
+      assetDecorationLayer({ name: "画像 6（時刻バッジ）", src: `${thumbnailPhase4DecorationAssetPrefix}game-live-time-banner-base.svg`, x: 74, y: 488, width: 705, height: 128, opacity: 0.98 }),
+      shapeLayer({ name: "図形 2（時刻下ライン）", shapeType: "line", x: 134, y: 610, width: 492, height: 14, fillColor: "#35f8ff", strokeColor: "#35f8ff", strokeWidth: 3, borderRadius: 8, opacity: 0.62 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 190, y: 522, width: 390, height: 62, fontSize: 56, color: "#5ffcff", strokeColor: "#021018", strokeWidth: 3, shadowColor: "#42ff6f", shadowBlur: 10, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Oswald" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "初見さん歓迎 / 一緒に遊ぼう", x: 112, y: 632, width: 610, height: 46, fontSize: 34, align: "center", color: "#f4fff1", strokeColor: "#01110a", strokeWidth: 4, shadowColor: "#42ff6f", shadowBlur: 6, shadowOffsetX: 2, shadowOffsetY: 3 })
     ]
   },
   {

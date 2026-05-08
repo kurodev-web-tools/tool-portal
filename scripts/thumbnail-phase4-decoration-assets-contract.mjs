@@ -50,6 +50,10 @@ const expectedDecorationFiles = [
   "karaoke-sparkle-dust-white-gold.png",
   "karaoke-sparkle-dust-pink-cyan.png",
   "karaoke-glint-single-soft-white.png",
+  "game-live-label-band-base.svg",
+  "game-live-time-banner-base.svg",
+  "game-live-hud-lines.svg",
+  "game-live-standee-guide-lines.svg",
   "announcement-label-band-base.svg",
   "announcement-date-badge-base.svg",
   "announcement-guide-lines.svg",
@@ -71,7 +75,7 @@ const phase4PresetExpectations = {
   karaoke: { minDecorationImages: 13, shapeTypes: ["frame", "line"] },
   chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
   clip: { minDecorationImages: 2, shapeTypes: ["frame", "burst", "polygon"] },
-  game_live: { minDecorationImages: 1, shapeTypes: ["frame", "line", "polygon"] },
+  game_live: { minDecorationImages: 5, shapeTypes: ["frame", "line", "polygon"] },
   collaboration: { minDecorationImages: 1, shapeTypes: ["frame", "line"] },
   announcement: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
   weekly_schedule: { minDecorationImages: 1, shapeTypes: ["line", "frame"] },
@@ -155,6 +159,21 @@ for (const fileName of [
   "karaoke-glint-single-soft-white.png"
 ]) {
   assert.equal(karaokeDecorationSources.has(fileName), true, `karaoke uses dedicated ${fileName}`);
+}
+
+const gameLivePreset = lib.thumbnailPresets.find((item) => item.id === "game_live");
+const gameLiveDecorationSources = new Set(
+  gameLivePreset.layers
+    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
+    .map((layer) => path.basename(layer.src))
+);
+for (const fileName of [
+  "game-live-label-band-base.svg",
+  "game-live-time-banner-base.svg",
+  "game-live-hud-lines.svg",
+  "game-live-standee-guide-lines.svg"
+]) {
+  assert.equal(gameLiveDecorationSources.has(fileName), true, `game_live uses dedicated ${fileName}`);
 }
 
 const announcementPreset = lib.thumbnailPresets.find((item) => item.id === "announcement");

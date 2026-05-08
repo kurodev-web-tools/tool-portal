@@ -558,6 +558,18 @@
 
 ## 次の整理メモ
 
+- 2026-05-08 `雑談` preset 単体polish:
+  - `雑談` だけを対象に、既存 Phase 3 背景と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
+  - 新規assetは追加せず、既存 `soft-light-particles.svg` / `sparkle-small.svg` の配置とopacityだけを控えめに調整した
+  - 立ち絵guideは右側へ広げ、fill / stroke の主張を下げて、立ち絵を置きやすい薄い余白にした
+  - 見出しは読みやすさ優先で少し大型化し、stroke / shadow を暖色寄りに整えた
+  - 時刻バッジは横幅、角丸、strokeを調整し、既存shapeだけで小さな時計ディテールを追加した
+  - サブテキストは下へ逃がして余白を確保し、下線とsparkle密度は歌枠より控えめにした
+  - 背景焼き込み、schema変更、public API変更、新しい `shapeType`、素材ライブラリUI変更、`tintColor` 変更、他プリセット定義は入れていない
+  - 比較結果は `docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` の `雑談` 行に記録した
+  - 検証: `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS
+  - 追加検証: `npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - Browser確認: clean localStorage状態から `雑談` presetを確認。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、水平overflow 0、console error / warn なし。1024px以上では既存小物asset `画像 2（光粒）` / `画像 3（小さなきらめき）` と `見出し` / `時刻` / `サブ` / `ラベル` がレイヤー一覧に残ることを確認。canvas表示で見出し、時刻、サブ、ラベルの可読性と右立ち絵枠の余白を確認した
 - 2026-05-07 `歌枠` preset 単体polish:
   - `歌枠` だけを対象に、Phase 1 背景と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 専用抽象SVG assetとして `karaoke-label-band-base.svg` / `karaoke-title-glow-backplate.svg` / `karaoke-time-banner-base.svg` / `karaoke-ornate-frame.svg` / `karaoke-spark-field.svg` を追加した

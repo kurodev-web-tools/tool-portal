@@ -380,16 +380,19 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#36aaff",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase3BackgroundAssetPrefix}chatting-background.png`),
-      assetDecorationLayer({ name: "画像 2（光粒）", src: `${thumbnailPhase4DecorationAssetPrefix}soft-light-particles.svg`, x: 48, y: 30, width: 610, height: 330, opacity: 0.5 }),
-      assetDecorationLayer({ name: "画像 3（小さなきらめき）", src: `${thumbnailPhase4DecorationAssetPrefix}sparkle-small.svg`, x: 432, y: 110, width: 126, height: 112, rotation: -8, opacity: 0.62 }),
-      shapeLayer({ name: "図形 4（やわらかい下線）", shapeType: "line", x: 92, y: 548, width: 430, height: 20, fillColor: "#f0aa66", strokeColor: "#f0aa66", strokeWidth: 5, borderRadius: 12, opacity: 0.76 }),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 728, y: 70, width: 368, height: 585, fillColor: "#f3b17a24", strokeColor: "#fff0db", strokeWidth: 2, borderRadius: 48, opacity: 0.78 }),
-      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 92, y: 74, width: 282, height: 40, fillColor: "#070b18d4", strokeColor: "#b36dff", strokeWidth: 3, borderRadius: 20 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "CHATTING / YouTube", x: 120, y: 84, width: 226, height: 24, fontSize: 20, color: "#f8f2ff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n雑談配信", x: 86, y: 142, width: 585, height: 270, fontSize: 100, lineHeight: 1.1, color: "#fff7ec", strokeColor: "#3b1632", strokeWidth: 9, shadowColor: "#f3aa72", shadowBlur: 12, shadowOffsetX: 4, shadowOffsetY: 5 }),
-      shapeLayer({ name: "図形 1（時刻バッジ）", shapeType: "rect", x: 90, y: 470, width: 402, height: 70, fillColor: "#15121fdb", strokeColor: "#f0aa66", strokeWidth: 3, borderRadius: 18 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 138, y: 486, width: 310, height: 44, fontSize: 42, color: "#fff4df", strokeColor: "#2b1630", strokeWidth: 3, shadowColor: "#000000", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "今日の話題を一緒に整理しよう", x: 94, y: 574, width: 560, height: 42, fontSize: 28, color: "#fff8ee", strokeColor: "#140b21", strokeWidth: 3, shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3 })
+      assetDecorationLayer({ name: "画像 2（光粒）", src: `${thumbnailPhase4DecorationAssetPrefix}soft-light-particles.svg`, x: 54, y: 34, width: 590, height: 320, opacity: 0.34 }),
+      assetDecorationLayer({ name: "画像 3（小さなきらめき）", src: `${thumbnailPhase4DecorationAssetPrefix}sparkle-small.svg`, x: 418, y: 116, width: 112, height: 98, rotation: -8, opacity: 0.42 }),
+      shapeLayer({ name: "図形 4（やわらかい下線）", shapeType: "line", x: 92, y: 548, width: 458, height: 18, fillColor: "#f0aa66", strokeColor: "#f0aa66", strokeWidth: 4, borderRadius: 12, opacity: 0.58 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 730, y: 48, width: 420, height: 628, fillColor: "#f3b17a16", strokeColor: "#fff0db", strokeWidth: 2, borderRadius: 64, opacity: 0.48 }),
+      shapeLayer({ name: "図形 2（ラベル）", shapeType: "rect", x: 92, y: 72, width: 282, height: 40, fillColor: "#070b18cc", strokeColor: "#c8a3ff", strokeWidth: 2, borderRadius: 20, opacity: 0.94 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "CHATTING / YouTube", x: 120, y: 82, width: 226, height: 24, fontSize: 20, color: "#f8f2ff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n雑談配信", x: 78, y: 138, width: 600, height: 288, fontSize: 106, lineHeight: 1.06, color: "#fffaf2", strokeColor: "#2e1430", strokeWidth: 10, shadowColor: "#eba36d", shadowBlur: 16, shadowOffsetX: 4, shadowOffsetY: 5 }),
+      shapeLayer({ name: "図形 1（時刻バッジ）", shapeType: "rect", x: 90, y: 466, width: 430, height: 76, fillColor: "#15111fe8", strokeColor: "#f0aa66", strokeWidth: 3, borderRadius: 24 }),
+      shapeLayer({ name: "図形 5（時刻アイコン外円）", shapeType: "circle", x: 118, y: 486, width: 38, height: 38, fillColor: "#00000000", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 0, opacity: 0.9 }),
+      shapeLayer({ name: "図形 6（時刻アイコン短針）", shapeType: "line", x: 136, y: 495, width: 2, height: 20, rotation: -90, fillColor: "#f3c17c", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 4, opacity: 0.92 }),
+      shapeLayer({ name: "図形 7（時刻アイコン長針）", shapeType: "line", x: 140, y: 506, width: 16, height: 2, fillColor: "#f3c17c", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 4, opacity: 0.92 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 180, y: 484, width: 310, height: 46, fontSize: 43, color: "#fff4df", strokeColor: "#2b1630", strokeWidth: 3, shadowColor: "#000000", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "今日の話題を一緒に整理しよう", x: 94, y: 584, width: 570, height: 42, fontSize: 29, color: "#fff8ee", strokeColor: "#140b21", strokeWidth: 3, shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3 })
     ]
   },
   {

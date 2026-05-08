@@ -195,6 +195,50 @@
   - テキスト: 既存どおりtext layerで維持する。読める文字を画像生成assetへ入れない
 - この順にする理由: 初期は背景焼き込みでMVPの見た目完成度を優先しつつ、後から大枠や小物を独立asset化して流用できる構造へ移行しやすくするため
 
+2026-05-08 Phase 5 `切り抜き` kickoff:
+
+- 作業前に PR #42 `[codex] Document thumbnail phase 5 direction` が `main` に merge済みで、local `main` が merge commit `e8c0a7fba055c177756d8f4d42fef87d5bef1c55` を含むことを確認した
+- `main` 直作業を避け、`codex/thumbnail-phase5-clip-preset` branch / `.worktrees/thumbnail-phase5-clip-preset` worktreeで開始した
+- 実装前の設計整理として、`docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` に `Phase 5 切り抜き Kickoff Design Memo` を追記した
+- 現時点の推奨最小PR範囲は、`切り抜き` 1プリセットだけで `背景 + 大きな動画フレームは初期MVPで焼き込み`、`ラベル土台 / 時刻バッジ土台 / ステッカー / 矢印 / 衝撃マーク / 小物は文字なし個別asset`、`下線 / 補助ライン / 区切り線はshape layer`、`見出し / 時刻 / サブ / ラベル文字はeditable text layer` として構造検証すること
+- 実装へ進む前の確認点: 動画フレーム風の大きな枠を初期MVPで背景へ焼き込む方針でよいか。後続で独立asset化できるよう、焼き込み範囲と分離候補はdocsへ記録済み
+- docs整理のみのため、検証は `git diff --check` を実行する
+
+2026-05-08 Phase 5 `切り抜き` preset renewal:
+
+- `imagegen` skill + built-in `image_gen` toolで、`切り抜き` 用のPhase 5背景と小物asset sheetを生成した
+- Phase 5背景は `public/assets/images/thumbnail-editor/phase5/clip-background-v1.png` として保存した。大きな動画フレーム風の枠は初期MVPとして背景へ焼き込み、読める文字、ロゴ、人物、キャラクター、実動画スクショ、実ゲーム画面、SNS UIは入れていない
+- #00ff00 chroma-key asset sheetから背景除去 / 2列x3行の同一セル分割を行い、文字なし個別assetをすべて `768 x 512` の透明PNGとして `public/assets/images/thumbnail-editor/decorations/phase5/` へ保存した。assetごとの個別トリムは見切れやキャッシュ差分の原因になるため使わない
+  - `clip-label-sticker-yellow-uniform-cell.png`
+  - `clip-time-badge-sticker-purple-uniform-cell.png`
+  - `clip-title-sticker-backplate-uniform-cell.png`
+  - `clip-arrow-yellow-uniform-cell.png`
+  - `clip-impact-burst-yellow-uniform-cell.png`
+  - `clip-spark-shards-purple-uniform-cell.png`
+- `lib/thumbnail-editor.ts` は `clip` presetだけをPhase 5構造へ更新した。背景参照をPhase 5に切り替え、動画フレームshapeを外し、ラベル/時刻/見出し土台/矢印/衝撃/破片を個別assetとして配置した
+- `見出し` / `時刻` / `サブ` / `ラベル` は editable text layerとして維持し、`下線` / `補助ライン` / `区切り線` は shape layerとして残した
+- `scripts/thumbnail-phase5-clip-preset-contract.mjs` を追加し、Phase 5背景、個別asset、editable text layer、shape layer責務、個別assetが同一 `768 x 512` セルcanvasであることを確認できるようにした
+- 既存 `scripts/thumbnail-phase3-preset-assets-contract.mjs` / `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は、`clip` がPhase 5へ移った前提に合わせて期待値を更新した。あわせて `x_announcement` の投稿カードは現行Phase 4 asset layer前提に修正した
+- 検証済み:
+  - `node scripts/thumbnail-phase5-clip-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-clip-preset-contract.mjs; node scripts/thumbnail-phase4-decoration-assets-contract.mjs; node scripts/thumbnail-phase3-preset-assets-contract.mjs; node scripts/thumbnail-phase2-preset-assets-contract.mjs; node scripts/thumbnail-phase1-preset-assets-contract.mjs; node scripts/thumbnail-preset-apply-safety-contract.mjs; node scripts/thumbnail-preset-discovery-contract.mjs; node scripts/thumbnail-layer-management-contract.mjs; node scripts/tool-handoff-contract.mjs; node scripts/sns-split-image-maker-contract.mjs` PASS
+  - `npm run lint` PASS
+  - `npx tsc --noEmit` PASS
+  - `git diff --check` PASS。LF -> CRLF warningのみ
+  - `npm run build` PASS。worktree と root の lockfile 重複による Next.js workspace root 推定 warning は出たが、build は成功
+- UI確認:
+  - static outputを `localhost:3025` で配信し、Chrome DevToolsで `切り抜き` presetを適用。確認幅は 500 / 820 / 1024 / 1280 / 1366px。390px指定はChrome DevTools側で実幅500pxになった
+  - 各幅でcanvas非blank、水平overflow 0を確認。1024px以上ではPhase 5背景、Phase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認
+  - static outputではPhase 5 asset requestはすべて 200。Next static export のRSC prefetch `.txt?_rsc=` 404 と、pixel sampling時のCanvas readback warningが出た
+  - 追加フィードバックで `画像 6（ラベル土台）` と `画像 5（見出しステッカー土台）` の右側がまだ詰まって見えるため、asset sheetを再生成し、6点を同じセルサイズ / 同じ内部余白で配置する方針へ切り替えた。ローカル処理では 2列x3行を6等分し、chroma-key除去後に最大オブジェクトだけを残し、全6点を同じ `768 x 512` canvas / 同じ内側セーフボックスへ配置した `*-uniform-cell.png` に差し替えた。`画像 5（見出しステッカー土台）`、時刻バッジ、見出し、サブ、見出し下線は初期配置も少し左へ戻し、右端に余白が出るようにした。dev server `localhost:3026` の 1366px表示で再確認し、証跡を `output/phase5-clip-uniform-cell-dev-1366.png` に保存した。`scripts/thumbnail-phase5-clip-preset-contract.mjs` にはPNG alpha境界の余白チェックを追加した
+  - 追加確認で `画像 5（見出しステッカー土台）` の輪郭自体が途中で終わったように見えたため、見出しステッカー土台だけ `1 asset = 1 canvas` で個別再生成し、同じ `768 x 512` / `*-uniform-cell.png` に正規化して差し替えた。alpha境界は左右114px、上下119px以上の透明余白。dev server `localhost:3026` の 1366px表示で再確認し、証跡を `output/phase5-clip-title-sticker-rebuilt-dev-1366.png` に保存した
+  - 今後のPhase 5小物asset生成方針: sheet一括生成は比較/候補出しには有効だが、最終採用assetは基本 `1 asset = 1 canvas` で生成し、同一canvas / 同一セーフボックスへ正規化する。これにより、隣接セルの小片混入、余白不足、生成時点での輪郭見切れを避けやすい
+  - 切り分けとして dev server `localhost:3026` でも 1366px確認を実施。`切り抜き` preset適用後、console error / warn なし。canvas非blank、水平overflow 0、Phase 5レイヤー一覧残存を確認
+  - 確認スクリーンショット: `output/phase5-clip-canvas-dev-1366.png`
+
 - 2026-05-08 `コラボ` preset 単体polish:
   - `コラボ` だけを対象に、既存 Phase 2 背景 `collaboration-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 専用抽象SVG assetとして `collaboration-label-band-base.svg` / `collaboration-time-badge-base.svg` / `collaboration-duo-guide-lines.svg` / `collaboration-connection-lines.svg` / `collaboration-soft-glints.svg` を追加した

@@ -436,3 +436,56 @@ Phase 5 は単なる配置微調整ではなく、プリセット構造を「完
   - 390 / 820pxでは RSC prefetch 404は出ず、pixel sampling時のみChromeのCanvas readback warningが出る。静的配信中の内部HEAD request abortは追加assetの失敗ではない。
   - 確認スクリーンショット: `output/playwright/phase5-chatting-final-390.png` / `phase5-chatting-final-820.png` / `phase5-chatting-final-1024.png` / `phase5-chatting-final-1280.png` / `phase5-chatting-final-1366.png`
   - Canvas export確認: `output/playwright/phase5-chatting-canvas-static-clean-1280x720.png`
+
+## Phase 5 `歌枠` Implementation Notes
+
+- 実装日: 2026-05-09
+- 作業branch / worktree: `codex/thumbnail-phase5-karaoke-preset` / `.worktrees/thumbnail-phase5-karaoke-preset`
+- 前提確認: PR #48 `[codex] Renew chatting thumbnail phase 5 preset` は `main` に merge済み。merge commit `97986f46cd6e8d8853f981ff1a29f8830856ee69` を作業開始時の `origin/main` が指していることを確認した。
+- 対象: `歌枠` presetのみ。全9プリセットへは広げていない。
+- 背景: `public/assets/images/thumbnail-editor/phase5/karaoke-background-v1.png`
+  - 既存 `karaoke-background.png` / `karaoke-mock.png` の紫基調、左側のテキスト安全領域、右側の立ち絵差し替え余白、光と曲線の方向性を参照した。
+  - 背景assetには読める文字、ロゴ、人物、キャラクター、実画面、SNS UI、ラベル文字、時刻文字は入れていない。
+- 追加調整: 初回Phase 5背景はモックに比べて密度とステージ感が落ち、見出しも小さくなりすぎていたため、Phase 1の高密度背景を `1280 x 720` へ正規化して採用し直した。見出しは巨大な `歌枠` と `SINGING STREAM` の2つのeditable text layerへ分け、右立ち絵枠は縦長の角付きフレームへ寄せた。
+- 追加調整2: user確認後、モック右側の装飾枠と音符の存在感がまだ弱かったため、右立ち絵枠asset、ピンク/金の音符asset、ピンク三角アクセントassetを追加した。初回追加assetは手描き線が太く低品質に見えたため、user提供のグリーンバック素材からキー抜きし、Phase 5用 `768 x 512` 透明PNGへ正規化し直した。小物追加はモック上の主要要素に絞り、対象preset外、schema、素材ライブラリUI、フォントは変更していない。
+- 個別asset: `public/assets/images/thumbnail-editor/decorations/phase5/`
+  - `karaoke-label-plaque-rose-uniform-cell.png`
+  - `karaoke-time-badge-gold-uniform-cell.png`
+  - `karaoke-sparkle-cluster-rose-cyan-uniform-cell.png`
+  - `karaoke-standee-frame-glow-uniform-cell.png`
+  - `karaoke-music-note-rose-uniform-cell.png`
+  - `karaoke-music-note-gold-uniform-cell.png`
+  - `karaoke-triangle-burst-rose-uniform-cell.png`
+- 個別assetは `768 x 512` canvas / 透明PNG / 最低76px以上の透明余白へ正規化した。
+- `lib/thumbnail-editor.ts` は `karaoke` presetだけをPhase 5構造へ更新した。schema変更、素材ライブラリUI変更、フォント追加、外部CDN依存、他preset変更は行っていない。
+- ラベル / 時刻 / 見出し / サブの文字は editable text layerとして維持した。
+- 立ち絵guide、ラベル横ライン、見出し下ライン、時刻下ラインは shape layerとして残した。Phase 4の多数小物から、モック再現に必要な右枠、音符、sparkle、ラベル、時刻土台の7点のPhase 5個別assetへ整理した。
+- 追加contract: `scripts/thumbnail-phase5-karaoke-preset-contract.mjs`
+  - Phase 5背景、背景asset存在 / `1280 x 720`、個別asset存在 / `768 x 512` / alpha余白、editable text layer、guide / 装飾のshape・asset責務、draft normalization 後の背景維持を検証する。
+- 既存contract更新:
+  - `scripts/thumbnail-phase1-preset-assets-contract.mjs` は `karaoke` がPhase 5へ移った前提に変更した。既存 Phase 1背景assetは保存済みdraft互換のため残す。
+  - `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `karaoke` をPhase 4 preset対象から外した。Phase 4 assetファイル自体は残す。
+- RED確認:
+  - 新規contractは実装前に `karaoke uses the phase 5 generated background` で失敗し、実装後にPASSした。
+- 検証:
+  - `node scripts/thumbnail-phase5-karaoke-preset-contract.mjs` PASS
+  - 既存Phase 5 contract群 PASS
+  - `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-discovery-contract.mjs` PASS
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS
+  - `node scripts/tool-handoff-contract.mjs` PASS
+  - `node scripts/sns-split-image-maker-contract.mjs` PASS
+  - `npm run lint` PASS
+  - `npx tsc --noEmit` PASS
+  - `npm run build` PASS。worktree内 `package-lock.json` と root 側 lockfile の重複による Next.js workspace root 推定 warning は出たが、build は成功した。
+- UI確認:
+  - static outputを `localhost:3032` で配信し、Playwrightで `歌枠` presetを適用。確認幅は 390 / 820 / 1024 / 1280 / 1366px。
+  - 各幅でcanvas非blank、horizontal overflow 0を確認。1024px以上ではPhase 5背景、Phase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認。
+  - static outputでは追加した Phase 5 `karaoke` asset request はすべて 200。Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加したPhase 5 assetの読み込み失敗ではない。
+  - 追加調整2後は static outputを `localhost:3034` で配信し、同じ 390 / 820 / 1024 / 1280 / 1366px を再確認した。各幅でcanvas非blank、horizontal overflow 0。1024px以上では追加した音符 / 右枠 / ピンク三角アクセントassetを含むPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認した。追加asset requestの404はなし。
+  - pixel sampling時のみChromeのCanvas readback warningが出る。
+  - 確認スクリーンショット: `output/playwright/phase5-karaoke-final-390.png` / `phase5-karaoke-final-820.png` / `phase5-karaoke-final-1024.png` / `phase5-karaoke-final-1280.png` / `phase5-karaoke-final-1366.png`

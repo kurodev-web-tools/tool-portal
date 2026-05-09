@@ -22,7 +22,6 @@ const lib = testModule.exports;
 
 const phase1Backgrounds = new Map([
   ["stream_announce", "/assets/images/thumbnail-editor/phase1/stream-announce-background.png"],
-  ["karaoke", "/assets/images/thumbnail-editor/phase1/karaoke-background.png"],
   ["weekly_schedule", "/assets/images/thumbnail-editor/phase1/weekly-schedule-background.png"]
 ]);
 

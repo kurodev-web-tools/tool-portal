@@ -78,12 +78,10 @@ const expectedDecorationFiles = [
 ];
 const phase4PresetIds = [
   "stream_announce",
-  "karaoke",
   "weekly_schedule"
 ];
 const phase4PresetExpectations = {
   stream_announce: { minDecorationImages: 9, shapeTypes: ["frame", "line"] },
-  karaoke: { minDecorationImages: 13, shapeTypes: ["frame", "line"] },
   weekly_schedule: { minDecorationImages: 5, shapeTypes: ["line", "frame"] }
 };
 
@@ -143,28 +141,12 @@ assert.equal(streamAnnounceDecorationSources.has("arrow-accent.svg"), false, "st
 assert.equal(streamAnnounceDecorationSources.has("stream-time-banner-cap.svg"), false, "stream_announce uses a single time banner asset");
 
 const karaokePreset = lib.thumbnailPresets.find((item) => item.id === "karaoke");
-const karaokeDecorationSources = new Set(
-  karaokePreset.layers
-    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
-    .map((layer) => path.basename(layer.src))
+assert.ok(karaokePreset, "karaoke preset exists");
+assert.equal(
+  karaokePreset.layers.some((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix)),
+  false,
+  "karaoke migrated to phase 5 decoration assets"
 );
-for (const fileName of [
-  "karaoke-label-band-base.svg",
-  "karaoke-title-glow-backplate.svg",
-  "karaoke-time-banner-base.svg",
-  "karaoke-ornate-frame.svg",
-  "karaoke-spark-field.svg",
-  "karaoke-ornament-note-cyan.png",
-  "karaoke-ornament-note-gold.png",
-  "karaoke-ornament-star-pink.png",
-  "karaoke-ornament-star-gold.png",
-  "karaoke-ornament-sparkle-cluster-pink-cyan.png",
-  "karaoke-sparkle-dust-white-gold.png",
-  "karaoke-sparkle-dust-pink-cyan.png",
-  "karaoke-glint-single-soft-white.png"
-]) {
-  assert.equal(karaokeDecorationSources.has(fileName), true, `karaoke uses dedicated ${fileName}`);
-}
 
 const weeklySchedulePreset = lib.thumbnailPresets.find((item) => item.id === "weekly_schedule");
 const weeklyScheduleDecorationSources = new Set(

@@ -255,3 +255,37 @@ Phase 5 は単なる配置微調整ではなく、プリセット構造を「完
   - preset切替直後に古い非同期描画が新しいpreset canvasを上書きしないよう、main canvas / mobile preview canvasの描画をrender version付きoffscreen buffer経由に変更した。
   - 確認スクリーンショット: `output/playwright/phase5-announcement-final-390.png` / `phase5-announcement-final-820.png` / `phase5-announcement-final-1024.png` / `phase5-announcement-final-1280.png` / `phase5-announcement-final-1366.png`
   - Canvas export確認: `output/playwright/phase5-announcement-canvas-static-clean-1280x720.png`
+
+## Phase 5 `X告知画像` Implementation Notes
+
+- 実装日: 2026-05-09
+- 作業branch / worktree: `codex/thumbnail-phase5-x-announcement-preset` / `.worktrees/thumbnail-phase5-x-announcement-preset`
+- 前提確認: PR #44 `[codex] Renew announcement thumbnail phase 5 preset` は `main` に merge済み。merge commit `e73f8b4555455df768643eb3222aefdb1bc20c69` を作業開始時のlocal `main` / `origin/main` が含むことを確認した。
+- 対象: `X告知画像` presetのみ。全9プリセットへは広げない。
+- 画像生成: `imagegen` skill + built-in `image_gen` toolを使用した。CLI fallback / true native transparency は使っていない。
+- 背景: `public/assets/images/thumbnail-editor/phase5/x-announcement-background-v1.png`
+  - 既存 `x-announcement-background.png` / `x-announcement-mock.png` の方向性を参照し、明るい紙質、淡い青白グラデーション、控えめな金線、左中央の大きな投稿カード / 情報パネル、右側の立ち絵差し替え余白を初期MVPとして焼き込んだ。
+  - 読める文字、ロゴ、SNS UI、X/Twitterロゴ、人物、キャラクター、実画面、日付バッジ、ラベル文字は入れていない。
+- 個別asset: `public/assets/images/thumbnail-editor/decorations/phase5/`
+  - `x-announcement-label-plaque-blue-uniform-cell.png`
+  - `x-announcement-date-badge-blue-gold-uniform-cell.png`
+  - `x-announcement-corner-ornament-gold-uniform-cell.png`
+  - `x-announcement-soft-glint-cluster-blue-uniform-cell.png`
+  - `x-announcement-label-plaque-ivory-candidate-uniform-cell.png` は未使用候補。
+- 透明assetは built-in `image_gen` で #00ff00 chroma-key 背景つき素材として生成し、`C:\Users\taka\.codex\skills\.system\imagegen\scripts\remove_chroma_key.py` で背景除去した。採用assetはすべて `768 x 512` canvas / 最低76px以上の透明余白へ正規化した。
+- `lib/thumbnail-editor.ts` は `x_announcement` presetだけをPhase 5構造へ更新した。schema変更、素材ライブラリUI変更、フォント追加、外部CDN依存、他preset変更は行っていない。
+- 投稿カード / 大きな情報パネルは背景へ焼き込んだため、Phase 5 `x_announcement` presetから Phase 4 `x-post-card-base.svg` は外した。将来分離する場合は、カード面、枠線、角飾り、薄い影を `x-announcement-post-card-*` assetとして再生成する。
+- ラベル / 日付 / 見出し / サブの文字は editable text layerとして維持した。
+- 本文罫線 / サブ下ライン / 立ち絵guide枠は shape layerとして残した。
+- 追加contract: `scripts/thumbnail-phase5-x-announcement-preset-contract.mjs`
+  - Phase 5背景、個別asset、editable text layer、shape layer責務に加え、個別asset 5点が同一 `768 x 512` canvasであること、PNG alpha境界に上下左右最低76px以上の透明余白が残ることを検証する。
+  - `x-announcement-label-plaque-ivory-candidate-uniform-cell.png` は存在だけ検証し、preset未使用候補として扱う。
+- 既存contract更新:
+  - `scripts/thumbnail-phase3-preset-assets-contract.mjs` は `x_announcement` がPhase 5へ移った前提に変更した。
+  - `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `x_announcement` をPhase 4 preset対象から外した。Phase 4 assetファイル自体は残す。
+- UI確認:
+  - static outputを `localhost:3028` で配信し、Playwrightで `X告知画像` presetを適用。確認幅は 390 / 820 / 1024 / 1280 / 1366px。
+  - 各幅でcanvas非blank、水平overflow 0を確認。1024px以上ではPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認。
+  - static outputではPhase 5 asset requestはすべて 200。Next static export のRSC prefetch `__next...txt?_rsc=` 404と、静的配信中の内部HEAD request abort、1280px確認時のGoogle Fonts request abortが出たが、今回追加assetの読み込み失敗ではない。
+  - 確認スクリーンショット: `output/playwright/phase5-x-announcement-final-390.png` / `phase5-x-announcement-final-820.png` / `phase5-x-announcement-final-1024.png` / `phase5-x-announcement-final-1280.png` / `phase5-x-announcement-final-1366.png`
+  - Canvas export確認: `output/playwright/phase5-x-announcement-canvas-static-clean-1280x720.png`

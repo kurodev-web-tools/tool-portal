@@ -127,6 +127,23 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-09 `歌枠` Phase 5 preset 更新:
+  - 作業前に PR #48 `[codex] Renew chatting thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` / worktree が merge commit `97986f46cd6e8d8853f981ff1a29f8830856ee69` を含むことを確認した
+  - 作業branch / worktree: `codex/thumbnail-phase5-karaoke-preset` / `.worktrees/thumbnail-phase5-karaoke-preset`
+  - 対象は `歌枠` presetのみ。全9プリセット、schema、public API、素材ライブラリUI、フォント、外部CDN依存は変更していない
+  - 背景を `public/assets/images/thumbnail-editor/phase5/karaoke-background-v1.png` へ移し、読める文字、ロゴ、人物、キャラクター、実画面、SNS UI は入れていない
+  - 個別assetは `karaoke-label-plaque-rose-uniform-cell.png` / `karaoke-time-badge-gold-uniform-cell.png` / `karaoke-sparkle-cluster-rose-cyan-uniform-cell.png` / `karaoke-standee-frame-glow-uniform-cell.png` / `karaoke-music-note-rose-uniform-cell.png` / `karaoke-music-note-gold-uniform-cell.png` / `karaoke-triangle-burst-rose-uniform-cell.png` の7点に絞り、すべて `768 x 512` 透明PNG / alpha余白つきへ正規化した
+  - `lib/thumbnail-editor.ts` は `karaoke` presetだけをPhase 5構造へ更新し、`見出し` / `時刻` / `サブ` / `ラベル` は editable text layer として維持した
+  - `立ち絵挿入ガイド` / `ラベル横ライン` / `見出し下ライン` / `時刻下ライン` は shape layer として維持した
+  - 追加contract: `scripts/thumbnail-phase5-karaoke-preset-contract.mjs`。実装前REDは `karaoke uses the phase 5 generated background` で確認し、実装後PASS
+  - 既存contract更新: `scripts/thumbnail-phase1-preset-assets-contract.mjs` は `karaoke` がPhase 5へ移った前提に変更。`scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `karaoke` をPhase 4 preset対象から外し、既存Phase 4 assetファイル自体は保存済みdraft互換のため残した
+  - 検証: 新規 `node scripts/thumbnail-phase5-karaoke-preset-contract.mjs`、既存Phase 5 contract群、Phase 1〜4 / preset safety / discovery / layer management / handoff / sns split contracts、`npm run lint`、`npx tsc --noEmit`、`npm run build` はPASS。`npm run build` は worktree とrootのlockfile重複によるNext.js workspace root推定warningのみ発生
+  - UI確認: static outputを `localhost:3032` で配信し、Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でcanvas非blank、horizontal overflow 0。1024px以上ではPhase 5背景 / 個別asset / shape layer / editable text layerがレイヤー一覧に残ることを確認
+  - console確認: 追加したPhase 5 `karaoke` asset requestは404なし。Next static export のRSC prefetch `__next...txt?_rsc=` 404と、pixel sampling由来のCanvas readback warningのみ発生
+  - 追加調整: 初回Phase 5背景はモックから情報量と見出しの主役感が落ちすぎたため、Phase 1の高密度な歌枠背景を `1280 x 720` へ正規化してPhase 5背景に採用し直した。見出しは巨大な `歌枠` と `SINGING STREAM` のeditable text layerへ分け、右立ち絵枠も縦長の角付きフレームへ寄せた
+  - 追加調整2: user確認後、モック右側の装飾枠と音符の存在感がまだ弱かったため、右立ち絵枠asset、ピンク/金の音符asset、ピンク三角アクセントassetを追加した。初回追加assetは手描き線が太く低品質に見えたため、user提供のグリーンバック素材からキー抜きし、Phase 5用 `768 x 512` 透明PNGへ正規化し直した。追加後も対象は `karaoke` のみで、schema / UI / フォントは変更していない
+  - 追加調整2後のUI確認: static outputを `localhost:3034` で配信し、Playwrightで 390 / 820 / 1024 / 1280 / 1366px を再確認。各幅でcanvas非blank、horizontal overflow 0。1024px以上では追加した音符 / 右枠 / ピンク三角アクセントassetを含むPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認。追加asset requestの404はなし
+
 - 2026-05-08 `切り抜き` preset 単体polish:
   - `切り抜き` だけを対象に、既存 Phase 3 背景 `clip-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 専用抽象SVG assetとして `clip-label-band-base.svg` / `clip-time-badge-base.svg` / `clip-video-frame-accent.svg` / `clip-impact-marks.svg` を追加した

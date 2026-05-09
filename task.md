@@ -127,6 +127,23 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-09 `配信告知` Phase 5 preset 更新:
+  - 作業前に PR #49 `[codex] Renew karaoke thumbnail phase 5 preset` が `main` に merge済みで、local `main` / `origin/main` が merge commit `eef2748cf22f97d753fbd06f6d8ab6659a8e7c35` を含むことを確認した
+  - 作業branch / worktree: `codex/thumbnail-phase5-stream-preset` / `.worktrees/thumbnail-phase5-stream-preset`
+  - 対象は `配信告知` presetのみ。`週間予定`、全9プリセット、schema、public API、素材ライブラリUI、フォント、外部CDN依存は変更していない
+  - `imagegen` skill + built-in `image_gen` toolで、Phase 5背景 `public/assets/images/thumbnail-editor/phase5/stream-announce-background-v1.png` を生成し、読める文字、ロゴ、人物、キャラクター、実画面、SNS UI は入れていない
+  - 個別assetは `stream-label-plaque-cyan-uniform-cell.png` / `stream-time-badge-magenta-cyan-uniform-cell.png` / `stream-standee-frame-glow-uniform-cell.png` / `stream-spark-cluster-cyan-uniform-cell.png` / `stream-triangle-accent-magenta-uniform-cell.png` の5点に絞り、すべて `768 x 512` 透明PNG / alpha余白つきへ正規化した
+  - 透明assetは built-in `image_gen` の #00ff00 chroma-key 生成物を `C:\Users\taka\.codex\skills\.system\imagegen\scripts\remove_chroma_key.py` で背景除去し、repo内の `public/assets/images/thumbnail-editor/decorations/phase5/` へ移した
+  - `lib/thumbnail-editor.ts` は `stream_announce` presetだけをPhase 5構造へ更新し、`見出し` / `時刻` / `サブ` / `ラベル` は editable text layer として維持した
+  - `立ち絵挿入ガイド` / `ラベル横ライン` / `見出し下ライン` / `時刻下ライン` は shape layer として維持した
+  - 追加contract: `scripts/thumbnail-phase5-stream-preset-contract.mjs`。実装前REDは `stream_announce uses the phase 5 generated background` で確認し、実装後PASS
+  - 既存contract更新: `scripts/thumbnail-phase1-preset-assets-contract.mjs` は `stream_announce` がPhase 5へ移った前提に変更。`scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `stream_announce` をPhase 4 preset対象から外し、既存Phase 4 assetファイル自体は保存済みdraft互換のため残した
+  - 検証: 新規 `node scripts/thumbnail-phase5-stream-preset-contract.mjs`、既存Phase 5 contract群、Phase 1〜4 / preset safety / discovery / layer management / handoff / sns split contracts、`npm run lint`、`npx tsc --noEmit`、`git diff --check`、`npm run build` はPASS。`npm run build` は worktree とrootのlockfile重複によるNext.js workspace root推定warningのみ発生
+  - UI確認: static outputを `localhost:3036` で配信し、Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でcanvas非blank、horizontal overflow 0。1024px以上ではPhase 5背景 / 個別asset / shape layer / editable text layerがレイヤー一覧に残ることを確認
+  - console確認: 追加したPhase 5 `stream_announce` asset requestは404なし。Next static export のRSC prefetch `__next...txt?_rsc=` 404と、pixel sampling由来のCanvas readback warningのみ発生
+  - 確認スクリーンショット: `output/playwright/phase5-stream-final-390.png` / `phase5-stream-final-820.png` / `phase5-stream-final-1024.png` / `phase5-stream-final-1280.png` / `phase5-stream-final-1366.png`
+  - Canvas export確認: `output/playwright/phase5-stream-canvas-static-clean-1280x720.png`
+
 - 2026-05-09 `歌枠` Phase 5 preset 更新:
   - 作業前に PR #48 `[codex] Renew chatting thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` / worktree が merge commit `97986f46cd6e8d8853f981ff1a29f8830856ee69` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-karaoke-preset` / `.worktrees/thumbnail-phase5-karaoke-preset`

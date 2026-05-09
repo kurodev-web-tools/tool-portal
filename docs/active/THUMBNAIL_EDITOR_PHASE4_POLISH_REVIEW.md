@@ -489,3 +489,44 @@ Phase 5 は単なる配置微調整ではなく、プリセット構造を「完
   - 追加調整2後は static outputを `localhost:3034` で配信し、同じ 390 / 820 / 1024 / 1280 / 1366px を再確認した。各幅でcanvas非blank、horizontal overflow 0。1024px以上では追加した音符 / 右枠 / ピンク三角アクセントassetを含むPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認した。追加asset requestの404はなし。
   - pixel sampling時のみChromeのCanvas readback warningが出る。
   - 確認スクリーンショット: `output/playwright/phase5-karaoke-final-390.png` / `phase5-karaoke-final-820.png` / `phase5-karaoke-final-1024.png` / `phase5-karaoke-final-1280.png` / `phase5-karaoke-final-1366.png`
+
+## Phase 5 `配信告知` Implementation Notes
+
+- 実装日: 2026-05-09
+- 前提確認: PR #49 `[codex] Renew karaoke thumbnail phase 5 preset` は `main` に merge済み。merge commit `eef2748cf22f97d753fbd06f6d8ab6659a8e7c35` を作業開始時のlocal `main` / `origin/main` が含むことを確認した。
+- 作業branch / worktree: `codex/thumbnail-phase5-stream-preset` / `.worktrees/thumbnail-phase5-stream-preset`
+- 対象: `配信告知` presetのみ。`週間予定` や全9プリセットへは広げていない。
+- 画像生成: `imagegen` skill + built-in `image_gen` toolを使用した。CLI fallback / true native transparency は使っていない。
+- 背景: `public/assets/images/thumbnail-editor/phase5/stream-announce-background-v1.png`
+  - 既存 `stream-announce-background.png` / `stream-announce-mock.png` の方向性を参照し、濃紺のサイバー背景、シアン発光、右側の立ち絵配置余白、左側のテキスト安全領域を持つ Phase 5 背景として生成した。
+  - 読める文字、ロゴ、人物、キャラクター、実動画スクショ、実ゲーム画面、SNS UI、ラベル文字、時刻文字は入れていない。
+- 個別asset: `public/assets/images/thumbnail-editor/decorations/phase5/`
+  - `stream-label-plaque-cyan-uniform-cell.png`
+  - `stream-time-badge-magenta-cyan-uniform-cell.png`
+  - `stream-standee-frame-glow-uniform-cell.png`
+  - `stream-spark-cluster-cyan-uniform-cell.png`
+  - `stream-triangle-accent-magenta-uniform-cell.png`
+- 透明assetは built-in `image_gen` で #00ff00 chroma-key 背景つき素材として生成し、`C:\Users\taka\.codex\skills\.system\imagegen\scripts\remove_chroma_key.py` で背景除去した。採用assetはすべて `768 x 512` canvas / 最低76px以上の透明余白へ正規化した。
+- `lib/thumbnail-editor.ts` は `stream_announce` presetだけをPhase 5構造へ更新した。schema変更、素材ライブラリUI変更、フォント追加、外部CDN依存、他preset変更は行っていない。
+- ラベル / 時刻 / 見出し / サブの文字は editable text layerとして維持した。
+- ラベル横ライン / 見出し下ライン / 時刻下ライン / 立ち絵挿入ガイドは shape layerとして残した。
+- 追加contract: `scripts/thumbnail-phase5-stream-preset-contract.mjs`
+  - 実装前REDは `stream_announce uses the phase 5 generated background` で確認した。
+  - Phase 5背景、個別asset、editable text layer、shape layer責務に加え、個別asset 5点が同一 `768 x 512` canvasであること、PNG alpha境界に上下左右最低76px以上の透明余白が残ることを検証する。
+- 既存contract更新:
+  - `scripts/thumbnail-phase1-preset-assets-contract.mjs` は `stream_announce` がPhase 5へ移った前提に変更した。
+  - `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `stream_announce` をPhase 4 preset対象から外した。Phase 4 assetファイル自体は残す。
+- 検証:
+  - `node scripts/thumbnail-phase5-stream-preset-contract.mjs` PASS
+  - 既存Phase 5 contract群 PASS
+  - Phase 1〜4 / preset safety / discovery / layer management / handoff / sns split contracts PASS
+  - `npm run lint` PASS
+  - `npx tsc --noEmit` PASS
+  - `git diff --check` PASS。LF -> CRLF warningのみ
+  - `npm run build` PASS。worktree と root のlockfile重複によるNext.js workspace root推定warningのみ発生。
+- UI確認:
+  - static outputを `localhost:3036` で配信し、Playwrightで `配信告知` presetを確認。確認幅は 390 / 820 / 1024 / 1280 / 1366px。
+  - 各幅でcanvas非blank、horizontal overflow 0を確認。1024px以上ではPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認。
+  - static outputではPhase 5 asset requestはすべて 200。Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加assetの読み込み失敗ではない。Canvas pixel sampling由来の readback warning も確認した。
+  - 確認スクリーンショット: `output/playwright/phase5-stream-final-390.png` / `phase5-stream-final-820.png` / `phase5-stream-final-1024.png` / `phase5-stream-final-1280.png` / `phase5-stream-final-1366.png`
+  - Canvas export確認: `output/playwright/phase5-stream-canvas-static-clean-1280x720.png`

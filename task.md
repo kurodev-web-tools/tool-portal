@@ -239,6 +239,54 @@
   - 切り分けとして dev server `localhost:3026` でも 1366px確認を実施。`切り抜き` preset適用後、console error / warn なし。canvas非blank、水平overflow 0、Phase 5レイヤー一覧残存を確認
   - 確認スクリーンショット: `output/phase5-clip-canvas-dev-1366.png`
 
+2026-05-08 Phase 5 `お知らせ` kickoff:
+
+- 作業前に PR #43 `[codex] Renew clip thumbnail phase 5 preset` が `main` に merge済みで、local `main` が merge commit `98e5e9d949e75298165fb0ebac2f24ebee25d7c6` を含むことを確認した
+- `main` 直作業を避け、`codex/thumbnail-phase5-announcement-preset` branch / `.worktrees/thumbnail-phase5-announcement-preset` worktreeで開始した
+- 実装前の設計整理として、`docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` に `Phase 5 お知らせ Kickoff Design Memo` を追記した
+- 現時点の推奨最小PR範囲は、`お知らせ` 1プリセットだけで `背景 + 本文パネル / 大きな情報枠は初期MVPで焼き込み`、`ラベル土台 / 日付バッジ / 角飾り / 小さな光は文字なし個別asset`、`本文罫線 / サブ下ライン / 立ち絵guide枠はshape layer`、`見出し / 日付または時刻 / サブ / ラベル文字はeditable text layer` として構造検証すること
+- 実装へ進む前の確認点: 本文パネル / 大きな情報枠を初期MVPで背景へ焼き込む方針でよいか。後続で独立asset化できるよう、焼き込み範囲と分離候補はdocsへ記録済み
+- docs整理のみのため、検証は `git diff --check` を実行する
+
+2026-05-08 Phase 5 `お知らせ` preset renewal:
+
+- `imagegen` skill + built-in `image_gen` toolで、`お知らせ` 用のPhase 5背景と文字なし個別assetを生成した。CLI fallback / true native transparency は使っていない
+- Phase 5背景は `public/assets/images/thumbnail-editor/phase5/announcement-background-v1.png` として保存した。背景には大きな本文パネル / 情報枠を初期MVPとして焼き込み、読める文字、ロゴ、人物、キャラクター、実動画スクショ、実ゲーム画面、SNS UIは入れていない。初回生成でラベル枠に見える小枠が背景へ入ったため不採用にし、ラベル/日付バッジ形状を焼き込まない条件で再生成した
+- #00ff00 chroma-key assetから背景除去し、文字なし個別assetをすべて `768 x 512` の透明PNGとして `public/assets/images/thumbnail-editor/decorations/phase5/` へ保存した。最終採用assetは `1 asset = 1 canvas` とし、同一canvas / 同一セーフボックスへ正規化した
+  - `announcement-label-plaque-ivory-uniform-cell.png`
+  - `announcement-date-badge-navy-gold-uniform-cell.png`
+  - `announcement-corner-ornament-gold-uniform-cell.png`
+  - `announcement-soft-glint-cluster-gold-uniform-cell.png`
+  - `announcement-label-plaque-navy-candidate-uniform-cell.png` は未使用候補
+- `lib/thumbnail-editor.ts` は `announcement` presetだけをPhase 5構造へ更新した。背景参照をPhase 5に切り替え、本文パネルshapeを外し、ラベル土台 / 日付バッジ / 角飾り / 小さな光を個別assetとして配置した
+- `見出し` / `時刻` / `サブ` / `ラベル` は editable text layerとして維持し、`本文罫線` / `サブ下ライン` / `立ち絵guide枠` は shape layerとして残した
+- `scripts/thumbnail-phase5-announcement-preset-contract.mjs` を追加し、Phase 5背景、個別asset、editable text layer、shape layer責務、個別assetが同一 `768 x 512` canvasであること、上下左右に最低76px以上の透明余白があることを確認できるようにした
+- 既存 `scripts/thumbnail-phase2-preset-assets-contract.mjs` / `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は、`announcement` がPhase 5へ移った前提に合わせて期待値を更新した
+- 検証済み:
+  - `node scripts/thumbnail-phase5-announcement-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-clip-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-discovery-contract.mjs` PASS
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS
+  - `node scripts/tool-handoff-contract.mjs` PASS
+  - `node scripts/sns-split-image-maker-contract.mjs` PASS
+  - `npm run lint` PASS
+  - `npx tsc --noEmit` PASS
+  - `git diff --check` PASS。LF -> CRLF warningのみ
+  - `npm run build` PASS。worktree と root の lockfile 重複による Next.js workspace root 推定 warning は出たが、build は成功
+- UI確認:
+  - static outputを `localhost:3027` で配信し、Playwrightで `お知らせ` presetを適用。確認幅は 390 / 820 / 1024 / 1280 / 1366px
+  - 各幅でcanvas非blank、水平overflow 0を確認。1024px以上ではPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認
+  - static outputではPhase 5 asset requestはすべて 200。Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加assetの読み込み失敗ではない
+  - dev server確認はNext.jsのworkspace root推定によりroot側bundleを参照する可能性があったため、採用証跡から外した
+  - preset切替直後に古い非同期描画が新しいpreset canvasを上書きしないよう、main canvas / mobile preview canvasの描画をrender version付きoffscreen buffer経由に変更した
+  - 確認スクリーンショット: `output/playwright/phase5-announcement-final-390.png` / `phase5-announcement-final-820.png` / `phase5-announcement-final-1024.png` / `phase5-announcement-final-1280.png` / `phase5-announcement-final-1366.png`
+  - Canvas export確認: `output/playwright/phase5-announcement-canvas-static-clean-1280x720.png`
+
 - 2026-05-08 `コラボ` preset 単体polish:
   - `コラボ` だけを対象に、既存 Phase 2 背景 `collaboration-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 専用抽象SVG assetとして `collaboration-label-band-base.svg` / `collaboration-time-badge-base.svg` / `collaboration-duo-guide-lines.svg` / `collaboration-connection-lines.svg` / `collaboration-soft-glints.svg` を追加した

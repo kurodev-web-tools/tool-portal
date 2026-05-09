@@ -161,3 +161,97 @@ Phase 5 は単なる配置微調整ではなく、プリセット構造を「完
 - 追加contract: `scripts/thumbnail-phase5-clip-preset-contract.mjs`
   - Phase 5背景、個別asset、editable text layer、shape layer責務に加え、個別asset 6点が同一 `768 x 512` セルcanvasであることを検証する。
   - 個別asset 6点はPNG alpha境界を読み取り、上下左右に最低76px以上の透明余白が残ることも検証する。
+
+## Phase 5 `お知らせ` Kickoff Design Memo
+
+- 確認日: 2026-05-08
+- 作業branch / worktree: `codex/thumbnail-phase5-announcement-preset` / `.worktrees/thumbnail-phase5-announcement-preset`
+- 前提確認: PR #43 `[codex] Renew clip thumbnail phase 5 preset` は `main` に merge済み。merge commit `98e5e9d949e75298165fb0ebac2f24ebee25d7c6` を作業開始時のlocal `main` が含むことを確認した。
+- 対象: `お知らせ` presetのみ。全9プリセットへは広げない。
+- 参照元: `docs/mockups/thumbnail-editor-phase2-candidates/announcement-mock.png`、`docs/mockups/thumbnail-editor-phase2-candidates/announcement-background-candidate.png`、`public/assets/images/thumbnail-editor/phase2/announcement-background.png`、現行 `lib/thumbnail-editor.ts` の `announcement` preset、既存 Phase 4 `announcement-*` decoration asset、Phase 5 `切り抜き` の `1 asset = 1 canvas` 方針。
+
+### 背景へ焼き込む範囲
+
+| 範囲 | 初期MVP方針 | 将来分離候補 |
+| --- | --- | --- |
+| 背景本体 | 既存 `announcement-background.png` の濃紺、金線、右上からの落ち着いた光、粒子、紙/布に近い浅い質感を参照して再生成する。告知らしい静かな高級感を優先し、読める文字、ロゴ、人物、キャラクター、SNS UI、実画面は入れない。 | 背景variantを増やす場合は、暗め、金光強め、よりフラットな情報整理向けを別背景として追加する。 |
+| 本文パネル / 大きな情報枠 | 初期MVPでは背景へ焼き込み可。左側に大きな本文パネルを置き、角丸、薄い金縁、内側の暗い面、控えめな影まで背景と一体化させる。テキストは焼き込まない。 | 利用者が枠色や情報量を変えたくなる可能性があるため、後続で `announcement-info-panel-*` の独立asset化候補にする。枠線、内側面、角飾りを分けられるよう記録する。 |
+| テキスト安全領域 | 左パネル内にラベル、見出し2行、日付/時刻、サブを置く前提で、強い粒子や金線を文字背面に入れすぎない。見出しは左寄せでも中央寄せでも成立する広さを残す。 | 背景variant追加時も左パネル内の主要座標は維持し、handoff後のテキスト再適用を崩さない。 |
+| 日付バッジが乗る余白 | 左パネル下寄りに横長の日付/時刻バッジを置ける余白を確保する。背景にはバッジ形状を焼き込まず、バッジ土台は個別assetで差し替え可能にする。 | 日付のみ、時刻のみ、日付+曜日の3パターンに対応できるよう、バッジ幅はpreset側で調整可能にする。 |
+| 右側立ち絵guideや余白 | 右側は立ち絵配置用に明るい縦の光と静かな余白を残す。guide枠自体は焼き込みすぎず、背景には「置きやすい光の場」だけを含める。 | guide線や薄いframeはshape layerまたは個別assetへ分離し、非表示/削除しやすくする。 |
+| 光、影、奥行き、読みやすさ | 右上から左パネルへ流れる斜め光、パネル背面の影、控えめな金粒、奥行き感は背景に焼き込む。告知用途なので装飾量は増やさず、読みやすさを最優先にする。 | 前面に重ねるグリントや角飾りはオン/オフ需要があるため、個別assetに寄せる。 |
+
+### 個別asset化する範囲
+
+| Asset候補 | 初期MVP方針 |
+| --- | --- |
+| ラベル土台 | アイボリーまたは金系の文字なしラベル土台を `1 asset = 1 canvas` で生成し、`ラベル` text layerを重ねる。現行 `announcement-label-band-base.svg` の役割をPhase 5 PNG/SVG assetへ更新する。 |
+| 日付 / 時刻バッジ土台 | 横長の文字なしバッジを個別asset化する。日付、時刻、公開予定のいずれにも使えるよう、中央の文字領域を広く取り、縁と光は控えめにする。 |
+| 角飾り | 左パネルの角または右上光に馴染む小さな金線/角装飾を少数用意する。本文パネルに焼き込む角飾りと、前面に置く角飾りを混ぜない。 |
+| 小さな光やアクセント | 控えめなグリント、金粒、短い斜線を文字なし個別assetとして用意する。告知用途なので強いburstやステッカー感は避ける。 |
+| 未使用候補や色違い | プリセット採用品に加え、アイボリー強め、金強め、濃紺影強めなど少数だけ用意する。最終採用assetは同一canvas / 同一セーフボックスへ正規化する。 |
+
+透明assetが必要な場合は、まず built-in `image_gen` で均一なchroma-key背景の素材を生成し、ローカルで背景除去する。true/native transparency が必要そうな場合は、CLI fallbackへ進む前に確認する。
+
+### Shape Layerで残す範囲
+
+| 範囲 | 方針 |
+| --- | --- |
+| 本文罫線 | 見出しと日付/サブの区切りはshape layerで残し、長さ、色、opacityを後から調整できるようにする。 |
+| サブ下ライン | サブの読みやすさを補う短い金線はshape layerで維持し、不要な場合に削除しやすくする。 |
+| 立ち絵guide枠 | 右側の薄いframe guideはshape layerを第一候補にし、背景には焼き込まない。必要ならPhase 4 `announcement-guide-lines.svg` 相当を低opacity個別assetとして併用する。 |
+| 必要な簡易ガイド | テキスト安全領域やパネル内余白を示す線は公開presetで邪魔にならない薄さにする。実装時は初期表示に入れるものを最小限に絞る。 |
+
+### Text Layerで維持する範囲
+
+| Text | 方針 |
+| --- | --- |
+| 見出し | editable text layerで維持する。`大切な\nお知らせ` の2行を基準にし、Phase 5背景では左パネル内でより余白を持たせる。 |
+| 日付または時刻 | editable text layerで維持する。Schedule Calendar handoffの時刻反映を壊さず、文言は `5/10 公開`、`20:00 公開` などに差し替え可能にする。 |
+| サブ | editable text layerで維持する。本文パネル内の下部に置き、日付バッジとの距離を十分取る。 |
+| ラベル文字 | editable text layerで維持する。ラベル土台assetには `NEWS` などの文字を焼き込まない。 |
+
+### 最小PR範囲候補
+
+1. `お知らせ` 用の Phase 5 背景を1枚生成し、`public/assets/images/thumbnail-editor/phase5/announcement-background-v1.png` のような新規assetとして保存する。初期MVPでは背景 + 本文パネル / 大きな情報枠を焼き込み可にする。
+2. `お知らせ` 用の文字なし個別assetを最小数だけ追加する。必須はラベル土台、日付/時刻バッジ土台、角飾り、小さな光/アクセント。色違い・未使用候補は合計3から5点まで。
+3. 透明小物は `1 asset = 1 canvas` を原則にし、採用assetは同一canvas / 同一セーフボックスへ正規化する。sheet一括生成は候補比較用までに留める。
+4. `lib/thumbnail-editor.ts` の `announcement` presetだけを更新し、背景参照、asset配置、shape layer、text layer座標を調整する。schema変更、素材ライブラリUI変更、フォント追加、外部CDN依存、他preset変更は行わない。
+5. `scripts/thumbnail-phase5-announcement-preset-contract.mjs` を追加する。対象は Phase 5背景参照、個別asset存在、禁止要素を含まないassetファイル、editable `見出し` / `時刻` / `サブ` / `ラベル` text layer維持、本文罫線 / サブ下ライン / 立ち絵guide枠のshape layer責務。
+6. `task.md` とこのdocsへ、生成prompt、保存path、確認幅、検証結果、未採用asset候補、将来分離候補を記録する。
+
+実装に進む場合の推奨は、「背景 + 本文パネル / 大きな情報枠は初期MVPで焼き込み、ラベル土台 / 日付バッジ / 角飾り / 小さな光は個別asset、本文罫線 / サブ下ライン / 立ち絵guide枠はshape、見出し / 日付または時刻 / サブ / ラベル文字はeditable text」で開始する。
+
+### Phase 5 `お知らせ` Implementation Notes
+
+- 実装日: 2026-05-08
+- 画像生成: `imagegen` skill + built-in `image_gen` toolを使用した。CLI fallback / true native transparency は使っていない。
+- 背景: `public/assets/images/thumbnail-editor/phase5/announcement-background-v1.png`
+  - 既存 `announcement-background.png` / `announcement-mock.png` の方向性を参照し、濃紺、金線、右上スポットライト、紙/布に近い浅い質感、左側の大きな本文パネルを初期MVPとして焼き込んだ。
+  - 読める文字、ロゴ、人物、キャラクター、実動画スクショ、実ゲーム画面、SNS UI、日付バッジ、ラベル文字は入れていない。
+  - 初回生成ではラベル枠に見える小枠が背景へ入ったため不採用にし、ラベル/日付バッジ形状を焼き込まない条件で再生成した。
+- 個別asset: `public/assets/images/thumbnail-editor/decorations/phase5/`
+  - `announcement-label-plaque-ivory-uniform-cell.png`
+  - `announcement-date-badge-navy-gold-uniform-cell.png`
+  - `announcement-corner-ornament-gold-uniform-cell.png`
+  - `announcement-soft-glint-cluster-gold-uniform-cell.png`
+  - `announcement-label-plaque-navy-candidate-uniform-cell.png` は未使用候補。
+- 透明assetは built-in `image_gen` で #00ff00 chroma-key 背景つき素材として生成し、`C:\Users\taka\.codex\skills\.system\imagegen\scripts\remove_chroma_key.py` で背景除去した。採用assetはすべて `768 x 512` canvas / 最低76px以上の透明余白へ正規化した。
+- `lib/thumbnail-editor.ts` は `announcement` presetだけをPhase 5構造へ更新した。schema変更、素材ライブラリUI変更、フォント追加、外部CDN依存、他preset変更は行っていない。
+- 本文パネル / 大きな情報枠は背景へ焼き込んだため、Phase 5 `announcement` presetから `図形 1（本文パネル）` は外した。将来分離する場合は、背景内の枠線、内側暗面、角飾りを `announcement-info-panel-*` assetとして再生成する。
+- ラベル / 日付 / 見出し / サブの文字は editable text layerとして維持した。
+- 本文罫線 / サブ下ライン / 立ち絵guide枠は shape layerとして残した。
+- 追加contract: `scripts/thumbnail-phase5-announcement-preset-contract.mjs`
+  - Phase 5背景、個別asset、editable text layer、shape layer責務に加え、個別asset 5点が同一 `768 x 512` canvasであること、PNG alpha境界に上下左右最低76px以上の透明余白が残ることを検証する。
+  - `announcement-label-plaque-navy-candidate-uniform-cell.png` は存在だけ検証し、preset未使用候補として扱う。
+- 既存contract更新:
+  - `scripts/thumbnail-phase2-preset-assets-contract.mjs` は `announcement` がPhase 5へ移った前提に変更した。
+  - `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `announcement` をPhase 4 preset対象から外した。Phase 4 assetファイル自体は残す。
+- UI確認:
+  - static outputを `localhost:3027` で配信し、Playwrightで `お知らせ` presetを適用。確認幅は 390 / 820 / 1024 / 1280 / 1366px。
+  - 各幅でcanvas非blank、水平overflow 0を確認。1024px以上ではPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認。
+  - static outputではPhase 5 asset requestはすべて 200。Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加assetの読み込み失敗ではない。
+  - dev server確認はNext.jsのworkspace root推定によりroot側bundleを参照する可能性があったため、採用証跡から外した。
+  - preset切替直後に古い非同期描画が新しいpreset canvasを上書きしないよう、main canvas / mobile preview canvasの描画をrender version付きoffscreen buffer経由に変更した。
+  - 確認スクリーンショット: `output/playwright/phase5-announcement-final-390.png` / `phase5-announcement-final-820.png` / `phase5-announcement-final-1024.png` / `phase5-announcement-final-1280.png` / `phase5-announcement-final-1366.png`
+  - Canvas export確認: `output/playwright/phase5-announcement-canvas-static-clean-1280x720.png`

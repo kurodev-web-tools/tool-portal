@@ -389,6 +389,11 @@ Phase 5 は単なる配置微調整ではなく、プリセット構造を「完
 - 背景: `public/assets/images/thumbnail-editor/phase5/chatting-background-v1.png`
   - 既存 `chatting-background.png` / `chatting-mock.png` の落ち着いた暖色、右側の立ち絵余白、トーク向けのやわらかい光を参照し、Phase 5背景として再生成した。
   - 背景assetには読める文字、ロゴ、人物、キャラクター、実画面、SNS UI、ラベル文字、時刻文字は入れていない。
+- 追加調整:
+  - 初回Phase 5背景は明るいパネル感が強く、元モックの夜の部屋感と奥行きが弱かったため、背景を暗めの室内、ペンダントライト、窓のbokeh、右側の差し替え余白へ寄せて再生成した。
+  - 背景には人物、キャラクター、顔、体、人物シルエット、読める文字、SNS UI、実画面は入れていない。
+  - ラベル土台は大きいステッカー風から、元モックに近い細いカプセルへ差し替えた。
+  - 時刻バッジ、見出し、サブ、右立ち絵guideは、Phase 5構造を維持したまま元モック寄りに縮めて再配置した。
 - 個別asset: `public/assets/images/thumbnail-editor/decorations/phase5/`
   - `chatting-label-plaque-cozy-uniform-cell.png`
   - `chatting-time-badge-cozy-uniform-cell.png`

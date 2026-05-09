@@ -826,6 +826,8 @@
   - UI確認: static outputを `localhost:3031` で配信し、Playwrightで `雑談` presetを適用。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、horizontal overflow 0を確認。1024px以上ではPhase 5背景 / 個別asset / shape layer / editable text layerがレイヤー一覧に残ることを確認した。追加した Phase 5 asset request の404はなし。1024px以上では Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない。pixel sampling時のみChromeのCanvas readback warningが出る
   - 確認スクリーンショット: `output/playwright/phase5-chatting-final-390.png` / `phase5-chatting-final-820.png` / `phase5-chatting-final-1024.png` / `phase5-chatting-final-1280.png` / `phase5-chatting-final-1366.png`
   - Canvas export確認: `output/playwright/phase5-chatting-canvas-static-clean-1280x720.png`
+  - 追加調整: user確認後、元モックのほうが夜の部屋感とサムネ完成度が高かったため、Phase 5構造は維持したまま背景を暗めの室内奥行きへ再生成し、ラベル土台を細いカプセルへ差し替えた。時刻バッジ、見出し、サブ、右立ち絵guideも元モック寄りに縮めて再配置した。背景には引き続き読める文字、ロゴ、人物、キャラクター、実画面、SNS UI、人物シルエットを入れていない
+  - 追加検証: `node scripts/thumbnail-phase5-chatting-preset-contract.mjs` PASS、`npm run build` PASS、static output `localhost:3033` で1366px spot checkを行い、canvas非blank、horizontal overflow 0、1024px以上のレイヤー残存、追加asset 404なしを確認した
 - 2026-05-09 Phase 5 `コラボ` preset:
   - 作業前に PR #46 `[codex] Renew game live thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `84160c9d317bebb2c47ef78411ad0e6c1de29959` を指すことを確認した
   - `codex/thumbnail-phase5-collaboration-preset` branch / `.worktrees/thumbnail-phase5-collaboration-preset` worktree で実装した

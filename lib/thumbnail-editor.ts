@@ -383,18 +383,18 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#36aaff",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}chatting-background-v1.png`),
-      assetDecorationLayer({ name: "画像 2（やわらかい光粒）", src: `${thumbnailPhase5DecorationAssetPrefix}chatting-soft-glow-dots-uniform-cell.png`, x: 60, y: 50, width: 560, height: 373, opacity: 0.36 }),
-      shapeLayer({ name: "図形 4（やわらかい下線）", shapeType: "line", x: 104, y: 548, width: 452, height: 18, fillColor: "#efb36f", strokeColor: "#efb36f", strokeWidth: 4, borderRadius: 12, opacity: 0.5 }),
-      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 762, y: 76, width: 398, height: 556, fillColor: "#fff3df10", strokeColor: "#fff0db", strokeWidth: 2, borderRadius: 78, opacity: 0.36 }),
-      assetDecorationLayer({ name: "画像 3（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}chatting-label-plaque-cozy-uniform-cell.png`, x: 54, y: 10, width: 436, height: 291, opacity: 0.96 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "CHATTING / YouTube", x: 132, y: 100, width: 282, height: 32, fontSize: 25, color: "#1d1830", strokeWidth: 0, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Oswald", align: "center" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n雑談配信", x: 84, y: 164, width: 620, height: 252, fontSize: 101, lineHeight: 1.02, color: "#fffaf2", strokeColor: "#251431", strokeWidth: 10, shadowColor: "#df8f58", shadowBlur: 14, shadowOffsetX: 4, shadowOffsetY: 5 }),
-      assetDecorationLayer({ name: "画像 4（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}chatting-time-badge-cozy-uniform-cell.png`, x: 18, y: 384, width: 592, height: 395, opacity: 0.94 }),
-      shapeLayer({ name: "図形 5（時刻アイコン外円）", shapeType: "circle", x: 126, y: 510, width: 38, height: 38, fillColor: "#00000000", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 0, opacity: 0.9 }),
-      shapeLayer({ name: "図形 6（時刻アイコン短針）", shapeType: "line", x: 144, y: 519, width: 2, height: 20, rotation: -90, fillColor: "#f3c17c", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 4, opacity: 0.92 }),
-      shapeLayer({ name: "図形 7（時刻アイコン長針）", shapeType: "line", x: 148, y: 530, width: 16, height: 2, fillColor: "#f3c17c", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 4, opacity: 0.92 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 188, y: 506, width: 320, height: 52, fontSize: 45, color: "#fff4df", strokeColor: "#20142c", strokeWidth: 3, shadowColor: "#000000", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "今日の話題を一緒に整理しよう", x: 94, y: 604, width: 590, height: 44, fontSize: 30, color: "#fff8ee", strokeColor: "#140b21", strokeWidth: 3, shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3 })
+      assetDecorationLayer({ name: "画像 2（やわらかい光粒）", src: `${thumbnailPhase5DecorationAssetPrefix}chatting-soft-glow-dots-uniform-cell.png`, x: 48, y: 76, width: 520, height: 347, opacity: 0.28 }),
+      shapeLayer({ name: "図形 4（やわらかい下線）", shapeType: "line", x: 92, y: 610, width: 474, height: 14, fillColor: "#efb36f", strokeColor: "#efb36f", strokeWidth: 3, borderRadius: 10, opacity: 0.58 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 762, y: 92, width: 358, height: 528, fillColor: "#fff3df0c", strokeColor: "#fff0db", strokeWidth: 2, borderRadius: 120, opacity: 0.28 }),
+      assetDecorationLayer({ name: "画像 3（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}chatting-label-plaque-cozy-uniform-cell.png`, x: 58, y: 10, width: 360, height: 162, opacity: 0.96 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "CHATTING / YouTube", x: 118, y: 80, width: 250, height: 28, fontSize: 22, color: "#fff8ef", strokeWidth: 0, shadowColor: "#20142c", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Oswald", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n雑談配信", x: 86, y: 150, width: 640, height: 268, fontSize: 105, lineHeight: 1.03, color: "#fffaf2", strokeColor: "#251431", strokeWidth: 10, shadowColor: "#df8f58", shadowBlur: 15, shadowOffsetX: 4, shadowOffsetY: 5 }),
+      assetDecorationLayer({ name: "画像 4（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}chatting-time-badge-cozy-uniform-cell.png`, x: 42, y: 420, width: 510, height: 168, opacity: 0.94 }),
+      shapeLayer({ name: "図形 5（時刻アイコン外円）", shapeType: "circle", x: 118, y: 486, width: 38, height: 38, fillColor: "#00000000", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 0, opacity: 0.9 }),
+      shapeLayer({ name: "図形 6（時刻アイコン短針）", shapeType: "line", x: 136, y: 495, width: 2, height: 20, rotation: -90, fillColor: "#f3c17c", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 4, opacity: 0.92 }),
+      shapeLayer({ name: "図形 7（時刻アイコン長針）", shapeType: "line", x: 140, y: 506, width: 16, height: 2, fillColor: "#f3c17c", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 4, opacity: 0.92 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 178, y: 482, width: 320, height: 52, fontSize: 47, color: "#fff4df", strokeColor: "#20142c", strokeWidth: 3, shadowColor: "#000000", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "今日の話題を一緒に整理しよう", x: 94, y: 574, width: 590, height: 44, fontSize: 30, color: "#fff8ee", strokeColor: "#140b21", strokeWidth: 3, shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3 })
     ]
   },
   {

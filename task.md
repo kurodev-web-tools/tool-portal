@@ -810,6 +810,20 @@
 
 ## 次の整理メモ
 
+- 2026-05-09 Phase 5 `コラボ` preset:
+  - 作業前に PR #46 `[codex] Renew game live thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `84160c9d317bebb2c47ef78411ad0e6c1de29959` を指すことを確認した
+  - `codex/thumbnail-phase5-collaboration-preset` branch / `.worktrees/thumbnail-phase5-collaboration-preset` worktree で実装した
+  - `コラボ` だけを対象に、参照モック `docs/mockups/thumbnail-editor-phase2-candidates/collaboration-mock-imagegen-2026-05-08.png` のステージ光、2人配置、大きな文字配置、時刻バッジ、サブ導線へ寄せた
+  - Phase 5背景 `public/assets/images/thumbnail-editor/phase5/collaboration-background-v1.png` を追加した。背景には読める文字、ロゴ、人物、キャラクター、実画面、SNS UI、ラベル文字、時刻文字を入れていない
+  - Phase 5個別assetとして `collaboration-label-plaque-warm-uniform-cell.png` / `collaboration-time-badge-rose-gold-uniform-cell.png` / `collaboration-duo-guide-spotlight-uniform-cell.png` / `collaboration-connection-accent-uniform-cell.png` をpresetで使用し、`collaboration-soft-glint-candidate-uniform-cell.png` は未使用候補として追加した
+  - 個別assetは `768 x 512` canvas / 透明PNG / 最低76px以上の透明余白へ正規化した
+  - `lib/thumbnail-editor.ts` は `collaboration` presetだけをPhase 5構造へ更新し、`見出し` / `時刻` / `サブ` / `ラベル` は editable text layer として維持した
+  - 左右2人分のguideと二人配置ラインは shape layer として残し、2人guideスポット / 接続アクセントは個別asset layerとして残した
+  - schema変更、public API変更、新しい `shapeType`、素材ライブラリUI変更、フォント追加、外部CDN依存、他preset変更は入れていない
+  - 追加contract: `scripts/thumbnail-phase5-collaboration-preset-contract.mjs`
+  - 既存contract更新: `scripts/thumbnail-phase2-preset-assets-contract.mjs` は `collaboration` がPhase 5へ移った前提に変更し、`scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `collaboration` をPhase 4 preset対象から外した。Phase 4 assetファイル自体は残す
+  - 検証: `node scripts/thumbnail-phase5-collaboration-preset-contract.mjs` PASS、`node scripts/thumbnail-phase5-game-live-preset-contract.mjs` PASS、`node scripts/thumbnail-phase5-x-announcement-preset-contract.mjs` PASS、`node scripts/thumbnail-phase5-announcement-preset-contract.mjs` PASS、`node scripts/thumbnail-phase5-clip-preset-contract.mjs` PASS、`node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: static outputを `localhost:3030` で配信し、390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、horizontal overflow 0を確認。1024px以上ではPhase 5背景 / 個別asset / shape layer / editable text layerがレイヤー一覧に残ることを確認した。Phase 5 `collaboration` asset requestは404なし。Next static export のRSC prefetch `__next...txt?_rsc=` 404は出たが、追加assetの読み込み失敗ではない。pixel sampling時のみChromeのCanvas readback warningが出る
 - 2026-05-08 `ゲーム実況` preset 単体polish:
   - `ゲーム実況` だけを対象に、既存 Phase 2 背景 `game-live-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 専用抽象SVG assetとして `game-live-label-band-base.svg` / `game-live-time-banner-base.svg` / `game-live-hud-lines.svg` / `game-live-standee-guide-lines.svg` を追加した

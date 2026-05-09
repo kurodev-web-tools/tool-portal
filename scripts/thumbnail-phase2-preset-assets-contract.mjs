@@ -20,13 +20,8 @@ testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
 testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
 
-const phase2Presets = new Map([
-  ["collaboration", "/assets/images/thumbnail-editor/phase2/collaboration-background.png"]
-]);
-
-const mockupFiles = new Map([
-  ["collaboration", "collaboration-mock.png"]
-]);
+const phase2Presets = new Map([]);
+const migratedPhase5PresetIds = ["announcement", "game_live", "collaboration"];
 
 for (const [presetId, expectedSrc] of phase2Presets) {
   const preset = lib.thumbnailPresets.find((item) => item.id === presetId);
@@ -39,9 +34,6 @@ for (const [presetId, expectedSrc] of phase2Presets) {
 
   const publicPath = path.join(root, "public", expectedSrc.replace(/^\//, ""));
   assert.equal(fs.existsSync(publicPath), true, `${presetId} background asset exists in public`);
-
-  const mockupPath = path.join(root, "docs", "mockups", "thumbnail-editor-phase2-candidates", mockupFiles.get(presetId));
-  assert.equal(fs.existsSync(mockupPath), true, `${presetId} finished mockup exists in docs/mockups`);
 
   const draft = lib.createDraftFromPreset(presetId);
   const normalized = lib.normalizeThumbnailDraft(draft);
@@ -56,14 +48,14 @@ for (const [presetId, expectedSrc] of phase2Presets) {
   }
 }
 
-const collaboration = lib.thumbnailPresets.find((item) => item.id === "collaboration");
-assert.ok(
-  collaboration.layers.some((layer) => layer.type === "shape" && layer.name.includes("左立ち絵")),
-  "collaboration has a left standee guide shape"
-);
-assert.ok(
-  collaboration.layers.some((layer) => layer.type === "shape" && layer.name.includes("右立ち絵")),
-  "collaboration has a right standee guide shape"
-);
+for (const presetId of migratedPhase5PresetIds) {
+  const preset = lib.thumbnailPresets.find((item) => item.id === presetId);
+  assert.ok(preset, `${presetId} preset exists after phase 5 migration`);
+  assert.equal(
+    preset.layers.some((layer) => layer.type === "image" && layer.src.includes("/phase2/")),
+    false,
+    `${presetId} no longer depends on a phase 2 background after phase 5 migration`
+  );
+}
 
 console.log("thumbnail phase 2 preset asset contract checks passed");

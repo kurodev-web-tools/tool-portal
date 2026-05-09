@@ -322,3 +322,56 @@ Phase 5 は単なる配置微調整ではなく、プリセット構造を「完
   - Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でcanvas非blank、水平overflow 0。1024px以上ではPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認。
   - static outputでは Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加したPhase 5 asset requestの404ではない。
   - 確認スクリーンショット: `output/playwright/phase5-game-live-final-390.png` / `phase5-game-live-final-820.png` / `phase5-game-live-final-1024.png` / `phase5-game-live-final-1280.png` / `phase5-game-live-final-1366.png`
+
+## Phase 5 `コラボ` Implementation Notes
+
+- 実装日: 2026-05-09
+- 作業branch / worktree: `codex/thumbnail-phase5-collaboration-preset` / `.worktrees/thumbnail-phase5-collaboration-preset`
+- 前提確認: PR #46 `[codex] Renew game live thumbnail phase 5 preset` は `main` に merge済み。merge commit `84160c9d317bebb2c47ef78411ad0e6c1de29959` を作業開始時の `origin/main` が指していることを確認した。
+- 対象: `コラボ` presetのみ。全9プリセットへは広げていない。
+- 参照モック: `docs/mockups/thumbnail-editor-phase2-candidates/collaboration-mock-imagegen-2026-05-08.png`
+- 背景: `public/assets/images/thumbnail-editor/phase5/collaboration-background-v1.png`
+  - 参照モックの右側ステージ、2人分のスポットライト、円形guide、紙吹雪密度を基準にした。
+  - 背景assetには読める文字、ロゴ、人物、キャラクター、実画面、SNS UI、ラベル文字、時刻文字は入れていない。
+  - 左側はテキスト安全領域として暗く開け、参照モックに含まれる見出し / ラベル / 時刻 / サブは焼き込まず、editable text layerで再構成した。
+- 個別asset: `public/assets/images/thumbnail-editor/decorations/phase5/`
+  - `collaboration-label-plaque-warm-uniform-cell.png`
+  - `collaboration-time-badge-rose-gold-uniform-cell.png`
+  - `collaboration-duo-guide-spotlight-uniform-cell.png`
+  - `collaboration-connection-accent-uniform-cell.png`
+  - `collaboration-soft-glint-candidate-uniform-cell.png` は未使用候補。
+- 個別assetは `768 x 512` canvas / 透明PNG / 最低76px以上の透明余白へ正規化した。
+- `lib/thumbnail-editor.ts` は `collaboration` presetだけをPhase 5構造へ更新した。schema変更、素材ライブラリUI変更、フォント追加、外部CDN依存、他preset変更は行っていない。
+- ラベル / 時刻 / 見出し / サブの文字は editable text layerとして維持した。
+- 左右2人分のguideと二人配置ラインは shape layerとして残し、2人guideスポットと接続アクセントは個別asset layerとして残した。
+- 追加contract: `scripts/thumbnail-phase5-collaboration-preset-contract.mjs`
+  - Phase 5背景、背景asset存在 / `1280 x 720`、個別asset存在 / `768 x 512` / alpha余白、editable text layer、2人guide / 舞台接続要素、draft normalization 後の背景維持を検証する。
+  - `collaboration-soft-glint-candidate-uniform-cell.png` は存在だけ検証し、preset未使用候補として扱う。
+- 既存contract更新:
+  - `scripts/thumbnail-phase2-preset-assets-contract.mjs` は `collaboration` がPhase 5へ移った前提に変更した。
+  - `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `collaboration` をPhase 4 preset対象から外した。Phase 4 assetファイル自体は残す。
+- 検証:
+  - `node scripts/thumbnail-phase5-collaboration-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-game-live-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-x-announcement-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-announcement-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-clip-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-discovery-contract.mjs` PASS
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS
+  - `node scripts/tool-handoff-contract.mjs` PASS
+  - `node scripts/sns-split-image-maker-contract.mjs` PASS
+  - `npm run lint` PASS
+  - `npx tsc --noEmit` PASS
+  - `git diff --check` PASS
+  - `npm run build` PASS。worktree内 `package-lock.json` と root 側 lockfile の重複による Next.js workspace root 推定 warning は出たが、build は成功した。
+- UI確認:
+  - static outputを `localhost:3030` で配信し、Playwrightで `コラボ` presetを適用。確認幅は 390 / 820 / 1024 / 1280 / 1366px。
+  - 各幅でcanvas非blank、水平overflow 0を確認。1024px以上ではPhase 5背景、Phase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認。
+  - static outputではPhase 5 `collaboration` asset requestはすべて 200。Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加したPhase 5 assetの読み込み失敗ではない。
+  - pixel sampling時のみChromeのCanvas readback warningが出る。
+  - 確認スクリーンショット: `output/playwright/phase5-collaboration-final-390.png` / `phase5-collaboration-final-820.png` / `phase5-collaboration-final-1024.png` / `phase5-collaboration-final-1280.png` / `phase5-collaboration-final-1366.png`

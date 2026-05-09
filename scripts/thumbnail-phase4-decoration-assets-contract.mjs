@@ -80,14 +80,12 @@ const phase4PresetIds = [
   "stream_announce",
   "karaoke",
   "chatting",
-  "collaboration",
   "weekly_schedule"
 ];
 const phase4PresetExpectations = {
   stream_announce: { minDecorationImages: 9, shapeTypes: ["frame", "line"] },
   karaoke: { minDecorationImages: 13, shapeTypes: ["frame", "line"] },
   chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
-  collaboration: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
   weekly_schedule: { minDecorationImages: 5, shapeTypes: ["line", "frame"] }
 };
 
@@ -168,32 +166,6 @@ for (const fileName of [
   "karaoke-glint-single-soft-white.png"
 ]) {
   assert.equal(karaokeDecorationSources.has(fileName), true, `karaoke uses dedicated ${fileName}`);
-}
-
-const collaborationPreset = lib.thumbnailPresets.find((item) => item.id === "collaboration");
-const collaborationDecorationSources = new Set(
-  collaborationPreset.layers
-    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
-    .map((layer) => path.basename(layer.src))
-);
-for (const fileName of [
-  "collaboration-label-band-base.svg",
-  "collaboration-time-badge-base.svg",
-  "collaboration-duo-guide-lines.svg",
-  "collaboration-connection-lines.svg",
-  "collaboration-soft-glints.svg"
-]) {
-  assert.equal(collaborationDecorationSources.has(fileName), true, `collaboration uses dedicated ${fileName}`);
-}
-assert.ok(
-  collaborationPreset.layers.some((layer) => layer.type === "image" && layer.src.endsWith("/phase2/collaboration-background.png") && layer.locked === true),
-  "collaboration keeps the locked phase 2 background"
-);
-for (const textRole of ["見出し", "時刻", "サブ", "ラベル"]) {
-  assert.ok(
-    collaborationPreset.layers.some((layer) => layer.type === "text" && layer.name.includes(textRole)),
-    `collaboration keeps editable ${textRole} text layer`
-  );
 }
 
 const weeklySchedulePreset = lib.thumbnailPresets.find((item) => item.id === "weekly_schedule");

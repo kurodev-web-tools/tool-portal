@@ -453,16 +453,16 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     accent: "#ff7a59",
     layers: [
       assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}collaboration-background-v1.png`),
-      assetDecorationLayer({ name: "画像 2（2人guideスポット）", src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-duo-guide-spotlight-uniform-cell.png`, x: 594, y: 102, width: 628, height: 419, opacity: 0.72 }),
-      assetDecorationLayer({ name: "画像 3（接続アクセント）", src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-connection-accent-uniform-cell.png`, x: 596, y: 300, width: 596, height: 397, opacity: 0.8 }),
+      assetDecorationLayer({ name: "画像 2（2人guideスポット）", src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-duo-guide-spotlight-uniform-cell.png`, x: 594, y: 102, width: 628, height: 419, opacity: 0.18 }),
+      assetDecorationLayer({ name: "画像 3（接続アクセント）", src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-connection-accent-uniform-cell.png`, x: 596, y: 318, width: 596, height: 397, opacity: 0.42 }),
       shapeLayer({ name: "図形 1（左立ち絵ガイド）", shapeType: "frame", x: 650, y: 150, width: 292, height: 452, fillColor: "#ff7b5912", strokeColor: "#ffd28c", strokeWidth: 2, borderRadius: 76, opacity: 0.42 }),
       shapeLayer({ name: "図形 2（右立ち絵ガイド）", shapeType: "frame", x: 902, y: 150, width: 300, height: 452, fillColor: "#ff4cc212", strokeColor: "#ffc4f0", strokeWidth: 2, borderRadius: 76, opacity: 0.42 }),
       shapeLayer({ name: "図形 5（二人配置ライン）", shapeType: "line", x: 682, y: 618, width: 496, height: 16, fillColor: "#ffe8d8", strokeColor: "#ffe8d8", strokeWidth: 3, borderRadius: 8, opacity: 0.42 }),
-      assetDecorationLayer({ name: "画像 4（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-label-plaque-warm-uniform-cell.png`, x: 26, y: 26, width: 526, height: 351, opacity: 0.98 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "GUEST", x: 146, y: 102, width: 278, height: 44, fontSize: 42, color: "#fff8ec", strokeColor: "#7d2307", strokeWidth: 2, shadowColor: "#25050b", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Oswald", align: "center" }),
+      assetDecorationLayer({ name: "画像 4（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-label-plaque-warm-uniform-cell.png`, x: 48, y: -25, width: 467, height: 251, opacity: 0.98 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "GUEST", x: 158, y: 75, width: 250, height: 44, fontSize: 42, color: "#fff8ec", strokeColor: "#7d2307", strokeWidth: 2, shadowColor: "#25050b", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Oswald", align: "center" }),
       textLayer({ name: "テキスト 1（見出し）", text: "コラボ\n配信", x: 72, y: 178, width: 590, height: 248, fontSize: 112, lineHeight: 0.96, color: "#fff8ef", strokeColor: "#330804", strokeWidth: 14, shadowColor: "#ff4d31", shadowBlur: 12, shadowOffsetX: 5, shadowOffsetY: 7 }),
-      assetDecorationLayer({ name: "画像 5（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-time-badge-rose-gold-uniform-cell.png`, x: 24, y: 366, width: 590, height: 393, opacity: 0.96 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 170, y: 486, width: 326, height: 52, fontSize: 46, color: "#fff2c2", strokeColor: "#23050a", strokeWidth: 3, shadowColor: "#ff3b86", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Oswald", align: "center" }),
+      assetDecorationLayer({ name: "画像 5（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-time-badge-rose-gold-uniform-cell.png`, x: 18, y: 380, width: 540, height: 267, opacity: 0.96 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 184, y: 492, width: 304, height: 52, fontSize: 46, color: "#fff2c2", strokeColor: "#23050a", strokeWidth: 3, shadowColor: "#ff3b86", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Oswald", align: "center" }),
       textLayer({ name: "テキスト 3（サブ）", text: "ゲスト名 / 企画名", x: 100, y: 592, width: 490, height: 50, fontSize: 35, align: "center", color: "#fffdf7", strokeColor: "#180610", strokeWidth: 4, shadowColor: "#ff7a2b", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3 })
     ]
   },

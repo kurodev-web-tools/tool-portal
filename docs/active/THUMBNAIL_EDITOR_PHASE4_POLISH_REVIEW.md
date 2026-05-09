@@ -334,6 +334,7 @@ Phase 5 は単なる配置微調整ではなく、プリセット構造を「完
   - 参照モックの右側ステージ、2人分のスポットライト、円形guide、紙吹雪密度を基準にした。
   - 背景assetには読める文字、ロゴ、人物、キャラクター、実画面、SNS UI、ラベル文字、時刻文字は入れていない。
   - 左側はテキスト安全領域として暗く開け、参照モックに含まれる見出し / ラベル / 時刻 / サブは焼き込まず、editable text layerで再構成した。
+- 追加調整: user確認後に `imagegen` で背景 / ラベル土台 / 時刻バッジ / 接続アクセントを再生成し、背景側へステージ光と2人配置の大きな空間を焼き込んだ。2人guideスポットは人物シルエットや濁りが残らない透明PNGへ再正規化し、preset上では補助レイヤーとして低opacityにした。
 - 個別asset: `public/assets/images/thumbnail-editor/decorations/phase5/`
   - `collaboration-label-plaque-warm-uniform-cell.png`
   - `collaboration-time-badge-rose-gold-uniform-cell.png`
@@ -371,6 +372,7 @@ Phase 5 は単なる配置微調整ではなく、プリセット構造を「完
   - `npm run build` PASS。worktree内 `package-lock.json` と root 側 lockfile の重複による Next.js workspace root 推定 warning は出たが、build は成功した。
 - UI確認:
   - static outputを `localhost:3030` で配信し、Playwrightで `コラボ` presetを適用。確認幅は 390 / 820 / 1024 / 1280 / 1366px。
+  - 追加調整後は worktree dev server `localhost:3000` でも Playwrightで同じ5幅を確認した。
   - 各幅でcanvas非blank、水平overflow 0を確認。1024px以上ではPhase 5背景、Phase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認。
   - static outputではPhase 5 `collaboration` asset requestはすべて 200。Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加したPhase 5 assetの読み込み失敗ではない。
   - pixel sampling時のみChromeのCanvas readback warningが出る。

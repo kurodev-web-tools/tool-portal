@@ -20,13 +20,9 @@ testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
 testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
 
-const phase3Presets = new Map([
-  ["chatting", "/assets/images/thumbnail-editor/phase3/chatting-background.png"]
-]);
+const phase3Presets = new Map();
 
-const mockupFiles = new Map([
-  ["chatting", "chatting-mock.png"]
-]);
+const mockupFiles = new Map();
 
 for (const [presetId, expectedSrc] of phase3Presets) {
   const preset = lib.thumbnailPresets.find((item) => item.id === presetId);
@@ -56,10 +52,12 @@ for (const [presetId, expectedSrc] of phase3Presets) {
   }
 }
 
-const chatting = lib.thumbnailPresets.find((item) => item.id === "chatting");
-assert.ok(
-  chatting.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),
-  "chatting has an editable standee guide shape"
-);
+const retiredPhase3Assets = [
+  "/assets/images/thumbnail-editor/phase3/chatting-background.png"
+];
+for (const retiredAsset of retiredPhase3Assets) {
+  const publicPath = path.join(root, "public", retiredAsset.replace(/^\//, ""));
+  assert.equal(fs.existsSync(publicPath), true, `${path.basename(retiredAsset)} remains available for existing saved drafts`);
+}
 
 console.log("thumbnail phase 3 preset asset contract checks passed");

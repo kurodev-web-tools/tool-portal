@@ -79,13 +79,11 @@ const expectedDecorationFiles = [
 const phase4PresetIds = [
   "stream_announce",
   "karaoke",
-  "chatting",
   "weekly_schedule"
 ];
 const phase4PresetExpectations = {
   stream_announce: { minDecorationImages: 9, shapeTypes: ["frame", "line"] },
   karaoke: { minDecorationImages: 13, shapeTypes: ["frame", "line"] },
-  chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
   weekly_schedule: { minDecorationImages: 5, shapeTypes: ["line", "frame"] }
 };
 

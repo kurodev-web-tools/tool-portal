@@ -810,6 +810,24 @@
 
 ## 次の整理メモ
 
+- 2026-05-09 Phase 5 `雑談` preset:
+  - 作業前に PR #47 `[codex] Renew collaboration thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `32b38c5e21602cf922a413755376b7856e745252` を指すことを確認した
+  - `task.md` / `docs/active/THUMBNAIL_EDITOR_PHASE4_POLISH_REVIEW.md` / 既存mock / assetを確認し、`雑談` は Phase 4 review で余白と可読性が安定し、歌枠より最小asset構成へ移しやすいため今回対象にした。対象は `雑談` のみで、全9プリセットへは広げていない
+  - `codex/thumbnail-phase5-chatting-preset` branch / `.worktrees/thumbnail-phase5-chatting-preset` worktree で実装した
+  - Phase 5背景 `public/assets/images/thumbnail-editor/phase5/chatting-background-v1.png` を追加した。背景には読める文字、ロゴ、人物、キャラクター、実画面、SNS UI、ラベル文字、時刻文字を入れていない
+  - Phase 5個別assetとして `chatting-label-plaque-cozy-uniform-cell.png` / `chatting-time-badge-cozy-uniform-cell.png` / `chatting-soft-glow-dots-uniform-cell.png` を追加し、presetで使用した
+  - 個別assetは built-in `image_gen` の chroma-key 出力から背景除去し、`768 x 512` canvas / 透明PNG / 最低76px以上の透明余白へ正規化した
+  - `lib/thumbnail-editor.ts` は `chatting` presetだけをPhase 5構造へ更新し、`見出し` / `時刻` / `サブ` / `ラベル` は editable text layer として維持した
+  - 立ち絵guide、下線、時刻アイコンは shape layer として残した。schema変更、public API変更、新しい `shapeType`、素材ライブラリUI変更、フォント追加、外部CDN依存、他preset変更は入れていない
+  - 追加contract: `scripts/thumbnail-phase5-chatting-preset-contract.mjs`
+  - 既存contract更新: `scripts/thumbnail-phase3-preset-assets-contract.mjs` は `chatting` がPhase 5へ移った前提に変更し、`scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `chatting` をPhase 4 preset対象から外した。既存Phase 3背景 / Phase 4 assetファイル自体は残す
+  - RED確認: 新規contractは実装前に `chatting uses the phase 5 generated background` で失敗し、実装後にPASSした
+  - 検証: `node scripts/thumbnail-phase5-chatting-preset-contract.mjs` PASS、既存Phase 5 contract群 PASS、`node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS、`node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`node scripts/sns-split-image-maker-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: static outputを `localhost:3031` で配信し、Playwrightで `雑談` presetを適用。390 / 820 / 1024 / 1280 / 1366px でcanvas非blank、horizontal overflow 0を確認。1024px以上ではPhase 5背景 / 個別asset / shape layer / editable text layerがレイヤー一覧に残ることを確認した。追加した Phase 5 asset request の404はなし。1024px以上では Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない。pixel sampling時のみChromeのCanvas readback warningが出る
+  - 確認スクリーンショット: `output/playwright/phase5-chatting-final-390.png` / `phase5-chatting-final-820.png` / `phase5-chatting-final-1024.png` / `phase5-chatting-final-1280.png` / `phase5-chatting-final-1366.png`
+  - Canvas export確認: `output/playwright/phase5-chatting-canvas-static-clean-1280x720.png`
+  - 追加調整: user確認後、元モックのほうが夜の部屋感とサムネ完成度が高かったため、Phase 5構造は維持したまま背景を暗めの室内奥行きへ再生成し、ラベル土台を細いカプセルへ差し替えた。時刻バッジ、見出し、サブ、右立ち絵guideも元モック寄りに縮めて再配置した。背景には引き続き読める文字、ロゴ、人物、キャラクター、実画面、SNS UI、人物シルエットを入れていない
+  - 追加検証: `node scripts/thumbnail-phase5-chatting-preset-contract.mjs` PASS、`npm run build` PASS、static output `localhost:3033` で1366px spot checkを行い、canvas非blank、horizontal overflow 0、1024px以上のレイヤー残存、追加asset 404なしを確認した
 - 2026-05-09 Phase 5 `コラボ` preset:
   - 作業前に PR #46 `[codex] Renew game live thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `84160c9d317bebb2c47ef78411ad0e6c1de29959` を指すことを確認した
   - `codex/thumbnail-phase5-collaboration-preset` branch / `.worktrees/thumbnail-phase5-collaboration-preset` worktree で実装した

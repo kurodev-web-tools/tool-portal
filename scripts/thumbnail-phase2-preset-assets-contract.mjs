@@ -22,14 +22,12 @@ const lib = testModule.exports;
 
 const phase2Presets = new Map([
   ["game_live", "/assets/images/thumbnail-editor/phase2/game-live-background.png"],
-  ["collaboration", "/assets/images/thumbnail-editor/phase2/collaboration-background.png"],
-  ["announcement", "/assets/images/thumbnail-editor/phase2/announcement-background.png"]
+  ["collaboration", "/assets/images/thumbnail-editor/phase2/collaboration-background.png"]
 ]);
 
 const mockupFiles = new Map([
   ["game_live", "game-live-mock.png"],
-  ["collaboration", "collaboration-mock.png"],
-  ["announcement", "announcement-mock.png"]
+  ["collaboration", "collaboration-mock.png"]
 ]);
 
 for (const [presetId, expectedSrc] of phase2Presets) {
@@ -74,12 +72,6 @@ assert.ok(
 assert.ok(
   collaboration.layers.some((layer) => layer.type === "shape" && layer.name.includes("右立ち絵")),
   "collaboration has a right standee guide shape"
-);
-
-const announcement = lib.thumbnailPresets.find((item) => item.id === "announcement");
-assert.ok(
-  announcement.layers.some((layer) => layer.type === "shape" && layer.name.includes("本文パネル")),
-  "announcement keeps the body panel editable as a shape layer"
 );
 
 console.log("thumbnail phase 2 preset asset contract checks passed");

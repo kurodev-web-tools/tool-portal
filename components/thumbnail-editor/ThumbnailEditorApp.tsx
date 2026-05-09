@@ -320,6 +320,8 @@ export function ThumbnailEditorApp() {
   const panRef = useRef<CanvasPanState | null>(null);
   const lastTapRef = useRef<LastTapState | null>(null);
   const userAdjustedZoomRef = useRef(false);
+  const canvasRenderVersionRef = useRef(0);
+  const mobilePreviewRenderVersionRef = useRef(0);
 
   const selectedLayer = useMemo(
     () => draft.layers.find((layer) => layer.id === draft.selectedLayerId) ?? null,
@@ -413,8 +415,21 @@ export function ThumbnailEditorApp() {
     if (!canvas) {
       return;
     }
-    drawThumbnail(canvas, draft, { selectedLayerId: draft.selectedLayerId, includeSelection: true }).catch(() => {
-      showToast("error", "キャンバスの描画に失敗しました。");
+    const renderVersion = (canvasRenderVersionRef.current += 1);
+    const buffer = document.createElement("canvas");
+    drawThumbnail(buffer, draft, { selectedLayerId: draft.selectedLayerId, includeSelection: true }).then(() => {
+      if (canvasRenderVersionRef.current !== renderVersion || canvasRef.current !== canvas) {
+        return;
+      }
+      canvas.width = buffer.width;
+      canvas.height = buffer.height;
+      const context = canvas.getContext("2d");
+      context?.clearRect(0, 0, canvas.width, canvas.height);
+      context?.drawImage(buffer, 0, 0);
+    }).catch(() => {
+      if (canvasRenderVersionRef.current === renderVersion) {
+        showToast("error", "キャンバスの描画に失敗しました。");
+      }
     });
   }, [draft, showToast]);
 
@@ -428,8 +443,21 @@ export function ThumbnailEditorApp() {
       return;
     }
 
-    drawThumbnail(canvas, draft, { selectedLayerId: null, includeSelection: false }).catch(() => {
-      showToast("error", "全体プレビューの描画に失敗しました。");
+    const renderVersion = (mobilePreviewRenderVersionRef.current += 1);
+    const buffer = document.createElement("canvas");
+    drawThumbnail(buffer, draft, { selectedLayerId: null, includeSelection: false }).then(() => {
+      if (mobilePreviewRenderVersionRef.current !== renderVersion || mobilePreviewCanvasRef.current !== canvas) {
+        return;
+      }
+      canvas.width = buffer.width;
+      canvas.height = buffer.height;
+      const context = canvas.getContext("2d");
+      context?.clearRect(0, 0, canvas.width, canvas.height);
+      context?.drawImage(buffer, 0, 0);
+    }).catch(() => {
+      if (mobilePreviewRenderVersionRef.current === renderVersion) {
+        showToast("error", "全体プレビューの描画に失敗しました。");
+      }
     });
   }, [draft, mobilePreviewOpen, showToast]);
 

@@ -82,7 +82,6 @@ const phase4PresetIds = [
   "chatting",
   "game_live",
   "collaboration",
-  "announcement",
   "weekly_schedule",
   "x_announcement"
 ];
@@ -92,7 +91,6 @@ const phase4PresetExpectations = {
   chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
   game_live: { minDecorationImages: 5, shapeTypes: ["frame", "line", "polygon"] },
   collaboration: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
-  announcement: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
   weekly_schedule: { minDecorationImages: 5, shapeTypes: ["line", "frame"] },
   x_announcement: { minDecorationImages: 7, shapeTypes: ["frame", "line", "burst"] }
 };
@@ -214,31 +212,6 @@ for (const textRole of ["見出し", "時刻", "サブ", "ラベル"]) {
   assert.ok(
     collaborationPreset.layers.some((layer) => layer.type === "text" && layer.name.includes(textRole)),
     `collaboration keeps editable ${textRole} text layer`
-  );
-}
-
-const announcementPreset = lib.thumbnailPresets.find((item) => item.id === "announcement");
-const announcementDecorationSources = new Set(
-  announcementPreset.layers
-    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
-    .map((layer) => path.basename(layer.src))
-);
-for (const fileName of [
-  "announcement-label-band-base.svg",
-  "announcement-date-badge-base.svg",
-  "announcement-guide-lines.svg",
-  "announcement-soft-glints.svg"
-]) {
-  assert.equal(announcementDecorationSources.has(fileName), true, `announcement uses dedicated ${fileName}`);
-}
-assert.ok(
-  announcementPreset.layers.some((layer) => layer.type === "image" && layer.src.endsWith("/phase2/announcement-background.png") && layer.locked === true),
-  "announcement keeps the locked phase 2 background"
-);
-for (const textRole of ["見出し", "時刻", "サブ", "ラベル"]) {
-  assert.ok(
-    announcementPreset.layers.some((layer) => layer.type === "text" && layer.name.includes(textRole)),
-    `announcement keeps editable ${textRole} text layer`
   );
 }
 

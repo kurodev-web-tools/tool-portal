@@ -21,13 +21,11 @@ testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
 
 const phase3Presets = new Map([
-  ["chatting", "/assets/images/thumbnail-editor/phase3/chatting-background.png"],
-  ["x_announcement", "/assets/images/thumbnail-editor/phase3/x-announcement-background.png"]
+  ["chatting", "/assets/images/thumbnail-editor/phase3/chatting-background.png"]
 ]);
 
 const mockupFiles = new Map([
-  ["chatting", "chatting-mock.png"],
-  ["x_announcement", "x-announcement-mock.png"]
+  ["chatting", "chatting-mock.png"]
 ]);
 
 for (const [presetId, expectedSrc] of phase3Presets) {
@@ -62,16 +60,6 @@ const chatting = lib.thumbnailPresets.find((item) => item.id === "chatting");
 assert.ok(
   chatting.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),
   "chatting has an editable standee guide shape"
-);
-
-const xAnnouncement = lib.thumbnailPresets.find((item) => item.id === "x_announcement");
-assert.ok(
-  xAnnouncement.layers.some((layer) => layer.type === "image" && layer.src.endsWith("/decorations/phase4/x-post-card-base.svg")),
-  "x_announcement keeps the post card as a dedicated phase 4 asset layer"
-);
-assert.ok(
-  xAnnouncement.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),
-  "x_announcement has an editable standee guide shape"
 );
 
 console.log("thumbnail phase 3 preset asset contract checks passed");

@@ -287,6 +287,45 @@
   - 確認スクリーンショット: `output/playwright/phase5-announcement-final-390.png` / `phase5-announcement-final-820.png` / `phase5-announcement-final-1024.png` / `phase5-announcement-final-1280.png` / `phase5-announcement-final-1366.png`
   - Canvas export確認: `output/playwright/phase5-announcement-canvas-static-clean-1280x720.png`
 
+2026-05-09 Phase 5 `X告知画像` preset renewal:
+
+- 作業前に PR #44 `[codex] Renew announcement thumbnail phase 5 preset` が `main` に merge済みで、local `main` / `origin/main` が merge commit `e73f8b4555455df768643eb3222aefdb1bc20c69` を含むことを確認した
+- `imagegen` skill + built-in `image_gen` toolで、`X告知画像` 用のPhase 5背景と文字なし個別assetを生成した。CLI fallback / true native transparency は使っていない
+- Phase 5背景は `public/assets/images/thumbnail-editor/phase5/x-announcement-background-v1.png` として保存した。背景には大きな投稿カード / 情報パネルを初期MVPとして焼き込み、読める文字、ロゴ、SNS UI、X/Twitterロゴ、人物、キャラクター、実画面、日付バッジ、ラベル文字は入れていない
+- #00ff00 chroma-key assetから背景除去し、文字なし個別assetをすべて `768 x 512` の透明PNGとして `public/assets/images/thumbnail-editor/decorations/phase5/` へ保存した。最終採用assetは `1 asset = 1 canvas` とし、同一canvas / 同一セーフボックスへ正規化した
+  - `x-announcement-label-plaque-blue-uniform-cell.png`
+  - `x-announcement-date-badge-blue-gold-uniform-cell.png`
+  - `x-announcement-corner-ornament-gold-uniform-cell.png`
+  - `x-announcement-soft-glint-cluster-blue-uniform-cell.png`
+  - `x-announcement-label-plaque-ivory-candidate-uniform-cell.png` は未使用候補
+- `lib/thumbnail-editor.ts` は `x_announcement` presetだけをPhase 5構造へ更新した。背景参照をPhase 5に切り替え、Phase 4投稿カードassetを外し、ラベル土台 / 日付バッジ / 角飾り / 小さな光を個別assetとして配置した
+- `見出し` / `時刻` / `サブ` / `ラベル` は editable text layerとして維持し、`本文罫線` / `サブ下ライン` / `立ち絵guide枠` は shape layerとして残した
+- `scripts/thumbnail-phase5-x-announcement-preset-contract.mjs` を追加し、Phase 5背景、個別asset、editable text layer、shape layer責務、個別assetが同一 `768 x 512` canvasであること、上下左右に最低76px以上の透明余白があることを確認できるようにした
+- 既存 `scripts/thumbnail-phase3-preset-assets-contract.mjs` / `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は、`x_announcement` がPhase 5へ移った前提に合わせて期待値を更新した
+- 検証済み:
+  - `node scripts/thumbnail-phase5-x-announcement-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-announcement-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-clip-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-discovery-contract.mjs` PASS
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS
+  - `node scripts/tool-handoff-contract.mjs` PASS
+  - `node scripts/sns-split-image-maker-contract.mjs` PASS
+  - `npm run lint` PASS
+  - `npx tsc --noEmit` PASS
+  - `git diff --check` PASS。LF -> CRLF warningのみ
+  - `npm run build` PASS。worktree と root の lockfile 重複による Next.js workspace root 推定 warning は出たが、build は成功
+- UI確認:
+  - static outputを `localhost:3028` で配信し、Playwrightで `X告知画像` presetを適用。確認幅は 390 / 820 / 1024 / 1280 / 1366px
+  - 各幅でcanvas非blank、水平overflow 0を確認。1024px以上ではPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認
+  - static outputではPhase 5 asset requestはすべて 200。Next static export のRSC prefetch `__next...txt?_rsc=` 404と、静的配信中の内部HEAD request abort、1280px確認時のGoogle Fonts request abortが出たが、今回追加assetの読み込み失敗ではない
+  - 確認スクリーンショット: `output/playwright/phase5-x-announcement-final-390.png` / `phase5-x-announcement-final-820.png` / `phase5-x-announcement-final-1024.png` / `phase5-x-announcement-final-1280.png` / `phase5-x-announcement-final-1366.png`
+  - Canvas export確認: `output/playwright/phase5-x-announcement-canvas-static-clean-1280x720.png`
+
 - 2026-05-08 `コラボ` preset 単体polish:
   - `コラボ` だけを対象に、既存 Phase 2 背景 `collaboration-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 専用抽象SVG assetとして `collaboration-label-band-base.svg` / `collaboration-time-badge-base.svg` / `collaboration-duo-guide-lines.svg` / `collaboration-connection-lines.svg` / `collaboration-soft-glints.svg` を追加した

@@ -82,8 +82,7 @@ const phase4PresetIds = [
   "chatting",
   "game_live",
   "collaboration",
-  "weekly_schedule",
-  "x_announcement"
+  "weekly_schedule"
 ];
 const phase4PresetExpectations = {
   stream_announce: { minDecorationImages: 9, shapeTypes: ["frame", "line"] },
@@ -91,8 +90,7 @@ const phase4PresetExpectations = {
   chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
   game_live: { minDecorationImages: 5, shapeTypes: ["frame", "line", "polygon"] },
   collaboration: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
-  weekly_schedule: { minDecorationImages: 5, shapeTypes: ["line", "frame"] },
-  x_announcement: { minDecorationImages: 7, shapeTypes: ["frame", "line", "burst"] }
+  weekly_schedule: { minDecorationImages: 5, shapeTypes: ["line", "frame"] }
 };
 
 for (const fileName of expectedDecorationFiles) {
@@ -215,34 +213,6 @@ for (const textRole of ["見出し", "時刻", "サブ", "ラベル"]) {
   );
 }
 
-const xAnnouncementPreset = lib.thumbnailPresets.find((item) => item.id === "x_announcement");
-const xAnnouncementDecorationSources = new Set(
-  xAnnouncementPreset.layers
-    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
-    .map((layer) => path.basename(layer.src))
-);
-for (const fileName of [
-  "x-post-card-base.svg",
-  "x-label-band-base.svg",
-  "x-date-badge-base.svg",
-  "x-standee-guide-lines.svg",
-  "x-corner-ornaments.svg",
-  "dot-dash-row.svg",
-  "soft-light-particles.svg"
-]) {
-  assert.equal(xAnnouncementDecorationSources.has(fileName), true, `x_announcement uses dedicated or shared ${fileName}`);
-}
-assert.ok(
-  xAnnouncementPreset.layers.some((layer) => layer.type === "image" && layer.src.endsWith("/phase3/x-announcement-background.png") && layer.locked === true),
-  "x_announcement keeps the locked phase 3 background"
-);
-for (const textRole of ["見出し", "時刻", "サブ", "ラベル"]) {
-  assert.ok(
-    xAnnouncementPreset.layers.some((layer) => layer.type === "text" && layer.name.includes(textRole)),
-    `x_announcement keeps editable ${textRole} text layer`
-  );
-}
-
 const weeklySchedulePreset = lib.thumbnailPresets.find((item) => item.id === "weekly_schedule");
 const weeklyScheduleDecorationSources = new Set(
   weeklySchedulePreset.layers
@@ -278,8 +248,10 @@ for (const dayName of ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜
 }
 
 const allShapeTypes = new Set(lib.thumbnailPresets.flatMap((preset) => preset.layers.filter((layer) => layer.type === "shape").map((layer) => layer.shapeType)));
-for (const shapeType of ["line", "burst", "frame", "polygon"]) {
+for (const shapeType of ["line", "frame", "polygon"]) {
   assert.equal(allShapeTypes.has(shapeType), true, `${shapeType} shapeType is used by preset initial layers`);
+}
+for (const shapeType of ["line", "burst", "frame", "polygon"]) {
   assert.equal(typeof lib.thumbnailShapeTypeLabels[shapeType], "string", `${shapeType} has a shape label`);
 }
 

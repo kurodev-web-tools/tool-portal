@@ -289,3 +289,36 @@ Phase 5 は単なる配置微調整ではなく、プリセット構造を「完
   - static outputではPhase 5 asset requestはすべて 200。Next static export のRSC prefetch `__next...txt?_rsc=` 404と、静的配信中の内部HEAD request abort、1280px確認時のGoogle Fonts request abortが出たが、今回追加assetの読み込み失敗ではない。
   - 確認スクリーンショット: `output/playwright/phase5-x-announcement-final-390.png` / `phase5-x-announcement-final-820.png` / `phase5-x-announcement-final-1024.png` / `phase5-x-announcement-final-1280.png` / `phase5-x-announcement-final-1366.png`
   - Canvas export確認: `output/playwright/phase5-x-announcement-canvas-static-clean-1280x720.png`
+
+## Phase 5 `ゲーム実況` Implementation Notes
+
+- 実装日: 2026-05-09
+- 作業branch / worktree: `codex/thumbnail-phase5-game-live-preset` / `.worktrees/thumbnail-phase5-game-live-preset`
+- 前提確認: PR #45 `[codex] Renew x announcement thumbnail phase 5 preset` は `main` に merge済み。merge commit `1a251ba7528ffd13f57398df0581d9eb41c12e18` を作業開始時のlocal `main` が含むことを確認した。
+- 対象: `ゲーム実況` presetのみ。全9プリセットへは広げない。
+- 画像生成: `imagegen` skill + built-in `image_gen` toolを使用した。CLI fallback / true native transparency は使っていない。
+- 背景: `public/assets/images/thumbnail-editor/phase5/game-live-background-v1.png`
+  - 既存 `game-live-background.png` / `game-live-mock.png` の方向性を参照し、黒/濃紺ベース、シアンとネオングリーンのHUD感、左側の大きなタイトルパネル、右側の立ち絵差し替え余白を初期MVPとして焼き込んだ。
+  - 読める文字、ロゴ、ゲームスクリーンショット、実UI、人物、キャラクター、コントローラー、ラベル文字は入れていない。
+- 個別asset: `public/assets/images/thumbnail-editor/decorations/phase5/`
+  - `game-live-label-plaque-neon-uniform-cell.png`
+  - `game-live-time-badge-cyan-uniform-cell.png`
+  - `game-live-hud-corner-frame-uniform-cell.png`
+  - `game-live-speed-accent-green-uniform-cell.png`
+  - `game-live-soft-glint-cyan-candidate-uniform-cell.png` は未使用候補。
+- 透明assetは built-in `image_gen` で #00ff00 chroma-key 背景つき素材sheetとして生成し、ローカルで背景除去した。採用assetはすべて `768 x 512` canvas / 最低76px以上の透明余白へ正規化した。
+- `lib/thumbnail-editor.ts` は `game_live` presetだけをPhase 5構造へ更新した。schema変更、素材ライブラリUI変更、フォント追加、外部CDN依存、他preset変更は行っていない。
+- 大きなHUDパネルは背景へ焼き込んだため、Phase 5 `game_live` presetから `図形 5（斜め強調ベース）` は外した。将来分離する場合は、背景内の左HUDパネル、右立ち絵用の光、下部HUD床を `game-live-panel-*` assetとして再生成する。
+- ラベル / 時刻 / 見出し / サブの文字は editable text layerとして維持した。
+- 時刻下ライン / ゲーム感ライン / 立ち絵guide枠は shape layerとして残した。
+- 追加contract: `scripts/thumbnail-phase5-game-live-preset-contract.mjs`
+  - Phase 5背景、個別asset、editable text layer、shape layer責務に加え、個別asset 5点が同一 `768 x 512` canvasであること、PNG alpha境界に上下左右最低76px以上の透明余白が残ることを検証する。
+  - `game-live-soft-glint-cyan-candidate-uniform-cell.png` は存在だけ検証し、preset未使用候補として扱う。
+- 既存contract更新:
+  - `scripts/thumbnail-phase2-preset-assets-contract.mjs` は `game_live` がPhase 5へ移った前提に変更した。
+  - `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `game_live` をPhase 4 preset対象から外した。Phase 4 assetファイル自体は残す。
+- UI確認:
+  - static outputを `localhost:3029` で配信し、in-app browserで `ゲーム実況` presetを適用。1366pxでPhase 5背景、Phase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることと console error / warn 0件を確認。
+  - Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でcanvas非blank、水平overflow 0。1024px以上ではPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認。
+  - static outputでは Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加したPhase 5 asset requestの404ではない。
+  - 確認スクリーンショット: `output/playwright/phase5-game-live-final-390.png` / `phase5-game-live-final-820.png` / `phase5-game-live-final-1024.png` / `phase5-game-live-final-1280.png` / `phase5-game-live-final-1366.png`

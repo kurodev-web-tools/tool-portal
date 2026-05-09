@@ -21,12 +21,10 @@ testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
 
 const phase2Presets = new Map([
-  ["game_live", "/assets/images/thumbnail-editor/phase2/game-live-background.png"],
   ["collaboration", "/assets/images/thumbnail-editor/phase2/collaboration-background.png"]
 ]);
 
 const mockupFiles = new Map([
-  ["game_live", "game-live-mock.png"],
   ["collaboration", "collaboration-mock.png"]
 ]);
 
@@ -57,12 +55,6 @@ for (const [presetId, expectedSrc] of phase2Presets) {
     );
   }
 }
-
-const gameLive = lib.thumbnailPresets.find((item) => item.id === "game_live");
-assert.ok(
-  gameLive.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),
-  "game_live has an editable standee guide shape"
-);
 
 const collaboration = lib.thumbnailPresets.find((item) => item.id === "collaboration");
 assert.ok(

@@ -326,6 +326,46 @@
   - 確認スクリーンショット: `output/playwright/phase5-x-announcement-final-390.png` / `phase5-x-announcement-final-820.png` / `phase5-x-announcement-final-1024.png` / `phase5-x-announcement-final-1280.png` / `phase5-x-announcement-final-1366.png`
   - Canvas export確認: `output/playwright/phase5-x-announcement-canvas-static-clean-1280x720.png`
 
+2026-05-09 Phase 5 `ゲーム実況` preset renewal:
+
+- 作業前に PR #45 `[codex] Renew x announcement thumbnail phase 5 preset` が `main` に merge済みで、local `main` が merge commit `1a251ba7528ffd13f57398df0581d9eb41c12e18` を含むことを確認した
+- `main` 直作業を避け、`codex/thumbnail-phase5-game-live-preset` branch / `.worktrees/thumbnail-phase5-game-live-preset` worktreeで開始した
+- `imagegen` skill + built-in `image_gen` toolで、`ゲーム実況` 用のPhase 5背景と文字なし個別asset sheetを生成した。CLI fallback / true native transparency は使っていない
+- Phase 5背景は `public/assets/images/thumbnail-editor/phase5/game-live-background-v1.png` として保存した。背景には大きな左HUDパネルと右側の立ち絵差し替え余白を初期MVPとして焼き込み、読める文字、ロゴ、ゲームスクリーンショット、実UI、人物、キャラクター、コントローラーは入れていない
+- #00ff00 chroma-key asset sheetから背景除去し、文字なし個別assetをすべて `768 x 512` の透明PNGとして `public/assets/images/thumbnail-editor/decorations/phase5/` へ保存した
+  - `game-live-label-plaque-neon-uniform-cell.png`
+  - `game-live-time-badge-cyan-uniform-cell.png`
+  - `game-live-hud-corner-frame-uniform-cell.png`
+  - `game-live-speed-accent-green-uniform-cell.png`
+  - `game-live-soft-glint-cyan-candidate-uniform-cell.png` は未使用候補
+- `lib/thumbnail-editor.ts` は `game_live` presetだけをPhase 5構造へ更新した。背景参照をPhase 5に切り替え、Phase 4 HUD系SVGを外し、ラベル土台 / 時刻バッジ土台 / HUD角 / スピードアクセントを個別assetとして配置した
+- `見出し` / `時刻` / `サブ` / `ラベル` は editable text layerとして維持し、`時刻下ライン` / `ゲーム感ライン` / `立ち絵guide枠` は shape layerとして残した
+- `scripts/thumbnail-phase5-game-live-preset-contract.mjs` を追加し、Phase 5背景、個別asset、editable text layer、shape layer責務、個別assetが同一 `768 x 512` canvasであること、上下左右に最低76px以上の透明余白があることを確認できるようにした
+- 既存 `scripts/thumbnail-phase2-preset-assets-contract.mjs` / `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は、`game_live` がPhase 5へ移った前提に合わせて期待値を更新した
+- 検証済み:
+  - `node scripts/thumbnail-phase5-game-live-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-x-announcement-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-announcement-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase5-clip-preset-contract.mjs` PASS
+  - `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-discovery-contract.mjs` PASS
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS
+  - `node scripts/tool-handoff-contract.mjs` PASS
+  - `node scripts/sns-split-image-maker-contract.mjs` PASS
+  - `npm run lint` PASS
+  - `npx tsc --noEmit` PASS
+  - `git diff --check` PASS。LF -> CRLF warningのみ
+  - `npm run build` PASS。worktree と root の lockfile 重複による Next.js workspace root 推定 warning は出たが、build は成功
+- UI確認:
+  - static outputを `localhost:3029` で配信し、in-app browserで `ゲーム実況` presetを適用。1366pxでPhase 5背景、Phase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることと console error / warn 0件を確認
+  - Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でcanvas非blank、水平overflow 0。1024px以上ではPhase 5個別asset、shape layer、editable text layerがレイヤー一覧に残ることを確認
+  - static outputでは Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加したPhase 5 asset requestの404ではない
+  - 確認スクリーンショット: `output/playwright/phase5-game-live-final-390.png` / `phase5-game-live-final-820.png` / `phase5-game-live-final-1024.png` / `phase5-game-live-final-1280.png` / `phase5-game-live-final-1366.png`
+
 - 2026-05-08 `コラボ` preset 単体polish:
   - `コラボ` だけを対象に、既存 Phase 2 背景 `collaboration-background.png` と `見出し` / `時刻` / `サブ` / `ラベル` の editable text layer を維持した
   - 専用抽象SVG assetとして `collaboration-label-band-base.svg` / `collaboration-time-badge-base.svg` / `collaboration-duo-guide-lines.svg` / `collaboration-connection-lines.svg` / `collaboration-soft-glints.svg` を追加した

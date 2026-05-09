@@ -80,7 +80,6 @@ const phase4PresetIds = [
   "stream_announce",
   "karaoke",
   "chatting",
-  "game_live",
   "collaboration",
   "weekly_schedule"
 ];
@@ -88,7 +87,6 @@ const phase4PresetExpectations = {
   stream_announce: { minDecorationImages: 9, shapeTypes: ["frame", "line"] },
   karaoke: { minDecorationImages: 13, shapeTypes: ["frame", "line"] },
   chatting: { minDecorationImages: 2, shapeTypes: ["frame", "line"] },
-  game_live: { minDecorationImages: 5, shapeTypes: ["frame", "line", "polygon"] },
   collaboration: { minDecorationImages: 5, shapeTypes: ["frame", "line"] },
   weekly_schedule: { minDecorationImages: 5, shapeTypes: ["line", "frame"] }
 };
@@ -172,21 +170,6 @@ for (const fileName of [
   assert.equal(karaokeDecorationSources.has(fileName), true, `karaoke uses dedicated ${fileName}`);
 }
 
-const gameLivePreset = lib.thumbnailPresets.find((item) => item.id === "game_live");
-const gameLiveDecorationSources = new Set(
-  gameLivePreset.layers
-    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
-    .map((layer) => path.basename(layer.src))
-);
-for (const fileName of [
-  "game-live-label-band-base.svg",
-  "game-live-time-banner-base.svg",
-  "game-live-hud-lines.svg",
-  "game-live-standee-guide-lines.svg"
-]) {
-  assert.equal(gameLiveDecorationSources.has(fileName), true, `game_live uses dedicated ${fileName}`);
-}
-
 const collaborationPreset = lib.thumbnailPresets.find((item) => item.id === "collaboration");
 const collaborationDecorationSources = new Set(
   collaborationPreset.layers
@@ -248,7 +231,7 @@ for (const dayName of ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜
 }
 
 const allShapeTypes = new Set(lib.thumbnailPresets.flatMap((preset) => preset.layers.filter((layer) => layer.type === "shape").map((layer) => layer.shapeType)));
-for (const shapeType of ["line", "frame", "polygon"]) {
+for (const shapeType of ["line", "frame"]) {
   assert.equal(allShapeTypes.has(shapeType), true, `${shapeType} shapeType is used by preset initial layers`);
 }
 for (const shapeType of ["line", "burst", "frame", "polygon"]) {

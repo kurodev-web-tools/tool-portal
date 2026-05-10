@@ -24,6 +24,7 @@ testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
 
 const materialPrefix = "/assets/images/thumbnail-editor/materials/batch1/";
+const labelMaterialPrefix = "/assets/images/thumbnail-editor/materials/labels/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -105,6 +106,38 @@ const expectedMaterials = [
     width: 600,
     height: 360,
     recommended: "動画枠・コメント枠の土台"
+  },
+  {
+    id: "label-tech-plate-navy-cyan",
+    category: "label-base",
+    src: `${labelMaterialPrefix}label-tech-plate-navy-cyan.png`,
+    width: 620,
+    height: 156,
+    recommended: "見出し背面の横長テックプレート"
+  },
+  {
+    id: "label-glass-plate-white-blue",
+    category: "label-base",
+    src: `${labelMaterialPrefix}label-glass-plate-white-blue.png`,
+    width: 600,
+    height: 148,
+    recommended: "短い補足テキスト背面のガラス風ラベル"
+  },
+  {
+    id: "label-champagne-plaque-dark-trim",
+    category: "label-base",
+    src: `${labelMaterialPrefix}label-champagne-plaque-dark-trim.png`,
+    width: 590,
+    height: 150,
+    recommended: "上品な告知見出しの横長台座"
+  },
+  {
+    id: "label-diagonal-ribbon-slate-cyan",
+    category: "label-base",
+    src: `${labelMaterialPrefix}label-diagonal-ribbon-slate-cyan.png`,
+    width: 580,
+    height: 142,
+    recommended: "斜めカットのサブ見出しリボン"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -203,7 +236,7 @@ const readPngAlphaBounds = (filePath) => {
 assert.ok(Array.isArray(lib.thumbnailMaterialLibrary), "thumbnail material library is exported");
 assert.equal(typeof lib.createThumbnailMaterialLayer, "function", "material layer factory is exported");
 
-assert.equal(lib.thumbnailMaterialLibrary.length, expectedMaterials.length, "first material library batch keeps a scoped size");
+assert.equal(lib.thumbnailMaterialLibrary.length, expectedMaterials.length, "material library keeps the expected scoped size");
 assert.deepEqual(
   lib.thumbnailMaterialLibrary.map((material) => material.id),
   expectedMaterials.map((material) => material.id),
@@ -245,6 +278,9 @@ for (const expected of expectedMaterials) {
 assert.equal(lib.createThumbnailMaterialLayer("missing-material"), null, "unknown material ids are ignored");
 
 const newMaterialSources = new Set(expectedMaterials.filter((item) => item.src.startsWith(materialPrefix)).map((item) => item.src));
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(labelMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
 for (const preset of lib.thumbnailPresets) {
   for (const layer of preset.layers) {
     assert.equal(newMaterialSources.has(layer.src), false, `${preset.id} does not receive new material-only assets in initial layers`);

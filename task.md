@@ -153,6 +153,18 @@
   - 生成順: 各カテゴリPRで素材候補を3〜5点程度に絞り、同一カテゴリ内ではプロンプトと色設計を揃えて品質差を抑える。総枚数は各カテゴリPRのレビュー後に確定し、カテゴリをまたいだ大量生成はしない
   - contract方針: 既存 `scripts/thumbnail-material-assets-contract.mjs` を維持しつつ、必要に応じてカテゴリ別contractを追加する。確認項目は登録、ファイル存在、`768 x 512`、alpha余白、素材名 / カテゴリ / 初期サイズ、追加時にpreset draftを壊さないこと、既存プリセット初期layersへ勝手に入らないこと
 
+- 2026-05-11 素材ライブラリ `ラベル土台` PR:
+  - 前提確認: PR #52 `[codex] Add thumbnail material library batch 1` と PR #53 `[codex] Document thumbnail material category plan` はどちらも `main` に merge済み
+  - 作業branch / worktree: `codex/thumbnail-material-labels` / `.worktrees/thumbnail-material-labels`
+  - 対象はカテゴリ `ラベル土台` の素材ライブラリ追加のみ。既存プリセットの初期layers、初期レイヤー順、draft schema、public API、フォント、外部CDN依存は変更していない
+  - `imagegen` skill + built-in `image_gen` toolで4点を生成し、`#00ff00` chroma-key source をローカル処理して `768 x 512` 透明PNG / alpha余白つきへ正規化した。asset本体に緑は残していない
+  - 新規asset: `public/assets/images/thumbnail-editor/materials/labels/label-tech-plate-navy-cyan.png` / `label-glass-plate-white-blue.png` / `label-champagne-plaque-dark-trim.png` / `label-diagonal-ribbon-slate-cyan.png`
+  - `lib/thumbnail-editor.ts` の `thumbnailMaterialLibrary` に4件を追加し、素材名、カテゴリ、説明、初期サイズ、推奨配置、初期位置を定義した。素材追加時は既存の `createThumbnailMaterialLayer` 経由で通常の編集可能な image layer になる
+  - contract: `scripts/thumbnail-material-assets-contract.mjs` を拡張。実装前REDは `material library keeps the expected scoped size` で確認し、実装後PASS。登録、ファイル存在、`768 x 512`、alpha余白、素材名 / カテゴリ / 初期サイズ / 推奨配置、通常image layer化、material-only新規assetが既存プリセット初期layersへ入らないことを検証する
+  - 検証: `node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: static outputを `localhost:3058` で配信し、Chrome DevToolsで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で実測viewport幅一致、canvas非blank、horizontal overflow 0、素材ライブラリから `紺シアン横長プレート` を追加後にcanvas checksumが変化、追加layer名 / 初期サイズ、素材asset HEAD 200を確認
+  - console確認: 新規 `materials/labels/*` asset requestの404はなし。1024px以上ではNext static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない。pixel sampling由来のCanvas readback warningのみ発生
+
 - 2026-05-10 `週間予定` Phase 5 preset 更新:
   - 作業前に PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`

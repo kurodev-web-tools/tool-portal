@@ -88,23 +88,23 @@ for (const dayName of weeklyDayNames) {
   assert.equal(weekdayLayer.height, 52, `${dayName} weekday height matches the saved weekly draft placement`);
   assert.equal(timeLayer.height, 52, `${dayName} time height matches the saved weekly draft placement`);
   assert.equal(detailLayer.height, 52, `${dayName} detail height matches the saved weekly draft placement`);
-  assert.equal(weekdayLayer.x, 670, `${dayName} weekday x matches the saved weekly draft placement`);
-  assert.equal(timeLayer.x, 770, `${dayName} time x matches the saved weekly draft placement`);
-  assert.equal(detailLayer.x, 890, `${dayName} detail x matches the saved weekly draft placement`);
+  assert.equal(weekdayLayer.x, 540, `${dayName} weekday x matches the phase 5 weekly draft placement`);
+  assert.equal(timeLayer.x, 690, `${dayName} time x matches the phase 5 weekly draft placement`);
+  assert.equal(detailLayer.x, 860, `${dayName} detail x matches the phase 5 weekly draft placement`);
   assert.ok(detailLayer.width >= 320, `${dayName} detail column has enough room for longer schedule text`);
   assert.ok(detailLayer.x + detailLayer.width <= 1230, `${dayName} detail column stays inside the right-side safe area`);
 }
 
-assertPlacement(weeklyLayerByName("図形 3（立ち絵挿入ガイド）"), { x: 80, y: 505, width: 510, height: 155 }, "standee guide");
+assertPlacement(weeklyLayerByName("図形 3（立ち絵挿入ガイド）"), { x: 66, y: 536, width: 438, height: 118 }, "standee guide");
 const weeklyHeadline = weeklyLayerByName("テキスト 1（見出し）");
-assertPlacement(weeklyHeadline, { x: 50, y: 185, width: 530, height: 240 }, "weekly headline");
+assertPlacement(weeklyHeadline, { x: 44, y: 174, width: 510, height: 232 }, "weekly headline");
 assert.equal(weeklyHeadline.align, "center", "weekly headline defaults to centered text");
 assert.equal(weeklyHeadline.bold, true, "weekly headline defaults to bold text");
 assert.equal(weeklyHeadline.italic, true, "weekly headline defaults to italic text");
-assertPlacement(weeklyLayerByName("図形 2（ラベル）"), { x: 150, y: 115, width: 345, height: 60 }, "weekly label shape");
-assertPlacement(weeklyLayerByName("テキスト 4（ラベル）"), { x: 190, y: 130, width: 270, height: 35 }, "weekly label text");
-assertPlacement(weeklyLayerByName("図形 1（週範囲バッジ）"), { x: 205, y: 400, width: 220, height: 65 }, "weekly range badge");
-assertPlacement(weeklyLayerByName("テキスト 2（時刻）"), { x: 240, y: 415, width: 245, height: 40 }, "weekly range text");
+assertPlacement(weeklyLayerByName("画像 4（ラベル土台）"), { x: 54, y: 54, width: 470, height: 138 }, "weekly label asset");
+assertPlacement(weeklyLayerByName("テキスト 4（ラベル）"), { x: 132, y: 100, width: 312, height: 38 }, "weekly label text");
+assertPlacement(weeklyLayerByName("画像 5（週範囲バッジ土台）"), { x: 116, y: 410, width: 390, height: 120 }, "weekly range badge asset");
+assertPlacement(weeklyLayerByName("テキスト 2（時刻）"), { x: 192, y: 452, width: 245, height: 42 }, "weekly range text");
 assert.ok(
   weekly.layers.every((layer) => !["曜日列", "時刻列", "内容列"].some((label) => layer.name.includes(label))),
   "weekly preset does not use column-only layer names"

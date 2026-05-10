@@ -76,12 +76,8 @@ const expectedDecorationFiles = [
   "x-date-badge-base.svg",
   "x-standee-guide-lines.svg"
 ];
-const phase4PresetIds = [
-  "weekly_schedule"
-];
-const phase4PresetExpectations = {
-  weekly_schedule: { minDecorationImages: 5, shapeTypes: ["line", "frame"] }
-};
+const phase4PresetIds = [];
+const phase4PresetExpectations = {};
 
 for (const fileName of expectedDecorationFiles) {
   const filePath = path.join(root, "public", "assets", "images", "thumbnail-editor", "decorations", "phase4", fileName);
@@ -135,23 +131,16 @@ assert.equal(
 );
 
 const weeklySchedulePreset = lib.thumbnailPresets.find((item) => item.id === "weekly_schedule");
-const weeklyScheduleDecorationSources = new Set(
-  weeklySchedulePreset.layers
-    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
-    .map((layer) => path.basename(layer.src))
+assert.ok(weeklySchedulePreset, "weekly_schedule preset exists");
+assert.equal(
+  weeklySchedulePreset.layers.some((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix)),
+  false,
+  "weekly_schedule migrated to phase 5 decoration assets"
 );
-for (const fileName of [
-  "weekly-table-accent-lines.svg",
-  "weekly-range-badge-base.svg",
-  "weekly-standee-guide-lines.svg",
-  "weekly-soft-glints.svg",
-  "dot-dash-row.svg"
-]) {
-  assert.equal(weeklyScheduleDecorationSources.has(fileName), true, `weekly_schedule uses dedicated or shared ${fileName}`);
-}
-assert.ok(
-  weeklySchedulePreset.layers.some((layer) => layer.type === "image" && layer.src.endsWith("/phase1/weekly-schedule-background.png") && layer.locked === true),
-  "weekly_schedule keeps the locked phase 1 background"
+assert.equal(
+  weeklySchedulePreset.layers.some((layer) => layer.type === "image" && layer.src.endsWith("/phase1/weekly-schedule-background.png")),
+  false,
+  "weekly_schedule migrated away from the phase 1 background"
 );
 for (const textRole of ["見出し", "時刻", "ラベル"]) {
   assert.ok(

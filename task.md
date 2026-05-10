@@ -127,6 +127,19 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-10 素材ライブラリ first batch:
+  - 前提確認: PR #51 `[codex] Renew weekly schedule thumbnail phase 5 preset` は `main` に merge済み。`origin/main` が merge commit `69ef06b439cb1b5d84856bcd40639b19c9db78d0` を含むことを確認した
+  - 作業branch / worktree: `codex/thumbnail-material-library-batch1` / `.worktrees/thumbnail-material-library-batch1`
+  - 対象は Thumbnail Editor の素材ライブラリ追加のみ。既存プリセットの初期layers、初期レイヤー順、draft schema、public API、フォント、外部CDN依存は変更していない
+  - `lib/thumbnail-editor.ts` に素材メタデータ `thumbnailMaterialLibrary` と `createThumbnailMaterialLayer` を追加し、素材を選ぶと通常の編集可能な image layer としてcanvasへ追加する形にした
+  - 素材カテゴリは first batch として `ラベル土台` / `日付バッジ` / `角飾り` / `光・アクセント` / `HUD線` / `フレーム` に限定した
+  - 素材10点のうち8点は既存 Phase 5 assetを再利用し、2点は `imagegen` skill + built-in `image_gen` toolで生成した。透明化は #00ff00 chroma-key source をローカル処理し、`768 x 512` 透明PNG / alpha余白つきへ正規化した
+  - 新規asset: `public/assets/images/thumbnail-editor/materials/batch1/hud-divider-cyan-uniform-cell.png` / `video-comment-frame-blue-uniform-cell.png`
+  - 追加contract: `scripts/thumbnail-material-assets-contract.mjs`。実装前REDは `thumbnail material library is exported` で確認し、実装後PASS。登録asset、ファイル存在、`768 x 512`、alpha余白、素材名 / カテゴリ / 初期サイズ、通常image layer化、material-only新規assetが既存プリセット初期layersへ入らないことを検証する
+  - UI確認: static outputを `localhost:3056` で配信し、Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でviewport幅一致、canvas非blank、horizontal overflow 0、素材ライブラリから `動画コメント枠` を追加後にcanvas checksumが変化、素材asset HEAD 200を確認
+  - console確認: 新規素材asset requestの404はなし。1024px以上ではNext static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない。pixel sampling由来のCanvas readback warningのみ発生
+  - 確認スクリーンショット: `output/playwright/material-library-batch1-390.png` / `material-library-batch1-820.png` / `material-library-batch1-1024.png` / `material-library-batch1-1280.png` / `material-library-batch1-1366.png`
+
 - 2026-05-10 `週間予定` Phase 5 preset 更新:
   - 作業前に PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`

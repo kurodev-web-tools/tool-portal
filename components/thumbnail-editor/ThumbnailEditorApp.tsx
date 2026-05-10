@@ -7,6 +7,7 @@ import {
   createNextRecentThumbnailPresetIds,
   createDraftFromPreset,
   createImageLayer,
+  createThumbnailMaterialLayer,
   createShapeLayer,
   createTextLayer,
   drawThumbnail,
@@ -25,6 +26,8 @@ import {
   thumbnailFontGroups,
   thumbnailFonts,
   thumbnailMainTextCarryoverTargets,
+  thumbnailMaterialCategoryLabels,
+  thumbnailMaterialLibrary,
   thumbnailPresetDiscoveryStorageKey,
   thumbnailPresets,
   toggleThumbnailPresetFavorite,
@@ -34,6 +37,7 @@ import {
   type ThumbnailCanvasSizeId,
   type ThumbnailEditorDraft,
   type ThumbnailLayer,
+  type ThumbnailMaterialCategory,
   type ThumbnailPreset,
   type ThumbnailPresetCategory,
   type ThumbnailPresetDiscoveryState,
@@ -52,7 +56,7 @@ import { writeStoredImageSource } from "@/components/sns-split-image-maker/snsSp
 
 type ToastTone = "info" | "success" | "warning" | "error";
 type ToastState = { tone: ToastTone; message: string } | null;
-type MobilePanel = "canvas" | "layers" | "text" | "export";
+type MobilePanel = "canvas" | "materials" | "layers" | "text" | "export";
 type EditorMode = "edit" | "pan";
 type PresetApplyMode = "plain" | "carryover" | "handoff";
 type CanvasInteractionMode = "drag" | "resize" | "rotate";
@@ -94,6 +98,7 @@ const toneClassName: Record<ToastTone, string> = {
 
 const mobilePanels: { id: MobilePanel; label: string; icon: string }[] = [
   { id: "canvas", label: "キャンバス", icon: "▧" },
+  { id: "materials", label: "素材", icon: "◇" },
   { id: "layers", label: "レイヤー", icon: "▤" },
   { id: "text", label: "テキスト", icon: "T" },
   { id: "export", label: "書き出し", icon: "⇧" }
@@ -759,6 +764,16 @@ export function ThumbnailEditorApp() {
     reader.readAsDataURL(file);
   };
 
+  const addMaterialLayer = (materialId: string) => {
+    const layer = createThumbnailMaterialLayer(materialId, draft.canvas);
+    if (!layer) {
+      showToast("error", "素材を追加できませんでした。");
+      return;
+    }
+    addLayer(layer);
+    showToast("success", "素材レイヤーを追加しました。");
+  };
+
   const moveLayer = (layerId: string, direction: "front" | "back") => {
     updateDraft((current) => {
       const index = current.layers.findIndex((layer) => layer.id === layerId);
@@ -1274,6 +1289,7 @@ export function ThumbnailEditorApp() {
                     onText={() => addLayer(createTextLayer())}
                     onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
                     onImage={() => fileInputRef.current?.click()}
+                    onMaterial={() => setSidePanelCollapsed(false)}
                   />
                   <div ref={canvasViewportRef} className="scrollbar-accent min-w-0 flex-1 overflow-auto [scrollbar-gutter:stable] min-[1024px]:max-h-[calc(100vh-20rem)]">
                     {editorMode === "pan" && (
@@ -1313,6 +1329,7 @@ export function ThumbnailEditorApp() {
                 onText={() => addLayer(createTextLayer())}
                 onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
                 onImage={() => fileInputRef.current?.click()}
+                onMaterial={() => setMobilePanel("materials")}
               />
               {mobilePanel === "canvas" && (
                 <PresetCards
@@ -1323,6 +1340,7 @@ export function ThumbnailEditorApp() {
                   onFavoriteToggle={togglePresetFavorite}
                 />
               )}
+              {mobilePanel === "materials" && <MaterialLibraryPanel onAdd={addMaterialLayer} />}
               {mobilePanel === "layers" && (
                 <LayerPanel
                   layers={draft.layers}
@@ -1360,7 +1378,9 @@ export function ThumbnailEditorApp() {
                 onText={() => addLayer(createTextLayer())}
                 onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
                 onImage={() => fileInputRef.current?.click()}
+                onMaterial={() => setSidePanelCollapsed(false)}
               />
+              <MaterialLibraryPanel onAdd={addMaterialLayer} />
               <LayerPanel
                 layers={draft.layers}
                 presetId={draft.presetId}
@@ -1382,7 +1402,7 @@ export function ThumbnailEditorApp() {
         </div>
       </div>
 
-      <nav className="grid shrink-0 grid-cols-4 border-t border-border bg-surface/95 min-[1024px]:hidden">
+      <nav className="grid shrink-0 grid-cols-5 border-t border-border bg-surface/95 min-[1024px]:hidden">
         {mobilePanels.map((item) => (
           <button
             key={item.id}
@@ -1449,27 +1469,99 @@ export function ThumbnailEditorApp() {
 function QuickAddBar({
   onText,
   onShape,
-  onImage
+  onImage,
+  onMaterial
 }: {
   onText: () => void;
   onShape: (shapeType: ThumbnailShapeType) => void;
   onImage: () => void;
+  onMaterial: () => void;
 }) {
   return (
     <section className="panel p-3">
-      <div className="grid grid-cols-4 gap-2">
-        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={onText} aria-label="テキストレイヤーを追加">
+      <div className="grid grid-cols-5 gap-2">
+        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={onText} aria-label="テキストレイヤーを追加">
           T テキスト
         </button>
-        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={() => onShape("rect")} aria-label="矩形レイヤーを追加">
+        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={() => onShape("rect")} aria-label="矩形レイヤーを追加">
           ▭ 矩形
         </button>
-        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={() => onShape("circle")} aria-label="円レイヤーを追加">
+        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={() => onShape("circle")} aria-label="円レイヤーを追加">
           ○ 円
         </button>
-        <button className="flat-control whitespace-nowrap px-2 py-2 text-[11px] font-bold xl:text-xs" type="button" onClick={onImage} aria-label="画像レイヤーを追加">
+        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={onImage} aria-label="画像レイヤーを追加">
           ▧ 画像
         </button>
+        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={onMaterial} aria-label="素材ライブラリを開く">
+          ◇ 素材
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
+  const [selectedCategory, setSelectedCategory] = useState<ThumbnailMaterialCategory | "all">("all");
+  const materialCategories = useMemo(
+    () => Array.from(new Set(thumbnailMaterialLibrary.map((material) => material.category))) as ThumbnailMaterialCategory[],
+    []
+  );
+  const filteredMaterials = useMemo(
+    () => thumbnailMaterialLibrary.filter((material) => selectedCategory === "all" || material.category === selectedCategory),
+    [selectedCategory]
+  );
+
+  return (
+    <section className="panel space-y-3 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-black text-foreground">素材ライブラリ</h2>
+        <p className="text-xs font-bold text-muted">{filteredMaterials.length} / {thumbnailMaterialLibrary.length}点</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {[
+          { id: "all", label: "すべて" },
+          ...materialCategories.map((category) => ({ id: category, label: thumbnailMaterialCategoryLabels[category] }))
+        ].map((option) => (
+          <button
+            key={option.id}
+            className={[
+              "rounded-base border px-3 py-1.5 text-xs font-bold transition",
+              selectedCategory === option.id ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface text-muted hover:text-foreground"
+            ].join(" ")}
+            type="button"
+            onClick={() => setSelectedCategory(option.id as ThumbnailMaterialCategory | "all")}
+            aria-pressed={selectedCategory === option.id}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      <div className="grid gap-2">
+        {filteredMaterials.map((material) => (
+          <button
+            key={material.id}
+            className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 rounded-base border border-border bg-surface p-2 text-left transition hover:border-primary hover:bg-primary-soft/35"
+            type="button"
+            onClick={() => onAdd(material.id)}
+            aria-label={`${material.name}を素材として追加`}
+            title={material.description}
+          >
+            <span className="grid aspect-video place-items-center overflow-hidden rounded-sm border border-border bg-[#07111c]">
+              <span
+                className="block h-full w-full bg-contain bg-center bg-no-repeat"
+                style={{ backgroundImage: `url(${material.src})` }}
+                aria-hidden="true"
+              />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-black text-foreground">{material.name}</span>
+              <span className="mt-1 inline-flex rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">
+                {thumbnailMaterialCategoryLabels[material.category]}
+              </span>
+              <span className="mt-1 line-clamp-2 block text-xs leading-5 text-muted">{material.recommendedPlacement}</span>
+            </span>
+          </button>
+        ))}
       </div>
     </section>
   );
@@ -1509,13 +1601,15 @@ function DesktopToolRail({
   onModeChange,
   onText,
   onShape,
-  onImage
+  onImage,
+  onMaterial
 }: {
   editorMode: EditorMode;
   onModeChange: (mode: EditorMode) => void;
   onText: () => void;
   onShape: (shapeType: ThumbnailShapeType) => void;
   onImage: () => void;
+  onMaterial: () => void;
 }) {
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
   const shapeMenuRef = useRef<HTMLDivElement | null>(null);
@@ -1581,6 +1675,10 @@ function DesktopToolRail({
       <button className={toolButtonClass(false)} type="button" onClick={onImage} title="画像">
         <span className="text-lg">▧</span>
         画像
+      </button>
+      <button className={toolButtonClass(false)} type="button" onClick={onMaterial} title="素材">
+        <span className="text-lg">◇</span>
+        素材
       </button>
       <div className="my-1 h-px w-10 bg-border" />
       <button className={toolButtonClass(editorMode === "pan")} type="button" onClick={() => onModeChange("pan")} title="表示移動">

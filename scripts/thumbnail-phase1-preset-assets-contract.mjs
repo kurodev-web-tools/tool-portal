@@ -20,9 +20,7 @@ testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
 testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
 
-const phase1Backgrounds = new Map([
-  ["weekly_schedule", "/assets/images/thumbnail-editor/phase1/weekly-schedule-background.png"]
-]);
+const phase1Backgrounds = new Map([]);
 
 for (const [presetId, expectedSrc] of phase1Backgrounds) {
   const preset = lib.thumbnailPresets.find((item) => item.id === presetId);

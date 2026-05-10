@@ -530,3 +530,54 @@ Phase 5 は単なる配置微調整ではなく、プリセット構造を「完
   - static outputではPhase 5 asset requestはすべて 200。Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加assetの読み込み失敗ではない。Canvas pixel sampling由来の readback warning も確認した。
   - 確認スクリーンショット: `output/playwright/phase5-stream-final-390.png` / `phase5-stream-final-820.png` / `phase5-stream-final-1024.png` / `phase5-stream-final-1280.png` / `phase5-stream-final-1366.png`
   - Canvas export確認: `output/playwright/phase5-stream-canvas-static-clean-1280x720.png`
+
+## Phase 5 `週間予定` Implementation Notes
+
+- 実装日: 2026-05-10
+- 前提確認: PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` は `main` に merge済み。merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を作業開始時の `origin/main` が含むことを確認した。
+- 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`
+- 対象: `週間予定` presetのみ。全9プリセットへは広げていない。
+- 画像生成: `imagegen` skill + built-in `image_gen` toolを使用した。CLI fallback / true native transparency は使っていない。
+- 背景: `public/assets/images/thumbnail-editor/phase5/weekly-schedule-background-v1.png`
+  - 既存 `weekly-schedule-background.png` / `weekly-schedule-mock.png` の夜配信部屋、青シアンの発光、右側7行予定表、左側テキスト安全領域の方向性を参照した。
+  - 背景には大きな予定表フレーム、7行の空パネル、光、抽象ガラスパネル、奥行き、非編集の装飾要素を焼き込んだ。
+  - 初回確認後の表示feedbackを受け、曜日専用の小枠を背景から外し、右側予定一覧は分断しない連続横長パネルへ差し替えた。
+  - 読める文字、曜日、日付、ロゴ、人物、キャラクター、実画面、SNS UI、ラベル文字、予定テキストは入れていない。
+- 個別asset: `public/assets/images/thumbnail-editor/decorations/phase5/`
+  - `weekly-schedule-label-plaque-cyan-uniform-cell.png`
+  - `weekly-schedule-range-badge-blue-uniform-cell.png`
+  - `weekly-schedule-table-accent-cyan-uniform-cell.png`
+  - `weekly-schedule-corner-glints-cyan-uniform-cell.png`
+- 透明assetは built-in `image_gen` で #00ff00 chroma-key 背景つき素材として生成し、ローカルで背景除去 / despill / 同一canvas配置を行った。採用assetはすべて `768 x 512` canvas / 最低76px以上の透明余白へ正規化した。
+- `lib/thumbnail-editor.ts` は `weekly_schedule` presetだけをPhase 5構造へ更新した。schema変更、素材ライブラリUI変更、フォント追加、外部CDN依存、他preset変更は行っていない。
+- `見出し` / `時刻` / `ラベル`、曜日別の `曜日` / `時間` / `予定` は editable text layerとして維持した。背景の予定表パネル位置に合わせ、曜日 / 時間 / 予定の列x座標と幅はPhase 5配置へ更新した。曜日列は小枠前提をやめ、横長パネル内で読める幅へ広げた。
+- `予定表フレーム` / `予定表区切り線 上` / `予定表区切り線 下` / `立ち絵挿入ガイド` は shape layerとして残した。行panelは背景へ焼き込んだため、プリセット側で追加の行panelは重ねていない。
+- 追加contract: `scripts/thumbnail-phase5-weekly-schedule-preset-contract.mjs`
+  - 実装前REDは `weekly_schedule uses the phase 5 generated background` で確認した。
+  - Phase 5背景、背景asset存在 / `1280 x 720`、個別asset存在 / `768 x 512` / alpha余白、editable `見出し` / `時刻` / `ラベル`、曜日別の `曜日` / `時間` / `予定`、予定表 / guide のshape・asset責務、draft normalization 後の背景維持を検証する。
+- 既存contract更新:
+  - `scripts/thumbnail-phase1-preset-assets-contract.mjs` は `weekly_schedule` がPhase 5へ移った前提に変更した。
+  - `scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `weekly_schedule` をPhase 4 preset対象から外した。Phase 4 assetファイル自体は保存済みdraft互換のため残す。
+  - `scripts/thumbnail-layer-management-contract.mjs` はPhase 5の週間予定配置へ更新した。
+- 検証:
+  - `node scripts/thumbnail-phase5-weekly-schedule-preset-contract.mjs` PASS
+  - 既存Phase 5 contract群 PASS
+  - `node scripts/thumbnail-phase4-decoration-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase3-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase2-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-phase1-preset-assets-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS
+  - `node scripts/thumbnail-preset-discovery-contract.mjs` PASS
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS
+  - `node scripts/tool-handoff-contract.mjs` PASS
+  - `node scripts/sns-split-image-maker-contract.mjs` PASS
+  - `npm run lint` PASS
+  - `npx tsc --noEmit` PASS
+  - `git diff --check` PASS。LF -> CRLF warningのみ
+  - `npm run build` PASS。worktree と root のlockfile重複によるNext.js workspace root推定warningのみ発生。
+- UI確認:
+  - static outputを `localhost:3044` で配信し、Browser / Playwrightで `週間予定` presetを確認。確認幅は 390 / 820 / 1024 / 1280 / 1366px。
+  - 各幅でcanvas非blank、horizontal overflow 0を確認。1024px以上ではPhase 5背景、Phase 5個別asset、shape layer、editable text layer、曜日別グループ内の `曜日` / `時間` / `予定` がレイヤー一覧に残ることを確認。
+  - static outputでは追加した Phase 5 `weekly_schedule` asset request はすべて 200。1024px以上では Next static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、今回追加したPhase 5 assetの読み込み失敗ではない。
+  - 確認スクリーンショット: `output/playwright/phase5-weekly-final-390.png` / `phase5-weekly-final-820.png` / `phase5-weekly-final-1024.png` / `phase5-weekly-final-1280.png` / `phase5-weekly-final-1366.png`
+  - Canvas export確認: `output/playwright/phase5-weekly-canvas-static-clean-1280x720.png`

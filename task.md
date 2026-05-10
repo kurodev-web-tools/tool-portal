@@ -127,6 +127,23 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-10 `週間予定` Phase 5 preset 更新:
+  - 作業前に PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を含むことを確認した
+  - 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`
+  - 対象は `週間予定` presetのみ。全9プリセット、schema、public API、素材ライブラリUI、フォント、外部CDN依存は変更していない
+  - `imagegen` skill + built-in `image_gen` toolで、Phase 5背景 `public/assets/images/thumbnail-editor/phase5/weekly-schedule-background-v1.png` を生成し、読める文字、曜日、日付、ロゴ、人物、キャラクター、実画面、SNS UI は入れていない
+  - 初回確認後の表示feedbackを受け、右側予定一覧の曜日専用小枠をなくした連続横長パネル背景へ差し替えた。曜日 / 時間 / 予定は editable text layer の列配置で分け、背景側では枠を分断しない
+  - 個別assetは `weekly-schedule-label-plaque-cyan-uniform-cell.png` / `weekly-schedule-range-badge-blue-uniform-cell.png` / `weekly-schedule-table-accent-cyan-uniform-cell.png` / `weekly-schedule-corner-glints-cyan-uniform-cell.png` の4点に絞り、すべて `768 x 512` 透明PNG / alpha余白つきへ正規化した
+  - `lib/thumbnail-editor.ts` は `weekly_schedule` presetだけをPhase 5構造へ更新し、`見出し` / `時刻` / `ラベル`、曜日別の `曜日` / `時間` / `予定` は editable text layer として維持した。曜日列は小枠前提をやめ、横長パネル上で読める幅へ調整した
+  - `予定表フレーム` / `予定表区切り線 上` / `予定表区切り線 下` / `立ち絵挿入ガイド` は shape layer として維持した
+  - 追加contract: `scripts/thumbnail-phase5-weekly-schedule-preset-contract.mjs`。実装前REDは `weekly_schedule uses the phase 5 generated background` で確認し、実装後PASS
+  - 既存contract更新: `scripts/thumbnail-phase1-preset-assets-contract.mjs` は `weekly_schedule` がPhase 5へ移った前提に変更。`scripts/thumbnail-phase4-decoration-assets-contract.mjs` は `weekly_schedule` をPhase 4 preset対象から外し、Phase 4 assetファイル自体は保存済みdraft互換のため残した。`scripts/thumbnail-layer-management-contract.mjs` はPhase 5の週間予定配置へ更新した
+  - 検証: 新規 `node scripts/thumbnail-phase5-weekly-schedule-preset-contract.mjs`、既存Phase 5 contract群、Phase 1〜4 / preset safety / discovery / layer management / handoff / sns split contracts、`npm run lint`、`npx tsc --noEmit`、`git diff --check`、`npm run build` はPASS。`npm run build` は worktree とrootのlockfile重複によるNext.js workspace root推定warningのみ発生
+  - UI確認: static outputを `localhost:3044` で配信し、Browser / Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でcanvas非blank、horizontal overflow 0。1024px以上ではPhase 5背景 / 個別asset / shape layer / editable text layer、曜日別グループ内の `曜日` / `時間` / `予定` がレイヤー一覧に残ることを確認
+  - console確認: 追加したPhase 5 `weekly_schedule` asset requestは404なし。1024px以上ではNext static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない
+  - 確認スクリーンショット: `output/playwright/phase5-weekly-final-390.png` / `phase5-weekly-final-820.png` / `phase5-weekly-final-1024.png` / `phase5-weekly-final-1280.png` / `phase5-weekly-final-1366.png`
+  - Canvas export確認: `output/playwright/phase5-weekly-canvas-static-clean-1280x720.png`
+
 - 2026-05-09 `配信告知` Phase 5 preset 更新:
   - 作業前に PR #49 `[codex] Renew karaoke thumbnail phase 5 preset` が `main` に merge済みで、local `main` / `origin/main` が merge commit `eef2748cf22f97d753fbd06f6d8ab6659a8e7c35` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-stream-preset` / `.worktrees/thumbnail-phase5-stream-preset`

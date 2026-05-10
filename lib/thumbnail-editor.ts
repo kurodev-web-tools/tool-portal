@@ -12,6 +12,23 @@ export type ThumbnailPresetId =
 export type ThumbnailPresetCategory = "配信ジャンル" | "告知画像" | "スケジュール";
 export type ThumbnailLayerType = "image" | "text" | "shape";
 export type ThumbnailShapeType = "rect" | "circle" | "line" | "burst" | "frame" | "polygon";
+export type ThumbnailMaterialCategory = "label-base" | "date-badge" | "corner" | "accent" | "divider" | "frame";
+export type ThumbnailMaterial = {
+  id: string;
+  name: string;
+  category: ThumbnailMaterialCategory;
+  description: string;
+  src: string;
+  initialSize: {
+    width: number;
+    height: number;
+  };
+  initialPosition: {
+    x: number;
+    y: number;
+  };
+  recommendedPlacement: string;
+};
 
 export type ThumbnailCanvas = {
   width: number;
@@ -100,6 +117,14 @@ export const thumbnailShapeTypeLabels: Record<ThumbnailShapeType, string> = {
   burst: "衝撃マーク",
   frame: "枠",
   polygon: "多角形"
+};
+export const thumbnailMaterialCategoryLabels: Record<ThumbnailMaterialCategory, string> = {
+  "label-base": "ラベル土台",
+  "date-badge": "日付バッジ",
+  corner: "角飾り",
+  accent: "光・アクセント",
+  divider: "HUD線",
+  frame: "フレーム"
 };
 
 export type ThumbnailPresetFilter = {
@@ -197,6 +222,7 @@ const thumbnailPhase3BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase
 const thumbnailPhase4DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decorations/phase4/`;
 const thumbnailPhase5BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase5/`;
 const thumbnailPhase5DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decorations/phase5/`;
+const thumbnailMaterialBatch1AssetPrefix = `${thumbnailPresetAssetPrefix}materials/batch1/`;
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -722,6 +748,133 @@ export const createImageLayer = (src: string): ThumbnailImageLayer => ({
   opacity: 1,
   blur: 0
 });
+
+export const thumbnailMaterialLibrary = [
+  {
+    id: "label-plaque-cyan",
+    name: "シアンラベル土台",
+    category: "label-base",
+    description: "短いラベル文字を重ねるためのシアン発光プレート。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}stream-label-plaque-cyan-uniform-cell.png`,
+    initialSize: { width: 430, height: 144 },
+    initialPosition: { x: 56, y: 52 },
+    recommendedPlacement: "左上のラベル土台"
+  },
+  {
+    id: "date-badge-navy-gold",
+    name: "紺金日付バッジ",
+    category: "date-badge",
+    description: "日付、時間、公開予定などを載せる横長の紺金バッジ。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}announcement-date-badge-navy-gold-uniform-cell.png`,
+    initialSize: { width: 480, height: 120 },
+    initialPosition: { x: 96, y: 452 },
+    recommendedPlacement: "下部の日付・時間バッジ"
+  },
+  {
+    id: "week-range-badge-blue",
+    name: "週範囲バッジ",
+    category: "date-badge",
+    description: "週範囲や短い期間表示に使いやすい青系バッジ。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}weekly-schedule-range-badge-blue-uniform-cell.png`,
+    initialSize: { width: 390, height: 120 },
+    initialPosition: { x: 116, y: 410 },
+    recommendedPlacement: "週範囲や短い期間表示"
+  },
+  {
+    id: "corner-ornament-gold",
+    name: "金角飾り",
+    category: "corner",
+    description: "情報枠やカード角に添える控えめな金色の角飾り。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}announcement-corner-ornament-gold-uniform-cell.png`,
+    initialSize: { width: 180, height: 120 },
+    initialPosition: { x: 80, y: 88 },
+    recommendedPlacement: "情報枠の角"
+  },
+  {
+    id: "soft-glint-gold",
+    name: "控えめ金グリント",
+    category: "accent",
+    description: "見出しやバッジ周辺に足す小さな金色の光粒。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}announcement-soft-glint-cluster-gold-uniform-cell.png`,
+    initialSize: { width: 260, height: 174 },
+    initialPosition: { x: 760, y: 94 },
+    recommendedPlacement: "見出し周辺の控えめな光"
+  },
+  {
+    id: "hud-corner-frame-green",
+    name: "HUD角フレーム",
+    category: "frame",
+    description: "立ち絵、動画枠、情報枠に重ねやすい緑系HUD角。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}game-live-hud-corner-frame-uniform-cell.png`,
+    initialSize: { width: 460, height: 306 },
+    initialPosition: { x: 700, y: 110 },
+    recommendedPlacement: "立ち絵・情報枠のHUD角"
+  },
+  {
+    id: "schedule-table-accent-cyan",
+    name: "予定表アクセント",
+    category: "frame",
+    description: "予定表、区切り枠、情報グリッドに重ねるシアン線。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}weekly-schedule-table-accent-cyan-uniform-cell.png`,
+    initialSize: { width: 520, height: 468 },
+    initialPosition: { x: 610, y: 72 },
+    recommendedPlacement: "予定表や区切りアクセント"
+  },
+  {
+    id: "duo-guide-spotlight",
+    name: "薄い複数枠ガイド",
+    category: "frame",
+    description: "複数人配置、動画枠、コメント枠の背面に置く薄いガイド光。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-duo-guide-spotlight-uniform-cell.png`,
+    initialSize: { width: 560, height: 374 },
+    initialPosition: { x: 620, y: 128 },
+    recommendedPlacement: "複数人・動画枠の薄いガイド"
+  },
+  {
+    id: "hud-divider-cyan",
+    name: "シアンHUD区切り",
+    category: "divider",
+    description: "見出し下やセクション境界に使う細いシアンHUDライン。",
+    src: `${thumbnailMaterialBatch1AssetPrefix}hud-divider-cyan-uniform-cell.png`,
+    initialSize: { width: 520, height: 120 },
+    initialPosition: { x: 104, y: 364 },
+    recommendedPlacement: "見出し下やセクション区切り"
+  },
+  {
+    id: "video-comment-frame-blue",
+    name: "動画コメント枠",
+    category: "frame",
+    description: "動画枠、コメント欄、予定表の大きな情報枠に使える青系フレーム。",
+    src: `${thumbnailMaterialBatch1AssetPrefix}video-comment-frame-blue-uniform-cell.png`,
+    initialSize: { width: 600, height: 360 },
+    initialPosition: { x: 120, y: 140 },
+    recommendedPlacement: "動画枠・コメント枠の土台"
+  }
+] satisfies ThumbnailMaterial[];
+
+export const createThumbnailMaterialLayer = (materialId: string, canvas: ThumbnailCanvas = thumbnailCanvasSizes.hd): ThumbnailImageLayer | null => {
+  const material = thumbnailMaterialLibrary.find((item) => item.id === materialId);
+  if (!material) {
+    return null;
+  }
+
+  const scaleX = canvas.width / thumbnailCanvasSizes.hd.width;
+  const scaleY = canvas.height / thumbnailCanvasSizes.hd.height;
+  return {
+    id: createId("image"),
+    name: `素材: ${material.name}`,
+    type: "image",
+    src: material.src,
+    x: Math.round(material.initialPosition.x * scaleX),
+    y: Math.round(material.initialPosition.y * scaleY),
+    width: Math.round(material.initialSize.width * scaleX),
+    height: Math.round(material.initialSize.height * scaleY),
+    rotation: 0,
+    opacity: 1,
+    blur: 0,
+    locked: false
+  };
+};
 
 export const createDraftFromPreset = (
   presetId: ThumbnailPresetId = "stream_announce",

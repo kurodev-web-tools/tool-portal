@@ -28,6 +28,21 @@
 - `X告知画像` の追加SVGには、読める文字、ロゴ、人物、キャラクター、外部画像参照、`<text>` / `font-family` / `<image>` / `href=` を含めていない。
 - 週間予定の曜日/時間/予定テキストレイヤー構造と既存座標は維持する。
 
+## Material Library Batch 1 Implementation Notes
+
+- 実装日: 2026-05-10
+- 目的: Phase 5で作成してきた装飾bitmap assetを、プリセット初期layersへ組み込まず、ユーザーが素材として追加できる first batch にする。
+- UI: Thumbnail Editor の Quick Add / side panel / mobile panel に素材ライブラリを追加し、選択した素材は通常の編集可能な image layer としてcanvas末尾へ追加する。
+- Data: `lib/thumbnail-editor.ts` に `thumbnailMaterialLibrary` と `createThumbnailMaterialLayer` を追加した。draft schema、既存preset初期layers、初期レイヤー順、public handoff contractは変更していない。
+- 登録素材: ラベル土台、日付 / 週範囲バッジ、角飾り、控えめな光、HUD線、予定表 / 動画 / コメント枠系を合計10点に限定した。
+- 新規生成asset: `public/assets/images/thumbnail-editor/materials/batch1/hud-divider-cyan-uniform-cell.png` / `video-comment-frame-blue-uniform-cell.png`
+  - `imagegen` skill + built-in `image_gen` toolで #00ff00 chroma-key source を生成し、ローカル処理で背景除去、`768 x 512` 透明PNGへ正規化した。
+  - 読める文字、曜日、日付、ロゴ、人物、キャラクター、実画面、SNS UIは入れていない。
+- Contract: `scripts/thumbnail-material-assets-contract.mjs`
+  - 素材登録、ファイル存在、`768 x 512`、alpha余白、素材名 / カテゴリ / 初期サイズ、通常image layer化、material-only新規assetが既存preset初期layersへ入らないことを検証する。
+- UI確認: static output `localhost:3056` で 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でcanvas非blank、horizontal overflow 0、素材追加後のcanvas差分、素材asset HEAD 200を確認した。
+- Console: 新規素材assetの404はなし。1024px以上ではNext static exportのRSC prefetch `__next...txt?_rsc=` 404のみ発生し、追加assetの読み込み失敗ではない。
+
 ## Phase 5 Cross-Preset Visual Review
 
 - 確認日: 2026-05-08

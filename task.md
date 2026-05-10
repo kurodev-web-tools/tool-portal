@@ -140,6 +140,19 @@
   - console確認: 新規素材asset requestの404はなし。1024px以上ではNext static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない。pixel sampling由来のCanvas readback warningのみ発生
   - 確認スクリーンショット: `output/playwright/material-library-batch1-390.png` / `material-library-batch1-820.png` / `material-library-batch1-1024.png` / `material-library-batch1-1280.png` / `material-library-batch1-1366.png`
 
+- 2026-05-11 素材ライブラリ category PR計画:
+  - 前提: PR #52 `[codex] Add thumbnail material library batch 1` は `main` に merge済み。以降の素材追加はカテゴリ単位でPRを分け、各PRは `main` から新規branch / `.worktrees/...` worktreeを切って進める
+  - 共通方針: 既存プリセットの初期layersへは組み込まない。素材ライブラリへ登録し、ユーザーが任意にcanvasへ追加できる素材として扱う
+  - 共通asset条件: 原則 `768 x 512` canvas / 透明PNG / alpha余白つき。読める文字、曜日、日付、ロゴ、人物、キャラクター、実画面、SNS UIは入れない。透明assetが必要な場合は `#00ff00` グリーンバック生成 + ローカル背景除去で作る
+  - PR 1 `ラベル土台`: 見出しや短い補足テキストの背面に置く横長素材。色は `deep navy + cyan edge`、`white glass + pale blue`、`champagne gold + dark trim` を中心にして、既存の青系バッジと被らないよう大きめの横長プレート / リボン / 斜めカット台座へ寄せる。丸型、小型カプセル、強い発光、角飾り単体はこのPRに入れない
+  - PR 2 `バッジ`: 日付、時間、短いステータス表現の背面に置く小〜中サイズ素材。色は `magenta + cyan`、`amber + charcoal`、`mint + white` を中心にして、ラベル土台より小さく、円形 / ピル / 六角形 / 小型タグの形に寄せる。横長タイトル帯、フレーム、線だけのHUD素材は入れない
+  - PR 3 `フレーム / パネル`: 動画枠、コメント枠、予定表アクセント、立ち絵余白のガイドに使える大きめ素材。色は `smoke glass + blue rim`、`off-white panel + navy line`、`thin gold technical frame` を中心にして、面積は大きいが文字を邪魔しない低彩度にする。ラベルやバッジに見える塗りつぶし小物、強いスパークは入れない
+  - PR 4 `HUD線 / 区切り`: 下線、区切り線、点線、L字ガイド、細いアクセントバーなど、shape layerでは出しにくい装飾線を補う素材。色は `cyan`、`soft white`、`lime-free greenish teal` を中心にして、線幅は細め、発光は控えめにする。大きな枠、ラベル塗り、粒子エフェクトは入れない
+  - PR 5 `光 / グリント / エフェクト`: 控えめなグリント、斜光、ハイライト、薄い粒子、集中しすぎない光だまり。色は `warm gold`、`white`、`pale cyan` を中心にして、素材本体の輪郭や役割を持たせず、他カテゴリの上から薄く足せるものにする。枠線、ラベル形状、日付バッジ形状は入れない
+  - PR 6 `角飾り / 小型アクセント`: 角だけの飾り、斜めタブ、矢印、シェブロン、三角アクセントなど、画面端や見出し横に置ける小物。色は `rose + gold`、`cyan + navy`、`white + charcoal` を中心にして、既存の金角飾りと被らないよう左右非対称 / 斜め方向 / 小型マークへ寄せる。全周フレームや大きなラベル台座は入れない
+  - 生成順: 各カテゴリPRで素材候補を3〜5点程度に絞り、同一カテゴリ内ではプロンプトと色設計を揃えて品質差を抑える。総枚数は各カテゴリPRのレビュー後に確定し、カテゴリをまたいだ大量生成はしない
+  - contract方針: 既存 `scripts/thumbnail-material-assets-contract.mjs` を維持しつつ、必要に応じてカテゴリ別contractを追加する。確認項目は登録、ファイル存在、`768 x 512`、alpha余白、素材名 / カテゴリ / 初期サイズ、追加時にpreset draftを壊さないこと、既存プリセット初期layersへ勝手に入らないこと
+
 - 2026-05-10 `週間予定` Phase 5 preset 更新:
   - 作業前に PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`

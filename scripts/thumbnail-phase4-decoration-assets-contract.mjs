@@ -77,11 +77,9 @@ const expectedDecorationFiles = [
   "x-standee-guide-lines.svg"
 ];
 const phase4PresetIds = [
-  "stream_announce",
   "weekly_schedule"
 ];
 const phase4PresetExpectations = {
-  stream_announce: { minDecorationImages: 9, shapeTypes: ["frame", "line"] },
   weekly_schedule: { minDecorationImages: 5, shapeTypes: ["line", "frame"] }
 };
 
@@ -121,24 +119,12 @@ for (const presetId of phase4PresetIds) {
 }
 
 const streamAnnouncePreset = lib.thumbnailPresets.find((item) => item.id === "stream_announce");
-const streamAnnounceDecorationSources = new Set(
-  streamAnnouncePreset.layers
-    .filter((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix))
-    .map((layer) => path.basename(layer.src))
+assert.ok(streamAnnouncePreset, "stream_announce preset exists");
+assert.equal(
+  streamAnnouncePreset.layers.some((layer) => layer.type === "image" && layer.src.startsWith(decorationPrefix)),
+  false,
+  "stream_announce migrated to phase 5 decoration assets"
 );
-for (const fileName of [
-  "stream-emphasis-bursts.svg",
-  "stream-tech-corner-frame.svg",
-  "stream-tech-dash-row.svg",
-  "stream-title-glow-backplate.svg",
-  "stream-star-sparks.svg",
-  "stream-time-banner-base.svg",
-  "stream-label-band-base.svg"
-]) {
-  assert.equal(streamAnnounceDecorationSources.has(fileName), true, `stream_announce uses dedicated ${fileName}`);
-}
-assert.equal(streamAnnounceDecorationSources.has("arrow-accent.svg"), false, "stream_announce does not reuse clip arrow accent");
-assert.equal(streamAnnounceDecorationSources.has("stream-time-banner-cap.svg"), false, "stream_announce uses a single time banner asset");
 
 const karaokePreset = lib.thumbnailPresets.find((item) => item.id === "karaoke");
 assert.ok(karaokePreset, "karaoke preset exists");

@@ -127,6 +127,15 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-11 立ち絵配置 適用先表示:
+  - 前提確認: PR #65 `[codex] Clarify standee placement scope` は GitHub上で `MERGED`、merge時刻 `2026-05-11T13:10:57Z`、merge commit `bdd6a33945d98e44f7079210973fb801bf541421` が `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-standee-target-layer-label` / `.worktrees/thumbnail-standee-target-layer-label`
+  - 対象は Thumbnail Editor の standee placement UI、適用toast、`scripts/thumbnail-standee-placement-contract.mjs` のみ。image layer schema、crop仕様、preset本体、素材データ、新規素材生成、外部CDN、フォント追加、Schedule Calendar、SNS Split Image Maker は触っていない
+  - `立ち絵配置` パネルに `適用先: 画像名` の短い表示を追加し、適用toastにも対象画像レイヤー名を含めた。2人 / 3人配置は引き続き、画像レイヤーを人数分追加して選択中の1枚へ個別に適用する前提のまま。一括配置、自動分割、複数選択に見える文言は入れていない
+  - contract は先に `scripts/thumbnail-standee-placement-contract.mjs` を更新し、RED を `standee placement UI shows the selected editable image layer as the apply target` で確認してから実装した。2人 / 3人配置が選択中の editable image layer だけを動かすこと、locked image layer を変えないこと、text layer や preset 本体を変更しないこと、`右 / バスト` / `中央 / 顔寄り` の crop 挙動維持も同contractで確認する
+  - 検証: `node scripts/thumbnail-standee-placement-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: `out/` を一時ローカルサーバー `localhost:3092` で配信し、Chrome headless CDPで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で `適用先: 画像 2（立ち絵テスト）`、`右 / バスト` / `中央 / 顔寄り`、適用toastの対象レイヤー名、canvas nonblank、horizontal overflow 0、一括配置 / 自動分割 / 複数選択に見える文言なし、console error / warn なしを確認した
+
 - 2026-05-11 立ち絵配置 2人/3人 scope 補足:
   - 前提確認: PR #64 `[codex] Add thumbnail standee crop presets` は GitHub上で `MERGED`、merge時刻 `2026-05-11T12:43:42Z`、merge commit `4e48761876595e5831a008511bec01df6510fbb4` が `origin/main` に含まれることを確認した
   - 作業branch / worktree: `codex/thumbnail-standee-placement-scope-note` / `.worktrees/thumbnail-standee-placement-scope-note`

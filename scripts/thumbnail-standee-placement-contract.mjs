@@ -280,6 +280,14 @@ assert.ok(
   componentSource.includes("2人 / 3人は画像レイヤーを人数分追加して、選択中の1枚へ個別に適用します。"),
   "standee placement UI explains duo/trio slots apply to one selected image layer at a time"
 );
+assert.ok(
+  componentSource.includes("適用先:"),
+  "standee placement UI shows the selected editable image layer as the apply target"
+);
+assert.ok(
+  componentSource.includes("targetLayer?.name"),
+  "standee placement toast includes the selected image layer name when applying a preset"
+);
 for (const misleadingCopy of ["一括配置", "自動分割", "複数選択"]) {
   assert.equal(
     componentSource.includes(misleadingCopy),

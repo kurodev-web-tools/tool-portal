@@ -120,7 +120,7 @@ export const thumbnailShapeTypeLabels: Record<ThumbnailShapeType, string> = {
 };
 export const thumbnailMaterialCategoryLabels: Record<ThumbnailMaterialCategory, string> = {
   "label-base": "ラベル土台",
-  "date-badge": "日付バッジ",
+  "date-badge": "バッジ",
   corner: "角飾り",
   accent: "光・アクセント",
   divider: "HUD線",
@@ -224,6 +224,7 @@ const thumbnailPhase5BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase
 const thumbnailPhase5DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decorations/phase5/`;
 const thumbnailMaterialBatch1AssetPrefix = `${thumbnailPresetAssetPrefix}materials/batch1/`;
 const thumbnailMaterialLabelAssetPrefix = `${thumbnailPresetAssetPrefix}materials/labels/`;
+const thumbnailMaterialBadgeAssetPrefix = `${thumbnailPresetAssetPrefix}materials/badges/`;
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -890,6 +891,46 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 580, height: 142 },
     initialPosition: { x: 122, y: 426 },
     recommendedPlacement: "斜めカットのサブ見出しリボン"
+  },
+  {
+    id: "badge-status-magenta-cyan",
+    name: "マゼンタ丸バッジ",
+    category: "date-badge",
+    description: "日付や短いステータスの背面に置くマゼンタとシアンの小型丸バッジ。",
+    src: `${thumbnailMaterialBadgeAssetPrefix}badge-status-magenta-cyan.png`,
+    initialSize: { width: 320, height: 170 },
+    initialPosition: { x: 126, y: 444 },
+    recommendedPlacement: "日付や短いステータスの背面"
+  },
+  {
+    id: "badge-time-amber-charcoal",
+    name: "琥珀時刻ピル",
+    category: "date-badge",
+    description: "時刻や公開時間の背面に置きやすい琥珀色とチャコールのピルバッジ。",
+    src: `${thumbnailMaterialBadgeAssetPrefix}badge-time-amber-charcoal.png`,
+    initialSize: { width: 430, height: 128 },
+    initialPosition: { x: 94, y: 464 },
+    recommendedPlacement: "時刻表示の背面ピル"
+  },
+  {
+    id: "badge-notice-mint-white",
+    name: "ミント通知タグ",
+    category: "date-badge",
+    description: "軽い通知や短い補足の背面に置くミントと白の小型タグバッジ。",
+    src: `${thumbnailMaterialBadgeAssetPrefix}badge-notice-mint-white.png`,
+    initialSize: { width: 340, height: 146 },
+    initialPosition: { x: 116, y: 86 },
+    recommendedPlacement: "軽い通知や短い補足の背面"
+  },
+  {
+    id: "badge-tech-hex-cyan-violet",
+    name: "シアン六角バッジ",
+    category: "date-badge",
+    description: "短いテック系ステータスを載せるためのシアンと紫の小型六角バッジ。",
+    src: `${thumbnailMaterialBadgeAssetPrefix}badge-tech-hex-cyan-violet.png`,
+    initialSize: { width: 270, height: 220 },
+    initialPosition: { x: 104, y: 402 },
+    recommendedPlacement: "短いテック系ステータス表示"
   }
 ] satisfies ThumbnailMaterial[];
 

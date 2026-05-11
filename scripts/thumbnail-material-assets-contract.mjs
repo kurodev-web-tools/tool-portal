@@ -25,6 +25,7 @@ const lib = testModule.exports;
 
 const materialPrefix = "/assets/images/thumbnail-editor/materials/batch1/";
 const labelMaterialPrefix = "/assets/images/thumbnail-editor/materials/labels/";
+const badgeMaterialPrefix = "/assets/images/thumbnail-editor/materials/badges/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -138,6 +139,38 @@ const expectedMaterials = [
     width: 580,
     height: 142,
     recommended: "斜めカットのサブ見出しリボン"
+  },
+  {
+    id: "badge-status-magenta-cyan",
+    category: "date-badge",
+    src: `${badgeMaterialPrefix}badge-status-magenta-cyan.png`,
+    width: 320,
+    height: 170,
+    recommended: "日付や短いステータスの背面"
+  },
+  {
+    id: "badge-time-amber-charcoal",
+    category: "date-badge",
+    src: `${badgeMaterialPrefix}badge-time-amber-charcoal.png`,
+    width: 430,
+    height: 128,
+    recommended: "時刻表示の背面ピル"
+  },
+  {
+    id: "badge-notice-mint-white",
+    category: "date-badge",
+    src: `${badgeMaterialPrefix}badge-notice-mint-white.png`,
+    width: 340,
+    height: 146,
+    recommended: "軽い通知や短い補足の背面"
+  },
+  {
+    id: "badge-tech-hex-cyan-violet",
+    category: "date-badge",
+    src: `${badgeMaterialPrefix}badge-tech-hex-cyan-violet.png`,
+    width: 270,
+    height: 220,
+    recommended: "短いテック系ステータス表示"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -235,6 +268,7 @@ const readPngAlphaBounds = (filePath) => {
 
 assert.ok(Array.isArray(lib.thumbnailMaterialLibrary), "thumbnail material library is exported");
 assert.equal(typeof lib.createThumbnailMaterialLayer, "function", "material layer factory is exported");
+assert.equal(lib.thumbnailMaterialCategoryLabels["date-badge"], "バッジ", "date-badge category is shown as バッジ for the category PR");
 
 assert.equal(lib.thumbnailMaterialLibrary.length, expectedMaterials.length, "material library keeps the expected scoped size");
 assert.deepEqual(
@@ -279,6 +313,9 @@ assert.equal(lib.createThumbnailMaterialLayer("missing-material"), null, "unknow
 
 const newMaterialSources = new Set(expectedMaterials.filter((item) => item.src.startsWith(materialPrefix)).map((item) => item.src));
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(labelMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(badgeMaterialPrefix))) {
   newMaterialSources.add(item.src);
 }
 for (const preset of lib.thumbnailPresets) {

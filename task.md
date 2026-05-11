@@ -127,6 +127,17 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-11 サムネ品質ガード:
+  - 前提確認: `main` / `origin/main` は `5353951 Trim task.md and archive completed task history` で一致し、`task.md` cleanup差分は両方向で空。`dd47f7d Clarify locked standee placement controls` も `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-quality-guard` / `.worktrees/thumbnail-quality-guard`
+  - 対象は Thumbnail Editor の短い品質ガードUI、`lib/thumbnail-editor.ts` の判定helper、`scripts/thumbnail-quality-guard-contract.mjs`、この `task.md` のみ。preset本体、text layer / image layer schema、crop仕様、素材ライブラリ登録、素材asset、Schedule Calendar、SNS Split Image Maker は触っていない
+  - `getThumbnailQualityGuardItems` を追加し、選択中レイヤーに対して `文字が小さめです`、`縁取りか影を足すと安心`、`セーフエリア外に注意`、`品質チェックOK` の短い warning / hint / ok だけを返すようにした。自動修正、AI生成、外部CDN、フォント追加は入れていない
+  - 設定パネル内に `サムネ品質` の小さな状態表示を追加し、テキスト設定 / 画像設定 / 立ち絵配置の既存導線は維持した。canvas側には `プリセットを選んで、文字と立ち絵を差し替える` の短い説明だけを追加した
+  - contract は先に `scripts/thumbnail-quality-guard-contract.mjs` を追加し、RED を `thumbnail quality guard helper is exported` で確認してから実装した。warning / hint が自動修正ではないこと、text layer編集導線、image layerの立ち絵配置UI、preset主要構造、素材ライブラリ登録、素材asset、ペイント / Canva的な汎用制作ツールに見えすぎる文言がないことを同contractで確認する
+  - 検証: `node scripts/thumbnail-quality-guard-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-standee-placement-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: worktree dev server `localhost:3124` をChrome headless CDPで確認。390 / 820 / 1024 / 1280 / 1366px の各幅で `サムネ品質`、短い説明文、テキスト設定、画像設定、`立ち絵配置`、locked理由、canvas nonblank、horizontal overflow 0、unsupported copyなし、console error / warnなしを確認した
+  - 補足: `npm run build` は PASS。worktree が repo 内 `.worktrees` にあるため、Next.js が複数 lockfile 検出の workspace root warning を出すが、build 自体は成功している
+
 - 2026-05-11 立ち絵配置 locked layer 理由表示:
   - 前提確認: PR #66 `[codex] Clarify thumbnail standee apply target` は GitHub上で `MERGED`、merge時刻 `2026-05-11T13:37:57Z`、merge commit `9222dc3d5a0a2160564fd48a035ea501b7414563` が `origin/main` に含まれることを確認した
   - 作業branch / worktree: `codex/thumbnail-standee-locked-reason` / `.worktrees/thumbnail-standee-locked-reason`

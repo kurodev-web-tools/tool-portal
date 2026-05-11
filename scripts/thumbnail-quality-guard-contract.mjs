@@ -45,6 +45,8 @@ const materialIdsBefore = JSON.stringify(lib.thumbnailMaterialLibrary.map((mater
 const assetFilesBefore = collectAssetFiles(materialAssetsRoot);
 
 assert.equal(typeof lib.getThumbnailQualityGuardItems, "function", "thumbnail quality guard helper is exported");
+assert.equal(typeof lib.getThumbnailOverallQualityGuardItems, "function", "overall thumbnail quality guard helper is exported");
+assert.equal(typeof lib.getThumbnailQualityGuardSummary, "function", "thumbnail quality guard summary helper is exported");
 
 const draft = lib.createDraftFromPreset("stream_announce");
 const textLayer = draft.layers.find((layer) => layer.type === "text" && layer.name.includes("見出し"));
@@ -116,6 +118,50 @@ const imageGuardItems = lib.getThumbnailQualityGuardItems(
 );
 assert.ok(imageGuardItems.some((item) => item.id === "selected-layer-safe-area"), "image layer guard checks standee safe area without changing placement schema");
 
+const overallRiskyDraft = {
+  ...draft,
+  selectedLayerId: null,
+  layers: draft.layers.map((layer) =>
+    layer.id === textLayer.id
+      ? {
+          ...layer,
+          fontSize: 22,
+          x: -18
+        }
+      : layer.type === "image"
+        ? {
+            ...layer,
+            locked: true,
+            hidden: true
+          }
+        : layer
+  )
+};
+const overallRiskyBefore = JSON.stringify(overallRiskyDraft);
+const overallGuardItems = lib.getThumbnailOverallQualityGuardItems(overallRiskyDraft);
+
+assert.ok(overallGuardItems.some((item) => item.id === "overall-text-size" && item.tone === "warning"), "overall guard checks small text without selecting a layer");
+assert.ok(overallGuardItems.some((item) => item.id === "overall-safe-area" && item.tone === "warning"), "overall guard checks safe area without selecting a layer");
+assert.ok(overallGuardItems.some((item) => item.id === "overall-hidden-layers" && item.tone === "hint"), "overall guard lightly notes hidden layers");
+assert.ok(overallGuardItems.some((item) => item.id === "overall-locked-layers" && item.tone === "hint"), "overall guard lightly notes locked layers");
+assert.ok(
+  overallGuardItems.every((item) => ["warning", "hint", "ok"].includes(item.tone) && item.message.length <= 28),
+  "overall quality guard copy stays short"
+);
+assert.equal(JSON.stringify(overallRiskyDraft), overallRiskyBefore, "overall guard does not auto-correct or mutate the draft");
+
+const riskySummary = lib.getThumbnailQualityGuardSummary(overallGuardItems);
+assert.equal(riskySummary.label, `注意 ${overallGuardItems.length}件`, "overall summary stays short near export actions");
+assert.equal(riskySummary.tone, "warning", "overall summary uses warning tone when warnings exist");
+
+const overallOkDraft = {
+  ...safeTextDraft,
+  layers: safeTextDraft.layers.map((layer) => (layer.type === "text" ? { ...layer, fontSize: Math.max(layer.fontSize, 44), x: Math.max(layer.x, 80) } : layer))
+};
+const overallOkItems = lib.getThumbnailOverallQualityGuardItems(overallOkDraft);
+assert.ok(overallOkItems.some((item) => item.id === "thumbnail-quality-ok" && item.tone === "ok"), "overall guard can show compact ok state");
+assert.equal(lib.getThumbnailQualityGuardSummary(overallOkItems).label, "品質チェックOK", "overall summary can show compact ok text");
+
 assert.equal(
   JSON.stringify(
     lib.thumbnailPresets.map((preset) => ({
@@ -133,6 +179,8 @@ assert.deepEqual(collectAssetFiles(materialAssetsRoot), assetFilesBefore, "quali
 
 assert.ok(componentSource.includes("ThumbnailQualityGuardPanel"), "Thumbnail Editor renders a compact quality guard panel");
 assert.ok(componentSource.includes("getThumbnailQualityGuardItems"), "component uses the shared quality guard helper");
+assert.ok(componentSource.includes("overallQualityGuardSummary"), "Thumbnail Editor keeps a short overall quality summary near export actions");
+assert.ok(componentSource.includes("qualityGuardSummary"), "ExportPanel can receive the quality summary without growing into a diagnostics UI");
 assert.ok(componentSource.includes("サムネ品質"), "quality guard is visible as thumbnail quality, not a generic paint tool");
 assert.ok(componentSource.includes("プリセットを選んで、文字と立ち絵を差し替える"), "UI briefly explains the preset-completion workflow");
 assert.ok(componentSource.includes("<TextControls"), "text layer editing route remains rendered");

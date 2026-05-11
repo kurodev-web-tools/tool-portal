@@ -145,6 +145,10 @@ export type ThumbnailQualityGuardItem = {
   tone: ThumbnailQualityGuardTone;
   message: string;
 };
+export type ThumbnailQualityGuardSummary = {
+  tone: ThumbnailQualityGuardTone;
+  label: string;
+};
 
 export const thumbnailDraftStorageKey = "v-streamer-tools:thumbnail-editor:draft:v1";
 export const thumbnailPresetDiscoveryStorageKey = "v-streamer-tools:thumbnail-editor:preset-discovery:v1";
@@ -217,10 +221,12 @@ const thumbnailContrastRatio = (a: string, b: string) => {
   return (light + 0.05) / (dark + 0.05);
 };
 
-export const getThumbnailQualityGuardItems = (draft: ThumbnailEditorDraft, selectedLayerId: string | null = draft.selectedLayerId): ThumbnailQualityGuardItem[] => {
+const getThumbnailQualityGuardItemsForLayers = (
+  draft: ThumbnailEditorDraft,
+  targetLayers: ThumbnailLayer[],
+  scope: "selected" | "overall"
+): ThumbnailQualityGuardItem[] => {
   const items: ThumbnailQualityGuardItem[] = [];
-  const selectedLayer = draft.layers.find((layer) => layer.id === selectedLayerId) ?? null;
-  const targetLayers = selectedLayer ? [selectedLayer] : draft.layers;
   const safeX = draft.canvas.width * thumbnailQualitySafeAreaInsetRatio;
   const safeY = draft.canvas.height * thumbnailQualitySafeAreaInsetRatio;
   const minTextSize = draft.canvas.width >= 1800 ? 54 : 36;
@@ -229,12 +235,12 @@ export const getThumbnailQualityGuardItems = (draft: ThumbnailEditorDraft, selec
     (layer) => layer.x < safeX || layer.y < safeY || layer.x + layer.width > draft.canvas.width - safeX || layer.y + layer.height > draft.canvas.height - safeY
   );
   if (hasUnsafeLayer) {
-    items.push({ id: "selected-layer-safe-area", tone: "warning", message: "セーフエリア外に注意" });
+    items.push({ id: scope === "selected" ? "selected-layer-safe-area" : "overall-safe-area", tone: "warning", message: "セーフエリア外に注意" });
   }
 
   const textLayers = targetLayers.filter((layer): layer is ThumbnailTextLayer => layer.type === "text");
   if (textLayers.some((layer) => layer.fontSize < minTextSize)) {
-    items.push({ id: "selected-text-size", tone: "warning", message: "文字が小さめです" });
+    items.push({ id: scope === "selected" ? "selected-text-size" : "overall-text-size", tone: "warning", message: "文字が小さめです" });
   }
   if (
     textLayers.some((layer) => {
@@ -243,10 +249,46 @@ export const getThumbnailQualityGuardItems = (draft: ThumbnailEditorDraft, selec
       return layer.strokeWidth < 4 && layer.shadowBlur < 8 && Math.max(strokeContrast, shadowContrast) < 3;
     })
   ) {
-    items.push({ id: "selected-text-contrast", tone: "hint", message: "縁取りか影を足すと安心" });
+    items.push({ id: scope === "selected" ? "selected-text-contrast" : "overall-text-contrast", tone: "hint", message: "縁取りか影を足すと安心" });
+  }
+
+  return items;
+};
+
+export const getThumbnailQualityGuardItems = (draft: ThumbnailEditorDraft, selectedLayerId: string | null = draft.selectedLayerId): ThumbnailQualityGuardItem[] => {
+  const selectedLayer = draft.layers.find((layer) => layer.id === selectedLayerId) ?? null;
+  const targetLayers = selectedLayer ? [selectedLayer] : draft.layers;
+  const items = getThumbnailQualityGuardItemsForLayers(draft, targetLayers, "selected");
+
+  return items.length > 0 ? items : [{ id: "thumbnail-quality-ok", tone: "ok", message: "品質チェックOK" }];
+};
+
+const isThumbnailQualityStructuralBackgroundLayer = (draft: ThumbnailEditorDraft, layer: ThumbnailLayer) =>
+  layer.type === "image" && layer.name.includes("背景") && layer.width >= draft.canvas.width && layer.height >= draft.canvas.height;
+
+export const getThumbnailOverallQualityGuardItems = (draft: ThumbnailEditorDraft): ThumbnailQualityGuardItem[] => {
+  const textLayers = draft.layers.filter((layer): layer is ThumbnailTextLayer => layer.type === "text" && !layer.hidden);
+  const items = getThumbnailQualityGuardItemsForLayers(draft, textLayers, "overall");
+
+  if (draft.layers.some((layer) => !isThumbnailQualityStructuralBackgroundLayer(draft, layer) && layer.hidden)) {
+    items.push({ id: "overall-hidden-layers", tone: "hint", message: "非表示レイヤーあり" });
+  }
+  if (draft.layers.some((layer) => !isThumbnailQualityStructuralBackgroundLayer(draft, layer) && layer.locked)) {
+    items.push({ id: "overall-locked-layers", tone: "hint", message: "ロック中レイヤーあり" });
   }
 
   return items.length > 0 ? items : [{ id: "thumbnail-quality-ok", tone: "ok", message: "品質チェックOK" }];
+};
+
+export const getThumbnailQualityGuardSummary = (items: ThumbnailQualityGuardItem[]): ThumbnailQualityGuardSummary => {
+  const activeItems = items.filter((item) => item.tone !== "ok");
+  if (activeItems.length === 0) {
+    return { tone: "ok", label: "品質チェックOK" };
+  }
+  return {
+    tone: activeItems.some((item) => item.tone === "warning") ? "warning" : "hint",
+    label: `注意 ${activeItems.length}件`
+  };
 };
 
 export const thumbnailStandeePlacementPresets = [

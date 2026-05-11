@@ -254,6 +254,16 @@
   - console / network確認: 820px確認時点で console error / warning なし。素材画像requestは 200 / 304 で、`impact-arrow-cyan-black.png` は 200
   - 確認スクリーンショット: `output/playwright/thumbnail-material-ux-polish-390.png` / `thumbnail-material-ux-polish-820.png` / `thumbnail-material-ux-polish-1024.png` / `thumbnail-material-ux-polish-1280.png` / `thumbnail-material-ux-polish-1366.png`
 
+- 2026-05-11 キャンバスサイズ変更時の主要テキスト引き継ぎ:
+  - 前提確認: PR #61 `[codex] Polish thumbnail material library UX` は GitHub上で `MERGED`、merge commit `e654c7514ae0ee47cad1e05152251ab670830329` として `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-preset-filter` / `.worktrees/thumbnail-preset-filter`
+  - 対象は Thumbnail Editor のキャンバスサイズ変更時の既存プリセット再作成ロジックのみ。schema、public API、素材データ、プリセット定義、素材ライブラリUI、外部CDN、フォント追加、他ツール変更はしていない
+  - handoffなしの通常編集でも、キャンバスサイズ変更時に `見出し` / `時刻` / `サブ` / `ラベル` の主要テキストを新サイズの同一プリセットへ引き継ぐようにした。Schedule Calendar handoff時は従来どおり予定テキストを優先する
+  - contract: `scripts/thumbnail-preset-apply-safety-contract.mjs` に、`changeCanvasSize` が手動編集済み主要テキストを保持する静的確認を追加した。実装前REDは `canvas size changes preserve manually edited main text when no schedule handoff is active` で確認し、実装後PASS
+  - 検証: `node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: dev serverを `localhost:3106` で起動し、Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でviewport幅一致、horizontal overflow 0、canvas nonblank、プリセット一覧表示、キャンバスサイズcontrol表示、console error / warning なしを確認した
+  - 確認スクリーンショット: `output/playwright/thumbnail-preset-filter-390.png` / `thumbnail-preset-filter-820.png` / `thumbnail-preset-filter-1024.png` / `thumbnail-preset-filter-1280.png` / `thumbnail-preset-filter-1366.png`
+
 - 2026-05-10 `週間予定` Phase 5 preset 更新:
   - 作業前に PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`

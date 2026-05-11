@@ -127,6 +127,17 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-11 立ち絵配置 locked layer 理由表示:
+  - 前提確認: PR #66 `[codex] Clarify thumbnail standee apply target` は GitHub上で `MERGED`、merge時刻 `2026-05-11T13:37:57Z`、merge commit `9222dc3d5a0a2160564fd48a035ea501b7414563` が `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-standee-locked-reason` / `.worktrees/thumbnail-standee-locked-reason`
+  - 対象は Thumbnail Editor の standee placement UI、`scripts/thumbnail-standee-placement-contract.mjs`、この `task.md` のみ。image layer schema、crop仕様、preset本体、素材データ、新規素材生成、外部CDN、フォント追加、Schedule Calendar、SNS Split Image Maker は触っていない
+  - locked image layer 選択時の `立ち絵配置` に `ロック解除後に適用できます。` の短い補足を追加し、disabled preset button の `title` / `aria-label` に `ロック中のため適用できません` を含めた。説明はロック中にだけ出し、editable image layer の `適用先: 画像名` と適用toastは既存通り維持した
+  - 2人 / 3人配置は引き続き、画像レイヤーを人数分追加して選択中の1枚へ個別に適用する前提のまま。一括配置、自動分割、複数選択に見える文言は入れていない
+  - contract は先に `scripts/thumbnail-standee-placement-contract.mjs` を更新し、RED を `standee placement UI briefly explains why locked image layers cannot use presets` で確認してから実装した。locked image layer 非適用、editable image layer の適用先/toast、2人 / 3人の選択中 editable image layer 限定適用、text layer非表示、`右 / バスト` / `中央 / 顔寄り` の crop 維持は同contractとUI確認で確認する
+  - 検証: `node scripts/thumbnail-standee-placement-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: `out/` を一時ローカルサーバー `localhost:3118` で配信し、Chrome DevTools MCPで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で locked image layer の `ロック中`、`ロック解除後に適用できます。`、`適用先: 画像 2（立ち絵テスト）`、disabled button の locked 理由、2人 / 3人補足、canvas表示、horizontal overflow 0、一括配置 / 自動分割 / 複数選択に見える文言なしを確認した。1366pxでは editable image layer で `右 / バスト` 適用toastと crop 保存、text layer 選択時に `立ち絵配置` が出ないことも確認した
+  - console確認: 追加UIや画像asset起因の error / warn はなし。static export の RSC prefetch `.txt?_rsc=` 404 は既存と同様に発生
+
 - 2026-05-11 立ち絵配置 適用先表示:
   - 前提確認: PR #65 `[codex] Clarify standee placement scope` は GitHub上で `MERGED`、merge時刻 `2026-05-11T13:10:57Z`、merge commit `bdd6a33945d98e44f7079210973fb801bf541421` が `origin/main` に含まれることを確認した
   - 作業branch / worktree: `codex/thumbnail-standee-target-layer-label` / `.worktrees/thumbnail-standee-target-layer-label`

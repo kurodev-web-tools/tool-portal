@@ -1958,6 +1958,7 @@ function StandeePlacementPanel({
   onApply: (presetId: ThumbnailStandeePlacementPresetId) => void;
 }) {
   const groups = ["1人", "2人", "3人"] as const;
+  const lockedReason = "ロック中のため適用できません";
 
   return (
     <div className="space-y-3 border-t border-border pt-4">
@@ -1968,6 +1969,7 @@ function StandeePlacementPanel({
       <p className="truncate text-[11px] font-bold text-muted">
         適用先: <span className="text-foreground">{layer.name}</span>
       </p>
+      {layer.locked ? <p className="text-[11px] font-semibold text-muted">ロック解除後に適用できます。</p> : null}
       <p className="text-[11px] font-semibold leading-relaxed text-muted">2人 / 3人は画像レイヤーを人数分追加して、選択中の1枚へ個別に適用します。</p>
       {groups.map((group) => (
         <div key={group} className="space-y-2">
@@ -1982,7 +1984,8 @@ function StandeePlacementPanel({
                   type="button"
                   disabled={Boolean(layer.locked)}
                   onClick={() => onApply(preset.id)}
-                  title={preset.description}
+                  title={layer.locked ? `${preset.description}（${lockedReason}）` : preset.description}
+                  aria-label={layer.locked ? `${preset.name}。${lockedReason}。` : preset.name}
                 >
                   <span className="block text-foreground">{preset.name}</span>
                   <span className="mt-0.5 block truncate text-[11px] text-muted">{preset.description}</span>

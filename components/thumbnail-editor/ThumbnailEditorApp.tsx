@@ -783,6 +783,7 @@ export function ThumbnailEditorApp() {
   };
 
   const applyStandeePlacementPreset = (presetId: ThumbnailStandeePlacementPresetId) => {
+    const targetLayer = draft.layers.find((layer) => layer.id === draft.selectedLayerId && layer.type === "image" && !layer.locked);
     const next = applyThumbnailStandeePlacementPreset(draft, presetId);
     if (!next) {
       showToast("warning", "編集可能な画像レイヤーを選択してください。");
@@ -792,7 +793,12 @@ export function ThumbnailEditorApp() {
     const preset = thumbnailStandeePlacementPresets.find((item) => item.id === presetId);
     setDraft(next);
     setMobilePanel("layers");
-    showToast("success", preset ? `立ち絵配置を「${preset.name}」にしました。` : "立ち絵配置を適用しました。");
+    showToast(
+      "success",
+      preset
+        ? `「${targetLayer?.name ?? "選択中の画像"}」へ立ち絵配置「${preset.name}」を適用しました。`
+        : `「${targetLayer?.name ?? "選択中の画像"}」へ立ち絵配置を適用しました。`
+    );
   };
 
   const moveLayer = (layerId: string, direction: "front" | "back") => {
@@ -1959,6 +1965,9 @@ function StandeePlacementPanel({
         <h3 className="text-sm font-black text-foreground">立ち絵配置</h3>
         {layer.locked ? <span className="text-[11px] font-bold text-muted">ロック中</span> : null}
       </div>
+      <p className="truncate text-[11px] font-bold text-muted">
+        適用先: <span className="text-foreground">{layer.name}</span>
+      </p>
       <p className="text-[11px] font-semibold leading-relaxed text-muted">2人 / 3人は画像レイヤーを人数分追加して、選択中の1枚へ個別に適用します。</p>
       {groups.map((group) => (
         <div key={group} className="space-y-2">

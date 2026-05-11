@@ -127,6 +127,17 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-11 サムネ品質ガード 全体要約:
+  - 前提確認: PR #68 `[codex] Add thumbnail quality guard` は GitHub上で `MERGED`、merge時刻 `2026-05-11T14:40:03Z`、merge commit `7c0cb1c2767a94b57afd62d2fafdf93376401b9b` が `main` / `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-quality-guard-overall` / `.worktrees/thumbnail-quality-guard-overall`
+  - 対象は Thumbnail Editor の品質ガードhelper、保存 / 書き出しパネルの短い要約、`scripts/thumbnail-quality-guard-contract.mjs`、この `task.md` のみ。preset本体、text layer / image layer schema、crop仕様、素材ライブラリ登録、素材asset、Schedule Calendar、SNS Split Image Maker は触っていない
+  - 選択中レイヤー向けの `サムネ品質` パネルは維持し、全体チェック用に `getThumbnailOverallQualityGuardItems` と `getThumbnailQualityGuardSummary` を追加した。全体側は小さすぎるテキスト、テキストのセーフエリア外、非表示レイヤー、ロック中レイヤーを warning / hint / ok の短い状態だけで返し、自動修正ボタンや重い診断UIは入れていない
+  - `保存 / 書き出し` パネルには `注意 1件` / `品質チェックOK` の要約だけを表示し、既存の PNG/JPEG、下書き保存、SNS分割画像、書き出し導線は維持した
+  - contract は先に `scripts/thumbnail-quality-guard-contract.mjs` を更新し、RED を `overall thumbnail quality guard helper is exported` で確認してから実装した。選択中レイヤー向け品質ガード、全体向け要約、自動修正なし、text layer編集導線、image layerの立ち絵配置UI、preset主要構造、素材ライブラリ登録、素材asset、汎用制作ツール寄り文言なしを同contractで確認する
+  - 検証: `node scripts/thumbnail-quality-guard-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-standee-placement-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: worktree dev server `localhost:3126` をPlaywright/Chromiumで確認。390 / 820 / 1024 / 1280 / 1366px の各幅で `プリセットを選んで、文字と立ち絵を差し替える`、`注意 1件` の全体要約、`サムネ品質`、`確認のみ`、書き出しボタン、canvas nonblank、horizontal overflow 0、console error / warnなしを確認した
+  - 補足: `npm run build` は PASS。worktree が repo 内 `.worktrees` にあるため、Next.js が複数 lockfile 検出の workspace root warning を出すが、build 自体は成功している
+
 - 2026-05-11 サムネ品質ガード:
   - 前提確認: `main` / `origin/main` は `5353951 Trim task.md and archive completed task history` で一致し、`task.md` cleanup差分は両方向で空。`dd47f7d Clarify locked standee placement controls` も `origin/main` に含まれることを確認した
   - 作業branch / worktree: `codex/thumbnail-quality-guard` / `.worktrees/thumbnail-quality-guard`

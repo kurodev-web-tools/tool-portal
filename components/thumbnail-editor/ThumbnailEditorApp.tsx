@@ -15,6 +15,8 @@ import {
   filterThumbnailPresets,
   getThumbnailMainTextCarryover,
   getThumbnailQualityGuardItems,
+  getThumbnailOverallQualityGuardItems,
+  getThumbnailQualityGuardSummary,
   getLayerCenter,
   hitTestLayerHandle,
   isThumbnailDraftPristineForPreset,
@@ -46,6 +48,7 @@ import {
   type ThumbnailPresetDiscoveryState,
   type ThumbnailPresetId,
   type ThumbnailQualityGuardItem,
+  type ThumbnailQualityGuardSummary,
   type ThumbnailShapeType,
   type ThumbnailStandeePlacementPresetId,
   type ThumbnailTextAlign
@@ -342,6 +345,8 @@ export function ThumbnailEditorApp() {
     () => getThumbnailQualityGuardItems(draft, selectedLayer?.id ?? draft.selectedLayerId),
     [draft, selectedLayer?.id]
   );
+  const overallQualityGuardItems = useMemo(() => getThumbnailOverallQualityGuardItems(draft), [draft]);
+  const overallQualityGuardSummary = useMemo(() => getThumbnailQualityGuardSummary(overallQualityGuardItems), [overallQualityGuardItems]);
 
   const selectedPreset = useMemo(
     () => thumbnailPresets.find((preset) => preset.id === draft.presetId) ?? thumbnailPresets[0],
@@ -1398,7 +1403,14 @@ export function ThumbnailEditorApp() {
                 />
               )}
               {mobilePanel === "export" && (
-                <ExportPanel exportFormat={exportFormat} onFormatChange={setExportFormat} onSave={saveDraft} onExport={exportImage} onSendToSns={sendToSnsSplit} />
+                <ExportPanel
+                  exportFormat={exportFormat}
+                  qualityGuardSummary={overallQualityGuardSummary}
+                  onFormatChange={setExportFormat}
+                  onSave={saveDraft}
+                  onExport={exportImage}
+                  onSendToSns={sendToSnsSplit}
+                />
               )}
             </section>
 
@@ -1444,7 +1456,14 @@ export function ThumbnailEditorApp() {
               ) : (
                 <div className="panel p-4 text-sm text-muted">編集するレイヤーを選択してください。</div>
               )}
-              <ExportPanel exportFormat={exportFormat} onFormatChange={setExportFormat} onSave={saveDraft} onExport={exportImage} onSendToSns={sendToSnsSplit} />
+              <ExportPanel
+                exportFormat={exportFormat}
+                qualityGuardSummary={overallQualityGuardSummary}
+                onFormatChange={setExportFormat}
+                onSave={saveDraft}
+                onExport={exportImage}
+                onSendToSns={sendToSnsSplit}
+              />
             </div>
           </aside>
         </div>
@@ -2446,20 +2465,33 @@ function PresetShortcutRow({ title, presets, onApply }: { title: string; presets
 
 function ExportPanel({
   exportFormat,
+  qualityGuardSummary,
   onFormatChange,
   onSave,
   onExport,
   onSendToSns
 }: {
   exportFormat: "png" | "jpeg";
+  qualityGuardSummary: ThumbnailQualityGuardSummary;
   onFormatChange: (format: "png" | "jpeg") => void;
   onSave: () => void;
   onExport: () => void;
   onSendToSns: () => void;
 }) {
+  const summaryToneClassName: Record<ThumbnailQualityGuardSummary["tone"], string> = {
+    warning: "border-amber-400/55 bg-amber-500/10 text-amber-200",
+    hint: "border-sky-400/45 bg-sky-500/10 text-sky-100",
+    ok: "border-emerald-400/45 bg-emerald-500/10 text-emerald-100"
+  };
+
   return (
     <section className="panel space-y-3 p-4">
-      <h2 className="text-base font-black text-foreground">保存 / 書き出し</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-black text-foreground">保存 / 書き出し</h2>
+        <span className={`rounded-sm border px-2 py-1 text-[11px] font-bold ${summaryToneClassName[qualityGuardSummary.tone]}`}>
+          {qualityGuardSummary.label}
+        </span>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <button className={`flat-control py-2 text-sm font-bold ${exportFormat === "png" ? "border-primary bg-primary-soft text-primary-strong" : ""}`} type="button" onClick={() => onFormatChange("png")}>
           PNG

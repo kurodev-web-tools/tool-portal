@@ -45,6 +45,7 @@ export type ThumbnailStandeePlacementPreset = {
   name: string;
   description: string;
   group: "1人" | "2人" | "3人";
+  disabledReason?: string;
   frame: {
     x: number;
     y: number;
@@ -197,6 +198,7 @@ export const thumbnailStandeePlacementPresets = [
     name: "右 / バスト",
     description: "右側にバストアップを大きめに置く。",
     group: "1人",
+    disabledReason: "画像crop対応を別PRで実装予定",
     frame: { x: 730, y: 110, width: 470, height: 560 }
   },
   {
@@ -204,6 +206,7 @@ export const thumbnailStandeePlacementPresets = [
     name: "中央 / 顔寄り",
     description: "中央に顔寄りの大きな立ち絵を置く。",
     group: "1人",
+    disabledReason: "画像crop対応を別PRで実装予定",
     frame: { x: 390, y: 36, width: 500, height: 650 }
   },
   {
@@ -1295,6 +1298,9 @@ export const applyThumbnailStandeePlacementPreset = (
 ): ThumbnailEditorDraft | null => {
   const preset = thumbnailStandeePlacementPresets.find((item) => item.id === presetId);
   if (!preset || !layerId) {
+    return null;
+  }
+  if (preset.disabledReason) {
     return null;
   }
 

@@ -47,6 +47,16 @@ assert.ok(
   lib.thumbnailStandeePlacementPresets.every((preset) => preset.name.length <= 16 && preset.description.length >= 10),
   "standee placement presets have concise labels and useful descriptions"
 );
+const cropDependentPresets = lib.thumbnailStandeePlacementPresets.filter((preset) => ["solo-right-bust", "solo-center-face"].includes(preset.id));
+assert.deepEqual(
+  cropDependentPresets.map((preset) => preset.name),
+  ["右 / バスト", "中央 / 顔寄り"],
+  "crop-dependent standee presets keep their user-facing names"
+);
+assert.ok(
+  cropDependentPresets.every((preset) => typeof preset.disabledReason === "string" && preset.disabledReason.includes("別PR")),
+  "crop-dependent standee presets are visibly reserved for a later crop PR"
+);
 
 const draft = lib.createDraftFromPreset("stream_announce");
 const imageLayer = lib.createImageLayer("data:image/png;base64,standee");
@@ -79,6 +89,16 @@ assert.deepEqual(
 );
 assert.equal(applied.version, 1, "standee placement keeps the existing draft schema version");
 assert.equal(applied.presetId, working.presetId, "standee placement keeps the current thumbnail preset");
+assert.equal(
+  lib.applyThumbnailStandeePlacementPreset(working, "solo-right-bust"),
+  null,
+  "bust-up placement stays disabled until image crop support exists"
+);
+assert.equal(
+  lib.applyThumbnailStandeePlacementPreset(working, "solo-center-face"),
+  null,
+  "face-close placement stays disabled until image crop support exists"
+);
 
 const fullHdDraft = lib.createDraftFromPreset("stream_announce", { width: 1920, height: 1080 });
 const fullHdImage = lib.createImageLayer("data:image/png;base64,standee");
@@ -116,6 +136,7 @@ assert.equal(
 
 assert.ok(componentSource.includes("StandeePlacementPanel"), "Thumbnail Editor renders the standee placement panel");
 assert.ok(componentSource.includes("applyStandeePlacementPreset"), "component wires standee placement presets to draft updates");
+assert.ok(componentSource.includes("preset.disabledReason"), "disabled standee presets are rendered as unavailable controls");
 assert.ok(componentSource.includes("立ち絵配置"), "standee placement UI is visible to users");
 
 console.log("thumbnail standee placement contract checks passed");

@@ -131,11 +131,13 @@
   - 前提確認: PR #62 `[codex] Preserve thumbnail text on canvas resize` は GitHub上で `MERGED`、merge commit `d7206aa22509712f152bca28344aaf290cf841eb` が `origin/main` に含まれることを確認した
   - 作業branch / worktree: `codex/thumbnail-standee-placement-presets` / `.worktrees/thumbnail-standee-placement-presets`
   - 対象は Thumbnail Editor の選択中 image layer に対する立ち絵配置プリセットのみ。draft schema、保存形式、既存プリセット構造、public API、外部CDN、フォント、他ツールは変更していない
-  - `lib/thumbnail-editor.ts` に `thumbnailStandeePlacementPresets` と `applyThumbnailStandeePlacementPreset` を追加した。右寄せ / 左寄せ / 中央寄せ、半身 / バストアップ / 顔寄り、コラボ2人 / 3人のスロットを、既存 image layer の `x/y/width/height/rotation` へ適用する
-  - `components/thumbnail-editor/ThumbnailEditorApp.tsx` の画像設定に `立ち絵配置` パネルを追加した。ロック中の画像は動かさず、通常の画像レイヤーだけを配置対象にする
-  - 追加contract: `scripts/thumbnail-standee-placement-contract.mjs`。実装前REDは `standee placement presets are exported` で確認し、実装後PASS。preset一覧、HD/Full HDスケール、テキスト非破壊、schema維持、locked image保護、UI配線を検証する
+  - `lib/thumbnail-editor.ts` に `thumbnailStandeePlacementPresets` と `applyThumbnailStandeePlacementPreset` を追加した。右寄せ / 左寄せ / 中央寄せ、コラボ2人 / 3人のスロットを、既存 image layer の `x/y/width/height/rotation` へ適用する
+  - `バストアップ` / `顔寄り` は画像cropが必要なため、名称は残したまま今PRではグレーアウトし、別PRで実装する予約項目にした。直接関数呼び出しでも適用しない
+  - `components/thumbnail-editor/ThumbnailEditorApp.tsx` の画像設定に `立ち絵配置` パネルを追加した。ロック中の画像、またはcrop未実装の予約項目は動かさず、通常の画像レイヤーだけを配置対象にする
+  - 追加contract: `scripts/thumbnail-standee-placement-contract.mjs`。実装前REDは `standee placement presets are exported` と、追加調整時の `crop-dependent standee presets are visibly reserved for a later crop PR` で確認し、実装後PASS。preset一覧、HD/Full HDスケール、テキスト非破壊、schema維持、locked image保護、crop依存項目のdisabled、UI配線を検証する
   - 検証: `node scripts/thumbnail-standee-placement-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
   - UI確認: static outputを `localhost:3072` で配信し、Chrome CDPで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で実測viewport幅一致、canvas非blank、horizontal overflow 0、選択中画像レイヤーで `立ち絵配置` パネル表示、`右 / 半身` 適用toast、console error / warn なしを確認した
+  - 追加UI確認: static outputを `localhost:3074` で配信し、Chrome CDPで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で `右 / 半身` は有効、`右 / バスト` / `中央 / 顔寄り` はグレーアウト、`画像crop対応を別PRで実装予定` 表示、canvas非blank、horizontal overflow 0、console error / warn なしを確認した
   - 確認スクリーンショット: `output/playwright/thumbnail-standee-placement-390.png` / `thumbnail-standee-placement-820.png` / `thumbnail-standee-placement-1024.png` / `thumbnail-standee-placement-1280.png` / `thumbnail-standee-placement-1366.png`
 
 - 2026-05-10 素材ライブラリ first batch:

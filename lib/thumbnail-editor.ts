@@ -228,6 +228,7 @@ const thumbnailMaterialBadgeAssetPrefix = `${thumbnailPresetAssetPrefix}material
 const thumbnailMaterialFrameAssetPrefix = `${thumbnailPresetAssetPrefix}materials/frames/`;
 const thumbnailMaterialDividerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/dividers/`;
 const thumbnailMaterialEffectAssetPrefix = `${thumbnailPresetAssetPrefix}materials/effects/`;
+const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/corners/`;
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -1074,6 +1075,46 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 560, height: 300 },
     initialPosition: { x: 584, y: 214 },
     recommendedPlacement: "素材同士の境界をなじませる淡い青の光だまり"
+  },
+  {
+    id: "corner-rose-gold-asymmetric-shard",
+    name: "ローズ金斜め破片",
+    category: "corner",
+    description: "見出し横や情報枠の角へ控えめに置く、ローズと金色の非対称アクセント。",
+    src: `${thumbnailMaterialCornerAssetPrefix}corner-rose-gold-asymmetric-shard.png`,
+    initialSize: { width: 230, height: 154 },
+    initialPosition: { x: 88, y: 94 },
+    recommendedPlacement: "見出し横や情報枠角の非対称アクセント"
+  },
+  {
+    id: "corner-cyan-navy-tech-chevron",
+    name: "紺シアン小シェブロン",
+    category: "corner",
+    description: "重要情報の横へ小さく添える、紺とシアンの方向づけシェブロン。",
+    src: `${thumbnailMaterialCornerAssetPrefix}corner-cyan-navy-tech-chevron.png`,
+    initialSize: { width: 210, height: 132 },
+    initialPosition: { x: 812, y: 102 },
+    recommendedPlacement: "重要情報横の小さな方向づけマーク"
+  },
+  {
+    id: "corner-white-charcoal-diagonal-tab",
+    name: "白チャコール斜めタブ",
+    category: "corner",
+    description: "画面端や余白へ足しやすい、白とチャコールの小さな斜めタブ。",
+    src: `${thumbnailMaterialCornerAssetPrefix}corner-white-charcoal-diagonal-tab.png`,
+    initialSize: { width: 240, height: 142 },
+    initialPosition: { x: 862, y: 456 },
+    recommendedPlacement: "画面端や余白へ足す斜めタブ"
+  },
+  {
+    id: "corner-champagne-glint-bracket",
+    name: "小金具グリント角",
+    category: "corner",
+    description: "他素材の角に一点だけ重ねて締まりを出す、小さなシャンパン金具。",
+    src: `${thumbnailMaterialCornerAssetPrefix}corner-champagne-glint-bracket.png`,
+    initialSize: { width: 190, height: 134 },
+    initialPosition: { x: 940, y: 78 },
+    recommendedPlacement: "他素材の角に重ねる小さな金具アクセント"
   }
 ] satisfies ThumbnailMaterial[];
 

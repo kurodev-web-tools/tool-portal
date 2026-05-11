@@ -223,6 +223,7 @@ const thumbnailPhase4DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decor
 const thumbnailPhase5BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase5/`;
 const thumbnailPhase5DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decorations/phase5/`;
 const thumbnailMaterialBatch1AssetPrefix = `${thumbnailPresetAssetPrefix}materials/batch1/`;
+const thumbnailMaterialLabelAssetPrefix = `${thumbnailPresetAssetPrefix}materials/labels/`;
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -849,6 +850,46 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 600, height: 360 },
     initialPosition: { x: 120, y: 140 },
     recommendedPlacement: "動画枠・コメント枠の土台"
+  },
+  {
+    id: "label-tech-plate-navy-cyan",
+    name: "紺シアン横長プレート",
+    category: "label-base",
+    description: "見出し文字の背面に置く紺色とシアン縁の横長テックプレート。",
+    src: `${thumbnailMaterialLabelAssetPrefix}label-tech-plate-navy-cyan.png`,
+    initialSize: { width: 620, height: 156 },
+    initialPosition: { x: 84, y: 74 },
+    recommendedPlacement: "見出し背面の横長テックプレート"
+  },
+  {
+    id: "label-glass-plate-white-blue",
+    name: "白青ガラスラベル",
+    category: "label-base",
+    description: "短い補足文の背面に重ねやすい白と淡青のガラス風ラベル。",
+    src: `${thumbnailMaterialLabelAssetPrefix}label-glass-plate-white-blue.png`,
+    initialSize: { width: 600, height: 148 },
+    initialPosition: { x: 96, y: 472 },
+    recommendedPlacement: "短い補足テキスト背面のガラス風ラベル"
+  },
+  {
+    id: "label-champagne-plaque-dark-trim",
+    name: "金縁タイトル台座",
+    category: "label-base",
+    description: "上品な告知見出しを載せるシャンパンゴールドの横長台座。",
+    src: `${thumbnailMaterialLabelAssetPrefix}label-champagne-plaque-dark-trim.png`,
+    initialSize: { width: 590, height: 150 },
+    initialPosition: { x: 92, y: 92 },
+    recommendedPlacement: "上品な告知見出しの横長台座"
+  },
+  {
+    id: "label-diagonal-ribbon-slate-cyan",
+    name: "斜めカットリボン",
+    category: "label-base",
+    description: "サブ見出しや短い注釈の背面に置く斜めカットの横長リボン。",
+    src: `${thumbnailMaterialLabelAssetPrefix}label-diagonal-ribbon-slate-cyan.png`,
+    initialSize: { width: 580, height: 142 },
+    initialPosition: { x: 122, y: 426 },
+    recommendedPlacement: "斜めカットのサブ見出しリボン"
   }
 ] satisfies ThumbnailMaterial[];
 

@@ -127,6 +127,18 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-12 サムネ品質ガード 読み取りやすさ調整:
+  - 前提確認: PR #69 `[codex] Add thumbnail quality guard summary` は GitHub上で `MERGED`、merge時刻 `2026-05-11T15:06:24Z`、merge commit `e0ccc0d0e04a0e1df35c8172517917bc39c102c9` が `main` / `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-quality-guard-readability` / `.worktrees/thumbnail-quality-guard-readability`
+  - 対象は Thumbnail Editor の品質ガードhelper、保存 / 書き出しパネルの補助文、`scripts/thumbnail-quality-guard-contract.mjs`、この `task.md` のみ。preset本体、text layer / image layer schema、crop仕様、素材ライブラリ登録、素材asset、Schedule Calendar、SNS Split Image Maker は触っていない
+  - `サムネ品質` の warning / hint 表示順を contract で固定し、warning を先、hint を後に並べる軽いソートを追加した。tone は引き続き `warning` / `hint` / `ok` のみで、自動修正や詳細診断UIは入れていない
+  - 全体品質ガードでは初期プリセットの背景ロックや補助コピー由来の過剰な注意を出さないよう、全体チェック側だけ小さめ文字の閾値を調整した。選択中レイヤー向け `サムネ品質` の既存判定は維持した
+  - `保存 / 書き出し` パネルの `品質チェックOK` / `注意 n件` 要約は維持し、その近くに `全体の軽い確認` の1行だけを追加した
+  - contract は先に `scripts/thumbnail-quality-guard-contract.mjs` を更新し、RED を `initial preset does not show excessive notes for structural locked background or supporting copy` で確認してから実装した
+  - 検証: `node scripts/thumbnail-quality-guard-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-standee-placement-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: worktree dev server `localhost:3128` を Chrome DevTools Protocol で確認。390 / 820 / 1024 / 1280 / 1366px の各幅で `プリセットを選んで、文字と立ち絵を差し替える`、`サムネ品質`、`確認のみ`、`テキスト設定`、`保存 / 書き出し`、`全体の軽い確認`、`品質チェックOK`、書き出しボタン、canvas nonblank、horizontal overflow 0、console error / warnなしを確認した
+  - 補足: `npm run build` は PASS。worktree が repo 内 `.worktrees` にあるため、Next.js が複数 lockfile 検出の workspace root warning を出すが、build 自体は成功している
+
 - 2026-05-11 サムネ品質ガード 全体要約:
   - 前提確認: PR #68 `[codex] Add thumbnail quality guard` は GitHub上で `MERGED`、merge時刻 `2026-05-11T14:40:03Z`、merge commit `7c0cb1c2767a94b57afd62d2fafdf93376401b9b` が `main` / `origin/main` に含まれることを確認した
   - 作業branch / worktree: `codex/thumbnail-quality-guard-overall` / `.worktrees/thumbnail-quality-guard-overall`

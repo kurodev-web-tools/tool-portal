@@ -124,7 +124,7 @@ export const thumbnailMaterialCategoryLabels: Record<ThumbnailMaterialCategory, 
   corner: "角飾り",
   accent: "光・アクセント",
   divider: "HUD線",
-  frame: "フレーム"
+  frame: "フレーム / パネル"
 };
 
 export type ThumbnailPresetFilter = {
@@ -225,6 +225,7 @@ const thumbnailPhase5DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decor
 const thumbnailMaterialBatch1AssetPrefix = `${thumbnailPresetAssetPrefix}materials/batch1/`;
 const thumbnailMaterialLabelAssetPrefix = `${thumbnailPresetAssetPrefix}materials/labels/`;
 const thumbnailMaterialBadgeAssetPrefix = `${thumbnailPresetAssetPrefix}materials/badges/`;
+const thumbnailMaterialFrameAssetPrefix = `${thumbnailPresetAssetPrefix}materials/frames/`;
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -931,6 +932,56 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 270, height: 220 },
     initialPosition: { x: 104, y: 402 },
     recommendedPlacement: "短いテック系ステータス表示"
+  },
+  {
+    id: "frame-smoke-glass-blue-rim",
+    name: "青縁スモークパネル",
+    category: "frame",
+    description: "動画枠や情報ブロックの背面に置く、青縁の低彩度スモークガラスパネル。",
+    src: `${thumbnailMaterialFrameAssetPrefix}frame-smoke-glass-blue-rim.png`,
+    initialSize: { width: 660, height: 382 },
+    initialPosition: { x: 120, y: 132 },
+    recommendedPlacement: "動画枠や情報ブロックの背面パネル"
+  },
+  {
+    id: "frame-offwhite-navy-info-panel",
+    name: "白紺情報パネル",
+    category: "frame",
+    description: "読みやすい情報ブロックの背面に使う、オフホワイト地と紺線のパネル。",
+    src: `${thumbnailMaterialFrameAssetPrefix}frame-offwhite-navy-info-panel.png`,
+    initialSize: { width: 620, height: 344 },
+    initialPosition: { x: 126, y: 164 },
+    recommendedPlacement: "読みやすい情報ブロックの背面"
+  },
+  {
+    id: "frame-thin-gold-technical",
+    name: "細金テック枠",
+    category: "frame",
+    description: "上品な動画枠や立ち絵余白のガイドに使う、細い金色のテクニカル枠。",
+    src: `${thumbnailMaterialFrameAssetPrefix}frame-thin-gold-technical.png`,
+    initialSize: { width: 640, height: 396 },
+    initialPosition: { x: 590, y: 122 },
+    recommendedPlacement: "上品な動画枠や立ち絵余白のガイド"
+  },
+  {
+    id: "frame-translucent-comment-panel",
+    name: "透けコメントパネル",
+    category: "frame",
+    description: "コメント枠や短い案内文の背面に置きやすい、透け感のある横長パネル。",
+    src: `${thumbnailMaterialFrameAssetPrefix}frame-translucent-comment-panel.png`,
+    initialSize: { width: 610, height: 292 },
+    initialPosition: { x: 116, y: 356 },
+    recommendedPlacement: "コメント枠や短い案内文の背面"
+  },
+  {
+    id: "frame-muted-schedule-panel",
+    name: "低彩度予定パネル",
+    category: "frame",
+    description: "予定表エリアや情報枠の背面に使う、低彩度で薄い罫線入りのパネル。",
+    src: `${thumbnailMaterialFrameAssetPrefix}frame-muted-schedule-panel.png`,
+    initialSize: { width: 650, height: 404 },
+    initialPosition: { x: 84, y: 126 },
+    recommendedPlacement: "予定表エリアや低彩度の情報枠"
   }
 ] satisfies ThumbnailMaterial[];
 

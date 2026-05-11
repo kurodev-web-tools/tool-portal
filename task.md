@@ -228,6 +228,19 @@
   - console確認: 新規 `materials/corners/*` asset requestの404はなし。390 / 820pxではconsole error / warnなし。1024px以上ではNext static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない
   - 確認スクリーンショット: `output/playwright/corner-material-before-390.png` / `corner-material-after-390.png` / `corner-material-before-820.png` / `corner-material-after-820.png` / `corner-material-before-1024.png` / `corner-material-after-1024.png` / `corner-material-before-1280.png` / `corner-material-after-1280.png` / `corner-material-before-1366.png` / `corner-material-after-1366.png`
 
+- 2026-05-11 素材ライブラリ `切り抜き / 強調素材パック` PR:
+  - 前提確認: PR #59 `[codex] Add thumbnail corner materials` は `main` に merge済み。GitHub上の merge commit は `e420bb543fee654283479569c115618b6cc2e302`、`origin/main` が同commitを含むことを確認した
+  - 作業branch / worktree: `codex/thumbnail-material-impact-pack` / `.worktrees/thumbnail-material-impact-pack`
+  - 対象は Thumbnail Editor の素材ライブラリ追加のみ。新しい top-level category、既存プリセットの初期layers、初期レイヤー順、draft schema、public API、フォント、外部CDN依存、他ツールへの波及変更はしていない
+  - 5点をローカル生成で `768 x 512` 透明PNG / alpha余白つきへ正規化した。読める文字、曜日、日付、ロゴ、人物、キャラクター、実画面、SNS UIは入れていない。透明PNGを直接生成したため、グリーンバック除去は不要だった
+  - 新規asset: `public/assets/images/thumbnail-editor/materials/impact/impact-arrow-cyan-black.png` / `impact-burst-yellow-black.png` / `impact-speed-lines-white-cyan.png` / `impact-focus-lines-monochrome.png` / `impact-outline-pop-base-white-black.png`
+  - `lib/thumbnail-editor.ts` の `thumbnailMaterialLibrary` に5件を追加し、既存カテゴリ `corner` / `accent` / `divider` / `date-badge` へ割り当てた。素材追加時は既存の `createThumbnailMaterialLayer` 経由で通常の編集可能な image layer になる
+  - contract: `scripts/thumbnail-material-assets-contract.mjs` を拡張。実装前REDは `material library keeps the expected scoped size` で確認し、実装後PASS。登録、ファイル存在、`768 x 512`、alpha余白、可視chroma-key緑なし、素材名 / カテゴリ / 初期サイズ / 推奨配置、通常image layer化、material-only新規assetが既存プリセット初期layersへ入らないことを検証する
+  - 検証: `node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: dev serverを `localhost:3061` で起動し、Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でviewport幅一致、素材ライブラリ `41 / 41点`、canvas非blank、horizontal overflow 0、素材ライブラリから `シアン矢印アクセント` を追加後にcanvas hashが変化、素材asset HEAD 200を確認
+  - console確認: 390 / 820 / 1024 / 1280 / 1366px すべてで console error / warning なし
+  - 確認スクリーンショット: `output/playwright/impact-pack-390.png` / `impact-pack-820.png` / `impact-pack-1024.png` / `impact-pack-1280.png` / `impact-pack-1366.png`
+
 - 2026-05-10 `週間予定` Phase 5 preset 更新:
   - 作業前に PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`

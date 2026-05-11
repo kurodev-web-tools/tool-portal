@@ -26,6 +26,7 @@ const lib = testModule.exports;
 const materialPrefix = "/assets/images/thumbnail-editor/materials/batch1/";
 const labelMaterialPrefix = "/assets/images/thumbnail-editor/materials/labels/";
 const badgeMaterialPrefix = "/assets/images/thumbnail-editor/materials/badges/";
+const frameMaterialPrefix = "/assets/images/thumbnail-editor/materials/frames/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -171,6 +172,46 @@ const expectedMaterials = [
     width: 270,
     height: 220,
     recommended: "短いテック系ステータス表示"
+  },
+  {
+    id: "frame-smoke-glass-blue-rim",
+    category: "frame",
+    src: `${frameMaterialPrefix}frame-smoke-glass-blue-rim.png`,
+    width: 660,
+    height: 382,
+    recommended: "動画枠や情報ブロックの背面パネル"
+  },
+  {
+    id: "frame-offwhite-navy-info-panel",
+    category: "frame",
+    src: `${frameMaterialPrefix}frame-offwhite-navy-info-panel.png`,
+    width: 620,
+    height: 344,
+    recommended: "読みやすい情報ブロックの背面"
+  },
+  {
+    id: "frame-thin-gold-technical",
+    category: "frame",
+    src: `${frameMaterialPrefix}frame-thin-gold-technical.png`,
+    width: 640,
+    height: 396,
+    recommended: "上品な動画枠や立ち絵余白のガイド"
+  },
+  {
+    id: "frame-translucent-comment-panel",
+    category: "frame",
+    src: `${frameMaterialPrefix}frame-translucent-comment-panel.png`,
+    width: 610,
+    height: 292,
+    recommended: "コメント枠や短い案内文の背面"
+  },
+  {
+    id: "frame-muted-schedule-panel",
+    category: "frame",
+    src: `${frameMaterialPrefix}frame-muted-schedule-panel.png`,
+    width: 650,
+    height: 404,
+    recommended: "予定表エリアや低彩度の情報枠"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -263,12 +304,26 @@ const readPngAlphaBounds = (filePath) => {
     }
   }
   assert.ok(maxX >= 0 && maxY >= 0, `${path.basename(filePath)} has visible alpha content`);
-  return { width, height, minX, minY, maxX, maxY };
+  let chromaKeyGreenPixels = 0;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const offset = y * rowBytes + x * bytesPerPixel;
+      const alpha = pixels[offset + 3];
+      const red = pixels[offset];
+      const green = pixels[offset + 1];
+      const blue = pixels[offset + 2];
+      if (alpha > 8 && green > 210 && red < 80 && blue < 80) {
+        chromaKeyGreenPixels += 1;
+      }
+    }
+  }
+  return { width, height, minX, minY, maxX, maxY, chromaKeyGreenPixels };
 };
 
 assert.ok(Array.isArray(lib.thumbnailMaterialLibrary), "thumbnail material library is exported");
 assert.equal(typeof lib.createThumbnailMaterialLayer, "function", "material layer factory is exported");
 assert.equal(lib.thumbnailMaterialCategoryLabels["date-badge"], "バッジ", "date-badge category is shown as バッジ for the category PR");
+assert.equal(lib.thumbnailMaterialCategoryLabels.frame, "フレーム / パネル", "frame category is shown as フレーム / パネル for the category PR");
 
 assert.equal(lib.thumbnailMaterialLibrary.length, expectedMaterials.length, "material library keeps the expected scoped size");
 assert.deepEqual(
@@ -299,6 +354,9 @@ for (const expected of expectedMaterials) {
   assert.ok(bounds.width - bounds.maxX - 1 >= minimumAlphaPadding, `${expected.id} keeps right alpha padding`);
   assert.ok(bounds.minY >= minimumAlphaPadding, `${expected.id} keeps top alpha padding`);
   assert.ok(bounds.height - bounds.maxY - 1 >= minimumAlphaPadding, `${expected.id} keeps bottom alpha padding`);
+  if (expected.src.startsWith(frameMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
 
   const layer = lib.createThumbnailMaterialLayer(expected.id);
   assert.equal(layer.type, "image", `${expected.id} creates an image layer`);
@@ -316,6 +374,9 @@ for (const item of expectedMaterials.filter((item) => item.src.startsWith(labelM
   newMaterialSources.add(item.src);
 }
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(badgeMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(frameMaterialPrefix))) {
   newMaterialSources.add(item.src);
 }
 for (const preset of lib.thumbnailPresets) {

@@ -177,6 +177,18 @@
   - UI確認: static outputを `localhost:3061` で配信し、Chrome DevToolsで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で実測viewport幅一致、canvas非blank、horizontal overflow 0、素材ライブラリから `琥珀時刻ピル` を追加後にcanvas checksumが変化、追加layer名、素材asset HEAD 200を確認
   - console確認: 新規 `materials/badges/*` asset requestの404はなし。1024px以上ではNext static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない。pixel sampling由来のCanvas readback warningのみ発生
 
+- 2026-05-11 素材ライブラリ `フレーム / パネル` PR:
+  - 前提確認: PR #55 `[codex] Add thumbnail badge materials` は `main` に merge済み。GitHub上の merge commit は `ae1311ac4314c628d319502e192c242901fe071a`、`origin/main` も同commitを指していることを確認した
+  - 作業branch / worktree: `codex/thumbnail-material-frames-panels` / `.worktrees/thumbnail-material-frames-panels`
+  - 対象はカテゴリ `フレーム / パネル` の素材ライブラリ追加のみ。既存プリセットの初期layers、初期レイヤー順、draft schema、public API、フォント、外部CDN依存、他ツールへの波及変更は変更していない
+  - `imagegen` skill + built-in `image_gen` toolで5点を生成し、`#00ff00` chroma-key source をローカル処理して `768 x 512` 透明PNG / alpha余白つきへ正規化した。新規frame素材には可視chroma-key緑が残らないことをcontractで確認する
+  - 新規asset: `public/assets/images/thumbnail-editor/materials/frames/frame-smoke-glass-blue-rim.png` / `frame-offwhite-navy-info-panel.png` / `frame-thin-gold-technical.png` / `frame-translucent-comment-panel.png` / `frame-muted-schedule-panel.png`
+  - `lib/thumbnail-editor.ts` の `thumbnailMaterialLibrary` に5件を追加し、素材名、カテゴリ、説明、初期サイズ、推奨配置、初期位置を定義した。既存 `frame` category id は維持し、表示名を `フレーム / パネル` に広げた。素材追加時は既存の `createThumbnailMaterialLayer` 経由で通常の編集可能な image layer になる
+  - contract: `scripts/thumbnail-material-assets-contract.mjs` を拡張。実装前REDは `frame category is shown as フレーム / パネル for the category PR` で確認し、実装後PASS。登録、ファイル存在、`768 x 512`、alpha余白、可視chroma-key緑なし、素材名 / カテゴリ / 初期サイズ / 推奨配置、通常image layer化、material-only新規assetが既存プリセット初期layersへ入らないことを検証する
+  - 検証: `node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: static outputを `localhost:3064` で配信し、Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でviewport幅一致、canvas非blank、horizontal overflow 0、素材ライブラリから `青縁スモークパネル` を追加後にcanvas checksumが変化、追加layer名、素材asset HEAD 200を確認
+  - console確認: 新規 `materials/frames/*` asset requestの404はなし。1024px以上ではNext static export のRSC prefetch 404がconsole errorとして出たが、追加assetの読み込み失敗ではない。pixel sampling由来のCanvas readback warningは確認用checksum取得時のみ発生
+
 - 2026-05-10 `週間予定` Phase 5 preset 更新:
   - 作業前に PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`

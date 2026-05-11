@@ -139,6 +139,13 @@ export type ThumbnailPreset = {
   layers: ThumbnailLayer[];
 };
 
+export type ThumbnailQualityGuardTone = "warning" | "hint" | "ok";
+export type ThumbnailQualityGuardItem = {
+  id: string;
+  tone: ThumbnailQualityGuardTone;
+  message: string;
+};
+
 export const thumbnailDraftStorageKey = "v-streamer-tools:thumbnail-editor:draft:v1";
 export const thumbnailPresetDiscoveryStorageKey = "v-streamer-tools:thumbnail-editor:preset-discovery:v1";
 export const thumbnailPresetRecentLimit = 6;
@@ -179,6 +186,69 @@ export const thumbnailMainTextCarryoverTargets = [
 ] as const;
 export type ThumbnailMainTextCarryoverKey = (typeof thumbnailMainTextCarryoverTargets)[number]["id"];
 export type ThumbnailMainTextCarryover = Partial<Record<ThumbnailMainTextCarryoverKey, string>>;
+
+const thumbnailQualitySafeAreaInsetRatio = 0.04;
+const thumbnailHexToRgb = (value: string) => {
+  const normalized = value.trim().toLowerCase();
+  if (!/^#[0-9a-f]{6}$/.test(normalized)) {
+    return null;
+  }
+  return {
+    r: parseInt(normalized.slice(1, 3), 16),
+    g: parseInt(normalized.slice(3, 5), 16),
+    b: parseInt(normalized.slice(5, 7), 16)
+  };
+};
+const thumbnailRelativeLuminance = (color: { r: number; g: number; b: number }) => {
+  const values = [color.r, color.g, color.b].map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * values[0] + 0.7152 * values[1] + 0.0722 * values[2];
+};
+const thumbnailContrastRatio = (a: string, b: string) => {
+  const first = thumbnailHexToRgb(a);
+  const second = thumbnailHexToRgb(b);
+  if (!first || !second) {
+    return 1;
+  }
+  const light = Math.max(thumbnailRelativeLuminance(first), thumbnailRelativeLuminance(second));
+  const dark = Math.min(thumbnailRelativeLuminance(first), thumbnailRelativeLuminance(second));
+  return (light + 0.05) / (dark + 0.05);
+};
+
+export const getThumbnailQualityGuardItems = (draft: ThumbnailEditorDraft, selectedLayerId: string | null = draft.selectedLayerId): ThumbnailQualityGuardItem[] => {
+  const items: ThumbnailQualityGuardItem[] = [];
+  const selectedLayer = draft.layers.find((layer) => layer.id === selectedLayerId) ?? null;
+  const targetLayers = selectedLayer ? [selectedLayer] : draft.layers;
+  const safeX = draft.canvas.width * thumbnailQualitySafeAreaInsetRatio;
+  const safeY = draft.canvas.height * thumbnailQualitySafeAreaInsetRatio;
+  const minTextSize = draft.canvas.width >= 1800 ? 54 : 36;
+
+  const hasUnsafeLayer = targetLayers.some(
+    (layer) => layer.x < safeX || layer.y < safeY || layer.x + layer.width > draft.canvas.width - safeX || layer.y + layer.height > draft.canvas.height - safeY
+  );
+  if (hasUnsafeLayer) {
+    items.push({ id: "selected-layer-safe-area", tone: "warning", message: "セーフエリア外に注意" });
+  }
+
+  const textLayers = targetLayers.filter((layer): layer is ThumbnailTextLayer => layer.type === "text");
+  if (textLayers.some((layer) => layer.fontSize < minTextSize)) {
+    items.push({ id: "selected-text-size", tone: "warning", message: "文字が小さめです" });
+  }
+  if (
+    textLayers.some((layer) => {
+      const strokeContrast = thumbnailContrastRatio(layer.color, layer.strokeColor);
+      const shadowContrast = thumbnailContrastRatio(layer.color, layer.shadowColor);
+      return layer.strokeWidth < 4 && layer.shadowBlur < 8 && Math.max(strokeContrast, shadowContrast) < 3;
+    })
+  ) {
+    items.push({ id: "selected-text-contrast", tone: "hint", message: "縁取りか影を足すと安心" });
+  }
+
+  return items.length > 0 ? items : [{ id: "thumbnail-quality-ok", tone: "ok", message: "品質チェックOK" }];
+};
+
 export const thumbnailStandeePlacementPresets = [
   {
     id: "solo-right-half",

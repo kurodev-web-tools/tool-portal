@@ -14,6 +14,7 @@ import {
   drawThumbnail,
   filterThumbnailPresets,
   getThumbnailMainTextCarryover,
+  getThumbnailQualityGuardItems,
   getLayerCenter,
   hitTestLayerHandle,
   isThumbnailDraftPristineForPreset,
@@ -44,6 +45,7 @@ import {
   type ThumbnailPresetCategory,
   type ThumbnailPresetDiscoveryState,
   type ThumbnailPresetId,
+  type ThumbnailQualityGuardItem,
   type ThumbnailShapeType,
   type ThumbnailStandeePlacementPresetId,
   type ThumbnailTextAlign
@@ -335,6 +337,10 @@ export function ThumbnailEditorApp() {
   const selectedLayer = useMemo(
     () => draft.layers.find((layer) => layer.id === draft.selectedLayerId) ?? null,
     [draft.layers, draft.selectedLayerId]
+  );
+  const qualityGuardItems = useMemo(
+    () => getThumbnailQualityGuardItems(draft, selectedLayer?.id ?? draft.selectedLayerId),
+    [draft, selectedLayer?.id]
   );
 
   const selectedPreset = useMemo(
@@ -1284,6 +1290,7 @@ export function ThumbnailEditorApp() {
                 <div>
                   <p className="text-sm font-bold text-foreground">{selectedPreset.name}</p>
                   <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / 16:9</p>
+                  <p className="mt-1 text-xs font-semibold text-muted">プリセットを選んで、文字と立ち絵を差し替える</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <button
@@ -1383,6 +1390,7 @@ export function ThumbnailEditorApp() {
               {mobilePanel === "text" && selectedLayer && (
                 <PropertyPanel
                   layer={selectedLayer}
+                  qualityGuardItems={qualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
                   onChange={updateSelectedLayer}
@@ -1427,6 +1435,7 @@ export function ThumbnailEditorApp() {
               {selectedLayer ? (
                 <PropertyPanel
                   layer={selectedLayer}
+                  qualityGuardItems={qualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
                   onChange={updateSelectedLayer}
@@ -1902,12 +1911,14 @@ function LayerPanel({
 
 function PropertyPanel({
   layer,
+  qualityGuardItems,
   fontMenuOpen,
   onFontMenuOpenChange,
   onChange,
   onStandeePlacement
 }: {
   layer: ThumbnailLayer;
+  qualityGuardItems: ThumbnailQualityGuardItem[];
   fontMenuOpen: boolean;
   onFontMenuOpenChange: (open: boolean) => void;
   onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void;
@@ -1934,6 +1945,7 @@ function PropertyPanel({
           }}
         />
       </label>
+      <ThumbnailQualityGuardPanel items={qualityGuardItems} />
 
       <div className="grid grid-cols-2 gap-3">
         <NumberField label="X" value={layer.x} min={-2000} max={4000} onChange={(x) => onChange((item) => ({ ...item, x }))} />
@@ -1947,6 +1959,30 @@ function PropertyPanel({
       {layer.type === "image" && <StandeePlacementPanel layer={layer} onApply={onStandeePlacement} />}
       <EffectControls layer={layer} onChange={onChange} />
     </section>
+  );
+}
+
+function ThumbnailQualityGuardPanel({ items }: { items: ThumbnailQualityGuardItem[] }) {
+  const toneClassName: Record<ThumbnailQualityGuardItem["tone"], string> = {
+    warning: "border-amber-400/55 bg-amber-500/10 text-amber-200",
+    hint: "border-sky-400/45 bg-sky-500/10 text-sky-100",
+    ok: "border-emerald-400/45 bg-emerald-500/10 text-emerald-100"
+  };
+
+  return (
+    <div className="rounded-base border border-border bg-surface-muted/55 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-black text-foreground">サムネ品質</h3>
+        <span className="text-[10px] font-bold text-muted">確認のみ</span>
+      </div>
+      <div className="grid gap-1.5">
+        {items.map((item) => (
+          <p key={item.id} className={`rounded-sm border px-2 py-1.5 text-[11px] font-bold leading-5 ${toneClassName[item.tone]}`}>
+            {item.message}
+          </p>
+        ))}
+      </div>
+    </div>
   );
 }
 

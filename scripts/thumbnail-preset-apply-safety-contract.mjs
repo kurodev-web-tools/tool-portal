@@ -6,7 +6,9 @@ import ts from "typescript";
 
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "thumbnail-editor.ts");
+const componentSourcePath = path.join(root, "components", "thumbnail-editor", "ThumbnailEditorApp.tsx");
 const source = fs.readFileSync(sourcePath, "utf8");
+const componentSource = fs.readFileSync(componentSourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -122,6 +124,13 @@ assert.equal(
   ).text,
   target.layers.find((layer) => layer.type === "text" && layer.name.includes("時刻")).text,
   "missing carryover roles leave target preset text unchanged"
+);
+
+const canvasSizeChangeBody = componentSource.match(/const changeCanvasSize = \(sizeId: ThumbnailCanvasSizeId\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
+assert.ok(canvasSizeChangeBody.length > 0, "canvas size change handler exists");
+assert.ok(
+  canvasSizeChangeBody.includes("applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft))"),
+  "canvas size changes preserve manually edited main text when no schedule handoff is active"
 );
 
 console.log("thumbnail-preset-apply-safety contract checks passed");

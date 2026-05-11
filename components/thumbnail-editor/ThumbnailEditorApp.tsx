@@ -701,8 +701,11 @@ export function ThumbnailEditorApp() {
   const changeCanvasSize = (sizeId: ThumbnailCanvasSizeId) => {
     const canvas = thumbnailCanvasSizes[sizeId];
     const next = createDraftFromPreset(draft.presetId, canvas);
-    setDraft(handoffPayload ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload) : next);
-    showToast("info", handoffPayload ? `${canvas.label} に予定テキストを引き継ぎました。` : `${canvas.label} で新規作成しました。`);
+    const nextDraft = handoffPayload
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
+      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+    setDraft(nextDraft);
+    showToast("info", handoffPayload ? `${canvas.label} に予定テキストを引き継ぎました。` : `${canvas.label} に主要テキストを引き継ぎました。`);
   };
 
   const saveDraft = () => {

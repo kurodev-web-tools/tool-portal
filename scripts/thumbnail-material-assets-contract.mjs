@@ -28,6 +28,7 @@ const labelMaterialPrefix = "/assets/images/thumbnail-editor/materials/labels/";
 const badgeMaterialPrefix = "/assets/images/thumbnail-editor/materials/badges/";
 const frameMaterialPrefix = "/assets/images/thumbnail-editor/materials/frames/";
 const dividerMaterialPrefix = "/assets/images/thumbnail-editor/materials/dividers/";
+const effectMaterialPrefix = "/assets/images/thumbnail-editor/materials/effects/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -253,6 +254,38 @@ const expectedMaterials = [
     width: 610,
     height: 104,
     recommended: "予定表エリアの補助罫線"
+  },
+  {
+    id: "effect-warm-gold-subtle-glint",
+    category: "accent",
+    src: `${effectMaterialPrefix}effect-warm-gold-subtle-glint.png`,
+    width: 260,
+    height: 174,
+    recommended: "見出しやバッジ横の小さな金色グリント"
+  },
+  {
+    id: "effect-soft-white-sparkle-cluster",
+    category: "accent",
+    src: `${effectMaterialPrefix}effect-soft-white-sparkle-cluster.png`,
+    width: 300,
+    height: 190,
+    recommended: "CTAや重要情報近くの淡い白スパークル"
+  },
+  {
+    id: "effect-pale-cyan-diagonal-streak",
+    category: "accent",
+    src: `${effectMaterialPrefix}effect-pale-cyan-diagonal-streak.png`,
+    width: 620,
+    height: 180,
+    recommended: "背景へ軽く重ねる淡シアンの斜光"
+  },
+  {
+    id: "effect-blue-glow-wash",
+    category: "accent",
+    src: `${effectMaterialPrefix}effect-blue-glow-wash.png`,
+    width: 560,
+    height: 300,
+    recommended: "素材同士の境界をなじませる淡い青の光だまり"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -366,6 +399,7 @@ assert.equal(typeof lib.createThumbnailMaterialLayer, "function", "material laye
 assert.equal(lib.thumbnailMaterialCategoryLabels["date-badge"], "バッジ", "date-badge category is shown as バッジ for the category PR");
 assert.equal(lib.thumbnailMaterialCategoryLabels.frame, "フレーム / パネル", "frame category is shown as フレーム / パネル for the category PR");
 assert.equal(lib.thumbnailMaterialCategoryLabels.divider, "HUD線 / 区切り", "divider category is shown as HUD線 / 区切り for the category PR");
+assert.equal(lib.thumbnailMaterialCategoryLabels.accent, "光 / グリント / エフェクト", "accent category is shown as 光 / グリント / エフェクト for the category PR");
 
 assert.equal(lib.thumbnailMaterialLibrary.length, expectedMaterials.length, "material library keeps the expected scoped size");
 assert.deepEqual(
@@ -402,6 +436,9 @@ for (const expected of expectedMaterials) {
   if (expected.src.startsWith(dividerMaterialPrefix)) {
     assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
   }
+  if (expected.src.startsWith(effectMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
 
   const layer = lib.createThumbnailMaterialLayer(expected.id);
   assert.equal(layer.type, "image", `${expected.id} creates an image layer`);
@@ -425,6 +462,9 @@ for (const item of expectedMaterials.filter((item) => item.src.startsWith(frameM
   newMaterialSources.add(item.src);
 }
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(dividerMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(effectMaterialPrefix))) {
   newMaterialSources.add(item.src);
 }
 for (const preset of lib.thumbnailPresets) {

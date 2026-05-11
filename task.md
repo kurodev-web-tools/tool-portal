@@ -202,6 +202,19 @@
   - console確認: 新規 `materials/dividers/*` asset requestの404はなし。1024px以上ではNext static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない
   - 確認スクリーンショット: `output/playwright/material-hud-dividers-390.png` / `material-hud-dividers-820.png` / `material-hud-dividers-1024.png` / `material-hud-dividers-1280.png` / `material-hud-dividers-1366.png`
 
+- 2026-05-11 素材ライブラリ `光 / グリント / エフェクト` PR:
+  - 前提確認: PR #57 `[codex] Add thumbnail HUD divider materials` は `main` に merge済み。GitHub上の merge commit は `78d5825503d4fc9d91de4e47f83feb7f27cca51d`、`origin/main` が同commitを含むことを確認した
+  - 作業branch / worktree: `codex/thumbnail-material-effects` / `.worktrees/thumbnail-material-effects`
+  - 対象はカテゴリ `光 / グリント / エフェクト` の素材ライブラリ追加のみ。既存プリセットの初期layers、初期レイヤー順、draft schema、public API、フォント、外部CDN依存、他ツールへの波及変更はしていない
+  - `imagegen` skill + built-in `image_gen` toolで4点を生成し、`#00ff00` chroma-key source をローカル処理して `768 x 512` 透明PNG / alpha余白つきへ正規化した。asset本体に可視chroma-key緑が残らないことをcontractで確認する
+  - 新規asset: `public/assets/images/thumbnail-editor/materials/effects/effect-warm-gold-subtle-glint.png` / `effect-soft-white-sparkle-cluster.png` / `effect-pale-cyan-diagonal-streak.png` / `effect-blue-glow-wash.png`
+  - `lib/thumbnail-editor.ts` の `thumbnailMaterialLibrary` に4件を追加し、素材名、カテゴリ、説明、初期サイズ、推奨配置、初期位置を定義した。既存 `accent` category id は維持し、表示名を `光 / グリント / エフェクト` に広げた。素材追加時は既存の `createThumbnailMaterialLayer` 経由で通常の編集可能な image layer になる
+  - contract: `scripts/thumbnail-material-assets-contract.mjs` を拡張。実装前REDは `accent category is shown as 光 / グリント / エフェクト for the category PR` で確認し、実装後PASS。登録、ファイル存在、`768 x 512`、alpha余白、可視chroma-key緑なし、素材名 / カテゴリ / 初期サイズ / 推奨配置、通常image layer化、material-only新規assetが既存プリセット初期layersへ入らないことを検証する
+  - 検証: `node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: static outputを `localhost:3070` で配信し、Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でviewport幅一致、canvas非blank、horizontal overflow 0、素材ライブラリから `薄金グリント` を追加後にcanvas checksumが変化、追加layer描画、素材asset HEAD 200を確認
+  - console確認: 新規 `materials/effects/*` asset requestの404はなし。1024px以上ではNext static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない。pixel sampling由来のCanvas readback warningは確認用checksum取得時のみ発生
+  - 確認スクリーンショット: `output/playwright/material-effects-390.png` / `material-effects-820.png` / `material-effects-1024.png` / `material-effects-1280.png` / `material-effects-1366.png`
+
 - 2026-05-10 `週間予定` Phase 5 preset 更新:
   - 作業前に PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`

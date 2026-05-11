@@ -127,6 +127,17 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-11 立ち絵配置プリセット最小UI:
+  - 前提確認: PR #62 `[codex] Preserve thumbnail text on canvas resize` は GitHub上で `MERGED`、merge commit `d7206aa22509712f152bca28344aaf290cf841eb` が `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-standee-placement-presets` / `.worktrees/thumbnail-standee-placement-presets`
+  - 対象は Thumbnail Editor の選択中 image layer に対する立ち絵配置プリセットのみ。draft schema、保存形式、既存プリセット構造、public API、外部CDN、フォント、他ツールは変更していない
+  - `lib/thumbnail-editor.ts` に `thumbnailStandeePlacementPresets` と `applyThumbnailStandeePlacementPreset` を追加した。右寄せ / 左寄せ / 中央寄せ、半身 / バストアップ / 顔寄り、コラボ2人 / 3人のスロットを、既存 image layer の `x/y/width/height/rotation` へ適用する
+  - `components/thumbnail-editor/ThumbnailEditorApp.tsx` の画像設定に `立ち絵配置` パネルを追加した。ロック中の画像は動かさず、通常の画像レイヤーだけを配置対象にする
+  - 追加contract: `scripts/thumbnail-standee-placement-contract.mjs`。実装前REDは `standee placement presets are exported` で確認し、実装後PASS。preset一覧、HD/Full HDスケール、テキスト非破壊、schema維持、locked image保護、UI配線を検証する
+  - 検証: `node scripts/thumbnail-standee-placement-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: static outputを `localhost:3072` で配信し、Chrome CDPで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で実測viewport幅一致、canvas非blank、horizontal overflow 0、選択中画像レイヤーで `立ち絵配置` パネル表示、`右 / 半身` 適用toast、console error / warn なしを確認した
+  - 確認スクリーンショット: `output/playwright/thumbnail-standee-placement-390.png` / `thumbnail-standee-placement-820.png` / `thumbnail-standee-placement-1024.png` / `thumbnail-standee-placement-1280.png` / `thumbnail-standee-placement-1366.png`
+
 - 2026-05-10 素材ライブラリ first batch:
   - 前提確認: PR #51 `[codex] Renew weekly schedule thumbnail phase 5 preset` は `main` に merge済み。`origin/main` が merge commit `69ef06b439cb1b5d84856bcd40639b19c9db78d0` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-material-library-batch1` / `.worktrees/thumbnail-material-library-batch1`
@@ -889,7 +900,7 @@
   - 文字が小さすぎる、縁取りが弱い、背景とのコントラストが低い、セーフエリア外にある状態を警告する
   - 警告は自動修正ではなく、まずは軽いガイドとして表示する
   - VTuber向けプリセット完成型の品質差別化ポイントとして扱う
-- [ ] 立ち絵配置プリセットを追加する
+- [x] 立ち絵配置プリセットを追加する
   - 右寄せ / 左寄せ / 中央寄せ
   - 半身 / バストアップ / 顔寄り
   - コラボ2人 / 3人

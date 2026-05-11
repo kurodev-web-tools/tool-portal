@@ -27,6 +27,7 @@ const materialPrefix = "/assets/images/thumbnail-editor/materials/batch1/";
 const labelMaterialPrefix = "/assets/images/thumbnail-editor/materials/labels/";
 const badgeMaterialPrefix = "/assets/images/thumbnail-editor/materials/badges/";
 const frameMaterialPrefix = "/assets/images/thumbnail-editor/materials/frames/";
+const dividerMaterialPrefix = "/assets/images/thumbnail-editor/materials/dividers/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -212,6 +213,46 @@ const expectedMaterials = [
     width: 650,
     height: 404,
     recommended: "予定表エリアや低彩度の情報枠"
+  },
+  {
+    id: "divider-cyan-thin-hud",
+    category: "divider",
+    src: `${dividerMaterialPrefix}divider-cyan-thin-hud.png`,
+    width: 620,
+    height: 96,
+    recommended: "見出し下の細いアクセントライン"
+  },
+  {
+    id: "divider-soft-white-dotted",
+    category: "divider",
+    src: `${dividerMaterialPrefix}divider-soft-white-dotted.png`,
+    width: 560,
+    height: 86,
+    recommended: "情報ブロック間の点線区切り"
+  },
+  {
+    id: "divider-muted-teal-l-corner-guide",
+    category: "divider",
+    src: `${dividerMaterialPrefix}divider-muted-teal-l-corner-guide.png`,
+    width: 360,
+    height: 220,
+    recommended: "予定表や情報枠のL字ガイド"
+  },
+  {
+    id: "divider-pale-cyan-segmented-underline",
+    category: "divider",
+    src: `${dividerMaterialPrefix}divider-pale-cyan-segmented-underline.png`,
+    width: 590,
+    height: 92,
+    recommended: "見出しや短い説明の分割下線"
+  },
+  {
+    id: "divider-navy-white-technical-rule",
+    category: "divider",
+    src: `${dividerMaterialPrefix}divider-navy-white-technical-rule.png`,
+    width: 610,
+    height: 104,
+    recommended: "予定表エリアの補助罫線"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -324,6 +365,7 @@ assert.ok(Array.isArray(lib.thumbnailMaterialLibrary), "thumbnail material libra
 assert.equal(typeof lib.createThumbnailMaterialLayer, "function", "material layer factory is exported");
 assert.equal(lib.thumbnailMaterialCategoryLabels["date-badge"], "バッジ", "date-badge category is shown as バッジ for the category PR");
 assert.equal(lib.thumbnailMaterialCategoryLabels.frame, "フレーム / パネル", "frame category is shown as フレーム / パネル for the category PR");
+assert.equal(lib.thumbnailMaterialCategoryLabels.divider, "HUD線 / 区切り", "divider category is shown as HUD線 / 区切り for the category PR");
 
 assert.equal(lib.thumbnailMaterialLibrary.length, expectedMaterials.length, "material library keeps the expected scoped size");
 assert.deepEqual(
@@ -357,6 +399,9 @@ for (const expected of expectedMaterials) {
   if (expected.src.startsWith(frameMaterialPrefix)) {
     assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
   }
+  if (expected.src.startsWith(dividerMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
 
   const layer = lib.createThumbnailMaterialLayer(expected.id);
   assert.equal(layer.type, "image", `${expected.id} creates an image layer`);
@@ -377,6 +422,9 @@ for (const item of expectedMaterials.filter((item) => item.src.startsWith(badgeM
   newMaterialSources.add(item.src);
 }
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(frameMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(dividerMaterialPrefix))) {
   newMaterialSources.add(item.src);
 }
 for (const preset of lib.thumbnailPresets) {

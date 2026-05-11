@@ -285,6 +285,14 @@ assert.ok(
   "standee placement UI shows the selected editable image layer as the apply target"
 );
 assert.ok(
+  componentSource.includes("ロック解除後に適用できます。"),
+  "standee placement UI briefly explains why locked image layers cannot use presets"
+);
+assert.ok(
+  componentSource.includes("ロック中のため適用できません"),
+  "disabled standee placement controls expose the locked reason"
+);
+assert.ok(
   componentSource.includes("targetLayer?.name"),
   "standee placement toast includes the selected image layer name when applying a preset"
 );

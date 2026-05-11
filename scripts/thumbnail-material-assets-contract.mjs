@@ -563,5 +563,10 @@ for (const preset of lib.thumbnailPresets) {
 assert.ok(componentSource.includes("MaterialLibraryPanel"), "Thumbnail Editor renders a material library panel");
 assert.ok(componentSource.includes("onMaterial"), "quick add controls expose material insertion");
 assert.ok(componentSource.includes("thumbnailMaterialLibrary"), "component uses the shared material library data");
+assert.ok(componentSource.includes("materialSearchQuery"), "material library keeps local search state");
+assert.ok(componentSource.includes("素材名・説明・推奨配置で検索"), "material library exposes lightweight search copy");
+assert.ok(componentSource.includes("materialCategoryCounts"), "material library shows category counts");
+assert.ok(componentSource.includes("max-h-[min(60vh,38rem)]"), "material library keeps dense results scrollable");
+assert.ok(componentSource.includes("material.description"), "material cards keep descriptions visible and searchable");
 
 console.log("thumbnail material asset contract checks passed");

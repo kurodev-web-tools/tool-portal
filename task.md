@@ -241,6 +241,19 @@
   - console確認: 390 / 820 / 1024 / 1280 / 1366px すべてで console error / warning なし
   - 確認スクリーンショット: `output/playwright/impact-pack-390.png` / `impact-pack-820.png` / `impact-pack-1024.png` / `impact-pack-1280.png` / `impact-pack-1366.png`
 
+- 2026-05-11 素材ライブラリ UX polish:
+  - 前提確認: PR #60 `[codex] Add thumbnail impact materials` は GitHub上で `MERGED`、merge commit `6067d56caf87f9ab9b048753ff840bc3450b1911` として `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-material-library-ux-polish` / `.worktrees/thumbnail-material-library-ux-polish`
+  - 対象は Thumbnail Editor の素材ライブラリUIのみ。新規素材生成、既存プリセット初期layersへの組み込み、schema / public API変更、新しい top-level category、外部CDN、フォント追加、他ツール変更はしていない
+  - 素材名 / 説明 / 推奨配置 / カテゴリラベルの軽い検索を追加した。カテゴリfilterには `すべて41` / `ラベル土台5` / `バッジ7` / `角飾り6` / `光 / グリント / エフェクト7` / `フレーム / パネル9` / `HUD線 / 区切り7` の件数を表示する
+  - 大量表示時に素材カード一覧だけがスクロールするよう `max-h` と `scrollbar-gutter` を追加し、カードのサムネ幅と説明表示を少し圧縮した。既存カテゴリID `label-base` / `date-badge` / `corner` / `accent` / `divider` / `frame` は維持した
+  - 素材追加後toastは `「シアン矢印アクセント」を素材レイヤーとして追加しました。` のように追加素材名が分かる文言にした
+  - contract: `scripts/thumbnail-material-assets-contract.mjs` に素材ライブラリUIの検索、カテゴリ件数、スクロール密度、説明表示の静的確認を追加した
+  - 検証: `node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: static outputを `localhost:3092` で配信し、Chrome DevToolsで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でviewport幅一致、horizontal overflow 0、canvas nonblank、素材ライブラリ `41 / 41点`、検索 `矢印` で `1 / 41点`、カテゴリ件数表示、`シアン矢印アクセント` 追加後のlayer表示を確認した
+  - console / network確認: 820px確認時点で console error / warning なし。素材画像requestは 200 / 304 で、`impact-arrow-cyan-black.png` は 200
+  - 確認スクリーンショット: `output/playwright/thumbnail-material-ux-polish-390.png` / `thumbnail-material-ux-polish-820.png` / `thumbnail-material-ux-polish-1024.png` / `thumbnail-material-ux-polish-1280.png` / `thumbnail-material-ux-polish-1366.png`
+
 - 2026-05-10 `週間予定` Phase 5 preset 更新:
   - 作業前に PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`

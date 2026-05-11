@@ -249,6 +249,7 @@ const getWeeklyScheduleLayerGroup = (layer: ThumbnailLayer) => {
 };
 const thumbnailPresetCategories = Array.from(new Set(thumbnailPresets.map((preset) => preset.category))) as ThumbnailPresetCategory[];
 const thumbnailPresetUsageLabels = Array.from(new Set(thumbnailPresets.map((preset) => preset.usageLabel)));
+const normalizeMaterialSearchText = (value: string) => value.trim().toLocaleLowerCase("ja-JP");
 const getPresetsByIds = (presetIds: ThumbnailPresetId[]) =>
   presetIds
     .map((presetId) => thumbnailPresets.find((preset) => preset.id === presetId))
@@ -770,8 +771,9 @@ export function ThumbnailEditorApp() {
       showToast("error", "素材を追加できませんでした。");
       return;
     }
+    const material = thumbnailMaterialLibrary.find((item) => item.id === materialId);
     addLayer(layer);
-    showToast("success", "素材レイヤーを追加しました。");
+    showToast("success", material ? `「${material.name}」を素材レイヤーとして追加しました。` : "素材レイヤーを追加しました。");
   };
 
   const moveLayer = (layerId: string, direction: "front" | "back") => {
@@ -1502,30 +1504,70 @@ function QuickAddBar({
 
 function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
   const [selectedCategory, setSelectedCategory] = useState<ThumbnailMaterialCategory | "all">("all");
+  const [materialSearchQuery, setMaterialSearchQuery] = useState("");
   const materialCategories = useMemo(
     () => Array.from(new Set(thumbnailMaterialLibrary.map((material) => material.category))) as ThumbnailMaterialCategory[],
     []
   );
+  const materialCategoryCounts = useMemo(() => {
+    const counts = Object.fromEntries(materialCategories.map((category) => [category, 0])) as Record<ThumbnailMaterialCategory, number>;
+    for (const material of thumbnailMaterialLibrary) {
+      counts[material.category] += 1;
+    }
+    return counts;
+  }, [materialCategories]);
   const filteredMaterials = useMemo(
-    () => thumbnailMaterialLibrary.filter((material) => selectedCategory === "all" || material.category === selectedCategory),
-    [selectedCategory]
+    () => {
+      const query = normalizeMaterialSearchText(materialSearchQuery);
+      return thumbnailMaterialLibrary.filter((material) => {
+        if (selectedCategory !== "all" && material.category !== selectedCategory) {
+          return false;
+        }
+        if (!query) {
+          return true;
+        }
+        return normalizeMaterialSearchText(
+          [material.name, material.description, material.recommendedPlacement, thumbnailMaterialCategoryLabels[material.category]].join(" ")
+        ).includes(query);
+      });
+    },
+    [materialSearchQuery, selectedCategory]
   );
+  const selectedCategoryCount = selectedCategory === "all" ? thumbnailMaterialLibrary.length : materialCategoryCounts[selectedCategory];
 
   return (
-    <section className="panel space-y-3 p-4">
-      <div className="flex items-center justify-between gap-3">
+    <section className="panel space-y-3 p-3 md:p-4">
+      <div className="flex items-start justify-between gap-3">
         <h2 className="text-base font-black text-foreground">素材ライブラリ</h2>
-        <p className="text-xs font-bold text-muted">{filteredMaterials.length} / {thumbnailMaterialLibrary.length}点</p>
+        <p className="shrink-0 text-right text-xs font-bold leading-5 text-muted">
+          {filteredMaterials.length} / {selectedCategoryCount}点
+          <span className="block text-[11px] font-bold text-muted/80">全{thumbnailMaterialLibrary.length}点</span>
+        </p>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <label className="block">
+        <span className="sr-only">素材名・説明・推奨配置で検索</span>
+        <input
+          className="w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground outline-none transition placeholder:text-muted/70 focus:border-primary focus:bg-primary-soft/20"
+          type="search"
+          value={materialSearchQuery}
+          onChange={(event) => setMaterialSearchQuery(event.target.value)}
+          placeholder="素材名・説明・推奨配置で検索"
+          aria-label="素材名・説明・推奨配置で検索"
+        />
+      </label>
+      <div className="scrollbar-accent flex gap-2 overflow-x-auto pb-1 [scrollbar-gutter:stable] min-[520px]:flex-wrap min-[520px]:overflow-visible min-[520px]:pb-0">
         {[
-          { id: "all", label: "すべて" },
-          ...materialCategories.map((category) => ({ id: category, label: thumbnailMaterialCategoryLabels[category] }))
+          { id: "all", label: "すべて", count: thumbnailMaterialLibrary.length },
+          ...materialCategories.map((category) => ({
+            id: category,
+            label: thumbnailMaterialCategoryLabels[category],
+            count: materialCategoryCounts[category]
+          }))
         ].map((option) => (
           <button
             key={option.id}
             className={[
-              "rounded-base border px-3 py-1.5 text-xs font-bold transition",
+              "shrink-0 rounded-base border px-2.5 py-1.5 text-xs font-bold transition",
               selectedCategory === option.id ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface text-muted hover:text-foreground"
             ].join(" ")}
             type="button"
@@ -1533,14 +1575,15 @@ function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
             aria-pressed={selectedCategory === option.id}
           >
             {option.label}
+            <span className="ml-1 text-[11px] opacity-75">{option.count}</span>
           </button>
         ))}
       </div>
-      <div className="grid gap-2">
+      <div className="scrollbar-accent grid max-h-[min(60vh,38rem)] gap-2 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
         {filteredMaterials.map((material) => (
           <button
             key={material.id}
-            className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 rounded-base border border-border bg-surface p-2 text-left transition hover:border-primary hover:bg-primary-soft/35"
+            className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2 rounded-base border border-border bg-surface p-2 text-left transition hover:border-primary hover:bg-primary-soft/35 md:grid-cols-[5.25rem_minmax(0,1fr)]"
             type="button"
             onClick={() => onAdd(material.id)}
             aria-label={`${material.name}を素材として追加`}
@@ -1558,10 +1601,16 @@ function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
               <span className="mt-1 inline-flex rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">
                 {thumbnailMaterialCategoryLabels[material.category]}
               </span>
-              <span className="mt-1 line-clamp-2 block text-xs leading-5 text-muted">{material.recommendedPlacement}</span>
+              <span className="mt-1 line-clamp-1 block text-xs leading-5 text-muted">{material.recommendedPlacement}</span>
+              <span className="line-clamp-1 block text-[11px] leading-4 text-muted/85">{material.description}</span>
             </span>
           </button>
         ))}
+        {filteredMaterials.length === 0 ? (
+          <div className="rounded-base border border-dashed border-border bg-surface-muted/40 px-3 py-5 text-center text-xs font-bold leading-5 text-muted">
+            条件に合う素材はありません。
+          </div>
+        ) : null}
       </div>
     </section>
   );

@@ -122,7 +122,7 @@ export const thumbnailMaterialCategoryLabels: Record<ThumbnailMaterialCategory, 
   "label-base": "ラベル土台",
   "date-badge": "バッジ",
   corner: "角飾り",
-  accent: "光・アクセント",
+  accent: "光 / グリント / エフェクト",
   divider: "HUD線 / 区切り",
   frame: "フレーム / パネル"
 };
@@ -227,6 +227,7 @@ const thumbnailMaterialLabelAssetPrefix = `${thumbnailPresetAssetPrefix}material
 const thumbnailMaterialBadgeAssetPrefix = `${thumbnailPresetAssetPrefix}materials/badges/`;
 const thumbnailMaterialFrameAssetPrefix = `${thumbnailPresetAssetPrefix}materials/frames/`;
 const thumbnailMaterialDividerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/dividers/`;
+const thumbnailMaterialEffectAssetPrefix = `${thumbnailPresetAssetPrefix}materials/effects/`;
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -1033,6 +1034,46 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 610, height: 104 },
     initialPosition: { x: 92, y: 392 },
     recommendedPlacement: "予定表エリアの補助罫線"
+  },
+  {
+    id: "effect-warm-gold-subtle-glint",
+    name: "薄金グリント",
+    category: "accent",
+    description: "見出しやバッジの横に薄く足す、低主張の金色グリント。",
+    src: `${thumbnailMaterialEffectAssetPrefix}effect-warm-gold-subtle-glint.png`,
+    initialSize: { width: 260, height: 174 },
+    initialPosition: { x: 808, y: 108 },
+    recommendedPlacement: "見出しやバッジ横の小さな金色グリント"
+  },
+  {
+    id: "effect-soft-white-sparkle-cluster",
+    name: "白小粒スパークル",
+    category: "accent",
+    description: "CTAや重要情報の近くに置く、淡い白の小さな光粒。",
+    src: `${thumbnailMaterialEffectAssetPrefix}effect-soft-white-sparkle-cluster.png`,
+    initialSize: { width: 300, height: 190 },
+    initialPosition: { x: 840, y: 396 },
+    recommendedPlacement: "CTAや重要情報近くの淡い白スパークル"
+  },
+  {
+    id: "effect-pale-cyan-diagonal-streak",
+    name: "淡シアン斜光",
+    category: "accent",
+    description: "背景へ軽く重ねる、淡いシアンの斜めハイライト。",
+    src: `${thumbnailMaterialEffectAssetPrefix}effect-pale-cyan-diagonal-streak.png`,
+    initialSize: { width: 620, height: 180 },
+    initialPosition: { x: 342, y: 178 },
+    recommendedPlacement: "背景へ軽く重ねる淡シアンの斜光"
+  },
+  {
+    id: "effect-blue-glow-wash",
+    name: "青グロー光だまり",
+    category: "accent",
+    description: "素材同士の境界をなじませる、淡い青の低主張グロー。",
+    src: `${thumbnailMaterialEffectAssetPrefix}effect-blue-glow-wash.png`,
+    initialSize: { width: 560, height: 300 },
+    initialPosition: { x: 584, y: 214 },
+    recommendedPlacement: "素材同士の境界をなじませる淡い青の光だまり"
   }
 ] satisfies ThumbnailMaterial[];
 

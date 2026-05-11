@@ -216,6 +216,46 @@ assert.deepEqual(
   "standee placement scales from HD to Full HD without changing canvas modes"
 );
 
+const anotherImageLayer = { ...lib.createImageLayer("data:image/png;base64,another-standee"), id: "another-image" };
+const multiLayerWorking = {
+  ...working,
+  layers: [...working.layers, anotherImageLayer],
+  selectedLayerId: imageLayer.id
+};
+const duoApplied = lib.applyThumbnailStandeePlacementPreset(multiLayerWorking, "duo-left");
+assert.ok(duoApplied, "duo standee slot applies to the selected editable image layer");
+assert.deepEqual(
+  {
+    x: duoApplied.layers.find((layer) => layer.id === imageLayer.id).x,
+    y: duoApplied.layers.find((layer) => layer.id === imageLayer.id).y,
+    width: duoApplied.layers.find((layer) => layer.id === imageLayer.id).width,
+    height: duoApplied.layers.find((layer) => layer.id === imageLayer.id).height
+  },
+  { x: 250, y: 96, width: 360, height: 585 },
+  "duo standee slot moves only the selected image layer into the requested slot"
+);
+assert.deepEqual(
+  duoApplied.layers.find((layer) => layer.id === anotherImageLayer.id),
+  anotherImageLayer,
+  "duo standee slot does not move or split other image layers"
+);
+
+const lockedUnselectedImage = { ...lib.createImageLayer("data:image/png;base64,locked-standee"), id: "locked-unselected-image", locked: true };
+const trioApplied = lib.applyThumbnailStandeePlacementPreset(
+  {
+    ...working,
+    layers: [...working.layers, lockedUnselectedImage],
+    selectedLayerId: imageLayer.id
+  },
+  "trio-right"
+);
+assert.ok(trioApplied, "trio standee slot applies to the selected editable image layer");
+assert.deepEqual(
+  trioApplied.layers.find((layer) => layer.id === lockedUnselectedImage.id),
+  lockedUnselectedImage,
+  "trio standee slot does not alter locked image layers that are not selected"
+);
+
 const lockedImage = { ...imageLayer, id: "locked-image", locked: true };
 assert.equal(
   lib.applyThumbnailStandeePlacementPreset({ ...draft, layers: [...draft.layers, lockedImage], selectedLayerId: lockedImage.id }, "solo-left-half"),
@@ -236,5 +276,16 @@ assert.equal(
 assert.ok(componentSource.includes("StandeePlacementPanel"), "Thumbnail Editor renders the standee placement panel");
 assert.ok(componentSource.includes("applyStandeePlacementPreset"), "component wires standee placement presets to draft updates");
 assert.ok(componentSource.includes("立ち絵配置"), "standee placement UI is visible to users");
+assert.ok(
+  componentSource.includes("2人 / 3人は画像レイヤーを人数分追加して、選択中の1枚へ個別に適用します。"),
+  "standee placement UI explains duo/trio slots apply to one selected image layer at a time"
+);
+for (const misleadingCopy of ["一括配置", "自動分割", "複数選択"]) {
+  assert.equal(
+    componentSource.includes(misleadingCopy),
+    false,
+    `standee placement UI does not imply unsupported ${misleadingCopy} behavior`
+  );
+}
 
 console.log("thumbnail standee placement contract checks passed");

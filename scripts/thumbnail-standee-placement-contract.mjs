@@ -22,6 +22,12 @@ testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
 testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
 
+const assertApproxRect = (actual, expected, message) => {
+  for (const key of ["x", "y", "width", "height"]) {
+    assert.ok(Math.abs(actual[key] - expected[key]) < 0.001, `${message}: ${key}`);
+  }
+};
+
 assert.ok(Array.isArray(lib.thumbnailStandeePlacementPresets), "standee placement presets are exported");
 assert.equal(typeof lib.applyThumbnailStandeePlacementPreset, "function", "standee placement applier is exported");
 
@@ -54,8 +60,8 @@ assert.deepEqual(
   "crop-dependent standee presets keep their user-facing names"
 );
 assert.ok(
-  cropDependentPresets.every((preset) => typeof preset.disabledReason === "string" && preset.disabledReason.includes("別PR")),
-  "crop-dependent standee presets are visibly reserved for a later crop PR"
+  cropDependentPresets.every((preset) => !preset.disabledReason),
+  "crop-dependent standee presets are enabled after image crop support exists"
 );
 
 const draft = lib.createDraftFromPreset("stream_announce");
@@ -89,15 +95,108 @@ assert.deepEqual(
 );
 assert.equal(applied.version, 1, "standee placement keeps the existing draft schema version");
 assert.equal(applied.presetId, working.presetId, "standee placement keeps the current thumbnail preset");
-assert.equal(
-  lib.applyThumbnailStandeePlacementPreset(working, "solo-right-bust"),
-  null,
-  "bust-up placement stays disabled until image crop support exists"
+
+const bustApplied = lib.applyThumbnailStandeePlacementPreset(working, "solo-right-bust");
+assert.ok(bustApplied, "bust-up placement is available after crop support exists");
+const bustLayer = bustApplied.layers.find((layer) => layer.id === imageLayer.id);
+assert.deepEqual(
+  {
+    x: bustLayer.x,
+    y: bustLayer.y,
+    width: bustLayer.width,
+    height: bustLayer.height,
+    rotation: bustLayer.rotation,
+    crop: bustLayer.crop
+  },
+  {
+    x: 730,
+    y: 110,
+    width: 470,
+    height: 560,
+    rotation: 0,
+    crop: { x: 0, y: 0, width: 1, height: 0.5 }
+  },
+  "bust-up placement crops to the upper half of the standee image"
+);
+
+const faceApplied = lib.applyThumbnailStandeePlacementPreset(working, "solo-center-face");
+assert.ok(faceApplied, "face-close placement is available after crop support exists");
+const faceLayer = faceApplied.layers.find((layer) => layer.id === imageLayer.id);
+assert.deepEqual(
+  {
+    x: faceLayer.x,
+    y: faceLayer.y,
+    width: faceLayer.width,
+    height: faceLayer.height,
+    rotation: faceLayer.rotation,
+    crop: faceLayer.crop
+  },
+  {
+    x: 390,
+    y: 36,
+    width: 500,
+    height: 650,
+    rotation: 0,
+    crop: { x: 0, y: 0, width: 1, height: 1 / 3 }
+  },
+  "face-close placement crops to the upper third of the standee image"
+);
+
+const normalizedBust = lib.normalizeThumbnailDraft(bustApplied);
+assert.deepEqual(
+  normalizedBust.layers.find((layer) => layer.id === imageLayer.id)?.crop,
+  { x: 0, y: 0, width: 1, height: 0.5 },
+  "standee crop metadata survives draft normalization"
+);
+const bustSourceRect = lib.getThumbnailImageCropSourceRect(bustLayer, { naturalWidth: 900, naturalHeight: 1800, width: 900, height: 1800 });
+assertApproxRect(
+  bustSourceRect,
+  { x: 72.32142857142856, y: 0, width: 755.3571428571429, height: 900 },
+  "draw helper converts bust-up crop metadata to an aspect-preserving upper-half source rectangle"
 );
 assert.equal(
-  lib.applyThumbnailStandeePlacementPreset(working, "solo-center-face"),
+  Math.round((bustSourceRect.width / bustSourceRect.height) * 1000),
+  Math.round((bustLayer.width / bustLayer.height) * 1000),
+  "bust-up source crop keeps the same aspect ratio as the displayed layer"
+);
+const faceSourceRect = lib.getThumbnailImageCropSourceRect(faceLayer, { naturalWidth: 900, naturalHeight: 1800, width: 900, height: 1800 });
+assertApproxRect(
+  faceSourceRect,
+  { x: 219.23076923076923, y: 0, width: 461.53846153846155, height: 600 },
+  "draw helper converts face-close crop metadata to an aspect-preserving upper-third source rectangle"
+);
+assert.equal(
+  Math.round((faceSourceRect.width / faceSourceRect.height) * 1000),
+  Math.round((faceLayer.width / faceLayer.height) * 1000),
+  "face-close source crop keeps the same aspect ratio as the displayed layer"
+);
+assert.equal(
+  lib.getThumbnailImageCropSourceRect(movedLayer, { naturalWidth: 900, naturalHeight: 1800, width: 900, height: 1800 }),
   null,
-  "face-close placement stays disabled until image crop support exists"
+  "draw helper keeps crop-free image layers on the full source image"
+);
+assert.deepEqual(
+  lib.cloneThumbnailLayer(bustLayer, applied.layers.map((layer) => layer.name)).crop,
+  { x: 0, y: 0, width: 1, height: 0.5 },
+  "duplicating a cropped image layer preserves crop metadata"
+);
+const normalizedLegacyDraft = lib.normalizeThumbnailDraft(working);
+assert.equal(
+  Object.hasOwn(normalizedLegacyDraft.layers.find((layer) => layer.id === imageLayer.id), "crop"),
+  false,
+  "existing v1 image layers without crop stay full-image layers"
+);
+const resetFullImage = lib.applyThumbnailStandeePlacementPreset(
+  {
+    ...working,
+    layers: working.layers.map((layer) => (layer.id === imageLayer.id ? { ...layer, crop: { x: 0, y: 0, width: 1, height: 0.5 } } : layer))
+  },
+  "solo-right-half"
+);
+assert.equal(
+  Object.hasOwn(resetFullImage.layers.find((layer) => layer.id === imageLayer.id), "crop"),
+  false,
+  "regular standee placements clear prior crop metadata and return to full-image display"
 );
 
 const fullHdDraft = lib.createDraftFromPreset("stream_announce", { width: 1920, height: 1080 });
@@ -136,7 +235,6 @@ assert.equal(
 
 assert.ok(componentSource.includes("StandeePlacementPanel"), "Thumbnail Editor renders the standee placement panel");
 assert.ok(componentSource.includes("applyStandeePlacementPreset"), "component wires standee placement presets to draft updates");
-assert.ok(componentSource.includes("preset.disabledReason"), "disabled standee presets are rendered as unavailable controls");
 assert.ok(componentSource.includes("立ち絵配置"), "standee placement UI is visible to users");
 
 console.log("thumbnail standee placement contract checks passed");

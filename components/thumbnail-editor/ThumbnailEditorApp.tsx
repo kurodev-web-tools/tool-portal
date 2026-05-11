@@ -1965,24 +1965,19 @@ function StandeePlacementPanel({
           <div className="grid grid-cols-2 gap-2">
             {thumbnailStandeePlacementPresets
               .filter((preset) => preset.group === group)
-              .map((preset) => {
-                const disabled = Boolean(layer.locked || preset.disabledReason);
-                const description = preset.disabledReason ?? preset.description;
-
-                return (
-                  <button
-                    key={preset.id}
-                    className="flat-control min-h-12 px-2 py-2 text-left text-xs font-bold disabled:cursor-not-allowed disabled:opacity-45"
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => onApply(preset.id)}
-                    title={description}
-                  >
-                    <span className="block text-foreground">{preset.name}</span>
-                    <span className="mt-0.5 block truncate text-[11px] text-muted">{description}</span>
-                  </button>
-                );
-              })}
+              .map((preset) => (
+                <button
+                  key={preset.id}
+                  className="flat-control min-h-12 px-2 py-2 text-left text-xs font-bold disabled:cursor-not-allowed disabled:opacity-45"
+                  type="button"
+                  disabled={Boolean(layer.locked)}
+                  onClick={() => onApply(preset.id)}
+                  title={preset.description}
+                >
+                  <span className="block text-foreground">{preset.name}</span>
+                  <span className="mt-0.5 block truncate text-[11px] text-muted">{preset.description}</span>
+                </button>
+              ))}
           </div>
         </div>
       ))}

@@ -30,6 +30,7 @@ const frameMaterialPrefix = "/assets/images/thumbnail-editor/materials/frames/";
 const dividerMaterialPrefix = "/assets/images/thumbnail-editor/materials/dividers/";
 const effectMaterialPrefix = "/assets/images/thumbnail-editor/materials/effects/";
 const cornerMaterialPrefix = "/assets/images/thumbnail-editor/materials/corners/";
+const impactMaterialPrefix = "/assets/images/thumbnail-editor/materials/impact/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -319,6 +320,46 @@ const expectedMaterials = [
     width: 190,
     height: 134,
     recommended: "他素材の角に重ねる小さな金具アクセント"
+  },
+  {
+    id: "impact-arrow-cyan-black",
+    category: "corner",
+    src: `${impactMaterialPrefix}impact-arrow-cyan-black.png`,
+    width: 250,
+    height: 150,
+    recommended: "見出し横や注目箇所への矢印アクセント"
+  },
+  {
+    id: "impact-burst-yellow-black",
+    category: "accent",
+    src: `${impactMaterialPrefix}impact-burst-yellow-black.png`,
+    width: 250,
+    height: 190,
+    recommended: "強調したい要素の背面や横の衝撃マーク"
+  },
+  {
+    id: "impact-speed-lines-white-cyan",
+    category: "divider",
+    src: `${impactMaterialPrefix}impact-speed-lines-white-cyan.png`,
+    width: 540,
+    height: 150,
+    recommended: "見出し下や画面端へ足すスピード線"
+  },
+  {
+    id: "impact-focus-lines-monochrome",
+    category: "accent",
+    src: `${impactMaterialPrefix}impact-focus-lines-monochrome.png`,
+    width: 420,
+    height: 280,
+    recommended: "注目箇所の背面へ薄く置く集中線"
+  },
+  {
+    id: "impact-outline-pop-base-white-black",
+    category: "date-badge",
+    src: `${impactMaterialPrefix}impact-outline-pop-base-white-black.png`,
+    width: 340,
+    height: 150,
+    recommended: "短い日付やステータスを載せる白黒フチ風の小型土台"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -476,6 +517,9 @@ for (const expected of expectedMaterials) {
   if (expected.src.startsWith(cornerMaterialPrefix)) {
     assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
   }
+  if (expected.src.startsWith(impactMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
 
   const layer = lib.createThumbnailMaterialLayer(expected.id);
   assert.equal(layer.type, "image", `${expected.id} creates an image layer`);
@@ -505,6 +549,9 @@ for (const item of expectedMaterials.filter((item) => item.src.startsWith(effect
   newMaterialSources.add(item.src);
 }
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(cornerMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(impactMaterialPrefix))) {
   newMaterialSources.add(item.src);
 }
 for (const preset of lib.thumbnailPresets) {

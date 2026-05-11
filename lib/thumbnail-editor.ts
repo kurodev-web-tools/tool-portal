@@ -229,6 +229,7 @@ const thumbnailMaterialFrameAssetPrefix = `${thumbnailPresetAssetPrefix}material
 const thumbnailMaterialDividerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/dividers/`;
 const thumbnailMaterialEffectAssetPrefix = `${thumbnailPresetAssetPrefix}materials/effects/`;
 const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/corners/`;
+const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materials/impact/`;
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -1115,6 +1116,56 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 190, height: 134 },
     initialPosition: { x: 940, y: 78 },
     recommendedPlacement: "他素材の角に重ねる小さな金具アクセント"
+  },
+  {
+    id: "impact-arrow-cyan-black",
+    name: "シアン矢印アクセント",
+    category: "corner",
+    description: "見出し横や注目箇所へ足す、シアンと黒の小型矢印アクセント。",
+    src: `${thumbnailMaterialImpactAssetPrefix}impact-arrow-cyan-black.png`,
+    initialSize: { width: 250, height: 150 },
+    initialPosition: { x: 706, y: 108 },
+    recommendedPlacement: "見出し横や注目箇所への矢印アクセント"
+  },
+  {
+    id: "impact-burst-yellow-black",
+    name: "黄黒衝撃マーク",
+    category: "accent",
+    description: "強調したい要素の背面や横へ置く、黄色と黒の抽象衝撃マーク。",
+    src: `${thumbnailMaterialImpactAssetPrefix}impact-burst-yellow-black.png`,
+    initialSize: { width: 250, height: 190 },
+    initialPosition: { x: 780, y: 318 },
+    recommendedPlacement: "強調したい要素の背面や横の衝撃マーク"
+  },
+  {
+    id: "impact-speed-lines-white-cyan",
+    name: "白シアンスピード線",
+    category: "divider",
+    description: "見出し下や画面端へ足す、白とシアンの斜めスピード線。",
+    src: `${thumbnailMaterialImpactAssetPrefix}impact-speed-lines-white-cyan.png`,
+    initialSize: { width: 540, height: 150 },
+    initialPosition: { x: 84, y: 388 },
+    recommendedPlacement: "見出し下や画面端へ足すスピード線"
+  },
+  {
+    id: "impact-focus-lines-monochrome",
+    name: "白黒集中線",
+    category: "accent",
+    description: "注目箇所の背面へ薄く置ける、白黒の抽象集中線。",
+    src: `${thumbnailMaterialImpactAssetPrefix}impact-focus-lines-monochrome.png`,
+    initialSize: { width: 420, height: 280 },
+    initialPosition: { x: 680, y: 176 },
+    recommendedPlacement: "注目箇所の背面へ薄く置く集中線"
+  },
+  {
+    id: "impact-outline-pop-base-white-black",
+    name: "白黒フチ強調土台",
+    category: "date-badge",
+    description: "短い日付やステータスを載せやすい、白黒フチ風の小型強調土台。",
+    src: `${thumbnailMaterialImpactAssetPrefix}impact-outline-pop-base-white-black.png`,
+    initialSize: { width: 340, height: 150 },
+    initialPosition: { x: 116, y: 438 },
+    recommendedPlacement: "短い日付やステータスを載せる白黒フチ風の小型土台"
   }
 ] satisfies ThumbnailMaterial[];
 

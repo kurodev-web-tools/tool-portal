@@ -189,6 +189,19 @@
   - UI確認: static outputを `localhost:3064` で配信し、Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でviewport幅一致、canvas非blank、horizontal overflow 0、素材ライブラリから `青縁スモークパネル` を追加後にcanvas checksumが変化、追加layer名、素材asset HEAD 200を確認
   - console確認: 新規 `materials/frames/*` asset requestの404はなし。1024px以上ではNext static export のRSC prefetch 404がconsole errorとして出たが、追加assetの読み込み失敗ではない。pixel sampling由来のCanvas readback warningは確認用checksum取得時のみ発生
 
+- 2026-05-11 素材ライブラリ `HUD線 / 区切り` PR:
+  - 前提確認: PR #56 `[codex] Add thumbnail frame panel materials` は `main` に merge済み。GitHub上の merge commit は `e79443b85c7695ca4064cab10f76b7b3cb412b69`、`origin/main` も同commitを指していることを確認した
+  - 作業branch / worktree: `codex/thumbnail-material-hud-dividers` / `.worktrees/thumbnail-material-hud-dividers`
+  - 対象はカテゴリ `HUD線 / 区切り` の素材ライブラリ追加のみ。既存プリセットの初期layers、初期レイヤー順、draft schema、public API、フォント、外部CDN依存、他ツールへの波及変更はしていない
+  - `imagegen` skill + built-in `image_gen` toolで5点を生成し、`#00ff00` chroma-key source をローカル処理して `768 x 512` 透明PNG / alpha余白つきへ正規化した。asset本体に可視chroma-key緑が残らないことをcontractで確認する
+  - 新規asset: `public/assets/images/thumbnail-editor/materials/dividers/divider-cyan-thin-hud.png` / `divider-soft-white-dotted.png` / `divider-muted-teal-l-corner-guide.png` / `divider-pale-cyan-segmented-underline.png` / `divider-navy-white-technical-rule.png`
+  - `lib/thumbnail-editor.ts` の `thumbnailMaterialLibrary` に5件を追加し、素材名、カテゴリ、説明、初期サイズ、推奨配置、初期位置を定義した。既存 `divider` category id は維持し、表示名を `HUD線 / 区切り` に広げた。素材追加時は既存の `createThumbnailMaterialLayer` 経由で通常の編集可能な image layer になる
+  - contract: `scripts/thumbnail-material-assets-contract.mjs` を拡張。実装前REDは `divider category is shown as HUD線 / 区切り for the category PR` で確認し、実装後PASS。登録、ファイル存在、`768 x 512`、alpha余白、可視chroma-key緑なし、素材名 / カテゴリ / 初期サイズ / 推奨配置、通常image layer化、material-only新規assetが既存プリセット初期layersへ入らないことを検証する
+  - 検証: `node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`npm run build` PASS
+  - UI確認: static outputを `localhost:3067` で配信し、Playwrightで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅でviewport幅一致、canvas非blank、horizontal overflow 0、素材ライブラリから `細シアンHUDライン` を追加後にcanvas checksumが変化、追加layer名 / 初期サイズ、素材asset HEAD 200を確認
+  - console確認: 新規 `materials/dividers/*` asset requestの404はなし。1024px以上ではNext static export のRSC prefetch `__next...txt?_rsc=` 404がconsole errorとして出たが、追加assetの読み込み失敗ではない
+  - 確認スクリーンショット: `output/playwright/material-hud-dividers-390.png` / `material-hud-dividers-820.png` / `material-hud-dividers-1024.png` / `material-hud-dividers-1280.png` / `material-hud-dividers-1366.png`
+
 - 2026-05-10 `週間予定` Phase 5 preset 更新:
   - 作業前に PR #50 `[codex] Renew stream announcement thumbnail phase 5 preset` が `main` に merge済みで、`origin/main` が merge commit `d80ca2e0e97b959c79bede1a4c0faf39d3d7103b` を含むことを確認した
   - 作業branch / worktree: `codex/thumbnail-phase5-weekly-schedule-preset` / `.worktrees/thumbnail-phase5-weekly-schedule-preset`

@@ -123,7 +123,7 @@ export const thumbnailMaterialCategoryLabels: Record<ThumbnailMaterialCategory, 
   "date-badge": "バッジ",
   corner: "角飾り",
   accent: "光・アクセント",
-  divider: "HUD線",
+  divider: "HUD線 / 区切り",
   frame: "フレーム / パネル"
 };
 
@@ -226,6 +226,7 @@ const thumbnailMaterialBatch1AssetPrefix = `${thumbnailPresetAssetPrefix}materia
 const thumbnailMaterialLabelAssetPrefix = `${thumbnailPresetAssetPrefix}materials/labels/`;
 const thumbnailMaterialBadgeAssetPrefix = `${thumbnailPresetAssetPrefix}materials/badges/`;
 const thumbnailMaterialFrameAssetPrefix = `${thumbnailPresetAssetPrefix}materials/frames/`;
+const thumbnailMaterialDividerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/dividers/`;
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -982,6 +983,56 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 650, height: 404 },
     initialPosition: { x: 84, y: 126 },
     recommendedPlacement: "予定表エリアや低彩度の情報枠"
+  },
+  {
+    id: "divider-cyan-thin-hud",
+    name: "細シアンHUDライン",
+    category: "divider",
+    description: "見出し下へ薄く重ねる、細いシアンのHUDアクセントライン。",
+    src: `${thumbnailMaterialDividerAssetPrefix}divider-cyan-thin-hud.png`,
+    initialSize: { width: 620, height: 96 },
+    initialPosition: { x: 92, y: 372 },
+    recommendedPlacement: "見出し下の細いアクセントライン"
+  },
+  {
+    id: "divider-soft-white-dotted",
+    name: "白点線セパレーター",
+    category: "divider",
+    description: "情報ブロックの間へ入れやすい、淡い白の点線区切り。",
+    src: `${thumbnailMaterialDividerAssetPrefix}divider-soft-white-dotted.png`,
+    initialSize: { width: 560, height: 86 },
+    initialPosition: { x: 116, y: 430 },
+    recommendedPlacement: "情報ブロック間の点線区切り"
+  },
+  {
+    id: "divider-muted-teal-l-corner-guide",
+    name: "ティールL字ガイド",
+    category: "divider",
+    description: "予定表や情報枠の角へ足す、低彩度ティールのL字ガイド。",
+    src: `${thumbnailMaterialDividerAssetPrefix}divider-muted-teal-l-corner-guide.png`,
+    initialSize: { width: 360, height: 220 },
+    initialPosition: { x: 710, y: 104 },
+    recommendedPlacement: "予定表や情報枠のL字ガイド"
+  },
+  {
+    id: "divider-pale-cyan-segmented-underline",
+    name: "淡シアン分割下線",
+    category: "divider",
+    description: "見出しや短い説明に添える、淡いシアンの分割下線。",
+    src: `${thumbnailMaterialDividerAssetPrefix}divider-pale-cyan-segmented-underline.png`,
+    initialSize: { width: 590, height: 92 },
+    initialPosition: { x: 104, y: 468 },
+    recommendedPlacement: "見出しや短い説明の分割下線"
+  },
+  {
+    id: "divider-navy-white-technical-rule",
+    name: "紺白テクニカル罫線",
+    category: "divider",
+    description: "予定表エリアの補助罫線として使う、紺白の低主張テクニカル線。",
+    src: `${thumbnailMaterialDividerAssetPrefix}divider-navy-white-technical-rule.png`,
+    initialSize: { width: 610, height: 104 },
+    initialPosition: { x: 92, y: 392 },
+    recommendedPlacement: "予定表エリアの補助罫線"
   }
 ] satisfies ThumbnailMaterial[];
 

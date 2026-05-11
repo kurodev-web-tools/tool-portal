@@ -29,6 +29,30 @@ export type ThumbnailMaterial = {
   };
   recommendedPlacement: string;
 };
+export type ThumbnailStandeePlacementPresetId =
+  | "solo-right-half"
+  | "solo-left-half"
+  | "solo-center-half"
+  | "solo-right-bust"
+  | "solo-center-face"
+  | "duo-left"
+  | "duo-right"
+  | "trio-left"
+  | "trio-center"
+  | "trio-right";
+export type ThumbnailStandeePlacementPreset = {
+  id: ThumbnailStandeePlacementPresetId;
+  name: string;
+  description: string;
+  group: "1人" | "2人" | "3人";
+  disabledReason?: string;
+  frame: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+};
 
 export type ThumbnailCanvas = {
   width: number;
@@ -147,6 +171,80 @@ export const thumbnailMainTextCarryoverTargets = [
 ] as const;
 export type ThumbnailMainTextCarryoverKey = (typeof thumbnailMainTextCarryoverTargets)[number]["id"];
 export type ThumbnailMainTextCarryover = Partial<Record<ThumbnailMainTextCarryoverKey, string>>;
+export const thumbnailStandeePlacementPresets = [
+  {
+    id: "solo-right-half",
+    name: "右 / 半身",
+    description: "右側に半身立ち絵を置く基本位置。",
+    group: "1人",
+    frame: { x: 790, y: 70, width: 390, height: 610 }
+  },
+  {
+    id: "solo-left-half",
+    name: "左 / 半身",
+    description: "左側に半身立ち絵を置く基本位置。",
+    group: "1人",
+    frame: { x: 100, y: 70, width: 390, height: 610 }
+  },
+  {
+    id: "solo-center-half",
+    name: "中央 / 半身",
+    description: "中央に半身立ち絵を置く基本位置。",
+    group: "1人",
+    frame: { x: 445, y: 70, width: 390, height: 610 }
+  },
+  {
+    id: "solo-right-bust",
+    name: "右 / バスト",
+    description: "右側にバストアップを大きめに置く。",
+    group: "1人",
+    disabledReason: "画像crop対応を別PRで実装予定",
+    frame: { x: 730, y: 110, width: 470, height: 560 }
+  },
+  {
+    id: "solo-center-face",
+    name: "中央 / 顔寄り",
+    description: "中央に顔寄りの大きな立ち絵を置く。",
+    group: "1人",
+    disabledReason: "画像crop対応を別PRで実装予定",
+    frame: { x: 390, y: 36, width: 500, height: 650 }
+  },
+  {
+    id: "duo-left",
+    name: "2人 / 左",
+    description: "コラボ2人用の左側スロット。",
+    group: "2人",
+    frame: { x: 250, y: 96, width: 360, height: 585 }
+  },
+  {
+    id: "duo-right",
+    name: "2人 / 右",
+    description: "コラボ2人用の右側スロット。",
+    group: "2人",
+    frame: { x: 670, y: 96, width: 360, height: 585 }
+  },
+  {
+    id: "trio-left",
+    name: "3人 / 左",
+    description: "コラボ3人用の左側スロット。",
+    group: "3人",
+    frame: { x: 300, y: 110, width: 320, height: 550 }
+  },
+  {
+    id: "trio-center",
+    name: "3人 / 中央",
+    description: "コラボ3人用の中央スロット。",
+    group: "3人",
+    frame: { x: 480, y: 110, width: 320, height: 550 }
+  },
+  {
+    id: "trio-right",
+    name: "3人 / 右",
+    description: "コラボ3人用の右側スロット。",
+    group: "3人",
+    frame: { x: 660, y: 110, width: 320, height: 550 }
+  }
+] satisfies ThumbnailStandeePlacementPreset[];
 
 export const thumbnailCanvasSizes: Record<ThumbnailCanvasSizeId, ThumbnailCanvas & { label: string }> = {
   hd: { width: 1280, height: 720, label: "1280 x 720 (16:9)" },
@@ -1190,6 +1288,47 @@ export const createThumbnailMaterialLayer = (materialId: string, canvas: Thumbna
     opacity: 1,
     blur: 0,
     locked: false
+  };
+};
+
+export const applyThumbnailStandeePlacementPreset = (
+  draft: ThumbnailEditorDraft,
+  presetId: string,
+  layerId: string | null = draft.selectedLayerId
+): ThumbnailEditorDraft | null => {
+  const preset = thumbnailStandeePlacementPresets.find((item) => item.id === presetId);
+  if (!preset || !layerId) {
+    return null;
+  }
+  if (preset.disabledReason) {
+    return null;
+  }
+
+  const target = draft.layers.find((layer) => layer.id === layerId);
+  if (target?.type !== "image" || target.locked) {
+    return null;
+  }
+
+  const scaleX = draft.canvas.width / thumbnailCanvasSizes.hd.width;
+  const scaleY = draft.canvas.height / thumbnailCanvasSizes.hd.height;
+  const layers = draft.layers.map((layer) =>
+    layer.id === layerId && layer.type === "image"
+      ? {
+          ...layer,
+          x: Math.round(preset.frame.x * scaleX),
+          y: Math.round(preset.frame.y * scaleY),
+          width: Math.round(preset.frame.width * scaleX),
+          height: Math.round(preset.frame.height * scaleY),
+          rotation: 0
+        }
+      : layer
+  );
+
+  return {
+    ...draft,
+    layers,
+    selectedLayerId: layerId,
+    updatedAt: nowIso()
   };
 };
 

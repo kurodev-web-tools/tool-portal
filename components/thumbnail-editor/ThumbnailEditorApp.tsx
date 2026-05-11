@@ -4,6 +4,7 @@ import { ChangeEvent, MouseEvent, PointerEvent, useCallback, useEffect, useMemo,
 import {
   cloneThumbnailLayer,
   applyThumbnailMainTextCarryover,
+  applyThumbnailStandeePlacementPreset,
   createNextRecentThumbnailPresetIds,
   createDraftFromPreset,
   createImageLayer,
@@ -30,6 +31,7 @@ import {
   thumbnailMaterialLibrary,
   thumbnailPresetDiscoveryStorageKey,
   thumbnailPresets,
+  thumbnailStandeePlacementPresets,
   toggleThumbnailPresetFavorite,
   type ThumbnailHandleKind,
   type ThumbnailMainTextCarryover,
@@ -43,6 +45,7 @@ import {
   type ThumbnailPresetDiscoveryState,
   type ThumbnailPresetId,
   type ThumbnailShapeType,
+  type ThumbnailStandeePlacementPresetId,
   type ThumbnailTextAlign
 } from "@/lib/thumbnail-editor";
 import {
@@ -779,6 +782,19 @@ export function ThumbnailEditorApp() {
     showToast("success", material ? `「${material.name}」を素材レイヤーとして追加しました。` : "素材レイヤーを追加しました。");
   };
 
+  const applyStandeePlacementPreset = (presetId: ThumbnailStandeePlacementPresetId) => {
+    const next = applyThumbnailStandeePlacementPreset(draft, presetId);
+    if (!next) {
+      showToast("warning", "編集可能な画像レイヤーを選択してください。");
+      return;
+    }
+
+    const preset = thumbnailStandeePlacementPresets.find((item) => item.id === presetId);
+    setDraft(next);
+    setMobilePanel("layers");
+    showToast("success", preset ? `立ち絵配置を「${preset.name}」にしました。` : "立ち絵配置を適用しました。");
+  };
+
   const moveLayer = (layerId: string, direction: "front" | "back") => {
     updateDraft((current) => {
       const index = current.layers.findIndex((layer) => layer.id === layerId);
@@ -1359,7 +1375,13 @@ export function ThumbnailEditorApp() {
                 />
               )}
               {mobilePanel === "text" && selectedLayer && (
-                <PropertyPanel layer={selectedLayer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={setFontMenuOpen} onChange={updateSelectedLayer} />
+                <PropertyPanel
+                  layer={selectedLayer}
+                  fontMenuOpen={fontMenuOpen}
+                  onFontMenuOpenChange={setFontMenuOpen}
+                  onChange={updateSelectedLayer}
+                  onStandeePlacement={applyStandeePlacementPreset}
+                />
               )}
               {mobilePanel === "export" && (
                 <ExportPanel exportFormat={exportFormat} onFormatChange={setExportFormat} onSave={saveDraft} onExport={exportImage} onSendToSns={sendToSnsSplit} />
@@ -1397,7 +1419,13 @@ export function ThumbnailEditorApp() {
                 onToggleFlag={toggleLayerFlag}
               />
               {selectedLayer ? (
-                <PropertyPanel layer={selectedLayer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={setFontMenuOpen} onChange={updateSelectedLayer} />
+                <PropertyPanel
+                  layer={selectedLayer}
+                  fontMenuOpen={fontMenuOpen}
+                  onFontMenuOpenChange={setFontMenuOpen}
+                  onChange={updateSelectedLayer}
+                  onStandeePlacement={applyStandeePlacementPreset}
+                />
               ) : (
                 <div className="panel p-4 text-sm text-muted">編集するレイヤーを選択してください。</div>
               )}
@@ -1870,12 +1898,14 @@ function PropertyPanel({
   layer,
   fontMenuOpen,
   onFontMenuOpenChange,
-  onChange
+  onChange,
+  onStandeePlacement
 }: {
   layer: ThumbnailLayer;
   fontMenuOpen: boolean;
   onFontMenuOpenChange: (open: boolean) => void;
   onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void;
+  onStandeePlacement: (presetId: ThumbnailStandeePlacementPresetId) => void;
 }) {
   return (
     <section className="panel space-y-4 p-4">
@@ -1908,8 +1938,55 @@ function PropertyPanel({
 
       {layer.type === "text" && <TextControls layer={layer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={onFontMenuOpenChange} onChange={onChange} />}
       {layer.type === "shape" && <ShapeControls layer={layer} onChange={onChange} />}
+      {layer.type === "image" && <StandeePlacementPanel layer={layer} onApply={onStandeePlacement} />}
       <EffectControls layer={layer} onChange={onChange} />
     </section>
+  );
+}
+
+function StandeePlacementPanel({
+  layer,
+  onApply
+}: {
+  layer: Extract<ThumbnailLayer, { type: "image" }>;
+  onApply: (presetId: ThumbnailStandeePlacementPresetId) => void;
+}) {
+  const groups = ["1人", "2人", "3人"] as const;
+
+  return (
+    <div className="space-y-3 border-t border-border pt-4">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-black text-foreground">立ち絵配置</h3>
+        {layer.locked ? <span className="text-[11px] font-bold text-muted">ロック中</span> : null}
+      </div>
+      {groups.map((group) => (
+        <div key={group} className="space-y-2">
+          <p className="text-[11px] font-black text-muted">{group}</p>
+          <div className="grid grid-cols-2 gap-2">
+            {thumbnailStandeePlacementPresets
+              .filter((preset) => preset.group === group)
+              .map((preset) => {
+                const disabled = Boolean(layer.locked || preset.disabledReason);
+                const description = preset.disabledReason ?? preset.description;
+
+                return (
+                  <button
+                    key={preset.id}
+                    className="flat-control min-h-12 px-2 py-2 text-left text-xs font-bold disabled:cursor-not-allowed disabled:opacity-45"
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onApply(preset.id)}
+                    title={description}
+                  >
+                    <span className="block text-foreground">{preset.name}</span>
+                    <span className="mt-0.5 block truncate text-[11px] text-muted">{description}</span>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

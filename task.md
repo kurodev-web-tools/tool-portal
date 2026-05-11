@@ -127,6 +127,17 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-11 立ち絵配置 crop プリセット実装:
+  - 前提確認: PR #63 `[codex] Add thumbnail standee placement presets` は GitHub上で `MERGED`、merge時刻 `2026-05-11T11:59:50Z`。作業は `origin/main` の merge commit `859e758` から切った
+  - 作業branch / worktree: `codex/thumbnail-standee-crop-presets` / `.worktrees/thumbnail-standee-crop-presets`
+  - 対象は Thumbnail Editor の image layer crop / draw / normalize / 立ち絵配置 UI のみ。Schedule Calendar、SNS Split Image Maker、素材データ、新規素材生成、外部CDN、フォント追加は触っていない
+  - image layer に任意の `crop` メタデータを追加した。crop 未設定の既存 v1 draft / 既存 image layer は従来通り画像全体を表示し、通常配置プリセットを適用した場合は既存 crop を外して全体表示へ戻す
+  - `右 / バスト` は上半分 crop `{ x: 0, y: 0, width: 1, height: 0.5 }`、`中央 / 顔寄り` は上部1/3 crop `{ x: 0, y: 0, width: 1, height: 1 / 3 }` を保存し、draw時に source rect として使う
+  - `右 / バスト` / `中央 / 顔寄り` の disabled 状態を解除した。ロック中の image layer には引き続き適用しない
+  - contract は先に `scripts/thumbnail-standee-placement-contract.mjs` を更新し、RED を `crop-dependent standee presets are enabled after image crop support exists` で確認してから実装した。crop 保存 / normalize / draw helper / duplicate / cropなし全体表示 / locked image保護 / text非破壊を同contractで確認する
+  - 検証: `node scripts/thumbnail-standee-placement-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: `out/` を一時ローカルサーバー `localhost:3080` で配信し、Chrome DevTools MCPで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で `右 / バスト` / `中央 / 顔寄り` が有効、適用後に crop が保存されること、canvas nonblank、horizontal overflow 0、console error / warn なしを確認した
+
 - 2026-05-11 立ち絵配置プリセット最小UI:
   - 前提確認: PR #62 `[codex] Preserve thumbnail text on canvas resize` は GitHub上で `MERGED`、merge commit `d7206aa22509712f152bca28344aaf290cf841eb` が `origin/main` に含まれることを確認した
   - 作業branch / worktree: `codex/thumbnail-standee-placement-presets` / `.worktrees/thumbnail-standee-placement-presets`

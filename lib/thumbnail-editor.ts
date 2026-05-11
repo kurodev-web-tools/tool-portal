@@ -29,6 +29,12 @@ export type ThumbnailMaterial = {
   };
   recommendedPlacement: string;
 };
+export type ThumbnailImageCrop = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 export type ThumbnailStandeePlacementPresetId =
   | "solo-right-half"
   | "solo-left-half"
@@ -52,6 +58,7 @@ export type ThumbnailStandeePlacementPreset = {
     width: number;
     height: number;
   };
+  crop?: ThumbnailImageCrop;
 };
 
 export type ThumbnailCanvas = {
@@ -77,6 +84,7 @@ export type ThumbnailBaseLayer = {
 export type ThumbnailImageLayer = ThumbnailBaseLayer & {
   type: "image";
   src: string;
+  crop?: ThumbnailImageCrop;
 };
 
 export type ThumbnailTextAlign = "left" | "center" | "right";
@@ -198,16 +206,16 @@ export const thumbnailStandeePlacementPresets = [
     name: "右 / バスト",
     description: "右側にバストアップを大きめに置く。",
     group: "1人",
-    disabledReason: "画像crop対応を別PRで実装予定",
-    frame: { x: 730, y: 110, width: 470, height: 560 }
+    frame: { x: 730, y: 110, width: 470, height: 560 },
+    crop: { x: 0, y: 0, width: 1, height: 0.5 }
   },
   {
     id: "solo-center-face",
     name: "中央 / 顔寄り",
     description: "中央に顔寄りの大きな立ち絵を置く。",
     group: "1人",
-    disabledReason: "画像crop対応を別PRで実装予定",
-    frame: { x: 390, y: 36, width: 500, height: 650 }
+    frame: { x: 390, y: 36, width: 500, height: 650 },
+    crop: { x: 0, y: 0, width: 1, height: 1 / 3 }
   },
   {
     id: "duo-left",
@@ -1300,9 +1308,6 @@ export const applyThumbnailStandeePlacementPreset = (
   if (!preset || !layerId) {
     return null;
   }
-  if (preset.disabledReason) {
-    return null;
-  }
 
   const target = draft.layers.find((layer) => layer.id === layerId);
   if (target?.type !== "image" || target.locked) {
@@ -1313,14 +1318,18 @@ export const applyThumbnailStandeePlacementPreset = (
   const scaleY = draft.canvas.height / thumbnailCanvasSizes.hd.height;
   const layers = draft.layers.map((layer) =>
     layer.id === layerId && layer.type === "image"
-      ? {
-          ...layer,
-          x: Math.round(preset.frame.x * scaleX),
-          y: Math.round(preset.frame.y * scaleY),
-          width: Math.round(preset.frame.width * scaleX),
-          height: Math.round(preset.frame.height * scaleY),
-          rotation: 0
-        }
+      ? (() => {
+          const { crop: _crop, ...imageLayer } = layer;
+          return {
+            ...imageLayer,
+            x: Math.round(preset.frame.x * scaleX),
+            y: Math.round(preset.frame.y * scaleY),
+            width: Math.round(preset.frame.width * scaleX),
+            height: Math.round(preset.frame.height * scaleY),
+            rotation: 0,
+            ...(preset.crop ? { crop: { ...preset.crop } } : {})
+          };
+        })()
       : layer
   );
 
@@ -1403,6 +1412,24 @@ const thumbnailShapeTypes: ThumbnailShapeType[] = ["rect", "circle", "line", "bu
 const normalizeShapeType = (value: unknown): ThumbnailShapeType =>
   typeof value === "string" && thumbnailShapeTypes.includes(value as ThumbnailShapeType) ? (value as ThumbnailShapeType) : "rect";
 
+const normalizeImageCrop = (value: unknown): ThumbnailImageCrop | null => {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const crop = value as Partial<ThumbnailImageCrop>;
+  const x = clamp(numberValue(crop.x, 0), 0, 0.95);
+  const y = clamp(numberValue(crop.y, 0), 0, 0.95);
+  const width = clamp(numberValue(crop.width, 1), 0.05, 1 - x);
+  const height = clamp(numberValue(crop.height, 1), 0.05, 1 - y);
+
+  if (x === 0 && y === 0 && width === 1 && height === 1) {
+    return null;
+  }
+
+  return { x, y, width, height };
+};
+
 export const normalizeThumbnailDraft = (value: unknown): ThumbnailEditorDraft | null => {
   if (!value || typeof value !== "object") {
     return null;
@@ -1465,7 +1492,12 @@ const normalizeLayer = (layer: unknown, canvas: ThumbnailCanvas): ThumbnailLayer
 
   if (item.type === "image") {
     const image = item as Partial<ThumbnailImageLayer>;
-    return typeof image.src === "string" && isSafeImageSource(image.src) ? { ...base, type: "image", src: image.src } : null;
+    if (typeof image.src !== "string" || !isSafeImageSource(image.src)) {
+      return null;
+    }
+
+    const crop = normalizeImageCrop(image.crop);
+    return crop ? { ...base, type: "image", src: image.src, crop } : { ...base, type: "image", src: image.src };
   }
 
   if (item.type === "shape") {
@@ -1521,6 +1553,28 @@ const loadImage = (src: string) =>
     image.src = src;
   });
 
+export const getThumbnailImageCropSourceRect = (
+  layer: ThumbnailImageLayer,
+  image: { naturalWidth?: number; naturalHeight?: number; width: number; height: number }
+) => {
+  if (!layer.crop) {
+    return null;
+  }
+
+  const sourceWidth = image.naturalWidth && image.naturalWidth > 0 ? image.naturalWidth : image.width;
+  const sourceHeight = image.naturalHeight && image.naturalHeight > 0 ? image.naturalHeight : image.height;
+  if (sourceWidth <= 0 || sourceHeight <= 0) {
+    return null;
+  }
+
+  return {
+    x: layer.crop.x * sourceWidth,
+    y: layer.crop.y * sourceHeight,
+    width: layer.crop.width * sourceWidth,
+    height: layer.crop.height * sourceHeight
+  };
+};
+
 export const drawThumbnail = async (
   canvas: HTMLCanvasElement,
   draft: Pick<ThumbnailEditorDraft, "canvas" | "layers">,
@@ -1562,7 +1616,12 @@ const drawLayer = async (context: CanvasRenderingContext2D, layer: ThumbnailLaye
 
   if (layer.type === "image") {
     const image = await loadImage(layer.src);
-    context.drawImage(image, 0, 0, layer.width, layer.height);
+    const crop = getThumbnailImageCropSourceRect(layer, image);
+    if (crop) {
+      context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, layer.width, layer.height);
+    } else {
+      context.drawImage(image, 0, 0, layer.width, layer.height);
+    }
   } else if (layer.type === "shape") {
     drawShape(context, layer);
   } else {

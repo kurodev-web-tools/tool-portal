@@ -22,6 +22,12 @@ testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
 testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
 
+const assertApproxRect = (actual, expected, message) => {
+  for (const key of ["x", "y", "width", "height"]) {
+    assert.ok(Math.abs(actual[key] - expected[key]) < 0.001, `${message}: ${key}`);
+  }
+};
+
 assert.ok(Array.isArray(lib.thumbnailStandeePlacementPresets), "standee placement presets are exported");
 assert.equal(typeof lib.applyThumbnailStandeePlacementPreset, "function", "standee placement applier is exported");
 
@@ -142,10 +148,27 @@ assert.deepEqual(
   { x: 0, y: 0, width: 1, height: 0.5 },
   "standee crop metadata survives draft normalization"
 );
-assert.deepEqual(
-  lib.getThumbnailImageCropSourceRect(bustLayer, { naturalWidth: 900, naturalHeight: 1800, width: 900, height: 1800 }),
-  { x: 0, y: 0, width: 900, height: 900 },
-  "draw helper converts bust-up crop metadata to the upper-half source rectangle"
+const bustSourceRect = lib.getThumbnailImageCropSourceRect(bustLayer, { naturalWidth: 900, naturalHeight: 1800, width: 900, height: 1800 });
+assertApproxRect(
+  bustSourceRect,
+  { x: 72.32142857142856, y: 0, width: 755.3571428571429, height: 900 },
+  "draw helper converts bust-up crop metadata to an aspect-preserving upper-half source rectangle"
+);
+assert.equal(
+  Math.round((bustSourceRect.width / bustSourceRect.height) * 1000),
+  Math.round((bustLayer.width / bustLayer.height) * 1000),
+  "bust-up source crop keeps the same aspect ratio as the displayed layer"
+);
+const faceSourceRect = lib.getThumbnailImageCropSourceRect(faceLayer, { naturalWidth: 900, naturalHeight: 1800, width: 900, height: 1800 });
+assertApproxRect(
+  faceSourceRect,
+  { x: 219.23076923076923, y: 0, width: 461.53846153846155, height: 600 },
+  "draw helper converts face-close crop metadata to an aspect-preserving upper-third source rectangle"
+);
+assert.equal(
+  Math.round((faceSourceRect.width / faceSourceRect.height) * 1000),
+  Math.round((faceLayer.width / faceLayer.height) * 1000),
+  "face-close source crop keeps the same aspect ratio as the displayed layer"
 );
 assert.equal(
   lib.getThumbnailImageCropSourceRect(movedLayer, { naturalWidth: 900, naturalHeight: 1800, width: 900, height: 1800 }),

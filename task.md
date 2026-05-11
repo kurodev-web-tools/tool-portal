@@ -135,6 +135,7 @@
   - `右 / バスト` は上半分 crop `{ x: 0, y: 0, width: 1, height: 0.5 }`、`中央 / 顔寄り` は上部1/3 crop `{ x: 0, y: 0, width: 1, height: 1 / 3 }` を保存し、draw時に source rect として使う
   - `右 / バスト` / `中央 / 顔寄り` の disabled 状態を解除した。ロック中の image layer には引き続き適用しない
   - contract は先に `scripts/thumbnail-standee-placement-contract.mjs` を更新し、RED を `crop-dependent standee presets are enabled after image crop support exists` で確認してから実装した。crop 保存 / normalize / draw helper / duplicate / cropなし全体表示 / locked image保護 / text非破壊を同contractで確認する
+  - 追加修正: `中央 / 顔寄り` で縦長画像が縦方向に伸びて見えたため、crop source rect を layer 表示枠と同じアスペクト比に切り直してから描画するようにした。上部1/3 / 上半分の crop 範囲は維持しつつ、画像比率は崩さない。1366pxで縦長テスト画像の `中央 / 顔寄り` を適用し、layer aspect `0.769231` と source aspect `0.769231` が一致、canvas nonblank、horizontal overflow 0、console error / warn なしを確認した
   - 検証: `node scripts/thumbnail-standee-placement-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
   - UI確認: `out/` を一時ローカルサーバー `localhost:3080` で配信し、Chrome DevTools MCPで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で `右 / バスト` / `中央 / 顔寄り` が有効、適用後に crop が保存されること、canvas nonblank、horizontal overflow 0、console error / warn なしを確認した
 

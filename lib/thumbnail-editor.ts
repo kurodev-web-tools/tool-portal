@@ -1567,11 +1567,29 @@ export const getThumbnailImageCropSourceRect = (
     return null;
   }
 
+  const cropX = layer.crop.x * sourceWidth;
+  const cropY = layer.crop.y * sourceHeight;
+  const cropWidth = layer.crop.width * sourceWidth;
+  const cropHeight = layer.crop.height * sourceHeight;
+  const layerAspect = layer.width / layer.height;
+  const cropAspect = cropWidth / cropHeight;
+
+  if (cropAspect > layerAspect) {
+    const fittedWidth = cropHeight * layerAspect;
+    return {
+      x: cropX + (cropWidth - fittedWidth) / 2,
+      y: cropY,
+      width: fittedWidth,
+      height: cropHeight
+    };
+  }
+
+  const fittedHeight = cropWidth / layerAspect;
   return {
-    x: layer.crop.x * sourceWidth,
-    y: layer.crop.y * sourceHeight,
-    width: layer.crop.width * sourceWidth,
-    height: layer.crop.height * sourceHeight
+    x: cropX,
+    y: cropY,
+    width: cropWidth,
+    height: fittedHeight
   };
 };
 

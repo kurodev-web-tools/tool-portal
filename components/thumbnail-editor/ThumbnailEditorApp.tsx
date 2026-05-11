@@ -1959,6 +1959,7 @@ function StandeePlacementPanel({
         <h3 className="text-sm font-black text-foreground">立ち絵配置</h3>
         {layer.locked ? <span className="text-[11px] font-bold text-muted">ロック中</span> : null}
       </div>
+      <p className="text-[11px] font-semibold leading-relaxed text-muted">2人 / 3人は画像レイヤーを人数分追加して、選択中の1枚へ個別に適用します。</p>
       {groups.map((group) => (
         <div key={group} className="space-y-2">
           <p className="text-[11px] font-black text-muted">{group}</p>

@@ -127,6 +127,15 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-11 立ち絵配置 2人/3人 scope 補足:
+  - 前提確認: PR #64 `[codex] Add thumbnail standee crop presets` は GitHub上で `MERGED`、merge時刻 `2026-05-11T12:43:42Z`、merge commit `4e48761876595e5831a008511bec01df6510fbb4` が `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-standee-placement-scope-note` / `.worktrees/thumbnail-standee-placement-scope-note`
+  - 対象は Thumbnail Editor の standee placement UI と `scripts/thumbnail-standee-placement-contract.mjs` のみ。image layer schema、crop仕様、preset本体、素材データ、新規素材生成、外部CDN、フォント追加、Schedule Calendar、SNS Split Image Maker は触っていない
+  - `立ち絵配置` パネルに「2人 / 3人は画像レイヤーを人数分追加して、選択中の1枚へ個別に適用します。」の短い補足を追加した。一括配置、自動分割、複数選択に見える文言は入れていない
+  - contract は先に `scripts/thumbnail-standee-placement-contract.mjs` を更新し、RED を `standee placement UI explains duo/trio slots apply to one selected image layer at a time` で確認してから実装した。2人 / 3人配置が選択中の editable image layer だけを動かすこと、他 image layer や locked image layer を変えないこと、UI文言が unsupported behavior を示さないことを追加で確認する
+  - 検証: `node scripts/thumbnail-standee-placement-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/tool-handoff-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: `out/` を一時ローカルサーバー `localhost:3086` で配信し、Chrome DevTools MCPで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で補足文表示、`右 / バスト` / `中央 / 顔寄り` と2人/3人スロット表示、horizontal overflow 0、一括配置 / 自動分割 / 複数選択に見える文言なしを確認した。console error は Next static export の RSC prefetch `.txt?_rsc=` 404 のみで、追加UIや画像assetの読み込み失敗はなし
+
 - 2026-05-11 立ち絵配置 crop プリセット実装:
   - 前提確認: PR #63 `[codex] Add thumbnail standee placement presets` は GitHub上で `MERGED`、merge時刻 `2026-05-11T11:59:50Z`。作業は `origin/main` の merge commit `859e758` から切った
   - 作業branch / worktree: `codex/thumbnail-standee-crop-presets` / `.worktrees/thumbnail-standee-crop-presets`

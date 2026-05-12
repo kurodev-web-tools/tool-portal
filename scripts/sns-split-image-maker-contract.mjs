@@ -8,9 +8,13 @@ const root = process.cwd();
 const sourcePath = path.join(root, "lib", "sns-split-image-maker.ts");
 const appSourcePath = path.join(root, "components", "sns-split-image-maker", "SnsSplitImageMakerApp.tsx");
 const landingSourcePath = path.join(root, "components", "sns-split-image-maker", "SnsSplitPresetLanding.tsx");
+const pageSourcePath = path.join(root, "app", "tools", "sns-split-image-maker", "page.tsx");
+const designSourcePath = path.join(root, "docs", "design-sns-split-image-maker.md");
 const source = fs.readFileSync(sourcePath, "utf8");
 const appSource = fs.readFileSync(appSourcePath, "utf8");
 const landingSource = fs.readFileSync(landingSourcePath, "utf8");
+const pageSource = fs.readFileSync(pageSourcePath, "utf8");
+const designSource = fs.readFileSync(designSourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -75,5 +79,8 @@ assert.doesNotMatch(appSource, /label: "投稿時"/, "preview tab label no longe
 assert.doesNotMatch(appSource, /label: "1\+8連結"/, "primary 4-split mode label no longer uses legacy 1+8 text");
 assert.doesNotMatch(appSource, /label: "1\+4差し替え"/, "primary 4-split mode label no longer uses legacy 1+4 text");
 assert.match(landingSource, /個別追加 \/ フレーム追加/, "landing card uses unified 4-split mode labels");
+assert.match(pageSource, /2分割\/3分割\/4分割画像/, "page metadata includes all available split presets");
+assert.match(designSource, /2分割 \/ 3分割 \/ 4分割/, "design doc describes current preset scope");
+assert.match(designSource, /390 \/ 820 \/ 1024 \/ 1280 \/ 1366/, "design doc lists freeze-readiness viewport widths");
 
 console.log("sns-split-image-maker contract checks passed");

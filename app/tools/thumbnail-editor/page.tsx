@@ -4,7 +4,7 @@ import { ThumbnailEditorApp } from "@/components/thumbnail-editor/ThumbnailEdito
 
 export const metadata: Metadata = {
   title: "Thumbnail Editor",
-  description: "画像、テキスト、図形レイヤーを手動編集して16:9サムネイルを作成できるV Streamer Toolsのツールです。"
+  description: "用途別プリセットを選び、文字と立ち絵を差し替えてVTuber向けサムネイルを組み立てるV Streamer Toolsのツールです。"
 };
 
 export default function ThumbnailEditorPage() {

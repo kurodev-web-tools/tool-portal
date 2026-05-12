@@ -25,11 +25,11 @@ export const suites: SuiteDefinition[] = [
   {
     key: "fan-brand",
     name: "ファン＆ブランド",
-    description: "ファンとの交流や世界観づくりを支え、活動の魅力を育てるツール群",
+    description: "サムネイル作成やX向け分割画像づくりを支え、活動の見せ方を整えるツール群",
     icon: "♥",
-    tags: ["ファンレポート", "交流管理", "ブランディング", "+ その他"],
+    tags: ["Thumbnail Editor", "SNS分割画像", "ブランディング", "+ その他"],
     toolCount: 6,
-    status: "planned"
+    status: "available"
   },
   {
     key: "business-collab",

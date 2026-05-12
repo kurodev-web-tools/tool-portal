@@ -29,7 +29,7 @@ export function PortalHome() {
       <FeedbackNotice />
 
       <p className="text-center text-sm text-muted">
-        現在利用できる個別ツールは Schedule Calendar です。その他は準備中です。
+        現在利用できる個別ツールは Schedule Calendar / Thumbnail Editor / SNS分割画像メーカーです。
       </p>
     </div>
   );

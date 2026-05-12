@@ -127,6 +127,17 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-12 初回操作向けの短い導線整理:
+  - 前提確認: PR #70 `[codex] Improve thumbnail quality guard readability` は GitHub上で `MERGED`、merge時刻 `2026-05-12T01:13:40Z`、merge commit `9c61f55c4647933faf25496412a43483e7928676` が `main` / `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-editor-first-run-guidance` / `.worktrees/thumbnail-editor-first-run-guidance`
+  - 対象は Thumbnail Editor の短いUI文言、`scripts/thumbnail-quality-guard-contract.mjs`、この `task.md` のみ。preset本体、text layer / image layer schema、crop仕様、素材ライブラリ登録、素材asset、Schedule Calendar、SNS Split Image Maker は触っていない
+  - 初期キャンバス説明を `プリセットを選んで、文字と立ち絵を差し替えてから書き出す` に更新し、プリセット選択後の編集から書き出しまでの流れだけを短く示した。新機能、自動修正、AI生成、チュートリアル画面、重いチェックリストは入れていない
+  - text layer選択時は `選択中の文字を差し替えて、必要なら縁取りや影を調整します。`、image layer選択時は `立ち絵画像を選んだ状態で、配置だけを整えます。` の1行だけを既存パネル内に追加し、既存のテキスト編集導線と立ち絵配置UIは維持した
+  - contract は先に `scripts/thumbnail-quality-guard-contract.mjs` を更新し、RED を `UI briefly explains the preset-to-export workflow` で確認してから実装した。warning / hint / ok、`サムネ品質`、`注意 n件`、`品質チェックOK`、自動修正やAI生成に見える文言なし、汎用制作ツール寄り文言なしも同contractで確認する
+  - 検証: `node scripts/thumbnail-quality-guard-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-standee-placement-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: worktree dev server `localhost:3130` を Chrome DevTools で確認。390 / 820 / 1024 / 1280 / 1366px の各幅で新しい初期説明、書き出し導線、canvas nonblank、horizontal overflow 0を確認。390 / 820px は下部タブと書き出しタブ内の品質要約を確認。1024 / 1280 / 1366px は右パネル内の image layer案内、`サムネ品質`、`品質チェックOK`、`保存 / 書き出し` を確認。text layer案内は1280pxで `テキスト設定` 選択状態を確認。クリーンロード時の console error / warn なし。pixel sampling時のみChromeのCanvas readback warningが出る
+  - 補足: `npm run build` は PASS。worktree が repo 内 `.worktrees` にあるため、Next.js が複数 lockfile 検出の workspace root warning を出すが、build 自体は成功している
+
 - 2026-05-12 サムネ品質ガード 読み取りやすさ調整:
   - 前提確認: PR #69 `[codex] Add thumbnail quality guard summary` は GitHub上で `MERGED`、merge時刻 `2026-05-11T15:06:24Z`、merge commit `e0ccc0d0e04a0e1df35c8172517917bc39c102c9` が `main` / `origin/main` に含まれることを確認した
   - 作業branch / worktree: `codex/thumbnail-quality-guard-readability` / `.worktrees/thumbnail-quality-guard-readability`

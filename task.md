@@ -31,7 +31,10 @@
 6. Thumbnail Editor の preset batch を追加検討する。
    - 候補: 初配信、記念配信、耐久配信、歌枠、雑談、ゲーム実況、告知、切り抜き。
    - preset 本体の変更は、variant / partial apply の方針が固まってから行う。
-7. Schedule Calendar と SNS Split Image Maker の仕上げに戻る。
+7. Thumbnail Editor の quality guard expansion を追加検討する。
+   - warning / hint / ok の軽い品質確認だけを増やす。
+   - 自動修正、AI生成、重いチェックリスト化、素材 / preset 本体変更は入れない。
+8. Schedule Calendar と SNS Split Image Maker の仕上げに戻る。
    - Schedule Calendar から Thumbnail Editor への引き継ぎ方を先に固定する。
    - SNS Split Image Maker は output UX と freeze 条件を先に詰める。
 
@@ -58,19 +61,82 @@
 
 ### P1: Thumbnail Editor 残設計の切り分け
 
-- 状態: next
+- 状態: done
 - 目的:
-  - compact guidance 追加の次に、実装順を崩さず大きい設計を分割する。
-- 次に決めること:
-  - `preset variants` を preset 定義で持つか、preset family / metadata で持つか。
-  - `partial preset apply` が守る対象を text / image / background / decoration / color のどこまでにするか。
-  - 素材ライブラリの永続化をどの storage boundary に置くか。
+  - compact guidance 追加の次に、実装順を崩さず大きい設計を安全な PR 単位へ分割する。
+  - Thumbnail Editor を「用途別プリセットを選んで、文字と立ち絵を差し替える VTuber 向けサムネ組み立てツール」として維持する。
+- 具体化した順序:
+  1. `preset variants`
+  2. `partial preset apply`
+  3. `common material library`
+  4. `font policy`
+  5. `preset batch`
+  6. `quality guard expansion`
+- 詳細メモ:
+  - `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md`
+- 次PR候補:
+  - P1: `preset variants`
+    - 目的: 横長 / 縦長 / 正方形などの出力先差分を、既存 preset を壊さず metadata / family として扱う境界を決める。
+    - 入れるもの: variant id、canvas size、用途、既存 preset id との関係、discovery / recent / favorite への影響 contract。
+    - 入れないもの: preset 本体変更、asset 追加、schema 変更、crop 仕様変更。
+    - contract-first: `thumbnail-preset-discovery-contract.mjs` と新規候補 `thumbnail-preset-variants-contract.mjs`。
+    - 変更可: `lib/thumbnail-editor.ts`、該当 contract、必要最小限の `components/thumbnail-editor/ThumbnailEditorApp.tsx`、`task.md`。
+    - 変更不可: `public/assets/images/thumbnail-editor/**`、preset 背景 / 装飾 asset、Schedule Calendar / SNS Split Image Maker 実装。
+  - P2: `partial preset apply`
+    - 目的: 入力済みの文字と立ち絵を守りながら、背景 / 装飾 / 色だけを安全に差し替える。
+    - 入れるもの: 保持対象、上書き対象、確認UIが必要な条件、即時適用してよい条件。
+    - 入れないもの: 複数選択、一括配置、自動分割、AI生成、crop 仕様変更、schema 変更。
+    - contract-first: `thumbnail-preset-apply-safety-contract.mjs`、`thumbnail-standee-placement-contract.mjs`。
+    - 変更可: `lib/thumbnail-editor.ts`、`components/thumbnail-editor/ThumbnailEditorApp.tsx`、該当 contract、`task.md`。
+    - 変更不可: `public/assets/images/thumbnail-editor/**`、素材ライブラリ登録、Schedule Calendar / SNS Split Image Maker 実装。
+  - P3: `common material library`
+    - 目的: project-bound material と user-added material を分け、画像本体を localStorage に置かない storage boundary を決める。
+    - 入れるもの: IndexedDB 前提、delete / replace / 容量上限 / 復旧不能時表示、既存 registered material 互換。
+    - 入れないもの: 新規 asset 追加、素材ライブラリ登録変更、preset 初期 layer への自動挿入、AI生成。
+    - contract-first: `thumbnail-material-assets-contract.mjs`。
+    - 変更可: `lib/thumbnail-editor.ts`、`components/thumbnail-editor/ThumbnailEditorApp.tsx`、storage helper、該当 contract、`task.md`。
+    - 変更不可: `public/assets/images/thumbnail-editor/**` の新規追加、preset 本体、Schedule Calendar / SNS Split Image Maker 実装。
+  - P4: `font policy`
+    - 目的: VTuber サムネ向けの文字品質を上げる前に、font 追加可否と fallback を決める。
+    - 入れるもの: 既存fontで進める条件、追加する場合の self-host / repo 同梱 / license / fallback 条件。
+    - 入れないもの: 外部 CDN / Google Fonts 新規参照、font asset 追加、preset 本体 font 差し替え、UI文言変更。
+    - contract-first: font fallback、canvas rendering、外部 network 非依存の確認候補。
+    - 変更可: `docs/future/**` または既存 design doc の policy section、実装PRでは `lib/thumbnail-editor.ts` と最小 contract、`task.md`。
+    - 変更不可: `public/fonts/**` などの新規 font asset、外部 CDN 設定、preset 本体、Schedule Calendar / SNS Split Image Maker 実装。
+  - P5: `preset batch`
+    - 目的: 初配信、記念配信、耐久配信、歌枠、雑談、ゲーム実況、告知、切り抜きなどの追加候補を実装可能な batch に分ける。
+    - 入れるもの: 追加候補の優先順、必要 asset、必要 variant、必要 text layer 名、既存 preset と重複しない役割。
+    - 入れないもの: preset 本体変更、背景 / 装飾 asset 追加、imagegen、UI への大量追加。
+    - contract-first: 新規候補 `thumbnail-preset-batch-readiness-contract.mjs`。
+    - 変更可: `docs/future/**`、実装PRでは `lib/thumbnail-editor.ts` と batch contract、`task.md`。
+    - 変更不可: variant / partial apply 未確定状態での preset 本体、`public/assets/images/thumbnail-editor/**`、schema、Schedule Calendar / SNS Split Image Maker 実装。
+  - P6: `quality guard expansion`
+    - 目的: 文字の可読性、立ち絵の見切れ、書き出し前確認を warning / hint として最小拡張する。
+    - 入れるもの: selected layer と overall summary の追加 warning / hint、短文 copy、draft 非 mutation。
+    - 入れないもの: 自動修正、AI生成、モーダル型チュートリアル、preset / material / asset / schema 変更。
+    - contract-first: `thumbnail-quality-guard-contract.mjs`、`thumbnail-standee-placement-contract.mjs`。
+    - 変更可: `lib/thumbnail-editor.ts`、`components/thumbnail-editor/ThumbnailEditorApp.tsx`、該当 contract、`task.md`。
+    - 変更不可: preset 本体、`public/assets/images/thumbnail-editor/**`、素材ライブラリ登録、Schedule Calendar / SNS Split Image Maker 実装。
 - 入れないもの:
   - 新機能の実装。
+  - UI文言変更。
   - preset 本体の追加。
   - asset 追加。
   - crop 仕様変更。
   - text layer / image layer schema 変更。
+  - 素材ライブラリ登録変更。
+  - 外部 CDN / フォント追加。
+  - AI生成。
+  - Schedule Calendar / SNS Split Image Maker の実装変更。
+- 実施内容:
+  - PR #74 が `main` / `origin/main` に merge 済みで、merge commit `e8769f6` が `origin/main` に含まれることを確認した。
+  - `origin/main` 起点で `codex/thumbnail-editor-pr-scope-plan` / `.worktrees/thumbnail-editor-pr-scope-plan` を作成した。
+  - 次PR順序を `preset variants -> partial preset apply -> common material library -> font policy -> preset batch -> quality guard expansion` に固定した。
+  - 各候補の目的、入れるもの、入れないもの、contract-first 確認、変更可 / 不可範囲、優先度を `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` に整理した。
+  - UI / code / contract / asset / preset 本体は変更していない。
+- 検証:
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - UI 変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。
 
 ## Thumbnail Editor
 
@@ -99,6 +165,9 @@
 - PR #73 `[codex] Clarify thumbnail editor first flow guidance`
   - main / origin/main に merge 済み。
   - 初回操作で、preset selection -> text replacement -> standee replacement / placement -> export の流れが読めるように短文だけ調整。
+- PR #74 `[codex] Organize task board for thumbnail editor order`
+  - main / origin/main に merge 済み。
+  - Thumbnail Editor の次順序を `task.md` 上で軽量に整理。
 
 ### 残タスク候補
 

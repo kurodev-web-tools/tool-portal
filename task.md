@@ -333,6 +333,42 @@
   - `git diff --check` PASS。LF -> CRLF warning のみ。
   - `docs/SCHEDULE_CALENDAR_STABILITY_CHECK_2026-04-28.md` に freeze readiness の確認結果を追記。
 
+### P8: SNS Split Image Maker freeze readiness audit
+
+- 状態: done
+- 目的:
+  - PR #82 merge 後の `origin/main` 起点で、SNS Split Image Maker の freeze 前安定性、draft persistence / IndexedDB、handoff、主要幅、export 導線のリスクを確認する。
+  - 大きな新機能や UI redesign は入れず、明確な軽微バグだけ最小修正する。
+- 実施内容:
+  - PR #82 `[codex] Check schedule calendar freeze readiness` が `main` / `origin/main` に merge 済みで、merge commit `6418032` が `origin/main` 先頭にあることを確認した。
+  - `origin/main` 起点で `codex/sns-split-freeze-readiness` / `.worktrees/sns-split-freeze-readiness` を作成した。
+  - SNS Split Image Maker の現状実装、design doc、Schedule Calendar README の handoff contract、`task.md` の該当箇所を確認した。
+  - draft metadata は `localStorage` key `v-streamer-tools:sns-split-image-maker:draft:v1`、画像本体は IndexedDB `v-streamer-tools:sns-split-image-maker` / `images` store に分離されていることを確認した。
+  - Thumbnail Editor からの画像 handoff は IndexedDB の一時 `imageStorageId` を読み、`base` 画像へ反映後に元キーを削除することをブラウザで確認した。
+  - Schedule Calendar からの handoff は告知文メモ、日付、タイトル、ファイル名候補を反映し、画像本体は渡さないことをブラウザで確認した。
+  - 出力はメイン画像未選択時に disabled、Thumbnail Editor handoff 後は有効化し、`split_1 -> split_4` の順で4枚出力した成功 toast が出ることを確認した。
+  - 実装とずれていた page metadata / design doc の `2分割/4分割`・旧 `1+8/1+4` 前提を、現行の `2分割 / 3分割 / 4分割` と freeze 確認幅へ最小修正した。
+  - Thumbnail Editor / Schedule Calendar 実装、thumbnail asset、font、portal shell は変更していない。
+- 幅別確認:
+  - `390px`: mobile edit UI。横スクロールなし、下部ナビ表示、入力エリア / 追加画像スロット / ファイル名 / disabled 保存導線が表示。console error / warn 0。
+  - `820px`: mobile edit UI。横スクロールなし、下部ナビ表示、入力エリア / 追加画像スロット / ファイル名 / disabled 保存導線が表示。console error / warn 0。
+  - `1024px`: desktop two-pane UI。横スクロールなし、プレビューと入力エリアが同時表示、header の画像保存と export panel が disabled。console error / warn 0。
+  - `1280px`: desktop two-pane UI。横スクロールなし、プレビューと入力エリアが同時表示、header の画像保存と export panel が disabled。console error / warn 0。
+  - `1366px`: desktop two-pane UI。横スクロールなし、プレビューと入力エリアが同時表示、Thumbnail handoff 後の export enabled / success toast を確認。console error / warn 0。
+- リスク / 次アクション:
+  - ZIP 出力、X 以外の比率、複数形式の大規模 export、重い onboarding は freeze 後の別PR候補に留める。
+  - 連続ダウンロードのブラウザ挙動は環境差があるため、freeze 前は「順番表示 + 成功 toast + 個別 download」の範囲で固定する。
+- 検証:
+  - RED: `node scripts/sns-split-image-maker-contract.mjs` は page metadata が `3分割` を含まない既存挙動で失敗することを確認。
+  - GREEN: `node scripts/sns-split-image-maker-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - Browser regression on `http://localhost:3005/tools/sns-split-image-maker/`: `390 / 820 / 1024 / 1280 / 1366px` PASS。
+  - Schedule Calendar -> SNS Split Image Maker handoff PASS。
+  - Thumbnail Editor -> SNS Split Image Maker handoff PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性

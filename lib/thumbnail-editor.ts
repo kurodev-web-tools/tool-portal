@@ -112,6 +112,17 @@ export type ThumbnailPresetVariantRelation = {
   variantIds: ThumbnailPresetVariantId[];
 };
 
+export type ThumbnailFontPolicy = {
+  owner: "thumbnail-editor";
+  source: "system-or-browser-installed";
+  allowsExternalNetworkFonts: boolean;
+  allowsGoogleFonts: boolean;
+  allowsCdnFonts: boolean;
+  allowsBundledFontAssetsInThisPr: boolean;
+  fallbackFamily: string;
+  fallbackStack: string[];
+};
+
 export type ThumbnailBaseLayer = {
   id: string;
   name: string;
@@ -498,6 +509,51 @@ export const thumbnailFontGroups = [
   }
 ];
 export const thumbnailFonts = thumbnailFontGroups.flatMap((group) => group.fonts);
+export const thumbnailFontFallbackFamily = "Noto Sans JP";
+export const thumbnailCanvasFontFallbackStack = [thumbnailFontFallbackFamily, "BIZ UDPGothic", "Yu Gothic", "Meiryo", "sans-serif"];
+export const thumbnailFontPolicy: ThumbnailFontPolicy = {
+  owner: "thumbnail-editor",
+  source: "system-or-browser-installed",
+  allowsExternalNetworkFonts: false,
+  allowsGoogleFonts: false,
+  allowsCdnFonts: false,
+  allowsBundledFontAssetsInThisPr: false,
+  fallbackFamily: thumbnailFontFallbackFamily,
+  fallbackStack: thumbnailCanvasFontFallbackStack
+};
+
+const quoteCanvasFontFamily = (fontFamily: string) => (fontFamily === "sans-serif" ? fontFamily : `"${fontFamily}"`);
+
+export const normalizeThumbnailFontFamily = (fontFamily: unknown): string => {
+  if (typeof fontFamily !== "string") {
+    return thumbnailFontFallbackFamily;
+  }
+
+  const normalized = fontFamily.trim();
+  if (!normalized || normalized.includes(",") || normalized.includes("\"") || normalized.includes("'")) {
+    return thumbnailFontFallbackFamily;
+  }
+  if (/^(?:https?:|data:|blob:|@import\b)/i.test(normalized) || /(?:url\(|fonts\.googleapis|fonts\.gstatic|cdn)/i.test(normalized)) {
+    return thumbnailFontFallbackFamily;
+  }
+
+  return thumbnailFonts.includes(normalized) ? normalized : thumbnailFontFallbackFamily;
+};
+
+export const getThumbnailCanvasFontFamily = (fontFamily: unknown): string => {
+  const normalized = normalizeThumbnailFontFamily(fontFamily);
+  const stack = normalized === thumbnailFontFallbackFamily ? thumbnailCanvasFontFallbackStack : [normalized, ...thumbnailCanvasFontFallbackStack];
+  return stack.filter((family, index) => stack.indexOf(family) === index).map(quoteCanvasFontFamily).join(", ");
+};
+
+export const getThumbnailCanvasFont = (
+  layer: Pick<ThumbnailTextLayer, "fontFamily" | "fontSize" | "bold" | "italic">
+): string => {
+  const fontSize = typeof layer.fontSize === "number" && Number.isFinite(layer.fontSize) ? Math.round(layer.fontSize) : 64;
+  const style = layer.italic ? "italic " : "";
+  const weight = layer.bold ? "700" : "400";
+  return `${style}${weight} ${fontSize}px ${getThumbnailCanvasFontFamily(layer.fontFamily)}`;
+};
 
 const nowIso = () => new Date().toISOString();
 
@@ -1997,7 +2053,7 @@ const normalizeLayer = (layer: unknown, canvas: ThumbnailCanvas): ThumbnailLayer
     ...base,
     type: "text",
     text: safeText(text.text, "テキスト", 150),
-    fontFamily: typeof text.fontFamily === "string" && thumbnailFonts.includes(text.fontFamily) ? text.fontFamily : "Noto Sans JP",
+    fontFamily: normalizeThumbnailFontFamily(text.fontFamily),
     fontSize: clamp(numberValue(text.fontSize, 64), 12, 240),
     lineHeight: clamp(numberValue(text.lineHeight, 1.1), 0.8, 2),
     color: typeof text.color === "string" ? text.color : "#ffffff",
@@ -2173,7 +2229,7 @@ const drawShape = (context: CanvasRenderingContext2D, layer: ThumbnailShapeLayer
 const drawText = (context: CanvasRenderingContext2D, layer: ThumbnailTextLayer) => {
   const lines = layer.text.split("\n").slice(0, 5);
   const linePx = layer.fontSize * layer.lineHeight;
-  context.font = `${layer.italic ? "italic " : ""}${layer.bold ? "700 " : "400 "}${layer.fontSize}px "${layer.fontFamily}", sans-serif`;
+  context.font = getThumbnailCanvasFont(layer);
   context.textBaseline = "top";
   context.textAlign = layer.align;
   context.shadowColor = layer.shadowColor;

@@ -563,6 +563,10 @@ for (const preset of lib.thumbnailPresets) {
 assert.ok(componentSource.includes("MaterialLibraryPanel"), "Thumbnail Editor renders a material library panel");
 assert.ok(componentSource.includes("onMaterial"), "quick add controls expose material insertion");
 assert.ok(componentSource.includes("thumbnailMaterialLibrary"), "component uses the shared material library data");
+assert.ok(
+  componentSource.includes("素材はプリセットに後から足す飾りです。選ぶとレイヤーへ追加されます。"),
+  "material library reads as a light supporting route for decorating a chosen preset"
+);
 assert.ok(componentSource.includes("materialSearchQuery"), "material library keeps local search state");
 assert.ok(componentSource.includes("素材名・説明・推奨配置で検索"), "material library exposes lightweight search copy");
 assert.ok(componentSource.includes("materialCategoryCounts"), "material library shows category counts");

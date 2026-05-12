@@ -122,6 +122,7 @@ assert.ok(
 assert.ok(componentSource.includes("getWeeklyScheduleLayerGroup"), "layer panel has weekly schedule grouping helper");
 assert.ok(componentSource.includes("aria-expanded={"), "layer panel renders accordion buttons");
 assert.ok(componentSource.includes("max-h-[min(52vh,560px)] overflow-y-auto"), "layer panel has an independent scroll area");
+assert.ok(componentSource.includes("上が前面 / 選択して編集"), "layer panel briefly explains stacking order and selection flow");
 assert.ok(componentSource.includes("[group.id]: !collapsed"), "accordion toggles from the rendered collapsed state");
 assert.ok(!componentSource.includes('>{collapsed ? "開く" : "閉じる"}</span>'), "accordion uses icon affordance instead of open-close text labels");
 assert.ok(componentSource.includes('aria-label={`${group.label}グループを${collapsed ? "開く" : "閉じる"}`'), "accordion keeps an accessible open-close label");

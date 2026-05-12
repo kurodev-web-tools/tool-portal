@@ -127,6 +127,19 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-12 初回操作向けのパネル関係補助:
+  - 前提確認: PR #71 `[codex] Clarify thumbnail editor first-run guidance` は GitHub上で `MERGED`、merge時刻 `2026-05-12T02:39:23Z`、merge commit `d7aa66e425edb28ae5d469019feebee2d0db5d45` が `main` / `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-editor-panel-guidance` / `.worktrees/thumbnail-editor-panel-guidance`
+  - 対象は Thumbnail Editor の短いUI文言、`scripts/thumbnail-material-assets-contract.mjs`、`scripts/thumbnail-layer-management-contract.mjs`、この `task.md` のみ。preset本体、text layer / image layer schema、crop仕様、素材ライブラリ登録、素材asset、Schedule Calendar、SNS Split Image Maker は触っていない
+  - 初期キャンバス説明の `プリセットを選んで、文字と立ち絵を差し替えてから書き出す` は維持した
+  - 素材ライブラリに `素材はプリセットに後から足す飾りです。選ぶとレイヤーへ追加されます。` の1行だけを追加し、素材をプリセットへ足す補助導線として読めるようにした
+  - レイヤー一覧の補助表示を `上が前面 / 選択して編集` に更新し、前面順と選択編集の流れだけを短く示した
+  - 新機能、自動修正、AI生成、新規素材生成、チュートリアル画面、オンボーディング画面、モーダル、重いチェックリストは入れていない
+  - contract は先に `scripts/thumbnail-material-assets-contract.mjs` と `scripts/thumbnail-layer-management-contract.mjs` を更新し、RED をそれぞれ `material library reads as a light supporting route for decorating a chosen preset` / `layer panel briefly explains stacking order and selection flow` で確認してから実装した
+  - 検証: `node scripts/thumbnail-quality-guard-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-standee-placement-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: worktree dev server `localhost:3134` を Chrome headless + DevTools Protocol で確認。390 / 820 / 1024 / 1280 / 1366px の各幅で初期説明、プリセット一覧、素材ライブラリ補助文、レイヤー一覧補助文、canvas nonblank、horizontal overflow 0、console error / warnなしを確認した。390 / 820px は素材 / レイヤータブへ切り替えて変更文言を確認。1024 / 1280 / 1366px は右パネル内で素材ライブラリ、レイヤー一覧、`サムネ品質`、`品質チェックOK` を確認
+  - 補足: `npm run build` は PASS。worktree が repo 内 `.worktrees` にあるため、Next.js が複数 lockfile 検出の workspace root warning を出すが、build 自体は成功している
+
 - 2026-05-12 初回操作向けの短い導線整理:
   - 前提確認: PR #70 `[codex] Improve thumbnail quality guard readability` は GitHub上で `MERGED`、merge時刻 `2026-05-12T01:13:40Z`、merge commit `9c61f55c4647933faf25496412a43483e7928676` が `main` / `origin/main` に含まれることを確認した
   - 作業branch / worktree: `codex/thumbnail-editor-first-run-guidance` / `.worktrees/thumbnail-editor-first-run-guidance`

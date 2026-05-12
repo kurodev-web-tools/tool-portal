@@ -127,6 +127,19 @@
 
 #### 2. Thumbnail Editor をプリセット完成型へ寄せる
 
+- 2026-05-12 初回操作フローの最小導線確認:
+  - 前提確認: PR #72 `[codex] Clarify thumbnail editor panel guidance` は GitHub上で `MERGED`、merge時刻 `2026-05-12T03:01:50Z`、merge commit `ab00fc1f9781eb684294ecc33528856a4995d658` が `main` / `origin/main` に含まれることを確認した
+  - 作業branch / worktree: `codex/thumbnail-editor-first-flow-guidance` / `.worktrees/thumbnail-editor-first-flow-guidance`
+  - 対象は Thumbnail Editor の短いUI文言、`scripts/thumbnail-quality-guard-contract.mjs`、この `task.md` のみ。preset本体、text layer / image layer schema、crop仕様、素材ライブラリ登録、素材asset、Schedule Calendar、SNS Split Image Maker は触っていない
+  - 初期キャンバス説明の `プリセットを選んで、文字と立ち絵を差し替えてから書き出す` と text layer選択時の `選択中の文字を差し替えて、必要なら縁取りや影を調整します。` は維持した
+  - image layer選択時の補助文を `立ち絵画像を追加・差し替えて、配置だけを整えます。` に更新し、画像追加 / 差し替えから立ち絵配置へ進む導線だけを短く示した
+  - `保存 / 書き出し` の補助文を `文字と立ち絵を確認して書き出す` に更新し、`品質チェックOK` / `注意 n件` の品質ガード要約と競合しない最終確認導線にした
+  - 新機能、自動修正、AI生成、新規素材生成、外部CDN / フォント追加、チュートリアル画面、オンボーディング画面、モーダル、重いチェックリストは入れていない
+  - contract は先に `scripts/thumbnail-quality-guard-contract.mjs` を更新し、RED を `image layer guidance briefly points to adding or replacing standee images before placement` で確認してから実装した。warning / hint / ok、`サムネ品質`、`注意 n件`、`品質チェックOK`、自動修正やAI生成に見える文言なし、汎用制作ツール寄り文言なしも同contractで確認する
+  - 検証: `node scripts/thumbnail-quality-guard-contract.mjs` PASS、`node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS、`node scripts/thumbnail-preset-discovery-contract.mjs` PASS、`node scripts/thumbnail-layer-management-contract.mjs` PASS、`node scripts/thumbnail-material-assets-contract.mjs` PASS、`node scripts/thumbnail-standee-placement-contract.mjs` PASS、`npm run lint` PASS、`npx tsc --noEmit` PASS、`git diff --check` PASS、`npm run build` PASS
+  - UI確認: `out/` を `localhost:3140` で配信し、Chrome DevToolsで 390 / 820 / 1024 / 1280 / 1366px を確認。各幅で初期説明、画像設定の追加 / 差し替え補助文、書き出し補助文、`品質チェックOK`、canvas nonblank、horizontal overflow 0を確認した。390 / 820px は下部タブで画像設定 / 書き出しを確認。1024 / 1280 / 1366px は右パネルで画像設定、`立ち絵配置`、保存 / 書き出しを確認
+  - 補足: dev server `localhost:3136` は起動後の応答が不安定だったため static export で確認した。static配信では Next.js RSC prefetch の `__next...txt?_rsc=` 404 が console error として出るが、今回変更した文言、追加asset、JS chunk の読み込み失敗ではない
+
 - 2026-05-12 初回操作向けのパネル関係補助:
   - 前提確認: PR #71 `[codex] Clarify thumbnail editor first-run guidance` は GitHub上で `MERGED`、merge時刻 `2026-05-12T02:39:23Z`、merge commit `d7aa66e425edb28ae5d469019feebee2d0db5d45` が `main` / `origin/main` に含まれることを確認した
   - 作業branch / worktree: `codex/thumbnail-editor-panel-guidance` / `.worktrees/thumbnail-editor-panel-guidance`

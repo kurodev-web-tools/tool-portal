@@ -6,13 +6,14 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 この整理では新機能、UI文言、asset、preset本体、schema、crop、外部fontは変更しない。
 
 2026-05-12 時点では、P1〜P6 の contract / helper 境界は実装済み。
-この文書は、現行機能一覧ではなく、freeze 後に preset body、素材UI、font asset、追加品質確認へ広げるときの参照境界として扱う。
+この文書は、現行機能一覧ではなく、freeze 後に preset body、ユーザー素材ライブラリ管理 UI、font asset、追加品質確認へ広げるときの参照境界として扱う。
 
 維持する見え方:
 
 - 用途別プリセットを選ぶ。
 - 文字を差し替える。
 - 立ち絵を差し替えて配置する。
+- 登録済み装飾素材を軽い素材パネルから追加する。
 - 品質を確認して書き出す。
 
 ## PR Order
@@ -114,6 +115,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - 目的:
   - project-bound material と user-added material を分け、画像本体を localStorage に置かない保存境界を決める。
   - delete / replace / 容量 / 復旧不能時の表示を実装前に固定する。
+  - 現行の登録済み装飾素材パネルと、future のユーザー素材管理 UI を混同しない。
 - 入れるもの:
   - IndexedDB など画像向け storage を前提にした user material contract。
   - 登録素材とユーザー素材の責務分離。

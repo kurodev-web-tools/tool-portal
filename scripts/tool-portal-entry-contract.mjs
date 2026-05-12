@@ -29,6 +29,8 @@ const suitesSource = fs.readFileSync(path.join(root, "lib", "suites.ts"), "utf8"
 const portalHomeSource = fs.readFileSync(path.join(root, "components", "portal", "PortalHome.tsx"), "utf8");
 const portalHeroSource = fs.readFileSync(path.join(root, "components", "portal", "PortalHeroSummary.tsx"), "utf8");
 const portalToolsIndexSource = fs.readFileSync(path.join(root, "components", "portal", "PortalToolsIndex.tsx"), "utf8");
+const appLayoutSource = fs.readFileSync(path.join(root, "app", "layout.tsx"), "utf8");
+const homePageSource = fs.readFileSync(path.join(root, "app", "page.tsx"), "utf8");
 const toolsPageSource = fs.readFileSync(path.join(root, "app", "tools", "page.tsx"), "utf8");
 const thumbnailPageSource = fs.readFileSync(path.join(root, "app", "tools", "thumbnail-editor", "page.tsx"), "utf8");
 const snsPageSource = fs.readFileSync(path.join(root, "app", "tools", "sns-split-image-maker", "page.tsx"), "utf8");
@@ -54,10 +56,12 @@ assert.match(snsTool.description, /2分割 \/ 3分割 \/ 4分割/, "sns split en
 assert.match(snsTool.description, /個別PNG\/JPEG/, "sns split entry keeps individual PNG/JPEG export scope");
 assert.doesNotMatch(snsTool.description, /ZIP|一括ZIP|複数形式/, "sns split entry does not present deferred export expansions as current");
 
-for (const source of [portalHomeSource, portalHeroSource, portalToolsIndexSource, toolsPageSource]) {
+for (const source of [portalHomeSource, portalHeroSource, portalToolsIndexSource, appLayoutSource, homePageSource, toolsPageSource]) {
   assert.doesNotMatch(source, /Schedule Calendar (?:を最小セット|です。その他は準備中|です。準備中|と準備中)/, "portal copy does not say Schedule Calendar is the only available tool");
 }
 
+assert.match(appLayoutSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "root metadata names the available tool set");
+assert.match(homePageSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "home metadata names the available tool set");
 assert.match(portalToolsIndexSource, /Schedule Calendar \/ Thumbnail Editor \/ SNS分割画像メーカー/, "tools index names the available tool set");
 assert.match(toolsPageSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "tools page metadata names the available tool set");
 assert.match(thumbnailPageSource, /用途別プリセット/, "thumbnail page metadata keeps preset-first scope");
@@ -66,6 +70,6 @@ assert.match(snsPageSource, /2分割\/3分割\/4分割/, "sns page metadata list
 assert.match(suitesSource, /key: "fan-brand"[\s\S]*?status: "available"/, "fan-brand suite is available while design tools are available");
 assert.match(suitesSource, /Thumbnail Editor/, "fan-brand suite tags include Thumbnail Editor");
 assert.match(suitesSource, /SNS分割画像/, "fan-brand suite tags include SNS split image maker");
-assert.doesNotMatch(toolsSource + toolsPageSource + portalHomeSource + portalHeroSource + portalToolsIndexSource, /ZIP 出力|一括ZIP|複数形式 export/, "portal entry copy keeps post-freeze export candidates out of current feature copy");
+assert.doesNotMatch(toolsSource + toolsPageSource + appLayoutSource + homePageSource + portalHomeSource + portalHeroSource + portalToolsIndexSource, /ZIP 出力|一括ZIP|複数形式 export/, "portal entry copy keeps post-freeze export candidates out of current feature copy");
 
 console.log("tool-portal-entry contract checks passed");

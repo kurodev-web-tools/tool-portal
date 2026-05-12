@@ -9,6 +9,7 @@
 - UI 変更時の確認幅は `390 / 820 / 1024 / 1280 / 1366px` を基本にする。
 - 2026-05 の完了済み詳細ログは `docs/archive/TASK_HISTORY_2026-05.md` を参照する。
 - PR #86 `[codex] Align portal entry freeze copy` は `main` / `origin/main` に merge 済み。merge commit は `e2ef089`。
+- PR #87 `[codex] Organize freeze docs task board` は `main` / `origin/main` に merge 済み。merge commit は `f6f7d08`。
 
 ## Freeze 前の現行境界
 
@@ -28,13 +29,14 @@
 
 - 現行 freeze 対象:
   - 用途別プリセットを選び、文字と立ち絵を差し替え、品質を確認して PNG / JPEG 1枚を書き出す体験。
+  - 登録済み装飾素材を追加する軽い素材パネル。ユーザー素材の保存 / 削除 / 置換 / 容量管理 UI は含めない。
   - preset discovery、partial preset apply、user material storage boundary、font fallback、preset batch readiness、quality guard は contract / helper 境界まで固定済み。
   - Schedule Calendar 由来の予定テキスト handoff と、Thumbnail -> SNS Split の IndexedDB 一時画像 handoff。
 - freeze 前に見るもの:
   - 汎用ペイントツールや多機能制作ツールに見える表現が増えていないか。
-  - 現行機能と contract-only / readiness-only の境界が docs 上で混ざっていないか。
+  - 現行機能、軽い登録済み素材パネル、contract-only / readiness-only、ユーザー素材管理UIの境界が docs 上で混ざっていないか。
 - freeze 後候補:
-  - 縦長 / 正方形 variant body、素材ライブラリ UI、font asset 追加、preset batch 本体追加、quality guard のさらなる拡張。
+  - 縦長 / 正方形 variant body、ユーザー素材ライブラリ管理 UI、font asset 追加、preset batch 本体追加、quality guard のさらなる拡張。
   - crop 仕様、text / image layer schema、public asset / font 追加は別PRで明示的に扱う。
 
 ### SNS Split Image Maker
@@ -54,7 +56,7 @@
 
 ### P0: Freeze final QA / docs consistency
 
-- 状態: next
+- 状態: review-ready
 - 目的:
   - Schedule Calendar / Thumbnail Editor / SNS Split Image Maker の freeze 対象と freeze 後候補を、docs と portal entry の表現で再確認する。
   - 新機能追加ではなく、最終QAで固定する範囲と後続PRへ送る範囲を切り分ける。
@@ -65,6 +67,28 @@
   - ZIP、X以外比率、複数形式 export、重い onboarding、Thumbnail Editor の大きな次機能が現行機能のように読めない。
   - final QA で見る対象と freeze 後候補が task / docs 間で矛盾しない。
   - 関連 contract、lint、typecheck、`git diff --check` の結果を記録する。
+- 実施結果:
+  - PR #87 merge commit `f6f7d08` が `origin/main` に含まれることを確認し、`codex/freeze-final-qa` / `.worktrees/freeze-final-qa` を `origin/main` 起点で作成。
+  - Schedule Calendar docs は、予定追加 / 編集 / 削除 / undo / 投稿補助 / handoff を freeze 対象として読み取れる。Google Calendar、ログイン、週間予定画像生成は non-goals / freeze 後候補として読める。
+  - Thumbnail Editor docs は、用途別プリセット、文字差し替え、立ち絵 / 画像差し替え、品質確認、PNG / JPEG 1枚 export を freeze 対象として読み取れる。登録済み装飾素材の軽い追加パネルと、future のユーザー素材管理 UI の境界を明確化した。
+  - SNS Split Image Maker docs は、X向け `2分割 / 3分割 / 4分割`、メイン画像 guard、個別 PNG / JPEG export、Schedule / Thumbnail handoff の next action を freeze 対象として読み取れる。ZIP、X 以外比率、複数形式 export、重い onboarding は freeze 後候補として読める。
+  - Cross tool handoff は、URL本文なし、`sessionStorage` token、Thumbnail -> SNS の IndexedDB 一時画像境界として contract / docs 上で崩れていない。
+  - 明確な copy drift として、root / home metadata が Schedule Calendar のみ提供のように読めたため、公開中3ツール表記へ修正し、`tool-portal-entry` contract の検査対象へ追加。
+- 幅別表示結果:
+  - Chrome DevTools viewport emulation / `http://localhost:3003` で確認。
+  - `/tools/schedule-calendar`: `390 / 820 / 1024 / 1280 / 1366px` で `h1` 表示、横 overflow なし、console error なし。
+  - `/tools/thumbnail-editor`: `390 / 820 / 1024 / 1280 / 1366px` で `h1` 表示、横 overflow なし、console error なし。
+  - `/tools/sns-split-image-maker`: `390 / 820 / 1024 / 1280 / 1366px` で `h1` 表示、横 overflow なし、console error なし。
+- 検証:
+  - `node scripts/sns-split-image-maker-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `node scripts/tool-portal-entry-contract.mjs` PASS。
+  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
+  - `node scripts/thumbnail-quality-guard-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-batch-readiness-contract.mjs` PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
 
 ## 残タスク候補
 
@@ -81,11 +105,12 @@
 
 - final QA:
   - preset selection -> text replacement -> standee replacement / placement -> quality guard -> export の流れ。
+  - 登録済み装飾素材の軽い追加パネルは、ユーザー素材の保存 / 削除 / 置換 / 容量管理 UI と混同しない。
   - Schedule Calendar 由来テキストの再適用と Thumbnail -> SNS Split handoff。
   - `サムネ品質` / `注意 n件` / `品質チェックOK` の軽い品質ガード表現。
 - 後続PR候補:
   - variant body 実装。
-  - common material library UI。
+  - ユーザー素材ライブラリ管理 UI。
   - self-host font / repo同梱 font の検討。
   - preset batch 本体追加。
   - quality guard expansion の追加分。

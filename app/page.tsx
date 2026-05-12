@@ -4,7 +4,7 @@ import { PortalShell } from "@/components/portal/PortalShell";
 
 export const metadata: Metadata = {
   title: "Home",
-  description: "V Streamer Toolsの公開最小セットへの入口。Tools IndexとSchedule Calendarへ移動できます。"
+  description: "V Streamer Toolsの公開最小セットへの入口。Schedule Calendar、Thumbnail Editor、SNS分割画像メーカーへ移動できます。"
 };
 
 export default function Home() {

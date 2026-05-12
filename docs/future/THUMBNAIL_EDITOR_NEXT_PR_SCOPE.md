@@ -163,7 +163,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - UI文言変更。
 - contract-first で確認する内容:
   - font が解決しなくても canvas rendering が落ちない。
-  - 既存 draft の fontName が fallback で表示できる。
+  - 既存 draft の fontFamily が fallback で表示できる。
   - build / export が外部 network に依存しない。
 - 変更してよいファイル範囲:
   - `docs/future/**` または既存 design doc の policy section。
@@ -176,6 +176,14 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - Schedule Calendar / SNS Split Image Maker 実装。
 - 次PR候補としての優先度:
   - P4。preset batch 前に方針だけ決め、実 asset 追加は別PRにする。
+
+#### 実装で確定した境界
+
+- font policy は editor 全体の `thumbnailFontPolicy` として扱い、source は browser / system installed font に限定する。
+- 外部 CDN、Google Fonts、network font、今回PRでの bundled font asset 追加は許可しない。
+- 既存 `thumbnailFonts` に含まれる fontFamily はそのまま保持し、未知、空、URL、`@import`、comma stack、quote を含む unsafe fontFamily は `Noto Sans JP` へ fallback する。
+- canvas rendering / export は `getThumbnailCanvasFont()` を通し、`Noto Sans JP` / `BIZ UDPGothic` / `Yu Gothic` / `Meiryo` / `sans-serif` の fallback stack を使う。
+- normalize は text layer schema を破壊せず、preset 初期 text layer の fontFamily、material、partial apply、variant refs、recent / favorite、Schedule Calendar / SNS Split Image Maker handoff contract は変更しない。
 
 ### 5. preset batch
 
@@ -248,5 +256,6 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - `scripts/thumbnail-material-assets-contract.mjs`
 - `scripts/thumbnail-quality-guard-contract.mjs`
 - `scripts/thumbnail-layer-management-contract.mjs`
+- `scripts/thumbnail-font-policy-contract.mjs`
 - 新規候補: `scripts/thumbnail-preset-variants-contract.mjs`
 - 新規候補: `scripts/thumbnail-preset-batch-readiness-contract.mjs`

@@ -217,6 +217,34 @@
   - `npx tsc --noEmit` PASS。
   - UI 表示変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。
 
+### P4: Thumbnail Editor font policy contract
+
+- 状態: done
+- 目的:
+  - 外部 CDN / Google Fonts / 新規 font asset に依存せず、editor 全体の font policy と fallback 境界を固定する。
+  - 既存 `fontFamily` が未知、空、unsafe な値でも draft normalize / canvas export / editor 表示が破綻しない前提を作る。
+  - 既存 preset / text layer / image layer / material / partial apply / handoff 互換を壊さない。
+- 実施内容:
+  - PR #78 `[codex] Add thumbnail common material storage contract` が `main` / `origin/main` に merge 済みで、merge commit `8a961dc` が `origin/main` に含まれることを確認した。
+  - `origin/main` 起点で `codex/thumbnail-font-policy-contract` / `.worktrees/thumbnail-font-policy-contract` を作成した。
+  - 新規 `scripts/thumbnail-font-policy-contract.mjs` を追加し、RED (`thumbnailFontPolicy` 未定義) を確認してから実装した。
+  - `lib/thumbnail-editor.ts` に `thumbnailFontPolicy`、`thumbnailFontFallbackFamily`、`thumbnailCanvasFontFallbackStack`、`normalizeThumbnailFontFamily()`、`getThumbnailCanvasFontFamily()`、`getThumbnailCanvasFont()` を追加した。
+  - known font は保持し、未知 / 空 / URL / `@import` / comma stack / quote を含む unsafe `fontFamily` は `Noto Sans JP` へ fallback するようにした。
+  - `normalizeThumbnailDraft` と canvas text rendering は同じ font helper を使い、canvas export 側は fallback stack を持つ font shorthand を使うようにした。
+  - 実装で確定した font policy boundary を `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` に追記した。
+  - preset 本体、asset、font asset、外部 CDN、text / image layer schema、crop、素材ライブラリ登録、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+- 検証:
+  - `node scripts/thumbnail-font-policy-contract.mjs` PASS。
+  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-variants-contract.mjs` PASS。
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - UI 表示 / layout / 文言変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性

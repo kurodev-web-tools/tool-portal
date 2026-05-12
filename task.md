@@ -245,6 +245,35 @@
   - `npx tsc --noEmit` PASS。
   - UI 表示 / layout / 文言変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。
 
+### P5: Thumbnail Editor preset batch readiness contract
+
+- 状態: done
+- 目的:
+  - 初配信、記念配信、耐久配信、歌枠、雑談、ゲーム実況、告知、切り抜きの追加候補を、実 preset 本体や asset を増やす前に contract-first で固定する。
+  - 既存 preset / variant / partial apply / material / font policy / handoff 互換を壊さず、「用途別プリセットを選んで、文字と立ち絵を差し替える VTuber 向けサムネ組み立てツール」という見え方を維持する。
+- 実施内容:
+  - PR #79 `[codex] Add thumbnail font policy contract` が `main` / `origin/main` に merge 済みで、merge commit `a76bf99` が `origin/main` に含まれることを確認した。
+  - `origin/main` 起点で `codex/thumbnail-preset-batch-readiness` / `.worktrees/thumbnail-preset-batch-readiness` を作成した。
+  - 新規 `scripts/thumbnail-preset-batch-readiness-contract.mjs` を追加し、RED (`thumbnailPresetBatchCandidates` 未export) を確認してから実装した。
+  - `lib/thumbnail-editor.ts` に preset batch 候補 metadata、readiness policy、`getThumbnailPresetBatchReadiness()`、`getThumbnailPresetBatchReadinessSummary()` を追加した。
+  - 候補 id は `first_stream` / `anniversary_stream` / `endurance_stream` / `karaoke_stream` / `chat_stream` / `gameplay_stream` / `notice_stream` / `highlight_clip` とし、既存 preset id と衝突しない形にした。
+  - 各候補に用途、推奨 variant、必要 text layer role、必要 material category、依存 contract を持たせた。
+  - readiness helper は warning-only / checks-only とし、自動修正、AI生成、asset 生成、preset body 生成、font asset 追加、material 登録変更を行わない。
+  - 実装で確定した境界を `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` に追記した。
+  - preset 本体、asset、font asset、外部 CDN、text / image layer schema、crop、素材ライブラリ登録、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+- 検証:
+  - `node scripts/thumbnail-preset-batch-readiness-contract.mjs` PASS。
+  - `node scripts/thumbnail-font-policy-contract.mjs` PASS。
+  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-variants-contract.mjs` PASS。
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - UI 表示 / layout / 文言変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性

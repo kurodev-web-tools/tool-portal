@@ -5,6 +5,9 @@
 Thumbnail Editor の残作業を、実装前に contract-first で確認できる PR 単位へ分ける。
 この整理では新機能、UI文言、asset、preset本体、schema、crop、外部fontは変更しない。
 
+2026-05-12 時点では、P1〜P6 の contract / helper 境界は実装済み。
+この文書は、現行機能一覧ではなく、freeze 後に preset body、素材UI、font asset、追加品質確認へ広げるときの参照境界として扱う。
+
 維持する見え方:
 
 - 用途別プリセットを選ぶ。

@@ -10,10 +10,8 @@ default_ratio: "16:9"
 
 ## Overview
 
-サムネイルエディタは、AI自動生成ではなく「手動で速く・確実に作れる」ことを主目的に設計する。  
-初回MVPでは、素材持ち込み前提で、文字の見栄え・レイヤー編集・プリセット適用を中心に実装する。
-
-この画面は「軽量Canva」の入口ではあるが、MVP段階では高機能化より実運用の安定性を優先する。
+サムネイルエディタは、AI自動生成ではなく「用途別プリセットを選び、文字と立ち絵を差し替えて、手動で速く確実に作れる」ことを主目的に設計する。
+freeze 前は、汎用ペイントツールや Canva 的な多機能制作ツールへ広げず、VTuber 向けサムネ組み立て体験と書き出しの安定性を優先する。
 
 ## Layout
 
@@ -62,9 +60,9 @@ default_ratio: "16:9"
 - 複製
 - 削除
 
-### Text Quality (MVP Core)
+### Text Quality (Freeze Core)
 
-- フォント（Google Fontsの限定セット）
+- 既存の font set と fallback policy
 - サイズ
 - 色
 - 行間
@@ -234,6 +232,13 @@ Hero Patterns、Haikei、css-doodle、pattern.css は生成手法の参考に留
 この段階ではレイヤーデータモデルにグループを追加せず、レイヤー名から表示上のグループを判定する。
 背景と予定入力欄を後続で別アセットまたは調整可能なフレームレイヤーとして分けると、週間予定の枠サイズ、余白、文字量に合わせた調整がしやすくなる。
 
+## Freeze Boundary
+
+- 現行 freeze 対象は、用途別プリセット選択、主要テキスト差し替え、立ち絵 / 画像差し替え、軽い品質ガード、PNG / JPEG 1枚書き出しに限定する。
+- variant metadata、partial preset apply、user material storage boundary、font fallback、preset batch readiness、quality guard expansion は contract / helper 境界として固定済みだが、縦長 / 正方形 preset body、素材ライブラリ UI、font asset 追加、preset batch 本体追加は freeze 後候補として扱う。
+- Schedule Calendar 由来の予定テキストは同名テキストレイヤーへ再適用し、Thumbnail Editor から SNS分割画像メーカーへ渡す画像は SNS分割画像メーカー側 IndexedDB の一時保存を使う。
+- crop 仕様、text / image layer schema、public asset / font 追加、外部 CDN 追加は今回の freeze 前整理では変更しない。
+
 ## Export
 
 - 出力形式: PNG / JPEG
@@ -256,9 +261,9 @@ Hero Patterns、Haikei、css-doodle、pattern.css は生成手法の参考に留
 
 ## Responsive Behavior
 
-- PC優先設計
-- タブレットは右パネル幅を縮小
-- モバイルはMVP対象外（閲覧または簡易操作に留める）
+- `>=1280px`: PC向けの左キャンバス + 右操作パネル
+- `1024-1279px`: tablet landscape向けのコンパクト2ペイン
+- `<=1023px`: mobile統合UI
 
 ## Key Components
 

@@ -138,6 +138,31 @@
   - `git diff --check` PASS。LF -> CRLF warning のみ。
   - UI 変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。
 
+### P1: Thumbnail Editor preset variants
+
+- 状態: done
+- 目的:
+  - 横長 / 縦長 / 正方形などの出力先差分を、既存 preset id を壊さず metadata / family / canvas size の土台として扱えるようにする。
+  - 「用途別プリセットを選んで、文字と立ち絵を差し替える VTuber 向けサムネ組み立てツール」という見え方を維持する。
+- 実施内容:
+  - PR #75 `[codex] Document thumbnail editor next PR scope` が `main` / `origin/main` に merge 済みで、merge commit `a922c09` が `origin/main` に含まれることを確認した。
+  - `origin/main` 起点で `codex/thumbnail-preset-variants` / `.worktrees/thumbnail-preset-variants` を作成した。
+  - 新規 `scripts/thumbnail-preset-variants-contract.mjs` を追加し、RED (`thumbnailPresetVariants` 未定義) を確認してから実装した。
+  - `lib/thumbnail-editor.ts` に `landscape-16-9` / `portrait-9-16` / `square-1-1` の variant metadata、既存 preset との relation、default variant ref、canvas resolver、軽量 variant ref normalizer を追加した。
+  - 既存 preset は全て横長 16:9 を default variant とし、縦長 / 正方形は metadata のみで既存 preset body 対応済みとは扱わない。
+  - discovery は従来の `recentPresetIds` / `favoritePresetIds` 互換を維持し、variant 参照は `presetId` + `variantId` の軽い ref だけを正規化する。
+  - preset 本体、asset、text / image layer schema、crop、素材ライブラリ登録、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+- 検証:
+  - `node scripts/thumbnail-preset-variants-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-discovery-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - UI 表示変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。`ThumbnailEditorApp.tsx` は discovery state の初期値型合わせのみ。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性

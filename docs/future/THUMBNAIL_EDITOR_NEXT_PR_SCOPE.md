@@ -57,6 +57,13 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - 次PR候補としての優先度:
   - P1。後続の partial apply と preset batch の前提になる。
 
+#### 実装で確定した境界
+
+- variant catalog は `landscape-16-9` / `portrait-9-16` / `square-1-1` の metadata に留める。
+- 既存 preset は全て既存の横長 16:9 を default variant とし、未対応の縦長 / 正方形 variant body は support 済みとして扱わない。
+- discovery は従来の `recentPresetIds` / `favoritePresetIds` 互換を維持し、variant 参照は `presetId` + `variantId` の軽い ref だけを正規化する。
+- UI 導線、preset 本体、text / image layer schema、crop、material library、Schedule Calendar / SNS Split Image Maker handoff は変更しない。
+
 ### 2. partial preset apply
 
 - 目的:

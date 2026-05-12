@@ -65,6 +65,25 @@ export type ThumbnailCanvas = {
   width: number;
   height: number;
 };
+export type ThumbnailPresetVariantId = "landscape-16-9" | "portrait-9-16" | "square-1-1";
+export type ThumbnailPresetVariantAspectRatio = "16:9" | "9:16" | "1:1";
+export type ThumbnailPresetVariant = {
+  id: ThumbnailPresetVariantId;
+  label: string;
+  canvas: ThumbnailCanvas;
+  aspectRatio: ThumbnailPresetVariantAspectRatio;
+  intendedUse: string;
+};
+export type ThumbnailPresetVariantRef = {
+  presetId: ThumbnailPresetId;
+  variantId: ThumbnailPresetVariantId;
+};
+export type ThumbnailPresetVariantRelation = {
+  presetId: ThumbnailPresetId;
+  familyId: string;
+  defaultVariantId: ThumbnailPresetVariantId;
+  variantIds: ThumbnailPresetVariantId[];
+};
 
 export type ThumbnailBaseLayer = {
   id: string;
@@ -180,6 +199,8 @@ export type ThumbnailPresetDiscoveryState = {
   version: 1;
   recentPresetIds: ThumbnailPresetId[];
   favoritePresetIds: ThumbnailPresetId[];
+  recentPresetVariantRefs: ThumbnailPresetVariantRef[];
+  favoritePresetVariantRefs: ThumbnailPresetVariantRef[];
 };
 
 export const thumbnailMainTextCarryoverTargets = [
@@ -378,6 +399,29 @@ export const thumbnailStandeePlacementPresets = [
 export const thumbnailCanvasSizes: Record<ThumbnailCanvasSizeId, ThumbnailCanvas & { label: string }> = {
   hd: { width: 1280, height: 720, label: "1280 x 720 (16:9)" },
   "full-hd": { width: 1920, height: 1080, label: "1920 x 1080 (16:9)" }
+};
+export const thumbnailPresetVariants: Record<ThumbnailPresetVariantId, ThumbnailPresetVariant> = {
+  "landscape-16-9": {
+    id: "landscape-16-9",
+    label: "横長 16:9",
+    canvas: { width: 1280, height: 720 },
+    aspectRatio: "16:9",
+    intendedUse: "YouTube配信サムネ / 通常告知"
+  },
+  "portrait-9-16": {
+    id: "portrait-9-16",
+    label: "縦長 9:16",
+    canvas: { width: 1080, height: 1920 },
+    aspectRatio: "9:16",
+    intendedUse: "Shorts / 縦長告知の設計候補"
+  },
+  "square-1-1": {
+    id: "square-1-1",
+    label: "正方形 1:1",
+    canvas: { width: 1080, height: 1080 },
+    aspectRatio: "1:1",
+    intendedUse: "SNS投稿 / 正方形告知の設計候補"
+  }
 };
 
 export const thumbnailFontGroups = [
@@ -787,9 +831,27 @@ export const thumbnailPresets: ThumbnailPreset[] = [
   }
 ];
 
+const thumbnailDefaultPresetVariantId: ThumbnailPresetVariantId = "landscape-16-9";
+export const thumbnailPresetVariantRelations = Object.fromEntries(
+  thumbnailPresets.map((preset) => [
+    preset.id,
+    {
+      presetId: preset.id,
+      familyId: preset.id.replace(/_/g, "-"),
+      defaultVariantId: thumbnailDefaultPresetVariantId,
+      variantIds: [thumbnailDefaultPresetVariantId]
+    }
+  ])
+) as Record<ThumbnailPresetId, ThumbnailPresetVariantRelation>;
+
 const thumbnailPresetIds = new Set<ThumbnailPresetId>(thumbnailPresets.map((preset) => preset.id));
 const isThumbnailPresetId = (value: unknown): value is ThumbnailPresetId =>
   typeof value === "string" && thumbnailPresetIds.has(value as ThumbnailPresetId);
+const thumbnailPresetVariantIds = new Set<ThumbnailPresetVariantId>(
+  Object.keys(thumbnailPresetVariants) as ThumbnailPresetVariantId[]
+);
+const isThumbnailPresetVariantId = (value: unknown): value is ThumbnailPresetVariantId =>
+  typeof value === "string" && thumbnailPresetVariantIds.has(value as ThumbnailPresetVariantId);
 
 const uniquePresetIds = (values: unknown, limit = thumbnailPresets.length): ThumbnailPresetId[] => {
   if (!Array.isArray(values)) {
@@ -808,16 +870,75 @@ const uniquePresetIds = (values: unknown, limit = thumbnailPresets.length): Thum
   return ids;
 };
 
+export const getDefaultThumbnailPresetVariantRef = (presetId: ThumbnailPresetId): ThumbnailPresetVariantRef => {
+  const relation = thumbnailPresetVariantRelations[presetId];
+  return {
+    presetId,
+    variantId: relation.defaultVariantId
+  };
+};
+
+export const getThumbnailPresetVariant = (
+  presetId: ThumbnailPresetId,
+  variantId: ThumbnailPresetVariantId = thumbnailPresetVariantRelations[presetId].defaultVariantId
+): ThumbnailPresetVariant | null => {
+  const relation = thumbnailPresetVariantRelations[presetId];
+  if (!relation.variantIds.includes(variantId)) {
+    return null;
+  }
+  return thumbnailPresetVariants[variantId] ?? null;
+};
+
+export const getThumbnailPresetCanvasFromVariant = (
+  presetId: ThumbnailPresetId,
+  variantId: ThumbnailPresetVariantId = thumbnailPresetVariantRelations[presetId].defaultVariantId
+): ThumbnailCanvas | null => {
+  const variant = getThumbnailPresetVariant(presetId, variantId);
+  return variant ? { ...variant.canvas } : null;
+};
+
+export const normalizeThumbnailPresetVariantRefs = (values: unknown, limit = thumbnailPresets.length): ThumbnailPresetVariantRef[] => {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  const refs: ThumbnailPresetVariantRef[] = [];
+  for (const value of values) {
+    if (!value || typeof value !== "object") {
+      continue;
+    }
+
+    const ref = value as Partial<ThumbnailPresetVariantRef>;
+    if (!isThumbnailPresetId(ref.presetId) || !isThumbnailPresetVariantId(ref.variantId)) {
+      continue;
+    }
+    if (!getThumbnailPresetVariant(ref.presetId, ref.variantId)) {
+      continue;
+    }
+    if (refs.some((item) => item.presetId === ref.presetId && item.variantId === ref.variantId)) {
+      continue;
+    }
+
+    refs.push({ presetId: ref.presetId, variantId: ref.variantId });
+    if (refs.length >= limit) {
+      break;
+    }
+  }
+  return refs;
+};
+
 export const normalizeThumbnailPresetDiscoveryState = (value: unknown): ThumbnailPresetDiscoveryState => {
   if (!value || typeof value !== "object") {
-    return { version: 1, recentPresetIds: [], favoritePresetIds: [] };
+    return { version: 1, recentPresetIds: [], favoritePresetIds: [], recentPresetVariantRefs: [], favoritePresetVariantRefs: [] };
   }
 
   const state = value as Partial<ThumbnailPresetDiscoveryState>;
   return {
     version: 1,
     recentPresetIds: uniquePresetIds(state.recentPresetIds, thumbnailPresetRecentLimit),
-    favoritePresetIds: uniquePresetIds(state.favoritePresetIds)
+    favoritePresetIds: uniquePresetIds(state.favoritePresetIds),
+    recentPresetVariantRefs: normalizeThumbnailPresetVariantRefs(state.recentPresetVariantRefs, thumbnailPresetRecentLimit),
+    favoritePresetVariantRefs: normalizeThumbnailPresetVariantRefs(state.favoritePresetVariantRefs)
   };
 };
 

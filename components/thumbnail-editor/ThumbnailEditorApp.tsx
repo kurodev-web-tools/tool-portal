@@ -238,7 +238,9 @@ const getFirstTextLayerValue = (draft: ThumbnailEditorDraft, namePart: string) =
 const defaultPresetDiscoveryState: ThumbnailPresetDiscoveryState = {
   version: 1,
   recentPresetIds: [],
-  favoritePresetIds: []
+  favoritePresetIds: [],
+  recentPresetVariantRefs: [],
+  favoritePresetVariantRefs: []
 };
 const weeklyScheduleLayerGroupPattern = /^(月曜|火曜|水曜|木曜|金曜|土曜|日曜) \/ (曜日|時間|予定)$/;
 const weeklyScheduleGroupOrder = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"];

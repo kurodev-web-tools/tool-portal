@@ -1603,7 +1603,10 @@ function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
   return (
     <section className="panel space-y-3 p-3 md:p-4">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-base font-black text-foreground">素材ライブラリ</h2>
+        <div>
+          <h2 className="text-base font-black text-foreground">素材ライブラリ</h2>
+          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">素材はプリセットに後から足す飾りです。選ぶとレイヤーへ追加されます。</p>
+        </div>
         <p className="shrink-0 text-right text-xs font-bold leading-5 text-muted">
           {filteredMaterials.length} / {selectedCategoryCount}点
           <span className="block text-[11px] font-bold text-muted/80">全{thumbnailMaterialLibrary.length}点</span>
@@ -1893,7 +1896,7 @@ function LayerPanel({
     <section className="panel p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-base font-black text-foreground">レイヤー一覧</h2>
-        <p className="text-xs font-bold text-muted">上が前面</p>
+        <p className="text-xs font-bold text-muted">上が前面 / 選択して編集</p>
       </div>
       <div className="scrollbar-accent max-h-[min(52vh,560px)] overflow-y-auto [scrollbar-gutter:stable]">
         <div className="space-y-2 pr-1">

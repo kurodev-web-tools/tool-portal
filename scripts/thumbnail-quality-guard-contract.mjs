@@ -80,6 +80,11 @@ assert.ok(
   textGuardItems.every((item) => ["warning", "hint", "ok"].includes(item.tone) && item.message.length <= 28),
   "quality guard copy stays short"
 );
+assert.deepEqual(
+  textGuardItems.map((item) => item.tone),
+  ["warning", "warning", "hint"],
+  "selected quality guard keeps warning first and hint after warnings"
+);
 assert.equal(JSON.stringify(riskyTextDraft), riskyTextBefore, "quality guard does not auto-correct or mutate the draft");
 
 const safeTextDraft = {
@@ -148,6 +153,11 @@ assert.ok(
   overallGuardItems.every((item) => ["warning", "hint", "ok"].includes(item.tone) && item.message.length <= 28),
   "overall quality guard copy stays short"
 );
+assert.deepEqual(
+  overallGuardItems.map((item) => item.tone),
+  ["warning", "warning", "hint", "hint"],
+  "overall quality guard keeps warnings before hints"
+);
 assert.equal(JSON.stringify(overallRiskyDraft), overallRiskyBefore, "overall guard does not auto-correct or mutate the draft");
 
 const riskySummary = lib.getThumbnailQualityGuardSummary(overallGuardItems);
@@ -161,6 +171,18 @@ const overallOkDraft = {
 const overallOkItems = lib.getThumbnailOverallQualityGuardItems(overallOkDraft);
 assert.ok(overallOkItems.some((item) => item.id === "thumbnail-quality-ok" && item.tone === "ok"), "overall guard can show compact ok state");
 assert.equal(lib.getThumbnailQualityGuardSummary(overallOkItems).label, "品質チェックOK", "overall summary can show compact ok text");
+
+const initialPresetOverallItems = lib.getThumbnailOverallQualityGuardItems(draft);
+assert.deepEqual(
+  initialPresetOverallItems,
+  [{ id: "thumbnail-quality-ok", tone: "ok", message: "品質チェックOK" }],
+  "initial preset does not show excessive notes for structural locked background or supporting copy"
+);
+assert.equal(
+  lib.getThumbnailQualityGuardSummary(initialPresetOverallItems).label,
+  "品質チェックOK",
+  "initial preset summary stays quiet when only structural layers are locked"
+);
 
 assert.equal(
   JSON.stringify(
@@ -181,6 +203,7 @@ assert.ok(componentSource.includes("ThumbnailQualityGuardPanel"), "Thumbnail Edi
 assert.ok(componentSource.includes("getThumbnailQualityGuardItems"), "component uses the shared quality guard helper");
 assert.ok(componentSource.includes("overallQualityGuardSummary"), "Thumbnail Editor keeps a short overall quality summary near export actions");
 assert.ok(componentSource.includes("qualityGuardSummary"), "ExportPanel can receive the quality summary without growing into a diagnostics UI");
+assert.ok(componentSource.includes("全体の軽い確認"), "export quality summary can be read as a lightweight overall check");
 assert.ok(componentSource.includes("サムネ品質"), "quality guard is visible as thumbnail quality, not a generic paint tool");
 assert.ok(componentSource.includes("プリセットを選んで、文字と立ち絵を差し替える"), "UI briefly explains the preset-completion workflow");
 assert.ok(componentSource.includes("<TextControls"), "text layer editing route remains rendered");

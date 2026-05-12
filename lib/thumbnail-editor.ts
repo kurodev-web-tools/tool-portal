@@ -229,7 +229,7 @@ const getThumbnailQualityGuardItemsForLayers = (
   const items: ThumbnailQualityGuardItem[] = [];
   const safeX = draft.canvas.width * thumbnailQualitySafeAreaInsetRatio;
   const safeY = draft.canvas.height * thumbnailQualitySafeAreaInsetRatio;
-  const minTextSize = draft.canvas.width >= 1800 ? 54 : 36;
+  const minTextSize = scope === "overall" ? (draft.canvas.width >= 1800 ? 48 : 32) : draft.canvas.width >= 1800 ? 54 : 36;
 
   const hasUnsafeLayer = targetLayers.some(
     (layer) => layer.x < safeX || layer.y < safeY || layer.x + layer.width > draft.canvas.width - safeX || layer.y + layer.height > draft.canvas.height - safeY
@@ -255,12 +255,21 @@ const getThumbnailQualityGuardItemsForLayers = (
   return items;
 };
 
+const sortThumbnailQualityGuardItems = (items: ThumbnailQualityGuardItem[]) => {
+  const toneOrder: Record<ThumbnailQualityGuardTone, number> = {
+    warning: 0,
+    hint: 1,
+    ok: 2
+  };
+  return [...items].sort((a, b) => toneOrder[a.tone] - toneOrder[b.tone]);
+};
+
 export const getThumbnailQualityGuardItems = (draft: ThumbnailEditorDraft, selectedLayerId: string | null = draft.selectedLayerId): ThumbnailQualityGuardItem[] => {
   const selectedLayer = draft.layers.find((layer) => layer.id === selectedLayerId) ?? null;
   const targetLayers = selectedLayer ? [selectedLayer] : draft.layers;
   const items = getThumbnailQualityGuardItemsForLayers(draft, targetLayers, "selected");
 
-  return items.length > 0 ? items : [{ id: "thumbnail-quality-ok", tone: "ok", message: "品質チェックOK" }];
+  return items.length > 0 ? sortThumbnailQualityGuardItems(items) : [{ id: "thumbnail-quality-ok", tone: "ok", message: "品質チェックOK" }];
 };
 
 const isThumbnailQualityStructuralBackgroundLayer = (draft: ThumbnailEditorDraft, layer: ThumbnailLayer) =>
@@ -277,7 +286,7 @@ export const getThumbnailOverallQualityGuardItems = (draft: ThumbnailEditorDraft
     items.push({ id: "overall-locked-layers", tone: "hint", message: "ロック中レイヤーあり" });
   }
 
-  return items.length > 0 ? items : [{ id: "thumbnail-quality-ok", tone: "ok", message: "品質チェックOK" }];
+  return items.length > 0 ? sortThumbnailQualityGuardItems(items) : [{ id: "thumbnail-quality-ok", tone: "ok", message: "品質チェックOK" }];
 };
 
 export const getThumbnailQualityGuardSummary = (items: ThumbnailQualityGuardItem[]): ThumbnailQualityGuardSummary => {

@@ -2487,7 +2487,10 @@ function ExportPanel({
   return (
     <section className="panel space-y-3 p-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-black text-foreground">保存 / 書き出し</h2>
+        <div>
+          <h2 className="text-base font-black text-foreground">保存 / 書き出し</h2>
+          <p className="mt-1 text-[11px] font-semibold text-muted">全体の軽い確認</p>
+        </div>
         <span className={`rounded-sm border px-2 py-1 text-[11px] font-bold ${summaryToneClassName[qualityGuardSummary.tone]}`}>
           {qualityGuardSummary.label}
         </span>

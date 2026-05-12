@@ -138,6 +138,15 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - 次PR候補としての優先度:
   - P3。partial apply 後、素材の責務が混ざらない状態で進める。
 
+#### 実装で確定した境界
+
+- project-bound material は既存 `thumbnailMaterialLibrary` の登録を維持し、repo 内 `public/assets/images/thumbnail-editor/**` の asset を参照する。ユーザーの保存状態や `storageId` は混ぜない。
+- user-added material は `ThumbnailUserMaterialRef` として `id` / `name` / `storageId` / `storage: "indexeddb"` / `mimeType` / 任意の `width` / `height` / `byteSize` / timestamp だけを持つ。
+- user-added material の画像本体は IndexedDB など画像向け storage 側で扱い、localStorage 側に保存するのは metadata と `storageId` だけにする。
+- user-added material layer は既存 image layer に optional `materialRef` を持たせる非破壊拡張に留め、画像本体を draft `src` へ永続化しない。読み込み前、削除後、置換直後、読み込み失敗時は共通 fallback image を使う。
+- delete / replace / load failure は layer の geometry と crop を維持し、画像レイヤー自体を壊さない。replace は軽量 ref を差し替え、fallback `src` のまま次の画像 storage 読み込みへ渡す。
+- partial preset apply は `materialRef` を持つ user-added material layer を保持する。preset id、variant refs、recent / favorite、Schedule Calendar / SNS Split Image Maker handoff contract は変更しない。
+
 ### 4. font policy
 
 - 目的:

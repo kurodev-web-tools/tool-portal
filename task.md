@@ -369,6 +369,41 @@
   - `npx tsc --noEmit` PASS。
   - `git diff --check` PASS。LF -> CRLF warning のみ。
 
+### P9: Cross Tool handoff / storage / export policy freeze audit
+
+- 状態: done
+- 目的:
+  - Schedule Calendar -> Thumbnail Editor -> SNS Split Image Maker の横断 handoff / storage / export policy を freeze 前に読める状態へ整理する。
+  - 大きな新機能や UX redesign は入れず、contract / docs / 小さな drift guard に留める。
+- 確認した handoff contract:
+  - PR #83 `[codex] Check SNS split freeze readiness` は `main` / `origin/main` に merge 済みで、merge commit `87c3ef4` が `origin/main` 先頭にあることを確認した。
+  - `origin/main` 起点で `codex/cross-tool-handoff-policy` / `.worktrees/cross-tool-handoff-policy` を作成した。
+  - Schedule Calendar -> Thumbnail Editor: URL query は短い `handoff` token のみ。payload は `sessionStorage` key `v-streamer-tools:tool-handoff:v1:{token}` に置き、予定テキスト / 日時 / カテゴリ / プラットフォーム / 告知文 / ハッシュタグだけを渡す。画像本体や画像 ref は渡さない。
+  - Schedule Calendar -> SNS Split Image Maker: URL query は `handoff` token と `preset=split-4`。payload は Schedule 由来の同じテキスト metadata のみで、SNS Split 側は告知文メモと `date + title + {n}` のファイル名候補へ反映する。
+  - Thumbnail Editor -> SNS Split Image Maker: URL query は `handoff` token と `preset=split-4`。payload は `source: "thumbnail-editor"` / `target: "sns-split-image-maker"` / `imageStorageId` / title / date / category / platform / announcement text / hashtags / fileNameBase。描画済み PNG 相当の画像本体は `localStorage` へ置かず、SNS Split Image Maker の IndexedDB 画像 store へ一時保存する。
+  - `readToolHandoff()` は token を `sessionStorage` から読み、読み取り後に payload を削除する single-use 境界。期限切れ、target 不一致、source 不一致、壊れた JSON、token 不一致は `null` にして通常起動へ戻す。
+  - Thumbnail -> SNS の画像取得失敗、safe でない data URL、IndexedDB 読み込み失敗は handoff を適用せず通常起動へ戻し、一時 `imageStorageId` は削除を試みる。
+- 確認した storage / export boundary:
+  - Schedule Calendar の永続保存は `localStorage` key `v-streamer-tools:schedule-calendar-events:v1`、payload version `2`。
+  - handoff payload は `sessionStorage` の一時データで TTL 30分。URL には本文、告知文、画像本体を載せない。
+  - Thumbnail Editor の通常 export は PNG/JPEG 1枚。SNS Split へ渡すときだけ canvas を PNG 相当で描画し、SNS Split 側 IndexedDB へ一時保存する。
+  - SNS Split Image Maker の draft metadata は `localStorage` key `v-streamer-tools:sns-split-image-maker:draft:v1`。画像本体は IndexedDB `v-streamer-tools:sns-split-image-maker` / `images` store。画像本体を `localStorage` に保存しない。
+  - SNS Split Image Maker の export は現行の `split-2` / `split-3` / `split-4` に応じた個別 PNG/JPEG 出力。ZIP 出力、X 以外の比率、複数形式の大規模 export は今回入れない。
+- 実施内容:
+  - `scripts/tool-handoff-contract.mjs` に Schedule -> Thumbnail、Schedule -> SNS、Thumbnail -> SNS、URL query、single-use token、missing token、期限切れ、target/source 不一致、画像本体を URL / localStorage に載せない境界の contract を追加した。
+  - `writeToolHandoff()` が `sessionStorage.setItem()` 失敗時に例外を外へ漏らさず `null` を返すようにし、既存呼び出し側のエラー表示 / 通常起動 fallback に乗るようにした。
+  - `docs/SCHEDULE_CALENDAR_README.md`、`docs/design-thumbnail-editor.md`、`docs/design-sns-split-image-maker.md` の handoff / storage / data model 表現を現行実装へ同期した。
+  - 各ツール本体の UX redesign、preset / asset / font、portal shell、storage schema の破壊的変更は行っていない。
+- 検証:
+  - RED: `node scripts/tool-handoff-contract.mjs` は `sessionStorage.setItem()` 例外が外へ漏れる既存挙動で失敗することを確認。
+  - GREEN: `node scripts/tool-handoff-contract.mjs` PASS。
+  - `node scripts/sns-split-image-maker-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - UI / layout 変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。handoff contract / docs consistency を優先。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性

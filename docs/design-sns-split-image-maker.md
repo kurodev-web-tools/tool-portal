@@ -125,6 +125,9 @@ freeze 前の対象はX向けの既存3プリセットに限定し、投稿前�
 
 ## Tool Handoff
 
+Schedule Calendar から受け取る場合は、URL query の短い `handoff` token を読み、対応する `sessionStorage` 上の一時 payload から告知文、ハッシュタグ、日付、タイトル、ファイル名候補だけを反映する。
+Schedule Calendar 由来の payload では画像本体を渡さない。
+
 Thumbnail Editor から受け取る場合は、URL query の短い `handoff` token を読み、対応する一時 payload とIndexedDB上の一時画像を確認する。
 画像本体は `localStorage` へ保存せず、既存のSNS分割画像メーカー画像保存方式を使う。
 正常に読めた場合は、画像を `base` 画像へ反映し、既定で `split-4` 編集画面を開く。
@@ -151,9 +154,11 @@ token 不一致、期限切れ、壊れた payload、対象ツール不一致、
 ## Data Model (Implementation Reference)
 
 - `SplitMode`: `concatenate` | `replace`
-- `SplitImageSource`: id, type(`base`/`slot1..slot8`), fileDataURL
-- `SplitConfig`: splitX, splitY, seamFix, offsets, zoom
-- `SplitDraft`: mode, sources, config, updatedAt
+- `SplitImageSource`: id(`base`/`slot-${number}`), name, src
+- `SplitConfig`: splitX, splitY, seamFix, offset, scale, joinType, postAdjustments, seam display
+- `SplitExportSettings`: format, quality, filePattern
+- `SplitDraft`: version, preset, mode, aspectRatio, images, config, exportSettings, updatedAt
+- draft metadata は `localStorage`、画像本体は IndexedDB `v-streamer-tools:sns-split-image-maker` / `images` store へ分離する
 
 ## Do
 

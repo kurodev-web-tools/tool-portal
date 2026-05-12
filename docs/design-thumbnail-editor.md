@@ -120,7 +120,7 @@ Schedule Calendar からの handoff は、受け取った予定テキストを�
 最近使ったプリセットとお気に入りは、`preset id` の配列だけを `localStorage` へ保存する。
 画像本体、draft、handoff payload、SNS Split Image Maker の分割ロジックは変更しない。
 
-手動編集済みテキストと handoff テキストの高度なマージ、立ち絵配置プリセット、プリセットの部分適用は後続候補のまま残す。
+手動編集済みテキストと handoff テキストの高度なマージ、立ち絵配置プリセットは後続候補のまま残す。
 
 ### 2026-05 Preset Apply Safety Minimum Step
 
@@ -133,7 +133,8 @@ handoff なしの通常編集では、次の2択を用意する。
 - 現在の `見出し`、`時刻`、`サブ`、`ラベル` テキストを新プリセットへ引き継いで適用する
 
 引き継ぎ対象はレイヤー名に `見出し`、`時刻`、`サブ`、`ラベル` を含むテキストレイヤーだけに限定する。
-画像レイヤー、図形レイヤー、自由追加レイヤーは今回マージしない。
+user-added image layer は partial apply / material storage contract に従って保持し、画像本体は `localStorage` へ保存しない。
+図形レイヤーや高度な自由追加レイヤーのマージは今回行わない。
 Schedule Calendar 由来の handoff 中は、既存どおり予定テキストを優先し、新しいプリセットの同名テキストレイヤーへ再反映する。
 最近使ったプリセットとお気に入りは引き続き `preset id` のみを保存し、画像本体や draft 保存方式は変更しない。
 

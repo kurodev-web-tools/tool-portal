@@ -41,6 +41,42 @@
 
 - Capped generated event end times at `23:59` instead of `24:00`, because `input type="time"` does not display `24:00`.
 
+## 2026-05-12 Freeze Readiness Pass
+
+- Base: PR #81 `[codex] Add thumbnail quality guard expansion` is merged into `main` / `origin/main` at merge commit `c83649c`.
+- Branch / worktree: `codex/schedule-calendar-freeze-readiness` / `.worktrees/schedule-calendar-freeze-readiness` from `origin/main`.
+- Scope: Schedule Calendar stability / freeze readiness only. Thumbnail Editor and SNS Split Image Maker implementation were not changed.
+
+### Storage / Migration Result
+
+| Case | Result |
+| --- | --- |
+| Legacy event array | Migrates through `normalizeStoragePayload()` into version `2` payload. |
+| Existing event with `endTime: "24:00"` | Normalized to `23:59` so the time picker and save validation keep a displayable value. |
+| Invalid event time such as `25:00` / `99:99` | Falls back to safe `20:00 - 21:00` range during normalization. |
+| Invalid default start time such as `24:00` | Falls back to `20:00` so new drafts do not start in an unsaveable state. |
+| Storage key / version | `v-streamer-tools:schedule-calendar-events:v1` and version `2` unchanged. |
+| Broken JSON / failed import | Existing guard remains unchanged: load/import failure does not replace current data. |
+
+### Width / Input Route Result
+
+| Width | Result |
+| --- | --- |
+| 390 | Mobile integrated UI confirmed. Bottom tabs visible, desktop right tabs hidden, FAB opens the schedule form. Title, memo, category, platform, and save controls become visible. Console errors: 0. |
+| 820 | Mobile integrated UI confirmed. Bottom tabs visible, desktop right tabs hidden, FAB opens the schedule form. Title, memo, category, platform, and save controls become visible. Console errors: 0. |
+| 1024 | Tablet two-pane UI confirmed. Desktop right-panel tabs visible. Title, memo, category, and platform inputs visible in the schedule panel. Console errors: 0. |
+| 1280 | Desktop two-pane UI confirmed. Desktop right-panel tabs visible. Title, memo, category, and platform inputs visible in the schedule panel. Console errors: 0. |
+| 1366 | Desktop two-pane UI confirmed. Desktop right-panel tabs visible. Title, memo, category, and platform inputs visible in the schedule panel. Console errors: 0. |
+
+### Verification Attempts
+
+- `node scripts/schedule-calendar-storage-contract.mjs`: PASS.
+- Browser regression on `http://localhost:3002/tools/schedule-calendar/`: passed for `390 / 820 / 1024 / 1280 / 1366` widths.
+- `npm run lint`: PASS.
+- `npx tsc --noEmit`: PASS.
+- `git diff --check`: PASS. LF -> CRLF warnings only.
+- UI source / layout was not changed; width checks were still run as freeze-readiness evidence.
+
 ## Empty / Error Text Policy
 
 - Empty events: `予定はまだありません。`

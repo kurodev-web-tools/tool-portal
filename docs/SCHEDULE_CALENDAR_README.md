@@ -79,6 +79,7 @@
 
 読み込み時は `normalizeStoragePayload()` を通して、旧形式の予定配列と versioned payload の両方を受け付けます。
 壊れた JSON や import 失敗時は既存データを変更しない方針です。
+旧データに `24:00` の終了時刻が残っている場合は、ブラウザの時刻入力で扱える `23:59` へ丸めます。
 
 `events` は既存の予定基本項目に加えて、`announcementText`、`announcementHashtags`、`announcementMemo`、`announcementStatus` を持ちます。
 `postTemplates` は `name`、`description`、`body` に加えて、`usageCategory`、`defaultPlatform`、`hashtags` を持ちます。

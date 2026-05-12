@@ -1950,7 +1950,7 @@ function PropertyPanel({
     layer.type === "text"
       ? "選択中の文字を差し替えて、必要なら縁取りや影を調整します。"
       : layer.type === "image"
-        ? "立ち絵画像を選んだ状態で、配置だけを整えます。"
+        ? "立ち絵画像を追加・差し替えて、配置だけを整えます。"
         : null;
 
   return (
@@ -2502,7 +2502,7 @@ function ExportPanel({
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-black text-foreground">保存 / 書き出し</h2>
-          <p className="mt-1 text-[11px] font-semibold text-muted">全体の軽い確認</p>
+          <p className="mt-1 text-[11px] font-semibold text-muted">文字と立ち絵を確認して書き出す</p>
         </div>
         <span className={`rounded-sm border px-2 py-1 text-[11px] font-bold ${summaryToneClassName[qualityGuardSummary.tone]}`}>
           {qualityGuardSummary.label}

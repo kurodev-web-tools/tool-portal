@@ -203,7 +203,7 @@ assert.ok(componentSource.includes("ThumbnailQualityGuardPanel"), "Thumbnail Edi
 assert.ok(componentSource.includes("getThumbnailQualityGuardItems"), "component uses the shared quality guard helper");
 assert.ok(componentSource.includes("overallQualityGuardSummary"), "Thumbnail Editor keeps a short overall quality summary near export actions");
 assert.ok(componentSource.includes("qualityGuardSummary"), "ExportPanel can receive the quality summary without growing into a diagnostics UI");
-assert.ok(componentSource.includes("全体の軽い確認"), "export quality summary can be read as a lightweight overall check");
+assert.ok(componentSource.includes("文字と立ち絵を確認して書き出す"), "export quality summary can be read as a lightweight final check");
 assert.ok(componentSource.includes("サムネ品質"), "quality guard is visible as thumbnail quality, not a generic paint tool");
 assert.ok(componentSource.includes("プリセットを選んで、文字と立ち絵を差し替えてから書き出す"), "UI briefly explains the preset-to-export workflow");
 assert.ok(
@@ -211,8 +211,12 @@ assert.ok(
   "text layer guidance keeps the existing text editing route discoverable"
 );
 assert.ok(
-  componentSource.includes("立ち絵画像を選んだ状態で、配置だけを整えます。"),
-  "image layer guidance keeps the existing standee placement route discoverable"
+  componentSource.includes("立ち絵画像を追加・差し替えて、配置だけを整えます。"),
+  "image layer guidance briefly points to adding or replacing standee images before placement"
+);
+assert.ok(
+  componentSource.includes("文字と立ち絵を確認して書き出す"),
+  "export guidance stays short and reads as final confirmation before export"
 );
 assert.ok(componentSource.includes("<TextControls"), "text layer editing route remains rendered");
 assert.ok(componentSource.includes("<StandeePlacementPanel"), "image layer standee placement route remains rendered");

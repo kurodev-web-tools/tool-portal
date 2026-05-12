@@ -163,6 +163,33 @@
   - `npx tsc --noEmit` PASS。
   - UI 表示変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。`ThumbnailEditorApp.tsx` は discovery state の初期値型合わせのみ。
 
+### P2: Thumbnail Editor partial preset apply
+
+- 状態: done
+- 目的:
+  - 文字と立ち絵 / user-added image layer を守りながら、preset 初期の背景 / 装飾 / 色だけを安全に差し替える最小境界を作る。
+  - 既存 preset id / default variant / discovery / recent / favorite / handoff contract を壊さない。
+- 実施内容:
+  - PR #76 `[codex] Add thumbnail preset variants contract` が `main` / `origin/main` に merge 済みで、merge commit `71459b0` が `origin/main` に含まれることを確認した。
+  - `origin/main` 起点で `codex/thumbnail-partial-preset-apply` / `.worktrees/thumbnail-partial-preset-apply` を作成した。
+  - `scripts/thumbnail-preset-apply-safety-contract.mjs` に partial apply の contract を追加し、RED (`applyThumbnailPresetPartial` 未定義) を確認してから実装した。
+  - `lib/thumbnail-editor.ts` に `applyThumbnailPresetPartial(draft, targetPresetId)` を追加し、edited draft では主要テキスト値と user-added image layer を保持しつつ、target preset 初期 layer へ差し替えるようにした。
+  - pristine draft は target preset 初期 draft へそのまま切り替え、source preset の文字や user image を持ち越さない。
+  - user-added image layer は `data:image/` 由来または `素材:` layer name の画像レイヤーに限定し、crop metadata と image layer schema は変更していない。
+  - `ThumbnailEditorApp.tsx` の既存 carryover apply 経路だけを partial apply helper に差し替えた。UI 表示文言は変更していない。
+  - preset 本体、asset、text / image layer schema、crop 仕様、素材ライブラリ登録、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+  - 実装で確定した境界を `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` に追記した。
+- 検証:
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-variants-contract.mjs` PASS。
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS。
+  - `node scripts/thumbnail-standee-placement-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - UI 表示変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性

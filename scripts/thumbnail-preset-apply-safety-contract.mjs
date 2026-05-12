@@ -21,9 +21,14 @@ testModule.filename = sourcePath;
 testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
 testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
+const comparableLayer = (layer) => {
+  const { id: _id, ...rest } = layer;
+  return rest;
+};
 
 assert.equal(typeof lib.getThumbnailMainTextCarryover, "function", "main text carryover extractor exists");
 assert.equal(typeof lib.applyThumbnailMainTextCarryover, "function", "main text carryover applier exists");
+assert.equal(typeof lib.applyThumbnailPresetPartial, "function", "partial preset apply helper exists");
 assert.equal(typeof lib.isThumbnailDraftPristineForPreset, "function", "pristine preset draft detector exists");
 
 const pristine = lib.createDraftFromPreset("stream_announce");
@@ -78,6 +83,7 @@ const editedLayers = current.layers.map((layer) => {
 });
 const edited = { ...current, layers: editedLayers };
 const carryover = lib.getThumbnailMainTextCarryover(edited);
+const materialIdsBeforePartialApply = JSON.stringify(lib.thumbnailMaterialLibrary.map((material) => material.id));
 
 assert.deepEqual(
   carryover,
@@ -126,11 +132,94 @@ assert.equal(
   "missing carryover roles leave target preset text unchanged"
 );
 
+const editedWithUserStandee = {
+  ...edited,
+  selectedLayerId: "user-standee",
+  layers: [
+    ...edited.layers,
+    {
+      ...lib.createImageLayer("data:image/png;base64,user-standee"),
+      id: "user-standee",
+      name: "アップロード立ち絵",
+      x: 760,
+      y: 44,
+      width: 430,
+      height: 650,
+      crop: { x: 0, y: 0, width: 1, height: 0.5 }
+    }
+  ]
+};
+const partiallyApplied = lib.applyThumbnailPresetPartial(editedWithUserStandee, "karaoke");
+const pristineKaraoke = lib.createDraftFromPreset("karaoke", edited.canvas);
+
+assert.equal(partiallyApplied.version, editedWithUserStandee.version, "partial apply keeps draft schema version");
+assert.deepEqual(partiallyApplied.canvas, editedWithUserStandee.canvas, "partial apply keeps the current canvas size");
+assert.equal(partiallyApplied.presetId, "karaoke", "partial apply switches to the target preset id");
+assert.equal(
+  partiallyApplied.layers.find((layer) => layer.type === "text" && layer.name.includes("見出し")).text,
+  "手動で直した見出し",
+  "partial apply keeps edited headline text"
+);
+assert.equal(
+  partiallyApplied.layers.find((layer) => layer.type === "text" && layer.name.includes("時刻")).text,
+  "5/5 22:00",
+  "partial apply keeps edited time text"
+);
+assert.deepEqual(
+  partiallyApplied.layers.find((layer) => layer.id === "user-standee"),
+  editedWithUserStandee.layers.find((layer) => layer.id === "user-standee"),
+  "partial apply keeps user-added standee image layers including crop metadata"
+);
+assert.ok(
+  partiallyApplied.layers.some((layer) => layer.type === "image" && layer.src === pristineKaraoke.layers.find((item) => item.type === "image").src),
+  "partial apply uses target preset initial background and decoration image layers"
+);
+assert.equal(
+  partiallyApplied.layers.filter((layer) => layer.id === "user-standee").length,
+  1,
+  "partial apply does not duplicate preserved user image layers"
+);
+assert.ok(
+  partiallyApplied.layers.every((layer) => layer.type !== "image" || layer.src !== current.layers.find((item) => item.type === "image").src),
+  "partial apply does not keep source preset initial image layers"
+);
+assert.deepEqual(
+  Object.keys(partiallyApplied.layers.find((layer) => layer.id === "user-standee")).sort(),
+  Object.keys(editedWithUserStandee.layers.find((layer) => layer.id === "user-standee")).sort(),
+  "partial apply does not change image layer schema keys"
+);
+assert.equal(
+  JSON.stringify(lib.thumbnailMaterialLibrary.map((material) => material.id)),
+  materialIdsBeforePartialApply,
+  "partial apply does not mutate material library registration"
+);
+assert.equal(
+  lib.getThumbnailPresetVariant("karaoke", lib.getDefaultThumbnailPresetVariantRef("karaoke").variantId).id,
+  "landscape-16-9",
+  "partial apply keeps target preset default variant relation intact"
+);
+
+const pristinePartial = lib.applyThumbnailPresetPartial(lib.createDraftFromPreset("stream_announce"), "karaoke");
+assert.equal(
+  lib.isThumbnailDraftPristineForPreset(pristinePartial),
+  true,
+  "partial apply on a pristine draft produces a pristine target preset draft"
+);
+assert.deepEqual(
+  pristinePartial.layers.map((layer) => comparableLayer(layer)),
+  pristineKaraoke.layers.map((layer) => comparableLayer(layer)),
+  "pristine draft apply does not carry source text or source user layers"
+);
+
 const canvasSizeChangeBody = componentSource.match(/const changeCanvasSize = \(sizeId: ThumbnailCanvasSizeId\) => \{[\s\S]*?\n  \};/)?.[0] ?? "";
 assert.ok(canvasSizeChangeBody.length > 0, "canvas size change handler exists");
 assert.ok(
   canvasSizeChangeBody.includes("applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft))"),
   "canvas size changes preserve manually edited main text when no schedule handoff is active"
+);
+assert.ok(
+  componentSource.includes("applyThumbnailPresetPartial(draft, presetId)"),
+  "edited preset changes use partial apply to preserve text and user standee/image layers"
 );
 
 console.log("thumbnail-preset-apply-safety contract checks passed");

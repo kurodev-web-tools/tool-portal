@@ -1033,6 +1033,34 @@ export const isThumbnailDraftPristineForPreset = (draft: ThumbnailEditorDraft): 
   });
 };
 
+const isThumbnailUserImageLayer = (layer: ThumbnailLayer): layer is ThumbnailImageLayer =>
+  layer.type === "image" && (layer.src.startsWith("data:image/") || layer.name.startsWith("素材:"));
+
+export const applyThumbnailPresetPartial = (
+  draft: ThumbnailEditorDraft,
+  targetPresetId: ThumbnailPresetId
+): ThumbnailEditorDraft => {
+  const targetDraft = createDraftFromPreset(targetPresetId, draft.canvas);
+  if (isThumbnailDraftPristineForPreset(draft)) {
+    return targetDraft;
+  }
+
+  const withMainText = applyThumbnailMainTextCarryover(targetDraft, getThumbnailMainTextCarryover(draft));
+  const preservedImageLayers = draft.layers
+    .filter(isThumbnailUserImageLayer)
+    .map((layer) => ({ ...layer }));
+  const selectedLayerId = preservedImageLayers.some((layer) => layer.id === draft.selectedLayerId)
+    ? draft.selectedLayerId
+    : withMainText.selectedLayerId;
+
+  return {
+    ...withMainText,
+    layers: [...withMainText.layers, ...preservedImageLayers],
+    selectedLayerId,
+    updatedAt: nowIso()
+  };
+};
+
 export const normalizeThumbnailLayerName = (value: string, fallback: string) => {
   const normalized = value.trim().replace(/\s+/g, " ").slice(0, 40);
   return normalized || fallback.slice(0, 40) || "レイヤー";

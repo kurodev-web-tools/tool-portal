@@ -4,6 +4,7 @@ import { ChangeEvent, MouseEvent, PointerEvent, useCallback, useEffect, useMemo,
 import {
   cloneThumbnailLayer,
   applyThumbnailMainTextCarryover,
+  applyThumbnailPresetPartial,
   applyThumbnailStandeePlacementPreset,
   createNextRecentThumbnailPresetIds,
   createDraftFromPreset,
@@ -699,7 +700,7 @@ export function ThumbnailEditorApp() {
       mode === "handoff" && handoffPayload
         ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
         : mode === "carryover"
-          ? applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft))
+          ? applyThumbnailPresetPartial(draft, presetId)
           : next;
     setDraft(nextDraft);
     setMobilePanel("canvas");

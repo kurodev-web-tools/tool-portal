@@ -158,7 +158,7 @@ Phase 1 は全プリセット刷新ではなく、完成型の基準を作るた
 Phase 1 のレイヤー方針は次の通り。
 
 - 背景: 1枚の画像レイヤーとして最背面に置き、基本は locked 扱いにする。
-- 立ち絵挿入場所: 画像レイヤー想定のプレースホルダーまたはガイドを置く。実際の立ち絵アップロードや素材ライブラリ化は後続に送る。
+- 立ち絵挿入場所: 画像レイヤー想定のプレースホルダーまたはガイドを置く。登録済み装飾素材の軽い追加は現行範囲に含めるが、ユーザー素材の保存 / 削除 / 置換 / 容量管理 UI は後続に送る。
 - `見出し`: 最大文字。Schedule Calendar handoff の `title` を流し込む主対象にする。
 - `時刻`: 日付、開始時刻、期間を表示する。単発では `startTime`、週間予定では週範囲を使う。
 - `サブ`: 告知文や補足文を短く見せる。長文の自動整形や高度な省略は後続に送る。
@@ -166,7 +166,7 @@ Phase 1 のレイヤー方針は次の通り。
 - 装飾: 帯、バッジ、リスト枠などの図形レイヤーに限定し、配色variantや装飾ON/OFFは後続に送る。
 
 各プリセットの実装目標は、背景と立ち絵を差し替えるだけで完成に近づく状態にすること。
-一方で、Phase 1 では縦横variant、高度な部分適用、AI API連携、素材ライブラリ、全プリセット刷新は行わない。
+一方で、Phase 1 では縦横variant、高度な部分適用、AI API連携、ユーザー素材管理 UI、全プリセット刷新は行わない。
 
 ### 2026-05 Phase 2 Background Candidates
 
@@ -198,7 +198,7 @@ PR #28 の Phase 2 背景セット完了後は、残りプリセットのうち�
 ### 2026-05 Phase 4 Decoration Units
 
 PR #29 の Phase 3 背景反映後は、`雑談` / `切り抜き` / `X告知画像` の初期レイヤーとして使う枠、パネル、小物だけを先に追加する。
-素材ライブラリUIにはまだ出さず、プリセットを開いた時点で編集できる初期レイヤーとして扱う。
+素材は登録済み装飾を追加できる軽いパネルまでに留め、ユーザー素材の保存 / 削除 / 置換 / 容量管理 UI にはまだ出さない。プリセットを開いた時点で編集できる初期レイヤーとしても扱う。
 
 PR #30 後の追加反映では、残りの `配信告知` / `歌枠` / `週間予定` / `ゲーム実況` / `コラボ` / `お知らせ` にも同じ Phase 4 asset と shapeType を使い、全9プリセットで背景以外の editable な枠、パネル、小物装飾を持つ状態にする。
 この追加反映でも、枠、パネル、バッジ、立ち絵ガイドは画像化せず、`frame` / `line` / `polygon` を中心に shape layer として置く。
@@ -234,8 +234,8 @@ Hero Patterns、Haikei、css-doodle、pattern.css は生成手法の参考に留
 
 ## Freeze Boundary
 
-- 現行 freeze 対象は、用途別プリセット選択、主要テキスト差し替え、立ち絵 / 画像差し替え、軽い品質ガード、PNG / JPEG 1枚書き出しに限定する。
-- variant metadata、partial preset apply、user material storage boundary、font fallback、preset batch readiness、quality guard expansion は contract / helper 境界として固定済みだが、縦長 / 正方形 preset body、素材ライブラリ UI、font asset 追加、preset batch 本体追加は freeze 後候補として扱う。
+- 現行 freeze 対象は、用途別プリセット選択、主要テキスト差し替え、立ち絵 / 画像差し替え、登録済み装飾素材の軽い追加、軽い品質ガード、PNG / JPEG 1枚書き出しに限定する。
+- variant metadata、partial preset apply、user material storage boundary、font fallback、preset batch readiness、quality guard expansion は contract / helper 境界として固定済みだが、縦長 / 正方形 preset body、ユーザー素材ライブラリ管理 UI、font asset 追加、preset batch 本体追加は freeze 後候補として扱う。
 - Schedule Calendar 由来の予定テキストは同名テキストレイヤーへ再適用し、Thumbnail Editor から SNS分割画像メーカーへ渡す画像は SNS分割画像メーカー側 IndexedDB の一時保存を使う。
 - crop 仕様、text / image layer schema、public asset / font 追加、外部 CDN 追加は今回の freeze 前整理では変更しない。
 

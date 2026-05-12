@@ -7,10 +7,10 @@ export const metadata: Metadata = {
     default: "V Streamer Tools",
     template: "%s | V Streamer Tools"
   },
-  description: "VTuber向けの活動支援ツールポータル。公開版ではSchedule Calendarを提供しています。",
+  description: "VTuber向けの活動支援ツールポータル。公開版ではSchedule Calendar、Thumbnail Editor、SNS分割画像メーカーを提供しています。",
   openGraph: {
     title: "V Streamer Tools",
-    description: "VTuber向けの活動支援ツールポータル。公開版ではSchedule Calendarを提供しています。",
+    description: "VTuber向けの活動支援ツールポータル。公開版ではSchedule Calendar、Thumbnail Editor、SNS分割画像メーカーを提供しています。",
     type: "website",
     locale: "ja_JP"
   }

@@ -205,11 +205,19 @@ assert.ok(componentSource.includes("overallQualityGuardSummary"), "Thumbnail Edi
 assert.ok(componentSource.includes("qualityGuardSummary"), "ExportPanel can receive the quality summary without growing into a diagnostics UI");
 assert.ok(componentSource.includes("全体の軽い確認"), "export quality summary can be read as a lightweight overall check");
 assert.ok(componentSource.includes("サムネ品質"), "quality guard is visible as thumbnail quality, not a generic paint tool");
-assert.ok(componentSource.includes("プリセットを選んで、文字と立ち絵を差し替える"), "UI briefly explains the preset-completion workflow");
+assert.ok(componentSource.includes("プリセットを選んで、文字と立ち絵を差し替えてから書き出す"), "UI briefly explains the preset-to-export workflow");
+assert.ok(
+  componentSource.includes("選択中の文字を差し替えて、必要なら縁取りや影を調整します。"),
+  "text layer guidance keeps the existing text editing route discoverable"
+);
+assert.ok(
+  componentSource.includes("立ち絵画像を選んだ状態で、配置だけを整えます。"),
+  "image layer guidance keeps the existing standee placement route discoverable"
+);
 assert.ok(componentSource.includes("<TextControls"), "text layer editing route remains rendered");
 assert.ok(componentSource.includes("<StandeePlacementPanel"), "image layer standee placement route remains rendered");
 assert.ok(!componentSource.includes("自動修正"), "quality guard does not promise automatic correction");
-for (const misleadingCopy of ["ペイント", "Canva的", "Canva風", "汎用制作", "一括配置", "自動分割", "複数選択"]) {
+for (const misleadingCopy of ["AI生成", "AIで", "自動生成", "ペイント", "Canva的", "Canva風", "汎用制作", "一括配置", "自動分割", "複数選択"]) {
   assert.equal(componentSource.includes(misleadingCopy), false, `quality guard UI does not imply unsupported ${misleadingCopy} behavior`);
 }
 

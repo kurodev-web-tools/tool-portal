@@ -1295,7 +1295,7 @@ export function ThumbnailEditorApp() {
                 <div>
                   <p className="text-sm font-bold text-foreground">{selectedPreset.name}</p>
                   <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / 16:9</p>
-                  <p className="mt-1 text-xs font-semibold text-muted">プリセットを選んで、文字と立ち絵を差し替える</p>
+                  <p className="mt-1 text-xs font-semibold text-muted">プリセットを選んで、文字と立ち絵を差し替えてから書き出す</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <button
@@ -1943,10 +1943,20 @@ function PropertyPanel({
   onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void;
   onStandeePlacement: (presetId: ThumbnailStandeePlacementPresetId) => void;
 }) {
+  const layerGuidance =
+    layer.type === "text"
+      ? "選択中の文字を差し替えて、必要なら縁取りや影を調整します。"
+      : layer.type === "image"
+        ? "立ち絵画像を選んだ状態で、配置だけを整えます。"
+        : null;
+
   return (
     <section className="panel space-y-4 p-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-black text-foreground">{layer.type === "text" ? "テキスト設定" : layer.type === "shape" ? "図形設定" : "画像設定"}</h2>
+        <div>
+          <h2 className="text-base font-black text-foreground">{layer.type === "text" ? "テキスト設定" : layer.type === "shape" ? "図形設定" : "画像設定"}</h2>
+          {layerGuidance ? <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">{layerGuidance}</p> : null}
+        </div>
         <span className="rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{layer.name}</span>
       </div>
 

@@ -6,10 +6,12 @@ import {
   applyThumbnailMainTextCarryover,
   applyThumbnailPresetPartial,
   applyThumbnailStandeePlacementPreset,
+  applyThumbnailUserMaterialLayerFallback,
   createNextRecentThumbnailPresetIds,
   createDraftFromPreset,
   createImageLayer,
   createThumbnailMaterialLayer,
+  createThumbnailUserMaterialLayer,
   createShapeLayer,
   createTextLayer,
   drawThumbnail,
@@ -52,7 +54,8 @@ import {
   type ThumbnailQualityGuardSummary,
   type ThumbnailShapeType,
   type ThumbnailStandeePlacementPresetId,
-  type ThumbnailTextAlign
+  type ThumbnailTextAlign,
+  type ThumbnailUserMaterialRef
 } from "@/lib/thumbnail-editor";
 import {
   buildToolHandoffUrl,
@@ -62,6 +65,14 @@ import {
   type ScheduleHandoffPayload
 } from "@/lib/tool-handoff";
 import { writeStoredImageSource } from "@/components/sns-split-image-maker/snsSplitDraftPersistence";
+import {
+  deleteThumbnailUserMaterialImage,
+  isThumbnailUserMaterialFile,
+  readThumbnailUserMaterialRefsMetadata,
+  resolveThumbnailUserMaterialImageUrl,
+  saveThumbnailUserMaterialFile,
+  writeThumbnailUserMaterialRefsMetadata
+} from "@/components/thumbnail-editor/thumbnailUserMaterialStorage";
 
 type ToastTone = "info" | "success" | "warning" | "error";
 type ToastState = { tone: ToastTone; message: string } | null;
@@ -327,12 +338,16 @@ export function ThumbnailEditorApp() {
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [handoffPayload, setHandoffPayload] = useState<ScheduleHandoffPayload | null>(null);
   const [presetDiscoveryState, setPresetDiscoveryState] = useState<ThumbnailPresetDiscoveryState>(defaultPresetDiscoveryState);
+  const [userMaterialRefs, setUserMaterialRefs] = useState<ThumbnailUserMaterialRef[]>([]);
+  const [userMaterialImageUrls, setUserMaterialImageUrls] = useState<Record<string, string>>({});
+  const [replaceUserMaterialRef, setReplaceUserMaterialRef] = useState<ThumbnailUserMaterialRef | null>(null);
   const [pendingPresetApplyId, setPendingPresetApplyId] = useState<ThumbnailPresetId | null>(null);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mobilePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvasViewportRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const userMaterialFileInputRef = useRef<HTMLInputElement | null>(null);
   const interactionRef = useRef<CanvasInteractionState | null>(null);
   const panRef = useRef<CanvasPanState | null>(null);
   const lastTapRef = useRef<LastTapState | null>(null);
@@ -350,6 +365,17 @@ export function ThumbnailEditorApp() {
   );
   const overallQualityGuardItems = useMemo(() => getThumbnailOverallQualityGuardItems(draft), [draft]);
   const overallQualityGuardSummary = useMemo(() => getThumbnailQualityGuardSummary(overallQualityGuardItems), [overallQualityGuardItems]);
+  const resolvedDraft = useMemo(
+    () => ({
+      ...draft,
+      layers: draft.layers.map((layer) =>
+        layer.type === "image" && layer.materialRef
+          ? { ...layer, src: userMaterialImageUrls[layer.materialRef.storageId] ?? layer.src }
+          : layer
+      )
+    }),
+    [draft, userMaterialImageUrls]
+  );
 
   const selectedPreset = useMemo(
     () => thumbnailPresets.find((preset) => preset.id === draft.presetId) ?? thumbnailPresets[0],
@@ -382,7 +408,48 @@ export function ThumbnailEditorApp() {
       window.localStorage.removeItem(thumbnailPresetDiscoveryStorageKey);
       setPresetDiscoveryState(defaultPresetDiscoveryState);
     }
+    setUserMaterialRefs(readThumbnailUserMaterialRefsMetadata());
   }, []);
+  useEffect(() => {
+    let cancelled = false;
+    const createdUrls: string[] = [];
+
+    Promise.all(
+      userMaterialRefs.map(async (ref) => {
+        const url = await resolveThumbnailUserMaterialImageUrl(ref).catch(() => null);
+        if (url) {
+          createdUrls.push(url);
+        }
+        return [ref.storageId, url] as const;
+      })
+    ).then((entries) => {
+      if (cancelled) {
+        for (const url of createdUrls) {
+          URL.revokeObjectURL(url);
+        }
+        return;
+      }
+      const nextUrls = Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1])));
+      setUserMaterialImageUrls((current) => {
+        for (const url of Object.values(current)) {
+          URL.revokeObjectURL(url);
+        }
+        return nextUrls;
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userMaterialRefs]);
+  useEffect(
+    () => () => {
+      for (const url of Object.values(userMaterialImageUrls)) {
+        URL.revokeObjectURL(url);
+      }
+    },
+    [userMaterialImageUrls]
+  );
   useEffect(() => {
     const updateDefaultZoom = () => {
       if (!userAdjustedZoomRef.current) {
@@ -440,7 +507,7 @@ export function ThumbnailEditorApp() {
     }
     const renderVersion = (canvasRenderVersionRef.current += 1);
     const buffer = document.createElement("canvas");
-    drawThumbnail(buffer, draft, { selectedLayerId: draft.selectedLayerId, includeSelection: true }).then(() => {
+    drawThumbnail(buffer, resolvedDraft, { selectedLayerId: draft.selectedLayerId, includeSelection: true }).then(() => {
       if (canvasRenderVersionRef.current !== renderVersion || canvasRef.current !== canvas) {
         return;
       }
@@ -454,7 +521,7 @@ export function ThumbnailEditorApp() {
         showToast("error", "キャンバスの描画に失敗しました。");
       }
     });
-  }, [draft, showToast]);
+  }, [draft.selectedLayerId, resolvedDraft, showToast]);
 
   useEffect(() => {
     if (!mobilePreviewOpen) {
@@ -468,7 +535,7 @@ export function ThumbnailEditorApp() {
 
     const renderVersion = (mobilePreviewRenderVersionRef.current += 1);
     const buffer = document.createElement("canvas");
-    drawThumbnail(buffer, draft, { selectedLayerId: null, includeSelection: false }).then(() => {
+    drawThumbnail(buffer, resolvedDraft, { selectedLayerId: null, includeSelection: false }).then(() => {
       if (mobilePreviewRenderVersionRef.current !== renderVersion || mobilePreviewCanvasRef.current !== canvas) {
         return;
       }
@@ -482,7 +549,7 @@ export function ThumbnailEditorApp() {
         showToast("error", "全体プレビューの描画に失敗しました。");
       }
     });
-  }, [draft, mobilePreviewOpen, showToast]);
+  }, [mobilePreviewOpen, resolvedDraft, showToast]);
 
   useEffect(() => {
     if (!mobilePreviewOpen) {
@@ -549,6 +616,14 @@ export function ThumbnailEditorApp() {
   const updateDraft = (updater: (current: ThumbnailEditorDraft) => ThumbnailEditorDraft) => {
     setDraft((current) => ({ ...updater(current), updatedAt: new Date().toISOString() }));
   };
+  const resolveUserMaterialLayersForOutput = (value: ThumbnailEditorDraft): ThumbnailEditorDraft => ({
+    ...value,
+    layers: value.layers.map((layer) =>
+      layer.type === "image" && layer.materialRef
+        ? { ...layer, src: userMaterialImageUrls[layer.materialRef.storageId] ?? layer.src }
+        : layer
+    )
+  });
 
   const updateSelectedLayer = (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => {
     updateDraft((current) => ({
@@ -794,6 +869,84 @@ export function ThumbnailEditorApp() {
     const material = thumbnailMaterialLibrary.find((item) => item.id === materialId);
     addLayer(layer);
     showToast("success", material ? `「${material.name}」を素材レイヤーとして追加しました。` : "素材レイヤーを追加しました。");
+  };
+
+  const commitUserMaterialRefs = (refs: ThumbnailUserMaterialRef[]) => {
+    setUserMaterialRefs(refs);
+    try {
+      writeThumbnailUserMaterialRefsMetadata(refs);
+    } catch {
+      showToast("error", "ユーザー素材の一覧保存に失敗しました。");
+    }
+  };
+
+  const openUserMaterialFilePicker = (replaceRef: ThumbnailUserMaterialRef | null = null) => {
+    setReplaceUserMaterialRef(replaceRef);
+    userMaterialFileInputRef.current?.click();
+  };
+
+  const handleUserMaterialUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      setReplaceUserMaterialRef(null);
+      return;
+    }
+    if (!isThumbnailUserMaterialFile(file)) {
+      showToast("error", "PNG/JPEG/WebP/SVG画像ファイルを選択してください。");
+      setReplaceUserMaterialRef(null);
+      return;
+    }
+    if (file.size > imageUploadMaxBytes) {
+      showToast("error", "ユーザー素材は8MB以下にしてください。");
+      setReplaceUserMaterialRef(null);
+      return;
+    }
+
+    try {
+      const nextRef = await saveThumbnailUserMaterialFile(file, replaceUserMaterialRef ?? undefined);
+      const nextRefs = replaceUserMaterialRef
+        ? userMaterialRefs.map((ref) => (ref.storageId === replaceUserMaterialRef.storageId ? nextRef : ref))
+        : [nextRef, ...userMaterialRefs].slice(0, 24);
+      commitUserMaterialRefs(nextRefs);
+
+      if (replaceUserMaterialRef) {
+        updateDraft((current) => ({
+          ...current,
+          layers: current.layers.map((layer) =>
+            layer.type === "image" && layer.materialRef?.storageId === replaceUserMaterialRef.storageId
+              ? { ...layer, name: `素材: ${nextRef.name}`, src: layer.src, materialRef: nextRef }
+              : layer
+          )
+        }));
+        showToast("success", `「${nextRef.name}」へ置換しました。配置とcropは維持しています。`);
+      } else {
+        addLayer(createThumbnailUserMaterialLayer(nextRef, draft.canvas));
+        setMobilePanel("layers");
+        showToast("success", `「${nextRef.name}」をユーザー素材として追加しました。`);
+      }
+    } catch (error) {
+      showToast("error", error instanceof Error ? error.message : "ユーザー素材の保存に失敗しました。");
+    } finally {
+      setReplaceUserMaterialRef(null);
+    }
+  };
+
+  const addUserMaterialLayer = (ref: ThumbnailUserMaterialRef) => {
+    addLayer(createThumbnailUserMaterialLayer(ref, draft.canvas));
+    showToast("success", `「${ref.name}」をユーザー素材レイヤーとして追加しました。`);
+  };
+
+  const deleteUserMaterial = async (ref: ThumbnailUserMaterialRef) => {
+    try {
+      await deleteThumbnailUserMaterialImage(ref.storageId);
+      commitUserMaterialRefs(userMaterialRefs.filter((item) => item.storageId !== ref.storageId));
+      setDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "deleted"));
+      showToast("warning", `「${ref.name}」を削除しました。既存レイヤーはfallback表示にしました。`);
+    } catch {
+      setDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "load-failed"));
+      showToast("error", "ユーザー素材の削除に失敗しました。");
+    }
   };
 
   const applyStandeePlacementPreset = (presetId: ThumbnailStandeePlacementPresetId) => {
@@ -1109,14 +1262,15 @@ export function ThumbnailEditorApp() {
       showToast("error", "下書きデータが不正なため書き出しできません。");
       return;
     }
-    const hasVisibleImage = normalized.layers.some((layer) => layer.type === "image" && !layer.hidden && layer.src);
+    const outputDraft = resolveUserMaterialLayersForOutput(normalized);
+    const hasVisibleImage = outputDraft.layers.some((layer) => layer.type === "image" && !layer.hidden && layer.src);
     if (!hasVisibleImage) {
       showToast("error", "画像レイヤーがないため書き出しできません。画像を追加してください。");
       return;
     }
     try {
       const exportCanvas = document.createElement("canvas");
-      await drawThumbnail(exportCanvas, normalized, { forceJpegBackground: exportFormat === "jpeg" });
+      await drawThumbnail(exportCanvas, outputDraft, { forceJpegBackground: exportFormat === "jpeg" });
       const mimeType = exportFormat === "png" ? "image/png" : "image/jpeg";
       const dataUrl = exportCanvas.toDataURL(mimeType, 0.92);
       if (!dataUrl || dataUrl === "data:,") {
@@ -1142,7 +1296,8 @@ export function ThumbnailEditorApp() {
 
     try {
       const exportCanvas = document.createElement("canvas");
-      await drawThumbnail(exportCanvas, normalized, { forceJpegBackground: false });
+      const outputDraft = resolveUserMaterialLayersForOutput(normalized);
+      await drawThumbnail(exportCanvas, outputDraft, { forceJpegBackground: false });
       const dataUrl = exportCanvas.toDataURL("image/png", 0.92);
       if (!dataUrl || dataUrl === "data:,") {
         throw new Error("Canvas export failed.");
@@ -1382,7 +1537,19 @@ export function ThumbnailEditorApp() {
                   onFavoriteToggle={togglePresetFavorite}
                 />
               )}
-              {mobilePanel === "materials" && <MaterialLibraryPanel onAdd={addMaterialLayer} />}
+              {mobilePanel === "materials" && (
+                <>
+                  <MaterialLibraryPanel onAdd={addMaterialLayer} />
+                  <UserMaterialLibraryPanel
+                    refs={userMaterialRefs}
+                    imageUrls={userMaterialImageUrls}
+                    onUpload={() => openUserMaterialFilePicker()}
+                    onAdd={addUserMaterialLayer}
+                    onReplaceUserMaterial={openUserMaterialFilePicker}
+                    onDeleteUserMaterial={deleteUserMaterial}
+                  />
+                </>
+              )}
               {mobilePanel === "layers" && (
                 <LayerPanel
                   layers={draft.layers}
@@ -1437,6 +1604,14 @@ export function ThumbnailEditorApp() {
                 onMaterial={() => setSidePanelCollapsed(false)}
               />
               <MaterialLibraryPanel onAdd={addMaterialLayer} />
+              <UserMaterialLibraryPanel
+                refs={userMaterialRefs}
+                imageUrls={userMaterialImageUrls}
+                onUpload={() => openUserMaterialFilePicker()}
+                onAdd={addUserMaterialLayer}
+                onReplaceUserMaterial={openUserMaterialFilePicker}
+                onDeleteUserMaterial={deleteUserMaterial}
+              />
               <LayerPanel
                 layers={draft.layers}
                 presetId={draft.presetId}
@@ -1527,6 +1702,14 @@ export function ThumbnailEditorApp() {
       ) : null}
 
       <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} aria-label="画像ファイルを選択" />
+      <input
+        ref={userMaterialFileInputRef}
+        className="hidden"
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+        onChange={handleUserMaterialUpload}
+        aria-label="ユーザー素材ファイルを選択"
+      />
       {toast && (
         <div className={`fixed bottom-20 left-4 right-4 z-50 rounded-base border px-4 py-3 text-sm font-bold shadow-panel min-[1024px]:bottom-5 min-[1024px]:left-auto min-[1024px]:right-5 min-[1024px]:w-96 ${toneClassName[toast.tone]}`}>
           {toast.message}
@@ -1607,7 +1790,7 @@ function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
     <section className="panel space-y-3 p-3 md:p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black text-foreground">素材ライブラリ</h2>
+          <h2 className="text-base font-black text-foreground">登録済み素材</h2>
           <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">素材はプリセットに後から足す飾りです。選ぶとレイヤーへ追加されます。</p>
         </div>
         <p className="shrink-0 text-right text-xs font-bold leading-5 text-muted">
@@ -2211,6 +2394,76 @@ function EffectControls({ layer, onChange }: { layer: ThumbnailLayer; onChange: 
         )}
       </div>
     </div>
+  );
+}
+
+function UserMaterialLibraryPanel({
+  refs,
+  imageUrls,
+  onUpload,
+  onAdd,
+  onReplaceUserMaterial,
+  onDeleteUserMaterial
+}: {
+  refs: ThumbnailUserMaterialRef[];
+  imageUrls: Record<string, string>;
+  onUpload: () => void;
+  onAdd: (ref: ThumbnailUserMaterialRef) => void;
+  onReplaceUserMaterial: (ref: ThumbnailUserMaterialRef) => void;
+  onDeleteUserMaterial: (ref: ThumbnailUserMaterialRef) => void;
+}) {
+  return (
+    <section className="panel space-y-3 p-3 md:p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-black text-foreground">ユーザー素材</h2>
+          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">画像本体はIndexedDBに保存し、下書きには軽い参照だけを残します。</p>
+        </div>
+        <button className="flat-control shrink-0 px-3 py-2 text-xs font-bold" type="button" onClick={onUpload}>
+          追加
+        </button>
+      </div>
+      <div className="grid gap-2">
+        {refs.map((ref) => {
+          const imageUrl = imageUrls[ref.storageId] ?? null;
+          return (
+            <article key={ref.storageId} className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2 rounded-base border border-border bg-surface p-2 md:grid-cols-[5.25rem_minmax(0,1fr)]">
+              <span className="grid aspect-video place-items-center overflow-hidden rounded-sm border border-border bg-[#07111c]">
+                {imageUrl ? (
+                  <span className="block h-full w-full bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${imageUrl})` }} aria-hidden="true" />
+                ) : (
+                  <span className="px-2 text-center text-[10px] font-bold leading-4 text-muted">fallback</span>
+                )}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-black text-foreground">{ref.name}</span>
+                <span className="mt-1 block text-[11px] font-bold leading-4 text-muted">
+                  {ref.mimeType.replace("image/", "").toUpperCase()}
+                  {ref.width && ref.height ? ` / ${ref.width}x${ref.height}` : ""}
+                  {ref.byteSize ? ` / ${Math.ceil(ref.byteSize / 1024)}KB` : ""}
+                </span>
+                <span className="mt-2 grid grid-cols-3 gap-1.5">
+                  <button className="flat-control px-2 py-1.5 text-[11px] font-bold" type="button" onClick={() => onAdd(ref)}>
+                    配置
+                  </button>
+                  <button className="flat-control px-2 py-1.5 text-[11px] font-bold" type="button" onClick={() => onReplaceUserMaterial(ref)}>
+                    置換
+                  </button>
+                  <button className="flat-control px-2 py-1.5 text-[11px] font-bold text-rose-100" type="button" onClick={() => onDeleteUserMaterial(ref)}>
+                    削除
+                  </button>
+                </span>
+              </span>
+            </article>
+          );
+        })}
+        {refs.length === 0 ? (
+          <div className="rounded-base border border-dashed border-border bg-surface-muted/40 px-3 py-5 text-center text-xs font-bold leading-5 text-muted">
+            追加済みのユーザー素材はありません。
+          </div>
+        ) : null}
+      </div>
+    </section>
   );
 }
 

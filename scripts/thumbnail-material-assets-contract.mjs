@@ -8,8 +8,10 @@ import ts from "typescript";
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "thumbnail-editor.ts");
 const componentPath = path.join(root, "components", "thumbnail-editor", "ThumbnailEditorApp.tsx");
+const userMaterialStoragePath = path.join(root, "components", "thumbnail-editor", "thumbnailUserMaterialStorage.ts");
 const source = fs.readFileSync(sourcePath, "utf8");
 const componentSource = fs.readFileSync(componentPath, "utf8");
+const userMaterialStorageSource = fs.existsSync(userMaterialStoragePath) ? fs.readFileSync(userMaterialStoragePath, "utf8") : "";
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -706,5 +708,14 @@ assert.ok(componentSource.includes("素材名・説明・推奨配置で検索")
 assert.ok(componentSource.includes("materialCategoryCounts"), "material library shows category counts");
 assert.ok(componentSource.includes("max-h-[min(60vh,38rem)]"), "material library keeps dense results scrollable");
 assert.ok(componentSource.includes("material.description"), "material cards keep descriptions visible and searchable");
+assert.ok(userMaterialStorageSource.includes("indexedDB.open"), "user material image bodies are stored through IndexedDB");
+assert.ok(userMaterialStorageSource.includes("thumbnailUserMaterialRefsStorageKey"), "user material metadata has an explicit storage key");
+assert.equal(userMaterialStorageSource.includes("localStorage.setItem") && userMaterialStorageSource.includes("data:image"), false, "user material metadata persistence does not write image bodies to localStorage");
+assert.ok(componentSource.includes("UserMaterialLibraryPanel"), "Thumbnail Editor renders a separate user material library panel");
+assert.ok(componentSource.includes("ユーザー素材"), "user-added material UI is visible as a separate responsibility");
+assert.ok(componentSource.includes("登録済み素材"), "registered material UI remains visually separate from user-added material UI");
+assert.ok(componentSource.includes("onReplaceUserMaterial"), "user-added material UI exposes replace without changing geometry");
+assert.ok(componentSource.includes("onDeleteUserMaterial"), "user-added material UI exposes delete with fallback handling");
+assert.ok(componentSource.includes("resolveThumbnailUserMaterialImageUrl"), "canvas rendering resolves user material blobs at render time instead of persisting image bodies in draft");
 
 console.log("thumbnail material asset contract checks passed");

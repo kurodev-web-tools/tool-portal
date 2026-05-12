@@ -58,13 +58,15 @@ const riskyTextDraft = {
     layer.id === textLayer.id
       ? {
           ...layer,
+          text: "超耐久配信のお知らせと参加型イベント",
           fontSize: 22,
           color: "#111111",
           strokeColor: "#111111",
           strokeWidth: 0,
           shadowBlur: 0,
           shadowColor: "#111111",
-          x: -18
+          x: -18,
+          width: 180
         }
       : layer
   )
@@ -75,6 +77,7 @@ const textGuardItems = lib.getThumbnailQualityGuardItems(riskyTextDraft, textLay
 assert.ok(textGuardItems.length >= 3, "quality guard returns lightweight warnings and hints for selected text");
 assert.ok(textGuardItems.some((item) => item.id === "selected-text-size" && item.tone === "warning"), "selected text size warning exists");
 assert.ok(textGuardItems.some((item) => item.id === "selected-text-contrast"), "selected text contrast hint exists");
+assert.ok(textGuardItems.some((item) => item.id === "selected-text-readability" && item.tone === "hint"), "selected text readability hint exists");
 assert.ok(textGuardItems.some((item) => item.id === "selected-layer-safe-area"), "selected layer safe area warning exists");
 assert.ok(
   textGuardItems.every((item) => ["warning", "hint", "ok"].includes(item.tone) && item.message.length <= 28),
@@ -82,7 +85,7 @@ assert.ok(
 );
 assert.deepEqual(
   textGuardItems.map((item) => item.tone),
-  ["warning", "warning", "hint"],
+  ["warning", "warning", "hint", "hint"],
   "selected quality guard keeps warning first and hint after warnings"
 );
 assert.equal(JSON.stringify(riskyTextDraft), riskyTextBefore, "quality guard does not auto-correct or mutate the draft");
@@ -113,6 +116,24 @@ assert.ok(
 );
 
 const imageLayer = lib.createImageLayer("data:image/png;base64,standee");
+const croppedImageLayer = {
+  ...imageLayer,
+  x: 820,
+  y: 90,
+  width: 360,
+  height: 560,
+  crop: { x: 0, y: 0.12, width: 1, height: 0.42 }
+};
+const croppedImageDraft = {
+  ...draft,
+  selectedLayerId: croppedImageLayer.id,
+  layers: [...draft.layers, croppedImageLayer]
+};
+const croppedImageBefore = JSON.stringify(croppedImageDraft);
+const croppedImageGuardItems = lib.getThumbnailQualityGuardItems(croppedImageDraft, croppedImageLayer.id);
+assert.ok(croppedImageGuardItems.some((item) => item.id === "selected-image-crop" && item.tone === "hint"), "selected image guard lightly notes cropped standee or image layers");
+assert.equal(JSON.stringify(croppedImageDraft), croppedImageBefore, "image crop guard does not mutate the draft");
+
 const imageGuardItems = lib.getThumbnailQualityGuardItems(
   {
     ...draft,
@@ -140,13 +161,14 @@ const overallRiskyDraft = {
             hidden: true
           }
         : layer
-  )
+  ).concat([{ ...croppedImageLayer, id: "overall-cropped-standee" }])
 };
 const overallRiskyBefore = JSON.stringify(overallRiskyDraft);
 const overallGuardItems = lib.getThumbnailOverallQualityGuardItems(overallRiskyDraft);
 
 assert.ok(overallGuardItems.some((item) => item.id === "overall-text-size" && item.tone === "warning"), "overall guard checks small text without selecting a layer");
 assert.ok(overallGuardItems.some((item) => item.id === "overall-safe-area" && item.tone === "warning"), "overall guard checks safe area without selecting a layer");
+assert.ok(overallGuardItems.some((item) => item.id === "overall-image-crop" && item.tone === "hint"), "overall guard checks cropped standee or image layers before export");
 assert.ok(overallGuardItems.some((item) => item.id === "overall-hidden-layers" && item.tone === "hint"), "overall guard lightly notes hidden layers");
 assert.ok(overallGuardItems.some((item) => item.id === "overall-locked-layers" && item.tone === "hint"), "overall guard lightly notes locked layers");
 assert.ok(
@@ -155,7 +177,7 @@ assert.ok(
 );
 assert.deepEqual(
   overallGuardItems.map((item) => item.tone),
-  ["warning", "warning", "hint", "hint"],
+  ["warning", "warning", "hint", "hint", "hint"],
   "overall quality guard keeps warnings before hints"
 );
 assert.equal(JSON.stringify(overallRiskyDraft), overallRiskyBefore, "overall guard does not auto-correct or mutate the draft");

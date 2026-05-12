@@ -274,6 +274,35 @@
   - `npx tsc --noEmit` PASS。
   - UI 表示 / layout / 文言変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。
 
+### P6: Thumbnail Editor quality guard expansion
+
+- 状態: done
+- 目的:
+  - warning / hint / ok の軽い品質確認のまま、文字の可読性と立ち絵 / 画像レイヤーの見切れ確認を最小拡張する。
+  - selected layer guard、export-adjacent overall summary、preset batch readiness、variant、partial apply、material、font policy、handoff 互換を壊さない。
+- 実施内容:
+  - PR #80 `[codex] Add thumbnail preset batch readiness contract` が `main` / `origin/main` に merge 済みで、merge commit `86f9941` が `origin/main` に含まれることを確認した。
+  - `origin/main` 起点で `codex/thumbnail-quality-guard-expansion` / `.worktrees/thumbnail-quality-guard-expansion` を作成した。
+  - `scripts/thumbnail-quality-guard-contract.mjs` を先に拡張し、RED (`selected text readability hint exists`) を確認してから実装した。
+  - `lib/thumbnail-editor.ts` に、長文 text layer の lightweight readability hint と user-added image / material image の crop hint を追加した。
+  - overall summary は text layer と user-added image layer だけを対象にし、preset 初期の背景 / 装飾 / 立ち絵ガイド枠は過剰に注意表示しない。
+  - `サムネ品質` / `注意 n件` / `品質チェックOK`、warning / hint / ok tone、自動修正なし、draft 非 mutation を contract で確認した。
+  - preset 本体、asset、font asset、外部 CDN、text / image layer schema、crop 仕様、素材ライブラリ登録、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+  - 実装で確定した境界を `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` に追記した。
+- 検証:
+  - `node scripts/thumbnail-quality-guard-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-batch-readiness-contract.mjs` PASS。
+  - `node scripts/thumbnail-font-policy-contract.mjs` PASS。
+  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-variants-contract.mjs` PASS。
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - UI 表示 / layout / 文言変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。既存 panel / export summary の表示経路は変えず、shared quality guard helper の返す短文 item だけを増やした。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性

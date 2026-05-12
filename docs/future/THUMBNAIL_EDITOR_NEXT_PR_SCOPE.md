@@ -257,6 +257,14 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - 次PR候補としての優先度:
   - P6。UI を重くしない範囲で、上記の仕様整理後に進める。
 
+#### 実装で確定した境界
+
+- quality guard expansion は既存の `getThumbnailQualityGuardItems()` / `getThumbnailOverallQualityGuardItems()` / `getThumbnailQualityGuardSummary()` に閉じる。
+- text layer は小さすぎる文字、縁取り / 影不足に加え、1行がレイヤー幅に対して長い場合だけ `長文は改行も確認` の hint を出す。
+- image layer は `data:image/`、user material ref、初期追加名 `画像` / `ユーザー素材` のような user-added image だけを content image として扱い、crop が強い場合だけ `見切れ具合を確認` の hint を出す。
+- overall summary は text layer と user-added image layer だけを軽く確認し、preset 初期の背景 / 装飾 / 立ち絵ガイド枠を warning の対象にしない。
+- summary label は `注意 n件` / `品質チェックOK` を維持し、draft、preset、material registration、asset、font、schema、crop 仕様は変更しない。
+
 ## Contract Candidates
 
 - `scripts/thumbnail-preset-discovery-contract.mjs`

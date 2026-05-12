@@ -312,6 +312,8 @@ export type ThumbnailMainTextCarryoverKey = (typeof thumbnailMainTextCarryoverTa
 export type ThumbnailMainTextCarryover = Partial<Record<ThumbnailMainTextCarryoverKey, string>>;
 
 const thumbnailQualitySafeAreaInsetRatio = 0.04;
+const thumbnailQualityTextWidthWarnRatio = 0.92;
+const thumbnailQualityCropWarnRatio = 0.65;
 const thumbnailHexToRgb = (value: string) => {
   const normalized = value.trim().toLowerCase();
   if (!/^#[0-9a-f]{6}$/.test(normalized)) {
@@ -340,6 +342,16 @@ const thumbnailContrastRatio = (a: string, b: string) => {
   const dark = Math.min(thumbnailRelativeLuminance(first), thumbnailRelativeLuminance(second));
   return (light + 0.05) / (dark + 0.05);
 };
+const getThumbnailEstimatedTextLineWidth = (text: string, fontSize: number) =>
+  Array.from(text).reduce((total, character) => total + (/[ -~]/.test(character) ? 0.55 : 1), 0) * fontSize * 0.9;
+const hasThumbnailTextReadabilityRisk = (layer: ThumbnailTextLayer) =>
+  layer.text
+    .split("\n")
+    .some((line) => line.trim().length > 0 && getThumbnailEstimatedTextLineWidth(line.trim(), layer.fontSize) > layer.width * thumbnailQualityTextWidthWarnRatio);
+const hasThumbnailImageCropRisk = (layer: ThumbnailImageLayer) =>
+  Boolean(layer.crop && (layer.crop.width < thumbnailQualityCropWarnRatio || layer.crop.height < thumbnailQualityCropWarnRatio));
+const isThumbnailQualityUserImageLayer = (layer: ThumbnailLayer): layer is ThumbnailImageLayer =>
+  layer.type === "image" && (layer.src.startsWith("data:image/") || Boolean(layer.materialRef) || layer.name === "画像" || layer.name === "ユーザー素材");
 
 const getThumbnailQualityGuardItemsForLayers = (
   draft: ThumbnailEditorDraft,
@@ -371,6 +383,14 @@ const getThumbnailQualityGuardItemsForLayers = (
   ) {
     items.push({ id: scope === "selected" ? "selected-text-contrast" : "overall-text-contrast", tone: "hint", message: "縁取りか影を足すと安心" });
   }
+  if (textLayers.some(hasThumbnailTextReadabilityRisk)) {
+    items.push({ id: scope === "selected" ? "selected-text-readability" : "overall-text-readability", tone: "hint", message: "長文は改行も確認" });
+  }
+
+  const imageLayers = targetLayers.filter((layer): layer is ThumbnailImageLayer => layer.type === "image");
+  if (imageLayers.some(hasThumbnailImageCropRisk)) {
+    items.push({ id: scope === "selected" ? "selected-image-crop" : "overall-image-crop", tone: "hint", message: "見切れ具合を確認" });
+  }
 
   return items;
 };
@@ -397,7 +417,8 @@ const isThumbnailQualityStructuralBackgroundLayer = (draft: ThumbnailEditorDraft
 
 export const getThumbnailOverallQualityGuardItems = (draft: ThumbnailEditorDraft): ThumbnailQualityGuardItem[] => {
   const textLayers = draft.layers.filter((layer): layer is ThumbnailTextLayer => layer.type === "text" && !layer.hidden);
-  const items = getThumbnailQualityGuardItemsForLayers(draft, textLayers, "overall");
+  const userImageLayers = draft.layers.filter((layer) => !layer.hidden && isThumbnailQualityUserImageLayer(layer));
+  const items = getThumbnailQualityGuardItemsForLayers(draft, [...textLayers, ...userImageLayers], "overall");
 
   if (draft.layers.some((layer) => !isThumbnailQualityStructuralBackgroundLayer(draft, layer) && layer.hidden)) {
     items.push({ id: "overall-hidden-layers", tone: "hint", message: "非表示レイヤーあり" });

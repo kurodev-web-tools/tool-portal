@@ -404,6 +404,36 @@
   - `git diff --check` PASS。LF -> CRLF warning のみ。
   - UI / layout 変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。handoff contract / docs consistency を優先。
 
+### P10: SNS Split Image Maker core UX freeze boundary
+
+- 状態: done
+- 目的:
+  - PR #84 merge 後の `origin/main` 起点で、SNS Split Image Maker の入口導線、初回例、export 前 guard、handoff 成功後の次アクション、export boundary を freeze 前に読める状態にする。
+  - UI redesign、大規模 export 拡張、storage schema 変更は入れない。
+- 確認した core UX freeze 条件:
+  - 初回起動はプリセット選択から入り、`2分割 / 3分割 / 4分割` のどれを開くかを選べる。
+  - 編集画面の入力エリアでメイン画像を選び、必要なら追加画像と境界を調整する。
+  - メイン画像未選択時は export button が disabled になり、直接実行されても `メイン画像を選択してから出力してください。` の警告で止まる。
+  - Schedule Calendar handoff 後は告知文メモとファイル名候補だけを受け取り、次にメイン画像を選んで export する。
+  - Thumbnail Editor handoff 後は受け取った画像をメイン画像として確認し、必要な追加画像や境界調整後に export する。
+  - export 成功時は `split_1 -> split_n` の順と枚数を toast で返す。
+  - ZIP 出力、X 以外の比率、複数形式の大規模 export は freeze 後候補に分ける。
+- 実施内容:
+  - PR #84 `[codex] Document cross-tool handoff policy` が `main` / `origin/main` に merge 済みで、merge commit `05aa368` が `origin/main` 先頭にあることを確認した。
+  - `origin/main` 起点で `codex/sns-split-core-ux-freeze` / `.worktrees/sns-split-core-ux-freeze` を作成した。
+  - `lib/sns-split-image-maker.ts` に `snsSplitFreezePolicy` を追加し、freeze 対象 preset、export format、メイン画像必須 guard、handoff 後 next action、後送り export 拡張を contract から読めるようにした。
+  - `scripts/sns-split-image-maker-contract.mjs` に export guard、success toast、ZIP packaging 非導入、freeze docs の drift guard を追加した。
+  - `docs/design-sns-split-image-maker.md` と `docs/SCHEDULE_CALENDAR_README.md` に freeze boundary と handoff 後の次アクションを追記した。
+  - UI / layout / storage schema / export 機能本体、Thumbnail Editor / Schedule Calendar 実装、asset / font / portal shell は変更していない。
+- 検証:
+  - RED: `node scripts/sns-split-image-maker-contract.mjs` は `snsSplitFreezePolicy` 未定義、および design doc の `Freeze Boundary` 未記載で失敗することを確認。
+  - GREEN: `node scripts/sns-split-image-maker-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - UI / layout / 表示文言変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。contract / docs consistency を優先。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性
@@ -494,10 +524,9 @@
 
 ### 残タスク
 
-- core UX の freeze 条件を決める。
-- 初回例、操作 guard、出力後の次アクションを軽く整える。
-- export 前確認を必要最小限にする。
-- ZIP 出力、X 以外の比率、複数形式は後続候補として分ける。
+- core UX freeze 条件は P10 で固定済み。
+- freeze 後候補として、ZIP 出力、X 以外の比率、複数形式 export を別PRで検討する。
+- 連続ダウンロードのブラウザ差は、現行の個別PNG/JPEG + 順番表示 + success toast の範囲で運用し、必要なら後続で検証する。
 
 ### SNS Split Image Maker verification baseline
 

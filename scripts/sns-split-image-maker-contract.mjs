@@ -10,11 +10,13 @@ const appSourcePath = path.join(root, "components", "sns-split-image-maker", "Sn
 const landingSourcePath = path.join(root, "components", "sns-split-image-maker", "SnsSplitPresetLanding.tsx");
 const pageSourcePath = path.join(root, "app", "tools", "sns-split-image-maker", "page.tsx");
 const designSourcePath = path.join(root, "docs", "design-sns-split-image-maker.md");
+const scheduleReadmeSourcePath = path.join(root, "docs", "SCHEDULE_CALENDAR_README.md");
 const source = fs.readFileSync(sourcePath, "utf8");
 const appSource = fs.readFileSync(appSourcePath, "utf8");
 const landingSource = fs.readFileSync(landingSourcePath, "utf8");
 const pageSource = fs.readFileSync(pageSourcePath, "utf8");
 const designSource = fs.readFileSync(designSourcePath, "utf8");
+const scheduleReadmeSource = fs.readFileSync(scheduleReadmeSourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -61,6 +63,14 @@ assert.deepEqual(lib.getSnsSplitPostCanvas("split-3", 2), { width: 1280, height:
 assert.deepEqual(lib.getSnsSplitPostCanvas("split-3", 3), { width: 1280, height: 2160 }, "split-3 third output is 8:13.5");
 assert.deepEqual(lib.getSnsSplitPostCanvas("split-2", 1), { width: 1920, height: 720 }, "split-2 output remains 24:9");
 assert.deepEqual(lib.getSnsSplitPostCanvas("split-4", 1), { width: 1280, height: 2160 }, "split-4 output remains 8:13.5");
+assert.deepEqual(lib.snsSplitFreezePolicy.presetScope, ["split-2", "split-3", "split-4"], "freeze scope stays on the three X post presets");
+assert.deepEqual(lib.snsSplitFreezePolicy.exportFormats, ["png", "jpeg"], "freeze export formats stay limited to png/jpeg");
+assert.equal(lib.snsSplitFreezePolicy.requiresBaseImageBeforeExport, true, "export requires a main image before download");
+assert.deepEqual(
+  lib.snsSplitFreezePolicy.deferredExportExpansions,
+  ["zip", "non-x-ratios", "multi-format-batch"],
+  "zip, non-X ratios, and multi-format batch export stay deferred"
+);
 
 assert.equal(lib.getSnsSplitSlotLabel("concatenate", 1, "split-3"), "画像1 左");
 assert.equal(lib.getSnsSplitSlotLabel("concatenate", 2, "split-3"), "画像1 右");
@@ -75,12 +85,20 @@ assert.equal(lib.getSnsSplitSlotLabel("replace", 3, "split-3"), "画像3 フレ�
 assert.match(appSource, /label: "個別追加"/, "UI labels include individual-add mode");
 assert.match(appSource, /label: "フレーム追加"/, "UI labels include frame-add mode");
 assert.match(appSource, /label: "メイン分割"/, "preview tabs expose main-split label");
+assert.match(appSource, /disabled=\{!canExport\}/, "export buttons are guarded by main-image readiness");
+assert.match(appSource, /メイン画像を選択してから出力してください。/, "manual export call warns before exporting without a main image");
+assert.match(appSource, /の順で\$\{postCount\}枚を書き出しました。/, "successful export toast includes output order and count");
 assert.doesNotMatch(appSource, /label: "投稿時"/, "preview tab label no longer says post-time");
 assert.doesNotMatch(appSource, /label: "1\+8連結"/, "primary 4-split mode label no longer uses legacy 1+8 text");
 assert.doesNotMatch(appSource, /label: "1\+4差し替え"/, "primary 4-split mode label no longer uses legacy 1+4 text");
+assert.doesNotMatch(appSource + source, /JSZip|application\/zip|new Blob\(/, "freeze scope does not add zip packaging");
 assert.match(landingSource, /個別追加 \/ フレーム追加/, "landing card uses unified 4-split mode labels");
 assert.match(pageSource, /2分割\/3分割\/4分割画像/, "page metadata includes all available split presets");
 assert.match(designSource, /2分割 \/ 3分割 \/ 4分割/, "design doc describes current preset scope");
 assert.match(designSource, /390 \/ 820 \/ 1024 \/ 1280 \/ 1366/, "design doc lists freeze-readiness viewport widths");
+assert.match(designSource, /Freeze Boundary/, "design doc has an explicit freeze boundary section");
+assert.match(designSource, /ZIP 出力、X 以外の比率、複数形式の大規模 export は freeze 後/, "design doc keeps deferred export expansion out of freeze scope");
+assert.match(scheduleReadmeSource, /Schedule Calendar 由来ではメイン画像は未選択/, "Schedule README documents the Schedule -> SNS next action");
+assert.match(scheduleReadmeSource, /Thumbnail Editor 由来では受け取った画像を確認してから/, "Schedule README documents the Thumbnail -> SNS next action");
 
 console.log("sns-split-image-maker contract checks passed");

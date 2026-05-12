@@ -64,6 +64,15 @@ export const snsSplitBaseCanvas = { width: 1280, height: 720 };
 export const snsSplitPostCanvas = { width: 1280, height: 2160 };
 export const snsSplitWidePostCanvas = { width: 1920, height: 720 };
 export const snsSplitCanvas = snsSplitBaseCanvas;
+export const snsSplitFreezePolicy = {
+  presetScope: ["split-2", "split-3", "split-4"],
+  exportFormats: ["png", "jpeg"],
+  requiresBaseImageBeforeExport: true,
+  firstRunAction: "choose-preset-then-main-image",
+  handoffNextAction: "review-main-image-or-add-one-then-export-individual-files",
+  exportPackaging: "individual-downloads",
+  deferredExportExpansions: ["zip", "non-x-ratios", "multi-format-batch"]
+} as const;
 
 export const defaultSnsSplitPostAdjustment: SnsSplitPostAdjustment = {
   offsetX: 0,

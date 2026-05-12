@@ -216,6 +216,15 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - 次PR候補としての優先度:
   - P5。先に仕様境界を固め、実 preset 追加はさらに分割する。
 
+#### 実装で確定した境界
+
+- preset batch readiness は `thumbnailPresetBatchCandidates` と `getThumbnailPresetBatchReadiness()` / `getThumbnailPresetBatchReadinessSummary()` の軽量 contract として扱う。
+- 候補 id は `first_stream` / `anniversary_stream` / `endurance_stream` / `karaoke_stream` / `chat_stream` / `gameplay_stream` / `notice_stream` / `highlight_clip` とし、既存 preset id とは衝突させない。
+- 各候補は用途、推奨 variant、必要 text layer role、必要 material category、依存 contract を metadata として持つ。
+- 初期候補は既存の `landscape-16-9` variant を前提にし、未対応の縦長 / 正方形 variant body を support 済みとして扱わない。
+- readiness helper は warning-only / checks-only とし、自動修正、asset 生成、preset body 生成、font asset 追加、material 登録変更を行わない。
+- preset 本体、asset、font asset、text / image layer schema、crop、素材ライブラリ登録、Schedule Calendar / SNS Split Image Maker handoff contract は変更しない。
+
 ### 6. quality guard expansion
 
 - 目的:

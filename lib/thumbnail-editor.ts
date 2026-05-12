@@ -111,6 +111,53 @@ export type ThumbnailPresetVariantRelation = {
   defaultVariantId: ThumbnailPresetVariantId;
   variantIds: ThumbnailPresetVariantId[];
 };
+export type ThumbnailPresetBatchCandidateId =
+  | "first_stream"
+  | "anniversary_stream"
+  | "endurance_stream"
+  | "karaoke_stream"
+  | "chat_stream"
+  | "gameplay_stream"
+  | "notice_stream"
+  | "highlight_clip";
+export type ThumbnailPresetBatchTextLayerRole = "見出し" | "時刻" | "サブ" | "ラベル";
+export type ThumbnailPresetBatchDependency = "variant" | "partial-apply" | "font-policy" | "material-boundary" | "handoff";
+export type ThumbnailPresetBatchCandidate = {
+  id: ThumbnailPresetBatchCandidateId;
+  label: string;
+  useCase: string;
+  recommendedVariantId: ThumbnailPresetVariantId;
+  requiredTextLayerRoles: ThumbnailPresetBatchTextLayerRole[];
+  requiredMaterialCategories: ThumbnailMaterialCategory[];
+  dependsOn: ThumbnailPresetBatchDependency[];
+};
+export type ThumbnailPresetBatchReadinessPolicy = {
+  owner: "thumbnail-editor";
+  checksOnly: boolean;
+  allowsAutoFix: boolean;
+  allowsGeneration: boolean;
+  addsPresetBodies: boolean;
+  addsAssets: boolean;
+  addsFontAssets: boolean;
+  changesMaterialRegistration: boolean;
+};
+export type ThumbnailPresetBatchReadinessWarning = {
+  id: string;
+  message: string;
+  tone: "warning";
+};
+export type ThumbnailPresetBatchReadiness = {
+  candidateId: string;
+  ready: boolean;
+  warnings: ThumbnailPresetBatchReadinessWarning[];
+  policy: ThumbnailPresetBatchReadinessPolicy;
+};
+export type ThumbnailPresetBatchReadinessSummary = {
+  total: number;
+  readyCount: number;
+  warningCount: number;
+  items: ThumbnailPresetBatchReadiness[];
+};
 
 export type ThumbnailFontPolicy = {
   owner: "thumbnail-editor";
@@ -520,6 +567,16 @@ export const thumbnailFontPolicy: ThumbnailFontPolicy = {
   allowsBundledFontAssetsInThisPr: false,
   fallbackFamily: thumbnailFontFallbackFamily,
   fallbackStack: thumbnailCanvasFontFallbackStack
+};
+export const thumbnailPresetBatchReadinessPolicy: ThumbnailPresetBatchReadinessPolicy = {
+  owner: "thumbnail-editor",
+  checksOnly: true,
+  allowsAutoFix: false,
+  allowsGeneration: false,
+  addsPresetBodies: false,
+  addsAssets: false,
+  addsFontAssets: false,
+  changesMaterialRegistration: false
 };
 
 const quoteCanvasFontFamily = (fontFamily: string) => (fontFamily === "sans-serif" ? fontFamily : `"${fontFamily}"`);
@@ -949,6 +1006,170 @@ const thumbnailPresetVariantIds = new Set<ThumbnailPresetVariantId>(
 );
 const isThumbnailPresetVariantId = (value: unknown): value is ThumbnailPresetVariantId =>
   typeof value === "string" && thumbnailPresetVariantIds.has(value as ThumbnailPresetVariantId);
+const thumbnailPresetBatchTextLayerRoles: ThumbnailPresetBatchTextLayerRole[] = ["見出し", "時刻", "サブ", "ラベル"];
+const thumbnailPresetBatchDependencies: ThumbnailPresetBatchDependency[] = [
+  "variant",
+  "partial-apply",
+  "font-policy",
+  "material-boundary",
+  "handoff"
+];
+
+export const thumbnailPresetBatchCandidates: ThumbnailPresetBatchCandidate[] = [
+  {
+    id: "first_stream",
+    label: "初配信",
+    useCase: "初配信や初回自己紹介向け",
+    recommendedVariantId: "landscape-16-9",
+    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
+    requiredMaterialCategories: ["label-base", "date-badge", "frame", "accent"],
+    dependsOn: thumbnailPresetBatchDependencies
+  },
+  {
+    id: "anniversary_stream",
+    label: "記念配信",
+    useCase: "周年、登録者記念、誕生日などの告知向け",
+    recommendedVariantId: "landscape-16-9",
+    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
+    requiredMaterialCategories: ["label-base", "date-badge", "corner", "accent"],
+    dependsOn: thumbnailPresetBatchDependencies
+  },
+  {
+    id: "endurance_stream",
+    label: "耐久配信",
+    useCase: "耐久企画や長時間配信の目標表示向け",
+    recommendedVariantId: "landscape-16-9",
+    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
+    requiredMaterialCategories: ["label-base", "date-badge", "divider", "frame"],
+    dependsOn: thumbnailPresetBatchDependencies
+  },
+  {
+    id: "karaoke_stream",
+    label: "歌枠",
+    useCase: "歌枠や音楽配信の開始告知向け",
+    recommendedVariantId: "landscape-16-9",
+    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
+    requiredMaterialCategories: ["label-base", "date-badge", "accent", "corner"],
+    dependsOn: thumbnailPresetBatchDependencies
+  },
+  {
+    id: "chat_stream",
+    label: "雑談",
+    useCase: "雑談配信や近況共有の開始告知向け",
+    recommendedVariantId: "landscape-16-9",
+    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
+    requiredMaterialCategories: ["label-base", "date-badge", "frame", "divider"],
+    dependsOn: thumbnailPresetBatchDependencies
+  },
+  {
+    id: "gameplay_stream",
+    label: "ゲーム実況",
+    useCase: "ゲーム実況、参加型、シリーズ配信向け",
+    recommendedVariantId: "landscape-16-9",
+    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
+    requiredMaterialCategories: ["label-base", "date-badge", "divider", "frame"],
+    dependsOn: thumbnailPresetBatchDependencies
+  },
+  {
+    id: "notice_stream",
+    label: "告知",
+    useCase: "配信外のお知らせや公開案内向け",
+    recommendedVariantId: "landscape-16-9",
+    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
+    requiredMaterialCategories: ["label-base", "date-badge", "frame", "corner"],
+    dependsOn: thumbnailPresetBatchDependencies
+  },
+  {
+    id: "highlight_clip",
+    label: "切り抜き",
+    useCase: "切り抜き、見どころ、公開予定の告知向け",
+    recommendedVariantId: "landscape-16-9",
+    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
+    requiredMaterialCategories: ["label-base", "date-badge", "accent", "divider"],
+    dependsOn: thumbnailPresetBatchDependencies
+  }
+];
+
+const toPresetBatchStringArray = (values: unknown): string[] => (Array.isArray(values) ? values.filter((value): value is string => typeof value === "string") : []);
+
+export const getThumbnailPresetBatchReadiness = (
+  candidate: Partial<ThumbnailPresetBatchCandidate> & { id?: unknown } = thumbnailPresetBatchCandidates[0]
+): ThumbnailPresetBatchReadiness => {
+  const candidateId = typeof candidate.id === "string" ? candidate.id : "unknown";
+  const warnings: ThumbnailPresetBatchReadinessWarning[] = [];
+
+  if (isThumbnailPresetId(candidate.id)) {
+    warnings.push({
+      id: "preset-id-collision",
+      message: `${candidateId} は既存 preset id と衝突します。`,
+      tone: "warning"
+    });
+  }
+
+  if (!isThumbnailPresetVariantId(candidate.recommendedVariantId) || candidate.recommendedVariantId !== thumbnailDefaultPresetVariantId) {
+    warnings.push({
+      id: "unsupported-variant",
+      message: `${candidateId} は現時点で未対応の variant body を前提にしています。`,
+      tone: "warning"
+    });
+  }
+
+  const roles = toPresetBatchStringArray(candidate.requiredTextLayerRoles);
+  const unsupportedRoles = roles.filter((role) => !thumbnailPresetBatchTextLayerRoles.includes(role as ThumbnailPresetBatchTextLayerRole));
+  if (roles.length === 0 || unsupportedRoles.length > 0) {
+    warnings.push({
+      id: "unsupported-text-layer-role",
+      message: `${candidateId} に未対応の text layer role があります。`,
+      tone: "warning"
+    });
+  }
+
+  const dependencies = toPresetBatchStringArray(candidate.dependsOn);
+  for (const dependency of thumbnailPresetBatchDependencies) {
+    if (!dependencies.includes(dependency)) {
+      warnings.push({
+        id: `missing-${dependency}`,
+        message: `${candidateId} は ${dependency} contract の前提が不足しています。`,
+        tone: "warning"
+      });
+    }
+  }
+
+  if (thumbnailFontPolicy.allowsExternalNetworkFonts || thumbnailFontPolicy.allowsGoogleFonts || thumbnailFontPolicy.allowsCdnFonts) {
+    warnings.push({
+      id: "network-font-policy",
+      message: `${candidateId} は外部 network font 非依存の前提を満たしていません。`,
+      tone: "warning"
+    });
+  }
+
+  if (thumbnailUserMaterialStoragePolicy.localStorageStoresImageBody) {
+    warnings.push({
+      id: "material-storage-boundary",
+      message: `${candidateId} は user material storage boundary の前提を満たしていません。`,
+      tone: "warning"
+    });
+  }
+
+  return {
+    candidateId,
+    ready: warnings.length === 0,
+    warnings,
+    policy: thumbnailPresetBatchReadinessPolicy
+  };
+};
+
+export const getThumbnailPresetBatchReadinessSummary = (
+  candidates: readonly ThumbnailPresetBatchCandidate[] = thumbnailPresetBatchCandidates
+): ThumbnailPresetBatchReadinessSummary => {
+  const items = candidates.map((candidate) => getThumbnailPresetBatchReadiness(candidate));
+  return {
+    total: items.length,
+    readyCount: items.filter((item) => item.ready).length,
+    warningCount: items.reduce((total, item) => total + item.warnings.length, 0),
+    items
+  };
+};
 
 const uniquePresetIds = (values: unknown, limit = thumbnailPresets.length): ThumbnailPresetId[] => {
   if (!Array.isArray(values)) {

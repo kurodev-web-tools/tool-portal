@@ -97,6 +97,15 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - 次PR候補としての優先度:
   - P2。variant の境界が決まった後に進める。
 
+#### 実装で確定した境界
+
+- partial apply は `applyThumbnailPresetPartial(draft, targetPresetId)` の最小 helper として扱う。
+- pristine draft は target preset の初期 draft へそのまま切り替え、source preset の文字や user image は持ち越さない。
+- edited draft は target preset の初期背景、装飾、図形、色を使い、`見出し` / `時刻` / `サブ` / `ラベル` の主要テキスト値だけを target preset の text layer へ反映する。
+- user-added image layer は `data:image/` 由来または `素材:` layer name の画像レイヤーだけを保持し、crop metadata と既存 image layer schema を変えない。
+- source preset 初期の背景 / 装飾 image layer は保持せず、target preset 側の初期 layer に置き換える。
+- preset id、default variant relation、recent / favorite / lightweight variant refs、Schedule Calendar / SNS Split Image Maker handoff contract は変更しない。
+
 ### 3. common material library
 
 - 目的:

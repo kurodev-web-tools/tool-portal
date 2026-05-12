@@ -434,6 +434,36 @@
   - `git diff --check` PASS。LF -> CRLF warning のみ。
   - UI / layout / 表示文言変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。contract / docs consistency を優先。
 
+### P11: Portal / Cross Tool entry freeze consistency
+
+- 状態: done
+- 目的:
+  - PR #85 merge 後の `origin/main` 起点で、tool portal / cross-tool entry 導線が Schedule Calendar / Thumbnail Editor / SNS Split Image Maker の freeze 状態と矛盾していないか確認する。
+  - 大きな新機能、UI redesign、storage schema 変更、各ツール本体の新機能追加は入れない。
+- 確認結果:
+  - PR #85 `[codex] Document SNS split freeze boundary` は `main` / `origin/main` に merge 済みで、merge commit `fe80b9b` が両方に含まれることを確認した。
+  - `origin/main` 起点で `codex/portal-cross-tool-freeze-entry` / `.worktrees/portal-cross-tool-freeze-entry` を作成した。
+  - Portal / Tools entry の「公開中ツールは Schedule Calendar のみ」と読める文言を、現在の公開中3ツールへ同期した。
+  - Thumbnail Editor の入口説明を「用途別プリセットを選んで、文字と立ち絵を差し替える VTuber 向けサムネ組み立てツール」として読める文言へ寄せた。
+  - SNS Split Image Maker の入口説明を、X向け `2分割 / 3分割 / 4分割`、個別PNG/JPEG、ZIPなしの freeze 境界へ同期した。
+  - Schedule Calendar -> Thumbnail Editor -> SNS Split Image Maker の handoff は、URL本文なし / sessionStorage token / IndexedDB一時画像の既存境界と矛盾しないことを contract と docs で確認した。
+  - ZIP、X 以外の比率、複数形式 export、重い onboarding は現行機能のように表示していない。
+  - 各ツール本体、storage schema、public asset、font、外部 service / CDN は変更していない。
+- 幅別確認:
+  - `390px`: `/` と `/tools` で公開中3ツール文言、Schedule / Thumbnail / SNS Split の入口説明が読める。古い「Schedule Calendarのみ」「SNS 4分割のみ」文言なし。console error / warn 0。
+  - `820px`: `/` と `/tools` で公開中3ツール文言、Schedule / Thumbnail / SNS Split の入口説明が読める。古い「Schedule Calendarのみ」「SNS 4分割のみ」文言なし。console error / warn 0。
+  - `1024px`: sidebar + tools index で実装済み3ツールと説明文が一致。古い「Schedule Calendarのみ」「SNS 4分割のみ」文言なし。console error / warn 0。
+  - `1280px`: desktop portal で fan-brand suite が利用可能扱いになり、Thumbnail / SNS Split 入口と説明文が一致。console error / warn 0。
+  - `1366px`: desktop portal で3ツールのカード説明が freeze 境界と一致。console error / warn 0。
+- 検証:
+  - RED: `node scripts/tool-portal-entry-contract.mjs` は Thumbnail Editor entry が `用途別プリセット` を含まない既存挙動で失敗することを確認。
+  - GREEN: `node scripts/tool-portal-entry-contract.mjs` PASS。
+  - `node scripts/sns-split-image-maker-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性

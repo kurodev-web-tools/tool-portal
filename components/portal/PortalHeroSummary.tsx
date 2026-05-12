@@ -20,10 +20,10 @@ export function PortalHeroSummary() {
         </h1>
         <p className="mt-5 max-w-3xl text-base leading-8 text-foreground">
           <span className="block">
-            公開版では、ポータル、ツール一覧、Schedule Calendar を最小セットとして提供します。
+            公開版では、Schedule Calendar、Thumbnail Editor、SNS分割画像メーカーを入口から直接開けます。
           </span>
           <span className="block">
-            そのほかのツールは準備中として表示し、利用できる導線と分けています。
+            後続候補は準備中として表示し、利用できる導線と分けています。
           </span>
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">

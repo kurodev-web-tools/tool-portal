@@ -42,7 +42,7 @@ export const tools: ToolDefinition[] = [
   {
     id: "schedule-calendar",
     name: "Schedule Calendar",
-    description: "配信スケジュールの作成・管理ができるカレンダーツールです。",
+    description: "配信予定と告知文を管理し、サムネ作成やSNS分割画像作成へ一時handoffできます。",
     category: "schedule",
     status: "available",
     suite: "stream-workflow",
@@ -86,7 +86,7 @@ export const tools: ToolDefinition[] = [
   {
     id: "thumbnail-editor",
     name: "Thumbnail Editor",
-    description: "配信告知や切り抜き用の16:9サムネイルを手動で作成・書き出しできます。",
+    description: "用途別プリセットを選んで、文字と立ち絵を差し替えるVTuber向けサムネ組み立てツールです。",
     category: "design",
     status: "available",
     suite: "fan-brand",
@@ -97,7 +97,7 @@ export const tools: ToolDefinition[] = [
   {
     id: "sns-split-image-maker",
     name: "SNS分割画像メーカー",
-    description: "SNS投稿向けの4分割画像を投稿順どおりに調整・書き出しできます。",
+    description: "X向けの2分割 / 3分割 / 4分割画像を手動調整し、投稿順どおりに個別PNG/JPEGで書き出せます。",
     category: "design",
     status: "available",
     suite: "fan-brand",

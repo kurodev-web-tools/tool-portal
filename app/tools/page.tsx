@@ -5,7 +5,7 @@ import { PortalToolsIndex } from "@/components/portal/PortalToolsIndex";
 
 export const metadata: Metadata = {
   title: "Tools",
-  description: "V Streamer Toolsのツール一覧。公開版で利用できるSchedule Calendarと準備中の候補を確認できます。"
+  description: "V Streamer Toolsのツール一覧。公開版で利用できるSchedule Calendar、Thumbnail Editor、SNS分割画像メーカーと準備中の候補を確認できます。"
 };
 
 export default function ToolsPage() {

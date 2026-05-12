@@ -470,6 +470,13 @@ const readPngAlphaBounds = (filePath) => {
 
 assert.ok(Array.isArray(lib.thumbnailMaterialLibrary), "thumbnail material library is exported");
 assert.equal(typeof lib.createThumbnailMaterialLayer, "function", "material layer factory is exported");
+assert.equal(typeof lib.thumbnailProjectMaterialBoundary, "object", "project material boundary is exported");
+assert.equal(typeof lib.thumbnailUserMaterialStoragePolicy, "object", "user material storage policy is exported");
+assert.equal(typeof lib.normalizeThumbnailUserMaterialRef, "function", "user material ref normalizer is exported");
+assert.equal(typeof lib.normalizeThumbnailUserMaterialRefs, "function", "user material ref list normalizer is exported");
+assert.equal(typeof lib.createThumbnailUserMaterialLayer, "function", "user material layer factory is exported");
+assert.equal(typeof lib.applyThumbnailUserMaterialLayerFallback, "function", "user material fallback helper is exported");
+assert.equal(typeof lib.replaceThumbnailUserMaterialLayerRef, "function", "user material replace helper is exported");
 assert.equal(lib.thumbnailMaterialCategoryLabels["date-badge"], "バッジ", "date-badge category is shown as バッジ for the category PR");
 assert.equal(lib.thumbnailMaterialCategoryLabels.frame, "フレーム / パネル", "frame category is shown as フレーム / パネル for the category PR");
 assert.equal(lib.thumbnailMaterialCategoryLabels.divider, "HUD線 / 区切り", "divider category is shown as HUD線 / 区切り for the category PR");
@@ -483,9 +490,33 @@ assert.deepEqual(
   "material library exposes the expected first batch in review order"
 );
 
+assert.deepEqual(
+  lib.thumbnailProjectMaterialBoundary,
+  {
+    owner: "project",
+    imageStorage: "public-assets",
+    mutableByUser: false,
+    srcPrefix: "/assets/images/thumbnail-editor/"
+  },
+  "registered material stays project-bound and backed by repo assets"
+);
+assert.deepEqual(
+  lib.thumbnailUserMaterialStoragePolicy,
+  {
+    owner: "user",
+    imageStorage: "indexeddb",
+    localStorageStoresImageBody: false,
+    localStorageStores: ["metadata", "storageId"],
+    supportedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
+  },
+  "user-added material stores image bodies outside localStorage"
+);
+
 for (const expected of expectedMaterials) {
   const material = lib.thumbnailMaterialLibrary.find((item) => item.id === expected.id);
   assert.ok(material, `${expected.id} material is registered`);
+  assert.equal(Object.hasOwn(material, "storageId"), false, `${expected.id} does not mix user storage ids into project material`);
+  assert.equal(Object.hasOwn(material, "materialRef"), false, `${expected.id} does not mix user refs into project material`);
   assert.equal(material.category, expected.category, `${expected.id} category is stable`);
   assert.ok(categories.has(material.category), `${expected.id} category belongs to the compact first-batch set`);
   assert.equal(material.src, expected.src, `${expected.id} source is stable`);
@@ -531,6 +562,109 @@ for (const expected of expectedMaterials) {
 }
 
 assert.equal(lib.createThumbnailMaterialLayer("missing-material"), null, "unknown material ids are ignored");
+
+const userMaterialRef = lib.normalizeThumbnailUserMaterialRef({
+  id: "user-material-01",
+  name: "  配信者ロゴ  ",
+  storageId: "thumb-user-material-logo-01",
+  mimeType: "image/png",
+  width: 1200,
+  height: 630,
+  byteSize: 348_512,
+  createdAt: "2026-05-12T00:00:00.000Z",
+  updatedAt: "2026-05-12T01:00:00.000Z",
+  src: "data:image/png;base64,should-not-survive",
+  imageData: "data:image/png;base64,should-not-survive",
+  blob: { size: 348_512 },
+  draft: { layers: [] }
+});
+
+assert.deepEqual(
+  userMaterialRef,
+  {
+    id: "user-material-01",
+    name: "配信者ロゴ",
+    storageId: "thumb-user-material-logo-01",
+    storage: "indexeddb",
+    mimeType: "image/png",
+    width: 1200,
+    height: 630,
+    byteSize: 348_512,
+    createdAt: "2026-05-12T00:00:00.000Z",
+    updatedAt: "2026-05-12T01:00:00.000Z"
+  },
+  "user material ref keeps only lightweight metadata and storage id"
+);
+assert.equal(JSON.stringify(userMaterialRef).includes("data:image"), false, "user material ref serialization excludes image bodies");
+assert.equal(
+  lib.normalizeThumbnailUserMaterialRef({
+    id: "user-material-02",
+    name: "ロゴ",
+    storageId: "thumb-user-material-logo-02",
+    storage: "localStorage",
+    mimeType: "image/png"
+  }),
+  null,
+  "user material refs cannot claim localStorage image storage"
+);
+assert.deepEqual(
+  lib.normalizeThumbnailUserMaterialRefs(
+    [
+      userMaterialRef,
+      { ...userMaterialRef, id: "user-material-duplicate" },
+      { ...userMaterialRef, id: "user-material-02", storageId: "thumb-user-material-logo-02", imageData: "data:image/png;base64,drop-me" },
+      { ...userMaterialRef, id: "bad-mime", storageId: "thumb-user-material-logo-03", mimeType: "image/gif" }
+    ],
+    4
+  ),
+  [
+    userMaterialRef,
+    { ...userMaterialRef, id: "user-material-02", storageId: "thumb-user-material-logo-02" }
+  ],
+  "recent and favorite user material refs stay lightweight and unique by storage id"
+);
+
+const userMaterialLayer = lib.createThumbnailUserMaterialLayer(userMaterialRef);
+assert.equal(userMaterialLayer.type, "image", "user material creates an image layer");
+assert.equal(userMaterialLayer.name, "素材: 配信者ロゴ", "user material layer remains recognizable as material");
+assert.equal(userMaterialLayer.src, lib.thumbnailUserMaterialFallbackImageSrc, "user material layer does not embed the original image body in draft src");
+assert.deepEqual(userMaterialLayer.materialRef, userMaterialRef, "user material layer carries the lightweight ref");
+assert.equal(JSON.stringify(userMaterialLayer).includes("should-not-survive"), false, "user material layer serialization excludes dropped image bodies");
+
+const draftWithUserMaterial = {
+  ...lib.createDraftFromPreset("stream_announce"),
+  layers: [...lib.createDraftFromPreset("stream_announce").layers, { ...userMaterialLayer, id: "user-material-layer", crop: { x: 0, y: 0, width: 1, height: 0.5 } }],
+  selectedLayerId: "user-material-layer"
+};
+const deletedFallbackDraft = lib.applyThumbnailUserMaterialLayerFallback(draftWithUserMaterial, "thumb-user-material-logo-01", "deleted");
+const deletedFallbackLayer = deletedFallbackDraft.layers.find((layer) => layer.id === "user-material-layer");
+assert.equal(deletedFallbackLayer.type, "image", "delete fallback keeps an image layer instead of corrupting the draft");
+assert.equal(deletedFallbackLayer.src, lib.thumbnailUserMaterialFallbackImageSrc, "delete fallback uses the shared missing material image");
+assert.deepEqual(deletedFallbackLayer.crop, { x: 0, y: 0, width: 1, height: 0.5 }, "delete fallback preserves crop metadata");
+assert.deepEqual(deletedFallbackLayer.materialRef, userMaterialRef, "delete fallback keeps the lightweight ref for recovery messaging");
+assert.ok(deletedFallbackLayer.name.includes("削除済み"), "delete fallback labels the missing user material state");
+
+const replacedRef = {
+  ...userMaterialRef,
+  id: "user-material-03",
+  name: "差し替えロゴ",
+  storageId: "thumb-user-material-logo-03",
+  width: 1024,
+  height: 512,
+  byteSize: 222_000,
+  updatedAt: "2026-05-12T02:00:00.000Z"
+};
+const replacedDraft = lib.replaceThumbnailUserMaterialLayerRef(draftWithUserMaterial, "user-material-layer", replacedRef);
+const replacedLayer = replacedDraft.layers.find((layer) => layer.id === "user-material-layer");
+assert.equal(replacedLayer.name, "素材: 差し替えロゴ", "replace helper updates the material layer label");
+assert.deepEqual(replacedLayer.materialRef, replacedRef, "replace helper swaps to the new lightweight ref");
+assert.equal(replacedLayer.src, lib.thumbnailUserMaterialFallbackImageSrc, "replace helper does not persist an image body in draft src");
+assert.deepEqual(replacedLayer.crop, { x: 0, y: 0, width: 1, height: 0.5 }, "replace helper preserves crop metadata");
+
+const loadFailureDraft = lib.applyThumbnailUserMaterialLayerFallback(replacedDraft, "thumb-user-material-logo-03", "load-failed");
+const loadFailureLayer = loadFailureDraft.layers.find((layer) => layer.id === "user-material-layer");
+assert.ok(loadFailureLayer.name.includes("読み込み失敗"), "load failure fallback has a visible boundary");
+assert.equal(JSON.stringify(loadFailureDraft).includes("data:image/png;base64"), false, "fallback drafts do not store uploaded image bodies");
 
 const newMaterialSources = new Set(expectedMaterials.filter((item) => item.src.startsWith(materialPrefix)).map((item) => item.src));
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(labelMaterialPrefix))) {

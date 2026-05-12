@@ -188,6 +188,41 @@ assert.deepEqual(
   Object.keys(editedWithUserStandee.layers.find((layer) => layer.id === "user-standee")).sort(),
   "partial apply does not change image layer schema keys"
 );
+
+const userMaterialRef = lib.normalizeThumbnailUserMaterialRef({
+  id: "user-material-01",
+  name: "ユーザー追加ロゴ",
+  storageId: "thumb-user-material-logo-01",
+  mimeType: "image/png",
+  width: 1200,
+  height: 630,
+  byteSize: 348_512
+});
+const userMaterialLayer = {
+  ...lib.createThumbnailUserMaterialLayer(userMaterialRef),
+  id: "user-material-layer",
+  x: 100,
+  y: 120,
+  width: 360,
+  height: 180,
+  crop: { x: 0, y: 0, width: 1, height: 0.75 }
+};
+const editedWithUserMaterial = {
+  ...edited,
+  selectedLayerId: "user-material-layer",
+  layers: [...edited.layers, userMaterialLayer]
+};
+const partiallyAppliedWithUserMaterial = lib.applyThumbnailPresetPartial(editedWithUserMaterial, "karaoke");
+assert.deepEqual(
+  partiallyAppliedWithUserMaterial.layers.find((layer) => layer.id === "user-material-layer"),
+  userMaterialLayer,
+  "partial apply preserves user-added material image layers and lightweight refs"
+);
+assert.equal(
+  JSON.stringify(partiallyAppliedWithUserMaterial).includes("data:image/png;base64"),
+  false,
+  "partial apply does not introduce stored user material image bodies"
+);
 assert.equal(
   JSON.stringify(lib.thumbnailMaterialLibrary.map((material) => material.id)),
   materialIdsBeforePartialApply,

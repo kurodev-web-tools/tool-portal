@@ -190,6 +190,33 @@
   - `npx tsc --noEmit` PASS。
   - UI 表示変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。
 
+### P3: Thumbnail Editor common material library contract
+
+- 状態: done
+- 目的:
+  - project-bound material と user-added material の責務を分ける。
+  - user-added material の画像本体を localStorage に置かず、IndexedDB など画像向け storage を前提にした軽量 ref 境界を固定する。
+  - 既存 registered material / preset / partial apply / recent / favorite / handoff 互換を壊さない。
+- 実施内容:
+  - PR #77 `[codex] Add thumbnail partial preset apply contract` が `main` / `origin/main` に merge 済みで、merge commit `c2f953f` が `origin/main` に含まれることを確認した。
+  - `origin/main` 起点で `codex/thumbnail-common-material-contract` / `.worktrees/thumbnail-common-material-contract` を作成した。
+  - `scripts/thumbnail-material-assets-contract.mjs` と `scripts/thumbnail-preset-apply-safety-contract.mjs` を先に更新し、RED (`thumbnailProjectMaterialBoundary` 未export / `normalizeThumbnailUserMaterialRef` 未実装) を確認してから実装した。
+  - `lib/thumbnail-editor.ts` に project-bound material boundary、user material storage policy、軽量 `ThumbnailUserMaterialRef`、ref normalizer、user material layer factory、delete / replace / load failure fallback helper を追加した。
+  - user-added material layer は optional `materialRef` を持つ image layer の非破壊拡張に留め、draft `src` へユーザー画像本体を永続化しない。
+  - partial preset apply で `materialRef` を持つ user-added material layer が保持される contract を追加した。
+  - 既存 material 登録、asset、preset 本体、text / image layer schema の既存キー、crop 仕様、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+  - 実装で確定した storage boundary を `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` に追記した。
+- 検証:
+  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-variants-contract.mjs` PASS。
+  - `node scripts/thumbnail-layer-management-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - UI 表示変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性

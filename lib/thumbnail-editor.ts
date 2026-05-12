@@ -35,6 +35,33 @@ export type ThumbnailImageCrop = {
   width: number;
   height: number;
 };
+export type ThumbnailProjectMaterialBoundary = {
+  owner: "project";
+  imageStorage: "public-assets";
+  mutableByUser: false;
+  srcPrefix: "/assets/images/thumbnail-editor/";
+};
+export type ThumbnailUserMaterialStoragePolicy = {
+  owner: "user";
+  imageStorage: "indexeddb";
+  localStorageStoresImageBody: false;
+  localStorageStores: ["metadata", "storageId"];
+  supportedMimeTypes: ThumbnailUserMaterialMimeType[];
+};
+export type ThumbnailUserMaterialMimeType = "image/png" | "image/jpeg" | "image/webp" | "image/svg+xml";
+export type ThumbnailUserMaterialRef = {
+  id: string;
+  name: string;
+  storageId: string;
+  storage: "indexeddb";
+  mimeType: ThumbnailUserMaterialMimeType;
+  width?: number;
+  height?: number;
+  byteSize?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type ThumbnailUserMaterialFallbackReason = "deleted" | "replaced" | "load-failed";
 export type ThumbnailStandeePlacementPresetId =
   | "solo-right-half"
   | "solo-left-half"
@@ -103,6 +130,7 @@ export type ThumbnailBaseLayer = {
 export type ThumbnailImageLayer = ThumbnailBaseLayer & {
   type: "image";
   src: string;
+  materialRef?: ThumbnailUserMaterialRef;
   crop?: ThumbnailImageCrop;
 };
 
@@ -187,6 +215,19 @@ export const thumbnailMaterialCategoryLabels: Record<ThumbnailMaterialCategory, 
   accent: "光 / グリント / エフェクト",
   divider: "HUD線 / 区切り",
   frame: "フレーム / パネル"
+};
+export const thumbnailProjectMaterialBoundary: ThumbnailProjectMaterialBoundary = {
+  owner: "project",
+  imageStorage: "public-assets",
+  mutableByUser: false,
+  srcPrefix: "/assets/images/thumbnail-editor/"
+};
+export const thumbnailUserMaterialStoragePolicy: ThumbnailUserMaterialStoragePolicy = {
+  owner: "user",
+  imageStorage: "indexeddb",
+  localStorageStoresImageBody: false,
+  localStorageStores: ["metadata", "storageId"],
+  supportedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
 };
 
 export type ThumbnailPresetFilter = {
@@ -1034,7 +1075,7 @@ export const isThumbnailDraftPristineForPreset = (draft: ThumbnailEditorDraft): 
 };
 
 const isThumbnailUserImageLayer = (layer: ThumbnailLayer): layer is ThumbnailImageLayer =>
-  layer.type === "image" && (layer.src.startsWith("data:image/") || layer.name.startsWith("素材:"));
+  layer.type === "image" && (layer.src.startsWith("data:image/") || layer.name.startsWith("素材:") || Boolean(layer.materialRef));
 
 export const applyThumbnailPresetPartial = (
   draft: ThumbnailEditorDraft,
@@ -1131,6 +1172,172 @@ export const createImageLayer = (src: string): ThumbnailImageLayer => ({
   opacity: 1,
   blur: 0
 });
+
+export const thumbnailUserMaterialFallbackImageSrc = svgDataUrl("USER MATERIAL", "#111827", "#475569", "#e5e7eb");
+
+const thumbnailUserMaterialMimeTypes: ThumbnailUserMaterialMimeType[] = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+const thumbnailUserMaterialFallbackLabels: Record<ThumbnailUserMaterialFallbackReason, string> = {
+  deleted: "削除済み",
+  replaced: "差し替え待ち",
+  "load-failed": "読み込み失敗"
+};
+const normalizeThumbnailUserMaterialText = (value: unknown, fallback: string, maxLength: number) => {
+  const normalized = typeof value === "string" ? value.trim().replace(/\s+/g, " ").slice(0, maxLength) : "";
+  return normalized || fallback;
+};
+const normalizeThumbnailUserMaterialPositiveNumber = (value: unknown) =>
+  typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.round(value) : undefined;
+const normalizeThumbnailUserMaterialTimestamp = (value: unknown) =>
+  typeof value === "string" && !Number.isNaN(Date.parse(value)) ? value : undefined;
+
+export const normalizeThumbnailUserMaterialRef = (value: unknown): ThumbnailUserMaterialRef | null => {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const ref = value as Partial<ThumbnailUserMaterialRef>;
+  if (ref.storage && ref.storage !== "indexeddb") {
+    return null;
+  }
+  if (!ref.mimeType || !thumbnailUserMaterialMimeTypes.includes(ref.mimeType)) {
+    return null;
+  }
+
+  const id = normalizeThumbnailUserMaterialText(ref.id, "", 72);
+  const storageId = normalizeThumbnailUserMaterialText(ref.storageId, "", 96);
+  if (!id || !storageId || id.startsWith("data:") || storageId.startsWith("data:")) {
+    return null;
+  }
+
+  const normalized: ThumbnailUserMaterialRef = {
+    id,
+    name: normalizeThumbnailUserMaterialText(ref.name, "ユーザー素材", 32),
+    storageId,
+    storage: "indexeddb",
+    mimeType: ref.mimeType
+  };
+  const width = normalizeThumbnailUserMaterialPositiveNumber(ref.width);
+  const height = normalizeThumbnailUserMaterialPositiveNumber(ref.height);
+  const byteSize = normalizeThumbnailUserMaterialPositiveNumber(ref.byteSize);
+  const createdAt = normalizeThumbnailUserMaterialTimestamp(ref.createdAt);
+  const updatedAt = normalizeThumbnailUserMaterialTimestamp(ref.updatedAt);
+  if (width) normalized.width = width;
+  if (height) normalized.height = height;
+  if (byteSize) normalized.byteSize = byteSize;
+  if (createdAt) normalized.createdAt = createdAt;
+  if (updatedAt) normalized.updatedAt = updatedAt;
+  return normalized;
+};
+
+export const normalizeThumbnailUserMaterialRefs = (values: unknown, limit = 24): ThumbnailUserMaterialRef[] => {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  const refs: ThumbnailUserMaterialRef[] = [];
+  for (const value of values) {
+    const ref = normalizeThumbnailUserMaterialRef(value);
+    if (!ref || refs.some((item) => item.storageId === ref.storageId)) {
+      continue;
+    }
+
+    refs.push(ref);
+    if (refs.length >= limit) {
+      break;
+    }
+  }
+  return refs;
+};
+
+const getThumbnailUserMaterialInitialSize = (ref: ThumbnailUserMaterialRef, canvas: ThumbnailCanvas) => {
+  const sourceWidth = ref.width && ref.width > 0 ? ref.width : 520;
+  const sourceHeight = ref.height && ref.height > 0 ? ref.height : 330;
+  const maxWidth = canvas.width * 0.42;
+  const maxHeight = canvas.height * 0.46;
+  const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight, 1);
+  return {
+    width: Math.round(sourceWidth * scale),
+    height: Math.round(sourceHeight * scale)
+  };
+};
+
+export const createThumbnailUserMaterialLayer = (
+  value: ThumbnailUserMaterialRef,
+  canvas: ThumbnailCanvas = thumbnailCanvasSizes.hd
+): ThumbnailImageLayer => {
+  const materialRef = normalizeThumbnailUserMaterialRef(value) ?? {
+    id: "user-material",
+    name: "ユーザー素材",
+    storageId: "missing-user-material",
+    storage: "indexeddb",
+    mimeType: "image/png"
+  };
+  const size = getThumbnailUserMaterialInitialSize(materialRef, canvas);
+  return {
+    id: createId("image"),
+    name: `素材: ${materialRef.name}`,
+    type: "image",
+    src: thumbnailUserMaterialFallbackImageSrc,
+    x: Math.round((canvas.width - size.width) / 2),
+    y: Math.round((canvas.height - size.height) / 2),
+    width: size.width,
+    height: size.height,
+    rotation: 0,
+    opacity: 1,
+    blur: 0,
+    locked: false,
+    materialRef
+  };
+};
+
+export const applyThumbnailUserMaterialLayerFallback = (
+  draft: ThumbnailEditorDraft,
+  storageId: string,
+  reason: ThumbnailUserMaterialFallbackReason
+): ThumbnailEditorDraft => {
+  const label = thumbnailUserMaterialFallbackLabels[reason];
+  return {
+    ...draft,
+    layers: draft.layers.map((layer) => {
+      if (layer.type !== "image" || layer.materialRef?.storageId !== storageId) {
+        return layer;
+      }
+      return {
+        ...layer,
+        name: `素材: ${layer.materialRef.name}（${label}）`,
+        src: thumbnailUserMaterialFallbackImageSrc
+      };
+    }),
+    updatedAt: nowIso()
+  };
+};
+
+export const replaceThumbnailUserMaterialLayerRef = (
+  draft: ThumbnailEditorDraft,
+  layerId: string,
+  nextRefValue: ThumbnailUserMaterialRef
+): ThumbnailEditorDraft => {
+  const nextRef = normalizeThumbnailUserMaterialRef(nextRefValue);
+  if (!nextRef) {
+    return draft;
+  }
+
+  return {
+    ...draft,
+    layers: draft.layers.map((layer) =>
+      layer.id === layerId && layer.type === "image"
+        ? {
+            ...layer,
+            name: `素材: ${nextRef.name}`,
+            src: thumbnailUserMaterialFallbackImageSrc,
+            materialRef: nextRef
+          }
+        : layer
+    ),
+    selectedLayerId: draft.layers.some((layer) => layer.id === layerId) ? layerId : draft.selectedLayerId,
+    updatedAt: nowIso()
+  };
+};
 
 export const thumbnailMaterialLibrary = [
   {
@@ -1767,7 +1974,9 @@ const normalizeLayer = (layer: unknown, canvas: ThumbnailCanvas): ThumbnailLayer
     }
 
     const crop = normalizeImageCrop(image.crop);
-    return crop ? { ...base, type: "image", src: image.src, crop } : { ...base, type: "image", src: image.src };
+    const materialRef = normalizeThumbnailUserMaterialRef(image.materialRef);
+    const imageLayer = crop ? { ...base, type: "image" as const, src: image.src, crop } : { ...base, type: "image" as const, src: image.src };
+    return materialRef ? { ...imageLayer, materialRef } : imageLayer;
   }
 
   if (item.type === "shape") {

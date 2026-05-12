@@ -104,6 +104,8 @@ Schedule Calendar 由来の handoff payload は version `1` で、次のテキ�
   "version": 1,
   "source": "schedule-calendar",
   "target": "thumbnail-editor",
+  "createdAt": "2026-05-03T10:30:00.000Z",
+  "expiresAt": "2026-05-03T11:00:00.000Z",
   "eventId": "event-...",
   "title": "配信タイトル",
   "date": "2026-05-03",
@@ -121,6 +123,7 @@ Schedule Calendar 由来の handoff payload は version `1` で、次のテキ�
 
 Schedule Calendar 由来の payload では画像本体は渡しません。
 payload は30分で期限切れ扱いにし、期限切れ、対象ツール不一致、壊れた JSON、token 不一致は安全に無視して通常起動します。
+`sessionStorage` へ一時 payload を書き込めない場合は遷移せず、元ツール側でエラー表示に戻します。
 Thumbnail Editor は受け取ったタイトル、日時、告知文、カテゴリ / プラットフォームを、プリセット内の `見出し`、`時刻`、`サブ`、`ラベル` テキストへ初期反映します。
 Schedule Calendar から遷移してきた場合は、プリセット変更やキャンバスサイズ変更をしても同じ予定テキストを新しいプリセットへ再適用します。
 handoff 中のプリセット変更では、確認UI上でも予定テキストを引き継ぐ方針を明示し、プリセットを適用するたびに予定テキストを初期テキストとして再配置します。

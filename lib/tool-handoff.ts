@@ -137,8 +137,12 @@ export function writeToolHandoff(payload: ToolHandoffPayload) {
   }
 
   const token = createHandoffToken();
-  window.sessionStorage.setItem(`${toolHandoffStoragePrefix}${token}`, JSON.stringify(payload));
-  return token;
+  try {
+    window.sessionStorage.setItem(`${toolHandoffStoragePrefix}${token}`, JSON.stringify(payload));
+    return token;
+  } catch {
+    return null;
+  }
 }
 
 export function buildToolHandoffUrl(target: ToolHandoffTarget, token: string) {

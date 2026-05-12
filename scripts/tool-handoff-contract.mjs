@@ -23,6 +23,45 @@ const lib = testModule.exports;
 assert.equal(typeof lib.createThumbnailToSnsHandoffPayload, "function", "thumbnail -> sns payload factory exists");
 assert.equal(typeof lib.normalizeThumbnailToSnsHandoffPayload, "function", "thumbnail -> sns normalizer exists");
 
+const schedulePayloadInput = {
+  eventId: "schedule-event-1",
+  title: "定期配信",
+  date: "2026-05-05",
+  startTime: "20:00",
+  endTime: "21:00",
+  category: "stream",
+  categoryLabel: "配信",
+  platform: "YouTube",
+  announcementText: "本日20時から配信します。",
+  hashtags: "#VTuber #配信告知",
+  announcementStatus: "copy-ready",
+  announcementStatusLabel: "投稿文準備済み"
+};
+
+const scheduleToThumbnailPayload = lib.createScheduleHandoffPayload("thumbnail-editor", schedulePayloadInput);
+
+assert.equal(scheduleToThumbnailPayload.version, 1);
+assert.equal(scheduleToThumbnailPayload.source, "schedule-calendar");
+assert.equal(scheduleToThumbnailPayload.target, "thumbnail-editor");
+assert.equal(scheduleToThumbnailPayload.title, "定期配信");
+assert.equal(scheduleToThumbnailPayload.announcementText, "本日20時から配信します。");
+assert.equal("imageStorageId" in scheduleToThumbnailPayload, false, "schedule handoff does not carry image body refs");
+assert.equal(lib.normalizeScheduleHandoffPayload(scheduleToThumbnailPayload, "thumbnail-editor").eventId, "schedule-event-1");
+assert.equal(
+  lib.normalizeScheduleHandoffPayload({ ...scheduleToThumbnailPayload, target: "sns-split-image-maker" }, "thumbnail-editor"),
+  null,
+  "schedule target mismatch is ignored"
+);
+assert.equal(
+  lib.normalizeScheduleHandoffPayload({ ...scheduleToThumbnailPayload, expiresAt: "2020-01-01T00:00:00.000Z" }, "thumbnail-editor"),
+  null,
+  "expired schedule payload is ignored"
+);
+
+const scheduleToSnsPayload = lib.createScheduleHandoffPayload("sns-split-image-maker", schedulePayloadInput);
+assert.equal(scheduleToSnsPayload.target, "sns-split-image-maker");
+assert.equal(lib.normalizeScheduleHandoffPayload(scheduleToSnsPayload, "sns-split-image-maker").title, "定期配信");
+
 const payload = lib.createThumbnailToSnsHandoffPayload({
   imageStorageId: "thumbnail-handoff-test",
   title: "配信告知サムネ",
@@ -63,5 +102,34 @@ assert.equal(
 
 const url = lib.buildToolHandoffUrl("sns-split-image-maker", "short-token");
 assert.equal(url, "/tools/sns-split-image-maker?handoff=short-token&preset=split-4");
+assert.equal(url.includes("配信告知サムネ"), false, "handoff url does not contain title text");
+assert.equal(url.includes("data:image"), false, "handoff url does not contain image data");
+
+const storage = new Map();
+global.window = {
+  location: { search: "?handoff=ok-token" },
+  sessionStorage: {
+    setItem: (key, value) => storage.set(key, value),
+    getItem: (key) => storage.get(key) ?? null,
+    removeItem: (key) => storage.delete(key)
+  }
+};
+const token = lib.writeToolHandoff(scheduleToThumbnailPayload);
+assert.equal(typeof token, "string", "writeToolHandoff returns a token");
+global.window.location.search = `?handoff=${token}`;
+assert.equal(lib.readToolHandoff("thumbnail-editor").title, "定期配信");
+assert.equal(lib.readToolHandoff("thumbnail-editor"), null, "handoff payload is single-use");
+global.window.location.search = "?handoff=missing-token";
+assert.equal(lib.readToolHandoff("thumbnail-editor"), null, "missing token returns normal startup fallback");
+
+global.window = {
+  sessionStorage: {
+    setItem: () => {
+      throw new Error("quota exceeded");
+    }
+  }
+};
+assert.equal(lib.writeToolHandoff(scheduleToThumbnailPayload), null, "sessionStorage write failure returns null");
+delete global.window;
 
 console.log("tool-handoff contract checks passed");

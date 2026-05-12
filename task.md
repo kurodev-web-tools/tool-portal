@@ -303,6 +303,36 @@
   - `npx tsc --noEmit` PASS。
   - UI 表示 / layout / 文言変更なしのため、`390 / 820 / 1024 / 1280 / 1366px` の幅別確認は不要。既存 panel / export summary の表示経路は変えず、shared quality guard helper の返す短文 item だけを増やした。
 
+### P7: Schedule Calendar freeze readiness audit
+
+- 状態: done
+- 目的:
+  - PR #81 merge 後の `origin/main` 起点で、Schedule Calendar の freeze 前安定性、既存データ、localStorage migration、主要幅、入力導線のリスクを確認する。
+  - 大きな新機能や UI redesign は入れず、明確な軽微バグだけ最小修正する。
+- 実施内容:
+  - PR #81 `[codex] Add thumbnail quality guard expansion` が `main` / `origin/main` に merge 済みで、merge commit `c83649c` が `origin/main` 先頭にあることを確認した。
+  - `origin/main` 起点で `codex/schedule-calendar-freeze-readiness` / `.worktrees/schedule-calendar-freeze-readiness` を作成した。
+  - Schedule Calendar の現状実装、README、stability doc、future tasks、`task.md` の該当箇所を確認した。
+  - 既存の localStorage key `v-streamer-tools:schedule-calendar-events:v1` と payload version `2` は変更していない。
+  - 旧データや import で `endTime: "24:00"` が残っている場合、ブラウザの時刻入力で表示できる `23:59` へ migration 時に丸める最小修正を入れた。
+  - `25:00` / `99:99` などの不正時刻は `20:00 - 21:00` の安全な範囲へ fallback するようにした。
+  - 番組タイトル、メモ・備考、告知文メモ、カテゴリ、プラットフォーム、開始 / 終了時刻は既存フォームと独自メニューで編集導線があることを確認した。
+  - Thumbnail Editor / SNS Split Image Maker / thumbnail asset / font / portal shell は変更していない。
+- 幅別確認:
+  - `390px`: mobile integrated UI。下部タブ表示、右パネルタブ非表示、FAB からフォームを開くとタイトル / メモ / カテゴリ / プラットフォーム / 保存が表示。console error 0。
+  - `820px`: mobile integrated UI。下部タブ表示、右パネルタブ非表示、FAB からフォームを開くとタイトル / メモ / カテゴリ / プラットフォーム / 保存が表示。console error 0。
+  - `1024px`: tablet two-pane UI。右パネルタブ表示、予定管理フォーム内のタイトル / メモ / カテゴリ / プラットフォームが表示。console error 0。
+  - `1280px`: desktop two-pane UI。右パネルタブ表示、予定管理フォーム内のタイトル / メモ / カテゴリ / プラットフォームが表示。console error 0。
+  - `1366px`: desktop two-pane UI。右パネルタブ表示、予定管理フォーム内のタイトル / メモ / カテゴリ / プラットフォームが表示。console error 0。
+- 検証:
+  - RED: `node scripts/schedule-calendar-storage-contract.mjs` は `24:00` がそのまま残る既存挙動で失敗することを確認。
+  - GREEN: `node scripts/schedule-calendar-storage-contract.mjs` PASS。
+  - Browser regression on `http://localhost:3002/tools/schedule-calendar/`: `390 / 820 / 1024 / 1280 / 1366px` PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - `docs/SCHEDULE_CALENDAR_STABILITY_CHECK_2026-04-28.md` に freeze readiness の確認結果を追記。
+
 ## Thumbnail Editor
 
 ### 固定済みの方向性

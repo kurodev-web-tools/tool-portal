@@ -311,6 +311,54 @@ function normalizeText(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function getTimeMinutes(time: string): number {
+  const [hour, minute] = time.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+function getTimeAfter(startTime: string, durationMinutes: number): string {
+  const totalMinutes = Math.min(24 * 60 - 1, getTimeMinutes(startTime) + durationMinutes);
+  const hour = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function normalizeTime(value: unknown, fallback: string, options: { allowEndOfDay?: boolean } = {}): string {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  if (!match) {
+    return fallback;
+  }
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (options.allowEndOfDay && hour === 24 && minute === 0) {
+    return "23:59";
+  }
+
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return fallback;
+  }
+
+  return value;
+}
+
+function normalizeEventTimeRange(startValue: unknown, endValue: unknown): { startTime: string; endTime: string } {
+  const fallbackStartTime = "20:00";
+  const fallbackEndTime = "21:00";
+  const startTime = normalizeTime(startValue, fallbackStartTime);
+  const endTime = normalizeTime(endValue, getTimeAfter(startTime, 60), { allowEndOfDay: true });
+
+  if (getTimeMinutes(endTime) <= getTimeMinutes(startTime)) {
+    return { startTime: fallbackStartTime, endTime: fallbackEndTime };
+  }
+
+  return { startTime, endTime };
+}
+
 export function normalizeEvents(value: unknown): ScheduleEvent[] {
   if (!Array.isArray(value)) {
     return [];
@@ -337,6 +385,9 @@ export function normalizeEvents(value: unknown): ScheduleEvent[] {
         return false;
       }
 
+      const normalizedTimeRange = normalizeEventTimeRange(event.startTime, event.endTime);
+      event.startTime = normalizedTimeRange.startTime;
+      event.endTime = normalizedTimeRange.endTime;
       event.recurrence = normalizeRecurrence(event.recurrence);
       event.recurrenceCount = normalizeRecurrenceCount(event.recurrenceCount);
       event.announcementText = normalizeText(event.announcementText);
@@ -364,10 +415,6 @@ export const defaultHashtagSets: HashtagSet[] = [
 
 function isCalendarView(value: unknown): value is CalendarView {
   return value === "month" || value === "week" || value === "day";
-}
-
-function normalizeTime(value: unknown, fallback: string): string {
-  return typeof value === "string" && /^\d{2}:\d{2}$/.test(value) ? value : fallback;
 }
 
 export function normalizeSettings(value: unknown): ScheduleSettings {

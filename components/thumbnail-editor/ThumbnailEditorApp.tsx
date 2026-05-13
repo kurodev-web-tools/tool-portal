@@ -940,7 +940,7 @@ export function ThumbnailEditorApp() {
       await deleteThumbnailUserMaterialImage(ref.storageId);
       commitUserMaterialRefs(userMaterialRefs.filter((item) => item.storageId !== ref.storageId));
       setDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "deleted"));
-      showToast("warning", `「${ref.name}」を削除しました。既存レイヤーはfallback表示にしました。`);
+      showToast("warning", `「${ref.name}」を素材一覧から削除しました。配置済みレイヤーは残ります。不要ならレイヤー一覧から削除してください。`);
     } catch {
       setDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "load-failed"));
       showToast("error", "ユーザー素材の削除に失敗しました。");
@@ -2430,7 +2430,7 @@ function UserMaterialLibraryPanel({
                 {imageUrl ? (
                   <span className="block h-full w-full bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${imageUrl})` }} aria-hidden="true" />
                 ) : (
-                  <span className="px-2 text-center text-[10px] font-bold leading-4 text-muted">復元待ち</span>
+                  <span className="px-2 text-center text-[10px] font-bold leading-4 text-muted">要再追加</span>
                 )}
               </span>
               <span className="min-w-0">

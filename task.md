@@ -100,7 +100,8 @@
   - `scripts/thumbnail-material-assets-contract.mjs` に user material UI copy、fallback 表示、replace helper 利用の QA を追加。
   - `scripts/tool-handoff-contract.mjs` に Thumbnail -> SNS handoff payload / normalizer が user material metadata、`materialRef`、画像本体を混ぜない QA を追加。
   - `components/thumbnail-editor/ThumbnailEditorApp.tsx` は、user material 置換時に `replaceThumbnailUserMaterialLayerRef()` を通して geometry-preserving helper と揃えた。
-  - ユーザー素材パネルの copy を「追加した画像はこのブラウザに保存され、下書きには参照だけを残します。」へ軽く調整し、プレビュー未解決時の `fallback` 表示を `復元待ち` に変更。
+  - ユーザー素材パネルの copy を「追加した画像はこのブラウザに保存され、下書きには参照だけを残します。」へ軽く調整し、プレビュー未解決時の `fallback` 表示を `要再追加` に変更。
+  - review 中の追加確認として、未解決プレビューは待てば戻るように読める `復元待ち` ではなく `要再追加` に変更し、削除 toast で「配置済みレイヤーは残る」ことを明示。canvas fallback ラベルも通常素材に見えない `MATERIAL MISSING` へ変更。
   - preset body、public asset、font asset、variant body、crop 仕様、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
 - 幅別表示 / storage / handoff 結果:
   - `npm run build` 後、`out` を `serve` で配信し Playwright / `http://127.0.0.1:3006/tools/thumbnail-editor` で確認。
@@ -108,6 +109,7 @@
   - `390 / 820px`: mobile panel 初期表示では素材パネルは非表示。ユーザー素材追加後、下書き / metadata にアップロード PNG 本体は入らず、reload / `/tools` へのページ遷移後も layer と metadata が復元されることを確認。console 404 なし。
   - `1024 / 1280 / 1366px`: `登録済み素材` と `ユーザー素材` の分離表示、更新後 / ページ遷移後の復元、metadata / draft にアップロード PNG 本体が入らないことを確認。
   - `1280px`: 置換後も layer の `x / y / width / height / rotation` は維持。削除後も layer は残り `素材: qa-user-material-replaced（削除済み）` fallback 表示、refs は空、IndexedDB image は 0件。
+  - user material 削除は素材一覧からの削除に留め、配置済みレイヤーは削除済み fallback として残す。キャンバス上は `MATERIAL MISSING`、素材カードは `要再追加` として、再アップロードまたはレイヤー一覧からの手動削除が必要だと分かる状態にした。
   - `1366px`: Thumbnail -> SNS handoff は `sessionStorage` payload 1件を作成し、URL は短い `handoff` token + `preset=split-4` のみ。payload に user material metadata / `materialRef` / uploaded PNG body は含まれない。
   - production static serve の `1024px+` では `__next.*.txt` prefetch 404 が再現。`390 / 820px` では 404 なし。PR #89 差分は Thumbnail Editor component / storage helper / material contract / task.md のみで、portal `Link` や `next.config.mjs` は変更していない。`out` には `__next.tools/thumbnail-editor.txt` のような slash path が生成される一方、runtime は `__next.tools.thumbnail-editor.txt` のような dotted path を要求するため、今回の user material UI 由来ではなく Next static export + `serve` の prefetch 配信方式由来として扱う。
 - 検証:

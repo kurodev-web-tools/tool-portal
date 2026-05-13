@@ -630,6 +630,8 @@ const userMaterialLayer = lib.createThumbnailUserMaterialLayer(userMaterialRef);
 assert.equal(userMaterialLayer.type, "image", "user material creates an image layer");
 assert.equal(userMaterialLayer.name, "素材: 配信者ロゴ", "user material layer remains recognizable as material");
 assert.equal(userMaterialLayer.src, lib.thumbnailUserMaterialFallbackImageSrc, "user material layer does not embed the original image body in draft src");
+assert.ok(decodeURIComponent(lib.thumbnailUserMaterialFallbackImageSrc).includes("MATERIAL MISSING"), "user material fallback canvas label reads as a missing image state");
+assert.equal(decodeURIComponent(lib.thumbnailUserMaterialFallbackImageSrc).includes("USER MATERIAL"), false, "user material fallback canvas label does not look like a recoverable normal material");
 assert.deepEqual(userMaterialLayer.materialRef, userMaterialRef, "user material layer carries the lightweight ref");
 assert.equal(JSON.stringify(userMaterialLayer).includes("should-not-survive"), false, "user material layer serialization excludes dropped image bodies");
 
@@ -716,6 +718,9 @@ assert.ok(componentSource.includes("ユーザー素材"), "user-added material U
 assert.ok(componentSource.includes("登録済み素材"), "registered material UI remains visually separate from user-added material UI");
 assert.ok(componentSource.includes("追加した画像はこのブラウザに保存され、下書きには参照だけを残します。"), "user material panel explains storage without mixing it with registered material copy");
 assert.equal(componentSource.includes(">fallback<"), false, "user material fallback preview does not expose English implementation copy");
+assert.ok(componentSource.includes(">要再追加<"), "user material fallback preview makes clear the image must be added again");
+assert.equal(componentSource.includes(">復元待ち<"), false, "user material fallback preview does not imply waiting will restore the image");
+assert.ok(componentSource.includes("配置済みレイヤーは残ります"), "user material delete copy explains existing layers are preserved");
 assert.ok(componentSource.includes("onReplaceUserMaterial"), "user-added material UI exposes replace without changing geometry");
 assert.ok(componentSource.includes("onDeleteUserMaterial"), "user-added material UI exposes delete with fallback handling");
 assert.ok(componentSource.includes("replaceThumbnailUserMaterialLayerRef"), "user material replace uses the shared geometry-preserving helper");

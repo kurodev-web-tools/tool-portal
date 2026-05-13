@@ -75,6 +75,19 @@ function clampHandoffText(value: string, maxLength: number) {
   return value.length > maxLength ? value.slice(0, maxLength) : value;
 }
 
+function normalizeThumbnailToSnsHandoffTextFields(payload: Partial<ThumbnailToSnsHandoffPayload>) {
+  return {
+    imageStorageId: safeString(payload.imageStorageId, maxTextLengths.imageStorageId),
+    title: safeString(payload.title, maxTextLengths.title),
+    date: safeString(payload.date, maxTextLengths.date),
+    categoryLabel: safeString(payload.categoryLabel, maxTextLengths.categoryLabel),
+    platform: safeString(payload.platform, maxTextLengths.platform),
+    announcementText: safeString(payload.announcementText, maxTextLengths.announcementText),
+    hashtags: safeString(payload.hashtags, maxTextLengths.hashtags),
+    fileNameBase: safeString(payload.fileNameBase, maxTextLengths.fileNameBase)
+  };
+}
+
 function isTarget(value: unknown): value is ToolHandoffTarget {
   return value === "thumbnail-editor" || value === "sns-split-image-maker";
 }
@@ -117,6 +130,7 @@ export function createThumbnailToSnsHandoffPayload(
 ): ThumbnailToSnsHandoffPayload {
   const createdAt = new Date();
   const expiresAt = new Date(createdAt.getTime() + handoffTtlMs);
+  const fields = normalizeThumbnailToSnsHandoffTextFields(input);
 
   return {
     version: 1,
@@ -124,14 +138,7 @@ export function createThumbnailToSnsHandoffPayload(
     target: "sns-split-image-maker",
     createdAt: createdAt.toISOString(),
     expiresAt: expiresAt.toISOString(),
-    imageStorageId: input.imageStorageId,
-    title: input.title,
-    date: input.date,
-    categoryLabel: input.categoryLabel,
-    platform: input.platform,
-    announcementText: input.announcementText,
-    hashtags: input.hashtags,
-    fileNameBase: input.fileNameBase
+    ...fields
   };
 }
 
@@ -261,8 +268,8 @@ export function normalizeThumbnailToSnsHandoffPayload(value: unknown, target: To
     return null;
   }
 
-  const imageStorageId = safeString(payload.imageStorageId, maxTextLengths.imageStorageId);
-  if (!imageStorageId) {
+  const fields = normalizeThumbnailToSnsHandoffTextFields(payload);
+  if (!fields.imageStorageId) {
     return null;
   }
 
@@ -272,13 +279,6 @@ export function normalizeThumbnailToSnsHandoffPayload(value: unknown, target: To
     target: "sns-split-image-maker",
     createdAt: isValidDateTime(createdAt) ? createdAt : new Date().toISOString(),
     expiresAt,
-    imageStorageId,
-    title: safeString(payload.title, maxTextLengths.title),
-    date: safeString(payload.date, maxTextLengths.date),
-    categoryLabel: safeString(payload.categoryLabel, maxTextLengths.categoryLabel),
-    platform: safeString(payload.platform, maxTextLengths.platform),
-    announcementText: safeString(payload.announcementText, maxTextLengths.announcementText),
-    hashtags: safeString(payload.hashtags, maxTextLengths.hashtags),
-    fileNameBase: safeString(payload.fileNameBase, maxTextLengths.fileNameBase)
+    ...fields
   };
 }

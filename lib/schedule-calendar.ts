@@ -70,6 +70,12 @@ export type ScheduleStoragePayload = {
 
 export const scheduleStorageKey = "v-streamer-tools:schedule-calendar-events:v1";
 export const scheduleStorageVersion = 2;
+export const scheduleInputTextLimits = {
+  title: 120,
+  announcementText: 1200,
+  announcementHashtags: 300,
+  postTemplateBody: 2000
+};
 
 export const categoryMeta: Record<EventCategory, { label: string; tone: string; dot: string }> = {
   stream: {
@@ -307,8 +313,16 @@ function normalizeTemplateUsageCategory(value: unknown): PostTemplateUsageCatego
     : "custom";
 }
 
-function normalizeText(value: unknown): string {
-  return typeof value === "string" ? value : "";
+export function clampScheduleText(value: string, maxLength: number): string {
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
+}
+
+function normalizeText(value: unknown, maxLength?: number): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return typeof maxLength === "number" ? clampScheduleText(value, maxLength) : value;
 }
 
 function getTimeMinutes(time: string): number {
@@ -390,8 +404,9 @@ export function normalizeEvents(value: unknown): ScheduleEvent[] {
       event.endTime = normalizedTimeRange.endTime;
       event.recurrence = normalizeRecurrence(event.recurrence);
       event.recurrenceCount = normalizeRecurrenceCount(event.recurrenceCount);
-      event.announcementText = normalizeText(event.announcementText);
-      event.announcementHashtags = normalizeText(event.announcementHashtags);
+      event.title = clampScheduleText(event.title ?? "", scheduleInputTextLimits.title);
+      event.announcementText = normalizeText(event.announcementText, scheduleInputTextLimits.announcementText);
+      event.announcementHashtags = normalizeText(event.announcementHashtags, scheduleInputTextLimits.announcementHashtags);
       event.announcementMemo = normalizeText(event.announcementMemo);
       event.announcementStatus = normalizeAnnouncementStatus(event.announcementStatus);
       return true;
@@ -462,8 +477,8 @@ export function normalizePostTemplates(value: unknown): PostTemplate[] {
       description: template.description ?? "",
       usageCategory: normalizeTemplateUsageCategory(template.usageCategory),
       defaultPlatform: normalizePlatform(template.defaultPlatform),
-      body: template.body ?? "",
-      hashtags: normalizeText(template.hashtags)
+      body: clampScheduleText(template.body ?? "", scheduleInputTextLimits.postTemplateBody),
+      hashtags: normalizeText(template.hashtags, scheduleInputTextLimits.announcementHashtags)
     });
     return result;
   }, []);

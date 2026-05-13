@@ -58,6 +58,25 @@ assert.equal(
   "expired schedule payload is ignored"
 );
 
+const longScheduleHandoffPayload = lib.createScheduleHandoffPayload("thumbnail-editor", {
+  ...schedulePayloadInput,
+  title: "長".repeat(200),
+  announcementText: "告".repeat(2000),
+  hashtags: "#tag ".repeat(120)
+});
+assert.equal(longScheduleHandoffPayload.title.length, 120, "schedule handoff title is capped before sessionStorage write");
+assert.equal(longScheduleHandoffPayload.announcementText.length, 1200, "schedule handoff announcement text is capped before sessionStorage write");
+assert.equal(longScheduleHandoffPayload.hashtags.length, 300, "schedule handoff hashtags are capped before sessionStorage write");
+assert.equal(
+  lib.normalizeScheduleHandoffPayload(longScheduleHandoffPayload, "thumbnail-editor").announcementText.length,
+  1200,
+  "schedule handoff normalizer preserves the compact announcement limit"
+);
+assert.ok(
+  JSON.stringify(longScheduleHandoffPayload).length < 2500,
+  "schedule handoff payload stays compact even with long copy input"
+);
+
 const scheduleToSnsPayload = lib.createScheduleHandoffPayload("sns-split-image-maker", schedulePayloadInput);
 assert.equal(scheduleToSnsPayload.target, "sns-split-image-maker");
 assert.equal(lib.normalizeScheduleHandoffPayload(scheduleToSnsPayload, "sns-split-image-maker").title, "定期配信");

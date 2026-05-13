@@ -21,6 +21,17 @@
 - PR #92 の production static serve final QA では、`1024px` の `/tools` と3ツールで dotted `__next.tools*.txt` が 200 / 304、`1280px` / `1366px` で `__next.*.txt` の 400+ response なし。
 - docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
 
+## Current PR result
+
+- 2026-05-13 `codex/schedule-calendar-input-copy-guard` / `.worktrees/schedule-calendar-input-copy-guard` で Candidate 1 を実施。
+- 予定タイトル `120` 文字、予定ごとの告知文 `1200` 文字、予定 / テンプレートのハッシュタグ `300` 文字、テンプレート本文 `2000` 文字を上限にした。
+- UI には counters と上限付近の warning copy のみを追加し、重い onboarding / modal tutorial は入れていない。
+- `localStorage` key と version `2` は維持。旧形式 / 既存 payload は normalizer で同じ上限へ丸める。
+- Schedule -> Thumbnail / SNS Split handoff は URL 本文なしのまま、sessionStorage payload へ入る title / announcementText / hashtags を同じ境界で clamp する。
+- Thumbnail Editor / SNS Split Image Maker の実装、storage schema、Next.js / React version は変更していない。
+- 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で予定フォーム counters 表示、layout signal OK、console error / warning 0。`1366px` でテンプレート本文 / タグ counters と title 上限 warning も確認。
+- 検証: `node scripts/tool-handoff-contract.mjs`、`node scripts/schedule-calendar-storage-contract.mjs`、`npm run lint`、`npx tsc --noEmit` は成功。最終確認では `git diff --check` も実行する。
+
 ## Freeze 後の現行境界
 
 ### Schedule Calendar
@@ -59,6 +70,8 @@
 
 ### Candidate 1: Schedule Calendar input length / copy guard
 
+- 状態:
+  - このブランチで実装 / 検証中。merge 後は Candidate 2 に進む。
 - 目的:
   - 予定タイトル、告知文、ハッシュタグ、テンプレート本文の長文入力で保存 / 投稿補助 / handoff が読みにくくならない境界を決める。
 - 入れるもの:
@@ -97,44 +110,46 @@
 
 前提:
 - まず AGENTS.md と task.md を読む
-- PR #94 `[codex] Add thumbnail user material management guards` と、この task cleanup PR が main / origin/main に merge 済みか確認する
+- Schedule Calendar input length / copy guard PR が main / origin/main に merge 済みか確認する
 - 未mergeなら新規実装へ進まず、merge待ち / review対応が必要かだけを blocker summary にする
 - main 直作業は避ける
 - origin/main から次task用の feature branch / `.worktrees/...` を切る
 - ローカル main の未コミット変更があっても触らない
 
 目的:
-- Schedule Calendar input length / copy guard を PR-sized に進める
-- 予定タイトル、告知文、ハッシュタグ、テンプレート本文の長文入力で、保存 / 投稿補助 / handoff が読みにくくならない境界を小さく決める
+- Candidate 2: SNS Split Image Maker export boundary polish を PR-sized に進める
+- 現行の個別 PNG / JPEG export を保ったまま、ZIP / 複数形式 export を現行機能に見せない境界と、未選択 guard / 成功 feedback を再確認する
 
 読むもの:
 - AGENTS.md
 - task.md
-- docs/SCHEDULE_CALENDAR_README.md
-- docs/SCHEDULE_CALENDAR_STABILITY_CHECK_2026-04-28.md
+- docs/design-sns-split-image-maker.md
 - docs/archive/TASK_HISTORY_2026-05.md
 - scripts/tool-handoff-contract.mjs
-- 必要なら Schedule Calendar 関連 component / storage helper / contract
+- scripts/sns-split-image-maker-contract.mjs
+- 必要なら SNS Split Image Maker 関連 component / storage helper / contract
 
 入れるもの:
-- 予定タイトル、告知文、ハッシュタグ、テンプレート本文の文字数上限 / カウンター / warning copy の必要最小限の調整
-- 既存 `localStorage` version `2` と旧形式 normalizer を壊さない確認
-- Schedule -> Thumbnail / SNS Split handoff payload が肥大化しすぎない確認
+- export boundary の contract / docs / copy 最小調整
+- split-2 / split-3 / split-4 の出力順と main image guard の確認
+- 未選択時の guard と export 成功 feedback が現行 freeze 境界と矛盾しない確認
 - 必要なら UI を軽く触る。ただし重い onboarding / modal tutorial にはしない
 - 意味のある実装後は task.md を更新する
 
 入れないもの:
+- ZIP 出力本体
+- X 以外の比率
+- 複数形式一括 export
 - storage schema 変更
-- Google Calendar 連携
 - ログイン / サーバー同期
-- 週間予定画像生成
 - シリーズ一括編集 / 例外日
 - AI生成
-- Thumbnail Editor / SNS Split Image Maker の実装修正
+- Schedule Calendar / Thumbnail Editor の実装修正
 - 重い onboarding / modal tutorial
 - Next.js / React のバージョン変更
 
 検証:
+- node scripts/sns-split-image-maker-contract.mjs
 - node scripts/tool-handoff-contract.mjs
 - npm run lint
 - npx tsc --noEmit
@@ -143,15 +158,15 @@
 
 完了条件:
 - origin/main 起点の worktree / feature branch で作業している
-- `localStorage` version `2` と handoff payload の境界を壊していない
-- 長文入力時に保存 / 投稿補助 / handoff の copy が読みにくくならない
-- Thumbnail Editor / SNS Split Image Maker の実装へ変更を広げていない
+- SNS Split の現行 export は個別 PNG / JPEG として読める
+- ZIP / 複数形式 export を現行機能のように見せていない
+- Schedule Calendar / Thumbnail Editor の実装へ変更を広げていない
 - 必要な検証が通っている
 - task.md に実施結果と検証結果が残っている
 - commit / push / draft PR 作成まで進める
 
 その次の流れ:
-- この PR merge 後に、別セッションで Candidate 2: SNS Split Image Maker export boundary polish へ進む
+- この PR merge 後に、別セッションで次の freeze 後候補を task.md から選ぶ
 ```
 
 ## Verification baseline

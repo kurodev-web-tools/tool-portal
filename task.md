@@ -114,7 +114,7 @@
 前提:
 - まず AGENTS.md と task.md を読む
 - PR #97 `[codex] Polish SNS split export boundary` が main / origin/main に merge 済みか確認する
-- この task.md 整理PR `[codex] Organize task board after PR97` が未mergeなら、新規実装へ進まず merge待ち / review対応が必要かだけを blocker summary にする
+- PR #98 `[codex] Organize task board after PR97` が未mergeなら、新規実装へ進まず merge待ち / review対応が必要かだけを blocker summary にする
 - main 直作業は避ける
 - origin/main から次task用の feature branch / `.worktrees/...` を切る
 - ローカル main の未コミット変更があっても触らない

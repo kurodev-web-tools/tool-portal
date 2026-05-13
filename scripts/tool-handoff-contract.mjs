@@ -135,6 +135,29 @@ assert.equal(payload.fileNameBase, "20260505-stream");
 assert.equal("userMaterialRefs" in payload, false, "thumbnail -> sns payload does not carry user material metadata");
 assert.equal(JSON.stringify(payload).includes("data:image"), false, "thumbnail -> sns payload does not carry image bodies");
 
+const longThumbnailPayload = lib.createThumbnailToSnsHandoffPayload({
+  imageStorageId: `thumbnail-handoff-${"id".repeat(90)}`,
+  title: "長".repeat(200),
+  date: "2026-05-05-extra-date-text-that-should-not-grow",
+  categoryLabel: "カテゴリ".repeat(40),
+  platform: "YouTube".repeat(20),
+  announcementText: "告".repeat(2000),
+  hashtags: "#tag ".repeat(120),
+  fileNameBase: "thumbnail-file-name-base-".repeat(8),
+  userMaterialRefs: [{ storageId: "user-material-storage", name: "ロゴ" }],
+  materialRef: { storageId: "user-material-storage" },
+  imageData: "data:image/png;base64,should-not-survive"
+});
+assert.equal(longThumbnailPayload.imageStorageId.length, 120, "thumbnail -> sns image storage id is capped before sessionStorage write");
+assert.equal(longThumbnailPayload.title.length, 120, "thumbnail -> sns title is capped before sessionStorage write");
+assert.equal(longThumbnailPayload.announcementText.length, 1200, "thumbnail -> sns announcement text is capped before sessionStorage write");
+assert.equal(longThumbnailPayload.hashtags.length, 300, "thumbnail -> sns hashtags are capped before sessionStorage write");
+assert.equal(longThumbnailPayload.fileNameBase.length, 80, "thumbnail -> sns filename base is capped before sessionStorage write");
+assert.equal("userMaterialRefs" in longThumbnailPayload, false, "thumbnail -> sns factory drops user material metadata");
+assert.equal("materialRef" in longThumbnailPayload, false, "thumbnail -> sns factory drops material refs");
+assert.equal(JSON.stringify(longThumbnailPayload).includes("data:image"), false, "thumbnail -> sns factory drops image bodies");
+assert.ok(JSON.stringify(longThumbnailPayload).length < 2500, "thumbnail -> sns payload stays compact even with long copy input");
+
 const normalized = lib.normalizeThumbnailToSnsHandoffPayload(payload, "sns-split-image-maker");
 assert.equal(normalized.imageStorageId, "thumbnail-handoff-test");
 assert.equal(normalized.announcementText, "本日20時から配信します。");

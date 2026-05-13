@@ -14,20 +14,21 @@
 - PR #101 の merge commit は `f9df381dc091d8d9369b900eead3bba9034978e4`。
 - PR #102 の merge commit は `bd9119aa0e4437e950b6c71ddeca5eaced192e7c`。
 - PR #103 `[codex] Clean up task board after PR102` は `main` / `origin/main` に merge 済み。merge commit は `1e4e4931fb5050d99e5a967a9817ffaf8dbd8402`。
+- PR #104 `[codex] Clean up file name sanitize helpers` は `main` / `origin/main` に merge 済み。merge commit は `9b6bc17a136cc948760fb3c96530649a4406f820`。
 - static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish、Thumbnail docs drift cleanup、SNS handoff accessibility copy polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 / PR #101 / PR #102 欄を参照する。
 
 ## Active
 
-- Cross-tool file name sanitize helper cleanup:
-  - branch / worktree: `codex/file-name-sanitize-helper-cleanup` / `.worktrees/file-name-sanitize-helper-cleanup`
-  - 実装: Thumbnail -> SNS と Schedule / Thumbnail -> SNS の handoff filename candidate 生成で重複していた sanitize 境界を `lib/file-name.ts` に集約。
-  - 境界: SNS Split Image Maker の最終 download filename 生成、handoff schema / storage、UI 表示文言、export 形式は変更しない。
-  - contract: `scripts/tool-handoff-contract.mjs` と `scripts/sns-split-image-maker-contract.mjs` に共有 helper 利用と既存 sanitize 仕様の確認を追加。
+- Thumbnail -> SNS handoff payload clamp:
+  - branch / worktree: `codex/thumbnail-to-sns-handoff-payload-clamp` / `.worktrees/thumbnail-to-sns-handoff-payload-clamp`
+  - 実装: Thumbnail Editor から SNS Split Image Maker へ渡す payload の `imageStorageId` / `title` / `announcementText` / `hashtags` / `fileNameBase` を生成時点で clamp し、受信側 normalizer と同じ helper を使うよう整理。
+  - 境界: handoff schema / storage key / URL token flow / UI 表示文言 / export 形式は変更しない。画像本体は引き続き IndexedDB の一時 `imageStorageId` 参照だけを sessionStorage payload に置く。
+  - contract: `scripts/tool-handoff-contract.mjs` に長文 Thumbnail -> SNS payload、余分な metadata、`data:image` body が factory / normalizer 後に残らない確認を追加。
   - 検証: `node scripts/tool-handoff-contract.mjs` / `node scripts/sns-split-image-maker-contract.mjs` / `npm run lint` / `npx tsc --noEmit` / `git diff --check` は通過。
   - 幅別確認: UI / 表示文言 / layout 変更なしのため `390 / 820 / 1024 / 1280 / 1366px` の browser 確認は不要。
 - 次に新規作業へ進む場合は、下の次候補を `origin/main` 起点の feature branch / `.worktrees/...` で PR-sized に切る。
 - 次候補:
-  - Thumbnail -> SNS handoff payload clamp
+  - Thumbnail Editor variant body / font asset / preset batch 本体は、それぞれ別PRで scope を明示して扱う。
 - docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
 
 ## Freeze closeout state

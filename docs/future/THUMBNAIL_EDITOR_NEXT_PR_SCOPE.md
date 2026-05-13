@@ -182,7 +182,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - preset 本体。
   - Schedule Calendar / SNS Split Image Maker 実装。
 - 現在の扱い:
-  - P4 policy / helper は実装済み。実 font asset 追加は別PRにする。
+  - P4 policy / helper は実装済み。初期候補 24 種、カテゴリ、読み込み方針、後続 PR scope は `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md` を参照する。実 font asset 追加は別PRにする。
 
 #### 実装で確定した境界
 

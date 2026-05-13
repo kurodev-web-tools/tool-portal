@@ -17,20 +17,25 @@
 - PR #104 `[codex] Clean up file name sanitize helpers` は `main` / `origin/main` に merge 済み。merge commit は `9b6bc17a136cc948760fb3c96530649a4406f820`。
 - PR #105 `[codex] Clamp thumbnail to SNS handoff payload` は `main` / `origin/main` に merge 済み。merge commit は `edafcae28da0e90b3de852f917988774b497198d`。
 - PR #106 `[codex] Add thumbnail variant body foundation` は `main` / `origin/main` に merge 済み。merge commit は `50bab4419b2d8389428a5f5b6995f470a6e83113`。
+- PR #107 `[codex] Add thumbnail variant UI route` は `main` / `origin/main` に merge 済み。merge commit は `4d758f6062bfbd756b21fe640d95c81894e93bf9`。
 - static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish、Thumbnail docs drift cleanup、SNS handoff accessibility copy polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 / PR #101 / PR #102 欄を参照する。
 
 ## Active
 
-- Thumbnail Editor variant UI route:
-  - branch / worktree: `codex/thumbnail-variant-ui-route` / `.worktrees/thumbnail-variant-ui-route`
-  - 実装: 既存の `プリセット` / `キャンバスサイズ` Listbox と同じ軽量 UI 境界で `出力比率` を追加し、`横長 16:9` / `縦長 9:16` / `正方形 1:1` から `createDraftFromPresetVariant(draft.presetId, variantId)` を呼べるようにした。非 16:9 variant 選択時は、既存 canvas size UI が 16:9 解像度を誤表示しないよう、現在の実 canvas 寸法を表示する。
-  - 境界: schema version / storage key / crop 仕様 / text・image layer schema / user material schema / preset body / font asset / Thumbnail -> SNS handoff / Schedule handoff / SNS Split Image Maker は変更しない。
-  - contract: `scripts/thumbnail-preset-variants-contract.mjs` は、UI が variant draft helper を使うこと、既存 Listbox 境界で出すこと、handoff に `variantId` を広げないことを確認する。
-  - 検証: `node scripts/thumbnail-preset-variants-contract.mjs` は RED -> GREEN 済み。`node scripts/thumbnail-*.mjs` 全件 / `node scripts/tool-handoff-contract.mjs` / `npm run lint` / `npx tsc --noEmit` / `git diff --check` は通過。`git diff --check` は CRLF 置換 warning のみ。
-  - 幅別確認: in-app browser で `390 / 820 / 1024 / 1280 / 1366px` を確認し、各幅で `出力比率` control と編集 canvas が表示され、console error は 0。in-app browser では既存の `プリセット` / `キャンバスサイズ` Listbox もクリック展開が取れないため、縦長 / 正方形の draft 生成挙動は contract 側で確認した。
+- Thumbnail Editor font candidates planning:
+  - branch / worktree: `codex/thumbnail-font-planning` / `.worktrees/thumbnail-font-planning`
+  - 前提確認: PR #107 `[codex] Add thumbnail variant UI route` は GitHub 上で `MERGED`、merge commit `4d758f6062bfbd756b21fe640d95c81894e93bf9` が `origin/main` 先頭にあることを確認済み。
+  - planning: `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md` に、日本語 12 種 / 英語 12 種の初期候補、Google Fonts specimen URL、用途、印象、注意点、読み込み方針、後続 PR scope を整理した。
+  - 境界: font file / `public/fonts/**`、Google Fonts CDN / CSP、CSS / API / loader 実装、preset body、variant body、material registration、text / image layer schema、Schedule Calendar、SNS Split Image Maker は変更しない。
+  - 検証: docs / task 変更のみのため `git diff --check` を実行する。既存 contract には触っていないため関連 script は不要。
+  - 幅別確認: UI / 実装変更なしのため `390 / 820 / 1024 / 1280 / 1366px` の browser 確認は不要。
 - 次に新規作業へ進む場合は、下の次候補を `origin/main` 起点の feature branch / `.worktrees/...` で PR-sized に切る。
 - 次候補:
-  - Thumbnail Editor font asset / preset batch 本体は、それぞれ別PRで scope を明示して扱う。
+  - `font loading foundation`: font manifest / category metadata / safe load helper / export 前 wait helper / contract。font file、CSP、preset body、schema は変更しない。
+  - `Japanese font batch`: 日本語 12 種の必要 weight / subset / self-host asset / license note / export wait verification。
+  - `English font batch`: 英語 12 種の必要 weight / self-host asset / display preview / export wait verification。
+  - `font UI categories`: language / mood category 表示。検索、最近使った、preset body 変更は別 scope。
+  - `preset font application`: preset batch 本体で必要になった場合だけ、catalog 内 font へ差し替える。
 - docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
 
 ## Freeze closeout state

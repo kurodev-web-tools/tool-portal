@@ -8,15 +8,20 @@
 - 意味のある実装後は、このファイルに実装内容、検証、必要な幅別確認を残す。
 - UI 変更時の確認幅は `390 / 820 / 1024 / 1280 / 1366px` を基本にする。
 - 2026-05 の完了済み詳細ログは `docs/archive/TASK_HISTORY_2026-05.md` を参照する。
-- PR #86 `[codex] Align portal entry freeze copy` から PR #100 `[codex] Clean up task board after PR99` まで、`main` / `origin/main` に merge 済み。
+- PR #86 `[codex] Align portal entry freeze copy` から PR #102 `[codex] Polish SNS handoff accessibility copy` まで、`main` / `origin/main` に merge 済み。
 - PR #99 の merge commit は `354d02bad0a0136f1ed43afd58f0e791e318a9fc`。
 - PR #100 の merge commit は `f44618b0f8ecb1e265c65f409771f4a0e37493c2`。
-- static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 欄を参照する。
+- PR #101 の merge commit は `f9df381dc091d8d9369b900eead3bba9034978e4`。
+- PR #102 の merge commit は `bd9119aa0e4437e950b6c71ddeca5eaced192e7c`。
+- static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish、Thumbnail docs drift cleanup、SNS handoff accessibility copy polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 / PR #101 / PR #102 欄を参照する。
 
 ## Active
 
 - 現時点で `task.md` に残す即時実装タスクはなし。
-- 次に新規作業へ進む場合は、下の freeze 後候補から1件を選び、`origin/main` 起点の feature branch / `.worktrees/...` で PR-sized に切る。
+- 次に新規作業へ進む場合は、下の次候補から1件を選び、`origin/main` 起点の feature branch / `.worktrees/...` で PR-sized に切る。
+- 次候補:
+  - Cross-tool file name sanitize helper cleanup
+  - Thumbnail -> SNS handoff payload clamp
 - docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
 
 ## Freeze closeout state
@@ -28,9 +33,8 @@
 - Schedule Calendar input length / copy guard は PR #96 で完了済み。
 - SNS Split Image Maker export boundary polish は PR #97 で完了済み。
 - Thumbnail Editor quality guard export-preflight polish は PR #99 で完了済み。
-- Thumbnail Editor docs drift cleanup では、PR #94 / PR #99 後の `docs/design-thumbnail-editor.md` と `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` を同期し、user material library UI v1 / management v1 / quality guard export-preflight polish を完了済みとして整理する。docs-only で UI / 表示文言 / tool 実装を触らないため、幅別ブラウザ確認は不要。
-- SNS Split handoff accessibility copy polish では、Schedule / Thumbnail 由来の受け取り banner を source 別 copy、`role="status"` / `aria-live="polite"`、source 別 textarea label、具体的な次アクション文に整理した。handoff schema、storage、export、asset、他ツール実装は変更していない。
-- 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/sns-split-image-maker?preset=split-4` の Schedule handoff banner 表示、source 別 status、次アクション文、textarea label、横 overflow なし、console error / warning なしを確認した。
+- Thumbnail Editor docs drift cleanup は PR #101 で完了済み。
+- SNS Split handoff accessibility copy polish は PR #102 で完了済み。
 - PR #92 の production static serve final QA では、`1024px` の `/tools` と3ツールで dotted `__next.tools*.txt` が 200 / 304、`1280px` / `1366px` で `__next.*.txt` の 400+ response なし。
 
 ## Freeze 後の現行境界

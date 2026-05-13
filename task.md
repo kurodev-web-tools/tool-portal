@@ -13,6 +13,7 @@
 - PR #88 `[codex] Freeze final QA docs consistency` は `main` / `origin/main` に merge 済み。merge commit は `ba9cc45`。
 - PR #89 `[codex] Add thumbnail user material library UI` は `main` / `origin/main` に merge 済み。merge commit は `2901020`。
 - PR #90 `[codex] QA thumbnail user material library` は `main` / `origin/main` に merge 済み。merge commit は `08f59cd`。
+- PR #91 `[codex] Fix static export RSC aliases` は `main` / `origin/main` に merge 済み。merge commit は `ceec8de`。
 
 ## Freeze 前の現行境界
 
@@ -56,6 +57,42 @@
   - ZIP 出力、X 以外の比率、複数形式の大規模 export、重い onboarding。
 
 ## Active
+
+### P0: Freeze production final QA after static export RSC alias fix
+
+- 状態: completed in current branch
+- 目的:
+  - PR #91 merge 後の `origin/main` 起点で、公開中3ツールの production static serve 前提の freeze 前 final QA を行う。
+  - 新機能追加、UI redesign、public asset / font / preset 本体追加、variant body、crop 仕様、text / image layer schema 変更へ広げない。
+- 実施結果:
+  - PR #91 merge commit `ceec8de` が `main` / `origin/main` 先端であることを確認し、`codex/freeze-production-final-qa` / `.worktrees/freeze-production-final-qa` を `origin/main` 起点で作成。
+  - `task.md`、Schedule Calendar / Thumbnail Editor / SNS Split Image Maker docs、Thumbnail Editor future scope、3ツール page metadata、portal header / sidebar を再読した。
+  - Schedule Calendar -> Thumbnail / SNS Split handoff は、URL本文なし、`sessionStorage` token、テキスト metadata のみとして現行 freeze 範囲に読める。
+  - Thumbnail Editor -> SNS Split handoff は、URLに短い `handoff` token と `preset=split-4` のみを載せ、画像本体はSNS Split側 IndexedDB、一時 payload は user material metadata / `materialRef` / 画像本体を混ぜない境界として contract / docs 上で崩れていない。
+  - SNS Split Image Maker の export 導線は、X向け `2分割 / 3分割 / 4分割` の個別 PNG / JPEG 出力として読める。ZIP、X以外比率、複数形式の大規模 export は freeze 後候補に閉じている。
+  - docs / task.md 上で、現行 freeze 対象と freeze 後候補を混ぜる明確な drift は見つからなかったため、UI文言 / ツール機能実装修正は行っていない。
+  - `npm run build` により `next-env.d.ts` の route type reference が production build 側の `./.next/types/routes.d.ts` へ同期された。
+- static export / production serve 結果:
+  - `npm run build` PASS。`postbuild` で `Static export RSC aliases ready: 8 checked, 8 written.` を確認。
+  - `node scripts/static-export-rsc-aliases.mjs --check` PASS。`Static export RSC aliases verified: 8` を確認。
+  - `serve out` を `http://127.0.0.1:3017` で配信し、Chrome DevTools で production static serve を確認。
+  - `1024px` の `/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` で dotted `__next.tools*.txt` は 200 / 304。PR #91 前に出ていた prefetch 404 は再発なし。
+  - `1280px` / `1366px` でも `__next.*.txt` の 400+ response はなし。
+- 幅別表示結果:
+  - `390px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。
+  - `820px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。
+  - `1024px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。dotted RSC `.txt` は 200 / 304。
+  - `1280px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。`__next.*.txt` 400+ なし。
+  - `1366px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。`__next.*.txt` 400+ なし。
+- 検証:
+  - `npm run build` PASS。workspace root warning は既知の multiple lockfiles warning。
+  - `node scripts/static-export-rsc-aliases.mjs --check` PASS。
+  - `node scripts/tool-portal-entry-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
+  - `node scripts/sns-split-image-maker-contract.mjs` PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
 
 ### P0: Static export RSC prefetch 404 investigation
 

@@ -8,8 +8,9 @@
 - 意味のある実装後は、このファイルに実装内容、検証、必要な幅別確認を残す。
 - UI 変更時の確認幅は `390 / 820 / 1024 / 1280 / 1366px` を基本にする。
 - 2026-05 の完了済み詳細ログは `docs/archive/TASK_HISTORY_2026-05.md` を参照する。
-- PR #86 `[codex] Align portal entry freeze copy` から PR #97 `[codex] Polish SNS split export boundary` まで、`main` / `origin/main` に merge 済み。
+- PR #86 `[codex] Align portal entry freeze copy` から PR #98 `[codex] Organize task board after PR97` まで、`main` / `origin/main` に merge 済み。
 - PR #97 の merge commit は `1d5e13cb9c3cbb7be73ff9ba1568d5712ceefe24`。
+- PR #98 の merge commit は `bf8250fe656fb2d1f31d86bd0e7e666dcedf3547`。
 - static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 欄を参照する。
 
 ## Freeze closeout state
@@ -22,6 +23,17 @@
 - SNS Split Image Maker export boundary polish は PR #97 で完了済み。
 - PR #92 の production static serve final QA では、`1024px` の `/tools` と3ツールで dotted `__next.tools*.txt` が 200 / 304、`1280px` / `1366px` で `__next.*.txt` の 400+ response なし。
 - docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
+
+## Current PR result
+
+- 2026-05-13 `codex/thumbnail-quality-preflight-polish` / `.worktrees/thumbnail-quality-preflight-polish` で Candidate 3 を実施。
+- `サムネ品質` / `注意 n件` / `品質チェックOK` の軽い表示を維持したまま、低透明度テキストの可読性 hint と、未解決 user material 画像の warning を selected layer / overall guard に追加した。
+- export panel には `注意 n件` / `品質チェックOK` の短いラベルを残し、`書き出し前の確認` として最大2件の短文 summary だけを表示する形にした。
+- quality guard は warning / hint のみで、自動修正、AI生成、modal tutorial、重い onboarding は追加していない。
+- draft / preset / material registration / public asset / font / crop / text layer schema / image layer schema / storage schema は変更していない。
+- Schedule Calendar / SNS Split Image Maker の実装修正、Next.js / React version 変更は行っていない。
+- 幅別確認: Playwright + local dev server で `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認。`390 / 820px` は下部 `テキスト` tab で `サムネ品質`、下部 `書き出し` tab で `書き出し前の確認` / `品質チェックOK` / `そのまま書き出せます` を確認。`1024 / 1280 / 1366px` は右 panel 上で同表示を確認。全幅で canvas 表示、横 overflow なし、console error / warn なし。
+- 検証: `node scripts/thumbnail-quality-guard-contract.mjs`、`node scripts/thumbnail-standee-placement-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は成功。
 
 ## 完了済み候補
 

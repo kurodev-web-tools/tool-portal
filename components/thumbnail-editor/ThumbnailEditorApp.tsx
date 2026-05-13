@@ -369,12 +369,6 @@ export function ThumbnailEditorApp() {
     () => draft.layers.find((layer) => layer.id === draft.selectedLayerId) ?? null,
     [draft.layers, draft.selectedLayerId]
   );
-  const qualityGuardItems = useMemo(
-    () => getThumbnailQualityGuardItems(draft, selectedLayer?.id ?? draft.selectedLayerId),
-    [draft, selectedLayer?.id]
-  );
-  const overallQualityGuardItems = useMemo(() => getThumbnailOverallQualityGuardItems(draft), [draft]);
-  const overallQualityGuardSummary = useMemo(() => getThumbnailQualityGuardSummary(overallQualityGuardItems), [overallQualityGuardItems]);
   const resolvedDraft = useMemo(
     () => ({
       ...draft,
@@ -386,6 +380,12 @@ export function ThumbnailEditorApp() {
     }),
     [draft, userMaterialImageUrls]
   );
+  const qualityGuardItems = useMemo(
+    () => getThumbnailQualityGuardItems(resolvedDraft, selectedLayer?.id ?? draft.selectedLayerId),
+    [draft.selectedLayerId, resolvedDraft, selectedLayer?.id]
+  );
+  const overallQualityGuardItems = useMemo(() => getThumbnailOverallQualityGuardItems(resolvedDraft), [resolvedDraft]);
+  const overallQualityGuardSummary = useMemo(() => getThumbnailQualityGuardSummary(overallQualityGuardItems), [overallQualityGuardItems]);
 
   const selectedPreset = useMemo(
     () => thumbnailPresets.find((preset) => preset.id === draft.presetId) ?? thumbnailPresets[0],
@@ -2804,6 +2804,16 @@ function ExportPanel({
       <button className="w-full rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onExport} aria-label="サムネイルを書き出し">
         書き出し
       </button>
+      <div className="space-y-1 border-t border-border pt-2">
+        <p className="text-[11px] font-bold text-muted">書き出し前の確認</p>
+        <ul className="grid gap-1">
+          {qualityGuardSummary.messages.map((message, index) => (
+            <li key={`${message}-${index}`} className="text-xs font-semibold leading-5 text-muted">
+              {message}
+            </li>
+          ))}
+        </ul>
+      </div>
       <p className="text-xs leading-5 text-muted">下書きはこのブラウザの localStorage に保存されます。PNG/JPEG は表示中キャンバスと同じ描画結果で1枚出力します。SNS分割画像への受け渡し画像は一時的にIndexedDBへ保存します。</p>
     </section>
   );

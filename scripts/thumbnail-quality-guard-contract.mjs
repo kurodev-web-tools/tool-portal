@@ -90,6 +90,30 @@ assert.deepEqual(
 );
 assert.equal(JSON.stringify(riskyTextDraft), riskyTextBefore, "quality guard does not auto-correct or mutate the draft");
 
+const fadedTextDraft = {
+  ...draft,
+  selectedLayerId: textLayer.id,
+  layers: draft.layers.map((layer) =>
+    layer.id === textLayer.id
+      ? {
+          ...layer,
+          opacity: 0.42,
+          fontSize: 72,
+          color: "#ffffff",
+          strokeColor: "#111111",
+          strokeWidth: 8,
+          shadowBlur: 18
+        }
+      : layer
+  )
+};
+const fadedTextBefore = JSON.stringify(fadedTextDraft);
+assert.ok(
+  lib.getThumbnailQualityGuardItems(fadedTextDraft, textLayer.id).some((item) => item.id === "selected-text-opacity" && item.tone === "hint"),
+  "selected text guard lightly notes low-opacity readable text risk"
+);
+assert.equal(JSON.stringify(fadedTextDraft), fadedTextBefore, "text opacity guard does not mutate the draft");
+
 const safeTextDraft = {
   ...draft,
   selectedLayerId: textLayer.id,
@@ -133,6 +157,39 @@ const croppedImageBefore = JSON.stringify(croppedImageDraft);
 const croppedImageGuardItems = lib.getThumbnailQualityGuardItems(croppedImageDraft, croppedImageLayer.id);
 assert.ok(croppedImageGuardItems.some((item) => item.id === "selected-image-crop" && item.tone === "hint"), "selected image guard lightly notes cropped standee or image layers");
 assert.equal(JSON.stringify(croppedImageDraft), croppedImageBefore, "image crop guard does not mutate the draft");
+
+const unresolvedUserMaterialLayer = lib.createThumbnailUserMaterialLayer({
+  id: "user-material-preflight",
+  name: "配信者ロゴ",
+  storageId: "missing-user-material",
+  storage: "indexeddb",
+  mimeType: "image/png",
+  width: 960,
+  height: 540,
+  byteSize: 128000,
+  createdAt: "2026-05-13T00:00:00.000Z",
+  updatedAt: "2026-05-13T00:00:00.000Z"
+});
+const unresolvedImageDraft = {
+  ...draft,
+  selectedLayerId: unresolvedUserMaterialLayer.id,
+  layers: [...draft.layers, unresolvedUserMaterialLayer]
+};
+const unresolvedImageBefore = JSON.stringify(unresolvedImageDraft);
+assert.ok(
+  lib.getThumbnailQualityGuardItems(unresolvedImageDraft, unresolvedUserMaterialLayer.id).some((item) => item.id === "selected-image-unresolved" && item.tone === "warning"),
+  "selected image guard warns when a user material image is still unresolved before export"
+);
+assert.equal(JSON.stringify(unresolvedImageDraft), unresolvedImageBefore, "unresolved image guard does not mutate the draft");
+
+const resolvedUserMaterialLayer = { ...unresolvedUserMaterialLayer, src: "blob:http://localhost/resolved-user-material" };
+assert.equal(
+  lib.getThumbnailQualityGuardItems({ ...unresolvedImageDraft, layers: [...draft.layers, resolvedUserMaterialLayer] }, resolvedUserMaterialLayer.id).some(
+    (item) => item.id === "selected-image-unresolved"
+  ),
+  false,
+  "selected image unresolved guard clears when the user material image has a resolved runtime URL"
+);
 
 const imageGuardItems = lib.getThumbnailQualityGuardItems(
   {
@@ -182,9 +239,35 @@ assert.deepEqual(
 );
 assert.equal(JSON.stringify(overallRiskyDraft), overallRiskyBefore, "overall guard does not auto-correct or mutate the draft");
 
+const overallPreflightDraft = {
+  ...fadedTextDraft,
+  selectedLayerId: null,
+  layers: [
+    ...fadedTextDraft.layers.map((layer) => (layer.id === textLayer.id ? { ...layer, x: 90, y: 180, width: 760, height: 190 } : layer)),
+    unresolvedUserMaterialLayer
+  ]
+};
+const overallPreflightBefore = JSON.stringify(overallPreflightDraft);
+const overallPreflightItems = lib.getThumbnailOverallQualityGuardItems(overallPreflightDraft);
+assert.ok(overallPreflightItems.some((item) => item.id === "overall-text-opacity" && item.tone === "hint"), "overall guard notes low-opacity text before export");
+assert.ok(
+  overallPreflightItems.some((item) => item.id === "overall-image-unresolved" && item.tone === "warning"),
+  "overall guard warns about unresolved user material images before export"
+);
+assert.equal(JSON.stringify(overallPreflightDraft), overallPreflightBefore, "overall preflight guard does not mutate the draft");
+
 const riskySummary = lib.getThumbnailQualityGuardSummary(overallGuardItems);
 assert.equal(riskySummary.label, `注意 ${overallGuardItems.length}件`, "overall summary stays short near export actions");
 assert.equal(riskySummary.tone, "warning", "overall summary uses warning tone when warnings exist");
+assert.deepEqual(
+  riskySummary.messages,
+  overallGuardItems.filter((item) => item.tone !== "ok").slice(0, 2).map((item) => item.message),
+  "overall summary exposes a short export-preflight message list"
+);
+assert.ok(
+  riskySummary.messages.every((message) => message.length <= 28),
+  "export-preflight summary messages stay short"
+);
 
 const overallOkDraft = {
   ...safeTextDraft,
@@ -193,6 +276,7 @@ const overallOkDraft = {
 const overallOkItems = lib.getThumbnailOverallQualityGuardItems(overallOkDraft);
 assert.ok(overallOkItems.some((item) => item.id === "thumbnail-quality-ok" && item.tone === "ok"), "overall guard can show compact ok state");
 assert.equal(lib.getThumbnailQualityGuardSummary(overallOkItems).label, "品質チェックOK", "overall summary can show compact ok text");
+assert.deepEqual(lib.getThumbnailQualityGuardSummary(overallOkItems).messages, ["そのまま書き出せます"], "ok summary stays compact before export");
 
 const initialPresetOverallItems = lib.getThumbnailOverallQualityGuardItems(draft);
 assert.deepEqual(
@@ -225,6 +309,8 @@ assert.ok(componentSource.includes("ThumbnailQualityGuardPanel"), "Thumbnail Edi
 assert.ok(componentSource.includes("getThumbnailQualityGuardItems"), "component uses the shared quality guard helper");
 assert.ok(componentSource.includes("overallQualityGuardSummary"), "Thumbnail Editor keeps a short overall quality summary near export actions");
 assert.ok(componentSource.includes("qualityGuardSummary"), "ExportPanel can receive the quality summary without growing into a diagnostics UI");
+assert.ok(componentSource.includes("qualityGuardSummary.messages"), "ExportPanel shows a short readable pre-export quality summary");
+assert.ok(componentSource.includes("書き出し前の確認"), "export preflight summary is labeled as a final lightweight check");
 assert.ok(componentSource.includes("文字と立ち絵を確認して書き出す"), "export quality summary can be read as a lightweight final check");
 assert.ok(componentSource.includes("サムネ品質"), "quality guard is visible as thumbnail quality, not a generic paint tool");
 assert.ok(componentSource.includes("プリセットを選んで、文字と立ち絵を差し替えてから書き出す"), "UI briefly explains the preset-to-export workflow");

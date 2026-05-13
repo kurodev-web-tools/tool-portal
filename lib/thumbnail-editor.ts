@@ -266,6 +266,7 @@ export type ThumbnailQualityGuardItem = {
 export type ThumbnailQualityGuardSummary = {
   tone: ThumbnailQualityGuardTone;
   label: string;
+  messages: string[];
 };
 
 export const thumbnailDraftStorageKey = "v-streamer-tools:thumbnail-editor:draft:v1";
@@ -330,6 +331,7 @@ export type ThumbnailMainTextCarryover = Partial<Record<ThumbnailMainTextCarryov
 const thumbnailQualitySafeAreaInsetRatio = 0.04;
 const thumbnailQualityTextWidthWarnRatio = 0.92;
 const thumbnailQualityCropWarnRatio = 0.65;
+const thumbnailQualityOpacityWarnRatio = 0.65;
 const thumbnailHexToRgb = (value: string) => {
   const normalized = value.trim().toLowerCase();
   if (!/^#[0-9a-f]{6}$/.test(normalized)) {
@@ -366,6 +368,11 @@ const hasThumbnailTextReadabilityRisk = (layer: ThumbnailTextLayer) =>
     .some((line) => line.trim().length > 0 && getThumbnailEstimatedTextLineWidth(line.trim(), layer.fontSize) > layer.width * thumbnailQualityTextWidthWarnRatio);
 const hasThumbnailImageCropRisk = (layer: ThumbnailImageLayer) =>
   Boolean(layer.crop && (layer.crop.width < thumbnailQualityCropWarnRatio || layer.crop.height < thumbnailQualityCropWarnRatio));
+const hasThumbnailImageUnresolvedRisk = (layer: ThumbnailImageLayer) =>
+  Boolean(
+    layer.materialRef &&
+      (layer.src === thumbnailUserMaterialFallbackImageSrc || layer.name.includes("削除済み") || layer.name.includes("読み込み失敗"))
+  );
 const isThumbnailQualityUserImageLayer = (layer: ThumbnailLayer): layer is ThumbnailImageLayer =>
   layer.type === "image" && (layer.src.startsWith("data:image/") || Boolean(layer.materialRef) || layer.name === "画像" || layer.name === "ユーザー素材");
 
@@ -402,8 +409,14 @@ const getThumbnailQualityGuardItemsForLayers = (
   if (textLayers.some(hasThumbnailTextReadabilityRisk)) {
     items.push({ id: scope === "selected" ? "selected-text-readability" : "overall-text-readability", tone: "hint", message: "長文は改行も確認" });
   }
+  if (textLayers.some((layer) => layer.opacity < thumbnailQualityOpacityWarnRatio)) {
+    items.push({ id: scope === "selected" ? "selected-text-opacity" : "overall-text-opacity", tone: "hint", message: "文字の透け具合を確認" });
+  }
 
   const imageLayers = targetLayers.filter((layer): layer is ThumbnailImageLayer => layer.type === "image");
+  if (imageLayers.some(hasThumbnailImageUnresolvedRisk)) {
+    items.push({ id: scope === "selected" ? "selected-image-unresolved" : "overall-image-unresolved", tone: "warning", message: "画像の再追加を確認" });
+  }
   if (imageLayers.some(hasThumbnailImageCropRisk)) {
     items.push({ id: scope === "selected" ? "selected-image-crop" : "overall-image-crop", tone: "hint", message: "見切れ具合を確認" });
   }
@@ -449,11 +462,12 @@ export const getThumbnailOverallQualityGuardItems = (draft: ThumbnailEditorDraft
 export const getThumbnailQualityGuardSummary = (items: ThumbnailQualityGuardItem[]): ThumbnailQualityGuardSummary => {
   const activeItems = items.filter((item) => item.tone !== "ok");
   if (activeItems.length === 0) {
-    return { tone: "ok", label: "品質チェックOK" };
+    return { tone: "ok", label: "品質チェックOK", messages: ["そのまま書き出せます"] };
   }
   return {
     tone: activeItems.some((item) => item.tone === "warning") ? "warning" : "hint",
-    label: `注意 ${activeItems.length}件`
+    label: `注意 ${activeItems.length}件`,
+    messages: activeItems.slice(0, 2).map((item) => item.message)
   };
 };
 

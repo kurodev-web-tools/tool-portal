@@ -12,6 +12,7 @@
 - PR #87 `[codex] Organize freeze docs task board` は `main` / `origin/main` に merge 済み。merge commit は `f6f7d08`。
 - PR #88 `[codex] Freeze final QA docs consistency` は `main` / `origin/main` に merge 済み。merge commit は `ba9cc45`。
 - PR #89 `[codex] Add thumbnail user material library UI` は `main` / `origin/main` に merge 済み。merge commit は `2901020`。
+- PR #90 `[codex] QA thumbnail user material library` は `main` / `origin/main` に merge 済み。merge commit は `08f59cd`。
 
 ## Freeze 前の現行境界
 
@@ -56,6 +57,37 @@
 
 ## Active
 
+### P0: Static export RSC prefetch 404 investigation
+
+- 状態: implemented in current branch
+- 目的:
+  - production static serve 時に `1024px+` で出ていた Next static export の `__next.*.txt` prefetch 404 を、Thumbnail Editor 個別問題ではなく portal 全体の static export / hosting 配信方式として切り分ける。
+  - ツール本体の機能追加、UI redesign、schema変更、asset追加へ広げない。
+- 調査結果:
+  - PR #90 merge commit `08f59cd` が `origin/main` 先端であることを確認し、`codex/static-export-prefetch-404-investigation` / `.worktrees/static-export-prefetch-404-investigation` を `origin/main` 起点で作成。
+  - `npm run build` の static export 出力では、`out/tools/thumbnail-editor/__next.tools/thumbnail-editor.txt` と `out/tools/thumbnail-editor/__next.tools/thumbnail-editor/__PAGE__.txt` のように、route segment 部分が `__next.tools/` 配下の slash path として生成されていた。
+  - runtime prefetch は `1024px+` で表示される desktop sidebar / portal link 群を起点に、`/tools/thumbnail-editor/__next.tools.thumbnail-editor.txt`、`/tools/thumbnail-editor/__next.tools.thumbnail-editor.__PAGE__.txt`、`/tools/__next.tools.__PAGE__.txt` のような dotted path を要求していた。
+  - `390 / 820px` では desktop sidebar が非表示のため、要求は mobile header の root link prefetch に留まり、root の `__next._tree.txt` / `__next.__PAGE__.txt` は 200 で 404 なし。
+  - `/tools`、`/tools/schedule-calendar`、`/tools/sns-split-image-maker` でも `1024px+` の portal link prefetch で同じ dotted path が要求されるため、Thumbnail Editor user material UI / PR #89 / PR #90 由来ではなく、Next static export の出力 path と static hosting の exact file serving の不一致として扱う。
+  - `serve out` 固有の fallback ではなく、dotted path の実ファイルまたは rewrite がない static hosting では同様に 404 になりうる。ページ表示は `index.txt` fallback で継続し、保存、IndexedDB、handoff、export には影響しないが、production console と navigation prefetch が noisy になる。
+- 実施結果:
+  - `scripts/static-export-rsc-aliases.mjs` を追加し、`out/**/__next.*/*.txt` の slash path 出力から、runtime が要求する dotted `.txt` alias を生成 / `--check` 検証できるようにした。
+  - `package.json` に `postbuild` を追加し、`npm run build` 後に static export RSC alias を自動生成する。
+  - アプリ側 `Link`、portal UI、Thumbnail Editor user material UI、Schedule Calendar、SNS Split Image Maker、schema、public asset、font、preset、variant body、crop 仕様は変更していない。
+- 幅別表示 / prefetch 結果:
+  - 修正前の `1024px` `/tools/thumbnail-editor`: desktop sidebar の `Home / Tools / Schedule Calendar / Thumbnail Editor / SNS分割画像メーカー` link prefetch で dotted `.txt` が 7件 404。`390 / 820px` は console error なし。
+  - 修正後の `390 / 820 / 1024 / 1280 / 1366px` `/tools/thumbnail-editor`: `h1` 表示、横 overflow なし、console error なし。`1024px+` の dotted `.txt` prefetch は 200。
+  - 修正後の `1280px` `/tools`、`/tools/schedule-calendar`、`/tools/sns-split-image-maker`: `h1` 表示、横 overflow なし、console error なし。portal sidebar / card link prefetch の dotted `.txt` は 200。
+- 検証:
+  - `npm run build` PASS。`postbuild` で `Static export RSC aliases ready: 8 checked, 8 written.` を確認。workspace root warning は既知の multiple lockfiles warning。
+  - `node scripts/static-export-rsc-aliases.mjs --check` PASS。
+  - `node scripts/tool-portal-entry-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+
 ### P0: Thumbnail Editor user material library UI v1
 
 - 状態: merged in PR #89
@@ -91,7 +123,7 @@
 
 ### P0: Thumbnail Editor user material library UI v1 QA / polish
 
-- 状態: draft PR ready
+- 状態: merged in PR #90
 - 目的:
   - PR #89 merge 後の `origin/main` 起点で、user material UI v1 が保存 / 復元 / 削除 / 置換 / export / Thumbnail -> SNS handoff と矛盾していないか確認する。
   - 必要最小限の QA contract と copy / layout polish に留め、preset body、public asset、font、schema、crop、他ツール実装へ広げない。

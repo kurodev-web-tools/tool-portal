@@ -3,6 +3,7 @@
 import { ChangeEvent, type PointerEvent as ReactPointerEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   countReadySnsSplitImages,
+  canExportSnsSplitDraft,
   createSnsSplitDraft,
   createSnsSplitFileName,
   defaultSnsSplitPreset,
@@ -12,6 +13,7 @@ import {
   drawSnsSplitMainTile,
   drawSnsSplitTile,
   getSnsSplitPostAdjustment,
+  getSnsSplitExportOrderLabel,
   getRequiredSlotCount,
   getSnsSplitSlotLabel,
   getSnsSplitTiles,
@@ -143,15 +145,6 @@ const getPresetRatioLabel = (preset: SnsSplitPreset) => {
   }
   return "16:27";
 };
-const getOutputOrderLabel = (preset: SnsSplitPreset) => {
-  if (preset === "split-2") {
-    return "split_1 → split_2";
-  }
-  if (preset === "split-3") {
-    return "split_1 → split_2 → split_3";
-  }
-  return "split_1 → split_2 → split_3 → split_4";
-};
 const getPreviewDescription = (preset: SnsSplitPreset) => {
   if (preset === "split-2") {
     return "編集、24:9完成画像、左右のメイン分割を切り替えて確認します。";
@@ -266,7 +259,7 @@ export function SnsSplitImageMakerApp() {
     [draft.config.joinType, draft.images, draft.mode, draft.preset]
   );
   const baseImage = draft.images.find((image) => image.id === "base") ?? null;
-  const canExport = imageStatus.baseReady;
+  const canExport = canExportSnsSplitDraft(draft);
   const selectedTile = tiles.find((tile) => tile.index === selectedPost) ?? tiles[0];
   const selectedAdjustment = getSnsSplitPostAdjustment(draft.config, selectedPost);
   const postCount = tiles.length;
@@ -664,7 +657,7 @@ export function SnsSplitImageMakerApp() {
         link.download = createSnsSplitFileName(draft.exportSettings.filePattern, tile.index, draft.exportSettings.format);
         link.click();
       }
-      setToast({ tone: "success", message: `${getOutputOrderLabel(draft.preset)} の順で${postCount}枚を書き出しました。` });
+      setToast({ tone: "success", message: `${getSnsSplitExportOrderLabel(draft.preset)} の順で${postCount}枚を書き出しました。` });
     } catch (error) {
       setToast({ tone: "error", message: error instanceof Error ? error.message : "画像の書き出しに失敗しました。" });
     }
@@ -781,7 +774,7 @@ export function SnsSplitImageMakerApp() {
               <SectionTitle title="プレビュー" description={getPreviewDescription(draft.preset)} />
               <div className="flex items-center gap-2 rounded-base border border-border bg-surface px-3 py-2 text-xs text-muted">
                 <span className="font-bold text-primary-strong">出力順</span>
-                <span>{getOutputOrderLabel(draft.preset)}</span>
+                <span>{getSnsSplitExportOrderLabel(draft.preset)}</span>
               </div>
             </div>
             <div className="grid grid-cols-3 overflow-hidden rounded-base border border-border bg-surface">
@@ -1012,6 +1005,7 @@ export function SnsSplitImageMakerApp() {
                   />
                   <span className="mt-1 block text-xs text-muted">{getFilePatternHint(draft.preset)}</span>
                 </label>
+                <p className="text-xs text-muted">PNG/JPEGはどちらか1形式を選び、ZIPや複数形式の一括出力は後続候補です。</p>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <button type="button" onClick={saveDraft} className="flat-control min-h-12 px-4 py-2 font-black">
@@ -1024,7 +1018,7 @@ export function SnsSplitImageMakerApp() {
               <p className="mt-2 text-xs text-muted">
                 メイン画像: {imageStatus.baseReady ? "選択済み" : "未選択"} / 追加画像: {imageStatus.slotReady}/{imageStatus.requiredSlots}
               </p>
-              <p className="mt-1 text-xs text-muted">出力はブラウザのダウンロードとして{postCount}枚を保存します。順番は {getOutputOrderLabel(draft.preset)} です。</p>
+              <p className="mt-1 text-xs text-muted">出力はブラウザのダウンロードとして{postCount}枚を保存します。順番は {getSnsSplitExportOrderLabel(draft.preset)} です。</p>
             </ControlSection>
           </aside>
         </main>

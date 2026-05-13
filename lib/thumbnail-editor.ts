@@ -1471,7 +1471,7 @@ export const createImageLayer = (src: string): ThumbnailImageLayer => ({
   blur: 0
 });
 
-export const thumbnailUserMaterialFallbackImageSrc = svgDataUrl("USER MATERIAL", "#111827", "#475569", "#e5e7eb");
+export const thumbnailUserMaterialFallbackImageSrc = svgDataUrl("MATERIAL MISSING", "#111827", "#475569", "#e5e7eb");
 
 const thumbnailUserMaterialMimeTypes: ThumbnailUserMaterialMimeType[] = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 const thumbnailUserMaterialFallbackLabels: Record<ThumbnailUserMaterialFallbackReason, string> = {

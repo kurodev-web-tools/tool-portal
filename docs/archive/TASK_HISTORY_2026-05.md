@@ -444,6 +444,18 @@
 - 幅別確認: DevTools isolated context で `/tools/sns-split-image-maker?preset=split-4` を `390 / 820 / 1024 / 1280 / 1366px` で確認。export copy 表示、main画像未選択時の出力ボタン disabled、横 overflow なし、console error / warn なし。
 - 検証: `node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
 
+#### P24: Thumbnail Editor quality guard export-preflight polish
+
+- PR #99 `[codex] Polish thumbnail quality preflight` は 2026-05-13 に `main` / `origin/main` へ merge 済み。
+- merge commit は `354d02bad0a0136f1ed43afd58f0e791e318a9fc`。
+- 既存の `サムネ品質` / `注意 n件` / `品質チェックOK` の軽い表示を維持したまま、低透明度テキストの可読性 hint と、未解決 user material 画像の warning を selected layer / overall guard に追加した。
+- export panel には `注意 n件` / `品質チェックOK` の短いラベルを残し、`書き出し前の確認` として最大2件の短文 summary だけを表示する形にした。
+- quality guard は warning / hint のみで、自動修正、AI生成、modal tutorial、重い onboarding は追加していない。
+- draft / preset / material registration / public asset / font / crop / text layer schema / image layer schema / storage schema は変更していない。
+- Schedule Calendar / SNS Split Image Maker の実装修正、Next.js / React version 変更は行っていない。
+- 幅別確認: Playwright + local dev server で `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認。`390 / 820px` は下部 `テキスト` tab で `サムネ品質`、下部 `書き出し` tab で `書き出し前の確認` / `品質チェックOK` / `そのまま書き出せます` を確認。`1024 / 1280 / 1366px` は右 panel 上で同表示を確認。全幅で canvas 表示、横 overflow なし、console error / warn なし。
+- 検証: `node scripts/thumbnail-quality-guard-contract.mjs`、`node scripts/thumbnail-standee-placement-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

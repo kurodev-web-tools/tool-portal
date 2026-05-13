@@ -8,8 +8,9 @@
 - 意味のある実装後は、このファイルに実装内容、検証、必要な幅別確認を残す。
 - UI 変更時の確認幅は `390 / 820 / 1024 / 1280 / 1366px` を基本にする。
 - 2026-05 の完了済み詳細ログは `docs/archive/TASK_HISTORY_2026-05.md` を参照する。
-- PR #86 `[codex] Align portal entry freeze copy` から PR #99 `[codex] Polish thumbnail quality preflight` まで、`main` / `origin/main` に merge 済み。
+- PR #86 `[codex] Align portal entry freeze copy` から PR #100 `[codex] Clean up task board after PR99` まで、`main` / `origin/main` に merge 済み。
 - PR #99 の merge commit は `354d02bad0a0136f1ed43afd58f0e791e318a9fc`。
+- PR #100 の merge commit は `f44618b0f8ecb1e265c65f409771f4a0e37493c2`。
 - static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 欄を参照する。
 
 ## Active
@@ -22,11 +23,12 @@
 
 - Schedule Calendar / Thumbnail Editor / SNS Split Image Maker の freeze 前 final QA は PR #92 で完了済み。
 - static export RSC alias は PR #91 で `postbuild` 生成と `--check` 検証が入っている。
-- task board closeout は PR #93 / PR #95 / PR #98 で完了済み。
+- task board closeout は PR #93 / PR #95 / PR #98 / PR #100 で完了済み。
 - Thumbnail Editor user material library management v1 は PR #94 で完了済み。
 - Schedule Calendar input length / copy guard は PR #96 で完了済み。
 - SNS Split Image Maker export boundary polish は PR #97 で完了済み。
 - Thumbnail Editor quality guard export-preflight polish は PR #99 で完了済み。
+- Thumbnail Editor docs drift cleanup では、PR #94 / PR #99 後の `docs/design-thumbnail-editor.md` と `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` を同期し、user material library UI v1 / management v1 / quality guard export-preflight polish を完了済みとして整理する。docs-only で UI / 表示文言 / tool 実装を触らないため、幅別ブラウザ確認は不要。
 - PR #92 の production static serve final QA では、`1024px` の `/tools` と3ツールで dotted `__next.tools*.txt` が 200 / 304、`1280px` / `1366px` で `__next.*.txt` の 400+ response なし。
 
 ## Freeze 後の現行境界

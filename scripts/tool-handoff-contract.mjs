@@ -6,7 +6,10 @@ import ts from "typescript";
 
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "tool-handoff.ts");
+const fileNameSourcePath = path.join(root, "lib", "file-name.ts");
+const thumbnailAppSourcePath = path.join(root, "components", "thumbnail-editor", "ThumbnailEditorApp.tsx");
 const source = fs.readFileSync(sourcePath, "utf8");
+const thumbnailAppSource = fs.readFileSync(thumbnailAppSourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -19,9 +22,40 @@ testModule.filename = sourcePath;
 testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
 testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
+const fileNameSource = fs.readFileSync(fileNameSourcePath, "utf8");
+const fileNameCompiled = ts.transpileModule(fileNameSource, {
+  compilerOptions: {
+    module: ts.ModuleKind.CommonJS,
+    target: ts.ScriptTarget.ES2022
+  }
+}).outputText;
+const fileNameModule = new Module(fileNameSourcePath);
+fileNameModule.filename = fileNameSourcePath;
+fileNameModule.paths = Module._nodeModulePaths(path.dirname(fileNameSourcePath));
+fileNameModule._compile(fileNameCompiled, fileNameSourcePath);
+const fileNameLib = fileNameModule.exports;
 
 assert.equal(typeof lib.createThumbnailToSnsHandoffPayload, "function", "thumbnail -> sns payload factory exists");
 assert.equal(typeof lib.normalizeThumbnailToSnsHandoffPayload, "function", "thumbnail -> sns normalizer exists");
+assert.equal(typeof fileNameLib.sanitizeFileNamePart, "function", "shared filename part sanitizer exists");
+assert.equal(typeof fileNameLib.createHandoffFileNameBase, "function", "shared handoff filename base helper exists");
+assert.equal(typeof fileNameLib.createNumberedFilePattern, "function", "shared numbered file pattern helper exists");
+assert.equal(fileNameLib.sanitizeFileNamePart(" 配信 告知/サムネ? "), "配信-告知-サムネ-", "filename part sanitizer preserves current handoff boundary");
+assert.equal(
+  fileNameLib.sanitizeFileNamePart("a".repeat(40)),
+  "a".repeat(32),
+  "filename part sanitizer keeps the existing 32-character candidate cap"
+);
+assert.equal(fileNameLib.createHandoffFileNameBase("2026-05-05", "配信 告知/サムネ?"), "20260505_配信-告知-サムネ-");
+assert.equal(fileNameLib.createHandoffFileNameBase("", ""), "thumbnail", "empty thumbnail -> sns base falls back to thumbnail");
+assert.equal(fileNameLib.createNumberedFilePattern(["20260505", "配信 告知/サムネ?"]), "20260505_配信-告知-サムネ-_{n}");
+assert.equal(fileNameLib.createNumberedFilePattern([""], "thumbnail_{n}"), "{n}", "schedule -> sns empty candidate keeps the previous token-only boundary");
+assert.match(
+  thumbnailAppSource,
+  /createHandoffFileNameBase/,
+  "thumbnail app uses the shared helper for thumbnail -> sns filename candidates"
+);
+assert.doesNotMatch(thumbnailAppSource, /const sanitizeFilePatternPart =/, "thumbnail app does not keep a local handoff filename sanitizer");
 
 const schedulePayloadInput = {
   eventId: "schedule-event-1",

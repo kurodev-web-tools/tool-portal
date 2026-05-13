@@ -28,6 +28,7 @@ import {
   type SnsSplitPostIndex,
   type SnsSplitTile
 } from "@/lib/sns-split-image-maker";
+import { createNumberedFilePattern } from "@/lib/file-name";
 import { readToolHandoff, type ScheduleHandoffPayload, type SnsSplitToolHandoffPayload, type ThumbnailToSnsHandoffPayload } from "@/lib/tool-handoff";
 import { SnsSplitPresetLanding } from "./SnsSplitPresetLanding";
 import {
@@ -86,21 +87,14 @@ const snapPostOffset = (value: number) => {
   const rounded = clampPostOffset(value);
   return Math.abs(rounded) <= postAdjustmentSnapThreshold ? 0 : rounded;
 };
-const sanitizeFilePatternPart = (value: string) =>
-  value
-    .trim()
-    .replace(/[\\/:*?"<>|]+/g, "-")
-    .replace(/\s+/g, "-")
-    .slice(0, 32);
 const applyScheduleHandoffToSnsDraft = (draft: SnsSplitDraft, payload: ScheduleHandoffPayload): SnsSplitDraft => {
-  const titlePart = sanitizeFilePatternPart(payload.title);
   const datePart = payload.date.replaceAll("-", "");
 
   return {
     ...draft,
     exportSettings: {
       ...draft.exportSettings,
-      filePattern: [datePart, titlePart, "{n}"].filter(Boolean).join("_")
+      filePattern: createNumberedFilePattern([datePart, payload.title])
     },
     updatedAt: new Date().toISOString()
   };
@@ -119,7 +113,7 @@ const applyThumbnailHandoffToSnsDraft = async (
     }
 
     await writeStoredImageSource("base", src);
-    const filePattern = [sanitizeFilePatternPart(payload.fileNameBase), "{n}"].filter(Boolean).join("_") || "thumbnail_{n}";
+    const filePattern = createNumberedFilePattern([payload.fileNameBase]);
     return {
       ...draft,
       preset: "split-4",

@@ -112,7 +112,9 @@ assert.match(appSource, /Schedule Calendarから告知文メモを受け取り�
 assert.match(appSource, /受け取った画像をメイン画像として確認し、必要なら追加画像を入れてから保存します。/, "thumbnail handoff next action stays concrete");
 assert.match(appSource, /メイン画像は未選択です。画像を選んでから、告知文メモを投稿文へ使えます。/, "schedule handoff next action explains the missing main image");
 assert.match(appSource, /aria-label=\{isThumbnailToSnsHandoffPayload\(handoffPayload\) \? "Thumbnail Editorから受け取った告知文メモ" : "Schedule Calendarから受け取った告知文メモ"\}/, "handoff textarea label names the source");
+assert.match(appSource, /createNumberedFilePattern/, "app uses the shared numbered filename pattern helper for handoff candidates");
 assert.doesNotMatch(appSource, /getOutputOrderLabel\(/, "app uses the shared export order helper consistently");
+assert.doesNotMatch(appSource, /const sanitizeFilePatternPart =/, "app does not keep a local handoff filename sanitizer");
 assert.doesNotMatch(appSource, /label: "投稿時"/, "preview tab label no longer says post-time");
 assert.doesNotMatch(appSource, /label: "1\+8連結"/, "primary 4-split mode label no longer uses legacy 1+8 text");
 assert.doesNotMatch(appSource, /label: "1\+4差し替え"/, "primary 4-split mode label no longer uses legacy 1+4 text");

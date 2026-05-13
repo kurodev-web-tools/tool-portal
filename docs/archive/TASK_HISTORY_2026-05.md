@@ -1,6 +1,6 @@
 # TASK HISTORY 2026-05
 
-更新日: 2026-05-03
+更新日: 2026-05-13
 目的: `task.md` の完了済み項目を月次で退避し、現行タスクを未完了中心に保つ。
 
 ## 2026-05 完了済みの主な実施内容
@@ -307,6 +307,91 @@
 - PR #86 `[codex] Align portal entry freeze copy` は 2026-05-12 に `main` / `origin/main` へ merge 済み。
 - merge commit は `e2ef0896ffda466242aaa4c26ed76bae6a46811e`。
 - この merge 後の `origin/main` 起点で、次の task cleanup / docs consistency worktree を作成した。
+
+#### P13: Freeze docs task board cleanup
+
+- PR #87 `[codex] Organize freeze docs task board` は `main` / `origin/main` へ merge 済み。
+- merge commit は `f6f7d08`。
+- `task.md` から完了済み詳細ログを外し、freeze 境界、次アクション、残タスク候補、未確認範囲を読む active-only board へ再整理した。
+- UI / 表示文言 / tool 実装 / storage schema / export 機能本体は変更していない。
+- 検証: `node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`node scripts/tool-portal-entry-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
+
+#### P14: Freeze final QA / docs consistency
+
+- PR #88 `[codex] Freeze final QA docs consistency` は `main` / `origin/main` へ merge 済み。
+- merge commit は `ba9cc45`。
+- Schedule Calendar / Thumbnail Editor / SNS Split Image Maker の freeze 対象と freeze 後候補を、docs と portal entry の表現で再確認した。
+- Schedule Calendar は予定管理、投稿補助、undo、handoff を freeze 対象として確認し、Google Calendar、ログイン、週間予定画像生成を freeze 後候補に閉じた。
+- Thumbnail Editor は用途別プリセット、文字差し替え、立ち絵 / 画像差し替え、登録済み装飾素材の軽い追加、品質確認、PNG / JPEG 1枚 export を freeze 対象として確認した。
+- SNS Split Image Maker はX向け `2分割 / 3分割 / 4分割`、メイン画像 guard、個別 PNG / JPEG export、Schedule / Thumbnail handoff の next action を freeze 対象として確認した。
+- ZIP、X 以外比率、複数形式 export、重い onboarding は freeze 後候補として分離した。
+- 幅別確認: 3ツールで `390 / 820 / 1024 / 1280 / 1366px` の `h1` 表示、横 overflow なし、console error なしを確認。
+- 検証: `node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`node scripts/tool-portal-entry-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/thumbnail-quality-guard-contract.mjs`、`node scripts/thumbnail-preset-batch-readiness-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
+
+#### P15: Thumbnail Editor user material library UI v1
+
+- PR #89 `[codex] Add thumbnail user material library UI` は `main` / `origin/main` へ merge 済み。
+- merge commit は `2901020`。
+- 登録済み装飾素材パネルと user-added material 管理 UI を分離した。
+- user material metadata は `localStorage` に `id` / `name` / `storageId` 等だけを保存し、画像本体は IndexedDB `images` store に保存する形へ分離した。
+- user material layer は draft 上では fallback `src` と lightweight `materialRef` を保持し、canvas 表示 / export / Thumbnail -> SNS handoff 描画時だけ IndexedDB から blob URL を解決する。
+- 削除時は既存 layer を削除せず、削除済み fallback 表示へ寄せる。置換時は layer geometry / crop を維持する。
+- registered material library、preset body、public asset、font asset、variant body、crop 仕様、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+- 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で横 overflow なし、canvas表示、登録済み素材 / ユーザー素材の分離表示、metadata / draft に uploaded PNG body が入らないことを確認。
+- 既知事項: production static serve の `1024px+` では当時 `__next.*.txt` prefetch 404 が出ていたが、ページ表示、操作、localStorage / IndexedDB 境界には影響なしとして別PRへ分離した。
+- 検証: `node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/thumbnail-preset-apply-safety-contract.mjs`、`node scripts/thumbnail-quality-guard-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` 成功。
+
+#### P16: Thumbnail Editor user material library UI v1 QA / polish
+
+- PR #90 `[codex] QA thumbnail user material library` は `main` / `origin/main` へ merge 済み。
+- merge commit は `08f59cd`。
+- user material UI v1 が保存 / 復元 / 削除 / 置換 / export / Thumbnail -> SNS handoff と矛盾していないか確認した。
+- `scripts/thumbnail-material-assets-contract.mjs` に user material UI copy、fallback 表示、replace helper 利用の QA を追加した。
+- `scripts/tool-handoff-contract.mjs` に Thumbnail -> SNS handoff payload / normalizer が user material metadata、`materialRef`、画像本体を混ぜない QA を追加した。
+- 未解決プレビューは `要再追加`、canvas fallback は `MATERIAL MISSING` とし、削除 toast で配置済みレイヤーは残ることを明示した。
+- 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で横 overflow なし、canvas nonblank、user material追加後に refs 1件 / user material layer 1件 / IndexedDB image 1件を確認。
+- `1280px` では置換後も layer geometry を維持し、削除後も layer は削除済み fallback として残り、refs は空、IndexedDB image は 0件になることを確認した。
+- `1366px` では Thumbnail -> SNS handoff が短い `handoff` token + `preset=split-4` のみを URL に載せ、payload に user material metadata / `materialRef` / uploaded PNG body を含めないことを確認した。
+- production static serve の `1024px+` では `__next.*.txt` prefetch 404 が再現し、Next static export と `serve` の prefetch 配信方式由来として PR #91 へ分離した。
+- 検証: `node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/thumbnail-preset-apply-safety-contract.mjs`、`node scripts/thumbnail-quality-guard-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build` 成功。
+
+#### P17: Static export RSC prefetch 404 investigation / alias fix
+
+- PR #91 `[codex] Fix static export RSC aliases` は `main` / `origin/main` へ merge 済み。
+- merge commit は `ceec8de`。
+- production static serve 時に `1024px+` で出ていた Next static export の `__next.*.txt` prefetch 404 を、Thumbnail Editor 個別問題ではなく portal 全体の static export / hosting 配信方式として切り分けた。
+- `npm run build` の static export 出力は `out/tools/thumbnail-editor/__next.tools/thumbnail-editor.txt` のような slash path を生成する一方、runtime prefetch は `/tools/thumbnail-editor/__next.tools.thumbnail-editor.txt` のような dotted path を要求していた。
+- `/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` で同じ dotted path 要求が確認されたため、Next static export の出力 path と static hosting の exact file serving の不一致として扱った。
+- `scripts/static-export-rsc-aliases.mjs` を追加し、`out/**/__next.*/*.txt` の slash path 出力から runtime が要求する dotted `.txt` alias を生成 / `--check` 検証できるようにした。
+- `package.json` に `postbuild` を追加し、`npm run build` 後に static export RSC alias を自動生成する。
+- アプリ側 `Link`、portal UI、Thumbnail Editor user material UI、Schedule Calendar、SNS Split Image Maker、schema、public asset、font、preset、variant body、crop 仕様は変更していない。
+- 修正後の確認では、`390 / 820 / 1024 / 1280 / 1366px` の `/tools/thumbnail-editor` で `h1` 表示、横 overflow なし、console error なし、`1024px+` の dotted `.txt` prefetch は 200。
+- `/tools`、`/tools/schedule-calendar`、`/tools/sns-split-image-maker` でも portal sidebar / card link prefetch の dotted `.txt` は 200。
+- 検証: `npm run build` 成功、`postbuild` で `Static export RSC aliases ready: 8 checked, 8 written.` を確認。`node scripts/static-export-rsc-aliases.mjs --check`、`node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
+
+#### P18: Freeze production final QA after static export RSC alias fix
+
+- PR #92 `[codex] Freeze production final QA` は 2026-05-13 に `main` / `origin/main` へ merge 済み。
+- merge commit は `05c4223de146976d5e84ff2b30e79e17854b261c`。
+- PR #91 merge 後の `origin/main` 起点で、公開中3ツールの production static serve 前提の freeze 前 final QA を行った。
+- Schedule Calendar -> Thumbnail / SNS Split handoff は、URL本文なし、`sessionStorage` token、テキスト metadata のみとして現行 freeze 範囲に読めることを確認した。
+- Thumbnail Editor -> SNS Split handoff は、URLに短い `handoff` token と `preset=split-4` のみを載せ、画像本体はSNS Split側 IndexedDB、一時 payload は user material metadata / `materialRef` / 画像本体を混ぜない境界として contract / docs 上で崩れていないことを確認した。
+- SNS Split Image Maker の export 導線は、X向け `2分割 / 3分割 / 4分割` の個別 PNG / JPEG 出力として読める。ZIP、X以外比率、複数形式の大規模 export は freeze 後候補に閉じている。
+- docs / task.md 上で、現行 freeze 対象と freeze 後候補を混ぜる明確な drift は見つからなかったため、UI文言 / ツール機能実装修正は行っていない。
+- `npm run build` により `next-env.d.ts` の route type reference が production build 側の `./.next/types/routes.d.ts` へ同期された。
+- static export / production serve 結果:
+  - `npm run build` 成功。`postbuild` で `Static export RSC aliases ready: 8 checked, 8 written.` を確認。
+  - `node scripts/static-export-rsc-aliases.mjs --check` 成功。`Static export RSC aliases verified: 8` を確認。
+  - `serve out` を `http://127.0.0.1:3017` で配信し、Chrome DevTools で production static serve を確認。
+  - `1024px` の `/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` で dotted `__next.tools*.txt` は 200 / 304。PR #91 前に出ていた prefetch 404 は再発なし。
+  - `1280px` / `1366px` でも `__next.*.txt` の 400+ response はなし。
+- 幅別表示結果:
+  - `390px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。
+  - `820px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。
+  - `1024px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。dotted RSC `.txt` は 200 / 304。
+  - `1280px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。`__next.*.txt` 400+ なし。
+  - `1366px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。`__next.*.txt` 400+ なし。
+- 検証: `npm run build`、`node scripts/static-export-rsc-aliases.mjs --check`、`node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/sns-split-image-maker-contract.mjs`、`npm run lint`、`npx tsc --noEmit` 成功。
 
 ## 参照ドキュメント
 

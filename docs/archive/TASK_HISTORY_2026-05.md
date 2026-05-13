@@ -393,6 +393,29 @@
   - `1366px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。`__next.*.txt` 400+ なし。
 - 検証: `npm run build`、`node scripts/static-export-rsc-aliases.mjs --check`、`node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/sns-split-image-maker-contract.mjs`、`npm run lint`、`npx tsc --noEmit` 成功。
 
+#### P19: Freeze closeout task board cleanup
+
+- PR #93 `[codex] Organize freeze closeout task board` は 2026-05-13 に `main` / `origin/main` へ merge 済み。
+- merge commit は `84153e88ee38d195587d2820e5d808095ba7d86c`。
+- PR #92 merge 後の `origin/main` 起点で、`task.md` を freeze closeout 後の active-only board へ整理した。
+- Schedule Calendar / Thumbnail Editor / SNS Split Image Maker の freeze 済み範囲と、freeze 後候補を簡潔に読み直せる形にした。
+- 次PR候補を `Thumbnail Editor user material library management v1`、`Schedule Calendar input length / copy guard`、`SNS Split Image Maker export boundary polish` に整理した。
+- UI / 表示文言 / tool 実装 / storage schema / export 機能本体は変更していない。
+- 検証: `node scripts/static-export-rsc-aliases.mjs --check`、`node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/sns-split-image-maker-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
+
+#### P20: Thumbnail Editor user material library management v1
+
+- PR #94 `[codex] Add thumbnail user material management guards` は 2026-05-13 に `main` / `origin/main` へ merge 済み。
+- merge commit は `77ce20233fc56c665919273da8abddcc7a5f8630`。
+- PR #93 merge 後の `origin/main` 起点で、既存 user material UI v1 の IndexedDB / lightweight ref 境界を保ったまま、容量上限、読み込み不能 fallback、再追加 / 整理導線を最小実装した。
+- `thumbnailUserMaterialStoragePolicy` に `最大24件 / 1点8MB / 合計48MB` の軽い容量境界を追加し、使用量 summary / 追加可否 helper / byte 表示 helper を contract 化した。
+- user material 追加時は既存 `ThumbnailUserMaterialRef` metadata から容量を判定し、画像本体は引き続き IndexedDB に保存、localStorage / draft / handoff payload へ混ぜない。
+- IndexedDB から画像 URL を解決できない ref は `読み込み失敗` fallback へ寄せ、既存 layer geometry / crop / lightweight ref は維持する。
+- ユーザー素材パネルには容量表示と「要再追加の素材は置換で復旧 / 不要なら削除」の短い整理導線だけを追加した。重い管理画面や modal tutorial は入れていない。
+- public asset、font asset、preset body、variant body、crop 仕様、text / image layer schema、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+- 幅別確認: `390 / 820px` は素材タブを開き、`1024 / 1280 / 1366px` は初期表示で、`h1` 表示、横 overflow なし、console error / warning なし、ユーザー素材の容量 copy / 再追加 guidance 表示を確認。
+- 検証: `node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

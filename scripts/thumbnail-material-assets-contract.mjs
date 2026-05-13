@@ -479,6 +479,9 @@ assert.equal(typeof lib.normalizeThumbnailUserMaterialRefs, "function", "user ma
 assert.equal(typeof lib.createThumbnailUserMaterialLayer, "function", "user material layer factory is exported");
 assert.equal(typeof lib.applyThumbnailUserMaterialLayerFallback, "function", "user material fallback helper is exported");
 assert.equal(typeof lib.replaceThumbnailUserMaterialLayerRef, "function", "user material replace helper is exported");
+assert.equal(typeof lib.formatThumbnailUserMaterialBytes, "function", "user material byte formatter is exported");
+assert.equal(typeof lib.getThumbnailUserMaterialUsageSummary, "function", "user material usage summary helper is exported");
+assert.equal(typeof lib.canAddThumbnailUserMaterialRef, "function", "user material capacity helper is exported");
 assert.equal(lib.thumbnailMaterialCategoryLabels["date-badge"], "バッジ", "date-badge category is shown as バッジ for the category PR");
 assert.equal(lib.thumbnailMaterialCategoryLabels.frame, "フレーム / パネル", "frame category is shown as フレーム / パネル for the category PR");
 assert.equal(lib.thumbnailMaterialCategoryLabels.divider, "HUD線 / 区切り", "divider category is shown as HUD線 / 区切り for the category PR");
@@ -509,7 +512,10 @@ assert.deepEqual(
     imageStorage: "indexeddb",
     localStorageStoresImageBody: false,
     localStorageStores: ["metadata", "storageId"],
-    supportedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
+    supportedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/svg+xml"],
+    maxRefs: 24,
+    maxFileBytes: 8 * 1024 * 1024,
+    maxTotalBytes: 48 * 1024 * 1024
   },
   "user-added material stores image bodies outside localStorage"
 );
@@ -598,6 +604,9 @@ assert.deepEqual(
   "user material ref keeps only lightweight metadata and storage id"
 );
 assert.equal(JSON.stringify(userMaterialRef).includes("data:image"), false, "user material ref serialization excludes image bodies");
+assert.equal(lib.formatThumbnailUserMaterialBytes(0), "0KB", "user material byte formatter handles empty libraries");
+assert.equal(lib.formatThumbnailUserMaterialBytes(1536), "2KB", "user material byte formatter keeps small sizes concise");
+assert.equal(lib.formatThumbnailUserMaterialBytes(8 * 1024 * 1024), "8MB", "user material byte formatter keeps large sizes concise");
 assert.equal(
   lib.normalizeThumbnailUserMaterialRef({
     id: "user-material-02",
@@ -624,6 +633,46 @@ assert.deepEqual(
     { ...userMaterialRef, id: "user-material-02", storageId: "thumb-user-material-logo-02" }
   ],
   "recent and favorite user material refs stay lightweight and unique by storage id"
+);
+const usageSummary = lib.getThumbnailUserMaterialUsageSummary([
+  userMaterialRef,
+  { ...userMaterialRef, id: "user-material-02", storageId: "thumb-user-material-logo-02", byteSize: 5 * 1024 * 1024 }
+]);
+assert.deepEqual(
+  usageSummary,
+  {
+    count: 2,
+    maxCount: 24,
+    totalBytes: 5 * 1024 * 1024 + 348_512,
+    maxTotalBytes: 48 * 1024 * 1024,
+    remainingBytes: 48 * 1024 * 1024 - (5 * 1024 * 1024 + 348_512)
+  },
+  "user material usage summary is derived from lightweight metadata"
+);
+assert.deepEqual(
+  lib.canAddThumbnailUserMaterialRef([userMaterialRef], 1024),
+  { ok: true },
+  "small user material can be added when count and total capacity allow it"
+);
+assert.deepEqual(
+  lib.canAddThumbnailUserMaterialRef([userMaterialRef], 9 * 1024 * 1024),
+  { ok: false, reason: "file-too-large" },
+  "single user material file size is bounded"
+);
+assert.deepEqual(
+  lib.canAddThumbnailUserMaterialRef(Array.from({ length: 24 }, (_, index) => ({ ...userMaterialRef, id: `full-${index}`, storageId: `full-${index}`, byteSize: 1024 })), 1024),
+  { ok: false, reason: "library-full" },
+  "user material count stays bounded"
+);
+assert.deepEqual(
+  lib.canAddThumbnailUserMaterialRef([{ ...userMaterialRef, byteSize: 47 * 1024 * 1024 }], 2 * 1024 * 1024),
+  { ok: false, reason: "total-bytes-exceeded" },
+  "total user material metadata capacity is checked before saving another image body"
+);
+assert.deepEqual(
+  lib.canAddThumbnailUserMaterialRef([{ ...userMaterialRef, byteSize: 47 * 1024 * 1024 }], 6 * 1024 * 1024, userMaterialRef.storageId),
+  { ok: true },
+  "replacement capacity subtracts the old lightweight ref before checking total size"
 );
 
 const userMaterialLayer = lib.createThumbnailUserMaterialLayer(userMaterialRef);
@@ -717,6 +766,8 @@ assert.ok(componentSource.includes("UserMaterialLibraryPanel"), "Thumbnail Edito
 assert.ok(componentSource.includes("ユーザー素材"), "user-added material UI is visible as a separate responsibility");
 assert.ok(componentSource.includes("登録済み素材"), "registered material UI remains visually separate from user-added material UI");
 assert.ok(componentSource.includes("追加した画像はこのブラウザに保存され、下書きには参照だけを残します。"), "user material panel explains storage without mixing it with registered material copy");
+assert.ok(componentSource.includes("最大24件 / 1点8MB / 合計48MB"), "user material panel shows the lightweight capacity boundary");
+assert.ok(componentSource.includes("要再追加の素材は置換で復旧できます。不要な素材は削除してください。"), "user material panel gives concise recovery and cleanup guidance");
 assert.equal(componentSource.includes(">fallback<"), false, "user material fallback preview does not expose English implementation copy");
 assert.ok(componentSource.includes(">要再追加<"), "user material fallback preview makes clear the image must be added again");
 assert.equal(componentSource.includes(">復元待ち<"), false, "user material fallback preview does not imply waiting will restore the image");

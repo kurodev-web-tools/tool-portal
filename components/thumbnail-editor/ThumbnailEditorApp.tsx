@@ -14,12 +14,15 @@ import {
   createThumbnailUserMaterialLayer,
   createShapeLayer,
   createTextLayer,
+  canAddThumbnailUserMaterialRef,
   drawThumbnail,
   filterThumbnailPresets,
+  formatThumbnailUserMaterialBytes,
   getThumbnailMainTextCarryover,
   getThumbnailQualityGuardItems,
   getThumbnailOverallQualityGuardItems,
   getThumbnailQualityGuardSummary,
+  getThumbnailUserMaterialUsageSummary,
   getLayerCenter,
   hitTestLayerHandle,
   isThumbnailDraftPristineForPreset,
@@ -56,6 +59,7 @@ import {
   type ThumbnailShapeType,
   type ThumbnailStandeePlacementPresetId,
   type ThumbnailTextAlign,
+  type ThumbnailUserMaterialUsageSummary,
   type ThumbnailUserMaterialRef
 } from "@/lib/thumbnail-editor";
 import {
@@ -137,6 +141,11 @@ const colorSwatches = [
 const imageUploadMaxBytes = 8 * 1024 * 1024;
 const allowedImageMimeTypes = new Set(["image/png", "image/jpeg"]);
 const allowedImageExtensions = new Set(["png", "jpg", "jpeg"]);
+const userMaterialCapacityMessages = {
+  "file-too-large": "ユーザー素材は1点8MB以下にしてください。",
+  "library-full": "ユーザー素材は最大24件です。不要な素材を削除してから追加してください。",
+  "total-bytes-exceeded": "ユーザー素材は合計48MBまでです。不要な素材を削除するか置換してください。"
+};
 
 const selectedLayerFallback = (layers: ThumbnailLayer[]) => layers[layers.length - 1]?.id ?? null;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -391,6 +400,7 @@ export function ThumbnailEditorApp() {
     () => (pendingPreset ? getThumbnailMainTextCarryover(createDraftFromPreset(pendingPreset.id, draft.canvas)) : {}),
     [draft.canvas, pendingPreset]
   );
+  const userMaterialUsageSummary = useMemo(() => getThumbnailUserMaterialUsageSummary(userMaterialRefs), [userMaterialRefs]);
 
   useEffect(() => {
     setFontMenuOpen(false);
@@ -431,6 +441,12 @@ export function ThumbnailEditorApp() {
         return;
       }
       const nextUrls = Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => Boolean(entry[1])));
+      const missingStorageIds = entries.filter(([, url]) => !url).map(([storageId]) => storageId);
+      if (missingStorageIds.length > 0) {
+        setDraft((current) =>
+          missingStorageIds.reduce((nextDraft, storageId) => applyThumbnailUserMaterialLayerFallback(nextDraft, storageId, "load-failed"), current)
+        );
+      }
       setUserMaterialImageUrls((current) => {
         for (const url of Object.values(current)) {
           URL.revokeObjectURL(url);
@@ -898,8 +914,9 @@ export function ThumbnailEditorApp() {
       setReplaceUserMaterialRef(null);
       return;
     }
-    if (file.size > imageUploadMaxBytes) {
-      showToast("error", "ユーザー素材は8MB以下にしてください。");
+    const capacity = canAddThumbnailUserMaterialRef(userMaterialRefs, file.size, replaceUserMaterialRef?.storageId);
+    if (!capacity.ok) {
+      showToast("error", userMaterialCapacityMessages[capacity.reason]);
       setReplaceUserMaterialRef(null);
       return;
     }
@@ -1541,6 +1558,7 @@ export function ThumbnailEditorApp() {
                   <UserMaterialLibraryPanel
                     refs={userMaterialRefs}
                     imageUrls={userMaterialImageUrls}
+                    usageSummary={userMaterialUsageSummary}
                     onUpload={() => openUserMaterialFilePicker()}
                     onAdd={addUserMaterialLayer}
                     onReplaceUserMaterial={openUserMaterialFilePicker}
@@ -1605,6 +1623,7 @@ export function ThumbnailEditorApp() {
               <UserMaterialLibraryPanel
                 refs={userMaterialRefs}
                 imageUrls={userMaterialImageUrls}
+                usageSummary={userMaterialUsageSummary}
                 onUpload={() => openUserMaterialFilePicker()}
                 onAdd={addUserMaterialLayer}
                 onReplaceUserMaterial={openUserMaterialFilePicker}
@@ -2398,6 +2417,7 @@ function EffectControls({ layer, onChange }: { layer: ThumbnailLayer; onChange: 
 function UserMaterialLibraryPanel({
   refs,
   imageUrls,
+  usageSummary,
   onUpload,
   onAdd,
   onReplaceUserMaterial,
@@ -2405,6 +2425,7 @@ function UserMaterialLibraryPanel({
 }: {
   refs: ThumbnailUserMaterialRef[];
   imageUrls: Record<string, string>;
+  usageSummary: ThumbnailUserMaterialUsageSummary;
   onUpload: () => void;
   onAdd: (ref: ThumbnailUserMaterialRef) => void;
   onReplaceUserMaterial: (ref: ThumbnailUserMaterialRef) => void;
@@ -2416,6 +2437,10 @@ function UserMaterialLibraryPanel({
         <div>
           <h2 className="text-base font-black text-foreground">ユーザー素材</h2>
           <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">追加した画像はこのブラウザに保存され、下書きには参照だけを残します。</p>
+          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">
+            最大24件 / 1点8MB / 合計48MB。使用中 {usageSummary.count}/{usageSummary.maxCount}件 / {formatThumbnailUserMaterialBytes(usageSummary.totalBytes)}。
+          </p>
+          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">要再追加の素材は置換で復旧できます。不要な素材は削除してください。</p>
         </div>
         <button className="flat-control shrink-0 px-3 py-2 text-xs font-bold" type="button" onClick={onUpload}>
           画像を追加

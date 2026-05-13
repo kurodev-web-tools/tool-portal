@@ -8,8 +8,8 @@
 - 意味のある実装後は、このファイルに実装内容、検証、必要な幅別確認を残す。
 - UI 変更時の確認幅は `390 / 820 / 1024 / 1280 / 1366px` を基本にする。
 - 2026-05 の完了済み詳細ログは `docs/archive/TASK_HISTORY_2026-05.md` を参照する。
-- PR #86 `[codex] Align portal entry freeze copy` から PR #94 `[codex] Add thumbnail user material management guards` まで、`main` / `origin/main` に merge 済み。
-- PR #94 の merge commit は `77ce20233fc56c665919273da8abddcc7a5f8630`。
+- PR #86 `[codex] Align portal entry freeze copy` から PR #96 `[codex] Add schedule calendar input copy guards` まで、`main` / `origin/main` に merge 済み。
+- PR #96 の merge commit は `c4483c36fcb920a5e63c6e93b69c52dd5f0dafd0`。
 - static export RSC alias fix、production static serve final QA、user material management guard の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 欄を参照する。
 
 ## Freeze closeout state
@@ -18,19 +18,20 @@
 - static export RSC alias は PR #91 で `postbuild` 生成と `--check` 検証が入っている。
 - task board closeout は PR #93 で完了済み。
 - Thumbnail Editor user material library management v1 は PR #94 で完了済み。
+- Schedule Calendar input length / copy guard は PR #96 で完了済み。
 - PR #92 の production static serve final QA では、`1024px` の `/tools` と3ツールで dotted `__next.tools*.txt` が 200 / 304、`1280px` / `1366px` で `__next.*.txt` の 400+ response なし。
 - docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
 
 ## Current PR result
 
-- 2026-05-13 `codex/schedule-calendar-input-copy-guard` / `.worktrees/schedule-calendar-input-copy-guard` で Candidate 1 を実施。
-- 予定タイトル `120` 文字、予定ごとの告知文 `1200` 文字、予定 / テンプレートのハッシュタグ `300` 文字、テンプレート本文 `2000` 文字を上限にした。
-- UI には counters と上限付近の warning copy のみを追加し、重い onboarding / modal tutorial は入れていない。
-- `localStorage` key と version `2` は維持。旧形式 / 既存 payload は normalizer で同じ上限へ丸める。
-- Schedule -> Thumbnail / SNS Split handoff は URL 本文なしのまま、sessionStorage payload へ入る title / announcementText / hashtags を同じ境界で clamp する。
-- Thumbnail Editor / SNS Split Image Maker の実装、storage schema、Next.js / React version は変更していない。
-- 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で予定フォーム counters 表示、layout signal OK、console error / warning 0。`1366px` でテンプレート本文 / タグ counters と title 上限 warning も確認。
-- 検証: `node scripts/tool-handoff-contract.mjs`、`node scripts/schedule-calendar-storage-contract.mjs`、`npm run lint`、`npx tsc --noEmit` は成功。最終確認では `git diff --check` も実行する。
+- 2026-05-13 `codex/sns-split-export-boundary-polish` / `.worktrees/sns-split-export-boundary-polish` で Candidate 2 を実施。
+- 現行 export は `split-2 / split-3 / split-4` の投稿順 `split_1 -> split_n` を共有 helper / contract で確認する形にした。
+- export boundary は `png / jpeg` のどちらか1形式を選ぶ個別ファイル保存として明示し、ZIP / 複数形式一括 export は policy / contract / docs / UI copy 上で後続候補に閉じた。
+- main image 未選択時の export guard を `canExportSnsSplitDraft()` と contract で確認し、UI の出力ボタン disabled と直接実行時 warning copy は維持した。
+- 成功 feedback は共有 helper の出力順 label を使い、`split_1 -> split_n` の順と枚数を返す境界を維持した。
+- Schedule Calendar / Thumbnail Editor の実装修正、storage schema、Next.js / React version は変更していない。
+- 幅別確認: DevTools isolated context で `390 / 820 / 1024 / 1280 / 1366px` を確認。全幅で export copy 表示、出力ボタンは main画像未選択で disabled、横 overflow なし、console error / warn なし。
+- 検証: `node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は成功。
 
 ## Freeze 後の現行境界
 
@@ -71,7 +72,7 @@
 ### Candidate 1: Schedule Calendar input length / copy guard
 
 - 状態:
-  - このブランチで実装 / 検証中。merge 後は Candidate 2 に進む。
+  - PR #96 `[codex] Add schedule calendar input copy guards` として `main` / `origin/main` に merge 済み。
 - 目的:
   - 予定タイトル、告知文、ハッシュタグ、テンプレート本文の長文入力で保存 / 投稿補助 / handoff が読みにくくならない境界を決める。
 - 入れるもの:

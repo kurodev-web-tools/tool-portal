@@ -70,7 +70,9 @@ export const snsSplitFreezePolicy = {
   requiresBaseImageBeforeExport: true,
   firstRunAction: "choose-preset-then-main-image",
   handoffNextAction: "review-main-image-or-add-one-then-export-individual-files",
-  exportPackaging: "individual-downloads",
+  exportPackaging: "individual-single-format-downloads",
+  allowsMultiFormatBatch: false,
+  allowsZipExport: false,
   deferredExportExpansions: ["zip", "non-x-ratios", "multi-format-batch"]
 } as const;
 
@@ -163,6 +165,21 @@ export const getSnsSplitPostCanvas = (preset: SnsSplitPreset, postIndex: SnsSpli
   }
   return snsSplitPostCanvas;
 };
+
+export const getSnsSplitExportOrder = (preset: SnsSplitPreset): SnsSplitPostIndex[] => {
+  if (preset === "split-2") {
+    return [1, 2];
+  }
+  if (preset === "split-3") {
+    return [1, 2, 3];
+  }
+  return [1, 2, 3, 4];
+};
+
+export const getSnsSplitExportOrderLabel = (preset: SnsSplitPreset) =>
+  getSnsSplitExportOrder(preset)
+    .map((index) => `split_${index}`)
+    .join(" → ");
 
 const getSnsSplitCompositeCanvas = (preset: SnsSplitPreset) => {
   if (preset === "split-2") {
@@ -930,3 +947,6 @@ export const countReadySnsSplitImages = (draft: Pick<SnsSplitDraft, "images" | "
     .filter((image) => Boolean(image.src)).length;
   return { baseReady, slotReady, requiredSlots };
 };
+
+export const canExportSnsSplitDraft = (draft: Pick<SnsSplitDraft, "images">) =>
+  Boolean(draft.images.find((image) => image.id === "base")?.src);

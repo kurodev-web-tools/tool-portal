@@ -10,6 +10,7 @@
 - 2026-05 の完了済み詳細ログは `docs/archive/TASK_HISTORY_2026-05.md` を参照する。
 - PR #86 `[codex] Align portal entry freeze copy` は `main` / `origin/main` に merge 済み。merge commit は `e2ef089`。
 - PR #87 `[codex] Organize freeze docs task board` は `main` / `origin/main` に merge 済み。merge commit は `f6f7d08`。
+- PR #88 `[codex] Freeze final QA docs consistency` は `main` / `origin/main` に merge 済み。merge commit は `ba9cc45`。
 
 ## Freeze 前の現行境界
 
@@ -54,9 +55,42 @@
 
 ## Active
 
-### P0: Freeze final QA / docs consistency
+### P0: Thumbnail Editor user material library UI v1
 
 - 状態: review-ready
+- 目的:
+  - 登録済み装飾素材パネルと user-added material 管理 UI を分ける。
+  - ユーザー素材の画像本体は `localStorage` に保存せず、IndexedDB 側へ置く。
+  - 追加 / 一覧 / 削除 / 置換 / 読み込み失敗時 fallback を、既存 `ThumbnailUserMaterialRef` と fallback helper の境界に沿って最小実装する。
+- 実施結果:
+  - PR #88 merge commit `ba9cc45` が `origin/main` 先端であることを確認し、`codex/thumbnail-user-material-library-v1` / `.worktrees/thumbnail-user-material-library-v1` を `origin/main` 起点で作成。
+  - `components/thumbnail-editor/thumbnailUserMaterialStorage.ts` を追加し、user material metadata は `localStorage` に `id` / `name` / `storageId` 等だけを保存、画像本体は IndexedDB `images` store に保存する形へ分離。
+  - `/tools/thumbnail-editor` の素材エリアを `登録済み素材` と `ユーザー素材` に分離し、ユーザー素材の追加 / 一覧 / 配置 / 置換 / 削除を追加。
+  - user material layer は draft 上では fallback `src` + lightweight `materialRef` を保持し、canvas 表示 / export / Thumbnail -> SNS handoff 描画時だけ IndexedDB から blob URL を解決する。
+  - 削除時は既存 layer を削除せず `削除済み` fallback 表示へ寄せる。置換時は layer の geometry / crop を変えず lightweight ref と表示名だけ更新する。
+  - registered material library、preset body、public asset、font asset、variant body、crop 仕様、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+- 幅別表示結果:
+  - `npm run build` 後、`out` を `serve` で配信し Chrome headless / `http://127.0.0.1:3006/tools/thumbnail-editor` で確認。
+  - `390 / 820 / 1024 / 1280 / 1366px`: 横 overflow なし、canvas 1件表示、`登録済み素材` と `ユーザー素材` の分離表示を確認。
+  - 同幅でユーザー素材 PNG を追加し、user material metadata / draft に `data:image` 本体が入らないことを確認。
+  - `1280px`: 追加後に置換 / 削除を実行し、refs が空になり、draft 側は `削除済み` fallback 表示へ戻ることを確認。
+  - production static serve の `1024px+` では Next static export の RSC prefetch `__next.*.txt` 404 が console に出た。ページ表示、操作、localStorage / IndexedDB 境界には影響なし。`390 / 820px` では同 console error なし。
+- 検証:
+  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
+  - `node scripts/thumbnail-quality-guard-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - `npm run build` PASS。workspace root warning は既知の multiple lockfiles warning。
+  - `git diff --check` PASS。LF -> CRLF warning のみ。
+- 未確認範囲 / 次アクション:
+  - 容量管理、並び替え、カテゴリ付け、検索、複数選択、drop import、crop UI 変更は未実装。
+  - static export の RSC prefetch 404 は既存配信方式由来の可能性が高いため、別PRで portal 全体の static prefetch 挙動として確認する。
+
+### P0: Freeze final QA / docs consistency
+
+- 状態: merged in PR #88
 - 目的:
   - Schedule Calendar / Thumbnail Editor / SNS Split Image Maker の freeze 対象と freeze 後候補を、docs と portal entry の表現で再確認する。
   - 新機能追加ではなく、最終QAで固定する範囲と後続PRへ送る範囲を切り分ける。

@@ -28,6 +28,7 @@ import {
   normalizeThumbnailLayerName,
   normalizeThumbnailPresetDiscoveryState,
   pointToLayerLocal,
+  replaceThumbnailUserMaterialLayerRef,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
   thumbnailFontGroups,
@@ -911,14 +912,11 @@ export function ThumbnailEditorApp() {
       commitUserMaterialRefs(nextRefs);
 
       if (replaceUserMaterialRef) {
-        updateDraft((current) => ({
-          ...current,
-          layers: current.layers.map((layer) =>
-            layer.type === "image" && layer.materialRef?.storageId === replaceUserMaterialRef.storageId
-              ? { ...layer, name: `素材: ${nextRef.name}`, src: layer.src, materialRef: nextRef }
-              : layer
-          )
-        }));
+        updateDraft((current) =>
+          current.layers
+            .filter((layer) => layer.type === "image" && layer.materialRef?.storageId === replaceUserMaterialRef.storageId)
+            .reduce((nextDraft, layer) => replaceThumbnailUserMaterialLayerRef(nextDraft, layer.id, nextRef), current)
+        );
         showToast("success", `「${nextRef.name}」へ置換しました。配置とcropは維持しています。`);
       } else {
         addLayer(createThumbnailUserMaterialLayer(nextRef, draft.canvas));
@@ -2417,10 +2415,10 @@ function UserMaterialLibraryPanel({
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-black text-foreground">ユーザー素材</h2>
-          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">画像本体はIndexedDBに保存し、下書きには軽い参照だけを残します。</p>
+          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">追加した画像はこのブラウザに保存され、下書きには参照だけを残します。</p>
         </div>
         <button className="flat-control shrink-0 px-3 py-2 text-xs font-bold" type="button" onClick={onUpload}>
-          追加
+          画像を追加
         </button>
       </div>
       <div className="grid gap-2">
@@ -2432,7 +2430,7 @@ function UserMaterialLibraryPanel({
                 {imageUrl ? (
                   <span className="block h-full w-full bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${imageUrl})` }} aria-hidden="true" />
                 ) : (
-                  <span className="px-2 text-center text-[10px] font-bold leading-4 text-muted">fallback</span>
+                  <span className="px-2 text-center text-[10px] font-bold leading-4 text-muted">復元待ち</span>
                 )}
               </span>
               <span className="min-w-0">

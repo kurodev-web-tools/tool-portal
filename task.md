@@ -11,6 +11,7 @@
 - PR #86 `[codex] Align portal entry freeze copy` は `main` / `origin/main` に merge 済み。merge commit は `e2ef089`。
 - PR #87 `[codex] Organize freeze docs task board` は `main` / `origin/main` に merge 済み。merge commit は `f6f7d08`。
 - PR #88 `[codex] Freeze final QA docs consistency` は `main` / `origin/main` に merge 済み。merge commit は `ba9cc45`。
+- PR #89 `[codex] Add thumbnail user material library UI` は `main` / `origin/main` に merge 済み。merge commit は `2901020`。
 
 ## Freeze 前の現行境界
 
@@ -57,7 +58,7 @@
 
 ### P0: Thumbnail Editor user material library UI v1
 
-- 状態: review-ready
+- 状態: merged in PR #89
 - 目的:
   - 登録済み装飾素材パネルと user-added material 管理 UI を分ける。
   - ユーザー素材の画像本体は `localStorage` に保存せず、IndexedDB 側へ置く。
@@ -87,6 +88,39 @@
 - 未確認範囲 / 次アクション:
   - 容量管理、並び替え、カテゴリ付け、検索、複数選択、drop import、crop UI 変更は未実装。
   - static export の RSC prefetch 404 は既存配信方式由来の可能性が高いため、別PRで portal 全体の static prefetch 挙動として確認する。
+
+### P0: Thumbnail Editor user material library UI v1 QA / polish
+
+- 状態: draft PR ready
+- 目的:
+  - PR #89 merge 後の `origin/main` 起点で、user material UI v1 が保存 / 復元 / 削除 / 置換 / export / Thumbnail -> SNS handoff と矛盾していないか確認する。
+  - 必要最小限の QA contract と copy / layout polish に留め、preset body、public asset、font、schema、crop、他ツール実装へ広げない。
+- 実施結果:
+  - PR #89 merge commit `2901020` が `origin/main` に含まれることを確認し、`codex/thumbnail-user-material-library-qa-polish` / `.worktrees/thumbnail-user-material-library-qa-polish` を `origin/main` 起点で作成。
+  - `scripts/thumbnail-material-assets-contract.mjs` に user material UI copy、fallback 表示、replace helper 利用の QA を追加。
+  - `scripts/tool-handoff-contract.mjs` に Thumbnail -> SNS handoff payload / normalizer が user material metadata、`materialRef`、画像本体を混ぜない QA を追加。
+  - `components/thumbnail-editor/ThumbnailEditorApp.tsx` は、user material 置換時に `replaceThumbnailUserMaterialLayerRef()` を通して geometry-preserving helper と揃えた。
+  - ユーザー素材パネルの copy を「追加した画像はこのブラウザに保存され、下書きには参照だけを残します。」へ軽く調整し、プレビュー未解決時の `fallback` 表示を `復元待ち` に変更。
+  - preset body、public asset、font asset、variant body、crop 仕様、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+- 幅別表示 / storage / handoff 結果:
+  - `npm run build` 後、`out` を `serve` で配信し Playwright / `http://127.0.0.1:3006/tools/thumbnail-editor` で確認。
+  - `390 / 820 / 1024 / 1280 / 1366px`: 横 overflow なし、canvas nonblank、ユーザー素材追加後に refs 1件 / user material layer 1件 / IndexedDB image 1件を確認。
+  - `390 / 820px`: mobile panel 初期表示では素材パネルは非表示。ユーザー素材追加後、下書き / metadata にアップロード PNG 本体は入らず、reload / `/tools` へのページ遷移後も layer と metadata が復元されることを確認。console 404 なし。
+  - `1024 / 1280 / 1366px`: `登録済み素材` と `ユーザー素材` の分離表示、更新後 / ページ遷移後の復元、metadata / draft にアップロード PNG 本体が入らないことを確認。
+  - `1280px`: 置換後も layer の `x / y / width / height / rotation` は維持。削除後も layer は残り `素材: qa-user-material-replaced（削除済み）` fallback 表示、refs は空、IndexedDB image は 0件。
+  - `1366px`: Thumbnail -> SNS handoff は `sessionStorage` payload 1件を作成し、URL は短い `handoff` token + `preset=split-4` のみ。payload に user material metadata / `materialRef` / uploaded PNG body は含まれない。
+  - production static serve の `1024px+` では `__next.*.txt` prefetch 404 が再現。`390 / 820px` では 404 なし。PR #89 差分は Thumbnail Editor component / storage helper / material contract / task.md のみで、portal `Link` や `next.config.mjs` は変更していない。`out` には `__next.tools/thumbnail-editor.txt` のような slash path が生成される一方、runtime は `__next.tools.thumbnail-editor.txt` のような dotted path を要求するため、今回の user material UI 由来ではなく Next static export + `serve` の prefetch 配信方式由来として扱う。
+- 検証:
+  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
+  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
+  - `node scripts/thumbnail-quality-guard-contract.mjs` PASS。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - `npm run build` PASS。workspace root warning は既知の multiple lockfiles warning。
+- 未確認範囲 / 次アクション:
+  - 手動での OS file picker 表示確認、容量上限を超えた実ファイル、ブラウザ別の IndexedDB quota 差は未確認。
+  - static export の `__next.*.txt` 404 は別PRで portal 全体の static prefetch / hosting rewrite 方針として扱う。
 
 ### P0: Freeze final QA / docs consistency
 

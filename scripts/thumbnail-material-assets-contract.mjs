@@ -714,8 +714,11 @@ assert.equal(userMaterialStorageSource.includes("localStorage.setItem") && userM
 assert.ok(componentSource.includes("UserMaterialLibraryPanel"), "Thumbnail Editor renders a separate user material library panel");
 assert.ok(componentSource.includes("ユーザー素材"), "user-added material UI is visible as a separate responsibility");
 assert.ok(componentSource.includes("登録済み素材"), "registered material UI remains visually separate from user-added material UI");
+assert.ok(componentSource.includes("追加した画像はこのブラウザに保存され、下書きには参照だけを残します。"), "user material panel explains storage without mixing it with registered material copy");
+assert.equal(componentSource.includes(">fallback<"), false, "user material fallback preview does not expose English implementation copy");
 assert.ok(componentSource.includes("onReplaceUserMaterial"), "user-added material UI exposes replace without changing geometry");
 assert.ok(componentSource.includes("onDeleteUserMaterial"), "user-added material UI exposes delete with fallback handling");
+assert.ok(componentSource.includes("replaceThumbnailUserMaterialLayerRef"), "user material replace uses the shared geometry-preserving helper");
 assert.ok(componentSource.includes("resolveThumbnailUserMaterialImageUrl"), "canvas rendering resolves user material blobs at render time instead of persisting image bodies in draft");
 
 console.log("thumbnail material asset contract checks passed");

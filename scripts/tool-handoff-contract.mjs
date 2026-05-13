@@ -79,10 +79,24 @@ assert.equal(payload.target, "sns-split-image-maker");
 assert.equal(payload.imageStorageId, "thumbnail-handoff-test");
 assert.equal(payload.title, "配信告知サムネ");
 assert.equal(payload.fileNameBase, "20260505-stream");
+assert.equal("userMaterialRefs" in payload, false, "thumbnail -> sns payload does not carry user material metadata");
+assert.equal(JSON.stringify(payload).includes("data:image"), false, "thumbnail -> sns payload does not carry image bodies");
 
 const normalized = lib.normalizeThumbnailToSnsHandoffPayload(payload, "sns-split-image-maker");
 assert.equal(normalized.imageStorageId, "thumbnail-handoff-test");
 assert.equal(normalized.announcementText, "本日20時から配信します。");
+const normalizedWithExtraUserMaterialFields = lib.normalizeThumbnailToSnsHandoffPayload(
+  {
+    ...payload,
+    userMaterialRefs: [{ storageId: "user-material-storage", name: "ロゴ" }],
+    materialRef: { storageId: "user-material-storage" },
+    imageData: "data:image/png;base64,should-not-survive"
+  },
+  "sns-split-image-maker"
+);
+assert.equal("userMaterialRefs" in normalizedWithExtraUserMaterialFields, false, "thumbnail -> sns normalizer drops user material metadata");
+assert.equal("materialRef" in normalizedWithExtraUserMaterialFields, false, "thumbnail -> sns normalizer drops user material refs");
+assert.equal(JSON.stringify(normalizedWithExtraUserMaterialFields).includes("data:image"), false, "thumbnail -> sns normalizer drops image bodies");
 
 assert.equal(
   lib.normalizeThumbnailToSnsHandoffPayload({ ...payload, target: "thumbnail-editor" }, "sns-split-image-maker"),

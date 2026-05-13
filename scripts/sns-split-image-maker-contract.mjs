@@ -105,6 +105,13 @@ assert.match(appSource, /disabled=\{!canExport\}/, "export buttons are guarded b
 assert.match(appSource, /メイン画像を選択してから出力してください。/, "manual export call warns before exporting without a main image");
 assert.match(appSource, /の順で\$\{postCount\}枚を書き出しました。/, "successful export toast includes output order and count");
 assert.match(appSource, /PNG\/JPEGはどちらか1形式を選び、ZIPや複数形式の一括出力は後続候補です。/, "export copy keeps zip and multi-format batch out of current features");
+assert.match(appSource, /role="status"/, "handoff and toast status areas are exposed to assistive tech");
+assert.match(appSource, /aria-live="polite"/, "handoff and toast updates use polite announcements");
+assert.match(appSource, /Thumbnail Editorから画像を受け取りました。/, "thumbnail handoff copy says the base image was received");
+assert.match(appSource, /Schedule Calendarから告知文メモを受け取りました。/, "schedule handoff copy says only text memo was received");
+assert.match(appSource, /受け取った画像をメイン画像として確認し、必要なら追加画像を入れてから保存します。/, "thumbnail handoff next action stays concrete");
+assert.match(appSource, /メイン画像は未選択です。画像を選んでから、告知文メモを投稿文へ使えます。/, "schedule handoff next action explains the missing main image");
+assert.match(appSource, /aria-label=\{isThumbnailToSnsHandoffPayload\(handoffPayload\) \? "Thumbnail Editorから受け取った告知文メモ" : "Schedule Calendarから受け取った告知文メモ"\}/, "handoff textarea label names the source");
 assert.doesNotMatch(appSource, /getOutputOrderLabel\(/, "app uses the shared export order helper consistently");
 assert.doesNotMatch(appSource, /label: "投稿時"/, "preview tab label no longer says post-time");
 assert.doesNotMatch(appSource, /label: "1\+8連結"/, "primary 4-split mode label no longer uses legacy 1+8 text");

@@ -334,7 +334,7 @@ export function SnsSplitImageMakerApp() {
           setToast({
             tone: "success",
             message: isThumbnailToSnsHandoffPayload(appliedHandoff)
-              ? "Thumbnail Editorの画像をメイン画像として受け取りました。"
+              ? "Thumbnail Editorから画像を受け取りました。"
               : "Schedule Calendarの予定から告知文メモを受け取りました。"
           });
         }
@@ -692,17 +692,27 @@ export function SnsSplitImageMakerApp() {
         </header>
 
         {handoffPayload ? (
-          <section className="rounded-base border border-primary/35 bg-primary-soft/35 px-4 py-3">
+          <section
+            className="rounded-base border border-primary/35 bg-primary-soft/35 px-4 py-3"
+            role="status"
+            aria-live="polite"
+            aria-label={isThumbnailToSnsHandoffPayload(handoffPayload) ? "Thumbnail Editorからの受け取り内容" : "Schedule Calendarからの受け取り内容"}
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-bold text-primary-strong">
-                  {isThumbnailToSnsHandoffPayload(handoffPayload) ? "Thumbnail Editorから受け取り" : "Schedule Calendarから受け取り"}
+                  {isThumbnailToSnsHandoffPayload(handoffPayload) ? "Thumbnail Editorから画像を受け取りました。" : "Schedule Calendarから告知文メモを受け取りました。"}
                 </p>
                 <h2 className="mt-1 truncate text-base font-black text-foreground">{handoffPayload.title || "無題の予定"}</h2>
                 <p className="mt-1 text-xs font-bold text-muted">
                   {handoffPayload.date}
                   {!isThumbnailToSnsHandoffPayload(handoffPayload) ? ` ${handoffPayload.startTime} - ${handoffPayload.endTime}` : ""}
                   {handoffPayload.platform ? ` / ${handoffPayload.platform}` : ""}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-muted">
+                  {isThumbnailToSnsHandoffPayload(handoffPayload)
+                    ? "受け取った画像をメイン画像として確認し、必要なら追加画像を入れてから保存します。"
+                    : "メイン画像は未選択です。画像を選んでから、告知文メモを投稿文へ使えます。"}
                 </p>
               </div>
               <button type="button" onClick={copyHandoffAnnouncementText} className="flat-control px-3 py-2 text-xs font-bold">
@@ -713,7 +723,7 @@ export function SnsSplitImageMakerApp() {
               readOnly
               value={handoffPayload.announcementText}
               className="mt-3 min-h-24 w-full resize-none rounded-base border border-border bg-surface px-3 py-2 text-xs leading-5 text-foreground"
-              aria-label="Schedule Calendarから受け取った告知文"
+              aria-label={isThumbnailToSnsHandoffPayload(handoffPayload) ? "Thumbnail Editorから受け取った告知文メモ" : "Schedule Calendarから受け取った告知文メモ"}
             />
             {handoffPayload.hashtags ? <p className="mt-2 text-xs font-bold text-primary-strong">{handoffPayload.hashtags}</p> : null}
           </section>
@@ -1051,7 +1061,7 @@ export function SnsSplitImageMakerApp() {
       </nav>
 
       {toast ? (
-        <div className={["fixed bottom-24 left-4 right-4 z-[100] rounded-base border px-4 py-3 text-sm font-bold shadow-panel sm:left-auto sm:w-[360px] lg:bottom-4", toneClassName[toast.tone]].join(" ")}>
+        <div className={["fixed bottom-24 left-4 right-4 z-[100] rounded-base border px-4 py-3 text-sm font-bold shadow-panel sm:left-auto sm:w-[360px] lg:bottom-4", toneClassName[toast.tone]].join(" ")} role="status" aria-live="polite">
           <div className="flex items-center justify-between gap-3">
             <span>{toast.message}</span>
             <button type="button" className="text-muted" onClick={() => setToast(null)} aria-label="通知を閉じる">

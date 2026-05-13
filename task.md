@@ -29,6 +29,8 @@
 - SNS Split Image Maker export boundary polish は PR #97 で完了済み。
 - Thumbnail Editor quality guard export-preflight polish は PR #99 で完了済み。
 - Thumbnail Editor docs drift cleanup では、PR #94 / PR #99 後の `docs/design-thumbnail-editor.md` と `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` を同期し、user material library UI v1 / management v1 / quality guard export-preflight polish を完了済みとして整理する。docs-only で UI / 表示文言 / tool 実装を触らないため、幅別ブラウザ確認は不要。
+- SNS Split handoff accessibility copy polish では、Schedule / Thumbnail 由来の受け取り banner を source 別 copy、`role="status"` / `aria-live="polite"`、source 別 textarea label、具体的な次アクション文に整理した。handoff schema、storage、export、asset、他ツール実装は変更していない。
+- 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/sns-split-image-maker?preset=split-4` の Schedule handoff banner 表示、source 別 status、次アクション文、textarea label、横 overflow なし、console error / warning なしを確認した。
 - PR #92 の production static serve final QA では、`1024px` の `/tools` と3ツールで dotted `__next.tools*.txt` が 200 / 304、`1280px` / `1366px` で `__next.*.txt` の 400+ response なし。
 
 ## Freeze 後の現行境界

@@ -16,20 +16,21 @@
 - PR #103 `[codex] Clean up task board after PR102` は `main` / `origin/main` に merge 済み。merge commit は `1e4e4931fb5050d99e5a967a9817ffaf8dbd8402`。
 - PR #104 `[codex] Clean up file name sanitize helpers` は `main` / `origin/main` に merge 済み。merge commit は `9b6bc17a136cc948760fb3c96530649a4406f820`。
 - PR #105 `[codex] Clamp thumbnail to SNS handoff payload` は `main` / `origin/main` に merge 済み。merge commit は `edafcae28da0e90b3de852f917988774b497198d`。
+- PR #106 `[codex] Add thumbnail variant body foundation` は `main` / `origin/main` に merge 済み。merge commit は `50bab4419b2d8389428a5f5b6995f470a6e83113`。
 - static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish、Thumbnail docs drift cleanup、SNS handoff accessibility copy polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 / PR #101 / PR #102 欄を参照する。
 
 ## Active
 
-- Thumbnail Editor variant body foundation:
-  - branch / worktree: `codex/thumbnail-variant-body-foundation` / `.worktrees/thumbnail-variant-body-foundation`
-  - 実装: `landscape-16-9` / `portrait-9-16` / `square-1-1` を既存 preset relation に紐づけ、`createDraftFromPresetVariant()` で縦長 / 正方形 draft body を生成できる helper 境界を追加。`normalizeThumbnailDraft()` は schema version / storage key を変えず、既知 variant canvas の `1080 x 1920` / `1080 x 1080` を保持する。
-  - 境界: UI 導線、preset 本体追加、font asset 追加、crop 仕様、text / image layer schema、user material schema、Thumbnail -> SNS / Schedule handoff、SNS Split Image Maker 実装は変更しない。
-  - contract: `scripts/thumbnail-preset-variants-contract.mjs` に variant body helper、軽量 ref、normalize 境界、UI / handoff 非変更を追加。`scripts/thumbnail-preset-batch-readiness-contract.mjs` は既知 variant body を readiness で許可する確認を追加。
-  - 検証: `node scripts/thumbnail-*.mjs` 全件 / `node scripts/tool-handoff-contract.mjs` / `npm run lint` / `npx tsc --noEmit` / `git diff --check` は通過。`git diff --check` は CRLF 置換 warning のみ。
-  - 幅別確認: UI / 表示文言 / layout 変更なしのため `390 / 820 / 1024 / 1280 / 1366px` の browser 確認は不要。
+- Thumbnail Editor variant UI route:
+  - branch / worktree: `codex/thumbnail-variant-ui-route` / `.worktrees/thumbnail-variant-ui-route`
+  - 実装: 既存の `プリセット` / `キャンバスサイズ` Listbox と同じ軽量 UI 境界で `出力比率` を追加し、`横長 16:9` / `縦長 9:16` / `正方形 1:1` から `createDraftFromPresetVariant(draft.presetId, variantId)` を呼べるようにした。非 16:9 variant 選択時は、既存 canvas size UI が 16:9 解像度を誤表示しないよう、現在の実 canvas 寸法を表示する。
+  - 境界: schema version / storage key / crop 仕様 / text・image layer schema / user material schema / preset body / font asset / Thumbnail -> SNS handoff / Schedule handoff / SNS Split Image Maker は変更しない。
+  - contract: `scripts/thumbnail-preset-variants-contract.mjs` は、UI が variant draft helper を使うこと、既存 Listbox 境界で出すこと、handoff に `variantId` を広げないことを確認する。
+  - 検証: `node scripts/thumbnail-preset-variants-contract.mjs` は RED -> GREEN 済み。`node scripts/thumbnail-*.mjs` 全件 / `node scripts/tool-handoff-contract.mjs` / `npm run lint` / `npx tsc --noEmit` / `git diff --check` は通過。`git diff --check` は CRLF 置換 warning のみ。
+  - 幅別確認: in-app browser で `390 / 820 / 1024 / 1280 / 1366px` を確認し、各幅で `出力比率` control と編集 canvas が表示され、console error は 0。in-app browser では既存の `プリセット` / `キャンバスサイズ` Listbox もクリック展開が取れないため、縦長 / 正方形の draft 生成挙動は contract 側で確認した。
 - 次に新規作業へ進む場合は、下の次候補を `origin/main` 起点の feature branch / `.worktrees/...` で PR-sized に切る。
 - 次候補:
-  - Thumbnail Editor variant UI 導線 / font asset / preset batch 本体は、それぞれ別PRで scope を明示して扱う。
+  - Thumbnail Editor font asset / preset batch 本体は、それぞれ別PRで scope を明示して扱う。
 - docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
 
 ## Freeze closeout state

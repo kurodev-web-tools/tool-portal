@@ -235,7 +235,12 @@ assert.equal(
 );
 assert.equal(JSON.stringify(lib.thumbnailMaterialLibrary.map((material) => material.id)), materialIdsBefore, "variant metadata does not alter material library registration");
 assert.ok(source.includes("crop?: ThumbnailImageCrop"), "crop schema remains owned by image layer only");
-assert.equal(componentSource.includes("variantId"), false, "UI does not expose new variant flows in this minimal contract PR");
+assert.ok(componentSource.includes("createDraftFromPresetVariant"), "UI variant route uses the scoped draft helper instead of adding preset bodies");
+assert.ok(componentSource.includes('headerMenuOpen === "variant"'), "UI exposes variant choices through the existing lightweight listbox boundary");
+assert.ok(
+  componentSource.includes("createDraftFromPresetVariant(draft.presetId, variantId)"),
+  "UI variant selection creates the current preset body for the selected variant"
+);
 assert.equal(handoffSource.includes("variantId"), false, "Schedule Calendar / SNS Split Image Maker handoff contract is unchanged");
 
 console.log("thumbnail-preset-variants contract checks passed");

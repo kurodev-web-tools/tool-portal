@@ -416,6 +416,34 @@
 - 幅別確認: `390 / 820px` は素材タブを開き、`1024 / 1280 / 1366px` は初期表示で、`h1` 表示、横 overflow なし、console error / warning なし、ユーザー素材の容量 copy / 再追加 guidance 表示を確認。
 - 検証: `node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
 
+#### P21: Task board cleanup after PR #94
+
+- PR #95 `[codex] Clean up task board after PR94` は 2026-05-13 に `main` / `origin/main` へ merge 済み。
+- merge commit は `4157cf8aa2da16abec201934c413e41b6d03f92e`。
+- PR #94 merge 後の `task.md` を active-only board に戻し、次候補を `Schedule Calendar input length / copy guard` と `SNS Split Image Maker export boundary polish` に整理した。
+- PR #93 / PR #94 の完了ログをこの履歴へ退避し、UI / 表示文言 / tool 実装 / storage schema / export 機能本体は変更していない。
+- 検証: `node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/sns-split-image-maker-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`node scripts/static-export-rsc-aliases.mjs --check`、`git diff --check` 成功。
+
+#### P22: Schedule Calendar input length / copy guard
+
+- PR #96 `[codex] Add schedule calendar input copy guards` は 2026-05-13 に `main` / `origin/main` へ merge 済み。
+- merge commit は `c4483c36fcb920a5e63c6e93b69c52dd5f0dafd0`。
+- 予定タイトル / 告知文 / ハッシュタグ / テンプレート本文に小さな文字数境界を追加し、保存時、旧形式 normalizer、Schedule -> Thumbnail / SNS Split handoff payload で同じ境界に丸めるようにした。
+- UI には counter と上限付近の warning copy だけを追加し、重い onboarding / modal tutorial は入れていない。
+- `localStorage` key と version `2`、storage schema、Google Calendar 連携、ログイン / サーバー同期、週間予定画像生成は変更していない。
+- 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で予定フォーム counters、layout signal、console error / warning なしを確認。`1366px` では設定内テンプレート本文 / タグ counters とタイトル上限 warning copy も確認。
+- 検証: `node scripts/tool-handoff-contract.mjs`、`node scripts/schedule-calendar-storage-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
+
+#### P23: SNS Split Image Maker export boundary polish
+
+- PR #97 `[codex] Polish SNS split export boundary` は 2026-05-13 に `main` / `origin/main` へ merge 済み。
+- merge commit は `1d5e13cb9c3cbb7be73ff9ba1568d5712ceefe24`。
+- SNS Split Image Maker の export policy を「1つの選択形式で個別 PNG / JPEG 保存」として明示し、split-2 / split-3 / split-4 の出力順 helper と main image export guard helper を contract から確認できるようにした。
+- ZIP / 複数形式一括 export は現行機能に見せず、docs / UI copy / contract で後続候補に閉じた。
+- Schedule Calendar / Thumbnail Editor の実装修正、storage schema、Next.js / React version は変更していない。
+- 幅別確認: DevTools isolated context で `/tools/sns-split-image-maker?preset=split-4` を `390 / 820 / 1024 / 1280 / 1366px` で確認。export copy 表示、main画像未選択時の出力ボタン disabled、横 overflow なし、console error / warn なし。
+- 検証: `node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

@@ -62,6 +62,7 @@ import {
   type ThumbnailUserMaterialUsageSummary,
   type ThumbnailUserMaterialRef
 } from "@/lib/thumbnail-editor";
+import { createHandoffFileNameBase } from "@/lib/file-name";
 import {
   buildToolHandoffUrl,
   createThumbnailToSnsHandoffPayload,
@@ -247,12 +248,6 @@ const formatHandoffDate = (date: string) => {
 const firstMeaningfulLine = (text: string) => text.split(/\r?\n/).map((line) => line.trim()).find(Boolean) ?? "";
 const compactLayerText = (text: string, maxLength: number) => (text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text);
 const thumbnailToSnsImageStoragePrefix = "thumbnail-handoff";
-const sanitizeFilePatternPart = (value: string) =>
-  value
-    .trim()
-    .replace(/[\\/:*?"<>|]+/g, "-")
-    .replace(/\s+/g, "-")
-    .slice(0, 32);
 const getFirstTextLayerValue = (draft: ThumbnailEditorDraft, namePart: string) => {
   const layer = draft.layers.find((item) => item.type === "text" && item.name.includes(namePart));
   return layer?.type === "text" ? firstMeaningfulLine(layer.text) : "";
@@ -1321,7 +1316,7 @@ export function ThumbnailEditorApp() {
       const title = getFirstTextLayerValue(normalized, "見出し") || handoffPayload?.title || selectedPreset.name;
       const date = handoffPayload?.date ?? "";
       const imageStorageId = createThumbnailToSnsImageStorageId();
-      const fileNameBase = [date.replaceAll("-", ""), sanitizeFilePatternPart(title)].filter(Boolean).join("_") || "thumbnail";
+      const fileNameBase = createHandoffFileNameBase(date, title);
       const payload = createThumbnailToSnsHandoffPayload({
         imageStorageId,
         title,

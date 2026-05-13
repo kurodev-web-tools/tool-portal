@@ -33,6 +33,8 @@ import {
   postTemplateUsageOptions,
   postTemplateVariableOptions,
   recurrenceOptions,
+  clampScheduleText,
+  scheduleInputTextLimits,
   scheduleStorageKey,
   scheduleStorageVersion,
   sortEvents,
@@ -101,16 +103,16 @@ const importMaxEvents = 500;
 const importMaxTemplates = 50;
 const importMaxHashtagSets = 100;
 const importMaxTextLengths = {
-  title: 120,
+  title: scheduleInputTextLimits.title,
   memo: 2000,
   templateName: 80,
   templateDescription: 240,
-  templateBody: 4000,
-  templateHashtags: 1000,
+  templateBody: scheduleInputTextLimits.postTemplateBody,
+  templateHashtags: scheduleInputTextLimits.announcementHashtags,
   hashtagSetName: 80,
   hashtagSetTags: 1000,
-  announcementText: 4000,
-  announcementHashtags: 1000,
+  announcementText: scheduleInputTextLimits.announcementText,
+  announcementHashtags: scheduleInputTextLimits.announcementHashtags,
   announcementMemo: 2000
 };
 const maxRecurrenceCount = 30;
@@ -512,6 +514,25 @@ function EventHoverPreview({
 
 function FieldLabel({ children }: { children: ReactNode }) {
   return <p className="text-xs font-bold text-muted">{children}</p>;
+}
+
+function TextLimitCounter({
+  value,
+  maxLength,
+  warning
+}: {
+  value: string;
+  maxLength: number;
+  warning: string;
+}) {
+  const nearLimit = value.length >= Math.floor(maxLength * 0.9);
+
+  return (
+    <p className={["mt-2 text-xs leading-5", nearLimit ? "font-bold text-amber-700 dark:text-amber-300" : "text-muted"].join(" ")}>
+      {value.length} / {maxLength}
+      {nearLimit ? ` ${warning}` : ""}
+    </p>
+  );
 }
 
 function setDraggedEvent(detail: DragEvent, event: ScheduleEvent) {
@@ -1773,12 +1794,15 @@ function TemplateDraftEditor({
     const textarea = textareaRef.current;
     const start = textarea?.selectionStart ?? templateDraft.body.length;
     const end = textarea?.selectionEnd ?? templateDraft.body.length;
-    const nextBody = `${templateDraft.body.slice(0, start)}${token}${templateDraft.body.slice(end)}`;
+    const nextBody = clampScheduleText(
+      `${templateDraft.body.slice(0, start)}${token}${templateDraft.body.slice(end)}`,
+      scheduleInputTextLimits.postTemplateBody
+    );
     onTemplateDraftChange({ ...templateDraft, body: nextBody });
 
     window.setTimeout(() => {
       textarea?.focus();
-      const nextPosition = start + token.length;
+      const nextPosition = Math.min(start + token.length, nextBody.length);
       textarea?.setSelectionRange(nextPosition, nextPosition);
     }, 0);
   }
@@ -1818,8 +1842,19 @@ function TemplateDraftEditor({
         <textarea
           ref={textareaRef}
           value={templateDraft.body}
-          onChange={(event) => onTemplateDraftChange({ ...templateDraft, body: event.target.value })}
+          onChange={(event) =>
+            onTemplateDraftChange({
+              ...templateDraft,
+              body: clampScheduleText(event.target.value, scheduleInputTextLimits.postTemplateBody)
+            })
+          }
           className={inputClassName("min-h-32 resize-none")}
+          maxLength={scheduleInputTextLimits.postTemplateBody}
+        />
+        <TextLimitCounter
+          value={templateDraft.body}
+          maxLength={scheduleInputTextLimits.postTemplateBody}
+          warning="長文テンプレートはプレビューとコピーの見通しが悪くなります。"
         />
         <div className="mt-2 flex flex-wrap gap-1.5">
           {postTemplateVariableOptions.map((option) => (
@@ -1833,9 +1868,20 @@ function TemplateDraftEditor({
         <FieldLabel>ハッシュタグ</FieldLabel>
         <textarea
           value={templateDraft.hashtags}
-          onChange={(event) => onTemplateDraftChange({ ...templateDraft, hashtags: event.target.value })}
+          onChange={(event) =>
+            onTemplateDraftChange({
+              ...templateDraft,
+              hashtags: clampScheduleText(event.target.value, scheduleInputTextLimits.announcementHashtags)
+            })
+          }
           className={inputClassName("min-h-20 resize-none")}
           placeholder="#VTuber #配信告知"
+          maxLength={scheduleInputTextLimits.announcementHashtags}
+        />
+        <TextLimitCounter
+          value={templateDraft.hashtags}
+          maxLength={scheduleInputTextLimits.announcementHashtags}
+          warning="タグが多いと投稿補助とhandoffが読みにくくなります。"
         />
         <p className="mt-2 text-xs leading-5 text-muted">本文とは別に保存し、コピー時に予定側のハッシュタグと結合します。</p>
       </div>
@@ -2522,7 +2568,10 @@ function ScheduleForm({
   function addHashtagSetToDraft(hashtagSet: HashtagSet) {
     onDraftChange({
       ...draft,
-      announcementHashtags: mergeHashtags(draft.announcementHashtags, hashtagSet.hashtags)
+      announcementHashtags: clampScheduleText(
+        mergeHashtags(draft.announcementHashtags, hashtagSet.hashtags),
+        scheduleInputTextLimits.announcementHashtags
+      )
     });
   }
 
@@ -2547,10 +2596,16 @@ function ScheduleForm({
         <FieldLabel>タイトル</FieldLabel>
         <input
           value={draft.title}
-          onChange={(event) => onDraftChange({ ...draft, title: event.target.value })}
+          onChange={(event) => onDraftChange({ ...draft, title: clampScheduleText(event.target.value, scheduleInputTextLimits.title) })}
           className={inputClassName()}
           placeholder="配信企画会議"
+          maxLength={scheduleInputTextLimits.title}
           required
+        />
+        <TextLimitCounter
+          value={draft.title}
+          maxLength={scheduleInputTextLimits.title}
+          warning="一覧とhandoffで読みやすい長さに調整してください。"
         />
       </div>
       <div className="rounded-base border border-border bg-surface-muted/35 p-3">
@@ -2611,9 +2666,20 @@ function ScheduleForm({
             <FieldLabel>告知ハッシュタグ</FieldLabel>
             <input
               value={draft.announcementHashtags}
-              onChange={(event) => onDraftChange({ ...draft, announcementHashtags: event.target.value })}
+              onChange={(event) =>
+                onDraftChange({
+                  ...draft,
+                  announcementHashtags: clampScheduleText(event.target.value, scheduleInputTextLimits.announcementHashtags)
+                })
+              }
               className={inputClassName()}
               placeholder="#VTuber #配信告知"
+              maxLength={scheduleInputTextLimits.announcementHashtags}
+            />
+            <TextLimitCounter
+              value={draft.announcementHashtags}
+              maxLength={scheduleInputTextLimits.announcementHashtags}
+              warning="タグが多いと投稿補助とhandoffが読みにくくなります。"
             />
             {eventHashtagSets.length > 0 ? (
               <div className="mt-2">
@@ -2643,9 +2709,20 @@ function ScheduleForm({
           <FieldLabel>告知文メモ</FieldLabel>
           <textarea
             value={draft.announcementText}
-            onChange={(event) => onDraftChange({ ...draft, announcementText: event.target.value })}
+            onChange={(event) =>
+              onDraftChange({
+                ...draft,
+                announcementText: clampScheduleText(event.target.value, scheduleInputTextLimits.announcementText)
+              })
+            }
             className={inputClassName("min-h-24 resize-none")}
             placeholder="予定固有の告知文や、テンプレートの {announcementText} に差し込む文面。"
+            maxLength={scheduleInputTextLimits.announcementText}
+          />
+          <TextLimitCounter
+            value={draft.announcementText}
+            maxLength={scheduleInputTextLimits.announcementText}
+            warning="長文になると投稿補助とhandoffで扱いづらくなります。"
           />
         </div>
         <div>
@@ -2988,6 +3065,11 @@ function PostAssistPanel({
           value={postText}
           readOnly
           className="mt-3 min-h-44 w-full resize-none rounded-base border border-border bg-surface-muted px-3 py-3 text-sm leading-6 text-foreground lg:text-[13px]"
+        />
+        <TextLimitCounter
+          value={postText}
+          maxLength={scheduleInputTextLimits.announcementText}
+          warning="長めです。コピー前に削るとX投稿やhandoffで扱いやすくなります。"
         />
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button type="button" onClick={onCopy} className="flat-control flex-1 px-3 py-2">
@@ -3403,10 +3485,10 @@ export function ScheduleCalendarApp() {
     const normalizedRecurrence = draft.recurrence ?? "none";
     const nextDraft = {
       ...draft,
-      title: draft.title.trim() || "無題の予定",
+      title: clampScheduleText(draft.title.trim(), scheduleInputTextLimits.title) || "無題の予定",
       memo: draft.memo.trim(),
-      announcementText: draft.announcementText.trim(),
-      announcementHashtags: draft.announcementHashtags.trim(),
+      announcementText: clampScheduleText(draft.announcementText.trim(), scheduleInputTextLimits.announcementText),
+      announcementHashtags: clampScheduleText(draft.announcementHashtags.trim(), scheduleInputTextLimits.announcementHashtags),
       announcementMemo: draft.announcementMemo.trim(),
       recurrence: normalizedRecurrence,
       recurrenceCount: normalizedRecurrence === "none" ? 1 : Math.min(maxRecurrenceCount, Math.max(2, Math.floor(draft.recurrenceCount ?? 4)))
@@ -3473,7 +3555,7 @@ export function ScheduleCalendarApp() {
     const duplicatedEvent = {
       ...selectedEvent,
       id: createEventId(),
-      title: `${selectedEvent.title || "無題の予定"} コピー`,
+      title: clampScheduleText(`${selectedEvent.title || "無題の予定"} コピー`, scheduleInputTextLimits.title),
       recurrence: "none" as const,
       recurrenceCount: 1
     };
@@ -3555,8 +3637,8 @@ export function ScheduleCalendarApp() {
       description: templateDraft.description.trim() || "カスタムテンプレート",
       usageCategory: templateDraft.usageCategory,
       defaultPlatform: templateDraft.defaultPlatform,
-      body: templateDraft.body.trim() || "{title}",
-      hashtags: templateDraft.hashtags.trim()
+      body: clampScheduleText(templateDraft.body.trim(), scheduleInputTextLimits.postTemplateBody) || "{title}",
+      hashtags: clampScheduleText(templateDraft.hashtags.trim(), scheduleInputTextLimits.announcementHashtags)
     };
     setUserPostTemplates((current) => {
       const exists = current.some((template) => template.id === nextTemplate.id);

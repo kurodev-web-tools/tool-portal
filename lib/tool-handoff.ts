@@ -45,14 +45,14 @@ const handoffTtlMs = 30 * 60 * 1000;
 
 const maxTextLengths = {
   eventId: 160,
-  title: 160,
+  title: 120,
   date: 24,
   time: 8,
   category: 64,
   categoryLabel: 64,
   platform: 64,
-  announcementText: 4000,
-  hashtags: 1000,
+  announcementText: 1200,
+  hashtags: 300,
   announcementStatus: 64,
   announcementStatusLabel: 64,
   imageStorageId: 120,
@@ -69,6 +69,10 @@ function createHandoffToken() {
 
 function safeString(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.slice(0, maxLength) : "";
+}
+
+function clampHandoffText(value: string, maxLength: number) {
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
 }
 
 function isTarget(value: unknown): value is ToolHandoffTarget {
@@ -94,15 +98,15 @@ export function createScheduleHandoffPayload(
     createdAt: createdAt.toISOString(),
     expiresAt: expiresAt.toISOString(),
     eventId: input.eventId,
-    title: input.title,
+    title: clampHandoffText(input.title, maxTextLengths.title),
     date: input.date,
     startTime: input.startTime,
     endTime: input.endTime,
     category: input.category,
     categoryLabel: input.categoryLabel,
     platform: input.platform,
-    announcementText: input.announcementText,
-    hashtags: input.hashtags,
+    announcementText: clampHandoffText(input.announcementText, maxTextLengths.announcementText),
+    hashtags: clampHandoffText(input.hashtags, maxTextLengths.hashtags),
     announcementStatus: input.announcementStatus,
     announcementStatusLabel: input.announcementStatusLabel
   };

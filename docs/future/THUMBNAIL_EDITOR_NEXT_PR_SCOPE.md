@@ -5,8 +5,8 @@
 Thumbnail Editor の残作業を、実装前に contract-first で確認できる PR 単位へ分ける。
 この整理では新機能、UI文言、asset、preset本体、schema、crop、外部fontは変更しない。
 
-2026-05-12 時点では、P1〜P6 の contract / helper 境界は実装済み。
-この文書は、現行機能一覧ではなく、freeze 後に preset body、ユーザー素材ライブラリ管理 UI、font asset、追加品質確認へ広げるときの参照境界として扱う。
+2026-05-13 時点では、P1〜P6 の contract / helper 境界に加え、user material library UI v1、user material library management v1、quality guard export-preflight polish まで実装済み。
+この文書は、現行機能一覧ではなく、freeze 後に縦長 / 正方形 variant body、font asset、preset batch 本体、crop 仕様、text / image layer schema、public asset / font 追加へ広げるときの参照境界として扱う。
 
 維持する見え方:
 
@@ -18,14 +18,14 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 
 ## PR Order
 
-| Priority | Candidate | Goal | Contract-first check |
+| Priority | Candidate | Current state | Remaining boundary |
 | --- | --- | --- | --- |
-| P1 | preset variants | 用途と出力先の違いを preset metadata / family として扱える境界を決める。 | variant id、canvas size、既存 preset id 互換、検索 / 最近使った / お気に入りへの影響。 |
-| P2 | partial preset apply | 文字と立ち絵を守りながら、背景 / 装飾 / 色だけを安全に適用する境界を決める。 | 保持対象、上書き対象、確認UIが出る条件、draft mutation が限定されること。 |
-| P3 | common material library | ユーザー素材の保存、削除、置換、容量、復旧不能時の境界を決める。 | IndexedDB 境界、localStorage 非使用、既存 registered material 互換、asset 追加なし。 |
-| P4 | font policy | 追加fontを入れるかどうかの基準と、入れる場合の self-host / fallback 境界を決める。 | 外部CDNなし、既存font表示互換、fontが解決しない場合の fallback。 |
-| P5 | preset batch | 新規用途プリセットの追加順、対象、asset / variant / partial apply 依存を決める。 | 追加候補の preset id、既存 preset 非破壊、preset本体変更前の readiness。 |
-| P6 | quality guard expansion | warning / hint のまま、可読性、立ち絵見切れ、書き出し前確認を最小拡張する。 | 自動修正なし、短文コピー、material / preset / schema 非変更、summary 表示互換。 |
+| P1 | preset variants | metadata / lightweight ref は実装済み。 | 縦長 / 正方形 variant body は未追加。 |
+| P2 | partial preset apply | helper / UI 境界は実装済み。 | preset body / schema / crop 変更は引き続き別PR。 |
+| P3 | common material library | user material library UI v1 / management v1 まで実装済み。 | public asset 追加や素材登録変更は引き続き別PR。 |
+| P4 | font policy | fallback policy / helper は実装済み。 | font asset 追加は未実施。 |
+| P5 | preset batch | readiness metadata / helper は実装済み。 | preset batch 本体追加は未実施。 |
+| P6 | quality guard expansion | export-preflight polish まで実装済み。 | 自動修正、重い診断UI、schema / material / preset 変更は引き続き入れない。 |
 
 ## Candidate Details
 
@@ -58,8 +58,8 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - preset 背景 / 装飾 asset。
   - `scripts/thumbnail-material-assets-contract.mjs`
   - Schedule Calendar / SNS Split Image Maker 実装。
-- 次PR候補としての優先度:
-  - P1。後続の partial apply と preset batch の前提になる。
+- 現在の扱い:
+  - P1 contract は実装済み。縦長 / 正方形 variant body は後続候補として残す。
 
 #### 実装で確定した境界
 
@@ -98,8 +98,8 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - preset asset 登録。
   - text layer / image layer schema 定義そのもの。
   - Schedule Calendar / SNS Split Image Maker 実装。
-- 次PR候補としての優先度:
-  - P2。variant の境界が決まった後に進める。
+- 現在の扱い:
+  - P2 helper / UI 境界は実装済み。preset body、schema、crop 仕様変更は引き続き別PRで扱う。
 
 #### 実装で確定した境界
 
@@ -115,7 +115,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - 目的:
   - project-bound material と user-added material を分け、画像本体を localStorage に置かない保存境界を決める。
   - delete / replace / 容量 / 復旧不能時の表示を実装前に固定する。
-  - 現行の登録済み装飾素材パネルと、future のユーザー素材管理 UI を混同しない。
+  - 現行の登録済み装飾素材パネルと、完了済み user material library UI v1 / management v1 の責務を混同しない。
 - 入れるもの:
   - IndexedDB など画像向け storage を前提にした user material contract。
   - 登録素材とユーザー素材の責務分離。
@@ -140,8 +140,8 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - preset 本体。
   - preset variants / partial apply の未確定仕様。
   - Schedule Calendar / SNS Split Image Maker 実装。
-- 次PR候補としての優先度:
-  - P3。partial apply 後、素材の責務が混ざらない状態で進める。
+- 現在の扱い:
+  - P3 storage boundary、user material library UI v1、management v1 は実装済み。public asset 追加、素材登録変更、preset 本体への自動挿入は後続候補に残す。
 
 #### 実装で確定した境界
 
@@ -151,6 +151,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - user-added material layer は既存 image layer に optional `materialRef` を持たせる非破壊拡張に留め、画像本体を draft `src` へ永続化しない。読み込み前、削除後、置換直後、読み込み失敗時は共通 fallback image を使う。
 - delete / replace / load failure は layer の geometry と crop を維持し、画像レイヤー自体を壊さない。replace は軽量 ref を差し替え、fallback `src` のまま次の画像 storage 読み込みへ渡す。
 - partial preset apply は `materialRef` を持つ user-added material layer を保持する。preset id、variant refs、recent / favorite、Schedule Calendar / SNS Split Image Maker handoff contract は変更しない。
+- user material library management v1 は、容量上限、読み込み不能 fallback、再追加 / 整理導線の最小 UI まで完了済み。
 
 ### 4. font policy
 
@@ -179,8 +180,8 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - 外部 CDN 設定。
   - preset 本体。
   - Schedule Calendar / SNS Split Image Maker 実装。
-- 次PR候補としての優先度:
-  - P4。preset batch 前に方針だけ決め、実 asset 追加は別PRにする。
+- 現在の扱い:
+  - P4 policy / helper は実装済み。実 font asset 追加は別PRにする。
 
 #### 実装で確定した境界
 
@@ -218,8 +219,8 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - `public/assets/images/thumbnail-editor/**`
   - text / image layer schema。
   - Schedule Calendar / SNS Split Image Maker 実装。
-- 次PR候補としての優先度:
-  - P5。先に仕様境界を固め、実 preset 追加はさらに分割する。
+- 現在の扱い:
+  - P5 readiness は実装済み。実 preset body 追加はさらに分割する。
 
 #### 実装で確定した境界
 
@@ -259,8 +260,8 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - `public/assets/images/thumbnail-editor/**`
   - 素材ライブラリ登録。
   - Schedule Calendar / SNS Split Image Maker 実装。
-- 次PR候補としての優先度:
-  - P6。UI を重くしない範囲で、上記の仕様整理後に進める。
+- 現在の扱い:
+  - P6 quality guard expansion と export-preflight polish は実装済み。自動修正、重い診断UI、preset / material / asset / schema 変更は引き続き入れない。
 
 #### 実装で確定した境界
 
@@ -269,6 +270,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - image layer は `data:image/`、user material ref、初期追加名 `画像` / `ユーザー素材` のような user-added image だけを content image として扱い、crop が強い場合だけ `見切れ具合を確認` の hint を出す。
 - overall summary は text layer と user-added image layer だけを軽く確認し、preset 初期の背景 / 装飾 / 立ち絵ガイド枠を warning の対象にしない。
 - summary label は `注意 n件` / `品質チェックOK` を維持し、draft、preset、material registration、asset、font、schema、crop 仕様は変更しない。
+- export-preflight polish は、低透明度テキスト hint、未解決 user material warning、短い export summary まで完了済み。
 
 ## Contract Candidates
 

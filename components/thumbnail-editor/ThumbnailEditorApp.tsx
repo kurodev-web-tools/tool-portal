@@ -9,6 +9,7 @@ import {
   applyThumbnailUserMaterialLayerFallback,
   createNextRecentThumbnailPresetIds,
   createDraftFromPreset,
+  createDraftFromPresetVariant,
   createImageLayer,
   createThumbnailMaterialLayer,
   createThumbnailUserMaterialLayer,
@@ -41,6 +42,7 @@ import {
   thumbnailMaterialLibrary,
   thumbnailPresetDiscoveryStorageKey,
   thumbnailPresets,
+  thumbnailPresetVariants,
   thumbnailStandeePlacementPresets,
   toggleThumbnailPresetFavorite,
   type ThumbnailHandleKind,
@@ -54,6 +56,7 @@ import {
   type ThumbnailPresetCategory,
   type ThumbnailPresetDiscoveryState,
   type ThumbnailPresetId,
+  type ThumbnailPresetVariantId,
   type ThumbnailQualityGuardItem,
   type ThumbnailQualityGuardSummary,
   type ThumbnailShapeType,
@@ -337,7 +340,7 @@ export function ThumbnailEditorApp() {
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("canvas");
   const [zoom, setZoom] = useState(0.72);
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
-  const [headerMenuOpen, setHeaderMenuOpen] = useState<"preset" | "canvas" | null>(null);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState<"preset" | "canvas" | "variant" | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
   const [sidePanelCollapsed, setSidePanelCollapsed] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
@@ -810,6 +813,18 @@ export function ThumbnailEditorApp() {
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
     setDraft(nextDraft);
     showToast("info", handoffPayload ? `${canvas.label} に予定テキストを引き継ぎました。` : `${canvas.label} に主要テキストを引き継ぎました。`);
+  };
+
+  const changePresetVariant = (variantId: ThumbnailPresetVariantId) => {
+    const variant = thumbnailPresetVariants[variantId];
+    const next = createDraftFromPresetVariant(draft.presetId, variantId);
+    const nextDraft = handoffPayload
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
+      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+    setDraft(nextDraft);
+    setMobilePanel("canvas");
+    setHeaderMenuOpen(null);
+    showToast("info", handoffPayload ? `${variant.label} に予定テキストを引き継ぎました。` : `${variant.label} に主要テキストを引き継ぎました。`);
   };
 
   const saveDraft = () => {
@@ -1342,6 +1357,16 @@ export function ThumbnailEditorApp() {
   };
 
   const canvasSizeId: ThumbnailCanvasSizeId = draft.canvas.width === 1920 ? "full-hd" : "hd";
+  const currentVariantId: ThumbnailPresetVariantId =
+    (Object.values(thumbnailPresetVariants).find((variant) => variant.canvas.width === draft.canvas.width && variant.canvas.height === draft.canvas.height)?.id as ThumbnailPresetVariantId | undefined) ??
+    "landscape-16-9";
+  const currentVariant = thumbnailPresetVariants[currentVariantId];
+  const canvasSizeLabel =
+    currentVariantId === "landscape-16-9" ? thumbnailCanvasSizes[canvasSizeId].label : `${draft.canvas.width} x ${draft.canvas.height} (${currentVariant.aspectRatio})`;
+  const variantOptions = Object.values(thumbnailPresetVariants).map((variant) => ({
+    id: variant.id,
+    label: variant.label
+  }));
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
@@ -1351,7 +1376,7 @@ export function ThumbnailEditorApp() {
             <p className="text-xs font-semibold text-primary-strong">画像・デザイン</p>
             <h1 className="whitespace-nowrap text-lg font-black tracking-normal text-foreground xl:text-xl">Thumbnail Editor</h1>
           </div>
-          <div className="grid w-full grid-cols-2 gap-3 min-[1024px]:w-auto min-[1024px]:min-w-[29rem] xl:min-w-[31rem] xl:flex xl:items-center">
+          <div className="grid w-full grid-cols-1 gap-3 min-[520px]:grid-cols-3 min-[1024px]:w-auto min-[1024px]:min-w-[40rem] xl:min-w-[43rem]">
             <label className="min-w-0 text-xs font-bold text-muted">
               プリセット
               <ListboxField
@@ -1371,13 +1396,24 @@ export function ThumbnailEditorApp() {
               <ListboxField
                 className="mt-1"
                 isOpen={headerMenuOpen === "canvas"}
-                value={thumbnailCanvasSizes[canvasSizeId].label}
+                value={canvasSizeLabel}
                 onToggle={() => setHeaderMenuOpen((current) => (current === "canvas" ? null : "canvas"))}
                 options={Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
                   id,
                   label: size.label
                 }))}
                 onSelect={(id) => changeCanvasSize(id as ThumbnailCanvasSizeId)}
+              />
+            </label>
+            <label className="min-w-0 text-xs font-bold text-muted">
+              出力比率
+              <ListboxField
+                className="mt-1"
+                isOpen={headerMenuOpen === "variant"}
+                value={currentVariant.label}
+                onToggle={() => setHeaderMenuOpen((current) => (current === "variant" ? null : "variant"))}
+                options={variantOptions}
+                onSelect={(id) => changePresetVariant(id as ThumbnailPresetVariantId)}
               />
             </label>
           </div>
@@ -1410,7 +1446,7 @@ export function ThumbnailEditorApp() {
         >
           <main className="scrollbar-accent min-h-0 overflow-y-auto p-4 [scrollbar-gutter:stable] md:p-5 xl:p-6">
             <section className="mb-4 grid gap-3 min-[1024px]:hidden">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-3">
                 <label className="min-w-0 text-xs font-bold text-muted">
                   プリセット
                   <ListboxField
@@ -1430,13 +1466,24 @@ export function ThumbnailEditorApp() {
                   <ListboxField
                     className="mt-1"
                     isOpen={headerMenuOpen === "canvas"}
-                    value={thumbnailCanvasSizes[canvasSizeId].label}
+                    value={canvasSizeLabel}
                     onToggle={() => setHeaderMenuOpen((current) => (current === "canvas" ? null : "canvas"))}
                     options={Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
                       id,
                       label: size.label
                     }))}
                     onSelect={(id) => changeCanvasSize(id as ThumbnailCanvasSizeId)}
+                  />
+                </label>
+                <label className="min-w-0 text-xs font-bold text-muted">
+                  出力比率
+                  <ListboxField
+                    className="mt-1"
+                    isOpen={headerMenuOpen === "variant"}
+                    value={currentVariant.label}
+                    onToggle={() => setHeaderMenuOpen((current) => (current === "variant" ? null : "variant"))}
+                    options={variantOptions}
+                    onSelect={(id) => changePresetVariant(id as ThumbnailPresetVariantId)}
                   />
                 </label>
               </div>
@@ -1462,7 +1509,7 @@ export function ThumbnailEditorApp() {
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-bold text-foreground">{selectedPreset.name}</p>
-                  <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / 16:9</p>
+                  <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / {currentVariant.aspectRatio}</p>
                   <p className="mt-1 text-xs font-semibold text-muted">プリセットを選んで、文字と立ち絵を差し替えてから書き出す</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">

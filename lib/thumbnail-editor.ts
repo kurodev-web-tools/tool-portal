@@ -1037,6 +1037,7 @@ export const thumbnailPresets: ThumbnailPreset[] = [
 ];
 
 const thumbnailDefaultPresetVariantId: ThumbnailPresetVariantId = "landscape-16-9";
+const thumbnailSupportedPresetVariantIds: ThumbnailPresetVariantId[] = ["landscape-16-9", "portrait-9-16", "square-1-1"];
 export const thumbnailPresetVariantRelations = Object.fromEntries(
   thumbnailPresets.map((preset) => [
     preset.id,
@@ -1044,7 +1045,7 @@ export const thumbnailPresetVariantRelations = Object.fromEntries(
       presetId: preset.id,
       familyId: preset.id.replace(/_/g, "-"),
       defaultVariantId: thumbnailDefaultPresetVariantId,
-      variantIds: [thumbnailDefaultPresetVariantId]
+      variantIds: [...thumbnailSupportedPresetVariantIds]
     }
   ])
 ) as Record<ThumbnailPresetId, ThumbnailPresetVariantRelation>;
@@ -1157,7 +1158,7 @@ export const getThumbnailPresetBatchReadiness = (
     });
   }
 
-  if (!isThumbnailPresetVariantId(candidate.recommendedVariantId) || candidate.recommendedVariantId !== thumbnailDefaultPresetVariantId) {
+  if (!isThumbnailPresetVariantId(candidate.recommendedVariantId)) {
     warnings.push({
       id: "unsupported-variant",
       message: `${candidateId} は現時点で未対応の variant body を前提にしています。`,
@@ -2234,6 +2235,14 @@ export const createDraftFromPreset = (
   };
 };
 
+export const createDraftFromPresetVariant = (
+  presetId: ThumbnailPresetId = "stream_announce",
+  variantId: ThumbnailPresetVariantId = thumbnailPresetVariantRelations[presetId].defaultVariantId
+): ThumbnailEditorDraft => {
+  const canvas = getThumbnailPresetCanvasFromVariant(presetId, variantId) ?? thumbnailPresetVariants[thumbnailDefaultPresetVariantId].canvas;
+  return createDraftFromPreset(presetId, canvas);
+};
+
 const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 const numberValue = (value: unknown, fallback: number) => (isFiniteNumber(value) ? value : fallback);
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -2248,8 +2257,13 @@ const normalizeRotation = (value: number) => {
   return normalized;
 };
 const normalizeCanvas = (canvas: Partial<ThumbnailCanvas> | undefined): ThumbnailCanvas => {
-  if (canvas?.width === 1920 && canvas.height === 1080) {
-    return { width: 1920, height: 1080 };
+  const supportedCanvas = [
+    thumbnailCanvasSizes.hd,
+    thumbnailCanvasSizes["full-hd"],
+    ...Object.values(thumbnailPresetVariants).map((variant) => variant.canvas)
+  ].find((item) => item.width === canvas?.width && item.height === canvas?.height);
+  if (supportedCanvas) {
+    return { width: supportedCanvas.width, height: supportedCanvas.height };
   }
   return { width: 1280, height: 720 };
 };

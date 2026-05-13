@@ -20,7 +20,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 
 | Priority | Candidate | Current state | Remaining boundary |
 | --- | --- | --- | --- |
-| P1 | preset variants | metadata / lightweight ref は実装済み。 | 縦長 / 正方形 variant body は未追加。 |
+| P1 | preset variants | metadata / lightweight ref / 縦長・正方形 variant body helper は実装済み。 | UI 導線、preset batch 本体、crop / schema 変更は未追加。 |
 | P2 | partial preset apply | helper / UI 境界は実装済み。 | preset body / schema / crop 変更は引き続き別PR。 |
 | P3 | common material library | user material library UI v1 / management v1 まで実装済み。 | public asset 追加や素材登録変更は引き続き別PR。 |
 | P4 | font policy | fallback policy / helper は実装済み。 | font asset 追加は未実施。 |
@@ -59,12 +59,13 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - `scripts/thumbnail-material-assets-contract.mjs`
   - Schedule Calendar / SNS Split Image Maker 実装。
 - 現在の扱い:
-  - P1 contract は実装済み。縦長 / 正方形 variant body は後続候補として残す。
+  - P1 contract と縦長 / 正方形 variant body foundation は実装済み。UI 導線、preset batch 本体、crop / schema 変更は後続候補として残す。
 
 #### 実装で確定した境界
 
-- variant catalog は `landscape-16-9` / `portrait-9-16` / `square-1-1` の metadata に留める。
-- 既存 preset は全て既存の横長 16:9 を default variant とし、未対応の縦長 / 正方形 variant body は support 済みとして扱わない。
+- variant catalog は `landscape-16-9` / `portrait-9-16` / `square-1-1` の metadata と、既存 preset から variant canvas の draft body を作る `createDraftFromPresetVariant()` に留める。
+- 既存 preset は全て既存の横長 16:9 を default variant とし、縦長 / 正方形は既存 layer schema を保った生成 helper で扱う。
+- `normalizeThumbnailDraft()` は schema version / storage key を変えず、既知 variant canvas の `1080 x 1920` / `1080 x 1080` を保持できる。
 - discovery は従来の `recentPresetIds` / `favoritePresetIds` 互換を維持し、variant 参照は `presetId` + `variantId` の軽い ref だけを正規化する。
 - UI 導線、preset 本体、text / image layer schema、crop、material library、Schedule Calendar / SNS Split Image Maker handoff は変更しない。
 

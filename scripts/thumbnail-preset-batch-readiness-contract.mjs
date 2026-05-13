@@ -173,7 +173,7 @@ for (const item of readinessItems) {
 const malformedCandidate = {
   ...lib.thumbnailPresetBatchCandidates[0],
   id: "karaoke",
-  recommendedVariantId: "portrait-9-16",
+  recommendedVariantId: "wide-21-9",
   requiredTextLayerRoles: ["見出し", "CTA"],
   dependsOn: ["variant", "font-policy"]
 };
@@ -197,6 +197,18 @@ assert.ok(
   "readiness warns about missing prerequisite dependencies"
 );
 assert.equal(JSON.stringify(malformedCandidate), malformedSnapshot, "readiness helper does not mutate candidate metadata");
+
+const portraitCandidate = {
+  ...lib.thumbnailPresetBatchCandidates[0],
+  id: "portrait_batch_candidate",
+  recommendedVariantId: "portrait-9-16"
+};
+const portraitReadiness = lib.getThumbnailPresetBatchReadiness(portraitCandidate);
+assert.equal(
+  portraitReadiness.warnings.some((warning) => warning.id === "unsupported-variant"),
+  false,
+  "readiness accepts scoped portrait variant bodies after the variant foundation"
+);
 
 const summary = lib.getThumbnailPresetBatchReadinessSummary();
 assert.equal(summary.total, expectedCandidates.length, "summary covers the scoped candidate set");

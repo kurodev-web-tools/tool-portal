@@ -29,6 +29,7 @@ assert.equal(typeof lib.thumbnailPresetVariantRelations, "object", "preset to va
 assert.equal(typeof lib.getDefaultThumbnailPresetVariantRef, "function", "default variant ref helper is exported");
 assert.equal(typeof lib.getThumbnailPresetVariant, "function", "variant metadata resolver is exported");
 assert.equal(typeof lib.getThumbnailPresetCanvasFromVariant, "function", "variant canvas resolver is exported");
+assert.equal(typeof lib.createDraftFromPresetVariant, "function", "variant body draft helper is exported");
 assert.equal(typeof lib.normalizeThumbnailPresetVariantRefs, "function", "variant ref normalizer is exported");
 
 const presetIds = lib.thumbnailPresets.map((preset) => preset.id);
@@ -73,7 +74,11 @@ for (const preset of lib.thumbnailPresets) {
   assert.ok(relation, `${preset.id} has variant relation metadata`);
   assert.equal(relation.presetId, preset.id, `${preset.id} relation keeps existing preset id`);
   assert.equal(relation.defaultVariantId, "landscape-16-9", `${preset.id} defaults to existing landscape output`);
-  assert.deepEqual(relation.variantIds, ["landscape-16-9"], `${preset.id} does not claim unsupported variant bodies`);
+  assert.deepEqual(
+    relation.variantIds,
+    ["landscape-16-9", "portrait-9-16", "square-1-1"],
+    `${preset.id} exposes only the scoped variant bodies`
+  );
   assert.equal(typeof relation.familyId, "string", `${preset.id} has a family id for future batches`);
   assert.equal(
     lib.getDefaultThumbnailPresetVariantRef(preset.id).presetId,
@@ -93,11 +98,16 @@ for (const preset of lib.thumbnailPresets) {
 }
 
 assert.equal(
-  lib.getThumbnailPresetVariant("karaoke", "portrait-9-16"),
-  null,
-  "metadata exists but existing presets do not silently support unsupported variant bodies"
+  lib.getThumbnailPresetVariant("karaoke", "portrait-9-16").label,
+  "縦長 9:16",
+  "portrait variant body support resolves through relation metadata"
 );
 assert.equal(lib.getThumbnailPresetVariant("karaoke", "landscape-16-9").label, "横長 16:9", "supported variant resolves");
+assert.deepEqual(
+  lib.getThumbnailPresetCanvasFromVariant("karaoke", "portrait-9-16"),
+  { width: 1080, height: 1920 },
+  "portrait variant canvas resolves without changing the preset id"
+);
 
 assert.deepEqual(
   lib.normalizeThumbnailPresetVariantRefs(
@@ -112,6 +122,7 @@ assert.deepEqual(
   ),
   [
     { presetId: "karaoke", variantId: "landscape-16-9" },
+    { presetId: "clip", variantId: "square-1-1" },
     { presetId: "x_announcement", variantId: "landscape-16-9" }
   ],
   "recent and favorite variant refs stay lightweight and only keep supported preset/variant ids"
@@ -133,7 +144,10 @@ assert.deepEqual(discoveryState.recentPresetIds, ["karaoke"], "existing recent p
 assert.deepEqual(discoveryState.favoritePresetIds, ["announcement"], "existing favorite preset ids stay compatible");
 assert.deepEqual(
   discoveryState.recentPresetVariantRefs,
-  [{ presetId: "karaoke", variantId: "landscape-16-9" }],
+  [
+    { presetId: "karaoke", variantId: "landscape-16-9" },
+    { presetId: "announcement", variantId: "square-1-1" }
+  ],
   "recent variant refs keep only lightweight supported refs"
 );
 assert.deepEqual(
@@ -170,6 +184,27 @@ const materialIdsBefore = JSON.stringify(lib.thumbnailMaterialLibrary.map((mater
 
 for (const presetId of presetIds) {
   lib.createDraftFromPreset(presetId);
+  for (const variantId of Object.keys(lib.thumbnailPresetVariants)) {
+    const variantDraft = lib.createDraftFromPresetVariant(presetId, variantId);
+    const variant = lib.thumbnailPresetVariants[variantId];
+    assert.equal(variantDraft.version, 1, `${presetId}/${variantId} keeps draft schema version`);
+    assert.equal(variantDraft.presetId, presetId, `${presetId}/${variantId} keeps existing preset id`);
+    assert.deepEqual(variantDraft.canvas, variant.canvas, `${presetId}/${variantId} uses variant canvas`);
+    assert.equal(Object.hasOwn(variantDraft, "variantId"), false, `${presetId}/${variantId} does not add variantId to draft schema`);
+    assert.ok(variantDraft.layers.length > 0, `${presetId}/${variantId} creates a non-empty body`);
+    assert.ok(variantDraft.layers.some((layer) => layer.type === "text" && layer.name.includes("見出し")), `${presetId}/${variantId} keeps a headline text layer`);
+    for (const layer of variantDraft.layers) {
+      assert.ok(Number.isFinite(layer.x), `${presetId}/${variantId}/${layer.name} has finite x`);
+      assert.ok(Number.isFinite(layer.y), `${presetId}/${variantId}/${layer.name} has finite y`);
+      assert.ok(layer.width > 0, `${presetId}/${variantId}/${layer.name} keeps a positive width`);
+      assert.ok(layer.height > 0, `${presetId}/${variantId}/${layer.name} keeps a positive height`);
+      assert.ok(layer.x >= -variant.canvas.width && layer.x <= variant.canvas.width * 2, `${presetId}/${variantId}/${layer.name} stays within draft normalize x bounds`);
+      assert.ok(layer.y >= -variant.canvas.height && layer.y <= variant.canvas.height * 2, `${presetId}/${variantId}/${layer.name} stays within draft normalize y bounds`);
+    }
+    const normalizedVariantDraft = lib.normalizeThumbnailDraft(variantDraft);
+    assert.ok(normalizedVariantDraft, `${presetId}/${variantId} normalizes as a storable draft`);
+    assert.deepEqual(normalizedVariantDraft.canvas, variant.canvas, `${presetId}/${variantId} keeps variant canvas after normalize`);
+  }
 }
 
 assert.equal(

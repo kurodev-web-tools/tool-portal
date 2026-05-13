@@ -456,6 +456,25 @@
 - 幅別確認: Playwright + local dev server で `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認。`390 / 820px` は下部 `テキスト` tab で `サムネ品質`、下部 `書き出し` tab で `書き出し前の確認` / `品質チェックOK` / `そのまま書き出せます` を確認。`1024 / 1280 / 1366px` は右 panel 上で同表示を確認。全幅で canvas 表示、横 overflow なし、console error / warn なし。
 - 検証: `node scripts/thumbnail-quality-guard-contract.mjs`、`node scripts/thumbnail-standee-placement-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
 
+#### P25: Thumbnail Editor docs drift cleanup
+
+- PR #101 `[codex] Clean up thumbnail docs drift` は 2026-05-13 に `main` / `origin/main` へ merge 済み。
+- merge commit は `f9df381dc091d8d9369b900eead3bba9034978e4`。
+- PR #94 / PR #99 後の `docs/design-thumbnail-editor.md` と `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` を同期した。
+- user material library UI v1 / management v1 / quality guard export-preflight polish を完了済みとして整理した。
+- UI / 表示文言 / tool 実装 / schema / asset / handoff 実装は変更していない。
+- docs-only のため幅別ブラウザ確認は未実施。
+- 検証: `node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/thumbnail-quality-guard-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`git diff --check` 成功。
+
+#### P26: SNS Split handoff accessibility copy polish
+
+- PR #102 `[codex] Polish SNS handoff accessibility copy` は 2026-05-13 に `main` / `origin/main` へ merge 済み。
+- merge commit は `bd9119aa0e4437e950b6c71ddeca5eaced192e7c`。
+- Schedule / Thumbnail 由来の受け取り banner を source 別 copy、`role="status"` / `aria-live="polite"`、source 別 textarea label、具体的な次アクション文に整理した。
+- handoff schema、storage、export、asset、他ツール実装は変更していない。
+- 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/sns-split-image-maker?preset=split-4` の Schedule handoff banner 表示、source 別 status、次アクション文、textarea label、横 overflow なし、console error / warning なしを確認した。
+- 検証: `node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

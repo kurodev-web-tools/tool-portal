@@ -58,6 +58,7 @@
 
 ### Candidate 1: Thumbnail Editor user material library management v1
 
+- 状態: implemented in current branch
 - 目的:
   - 既存 user material UI v1 の保存 / 削除 / 置換境界を保ったまま、容量上限、読み込み不能、再追加、整理導線を小さく固める。
 - 入れるもの:
@@ -72,6 +73,24 @@
   - `npm run lint`
   - `npx tsc --noEmit`
   - `git diff --check`
+- 実施結果:
+  - PR #92 `[codex] Freeze production final QA` は merge commit `05c4223de146976d5e84ff2b30e79e17854b261c`、freeze closeout task cleanup は PR #93 `[codex] Organize freeze closeout task board` / merge commit `84153e88ee38d195587d2820e5d808095ba7d86c` として `origin/main` に merge 済みであることを確認した。
+  - `codex/thumbnail-user-material-management-v1` / `.worktrees/thumbnail-user-material-management-v1` を `origin/main` 起点で作成して実装した。ローカル `main` は触っていない。
+  - `thumbnailUserMaterialStoragePolicy` に `最大24件 / 1点8MB / 合計48MB` の軽い容量境界を追加し、使用量 summary / 追加可否 helper / byte 表示 helper を contract 化した。
+  - user material 追加時は既存 `ThumbnailUserMaterialRef` metadata から容量を判定し、画像本体は引き続き IndexedDB に保存、localStorage / draft / handoff payload へ混ぜない。
+  - IndexedDB から画像 URL を解決できない ref は `読み込み失敗` fallback へ寄せ、既存 layer geometry / crop / lightweight ref は維持する。
+  - ユーザー素材パネルには容量表示と「要再追加の素材は置換で復旧 / 不要なら削除」の短い整理導線だけを追加した。重い管理画面や modal tutorial は入れていない。
+  - public asset、font asset、preset body、variant body、crop 仕様、text / image layer schema、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
+- 幅別表示結果:
+  - `next dev` / `http://127.0.0.1:3020/tools/thumbnail-editor` を Playwright で確認。
+  - `390 / 820px`: 素材タブを開き、`h1` 表示、横 overflow なし、console error / warning なし、ユーザー素材の容量 copy / 再追加 guidance 表示を確認。
+  - `1024 / 1280 / 1366px`: 初期表示で `h1` 表示、横 overflow なし、console error / warning なし、ユーザー素材の容量 copy / 再追加 guidance 表示を確認。
+- 検証:
+  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。RED は `formatThumbnailUserMaterialBytes` 未export で失敗することを確認済み。
+  - `node scripts/tool-handoff-contract.mjs` PASS。
+  - `npm run lint` PASS。
+  - `npx tsc --noEmit` PASS。
+  - `git diff --check` PASS。
 
 ### Candidate 2: Schedule Calendar input length / copy guard
 

@@ -47,6 +47,9 @@ export type ThumbnailUserMaterialStoragePolicy = {
   localStorageStoresImageBody: false;
   localStorageStores: ["metadata", "storageId"];
   supportedMimeTypes: ThumbnailUserMaterialMimeType[];
+  maxRefs: number;
+  maxFileBytes: number;
+  maxTotalBytes: number;
 };
 export type ThumbnailUserMaterialMimeType = "image/png" | "image/jpeg" | "image/webp" | "image/svg+xml";
 export type ThumbnailUserMaterialRef = {
@@ -62,6 +65,16 @@ export type ThumbnailUserMaterialRef = {
   updatedAt?: string;
 };
 export type ThumbnailUserMaterialFallbackReason = "deleted" | "replaced" | "load-failed";
+export type ThumbnailUserMaterialUsageSummary = {
+  count: number;
+  maxCount: number;
+  totalBytes: number;
+  maxTotalBytes: number;
+  remainingBytes: number;
+};
+export type ThumbnailUserMaterialCapacityResult =
+  | { ok: true }
+  | { ok: false; reason: "file-too-large" | "library-full" | "total-bytes-exceeded" };
 export type ThumbnailStandeePlacementPresetId =
   | "solo-right-half"
   | "solo-left-half"
@@ -285,7 +298,10 @@ export const thumbnailUserMaterialStoragePolicy: ThumbnailUserMaterialStoragePol
   imageStorage: "indexeddb",
   localStorageStoresImageBody: false,
   localStorageStores: ["metadata", "storageId"],
-  supportedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/svg+xml"]
+  supportedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/svg+xml"],
+  maxRefs: 24,
+  maxFileBytes: 8 * 1024 * 1024,
+  maxTotalBytes: 48 * 1024 * 1024
 };
 
 export type ThumbnailPresetFilter = {
@@ -1527,7 +1543,7 @@ export const normalizeThumbnailUserMaterialRef = (value: unknown): ThumbnailUser
   return normalized;
 };
 
-export const normalizeThumbnailUserMaterialRefs = (values: unknown, limit = 24): ThumbnailUserMaterialRef[] => {
+export const normalizeThumbnailUserMaterialRefs = (values: unknown, limit = thumbnailUserMaterialStoragePolicy.maxRefs): ThumbnailUserMaterialRef[] => {
   if (!Array.isArray(values)) {
     return [];
   }
@@ -1545,6 +1561,53 @@ export const normalizeThumbnailUserMaterialRefs = (values: unknown, limit = 24):
     }
   }
   return refs;
+};
+
+export const formatThumbnailUserMaterialBytes = (bytes: number) => {
+  const normalized = normalizeThumbnailUserMaterialPositiveNumber(bytes) ?? 0;
+  if (normalized <= 0) {
+    return "0KB";
+  }
+  if (normalized >= 1024 * 1024) {
+    return `${Math.ceil(normalized / (1024 * 1024))}MB`;
+  }
+  return `${Math.ceil(normalized / 1024)}KB`;
+};
+
+export const getThumbnailUserMaterialUsageSummary = (values: unknown): ThumbnailUserMaterialUsageSummary => {
+  const refs = normalizeThumbnailUserMaterialRefs(values);
+  const totalBytes = refs.reduce((sum, ref) => sum + (ref.byteSize ?? 0), 0);
+  return {
+    count: refs.length,
+    maxCount: thumbnailUserMaterialStoragePolicy.maxRefs,
+    totalBytes,
+    maxTotalBytes: thumbnailUserMaterialStoragePolicy.maxTotalBytes,
+    remainingBytes: Math.max(0, thumbnailUserMaterialStoragePolicy.maxTotalBytes - totalBytes)
+  };
+};
+
+export const canAddThumbnailUserMaterialRef = (
+  currentRefsValue: unknown,
+  nextByteSizeValue: unknown,
+  replaceStorageId?: string
+): ThumbnailUserMaterialCapacityResult => {
+  const nextByteSize = normalizeThumbnailUserMaterialPositiveNumber(nextByteSizeValue) ?? 0;
+  if (nextByteSize > thumbnailUserMaterialStoragePolicy.maxFileBytes) {
+    return { ok: false, reason: "file-too-large" };
+  }
+
+  const currentRefs = normalizeThumbnailUserMaterialRefs(currentRefsValue);
+  const retainedRefs = replaceStorageId ? currentRefs.filter((ref) => ref.storageId !== replaceStorageId) : currentRefs;
+  if (!replaceStorageId && retainedRefs.length >= thumbnailUserMaterialStoragePolicy.maxRefs) {
+    return { ok: false, reason: "library-full" };
+  }
+
+  const nextTotalBytes = retainedRefs.reduce((sum, ref) => sum + (ref.byteSize ?? 0), 0) + nextByteSize;
+  if (nextTotalBytes > thumbnailUserMaterialStoragePolicy.maxTotalBytes) {
+    return { ok: false, reason: "total-bytes-exceeded" };
+  }
+
+  return { ok: true };
 };
 
 const getThumbnailUserMaterialInitialSize = (ref: ThumbnailUserMaterialRef, canvas: ThumbnailCanvas) => {

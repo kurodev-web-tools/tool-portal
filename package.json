@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
+    "postbuild": "node scripts/static-export-rsc-aliases.mjs",
     "lint": "eslint .",
     "audit:prod": "npm audit --omit=dev",
     "start": "next start"

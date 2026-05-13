@@ -8,288 +8,174 @@
 - 意味のある実装後は、このファイルに実装内容、検証、必要な幅別確認を残す。
 - UI 変更時の確認幅は `390 / 820 / 1024 / 1280 / 1366px` を基本にする。
 - 2026-05 の完了済み詳細ログは `docs/archive/TASK_HISTORY_2026-05.md` を参照する。
-- PR #86 `[codex] Align portal entry freeze copy` は `main` / `origin/main` に merge 済み。merge commit は `e2ef089`。
-- PR #87 `[codex] Organize freeze docs task board` は `main` / `origin/main` に merge 済み。merge commit は `f6f7d08`。
-- PR #88 `[codex] Freeze final QA docs consistency` は `main` / `origin/main` に merge 済み。merge commit は `ba9cc45`。
-- PR #89 `[codex] Add thumbnail user material library UI` は `main` / `origin/main` に merge 済み。merge commit は `2901020`。
-- PR #90 `[codex] QA thumbnail user material library` は `main` / `origin/main` に merge 済み。merge commit は `08f59cd`。
-- PR #91 `[codex] Fix static export RSC aliases` は `main` / `origin/main` に merge 済み。merge commit は `ceec8de`。
+- PR #86 `[codex] Align portal entry freeze copy` から PR #92 `[codex] Freeze production final QA` まで、`main` / `origin/main` に merge 済み。
+- PR #92 の merge commit は `05c4223de146976d5e84ff2b30e79e17854b261c`。この closeout は PR #92 merge 後の `origin/main` 起点で行う。
+- static export RSC alias fix と production static serve final QA の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 欄を参照する。
 
-## Freeze 前の現行境界
+## Freeze closeout state
+
+- Schedule Calendar / Thumbnail Editor / SNS Split Image Maker の freeze 前 final QA は PR #92 で完了済み。
+- static export RSC alias は PR #91 で `postbuild` 生成と `--check` 検証が入っている。
+- PR #92 の production static serve final QA では、`1024px` の `/tools` と3ツールで dotted `__next.tools*.txt` が 200 / 304、`1280px` / `1366px` で `__next.*.txt` の 400+ response なし。
+- この closeout では UI / 表示文言 / tool 実装 / storage schema / export 機能本体は触らない。
+- docs / task 整理のみのため、幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
+
+## Freeze 後の現行境界
 
 ### Schedule Calendar
 
-- 現行 freeze 対象:
+- freeze 済み:
   - 月 / 週 / 日表示、予定管理、投稿補助、予定一覧、設定、バックアップ / 復元。
   - `localStorage` version `2` の保存 payload と、旧形式読み込みの normalizer。
   - undo toast、投稿補助テンプレート、保存済みハッシュタグセット、Schedule -> Thumbnail / SNS Split handoff。
-- freeze 前に見るもの:
-  - 既存データ、localStorage migration、主要幅表示、入力導線の final QA。
-  - `docs/SCHEDULE_CALENDAR_README.md` と `docs/SCHEDULE_CALENDAR_STABILITY_CHECK_2026-04-28.md` の未確認範囲。
 - freeze 後候補:
   - Google Calendar 連携、ログイン / サーバー同期、シリーズ一括編集、例外日、週間予定画像そのものの生成。
 
 ### Thumbnail Editor
 
-- 現行 freeze 対象:
+- freeze 済み:
   - 用途別プリセットを選び、文字と立ち絵を差し替え、品質を確認して PNG / JPEG 1枚を書き出す体験。
-  - 登録済み装飾素材を追加する軽い素材パネル。ユーザー素材の保存 / 削除 / 置換 / 容量管理 UI は含めない。
+  - 登録済み装飾素材を追加する軽い素材パネル。
+  - user material library UI v1 は、画像本体を IndexedDB に置き、draft / localStorage には軽量 ref を残す境界まで完了済み。
   - preset discovery、partial preset apply、user material storage boundary、font fallback、preset batch readiness、quality guard は contract / helper 境界まで固定済み。
   - Schedule Calendar 由来の予定テキスト handoff と、Thumbnail -> SNS Split の IndexedDB 一時画像 handoff。
-- freeze 前に見るもの:
-  - 汎用ペイントツールや多機能制作ツールに見える表現が増えていないか。
-  - 現行機能、軽い登録済み素材パネル、contract-only / readiness-only、ユーザー素材管理UIの境界が docs 上で混ざっていないか。
 - freeze 後候補:
-  - 縦長 / 正方形 variant body、ユーザー素材ライブラリ管理 UI、font asset 追加、preset batch 本体追加、quality guard のさらなる拡張。
+  - ユーザー素材ライブラリ管理 UI の容量 / 復旧 / 整理導線。
+  - 縦長 / 正方形 variant body、font asset 追加、preset batch 本体追加、quality guard のさらなる拡張。
   - crop 仕様、text / image layer schema、public asset / font 追加は別PRで明示的に扱う。
 
 ### SNS Split Image Maker
 
-- 現行 freeze 対象:
+- freeze 済み:
   - X向け `2分割 / 3分割 / 4分割`。
   - メイン画像 + 追加画像 / フレーム、境界調整、投稿順 `split_1 -> split_n` の個別 PNG / JPEG export。
   - draft metadata は `localStorage`、画像本体は IndexedDB に分離。
   - Schedule Calendar 由来では告知文メモとファイル名候補だけを受け取り、Thumbnail Editor 由来では一時画像を `base` として受け取る。
-- freeze 前に見るもの:
-  - メイン画像未選択 guard、handoff 後の次アクション、個別 download の環境差。
-  - 現行 export が ZIP / 複数形式一括出力のように読めないか。
 - freeze 後候補:
   - ZIP 出力、X 以外の比率、複数形式の大規模 export、重い onboarding。
 
-## Active
+## 今すぐ着手可能な次PR候補
 
-### P0: Freeze production final QA after static export RSC alias fix
+### Candidate 1: Thumbnail Editor user material library management v1
 
-- 状態: completed in current branch
 - 目的:
-  - PR #91 merge 後の `origin/main` 起点で、公開中3ツールの production static serve 前提の freeze 前 final QA を行う。
-  - 新機能追加、UI redesign、public asset / font / preset 本体追加、variant body、crop 仕様、text / image layer schema 変更へ広げない。
-- 実施結果:
-  - PR #91 merge commit `ceec8de` が `main` / `origin/main` 先端であることを確認し、`codex/freeze-production-final-qa` / `.worktrees/freeze-production-final-qa` を `origin/main` 起点で作成。
-  - `task.md`、Schedule Calendar / Thumbnail Editor / SNS Split Image Maker docs、Thumbnail Editor future scope、3ツール page metadata、portal header / sidebar を再読した。
-  - Schedule Calendar -> Thumbnail / SNS Split handoff は、URL本文なし、`sessionStorage` token、テキスト metadata のみとして現行 freeze 範囲に読める。
-  - Thumbnail Editor -> SNS Split handoff は、URLに短い `handoff` token と `preset=split-4` のみを載せ、画像本体はSNS Split側 IndexedDB、一時 payload は user material metadata / `materialRef` / 画像本体を混ぜない境界として contract / docs 上で崩れていない。
-  - SNS Split Image Maker の export 導線は、X向け `2分割 / 3分割 / 4分割` の個別 PNG / JPEG 出力として読める。ZIP、X以外比率、複数形式の大規模 export は freeze 後候補に閉じている。
-  - docs / task.md 上で、現行 freeze 対象と freeze 後候補を混ぜる明確な drift は見つからなかったため、UI文言 / ツール機能実装修正は行っていない。
-  - `npm run build` により `next-env.d.ts` の route type reference が production build 側の `./.next/types/routes.d.ts` へ同期された。
-- static export / production serve 結果:
-  - `npm run build` PASS。`postbuild` で `Static export RSC aliases ready: 8 checked, 8 written.` を確認。
-  - `node scripts/static-export-rsc-aliases.mjs --check` PASS。`Static export RSC aliases verified: 8` を確認。
-  - `serve out` を `http://127.0.0.1:3017` で配信し、Chrome DevTools で production static serve を確認。
-  - `1024px` の `/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` で dotted `__next.tools*.txt` は 200 / 304。PR #91 前に出ていた prefetch 404 は再発なし。
-  - `1280px` / `1366px` でも `__next.*.txt` の 400+ response はなし。
-- 幅別表示結果:
-  - `390px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。
-  - `820px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。
-  - `1024px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。dotted RSC `.txt` は 200 / 304。
-  - `1280px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。`__next.*.txt` 400+ なし。
-  - `1366px`: `/tools` と3ツールで `h1` 表示、横 overflow なし、console error なし。`__next.*.txt` 400+ なし。
-- 検証:
-  - `npm run build` PASS。workspace root warning は既知の multiple lockfiles warning。
-  - `node scripts/static-export-rsc-aliases.mjs --check` PASS。
-  - `node scripts/tool-portal-entry-contract.mjs` PASS。
-  - `node scripts/tool-handoff-contract.mjs` PASS。
-  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
-  - `node scripts/sns-split-image-maker-contract.mjs` PASS。
-  - `npm run lint` PASS。
-  - `npx tsc --noEmit` PASS。
+  - 既存 user material UI v1 の保存 / 削除 / 置換境界を保ったまま、容量上限、読み込み不能、再追加、整理導線を小さく固める。
+- 入れるもの:
+  - 既存 IndexedDB / lightweight ref 境界の contract 追加。
+  - 容量超過、壊れた参照、削除済み fallback、再追加 guidance の copy / helper 最小調整。
+  - `task.md` への検証結果。
+- 入れないもの:
+  - 新規 public asset、font asset、preset body、variant body、crop 仕様変更、text / image layer schema 変更、AI生成、他ツール実装。
+- 主な検証:
+  - `node scripts/thumbnail-material-assets-contract.mjs`
+  - `node scripts/tool-handoff-contract.mjs`
+  - `npm run lint`
+  - `npx tsc --noEmit`
+  - `git diff --check`
 
-### P0: Static export RSC prefetch 404 investigation
+### Candidate 2: Schedule Calendar input length / copy guard
 
-- 状態: implemented in current branch
 - 目的:
-  - production static serve 時に `1024px+` で出ていた Next static export の `__next.*.txt` prefetch 404 を、Thumbnail Editor 個別問題ではなく portal 全体の static export / hosting 配信方式として切り分ける。
-  - ツール本体の機能追加、UI redesign、schema変更、asset追加へ広げない。
-- 調査結果:
-  - PR #90 merge commit `08f59cd` が `origin/main` 先端であることを確認し、`codex/static-export-prefetch-404-investigation` / `.worktrees/static-export-prefetch-404-investigation` を `origin/main` 起点で作成。
-  - `npm run build` の static export 出力では、`out/tools/thumbnail-editor/__next.tools/thumbnail-editor.txt` と `out/tools/thumbnail-editor/__next.tools/thumbnail-editor/__PAGE__.txt` のように、route segment 部分が `__next.tools/` 配下の slash path として生成されていた。
-  - runtime prefetch は `1024px+` で表示される desktop sidebar / portal link 群を起点に、`/tools/thumbnail-editor/__next.tools.thumbnail-editor.txt`、`/tools/thumbnail-editor/__next.tools.thumbnail-editor.__PAGE__.txt`、`/tools/__next.tools.__PAGE__.txt` のような dotted path を要求していた。
-  - `390 / 820px` では desktop sidebar が非表示のため、要求は mobile header の root link prefetch に留まり、root の `__next._tree.txt` / `__next.__PAGE__.txt` は 200 で 404 なし。
-  - `/tools`、`/tools/schedule-calendar`、`/tools/sns-split-image-maker` でも `1024px+` の portal link prefetch で同じ dotted path が要求されるため、Thumbnail Editor user material UI / PR #89 / PR #90 由来ではなく、Next static export の出力 path と static hosting の exact file serving の不一致として扱う。
-  - `serve out` 固有の fallback ではなく、dotted path の実ファイルまたは rewrite がない static hosting では同様に 404 になりうる。ページ表示は `index.txt` fallback で継続し、保存、IndexedDB、handoff、export には影響しないが、production console と navigation prefetch が noisy になる。
-- 実施結果:
-  - `scripts/static-export-rsc-aliases.mjs` を追加し、`out/**/__next.*/*.txt` の slash path 出力から、runtime が要求する dotted `.txt` alias を生成 / `--check` 検証できるようにした。
-  - `package.json` に `postbuild` を追加し、`npm run build` 後に static export RSC alias を自動生成する。
-  - アプリ側 `Link`、portal UI、Thumbnail Editor user material UI、Schedule Calendar、SNS Split Image Maker、schema、public asset、font、preset、variant body、crop 仕様は変更していない。
-- 幅別表示 / prefetch 結果:
-  - 修正前の `1024px` `/tools/thumbnail-editor`: desktop sidebar の `Home / Tools / Schedule Calendar / Thumbnail Editor / SNS分割画像メーカー` link prefetch で dotted `.txt` が 7件 404。`390 / 820px` は console error なし。
-  - 修正後の `390 / 820 / 1024 / 1280 / 1366px` `/tools/thumbnail-editor`: `h1` 表示、横 overflow なし、console error なし。`1024px+` の dotted `.txt` prefetch は 200。
-  - 修正後の `1280px` `/tools`、`/tools/schedule-calendar`、`/tools/sns-split-image-maker`: `h1` 表示、横 overflow なし、console error なし。portal sidebar / card link prefetch の dotted `.txt` は 200。
-- 検証:
-  - `npm run build` PASS。`postbuild` で `Static export RSC aliases ready: 8 checked, 8 written.` を確認。workspace root warning は既知の multiple lockfiles warning。
-  - `node scripts/static-export-rsc-aliases.mjs --check` PASS。
-  - `node scripts/tool-portal-entry-contract.mjs` PASS。
-  - `node scripts/tool-handoff-contract.mjs` PASS。
-  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
-  - `npm run lint` PASS。
-  - `npx tsc --noEmit` PASS。
-  - `git diff --check` PASS。LF -> CRLF warning のみ。
+  - 予定タイトル、告知文、ハッシュタグ、テンプレート本文の長文入力で保存 / 投稿補助 / handoff が読みにくくならない境界を決める。
+- 入れるもの:
+  - 文字数上限 / カウンター / warning copy の contract または最小 UI。
+  - 既存 `localStorage` version `2` と handoff payload を壊さない確認。
+- 入れないもの:
+  - storage schema 変更、Google Calendar 連携、ログイン、サーバー同期、週間予定画像生成。
+- 主な検証:
+  - `node scripts/tool-handoff-contract.mjs`
+  - `npm run lint`
+  - `npx tsc --noEmit`
+  - `git diff --check`
+  - UI を触った場合のみ `390 / 820 / 1024 / 1280 / 1366px`
 
-### P0: Thumbnail Editor user material library UI v1
+### Candidate 3: SNS Split Image Maker export boundary polish
 
-- 状態: merged in PR #89
 - 目的:
-  - 登録済み装飾素材パネルと user-added material 管理 UI を分ける。
-  - ユーザー素材の画像本体は `localStorage` に保存せず、IndexedDB 側へ置く。
-  - 追加 / 一覧 / 削除 / 置換 / 読み込み失敗時 fallback を、既存 `ThumbnailUserMaterialRef` と fallback helper の境界に沿って最小実装する。
-- 実施結果:
-  - PR #88 merge commit `ba9cc45` が `origin/main` 先端であることを確認し、`codex/thumbnail-user-material-library-v1` / `.worktrees/thumbnail-user-material-library-v1` を `origin/main` 起点で作成。
-  - `components/thumbnail-editor/thumbnailUserMaterialStorage.ts` を追加し、user material metadata は `localStorage` に `id` / `name` / `storageId` 等だけを保存、画像本体は IndexedDB `images` store に保存する形へ分離。
-  - `/tools/thumbnail-editor` の素材エリアを `登録済み素材` と `ユーザー素材` に分離し、ユーザー素材の追加 / 一覧 / 配置 / 置換 / 削除を追加。
-  - user material layer は draft 上では fallback `src` + lightweight `materialRef` を保持し、canvas 表示 / export / Thumbnail -> SNS handoff 描画時だけ IndexedDB から blob URL を解決する。
-  - 削除時は既存 layer を削除せず `削除済み` fallback 表示へ寄せる。置換時は layer の geometry / crop を変えず lightweight ref と表示名だけ更新する。
-  - registered material library、preset body、public asset、font asset、variant body、crop 仕様、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
-- 幅別表示結果:
-  - `npm run build` 後、`out` を `serve` で配信し Chrome headless / `http://127.0.0.1:3006/tools/thumbnail-editor` で確認。
-  - `390 / 820 / 1024 / 1280 / 1366px`: 横 overflow なし、canvas 1件表示、`登録済み素材` と `ユーザー素材` の分離表示を確認。
-  - 同幅でユーザー素材 PNG を追加し、user material metadata / draft に `data:image` 本体が入らないことを確認。
-  - `1280px`: 追加後に置換 / 削除を実行し、refs が空になり、draft 側は `削除済み` fallback 表示へ戻ることを確認。
-  - production static serve の `1024px+` では Next static export の RSC prefetch `__next.*.txt` 404 が console に出た。ページ表示、操作、localStorage / IndexedDB 境界には影響なし。`390 / 820px` では同 console error なし。
-- 検証:
-  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
-  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
-  - `node scripts/thumbnail-quality-guard-contract.mjs` PASS。
-  - `node scripts/tool-handoff-contract.mjs` PASS。
-  - `npm run lint` PASS。
-  - `npx tsc --noEmit` PASS。
-  - `npm run build` PASS。workspace root warning は既知の multiple lockfiles warning。
-  - `git diff --check` PASS。LF -> CRLF warning のみ。
-- 未確認範囲 / 次アクション:
-  - 容量管理、並び替え、カテゴリ付け、検索、複数選択、drop import、crop UI 変更は未実装。
-  - static export の RSC prefetch 404 は既存配信方式由来の可能性が高いため、別PRで portal 全体の static prefetch 挙動として確認する。
+  - 現行の個別 PNG / JPEG export を保ったまま、ZIP / 複数形式 export を現行機能に見せない境界と、未選択 guard / 成功 feedback を再確認する。
+- 入れるもの:
+  - export boundary の contract / docs / copy 最小調整。
+  - split-2 / split-3 / split-4 の出力順と main image guard の確認。
+- 入れないもの:
+  - ZIP 出力本体、X以外比率、複数形式一括 export、重い onboarding。
+- 主な検証:
+  - `node scripts/sns-split-image-maker-contract.mjs`
+  - `node scripts/tool-handoff-contract.mjs`
+  - `npm run lint`
+  - `npx tsc --noEmit`
+  - `git diff --check`
+  - UI を触った場合のみ `390 / 820 / 1024 / 1280 / 1366px`
 
-### P0: Thumbnail Editor user material library UI v1 QA / polish
+## 次セッション用プロンプト
 
-- 状態: merged in PR #90
-- 目的:
-  - PR #89 merge 後の `origin/main` 起点で、user material UI v1 が保存 / 復元 / 削除 / 置換 / export / Thumbnail -> SNS handoff と矛盾していないか確認する。
-  - 必要最小限の QA contract と copy / layout polish に留め、preset body、public asset、font、schema、crop、他ツール実装へ広げない。
-- 実施結果:
-  - PR #89 merge commit `2901020` が `origin/main` に含まれることを確認し、`codex/thumbnail-user-material-library-qa-polish` / `.worktrees/thumbnail-user-material-library-qa-polish` を `origin/main` 起点で作成。
-  - `scripts/thumbnail-material-assets-contract.mjs` に user material UI copy、fallback 表示、replace helper 利用の QA を追加。
-  - `scripts/tool-handoff-contract.mjs` に Thumbnail -> SNS handoff payload / normalizer が user material metadata、`materialRef`、画像本体を混ぜない QA を追加。
-  - `components/thumbnail-editor/ThumbnailEditorApp.tsx` は、user material 置換時に `replaceThumbnailUserMaterialLayerRef()` を通して geometry-preserving helper と揃えた。
-  - ユーザー素材パネルの copy を「追加した画像はこのブラウザに保存され、下書きには参照だけを残します。」へ軽く調整し、プレビュー未解決時の `fallback` 表示を `要再追加` に変更。
-  - review 中の追加確認として、未解決プレビューは待てば戻るように読める `復元待ち` ではなく `要再追加` に変更し、削除 toast で「配置済みレイヤーは残る」ことを明示。canvas fallback ラベルも通常素材に見えない `MATERIAL MISSING` へ変更。
-  - preset body、public asset、font asset、variant body、crop 仕様、Schedule Calendar / SNS Split Image Maker 実装は変更していない。
-- 幅別表示 / storage / handoff 結果:
-  - `npm run build` 後、`out` を `serve` で配信し Playwright / `http://127.0.0.1:3006/tools/thumbnail-editor` で確認。
-  - `390 / 820 / 1024 / 1280 / 1366px`: 横 overflow なし、canvas nonblank、ユーザー素材追加後に refs 1件 / user material layer 1件 / IndexedDB image 1件を確認。
-  - `390 / 820px`: mobile panel 初期表示では素材パネルは非表示。ユーザー素材追加後、下書き / metadata にアップロード PNG 本体は入らず、reload / `/tools` へのページ遷移後も layer と metadata が復元されることを確認。console 404 なし。
-  - `1024 / 1280 / 1366px`: `登録済み素材` と `ユーザー素材` の分離表示、更新後 / ページ遷移後の復元、metadata / draft にアップロード PNG 本体が入らないことを確認。
-  - `1280px`: 置換後も layer の `x / y / width / height / rotation` は維持。削除後も layer は残り `素材: qa-user-material-replaced（削除済み）` fallback 表示、refs は空、IndexedDB image は 0件。
-  - user material 削除は素材一覧からの削除に留め、配置済みレイヤーは削除済み fallback として残す。キャンバス上は `MATERIAL MISSING`、素材カードは `要再追加` として、再アップロードまたはレイヤー一覧からの手動削除が必要だと分かる状態にした。
-  - `1366px`: Thumbnail -> SNS handoff は `sessionStorage` payload 1件を作成し、URL は短い `handoff` token + `preset=split-4` のみ。payload に user material metadata / `materialRef` / uploaded PNG body は含まれない。
-  - production static serve の `1024px+` では `__next.*.txt` prefetch 404 が再現。`390 / 820px` では 404 なし。PR #89 差分は Thumbnail Editor component / storage helper / material contract / task.md のみで、portal `Link` や `next.config.mjs` は変更していない。`out` には `__next.tools/thumbnail-editor.txt` のような slash path が生成される一方、runtime は `__next.tools.thumbnail-editor.txt` のような dotted path を要求するため、今回の user material UI 由来ではなく Next static export + `serve` の prefetch 配信方式由来として扱う。
-- 検証:
-  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
-  - `node scripts/thumbnail-preset-apply-safety-contract.mjs` PASS。
-  - `node scripts/thumbnail-quality-guard-contract.mjs` PASS。
-  - `node scripts/tool-handoff-contract.mjs` PASS。
-  - `npm run lint` PASS。
-  - `npx tsc --noEmit` PASS。
-  - `npm run build` PASS。workspace root warning は既知の multiple lockfiles warning。
-- 未確認範囲 / 次アクション:
-  - 手動での OS file picker 表示確認、容量上限を超えた実ファイル、ブラウザ別の IndexedDB quota 差は未確認。
-  - static export の `__next.*.txt` 404 は別PRで portal 全体の static prefetch / hosting rewrite 方針として扱う。
+```text
+対象repo: D:\V_streamer_tools
 
-### P0: Freeze final QA / docs consistency
+前提:
+- まず AGENTS.md と task.md を読む
+- PR #92 `[codex] Freeze production final QA` と、その後の freeze closeout task cleanup PR が main / origin/main に merge 済みか確認する
+- 未mergeなら新規実装へ進まず、merge待ち / review対応が必要かだけを blocker summary にする
+- main 直作業は避ける
+- origin/main から次task用の feature branch / `.worktrees/...` を切る
+- ローカル main の未コミット変更があっても触らない
 
-- 状態: merged in PR #88
-- 目的:
-  - Schedule Calendar / Thumbnail Editor / SNS Split Image Maker の freeze 対象と freeze 後候補を、docs と portal entry の表現で再確認する。
-  - 新機能追加ではなく、最終QAで固定する範囲と後続PRへ送る範囲を切り分ける。
-- 次アクション:
-  - `docs/SCHEDULE_CALENDAR_README.md`、`docs/design-thumbnail-editor.md`、`docs/design-sns-split-image-maker.md`、`docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md` の freeze / future 表現を再読する。
-  - UI 文言を触る場合だけ `390 / 820 / 1024 / 1280 / 1366px` の幅別確認を残す。
-- 完了条件:
-  - ZIP、X以外比率、複数形式 export、重い onboarding、Thumbnail Editor の大きな次機能が現行機能のように読めない。
-  - final QA で見る対象と freeze 後候補が task / docs 間で矛盾しない。
-  - 関連 contract、lint、typecheck、`git diff --check` の結果を記録する。
-- 実施結果:
-  - PR #87 merge commit `f6f7d08` が `origin/main` に含まれることを確認し、`codex/freeze-final-qa` / `.worktrees/freeze-final-qa` を `origin/main` 起点で作成。
-  - Schedule Calendar docs は、予定追加 / 編集 / 削除 / undo / 投稿補助 / handoff を freeze 対象として読み取れる。Google Calendar、ログイン、週間予定画像生成は non-goals / freeze 後候補として読める。
-  - Thumbnail Editor docs は、用途別プリセット、文字差し替え、立ち絵 / 画像差し替え、品質確認、PNG / JPEG 1枚 export を freeze 対象として読み取れる。登録済み装飾素材の軽い追加パネルと、future のユーザー素材管理 UI の境界を明確化した。
-  - SNS Split Image Maker docs は、X向け `2分割 / 3分割 / 4分割`、メイン画像 guard、個別 PNG / JPEG export、Schedule / Thumbnail handoff の next action を freeze 対象として読み取れる。ZIP、X 以外比率、複数形式 export、重い onboarding は freeze 後候補として読める。
-  - Cross tool handoff は、URL本文なし、`sessionStorage` token、Thumbnail -> SNS の IndexedDB 一時画像境界として contract / docs 上で崩れていない。
-  - 明確な copy drift として、root / home metadata が Schedule Calendar のみ提供のように読めたため、公開中3ツール表記へ修正し、`tool-portal-entry` contract の検査対象へ追加。
-- 幅別表示結果:
-  - Chrome DevTools viewport emulation / `http://localhost:3003` で確認。
-  - `/tools/schedule-calendar`: `390 / 820 / 1024 / 1280 / 1366px` で `h1` 表示、横 overflow なし、console error なし。
-  - `/tools/thumbnail-editor`: `390 / 820 / 1024 / 1280 / 1366px` で `h1` 表示、横 overflow なし、console error なし。
-  - `/tools/sns-split-image-maker`: `390 / 820 / 1024 / 1280 / 1366px` で `h1` 表示、横 overflow なし、console error なし。
-- 検証:
-  - `node scripts/sns-split-image-maker-contract.mjs` PASS。
-  - `node scripts/tool-handoff-contract.mjs` PASS。
-  - `node scripts/tool-portal-entry-contract.mjs` PASS。
-  - `node scripts/thumbnail-material-assets-contract.mjs` PASS。
-  - `node scripts/thumbnail-quality-guard-contract.mjs` PASS。
-  - `node scripts/thumbnail-preset-batch-readiness-contract.mjs` PASS。
-  - `npm run lint` PASS。
-  - `npx tsc --noEmit` PASS。
-  - `git diff --check` PASS。LF -> CRLF warning のみ。
+目的:
+- Thumbnail Editor user material library management v1 を PR-sized に進める
+- 既存 user material UI v1 の IndexedDB / lightweight ref 境界を保ったまま、容量上限、読み込み不能、再追加、削除済み fallback、整理導線を小さく固める
 
-## 残タスク候補
+読むもの:
+- AGENTS.md
+- task.md
+- docs/design-thumbnail-editor.md
+- docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md
+- docs/archive/TASK_HISTORY_2026-05.md
+- scripts/thumbnail-material-assets-contract.mjs
+- scripts/tool-handoff-contract.mjs
 
-### Schedule Calendar
+入れるもの:
+- user material metadata と画像本体の分離境界を壊さない contract / helper / copy の必要最小限の調整
+- 容量超過、壊れた参照、削除済み fallback、再追加 guidance の検証
+- 必要なら UI を軽く触る。ただし重い管理画面や modal tutorial にはしない
+- 意味のある実装後は task.md を更新する
 
-- final QA:
-  - 既存データ、localStorage migration、主要幅、投稿補助、handoff の回帰確認。
-- 後続PR候補:
-  - 入力文字数上限 / カウンターの扱い。
-  - 週間予定画像生成を Thumbnail Editor preset 起点にするか、Schedule Calendar 内で生成するかの設計。
-  - 例外日、繰り返し終了日、シリーズ一括編集。
+入れないもの:
+- public asset 追加
+- font asset 追加
+- preset 本体追加 / 差し替え
+- variant body 実装
+- crop 仕様変更
+- text / image layer schema 変更
+- AI生成
+- Schedule Calendar / SNS Split Image Maker の実装修正
+- 重い onboarding / modal tutorial
+- Next.js / React のバージョン変更
 
-### Thumbnail Editor
+検証:
+- node scripts/thumbnail-material-assets-contract.mjs
+- node scripts/tool-handoff-contract.mjs
+- npm run lint
+- npx tsc --noEmit
+- git diff --check
+- UI / 表示文言を触った場合だけ 390 / 820 / 1024 / 1280 / 1366px を確認し task.md に残す
 
-- final QA:
-  - preset selection -> text replacement -> standee replacement / placement -> quality guard -> export の流れ。
-  - 登録済み装飾素材の軽い追加パネルは、ユーザー素材の保存 / 削除 / 置換 / 容量管理 UI と混同しない。
-  - Schedule Calendar 由来テキストの再適用と Thumbnail -> SNS Split handoff。
-  - `サムネ品質` / `注意 n件` / `品質チェックOK` の軽い品質ガード表現。
-- 後続PR候補:
-  - variant body 実装。
-  - ユーザー素材ライブラリ管理 UI。
-  - self-host font / repo同梱 font の検討。
-  - preset batch 本体追加。
-  - quality guard expansion の追加分。
-
-### SNS Split Image Maker
-
-- final QA:
-  - `split-2 / split-3 / split-4` の出力順、メイン画像未選択 guard、handoff 後 next action。
-  - 個別 PNG / JPEG export と success toast。
-- 後続PR候補:
-  - ZIP 出力。
-  - X 以外の比率。
-  - 複数形式 export。
-  - 初回 onboarding の重い導線。
-
-## 直近の棚卸し
-
-- 2026-05-12:
-  - PR #86 merge 済みを確認し、`origin/main` 起点で `codex/freeze-docs-task-cleanup` / `.worktrees/freeze-docs-task-cleanup` を作成。
-  - `task.md` から完了済み P0〜P11 の詳細ログを外し、`docs/archive/TASK_HISTORY_2026-05.md` へ退避。
-  - `task.md` は現在の freeze 境界、次アクション、残タスク候補、未確認範囲が読める active-only board へ再整理。
-  - アプリ UI / 表示文言 / tool 実装 / storage schema / export 機能本体は変更していない。
-- 未確認範囲:
-  - docs / task.md のみの変更のため、幅別ブラウザ確認は未実施。
-  - UI / 表示文言を触る後続PRでは `390 / 820 / 1024 / 1280 / 1366px` を確認する。
-- 検証:
-  - `node scripts/sns-split-image-maker-contract.mjs` PASS。
-  - `node scripts/tool-handoff-contract.mjs` PASS。
-  - `node scripts/tool-portal-entry-contract.mjs` PASS。
-  - `npm run lint` PASS。
-  - `npx tsc --noEmit` PASS。
-  - `git diff --check` PASS。LF -> CRLF warning のみ。
+完了条件:
+- origin/main 起点の worktree / feature branch で作業している
+- user material の画像本体が localStorage / draft / handoff payload に混ざらない
+- 既存 registered material / preset body / crop / schema / other tools を壊していない
+- 必要な検証が通っている
+- task.md に実施結果と検証結果が残っている
+- commit / push / draft PR 作成まで進める
+```
 
 ## Verification baseline
 
 docs / contract 変更時は、必要に応じて次を実行する。
 
-- `node scripts/sns-split-image-maker-contract.mjs`
-- `node scripts/tool-handoff-contract.mjs`
+- `node scripts/static-export-rsc-aliases.mjs --check`
 - `node scripts/tool-portal-entry-contract.mjs`
+- `node scripts/tool-handoff-contract.mjs`
+- `node scripts/thumbnail-material-assets-contract.mjs`
+- `node scripts/sns-split-image-maker-contract.mjs`
 - `npm run lint`
 - `npx tsc --noEmit`
 - `git diff --check`

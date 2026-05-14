@@ -49,6 +49,7 @@ const existingPresetIds = [
   "first_stream",
   "anniversary_stream",
   "endurance_stream",
+  "project_stream",
   "karaoke",
   "chatting",
   "clip",

@@ -4,6 +4,7 @@ export type ThumbnailPresetId =
   | "first_stream"
   | "anniversary_stream"
   | "endurance_stream"
+  | "project_stream"
   | "karaoke"
   | "chatting"
   | "clip"
@@ -1444,6 +1445,35 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       assetDecorationLayer({ name: "画像 13（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-time-badge-orange-uniform-cell.png`, x: 940, y: 476, width: 276, height: 184, opacity: 0.98 }),
       shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 984, y: 618, width: 190, height: 10, fillColor: "#ff7b1d", strokeColor: "#ff7b1d", strokeWidth: 3, borderRadius: 8, opacity: 0.54 }),
       textLayer({ name: "テキスト 2（時刻）", text: "19:00 START", x: 980, y: 548, width: 202, height: 48, fontSize: 39, color: "#ff8a1f", strokeColor: "#060a0a", strokeWidth: 4, shadowColor: "#33f5ff", shadowBlur: 8, shadowOffsetX: 1, shadowOffsetY: 2, fontFamily: "Orbitron", align: "center" })
+    ]
+  },
+  {
+    id: "project_stream",
+    name: "企画配信",
+    category: "配信ジャンル",
+    usageLabel: "企画 / 視聴者参加",
+    description: "特別企画や視聴者参加型の内容を明るく整理して見せる variety show 向け。",
+    accent: "#13b8b3",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}project-stream-background-v1.png`),
+      assetDecorationLayer({ name: "画像 2（右上矢印アクセント）", src: `${thumbnailPhase5DecorationAssetPrefix}project-stream-arrow-accent-teal-coral-uniform-cell.png`, x: 936, y: 54, width: 340, height: 227, rotation: -4, opacity: 0.88 }),
+      assetDecorationLayer({ name: "画像 3（見出し左矢印アクセント）", src: `${thumbnailPhase5DecorationAssetPrefix}project-stream-arrow-accent-teal-coral-uniform-cell.png`, x: 18, y: 352, width: 232, height: 155, rotation: 180, opacity: 0.72 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 852, y: 74, width: 338, height: 560, fillColor: "#fff7e81f", strokeColor: "#8d8d8d", strokeWidth: 2, borderRadius: 98, opacity: 0.42 }),
+      assetDecorationLayer({ name: "画像 4（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}project-stream-label-plaque-coral-teal-uniform-cell.png`, x: 42, y: 34, width: 540, height: 180, rotation: -5, opacity: 0.98 }),
+      textLayer({ name: "テキスト 5（英字）", text: "SPECIAL PROGRAM", x: 104, y: 88, width: 404, height: 48, fontSize: 41, color: "#151c24", strokeColor: "#fffaf0", strokeWidth: 2, shadowColor: "#13b8b3", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "新企画", x: 70, y: 174, width: 650, height: 198, fontSize: 166, lineHeight: 0.94, color: "#fffaf0", strokeColor: "#261915", strokeWidth: 15, shadowColor: "#ff6b57", shadowBlur: 17, shadowOffsetX: 6, shadowOffsetY: 8, fontFamily: "RocknRoll One" }),
+      shapeLayer({ name: "図形 6（見出し下ライン）", shapeType: "line", x: 96, y: 396, width: 560, height: 16, fillColor: "#13b8b3", strokeColor: "#13b8b3", strokeWidth: 5, borderRadius: 10, opacity: 0.7 }),
+      assetDecorationLayer({ name: "画像 5（サブ用キューカード）", src: `${thumbnailPhase5DecorationAssetPrefix}project-stream-cue-card-panel-teal-uniform-cell.png`, x: 104, y: 408, width: 610, height: 406, rotation: -3, opacity: 0.98 }),
+      shapeLayer({ name: "図形 7（カード区切りライン）", shapeType: "line", x: 188, y: 548, width: 410, height: 12, fillColor: "#f5bd3d", strokeColor: "#f5bd3d", strokeWidth: 3, borderRadius: 8, opacity: 0.7 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "今日は何が起きる?", x: 160, y: 472, width: 486, height: 68, fontSize: 48, align: "center", color: "#151c24", strokeColor: "#fffaf0", strokeWidth: 4, shadowColor: "#13b8b3", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "M PLUS 1p" }),
+      assetDecorationLayer({ name: "画像 6（参加ラベル用カード）", src: `${thumbnailPhase5DecorationAssetPrefix}project-stream-cue-card-panel-yellow-uniform-cell.png`, x: 28, y: 556, width: 324, height: 216, rotation: 1, opacity: 0.98 }),
+      assetDecorationLayer({ name: "画像 7（時刻カード土台）", src: `${thumbnailPhase5DecorationAssetPrefix}project-stream-time-badge-coral-uniform-cell.png`, x: 502, y: 548, width: 326, height: 217, rotation: -1, opacity: 0.98 }),
+      assetDecorationLayer({ name: "画像 8（左カードタブ）", src: `${thumbnailPhase5DecorationAssetPrefix}project-stream-sticker-tab-teal-yellow-uniform-cell.png`, x: 92, y: 524, width: 132, height: 88, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 9（中央カードタブ）", src: `${thumbnailPhase5DecorationAssetPrefix}project-stream-sticker-tab-coral-uniform-cell.png`, x: 404, y: 402, width: 118, height: 79, rotation: 2, opacity: 0.94 }),
+      assetDecorationLayer({ name: "画像 10（時刻カードタブ）", src: `${thumbnailPhase5DecorationAssetPrefix}project-stream-sticker-tab-coral-uniform-cell.png`, x: 594, y: 520, width: 128, height: 85, rotation: -2, opacity: 0.94 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "視聴者参加型", x: 82, y: 628, width: 236, height: 42, fontSize: 33, color: "#151c24", strokeColor: "#fffaf0", strokeWidth: 3, shadowColor: "#f5bd3d", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
+      shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 574, y: 670, width: 170, height: 10, fillColor: "#ff6b57", strokeColor: "#ff6b57", strokeWidth: 3, borderRadius: 8, opacity: 0.58 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:30 START", x: 562, y: 610, width: 220, height: 52, fontSize: 43, color: "#151c24", strokeColor: "#fffaf0", strokeWidth: 3, shadowColor: "#ff6b57", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Montserrat", align: "center" })
     ]
   },
   {

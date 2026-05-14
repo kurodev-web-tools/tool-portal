@@ -29,38 +29,43 @@
 
 ## Active
 
-- Thumbnail Editor usecase preset next implementation: `project_stream` / 企画配信
-  - 推奨順: `project_stream` -> `cover_song_notice` -> `event_notice`。mock 済み second batch は 1 preset / 1 PR で進める。
-  - 前提確認: PR #115 `[codex] Plan thumbnail usecase preset mocks`、PR #116 `first_stream`、PR #117 `anniversary_stream`、PR #118 `endurance_stream`、PR #119 `endurance frame asset split` は `main` / `origin/main` に merge 済み。次回実装前に `origin/main` へ各 merge commit が含まれることを確認する。
+- Thumbnail Editor usecase preset implementation: `project_stream` / 企画配信
+  - 2026-05-14: branch / worktree `codex/thumbnail-project-stream-preset` / `.worktrees/thumbnail-project-stream-preset` で実装。
+  - 追加内容: `project_stream` preset body、`project-stream-background-v1.png`、cue-card panels、label plaque、time badge、arrow accent、sticker tabs、専用 contract。
+  - 生成: 背景・装飾 asset は `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode を使用。装飾は chroma-key 生成後、skill 付属 `remove_chroma_key.py` で alpha PNG 化。
+  - 検証: `node scripts/thumbnail-usecase-project-stream-preset-contract.mjs`、`node scripts/thumbnail-preset-discovery-contract.mjs`、`node scripts/thumbnail-preset-batch-readiness-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check`。
+  - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認し、`企画配信` preset text 表示あり、console error 0。
+- Thumbnail Editor usecase preset next implementation: `cover_song_notice` / 歌ってみた告知
+  - 推奨順: `cover_song_notice` -> `event_notice`。mock 済み second batch は 1 preset / 1 PR で進める。
   - 次 preset 実装用 prompt:
 
 ```text
 対象repo: D:\V_streamer_tools
 
 目的:
-- Thumbnail Editor の追加用途 preset `project_stream` / 企画配信を 1 preset / 1 PR で実装する
+- Thumbnail Editor の追加用途 preset `cover_song_notice` / 歌ってみた告知を 1 preset / 1 PR で実装する
 - 背景 + 焼き込み装飾 + 必要 asset + preset body + 必要 contract を追加する
 - 背景・装飾 asset 生成には必ず [$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md) を使う
 
 前提:
 - AGENTS.md、task.md、docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md、docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md を読む
-- mock `docs/mockups/thumbnail-editor-usecase-preset-candidates/project-stream-mock.png` を方向性 reference として確認する
-- PR #115 `[codex] Plan thumbnail usecase preset mocks` と、先行する `first_stream` / `anniversary_stream` / `endurance_stream` / endurance frame asset split 実装 PR が main / origin/main に merge 済みか確認する
+- mock `docs/mockups/thumbnail-editor-usecase-preset-candidates/cover-song-notice-mock.png` を方向性 reference として確認する
+- PR #115 `[codex] Plan thumbnail usecase preset mocks` と、先行する `first_stream` / `anniversary_stream` / `endurance_stream` / endurance frame asset split / `project_stream` 実装 PR が main / origin/main に merge 済みか確認する
 - 未mergeなら新規作業へ進まず、merge待ち / review対応が必要かだけを blocker summary にする
 - main 直作業は避け、origin/main 起点で feature branch / `.worktrees/...` を切る
 - ローカル main の未コミット変更があっても触らない
 
 scope:
-- `project_stream` / 企画配信のみ
-- 背景、cue-card panels、label plaque、time badge、arrow accent、sticker tabs、preset body、必要 contract を追加する
+- `cover_song_notice` / 歌ってみた告知のみ
+- 背景、cover-art frame、premiere badge、soundwave accent、music sparkle、label plaque、preset body、必要 contract を追加する
 - schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない
-- 生成 asset は後で個別配置しやすい単体 asset にする。複数パーツを1枚に詰めた sheet にしない。角・矢印・タブなど回転 / 反転再利用できるものは 1-2 種だけ作り、preset body 側で配置する
+- 生成 asset は後で個別配置しやすい単体 asset にする。複数パーツを1枚に詰めた sheet にしない。soundwave、glint、badge など回転 / 反転再利用できるものは少数にし、preset body 側で配置する
 
 参考:
-- mock: `docs/mockups/thumbnail-editor-usecase-preset-candidates/project-stream-mock.png`
-- direction: teal / coral / warm yellow、variety show、特別企画、視聴者参加、cue-card、arrows、sticker tabs、明るいが情報整理された構成
-- initial text: `新企画` / `SPECIAL PROGRAM` / `視聴者参加型` / `今日は何が起きる?`
-- font direction: 見出し `RocknRoll One` / `M PLUS 1p`、label `Montserrat` / `Fredoka`
+- mock: `docs/mockups/thumbnail-editor-usecase-preset-candidates/cover-song-notice-mock.png`
+- direction: black violet + magenta + cyan、cover MV / premiere、音楽的で release 告知寄り、cover-art placeholder、soundwave、soft glow
+- initial text: `歌ってみた` / `COVER PREMIERE` / `20:00 公開` / `新作カバー公開`
+- font direction: 見出し `M PLUS Rounded 1c` / `Noto Serif JP`、英字 `Playfair Display` / `Pacifico` / `Bebas Neue`
 
 検証:
 - preset / asset contract を追加または更新
@@ -73,7 +78,7 @@ scope:
 終了:
 - task.md 更新、diff 確認、commit、push、draft PR 作成
 - PR body には `変更内容` / `検証結果` / `確認してほしい表示ポイント` / `次 preset 用プロンプト` を入れる
-- 次 preset 用プロンプトは `cover_song_notice` / 歌ってみた告知を想定し、mock と imagegen 使用条件を明記する
+- 次 preset 用プロンプトは `event_notice` / イベント告知を想定し、mock と imagegen 使用条件を明記する
 ```
 
 ## Freeze closeout state

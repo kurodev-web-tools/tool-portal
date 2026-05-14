@@ -7,9 +7,11 @@ import ts from "typescript";
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "thumbnail-editor.ts");
 const componentSourcePath = path.join(root, "components", "thumbnail-editor", "ThumbnailEditorApp.tsx");
+const thumbnailFontCssPath = path.join(root, "components", "thumbnail-editor", "thumbnailFontAssets.module.css");
 const handoffSourcePath = path.join(root, "lib", "tool-handoff.ts");
 const source = fs.readFileSync(sourcePath, "utf8");
 const componentSource = fs.readFileSync(componentSourcePath, "utf8");
+const thumbnailFontCssSource = fs.readFileSync(thumbnailFontCssPath, "utf8");
 const handoffSource = fs.readFileSync(handoffSourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
@@ -41,15 +43,15 @@ assert.deepEqual(
   lib.thumbnailFontPolicy,
   {
     owner: "thumbnail-editor",
-    source: "system-or-browser-installed",
+    source: "self-hosted-thumbnail-editor-assets",
     allowsExternalNetworkFonts: false,
     allowsGoogleFonts: false,
     allowsCdnFonts: false,
-    allowsBundledFontAssetsInThisPr: false,
+    allowsBundledFontAssetsInThisPr: true,
     fallbackFamily: "Noto Sans JP",
     fallbackStack: ["Noto Sans JP", "BIZ UDPGothic", "Yu Gothic", "Meiryo", "sans-serif"]
   },
-  "font policy fixes the no-external-font fallback boundary"
+  "font policy fixes the self-hosted no-external-font fallback boundary"
 );
 
 assert.equal(lib.thumbnailFontFallbackFamily, "Noto Sans JP", "fallback family stays aligned with existing text defaults");
@@ -70,6 +72,42 @@ for (const font of lib.thumbnailFontManifest) {
   assert.equal(typeof font.bestFor, "string", `${font.family} has recommended usage`);
   assert.equal(typeof font.caution, "string", `${font.family} has caution copy`);
   assert.match(font.sourceUrl, /^https:\/\/fonts\.google\.com\/specimen\//, `${font.family} source URL is specimen metadata only`);
+}
+
+const japaneseFontManifest = lib.thumbnailFontManifest.filter((font) => font.language === "ja");
+const englishFontManifest = lib.thumbnailFontManifest.filter((font) => font.language === "en");
+for (const font of japaneseFontManifest) {
+  assert.equal(font.assetBasePath.startsWith("/fonts/thumbnail-editor/"), true, `${font.family} asset path is tool-scoped`);
+  assert.equal(font.assetSubset, "thumbnail-editor-ja-seed-v1", `${font.family} records the Japanese seed subset`);
+  assert.match(font.license, /SIL Open Font License 1\.1/, `${font.family} records the license note`);
+  assert.ok(Array.isArray(font.assets) && font.assets.length > 0, `${font.family} has self-hosted asset files`);
+  for (const asset of font.assets) {
+    assert.ok([400, 500, 700, 900].includes(asset.weight), `${font.family} asset weight is intentionally limited`);
+    assert.equal(asset.format, "woff2", `${font.family} uses woff2 self-host assets`);
+    assert.equal(asset.path.startsWith(font.assetBasePath), true, `${font.family} asset stays under its family directory`);
+    assert.equal(fs.existsSync(path.join(root, "public", asset.path)), true, `${font.family} asset exists: ${asset.path}`);
+  }
+}
+assert.deepEqual(
+  Object.fromEntries(japaneseFontManifest.map((font) => [font.family, font.assets.map((asset) => asset.weight)])),
+  {
+    "Noto Sans JP": [400, 700, 900],
+    "M PLUS 1p": [400, 700, 900],
+    "BIZ UDPGothic": [400, 700],
+    "Zen Kaku Gothic New": [400, 700, 900],
+    "M PLUS Rounded 1c": [400, 700, 900],
+    "Kosugi Maru": [400],
+    "Noto Serif JP": [400, 700, 900],
+    "Kiwi Maru": [400, 500],
+    Yomogi: [400],
+    "Hachi Maru Pop": [400],
+    "RocknRoll One": [400],
+    DotGothic16: [400]
+  },
+  "Japanese batch keeps only the selected weight set"
+);
+for (const font of englishFontManifest) {
+  assert.equal(font.assets, undefined, `${font.family} English asset batch stays out of scope`);
 }
 assert.deepEqual(
   lib.thumbnailFontManifest.map((font) => font.family),
@@ -113,6 +151,8 @@ assert.equal(lib.normalizeThumbnailFontFamily(" Oswald "), "Oswald", "known font
 assert.equal(lib.normalizeThumbnailFontFamily(""), "Noto Sans JP", "empty fontFamily falls back");
 assert.equal(lib.normalizeThumbnailFontFamily(null), "Noto Sans JP", "non-string fontFamily falls back");
 assert.equal(lib.normalizeThumbnailFontFamily("Unknown Fancy Font"), "Noto Sans JP", "unknown fontFamily falls back");
+assert.equal(lib.normalizeThumbnailFontFamily("RocknRoll One"), "RocknRoll One", "self-hosted Japanese manifest fonts are accepted without changing the UI groups");
+assert.equal(lib.normalizeThumbnailFontFamily("DotGothic16"), "DotGothic16", "self-hosted Japanese display fonts are accepted without changing the UI groups");
 assert.equal(lib.normalizeThumbnailFontFamily("https://fonts.example/font.css"), "Noto Sans JP", "URL fontFamily falls back");
 assert.equal(lib.normalizeThumbnailFontFamily("@import url('https://fonts.example/font.css')"), "Noto Sans JP", "import-like fontFamily falls back");
 assert.equal(lib.normalizeThumbnailFontFamily("Noto Sans JP, serif"), "Noto Sans JP", "stack injection falls back to policy family");
@@ -149,6 +189,34 @@ fontLoadTextLayer.fontFamily = "Oswald";
 const fontLoadRequests = lib.getThumbnailFontLoadRequests(fontLoadDraft);
 assert.ok(fontLoadRequests.some((request) => request.fontFamily === "Oswald"), "font load requests include used visible text layer fonts");
 assert.ok(fontLoadRequests.every((request) => request.canvasFont.includes("Noto Sans JP")), "font load requests keep canvas fallback stack");
+
+const selfHostedJapaneseFontDraft = lib.createDraftFromPreset("stream_announce");
+for (const layer of selfHostedJapaneseFontDraft.layers.filter((layer) => layer.type === "text")) {
+  layer.hidden = true;
+}
+const japaneseFontLayer = selfHostedJapaneseFontDraft.layers.find((layer) => layer.type === "text");
+japaneseFontLayer.hidden = false;
+japaneseFontLayer.fontFamily = "RocknRoll One";
+japaneseFontLayer.bold = true;
+const selfHostedJapaneseFontRequests = lib.getThumbnailFontLoadRequests(selfHostedJapaneseFontDraft);
+assert.deepEqual(
+  selfHostedJapaneseFontRequests.map((request) => request.fontFamily),
+  ["RocknRoll One"],
+  "font load requests include self-hosted Japanese manifest fonts"
+);
+const selfHostedLoadedCalls = [];
+const selfHostedJapaneseFontResult = await lib.waitForThumbnailDraftFonts(selfHostedJapaneseFontDraft, {
+  fontFaceSet: {
+    load: async (font) => {
+      selfHostedLoadedCalls.push(font);
+      return [];
+    },
+    ready: Promise.resolve()
+  },
+  timeoutMs: 50
+});
+assert.equal(selfHostedJapaneseFontResult.status, "loaded", "draft font wait resolves for self-hosted Japanese manifest fonts");
+assert.ok(selfHostedLoadedCalls[0].includes("\"RocknRoll One\""), "export wait calls document.fonts.load for self-hosted Japanese fonts");
 
 const unsupportedFontResult = await lib.waitForThumbnailFontLoadRequests(fontLoadRequests, { fontFaceSet: null, timeoutMs: 20 });
 assert.deepEqual(
@@ -271,10 +339,21 @@ assert.equal(typeof lib.applyThumbnailPresetPartial, "function", "partial preset
 assert.equal(typeof lib.normalizeThumbnailUserMaterialRef, "function", "user material ref contract helper remains exported");
 assert.equal(handoffSource.includes("fontFamily"), false, "tool handoff contract does not gain font payloads");
 assert.equal(componentSource.includes("fonts.googleapis.com"), false, "component does not add Google Fonts");
+assert.equal(componentSource.includes("thumbnailFontAssets.module.css"), true, "Thumbnail Editor imports tool-scoped font asset CSS");
+assert.equal(componentSource.includes("thumbnailFontAssets.thumbnailFontAssetScope"), true, "Thumbnail Editor attaches the font asset CSS module to the tool root");
+assert.equal(thumbnailFontCssSource.includes("@font-face"), true, "tool-scoped font CSS declares self-hosted font faces");
+assert.equal(thumbnailFontCssSource.includes("fonts.googleapis.com"), false, "tool-scoped font CSS does not use Google Fonts CSS");
+assert.equal(thumbnailFontCssSource.includes("fonts.gstatic.com"), false, "tool-scoped font CSS does not use Google font CDN URLs");
+for (const font of japaneseFontManifest) {
+  for (const asset of font.assets) {
+    assert.equal(thumbnailFontCssSource.includes(asset.path), true, `tool-scoped font CSS references ${asset.path}`);
+  }
+}
+assert.equal(fs.existsSync(path.join(root, "public", "fonts", "thumbnail-editor", "LICENSES.md")), true, "self-hosted fonts include license notes");
 
 const fontNetworkPattern = /fonts\.googleapis|fonts\.gstatic|@import\s+url|https?:\/\/[^"'\s]*(?:font|cdn)/i;
 assert.equal(/fonts\.googleapis|fonts\.gstatic|@import\s+url/i.test(source), false, "thumbnail editor library has no external font runtime import/CDN dependency");
 assert.equal(fontNetworkPattern.test(componentSource), false, "thumbnail editor component has no external font URL/import/CDN dependency");
-assert.equal(fs.existsSync(path.join(root, "public", "fonts")), false, "this PR does not add bundled font assets");
+assert.equal(fs.existsSync(path.join(root, "public", "fonts", "thumbnail-editor")), true, "Japanese font batch adds self-hosted thumbnail editor font assets");
 
 console.log("thumbnail font policy contract checks passed");

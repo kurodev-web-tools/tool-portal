@@ -174,7 +174,7 @@ export type ThumbnailPresetBatchReadinessSummary = {
 
 export type ThumbnailFontPolicy = {
   owner: "thumbnail-editor";
-  source: "system-or-browser-installed";
+  source: "system-or-browser-installed" | "self-hosted-thumbnail-editor-assets";
   allowsExternalNetworkFonts: boolean;
   allowsGoogleFonts: boolean;
   allowsCdnFonts: boolean;
@@ -183,6 +183,12 @@ export type ThumbnailFontPolicy = {
   fallbackStack: string[];
 };
 export type ThumbnailFontLanguage = "ja" | "en";
+export type ThumbnailFontAsset = {
+  weight: number;
+  style: "normal";
+  format: "woff2";
+  path: string;
+};
 export type ThumbnailFontManifestEntry = {
   family: string;
   language: ThumbnailFontLanguage;
@@ -191,6 +197,10 @@ export type ThumbnailFontManifestEntry = {
   bestFor: string;
   caution: string;
   sourceUrl: string;
+  assetBasePath?: string;
+  assetSubset?: string;
+  license?: string;
+  assets?: ThumbnailFontAsset[];
 };
 export type ThumbnailFontLoadRequest = {
   fontFamily: string;
@@ -633,8 +643,28 @@ export const thumbnailFontGroups = [
   }
 ];
 export const thumbnailFonts = thumbnailFontGroups.flatMap((group) => group.fonts);
+export const thumbnailJapaneseFontAssetSubset = "thumbnail-editor-ja-seed-v1";
+export const thumbnailJapaneseFontLicense = "SIL Open Font License 1.1; see public/fonts/thumbnail-editor/LICENSES.md";
+const createThumbnailJapaneseFontAssets = (slug: string, weights: number[]): ThumbnailFontAsset[] =>
+  weights.map((weight) => ({
+    weight,
+    style: "normal",
+    format: "woff2",
+    path: `/fonts/thumbnail-editor/${slug}/${slug}-${weight}-ja-seed-v1.woff2`
+  }));
+const withThumbnailJapaneseFontAssets = (
+  entry: Omit<ThumbnailFontManifestEntry, "assetBasePath" | "assetSubset" | "license" | "assets">,
+  slug: string,
+  weights: number[]
+): ThumbnailFontManifestEntry => ({
+  ...entry,
+  assetBasePath: `/fonts/thumbnail-editor/${slug}/`,
+  assetSubset: thumbnailJapaneseFontAssetSubset,
+  license: thumbnailJapaneseFontLicense,
+  assets: createThumbnailJapaneseFontAssets(slug, weights)
+});
 export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
-  {
+  withThumbnailJapaneseFontAssets({
     family: "Noto Sans JP",
     language: "ja",
     category: "太字見出し / 汎用",
@@ -642,8 +672,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "見出し、サブ、UI 的な短文",
     caution: "weight が多く日本語容量が重い。初期 load は必要 weight を絞る。",
     sourceUrl: "https://fonts.google.com/specimen/Noto+Sans+JP"
-  },
-  {
+  }, "noto-sans-jp", [400, 700, 900]),
+  withThumbnailJapaneseFontAssets({
     family: "M PLUS 1p",
     language: "ja",
     category: "太字見出し / 汎用",
@@ -651,8 +681,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "見出し、告知文、サブ",
     caution: "細い weight はサムネで弱い。見出しは bold 系前提。",
     sourceUrl: "https://fonts.google.com/specimen/M+PLUS+1p"
-  },
-  {
+  }, "m-plus-1p", [400, 700, 900]),
+  withThumbnailJapaneseFontAssets({
     family: "BIZ UDPGothic",
     language: "ja",
     category: "読みやすいゴシック",
@@ -660,8 +690,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "サブ、日程、説明、長めの日本語",
     caution: "display 感は弱い。装飾は stroke / shadow 側で補う。",
     sourceUrl: "https://fonts.google.com/specimen/BIZ+UDPGothic"
-  },
-  {
+  }, "biz-udpgothic", [400, 700]),
+  withThumbnailJapaneseFontAssets({
     family: "Zen Kaku Gothic New",
     language: "ja",
     category: "読みやすいゴシック",
@@ -669,8 +699,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "見出し、サブ、告知",
     caution: "太字でもやや静か。強いゲーム系には別 font を使う。",
     sourceUrl: "https://fonts.google.com/specimen/Zen+Kaku+Gothic+New"
-  },
-  {
+  }, "zen-kaku-gothic-new", [400, 700, 900]),
+  withThumbnailJapaneseFontAssets({
     family: "M PLUS Rounded 1c",
     language: "ja",
     category: "かわいい / 丸ゴ",
@@ -678,8 +708,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "雑談、歌枠、かわいい見出し",
     caution: "丸さが強い。硬い告知やシリアス用途では使いすぎ注意。",
     sourceUrl: "https://fonts.google.com/specimen/M+PLUS+Rounded+1c"
-  },
-  {
+  }, "m-plus-rounded-1c", [400, 700, 900]),
+  withThumbnailJapaneseFontAssets({
     family: "Kosugi Maru",
     language: "ja",
     category: "かわいい / 丸ゴ",
@@ -687,8 +717,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "サブ、ラベル、かわいい短文",
     caution: "weight が限定的。大見出しは縁取りで補強する。",
     sourceUrl: "https://fonts.google.com/specimen/Kosugi+Maru"
-  },
-  {
+  }, "kosugi-maru", [400]),
+  withThumbnailJapaneseFontAssets({
     family: "Noto Serif JP",
     language: "ja",
     category: "上品 / 和風",
@@ -696,17 +726,17 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "記念配信、告知、上品な見出し",
     caution: "日本語容量が重い。本文より短い見出し向き。",
     sourceUrl: "https://fonts.google.com/specimen/Noto+Serif+JP"
-  },
-  {
+  }, "noto-serif-jp", [400, 700, 900]),
+  withThumbnailJapaneseFontAssets({
     family: "Kiwi Maru",
     language: "ja",
     category: "上品 / レトロ",
     mood: "ほんのりレトロ、上品、丸み",
     bestFor: "雑談、レトロ、柔らかい見出し",
-    caution: "強い太字感はない。大きめサイズで使う。",
+    caution: "700 がないため強め用途は 500 と縁取りで補う。大きめサイズで使う。",
     sourceUrl: "https://fonts.google.com/specimen/Kiwi+Maru"
-  },
-  {
+  }, "kiwi-maru", [400, 500]),
+  withThumbnailJapaneseFontAssets({
     family: "Yomogi",
     language: "ja",
     category: "手書き / ラフ",
@@ -714,8 +744,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "手書きコメント、補足、ゆるい告知",
     caution: "長文や小サイズは読みにくい。アクセント用途を基本にする。",
     sourceUrl: "https://fonts.google.com/specimen/Yomogi"
-  },
-  {
+  }, "yomogi", [400]),
+  withThumbnailJapaneseFontAssets({
     family: "Hachi Maru Pop",
     language: "ja",
     category: "手書き / ポップ",
@@ -723,8 +753,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "かわいいアクセント、短い見出し",
     caution: "display 向き。可読性が必要な本文には使わない。",
     sourceUrl: "https://fonts.google.com/specimen/Hachi+Maru+Pop"
-  },
-  {
+  }, "hachi-maru-pop", [400]),
+  withThumbnailJapaneseFontAssets({
     family: "RocknRoll One",
     language: "ja",
     category: "レトロ / ポップ",
@@ -732,8 +762,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "強めの日本語見出し、企画タイトル",
     caution: "weight 選択が少ない。繊細な用途には不向き。",
     sourceUrl: "https://fonts.google.com/specimen/RocknRoll+One"
-  },
-  {
+  }, "rocknroll-one", [400]),
+  withThumbnailJapaneseFontAssets({
     family: "DotGothic16",
     language: "ja",
     category: "レトロ / ピクセル",
@@ -741,7 +771,7 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "ゲーム風ラベル、ドット風企画",
     caution: "小サイズでは潰れやすい。本文や細かい日程には使わない。",
     sourceUrl: "https://fonts.google.com/specimen/DotGothic16"
-  },
+  }, "dotgothic16", [400]),
   {
     family: "Anton",
     language: "en",
@@ -856,11 +886,11 @@ export const thumbnailCanvasFontFallbackStack = [thumbnailFontFallbackFamily, "B
 export const thumbnailFontLoadTimeoutMs = 1200;
 export const thumbnailFontPolicy: ThumbnailFontPolicy = {
   owner: "thumbnail-editor",
-  source: "system-or-browser-installed",
+  source: "self-hosted-thumbnail-editor-assets",
   allowsExternalNetworkFonts: false,
   allowsGoogleFonts: false,
   allowsCdnFonts: false,
-  allowsBundledFontAssetsInThisPr: false,
+  allowsBundledFontAssetsInThisPr: true,
   fallbackFamily: thumbnailFontFallbackFamily,
   fallbackStack: thumbnailCanvasFontFallbackStack
 };
@@ -894,7 +924,8 @@ export const normalizeThumbnailFontFamily = (fontFamily: unknown): string => {
     return thumbnailFontFallbackFamily;
   }
 
-  return thumbnailFonts.includes(normalized) ? normalized : thumbnailFontFallbackFamily;
+  const manifestEntry = getThumbnailFontManifestEntry(normalized);
+  return thumbnailFonts.includes(normalized) || Boolean(manifestEntry?.assets?.length) ? normalized : thumbnailFontFallbackFamily;
 };
 
 export const getThumbnailFontManifestEntry = (fontFamily: unknown): ThumbnailFontManifestEntry | null => {

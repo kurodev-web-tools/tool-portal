@@ -83,6 +83,7 @@ import {
   saveThumbnailUserMaterialFile,
   writeThumbnailUserMaterialRefsMetadata
 } from "@/components/thumbnail-editor/thumbnailUserMaterialStorage";
+import thumbnailFontAssets from "@/components/thumbnail-editor/thumbnailFontAssets.module.css";
 
 type ToastTone = "info" | "success" | "warning" | "error";
 type ToastState = { tone: ToastTone; message: string } | null;
@@ -1372,7 +1373,7 @@ export function ThumbnailEditorApp() {
   }));
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
+    <div className={`flex h-full min-h-0 flex-col bg-background text-foreground ${thumbnailFontAssets.thumbnailFontAssetScope}`}>
       <header className="hidden shrink-0 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur min-[1024px]:block md:px-5 xl:px-6">
         <div className="flex flex-wrap items-center gap-3 min-[1024px]:flex-nowrap">
           <div className="hidden min-w-[11rem] flex-1 min-[1024px]:block">

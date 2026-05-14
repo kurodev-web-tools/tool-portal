@@ -2,6 +2,7 @@ export type ThumbnailCanvasSizeId = "hd" | "full-hd";
 export type ThumbnailPresetId =
   | "stream_announce"
   | "first_stream"
+  | "anniversary_stream"
   | "karaoke"
   | "chatting"
   | "clip"
@@ -126,7 +127,6 @@ export type ThumbnailPresetVariantRelation = {
   variantIds: ThumbnailPresetVariantId[];
 };
 export type ThumbnailPresetBatchCandidateId =
-  | "anniversary_stream"
   | "endurance_stream"
   | "karaoke_stream"
   | "chat_stream"
@@ -1389,6 +1389,32 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     ]
   },
   {
+    id: "anniversary_stream",
+    name: "記念配信",
+    category: "告知画像",
+    usageLabel: "記念 / milestone",
+    description: "周年や登録者記念を上品に見せる premium milestone 向け。",
+    accent: "#d8b56a",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}anniversary-stream-background-v1.png`),
+      assetDecorationLayer({ name: "画像 2（左上金飾り）", src: `${thumbnailPhase5DecorationAssetPrefix}anniversary-stream-corner-ornament-gold-uniform-cell.png`, x: -28, y: -2, width: 274, height: 183, opacity: 0.88 }),
+      assetDecorationLayer({ name: "画像 3（右下金飾り）", src: `${thumbnailPhase5DecorationAssetPrefix}anniversary-stream-corner-ornament-gold-uniform-cell.png`, x: 1026, y: 542, width: 274, height: 183, rotation: 180, opacity: 0.66 }),
+      assetDecorationLayer({ name: "画像 4（記念バッジ）", src: `${thumbnailPhase5DecorationAssetPrefix}anniversary-stream-milestone-badge-gold-uniform-cell.png`, x: 670, y: 72, width: 190, height: 190, opacity: 0.94 }),
+      assetDecorationLayer({ name: "画像 5（金ローズきらめき）", src: `${thumbnailPhase5DecorationAssetPrefix}anniversary-stream-glint-cluster-gold-rose-uniform-cell.png`, x: 282, y: 122, width: 370, height: 247, opacity: 0.72 }),
+      assetDecorationLayer({ name: "画像 6（右側きらめき）", src: `${thumbnailPhase5DecorationAssetPrefix}anniversary-stream-glint-cluster-gold-rose-uniform-cell.png`, x: 724, y: 304, width: 300, height: 200, rotation: 5, opacity: 0.46 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 830, y: 76, width: 350, height: 564, fillColor: "#f4d7e61c", strokeColor: "#f6d991", strokeWidth: 2, borderRadius: 106, opacity: 0.32 }),
+      shapeLayer({ name: "図形 4（ラベル横ライン）", shapeType: "line", x: 164, y: 156, width: 436, height: 12, fillColor: "#d8b56a", strokeColor: "#d8b56a", strokeWidth: 3, borderRadius: 8, opacity: 0.52 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "1周年記念", x: 76, y: 190, width: 704, height: 148, fontSize: 126, lineHeight: 0.96, color: "#fff5dc", strokeColor: "#17152d", strokeWidth: 10, shadowColor: "#d99a58", shadowBlur: 17, shadowOffsetX: 4, shadowOffsetY: 6, fontFamily: "Noto Serif JP", bold: true }),
+      shapeLayer({ name: "図形 6（見出し下ライン）", shapeType: "line", x: 108, y: 356, width: 548, height: 14, fillColor: "#dfbf72", strokeColor: "#dfbf72", strokeWidth: 4, borderRadius: 8, opacity: 0.58 }),
+      assetDecorationLayer({ name: "画像 7（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}anniversary-stream-label-plaque-navy-gold-uniform-cell.png`, x: 162, y: 374, width: 520, height: 122, opacity: 0.98 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "ANNIVERSARY LIVE", x: 254, y: 416, width: 338, height: 40, fontSize: 35, color: "#ffe5a6", strokeColor: "#090a18", strokeWidth: 2, shadowColor: "#d99a58", shadowBlur: 7, shadowOffsetX: 1, shadowOffsetY: 2, fontFamily: "Playfair Display", align: "center" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "ありがとうを伝える特別な夜", x: 98, y: 500, width: 652, height: 52, fontSize: 38, align: "center", color: "#fff8ee", strokeColor: "#19122c", strokeWidth: 4, shadowColor: "#e7a0a8", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Noto Serif JP" }),
+      assetDecorationLayer({ name: "画像 8（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}anniversary-stream-time-badge-navy-gold-uniform-cell.png`, x: 66, y: 544, width: 640, height: 148, opacity: 0.98 }),
+      shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 226, y: 650, width: 322, height: 12, fillColor: "#d8b56a", strokeColor: "#d8b56a", strokeWidth: 3, borderRadius: 8, opacity: 0.46 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 222, y: 590, width: 344, height: 54, fontSize: 52, color: "#fff0be", strokeColor: "#090a18", strokeWidth: 3, shadowColor: "#d99a58", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Montserrat", align: "center" })
+    ]
+  },
+  {
     id: "karaoke",
     name: "歌枠",
     category: "配信ジャンル",
@@ -1607,15 +1633,6 @@ const thumbnailPresetBatchDependencies: ThumbnailPresetBatchDependency[] = [
 ];
 
 export const thumbnailPresetBatchCandidates: ThumbnailPresetBatchCandidate[] = [
-  {
-    id: "anniversary_stream",
-    label: "記念配信",
-    useCase: "周年、登録者記念、誕生日などの告知向け",
-    recommendedVariantId: "landscape-16-9",
-    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
-    requiredMaterialCategories: ["label-base", "date-badge", "corner", "accent"],
-    dependsOn: thumbnailPresetBatchDependencies
-  },
   {
     id: "endurance_stream",
     label: "耐久配信",

@@ -20,24 +20,24 @@
 - PR #107 `[codex] Add thumbnail variant UI route` は `main` / `origin/main` に merge 済み。merge commit は `4d758f6062bfbd756b21fe640d95c81894e93bf9`。
 - PR #108 `[codex] Plan thumbnail font candidates` は `main` / `origin/main` に merge 済み。merge commit は `8c6a3f67611c82df164b91c339b814aa00625b69`。
 - PR #109 `[codex] Add thumbnail font loading foundation` は `main` / `origin/main` に merge 済み。merge commit は `6edca54f93144d691cfc4a1ebff927bd978ac9f8`。
+- PR #110 `[codex] Add thumbnail Japanese font batch` は `main` / `origin/main` に merge 済み。merge commit は `f168bddc75c660ad1f718efc32c33d8224b591d6`。
 - static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish、Thumbnail docs drift cleanup、SNS handoff accessibility copy polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 / PR #101 / PR #102 欄を参照する。
 
 ## Active
 
-- Thumbnail Editor Japanese font batch:
-  - branch / worktree: `codex/thumbnail-japanese-font-batch` / `.worktrees/thumbnail-japanese-font-batch`
-  - 前提確認: PR #109 `[codex] Add thumbnail font loading foundation` は GitHub 上で `MERGED`、merge commit `6edca54f93144d691cfc4a1ebff927bd978ac9f8` が `origin/main` 先頭にあることを確認済み。
-  - 実装: 日本語 12 種の self-host woff2 を `public/fonts/thumbnail-editor/<family>/` に追加し、`thumbnailFontManifest` に asset path / selected weights / subset / license note を持たせた。
-  - subset: `thumbnail-editor-ja-seed-v1`。current preset text、日付 / 時刻 / 配信ラベル、数字、基本 Latin、一般的な記号を中心にした初期 subset。未収録 glyph は既存 fallback stack で継続する。
-  - weights: `Noto Sans JP 400/700/900`、`M PLUS 1p 400/700/900`、`BIZ UDPGothic 400/700`、`Zen Kaku Gothic New 400/700/900`、`M PLUS Rounded 1c 400/700/900`、`Kosugi Maru 400`、`Noto Serif JP 400/700/900`、`Kiwi Maru 400/500`、`Yomogi 400`、`Hachi Maru Pop 400`、`RocknRoll One 400`、`DotGothic16 400`。
+- Thumbnail Editor English font batch:
+  - branch / worktree: `codex/thumbnail-english-font-batch` / `.worktrees/thumbnail-english-font-batch`
+  - 前提確認: PR #110 `[codex] Add thumbnail Japanese font batch` は GitHub 上で `MERGED`、merge commit `f168bddc75c660ad1f718efc32c33d8224b591d6` が `origin/main` 先頭にあることを確認済み。
+  - 実装: 英語 12 種の self-host woff2 を `public/fonts/thumbnail-editor/<family>/` に追加し、`thumbnailFontManifest` に asset path / selected weights / subset / license note を持たせた。
+  - subset: `thumbnail-editor-en-seed-v1`。Google Fonts CSS2 の Latin woff2 subset を self-host し、英字 display label、数字、common punctuation、basic Latin fallback characters を中心にした初期 subset。日本語混在時は既存 fallback stack で継続する。
+  - weights: `Anton 400`、`Bebas Neue 400`、`Oswald 400/700`、`Montserrat 400/700/900`、`Poppins 400/700/900`、`Rubik 400/700/900`、`Fredoka 400/700`、`Bangers 400`、`Playfair Display 400/700/900`、`Pacifico 400`、`Orbitron 400/700/900`、`Press Start 2P 400`。
   - loading 境界: `components/thumbnail-editor/thumbnailFontAssets.module.css` を Thumbnail Editor component だけで import し、新規 asset は self-host path から読む。既存の app-wide font import / CSP は明示的な対象外として触らない。
-  - export 境界: `waitForThumbnailDraftFonts()` / `document.fonts.load()` の contract に self-host Japanese manifest font を追加し、`RocknRoll One` など UI group 未表示の日本語 manifest font も安全に待機できることを固定した。
-  - 境界: English font batch、font UI categories / search / recently used、preset font application、preset body / variant body / material registration、text / image layer schema、Schedule Calendar、SNS Split Image Maker は変更しない。
-  - 検証: `node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-preset-batch-readiness-contract.mjs`、`node scripts/thumbnail-quality-guard-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` を実行済み。`git diff --check` は CRLF 変換 warning のみで whitespace error なし。
-  - 幅別確認: font listbox の表示、preset body、layout CSS、visible UI copy は変更していない。今回の変更は self-host asset / CSS loading boundary / contract 更新のため、`390 / 820 / 1024 / 1280 / 1366px` の browser 確認は不要。
+  - export 境界: `waitForThumbnailDraftFonts()` / `document.fonts.load()` の contract に self-host English manifest font を追加し、`Orbitron` などの英語 manifest font も安全に待機できることを固定した。
+  - 境界: font UI categories / search / recently used、preset font application、preset body / variant body / material registration、text / image layer schema、Schedule Calendar、SNS Split Image Maker は変更しない。
+  - 検証: `node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-preset-batch-readiness-contract.mjs`、`node scripts/thumbnail-quality-guard-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` を実行済み。`git diff --check` は LF -> CRLF 変換 warning のみで whitespace error なし。
+  - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認。Text panel から font listbox を開き、`Noto Sans JP` / `Anton` / `Bebas Neue` / `Pacifico` option が見えること、主要操作列と canvas 周辺が破綻しないことを確認。今回の UI-visible 差分は既存 English font options の actual font rendering のみ。
 - 次に新規作業へ進む場合は、下の次候補を `origin/main` 起点の feature branch / `.worktrees/...` で PR-sized に切る。
 - 次候補:
-  - `English font batch`: 英語 12 種の必要 weight / self-host asset / display preview / export wait verification。
   - `font UI categories`: language / mood category 表示。検索、最近使った、preset body 変更は別 scope。
   - `preset font application`: preset batch 本体で必要になった場合だけ、catalog 内 font へ差し替える。
 - docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。

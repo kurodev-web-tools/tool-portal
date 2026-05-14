@@ -644,13 +644,22 @@ export const thumbnailFontGroups = [
 ];
 export const thumbnailFonts = thumbnailFontGroups.flatMap((group) => group.fonts);
 export const thumbnailJapaneseFontAssetSubset = "thumbnail-editor-ja-seed-v1";
+export const thumbnailEnglishFontAssetSubset = "thumbnail-editor-en-seed-v1";
 export const thumbnailJapaneseFontLicense = "SIL Open Font License 1.1; see public/fonts/thumbnail-editor/LICENSES.md";
+export const thumbnailEnglishFontLicense = "SIL Open Font License 1.1; see public/fonts/thumbnail-editor/LICENSES.md";
 const createThumbnailJapaneseFontAssets = (slug: string, weights: number[]): ThumbnailFontAsset[] =>
   weights.map((weight) => ({
     weight,
     style: "normal",
     format: "woff2",
     path: `/fonts/thumbnail-editor/${slug}/${slug}-${weight}-ja-seed-v1.woff2`
+  }));
+const createThumbnailEnglishFontAssets = (slug: string, weights: number[]): ThumbnailFontAsset[] =>
+  weights.map((weight) => ({
+    weight,
+    style: "normal",
+    format: "woff2",
+    path: `/fonts/thumbnail-editor/${slug}/${slug}-${weight}-en-seed-v1.woff2`
   }));
 const withThumbnailJapaneseFontAssets = (
   entry: Omit<ThumbnailFontManifestEntry, "assetBasePath" | "assetSubset" | "license" | "assets">,
@@ -662,6 +671,17 @@ const withThumbnailJapaneseFontAssets = (
   assetSubset: thumbnailJapaneseFontAssetSubset,
   license: thumbnailJapaneseFontLicense,
   assets: createThumbnailJapaneseFontAssets(slug, weights)
+});
+const withThumbnailEnglishFontAssets = (
+  entry: Omit<ThumbnailFontManifestEntry, "assetBasePath" | "assetSubset" | "license" | "assets">,
+  slug: string,
+  weights: number[]
+): ThumbnailFontManifestEntry => ({
+  ...entry,
+  assetBasePath: `/fonts/thumbnail-editor/${slug}/`,
+  assetSubset: thumbnailEnglishFontAssetSubset,
+  license: thumbnailEnglishFontLicense,
+  assets: createThumbnailEnglishFontAssets(slug, weights)
 });
 export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
   withThumbnailJapaneseFontAssets({
@@ -772,7 +792,7 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     caution: "小サイズでは潰れやすい。本文や細かい日程には使わない。",
     sourceUrl: "https://fonts.google.com/specimen/DotGothic16"
   }, "dotgothic16", [400]),
-  {
+  withThumbnailEnglishFontAssets({
     family: "Anton",
     language: "en",
     category: "Impact headline",
@@ -780,8 +800,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "英字見出し、強いラベル",
     caution: "日本語は不可。英字大文字中心で使う。",
     sourceUrl: "https://fonts.google.com/specimen/Anton"
-  },
-  {
+  }, "anton", [400]),
+  withThumbnailEnglishFontAssets({
     family: "Bebas Neue",
     language: "en",
     category: "Impact headline",
@@ -789,8 +809,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "配信タイトル、時刻、強調ラベル",
     caution: "小文字や長文では単調。tracking 調整を後続で検討。",
     sourceUrl: "https://fonts.google.com/specimen/Bebas+Neue"
-  },
-  {
+  }, "bebas-neue", [400]),
+  withThumbnailEnglishFontAssets({
     family: "Oswald",
     language: "en",
     category: "Label / readable condensed",
@@ -798,8 +818,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "時刻、カテゴリ、ラベル",
     caution: "既存 preset で使用中。英字アクセント向き。",
     sourceUrl: "https://fonts.google.com/specimen/Oswald"
-  },
-  {
+  }, "oswald", [400, 700]),
+  withThumbnailEnglishFontAssets({
     family: "Montserrat",
     language: "en",
     category: "Label / readable sans",
@@ -807,8 +827,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "ラベル、サブ、告知文",
     caution: "display の個性は控えめ。太字 weight を使う。",
     sourceUrl: "https://fonts.google.com/specimen/Montserrat"
-  },
-  {
+  }, "montserrat", [400, 700, 900]),
+  withThumbnailEnglishFontAssets({
     family: "Poppins",
     language: "en",
     category: "Readable sans",
@@ -816,8 +836,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "サブ、告知、柔らかい英字",
     caution: "見出しではやや軽い。bold weight 前提。",
     sourceUrl: "https://fonts.google.com/specimen/Poppins"
-  },
-  {
+  }, "poppins", [400, 700, 900]),
+  withThumbnailEnglishFontAssets({
     family: "Rubik",
     language: "en",
     category: "Readable sans",
@@ -825,8 +845,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "ラベル、ゲーム UI 風の短文",
     caution: "強い装飾性は低い。色 / shape 側で補う。",
     sourceUrl: "https://fonts.google.com/specimen/Rubik"
-  },
-  {
+  }, "rubik", [400, 700, 900]),
+  withThumbnailEnglishFontAssets({
     family: "Fredoka",
     language: "en",
     category: "Cute / comic",
@@ -834,8 +854,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "かわいい英字、雑談、歌枠",
     caution: "大人っぽい告知には合いにくい。",
     sourceUrl: "https://fonts.google.com/specimen/Fredoka"
-  },
-  {
+  }, "fredoka", [400, 700]),
+  withThumbnailEnglishFontAssets({
     family: "Bangers",
     language: "en",
     category: "Cute / comic",
@@ -843,8 +863,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "驚き系見出し、切り抜き、勢い",
     caution: "display 専用。長文や日本語混在には不向き。",
     sourceUrl: "https://fonts.google.com/specimen/Bangers"
-  },
-  {
+  }, "bangers", [400]),
+  withThumbnailEnglishFontAssets({
     family: "Playfair Display",
     language: "en",
     category: "Elegant / stylish",
@@ -852,8 +872,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "記念配信、上品な英字アクセント",
     caution: "小サイズや太い縁取りで細部が潰れやすい。",
     sourceUrl: "https://fonts.google.com/specimen/Playfair+Display"
-  },
-  {
+  }, "playfair-display", [400, 700, 900]),
+  withThumbnailEnglishFontAssets({
     family: "Pacifico",
     language: "en",
     category: "Handwritten / personal",
@@ -861,8 +881,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "サイン風、軽いアクセント",
     caution: "display / accent 専用。大文字羅列や長文には向かない。",
     sourceUrl: "https://fonts.google.com/specimen/Pacifico"
-  },
-  {
+  }, "pacifico", [400]),
+  withThumbnailEnglishFontAssets({
     family: "Orbitron",
     language: "en",
     category: "Game / futuristic",
@@ -870,8 +890,8 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "近未来、ゲーム、SF ラベル",
     caution: "日本語不可。数字 / 英字短文に限定する。",
     sourceUrl: "https://fonts.google.com/specimen/Orbitron"
-  },
-  {
+  }, "orbitron", [400, 700, 900]),
+  withThumbnailEnglishFontAssets({
     family: "Press Start 2P",
     language: "en",
     category: "Game / pixel",
@@ -879,7 +899,7 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "レトロゲーム、ドット風短文",
     caution: "大容量ではないが可読性が低い。大きめ短文だけにする。",
     sourceUrl: "https://fonts.google.com/specimen/Press+Start+2P"
-  }
+  }, "press-start-2p", [400])
 ];
 export const thumbnailFontFallbackFamily = "Noto Sans JP";
 export const thumbnailCanvasFontFallbackStack = [thumbnailFontFallbackFamily, "BIZ UDPGothic", "Yu Gothic", "Meiryo", "sans-serif"];

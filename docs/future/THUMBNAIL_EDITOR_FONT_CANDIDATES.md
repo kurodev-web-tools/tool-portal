@@ -98,6 +98,31 @@ Thumbnail Editor の font asset / preset batch 本体へ進む前に、初期フ
 
 この batch では English font asset、font UI category 表示、preset body への font 適用、text / image layer schema 変更は扱わない。
 
+### English Font Batch State
+
+2026-05-14 の English font batch では、英語 12 種を `public/fonts/thumbnail-editor/<family>/` 配下の self-host asset として追加した。
+追加 asset は Google Fonts CDN へ新規 runtime 依存せず、既存の Thumbnail Editor route scoped CSS module から読む。
+
+- subset: `thumbnail-editor-en-seed-v1`
+  - Google Fonts CSS2 の Latin woff2 subset を self-host し、英字 display label、数字、common punctuation、basic Latin fallback characters を扱う。
+  - 日本語 coverage ではなく、英字見出し / ラベル / 数字アクセント用途に絞る。日本語混在時は既存 fallback stack で継続する。
+- license note: `public/fonts/thumbnail-editor/LICENSES.md`
+- added weights:
+  - `Anton`: `400`
+  - `Bebas Neue`: `400`
+  - `Oswald`: `400 / 700`
+  - `Montserrat`: `400 / 700 / 900`
+  - `Poppins`: `400 / 700 / 900`
+  - `Rubik`: `400 / 700 / 900`
+  - `Fredoka`: `400 / 700`
+  - `Bangers`: `400`
+  - `Playfair Display`: `400 / 700 / 900`
+  - `Pacifico`: `400`
+  - `Orbitron`: `400 / 700 / 900`
+  - `Press Start 2P`: `400`
+
+この batch では font UI category 表示、search / recently used、preset body への font 適用、text / image layer schema 変更は扱わない。
+
 ### Google Fonts CDN
 
 - 速く候補検証できるが、runtime 外部依存、CSP、offline / static export、canvas export 前の race が増える。
@@ -125,6 +150,7 @@ Thumbnail Editor の font asset / preset batch 本体へ進む前に、初期フ
    - 現在の状態: self-host asset と export wait contract は追加済み。UI category 表示、English asset、preset font application は後続。
 3. `English font batch`
    - 英語 12 種の必要 weight を追加し、英字ラベル / display 用の preview と export wait を検証する。
+   - 現在の状態: self-host asset と export wait contract は追加済み。UI category 表示、search / recently used、preset font application は後続。
 4. `font UI categories`
    - listbox を language / mood category 表示へ拡張する。
    - 検索、最近使った、preset body 変更は別 scope にする。

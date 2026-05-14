@@ -29,48 +29,52 @@
 
 ## Active
 
-- Thumbnail Editor usecase preset implementation: `endurance_stream` / 耐久配信
-  - branch / worktree: `codex/thumbnail-endurance-frame-assets-split` / `.worktrees/thumbnail-endurance-frame-assets-split`
-  - 前提確認: PR #115 `[codex] Plan thumbnail usecase preset mocks` は `MERGED`、merge commit `3d5e7dd24826dc95abbc46d511a844bb86c05800`。PR #116 `[codex] Add first stream thumbnail preset` は `MERGED`、merge commit `68bbcd48d71586b1891314f8bfd766abe19aa8bf`。PR #117 `[codex] Add anniversary stream thumbnail preset` は `MERGED`、merge commit `562163fe90546d4dee413947ffc0ec36a9068683`。3 commit とも `origin/main` に含まれることを確認済み。
-  - 実装 preset id: `endurance_stream`
-  - scope: `endurance_stream` / 耐久配信のみ。`lib/thumbnail-editor.ts` に preset body を追加し、`endurance_stream` を future batch candidate から実 preset へ昇格した。schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更していない。
-  - 生成元: built-in `image_gen` mode。採用元は `C:\Users\taka\.codex\generated_images\019e25fa-8a8b-7e81-aa27-2be872628089\` に残置。装飾 asset は `remove_chroma_key.py` で chroma-key removal 後、`768 x 512` uniform-cell PNG に整形した。
-    - background source: `ig_0f7951029f3eaeb7016a05a0fd1b248191b7e6b97dbfb15c58.png`
-    - goal badge panel source: `ig_0f7951029f3eaeb7016a05a1409a908191a872f4302df661c8.png`
-    - progress divider source: `ig_0f7951029f3eaeb7016a05a19345e48191829f01a869449a69.png`
-    - challenge label plaque source: `ig_0f7951029f3eaeb7016a05a1c245108191937cce4badaa658b.png`
-    - time badge source: `ig_0f7951029f3eaeb7016a05a1ed8758819195b96e92b7493904.png`
-    - sharp frame accents source: `ig_0f7951029f3eaeb7016a05a22906808191ab7113002d6b56e4.png`
-    - regenerated frame corner left source: `ig_0f7951029f3eaeb7016a05acc9f7688191ac6851b89c50246f.png`
-    - regenerated frame corner right source: `ig_0f7951029f3eaeb7016a05ad2fe0448191b78936a6ca648b18.png`
-    - regenerated lightning bolt lime source: `ig_0f7951029f3eaeb7016a05ad8679908191a7612f4477e1c198.png`
-    - regenerated lightning bolt cyan source: `ig_0f7951029f3eaeb7016a05add70de481919ac2c472e31bef6b.png`
-    - regenerated chevron cluster source: `ig_0f7951029f3eaeb7016a05ae2beb748191a685f889bafe4f1a.png`
-    - regenerated rail accent source: `ig_0f7951029f3eaeb7016a05ae75c52481918f47306903ff732d.png`
-  - repo asset:
-    - `public/assets/images/thumbnail-editor/phase5/endurance-stream-background-v1.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-goal-badge-panel-lime-orange-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-progress-divider-lime-cyan-orange-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-challenge-label-plaque-lime-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-time-badge-orange-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-frame-corner-left-lime-cyan-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-frame-corner-right-lime-cyan-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-lightning-bolt-lime-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-lightning-bolt-cyan-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-chevron-cluster-lime-cyan-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-rail-accent-lime-cyan-uniform-cell.png`
-  - follow-up: PR #118 merge 後、`endurance-stream-sharp-frame-accents-lime-cyan-uniform-cell.png` は grouped sheet として扱いづらいため削除し、左右 corner 2種 + 稲妻 / chevron / rail の個別 asset に分割した。初回の機械切り出しでは角枠に余計な入り込みが残ったため、この6点だけ built-in `image_gen` mode で再生成した。4角は `frame-corner-left` / `frame-corner-right` を preset body 側で 180 度回転再利用する。
-  - contract / verification:
-    - `node scripts/thumbnail-usecase-endurance-stream-preset-contract.mjs` PASS
-    - `node scripts/thumbnail-preset-discovery-contract.mjs` PASS
-    - `node scripts/thumbnail-preset-batch-readiness-contract.mjs` PASS
-    - `node scripts/thumbnail-preset-variants-contract.mjs` PASS
-    - `node scripts/thumbnail-font-policy-contract.mjs` PASS
-    - `node scripts/thumbnail-material-assets-contract.mjs` PASS
-    - `git diff --check` PASS（CRLF 変換 warning のみ）
-    - `npm run lint` PASS
-    - `npx tsc --noEmit` PASS
-  - 幅別確認: dev server `http://localhost:3000/tools/thumbnail-editor`、Playwright + Chrome。`390 / 820 / 1024 / 1280 / 1366px` すべてで `耐久配信` preset card 表示、preset 選択可、canvas 表示、横 overflow `0`。確認用 screenshot は ignored path `output/playwright/thumbnail-endurance-frame-assets-split/endurance-frame-regenerated-*.png`。canvas pixel capture は `output/playwright/thumbnail-endurance-frame-assets-split/endurance-frame-regenerated-canvas-pixels-1280x720.png`。
+- Thumbnail Editor usecase preset next implementation: `project_stream` / 企画配信
+  - 推奨順: `project_stream` -> `cover_song_notice` -> `event_notice`。mock 済み second batch は 1 preset / 1 PR で進める。
+  - 前提確認: PR #115 `[codex] Plan thumbnail usecase preset mocks`、PR #116 `first_stream`、PR #117 `anniversary_stream`、PR #118 `endurance_stream`、PR #119 `endurance frame asset split` は `main` / `origin/main` に merge 済み。次回実装前に `origin/main` へ各 merge commit が含まれることを確認する。
+  - 次 preset 実装用 prompt:
+
+```text
+対象repo: D:\V_streamer_tools
+
+目的:
+- Thumbnail Editor の追加用途 preset `project_stream` / 企画配信を 1 preset / 1 PR で実装する
+- 背景 + 焼き込み装飾 + 必要 asset + preset body + 必要 contract を追加する
+- 背景・装飾 asset 生成には必ず [$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md) を使う
+
+前提:
+- AGENTS.md、task.md、docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md、docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md を読む
+- mock `docs/mockups/thumbnail-editor-usecase-preset-candidates/project-stream-mock.png` を方向性 reference として確認する
+- PR #115 `[codex] Plan thumbnail usecase preset mocks` と、先行する `first_stream` / `anniversary_stream` / `endurance_stream` / endurance frame asset split 実装 PR が main / origin/main に merge 済みか確認する
+- 未mergeなら新規作業へ進まず、merge待ち / review対応が必要かだけを blocker summary にする
+- main 直作業は避け、origin/main 起点で feature branch / `.worktrees/...` を切る
+- ローカル main の未コミット変更があっても触らない
+
+scope:
+- `project_stream` / 企画配信のみ
+- 背景、cue-card panels、label plaque、time badge、arrow accent、sticker tabs、preset body、必要 contract を追加する
+- schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない
+- 生成 asset は後で個別配置しやすい単体 asset にする。複数パーツを1枚に詰めた sheet にしない。角・矢印・タブなど回転 / 反転再利用できるものは 1-2 種だけ作り、preset body 側で配置する
+
+参考:
+- mock: `docs/mockups/thumbnail-editor-usecase-preset-candidates/project-stream-mock.png`
+- direction: teal / coral / warm yellow、variety show、特別企画、視聴者参加、cue-card、arrows、sticker tabs、明るいが情報整理された構成
+- initial text: `新企画` / `SPECIAL PROGRAM` / `視聴者参加型` / `今日は何が起きる?`
+- font direction: 見出し `RocknRoll One` / `M PLUS 1p`、label `Montserrat` / `Fredoka`
+
+検証:
+- preset / asset contract を追加または更新
+- `git diff --check`
+- 該当 contract、`node scripts/thumbnail-preset-discovery-contract.mjs`、`node scripts/thumbnail-preset-batch-readiness-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`
+- `npm run lint`
+- `npx tsc --noEmit`
+- UI 表示を触った場合は `390 / 820 / 1024 / 1280 / 1366px` を確認して task.md に記録
+
+終了:
+- task.md 更新、diff 確認、commit、push、draft PR 作成
+- PR body には `変更内容` / `検証結果` / `確認してほしい表示ポイント` / `次 preset 用プロンプト` を入れる
+- 次 preset 用プロンプトは `cover_song_notice` / 歌ってみた告知を想定し、mock と imagegen 使用条件を明記する
+```
 
 ## Freeze closeout state
 

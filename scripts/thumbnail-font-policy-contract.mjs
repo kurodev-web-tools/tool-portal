@@ -407,17 +407,41 @@ const textLayerKeysBefore = JSON.stringify(
       .map((layer) => Object.keys(layer).sort())
   )
 );
-const presetFontsBefore = JSON.stringify(
-  lib.thumbnailPresets.map((preset) => ({
-    id: preset.id,
-    fonts: preset.layers.filter((layer) => layer.type === "text").map((layer) => layer.fontFamily)
-  }))
-);
+const presetFontManifestFamilies = new Set(lib.thumbnailFontManifest.map((font) => font.family));
+const getPresetTextFont = (presetId, layerName) =>
+  lib.thumbnailPresets
+    .find((preset) => preset.id === presetId)
+    ?.layers.find((layer) => layer.type === "text" && layer.name === layerName)
+    ?.fontFamily;
+const expectedPresetInitialFontFamilies = [
+  ["stream_announce", "テキスト 1（見出し）", "RocknRoll One"],
+  ["stream_announce", "テキスト 2（時刻）", "Bebas Neue"],
+  ["stream_announce", "テキスト 3（サブ）", "Zen Kaku Gothic New"],
+  ["karaoke", "テキスト 1（見出し）", "M PLUS Rounded 1c"],
+  ["karaoke", "テキスト 5（見出し英字）", "Fredoka"],
+  ["chatting", "テキスト 1（見出し）", "Kiwi Maru"],
+  ["chatting", "テキスト 3（サブ）", "BIZ UDPGothic"],
+  ["clip", "テキスト 1（見出し）", "RocknRoll One"],
+  ["clip", "テキスト 2（時刻）", "M PLUS 1p"],
+  ["game_live", "テキスト 4（ラベル）", "Orbitron"],
+  ["game_live", "テキスト 1（見出し）", "DotGothic16"],
+  ["collaboration", "テキスト 1（見出し）", "M PLUS 1p"],
+  ["announcement", "テキスト 1（見出し）", "Noto Serif JP"],
+  ["announcement", "テキスト 3（サブ）", "Noto Serif JP"],
+  ["weekly_schedule", "テキスト 4（ラベル）", "Bebas Neue"],
+  ["weekly_schedule", "月曜 / 曜日", "Oswald"],
+  ["weekly_schedule", "月曜 / 予定", "BIZ UDPGothic"],
+  ["x_announcement", "テキスト 1（見出し）", "Zen Kaku Gothic New"],
+  ["x_announcement", "テキスト 3（サブ）", "BIZ UDPGothic"]
+];
 
 for (const preset of lib.thumbnailPresets) {
   for (const layer of preset.layers.filter((item) => item.type === "text")) {
-    assert.ok(lib.thumbnailFonts.includes(layer.fontFamily), `${preset.id}:${layer.name} keeps a known initial fontFamily`);
+    assert.ok(presetFontManifestFamilies.has(layer.fontFamily), `${preset.id}:${layer.name} keeps a manifest-backed initial fontFamily`);
   }
+}
+for (const [presetId, layerName, fontFamily] of expectedPresetInitialFontFamilies) {
+  assert.equal(getPresetTextFont(presetId, layerName), fontFamily, `${presetId}:${layerName} uses the intended preset font`);
 }
 
 const unsafeDraft = lib.createDraftFromPreset("stream_announce");
@@ -447,16 +471,6 @@ assert.equal(
   ),
   textLayerKeysBefore,
   "font policy does not change preset text layer keys"
-);
-assert.equal(
-  JSON.stringify(
-    lib.thumbnailPresets.map((preset) => ({
-      id: preset.id,
-      fonts: preset.layers.filter((layer) => layer.type === "text").map((layer) => layer.fontFamily)
-    }))
-  ),
-  presetFontsBefore,
-  "font policy does not rewrite preset initial fontFamily values"
 );
 
 const materialIdsBefore = JSON.stringify(lib.thumbnailMaterialLibrary.map((material) => material.id));

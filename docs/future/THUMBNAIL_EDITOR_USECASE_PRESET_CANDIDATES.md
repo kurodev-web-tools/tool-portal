@@ -73,6 +73,7 @@ Thumbnail Editor の追加 preset body 実装へ進む前に、既存カテゴ�
 
 ### `cover_song_notice`
 
+- 2026-05-14 実装済み: `codex/thumbnail-cover-song-notice-preset` で production preset body / generated asset / contract を追加。
 - 雰囲気: cover MV / premiere、音楽的で release 告知寄り。
 - 既存との差分: `歌枠` は live stream、これは動画公開・MV 告知。右側に cover art placeholder を置く。
 - font 傾向: 見出しは `M PLUS Rounded 1c` / `Noto Serif JP`、英字は `Playfair Display` / `Pacifico` / `Bebas Neue`。

@@ -80,6 +80,17 @@ assert.deepEqual(
   "usage label filter includes the project stream preset"
 );
 
+const coverSongUsageResult = lib.filterThumbnailPresets(lib.thumbnailPresets, {
+  query: "",
+  category: "all",
+  usageLabel: "動画公開 / cover"
+});
+assert.deepEqual(
+  coverSongUsageResult.map((preset) => preset.id),
+  ["cover_song_notice"],
+  "usage label filter includes the cover song notice preset"
+);
+
 assert.deepEqual(
   lib.createNextRecentThumbnailPresetIds(["karaoke", "chatting"], "karaoke"),
   ["karaoke", "chatting"],

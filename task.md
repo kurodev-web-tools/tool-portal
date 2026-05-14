@@ -22,22 +22,24 @@
 - PR #109 `[codex] Add thumbnail font loading foundation` は `main` / `origin/main` に merge 済み。merge commit は `6edca54f93144d691cfc4a1ebff927bd978ac9f8`。
 - PR #110 `[codex] Add thumbnail Japanese font batch` は `main` / `origin/main` に merge 済み。merge commit は `f168bddc75c660ad1f718efc32c33d8224b591d6`。
 - PR #111 `[codex] Add thumbnail English font batch` は `main` / `origin/main` に merge 済み。merge commit は `f30e3ee8f3a9358709789c91f43d1b39dfc72e0e`。
+- PR #112 `[codex] Add thumbnail font UI categories` は `main` / `origin/main` に merge 済み。merge commit は `cb4a179667520e42d3299a78a5848115fe58a9e6`。
 - static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish、Thumbnail docs drift cleanup、SNS handoff accessibility copy polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 / PR #101 / PR #102 欄を参照する。
 
 ## Active
 
-- Thumbnail Editor font UI categories:
-  - branch / worktree: `codex/thumbnail-font-ui-categories` / `.worktrees/thumbnail-font-ui-categories`
-  - 前提確認: PR #111 `[codex] Add thumbnail English font batch` は GitHub 上で `MERGED`、merge commit `f30e3ee8f3a9358709789c91f43d1b39dfc72e0e` が `origin/main` 先頭にあることを確認済み。
-  - 実装: `thumbnailFontManifest` の `language` / `category` / `mood` から `thumbnailFontListboxGroups` を作り、Thumbnail Editor の font listbox を language -> category -> font + mood の短い表示へ整理した。
-  - 選択境界: 既存の `fontFamily` 更新処理を維持し、draft schema、canvas export、font loading helper、preset body、preset font application は変更しない。`Noto Sans JP` と `Orbitron` の選択切り替えを確認済み。
-  - スコープ外: font search、recently used、preset body への font 適用、preset font application、text / image layer schema、Schedule Calendar、SNS Split Image Maker は変更しない。
+- Thumbnail Editor font search / recently used:
+  - branch / worktree: `codex/thumbnail-font-search-recent` / `.worktrees/thumbnail-font-search-recent`
+  - 前提確認: PR #112 `[codex] Add thumbnail font UI categories` は GitHub 上で `MERGED`、merge commit `cb4a179667520e42d3299a78a5848115fe58a9e6` が `origin/main` 先頭にあることを確認済み。
+  - 実装: Thumbnail Editor の font listbox 内に短い検索欄を追加し、既存 `thumbnailFontManifest` / `thumbnailFontListboxGroups` から `family` / `language` / `category` / `mood` で絞り込む `filterThumbnailFontListboxGroups()` を追加した。
+  - 最近使った font: editor-local の `localStorage` key `v-streamer-tools:thumbnail-editor:recent-fonts:v1` に既知 font family だけを最大4件保存し、listbox 内に `最近` として短く表示する。draft schema、canvas export、font loading helper には保存しない。
+  - 選択境界: 既存の `fontFamily` 更新処理を維持し、manifest 24種の日本語 / English option が引き続き選べる。preset body、preset font application、draft schema、canvas export、font loading helper は変更しない。
+  - スコープ外: preset body への font 適用、preset font application、text / image layer schema、Schedule Calendar、SNS Split Image Maker は変更しない。
   - 検証: `node scripts/thumbnail-font-policy-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` を実行済み。`git diff --check` は LF -> CRLF 変換 warning のみで whitespace error なし。
-  - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認。390 / 820px は下部 `テキスト` パネルで listbox を開き、language / category / mood の短い表示が崩れないことを確認。1024 / 1280 / 1366px は右パネル内で listbox を開き、狭い幅では option copy が truncate され、主要操作列と canvas 周辺を押し崩さないことを確認。
+  - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認。390 / 820px は下部 `テキスト` パネルで listbox を開き、検索欄と `最近` の短い2列表示がフォームを押し崩さないことを確認。1024 / 1280 / 1366px は右パネル内で listbox を開き、検索欄、`最近`、language / category / mood option が右パネル幅内に収まり、主要操作列と canvas 周辺を押し崩さないことを確認。
 - 次に新規作業へ進む場合は、下の次候補を `origin/main` 起点の feature branch / `.worktrees/...` で PR-sized に切る。
 - 次候補:
-  - `font search / recently used`: font listbox の検索と最近使った font 表示。preset body 変更は別 scope。
   - `preset font application`: preset batch 本体で必要になった場合だけ、catalog 内 font へ差し替える。
+  - `preset body` / `preset batch`: font 適用とは別に、候補ごとの body 追加を PR-sized に切る。
 - docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
 
 ## Freeze closeout state

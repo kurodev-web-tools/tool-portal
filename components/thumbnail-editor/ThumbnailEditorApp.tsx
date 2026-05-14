@@ -19,7 +19,10 @@ import {
   drawThumbnail,
   filterThumbnailPresets,
   formatThumbnailUserMaterialBytes,
+  createNextRecentThumbnailFontFamilies,
+  filterThumbnailFontListboxGroups,
   getThumbnailMainTextCarryover,
+  getThumbnailFontManifestEntry,
   getThumbnailQualityGuardItems,
   getThumbnailOverallQualityGuardItems,
   getThumbnailQualityGuardSummary,
@@ -30,12 +33,13 @@ import {
   layerContainsPoint,
   normalizeThumbnailDraft,
   normalizeThumbnailLayerName,
+  normalizeThumbnailRecentFontFamilies,
   normalizeThumbnailPresetDiscoveryState,
   pointToLayerLocal,
   replaceThumbnailUserMaterialLayerRef,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
-  thumbnailFontListboxGroups,
+  thumbnailFontRecentStorageKey,
   thumbnailMainTextCarryoverTargets,
   thumbnailMaterialCategoryLabels,
   thumbnailMaterialLibrary,
@@ -2327,6 +2331,32 @@ function TextControls({
 }) {
   const update = <K extends keyof typeof layer>(key: K, value: (typeof layer)[K]) => onChange((item) => (item.type === "text" ? { ...item, [key]: value } : item));
   const fontMenuRef = useRef<HTMLDivElement | null>(null);
+  const [fontSearch, setFontSearch] = useState("");
+  const [recentFonts, setRecentFonts] = useState<string[]>([]);
+  const filteredFontGroups = useMemo(() => filterThumbnailFontListboxGroups(fontSearch), [fontSearch]);
+  const recentFontOptions = useMemo(
+    () =>
+      recentFonts
+        .map((family) => getThumbnailFontManifestEntry(family))
+        .filter((font): font is NonNullable<ReturnType<typeof getThumbnailFontManifestEntry>> => Boolean(font)),
+    [recentFonts]
+  );
+  const persistRecentFonts = (fontFamily: string) => {
+    setRecentFonts((current) => {
+      const next = createNextRecentThumbnailFontFamilies(current, fontFamily);
+      try {
+        window.localStorage.setItem(thumbnailFontRecentStorageKey, JSON.stringify(next));
+      } catch {
+        // Recent fonts are convenience-only; selection should still work when storage is unavailable.
+      }
+      return next;
+    });
+  };
+  const selectFontFamily = (fontFamily: string) => {
+    update("fontFamily", fontFamily);
+    persistRecentFonts(fontFamily);
+    onFontMenuOpenChange(false);
+  };
 
   useEffect(() => {
     if (!fontMenuOpen) {
@@ -2340,6 +2370,15 @@ function TextControls({
     window.addEventListener("pointerdown", handlePointerDown);
     return () => window.removeEventListener("pointerdown", handlePointerDown);
   }, [fontMenuOpen, onFontMenuOpenChange]);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(thumbnailFontRecentStorageKey);
+      setRecentFonts(saved ? normalizeThumbnailRecentFontFamilies(JSON.parse(saved)) : []);
+    } catch {
+      window.localStorage.removeItem(thumbnailFontRecentStorageKey);
+      setRecentFonts([]);
+    }
+  }, []);
 
   return (
     <div className="space-y-3 border-t border-border pt-4">
@@ -2367,8 +2406,40 @@ function TextControls({
           </button>
           {fontMenuOpen ? (
             <div className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-base border border-border bg-surface p-1 shadow-panel">
+              <div className="p-1">
+                <input
+                  className="w-full rounded-base border border-border bg-background px-2 py-1.5 text-xs font-bold text-foreground placeholder:text-muted"
+                  type="search"
+                  value={fontSearch}
+                  onChange={(event) => setFontSearch(event.target.value)}
+                  placeholder="検索"
+                  aria-label="フォントを検索"
+                />
+              </div>
+              {recentFontOptions.length > 0 && !fontSearch.trim() ? (
+                <div className="border-b border-border px-1 pb-2">
+                  <p className="px-2 pb-1 pt-1 text-[10px] font-black tracking-normal text-muted/80">最近</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {recentFontOptions.map((recentFont) => (
+                      <button
+                        key={recentFont.family}
+                        type="button"
+                        className={[
+                          "min-w-0 rounded-base px-2 py-1.5 text-left text-xs font-bold",
+                          recentFont.family === layer.fontFamily ? "bg-primary-soft text-primary-strong" : "text-foreground hover:bg-surface-muted"
+                        ].join(" ")}
+                        style={{ fontFamily: `"${recentFont.family}", sans-serif` }}
+                        onClick={() => selectFontFamily(recentFont.family)}
+                      >
+                        <span className="block truncate">{recentFont.family}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <div className="scrollbar-accent max-h-48 overflow-y-auto [scrollbar-gutter:stable]" role="listbox">
-                {thumbnailFontListboxGroups.map((group) => (
+                {filteredFontGroups.length > 0 ? (
+                  filteredFontGroups.map((group) => (
                   <div key={group.language}>
                     <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-normal text-muted">{group.label}</p>
                     {group.categories.map((fontCategory) => (
@@ -2385,10 +2456,7 @@ function TextControls({
                               fontOption.family === layer.fontFamily ? "bg-primary-soft text-primary-strong" : "text-foreground hover:bg-surface-muted"
                             ].join(" ")}
                             style={{ fontFamily: `"${fontOption.family}", sans-serif` }}
-                            onClick={() => {
-                              update("fontFamily", fontOption.family);
-                              onFontMenuOpenChange(false);
-                            }}
+                            onClick={() => selectFontFamily(fontOption.family)}
                           >
                             <span className="block truncate">{fontOption.label}</span>
                             <span className="mt-0.5 block truncate text-[10px] font-bold text-muted/80">{fontOption.mood}</span>
@@ -2397,7 +2465,10 @@ function TextControls({
                       </div>
                     ))}
                   </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="px-3 py-4 text-center text-xs font-bold text-muted">該当なし</p>
+                )}
               </div>
             </div>
           ) : null}

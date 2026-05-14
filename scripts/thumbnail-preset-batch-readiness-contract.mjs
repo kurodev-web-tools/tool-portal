@@ -48,6 +48,7 @@ const existingPresetIds = [
   "stream_announce",
   "first_stream",
   "anniversary_stream",
+  "endurance_stream",
   "karaoke",
   "chatting",
   "clip",
@@ -60,12 +61,6 @@ const existingPresetIds = [
 assert.deepEqual(lib.thumbnailPresets.map((preset) => preset.id), existingPresetIds, "existing preset ids remain stable");
 
 const expectedCandidates = [
-  {
-    id: "endurance_stream",
-    label: "耐久配信",
-    useCase: "耐久企画や長時間配信の目標表示向け",
-    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"]
-  },
   {
     id: "karaoke_stream",
     label: "歌枠",

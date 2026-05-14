@@ -29,27 +29,27 @@
 
 ## Active
 
-- Thumbnail Editor usecase preset implementation: `anniversary_stream` / 記念配信
-  - branch / worktree: `codex/thumbnail-anniversary-stream-preset` / `.worktrees/thumbnail-anniversary-stream-preset`
-  - 前提確認: PR #115 `[codex] Plan thumbnail usecase preset mocks` は GitHub 上で `MERGED`、merge commit `3d5e7dd24826dc95abbc46d511a844bb86c05800`。先行 PR #116 `[codex] Add first stream thumbnail preset` も `MERGED`、merge commit `68bbcd48d71586b1891314f8bfd766abe19aa8bf` が `origin/main` の HEAD であることを確認済み。
-  - 実装 preset id: `anniversary_stream`
-  - scope: `anniversary_stream` / 記念配信のみ。`lib/thumbnail-editor.ts` に preset body を追加し、`anniversary_stream` を future batch candidate から実 preset へ昇格した。schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更していない。
-  - 生成元: built-in `image_gen` mode。採用元は `C:\Users\taka\.codex\generated_images\019e2571-e90b-7b53-94b0-4def74901259\` に残置。
-    - background source: `ig_02e9930e44647fd4016a057e314570819188b3222433ec8c55.png`
-    - milestone badge source: `ig_02e9930e44647fd4016a057e82e4748191b627213a14dda75a.png`
-    - gold corner ornament source: `ig_02e9930e44647fd4016a057eae36188191ad6264aba7340377.png`
-    - glint cluster source: `ig_02e9930e44647fd4016a057ed435d48191aa8bdde47775ae13.png`
-    - label plaque source: `ig_02e9930e44647fd4016a057ef7a6b48191ab9107f160c2b855.png`
-    - time badge source: `ig_02e9930e44647fd4016a057f4c89b08191af002bc94a4882b1.png`
+- Thumbnail Editor usecase preset implementation: `endurance_stream` / 耐久配信
+  - branch / worktree: `codex/thumbnail-endurance-stream-preset` / `.worktrees/thumbnail-endurance-stream-preset`
+  - 前提確認: PR #115 `[codex] Plan thumbnail usecase preset mocks` は `MERGED`、merge commit `3d5e7dd24826dc95abbc46d511a844bb86c05800`。PR #116 `[codex] Add first stream thumbnail preset` は `MERGED`、merge commit `68bbcd48d71586b1891314f8bfd766abe19aa8bf`。PR #117 `[codex] Add anniversary stream thumbnail preset` は `MERGED`、merge commit `562163fe90546d4dee413947ffc0ec36a9068683`。3 commit とも `origin/main` に含まれることを確認済み。
+  - 実装 preset id: `endurance_stream`
+  - scope: `endurance_stream` / 耐久配信のみ。`lib/thumbnail-editor.ts` に preset body を追加し、`endurance_stream` を future batch candidate から実 preset へ昇格した。schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更していない。
+  - 生成元: built-in `image_gen` mode。採用元は `C:\Users\taka\.codex\generated_images\019e25fa-8a8b-7e81-aa27-2be872628089\` に残置。装飾 asset は `remove_chroma_key.py` で chroma-key removal 後、`768 x 512` uniform-cell PNG に整形した。
+    - background source: `ig_0f7951029f3eaeb7016a05a0fd1b248191b7e6b97dbfb15c58.png`
+    - goal badge panel source: `ig_0f7951029f3eaeb7016a05a1409a908191a872f4302df661c8.png`
+    - progress divider source: `ig_0f7951029f3eaeb7016a05a19345e48191829f01a869449a69.png`
+    - challenge label plaque source: `ig_0f7951029f3eaeb7016a05a1c245108191937cce4badaa658b.png`
+    - time badge source: `ig_0f7951029f3eaeb7016a05a1ed8758819195b96e92b7493904.png`
+    - sharp frame accents source: `ig_0f7951029f3eaeb7016a05a22906808191ab7113002d6b56e4.png`
   - repo asset:
-    - `public/assets/images/thumbnail-editor/phase5/anniversary-stream-background-v1.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/anniversary-stream-milestone-badge-gold-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/anniversary-stream-corner-ornament-gold-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/anniversary-stream-glint-cluster-gold-rose-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/anniversary-stream-label-plaque-navy-gold-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/anniversary-stream-time-badge-navy-gold-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/phase5/endurance-stream-background-v1.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-goal-badge-panel-lime-orange-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-progress-divider-lime-cyan-orange-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-challenge-label-plaque-lime-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-time-badge-orange-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-sharp-frame-accents-lime-cyan-uniform-cell.png`
   - contract / verification:
-    - `node scripts/thumbnail-usecase-anniversary-stream-preset-contract.mjs` PASS
+    - `node scripts/thumbnail-usecase-endurance-stream-preset-contract.mjs` PASS
     - `node scripts/thumbnail-preset-discovery-contract.mjs` PASS
     - `node scripts/thumbnail-preset-batch-readiness-contract.mjs` PASS
     - `node scripts/thumbnail-preset-variants-contract.mjs` PASS
@@ -58,43 +58,7 @@
     - `git diff --check` PASS（CRLF 変換 warning のみ）
     - `npm run lint` PASS
     - `npx tsc --noEmit` PASS
-  - 幅別確認: dev server `http://localhost:3026/tools/thumbnail-editor`、Playwright + Chrome。`390 / 820 / 1024 / 1280 / 1366px` すべてで `記念配信` preset card 表示、preset 選択可、canvas 表示、横 overflow なし。確認用 screenshot は ignored path `output/thumbnail-anniversary-stream-widths/anniversary-stream-*.png`。
-  - 次 preset 実装用 prompt:
-
-```text
-対象repo: D:\V_streamer_tools
-
-目的:
-- Thumbnail Editor の追加用途 preset `endurance_stream` / 耐久配信を 1 preset / 1 PR で実装する
-- 背景 + 焼き込み装飾 + 必要 asset + preset body + 必要 contract を追加する
-- 背景・装飾 asset 生成には必ず [$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md) を使う
-
-前提:
-- AGENTS.md、task.md、docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md、docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md を読む
-- mock `docs/mockups/thumbnail-editor-usecase-preset-candidates/endurance-stream-mock.png` を方向性 reference として確認する
-- PR #115 `[codex] Plan thumbnail usecase preset mocks` と、先行する `first_stream` / `anniversary_stream` 実装 PR が main / origin/main に merge 済みか確認する
-- 未mergeなら新規作業へ進まず、merge待ち / review対応が必要かだけを blocker summary にする
-- main 直作業は避け、origin/main 起点で feature branch / `.worktrees/...` を切る
-- ローカル main の未コミット変更があっても触らない
-
-scope:
-- `endurance_stream` / 耐久配信のみ
-- 背景、goal badge panel、progress divider、challenge label plaque、time badge、sharp frame accents、preset body、必要 contract を追加する
-- schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない
-
-参考:
-- mock: `docs/mockups/thumbnail-editor-usecase-preset-candidates/endurance-stream-mock.png`
-- direction: dark charcoal + electric lime / cyan / orange、challenge / progress / goal、情報整理された耐久感
-
-検証:
-- preset / asset contract を追加または更新
-- `git diff --check`
-- 該当 contract、`npm run lint`、`npx tsc --noEmit`
-- UI 表示を触った場合は `390 / 820 / 1024 / 1280 / 1366px` を確認して task.md に記録
-
-終了:
-- task.md 更新、diff 確認、commit、push、draft PR 作成
-```
+  - 幅別確認: dev server `http://localhost:3027/tools/thumbnail-editor`、Playwright + Chrome。`390 / 820 / 1024 / 1280 / 1366px` すべてで `耐久配信` preset card 表示、preset 選択可、canvas 表示、横 overflow `0`。確認用 screenshot は ignored path `output/playwright/thumbnail-endurance-stream-widths/endurance-stream-*.png`。canvas pixel capture は `output/playwright/thumbnail-endurance-stream-widths/endurance-stream-canvas-pixels-1280x720.png`。
 
 ## Freeze closeout state
 

@@ -3,6 +3,7 @@ export type ThumbnailPresetId =
   | "stream_announce"
   | "first_stream"
   | "anniversary_stream"
+  | "endurance_stream"
   | "karaoke"
   | "chatting"
   | "clip"
@@ -127,7 +128,6 @@ export type ThumbnailPresetVariantRelation = {
   variantIds: ThumbnailPresetVariantId[];
 };
 export type ThumbnailPresetBatchCandidateId =
-  | "endurance_stream"
   | "karaoke_stream"
   | "chat_stream"
   | "gameplay_stream"
@@ -1415,6 +1415,32 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     ]
   },
   {
+    id: "endurance_stream",
+    name: "耐久配信",
+    category: "配信ジャンル",
+    usageLabel: "耐久 / 目標",
+    description: "長時間企画や達成目標を強く見せる challenge / progress 向け。",
+    accent: "#c9ff00",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}endurance-stream-background-v1.png`),
+      assetDecorationLayer({ name: "画像 2（鋭角フレームアクセント）", src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-sharp-frame-accents-lime-cyan-uniform-cell.png`, x: 682, y: 20, width: 590, height: 394, opacity: 0.92 }),
+      assetDecorationLayer({ name: "画像 3（左上鋭角アクセント）", src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-sharp-frame-accents-lime-cyan-uniform-cell.png`, x: -176, y: -40, width: 500, height: 333, rotation: 180, opacity: 0.48 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 844, y: 86, width: 332, height: 548, fillColor: "#10182033", strokeColor: "#c9ff00", strokeWidth: 2, borderRadius: 28, opacity: 0.34 }),
+      assetDecorationLayer({ name: "画像 4（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-challenge-label-plaque-lime-uniform-cell.png`, x: 306, y: 36, width: 454, height: 303, opacity: 0.98 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "CHALLENGE", x: 418, y: 124, width: 244, height: 48, fontSize: 42, color: "#10180f", strokeWidth: 0, shadowColor: "#d8ff00", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Anton", italic: true, align: "center" }),
+      shapeLayer({ name: "図形 4（ラベル横ライン）", shapeType: "line", x: 646, y: 132, width: 150, height: 12, fillColor: "#33f5ff", strokeColor: "#33f5ff", strokeWidth: 3, borderRadius: 8, opacity: 0.66 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "耐久配信", x: 64, y: 182, width: 724, height: 172, fontSize: 142, lineHeight: 0.96, color: "#f8fbf6", strokeColor: "#050704", strokeWidth: 15, shadowColor: "#c9ff00", shadowBlur: 18, shadowOffsetX: 6, shadowOffsetY: 8, fontFamily: "M PLUS 1p" }),
+      shapeLayer({ name: "図形 6（見出し下ライン）", shapeType: "line", x: 82, y: 370, width: 630, height: 16, fillColor: "#c9ff00", strokeColor: "#c9ff00", strokeWidth: 5, borderRadius: 10, opacity: 0.68 }),
+      assetDecorationLayer({ name: "画像 5（目標バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-goal-badge-panel-lime-orange-uniform-cell.png`, x: 62, y: 382, width: 682, height: 218, opacity: 0.98 }),
+      textLayer({ name: "テキスト 5（目標）", text: "目標 100回", x: 136, y: 444, width: 462, height: 76, fontSize: 64, color: "#ff9a1f", strokeColor: "#07100f", strokeWidth: 7, shadowColor: "#c9ff00", shadowBlur: 10, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Orbitron", align: "center" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "達成するまで終われない", x: 94, y: 572, width: 616, height: 52, fontSize: 39, align: "center", color: "#f8fbf6", strokeColor: "#07100f", strokeWidth: 5, shadowColor: "#31f8ff", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "BIZ UDPGothic" }),
+      assetDecorationLayer({ name: "画像 6（進捗ディバイダー）", src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-progress-divider-lime-cyan-orange-uniform-cell.png`, x: 30, y: 612, width: 760, height: 126, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 7（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-time-badge-orange-uniform-cell.png`, x: 940, y: 476, width: 276, height: 184, opacity: 0.98 }),
+      shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 984, y: 618, width: 190, height: 10, fillColor: "#ff7b1d", strokeColor: "#ff7b1d", strokeWidth: 3, borderRadius: 8, opacity: 0.54 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "19:00 START", x: 980, y: 548, width: 202, height: 48, fontSize: 39, color: "#ff8a1f", strokeColor: "#060a0a", strokeWidth: 4, shadowColor: "#33f5ff", shadowBlur: 8, shadowOffsetX: 1, shadowOffsetY: 2, fontFamily: "Orbitron", align: "center" })
+    ]
+  },
+  {
     id: "karaoke",
     name: "歌枠",
     category: "配信ジャンル",
@@ -1633,15 +1659,6 @@ const thumbnailPresetBatchDependencies: ThumbnailPresetBatchDependency[] = [
 ];
 
 export const thumbnailPresetBatchCandidates: ThumbnailPresetBatchCandidate[] = [
-  {
-    id: "endurance_stream",
-    label: "耐久配信",
-    useCase: "耐久企画や長時間配信の目標表示向け",
-    recommendedVariantId: "landscape-16-9",
-    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
-    requiredMaterialCategories: ["label-base", "date-badge", "divider", "frame"],
-    dependsOn: thumbnailPresetBatchDependencies
-  },
   {
     id: "karaoke_stream",
     label: "歌枠",

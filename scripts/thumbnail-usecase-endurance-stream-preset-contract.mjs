@@ -30,7 +30,12 @@ const expectedDecorationFiles = [
   "endurance-stream-progress-divider-lime-cyan-orange-uniform-cell.png",
   "endurance-stream-challenge-label-plaque-lime-uniform-cell.png",
   "endurance-stream-time-badge-orange-uniform-cell.png",
-  "endurance-stream-sharp-frame-accents-lime-cyan-uniform-cell.png"
+  "endurance-stream-frame-corner-left-lime-cyan-uniform-cell.png",
+  "endurance-stream-frame-corner-right-lime-cyan-uniform-cell.png",
+  "endurance-stream-lightning-bolt-lime-uniform-cell.png",
+  "endurance-stream-lightning-bolt-cyan-uniform-cell.png",
+  "endurance-stream-chevron-cluster-lime-cyan-uniform-cell.png",
+  "endurance-stream-rail-accent-lime-cyan-uniform-cell.png"
 ];
 
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -151,6 +156,12 @@ for (const fileName of expectedDecorationFiles) {
   assert.ok(fs.statSync(assetPath).size < 700_000, `${fileName} stays reasonably lightweight`);
 }
 
+assert.equal(
+  fs.existsSync(path.join(root, "public", "assets", "images", "thumbnail-editor", "decorations", "phase5", "endurance-stream-sharp-frame-accents-lime-cyan-uniform-cell.png")),
+  false,
+  "old grouped sharp frame asset is removed after split"
+);
+
 const decorationSources = new Set(
   endurancePreset.layers
     .filter((layer) => layer.type === "image" && layer.src.startsWith(phase5DecorationPrefix))
@@ -159,6 +170,12 @@ const decorationSources = new Set(
 for (const fileName of expectedDecorationFiles) {
   assert.equal(decorationSources.has(fileName), true, `endurance_stream preset uses ${fileName}`);
 }
+
+assert.equal(
+  decorationSources.has("endurance-stream-sharp-frame-accents-lime-cyan-uniform-cell.png"),
+  false,
+  "endurance_stream uses split frame accents instead of one grouped frame sheet"
+);
 
 assert.equal(
   endurancePreset.layers.some((layer) => layer.type === "image" && layer.src.includes("/decorations/phase4/")),
@@ -195,6 +212,12 @@ assert.ok(
   ),
   "endurance_stream keeps a wide progress divider asset layer"
 );
+
+const splitFrameLayers = endurancePreset.layers.filter(
+  (layer) => layer.type === "image" && path.basename(layer.src).startsWith("endurance-stream-frame-corner-")
+);
+assert.ok(splitFrameLayers.length >= 4, "endurance_stream places corner frame assets as reusable individual layers");
+assert.ok(splitFrameLayers.some((layer) => layer.rotation === 180), "endurance_stream reuses corner assets with 180-degree rotation");
 
 assert.equal(
   lib.thumbnailPresetBatchCandidates.some((candidate) => candidate.id === "endurance_stream"),

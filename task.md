@@ -30,7 +30,7 @@
 ## Active
 
 - Thumbnail Editor usecase preset implementation: `endurance_stream` / 耐久配信
-  - branch / worktree: `codex/thumbnail-endurance-stream-preset` / `.worktrees/thumbnail-endurance-stream-preset`
+  - branch / worktree: `codex/thumbnail-endurance-frame-assets-split` / `.worktrees/thumbnail-endurance-frame-assets-split`
   - 前提確認: PR #115 `[codex] Plan thumbnail usecase preset mocks` は `MERGED`、merge commit `3d5e7dd24826dc95abbc46d511a844bb86c05800`。PR #116 `[codex] Add first stream thumbnail preset` は `MERGED`、merge commit `68bbcd48d71586b1891314f8bfd766abe19aa8bf`。PR #117 `[codex] Add anniversary stream thumbnail preset` は `MERGED`、merge commit `562163fe90546d4dee413947ffc0ec36a9068683`。3 commit とも `origin/main` に含まれることを確認済み。
   - 実装 preset id: `endurance_stream`
   - scope: `endurance_stream` / 耐久配信のみ。`lib/thumbnail-editor.ts` に preset body を追加し、`endurance_stream` を future batch candidate から実 preset へ昇格した。schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更していない。
@@ -41,13 +41,25 @@
     - challenge label plaque source: `ig_0f7951029f3eaeb7016a05a1c245108191937cce4badaa658b.png`
     - time badge source: `ig_0f7951029f3eaeb7016a05a1ed8758819195b96e92b7493904.png`
     - sharp frame accents source: `ig_0f7951029f3eaeb7016a05a22906808191ab7113002d6b56e4.png`
+    - regenerated frame corner left source: `ig_0f7951029f3eaeb7016a05acc9f7688191ac6851b89c50246f.png`
+    - regenerated frame corner right source: `ig_0f7951029f3eaeb7016a05ad2fe0448191b78936a6ca648b18.png`
+    - regenerated lightning bolt lime source: `ig_0f7951029f3eaeb7016a05ad8679908191a7612f4477e1c198.png`
+    - regenerated lightning bolt cyan source: `ig_0f7951029f3eaeb7016a05add70de481919ac2c472e31bef6b.png`
+    - regenerated chevron cluster source: `ig_0f7951029f3eaeb7016a05ae2beb748191a685f889bafe4f1a.png`
+    - regenerated rail accent source: `ig_0f7951029f3eaeb7016a05ae75c52481918f47306903ff732d.png`
   - repo asset:
     - `public/assets/images/thumbnail-editor/phase5/endurance-stream-background-v1.png`
     - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-goal-badge-panel-lime-orange-uniform-cell.png`
     - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-progress-divider-lime-cyan-orange-uniform-cell.png`
     - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-challenge-label-plaque-lime-uniform-cell.png`
     - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-time-badge-orange-uniform-cell.png`
-    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-sharp-frame-accents-lime-cyan-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-frame-corner-left-lime-cyan-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-frame-corner-right-lime-cyan-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-lightning-bolt-lime-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-lightning-bolt-cyan-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-chevron-cluster-lime-cyan-uniform-cell.png`
+    - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-rail-accent-lime-cyan-uniform-cell.png`
+  - follow-up: PR #118 merge 後、`endurance-stream-sharp-frame-accents-lime-cyan-uniform-cell.png` は grouped sheet として扱いづらいため削除し、左右 corner 2種 + 稲妻 / chevron / rail の個別 asset に分割した。初回の機械切り出しでは角枠に余計な入り込みが残ったため、この6点だけ built-in `image_gen` mode で再生成した。4角は `frame-corner-left` / `frame-corner-right` を preset body 側で 180 度回転再利用する。
   - contract / verification:
     - `node scripts/thumbnail-usecase-endurance-stream-preset-contract.mjs` PASS
     - `node scripts/thumbnail-preset-discovery-contract.mjs` PASS
@@ -58,7 +70,7 @@
     - `git diff --check` PASS（CRLF 変換 warning のみ）
     - `npm run lint` PASS
     - `npx tsc --noEmit` PASS
-  - 幅別確認: dev server `http://localhost:3027/tools/thumbnail-editor`、Playwright + Chrome。`390 / 820 / 1024 / 1280 / 1366px` すべてで `耐久配信` preset card 表示、preset 選択可、canvas 表示、横 overflow `0`。確認用 screenshot は ignored path `output/playwright/thumbnail-endurance-stream-widths/endurance-stream-*.png`。canvas pixel capture は `output/playwright/thumbnail-endurance-stream-widths/endurance-stream-canvas-pixels-1280x720.png`。
+  - 幅別確認: dev server `http://localhost:3000/tools/thumbnail-editor`、Playwright + Chrome。`390 / 820 / 1024 / 1280 / 1366px` すべてで `耐久配信` preset card 表示、preset 選択可、canvas 表示、横 overflow `0`。確認用 screenshot は ignored path `output/playwright/thumbnail-endurance-frame-assets-split/endurance-frame-regenerated-*.png`。canvas pixel capture は `output/playwright/thumbnail-endurance-frame-assets-split/endurance-frame-regenerated-canvas-pixels-1280x720.png`。
 
 ## Freeze closeout state
 

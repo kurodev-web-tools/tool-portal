@@ -123,6 +123,14 @@ Thumbnail Editor の font asset / preset batch 本体へ進む前に、初期フ
 
 この batch では font UI category 表示、search / recently used、preset body への font 適用、text / image layer schema 変更は扱わない。
 
+### Font UI Category State
+
+2026-05-14 の font UI categories では、`thumbnailFontManifest` の `language` / `category` / `mood` を使い、font listbox を language -> category -> font + mood の短い表示へ整理した。
+
+- listbox は manifest 24 種を表示する。
+- 既存の fontFamily 選択、draft schema、canvas export、font loading helper は変更しない。
+- search / recently used、preset body への font 適用、preset font application は後続 PR に残す。
+
 ### Google Fonts CDN
 
 - 速く候補検証できるが、runtime 外部依存、CSP、offline / static export、canvas export 前の race が増える。
@@ -154,6 +162,7 @@ Thumbnail Editor の font asset / preset batch 本体へ進む前に、初期フ
 4. `font UI categories`
    - listbox を language / mood category 表示へ拡張する。
    - 検索、最近使った、preset body 変更は別 scope にする。
+   - 現在の状態: language / category / mood 表示は実装済み。検索、最近使った、preset body 変更は後続。
 5. `preset font application`
    - preset batch 本体で font を使う場合だけ、preset text layer の `fontFamily` を候補 catalog 内で差し替える。
    - schema、handoff payload、crop 仕様は変えない。

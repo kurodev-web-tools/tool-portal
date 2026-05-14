@@ -202,6 +202,22 @@ export type ThumbnailFontManifestEntry = {
   license?: string;
   assets?: ThumbnailFontAsset[];
 };
+export type ThumbnailFontListboxOption = {
+  family: string;
+  label: string;
+  language: ThumbnailFontLanguage;
+  category: string;
+  mood: string;
+};
+export type ThumbnailFontListboxCategory = {
+  label: string;
+  options: ThumbnailFontListboxOption[];
+};
+export type ThumbnailFontListboxGroup = {
+  language: ThumbnailFontLanguage;
+  label: string;
+  categories: ThumbnailFontListboxCategory[];
+};
 export type ThumbnailFontLoadRequest = {
   fontFamily: string;
   canvasFont: string;
@@ -901,6 +917,31 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     sourceUrl: "https://fonts.google.com/specimen/Press+Start+2P"
   }, "press-start-2p", [400])
 ];
+const thumbnailFontLanguageLabels: Record<ThumbnailFontLanguage, string> = {
+  ja: "日本語",
+  en: "English"
+};
+const createThumbnailFontListboxGroup = (language: ThumbnailFontLanguage): ThumbnailFontListboxGroup => {
+  const categories = new Map<string, ThumbnailFontListboxOption[]>();
+  for (const font of thumbnailFontManifest.filter((item) => item.language === language)) {
+    const options = categories.get(font.category) ?? [];
+    options.push({
+      family: font.family,
+      label: font.family,
+      language: font.language,
+      category: font.category,
+      mood: font.mood
+    });
+    categories.set(font.category, options);
+  }
+
+  return {
+    language,
+    label: thumbnailFontLanguageLabels[language],
+    categories: Array.from(categories, ([label, options]) => ({ label, options }))
+  };
+};
+export const thumbnailFontListboxGroups: ThumbnailFontListboxGroup[] = [createThumbnailFontListboxGroup("ja"), createThumbnailFontListboxGroup("en")];
 export const thumbnailFontFallbackFamily = "Noto Sans JP";
 export const thumbnailCanvasFontFallbackStack = [thumbnailFontFallbackFamily, "BIZ UDPGothic", "Yu Gothic", "Meiryo", "sans-serif"];
 export const thumbnailFontLoadTimeoutMs = 1200;

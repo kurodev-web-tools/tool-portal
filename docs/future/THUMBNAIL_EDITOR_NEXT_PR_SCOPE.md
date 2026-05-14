@@ -9,6 +9,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 2026-05-14 時点では、font loading foundation として font manifest 24種、category metadata、safe load helper、canvas export 前の font readiness wait helper まで実装済み。
 同日後続の Japanese font batch で、日本語 12 種の self-host asset、`thumbnail-editor-ja-seed-v1` subset、license note、Thumbnail Editor route scoped CSS loading、export wait contract を追加済み。
 同日後続の English font batch で、英語 12 種の self-host asset、`thumbnail-editor-en-seed-v1` subset、license note、Thumbnail Editor route scoped CSS loading、export wait contract を追加済み。
+同日後続の font UI categories で、manifest 24 種を language / category / mood で整理する font listbox 表示を追加済み。
 この文書は、現行機能一覧ではなく、freeze 後に縦長 / 正方形 variant body、font asset、preset batch 本体、crop 仕様、text / image layer schema、public asset / font 追加へ広げるときの参照境界として扱う。
 
 維持する見え方:
@@ -26,7 +27,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 | P1 | preset variants | metadata / lightweight ref / 縦長・正方形 variant body helper は実装済み。 | UI 導線、preset batch 本体、crop / schema 変更は未追加。 |
 | P2 | partial preset apply | helper / UI 境界は実装済み。 | preset body / schema / crop 変更は引き続き別PR。 |
 | P3 | common material library | user material library UI v1 / management v1 まで実装済み。 | public asset 追加や素材登録変更は引き続き別PR。 |
-| P4 | font policy | fallback policy / helper、font loading foundation、日本語 12 種 self-host asset、英語 12 種 self-host asset は実装済み。 | font UI category 表示、preset font application は未実施。 |
+| P4 | font policy | fallback policy / helper、font loading foundation、日本語 12 種 self-host asset、英語 12 種 self-host asset、font UI category 表示は実装済み。 | search / recently used、preset font application は未実施。 |
 | P5 | preset batch | readiness metadata / helper は実装済み。 | preset batch 本体追加は未実施。 |
 | P6 | quality guard expansion | export-preflight polish まで実装済み。 | 自動修正、重い診断UI、schema / material / preset 変更は引き続き入れない。 |
 
@@ -188,7 +189,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - Schedule Calendar / SNS Split Image Maker 実装。
 - 現在の扱い:
   - P4 policy / helper と font loading foundation は実装済み。初期候補 24 種、カテゴリ、読み込み方針、後続 PR scope は `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md` を参照する。
-  - Japanese font batch と English font batch は実装済み。font UI category 表示、preset font application は別PRにする。
+  - Japanese font batch、English font batch、font UI category 表示は実装済み。search / recently used、preset font application は別PRにする。
 
 #### 実装で確定した境界
 
@@ -204,6 +205,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - Japanese asset subset は `thumbnail-editor-ja-seed-v1`。任意入力の完全 coverage ではなく、current preset text / date labels / numeric / basic Latin / common punctuation を中心にした初期 seed subset とし、未収録 glyph は fallback stack で継続する。
 - English font batch では `public/fonts/thumbnail-editor/**` に self-host asset を追加し、Thumbnail Editor component の CSS module だけで読み込む。既存の app-wide font import / CSP は触らない。
 - English asset subset は `thumbnail-editor-en-seed-v1`。Google Fonts CSS2 の Latin woff2 subset を self-host し、英字 display label / numeric / common punctuation / basic Latin fallback characters を中心にする。日本語混在時は fallback stack で継続する。
+- font UI categories では `thumbnailFontManifest` 由来の `language` / `category` / `mood` を listbox に表示する。既存の fontFamily 選択、draft schema、canvas export、font loading helper、preset body は変更しない。
 
 ### 5. preset batch
 

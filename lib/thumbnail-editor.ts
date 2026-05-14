@@ -6,6 +6,7 @@ export type ThumbnailPresetId =
   | "endurance_stream"
   | "project_stream"
   | "cover_song_notice"
+  | "event_notice"
   | "karaoke"
   | "chatting"
   | "clip"
@@ -1501,6 +1502,33 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       assetDecorationLayer({ name: "画像 7（時刻ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-label-plaque-magenta-cyan-uniform-cell.png`, x: 56, y: 496, width: 660, height: 440, opacity: 0.98 }),
       shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 194, y: 646, width: 342, height: 12, fillColor: "#8ff7ff", strokeColor: "#8ff7ff", strokeWidth: 3, borderRadius: 8, opacity: 0.62 }),
       textLayer({ name: "テキスト 2（時刻）", text: "20:00 公開", x: 142, y: 560, width: 500, height: 78, fontSize: 70, color: "#ffffff", strokeColor: "#250735", strokeWidth: 5, shadowColor: "#ff4ee3", shadowBlur: 11, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Bebas Neue", align: "center" })
+    ]
+  },
+  {
+    id: "event_notice",
+    name: "イベント告知",
+    category: "告知画像",
+    usageLabel: "イベント / 参加情報",
+    description: "日付、参加情報、key visual 枠を整理して見せる event flyer 向け。",
+    accent: "#007a4d",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}event-notice-background-v1.png`),
+      assetDecorationLayer({ name: "画像 2（キービジュアル枠）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-key-visual-frame-emerald-uniform-cell.png`, x: 782, y: 10, width: 488, height: 650, opacity: 0.9 }),
+      shapeLayer({ name: "図形 3（キービジュアル挿入ガイド）", shapeType: "frame", x: 846, y: 84, width: 354, height: 492, fillColor: "#f5fff42a", strokeColor: "#0d6f4e", strokeWidth: 2, borderRadius: 20, opacity: 0.28 }),
+      textLayer({ name: "テキスト 5（キービジュアル注記）", text: "KEY VISUAL", x: 904, y: 324, width: 238, height: 40, fontSize: 30, color: "#0c6b4b", strokeColor: "#f4fbef", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
+      assetDecorationLayer({ name: "画像 3（左上角マーク）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-corner-mark-emerald-gold-uniform-cell.png`, x: 42, y: 58, width: 164, height: 110, opacity: 0.82 }),
+      assetDecorationLayer({ name: "画像 4（右下角マーク）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-corner-mark-emerald-gold-uniform-cell.png`, x: 612, y: 520, width: 164, height: 110, rotation: 180, opacity: 0.68 }),
+      assetDecorationLayer({ name: "画像 5（ラベル用角マーク）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-corner-mark-emerald-gold-uniform-cell.png`, x: 366, y: 26, width: 132, height: 88, rotation: 90, opacity: 0.76 }),
+      shapeLayer({ name: "図形 4（ラベル土台）", shapeType: "rect", x: 330, y: 42, width: 300, height: 58, fillColor: "#006a45", strokeColor: "#f7f4df", strokeWidth: 4, borderRadius: 10, opacity: 0.95 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "EVENT INFO", x: 376, y: 58, width: 210, height: 32, fontSize: 28, color: "#f7f4df", strokeColor: "#003b2c", strokeWidth: 1, shadowColor: "#07291f", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "イベント告知", x: 54, y: 144, width: 674, height: 150, fontSize: 118, lineHeight: 0.94, color: "#006b45", strokeColor: "#fffaf0", strokeWidth: 9, shadowColor: "#0b1a33", shadowBlur: 8, shadowOffsetX: 5, shadowOffsetY: 6, fontFamily: "Zen Kaku Gothic New", bold: true }),
+      shapeLayer({ name: "図形 5（見出し下ライン）", shapeType: "line", x: 122, y: 328, width: 520, height: 12, fillColor: "#f2bd2f", strokeColor: "#f2bd2f", strokeWidth: 4, borderRadius: 8, opacity: 0.72 }),
+      assetDecorationLayer({ name: "画像 6（日付チケットバッジ）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-ticket-date-badge-emerald-uniform-cell.png`, x: 154, y: 292, width: 558, height: 372, rotation: -2, opacity: 0.98 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "06.15 SAT", x: 260, y: 404, width: 344, height: 74, fontSize: 69, color: "#fffdf2", strokeColor: "#00452f", strokeWidth: 3, shadowColor: "#001f34", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Oswald", align: "center" }),
+      assetDecorationLayer({ name: "画像 7（参加情報バンド）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-info-band-navy-emerald-uniform-cell.png`, x: 18, y: 476, width: 760, height: 264, opacity: 0.96 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "参加情報まとめ", x: 120, y: 506, width: 540, height: 58, fontSize: 47, align: "center", color: "#092746", strokeColor: "#fffaf0", strokeWidth: 4, shadowColor: "#0d8b63", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "BIZ UDPGothic", bold: true }),
+      shapeLayer({ name: "図形 6（情報区切りライン）", shapeType: "line", x: 134, y: 586, width: 470, height: 10, fillColor: "#0b6d4a", strokeColor: "#0b6d4a", strokeWidth: 3, borderRadius: 8, opacity: 0.62 }),
+      assetDecorationLayer({ name: "画像 8（マップラインディバイダー）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-map-line-divider-emerald-gold-uniform-cell.png`, x: 28, y: 596, width: 650, height: 434, rotation: -2, opacity: 0.78 })
     ]
   },
   {

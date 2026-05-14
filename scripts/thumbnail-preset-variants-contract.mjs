@@ -38,6 +38,7 @@ assert.deepEqual(
   [
     "stream_announce",
     "first_stream",
+    "anniversary_stream",
     "karaoke",
     "chatting",
     "clip",

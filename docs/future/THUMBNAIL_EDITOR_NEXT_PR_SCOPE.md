@@ -6,6 +6,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 この整理では新機能、UI文言、asset、preset本体、schema、crop、外部fontは変更しない。
 
 2026-05-13 時点では、P1〜P6 の contract / helper 境界に加え、user material library UI v1、user material library management v1、quality guard export-preflight polish まで実装済み。
+2026-05-14 時点では、font loading foundation として font manifest 24種、category metadata、safe load helper、canvas export 前の font readiness wait helper まで実装済み。
 この文書は、現行機能一覧ではなく、freeze 後に縦長 / 正方形 variant body、font asset、preset batch 本体、crop 仕様、text / image layer schema、public asset / font 追加へ広げるときの参照境界として扱う。
 
 維持する見え方:
@@ -23,7 +24,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 | P1 | preset variants | metadata / lightweight ref / 縦長・正方形 variant body helper は実装済み。 | UI 導線、preset batch 本体、crop / schema 変更は未追加。 |
 | P2 | partial preset apply | helper / UI 境界は実装済み。 | preset body / schema / crop 変更は引き続き別PR。 |
 | P3 | common material library | user material library UI v1 / management v1 まで実装済み。 | public asset 追加や素材登録変更は引き続き別PR。 |
-| P4 | font policy | fallback policy / helper は実装済み。 | font asset 追加は未実施。 |
+| P4 | font policy | fallback policy / helper と font loading foundation は実装済み。 | font asset 追加、font UI category 表示、preset font application は未実施。 |
 | P5 | preset batch | readiness metadata / helper は実装済み。 | preset batch 本体追加は未実施。 |
 | P6 | quality guard expansion | export-preflight polish まで実装済み。 | 自動修正、重い診断UI、schema / material / preset 変更は引き続き入れない。 |
 
@@ -163,6 +164,8 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - 既存fontだけで進める条件。
   - 追加する場合の self-host / repo 同梱 / license / fallback の条件。
   - preset ごとではなく editor 全体で使う policy。
+  - 初期候補 24 種の language / category / mood / bestFor / caution / sourceUrl metadata。
+  - canvas export 前に使用中 text layer の font readiness を待つ helper。
 - 入れないもの:
   - 外部 CDN / Google Fonts の新規参照。
   - font asset 追加。
@@ -182,7 +185,7 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
   - preset 本体。
   - Schedule Calendar / SNS Split Image Maker 実装。
 - 現在の扱い:
-  - P4 policy / helper は実装済み。初期候補 24 種、カテゴリ、読み込み方針、後続 PR scope は `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md` を参照する。実 font asset 追加は別PRにする。
+  - P4 policy / helper と font loading foundation は実装済み。初期候補 24 種、カテゴリ、読み込み方針、後続 PR scope は `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md` を参照する。実 font asset 追加、font UI category 表示、preset font application は別PRにする。
 
 #### 実装で確定した境界
 
@@ -191,6 +194,9 @@ Thumbnail Editor の残作業を、実装前に contract-first で確認でき�
 - 既存 `thumbnailFonts` に含まれる fontFamily はそのまま保持し、未知、空、URL、`@import`、comma stack、quote を含む unsafe fontFamily は `Noto Sans JP` へ fallback する。
 - canvas rendering / export は `getThumbnailCanvasFont()` を通し、`Noto Sans JP` / `BIZ UDPGothic` / `Yu Gothic` / `Meiryo` / `sans-serif` の fallback stack を使う。
 - normalize は text layer schema を破壊せず、preset 初期 text layer の fontFamily、material、partial apply、variant refs、recent / favorite、Schedule Calendar / SNS Split Image Maker handoff contract は変更しない。
+- font manifest は `thumbnailFontManifest` の metadata として持ち、sourceUrl は Google Fonts specimen の確認 URL に留める。Google Fonts CDN / CSP / CSS `@font-face` / `public/fonts/**` は変更しない。
+- `waitForThumbnailDraftFonts()` は PNG / JPEG export と Thumbnail -> SNS handoff の canvas 生成前に呼ぶ。`document.fonts` がない環境、load failure、timeout では fallback stack で export を継続する。
+- 既存 text layer font UI は `thumbnailFontGroups` の日本語 10 種 / 英語 10 種表示を維持し、language / mood category 表示は後続 PR に残す。
 
 ### 5. preset batch
 

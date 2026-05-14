@@ -30,6 +30,12 @@ assert.ok(Array.isArray(lib.thumbnailCanvasFontFallbackStack), "canvas fallback 
 assert.equal(typeof lib.normalizeThumbnailFontFamily, "function", "font family fallback helper is exported");
 assert.equal(typeof lib.getThumbnailCanvasFontFamily, "function", "canvas font family helper is exported");
 assert.equal(typeof lib.getThumbnailCanvasFont, "function", "canvas font shorthand helper is exported");
+assert.ok(Array.isArray(lib.thumbnailFontManifest), "font manifest metadata is exported");
+assert.equal(typeof lib.getThumbnailFontManifestEntry, "function", "font manifest lookup helper is exported");
+assert.equal(typeof lib.getThumbnailFontLoadRequests, "function", "font load request helper is exported");
+assert.equal(typeof lib.waitForThumbnailFontLoadRequests, "function", "safe font load helper is exported");
+assert.equal(typeof lib.waitForThumbnailDraftFonts, "function", "draft font readiness helper is exported");
+assert.equal(typeof lib.thumbnailFontLoadTimeoutMs, "number", "font load timeout is exported");
 
 assert.deepEqual(
   lib.thumbnailFontPolicy,
@@ -52,6 +58,52 @@ assert.deepEqual(
   ["Noto Sans JP", "BIZ UDPGothic", "Yu Gothic", "Meiryo", "sans-serif"],
   "canvas fallback stack stays local/browser-resolved"
 );
+
+assert.equal(lib.thumbnailFontManifest.length, 24, "planning PR's 24 font candidates are available as metadata");
+assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "ja").length, 12, "manifest keeps 12 Japanese candidates");
+assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "en").length, 12, "manifest keeps 12 English candidates");
+for (const font of lib.thumbnailFontManifest) {
+  assert.equal(typeof font.family, "string", "manifest font family is a string");
+  assert.ok(["ja", "en"].includes(font.language), `${font.family} has a supported language`);
+  assert.equal(typeof font.category, "string", `${font.family} has a UI category`);
+  assert.equal(typeof font.mood, "string", `${font.family} has a thumbnail mood`);
+  assert.equal(typeof font.bestFor, "string", `${font.family} has recommended usage`);
+  assert.equal(typeof font.caution, "string", `${font.family} has caution copy`);
+  assert.match(font.sourceUrl, /^https:\/\/fonts\.google\.com\/specimen\//, `${font.family} source URL is specimen metadata only`);
+}
+assert.deepEqual(
+  lib.thumbnailFontManifest.map((font) => font.family),
+  [
+    "Noto Sans JP",
+    "M PLUS 1p",
+    "BIZ UDPGothic",
+    "Zen Kaku Gothic New",
+    "M PLUS Rounded 1c",
+    "Kosugi Maru",
+    "Noto Serif JP",
+    "Kiwi Maru",
+    "Yomogi",
+    "Hachi Maru Pop",
+    "RocknRoll One",
+    "DotGothic16",
+    "Anton",
+    "Bebas Neue",
+    "Oswald",
+    "Montserrat",
+    "Poppins",
+    "Rubik",
+    "Fredoka",
+    "Bangers",
+    "Playfair Display",
+    "Pacifico",
+    "Orbitron",
+    "Press Start 2P"
+  ],
+  "manifest preserves the planned candidate order"
+);
+assert.equal(lib.getThumbnailFontManifestEntry(" Oswald ").family, "Oswald", "manifest lookup trims known values");
+assert.equal(lib.getThumbnailFontManifestEntry("Unknown Fancy Font"), null, "manifest lookup rejects unknown values");
+assert.deepEqual(lib.thumbnailFontGroups.map((group) => group.fonts.length), [10, 10], "existing UI font groups stay unchanged in this foundation PR");
 
 for (const font of lib.thumbnailFonts) {
   assert.equal(lib.normalizeThumbnailFontFamily(font), font, `${font} is kept as a known editor font`);
@@ -86,6 +138,71 @@ assert.equal(
   "400 72px \"Noto Sans JP\", \"BIZ UDPGothic\", \"Yu Gothic\", \"Meiryo\", sans-serif",
   "canvas font shorthand cannot carry URL font values into rendering"
 );
+
+const fontLoadDraft = lib.createDraftFromPreset("stream_announce");
+for (const layer of fontLoadDraft.layers.filter((layer) => layer.type === "text")) {
+  layer.hidden = true;
+}
+const fontLoadTextLayer = fontLoadDraft.layers.find((layer) => layer.type === "text");
+fontLoadTextLayer.hidden = false;
+fontLoadTextLayer.fontFamily = "Oswald";
+const fontLoadRequests = lib.getThumbnailFontLoadRequests(fontLoadDraft);
+assert.ok(fontLoadRequests.some((request) => request.fontFamily === "Oswald"), "font load requests include used visible text layer fonts");
+assert.ok(fontLoadRequests.every((request) => request.canvasFont.includes("Noto Sans JP")), "font load requests keep canvas fallback stack");
+
+const unsupportedFontResult = await lib.waitForThumbnailFontLoadRequests(fontLoadRequests, { fontFaceSet: null, timeoutMs: 20 });
+assert.deepEqual(
+  unsupportedFontResult,
+  {
+    status: "unsupported",
+    attemptedFonts: ["Oswald"],
+    loadedFonts: [],
+    failedFonts: [],
+    timedOut: false,
+    usedFallback: true
+  },
+  "font load helper is safe when document.fonts is unavailable"
+);
+
+const loadedCalls = [];
+const loadedFontResult = await lib.waitForThumbnailDraftFonts(fontLoadDraft, {
+  fontFaceSet: {
+    load: async (font) => {
+      loadedCalls.push(font);
+      return [];
+    },
+    ready: Promise.resolve()
+  },
+  timeoutMs: 50
+});
+assert.equal(loadedFontResult.status, "loaded", "draft font wait resolves when fontFaceSet.load and ready resolve");
+assert.deepEqual(loadedFontResult.attemptedFonts, ["Oswald"], "draft font wait de-duplicates font families");
+assert.equal(loadedFontResult.usedFallback, false, "loaded font result does not mark fallback");
+assert.ok(loadedCalls[0].includes("\"Oswald\""), "fontFaceSet.load receives canvas font shorthand");
+
+const timeoutFontResult = await lib.waitForThumbnailFontLoadRequests(fontLoadRequests, {
+  fontFaceSet: {
+    load: () => new Promise(() => {}),
+    ready: new Promise(() => {})
+  },
+  timeoutMs: 5
+});
+assert.equal(timeoutFontResult.status, "timeout", "font load helper times out instead of blocking export");
+assert.equal(timeoutFontResult.timedOut, true, "timeout result is explicit");
+assert.equal(timeoutFontResult.usedFallback, true, "timeout continues through fallback stack");
+
+const failedFontResult = await lib.waitForThumbnailFontLoadRequests(fontLoadRequests, {
+  fontFaceSet: {
+    load: () => {
+      throw new Error("font load failed");
+    },
+    ready: Promise.resolve()
+  },
+  timeoutMs: 50
+});
+assert.equal(failedFontResult.status, "failed", "font load helper catches load failures");
+assert.deepEqual(failedFontResult.failedFonts, ["Oswald"], "font load failure reports the affected family");
+assert.equal(failedFontResult.usedFallback, true, "font load failure continues through fallback stack");
 
 const textLayerKeysBefore = JSON.stringify(
   lib.thumbnailPresets.map((preset) =>
@@ -156,7 +273,7 @@ assert.equal(handoffSource.includes("fontFamily"), false, "tool handoff contract
 assert.equal(componentSource.includes("fonts.googleapis.com"), false, "component does not add Google Fonts");
 
 const fontNetworkPattern = /fonts\.googleapis|fonts\.gstatic|@import\s+url|https?:\/\/[^"'\s]*(?:font|cdn)/i;
-assert.equal(fontNetworkPattern.test(source), false, "thumbnail editor library has no external font URL/import/CDN dependency");
+assert.equal(/fonts\.googleapis|fonts\.gstatic|@import\s+url/i.test(source), false, "thumbnail editor library has no external font runtime import/CDN dependency");
 assert.equal(fontNetworkPattern.test(componentSource), false, "thumbnail editor component has no external font URL/import/CDN dependency");
 assert.equal(fs.existsSync(path.join(root, "public", "fonts")), false, "this PR does not add bundled font assets");
 

@@ -73,6 +73,31 @@ Thumbnail Editor の font asset / preset batch 本体へ進む前に、初期フ
 - 英語 font も display 用は必要 weight のみに絞る。
 - fallback は現行の `Noto Sans JP` / `BIZ UDPGothic` / `Yu Gothic` / `Meiryo` / `sans-serif` を維持する。
 
+### Japanese Font Batch State
+
+2026-05-14 の Japanese font batch では、日本語 12 種を `public/fonts/thumbnail-editor/<family>/` 配下の self-host asset として追加した。
+追加 asset は Google Fonts CDN へ新規依存せず、Thumbnail Editor component が CSS module として font face を読み込む。既存の app-wide font import / CSP はこの PR の対象外として触らない。
+
+- subset: `thumbnail-editor-ja-seed-v1`
+  - current Thumbnail Editor preset text、日付 / 時刻 / 配信ラベル、数字、基本 Latin、一般的な記号に絞る。
+  - 任意入力の全文字 coverage ではなく、初期 batch の容量を抑える seed subset。未収録 glyph は既存 fallback stack で継続する。
+- license note: `public/fonts/thumbnail-editor/LICENSES.md`
+- added weights:
+  - `Noto Sans JP`: `400 / 700 / 900`
+  - `M PLUS 1p`: `400 / 700 / 900`
+  - `BIZ UDPGothic`: `400 / 700`
+  - `Zen Kaku Gothic New`: `400 / 700 / 900`
+  - `M PLUS Rounded 1c`: `400 / 700 / 900`
+  - `Kosugi Maru`: `400`
+  - `Noto Serif JP`: `400 / 700 / 900`
+  - `Kiwi Maru`: `400 / 500`。700 は提供されないため、強め用途は 500 と stroke / shadow で補う。
+  - `Yomogi`: `400`
+  - `Hachi Maru Pop`: `400`
+  - `RocknRoll One`: `400`
+  - `DotGothic16`: `400`
+
+この batch では English font asset、font UI category 表示、preset body への font 適用、text / image layer schema 変更は扱わない。
+
 ### Google Fonts CDN
 
 - 速く候補検証できるが、runtime 外部依存、CSP、offline / static export、canvas export 前の race が増える。
@@ -97,6 +122,7 @@ Thumbnail Editor の font asset / preset batch 本体へ進む前に、初期フ
 2. `Japanese font batch`
    - 日本語 12 種のうち必要 weight / subset 方針を確定し、self-host asset を追加する。
    - 容量上限、license note、fallback、export wait を検証する。
+   - 現在の状態: self-host asset と export wait contract は追加済み。UI category 表示、English asset、preset font application は後続。
 3. `English font batch`
    - 英語 12 種の必要 weight を追加し、英字ラベル / display 用の preview と export wait を検証する。
 4. `font UI categories`

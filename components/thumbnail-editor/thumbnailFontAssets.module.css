@@ -1,0 +1,195 @@
+.thumbnailFontAssetScope {
+  --thumbnail-editor-font-assets: "ja-seed-v1";
+}
+
+@font-face {
+  font-family: "Noto Sans JP";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/noto-sans-jp/noto-sans-jp-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Noto Sans JP";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/noto-sans-jp/noto-sans-jp-700-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Noto Sans JP";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/noto-sans-jp/noto-sans-jp-900-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "M PLUS 1p";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/m-plus-1p/m-plus-1p-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "M PLUS 1p";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/m-plus-1p/m-plus-1p-700-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "M PLUS 1p";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/m-plus-1p/m-plus-1p-900-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "BIZ UDPGothic";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/biz-udpgothic/biz-udpgothic-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "BIZ UDPGothic";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/biz-udpgothic/biz-udpgothic-700-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/zen-kaku-gothic-new/zen-kaku-gothic-new-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/zen-kaku-gothic-new/zen-kaku-gothic-new-700-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Zen Kaku Gothic New";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/zen-kaku-gothic-new/zen-kaku-gothic-new-900-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "M PLUS Rounded 1c";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/m-plus-rounded-1c/m-plus-rounded-1c-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "M PLUS Rounded 1c";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/m-plus-rounded-1c/m-plus-rounded-1c-700-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "M PLUS Rounded 1c";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/m-plus-rounded-1c/m-plus-rounded-1c-900-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Kosugi Maru";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/kosugi-maru/kosugi-maru-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Noto Serif JP";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/noto-serif-jp/noto-serif-jp-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Noto Serif JP";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/noto-serif-jp/noto-serif-jp-700-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Noto Serif JP";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/noto-serif-jp/noto-serif-jp-900-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Kiwi Maru";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/kiwi-maru/kiwi-maru-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Kiwi Maru";
+  font-style: normal;
+  font-weight: 500 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/kiwi-maru/kiwi-maru-500-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Yomogi";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/yomogi/yomogi-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Hachi Maru Pop";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/hachi-maru-pop/hachi-maru-pop-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "RocknRoll One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/rocknroll-one/rocknroll-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DotGothic16";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/dotgothic16/dotgothic16-400-ja-seed-v1.woff2") format("woff2");
+}

@@ -942,6 +942,59 @@ const createThumbnailFontListboxGroup = (language: ThumbnailFontLanguage): Thumb
   };
 };
 export const thumbnailFontListboxGroups: ThumbnailFontListboxGroup[] = [createThumbnailFontListboxGroup("ja"), createThumbnailFontListboxGroup("en")];
+export const thumbnailFontRecentStorageKey = "v-streamer-tools:thumbnail-editor:recent-fonts:v1";
+export const thumbnailFontRecentLimit = 4;
+const normalizeThumbnailFontSearchText = (value: string) => value.trim().toLowerCase();
+export const filterThumbnailFontListboxGroups = (query: string): ThumbnailFontListboxGroup[] => {
+  const normalizedQuery = normalizeThumbnailFontSearchText(query);
+  if (!normalizedQuery) {
+    return thumbnailFontListboxGroups;
+  }
+
+  return thumbnailFontListboxGroups
+    .map((group) => {
+      const languageMatches = normalizeThumbnailFontSearchText(group.label).includes(normalizedQuery) || group.language.includes(normalizedQuery);
+      const categories = group.categories
+        .map((category) => {
+          const options = category.options.filter((option) => {
+            const searchableText = [option.family, group.label, option.language, option.category, option.mood].map(normalizeThumbnailFontSearchText).join(" ");
+            return searchableText.includes(normalizedQuery);
+          });
+          return languageMatches ? category : { ...category, options };
+        })
+        .filter((category) => category.options.length > 0);
+      return { ...group, categories };
+    })
+    .filter((group) => group.categories.length > 0);
+};
+export const normalizeThumbnailRecentFontFamilies = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const recentFonts: string[] = [];
+  for (const item of value) {
+    const rawFontFamily = typeof item === "string" ? item.trim() : "";
+    const fontFamily = normalizeThumbnailFontFamily(item);
+    if (fontFamily === thumbnailFontFallbackFamily && rawFontFamily !== thumbnailFontFallbackFamily) {
+      continue;
+    }
+    if (!recentFonts.includes(fontFamily)) {
+      recentFonts.push(fontFamily);
+    }
+    if (recentFonts.length >= thumbnailFontRecentLimit) {
+      break;
+    }
+  }
+  return recentFonts;
+};
+export const createNextRecentThumbnailFontFamilies = (current: unknown, selectedFontFamily: unknown): string[] => {
+  const rawFontFamily = typeof selectedFontFamily === "string" ? selectedFontFamily.trim() : "";
+  const fontFamily = normalizeThumbnailFontFamily(selectedFontFamily);
+  if (fontFamily === thumbnailFontFallbackFamily && rawFontFamily !== thumbnailFontFallbackFamily) {
+    return normalizeThumbnailRecentFontFamilies(current);
+  }
+  return normalizeThumbnailRecentFontFamilies([fontFamily, ...normalizeThumbnailRecentFontFamilies(current)]);
+};
 export const thumbnailFontFallbackFamily = "Noto Sans JP";
 export const thumbnailCanvasFontFallbackStack = [thumbnailFontFallbackFamily, "BIZ UDPGothic", "Yu Gothic", "Meiryo", "sans-serif"];
 export const thumbnailFontLoadTimeoutMs = 1200;

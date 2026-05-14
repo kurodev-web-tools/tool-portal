@@ -35,6 +35,9 @@ assert.equal(typeof lib.getThumbnailCanvasFont, "function", "canvas font shortha
 assert.ok(Array.isArray(lib.thumbnailFontManifest), "font manifest metadata is exported");
 assert.ok(Array.isArray(lib.thumbnailFontListboxGroups), "font listbox category groups are exported");
 assert.equal(typeof lib.getThumbnailFontManifestEntry, "function", "font manifest lookup helper is exported");
+assert.equal(typeof lib.filterThumbnailFontListboxGroups, "function", "font listbox search helper is exported");
+assert.equal(typeof lib.normalizeThumbnailRecentFontFamilies, "function", "recent font normalize helper is exported");
+assert.equal(typeof lib.createNextRecentThumbnailFontFamilies, "function", "recent font update helper is exported");
 assert.equal(typeof lib.getThumbnailFontLoadRequests, "function", "font load request helper is exported");
 assert.equal(typeof lib.waitForThumbnailFontLoadRequests, "function", "safe font load helper is exported");
 assert.equal(typeof lib.waitForThumbnailDraftFonts, "function", "draft font readiness helper is exported");
@@ -203,6 +206,41 @@ assert.deepEqual(
   lib.thumbnailFontListboxGroups.flatMap((group) => group.categories.flatMap((category) => category.options.map((option) => option.family))),
   lib.thumbnailFontManifest.map((font) => font.family),
   "font listbox order follows the manifest without changing draft schema"
+);
+assert.deepEqual(
+  lib.filterThumbnailFontListboxGroups("ゲーム").flatMap((group) => group.categories.flatMap((category) => category.options.map((option) => option.family))),
+  ["DotGothic16", "Orbitron", "Press Start 2P"],
+  "font listbox search can match category and mood metadata"
+);
+assert.deepEqual(
+  lib.filterThumbnailFontListboxGroups("english").map((group) => group.label),
+  ["English"],
+  "font listbox search can match language labels"
+);
+assert.deepEqual(
+  lib.filterThumbnailFontListboxGroups("noto").flatMap((group) => group.categories.flatMap((category) => category.options.map((option) => option.family))),
+  ["Noto Sans JP", "Noto Serif JP"],
+  "font listbox search can match family names"
+);
+assert.deepEqual(
+  lib.filterThumbnailFontListboxGroups("no-such-font").flatMap((group) => group.categories.flatMap((category) => category.options)),
+  [],
+  "font listbox search returns empty groups when no font matches"
+);
+assert.deepEqual(
+  lib.normalizeThumbnailRecentFontFamilies(["Orbitron", "Unknown Font", "Noto Sans JP", "Orbitron", 42, ""]),
+  ["Orbitron", "Noto Sans JP"],
+  "recent fonts keep known unique font families only"
+);
+assert.deepEqual(
+  lib.createNextRecentThumbnailFontFamilies(["Oswald", "Noto Sans JP", "BIZ UDPGothic", "Orbitron"], "Noto Sans JP"),
+  ["Noto Sans JP", "Oswald", "BIZ UDPGothic", "Orbitron"],
+  "recent font update moves selected known fonts to the front"
+);
+assert.deepEqual(
+  lib.createNextRecentThumbnailFontFamilies(["Oswald", "Noto Sans JP", "BIZ UDPGothic", "Orbitron"], "Unknown Font"),
+  ["Oswald", "Noto Sans JP", "BIZ UDPGothic", "Orbitron"],
+  "recent font update ignores unknown font families without mutating the list"
 );
 
 for (const font of lib.thumbnailFonts) {
@@ -429,11 +467,11 @@ assert.equal(typeof lib.applyThumbnailPresetPartial, "function", "partial preset
 assert.equal(typeof lib.normalizeThumbnailUserMaterialRef, "function", "user material ref contract helper remains exported");
 assert.equal(handoffSource.includes("fontFamily"), false, "tool handoff contract does not gain font payloads");
 assert.equal(componentSource.includes("fonts.googleapis.com"), false, "component does not add Google Fonts");
-assert.equal(componentSource.includes("thumbnailFontListboxGroups"), true, "component renders the manifest-backed font listbox groups");
+assert.equal(componentSource.includes("filterThumbnailFontListboxGroups"), true, "component renders filtered manifest-backed font listbox groups");
 assert.equal(componentSource.includes("fontOption.mood"), true, "component shows short mood metadata in font options");
 assert.equal(componentSource.includes("fontOption.category"), false, "component keeps category labels at group level instead of repeating long option copy");
-assert.equal(componentSource.includes("recentFont"), false, "font UI category PR does not add recently used font UI");
-assert.equal(componentSource.includes("fontSearch"), false, "font UI category PR does not add font search state");
+assert.equal(componentSource.includes("recentFonts"), true, "font listbox shows recently used font state");
+assert.equal(componentSource.includes("fontSearch"), true, "font listbox includes lightweight search state");
 assert.equal(componentSource.includes("thumbnailFontAssets.module.css"), true, "Thumbnail Editor imports tool-scoped font asset CSS");
 assert.equal(componentSource.includes("thumbnailFontAssets.thumbnailFontAssetScope"), true, "Thumbnail Editor attaches the font asset CSS module to the tool root");
 assert.equal(thumbnailFontCssSource.includes("@font-face"), true, "tool-scoped font CSS declares self-hosted font faces");

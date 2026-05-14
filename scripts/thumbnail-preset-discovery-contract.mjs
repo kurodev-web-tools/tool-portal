@@ -43,7 +43,7 @@ const categoryResult = lib.filterThumbnailPresets(lib.thumbnailPresets, {
 });
 assert.deepEqual(
   categoryResult.map((preset) => preset.id),
-  ["first_stream", "karaoke", "chatting", "game_live", "collaboration"],
+  ["first_stream", "endurance_stream", "karaoke", "chatting", "game_live", "collaboration"],
   "category filter narrows presets"
 );
 
@@ -56,6 +56,17 @@ assert.deepEqual(
   usageResult.map((preset) => preset.id),
   ["first_stream"],
   "usage label filter narrows presets"
+);
+
+const enduranceUsageResult = lib.filterThumbnailPresets(lib.thumbnailPresets, {
+  query: "",
+  category: "all",
+  usageLabel: "耐久 / 目標"
+});
+assert.deepEqual(
+  enduranceUsageResult.map((preset) => preset.id),
+  ["endurance_stream"],
+  "usage label filter includes the endurance stream preset"
 );
 
 assert.deepEqual(

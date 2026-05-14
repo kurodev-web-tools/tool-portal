@@ -42,6 +42,7 @@ assert.deepEqual(
     "endurance_stream",
     "project_stream",
     "cover_song_notice",
+    "event_notice",
     "karaoke",
     "chatting",
     "clip",

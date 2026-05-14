@@ -29,57 +29,50 @@
 
 ## Active
 
-- Thumbnail Editor usecase preset implementation: `cover_song_notice` / 歌ってみた告知
-  - 2026-05-14: branch / worktree `codex/thumbnail-cover-song-notice-preset` / `.worktrees/thumbnail-cover-song-notice-preset` で実装。
-  - 追加内容: `cover_song_notice` preset body、`cover-song-notice-background-v1.png`、cover-art frame、premiere badge、soundwave accent、music sparkle、label plaque、専用 contract。
+- Thumbnail Editor usecase preset implementation: `event_notice` / イベント告知
+  - 2026-05-14: branch / worktree `codex/thumbnail-event-notice-preset` / `.worktrees/thumbnail-event-notice-preset` で実装。
+  - 追加内容: `event_notice` preset body、`event-notice-background-v1.png`、ticket/date badge、info band、map-line divider、key-visual frame、corner mark、専用 contract。
   - 生成: 背景・装飾 asset は `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode を使用。装飾は chroma-key 生成後、skill 付属 `remove_chroma_key.py` で alpha PNG 化。
-  - 検証: `node scripts/thumbnail-usecase-cover-song-notice-preset-contract.mjs`、`node scripts/thumbnail-preset-discovery-contract.mjs`、`node scripts/thumbnail-preset-batch-readiness-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check`。
-  - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認。`歌ってみた告知` preset を適用でき、canvas 表示あり、console error 0。
-- Thumbnail Editor usecase preset next implementation: `event_notice` / イベント告知
-  - 推奨順: `event_notice`。mock 済み second batch は 1 preset / 1 PR で進める。
-  - 次 preset 実装用 prompt:
+  - 検証: `node scripts/thumbnail-usecase-event-notice-preset-contract.mjs`、`node scripts/thumbnail-preset-discovery-contract.mjs`、`node scripts/thumbnail-preset-batch-readiness-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check`。
+  - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認。各幅で `イベント告知` preset 選択状態、canvas 1件、console error 0。
+- Thumbnail Editor usecase preset next planning
+  - second batch の mock 済み候補は `event_notice` で最後。次は新規候補を増やす planning PR から始める。
+  - 次 preset 候補 planning 用 prompt:
 
 ```text
 対象repo: D:\V_streamer_tools
 
 目的:
-- Thumbnail Editor の追加用途 preset `event_notice` / イベント告知を 1 preset / 1 PR で実装する
-- 背景 + 焼き込み装飾 + 必要 asset + preset body + 必要 contract を追加する
-- 背景・装飾 asset 生成には必ず [$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md) を使う
+- Thumbnail Editor の次の追加用途 preset 候補を planning する
+- second batch の `first_stream` / `anniversary_stream` / `endurance_stream` / `project_stream` / `cover_song_notice` / `event_notice` 実装後に続く候補を 3〜6 件に整理する
+- 実装は行わず、docs と task.md に候補、用途差、asset 方針、1 preset / 1 PR の推奨順を残す
 
 前提:
 - AGENTS.md、task.md、docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md、docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md を読む
-- mock `docs/mockups/thumbnail-editor-usecase-preset-candidates/event-notice-mock.png` を方向性 reference として確認する
-- PR #115 `[codex] Plan thumbnail usecase preset mocks` と、先行する `first_stream` / `anniversary_stream` / `endurance_stream` / endurance frame asset split / `project_stream` / `cover_song_notice` 実装 PR が main / origin/main に merge 済みか確認する
+- PR #115 と、先行する `first_stream` / `anniversary_stream` / `endurance_stream` / endurance frame asset split / `project_stream` / `cover_song_notice` / `event_notice` 実装 PR が main / origin/main に merge 済みか確認する
 - 未mergeなら新規作業へ進まず、merge待ち / review対応が必要かだけを blocker summary にする
 - main 直作業は避け、origin/main 起点で feature branch / `.worktrees/...` を切る
 - ローカル main の未コミット変更があっても触らない
 
 scope:
-- `event_notice` / イベント告知のみ
-- 背景、ticket/date badge、info bands、map-line divider、key-visual frame、corner marks、preset body、必要 contract を追加する
-- schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない
-- 生成 asset は後で個別配置しやすい単体 asset にする。複数パーツを1枚に詰めた sheet にしない。corner marks、map-line divider、badge など回転 / 反転再利用できるものは少数にし、preset body 側で配置する
-
-参考:
-- mock: `docs/mockups/thumbnail-editor-usecase-preset-candidates/event-notice-mock.png`
-- direction: emerald / off-white / navy、event flyer、参加情報、公式感と見やすさ、key visual placeholder
-- initial text: `イベント告知` / `EVENT INFO` / `06.15 SAT` / `参加情報まとめ`
-- font direction: 情報整理 `Zen Kaku Gothic New` / `BIZ UDPGothic`、date / label `Montserrat` / `Oswald`
+- planning docs / task.md のみ
+- preset body、production asset、schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない
+- 候補ごとに mock 生成が必要なら、必ず `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode を使う
 
 検証:
-- preset / asset contract を追加または更新
 - `git diff --check`
-- 該当 contract、`node scripts/thumbnail-preset-discovery-contract.mjs`、`node scripts/thumbnail-preset-batch-readiness-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`
-- `npm run lint`
-- `npx tsc --noEmit`
-- UI 表示を触った場合は `390 / 820 / 1024 / 1280 / 1366px` を確認して task.md に記録
+- docs の候補表と follow-up split が一致しているか確認
+- 実装を触らないため UI 幅別確認は不要
 
 終了:
 - task.md 更新、diff 確認、commit、push、draft PR 作成
 - PR body には `変更内容` / `検証結果` / `確認してほしい表示ポイント` / `次 preset 用プロンプト` を入れる
-- 次 preset 用プロンプトは `event_notice` / イベント告知を想定し、mock と imagegen 使用条件を明記する
 ```
+
+- 実装 PR 終了時の確認用 checklist:
+  - `event_notice` の contract / shared contract / lint / type-check / diff check を完了。
+  - UI 幅別確認結果を記録済み。
+  - draft PR body に次 preset 候補 planning prompt を入れる。
 
 ## Freeze closeout state
 

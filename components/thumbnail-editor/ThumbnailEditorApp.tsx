@@ -45,6 +45,7 @@ import {
   thumbnailPresetVariants,
   thumbnailStandeePlacementPresets,
   toggleThumbnailPresetFavorite,
+  waitForThumbnailDraftFonts,
   type ThumbnailHandleKind,
   type ThumbnailMainTextCarryover,
   type ThumbnailResizeHandle,
@@ -1295,6 +1296,7 @@ export function ThumbnailEditorApp() {
     }
     try {
       const exportCanvas = document.createElement("canvas");
+      await waitForThumbnailDraftFonts(outputDraft);
       await drawThumbnail(exportCanvas, outputDraft, { forceJpegBackground: exportFormat === "jpeg" });
       const mimeType = exportFormat === "png" ? "image/png" : "image/jpeg";
       const dataUrl = exportCanvas.toDataURL(mimeType, 0.92);
@@ -1322,6 +1324,7 @@ export function ThumbnailEditorApp() {
     try {
       const exportCanvas = document.createElement("canvas");
       const outputDraft = resolveUserMaterialLayersForOutput(normalized);
+      await waitForThumbnailDraftFonts(outputDraft);
       await drawThumbnail(exportCanvas, outputDraft, { forceJpegBackground: false });
       const dataUrl = exportCanvas.toDataURL("image/png", 0.92);
       if (!dataUrl || dataUrl === "data:,") {

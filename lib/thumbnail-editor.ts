@@ -182,6 +182,32 @@ export type ThumbnailFontPolicy = {
   fallbackFamily: string;
   fallbackStack: string[];
 };
+export type ThumbnailFontLanguage = "ja" | "en";
+export type ThumbnailFontManifestEntry = {
+  family: string;
+  language: ThumbnailFontLanguage;
+  category: string;
+  mood: string;
+  bestFor: string;
+  caution: string;
+  sourceUrl: string;
+};
+export type ThumbnailFontLoadRequest = {
+  fontFamily: string;
+  canvasFont: string;
+};
+export type ThumbnailFontFaceSetLike = {
+  load?: (font: string) => Promise<unknown> | unknown;
+  ready?: Promise<unknown> | unknown;
+};
+export type ThumbnailFontLoadResult = {
+  status: "loaded" | "unsupported" | "timeout" | "failed";
+  attemptedFonts: string[];
+  loadedFonts: string[];
+  failedFonts: string[];
+  timedOut: boolean;
+  usedFallback: boolean;
+};
 
 export type ThumbnailBaseLayer = {
   id: string;
@@ -607,8 +633,227 @@ export const thumbnailFontGroups = [
   }
 ];
 export const thumbnailFonts = thumbnailFontGroups.flatMap((group) => group.fonts);
+export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
+  {
+    family: "Noto Sans JP",
+    language: "ja",
+    category: "太字見出し / 汎用",
+    mood: "太字見出し、読みやすいゴシック",
+    bestFor: "見出し、サブ、UI 的な短文",
+    caution: "weight が多く日本語容量が重い。初期 load は必要 weight を絞る。",
+    sourceUrl: "https://fonts.google.com/specimen/Noto+Sans+JP"
+  },
+  {
+    family: "M PLUS 1p",
+    language: "ja",
+    category: "太字見出し / 汎用",
+    mood: "ポップ、現代的、太字向き",
+    bestFor: "見出し、告知文、サブ",
+    caution: "細い weight はサムネで弱い。見出しは bold 系前提。",
+    sourceUrl: "https://fonts.google.com/specimen/M+PLUS+1p"
+  },
+  {
+    family: "BIZ UDPGothic",
+    language: "ja",
+    category: "読みやすいゴシック",
+    mood: "読みやすい、実用、情報整理",
+    bestFor: "サブ、日程、説明、長めの日本語",
+    caution: "display 感は弱い。装飾は stroke / shadow 側で補う。",
+    sourceUrl: "https://fonts.google.com/specimen/BIZ+UDPGothic"
+  },
+  {
+    family: "Zen Kaku Gothic New",
+    language: "ja",
+    category: "読みやすいゴシック",
+    mood: "すっきり、上品、配信告知向き",
+    bestFor: "見出し、サブ、告知",
+    caution: "太字でもやや静か。強いゲーム系には別 font を使う。",
+    sourceUrl: "https://fonts.google.com/specimen/Zen+Kaku+Gothic+New"
+  },
+  {
+    family: "M PLUS Rounded 1c",
+    language: "ja",
+    category: "かわいい / 丸ゴ",
+    mood: "かわいい、やわらかい、親しみ",
+    bestFor: "雑談、歌枠、かわいい見出し",
+    caution: "丸さが強い。硬い告知やシリアス用途では使いすぎ注意。",
+    sourceUrl: "https://fonts.google.com/specimen/M+PLUS+Rounded+1c"
+  },
+  {
+    family: "Kosugi Maru",
+    language: "ja",
+    category: "かわいい / 丸ゴ",
+    mood: "やさしい、丸い、軽い",
+    bestFor: "サブ、ラベル、かわいい短文",
+    caution: "weight が限定的。大見出しは縁取りで補強する。",
+    sourceUrl: "https://fonts.google.com/specimen/Kosugi+Maru"
+  },
+  {
+    family: "Noto Serif JP",
+    language: "ja",
+    category: "上品 / 和風",
+    mood: "上品、和風、落ち着き",
+    bestFor: "記念配信、告知、上品な見出し",
+    caution: "日本語容量が重い。本文より短い見出し向き。",
+    sourceUrl: "https://fonts.google.com/specimen/Noto+Serif+JP"
+  },
+  {
+    family: "Kiwi Maru",
+    language: "ja",
+    category: "上品 / レトロ",
+    mood: "ほんのりレトロ、上品、丸み",
+    bestFor: "雑談、レトロ、柔らかい見出し",
+    caution: "強い太字感はない。大きめサイズで使う。",
+    sourceUrl: "https://fonts.google.com/specimen/Kiwi+Maru"
+  },
+  {
+    family: "Yomogi",
+    language: "ja",
+    category: "手書き / ラフ",
+    mood: "手書き、ゆるい、親近感",
+    bestFor: "手書きコメント、補足、ゆるい告知",
+    caution: "長文や小サイズは読みにくい。アクセント用途を基本にする。",
+    sourceUrl: "https://fonts.google.com/specimen/Yomogi"
+  },
+  {
+    family: "Hachi Maru Pop",
+    language: "ja",
+    category: "手書き / ポップ",
+    mood: "手書き、かわいい、個性強め",
+    bestFor: "かわいいアクセント、短い見出し",
+    caution: "display 向き。可読性が必要な本文には使わない。",
+    sourceUrl: "https://fonts.google.com/specimen/Hachi+Maru+Pop"
+  },
+  {
+    family: "RocknRoll One",
+    language: "ja",
+    category: "レトロ / ポップ",
+    mood: "レトロ、元気、ポップ",
+    bestFor: "強めの日本語見出し、企画タイトル",
+    caution: "weight 選択が少ない。繊細な用途には不向き。",
+    sourceUrl: "https://fonts.google.com/specimen/RocknRoll+One"
+  },
+  {
+    family: "DotGothic16",
+    language: "ja",
+    category: "レトロ / ピクセル",
+    mood: "ピクセル、ゲーム風、レトロ",
+    bestFor: "ゲーム風ラベル、ドット風企画",
+    caution: "小サイズでは潰れやすい。本文や細かい日程には使わない。",
+    sourceUrl: "https://fonts.google.com/specimen/DotGothic16"
+  },
+  {
+    family: "Anton",
+    language: "en",
+    category: "Impact headline",
+    mood: "太字、圧縮、インパクト",
+    bestFor: "英字見出し、強いラベル",
+    caution: "日本語は不可。英字大文字中心で使う。",
+    sourceUrl: "https://fonts.google.com/specimen/Anton"
+  },
+  {
+    family: "Bebas Neue",
+    language: "en",
+    category: "Impact headline",
+    mood: "スタイリッシュ、縦長、サムネ向き",
+    bestFor: "配信タイトル、時刻、強調ラベル",
+    caution: "小文字や長文では単調。tracking 調整を後続で検討。",
+    sourceUrl: "https://fonts.google.com/specimen/Bebas+Neue"
+  },
+  {
+    family: "Oswald",
+    language: "en",
+    category: "Label / readable condensed",
+    mood: "読みやすい、配信 UI、凝縮",
+    bestFor: "時刻、カテゴリ、ラベル",
+    caution: "既存 preset で使用中。英字アクセント向き。",
+    sourceUrl: "https://fonts.google.com/specimen/Oswald"
+  },
+  {
+    family: "Montserrat",
+    language: "en",
+    category: "Label / readable sans",
+    mood: "モダン、安定、読みやすい",
+    bestFor: "ラベル、サブ、告知文",
+    caution: "display の個性は控えめ。太字 weight を使う。",
+    sourceUrl: "https://fonts.google.com/specimen/Montserrat"
+  },
+  {
+    family: "Poppins",
+    language: "en",
+    category: "Readable sans",
+    mood: "丸み、現代的、親しみ",
+    bestFor: "サブ、告知、柔らかい英字",
+    caution: "見出しではやや軽い。bold weight 前提。",
+    sourceUrl: "https://fonts.google.com/specimen/Poppins"
+  },
+  {
+    family: "Rubik",
+    language: "en",
+    category: "Readable sans",
+    mood: "丸い、軽快、読みやすい",
+    bestFor: "ラベル、ゲーム UI 風の短文",
+    caution: "強い装飾性は低い。色 / shape 側で補う。",
+    sourceUrl: "https://fonts.google.com/specimen/Rubik"
+  },
+  {
+    family: "Fredoka",
+    language: "en",
+    category: "Cute / comic",
+    mood: "かわいい、丸い、ポップ",
+    bestFor: "かわいい英字、雑談、歌枠",
+    caution: "大人っぽい告知には合いにくい。",
+    sourceUrl: "https://fonts.google.com/specimen/Fredoka"
+  },
+  {
+    family: "Bangers",
+    language: "en",
+    category: "Cute / comic",
+    mood: "コミック、派手、強い",
+    bestFor: "驚き系見出し、切り抜き、勢い",
+    caution: "display 専用。長文や日本語混在には不向き。",
+    sourceUrl: "https://fonts.google.com/specimen/Bangers"
+  },
+  {
+    family: "Playfair Display",
+    language: "en",
+    category: "Elegant / stylish",
+    mood: "上品、クラシック、ファッション寄り",
+    bestFor: "記念配信、上品な英字アクセント",
+    caution: "小サイズや太い縁取りで細部が潰れやすい。",
+    sourceUrl: "https://fonts.google.com/specimen/Playfair+Display"
+  },
+  {
+    family: "Pacifico",
+    language: "en",
+    category: "Handwritten / personal",
+    mood: "手書き、華やか、親しみ",
+    bestFor: "サイン風、軽いアクセント",
+    caution: "display / accent 専用。大文字羅列や長文には向かない。",
+    sourceUrl: "https://fonts.google.com/specimen/Pacifico"
+  },
+  {
+    family: "Orbitron",
+    language: "en",
+    category: "Game / futuristic",
+    mood: "近未来、テック、ゲーム風",
+    bestFor: "近未来、ゲーム、SF ラベル",
+    caution: "日本語不可。数字 / 英字短文に限定する。",
+    sourceUrl: "https://fonts.google.com/specimen/Orbitron"
+  },
+  {
+    family: "Press Start 2P",
+    language: "en",
+    category: "Game / pixel",
+    mood: "ピクセル、ゲーム、強い個性",
+    bestFor: "レトロゲーム、ドット風短文",
+    caution: "大容量ではないが可読性が低い。大きめ短文だけにする。",
+    sourceUrl: "https://fonts.google.com/specimen/Press+Start+2P"
+  }
+];
 export const thumbnailFontFallbackFamily = "Noto Sans JP";
 export const thumbnailCanvasFontFallbackStack = [thumbnailFontFallbackFamily, "BIZ UDPGothic", "Yu Gothic", "Meiryo", "sans-serif"];
+export const thumbnailFontLoadTimeoutMs = 1200;
 export const thumbnailFontPolicy: ThumbnailFontPolicy = {
   owner: "thumbnail-editor",
   source: "system-or-browser-installed",
@@ -631,6 +876,13 @@ export const thumbnailPresetBatchReadinessPolicy: ThumbnailPresetBatchReadinessP
 };
 
 const quoteCanvasFontFamily = (fontFamily: string) => (fontFamily === "sans-serif" ? fontFamily : `"${fontFamily}"`);
+const isUnsafeThumbnailFontFamily = (fontFamily: string) =>
+  !fontFamily ||
+  fontFamily.includes(",") ||
+  fontFamily.includes("\"") ||
+  fontFamily.includes("'") ||
+  /^(?:https?:|data:|blob:|@import\b)/i.test(fontFamily) ||
+  /(?:url\(|fonts\.googleapis|fonts\.gstatic|cdn)/i.test(fontFamily);
 
 export const normalizeThumbnailFontFamily = (fontFamily: unknown): string => {
   if (typeof fontFamily !== "string") {
@@ -638,14 +890,24 @@ export const normalizeThumbnailFontFamily = (fontFamily: unknown): string => {
   }
 
   const normalized = fontFamily.trim();
-  if (!normalized || normalized.includes(",") || normalized.includes("\"") || normalized.includes("'")) {
-    return thumbnailFontFallbackFamily;
-  }
-  if (/^(?:https?:|data:|blob:|@import\b)/i.test(normalized) || /(?:url\(|fonts\.googleapis|fonts\.gstatic|cdn)/i.test(normalized)) {
+  if (isUnsafeThumbnailFontFamily(normalized)) {
     return thumbnailFontFallbackFamily;
   }
 
   return thumbnailFonts.includes(normalized) ? normalized : thumbnailFontFallbackFamily;
+};
+
+export const getThumbnailFontManifestEntry = (fontFamily: unknown): ThumbnailFontManifestEntry | null => {
+  if (typeof fontFamily !== "string") {
+    return null;
+  }
+
+  const normalized = fontFamily.trim();
+  if (isUnsafeThumbnailFontFamily(normalized)) {
+    return null;
+  }
+
+  return thumbnailFontManifest.find((font) => font.family === normalized) ?? null;
 };
 
 export const getThumbnailCanvasFontFamily = (fontFamily: unknown): string => {
@@ -662,6 +924,110 @@ export const getThumbnailCanvasFont = (
   const weight = layer.bold ? "700" : "400";
   return `${style}${weight} ${fontSize}px ${getThumbnailCanvasFontFamily(layer.fontFamily)}`;
 };
+
+export const getThumbnailFontLoadRequests = (draft: Pick<ThumbnailEditorDraft, "layers">): ThumbnailFontLoadRequest[] => {
+  const requests = new Map<string, ThumbnailFontLoadRequest>();
+  for (const layer of draft.layers) {
+    if (layer.type !== "text" || layer.hidden) {
+      continue;
+    }
+    const fontFamily = normalizeThumbnailFontFamily(layer.fontFamily);
+    const canvasFont = getThumbnailCanvasFont({ ...layer, fontFamily });
+    requests.set(canvasFont, { fontFamily, canvasFont });
+  }
+  return Array.from(requests.values());
+};
+
+const getDefaultThumbnailFontFaceSet = (): ThumbnailFontFaceSetLike | null => {
+  if (typeof document === "undefined" || !("fonts" in document)) {
+    return null;
+  }
+  return document.fonts as ThumbnailFontFaceSetLike;
+};
+
+const uniqueThumbnailFontFamilies = (requests: ThumbnailFontLoadRequest[]) =>
+  requests.map((request) => request.fontFamily).filter((fontFamily, index, values) => values.indexOf(fontFamily) === index);
+
+const waitForThumbnailFontPromise = async <T>(promise: Promise<T>, timeoutMs: number): Promise<{ timedOut: true } | { timedOut: false; value: T }> =>
+  new Promise((resolve) => {
+    const timeoutId = setTimeout(() => resolve({ timedOut: true }), Math.max(0, timeoutMs));
+    promise.then((value) => {
+      clearTimeout(timeoutId);
+      resolve({ timedOut: false, value });
+    });
+  });
+
+const loadThumbnailFontRequest = (fontFaceSet: ThumbnailFontFaceSetLike, request: ThumbnailFontLoadRequest) => {
+  try {
+    return Promise.resolve(fontFaceSet.load?.(request.canvasFont));
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
+
+export const waitForThumbnailFontLoadRequests = async (
+  requests: ThumbnailFontLoadRequest[],
+  options: { fontFaceSet?: ThumbnailFontFaceSetLike | null; timeoutMs?: number } = {}
+): Promise<ThumbnailFontLoadResult> => {
+  const fontFaceSet = "fontFaceSet" in options ? options.fontFaceSet : getDefaultThumbnailFontFaceSet();
+  const attemptedFonts = uniqueThumbnailFontFamilies(requests);
+  const emptyResult: ThumbnailFontLoadResult = {
+    status: "loaded",
+    attemptedFonts,
+    loadedFonts: [],
+    failedFonts: [],
+    timedOut: false,
+    usedFallback: false
+  };
+
+  if (requests.length === 0) {
+    return emptyResult;
+  }
+  if (!fontFaceSet || typeof fontFaceSet.load !== "function") {
+    return { ...emptyResult, status: "unsupported", usedFallback: true };
+  }
+
+  const timeoutMs = options.timeoutMs ?? thumbnailFontLoadTimeoutMs;
+  const loadPromise = Promise.allSettled(requests.map((request) => loadThumbnailFontRequest(fontFaceSet, request))).then(
+    async (results) => {
+      if (fontFaceSet.ready && typeof (fontFaceSet.ready as Promise<unknown>).then === "function") {
+        try {
+          await fontFaceSet.ready;
+        } catch (reason) {
+          return requests.map(() => ({ status: "rejected" as const, reason }));
+        }
+      }
+      return results;
+    }
+  );
+  const loaded = await waitForThumbnailFontPromise(loadPromise, timeoutMs);
+
+  if (loaded.timedOut) {
+    return { ...emptyResult, status: "timeout", timedOut: true, usedFallback: true };
+  }
+
+  const failedFonts = requests
+    .filter((_, index) => loaded.value[index]?.status === "rejected")
+    .map((request) => request.fontFamily)
+    .filter((fontFamily, index, values) => values.indexOf(fontFamily) === index);
+
+  if (failedFonts.length > 0) {
+    return {
+      ...emptyResult,
+      status: "failed",
+      loadedFonts: attemptedFonts.filter((fontFamily) => !failedFonts.includes(fontFamily)),
+      failedFonts,
+      usedFallback: true
+    };
+  }
+
+  return { ...emptyResult, loadedFonts: attemptedFonts };
+};
+
+export const waitForThumbnailDraftFonts = (
+  draft: Pick<ThumbnailEditorDraft, "layers">,
+  options: { fontFaceSet?: ThumbnailFontFaceSetLike | null; timeoutMs?: number } = {}
+): Promise<ThumbnailFontLoadResult> => waitForThumbnailFontLoadRequests(getThumbnailFontLoadRequests(draft), options);
 
 const nowIso = () => new Date().toISOString();
 

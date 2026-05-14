@@ -10,6 +10,16 @@ Thumbnail Editor の追加 preset body 実装へ進む前に、既存カテゴ�
 - PR #114 `[codex] Apply thumbnail preset fonts` は `main` / `origin/main` に merge 済み。
 - merge commit: `615d714de37a8e0124e4b27ac855419041933433`
 - planning branch / worktree: `codex/thumbnail-preset-usecase-mocks` / `.worktrees/thumbnail-preset-usecase-mocks`
+- PR #115 `[codex] Plan thumbnail usecase preset mocks` から PR #123 `[codex] Add event notice thumbnail preset` まで merge 済み。
+- second batch completion PRs:
+  - PR #116 `first_stream`
+  - PR #117 `anniversary_stream`
+  - PR #118 `endurance_stream`
+  - PR #119 endurance frame asset split
+  - PR #121 `project_stream`
+  - PR #122 `cover_song_notice`
+  - PR #123 `event_notice`
+- next planning branch / worktree: `codex/thumbnail-usecase-next-planning` / `.worktrees/thumbnail-usecase-next-planning`
 
 ## Candidate Summary
 
@@ -21,6 +31,40 @@ Thumbnail Editor の追加 preset body 実装へ進む前に、既存カテゴ�
 | `project_stream` | 企画配信 | 配信ジャンル | 企画 / 視聴者参加 | `新企画` / `SPECIAL PROGRAM` / `視聴者参加型` / `今日は何が起きる?` | `docs/mockups/thumbnail-editor-usecase-preset-candidates/project-stream-mock.png` |
 | `cover_song_notice` | 歌ってみた告知 | 告知画像 | 動画公開 / cover | `歌ってみた` / `COVER PREMIERE` / `20:00 公開` / `新作カバー公開` | `docs/mockups/thumbnail-editor-usecase-preset-candidates/cover-song-notice-mock.png` |
 | `event_notice` | イベント告知 | 告知画像 | イベント / 参加情報 | `イベント告知` / `EVENT INFO` / `06.15 SAT` / `参加情報まとめ` | `docs/mockups/thumbnail-editor-usecase-preset-candidates/event-notice-mock.png` |
+
+## Post Second Batch Candidates
+
+second batch 後は、同じ「配信告知の雰囲気違い」を増やすより、VTuber が実際に使う投稿目的を別方向に広げる。
+この planning では mock / production asset は追加せず、必要になった候補だけ後続 PR で `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode を使って mock から作る。
+
+| Candidate id | Display name | Existing category | Usage label | Initial text | Mock |
+| --- | --- | --- | --- | --- | --- |
+| `goods_notice` | グッズ告知 | 告知画像 | 物販 / merch release | `新グッズ` / `MERCH DROP` / `20:00 START` / `販売ページ公開` | not generated |
+| `membership_stream` | メン限配信 | 配信ジャンル | 限定配信 / members | `メン限配信` / `MEMBERS ONLY` / `21:00 START` / `今夜だけの作戦会議` | not generated |
+| `asmr_stream` | ASMR配信 | 配信ジャンル | ASMR / sleep aid | `ASMR` / `RELAX NIGHT` / `23:00 START` / `耳元でゆっくり話す夜` | not generated |
+| `relay_stream` | リレー配信 | 配信ジャンル | リレー / multi slot | `リレー配信` / `STREAM RELAY` / `NEXT 20:30` / `次の枠へつなぐ` | not generated |
+| `collab_recruit_notice` | コラボ募集 | 告知画像 | 募集 / partner call | `コラボ募集` / `COLLAB CALL` / `応募締切 06.30` / `一緒に企画しませんか` | not generated |
+
+## Recommended Follow-up Split
+
+1. `goods_notice`
+   - 物販 / booth / digital goods の告知は、既存 `イベント告知` の参加情報とも `歌ってみた告知` の動画公開とも違う。
+   - product card、price / release badge、注意書き panel が必要で、asset 方針を分けやすい。
+2. `membership_stream`
+   - 配信ジャンル側で「限定公開 / community perk」を扱える。通常の `配信告知` や `雑談` と違い、closed / premium な見た目が必要。
+   - member badge、locked room frame、soft premium label を使い、本文は text layer 化する。
+3. `asmr_stream`
+   - `歌枠` とは音楽ではなく音声体験、`雑談` とは夜 / 静けさ / 音響の方向で差別化できる。
+   - mic silhouette、sound ring、night gradient、low-contrast label を使うが、文字可読性は品質 guard で確認しやすい構造にする。
+4. `relay_stream`
+   - `コラボ` の複数人配置ではなく、時間順に次枠へつなぐ用途。配信順 / next slot / host label を整理する preset。
+   - relay timeline、next badge、small slot cards を必要 asset とし、Schedule Calendar 本体には触れない。
+5. `collab_recruit_notice`
+   - 既存 `コラボ` は配信告知向けだが、これは相手募集 / 応募条件の告知画像。CTA と条件欄が主役になる。
+   - application panel、deadline badge、category chips、DM / form placeholder を焼き込み装飾と text layer に分ける。
+
+上記はすべて 1 preset / 1 PR で進める。
+各 PR は preset body、必要 production asset、専用 contract、shared thumbnail preset contracts のみを対象にし、schema / canvas export / font loading helper / font search / recently used UI へ広げない。
 
 ## First Batch
 

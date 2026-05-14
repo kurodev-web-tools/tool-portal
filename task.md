@@ -25,54 +25,73 @@
 - PR #112 `[codex] Add thumbnail font UI categories` は `main` / `origin/main` に merge 済み。merge commit は `cb4a179667520e42d3299a78a5848115fe58a9e6`。
 - PR #113 `[codex] Add thumbnail font search and recents` は `main` / `origin/main` に merge 済み。merge commit は `7879943e9d55841980d6a6d1e0d770ae66705aa9`。
 - PR #114 `[codex] Apply thumbnail preset fonts` は `main` / `origin/main` に merge 済み。merge commit は `615d714de37a8e0124e4b27ac855419041933433`。
+- PR #115 `[codex] Plan thumbnail usecase preset mocks` は `main` / `origin/main` に merge 済み。merge commit は `3d5e7dd24826dc95abbc46d511a844bb86c05800`。
+- PR #116 `[codex] Add first stream thumbnail preset` は `main` / `origin/main` に merge 済み。merge commit は `68bbcd48d71586b1891314f8bfd766abe19aa8bf`。
+- PR #117 `[codex] Add anniversary stream thumbnail preset` は `main` / `origin/main` に merge 済み。merge commit は `562163fe90546d4dee413947ffc0ec36a9068683`。
+- PR #118 `[codex] Add endurance stream thumbnail preset` は `main` / `origin/main` に merge 済み。merge commit は `1d051a7b24e40dadbd053a9d02878676d897b4e5`。
+- PR #119 `[codex] Split endurance stream frame assets` は `main` / `origin/main` に merge 済み。merge commit は `c9b2c28334b84db84ddab64ef940b7c962dffb0d`。
+- PR #120 `[codex] Document next thumbnail preset prompt` は `main` / `origin/main` に merge 済み。merge commit は `82a596815dc2f12615d21bfb236ed083226c61cc`。
+- PR #121 `[codex] Add project stream thumbnail preset` は `main` / `origin/main` に merge 済み。merge commit は `3d0c695ac0ac8b31e47d319521137660071e94e9`。
+- PR #122 `[codex] Add cover song thumbnail preset` は `main` / `origin/main` に merge 済み。merge commit は `22831fbdcc90b5da2cba1d363b9b29230dd86258`。
+- PR #123 `[codex] Add event notice thumbnail preset` は `main` / `origin/main` に merge 済み。merge commit は `f0e28573e3ecbb7cbd62dbfbad5db336434ea9aa`。
 - static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish、Thumbnail docs drift cleanup、SNS handoff accessibility copy polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 / PR #101 / PR #102 欄を参照する。
 
 ## Active
 
-- Thumbnail Editor usecase preset implementation: `event_notice` / イベント告知
-  - 2026-05-14: branch / worktree `codex/thumbnail-event-notice-preset` / `.worktrees/thumbnail-event-notice-preset` で実装。
-  - 追加内容: `event_notice` preset body、`event-notice-background-v1.png`、ticket/date badge、info band、map-line divider、key-visual frame、corner mark、専用 contract。
-  - 生成: 背景・装飾 asset は `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode を使用。装飾は chroma-key 生成後、skill 付属 `remove_chroma_key.py` で alpha PNG 化。
-  - 検証: `node scripts/thumbnail-usecase-event-notice-preset-contract.mjs`、`node scripts/thumbnail-preset-discovery-contract.mjs`、`node scripts/thumbnail-preset-batch-readiness-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check`。
-  - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認。各幅で `イベント告知` preset 選択状態、canvas 1件、console error 0。
 - Thumbnail Editor usecase preset next planning
-  - second batch の mock 済み候補は `event_notice` で最後。次は新規候補を増やす planning PR から始める。
-  - 次 preset 候補 planning 用 prompt:
+  - 2026-05-15: branch / worktree `codex/thumbnail-usecase-next-planning` / `.worktrees/thumbnail-usecase-next-planning` で docs-only planning。
+  - PR #115 と second batch 実装 PR #116 / #117 / #118 / #119 / #121 / #122 / #123 が `main` / `origin/main` に merge 済みであることを確認。
+  - 次候補は `goods_notice` / `membership_stream` / `asmr_stream` / `relay_stream` / `collab_recruit_notice` の 5件。
+  - 1 preset / 1 PR の推奨順は `goods_notice` -> `membership_stream` -> `asmr_stream` -> `relay_stream` -> `collab_recruit_notice`。
+  - planning 詳細: `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`。
+  - mock 方針: 今回は新規 mock 生成なし。候補ごとに必要になったら `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode で対象候補だけ生成する。
+  - scope: planning docs / task.md のみ。preset body、production asset、schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない。
+  - 検証: `git diff --check`。docs の候補表と follow-up split が一致していることを diff で確認。UI 実装を触らないため幅別確認は不要。
+  - 次 preset 実装用 prompt:
 
 ```text
 対象repo: D:\V_streamer_tools
 
 目的:
-- Thumbnail Editor の次の追加用途 preset 候補を planning する
-- second batch の `first_stream` / `anniversary_stream` / `endurance_stream` / `project_stream` / `cover_song_notice` / `event_notice` 実装後に続く候補を 3〜6 件に整理する
-- 実装は行わず、docs と task.md に候補、用途差、asset 方針、1 preset / 1 PR の推奨順を残す
+- Thumbnail Editor の次追加 preset として `goods_notice` / グッズ告知を 1 preset / 1 PR で実装する
+- `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md` の Post Second Batch Candidates / Recommended Follow-up Split を実装 spec として扱う
+- 物販 / merch release 用途として、既存 `イベント告知`、`歌ってみた告知`、通常 `お知らせ` と用途差が分かる preset body / production asset / contract を追加する
 
 前提:
 - AGENTS.md、task.md、docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md、docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md を読む
-- PR #115 と、先行する `first_stream` / `anniversary_stream` / `endurance_stream` / endurance frame asset split / `project_stream` / `cover_song_notice` / `event_notice` 実装 PR が main / origin/main に merge 済みか確認する
-- 未mergeなら新規作業へ進まず、merge待ち / review対応が必要かだけを blocker summary にする
+- この planning PR と PR #123 が main / origin/main に merge 済みか確認する
+- 未mergeなら新規実装へ進まず、merge待ち / review対応が必要かだけを blocker summary にする
 - main 直作業は避け、origin/main 起点で feature branch / `.worktrees/...` を切る
 - ローカル main の未コミット変更があっても触らない
 
 scope:
-- planning docs / task.md のみ
-- preset body、production asset、schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない
-- 候補ごとに mock 生成が必要なら、必ず `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode を使う
+- `goods_notice` preset body、必要 production asset、専用 contract、shared thumbnail preset contracts、task.md のみ
+- asset 方針: product card、price / release badge、注意書き panel、label plaque。商品写真そのものは placeholder / editable user material 前提にし、価格・日時・CTA は text layer 化する
+- mock / asset 生成が必要なら、必ず `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode を使う
+- schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない
 
 検証:
+- 専用 contract
+- `node scripts/thumbnail-preset-discovery-contract.mjs`
+- `node scripts/thumbnail-preset-batch-readiness-contract.mjs`
+- `node scripts/thumbnail-preset-variants-contract.mjs`
+- `node scripts/thumbnail-font-policy-contract.mjs`
+- `node scripts/thumbnail-material-assets-contract.mjs`
+- `npm run lint`
+- `npx tsc --noEmit`
 - `git diff --check`
-- docs の候補表と follow-up split が一致しているか確認
-- 実装を触らないため UI 幅別確認は不要
+- UI 変更後は `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認し、task.md に結果を残す
 
 終了:
 - task.md 更新、diff 確認、commit、push、draft PR 作成
 - PR body には `変更内容` / `検証結果` / `確認してほしい表示ポイント` / `次 preset 用プロンプト` を入れる
+- 次 preset 用プロンプトは `membership_stream` を対象にし、残り推奨順 `membership_stream` -> `asmr_stream` -> `relay_stream` -> `collab_recruit_notice` を残す
 ```
 
-- 実装 PR 終了時の確認用 checklist:
-  - `event_notice` の contract / shared contract / lint / type-check / diff check を完了。
-  - UI 幅別確認結果を記録済み。
-  - draft PR body に次 preset 候補 planning prompt を入れる。
+- planning PR 終了時の確認用 checklist:
+  - docs の Post Second Batch Candidates が 5件で、Recommended Follow-up Split と順序一致。
+  - mock README の Next Candidate Mock Split が同じ順序。
+  - `git diff --check` 完了。
 
 ## Freeze closeout state
 

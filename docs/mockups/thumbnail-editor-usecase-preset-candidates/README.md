@@ -26,9 +26,25 @@
 
 ## Follow-up Split
 
-1. Implement `first_stream` as one PR: background + baked decoration assets + required registered assets + preset body.
-2. Implement `anniversary_stream` as one PR with separate milestone / gold ornament assets.
-3. Implement `endurance_stream` as one PR with goal / progress / challenge assets.
-4. Implement `project_stream` as one PR with cue-card / label / tab assets.
-5. Implement `cover_song_notice` as one PR with cover-art frame / premiere / soundwave assets.
-6. Implement `event_notice` as one PR with event flyer / date / key-visual assets.
+The original first / second batch split has been implemented through PR #123.
+
+1. `first_stream`: implemented in PR #116.
+2. `anniversary_stream`: implemented in PR #117.
+3. `endurance_stream`: implemented in PR #118, with frame asset split in PR #119.
+4. `project_stream`: implemented in PR #121.
+5. `cover_song_notice`: implemented in PR #122.
+6. `event_notice`: implemented in PR #123.
+
+## Next Candidate Mock Split
+
+Next candidates are documented in `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`.
+No new mock images have been generated in this planning pass.
+When a candidate needs visual direction, generate only that candidate's mock with `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode, then implement it as a separate 1 preset / 1 PR follow-up.
+
+Recommended order:
+
+1. `goods_notice`: merch release / product card direction.
+2. `membership_stream`: member-only / premium room direction.
+3. `asmr_stream`: quiet audio / relax night direction.
+4. `relay_stream`: stream relay / next slot direction.
+5. `collab_recruit_notice`: partner call / application CTA direction.

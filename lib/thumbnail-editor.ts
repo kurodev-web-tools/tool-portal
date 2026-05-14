@@ -5,6 +5,7 @@ export type ThumbnailPresetId =
   | "anniversary_stream"
   | "endurance_stream"
   | "project_stream"
+  | "cover_song_notice"
   | "karaoke"
   | "chatting"
   | "clip"
@@ -1474,6 +1475,32 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       textLayer({ name: "テキスト 4（ラベル）", text: "視聴者参加型", x: 82, y: 628, width: 236, height: 42, fontSize: 33, color: "#151c24", strokeColor: "#fffaf0", strokeWidth: 3, shadowColor: "#f5bd3d", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
       shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 574, y: 670, width: 170, height: 10, fillColor: "#ff6b57", strokeColor: "#ff6b57", strokeWidth: 3, borderRadius: 8, opacity: 0.58 }),
       textLayer({ name: "テキスト 2（時刻）", text: "20:30 START", x: 562, y: 610, width: 220, height: 52, fontSize: 43, color: "#151c24", strokeColor: "#fffaf0", strokeWidth: 3, shadowColor: "#ff6b57", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Montserrat", align: "center" })
+    ]
+  },
+  {
+    id: "cover_song_notice",
+    name: "歌ってみた告知",
+    category: "告知画像",
+    usageLabel: "動画公開 / cover",
+    description: "cover MV や歌ってみた公開を premiere 感のある構成で見せる release 告知向け。",
+    accent: "#ff4ee3",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}cover-song-notice-background-v1.png`),
+      assetDecorationLayer({ name: "画像 2（カバーアート枠）", src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-cover-art-frame-magenta-cyan-uniform-cell.png`, x: 688, y: 56, width: 604, height: 604, opacity: 0.92 }),
+      shapeLayer({ name: "図形 3（カバーアート挿入ガイド）", shapeType: "frame", x: 758, y: 112, width: 430, height: 430, fillColor: "#f4edff18", strokeColor: "#e5d7ff", strokeWidth: 2, borderRadius: 18, opacity: 0.28 }),
+      shapeLayer({ name: "図形 4（立ち絵挿入ガイド）", shapeType: "frame", x: 1046, y: 476, width: 142, height: 150, fillColor: "#ffffff10", strokeColor: "#d9c9ff", strokeWidth: 2, borderRadius: 24, opacity: 0.32 }),
+      textLayer({ name: "テキスト 5（カバーアート注記）", text: "COVER ART / MV", x: 836, y: 306, width: 274, height: 38, fontSize: 29, color: "#e9e3ff", strokeColor: "#26133a", strokeWidth: 2, shadowColor: "#8bf4ff", shadowBlur: 6, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Playfair Display", align: "center" }),
+      assetDecorationLayer({ name: "画像 3（プレミアバッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-premiere-badge-violet-uniform-cell.png`, x: 216, y: 56, width: 430, height: 287, opacity: 0.96 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "COVER PREMIERE", x: 296, y: 156, width: 274, height: 42, fontSize: 36, color: "#ffffff", strokeColor: "#220b35", strokeWidth: 2, shadowColor: "#ff4ee3", shadowBlur: 7, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Playfair Display", align: "center" }),
+      assetDecorationLayer({ name: "画像 4（左上きらめき）", src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-music-sparkle-magenta-cyan-uniform-cell.png`, x: -54, y: 92, width: 310, height: 207, rotation: -9, opacity: 0.78 }),
+      assetDecorationLayer({ name: "画像 5（右上きらめき）", src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-music-sparkle-magenta-cyan-uniform-cell.png`, x: 570, y: 54, width: 260, height: 173, rotation: 8, opacity: 0.58 }),
+      textLayer({ name: "テキスト 1（見出し）", text: "歌ってみた", x: 54, y: 194, width: 650, height: 176, fontSize: 134, lineHeight: 0.96, color: "#fff4ff", strokeColor: "#190723", strokeWidth: 13, shadowColor: "#ff4ee3", shadowBlur: 22, shadowOffsetX: 5, shadowOffsetY: 7, fontFamily: "M PLUS Rounded 1c" }),
+      shapeLayer({ name: "図形 6（見出し下スイープ）", shapeType: "line", x: 110, y: 386, width: 548, height: 14, fillColor: "#ff59e6", strokeColor: "#ff59e6", strokeWidth: 4, borderRadius: 8, opacity: 0.62 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "新作カバー公開", x: 134, y: 402, width: 476, height: 56, fontSize: 46, align: "center", color: "#f8f4ff", strokeColor: "#170722", strokeWidth: 5, shadowColor: "#91f6ff", shadowBlur: 9, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Noto Serif JP" }),
+      assetDecorationLayer({ name: "画像 6（サウンドウェーブ）", src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-soundwave-magenta-cyan-uniform-cell.png`, x: 90, y: 430, width: 592, height: 395, opacity: 0.86 }),
+      assetDecorationLayer({ name: "画像 7（時刻ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-label-plaque-magenta-cyan-uniform-cell.png`, x: 56, y: 496, width: 660, height: 440, opacity: 0.98 }),
+      shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 194, y: 646, width: 342, height: 12, fillColor: "#8ff7ff", strokeColor: "#8ff7ff", strokeWidth: 3, borderRadius: 8, opacity: 0.62 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 公開", x: 142, y: 560, width: 500, height: 78, fontSize: 70, color: "#ffffff", strokeColor: "#250735", strokeWidth: 5, shadowColor: "#ff4ee3", shadowBlur: 11, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Bebas Neue", align: "center" })
     ]
   },
   {

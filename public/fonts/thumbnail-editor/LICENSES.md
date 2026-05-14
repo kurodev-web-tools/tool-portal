@@ -1,10 +1,11 @@
 # Thumbnail Editor Font Assets
 
-The Japanese font batch under this directory is self-hosted for Thumbnail Editor export readiness.
+The Japanese and English font batches under this directory are self-hosted for Thumbnail Editor export readiness.
 
 - Source: Google Fonts specimen files referenced from `thumbnailFontManifest`.
 - License: SIL Open Font License 1.1 for the bundled families in this batch.
-- Subset: `thumbnail-editor-ja-seed-v1`, a small seed subset covering current Thumbnail Editor preset text, common schedule labels, numbers, basic Latin, and common punctuation.
+- Japanese subset: `thumbnail-editor-ja-seed-v1`, a small seed subset covering current Thumbnail Editor preset text, common schedule labels, numbers, basic Latin, and common punctuation.
+- English subset: `thumbnail-editor-en-seed-v1`, a Latin subset from Google Fonts CSS2 covering English display labels, numbers, common punctuation, and basic Latin fallback characters.
 - Runtime boundary: these files are loaded from `/fonts/thumbnail-editor/...` by the Thumbnail Editor route. This batch does not add Google Fonts CDN or CSP changes.
 
 Families included in this Japanese batch:
@@ -21,3 +22,18 @@ Families included in this Japanese batch:
 - Hachi Maru Pop: 400
 - RocknRoll One: 400
 - DotGothic16: 400
+
+Families included in this English batch:
+
+- Anton: 400
+- Bebas Neue: 400
+- Oswald: 400 / 700
+- Montserrat: 400 / 700 / 900
+- Poppins: 400 / 700 / 900
+- Rubik: 400 / 700 / 900
+- Fredoka: 400 / 700
+- Bangers: 400
+- Playfair Display: 400 / 700 / 900
+- Pacifico: 400
+- Orbitron: 400 / 700 / 900
+- Press Start 2P: 400

@@ -1,5 +1,5 @@
 .thumbnailFontAssetScope {
-  --thumbnail-editor-font-assets: "ja-seed-v1";
+  --thumbnail-editor-font-assets: "ja-seed-v1 en-seed-v1";
 }
 
 @font-face {
@@ -192,4 +192,196 @@
   font-weight: 400 900;
   font-display: swap;
   src: url("/fonts/thumbnail-editor/dotgothic16/dotgothic16-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Anton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/anton/anton-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Bebas Neue";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/bebas-neue/bebas-neue-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Oswald";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/oswald/oswald-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Oswald";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/oswald/oswald-700-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/montserrat/montserrat-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/montserrat/montserrat-700-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/montserrat/montserrat-900-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/poppins/poppins-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/poppins/poppins-700-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/poppins/poppins-900-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rubik";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/rubik/rubik-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rubik";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/rubik/rubik-700-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rubik";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/rubik/rubik-900-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/fredoka/fredoka-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/fredoka/fredoka-700-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Bangers";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/bangers/bangers-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/playfair-display/playfair-display-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/playfair-display/playfair-display-700-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/playfair-display/playfair-display-900-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Pacifico";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/pacifico/pacifico-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Orbitron";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/orbitron/orbitron-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Orbitron";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/orbitron/orbitron-700-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Orbitron";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/orbitron/orbitron-900-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Press Start 2P";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/press-start-2p/press-start-2p-400-en-seed-v1.woff2") format("woff2");
 }

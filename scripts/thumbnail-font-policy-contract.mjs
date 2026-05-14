@@ -107,8 +107,36 @@ assert.deepEqual(
   "Japanese batch keeps only the selected weight set"
 );
 for (const font of englishFontManifest) {
-  assert.equal(font.assets, undefined, `${font.family} English asset batch stays out of scope`);
+  assert.equal(typeof font.assetBasePath, "string", `${font.family} English asset path is recorded`);
+  assert.equal(font.assetBasePath.startsWith("/fonts/thumbnail-editor/"), true, `${font.family} English asset path is tool-scoped`);
+  assert.equal(font.assetSubset, "thumbnail-editor-en-seed-v1", `${font.family} records the English seed subset`);
+  assert.match(font.license, /SIL Open Font License 1\.1/, `${font.family} records the license note`);
+  assert.ok(Array.isArray(font.assets) && font.assets.length > 0, `${font.family} has self-hosted English asset files`);
+  for (const asset of font.assets) {
+    assert.ok([400, 700, 900].includes(asset.weight), `${font.family} English asset weight is intentionally limited`);
+    assert.equal(asset.format, "woff2", `${font.family} uses woff2 self-host assets`);
+    assert.equal(asset.path.startsWith(font.assetBasePath), true, `${font.family} asset stays under its family directory`);
+    assert.equal(fs.existsSync(path.join(root, "public", asset.path)), true, `${font.family} asset exists: ${asset.path}`);
+  }
 }
+assert.deepEqual(
+  Object.fromEntries(englishFontManifest.map((font) => [font.family, font.assets.map((asset) => asset.weight)])),
+  {
+    Anton: [400],
+    "Bebas Neue": [400],
+    Oswald: [400, 700],
+    Montserrat: [400, 700, 900],
+    Poppins: [400, 700, 900],
+    Rubik: [400, 700, 900],
+    Fredoka: [400, 700],
+    Bangers: [400],
+    "Playfair Display": [400, 700, 900],
+    Pacifico: [400],
+    Orbitron: [400, 700, 900],
+    "Press Start 2P": [400]
+  },
+  "English batch keeps only the selected weight set"
+);
 assert.deepEqual(
   lib.thumbnailFontManifest.map((font) => font.family),
   [
@@ -217,6 +245,34 @@ const selfHostedJapaneseFontResult = await lib.waitForThumbnailDraftFonts(selfHo
 });
 assert.equal(selfHostedJapaneseFontResult.status, "loaded", "draft font wait resolves for self-hosted Japanese manifest fonts");
 assert.ok(selfHostedLoadedCalls[0].includes("\"RocknRoll One\""), "export wait calls document.fonts.load for self-hosted Japanese fonts");
+
+const selfHostedEnglishFontDraft = lib.createDraftFromPreset("stream_announce");
+for (const layer of selfHostedEnglishFontDraft.layers.filter((layer) => layer.type === "text")) {
+  layer.hidden = true;
+}
+const englishFontLayer = selfHostedEnglishFontDraft.layers.find((layer) => layer.type === "text");
+englishFontLayer.hidden = false;
+englishFontLayer.fontFamily = "Orbitron";
+englishFontLayer.bold = true;
+const selfHostedEnglishFontRequests = lib.getThumbnailFontLoadRequests(selfHostedEnglishFontDraft);
+assert.deepEqual(
+  selfHostedEnglishFontRequests.map((request) => request.fontFamily),
+  ["Orbitron"],
+  "font load requests include self-hosted English manifest fonts"
+);
+const selfHostedEnglishLoadedCalls = [];
+const selfHostedEnglishFontResult = await lib.waitForThumbnailDraftFonts(selfHostedEnglishFontDraft, {
+  fontFaceSet: {
+    load: async (font) => {
+      selfHostedEnglishLoadedCalls.push(font);
+      return [];
+    },
+    ready: Promise.resolve()
+  },
+  timeoutMs: 50
+});
+assert.equal(selfHostedEnglishFontResult.status, "loaded", "draft font wait resolves for self-hosted English manifest fonts");
+assert.ok(selfHostedEnglishLoadedCalls[0].includes("\"Orbitron\""), "export wait calls document.fonts.load for self-hosted English fonts");
 
 const unsupportedFontResult = await lib.waitForThumbnailFontLoadRequests(fontLoadRequests, { fontFaceSet: null, timeoutMs: 20 });
 assert.deepEqual(
@@ -349,11 +405,17 @@ for (const font of japaneseFontManifest) {
     assert.equal(thumbnailFontCssSource.includes(asset.path), true, `tool-scoped font CSS references ${asset.path}`);
   }
 }
+for (const font of englishFontManifest) {
+  for (const asset of font.assets) {
+    assert.equal(thumbnailFontCssSource.includes(asset.path), true, `tool-scoped font CSS references ${asset.path}`);
+  }
+}
 assert.equal(fs.existsSync(path.join(root, "public", "fonts", "thumbnail-editor", "LICENSES.md")), true, "self-hosted fonts include license notes");
 
 const fontNetworkPattern = /fonts\.googleapis|fonts\.gstatic|@import\s+url|https?:\/\/[^"'\s]*(?:font|cdn)/i;
 assert.equal(/fonts\.googleapis|fonts\.gstatic|@import\s+url/i.test(source), false, "thumbnail editor library has no external font runtime import/CDN dependency");
 assert.equal(fontNetworkPattern.test(componentSource), false, "thumbnail editor component has no external font URL/import/CDN dependency");
 assert.equal(fs.existsSync(path.join(root, "public", "fonts", "thumbnail-editor")), true, "Japanese font batch adds self-hosted thumbnail editor font assets");
+assert.equal(fs.existsSync(path.join(root, "public", "fonts", "thumbnail-editor", "orbitron", "orbitron-700-en-seed-v1.woff2")), true, "English font batch adds self-hosted thumbnail editor font assets");
 
 console.log("thumbnail font policy contract checks passed");

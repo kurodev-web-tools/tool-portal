@@ -23,23 +23,23 @@
 - PR #110 `[codex] Add thumbnail Japanese font batch` は `main` / `origin/main` に merge 済み。merge commit は `f168bddc75c660ad1f718efc32c33d8224b591d6`。
 - PR #111 `[codex] Add thumbnail English font batch` は `main` / `origin/main` に merge 済み。merge commit は `f30e3ee8f3a9358709789c91f43d1b39dfc72e0e`。
 - PR #112 `[codex] Add thumbnail font UI categories` は `main` / `origin/main` に merge 済み。merge commit は `cb4a179667520e42d3299a78a5848115fe58a9e6`。
+- PR #113 `[codex] Add thumbnail font search and recents` は `main` / `origin/main` に merge 済み。merge commit は `7879943e9d55841980d6a6d1e0d770ae66705aa9`。
 - static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish、Thumbnail docs drift cleanup、SNS handoff accessibility copy polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 / PR #101 / PR #102 欄を参照する。
 
 ## Active
 
-- Thumbnail Editor font search / recently used:
-  - branch / worktree: `codex/thumbnail-font-search-recent` / `.worktrees/thumbnail-font-search-recent`
-  - 前提確認: PR #112 `[codex] Add thumbnail font UI categories` は GitHub 上で `MERGED`、merge commit `cb4a179667520e42d3299a78a5848115fe58a9e6` が `origin/main` 先頭にあることを確認済み。
-  - 実装: Thumbnail Editor の font listbox 内に短い検索欄を追加し、既存 `thumbnailFontManifest` / `thumbnailFontListboxGroups` から `family` / `language` / `category` / `mood` で絞り込む `filterThumbnailFontListboxGroups()` を追加した。
-  - 最近使った font: editor-local の `localStorage` key `v-streamer-tools:thumbnail-editor:recent-fonts:v1` に既知 font family だけを最大4件保存し、listbox 内に `最近` として短く表示する。draft schema、canvas export、font loading helper には保存しない。
-  - 選択境界: 既存の `fontFamily` 更新処理を維持し、manifest 24種の日本語 / English option が引き続き選べる。preset body、preset font application、draft schema、canvas export、font loading helper は変更しない。
-  - スコープ外: preset body への font 適用、preset font application、text / image layer schema、Schedule Calendar、SNS Split Image Maker は変更しない。
+- Thumbnail Editor preset font application:
+  - branch / worktree: `codex/thumbnail-preset-font-application` / `.worktrees/thumbnail-preset-font-application`
+  - 前提確認: PR #113 `[codex] Add thumbnail font search and recents` は GitHub 上で `MERGED`、merge commit `7879943e9d55841980d6a6d1e0d770ae66705aa9` が `origin/main` 先頭にあることを確認済み。
+  - 実装: 既存 Thumbnail Editor preset の初期 text layer `fontFamily` を、`thumbnailFontManifest` 24種の範囲で用途に合わせて最小差し替えした。日本語本文 / 長めの日本語は `BIZ UDPGothic`、`Zen Kaku Gothic New`、`Noto Serif JP` など読みやすい日本語 font を優先し、英字ラベル / 時刻 / ゲーム風アクセントは `Bebas Neue`、`Montserrat`、`Orbitron`、`Oswald` などに限定した。
+  - contract: `scripts/thumbnail-font-policy-contract.mjs` に、preset 初期 text layer が manifest-backed fontFamily のみを使うことと、代表 layer の用途別 font mapping を確認する assertion を追加した。text layer key、draft normalize、material registration、handoff payload の既存境界は維持する。
+  - スコープ外: preset body 新規追加、draft schema、canvas export、font loading helper、font search / recently used UI、text / image layer schema、material registration、Schedule Calendar、SNS Split Image Maker は変更しない。
   - 検証: `node scripts/thumbnail-font-policy-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` を実行済み。`git diff --check` は LF -> CRLF 変換 warning のみで whitespace error なし。
-  - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認。390 / 820px は下部 `テキスト` パネルで listbox を開き、検索欄と `最近` の短い2列表示がフォームを押し崩さないことを確認。1024 / 1280 / 1366px は右パネル内で listbox を開き、検索欄、`最近`、language / category / mood option が右パネル幅内に収まり、主要操作列と canvas 周辺を押し崩さないことを確認。
+  - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認。390px は header controls、bottom nav、canvas card が縦積みで崩れず、変更後の初期 font が canvas 内に収まることを確認。820px は async asset draw 後に canvas が表示され、top controls、preset list、bottom nav、toast が互いに押し崩さないことを確認。1024 / 1280 / 1366px は side nav / right panel / canvas 周辺が維持され、font 変更後の見出し、時刻、サブが canvas 内で破綻しないことを確認。
 - 次に新規作業へ進む場合は、下の次候補を `origin/main` 起点の feature branch / `.worktrees/...` で PR-sized に切る。
 - 次候補:
-  - `preset font application`: preset batch 本体で必要になった場合だけ、catalog 内 font へ差し替える。
   - `preset body` / `preset batch`: font 適用とは別に、候補ごとの body 追加を PR-sized に切る。
+  - `variant body UI`: 既存 helper 境界を使う場合のみ、縦長 / 正方形の UI 導線を PR-sized に切る。
 - docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
 
 ## Freeze closeout state

@@ -1296,6 +1296,7 @@ const weeklyScheduleRowLayers = () =>
       x: 540,
       y: row.y,
       width: 126,
+      fontFamily: "Oswald",
       color: "#9dfaff",
       align: "center"
     }),
@@ -1306,6 +1307,7 @@ const weeklyScheduleRowLayers = () =>
       x: 690,
       y: row.y,
       width: 142,
+      fontFamily: "Oswald",
       color: "#f7feff",
       align: "center"
     }),
@@ -1351,13 +1353,13 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 844, y: 72, width: 342, height: 560, fillColor: "#03172422", strokeColor: "#73f7ff", strokeWidth: 2, borderRadius: 46, opacity: 0.36 }),
       shapeLayer({ name: "図形 4（ラベル横ライン）", shapeType: "line", x: 492, y: 112, width: 264, height: 16, fillColor: "#79fbff", strokeColor: "#79fbff", strokeWidth: 4, borderRadius: 8, opacity: 0.64 }),
       assetDecorationLayer({ name: "画像 6（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}stream-label-plaque-cyan-uniform-cell.png`, x: 42, y: 28, width: 516, height: 144, opacity: 0.98 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "配信 / YouTube", x: 122, y: 82, width: 340, height: 42, fontSize: 35, color: "#031321", strokeWidth: 0, shadowColor: "#ffffff", shadowBlur: 2, shadowOffsetX: 0, shadowOffsetY: 1, align: "center" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "初見さん\n大歓迎!", x: 66, y: 164, width: 708, height: 272, fontSize: 116, lineHeight: 0.98, color: "#ffffff", strokeColor: "#06112f", strokeWidth: 13, shadowColor: "#00cfff", shadowBlur: 20, shadowOffsetX: 6, shadowOffsetY: 8 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "配信 / YouTube", x: 122, y: 82, width: 340, height: 42, fontSize: 35, color: "#031321", strokeWidth: 0, shadowColor: "#ffffff", shadowBlur: 2, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Zen Kaku Gothic New", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "初見さん\n大歓迎!", x: 66, y: 164, width: 708, height: 272, fontSize: 116, lineHeight: 0.98, color: "#ffffff", strokeColor: "#06112f", strokeWidth: 13, shadowColor: "#00cfff", shadowBlur: 20, shadowOffsetX: 6, shadowOffsetY: 8, fontFamily: "RocknRoll One" }),
       shapeLayer({ name: "図形 6（見出し下ライン）", shapeType: "line", x: 94, y: 448, width: 600, height: 16, fillColor: "#72f9ff", strokeColor: "#72f9ff", strokeWidth: 4, borderRadius: 8, opacity: 0.54 }),
       assetDecorationLayer({ name: "画像 7（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}stream-time-badge-magenta-cyan-uniform-cell.png`, x: 46, y: 454, width: 706, height: 166, rotation: -2, opacity: 0.98 }),
       shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 116, y: 606, width: 520, height: 18, fillColor: "#5ef7ff", strokeColor: "#5ef7ff", strokeWidth: 4, borderRadius: 8, opacity: 0.58 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 136, y: 508, width: 520, height: 64, fontSize: 60, color: "#ffffff", strokeColor: "#5b0637", strokeWidth: 4, shadowColor: "#06111c", shadowBlur: 10, shadowOffsetX: 4, shadowOffsetY: 5 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "一緒に楽しくお話ししよう!", x: 132, y: 632, width: 588, height: 46, fontSize: 34, lineHeight: 1.1, strokeWidth: 5 })
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 136, y: 508, width: 520, height: 64, fontSize: 60, color: "#ffffff", strokeColor: "#5b0637", strokeWidth: 4, shadowColor: "#06111c", shadowBlur: 10, shadowOffsetX: 4, shadowOffsetY: 5, fontFamily: "Bebas Neue" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "一緒に楽しくお話ししよう!", x: 132, y: 632, width: 588, height: 46, fontSize: 34, lineHeight: 1.1, strokeWidth: 5, fontFamily: "Zen Kaku Gothic New" })
     ]
   },
   {
@@ -1377,14 +1379,14 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 800, y: 70, width: 390, height: 590, fillColor: "#1608261f", strokeColor: "#fff0fb", strokeWidth: 2, borderRadius: 48, opacity: 0.34 }),
       shapeLayer({ name: "図形 2（ラベル横ライン）", shapeType: "line", x: 432, y: 112, width: 174, height: 14, fillColor: "#ffd484", strokeColor: "#ffd484", strokeWidth: 4, borderRadius: 8, opacity: 0.62 }),
       assetDecorationLayer({ name: "画像 7（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-label-plaque-rose-uniform-cell.png`, x: 72, y: 32, width: 460, height: 154, opacity: 0.98 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "歌枠 / YouTube", x: 156, y: 80, width: 300, height: 44, fontSize: 35, color: "#26051f", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }),
-      textLayer({ name: "テキスト 1（見出し）", text: "歌枠", x: 72, y: 146, width: 640, height: 230, fontSize: 184, lineHeight: 0.94, color: "#fff4fb", strokeColor: "#2b061f", strokeWidth: 16, shadowColor: "#ff4cc2", shadowBlur: 24, shadowOffsetX: 6, shadowOffsetY: 8 }),
-      textLayer({ name: "テキスト 5（見出し英字）", text: "SINGING STREAM", x: 104, y: 398, width: 610, height: 70, fontSize: 54, align: "center", color: "#fff4fb", strokeColor: "#3b082d", strokeWidth: 5, shadowColor: "#ff4cc2", shadowBlur: 14, shadowOffsetX: 2, shadowOffsetY: 3 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "歌枠 / YouTube", x: 156, y: 80, width: 300, height: 44, fontSize: 35, color: "#26051f", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "M PLUS Rounded 1c" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "歌枠", x: 72, y: 146, width: 640, height: 230, fontSize: 184, lineHeight: 0.94, color: "#fff4fb", strokeColor: "#2b061f", strokeWidth: 16, shadowColor: "#ff4cc2", shadowBlur: 24, shadowOffsetX: 6, shadowOffsetY: 8, fontFamily: "M PLUS Rounded 1c" }),
+      textLayer({ name: "テキスト 5（見出し英字）", text: "SINGING STREAM", x: 104, y: 398, width: 610, height: 70, fontSize: 54, align: "center", color: "#fff4fb", strokeColor: "#3b082d", strokeWidth: 5, shadowColor: "#ff4cc2", shadowBlur: 14, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Fredoka" }),
       shapeLayer({ name: "図形 4（見出し下ライン）", shapeType: "line", x: 118, y: 472, width: 578, height: 16, fillColor: "#ffd484", strokeColor: "#ffd484", strokeWidth: 5, borderRadius: 10, opacity: 0.78 }),
       assetDecorationLayer({ name: "画像 8（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-time-badge-gold-uniform-cell.png`, x: 74, y: 488, width: 640, height: 166, opacity: 0.98 }),
       shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 158, y: 612, width: 470, height: 14, fillColor: "#ff7bd2", strokeColor: "#ff7bd2", strokeWidth: 4, borderRadius: 8, opacity: 0.38 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 166, y: 526, width: 500, height: 78, fontSize: 70, color: "#ffe8b7", strokeColor: "#39071e", strokeWidth: 5, shadowColor: "#ff4cc2", shadowBlur: 12, shadowOffsetX: 3, shadowOffsetY: 4 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "リクエスト歓迎 / 初見さん歓迎", x: 132, y: 636, width: 610, height: 52, fontSize: 38, align: "center", color: "#fff9f4", strokeColor: "#1b0820", strokeWidth: 5, shadowColor: "#ff4cc2", shadowBlur: 9, shadowOffsetX: 2, shadowOffsetY: 3 })
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 166, y: 526, width: 500, height: 78, fontSize: 70, color: "#ffe8b7", strokeColor: "#39071e", strokeWidth: 5, shadowColor: "#ff4cc2", shadowBlur: 12, shadowOffsetX: 3, shadowOffsetY: 4, fontFamily: "Bebas Neue" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "リクエスト歓迎 / 初見さん歓迎", x: 132, y: 636, width: 610, height: 52, fontSize: 38, align: "center", color: "#fff9f4", strokeColor: "#1b0820", strokeWidth: 5, shadowColor: "#ff4cc2", shadowBlur: 9, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "M PLUS Rounded 1c" })
     ]
   },
   {
@@ -1400,14 +1402,14 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       shapeLayer({ name: "図形 4（やわらかい下線）", shapeType: "line", x: 92, y: 610, width: 474, height: 14, fillColor: "#efb36f", strokeColor: "#efb36f", strokeWidth: 3, borderRadius: 10, opacity: 0.58 }),
       shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 762, y: 92, width: 358, height: 528, fillColor: "#fff3df0c", strokeColor: "#fff0db", strokeWidth: 2, borderRadius: 120, opacity: 0.28 }),
       assetDecorationLayer({ name: "画像 3（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}chatting-label-plaque-cozy-uniform-cell.png`, x: 58, y: 10, width: 360, height: 162, opacity: 0.96 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "CHATTING / YouTube", x: 118, y: 80, width: 250, height: 28, fontSize: 22, color: "#fff8ef", strokeWidth: 0, shadowColor: "#20142c", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Oswald", align: "center" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n雑談配信", x: 86, y: 150, width: 640, height: 268, fontSize: 105, lineHeight: 1.03, color: "#fffaf2", strokeColor: "#251431", strokeWidth: 10, shadowColor: "#df8f58", shadowBlur: 15, shadowOffsetX: 4, shadowOffsetY: 5 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "CHATTING / YouTube", x: 118, y: 80, width: 250, height: 28, fontSize: 22, color: "#fff8ef", strokeWidth: 0, shadowColor: "#20142c", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n雑談配信", x: 86, y: 150, width: 640, height: 268, fontSize: 105, lineHeight: 1.03, color: "#fffaf2", strokeColor: "#251431", strokeWidth: 10, shadowColor: "#df8f58", shadowBlur: 15, shadowOffsetX: 4, shadowOffsetY: 5, fontFamily: "Kiwi Maru" }),
       assetDecorationLayer({ name: "画像 4（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}chatting-time-badge-cozy-uniform-cell.png`, x: 42, y: 420, width: 510, height: 168, opacity: 0.94 }),
       shapeLayer({ name: "図形 5（時刻アイコン外円）", shapeType: "circle", x: 118, y: 486, width: 38, height: 38, fillColor: "#00000000", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 0, opacity: 0.9 }),
       shapeLayer({ name: "図形 6（時刻アイコン短針）", shapeType: "line", x: 136, y: 495, width: 2, height: 20, rotation: -90, fillColor: "#f3c17c", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 4, opacity: 0.92 }),
       shapeLayer({ name: "図形 7（時刻アイコン長針）", shapeType: "line", x: 140, y: 506, width: 16, height: 2, fillColor: "#f3c17c", strokeColor: "#f3c17c", strokeWidth: 4, borderRadius: 4, opacity: 0.92 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 178, y: 482, width: 320, height: 52, fontSize: 47, color: "#fff4df", strokeColor: "#20142c", strokeWidth: 3, shadowColor: "#000000", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "今日の話題を一緒に整理しよう", x: 94, y: 574, width: 590, height: 44, fontSize: 30, color: "#fff8ee", strokeColor: "#140b21", strokeWidth: 3, shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3 })
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 178, y: 482, width: 320, height: 52, fontSize: 47, color: "#fff4df", strokeColor: "#20142c", strokeWidth: 3, shadowColor: "#000000", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4, fontFamily: "Poppins" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "今日の話題を一緒に整理しよう", x: 94, y: 574, width: 590, height: 44, fontSize: 30, color: "#fff8ee", strokeColor: "#140b21", strokeWidth: 3, shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "BIZ UDPGothic" })
     ]
   },
   {
@@ -1427,11 +1429,11 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       shapeLayer({ name: "図形 2（左下補助ライン）", shapeType: "line", x: 96, y: 574, width: 440, height: 18, rotation: -4, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 3, borderRadius: 10, opacity: 0.38 }),
       shapeLayer({ name: "図形 3（右側区切り線）", shapeType: "line", x: 740, y: 194, width: 260, height: 18, rotation: 10, fillColor: "#ff9f1a", strokeColor: "#ff9f1a", strokeWidth: 4, borderRadius: 10, opacity: 0.46 }),
       assetDecorationLayer({ name: "画像 6（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}clip-label-sticker-yellow-uniform-cell.png`, x: 30, y: 34, width: 420, height: 280, rotation: -5, opacity: 0.98 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "見どころ", x: 112, y: 102, width: 238, height: 48, rotation: -5, fontSize: 44, color: "#ffffff", strokeColor: "#050505", strokeWidth: 6, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 }),
-      textLayer({ name: "テキスト 1（見出し）", text: "神回\nまとめ", x: 542, y: 400, width: 456, height: 156, rotation: -2, fontSize: 74, lineHeight: 0.9, align: "center", color: "#ffd329", strokeColor: "#060606", strokeWidth: 12, shadowColor: "#9b22ff", shadowBlur: 10, shadowOffsetX: 4, shadowOffsetY: 6 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "見どころ", x: 112, y: 102, width: 238, height: 48, rotation: -5, fontSize: 44, color: "#ffffff", strokeColor: "#050505", strokeWidth: 6, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4, fontFamily: "RocknRoll One" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "神回\nまとめ", x: 542, y: 400, width: 456, height: 156, rotation: -2, fontSize: 74, lineHeight: 0.9, align: "center", color: "#ffd329", strokeColor: "#060606", strokeWidth: 12, shadowColor: "#9b22ff", shadowBlur: 10, shadowOffsetX: 4, shadowOffsetY: 6, fontFamily: "RocknRoll One" }),
       assetDecorationLayer({ name: "画像 7（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}clip-time-badge-sticker-purple-uniform-cell.png`, x: 672, y: 214, width: 374, height: 249, rotation: 2, opacity: 0.98 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "20:00 公開", x: 748, y: 302, width: 228, height: 48, rotation: 2, fontSize: 39, color: "#ffd32b", strokeColor: "#050505", strokeWidth: 5, shadowColor: "#ffffff", shadowBlur: 2, shadowOffsetX: 1, shadowOffsetY: 1, fontFamily: "Oswald" }),
-      textLayer({ name: "テキスト 3（サブ）", text: "ショート動画 / プレミア公開", x: 480, y: 608, width: 540, height: 44, fontSize: 31, align: "center", color: "#ffffff", strokeColor: "#070707", strokeWidth: 6, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4 })
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 公開", x: 748, y: 302, width: 228, height: 48, rotation: 2, fontSize: 39, color: "#ffd32b", strokeColor: "#050505", strokeWidth: 5, shadowColor: "#ffffff", shadowBlur: 2, shadowOffsetX: 1, shadowOffsetY: 1, fontFamily: "M PLUS 1p" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "ショート動画 / プレミア公開", x: 480, y: 608, width: 540, height: 44, fontSize: 31, align: "center", color: "#ffffff", strokeColor: "#070707", strokeWidth: 6, shadowColor: "#d233ff", shadowBlur: 8, shadowOffsetX: 3, shadowOffsetY: 4, fontFamily: "M PLUS 1p" })
     ]
   },
   {
@@ -1448,12 +1450,12 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       shapeLayer({ name: "図形 3（立ち絵guide枠）", shapeType: "frame", x: 820, y: 112, width: 330, height: 492, fillColor: "#03172418", strokeColor: "#dffeff", strokeWidth: 2, borderRadius: 70, opacity: 0.38 }),
       shapeLayer({ name: "図形 6（ゲーム感ライン）", shapeType: "line", x: 510, y: 112, width: 225, height: 16, fillColor: "#66fff0", strokeColor: "#66fff0", strokeWidth: 4, borderRadius: 8, opacity: 0.64 }),
       assetDecorationLayer({ name: "画像 4（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}game-live-label-plaque-neon-uniform-cell.png`, x: 46, y: 36, width: 490, height: 328, opacity: 0.96 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "GAME LIVE", x: 136, y: 106, width: 300, height: 44, fontSize: 40, color: "#b9ffbe", strokeColor: "#06120e", strokeWidth: 2, shadowColor: "#42ff6f", shadowBlur: 8, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Oswald", italic: true, align: "center" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "参加型\nゲーム実況", x: 82, y: 166, width: 664, height: 266, fontSize: 108, lineHeight: 0.98, color: "#ffffff", strokeColor: "#031017", strokeWidth: 14, shadowColor: "#2dfaff", shadowBlur: 12, shadowOffsetX: 6, shadowOffsetY: 8 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "GAME LIVE", x: 136, y: 106, width: 300, height: 44, fontSize: 40, color: "#b9ffbe", strokeColor: "#06120e", strokeWidth: 2, shadowColor: "#42ff6f", shadowBlur: 8, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Orbitron", italic: true, align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "参加型\nゲーム実況", x: 82, y: 166, width: 664, height: 266, fontSize: 108, lineHeight: 0.98, color: "#ffffff", strokeColor: "#031017", strokeWidth: 14, shadowColor: "#2dfaff", shadowBlur: 12, shadowOffsetX: 6, shadowOffsetY: 8, fontFamily: "DotGothic16" }),
       assetDecorationLayer({ name: "画像 5（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}game-live-time-badge-cyan-uniform-cell.png`, x: 74, y: 382, width: 560, height: 374, opacity: 0.92 }),
       shapeLayer({ name: "図形 2（時刻下ライン）", shapeType: "line", x: 148, y: 610, width: 430, height: 14, fillColor: "#35f8ff", strokeColor: "#35f8ff", strokeWidth: 3, borderRadius: 8, opacity: 0.58 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 202, y: 516, width: 304, height: 58, fontSize: 51, color: "#5ffcff", strokeColor: "#021018", strokeWidth: 3, shadowColor: "#42ff6f", shadowBlur: 10, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Oswald", align: "center" }),
-      textLayer({ name: "テキスト 3（サブ）", text: "初見さん歓迎 / 一緒に遊ぼう", x: 106, y: 634, width: 590, height: 46, fontSize: 33, align: "center", color: "#f4fff1", strokeColor: "#01110a", strokeWidth: 4, shadowColor: "#42ff6f", shadowBlur: 6, shadowOffsetX: 2, shadowOffsetY: 3 })
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 202, y: 516, width: 304, height: 58, fontSize: 51, color: "#5ffcff", strokeColor: "#021018", strokeWidth: 3, shadowColor: "#42ff6f", shadowBlur: 10, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Orbitron", align: "center" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "初見さん歓迎 / 一緒に遊ぼう", x: 106, y: 634, width: 590, height: 46, fontSize: 33, align: "center", color: "#f4fff1", strokeColor: "#01110a", strokeWidth: 4, shadowColor: "#42ff6f", shadowBlur: 6, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "BIZ UDPGothic" })
     ]
   },
   {
@@ -1471,11 +1473,11 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       shapeLayer({ name: "図形 2（右立ち絵ガイド）", shapeType: "frame", x: 902, y: 150, width: 300, height: 452, fillColor: "#ff4cc212", strokeColor: "#ffc4f0", strokeWidth: 2, borderRadius: 76, opacity: 0.42 }),
       shapeLayer({ name: "図形 5（二人配置ライン）", shapeType: "line", x: 682, y: 618, width: 496, height: 16, fillColor: "#ffe8d8", strokeColor: "#ffe8d8", strokeWidth: 3, borderRadius: 8, opacity: 0.42 }),
       assetDecorationLayer({ name: "画像 4（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-label-plaque-warm-uniform-cell.png`, x: 48, y: -25, width: 467, height: 251, opacity: 0.98 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "GUEST", x: 158, y: 75, width: 250, height: 44, fontSize: 42, color: "#fff8ec", strokeColor: "#7d2307", strokeWidth: 2, shadowColor: "#25050b", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Oswald", align: "center" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "コラボ\n配信", x: 72, y: 178, width: 590, height: 248, fontSize: 112, lineHeight: 0.96, color: "#fff8ef", strokeColor: "#330804", strokeWidth: 14, shadowColor: "#ff4d31", shadowBlur: 12, shadowOffsetX: 5, shadowOffsetY: 7 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "GUEST", x: 158, y: 75, width: 250, height: 44, fontSize: 42, color: "#fff8ec", strokeColor: "#7d2307", strokeWidth: 2, shadowColor: "#25050b", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "コラボ\n配信", x: 72, y: 178, width: 590, height: 248, fontSize: 112, lineHeight: 0.96, color: "#fff8ef", strokeColor: "#330804", strokeWidth: 14, shadowColor: "#ff4d31", shadowBlur: 12, shadowOffsetX: 5, shadowOffsetY: 7, fontFamily: "M PLUS 1p" }),
       assetDecorationLayer({ name: "画像 5（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}collaboration-time-badge-rose-gold-uniform-cell.png`, x: 18, y: 380, width: 540, height: 267, opacity: 0.96 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 184, y: 492, width: 304, height: 52, fontSize: 46, color: "#fff2c2", strokeColor: "#23050a", strokeWidth: 3, shadowColor: "#ff3b86", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Oswald", align: "center" }),
-      textLayer({ name: "テキスト 3（サブ）", text: "ゲスト名 / 企画名", x: 100, y: 592, width: 490, height: 50, fontSize: 35, align: "center", color: "#fffdf7", strokeColor: "#180610", strokeWidth: 4, shadowColor: "#ff7a2b", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3 })
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 184, y: 492, width: 304, height: 52, fontSize: 46, color: "#fff2c2", strokeColor: "#23050a", strokeWidth: 3, shadowColor: "#ff3b86", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "ゲスト名 / 企画名", x: 100, y: 592, width: 490, height: 50, fontSize: 35, align: "center", color: "#fffdf7", strokeColor: "#180610", strokeWidth: 4, shadowColor: "#ff7a2b", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Zen Kaku Gothic New" })
     ]
   },
   {
@@ -1491,13 +1493,13 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       assetDecorationLayer({ name: "画像 3（角飾り）", src: `${thumbnailPhase5DecorationAssetPrefix}announcement-corner-ornament-gold-uniform-cell.png`, x: 66, y: 82, width: 155, height: 104, opacity: 0.5 }),
       shapeLayer({ name: "図形 3（立ち絵guide枠）", shapeType: "frame", x: 888, y: 126, width: 302, height: 506, fillColor: "#fff2d012", strokeColor: "#ffe4a2", strokeWidth: 2, borderRadius: 78, opacity: 0.34 }),
       assetDecorationLayer({ name: "画像 5（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}announcement-label-plaque-ivory-uniform-cell.png`, x: 118, y: 54, width: 418, height: 112, opacity: 0.98 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "NEWS", x: 232, y: 91, width: 190, height: 40, fontSize: 34, color: "#111827", strokeWidth: 0, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Oswald", align: "center" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "大切な\nお知らせ", x: 126, y: 174, width: 610, height: 224, fontSize: 82, lineHeight: 1.16, color: "#fff8e7", strokeColor: "#080d17", strokeWidth: 9, shadowColor: "#d99b42", shadowBlur: 10, shadowOffsetX: 3, shadowOffsetY: 4 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "NEWS", x: 232, y: 91, width: 190, height: 40, fontSize: 34, color: "#111827", strokeWidth: 0, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Playfair Display", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "大切な\nお知らせ", x: 126, y: 174, width: 610, height: 224, fontSize: 82, lineHeight: 1.16, color: "#fff8e7", strokeColor: "#080d17", strokeWidth: 9, shadowColor: "#d99b42", shadowBlur: 10, shadowOffsetX: 3, shadowOffsetY: 4, fontFamily: "Noto Serif JP" }),
       shapeLayer({ name: "図形 5（本文罫線）", shapeType: "line", x: 134, y: 404, width: 518, height: 14, fillColor: "#e8c369", strokeColor: "#e8c369", strokeWidth: 3, borderRadius: 8, opacity: 0.68 }),
       assetDecorationLayer({ name: "画像 6（日付バッジ）", src: `${thumbnailPhase5DecorationAssetPrefix}announcement-date-badge-navy-gold-uniform-cell.png`, x: 104, y: 432, width: 566, height: 126, opacity: 0.98 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "5/10 公開", x: 194, y: 470, width: 390, height: 54, fontSize: 47, align: "center", color: "#fff0be", strokeColor: "#090c14", strokeWidth: 3, shadowColor: "#d59642", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "5/10 公開", x: 194, y: 470, width: 390, height: 54, fontSize: 47, align: "center", color: "#fff0be", strokeColor: "#090c14", strokeWidth: 3, shadowColor: "#d59642", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "BIZ UDPGothic" }),
       shapeLayer({ name: "図形 6（サブ下ライン）", shapeType: "line", x: 178, y: 616, width: 390, height: 12, fillColor: "#dfb86a", strokeColor: "#dfb86a", strokeWidth: 2, borderRadius: 8, opacity: 0.48 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "今後の活動について", x: 128, y: 558, width: 520, height: 52, fontSize: 34, align: "center", color: "#fffdf5", strokeColor: "#080c16", strokeWidth: 3, shadowColor: "#000000", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3 })
+      textLayer({ name: "テキスト 3（サブ）", text: "今後の活動について", x: 128, y: 558, width: 520, height: 52, fontSize: 34, align: "center", color: "#fffdf5", strokeColor: "#080c16", strokeWidth: 3, shadowColor: "#000000", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Noto Serif JP" })
     ]
   },
   {
@@ -1515,8 +1517,8 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       shapeLayer({ name: "図形 5（予定表区切り線 上）", shapeType: "line", x: 530, y: 145, width: 642, height: 14, fillColor: "#8cf8ff", strokeColor: "#8cf8ff", strokeWidth: 2, borderRadius: 4, opacity: 0.18 }),
       shapeLayer({ name: "図形 6（予定表区切り線 下）", shapeType: "line", x: 530, y: 546, width: 642, height: 14, fillColor: "#8cf8ff", strokeColor: "#8cf8ff", strokeWidth: 2, borderRadius: 4, opacity: 0.16 }),
       assetDecorationLayer({ name: "画像 4（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}weekly-schedule-label-plaque-cyan-uniform-cell.png`, x: 54, y: 54, width: 470, height: 138, opacity: 0.98 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "WEEKLY SCHEDULE", x: 132, y: 100, width: 312, height: 38, fontSize: 31, color: "#d9feff", strokeWidth: 0, shadowColor: "#4dd8ff", shadowBlur: 9, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald", align: "center" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "今週の\n配信予定", x: 44, y: 174, width: 510, height: 232, fontSize: 92, lineHeight: 1.04, color: "#f8feff", align: "center", bold: true, italic: true, strokeColor: "#04143a", strokeWidth: 11, shadowColor: "#35e6ff", shadowBlur: 19, shadowOffsetX: 4, shadowOffsetY: 6 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "WEEKLY SCHEDULE", x: 132, y: 100, width: 312, height: 38, fontSize: 31, color: "#d9feff", strokeWidth: 0, shadowColor: "#4dd8ff", shadowBlur: 9, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Bebas Neue", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "今週の\n配信予定", x: 44, y: 174, width: 510, height: 232, fontSize: 92, lineHeight: 1.04, color: "#f8feff", align: "center", bold: true, italic: true, strokeColor: "#04143a", strokeWidth: 11, shadowColor: "#35e6ff", shadowBlur: 19, shadowOffsetX: 4, shadowOffsetY: 6, fontFamily: "Zen Kaku Gothic New" }),
       assetDecorationLayer({ name: "画像 5（週範囲バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}weekly-schedule-range-badge-blue-uniform-cell.png`, x: 116, y: 410, width: 390, height: 120, opacity: 0.98 }),
       textLayer({ name: "テキスト 2（時刻）", text: "5/4 - 5/10", x: 192, y: 452, width: 245, height: 42, fontSize: 36, color: "#ffffff", strokeColor: "#20306d", strokeWidth: 2, shadowColor: "#8ffcff", shadowBlur: 7, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Oswald", align: "center" }),
       ...weeklyScheduleRowLayers(),
@@ -1536,13 +1538,13 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       assetDecorationLayer({ name: "画像 3（角飾り）", src: `${thumbnailPhase5DecorationAssetPrefix}x-announcement-corner-ornament-gold-uniform-cell.png`, x: 82, y: 130, width: 138, height: 92, opacity: 0.5 }),
       shapeLayer({ name: "図形 3（立ち絵guide枠）", shapeType: "frame", x: 872, y: 110, width: 306, height: 520, fillColor: "#f8fbff08", strokeColor: "#8ca5df", strokeWidth: 2, borderRadius: 86, opacity: 0.24 }),
       assetDecorationLayer({ name: "画像 5（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}x-announcement-label-plaque-blue-uniform-cell.png`, x: 260, y: 116, width: 360, height: 104, opacity: 0.98 }),
-      textLayer({ name: "テキスト 4（ラベル）", text: "X POST", x: 350, y: 151, width: 180, height: 34, fontSize: 30, color: "#ffffff", strokeColor: "#243d84", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald", align: "center" }),
-      textLayer({ name: "テキスト 1（見出し）", text: "本日のお知らせ", x: 116, y: 258, width: 674, height: 94, fontSize: 75, lineHeight: 1, color: "#172766", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#cfdcff", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "X POST", x: 350, y: 151, width: 180, height: 34, fontSize: 30, color: "#ffffff", strokeColor: "#243d84", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "本日のお知らせ", x: 116, y: 258, width: 674, height: 94, fontSize: 75, lineHeight: 1, color: "#172766", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#cfdcff", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Zen Kaku Gothic New" }),
       shapeLayer({ name: "図形 5（本文罫線）", shapeType: "line", x: 128, y: 386, width: 604, height: 16, fillColor: "#d1ad58", strokeColor: "#d1ad58", strokeWidth: 2, borderRadius: 8, opacity: 0.54 }),
-      textLayer({ name: "テキスト 3（サブ）", text: "配信予定と最新情報をまとめました", x: 158, y: 420, width: 564, height: 44, fontSize: 31, align: "center", color: "#22306f", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#dce6ff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1 }),
+      textLayer({ name: "テキスト 3（サブ）", text: "配信予定と最新情報をまとめました", x: 158, y: 420, width: 564, height: 44, fontSize: 31, align: "center", color: "#22306f", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#dce6ff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic" }),
       shapeLayer({ name: "図形 6（サブ下ライン）", shapeType: "line", x: 244, y: 482, width: 392, height: 12, fillColor: "#d1ad58", strokeColor: "#d1ad58", strokeWidth: 2, borderRadius: 8, opacity: 0.38 }),
       assetDecorationLayer({ name: "画像 6（日付バッジ）", src: `${thumbnailPhase5DecorationAssetPrefix}x-announcement-date-badge-blue-gold-uniform-cell.png`, x: 250, y: 498, width: 380, height: 112, opacity: 0.98 }),
-      textLayer({ name: "テキスト 2（時刻）", text: "05.06 WED", x: 334, y: 535, width: 216, height: 42, fontSize: 38, color: "#ffffff", strokeColor: "#243d84", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Oswald", align: "center" })
+      textLayer({ name: "テキスト 2（時刻）", text: "05.06 WED", x: 334, y: 535, width: 216, height: 42, fontSize: 38, color: "#ffffff", strokeColor: "#243d84", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Montserrat", align: "center" })
     ]
   }
 ];

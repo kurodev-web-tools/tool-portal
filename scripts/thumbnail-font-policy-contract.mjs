@@ -33,6 +33,7 @@ assert.equal(typeof lib.normalizeThumbnailFontFamily, "function", "font family f
 assert.equal(typeof lib.getThumbnailCanvasFontFamily, "function", "canvas font family helper is exported");
 assert.equal(typeof lib.getThumbnailCanvasFont, "function", "canvas font shorthand helper is exported");
 assert.ok(Array.isArray(lib.thumbnailFontManifest), "font manifest metadata is exported");
+assert.ok(Array.isArray(lib.thumbnailFontListboxGroups), "font listbox category groups are exported");
 assert.equal(typeof lib.getThumbnailFontManifestEntry, "function", "font manifest lookup helper is exported");
 assert.equal(typeof lib.getThumbnailFontLoadRequests, "function", "font load request helper is exported");
 assert.equal(typeof lib.waitForThumbnailFontLoadRequests, "function", "safe font load helper is exported");
@@ -170,6 +171,39 @@ assert.deepEqual(
 assert.equal(lib.getThumbnailFontManifestEntry(" Oswald ").family, "Oswald", "manifest lookup trims known values");
 assert.equal(lib.getThumbnailFontManifestEntry("Unknown Fancy Font"), null, "manifest lookup rejects unknown values");
 assert.deepEqual(lib.thumbnailFontGroups.map((group) => group.fonts.length), [10, 10], "existing UI font groups stay unchanged in this foundation PR");
+assert.deepEqual(
+  lib.thumbnailFontListboxGroups.map((group) => ({
+    label: group.label,
+    count: group.categories.reduce((total, category) => total + category.options.length, 0)
+  })),
+  [
+    { label: "日本語", count: 12 },
+    { label: "English", count: 12 }
+  ],
+  "font listbox groups expose all self-hosted manifest fonts by language"
+);
+for (const group of lib.thumbnailFontListboxGroups) {
+  assert.ok(["ja", "en"].includes(group.language), `${group.label} keeps a language key`);
+  assert.ok(group.categories.length > 0, `${group.label} has category buckets`);
+  for (const category of group.categories) {
+    assert.equal(typeof category.label, "string", `${group.label} category has a label`);
+    assert.ok(category.options.length > 0, `${category.label} has font options`);
+    for (const option of category.options) {
+      const manifestEntry = lib.getThumbnailFontManifestEntry(option.family);
+      assert.ok(manifestEntry, `${option.family} option maps back to manifest metadata`);
+      assert.equal(option.language, manifestEntry.language, `${option.family} option keeps manifest language`);
+      assert.equal(option.category, manifestEntry.category, `${option.family} option keeps manifest category`);
+      assert.equal(option.mood, manifestEntry.mood, `${option.family} option keeps manifest mood`);
+      assert.equal(typeof option.label, "string", `${option.family} option has short display label`);
+      assert.ok(option.label.length <= 32, `${option.family} option label stays short for the listbox`);
+    }
+  }
+}
+assert.deepEqual(
+  lib.thumbnailFontListboxGroups.flatMap((group) => group.categories.flatMap((category) => category.options.map((option) => option.family))),
+  lib.thumbnailFontManifest.map((font) => font.family),
+  "font listbox order follows the manifest without changing draft schema"
+);
 
 for (const font of lib.thumbnailFonts) {
   assert.equal(lib.normalizeThumbnailFontFamily(font), font, `${font} is kept as a known editor font`);
@@ -395,6 +429,11 @@ assert.equal(typeof lib.applyThumbnailPresetPartial, "function", "partial preset
 assert.equal(typeof lib.normalizeThumbnailUserMaterialRef, "function", "user material ref contract helper remains exported");
 assert.equal(handoffSource.includes("fontFamily"), false, "tool handoff contract does not gain font payloads");
 assert.equal(componentSource.includes("fonts.googleapis.com"), false, "component does not add Google Fonts");
+assert.equal(componentSource.includes("thumbnailFontListboxGroups"), true, "component renders the manifest-backed font listbox groups");
+assert.equal(componentSource.includes("fontOption.mood"), true, "component shows short mood metadata in font options");
+assert.equal(componentSource.includes("fontOption.category"), false, "component keeps category labels at group level instead of repeating long option copy");
+assert.equal(componentSource.includes("recentFont"), false, "font UI category PR does not add recently used font UI");
+assert.equal(componentSource.includes("fontSearch"), false, "font UI category PR does not add font search state");
 assert.equal(componentSource.includes("thumbnailFontAssets.module.css"), true, "Thumbnail Editor imports tool-scoped font asset CSS");
 assert.equal(componentSource.includes("thumbnailFontAssets.thumbnailFontAssetScope"), true, "Thumbnail Editor attaches the font asset CSS module to the tool root");
 assert.equal(thumbnailFontCssSource.includes("@font-face"), true, "tool-scoped font CSS declares self-hosted font faces");

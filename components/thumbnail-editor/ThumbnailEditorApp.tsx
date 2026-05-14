@@ -35,8 +35,7 @@ import {
   replaceThumbnailUserMaterialLayerRef,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
-  thumbnailFontGroups,
-  thumbnailFonts,
+  thumbnailFontListboxGroups,
   thumbnailMainTextCarryoverTargets,
   thumbnailMaterialCategoryLabels,
   thumbnailMaterialLibrary,
@@ -2369,27 +2368,33 @@ function TextControls({
           {fontMenuOpen ? (
             <div className="absolute left-0 right-0 top-full z-[30] mt-1 rounded-base border border-border bg-surface p-1 shadow-panel">
               <div className="scrollbar-accent max-h-48 overflow-y-auto [scrollbar-gutter:stable]" role="listbox">
-                {thumbnailFontGroups.map((group) => (
-                  <div key={group.label}>
+                {thumbnailFontListboxGroups.map((group) => (
+                  <div key={group.language}>
                     <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-normal text-muted">{group.label}</p>
-                    {group.fonts.map((font) => (
-                      <button
-                        key={font}
-                        type="button"
-                        role="option"
-                        aria-selected={font === layer.fontFamily}
-                        className={[
-                          "block w-full rounded-base px-3 py-2 text-left text-sm font-bold",
-                          font === layer.fontFamily ? "bg-primary-soft text-primary-strong" : "text-foreground hover:bg-surface-muted"
-                        ].join(" ")}
-                        style={{ fontFamily: `"${font}", sans-serif` }}
-                        onClick={() => {
-                          update("fontFamily", font);
-                          onFontMenuOpenChange(false);
-                        }}
-                      >
-                        {font}
-                      </button>
+                    {group.categories.map((fontCategory) => (
+                      <div key={`${group.language}-${fontCategory.label}`}>
+                        <p className="px-3 pb-1 pt-2 text-[10px] font-black tracking-normal text-muted/80">{fontCategory.label}</p>
+                        {fontCategory.options.map((fontOption) => (
+                          <button
+                            key={fontOption.family}
+                            type="button"
+                            role="option"
+                            aria-selected={fontOption.family === layer.fontFamily}
+                            className={[
+                              "block w-full rounded-base px-3 py-2 text-left text-sm font-bold",
+                              fontOption.family === layer.fontFamily ? "bg-primary-soft text-primary-strong" : "text-foreground hover:bg-surface-muted"
+                            ].join(" ")}
+                            style={{ fontFamily: `"${fontOption.family}", sans-serif` }}
+                            onClick={() => {
+                              update("fontFamily", fontOption.family);
+                              onFontMenuOpenChange(false);
+                            }}
+                          >
+                            <span className="block truncate">{fontOption.label}</span>
+                            <span className="mt-0.5 block truncate text-[10px] font-bold text-muted/80">{fontOption.mood}</span>
+                          </button>
+                        ))}
+                      </div>
                     ))}
                   </div>
                 ))}

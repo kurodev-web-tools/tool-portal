@@ -24,23 +24,131 @@
 - PR #111 `[codex] Add thumbnail English font batch` は `main` / `origin/main` に merge 済み。merge commit は `f30e3ee8f3a9358709789c91f43d1b39dfc72e0e`。
 - PR #112 `[codex] Add thumbnail font UI categories` は `main` / `origin/main` に merge 済み。merge commit は `cb4a179667520e42d3299a78a5848115fe58a9e6`。
 - PR #113 `[codex] Add thumbnail font search and recents` は `main` / `origin/main` に merge 済み。merge commit は `7879943e9d55841980d6a6d1e0d770ae66705aa9`。
+- PR #114 `[codex] Apply thumbnail preset fonts` は `main` / `origin/main` に merge 済み。merge commit は `615d714de37a8e0124e4b27ac855419041933433`。
 - static export RSC alias fix、production static serve final QA、user material management guard、Schedule Calendar input guard、SNS Split export boundary polish、Thumbnail quality preflight polish、Thumbnail docs drift cleanup、SNS handoff accessibility copy polish の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の PR #91 / PR #92 / PR #94 / PR #96 / PR #97 / PR #99 / PR #101 / PR #102 欄を参照する。
 
 ## Active
 
-- Thumbnail Editor preset font application:
-  - branch / worktree: `codex/thumbnail-preset-font-application` / `.worktrees/thumbnail-preset-font-application`
-  - 前提確認: PR #113 `[codex] Add thumbnail font search and recents` は GitHub 上で `MERGED`、merge commit `7879943e9d55841980d6a6d1e0d770ae66705aa9` が `origin/main` 先頭にあることを確認済み。
-  - 実装: 既存 Thumbnail Editor preset の初期 text layer `fontFamily` を、`thumbnailFontManifest` 24種の範囲で用途に合わせて最小差し替えした。日本語本文 / 長めの日本語は `BIZ UDPGothic`、`Zen Kaku Gothic New`、`Noto Serif JP` など読みやすい日本語 font を優先し、英字ラベル / 時刻 / ゲーム風アクセントは `Bebas Neue`、`Montserrat`、`Orbitron`、`Oswald` などに限定した。
-  - contract: `scripts/thumbnail-font-policy-contract.mjs` に、preset 初期 text layer が manifest-backed fontFamily のみを使うことと、代表 layer の用途別 font mapping を確認する assertion を追加した。text layer key、draft normalize、material registration、handoff payload の既存境界は維持する。
-  - スコープ外: preset body 新規追加、draft schema、canvas export、font loading helper、font search / recently used UI、text / image layer schema、material registration、Schedule Calendar、SNS Split Image Maker は変更しない。
-  - 検証: `node scripts/thumbnail-font-policy-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` を実行済み。`git diff --check` は LF -> CRLF 変換 warning のみで whitespace error なし。
-  - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認。390px は header controls、bottom nav、canvas card が縦積みで崩れず、変更後の初期 font が canvas 内に収まることを確認。820px は async asset draw 後に canvas が表示され、top controls、preset list、bottom nav、toast が互いに押し崩さないことを確認。1024 / 1280 / 1366px は side nav / right panel / canvas 周辺が維持され、font 変更後の見出し、時刻、サブが canvas 内で破綻しないことを確認。
-- 次に新規作業へ進む場合は、下の次候補を `origin/main` 起点の feature branch / `.worktrees/...` で PR-sized に切る。
-- 次候補:
-  - `preset body` / `preset batch`: font 適用とは別に、候補ごとの body 追加を PR-sized に切る。
-  - `variant body UI`: 既存 helper 境界を使う場合のみ、縦長 / 正方形の UI 導線を PR-sized に切る。
-- docs / task 整理のみの変更では幅別ブラウザ再確認は不要。UI / 表示文言を触る後続PRでは幅別確認を残す。
+- Thumbnail Editor usecase preset candidates planning:
+  - branch / worktree: `codex/thumbnail-preset-usecase-mocks` / `.worktrees/thumbnail-preset-usecase-mocks`
+  - 前提確認: PR #114 `[codex] Apply thumbnail preset fonts` は GitHub 上で `MERGED`、merge commit `615d714de37a8e0124e4b27ac855419041933433` が `origin/main` に含まれることを確認済み。
+  - scope: 既存カテゴリ内に追加する用途違い preset 候補を整理し、方向確認用 mock を生成した。実 preset body、asset registration、schema、canvas export、font loading helper、font search / recently used UI は変更しない。
+  - planning doc: `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`
+  - mock path: `docs/mockups/thumbnail-editor-usecase-preset-candidates/`
+  - 候補一覧:
+    - `first_stream` / 初配信 / `配信ジャンル` / 初回・自己紹介 / mock `first-stream-mock.png`
+    - `anniversary_stream` / 記念配信 / `告知画像` / 記念・milestone / mock `anniversary-stream-mock.png`
+    - `endurance_stream` / 耐久配信 / `配信ジャンル` / 耐久・目標 / mock `endurance-stream-mock.png`
+    - `project_stream` / 企画配信 / `配信ジャンル` / 企画・視聴者参加 / mock `project-stream-mock.png`
+    - `cover_song_notice` / 歌ってみた告知 / `告知画像` / 動画公開・cover / mock `cover-song-notice-mock.png`
+    - `event_notice` / イベント告知 / `告知画像` / イベント・参加情報 / mock `event-notice-mock.png`
+  - first batch:
+    - `first_stream`: 既存 `配信告知` より debut / welcome / 自己紹介に寄せられ、用途差が明確。
+    - `anniversary_stream`: 既存 `お知らせ` より milestone / 祝祭 / 記念 badge を主役にできる。
+    - `endurance_stream`: 既存 `ゲーム実況` と違い、goal / progress / 長時間 challenge を扱える。
+  - production 実装メモ:
+    - 1 preset / 1 PR で、背景、焼き込み装飾、必要 asset、preset body、必要 contract を分けて実装する。
+    - `first_stream` は ivory / cyan / soft pink の debut stage、label plaque、time badge、standee frame glow、sparkle / ribbon accent。
+    - `anniversary_stream` は midnight navy / champagne gold / rose、milestone badge、gold corner ornament、glint cluster、time badge。
+    - `endurance_stream` は charcoal / electric lime / cyan / orange、goal badge panel、progress divider、challenge label、sharp frame accent。
+    - second batch は `project_stream`、`cover_song_notice`、`event_notice` を first batch review 後に再評価する。
+  - 検証方針: docs / mock planning 中心なので `git diff --check` を baseline にする。UI 実装を触らないため `390 / 820 / 1024 / 1280 / 1366px` の幅別 browser 確認は不要。
+  - 次セッション用 prompt:
+
+```text
+対象repo: D:\V_streamer_tools
+
+目的:
+- Thumbnail Editor の追加用途 preset `first_stream` / 初配信を 1 preset / 1 PR で実装する
+- 背景 + 焼き込み装飾 + 必要 asset + preset body + 必要 contract を追加する
+
+前提:
+- AGENTS.md と task.md を読む
+- docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md と docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md を読む
+- PR #115 `[codex] Plan thumbnail usecase preset mocks` が main / origin/main に merge 済みか確認する
+- 未mergeなら新規作業へ進まず blocker summary にする
+- main 直作業は避け、origin/main 起点で feature branch / `.worktrees/...` を切る
+
+scope:
+- `first_stream` / 初配信のみ
+- production asset は `public/assets/images/thumbnail-editor/...` の既存 phase / decoration 命名に合わせて追加する
+- preset body は既存 `見出し` / `時刻` / `サブ` / `ラベル` text layer 境界を維持する
+- schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない
+
+参考:
+- mock: `docs/mockups/thumbnail-editor-usecase-preset-candidates/first-stream-mock.png`
+- direction: debut / welcome / 自己紹介、ivory + cyan + soft pink、standee frame glow、label plaque、time badge、small sparkle / ribbon accents
+
+検証:
+- preset / asset contract を追加または更新
+- `git diff --check`
+- 実装コードを触るため該当 contract、`npm run lint`、`npx tsc --noEmit`
+- UI 表示を触った場合は `390 / 820 / 1024 / 1280 / 1366px` を確認して task.md に記録
+
+終了:
+- task.md 更新、diff 確認、commit、push、draft PR 作成
+```
+
+```text
+対象repo: D:\V_streamer_tools
+
+目的:
+- Thumbnail Editor の追加用途 preset `anniversary_stream` / 記念配信を 1 preset / 1 PR で実装する
+
+前提:
+- AGENTS.md、task.md、docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md、docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md を読む
+- PR #115 `[codex] Plan thumbnail usecase preset mocks` と、先行する `first_stream` 実装 PR が merge 済みか確認する
+- main 直作業は避け、origin/main 起点で feature branch / `.worktrees/...` を切る
+
+scope:
+- `anniversary_stream` / 記念配信のみ
+- 背景、milestone badge、gold corner ornament、glint cluster、label plaque、time badge、preset body、必要 contract を追加する
+- schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない
+
+参考:
+- mock: `docs/mockups/thumbnail-editor-usecase-preset-candidates/anniversary-stream-mock.png`
+- direction: midnight navy + champagne gold + soft rose、premium / milestone / anniversary、上品な記念感
+
+検証:
+- preset / asset contract を追加または更新
+- `git diff --check`
+- 該当 contract、`npm run lint`、`npx tsc --noEmit`
+- UI 表示を触った場合は `390 / 820 / 1024 / 1280 / 1366px` を確認して task.md に記録
+
+終了:
+- task.md 更新、diff 確認、commit、push、draft PR 作成
+```
+
+```text
+対象repo: D:\V_streamer_tools
+
+目的:
+- Thumbnail Editor の追加用途 preset `endurance_stream` / 耐久配信を 1 preset / 1 PR で実装する
+
+前提:
+- AGENTS.md、task.md、docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md、docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md を読む
+- PR #115 `[codex] Plan thumbnail usecase preset mocks` と、先行する first batch 実装 PR の merge 状態を確認する
+- main 直作業は避け、origin/main 起点で feature branch / `.worktrees/...` を切る
+
+scope:
+- `endurance_stream` / 耐久配信のみ
+- 背景、goal badge panel、progress divider、challenge label plaque、time badge、sharp frame accents、preset body、必要 contract を追加する
+- 既存 `ゲーム実況` の HUD 方向とは被らせず、goal / progress / 長時間 challenge を主役にする
+- schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker は変更しない
+
+参考:
+- mock: `docs/mockups/thumbnail-editor-usecase-preset-candidates/endurance-stream-mock.png`
+- direction: charcoal + electric lime + cyan + orange、challenge / progress、情報量は多いが整理された layout
+
+検証:
+- preset / asset contract を追加または更新
+- `git diff --check`
+- 該当 contract、`npm run lint`、`npx tsc --noEmit`
+- UI 表示を触った場合は `390 / 820 / 1024 / 1280 / 1366px` を確認して task.md に記録
+
+終了:
+- task.md 更新、diff 確認、commit、push、draft PR 作成
+```
 
 ## Freeze closeout state
 

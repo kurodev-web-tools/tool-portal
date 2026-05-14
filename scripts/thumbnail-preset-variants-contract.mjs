@@ -37,6 +37,7 @@ assert.deepEqual(
   presetIds,
   [
     "stream_announce",
+    "first_stream",
     "karaoke",
     "chatting",
     "clip",

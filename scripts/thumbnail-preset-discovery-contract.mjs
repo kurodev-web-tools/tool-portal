@@ -43,18 +43,18 @@ const categoryResult = lib.filterThumbnailPresets(lib.thumbnailPresets, {
 });
 assert.deepEqual(
   categoryResult.map((preset) => preset.id),
-  ["karaoke", "chatting", "game_live", "collaboration"],
+  ["first_stream", "karaoke", "chatting", "game_live", "collaboration"],
   "category filter narrows presets"
 );
 
 const usageResult = lib.filterThumbnailPresets(lib.thumbnailPresets, {
   query: "",
   category: "all",
-  usageLabel: "週まとめ"
+  usageLabel: "初回 / 自己紹介"
 });
 assert.deepEqual(
   usageResult.map((preset) => preset.id),
-  ["weekly_schedule"],
+  ["first_stream"],
   "usage label filter narrows presets"
 );
 

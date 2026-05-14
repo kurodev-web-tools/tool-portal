@@ -1,6 +1,7 @@
 export type ThumbnailCanvasSizeId = "hd" | "full-hd";
 export type ThumbnailPresetId =
   | "stream_announce"
+  | "first_stream"
   | "karaoke"
   | "chatting"
   | "clip"
@@ -125,7 +126,6 @@ export type ThumbnailPresetVariantRelation = {
   variantIds: ThumbnailPresetVariantId[];
 };
 export type ThumbnailPresetBatchCandidateId =
-  | "first_stream"
   | "anniversary_stream"
   | "endurance_stream"
   | "karaoke_stream"
@@ -1363,6 +1363,32 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     ]
   },
   {
+    id: "first_stream",
+    name: "初配信",
+    category: "配信ジャンル",
+    usageLabel: "初回 / 自己紹介",
+    description: "初回配信や自己紹介に使いやすい明るい歓迎向け。",
+    accent: "#7bdcff",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}first-stream-background-v1.png`),
+      assetDecorationLayer({ name: "画像 2（右立ち絵枠の発光）", src: `${thumbnailPhase5DecorationAssetPrefix}first-stream-standee-frame-glow-uniform-cell.png`, x: 682, y: 36, width: 620, height: 620, opacity: 0.82 }),
+      assetDecorationLayer({ name: "画像 3（左上リボン）", src: `${thumbnailPhase5DecorationAssetPrefix}first-stream-ribbon-accent-cyan-pink-uniform-cell.png`, x: -120, y: 36, width: 410, height: 274, rotation: -16, opacity: 0.56 }),
+      assetDecorationLayer({ name: "画像 4（右下リボン）", src: `${thumbnailPhase5DecorationAssetPrefix}first-stream-ribbon-accent-cyan-pink-uniform-cell.png`, x: 896, y: 452, width: 430, height: 287, rotation: 12, opacity: 0.48 }),
+      assetDecorationLayer({ name: "画像 5（小粒きらめき）", src: `${thumbnailPhase5DecorationAssetPrefix}first-stream-sparkle-cluster-cyan-pink-uniform-cell.png`, x: 286, y: 114, width: 350, height: 233, opacity: 0.72 }),
+      assetDecorationLayer({ name: "画像 6（右側きらめき）", src: `${thumbnailPhase5DecorationAssetPrefix}first-stream-sparkle-cluster-cyan-pink-uniform-cell.png`, x: 588, y: 286, width: 280, height: 187, rotation: 8, opacity: 0.54 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 836, y: 86, width: 322, height: 548, fillColor: "#ffffff18", strokeColor: "#8ee9ff", strokeWidth: 2, borderRadius: 92, opacity: 0.34 }),
+      shapeLayer({ name: "図形 4（ラベル横ライン）", shapeType: "line", x: 448, y: 126, width: 238, height: 12, fillColor: "#f3c9d9", strokeColor: "#f3c9d9", strokeWidth: 3, borderRadius: 8, opacity: 0.6 }),
+      assetDecorationLayer({ name: "画像 7（ラベル土台）", src: `${thumbnailPhase5DecorationAssetPrefix}first-stream-label-plaque-ivory-uniform-cell.png`, x: 64, y: 48, width: 492, height: 144, opacity: 0.98 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "DEBUT STREAM", x: 146, y: 100, width: 324, height: 42, fontSize: 34, color: "#17496a", strokeWidth: 0, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Poppins", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "初配信", x: 72, y: 198, width: 686, height: 166, fontSize: 158, lineHeight: 0.96, color: "#fff8f4", strokeColor: "#28638f", strokeWidth: 11, shadowColor: "#f49abd", shadowBlur: 15, shadowOffsetX: 4, shadowOffsetY: 6, fontFamily: "RocknRoll One" }),
+      shapeLayer({ name: "図形 6（見出し下ライン）", shapeType: "line", x: 92, y: 404, width: 568, height: 14, fillColor: "#88e4ff", strokeColor: "#88e4ff", strokeWidth: 4, borderRadius: 8, opacity: 0.54 }),
+      assetDecorationLayer({ name: "画像 8（時刻バッジ土台）", src: `${thumbnailPhase5DecorationAssetPrefix}first-stream-time-badge-cyan-pink-uniform-cell.png`, x: 54, y: 454, width: 660, height: 154, opacity: 0.98 }),
+      shapeLayer({ name: "図形 5（時刻下ライン）", shapeType: "line", x: 154, y: 610, width: 418, height: 12, fillColor: "#f4b7ca", strokeColor: "#f4b7ca", strokeWidth: 3, borderRadius: 8, opacity: 0.46 }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 152, y: 506, width: 470, height: 62, fontSize: 60, color: "#164865", strokeColor: "#fffaf2", strokeWidth: 2, shadowColor: "#9feaff", shadowBlur: 8, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Bebas Neue", align: "center" }),
+      textLayer({ name: "テキスト 3（サブ）", text: "はじめまして、よろしくね", x: 116, y: 632, width: 560, height: 44, fontSize: 32, align: "center", color: "#17496a", strokeColor: "#fffaf2", strokeWidth: 3, shadowColor: "#f2abc0", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Zen Kaku Gothic New" })
+    ]
+  },
+  {
     id: "karaoke",
     name: "歌枠",
     category: "配信ジャンル",
@@ -1581,15 +1607,6 @@ const thumbnailPresetBatchDependencies: ThumbnailPresetBatchDependency[] = [
 ];
 
 export const thumbnailPresetBatchCandidates: ThumbnailPresetBatchCandidate[] = [
-  {
-    id: "first_stream",
-    label: "初配信",
-    useCase: "初配信や初回自己紹介向け",
-    recommendedVariantId: "landscape-16-9",
-    requiredTextLayerRoles: ["見出し", "時刻", "サブ", "ラベル"],
-    requiredMaterialCategories: ["label-base", "date-badge", "frame", "accent"],
-    dependsOn: thumbnailPresetBatchDependencies
-  },
   {
     id: "anniversary_stream",
     label: "記念配信",

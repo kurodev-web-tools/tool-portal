@@ -475,6 +475,44 @@
 - 幅別確認: `390 / 820 / 1024 / 1280 / 1366px` で `/tools/sns-split-image-maker?preset=split-4` の Schedule handoff banner 表示、source 別 status、次アクション文、textarea label、横 overflow なし、console error / warning なしを確認した。
 - 検証: `node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` 成功。
 
+#### P27: Thumbnail Editor usecase preset implementation sequence
+
+- PR #103 `[codex] Clean up task board after PR102` は `main` / `origin/main` へ merge 済み。merge commit は `1e4e4931fb5050d99e5a967a9817ffaf8dbd8402`。
+- PR #104 `[codex] Clean up file name sanitize helpers` は `main` / `origin/main` へ merge 済み。merge commit は `9b6bc17a136cc948760fb3c96530649a4406f820`。
+- PR #105 `[codex] Clamp thumbnail to SNS handoff payload` は `main` / `origin/main` へ merge 済み。merge commit は `edafcae28da0e90b3de852f917988774b497198d`。
+- PR #106 `[codex] Add thumbnail variant body foundation` は `main` / `origin/main` へ merge 済み。merge commit は `50bab4419b2d8389428a5f5b6995f470a6e83113`。
+- PR #107 `[codex] Add thumbnail variant UI route` は `main` / `origin/main` へ merge 済み。merge commit は `4d758f6062bfbd756b21fe640d95c81894e93bf9`。
+- PR #108 `[codex] Plan thumbnail font candidates` は `main` / `origin/main` へ merge 済み。merge commit は `8c6a3f67611c82df164b91c339b814aa00625b69`。
+- PR #109 `[codex] Add thumbnail font loading foundation` は `main` / `origin/main` へ merge 済み。merge commit は `6edca54f93144d691cfc4a1ebff927bd978ac9f8`。
+- PR #110 `[codex] Add thumbnail Japanese font batch` は `main` / `origin/main` へ merge 済み。merge commit は `f168bddc75c660ad1f718efc32c33d8224b591d6`。
+- PR #111 `[codex] Add thumbnail English font batch` は `main` / `origin/main` へ merge 済み。merge commit は `f30e3ee8f3a9358709789c91f43d1b39dfc72e0e`。
+- PR #112 `[codex] Add thumbnail font UI categories` は `main` / `origin/main` へ merge 済み。merge commit は `cb4a179667520e42d3299a78a5848115fe58a9e6`。
+- PR #113 `[codex] Add thumbnail font search and recents` は `main` / `origin/main` へ merge 済み。merge commit は `7879943e9d55841980d6a6d1e0d770ae66705aa9`。
+- PR #114 `[codex] Apply thumbnail preset fonts` は `main` / `origin/main` へ merge 済み。merge commit は `615d714de37a8e0124e4b27ac855419041933433`。
+- PR #115 `[codex] Plan thumbnail usecase preset mocks` は `main` / `origin/main` へ merge 済み。merge commit は `3d5e7dd24826dc95abbc46d511a844bb86c05800`。
+- PR #116 `[codex] Add first stream thumbnail preset` は `main` / `origin/main` へ merge 済み。merge commit は `68bbcd48d71586b1891314f8bfd766abe19aa8bf`。
+- PR #117 `[codex] Add anniversary stream thumbnail preset` は `main` / `origin/main` へ merge 済み。merge commit は `562163fe90546d4dee413947ffc0ec36a9068683`。
+- PR #118 `[codex] Add endurance stream thumbnail preset` は `main` / `origin/main` へ merge 済み。merge commit は `1d051a7b24e40dadbd053a9d02878676d897b4e5`。
+- PR #119 `[codex] Split endurance stream frame assets` は `main` / `origin/main` へ merge 済み。merge commit は `c9b2c28334b84db84ddab64ef940b7c962dffb0d`。
+- PR #120 `[codex] Document next thumbnail preset prompt` は `main` / `origin/main` へ merge 済み。merge commit は `82a596815dc2f12615d21bfb236ed083226c61cc`。
+- PR #121 `[codex] Add project stream thumbnail preset` は `main` / `origin/main` へ merge 済み。merge commit は `3d0c695ac0ac8b31e47d319521137660071e94e9`。
+- PR #122 `[codex] Add cover song thumbnail preset` は `main` / `origin/main` へ merge 済み。merge commit は `22831fbdcc90b5da2cba1d363b9b29230dd86258`。
+- PR #123 `[codex] Add event notice thumbnail preset` は `main` / `origin/main` へ merge 済み。merge commit は `f0e28573e3ecbb7cbd62dbfbad5db336434ea9aa`。
+- `event_notice` では `event-notice-background-v1.png`、ticket/date badge、info band、map-line divider、key-visual frame、corner mark、専用 contract を追加した。
+- `event_notice` の背景・装飾 asset は `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode を使用し、装飾は chroma-key 生成後に skill 付属 `remove_chroma_key.py` で alpha PNG 化した。
+- `event_notice` の検証は `node scripts/thumbnail-usecase-event-notice-preset-contract.mjs`、`node scripts/thumbnail-preset-discovery-contract.mjs`、`node scripts/thumbnail-preset-batch-readiness-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-material-assets-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check`。
+- 幅別確認は `390 / 820 / 1024 / 1280 / 1366px` で `/tools/thumbnail-editor` を確認し、各幅で `イベント告知` preset 選択状態、canvas 1件、console error 0。
+
+#### P28: Thumbnail Editor next usecase preset planning
+
+- PR #124 `[codex] Plan next thumbnail preset candidates` は 2026-05-15 時点で draft/open。
+- branch / worktree は `codex/thumbnail-usecase-next-planning` / `.worktrees/thumbnail-usecase-next-planning`。
+- second batch 後の次候補を `goods_notice` / `membership_stream` / `asmr_stream` / `relay_stream` / `collab_recruit_notice` の 5件に整理した。
+- 推奨順は `goods_notice` -> `membership_stream` -> `asmr_stream` -> `relay_stream` -> `collab_recruit_notice`。
+- planning 詳細は `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`、mock split は `docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md` に残した。
+- 今回は新規 mock / production asset / preset body は追加していない。候補ごとに必要になった時点で `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode を使う。
+- 検証: `git diff --check`、docs の候補表と follow-up split の一致確認。
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

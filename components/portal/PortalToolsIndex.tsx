@@ -12,6 +12,16 @@ function isSuiteKey(value: string | null): value is SuiteKey {
   return Boolean(value && suites.some((suite) => suite.key === value));
 }
 
+function getDefaultStatusFilter(suite: SuiteKey | "all") {
+  if (suite === "all") {
+    return "available";
+  }
+
+  return tools.some((tool) => tool.suite === suite && tool.status === "available")
+    ? "available"
+    : "all";
+}
+
 export function PortalToolsIndex() {
   const pathname = usePathname();
   const router = useRouter();
@@ -19,7 +29,7 @@ export function PortalToolsIndex() {
   const suiteParam = searchParams.get("suite");
   const suite: SuiteKey | "all" = isSuiteKey(suiteParam) ? suiteParam : "all";
   const [category, setCategory] = useState("all");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState(() => getDefaultStatusFilter(suite));
 
   const handleSuiteChange = (nextSuite: SuiteKey | "all") => {
     const params = new URLSearchParams(searchParams.toString());
@@ -30,6 +40,7 @@ export function PortalToolsIndex() {
     }
 
     const query = params.toString();
+    setStatus(getDefaultStatusFilter(nextSuite));
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
@@ -49,7 +60,7 @@ export function PortalToolsIndex() {
           <p className="text-sm font-bold text-primary-strong">Tools</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">ツール一覧</h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-            公開版で利用できる個別ツールは Schedule Calendar / Thumbnail Editor / SNS分割画像メーカーです。準備中の候補は利用導線と分けて表示しています。
+            公開版で利用できる個別ツールは Schedule Calendar / Thumbnail Editor / SNS分割画像メーカーです。準備中の候補は必要なときだけ絞り込んで確認できます。
           </p>
           {currentSuiteName ? (
             <div className="mt-4 inline-flex items-center gap-2 rounded-base bg-primary-soft px-3 py-2 text-sm font-bold text-primary-strong">

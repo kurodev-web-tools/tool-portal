@@ -7,6 +7,8 @@ export type ThumbnailPresetId =
   | "project_stream"
   | "cover_song_notice"
   | "event_notice"
+  | "privacy_notice"
+  | "whiteboard_plan"
   | "karaoke"
   | "chatting"
   | "clip"
@@ -1529,6 +1531,44 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       textLayer({ name: "テキスト 3（サブ）", text: "参加情報まとめ", x: 120, y: 506, width: 540, height: 58, fontSize: 47, align: "center", color: "#092746", strokeColor: "#fffaf0", strokeWidth: 4, shadowColor: "#0d8b63", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "BIZ UDPGothic", bold: true }),
       shapeLayer({ name: "図形 6（情報区切りライン）", shapeType: "line", x: 134, y: 586, width: 470, height: 10, fillColor: "#0b6d4a", strokeColor: "#0b6d4a", strokeWidth: 3, borderRadius: 8, opacity: 0.62 }),
       assetDecorationLayer({ name: "画像 8（マップラインディバイダー）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-map-line-divider-emerald-gold-uniform-cell.png`, x: 28, y: 596, width: 650, height: 434, rotation: -2, opacity: 0.78 })
+    ]
+  },
+  {
+    id: "privacy_notice",
+    name: "プライバシー告知",
+    category: "告知画像",
+    usageLabel: "予定 / 非公開情報配慮",
+    description: "予定テキストを活かしつつ、細かい内容を出しすぎない事前告知向け。",
+    accent: "#5f7fff",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}x-announcement-background-v1.png`),
+      shapeLayer({ name: "図形 1（全体トーン）", shapeType: "rect", x: 0, y: 0, width: 1280, height: 720, fillColor: "#10214a", strokeColor: "#10214a", strokeWidth: 0, borderRadius: 0, opacity: 0.22 }),
+      shapeLayer({ name: "図形 2（見出しカード）", shapeType: "rect", x: 88, y: 142, width: 730, height: 280, fillColor: "#fbfdff", strokeColor: "#6f84dc", strokeWidth: 4, borderRadius: 28, opacity: 0.94 }),
+      shapeLayer({ name: "図形 3（サブ情報カード）", shapeType: "rect", x: 116, y: 456, width: 660, height: 120, fillColor: "#f7f3e9", strokeColor: "#b9a86f", strokeWidth: 3, borderRadius: 22, opacity: 0.92 }),
+      assetDecorationLayer({ name: "画像 2（プライバシー目隠しバー）", src: `${thumbnailPhase5DecorationAssetPrefix}privacy-redaction-bar-v1.png`, x: 778, y: 130, width: 390, height: 68, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 3（プライバシー目隠しパネル）", src: `${thumbnailPhase5DecorationAssetPrefix}privacy-mask-panel-v1.png`, x: 824, y: 472, width: 354, height: 197, opacity: 0.9 }),
+      assetDecorationLayer({ name: "画像 4（プライバシーロックバッジ）", src: `${thumbnailPhase5DecorationAssetPrefix}privacy-lock-badge-v1.png`, x: 904, y: 226, width: 174, height: 180, opacity: 0.88 }),
+      shapeLayer({ name: "図形 7（ラベルライン）", shapeType: "line", x: 112, y: 108, width: 328, height: 12, fillColor: "#5f7fff", strokeColor: "#5f7fff", strokeWidth: 3, borderRadius: 8, opacity: 0.74 }),
+      shapeLayer({ name: "図形 8（時刻ピル土台）", shapeType: "rect", x: 118, y: 584, width: 430, height: 70, fillColor: "#243466", strokeColor: "#ffffff", strokeWidth: 3, borderRadius: 20, opacity: 0.96 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "SAFE NOTICE", x: 112, y: 70, width: 330, height: 34, fontSize: 29, color: "#20305f", strokeWidth: 0, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "予定のお知らせ", x: 124, y: 190, width: 656, height: 120, fontSize: 88, lineHeight: 1, color: "#18234d", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#dbe4ff", shadowBlur: 6, shadowOffsetX: 0, shadowOffsetY: 3, fontFamily: "Zen Kaku Gothic New", bold: true }),
+      textLayer({ name: "テキスト 3（サブ）", text: "詳しい内容は当日の告知で案内します", x: 154, y: 494, width: 590, height: 44, fontSize: 33, color: "#23305b", strokeColor: "#ffffff", strokeWidth: 0, shadowColor: "#f8f0d4", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 154, y: 602, width: 360, height: 42, fontSize: 38, color: "#ffffff", strokeColor: "#192650", strokeWidth: 2, shadowColor: "#91a5ff", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Montserrat", align: "center" })
+    ]
+  },
+  {
+    id: "whiteboard_plan",
+    name: "ホワイトボード",
+    category: "告知画像",
+    usageLabel: "予定 / 説明整理",
+    description: "企画内容や配信の流れを、白板風に軽く整理して見せる告知向け。",
+    accent: "#2fb7a3",
+    layers: [
+      shapeLayer({ name: "図形 1（白板面）", shapeType: "rect", x: 0, y: 0, width: 1280, height: 720, fillColor: "#fffefa", strokeColor: "#fffefa", strokeWidth: 0, borderRadius: 0, opacity: 1 }),
+      textLayer({ name: "テキスト 4（ラベル）", text: "TODAY'S PLAN", x: 90, y: 84, width: 330, height: 38, fontSize: 30, color: "#3d635e", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Fredoka", align: "left" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "今日の配信予定", x: 88, y: 174, width: 880, height: 100, fontSize: 78, lineHeight: 1, color: "#213534", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Zen Kaku Gothic New", bold: true }),
+      textLayer({ name: "テキスト 3（サブ）", text: "やることを一緒に確認しよう", x: 92, y: 336, width: 820, height: 58, fontSize: 42, color: "#355450", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "BIZ UDPGothic", align: "left" }),
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 92, y: 512, width: 420, height: 54, fontSize: 44, color: "#1e4640", strokeColor: "#ffffff", strokeWidth: 0, shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, fontFamily: "Montserrat", align: "left" })
     ]
   },
   {

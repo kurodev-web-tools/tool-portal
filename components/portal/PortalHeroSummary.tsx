@@ -1,13 +1,12 @@
 import Link from "next/link";
 import {
   implementedToolCount,
-  plannedToolCount,
   suiteCount
 } from "@/lib/suites";
 
 const summaryItems = [
   { label: "利用できるツール", value: `${implementedToolCount} 個`, mark: "□", helper: "実装済み" },
-  { label: "開発中のツール", value: `${plannedToolCount} 個`, mark: "◇", helper: "準備中" },
+  { label: "公開導線", value: "3 ステップ", mark: "◇", helper: "配信準備" },
   { label: "スイート数", value: `${suiteCount}`, mark: "☆", helper: "カテゴリ" }
 ];
 
@@ -23,7 +22,7 @@ export function PortalHeroSummary() {
             公開版では、Schedule Calendar、Thumbnail Editor、SNS分割画像メーカーを入口から直接開けます。
           </span>
           <span className="block">
-            後続候補は準備中として表示し、利用できる導線と分けています。
+            未確定の候補は前面に出さず、今すぐ使える導線を優先しています。
           </span>
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">

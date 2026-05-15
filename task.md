@@ -32,6 +32,7 @@
   - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は通過。
   - 幅別確認: in-app browser で `/tools?suite=stream-workflow` と `/tools?suite=fan-brand` を `390 / 820 / 1280px` で確認。`stream-workflow` は `Schedule Calendar -> Thumbnail Editor -> SNS分割画像メーカー` が公開ツールとして先頭に並び、`fan-brand` は `Fan Community` のみに絞られる。console error なし。問題がなかったため `1024 / 1366px` は追加確認なし。
   - 次セッション候補: `schedule-public-prelaunch-polish` を推奨。Schedule Calendar の初期導線、予定作成 / 編集、投稿補助、backup / restore、input guard、Schedule -> Thumbnail / SNS Split handoff copy を公開前調整する。
+  - 追記 2026-05-15 / review follow-up: 公開前の第一印象では未確定の開発中ツール数を前面に出さない方針へ変更。Hero summary は `開発中のツール 7個` ではなく `公開導線 3ステップ` を表示し、Tools 一覧は初期表示を利用可能ツール優先にする。`fan-brand` は現時点で公開ツールを持たないため `planned` suite として扱う。in-app browser で `/`、`/tools`、`/tools?suite=stream-workflow`、`/tools?suite=fan-brand` を `390 / 820 / 1280px` で確認し、console error なし。
 
 - Thumbnail Editor preset default placement pass
   - 目的: 既存 preset の初期テキスト / asset / standee guide / frame 配置を mock 画像と再比較し、正式版の default placement へ寄せる。

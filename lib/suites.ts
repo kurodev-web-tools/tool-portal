@@ -29,7 +29,7 @@ export const suites: SuiteDefinition[] = [
     icon: "♥",
     tags: ["ファン交流", "プロフィール整備", "ブランド素材", "+ その他"],
     toolCount: 4,
-    status: "available"
+    status: "planned"
   },
   {
     key: "business-collab",

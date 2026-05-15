@@ -80,10 +80,13 @@ assert.match(toolsPageSource, /Schedule Calendar、Thumbnail Editor、SNS分割�
 assert.match(thumbnailPageSource, /用途別プリセット/, "thumbnail page metadata keeps preset-first scope");
 assert.match(thumbnailPageSource, /立ち絵/, "thumbnail page metadata keeps standee replacement scope");
 assert.match(snsPageSource, /2分割\/3分割\/4分割/, "sns page metadata lists all split presets");
-assert.match(suitesSource, /key: "fan-brand"[\s\S]*?status: "available"/, "fan-brand suite is available while design tools are available");
+assert.match(suitesSource, /key: "fan-brand"[\s\S]*?status: "planned"/, "fan-brand suite stays planned until it has a public tool");
 assert.match(suitesSource, /key: "stream-workflow"[\s\S]*?Schedule Calendar[\s\S]*?Thumbnail Editor[\s\S]*?SNS分割画像/, "stream workflow suite tags present the public tool flow");
 assert.match(suitesSource, /key: "fan-brand"[\s\S]*?ファン交流[\s\S]*?プロフィール整備[\s\S]*?ブランド素材/, "fan-brand suite tags focus on fan and brand work");
-assert.doesNotMatch(suitesSource.match(/key: "fan-brand"[\s\S]*?status: "available"/)?.[0] ?? "", /Thumbnail Editor|SNS分割画像|サムネイル作成|分割画像づくり/, "fan-brand suite copy does not claim thumbnail or sns split creation");
+assert.doesNotMatch(suitesSource.match(/key: "fan-brand"[\s\S]*?status: "planned"/)?.[0] ?? "", /Thumbnail Editor|SNS分割画像|サムネイル作成|分割画像づくり/, "fan-brand suite copy does not claim thumbnail or sns split creation");
+assert.doesNotMatch(portalHeroSource, /開発中のツール/, "hero summary does not foreground the number of planned tools before launch");
+assert.match(portalHeroSource, /公開導線/, "hero summary foregrounds the public workflow instead of planned inventory");
+assert.match(portalToolsIndexSource, /getDefaultStatusFilter/, "tools index defaults to available tools unless a selected suite has no public tools");
 assert.doesNotMatch(toolsSource + toolsPageSource + appLayoutSource + homePageSource + portalHomeSource + portalHeroSource + portalToolsIndexSource, /ZIP 出力|一括ZIP|複数形式 export/, "portal entry copy keeps post-freeze export candidates out of current feature copy");
 
 console.log("tool-portal-entry contract checks passed");

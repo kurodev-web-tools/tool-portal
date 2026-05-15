@@ -45,6 +45,12 @@
   - 確認観点: 初期導線、予定作成 / 編集、投稿補助、backup / restore、input guard、Schedule -> Thumbnail / SNS Split handoff copy。
   - 入れないもの: Google Calendar 連携、ログイン / サーバー同期、シリーズ一括編集、例外日、週間予定画像生成。
   - 検証: `node scripts/schedule-calendar-storage-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check`、in-app browser 幅別確認。
+  - 結果記録 2026-05-15 / `schedule-public-prelaunch-polish`: PR #125 `[codex] Reclassify portal suite tools` が `main` / `origin/main` に merge 済みであることを確認し、`origin/main` 起点の `.worktrees/schedule-public-prelaunch-polish` で実装。Schedule Calendar の初期導線を「予定作成 -> 告知文 -> サムネ -> 分割画像」へ短く寄せ、空状態、投稿補助、backup / restore、input guard、handoff 失敗時 copy を公開前の実用導線として整理した。storage schema、handoff payload、Thumbnail Editor / SNS Split Image Maker 本体は変更していない。
+  - contract 更新: `scripts/schedule-calendar-prelaunch-polish-contract.mjs` を追加し、初期導線、投稿補助、backup / restore、input guard、handoff copy と、storage version / handoff TTL / 画像本文を渡さない境界を固定。
+  - 検証結果: `node scripts/schedule-calendar-prelaunch-polish-contract.mjs`、`node scripts/schedule-calendar-storage-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit` は通過。`git diff --check` は commit 前に最終実行する。
+  - 幅別確認: in-app browser で `/tools/schedule-calendar` を `390 / 820 / 1024 / 1280 / 1366px` で確認。`390 / 820px` はモバイル統合UIとして、空いている時間 / 右下＋から予定追加できる初期導線が見える。`1024px` は右パネル4タブ付きのタブレット2ペイン、`1280 / 1366px` は左ナビ付きPC2ペインとして表示。追加で `1024px` の投稿補助 / 設定 tab、`390px` の設定 tab を確認し、backup copy と handoff copy が読める。console error なし。
+  - 残リスク: 実データ入りの長文予定や大量予定での目視確認は未実施。今回の scope は copy / 初期導線 / handoff 周辺の polish に限定し、Google Calendar 連携、ログイン / 同期、シリーズ一括編集、例外日、週間予定画像生成は引き続き freeze 後候補。
+  - 次セッション候補: `thumbnail-privacy-whiteboard-preset` を先に進め、Schedule Calendar から渡った予定テキストが Thumbnail Editor の用途別プリセット選択で迷いにくいか確認する。続けて `thumbnail-preset-placement-polish`、その後 `sns-split-public-prelaunch-polish`。
 
 - SNS Split Image Maker public pre-release adjustment
   - 確認観点: `2分割 / 3分割 / 4分割` の初期状態、メイン画像 guard、境界調整、投稿順、個別 PNG / JPEG export copy、Schedule / Thumbnail handoff 後の次アクション。

@@ -43,6 +43,8 @@ assert.deepEqual(
     "project_stream",
     "cover_song_notice",
     "event_notice",
+    "privacy_notice",
+    "whiteboard_plan",
     "karaoke",
     "chatting",
     "clip",

@@ -36,6 +36,28 @@ assert.deepEqual(
   "search includes usage label"
 );
 
+const privacySearchResult = lib.filterThumbnailPresets(lib.thumbnailPresets, {
+  query: "非公開",
+  category: "all",
+  usageLabel: "all"
+});
+assert.deepEqual(
+  privacySearchResult.map((preset) => preset.id),
+  ["privacy_notice"],
+  "search includes privacy-focused preset description"
+);
+
+const whiteboardSearchResult = lib.filterThumbnailPresets(lib.thumbnailPresets, {
+  query: "白板",
+  category: "all",
+  usageLabel: "all"
+});
+assert.deepEqual(
+  whiteboardSearchResult.map((preset) => preset.id),
+  ["whiteboard_plan"],
+  "search includes whiteboard preset description"
+);
+
 const categoryResult = lib.filterThumbnailPresets(lib.thumbnailPresets, {
   query: "",
   category: "配信ジャンル",
@@ -89,6 +111,28 @@ assert.deepEqual(
   coverSongUsageResult.map((preset) => preset.id),
   ["cover_song_notice"],
   "usage label filter includes the cover song notice preset"
+);
+
+const privacyUsageResult = lib.filterThumbnailPresets(lib.thumbnailPresets, {
+  query: "",
+  category: "all",
+  usageLabel: "予定 / 非公開情報配慮"
+});
+assert.deepEqual(
+  privacyUsageResult.map((preset) => preset.id),
+  ["privacy_notice"],
+  "usage label filter includes the privacy notice preset"
+);
+
+const whiteboardUsageResult = lib.filterThumbnailPresets(lib.thumbnailPresets, {
+  query: "",
+  category: "all",
+  usageLabel: "予定 / 説明整理"
+});
+assert.deepEqual(
+  whiteboardUsageResult.map((preset) => preset.id),
+  ["whiteboard_plan"],
+  "usage label filter includes the whiteboard preset"
 );
 
 assert.deepEqual(

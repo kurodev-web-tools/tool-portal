@@ -492,7 +492,7 @@ export function ThumbnailEditorApp() {
       if (handoffPayload) {
         setDraft(createThumbnailDraftFromHandoff(handoffPayload));
         setHandoffPayload(handoffPayload);
-        showToast("success", "Schedule Calendarの予定から初期テキストを反映しました。");
+        showToast("success", "Schedule Calendarの予定を反映しました。用途に合わせてプリセットを選べます。");
         setHydrated(true);
         return;
       }
@@ -803,7 +803,7 @@ export function ThumbnailEditorApp() {
     showToast(
       "success",
       mode === "handoff"
-        ? "プリセットへ予定テキストを引き継ぎました。"
+        ? "予定テキストを新しいプリセットへ自然に入れ直しました。"
         : mode === "carryover"
           ? "プリセットへ主要テキストを引き継ぎました。"
           : "プリセットを適用しました。"
@@ -1359,7 +1359,7 @@ export function ThumbnailEditorApp() {
 
       window.location.href = buildToolHandoffUrl("sns-split-image-maker", token);
     } catch {
-      showToast("error", "SNS分割画像メーカーへの受け渡しに失敗しました。");
+      showToast("error", "SNS分割画像メーカーへの受け渡しに失敗しました。時間を置いてもう一度試してください。");
     }
   };
 
@@ -1434,7 +1434,7 @@ export function ThumbnailEditorApp() {
                 下書き
               </button>
               <button className="flat-control px-4 py-2 font-bold" type="button" onClick={sendToSnsSplit} aria-label="SNS分割画像メーカーで使う" title="SNS分割画像メーカーで使う">
-                SNS分割
+                SNS分割へ
               </button>
               <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
                 出力
@@ -1504,7 +1504,7 @@ export function ThumbnailEditorApp() {
                     下書き
                   </button>
                   <button className="flat-control px-4 py-2 font-bold" type="button" onClick={sendToSnsSplit} aria-label="SNS分割画像メーカーで使う" title="SNS分割画像メーカーで使う">
-                    SNS分割
+                    SNS分割へ
                   </button>
                   <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
                     出力
@@ -1517,7 +1517,9 @@ export function ThumbnailEditorApp() {
                 <div>
                   <p className="text-sm font-bold text-foreground">{selectedPreset.name}</p>
                   <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / {currentVariant.aspectRatio}</p>
-                  <p className="mt-1 text-xs font-semibold text-muted">プリセットを選んで、文字と立ち絵を差し替えてから書き出す</p>
+                  <p className="mt-1 text-xs font-semibold text-muted">
+                    {handoffPayload ? "予定テキストはプリセット変更後も見出し、時刻、サブ、ラベルへ引き継ぎます。" : "プリセットを選んで、文字と立ち絵を差し替えてから書き出す"}
+                  </p>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <button
@@ -1597,6 +1599,7 @@ export function ThumbnailEditorApp() {
                   currentPresetId={draft.presetId}
                   favoritePresetIds={presetDiscoveryState.favoritePresetIds}
                   recentPresetIds={presetDiscoveryState.recentPresetIds}
+                  hasScheduleHandoff={Boolean(handoffPayload)}
                   onApply={requestPresetApply}
                   onFavoriteToggle={togglePresetFavorite}
                 />
@@ -1654,6 +1657,7 @@ export function ThumbnailEditorApp() {
                 currentPresetId={draft.presetId}
                 favoritePresetIds={presetDiscoveryState.favoritePresetIds}
                 recentPresetIds={presetDiscoveryState.recentPresetIds}
+                hasScheduleHandoff={Boolean(handoffPayload)}
                 onApply={requestPresetApply}
                 onFavoriteToggle={togglePresetFavorite}
               />
@@ -2644,7 +2648,7 @@ function PresetApplyConfirmDialog({
           </p>
           {hasScheduleHandoff ? (
             <p className="mt-2 rounded-base border border-primary/40 bg-primary-soft/35 px-3 py-2 text-xs font-bold leading-5 text-primary-strong">
-              Schedule Calendar 由来の予定テキストを優先し、新しいプリセットの見出し、時刻、サブ、ラベルへ再反映します。
+              Schedule Calendar 由来の予定テキストを優先し、新しいプリセットの見出し、時刻、サブ、ラベルへ入れ直します。細かい予定を見せすぎたくない時はプライバシー告知、流れを説明したい時はホワイトボードが使いやすいです。
             </p>
           ) : null}
         </div>
@@ -2675,7 +2679,7 @@ function PresetApplyConfirmDialog({
             </button>
           ) : null}
           <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onApplyCarryover}>
-            {hasScheduleHandoff ? "予定テキストを引き継いで適用" : "主要テキストを引き継いで適用"}
+            {hasScheduleHandoff ? "予定テキストで適用" : "主要テキストを引き継いで適用"}
           </button>
         </div>
       </div>
@@ -2687,12 +2691,14 @@ function PresetCards({
   currentPresetId,
   favoritePresetIds,
   recentPresetIds,
+  hasScheduleHandoff,
   onApply,
   onFavoriteToggle
 }: {
   currentPresetId: ThumbnailPresetId;
   favoritePresetIds: ThumbnailPresetId[];
   recentPresetIds: ThumbnailPresetId[];
+  hasScheduleHandoff: boolean;
   onApply: (id: ThumbnailPresetId) => void;
   onFavoriteToggle: (id: ThumbnailPresetId) => void;
 }) {
@@ -2722,7 +2728,11 @@ function PresetCards({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-base font-black text-foreground">プリセット一覧</h2>
-          <p className="mt-1 text-xs font-bold text-muted">検索、カテゴリ、用途ラベルで絞り込みできます。</p>
+          <p className="mt-1 text-xs font-bold text-muted">
+            {hasScheduleHandoff
+              ? "予定から作る時は、通常告知、プライバシー告知、ホワイトボードをまず比べると選びやすいです。"
+              : "検索、カテゴリ、用途ラベルで絞り込みできます。"}
+          </p>
         </div>
         <p className="text-xs font-bold text-muted">
           {filteredPresets.length} / {thumbnailPresets.length}種
@@ -2749,6 +2759,12 @@ function PresetCards({
           条件クリア
         </button>
       </div>
+
+      {hasScheduleHandoff ? (
+        <div className="rounded-base border border-primary/30 bg-primary-soft/25 px-3 py-2 text-xs font-bold leading-5 text-primary-strong">
+          予定タイトル、日付、時刻、告知文はプリセット適用後も同名レイヤーへ入ります。迷ったら通常告知、内容を伏せたい時はプライバシー告知、流れを整理したい時はホワイトボードを選んでください。
+        </div>
+      ) : null}
 
       <PresetFilterChips
         label="カテゴリ"
@@ -2921,7 +2937,7 @@ function ExportPanel({
         下書き保存
       </button>
       <button className="flat-control w-full px-4 py-2 font-bold" type="button" onClick={onSendToSns} aria-label="SNS分割画像メーカーで使う">
-        SNS分割画像で使う
+        SNS分割画像へ進む
       </button>
       <button className="w-full rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onExport} aria-label="サムネイルを書き出し">
         書き出し
@@ -2936,7 +2952,7 @@ function ExportPanel({
           ))}
         </ul>
       </div>
-      <p className="text-xs leading-5 text-muted">下書きはこのブラウザの localStorage に保存されます。PNG/JPEG は表示中キャンバスと同じ描画結果で1枚出力します。SNS分割画像への受け渡し画像は一時的にIndexedDBへ保存します。</p>
+      <p className="text-xs leading-5 text-muted">下書きはこのブラウザに保存されます。PNG/JPEG は表示中キャンバスを1枚で出力し、SNS分割画像メーカーへ進む時だけ一時画像を保存します。</p>
     </section>
   );
 }

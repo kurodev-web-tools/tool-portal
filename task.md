@@ -17,6 +17,9 @@
 - 3 tools public pre-release adjustment
   - 目的: 新しい preset 追加より先に、Schedule Calendar / Thumbnail Editor / SNS Split Image Maker を公開前に触って確認できる状態へ整える。
   - 実装方針: 既存機能の配置、copy、導線、初期状態、handoff、export の polish に閉じる。新規大型機能、schema 変更、重い onboarding、外部連携は入れない。
+  - suite 整理: `Thumbnail Editor` と `SNS分割画像メーカー` は `ファン＆ブランド` ではなく `配信ワークフロー` に移す。3ツールが `Schedule Calendar -> Thumbnail Editor -> SNS分割画像メーカー` の一連導線として見える状態にする。
+  - category 方針: `Thumbnail Editor` と `SNS分割画像メーカー` の tool category は `画像・デザイン` のままにする。suite は利用シーン、category はツール種別として分ける。
+  - fan-brand copy: `ファン＆ブランド` の説明と tags からサムネイル作成 / SNS分割画像づくりの主語を外し、ファン交流、プロフィール整備、ブランド素材づくり寄りの説明へ更新する。
   - ブラウザー確認: in-app browser を基本に、`390 / 820 / 1024 / 1280 / 1366px` を記録する。
   - 完了条件: 3ツールそれぞれで static checks、主要幅の表示確認、console error なし、公開前の残リスクを task.md / PR 本文へ記録。
 

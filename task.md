@@ -28,6 +28,10 @@
   - fan-brand copy: `ファン＆ブランド` の説明と tags からサムネイル作成 / SNS分割画像づくりの主語を外し、ファン交流、プロフィール整備、ブランド素材づくり寄りの説明へ更新する。
   - ブラウザー確認: in-app browser を基本に、`390 / 820 / 1024 / 1280 / 1366px` を記録する。
   - 完了条件: 3ツールそれぞれで static checks、主要幅の表示確認、console error なし、公開前の残リスクを task.md / PR 本文へ記録。
+  - 結果記録 2026-05-15 / `portal-suite-reclassification`: `thumbnail-editor` と `sns-split-image-maker` の suite を `stream-workflow` へ移し、category は `design` のまま維持。`stream-workflow` の suite copy / tags / toolCount を `Schedule Calendar -> Thumbnail Editor -> SNS分割画像メーカー` の導線寄りに更新し、`fan-brand` はファン交流、プロフィール整備、ブランド素材づくり寄りへ整理。
+  - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は通過。
+  - 幅別確認: in-app browser で `/tools?suite=stream-workflow` と `/tools?suite=fan-brand` を `390 / 820 / 1280px` で確認。`stream-workflow` は `Schedule Calendar -> Thumbnail Editor -> SNS分割画像メーカー` が公開ツールとして先頭に並び、`fan-brand` は `Fan Community` のみに絞られる。console error なし。問題がなかったため `1024 / 1366px` は追加確認なし。
+  - 次セッション候補: `schedule-public-prelaunch-polish` を推奨。Schedule Calendar の初期導線、予定作成 / 編集、投稿補助、backup / restore、input guard、Schedule -> Thumbnail / SNS Split handoff copy を公開前調整する。
 
 - Thumbnail Editor preset default placement pass
   - 目的: 既存 preset の初期テキスト / asset / standee guide / frame 配置を mock 画像と再比較し、正式版の default placement へ寄せる。

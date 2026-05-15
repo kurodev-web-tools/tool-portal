@@ -51,6 +51,28 @@ export const tools: ToolDefinition[] = [
     icon: "SC"
   },
   {
+    id: "thumbnail-editor",
+    name: "Thumbnail Editor",
+    description: "用途別プリセットを選んで、文字と立ち絵を差し替えるVTuber向けサムネ組み立てツールです。",
+    category: "design",
+    status: "available",
+    suite: "stream-workflow",
+    href: "/tools/thumbnail-editor",
+    sidebar: true,
+    icon: "TE"
+  },
+  {
+    id: "sns-split-image-maker",
+    name: "SNS分割画像メーカー",
+    description: "X向けの2分割 / 3分割 / 4分割画像を手動調整し、投稿順どおりに個別PNG/JPEGで書き出せます。",
+    category: "design",
+    status: "available",
+    suite: "stream-workflow",
+    href: "/tools/sns-split-image-maker",
+    sidebar: true,
+    icon: "SS"
+  },
+  {
     id: "stream-manager",
     name: "Stream Manager",
     description: "配信前後の管理を扱う候補です。公開版ではまだ利用できません。",
@@ -82,28 +104,6 @@ export const tools: ToolDefinition[] = [
     href: "/tools",
     sidebar: false,
     icon: "FC"
-  },
-  {
-    id: "thumbnail-editor",
-    name: "Thumbnail Editor",
-    description: "用途別プリセットを選んで、文字と立ち絵を差し替えるVTuber向けサムネ組み立てツールです。",
-    category: "design",
-    status: "available",
-    suite: "fan-brand",
-    href: "/tools/thumbnail-editor",
-    sidebar: true,
-    icon: "TE"
-  },
-  {
-    id: "sns-split-image-maker",
-    name: "SNS分割画像メーカー",
-    description: "X向けの2分割 / 3分割 / 4分割画像を手動調整し、投稿順どおりに個別PNG/JPEGで書き出せます。",
-    category: "design",
-    status: "available",
-    suite: "fan-brand",
-    href: "/tools/sns-split-image-maker",
-    sidebar: true,
-    icon: "SS"
   },
   {
     id: "content-planner",

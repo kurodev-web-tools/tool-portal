@@ -16,19 +16,19 @@ export const suites: SuiteDefinition[] = [
   {
     key: "stream-workflow",
     name: "配信ワークフロー",
-    description: "企画から配信後の振り返りまで、日々の配信活動を支えるツール群",
+    description: "予定管理からサムネ作成、SNS投稿画像づくりまで、配信準備の流れを支えるツール群",
     icon: "▶",
-    tags: ["配信計画", "配信アシスタント", "データ分析", "+ その他"],
-    toolCount: 8,
+    tags: ["Schedule Calendar", "Thumbnail Editor", "SNS分割画像", "+ その他"],
+    toolCount: 10,
     status: "available"
   },
   {
     key: "fan-brand",
     name: "ファン＆ブランド",
-    description: "サムネイル作成やX向け分割画像づくりを支え、活動の見せ方を整えるツール群",
+    description: "ファン交流、プロフィール整備、ブランド素材づくりを通じて活動の見せ方を整えるツール群",
     icon: "♥",
-    tags: ["Thumbnail Editor", "SNS分割画像", "ブランディング", "+ その他"],
-    toolCount: 6,
+    tags: ["ファン交流", "プロフィール整備", "ブランド素材", "+ その他"],
+    toolCount: 4,
     status: "available"
   },
   {

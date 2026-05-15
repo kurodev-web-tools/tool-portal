@@ -150,6 +150,14 @@ const announcementStatusFilterOptions: Array<{ value: AnnouncementStatus | "all"
   { value: "all", label: "告知すべて" },
   ...announcementStatusOptions
 ];
+const scheduleStartGuide = "空いている時間をクリック、または右パネルの「新しい予定を追加」から1件作成します。";
+const mobileScheduleStartGuide = "空いている時間をタップ、または右下の＋から予定を追加できます。";
+const postAssistStartGuide = "予定を選ぶと、告知文コピーと Thumbnail Editor / SNS分割画像メーカーへの受け渡しをここで確認できます。";
+const handoffSelectedGuide =
+  "Thumbnail Editorには予定テキストを初期値として渡します。SNS分割画像メーカーではメイン画像を選んでから個別PNG/JPEGを書き出します。";
+const handoffEmptyGuide = "予定を選ぶと、公開前の配信ワークフロー導線として次ツールへ初期テキストを渡せます。";
+const backupHelpText =
+  "このブラウザに保存された予定、投稿補助テンプレート、ハッシュタグ、設定をJSONで控えます。復元に失敗した場合、既存データは変更しません。";
 
 function formatSlot(minutes: number) {
   const hour = Math.floor(minutes / 60);
@@ -879,6 +887,7 @@ function CalendarToolbar({
       <div className="hidden min-w-[13rem] lg:block">
         <p className="text-xs font-bold text-primary-strong">予定・配信管理</p>
         <h1 className="truncate text-xl font-black tracking-tight text-foreground">Schedule Calendar</h1>
+        <p className="mt-1 text-xs font-semibold text-muted">予定作成から告知文、サムネ、分割画像までつなげます。</p>
       </div>
       <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2 md:flex md:flex-wrap md:justify-end">
         <button type="button" className="flat-control shrink-0 px-3 py-2" onClick={onToday}>
@@ -1446,8 +1455,8 @@ function DayView({
             <TimeSlotLines />
             {dragGuide ? <DragMoveGuide guide={dragGuide} /> : null}
             {dayEvents.length === 0 ? (
-              <div className="absolute left-3 right-3 top-1 flex h-6 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-3 text-center text-[11px] font-bold text-muted">
-                この日の予定はまだありません。右パネルから追加できます。
+              <div className="absolute left-3 right-3 top-1 flex min-h-8 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-3 py-1 text-center text-[11px] font-bold leading-4 text-muted">
+                {scheduleStartGuide}
               </div>
             ) : null}
             {dayEvents.map((event) => (
@@ -1564,7 +1573,7 @@ function MobileDayTimeline({
             </div>
             {dayEvents.length === 0 ? (
               <div className="absolute left-3 right-3 top-2 rounded-base border border-dashed border-border bg-surface-muted/70 px-3 py-3 text-center text-sm font-bold text-muted">
-                この日の予定はまだありません。下のパネルから追加できます。
+                {mobileScheduleStartGuide}
               </div>
             ) : null}
             {dayEvents.map((event) => (
@@ -2038,7 +2047,7 @@ function MobileSettingsPanel({
       <SettingsAccordionSection
         id="data"
         title="データ管理"
-        summary="JSON保存・復元 / 全データ初期化"
+        summary="JSONバックアップ / 復元 / 初期化"
         open={openSections.data}
         onToggle={toggleSection}
       >
@@ -2051,9 +2060,9 @@ function MobileSettingsPanel({
           </button>
         </div>
         <p className="text-xs leading-5 text-muted">
-          作成したJSONを安全な場所に保管してください。復元に失敗した場合、既存データは変更しません。
+          {backupHelpText}
         </p>
-        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-24 resize-none")} placeholder="復元する JSON を貼り付け" />
+        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-24 resize-none")} placeholder="復元するバックアップJSONを貼り付け" />
         <button type="button" onClick={onResetAll} className="w-full rounded-base border border-red-300 px-3 py-2 text-sm font-bold text-red-600">
           全データ初期化
         </button>
@@ -2478,7 +2487,7 @@ function DesktopSettingsPanel({
       <SettingsAccordionSection
         id="data"
         title="データ管理"
-        summary="JSON保存・復元 / 全データ削除"
+        summary="JSONバックアップ / 復元 / 初期化"
         open={openSections.data}
         onToggle={toggleSection}
       >
@@ -2491,11 +2500,11 @@ function DesktopSettingsPanel({
           </button>
         </div>
         <p className="text-xs leading-5 text-muted">
-          作成したJSONを安全な場所に保管してください。復元に失敗した場合、既存データは変更しません。
+          {backupHelpText}
         </p>
-        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-28 resize-none")} placeholder="復元する JSON を貼り付け" />
+        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-28 resize-none")} placeholder="復元するバックアップJSONを貼り付け" />
         <button type="button" onClick={onResetAll} className="w-full rounded-base border border-red-300 px-3 py-2 text-sm font-bold text-red-600">
-          全データ削除
+          全データ初期化
         </button>
       </SettingsAccordionSection>
     </div>
@@ -2605,7 +2614,7 @@ function ScheduleForm({
         <TextLimitCounter
           value={draft.title}
           maxLength={scheduleInputTextLimits.title}
-          warning="一覧とhandoffで読みやすい長さに調整してください。"
+          warning="一覧と次ツールで見切れないよう、短めに整えると扱いやすいです。"
         />
       </div>
       <div className="rounded-base border border-border bg-surface-muted/35 p-3">
@@ -2679,7 +2688,7 @@ function ScheduleForm({
             <TextLimitCounter
               value={draft.announcementHashtags}
               maxLength={scheduleInputTextLimits.announcementHashtags}
-              warning="タグが多いと投稿補助とhandoffが読みにくくなります。"
+              warning="投稿文と次ツールで確認しやすい量に整えると扱いやすいです。"
             />
             {eventHashtagSets.length > 0 ? (
               <div className="mt-2">
@@ -2722,7 +2731,7 @@ function ScheduleForm({
           <TextLimitCounter
             value={draft.announcementText}
             maxLength={scheduleInputTextLimits.announcementText}
-            warning="長文になると投稿補助とhandoffで扱いづらくなります。"
+            warning="投稿前に要点を絞ると、コピーと次ツールへの受け渡しが確認しやすいです。"
           />
         </div>
         <div>
@@ -2857,6 +2866,9 @@ function SchedulePanel({
         <p className="text-xs font-bold text-muted">選択中の日付</p>
         <p className="mt-1 text-base font-bold text-foreground">{getLongDateLabel(selectedDateKey)}</p>
         <p className="mt-1 text-sm text-muted">予定 {dayEvents.length} 件</p>
+        <p className="mt-3 rounded-base border border-border bg-surface-muted/55 px-3 py-2 text-xs font-semibold leading-5 text-muted">
+          {dayEvents.length === 0 ? scheduleStartGuide : "予定を選ぶと編集できます。告知文やサムネ導線は投稿補助タブで確認します。"}
+        </p>
       </section>
       <section className={[mobileMode === "detail" && selectedEvent ? "hidden lg:block" : "", "lg:border-t lg:border-border lg:pt-5"].join(" ")}>
         <div className="flex items-center justify-between gap-3">
@@ -2975,7 +2987,7 @@ function PostAssistPanel({
         <p className="text-xs font-bold text-muted">対象予定</p>
         <p className="mt-1 text-base font-bold text-foreground">{selectedEvent?.title || "予定未選択"}</p>
         <p className="mt-1 text-sm text-muted">
-          {selectedEvent ? `${getLongDateLabel(selectedEvent.date)} ${selectedEvent.startTime}` : "予定を選ぶと文面に反映されます。"}
+          {selectedEvent ? `${getLongDateLabel(selectedEvent.date)} ${selectedEvent.startTime}` : postAssistStartGuide}
         </p>
       </section>
       <section className="border-t border-border pt-5">
@@ -3069,7 +3081,7 @@ function PostAssistPanel({
         <TextLimitCounter
           value={postText}
           maxLength={scheduleInputTextLimits.announcementText}
-          warning="長めです。コピー前に削るとX投稿やhandoffで扱いやすくなります。"
+          warning="X投稿や次ツールで確認しやすいよう、コピー前に要点を絞ると扱いやすいです。"
         />
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button type="button" onClick={onCopy} className="flat-control flex-1 px-3 py-2">
@@ -3091,7 +3103,7 @@ function PostAssistPanel({
             onClick={onCreateThumbnail}
             className="flat-control px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-45"
           >
-            この予定のサムネを作る
+            サムネを作る
           </button>
           <button
             type="button"
@@ -3099,13 +3111,11 @@ function PostAssistPanel({
             onClick={onCreateSnsSplit}
             className="flat-control px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-45"
           >
-            SNS分割画像を作る
+            分割画像を作る
           </button>
         </div>
         <p className="mt-2 text-xs leading-5 text-muted">
-          {selectedEvent
-            ? "この予定のタイトル、日時、告知文、ハッシュタグを次ツールの初期値として渡します。"
-            : "予定を選ぶと、サムネ / 分割画像ツールへ初期テキストを渡せます。"}
+          {selectedEvent ? handoffSelectedGuide : handoffEmptyGuide}
         </p>
         {copyStatus ? (
           <p
@@ -3708,7 +3718,7 @@ export function ScheduleCalendarApp() {
   function exportJson() {
     const payload = createScheduleStoragePayload(events, settings, userPostTemplates, userHashtagSets);
     setImportText(JSON.stringify(payload, null, 2));
-    setSettingsStatus("バックアップJSONを出力しました。");
+    setSettingsStatus("バックアップJSONを作成しました。必要な場所に保管してください。");
   }
 
   function importJson() {
@@ -3817,7 +3827,7 @@ export function ScheduleCalendarApp() {
 
   function openHandoffTarget(target: ToolHandoffTarget) {
     if (!selectedEvent) {
-      setCopyStatus("予定を選んでから次ツールへ進んでください。");
+      setCopyStatus("予定を選ぶと、サムネ作成や分割画像作成へ初期テキストを渡せます。");
       setCopyStatusKind("error");
       return;
     }
@@ -3845,7 +3855,7 @@ export function ScheduleCalendarApp() {
     const token = writeToolHandoff(payload);
 
     if (!token) {
-      setCopyStatus("次ツールへ渡す一時データを保存できませんでした。");
+      setCopyStatus("次ツールへ渡す一時データを保存できませんでした。予定内容はこの画面に残っています。");
       setCopyStatusKind("error");
       return;
     }

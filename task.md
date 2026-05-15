@@ -10,9 +10,15 @@
 - ブラウザー実見は、通常の表示確認と幅別確認では Codex app の in-app browser を優先する。繰り返し操作や機械的な console / canvas 確認は Playwright、原因調査は Chrome DevTools MCP に切り替える。
 - 2026-05 の完了済み詳細ログは `docs/archive/TASK_HISTORY_2026-05.md` を参照する。
 - PR #86 から PR #123 まで `main` / `origin/main` に merge 済み。PR #103 以降の詳細は `docs/archive/TASK_HISTORY_2026-05.md` の P27 を参照する。
-- PR #124 `[codex] Plan next thumbnail preset candidates` は 2026-05-15 時点で draft/open。次 preset 候補 planning の詳細は `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md` と `docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md` を参照する。
+- PR #124 `[codex] Plan next thumbnail presets and prelaunch board` は `main` / `origin/main` に merge 済み。merge commit は `105cc457aac1963bc17582dfbfde964598ca44b7`。次 preset 候補 planning の詳細は `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md` と `docs/mockups/thumbnail-editor-usecase-preset-candidates/README.md` を参照する。
 
 ## Active
+
+- Public pre-release work order
+  - 進め方: `ポータル整理` -> `各ツール公開前調整` -> `最終確認` の順で進める。
+  - session / worktree 方針: レビューしやすさと戻しやすさを優先し、原則として session / worktree / branch / PR を分ける。
+  - 推奨分割: `portal-suite-reclassification`、`schedule-public-prelaunch-polish`、`thumbnail-privacy-whiteboard-preset`、`thumbnail-preset-placement-polish`、`sns-split-public-prelaunch-polish`、`public-final-qa`。
+  - Thumbnail Editor は範囲が大きくなりやすいため、privacy / whiteboard preset と既存 preset placement polish を別 PR にする。
 
 - 3 tools public pre-release adjustment
   - 目的: 新しい preset 追加より先に、Schedule Calendar / Thumbnail Editor / SNS Split Image Maker を公開前に触って確認できる状態へ整える。

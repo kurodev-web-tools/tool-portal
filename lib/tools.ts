@@ -75,7 +75,7 @@ export const tools: ToolDefinition[] = [
   {
     id: "stream-manager",
     name: "Stream Manager",
-    description: "配信前後の管理を扱う候補です。公開版ではまだ利用できません。",
+    description: "配信前後の管理をまとめる追加ツールとして準備中です。公開後に順次追加予定です。",
     category: "stream",
     status: "planned",
     suite: "stream-workflow",
@@ -86,7 +86,7 @@ export const tools: ToolDefinition[] = [
   {
     id: "analytics-dashboard",
     name: "Analytics Dashboard",
-    description: "配信データの確認を扱う候補です。公開版ではまだ利用できません。",
+    description: "配信データの確認を支える追加ツールとして準備中です。公開後に順次追加予定です。",
     category: "analytics",
     status: "planned",
     suite: "stream-workflow",
@@ -97,7 +97,7 @@ export const tools: ToolDefinition[] = [
   {
     id: "fan-community",
     name: "Fan Community",
-    description: "交流管理を扱う候補です。公開版ではまだ利用できません。",
+    description: "ファン交流の整理を支える追加ツールとして準備中です。公開後に順次追加予定です。",
     category: "community",
     status: "planned",
     suite: "fan-brand",
@@ -108,7 +108,7 @@ export const tools: ToolDefinition[] = [
   {
     id: "content-planner",
     name: "Content Planner",
-    description: "企画メモや配信準備を扱う候補です。公開版ではまだ利用できません。",
+    description: "企画メモや配信準備をまとめる追加ツールとして準備中です。公開後に順次追加予定です。",
     category: "stream",
     status: "planned",
     suite: "stream-workflow",
@@ -119,7 +119,7 @@ export const tools: ToolDefinition[] = [
   {
     id: "task-tracker",
     name: "Task Tracker",
-    description: "制作タスク管理を扱う候補です。公開版ではまだ利用できません。",
+    description: "制作タスク管理を支える追加ツールとして準備中です。公開後に順次追加予定です。",
     category: "management",
     status: "planned",
     suite: "growth-selfcare",
@@ -130,7 +130,7 @@ export const tools: ToolDefinition[] = [
   {
     id: "asset-library",
     name: "Asset Library",
-    description: "素材整理を扱う候補です。公開版ではまだ利用できません。",
+    description: "素材整理を支える追加ツールとして準備中です。公開後に順次追加予定です。",
     category: "design",
     status: "planned",
     suite: "business-collab",
@@ -141,7 +141,7 @@ export const tools: ToolDefinition[] = [
   {
     id: "coming-soon",
     name: "Coming Soon",
-    description: "追加ツールの候補枠です。公開版ではまだ利用できません。",
+    description: "今後の追加ツール候補です。公開後に順次追加予定です。",
     category: "other",
     status: "planned",
     suite: "growth-selfcare",

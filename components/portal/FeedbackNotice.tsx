@@ -4,7 +4,7 @@ export function FeedbackNotice() {
       <div>
         <p className="text-sm font-bold text-foreground">不具合報告 / 要望</p>
         <p className="mt-2 text-sm leading-6 text-muted">
-          MVP公開中のため、表示崩れ・操作不具合・欲しい改善点はメールで受け付けます。
+          表示崩れ、操作不具合、欲しい改善点はメールで受け付けています。X / Discord も受付窓口として準備予定です。
         </p>
       </div>
       <a

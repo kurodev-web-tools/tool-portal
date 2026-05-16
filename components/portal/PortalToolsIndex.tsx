@@ -60,7 +60,7 @@ export function PortalToolsIndex() {
           <p className="text-sm font-bold text-primary-strong">Tools</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">ツール一覧</h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-            公開版で利用できる個別ツールは Schedule Calendar / Thumbnail Editor / SNS分割画像メーカーです。準備中の候補は必要なときだけ絞り込んで確認できます。
+            Schedule Calendar / Thumbnail Editor / SNS分割画像メーカーを公開中です。追加予定の候補は準備中として分け、必要なときだけ絞り込んで確認できます。
           </p>
           {currentSuiteName ? (
             <div className="mt-4 inline-flex items-center gap-2 rounded-base bg-primary-soft px-3 py-2 text-sm font-bold text-primary-strong">

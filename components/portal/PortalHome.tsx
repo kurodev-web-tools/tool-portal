@@ -16,7 +16,7 @@ export function PortalHome() {
             スイートから探す
           </h2>
           <p className="mt-2 text-sm text-muted">
-            公開版で使えるものと、今後の候補を分けて表示しています。
+            いま使えるスイートと、追加予定の候補を分けて確認できます。
           </p>
         </div>
         <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
@@ -29,7 +29,7 @@ export function PortalHome() {
       <FeedbackNotice />
 
       <p className="text-center text-sm text-muted">
-        現在利用できる個別ツールは Schedule Calendar / Thumbnail Editor / SNS分割画像メーカーです。
+        今すぐ使える個別ツールは Schedule Calendar / Thumbnail Editor / SNS分割画像メーカーです。
       </p>
     </div>
   );

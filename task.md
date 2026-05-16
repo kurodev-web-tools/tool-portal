@@ -14,6 +14,13 @@
 
 ## Active
 
+- Public prelaunch visual review Task 1 / portal public copy and status polish
+  - 結果記録 2026-05-16 / `portal-public-copy-status-polish`: PR #134 `[codex] Document prelaunch visual review notes` が merge 済み、`HEAD` / `origin/main` が merge commit `fbb686f8a9119ebb7b7d0e6b44d76efc2a0450b6` で同期済みであることを確認し、`origin/main` 起点の `D:/V_streamer_tools/.worktrees/portal-public-copy-status-polish` で実装。Home hero 右側の大きい `V` visual を削除し、公開中の3ツール / 3ステップ導線 / 探し方の summary に整理。suite card の tool count は `lib/tools.ts` から算出するようにし、準備中 suite / tool card は dashed border と muted background で公開中 item と区別した。Home / Tools / feedback / 準備中 tool copy は公開中の利用者向け表現へ寄せ、X / Discord の実URLは未確定のためリンクは増やさず受付窓口予定の文言に留めた。
+  - contract 更新: `scripts/tool-portal-entry-contract.mjs` に suite key / tool count の data alignment、hero の大きい `V` visual 不使用、feedback の X / Discord 予定文言、`MVP公開中` / `公開版ではまだ利用できません` の非表示を追加。
+  - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`npm run lint`、`npx tsc --noEmit` は通過。`git diff --check` は exit 0 で、portal 関連ファイルと `task.md` の LF -> CRLF warning のみ。
+  - 幅別確認: in-app browser で `/` と `/tools` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全幅で body 横 overflow なし、console error / warn なし、公開向け copy と準備中表示が読める。追加で `/tools?suite=fan-brand` を `390 / 1280px` で確認し、準備中 tool card copy と disabled button copy が読めることを確認。
+  - 残リスク: X / Discord の実URLは repo から確定できなかったため未リンク。準備中候補の名称や数は現行 `lib/tools.ts` に合わせた表示で、公開後に候補整理する場合は copy の再点検余地あり。
+
 - Public pre-release work order
   - 進め方: `ポータル整理` -> `各ツール公開前調整` -> `最終確認` の順で進める。
   - session / worktree 方針: レビューしやすさと戻しやすさを優先し、原則として session / worktree / branch / PR を分ける。

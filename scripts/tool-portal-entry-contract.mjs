@@ -29,6 +29,7 @@ const suitesSource = fs.readFileSync(path.join(root, "lib", "suites.ts"), "utf8"
 const portalHomeSource = fs.readFileSync(path.join(root, "components", "portal", "PortalHome.tsx"), "utf8");
 const portalHeroSource = fs.readFileSync(path.join(root, "components", "portal", "PortalHeroSummary.tsx"), "utf8");
 const portalToolsIndexSource = fs.readFileSync(path.join(root, "components", "portal", "PortalToolsIndex.tsx"), "utf8");
+const feedbackNoticeSource = fs.readFileSync(path.join(root, "components", "portal", "FeedbackNotice.tsx"), "utf8");
 const appLayoutSource = fs.readFileSync(path.join(root, "app", "layout.tsx"), "utf8");
 const homePageSource = fs.readFileSync(path.join(root, "app", "page.tsx"), "utf8");
 const toolsPageSource = fs.readFileSync(path.join(root, "app", "tools", "page.tsx"), "utf8");
@@ -69,6 +70,20 @@ assert.deepEqual(
   "stream workflow keeps the public tool flow in schedule -> thumbnail -> sns order"
 );
 
+const suiteKeysFromTools = Array.from(new Set(toolsLib.tools.map((tool) => tool.suite))).sort();
+const suiteKeysFromSuites = Array.from(suitesSource.matchAll(/key: "([^"]+)"/g), (match) => match[1]).sort();
+assert.deepEqual(suiteKeysFromSuites, suiteKeysFromTools, "suite definitions cover the same suite keys as tool data");
+assert.match(
+  suitesSource,
+  /toolCount: tools\.filter\(\(tool\) => tool\.suite === suite\.key\)\.length/,
+  "suite tool count is derived from tool data"
+);
+assert.match(
+  suitesSource,
+  /totalSuiteToolCount = suites\.reduce/,
+  "suite total count is derived from computed suite counts"
+);
+
 for (const source of [portalHomeSource, portalHeroSource, portalToolsIndexSource, appLayoutSource, homePageSource, toolsPageSource]) {
   assert.doesNotMatch(source, /Schedule Calendar (?:を最小セット|です。その他は準備中|です。準備中|と準備中)/, "portal copy does not say Schedule Calendar is the only available tool");
 }
@@ -86,6 +101,13 @@ assert.match(suitesSource, /key: "fan-brand"[\s\S]*?ファン交流[\s\S]*?プ�
 assert.doesNotMatch(suitesSource.match(/key: "fan-brand"[\s\S]*?status: "planned"/)?.[0] ?? "", /Thumbnail Editor|SNS分割画像|サムネイル作成|分割画像づくり/, "fan-brand suite copy does not claim thumbnail or sns split creation");
 assert.doesNotMatch(portalHeroSource, /開発中のツール/, "hero summary does not foreground the number of planned tools before launch");
 assert.match(portalHeroSource, /公開導線/, "hero summary foregrounds the public workflow instead of planned inventory");
+assert.doesNotMatch(portalHeroSource, />\s*V\s*</, "hero summary does not show the large V visual");
+assert.match(feedbackNoticeSource, /X \/ Discord/, "feedback notice can mention planned X and Discord reception without adding unresolved links");
+assert.doesNotMatch(
+  toolsSource + portalHomeSource + portalHeroSource + portalToolsIndexSource + feedbackNoticeSource,
+  /MVP公開中|公開版ではまだ利用できません/,
+  "public entry copy avoids internal MVP or unavailable wording"
+);
 assert.match(portalToolsIndexSource, /getDefaultStatusFilter/, "tools index defaults to available tools unless a selected suite has no public tools");
 assert.doesNotMatch(toolsSource + toolsPageSource + appLayoutSource + homePageSource + portalHomeSource + portalHeroSource + portalToolsIndexSource, /ZIP 出力|一括ZIP|複数形式 export/, "portal entry copy keeps post-freeze export candidates out of current feature copy");
 

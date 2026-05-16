@@ -10,7 +10,14 @@ export function SuiteCard({ suite }: SuiteCardProps) {
   const isAvailable = suite.status === "available";
 
   return (
-    <article className="panel relative grid gap-5 p-5 shadow-none transition hover:border-primary/45 sm:grid-cols-[7rem_1fr]">
+    <article
+      className={[
+        "panel relative grid gap-5 p-5 shadow-none transition sm:grid-cols-[7rem_1fr]",
+        isAvailable
+          ? "hover:border-primary/45"
+          : "border-dashed bg-surface-muted/45"
+      ].join(" ")}
+    >
       <div className="absolute right-5 top-5">
         <StatusBadge status={suite.status} />
       </div>
@@ -28,7 +35,7 @@ export function SuiteCard({ suite }: SuiteCardProps) {
       <div className="flex min-w-0 flex-col">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold tracking-tight text-primary-strong">
+            <h2 className={["text-2xl font-bold tracking-tight", isAvailable ? "text-primary-strong" : "text-foreground"].join(" ")}>
               {suite.name}
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-7 text-foreground">{suite.description}</p>
@@ -39,7 +46,15 @@ export function SuiteCard({ suite }: SuiteCardProps) {
           <p className="text-xs font-bold text-muted">代表的な候補</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {suite.tags.map((tag) => (
-              <span key={tag} className="rounded-base bg-surface-muted px-3 py-1 text-xs font-semibold text-muted">
+              <span
+                key={tag}
+                className={[
+                  "rounded-base px-3 py-1 text-xs font-semibold",
+                  isAvailable
+                    ? "bg-surface-muted text-muted"
+                    : "border border-border bg-surface text-muted"
+                ].join(" ")}
+              >
                 {tag}
               </span>
             ))}
@@ -48,7 +63,7 @@ export function SuiteCard({ suite }: SuiteCardProps) {
 
         <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            <span className="font-semibold text-foreground">ツール数</span>
+            <span className="font-semibold text-foreground">{isAvailable ? "公開中ツール" : "準備中候補"}</span>
             <span className="font-bold text-foreground">{suite.toolCount} 個</span>
           </div>
           <Link
@@ -60,7 +75,7 @@ export function SuiteCard({ suite }: SuiteCardProps) {
                 : "border border-primary/60 text-primary-strong hover:bg-primary-soft/50"
             ].join(" ")}
           >
-            {isAvailable ? "開く" : "準備中を見る"}
+            {isAvailable ? "開く" : "候補を見る"}
             <span aria-hidden="true">→</span>
           </Link>
         </div>

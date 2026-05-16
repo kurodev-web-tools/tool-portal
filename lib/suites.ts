@@ -12,14 +12,13 @@ export type SuiteDefinition = {
   status: ToolStatus;
 };
 
-export const suites: SuiteDefinition[] = [
+const suiteSeeds: Array<Omit<SuiteDefinition, "toolCount">> = [
   {
     key: "stream-workflow",
     name: "配信ワークフロー",
     description: "予定管理からサムネ作成、SNS投稿画像づくりまで、配信準備の流れを支えるツール群",
     icon: "▶",
     tags: ["Schedule Calendar", "Thumbnail Editor", "SNS分割画像", "+ その他"],
-    toolCount: 10,
     status: "available"
   },
   {
@@ -28,7 +27,6 @@ export const suites: SuiteDefinition[] = [
     description: "ファン交流、プロフィール整備、ブランド素材づくりを通じて活動の見せ方を整えるツール群",
     icon: "♥",
     tags: ["ファン交流", "プロフィール整備", "ブランド素材", "+ その他"],
-    toolCount: 4,
     status: "planned"
   },
   {
@@ -37,7 +35,6 @@ export const suites: SuiteDefinition[] = [
     description: "収益化やバックオフィス、コラボ進行を整理するためのツール群",
     icon: "▣",
     tags: ["収益管理", "コラボ管理", "契約・ドキュメント", "+ その他"],
-    toolCount: 5,
     status: "planned"
   },
   {
@@ -46,10 +43,14 @@ export const suites: SuiteDefinition[] = [
     description: "学習、活動継続、セルフマネジメントを支えるツール群",
     icon: "✦",
     tags: ["学習トラッカー", "目標管理", "習慣管理", "+ その他"],
-    toolCount: 5,
     status: "planned"
   }
 ];
+
+export const suites: SuiteDefinition[] = suiteSeeds.map((suite) => ({
+  ...suite,
+  toolCount: tools.filter((tool) => tool.suite === suite.key).length
+}));
 
 export const suiteLabels = Object.fromEntries(
   suites.map((suite) => [suite.key, suite.name])

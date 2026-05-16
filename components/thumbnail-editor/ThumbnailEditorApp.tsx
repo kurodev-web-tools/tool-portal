@@ -159,7 +159,7 @@ const mobilePanels: { id: MobilePanel; label: string; icon: string }[] = [
   { id: "canvas", label: "キャンバス", icon: "▧" },
   { id: "materials", label: "素材", icon: "◇" },
   { id: "layers", label: "レイヤー", icon: "▤" },
-  { id: "text", label: "テキスト", icon: "T" },
+  { id: "text", label: "編集", icon: "T" },
   { id: "export", label: "書き出し", icon: "⇧" }
 ];
 function CanvasCenterGuideOverlay() {
@@ -520,6 +520,30 @@ export function ThumbnailEditorApp() {
   useEffect(() => {
     setHeaderMenuOpen(null);
   }, [draft.presetId, draft.canvas.width, draft.canvas.height]);
+  useEffect(() => {
+    if (!headerMenuOpen) {
+      return;
+    }
+
+    const handleHeaderMenuPointerDown = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest("[data-thumbnail-menu-root]")) {
+        return;
+      }
+      setHeaderMenuOpen(null);
+    };
+    const handleHeaderMenuKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setHeaderMenuOpen(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleHeaderMenuPointerDown);
+    document.addEventListener("keydown", handleHeaderMenuKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handleHeaderMenuPointerDown);
+      document.removeEventListener("keydown", handleHeaderMenuKeyDown);
+    };
+  }, [headerMenuOpen]);
   useEffect(() => {
     setCanvasCursor(editorMode === "pan" ? "grab" : "default");
   }, [editorMode]);
@@ -1615,18 +1639,23 @@ export function ThumbnailEditorApp() {
     currentVariantId === "landscape-16-9" ? thumbnailCanvasSizes[canvasSizeId].label : `${draft.canvas.width} x ${draft.canvas.height} (${currentVariant.aspectRatio})`;
   const variantOptions = Object.values(thumbnailPresetVariants).map((variant) => ({
     id: variant.id,
-    label: variant.label
+    label: variant.aspectRatio === "16:9" ? variant.label : `${variant.label}（後続候補）`,
+    description: variant.aspectRatio === "16:9" ? variant.intendedUse : `${variant.intendedUse}。公開前版ではまだ選択できません。`,
+    disabled: variant.aspectRatio !== "16:9"
   }));
 
   return (
     <div className={`flex h-full min-h-0 flex-col bg-background text-foreground ${thumbnailFontAssets.thumbnailFontAssetScope}`}>
       <header className="hidden shrink-0 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur min-[1024px]:block md:px-5 xl:px-6">
-        <div className="flex flex-wrap items-center gap-3 min-[1024px]:flex-nowrap">
-          <div className="hidden min-w-[11rem] flex-1 min-[1024px]:block">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="hidden min-w-[10rem] flex-1 min-[1024px]:block">
             <p className="text-xs font-semibold text-primary-strong">画像・デザイン</p>
             <h1 className="whitespace-nowrap text-lg font-black tracking-normal text-foreground xl:text-xl">Thumbnail Editor</h1>
           </div>
-          <div className="grid w-full grid-cols-1 gap-3 min-[520px]:grid-cols-3 min-[1024px]:w-auto min-[1024px]:min-w-[40rem] xl:min-w-[43rem]">
+          <div
+            className="grid w-full grid-cols-1 gap-3 min-[520px]:grid-cols-3 min-[1024px]:w-[min(100%,38rem)] min-[1180px]:w-[40rem] xl:w-[43rem]"
+            data-thumbnail-responsive-header-controls="true"
+          >
             <label className="min-w-0 text-xs font-bold text-muted">
               プリセット
               <ListboxField
@@ -1638,7 +1667,10 @@ export function ThumbnailEditorApp() {
                   id: preset.id,
                   label: preset.name
                 }))}
-                onSelect={(id) => requestPresetApply(id as ThumbnailPresetId)}
+                onSelect={(id) => {
+                  setHeaderMenuOpen(null);
+                  requestPresetApply(id as ThumbnailPresetId);
+                }}
               />
             </label>
             <label className="min-w-0 text-xs font-bold text-muted">
@@ -1652,7 +1684,10 @@ export function ThumbnailEditorApp() {
                   id,
                   label: size.label
                 }))}
-                onSelect={(id) => changeCanvasSize(id as ThumbnailCanvasSizeId)}
+                onSelect={(id) => {
+                  setHeaderMenuOpen(null);
+                  changeCanvasSize(id as ThumbnailCanvasSizeId);
+                }}
               />
             </label>
             <label className="min-w-0 text-xs font-bold text-muted">
@@ -1663,23 +1698,26 @@ export function ThumbnailEditorApp() {
                 value={currentVariant.label}
                 onToggle={() => setHeaderMenuOpen((current) => (current === "variant" ? null : "variant"))}
                 options={variantOptions}
-                onSelect={(id) => changePresetVariant(id as ThumbnailPresetVariantId)}
+                onSelect={(id) => {
+                  setHeaderMenuOpen(null);
+                  changePresetVariant(id as ThumbnailPresetVariantId);
+                }}
               />
             </label>
           </div>
-          <div className="flex w-full flex-wrap items-center justify-between gap-2 min-[1024px]:w-auto min-[1024px]:justify-end">
+          <div className="flex w-full flex-wrap items-center justify-between gap-2 min-[1180px]:w-auto min-[1180px]:justify-end">
             <ModeToggle editorMode={editorMode} onModeChange={setEditorMode} className="min-[1024px]:hidden" />
-            <div className="flex flex-nowrap justify-end gap-2">
-              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft} aria-label="新規キャンバスを作成" title="新規キャンバスを作成">
+            <div className="scrollbar-accent flex max-w-full flex-nowrap justify-end gap-2 overflow-x-auto pb-1 [scrollbar-gutter:stable]">
+              <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold xl:px-4" type="button" onClick={newDraft} aria-label="新規キャンバスを作成" title="新規キャンバスを作成">
                 新規
               </button>
-              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft} aria-label="下書きを保存" title="下書きを保存">
+              <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold xl:px-4" type="button" onClick={saveDraft} aria-label="下書きを保存" title="下書きを保存">
                 下書き
               </button>
-              <button className="flat-control px-4 py-2 font-bold" type="button" onClick={sendToSnsSplit} aria-label="SNS分割画像メーカーで使う" title="SNS分割画像メーカーで使う">
+              <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold xl:px-4" type="button" onClick={sendToSnsSplit} aria-label="SNS分割画像メーカーで使う" title="SNS分割画像メーカーで使う">
                 SNS分割へ
               </button>
-              <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
+              <button className="shrink-0 rounded-base bg-primary px-3 py-2 text-sm font-bold text-white xl:px-4" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
                 出力
               </button>
             </div>
@@ -1708,7 +1746,10 @@ export function ThumbnailEditorApp() {
                       id: preset.id,
                       label: preset.name
                     }))}
-                    onSelect={(id) => requestPresetApply(id as ThumbnailPresetId)}
+                    onSelect={(id) => {
+                      setHeaderMenuOpen(null);
+                      requestPresetApply(id as ThumbnailPresetId);
+                    }}
                   />
                 </label>
                 <label className="min-w-0 text-xs font-bold text-muted">
@@ -1722,7 +1763,10 @@ export function ThumbnailEditorApp() {
                       id,
                       label: size.label
                     }))}
-                    onSelect={(id) => changeCanvasSize(id as ThumbnailCanvasSizeId)}
+                    onSelect={(id) => {
+                      setHeaderMenuOpen(null);
+                      changeCanvasSize(id as ThumbnailCanvasSizeId);
+                    }}
                   />
                 </label>
                 <label className="min-w-0 text-xs font-bold text-muted">
@@ -1733,23 +1777,29 @@ export function ThumbnailEditorApp() {
                     value={currentVariant.label}
                     onToggle={() => setHeaderMenuOpen((current) => (current === "variant" ? null : "variant"))}
                     options={variantOptions}
-                    onSelect={(id) => changePresetVariant(id as ThumbnailPresetVariantId)}
+                    onSelect={(id) => {
+                      setHeaderMenuOpen(null);
+                      changePresetVariant(id as ThumbnailPresetVariantId);
+                    }}
                   />
                 </label>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <ModeToggle editorMode={editorMode} onModeChange={setEditorMode} />
-                <div className="flex flex-nowrap justify-end gap-2">
-                  <button className="flat-control px-4 py-2 font-bold" type="button" onClick={newDraft} aria-label="新規キャンバスを作成" title="新規キャンバスを作成">
+                <div
+                  className="scrollbar-accent flex min-w-0 max-w-full flex-nowrap justify-end gap-2 overflow-x-auto pb-1 [scrollbar-gutter:stable]"
+                  data-thumbnail-mobile-action-toolbar="true"
+                >
+                  <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold" type="button" onClick={newDraft} aria-label="新規キャンバスを作成" title="新規キャンバスを作成">
                     新規
                   </button>
-                  <button className="flat-control px-4 py-2 font-bold" type="button" onClick={saveDraft} aria-label="下書きを保存" title="下書きを保存">
+                  <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold" type="button" onClick={saveDraft} aria-label="下書きを保存" title="下書きを保存">
                     下書き
                   </button>
-                  <button className="flat-control px-4 py-2 font-bold" type="button" onClick={sendToSnsSplit} aria-label="SNS分割画像メーカーで使う" title="SNS分割画像メーカーで使う">
+                  <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold" type="button" onClick={sendToSnsSplit} aria-label="SNS分割画像メーカーで使う" title="SNS分割画像メーカーで使う">
                     SNS分割へ
                   </button>
-                  <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
+                  <button className="shrink-0 rounded-base bg-primary px-3 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
                     出力
                   </button>
                 </div>
@@ -1846,7 +1896,7 @@ export function ThumbnailEditorApp() {
               </div>
             </section>
 
-            <section className="mt-4 grid gap-3 min-[1024px]:hidden">
+            <section className="mt-4 grid min-w-0 gap-3 min-[1024px]:hidden">
               <QuickAddBar
                 onText={() => addLayer(createTextLayer())}
                 onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
@@ -2476,7 +2526,7 @@ function PropertyPanel({
         : null;
 
   return (
-    <section className="panel space-y-4 p-4">
+    <section className="panel min-w-0 space-y-4 p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-black text-foreground">{layer.type === "text" ? "テキスト設定" : layer.type === "shape" ? "図形設定" : "画像設定"}</h2>
@@ -3052,7 +3102,7 @@ function PresetCards({
   };
 
   return (
-    <section className="panel space-y-4 p-4">
+    <section className="panel min-w-0 space-y-4 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-base font-black text-foreground">プリセット一覧</h2>
@@ -3067,7 +3117,7 @@ function PresetCards({
         </p>
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">
         <label className="block text-xs font-bold text-muted">
           検索
           <input
@@ -3112,14 +3162,14 @@ function PresetCards({
       {favoritePresets.length > 0 ? <PresetShortcutRow title="お気に入り" presets={favoritePresets} onApply={onApply} /> : null}
       {recentPresets.length > 0 ? <PresetShortcutRow title="最近使った" presets={recentPresets} onApply={onApply} /> : null}
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+      <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {filteredPresets.map((preset) => {
           const isFavorite = favoritePresetIds.includes(preset.id);
           return (
           <article
             key={preset.id}
             className={[
-              "rounded-base border bg-surface p-3 text-left transition",
+              "min-w-0 rounded-base border bg-surface p-3 text-left transition",
               currentPresetId === preset.id ? "border-primary bg-primary-soft/55" : "border-border"
             ].join(" ")}
           >
@@ -3138,9 +3188,12 @@ function PresetCards({
                 {isFavorite ? "★" : "☆"}
               </button>
             </div>
-            <div className="mb-2 flex flex-wrap gap-1.5">
-              <span className="rounded-sm border border-border bg-surface-muted px-2 py-0.5 text-[11px] font-bold text-muted">{preset.category}</span>
-              <span className="rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">{preset.usageLabel}</span>
+            <div
+              className="scrollbar-accent -mx-1 mb-2 flex max-w-full flex-nowrap gap-1.5 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0"
+              data-thumbnail-preset-card-chips="true"
+            >
+              <span className="shrink-0 rounded-sm border border-border bg-surface-muted px-2 py-0.5 text-[11px] font-bold text-muted">{preset.category}</span>
+              <span className="shrink-0 rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">{preset.usageLabel}</span>
             </div>
             <p className="text-sm font-black text-foreground">{preset.name}</p>
             <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{preset.description}</p>
@@ -3181,12 +3234,15 @@ function PresetFilterChips({
   return (
     <div className="space-y-2">
       <p className="text-xs font-bold text-muted">{label}</p>
-      <div className="flex flex-wrap gap-2">
+      <div
+        className="scrollbar-accent -mx-1 flex max-w-full flex-nowrap gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible md:pb-0"
+        data-thumbnail-preset-filter-chips="true"
+      >
         {[{ id: "all", label: allLabel }, ...options.map((option) => ({ id: option, label: option }))].map((option) => (
           <button
             key={option.id}
             className={[
-              "rounded-base border px-3 py-1.5 text-xs font-bold transition",
+              "shrink-0 rounded-base border px-3 py-1.5 text-xs font-bold transition",
               value === option.id ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface text-muted hover:text-foreground"
             ].join(" ")}
             type="button"
@@ -3205,11 +3261,11 @@ function PresetShortcutRow({ title, presets, onApply }: { title: string; presets
   return (
     <div className="space-y-2 rounded-base border border-border bg-surface-muted p-3">
       <p className="text-xs font-black text-foreground">{title}</p>
-      <div className="flex flex-wrap gap-2">
+      <div className="scrollbar-accent -mx-1 flex max-w-full flex-nowrap gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible md:pb-0">
         {presets.map((preset) => (
           <button
             key={preset.id}
-            className="rounded-base border border-border bg-surface px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary hover:text-primary-strong"
+            className="shrink-0 rounded-base border border-border bg-surface px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary hover:text-primary-strong"
             type="button"
             onClick={() => onApply(preset.id)}
           >
@@ -3496,14 +3552,14 @@ function ListboxField({
   className
 }: {
   value: string;
-  options: { id: string; label: string }[];
+  options: { id: string; label: string; description?: string; disabled?: boolean }[];
   isOpen: boolean;
   onToggle: () => void;
   onSelect: (id: string) => void;
   className?: string;
 }) {
   return (
-    <div className={`relative ${className ?? ""}`}>
+    <div className={`relative ${className ?? ""}`} data-thumbnail-menu-root="true">
       <button
         className="flex w-full items-center justify-between rounded-base border border-border bg-surface px-3 py-2 text-left text-sm font-bold text-foreground"
         type="button"
@@ -3519,11 +3575,18 @@ function ListboxField({
           {options.map((option) => (
             <button
               key={option.id}
-              className="block w-full border-b border-border/60 px-3 py-2 text-left text-sm font-bold text-foreground transition hover:bg-primary/12 last:border-b-0"
+              className={[
+                "block w-full border-b border-border/60 px-3 py-2 text-left text-sm font-bold transition last:border-b-0",
+                option.disabled ? "cursor-not-allowed bg-surface-muted/70 text-muted opacity-75" : "text-foreground hover:bg-primary/12"
+              ].join(" ")}
               type="button"
               onClick={() => onSelect(option.id)}
+              disabled={option.disabled}
+              aria-disabled={option.disabled || undefined}
+              title={option.description}
             >
-              {option.label}
+              <span className="block">{option.label}</span>
+              {option.description ? <span className="mt-0.5 block text-[11px] leading-4 text-muted">{option.description}</span> : null}
             </button>
           ))}
         </div>

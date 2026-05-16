@@ -103,6 +103,14 @@ assert.match(appSource, /label: "フレーム追加"/, "UI labels include frame-
 assert.match(appSource, /label: "メイン分割"/, "preview tabs expose main-split label");
 assert.match(appSource, /disabled=\{!canExport\}/, "export buttons are guarded by main-image readiness");
 assert.match(appSource, /メイン画像を選択してから出力してください。/, "manual export call warns before exporting without a main image");
+assert.match(appSource, /メイン画像を選ぶと、投稿順プレビューとPNG\/JPEG保存が有効になります。/, "empty main-image state explains why export is disabled");
+assert.match(appSource, /Thumbnail Editorからの画像が見つからなかったため、メイン画像は未選択のまま開始しました。/, "failed thumbnail handoff has a concrete recovery message");
+assert.match(appSource, /投稿順プレビュー/, "preview tab names the posting-order preview explicitly");
+assert.match(appSource, /split_1から保存順に確認/, "posting-order preview explains the save order");
+assert.match(appSource, /境界を動かすときは枠線を表示したまま/, "boundary adjustment guidance stays visible near preview controls");
+assert.match(appSource, /投稿別調整はドラッグまたはスライダーで行います。/, "post adjustment guidance explains drag and slider controls");
+assert.match(appSource, /選択中の形式で個別ファイル保存/, "export section describes single-format individual file output");
+assert.match(appSource, /getExportButtonLabel/, "export button label is generated from current PNG/JPEG format and post count");
 assert.match(appSource, /の順で\$\{postCount\}枚を書き出しました。/, "successful export toast includes output order and count");
 assert.match(appSource, /PNG\/JPEGはどちらか1形式を選び、ZIPや複数形式の一括出力は後続候補です。/, "export copy keeps zip and multi-format batch out of current features");
 assert.match(appSource, /role="status"/, "handoff and toast status areas are exposed to assistive tech");

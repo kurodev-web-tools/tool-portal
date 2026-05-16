@@ -152,9 +152,18 @@ const decorationSources = new Set(
     .filter((layer) => layer.type === "image" && layer.src.startsWith(phase5DecorationPrefix))
     .map((layer) => path.basename(layer.src))
 );
-for (const fileName of expectedDecorationFiles.slice(0, 4)) {
+for (const fileName of [
+  "collaboration-label-plaque-warm-uniform-cell.png",
+  "collaboration-time-badge-rose-gold-uniform-cell.png",
+  "collaboration-connection-accent-uniform-cell.png"
+]) {
   assert.equal(decorationSources.has(fileName), true, `collaboration preset uses ${fileName}`);
 }
+assert.equal(
+  decorationSources.has("collaboration-duo-guide-spotlight-uniform-cell.png"),
+  false,
+  "collaboration keeps the duo guide spotlight as an unused candidate asset"
+);
 assert.equal(
   decorationSources.has("collaboration-soft-glint-candidate-uniform-cell.png"),
   false,
@@ -175,12 +184,6 @@ for (const editableShapeName of ["左立ち絵ガイド", "右立ち絵ガイド
   );
 }
 
-assert.ok(
-  collaborationPreset.layers.some(
-    (layer) => layer.type === "image" && layer.src.endsWith("collaboration-duo-guide-spotlight-uniform-cell.png")
-  ),
-  "collaboration keeps the duo guide spotlight as an editable asset layer"
-);
 assert.ok(
   collaborationPreset.layers.some(
     (layer) => layer.type === "image" && layer.src.endsWith("collaboration-connection-accent-uniform-cell.png")

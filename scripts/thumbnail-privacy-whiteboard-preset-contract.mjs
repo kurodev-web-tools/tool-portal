@@ -37,11 +37,15 @@ const scopedPresets = [
     },
     expectedBackground: "/assets/images/thumbnail-editor/phase5/x-announcement-background-v1.png",
     expectedAssets: [
-      "/assets/images/thumbnail-editor/decorations/phase5/privacy-redaction-bar-v1.png",
-      "/assets/images/thumbnail-editor/decorations/phase5/privacy-mask-panel-v1.png",
-      "/assets/images/thumbnail-editor/decorations/phase5/privacy-lock-badge-v1.png"
+      "/assets/images/thumbnail-editor/decorations/phase5/privacy-label-plaque-navy-gold-v1.png",
+      "/assets/images/thumbnail-editor/decorations/phase5/privacy-main-card-ivory-gold-v1.png",
+      "/assets/images/thumbnail-editor/decorations/phase5/privacy-sub-info-card-ivory-v1.png",
+      "/assets/images/thumbnail-editor/decorations/phase5/privacy-redaction-stack-v1.png",
+      "/assets/images/thumbnail-editor/decorations/phase5/privacy-private-panel-blue-v1.png",
+      "/assets/images/thumbnail-editor/decorations/phase5/privacy-lock-badge-medal-v1.png",
+      "/assets/images/thumbnail-editor/decorations/phase5/privacy-time-pill-navy-gold-v1.png"
     ],
-    shapeName: "見出しカード"
+    shapeName: "全体トーン"
   },
   {
     id: "whiteboard_plan",
@@ -82,6 +86,17 @@ for (const scopedPreset of scopedPresets) {
       assert.equal(generatedAssetLayers.length, 1, `${scopedPreset.id} uses ${expectedAsset} once`);
       assert.equal(fs.existsSync(path.join(root, "public", expectedAsset.replace(/^\//, ""))), true, `${expectedAsset} exists`);
       assert.equal(generatedAssetLayers[0].crop, undefined, `${expectedAsset} is placed as a complete object without preset crop`);
+    }
+    for (const legacyAsset of [
+      "/assets/images/thumbnail-editor/decorations/phase5/privacy-redaction-bar-v1.png",
+      "/assets/images/thumbnail-editor/decorations/phase5/privacy-mask-panel-v1.png",
+      "/assets/images/thumbnail-editor/decorations/phase5/privacy-lock-badge-v1.png"
+    ]) {
+      assert.equal(
+        preset.layers.some((layer) => layer.type === "image" && layer.src === legacyAsset),
+        false,
+        `${scopedPreset.id} no longer uses legacy ${legacyAsset}`
+      );
     }
   } else {
     assert.equal(

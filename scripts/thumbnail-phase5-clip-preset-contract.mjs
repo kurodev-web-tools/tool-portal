@@ -160,8 +160,8 @@ for (const fileName of expectedDecorationFiles.slice(0, 5)) {
 
 assert.equal(
   clipPreset.layers.some((layer) => layer.type === "shape" && layer.name.includes("動画フレーム")),
-  false,
-  "phase 5 clip burns the large video frame into the generated background for MVP"
+  true,
+  "phase 5 clip keeps an editable large video frame layer"
 );
 
 for (const roleName of ["見出し", "時刻", "サブ", "ラベル"]) {
@@ -171,7 +171,7 @@ for (const roleName of ["見出し", "時刻", "サブ", "ラベル"]) {
   );
 }
 
-for (const editableShapeName of ["下線", "補助ライン", "区切り線"]) {
+for (const editableShapeName of ["動画フレーム", "下線", "補助ライン", "区切り線"]) {
   assert.ok(
     clipPreset.layers.some((layer) => layer.type === "shape" && layer.name.includes(editableShapeName)),
     `clip keeps editable ${editableShapeName} as a shape layer`

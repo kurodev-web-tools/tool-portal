@@ -94,6 +94,16 @@
   - 残リスク: Thumbnail Editor から実画像を書き出して SNS Split Image Maker に渡す end-to-end 操作は今回は未実施。受け取り contract と Thumbnail handoff 画像欠落時の recovery copy は確認済みだが、実データ入りの画像 handoff は PR review / final QA で確認する余地あり。
   - 次セッション候補: `public-final-qa` で Schedule Calendar -> Thumbnail Editor -> SNS Split Image Maker の3ツール導線を通し、実データ入り handoff、主要幅、console error、最終 copy をまとめて確認する。
 
+- Public final QA
+  - 結果記録 2026-05-16 / `public-final-qa`: PR #130 `[codex] Polish SNS split prelaunch flow` が `main` / `origin/main` に merge 済みで、`origin/main` が merge commit `c31580594e8245916feed3ef6a003652ce050885` を指すことを確認。`origin/main` 起点の `.worktrees/public-final-qa` / branch `codex/public-final-qa` で実施した。実装修正は不要で、変更はこの QA 記録のみ。
+  - 実データ handoff: Schedule Calendar で `公開前QAコラボ配信` を 2026-05-16 20:00-21:00 / YouTube / `#VTuber #公開前QA` として作成し、投稿補助 tab で告知文コピー、`サムネを作る` handoff を確認。Clipboard には実データ入り告知文が入った。
+  - Thumbnail Editor: Schedule 由来の `公開前QAコラボ配信` / 2026-05-16 / YouTube / 告知文が反映されることを確認。`ホワイトボード` preset を `予定テキストで適用` し、中央ガイド表示、操作補助の拡大、Undo / Redo button の有効化と操作、export copy、`SNS分割画像メーカーで使う` handoff を確認。
+  - SNS Split Image Maker: Thumbnail Editor 由来の画像と告知文を受け取り、メイン画像選択済みとして開始することを確認。`2分割 / 3分割 / 4分割` を開き、投稿順 `split_1 -> split_2` / `split_1 -> split_2 -> split_3` / `split_1 -> split_2 -> split_3 -> split_4`、境界調整 guidance、投稿別 X 調整 `0 -> 24`、PNG / JPEG の単一形式 export copy と `PNGを4枚保存` / `JPEGを4枚保存` copy を確認。
+  - 幅別確認: in-app browser で `/`、`/tools`、`/tools?suite=stream-workflow`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全対象で body 横 overflow 0、console error / warn なし。`/tools?suite=stream-workflow` は3ツールが利用可能ツールとして並び、各 tool page は主要導線と保存 / export copy が読める。
+  - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`node scripts/schedule-calendar-storage-contract.mjs`、`node scripts/thumbnail-preview-controls-contract.mjs`、`node scripts/thumbnail-center-guide-contract.mjs`、`node scripts/sns-split-image-maker-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は通過。`git diff --check` は `task.md` の LF -> CRLF warning のみで exit 0。
+  - 残リスク: 実ブラウザーでの PNG / JPEG ダウンロード生成そのものは、不要な download artifact を残さないため実行していない。SNS Split Image Maker の `2分割 / 3分割` では Thumbnail 由来画像を保持した状態で画面・copy・投稿順を確認したが、各分割の実ファイル pixel 内容は未確認。Google Calendar 連携、ZIP出力、X以外の比率、複数形式一括 export、重い onboarding は scope 外のまま。
+  - 未確認範囲: production build / deployed URL での browser 確認、実ダウンロードファイルの画像内容確認、長期間運用後の localStorage 大量データ状態、外部SNS投稿画面での最終表示。
+
 ## Backlog
 
 - Thumbnail Editor next preset candidates

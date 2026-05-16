@@ -180,7 +180,15 @@ for (const dayName of weeklyDayNames) {
   }
 }
 
-for (const editableShapeName of ["予定表フレーム", "予定表区切り線", "立ち絵挿入ガイド"]) {
+for (const removedShapeName of ["予定表フレーム", "予定表区切り線"]) {
+  assert.equal(
+    weeklyPreset.layers.some((layer) => layer.type === "shape" && layer.name.includes(removedShapeName)),
+    false,
+    `weekly_schedule keeps ${removedShapeName} out of the manually polished preset`
+  );
+}
+
+for (const editableShapeName of ["立ち絵挿入ガイド"]) {
   assert.ok(
     weeklyPreset.layers.some((layer) => layer.type === "shape" && layer.name.includes(editableShapeName)),
     `weekly_schedule keeps editable ${editableShapeName} as a shape layer`
@@ -192,9 +200,10 @@ assert.ok(
     (layer) =>
       layer.type === "image" &&
       layer.src.endsWith("weekly-schedule-table-accent-cyan-uniform-cell.png") &&
-      layer.x >= 580 &&
-      layer.width >= 520 &&
-      layer.height >= 540
+      layer.x >= 260 &&
+      layer.y <= -180 &&
+      layer.width >= 1100 &&
+      layer.height >= 1080
   ),
   "weekly_schedule keeps the schedule guide accent as a large editable asset layer"
 );

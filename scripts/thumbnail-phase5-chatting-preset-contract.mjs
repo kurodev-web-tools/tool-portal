@@ -25,11 +25,13 @@ const phase5BackgroundPrefix = "/assets/images/thumbnail-editor/phase5/";
 const phase5DecorationPrefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedBackground = `${phase5BackgroundPrefix}chatting-background-v1.png`;
 const minimumUniformCellPadding = 76;
-const expectedDecorationFiles = [
+const expectedUniformCellDecorationFiles = [
   "chatting-label-plaque-cozy-uniform-cell.png",
   "chatting-time-badge-cozy-uniform-cell.png",
   "chatting-soft-glow-dots-uniform-cell.png"
 ];
+const expectedSquareDecorationFiles = ["chatting-clock-icon-cozy-v1.png"];
+const expectedDecorationFiles = [...expectedUniformCellDecorationFiles, ...expectedSquareDecorationFiles];
 
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const readPngSize = (filePath) => {
@@ -133,7 +135,7 @@ assert.equal(fs.existsSync(backgroundPath), true, "chatting phase 5 generated ba
 assert.deepEqual(readPngSize(backgroundPath), { width: 1280, height: 720 }, "chatting background uses the app canvas size");
 assert.ok(fs.statSync(backgroundPath).size < 1_800_000, "chatting phase 5 background stays reasonably lightweight");
 
-for (const fileName of expectedDecorationFiles) {
+for (const fileName of expectedUniformCellDecorationFiles) {
   const assetPath = path.join(root, "public", "assets", "images", "thumbnail-editor", "decorations", "phase5", fileName);
   assert.equal(fs.existsSync(assetPath), true, `${fileName} phase 5 generated asset exists`);
   assert.deepEqual(readPngSize(assetPath), { width: 768, height: 512 }, `${fileName} uses the shared 768x512 canvas`);
@@ -143,6 +145,18 @@ for (const fileName of expectedDecorationFiles) {
   assert.ok(bounds.minY >= minimumUniformCellPadding, `${fileName} keeps uniform top transparent padding`);
   assert.ok(bounds.height - bounds.maxY - 1 >= minimumUniformCellPadding, `${fileName} keeps uniform bottom transparent padding`);
   assert.ok(fs.statSync(assetPath).size < 700_000, `${fileName} stays reasonably lightweight`);
+}
+
+for (const fileName of expectedSquareDecorationFiles) {
+  const assetPath = path.join(root, "public", "assets", "images", "thumbnail-editor", "decorations", "phase5", fileName);
+  assert.equal(fs.existsSync(assetPath), true, `${fileName} phase 5 generated asset exists`);
+  assert.deepEqual(readPngSize(assetPath), { width: 512, height: 512 }, `${fileName} uses a square icon canvas`);
+  const bounds = readPngAlphaBounds(assetPath);
+  assert.ok(bounds.minX >= 32, `${fileName} keeps left transparent padding`);
+  assert.ok(bounds.width - bounds.maxX - 1 >= 32, `${fileName} keeps right transparent padding`);
+  assert.ok(bounds.minY >= 32, `${fileName} keeps top transparent padding`);
+  assert.ok(bounds.height - bounds.maxY - 1 >= 32, `${fileName} keeps bottom transparent padding`);
+  assert.ok(fs.statSync(assetPath).size < 300_000, `${fileName} stays reasonably lightweight`);
 }
 
 const decorationSources = new Set(
@@ -161,12 +175,16 @@ for (const roleName of ["見出し", "時刻", "サブ", "ラベル"]) {
   );
 }
 
-for (const editableShapeName of ["立ち絵挿入ガイド", "やわらかい下線", "時刻アイコン外円", "時刻アイコン短針", "時刻アイコン長針"]) {
+for (const editableShapeName of ["立ち絵挿入ガイド", "やわらかい下線"]) {
   assert.ok(
     chattingPreset.layers.some((layer) => layer.type === "shape" && layer.name.includes(editableShapeName)),
     `chatting keeps editable ${editableShapeName} as a shape layer`
   );
 }
+
+const clockIcon = chattingPreset.layers.find((layer) => layer.type === "image" && layer.name === "画像 5（時刻アイコン）");
+assert.ok(clockIcon, "chatting uses a generated clock icon image layer");
+assert.equal(clockIcon.src, `${phase5DecorationPrefix}chatting-clock-icon-cozy-v1.png`, "chatting clock icon uses the generated phase 5 asset");
 
 const draft = lib.createDraftFromPreset("chatting");
 const normalized = lib.normalizeThumbnailDraft(draft);

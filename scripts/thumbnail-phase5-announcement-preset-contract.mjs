@@ -174,7 +174,13 @@ for (const roleName of ["見出し", "時刻", "サブ", "ラベル"]) {
   );
 }
 
-for (const editableShapeName of ["本文罫線", "サブ下ライン", "立ち絵guide枠"]) {
+assert.equal(
+  announcementPreset.layers.some((layer) => layer.type === "shape" && layer.name.includes("本文罫線")),
+  false,
+  "announcement keeps the body divider out of the manually polished preset"
+);
+
+for (const editableShapeName of ["サブ下ライン", "立ち絵guide枠"]) {
   assert.ok(
     announcementPreset.layers.some((layer) => layer.type === "shape" && layer.name.includes(editableShapeName)),
     `announcement keeps editable ${editableShapeName} as a shape layer`

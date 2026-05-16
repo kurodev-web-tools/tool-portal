@@ -21,6 +21,13 @@
   - 幅別確認: in-app browser で `/` と `/tools` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全幅で body 横 overflow なし、console error / warn なし、公開向け copy と準備中表示が読める。追加で `/tools?suite=fan-brand` を `390 / 1280px` で確認し、準備中 tool card copy と disabled button copy が読めることを確認。
   - 残リスク: X / Discord の実URLは repo から確定できなかったため未リンク。準備中候補の名称や数は現行 `lib/tools.ts` に合わせた表示で、公開後に候補整理する場合は copy の再点検余地あり。
 
+- Public prelaunch visual review Task 2 / Thumbnail Editor responsive control polish
+  - 結果記録 2026-05-17 / `thumbnail-responsive-control-polish`: PR #135 `[codex] Polish portal public copy and status cards` が merge 済みで、`HEAD` / `origin/main` が merge commit `362345c8d4613d5d23e30429ea0c258ca5cc7b3a` で同期済みであることを確認。`origin/main` 起点の `D:/V_streamer_tools/.worktrees/thumbnail-responsive-control-polish` で実装した。Thumbnail Editor の header controls は 1024px 付近で折り返せる compact layout にし、mobile action toolbar は横 overflow guard を持つ形へ変更。preset / canvas size / output ratio の custom menu は outside click / Escape で閉じるようにした。9:16 / 1:1 ratio は `後続候補` copy 付きで disabled 化し、16:9 flow は維持。mobile bottom nav の `テキスト` は text / image layer 両方に通じる `編集` へ変更し、preset filter / card chip は小幅で横スクロール guard を持たせた。登録済み素材 accordion、layer drag reorder、preset rail 再設計、export scale、schema、asset / preset 追加、英語対応は入れていない。
+  - contract 更新: `scripts/thumbnail-responsive-control-polish-contract.mjs` を追加し、neutral bottom nav label、header / mobile toolbar guard、outside click / Escape close、9:16 / 1:1 disabled option、chip overflow guard を固定した。
+  - 検証結果: `node scripts/thumbnail-responsive-control-polish-contract.mjs`、`node scripts/thumbnail-preview-controls-contract.mjs`、`node scripts/thumbnail-center-guide-contract.mjs`、`node scripts/thumbnail-preset-discovery-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は通過。`git diff --check` は `components/thumbnail-editor/ThumbnailEditorApp.tsx` / `task.md` の LF -> CRLF warning のみ。
+  - 幅別確認: in-app browser で `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全幅で body / main 横 overflow なし、console error / warn なし、header / top toolbar controls の見切れなし、bottom nav `編集` 表示、export / SNS handoff copy 維持を確認。`390px` で output ratio menu の outside click / Escape close、9:16 / 1:1 disabled、16:9 option enabled を確認。
+  - 残リスク: chip 群は最小 guard として横スクロールへ寄せた段階で、preset rail / 横スクロール再設計は scope 外。実画像 export と SNS Split Image Maker への end-to-end handoff は schema / copy 維持と contract で確認し、今回の browser 操作では実ファイル生成までは実施していない。
+
 - Public pre-release work order
   - 進め方: `ポータル整理` -> `各ツール公開前調整` -> `最終確認` の順で進める。
   - session / worktree 方針: レビューしやすさと戻しやすさを優先し、原則として session / worktree / branch / PR を分ける。

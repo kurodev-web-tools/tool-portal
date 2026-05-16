@@ -103,6 +103,7 @@ type CanvasInteractionState = {
   resizeHandle?: ThumbnailResizeHandle;
   startPointer: { x: number; y: number };
   startLayer: ThumbnailLayer;
+  startDraft: ThumbnailEditorDraft;
   startCenter: { x: number; y: number };
   rotateOffsetRad: number;
   moved: boolean;
@@ -122,12 +123,36 @@ type LastTapState = {
   clientY: number;
   layerId: string | null;
 };
+type DraftHistoryState = {
+  past: ThumbnailEditorDraft[];
+  future: ThumbnailEditorDraft[];
+};
+type DraftHistoryAvailability = {
+  canUndo: boolean;
+  canRedo: boolean;
+};
 
 const toneClassName: Record<ToastTone, string> = {
   info: "border-sky-400/60 bg-sky-500/12 text-foreground",
   success: "border-emerald-400/60 bg-emerald-500/12 text-foreground",
   warning: "border-amber-400/60 bg-amber-500/12 text-foreground",
   error: "border-rose-400/60 bg-rose-500/12 text-foreground"
+};
+const maxDraftHistoryEntries = 30;
+
+const areDraftHistorySnapshotsEqual = (a: ThumbnailEditorDraft, b: ThumbnailEditorDraft) =>
+  JSON.stringify({ ...a, updatedAt: "" }) === JSON.stringify({ ...b, updatedAt: "" });
+
+const withDraftUpdatedAt = (value: ThumbnailEditorDraft): ThumbnailEditorDraft => ({
+  ...value,
+  updatedAt: new Date().toISOString()
+});
+
+const fitZoomForCanvas = (canvasWidth: number, canvasHeight: number, viewportWidth: number, viewportHeight: number) => {
+  const paddedWidth = Math.max(320, viewportWidth - 48);
+  const paddedHeight = Math.max(220, viewportHeight - 280);
+  const next = Math.min(paddedWidth / canvasWidth, paddedHeight / canvasHeight, 1.15);
+  return clamp(Number(next.toFixed(2)), 0.42, 1.6);
 };
 
 const mobilePanels: { id: MobilePanel; label: string; icon: string }[] = [
@@ -137,6 +162,82 @@ const mobilePanels: { id: MobilePanel; label: string; icon: string }[] = [
   { id: "text", label: "テキスト", icon: "T" },
   { id: "export", label: "書き出し", icon: "⇧" }
 ];
+function CanvasCenterGuideOverlay() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-base" aria-hidden="true" data-thumbnail-preview-guide="center">
+      <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 border-l border-dashed border-white/55 opacity-80 shadow-[0_0_0_1px_rgba(0,0,0,0.28)]" />
+      <span className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 border-t border-dashed border-white/55 opacity-80 shadow-[0_0_0_1px_rgba(0,0,0,0.28)]" />
+    </div>
+  );
+}
+
+function PreviewControlToolbar({
+  zoom,
+  showCenterGuide,
+  canUndo,
+  canRedo,
+  compact = false,
+  onUndo,
+  onRedo,
+  onGuideToggle,
+  onZoomOut,
+  onZoomIn,
+  onZoomReset,
+  onZoomFit
+}: {
+  zoom: number;
+  showCenterGuide: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  compact?: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+  onGuideToggle: () => void;
+  onZoomOut: () => void;
+  onZoomIn: () => void;
+  onZoomReset: () => void;
+  onZoomFit: () => void;
+}) {
+  const buttonSize = compact ? "h-9" : "h-8";
+  const iconButton = `${buttonSize} w-9 text-xs`;
+  const textButton = `${buttonSize} px-3 text-xs font-bold`;
+  const toolbarWidth = compact ? "w-[calc(100vw-6.5rem)] max-w-[20rem]" : "max-w-full";
+
+  return (
+    <div className={`scrollbar-accent flex min-w-0 items-center gap-2 overflow-x-auto [scrollbar-gutter:stable] ${toolbarWidth}`} data-thumbnail-preview-toolbar="controls">
+      <button className={`flat-control ${iconButton}`} type="button" onClick={onUndo} disabled={!canUndo} aria-label="元に戻す" title="元に戻す（Ctrl+Z）">
+        ↶
+      </button>
+      <button className={`flat-control ${iconButton}`} type="button" onClick={onRedo} disabled={!canRedo} aria-label="やり直す" title="やり直す（Ctrl+Y / Ctrl+Shift+Z）">
+        ↷
+      </button>
+      <button
+        className={`flat-control ${textButton} ${showCenterGuide ? "border-primary bg-primary-soft text-primary-strong" : ""}`}
+        type="button"
+        onClick={onGuideToggle}
+        aria-pressed={showCenterGuide}
+        aria-label={showCenterGuide ? "中央ガイドを非表示" : "中央ガイドを表示"}
+        title={showCenterGuide ? "中央ガイドを非表示" : "中央ガイドを表示"}
+      >
+        ガイド
+      </button>
+      <span className="h-5 w-px shrink-0 bg-border" aria-hidden="true" />
+      <button className={`flat-control ${iconButton}`} type="button" onClick={onZoomOut} title="縮小" aria-label="キャンバスを縮小">
+        −
+      </button>
+      <button className={`flat-control ${compact ? "h-9 w-16" : "h-8 w-14"} text-xs font-bold`} type="button" onClick={onZoomReset} aria-label="表示倍率を100%に戻す" title="100%に戻す">
+        {Math.round(zoom * 100)}%
+      </button>
+      <button className={`flat-control ${iconButton}`} type="button" onClick={onZoomIn} title="拡大" aria-label="キャンバスを拡大">
+        +
+      </button>
+      <button className={`flat-control ${textButton}`} type="button" onClick={onZoomFit} aria-label="キャンバスを画面に合わせる" title="画面に合わせる">
+        合わせる
+      </button>
+    </div>
+  );
+}
+
 const colorSwatches = [
   "#ffffff",
   "#000000",
@@ -344,6 +445,8 @@ export function ThumbnailEditorApp() {
   const [exportFormat, setExportFormat] = useState<"png" | "jpeg">("png");
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>("canvas");
   const [zoom, setZoom] = useState(0.72);
+  const [showCenterGuide, setShowCenterGuide] = useState(true);
+  const [draftHistoryAvailability, setDraftHistoryAvailability] = useState<DraftHistoryAvailability>({ canUndo: false, canRedo: false });
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState<"preset" | "canvas" | "variant" | null>(null);
   const [editorMode, setEditorMode] = useState<EditorMode>("edit");
@@ -361,12 +464,18 @@ export function ThumbnailEditorApp() {
   const canvasViewportRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const userMaterialFileInputRef = useRef<HTMLInputElement | null>(null);
+  const draftRef = useRef<ThumbnailEditorDraft>(draft);
+  const draftHistoryRef = useRef<DraftHistoryState>({ past: [], future: [] });
   const interactionRef = useRef<CanvasInteractionState | null>(null);
   const panRef = useRef<CanvasPanState | null>(null);
   const lastTapRef = useRef<LastTapState | null>(null);
   const userAdjustedZoomRef = useRef(false);
   const canvasRenderVersionRef = useRef(0);
   const mobilePreviewRenderVersionRef = useRef(0);
+
+  useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
 
   const selectedLayer = useMemo(
     () => draft.layers.find((layer) => layer.id === draft.selectedLayerId) ?? null,
@@ -633,9 +742,129 @@ export function ThumbnailEditorApp() {
     return () => window.clearTimeout(timer);
   }, [draft, hydrated, showToast]);
 
-  const updateDraft = (updater: (current: ThumbnailEditorDraft) => ThumbnailEditorDraft) => {
-    setDraft((current) => ({ ...updater(current), updatedAt: new Date().toISOString() }));
+  const syncDraftHistoryAvailability = useCallback(() => {
+    const history = draftHistoryRef.current;
+    setDraftHistoryAvailability({ canUndo: history.past.length > 0, canRedo: history.future.length > 0 });
+  }, []);
+
+  const pushDraftHistory = useCallback(
+    (previous: ThumbnailEditorDraft, next: ThumbnailEditorDraft) => {
+      if (areDraftHistorySnapshotsEqual(previous, next)) {
+        return;
+      }
+      const history = draftHistoryRef.current;
+      history.past = [...history.past, previous].slice(-maxDraftHistoryEntries);
+      history.future = [];
+      syncDraftHistoryAvailability();
+    },
+    [syncDraftHistoryAvailability]
+  );
+
+  const replaceDraft = useCallback(
+    (nextDraft: ThumbnailEditorDraft, options: { recordHistory?: boolean } = {}) => {
+      const next = withDraftUpdatedAt(nextDraft);
+      if (options.recordHistory) {
+        pushDraftHistory(draftRef.current, next);
+      }
+      draftRef.current = next;
+      setDraft(next);
+    },
+    [pushDraftHistory]
+  );
+
+  const updateDraft = useCallback(
+    (updater: (current: ThumbnailEditorDraft) => ThumbnailEditorDraft) => {
+      const current = draftRef.current;
+      const next = withDraftUpdatedAt(updater(current));
+      pushDraftHistory(current, next);
+      draftRef.current = next;
+      setDraft(next);
+    },
+    [pushDraftHistory]
+  );
+
+  const undoDraft = () => {
+    const history = draftHistoryRef.current;
+    const previous = history.past.at(-1);
+    if (!previous) {
+      return;
+    }
+    const current = draftRef.current;
+    history.past = history.past.slice(0, -1);
+    history.future = [current, ...history.future].slice(0, maxDraftHistoryEntries);
+    const next = withDraftUpdatedAt(previous);
+    draftRef.current = next;
+    setDraft(next);
+    syncDraftHistoryAvailability();
   };
+
+  const redoDraft = () => {
+    const history = draftHistoryRef.current;
+    const nextHistoryDraft = history.future[0];
+    if (!nextHistoryDraft) {
+      return;
+    }
+    const current = draftRef.current;
+    history.future = history.future.slice(1);
+    history.past = [...history.past, current].slice(-maxDraftHistoryEntries);
+    const next = withDraftUpdatedAt(nextHistoryDraft);
+    draftRef.current = next;
+    setDraft(next);
+    syncDraftHistoryAvailability();
+  };
+
+  useEffect(() => {
+    const applyUndo = () => {
+      const history = draftHistoryRef.current;
+      const previous = history.past.at(-1);
+      if (!previous) {
+        return;
+      }
+      const current = draftRef.current;
+      history.past = history.past.slice(0, -1);
+      history.future = [current, ...history.future].slice(0, maxDraftHistoryEntries);
+      const next = withDraftUpdatedAt(previous);
+      draftRef.current = next;
+      setDraft(next);
+      syncDraftHistoryAvailability();
+    };
+    const applyRedo = () => {
+      const history = draftHistoryRef.current;
+      const nextHistoryDraft = history.future[0];
+      if (!nextHistoryDraft) {
+        return;
+      }
+      const current = draftRef.current;
+      history.future = history.future.slice(1);
+      history.past = [...history.past, current].slice(-maxDraftHistoryEntries);
+      const next = withDraftUpdatedAt(nextHistoryDraft);
+      draftRef.current = next;
+      setDraft(next);
+      syncDraftHistoryAvailability();
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isEditingText = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
+      if (isEditingText || (!event.ctrlKey && !event.metaKey)) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (key === "z") {
+        event.preventDefault();
+        if (event.shiftKey) {
+          applyRedo();
+        } else {
+          applyUndo();
+        }
+      } else if (key === "y") {
+        event.preventDefault();
+        applyRedo();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [syncDraftHistoryAvailability]);
+
   const resolveUserMaterialLayersForOutput = (value: ThumbnailEditorDraft): ThumbnailEditorDraft => ({
     ...value,
     layers: value.layers.map((layer) =>
@@ -655,6 +884,15 @@ export function ThumbnailEditorApp() {
   const updateZoom = (updater: (value: number) => number) => {
     userAdjustedZoomRef.current = true;
     setZoom(updater);
+  };
+  const resetZoom = () => {
+    userAdjustedZoomRef.current = true;
+    setZoom(1);
+  };
+  const fitZoomToViewport = () => {
+    userAdjustedZoomRef.current = true;
+    const viewport = canvasViewportRef.current;
+    setZoom(fitZoomForCanvas(draft.canvas.width, draft.canvas.height, viewport?.clientWidth ?? window.innerWidth, viewport?.clientHeight ?? window.innerHeight));
   };
 
   const commitPresetDiscoveryState = useCallback((updater: (current: ThumbnailPresetDiscoveryState) => ThumbnailPresetDiscoveryState) => {
@@ -797,7 +1035,7 @@ export function ThumbnailEditorApp() {
         : mode === "carryover"
           ? applyThumbnailPresetPartial(draft, presetId)
           : next;
-    setDraft(nextDraft);
+    replaceDraft(nextDraft, { recordHistory: true });
     setMobilePanel("canvas");
     setPendingPresetApplyId(null);
     showToast(
@@ -816,7 +1054,7 @@ export function ThumbnailEditorApp() {
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
-    setDraft(nextDraft);
+    replaceDraft(nextDraft, { recordHistory: true });
     showToast("info", handoffPayload ? `${canvas.label} に予定テキストを引き継ぎました。` : `${canvas.label} に主要テキストを引き継ぎました。`);
   };
 
@@ -826,7 +1064,7 @@ export function ThumbnailEditorApp() {
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
-    setDraft(nextDraft);
+    replaceDraft(nextDraft, { recordHistory: true });
     setMobilePanel("canvas");
     setHeaderMenuOpen(null);
     showToast("info", handoffPayload ? `${variant.label} に予定テキストを引き継ぎました。` : `${variant.label} に主要テキストを引き継ぎました。`);
@@ -850,7 +1088,7 @@ export function ThumbnailEditorApp() {
   };
 
   const newDraft = () => {
-    setDraft(createDraftFromPreset(draft.presetId, draft.canvas));
+    replaceDraft(createDraftFromPreset(draft.presetId, draft.canvas), { recordHistory: true });
     setMobilePanel("canvas");
     showToast("info", "新規キャンバスを作成しました。");
   };
@@ -971,7 +1209,7 @@ export function ThumbnailEditorApp() {
     try {
       await deleteThumbnailUserMaterialImage(ref.storageId);
       commitUserMaterialRefs(userMaterialRefs.filter((item) => item.storageId !== ref.storageId));
-      setDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "deleted"));
+      updateDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "deleted"));
       showToast("warning", `「${ref.name}」を素材一覧から削除しました。配置済みレイヤーは残ります。不要ならレイヤー一覧から削除してください。`);
     } catch {
       setDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "load-failed"));
@@ -988,7 +1226,7 @@ export function ThumbnailEditorApp() {
     }
 
     const preset = thumbnailStandeePlacementPresets.find((item) => item.id === presetId);
-    setDraft(next);
+    replaceDraft(next, { recordHistory: true });
     setMobilePanel("layers");
     showToast(
       "success",
@@ -1108,6 +1346,7 @@ export function ThumbnailEditorApp() {
         resizeHandle: handle && handle !== "rotate" ? handle : undefined,
         startPointer: point,
         startLayer: { ...activeLayer },
+        startDraft: draft,
         startCenter: center,
         rotateOffsetRad: angle - rad,
         moved: false
@@ -1115,7 +1354,7 @@ export function ThumbnailEditorApp() {
       event.currentTarget.setPointerCapture(event.pointerId);
       event.preventDefault();
     },
-    [draft.canvas.width, draft.layers, draft.selectedLayerId, editorMode, getCanvasPointFromClient]
+    [draft, editorMode, getCanvasPointFromClient]
   );
 
   const resizeLayerFromHandle = useCallback((state: CanvasInteractionState, point: { x: number; y: number }) => {
@@ -1245,7 +1484,9 @@ export function ThumbnailEditorApp() {
           const rotation = ((angle - state.rotateOffsetRad) * 180) / Math.PI;
           return constrainLayer({ ...state.startLayer, rotation });
         });
-        return { ...current, layers };
+        const next = { ...current, layers };
+        draftRef.current = next;
+        return next;
       });
       if (state.mode === "rotate") {
         setCanvasCursor("crosshair");
@@ -1283,8 +1524,10 @@ export function ThumbnailEditorApp() {
     }
     if (!state.moved) {
       handleTapEditIntent(event);
+    } else {
+      pushDraftHistory(state.startDraft, draftRef.current);
     }
-  }, [editorMode, handleTapEditIntent]);
+  }, [editorMode, handleTapEditIntent, pushDraftHistory]);
 
   const exportImage = async () => {
     const normalized = normalizeThumbnailDraft(draft);
@@ -1534,13 +1777,20 @@ export function ThumbnailEditorApp() {
                     <button className="flat-control h-9 px-3 text-xs font-bold" type="button" onClick={() => setMobilePreviewOpen(true)} aria-label="サムネイル全体を確認">
                       全体
                     </button>
-                    <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小" aria-label="キャンバスを縮小">
-                      −
-                    </button>
-                    <span className="w-14 text-center text-sm font-bold text-muted">{Math.round(zoom * 100)}%</span>
-                    <button className="flat-control h-9 w-9" type="button" onClick={() => updateZoom((value) => Math.min(1.6, value + 0.08))} title="拡大" aria-label="キャンバスを拡大">
-                      +
-                    </button>
+                    <PreviewControlToolbar
+                      zoom={zoom}
+                      showCenterGuide={showCenterGuide}
+                      canUndo={draftHistoryAvailability.canUndo}
+                      canRedo={draftHistoryAvailability.canRedo}
+                      compact
+                      onUndo={undoDraft}
+                      onRedo={redoDraft}
+                      onGuideToggle={() => setShowCenterGuide((value) => !value)}
+                      onZoomOut={() => updateZoom((value) => Math.max(0.42, value - 0.08))}
+                      onZoomIn={() => updateZoom((value) => Math.min(1.6, value + 0.08))}
+                      onZoomReset={resetZoom}
+                      onZoomFit={fitZoomToViewport}
+                    />
                   </div>
                 </div>
               </div>
@@ -1560,28 +1810,37 @@ export function ThumbnailEditorApp() {
                         表示移動中
                       </div>
                     )}
-                    <canvas
-                      ref={canvasRef}
-                      className="mx-auto block aspect-video max-w-none touch-none rounded-base border border-border bg-[#081117] shadow-lg"
-                      style={{ width: `${draft.canvas.width * zoom}px`, cursor: canvasCursor }}
-                      onPointerDown={beginInteraction}
-                      onPointerMove={updateInteraction}
-                      onPointerUp={endInteraction}
-                      onPointerCancel={endInteraction}
-                      onDoubleClick={handleCanvasDoubleClick}
-                      aria-label="サムネイル編集キャンバス"
-                    />
+                    <div className="relative mx-auto w-fit">
+                      <canvas
+                        ref={canvasRef}
+                        className="block aspect-video max-w-none touch-none rounded-base border border-border bg-[#081117] shadow-lg"
+                        style={{ width: `${draft.canvas.width * zoom}px`, cursor: canvasCursor }}
+                        onPointerDown={beginInteraction}
+                        onPointerMove={updateInteraction}
+                        onPointerUp={endInteraction}
+                        onPointerCancel={endInteraction}
+                        onDoubleClick={handleCanvasDoubleClick}
+                        aria-label="サムネイル編集キャンバス"
+                      />
+                      {showCenterGuide ? <CanvasCenterGuideOverlay /> : null}
+                    </div>
                   </div>
                 </div>
                 <div className="mt-3 hidden justify-center min-[1024px]:flex">
                   <div className="inline-flex items-center gap-2 rounded-base border border-border bg-surface px-2 py-2">
-                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => updateZoom((value) => Math.max(0.42, value - 0.08))} title="縮小" aria-label="キャンバスを縮小">
-                      −
-                    </button>
-                    <span className="w-12 text-center text-xs font-bold text-muted">{Math.round(zoom * 100)}%</span>
-                    <button className="flat-control h-8 w-8 text-xs" type="button" onClick={() => updateZoom((value) => Math.min(1.6, value + 0.08))} title="拡大" aria-label="キャンバスを拡大">
-                      +
-                    </button>
+                    <PreviewControlToolbar
+                      zoom={zoom}
+                      showCenterGuide={showCenterGuide}
+                      canUndo={draftHistoryAvailability.canUndo}
+                      canRedo={draftHistoryAvailability.canRedo}
+                      onUndo={undoDraft}
+                      onRedo={redoDraft}
+                      onGuideToggle={() => setShowCenterGuide((value) => !value)}
+                      onZoomOut={() => updateZoom((value) => Math.max(0.42, value - 0.08))}
+                      onZoomIn={() => updateZoom((value) => Math.min(1.6, value + 0.08))}
+                      onZoomReset={resetZoom}
+                      onZoomFit={fitZoomToViewport}
+                    />
                   </div>
                 </div>
               </div>
@@ -1633,6 +1892,7 @@ export function ThumbnailEditorApp() {
               {mobilePanel === "text" && selectedLayer && (
                 <PropertyPanel
                   layer={selectedLayer}
+                  canvas={draft.canvas}
                   qualityGuardItems={qualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
@@ -1695,6 +1955,7 @@ export function ThumbnailEditorApp() {
               {selectedLayer ? (
                 <PropertyPanel
                   layer={selectedLayer}
+                  canvas={draft.canvas}
                   qualityGuardItems={qualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
@@ -1746,11 +2007,14 @@ export function ThumbnailEditorApp() {
             </button>
           </div>
           <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
-            <canvas
-              ref={mobilePreviewCanvasRef}
-              className="aspect-video h-auto max-h-[calc(100vh-8rem)] w-full max-w-[min(100%,calc((100vh-8rem)*16/9))] rounded-base border border-border bg-[#081117] object-contain shadow-panel"
-              aria-label="サムネイル全体確認"
-            />
+            <div className="relative aspect-video w-full max-w-[min(100%,calc((100vh-8rem)*16/9))]">
+              <canvas
+                ref={mobilePreviewCanvasRef}
+                className="h-full w-full rounded-base border border-border bg-[#081117] object-contain shadow-panel"
+                aria-label="サムネイル全体確認"
+              />
+              {showCenterGuide ? <CanvasCenterGuideOverlay /> : null}
+            </div>
           </div>
           <p className="shrink-0 border-t border-border px-4 py-3 text-center text-xs leading-5 text-muted">
             確認専用です。編集に戻るには閉じるを押してください。
@@ -2189,6 +2453,7 @@ function LayerPanel({
 
 function PropertyPanel({
   layer,
+  canvas,
   qualityGuardItems,
   fontMenuOpen,
   onFontMenuOpenChange,
@@ -2196,6 +2461,7 @@ function PropertyPanel({
   onStandeePlacement
 }: {
   layer: ThumbnailLayer;
+  canvas: ThumbnailEditorDraft["canvas"];
   qualityGuardItems: ThumbnailQualityGuardItem[];
   fontMenuOpen: boolean;
   onFontMenuOpenChange: (open: boolean) => void;
@@ -2234,6 +2500,7 @@ function PropertyPanel({
         />
       </label>
       <ThumbnailQualityGuardPanel items={qualityGuardItems} />
+      <LayerQuickAdjustPanel layer={layer} canvas={canvas} onChange={onChange} />
 
       <div className="grid grid-cols-2 gap-3">
         <NumberField label="X" value={layer.x} min={-2000} max={4000} onChange={(x) => onChange((item) => ({ ...item, x }))} />
@@ -2247,6 +2514,67 @@ function PropertyPanel({
       {layer.type === "image" && <StandeePlacementPanel layer={layer} onApply={onStandeePlacement} />}
       <EffectControls layer={layer} onChange={onChange} />
     </section>
+  );
+}
+
+function LayerQuickAdjustPanel({
+  layer,
+  canvas,
+  onChange
+}: {
+  layer: ThumbnailLayer;
+  canvas: ThumbnailEditorDraft["canvas"];
+  onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void;
+}) {
+  const scaleLayer = (scale: number) => {
+    onChange((item) => {
+      const center = getLayerCenter(item);
+      const width = clamp(Math.round(item.width * scale), 16, 4000);
+      const height = clamp(Math.round(item.height * scale), 16, 4000);
+      return {
+        ...item,
+        width,
+        height,
+        x: Math.round(center.x - width / 2),
+        y: Math.round(center.y - height / 2)
+      };
+    });
+  };
+  const rotateLayer = (delta: number) => {
+    onChange((item) => ({ ...item, rotation: normalizeDeg(item.rotation + delta) }));
+  };
+  const centerLayer = () => {
+    onChange((item) => ({
+      ...item,
+      x: Math.round((canvas.width - item.width) / 2),
+      y: Math.round((canvas.height - item.height) / 2)
+    }));
+  };
+
+  return (
+    <div className="rounded-base border border-border bg-surface-muted/55 p-3" data-thumbnail-layer-rescue-controls="true">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-black text-foreground">操作補助</h3>
+        <span className="text-[10px] font-bold text-muted">画面外ハンドル対策</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(0.9)} aria-label={`${layer.name}を縮小`}>
+          サイズ -
+        </button>
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(1.1)} aria-label={`${layer.name}を拡大`}>
+          サイズ +
+        </button>
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(-5)} aria-label={`${layer.name}を左へ5度回転`}>
+          回転 -5
+        </button>
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(5)} aria-label={`${layer.name}を右へ5度回転`}>
+          回転 +5
+        </button>
+        <button className="flat-control col-span-2 px-2 py-2 text-xs font-bold" type="button" onClick={centerLayer} aria-label={`${layer.name}をキャンバス中央へ移動`}>
+          中央へ
+        </button>
+      </div>
+    </div>
   );
 }
 

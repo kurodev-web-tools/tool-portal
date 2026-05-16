@@ -112,7 +112,20 @@
   - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`node scripts/schedule-calendar-storage-contract.mjs`、`node scripts/thumbnail-preview-controls-contract.mjs`、`node scripts/thumbnail-center-guide-contract.mjs`、`node scripts/sns-split-image-maker-contract.mjs`、`npm run lint`、`npx tsc --noEmit` は通過。
   - 未確認・残リスク: deployed URL が未特定のため本番URL smoke は未実施。外部SNS投稿画面の最終表示は未確認。build warning は worktree / 親 checkout の複数 lockfile に起因する可能性が高く、公開成果物には影響していないが、CI / deploy 環境で同 warning が出るかは別途確認余地あり。
 
+- Public launch manual / post-launch smoke
+  - 公開前: 最終の細かい目視確認はユーザー側で実施。Codex 側で残す blocker は deployed URL 未確定と外部SNS投稿画面未確認のみ。
+  - 公開後追加 smoke 1: 公開URL上で SNS Split Image Maker の `2分割 / 3分割 / 4分割` が PNG / JPEG とも download できるか確認する。
+  - 公開後追加 smoke 2: X の投稿画面で `split_1 -> split_2 -> split_3 -> split_4` の順に添付し、投稿直前 preview の順番、比率、切れ方を確認する。実投稿は原則不要。
+  - 公開後追加 smoke 3: X 投稿後 timeline 表示まで確認したい場合のみ、検証用または鍵付きアカウントで実投稿する。本番アカウントでの実投稿は release blocker ではなく任意の confidence check として扱う。
+  - 上記で問題がなければ、次の優先タスクは初期段階で EN 圏もカバーするための英語対応に移す。
+
 ## Backlog
+
+- English support initial coverage
+  - 目的: 公開初期から EN 圏ユーザーが入口と3ツールの主要導線を理解できる状態にする。
+  - 初回 scope: portal / tool list / `Schedule Calendar` / `Thumbnail Editor` / `SNS分割画像メーカー` の主要見出し、CTA、empty state、export / handoff copy、metadata を対象にする。
+  - 進め方: まず文言 inventory と切替方式を小さく決める。大規模 i18n framework、URL設計変更、保存 schema 変更は初回で急がない。
+  - 完了条件: 日本語表示を壊さず、英語表示で主要導線が読めること。`390 / 820 / 1024 / 1280 / 1366px` の幅別確認を残す。
 
 - Thumbnail Editor next preset candidates
   - PR #124 planning の推奨順: `goods_notice` -> `membership_stream` -> `asmr_stream` -> `relay_stream` -> `collab_recruit_notice`。

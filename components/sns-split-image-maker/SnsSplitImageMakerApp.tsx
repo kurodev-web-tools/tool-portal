@@ -71,7 +71,7 @@ const splitTwoJoinOptions: { id: SnsSplitJoinType; label: string; note: string }
 ];
 const previewModes: { id: PreviewMode; label: string }[] = [
   { id: "edit", label: "編集" },
-  { id: "grid", label: "全体" },
+  { id: "grid", label: "投稿順" },
   { id: "post", label: "メイン分割" }
 ];
 const postAdjustmentSnapThreshold = 32;
@@ -141,13 +141,15 @@ const getPresetRatioLabel = (preset: SnsSplitPreset) => {
 };
 const getPreviewDescription = (preset: SnsSplitPreset) => {
   if (preset === "split-2") {
-    return "編集、24:9完成画像、左右のメイン分割を切り替えて確認します。";
+    return "編集、投稿順プレビュー、左右のメイン分割を切り替えて確認します。";
   }
   if (preset === "split-3") {
-    return "編集、上1枚+下2枚の完成画像、左大+右上下のメイン分割を切り替えて確認します。";
+    return "編集、投稿順プレビュー、左大+右上下のメイン分割を切り替えて確認します。";
   }
-  return "編集、2x2の完成画像、2x2のメイン分割を切り替えて確認します。";
+  return "編集、投稿順プレビュー、2x2のメイン分割を切り替えて確認します。";
 };
+const getExportFormatLabel = (format: SnsSplitExportFormat) => (format === "jpeg" ? "JPEG" : "PNG");
+const getExportButtonLabel = (format: SnsSplitExportFormat, postCount: number) => `${getExportFormatLabel(format)}を${postCount}枚保存`;
 const getSlotGroupLabel = (draft: SnsSplitDraft) => {
   if (draft.preset === "split-2") {
     if (draft.mode === "replace") {
@@ -232,6 +234,7 @@ export function SnsSplitImageMakerApp() {
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const [handoffPayload, setHandoffPayload] = useState<SnsSplitToolHandoffPayload | null>(null);
+  const [thumbnailHandoffImageMissing, setThumbnailHandoffImageMissing] = useState(false);
   const [mobileView, setMobileView] = useState<MobileView>("preview");
   const [selectedPost, setSelectedPost] = useState<SnsSplitPostIndex>(1);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("grid");
@@ -257,7 +260,7 @@ export function SnsSplitImageMakerApp() {
   const selectedTile = tiles.find((tile) => tile.index === selectedPost) ?? tiles[0];
   const selectedAdjustment = getSnsSplitPostAdjustment(draft.config, selectedPost);
   const postCount = tiles.length;
-  const exportButtonLabel = `画像を出力（${postCount}枚）`;
+  const exportButtonLabel = getExportButtonLabel(draft.exportSettings.format, postCount);
 
   useEffect(() => {
     draftRef.current = draft;
@@ -309,12 +312,17 @@ export function SnsSplitImageMakerApp() {
         const nextDraft = urlPreset ? createDraftForPreset(result.draft, urlPreset) : result.draft;
         let appliedDraft = nextDraft;
         let appliedHandoff: SnsSplitToolHandoffPayload | null = null;
+        let missingThumbnailImage = false;
         if (handoff) {
           if (isThumbnailToSnsHandoffPayload(handoff)) {
             const thumbnailDraft = await applyThumbnailHandoffToSnsDraft(createDraftForPreset(nextDraft, "split-4"), handoff);
             if (thumbnailDraft) {
               appliedDraft = thumbnailDraft;
               appliedHandoff = handoff;
+            } else {
+              appliedDraft = createDraftForPreset(nextDraft, "split-4");
+              appliedHandoff = handoff;
+              missingThumbnailImage = true;
             }
           } else {
             appliedDraft = applyScheduleHandoffToSnsDraft(nextDraft, handoff);
@@ -323,11 +331,14 @@ export function SnsSplitImageMakerApp() {
         }
         setDraft(appliedDraft);
         setHandoffPayload(appliedHandoff);
+        setThumbnailHandoffImageMissing(missingThumbnailImage);
         setHasStoredDraft(result.restoredFromStorage || result.restoredStoredImages);
         if (appliedHandoff) {
           setToast({
-            tone: "success",
-            message: isThumbnailToSnsHandoffPayload(appliedHandoff)
+            tone: missingThumbnailImage ? "warning" : "success",
+            message: missingThumbnailImage
+              ? "Thumbnail Editorからの画像が見つからなかったため、メイン画像は未選択のまま開始しました。"
+              : isThumbnailToSnsHandoffPayload(appliedHandoff)
               ? "Thumbnail Editorから画像を受け取りました。"
               : "Schedule Calendarの予定から告知文メモを受け取りました。"
           });
@@ -695,7 +706,11 @@ export function SnsSplitImageMakerApp() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-bold text-primary-strong">
-                  {isThumbnailToSnsHandoffPayload(handoffPayload) ? "Thumbnail Editorから画像を受け取りました。" : "Schedule Calendarから告知文メモを受け取りました。"}
+                  {isThumbnailToSnsHandoffPayload(handoffPayload)
+                    ? thumbnailHandoffImageMissing
+                      ? "Thumbnail Editorからの画像が見つからなかったため、メイン画像は未選択のまま開始しました。"
+                      : "Thumbnail Editorから画像を受け取りました。"
+                    : "Schedule Calendarから告知文メモを受け取りました。"}
                 </p>
                 <h2 className="mt-1 truncate text-base font-black text-foreground">{handoffPayload.title || "無題の予定"}</h2>
                 <p className="mt-1 text-xs font-bold text-muted">
@@ -705,7 +720,9 @@ export function SnsSplitImageMakerApp() {
                 </p>
                 <p className="mt-2 text-xs leading-5 text-muted">
                   {isThumbnailToSnsHandoffPayload(handoffPayload)
-                    ? "受け取った画像をメイン画像として確認し、必要なら追加画像を入れてから保存します。"
+                    ? thumbnailHandoffImageMissing
+                      ? "メイン画像を選び直してから、受け取った告知文メモを投稿文へ使えます。"
+                      : "受け取った画像をメイン画像として確認し、必要なら追加画像を入れてから保存します。"
                     : "メイン画像は未選択です。画像を選んでから、告知文メモを投稿文へ使えます。"}
                 </p>
               </div>
@@ -814,9 +831,16 @@ export function SnsSplitImageMakerApp() {
               </div>
             ) : null}
             <div className="min-h-[320px] flex-1 overflow-hidden rounded-base border border-primary/40 bg-surface-muted p-3 lg:min-h-[560px] xl:min-h-[640px]">
+              {!canExport ? (
+                <div className="mb-3 rounded-base border border-amber-400/45 bg-amber-500/10 px-3 py-2 text-xs font-bold leading-5 text-foreground">
+                  メイン画像を選ぶと、投稿順プレビューとPNG/JPEG保存が有効になります。
+                </div>
+              ) : null}
               {previewMode === "edit" ? (
                 <div className={["mx-auto flex h-full min-h-0 w-full flex-col", draft.preset === "split-2" || (draft.preset === "split-3" && selectedPost === 1) ? "max-w-[860px]" : "max-w-[520px]"].join(" ")}>
-                  <p className="mb-2 shrink-0 text-xs leading-5 text-muted">投稿{selectedPost}を編集中です。中央のメイン分割画像はPCのマウス操作でドラッグ移動できます。中心線に近づくと吸着します。</p>
+                  <p className="mb-2 shrink-0 text-xs leading-5 text-muted">
+                    投稿{selectedPost}を編集中です。投稿別調整はドラッグまたはスライダーで行います。中心線に近づくと吸着します。
+                  </p>
                   <div className="flex min-h-0 flex-1 justify-center">
                     <canvas
                       ref={editorCanvasRef}
@@ -831,8 +855,11 @@ export function SnsSplitImageMakerApp() {
                 </div>
               ) : null}
               {previewMode === "grid" ? (
-                <div className={["mx-auto flex h-full min-h-0 w-full justify-center", draft.preset === "split-2" ? "max-w-[900px]" : draft.preset === "split-3" ? "max-w-[760px]" : "max-w-[720px]"].join(" ")}>
-                  <canvas ref={compositeCanvasRef} className="h-full w-auto max-w-full rounded-base bg-background object-contain" aria-label={`${postCount}枚投稿の並び確認`} />
+                <div className="flex h-full min-h-0 flex-col">
+                  <p className="mb-2 shrink-0 text-xs leading-5 text-muted">投稿順プレビューです。split_1から保存順に確認できます。</p>
+                  <div className={["mx-auto flex min-h-0 w-full flex-1 justify-center", draft.preset === "split-2" ? "max-w-[900px]" : draft.preset === "split-3" ? "max-w-[760px]" : "max-w-[720px]"].join(" ")}>
+                    <canvas ref={compositeCanvasRef} className="h-full w-auto max-w-full rounded-base bg-background object-contain" aria-label={`${postCount}枚投稿の並び確認`} />
+                  </div>
                 </div>
               ) : null}
               {previewMode === "post" ? (
@@ -896,7 +923,7 @@ export function SnsSplitImageMakerApp() {
               ) : null}
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-base border border-border bg-surface-muted/70 px-3 py-3 text-xs text-muted">
-              <span>枠線は目安です。実際の投稿画像には含まれません。</span>
+              <span>枠線は目安です。実際の投稿画像には含まれません。境界を動かすときは枠線を表示したまま確認してください。</span>
               <div className="flex items-center gap-2">
                 <ToggleButton label="枠線を表示" checked={draft.config.showSeam} onChange={(checked) => updateConfig({ showSeam: checked })} />
                 <ToggleButton label="グリッドを表示" checked={draft.config.showGrid} onChange={(checked) => updateConfig({ showGrid: checked })} />
@@ -1010,6 +1037,7 @@ export function SnsSplitImageMakerApp() {
                   <span className="mt-1 block text-xs text-muted">{getFilePatternHint(draft.preset)}</span>
                 </label>
                 <p className="text-xs text-muted">PNG/JPEGはどちらか1形式を選び、ZIPや複数形式の一括出力は後続候補です。</p>
+                <p className="text-xs font-bold text-primary-strong">選択中の形式で個別ファイル保存します。</p>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <button type="button" onClick={saveDraft} className="flat-control min-h-12 px-4 py-2 font-black">

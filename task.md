@@ -86,6 +86,13 @@
   - 確認観点: `2分割 / 3分割 / 4分割` の初期状態、メイン画像 guard、境界調整、投稿順、個別 PNG / JPEG export copy、Schedule / Thumbnail handoff 後の次アクション。
   - 入れないもの: ZIP 出力、X 以外の比率、複数形式一括 export、重い onboarding。
   - 検証: `node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check`、in-app browser 幅別確認。
+  - 結果記録 2026-05-16 / `sns-split-public-prelaunch-polish`: PR #129 `[codex] Polish thumbnail preview controls` が `main` / `origin/main` に merge 済みであることを確認し、`origin/main` 起点の `.worktrees/sns-split-public-prelaunch-polish` で実装。SNS Split Image Maker の公開前調整として、投稿順 preview copy、メイン画像未選択時の guard、境界調整 guidance、PNG / JPEG の個別保存 button copy、Thumbnail Editor handoff 画像欠落時の recovery copy を整理した。ZIP 出力、X 以外の比率、複数形式一括 export、Thumbnail Editor / Schedule Calendar 本体、schema / storage の大きな変更は入れていない。
+  - contract 更新: `scripts/sns-split-image-maker-contract.mjs` に、メイン画像 guard、Thumbnail handoff 失敗時 copy、投稿順 preview、境界調整 guidance、単一形式の個別保存 copy、形式別 export button label を追加で固定。
+  - 検証結果: `node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は通過。`git diff --check` は `components/sns-split-image-maker/SnsSplitImageMakerApp.tsx`、`scripts/sns-split-image-maker-contract.mjs`、`task.md` の LF -> CRLF warning のみ。
+  - 幅別確認: in-app browser で `/tools/sns-split-image-maker?preset=split-4` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全幅で body 横 overflow なし、投稿順 preview / メイン画像 guard / 境界調整 guidance / 出力順表示が読める。`390 / 820px` はモバイル編集 tab で PNG個別保存 copy と `PNGを4枚保存` button を確認。`1024 / 1280 / 1366px` は desktop aside で export copy も確認。console error / warn なし。
+  - 初期状態確認: in-app browser の preset landing から `2分割 / 3分割 / 4分割` を開き、`24:9` / `24:9 / 8:13.5` / `16:27`、`PNGを2枚保存` / `PNGを3枚保存` / `PNGを4枚保存`、`split_1` からの保存順 copy を確認。console error / warn なし。
+  - 残リスク: Thumbnail Editor から実画像を書き出して SNS Split Image Maker に渡す end-to-end 操作は今回は未実施。受け取り contract と Thumbnail handoff 画像欠落時の recovery copy は確認済みだが、実データ入りの画像 handoff は PR review / final QA で確認する余地あり。
+  - 次セッション候補: `public-final-qa` で Schedule Calendar -> Thumbnail Editor -> SNS Split Image Maker の3ツール導線を通し、実データ入り handoff、主要幅、console error、最終 copy をまとめて確認する。
 
 ## Backlog
 

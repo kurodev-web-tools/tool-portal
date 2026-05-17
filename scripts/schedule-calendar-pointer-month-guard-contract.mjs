@@ -31,8 +31,23 @@ assert.match(
 );
 assert.match(
   appSource,
-  /lg:group-hover:block lg:group-focus-within:block/,
-  "desktop hover and keyboard focus preview remains available"
+  /const mobileLayout = isMobileLayout\(\);[\s\S]*?setMobileScheduleMode\(mobileLayout \? "detail" : "edit"\);[\s\S]*?setMobileSheetOpen\(mobileLayout\);/,
+  "right panel event selection only opens the mobile sheet on mobile layouts"
+);
+assert.match(
+  appSource,
+  /lg:group-hover:block/,
+  "desktop hover preview remains available"
+);
+assert.equal(
+  appSource.includes("lg:group-focus-within:block"),
+  false,
+  "desktop preview is not pinned by mouse click focus"
+);
+assert.doesNotMatch(
+  appSource,
+  /dayEvents\.map\(\(event\) => \([\s\S]*?<EventHoverPreview event=\{event\} \/>[\s\S]*?\)\)/,
+  "right panel day event list does not add a persistent preview popover"
 );
 assert.match(
   appSource,

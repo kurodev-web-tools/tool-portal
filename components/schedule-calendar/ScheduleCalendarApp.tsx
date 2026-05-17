@@ -510,7 +510,7 @@ function EventHoverPreview({
     <div
       className={[
         "pointer-events-none absolute z-50 hidden w-80 rounded-base border border-border bg-surface p-4 text-left shadow-panel",
-        "lg:group-hover:block lg:group-focus-within:block",
+        "lg:group-hover:block",
         sideClassName,
         verticalClassName
       ].join(" ")}
@@ -2908,7 +2908,6 @@ function SchedulePanel({
                     {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event)}` : ""}
                   </span>
                 </button>
-                <EventHoverPreview event={event} />
               </div>
             ))
           )}
@@ -3442,13 +3441,15 @@ export function ScheduleCalendarApp() {
   }
 
   function selectEvent(event: ScheduleEvent) {
+    const mobileLayout = isMobileLayout();
+
     setSelectedDateKey(event.date);
     setCursorDate(parseDateKey(event.date));
     setSelectedEventId(event.id);
     setDraft({ ...event });
     setActiveTab("schedule");
-    setMobileScheduleMode(isMobileLayout() ? "detail" : "edit");
-    setMobileSheetOpen(true);
+    setMobileScheduleMode(mobileLayout ? "detail" : "edit");
+    setMobileSheetOpen(mobileLayout);
     setStatusMessage("");
   }
 

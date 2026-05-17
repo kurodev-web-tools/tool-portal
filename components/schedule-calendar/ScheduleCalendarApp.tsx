@@ -117,6 +117,7 @@ const importMaxTextLengths = {
 };
 const maxRecurrenceCount = 30;
 const mobileLayoutQuery = "(max-width: 1023px)";
+const desktopPointerLayoutQuery = "(min-width: 1280px)";
 const calendarViewOptions: Array<{ value: CalendarView; label: string }> = [
   { value: "month", label: "月" },
   { value: "week", label: "週" },
@@ -3393,7 +3394,7 @@ export function ScheduleCalendarApp() {
   function isFineDesktopPointer() {
     return (
       typeof window !== "undefined" &&
-      !window.matchMedia(mobileLayoutQuery).matches &&
+      window.matchMedia(desktopPointerLayoutQuery).matches &&
       window.matchMedia("(pointer: fine)").matches
     );
   }
@@ -3454,6 +3455,8 @@ export function ScheduleCalendarApp() {
   }
 
   function selectEventForCalendar(event: ScheduleEvent) {
+    const mobileLayout = isMobileLayout();
+
     setSelectedDateKey(event.date);
     setCursorDate(parseDateKey(event.date));
     setSelectedEventId(event.id);
@@ -3466,8 +3469,8 @@ export function ScheduleCalendarApp() {
     }
 
     setActiveTab("schedule");
-    setMobileScheduleMode(isMobileLayout() ? "detail" : "edit");
-    setMobileSheetOpen(true);
+    setMobileScheduleMode(mobileLayout ? "detail" : "edit");
+    setMobileSheetOpen(mobileLayout);
   }
 
   function editSelectedEvent() {

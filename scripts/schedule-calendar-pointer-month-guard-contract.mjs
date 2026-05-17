@@ -36,13 +36,43 @@ assert.match(
 );
 assert.match(
   appSource,
-  /<EventHoverPreview event=\{event\} placement=\{previewPlacement \?\? \{ side: "center", vertical: getPreviewVerticalPlacement\(event\) \}\} forceTabletVisible=\{selected\} \/>/,
+  /const \[tabletPreviewDismissed, setTabletPreviewDismissed\] = useState\(true\);/,
+  "tablet click preview has dismiss state separate from selected event state"
+);
+assert.match(
+  appSource,
+  /forceTabletPreview\?: boolean;/,
+  "calendar event rows accept explicit tablet preview visibility"
+);
+assert.match(
+  appSource,
+  /<EventHoverPreview event=\{event\} placement=\{previewPlacement \?\? \{ side: "center", vertical: getPreviewVerticalPlacement\(event\) \}\} forceTabletVisible=\{forceTabletPreview\} \/>/,
   "week/day calendar pills show selected event preview on tablet landscape click"
 );
 assert.match(
   appSource,
-  /<EventHoverPreview event=\{event\} placement=\{previewPlacement \?\? \{ side: "center", vertical: "below" \}\} forceTabletVisible=\{selected\} \/>/,
+  /<EventHoverPreview event=\{event\} placement=\{previewPlacement \?\? \{ side: "center", vertical: "below" \}\} forceTabletVisible=\{forceTabletPreview\} \/>/,
   "month calendar rows show selected event preview on tablet landscape click"
+);
+assert.match(
+  appSource,
+  /forceSelectedEventPreview=\{!tabletPreviewDismissed\}/,
+  "calendar surfaces only force the selected preview while it has not been dismissed"
+);
+assert.match(
+  appSource,
+  /setTabletPreviewDismissed\(false\);[\s\S]*?setActiveTab\("schedule"\);[\s\S]*?setMobileScheduleMode\(mobileLayout \? "detail" : "edit"\);/,
+  "calendar event click opens tablet preview before switching the right panel to the selected event"
+);
+assert.match(
+  appSource,
+  /onPointerDown=\{\(\) => setTabletPreviewDismissed\(true\)\}/,
+  "right panel interaction dismisses the tablet calendar preview without closing the detail panel"
+);
+assert.match(
+  appSource,
+  /function selectEvent\(event: ScheduleEvent\) \{[\s\S]*?setTabletPreviewDismissed\(true\);/,
+  "right panel event selection dismisses calendar preview state"
 );
 assert.match(
   appSource,

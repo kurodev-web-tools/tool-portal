@@ -1000,6 +1000,7 @@ function EventPill({
   selected,
   compact = false,
   previewPlacement,
+  forceTabletPreview = false,
   onSelect,
   onDragStart,
   onDragEnd
@@ -1008,6 +1009,7 @@ function EventPill({
   selected: boolean;
   compact?: boolean;
   previewPlacement?: EventPreviewPlacement;
+  forceTabletPreview?: boolean;
   onSelect: (event: ScheduleEvent) => void;
   onDragStart?: (event: ScheduleEvent, detail: DragEvent<HTMLButtonElement>) => void;
   onDragEnd?: () => void;
@@ -1038,7 +1040,7 @@ function EventPill({
         </span>
         <span className="mt-0.5 block truncate text-xs font-bold">{event.title || "無題の予定"}</span>
       </button>
-      <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: getPreviewVerticalPlacement(event) }} forceTabletVisible={selected} />
+      <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: getPreviewVerticalPlacement(event) }} forceTabletVisible={forceTabletPreview} />
     </div>
   );
 }
@@ -1047,12 +1049,14 @@ function MonthEventRow({
   event,
   selected,
   previewPlacement,
+  forceTabletPreview = false,
   onSelect,
   onDragStart
 }: {
   event: ScheduleEvent;
   selected: boolean;
   previewPlacement?: EventPreviewPlacement;
+  forceTabletPreview?: boolean;
   onSelect: (event: ScheduleEvent) => void;
   onDragStart?: (event: ScheduleEvent, detail: DragEvent<HTMLButtonElement>) => void;
 }) {
@@ -1078,7 +1082,7 @@ function MonthEventRow({
         <span className="shrink-0 text-muted">{event.startTime}</span>
         <span className="min-w-0 truncate text-foreground">{event.title || "無題の予定"}</span>
       </button>
-      <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: "below" }} forceTabletVisible={selected} />
+      <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: "below" }} forceTabletVisible={forceTabletPreview} />
     </div>
   );
 }
@@ -1089,6 +1093,7 @@ function WeekView({
   weekStartsOn,
   selectedDateKey,
   selectedEventId,
+  forceSelectedEventPreview,
   onSelectDate,
   onSelectEvent,
   onMoveEventDate
@@ -1098,6 +1103,7 @@ function WeekView({
   weekStartsOn: 0 | 1;
   selectedDateKey: string;
   selectedEventId: string | null;
+  forceSelectedEventPreview: boolean;
   onSelectDate: (dateKey: string) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
   onMoveEventDate: (event: ScheduleEvent, dateKey: string, startMinutes?: number) => void;
@@ -1200,6 +1206,7 @@ function WeekView({
                     <EventPill
                       event={event}
                       selected={selectedEventId === event.id}
+                      forceTabletPreview={forceSelectedEventPreview && selectedEventId === event.id}
                       previewPlacement={{
                         side: getPreviewSidePlacement(dayIndex, days.length),
                         vertical: getPreviewVerticalPlacement(event)
@@ -1228,6 +1235,7 @@ function MonthView({
   weekStartsOn,
   selectedDateKey,
   selectedEventId,
+  forceSelectedEventPreview,
   onSelectDate,
   onSelectEvent,
   onMoveEventDate
@@ -1237,6 +1245,7 @@ function MonthView({
   weekStartsOn: 0 | 1;
   selectedDateKey: string;
   selectedEventId: string | null;
+  forceSelectedEventPreview: boolean;
   onSelectDate: (dateKey: string) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
   onMoveEventDate: (event: ScheduleEvent, dateKey: string) => void;
@@ -1307,6 +1316,7 @@ function MonthView({
                       key={event.id}
                       event={event}
                       selected={selectedEventId === event.id}
+                      forceTabletPreview={forceSelectedEventPreview && selectedEventId === event.id}
                       previewPlacement={{
                         side: getPreviewSidePlacement(dayIndex % 7, 7),
                         vertical: getMonthPreviewVerticalPlacement(dayIndex)
@@ -1409,12 +1419,14 @@ function DayView({
   events,
   selectedDateKey,
   selectedEventId,
+  forceSelectedEventPreview,
   onSelectEvent,
   onMoveEventDate
 }: {
   events: ScheduleEvent[];
   selectedDateKey: string;
   selectedEventId: string | null;
+  forceSelectedEventPreview: boolean;
   onSelectEvent: (event: ScheduleEvent) => void;
   onMoveEventDate: (event: ScheduleEvent, dateKey: string, startMinutes?: number) => void;
 }) {
@@ -1468,6 +1480,7 @@ function DayView({
                 <EventPill
                   event={event}
                   selected={selectedEventId === event.id}
+                  forceTabletPreview={forceSelectedEventPreview && selectedEventId === event.id}
                   previewPlacement={{
                     side: "center",
                     vertical: getPreviewVerticalPlacement(event)
@@ -3214,6 +3227,7 @@ export function ScheduleCalendarApp() {
   const [mobileSheetDragOffset, setMobileSheetDragOffset] = useState(0);
   const [mobileNavTab, setMobileNavTab] = useState<MobileNavTab>("calendar");
   const [mobileScheduleMode, setMobileScheduleMode] = useState<MobileScheduleMode>("edit");
+  const [tabletPreviewDismissed, setTabletPreviewDismissed] = useState(true);
   const [pendingUndo, setPendingUndo] = useState<PendingUndo | null>(null);
   const mobileSheetDragStartYRef = useRef<number | null>(null);
   const skipNextStorageWriteRef = useRef(false);
@@ -3425,6 +3439,7 @@ export function ScheduleCalendarApp() {
   }
 
   function selectDate(dateKey: string) {
+    setTabletPreviewDismissed(true);
     setSelectedDateKey(dateKey);
     setCursorDate(parseDateKey(dateKey));
     const firstEvent = getEventsForDate(events, dateKey)[0] ?? null;
@@ -3447,6 +3462,7 @@ export function ScheduleCalendarApp() {
   function selectEvent(event: ScheduleEvent) {
     const mobileLayout = isMobileLayout();
 
+    setTabletPreviewDismissed(true);
     setSelectedDateKey(event.date);
     setCursorDate(parseDateKey(event.date));
     setSelectedEventId(event.id);
@@ -3467,10 +3483,12 @@ export function ScheduleCalendarApp() {
     setStatusMessage("");
 
     if (isFineDesktopPointer()) {
+      setTabletPreviewDismissed(true);
       setMobileSheetOpen(false);
       return;
     }
 
+    setTabletPreviewDismissed(false);
     setActiveTab("schedule");
     setMobileScheduleMode(mobileLayout ? "detail" : "edit");
     setMobileSheetOpen(mobileLayout);
@@ -3931,6 +3949,7 @@ export function ScheduleCalendarApp() {
                 weekStartsOn={settings.weekStartsOn}
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
+                forceSelectedEventPreview={!tabletPreviewDismissed}
                 onSelectDate={selectDate}
                 onSelectEvent={selectEventForCalendar}
                 onMoveEventDate={moveEventDate}
@@ -3943,6 +3962,7 @@ export function ScheduleCalendarApp() {
                 weekStartsOn={settings.weekStartsOn}
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
+                forceSelectedEventPreview={!tabletPreviewDismissed}
                 onSelectDate={selectDate}
                 onSelectEvent={selectEventForCalendar}
                 onMoveEventDate={moveEventDate}
@@ -3953,6 +3973,7 @@ export function ScheduleCalendarApp() {
                 events={visibleEvents}
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
+                forceSelectedEventPreview={!tabletPreviewDismissed}
                 onSelectEvent={selectEventForCalendar}
                 onMoveEventDate={moveEventDate}
               />
@@ -4027,6 +4048,7 @@ export function ScheduleCalendarApp() {
           />
         ) : null}
         <aside
+          onPointerDown={() => setTabletPreviewDismissed(true)}
           className={[
             "scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 pb-3 pt-0 transition-transform lg:[scrollbar-gutter:stable] xl:px-4 xl:pb-4 xl:pt-0",
             mobileSheetOpen

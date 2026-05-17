@@ -167,6 +167,13 @@
   - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`node scripts/schedule-calendar-prelaunch-polish-contract.mjs`、`node scripts/schedule-calendar-pointer-month-guard-contract.mjs`、`node scripts/schedule-calendar-storage-contract.mjs`、`node scripts/thumbnail-responsive-control-polish-contract.mjs`、`node scripts/thumbnail-preview-controls-contract.mjs`、`node scripts/thumbnail-center-guide-contract.mjs`、`node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build` は通過。`npm audit --omit=dev` は patch 更新後 `found 0 vulnerabilities`。
   - 未確認・残リスク: deployed URL smoke は未実施。外部SNS投稿画面は未確認。実SNS投稿、Google Calendar 連携、ZIP 出力、X 以外の比率、複数形式一括 export は scope 外。公開前 blocker なし。
 
+- Portal feedback contact links
+  - 結果記録 2026-05-17 / `portal-feedback-links`: `origin/main` 起点の `D:/V_streamer_tools/.worktrees/portal-feedback-links` / branch `codex/portal-feedback-links` で実施。FeedbackNotice の未確定文言を外し、メール `feedback@kuro-lab.com`、X `https://x.com/kurodev_v`、Discord `https://discord.gg/35rjbPfxz5` を公開向け受付導線として追加した。X / Discord は icon button 風の外部リンクにし、`target="_blank"` / `rel="noreferrer"` を付与。メールは `mailto:feedback@kuro-lab.com?subject=V%20Streamer%20Tools%20feedback` の `メールで送る` button を維持。
+  - contract 更新: `scripts/tool-portal-entry-contract.mjs` に feedback address、mailto、X / Discord URL、外部リンク rel、未確定文言の非表示を追加。
+  - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` は通過。`npm run build` は worktree が親 checkout 配下にあるため複数 lockfile root 推定 warning が出るが、static export は成功。`git diff --check` は対象ファイルの LF -> CRLF warning のみで exit 0。
+  - 幅別確認: build 後の `out/` を `http://127.0.0.1:3023` で静的配信し、`/` を `390 / 820 / 1024 / 1280 / 1366px`、`/tools` を `390 / 1366px` で確認。body / document 横 overflow なし、feedback copy は確定済み文言で表示、mailto / X / Discord URL は期待通り。Chrome console は app error なし。Next static output の CSS preload warn が 1 件出るが、今回の contact link 変更起因ではない。
+  - 残リスク: deployed URL smoke は未実施。外部SNS投稿画面、Discord invite 遷移後の権限表示、メールクライアント起動後の送信画面は未確認。
+
 ## Backlog
 
 - English support initial coverage

@@ -102,7 +102,16 @@ assert.doesNotMatch(suitesSource.match(/key: "fan-brand"[\s\S]*?status: "planned
 assert.doesNotMatch(portalHeroSource, /開発中のツール/, "hero summary does not foreground the number of planned tools before launch");
 assert.match(portalHeroSource, /公開導線/, "hero summary foregrounds the public workflow instead of planned inventory");
 assert.doesNotMatch(portalHeroSource, />\s*V\s*</, "hero summary does not show the large V visual");
-assert.match(feedbackNoticeSource, /X \/ Discord/, "feedback notice can mention planned X and Discord reception without adding unresolved links");
+assert.match(feedbackNoticeSource, /feedback@kuro-lab\.com/, "feedback notice uses the public feedback address");
+assert.match(
+  feedbackNoticeSource,
+  /mailto:feedback@kuro-lab\.com\?subject=V%20Streamer%20Tools%20feedback/,
+  "feedback notice mail button uses the public feedback mailto"
+);
+assert.match(feedbackNoticeSource, /https:\/\/x\.com\/kurodev_v/, "feedback notice links to the public X profile");
+assert.match(feedbackNoticeSource, /https:\/\/discord\.gg\/35rjbPfxz5/, "feedback notice links to the Discord invite");
+assert.match(feedbackNoticeSource, /target="_blank"[\s\S]*?rel="noreferrer"/, "feedback external links open safely");
+assert.doesNotMatch(feedbackNoticeSource, /準備予定|未確定/, "feedback notice does not present confirmed channels as planned");
 assert.doesNotMatch(
   toolsSource + portalHomeSource + portalHeroSource + portalToolsIndexSource + feedbackNoticeSource,
   /MVP公開中|公開版ではまだ利用できません/,

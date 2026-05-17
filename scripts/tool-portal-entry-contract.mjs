@@ -36,6 +36,31 @@ const toolsPageSource = fs.readFileSync(path.join(root, "app", "tools", "page.ts
 const thumbnailPageSource = fs.readFileSync(path.join(root, "app", "tools", "thumbnail-editor", "page.tsx"), "utf8");
 const snsPageSource = fs.readFileSync(path.join(root, "app", "tools", "sns-split-image-maker", "page.tsx"), "utf8");
 
+function readPngDimensions(relativePath) {
+  const buffer = fs.readFileSync(path.join(root, relativePath));
+  assert.deepEqual(
+    Array.from(buffer.subarray(0, 8)),
+    [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+    `${relativePath} is a PNG`
+  );
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20),
+    bytes: buffer.byteLength
+  };
+}
+
+const favicon = readPngDimensions("app/icon.png");
+assert.equal(favicon.width, 256, "favicon keeps the optimized 256px width");
+assert.equal(favicon.height, 256, "favicon keeps the optimized 256px height");
+assert.ok(favicon.bytes < 200_000, "favicon stays lightweight enough for a public tab icon");
+
+const appleIcon = readPngDimensions("app/apple-icon.png");
+assert.equal(appleIcon.width, 180, "apple touch icon keeps the expected 180px width");
+assert.equal(appleIcon.height, 180, "apple touch icon keeps the expected 180px height");
+assert.ok(appleIcon.bytes < 100_000, "apple touch icon stays lightweight");
+assert.ok(!fs.existsSync(path.join(root, "app", "icon.svg")), "old placeholder svg favicon is replaced by the generated PNG icon");
+
 const availableToolIds = toolsLib.availableTools.map((tool) => tool.id);
 assert.deepEqual(
   availableToolIds,

@@ -100,13 +100,16 @@ assert.equal(lib.getSnsSplitSlotLabel("replace", 3, "split-3"), "画像3 フレ�
 
 assert.match(appSource, /label: "個別追加"/, "UI labels include individual-add mode");
 assert.match(appSource, /label: "フレーム追加"/, "UI labels include frame-add mode");
-assert.match(appSource, /label: "メイン分割"/, "preview tabs expose main-split label");
+assert.match(appSource, /label: "完成形"/, "preview tabs use a short final-image label");
+assert.doesNotMatch(appSource, /label: "メイン分割"/, "preview tab label avoids narrow mobile line breaks");
 assert.match(appSource, /disabled=\{!canExport\}/, "export buttons are guarded by main-image readiness");
 assert.match(appSource, /メイン画像を選択してから出力してください。/, "manual export call warns before exporting without a main image");
 assert.match(appSource, /メイン画像を選ぶと、投稿順プレビューとPNG\/JPEG保存が有効になります。/, "empty main-image state explains why export is disabled");
 assert.match(appSource, /Thumbnail Editorからの画像が見つからなかったため、メイン画像は未選択のまま開始しました。/, "failed thumbnail handoff has a concrete recovery message");
 assert.match(appSource, /投稿順プレビュー/, "preview tab names the posting-order preview explicitly");
 assert.match(appSource, /split_1から保存順に確認/, "posting-order preview explains the save order");
+assert.match(appSource, /完成形プレビューです。メイン分割を1枚の画像として確認/, "final-image preview explains the main split as one complete image");
+assert.match(appSource, /draft\.preset === "split-2" \? "max-w-\[860px\] grid-cols-2" : "max-w-\[720px\] grid-cols-2"/, "split-2 and split-4 final-image preview keep two columns on mobile");
 assert.match(appSource, /境界を動かすときは枠線を表示したまま/, "boundary adjustment guidance stays visible near preview controls");
 assert.match(appSource, /投稿別調整はドラッグまたはスライダーで行います。/, "post adjustment guidance explains drag and slider controls");
 assert.match(appSource, /選択中の形式で個別ファイル保存/, "export section describes single-format individual file output");
@@ -124,9 +127,15 @@ assert.match(appSource, /createNumberedFilePattern/, "app uses the shared number
 assert.doesNotMatch(appSource, /getOutputOrderLabel\(/, "app uses the shared export order helper consistently");
 assert.doesNotMatch(appSource, /const sanitizeFilePatternPart =/, "app does not keep a local handoff filename sanitizer");
 assert.doesNotMatch(appSource, /label: "投稿時"/, "preview tab label no longer says post-time");
+assert.doesNotMatch(appSource, /label: "完成イメージ"/, "preview tab stays short enough for mobile");
 assert.doesNotMatch(appSource, /label: "1\+8連結"/, "primary 4-split mode label no longer uses legacy 1+8 text");
 assert.doesNotMatch(appSource, /label: "1\+4差し替え"/, "primary 4-split mode label no longer uses legacy 1+4 text");
 assert.doesNotMatch(appSource + source, /JSZip|application\/zip|new Blob\(/, "freeze scope does not add zip packaging");
+assert.match(landingSource, /横長2枚を保存順どおりに作ります。/, "split-2 landing copy is short and save-order oriented");
+assert.match(landingSource, /横長1枚と縦長2枚を保存順どおりに作ります。/, "split-3 landing copy is short and save-order oriented");
+assert.match(landingSource, /縦長4枚を保存順どおりに作ります。/, "split-4 landing copy is short and save-order oriented");
+assert.match(landingSource, /保存順 split_1 → split_2 → split_3 → split_4/, "landing copy shows the full 4-split save order");
+assert.doesNotMatch(landingSource, /旧: 1\+8|旧: 1\+4/, "landing copy does not expose legacy mode labels");
 assert.match(landingSource, /個別追加 \/ フレーム追加/, "landing card uses unified 4-split mode labels");
 assert.match(pageSource, /2分割\/3分割\/4分割画像/, "page metadata includes all available split presets");
 assert.match(designSource, /2分割 \/ 3分割 \/ 4分割/, "design doc describes current preset scope");

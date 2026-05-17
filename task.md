@@ -28,6 +28,13 @@
   - 幅別確認: in-app browser で `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全幅で body / main 横 overflow なし、console error / warn なし、header / top toolbar controls の見切れなし、bottom nav `編集` 表示、export / SNS handoff copy 維持を確認。`390px` で output ratio menu の outside click / Escape close、9:16 / 1:1 disabled、16:9 option enabled を確認。
   - 残リスク: chip 群は最小 guard として横スクロールへ寄せた段階で、preset rail / 横スクロール再設計は scope 外。実画像 export と SNS Split Image Maker への end-to-end handoff は schema / copy 維持と contract で確認し、今回の browser 操作では実ファイル生成までは実施していない。
 
+- Public prelaunch visual review Task 3 / SNS Split preview and landing copy polish
+  - 結果記録 2026-05-17 / `sns-split-preview-landing-polish`: PR #136 `[codex] Polish thumbnail responsive controls` が merge 済みで、`HEAD` / `origin/main` が merge commit `e53f1546775da07fc753645b6aebe3d0e9ce7900` で同期済みであることを確認。`origin/main` 起点の `D:/V_streamer_tools/.worktrees/sns-split-preview-landing-polish` で実装した。preset landing の `2分割 / 3分割 / 4分割` 説明を短くし、保存順を full order で表示。preview tab の `メイン分割` label は mobile で分断されにくい `完成形` に変更し、説明文で最終投稿イメージとしての役割を補足。`split-2 / split-4` の完成形 preview は mobile でも2列の最終配置として見えるようにした。投稿順、保存順、PNG / JPEG export copy、Thumbnail Editor handoff copy / 導線は維持。
+  - contract 更新: `scripts/sns-split-image-maker-contract.mjs` に短い landing copy、保存順 full order、`完成形` tab label、完成形 preview guidance、mobile 2列 preview guard、legacy label 非表示を追加。
+  - 検証結果: `node scripts/sns-split-image-maker-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は通過。`git diff --check` は SNS Split 関連ファイルと `task.md` の LF -> CRLF warning のみ。
+  - 幅別確認: in-app browser で `/tools/sns-split-image-maker`、`/tools/sns-split-image-maker?preset=split-2`、`?preset=split-3`、`?preset=split-4` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全20ケースで body / main 横 overflow なし、console error / warn なし。landing の短い説明と保存順、preset 画面の投稿順 preview、`完成形` tab、mobile edit view の PNG / JPEG copy と `PNGを2/3/4枚保存` button copy を確認。
+  - 残リスク: 実画像を Thumbnail Editor から渡す end-to-end handoff と PNG / JPEG 実ダウンロードは今回未実施。schema / storage / export 形式は変更せず、handoff copy と導線は contract と画面表示で維持確認した。
+
 - Public pre-release work order
   - 進め方: `ポータル整理` -> `各ツール公開前調整` -> `最終確認` の順で進める。
   - session / worktree 方針: レビューしやすさと戻しやすさを優先し、原則として session / worktree / branch / PR を分ける。

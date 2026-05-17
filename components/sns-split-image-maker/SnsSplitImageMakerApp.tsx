@@ -72,7 +72,7 @@ const splitTwoJoinOptions: { id: SnsSplitJoinType; label: string; note: string }
 const previewModes: { id: PreviewMode; label: string }[] = [
   { id: "edit", label: "編集" },
   { id: "grid", label: "投稿順" },
-  { id: "post", label: "メイン分割" }
+  { id: "post", label: "完成形" }
 ];
 const postAdjustmentSnapThreshold = 32;
 const toneClassName: Record<ToastTone, string> = {
@@ -141,12 +141,12 @@ const getPresetRatioLabel = (preset: SnsSplitPreset) => {
 };
 const getPreviewDescription = (preset: SnsSplitPreset) => {
   if (preset === "split-2") {
-    return "編集、投稿順プレビュー、左右のメイン分割を切り替えて確認します。";
+    return "編集、投稿順、完成形を切り替えて確認します。";
   }
   if (preset === "split-3") {
-    return "編集、投稿順プレビュー、左大+右上下のメイン分割を切り替えて確認します。";
+    return "編集、投稿順、完成形を切り替えて確認します。";
   }
-  return "編集、投稿順プレビュー、2x2のメイン分割を切り替えて確認します。";
+  return "編集、投稿順、完成形を切り替えて確認します。";
 };
 const getExportFormatLabel = (format: SnsSplitExportFormat) => (format === "jpeg" ? "JPEG" : "PNG");
 const getExportButtonLabel = (format: SnsSplitExportFormat, postCount: number) => `${getExportFormatLabel(format)}を${postCount}枚保存`;
@@ -864,60 +864,70 @@ export function SnsSplitImageMakerApp() {
               ) : null}
               {previewMode === "post" ? (
                 draft.preset === "split-3" ? (
-                  <div className="m-auto grid aspect-video w-full max-w-[860px] overflow-hidden rounded-base border border-primary/40" style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr" }}>
-                    {tiles.map((tile, index) => (
-                      <button
-                        key={tile.index}
-                        type="button"
-                        onClick={() => setSelectedPost(tile.index)}
-                        className={[
-                          "relative flex items-center justify-center overflow-hidden border-primary/35 bg-transparent",
-                          tile.index === 1 ? "border-r" : "",
-                          tile.index === 2 ? "border-b" : "",
-                          selectedPost === tile.index ? "outline outline-2 outline-primary outline-offset-[-2px]" : ""
-                        ].join(" ")}
-                        style={tile.index === 1 ? { gridRow: "1 / span 2" } : undefined}
-                      >
-                        <span className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full bg-primary/80 text-xs font-black text-white">
-                          {tile.index}
-                        </span>
-                        <canvas
-                          ref={(element) => {
-                            postPreviewCanvasRefs.current[index] = element;
-                          }}
-                          className="h-full w-full object-cover"
-                          aria-label={`画像${tile.index}のメイン分割プレビュー`}
-                        />
-                      </button>
-                    ))}
+                  <div className="flex h-full min-h-0 flex-col">
+                    <p className="mb-2 shrink-0 text-xs leading-5 text-muted">
+                      完成形プレビューです。メイン分割を1枚の画像として確認し、気になる投稿を選んで調整できます。
+                    </p>
+                    <div className="m-auto grid aspect-video w-full max-w-[860px] overflow-hidden rounded-base border border-primary/40" style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr" }}>
+                      {tiles.map((tile, index) => (
+                        <button
+                          key={tile.index}
+                          type="button"
+                          onClick={() => setSelectedPost(tile.index)}
+                          className={[
+                            "relative flex items-center justify-center overflow-hidden border-primary/35 bg-transparent",
+                            tile.index === 1 ? "border-r" : "",
+                            tile.index === 2 ? "border-b" : "",
+                            selectedPost === tile.index ? "outline outline-2 outline-primary outline-offset-[-2px]" : ""
+                          ].join(" ")}
+                          style={tile.index === 1 ? { gridRow: "1 / span 2" } : undefined}
+                        >
+                          <span className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full bg-primary/80 text-xs font-black text-white">
+                            {tile.index}
+                          </span>
+                          <canvas
+                            ref={(element) => {
+                              postPreviewCanvasRefs.current[index] = element;
+                            }}
+                            className="h-full w-full object-cover"
+                            aria-label={`画像${tile.index}のメイン分割プレビュー`}
+                          />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <div className="m-auto grid w-full overflow-hidden rounded-base border border-primary/40 sm:grid-cols-2">
-                    {tiles.map((tile, index) => (
-                      <button
-                        key={tile.index}
-                        type="button"
-                        onClick={() => setSelectedPost(tile.index)}
-                        className={[
-                          "relative flex items-center justify-center overflow-hidden border-primary/35 bg-transparent",
-                          draft.preset === "split-2" ? "aspect-[8/9]" : "aspect-video",
-                          index % 2 === 0 ? "sm:border-r" : "",
-                          index < 2 ? "border-b" : "",
-                          selectedPost === tile.index ? "outline outline-2 outline-primary outline-offset-[-2px]" : ""
-                        ].join(" ")}
-                      >
-                        <span className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full bg-primary/80 text-xs font-black text-white">
-                          {tile.index}
-                        </span>
-                        <canvas
-                          ref={(element) => {
-                            postPreviewCanvasRefs.current[index] = element;
-                          }}
-                          className="aspect-video w-full max-h-full object-contain"
-                          aria-label={`投稿${tile.index}のメイン分割プレビュー`}
-                        />
-                      </button>
-                    ))}
+                  <div className="flex h-full min-h-0 flex-col">
+                    <p className="mb-2 shrink-0 text-xs leading-5 text-muted">
+                      完成形プレビューです。メイン分割を1枚の画像として確認し、気になる投稿を選んで調整できます。
+                    </p>
+                    <div className={["m-auto grid w-full overflow-hidden rounded-base border border-primary/40", draft.preset === "split-2" ? "max-w-[860px] grid-cols-2" : "max-w-[720px] grid-cols-2"].join(" ")}>
+                      {tiles.map((tile, index) => (
+                        <button
+                          key={tile.index}
+                          type="button"
+                          onClick={() => setSelectedPost(tile.index)}
+                          className={[
+                            "relative flex items-center justify-center overflow-hidden border-primary/35 bg-transparent",
+                            draft.preset === "split-2" ? "aspect-[8/9]" : "aspect-video",
+                            index % 2 === 0 ? "border-r" : "",
+                            index < 2 ? "border-b" : "",
+                            selectedPost === tile.index ? "outline outline-2 outline-primary outline-offset-[-2px]" : ""
+                          ].join(" ")}
+                        >
+                          <span className="absolute left-2 top-2 z-10 grid h-6 w-6 place-items-center rounded-full bg-primary/80 text-xs font-black text-white">
+                            {tile.index}
+                          </span>
+                          <canvas
+                            ref={(element) => {
+                              postPreviewCanvasRefs.current[index] = element;
+                            }}
+                            className="h-full w-full object-cover"
+                            aria-label={`投稿${tile.index}のメイン分割プレビュー`}
+                          />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )
               ) : null}

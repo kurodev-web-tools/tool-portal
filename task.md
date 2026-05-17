@@ -180,6 +180,13 @@
   - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` は通過。`npm run build` は `app/icon.png` と `app/apple-icon.png` を static route として出力し、`out/index.html` に `rel="icon"` / `rel="apple-touch-icon"` が入ることを確認。worktree が親 checkout 配下にあるため複数 lockfile root 推定 warning は出るが、static export は成功。
   - 残リスク: deployed URL smoke は未実施。ブラウザー tab 上の最終表示は cache の影響を受けるため、本番反映後に hard reload で確認する。
 
+- Thumbnail Editor project_stream initial placement polish
+  - 結果記録 2026-05-17 / `thumbnail-project-stream-placement`: 公開版から取得した `project_stream` draft JSON を調整値として使い、repo 側の `lib/thumbnail-editor.ts` に初期配置を反映。右上 / 左矢印アクセント、立ち絵挿入ガイド、カード区切りライン、時刻カード土台、左カードタブ、時刻下ラインを手元調整値へ寄せ、不要になった `画像 9（中央カードタブ）` は初期 layer から外した。schema / storage / asset 追加 / export 仕様変更はなし。
+  - contract 更新: `scripts/thumbnail-preset-placement-polish-contract.mjs` に `project_stream` の調整後位置を追加し、`scripts/thumbnail-usecase-project-stream-preset-contract.mjs` で中央カードタブ削除と sticker tab 数を固定した。
+  - 検証結果: `node scripts/thumbnail-preset-placement-polish-contract.mjs`、`node scripts/thumbnail-usecase-project-stream-preset-contract.mjs`、`node scripts/thumbnail-preset-discovery-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` は通過。`npm run build` は worktree が親 checkout 配下にあるため複数 lockfile root 推定 warning が出るが、static export は成功。
+  - 幅別確認: build 後の `out/` を `http://127.0.0.1:3024` で静的配信し、`/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認。`390px` で `企画配信` を適用し、presetId が `project_stream` になり、`画像 9（中央カードタブ）` が表示されず、`画像 8（左カードタブ）` が残ることを確認。全幅で body / document 横 overflow なし、console error / warn なし。
+  - 残リスク: deployed URL / Pages preview での smoke は未実施。実画像 export pixel 内容は未確認で、初期配置と UI 適用確認に限定。
+
 ## Backlog
 
 - English support initial coverage

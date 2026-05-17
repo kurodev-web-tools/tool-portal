@@ -206,7 +206,12 @@ assert.ok(arrowLayers.length >= 2, "project_stream reuses one arrow accent asset
 assert.ok(arrowLayers.some((layer) => layer.rotation !== 0), "project_stream rotates the reusable arrow accent");
 
 const tabLayers = projectPreset.layers.filter((layer) => layer.type === "image" && path.basename(layer.src).startsWith("project-stream-sticker-tab-"));
-assert.ok(tabLayers.length >= 3, "project_stream places sticker tab assets as individual reusable layers");
+assert.equal(tabLayers.length, 2, "project_stream keeps the manually adjusted sticker tab count");
+assert.equal(
+  projectPreset.layers.some((layer) => layer.name === "画像 9（中央カードタブ）"),
+  false,
+  "project_stream removes the obsolete center card tab from the adjusted public draft"
+);
 
 assert.equal(
   lib.thumbnailPresetBatchCandidates.some((candidate) => candidate.id === "project_stream"),

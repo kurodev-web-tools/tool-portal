@@ -208,14 +208,20 @@ const placementSpecs = [
     id: "project_stream",
     mock: "docs/mockups/thumbnail-editor-usecase-preset-candidates/project-stream-mock.png",
     layers: [
+      ["画像 2（右上矢印アクセント）", { x: 678, y: -6, width: 340, height: 227, rotation: 20.77715263881904, opacity: 1 }],
+      ["画像 3（見出し左矢印アクセント）", { x: -32, y: 295, width: 232, height: 155, rotation: -34.26877764033995, opacity: 1 }],
+      ["図形 3（立ち絵挿入ガイド）", { x: 924, y: 91, width: 338, height: 560, opacity: 0.42 }],
       ["画像 4（ラベル土台）", { x: -37, y: 7, width: 684, height: 233, rotation: -5, opacity: 0.98 }],
       ["テキスト 5（英字）", { x: 111, y: 98, width: 404, height: 48, rotation: -7.913055327753359, fontSize: 41 }],
       ["テキスト 1（見出し）", { x: 162, y: 198, width: 650, height: 198, fontSize: 166 }],
+      ["図形 7（カード区切りライン）", { x: 188, y: 548, width: 410, height: 16, opacity: 0.7 }],
       ["画像 5（サブ用キューカード）", { x: 79, y: 305, width: 681, height: 495, rotation: -3, opacity: 0.98, maxBottom: 805 }],
       ["画像 6（参加ラベル用カード）", { x: 28, y: 550, width: 346, height: 222, rotation: 1, opacity: 0.98, maxBottom: 775 }],
-      ["画像 7（時刻カード土台）", { x: 438, y: 524, width: 461, height: 243, rotation: -1, opacity: 0.98 }],
+      ["画像 7（時刻カード土台）", { x: 437, y: 524, width: 461, height: 243, rotation: -1, opacity: 0.98 }],
+      ["画像 8（左カードタブ）", { x: 132, y: 552, width: 132, height: 88, opacity: 0.96 }],
       ["画像 10（時刻カードタブ）", { x: 595, y: 505, width: 128, height: 85, rotation: -2, opacity: 0.94 }],
-      ["テキスト 4（ラベル）", { x: 81, y: 645, width: 236, height: 42, fontSize: 33 }]
+      ["テキスト 4（ラベル）", { x: 81, y: 645, width: 236, height: 42, fontSize: 33 }],
+      ["図形 5（時刻下ライン）", { x: 574, y: 670, width: 170, height: 16, opacity: 0.58 }]
     ]
   },
   {

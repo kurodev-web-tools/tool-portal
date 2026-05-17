@@ -50,11 +50,11 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
 
   return (
     <aside className="hidden w-20 shrink-0 border-r border-border bg-surface/78 px-2 py-5 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-hidden xl:w-72 xl:px-4 xl:py-6">
-      <Link href="/" className="mb-8 flex items-center justify-center gap-3 px-1 xl:mb-9 xl:justify-start xl:px-2" title="V Streamer Tools">
+      <Link href="/" className="mb-8 flex items-center justify-center gap-3 px-1 xl:mb-9 xl:justify-start xl:px-2" title="Kuro Stream Kit">
         <span className="grid h-9 w-9 place-items-center rounded-base bg-primary text-lg font-black text-white">
-          V
+          K
         </span>
-        <span className="hidden text-xl font-bold tracking-tight text-foreground xl:inline">V Streamer Tools</span>
+        <span className="hidden text-xl font-bold tracking-tight text-foreground xl:inline">Kuro Stream Kit</span>
       </Link>
 
       <nav className="space-y-6 xl:space-y-8">
@@ -112,7 +112,7 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
             </div>
           </div>
         ) : null}
-        <p className="px-2 text-xs text-muted">© 2026 V Streamer Tools</p>
+        <p className="px-2 text-xs text-muted">© 2026 Kuro Stream Kit</p>
       </div>
     </aside>
   );

@@ -201,6 +201,13 @@
   - 幅別確認: worktree dev server `http://localhost:3032` で `/` を `390 / 820 / 1024 / 1280 / 1366px`、`/tools` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全幅で `scrollbar-color` が primary / surface-muted、`scrollbar-width: thin`、WebKit scrollbar `8px`、body / document 横 overflow なし。`/tools` では console error / warn なし。
   - 残リスク: deployed URL / Pages preview での smoke は未実施。最終の 1920x1080 投稿用スクショは、この scrollbar 反映後に別途撮り直す。
 
+- Portal public product name update
+  - 結果記録 2026-05-18 / `portal-kuro-stream-kit-name`: 公開名を `Kuro Stream Kit` に変更。root metadata / Open Graph title、Home / Tools / 各 tool page metadata、portal header / sidebar / copyright、feedback mailto subject、現行 docs / prompt の表示名を更新した。URL、package name、localStorage / IndexedDB / handoff key、既存 export / storage schema は変更なし。
+  - contract 更新: `scripts/tool-portal-entry-contract.mjs` に公開名、header / sidebar の `K` mark、feedback mailto subject、旧公開名が app shell / metadata に残らない guard を追加。
+  - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` は通過。`npm run build` は worktree が親 checkout 配下にあるため複数 lockfile root 推定 warning が出るが、static export は成功。
+  - 幅別確認: build 後の `out/` を `http://127.0.0.1:3034` で静的配信し、`/` と `/tools` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全幅で body / document 横 overflow なし、title は `Kuro Stream Kit` 系、旧公開名 `V Streamer Tools` は表示なし。`/tools` の feedback mailto は `Kuro%20Stream%20Kit%20feedback`。Chrome console は app error なしで、Next static output の CSS preload warn のみ。
+  - 残リスク: deployed URL / Pages preview での smoke は未実施。公開告知用の 1920x1080 スクショは旧名ベースのため、この名称変更 merge 後に撮り直す。
+
 ## Backlog
 
 - English support initial coverage

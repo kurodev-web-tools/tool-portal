@@ -1,5 +1,5 @@
 ---
-title: "V Streamer Tools Shared Design"
+title: "Kuro Stream Kit Shared Design"
 theme_mode: ["light", "dark"]
 design_style: "practical dashboard with soft VTuber-friendly accents"
 accent_family: "deep teal with restrained mint support"

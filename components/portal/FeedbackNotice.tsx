@@ -1,5 +1,5 @@
 const feedbackLinks = {
-  email: "mailto:feedback@kuro-lab.com?subject=V%20Streamer%20Tools%20feedback",
+  email: "mailto:feedback@kuro-lab.com?subject=Kuro%20Stream%20Kit%20feedback",
   x: "https://x.com/kurodev_v",
   discord: "https://discord.gg/35rjbPfxz5"
 };

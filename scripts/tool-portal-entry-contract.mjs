@@ -29,11 +29,14 @@ const suitesSource = fs.readFileSync(path.join(root, "lib", "suites.ts"), "utf8"
 const portalHomeSource = fs.readFileSync(path.join(root, "components", "portal", "PortalHome.tsx"), "utf8");
 const portalHeroSource = fs.readFileSync(path.join(root, "components", "portal", "PortalHeroSummary.tsx"), "utf8");
 const portalToolsIndexSource = fs.readFileSync(path.join(root, "components", "portal", "PortalToolsIndex.tsx"), "utf8");
+const portalHeaderSource = fs.readFileSync(path.join(root, "components", "portal", "PortalHeader.tsx"), "utf8");
+const portalSidebarSource = fs.readFileSync(path.join(root, "components", "portal", "PortalSidebar.tsx"), "utf8");
 const feedbackNoticeSource = fs.readFileSync(path.join(root, "components", "portal", "FeedbackNotice.tsx"), "utf8");
 const globalsSource = fs.readFileSync(path.join(root, "app", "globals.css"), "utf8");
 const appLayoutSource = fs.readFileSync(path.join(root, "app", "layout.tsx"), "utf8");
 const homePageSource = fs.readFileSync(path.join(root, "app", "page.tsx"), "utf8");
 const toolsPageSource = fs.readFileSync(path.join(root, "app", "tools", "page.tsx"), "utf8");
+const schedulePageSource = fs.readFileSync(path.join(root, "app", "tools", "schedule-calendar", "page.tsx"), "utf8");
 const thumbnailPageSource = fs.readFileSync(path.join(root, "app", "tools", "thumbnail-editor", "page.tsx"), "utf8");
 const snsPageSource = fs.readFileSync(path.join(root, "app", "tools", "sns-split-image-maker", "page.tsx"), "utf8");
 
@@ -115,12 +118,20 @@ for (const source of [portalHomeSource, portalHeroSource, portalToolsIndexSource
 }
 
 assert.match(appLayoutSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "root metadata names the available tool set");
+assert.match(appLayoutSource, /default:\s*"Kuro Stream Kit"/, "root metadata uses the public product name");
+assert.match(appLayoutSource, /template:\s*"%s \| Kuro Stream Kit"/, "root metadata title template uses the public product name");
+assert.match(appLayoutSource, /title:\s*"Kuro Stream Kit"/, "open graph metadata uses the public product name");
+assert.match(homePageSource, /Kuro Stream Kitの公開最小セット/, "home metadata uses the public product name");
 assert.match(homePageSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "home metadata names the available tool set");
 assert.match(portalToolsIndexSource, /Schedule Calendar \/ Thumbnail Editor \/ SNS分割画像メーカー/, "tools index names the available tool set");
+assert.match(toolsPageSource, /Kuro Stream Kitのツール一覧/, "tools page metadata uses the public product name");
 assert.match(toolsPageSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "tools page metadata names the available tool set");
+assert.match(schedulePageSource, /Kuro Stream Kitの公開中ツール/, "schedule page metadata uses the public product name");
 assert.match(thumbnailPageSource, /用途別プリセット/, "thumbnail page metadata keeps preset-first scope");
 assert.match(thumbnailPageSource, /立ち絵/, "thumbnail page metadata keeps standee replacement scope");
+assert.match(thumbnailPageSource, /Kuro Stream Kitのツール/, "thumbnail page metadata uses the public product name");
 assert.match(snsPageSource, /2分割\/3分割\/4分割/, "sns page metadata lists all split presets");
+assert.match(snsPageSource, /Kuro Stream Kitのツール/, "sns page metadata uses the public product name");
 assert.match(suitesSource, /key: "fan-brand"[\s\S]*?status: "planned"/, "fan-brand suite stays planned until it has a public tool");
 assert.match(suitesSource, /key: "stream-workflow"[\s\S]*?Schedule Calendar[\s\S]*?Thumbnail Editor[\s\S]*?SNS分割画像/, "stream workflow suite tags present the public tool flow");
 assert.match(suitesSource, /key: "fan-brand"[\s\S]*?ファン交流[\s\S]*?プロフィール整備[\s\S]*?ブランド素材/, "fan-brand suite tags focus on fan and brand work");
@@ -128,10 +139,15 @@ assert.doesNotMatch(suitesSource.match(/key: "fan-brand"[\s\S]*?status: "planned
 assert.doesNotMatch(portalHeroSource, /開発中のツール/, "hero summary does not foreground the number of planned tools before launch");
 assert.match(portalHeroSource, /公開導線/, "hero summary foregrounds the public workflow instead of planned inventory");
 assert.doesNotMatch(portalHeroSource, />\s*V\s*</, "hero summary does not show the large V visual");
+assert.match(portalHeaderSource, /return "Kuro Stream Kit"/, "portal header uses the public product name");
+assert.match(portalHeaderSource, />\s*K\s*</, "portal mobile header uses the K brand mark");
+assert.match(portalSidebarSource, /title="Kuro Stream Kit"/, "portal sidebar home link uses the public product name");
+assert.match(portalSidebarSource, />Kuro Stream Kit</, "portal sidebar displays the public product name");
+assert.match(portalSidebarSource, /© 2026 Kuro Stream Kit/, "portal sidebar copyright uses the public product name");
 assert.match(feedbackNoticeSource, /feedback@kuro-lab\.com/, "feedback notice uses the public feedback address");
 assert.match(
   feedbackNoticeSource,
-  /mailto:feedback@kuro-lab\.com\?subject=V%20Streamer%20Tools%20feedback/,
+  /mailto:feedback@kuro-lab\.com\?subject=Kuro%20Stream%20Kit%20feedback/,
   "feedback notice mail button uses the public feedback mailto"
 );
 assert.match(feedbackNoticeSource, /https:\/\/x\.com\/kurodev_v/, "feedback notice links to the public X profile");
@@ -145,6 +161,11 @@ assert.doesNotMatch(
 );
 assert.match(portalToolsIndexSource, /getDefaultStatusFilter/, "tools index defaults to available tools unless a selected suite has no public tools");
 assert.doesNotMatch(toolsSource + toolsPageSource + appLayoutSource + homePageSource + portalHomeSource + portalHeroSource + portalToolsIndexSource, /ZIP 出力|一括ZIP|複数形式 export/, "portal entry copy keeps post-freeze export candidates out of current feature copy");
+assert.doesNotMatch(
+  appLayoutSource + homePageSource + toolsPageSource + schedulePageSource + thumbnailPageSource + snsPageSource + portalHeaderSource + portalSidebarSource + feedbackNoticeSource,
+  /V Streamer Tools/,
+  "public app shell and metadata no longer use the old product name"
+);
 assert.match(globalsSource, /html\s*{[\s\S]*?scrollbar-color:/, "document scrollbars use the portal accent palette");
 assert.match(globalsSource, /html::-webkit-scrollbar\s*{[\s\S]*?width:\s*8px;[\s\S]*?height:\s*8px;/, "document webkit scrollbars avoid the OS default width");
 assert.match(globalsSource, /\.scrollbar-accent::-webkit-scrollbar\s*{[\s\S]*?width:\s*8px;[\s\S]*?height:\s*8px;/, "tool scroll containers keep matching scrollbar dimensions");

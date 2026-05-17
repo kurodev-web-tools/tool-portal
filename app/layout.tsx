@@ -4,12 +4,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "V Streamer Tools",
-    template: "%s | V Streamer Tools"
+    default: "Kuro Stream Kit",
+    template: "%s | Kuro Stream Kit"
   },
   description: "VTuber向けの活動支援ツールポータル。公開版ではSchedule Calendar、Thumbnail Editor、SNS分割画像メーカーを提供しています。",
   openGraph: {
-    title: "V Streamer Tools",
+    title: "Kuro Stream Kit",
     description: "VTuber向けの活動支援ツールポータル。公開版ではSchedule Calendar、Thumbnail Editor、SNS分割画像メーカーを提供しています。",
     type: "website",
     locale: "ja_JP"

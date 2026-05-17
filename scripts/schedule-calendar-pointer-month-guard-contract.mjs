@@ -16,6 +16,16 @@ assert.match(
 );
 assert.match(
   appSource,
+  /const desktopPointerLayoutQuery = "\(\s*min-width:\s*1280px\s*\)";/,
+  "desktop click suppression starts at the 1280px desktop range"
+);
+assert.match(
+  appSource,
+  /window\.matchMedia\(desktopPointerLayoutQuery\)\.matches[\s\S]*?window\.matchMedia\("\(pointer: fine\)"\)\.matches/,
+  "tablet landscape keeps click detail while 1280px+ fine pointer uses hover-first behavior"
+);
+assert.match(
+  appSource,
   /function selectEventForCalendar\(event: ScheduleEvent\)/,
   "calendar event selection has a dedicated handler"
 );
@@ -26,8 +36,8 @@ assert.match(
 );
 assert.match(
   appSource,
-  /setMobileScheduleMode\(isMobileLayout\(\) \? "detail" : "edit"\);[\s\S]*?setMobileSheetOpen\(true\);/,
-  "coarse pointer and mobile taps keep the detail/edit panel behavior"
+  /const mobileLayout = isMobileLayout\(\);[\s\S]*?setMobileScheduleMode\(mobileLayout \? "detail" : "edit"\);[\s\S]*?setMobileSheetOpen\(mobileLayout\);/,
+  "tablet landscape and mobile taps keep the detail/edit panel behavior without forcing a desktop sheet state"
 );
 assert.match(
   appSource,

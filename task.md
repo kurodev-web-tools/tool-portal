@@ -35,6 +35,13 @@
   - 幅別確認: in-app browser で `/tools/sns-split-image-maker`、`/tools/sns-split-image-maker?preset=split-2`、`?preset=split-3`、`?preset=split-4` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全20ケースで body / main 横 overflow なし、console error / warn なし。landing の短い説明と保存順、preset 画面の投稿順 preview、`完成形` tab、mobile edit view の PNG / JPEG copy と `PNGを2/3/4枚保存` button copy を確認。
   - 残リスク: 実画像を Thumbnail Editor から渡す end-to-end handoff と PNG / JPEG 実ダウンロードは今回未実施。schema / storage / export 形式は変更せず、handoff copy と導線は contract と画面表示で維持確認した。
 
+- Public prelaunch visual review Task 4 / Schedule Calendar pointer behavior and month preview guard
+  - 結果記録 2026-05-17 / `schedule-pointer-month-preview-guard`: PR #137 `[codex] Polish SNS split preview landing` が merge 済みで、`HEAD` / `origin/main` が merge commit `1c937a6f23f91932378913c8779f48285ac91f1b` で同期済みであることを確認。`origin/main` 起点の `D:/V_streamer_tools/.worktrees/schedule-pointer-month-preview-guard` で実装した。カレンダー面の予定選択だけ `selectEventForCalendar` に分け、fine pointer desktop では予定選択と hover / focus preview 中心にし、右パネルの詳細固定表示へ強制切替しないようにした。coarse pointer / 1023px 以下は従来どおり tap で詳細 sheet / edit panel を開く。mobile 月表示は grid / chip を `min-w-0` と inner overflow guard へ寄せ、長い予定名でも body 横 overflow を出さないようにした。localStorage versioned payload、投稿補助、Thumbnail / SNS Split handoff は触っていない。
+  - contract 更新: `scripts/schedule-calendar-pointer-month-guard-contract.mjs` を追加し、fine pointer 判定、calendar 専用 selection handler、coarse / mobile detail 維持、hover / focus preview class、mobile month grid overflow guard、storage version 非変更を固定した。
+  - 検証結果: `node scripts/schedule-calendar-pointer-month-guard-contract.mjs`、`node scripts/schedule-calendar-prelaunch-polish-contract.mjs`、`node scripts/schedule-calendar-storage-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は通過。`git diff --check` は Schedule Calendar 関連ファイルと `task.md` の LF -> CRLF warning のみ。
+  - 幅別確認: in-app browser で `/tools/schedule-calendar` を `390 / 820 / 1024 / 1280 / 1366px` で確認。月表示は全幅で body / document 横 overflow なし。`1024 / 1280 / 1366px` は calendar 内横 scroll のみ発生し、body は広がらない。`390 / 820px` は週表示で予定 tap 後に `予定詳細` と `編集する` が表示され、body 横 overflow なし。`1280px` は投稿補助 tab 表示中にカレンダー予定を click しても投稿補助 tab のまま維持され、focus preview が表示されることを確認。console error / warn なし。
+  - 残リスク: in-app browser の pointer move では hover 判定が安定せず、PC hover は class contract と focus-within 表示で確認した。大量予定・長期間データでの月表示密度は未確認で、今回の scope は pointer 分岐と smartphone 月 preview 見切れ guard に限定。
+
 - Public pre-release work order
   - 進め方: `ポータル整理` -> `各ツール公開前調整` -> `最終確認` の順で進める。
   - session / worktree 方針: レビューしやすさと戻しやすさを優先し、原則として session / worktree / branch / PR を分ける。

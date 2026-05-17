@@ -1,0 +1,49 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+
+const root = process.cwd();
+const appSourcePath = path.join(root, "components", "schedule-calendar", "ScheduleCalendarApp.tsx");
+const scheduleLibSourcePath = path.join(root, "lib", "schedule-calendar.ts");
+const appSource = fs.readFileSync(appSourcePath, "utf8");
+const scheduleLibSource = fs.readFileSync(scheduleLibSourcePath, "utf8");
+
+assert.match(appSource, /function isFineDesktopPointer\(\)/, "desktop pointer behavior is explicitly detected");
+assert.match(
+  appSource,
+  /window\.matchMedia\("\(pointer: fine\)"\)\.matches/,
+  "fine pointer detection uses pointer media query"
+);
+assert.match(
+  appSource,
+  /function selectEventForCalendar\(event: ScheduleEvent\)/,
+  "calendar event selection has a dedicated handler"
+);
+assert.match(
+  appSource,
+  /if \(isFineDesktopPointer\(\)\) \{[\s\S]*?setMobileSheetOpen\(false\);[\s\S]*?return;/,
+  "fine desktop click selects without forcing the schedule detail panel open"
+);
+assert.match(
+  appSource,
+  /setMobileScheduleMode\(isMobileLayout\(\) \? "detail" : "edit"\);[\s\S]*?setMobileSheetOpen\(true\);/,
+  "coarse pointer and mobile taps keep the detail/edit panel behavior"
+);
+assert.match(
+  appSource,
+  /lg:group-hover:block lg:group-focus-within:block/,
+  "desktop hover and keyboard focus preview remains available"
+);
+assert.match(
+  appSource,
+  /scrollbar-accent grid min-h-0 flex-1 grid-cols-7 auto-rows-\[minmax\(4\.65rem,1fr\)\] overflow-x-hidden overflow-y-auto/,
+  "mobile month grid scrolls inside the calendar and guards horizontal overflow"
+);
+assert.match(
+  appSource,
+  /min-w-0 overflow-hidden rounded-base border border-primary\/35/,
+  "mobile month event chip is clipped inside the day cell instead of widening the body"
+);
+assert.match(scheduleLibSource, /export const scheduleStorageVersion = 2;/, "pointer/month guard does not change schedule storage version");
+
+console.log("schedule-calendar pointer/month guard contract checks passed");

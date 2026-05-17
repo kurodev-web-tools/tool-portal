@@ -1346,7 +1346,7 @@ function MobileMonthView({
   const todayKey = toDateKey(new Date());
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-surface">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-surface">
       <div className="grid grid-cols-7 border-b border-border bg-surface-muted/70 text-center text-[11px] font-bold text-muted">
         {(weekStartsOn === 1 ? ["月", "火", "水", "木", "金", "土", "日"] : ["日", "月", "火", "水", "木", "金", "土"]).map((label) => (
           <span key={label} className="py-2">
@@ -1354,7 +1354,7 @@ function MobileMonthView({
           </span>
         ))}
       </div>
-      <div className="grid flex-1 grid-cols-7 auto-rows-fr overflow-hidden">
+      <div className="scrollbar-accent grid min-h-0 flex-1 grid-cols-7 auto-rows-[minmax(4.65rem,1fr)] overflow-x-hidden overflow-y-auto">
         {days.map((day) => {
           const key = toDateKey(day);
           const dayEvents = getEventsForDate(events, key);
@@ -1369,7 +1369,7 @@ function MobileMonthView({
               type="button"
               onClick={() => onSelectDate(key)}
               className={[
-                "min-h-[4.65rem] border-b border-r border-border p-1.5 text-left transition",
+                "min-h-[4.65rem] min-w-0 overflow-hidden border-b border-r border-border p-1.5 text-left transition",
                 selected ? "bg-primary-soft/55" : "bg-surface",
                 inCurrentMonth ? "text-foreground" : "text-muted/45"
               ].join(" ")}
@@ -1385,7 +1385,7 @@ function MobileMonthView({
                 {day.getDate()}
               </span>
               {firstEvent ? (
-                <span className="mt-1 block rounded-base border border-primary/35 bg-primary-soft/50 px-1.5 py-1 text-[10px] font-bold leading-4 text-foreground">
+                <span className="mt-1 block min-w-0 overflow-hidden rounded-base border border-primary/35 bg-primary-soft/50 px-1.5 py-1 text-[10px] font-bold leading-4 text-foreground">
                   <span className="block truncate">{firstEvent.startTime}</span>
                   <span className="block truncate">{firstEvent.title || "無題の予定"}</span>
                 </span>
@@ -3391,6 +3391,14 @@ export function ScheduleCalendarApp() {
     return typeof window !== "undefined" && window.matchMedia(mobileLayoutQuery).matches;
   }
 
+  function isFineDesktopPointer() {
+    return (
+      typeof window !== "undefined" &&
+      !window.matchMedia(mobileLayoutQuery).matches &&
+      window.matchMedia("(pointer: fine)").matches
+    );
+  }
+
   function restoreUndoEvent() {
     if (!pendingUndo) {
       return;
@@ -3442,6 +3450,23 @@ export function ScheduleCalendarApp() {
     setMobileScheduleMode(isMobileLayout() ? "detail" : "edit");
     setMobileSheetOpen(true);
     setStatusMessage("");
+  }
+
+  function selectEventForCalendar(event: ScheduleEvent) {
+    setSelectedDateKey(event.date);
+    setCursorDate(parseDateKey(event.date));
+    setSelectedEventId(event.id);
+    setDraft({ ...event });
+    setStatusMessage("");
+
+    if (isFineDesktopPointer()) {
+      setMobileSheetOpen(false);
+      return;
+    }
+
+    setActiveTab("schedule");
+    setMobileScheduleMode(isMobileLayout() ? "detail" : "edit");
+    setMobileSheetOpen(true);
   }
 
   function editSelectedEvent() {
@@ -3900,7 +3925,7 @@ export function ScheduleCalendarApp() {
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
                 onSelectDate={selectDate}
-                onSelectEvent={selectEvent}
+                onSelectEvent={selectEventForCalendar}
                 onMoveEventDate={moveEventDate}
               />
             ) : null}
@@ -3912,7 +3937,7 @@ export function ScheduleCalendarApp() {
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
                 onSelectDate={selectDate}
-                onSelectEvent={selectEvent}
+                onSelectEvent={selectEventForCalendar}
                 onMoveEventDate={moveEventDate}
               />
             ) : null}
@@ -3921,7 +3946,7 @@ export function ScheduleCalendarApp() {
                 events={visibleEvents}
                 selectedDateKey={selectedDateKey}
                 selectedEventId={selectedEventId}
-                onSelectEvent={selectEvent}
+                onSelectEvent={selectEventForCalendar}
                 onMoveEventDate={moveEventDate}
               />
             ) : null}
@@ -3939,7 +3964,7 @@ export function ScheduleCalendarApp() {
                 selectedEventId={selectedEventId}
                 onSelectDate={selectDate}
                 onSelectMonthDate={selectDateAndOpenSheet}
-                onSelectEvent={selectEvent}
+                onSelectEvent={selectEventForCalendar}
                 onSelectTime={createEventAt}
               />
               <button

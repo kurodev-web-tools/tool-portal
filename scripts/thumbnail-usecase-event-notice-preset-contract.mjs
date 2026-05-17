@@ -189,8 +189,13 @@ for (const editableShapeName of ["キービジュアル挿入ガイド", "ラベ
 const cornerLayers = preset.layers.filter(
   (layer) => layer.type === "image" && path.basename(layer.src) === "event-notice-corner-mark-emerald-gold-uniform-cell.png"
 );
-assert.ok(cornerLayers.length >= 3, "event_notice reuses one corner mark asset in multiple placements");
+assert.equal(cornerLayers.length, 2, "event_notice keeps the manually adjusted corner mark count");
 assert.ok(cornerLayers.some((layer) => layer.rotation !== 0), "event_notice rotates the reusable corner mark asset");
+assert.equal(
+  preset.layers.some((layer) => layer.name === "画像 3（左上角マーク）"),
+  false,
+  "event_notice removes the obsolete left-top corner mark from the adjusted public draft"
+);
 
 assert.ok(
   preset.layers.some(

@@ -1518,7 +1518,6 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       assetDecorationLayer({ name: "画像 2（キービジュアル枠）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-key-visual-frame-emerald-uniform-cell.png`, x: 279, y: 21, width: 1389, height: 698, opacity: 0.9 }),
       shapeLayer({ name: "図形 3（キービジュアル挿入ガイド）", shapeType: "frame", x: 790, y: 97, width: 354, height: 492, fillColor: "#f5fff42a", strokeColor: "#0d6f4e", strokeWidth: 2, borderRadius: 20, opacity: 0.28 }),
       textLayer({ name: "テキスト 5（キービジュアル注記）", text: "KEY VISUAL", x: 858, y: 364, width: 238, height: 40, fontSize: 30, color: "#0c6b4b", strokeColor: "#f4fbef", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
-      assetDecorationLayer({ name: "画像 3（左上角マーク）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-corner-mark-emerald-gold-uniform-cell.png`, x: 42, y: 58, width: 164, height: 110, opacity: 0.82 }),
       assetDecorationLayer({ name: "画像 4（右下角マーク）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-corner-mark-emerald-gold-uniform-cell.png`, x: 612, y: 520, width: 164, height: 110, rotation: 180, opacity: 0.68 }),
       assetDecorationLayer({ name: "画像 5（ラベル用角マーク）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-corner-mark-emerald-gold-uniform-cell.png`, x: 366, y: 26, width: 132, height: 88, rotation: 90, opacity: 0.76 }),
       shapeLayer({ name: "図形 4（ラベル土台）", shapeType: "rect", x: 330, y: 42, width: 300, height: 58, fillColor: "#006a45", strokeColor: "#f7f4df", strokeWidth: 4, borderRadius: 10, opacity: 0.95 }),
@@ -1530,7 +1529,7 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       assetDecorationLayer({ name: "画像 7（参加情報バンド）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-info-band-navy-emerald-uniform-cell.png`, x: -20, y: 365, width: 796, height: 526, opacity: 0.96 }),
       assetDecorationLayer({ name: "画像 8（マップラインディバイダー）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-map-line-divider-emerald-gold-uniform-cell.png`, x: 76, y: 417, width: 646, height: 397, rotation: -2, opacity: 0.78 }),
       textLayer({ name: "テキスト 3（サブ）", text: "参加情報まとめ", x: 99, y: 584, width: 540, height: 58, fontSize: 47, align: "center", color: "#092746", strokeColor: "#fffaf0", strokeWidth: 4, shadowColor: "#0d8b63", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "BIZ UDPGothic", bold: true }),
-      shapeLayer({ name: "図形 6（情報区切りライン）", shapeType: "line", x: 134, y: 586, width: 470, height: 16, fillColor: "#0b6d4a", strokeColor: "#0b6d4a", strokeWidth: 3, borderRadius: 8, opacity: 0.62 })
+      shapeLayer({ name: "図形 6（情報区切りライン）", shapeType: "line", x: 146.5001907377737, y: 634.439471007121, width: 470, height: 16, fillColor: "#0b6d4a", strokeColor: "#0b6d4a", strokeWidth: 3, borderRadius: 8, opacity: 0.62 })
     ]
   },
   {

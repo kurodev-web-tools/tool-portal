@@ -494,10 +494,12 @@ function EventDetailContent({ event, compact = false }: { event: ScheduleEvent; 
 
 function EventHoverPreview({
   event,
-  placement = { side: "center", vertical: "below" }
+  placement = { side: "center", vertical: "below" },
+  forceTabletVisible = false
 }: {
   event: ScheduleEvent;
   placement?: EventPreviewPlacement;
+  forceTabletVisible?: boolean;
 }) {
   const sideClassName =
     placement.side === "right"
@@ -512,6 +514,7 @@ function EventHoverPreview({
       className={[
         "pointer-events-none absolute z-50 hidden w-80 rounded-base border border-border bg-surface p-4 text-left shadow-panel",
         "lg:group-hover:block",
+        forceTabletVisible ? "lg:block xl:hidden" : "",
         sideClassName,
         verticalClassName
       ].join(" ")}
@@ -1035,7 +1038,7 @@ function EventPill({
         </span>
         <span className="mt-0.5 block truncate text-xs font-bold">{event.title || "無題の予定"}</span>
       </button>
-      <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: getPreviewVerticalPlacement(event) }} />
+      <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: getPreviewVerticalPlacement(event) }} forceTabletVisible={selected} />
     </div>
   );
 }
@@ -1075,7 +1078,7 @@ function MonthEventRow({
         <span className="shrink-0 text-muted">{event.startTime}</span>
         <span className="min-w-0 truncate text-foreground">{event.title || "無題の予定"}</span>
       </button>
-      <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: "below" }} />
+      <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: "below" }} forceTabletVisible={selected} />
     </div>
   );
 }

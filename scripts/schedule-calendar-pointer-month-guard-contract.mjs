@@ -26,6 +26,26 @@ assert.match(
 );
 assert.match(
   appSource,
+  /forceTabletVisible = false/,
+  "calendar event preview can be forced visible for tablet landscape selection"
+);
+assert.match(
+  appSource,
+  /forceTabletVisible \? "lg:block xl:hidden" : ""/,
+  "forced calendar preview is limited to 1024-1279px tablet landscape widths"
+);
+assert.match(
+  appSource,
+  /<EventHoverPreview event=\{event\} placement=\{previewPlacement \?\? \{ side: "center", vertical: getPreviewVerticalPlacement\(event\) \}\} forceTabletVisible=\{selected\} \/>/,
+  "week/day calendar pills show selected event preview on tablet landscape click"
+);
+assert.match(
+  appSource,
+  /<EventHoverPreview event=\{event\} placement=\{previewPlacement \?\? \{ side: "center", vertical: "below" \}\} forceTabletVisible=\{selected\} \/>/,
+  "month calendar rows show selected event preview on tablet landscape click"
+);
+assert.match(
+  appSource,
   /function selectEventForCalendar\(event: ScheduleEvent\)/,
   "calendar event selection has a dedicated handler"
 );

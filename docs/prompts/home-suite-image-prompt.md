@@ -7,7 +7,7 @@
 
 ## Prompt
 
-Create a high-fidelity desktop UI mockup for a Japanese VTuber tools web app called "V Streamer Tools", focused on the homepage portal.
+Create a high-fidelity desktop UI mockup for a Japanese VTuber tools web app called "Kuro Stream Kit", focused on the homepage portal.
 
 Style direction:
 - practical dashboard

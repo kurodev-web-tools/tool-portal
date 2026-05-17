@@ -12,7 +12,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
   const showDesktopTitle = mode !== "workspace";
   const title = useMemo(() => {
     if (pathname === "/") {
-      return "V Streamer Tools";
+      return "Kuro Stream Kit";
     }
 
     if (pathname.startsWith("/tools/schedule-calendar")) {
@@ -31,7 +31,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
       return "ツール一覧";
     }
 
-    return "V Streamer Tools";
+    return "Kuro Stream Kit";
   }, [pathname]);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
       <header className="sticky top-0 z-[70] flex h-16 items-center justify-between gap-3 border-b border-border bg-background/92 px-4 backdrop-blur sm:px-8">
         <div className="flex min-w-0 items-center gap-3 lg:hidden">
           <Link href="/" className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-primary text-sm font-black text-white">
-            V
+            K
           </Link>
           <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
         </div>
@@ -102,9 +102,9 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-base bg-primary text-sm font-black text-white">
-                  V
+                  K
                 </span>
-                <span className="text-sm font-bold text-foreground">V Streamer Tools</span>
+                <span className="text-sm font-bold text-foreground">Kuro Stream Kit</span>
               </div>
               <button
                 type="button"

@@ -4,7 +4,7 @@ import { ThumbnailEditorApp } from "@/components/thumbnail-editor/ThumbnailEdito
 
 export const metadata: Metadata = {
   title: "Thumbnail Editor",
-  description: "用途別プリセットを選び、文字と立ち絵を差し替えてVTuber向けサムネイルを組み立てるV Streamer Toolsのツールです。"
+  description: "用途別プリセットを選び、文字と立ち絵を差し替えてVTuber向けサムネイルを組み立てるKuro Stream Kitのツールです。"
 };
 
 export default function ThumbnailEditorPage() {

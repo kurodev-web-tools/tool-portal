@@ -7,7 +7,7 @@
 
 ## Prompt
 
-Create a high-fidelity product UI mockup for a Japanese VTuber tools portal web app called "V Streamer Tools".
+Create a high-fidelity product UI mockup for a Japanese VTuber tools portal web app called "Kuro Stream Kit".
 
 Style direction:
 - practical dashboard, not a flashy landing page

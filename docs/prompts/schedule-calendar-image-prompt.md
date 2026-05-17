@@ -7,7 +7,7 @@
 
 ## Prompt
 
-Create a high-fidelity desktop UI mockup for a Japanese VTuber schedule calendar web app inside a product called "V Streamer Tools".
+Create a high-fidelity desktop UI mockup for a Japanese VTuber schedule calendar web app inside a product called "Kuro Stream Kit".
 
 Style direction:
 - practical schedule management tool

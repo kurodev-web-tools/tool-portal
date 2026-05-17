@@ -2,7 +2,7 @@
 
 ## Overview
 
-`/tools/schedule-calendar` は、V Streamer Tools 初回 MVP の中核ツールです。
+`/tools/schedule-calendar` は、Kuro Stream Kit 初回公開版の中核ツールです。
 認証やサーバー保存を使わず、ブラウザの `localStorage` だけで予定管理、投稿補助、設定管理を完結します。
 
 主な利用目的は、配信者・動画投稿者が日々の配信、制作、投稿、企画、準備、業務予定をまとめて確認し、投稿告知文まで素早く作ることです。

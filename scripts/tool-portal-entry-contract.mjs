@@ -30,6 +30,7 @@ const portalHomeSource = fs.readFileSync(path.join(root, "components", "portal",
 const portalHeroSource = fs.readFileSync(path.join(root, "components", "portal", "PortalHeroSummary.tsx"), "utf8");
 const portalToolsIndexSource = fs.readFileSync(path.join(root, "components", "portal", "PortalToolsIndex.tsx"), "utf8");
 const feedbackNoticeSource = fs.readFileSync(path.join(root, "components", "portal", "FeedbackNotice.tsx"), "utf8");
+const globalsSource = fs.readFileSync(path.join(root, "app", "globals.css"), "utf8");
 const appLayoutSource = fs.readFileSync(path.join(root, "app", "layout.tsx"), "utf8");
 const homePageSource = fs.readFileSync(path.join(root, "app", "page.tsx"), "utf8");
 const toolsPageSource = fs.readFileSync(path.join(root, "app", "tools", "page.tsx"), "utf8");
@@ -144,5 +145,8 @@ assert.doesNotMatch(
 );
 assert.match(portalToolsIndexSource, /getDefaultStatusFilter/, "tools index defaults to available tools unless a selected suite has no public tools");
 assert.doesNotMatch(toolsSource + toolsPageSource + appLayoutSource + homePageSource + portalHomeSource + portalHeroSource + portalToolsIndexSource, /ZIP 出力|一括ZIP|複数形式 export/, "portal entry copy keeps post-freeze export candidates out of current feature copy");
+assert.match(globalsSource, /html\s*{[\s\S]*?scrollbar-color:/, "document scrollbars use the portal accent palette");
+assert.match(globalsSource, /html::-webkit-scrollbar\s*{[\s\S]*?width:\s*8px;[\s\S]*?height:\s*8px;/, "document webkit scrollbars avoid the OS default width");
+assert.match(globalsSource, /\.scrollbar-accent::-webkit-scrollbar\s*{[\s\S]*?width:\s*8px;[\s\S]*?height:\s*8px;/, "tool scroll containers keep matching scrollbar dimensions");
 
 console.log("tool-portal-entry contract checks passed");

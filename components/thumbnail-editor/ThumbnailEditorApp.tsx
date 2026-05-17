@@ -1646,14 +1646,15 @@ export function ThumbnailEditorApp() {
 
   return (
     <div className={`flex h-full min-h-0 flex-col bg-background text-foreground ${thumbnailFontAssets.thumbnailFontAssetScope}`}>
-      <header className="hidden shrink-0 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur min-[1024px]:block md:px-5 xl:px-6">
+      <header className="relative z-[80] hidden shrink-0 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur min-[1024px]:block md:px-5 xl:px-6">
         <div className="flex flex-wrap items-center gap-3">
           <div className="hidden min-w-[10rem] flex-1 min-[1024px]:block">
             <p className="text-xs font-semibold text-primary-strong">画像・デザイン</p>
             <h1 className="whitespace-nowrap text-lg font-black tracking-normal text-foreground xl:text-xl">Thumbnail Editor</h1>
           </div>
           <div
-            className="grid w-full grid-cols-1 gap-3 min-[520px]:grid-cols-3 min-[1024px]:w-[min(100%,38rem)] min-[1180px]:w-[40rem] xl:w-[43rem]"
+            className="relative z-[90] grid w-full grid-cols-1 gap-3 min-[520px]:grid-cols-3 min-[1024px]:w-[min(100%,38rem)] min-[1180px]:w-[40rem] xl:w-[43rem]"
+            data-thumbnail-header-menu-layer="desktop"
             data-thumbnail-responsive-header-controls="true"
           >
             <label className="min-w-0 text-xs font-bold text-muted">
@@ -1733,7 +1734,7 @@ export function ThumbnailEditorApp() {
           ].join(" ")}
         >
           <main className="scrollbar-accent min-h-0 overflow-y-auto p-4 [scrollbar-gutter:stable] md:p-5 xl:p-6">
-            <section className="mb-4 grid gap-3 min-[1024px]:hidden">
+            <section className="relative z-[70] mb-4 grid gap-3 min-[1024px]:hidden" data-thumbnail-header-menu-layer="mobile">
               <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-3">
                 <label className="min-w-0 text-xs font-bold text-muted">
                   プリセット
@@ -3571,7 +3572,7 @@ function ListboxField({
         <span className="text-xs text-muted">▾</span>
       </button>
       {isOpen && (
-        <div className="absolute left-0 right-0 z-40 mt-1 max-h-60 overflow-auto rounded-base border border-border bg-surface shadow-lg">
+        <div className="absolute left-0 right-0 z-[120] mt-1 max-h-60 overflow-auto rounded-base border border-border bg-surface shadow-lg">
           {options.map((option) => (
             <button
               key={option.id}

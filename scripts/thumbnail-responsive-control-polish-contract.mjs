@@ -19,6 +19,9 @@ assert.ok(source.includes("handleHeaderMenuPointerDown"), "custom header menus c
 assert.ok(source.includes('event.key === "Escape"'), "custom header menus close on Escape");
 assert.ok(source.includes("document.addEventListener(\"pointerdown\", handleHeaderMenuPointerDown)"), "outside click listener is attached while a menu is open");
 assert.ok(source.includes("document.addEventListener(\"keydown\", handleHeaderMenuKeyDown)"), "Escape listener is attached while a menu is open");
+assert.ok(source.includes("data-thumbnail-header-menu-layer"), "header menu layer has an overlay guard marker");
+assert.ok(source.includes("relative z-[80]"), "desktop header sits above the editor canvas stack");
+assert.ok(source.includes("absolute left-0 right-0 z-[120]"), "listbox menus render above the editor surface");
 
 assert.ok(source.includes("disabled: variant.aspectRatio !== \"16:9\""), "non-16:9 output ratio variants are disabled");
 assert.ok(source.includes("後続候補"), "disabled output ratio variants explain they are later candidates");

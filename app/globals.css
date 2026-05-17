@@ -37,6 +37,8 @@
 html {
   min-height: 100%;
   background: rgb(var(--color-background));
+  scrollbar-color: rgb(var(--color-primary) / 0.8) rgb(var(--color-surface-muted) / 0.8);
+  scrollbar-width: thin;
 }
 
 body {
@@ -64,6 +66,24 @@ a {
   outline-offset: 3px;
 }
 
+html::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html::-webkit-scrollbar-track {
+  background: rgb(var(--color-surface-muted) / 0.72);
+}
+
+html::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(var(--color-primary)), rgb(var(--color-primary-strong)));
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-primary-strong));
+}
+
 @layer components {
   .panel {
     @apply rounded-base border border-border bg-surface shadow-panel;
@@ -79,6 +99,7 @@ a {
   }
 
   .scrollbar-accent::-webkit-scrollbar {
+    width: 8px;
     height: 8px;
   }
 

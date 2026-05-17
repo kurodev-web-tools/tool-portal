@@ -194,6 +194,13 @@
   - 幅別確認: build 後の `out/` を `http://127.0.0.1:3025` で静的配信し、`/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認。`390px` で `イベント告知` を適用し、presetId が `event_notice` になり、`画像 3（左上角マーク）` が表示されないことを確認。全幅で body / document 横 overflow なし、console error / warn なし。
   - 残リスク: deployed URL / Pages preview での smoke は未実施。実画像 export pixel 内容は未確認で、初期配置と UI 適用確認に限定。
 
+- Portal document scrollbar unification
+  - 結果記録 2026-05-17 / `portal-scrollbar-unify`: 親 checkout の `next-env.d.ts` 差分は触らず、`origin/main` 起点の `D:/V_streamer_tools/.worktrees/portal-scrollbar-unify` / branch `codex/portal-scrollbar-unify` で実施。Home / Tools の document scrollbar が OS 標準の見た目で残らないよう、`app/globals.css` の `html` scrollbar と WebKit pseudo element を portal accent palette / 8px thin style に統一し、既存 `.scrollbar-accent` も縦横 8px を明示した。各ツールの layout / schema / storage / copy は変更なし。
+  - contract 更新: `scripts/tool-portal-entry-contract.mjs` に document scrollbar palette、WebKit 8px scrollbar、`.scrollbar-accent` の縦横 8px guard を追加。
+  - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は通過。`git diff --check` は対象ファイルの LF -> CRLF warning のみで exit 0。
+  - 幅別確認: worktree dev server `http://localhost:3032` で `/` を `390 / 820 / 1024 / 1280 / 1366px`、`/tools` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全幅で `scrollbar-color` が primary / surface-muted、`scrollbar-width: thin`、WebKit scrollbar `8px`、body / document 横 overflow なし。`/tools` では console error / warn なし。
+  - 残リスク: deployed URL / Pages preview での smoke は未実施。最終の 1920x1080 投稿用スクショは、この scrollbar 反映後に別途撮り直す。
+
 ## Backlog
 
 - English support initial coverage

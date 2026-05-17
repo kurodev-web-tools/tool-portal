@@ -174,6 +174,12 @@
   - 幅別確認: build 後の `out/` を `http://127.0.0.1:3023` で静的配信し、`/` を `390 / 820 / 1024 / 1280 / 1366px`、`/tools` を `390 / 1366px` で確認。body / document 横 overflow なし、feedback copy は確定済み文言で表示、mailto / X / Discord URL は期待通り。Chrome console は app error なし。Next static output の CSS preload warn が 1 件出るが、今回の contact link 変更起因ではない。
   - 残リスク: deployed URL smoke は未実施。外部SNS投稿画面、Discord invite 遷移後の権限表示、メールクライアント起動後の送信画面は未確認。
 
+- Portal favicon update
+  - 結果記録 2026-05-17 / `portal-favicon`: `origin/main` 起点の `D:/V_streamer_tools/.worktrees/portal-favicon` / branch `codex/portal-favicon` で実施。imagegen で作成した cyan neon K icon を元に、`app/icon.png` は 256px、`app/apple-icon.png` は 180px にリサイズして配置。旧 placeholder の `app/icon.svg` は削除した。
+  - contract 更新: `scripts/tool-portal-entry-contract.mjs` に PNG signature、favicon / apple icon の square size、軽量サイズ上限、旧 SVG 非表示を追加。
+  - 検証結果: `node scripts/tool-portal-entry-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` は通過。`npm run build` は `app/icon.png` と `app/apple-icon.png` を static route として出力し、`out/index.html` に `rel="icon"` / `rel="apple-touch-icon"` が入ることを確認。worktree が親 checkout 配下にあるため複数 lockfile root 推定 warning は出るが、static export は成功。
+  - 残リスク: deployed URL smoke は未実施。ブラウザー tab 上の最終表示は cache の影響を受けるため、本番反映後に hard reload で確認する。
+
 ## Backlog
 
 - English support initial coverage

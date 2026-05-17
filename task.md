@@ -187,6 +187,13 @@
   - 幅別確認: build 後の `out/` を `http://127.0.0.1:3024` で静的配信し、`/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認。`390px` で `企画配信` を適用し、presetId が `project_stream` になり、`画像 9（中央カードタブ）` が表示されず、`画像 8（左カードタブ）` が残ることを確認。全幅で body / document 横 overflow なし、console error / warn なし。
   - 残リスク: deployed URL / Pages preview での smoke は未実施。実画像 export pixel 内容は未確認で、初期配置と UI 適用確認に限定。
 
+- Thumbnail Editor event_notice initial placement polish
+  - 結果記録 2026-05-17 / `thumbnail-event-notice-placement`: 公開版から取得した `event_notice` draft JSON を調整値として使い、repo 側の `lib/thumbnail-editor.ts` に初期配置を反映。情報区切りラインを手元調整値へ寄せ、不要になった `画像 3（左上角マーク）` は初期 layer から外した。schema / storage / asset 追加 / export 仕様変更はなし。
+  - contract 更新: `scripts/thumbnail-preset-placement-polish-contract.mjs` に `event_notice` の調整後ライン位置を反映し、`scripts/thumbnail-usecase-event-notice-preset-contract.mjs` で左上角マーク削除と corner mark 数を固定した。
+  - 検証結果: `node scripts/thumbnail-usecase-event-notice-preset-contract.mjs`、`node scripts/thumbnail-preset-placement-polish-contract.mjs`、`node scripts/thumbnail-preset-discovery-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` は通過。`npm run build` は worktree が親 checkout 配下にあるため複数 lockfile root 推定 warning が出るが、static export は成功。
+  - 幅別確認: build 後の `out/` を `http://127.0.0.1:3025` で静的配信し、`/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認。`390px` で `イベント告知` を適用し、presetId が `event_notice` になり、`画像 3（左上角マーク）` が表示されないことを確認。全幅で body / document 横 overflow なし、console error / warn なし。
+  - 残リスク: deployed URL / Pages preview での smoke は未実施。実画像 export pixel 内容は未確認で、初期配置と UI 適用確認に限定。
+
 ## Backlog
 
 - English support initial coverage

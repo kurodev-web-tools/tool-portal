@@ -256,7 +256,7 @@ const placementSpecs = [
       ["画像 7（参加情報バンド）", { x: -20, y: 365, width: 796, height: 526, opacity: 0.96, maxBottom: 895 }],
       ["画像 8（マップラインディバイダー）", { x: 76, y: 417, width: 646, height: 397, rotation: -2, opacity: 0.78, maxBottom: 815 }],
       ["テキスト 3（サブ）", { x: 99, y: 584, width: 540, height: 58, fontSize: 47 }],
-      ["図形 6（情報区切りライン）", { x: 134, y: 586, width: 470, height: 16, opacity: 0.62 }]
+      ["図形 6（情報区切りライン）", { x: 147, y: 634, width: 470, height: 16, opacity: 0.62 }]
     ]
   },
   {

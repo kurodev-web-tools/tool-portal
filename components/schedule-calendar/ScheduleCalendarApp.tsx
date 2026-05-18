@@ -7,12 +7,27 @@ import {
   writeToolHandoff,
   type ToolHandoffTarget
 } from "@/lib/tool-handoff";
+import { useLocale } from "@/components/portal/LocaleProvider";
+import {
+  getAnnouncementStatusFilterOptions,
+  getAnnouncementStatusOptions,
+  getCalendarViewOptions,
+  getDefaultDurationOptions,
+  getEventCategoryFilterOptions,
+  getEventPeriodOptions,
+  getEventSortOptions,
+  getLocalizedCategoryOptions,
+  getLocalizedPostTemplates,
+  getPostTemplateUsageOptions,
+  getRecurrenceOptions,
+  getScheduleCalendarCopy,
+  getWeekStartOptions,
+  type ScheduleCalendarCopy
+} from "@/lib/schedule-calendar-copy";
 import {
   addDays,
   addMonths,
-  announcementStatusOptions,
   categoryMeta,
-  categoryOptions,
   createEmptyEvent,
   defaultHashtagSets,
   defaultScheduleSettings,
@@ -30,9 +45,7 @@ import {
   parseDateKey,
   platformOptions,
   postTemplates,
-  postTemplateUsageOptions,
   postTemplateVariableOptions,
-  recurrenceOptions,
   clampScheduleText,
   scheduleInputTextLimits,
   scheduleStorageKey,
@@ -72,12 +85,6 @@ type EventPreviewPlacement = {
   vertical: "below" | "above";
 };
 
-const viewLabels: Record<CalendarView, string> = {
-  month: "月",
-  week: "週",
-  day: "日"
-};
-
 const timeSlots = Array.from({ length: 48 }, (_, index) => index * 30);
 const timelineStartMinutes = 0;
 const timelineEndMinutes = 24 * 60;
@@ -93,10 +100,6 @@ const mobileSheetMaxHeightClassName = "max-h-[74vh]";
 const timeGridMinHeightClassName = "min-h-[1152px]";
 const timeSlotHeightClassName = "h-6";
 const weekGridTemplateColumns = "48px repeat(7, minmax(84px, 1fr))";
-const emptyEventsMessage = "予定はまだありません。";
-const emptySearchResultsMessage = "条件に一致する予定はありません。";
-const saveFailureMessage = "保存できませんでした。ブラウザの保存領域を確認してください。";
-const importFailureMessage = "JSONをインポートできませんでした。形式を確認してください。既存データは変更していません。";
 const defaultDurationMinuteOptions = [30, 45, 60, 90, 120, 180];
 const importTextMaxLength = 250_000;
 const importMaxEvents = 500;
@@ -118,47 +121,24 @@ const importMaxTextLengths = {
 const maxRecurrenceCount = 30;
 const mobileLayoutQuery = "(max-width: 1023px)";
 const desktopPointerLayoutQuery = "(min-width: 1280px)";
-const calendarViewOptions: Array<{ value: CalendarView; label: string }> = [
-  { value: "month", label: "月" },
-  { value: "week", label: "週" },
-  { value: "day", label: "日" }
-];
-const weekStartOptions: Array<{ value: 0 | 1; label: string }> = [
-  { value: 0, label: "日曜" },
-  { value: 1, label: "月曜" }
-];
-const defaultDurationOptions = defaultDurationMinuteOptions.map((minutes) => ({ value: minutes, label: `${minutes}分` }));
-const eventCategoryFilterOptions: Array<{ value: EventCategory | "all"; label: string }> = [
-  { value: "all", label: "カテゴリすべて" },
-  ...categoryOptions
-];
-const eventPlatformFilterOptions: Array<{ value: EventPlatform | "all"; label: string }> = [
-  { value: "all", label: "媒体すべて" },
-  ...platformOptions.map((option) => ({ value: option, label: option || "-" }))
-];
-const eventPeriodOptions: Array<{ value: EventPeriodFilter; label: string }> = [
-  { value: "all", label: "全期間" },
-  { value: "today", label: "今日以降" },
-  { value: "week", label: "7日以内" },
-  { value: "month", label: "30日以内" }
-];
-const eventSortOptions: Array<{ value: EventSortOrder; label: string }> = [
-  { value: "upcoming", label: "直近順" },
-  { value: "dateAsc", label: "日付昇順" },
-  { value: "dateDesc", label: "日付降順" }
-];
-const announcementStatusFilterOptions: Array<{ value: AnnouncementStatus | "all"; label: string }> = [
-  { value: "all", label: "告知すべて" },
-  ...announcementStatusOptions
-];
-const scheduleStartGuide = "空いている時間をクリック、または右パネルの「新しい予定を追加」から1件作成します。";
-const mobileScheduleStartGuide = "空いている時間をタップ、または右下の＋から予定を追加できます。";
-const postAssistStartGuide = "予定を選ぶと、告知文コピーと Thumbnail Editor / SNS分割画像メーカーへの受け渡しをここで確認できます。";
-const handoffSelectedGuide =
-  "Thumbnail Editorには予定テキストを初期値として渡します。SNS分割画像メーカーではメイン画像を選んでから個別PNG/JPEGを書き出します。";
-const handoffEmptyGuide = "予定を選ぶと、公開前の配信ワークフロー導線として次ツールへ初期テキストを渡せます。";
-const backupHelpText =
-  "このブラウザに保存された予定、投稿補助テンプレート、ハッシュタグ、設定をJSONで控えます。復元に失敗した場合、既存データは変更しません。";
+function useScheduleCopy() {
+  const { locale } = useLocale();
+  const scheduleCopy = getScheduleCalendarCopy(locale);
+
+  return { locale, scheduleCopy };
+}
+
+function getCategoryLabel(category: EventCategory, copy: ScheduleCalendarCopy) {
+  return copy.categories[category] ?? categoryMeta[category].label;
+}
+
+function getCountLabel(count: number, copy: ScheduleCalendarCopy) {
+  return `${count} ${copy.common.countUnit}`;
+}
+
+function getDurationOptions(copy: ScheduleCalendarCopy, locale: "ja" | "en") {
+  return getDefaultDurationOptions(defaultDurationMinuteOptions, locale);
+}
 
 function formatSlot(minutes: number) {
   const hour = Math.floor(minutes / 60);
@@ -426,62 +406,64 @@ function DragMoveGuide({ guide }: { guide: DragGuide }) {
   );
 }
 
-function getEventRecurrenceLabel(event: ScheduleEvent) {
-  return recurrenceOptions.find((option) => option.value === event.recurrence)?.label ?? "繰り返しなし";
+function getEventRecurrenceLabel(event: ScheduleEvent, copy: ScheduleCalendarCopy) {
+  return copy.recurrence[event.recurrence ?? "none"];
 }
 
-function getAnnouncementStatusLabel(status: AnnouncementStatus) {
-  return announcementStatusOptions.find((option) => option.value === status)?.label ?? "未着手";
+function getAnnouncementStatusLabel(status: AnnouncementStatus, copy: ScheduleCalendarCopy) {
+  return copy.announcementStatus[status];
 }
 
-function getTemplateUsageLabel(template: PostTemplate) {
-  return postTemplateUsageOptions.find((option) => option.value === template.usageCategory)?.label ?? "カスタム";
+function getTemplateUsageLabel(template: PostTemplate, copy: ScheduleCalendarCopy) {
+  return copy.templateUsage[template.usageCategory];
 }
 
 function EventDetailContent({ event, compact = false }: { event: ScheduleEvent; compact?: boolean }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
+
   return (
     <div className={compact ? "space-y-2" : "space-y-4"}>
       <div>
-        <p className={compact ? "text-xs font-bold text-primary-strong" : "text-xs font-bold text-muted"}>{getLongDateLabel(event.date)}</p>
+        <p className={compact ? "text-xs font-bold text-primary-strong" : "text-xs font-bold text-muted"}>{getLongDateLabel(event.date, locale)}</p>
         <h3 className={compact ? "mt-1 text-sm font-bold text-foreground" : "mt-1 text-lg font-bold text-foreground"}>
-          {event.title || "無題の予定"}
+          {event.title || scheduleCopy.common.untitled}
         </h3>
       </div>
       <dl className={compact ? "grid gap-1.5 text-xs" : "grid gap-3 text-sm"}>
         <div className="flex items-center justify-between gap-3">
-          <dt className="font-bold text-muted">時間</dt>
+          <dt className="font-bold text-muted">{scheduleCopy.eventDetail.time}</dt>
           <dd className="font-bold text-foreground">
             {event.startTime} - {event.endTime}
           </dd>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <dt className="font-bold text-muted">カテゴリ</dt>
-          <dd className="font-bold text-foreground">{categoryMeta[event.category].label}</dd>
+          <dt className="font-bold text-muted">{scheduleCopy.eventDetail.category}</dt>
+          <dd className="font-bold text-foreground">{getCategoryLabel(event.category, scheduleCopy)}</dd>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <dt className="font-bold text-muted">プラットフォーム</dt>
-          <dd className="font-bold text-foreground">{event.platform || "-"}</dd>
+          <dt className="font-bold text-muted">{scheduleCopy.eventDetail.platform}</dt>
+          <dd className="font-bold text-foreground">{event.platform || scheduleCopy.common.none}</dd>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <dt className="font-bold text-muted">繰り返し</dt>
-          <dd className="font-bold text-foreground">{getEventRecurrenceLabel(event)}</dd>
+          <dt className="font-bold text-muted">{scheduleCopy.eventDetail.recurrence}</dt>
+          <dd className="font-bold text-foreground">{getEventRecurrenceLabel(event, scheduleCopy)}</dd>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <dt className="font-bold text-muted">告知準備</dt>
-          <dd className="font-bold text-foreground">{getAnnouncementStatusLabel(event.announcementStatus)}</dd>
+          <dt className="font-bold text-muted">{scheduleCopy.eventDetail.announcementPrep}</dt>
+          <dd className="font-bold text-foreground">{getAnnouncementStatusLabel(event.announcementStatus, scheduleCopy)}</dd>
         </div>
       </dl>
       <div>
-        <p className="text-xs font-bold text-muted">メモ</p>
+        <p className="text-xs font-bold text-muted">{scheduleCopy.eventDetail.memo}</p>
         <p className={compact ? "mt-1 whitespace-pre-wrap text-xs leading-5 text-foreground" : "mt-2 whitespace-pre-wrap rounded-base border border-border bg-surface-muted/45 px-3 py-3 text-sm leading-6 text-foreground"}>
-          {event.memo.trim() || "メモはありません。"}
+          {event.memo.trim() || scheduleCopy.eventDetail.emptyMemo}
         </p>
       </div>
       {!compact ? (
         <div>
-          <p className="text-xs font-bold text-muted">告知準備メモ</p>
+          <p className="text-xs font-bold text-muted">{scheduleCopy.eventDetail.announcementMemo}</p>
           <p className="mt-2 whitespace-pre-wrap rounded-base border border-border bg-surface-muted/45 px-3 py-3 text-sm leading-6 text-foreground">
-            {event.announcementMemo.trim() || "告知準備メモはありません。"}
+            {event.announcementMemo.trim() || scheduleCopy.eventDetail.emptyAnnouncementMemo}
           </p>
           {event.announcementHashtags.trim() ? (
             <p className="mt-2 text-xs font-bold text-primary-strong">{event.announcementHashtags}</p>
@@ -675,6 +657,7 @@ function DateSelectControl({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
   const [open, setOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => parseDateKey(value));
   const containerRef = useRef<HTMLDivElement>(null);
@@ -707,7 +690,7 @@ function DateSelectControl({
           setOpen((current) => !current);
         }}
       >
-        {getLongDateLabel(value)}
+        {getLongDateLabel(value, locale)}
       </button>
       {open ? (
         <div className="absolute left-0 right-0 top-full z-40 mt-2 rounded-base border border-border bg-surface p-2.5 shadow-panel sm:p-3">
@@ -716,14 +699,14 @@ function DateSelectControl({
               ‹
             </button>
             <p className="text-sm font-bold text-foreground">
-              {visibleMonth.getFullYear()}年{visibleMonth.getMonth() + 1}月
+              {getPeriodLabel(visibleMonth, "month", 0, locale)}
             </p>
             <button type="button" className="flat-control px-2 py-1" aria-label="次の月" onClick={() => setVisibleMonth((current) => addMonths(current, 1))}>
               ›
             </button>
           </div>
           <div className="mt-2 grid grid-cols-7 gap-0.5 text-center text-[10px] font-bold text-muted sm:mt-3 sm:gap-1 sm:text-[11px]">
-            {["日", "月", "火", "水", "木", "金", "土"].map((label) => (
+            {scheduleCopy.weekStarts.weekdays.map((label) => (
               <span key={label}>{label}</span>
             ))}
           </div>
@@ -766,6 +749,7 @@ function TimeSelectControl({
   onChange: (value: string) => void;
   align?: "start" | "end";
 }) {
+  const { scheduleCopy } = useScheduleCopy();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const hourListRef = useRef<HTMLDivElement>(null);
@@ -817,12 +801,12 @@ function TimeSelectControl({
       {open ? (
         <div className={["relative z-40 mt-2 w-full rounded-base border border-border bg-surface p-3 shadow-panel xl:absolute xl:top-full xl:w-[19rem] xl:max-w-[calc(100vw-2rem)] xl:p-4", panelAlignmentClassName].join(" ")}>
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-bold text-muted">時刻を選択</p>
+            <p className="text-xs font-bold text-muted">{scheduleCopy.form.selectTime}</p>
             <p className="rounded-base bg-primary-soft px-2 py-1 text-xs font-bold text-primary-strong">{composeTimeValue(hour, minute)}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="mt-3 text-xs font-bold text-muted">時</p>
+              <p className="mt-3 text-xs font-bold text-muted">{scheduleCopy.form.hour}</p>
               <div ref={hourListRef} className="scrollbar-accent mt-2 max-h-40 snap-y overflow-y-auto rounded-base border border-border bg-surface-muted/45 p-1 sm:max-h-44 xl:max-h-56">
                 {hourOptions.map((option) => (
                   <button
@@ -840,7 +824,7 @@ function TimeSelectControl({
               </div>
             </div>
             <div>
-              <p className="mt-3 text-xs font-bold text-muted">分</p>
+              <p className="mt-3 text-xs font-bold text-muted">{scheduleCopy.form.minute}</p>
               <div ref={minuteListRef} className="scrollbar-accent mt-2 max-h-40 snap-y overflow-y-auto rounded-base border border-border bg-surface-muted/45 p-1 sm:max-h-44 xl:max-h-56">
                 {minuteOptions.map((option) => (
                   <button
@@ -863,7 +847,7 @@ function TimeSelectControl({
             className="mt-3 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white transition hover:bg-primary-strong"
             onClick={() => setOpen(false)}
           >
-            決定
+            {scheduleCopy.common.confirm}
           </button>
         </div>
       ) : null}
@@ -886,16 +870,19 @@ function CalendarToolbar({
   onToday: () => void;
   onMove: (direction: -1 | 1) => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
+  const viewOptions = getCalendarViewOptions(scheduleCopy);
+
   return (
     <div className="flex flex-col gap-3 border-b border-border px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="hidden min-w-[13rem] lg:block">
-        <p className="text-xs font-bold text-primary-strong">予定・配信管理</p>
+        <p className="text-xs font-bold text-primary-strong">{scheduleCopy.toolbar.title}</p>
         <h1 className="truncate text-xl font-black tracking-tight text-foreground">Schedule Calendar</h1>
-        <p className="mt-1 text-xs font-semibold text-muted">予定作成から告知文、サムネ、分割画像までつなげます。</p>
+        <p className="mt-1 text-xs font-semibold text-muted">{scheduleCopy.toolbar.description}</p>
       </div>
       <div className="grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2 md:flex md:flex-wrap md:justify-end">
         <button type="button" className="flat-control shrink-0 px-3 py-2" onClick={onToday}>
-          今日
+          {scheduleCopy.toolbar.today}
         </button>
         <div className="flex shrink-0 items-center overflow-hidden rounded-base border border-border bg-surface">
           <button
@@ -916,20 +903,20 @@ function CalendarToolbar({
           </button>
         </div>
         <div className="min-w-0 rounded-base border border-border bg-surface-muted px-3 py-2 text-center text-xs font-bold text-foreground md:min-w-[13.5rem] md:flex-1 md:text-sm lg:flex-none">
-          {getPeriodLabel(cursorDate, view, weekStartsOn)}
+          {getPeriodLabel(cursorDate, view, weekStartsOn, locale)}
         </div>
         <div className="col-span-3 grid grid-cols-3 rounded-base border border-border bg-surface p-1 md:col-span-1 md:flex md:shrink-0">
-          {(Object.keys(viewLabels) as CalendarView[]).map((item) => (
+          {viewOptions.map((option) => (
             <button
-              key={item}
+              key={option.value}
               type="button"
               className={[
                 "rounded-base px-3 py-1.5 text-sm font-bold transition",
-                view === item ? "bg-primary text-white" : "text-muted hover:bg-surface-muted hover:text-foreground"
+                view === option.value ? "bg-primary text-white" : "text-muted hover:bg-surface-muted hover:text-foreground"
               ].join(" ")}
-              onClick={() => onViewChange(item)}
+              onClick={() => onViewChange(option.value)}
             >
-              {viewLabels[item]}
+              {option.label}
             </button>
           ))}
         </div>
@@ -939,9 +926,12 @@ function CalendarToolbar({
 }
 
 function CategoryLegend() {
+  const { scheduleCopy } = useScheduleCopy();
+  const categoryOptions = getLocalizedCategoryOptions(scheduleCopy);
+
   return (
     <div className="scrollbar-accent hidden shrink-0 items-center gap-2 overflow-x-auto border-b border-border px-4 py-2 text-xs font-bold text-muted lg:flex">
-      <span className="whitespace-nowrap">カテゴリ</span>
+      <span className="whitespace-nowrap">{scheduleCopy.filters.category}</span>
       {categoryOptions.map((option) => (
         <span
           key={option.value}
@@ -1014,6 +1004,7 @@ function EventPill({
   onDragStart?: (event: ScheduleEvent, detail: DragEvent<HTMLButtonElement>) => void;
   onDragEnd?: () => void;
 }) {
+  const { scheduleCopy } = useScheduleCopy();
   const meta = categoryMeta[event.category];
 
   return (
@@ -1038,7 +1029,7 @@ function EventPill({
           {event.startTime}
           {!compact ? ` - ${event.endTime}` : ""}
         </span>
-        <span className="mt-0.5 block truncate text-xs font-bold">{event.title || "無題の予定"}</span>
+        <span className="mt-0.5 block truncate text-xs font-bold">{event.title || scheduleCopy.common.untitled}</span>
       </button>
       <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: getPreviewVerticalPlacement(event) }} forceTabletVisible={forceTabletPreview} />
     </div>
@@ -1060,6 +1051,7 @@ function MonthEventRow({
   onSelect: (event: ScheduleEvent) => void;
   onDragStart?: (event: ScheduleEvent, detail: DragEvent<HTMLButtonElement>) => void;
 }) {
+  const { scheduleCopy } = useScheduleCopy();
   const meta = categoryMeta[event.category];
 
   return (
@@ -1080,7 +1072,7 @@ function MonthEventRow({
       >
         <span className={["h-1.5 w-1.5 shrink-0 rounded-full", meta.dot].join(" ")} />
         <span className="shrink-0 text-muted">{event.startTime}</span>
-        <span className="min-w-0 truncate text-foreground">{event.title || "無題の予定"}</span>
+        <span className="min-w-0 truncate text-foreground">{event.title || scheduleCopy.common.untitled}</span>
       </button>
       <EventHoverPreview event={event} placement={previewPlacement ?? { side: "center", vertical: "below" }} forceTabletVisible={forceTabletPreview} />
     </div>
@@ -1108,6 +1100,7 @@ function WeekView({
   onSelectEvent: (event: ScheduleEvent) => void;
   onMoveEventDate: (event: ScheduleEvent, dateKey: string, startMinutes?: number) => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
   const days = getWeekDays(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
   const { scrollContainerRef, scrollbarWidth } = useMeasuredScrollbarWidth();
@@ -1123,7 +1116,7 @@ function WeekView({
   return (
     <div className="flex h-full min-w-[636px] min-h-0 flex-col">
       <div className="grid shrink-0 border-b border-border bg-surface-muted/70" style={weekHeaderGridStyle}>
-        <div className="border-r border-border px-1.5 py-3 text-center text-xs font-bold text-muted">時刻</div>
+        <div className="border-r border-border px-1.5 py-3 text-center text-xs font-bold text-muted">{scheduleCopy.eventDetail.time}</div>
         {days.map((day, dayIndex) => {
           const key = toDateKey(day);
           return (
@@ -1137,7 +1130,7 @@ function WeekView({
                 selectedDateKey === key ? "bg-primary-soft text-primary-strong" : "text-foreground"
               ].join(" ")}
             >
-              <span className="block text-xs font-bold text-muted">{getShortDateLabel(day).split(" ")[1]}</span>
+              <span className="block text-xs font-bold text-muted">{getShortDateLabel(day, locale).split(" ")[1]}</span>
               <span
                 className={[
                   "mt-1 inline-grid h-8 min-w-8 place-items-center rounded-base px-1.5 font-bold",
@@ -1198,7 +1191,7 @@ function WeekView({
                 {dragGuide?.dateKey === key ? <DragMoveGuide guide={dragGuide} /> : null}
                 {dayEvents.length === 0 ? (
                   <span className="absolute left-2 right-2 top-1 flex h-6 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-2 text-center text-[11px] font-bold text-muted">
-                    予定なし
+                    {scheduleCopy.empty.events}
                   </span>
                 ) : null}
                 {dayEvents.map((event) => (
@@ -1250,13 +1243,16 @@ function MonthView({
   onSelectEvent: (event: ScheduleEvent) => void;
   onMoveEventDate: (event: ScheduleEvent, dateKey: string) => void;
 }) {
+  const { scheduleCopy } = useScheduleCopy();
   const days = getMonthGrid(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
   const { scrollContainerRef, scrollbarWidth } = useMeasuredScrollbarWidth();
   const monthHeaderGridStyle = {
     gridTemplateColumns: `repeat(7, minmax(0, 1fr)) ${scrollbarWidth}px`
   };
-  const weekdayLabels = weekStartsOn === 1 ? ["月", "火", "水", "木", "金", "土", "日"] : ["日", "月", "火", "水", "木", "金", "土"];
+  const weekdayLabels = weekStartsOn === 1
+    ? [...scheduleCopy.weekStarts.weekdays.slice(1), scheduleCopy.weekStarts.weekdays[0]]
+    : scheduleCopy.weekStarts.weekdays;
 
   return (
     <div className="flex h-full min-w-[720px] min-h-0 flex-col">
@@ -1330,7 +1326,7 @@ function MonthView({
                   ))}
                   {dayEvents.length > 2 ? (
                     <span className="rounded-base bg-surface-muted/70 px-1.5 py-1 text-[11px] font-bold text-muted">
-                      他 {dayEvents.length - 2} 件
+                      +{getCountLabel(dayEvents.length - 2, scheduleCopy)}
                     </span>
                   ) : null}
                 </span>
@@ -1356,13 +1352,16 @@ function MobileMonthView({
   selectedDateKey: string;
   onSelectDate: (dateKey: string) => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
   const days = getMonthGrid(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-surface">
       <div className="grid grid-cols-7 border-b border-border bg-surface-muted/70 text-center text-[11px] font-bold text-muted">
-        {(weekStartsOn === 1 ? ["月", "火", "水", "木", "金", "土", "日"] : ["日", "月", "火", "水", "木", "金", "土"]).map((label) => (
+        {(weekStartsOn === 1
+          ? [...scheduleCopy.weekStarts.weekdays.slice(1), scheduleCopy.weekStarts.weekdays[0]]
+          : scheduleCopy.weekStarts.weekdays).map((label) => (
           <span key={label} className="py-2">
             {label}
           </span>
@@ -1387,7 +1386,7 @@ function MobileMonthView({
                 selected ? "bg-primary-soft/55" : "bg-surface",
                 inCurrentMonth ? "text-foreground" : "text-muted/45"
               ].join(" ")}
-              aria-label={`${getLongDateLabel(key)}を選択`}
+              aria-label={`${getLongDateLabel(key, locale)}を選択`}
             >
               <span
                 className={[
@@ -1401,11 +1400,11 @@ function MobileMonthView({
               {firstEvent ? (
                 <span className="mt-1 block min-w-0 overflow-hidden rounded-base border border-primary/35 bg-primary-soft/50 px-1.5 py-1 text-[10px] font-bold leading-4 text-foreground">
                   <span className="block truncate">{firstEvent.startTime}</span>
-                  <span className="block truncate">{firstEvent.title || "無題の予定"}</span>
+                  <span className="block truncate">{firstEvent.title || scheduleCopy.common.untitled}</span>
                 </span>
               ) : null}
               {dayEvents.length > 1 ? (
-                <span className="mt-1 block text-[10px] font-bold text-primary-strong">+{dayEvents.length - 1}件</span>
+                <span className="mt-1 block text-[10px] font-bold text-primary-strong">+{getCountLabel(dayEvents.length - 1, scheduleCopy)}</span>
               ) : null}
             </button>
           );
@@ -1430,6 +1429,7 @@ function DayView({
   onSelectEvent: (event: ScheduleEvent) => void;
   onMoveEventDate: (event: ScheduleEvent, dateKey: string, startMinutes?: number) => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
   const dayEvents = getEventsForDate(events, selectedDateKey);
   const [dragGuide, setDragGuide] = useState<DragGuide | null>(null);
   const guideEvent = events.find((event) => event.id === selectedEventId);
@@ -1437,8 +1437,8 @@ function DayView({
   return (
     <div className="flex h-full min-w-[620px] min-h-0 flex-col">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-surface-muted/70 px-4 py-3 text-sm font-bold text-foreground [scrollbar-gutter:stable]">
-        <span>{getLongDateLabel(selectedDateKey)}</span>
-        <span className="rounded-base border border-border bg-surface px-2 py-1 text-xs text-muted">予定 {dayEvents.length} 件</span>
+        <span>{getLongDateLabel(selectedDateKey, locale)}</span>
+        <span className="rounded-base border border-border bg-surface px-2 py-1 text-xs text-muted">{getCountLabel(dayEvents.length, scheduleCopy)}</span>
       </div>
       <div className="scrollbar-accent min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
         <div className="grid grid-cols-[64px_1fr]">
@@ -1472,7 +1472,7 @@ function DayView({
             {dragGuide ? <DragMoveGuide guide={dragGuide} /> : null}
             {dayEvents.length === 0 ? (
               <div className="absolute left-3 right-3 top-1 flex min-h-8 items-center justify-center rounded-base border border-dashed border-border bg-surface-muted/55 px-3 py-1 text-center text-[11px] font-bold leading-4 text-muted">
-                {scheduleStartGuide}
+                {scheduleCopy.empty.events}
               </div>
             ) : null}
             {dayEvents.map((event) => (
@@ -1514,6 +1514,7 @@ function MobileDateStrip({
   events: ScheduleEvent[];
   onSelectDate: (dateKey: string) => void;
 }) {
+  const { locale } = useScheduleCopy();
   const days = getWeekDays(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
 
@@ -1531,10 +1532,10 @@ function MobileDateStrip({
               "grid min-w-14 place-items-center rounded-base border px-2 py-2 text-center transition",
               selectedDateKey === key ? "border-primary bg-primary text-white" : "border-border bg-surface-muted text-foreground"
             ].join(" ")}
-            aria-label={`${getLongDateLabel(key)}を表示`}
+            aria-label={`${getLongDateLabel(key, locale)}を表示`}
           >
             <span className={["text-[11px] font-bold", selectedDateKey === key ? "text-white/80" : "text-muted"].join(" ")}>
-              {getShortDateLabel(day).split(" ")[1]}
+              {getShortDateLabel(day, locale).split(" ")[1]}
             </span>
             <span className="mt-1 text-base font-black">{day.getDate()}</span>
             <span
@@ -1564,13 +1565,14 @@ function MobileDayTimeline({
   onSelectEvent: (event: ScheduleEvent) => void;
   onSelectTime: (minutes: number) => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
   const dayEvents = getEventsForDate(events, selectedDateKey);
 
   return (
     <div className="min-h-0 flex-1 overflow-hidden bg-surface">
       <div className="flex items-center justify-between border-b border-border bg-surface-muted/70 px-4 py-3 text-sm font-bold text-foreground">
-        <span>{getLongDateLabel(selectedDateKey)}</span>
-        <span className="rounded-base border border-border bg-surface px-2 py-1 text-xs text-muted">予定 {dayEvents.length} 件</span>
+        <span>{getLongDateLabel(selectedDateKey, locale)}</span>
+        <span className="rounded-base border border-border bg-surface px-2 py-1 text-xs text-muted">{getCountLabel(dayEvents.length, scheduleCopy)}</span>
       </div>
       <div className="scrollbar-accent h-full overflow-y-auto pb-20">
         <div className="grid grid-cols-[52px_1fr]">
@@ -1590,7 +1592,7 @@ function MobileDayTimeline({
             </div>
             {dayEvents.length === 0 ? (
               <div className="absolute left-3 right-3 top-2 rounded-base border border-dashed border-border bg-surface-muted/70 px-3 py-3 text-center text-sm font-bold text-muted">
-                {mobileScheduleStartGuide}
+                {scheduleCopy.eventList.createNewEvent}
               </div>
             ) : null}
             {dayEvents.map((event) => (
@@ -1686,12 +1688,21 @@ function MobileEventList({
   onFilterChange: (filters: EventListFilters) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
+  const categoryFilterOptions = getEventCategoryFilterOptions(scheduleCopy);
+  const platformFilterOptions = [
+    { value: "all" as const, label: scheduleCopy.filters.allPlatforms },
+    ...platformOptions.map((option) => ({ value: option, label: option || scheduleCopy.common.none }))
+  ];
+  const periodOptions = getEventPeriodOptions(scheduleCopy);
+  const announcementFilterOptions = getAnnouncementStatusFilterOptions(scheduleCopy);
+
   return (
     <div className={["scrollbar-accent min-h-0 flex-1 overflow-y-auto bg-surface px-4 pb-24 pt-4", mobileOnlyClassName].join(" ")}>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-bold text-foreground">予定一覧</h2>
+        <h2 className="text-base font-bold text-foreground">{scheduleCopy.eventList.title}</h2>
         <span className="rounded-base border border-border bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
-          {events.length} 件
+          {getCountLabel(events.length, scheduleCopy)}
         </span>
       </div>
       <div className="mt-4 space-y-3 rounded-base border border-border bg-surface-muted/35 p-3">
@@ -1699,19 +1710,19 @@ function MobileEventList({
           value={filters.query}
           onChange={(event) => onFilterChange({ ...filters, query: event.target.value })}
           className={inputClassName("mt-0")}
-          placeholder="タイトルを検索"
+          placeholder={scheduleCopy.filters.titleSearchPlaceholder}
         />
         <div className="grid grid-cols-2 gap-2">
           <SelectMenuControl
             value={filters.category}
-            options={eventCategoryFilterOptions}
+            options={categoryFilterOptions}
             onChange={(category) => onFilterChange({ ...filters, category })}
             ariaLabel="カテゴリで絞り込み"
             className="mt-0"
           />
           <SelectMenuControl
             value={filters.platform}
-            options={eventPlatformFilterOptions}
+            options={platformFilterOptions}
             onChange={(platform) => onFilterChange({ ...filters, platform })}
             ariaLabel="プラットフォームで絞り込み"
             className="mt-0"
@@ -1720,14 +1731,14 @@ function MobileEventList({
         <div className="grid grid-cols-2 gap-2">
           <SelectMenuControl
             value={filters.period}
-            options={eventPeriodOptions}
+            options={periodOptions}
             onChange={(period) => onFilterChange({ ...filters, period })}
             ariaLabel="期間で絞り込み"
             className="mt-0"
           />
           <SelectMenuControl
             value={filters.announcementStatus}
-            options={announcementStatusFilterOptions}
+            options={announcementFilterOptions}
             onChange={(announcementStatus) => onFilterChange({ ...filters, announcementStatus })}
             ariaLabel="告知ステータスで絞り込み"
             className="mt-0"
@@ -1737,7 +1748,7 @@ function MobileEventList({
       <div className="mt-4 space-y-2">
         {events.length === 0 ? (
           <div className="rounded-base border border-dashed border-border bg-surface-muted/65 px-3 py-8 text-center text-sm font-bold text-muted">
-            {hasActiveEventListFilters(filters) ? emptySearchResultsMessage : emptyEventsMessage}
+            {hasActiveEventListFilters(filters) ? scheduleCopy.empty.searchResults : scheduleCopy.empty.events}
           </div>
         ) : (
           events.map((event) => (
@@ -1750,16 +1761,16 @@ function MobileEventList({
                 selectedEventId === event.id ? "border-primary bg-primary-soft/55" : "border-border bg-surface-muted/45"
               ].join(" ")}
             >
-              <span className="text-xs font-bold text-primary-strong">{getLongDateLabel(event.date)}</span>
+              <span className="text-xs font-bold text-primary-strong">{getLongDateLabel(event.date, locale)}</span>
               <span className="mt-1 block text-xs font-bold text-muted">
                 {event.startTime} - {event.endTime}
               </span>
-              <span className="mt-1 block text-sm font-bold text-foreground">{event.title || "無題の予定"}</span>
+              <span className="mt-1 block text-sm font-bold text-foreground">{event.title || scheduleCopy.common.untitled}</span>
               <span className="mt-2 inline-flex rounded-base bg-surface px-2 py-1 text-xs font-bold text-muted">
-                {categoryMeta[event.category].label}
+                {getCategoryLabel(event.category, scheduleCopy)}
                 {event.platform ? ` / ${event.platform}` : ""}
-                {` / ${getAnnouncementStatusLabel(event.announcementStatus)}`}
-                {event.recurrence && event.recurrence !== "none" ? ` / ${recurrenceOptions.find((option) => option.value === event.recurrence)?.label}` : ""}
+                {` / ${getAnnouncementStatusLabel(event.announcementStatus, scheduleCopy)}`}
+                {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event, scheduleCopy)}` : ""}
               </span>
             </button>
           ))
@@ -1784,6 +1795,8 @@ function SettingsAccordionSection({
   onToggle: (id: SettingsSectionId) => void;
   children: ReactNode;
 }) {
+  const { scheduleCopy } = useScheduleCopy();
+
   return (
     <section className="rounded-base border border-border bg-surface-muted/35">
       <button
@@ -1814,7 +1827,9 @@ function TemplateDraftEditor({
   onTemplateDraftChange: (template: PostTemplate) => void;
   onSave: () => void;
 }) {
+  const { scheduleCopy } = useScheduleCopy();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const usageOptions = getPostTemplateUsageOptions(scheduleCopy);
 
   function insertVariable(token: string) {
     const textarea = textareaRef.current;
@@ -1837,20 +1852,20 @@ function TemplateDraftEditor({
     <div className="rounded-base border border-border bg-surface px-3 py-3">
       <div className="grid gap-3 lg:grid-cols-2">
         <div>
-          <FieldLabel>テンプレ名</FieldLabel>
+          <FieldLabel>{scheduleCopy.templateEditor.name}</FieldLabel>
           <input value={templateDraft.name} onChange={(event) => onTemplateDraftChange({ ...templateDraft, name: event.target.value })} className={inputClassName()} />
         </div>
         <div>
-          <FieldLabel>用途カテゴリ</FieldLabel>
+          <FieldLabel>{scheduleCopy.templateEditor.usageCategory}</FieldLabel>
           <SelectMenuControl
             value={templateDraft.usageCategory}
-            options={postTemplateUsageOptions}
+            options={usageOptions}
             onChange={(usageCategory) => onTemplateDraftChange({ ...templateDraft, usageCategory })}
             ariaLabel="用途カテゴリ"
           />
         </div>
         <div>
-          <FieldLabel>既定プラットフォーム</FieldLabel>
+          <FieldLabel>{scheduleCopy.templateEditor.defaultPlatform}</FieldLabel>
           <SelectMenuControl
             value={templateDraft.defaultPlatform}
             options={platformOptions.map((option) => ({ value: option, label: option || "-" }))}
@@ -1859,12 +1874,12 @@ function TemplateDraftEditor({
           />
         </div>
         <div>
-          <FieldLabel>説明</FieldLabel>
+          <FieldLabel>{scheduleCopy.templateEditor.description}</FieldLabel>
           <input value={templateDraft.description} onChange={(event) => onTemplateDraftChange({ ...templateDraft, description: event.target.value })} className={inputClassName()} />
         </div>
       </div>
       <div className="mt-3">
-        <FieldLabel>本文</FieldLabel>
+        <FieldLabel>{scheduleCopy.templateEditor.body}</FieldLabel>
         <textarea
           ref={textareaRef}
           value={templateDraft.body}
@@ -1880,7 +1895,7 @@ function TemplateDraftEditor({
         <TextLimitCounter
           value={templateDraft.body}
           maxLength={scheduleInputTextLimits.postTemplateBody}
-          warning="長文テンプレートはプレビューとコピーの見通しが悪くなります。"
+          warning={scheduleCopy.templateEditor.bodyWarning}
         />
         <div className="mt-2 flex flex-wrap gap-1.5">
           {postTemplateVariableOptions.map((option) => (
@@ -1891,7 +1906,7 @@ function TemplateDraftEditor({
         </div>
       </div>
       <div className="mt-3">
-        <FieldLabel>ハッシュタグ</FieldLabel>
+        <FieldLabel>{scheduleCopy.templateEditor.hashtags}</FieldLabel>
         <textarea
           value={templateDraft.hashtags}
           onChange={(event) =>
@@ -1901,18 +1916,18 @@ function TemplateDraftEditor({
             })
           }
           className={inputClassName("min-h-20 resize-none")}
-          placeholder="#VTuber #配信告知"
+          placeholder={scheduleCopy.form.hashtagPlaceholder}
           maxLength={scheduleInputTextLimits.announcementHashtags}
         />
         <TextLimitCounter
           value={templateDraft.hashtags}
           maxLength={scheduleInputTextLimits.announcementHashtags}
-          warning="タグが多いと投稿補助とhandoffが読みにくくなります。"
+          warning={scheduleCopy.templateEditor.hashtagsWarning}
         />
-        <p className="mt-2 text-xs leading-5 text-muted">本文とは別に保存し、コピー時に予定側のハッシュタグと結合します。</p>
+        <p className="mt-2 text-xs leading-5 text-muted">{scheduleCopy.templateEditor.hashtagsHelp}</p>
       </div>
       <button type="button" onClick={onSave} className="mt-3 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white">
-        テンプレートを保存
+        {scheduleCopy.templateEditor.save}
       </button>
     </div>
   );
@@ -1927,31 +1942,33 @@ function HashtagSetDraftEditor({
   onHashtagSetDraftChange: (hashtagSet: HashtagSet) => void;
   onSave: () => void;
 }) {
+  const { scheduleCopy } = useScheduleCopy();
+
   return (
     <div className="rounded-base border border-border bg-surface px-3 py-3">
       <div className="grid gap-3 lg:grid-cols-2">
         <div>
-          <FieldLabel>セット名</FieldLabel>
+          <FieldLabel>{scheduleCopy.templateEditor.hashtagSetName}</FieldLabel>
           <input
             value={hashtagSetDraft.name}
             onChange={(event) => onHashtagSetDraftChange({ ...hashtagSetDraft, name: event.target.value })}
             className={inputClassName()}
-            placeholder="ゲーム配信"
+            placeholder={scheduleCopy.templateEditor.hashtagSetNamePlaceholder}
           />
         </div>
         <div>
-          <FieldLabel>ハッシュタグ</FieldLabel>
+          <FieldLabel>{scheduleCopy.templateEditor.hashtags}</FieldLabel>
           <input
             value={hashtagSetDraft.hashtags}
             onChange={(event) => onHashtagSetDraftChange({ ...hashtagSetDraft, hashtags: event.target.value })}
             className={inputClassName()}
-            placeholder="#ゲーム配信 #VTuber"
+            placeholder={scheduleCopy.templateEditor.hashtagSetPlaceholder}
           />
         </div>
       </div>
-      <p className="mt-2 text-xs leading-5 text-muted">よく使う組み合わせを保存し、投稿補助プレビューで任意に追加できます。</p>
+      <p className="mt-2 text-xs leading-5 text-muted">{scheduleCopy.templateEditor.hashtagSetHelp}</p>
       <button type="button" onClick={onSave} className="mt-3 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white">
-        ハッシュタグセットを保存
+        {scheduleCopy.templateEditor.hashtagSetSave}
       </button>
     </div>
   );
@@ -2000,6 +2017,7 @@ function MobileSettingsPanel({
   onImport: () => void;
   onResetAll: () => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
   const [openSections, setOpenSections] = useState<Record<SettingsSectionId, boolean>>({
     display: true,
     defaults: true,
@@ -2007,9 +2025,12 @@ function MobileSettingsPanel({
     templates: false,
     hashtags: false
   });
-  const defaultTemplateName = templates.find((template) => template.id === settings.defaultTemplateId)?.name ?? "未設定";
-  const defaultViewLabel = viewLabels[settings.defaultView];
-  const weekStartsOnLabel = settings.weekStartsOn === 1 ? "月曜開始" : "日曜開始";
+  const defaultTemplateName = templates.find((template) => template.id === settings.defaultTemplateId)?.name ?? scheduleCopy.common.unset;
+  const defaultViewLabel = scheduleCopy.views[settings.defaultView];
+  const weekStartsOnLabel = settings.weekStartsOn === 1 ? scheduleCopy.weekStarts.mondayStart : scheduleCopy.weekStarts.sundayStart;
+  const calendarViewOptions = getCalendarViewOptions(scheduleCopy);
+  const weekStartOptions = getWeekStartOptions(scheduleCopy);
+  const defaultDurationOptions = getDurationOptions(scheduleCopy, locale);
 
   function toggleSection(sectionId: SettingsSectionId) {
     setOpenSections((current) => ({ ...current, [sectionId]: !current[sectionId] }));
@@ -2017,19 +2038,19 @@ function MobileSettingsPanel({
 
   return (
     <div className={["scrollbar-accent min-h-0 flex-1 overflow-y-auto bg-surface px-4 pb-24 pt-4", mobileOnlyClassName].join(" ")}>
-      <h2 className="text-base font-bold text-foreground">設定</h2>
+      <h2 className="text-base font-bold text-foreground">{scheduleCopy.settings.title}</h2>
       {settingsStatus ? <p className="mt-3 rounded-base border border-border bg-surface-muted/55 px-3 py-2 text-sm font-bold text-primary-strong">{settingsStatus}</p> : null}
       <div className="mt-4 space-y-3">
       <SettingsAccordionSection
         id="defaults"
-        title="表示・既定値"
-        summary={`${defaultViewLabel} / ${weekStartsOnLabel} / ${settings.defaultStartTime} / ${settings.defaultDurationMinutes}分`}
+        title={scheduleCopy.settings.displayAndDefaults}
+        summary={`${defaultViewLabel} / ${weekStartsOnLabel} / ${settings.defaultStartTime} / ${defaultDurationOptions.find((option) => option.value === settings.defaultDurationMinutes)?.label ?? settings.defaultDurationMinutes}`}
         open={openSections.defaults}
         onToggle={toggleSection}
       >
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <FieldLabel>初期表示ビュー</FieldLabel>
+            <FieldLabel>{scheduleCopy.settings.defaultView}</FieldLabel>
             <SelectMenuControl
               value={settings.defaultView}
               options={calendarViewOptions}
@@ -2038,7 +2059,7 @@ function MobileSettingsPanel({
             />
           </div>
           <div>
-            <FieldLabel>週開始曜日</FieldLabel>
+            <FieldLabel>{scheduleCopy.settings.weekStartsOn}</FieldLabel>
             <SelectMenuControl
               value={settings.weekStartsOn}
               options={weekStartOptions}
@@ -2047,11 +2068,11 @@ function MobileSettingsPanel({
             />
           </div>
           <div>
-            <FieldLabel>既定開始時刻</FieldLabel>
+            <FieldLabel>{scheduleCopy.settings.defaultStartTime}</FieldLabel>
             <TimeSelectControl value={settings.defaultStartTime} onChange={(defaultStartTime) => onSettingsChange({ ...settings, defaultStartTime })} />
           </div>
           <div>
-            <FieldLabel>既定予定時間</FieldLabel>
+            <FieldLabel>{scheduleCopy.settings.defaultDuration}</FieldLabel>
             <SelectMenuControl
               value={settings.defaultDurationMinutes}
               options={defaultDurationOptions}
@@ -2063,38 +2084,38 @@ function MobileSettingsPanel({
       </SettingsAccordionSection>
       <SettingsAccordionSection
         id="data"
-        title="データ管理"
-        summary="JSONバックアップ / 復元 / 初期化"
+        title={scheduleCopy.settings.data}
+        summary={scheduleCopy.settings.dataSummary}
         open={openSections.data}
         onToggle={toggleSection}
       >
         <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={onExport} className="flat-control px-3 py-2">
-            バックアップ作成
+            {scheduleCopy.settings.backupCreate}
           </button>
           <button type="button" onClick={onImport} className="flat-control px-3 py-2">
-            バックアップ復元
+            {scheduleCopy.settings.backupRestore}
           </button>
         </div>
         <p className="text-xs leading-5 text-muted">
-          {backupHelpText}
+          {scheduleCopy.settings.backupHelp}
         </p>
-        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-24 resize-none")} placeholder="復元するバックアップJSONを貼り付け" />
+        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-24 resize-none")} placeholder={scheduleCopy.settings.importPlaceholder} />
         <button type="button" onClick={onResetAll} className="w-full rounded-base border border-red-300 px-3 py-2 text-sm font-bold text-red-600">
-          全データ初期化
+          {scheduleCopy.settings.resetAll}
         </button>
       </SettingsAccordionSection>
       <SettingsAccordionSection
         id="hashtags"
-        title="保存済みハッシュタグ"
-        summary={`${hashtagSets.length}件`}
+        title={scheduleCopy.settings.savedHashtags}
+        summary={getCountLabel(hashtagSets.length, scheduleCopy)}
         open={openSections.hashtags}
         onToggle={toggleSection}
       >
         <div className="space-y-2">
           {hashtagSets.length === 0 ? (
             <p className="rounded-base border border-dashed border-border bg-surface-muted/55 px-3 py-4 text-center text-sm font-bold text-muted">
-              保存済みハッシュタグはありません。
+              {scheduleCopy.settings.emptyHashtags}
             </p>
           ) : (
             hashtagSets.map((hashtagSet) => (
@@ -2103,10 +2124,10 @@ function MobileSettingsPanel({
                 <p className="mt-1 text-xs leading-5 text-muted">{hashtagSet.hashtags}</p>
                 <div className="mt-2 flex gap-2">
                   <button type="button" onClick={() => onEditHashtagSet(hashtagSet)} className="flat-control px-3 py-1.5">
-                    編集
+                    {scheduleCopy.common.edit}
                   </button>
                   <button type="button" onClick={() => onDeleteHashtagSet(hashtagSet.id)} className="flat-control border-red-300 px-3 py-1.5 text-red-600">
-                    削除
+                    {scheduleCopy.common.delete}
                   </button>
                 </div>
               </div>
@@ -2117,18 +2138,18 @@ function MobileSettingsPanel({
       </SettingsAccordionSection>
       <SettingsAccordionSection
         id="templates"
-        title="投稿補助テンプレート"
-        summary={`${templates.length}件 / 既定: ${defaultTemplateName}`}
+        title={scheduleCopy.settings.postTemplates}
+        summary={`${getCountLabel(templates.length, scheduleCopy)} / ${scheduleCopy.settings.defaultTemplate}: ${defaultTemplateName}`}
         open={openSections.templates}
         onToggle={toggleSection}
       >
         <div>
-          <FieldLabel>既定テンプレート</FieldLabel>
+          <FieldLabel>{scheduleCopy.settings.defaultTemplate}</FieldLabel>
           <SelectMenuControl
             value={settings.defaultTemplateId}
             options={templates.map((template) => ({ value: template.id, label: template.name }))}
             onChange={(defaultTemplateId) => onSettingsChange({ ...settings, defaultTemplateId })}
-            ariaLabel="既定テンプレート"
+            ariaLabel={scheduleCopy.settings.defaultTemplate}
           />
         </div>
         <div className="space-y-2">
@@ -2137,16 +2158,16 @@ function MobileSettingsPanel({
               <p className="text-sm font-bold text-foreground">{template.name}</p>
               <p className="mt-1 text-xs text-muted">{template.description}</p>
               <p className="mt-1 text-xs font-bold text-primary-strong">
-                {getTemplateUsageLabel(template)}
+                {getTemplateUsageLabel(template, scheduleCopy)}
                 {template.defaultPlatform ? ` / ${template.defaultPlatform}` : ""}
               </p>
               {template.hashtags.trim() ? <p className="mt-1 text-xs leading-5 text-muted">{template.hashtags}</p> : null}
               <div className="mt-2 flex gap-2">
                 <button type="button" onClick={() => onEditTemplate(template)} className="flat-control px-3 py-1.5">
-                  編集
+                  {scheduleCopy.common.edit}
                 </button>
                 <button type="button" onClick={() => onDeleteTemplate(template.id)} className="flat-control border-red-300 px-3 py-1.5 text-red-600">
-                  削除
+                  {scheduleCopy.common.delete}
                 </button>
               </div>
             </div>
@@ -2172,7 +2193,16 @@ function DesktopEventListPanel({
   onFilterChange: (filters: EventListFilters) => void;
   onSelectEvent: (event: ScheduleEvent) => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const categoryFilterOptions = getEventCategoryFilterOptions(scheduleCopy);
+  const platformFilterOptions = [
+    { value: "all" as const, label: scheduleCopy.filters.allPlatforms },
+    ...platformOptions.map((option) => ({ value: option, label: option || scheduleCopy.common.none }))
+  ];
+  const periodOptions = getEventPeriodOptions(scheduleCopy);
+  const sortOptions = getEventSortOptions(scheduleCopy);
+  const announcementFilterOptions = getAnnouncementStatusFilterOptions(scheduleCopy);
 
   function toggleExpandedEvent(eventId: string) {
     setExpandedEventId((current) => (current === eventId ? null : eventId));
@@ -2181,28 +2211,28 @@ function DesktopEventListPanel({
   return (
     <div className="space-y-4">
       <section className="space-y-3 rounded-base border border-border bg-surface-muted/35 p-3">
-        <FieldLabel>検索</FieldLabel>
+        <FieldLabel>{scheduleCopy.filters.search}</FieldLabel>
         <input
           value={filters.query}
           onChange={(event) => onFilterChange({ ...filters, query: event.target.value })}
           className={inputClassName("mt-0")}
-          placeholder="タイトルを検索"
+          placeholder={scheduleCopy.filters.titleSearchPlaceholder}
         />
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <FieldLabel>カテゴリ</FieldLabel>
+            <FieldLabel>{scheduleCopy.filters.category}</FieldLabel>
             <SelectMenuControl
               value={filters.category}
-              options={eventCategoryFilterOptions}
+              options={categoryFilterOptions}
               onChange={(category) => onFilterChange({ ...filters, category })}
               ariaLabel="カテゴリ"
             />
           </div>
           <div>
-            <FieldLabel>媒体</FieldLabel>
+            <FieldLabel>{scheduleCopy.filters.platform}</FieldLabel>
             <SelectMenuControl
               value={filters.platform}
-              options={eventPlatformFilterOptions}
+              options={platformFilterOptions}
               onChange={(platform) => onFilterChange({ ...filters, platform })}
               ariaLabel="媒体"
             />
@@ -2210,29 +2240,29 @@ function DesktopEventListPanel({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <FieldLabel>期間</FieldLabel>
+            <FieldLabel>{scheduleCopy.filters.period}</FieldLabel>
             <SelectMenuControl
               value={filters.period}
-              options={eventPeriodOptions}
+              options={periodOptions}
               onChange={(period) => onFilterChange({ ...filters, period })}
               ariaLabel="期間"
             />
           </div>
           <div>
-            <FieldLabel>並び順</FieldLabel>
+            <FieldLabel>{scheduleCopy.filters.sortOrder}</FieldLabel>
             <SelectMenuControl
               value={filters.sortOrder}
-              options={eventSortOptions}
+              options={sortOptions}
               onChange={(sortOrder) => onFilterChange({ ...filters, sortOrder })}
               ariaLabel="並び順"
             />
           </div>
         </div>
         <div>
-          <FieldLabel>告知ステータス</FieldLabel>
+          <FieldLabel>{scheduleCopy.filters.announcementStatus}</FieldLabel>
           <SelectMenuControl
             value={filters.announcementStatus}
-            options={announcementStatusFilterOptions}
+            options={announcementFilterOptions}
             onChange={(announcementStatus) => onFilterChange({ ...filters, announcementStatus })}
             ariaLabel="告知ステータス"
           />
@@ -2240,13 +2270,13 @@ function DesktopEventListPanel({
       </section>
       <section>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-bold text-foreground">予定一覧</h2>
-          <span className="rounded-base border border-border bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{events.length} 件</span>
+          <h2 className="text-sm font-bold text-foreground">{scheduleCopy.eventList.title}</h2>
+          <span className="rounded-base border border-border bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{getCountLabel(events.length, scheduleCopy)}</span>
         </div>
         <div className="mt-3 space-y-2">
           {events.length === 0 ? (
             <div className="rounded-base border border-dashed border-border bg-surface-muted/60 px-3 py-8 text-center text-sm font-bold text-muted">
-              {hasActiveEventListFilters(filters) ? emptySearchResultsMessage : emptyEventsMessage}
+              {hasActiveEventListFilters(filters) ? scheduleCopy.empty.searchResults : scheduleCopy.empty.events}
             </div>
           ) : (
             events.map((event) => {
@@ -2262,16 +2292,16 @@ function DesktopEventListPanel({
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <span className="text-xs font-bold text-primary-strong">{getLongDateLabel(event.date)}</span>
+                      <span className="text-xs font-bold text-primary-strong">{getLongDateLabel(event.date, locale)}</span>
                       <span className="mt-1 block text-xs font-bold text-muted">
                         {event.startTime} - {event.endTime}
                       </span>
-                      <h3 className="mt-1 truncate text-sm font-bold text-foreground">{event.title || "無題の予定"}</h3>
+                      <h3 className="mt-1 truncate text-sm font-bold text-foreground">{event.title || scheduleCopy.common.untitled}</h3>
                       <span className="mt-2 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
-                        {categoryMeta[event.category].label}
+                        {getCategoryLabel(event.category, scheduleCopy)}
                         {event.platform ? ` / ${event.platform}` : ""}
-                        {` / ${getAnnouncementStatusLabel(event.announcementStatus)}`}
-                        {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event)}` : ""}
+                        {` / ${getAnnouncementStatusLabel(event.announcementStatus, scheduleCopy)}`}
+                        {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event, scheduleCopy)}` : ""}
                       </span>
                     </div>
                     <div className="flex shrink-0 gap-2">
@@ -2281,14 +2311,14 @@ function DesktopEventListPanel({
                         aria-expanded={expanded}
                         onClick={() => toggleExpandedEvent(event.id)}
                       >
-                        {expanded ? "閉じる" : "詳細"}
+                        {expanded ? scheduleCopy.common.close : scheduleCopy.common.details}
                       </button>
                       <button
                         type="button"
                         className="rounded-base bg-primary px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-primary-strong"
                         onClick={() => onSelectEvent(event)}
                       >
-                        編集
+                        {scheduleCopy.common.edit}
                       </button>
                     </div>
                   </div>
@@ -2352,6 +2382,7 @@ function DesktopSettingsPanel({
   onImport: () => void;
   onResetAll: () => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
   const [openSections, setOpenSections] = useState<Record<SettingsSectionId, boolean>>({
     display: true,
     defaults: true,
@@ -2359,8 +2390,11 @@ function DesktopSettingsPanel({
     templates: false,
     hashtags: false
   });
-  const defaultTemplateName = templates.find((template) => template.id === settings.defaultTemplateId)?.name ?? "未設定";
-  const settingsStatusIsError = settingsStatus.includes("できません") || settingsStatus.includes("読み込めません");
+  const defaultTemplateName = templates.find((template) => template.id === settings.defaultTemplateId)?.name ?? scheduleCopy.common.unset;
+  const settingsStatusIsError = settingsStatus === scheduleCopy.messages.importFailure || settingsStatus === scheduleCopy.messages.saveFailure || Boolean(storageError);
+  const calendarViewOptions = getCalendarViewOptions(scheduleCopy);
+  const weekStartOptions = getWeekStartOptions(scheduleCopy);
+  const defaultDurationOptions = getDurationOptions(scheduleCopy, locale);
 
   function toggleSection(sectionId: SettingsSectionId) {
     setOpenSections((current) => ({ ...current, [sectionId]: !current[sectionId] }));
@@ -2382,14 +2416,14 @@ function DesktopSettingsPanel({
       ) : null}
       <SettingsAccordionSection
         id="display"
-        title="表示設定"
-        summary={`${viewLabels[settings.defaultView]} / ${settings.weekStartsOn === 1 ? "月曜開始" : "日曜開始"}`}
+        title={scheduleCopy.settings.display}
+        summary={`${scheduleCopy.views[settings.defaultView]} / ${settings.weekStartsOn === 1 ? scheduleCopy.weekStarts.mondayStart : scheduleCopy.weekStarts.sundayStart}`}
         open={openSections.display}
         onToggle={toggleSection}
       >
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <FieldLabel>初期表示ビュー</FieldLabel>
+            <FieldLabel>{scheduleCopy.settings.defaultView}</FieldLabel>
             <SelectMenuControl
               value={settings.defaultView}
               options={calendarViewOptions}
@@ -2398,7 +2432,7 @@ function DesktopSettingsPanel({
             />
           </div>
           <div>
-            <FieldLabel>週開始曜日</FieldLabel>
+            <FieldLabel>{scheduleCopy.settings.weekStartsOn}</FieldLabel>
             <SelectMenuControl
               value={settings.weekStartsOn}
               options={weekStartOptions}
@@ -2410,18 +2444,18 @@ function DesktopSettingsPanel({
       </SettingsAccordionSection>
       <SettingsAccordionSection
         id="defaults"
-        title="既定値"
-        summary={`${settings.defaultStartTime} / ${settings.defaultDurationMinutes}分`}
+        title={scheduleCopy.settings.defaults}
+        summary={`${settings.defaultStartTime} / ${defaultDurationOptions.find((option) => option.value === settings.defaultDurationMinutes)?.label ?? settings.defaultDurationMinutes}`}
         open={openSections.defaults}
         onToggle={toggleSection}
       >
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <FieldLabel>既定開始時刻</FieldLabel>
+            <FieldLabel>{scheduleCopy.settings.defaultStartTime}</FieldLabel>
             <TimeSelectControl value={settings.defaultStartTime} onChange={(defaultStartTime) => onSettingsChange({ ...settings, defaultStartTime })} />
           </div>
           <div>
-            <FieldLabel>既定所要時間</FieldLabel>
+            <FieldLabel>{scheduleCopy.settings.defaultDurationShort}</FieldLabel>
             <SelectMenuControl
               value={settings.defaultDurationMinutes}
               options={defaultDurationOptions}
@@ -2433,15 +2467,15 @@ function DesktopSettingsPanel({
       </SettingsAccordionSection>
       <SettingsAccordionSection
         id="hashtags"
-        title="保存済みハッシュタグ"
-        summary={`${hashtagSets.length}件`}
+        title={scheduleCopy.settings.savedHashtags}
+        summary={getCountLabel(hashtagSets.length, scheduleCopy)}
         open={openSections.hashtags}
         onToggle={toggleSection}
       >
         <div className="space-y-2">
           {hashtagSets.length === 0 ? (
             <p className="rounded-base border border-dashed border-border bg-surface-muted/55 px-3 py-4 text-center text-sm font-bold text-muted">
-              保存済みハッシュタグはありません。
+              {scheduleCopy.settings.emptyHashtags}
             </p>
           ) : (
             hashtagSets.map((hashtagSet) => (
@@ -2450,10 +2484,10 @@ function DesktopSettingsPanel({
                 <p className="mt-1 text-xs leading-5 text-muted">{hashtagSet.hashtags}</p>
                 <div className="mt-2 flex gap-2">
                   <button type="button" onClick={() => onEditHashtagSet(hashtagSet)} className="flat-control px-3 py-1.5">
-                    編集
+                    {scheduleCopy.common.edit}
                   </button>
                   <button type="button" onClick={() => onDeleteHashtagSet(hashtagSet.id)} className="flat-control border-red-300 px-3 py-1.5 text-red-600">
-                    削除
+                    {scheduleCopy.common.delete}
                   </button>
                 </div>
               </div>
@@ -2464,18 +2498,18 @@ function DesktopSettingsPanel({
       </SettingsAccordionSection>
       <SettingsAccordionSection
         id="templates"
-        title="投稿補助設定"
-        summary={`${templates.length}件 / 既定: ${defaultTemplateName}`}
+        title={scheduleCopy.settings.postAssistSettings}
+        summary={`${getCountLabel(templates.length, scheduleCopy)} / ${scheduleCopy.settings.defaultTemplate}: ${defaultTemplateName}`}
         open={openSections.templates}
         onToggle={toggleSection}
       >
         <div>
-          <FieldLabel>既定テンプレート</FieldLabel>
+          <FieldLabel>{scheduleCopy.settings.defaultTemplate}</FieldLabel>
           <SelectMenuControl
             value={settings.defaultTemplateId}
             options={templates.map((template) => ({ value: template.id, label: template.name }))}
             onChange={(defaultTemplateId) => onSettingsChange({ ...settings, defaultTemplateId })}
-            ariaLabel="既定テンプレート"
+            ariaLabel={scheduleCopy.settings.defaultTemplate}
           />
         </div>
         <div className="space-y-2">
@@ -2484,16 +2518,16 @@ function DesktopSettingsPanel({
               <p className="text-sm font-bold text-foreground">{template.name}</p>
               <p className="mt-1 text-xs leading-5 text-muted">{template.description}</p>
               <p className="mt-1 text-xs font-bold text-primary-strong">
-                {getTemplateUsageLabel(template)}
+                {getTemplateUsageLabel(template, scheduleCopy)}
                 {template.defaultPlatform ? ` / ${template.defaultPlatform}` : ""}
               </p>
               {template.hashtags.trim() ? <p className="mt-1 text-xs leading-5 text-muted">{template.hashtags}</p> : null}
               <div className="mt-2 flex gap-2">
                 <button type="button" onClick={() => onEditTemplate(template)} className="flat-control px-3 py-1.5">
-                  編集
+                  {scheduleCopy.common.edit}
                 </button>
                 <button type="button" onClick={() => onDeleteTemplate(template.id)} className="flat-control border-red-300 px-3 py-1.5 text-red-600">
-                  削除
+                  {scheduleCopy.common.delete}
                 </button>
               </div>
             </div>
@@ -2503,25 +2537,25 @@ function DesktopSettingsPanel({
       </SettingsAccordionSection>
       <SettingsAccordionSection
         id="data"
-        title="データ管理"
-        summary="JSONバックアップ / 復元 / 初期化"
+        title={scheduleCopy.settings.data}
+        summary={scheduleCopy.settings.dataSummary}
         open={openSections.data}
         onToggle={toggleSection}
       >
         <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={onExport} className="flat-control px-3 py-2">
-            バックアップ作成
+            {scheduleCopy.settings.backupCreate}
           </button>
           <button type="button" onClick={onImport} className="flat-control px-3 py-2">
-            バックアップ復元
+            {scheduleCopy.settings.backupRestore}
           </button>
         </div>
         <p className="text-xs leading-5 text-muted">
-          {backupHelpText}
+          {scheduleCopy.settings.backupHelp}
         </p>
-        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-28 resize-none")} placeholder="復元するバックアップJSONを貼り付け" />
+        <textarea value={importText} onChange={(event) => onImportTextChange(event.target.value)} className={inputClassName("min-h-28 resize-none")} placeholder={scheduleCopy.settings.importPlaceholder} />
         <button type="button" onClick={onResetAll} className="w-full rounded-base border border-red-300 px-3 py-2 text-sm font-bold text-red-600">
-          全データ初期化
+          {scheduleCopy.settings.resetAll}
         </button>
       </SettingsAccordionSection>
     </div>
@@ -2535,10 +2569,11 @@ function MobileBottomTabs({
   activeTab: MobileNavTab;
   onTabChange: (tab: MobileNavTab) => void;
 }) {
+  const { scheduleCopy } = useScheduleCopy();
   const items: Array<{ id: MobileNavTab; label: string; icon: string }> = [
-    { id: "calendar", label: "カレンダー", icon: "□" },
-    { id: "events", label: "予定一覧", icon: "☷" },
-    { id: "settings", label: "設定", icon: "⚙" }
+    { id: "calendar", label: scheduleCopy.tabs.calendar, icon: "□" },
+    { id: "events", label: scheduleCopy.tabs.events, icon: "☷" },
+    { id: "settings", label: scheduleCopy.tabs.settings, icon: "⚙" }
   ];
 
   return (
@@ -2580,11 +2615,14 @@ function ScheduleForm({
   onCancel: () => void;
   canDelete: boolean;
 }) {
+  const { scheduleCopy } = useScheduleCopy();
   const eventHashtagSets = hashtagSets ?? [];
   const [selectedEventHashtagSetId, setSelectedEventHashtagSetId] = useState("");
   const activeEventHashtagSetId = selectedEventHashtagSetId || eventHashtagSets[0]?.id || "";
-  const categorySelectOptions = categoryOptions.map((option) => ({ value: option.value, label: option.label }));
-  const platformSelectOptions = platformOptions.map((option) => ({ value: option, label: option || "-" }));
+  const categorySelectOptions = getLocalizedCategoryOptions(scheduleCopy);
+  const platformSelectOptions = platformOptions.map((option) => ({ value: option, label: option || scheduleCopy.common.none }));
+  const statusOptions = getAnnouncementStatusOptions(scheduleCopy);
+  const recurrenceSelectOptions = getRecurrenceOptions(scheduleCopy);
   const hashtagSetSelectOptions = eventHashtagSets.map((hashtagSet) => ({
     value: hashtagSet.id,
     label: hashtagSet.name,
@@ -2619,38 +2657,38 @@ function ScheduleForm({
       }}
     >
       <div className="rounded-base border border-border bg-surface-muted/35 p-3">
-        <FieldLabel>タイトル</FieldLabel>
+        <FieldLabel>{scheduleCopy.form.title}</FieldLabel>
         <input
           value={draft.title}
           onChange={(event) => onDraftChange({ ...draft, title: clampScheduleText(event.target.value, scheduleInputTextLimits.title) })}
           className={inputClassName()}
-          placeholder="配信企画会議"
+          placeholder={scheduleCopy.form.titlePlaceholder}
           maxLength={scheduleInputTextLimits.title}
           required
         />
         <TextLimitCounter
           value={draft.title}
           maxLength={scheduleInputTextLimits.title}
-          warning="一覧と次ツールで見切れないよう、短めに整えると扱いやすいです。"
+          warning={scheduleCopy.form.titleWarning}
         />
       </div>
       <div className="rounded-base border border-border bg-surface-muted/35 p-3">
-        <FieldLabel>日付</FieldLabel>
+        <FieldLabel>{scheduleCopy.form.date}</FieldLabel>
         <DateSelectControl value={draft.date} onChange={(date) => onDraftChange({ ...draft, date })} />
       </div>
       <div className="grid grid-cols-1 gap-3 rounded-base border border-border bg-surface-muted/35 p-3 xl:grid-cols-2">
         <div>
-          <FieldLabel>開始時間</FieldLabel>
+          <FieldLabel>{scheduleCopy.form.startTime}</FieldLabel>
           <TimeSelectControl value={draft.startTime} onChange={(startTime) => onDraftChange({ ...draft, startTime })} align="start" />
         </div>
         <div>
-          <FieldLabel>終了時間</FieldLabel>
+          <FieldLabel>{scheduleCopy.form.endTime}</FieldLabel>
           <TimeSelectControl value={draft.endTime} onChange={(endTime) => onDraftChange({ ...draft, endTime })} align="end" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3 rounded-base border border-border bg-surface-muted/35 p-3">
         <div>
-          <FieldLabel>カテゴリ</FieldLabel>
+          <FieldLabel>{scheduleCopy.form.category}</FieldLabel>
           <SelectMenuControl
             value={draft.category}
             options={categorySelectOptions}
@@ -2659,7 +2697,7 @@ function ScheduleForm({
           />
         </div>
         <div>
-          <FieldLabel>プラットフォーム</FieldLabel>
+          <FieldLabel>{scheduleCopy.form.platform}</FieldLabel>
           <SelectMenuControl
             value={draft.platform}
             options={platformSelectOptions}
@@ -2669,27 +2707,27 @@ function ScheduleForm({
         </div>
       </div>
       <div className="rounded-base border border-border bg-surface-muted/35 p-3">
-        <FieldLabel>メモ・備考</FieldLabel>
+        <FieldLabel>{scheduleCopy.form.memo}</FieldLabel>
         <textarea
           value={draft.memo}
           onChange={(event) => onDraftChange({ ...draft, memo: event.target.value })}
           className={inputClassName("min-h-24 resize-none")}
-          placeholder="次回配信のセットリストやコラボ企画案を記録する。"
+          placeholder={scheduleCopy.form.memoPlaceholder}
         />
       </div>
       <div className="space-y-3 rounded-base border border-border bg-surface-muted/35 p-3">
         <div className="grid gap-3">
           <div>
-            <FieldLabel>告知ステータス</FieldLabel>
+            <FieldLabel>{scheduleCopy.form.announcementStatus}</FieldLabel>
             <SelectMenuControl
               value={draft.announcementStatus}
-              options={announcementStatusOptions}
+              options={statusOptions}
               onChange={(announcementStatus) => onDraftChange({ ...draft, announcementStatus })}
               ariaLabel="告知ステータス"
             />
           </div>
           <div>
-            <FieldLabel>告知ハッシュタグ</FieldLabel>
+            <FieldLabel>{scheduleCopy.form.announcementHashtags}</FieldLabel>
             <input
               value={draft.announcementHashtags}
               onChange={(event) =>
@@ -2699,17 +2737,17 @@ function ScheduleForm({
                 })
               }
               className={inputClassName()}
-              placeholder="#VTuber #配信告知"
+              placeholder={scheduleCopy.form.hashtagPlaceholder}
               maxLength={scheduleInputTextLimits.announcementHashtags}
             />
             <TextLimitCounter
               value={draft.announcementHashtags}
               maxLength={scheduleInputTextLimits.announcementHashtags}
-              warning="投稿文と次ツールで確認しやすい量に整えると扱いやすいです。"
+              warning={scheduleCopy.form.hashtagWarning}
             />
             {eventHashtagSets.length > 0 ? (
               <div className="mt-2">
-                <p className="text-xs font-bold text-muted">保存済みセットから追加</p>
+                <p className="text-xs font-bold text-muted">{scheduleCopy.form.addSavedSet}</p>
                 <div className="mt-1.5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
                   <SelectMenuControl
                     value={activeEventHashtagSetId}
@@ -2719,7 +2757,7 @@ function ScheduleForm({
                     className="mt-0"
                   />
                   <button type="button" onClick={addSelectedHashtagSetToDraft} className="flat-control px-3 py-2 text-sm">
-                    追加
+                    {scheduleCopy.common.add}
                   </button>
                 </div>
                 {activeEventHashtagSetId ? (
@@ -2732,7 +2770,7 @@ function ScheduleForm({
           </div>
         </div>
         <div>
-          <FieldLabel>告知文メモ</FieldLabel>
+          <FieldLabel>{scheduleCopy.form.announcementText}</FieldLabel>
           <textarea
             value={draft.announcementText}
             onChange={(event) =>
@@ -2742,32 +2780,32 @@ function ScheduleForm({
               })
             }
             className={inputClassName("min-h-24 resize-none")}
-            placeholder="予定固有の告知文や、テンプレートの {announcementText} に差し込む文面。"
+            placeholder={scheduleCopy.form.announcementTextPlaceholder}
             maxLength={scheduleInputTextLimits.announcementText}
           />
           <TextLimitCounter
             value={draft.announcementText}
             maxLength={scheduleInputTextLimits.announcementText}
-            warning="投稿前に要点を絞ると、コピーと次ツールへの受け渡しが確認しやすいです。"
+            warning={scheduleCopy.form.announcementTextWarning}
           />
         </div>
         <div>
-          <FieldLabel>準備メモ</FieldLabel>
+          <FieldLabel>{scheduleCopy.form.preparationMemo}</FieldLabel>
           <textarea
             value={draft.announcementMemo}
             onChange={(event) => onDraftChange({ ...draft, announcementMemo: event.target.value })}
             className={inputClassName("min-h-20 resize-none")}
-            placeholder="サムネ素材、告知画像、投稿タイミングなど。"
+            placeholder={scheduleCopy.form.preparationMemoPlaceholder}
           />
         </div>
       </div>
       <div className="rounded-base border border-border bg-surface-muted/35 p-3">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <FieldLabel>繰り返し</FieldLabel>
+            <FieldLabel>{scheduleCopy.form.recurrence}</FieldLabel>
             <SelectMenuControl
               value={draft.recurrence ?? "none"}
-              options={recurrenceOptions}
+              options={recurrenceSelectOptions}
               onChange={(recurrence) =>
                 onDraftChange({
                   ...draft,
@@ -2779,7 +2817,7 @@ function ScheduleForm({
             />
           </div>
           <div>
-            <FieldLabel>作成回数</FieldLabel>
+            <FieldLabel>{scheduleCopy.form.recurrenceCount}</FieldLabel>
             <input
               type="number"
               min={1}
@@ -2792,23 +2830,23 @@ function ScheduleForm({
           </div>
         </div>
         <p className="mt-2 text-xs leading-5 text-muted">
-          毎日 / 毎週のみ対応。例外日やシリーズ一括編集は未対応です。
+          {scheduleCopy.form.recurrenceHelp}
         </p>
       </div>
       <div className="grid grid-cols-2 gap-2 rounded-base border border-border bg-surface-muted/35 p-3">
         <button type="button" onClick={onDuplicate} disabled={!canDelete} className="flat-control px-3 py-2 disabled:cursor-not-allowed disabled:opacity-45">
-          複製
+          {scheduleCopy.common.duplicate}
         </button>
         <button type="button" onClick={onCancel} className="flat-control px-3 py-2">
-          リセット
+          {scheduleCopy.common.reset}
         </button>
       </div>
       <div className="sticky bottom-0 z-20 -mx-3 grid grid-cols-2 gap-2 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0">
         <button type="button" onClick={onDelete} disabled={!canDelete} className="flat-control flex-1 border-red-300 px-3 py-2 text-red-600 disabled:cursor-not-allowed disabled:opacity-45">
-          削除
+          {scheduleCopy.common.delete}
         </button>
         <button type="submit" className="flex-1 rounded-base bg-primary px-3 py-2 text-sm font-bold text-white transition hover:bg-primary-strong">
-          保存
+          {scheduleCopy.common.save}
         </button>
       </div>
     </form>
@@ -2822,10 +2860,12 @@ function MobileEventDetailView({
   event: ScheduleEvent;
   onEdit: () => void;
 }) {
+  const { scheduleCopy } = useScheduleCopy();
+
   return (
     <section className={["space-y-4", mobileOnlyClassName].join(" ")}>
       <div>
-        <p className="text-xs font-bold text-muted">予定詳細</p>
+        <p className="text-xs font-bold text-muted">{scheduleCopy.eventList.eventDetail}</p>
         <EventDetailContent event={event} />
       </div>
       <div className="sticky bottom-0 z-20 -mx-3 border-t border-border bg-surface/95 px-3 py-3 backdrop-blur">
@@ -2834,7 +2874,7 @@ function MobileEventDetailView({
           className="w-full rounded-base bg-primary px-3 py-3 text-sm font-bold text-white transition hover:bg-primary-strong"
           onClick={onEdit}
         >
-          編集する
+          {scheduleCopy.eventList.editSelected}
         </button>
       </div>
     </section>
@@ -2874,24 +2914,26 @@ function SchedulePanel({
   onDuplicate: () => void;
   onCancel: () => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
+
   return (
     <div className="space-y-4">
       {selectedEvent && mobileMode === "detail" ? (
         <MobileEventDetailView event={selectedEvent} onEdit={onEditSelectedEvent} />
       ) : null}
       <section className={tabletUpClassName}>
-        <p className="text-xs font-bold text-muted">選択中の日付</p>
-        <p className="mt-1 text-base font-bold text-foreground">{getLongDateLabel(selectedDateKey)}</p>
-        <p className="mt-1 text-sm text-muted">予定 {dayEvents.length} 件</p>
+        <p className="text-xs font-bold text-muted">{scheduleCopy.eventList.selectedDate}</p>
+        <p className="mt-1 text-base font-bold text-foreground">{getLongDateLabel(selectedDateKey, locale)}</p>
+        <p className="mt-1 text-sm text-muted">{getCountLabel(dayEvents.length, scheduleCopy)}</p>
         <p className="mt-3 rounded-base border border-border bg-surface-muted/55 px-3 py-2 text-xs font-semibold leading-5 text-muted">
-          {dayEvents.length === 0 ? scheduleStartGuide : "予定を選ぶと編集できます。告知文やサムネ導線は投稿補助タブで確認します。"}
+          {dayEvents.length === 0 ? scheduleCopy.eventList.createNewEvent : scheduleCopy.eventList.selectedDateGuide}
         </p>
       </section>
       <section className={[mobileMode === "detail" && selectedEvent ? "hidden lg:block" : "", "lg:border-t lg:border-border lg:pt-5"].join(" ")}>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-bold text-foreground">この日の予定一覧</h2>
+          <h2 className="text-sm font-bold text-foreground">{scheduleCopy.eventList.dayEventsTitle}</h2>
           <button type="button" className="text-sm font-bold text-primary-strong hover:underline" onClick={onNew}>
-            + 新規
+            + {scheduleCopy.common.new}
           </button>
         </div>
         <div className="mt-3 space-y-2">
@@ -2901,7 +2943,7 @@ function SchedulePanel({
               onClick={onNew}
               className="w-full rounded-base border border-dashed border-border bg-surface-muted/60 px-3 py-4 text-center text-sm text-muted transition hover:border-primary/60 hover:text-foreground"
             >
-              この日に新しい予定を追加
+              {scheduleCopy.eventList.emptyDayAction}
             </button>
           ) : (
             dayEvents.map((event) => (
@@ -2917,12 +2959,12 @@ function SchedulePanel({
                   <span className="text-xs font-bold text-primary-strong">
                     {event.startTime} - {event.endTime}
                   </span>
-                  <span className="mt-1 block text-sm font-bold text-foreground">{event.title || "無題の予定"}</span>
+                  <span className="mt-1 block text-sm font-bold text-foreground">{event.title || scheduleCopy.common.untitled}</span>
                   <span className="mt-1 inline-flex rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">
-                    {categoryMeta[event.category].label}
+                    {getCategoryLabel(event.category, scheduleCopy)}
                     {event.platform ? ` / ${event.platform}` : ""}
-                    {` / ${getAnnouncementStatusLabel(event.announcementStatus)}`}
-                    {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event)}` : ""}
+                    {` / ${getAnnouncementStatusLabel(event.announcementStatus, scheduleCopy)}`}
+                    {event.recurrence && event.recurrence !== "none" ? ` / ${getEventRecurrenceLabel(event, scheduleCopy)}` : ""}
                   </span>
                 </button>
               </div>
@@ -2930,11 +2972,11 @@ function SchedulePanel({
           )}
         </div>
         <button type="button" className={["mt-3 w-full rounded-base bg-primary px-3 py-3 text-sm font-bold text-white transition hover:bg-primary-strong", mobileOnlyClassName].join(" ")} onClick={onNew}>
-          新しい予定を追加
+          {scheduleCopy.eventList.createNewEvent}
         </button>
       </section>
       <section className={[mobileMode === "detail" && selectedEvent ? "hidden lg:block" : "", "border-t border-border pt-5"].join(" ")}>
-        <h2 className="text-sm font-bold text-foreground">{selectedEvent ? "予定の編集" : "新しい予定"}</h2>
+        <h2 className="text-sm font-bold text-foreground">{selectedEvent ? scheduleCopy.eventList.editEvent : scheduleCopy.eventList.newEvent}</h2>
         <div className="mt-3">
           <ScheduleForm
             draft={draft}
@@ -2984,6 +3026,7 @@ function PostAssistPanel({
   onCreateThumbnail: () => void;
   onCreateSnsSplit: () => void;
 }) {
+  const { locale, scheduleCopy } = useScheduleCopy();
   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(postText)}`;
   const selectedTemplate = templates.find((template) => template.id === templateId);
   const selectedHashtagSetIdSet = new Set(selectedHashtagSetIds);
@@ -3000,49 +3043,49 @@ function PostAssistPanel({
   return (
     <div className="space-y-5">
       <section>
-        <p className="text-xs font-bold text-muted">対象予定</p>
-        <p className="mt-1 text-base font-bold text-foreground">{selectedEvent?.title || "予定未選択"}</p>
+        <p className="text-xs font-bold text-muted">{scheduleCopy.postAssist.selectedEvent}</p>
+        <p className="mt-1 text-base font-bold text-foreground">{selectedEvent?.title || scheduleCopy.postAssist.noSelectedEvent}</p>
         <p className="mt-1 text-sm text-muted">
-          {selectedEvent ? `${getLongDateLabel(selectedEvent.date)} ${selectedEvent.startTime}` : postAssistStartGuide}
+          {selectedEvent ? `${getLongDateLabel(selectedEvent.date, locale)} ${selectedEvent.startTime}` : scheduleCopy.postAssist.startGuide}
         </p>
       </section>
       <section className="border-t border-border pt-5">
-        <FieldLabel>テンプレート</FieldLabel>
+        <FieldLabel>{scheduleCopy.postAssist.template}</FieldLabel>
         <SelectMenuControl
           value={templateId}
           options={templates.map((template) => ({ value: template.id, label: template.name }))}
           onChange={onTemplateChange}
-          ariaLabel="テンプレート"
+          ariaLabel={scheduleCopy.postAssist.template}
         />
         <p className="mt-2 text-sm leading-6 text-muted">
           {selectedTemplate?.description}
         </p>
         {selectedTemplate ? (
           <p className="mt-1 text-xs font-bold text-primary-strong">
-            {getTemplateUsageLabel(selectedTemplate)}
+            {getTemplateUsageLabel(selectedTemplate, scheduleCopy)}
             {selectedTemplate.defaultPlatform ? ` / ${selectedTemplate.defaultPlatform}` : ""}
           </p>
         ) : null}
         {selectedTemplate?.hashtags.trim() ? (
-          <p className="mt-2 text-xs leading-5 text-muted">テンプレートタグ: {selectedTemplate.hashtags}</p>
+          <p className="mt-2 text-xs leading-5 text-muted">{scheduleCopy.postAssist.templateTags}: {selectedTemplate.hashtags}</p>
         ) : null}
       </section>
       <section className="border-t border-border pt-5">
         <div className="flex items-center justify-between gap-3">
-          <FieldLabel>保存済みハッシュタグ</FieldLabel>
+          <FieldLabel>{scheduleCopy.postAssist.savedHashtags}</FieldLabel>
           {selectedHashtagSetIds.length > 0 ? (
             <button
               type="button"
               onClick={() => onSelectedHashtagSetIdsChange([])}
               className="rounded-base border border-border px-2 py-1 text-xs font-bold text-muted transition hover:bg-surface-muted"
             >
-              選択解除
+              {scheduleCopy.postAssist.clearSelection}
             </button>
           ) : null}
         </div>
         {hashtagSets.length === 0 ? (
           <p className="mt-2 rounded-base border border-dashed border-border bg-surface-muted/55 px-3 py-3 text-center text-xs font-bold text-muted">
-            設定でハッシュタグセットを追加できます。
+            {scheduleCopy.postAssist.addHashtagsInSettings}
           </p>
         ) : (
           <div className="mt-2 flex flex-wrap gap-2">
@@ -3069,26 +3112,26 @@ function PostAssistPanel({
         )}
         {selectedHashtagSetIds.length > 0 ? (
           <p className="mt-2 text-xs leading-5 text-muted">
-            選択したセットはテンプレートタグ、予定タグと重複排除してプレビューへ追加します。
+            {scheduleCopy.postAssist.selectedHashtagsHelp}
           </p>
         ) : null}
       </section>
       {selectedEvent ? (
         <section className="rounded-base border border-border bg-surface-muted/45 p-3">
           <div className="flex items-center justify-between gap-3">
-            <FieldLabel>告知ステータス</FieldLabel>
-            <span className="text-xs font-bold text-primary-strong">{getAnnouncementStatusLabel(selectedEvent.announcementStatus)}</span>
+            <FieldLabel>{scheduleCopy.form.announcementStatus}</FieldLabel>
+            <span className="text-xs font-bold text-primary-strong">{getAnnouncementStatusLabel(selectedEvent.announcementStatus, scheduleCopy)}</span>
           </div>
           {selectedEvent.announcementText.trim() ? (
             <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">{selectedEvent.announcementText}</p>
           ) : null}
           {selectedEvent.announcementHashtags.trim() ? (
-            <p className="mt-2 text-xs font-bold text-muted">予定タグ: {selectedEvent.announcementHashtags}</p>
+            <p className="mt-2 text-xs font-bold text-muted">{scheduleCopy.postAssist.eventTags}: {selectedEvent.announcementHashtags}</p>
           ) : null}
         </section>
       ) : null}
       <section className="border-t border-border pt-5">
-        <h2 className="text-sm font-bold text-foreground">投稿文プレビュー</h2>
+        <h2 className="text-sm font-bold text-foreground">{scheduleCopy.postAssist.previewTitle}</h2>
         <textarea
           value={postText}
           readOnly
@@ -3097,11 +3140,11 @@ function PostAssistPanel({
         <TextLimitCounter
           value={postText}
           maxLength={scheduleInputTextLimits.announcementText}
-          warning="X投稿や次ツールで確認しやすいよう、コピー前に要点を絞ると扱いやすいです。"
+          warning={scheduleCopy.postAssist.previewWarning}
         />
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button type="button" onClick={onCopy} className="flat-control flex-1 px-3 py-2">
-            告知文をコピー
+            {scheduleCopy.postAssist.copy}
           </button>
           <a
             href={tweetUrl}
@@ -3109,7 +3152,7 @@ function PostAssistPanel({
             rel="noreferrer"
             className="flex-1 rounded-base bg-primary px-3 py-2 text-center text-sm font-bold text-white transition hover:bg-primary-strong"
           >
-            Xで開く
+            {scheduleCopy.postAssist.openX}
           </a>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -3119,7 +3162,7 @@ function PostAssistPanel({
             onClick={onCreateThumbnail}
             className="flat-control px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-45"
           >
-            サムネを作る
+            {scheduleCopy.postAssist.createThumbnail}
           </button>
           <button
             type="button"
@@ -3127,11 +3170,11 @@ function PostAssistPanel({
             onClick={onCreateSnsSplit}
             className="flat-control px-3 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-45"
           >
-            分割画像を作る
+            {scheduleCopy.postAssist.createSnsSplit}
           </button>
         </div>
         <p className="mt-2 text-xs leading-5 text-muted">
-          {selectedEvent ? handoffSelectedGuide : handoffEmptyGuide}
+          {selectedEvent ? scheduleCopy.handoff.selectedGuide : scheduleCopy.handoff.emptyGuide}
         </p>
         {copyStatus ? (
           <p
@@ -3145,7 +3188,7 @@ function PostAssistPanel({
         ) : null}
         {copyFallbackText ? (
           <div className="mt-3 rounded-base border border-dashed border-border bg-surface-muted/55 p-3">
-            <p className="text-xs font-bold text-muted">手動コピー用</p>
+            <p className="text-xs font-bold text-muted">{scheduleCopy.postAssist.manualCopy}</p>
             <textarea
               value={copyFallbackText}
               readOnly
@@ -3159,26 +3202,26 @@ function PostAssistPanel({
   );
 }
 
-function getClipboardFailureMessage(error: unknown) {
+function getClipboardFailureMessage(error: unknown, copy: ScheduleCalendarCopy) {
   if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
-    return "コピーできませんでした。下の文面を選択して手動でコピーしてください。";
+    return copy.messages.copyFailure;
   }
 
   if (error instanceof DOMException && error.name === "NotAllowedError") {
-    return "コピーできませんでした。下の文面を選択して手動でコピーしてください。";
+    return copy.messages.copyFailure;
   }
 
-  return "コピーできませんでした。下の文面を選択して手動でコピーしてください。";
+  return copy.messages.copyFailure;
 }
 
-function createTemplateDraft(): PostTemplate {
+function createTemplateDraft(copy = getScheduleCalendarCopy("ja")): PostTemplate {
   return {
     id: `template-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: "",
     description: "",
     usageCategory: "custom",
     defaultPlatform: "X",
-    body: "【告知】\n{date} {startTime} - {endTime}\n{title}",
+    body: copy.defaults.templateBody,
     hashtags: ""
   };
 }
@@ -3192,6 +3235,7 @@ function createHashtagSetDraft(): HashtagSet {
 }
 
 export function ScheduleCalendarApp() {
+  const { locale, scheduleCopy } = useScheduleCopy();
   const fallbackDateKey = "2026-01-01";
   const [view, setView] = useState<CalendarView>("week");
   const [cursorDate, setCursorDate] = useState(() => parseDateKey(fallbackDateKey));
@@ -3203,7 +3247,7 @@ export function ScheduleCalendarApp() {
   const [settings, setSettings] = useState<ScheduleSettings>(defaultScheduleSettings);
   const [userPostTemplates, setUserPostTemplates] = useState<PostTemplate[]>(postTemplates);
   const [userHashtagSets, setUserHashtagSets] = useState<HashtagSet[]>(defaultHashtagSets);
-  const [templateDraft, setTemplateDraft] = useState<PostTemplate>(() => createTemplateDraft());
+  const [templateDraft, setTemplateDraft] = useState<PostTemplate>(() => createTemplateDraft(scheduleCopy));
   const [hashtagSetDraft, setHashtagSetDraft] = useState<HashtagSet>(() => createHashtagSetDraft());
   const [templateId, setTemplateId] = useState(defaultScheduleSettings.defaultTemplateId);
   const [selectedHashtagSetIds, setSelectedHashtagSetIds] = useState<string[]>([]);
@@ -3232,6 +3276,10 @@ export function ScheduleCalendarApp() {
   const mobileSheetDragStartYRef = useRef<number | null>(null);
   const skipNextStorageWriteRef = useRef(false);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const localizedPostTemplates = useMemo(
+    () => getLocalizedPostTemplates(userPostTemplates, locale),
+    [locale, userPostTemplates]
+  );
 
   useEffect(() => {
     const currentDate = new Date();
@@ -3254,12 +3302,12 @@ export function ScheduleCalendarApp() {
       }
     } catch {
       skipNextStorageWriteRef.current = true;
-      setStorageError("保存済みデータを読み込めませんでした。既存データは保持しています。");
+      setStorageError(scheduleCopy.messages.storageReadFailure);
       setDraft(createEmptyEvent(currentDateKey));
     } finally {
       setHydrated(true);
     }
-  }, []);
+  }, [scheduleCopy.messages.storageReadFailure]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -3278,9 +3326,9 @@ export function ScheduleCalendarApp() {
       );
       setStorageError("");
     } catch {
-      setStorageError(saveFailureMessage);
+      setStorageError(scheduleCopy.messages.saveFailure);
     }
-  }, [events, hydrated, settings, userHashtagSets, userPostTemplates]);
+  }, [events, hydrated, scheduleCopy.messages.saveFailure, settings, userHashtagSets, userPostTemplates]);
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedEventId) ?? null,
@@ -3292,8 +3340,15 @@ export function ScheduleCalendarApp() {
     [selectedHashtagSetIds, userHashtagSets]
   );
   const postText = useMemo(
-    () => generatePostText(selectedEvent, templateId, userPostTemplates, { extraHashtags: selectedHashtagSets.map((hashtagSet) => hashtagSet.hashtags) }),
-    [selectedEvent, selectedHashtagSets, templateId, userPostTemplates]
+    () =>
+      selectedEvent
+        ? generatePostText(selectedEvent, templateId, localizedPostTemplates, {
+            extraHashtags: selectedHashtagSets.map((hashtagSet) => hashtagSet.hashtags),
+            locale,
+            categoryLabel: getCategoryLabel(selectedEvent.category, scheduleCopy)
+          })
+        : scheduleCopy.postAssist.startGuide,
+    [locale, localizedPostTemplates, scheduleCopy, selectedEvent, selectedHashtagSets, templateId]
   );
   const visibleEvents = useMemo(() => sortEvents(events), [events]);
   const filteredListEvents = useMemo(() => {
@@ -3435,7 +3490,7 @@ export function ScheduleCalendarApp() {
     setActiveTab("schedule");
     setMobileScheduleMode("edit");
     setMobileSheetOpen(false);
-    setStatusMessage("予定を元に戻しました。");
+    setStatusMessage(scheduleCopy.messages.restoreEvent);
   }
 
   function selectDate(dateKey: string) {
@@ -3538,14 +3593,14 @@ export function ScheduleCalendarApp() {
 
   function saveDraft() {
     if (draft.endTime <= draft.startTime) {
-      setStatusMessage("終了時間は開始時間より後にしてください。");
+      setStatusMessage(scheduleCopy.messages.invalidEndTime);
       return;
     }
 
     const normalizedRecurrence = draft.recurrence ?? "none";
     const nextDraft = {
       ...draft,
-      title: clampScheduleText(draft.title.trim(), scheduleInputTextLimits.title) || "無題の予定",
+      title: clampScheduleText(draft.title.trim(), scheduleInputTextLimits.title) || scheduleCopy.common.untitled,
       memo: draft.memo.trim(),
       announcementText: clampScheduleText(draft.announcementText.trim(), scheduleInputTextLimits.announcementText),
       announcementHashtags: clampScheduleText(draft.announcementHashtags.trim(), scheduleInputTextLimits.announcementHashtags),
@@ -3574,17 +3629,17 @@ export function ScheduleCalendarApp() {
         previousEvent.startTime !== nextDraft.startTime ||
         previousEvent.endTime !== nextDraft.endTime;
       showUndoToast({
-        title: moved ? "予定を移動しました。" : "予定を更新しました。",
-        detail: nextDraft.title || "無題の予定",
-        actionLabel: "元に戻す",
+        title: moved ? scheduleCopy.messages.moved : scheduleCopy.messages.updated,
+        detail: nextDraft.title || scheduleCopy.common.untitled,
+        actionLabel: scheduleCopy.messages.undo,
         restoreEvent: previousEvent
       });
-      setStatusMessage(moved ? "予定を移動しました。" : "予定を保存しました。");
+      setStatusMessage(moved ? scheduleCopy.messages.moved : scheduleCopy.messages.saved);
       return;
     }
 
     setMobileSheetOpen(!isMobileLayout());
-    setStatusMessage(nextDraft.recurrence !== "none" ? `${nextDraft.recurrenceCount}件の繰り返し予定を作成しました。` : "予定を保存しました。");
+    setStatusMessage(nextDraft.recurrence !== "none" ? scheduleCopy.messages.recurrenceSaved(nextDraft.recurrenceCount ?? 1) : scheduleCopy.messages.saved);
   }
 
   function deleteSelectedEvent() {
@@ -3595,16 +3650,16 @@ export function ScheduleCalendarApp() {
     const deletedEvent = selectedEvent;
     setEvents((current) => current.filter((event) => event.id !== selectedEvent.id));
     showUndoToast({
-      title: "予定を削除しました。",
-      detail: deletedEvent.title || "無題の予定",
-      actionLabel: "元に戻す",
+      title: scheduleCopy.messages.deleted,
+      detail: deletedEvent.title || scheduleCopy.common.untitled,
+      actionLabel: scheduleCopy.messages.undo,
       restoreEvent: deletedEvent
     });
     setSelectedEventId(null);
     setDraft(createEventDraft(selectedDateKey, settings));
     setMobileScheduleMode("edit");
     setMobileSheetOpen(false);
-    setStatusMessage("予定を削除しました。");
+    setStatusMessage(scheduleCopy.messages.deleted);
   }
 
   function duplicateSelectedEvent() {
@@ -3615,7 +3670,7 @@ export function ScheduleCalendarApp() {
     const duplicatedEvent = {
       ...selectedEvent,
       id: createEventId(),
-      title: clampScheduleText(`${selectedEvent.title || "無題の予定"} コピー`, scheduleInputTextLimits.title),
+      title: clampScheduleText(`${selectedEvent.title || scheduleCopy.common.untitled} Copy`, scheduleInputTextLimits.title),
       recurrence: "none" as const,
       recurrenceCount: 1
     };
@@ -3627,7 +3682,7 @@ export function ScheduleCalendarApp() {
     setActiveTab("schedule");
     setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
-    setStatusMessage("予定を複製しました。");
+    setStatusMessage(scheduleCopy.common.duplicate);
   }
 
   function moveEventDate(event: ScheduleEvent, dateKey: string, startMinutes?: number) {
@@ -3651,12 +3706,12 @@ export function ScheduleCalendarApp() {
     setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
     showUndoToast({
-      title: "予定を移動しました。",
-      detail: nextEvent.title || "無題の予定",
-      actionLabel: "元に戻す",
+      title: scheduleCopy.messages.moved,
+      detail: nextEvent.title || scheduleCopy.common.untitled,
+      actionLabel: scheduleCopy.messages.undo,
       restoreEvent: event
     });
-    setStatusMessage("予定を移動しました。");
+    setStatusMessage(scheduleCopy.messages.moved);
   }
 
   function cancelDraftEdit() {
@@ -3664,12 +3719,12 @@ export function ScheduleCalendarApp() {
       setDraft({ ...selectedEvent });
       setSelectedDateKey(selectedEvent.date);
       setCursorDate(parseDateKey(selectedEvent.date));
-      setStatusMessage("編集内容を破棄しました。");
+      setStatusMessage(scheduleCopy.messages.editDiscarded);
       return;
     }
 
     setDraft(createEventDraft(selectedDateKey, settings));
-    setStatusMessage("新規作成を取り消しました。");
+    setStatusMessage(scheduleCopy.messages.createCanceled);
   }
 
   function closeMobileSheet() {
@@ -3687,14 +3742,14 @@ export function ScheduleCalendarApp() {
     setSettings(nextSettings);
     setTemplateId(nextSettings.defaultTemplateId);
     setView(nextSettings.defaultView);
-    setSettingsStatus("設定を更新しました。");
+    setSettingsStatus(scheduleCopy.messages.settingsUpdated);
   }
 
   function saveTemplateDraft() {
     const nextTemplate = {
       ...templateDraft,
-      name: templateDraft.name.trim() || "新しいテンプレート",
-      description: templateDraft.description.trim() || "カスタムテンプレート",
+      name: templateDraft.name.trim() || scheduleCopy.defaults.templateName,
+      description: templateDraft.description.trim() || scheduleCopy.defaults.templateDescription,
       usageCategory: templateDraft.usageCategory,
       defaultPlatform: templateDraft.defaultPlatform,
       body: clampScheduleText(templateDraft.body.trim(), scheduleInputTextLimits.postTemplateBody) || "{title}",
@@ -3708,13 +3763,13 @@ export function ScheduleCalendarApp() {
       ...current,
       defaultTemplateId: current.defaultTemplateId || nextTemplate.id
     }));
-    setTemplateDraft(createTemplateDraft());
-    setSettingsStatus("テンプレートを保存しました。");
+    setTemplateDraft(createTemplateDraft(scheduleCopy));
+    setSettingsStatus(scheduleCopy.messages.templateSaved);
   }
 
   function editTemplate(template: PostTemplate) {
     setTemplateDraft({ ...template });
-    setSettingsStatus("テンプレートを編集中です。");
+    setSettingsStatus(scheduleCopy.messages.templateEditing);
   }
 
   function deleteTemplate(templateIdToDelete: string) {
@@ -3731,13 +3786,13 @@ export function ScheduleCalendarApp() {
       setTemplateId(fallbackTemplateId);
       return { ...current, defaultTemplateId: fallbackTemplateId };
     });
-    setSettingsStatus("テンプレートを削除しました。");
+    setSettingsStatus(scheduleCopy.messages.templateDeleted);
   }
 
   function saveHashtagSetDraft() {
     const nextHashtagSet = {
       ...hashtagSetDraft,
-      name: hashtagSetDraft.name.trim() || "新しいハッシュタグセット",
+      name: hashtagSetDraft.name.trim() || scheduleCopy.defaults.hashtagSetName,
       hashtags: hashtagSetDraft.hashtags.trim()
     };
 
@@ -3748,12 +3803,12 @@ export function ScheduleCalendarApp() {
         : [...current, nextHashtagSet];
     });
     setHashtagSetDraft(createHashtagSetDraft());
-    setSettingsStatus("ハッシュタグセットを保存しました。");
+    setSettingsStatus(scheduleCopy.messages.hashtagSaved);
   }
 
   function editHashtagSet(hashtagSet: HashtagSet) {
     setHashtagSetDraft({ ...hashtagSet });
-    setSettingsStatus("ハッシュタグセットを編集中です。");
+    setSettingsStatus(scheduleCopy.messages.hashtagEditing);
   }
 
   function deleteHashtagSet(hashtagSetIdToDelete: string) {
@@ -3762,13 +3817,13 @@ export function ScheduleCalendarApp() {
     if (hashtagSetDraft.id === hashtagSetIdToDelete) {
       setHashtagSetDraft(createHashtagSetDraft());
     }
-    setSettingsStatus("ハッシュタグセットを削除しました。");
+    setSettingsStatus(scheduleCopy.messages.hashtagDeleted);
   }
 
   function exportJson() {
     const payload = createScheduleStoragePayload(events, settings, userPostTemplates, userHashtagSets);
     setImportText(JSON.stringify(payload, null, 2));
-    setSettingsStatus("バックアップJSONを作成しました。必要な場所に保管してください。");
+    setSettingsStatus(scheduleCopy.messages.backupCreated);
   }
 
   function importJson() {
@@ -3793,15 +3848,15 @@ export function ScheduleCalendarApp() {
       setView(payload.settings.defaultView);
       setSelectedEventId(null);
       setDraft(createEventDraft(selectedDateKey, payload.settings));
-      setSettingsStatus("バックアップJSONを復元しました。");
+      setSettingsStatus(scheduleCopy.messages.backupRestored);
       setStorageError("");
     } catch {
-      setSettingsStatus(importFailureMessage);
+      setSettingsStatus(scheduleCopy.messages.importFailure);
     }
   }
 
   function resetAllData() {
-    const confirmed = window.confirm("予定、設定、投稿補助テンプレート、保存済みハッシュタグをすべて初期化します。この操作は元に戻せません。");
+    const confirmed = window.confirm(scheduleCopy.messages.resetConfirm);
     if (!confirmed) {
       return;
     }
@@ -3820,7 +3875,7 @@ export function ScheduleCalendarApp() {
     setSelectedEventId(null);
     setDraft(createEmptyEvent(currentDateKey));
     setImportText("");
-    setSettingsStatus("全データを初期化しました。");
+    setSettingsStatus(scheduleCopy.messages.resetAll);
   }
 
   function startMobileSheetDrag(event: PointerEvent<HTMLDivElement>) {
@@ -3865,11 +3920,11 @@ export function ScheduleCalendarApp() {
       }
 
       await clipboard.writeText(postText);
-      setCopyStatus("投稿文をコピーしました。");
+      setCopyStatus(scheduleCopy.messages.copied);
       setCopyStatusKind("success");
       setCopyFallbackText("");
     } catch (error) {
-      setCopyStatus(getClipboardFailureMessage(error));
+      setCopyStatus(getClipboardFailureMessage(error, scheduleCopy));
       setCopyStatusKind("error");
       setCopyFallbackText(postText);
     }
@@ -3877,12 +3932,12 @@ export function ScheduleCalendarApp() {
 
   function openHandoffTarget(target: ToolHandoffTarget) {
     if (!selectedEvent) {
-      setCopyStatus("予定を選ぶと、サムネ作成や分割画像作成へ初期テキストを渡せます。");
+      setCopyStatus(scheduleCopy.handoff.emptySelectionError);
       setCopyStatusKind("error");
       return;
     }
 
-    const selectedTemplate = userPostTemplates.find((template) => template.id === templateId);
+    const selectedTemplate = localizedPostTemplates.find((template) => template.id === templateId);
     const handoffHashtags = mergeHashtags(
       selectedTemplate?.hashtags ?? "",
       ...selectedHashtagSets.map((hashtagSet) => hashtagSet.hashtags),
@@ -3890,22 +3945,22 @@ export function ScheduleCalendarApp() {
     );
     const payload = createScheduleHandoffPayload(target, {
       eventId: selectedEvent.id,
-      title: selectedEvent.title.trim() || "無題の予定",
+      title: selectedEvent.title.trim() || scheduleCopy.common.untitled,
       date: selectedEvent.date,
       startTime: selectedEvent.startTime,
       endTime: selectedEvent.endTime,
       category: selectedEvent.category,
-      categoryLabel: categoryMeta[selectedEvent.category].label,
+      categoryLabel: getCategoryLabel(selectedEvent.category, scheduleCopy),
       platform: selectedEvent.platform,
       announcementText: postText.trim() || selectedEvent.announcementText.trim(),
       hashtags: handoffHashtags,
       announcementStatus: selectedEvent.announcementStatus,
-      announcementStatusLabel: getAnnouncementStatusLabel(selectedEvent.announcementStatus)
+      announcementStatusLabel: getAnnouncementStatusLabel(selectedEvent.announcementStatus, scheduleCopy)
     });
     const token = writeToolHandoff(payload);
 
     if (!token) {
-      setCopyStatus("次ツールへ渡す一時データを保存できませんでした。予定内容はこの画面に残っています。");
+      setCopyStatus(scheduleCopy.handoff.storageError);
       setCopyStatusKind("error");
       return;
     }
@@ -3916,7 +3971,7 @@ export function ScheduleCalendarApp() {
   if (!hydrated) {
     return (
       <div className="grid h-full place-items-center border border-border bg-surface text-sm text-muted">
-        スケジュールカレンダーを読み込んでいます。
+        {scheduleCopy.common.loading}
       </div>
     );
   }
@@ -3999,7 +4054,7 @@ export function ScheduleCalendarApp() {
                 type="button"
                 onClick={createNewEvent}
                 className="absolute bottom-20 right-4 z-30 grid h-14 w-14 place-items-center rounded-full bg-primary text-3xl font-light leading-none text-white shadow-panel transition hover:bg-primary-strong"
-                aria-label="新しい予定を追加"
+                aria-label={scheduleCopy.eventList.createNewEvent}
               >
                 +
               </button>
@@ -4017,7 +4072,7 @@ export function ScheduleCalendarApp() {
           {mobileNavTab === "settings" ? (
             <MobileSettingsPanel
               settings={settings}
-              templates={userPostTemplates}
+              templates={localizedPostTemplates}
               hashtagSets={userHashtagSets}
               templateDraft={templateDraft}
               hashtagSetDraft={hashtagSetDraft}
@@ -4085,8 +4140,8 @@ export function ScheduleCalendarApp() {
             </div>
             <div className="grid grid-cols-2 border-t border-border bg-surface-muted lg:hidden">
               {[
-                { id: "schedule" as PanelTab, label: "予定管理" },
-                { id: "post" as PanelTab, label: "投稿補助" }
+                { id: "schedule" as PanelTab, label: scheduleCopy.tabs.schedule },
+                { id: "post" as PanelTab, label: scheduleCopy.tabs.post }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -4103,10 +4158,10 @@ export function ScheduleCalendarApp() {
             </div>
             <div className="hidden grid-cols-2 bg-surface-muted lg:grid">
               {[
-                { id: "schedule" as PanelTab, label: "予定管理" },
-                { id: "post" as PanelTab, label: "投稿補助" },
-                { id: "events" as PanelTab, label: "予定一覧" },
-                { id: "settings" as PanelTab, label: "設定" }
+                { id: "schedule" as PanelTab, label: scheduleCopy.tabs.schedule },
+                { id: "post" as PanelTab, label: scheduleCopy.tabs.post },
+                { id: "events" as PanelTab, label: scheduleCopy.tabs.events },
+                { id: "settings" as PanelTab, label: scheduleCopy.tabs.settings }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -4145,7 +4200,7 @@ export function ScheduleCalendarApp() {
             {activeTab === "post" ? (
               <PostAssistPanel
                 selectedEvent={selectedEvent}
-                templates={userPostTemplates}
+                templates={localizedPostTemplates}
                 hashtagSets={userHashtagSets}
                 templateId={templateId}
                 selectedHashtagSetIds={selectedHashtagSetIds}
@@ -4175,7 +4230,7 @@ export function ScheduleCalendarApp() {
               <div className={tabletUpClassName}>
                 <DesktopSettingsPanel
                   settings={settings}
-                  templates={userPostTemplates}
+                  templates={localizedPostTemplates}
                   hashtagSets={userHashtagSets}
                   templateDraft={templateDraft}
                   hashtagSetDraft={hashtagSetDraft}

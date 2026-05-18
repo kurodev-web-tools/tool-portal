@@ -1,3 +1,5 @@
+import type { Locale } from "@/lib/locale";
+
 export type CalendarView = "month" | "week" | "day";
 
 export type EventCategory = "stream" | "production" | "post" | "planning" | "prep" | "business";
@@ -152,14 +154,32 @@ export const postTemplateVariableOptions: Array<{ token: string; label: string }
   { token: "{hashtags}", label: "ハッシュタグ" }
 ];
 
-const dayFormatter = new Intl.DateTimeFormat("ja-JP", { weekday: "short" });
-const monthFormatter = new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "long" });
-const longDateFormatter = new Intl.DateTimeFormat("ja-JP", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  weekday: "short"
-});
+const localeFormatterNames: Record<Locale, string> = {
+  ja: "ja-JP",
+  en: "en-US"
+};
+const dayFormatters: Record<Locale, Intl.DateTimeFormat> = {
+  ja: new Intl.DateTimeFormat(localeFormatterNames.ja, { weekday: "short" }),
+  en: new Intl.DateTimeFormat(localeFormatterNames.en, { weekday: "short" })
+};
+const monthFormatters: Record<Locale, Intl.DateTimeFormat> = {
+  ja: new Intl.DateTimeFormat(localeFormatterNames.ja, { year: "numeric", month: "long" }),
+  en: new Intl.DateTimeFormat(localeFormatterNames.en, { year: "numeric", month: "long" })
+};
+const longDateFormatters: Record<Locale, Intl.DateTimeFormat> = {
+  ja: new Intl.DateTimeFormat(localeFormatterNames.ja, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short"
+  }),
+  en: new Intl.DateTimeFormat(localeFormatterNames.en, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short"
+  })
+};
 
 export function toDateKey(date: Date): string {
   const year = date.getFullYear();
@@ -204,29 +224,35 @@ export function getMonthGrid(date: Date, weekStartsOn: 0 | 1 = 0): Date[] {
   return Array.from({ length: 42 }, (_, index) => addDays(gridStart, index));
 }
 
-export function getPeriodLabel(date: Date, view: CalendarView, weekStartsOn: 0 | 1 = 0): string {
+export function getPeriodLabel(date: Date, view: CalendarView, weekStartsOn: 0 | 1 = 0, locale: Locale = "ja"): string {
+  const dayFormatter = dayFormatters[locale];
+
   if (view === "month") {
-    return monthFormatter.format(date);
+    return monthFormatters[locale].format(date);
   }
 
   if (view === "day") {
-    return longDateFormatter.format(date);
+    return longDateFormatters[locale].format(date);
   }
 
   const days = getWeekDays(date, weekStartsOn);
   const start = days[0];
   const end = days[6];
+  if (locale === "en") {
+    return `${start.toLocaleDateString(localeFormatterNames.en, { month: "short", day: "numeric", year: "numeric" })} (${dayFormatter.format(start)}) - ${end.toLocaleDateString(localeFormatterNames.en, { month: "short", day: "numeric" })} (${dayFormatter.format(end)})`;
+  }
+
   return `${start.getFullYear()}年${start.getMonth() + 1}月${start.getDate()}日(${dayFormatter.format(start)}) - ${
     end.getMonth() + 1
   }月${end.getDate()}日(${dayFormatter.format(end)})`;
 }
 
-export function getShortDateLabel(date: Date): string {
-  return `${date.getMonth() + 1}/${date.getDate()} (${dayFormatter.format(date)})`;
+export function getShortDateLabel(date: Date, locale: Locale = "ja"): string {
+  return `${date.getMonth() + 1}/${date.getDate()} (${dayFormatters[locale].format(date)})`;
 }
 
-export function getLongDateLabel(dateKey: string): string {
-  return longDateFormatter.format(parseDateKey(dateKey));
+export function getLongDateLabel(dateKey: string, locale: Locale = "ja"): string {
+  return longDateFormatters[locale].format(parseDateKey(dateKey));
 }
 
 export function sortEvents(events: ScheduleEvent[]): ScheduleEvent[] {
@@ -557,21 +583,25 @@ export function normalizeStoragePayload(value: unknown): ScheduleStoragePayload 
   };
 }
 
-function getTemplateValue(event: ScheduleEvent | null, key: string): string {
+function getTemplateValue(
+  event: ScheduleEvent | null,
+  key: string,
+  options: { locale?: Locale; categoryLabel?: string } = {}
+): string {
   if (!event) {
     return "";
   }
 
   if (key === "date") {
-    return getLongDateLabel(event.date);
+    return getLongDateLabel(event.date, options.locale ?? "ja");
   }
 
   if (key === "weekday") {
-    return dayFormatter.format(parseDateKey(event.date));
+    return dayFormatters[options.locale ?? "ja"].format(parseDateKey(event.date));
   }
 
   if (key === "category") {
-    return categoryMeta[event.category].label;
+    return options.categoryLabel ?? categoryMeta[event.category].label;
   }
 
   if (key === "hashtags") {
@@ -611,7 +641,8 @@ export function renderPostTemplate(
   event: ScheduleEvent | null,
   template: PostTemplate,
   includeHashtags = true,
-  extraHashtags: string[] = []
+  extraHashtags: string[] = [],
+  options: { locale?: Locale; categoryLabel?: string } = {}
 ): string {
   if (!event) {
     return "予定を選ぶと、ここに投稿文プレビューが表示されます。";
@@ -619,7 +650,7 @@ export function renderPostTemplate(
 
   const hashtags = includeHashtags ? mergeHashtags(template.hashtags, ...extraHashtags, event.announcementHashtags) : "";
   const body = template.body.replace(/\{(date|startTime|endTime|title|platform|category|memo|weekday|announcementText|hashtags)\}/g, (_, key: string) =>
-    key === "hashtags" ? hashtags : getTemplateValue(event, key)
+    key === "hashtags" ? hashtags : getTemplateValue(event, key, options)
   );
   const shouldAppendHashtags = includeHashtags && hashtags && !template.body.includes("{hashtags}");
 
@@ -630,11 +661,14 @@ export function generatePostText(
   event: ScheduleEvent | null,
   templateId: string,
   templates: PostTemplate[] = postTemplates,
-  options: { includeHashtags?: boolean; extraHashtags?: string[] } = {}
+  options: { includeHashtags?: boolean; extraHashtags?: string[]; locale?: Locale; categoryLabel?: string } = {}
 ): string {
   const normalizedTemplates = normalizePostTemplates(templates);
   const template = normalizedTemplates.find((item) => item.id === templateId) ?? normalizedTemplates[0];
-  return renderPostTemplate(event, template, options.includeHashtags ?? true, options.extraHashtags ?? []);
+  return renderPostTemplate(event, template, options.includeHashtags ?? true, options.extraHashtags ?? [], {
+    locale: options.locale,
+    categoryLabel: options.categoryLabel
+  });
 }
 
 export const postTemplates: PostTemplate[] = [

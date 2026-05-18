@@ -55,6 +55,11 @@ assert.match(languageSwitchSource, /日本語/, "language switch keeps a Japanes
 assert.match(languageSwitchSource, /English/, "language switch keeps an English label");
 assert.match(portalHeaderSource, /<LanguageSwitch\s*\/>/, "desktop header places the language switch near the theme toggle");
 assert.match(portalHeaderSource, /<LanguageSwitch variant="drawer"\s*\/>/, "mobile drawer places the language switch inside the menu");
+assert.match(
+  portalHeaderSource,
+  /<div className="flex items-center justify-between gap-3">\s*<span className="text-sm font-bold text-foreground">表示言語<\/span>\s*<LanguageSwitch variant="drawer" \/>\s*<\/div>/,
+  "mobile drawer language row stays on one line like the theme row"
+);
 assert.match(portalSidebarSource, /<LanguageSwitch variant="compact"\s*\/>/, "workspace sidebar keeps language access near compact theme control");
 assert.match(appLayoutSource, /<LocaleProvider>/, "root layout wraps the app in the locale provider");
 assert.doesNotMatch(appLayoutSource, /<html lang="\{/, "root html lang remains SSR-stable and is updated client-side");

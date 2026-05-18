@@ -139,7 +139,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
               })}
             </nav>
             <div className="mt-auto space-y-3 rounded-base border border-border bg-surface-muted/45 px-3 py-3">
-              <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-bold text-foreground">表示言語</span>
                 <LanguageSwitch variant="drawer" />
               </div>

@@ -29,6 +29,13 @@
     - 追加確認: Playwright 補助確認で `en-US` 初回 `lang=en`、`ja-JP` 初回 `lang=ja`、手動 `ja` は `en-US` reload 後も維持、手動 `en` は `ja-JP` reload 後も維持。localhost 確認では console warn/error なし。
     - follow-up: mobile drawer の `表示言語` 行を `表示テーマ` と同じ横並びに調整し、language switch の drawer 幅を圧縮。`390px / 430px` drawer で `表示言語` が折り返さず、横 overflow なしを確認。
     - 残リスク: PR1 では主要 copy 翻訳は非対象。in-app browser のログ API には編集中の Fast Refresh warning が残る場合があるため、console clean 判定は編集後の再実行または補助 Playwright の新規 context で確認する。
+  - PR2 Portal / Tools copy localization 実装済み（branch: `codex/en-portal-tools-copy` / target: `codex/en-support-preview`）。
+    - 実装内容: Portal Home、Tools index、suite card、tool card、status badge、filter bar、feedback notice、portal header / sidebar の主要 copy を `ja / en` 対応。大規模 i18n framework は入れず、`lib/portal-copy.ts` の小さな dictionary / helper を `useLocale()` から参照する。既存日本語 copy は `ja` 側に維持し、Schedule Calendar / Thumbnail Editor / SNS Split Image Maker の本文 UI、URL、localStorage / IndexedDB key、handoff payload、保存 schema は変更なし。
+    - metadata 整理: root / Home / Tools の title / description は `lib/portal-metadata.ts` に集約し、PR2 では従来どおり静的な `ja` 基準 metadata を使う。Next metadata の動的 locale 切替は過剰になりやすいため、Schedule Calendar EN copy 以降の PR3+ で必要性を再判断する。
+    - contract 更新: `scripts/portal-tools-copy-locale-contract.mjs` を追加し、Portal / Tools copy dictionary、localized suite / tool / category / status helper、`useLocale()` 接続、metadata copy 集約を固定。既存 `scripts/tool-portal-entry-contract.mjs` と `scripts/portal-locale-foundation-contract.mjs` は centralized copy / localized drawer row に合わせて更新した。
+    - 検証結果: `node scripts/portal-tools-copy-locale-contract.mjs` は RED -> GREEN を確認。`node scripts/portal-tools-copy-locale-contract.mjs`、`node scripts/portal-locale-foundation-contract.mjs`、`node scripts/tool-portal-entry-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` は通過。`git diff --check` は対象ファイルの LF -> CRLF warning のみで exit 0。
+    - 幅別確認: dev server `http://localhost:3037` を in-app browser で確認。`/` と `/tools` を `390 / 820 / 1024 / 1280 / 1366px` で `ja / en` それぞれ確認し、Home / Tools の主要見出し、CTA、filter、status、suite / tool card、feedback copy が locale に応じて読めること、manual switch 後の reload で選択が維持されること、`document.documentElement.lang` が `ja / en` に同期すること、body / document 横 overflow なし、console error / warn なしを確認。追加で `/tools?suite=fan-brand` の English 表示から `Available` filter を選び、empty state `No tools match these filters yet.` を確認。
+    - 残リスク: metadata は PR2 では静的 `ja` のまま。各ツール本文 UI の validation / error / aria label までの全面翻訳は C scope または各ツール EN copy PR で扱う。次 PR は `Schedule Calendar EN copy`。
 
 ## Backlog
 

@@ -4,36 +4,40 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LanguageSwitch } from "@/components/portal/LanguageSwitch";
+import { useLocale } from "@/components/portal/LocaleProvider";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
+import { getToolCopy, portalCopy } from "@/lib/portal-copy";
 import { sidebarTools } from "@/lib/tools";
 
 export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspace" }) {
+  const { locale } = useLocale();
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const showDesktopTitle = mode !== "workspace";
+  const copy = portalCopy[locale].navigation;
   const title = useMemo(() => {
     if (pathname === "/") {
       return "Kuro Stream Kit";
     }
 
     if (pathname.startsWith("/tools/schedule-calendar")) {
-      return "スケジュールカレンダー";
+      return copy.toolTitles["schedule-calendar"];
     }
 
     if (pathname.startsWith("/tools/thumbnail-editor")) {
-      return "Thumbnail Editor";
+      return copy.toolTitles["thumbnail-editor"];
     }
 
     if (pathname.startsWith("/tools/sns-split-image-maker")) {
-      return "SNS分割画像メーカー";
+      return copy.toolTitles["sns-split-image-maker"];
     }
 
     if (pathname.startsWith("/tools")) {
-      return "ツール一覧";
+      return copy.toolTitles.tools;
     }
 
     return "Kuro Stream Kit";
-  }, [pathname]);
+  }, [copy.toolTitles, pathname]);
 
   useEffect(() => {
     if (!drawerOpen) {
@@ -53,14 +57,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
     { href: "/tools", label: "Tools" },
     ...sidebarTools.map((tool) => ({
       href: tool.href,
-      label:
-        tool.id === "schedule-calendar"
-          ? "スケジュールカレンダー"
-          : tool.id === "thumbnail-editor"
-            ? "Thumbnail Editor"
-            : tool.id === "sns-split-image-maker"
-              ? "SNS分割画像メーカー"
-            : tool.name
+      label: getToolCopy(tool.id, locale).name
     }))
   ];
 
@@ -81,7 +78,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
         <button
           type="button"
           className="grid h-10 w-10 shrink-0 place-items-center rounded-base border border-border bg-surface text-foreground lg:hidden"
-          aria-label="メニューを開く"
+          aria-label={copy.menuOpen}
           aria-expanded={drawerOpen}
           onClick={() => setDrawerOpen(true)}
         >
@@ -97,7 +94,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
           <button
             type="button"
             className="fixed inset-0 z-[80] bg-black/50 lg:hidden"
-            aria-label="メニューを閉じる"
+            aria-label={copy.menuClose}
             onClick={() => setDrawerOpen(false)}
           />
           <aside className="fixed bottom-0 right-0 top-0 z-[90] flex w-[min(82vw,20rem)] flex-col border-l border-border bg-surface p-4 shadow-2xl lg:hidden">
@@ -111,7 +108,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
               <button
                 type="button"
                 className="grid h-9 w-9 place-items-center rounded-base border border-border text-lg text-muted"
-                aria-label="メニューを閉じる"
+                aria-label={copy.menuClose}
                 onClick={() => setDrawerOpen(false)}
               >
                 ×
@@ -140,11 +137,11 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
             </nav>
             <div className="mt-auto space-y-3 rounded-base border border-border bg-surface-muted/45 px-3 py-3">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-bold text-foreground">表示言語</span>
+                <span className="text-sm font-bold text-foreground">{copy.language}</span>
                 <LanguageSwitch variant="drawer" />
               </div>
               <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-bold text-foreground">表示テーマ</span>
+                <span className="text-sm font-bold text-foreground">{copy.theme}</span>
                 <ThemeToggle />
               </div>
             </div>

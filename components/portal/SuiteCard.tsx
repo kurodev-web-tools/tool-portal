@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/portal/StatusBadge";
+import type { Locale } from "@/lib/locale";
+import { getSuiteCopy, portalCopy } from "@/lib/portal-copy";
 import type { SuiteDefinition } from "@/lib/suites";
 
 type SuiteCardProps = {
   suite: SuiteDefinition;
+  locale: Locale;
 };
 
-export function SuiteCard({ suite }: SuiteCardProps) {
+export function SuiteCard({ suite, locale }: SuiteCardProps) {
   const isAvailable = suite.status === "available";
+  const suiteCopy = getSuiteCopy(suite.key, locale);
+  const copy = portalCopy[locale].suiteCard;
 
   return (
     <article
@@ -19,7 +24,7 @@ export function SuiteCard({ suite }: SuiteCardProps) {
       ].join(" ")}
     >
       <div className="absolute right-5 top-5">
-        <StatusBadge status={suite.status} />
+        <StatusBadge status={suite.status} locale={locale} />
       </div>
       <div
         className={[
@@ -36,16 +41,16 @@ export function SuiteCard({ suite }: SuiteCardProps) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className={["text-2xl font-bold tracking-tight", isAvailable ? "text-primary-strong" : "text-foreground"].join(" ")}>
-              {suite.name}
+              {suiteCopy.name}
             </h2>
-            <p className="mt-3 max-w-xl text-sm leading-7 text-foreground">{suite.description}</p>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-foreground">{suiteCopy.description}</p>
           </div>
         </div>
 
         <div className="mt-5">
-          <p className="text-xs font-bold text-muted">代表的な候補</p>
+          <p className="text-xs font-bold text-muted">{copy.representative}</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {suite.tags.map((tag) => (
+            {suiteCopy.tags.map((tag) => (
               <span
                 key={tag}
                 className={[
@@ -63,8 +68,8 @@ export function SuiteCard({ suite }: SuiteCardProps) {
 
         <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            <span className="font-semibold text-foreground">{isAvailable ? "公開中ツール" : "準備中候補"}</span>
-            <span className="font-bold text-foreground">{suite.toolCount} 個</span>
+            <span className="font-semibold text-foreground">{isAvailable ? copy.availableCount : copy.plannedCount}</span>
+            <span className="font-bold text-foreground">{suite.toolCount} {copy.toolUnit}</span>
           </div>
           <Link
             href={`/tools?suite=${suite.key}`}
@@ -75,7 +80,7 @@ export function SuiteCard({ suite }: SuiteCardProps) {
                 : "border border-primary/60 text-primary-strong hover:bg-primary-soft/50"
             ].join(" ")}
           >
-            {isAvailable ? "開く" : "候補を見る"}
+            {isAvailable ? copy.open : copy.viewCandidates}
             <span aria-hidden="true">→</span>
           </Link>
         </div>

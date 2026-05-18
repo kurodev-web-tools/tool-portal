@@ -459,6 +459,8 @@ export function ThumbnailEditorApp() {
   const [replaceUserMaterialRef, setReplaceUserMaterialRef] = useState<ThumbnailUserMaterialRef | null>(null);
   const [pendingPresetApplyId, setPendingPresetApplyId] = useState<ThumbnailPresetId | null>(null);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
+  const [canvasAttachVersion, setCanvasAttachVersion] = useState(0);
+  const [mobilePreviewCanvasAttachVersion, setMobilePreviewCanvasAttachVersion] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const mobilePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvasViewportRef = useRef<HTMLDivElement | null>(null);
@@ -618,6 +620,14 @@ export function ThumbnailEditorApp() {
     setToast({ tone, message });
     window.setTimeout(() => setToast(null), 3200);
   }, []);
+  const setCanvasRef = useCallback((node: HTMLCanvasElement | null) => {
+    canvasRef.current = node;
+    setCanvasAttachVersion((version) => version + 1);
+  }, []);
+  const setMobilePreviewCanvasRef = useCallback((node: HTMLCanvasElement | null) => {
+    mobilePreviewCanvasRef.current = node;
+    setMobilePreviewCanvasAttachVersion((version) => version + 1);
+  }, []);
 
   useEffect(() => {
     try {
@@ -659,22 +669,33 @@ export function ThumbnailEditorApp() {
       return;
     }
     const renderVersion = (canvasRenderVersionRef.current += 1);
-    const buffer = document.createElement("canvas");
-    drawThumbnail(buffer, resolvedDraft, { selectedLayerId: draft.selectedLayerId, includeSelection: true }).then(() => {
-      if (canvasRenderVersionRef.current !== renderVersion || canvasRef.current !== canvas) {
-        return;
+
+    const renderThumbnailPreview = async () => {
+      const buffer = document.createElement("canvas");
+      try {
+        await drawThumbnail(buffer, resolvedDraft, { selectedLayerId: draft.selectedLayerId, includeSelection: true });
+        if (canvasRenderVersionRef.current !== renderVersion || canvasRef.current !== canvas) {
+          return;
+        }
+        canvas.width = buffer.width;
+        canvas.height = buffer.height;
+        const context = canvas.getContext("2d");
+        context?.clearRect(0, 0, canvas.width, canvas.height);
+        context?.drawImage(buffer, 0, 0);
+      } catch {
+        if (canvasRenderVersionRef.current === renderVersion) {
+          showToast("error", "キャンバスの描画に失敗しました。");
+        }
       }
-      canvas.width = buffer.width;
-      canvas.height = buffer.height;
-      const context = canvas.getContext("2d");
-      context?.clearRect(0, 0, canvas.width, canvas.height);
-      context?.drawImage(buffer, 0, 0);
-    }).catch(() => {
-      if (canvasRenderVersionRef.current === renderVersion) {
-        showToast("error", "キャンバスの描画に失敗しました。");
-      }
-    });
-  }, [draft.selectedLayerId, resolvedDraft, showToast]);
+    };
+    const renderThumbnailPreviewAfterFonts = async () => {
+      await waitForThumbnailDraftFonts(resolvedDraft);
+      await renderThumbnailPreview();
+    };
+
+    void renderThumbnailPreview();
+    void renderThumbnailPreviewAfterFonts();
+  }, [canvasAttachVersion, draft.selectedLayerId, resolvedDraft, showToast]);
 
   useEffect(() => {
     if (!mobilePreviewOpen) {
@@ -687,22 +708,33 @@ export function ThumbnailEditorApp() {
     }
 
     const renderVersion = (mobilePreviewRenderVersionRef.current += 1);
-    const buffer = document.createElement("canvas");
-    drawThumbnail(buffer, resolvedDraft, { selectedLayerId: null, includeSelection: false }).then(() => {
-      if (mobilePreviewRenderVersionRef.current !== renderVersion || mobilePreviewCanvasRef.current !== canvas) {
-        return;
+
+    const renderMobileThumbnailPreview = async () => {
+      const buffer = document.createElement("canvas");
+      try {
+        await drawThumbnail(buffer, resolvedDraft, { selectedLayerId: null, includeSelection: false });
+        if (mobilePreviewRenderVersionRef.current !== renderVersion || mobilePreviewCanvasRef.current !== canvas) {
+          return;
+        }
+        canvas.width = buffer.width;
+        canvas.height = buffer.height;
+        const context = canvas.getContext("2d");
+        context?.clearRect(0, 0, canvas.width, canvas.height);
+        context?.drawImage(buffer, 0, 0);
+      } catch {
+        if (mobilePreviewRenderVersionRef.current === renderVersion) {
+          showToast("error", "全体プレビューの描画に失敗しました。");
+        }
       }
-      canvas.width = buffer.width;
-      canvas.height = buffer.height;
-      const context = canvas.getContext("2d");
-      context?.clearRect(0, 0, canvas.width, canvas.height);
-      context?.drawImage(buffer, 0, 0);
-    }).catch(() => {
-      if (mobilePreviewRenderVersionRef.current === renderVersion) {
-        showToast("error", "全体プレビューの描画に失敗しました。");
-      }
-    });
-  }, [mobilePreviewOpen, resolvedDraft, showToast]);
+    };
+    const renderMobileThumbnailPreviewAfterFonts = async () => {
+      await waitForThumbnailDraftFonts(resolvedDraft);
+      await renderMobileThumbnailPreview();
+    };
+
+    void renderMobileThumbnailPreview();
+    void renderMobileThumbnailPreviewAfterFonts();
+  }, [mobilePreviewCanvasAttachVersion, mobilePreviewOpen, resolvedDraft, showToast]);
 
   useEffect(() => {
     if (!mobilePreviewOpen) {
@@ -1863,7 +1895,7 @@ export function ThumbnailEditorApp() {
                     )}
                     <div className="relative mx-auto w-fit">
                       <canvas
-                        ref={canvasRef}
+                        ref={setCanvasRef}
                         className="block aspect-video max-w-none touch-none rounded-base border border-border bg-[#081117] shadow-lg"
                         style={{ width: `${draft.canvas.width * zoom}px`, cursor: canvasCursor }}
                         onPointerDown={beginInteraction}
@@ -2060,7 +2092,7 @@ export function ThumbnailEditorApp() {
           <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
             <div className="relative aspect-video w-full max-w-[min(100%,calc((100vh-8rem)*16/9))]">
               <canvas
-                ref={mobilePreviewCanvasRef}
+                ref={setMobilePreviewCanvasRef}
                 className="h-full w-full rounded-base border border-border bg-[#081117] object-contain shadow-panel"
                 aria-label="サムネイル全体確認"
               />

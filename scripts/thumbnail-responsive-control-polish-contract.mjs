@@ -29,5 +29,7 @@ assert.ok(source.includes("aria-disabled={option.disabled || undefined}"), "disa
 
 assert.ok(source.includes("data-thumbnail-preset-filter-chips"), "preset filter chips have a mobile overflow guard marker");
 assert.ok(source.includes("data-thumbnail-preset-card-chips"), "preset card category and usage chips have a mobile overflow guard marker");
+assert.ok(source.includes("内蔵素材について"), "export panel includes a built-in asset notice heading");
+assert.ok(source.includes("特定の人物、作家、既存作品、キャラクター素材を読み込ませて改変したものではありません。"), "export panel clarifies generated assets are not based on a specific person's or work's assets");
 
 console.log("thumbnail responsive control polish contract checks passed");

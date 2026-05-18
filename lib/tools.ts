@@ -15,6 +15,7 @@ export type ToolDefinition = {
   id: string;
   name: string;
   description: string;
+  notice?: string;
   category: ToolCategory;
   status: ToolStatus;
   suite: SuiteKey;
@@ -54,6 +55,7 @@ export const tools: ToolDefinition[] = [
     id: "thumbnail-editor",
     name: "Thumbnail Editor",
     description: "用途別プリセットを選んで、文字と立ち絵を差し替えるVTuber向けサムネ組み立てツールです。",
+    notice: "内蔵プリセットには、当方で生成・加工した抽象背景や装飾素材を含みます。",
     category: "design",
     status: "available",
     suite: "stream-workflow",

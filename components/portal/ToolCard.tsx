@@ -37,6 +37,11 @@ export function ToolCard({ tool }: ToolCardProps) {
       </div>
 
       <p className="mt-5 flex-1 text-sm leading-6 text-muted">{tool.description}</p>
+      {tool.notice ? (
+        <p className="mt-3 border-t border-border/70 pt-3 text-[11px] font-semibold leading-5 text-muted">
+          {tool.notice}
+        </p>
+      ) : null}
 
       {isAvailable ? (
         <Link

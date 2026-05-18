@@ -215,6 +215,13 @@
   - 幅別確認: Chrome headless / in-app browser 系で `1920x1080` の `/tools/thumbnail-editor` を確認したが、手元の一時静的配信環境では client hydration が走らず canvas が SSR 初期状態のままになったため、公開告知用の最終スクショはこの PR merge 後にユーザー起動中の `localhost:3000` または Pages preview で撮り直す。
   - 残リスク: deployed URL / Pages preview での smoke は未実施。今回の変更は preview redraw trigger のみで、実 export pixel 内容は既存 export font wait 経路に依存する。
 
+- Thumbnail Editor built-in asset notice
+  - 結果記録 2026-05-18 / `thumbnail-ai-asset-notice`: `origin/main` 起点の `D:/V_streamer_tools/.worktrees/thumbnail-ai-asset-notice` / branch `codex/thumbnail-ai-asset-notice` で実施。Tools 一覧の Thumbnail Editor card に、内蔵プリセットが当方で生成・加工した抽象背景や装飾素材を含むことを短く追記した。Thumbnail Editor の `保存 / 書き出し` panel には、特定の人物、作家、既存作品、キャラクター素材を読み込ませて改変したものではない旨を `内蔵素材について` として追加した。preset data、asset、export 処理、storage schema、SNS handoff は変更なし。
+  - contract 更新: `scripts/tool-portal-entry-contract.mjs` に tool card notice の data / render guard を追加し、`scripts/thumbnail-responsive-control-polish-contract.mjs` に export panel notice の guard を追加した。
+  - 検証結果: `node scripts/tool-portal-entry-contract.mjs` は RED -> GREEN、`node scripts/thumbnail-responsive-control-polish-contract.mjs` は RED -> GREEN を確認。`npm run lint`、`npx tsc --noEmit` は通過。
+  - 幅別確認: dev server `http://localhost:3036` で `/tools` と `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認。Tools card notice と export panel notice が表示され、body / document 横 overflow なし。`390 / 820px` は mobile bottom nav の `書き出し` を開いて確認し、Chrome console error / warn なし。
+  - 残リスク: deployed URL / Pages preview での smoke は未実施。文面は法務レビュー済みの正式規約ではなく、公開前の利用者向け disclosure として最小限に留めている。
+
 ## Backlog
 
 - English support initial coverage

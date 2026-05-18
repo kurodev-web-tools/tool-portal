@@ -208,6 +208,13 @@
   - 幅別確認: build 後の `out/` を `http://127.0.0.1:3034` で静的配信し、`/` と `/tools` を `390 / 820 / 1024 / 1280 / 1366px` で確認。全幅で body / document 横 overflow なし、title は `Kuro Stream Kit` 系、旧公開名 `V Streamer Tools` は表示なし。`/tools` の feedback mailto は `Kuro%20Stream%20Kit%20feedback`。Chrome console は app error なしで、Next static output の CSS preload warn のみ。
   - 残リスク: deployed URL / Pages preview での smoke は未実施。公開告知用の 1920x1080 スクショは旧名ベースのため、この名称変更 merge 後に撮り直す。
 
+- Thumbnail Editor preview font readiness
+  - 結果記録 2026-05-18 / `thumbnail-preview-font-readiness`: Thumbnail Editor の初回 canvas preview が Web Font 読み込み前の描画結果のまま残る場合があるため、通常 preview / mobile 全体 preview とも即時描画を維持しつつ、`waitForThumbnailDraftFonts(resolvedDraft)` 後に再描画するようにした。canvas ref attach 後にも描画 effect が確実に再発火するよう、stable callback ref と attach version を追加。export 処理、preset data、storage schema、asset は変更なし。
+  - contract 更新: `scripts/thumbnail-preview-font-readiness-contract.mjs` を追加し、即時描画、font-ready redraw、stable callback ref、canvas attach redraw trigger を固定した。
+  - 検証結果: `node scripts/thumbnail-preview-font-readiness-contract.mjs`、`node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-preview-controls-contract.mjs`、`node scripts/thumbnail-center-guide-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` は通過。`npm run build` は worktree が親 checkout 配下にあるため複数 lockfile root 推定 warning が出るが、static export は成功。
+  - 幅別確認: Chrome headless / in-app browser 系で `1920x1080` の `/tools/thumbnail-editor` を確認したが、手元の一時静的配信環境では client hydration が走らず canvas が SSR 初期状態のままになったため、公開告知用の最終スクショはこの PR merge 後にユーザー起動中の `localhost:3000` または Pages preview で撮り直す。
+  - 残リスク: deployed URL / Pages preview での smoke は未実施。今回の変更は preview redraw trigger のみで、実 export pixel 内容は既存 export font wait 経路に依存する。
+
 ## Backlog
 
 - English support initial coverage

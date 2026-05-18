@@ -3369,6 +3369,12 @@ function ExportPanel({
           ))}
         </ul>
       </div>
+      <div className="space-y-1 border-t border-border pt-2">
+        <p className="text-[11px] font-bold text-muted">内蔵素材について</p>
+        <p className="text-xs font-semibold leading-5 text-muted">
+          内蔵プリセットの背景・装飾素材には、当方で生成・加工した抽象素材を含みます。特定の人物、作家、既存作品、キャラクター素材を読み込ませて改変したものではありません。
+        </p>
+      </div>
       <p className="text-xs leading-5 text-muted">下書きはこのブラウザに保存されます。PNG/JPEG は表示中キャンバスを1枚で出力し、SNS分割画像メーカーへ進む時だけ一時画像を保存します。</p>
     </section>
   );

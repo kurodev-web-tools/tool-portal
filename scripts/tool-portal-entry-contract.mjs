@@ -80,6 +80,9 @@ assert.match(thumbnailTool.description, /用途別プリセット/, "thumbnail e
 assert.match(thumbnailTool.description, /文字/, "thumbnail entry mentions text replacement");
 assert.match(thumbnailTool.description, /立ち絵/, "thumbnail entry mentions standee replacement");
 assert.match(thumbnailTool.description, /VTuber/, "thumbnail entry keeps VTuber thumbnail scope");
+assert.match(thumbnailTool.notice ?? "", /生成・加工した抽象背景や装飾素材/, "thumbnail card discloses generated built-in visual assets");
+assert.match(toolsSource, /notice\?: string/, "tool data supports a short card-level notice");
+assert.match(portalToolsIndexSource + fs.readFileSync(path.join(root, "components", "portal", "ToolCard.tsx"), "utf8"), /tool\.notice/, "tool cards render short per-tool notices");
 
 const snsTool = toolsLib.tools.find((tool) => tool.id === "sns-split-image-maker");
 assert.ok(snsTool, "sns split tool entry exists");

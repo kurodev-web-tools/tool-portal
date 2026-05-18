@@ -53,6 +53,10 @@ assert.match(localeProviderSource, /navigator\.languages/, "locale provider chec
 assert.match(languageSwitchSource, /aria-pressed=\{locale === item\}/, "language switch exposes selected locale state");
 assert.match(languageSwitchSource, /日本語/, "language switch keeps a Japanese label");
 assert.match(languageSwitchSource, /English/, "language switch keeps an English label");
+assert.match(languageSwitchSource, /const isDrawer = variant === "drawer"/, "language switch treats drawer spacing separately");
+assert.match(languageSwitchSource, /isDrawer \? "shrink-0 gap-1"/, "drawer language switch keeps a compact non-wrapping width");
+assert.match(languageSwitchSource, /isDrawer\s*\?\s*"min-w-14 px-2 py-1\.5 text-xs"/, "drawer language buttons stay narrower than desktop buttons");
+assert.doesNotMatch(languageSwitchSource, /variant === "drawer" \? "w-full justify-between"/, "drawer language switch does not force a full-width segmented control");
 assert.match(portalHeaderSource, /<LanguageSwitch\s*\/>/, "desktop header places the language switch near the theme toggle");
 assert.match(portalHeaderSource, /<LanguageSwitch variant="drawer"\s*\/>/, "mobile drawer places the language switch inside the menu");
 assert.match(

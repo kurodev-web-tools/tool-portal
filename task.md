@@ -27,7 +27,7 @@
     - 検証結果: `node scripts/portal-locale-foundation-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` を実行済み。`git diff --check` は改行コード warning のみで exit 0。
     - 幅別確認: in-app browser で `/` と `/tools` を `390 / 820 / 1024 / 1280 / 1366px` 確認。`390 / 820px` は desktop switch 非表示、drawer 内 switch 表示。`1024 / 1280 / 1366px` は desktop switch 表示、drawer 非表示。全幅で `html lang=ja` 同期、body / document 横 overflow なし。
     - 追加確認: Playwright 補助確認で `en-US` 初回 `lang=en`、`ja-JP` 初回 `lang=ja`、手動 `ja` は `en-US` reload 後も維持、手動 `en` は `ja-JP` reload 後も維持。localhost 確認では console warn/error なし。
-    - follow-up: mobile drawer の `表示言語` 行を `表示テーマ` と同じ横並びに調整。`390px` Schedule Calendar drawer で 1 行表示、横 overflow なしを確認。
+    - follow-up: mobile drawer の `表示言語` 行を `表示テーマ` と同じ横並びに調整し、language switch の drawer 幅を圧縮。`390px / 430px` drawer で `表示言語` が折り返さず、横 overflow なしを確認。
     - 残リスク: PR1 では主要 copy 翻訳は非対象。in-app browser のログ API には編集中の Fast Refresh warning が残る場合があるため、console clean 判定は編集後の再実行または補助 Playwright の新規 context で確認する。
 
 ## Backlog

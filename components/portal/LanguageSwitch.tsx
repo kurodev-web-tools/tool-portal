@@ -21,12 +21,13 @@ const labels: Record<Locale, { short: string; long: string; aria: string }> = {
 export function LanguageSwitch({ variant = "default" }: { variant?: LanguageSwitchVariant }) {
   const { locale, setLocale } = useLocale();
   const isCompact = variant === "compact";
+  const isDrawer = variant === "drawer";
 
   return (
     <div
       className={[
         "inline-flex items-center rounded-base border border-border bg-surface-muted p-1",
-        variant === "drawer" ? "w-full justify-between" : "",
+        isDrawer ? "shrink-0 gap-1" : "",
         isCompact ? "gap-1" : "gap-1.5"
       ].join(" ")}
       aria-label="Language"
@@ -40,7 +41,11 @@ export function LanguageSwitch({ variant = "default" }: { variant?: LanguageSwit
           onClick={() => setLocale(item)}
           className={[
             "rounded-base font-bold transition",
-            isCompact ? "min-w-9 px-2 py-1 text-xs" : "min-w-16 px-3 py-1.5 text-xs",
+            isCompact
+              ? "min-w-9 px-2 py-1 text-xs"
+              : isDrawer
+                ? "min-w-14 px-2 py-1.5 text-xs"
+                : "min-w-16 px-3 py-1.5 text-xs",
             locale === item
               ? "bg-primary text-white"
               : "text-muted hover:bg-surface hover:text-foreground"

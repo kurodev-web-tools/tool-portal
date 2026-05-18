@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LanguageSwitch } from "@/components/portal/LanguageSwitch";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import { sidebarTools } from "@/lib/tools";
 
@@ -90,7 +91,8 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
       </nav>
 
       {showWorkspaceThemeToggle ? (
-        <div className="mt-auto flex justify-center pt-8 xl:hidden">
+        <div className="mt-auto flex flex-col items-center gap-3 pt-8 xl:hidden">
+          <LanguageSwitch variant="compact" />
           <ThemeToggle variant="compact" />
         </div>
       ) : null}
@@ -107,7 +109,8 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
         </div>
         {showWorkspaceThemeToggle ? (
           <div className="panel p-4 shadow-none">
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <LanguageSwitch />
               <ThemeToggle />
             </div>
           </div>

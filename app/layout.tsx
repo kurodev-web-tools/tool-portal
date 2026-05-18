@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { LocaleProvider } from "@/components/portal/LocaleProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,7 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        <LocaleProvider>{children}</LocaleProvider>
+      </body>
     </html>
   );
 }

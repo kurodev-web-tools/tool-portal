@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LanguageSwitch } from "@/components/portal/LanguageSwitch";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import { sidebarTools } from "@/lib/tools";
 
@@ -73,7 +74,8 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
           <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
         </div>
         {showDesktopTitle ? <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span> : <span className="hidden lg:block" />}
-        <div className={mode === "workspace" ? "hidden" : "hidden lg:block"}>
+        <div className={mode === "workspace" ? "hidden" : "hidden items-center gap-3 lg:flex"}>
+          <LanguageSwitch />
           <ThemeToggle />
         </div>
         <button
@@ -136,7 +138,11 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
                 );
               })}
             </nav>
-            <div className="mt-auto rounded-base border border-border bg-surface-muted/45 px-3 py-3">
+            <div className="mt-auto space-y-3 rounded-base border border-border bg-surface-muted/45 px-3 py-3">
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-bold text-foreground">表示言語</span>
+                <LanguageSwitch variant="drawer" />
+              </div>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-bold text-foreground">表示テーマ</span>
                 <ThemeToggle />

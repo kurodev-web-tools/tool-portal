@@ -21,6 +21,13 @@
   - 非対象: URL 設計変更、大規模 i18n framework 導入、保存 schema / IndexedDB / localStorage 既存 key / handoff payload 変更、Google Calendar 連携、外部投稿連携追加は B scope に含めない。
   - PR 分割: 1) locale foundation + language switch、2) Portal / Tools、3) Schedule Calendar、4) Thumbnail Editor / SNS Split Image Maker の主要導線。各 PR は `codex/en-support-preview` 宛てにし、B 完了時点でまとめて確認してから `main` へ持っていくか判断する。
   - 検証方針: 日本語表示を壊さず、英語表示で主要導線が読めること。UI 変更 PR では `390 / 820 / 1024 / 1280 / 1366px` の幅別確認を残す。
+  - PR1 locale foundation + language switch 実装済み（branch: `codex/en-locale-foundation` / target: `codex/en-support-preview`）。
+    - 実装内容: `ja / en` の locale helper、client locale provider、language switch UI を追加。初回は `navigator.languages` の先頭が `en*` なら `en`、それ以外は `ja`。手動選択後は新規 key `v-streamer-tools-locale` の保存値を優先し、`document.documentElement.lang` を同期する。
+    - UI 配置: desktop は portal header の theme toggle 付近、mobile は hamburger drawer 内。workspace sidebar では theme toggle 付近に compact switch を追加。
+    - 検証結果: `node scripts/portal-locale-foundation-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` を実行済み。`git diff --check` は改行コード warning のみで exit 0。
+    - 幅別確認: in-app browser で `/` と `/tools` を `390 / 820 / 1024 / 1280 / 1366px` 確認。`390 / 820px` は desktop switch 非表示、drawer 内 switch 表示。`1024 / 1280 / 1366px` は desktop switch 表示、drawer 非表示。全幅で `html lang=ja` 同期、body / document 横 overflow なし。
+    - 追加確認: Playwright 補助確認で `en-US` 初回 `lang=en`、`ja-JP` 初回 `lang=ja`、手動 `ja` は `en-US` reload 後も維持、手動 `en` は `ja-JP` reload 後も維持。localhost 確認では console warn/error なし。
+    - 残リスク: PR1 では主要 copy 翻訳は非対象。in-app browser のログ API には編集中の Fast Refresh warning が残る場合があるため、console clean 判定は編集後の再実行または補助 Playwright の新規 context で確認する。
 
 ## Backlog
 

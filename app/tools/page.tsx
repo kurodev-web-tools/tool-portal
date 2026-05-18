@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { PortalToolsIndex } from "@/components/portal/PortalToolsIndex";
+import { portalMetadata } from "@/lib/portal-metadata";
+
+const toolsMetadata = portalMetadata.ja.tools;
 
 export const metadata: Metadata = {
-  title: "Tools",
-  description: "Kuro Stream Kitのツール一覧。公開版で利用できるSchedule Calendar、Thumbnail Editor、SNS分割画像メーカーと準備中の候補を確認できます。"
+  title: toolsMetadata.title,
+  description: toolsMetadata.description
 };
 
 export default function ToolsPage() {

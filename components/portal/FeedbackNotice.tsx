@@ -1,3 +1,8 @@
+"use client";
+
+import { useLocale } from "@/components/portal/LocaleProvider";
+import { portalCopy } from "@/lib/portal-copy";
+
 const feedbackLinks = {
   email: "mailto:feedback@kuro-lab.com?subject=Kuro%20Stream%20Kit%20feedback",
   x: "https://x.com/kurodev_v",
@@ -19,12 +24,15 @@ function DiscordMark() {
 }
 
 export function FeedbackNotice() {
+  const { locale } = useLocale();
+  const copy = portalCopy[locale].feedback;
+
   return (
     <section className="panel flex flex-col gap-4 p-5 shadow-none sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <p className="text-sm font-bold text-foreground">不具合報告 / 要望</p>
+        <p className="text-sm font-bold text-foreground">{copy.title}</p>
         <p className="mt-2 text-sm leading-6 text-muted">
-          表示崩れ、操作不具合、欲しい改善点はメール、X、Discord で受け付けています。
+          {copy.body}
         </p>
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -32,13 +40,13 @@ export function FeedbackNotice() {
           href={feedbackLinks.email}
           className="inline-flex min-h-10 items-center justify-center rounded-base border border-primary/50 px-4 py-2.5 text-sm font-bold text-primary-strong transition hover:bg-primary-soft/50"
         >
-          メールで送る
+          {copy.email}
         </a>
         <a
           href={feedbackLinks.x}
           target="_blank"
           rel="noreferrer"
-          aria-label="Xでkurodevを開く"
+          aria-label={copy.xAria}
           title="X"
           className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-sm font-black text-foreground transition hover:border-primary/60 hover:bg-primary-soft/40"
         >
@@ -48,7 +56,7 @@ export function FeedbackNotice() {
           href={feedbackLinks.discord}
           target="_blank"
           rel="noreferrer"
-          aria-label="Discordのツールポータル受付を開く"
+          aria-label={copy.discordAria}
           title="Discord"
           className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-foreground transition hover:border-primary/60 hover:bg-primary-soft/40"
         >

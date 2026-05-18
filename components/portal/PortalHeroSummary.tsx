@@ -1,50 +1,65 @@
+"use client";
+
 import Link from "next/link";
+import { useLocale } from "@/components/portal/LocaleProvider";
 import {
   implementedToolCount,
   suiteCount
 } from "@/lib/suites";
-
-const summaryItems = [
-  { label: "使えるツール", value: `${implementedToolCount} 個`, mark: "1", helper: "予定・サムネ・分割画像" },
-  { label: "公開導線", value: "3 ステップ", mark: "2", helper: "Schedule -> Thumbnail -> SNS" },
-  { label: "探し方", value: `${suiteCount} スイート`, mark: "3", helper: "公開中と準備中を分けて確認" }
-];
+import { portalCopy } from "@/lib/portal-copy";
 
 export function PortalHeroSummary() {
+  const { locale } = useLocale();
+  const copy = portalCopy[locale].home.hero;
+  const summaryItems = [
+    {
+      label: copy.summary.availableTools.label,
+      value: `${implementedToolCount} ${copy.summary.availableTools.unit}`,
+      mark: "1",
+      helper: copy.summary.availableTools.helper
+    },
+    { label: copy.summary.publicFlow.label, value: copy.summary.publicFlow.value, mark: "2", helper: copy.summary.publicFlow.helper },
+    {
+      label: copy.summary.suites.label,
+      value: `${suiteCount} ${copy.summary.suites.unit}`,
+      mark: "3",
+      helper: copy.summary.suites.helper
+    }
+  ];
+
   return (
     <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_30rem] lg:items-center">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-primary-strong sm:text-4xl">
-          配信準備を、いま使えるツールから。
+          {copy.title}
         </h1>
         <p className="mt-5 max-w-3xl text-base leading-8 text-foreground">
-          <span className="block">
-            Schedule Calendar、Thumbnail Editor、SNS分割画像メーカーで、予定整理から投稿用画像づくりまで進められます。
-          </span>
-          <span className="block">
-            準備中の候補は一覧で分けて表示し、まず使える導線を迷わず開けるようにしています。
-          </span>
+          {copy.paragraphs.map((paragraph) => (
+            <span key={paragraph} className="block">
+              {paragraph}
+            </span>
+          ))}
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/tools"
             className="inline-flex items-center justify-center rounded-base bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-strong"
           >
-            ツール一覧を見る
+            {copy.primaryCta}
           </Link>
           <Link
             href="/tools/schedule-calendar"
             className="inline-flex items-center justify-center rounded-base border border-primary/50 px-4 py-2 text-sm font-bold text-primary-strong transition hover:bg-primary-soft/50"
           >
-            Schedule Calendar を開く
+            {copy.secondaryCta}
           </Link>
         </div>
       </div>
       <div className="rounded-base border border-border bg-primary-soft/55 p-4 sm:p-6 lg:p-7">
         <div>
-          <p className="text-sm font-bold text-primary-strong">公開中の使い方</p>
+          <p className="text-sm font-bold text-primary-strong">{copy.panelTitle}</p>
           <p className="mt-2 text-sm leading-6 text-muted">
-            入口では今すぐ使える3ツールを優先し、追加予定の候補は状態を分けて表示します。
+            {copy.panelLead}
           </p>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:mt-6 lg:gap-4">

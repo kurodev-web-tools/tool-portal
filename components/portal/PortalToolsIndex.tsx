@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FeedbackNotice } from "@/components/portal/FeedbackNotice";
+import { useLocale } from "@/components/portal/LocaleProvider";
 import { PortalFilterBar } from "@/components/portal/PortalFilterBar";
 import { ToolCard } from "@/components/portal/ToolCard";
+import { getSuiteCopy, portalCopy } from "@/lib/portal-copy";
 import { tools } from "@/lib/tools";
-import { suiteLabels, suites, type SuiteKey } from "@/lib/suites";
+import { suites, type SuiteKey } from "@/lib/suites";
 
 function isSuiteKey(value: string | null): value is SuiteKey {
   return Boolean(value && suites.some((suite) => suite.key === value));
@@ -23,6 +25,7 @@ function getDefaultStatusFilter(suite: SuiteKey | "all") {
 }
 
 export function PortalToolsIndex() {
+  const { locale } = useLocale();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -44,7 +47,8 @@ export function PortalToolsIndex() {
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
-  const currentSuiteName = suite === "all" ? undefined : suiteLabels[suite];
+  const copy = portalCopy[locale].tools;
+  const currentSuiteName = suite === "all" ? undefined : getSuiteCopy(suite, locale).name;
 
   const filteredTools = tools.filter((tool) => {
     const suiteMatch = suite === "all" || tool.suite === suite;
@@ -57,42 +61,43 @@ export function PortalToolsIndex() {
     <div className="space-y-5">
       <section className="panel flex flex-col gap-5 p-6 sm:p-7 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-bold text-primary-strong">Tools</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">ツール一覧</h1>
+          <p className="text-sm font-bold text-primary-strong">{copy.eyebrow}</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground">{copy.title}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted">
-            Schedule Calendar / Thumbnail Editor / SNS分割画像メーカーを公開中です。追加予定の候補は準備中として分け、必要なときだけ絞り込んで確認できます。
+            {copy.description}
           </p>
           {currentSuiteName ? (
             <div className="mt-4 inline-flex items-center gap-2 rounded-base bg-primary-soft px-3 py-2 text-sm font-bold text-primary-strong">
               <span aria-hidden="true">●</span>
-              {currentSuiteName}を表示中
+              {locale === "ja" ? `${currentSuiteName}${copy.currentSuiteSuffix}` : `${currentSuiteName} ${copy.currentSuiteSuffix}`}
             </div>
           ) : null}
         </div>
         <div className="rounded-base border border-border bg-surface-muted px-4 py-3 text-sm text-muted">
           <span className="font-bold text-foreground">{filteredTools.length}</span>
-          <span> / {tools.length} 件を表示中</span>
+          <span> / {tools.length} {copy.resultCountSuffix}</span>
         </div>
       </section>
       <PortalFilterBar
         suite={suite}
         category={category}
         status={status}
+        locale={locale}
         onSuiteChange={handleSuiteChange}
         onCategoryChange={setCategory}
         onStatusChange={setStatus}
       />
       <FeedbackNotice />
-      <section aria-label="ツール一覧">
+      <section aria-label={copy.listLabel}>
         {filteredTools.length > 0 ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {filteredTools.map((tool) => (
-              <ToolCard key={tool.id} tool={tool} />
+              <ToolCard key={tool.id} tool={tool} locale={locale} />
             ))}
           </div>
         ) : (
           <div className="panel p-8 text-center text-sm text-muted">
-            条件に一致するツールはまだありません。
+            {copy.empty}
           </div>
         )}
       </section>

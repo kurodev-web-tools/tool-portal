@@ -109,7 +109,7 @@ export const scheduleCalendarCopy = {
       announcementStatus: "告知ステータス"
     },
     empty: {
-      events: "予定はまだありません。",
+      events: "予定なし",
       searchResults: "条件に一致する予定はありません。"
     },
     eventDetail: {

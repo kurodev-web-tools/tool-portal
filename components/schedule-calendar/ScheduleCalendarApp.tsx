@@ -3274,6 +3274,7 @@ export function ScheduleCalendarApp() {
   const [mobileScheduleMode, setMobileScheduleMode] = useState<MobileScheduleMode>("edit");
   const [tabletPreviewDismissed, setTabletPreviewDismissed] = useState(true);
   const [pendingUndo, setPendingUndo] = useState<PendingUndo | null>(null);
+  const schedulePanelScrollRef = useRef<HTMLElement | null>(null);
   const mobileSheetDragStartYRef = useRef<number | null>(null);
   const skipNextStorageWriteRef = useRef(false);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -3285,6 +3286,12 @@ export function ScheduleCalendarApp() {
     () => getLocalizedHashtagSets(userHashtagSets, locale),
     [locale, userHashtagSets]
   );
+
+  function resetSchedulePanelScroll() {
+    window.setTimeout(() => {
+      schedulePanelScrollRef.current?.scrollTo({ top: 0 });
+    }, 0);
+  }
 
   useEffect(() => {
     const currentDate = new Date();
@@ -3575,6 +3582,7 @@ export function ScheduleCalendarApp() {
     setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
     setStatusMessage("");
+    resetSchedulePanelScroll();
   }
 
   function createEventAt(minutes: number) {
@@ -3594,6 +3602,7 @@ export function ScheduleCalendarApp() {
     setMobileScheduleMode("edit");
     setMobileSheetOpen(true);
     setStatusMessage("");
+    resetSchedulePanelScroll();
   }
 
   function saveDraft() {
@@ -4108,6 +4117,8 @@ export function ScheduleCalendarApp() {
           />
         ) : null}
         <aside
+          ref={schedulePanelScrollRef}
+          data-schedule-panel-scroll-root="true"
           onPointerDown={() => setTabletPreviewDismissed(true)}
           className={[
             "scrollbar-accent min-h-0 overflow-y-auto bg-surface px-3 pb-3 pt-0 transition-transform lg:[scrollbar-gutter:stable] xl:px-4 xl:pb-4 xl:pt-0",

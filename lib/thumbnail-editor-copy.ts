@@ -1044,7 +1044,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     },
     announcement: {
       "テキスト 4（ラベル）": "NEWS",
-      "テキスト 1（見出し）": "Key\nNotice",
+      "テキスト 1（見出し）": "Key Notice",
       "テキスト 2（時刻）": "5/10 RELEASE",
       "テキスト 3（サブ）": "Upcoming activities"
     },
@@ -1128,6 +1128,9 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
       "テキスト 4（ラベル）": { x: 174.93151348052112, y: 138.8275087929357 },
       "テキスト 1（見出し）": { x: 605.6550417780398 },
       "テキスト 2（時刻）": { x: 853.3798328878412, y: 282.310035171743 }
+    },
+    announcement: {
+      "テキスト 1（見出し）": { x: 264.34495822196027, y: 270.0698944847714 }
     },
     karaoke: {
       "テキスト 1（見出し）": { x: 181.62079851830015, y: 119.27508792935723, fontSize: 166 },

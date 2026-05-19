@@ -109,6 +109,8 @@ const estimateAsciiTextWidth = (line, layer) => {
           ? 0.49
           : layer.fontFamily === "Zen Kaku Gothic New"
             ? 0.48
+            : layer.fontFamily === "Noto Serif JP"
+              ? 0.48
           : 0.55;
   return Array.from(line).reduce((total, character) => total + (/[ -~]/.test(character) ? fontWidthRatio : 1), 0) * layer.fontSize * 0.9;
 };
@@ -137,6 +139,7 @@ const visualAdjustmentTargets = new Set([
   "clip/テキスト 4（ラベル）",
   "clip/テキスト 1（見出し）",
   "clip/テキスト 2（時刻）",
+  "announcement/テキスト 1（見出し）",
   "karaoke/テキスト 1（見出し）",
   "karaoke/テキスト 5（見出し英字）",
   "karaoke/テキスト 2（時刻）",
@@ -547,6 +550,26 @@ assert.equal(
   textLayers(enCollaborationDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
   "20:00 START",
   "Collaboration time copy follows the supplied English visual draft"
+);
+const enAnnouncementDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("announcement"),
+  "en"
+);
+const enAnnouncementHeadline = textLayers(enAnnouncementDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enAnnouncementHeadline?.text,
+  "Key Notice",
+  "Announcement headline copy follows the supplied English visual draft"
+);
+assert.equal(
+  enAnnouncementHeadline?.x,
+  264.34495822196027,
+  "Announcement headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enAnnouncementHeadline?.y,
+  270.0698944847714,
+  "Announcement headline y follows the supplied English visual draft"
 );
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(

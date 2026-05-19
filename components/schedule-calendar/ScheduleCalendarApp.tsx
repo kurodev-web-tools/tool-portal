@@ -17,6 +17,7 @@ import {
   getEventPeriodOptions,
   getEventSortOptions,
   getLocalizedCategoryOptions,
+  getLocalizedHashtagSets,
   getLocalizedPostTemplates,
   getPostTemplateUsageOptions,
   getRecurrenceOptions,
@@ -3280,6 +3281,10 @@ export function ScheduleCalendarApp() {
     () => getLocalizedPostTemplates(userPostTemplates, locale),
     [locale, userPostTemplates]
   );
+  const localizedHashtagSets = useMemo(
+    () => getLocalizedHashtagSets(userHashtagSets, locale),
+    [locale, userHashtagSets]
+  );
 
   useEffect(() => {
     const currentDate = new Date();
@@ -3336,8 +3341,8 @@ export function ScheduleCalendarApp() {
   );
   const selectedDayEvents = useMemo(() => getEventsForDate(events, selectedDateKey), [events, selectedDateKey]);
   const selectedHashtagSets = useMemo(
-    () => userHashtagSets.filter((hashtagSet) => selectedHashtagSetIds.includes(hashtagSet.id)),
-    [selectedHashtagSetIds, userHashtagSets]
+    () => localizedHashtagSets.filter((hashtagSet) => selectedHashtagSetIds.includes(hashtagSet.id)),
+    [localizedHashtagSets, selectedHashtagSetIds]
   );
   const postText = useMemo(
     () =>
@@ -4073,7 +4078,7 @@ export function ScheduleCalendarApp() {
             <MobileSettingsPanel
               settings={settings}
               templates={localizedPostTemplates}
-              hashtagSets={userHashtagSets}
+              hashtagSets={localizedHashtagSets}
               templateDraft={templateDraft}
               hashtagSetDraft={hashtagSetDraft}
               importText={importText}
@@ -4184,7 +4189,7 @@ export function ScheduleCalendarApp() {
                 selectedEvent={selectedEvent}
                 dayEvents={selectedDayEvents}
                 draft={draft}
-                hashtagSets={userHashtagSets}
+                hashtagSets={localizedHashtagSets}
                 statusMessage={statusMessage}
                 mobileMode={mobileScheduleMode}
                 onDraftChange={setDraft}
@@ -4201,7 +4206,7 @@ export function ScheduleCalendarApp() {
               <PostAssistPanel
                 selectedEvent={selectedEvent}
                 templates={localizedPostTemplates}
-                hashtagSets={userHashtagSets}
+                hashtagSets={localizedHashtagSets}
                 templateId={templateId}
                 selectedHashtagSetIds={selectedHashtagSetIds}
                 postText={postText}
@@ -4231,7 +4236,7 @@ export function ScheduleCalendarApp() {
                 <DesktopSettingsPanel
                   settings={settings}
                   templates={localizedPostTemplates}
-                  hashtagSets={userHashtagSets}
+                  hashtagSets={localizedHashtagSets}
                   templateDraft={templateDraft}
                   hashtagSetDraft={hashtagSetDraft}
                   importText={importText}

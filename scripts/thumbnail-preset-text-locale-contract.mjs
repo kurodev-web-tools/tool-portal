@@ -100,7 +100,8 @@ const layoutSnapshot = (draft) =>
     align: layer.align
   }));
 const estimateAsciiTextWidth = (line, layer) => {
-  const fontWidthRatio = layer.fontFamily === "Bebas Neue" ? 0.28 : layer.fontFamily === "Orbitron" ? 0.42 : 0.55;
+  const fontWidthRatio =
+    layer.fontFamily === "Bebas Neue" ? 0.28 : layer.fontFamily === "Orbitron" || layer.fontFamily === "Montserrat" ? 0.42 : 0.55;
   return Array.from(line).reduce((total, character) => total + (/[ -~]/.test(character) ? fontWidthRatio : 1), 0) * layer.fontSize * 0.9;
 };
 const maxEstimatedTextWidthRatio = (layer) =>
@@ -118,6 +119,9 @@ const visualAdjustmentTargets = new Set([
   "endurance_stream/テキスト 5（目標）",
   "endurance_stream/テキスト 3（サブ）",
   "endurance_stream/テキスト 2（時刻）",
+  "project_stream/テキスト 5（英字）",
+  "project_stream/テキスト 1（見出し）",
+  "project_stream/テキスト 3（サブ）",
   "karaoke/テキスト 1（見出し）"
 ]);
 
@@ -348,6 +352,48 @@ assert.equal(
   enEnduranceTime?.y,
   106.38891400669138,
   "Endurance Stream time y follows the supplied English visual draft"
+);
+const enProjectDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("project_stream"),
+  "en"
+);
+const enProjectEnglish = textLayers(enProjectDraft).find((layer) => layer.name === "テキスト 5（英字）");
+assert.equal(
+  enProjectEnglish?.x,
+  70.72194906920748,
+  "Project Stream English label x follows the supplied English visual draft"
+);
+assert.equal(
+  enProjectEnglish?.y,
+  43.83235373903608,
+  "Project Stream English label y follows the supplied English visual draft"
+);
+const enProjectHeadline = textLayers(enProjectDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enProjectHeadline?.x,
+  152.27771184429145,
+  "Project Stream headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enProjectHeadline?.y,
+  91.05362148476354,
+  "Project Stream headline y follows the supplied English visual draft"
+);
+const enProjectSub = textLayers(enProjectDraft).find((layer) => layer.name === "テキスト 3（サブ）");
+assert.equal(
+  enProjectSub?.x,
+  169.72228815570855,
+  "Project Stream sub x follows the supplied English visual draft"
+);
+assert.equal(
+  enProjectSub?.y,
+  497.0004521204449,
+  "Project Stream sub y follows the supplied English visual draft"
+);
+assert.equal(
+  textLayers(enProjectDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "20:30 START",
+  "Project Stream time copy follows the supplied English visual draft"
 );
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(

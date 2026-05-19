@@ -983,7 +983,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 1（見出し）": "New\nProject",
       "テキスト 3（サブ）": "What's next?",
       "テキスト 4（ラベル）": "Viewer Event",
-      "テキスト 2（時刻）": "20:30"
+      "テキスト 2（時刻）": "20:30 START"
     },
     cover_song_notice: {
       "テキスト 5（カバーアート注記）": "COVER ART / MV",
@@ -1108,6 +1108,11 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
       "テキスト 5（目標）": { x: 180.94449153979178, y: 522.0567863278777 },
       "テキスト 3（サブ）": { x: 50.944152453290826, y: 655.3348404014829 },
       "テキスト 2（時刻）": { x: 107.66677969550031, y: 106.38891400669138 }
+    },
+    project_stream: {
+      "テキスト 5（英字）": { x: 70.72194906920748, y: 43.83235373903608 },
+      "テキスト 1（見出し）": { x: 152.27771184429145, y: 91.05362148476354 },
+      "テキスト 3（サブ）": { x: 169.72228815570855, y: 497.0004521204449 }
     },
     karaoke: {
       "テキスト 1（見出し）": { fontSize: 166 }

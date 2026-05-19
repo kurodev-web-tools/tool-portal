@@ -237,7 +237,21 @@
 - Thumbnail Editor:
   - shortened long English preset initial text for time/sub/label/headline layers that were visually heavy in English mode.
   - added `getThumbnailPresetTextLayerVisualAdjustment()` and an EN-only visual adjustment map in `lib/thumbnail-editor-copy.ts`.
-  - limited layout adjustment to `endurance_stream` and `karaoke` headline font size during English draft creation/apply only.
+  - limited layout adjustment to targeted English text layers during English draft creation/apply only.
+  - incorporated the supplied `stream_announce` English draft: restored `21:00 START` time text and applied the headline `x/y` adjustment from the draft JSON.
+  - incorporated the supplied `first_stream` English draft: applied headline/time/sub `x/y` adjustments from the draft JSON while keeping text copy unchanged.
+  - incorporated the supplied `anniversary_stream` English draft: applied the one-line headline/time copy and headline/sub/time layout adjustments from the draft JSON.
+  - incorporated the supplied `endurance_stream` English draft: restored `19:00 START`, applied label/headline/goal/sub/time layout adjustments, and aligned the contract width estimator with Orbitron's narrow display.
+  - incorporated the supplied `project_stream` English draft: restored `20:30 START`, applied English-label/headline/sub layout adjustments, and aligned the contract width estimator with Montserrat's display width.
+  - incorporated the supplied `cover_song_notice` English draft: applied the one-line headline, `20:00 public` time copy, label/headline layout adjustments, and aligned the contract width estimator with `M PLUS Rounded 1c`.
+  - incorporated the supplied `event_notice` English draft: applied the one-line headline and headline layout adjustment, and aligned the contract width estimator with `Zen Kaku Gothic New`.
+  - incorporated the supplied `privacy_notice` English draft: restored `20:00 START` and applied the headline layout adjustment.
+  - incorporated the supplied `karaoke` English draft: applied the `song/frame` headline, restored `20:00 START`, and applied headline/English-headline/time/sub layout adjustments.
+  - incorporated the supplied `chatting` English draft: restored `21:00 START` while keeping existing text-layer layout unchanged.
+  - incorporated the supplied `clip` English draft: applied `20:00 / public` time copy and label/headline/time layout adjustments.
+  - incorporated the supplied `game_live` English draft: restored `20:00 START` while keeping existing text-layer layout unchanged.
+  - incorporated the supplied `collaboration` English draft: restored `20:00 START` while keeping existing text-layer layout unchanged.
+  - incorporated the supplied `announcement` English draft: applied the one-line headline and headline layout adjustment, and aligned the contract width estimator with `Noto Serif JP`.
   - kept Japanese preset text/layout unchanged, and kept preset ids, stored `layer.name`, matching keys, weekly grouping keys, storage/schema, and handoff payload unchanged.
   - Schedule Calendar handoff text still overrides English preset initial text and EN layout helper output after preset apply.
 - Verification:

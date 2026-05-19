@@ -99,12 +99,51 @@ const layoutSnapshot = (draft) =>
     lineHeight: layer.lineHeight,
     align: layer.align
   }));
-const estimateAsciiTextWidth = (line, fontSize) => Array.from(line).reduce((total, character) => total + (/[ -~]/.test(character) ? 0.55 : 1), 0) * fontSize * 0.9;
+const estimateAsciiTextWidth = (line, layer) => {
+  const fontWidthRatio =
+    layer.fontFamily === "Bebas Neue"
+      ? 0.28
+      : layer.fontFamily === "Orbitron" || layer.fontFamily === "Montserrat"
+        ? 0.42
+        : layer.fontFamily === "M PLUS Rounded 1c"
+          ? 0.49
+          : layer.fontFamily === "Zen Kaku Gothic New"
+            ? 0.48
+            : layer.fontFamily === "Noto Serif JP"
+              ? 0.48
+          : 0.55;
+  return Array.from(line).reduce((total, character) => total + (/[ -~]/.test(character) ? fontWidthRatio : 1), 0) * layer.fontSize * 0.9;
+};
 const maxEstimatedTextWidthRatio = (layer) =>
-  Math.max(...layer.text.split("\n").map((line) => (line.trim() ? estimateAsciiTextWidth(line.trim(), layer.fontSize) / layer.width : 0)));
+  Math.max(...layer.text.split("\n").map((line) => (line.trim() ? estimateAsciiTextWidth(line.trim(), layer) / layer.width : 0)));
 const visualAdjustmentTargets = new Set([
+  "stream_announce/テキスト 1（見出し）",
+  "first_stream/テキスト 1（見出し）",
+  "first_stream/テキスト 2（時刻）",
+  "first_stream/テキスト 3（サブ）",
+  "anniversary_stream/テキスト 1（見出し）",
+  "anniversary_stream/テキスト 2（時刻）",
+  "anniversary_stream/テキスト 3（サブ）",
+  "endurance_stream/テキスト 4（ラベル）",
   "endurance_stream/テキスト 1（見出し）",
-  "karaoke/テキスト 1（見出し）"
+  "endurance_stream/テキスト 5（目標）",
+  "endurance_stream/テキスト 3（サブ）",
+  "endurance_stream/テキスト 2（時刻）",
+  "project_stream/テキスト 5（英字）",
+  "project_stream/テキスト 1（見出し）",
+  "project_stream/テキスト 3（サブ）",
+  "cover_song_notice/テキスト 4（ラベル）",
+  "cover_song_notice/テキスト 1（見出し）",
+  "event_notice/テキスト 1（見出し）",
+  "privacy_notice/テキスト 1（見出し）",
+  "clip/テキスト 4（ラベル）",
+  "clip/テキスト 1（見出し）",
+  "clip/テキスト 2（時刻）",
+  "announcement/テキスト 1（見出し）",
+  "karaoke/テキスト 1（見出し）",
+  "karaoke/テキスト 5（見出し英字）",
+  "karaoke/テキスト 2（時刻）",
+  "karaoke/テキスト 3（サブ）"
 ]);
 
 for (const preset of thumbnailLib.thumbnailPresets) {
@@ -166,8 +205,371 @@ for (const preset of thumbnailLib.thumbnailPresets) {
 const enStreamDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("stream_announce"), "en");
 assert.equal(
   textLayers(enStreamDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
-  "21:00",
-  "Stream Announcement time copy is shortened for English visual balance"
+  "21:00 START",
+  "Stream Announcement time copy follows the supplied English visual draft"
+);
+const enStreamHeadline = textLayers(enStreamDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enStreamHeadline?.x,
+  116.33322030449972,
+  "Stream Announcement headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enStreamHeadline?.y,
+  145.33348404014833,
+  "Stream Announcement headline y follows the supplied English visual draft"
+);
+const enFirstStreamDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("first_stream"), "en");
+const enFirstHeadline = textLayers(enFirstStreamDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enFirstHeadline?.x,
+  106.72245769895892,
+  "First Stream headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enFirstHeadline?.y,
+  175.77737589293787,
+  "First Stream headline y follows the supplied English visual draft"
+);
+const enFirstTime = textLayers(enFirstStreamDraft).find((layer) => layer.name === "テキスト 2（時刻）");
+assert.equal(
+  enFirstTime?.x,
+  140.83330507612487,
+  "First Stream time x follows the supplied English visual draft"
+);
+assert.equal(
+  enFirstTime?.y,
+  528.3343882810381,
+  "First Stream time y follows the supplied English visual draft"
+);
+const enFirstSub = textLayers(enFirstStreamDraft).find((layer) => layer.name === "テキスト 3（サブ）");
+assert.equal(
+  enFirstSub?.x,
+  86.83313553287445,
+  "First Stream sub x follows the supplied English visual draft"
+);
+assert.equal(
+  enFirstSub?.y,
+  608.3884618862465,
+  "First Stream sub y follows the supplied English visual draft"
+);
+const enAnniversaryDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("anniversary_stream"),
+  "en"
+);
+const enAnniversaryHeadline = textLayers(enAnniversaryDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enAnniversaryHeadline?.text,
+  "1st Anniv.",
+  "Anniversary Stream headline copy follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversaryHeadline?.x,
+  73.66627106574896,
+  "Anniversary Stream headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversaryHeadline?.y,
+  214.6669680802966,
+  "Anniversary Stream headline y follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversaryHeadline?.align,
+  "center",
+  "Anniversary Stream headline align follows the supplied English visual draft"
+);
+const enAnniversarySub = textLayers(enAnniversaryDraft).find((layer) => layer.name === "テキスト 3（サブ）");
+assert.equal(
+  enAnniversarySub?.x,
+  103.55559323183354,
+  "Anniversary Stream sub x follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversarySub?.y,
+  477.77737589293787,
+  "Anniversary Stream sub y follows the supplied English visual draft"
+);
+const enAnniversaryTime = textLayers(enAnniversaryDraft).find((layer) => layer.name === "テキスト 2（時刻）");
+assert.equal(
+  enAnniversaryTime?.text,
+  "21:00 START",
+  "Anniversary Stream time copy follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversaryTime?.x,
+  276.61110169204164,
+  "Anniversary Stream time x follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversaryTime?.y,
+  588.3889140066914,
+  "Anniversary Stream time y follows the supplied English visual draft"
+);
+const enEnduranceDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("endurance_stream"),
+  "en"
+);
+const enEnduranceLabel = textLayers(enEnduranceDraft).find((layer) => layer.name === "テキスト 4（ラベル）");
+assert.equal(
+  enEnduranceLabel?.x,
+  733.555762775084,
+  "Endurance Stream label x follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceLabel?.y,
+  116.05452572565329,
+  "Endurance Stream label y follows the supplied English visual draft"
+);
+const enEnduranceHeadline = textLayers(enEnduranceDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enEnduranceHeadline?.x,
+  61.222203384083286,
+  "Endurance Stream headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceHeadline?.y,
+  182.72194592639477,
+  "Endurance Stream headline y follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceHeadline?.fontSize,
+  140,
+  "Endurance Stream headline keeps the English-only font size adjustment"
+);
+const enEnduranceGoal = textLayers(enEnduranceDraft).find((layer) => layer.name === "テキスト 5（目標）");
+assert.equal(
+  enEnduranceGoal?.x,
+  180.94449153979178,
+  "Endurance Stream goal x follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceGoal?.y,
+  522.0567863278777,
+  "Endurance Stream goal y follows the supplied English visual draft"
+);
+const enEnduranceSub = textLayers(enEnduranceDraft).find((layer) => layer.name === "テキスト 3（サブ）");
+assert.equal(
+  enEnduranceSub?.x,
+  50.944152453290826,
+  "Endurance Stream sub x follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceSub?.y,
+  655.3348404014829,
+  "Endurance Stream sub y follows the supplied English visual draft"
+);
+const enEnduranceTime = textLayers(enEnduranceDraft).find((layer) => layer.name === "テキスト 2（時刻）");
+assert.equal(
+  enEnduranceTime?.text,
+  "19:00 START",
+  "Endurance Stream time copy follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceTime?.x,
+  107.66677969550031,
+  "Endurance Stream time x follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceTime?.y,
+  106.38891400669138,
+  "Endurance Stream time y follows the supplied English visual draft"
+);
+const enProjectDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("project_stream"),
+  "en"
+);
+const enProjectEnglish = textLayers(enProjectDraft).find((layer) => layer.name === "テキスト 5（英字）");
+assert.equal(
+  enProjectEnglish?.x,
+  70.72194906920748,
+  "Project Stream English label x follows the supplied English visual draft"
+);
+assert.equal(
+  enProjectEnglish?.y,
+  43.83235373903608,
+  "Project Stream English label y follows the supplied English visual draft"
+);
+const enProjectHeadline = textLayers(enProjectDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enProjectHeadline?.x,
+  152.27771184429145,
+  "Project Stream headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enProjectHeadline?.y,
+  91.05362148476354,
+  "Project Stream headline y follows the supplied English visual draft"
+);
+const enProjectSub = textLayers(enProjectDraft).find((layer) => layer.name === "テキスト 3（サブ）");
+assert.equal(
+  enProjectSub?.x,
+  169.72228815570855,
+  "Project Stream sub x follows the supplied English visual draft"
+);
+assert.equal(
+  enProjectSub?.y,
+  497.0004521204449,
+  "Project Stream sub y follows the supplied English visual draft"
+);
+assert.equal(
+  textLayers(enProjectDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "20:30 START",
+  "Project Stream time copy follows the supplied English visual draft"
+);
+const enCoverSongDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("cover_song_notice"),
+  "en"
+);
+const enCoverSongLabel = textLayers(enCoverSongDraft).find((layer) => layer.name === "テキスト 4（ラベル）");
+assert.equal(
+  enCoverSongLabel?.x,
+  258.3120469977875,
+  "Cover Song Notice label x follows the supplied English visual draft"
+);
+const enCoverSongHeadline = textLayers(enCoverSongDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enCoverSongHeadline?.text,
+  "Cover Song",
+  "Cover Song Notice headline copy follows the supplied English visual draft"
+);
+assert.equal(
+  enCoverSongHeadline?.x,
+  18.186999313344018,
+  "Cover Song Notice headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enCoverSongHeadline?.y,
+  241.06307222787393,
+  "Cover Song Notice headline y follows the supplied English visual draft"
+);
+assert.equal(
+  textLayers(enCoverSongDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "20:00 public",
+  "Cover Song Notice time copy follows the supplied English visual draft"
+);
+const enEventDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("event_notice"),
+  "en"
+);
+const enEventHeadline = textLayers(enEventDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enEventHeadline?.text,
+  "Event Notice",
+  "Event Notice headline copy follows the supplied English visual draft"
+);
+assert.equal(
+  enEventHeadline?.x,
+  35.03487466588092,
+  "Event Notice headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enEventHeadline?.y,
+  157.82750879293576,
+  "Event Notice headline y follows the supplied English visual draft"
+);
+const enPrivacyDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("privacy_notice"),
+  "en"
+);
+const enPrivacyHeadline = textLayers(enPrivacyDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enPrivacyHeadline?.x,
+  109.55168059267987,
+  "Privacy Notice headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enPrivacyHeadline?.y,
+  193.6542692509167,
+  "Privacy Notice headline y follows the supplied English visual draft"
+);
+assert.equal(
+  textLayers(enPrivacyDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "20:00 START",
+  "Privacy Notice time copy follows the supplied English visual draft"
+);
+const enChattingDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("chatting"),
+  "en"
+);
+assert.equal(
+  textLayers(enChattingDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "21:00 START",
+  "Chatting time copy follows the supplied English visual draft"
+);
+const enClipDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("clip"),
+  "en"
+);
+const enClipLabel = textLayers(enClipDraft).find((layer) => layer.name === "テキスト 4（ラベル）");
+assert.equal(
+  enClipLabel?.x,
+  174.93151348052112,
+  "Clip label x follows the supplied English visual draft"
+);
+assert.equal(
+  enClipLabel?.y,
+  138.8275087929357,
+  "Clip label y follows the supplied English visual draft"
+);
+const enClipHeadline = textLayers(enClipDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enClipHeadline?.x,
+  605.6550417780398,
+  "Clip headline x follows the supplied English visual draft"
+);
+const enClipTime = textLayers(enClipDraft).find((layer) => layer.name === "テキスト 2（時刻）");
+assert.equal(
+  enClipTime?.text,
+  "20:00 \npublic",
+  "Clip time copy follows the supplied English visual draft"
+);
+assert.equal(
+  enClipTime?.x,
+  853.3798328878412,
+  "Clip time x follows the supplied English visual draft"
+);
+assert.equal(
+  enClipTime?.y,
+  282.310035171743,
+  "Clip time y follows the supplied English visual draft"
+);
+const enGameLiveDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("game_live"),
+  "en"
+);
+assert.equal(
+  textLayers(enGameLiveDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "20:00 START",
+  "Game Live time copy follows the supplied English visual draft"
+);
+const enCollaborationDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("collaboration"),
+  "en"
+);
+assert.equal(
+  textLayers(enCollaborationDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "20:00 START",
+  "Collaboration time copy follows the supplied English visual draft"
+);
+const enAnnouncementDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("announcement"),
+  "en"
+);
+const enAnnouncementHeadline = textLayers(enAnnouncementDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enAnnouncementHeadline?.text,
+  "Key Notice",
+  "Announcement headline copy follows the supplied English visual draft"
+);
+assert.equal(
+  enAnnouncementHeadline?.x,
+  264.34495822196027,
+  "Announcement headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enAnnouncementHeadline?.y,
+  270.0698944847714,
+  "Announcement headline y follows the supplied English visual draft"
 );
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(
@@ -175,10 +577,64 @@ assert.equal(
   "Requests welcome",
   "Karaoke sub copy is shortened for English visual balance"
 );
+const enKaraokeHeadline = textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 1（見出し）");
 assert.equal(
-  textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 1（見出し）")?.fontSize,
+  enKaraokeHeadline?.text,
+  "song\nframe",
+  "Karaoke headline copy follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeHeadline?.fontSize,
   166,
   "Karaoke headline gets an English-only font size adjustment"
+);
+assert.equal(
+  enKaraokeHeadline?.x,
+  181.62079851830015,
+  "Karaoke headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeHeadline?.y,
+  119.27508792935723,
+  "Karaoke headline y follows the supplied English visual draft"
+);
+const enKaraokeEnglishHeadline = textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 5（見出し英字）");
+assert.equal(
+  enKaraokeEnglishHeadline?.x,
+  67.93088207437961,
+  "Karaoke English headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeEnglishHeadline?.y,
+  464.89740327770704,
+  "Karaoke English headline y follows the supplied English visual draft"
+);
+const enKaraokeTime = textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 2（時刻）");
+assert.equal(
+  enKaraokeTime?.text,
+  "20:00 START",
+  "Karaoke time copy follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeTime?.x,
+  236.0691179256204,
+  "Karaoke time x follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeTime?.y,
+  555.0349472423857,
+  "Karaoke time y follows the supplied English visual draft"
+);
+const enKaraokeSub = textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 3（サブ）");
+assert.equal(
+  enKaraokeSub?.x,
+  52.37920148169968,
+  "Karaoke sub x follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeSub?.y,
+  650.241637356881,
+  "Karaoke sub y follows the supplied English visual draft"
 );
 
 for (const target of thumbnailLib.thumbnailMainTextCarryoverTargets) {

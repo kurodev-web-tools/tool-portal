@@ -956,7 +956,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     stream_announce: {
       "テキスト 4（ラベル）": "Stream / YouTube",
       "テキスト 1（見出し）": "FIRST TIME\nWELCOME!",
-      "テキスト 2（時刻）": "21:00",
+      "テキスト 2（時刻）": "21:00 START",
       "テキスト 3（サブ）": "Hang out together!"
     },
     first_stream: {
@@ -966,36 +966,36 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 3（サブ）": "Nice to meet you!"
     },
     anniversary_stream: {
-      "テキスト 1（見出し）": "1st\nAnniv.",
+      "テキスト 1（見出し）": "1st Anniv.",
       "テキスト 4（ラベル）": "ANNIV. LIVE",
       "テキスト 3（サブ）": "A special night of thanks",
-      "テキスト 2（時刻）": "21:00"
+      "テキスト 2（時刻）": "21:00 START"
     },
     endurance_stream: {
       "テキスト 4（ラベル）": "CHALLENGE",
       "テキスト 1（見出し）": "Endurance\nLive",
       "テキスト 5（目標）": "100-run goal",
       "テキスト 3（サブ）": "Clear until we win",
-      "テキスト 2（時刻）": "19:00"
+      "テキスト 2（時刻）": "19:00 START"
     },
     project_stream: {
       "テキスト 5（英字）": "SPECIAL PROGRAM",
       "テキスト 1（見出し）": "New\nProject",
       "テキスト 3（サブ）": "What's next?",
       "テキスト 4（ラベル）": "Viewer Event",
-      "テキスト 2（時刻）": "20:30"
+      "テキスト 2（時刻）": "20:30 START"
     },
     cover_song_notice: {
       "テキスト 5（カバーアート注記）": "COVER ART / MV",
       "テキスト 4（ラベル）": "PREMIERE",
-      "テキスト 1（見出し）": "Cover\nSong",
+      "テキスト 1（見出し）": "Cover Song",
       "テキスト 3（サブ）": "New cover release",
-      "テキスト 2（時刻）": "20:00"
+      "テキスト 2（時刻）": "20:00 public"
     },
     event_notice: {
       "テキスト 5（キービジュアル注記）": "KEY VISUAL",
       "テキスト 4（ラベル）": "EVENT INFO",
-      "テキスト 1（見出し）": "Event\nNotice",
+      "テキスト 1（見出し）": "Event Notice",
       "テキスト 2（時刻）": "06.15 SAT",
       "テキスト 3（サブ）": "Event details inside"
     },
@@ -1003,7 +1003,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 4（ラベル）": "SAFE NOTICE",
       "テキスト 1（見出し）": "Schedule\nNotice",
       "テキスト 3（サブ）": "Details on stream day",
-      "テキスト 2（時刻）": "20:00"
+      "テキスト 2（時刻）": "20:00 START"
     },
     whiteboard_plan: {
       "テキスト 4（ラベル）": "TODAY'S PLAN",
@@ -1013,38 +1013,38 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     },
     karaoke: {
       "テキスト 4（ラベル）": "KARAOKE LIVE",
-      "テキスト 1（見出し）": "Karaoke\nLive",
+      "テキスト 1（見出し）": "song\nframe",
       "テキスト 5（見出し英字）": "SINGING STREAM",
-      "テキスト 2（時刻）": "20:00",
+      "テキスト 2（時刻）": "20:00 START",
       "テキスト 3（サブ）": "Requests welcome"
     },
     chatting: {
       "テキスト 4（ラベル）": "CHATTING / YouTube",
       "テキスト 1（見出し）": "Chat\nStream",
-      "テキスト 2（時刻）": "21:00",
+      "テキスト 2（時刻）": "21:00 START",
       "テキスト 3（サブ）": "Let's sort out today's topics"
     },
     clip: {
       "テキスト 4（ラベル）": "CLIP",
       "テキスト 1（見出し）": "Best\nMoments",
-      "テキスト 2（時刻）": "20:00",
+      "テキスト 2（時刻）": "20:00 \npublic",
       "テキスト 3（サブ）": "Short premiere"
     },
     game_live: {
       "テキスト 4（ラベル）": "GAME LIVE",
       "テキスト 1（見出し）": "Viewer\nGame Live",
-      "テキスト 2（時刻）": "20:00",
+      "テキスト 2（時刻）": "20:00 START",
       "テキスト 3（サブ）": "Play along with us"
     },
     collaboration: {
       "テキスト 4（ラベル）": "GUEST",
       "テキスト 1（見出し）": "Collab\nStream",
-      "テキスト 2（時刻）": "20:00",
+      "テキスト 2（時刻）": "20:00 START",
       "テキスト 3（サブ）": "Guest name / project title"
     },
     announcement: {
       "テキスト 4（ラベル）": "NEWS",
-      "テキスト 1（見出し）": "Key\nNotice",
+      "テキスト 1（見出し）": "Key Notice",
       "テキスト 2（時刻）": "5/10 RELEASE",
       "テキスト 3（サブ）": "Upcoming activities"
     },
@@ -1089,11 +1089,54 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
 > = {
   ja: {},
   en: {
+    stream_announce: {
+      "テキスト 1（見出し）": { x: 116.33322030449972, y: 145.33348404014833 }
+    },
+    first_stream: {
+      "テキスト 1（見出し）": { x: 106.72245769895892, y: 175.77737589293787 },
+      "テキスト 2（時刻）": { x: 140.83330507612487, y: 528.3343882810381 },
+      "テキスト 3（サブ）": { x: 86.83313553287445, y: 608.3884618862465 }
+    },
+    anniversary_stream: {
+      "テキスト 1（見出し）": { x: 73.66627106574896, y: 214.6669680802966, align: "center" },
+      "テキスト 3（サブ）": { x: 103.55559323183354, y: 477.77737589293787 },
+      "テキスト 2（時刻）": { x: 276.61110169204164, y: 588.3889140066914 }
+    },
     endurance_stream: {
-      "テキスト 1（見出し）": { fontSize: 140 }
+      "テキスト 4（ラベル）": { x: 733.555762775084, y: 116.05452572565329 },
+      "テキスト 1（見出し）": { x: 61.222203384083286, y: 182.72194592639477, fontSize: 140 },
+      "テキスト 5（目標）": { x: 180.94449153979178, y: 522.0567863278777 },
+      "テキスト 3（サブ）": { x: 50.944152453290826, y: 655.3348404014829 },
+      "テキスト 2（時刻）": { x: 107.66677969550031, y: 106.38891400669138 }
+    },
+    project_stream: {
+      "テキスト 5（英字）": { x: 70.72194906920748, y: 43.83235373903608 },
+      "テキスト 1（見出し）": { x: 152.27771184429145, y: 91.05362148476354 },
+      "テキスト 3（サブ）": { x: 169.72228815570855, y: 497.0004521204449 }
+    },
+    cover_song_notice: {
+      "テキスト 4（ラベル）": { x: 258.3120469977875 },
+      "テキスト 1（見出し）": { x: 18.186999313344018, y: 241.06307222787393 }
+    },
+    event_notice: {
+      "テキスト 1（見出し）": { x: 35.03487466588092, y: 157.82750879293576 }
+    },
+    privacy_notice: {
+      "テキスト 1（見出し）": { x: 109.55168059267987, y: 193.6542692509167 }
+    },
+    clip: {
+      "テキスト 4（ラベル）": { x: 174.93151348052112, y: 138.8275087929357 },
+      "テキスト 1（見出し）": { x: 605.6550417780398 },
+      "テキスト 2（時刻）": { x: 853.3798328878412, y: 282.310035171743 }
+    },
+    announcement: {
+      "テキスト 1（見出し）": { x: 264.34495822196027, y: 270.0698944847714 }
     },
     karaoke: {
-      "テキスト 1（見出し）": { fontSize: 166 }
+      "テキスト 1（見出し）": { x: 181.62079851830015, y: 119.27508792935723, fontSize: 166 },
+      "テキスト 5（見出し英字）": { x: 67.93088207437961, y: 464.89740327770704 },
+      "テキスト 2（時刻）": { x: 236.0691179256204, y: 555.0349472423857 },
+      "テキスト 3（サブ）": { x: 52.37920148169968, y: 650.241637356881 }
     }
   }
 };

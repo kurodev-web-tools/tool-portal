@@ -134,6 +134,9 @@ const visualAdjustmentTargets = new Set([
   "cover_song_notice/テキスト 1（見出し）",
   "event_notice/テキスト 1（見出し）",
   "privacy_notice/テキスト 1（見出し）",
+  "clip/テキスト 4（ラベル）",
+  "clip/テキスト 1（見出し）",
+  "clip/テキスト 2（時刻）",
   "karaoke/テキスト 1（見出し）",
   "karaoke/テキスト 5（見出し英字）",
   "karaoke/テキスト 2（時刻）",
@@ -489,6 +492,43 @@ assert.equal(
   textLayers(enChattingDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
   "21:00 START",
   "Chatting time copy follows the supplied English visual draft"
+);
+const enClipDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("clip"),
+  "en"
+);
+const enClipLabel = textLayers(enClipDraft).find((layer) => layer.name === "テキスト 4（ラベル）");
+assert.equal(
+  enClipLabel?.x,
+  174.93151348052112,
+  "Clip label x follows the supplied English visual draft"
+);
+assert.equal(
+  enClipLabel?.y,
+  138.8275087929357,
+  "Clip label y follows the supplied English visual draft"
+);
+const enClipHeadline = textLayers(enClipDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enClipHeadline?.x,
+  605.6550417780398,
+  "Clip headline x follows the supplied English visual draft"
+);
+const enClipTime = textLayers(enClipDraft).find((layer) => layer.name === "テキスト 2（時刻）");
+assert.equal(
+  enClipTime?.text,
+  "20:00 \npublic",
+  "Clip time copy follows the supplied English visual draft"
+);
+assert.equal(
+  enClipTime?.x,
+  853.3798328878412,
+  "Clip time x follows the supplied English visual draft"
+);
+assert.equal(
+  enClipTime?.y,
+  282.310035171743,
+  "Clip time y follows the supplied English visual draft"
 );
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(

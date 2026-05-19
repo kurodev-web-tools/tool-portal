@@ -1027,7 +1027,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     clip: {
       "テキスト 4（ラベル）": "CLIP",
       "テキスト 1（見出し）": "Best\nMoments",
-      "テキスト 2（時刻）": "20:00",
+      "テキスト 2（時刻）": "20:00 \npublic",
       "テキスト 3（サブ）": "Short premiere"
     },
     game_live: {
@@ -1123,6 +1123,11 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
     },
     privacy_notice: {
       "テキスト 1（見出し）": { x: 109.55168059267987, y: 193.6542692509167 }
+    },
+    clip: {
+      "テキスト 4（ラベル）": { x: 174.93151348052112, y: 138.8275087929357 },
+      "テキスト 1（見出し）": { x: 605.6550417780398 },
+      "テキスト 2（時刻）": { x: 853.3798328878412, y: 282.310035171743 }
     },
     karaoke: {
       "テキスト 1（見出し）": { x: 181.62079851830015, y: 119.27508792935723, fontSize: 166 },

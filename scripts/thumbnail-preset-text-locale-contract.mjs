@@ -651,6 +651,19 @@ for (const dayName of ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜
   }
 }
 
+for (const preset of thumbnailLib.thumbnailPresets) {
+  const rawLayerNames = preset.layers.map((layer) => layer.name);
+  for (const layer of preset.layers) {
+    const displayName = thumbnailCopy.getThumbnailLayerDisplayName(layer, "en");
+    assert.equal(containsJapanese(displayName), false, `${preset.id}/${layer.name} has an English UI-only layer display name`);
+  }
+  assert.deepEqual(
+    preset.layers.map((layer) => layer.name),
+    rawLayerNames,
+    `${preset.id} keeps raw layer.name stable after resolving English display aliases`
+  );
+}
+
 assert.match(thumbnailSource, /v-streamer-tools:thumbnail-editor:draft:v1/, "Thumbnail draft storage key remains unchanged");
 assert.match(thumbnailSource, /v-streamer-tools:thumbnail-editor:preset-discovery:v1/, "Thumbnail preset discovery storage key remains unchanged");
 assert.match(handoffSource, /source: "schedule-calendar"/, "Schedule handoff source remains unchanged");

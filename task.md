@@ -14,6 +14,29 @@
 
 ## Active
 
+- Thumbnail Editor EN preset layer display name aliases
+  - branch/worktree: `codex/en-thumbnail-layer-display-alias` / `D:/V_streamer_tools/.worktrees/en-thumbnail-layer-display-alias`
+  - base: `origin/codex/en-support-preview` after PR #167 merge (`2026-05-19T13:04:35Z`)
+  - implementation:
+    - extended `getThumbnailLayerDisplayName(layer, locale)` EN token aliases for built-in preset layer semantic names.
+    - added UI-only composite token localization for weekly layer keys such as `月曜 / 曜日`, `月曜 / 時間`, and `月曜 / 予定`, while keeping raw weekly grouping keys unchanged.
+    - kept raw `layer.name`, preset ids, matching keys, storage/schema keys, and handoff payload fields unchanged.
+  - contract:
+    - `scripts/thumbnail-preset-text-locale-contract.mjs` now checks every preset layer resolves to an EN display name without Japanese characters.
+    - the same contract verifies raw `layer.name` stays stable after resolving EN display aliases.
+  - verification:
+    - PASS: `node scripts/en-c-scope-copy-contract.mjs`
+    - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+    - PASS: `node scripts/tool-handoff-contract.mjs`
+    - PASS: `npm run lint`
+    - PASS: `npx tsc --noEmit`
+    - PASS: `git diff --check` (only repo-normal LF -> CRLF working-copy warnings)
+  - width check:
+    - not run. This change is limited to helper/contract alias resolution and does not change DOM structure, layout classes, preset data, storage/schema, or handoff payloads.
+  - remaining risks:
+    - custom user-created layer names remain untranslated by design.
+    - selected-layer name input keeps the existing UI-only alias behavior: unchanged alias blur preserves the raw name, while actual manual edits still become the layer name as before.
+
 - English support C scope / pre-main completion
   - base: `origin/codex/en-support-preview`
   - 推奨 worktree: `D:/V_streamer_tools/.worktrees/en-c-scope-copy`

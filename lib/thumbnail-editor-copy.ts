@@ -1275,33 +1275,107 @@ const layerTokenLabels: Record<Locale, Record<string, string>> = {
     時刻: "Time",
     サブ: "Sub text",
     ラベル: "Label",
+    英字: "English text",
+    目標: "Goal",
     背景: "Background",
     曜日: "Day",
     時間: "Time",
     予定: "Schedule",
     立ち絵挿入ガイド: "Standee guide",
+    左立ち絵ガイド: "Left standee guide",
+    右立ち絵ガイド: "Right standee guide",
     右立ち絵枠の発光: "Right standee frame glow",
     見出し下ライン: "Headline underline",
+    見出し下線: "Headline underline",
+    見出し下スイープ: "Headline sweep",
+    見出しカード: "Headline card",
+    見出しステッカー土台: "Headline sticker base",
     見出し左下アクセント: "Lower-left headline accent",
     見出し右アクセント: "Right headline accent",
+    見出し左矢印アクセント: "Left headline arrow accent",
+    見出し英字: "English headline",
     ラベル横ライン: "Label side line",
     ラベル土台: "Label base",
+    ラベル用角マーク: "Label corner mark",
+    右下角マーク: "Lower-right corner mark",
     小粒スパーク: "Small sparkles",
+    小粒きらめき: "Small sparkles",
+    小さな破片候補: "Small shard accents",
     時刻バッジ土台: "Time badge base",
+    時刻カード土台: "Time card base",
+    時刻カードタブ: "Time card tab",
+    時刻ピル土台: "Time pill base",
+    時刻ラベル土台: "Time label base",
+    時刻アイコン: "Time icon",
     時刻下ライン: "Time underline",
     サブ下ライン: "Sub underline",
+    サブ情報カード: "Sub info card",
+    サブ用キューカード: "Sub cue card",
     予定表アクセント: "Schedule table accent",
     控えめな角グリント: "Subtle corner glints",
+    控えめな金色グリント: "Subtle gold glints",
+    控えめな青金グリント: "Subtle blue-gold glints",
     週範囲バッジ土台: "Week range badge base",
     立ち絵guide枠: "Standee guide frame",
+    立ち絵guideのHUD角: "Standee guide HUD corner",
     本文カード: "Body card",
     本文罫線: "Body rule",
     日付バッジ: "Date badge",
+    日付チケットバッジ: "Date ticket badge",
     角飾り: "Corner ornament",
+    左上金飾り: "Upper-left gold ornament",
+    右下金飾り: "Lower-right gold ornament",
+    記念バッジ: "Anniversary badge",
+    金ローズきらめき: "Gold rose sparkles",
+    金色音符: "Gold music notes",
+    ピンク音符: "Pink music notes",
+    ピンク三角アクセント: "Pink triangle accent",
     右側きらめき: "Right sparkle",
+    右上きらめき: "Upper-right sparkle",
+    左上きらめき: "Upper-left sparkle",
     左上リボン: "Upper-left ribbon",
     右下リボン: "Lower-right ribbon",
-    小粒きらめき: "Small sparkles",
+    右上フレーム角: "Upper-right frame corner",
+    右下フレーム角: "Lower-right frame corner",
+    左上フレーム角: "Upper-left frame corner",
+    左下フレーム角: "Lower-left frame corner",
+    稲妻アクセント大: "Large lightning accent",
+    稲妻アクセント小: "Small lightning accent",
+    右側シェブロン: "Right chevrons",
+    右側レールアクセント: "Right rail accent",
+    右側区切り線: "Right divider",
+    右上矢印アクセント: "Upper-right arrow accent",
+    矢印アクセント: "Arrow accent",
+    カード区切りライン: "Card divider",
+    参加ラベル用カード: "Participant label card",
+    参加情報バンド: "Participant info band",
+    左カードタブ: "Left card tab",
+    カバーアート挿入ガイド: "Cover art guide",
+    カバーアート枠: "Cover art frame",
+    カバーアート注記: "Cover art note",
+    サウンドウェーブ: "Sound wave",
+    プレミアバッジ土台: "Premiere badge base",
+    情報区切りライン: "Info divider",
+    キービジュアル挿入ガイド: "Key visual guide",
+    キービジュアル枠: "Key visual frame",
+    キービジュアル注記: "Key visual note",
+    プライバシーロックバッジ: "Privacy lock badge",
+    プライバシー目隠しパネル: "Privacy mask panel",
+    プライバシー目隠しバー: "Privacy mask bar",
+    白板面: "Whiteboard surface",
+    全体トーン: "Overall tone",
+    マップラインディバイダー: "Map line divider",
+    やわらかい光粒: "Soft glow dots",
+    やわらかい下線: "Soft underline",
+    動画フレーム: "Video frame",
+    衝撃マーク: "Impact mark",
+    左下補助ライン: "Lower-left support line",
+    ゲーム感ライン: "Game-style line",
+    スピードアクセント: "Speed accent",
+    接続アクセント: "Connection accent",
+    二人配置ライン: "Two-person placement line",
+    目標バッジ土台: "Goal badge base",
+    進捗ディバイダー: "Progress divider",
     コピー: "Copy",
     削除済み: "Deleted",
     差し替え待ち: "Needs replacement",
@@ -1507,6 +1581,19 @@ function localizeLayerToken(value: string, locale: Locale): string {
   return layerTokenLabels.en[value] ?? value;
 }
 
+function localizeCompositeLayerToken(value: string, locale: Locale): string {
+  if (locale === "ja" || !value.includes(" / ")) {
+    return value;
+  }
+
+  const parts = value.split(" / ");
+  if (parts.every((part) => layerTokenLabels.en[part])) {
+    return parts.map((part) => localizeLayerToken(part, locale)).join(" / ");
+  }
+
+  return value;
+}
+
 export function getThumbnailLayerDisplayName(
   layer: Pick<ThumbnailLayer, "name" | "type">,
   locale: Locale,
@@ -1525,6 +1612,11 @@ export function getThumbnailLayerDisplayName(
 
   if (layerTokenLabels.en[displayName]) {
     return localizeLayerToken(displayName, locale);
+  }
+
+  const compositeToken = localizeCompositeLayerToken(displayName, locale);
+  if (compositeToken !== displayName) {
+    return compositeToken;
   }
 
   const presetLayerMatch = displayName.match(/^(テキスト|画像|図形) (\d+)(?:（(.+)）)?(?: (コピー)(?: (\d+))?)?$/);

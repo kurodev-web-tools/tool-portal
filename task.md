@@ -73,6 +73,45 @@
   - UI 変更した対象 page を `390 / 820 / 1024 / 1280 / 1366px` で確認する。
   - `document.documentElement.lang` が `ja / en` に同期すること、manual switch 後 reload で選択が維持されること、body / document 横 overflow なし、console error / warn なしを確認する。
 
+### C Scope Implementation Result
+
+- branch/worktree: `codex/en-c-scope-copy` / `D:/V_streamer_tools/.worktrees/en-c-scope-copy`
+- base: `origin/codex/en-support-preview` after PR #160 merge (`2026-05-19T05:36:38Z`)
+- added `scripts/en-c-scope-copy-contract.mjs` as the C scope copy contract.
+- Schedule Calendar:
+  - moved drag move guide, month/period/date/create-event aria, filter/select aria, mobile sheet close aria, and undo-toast close aria into `scheduleCalendarCopy.ja/en`.
+  - kept storage key/version, URL, backup JSON shape, saved user content, and handoff payload unchanged.
+- Thumbnail Editor:
+  - moved major canvas/export/save/user-material/material/standee toast and error copy into `thumbnailEditorCopy.ja/en`.
+  - moved layer action titles, quick adjust labels, text/font controls, shape/effect controls, color aria, favorite aria/title, file input aria, and full-preview aria into `thumbnailEditorCopy.ja/en`.
+  - kept draft storage key, IndexedDB key, preset body/schema, canvas export naming, and handoff payload unchanged.
+- SNS Split Image Maker:
+  - moved mode/join tooltips, preview/image/save fallback errors, untitled handoff fallback, handoff textarea aria, preview canvas aria, mobile nav aria, and notification close aria into `snsSplitImageMakerCopy.ja/en`.
+  - kept image processing, saved draft metadata/images, URL, export order, and handoff payload unchanged.
+
+### C Scope Verification Result
+
+- PASS: `node scripts/en-c-scope-copy-contract.mjs`
+- PASS: `node scripts/schedule-calendar-copy-locale-contract.mjs`
+- PASS: `node scripts/thumbnail-sns-copy-locale-contract.mjs`
+- PASS: `node scripts/sns-split-image-maker-contract.mjs`
+- PASS: `node scripts/tool-handoff-contract.mjs`
+- PASS: `npm run lint`
+- PASS: `npx tsc --noEmit`
+- PASS: `git diff --check` (only repo-normal LF -> CRLF working-copy warnings)
+- UI width check:
+  - method: local `next dev --webpack -p 3038 --hostname 127.0.0.1` + Playwright-driven browser check.
+  - pages: `/`, `/tools`, `/tools/schedule-calendar`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker`
+  - widths: `390 / 820 / 1024 / 1280 / 1366px`
+  - locales: `ja / en`
+  - result: all target pages passed expected visible copy checks, `document.documentElement.lang` sync, manual language switch + reload persistence, body/document horizontal overflow <= 1px, and no browser console error/warn.
+
+### C Scope Remaining Risks
+
+- saved custom data, backup JSON internal strings, existing user-entered copy, preset body text, and handoff payload values remain untranslated by design.
+- fine-grained internal labels in `lib/thumbnail-editor.ts` / `lib/sns-split-image-maker.ts` that are primarily data identifiers, layer matching keys, generated canvas text, or saved draft compatibility strings remain as-is.
+- exhaustive aria translation and debug/internal exception text outside the public prelaunch path remain backlog scope.
+
 - B+C integration smoke:
   - `/`
   - `/tools`

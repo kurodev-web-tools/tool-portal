@@ -118,6 +118,22 @@ export const snsSplitImageMakerCopy = {
       exportNeedsMain: "メイン画像を選択してから出力してください。",
       exportDone: (orderLabel: string, postCount: number) => `${orderLabel} の順で${postCount}枚を書き出しました。`,
       exportFailed: "画像の書き出しに失敗しました。"
+    },
+    messages: {
+      previewFailed: "プレビュー生成に失敗しました。",
+      imageReadFailed: "画像を読み込めませんでした。",
+      saveWorkFailed: "作業状態の保存に失敗しました。",
+      untitledEvent: "無題の予定"
+    },
+    aria: {
+      handoffAnnouncementMemo: (source: "thumbnail" | "schedule") =>
+        source === "thumbnail" ? "Thumbnail Editorから受け取った告知文メモ" : "Schedule Calendarから受け取った告知文メモ",
+      editPreview: (index: number) => `投稿${index}の編集プレビュー`,
+      orderPreview: (count: number) => `${count}枚投稿の並び確認`,
+      imageMainPreview: (index: number) => `画像${index}のメイン分割プレビュー`,
+      postMainPreview: (index: number) => `投稿${index}のメイン分割プレビュー`,
+      mobileActions: "モバイル操作",
+      closeNotification: "通知を閉じる"
     }
   },
   en: {
@@ -227,6 +243,22 @@ export const snsSplitImageMakerCopy = {
       exportNeedsMain: "Select a main image before exporting.",
       exportDone: (orderLabel: string, postCount: number) => `Exported ${postCount} files in ${orderLabel} order.`,
       exportFailed: "Image export failed."
+    },
+    messages: {
+      previewFailed: "Could not generate preview.",
+      imageReadFailed: "Could not read the image.",
+      saveWorkFailed: "Could not save the work state.",
+      untitledEvent: "Untitled event"
+    },
+    aria: {
+      handoffAnnouncementMemo: (source: "thumbnail" | "schedule") =>
+        source === "thumbnail" ? "Announcement memo received from Thumbnail Editor" : "Announcement memo received from Schedule Calendar",
+      editPreview: (index: number) => `Edit preview for post ${index}`,
+      orderPreview: (count: number) => `Posting-order preview for ${count} posts`,
+      imageMainPreview: (index: number) => `Main split preview for image ${index}`,
+      postMainPreview: (index: number) => `Main split preview for post ${index}`,
+      mobileActions: "Mobile actions",
+      closeNotification: "Close notification"
     }
   }
 } as const;
@@ -297,6 +329,17 @@ const modeLabels = {
   }
 } as const satisfies Record<Locale, Record<SnsSplitMode, string>>;
 
+const modeNotes = {
+  ja: {
+    concatenate: "プリセットごとの追加枠に個別画像を配置します",
+    replace: "投稿ごとのフレーム画像へメイン分割を差し込みます"
+  },
+  en: {
+    concatenate: "Place individual images in each preset's extra slots.",
+    replace: "Insert the main split into each post's frame image."
+  }
+} as const satisfies Record<Locale, Record<SnsSplitMode, string>>;
+
 const joinTypeLabels = {
   ja: {
     three: "3連結",
@@ -305,6 +348,17 @@ const joinTypeLabels = {
   en: {
     three: "3-panel",
     five: "5-panel"
+  }
+} as const satisfies Record<Locale, Record<SnsSplitJoinType, string>>;
+
+const joinTypeNotes = {
+  ja: {
+    three: "左追加 / 中央メイン / 右追加で構成します",
+    five: "左上下 / 中央メイン / 右上下で構成します"
+  },
+  en: {
+    three: "Uses left extra / center main / right extra.",
+    five: "Uses left top-bottom / center main / right top-bottom."
   }
 } as const satisfies Record<Locale, Record<SnsSplitJoinType, string>>;
 
@@ -390,8 +444,16 @@ export function getSnsSplitModeLabel(mode: SnsSplitMode, locale: Locale): string
   return modeLabels[locale][mode] ?? modeLabels.ja[mode];
 }
 
+export function getSnsSplitModeNote(mode: SnsSplitMode, locale: Locale): string {
+  return modeNotes[locale][mode] ?? modeNotes.ja[mode];
+}
+
 export function getSnsSplitJoinTypeLabel(joinType: SnsSplitJoinType, locale: Locale): string {
   return joinTypeLabels[locale][joinType] ?? joinTypeLabels.ja[joinType];
+}
+
+export function getSnsSplitJoinTypeNote(joinType: SnsSplitJoinType, locale: Locale): string {
+  return joinTypeNotes[locale][joinType] ?? joinTypeNotes.ja[joinType];
 }
 
 export function getSnsSplitSlotGroupLabel(preset: SnsSplitPreset, mode: SnsSplitMode, joinType: SnsSplitJoinType, locale: Locale): string {

@@ -2629,6 +2629,7 @@ function PropertyPanel({
       : layer.type === "image"
         ? copy.panels.property.imageGuide
         : null;
+  const layerNameDisplayValue = getThumbnailLayerDisplayName(layer, locale);
 
   return (
     <section className="panel min-w-0 space-y-4 p-4">
@@ -2646,9 +2647,12 @@ function PropertyPanel({
           className="mt-1 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
           maxLength={40}
           type="text"
-          value={layer.name}
+          value={getThumbnailLayerDisplayName(layer, locale)}
           onChange={(event) => onChange((item) => ({ ...item, name: event.target.value.slice(0, 40) }))}
           onBlur={(event) => {
+            if (event.target.value === layerNameDisplayValue && layer.name !== event.target.value) {
+              return;
+            }
             const fallback = layer.type === "text" ? copy.panels.property.textFallback : layer.type === "shape" ? copy.panels.property.shapeFallback : copy.panels.property.imageFallback;
             onChange((item) => ({ ...item, name: normalizeThumbnailLayerName(event.target.value, fallback) }));
           }}

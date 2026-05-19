@@ -3,8 +3,8 @@ import { PortalShell } from "@/components/portal/PortalShell";
 import { SnsSplitImageMakerApp } from "@/components/sns-split-image-maker/SnsSplitImageMakerApp";
 
 export const metadata: Metadata = {
-  title: "SNS分割画像メーカー",
-  description: "SNS投稿向けの分割画像プリセットを選び、2分割/3分割/4分割画像を手動調整して投稿順どおりにPNG/JPEGで書き出せるKuro Stream Kitのツールです。"
+  title: "SNS Split Image Maker",
+  description: "A Kuro Stream Kit tool for choosing SNS posting presets, tuning 2-, 3-, and 4-split images, and exporting PNG/JPEG files in posting order."
 };
 
 export default function SnsSplitImageMakerPage() {

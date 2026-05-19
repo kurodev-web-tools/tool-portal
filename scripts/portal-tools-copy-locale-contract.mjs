@@ -91,8 +91,11 @@ assert.match(statusBadgeSource, /getStatusLabel\(status,\s*locale\)/, "status ba
 assert.equal(metadataCopy.portalMetadata.ja.root.title, "Kuro Stream Kit", "metadata copy keeps Japanese-rooted public name");
 assert.match(metadataCopy.portalMetadata.ja.root.description, /VTuber向け/, "metadata copy keeps the current Japanese root description");
 assert.match(metadataCopy.portalMetadata.en.root.description, /tool portal for VTubers/i, "metadata copy prepares English root description");
-assert.match(appLayoutSource, /portalMetadata\.ja\.root/, "root metadata stays statically Japanese for PR2");
-assert.match(homePageSource, /portalMetadata\.ja\.home/, "home metadata uses centralized Japanese metadata copy");
-assert.match(toolsPageSource, /portalMetadata\.ja\.tools/, "tools metadata uses centralized Japanese metadata copy");
+assert.match(appLayoutSource, /portalMetadata\.en\.root/, "root static metadata uses conservative English copy for EN support");
+assert.match(homePageSource, /portalMetadata\.en\.home/, "home static metadata uses conservative English copy for EN support");
+assert.match(toolsPageSource, /portalMetadata\.en\.tools/, "tools static metadata uses conservative English copy for EN support");
+assert.equal(portalCopy.portalCopy.en.tools.resultCountSuffix, "visible", "English result count copy reads naturally in isolation");
+assert.equal(portalCopy.portalCopy.en.feedback.discordAria, "Open the Kuro Stream Kit Discord feedback channel", "English Discord feedback aria is natural");
+assert.equal(portalCopy.portalCopy.en.navigation.loginTitle, "Sign in features are planned", "English login title avoids implying an active login flow");
 
 console.log("portal tools copy locale contract checks passed");

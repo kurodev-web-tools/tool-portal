@@ -137,9 +137,11 @@ assert.match(copySource, /横長2枚を保存順どおりに作ります。/, "s
 assert.match(copySource, /横長1枚と縦長2枚を保存順どおりに作ります。/, "split-3 landing copy is short and save-order oriented");
 assert.match(copySource, /縦長4枚を保存順どおりに作ります。/, "split-4 landing copy is short and save-order oriented");
 assert.match(copySource, /保存順 split_1 → split_2 → split_3 → split_4/, "landing copy shows the full 4-split save order");
+assert.match(landingSource, /data-sns-preset-card="true"[\s\S]*flex-1/, "preset card body flexes so CTA placement stays aligned");
+assert.match(landingSource, /data-sns-preset-cta="true"[\s\S]*min-h-12[\s\S]*w-full/, "preset CTA has a stable full-width button area");
 assert.doesNotMatch(landingSource, /旧: 1\+8|旧: 1\+4/, "landing copy does not expose legacy mode labels");
 assert.match(copySource, /個別追加 \/ フレーム追加/, "landing card uses unified 4-split mode labels");
-assert.match(pageSource, /2分割\/3分割\/4分割画像/, "page metadata includes all available split presets");
+assert.match(pageSource, /2-, 3-, and 4-split images/, "page metadata includes all available split presets in English");
 assert.match(designSource, /2分割 \/ 3分割 \/ 4分割/, "design doc describes current preset scope");
 assert.match(designSource, /390 \/ 820 \/ 1024 \/ 1280 \/ 1366/, "design doc lists freeze-readiness viewport widths");
 assert.match(designSource, /Freeze Boundary/, "design doc has an explicit freeze boundary section");

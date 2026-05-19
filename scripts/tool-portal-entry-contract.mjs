@@ -122,22 +122,22 @@ for (const source of [portalHomeSource, portalHeroSource, portalToolsIndexSource
   assert.doesNotMatch(source, /Schedule Calendar (?:を最小セット|です。その他は準備中|です。準備中|と準備中)/, "portal copy does not say Schedule Calendar is the only available tool");
 }
 
-assert.match(portalMetadataSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "root metadata names the available tool set");
+assert.match(portalMetadataSource, /Schedule Calendar, Thumbnail Editor, and SNS Split Image Maker/, "root metadata prepares an English available tool set");
 assert.match(portalMetadataSource, /title:\s*"Kuro Stream Kit"/, "root metadata uses the public product name");
 assert.match(appLayoutSource, /default:\s*rootMetadata\.title/, "root metadata uses centralized public product name");
 assert.match(appLayoutSource, /template:\s*`%s \| \$\{rootMetadata\.title\}`/, "root metadata title template uses the centralized public product name");
 assert.match(appLayoutSource, /title:\s*rootMetadata\.title/, "open graph metadata uses the centralized public product name");
-assert.match(portalMetadataSource, /Kuro Stream Kitの公開最小セット/, "home metadata uses the public product name");
-assert.match(portalMetadataSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "home metadata names the available tool set");
+assert.match(portalMetadataSource, /public minimum set in Kuro Stream Kit/, "home metadata has conservative English copy");
+assert.match(portalMetadataSource, /Schedule Calendar, Thumbnail Editor, and SNS Split Image Maker/, "home metadata names the available tool set in English");
 assert.match(portalCopySource, /Schedule Calendar \/ Thumbnail Editor \/ SNS分割画像メーカー/, "tools index names the available tool set");
-assert.match(portalMetadataSource, /Kuro Stream Kitのツール一覧/, "tools page metadata uses the public product name");
-assert.match(portalMetadataSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "tools page metadata names the available tool set");
-assert.match(schedulePageSource, /Kuro Stream Kitの公開中ツール/, "schedule page metadata uses the public product name");
-assert.match(thumbnailPageSource, /用途別プリセット/, "thumbnail page metadata keeps preset-first scope");
-assert.match(thumbnailPageSource, /立ち絵/, "thumbnail page metadata keeps standee replacement scope");
-assert.match(thumbnailPageSource, /Kuro Stream Kitのツール/, "thumbnail page metadata uses the public product name");
-assert.match(snsPageSource, /2分割\/3分割\/4分割/, "sns page metadata lists all split presets");
-assert.match(snsPageSource, /Kuro Stream Kitのツール/, "sns page metadata uses the public product name");
+assert.match(portalMetadataSource, /Kuro Stream Kit tool index/, "tools page metadata uses conservative English copy");
+assert.match(portalMetadataSource, /currently available tools and planned candidates/, "tools page metadata describes the index in English");
+assert.match(schedulePageSource, /public Kuro Stream Kit tool/, "schedule page metadata uses conservative English copy");
+assert.match(thumbnailPageSource, /purpose-built presets/, "thumbnail page metadata keeps preset-first scope in English");
+assert.match(thumbnailPageSource, /standee images/, "thumbnail page metadata keeps standee replacement scope in English");
+assert.match(thumbnailPageSource, /Kuro Stream Kit tool/, "thumbnail page metadata uses conservative English copy");
+assert.match(snsPageSource, /2-, 3-, and 4-split images/, "sns page metadata lists all split presets in English");
+assert.match(snsPageSource, /Kuro Stream Kit tool/, "sns page metadata uses conservative English copy");
 assert.match(suitesSource, /key: "fan-brand"[\s\S]*?status: "planned"/, "fan-brand suite stays planned until it has a public tool");
 assert.match(portalCopySource, /"stream-workflow"[\s\S]*?Schedule Calendar[\s\S]*?Thumbnail Editor[\s\S]*?SNS分割画像/, "stream workflow suite tags present the public tool flow");
 assert.match(portalCopySource, /"fan-brand"[\s\S]*?ファン交流[\s\S]*?プロフィール整備[\s\S]*?ブランド素材/, "fan-brand suite tags focus on fan and brand work");

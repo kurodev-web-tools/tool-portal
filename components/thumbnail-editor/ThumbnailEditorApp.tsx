@@ -420,8 +420,13 @@ const createThumbnailToSnsImageStorageId = () => {
   }
   return `${thumbnailToSnsImageStoragePrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 };
-const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, payload: ScheduleHandoffPayload): ThumbnailEditorDraft => {
-  const titleText = compactLayerText(payload.title || "無題の予定", 42);
+const scheduleHandoffCanvasFallbacks: Record<Locale, { title: string; label: string }> = {
+  ja: { title: "無題の予定", label: "配信告知" },
+  en: { title: "Untitled event", label: "Stream notice" }
+};
+const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, payload: ScheduleHandoffPayload, locale: Locale): ThumbnailEditorDraft => {
+  const fallback = scheduleHandoffCanvasFallbacks[locale] ?? scheduleHandoffCanvasFallbacks.ja;
+  const titleText = compactLayerText(payload.title || fallback.title, 42);
   const dateText = formatHandoffDate(payload.date);
   const timeRange = [payload.startTime, payload.endTime].filter(Boolean).join("-");
   const timeText = compactLayerText([dateText, timeRange].filter(Boolean).join(" "), 24);
@@ -430,7 +435,7 @@ const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, paylo
       [formatHandoffDate(payload.date), payload.categoryLabel, payload.hashtags].filter(Boolean).join(" / "),
     54
   );
-  const labelText = compactLayerText([payload.categoryLabel, payload.platform].filter(Boolean).join(" / ") || payload.announcementStatusLabel || "配信告知", 22);
+  const labelText = compactLayerText([payload.categoryLabel, payload.platform].filter(Boolean).join(" / ") || payload.announcementStatusLabel || fallback.label, 22);
   let selectedLayerId = draft.selectedLayerId;
   const layers = draft.layers.map((layer) => {
     if (layer.type !== "text") {
@@ -459,8 +464,8 @@ const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, paylo
 
   return { ...draft, layers, selectedLayerId, updatedAt: new Date().toISOString() };
 };
-const createThumbnailDraftFromHandoff = (payload: ScheduleHandoffPayload, canvas = thumbnailCanvasSizes.hd): ThumbnailEditorDraft =>
-  applyScheduleHandoffToThumbnailDraft(createDraftFromPreset("stream_announce", canvas), payload);
+const createThumbnailDraftFromHandoff = (payload: ScheduleHandoffPayload, locale: Locale, canvas = thumbnailCanvasSizes.hd): ThumbnailEditorDraft =>
+  applyScheduleHandoffToThumbnailDraft(createDraftFromPreset("stream_announce", canvas), payload, locale);
 
 export function ThumbnailEditorApp() {
   const { locale } = useLocale();
@@ -672,7 +677,7 @@ export function ThumbnailEditorApp() {
     try {
       const handoffPayload = readToolHandoff("thumbnail-editor");
       if (handoffPayload) {
-        setDraft(createThumbnailDraftFromHandoff(handoffPayload));
+        setDraft(createThumbnailDraftFromHandoff(handoffPayload, locale));
         setHandoffPayload(handoffPayload);
         showToast("success", copy.toasts.handoffApplied);
         setHydrated(true);
@@ -1131,7 +1136,7 @@ export function ThumbnailEditorApp() {
     const next = createPresetDraftForLocale(presetId, draft.canvas);
     const nextDraft =
       mode === "handoff" && handoffPayload
-        ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
+        ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
         : mode === "carryover"
           ? applyThumbnailPresetPartial(draft, presetId, next)
           : next;
@@ -1152,7 +1157,7 @@ export function ThumbnailEditorApp() {
     const canvas = thumbnailCanvasSizes[sizeId];
     const next = createPresetDraftForLocale(draft.presetId, canvas);
     const nextDraft = handoffPayload
-      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
     replaceDraft(nextDraft, { recordHistory: true });
     showToast("info", handoffPayload ? copy.toasts.resizeHandoff(canvas.label) : copy.toasts.resizeCarryover(canvas.label));
@@ -1162,7 +1167,7 @@ export function ThumbnailEditorApp() {
     const variant = thumbnailPresetVariants[variantId];
     const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(draft.presetId, variantId), locale);
     const nextDraft = handoffPayload
-      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
     replaceDraft(nextDraft, { recordHistory: true });
     setMobilePanel("canvas");
@@ -3342,11 +3347,11 @@ function PresetCards({
               </button>
             </div>
             <div
-              className="scrollbar-accent -mx-1 mb-2 flex max-w-full flex-nowrap gap-1.5 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0"
               data-thumbnail-preset-card-chips="true"
+              className="mb-2 flex max-w-full min-w-0 flex-wrap gap-1.5"
             >
-              <span className="shrink-0 rounded-sm border border-border bg-surface-muted px-2 py-0.5 text-[11px] font-bold text-muted">{getThumbnailPresetCategoryLabel(preset.category, locale)}</span>
-              <span className="shrink-0 rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">{getThumbnailPresetUsageLabel(preset.usageLabel, locale)}</span>
+              <span className="min-w-0 max-w-full whitespace-normal break-words rounded-sm border border-border bg-surface-muted px-2 py-0.5 text-[11px] font-bold leading-4 text-muted">{getThumbnailPresetCategoryLabel(preset.category, locale)}</span>
+              <span className="min-w-0 max-w-full whitespace-normal break-words rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold leading-4 text-primary-strong">{getThumbnailPresetUsageLabel(preset.usageLabel, locale)}</span>
             </div>
             <p className="text-sm font-black text-foreground">{getThumbnailPresetName(preset.id, locale, preset.name)}</p>
             <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{getThumbnailPresetDescription(preset, locale)}</p>

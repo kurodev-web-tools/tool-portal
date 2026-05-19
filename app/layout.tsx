@@ -4,7 +4,7 @@ import { LocaleProvider } from "@/components/portal/LocaleProvider";
 import { portalMetadata } from "@/lib/portal-metadata";
 import "./globals.css";
 
-const rootMetadata = portalMetadata.ja.root;
+const rootMetadata = portalMetadata.en.root;
 
 export const metadata: Metadata = {
   title: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     title: rootMetadata.title,
     description: rootMetadata.description,
     type: "website",
-    locale: "ja_JP"
+    locale: "en_US"
   }
 };
 

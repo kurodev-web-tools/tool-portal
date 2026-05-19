@@ -75,6 +75,10 @@ assert.match(thumbnailSource, /event\.target\.value === layerNameDisplayValue &&
 assert.match(thumbnailSource, /getThumbnailStandeePlacementName\(preset\.id,\s*locale/, "Thumbnail standee placement panel uses localized placement names");
 assert.match(thumbnailSource, /getThumbnailFontCategoryLabel\(fontCategory\.label,\s*locale/, "Thumbnail font listbox uses localized category labels");
 assert.match(thumbnailSource, /getThumbnailMainTextCarryoverLabel\(target\.id,\s*locale/, "Thumbnail preset apply dialog uses localized carryover labels");
+assert.match(thumbnailSource, /applyScheduleHandoffToThumbnailDraft\(next,\s*handoffPayload,\s*locale\)/, "Schedule -> Thumbnail handoff applies locale-aware canvas fallback text");
+assert.doesNotMatch(thumbnailSource, /payload\.title \|\| "無題の予定"| \|\| "配信告知"/, "Schedule -> Thumbnail handoff avoids Japanese canvas fallback literals in EN mode");
+assert.match(thumbnailSource, /data-thumbnail-preset-card-chips="true"[\s\S]*whitespace-normal[\s\S]*break-words/, "Thumbnail preset card chips can wrap long EN labels inside the card");
+assert.match(thumbnailSource, /data-thumbnail-preset-card-chips="true"[\s\S]*min-w-0[\s\S]*max-w-full/, "Thumbnail preset card chips keep long labels within the card width");
 assert.doesNotMatch(thumbnailSource, /下書きデータが不正|画像は8MB以下|操作補助|フォントを検索|お気に入りを解除/, "Thumbnail Editor avoids C-scope Japanese UI/status literals");
 assert.match(thumbnailLibSource, /v-streamer-tools:thumbnail-editor:draft:v1/, "Thumbnail draft storage key remains unchanged");
 assert.match(thumbnailUserMaterialStorageSource, /v-streamer-tools:thumbnail-editor:user-materials/, "Thumbnail user material IndexedDB name remains unchanged");

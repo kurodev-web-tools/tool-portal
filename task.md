@@ -230,6 +230,36 @@
   - visual check confirmed selected text / UI state rather than OCR-reading every canvas glyph. Contract covers all preset text layer bodies for English mode.
   - next PR: B+C integration smoke / main PR judgment.
 
+### EN Thumbnail Preset Visual Balance Follow-up
+
+- branch/worktree: `codex/en-preset-visual-balance` / `D:/V_streamer_tools/.worktrees/en-preset-visual-balance`
+- base: `origin/codex/en-support-preview` after PR #165 merge (`2026-05-19T11:35:47Z`)
+- Thumbnail Editor:
+  - shortened long English preset initial text for time/sub/label/headline layers that were visually heavy in English mode.
+  - added `getThumbnailPresetTextLayerVisualAdjustment()` and an EN-only visual adjustment map in `lib/thumbnail-editor-copy.ts`.
+  - limited layout adjustment to `endurance_stream` and `karaoke` headline font size during English draft creation/apply only.
+  - kept Japanese preset text/layout unchanged, and kept preset ids, stored `layer.name`, matching keys, weekly grouping keys, storage/schema, and handoff payload unchanged.
+  - Schedule Calendar handoff text still overrides English preset initial text and EN layout helper output after preset apply.
+- Verification:
+  - PASS: RED -> GREEN `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `node scripts/en-c-scope-copy-contract.mjs`
+  - PASS: `node scripts/thumbnail-sns-copy-locale-contract.mjs`
+  - PASS: `node scripts/tool-handoff-contract.mjs`
+  - PASS: `npm run lint`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `git diff --check` (only repo-normal LF -> CRLF working-copy warnings)
+- UI width check:
+  - method: local `next dev --webpack -p 3044 --hostname 127.0.0.1` + Chrome DevTools MCP browser check.
+  - page: `/tools/thumbnail-editor`
+  - widths: `390 / 820 / 1024 / 1280 / 1366px`
+  - result: English mode preset cards, layer list, selected-layer input, and preset apply dialog stayed English; canvas was nonblank; `document.documentElement.lang` was `en`; body/document horizontal overflow was `0`; console error/warn was `0`.
+  - manual language switch + reload at `1366px`: `ja` and `en` persisted in `v-streamer-tools-locale`, and `document.documentElement.lang` matched after reload.
+  - Schedule Calendar handoff smoke at `1366px`: `HANDOFF TITLE` remained after applying `Whiteboard Plan` with schedule text, and `Today's Plan` did not replace the handoff title.
+- Remaining risk:
+  - visual balance is contract-checked with estimated text width plus browser smoke; it does not OCR every rendered canvas glyph.
+  - existing saved drafts, user-entered custom text, backup JSON values, and handoff payload values remain unchanged by design.
+  - next PR: B+C integration smoke / main PR judgment.
+
 - B+C integration smoke:
   - `/`
   - `/tools`

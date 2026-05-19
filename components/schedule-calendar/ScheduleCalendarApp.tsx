@@ -395,13 +395,17 @@ function getEndTimeFromStart(startMinutes: number, durationMinutes: number) {
 }
 
 function DragMoveGuide({ guide }: { guide: DragGuide }) {
+  const { scheduleCopy } = useScheduleCopy();
+  const startTime = formatSlot(guide.startMinutes);
+  const endTime = getEndTimeFromStart(guide.startMinutes, guide.durationMinutes);
+
   return (
     <div
       className="pointer-events-none absolute left-2 right-2 z-20 rounded-base border-2 border-dashed border-primary bg-primary-soft/55 px-2 py-1 text-xs font-black text-primary-strong shadow-sm"
       style={getTimelineBlockStyle(guide.startMinutes, Math.max(30, guide.durationMinutes))}
     >
       <span className="block truncate">
-        ここに移動 {formatSlot(guide.startMinutes)} - {getEndTimeFromStart(guide.startMinutes, guide.durationMinutes)}
+        {scheduleCopy.dragMoveGuide(startTime, endTime)}
       </span>
     </div>
   );
@@ -696,13 +700,13 @@ function DateSelectControl({
       {open ? (
         <div className="absolute left-0 right-0 top-full z-40 mt-2 rounded-base border border-border bg-surface p-2.5 shadow-panel sm:p-3">
           <div className="flex items-center justify-between gap-2">
-            <button type="button" className="flat-control px-2 py-1" aria-label="前の月" onClick={() => setVisibleMonth((current) => addMonths(current, -1))}>
+            <button type="button" className="flat-control px-2 py-1" aria-label={scheduleCopy.aria.previousMonth} onClick={() => setVisibleMonth((current) => addMonths(current, -1))}>
               ‹
             </button>
             <p className="text-sm font-bold text-foreground">
               {getPeriodLabel(visibleMonth, "month", 0, locale)}
             </p>
-            <button type="button" className="flat-control px-2 py-1" aria-label="次の月" onClick={() => setVisibleMonth((current) => addMonths(current, 1))}>
+            <button type="button" className="flat-control px-2 py-1" aria-label={scheduleCopy.aria.nextMonth} onClick={() => setVisibleMonth((current) => addMonths(current, 1))}>
               ›
             </button>
           </div>
@@ -889,7 +893,7 @@ function CalendarToolbar({
           <button
             type="button"
             className="px-3 py-2 text-sm font-bold text-muted transition hover:bg-surface-muted hover:text-foreground"
-            aria-label="前の期間へ"
+            aria-label={scheduleCopy.aria.previousPeriod}
             onClick={() => onMove(-1)}
           >
             ‹
@@ -897,7 +901,7 @@ function CalendarToolbar({
           <button
             type="button"
             className="border-l border-border px-3 py-2 text-sm font-bold text-muted transition hover:bg-surface-muted hover:text-foreground"
-            aria-label="次の期間へ"
+            aria-label={scheduleCopy.aria.nextPeriod}
             onClick={() => onMove(1)}
           >
             ›
@@ -1387,7 +1391,7 @@ function MobileMonthView({
                 selected ? "bg-primary-soft/55" : "bg-surface",
                 inCurrentMonth ? "text-foreground" : "text-muted/45"
               ].join(" ")}
-              aria-label={`${getLongDateLabel(key, locale)}を選択`}
+              aria-label={scheduleCopy.aria.selectDate(getLongDateLabel(key, locale))}
             >
               <span
                 className={[
@@ -1515,7 +1519,7 @@ function MobileDateStrip({
   events: ScheduleEvent[];
   onSelectDate: (dateKey: string) => void;
 }) {
-  const { locale } = useScheduleCopy();
+  const { locale, scheduleCopy } = useScheduleCopy();
   const days = getWeekDays(cursorDate, weekStartsOn);
   const todayKey = toDateKey(new Date());
 
@@ -1533,7 +1537,7 @@ function MobileDateStrip({
               "grid min-w-14 place-items-center rounded-base border px-2 py-2 text-center transition",
               selectedDateKey === key ? "border-primary bg-primary text-white" : "border-border bg-surface-muted text-foreground"
             ].join(" ")}
-            aria-label={`${getLongDateLabel(key, locale)}を表示`}
+            aria-label={scheduleCopy.aria.showDate(getLongDateLabel(key, locale))}
           >
             <span className={["text-[11px] font-bold", selectedDateKey === key ? "text-white/80" : "text-muted"].join(" ")}>
               {getShortDateLabel(day, locale).split(" ")[1]}
@@ -1586,7 +1590,7 @@ function MobileDayTimeline({
                   key={minutes}
                   type="button"
                   className={timeSlotHeightClassName}
-                  aria-label={`${formatSlot(minutes)}に新規予定を作成`}
+                  aria-label={scheduleCopy.aria.createEventAt(formatSlot(minutes))}
                   onClick={() => onSelectTime(minutes)}
                 />
               ))}
@@ -1718,14 +1722,14 @@ function MobileEventList({
             value={filters.category}
             options={categoryFilterOptions}
             onChange={(category) => onFilterChange({ ...filters, category })}
-            ariaLabel="カテゴリで絞り込み"
+            ariaLabel={scheduleCopy.aria.filterCategory}
             className="mt-0"
           />
           <SelectMenuControl
             value={filters.platform}
             options={platformFilterOptions}
             onChange={(platform) => onFilterChange({ ...filters, platform })}
-            ariaLabel="プラットフォームで絞り込み"
+            ariaLabel={scheduleCopy.aria.filterPlatform}
             className="mt-0"
           />
         </div>
@@ -1734,14 +1738,14 @@ function MobileEventList({
             value={filters.period}
             options={periodOptions}
             onChange={(period) => onFilterChange({ ...filters, period })}
-            ariaLabel="期間で絞り込み"
+            ariaLabel={scheduleCopy.aria.filterPeriod}
             className="mt-0"
           />
           <SelectMenuControl
             value={filters.announcementStatus}
             options={announcementFilterOptions}
             onChange={(announcementStatus) => onFilterChange({ ...filters, announcementStatus })}
-            ariaLabel="告知ステータスで絞り込み"
+            ariaLabel={scheduleCopy.aria.filterAnnouncementStatus}
             className="mt-0"
           />
         </div>
@@ -1862,7 +1866,7 @@ function TemplateDraftEditor({
             value={templateDraft.usageCategory}
             options={usageOptions}
             onChange={(usageCategory) => onTemplateDraftChange({ ...templateDraft, usageCategory })}
-            ariaLabel="用途カテゴリ"
+            ariaLabel={scheduleCopy.aria.usageCategory}
           />
         </div>
         <div>
@@ -1871,7 +1875,7 @@ function TemplateDraftEditor({
             value={templateDraft.defaultPlatform}
             options={platformOptions.map((option) => ({ value: option, label: option || "-" }))}
             onChange={(defaultPlatform) => onTemplateDraftChange({ ...templateDraft, defaultPlatform })}
-            ariaLabel="既定プラットフォーム"
+            ariaLabel={scheduleCopy.aria.defaultPlatform}
           />
         </div>
         <div>
@@ -2056,7 +2060,7 @@ function MobileSettingsPanel({
               value={settings.defaultView}
               options={calendarViewOptions}
               onChange={(defaultView) => onSettingsChange({ ...settings, defaultView })}
-              ariaLabel="初期表示ビュー"
+              ariaLabel={scheduleCopy.aria.defaultView}
             />
           </div>
           <div>
@@ -2065,7 +2069,7 @@ function MobileSettingsPanel({
               value={settings.weekStartsOn}
               options={weekStartOptions}
               onChange={(weekStartsOn) => onSettingsChange({ ...settings, weekStartsOn })}
-              ariaLabel="週開始曜日"
+              ariaLabel={scheduleCopy.aria.weekStartsOn}
             />
           </div>
           <div>
@@ -2078,7 +2082,7 @@ function MobileSettingsPanel({
               value={settings.defaultDurationMinutes}
               options={defaultDurationOptions}
               onChange={(defaultDurationMinutes) => onSettingsChange({ ...settings, defaultDurationMinutes })}
-              ariaLabel="既定予定時間"
+              ariaLabel={scheduleCopy.aria.defaultDuration}
             />
           </div>
         </div>
@@ -2226,7 +2230,7 @@ function DesktopEventListPanel({
               value={filters.category}
               options={categoryFilterOptions}
               onChange={(category) => onFilterChange({ ...filters, category })}
-              ariaLabel="カテゴリ"
+              ariaLabel={scheduleCopy.aria.category}
             />
           </div>
           <div>
@@ -2235,7 +2239,7 @@ function DesktopEventListPanel({
               value={filters.platform}
               options={platformFilterOptions}
               onChange={(platform) => onFilterChange({ ...filters, platform })}
-              ariaLabel="媒体"
+              ariaLabel={scheduleCopy.aria.filterPlatform}
             />
           </div>
         </div>
@@ -2246,7 +2250,7 @@ function DesktopEventListPanel({
               value={filters.period}
               options={periodOptions}
               onChange={(period) => onFilterChange({ ...filters, period })}
-              ariaLabel="期間"
+              ariaLabel={scheduleCopy.aria.filterPeriod}
             />
           </div>
           <div>
@@ -2255,7 +2259,7 @@ function DesktopEventListPanel({
               value={filters.sortOrder}
               options={sortOptions}
               onChange={(sortOrder) => onFilterChange({ ...filters, sortOrder })}
-              ariaLabel="並び順"
+              ariaLabel={scheduleCopy.aria.filterSortOrder}
             />
           </div>
         </div>
@@ -2265,7 +2269,7 @@ function DesktopEventListPanel({
             value={filters.announcementStatus}
             options={announcementFilterOptions}
             onChange={(announcementStatus) => onFilterChange({ ...filters, announcementStatus })}
-            ariaLabel="告知ステータス"
+            ariaLabel={scheduleCopy.aria.announcementStatus}
           />
         </div>
       </section>
@@ -2429,7 +2433,7 @@ function DesktopSettingsPanel({
               value={settings.defaultView}
               options={calendarViewOptions}
               onChange={(defaultView) => onSettingsChange({ ...settings, defaultView })}
-              ariaLabel="初期表示ビュー"
+              ariaLabel={scheduleCopy.aria.defaultView}
             />
           </div>
           <div>
@@ -2438,7 +2442,7 @@ function DesktopSettingsPanel({
               value={settings.weekStartsOn}
               options={weekStartOptions}
               onChange={(weekStartsOn) => onSettingsChange({ ...settings, weekStartsOn })}
-              ariaLabel="週開始曜日"
+              ariaLabel={scheduleCopy.aria.weekStartsOn}
             />
           </div>
         </div>
@@ -2461,7 +2465,7 @@ function DesktopSettingsPanel({
               value={settings.defaultDurationMinutes}
               options={defaultDurationOptions}
               onChange={(defaultDurationMinutes) => onSettingsChange({ ...settings, defaultDurationMinutes })}
-              ariaLabel="既定所要時間"
+              ariaLabel={scheduleCopy.aria.defaultDurationShort}
             />
           </div>
         </div>
@@ -2694,7 +2698,7 @@ function ScheduleForm({
             value={draft.category}
             options={categorySelectOptions}
             onChange={(category) => onDraftChange({ ...draft, category })}
-            ariaLabel="カテゴリ"
+            ariaLabel={scheduleCopy.aria.category}
           />
         </div>
         <div>
@@ -2703,7 +2707,7 @@ function ScheduleForm({
             value={draft.platform}
             options={platformSelectOptions}
             onChange={(platform) => onDraftChange({ ...draft, platform })}
-            ariaLabel="プラットフォーム"
+            ariaLabel={scheduleCopy.aria.platform}
           />
         </div>
       </div>
@@ -2724,7 +2728,7 @@ function ScheduleForm({
               value={draft.announcementStatus}
               options={statusOptions}
               onChange={(announcementStatus) => onDraftChange({ ...draft, announcementStatus })}
-              ariaLabel="告知ステータス"
+              ariaLabel={scheduleCopy.aria.announcementStatus}
             />
           </div>
           <div>
@@ -2754,7 +2758,7 @@ function ScheduleForm({
                     value={activeEventHashtagSetId}
                     options={hashtagSetSelectOptions}
                     onChange={setSelectedEventHashtagSetId}
-                    ariaLabel="予定に追加する保存済みハッシュタグセット"
+                    ariaLabel={scheduleCopy.aria.addSavedHashtagSet}
                     className="mt-0"
                   />
                   <button type="button" onClick={addSelectedHashtagSetToDraft} className="flat-control px-3 py-2 text-sm">
@@ -2814,7 +2818,7 @@ function ScheduleForm({
                   recurrenceCount: recurrence === "none" ? 1 : Math.max(2, draft.recurrenceCount ?? 4)
                 })
               }
-              ariaLabel="繰り返し"
+              ariaLabel={scheduleCopy.aria.recurrence}
             />
           </div>
           <div>
@@ -4115,7 +4119,7 @@ export function ScheduleCalendarApp() {
         {mobileSheetOpen ? (
           <button
             type="button"
-            aria-label="予定パネルを閉じる"
+            aria-label={scheduleCopy.aria.closeSchedulePanel}
             className={["fixed inset-0 z-30 bg-black/35", mobileOnlyClassName].join(" ")}
             onClick={closeMobileSheet}
           />
@@ -4140,7 +4144,7 @@ export function ScheduleCalendarApp() {
             <div className={["relative mb-3 min-h-9 items-center justify-center", mobileOnlyClassName, "flex"].join(" ")}>
               <div
                 className="grid h-9 w-24 touch-none place-items-center rounded-base text-muted"
-                aria-label="下にスワイプして予定パネルを閉じる"
+                aria-label={scheduleCopy.aria.dragCloseSchedulePanel}
                 role="separator"
                 onPointerDown={startMobileSheetDrag}
                 onPointerMove={moveMobileSheetDrag}
@@ -4152,7 +4156,7 @@ export function ScheduleCalendarApp() {
               <button
                 type="button"
                 className="absolute right-0 top-0 grid h-9 w-9 place-items-center rounded-base text-xl font-light text-muted transition hover:bg-surface-muted"
-                aria-label="予定パネルを閉じる"
+                aria-label={scheduleCopy.aria.closeSchedulePanel}
                 onClick={closeMobileSheet}
               >
                 ×
@@ -4296,7 +4300,7 @@ export function ScheduleCalendarApp() {
               <button
                 type="button"
                 className="grid h-7 w-7 shrink-0 place-items-center rounded-base text-lg leading-none text-muted transition hover:bg-surface-muted"
-                aria-label="Undo通知を閉じる"
+                aria-label={scheduleCopy.aria.closeUndoToast}
                 onClick={closeUndoToast}
               >
                 ×

@@ -33,8 +33,10 @@ import { useLocale } from "@/components/portal/LocaleProvider";
 import {
   getSnsSplitAdditionalImageRatioHint,
   getSnsSplitImageMakerCopy,
+  getSnsSplitJoinTypeNote,
   getSnsSplitJoinTypeLabel,
   getSnsSplitModeLabel,
+  getSnsSplitModeNote,
   getSnsSplitSlotDescription,
   getSnsSplitSlotGroupLabel
 } from "@/lib/sns-split-image-maker-copy";
@@ -70,14 +72,8 @@ type DragPreviewRequest = {
   offsetY: number;
 };
 
-const modeOptions: { id: SnsSplitMode; note: string }[] = [
-  { id: "concatenate", note: "プリセットごとの追加枠に個別画像を配置します" },
-  { id: "replace", note: "投稿ごとのフレーム画像へメイン分割を差し込みます" }
-];
-const splitTwoJoinOptions: { id: SnsSplitJoinType; note: string }[] = [
-  { id: "three", note: "左追加 / 中央メイン / 右追加で構成します" },
-  { id: "five", note: "左上下 / 中央メイン / 右上下で構成します" }
-];
+const modeOptions: { id: SnsSplitMode }[] = [{ id: "concatenate" }, { id: "replace" }];
+const splitTwoJoinOptions: { id: SnsSplitJoinType }[] = [{ id: "three" }, { id: "five" }];
 const previewModes: { id: PreviewMode }[] = [
   { id: "edit" },
   { id: "grid" },
@@ -336,9 +332,9 @@ export function SnsSplitImageMakerApp() {
         });
       }
     } catch (error) {
-      setToast({ tone: "error", message: error instanceof Error ? error.message : "プレビュー生成に失敗しました。" });
+      setToast({ tone: "error", message: locale === "ja" && error instanceof Error ? error.message : copy.messages.previewFailed });
     }
-  }, [draft, selectedTile, setToast, tiles]);
+  }, [copy.messages.previewFailed, draft, locale, selectedTile, setToast, tiles]);
 
   useEffect(() => {
     void renderPreviews();
@@ -488,7 +484,7 @@ export function SnsSplitImageMakerApp() {
       setImageSource(id, src);
       setToast({ tone: "success", message: id === "base" ? copy.toasts.mainLoaded : copy.toasts.slotLoaded });
     } catch (error) {
-      setToast({ tone: "error", message: error instanceof Error ? error.message : "画像を読み込めませんでした。" });
+      setToast({ tone: "error", message: locale === "ja" && error instanceof Error ? error.message : copy.messages.imageReadFailed });
     }
   };
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>, id: SnsSplitImageSource["id"]) => {
@@ -597,7 +593,7 @@ export function SnsSplitImageMakerApp() {
       persistDraftMetadata(draft);
       setToast({ tone: "success", message: copy.toasts.draftSaved });
     } catch (error) {
-      setToast({ tone: "error", message: error instanceof Error ? error.message : "作業状態の保存に失敗しました。" });
+      setToast({ tone: "error", message: locale === "ja" && error instanceof Error ? error.message : copy.messages.saveWorkFailed });
     }
   };
   const exportTiles = async () => {
@@ -667,7 +663,7 @@ export function SnsSplitImageMakerApp() {
                       : copy.handoff.thumbnailReceived
                     : copy.handoff.scheduleReceived}
                 </p>
-                <h2 className="mt-1 truncate text-base font-black text-foreground">{handoffPayload.title || "無題の予定"}</h2>
+                <h2 className="mt-1 truncate text-base font-black text-foreground">{handoffPayload.title || copy.messages.untitledEvent}</h2>
                 <p className="mt-1 text-xs font-bold text-muted">
                   {handoffPayload.date}
                   {!isThumbnailToSnsHandoffPayload(handoffPayload) ? ` ${handoffPayload.startTime} - ${handoffPayload.endTime}` : ""}
@@ -689,7 +685,7 @@ export function SnsSplitImageMakerApp() {
               readOnly
               value={handoffPayload.announcementText}
               className="mt-3 min-h-24 w-full resize-none rounded-base border border-border bg-surface px-3 py-2 text-xs leading-5 text-foreground"
-              aria-label={isThumbnailToSnsHandoffPayload(handoffPayload) ? "Thumbnail Editorから受け取った告知文メモ" : "Schedule Calendarから受け取った告知文メモ"}
+              aria-label={copy.aria.handoffAnnouncementMemo(isThumbnailToSnsHandoffPayload(handoffPayload) ? "thumbnail" : "schedule")}
             />
             {handoffPayload.hashtags ? <p className="mt-2 text-xs font-bold text-primary-strong">{handoffPayload.hashtags}</p> : null}
           </section>
@@ -708,7 +704,7 @@ export function SnsSplitImageMakerApp() {
                     "min-h-10 px-4 text-sm font-black transition",
                     draft.mode === mode.id ? "bg-primary text-white" : "text-muted hover:bg-surface-muted hover:text-foreground"
                   ].join(" ")}
-                  title={mode.note}
+                  title={getSnsSplitModeNote(mode.id, locale)}
                 >
                   {getSnsSplitModeLabel(mode.id, locale)}
                 </button>
@@ -728,7 +724,7 @@ export function SnsSplitImageMakerApp() {
                       "min-h-10 px-4 text-sm font-black transition",
                       draft.config.joinType === joinType.id ? "bg-primary text-white" : "text-muted hover:bg-surface-muted hover:text-foreground"
                     ].join(" ")}
-                    title={joinType.note}
+                    title={getSnsSplitJoinTypeNote(joinType.id, locale)}
                   >
                     {getSnsSplitJoinTypeLabel(joinType.id, locale)}
                   </button>
@@ -800,7 +796,7 @@ export function SnsSplitImageMakerApp() {
                     <canvas
                       ref={editorCanvasRef}
                       className="h-full w-auto max-w-full cursor-grab rounded-base bg-background object-contain active:cursor-grabbing"
-                      aria-label={`投稿${selectedPost}の編集プレビュー`}
+                      aria-label={copy.aria.editPreview(selectedPost)}
                       onPointerDown={handleEditorPointerDown}
                       onPointerMove={handleEditorPointerMove}
                       onPointerUp={handleEditorPointerUp}
@@ -813,7 +809,7 @@ export function SnsSplitImageMakerApp() {
                 <div className="flex h-full min-h-0 flex-col">
                   <p className="mb-2 shrink-0 text-xs leading-5 text-muted">{copy.preview.gridGuide}</p>
                   <div className={["mx-auto flex min-h-0 w-full flex-1 justify-center", draft.preset === "split-2" ? "max-w-[900px]" : draft.preset === "split-3" ? "max-w-[760px]" : "max-w-[720px]"].join(" ")}>
-                    <canvas ref={compositeCanvasRef} className="h-full w-auto max-w-full rounded-base bg-background object-contain" aria-label={`${postCount}枚投稿の並び確認`} />
+                    <canvas ref={compositeCanvasRef} className="h-full w-auto max-w-full rounded-base bg-background object-contain" aria-label={copy.aria.orderPreview(postCount)} />
                   </div>
                 </div>
               ) : null}
@@ -845,7 +841,7 @@ export function SnsSplitImageMakerApp() {
                               postPreviewCanvasRefs.current[index] = element;
                             }}
                             className="h-full w-full object-cover"
-                            aria-label={`画像${tile.index}のメイン分割プレビュー`}
+                            aria-label={copy.aria.imageMainPreview(tile.index)}
                           />
                         </button>
                       ))}
@@ -878,7 +874,7 @@ export function SnsSplitImageMakerApp() {
                               postPreviewCanvasRefs.current[index] = element;
                             }}
                             className="h-full w-full object-cover"
-                            aria-label={`投稿${tile.index}のメイン分割プレビュー`}
+                            aria-label={copy.aria.postMainPreview(tile.index)}
                           />
                         </button>
                       ))}
@@ -1022,7 +1018,7 @@ export function SnsSplitImageMakerApp() {
         </main>
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-[90] grid grid-cols-[1fr_1fr_1.2fr] gap-2 border-t border-border bg-surface/96 px-3 py-3 shadow-panel backdrop-blur lg:hidden" aria-label="モバイル操作">
+      <nav className="fixed bottom-0 left-0 right-0 z-[90] grid grid-cols-[1fr_1fr_1.2fr] gap-2 border-t border-border bg-surface/96 px-3 py-3 shadow-panel backdrop-blur lg:hidden" aria-label={copy.aria.mobileActions}>
         <button
           type="button"
           onClick={() => setMobileView("preview")}
@@ -1052,7 +1048,7 @@ export function SnsSplitImageMakerApp() {
         <div className={["fixed bottom-24 left-4 right-4 z-[100] rounded-base border px-4 py-3 text-sm font-bold shadow-panel sm:left-auto sm:w-[360px] lg:bottom-4", toneClassName[toast.tone]].join(" ")} role="status" aria-live="polite">
           <div className="flex items-center justify-between gap-3">
             <span>{toast.message}</span>
-            <button type="button" className="text-muted" onClick={() => setToast(null)} aria-label="通知を閉じる">
+            <button type="button" className="text-muted" onClick={() => setToast(null)} aria-label={copy.aria.closeNotification}>
               x
             </button>
           </div>

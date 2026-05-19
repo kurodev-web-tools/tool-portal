@@ -267,11 +267,6 @@ const colorSwatches = [
 const imageUploadMaxBytes = 8 * 1024 * 1024;
 const allowedImageMimeTypes = new Set(["image/png", "image/jpeg"]);
 const allowedImageExtensions = new Set(["png", "jpg", "jpeg"]);
-const userMaterialCapacityMessages = {
-  "file-too-large": "ユーザー素材は1点8MB以下にしてください。",
-  "library-full": "ユーザー素材は最大24件です。不要な素材を削除してから追加してください。",
-  "total-bytes-exceeded": "ユーザー素材は合計48MBまでです。不要な素材を削除するか置換してください。"
-};
 
 const selectedLayerFallback = (layers: ThumbnailLayer[]) => layers[layers.length - 1]?.id ?? null;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -708,7 +703,7 @@ export function ThumbnailEditorApp() {
         context?.drawImage(buffer, 0, 0);
       } catch {
         if (canvasRenderVersionRef.current === renderVersion) {
-          showToast("error", "キャンバスの描画に失敗しました。");
+          showToast("error", copy.messages.canvasRenderFailed);
         }
       }
     };
@@ -719,7 +714,7 @@ export function ThumbnailEditorApp() {
 
     void renderThumbnailPreview();
     void renderThumbnailPreviewAfterFonts();
-  }, [canvasAttachVersion, draft.selectedLayerId, resolvedDraft, showToast]);
+  }, [canvasAttachVersion, copy.messages.canvasRenderFailed, draft.selectedLayerId, resolvedDraft, showToast]);
 
   useEffect(() => {
     if (!mobilePreviewOpen) {
@@ -747,7 +742,7 @@ export function ThumbnailEditorApp() {
         context?.drawImage(buffer, 0, 0);
       } catch {
         if (mobilePreviewRenderVersionRef.current === renderVersion) {
-          showToast("error", "全体プレビューの描画に失敗しました。");
+          showToast("error", copy.messages.fullPreviewRenderFailed);
         }
       }
     };
@@ -758,7 +753,7 @@ export function ThumbnailEditorApp() {
 
     void renderMobileThumbnailPreview();
     void renderMobileThumbnailPreviewAfterFonts();
-  }, [mobilePreviewCanvasAttachVersion, mobilePreviewOpen, resolvedDraft, showToast]);
+  }, [copy.messages.fullPreviewRenderFailed, mobilePreviewCanvasAttachVersion, mobilePreviewOpen, resolvedDraft, showToast]);
 
   useEffect(() => {
     if (!mobilePreviewOpen) {
@@ -807,7 +802,7 @@ export function ThumbnailEditorApp() {
     const timer = window.setTimeout(() => {
       const normalized = normalizeThumbnailDraft(draft);
       if (!normalized) {
-        showToast("error", "下書きデータが不正なため自動保存を中断しました。");
+        showToast("error", copy.messages.invalidAutoSave);
         return;
       }
       try {
@@ -816,11 +811,11 @@ export function ThumbnailEditorApp() {
           JSON.stringify({ ...normalized, updatedAt: new Date().toISOString() })
         );
       } catch {
-        showToast("error", "下書きの自動保存に失敗しました。");
+        showToast("error", copy.messages.autoSaveFailed);
       }
     }, 700);
     return () => window.clearTimeout(timer);
-  }, [draft, hydrated, showToast]);
+  }, [copy.messages.autoSaveFailed, copy.messages.invalidAutoSave, draft, hydrated, showToast]);
 
   const syncDraftHistoryAvailability = useCallback(() => {
     const history = draftHistoryRef.current;
@@ -1154,7 +1149,7 @@ export function ThumbnailEditorApp() {
   const saveDraft = () => {
     const normalized = normalizeThumbnailDraft(draft);
     if (!normalized) {
-      showToast("error", "下書きデータが不正なため保存できません。");
+      showToast("error", copy.messages.invalidSave);
       return;
     }
     try {
@@ -1164,7 +1159,7 @@ export function ThumbnailEditorApp() {
       );
       showToast("success", copy.toasts.saveDraft);
     } catch {
-      showToast("error", "下書き保存に失敗しました。");
+      showToast("error", copy.messages.saveFailed);
     }
   };
 
@@ -1190,36 +1185,36 @@ export function ThumbnailEditorApp() {
       return;
     }
     if (!isValidImageFile(file)) {
-      showToast("error", "PNG/JPEG画像ファイルを選択してください。");
+      showToast("error", copy.messages.imageTypeInvalid);
       return;
     }
     if (file.size > imageUploadMaxBytes) {
-      showToast("error", "画像は8MB以下にしてください。");
+      showToast("error", copy.messages.imageTooLarge);
       return;
     }
 
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result !== "string") {
-        showToast("error", "画像の読み込みに失敗しました。");
+        showToast("error", copy.messages.imageReadFailed);
         return;
       }
       addLayer(createImageLayer(reader.result));
-      showToast("success", "画像レイヤーを追加しました。");
+      showToast("success", copy.messages.imageLayerAdded);
     };
-    reader.onerror = () => showToast("error", "画像の読み込みに失敗しました。");
+    reader.onerror = () => showToast("error", copy.messages.imageReadFailed);
     reader.readAsDataURL(file);
   };
 
   const addMaterialLayer = (materialId: string) => {
     const layer = createThumbnailMaterialLayer(materialId, draft.canvas);
     if (!layer) {
-      showToast("error", "素材を追加できませんでした。");
+      showToast("error", copy.messages.materialAddFailed);
       return;
     }
     const material = thumbnailMaterialLibrary.find((item) => item.id === materialId);
     addLayer(layer);
-    showToast("success", material ? `「${material.name}」を素材レイヤーとして追加しました。` : "素材レイヤーを追加しました。");
+    showToast("success", material ? copy.messages.materialLayerAddedWithName(material.name) : copy.messages.materialLayerAdded);
   };
 
   const commitUserMaterialRefs = (refs: ThumbnailUserMaterialRef[]) => {
@@ -1227,7 +1222,7 @@ export function ThumbnailEditorApp() {
     try {
       writeThumbnailUserMaterialRefsMetadata(refs);
     } catch {
-      showToast("error", "ユーザー素材の一覧保存に失敗しました。");
+      showToast("error", copy.messages.userMaterialListSaveFailed);
     }
   };
 
@@ -1244,13 +1239,13 @@ export function ThumbnailEditorApp() {
       return;
     }
     if (!isThumbnailUserMaterialFile(file)) {
-      showToast("error", "PNG/JPEG/WebP/SVG画像ファイルを選択してください。");
+      showToast("error", copy.messages.userMaterialTypeInvalid);
       setReplaceUserMaterialRef(null);
       return;
     }
     const capacity = canAddThumbnailUserMaterialRef(userMaterialRefs, file.size, replaceUserMaterialRef?.storageId);
     if (!capacity.ok) {
-      showToast("error", userMaterialCapacityMessages[capacity.reason]);
+      showToast("error", copy.messages.userMaterialCapacity[capacity.reason]);
       setReplaceUserMaterialRef(null);
       return;
     }
@@ -1268,14 +1263,14 @@ export function ThumbnailEditorApp() {
             .filter((layer) => layer.type === "image" && layer.materialRef?.storageId === replaceUserMaterialRef.storageId)
             .reduce((nextDraft, layer) => replaceThumbnailUserMaterialLayerRef(nextDraft, layer.id, nextRef), current)
         );
-        showToast("success", `「${nextRef.name}」へ置換しました。配置とcropは維持しています。`);
+        showToast("success", copy.messages.userMaterialReplaced(nextRef.name));
       } else {
         addLayer(createThumbnailUserMaterialLayer(nextRef, draft.canvas));
         setMobilePanel("layers");
-        showToast("success", `「${nextRef.name}」をユーザー素材として追加しました。`);
+        showToast("success", copy.messages.userMaterialAdded(nextRef.name));
       }
     } catch (error) {
-      showToast("error", error instanceof Error ? error.message : "ユーザー素材の保存に失敗しました。");
+      showToast("error", locale === "ja" && error instanceof Error ? error.message : copy.messages.userMaterialSaveFailed);
     } finally {
       setReplaceUserMaterialRef(null);
     }
@@ -1283,7 +1278,7 @@ export function ThumbnailEditorApp() {
 
   const addUserMaterialLayer = (ref: ThumbnailUserMaterialRef) => {
     addLayer(createThumbnailUserMaterialLayer(ref, draft.canvas));
-    showToast("success", `「${ref.name}」をユーザー素材レイヤーとして追加しました。`);
+    showToast("success", copy.messages.userMaterialLayerAdded(ref.name));
   };
 
   const deleteUserMaterial = async (ref: ThumbnailUserMaterialRef) => {
@@ -1291,10 +1286,10 @@ export function ThumbnailEditorApp() {
       await deleteThumbnailUserMaterialImage(ref.storageId);
       commitUserMaterialRefs(userMaterialRefs.filter((item) => item.storageId !== ref.storageId));
       updateDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "deleted"));
-      showToast("warning", `「${ref.name}」を素材一覧から削除しました。配置済みレイヤーは残ります。不要ならレイヤー一覧から削除してください。`);
+      showToast("warning", copy.messages.userMaterialDeleted(ref.name));
     } catch {
       setDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "load-failed"));
-      showToast("error", "ユーザー素材の削除に失敗しました。");
+      showToast("error", copy.messages.userMaterialDeleteFailed);
     }
   };
 
@@ -1302,7 +1297,7 @@ export function ThumbnailEditorApp() {
     const targetLayer = draft.layers.find((layer) => layer.id === draft.selectedLayerId && layer.type === "image" && !layer.locked);
     const next = applyThumbnailStandeePlacementPreset(draft, presetId);
     if (!next) {
-      showToast("warning", "編集可能な画像レイヤーを選択してください。");
+      showToast("warning", copy.messages.editableImageRequired);
       return;
     }
 
@@ -1312,8 +1307,8 @@ export function ThumbnailEditorApp() {
     showToast(
       "success",
       preset
-        ? `「${targetLayer?.name ?? "選択中の画像"}」へ立ち絵配置「${preset.name}」を適用しました。`
-        : `「${targetLayer?.name ?? "選択中の画像"}」へ立ち絵配置を適用しました。`
+        ? copy.messages.standeePlacementApplied(targetLayer?.name ?? copy.panels.property.imageFallback, preset.name)
+        : copy.messages.standeePlacementAppliedFallback(targetLayer?.name ?? copy.panels.property.imageFallback)
     );
   };
 
@@ -1350,7 +1345,7 @@ export function ThumbnailEditorApp() {
   const deleteLayer = (layerId: string) => {
     updateDraft((current) => {
       if (current.layers.length <= 1) {
-        showToast("warning", "最低1レイヤーは残してください。");
+        showToast("warning", copy.messages.minimumLayerRequired);
         return current;
       }
       const layers = current.layers.filter((layer) => layer.id !== layerId);
@@ -1613,13 +1608,13 @@ export function ThumbnailEditorApp() {
   const exportImage = async () => {
     const normalized = normalizeThumbnailDraft(draft);
     if (!normalized) {
-      showToast("error", "下書きデータが不正なため書き出しできません。");
+      showToast("error", copy.messages.invalidExport);
       return;
     }
     const outputDraft = resolveUserMaterialLayersForOutput(normalized);
     const hasVisibleImage = outputDraft.layers.some((layer) => layer.type === "image" && !layer.hidden && layer.src);
     if (!hasVisibleImage) {
-      showToast("error", "画像レイヤーがないため書き出しできません。画像を追加してください。");
+      showToast("error", copy.messages.exportNeedsImage);
       return;
     }
     try {
@@ -1638,14 +1633,14 @@ export function ThumbnailEditorApp() {
       anchor.click();
       showToast("success", copy.toasts.exportDone(exportFormat.toUpperCase()));
     } catch {
-      showToast("error", "書き出しに失敗しました。");
+      showToast("error", copy.messages.exportFailed);
     }
   };
 
   const sendToSnsSplit = async () => {
     const normalized = normalizeThumbnailDraft(draft);
     if (!normalized) {
-      showToast("error", "下書きデータが不正なためSNS分割画像へ渡せません。");
+      showToast("error", copy.messages.invalidSnsHandoff);
       return;
     }
 
@@ -1700,9 +1695,7 @@ export function ThumbnailEditorApp() {
     label:
       variant.aspectRatio === "16:9"
         ? getThumbnailPresetVariantLabel(variant.id, locale, variant.label)
-        : locale === "en"
-          ? `${getThumbnailPresetVariantLabel(variant.id, locale, variant.label)} (later)`
-          : `${getThumbnailPresetVariantLabel(variant.id, locale, variant.label)}（後続候補）`,
+        : `${getThumbnailPresetVariantLabel(variant.id, locale, variant.label)}${copy.header.laterCandidateSuffix}`,
     description: getThumbnailPresetVariantDescription(variant.id, locale, variant.intendedUse, variant.aspectRatio !== "16:9"),
     disabled: variant.aspectRatio !== "16:9"
   }));
@@ -2139,7 +2132,7 @@ export function ThumbnailEditorApp() {
               <p className="text-xs font-bold text-primary-strong">{copy.canvas.previewTitle}</p>
               <h2 className="truncate text-base font-black text-foreground">{selectedPresetName}</h2>
             </div>
-            <button type="button" className="flat-control px-3 py-2 text-sm font-bold" onClick={() => setMobilePreviewOpen(false)} aria-label="全体プレビューを閉じる">
+            <button type="button" className="flat-control px-3 py-2 text-sm font-bold" onClick={() => setMobilePreviewOpen(false)} aria-label={copy.aria.closeFullPreview}>
               {copy.canvas.previewClose}
             </button>
           </div>
@@ -2148,7 +2141,7 @@ export function ThumbnailEditorApp() {
               <canvas
                 ref={setMobilePreviewCanvasRef}
                 className="h-full w-full rounded-base border border-border bg-[#081117] object-contain shadow-panel"
-                aria-label="サムネイル全体確認"
+                aria-label={copy.aria.fullPreviewCanvas}
               />
               {showCenterGuide ? <CanvasCenterGuideOverlay /> : null}
             </div>
@@ -2174,14 +2167,14 @@ export function ThumbnailEditorApp() {
         />
       ) : null}
 
-      <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} aria-label="画像ファイルを選択" />
+      <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} aria-label={copy.aria.imageFileInput} />
       <input
         ref={userMaterialFileInputRef}
         className="hidden"
         type="file"
         accept="image/png,image/jpeg,image/webp,image/svg+xml"
         onChange={handleUserMaterialUpload}
-        aria-label="ユーザー素材ファイルを選択"
+        aria-label={copy.aria.userMaterialFileInput}
       />
       {toast && (
         <div className={`fixed bottom-20 left-4 right-4 z-50 rounded-base border px-4 py-3 text-sm font-bold shadow-panel min-[1024px]:bottom-5 min-[1024px]:left-auto min-[1024px]:right-5 min-[1024px]:w-96 ${toneClassName[toast.tone]}`}>
@@ -2315,7 +2308,7 @@ function MaterialLibraryPanel({ copy, locale, onAdd }: { copy: ReturnType<typeof
             className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2 rounded-base border border-border bg-surface p-2 text-left transition hover:border-primary hover:bg-primary-soft/35 md:grid-cols-[5.25rem_minmax(0,1fr)]"
             type="button"
             onClick={() => onAdd(material.id)}
-            aria-label={`${material.name}を素材として追加`}
+            aria-label={copy.aria.addMaterial(material.name)}
             title={material.description}
           >
             <span className="grid aspect-video place-items-center overflow-hidden rounded-sm border border-border bg-[#07111c]">
@@ -2537,23 +2530,23 @@ function LayerPanel({
         <span className="text-xs text-muted">{layer.type}</span>
       </button>
       <div className="mt-2 grid grid-cols-6 gap-1">
-        <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "front")} title="前面へ">
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "front")} title={copy.layerControls.moveFront}>
           ↑
         </button>
-        <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "back")} title="背面へ">
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "back")} title={copy.layerControls.moveBack}>
           ↓
         </button>
-        <button className="flat-control py-1 text-xs" type="button" onClick={() => onDuplicate(layer.id)} title="複製">
-          複
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onDuplicate(layer.id)} title={copy.layerControls.duplicate}>
+          {copy.layerControls.duplicateShort}
         </button>
-        <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "hidden")} title="表示切替">
-          {layer.hidden ? "非" : "目"}
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "hidden")} title={copy.layerControls.toggleVisibility}>
+          {layer.hidden ? copy.layerControls.hiddenShort : copy.layerControls.visibleShort}
         </button>
-        <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "locked")} title="ロック切替">
-          {layer.locked ? "錠" : "開"}
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "locked")} title={copy.layerControls.toggleLock}>
+          {layer.locked ? copy.layerControls.lockedShort : copy.layerControls.unlockedShort}
         </button>
-        <button className="flat-control py-1 text-xs text-rose-500" type="button" onClick={() => onDelete(layer.id)} title="削除">
-          削
+        <button className="flat-control py-1 text-xs text-rose-500" type="button" onClick={() => onDelete(layer.id)} title={copy.layerControls.delete}>
+          {copy.layerControls.deleteShort}
         </button>
       </div>
     </div>
@@ -2578,7 +2571,7 @@ function LayerPanel({
                   type="button"
                   className="flex w-full items-center justify-between gap-2 rounded-base px-2 py-2 text-left text-sm font-black text-foreground hover:bg-surface-muted"
                   aria-expanded={!collapsed}
-                  aria-label={`${group.label}グループを${collapsed ? "開く" : "閉じる"}`}
+                  aria-label={copy.aria.toggleWeeklyGroup(group.label, collapsed)}
                   onClick={() => setCollapsedGroups((current) => ({ ...current, [group.id]: !collapsed }))}
                 >
                   <span>{copy.panels.layers.weeklyGroupPrefix} / {group.label}</span>
@@ -2649,28 +2642,30 @@ function PropertyPanel({
         />
       </label>
       <ThumbnailQualityGuardPanel copy={copy} items={qualityGuardItems} />
-      <LayerQuickAdjustPanel layer={layer} canvas={canvas} onChange={onChange} />
+      <LayerQuickAdjustPanel copy={copy} layer={layer} canvas={canvas} onChange={onChange} />
 
       <div className="grid grid-cols-2 gap-3">
         <NumberField label="X" value={layer.x} min={-2000} max={4000} onChange={(x) => onChange((item) => ({ ...item, x }))} />
         <NumberField label="Y" value={layer.y} min={-2000} max={4000} onChange={(y) => onChange((item) => ({ ...item, y }))} />
-        <NumberField label="幅" value={layer.width} min={16} max={4000} onChange={(width) => onChange((item) => ({ ...item, width }))} />
-        <NumberField label="高さ" value={layer.height} min={16} max={4000} onChange={(height) => onChange((item) => ({ ...item, height }))} />
+        <NumberField label={copy.panels.property.width} value={layer.width} min={16} max={4000} onChange={(width) => onChange((item) => ({ ...item, width }))} />
+        <NumberField label={copy.panels.property.height} value={layer.height} min={16} max={4000} onChange={(height) => onChange((item) => ({ ...item, height }))} />
       </div>
 
-      {layer.type === "text" && <TextControls layer={layer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={onFontMenuOpenChange} onChange={onChange} />}
-      {layer.type === "shape" && <ShapeControls layer={layer} onChange={onChange} />}
-      {layer.type === "image" && <StandeePlacementPanel layer={layer} onApply={onStandeePlacement} />}
-      <EffectControls layer={layer} onChange={onChange} />
+      {layer.type === "text" && <TextControls copy={copy} layer={layer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={onFontMenuOpenChange} onChange={onChange} />}
+      {layer.type === "shape" && <ShapeControls copy={copy} layer={layer} onChange={onChange} />}
+      {layer.type === "image" && <StandeePlacementPanel copy={copy} layer={layer} onApply={onStandeePlacement} />}
+      <EffectControls copy={copy} layer={layer} onChange={onChange} />
     </section>
   );
 }
 
 function LayerQuickAdjustPanel({
+  copy,
   layer,
   canvas,
   onChange
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
   layer: ThumbnailLayer;
   canvas: ThumbnailEditorDraft["canvas"];
   onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void;
@@ -2703,24 +2698,24 @@ function LayerQuickAdjustPanel({
   return (
     <div className="rounded-base border border-border bg-surface-muted/55 p-3" data-thumbnail-layer-rescue-controls="true">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-xs font-black text-foreground">操作補助</h3>
-        <span className="text-[10px] font-bold text-muted">画面外ハンドル対策</span>
+        <h3 className="text-xs font-black text-foreground">{copy.quickAdjust.title}</h3>
+        <span className="text-[10px] font-bold text-muted">{copy.quickAdjust.note}</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(0.9)} aria-label={`${layer.name}を縮小`}>
-          サイズ -
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(0.9)} aria-label={copy.quickAdjust.shrinkAria(layer.name)}>
+          {copy.quickAdjust.shrink}
         </button>
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(1.1)} aria-label={`${layer.name}を拡大`}>
-          サイズ +
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(1.1)} aria-label={copy.quickAdjust.enlargeAria(layer.name)}>
+          {copy.quickAdjust.enlarge}
         </button>
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(-5)} aria-label={`${layer.name}を左へ5度回転`}>
-          回転 -5
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(-5)} aria-label={copy.quickAdjust.rotateLeftAria(layer.name)}>
+          {copy.quickAdjust.rotateLeft}
         </button>
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(5)} aria-label={`${layer.name}を右へ5度回転`}>
-          回転 +5
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(5)} aria-label={copy.quickAdjust.rotateRightAria(layer.name)}>
+          {copy.quickAdjust.rotateRight}
         </button>
-        <button className="flat-control col-span-2 px-2 py-2 text-xs font-bold" type="button" onClick={centerLayer} aria-label={`${layer.name}をキャンバス中央へ移動`}>
-          中央へ
+        <button className="flat-control col-span-2 px-2 py-2 text-xs font-bold" type="button" onClick={centerLayer} aria-label={copy.quickAdjust.centerAria(layer.name)}>
+          {copy.quickAdjust.center}
         </button>
       </div>
     </div>
@@ -2752,29 +2747,31 @@ function ThumbnailQualityGuardPanel({ copy, items }: { copy: ReturnType<typeof g
 }
 
 function StandeePlacementPanel({
+  copy,
   layer,
   onApply
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
   layer: Extract<ThumbnailLayer, { type: "image" }>;
   onApply: (presetId: ThumbnailStandeePlacementPresetId) => void;
 }) {
   const groups = ["1人", "2人", "3人"] as const;
-  const lockedReason = "ロック中のため適用できません";
+  const lockedReason = copy.standee.lockedReason;
 
   return (
     <div className="space-y-3 border-t border-border pt-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-black text-foreground">立ち絵配置</h3>
-        {layer.locked ? <span className="text-[11px] font-bold text-muted">ロック中</span> : null}
+        <h3 className="text-sm font-black text-foreground">{copy.standee.title}</h3>
+        {layer.locked ? <span className="text-[11px] font-bold text-muted">{copy.standee.locked}</span> : null}
       </div>
       <p className="truncate text-[11px] font-bold text-muted">
-        適用先: <span className="text-foreground">{layer.name}</span>
+        {copy.standee.target}: <span className="text-foreground">{layer.name}</span>
       </p>
-      {layer.locked ? <p className="text-[11px] font-semibold text-muted">ロック解除後に適用できます。</p> : null}
-      <p className="text-[11px] font-semibold leading-relaxed text-muted">2人 / 3人は画像レイヤーを人数分追加して、選択中の1枚へ個別に適用します。</p>
+      {layer.locked ? <p className="text-[11px] font-semibold text-muted">{copy.standee.unlockGuide}</p> : null}
+      <p className="text-[11px] font-semibold leading-relaxed text-muted">{copy.standee.multiGuide}</p>
       {groups.map((group) => (
         <div key={group} className="space-y-2">
-          <p className="text-[11px] font-black text-muted">{group}</p>
+          <p className="text-[11px] font-black text-muted">{copy.standee.groups[group]}</p>
           <div className="grid grid-cols-2 gap-2">
             {thumbnailStandeePlacementPresets
               .filter((preset) => preset.group === group)
@@ -2800,11 +2797,13 @@ function StandeePlacementPanel({
 }
 
 function TextControls({
+  copy,
   layer,
   fontMenuOpen,
   onFontMenuOpenChange,
   onChange
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
   layer: Extract<ThumbnailLayer, { type: "text" }>;
   fontMenuOpen: boolean;
   onFontMenuOpenChange: (open: boolean) => void;
@@ -2864,7 +2863,7 @@ function TextControls({
   return (
     <div className="space-y-3 border-t border-border pt-4">
       <label className="block text-xs font-bold text-muted">
-        テキスト
+        {copy.textControls.text}
         <textarea
           className="mt-1 min-h-24 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm text-foreground"
           maxLength={150}
@@ -2874,7 +2873,7 @@ function TextControls({
       </label>
       <div className="grid grid-cols-2 gap-3">
         <div ref={fontMenuRef} className="relative text-xs font-bold text-muted">
-          フォント
+          {copy.textControls.font}
           <button
             type="button"
             className="mt-1 flex w-full items-center justify-between gap-2 rounded-base border border-border bg-surface px-3 py-2 text-left text-sm font-bold text-foreground"
@@ -2893,13 +2892,13 @@ function TextControls({
                   type="search"
                   value={fontSearch}
                   onChange={(event) => setFontSearch(event.target.value)}
-                  placeholder="検索"
-                  aria-label="フォントを検索"
+                  placeholder={copy.textControls.fontSearchPlaceholder}
+                  aria-label={copy.textControls.fontSearchAria}
                 />
               </div>
               {recentFontOptions.length > 0 && !fontSearch.trim() ? (
                 <div className="border-b border-border px-1 pb-2">
-                  <p className="px-2 pb-1 pt-1 text-[10px] font-black tracking-normal text-muted/80">最近</p>
+                  <p className="px-2 pb-1 pt-1 text-[10px] font-black tracking-normal text-muted/80">{copy.textControls.recent}</p>
                   <div className="grid grid-cols-2 gap-1">
                     {recentFontOptions.map((recentFont) => (
                       <button
@@ -2948,15 +2947,15 @@ function TextControls({
                   </div>
                   ))
                 ) : (
-                  <p className="px-3 py-4 text-center text-xs font-bold text-muted">該当なし</p>
+                  <p className="px-3 py-4 text-center text-xs font-bold text-muted">{copy.textControls.noResults}</p>
                 )}
               </div>
             </div>
           ) : null}
         </div>
-        <NumberField label="サイズ" value={layer.fontSize} min={12} max={240} onChange={(fontSize) => update("fontSize", fontSize)} />
-        <NumberField label="行間" value={Number(layer.lineHeight.toFixed(2))} min={0.8} max={2} step={0.05} onChange={(lineHeight) => update("lineHeight", lineHeight)} />
-        <ColorField label="色" value={layer.color} onChange={(color) => update("color", color)} />
+        <NumberField label={copy.textControls.size} value={layer.fontSize} min={12} max={240} onChange={(fontSize) => update("fontSize", fontSize)} />
+        <NumberField label={copy.textControls.lineHeight} value={Number(layer.lineHeight.toFixed(2))} min={0.8} max={2} step={0.05} onChange={(lineHeight) => update("lineHeight", lineHeight)} />
+        <ColorField copy={copy} label={copy.textControls.color} value={layer.color} onChange={(color) => update("color", color)} />
       </div>
       <div className="grid grid-cols-3 gap-2">
         {(["left", "center", "right"] as ThumbnailTextAlign[]).map((align) => (
@@ -2966,7 +2965,7 @@ function TextControls({
             type="button"
             onClick={() => update("align", align)}
           >
-            {align === "left" ? "左" : align === "center" ? "中央" : "右"}
+            {align === "left" ? copy.textControls.alignLeft : align === "center" ? copy.textControls.alignCenter : copy.textControls.alignRight}
           </button>
         ))}
       </div>
@@ -2982,34 +2981,34 @@ function TextControls({
   );
 }
 
-function ShapeControls({ layer, onChange }: { layer: Extract<ThumbnailLayer, { type: "shape" }>; onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void }) {
+function ShapeControls({ copy, layer, onChange }: { copy: ReturnType<typeof getThumbnailEditorCopy>; layer: Extract<ThumbnailLayer, { type: "shape" }>; onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void }) {
   const update = <K extends keyof typeof layer>(key: K, value: (typeof layer)[K]) => onChange((item) => (item.type === "shape" ? { ...item, [key]: value } : item));
 
   return (
     <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
-      <ColorField label="塗りつぶし" value={layer.fillColor} popoverAlign="left" onChange={(fillColor) => update("fillColor", fillColor)} />
-      <ColorField label="枠線" value={layer.strokeColor} onChange={(strokeColor) => update("strokeColor", strokeColor)} />
-      <NumberField label="枠線の太さ" value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => update("strokeWidth", strokeWidth)} />
-      <NumberField label="角丸" value={layer.borderRadius} min={0} max={120} onChange={(borderRadius) => update("borderRadius", borderRadius)} />
+      <ColorField copy={copy} label={copy.shapeControls.fill} value={layer.fillColor} popoverAlign="left" onChange={(fillColor) => update("fillColor", fillColor)} />
+      <ColorField copy={copy} label={copy.shapeControls.stroke} value={layer.strokeColor} onChange={(strokeColor) => update("strokeColor", strokeColor)} />
+      <NumberField label={copy.shapeControls.strokeWidth} value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => update("strokeWidth", strokeWidth)} />
+      <NumberField label={copy.shapeControls.radius} value={layer.borderRadius} min={0} max={120} onChange={(borderRadius) => update("borderRadius", borderRadius)} />
     </div>
   );
 }
 
-function EffectControls({ layer, onChange }: { layer: ThumbnailLayer; onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void }) {
+function EffectControls({ copy, layer, onChange }: { copy: ReturnType<typeof getThumbnailEditorCopy>; layer: ThumbnailLayer; onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void }) {
   return (
     <div className="space-y-3 border-t border-border pt-4">
-      <h3 className="text-sm font-black text-foreground">エフェクト</h3>
+      <h3 className="text-sm font-black text-foreground">{copy.effectControls.title}</h3>
       <div className="grid grid-cols-2 gap-3">
-        <NumberField label="透明度" value={Math.round(layer.opacity * 100)} min={0} max={100} onChange={(value) => onChange((item) => ({ ...item, opacity: value / 100 }))} suffix="%" />
-        <NumberField label="ぼかし" value={layer.blur} min={0} max={24} onChange={(blur) => onChange((item) => ({ ...item, blur }))} />
+        <NumberField label={copy.effectControls.opacity} value={Math.round(layer.opacity * 100)} min={0} max={100} onChange={(value) => onChange((item) => ({ ...item, opacity: value / 100 }))} suffix="%" />
+        <NumberField label={copy.effectControls.blur} value={layer.blur} min={0} max={24} onChange={(blur) => onChange((item) => ({ ...item, blur }))} />
         {layer.type === "text" && (
           <>
-            <NumberField label="縁取り" value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => onChange((item) => (item.type === "text" ? { ...item, strokeWidth } : item))} />
-            <ColorField label="縁取り色" value={layer.strokeColor} onChange={(strokeColor) => onChange((item) => (item.type === "text" ? { ...item, strokeColor } : item))} />
-            <NumberField label="影ぼかし" value={layer.shadowBlur} min={0} max={64} onChange={(shadowBlur) => onChange((item) => (item.type === "text" ? { ...item, shadowBlur } : item))} />
-            <ColorField label="影色" value={layer.shadowColor} onChange={(shadowColor) => onChange((item) => (item.type === "text" ? { ...item, shadowColor } : item))} />
-            <NumberField label="影X" value={layer.shadowOffsetX} min={-80} max={80} onChange={(shadowOffsetX) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetX } : item))} />
-            <NumberField label="影Y" value={layer.shadowOffsetY} min={-80} max={80} onChange={(shadowOffsetY) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetY } : item))} />
+            <NumberField label={copy.effectControls.outline} value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => onChange((item) => (item.type === "text" ? { ...item, strokeWidth } : item))} />
+            <ColorField copy={copy} label={copy.effectControls.outlineColor} value={layer.strokeColor} onChange={(strokeColor) => onChange((item) => (item.type === "text" ? { ...item, strokeColor } : item))} />
+            <NumberField label={copy.effectControls.shadowBlur} value={layer.shadowBlur} min={0} max={64} onChange={(shadowBlur) => onChange((item) => (item.type === "text" ? { ...item, shadowBlur } : item))} />
+            <ColorField copy={copy} label={copy.effectControls.shadowColor} value={layer.shadowColor} onChange={(shadowColor) => onChange((item) => (item.type === "text" ? { ...item, shadowColor } : item))} />
+            <NumberField label={copy.effectControls.shadowX} value={layer.shadowOffsetX} min={-80} max={80} onChange={(shadowOffsetX) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetX } : item))} />
+            <NumberField label={copy.effectControls.shadowY} value={layer.shadowOffsetY} min={-80} max={80} onChange={(shadowOffsetY) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetY } : item))} />
           </>
         )}
       </div>
@@ -3292,9 +3291,9 @@ function PresetCards({
                 ].join(" ")}
                 type="button"
                 onClick={() => onFavoriteToggle(preset.id)}
-                aria-label={isFavorite ? `${preset.name}のお気に入りを解除` : `${preset.name}をお気に入りに追加`}
+                aria-label={isFavorite ? copy.favorite.remove(getThumbnailPresetName(preset.id, locale, preset.name)) : copy.favorite.add(getThumbnailPresetName(preset.id, locale, preset.name))}
                 aria-pressed={isFavorite}
-                title={isFavorite ? "お気に入りを解除" : "お気に入りに追加"}
+                title={isFavorite ? copy.favorite.removeTitle : copy.favorite.addTitle}
               >
                 {isFavorite ? "★" : "☆"}
               </button>
@@ -3509,11 +3508,13 @@ function NumberField({
 }
 
 function ColorField({
+  copy,
   label,
   value,
   popoverAlign = "right",
   onChange
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
   label: string;
   value: string;
   popoverAlign?: "left" | "right";
@@ -3586,7 +3587,7 @@ function ColorField({
             type="button"
             style={{ backgroundColor: normalizedValue }}
             onClick={() => setPaletteOpen((current) => !current)}
-            aria-label={`${label}を選ぶ`}
+            aria-label={copy.aria.selectColor(label)}
           />
           <input
             className="min-w-0 flex-1 rounded-sm border border-border bg-transparent px-2 py-2 text-sm font-bold text-foreground"
@@ -3653,7 +3654,7 @@ function ColorField({
                   type="button"
                   style={{ backgroundColor: swatch }}
                   onClick={() => commitColor(swatch)}
-                  aria-label={`色 ${swatch}`}
+                  aria-label={copy.aria.colorSwatch(swatch)}
                 />
               ))}
             </div>

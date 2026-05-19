@@ -1,3 +1,5 @@
+import type { Locale } from "@/lib/locale";
+
 export type SnsSplitMode = "concatenate" | "replace";
 export type SnsSplitPreset = "split-2" | "split-3" | "split-4";
 export type SnsSplitJoinType = "three" | "five";
@@ -56,6 +58,11 @@ export type SnsSplitTile = {
   sy: number;
   sw: number;
   sh: number;
+};
+type SnsSplitDrawOptions = {
+  includeGuides?: boolean;
+  forceJpegBackground?: boolean;
+  placeholder?: string;
 };
 
 export const snsSplitDraftStorageKey = "v-streamer-tools:sns-split-image-maker:draft:v1";
@@ -307,31 +314,34 @@ export const getSnsSplitSlotLabel = (
   mode: SnsSplitMode,
   index: number,
   preset: SnsSplitPreset = defaultSnsSplitPreset,
-  joinType: SnsSplitJoinType = defaultSnsSplitConfig.joinType
+  joinType: SnsSplitJoinType = defaultSnsSplitConfig.joinType,
+  locale: Locale = "ja"
 ) => {
   if (preset === "split-2") {
     if (mode === "replace") {
-      return `投稿${index} フレーム`;
+      return locale === "en" ? `Post ${index} frame` : `投稿${index} フレーム`;
     }
     const postIndex = joinType === "five" ? Math.floor((index - 1) / 4) + 1 : Math.floor((index - 1) / 2) + 1;
     if (joinType === "five") {
-      const labels = ["左上", "左下", "右上", "右下"];
-      return `投稿${postIndex} ${labels[(index - 1) % 4]}`;
+      const labels = locale === "en" ? ["left top", "left bottom", "right top", "right bottom"] : ["左上", "左下", "右上", "右下"];
+      return locale === "en" ? `Post ${postIndex} ${labels[(index - 1) % 4]}` : `投稿${postIndex} ${labels[(index - 1) % 4]}`;
     }
-    return `投稿${postIndex} ${index % 2 === 1 ? "左" : "右"}`;
+    return locale === "en" ? `Post ${postIndex} ${index % 2 === 1 ? "left" : "right"}` : `投稿${postIndex} ${index % 2 === 1 ? "左" : "右"}`;
   }
   if (preset === "split-3") {
     if (mode === "replace") {
-      return `画像${index} フレーム`;
+      return locale === "en" ? `Image ${index} frame` : `画像${index} フレーム`;
     }
-    const labels = ["画像1 左", "画像1 右", "画像2 上", "画像2 下", "画像3 上", "画像3 下"];
-    return labels[index - 1] ?? `追加画像 ${index}`;
+    const labels = locale === "en"
+      ? ["Image 1 left", "Image 1 right", "Image 2 top", "Image 2 bottom", "Image 3 top", "Image 3 bottom"]
+      : ["画像1 左", "画像1 右", "画像2 上", "画像2 下", "画像3 上", "画像3 下"];
+    return labels[index - 1] ?? (locale === "en" ? `Extra image ${index}` : `追加画像 ${index}`);
   }
   if (mode === "replace") {
-    return `投稿${index} フレーム`;
+    return locale === "en" ? `Post ${index} frame` : `投稿${index} フレーム`;
   }
   const postIndex = Math.floor((index - 1) / 2) + 1;
-  return `投稿${postIndex} ${index % 2 === 1 ? "上部" : "下部"}`;
+  return locale === "en" ? `Post ${postIndex} ${index % 2 === 1 ? "top" : "bottom"}` : `投稿${postIndex} ${index % 2 === 1 ? "上部" : "下部"}`;
 };
 
 export const normalizeSnsSplitDraft = (value: unknown): SnsSplitDraft | null => {
@@ -435,7 +445,7 @@ const drawPlaceholder = (context: CanvasRenderingContext2D, label: string) => {
 const drawBaseComposite = async (
   canvas: HTMLCanvasElement,
   draft: Pick<SnsSplitDraft, "images" | "config">,
-  options: { forceJpegBackground?: boolean } = {}
+  options: Pick<SnsSplitDrawOptions, "forceJpegBackground" | "placeholder"> = {}
 ) => {
   canvas.width = snsSplitBaseCanvas.width;
   canvas.height = snsSplitBaseCanvas.height;
@@ -460,14 +470,14 @@ const drawBaseComposite = async (
     const dy = (canvas.height - drawHeight) / 2 + draft.config.offsetY;
     context.drawImage(image, dx, dy, drawWidth, drawHeight);
   } else {
-    drawPlaceholder(context, "ベース画像を選択してください");
+    drawPlaceholder(context, options.placeholder ?? "ベース画像を選択してください");
   }
 };
 
 export const drawSnsSplitComposite = async (
   canvas: HTMLCanvasElement,
   draft: Pick<SnsSplitDraft, "images" | "config" | "mode" | "preset">,
-  options: { includeGuides?: boolean; forceJpegBackground?: boolean } = {}
+  options: SnsSplitDrawOptions = {}
 ) => {
   const tiles = getSnsSplitTiles(draft.config, draft.preset);
   const compositeCanvasSize = getSnsSplitCompositeCanvas(draft.preset);
@@ -483,7 +493,7 @@ export const drawSnsSplitComposite = async (
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   const scratch = document.createElement("canvas");
-  await drawBaseComposite(scratch, draft, { forceJpegBackground: options.forceJpegBackground });
+  await drawBaseComposite(scratch, draft, { forceJpegBackground: options.forceJpegBackground, placeholder: options.placeholder });
 
   for (const tile of tiles) {
     const postCanvas = document.createElement("canvas");
@@ -522,11 +532,12 @@ export const drawSnsSplitTile = async (
   canvas: HTMLCanvasElement,
   draft: Pick<SnsSplitDraft, "images" | "config" | "mode" | "preset">,
   tile: SnsSplitTile,
-  options: { includeGuides?: boolean; forceJpegBackground?: boolean } = {}
+  options: SnsSplitDrawOptions = {}
 ) => {
   const scratch = document.createElement("canvas");
   await drawBaseComposite(scratch, draft, {
-    forceJpegBackground: options.forceJpegBackground
+    forceJpegBackground: options.forceJpegBackground,
+    placeholder: options.placeholder
   });
   await drawSnsSplitPostImage(canvas, draft, tile, {
     baseCanvas: scratch,
@@ -539,7 +550,7 @@ export const drawSnsSplitMainTile = async (
   canvas: HTMLCanvasElement,
   draft: Pick<SnsSplitDraft, "images" | "config" | "preset">,
   tile: SnsSplitTile,
-  options: { includeGuides?: boolean; forceJpegBackground?: boolean } = {}
+  options: SnsSplitDrawOptions = {}
 ) => {
   canvas.width = draft.preset === "split-2" || draft.preset === "split-3" ? tile.sw : snsSplitPostCanvas.width;
   canvas.height = draft.preset === "split-2" || draft.preset === "split-3" ? tile.sh : (snsSplitPostCanvas.width * 9) / 16;
@@ -554,7 +565,8 @@ export const drawSnsSplitMainTile = async (
 
   const scratch = document.createElement("canvas");
   await drawBaseComposite(scratch, draft, {
-    forceJpegBackground: options.forceJpegBackground
+    forceJpegBackground: options.forceJpegBackground,
+    placeholder: options.placeholder
   });
 
   const postAdjustment = getSnsSplitPostAdjustment(draft.config, tile.index);

@@ -1,10 +1,13 @@
-import { statusLabels, type ToolStatus } from "@/lib/tools";
+import type { Locale } from "@/lib/locale";
+import { getStatusLabel } from "@/lib/portal-copy";
+import type { ToolStatus } from "@/lib/tools";
 
 type StatusBadgeProps = {
   status: ToolStatus;
+  locale: Locale;
 };
 
-export function StatusBadge({ status }: StatusBadgeProps) {
+export function StatusBadge({ status, locale }: StatusBadgeProps) {
   const isAvailable = status === "available";
 
   return (
@@ -16,7 +19,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
           : "bg-surface-muted text-muted"
       ].join(" ")}
     >
-      {statusLabels[status]}
+      {getStatusLabel(status, locale)}
     </span>
   );
 }

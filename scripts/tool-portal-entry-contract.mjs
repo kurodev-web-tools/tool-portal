@@ -32,10 +32,12 @@ const portalToolsIndexSource = fs.readFileSync(path.join(root, "components", "po
 const portalHeaderSource = fs.readFileSync(path.join(root, "components", "portal", "PortalHeader.tsx"), "utf8");
 const portalSidebarSource = fs.readFileSync(path.join(root, "components", "portal", "PortalSidebar.tsx"), "utf8");
 const feedbackNoticeSource = fs.readFileSync(path.join(root, "components", "portal", "FeedbackNotice.tsx"), "utf8");
+const portalCopySource = fs.readFileSync(path.join(root, "lib", "portal-copy.ts"), "utf8");
 const globalsSource = fs.readFileSync(path.join(root, "app", "globals.css"), "utf8");
 const appLayoutSource = fs.readFileSync(path.join(root, "app", "layout.tsx"), "utf8");
 const homePageSource = fs.readFileSync(path.join(root, "app", "page.tsx"), "utf8");
 const toolsPageSource = fs.readFileSync(path.join(root, "app", "tools", "page.tsx"), "utf8");
+const portalMetadataSource = fs.readFileSync(path.join(root, "lib", "portal-metadata.ts"), "utf8");
 const schedulePageSource = fs.readFileSync(path.join(root, "app", "tools", "schedule-calendar", "page.tsx"), "utf8");
 const thumbnailPageSource = fs.readFileSync(path.join(root, "app", "tools", "thumbnail-editor", "page.tsx"), "utf8");
 const snsPageSource = fs.readFileSync(path.join(root, "app", "tools", "sns-split-image-maker", "page.tsx"), "utf8");
@@ -82,7 +84,7 @@ assert.match(thumbnailTool.description, /立ち絵/, "thumbnail entry mentions s
 assert.match(thumbnailTool.description, /VTuber/, "thumbnail entry keeps VTuber thumbnail scope");
 assert.match(thumbnailTool.notice ?? "", /生成・加工した抽象背景や装飾素材/, "thumbnail card discloses generated built-in visual assets");
 assert.match(toolsSource, /notice\?: string/, "tool data supports a short card-level notice");
-assert.match(portalToolsIndexSource + fs.readFileSync(path.join(root, "components", "portal", "ToolCard.tsx"), "utf8"), /tool\.notice/, "tool cards render short per-tool notices");
+assert.match(portalToolsIndexSource + fs.readFileSync(path.join(root, "components", "portal", "ToolCard.tsx"), "utf8"), /toolCopy\.notice/, "tool cards render short per-tool notices");
 
 const snsTool = toolsLib.tools.find((tool) => tool.id === "sns-split-image-maker");
 assert.ok(snsTool, "sns split tool entry exists");
@@ -120,27 +122,28 @@ for (const source of [portalHomeSource, portalHeroSource, portalToolsIndexSource
   assert.doesNotMatch(source, /Schedule Calendar (?:を最小セット|です。その他は準備中|です。準備中|と準備中)/, "portal copy does not say Schedule Calendar is the only available tool");
 }
 
-assert.match(appLayoutSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "root metadata names the available tool set");
-assert.match(appLayoutSource, /default:\s*"Kuro Stream Kit"/, "root metadata uses the public product name");
-assert.match(appLayoutSource, /template:\s*"%s \| Kuro Stream Kit"/, "root metadata title template uses the public product name");
-assert.match(appLayoutSource, /title:\s*"Kuro Stream Kit"/, "open graph metadata uses the public product name");
-assert.match(homePageSource, /Kuro Stream Kitの公開最小セット/, "home metadata uses the public product name");
-assert.match(homePageSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "home metadata names the available tool set");
-assert.match(portalToolsIndexSource, /Schedule Calendar \/ Thumbnail Editor \/ SNS分割画像メーカー/, "tools index names the available tool set");
-assert.match(toolsPageSource, /Kuro Stream Kitのツール一覧/, "tools page metadata uses the public product name");
-assert.match(toolsPageSource, /Schedule Calendar、Thumbnail Editor、SNS分割画像メーカー/, "tools page metadata names the available tool set");
-assert.match(schedulePageSource, /Kuro Stream Kitの公開中ツール/, "schedule page metadata uses the public product name");
-assert.match(thumbnailPageSource, /用途別プリセット/, "thumbnail page metadata keeps preset-first scope");
-assert.match(thumbnailPageSource, /立ち絵/, "thumbnail page metadata keeps standee replacement scope");
-assert.match(thumbnailPageSource, /Kuro Stream Kitのツール/, "thumbnail page metadata uses the public product name");
-assert.match(snsPageSource, /2分割\/3分割\/4分割/, "sns page metadata lists all split presets");
-assert.match(snsPageSource, /Kuro Stream Kitのツール/, "sns page metadata uses the public product name");
+assert.match(portalMetadataSource, /Schedule Calendar, Thumbnail Editor, and SNS Split Image Maker/, "root metadata prepares an English available tool set");
+assert.match(portalMetadataSource, /title:\s*"Kuro Stream Kit"/, "root metadata uses the public product name");
+assert.match(appLayoutSource, /default:\s*rootMetadata\.title/, "root metadata uses centralized public product name");
+assert.match(appLayoutSource, /template:\s*`%s \| \$\{rootMetadata\.title\}`/, "root metadata title template uses the centralized public product name");
+assert.match(appLayoutSource, /title:\s*rootMetadata\.title/, "open graph metadata uses the centralized public product name");
+assert.match(portalMetadataSource, /public minimum set in Kuro Stream Kit/, "home metadata has conservative English copy");
+assert.match(portalMetadataSource, /Schedule Calendar, Thumbnail Editor, and SNS Split Image Maker/, "home metadata names the available tool set in English");
+assert.match(portalCopySource, /Schedule Calendar \/ Thumbnail Editor \/ SNS分割画像メーカー/, "tools index names the available tool set");
+assert.match(portalMetadataSource, /Kuro Stream Kit tool index/, "tools page metadata uses conservative English copy");
+assert.match(portalMetadataSource, /currently available tools and planned candidates/, "tools page metadata describes the index in English");
+assert.match(schedulePageSource, /public Kuro Stream Kit tool/, "schedule page metadata uses conservative English copy");
+assert.match(thumbnailPageSource, /purpose-built presets/, "thumbnail page metadata keeps preset-first scope in English");
+assert.match(thumbnailPageSource, /standee images/, "thumbnail page metadata keeps standee replacement scope in English");
+assert.match(thumbnailPageSource, /Kuro Stream Kit tool/, "thumbnail page metadata uses conservative English copy");
+assert.match(snsPageSource, /2-, 3-, and 4-split images/, "sns page metadata lists all split presets in English");
+assert.match(snsPageSource, /Kuro Stream Kit tool/, "sns page metadata uses conservative English copy");
 assert.match(suitesSource, /key: "fan-brand"[\s\S]*?status: "planned"/, "fan-brand suite stays planned until it has a public tool");
-assert.match(suitesSource, /key: "stream-workflow"[\s\S]*?Schedule Calendar[\s\S]*?Thumbnail Editor[\s\S]*?SNS分割画像/, "stream workflow suite tags present the public tool flow");
-assert.match(suitesSource, /key: "fan-brand"[\s\S]*?ファン交流[\s\S]*?プロフィール整備[\s\S]*?ブランド素材/, "fan-brand suite tags focus on fan and brand work");
-assert.doesNotMatch(suitesSource.match(/key: "fan-brand"[\s\S]*?status: "planned"/)?.[0] ?? "", /Thumbnail Editor|SNS分割画像|サムネイル作成|分割画像づくり/, "fan-brand suite copy does not claim thumbnail or sns split creation");
-assert.doesNotMatch(portalHeroSource, /開発中のツール/, "hero summary does not foreground the number of planned tools before launch");
-assert.match(portalHeroSource, /公開導線/, "hero summary foregrounds the public workflow instead of planned inventory");
+assert.match(portalCopySource, /"stream-workflow"[\s\S]*?Schedule Calendar[\s\S]*?Thumbnail Editor[\s\S]*?SNS分割画像/, "stream workflow suite tags present the public tool flow");
+assert.match(portalCopySource, /"fan-brand"[\s\S]*?ファン交流[\s\S]*?プロフィール整備[\s\S]*?ブランド素材/, "fan-brand suite tags focus on fan and brand work");
+assert.doesNotMatch(portalCopySource.match(/"fan-brand"[\s\S]*?ブランド素材[\s\S]*?\+ その他"/)?.[0] ?? "", /Thumbnail Editor|SNS分割画像|サムネイル作成|分割画像づくり/, "fan-brand suite copy does not claim thumbnail or sns split creation");
+assert.doesNotMatch(portalCopySource, /開発中のツール/, "hero summary does not foreground the number of planned tools before launch");
+assert.match(portalCopySource, /公開導線/, "hero summary foregrounds the public workflow instead of planned inventory");
 assert.doesNotMatch(portalHeroSource, />\s*V\s*</, "hero summary does not show the large V visual");
 assert.match(portalHeaderSource, /return "Kuro Stream Kit"/, "portal header uses the public product name");
 assert.match(portalHeaderSource, />\s*K\s*</, "portal mobile header uses the K brand mark");
@@ -156,16 +159,16 @@ assert.match(
 assert.match(feedbackNoticeSource, /https:\/\/x\.com\/kurodev_v/, "feedback notice links to the public X profile");
 assert.match(feedbackNoticeSource, /https:\/\/discord\.gg\/35rjbPfxz5/, "feedback notice links to the Discord invite");
 assert.match(feedbackNoticeSource, /target="_blank"[\s\S]*?rel="noreferrer"/, "feedback external links open safely");
-assert.doesNotMatch(feedbackNoticeSource, /準備予定|未確定/, "feedback notice does not present confirmed channels as planned");
+assert.doesNotMatch(feedbackNoticeSource + portalCopySource, /準備予定|未確定/, "feedback notice does not present confirmed channels as planned");
 assert.doesNotMatch(
-  toolsSource + portalHomeSource + portalHeroSource + portalToolsIndexSource + feedbackNoticeSource,
+  toolsSource + portalHomeSource + portalHeroSource + portalToolsIndexSource + feedbackNoticeSource + portalCopySource,
   /MVP公開中|公開版ではまだ利用できません/,
   "public entry copy avoids internal MVP or unavailable wording"
 );
 assert.match(portalToolsIndexSource, /getDefaultStatusFilter/, "tools index defaults to available tools unless a selected suite has no public tools");
-assert.doesNotMatch(toolsSource + toolsPageSource + appLayoutSource + homePageSource + portalHomeSource + portalHeroSource + portalToolsIndexSource, /ZIP 出力|一括ZIP|複数形式 export/, "portal entry copy keeps post-freeze export candidates out of current feature copy");
+assert.doesNotMatch(toolsSource + toolsPageSource + appLayoutSource + homePageSource + portalHomeSource + portalHeroSource + portalToolsIndexSource + portalMetadataSource + portalCopySource, /ZIP 出力|一括ZIP|複数形式 export/, "portal entry copy keeps post-freeze export candidates out of current feature copy");
 assert.doesNotMatch(
-  appLayoutSource + homePageSource + toolsPageSource + schedulePageSource + thumbnailPageSource + snsPageSource + portalHeaderSource + portalSidebarSource + feedbackNoticeSource,
+  appLayoutSource + homePageSource + toolsPageSource + portalMetadataSource + schedulePageSource + thumbnailPageSource + snsPageSource + portalHeaderSource + portalSidebarSource + feedbackNoticeSource + portalCopySource,
   /V Streamer Tools/,
   "public app shell and metadata no longer use the old product name"
 );

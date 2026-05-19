@@ -513,6 +513,16 @@
 - 今回は新規 mock / production asset / preset body は追加していない。候補ごとに必要になった時点で `[$imagegen](C:\Users\taka\.codex\skills\.system\imagegen\SKILL.md)` built-in mode を使う。
 - 検証: `git diff --check`、docs の候補表と follow-up split の一致確認。
 
+#### P29: Public launch closeout and EN support preparation
+
+- 2026-05-16 から 2026-05-18 にかけて、公開前 visual review、3 tools public pre-release adjustment、final smoke / release checklist / security check、公開後の任意 smoke、feedback links、favicon、public product name update、Thumbnail Editor placement / font readiness / built-in asset notice を完了した。
+- 公開前 blocker は解消済み。公開後 smoke と公開確認も完了済みのため、EN 対応開始時点では `task.md` に deployed URL smoke、SNS Split 本番 download、X 投稿直前 preview、実投稿確認を active risk として残さない。
+- 公開名は `Kuro Stream Kit`。feedback contact は `feedback@kuro-lab.com`、X `https://x.com/kurodev_v`、Discord `https://discord.gg/35rjbPfxz5` を公開向け受付導線として扱う。
+- Public prelaunch visual review Task 1-4 の主要な修正は、portal public copy / status polish、Thumbnail Editor responsive control polish、SNS Split preview / landing copy polish、Schedule Calendar pointer behavior / month preview guard。
+- Final smoke / security check では Next.js `16.2.6` へ patch 更新し、`npm audit --omit=dev` は `found 0 vulnerabilities`。`npm run build` / lint / typecheck / contract 群 / width checks は通過済み。
+- EN 対応前の運用整理として `codex/en-support-preview` を `origin/main` 起点で作成し、B scope の EN 対応 PR を同 branch 宛てに積む方針にした。B 完了後に main へ持っていくか判断し、C scope は main 起点の小分け PR とする。
+- `task.md` は EN 対応の active board と backlog / verification baseline に圧縮し、完了済みの長いログはこの archive entry と各 PR 本文 / merge history を参照する。
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

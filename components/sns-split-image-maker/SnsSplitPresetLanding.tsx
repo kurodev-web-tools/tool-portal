@@ -1,42 +1,8 @@
 "use client";
 
 import type { SnsSplitPreset } from "@/lib/sns-split-image-maker";
-
-type PresetCard = {
-  id: SnsSplitPreset;
-  title: string;
-  status: string;
-  description: string;
-  details: string[];
-  available: boolean;
-};
-
-const presetCards: PresetCard[] = [
-  {
-    id: "split-2",
-    title: "2分割",
-    status: "利用可能",
-    description: "横長2枚を保存順どおりに作ります。",
-    details: ["3連結 / 5連結", "個別追加 / フレーム追加", "保存順 split_1 → split_2"],
-    available: true
-  },
-  {
-    id: "split-3",
-    title: "3分割",
-    status: "利用可能",
-    description: "横長1枚と縦長2枚を保存順どおりに作ります。",
-    details: ["24:9 + 8:13.5", "個別追加 / フレーム追加", "保存順 split_1 → split_2 → split_3"],
-    available: true
-  },
-  {
-    id: "split-4",
-    title: "4分割",
-    status: "利用可能",
-    description: "縦長4枚を保存順どおりに作ります。",
-    details: ["2x2配置", "個別追加 / フレーム追加", "保存順 split_1 → split_2 → split_3 → split_4"],
-    available: true
-  }
-];
+import { useLocale } from "@/components/portal/LocaleProvider";
+import { getSnsSplitImageMakerCopy, getSnsSplitPresetCards } from "@/lib/sns-split-image-maker-copy";
 
 export function SnsSplitPresetLanding({
   hasStoredDraft,
@@ -47,28 +13,32 @@ export function SnsSplitPresetLanding({
   storedPreset: SnsSplitPreset;
   onOpenPreset: (preset: SnsSplitPreset) => void;
 }) {
+  const { locale } = useLocale();
+  const copy = getSnsSplitImageMakerCopy(locale);
+  const presetCards = getSnsSplitPresetCards(locale);
+
   return (
     <div className="h-full overflow-y-auto bg-background/72 text-foreground scrollbar-accent">
       <div className="mx-auto flex min-h-full w-full max-w-[1320px] flex-col gap-6 px-4 py-5 lg:px-6 xl:px-8">
         <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
           <div className="min-w-0">
-            <p className="text-xs font-bold text-primary-strong">画像・デザイン</p>
-            <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground lg:text-3xl">SNS分割画像メーカー</h1>
+            <p className="text-xs font-bold text-primary-strong">{copy.header.category}</p>
+            <h1 className="mt-1 text-2xl font-black tracking-tight text-foreground lg:text-3xl">{copy.header.title}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-              投稿構成に合わせてプリセットを選択します。2分割 / 3分割 / 4分割の編集と書き出しに対応しています。
+              {copy.header.description}
             </p>
           </div>
           {hasStoredDraft ? (
             <button type="button" onClick={() => onOpenPreset(storedPreset)} className="min-h-11 rounded-base bg-primary px-5 py-2 text-sm font-black text-white shadow-panel">
-              前回の作業を開く
+              {copy.header.openStoredDraft}
             </button>
           ) : null}
         </header>
 
         <main className="grid gap-4 md:grid-cols-3">
           {presetCards.map((preset) => (
-            <article key={preset.id} className="panel flex min-h-[260px] flex-col justify-between gap-5 p-5 shadow-none">
-              <div>
+            <article key={preset.id} className="panel flex min-h-[260px] flex-col gap-5 p-5 shadow-none">
+              <div data-sns-preset-card="true" className="flex flex-1 flex-col">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold text-primary-strong">{preset.status}</p>
@@ -85,17 +55,19 @@ export function SnsSplitPresetLanding({
                   ))}
                 </ul>
               </div>
-              <button
-                type="button"
-                onClick={() => onOpenPreset(preset.id)}
-                disabled={!preset.available}
-                className={[
-                  "min-h-12 rounded-base px-4 py-2 text-sm font-black transition",
-                  preset.available ? "bg-primary text-white shadow-panel hover:opacity-90" : "cursor-not-allowed border border-border bg-surface-muted text-muted"
-                ].join(" ")}
-              >
-                {preset.available ? "編集画面を開く" : "まだ編集できません"}
-              </button>
+              <div className="mt-auto" data-sns-preset-cta="true">
+                <button
+                  type="button"
+                  onClick={() => onOpenPreset(preset.id)}
+                  disabled={!preset.available}
+                  className={[
+                    "min-h-12 w-full rounded-base px-4 py-2 text-sm font-black transition",
+                    preset.available ? "bg-primary text-white shadow-panel hover:opacity-90" : "cursor-not-allowed border border-border bg-surface-muted text-muted"
+                  ].join(" ")}
+                >
+                  {preset.available ? copy.common.openEditor : copy.common.unavailable}
+                </button>
+              </div>
             </article>
           ))}
         </main>

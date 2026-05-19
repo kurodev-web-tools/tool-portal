@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { LocaleProvider } from "@/components/portal/LocaleProvider";
+import { portalMetadata } from "@/lib/portal-metadata";
 import "./globals.css";
+
+const rootMetadata = portalMetadata.en.root;
 
 export const metadata: Metadata = {
   title: {
-    default: "Kuro Stream Kit",
-    template: "%s | Kuro Stream Kit"
+    default: rootMetadata.title,
+    template: `%s | ${rootMetadata.title}`
   },
-  description: "VTuber向けの活動支援ツールポータル。公開版ではSchedule Calendar、Thumbnail Editor、SNS分割画像メーカーを提供しています。",
+  description: rootMetadata.description,
   openGraph: {
-    title: "Kuro Stream Kit",
-    description: "VTuber向けの活動支援ツールポータル。公開版ではSchedule Calendar、Thumbnail Editor、SNS分割画像メーカーを提供しています。",
+    title: rootMetadata.title,
+    description: rootMetadata.description,
     type: "website",
-    locale: "ja_JP"
+    locale: "en_US"
   }
 };
 
@@ -23,7 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        <LocaleProvider>{children}</LocaleProvider>
+      </body>
     </html>
   );
 }

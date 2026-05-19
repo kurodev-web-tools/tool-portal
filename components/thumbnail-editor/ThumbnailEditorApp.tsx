@@ -17,7 +17,6 @@ import {
   createTextLayer,
   canAddThumbnailUserMaterialRef,
   drawThumbnail,
-  filterThumbnailPresets,
   formatThumbnailUserMaterialBytes,
   createNextRecentThumbnailFontFamilies,
   filterThumbnailFontListboxGroups,
@@ -41,7 +40,6 @@ import {
   thumbnailDraftStorageKey,
   thumbnailFontRecentStorageKey,
   thumbnailMainTextCarryoverTargets,
-  thumbnailMaterialCategoryLabels,
   thumbnailMaterialLibrary,
   thumbnailPresetDiscoveryStorageKey,
   thumbnailPresets,
@@ -52,6 +50,7 @@ import {
   type ThumbnailHandleKind,
   type ThumbnailMainTextCarryover,
   type ThumbnailResizeHandle,
+  type ThumbnailCanvas,
   type ThumbnailCanvasSizeId,
   type ThumbnailEditorDraft,
   type ThumbnailLayer,
@@ -69,6 +68,34 @@ import {
   type ThumbnailUserMaterialUsageSummary,
   type ThumbnailUserMaterialRef
 } from "@/lib/thumbnail-editor";
+import { useLocale } from "@/components/portal/LocaleProvider";
+import type { Locale } from "@/lib/locale";
+import {
+  filterLocalizedThumbnailPresets,
+  filterLocalizedThumbnailMaterials,
+  getLocalizedThumbnailQualityGuardItems,
+  getLocalizedThumbnailQualityGuardSummary,
+  getThumbnailEditorCopy,
+  getThumbnailFontCategoryLabel,
+  getThumbnailFontLanguageLabel,
+  getThumbnailFontMoodLabel,
+  getThumbnailLayerDisplayName,
+  getThumbnailMainTextCarryoverLabel,
+  getThumbnailMaterialCategoryLabel,
+  getThumbnailMaterialDescription,
+  getThumbnailMaterialName,
+  getThumbnailMaterialRecommendedPlacement,
+  getThumbnailPresetCategoryLabel,
+  getThumbnailPresetDescription,
+  getThumbnailPresetName,
+  getThumbnailPresetVariantDescription,
+  getThumbnailPresetVariantLabel,
+  getThumbnailPresetUsageLabel,
+  getThumbnailStandeePlacementDescription,
+  getThumbnailStandeePlacementGroup,
+  getThumbnailStandeePlacementName,
+  localizeThumbnailPresetTextLayerBodies
+} from "@/lib/thumbnail-editor-copy";
 import { createHandoffFileNameBase } from "@/lib/file-name";
 import {
   buildToolHandoffUrl,
@@ -131,6 +158,7 @@ type DraftHistoryAvailability = {
   canUndo: boolean;
   canRedo: boolean;
 };
+type PreviewControlToolbarCopy = ReturnType<typeof getThumbnailEditorCopy>["canvas"];
 
 const toneClassName: Record<ToastTone, string> = {
   info: "border-sky-400/60 bg-sky-500/12 text-foreground",
@@ -155,12 +183,12 @@ const fitZoomForCanvas = (canvasWidth: number, canvasHeight: number, viewportWid
   return clamp(Number(next.toFixed(2)), 0.42, 1.6);
 };
 
-const mobilePanels: { id: MobilePanel; label: string; icon: string }[] = [
-  { id: "canvas", label: "キャンバス", icon: "▧" },
-  { id: "materials", label: "素材", icon: "◇" },
-  { id: "layers", label: "レイヤー", icon: "▤" },
-  { id: "text", label: "編集", icon: "T" },
-  { id: "export", label: "書き出し", icon: "⇧" }
+const mobilePanelItems: { id: MobilePanel; icon: string }[] = [
+  { id: "canvas", icon: "▧" },
+  { id: "materials", icon: "◇" },
+  { id: "layers", icon: "▤" },
+  { id: "text", icon: "T" },
+  { id: "export", icon: "⇧" }
 ];
 function CanvasCenterGuideOverlay() {
   return (
@@ -172,6 +200,7 @@ function CanvasCenterGuideOverlay() {
 }
 
 function PreviewControlToolbar({
+  copy,
   zoom,
   showCenterGuide,
   canUndo,
@@ -185,6 +214,7 @@ function PreviewControlToolbar({
   onZoomReset,
   onZoomFit
 }: {
+  copy: PreviewControlToolbarCopy;
   zoom: number;
   showCenterGuide: boolean;
   canUndo: boolean;
@@ -205,10 +235,10 @@ function PreviewControlToolbar({
 
   return (
     <div className={`scrollbar-accent flex min-w-0 items-center gap-2 overflow-x-auto [scrollbar-gutter:stable] ${toolbarWidth}`} data-thumbnail-preview-toolbar="controls">
-      <button className={`flat-control ${iconButton}`} type="button" onClick={onUndo} disabled={!canUndo} aria-label="元に戻す" title="元に戻す（Ctrl+Z）">
+      <button className={`flat-control ${iconButton}`} type="button" onClick={onUndo} disabled={!canUndo} aria-label={copy.undo} title={`${copy.undo} (Ctrl+Z)`}>
         ↶
       </button>
-      <button className={`flat-control ${iconButton}`} type="button" onClick={onRedo} disabled={!canRedo} aria-label="やり直す" title="やり直す（Ctrl+Y / Ctrl+Shift+Z）">
+      <button className={`flat-control ${iconButton}`} type="button" onClick={onRedo} disabled={!canRedo} aria-label={copy.redo} title={`${copy.redo} (Ctrl+Y / Ctrl+Shift+Z)`}>
         ↷
       </button>
       <button
@@ -216,23 +246,23 @@ function PreviewControlToolbar({
         type="button"
         onClick={onGuideToggle}
         aria-pressed={showCenterGuide}
-        aria-label={showCenterGuide ? "中央ガイドを非表示" : "中央ガイドを表示"}
-        title={showCenterGuide ? "中央ガイドを非表示" : "中央ガイドを表示"}
+        aria-label={showCenterGuide ? copy.hideGuide : copy.showGuide}
+        title={showCenterGuide ? copy.hideGuide : copy.showGuide}
       >
-        ガイド
+        {copy.guide}
       </button>
       <span className="h-5 w-px shrink-0 bg-border" aria-hidden="true" />
-      <button className={`flat-control ${iconButton}`} type="button" onClick={onZoomOut} title="縮小" aria-label="キャンバスを縮小">
+      <button className={`flat-control ${iconButton}`} type="button" onClick={onZoomOut} title={copy.zoomOut} aria-label={copy.zoomOutAria}>
         −
       </button>
-      <button className={`flat-control ${compact ? "h-9 w-16" : "h-8 w-14"} text-xs font-bold`} type="button" onClick={onZoomReset} aria-label="表示倍率を100%に戻す" title="100%に戻す">
+      <button className={`flat-control ${compact ? "h-9 w-16" : "h-8 w-14"} text-xs font-bold`} type="button" onClick={onZoomReset} aria-label={copy.zoomResetAria} title={copy.zoomReset}>
         {Math.round(zoom * 100)}%
       </button>
-      <button className={`flat-control ${iconButton}`} type="button" onClick={onZoomIn} title="拡大" aria-label="キャンバスを拡大">
+      <button className={`flat-control ${iconButton}`} type="button" onClick={onZoomIn} title={copy.zoomIn} aria-label={copy.zoomInAria}>
         +
       </button>
-      <button className={`flat-control ${textButton}`} type="button" onClick={onZoomFit} aria-label="キャンバスを画面に合わせる" title="画面に合わせる">
-        合わせる
+      <button className={`flat-control ${textButton}`} type="button" onClick={onZoomFit} aria-label={copy.zoomFitAria} title={copy.zoomFitAria}>
+        {copy.zoomFit}
       </button>
     </div>
   );
@@ -251,11 +281,6 @@ const colorSwatches = [
 const imageUploadMaxBytes = 8 * 1024 * 1024;
 const allowedImageMimeTypes = new Set(["image/png", "image/jpeg"]);
 const allowedImageExtensions = new Set(["png", "jpg", "jpeg"]);
-const userMaterialCapacityMessages = {
-  "file-too-large": "ユーザー素材は1点8MB以下にしてください。",
-  "library-full": "ユーザー素材は最大24件です。不要な素材を削除してから追加してください。",
-  "total-bytes-exceeded": "ユーザー素材は合計48MBまでです。不要な素材を削除するか置換してください。"
-};
 
 const selectedLayerFallback = (layers: ThumbnailLayer[]) => layers[layers.length - 1]?.id ?? null;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -385,7 +410,6 @@ const getWeeklyScheduleLayerGroup = (layer: ThumbnailLayer) => {
 };
 const thumbnailPresetCategories = Array.from(new Set(thumbnailPresets.map((preset) => preset.category))) as ThumbnailPresetCategory[];
 const thumbnailPresetUsageLabels = Array.from(new Set(thumbnailPresets.map((preset) => preset.usageLabel)));
-const normalizeMaterialSearchText = (value: string) => value.trim().toLocaleLowerCase("ja-JP");
 const getPresetsByIds = (presetIds: ThumbnailPresetId[]) =>
   presetIds
     .map((presetId) => thumbnailPresets.find((preset) => preset.id === presetId))
@@ -396,8 +420,13 @@ const createThumbnailToSnsImageStorageId = () => {
   }
   return `${thumbnailToSnsImageStoragePrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 };
-const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, payload: ScheduleHandoffPayload): ThumbnailEditorDraft => {
-  const titleText = compactLayerText(payload.title || "無題の予定", 42);
+const scheduleHandoffCanvasFallbacks: Record<Locale, { title: string; label: string }> = {
+  ja: { title: "無題の予定", label: "配信告知" },
+  en: { title: "Untitled event", label: "Stream notice" }
+};
+const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, payload: ScheduleHandoffPayload, locale: Locale): ThumbnailEditorDraft => {
+  const fallback = scheduleHandoffCanvasFallbacks[locale] ?? scheduleHandoffCanvasFallbacks.ja;
+  const titleText = compactLayerText(payload.title || fallback.title, 42);
   const dateText = formatHandoffDate(payload.date);
   const timeRange = [payload.startTime, payload.endTime].filter(Boolean).join("-");
   const timeText = compactLayerText([dateText, timeRange].filter(Boolean).join(" "), 24);
@@ -406,7 +435,7 @@ const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, paylo
       [formatHandoffDate(payload.date), payload.categoryLabel, payload.hashtags].filter(Boolean).join(" / "),
     54
   );
-  const labelText = compactLayerText([payload.categoryLabel, payload.platform].filter(Boolean).join(" / ") || payload.announcementStatusLabel || "配信告知", 22);
+  const labelText = compactLayerText([payload.categoryLabel, payload.platform].filter(Boolean).join(" / ") || payload.announcementStatusLabel || fallback.label, 22);
   let selectedLayerId = draft.selectedLayerId;
   const layers = draft.layers.map((layer) => {
     if (layer.type !== "text") {
@@ -435,11 +464,20 @@ const applyScheduleHandoffToThumbnailDraft = (draft: ThumbnailEditorDraft, paylo
 
   return { ...draft, layers, selectedLayerId, updatedAt: new Date().toISOString() };
 };
-const createThumbnailDraftFromHandoff = (payload: ScheduleHandoffPayload, canvas = thumbnailCanvasSizes.hd): ThumbnailEditorDraft =>
-  applyScheduleHandoffToThumbnailDraft(createDraftFromPreset("stream_announce", canvas), payload);
+const createThumbnailDraftFromHandoff = (payload: ScheduleHandoffPayload, locale: Locale, canvas = thumbnailCanvasSizes.hd): ThumbnailEditorDraft =>
+  applyScheduleHandoffToThumbnailDraft(createDraftFromPreset("stream_announce", canvas), payload, locale);
 
 export function ThumbnailEditorApp() {
-  const [draft, setDraft] = useState<ThumbnailEditorDraft>(() => createDraftFromPreset());
+  const { locale, isLocaleReady } = useLocale();
+  const copy = getThumbnailEditorCopy(locale);
+  const createPresetDraftForLocale = useCallback(
+    (presetId: ThumbnailPresetId = "stream_announce", canvas: ThumbnailCanvas = thumbnailCanvasSizes.hd) =>
+      localizeThumbnailPresetTextLayerBodies(createDraftFromPreset(presetId, canvas), locale),
+    [locale]
+  );
+  const [draft, setDraft] = useState<ThumbnailEditorDraft>(() =>
+    localizeThumbnailPresetTextLayerBodies(createDraftFromPreset(), locale)
+  );
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const [exportFormat, setExportFormat] = useState<"png" | "jpeg">("png");
@@ -499,20 +537,26 @@ export function ThumbnailEditorApp() {
     [draft.selectedLayerId, resolvedDraft, selectedLayer?.id]
   );
   const overallQualityGuardItems = useMemo(() => getThumbnailOverallQualityGuardItems(resolvedDraft), [resolvedDraft]);
-  const overallQualityGuardSummary = useMemo(() => getThumbnailQualityGuardSummary(overallQualityGuardItems), [overallQualityGuardItems]);
+  const localizedQualityGuardItems = useMemo(() => getLocalizedThumbnailQualityGuardItems(qualityGuardItems, locale), [locale, qualityGuardItems]);
+  const localizedOverallQualityGuardItems = useMemo(() => getLocalizedThumbnailQualityGuardItems(overallQualityGuardItems, locale), [locale, overallQualityGuardItems]);
+  const overallQualityGuardSummary = useMemo(
+    () => getLocalizedThumbnailQualityGuardSummary(getThumbnailQualityGuardSummary(overallQualityGuardItems), localizedOverallQualityGuardItems, locale),
+    [locale, localizedOverallQualityGuardItems, overallQualityGuardItems]
+  );
 
-  const selectedPreset = useMemo(
+  const selectedPresetBase = useMemo(
     () => thumbnailPresets.find((preset) => preset.id === draft.presetId) ?? thumbnailPresets[0],
     [draft.presetId]
   );
+  const selectedPresetName = getThumbnailPresetName(selectedPresetBase.id, locale, selectedPresetBase.name);
   const pendingPreset = useMemo(
     () => thumbnailPresets.find((preset) => preset.id === pendingPresetApplyId) ?? null,
     [pendingPresetApplyId]
   );
   const currentMainTextCarryover = useMemo(() => getThumbnailMainTextCarryover(draft), [draft]);
   const pendingPresetDefaultText = useMemo(
-    () => (pendingPreset ? getThumbnailMainTextCarryover(createDraftFromPreset(pendingPreset.id, draft.canvas)) : {}),
-    [draft.canvas, pendingPreset]
+    () => (pendingPreset ? getThumbnailMainTextCarryover(createPresetDraftForLocale(pendingPreset.id, draft.canvas)) : {}),
+    [createPresetDraftForLocale, draft.canvas, pendingPreset]
   );
   const userMaterialUsageSummary = useMemo(() => getThumbnailUserMaterialUsageSummary(userMaterialRefs), [userMaterialRefs]);
 
@@ -630,38 +674,46 @@ export function ThumbnailEditorApp() {
   }, []);
 
   useEffect(() => {
+    if (!isLocaleReady) {
+      return;
+    }
     try {
       const handoffPayload = readToolHandoff("thumbnail-editor");
       if (handoffPayload) {
-        setDraft(createThumbnailDraftFromHandoff(handoffPayload));
+        setDraft(createThumbnailDraftFromHandoff(handoffPayload, locale));
         setHandoffPayload(handoffPayload);
-        showToast("success", "Schedule Calendarの予定を反映しました。用途に合わせてプリセットを選べます。");
+        showToast("success", copy.toasts.handoffApplied);
         setHydrated(true);
         return;
       }
 
       const saved = window.localStorage.getItem(thumbnailDraftStorageKey);
       if (!saved) {
+        setDraft((current) =>
+          locale === "en" && isThumbnailDraftPristineForPreset(current)
+            ? localizeThumbnailPresetTextLayerBodies(current, locale)
+            : current
+        );
         setHydrated(true);
         return;
       }
       const normalized = normalizeThumbnailDraft(JSON.parse(saved));
       if (normalized) {
         setDraft(normalized);
-        showToast("info", "前回の下書きを復元しました。");
+        showToast("info", copy.toasts.restored);
       } else {
         window.localStorage.removeItem(thumbnailDraftStorageKey);
-        setDraft(createDraftFromPreset());
-        showToast("warning", "破損した下書きを初期化しました。必要に応じて保存し直してください。");
+        setDraft(createPresetDraftForLocale());
+        showToast("warning", copy.toasts.brokenDraft);
       }
     } catch {
       window.localStorage.removeItem(thumbnailDraftStorageKey);
-      setDraft(createDraftFromPreset());
-      showToast("warning", "破損した下書きを初期化しました。必要に応じて保存し直してください。");
+      setDraft(createPresetDraftForLocale());
+      showToast("warning", copy.toasts.brokenDraft);
     } finally {
       setHydrated(true);
     }
-  }, [showToast]);
+  }, [copy.toasts.brokenDraft, copy.toasts.handoffApplied, copy.toasts.restored, createPresetDraftForLocale, isLocaleReady, locale, showToast]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -684,7 +736,7 @@ export function ThumbnailEditorApp() {
         context?.drawImage(buffer, 0, 0);
       } catch {
         if (canvasRenderVersionRef.current === renderVersion) {
-          showToast("error", "キャンバスの描画に失敗しました。");
+          showToast("error", copy.messages.canvasRenderFailed);
         }
       }
     };
@@ -695,7 +747,7 @@ export function ThumbnailEditorApp() {
 
     void renderThumbnailPreview();
     void renderThumbnailPreviewAfterFonts();
-  }, [canvasAttachVersion, draft.selectedLayerId, resolvedDraft, showToast]);
+  }, [canvasAttachVersion, copy.messages.canvasRenderFailed, draft.selectedLayerId, resolvedDraft, showToast]);
 
   useEffect(() => {
     if (!mobilePreviewOpen) {
@@ -723,7 +775,7 @@ export function ThumbnailEditorApp() {
         context?.drawImage(buffer, 0, 0);
       } catch {
         if (mobilePreviewRenderVersionRef.current === renderVersion) {
-          showToast("error", "全体プレビューの描画に失敗しました。");
+          showToast("error", copy.messages.fullPreviewRenderFailed);
         }
       }
     };
@@ -734,7 +786,7 @@ export function ThumbnailEditorApp() {
 
     void renderMobileThumbnailPreview();
     void renderMobileThumbnailPreviewAfterFonts();
-  }, [mobilePreviewCanvasAttachVersion, mobilePreviewOpen, resolvedDraft, showToast]);
+  }, [copy.messages.fullPreviewRenderFailed, mobilePreviewCanvasAttachVersion, mobilePreviewOpen, resolvedDraft, showToast]);
 
   useEffect(() => {
     if (!mobilePreviewOpen) {
@@ -783,7 +835,7 @@ export function ThumbnailEditorApp() {
     const timer = window.setTimeout(() => {
       const normalized = normalizeThumbnailDraft(draft);
       if (!normalized) {
-        showToast("error", "下書きデータが不正なため自動保存を中断しました。");
+        showToast("error", copy.messages.invalidAutoSave);
         return;
       }
       try {
@@ -792,11 +844,11 @@ export function ThumbnailEditorApp() {
           JSON.stringify({ ...normalized, updatedAt: new Date().toISOString() })
         );
       } catch {
-        showToast("error", "下書きの自動保存に失敗しました。");
+        showToast("error", copy.messages.autoSaveFailed);
       }
     }, 700);
     return () => window.clearTimeout(timer);
-  }, [draft, hydrated, showToast]);
+  }, [copy.messages.autoSaveFailed, copy.messages.invalidAutoSave, draft, hydrated, showToast]);
 
   const syncDraftHistoryAvailability = useCallback(() => {
     const history = draftHistoryRef.current;
@@ -1084,12 +1136,12 @@ export function ThumbnailEditorApp() {
 
   const applyPreset = (presetId: ThumbnailPresetId, mode: PresetApplyMode) => {
     recordPresetUse(presetId);
-    const next = createDraftFromPreset(presetId, draft.canvas);
+    const next = createPresetDraftForLocale(presetId, draft.canvas);
     const nextDraft =
       mode === "handoff" && handoffPayload
-        ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
+        ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
         : mode === "carryover"
-          ? applyThumbnailPresetPartial(draft, presetId)
+          ? applyThumbnailPresetPartial(draft, presetId, next)
           : next;
     replaceDraft(nextDraft, { recordHistory: true });
     setMobilePanel("canvas");
@@ -1097,39 +1149,40 @@ export function ThumbnailEditorApp() {
     showToast(
       "success",
       mode === "handoff"
-        ? "予定テキストを新しいプリセットへ自然に入れ直しました。"
+        ? copy.toasts.applyHandoff
         : mode === "carryover"
-          ? "プリセットへ主要テキストを引き継ぎました。"
-          : "プリセットを適用しました。"
+          ? copy.toasts.applyCarryover
+          : copy.toasts.applyPlain
     );
   };
 
   const changeCanvasSize = (sizeId: ThumbnailCanvasSizeId) => {
     const canvas = thumbnailCanvasSizes[sizeId];
-    const next = createDraftFromPreset(draft.presetId, canvas);
+    const next = createPresetDraftForLocale(draft.presetId, canvas);
     const nextDraft = handoffPayload
-      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
     replaceDraft(nextDraft, { recordHistory: true });
-    showToast("info", handoffPayload ? `${canvas.label} に予定テキストを引き継ぎました。` : `${canvas.label} に主要テキストを引き継ぎました。`);
+    showToast("info", handoffPayload ? copy.toasts.resizeHandoff(canvas.label) : copy.toasts.resizeCarryover(canvas.label));
   };
 
   const changePresetVariant = (variantId: ThumbnailPresetVariantId) => {
     const variant = thumbnailPresetVariants[variantId];
-    const next = createDraftFromPresetVariant(draft.presetId, variantId);
+    const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(draft.presetId, variantId), locale);
     const nextDraft = handoffPayload
-      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
     replaceDraft(nextDraft, { recordHistory: true });
     setMobilePanel("canvas");
     setHeaderMenuOpen(null);
-    showToast("info", handoffPayload ? `${variant.label} に予定テキストを引き継ぎました。` : `${variant.label} に主要テキストを引き継ぎました。`);
+    const localizedVariantLabel = getThumbnailPresetVariantLabel(variant.id, locale, variant.label);
+    showToast("info", handoffPayload ? copy.toasts.resizeHandoff(localizedVariantLabel) : copy.toasts.resizeCarryover(localizedVariantLabel));
   };
 
   const saveDraft = () => {
     const normalized = normalizeThumbnailDraft(draft);
     if (!normalized) {
-      showToast("error", "下書きデータが不正なため保存できません。");
+      showToast("error", copy.messages.invalidSave);
       return;
     }
     try {
@@ -1137,16 +1190,16 @@ export function ThumbnailEditorApp() {
         thumbnailDraftStorageKey,
         JSON.stringify({ ...normalized, updatedAt: new Date().toISOString() })
       );
-      showToast("success", "下書きを保存しました。");
+      showToast("success", copy.toasts.saveDraft);
     } catch {
-      showToast("error", "下書き保存に失敗しました。");
+      showToast("error", copy.messages.saveFailed);
     }
   };
 
   const newDraft = () => {
-    replaceDraft(createDraftFromPreset(draft.presetId, draft.canvas), { recordHistory: true });
+    replaceDraft(createPresetDraftForLocale(draft.presetId, draft.canvas), { recordHistory: true });
     setMobilePanel("canvas");
-    showToast("info", "新規キャンバスを作成しました。");
+    showToast("info", copy.toasts.newDraft);
   };
 
   const addLayer = (layer: ThumbnailLayer) => {
@@ -1165,36 +1218,36 @@ export function ThumbnailEditorApp() {
       return;
     }
     if (!isValidImageFile(file)) {
-      showToast("error", "PNG/JPEG画像ファイルを選択してください。");
+      showToast("error", copy.messages.imageTypeInvalid);
       return;
     }
     if (file.size > imageUploadMaxBytes) {
-      showToast("error", "画像は8MB以下にしてください。");
+      showToast("error", copy.messages.imageTooLarge);
       return;
     }
 
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result !== "string") {
-        showToast("error", "画像の読み込みに失敗しました。");
+        showToast("error", copy.messages.imageReadFailed);
         return;
       }
       addLayer(createImageLayer(reader.result));
-      showToast("success", "画像レイヤーを追加しました。");
+      showToast("success", copy.messages.imageLayerAdded);
     };
-    reader.onerror = () => showToast("error", "画像の読み込みに失敗しました。");
+    reader.onerror = () => showToast("error", copy.messages.imageReadFailed);
     reader.readAsDataURL(file);
   };
 
   const addMaterialLayer = (materialId: string) => {
     const layer = createThumbnailMaterialLayer(materialId, draft.canvas);
     if (!layer) {
-      showToast("error", "素材を追加できませんでした。");
+      showToast("error", copy.messages.materialAddFailed);
       return;
     }
     const material = thumbnailMaterialLibrary.find((item) => item.id === materialId);
     addLayer(layer);
-    showToast("success", material ? `「${material.name}」を素材レイヤーとして追加しました。` : "素材レイヤーを追加しました。");
+    showToast("success", material ? copy.messages.materialLayerAddedWithName(getThumbnailMaterialName(material.id, locale, material.name)) : copy.messages.materialLayerAdded);
   };
 
   const commitUserMaterialRefs = (refs: ThumbnailUserMaterialRef[]) => {
@@ -1202,7 +1255,7 @@ export function ThumbnailEditorApp() {
     try {
       writeThumbnailUserMaterialRefsMetadata(refs);
     } catch {
-      showToast("error", "ユーザー素材の一覧保存に失敗しました。");
+      showToast("error", copy.messages.userMaterialListSaveFailed);
     }
   };
 
@@ -1219,13 +1272,13 @@ export function ThumbnailEditorApp() {
       return;
     }
     if (!isThumbnailUserMaterialFile(file)) {
-      showToast("error", "PNG/JPEG/WebP/SVG画像ファイルを選択してください。");
+      showToast("error", copy.messages.userMaterialTypeInvalid);
       setReplaceUserMaterialRef(null);
       return;
     }
     const capacity = canAddThumbnailUserMaterialRef(userMaterialRefs, file.size, replaceUserMaterialRef?.storageId);
     if (!capacity.ok) {
-      showToast("error", userMaterialCapacityMessages[capacity.reason]);
+      showToast("error", copy.messages.userMaterialCapacity[capacity.reason]);
       setReplaceUserMaterialRef(null);
       return;
     }
@@ -1243,14 +1296,14 @@ export function ThumbnailEditorApp() {
             .filter((layer) => layer.type === "image" && layer.materialRef?.storageId === replaceUserMaterialRef.storageId)
             .reduce((nextDraft, layer) => replaceThumbnailUserMaterialLayerRef(nextDraft, layer.id, nextRef), current)
         );
-        showToast("success", `「${nextRef.name}」へ置換しました。配置とcropは維持しています。`);
+        showToast("success", copy.messages.userMaterialReplaced(nextRef.name));
       } else {
         addLayer(createThumbnailUserMaterialLayer(nextRef, draft.canvas));
         setMobilePanel("layers");
-        showToast("success", `「${nextRef.name}」をユーザー素材として追加しました。`);
+        showToast("success", copy.messages.userMaterialAdded(nextRef.name));
       }
     } catch (error) {
-      showToast("error", error instanceof Error ? error.message : "ユーザー素材の保存に失敗しました。");
+      showToast("error", locale === "ja" && error instanceof Error ? error.message : copy.messages.userMaterialSaveFailed);
     } finally {
       setReplaceUserMaterialRef(null);
     }
@@ -1258,7 +1311,7 @@ export function ThumbnailEditorApp() {
 
   const addUserMaterialLayer = (ref: ThumbnailUserMaterialRef) => {
     addLayer(createThumbnailUserMaterialLayer(ref, draft.canvas));
-    showToast("success", `「${ref.name}」をユーザー素材レイヤーとして追加しました。`);
+    showToast("success", copy.messages.userMaterialLayerAdded(ref.name));
   };
 
   const deleteUserMaterial = async (ref: ThumbnailUserMaterialRef) => {
@@ -1266,10 +1319,10 @@ export function ThumbnailEditorApp() {
       await deleteThumbnailUserMaterialImage(ref.storageId);
       commitUserMaterialRefs(userMaterialRefs.filter((item) => item.storageId !== ref.storageId));
       updateDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "deleted"));
-      showToast("warning", `「${ref.name}」を素材一覧から削除しました。配置済みレイヤーは残ります。不要ならレイヤー一覧から削除してください。`);
+      showToast("warning", copy.messages.userMaterialDeleted(ref.name));
     } catch {
       setDraft((current) => applyThumbnailUserMaterialLayerFallback(current, ref.storageId, "load-failed"));
-      showToast("error", "ユーザー素材の削除に失敗しました。");
+      showToast("error", copy.messages.userMaterialDeleteFailed);
     }
   };
 
@@ -1277,18 +1330,19 @@ export function ThumbnailEditorApp() {
     const targetLayer = draft.layers.find((layer) => layer.id === draft.selectedLayerId && layer.type === "image" && !layer.locked);
     const next = applyThumbnailStandeePlacementPreset(draft, presetId);
     if (!next) {
-      showToast("warning", "編集可能な画像レイヤーを選択してください。");
+      showToast("warning", copy.messages.editableImageRequired);
       return;
     }
 
     const preset = thumbnailStandeePlacementPresets.find((item) => item.id === presetId);
+    const targetLayerName = targetLayer ? getThumbnailLayerDisplayName(targetLayer, locale) : copy.panels.property.imageFallback;
     replaceDraft(next, { recordHistory: true });
     setMobilePanel("layers");
     showToast(
       "success",
       preset
-        ? `「${targetLayer?.name ?? "選択中の画像"}」へ立ち絵配置「${preset.name}」を適用しました。`
-        : `「${targetLayer?.name ?? "選択中の画像"}」へ立ち絵配置を適用しました。`
+        ? copy.messages.standeePlacementApplied(targetLayerName, getThumbnailStandeePlacementName(preset.id, locale, preset.name))
+        : copy.messages.standeePlacementAppliedFallback(targetLayerName)
     );
   };
 
@@ -1325,7 +1379,7 @@ export function ThumbnailEditorApp() {
   const deleteLayer = (layerId: string) => {
     updateDraft((current) => {
       if (current.layers.length <= 1) {
-        showToast("warning", "最低1レイヤーは残してください。");
+        showToast("warning", copy.messages.minimumLayerRequired);
         return current;
       }
       const layers = current.layers.filter((layer) => layer.id !== layerId);
@@ -1588,13 +1642,13 @@ export function ThumbnailEditorApp() {
   const exportImage = async () => {
     const normalized = normalizeThumbnailDraft(draft);
     if (!normalized) {
-      showToast("error", "下書きデータが不正なため書き出しできません。");
+      showToast("error", copy.messages.invalidExport);
       return;
     }
     const outputDraft = resolveUserMaterialLayersForOutput(normalized);
     const hasVisibleImage = outputDraft.layers.some((layer) => layer.type === "image" && !layer.hidden && layer.src);
     if (!hasVisibleImage) {
-      showToast("error", "画像レイヤーがないため書き出しできません。画像を追加してください。");
+      showToast("error", copy.messages.exportNeedsImage);
       return;
     }
     try {
@@ -1611,16 +1665,16 @@ export function ThumbnailEditorApp() {
       anchor.href = dataUrl;
       anchor.download = `thumbnail-${stamp}.${exportFormat === "png" ? "png" : "jpg"}`;
       anchor.click();
-      showToast("success", `${exportFormat.toUpperCase()}を書き出しました。`);
+      showToast("success", copy.toasts.exportDone(exportFormat.toUpperCase()));
     } catch {
-      showToast("error", "書き出しに失敗しました。");
+      showToast("error", copy.messages.exportFailed);
     }
   };
 
   const sendToSnsSplit = async () => {
     const normalized = normalizeThumbnailDraft(draft);
     if (!normalized) {
-      showToast("error", "下書きデータが不正なためSNS分割画像へ渡せません。");
+      showToast("error", copy.messages.invalidSnsHandoff);
       return;
     }
 
@@ -1634,7 +1688,7 @@ export function ThumbnailEditorApp() {
         throw new Error("Canvas export failed.");
       }
 
-      const title = getFirstTextLayerValue(normalized, "見出し") || handoffPayload?.title || selectedPreset.name;
+      const title = getFirstTextLayerValue(normalized, "見出し") || handoffPayload?.title || selectedPresetName;
       const date = handoffPayload?.date ?? "";
       const imageStorageId = createThumbnailToSnsImageStorageId();
       const fileNameBase = createHandoffFileNameBase(date, title);
@@ -1642,7 +1696,7 @@ export function ThumbnailEditorApp() {
         imageStorageId,
         title,
         date,
-        categoryLabel: handoffPayload?.categoryLabel ?? selectedPreset.category,
+        categoryLabel: handoffPayload?.categoryLabel ?? getThumbnailPresetCategoryLabel(selectedPresetBase.category, locale),
         platform: handoffPayload?.platform ?? "",
         announcementText: handoffPayload?.announcementText ?? getFirstTextLayerValue(normalized, "サブ"),
         hashtags: handoffPayload?.hashtags ?? "",
@@ -1658,7 +1712,7 @@ export function ThumbnailEditorApp() {
 
       window.location.href = buildToolHandoffUrl("sns-split-image-maker", token);
     } catch {
-      showToast("error", "SNS分割画像メーカーへの受け渡しに失敗しました。時間を置いてもう一度試してください。");
+      showToast("error", copy.toasts.sendToSnsError);
     }
   };
 
@@ -1667,12 +1721,16 @@ export function ThumbnailEditorApp() {
     (Object.values(thumbnailPresetVariants).find((variant) => variant.canvas.width === draft.canvas.width && variant.canvas.height === draft.canvas.height)?.id as ThumbnailPresetVariantId | undefined) ??
     "landscape-16-9";
   const currentVariant = thumbnailPresetVariants[currentVariantId];
+  const currentVariantLabel = getThumbnailPresetVariantLabel(currentVariant.id, locale, currentVariant.label);
   const canvasSizeLabel =
     currentVariantId === "landscape-16-9" ? thumbnailCanvasSizes[canvasSizeId].label : `${draft.canvas.width} x ${draft.canvas.height} (${currentVariant.aspectRatio})`;
   const variantOptions = Object.values(thumbnailPresetVariants).map((variant) => ({
     id: variant.id,
-    label: variant.aspectRatio === "16:9" ? variant.label : `${variant.label}（後続候補）`,
-    description: variant.aspectRatio === "16:9" ? variant.intendedUse : `${variant.intendedUse}。公開前版ではまだ選択できません。`,
+    label:
+      variant.aspectRatio === "16:9"
+        ? getThumbnailPresetVariantLabel(variant.id, locale, variant.label)
+        : `${getThumbnailPresetVariantLabel(variant.id, locale, variant.label)}${copy.header.laterCandidateSuffix}`,
+    description: getThumbnailPresetVariantDescription(variant.id, locale, variant.intendedUse, variant.aspectRatio !== "16:9"),
     disabled: variant.aspectRatio !== "16:9"
   }));
 
@@ -1681,8 +1739,8 @@ export function ThumbnailEditorApp() {
       <header className="relative z-[80] hidden shrink-0 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur min-[1024px]:block md:px-5 xl:px-6">
         <div className="flex flex-wrap items-center gap-3">
           <div className="hidden min-w-[10rem] flex-1 min-[1024px]:block">
-            <p className="text-xs font-semibold text-primary-strong">画像・デザイン</p>
-            <h1 className="whitespace-nowrap text-lg font-black tracking-normal text-foreground xl:text-xl">Thumbnail Editor</h1>
+            <p className="text-xs font-semibold text-primary-strong">{copy.header.category}</p>
+            <h1 className="whitespace-nowrap text-lg font-black tracking-normal text-foreground xl:text-xl">{copy.header.title}</h1>
           </div>
           <div
             className="relative z-[90] grid w-full grid-cols-1 gap-3 min-[520px]:grid-cols-3 min-[1024px]:w-[min(100%,38rem)] min-[1180px]:w-[40rem] xl:w-[43rem]"
@@ -1690,15 +1748,16 @@ export function ThumbnailEditorApp() {
             data-thumbnail-responsive-header-controls="true"
           >
             <label className="min-w-0 text-xs font-bold text-muted">
-              プリセット
+              {copy.header.preset}
               <ListboxField
                 className="mt-1"
                 isOpen={headerMenuOpen === "preset"}
-                value={selectedPreset.name}
+                value={selectedPresetName}
+                openLabel={copy.header.openOptions}
                 onToggle={() => setHeaderMenuOpen((current) => (current === "preset" ? null : "preset"))}
                 options={thumbnailPresets.map((preset) => ({
                   id: preset.id,
-                  label: preset.name
+                  label: getThumbnailPresetName(preset.id, locale, preset.name)
                 }))}
                 onSelect={(id) => {
                   setHeaderMenuOpen(null);
@@ -1707,11 +1766,12 @@ export function ThumbnailEditorApp() {
               />
             </label>
             <label className="min-w-0 text-xs font-bold text-muted">
-              キャンバスサイズ
+              {copy.header.canvasSize}
               <ListboxField
                 className="mt-1"
                 isOpen={headerMenuOpen === "canvas"}
                 value={canvasSizeLabel}
+                openLabel={copy.header.openOptions}
                 onToggle={() => setHeaderMenuOpen((current) => (current === "canvas" ? null : "canvas"))}
                 options={Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
                   id,
@@ -1724,11 +1784,12 @@ export function ThumbnailEditorApp() {
               />
             </label>
             <label className="min-w-0 text-xs font-bold text-muted">
-              出力比率
+              {copy.header.outputRatio}
               <ListboxField
                 className="mt-1"
                 isOpen={headerMenuOpen === "variant"}
-                value={currentVariant.label}
+                value={currentVariantLabel}
+                openLabel={copy.header.openOptions}
                 onToggle={() => setHeaderMenuOpen((current) => (current === "variant" ? null : "variant"))}
                 options={variantOptions}
                 onSelect={(id) => {
@@ -1739,19 +1800,19 @@ export function ThumbnailEditorApp() {
             </label>
           </div>
           <div className="flex w-full flex-wrap items-center justify-between gap-2 min-[1180px]:w-auto min-[1180px]:justify-end">
-            <ModeToggle editorMode={editorMode} onModeChange={setEditorMode} className="min-[1024px]:hidden" />
+            <ModeToggle copy={copy} editorMode={editorMode} onModeChange={setEditorMode} className="min-[1024px]:hidden" />
             <div className="scrollbar-accent flex max-w-full flex-nowrap justify-end gap-2 overflow-x-auto pb-1 [scrollbar-gutter:stable]">
-              <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold xl:px-4" type="button" onClick={newDraft} aria-label="新規キャンバスを作成" title="新規キャンバスを作成">
-                新規
+              <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold xl:px-4" type="button" onClick={newDraft} aria-label={copy.header.newDraftAria} title={copy.header.newDraftAria}>
+                {copy.header.newDraft}
               </button>
-              <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold xl:px-4" type="button" onClick={saveDraft} aria-label="下書きを保存" title="下書きを保存">
-                下書き
+              <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold xl:px-4" type="button" onClick={saveDraft} aria-label={copy.header.saveDraftAria} title={copy.header.saveDraftAria}>
+                {copy.header.saveDraft}
               </button>
-              <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold xl:px-4" type="button" onClick={sendToSnsSplit} aria-label="SNS分割画像メーカーで使う" title="SNS分割画像メーカーで使う">
-                SNS分割へ
+              <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold xl:px-4" type="button" onClick={sendToSnsSplit} aria-label={copy.header.sendToSnsAria} title={copy.header.sendToSnsAria}>
+                {copy.header.sendToSns}
               </button>
-              <button className="shrink-0 rounded-base bg-primary px-3 py-2 text-sm font-bold text-white xl:px-4" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
-                出力
+              <button className="shrink-0 rounded-base bg-primary px-3 py-2 text-sm font-bold text-white xl:px-4" type="button" onClick={exportImage} aria-label={copy.header.exportAria} title={copy.header.exportAria}>
+                {copy.header.export}
               </button>
             </div>
           </div>
@@ -1769,15 +1830,16 @@ export function ThumbnailEditorApp() {
             <section className="relative z-[70] mb-4 grid gap-3 min-[1024px]:hidden" data-thumbnail-header-menu-layer="mobile">
               <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-3">
                 <label className="min-w-0 text-xs font-bold text-muted">
-                  プリセット
+                  {copy.header.preset}
                   <ListboxField
                     className="mt-1"
                     isOpen={headerMenuOpen === "preset"}
-                    value={selectedPreset.name}
+                    value={selectedPresetName}
+                    openLabel={copy.header.openOptions}
                     onToggle={() => setHeaderMenuOpen((current) => (current === "preset" ? null : "preset"))}
                     options={thumbnailPresets.map((preset) => ({
                       id: preset.id,
-                      label: preset.name
+                      label: getThumbnailPresetName(preset.id, locale, preset.name)
                     }))}
                     onSelect={(id) => {
                       setHeaderMenuOpen(null);
@@ -1786,11 +1848,12 @@ export function ThumbnailEditorApp() {
                   />
                 </label>
                 <label className="min-w-0 text-xs font-bold text-muted">
-                  キャンバスサイズ
+                  {copy.header.canvasSize}
                   <ListboxField
                     className="mt-1"
                     isOpen={headerMenuOpen === "canvas"}
                     value={canvasSizeLabel}
+                    openLabel={copy.header.openOptions}
                     onToggle={() => setHeaderMenuOpen((current) => (current === "canvas" ? null : "canvas"))}
                     options={Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
                       id,
@@ -1803,11 +1866,12 @@ export function ThumbnailEditorApp() {
                   />
                 </label>
                 <label className="min-w-0 text-xs font-bold text-muted">
-                  出力比率
+                  {copy.header.outputRatio}
                   <ListboxField
                     className="mt-1"
                     isOpen={headerMenuOpen === "variant"}
-                    value={currentVariant.label}
+                    value={currentVariantLabel}
+                    openLabel={copy.header.openOptions}
                     onToggle={() => setHeaderMenuOpen((current) => (current === "variant" ? null : "variant"))}
                     options={variantOptions}
                     onSelect={(id) => {
@@ -1818,22 +1882,22 @@ export function ThumbnailEditorApp() {
                 </label>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <ModeToggle editorMode={editorMode} onModeChange={setEditorMode} />
+                <ModeToggle copy={copy} editorMode={editorMode} onModeChange={setEditorMode} />
                 <div
                   className="scrollbar-accent flex min-w-0 max-w-full flex-nowrap justify-end gap-2 overflow-x-auto pb-1 [scrollbar-gutter:stable]"
                   data-thumbnail-mobile-action-toolbar="true"
                 >
-                  <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold" type="button" onClick={newDraft} aria-label="新規キャンバスを作成" title="新規キャンバスを作成">
-                    新規
+                  <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold" type="button" onClick={newDraft} aria-label={copy.header.newDraftAria} title={copy.header.newDraftAria}>
+                    {copy.header.newDraft}
                   </button>
-                  <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold" type="button" onClick={saveDraft} aria-label="下書きを保存" title="下書きを保存">
-                    下書き
+                  <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold" type="button" onClick={saveDraft} aria-label={copy.header.saveDraftAria} title={copy.header.saveDraftAria}>
+                    {copy.header.saveDraft}
                   </button>
-                  <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold" type="button" onClick={sendToSnsSplit} aria-label="SNS分割画像メーカーで使う" title="SNS分割画像メーカーで使う">
-                    SNS分割へ
+                  <button className="flat-control shrink-0 px-3 py-2 text-sm font-bold" type="button" onClick={sendToSnsSplit} aria-label={copy.header.sendToSnsAria} title={copy.header.sendToSnsAria}>
+                    {copy.header.sendToSns}
                   </button>
-                  <button className="shrink-0 rounded-base bg-primary px-3 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label="サムネイルを書き出し" title="サムネイルを書き出し">
-                    出力
+                  <button className="shrink-0 rounded-base bg-primary px-3 py-2 text-sm font-bold text-white" type="button" onClick={exportImage} aria-label={copy.header.exportAria} title={copy.header.exportAria}>
+                    {copy.header.export}
                   </button>
                 </div>
               </div>
@@ -1841,10 +1905,10 @@ export function ThumbnailEditorApp() {
             <section className={["panel mx-auto p-3 md:p-4", sidePanelCollapsed ? "max-w-none" : "max-w-[76rem]"].join(" ")}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm font-bold text-foreground">{selectedPreset.name}</p>
+                  <p className="text-sm font-bold text-foreground">{selectedPresetName}</p>
                   <p className="text-xs text-muted">{draft.canvas.width} x {draft.canvas.height} / {currentVariant.aspectRatio}</p>
                   <p className="mt-1 text-xs font-semibold text-muted">
-                    {handoffPayload ? "予定テキストはプリセット変更後も見出し、時刻、サブ、ラベルへ引き継ぎます。" : "プリセットを選んで、文字と立ち絵を差し替えてから書き出す"}
+                    {handoffPayload ? copy.canvas.handoffGuide : copy.canvas.defaultGuide}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
@@ -1852,15 +1916,16 @@ export function ThumbnailEditorApp() {
                     className="flat-control hidden px-3 py-2 text-xs font-bold min-[1024px]:inline-flex"
                     type="button"
                     onClick={() => setSidePanelCollapsed((value) => !value)}
-                    aria-label={sidePanelCollapsed ? "設定パネルを表示" : "設定パネルを非表示"}
+                    aria-label={sidePanelCollapsed ? copy.canvas.showPanel : copy.canvas.hidePanel}
                   >
-                    {sidePanelCollapsed ? "パネル表示" : "パネル非表示"}
+                    {sidePanelCollapsed ? copy.canvas.showPanel : copy.canvas.hidePanel}
                   </button>
                   <div className="flex items-center gap-2 min-[1024px]:hidden">
-                    <button className="flat-control h-9 px-3 text-xs font-bold" type="button" onClick={() => setMobilePreviewOpen(true)} aria-label="サムネイル全体を確認">
-                      全体
+                    <button className="flat-control h-9 px-3 text-xs font-bold" type="button" onClick={() => setMobilePreviewOpen(true)} aria-label={copy.canvas.fullPreviewAria}>
+                      {copy.canvas.fullPreview}
                     </button>
                     <PreviewControlToolbar
+                      copy={copy.canvas}
                       zoom={zoom}
                       showCenterGuide={showCenterGuide}
                       canUndo={draftHistoryAvailability.canUndo}
@@ -1880,6 +1945,7 @@ export function ThumbnailEditorApp() {
               <div className="rounded-base bg-surface-muted p-2 md:p-4">
                 <div className="flex min-h-0 gap-3">
                   <DesktopToolRail
+                    copy={copy}
                     editorMode={editorMode}
                     onModeChange={setEditorMode}
                     onText={() => addLayer(createTextLayer())}
@@ -1890,7 +1956,7 @@ export function ThumbnailEditorApp() {
                   <div ref={canvasViewportRef} className="scrollbar-accent min-w-0 flex-1 overflow-auto [scrollbar-gutter:stable] min-[1024px]:max-h-[calc(100vh-20rem)]">
                     {editorMode === "pan" && (
                       <div className="mb-2 inline-flex rounded-sm border border-primary/50 bg-primary/20 px-2 py-1 text-[11px] font-bold text-primary-strong min-[1024px]:hidden">
-                        表示移動中
+                        {copy.canvas.panMode}
                       </div>
                     )}
                     <div className="relative mx-auto w-fit">
@@ -1903,7 +1969,7 @@ export function ThumbnailEditorApp() {
                         onPointerUp={endInteraction}
                         onPointerCancel={endInteraction}
                         onDoubleClick={handleCanvasDoubleClick}
-                        aria-label="サムネイル編集キャンバス"
+                        aria-label={copy.canvas.canvasAria}
                       />
                       {showCenterGuide ? <CanvasCenterGuideOverlay /> : null}
                     </div>
@@ -1912,6 +1978,7 @@ export function ThumbnailEditorApp() {
                 <div className="mt-3 hidden justify-center min-[1024px]:flex">
                   <div className="inline-flex items-center gap-2 rounded-base border border-border bg-surface px-2 py-2">
                     <PreviewControlToolbar
+                      copy={copy.canvas}
                       zoom={zoom}
                       showCenterGuide={showCenterGuide}
                       canUndo={draftHistoryAvailability.canUndo}
@@ -1930,14 +1997,17 @@ export function ThumbnailEditorApp() {
             </section>
 
             <section className="mt-4 grid min-w-0 gap-3 min-[1024px]:hidden">
-              <QuickAddBar
-                onText={() => addLayer(createTextLayer())}
+                <QuickAddBar
+                  copy={copy}
+                  onText={() => addLayer(createTextLayer())}
                 onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
                 onImage={() => fileInputRef.current?.click()}
                 onMaterial={() => setMobilePanel("materials")}
               />
               {mobilePanel === "canvas" && (
                 <PresetCards
+                  copy={copy}
+                  locale={locale}
                   currentPresetId={draft.presetId}
                   favoritePresetIds={presetDiscoveryState.favoritePresetIds}
                   recentPresetIds={presetDiscoveryState.recentPresetIds}
@@ -1948,8 +2018,9 @@ export function ThumbnailEditorApp() {
               )}
               {mobilePanel === "materials" && (
                 <>
-                  <MaterialLibraryPanel onAdd={addMaterialLayer} />
+                  <MaterialLibraryPanel copy={copy} locale={locale} onAdd={addMaterialLayer} />
                   <UserMaterialLibraryPanel
+                    copy={copy}
                     refs={userMaterialRefs}
                     imageUrls={userMaterialImageUrls}
                     usageSummary={userMaterialUsageSummary}
@@ -1962,6 +2033,8 @@ export function ThumbnailEditorApp() {
               )}
               {mobilePanel === "layers" && (
                 <LayerPanel
+                  copy={copy}
+                  locale={locale}
                   layers={draft.layers}
                   presetId={draft.presetId}
                   selectedLayerId={draft.selectedLayerId}
@@ -1974,9 +2047,11 @@ export function ThumbnailEditorApp() {
               )}
               {mobilePanel === "text" && selectedLayer && (
                 <PropertyPanel
+                  copy={copy}
+                  locale={locale}
                   layer={selectedLayer}
                   canvas={draft.canvas}
-                  qualityGuardItems={qualityGuardItems}
+                  qualityGuardItems={localizedQualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
                   onChange={updateSelectedLayer}
@@ -1985,6 +2060,7 @@ export function ThumbnailEditorApp() {
               )}
               {mobilePanel === "export" && (
                 <ExportPanel
+                  copy={copy}
                   exportFormat={exportFormat}
                   qualityGuardSummary={overallQualityGuardSummary}
                   onFormatChange={setExportFormat}
@@ -1997,6 +2073,8 @@ export function ThumbnailEditorApp() {
 
             <div className="hidden min-[1024px]:mt-4 min-[1024px]:block">
               <PresetCards
+                copy={copy}
+                locale={locale}
                 currentPresetId={draft.presetId}
                 favoritePresetIds={presetDiscoveryState.favoritePresetIds}
                 recentPresetIds={presetDiscoveryState.recentPresetIds}
@@ -2010,13 +2088,15 @@ export function ThumbnailEditorApp() {
           <aside className={sidePanelCollapsed ? "hidden" : "hidden min-h-0 border-l border-border bg-surface/78 min-[1024px]:block"}>
             <div className="h-full space-y-3 overflow-y-auto p-4 scrollbar-accent xl:p-5">
               <QuickAddBar
+                copy={copy}
                 onText={() => addLayer(createTextLayer())}
                 onShape={(shapeType) => addLayer(createShapeLayer(shapeType))}
                 onImage={() => fileInputRef.current?.click()}
                 onMaterial={() => setSidePanelCollapsed(false)}
               />
-              <MaterialLibraryPanel onAdd={addMaterialLayer} />
+              <MaterialLibraryPanel copy={copy} locale={locale} onAdd={addMaterialLayer} />
               <UserMaterialLibraryPanel
+                copy={copy}
                 refs={userMaterialRefs}
                 imageUrls={userMaterialImageUrls}
                 usageSummary={userMaterialUsageSummary}
@@ -2026,6 +2106,8 @@ export function ThumbnailEditorApp() {
                 onDeleteUserMaterial={deleteUserMaterial}
               />
               <LayerPanel
+                copy={copy}
+                locale={locale}
                 layers={draft.layers}
                 presetId={draft.presetId}
                 selectedLayerId={draft.selectedLayerId}
@@ -2037,18 +2119,21 @@ export function ThumbnailEditorApp() {
               />
               {selectedLayer ? (
                 <PropertyPanel
+                  copy={copy}
+                  locale={locale}
                   layer={selectedLayer}
                   canvas={draft.canvas}
-                  qualityGuardItems={qualityGuardItems}
+                  qualityGuardItems={localizedQualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
                   onChange={updateSelectedLayer}
                   onStandeePlacement={applyStandeePlacementPreset}
                 />
               ) : (
-                <div className="panel p-4 text-sm text-muted">編集するレイヤーを選択してください。</div>
+                <div className="panel p-4 text-sm text-muted">{copy.canvas.selectLayerEmpty}</div>
               )}
               <ExportPanel
+                copy={copy}
                 exportFormat={exportFormat}
                 qualityGuardSummary={overallQualityGuardSummary}
                 onFormatChange={setExportFormat}
@@ -2062,7 +2147,7 @@ export function ThumbnailEditorApp() {
       </div>
 
       <nav className="grid shrink-0 grid-cols-5 border-t border-border bg-surface/95 min-[1024px]:hidden">
-        {mobilePanels.map((item) => (
+        {mobilePanelItems.map((item) => (
           <button
             key={item.id}
             className={[
@@ -2073,20 +2158,20 @@ export function ThumbnailEditorApp() {
             onClick={() => setMobilePanel(item.id)}
           >
             <span className="text-lg">{item.icon}</span>
-            {item.label}
+            {copy.mobilePanels[item.id]}
           </button>
         ))}
       </nav>
 
       {mobilePreviewOpen ? (
-        <div className="fixed inset-0 z-[100] flex flex-col bg-background text-foreground min-[1024px]:hidden" role="dialog" aria-modal="true" aria-label="サムネイル全体プレビュー">
+        <div className="fixed inset-0 z-[100] flex flex-col bg-background text-foreground min-[1024px]:hidden" role="dialog" aria-modal="true" aria-label={copy.canvas.previewTitle}>
           <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-surface/95 px-4 py-3">
             <div className="min-w-0">
-              <p className="text-xs font-bold text-primary-strong">全体確認</p>
-              <h2 className="truncate text-base font-black text-foreground">{selectedPreset.name}</h2>
+              <p className="text-xs font-bold text-primary-strong">{copy.canvas.previewTitle}</p>
+              <h2 className="truncate text-base font-black text-foreground">{selectedPresetName}</h2>
             </div>
-            <button type="button" className="flat-control px-3 py-2 text-sm font-bold" onClick={() => setMobilePreviewOpen(false)} aria-label="全体プレビューを閉じる">
-              閉じる
+            <button type="button" className="flat-control px-3 py-2 text-sm font-bold" onClick={() => setMobilePreviewOpen(false)} aria-label={copy.aria.closeFullPreview}>
+              {copy.canvas.previewClose}
             </button>
           </div>
           <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
@@ -2094,20 +2179,22 @@ export function ThumbnailEditorApp() {
               <canvas
                 ref={setMobilePreviewCanvasRef}
                 className="h-full w-full rounded-base border border-border bg-[#081117] object-contain shadow-panel"
-                aria-label="サムネイル全体確認"
+                aria-label={copy.aria.fullPreviewCanvas}
               />
               {showCenterGuide ? <CanvasCenterGuideOverlay /> : null}
             </div>
           </div>
           <p className="shrink-0 border-t border-border px-4 py-3 text-center text-xs leading-5 text-muted">
-            確認専用です。編集に戻るには閉じるを押してください。
+            {copy.canvas.previewNote}
           </p>
         </div>
       ) : null}
 
       {pendingPreset ? (
         <PresetApplyConfirmDialog
-          currentPresetName={selectedPreset.name}
+          copy={copy}
+          locale={locale}
+          currentPresetName={selectedPresetName}
           targetPreset={pendingPreset}
           currentText={currentMainTextCarryover}
           targetText={pendingPresetDefaultText}
@@ -2118,14 +2205,14 @@ export function ThumbnailEditorApp() {
         />
       ) : null}
 
-      <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} aria-label="画像ファイルを選択" />
+      <input ref={fileInputRef} className="hidden" type="file" accept="image/png,image/jpeg" onChange={handleImageUpload} aria-label={copy.aria.imageFileInput} />
       <input
         ref={userMaterialFileInputRef}
         className="hidden"
         type="file"
         accept="image/png,image/jpeg,image/webp,image/svg+xml"
         onChange={handleUserMaterialUpload}
-        aria-label="ユーザー素材ファイルを選択"
+        aria-label={copy.aria.userMaterialFileInput}
       />
       {toast && (
         <div className={`fixed bottom-20 left-4 right-4 z-50 rounded-base border px-4 py-3 text-sm font-bold shadow-panel min-[1024px]:bottom-5 min-[1024px]:left-auto min-[1024px]:right-5 min-[1024px]:w-96 ${toneClassName[toast.tone]}`}>
@@ -2137,11 +2224,13 @@ export function ThumbnailEditorApp() {
 }
 
 function QuickAddBar({
+  copy,
   onText,
   onShape,
   onImage,
   onMaterial
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
   onText: () => void;
   onShape: (shapeType: ThumbnailShapeType) => void;
   onImage: () => void;
@@ -2150,27 +2239,27 @@ function QuickAddBar({
   return (
     <section className="panel p-3">
       <div className="grid grid-cols-5 gap-2">
-        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={onText} aria-label="テキストレイヤーを追加">
-          T テキスト
+        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={onText} aria-label={copy.quickAdd.textAria}>
+          {copy.quickAdd.text}
         </button>
-        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={() => onShape("rect")} aria-label="矩形レイヤーを追加">
-          ▭ 矩形
+        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={() => onShape("rect")} aria-label={copy.quickAdd.rectAria}>
+          {copy.quickAdd.rect}
         </button>
-        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={() => onShape("circle")} aria-label="円レイヤーを追加">
-          ○ 円
+        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={() => onShape("circle")} aria-label={copy.quickAdd.circleAria}>
+          {copy.quickAdd.circle}
         </button>
-        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={onImage} aria-label="画像レイヤーを追加">
-          ▧ 画像
+        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={onImage} aria-label={copy.quickAdd.imageAria}>
+          {copy.quickAdd.image}
         </button>
-        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={onMaterial} aria-label="素材ライブラリを開く">
-          ◇ 素材
+        <button className="flat-control whitespace-nowrap px-1.5 py-2 text-[10px] font-bold xl:text-xs" type="button" onClick={onMaterial} aria-label={copy.quickAdd.materialAria}>
+          {copy.quickAdd.material}
         </button>
       </div>
     </section>
   );
 }
 
-function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
+function MaterialLibraryPanel({ copy, locale, onAdd }: { copy: ReturnType<typeof getThumbnailEditorCopy>; locale: Locale; onAdd: (id: string) => void }) {
   const [selectedCategory, setSelectedCategory] = useState<ThumbnailMaterialCategory | "all">("all");
   const [materialSearchQuery, setMaterialSearchQuery] = useState("");
   const materialCategories = useMemo(
@@ -2185,21 +2274,8 @@ function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
     return counts;
   }, [materialCategories]);
   const filteredMaterials = useMemo(
-    () => {
-      const query = normalizeMaterialSearchText(materialSearchQuery);
-      return thumbnailMaterialLibrary.filter((material) => {
-        if (selectedCategory !== "all" && material.category !== selectedCategory) {
-          return false;
-        }
-        if (!query) {
-          return true;
-        }
-        return normalizeMaterialSearchText(
-          [material.name, material.description, material.recommendedPlacement, thumbnailMaterialCategoryLabels[material.category]].join(" ")
-        ).includes(query);
-      });
-    },
-    [materialSearchQuery, selectedCategory]
+    () => filterLocalizedThumbnailMaterials(thumbnailMaterialLibrary, materialSearchQuery, selectedCategory, locale),
+    [locale, materialSearchQuery, selectedCategory]
   );
   const selectedCategoryCount = selectedCategory === "all" ? thumbnailMaterialLibrary.length : materialCategoryCounts[selectedCategory];
 
@@ -2207,31 +2283,31 @@ function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
     <section className="panel space-y-3 p-3 md:p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black text-foreground">登録済み素材</h2>
-          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">素材はプリセットに後から足す飾りです。選ぶとレイヤーへ追加されます。</p>
+          <h2 className="text-base font-black text-foreground">{copy.panels.materials.title}</h2>
+          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">{copy.panels.materials.guide}</p>
         </div>
         <p className="shrink-0 text-right text-xs font-bold leading-5 text-muted">
-          {filteredMaterials.length} / {selectedCategoryCount}点
-          <span className="block text-[11px] font-bold text-muted/80">全{thumbnailMaterialLibrary.length}点</span>
+          {filteredMaterials.length} / {selectedCategoryCount}{copy.panels.materials.itemUnit}
+          <span className="block text-[11px] font-bold text-muted/80">{copy.panels.materials.allPrefix}{thumbnailMaterialLibrary.length}{copy.panels.materials.itemUnit}</span>
         </p>
       </div>
       <label className="block">
-        <span className="sr-only">素材名・説明・推奨配置で検索</span>
+        <span className="sr-only">{copy.panels.materials.search}</span>
         <input
           className="w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground outline-none transition placeholder:text-muted/70 focus:border-primary focus:bg-primary-soft/20"
           type="search"
           value={materialSearchQuery}
           onChange={(event) => setMaterialSearchQuery(event.target.value)}
-          placeholder="素材名・説明・推奨配置で検索"
-          aria-label="素材名・説明・推奨配置で検索"
+          placeholder={copy.panels.materials.search}
+          aria-label={copy.panels.materials.search}
         />
       </label>
       <div className="scrollbar-accent flex gap-2 overflow-x-auto pb-1 [scrollbar-gutter:stable] min-[520px]:flex-wrap min-[520px]:overflow-visible min-[520px]:pb-0">
         {[
-          { id: "all", label: "すべて", count: thumbnailMaterialLibrary.length },
+          { id: "all", label: copy.panels.materials.all, count: thumbnailMaterialLibrary.length },
           ...materialCategories.map((category) => ({
             id: category,
-            label: thumbnailMaterialCategoryLabels[category],
+            label: getThumbnailMaterialCategoryLabel(category, locale),
             count: materialCategoryCounts[category]
           }))
         ].map((option) => (
@@ -2251,35 +2327,41 @@ function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
         ))}
       </div>
       <div className="scrollbar-accent grid max-h-[min(60vh,38rem)] gap-2 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
-        {filteredMaterials.map((material) => (
-          <button
-            key={material.id}
-            className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2 rounded-base border border-border bg-surface p-2 text-left transition hover:border-primary hover:bg-primary-soft/35 md:grid-cols-[5.25rem_minmax(0,1fr)]"
-            type="button"
-            onClick={() => onAdd(material.id)}
-            aria-label={`${material.name}を素材として追加`}
-            title={material.description}
-          >
-            <span className="grid aspect-video place-items-center overflow-hidden rounded-sm border border-border bg-[#07111c]">
-              <span
-                className="block h-full w-full bg-contain bg-center bg-no-repeat"
-                style={{ backgroundImage: `url(${material.src})` }}
-                aria-hidden="true"
-              />
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-black text-foreground">{material.name}</span>
-              <span className="mt-1 inline-flex rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">
-                {thumbnailMaterialCategoryLabels[material.category]}
+        {filteredMaterials.map((material) => {
+          const materialName = getThumbnailMaterialName(material.id, locale, material.name);
+          const materialDescription = getThumbnailMaterialDescription(material, locale);
+          const materialPlacement = getThumbnailMaterialRecommendedPlacement(material, locale);
+          const materialCategory = getThumbnailMaterialCategoryLabel(material.category, locale);
+          return (
+            <button
+              key={material.id}
+              className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2 rounded-base border border-border bg-surface p-2 text-left transition hover:border-primary hover:bg-primary-soft/35 md:grid-cols-[5.25rem_minmax(0,1fr)]"
+              type="button"
+              onClick={() => onAdd(material.id)}
+              aria-label={copy.aria.addMaterial(materialName)}
+              title={materialDescription}
+            >
+              <span className="grid aspect-video place-items-center overflow-hidden rounded-sm border border-border bg-[#07111c]">
+                <span
+                  className="block h-full w-full bg-contain bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url(${material.src})` }}
+                  aria-hidden="true"
+                />
               </span>
-              <span className="mt-1 line-clamp-1 block text-xs leading-5 text-muted">{material.recommendedPlacement}</span>
-              <span className="line-clamp-1 block text-[11px] leading-4 text-muted/85">{material.description}</span>
-            </span>
-          </button>
-        ))}
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-black text-foreground">{materialName}</span>
+                <span className="mt-1 inline-flex rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">
+                  {materialCategory}
+                </span>
+                <span className="mt-1 line-clamp-1 block text-xs leading-5 text-muted">{materialPlacement}</span>
+                <span className="line-clamp-1 block text-[11px] leading-4 text-muted/85">{materialDescription}</span>
+              </span>
+            </button>
+          );
+        })}
         {filteredMaterials.length === 0 ? (
           <div className="rounded-base border border-dashed border-border bg-surface-muted/40 px-3 py-5 text-center text-xs font-bold leading-5 text-muted">
-            条件に合う素材はありません。
+            {copy.panels.materials.empty}
           </div>
         ) : null}
       </div>
@@ -2288,10 +2370,12 @@ function MaterialLibraryPanel({ onAdd }: { onAdd: (id: string) => void }) {
 }
 
 function ModeToggle({
+  copy,
   editorMode,
   onModeChange,
   className = ""
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
   editorMode: EditorMode;
   onModeChange: (mode: EditorMode) => void;
   className?: string;
@@ -2303,20 +2387,21 @@ function ModeToggle({
         type="button"
         onClick={() => onModeChange("edit")}
       >
-        編集
+        {copy.tools.edit}
       </button>
       <button
         className={`px-3 py-1 text-xs font-bold ${editorMode === "pan" ? "rounded-sm bg-primary text-white" : "text-muted"}`}
         type="button"
         onClick={() => onModeChange("pan")}
       >
-        表示移動
+        {copy.tools.pan}
       </button>
     </div>
   );
 }
 
 function DesktopToolRail({
+  copy,
   editorMode,
   onModeChange,
   onText,
@@ -2324,6 +2409,7 @@ function DesktopToolRail({
   onImage,
   onMaterial
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
   editorMode: EditorMode;
   onModeChange: (mode: EditorMode) => void;
   onText: () => void;
@@ -2354,18 +2440,18 @@ function DesktopToolRail({
 
   return (
     <div className="hidden w-16 shrink-0 flex-col items-center gap-2 rounded-base border border-border bg-surface p-2 min-[1024px]:flex">
-      <button className={toolButtonClass(editorMode === "edit")} type="button" onClick={() => onModeChange("edit")} title="選択">
+      <button className={toolButtonClass(editorMode === "edit")} type="button" onClick={() => onModeChange("edit")} title={copy.tools.select}>
         <span className="text-lg">⌖</span>
-        選択
+        {copy.tools.select}
       </button>
-      <button className={toolButtonClass(false)} type="button" onClick={onText} title="テキスト">
+      <button className={toolButtonClass(false)} type="button" onClick={onText} title={copy.tools.text}>
         <span className="text-lg">T</span>
-        テキスト
+        {copy.tools.text}
       </button>
       <div ref={shapeMenuRef} className="relative">
-        <button className={toolButtonClass(shapeMenuOpen)} type="button" onClick={() => setShapeMenuOpen((current) => !current)} title="図形">
+        <button className={toolButtonClass(shapeMenuOpen)} type="button" onClick={() => setShapeMenuOpen((current) => !current)} title={copy.tools.shape}>
           <span className="text-lg">◇</span>
-          図形
+          {copy.tools.shape}
         </button>
         {shapeMenuOpen && (
           <div className="absolute left-full top-0 z-50 ml-2 w-32 rounded-base border border-border bg-surface p-1 shadow-panel">
@@ -2377,7 +2463,7 @@ function DesktopToolRail({
                 setShapeMenuOpen(false);
               }}
             >
-              ▭ 矩形
+              {copy.quickAdd.rect}
             </button>
             <button
               className="block w-full rounded-base px-3 py-2 text-left text-xs font-bold text-foreground hover:bg-primary-soft"
@@ -2387,29 +2473,31 @@ function DesktopToolRail({
                 setShapeMenuOpen(false);
               }}
             >
-              ○ 円
+              {copy.quickAdd.circle}
             </button>
           </div>
         )}
       </div>
-      <button className={toolButtonClass(false)} type="button" onClick={onImage} title="画像">
+      <button className={toolButtonClass(false)} type="button" onClick={onImage} title={copy.tools.image}>
         <span className="text-lg">▧</span>
-        画像
+        {copy.tools.image}
       </button>
-      <button className={toolButtonClass(false)} type="button" onClick={onMaterial} title="素材">
+      <button className={toolButtonClass(false)} type="button" onClick={onMaterial} title={copy.tools.material}>
         <span className="text-lg">◇</span>
-        素材
+        {copy.tools.material}
       </button>
       <div className="my-1 h-px w-10 bg-border" />
-      <button className={toolButtonClass(editorMode === "pan")} type="button" onClick={() => onModeChange("pan")} title="表示移動">
+      <button className={toolButtonClass(editorMode === "pan")} type="button" onClick={() => onModeChange("pan")} title={copy.tools.pan}>
         <span className="text-lg">⌕</span>
-        ズーム
+        {copy.tools.zoom}
       </button>
     </div>
   );
 }
 
 function LayerPanel({
+  copy,
+  locale,
   layers,
   presetId,
   selectedLayerId,
@@ -2419,6 +2507,8 @@ function LayerPanel({
   onDelete,
   onToggleFlag
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   layers: ThumbnailLayer[];
   presetId: ThumbnailPresetId;
   selectedLayerId: string | null;
@@ -2469,27 +2559,27 @@ function LayerPanel({
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-surface-muted text-sm font-black text-primary-strong">
           {layer.type === "text" ? "T" : layer.type === "image" ? "▧" : layer.type === "shape" && layer.shapeType === "circle" ? "●" : "■"}
         </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">{compactName ?? layer.name}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">{getThumbnailLayerDisplayName(layer, locale, compactName)}</span>
         <span className="text-xs text-muted">{layer.type}</span>
       </button>
       <div className="mt-2 grid grid-cols-6 gap-1">
-        <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "front")} title="前面へ">
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "front")} title={copy.layerControls.moveFront}>
           ↑
         </button>
-        <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "back")} title="背面へ">
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onMove(layer.id, "back")} title={copy.layerControls.moveBack}>
           ↓
         </button>
-        <button className="flat-control py-1 text-xs" type="button" onClick={() => onDuplicate(layer.id)} title="複製">
-          複
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onDuplicate(layer.id)} title={copy.layerControls.duplicate}>
+          {copy.layerControls.duplicateShort}
         </button>
-        <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "hidden")} title="表示切替">
-          {layer.hidden ? "非" : "目"}
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "hidden")} title={copy.layerControls.toggleVisibility}>
+          {layer.hidden ? copy.layerControls.hiddenShort : copy.layerControls.visibleShort}
         </button>
-        <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "locked")} title="ロック切替">
-          {layer.locked ? "錠" : "開"}
+        <button className="flat-control py-1 text-xs" type="button" onClick={() => onToggleFlag(layer.id, "locked")} title={copy.layerControls.toggleLock}>
+          {layer.locked ? copy.layerControls.lockedShort : copy.layerControls.unlockedShort}
         </button>
-        <button className="flat-control py-1 text-xs text-rose-500" type="button" onClick={() => onDelete(layer.id)} title="削除">
-          削
+        <button className="flat-control py-1 text-xs text-rose-500" type="button" onClick={() => onDelete(layer.id)} title={copy.layerControls.delete}>
+          {copy.layerControls.deleteShort}
         </button>
       </div>
     </div>
@@ -2498,8 +2588,8 @@ function LayerPanel({
   return (
     <section className="panel p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-black text-foreground">レイヤー一覧</h2>
-        <p className="text-xs font-bold text-muted">上が前面 / 選択して編集</p>
+        <h2 className="text-base font-black text-foreground">{copy.panels.layers.title}</h2>
+        <p className="text-xs font-bold text-muted">{copy.panels.layers.guide}</p>
       </div>
       <div className="scrollbar-accent max-h-[min(52vh,560px)] overflow-y-auto [scrollbar-gutter:stable]">
         <div className="space-y-2 pr-1">
@@ -2514,10 +2604,10 @@ function LayerPanel({
                   type="button"
                   className="flex w-full items-center justify-between gap-2 rounded-base px-2 py-2 text-left text-sm font-black text-foreground hover:bg-surface-muted"
                   aria-expanded={!collapsed}
-                  aria-label={`${group.label}グループを${collapsed ? "開く" : "閉じる"}`}
+                  aria-label={copy.aria.toggleWeeklyGroup(group.label, collapsed)}
                   onClick={() => setCollapsedGroups((current) => ({ ...current, [group.id]: !collapsed }))}
                 >
-                  <span>週間予定レイヤー / {group.label}</span>
+                  <span>{copy.panels.layers.weeklyGroupPrefix} / {getThumbnailLayerDisplayName({ name: group.label, type: "text" }, locale)}</span>
                   <span className="text-base font-black text-muted" aria-hidden="true">{collapsed ? "▸" : "▾"}</span>
                 </button>
                 {!collapsed ? (
@@ -2535,6 +2625,8 @@ function LayerPanel({
 }
 
 function PropertyPanel({
+  copy,
+  locale,
   layer,
   canvas,
   qualityGuardItems,
@@ -2543,6 +2635,8 @@ function PropertyPanel({
   onChange,
   onStandeePlacement
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   layer: ThumbnailLayer;
   canvas: ThumbnailEditorDraft["canvas"];
   qualityGuardItems: ThumbnailQualityGuardItem[];
@@ -2553,58 +2647,66 @@ function PropertyPanel({
 }) {
   const layerGuidance =
     layer.type === "text"
-      ? "選択中の文字を差し替えて、必要なら縁取りや影を調整します。"
+      ? copy.panels.property.textGuide
       : layer.type === "image"
-        ? "立ち絵画像を追加・差し替えて、配置だけを整えます。"
+        ? copy.panels.property.imageGuide
         : null;
+  const layerNameDisplayValue = getThumbnailLayerDisplayName(layer, locale);
 
   return (
     <section className="panel min-w-0 space-y-4 p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-black text-foreground">{layer.type === "text" ? "テキスト設定" : layer.type === "shape" ? "図形設定" : "画像設定"}</h2>
+          <h2 className="text-base font-black text-foreground">{layer.type === "text" ? copy.panels.property.textTitle : layer.type === "shape" ? copy.panels.property.shapeTitle : copy.panels.property.imageTitle}</h2>
           {layerGuidance ? <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">{layerGuidance}</p> : null}
         </div>
-        <span className="rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{layer.name}</span>
+        <span className="rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{getThumbnailLayerDisplayName(layer, locale)}</span>
       </div>
 
       <label className="block text-xs font-bold text-muted">
-        レイヤー名
+        {copy.panels.property.layerName}
         <input
           className="mt-1 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
           maxLength={40}
           type="text"
-          value={layer.name}
+          value={getThumbnailLayerDisplayName(layer, locale)}
           onChange={(event) => onChange((item) => ({ ...item, name: event.target.value.slice(0, 40) }))}
           onBlur={(event) => {
-            const fallback = layer.type === "text" ? "テキスト" : layer.type === "shape" ? "図形" : "画像";
+            if (event.target.value === layerNameDisplayValue && layer.name !== event.target.value) {
+              return;
+            }
+            const fallback = layer.type === "text" ? copy.panels.property.textFallback : layer.type === "shape" ? copy.panels.property.shapeFallback : copy.panels.property.imageFallback;
             onChange((item) => ({ ...item, name: normalizeThumbnailLayerName(event.target.value, fallback) }));
           }}
         />
       </label>
-      <ThumbnailQualityGuardPanel items={qualityGuardItems} />
-      <LayerQuickAdjustPanel layer={layer} canvas={canvas} onChange={onChange} />
+      <ThumbnailQualityGuardPanel copy={copy} items={qualityGuardItems} />
+      <LayerQuickAdjustPanel copy={copy} locale={locale} layer={layer} canvas={canvas} onChange={onChange} />
 
       <div className="grid grid-cols-2 gap-3">
         <NumberField label="X" value={layer.x} min={-2000} max={4000} onChange={(x) => onChange((item) => ({ ...item, x }))} />
         <NumberField label="Y" value={layer.y} min={-2000} max={4000} onChange={(y) => onChange((item) => ({ ...item, y }))} />
-        <NumberField label="幅" value={layer.width} min={16} max={4000} onChange={(width) => onChange((item) => ({ ...item, width }))} />
-        <NumberField label="高さ" value={layer.height} min={16} max={4000} onChange={(height) => onChange((item) => ({ ...item, height }))} />
+        <NumberField label={copy.panels.property.width} value={layer.width} min={16} max={4000} onChange={(width) => onChange((item) => ({ ...item, width }))} />
+        <NumberField label={copy.panels.property.height} value={layer.height} min={16} max={4000} onChange={(height) => onChange((item) => ({ ...item, height }))} />
       </div>
 
-      {layer.type === "text" && <TextControls layer={layer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={onFontMenuOpenChange} onChange={onChange} />}
-      {layer.type === "shape" && <ShapeControls layer={layer} onChange={onChange} />}
-      {layer.type === "image" && <StandeePlacementPanel layer={layer} onApply={onStandeePlacement} />}
-      <EffectControls layer={layer} onChange={onChange} />
+      {layer.type === "text" && <TextControls copy={copy} locale={locale} layer={layer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={onFontMenuOpenChange} onChange={onChange} />}
+      {layer.type === "shape" && <ShapeControls copy={copy} layer={layer} onChange={onChange} />}
+      {layer.type === "image" && <StandeePlacementPanel copy={copy} locale={locale} layer={layer} onApply={onStandeePlacement} />}
+      <EffectControls copy={copy} layer={layer} onChange={onChange} />
     </section>
   );
 }
 
 function LayerQuickAdjustPanel({
+  copy,
+  locale,
   layer,
   canvas,
   onChange
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   layer: ThumbnailLayer;
   canvas: ThumbnailEditorDraft["canvas"];
   onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void;
@@ -2633,35 +2735,36 @@ function LayerQuickAdjustPanel({
       y: Math.round((canvas.height - item.height) / 2)
     }));
   };
+  const layerDisplayName = getThumbnailLayerDisplayName(layer, locale);
 
   return (
     <div className="rounded-base border border-border bg-surface-muted/55 p-3" data-thumbnail-layer-rescue-controls="true">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-xs font-black text-foreground">操作補助</h3>
-        <span className="text-[10px] font-bold text-muted">画面外ハンドル対策</span>
+        <h3 className="text-xs font-black text-foreground">{copy.quickAdjust.title}</h3>
+        <span className="text-[10px] font-bold text-muted">{copy.quickAdjust.note}</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(0.9)} aria-label={`${layer.name}を縮小`}>
-          サイズ -
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(0.9)} aria-label={copy.quickAdjust.shrinkAria(layerDisplayName)}>
+          {copy.quickAdjust.shrink}
         </button>
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(1.1)} aria-label={`${layer.name}を拡大`}>
-          サイズ +
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(1.1)} aria-label={copy.quickAdjust.enlargeAria(layerDisplayName)}>
+          {copy.quickAdjust.enlarge}
         </button>
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(-5)} aria-label={`${layer.name}を左へ5度回転`}>
-          回転 -5
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(-5)} aria-label={copy.quickAdjust.rotateLeftAria(layerDisplayName)}>
+          {copy.quickAdjust.rotateLeft}
         </button>
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(5)} aria-label={`${layer.name}を右へ5度回転`}>
-          回転 +5
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(5)} aria-label={copy.quickAdjust.rotateRightAria(layerDisplayName)}>
+          {copy.quickAdjust.rotateRight}
         </button>
-        <button className="flat-control col-span-2 px-2 py-2 text-xs font-bold" type="button" onClick={centerLayer} aria-label={`${layer.name}をキャンバス中央へ移動`}>
-          中央へ
+        <button className="flat-control col-span-2 px-2 py-2 text-xs font-bold" type="button" onClick={centerLayer} aria-label={copy.quickAdjust.centerAria(layerDisplayName)}>
+          {copy.quickAdjust.center}
         </button>
       </div>
     </div>
   );
 }
 
-function ThumbnailQualityGuardPanel({ items }: { items: ThumbnailQualityGuardItem[] }) {
+function ThumbnailQualityGuardPanel({ copy, items }: { copy: ReturnType<typeof getThumbnailEditorCopy>; items: ThumbnailQualityGuardItem[] }) {
   const toneClassName: Record<ThumbnailQualityGuardItem["tone"], string> = {
     warning: "border-amber-400/55 bg-amber-500/10 text-amber-200",
     hint: "border-sky-400/45 bg-sky-500/10 text-sky-100",
@@ -2671,8 +2774,8 @@ function ThumbnailQualityGuardPanel({ items }: { items: ThumbnailQualityGuardIte
   return (
     <div className="rounded-base border border-border bg-surface-muted/55 p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-xs font-black text-foreground">サムネ品質</h3>
-        <span className="text-[10px] font-bold text-muted">確認のみ</span>
+        <h3 className="text-xs font-black text-foreground">{copy.panels.quality.title}</h3>
+        <span className="text-[10px] font-bold text-muted">{copy.panels.quality.note}</span>
       </div>
       <div className="grid gap-1.5">
         {items.map((item) => (
@@ -2686,46 +2789,55 @@ function ThumbnailQualityGuardPanel({ items }: { items: ThumbnailQualityGuardIte
 }
 
 function StandeePlacementPanel({
+  copy,
+  locale,
   layer,
   onApply
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   layer: Extract<ThumbnailLayer, { type: "image" }>;
   onApply: (presetId: ThumbnailStandeePlacementPresetId) => void;
 }) {
   const groups = ["1人", "2人", "3人"] as const;
-  const lockedReason = "ロック中のため適用できません";
+  const lockedReason = copy.standee.lockedReason;
+  const layerDisplayName = getThumbnailLayerDisplayName(layer, locale);
 
   return (
     <div className="space-y-3 border-t border-border pt-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-black text-foreground">立ち絵配置</h3>
-        {layer.locked ? <span className="text-[11px] font-bold text-muted">ロック中</span> : null}
+        <h3 className="text-sm font-black text-foreground">{copy.standee.title}</h3>
+        {layer.locked ? <span className="text-[11px] font-bold text-muted">{copy.standee.locked}</span> : null}
       </div>
       <p className="truncate text-[11px] font-bold text-muted">
-        適用先: <span className="text-foreground">{layer.name}</span>
+        {copy.standee.target}: <span className="text-foreground">{layerDisplayName}</span>
       </p>
-      {layer.locked ? <p className="text-[11px] font-semibold text-muted">ロック解除後に適用できます。</p> : null}
-      <p className="text-[11px] font-semibold leading-relaxed text-muted">2人 / 3人は画像レイヤーを人数分追加して、選択中の1枚へ個別に適用します。</p>
+      {layer.locked ? <p className="text-[11px] font-semibold text-muted">{copy.standee.unlockGuide}</p> : null}
+      <p className="text-[11px] font-semibold leading-relaxed text-muted">{copy.standee.multiGuide}</p>
       {groups.map((group) => (
         <div key={group} className="space-y-2">
-          <p className="text-[11px] font-black text-muted">{group}</p>
+          <p className="text-[11px] font-black text-muted">{getThumbnailStandeePlacementGroup(group, locale)}</p>
           <div className="grid grid-cols-2 gap-2">
             {thumbnailStandeePlacementPresets
               .filter((preset) => preset.group === group)
-              .map((preset) => (
+              .map((preset) => {
+                const placementName = getThumbnailStandeePlacementName(preset.id, locale, preset.name);
+                const placementDescription = getThumbnailStandeePlacementDescription(preset, locale);
+                return (
                 <button
                   key={preset.id}
                   className="flat-control min-h-12 px-2 py-2 text-left text-xs font-bold disabled:cursor-not-allowed disabled:opacity-45"
                   type="button"
                   disabled={Boolean(layer.locked)}
                   onClick={() => onApply(preset.id)}
-                  title={layer.locked ? `${preset.description}（${lockedReason}）` : preset.description}
-                  aria-label={layer.locked ? `${preset.name}。${lockedReason}。` : preset.name}
+                  title={layer.locked ? `${placementDescription} (${lockedReason})` : placementDescription}
+                  aria-label={layer.locked ? `${placementName}. ${lockedReason}.` : placementName}
                 >
-                  <span className="block text-foreground">{preset.name}</span>
-                  <span className="mt-0.5 block truncate text-[11px] text-muted">{preset.description}</span>
+                  <span className="block text-foreground">{placementName}</span>
+                  <span className="mt-0.5 block truncate text-[11px] text-muted">{placementDescription}</span>
                 </button>
-              ))}
+                );
+              })}
           </div>
         </div>
       ))}
@@ -2734,11 +2846,15 @@ function StandeePlacementPanel({
 }
 
 function TextControls({
+  copy,
+  locale,
   layer,
   fontMenuOpen,
   onFontMenuOpenChange,
   onChange
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   layer: Extract<ThumbnailLayer, { type: "text" }>;
   fontMenuOpen: boolean;
   onFontMenuOpenChange: (open: boolean) => void;
@@ -2798,7 +2914,7 @@ function TextControls({
   return (
     <div className="space-y-3 border-t border-border pt-4">
       <label className="block text-xs font-bold text-muted">
-        テキスト
+        {copy.textControls.text}
         <textarea
           className="mt-1 min-h-24 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm text-foreground"
           maxLength={150}
@@ -2808,7 +2924,7 @@ function TextControls({
       </label>
       <div className="grid grid-cols-2 gap-3">
         <div ref={fontMenuRef} className="relative text-xs font-bold text-muted">
-          フォント
+          {copy.textControls.font}
           <button
             type="button"
             className="mt-1 flex w-full items-center justify-between gap-2 rounded-base border border-border bg-surface px-3 py-2 text-left text-sm font-bold text-foreground"
@@ -2827,13 +2943,13 @@ function TextControls({
                   type="search"
                   value={fontSearch}
                   onChange={(event) => setFontSearch(event.target.value)}
-                  placeholder="検索"
-                  aria-label="フォントを検索"
+                  placeholder={copy.textControls.fontSearchPlaceholder}
+                  aria-label={copy.textControls.fontSearchAria}
                 />
               </div>
               {recentFontOptions.length > 0 && !fontSearch.trim() ? (
                 <div className="border-b border-border px-1 pb-2">
-                  <p className="px-2 pb-1 pt-1 text-[10px] font-black tracking-normal text-muted/80">最近</p>
+                  <p className="px-2 pb-1 pt-1 text-[10px] font-black tracking-normal text-muted/80">{copy.textControls.recent}</p>
                   <div className="grid grid-cols-2 gap-1">
                     {recentFontOptions.map((recentFont) => (
                       <button
@@ -2856,10 +2972,10 @@ function TextControls({
                 {filteredFontGroups.length > 0 ? (
                   filteredFontGroups.map((group) => (
                   <div key={group.language}>
-                    <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-normal text-muted">{group.label}</p>
+                    <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-normal text-muted">{getThumbnailFontLanguageLabel(group.language, locale)}</p>
                     {group.categories.map((fontCategory) => (
                       <div key={`${group.language}-${fontCategory.label}`}>
-                        <p className="px-3 pb-1 pt-2 text-[10px] font-black tracking-normal text-muted/80">{fontCategory.label}</p>
+                        <p className="px-3 pb-1 pt-2 text-[10px] font-black tracking-normal text-muted/80">{getThumbnailFontCategoryLabel(fontCategory.label, locale)}</p>
                         {fontCategory.options.map((fontOption) => (
                           <button
                             key={fontOption.family}
@@ -2874,7 +2990,7 @@ function TextControls({
                             onClick={() => selectFontFamily(fontOption.family)}
                           >
                             <span className="block truncate">{fontOption.label}</span>
-                            <span className="mt-0.5 block truncate text-[10px] font-bold text-muted/80">{fontOption.mood}</span>
+                            <span className="mt-0.5 block truncate text-[10px] font-bold text-muted/80">{getThumbnailFontMoodLabel(fontOption.mood, locale)}</span>
                           </button>
                         ))}
                       </div>
@@ -2882,15 +2998,15 @@ function TextControls({
                   </div>
                   ))
                 ) : (
-                  <p className="px-3 py-4 text-center text-xs font-bold text-muted">該当なし</p>
+                  <p className="px-3 py-4 text-center text-xs font-bold text-muted">{copy.textControls.noResults}</p>
                 )}
               </div>
             </div>
           ) : null}
         </div>
-        <NumberField label="サイズ" value={layer.fontSize} min={12} max={240} onChange={(fontSize) => update("fontSize", fontSize)} />
-        <NumberField label="行間" value={Number(layer.lineHeight.toFixed(2))} min={0.8} max={2} step={0.05} onChange={(lineHeight) => update("lineHeight", lineHeight)} />
-        <ColorField label="色" value={layer.color} onChange={(color) => update("color", color)} />
+        <NumberField label={copy.textControls.size} value={layer.fontSize} min={12} max={240} onChange={(fontSize) => update("fontSize", fontSize)} />
+        <NumberField label={copy.textControls.lineHeight} value={Number(layer.lineHeight.toFixed(2))} min={0.8} max={2} step={0.05} onChange={(lineHeight) => update("lineHeight", lineHeight)} />
+        <ColorField copy={copy} label={copy.textControls.color} value={layer.color} onChange={(color) => update("color", color)} />
       </div>
       <div className="grid grid-cols-3 gap-2">
         {(["left", "center", "right"] as ThumbnailTextAlign[]).map((align) => (
@@ -2900,7 +3016,7 @@ function TextControls({
             type="button"
             onClick={() => update("align", align)}
           >
-            {align === "left" ? "左" : align === "center" ? "中央" : "右"}
+            {align === "left" ? copy.textControls.alignLeft : align === "center" ? copy.textControls.alignCenter : copy.textControls.alignRight}
           </button>
         ))}
       </div>
@@ -2916,34 +3032,34 @@ function TextControls({
   );
 }
 
-function ShapeControls({ layer, onChange }: { layer: Extract<ThumbnailLayer, { type: "shape" }>; onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void }) {
+function ShapeControls({ copy, layer, onChange }: { copy: ReturnType<typeof getThumbnailEditorCopy>; layer: Extract<ThumbnailLayer, { type: "shape" }>; onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void }) {
   const update = <K extends keyof typeof layer>(key: K, value: (typeof layer)[K]) => onChange((item) => (item.type === "shape" ? { ...item, [key]: value } : item));
 
   return (
     <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
-      <ColorField label="塗りつぶし" value={layer.fillColor} popoverAlign="left" onChange={(fillColor) => update("fillColor", fillColor)} />
-      <ColorField label="枠線" value={layer.strokeColor} onChange={(strokeColor) => update("strokeColor", strokeColor)} />
-      <NumberField label="枠線の太さ" value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => update("strokeWidth", strokeWidth)} />
-      <NumberField label="角丸" value={layer.borderRadius} min={0} max={120} onChange={(borderRadius) => update("borderRadius", borderRadius)} />
+      <ColorField copy={copy} label={copy.shapeControls.fill} value={layer.fillColor} popoverAlign="left" onChange={(fillColor) => update("fillColor", fillColor)} />
+      <ColorField copy={copy} label={copy.shapeControls.stroke} value={layer.strokeColor} onChange={(strokeColor) => update("strokeColor", strokeColor)} />
+      <NumberField label={copy.shapeControls.strokeWidth} value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => update("strokeWidth", strokeWidth)} />
+      <NumberField label={copy.shapeControls.radius} value={layer.borderRadius} min={0} max={120} onChange={(borderRadius) => update("borderRadius", borderRadius)} />
     </div>
   );
 }
 
-function EffectControls({ layer, onChange }: { layer: ThumbnailLayer; onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void }) {
+function EffectControls({ copy, layer, onChange }: { copy: ReturnType<typeof getThumbnailEditorCopy>; layer: ThumbnailLayer; onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void }) {
   return (
     <div className="space-y-3 border-t border-border pt-4">
-      <h3 className="text-sm font-black text-foreground">エフェクト</h3>
+      <h3 className="text-sm font-black text-foreground">{copy.effectControls.title}</h3>
       <div className="grid grid-cols-2 gap-3">
-        <NumberField label="透明度" value={Math.round(layer.opacity * 100)} min={0} max={100} onChange={(value) => onChange((item) => ({ ...item, opacity: value / 100 }))} suffix="%" />
-        <NumberField label="ぼかし" value={layer.blur} min={0} max={24} onChange={(blur) => onChange((item) => ({ ...item, blur }))} />
+        <NumberField label={copy.effectControls.opacity} value={Math.round(layer.opacity * 100)} min={0} max={100} onChange={(value) => onChange((item) => ({ ...item, opacity: value / 100 }))} suffix="%" />
+        <NumberField label={copy.effectControls.blur} value={layer.blur} min={0} max={24} onChange={(blur) => onChange((item) => ({ ...item, blur }))} />
         {layer.type === "text" && (
           <>
-            <NumberField label="縁取り" value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => onChange((item) => (item.type === "text" ? { ...item, strokeWidth } : item))} />
-            <ColorField label="縁取り色" value={layer.strokeColor} onChange={(strokeColor) => onChange((item) => (item.type === "text" ? { ...item, strokeColor } : item))} />
-            <NumberField label="影ぼかし" value={layer.shadowBlur} min={0} max={64} onChange={(shadowBlur) => onChange((item) => (item.type === "text" ? { ...item, shadowBlur } : item))} />
-            <ColorField label="影色" value={layer.shadowColor} onChange={(shadowColor) => onChange((item) => (item.type === "text" ? { ...item, shadowColor } : item))} />
-            <NumberField label="影X" value={layer.shadowOffsetX} min={-80} max={80} onChange={(shadowOffsetX) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetX } : item))} />
-            <NumberField label="影Y" value={layer.shadowOffsetY} min={-80} max={80} onChange={(shadowOffsetY) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetY } : item))} />
+            <NumberField label={copy.effectControls.outline} value={layer.strokeWidth} min={0} max={48} onChange={(strokeWidth) => onChange((item) => (item.type === "text" ? { ...item, strokeWidth } : item))} />
+            <ColorField copy={copy} label={copy.effectControls.outlineColor} value={layer.strokeColor} onChange={(strokeColor) => onChange((item) => (item.type === "text" ? { ...item, strokeColor } : item))} />
+            <NumberField label={copy.effectControls.shadowBlur} value={layer.shadowBlur} min={0} max={64} onChange={(shadowBlur) => onChange((item) => (item.type === "text" ? { ...item, shadowBlur } : item))} />
+            <ColorField copy={copy} label={copy.effectControls.shadowColor} value={layer.shadowColor} onChange={(shadowColor) => onChange((item) => (item.type === "text" ? { ...item, shadowColor } : item))} />
+            <NumberField label={copy.effectControls.shadowX} value={layer.shadowOffsetX} min={-80} max={80} onChange={(shadowOffsetX) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetX } : item))} />
+            <NumberField label={copy.effectControls.shadowY} value={layer.shadowOffsetY} min={-80} max={80} onChange={(shadowOffsetY) => onChange((item) => (item.type === "text" ? { ...item, shadowOffsetY } : item))} />
           </>
         )}
       </div>
@@ -2952,6 +3068,7 @@ function EffectControls({ layer, onChange }: { layer: ThumbnailLayer; onChange: 
 }
 
 function UserMaterialLibraryPanel({
+  copy,
   refs,
   imageUrls,
   usageSummary,
@@ -2960,6 +3077,7 @@ function UserMaterialLibraryPanel({
   onReplaceUserMaterial,
   onDeleteUserMaterial
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
   refs: ThumbnailUserMaterialRef[];
   imageUrls: Record<string, string>;
   usageSummary: ThumbnailUserMaterialUsageSummary;
@@ -2972,15 +3090,15 @@ function UserMaterialLibraryPanel({
     <section className="panel space-y-3 p-3 md:p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-black text-foreground">ユーザー素材</h2>
-          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">追加した画像はこのブラウザに保存され、下書きには参照だけを残します。</p>
+          <h2 className="text-base font-black text-foreground">{copy.panels.userMaterials.title}</h2>
+          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">{copy.panels.userMaterials.guide}</p>
           <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">
-            最大24件 / 1点8MB / 合計48MB。使用中 {usageSummary.count}/{usageSummary.maxCount}件 / {formatThumbnailUserMaterialBytes(usageSummary.totalBytes)}。
+            {copy.panels.userMaterials.limitGuide} {usageSummary.count}/{usageSummary.maxCount} / {formatThumbnailUserMaterialBytes(usageSummary.totalBytes)}.
           </p>
-          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">要再追加の素材は置換で復旧できます。不要な素材は削除してください。</p>
+          <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">{copy.panels.userMaterials.recoveryGuide}</p>
         </div>
         <button className="flat-control shrink-0 px-3 py-2 text-xs font-bold" type="button" onClick={onUpload}>
-          画像を追加
+          {copy.panels.userMaterials.upload}
         </button>
       </div>
       <div className="grid gap-2">
@@ -2992,7 +3110,7 @@ function UserMaterialLibraryPanel({
                 {imageUrl ? (
                   <span className="block h-full w-full bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${imageUrl})` }} aria-hidden="true" />
                 ) : (
-                  <span className="px-2 text-center text-[10px] font-bold leading-4 text-muted">要再追加</span>
+                  <span className="px-2 text-center text-[10px] font-bold leading-4 text-muted">{copy.panels.userMaterials.needsReadd}</span>
                 )}
               </span>
               <span className="min-w-0">
@@ -3004,13 +3122,13 @@ function UserMaterialLibraryPanel({
                 </span>
                 <span className="mt-2 grid grid-cols-3 gap-1.5">
                   <button className="flat-control px-2 py-1.5 text-[11px] font-bold" type="button" onClick={() => onAdd(ref)}>
-                    配置
+                    {copy.panels.userMaterials.place}
                   </button>
                   <button className="flat-control px-2 py-1.5 text-[11px] font-bold" type="button" onClick={() => onReplaceUserMaterial(ref)}>
-                    置換
+                    {copy.panels.userMaterials.replace}
                   </button>
                   <button className="flat-control px-2 py-1.5 text-[11px] font-bold text-rose-100" type="button" onClick={() => onDeleteUserMaterial(ref)}>
-                    削除
+                    {copy.panels.userMaterials.delete}
                   </button>
                 </span>
               </span>
@@ -3019,7 +3137,7 @@ function UserMaterialLibraryPanel({
         })}
         {refs.length === 0 ? (
           <div className="rounded-base border border-dashed border-border bg-surface-muted/40 px-3 py-5 text-center text-xs font-bold leading-5 text-muted">
-            追加済みのユーザー素材はありません。
+            {copy.panels.userMaterials.empty}
           </div>
         ) : null}
       </div>
@@ -3028,6 +3146,8 @@ function UserMaterialLibraryPanel({
 }
 
 function PresetApplyConfirmDialog({
+  copy,
+  locale,
   currentPresetName,
   targetPreset,
   currentText,
@@ -3037,6 +3157,8 @@ function PresetApplyConfirmDialog({
   onApplyCarryover,
   onCancel
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   currentPresetName: string;
   targetPreset: ThumbnailPreset;
   currentText: ThumbnailMainTextCarryover;
@@ -3050,16 +3172,16 @@ function PresetApplyConfirmDialog({
     <div className="fixed inset-0 z-[110] flex items-end bg-black/58 p-3 text-foreground min-[640px]:items-center min-[640px]:justify-center" role="dialog" aria-modal="true" aria-labelledby="preset-apply-title">
       <div className="w-full max-w-2xl rounded-base border border-border bg-background shadow-panel">
         <div className="border-b border-border px-4 py-3 md:px-5">
-          <p className="text-xs font-bold text-primary-strong">プリセット適用の確認</p>
+          <p className="text-xs font-bold text-primary-strong">{copy.presetDialog.eyebrow}</p>
           <h2 id="preset-apply-title" className="mt-1 text-lg font-black text-foreground">
-            {currentPresetName} から {targetPreset.name} へ変更
+            {copy.presetDialog.fromTo(currentPresetName, getThumbnailPresetName(targetPreset.id, locale, targetPreset.name))}
           </h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            プリセット適用で現在のレイヤー構成は置き換わります。画像、図形、自由追加レイヤーの高度なマージは今回行いません。
+            {copy.presetDialog.body}
           </p>
           {hasScheduleHandoff ? (
             <p className="mt-2 rounded-base border border-primary/40 bg-primary-soft/35 px-3 py-2 text-xs font-bold leading-5 text-primary-strong">
-              Schedule Calendar 由来の予定テキストを優先し、新しいプリセットの見出し、時刻、サブ、ラベルへ入れ直します。細かい予定を見せすぎたくない時はプライバシー告知、流れを説明したい時はホワイトボードが使いやすいです。
+              {copy.presetDialog.handoff}
             </p>
           ) : null}
         </div>
@@ -3067,14 +3189,14 @@ function PresetApplyConfirmDialog({
           <div className="grid gap-2">
             {thumbnailMainTextCarryoverTargets.map((target) => (
               <div key={target.id} className="grid gap-2 rounded-base border border-border bg-surface p-3 text-xs min-[640px]:grid-cols-[5.5rem_minmax(0,1fr)_minmax(0,1fr)]">
-                <p className="font-black text-foreground">{target.label}</p>
+                <p className="font-black text-foreground">{getThumbnailMainTextCarryoverLabel(target.id, locale)}</p>
                 <div className="min-w-0">
-                  <p className="mb-1 font-bold text-muted">現在</p>
-                  <p className="line-clamp-2 break-words font-bold text-foreground">{currentText[target.id] || "未設定"}</p>
+                  <p className="mb-1 font-bold text-muted">{copy.presetDialog.current}</p>
+                  <p className="line-clamp-2 break-words font-bold text-foreground">{currentText[target.id] || copy.presetDialog.unset}</p>
                 </div>
                 <div className="min-w-0">
-                  <p className="mb-1 font-bold text-muted">新プリセット初期値</p>
-                  <p className="line-clamp-2 break-words font-bold text-foreground">{targetText[target.id] || "未設定"}</p>
+                  <p className="mb-1 font-bold text-muted">{copy.presetDialog.targetDefault}</p>
+                  <p className="line-clamp-2 break-words font-bold text-foreground">{targetText[target.id] || copy.presetDialog.unset}</p>
                 </div>
               </div>
             ))}
@@ -3082,15 +3204,15 @@ function PresetApplyConfirmDialog({
         </div>
         <div className="flex flex-col-reverse gap-2 border-t border-border px-4 py-3 min-[640px]:flex-row min-[640px]:justify-end md:px-5">
           <button className="flat-control px-4 py-2 text-sm font-bold" type="button" onClick={onCancel}>
-            キャンセル
+            {copy.presetDialog.cancel}
           </button>
           {!hasScheduleHandoff ? (
             <button className="flat-control px-4 py-2 text-sm font-bold" type="button" onClick={onApplyPlain}>
-              プリセットをそのまま適用
+              {copy.presetDialog.applyPlain}
             </button>
           ) : null}
           <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onApplyCarryover}>
-            {hasScheduleHandoff ? "予定テキストで適用" : "主要テキストを引き継いで適用"}
+            {hasScheduleHandoff ? copy.presetDialog.applyHandoff : copy.presetDialog.applyCarryover}
           </button>
         </div>
       </div>
@@ -3099,6 +3221,8 @@ function PresetApplyConfirmDialog({
 }
 
 function PresetCards({
+  copy,
+  locale,
   currentPresetId,
   favoritePresetIds,
   recentPresetIds,
@@ -3106,6 +3230,8 @@ function PresetCards({
   onApply,
   onFavoriteToggle
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   currentPresetId: ThumbnailPresetId;
   favoritePresetIds: ThumbnailPresetId[];
   recentPresetIds: ThumbnailPresetId[];
@@ -3118,12 +3244,12 @@ function PresetCards({
   const [selectedUsageLabel, setSelectedUsageLabel] = useState<string | "all">("all");
   const filteredPresets = useMemo(
     () =>
-      filterThumbnailPresets(thumbnailPresets, {
+      filterLocalizedThumbnailPresets(thumbnailPresets, {
         query,
         category: selectedCategory,
         usageLabel: selectedUsageLabel
-      }),
-    [query, selectedCategory, selectedUsageLabel]
+      }, locale),
+    [locale, query, selectedCategory, selectedUsageLabel]
   );
   const favoritePresets = useMemo(() => getPresetsByIds(favoritePresetIds), [favoritePresetIds]);
   const recentPresets = useMemo(() => getPresetsByIds(recentPresetIds), [recentPresetIds]);
@@ -3138,27 +3264,27 @@ function PresetCards({
     <section className="panel min-w-0 space-y-4 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-base font-black text-foreground">プリセット一覧</h2>
+          <h2 className="text-base font-black text-foreground">{copy.panels.presets.title}</h2>
           <p className="mt-1 text-xs font-bold text-muted">
             {hasScheduleHandoff
-              ? "予定から作る時は、通常告知、プライバシー告知、ホワイトボードをまず比べると選びやすいです。"
-              : "検索、カテゴリ、用途ラベルで絞り込みできます。"}
+              ? copy.panels.presets.handoffGuide
+              : copy.panels.presets.normalGuide}
           </p>
         </div>
         <p className="text-xs font-bold text-muted">
-          {filteredPresets.length} / {thumbnailPresets.length}種
+          {filteredPresets.length} / {thumbnailPresets.length}{copy.panels.presets.countUnit}
         </p>
       </div>
 
       <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">
         <label className="block text-xs font-bold text-muted">
-          検索
+          {copy.panels.presets.search}
           <input
             className="mt-1 w-full rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground"
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="プリセット名・カテゴリ・用途・説明"
+            placeholder={copy.panels.presets.searchPlaceholder}
           />
         </label>
         <button
@@ -3167,33 +3293,35 @@ function PresetCards({
           onClick={clearFilters}
           disabled={!hasActiveFilters}
         >
-          条件クリア
+          {copy.panels.presets.clear}
         </button>
       </div>
 
       {hasScheduleHandoff ? (
         <div className="rounded-base border border-primary/30 bg-primary-soft/25 px-3 py-2 text-xs font-bold leading-5 text-primary-strong">
-          予定タイトル、日付、時刻、告知文はプリセット適用後も同名レイヤーへ入ります。迷ったら通常告知、内容を伏せたい時はプライバシー告知、流れを整理したい時はホワイトボードを選んでください。
+          {copy.panels.presets.handoffNotice}
         </div>
       ) : null}
 
       <PresetFilterChips
-        label="カテゴリ"
+        label={copy.panels.presets.category}
         value={selectedCategory}
         options={thumbnailPresetCategories}
-        allLabel="すべて"
+        allLabel={copy.panels.presets.all}
+        getOptionLabel={(category) => getThumbnailPresetCategoryLabel(category as ThumbnailPresetCategory, locale)}
         onChange={(category) => setSelectedCategory(category as ThumbnailPresetCategory | "all")}
       />
       <PresetFilterChips
-        label="用途ラベル"
+        label={copy.panels.presets.usage}
         value={selectedUsageLabel}
         options={thumbnailPresetUsageLabels}
-        allLabel="すべて"
+        allLabel={copy.panels.presets.all}
+        getOptionLabel={(usageLabel) => getThumbnailPresetUsageLabel(usageLabel, locale)}
         onChange={setSelectedUsageLabel}
       />
 
-      {favoritePresets.length > 0 ? <PresetShortcutRow title="お気に入り" presets={favoritePresets} onApply={onApply} /> : null}
-      {recentPresets.length > 0 ? <PresetShortcutRow title="最近使った" presets={recentPresets} onApply={onApply} /> : null}
+      {favoritePresets.length > 0 ? <PresetShortcutRow title={copy.panels.presets.favorites} locale={locale} presets={favoritePresets} onApply={onApply} /> : null}
+      {recentPresets.length > 0 ? <PresetShortcutRow title={copy.panels.presets.recent} locale={locale} presets={recentPresets} onApply={onApply} /> : null}
 
       <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {filteredPresets.map((preset) => {
@@ -3201,8 +3329,9 @@ function PresetCards({
           return (
           <article
             key={preset.id}
+            data-thumbnail-preset-card="true"
             className={[
-              "min-w-0 rounded-base border bg-surface p-3 text-left transition",
+              "flex min-w-0 flex-col rounded-base border bg-surface p-3 text-left transition",
               currentPresetId === preset.id ? "border-primary bg-primary-soft/55" : "border-border"
             ].join(" ")}
           >
@@ -3214,29 +3343,30 @@ function PresetCards({
                 ].join(" ")}
                 type="button"
                 onClick={() => onFavoriteToggle(preset.id)}
-                aria-label={isFavorite ? `${preset.name}のお気に入りを解除` : `${preset.name}をお気に入りに追加`}
+                aria-label={isFavorite ? copy.favorite.remove(getThumbnailPresetName(preset.id, locale, preset.name)) : copy.favorite.add(getThumbnailPresetName(preset.id, locale, preset.name))}
                 aria-pressed={isFavorite}
-                title={isFavorite ? "お気に入りを解除" : "お気に入りに追加"}
+                title={isFavorite ? copy.favorite.removeTitle : copy.favorite.addTitle}
               >
                 {isFavorite ? "★" : "☆"}
               </button>
             </div>
             <div
-              className="scrollbar-accent -mx-1 mb-2 flex max-w-full flex-nowrap gap-1.5 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0"
               data-thumbnail-preset-card-chips="true"
+              className="mb-2 flex max-w-full min-w-0 flex-wrap gap-1.5"
             >
-              <span className="shrink-0 rounded-sm border border-border bg-surface-muted px-2 py-0.5 text-[11px] font-bold text-muted">{preset.category}</span>
-              <span className="shrink-0 rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">{preset.usageLabel}</span>
+              <span className="min-w-0 max-w-full whitespace-normal break-words rounded-sm border border-border bg-surface-muted px-2 py-0.5 text-[11px] font-bold leading-4 text-muted">{getThumbnailPresetCategoryLabel(preset.category, locale)}</span>
+              <span className="min-w-0 max-w-full whitespace-normal break-words rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold leading-4 text-primary-strong">{getThumbnailPresetUsageLabel(preset.usageLabel, locale)}</span>
             </div>
-            <p className="text-sm font-black text-foreground">{preset.name}</p>
-            <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{preset.description}</p>
+            <p className="text-sm font-black text-foreground">{getThumbnailPresetName(preset.id, locale, preset.name)}</p>
+            <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{getThumbnailPresetDescription(preset, locale)}</p>
             <button
-              className="mt-3 inline-flex rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong transition hover:bg-primary-soft"
+              data-thumbnail-preset-cta="true"
+              className="mt-auto inline-flex self-start rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong transition hover:bg-primary-soft"
               type="button"
               onClick={() => onApply(preset.id)}
               aria-pressed={currentPresetId === preset.id}
             >
-              このプリセットを使用
+              {copy.panels.presets.usePreset}
             </button>
           </article>
           );
@@ -3244,7 +3374,7 @@ function PresetCards({
       </div>
       {filteredPresets.length === 0 ? (
         <div className="rounded-base border border-dashed border-border bg-surface-muted px-4 py-5 text-sm font-bold text-muted">
-          条件に一致するプリセットがありません。
+           {copy.panels.presets.empty}
         </div>
       ) : null}
     </section>
@@ -3256,12 +3386,14 @@ function PresetFilterChips({
   value,
   options,
   allLabel,
+  getOptionLabel = (option) => option,
   onChange
 }: {
   label: string;
   value: string;
   options: string[];
   allLabel: string;
+  getOptionLabel?: (option: string) => string;
   onChange: (value: string | "all") => void;
 }) {
   return (
@@ -3271,7 +3403,7 @@ function PresetFilterChips({
         className="scrollbar-accent -mx-1 flex max-w-full flex-nowrap gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible md:pb-0"
         data-thumbnail-preset-filter-chips="true"
       >
-        {[{ id: "all", label: allLabel }, ...options.map((option) => ({ id: option, label: option }))].map((option) => (
+        {[{ id: "all", label: allLabel }, ...options.map((option) => ({ id: option, label: getOptionLabel(option) }))].map((option) => (
           <button
             key={option.id}
             className={[
@@ -3290,7 +3422,7 @@ function PresetFilterChips({
   );
 }
 
-function PresetShortcutRow({ title, presets, onApply }: { title: string; presets: ThumbnailPreset[]; onApply: (id: ThumbnailPresetId) => void }) {
+function PresetShortcutRow({ title, locale, presets, onApply }: { title: string; locale: Locale; presets: ThumbnailPreset[]; onApply: (id: ThumbnailPresetId) => void }) {
   return (
     <div className="space-y-2 rounded-base border border-border bg-surface-muted p-3">
       <p className="text-xs font-black text-foreground">{title}</p>
@@ -3302,7 +3434,7 @@ function PresetShortcutRow({ title, presets, onApply }: { title: string; presets
             type="button"
             onClick={() => onApply(preset.id)}
           >
-            {preset.name}
+            {getThumbnailPresetName(preset.id, locale, preset.name)}
           </button>
         ))}
       </div>
@@ -3311,6 +3443,7 @@ function PresetShortcutRow({ title, presets, onApply }: { title: string; presets
 }
 
 function ExportPanel({
+  copy,
   exportFormat,
   qualityGuardSummary,
   onFormatChange,
@@ -3318,6 +3451,7 @@ function ExportPanel({
   onExport,
   onSendToSns
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
   exportFormat: "png" | "jpeg";
   qualityGuardSummary: ThumbnailQualityGuardSummary;
   onFormatChange: (format: "png" | "jpeg") => void;
@@ -3335,8 +3469,8 @@ function ExportPanel({
     <section className="panel space-y-3 p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-black text-foreground">保存 / 書き出し</h2>
-          <p className="mt-1 text-[11px] font-semibold text-muted">文字と立ち絵を確認して書き出す</p>
+          <h2 className="text-base font-black text-foreground">{copy.export.title}</h2>
+          <p className="mt-1 text-[11px] font-semibold text-muted">{copy.export.guide}</p>
         </div>
         <span className={`rounded-sm border px-2 py-1 text-[11px] font-bold ${summaryToneClassName[qualityGuardSummary.tone]}`}>
           {qualityGuardSummary.label}
@@ -3350,17 +3484,17 @@ function ExportPanel({
           JPEG
         </button>
       </div>
-      <button className="flat-control w-full px-4 py-2 font-bold" type="button" onClick={onSave} aria-label="下書きを保存">
-        下書き保存
+      <button className="flat-control w-full px-4 py-2 font-bold" type="button" onClick={onSave} aria-label={copy.header.saveDraftAria}>
+        {copy.export.saveDraft}
       </button>
-      <button className="flat-control w-full px-4 py-2 font-bold" type="button" onClick={onSendToSns} aria-label="SNS分割画像メーカーで使う">
-        SNS分割画像へ進む
+      <button className="flat-control w-full px-4 py-2 font-bold" type="button" onClick={onSendToSns} aria-label={copy.header.sendToSnsAria}>
+        {copy.export.sendToSns}
       </button>
-      <button className="w-full rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onExport} aria-label="サムネイルを書き出し">
-        書き出し
+      <button className="w-full rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onExport} aria-label={copy.header.exportAria}>
+        {copy.export.export}
       </button>
       <div className="space-y-1 border-t border-border pt-2">
-        <p className="text-[11px] font-bold text-muted">書き出し前の確認</p>
+        <p className="text-[11px] font-bold text-muted">{copy.export.preflight}</p>
         <ul className="grid gap-1">
           {qualityGuardSummary.messages.map((message, index) => (
             <li key={`${message}-${index}`} className="text-xs font-semibold leading-5 text-muted">
@@ -3370,12 +3504,12 @@ function ExportPanel({
         </ul>
       </div>
       <div className="space-y-1 border-t border-border pt-2">
-        <p className="text-[11px] font-bold text-muted">内蔵素材について</p>
+        <p className="text-[11px] font-bold text-muted">{copy.export.assetNoticeTitle}</p>
         <p className="text-xs font-semibold leading-5 text-muted">
-          内蔵プリセットの背景・装飾素材には、当方で生成・加工した抽象素材を含みます。特定の人物、作家、既存作品、キャラクター素材を読み込ませて改変したものではありません。
+          {copy.export.assetNotice}
         </p>
       </div>
-      <p className="text-xs leading-5 text-muted">下書きはこのブラウザに保存されます。PNG/JPEG は表示中キャンバスを1枚で出力し、SNS分割画像メーカーへ進む時だけ一時画像を保存します。</p>
+      <p className="text-xs leading-5 text-muted">{copy.export.storageNote}</p>
     </section>
   );
 }
@@ -3427,11 +3561,13 @@ function NumberField({
 }
 
 function ColorField({
+  copy,
   label,
   value,
   popoverAlign = "right",
   onChange
 }: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
   label: string;
   value: string;
   popoverAlign?: "left" | "right";
@@ -3504,7 +3640,7 @@ function ColorField({
             type="button"
             style={{ backgroundColor: normalizedValue }}
             onClick={() => setPaletteOpen((current) => !current)}
-            aria-label={`${label}を選ぶ`}
+            aria-label={copy.aria.selectColor(label)}
           />
           <input
             className="min-w-0 flex-1 rounded-sm border border-border bg-transparent px-2 py-2 text-sm font-bold text-foreground"
@@ -3571,7 +3707,7 @@ function ColorField({
                   type="button"
                   style={{ backgroundColor: swatch }}
                   onClick={() => commitColor(swatch)}
-                  aria-label={`色 ${swatch}`}
+                  aria-label={copy.aria.colorSwatch(swatch)}
                 />
               ))}
             </div>
@@ -3586,6 +3722,7 @@ function ListboxField({
   value,
   options,
   isOpen,
+  openLabel,
   onToggle,
   onSelect,
   className
@@ -3593,6 +3730,7 @@ function ListboxField({
   value: string;
   options: { id: string; label: string; description?: string; disabled?: boolean }[];
   isOpen: boolean;
+  openLabel: (value: string) => string;
   onToggle: () => void;
   onSelect: (id: string) => void;
   className?: string;
@@ -3604,7 +3742,7 @@ function ListboxField({
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
-        aria-label={`${value} の選択肢を開く`}
+        aria-label={openLabel(value)}
       >
         <span className="truncate">{value}</span>
         <span className="text-xs text-muted">▾</span>

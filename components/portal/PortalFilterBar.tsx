@@ -1,43 +1,47 @@
-import { activeCategories, categoryLabels } from "@/lib/tools";
+import type { Locale } from "@/lib/locale";
+import { getCategoryLabel, getStatusLabel, getSuiteCopy, portalCopy } from "@/lib/portal-copy";
+import { activeCategories } from "@/lib/tools";
 import { suites, type SuiteKey } from "@/lib/suites";
 
 type PortalFilterBarProps = {
   suite: SuiteKey | "all";
   category: string;
   status: string;
+  locale: Locale;
   onSuiteChange: (suite: SuiteKey | "all") => void;
   onCategoryChange: (category: string) => void;
   onStatusChange: (status: string) => void;
 };
 
-const statusFilters = [
-  { value: "all", label: "すべて" },
-  { value: "available", label: "利用可能" },
-  { value: "planned", label: "準備中" }
-];
-
 export function PortalFilterBar({
   suite,
   category,
   status,
+  locale,
   onSuiteChange,
   onCategoryChange,
   onStatusChange
 }: PortalFilterBarProps) {
+  const copy = portalCopy[locale].filters;
   const suiteFilters: Array<{ value: SuiteKey | "all"; label: string }> = [
-    { value: "all", label: "すべて" },
-    ...suites.map((item) => ({ value: item.key, label: item.name }))
+    { value: "all", label: copy.all },
+    ...suites.map((item) => ({ value: item.key, label: getSuiteCopy(item.key, locale).name }))
   ];
   const categoryFilters = [
-    { value: "all", label: "すべて" },
-    ...activeCategories.map((value) => ({ value, label: categoryLabels[value] }))
+    { value: "all", label: copy.all },
+    ...activeCategories.map((value) => ({ value, label: getCategoryLabel(value, locale) }))
+  ];
+  const statusFilters = [
+    { value: "all", label: copy.all },
+    { value: "available", label: getStatusLabel("available", locale) },
+    { value: "planned", label: getStatusLabel("planned", locale) }
   ];
   const chipWrapClass = "scrollbar-accent flex gap-3 overflow-x-auto pb-3 lg:flex-wrap lg:overflow-visible lg:pb-0";
 
   return (
     <section className="panel space-y-5 p-5">
       <div className="grid gap-3 lg:grid-cols-[10rem_1fr] lg:items-start">
-        <p className="pt-2 text-sm font-bold text-foreground">スイートで絞り込む</p>
+        <p className="pt-2 text-sm font-bold text-foreground">{copy.suite}</p>
         <div className={chipWrapClass}>
           {suiteFilters.map((item) => (
             <button
@@ -57,7 +61,7 @@ export function PortalFilterBar({
         </div>
       </div>
       <div className="grid gap-3 border-t border-border pt-5 lg:grid-cols-[10rem_1fr] lg:items-start">
-        <p className="pt-2 text-sm font-bold text-foreground">カテゴリで絞り込む</p>
+        <p className="pt-2 text-sm font-bold text-foreground">{copy.category}</p>
         <div className={chipWrapClass}>
           {categoryFilters.map((item) => (
             <button
@@ -77,7 +81,7 @@ export function PortalFilterBar({
         </div>
       </div>
       <div className="grid gap-3 border-t border-border pt-5 lg:grid-cols-[10rem_1fr] lg:items-start">
-        <p className="pt-2 text-sm font-bold text-foreground">実装状態で絞り込む</p>
+        <p className="pt-2 text-sm font-bold text-foreground">{copy.status}</p>
         <div className={chipWrapClass}>
           {statusFilters.map((item) => (
             <button

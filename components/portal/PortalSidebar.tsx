@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LanguageSwitch } from "@/components/portal/LanguageSwitch";
+import { useLocale } from "@/components/portal/LocaleProvider";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
+import { getToolCopy, portalCopy } from "@/lib/portal-copy";
 import { sidebarTools } from "@/lib/tools";
 
 const fixedItems = [
   { label: "Home", href: "/", icon: "H" },
   { label: "Tools", href: "/tools", icon: "T" }
 ];
-
-const futureItems = ["お気に入り", "最近使ったツール", "ピン留め"];
 
 function SidebarLink({
   href,
@@ -46,7 +47,9 @@ function SidebarLink({
 }
 
 export function PortalSidebar({ mode = "default" }: { mode?: "default" | "workspace" }) {
+  const { locale } = useLocale();
   const showWorkspaceThemeToggle = mode === "workspace";
+  const copy = portalCopy[locale].navigation;
 
   return (
     <aside className="hidden w-20 shrink-0 border-r border-border bg-surface/78 px-2 py-5 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-hidden xl:w-72 xl:px-4 xl:py-6">
@@ -59,7 +62,7 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
 
       <nav className="space-y-6 xl:space-y-8">
         <section>
-          <p className="mb-3 hidden px-2 text-xs font-semibold text-muted xl:block">固定ナビ</p>
+          <p className="mb-3 hidden px-2 text-xs font-semibold text-muted xl:block">{copy.fixed}</p>
           <div className="space-y-1">
             {fixedItems.map((item) => (
               <SidebarLink key={item.href} {...item} exact={item.href === "/" || item.href === "/tools"} />
@@ -68,21 +71,21 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
         </section>
 
         <section className="border-t border-border pt-6">
-          <p className="mb-3 hidden px-2 text-xs font-semibold text-muted xl:block">実装済みツール</p>
+          <p className="mb-3 hidden px-2 text-xs font-semibold text-muted xl:block">{copy.availableTools}</p>
           <div className="space-y-1">
             {sidebarTools.map((tool) => (
-              <SidebarLink key={tool.id} href={tool.href} label={tool.name} icon={tool.icon} />
+              <SidebarLink key={tool.id} href={tool.href} label={getToolCopy(tool.id, locale).name} icon={tool.icon} />
             ))}
           </div>
         </section>
 
         <section className="hidden border-t border-dashed border-border pt-6 xl:block">
-          <p className="mb-3 px-2 text-xs font-semibold text-muted">将来の機能（予定）</p>
+          <p className="mb-3 px-2 text-xs font-semibold text-muted">{copy.future}</p>
           <div className="space-y-2">
-            {futureItems.map((item) => (
+            {copy.futureItems.map((item) => (
               <div key={item} className="flex items-center justify-between rounded-base px-2 py-2 text-sm text-muted">
                 <span>{item}</span>
-                <span className="rounded-base bg-surface-muted px-2 py-1 text-xs">近日対応</span>
+                <span className="rounded-base bg-surface-muted px-2 py-1 text-xs">{copy.comingSoon}</span>
               </div>
             ))}
           </div>
@@ -90,24 +93,26 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
       </nav>
 
       {showWorkspaceThemeToggle ? (
-        <div className="mt-auto flex justify-center pt-8 xl:hidden">
+        <div className="mt-auto flex flex-col items-center gap-3 pt-8 xl:hidden">
+          <LanguageSwitch variant="compact" />
           <ThemeToggle variant="compact" />
         </div>
       ) : null}
 
       <div className="mt-auto hidden space-y-5 pt-8 xl:block">
         <div className="panel p-4 shadow-none">
-          <p className="text-sm font-bold text-foreground">ログインするともっと便利に</p>
+          <p className="text-sm font-bold text-foreground">{copy.loginTitle}</p>
           <p className="mt-2 text-xs leading-5 text-muted">
-            お気に入りや履歴の保存など、あなた専用の体験は後続フェーズで追加予定です。
+            {copy.loginBody}
           </p>
           <button className="mt-4 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white opacity-80" disabled>
-            ログイン予定
+            {copy.loginButton}
           </button>
         </div>
         {showWorkspaceThemeToggle ? (
           <div className="panel p-4 shadow-none">
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <LanguageSwitch />
               <ThemeToggle />
             </div>
           </div>

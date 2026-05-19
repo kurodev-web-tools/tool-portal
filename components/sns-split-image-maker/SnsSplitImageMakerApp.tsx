@@ -29,6 +29,15 @@ import {
   type SnsSplitTile
 } from "@/lib/sns-split-image-maker";
 import { createNumberedFilePattern } from "@/lib/file-name";
+import { useLocale } from "@/components/portal/LocaleProvider";
+import {
+  getSnsSplitAdditionalImageRatioHint,
+  getSnsSplitImageMakerCopy,
+  getSnsSplitJoinTypeLabel,
+  getSnsSplitModeLabel,
+  getSnsSplitSlotDescription,
+  getSnsSplitSlotGroupLabel
+} from "@/lib/sns-split-image-maker-copy";
 import { readToolHandoff, type ScheduleHandoffPayload, type SnsSplitToolHandoffPayload, type ThumbnailToSnsHandoffPayload } from "@/lib/tool-handoff";
 import { SnsSplitPresetLanding } from "./SnsSplitPresetLanding";
 import {
@@ -61,18 +70,18 @@ type DragPreviewRequest = {
   offsetY: number;
 };
 
-const modeOptions: { id: SnsSplitMode; label: string; note: string }[] = [
-  { id: "concatenate", label: "個別追加", note: "プリセットごとの追加枠に個別画像を配置します" },
-  { id: "replace", label: "フレーム追加", note: "投稿ごとのフレーム画像へメイン分割を差し込みます" }
+const modeOptions: { id: SnsSplitMode; note: string }[] = [
+  { id: "concatenate", note: "プリセットごとの追加枠に個別画像を配置します" },
+  { id: "replace", note: "投稿ごとのフレーム画像へメイン分割を差し込みます" }
 ];
-const splitTwoJoinOptions: { id: SnsSplitJoinType; label: string; note: string }[] = [
-  { id: "three", label: "3連結", note: "左追加 / 中央メイン / 右追加で構成します" },
-  { id: "five", label: "5連結", note: "左上下 / 中央メイン / 右上下で構成します" }
+const splitTwoJoinOptions: { id: SnsSplitJoinType; note: string }[] = [
+  { id: "three", note: "左追加 / 中央メイン / 右追加で構成します" },
+  { id: "five", note: "左上下 / 中央メイン / 右上下で構成します" }
 ];
-const previewModes: { id: PreviewMode; label: string }[] = [
-  { id: "edit", label: "編集" },
-  { id: "grid", label: "投稿順" },
-  { id: "post", label: "完成形" }
+const previewModes: { id: PreviewMode }[] = [
+  { id: "edit" },
+  { id: "grid" },
+  { id: "post" }
 ];
 const postAdjustmentSnapThreshold = 32;
 const toneClassName: Record<ToastTone, string> = {
@@ -139,65 +148,9 @@ const getPresetRatioLabel = (preset: SnsSplitPreset) => {
   }
   return "16:27";
 };
-const getPreviewDescription = (preset: SnsSplitPreset) => {
-  if (preset === "split-2") {
-    return "編集、投稿順、完成形を切り替えて確認します。";
-  }
-  if (preset === "split-3") {
-    return "編集、投稿順、完成形を切り替えて確認します。";
-  }
-  return "編集、投稿順、完成形を切り替えて確認します。";
-};
 const getExportFormatLabel = (format: SnsSplitExportFormat) => (format === "jpeg" ? "JPEG" : "PNG");
-const getExportButtonLabel = (format: SnsSplitExportFormat, postCount: number) => `${getExportFormatLabel(format)}を${postCount}枚保存`;
-const getSlotGroupLabel = (draft: SnsSplitDraft) => {
-  if (draft.preset === "split-2") {
-    if (draft.mode === "replace") {
-      return "投稿別フレーム";
-    }
-    return draft.config.joinType === "five" ? "投稿別の左右上下" : "投稿別の左右";
-  }
-  if (draft.preset === "split-3") {
-    return draft.mode === "replace" ? "画像別フレーム" : "画像別の左右/上下";
-  }
-  return draft.mode === "replace" ? "投稿別フレーム" : "投稿別の上部/下部";
-};
-const getSlotDescription = (draft: SnsSplitDraft) => {
-  if (draft.preset === "split-2") {
-    if (draft.mode === "replace") {
-      return "フレーム追加では、各24:9フレーム画像の中央8:9へメイン分割を差し込みます。";
-    }
-    return draft.config.joinType === "five"
-      ? "5連結では、各投稿を「左上下 / 中央メイン / 右上下」の24:9画像として作成します。"
-      : "3連結では、各投稿を「左追加 / 中央メイン / 右追加」の24:9画像として作成します。";
-  }
-  if (draft.preset === "split-3") {
-    return draft.mode === "replace"
-      ? "フレーム追加では、画像1は24:9、画像2/3は8:13.5のフレーム全面へ描画し、中央メイン領域を上書きします。"
-      : "個別追加では、画像1は左右8:9、画像2/3は上下8:4.5の追加画像でメイン分割を挟みます。";
-  }
-  return draft.mode === "concatenate"
-    ? "個別追加では、各投稿を「追加画像（上）/ メイン分割 / 追加画像（下）」で作成します。（旧: 1+8）"
-    : "フレーム追加では、各フレーム画像の中央1/3へメイン分割を差し込みます。（旧: 1+4）";
-};
-const getAdditionalImageRatioHint = (draft: SnsSplitDraft) => {
-  if (draft.preset === "split-2") {
-    if (draft.mode === "replace") {
-      return "フレーム追加は24:9画像を投稿ごとに1枚ずつ用意します。";
-    }
-    return draft.config.joinType === "five"
-      ? "5連結の個別追加は、左右の追加画像を各8:4.5相当で使います。"
-      : "3連結の個別追加は、左右の追加画像を各8:9相当で使います。";
-  }
-  if (draft.preset === "split-3") {
-    return draft.mode === "replace"
-      ? "フレーム追加は画像1が24:9、画像2/3が8:13.5です。"
-      : "個別追加は画像1の左右が8:9、画像2/3の上下が8:4.5です。";
-  }
-  return draft.mode === "replace"
-    ? "フレーム追加は投稿ごとの8:13.5フレームを使います。（旧: 1+4）"
-    : "個別追加は投稿ごとの上部/下部に16:9画像を使います。（旧: 1+8）";
-};
+const getExportButtonLabel = (format: SnsSplitExportFormat, postCount: number, locale: "ja" | "en") =>
+  locale === "en" ? `Save ${postCount} ${getExportFormatLabel(format)} files` : `${getExportFormatLabel(format)}を${postCount}枚保存`;
 const getFilePatternHint = (preset: SnsSplitPreset) => {
   if (preset === "split-2") {
     return "{n}: 1〜2、{nn}: 01〜02";
@@ -228,6 +181,8 @@ const createDraftForPreset = (current: SnsSplitDraft, preset: SnsSplitPreset) =>
 };
 
 export function SnsSplitImageMakerApp() {
+  const { locale } = useLocale();
+  const copy = getSnsSplitImageMakerCopy(locale);
   const [draft, setDraft] = useState<SnsSplitDraft>(() => createSnsSplitDraft());
   const [activePreset, setActivePreset] = useState<SnsSplitPreset | null>(null);
   const [hasStoredDraft, setHasStoredDraft] = useState(false);
@@ -260,7 +215,7 @@ export function SnsSplitImageMakerApp() {
   const selectedTile = tiles.find((tile) => tile.index === selectedPost) ?? tiles[0];
   const selectedAdjustment = getSnsSplitPostAdjustment(draft.config, selectedPost);
   const postCount = tiles.length;
-  const exportButtonLabel = getExportButtonLabel(draft.exportSettings.format, postCount);
+  const exportButtonLabel = getExportButtonLabel(draft.exportSettings.format, postCount, locale);
 
   useEffect(() => {
     draftRef.current = draft;
@@ -294,17 +249,17 @@ export function SnsSplitImageMakerApp() {
     const hydrateDraft = async () => {
       const result = await restoreDraft();
       if (active && result.invalidStoredDraft) {
-        setToast({ tone: "warning", message: "保存データを復元できなかったため初期状態で開始しました。" });
+        setToast({ tone: "warning", message: copy.toasts.restoredInvalid });
       }
       if (result.brokenStoredDraft) {
         if (active) {
-          setToast({ tone: "warning", message: "保存データが破損していたため安全に初期化しました。" });
+          setToast({ tone: "warning", message: copy.toasts.restoredBroken });
         }
       }
       if (active && result.imageRestoreFailed && result.restoredFromStorage) {
-        setToast({ tone: "warning", message: "設定は復元しましたが、画像の復元に失敗しました。" });
+        setToast({ tone: "warning", message: copy.toasts.imageRestoreFailed });
       } else if (active && (result.restoredFromStorage || result.restoredStoredImages)) {
-        setToast({ tone: "success", message: "前回の作業状態を復元しました。" });
+        setToast({ tone: "success", message: copy.toasts.restored });
       }
       if (active) {
         const handoff = readToolHandoff("sns-split-image-maker");
@@ -337,10 +292,10 @@ export function SnsSplitImageMakerApp() {
           setToast({
             tone: missingThumbnailImage ? "warning" : "success",
             message: missingThumbnailImage
-              ? "Thumbnail Editorからの画像が見つからなかったため、メイン画像は未選択のまま開始しました。"
+              ? copy.handoff.thumbnailMissing
               : isThumbnailToSnsHandoffPayload(appliedHandoff)
-              ? "Thumbnail Editorから画像を受け取りました。"
-              : "Schedule Calendarの予定から告知文メモを受け取りました。"
+              ? copy.handoff.thumbnailReceived
+              : copy.handoff.scheduleReceived
           });
         }
         setHydrated(true);
@@ -350,7 +305,7 @@ export function SnsSplitImageMakerApp() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [copy.handoff.scheduleReceived, copy.handoff.thumbnailMissing, copy.handoff.thumbnailReceived, copy.toasts.imageRestoreFailed, copy.toasts.restored, copy.toasts.restoredBroken, copy.toasts.restoredInvalid]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -359,9 +314,9 @@ export function SnsSplitImageMakerApp() {
     try {
       persistDraftMetadata(draft);
     } catch {
-      setToast({ tone: "warning", message: "設定の自動保存に失敗しました。画像は編集中の画面上では維持されています。" });
+      setToast({ tone: "warning", message: copy.toasts.settingsSaveFailed });
     }
-  }, [draft, hydrated]);
+  }, [copy.toasts.settingsSaveFailed, draft, hydrated]);
 
   const renderPreviews = useCallback(async () => {
     const snapshot = draft;
@@ -383,7 +338,7 @@ export function SnsSplitImageMakerApp() {
     } catch (error) {
       setToast({ tone: "error", message: error instanceof Error ? error.message : "プレビュー生成に失敗しました。" });
     }
-  }, [draft, selectedTile, tiles]);
+  }, [draft, selectedTile, setToast, tiles]);
 
   useEffect(() => {
     void renderPreviews();
@@ -406,7 +361,7 @@ export function SnsSplitImageMakerApp() {
         images: next.images.map((image) => ({ ...image, src: imageById.get(image.id) ?? null }))
       };
     });
-    setToast({ tone: "info", message: `${joinType === "three" ? "3連結" : "5連結"}に切り替えました。` });
+    setToast({ tone: "info", message: copy.toasts.modeSwitched(getSnsSplitJoinTypeLabel(joinType, locale)) });
   };
   const updatePostAdjustment = (postIndex: SnsSplitPostIndex, partial: Partial<typeof defaultSnsSplitPostAdjustment>) => {
     updateDraft((current) => ({
@@ -479,9 +434,9 @@ export function SnsSplitImageMakerApp() {
 
     try {
       await navigator.clipboard.writeText(handoffPayload.announcementText);
-      setToast({ tone: "success", message: "告知文をコピーしました。" });
+      setToast({ tone: "success", message: copy.toasts.copied });
     } catch {
-      setToast({ tone: "warning", message: "コピーできませんでした。告知文メモから手動でコピーしてください。" });
+      setToast({ tone: "warning", message: copy.toasts.copyFailed });
     }
   };
   const openPreset = (preset: SnsSplitPreset) => {
@@ -515,7 +470,7 @@ export function SnsSplitImageMakerApp() {
     });
     setToast({
       tone: "info",
-      message: `${mode === "concatenate" ? "個別追加" : "フレーム追加"}に切り替えました。`
+      message: copy.toasts.modeSwitched(getSnsSplitModeLabel(mode, locale))
     });
   };
   const setImageSource = (id: SnsSplitImageSource["id"], src: string | null) => {
@@ -524,14 +479,14 @@ export function SnsSplitImageMakerApp() {
       images: current.images.map((image) => (image.id === id ? { ...image, src } : image))
     }));
     void writeStoredImageSource(id, src).catch(() => {
-      setToast({ tone: "warning", message: "画像の復元用保存に失敗しました。現在の編集画面ではそのまま利用できます。" });
+      setToast({ tone: "warning", message: copy.toasts.imageStoreFailed });
     });
   };
   const handleImageFile = async (file: File, id: SnsSplitImageSource["id"]) => {
     try {
       const src = await readImageFile(file);
       setImageSource(id, src);
-      setToast({ tone: "success", message: id === "base" ? "メイン画像を読み込みました。" : "追加画像を読み込みました。" });
+      setToast({ tone: "success", message: id === "base" ? copy.toasts.mainLoaded : copy.toasts.slotLoaded });
     } catch (error) {
       setToast({ tone: "error", message: error instanceof Error ? error.message : "画像を読み込めませんでした。" });
     }
@@ -554,11 +509,11 @@ export function SnsSplitImageMakerApp() {
         4: { ...defaultSnsSplitPostAdjustment }
       }
     });
-    setToast({ tone: "info", message: "分割・合成設定をリセットしました。" });
+    setToast({ tone: "info", message: copy.toasts.resetConfig });
   };
   const resetSelectedPostAdjustment = () => {
     updatePostAdjustment(selectedPost, { ...defaultSnsSplitPostAdjustment });
-    setToast({ tone: "info", message: `投稿${selectedPost}の表示位置をリセットしました。` });
+    setToast({ tone: "info", message: copy.toasts.resetPost(selectedPost) });
   };
   const canvasPointFromPointer = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     const canvas = editorCanvasRef.current;
@@ -640,14 +595,14 @@ export function SnsSplitImageMakerApp() {
     try {
       await writeStoredImageSources(draft.images);
       persistDraftMetadata(draft);
-      setToast({ tone: "success", message: "作業状態を保存しました。" });
+      setToast({ tone: "success", message: copy.toasts.draftSaved });
     } catch (error) {
       setToast({ tone: "error", message: error instanceof Error ? error.message : "作業状態の保存に失敗しました。" });
     }
   };
   const exportTiles = async () => {
     if (!canExport) {
-      setToast({ tone: "warning", message: "メイン画像を選択してから出力してください。" });
+      setToast({ tone: "warning", message: copy.toasts.exportNeedsMain });
       return;
     }
     const canvas = exportCanvasRef.current ?? document.createElement("canvas");
@@ -662,9 +617,9 @@ export function SnsSplitImageMakerApp() {
         link.download = createSnsSplitFileName(draft.exportSettings.filePattern, tile.index, draft.exportSettings.format);
         link.click();
       }
-      setToast({ tone: "success", message: `${getSnsSplitExportOrderLabel(draft.preset)} の順で${postCount}枚を書き出しました。` });
+      setToast({ tone: "success", message: copy.toasts.exportDone(getSnsSplitExportOrderLabel(draft.preset), postCount) });
     } catch (error) {
-      setToast({ tone: "error", message: error instanceof Error ? error.message : "画像の書き出しに失敗しました。" });
+      setToast({ tone: "error", message: error instanceof Error ? error.message : copy.toasts.exportFailed });
     }
   };
 
@@ -677,21 +632,21 @@ export function SnsSplitImageMakerApp() {
       <div className="mx-auto flex min-h-full w-full max-w-[1640px] flex-col gap-4 px-4 py-4 lg:px-5 xl:px-8">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
           <div className="min-w-0">
-            <p className="text-xs font-bold text-primary-strong">画像・デザイン</p>
-            <h1 className="truncate text-xl font-black tracking-tight text-foreground lg:text-2xl">SNS分割画像メーカー</h1>
+            <p className="text-xs font-bold text-primary-strong">{copy.header.category}</p>
+            <h1 className="truncate text-xl font-black tracking-tight text-foreground lg:text-2xl">{copy.header.title}</h1>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={returnToPresetLanding} className="flat-control px-3 py-2 text-xs font-bold">
-              プリセットを変更
+              {copy.header.changePreset}
             </button>
             <button type="button" className="flat-control px-3 py-2 text-xs font-bold" disabled>
-              ? 使い方
+              {copy.header.help}
             </button>
             <button type="button" onClick={saveDraft} className="flat-control hidden px-4 py-2 text-xs font-bold sm:inline-flex">
-              下書き保存
+              {copy.header.saveDraft}
             </button>
             <button type="button" onClick={exportTiles} className="hidden rounded-base bg-primary px-4 py-2 text-sm font-black text-white shadow-panel disabled:cursor-not-allowed disabled:opacity-55 sm:inline-flex" disabled={!canExport}>
-              画像を保存
+              {copy.header.saveImages}
             </button>
           </div>
         </header>
@@ -701,16 +656,16 @@ export function SnsSplitImageMakerApp() {
             className="rounded-base border border-primary/35 bg-primary-soft/35 px-4 py-3"
             role="status"
             aria-live="polite"
-            aria-label={isThumbnailToSnsHandoffPayload(handoffPayload) ? "Thumbnail Editorからの受け取り内容" : "Schedule Calendarからの受け取り内容"}
+            aria-label={isThumbnailToSnsHandoffPayload(handoffPayload) ? copy.handoff.thumbnailReceived : copy.handoff.scheduleReceived}
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-bold text-primary-strong">
                   {isThumbnailToSnsHandoffPayload(handoffPayload)
                     ? thumbnailHandoffImageMissing
-                      ? "Thumbnail Editorからの画像が見つからなかったため、メイン画像は未選択のまま開始しました。"
-                      : "Thumbnail Editorから画像を受け取りました。"
-                    : "Schedule Calendarから告知文メモを受け取りました。"}
+                      ? copy.handoff.thumbnailMissing
+                      : copy.handoff.thumbnailReceived
+                    : copy.handoff.scheduleReceived}
                 </p>
                 <h2 className="mt-1 truncate text-base font-black text-foreground">{handoffPayload.title || "無題の予定"}</h2>
                 <p className="mt-1 text-xs font-bold text-muted">
@@ -721,13 +676,13 @@ export function SnsSplitImageMakerApp() {
                 <p className="mt-2 text-xs leading-5 text-muted">
                   {isThumbnailToSnsHandoffPayload(handoffPayload)
                     ? thumbnailHandoffImageMissing
-                      ? "メイン画像を選び直してから、受け取った告知文メモを投稿文へ使えます。"
-                      : "受け取った画像をメイン画像として確認し、必要なら追加画像を入れてから保存します。"
-                    : "メイン画像は未選択です。画像を選んでから、告知文メモを投稿文へ使えます。"}
+                      ? copy.handoff.thumbnailMissingNext
+                      : copy.handoff.thumbnailNext
+                    : copy.handoff.scheduleNext}
                 </p>
               </div>
               <button type="button" onClick={copyHandoffAnnouncementText} className="flat-control px-3 py-2 text-xs font-bold">
-                告知文コピー
+                {copy.handoff.copy}
               </button>
             </div>
             <textarea
@@ -742,7 +697,7 @@ export function SnsSplitImageMakerApp() {
 
         <section className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-black">追加方式</span>
+            <span className="text-sm font-black">{copy.controls.addMode}</span>
             <div className="flex overflow-hidden rounded-base border border-border bg-surface">
               {modeOptions.map((mode) => (
                 <button
@@ -755,14 +710,14 @@ export function SnsSplitImageMakerApp() {
                   ].join(" ")}
                   title={mode.note}
                 >
-                  {mode.label}
+                  {getSnsSplitModeLabel(mode.id, locale)}
                 </button>
               ))}
             </div>
           </div>
           {draft.preset === "split-2" ? (
             <div className="flex items-center gap-2">
-              <span className="text-sm font-black">連結タイプ</span>
+              <span className="text-sm font-black">{copy.controls.joinType}</span>
               <div className="flex overflow-hidden rounded-base border border-border bg-surface">
                 {splitTwoJoinOptions.map((joinType) => (
                   <button
@@ -775,14 +730,14 @@ export function SnsSplitImageMakerApp() {
                     ].join(" ")}
                     title={joinType.note}
                   >
-                    {joinType.label}
+                    {getSnsSplitJoinTypeLabel(joinType.id, locale)}
                   </button>
                 ))}
               </div>
             </div>
           ) : null}
           <label className="flex items-center gap-2 text-sm font-black">
-            最終比率
+            {copy.controls.finalRatio}
             <select className="flat-control h-10 px-4 font-bold" value={getPresetRatioLabel(draft.preset)} disabled>
               <option>{getPresetRatioLabel(draft.preset)}</option>
             </select>
@@ -792,9 +747,9 @@ export function SnsSplitImageMakerApp() {
         <main className="grid flex-1 gap-4 lg:min-h-[760px] lg:grid-cols-[minmax(0,1fr)_minmax(360px,43%)] xl:min-h-[820px] xl:grid-cols-[minmax(0,1fr)_minmax(440px,45%)]">
           <section className={["panel min-h-[560px] flex-col gap-4 overflow-hidden p-4 shadow-none lg:flex lg:min-h-[760px] xl:min-h-[820px]", mobileView === "preview" ? "flex" : "hidden"].join(" ")}>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <SectionTitle title="プレビュー" description={getPreviewDescription(draft.preset)} />
+              <SectionTitle title={copy.preview.title} description={copy.preview.description} />
               <div className="flex items-center gap-2 rounded-base border border-border bg-surface px-3 py-2 text-xs text-muted">
-                <span className="font-bold text-primary-strong">出力順</span>
+                <span className="font-bold text-primary-strong">{copy.controls.outputOrder}</span>
                 <span>{getSnsSplitExportOrderLabel(draft.preset)}</span>
               </div>
             </div>
@@ -809,7 +764,7 @@ export function SnsSplitImageMakerApp() {
                     previewMode === mode.id ? "bg-primary text-white" : "text-muted hover:bg-surface-muted"
                   ].join(" ")}
                 >
-                  {mode.label}
+                  {mode.id === "edit" ? copy.preview.edit : mode.id === "grid" ? copy.preview.grid : copy.preview.post}
                 </button>
               ))}
             </div>
@@ -825,7 +780,7 @@ export function SnsSplitImageMakerApp() {
                       selectedPost === tile.index ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface text-muted hover:bg-surface-muted"
                     ].join(" ")}
                   >
-                    投稿{tile.index}
+                    {copy.preview.postButton(tile.index)}
                   </button>
                 ))}
               </div>
@@ -833,13 +788,13 @@ export function SnsSplitImageMakerApp() {
             <div className="min-h-[320px] flex-1 overflow-hidden rounded-base border border-primary/40 bg-surface-muted p-3 lg:min-h-[560px] xl:min-h-[640px]">
               {!canExport ? (
                 <div className="mb-3 rounded-base border border-amber-400/45 bg-amber-500/10 px-3 py-2 text-xs font-bold leading-5 text-foreground">
-                  メイン画像を選ぶと、投稿順プレビューとPNG/JPEG保存が有効になります。
+                  {copy.preview.empty}
                 </div>
               ) : null}
               {previewMode === "edit" ? (
                 <div className={["mx-auto flex h-full min-h-0 w-full flex-col", draft.preset === "split-2" || (draft.preset === "split-3" && selectedPost === 1) ? "max-w-[860px]" : "max-w-[520px]"].join(" ")}>
                   <p className="mb-2 shrink-0 text-xs leading-5 text-muted">
-                    投稿{selectedPost}を編集中です。投稿別調整はドラッグまたはスライダーで行います。中心線に近づくと吸着します。
+                    {copy.preview.editGuide(selectedPost)}
                   </p>
                   <div className="flex min-h-0 flex-1 justify-center">
                     <canvas
@@ -856,7 +811,7 @@ export function SnsSplitImageMakerApp() {
               ) : null}
               {previewMode === "grid" ? (
                 <div className="flex h-full min-h-0 flex-col">
-                  <p className="mb-2 shrink-0 text-xs leading-5 text-muted">投稿順プレビューです。split_1から保存順に確認できます。</p>
+                  <p className="mb-2 shrink-0 text-xs leading-5 text-muted">{copy.preview.gridGuide}</p>
                   <div className={["mx-auto flex min-h-0 w-full flex-1 justify-center", draft.preset === "split-2" ? "max-w-[900px]" : draft.preset === "split-3" ? "max-w-[760px]" : "max-w-[720px]"].join(" ")}>
                     <canvas ref={compositeCanvasRef} className="h-full w-auto max-w-full rounded-base bg-background object-contain" aria-label={`${postCount}枚投稿の並び確認`} />
                   </div>
@@ -866,7 +821,7 @@ export function SnsSplitImageMakerApp() {
                 draft.preset === "split-3" ? (
                   <div className="flex h-full min-h-0 flex-col">
                     <p className="mb-2 shrink-0 text-xs leading-5 text-muted">
-                      完成形プレビューです。メイン分割を1枚の画像として確認し、気になる投稿を選んで調整できます。
+                      {copy.preview.finalGuide}
                     </p>
                     <div className="m-auto grid aspect-video w-full max-w-[860px] overflow-hidden rounded-base border border-primary/40" style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr" }}>
                       {tiles.map((tile, index) => (
@@ -899,7 +854,7 @@ export function SnsSplitImageMakerApp() {
                 ) : (
                   <div className="flex h-full min-h-0 flex-col">
                     <p className="mb-2 shrink-0 text-xs leading-5 text-muted">
-                      完成形プレビューです。メイン分割を1枚の画像として確認し、気になる投稿を選んで調整できます。
+                      {copy.preview.finalGuide}
                     </p>
                     <div className={["m-auto grid w-full overflow-hidden rounded-base border border-primary/40", draft.preset === "split-2" ? "max-w-[860px] grid-cols-2" : "max-w-[720px] grid-cols-2"].join(" ")}>
                       {tiles.map((tile, index) => (
@@ -933,25 +888,26 @@ export function SnsSplitImageMakerApp() {
               ) : null}
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-base border border-border bg-surface-muted/70 px-3 py-3 text-xs text-muted">
-              <span>枠線は目安です。実際の投稿画像には含まれません。境界を動かすときは枠線を表示したまま確認してください。</span>
+              <span>{copy.preview.guideNote}</span>
               <div className="flex items-center gap-2">
-                <ToggleButton label="枠線を表示" checked={draft.config.showSeam} onChange={(checked) => updateConfig({ showSeam: checked })} />
-                <ToggleButton label="グリッドを表示" checked={draft.config.showGrid} onChange={(checked) => updateConfig({ showGrid: checked })} />
+                <ToggleButton label={copy.controls.showSeam} checked={draft.config.showSeam} onChange={(checked) => updateConfig({ showSeam: checked })} />
+                <ToggleButton label={copy.controls.showGrid} checked={draft.config.showGrid} onChange={(checked) => updateConfig({ showGrid: checked })} />
               </div>
             </div>
           </section>
 
           <aside className={["flex-col gap-3 lg:sticky lg:top-4 lg:flex lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1 lg:scrollbar-accent", mobileView === "edit" ? "flex" : "hidden"].join(" ")}>
             <ControlSection>
-              <SectionTitle index="1" title="入力エリア" />
+              <SectionTitle index="1" title={copy.input.title} />
               <div className="grid gap-3">
-                {baseImage ? <ImagePicker image={baseImage} onChange={handleFileChange} onDropFile={handleImageFile} onRemove={setImageSource} prominent /> : null}
+                {baseImage ? <ImagePicker copy={copy} image={baseImage} onChange={handleFileChange} onDropFile={handleImageFile} onRemove={setImageSource} prominent /> : null}
                 <div className="rounded-base border border-border bg-surface-muted/60 p-3">
-                  <p className="text-sm font-black text-foreground">追加画像スロット（{getSlotGroupLabel(draft)}）</p>
+                  <p className="text-sm font-black text-foreground">{copy.input.additionalSlots}（{getSnsSplitSlotGroupLabel(draft.preset, draft.mode, draft.config.joinType, locale)}）</p>
                   <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {visibleSlots.map((image, index) => (
                       <ImagePicker
                         key={image.id}
+                        copy={copy}
                         image={image}
                         index={index + 1}
                         roleLabel={getSnsSplitSlotLabel(draft.mode, index + 1, draft.preset, draft.config.joinType)}
@@ -963,50 +919,50 @@ export function SnsSplitImageMakerApp() {
                     ))}
                   </div>
                   <p className="mt-3 text-xs text-muted">
-                    {getSlotDescription(draft)}
+                    {getSnsSplitSlotDescription(draft.preset, draft.mode, draft.config.joinType, locale)}
                   </p>
-                  <p className="mt-2 text-xs text-muted">{getAdditionalImageRatioHint(draft)} 異なる比率の画像は中央基準でトリミングされます。</p>
-                  <p className="mt-1 text-xs text-muted">画像処理と復元用保存はブラウザ内で完結し、外部へ送信しません。</p>
+                  <p className="mt-2 text-xs text-muted">{getSnsSplitAdditionalImageRatioHint(draft.preset, draft.mode, draft.config.joinType, locale)} {copy.input.cropNote}</p>
+                  <p className="mt-1 text-xs text-muted">{copy.input.localNote}</p>
                 </div>
               </div>
             </ControlSection>
 
             <ControlSection>
-              <SectionTitle index="2" title="分割・合成設定" />
+              <SectionTitle index="2" title={copy.settings.title} />
               <div className="mt-3 space-y-3">
                 <div>
-                  <p className="mb-2 text-xs font-black text-primary-strong">投稿{selectedPost}の中央メイン調整</p>
+                  <p className="mb-2 text-xs font-black text-primary-strong">{copy.settings.selectedPost(selectedPost)}</p>
                   <div className="grid gap-3">
-                    <RangeControl label="投稿別 X" value={selectedAdjustment.offsetX} min={-480} max={480} unit="px" onChange={(value) => updatePostAdjustment(selectedPost, { offsetX: value })} />
-                    <RangeControl label="投稿別 Y" value={selectedAdjustment.offsetY} min={-480} max={480} unit="px" onChange={(value) => updatePostAdjustment(selectedPost, { offsetY: value })} />
-                    <RangeControl label="投稿別 拡大率" value={selectedAdjustment.scale} min={50} max={180} unit="%" onChange={(value) => updatePostAdjustment(selectedPost, { scale: value })} />
+                    <RangeControl label={copy.settings.postX} value={selectedAdjustment.offsetX} min={-480} max={480} unit="px" onChange={(value) => updatePostAdjustment(selectedPost, { offsetX: value })} />
+                    <RangeControl label={copy.settings.postY} value={selectedAdjustment.offsetY} min={-480} max={480} unit="px" onChange={(value) => updatePostAdjustment(selectedPost, { offsetY: value })} />
+                    <RangeControl label={copy.settings.postScale} value={selectedAdjustment.scale} min={50} max={180} unit="%" onChange={(value) => updatePostAdjustment(selectedPost, { scale: value })} />
                   </div>
                 </div>
                 <button type="button" onClick={resetSelectedPostAdjustment} className="flat-control min-h-11 w-full px-3 py-2 font-bold">
-                  投稿{selectedPost}リセット
+                  {copy.settings.resetPost(selectedPost)}
                 </button>
                 <details className="rounded-base border border-border bg-surface-muted/50">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-sm font-black text-foreground marker:hidden">
-                    <span>基本分割調整</span>
-                    <span className="text-xs font-bold text-muted">開く</span>
+                    <span>{copy.settings.base}</span>
+                    <span className="text-xs font-bold text-muted">{copy.settings.open}</span>
                   </summary>
                   <div className="grid gap-3 border-t border-border px-3 pb-3 pt-3 xl:grid-cols-2">
-                    <RangeControl label="メイン分割 縦位置（splitY）" value={draft.config.splitY} min={10} max={90} unit="%" onChange={(value) => updateConfig({ splitY: value })} />
-                    <RangeControl label="メイン分割 横位置（splitX）" value={draft.config.splitX} min={10} max={90} unit="%" onChange={(value) => updateConfig({ splitX: value })} />
-                    <RangeControl label="シーム補正" value={draft.config.seamFix} min={-80} max={80} unit="px" onChange={(value) => updateConfig({ seamFix: value })} />
-                    <RangeControl label="境界線の太さ" value={draft.config.seamWidth} min={0} max={32} unit="px" onChange={(value) => updateConfig({ seamWidth: value })} />
-                    <RangeControl label="Xオフセット" value={draft.config.offsetX} min={-240} max={240} unit="px" onChange={(value) => updateConfig({ offsetX: value })} />
-                    <RangeControl label="Yオフセット" value={draft.config.offsetY} min={-240} max={240} unit="px" onChange={(value) => updateConfig({ offsetY: value })} />
+                    <RangeControl label={copy.settings.splitY} value={draft.config.splitY} min={10} max={90} unit="%" onChange={(value) => updateConfig({ splitY: value })} />
+                    <RangeControl label={copy.settings.splitX} value={draft.config.splitX} min={10} max={90} unit="%" onChange={(value) => updateConfig({ splitX: value })} />
+                    <RangeControl label={copy.settings.seamFix} value={draft.config.seamFix} min={-80} max={80} unit="px" onChange={(value) => updateConfig({ seamFix: value })} />
+                    <RangeControl label={copy.settings.seamWidth} value={draft.config.seamWidth} min={0} max={32} unit="px" onChange={(value) => updateConfig({ seamWidth: value })} />
+                    <RangeControl label={copy.settings.offsetX} value={draft.config.offsetX} min={-240} max={240} unit="px" onChange={(value) => updateConfig({ offsetX: value })} />
+                    <RangeControl label={copy.settings.offsetY} value={draft.config.offsetY} min={-240} max={240} unit="px" onChange={(value) => updateConfig({ offsetY: value })} />
                     <div className="xl:col-span-2">
-                      <RangeControl label="全体スケール" value={draft.config.scale} min={50} max={180} unit="%" onChange={(value) => updateConfig({ scale: value })} />
+                      <RangeControl label={copy.settings.scale} value={draft.config.scale} min={50} max={180} unit="%" onChange={(value) => updateConfig({ scale: value })} />
                     </div>
                     <label className="flex items-center gap-3 rounded-base border border-border bg-surface-muted/60 px-3 py-2 text-sm font-bold">
-                      色
+                      {copy.settings.color}
                       <input type="color" value={draft.config.seamColor} onChange={(event) => updateConfig({ seamColor: event.target.value })} className="h-8 w-10 rounded border border-border bg-surface" />
                       <span className="font-mono text-xs text-muted">{draft.config.seamColor.toUpperCase()}</span>
                     </label>
                     <button type="button" onClick={resetConfig} className="flat-control min-h-11 px-3 py-2 font-bold">
-                      全体リセット
+                      {copy.settings.resetAll}
                     </button>
                   </div>
                 </details>
@@ -1014,11 +970,11 @@ export function SnsSplitImageMakerApp() {
             </ControlSection>
 
             <ControlSection>
-              <SectionTitle index="3" title="エクスポート設定" />
+              <SectionTitle index="3" title={copy.export.title} />
               <div className="mt-3 space-y-3">
                 <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
                   <div>
-                    <p className="mb-2 text-xs font-bold text-muted">出力形式</p>
+                    <p className="mb-2 text-xs font-bold text-muted">{copy.export.format}</p>
                     <div className="flex overflow-hidden rounded-base border border-border bg-surface">
                       {(["png", "jpeg"] as SnsSplitExportFormat[]).map((format) => (
                         <button
@@ -1035,10 +991,10 @@ export function SnsSplitImageMakerApp() {
                       ))}
                     </div>
                   </div>
-                  <RangeControl label="画質" value={Math.round(draft.exportSettings.quality * 100)} min={50} max={100} unit="%" onChange={(value) => updateExport({ quality: value / 100 })} compact />
+                  <RangeControl label={copy.export.quality} value={Math.round(draft.exportSettings.quality * 100)} min={50} max={100} unit="%" onChange={(value) => updateExport({ quality: value / 100 })} compact />
                 </div>
                 <label className="block">
-                  <span className="mb-2 block text-xs font-bold text-muted">ファイル名の形式</span>
+                  <span className="mb-2 block text-xs font-bold text-muted">{copy.export.filePattern}</span>
                   <input
                     value={draft.exportSettings.filePattern}
                     onChange={(event) => updateExport({ filePattern: event.target.value })}
@@ -1046,21 +1002,21 @@ export function SnsSplitImageMakerApp() {
                   />
                   <span className="mt-1 block text-xs text-muted">{getFilePatternHint(draft.preset)}</span>
                 </label>
-                <p className="text-xs text-muted">PNG/JPEGはどちらか1形式を選び、ZIPや複数形式の一括出力は後続候補です。</p>
-                <p className="text-xs font-bold text-primary-strong">選択中の形式で個別ファイル保存します。</p>
+                <p className="text-xs text-muted">{copy.export.deferredNote}</p>
+                <p className="text-xs font-bold text-primary-strong">{copy.export.singleFormat}</p>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <button type="button" onClick={saveDraft} className="flat-control min-h-12 px-4 py-2 font-black">
-                  下書き保存
+                  {copy.header.saveDraft}
                 </button>
                 <button type="button" onClick={exportTiles} disabled={!canExport} className="min-h-12 rounded-base bg-primary px-4 py-2 font-black text-white disabled:cursor-not-allowed disabled:opacity-55">
                   {exportButtonLabel}
                 </button>
               </div>
               <p className="mt-2 text-xs text-muted">
-                メイン画像: {imageStatus.baseReady ? "選択済み" : "未選択"} / 追加画像: {imageStatus.slotReady}/{imageStatus.requiredSlots}
+                {copy.export.status(imageStatus.baseReady, imageStatus.slotReady, imageStatus.requiredSlots)}
               </p>
-              <p className="mt-1 text-xs text-muted">出力はブラウザのダウンロードとして{postCount}枚を保存します。順番は {getSnsSplitExportOrderLabel(draft.preset)} です。</p>
+              <p className="mt-1 text-xs text-muted">{copy.export.note(postCount, getSnsSplitExportOrderLabel(draft.preset))}</p>
             </ControlSection>
           </aside>
         </main>
@@ -1075,7 +1031,7 @@ export function SnsSplitImageMakerApp() {
             mobileView === "preview" ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-background text-muted"
           ].join(" ")}
         >
-          プレビュー
+          {copy.common.preview}
         </button>
         <button
           type="button"
@@ -1085,10 +1041,10 @@ export function SnsSplitImageMakerApp() {
             mobileView === "edit" ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-background text-muted"
           ].join(" ")}
         >
-          編集
+          {copy.common.edit}
         </button>
         <button type="button" onClick={exportTiles} disabled={!canExport} className="min-h-11 rounded-base bg-primary px-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-55">
-          保存
+          {copy.common.save}
         </button>
       </nav>
 
@@ -1124,6 +1080,7 @@ function ControlSection({ children, className = "" }: { children: ReactNode; cla
 }
 
 function ImagePicker({
+  copy,
   image,
   index,
   roleLabel,
@@ -1133,6 +1090,7 @@ function ImagePicker({
   onRemove,
   prominent = false
 }: {
+  copy: ReturnType<typeof getSnsSplitImageMakerCopy>;
   image: SnsSplitImageSource;
   index?: number;
   roleLabel?: string;
@@ -1145,7 +1103,7 @@ function ImagePicker({
   const compactSlot = !prominent;
   return (
     <div className={prominent ? "rounded-base border border-border bg-surface-muted/60 p-3" : "min-w-0"}>
-      {prominent ? <p className="mb-3 text-sm font-black text-foreground">分割用メイン画像（1枚）</p> : null}
+      {prominent ? <p className="mb-3 text-sm font-black text-foreground">{copy.input.mainImage}</p> : null}
       <label
         className={[
           "group relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-base border border-dashed border-border bg-surface text-center transition hover:border-primary",
@@ -1171,18 +1129,18 @@ function ImagePicker({
         ) : (
           <>
             <span className="text-2xl text-muted">{prominent ? "⇩" : "▧"}</span>
-            <span className={["font-black text-foreground", compactSlot ? "mt-1 text-[10px]" : "mt-2 text-xs"].join(" ")}>{prominent ? "画像を選択" : "+"}</span>
-            {prominent ? <span className="mt-1 text-xs text-muted">またはドラッグ&ドロップ</span> : null}
+            <span className={["font-black text-foreground", compactSlot ? "mt-1 text-[10px]" : "mt-2 text-xs"].join(" ")}>{prominent ? copy.input.selectImage : "+"}</span>
+            {prominent ? <span className="mt-1 text-xs text-muted">{copy.input.dragDrop}</span> : null}
           </>
         )}
         <input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={(event) => onChange(event, image.id)} />
       </label>
       {image.src ? (
         <button type="button" onClick={() => onRemove(image.id, null)} className="mt-2 text-xs font-bold text-muted hover:text-primary-strong">
-          画像を外す
+          {copy.input.removeImage}
         </button>
       ) : null}
-      {prominent ? <p className="mt-3 text-xs text-muted">推奨: 16:9（例: 1920x1080）。解像度違いは自動で拡大縮小します。</p> : null}
+      {prominent ? <p className="mt-3 text-xs text-muted">{copy.input.recommendation}</p> : null}
     </div>
   );
 }

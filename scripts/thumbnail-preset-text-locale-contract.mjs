@@ -41,15 +41,25 @@ assert.equal(
   "function",
   "Thumbnail preset text body locale helper is exported from copy layer"
 );
+assert.equal(
+  typeof thumbnailCopy.getThumbnailPresetTextLayerVisualAdjustment,
+  "function",
+  "Thumbnail preset text visual adjustment helper is exported from copy layer"
+);
 
 assert.match(
   thumbnailCopySource,
   /thumbnailPresetTextBodyCopy/,
   "Thumbnail preset text body copy stays in the copy dictionary layer"
 );
+assert.match(
+  thumbnailCopySource,
+  /thumbnailPresetTextLayerVisualAdjustments/,
+  "English-only preset text visual adjustments stay in the copy helper layer"
+);
 assert.doesNotMatch(
   thumbnailSource,
-  /text:\s*"FIRST TIME HERE|text:\s*"Welcome stream|text:\s*"Weekly stream plan/,
+  /text:\s*"FIRST TIME HERE|text:\s*"Welcome stream|text:\s*"Weekly stream plan|text:\s*"Karaoke\\nLive/,
   "Base preset definitions are not replaced with English body copy"
 );
 
@@ -78,6 +88,25 @@ assert.deepEqual(
   "Preset ids remain stable"
 );
 
+const layoutSnapshot = (draft) =>
+  textLayers(draft).map((layer) => ({
+    name: layer.name,
+    x: layer.x,
+    y: layer.y,
+    width: layer.width,
+    height: layer.height,
+    fontSize: layer.fontSize,
+    lineHeight: layer.lineHeight,
+    align: layer.align
+  }));
+const estimateAsciiTextWidth = (line, fontSize) => Array.from(line).reduce((total, character) => total + (/[ -~]/.test(character) ? 0.55 : 1), 0) * fontSize * 0.9;
+const maxEstimatedTextWidthRatio = (layer) =>
+  Math.max(...layer.text.split("\n").map((line) => (line.trim() ? estimateAsciiTextWidth(line.trim(), layer.fontSize) / layer.width : 0)));
+const visualAdjustmentTargets = new Set([
+  "endurance_stream/テキスト 1（見出し）",
+  "karaoke/テキスト 1（見出し）"
+]);
+
 for (const preset of thumbnailLib.thumbnailPresets) {
   const jaDraft = thumbnailLib.createDraftFromPreset(preset.id);
   const localizedJaDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(jaDraft, "ja");
@@ -85,6 +114,11 @@ for (const preset of thumbnailLib.thumbnailPresets) {
     textLayers(localizedJaDraft).map((layer) => ({ name: layer.name, text: layer.text })),
     textLayers(jaDraft).map((layer) => ({ name: layer.name, text: layer.text })),
     `${preset.id} keeps Japanese preset text body unchanged`
+  );
+  assert.deepEqual(
+    layoutSnapshot(localizedJaDraft),
+    layoutSnapshot(jaDraft),
+    `${preset.id} keeps Japanese preset text layout unchanged`
   );
 
   const enDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(jaDraft, "en");
@@ -101,7 +135,23 @@ for (const preset of thumbnailLib.thumbnailPresets) {
   for (const layer of textLayers(enDraft)) {
     assert.equal(containsJapanese(layer.text), false, `${preset.id}/${layer.name} has English initial text in English mode`);
     assert.ok(layer.text.length > 0, `${preset.id}/${layer.name} keeps non-empty English initial text`);
-    assert.ok(layer.text.length <= 48, `${preset.id}/${layer.name} keeps English initial text compact`);
+    assert.ok(layer.text.length <= 40, `${preset.id}/${layer.name} keeps English initial text compact`);
+    assert.ok(maxEstimatedTextWidthRatio(layer) <= 0.92, `${preset.id}/${layer.name} keeps English text within the visual balance threshold`);
+  }
+
+  for (const layer of textLayers(jaDraft)) {
+    const adjustmentKey = `${preset.id}/${layer.name}`;
+    const adjustment = thumbnailCopy.getThumbnailPresetTextLayerVisualAdjustment(preset.id, layer.name, "en");
+    if (visualAdjustmentTargets.has(adjustmentKey)) {
+      assert.ok(adjustment, `${adjustmentKey} has an English-only visual adjustment`);
+    } else {
+      assert.equal(adjustment, null, `${adjustmentKey} does not carry unnecessary English layout adjustment`);
+    }
+    assert.equal(
+      thumbnailCopy.getThumbnailPresetTextLayerVisualAdjustment(preset.id, layer.name, "ja"),
+      null,
+      `${adjustmentKey} has no Japanese visual adjustment`
+    );
   }
 
   const variantDraft = thumbnailLib.createDraftFromPresetVariant(preset.id, "square-1-1");
@@ -112,6 +162,24 @@ for (const preset of thumbnailLib.thumbnailPresets) {
     assert.equal(containsJapanese(layer.text), false, `${preset.id}/${layer.name} variant text is English in English mode`);
   }
 }
+
+const enStreamDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("stream_announce"), "en");
+assert.equal(
+  textLayers(enStreamDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "21:00",
+  "Stream Announcement time copy is shortened for English visual balance"
+);
+const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
+assert.equal(
+  textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 3（サブ）")?.text,
+  "Requests welcome",
+  "Karaoke sub copy is shortened for English visual balance"
+);
+assert.equal(
+  textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 1（見出し）")?.fontSize,
+  166,
+  "Karaoke headline gets an English-only font size adjustment"
+);
 
 for (const target of thumbnailLib.thumbnailMainTextCarryoverTargets) {
   assert.ok(["見出し", "時刻", "サブ", "ラベル"].includes(target.namePart), `${target.id} matching key remains Japanese namePart`);
@@ -137,6 +205,11 @@ assert.match(
   thumbnailAppSource,
   /localizeThumbnailPresetTextLayerBodies\(createDraftFromPreset\(/,
   "Thumbnail Editor localizes preset text bodies only at draft creation/apply time"
+);
+assert.doesNotMatch(
+  thumbnailAppSource,
+  /getThumbnailPresetTextLayerVisualAdjustment/,
+  "Thumbnail Editor does not apply visual adjustments outside the draft creation helper"
 );
 assert.match(
   thumbnailAppSource,

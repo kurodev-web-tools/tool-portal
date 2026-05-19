@@ -14,7 +14,8 @@ import type {
   ThumbnailQualityGuardItem,
   ThumbnailQualityGuardSummary,
   ThumbnailStandeePlacementPreset,
-  ThumbnailStandeePlacementPresetId
+  ThumbnailStandeePlacementPresetId,
+  ThumbnailTextLayer
 } from "@/lib/thumbnail-editor";
 
 type ThumbnailPresetCopy = {
@@ -23,6 +24,7 @@ type ThumbnailPresetCopy = {
 };
 
 type ThumbnailPresetTextBodyCopy = Partial<Record<ThumbnailPresetId, Record<string, string>>>;
+type ThumbnailPresetTextLayerVisualAdjustment = Partial<Pick<ThumbnailTextLayer, "x" | "y" | "width" | "height" | "fontSize" | "lineHeight" | "align">>;
 
 export const thumbnailEditorCopy = {
   ja: {
@@ -954,8 +956,8 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     stream_announce: {
       "テキスト 4（ラベル）": "Stream / YouTube",
       "テキスト 1（見出し）": "FIRST TIME\nWELCOME!",
-      "テキスト 2（時刻）": "21:00 START",
-      "テキスト 3（サブ）": "Let's hang out together!"
+      "テキスト 2（時刻）": "21:00",
+      "テキスト 3（サブ）": "Hang out together!"
     },
     first_stream: {
       "テキスト 4（ラベル）": "DEBUT STREAM",
@@ -964,31 +966,31 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 3（サブ）": "Nice to meet you!"
     },
     anniversary_stream: {
-      "テキスト 1（見出し）": "1st\nAnniversary",
-      "テキスト 4（ラベル）": "ANNIVERSARY LIVE",
+      "テキスト 1（見出し）": "1st\nAnniv.",
+      "テキスト 4（ラベル）": "ANNIV. LIVE",
       "テキスト 3（サブ）": "A special night of thanks",
-      "テキスト 2（時刻）": "21:00 START"
+      "テキスト 2（時刻）": "21:00"
     },
     endurance_stream: {
       "テキスト 4（ラベル）": "CHALLENGE",
-      "テキスト 1（見出し）": "Endurance\nStream",
-      "テキスト 5（目標）": "Goal: 100 runs",
-      "テキスト 3（サブ）": "We keep going until we clear it",
-      "テキスト 2（時刻）": "19:00 START"
+      "テキスト 1（見出し）": "Endurance\nLive",
+      "テキスト 5（目標）": "100-run goal",
+      "テキスト 3（サブ）": "Clear until we win",
+      "テキスト 2（時刻）": "19:00"
     },
     project_stream: {
       "テキスト 5（英字）": "SPECIAL PROGRAM",
       "テキスト 1（見出し）": "New\nProject",
-      "テキスト 3（サブ）": "What will happen today?",
-      "テキスト 4（ラベル）": "Audience Event",
-      "テキスト 2（時刻）": "20:30 START"
+      "テキスト 3（サブ）": "What's next?",
+      "テキスト 4（ラベル）": "Viewer Event",
+      "テキスト 2（時刻）": "20:30"
     },
     cover_song_notice: {
       "テキスト 5（カバーアート注記）": "COVER ART / MV",
-      "テキスト 4（ラベル）": "COVER PREMIERE",
+      "テキスト 4（ラベル）": "PREMIERE",
       "テキスト 1（見出し）": "Cover\nSong",
       "テキスト 3（サブ）": "New cover release",
-      "テキスト 2（時刻）": "20:00 PREMIERE"
+      "テキスト 2（時刻）": "20:00"
     },
     event_notice: {
       "テキスト 5（キービジュアル注記）": "KEY VISUAL",
@@ -1000,55 +1002,55 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     privacy_notice: {
       "テキスト 4（ラベル）": "SAFE NOTICE",
       "テキスト 1（見出し）": "Schedule\nNotice",
-      "テキスト 3（サブ）": "Details will be shared on the day",
-      "テキスト 2（時刻）": "20:00 START"
+      "テキスト 3（サブ）": "Details on stream day",
+      "テキスト 2（時刻）": "20:00"
     },
     whiteboard_plan: {
       "テキスト 4（ラベル）": "TODAY'S PLAN",
-      "テキスト 1（見出し）": "Today's\nStream Plan",
-      "テキスト 3（サブ）": "Let's check the plan together",
-      "テキスト 2（時刻）": "21:00 START"
+      "テキスト 1（見出し）": "Today's\nPlan",
+      "テキスト 3（サブ）": "Check the plan together",
+      "テキスト 2（時刻）": "21:00"
     },
     karaoke: {
-      "テキスト 4（ラベル）": "Karaoke / YouTube",
-      "テキスト 1（見出し）": "Karaoke\nStream",
+      "テキスト 4（ラベル）": "KARAOKE LIVE",
+      "テキスト 1（見出し）": "Karaoke\nLive",
       "テキスト 5（見出し英字）": "SINGING STREAM",
-      "テキスト 2（時刻）": "20:00 START",
-      "テキスト 3（サブ）": "Requests welcome / first-timers welcome"
+      "テキスト 2（時刻）": "20:00",
+      "テキスト 3（サブ）": "Requests welcome"
     },
     chatting: {
       "テキスト 4（ラベル）": "CHATTING / YouTube",
-      "テキスト 1（見出し）": "Chill\nChat Stream",
-      "テキスト 2（時刻）": "21:00 START",
+      "テキスト 1（見出し）": "Chat\nStream",
+      "テキスト 2（時刻）": "21:00",
       "テキスト 3（サブ）": "Let's sort out today's topics"
     },
     clip: {
-      "テキスト 4（ラベル）": "Highlights",
+      "テキスト 4（ラベル）": "CLIP",
       "テキスト 1（見出し）": "Best\nMoments",
-      "テキスト 2（時刻）": "20:00 PREMIERE",
-      "テキスト 3（サブ）": "Short video / premiere"
+      "テキスト 2（時刻）": "20:00",
+      "テキスト 3（サブ）": "Short premiere"
     },
     game_live: {
       "テキスト 4（ラベル）": "GAME LIVE",
       "テキスト 1（見出し）": "Viewer\nGame Live",
-      "テキスト 2（時刻）": "20:00 START",
-      "テキスト 3（サブ）": "First-timers welcome / play along"
+      "テキスト 2（時刻）": "20:00",
+      "テキスト 3（サブ）": "Play along with us"
     },
     collaboration: {
       "テキスト 4（ラベル）": "GUEST",
       "テキスト 1（見出し）": "Collab\nStream",
-      "テキスト 2（時刻）": "20:00 START",
+      "テキスト 2（時刻）": "20:00",
       "テキスト 3（サブ）": "Guest name / project title"
     },
     announcement: {
       "テキスト 4（ラベル）": "NEWS",
-      "テキスト 1（見出し）": "Important\nNotice",
+      "テキスト 1（見出し）": "Key\nNotice",
       "テキスト 2（時刻）": "5/10 RELEASE",
-      "テキスト 3（サブ）": "About upcoming activities"
+      "テキスト 3（サブ）": "Upcoming activities"
     },
     weekly_schedule: {
-      "テキスト 4（ラベル）": "WEEKLY SCHEDULE",
-      "テキスト 1（見出し）": "Weekly\nStream Plan",
+      "テキスト 4（ラベル）": "WEEKLY",
+      "テキスト 1（見出し）": "Weekly\nPlan",
       "テキスト 2（時刻）": "5/4 - 5/10",
       "月曜 / 曜日": "MON",
       "月曜 / 時間": "20:00",
@@ -1075,8 +1077,23 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     x_announcement: {
       "テキスト 4（ラベル）": "X POST",
       "テキスト 1（見出し）": "Today's Notice",
-      "テキスト 3（サブ）": "Stream plans and latest updates",
+      "テキスト 3（サブ）": "Stream updates",
       "テキスト 2（時刻）": "05.06 WED"
+    }
+  }
+};
+
+const thumbnailPresetTextLayerVisualAdjustments: Record<
+  Locale,
+  Partial<Record<ThumbnailPresetId, Record<string, ThumbnailPresetTextLayerVisualAdjustment>>>
+> = {
+  ja: {},
+  en: {
+    endurance_stream: {
+      "テキスト 1（見出し）": { fontSize: 140 }
+    },
+    karaoke: {
+      "テキスト 1（見出し）": { fontSize: 166 }
     }
   }
 };
@@ -1304,6 +1321,18 @@ export function getThumbnailPresetTextLayerBody(
   return thumbnailPresetTextBodyCopy[locale][presetId]?.[layerName] ?? fallback;
 }
 
+export function getThumbnailPresetTextLayerVisualAdjustment(
+  presetId: ThumbnailPresetId,
+  layerName: string,
+  locale: Locale
+): ThumbnailPresetTextLayerVisualAdjustment | null {
+  if (locale === "ja") {
+    return null;
+  }
+
+  return thumbnailPresetTextLayerVisualAdjustments[locale][presetId]?.[layerName] ?? null;
+}
+
 export function localizeThumbnailPresetTextLayerBodies(
   draft: ThumbnailEditorDraft,
   locale: Locale
@@ -1314,14 +1343,18 @@ export function localizeThumbnailPresetTextLayerBodies(
 
   return {
     ...draft,
-    layers: draft.layers.map((layer) =>
-      layer.type === "text"
-        ? {
-            ...layer,
-            text: getThumbnailPresetTextLayerBody(draft.presetId, layer.name, locale, layer.text)
-          }
-        : layer
-    )
+    layers: draft.layers.map((layer) => {
+      if (layer.type !== "text") {
+        return layer;
+      }
+
+      const visualAdjustment = getThumbnailPresetTextLayerVisualAdjustment(draft.presetId, layer.name, locale);
+      return {
+        ...layer,
+        ...visualAdjustment,
+        text: getThumbnailPresetTextLayerBody(draft.presetId, layer.name, locale, layer.text)
+      };
+    })
   };
 }
 

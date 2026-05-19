@@ -3326,8 +3326,9 @@ function PresetCards({
           return (
           <article
             key={preset.id}
+            data-thumbnail-preset-card="true"
             className={[
-              "min-w-0 rounded-base border bg-surface p-3 text-left transition",
+              "flex min-w-0 flex-col rounded-base border bg-surface p-3 text-left transition",
               currentPresetId === preset.id ? "border-primary bg-primary-soft/55" : "border-border"
             ].join(" ")}
           >
@@ -3356,7 +3357,8 @@ function PresetCards({
             <p className="text-sm font-black text-foreground">{getThumbnailPresetName(preset.id, locale, preset.name)}</p>
             <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{getThumbnailPresetDescription(preset, locale)}</p>
             <button
-              className="mt-3 inline-flex rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong transition hover:bg-primary-soft"
+              data-thumbnail-preset-cta="true"
+              className="mt-auto inline-flex self-start rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong transition hover:bg-primary-soft"
               type="button"
               onClick={() => onApply(preset.id)}
               aria-pressed={currentPresetId === preset.id}

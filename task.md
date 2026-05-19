@@ -340,6 +340,12 @@
   - exact `390px` browser measurement was not available through Chrome DevTools MCP in this environment; smallest actual `window.innerWidth` was `500px`.
   - static metadata is conservative English, not runtime locale-switched metadata.
 
+- Follow-up 2026-05-19 / Thumbnail preset CTA alignment:
+  - fixed Thumbnail Editor preset cards so `このプリセットを使用` / `Use this preset` is pinned to the bottom of each stretched grid card.
+  - kept the existing outline button styling and chip wrapping behavior; no preset id, schema, storage key, raw layer name, or handoff payload changes.
+  - verification: `node scripts/en-c-scope-copy-contract.mjs` RED -> GREEN, `npx tsc --noEmit` passed.
+  - browser check: local `next dev --webpack -p 3037` + Chrome DevTools MCP on `/tools/thumbnail-editor/`; JA/EN at `820px` showed per-row button top delta `0`, bottom-gap delta `0`, height delta `0`, and body overflow `0`; EN at `1280px` also showed row deltas `0`; requested `390px` still measured as actual `500px`, with button height delta `0`, bottom-gap delta `0`, body overflow `0`.
+
 ## Completed EN Support Summary
 
 - PR #154 `codex/en-locale-foundation` -> `codex/en-support-preview`: locale foundation + language switch merged.

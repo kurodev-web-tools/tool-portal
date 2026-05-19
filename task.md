@@ -250,6 +250,7 @@
   - incorporated the supplied `chatting` English draft: restored `21:00 START` while keeping existing text-layer layout unchanged.
   - incorporated the supplied `clip` English draft: applied `20:00 / public` time copy and label/headline/time layout adjustments.
   - incorporated the supplied `game_live` English draft: restored `20:00 START` while keeping existing text-layer layout unchanged.
+  - incorporated the supplied `collaboration` English draft: restored `20:00 START` while keeping existing text-layer layout unchanged.
   - kept Japanese preset text/layout unchanged, and kept preset ids, stored `layer.name`, matching keys, weekly grouping keys, storage/schema, and handoff payload unchanged.
   - Schedule Calendar handoff text still overrides English preset initial text and EN layout helper output after preset apply.
 - Verification:

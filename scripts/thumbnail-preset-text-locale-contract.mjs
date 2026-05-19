@@ -100,7 +100,7 @@ const layoutSnapshot = (draft) =>
     align: layer.align
   }));
 const estimateAsciiTextWidth = (line, layer) => {
-  const fontWidthRatio = layer.fontFamily === "Bebas Neue" ? 0.28 : 0.55;
+  const fontWidthRatio = layer.fontFamily === "Bebas Neue" ? 0.28 : layer.fontFamily === "Orbitron" ? 0.42 : 0.55;
   return Array.from(line).reduce((total, character) => total + (/[ -~]/.test(character) ? fontWidthRatio : 1), 0) * layer.fontSize * 0.9;
 };
 const maxEstimatedTextWidthRatio = (layer) =>
@@ -113,7 +113,11 @@ const visualAdjustmentTargets = new Set([
   "anniversary_stream/テキスト 1（見出し）",
   "anniversary_stream/テキスト 2（時刻）",
   "anniversary_stream/テキスト 3（サブ）",
+  "endurance_stream/テキスト 4（ラベル）",
   "endurance_stream/テキスト 1（見出し）",
+  "endurance_stream/テキスト 5（目標）",
+  "endurance_stream/テキスト 3（サブ）",
+  "endurance_stream/テキスト 2（時刻）",
   "karaoke/テキスト 1（見出し）"
 ]);
 
@@ -275,6 +279,75 @@ assert.equal(
   enAnniversaryTime?.y,
   588.3889140066914,
   "Anniversary Stream time y follows the supplied English visual draft"
+);
+const enEnduranceDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("endurance_stream"),
+  "en"
+);
+const enEnduranceLabel = textLayers(enEnduranceDraft).find((layer) => layer.name === "テキスト 4（ラベル）");
+assert.equal(
+  enEnduranceLabel?.x,
+  733.555762775084,
+  "Endurance Stream label x follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceLabel?.y,
+  116.05452572565329,
+  "Endurance Stream label y follows the supplied English visual draft"
+);
+const enEnduranceHeadline = textLayers(enEnduranceDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enEnduranceHeadline?.x,
+  61.222203384083286,
+  "Endurance Stream headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceHeadline?.y,
+  182.72194592639477,
+  "Endurance Stream headline y follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceHeadline?.fontSize,
+  140,
+  "Endurance Stream headline keeps the English-only font size adjustment"
+);
+const enEnduranceGoal = textLayers(enEnduranceDraft).find((layer) => layer.name === "テキスト 5（目標）");
+assert.equal(
+  enEnduranceGoal?.x,
+  180.94449153979178,
+  "Endurance Stream goal x follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceGoal?.y,
+  522.0567863278777,
+  "Endurance Stream goal y follows the supplied English visual draft"
+);
+const enEnduranceSub = textLayers(enEnduranceDraft).find((layer) => layer.name === "テキスト 3（サブ）");
+assert.equal(
+  enEnduranceSub?.x,
+  50.944152453290826,
+  "Endurance Stream sub x follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceSub?.y,
+  655.3348404014829,
+  "Endurance Stream sub y follows the supplied English visual draft"
+);
+const enEnduranceTime = textLayers(enEnduranceDraft).find((layer) => layer.name === "テキスト 2（時刻）");
+assert.equal(
+  enEnduranceTime?.text,
+  "19:00 START",
+  "Endurance Stream time copy follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceTime?.x,
+  107.66677969550031,
+  "Endurance Stream time x follows the supplied English visual draft"
+);
+assert.equal(
+  enEnduranceTime?.y,
+  106.38891400669138,
+  "Endurance Stream time y follows the supplied English visual draft"
 );
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(

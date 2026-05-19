@@ -976,7 +976,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 1（見出し）": "Endurance\nLive",
       "テキスト 5（目標）": "100-run goal",
       "テキスト 3（サブ）": "Clear until we win",
-      "テキスト 2（時刻）": "19:00"
+      "テキスト 2（時刻）": "19:00 START"
     },
     project_stream: {
       "テキスト 5（英字）": "SPECIAL PROGRAM",
@@ -1103,7 +1103,11 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
       "テキスト 2（時刻）": { x: 276.61110169204164, y: 588.3889140066914 }
     },
     endurance_stream: {
-      "テキスト 1（見出し）": { fontSize: 140 }
+      "テキスト 4（ラベル）": { x: 733.555762775084, y: 116.05452572565329 },
+      "テキスト 1（見出し）": { x: 61.222203384083286, y: 182.72194592639477, fontSize: 140 },
+      "テキスト 5（目標）": { x: 180.94449153979178, y: 522.0567863278777 },
+      "テキスト 3（サブ）": { x: 50.944152453290826, y: 655.3348404014829 },
+      "テキスト 2（時刻）": { x: 107.66677969550031, y: 106.38891400669138 }
     },
     karaoke: {
       "テキスト 1（見出し）": { fontSize: 166 }

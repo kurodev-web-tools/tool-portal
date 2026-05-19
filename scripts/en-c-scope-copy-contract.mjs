@@ -68,6 +68,8 @@ assert.match(thumbnailSource, /copy\.textControls\.fontSearchPlaceholder/, "Thum
 assert.match(thumbnailSource, /getThumbnailMaterialName\(material\.id,\s*locale/, "Thumbnail material cards use localized material names");
 assert.match(thumbnailSource, /filterLocalizedThumbnailMaterials/, "Thumbnail material search includes localized material copy");
 assert.match(thumbnailSource, /getThumbnailLayerDisplayName\(layer,\s*locale/, "Thumbnail layer list uses UI-only localized layer names");
+assert.match(thumbnailSource, /value=\{getThumbnailLayerDisplayName\(layer,\s*locale\)\}/, "Thumbnail property layer-name input uses UI-only localized layer names");
+assert.match(thumbnailSource, /event\.target\.value === layerNameDisplayValue && layer\.name !== event\.target\.value/, "Thumbnail layer-name input display alias does not overwrite stored layer.name on blur");
 assert.match(thumbnailSource, /getThumbnailStandeePlacementName\(preset\.id,\s*locale/, "Thumbnail standee placement panel uses localized placement names");
 assert.match(thumbnailSource, /getThumbnailFontCategoryLabel\(fontCategory\.label,\s*locale/, "Thumbnail font listbox uses localized category labels");
 assert.match(thumbnailSource, /getThumbnailMainTextCarryoverLabel\(target\.id,\s*locale/, "Thumbnail preset apply dialog uses localized carryover labels");

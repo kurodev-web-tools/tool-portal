@@ -151,6 +151,29 @@
 - canvas text, preset body text, saved user input, custom layer names, backup JSON payload values, and handoff payload values remain untranslated by design.
 - exhaustive internal/debug exception text outside normal English-mode UI flow remains backlog scope.
 
+### EN Layer Name Input Review Follow-up
+
+- branch/worktree: `codex/en-layer-name-input` / `D:/V_streamer_tools/.worktrees/en-layer-name-input`
+- base: `origin/codex/en-support-preview` after PR #162 merge (`2026-05-19T10:04:07Z`)
+- Thumbnail Editor:
+  - localized the selected-layer `Layer name` input value with the same UI-only `getThumbnailLayerDisplayName()` helper used by the layer list and selected-layer badge.
+  - kept stored `layer.name`, preset matching keys, handoff payload, backup JSON, localStorage, and IndexedDB schema unchanged.
+  - added a blur guard so simply focusing / blurring the localized display alias does not overwrite the original stored Japanese layer name; if the user edits the input, the edited value is still treated as a custom layer name.
+- Verification:
+  - PASS: RED -> GREEN `node scripts/en-c-scope-copy-contract.mjs`
+  - PASS: `node scripts/thumbnail-sns-copy-locale-contract.mjs`
+  - PASS: `node scripts/tool-handoff-contract.mjs`
+  - PASS: `npm run lint`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `git diff --check` (only repo-normal LF -> CRLF working-copy warnings)
+- UI width check:
+  - method: local `next dev --webpack -p 3041 --hostname 127.0.0.1` + Playwright CLI.
+  - page: `/tools/thumbnail-editor`
+  - widths: `390 / 820 / 1024 / 1280 / 1366px`
+  - result: English mode layer-name input displayed `Text 3 (Sub text)`, `document.documentElement.lang` was `en`, body/document horizontal overflow was `0`, and console output had only normal dev-server React DevTools / HMR info logs.
+- Remaining risk:
+  - user-entered custom layer names remain untranslated by design.
+
 - B+C integration smoke:
   - `/`
   - `/tools`

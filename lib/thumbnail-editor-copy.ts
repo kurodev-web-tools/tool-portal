@@ -1033,7 +1033,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     game_live: {
       "テキスト 4（ラベル）": "GAME LIVE",
       "テキスト 1（見出し）": "Viewer\nGame Live",
-      "テキスト 2（時刻）": "20:00",
+      "テキスト 2（時刻）": "20:00 START",
       "テキスト 3（サブ）": "Play along with us"
     },
     collaboration: {

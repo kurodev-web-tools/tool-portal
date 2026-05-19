@@ -530,6 +530,15 @@ assert.equal(
   282.310035171743,
   "Clip time y follows the supplied English visual draft"
 );
+const enGameLiveDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("game_live"),
+  "en"
+);
+assert.equal(
+  textLayers(enGameLiveDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "20:00 START",
+  "Game Live time copy follows the supplied English visual draft"
+);
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(
   textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 3（サブ）")?.text,

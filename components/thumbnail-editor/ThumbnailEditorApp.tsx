@@ -40,7 +40,6 @@ import {
   thumbnailDraftStorageKey,
   thumbnailFontRecentStorageKey,
   thumbnailMainTextCarryoverTargets,
-  thumbnailMaterialCategoryLabels,
   thumbnailMaterialLibrary,
   thumbnailPresetDiscoveryStorageKey,
   thumbnailPresets,
@@ -72,15 +71,28 @@ import { useLocale } from "@/components/portal/LocaleProvider";
 import type { Locale } from "@/lib/locale";
 import {
   filterLocalizedThumbnailPresets,
+  filterLocalizedThumbnailMaterials,
   getLocalizedThumbnailQualityGuardItems,
   getLocalizedThumbnailQualityGuardSummary,
   getThumbnailEditorCopy,
+  getThumbnailFontCategoryLabel,
+  getThumbnailFontLanguageLabel,
+  getThumbnailFontMoodLabel,
+  getThumbnailLayerDisplayName,
+  getThumbnailMainTextCarryoverLabel,
+  getThumbnailMaterialCategoryLabel,
+  getThumbnailMaterialDescription,
+  getThumbnailMaterialName,
+  getThumbnailMaterialRecommendedPlacement,
   getThumbnailPresetCategoryLabel,
   getThumbnailPresetDescription,
   getThumbnailPresetName,
   getThumbnailPresetVariantDescription,
   getThumbnailPresetVariantLabel,
-  getThumbnailPresetUsageLabel
+  getThumbnailPresetUsageLabel,
+  getThumbnailStandeePlacementDescription,
+  getThumbnailStandeePlacementGroup,
+  getThumbnailStandeePlacementName
 } from "@/lib/thumbnail-editor-copy";
 import { createHandoffFileNameBase } from "@/lib/file-name";
 import {
@@ -396,7 +408,6 @@ const getWeeklyScheduleLayerGroup = (layer: ThumbnailLayer) => {
 };
 const thumbnailPresetCategories = Array.from(new Set(thumbnailPresets.map((preset) => preset.category))) as ThumbnailPresetCategory[];
 const thumbnailPresetUsageLabels = Array.from(new Set(thumbnailPresets.map((preset) => preset.usageLabel)));
-const normalizeMaterialSearchText = (value: string) => value.trim().toLocaleLowerCase("ja-JP");
 const getPresetsByIds = (presetIds: ThumbnailPresetId[]) =>
   presetIds
     .map((presetId) => thumbnailPresets.find((preset) => preset.id === presetId))
@@ -1214,7 +1225,7 @@ export function ThumbnailEditorApp() {
     }
     const material = thumbnailMaterialLibrary.find((item) => item.id === materialId);
     addLayer(layer);
-    showToast("success", material ? copy.messages.materialLayerAddedWithName(material.name) : copy.messages.materialLayerAdded);
+    showToast("success", material ? copy.messages.materialLayerAddedWithName(getThumbnailMaterialName(material.id, locale, material.name)) : copy.messages.materialLayerAdded);
   };
 
   const commitUserMaterialRefs = (refs: ThumbnailUserMaterialRef[]) => {
@@ -1302,13 +1313,14 @@ export function ThumbnailEditorApp() {
     }
 
     const preset = thumbnailStandeePlacementPresets.find((item) => item.id === presetId);
+    const targetLayerName = targetLayer ? getThumbnailLayerDisplayName(targetLayer, locale) : copy.panels.property.imageFallback;
     replaceDraft(next, { recordHistory: true });
     setMobilePanel("layers");
     showToast(
       "success",
       preset
-        ? copy.messages.standeePlacementApplied(targetLayer?.name ?? copy.panels.property.imageFallback, preset.name)
-        : copy.messages.standeePlacementAppliedFallback(targetLayer?.name ?? copy.panels.property.imageFallback)
+        ? copy.messages.standeePlacementApplied(targetLayerName, getThumbnailStandeePlacementName(preset.id, locale, preset.name))
+        : copy.messages.standeePlacementAppliedFallback(targetLayerName)
     );
   };
 
@@ -1998,8 +2010,9 @@ export function ThumbnailEditorApp() {
                 </>
               )}
               {mobilePanel === "layers" && (
-                  <LayerPanel
-                    copy={copy}
+                <LayerPanel
+                  copy={copy}
+                  locale={locale}
                   layers={draft.layers}
                   presetId={draft.presetId}
                   selectedLayerId={draft.selectedLayerId}
@@ -2011,8 +2024,9 @@ export function ThumbnailEditorApp() {
                 />
               )}
               {mobilePanel === "text" && selectedLayer && (
-                  <PropertyPanel
-                    copy={copy}
+                <PropertyPanel
+                  copy={copy}
+                  locale={locale}
                   layer={selectedLayer}
                   canvas={draft.canvas}
                   qualityGuardItems={localizedQualityGuardItems}
@@ -2071,6 +2085,7 @@ export function ThumbnailEditorApp() {
               />
               <LayerPanel
                 copy={copy}
+                locale={locale}
                 layers={draft.layers}
                 presetId={draft.presetId}
                 selectedLayerId={draft.selectedLayerId}
@@ -2083,9 +2098,10 @@ export function ThumbnailEditorApp() {
               {selectedLayer ? (
                 <PropertyPanel
                   copy={copy}
+                  locale={locale}
                   layer={selectedLayer}
                   canvas={draft.canvas}
-                   qualityGuardItems={localizedQualityGuardItems}
+                  qualityGuardItems={localizedQualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
                   onChange={updateSelectedLayer}
@@ -2236,20 +2252,7 @@ function MaterialLibraryPanel({ copy, locale, onAdd }: { copy: ReturnType<typeof
     return counts;
   }, [materialCategories]);
   const filteredMaterials = useMemo(
-    () => {
-      const query = normalizeMaterialSearchText(materialSearchQuery);
-      return thumbnailMaterialLibrary.filter((material) => {
-        if (selectedCategory !== "all" && material.category !== selectedCategory) {
-          return false;
-        }
-        if (!query) {
-          return true;
-        }
-        return normalizeMaterialSearchText(
-          [material.name, material.description, material.recommendedPlacement, thumbnailMaterialCategoryLabels[material.category], getThumbnailPresetCategoryLabel("告知画像", locale)].join(" ")
-        ).includes(query);
-      });
-    },
+    () => filterLocalizedThumbnailMaterials(thumbnailMaterialLibrary, materialSearchQuery, selectedCategory, locale),
     [locale, materialSearchQuery, selectedCategory]
   );
   const selectedCategoryCount = selectedCategory === "all" ? thumbnailMaterialLibrary.length : materialCategoryCounts[selectedCategory];
@@ -2282,7 +2285,7 @@ function MaterialLibraryPanel({ copy, locale, onAdd }: { copy: ReturnType<typeof
           { id: "all", label: copy.panels.materials.all, count: thumbnailMaterialLibrary.length },
           ...materialCategories.map((category) => ({
             id: category,
-            label: thumbnailMaterialCategoryLabels[category],
+            label: getThumbnailMaterialCategoryLabel(category, locale),
             count: materialCategoryCounts[category]
           }))
         ].map((option) => (
@@ -2302,32 +2305,38 @@ function MaterialLibraryPanel({ copy, locale, onAdd }: { copy: ReturnType<typeof
         ))}
       </div>
       <div className="scrollbar-accent grid max-h-[min(60vh,38rem)] gap-2 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
-        {filteredMaterials.map((material) => (
-          <button
-            key={material.id}
-            className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2 rounded-base border border-border bg-surface p-2 text-left transition hover:border-primary hover:bg-primary-soft/35 md:grid-cols-[5.25rem_minmax(0,1fr)]"
-            type="button"
-            onClick={() => onAdd(material.id)}
-            aria-label={copy.aria.addMaterial(material.name)}
-            title={material.description}
-          >
-            <span className="grid aspect-video place-items-center overflow-hidden rounded-sm border border-border bg-[#07111c]">
-              <span
-                className="block h-full w-full bg-contain bg-center bg-no-repeat"
-                style={{ backgroundImage: `url(${material.src})` }}
-                aria-hidden="true"
-              />
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-black text-foreground">{material.name}</span>
-              <span className="mt-1 inline-flex rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">
-                {thumbnailMaterialCategoryLabels[material.category]}
+        {filteredMaterials.map((material) => {
+          const materialName = getThumbnailMaterialName(material.id, locale, material.name);
+          const materialDescription = getThumbnailMaterialDescription(material, locale);
+          const materialPlacement = getThumbnailMaterialRecommendedPlacement(material, locale);
+          const materialCategory = getThumbnailMaterialCategoryLabel(material.category, locale);
+          return (
+            <button
+              key={material.id}
+              className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2 rounded-base border border-border bg-surface p-2 text-left transition hover:border-primary hover:bg-primary-soft/35 md:grid-cols-[5.25rem_minmax(0,1fr)]"
+              type="button"
+              onClick={() => onAdd(material.id)}
+              aria-label={copy.aria.addMaterial(materialName)}
+              title={materialDescription}
+            >
+              <span className="grid aspect-video place-items-center overflow-hidden rounded-sm border border-border bg-[#07111c]">
+                <span
+                  className="block h-full w-full bg-contain bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url(${material.src})` }}
+                  aria-hidden="true"
+                />
               </span>
-              <span className="mt-1 line-clamp-1 block text-xs leading-5 text-muted">{material.recommendedPlacement}</span>
-              <span className="line-clamp-1 block text-[11px] leading-4 text-muted/85">{material.description}</span>
-            </span>
-          </button>
-        ))}
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-black text-foreground">{materialName}</span>
+                <span className="mt-1 inline-flex rounded-sm border border-primary/40 bg-primary-soft/40 px-2 py-0.5 text-[11px] font-bold text-primary-strong">
+                  {materialCategory}
+                </span>
+                <span className="mt-1 line-clamp-1 block text-xs leading-5 text-muted">{materialPlacement}</span>
+                <span className="line-clamp-1 block text-[11px] leading-4 text-muted/85">{materialDescription}</span>
+              </span>
+            </button>
+          );
+        })}
         {filteredMaterials.length === 0 ? (
           <div className="rounded-base border border-dashed border-border bg-surface-muted/40 px-3 py-5 text-center text-xs font-bold leading-5 text-muted">
             {copy.panels.materials.empty}
@@ -2466,6 +2475,7 @@ function DesktopToolRail({
 
 function LayerPanel({
   copy,
+  locale,
   layers,
   presetId,
   selectedLayerId,
@@ -2476,6 +2486,7 @@ function LayerPanel({
   onToggleFlag
 }: {
   copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   layers: ThumbnailLayer[];
   presetId: ThumbnailPresetId;
   selectedLayerId: string | null;
@@ -2526,7 +2537,7 @@ function LayerPanel({
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-surface-muted text-sm font-black text-primary-strong">
           {layer.type === "text" ? "T" : layer.type === "image" ? "▧" : layer.type === "shape" && layer.shapeType === "circle" ? "●" : "■"}
         </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">{compactName ?? layer.name}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">{getThumbnailLayerDisplayName(layer, locale, compactName)}</span>
         <span className="text-xs text-muted">{layer.type}</span>
       </button>
       <div className="mt-2 grid grid-cols-6 gap-1">
@@ -2574,7 +2585,7 @@ function LayerPanel({
                   aria-label={copy.aria.toggleWeeklyGroup(group.label, collapsed)}
                   onClick={() => setCollapsedGroups((current) => ({ ...current, [group.id]: !collapsed }))}
                 >
-                  <span>{copy.panels.layers.weeklyGroupPrefix} / {group.label}</span>
+                  <span>{copy.panels.layers.weeklyGroupPrefix} / {getThumbnailLayerDisplayName({ name: group.label, type: "text" }, locale)}</span>
                   <span className="text-base font-black text-muted" aria-hidden="true">{collapsed ? "▸" : "▾"}</span>
                 </button>
                 {!collapsed ? (
@@ -2593,6 +2604,7 @@ function LayerPanel({
 
 function PropertyPanel({
   copy,
+  locale,
   layer,
   canvas,
   qualityGuardItems,
@@ -2602,6 +2614,7 @@ function PropertyPanel({
   onStandeePlacement
 }: {
   copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   layer: ThumbnailLayer;
   canvas: ThumbnailEditorDraft["canvas"];
   qualityGuardItems: ThumbnailQualityGuardItem[];
@@ -2624,7 +2637,7 @@ function PropertyPanel({
           <h2 className="text-base font-black text-foreground">{layer.type === "text" ? copy.panels.property.textTitle : layer.type === "shape" ? copy.panels.property.shapeTitle : copy.panels.property.imageTitle}</h2>
           {layerGuidance ? <p className="mt-1 text-[11px] font-semibold leading-5 text-muted">{layerGuidance}</p> : null}
         </div>
-        <span className="rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{layer.name}</span>
+        <span className="rounded-base bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{getThumbnailLayerDisplayName(layer, locale)}</span>
       </div>
 
       <label className="block text-xs font-bold text-muted">
@@ -2642,7 +2655,7 @@ function PropertyPanel({
         />
       </label>
       <ThumbnailQualityGuardPanel copy={copy} items={qualityGuardItems} />
-      <LayerQuickAdjustPanel copy={copy} layer={layer} canvas={canvas} onChange={onChange} />
+      <LayerQuickAdjustPanel copy={copy} locale={locale} layer={layer} canvas={canvas} onChange={onChange} />
 
       <div className="grid grid-cols-2 gap-3">
         <NumberField label="X" value={layer.x} min={-2000} max={4000} onChange={(x) => onChange((item) => ({ ...item, x }))} />
@@ -2651,9 +2664,9 @@ function PropertyPanel({
         <NumberField label={copy.panels.property.height} value={layer.height} min={16} max={4000} onChange={(height) => onChange((item) => ({ ...item, height }))} />
       </div>
 
-      {layer.type === "text" && <TextControls copy={copy} layer={layer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={onFontMenuOpenChange} onChange={onChange} />}
+      {layer.type === "text" && <TextControls copy={copy} locale={locale} layer={layer} fontMenuOpen={fontMenuOpen} onFontMenuOpenChange={onFontMenuOpenChange} onChange={onChange} />}
       {layer.type === "shape" && <ShapeControls copy={copy} layer={layer} onChange={onChange} />}
-      {layer.type === "image" && <StandeePlacementPanel copy={copy} layer={layer} onApply={onStandeePlacement} />}
+      {layer.type === "image" && <StandeePlacementPanel copy={copy} locale={locale} layer={layer} onApply={onStandeePlacement} />}
       <EffectControls copy={copy} layer={layer} onChange={onChange} />
     </section>
   );
@@ -2661,11 +2674,13 @@ function PropertyPanel({
 
 function LayerQuickAdjustPanel({
   copy,
+  locale,
   layer,
   canvas,
   onChange
 }: {
   copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   layer: ThumbnailLayer;
   canvas: ThumbnailEditorDraft["canvas"];
   onChange: (updater: (layer: ThumbnailLayer) => ThumbnailLayer) => void;
@@ -2694,6 +2709,7 @@ function LayerQuickAdjustPanel({
       y: Math.round((canvas.height - item.height) / 2)
     }));
   };
+  const layerDisplayName = getThumbnailLayerDisplayName(layer, locale);
 
   return (
     <div className="rounded-base border border-border bg-surface-muted/55 p-3" data-thumbnail-layer-rescue-controls="true">
@@ -2702,19 +2718,19 @@ function LayerQuickAdjustPanel({
         <span className="text-[10px] font-bold text-muted">{copy.quickAdjust.note}</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(0.9)} aria-label={copy.quickAdjust.shrinkAria(layer.name)}>
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(0.9)} aria-label={copy.quickAdjust.shrinkAria(layerDisplayName)}>
           {copy.quickAdjust.shrink}
         </button>
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(1.1)} aria-label={copy.quickAdjust.enlargeAria(layer.name)}>
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => scaleLayer(1.1)} aria-label={copy.quickAdjust.enlargeAria(layerDisplayName)}>
           {copy.quickAdjust.enlarge}
         </button>
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(-5)} aria-label={copy.quickAdjust.rotateLeftAria(layer.name)}>
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(-5)} aria-label={copy.quickAdjust.rotateLeftAria(layerDisplayName)}>
           {copy.quickAdjust.rotateLeft}
         </button>
-        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(5)} aria-label={copy.quickAdjust.rotateRightAria(layer.name)}>
+        <button className="flat-control px-2 py-2 text-xs font-bold" type="button" onClick={() => rotateLayer(5)} aria-label={copy.quickAdjust.rotateRightAria(layerDisplayName)}>
           {copy.quickAdjust.rotateRight}
         </button>
-        <button className="flat-control col-span-2 px-2 py-2 text-xs font-bold" type="button" onClick={centerLayer} aria-label={copy.quickAdjust.centerAria(layer.name)}>
+        <button className="flat-control col-span-2 px-2 py-2 text-xs font-bold" type="button" onClick={centerLayer} aria-label={copy.quickAdjust.centerAria(layerDisplayName)}>
           {copy.quickAdjust.center}
         </button>
       </div>
@@ -2748,15 +2764,18 @@ function ThumbnailQualityGuardPanel({ copy, items }: { copy: ReturnType<typeof g
 
 function StandeePlacementPanel({
   copy,
+  locale,
   layer,
   onApply
 }: {
   copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   layer: Extract<ThumbnailLayer, { type: "image" }>;
   onApply: (presetId: ThumbnailStandeePlacementPresetId) => void;
 }) {
   const groups = ["1人", "2人", "3人"] as const;
   const lockedReason = copy.standee.lockedReason;
+  const layerDisplayName = getThumbnailLayerDisplayName(layer, locale);
 
   return (
     <div className="space-y-3 border-t border-border pt-4">
@@ -2765,30 +2784,34 @@ function StandeePlacementPanel({
         {layer.locked ? <span className="text-[11px] font-bold text-muted">{copy.standee.locked}</span> : null}
       </div>
       <p className="truncate text-[11px] font-bold text-muted">
-        {copy.standee.target}: <span className="text-foreground">{layer.name}</span>
+        {copy.standee.target}: <span className="text-foreground">{layerDisplayName}</span>
       </p>
       {layer.locked ? <p className="text-[11px] font-semibold text-muted">{copy.standee.unlockGuide}</p> : null}
       <p className="text-[11px] font-semibold leading-relaxed text-muted">{copy.standee.multiGuide}</p>
       {groups.map((group) => (
         <div key={group} className="space-y-2">
-          <p className="text-[11px] font-black text-muted">{copy.standee.groups[group]}</p>
+          <p className="text-[11px] font-black text-muted">{getThumbnailStandeePlacementGroup(group, locale)}</p>
           <div className="grid grid-cols-2 gap-2">
             {thumbnailStandeePlacementPresets
               .filter((preset) => preset.group === group)
-              .map((preset) => (
+              .map((preset) => {
+                const placementName = getThumbnailStandeePlacementName(preset.id, locale, preset.name);
+                const placementDescription = getThumbnailStandeePlacementDescription(preset, locale);
+                return (
                 <button
                   key={preset.id}
                   className="flat-control min-h-12 px-2 py-2 text-left text-xs font-bold disabled:cursor-not-allowed disabled:opacity-45"
                   type="button"
                   disabled={Boolean(layer.locked)}
                   onClick={() => onApply(preset.id)}
-                  title={layer.locked ? `${preset.description}（${lockedReason}）` : preset.description}
-                  aria-label={layer.locked ? `${preset.name}。${lockedReason}。` : preset.name}
+                  title={layer.locked ? `${placementDescription} (${lockedReason})` : placementDescription}
+                  aria-label={layer.locked ? `${placementName}. ${lockedReason}.` : placementName}
                 >
-                  <span className="block text-foreground">{preset.name}</span>
-                  <span className="mt-0.5 block truncate text-[11px] text-muted">{preset.description}</span>
+                  <span className="block text-foreground">{placementName}</span>
+                  <span className="mt-0.5 block truncate text-[11px] text-muted">{placementDescription}</span>
                 </button>
-              ))}
+                );
+              })}
           </div>
         </div>
       ))}
@@ -2798,12 +2821,14 @@ function StandeePlacementPanel({
 
 function TextControls({
   copy,
+  locale,
   layer,
   fontMenuOpen,
   onFontMenuOpenChange,
   onChange
 }: {
   copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   layer: Extract<ThumbnailLayer, { type: "text" }>;
   fontMenuOpen: boolean;
   onFontMenuOpenChange: (open: boolean) => void;
@@ -2921,10 +2946,10 @@ function TextControls({
                 {filteredFontGroups.length > 0 ? (
                   filteredFontGroups.map((group) => (
                   <div key={group.language}>
-                    <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-normal text-muted">{group.label}</p>
+                    <p className="px-3 pb-1 pt-2 text-[11px] font-black uppercase tracking-normal text-muted">{getThumbnailFontLanguageLabel(group.language, locale)}</p>
                     {group.categories.map((fontCategory) => (
                       <div key={`${group.language}-${fontCategory.label}`}>
-                        <p className="px-3 pb-1 pt-2 text-[10px] font-black tracking-normal text-muted/80">{fontCategory.label}</p>
+                        <p className="px-3 pb-1 pt-2 text-[10px] font-black tracking-normal text-muted/80">{getThumbnailFontCategoryLabel(fontCategory.label, locale)}</p>
                         {fontCategory.options.map((fontOption) => (
                           <button
                             key={fontOption.family}
@@ -2939,7 +2964,7 @@ function TextControls({
                             onClick={() => selectFontFamily(fontOption.family)}
                           >
                             <span className="block truncate">{fontOption.label}</span>
-                            <span className="mt-0.5 block truncate text-[10px] font-bold text-muted/80">{fontOption.mood}</span>
+                            <span className="mt-0.5 block truncate text-[10px] font-bold text-muted/80">{getThumbnailFontMoodLabel(fontOption.mood, locale)}</span>
                           </button>
                         ))}
                       </div>
@@ -3138,7 +3163,7 @@ function PresetApplyConfirmDialog({
           <div className="grid gap-2">
             {thumbnailMainTextCarryoverTargets.map((target) => (
               <div key={target.id} className="grid gap-2 rounded-base border border-border bg-surface p-3 text-xs min-[640px]:grid-cols-[5.5rem_minmax(0,1fr)_minmax(0,1fr)]">
-                <p className="font-black text-foreground">{target.label}</p>
+                <p className="font-black text-foreground">{getThumbnailMainTextCarryoverLabel(target.id, locale)}</p>
                 <div className="min-w-0">
                   <p className="mb-1 font-bold text-muted">{copy.presetDialog.current}</p>
                   <p className="line-clamp-2 break-words font-bold text-foreground">{currentText[target.id] || copy.presetDialog.unset}</p>

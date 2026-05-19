@@ -46,6 +46,9 @@ export const snsSplitImageMakerCopy = {
       post: "完成形",
       postButton: (index: number) => `投稿${index}`,
       empty: "メイン画像を選ぶと、投稿順プレビューとPNG/JPEG保存が有効になります。",
+      placeholder: {
+        mainImage: "ベース画像を選択してください"
+      },
       editGuide: (index: number) => `投稿${index}を編集中です。投稿別調整はドラッグまたはスライダーで行います。中心線に近づくと吸着します。`,
       gridGuide: "投稿順プレビューです。split_1から保存順に確認できます。",
       finalGuide: "完成形プレビューです。メイン分割を1枚の画像として確認し、気になる投稿を選んで調整できます。",
@@ -171,6 +174,9 @@ export const snsSplitImageMakerCopy = {
       post: "Final",
       postButton: (index: number) => `Post ${index}`,
       empty: "Select a main image to enable posting-order preview and PNG/JPEG export.",
+      placeholder: {
+        mainImage: "Select the main image"
+      },
       editGuide: (index: number) => `Editing post ${index}. Adjust per-post position by dragging or using sliders. It snaps near the center line.`,
       gridGuide: "Posting-order preview. Check from split_1 in save order.",
       finalGuide: "Final preview. Review the main split as one image, then pick a post to adjust.",

@@ -1003,7 +1003,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 4（ラベル）": "SAFE NOTICE",
       "テキスト 1（見出し）": "Schedule\nNotice",
       "テキスト 3（サブ）": "Details on stream day",
-      "テキスト 2（時刻）": "20:00"
+      "テキスト 2（時刻）": "20:00 START"
     },
     whiteboard_plan: {
       "テキスト 4（ラベル）": "TODAY'S PLAN",
@@ -1120,6 +1120,9 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
     },
     event_notice: {
       "テキスト 1（見出し）": { x: 35.03487466588092, y: 157.82750879293576 }
+    },
+    privacy_notice: {
+      "テキスト 1（見出し）": { x: 109.55168059267987, y: 193.6542692509167 }
     },
     karaoke: {
       "テキスト 1（見出し）": { fontSize: 166 }

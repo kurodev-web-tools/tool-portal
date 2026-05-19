@@ -133,6 +133,7 @@ const visualAdjustmentTargets = new Set([
   "cover_song_notice/テキスト 4（ラベル）",
   "cover_song_notice/テキスト 1（見出し）",
   "event_notice/テキスト 1（見出し）",
+  "privacy_notice/テキスト 1（見出し）",
   "karaoke/テキスト 1（見出し）"
 ]);
 
@@ -456,6 +457,26 @@ assert.equal(
   enEventHeadline?.y,
   157.82750879293576,
   "Event Notice headline y follows the supplied English visual draft"
+);
+const enPrivacyDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("privacy_notice"),
+  "en"
+);
+const enPrivacyHeadline = textLayers(enPrivacyDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enPrivacyHeadline?.x,
+  109.55168059267987,
+  "Privacy Notice headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enPrivacyHeadline?.y,
+  193.6542692509167,
+  "Privacy Notice headline y follows the supplied English visual draft"
+);
+assert.equal(
+  textLayers(enPrivacyDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "20:00 START",
+  "Privacy Notice time copy follows the supplied English visual draft"
 );
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(

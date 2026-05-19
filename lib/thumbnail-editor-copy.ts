@@ -1,6 +1,7 @@
 import type { Locale } from "@/lib/locale";
 import type {
   ThumbnailFontLanguage,
+  ThumbnailEditorDraft,
   ThumbnailLayer,
   ThumbnailMainTextCarryoverKey,
   ThumbnailMaterial,
@@ -20,6 +21,8 @@ type ThumbnailPresetCopy = {
   name: string;
   description: string;
 };
+
+type ThumbnailPresetTextBodyCopy = Partial<Record<ThumbnailPresetId, Record<string, string>>>;
 
 export const thumbnailEditorCopy = {
   ja: {
@@ -945,6 +948,139 @@ const materialCopy: Record<Locale, Partial<Record<string, MaterialCopy>>> = {
   }
 };
 
+const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> = {
+  ja: {},
+  en: {
+    stream_announce: {
+      "テキスト 4（ラベル）": "Stream / YouTube",
+      "テキスト 1（見出し）": "FIRST TIME\nWELCOME!",
+      "テキスト 2（時刻）": "21:00 START",
+      "テキスト 3（サブ）": "Let's hang out together!"
+    },
+    first_stream: {
+      "テキスト 4（ラベル）": "DEBUT STREAM",
+      "テキスト 1（見出し）": "Debut\nStream",
+      "テキスト 2（時刻）": "20:00 START",
+      "テキスト 3（サブ）": "Nice to meet you!"
+    },
+    anniversary_stream: {
+      "テキスト 1（見出し）": "1st\nAnniversary",
+      "テキスト 4（ラベル）": "ANNIVERSARY LIVE",
+      "テキスト 3（サブ）": "A special night of thanks",
+      "テキスト 2（時刻）": "21:00 START"
+    },
+    endurance_stream: {
+      "テキスト 4（ラベル）": "CHALLENGE",
+      "テキスト 1（見出し）": "Endurance\nStream",
+      "テキスト 5（目標）": "Goal: 100 runs",
+      "テキスト 3（サブ）": "We keep going until we clear it",
+      "テキスト 2（時刻）": "19:00 START"
+    },
+    project_stream: {
+      "テキスト 5（英字）": "SPECIAL PROGRAM",
+      "テキスト 1（見出し）": "New\nProject",
+      "テキスト 3（サブ）": "What will happen today?",
+      "テキスト 4（ラベル）": "Audience Event",
+      "テキスト 2（時刻）": "20:30 START"
+    },
+    cover_song_notice: {
+      "テキスト 5（カバーアート注記）": "COVER ART / MV",
+      "テキスト 4（ラベル）": "COVER PREMIERE",
+      "テキスト 1（見出し）": "Cover\nSong",
+      "テキスト 3（サブ）": "New cover release",
+      "テキスト 2（時刻）": "20:00 PREMIERE"
+    },
+    event_notice: {
+      "テキスト 5（キービジュアル注記）": "KEY VISUAL",
+      "テキスト 4（ラベル）": "EVENT INFO",
+      "テキスト 1（見出し）": "Event\nNotice",
+      "テキスト 2（時刻）": "06.15 SAT",
+      "テキスト 3（サブ）": "Event details inside"
+    },
+    privacy_notice: {
+      "テキスト 4（ラベル）": "SAFE NOTICE",
+      "テキスト 1（見出し）": "Schedule\nNotice",
+      "テキスト 3（サブ）": "Details will be shared on the day",
+      "テキスト 2（時刻）": "20:00 START"
+    },
+    whiteboard_plan: {
+      "テキスト 4（ラベル）": "TODAY'S PLAN",
+      "テキスト 1（見出し）": "Today's\nStream Plan",
+      "テキスト 3（サブ）": "Let's check the plan together",
+      "テキスト 2（時刻）": "21:00 START"
+    },
+    karaoke: {
+      "テキスト 4（ラベル）": "Karaoke / YouTube",
+      "テキスト 1（見出し）": "Karaoke\nStream",
+      "テキスト 5（見出し英字）": "SINGING STREAM",
+      "テキスト 2（時刻）": "20:00 START",
+      "テキスト 3（サブ）": "Requests welcome / first-timers welcome"
+    },
+    chatting: {
+      "テキスト 4（ラベル）": "CHATTING / YouTube",
+      "テキスト 1（見出し）": "Chill\nChat Stream",
+      "テキスト 2（時刻）": "21:00 START",
+      "テキスト 3（サブ）": "Let's sort out today's topics"
+    },
+    clip: {
+      "テキスト 4（ラベル）": "Highlights",
+      "テキスト 1（見出し）": "Best\nMoments",
+      "テキスト 2（時刻）": "20:00 PREMIERE",
+      "テキスト 3（サブ）": "Short video / premiere"
+    },
+    game_live: {
+      "テキスト 4（ラベル）": "GAME LIVE",
+      "テキスト 1（見出し）": "Viewer\nGame Live",
+      "テキスト 2（時刻）": "20:00 START",
+      "テキスト 3（サブ）": "First-timers welcome / play along"
+    },
+    collaboration: {
+      "テキスト 4（ラベル）": "GUEST",
+      "テキスト 1（見出し）": "Collab\nStream",
+      "テキスト 2（時刻）": "20:00 START",
+      "テキスト 3（サブ）": "Guest name / project title"
+    },
+    announcement: {
+      "テキスト 4（ラベル）": "NEWS",
+      "テキスト 1（見出し）": "Important\nNotice",
+      "テキスト 2（時刻）": "5/10 RELEASE",
+      "テキスト 3（サブ）": "About upcoming activities"
+    },
+    weekly_schedule: {
+      "テキスト 4（ラベル）": "WEEKLY SCHEDULE",
+      "テキスト 1（見出し）": "Weekly\nStream Plan",
+      "テキスト 2（時刻）": "5/4 - 5/10",
+      "月曜 / 曜日": "MON",
+      "月曜 / 時間": "20:00",
+      "月曜 / 予定": "Chat",
+      "火曜 / 曜日": "TUE",
+      "火曜 / 時間": "20:00",
+      "火曜 / 予定": "Chat",
+      "水曜 / 曜日": "WED",
+      "水曜 / 時間": "-",
+      "水曜 / 予定": "Break",
+      "木曜 / 曜日": "THU",
+      "木曜 / 時間": "20:00",
+      "木曜 / 予定": "Games",
+      "金曜 / 曜日": "FRI",
+      "金曜 / 時間": "22:00",
+      "金曜 / 予定": "Collab",
+      "土曜 / 曜日": "SAT",
+      "土曜 / 時間": "19:00",
+      "土曜 / 予定": "Special",
+      "日曜 / 曜日": "SUN",
+      "日曜 / 時間": "21:00",
+      "日曜 / 予定": "Recap"
+    },
+    x_announcement: {
+      "テキスト 4（ラベル）": "X POST",
+      "テキスト 1（見出し）": "Today's Notice",
+      "テキスト 3（サブ）": "Stream plans and latest updates",
+      "テキスト 2（時刻）": "05.06 WED"
+    }
+  }
+};
+
 const materialNameTranslationsEn: Record<string, string> = {
   シアンラベル土台: "Cyan Label Plate",
   紺金日付バッジ: "Navy Gold Date Badge",
@@ -1153,6 +1289,40 @@ export function getThumbnailPresetName(presetId: string, locale: Locale, fallbac
 
 export function getThumbnailPresetDescription(preset: ThumbnailPreset, locale: Locale): string {
   return thumbnailPresetCopy[locale][preset.id as ThumbnailPresetId]?.description ?? preset.description;
+}
+
+export function getThumbnailPresetTextLayerBody(
+  presetId: ThumbnailPresetId,
+  layerName: string,
+  locale: Locale,
+  fallback: string
+): string {
+  if (locale === "ja") {
+    return fallback;
+  }
+
+  return thumbnailPresetTextBodyCopy[locale][presetId]?.[layerName] ?? fallback;
+}
+
+export function localizeThumbnailPresetTextLayerBodies(
+  draft: ThumbnailEditorDraft,
+  locale: Locale
+): ThumbnailEditorDraft {
+  if (locale === "ja") {
+    return draft;
+  }
+
+  return {
+    ...draft,
+    layers: draft.layers.map((layer) =>
+      layer.type === "text"
+        ? {
+            ...layer,
+            text: getThumbnailPresetTextLayerBody(draft.presetId, layer.name, locale, layer.text)
+          }
+        : layer
+    )
+  };
 }
 
 export function getThumbnailPresetCategoryLabel(category: ThumbnailPresetCategory, locale: Locale): string {

@@ -2101,9 +2101,9 @@ const isThumbnailUserImageLayer = (layer: ThumbnailLayer): layer is ThumbnailIma
 
 export const applyThumbnailPresetPartial = (
   draft: ThumbnailEditorDraft,
-  targetPresetId: ThumbnailPresetId
+  targetPresetId: ThumbnailPresetId,
+  targetDraft: ThumbnailEditorDraft = createDraftFromPreset(targetPresetId, draft.canvas)
 ): ThumbnailEditorDraft => {
-  const targetDraft = createDraftFromPreset(targetPresetId, draft.canvas);
   if (isThumbnailDraftPristineForPreset(draft)) {
     return targetDraft;
   }

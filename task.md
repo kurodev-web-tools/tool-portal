@@ -197,6 +197,39 @@
 - Remaining risk:
   - Thumbnail preset text layer canvas contents remain preset body/content, not display labels. Translating those should be a separate localized preset-content PR because it changes the actual generated thumbnail text rather than UI chrome.
 
+### EN Thumbnail Preset Text Content Final Follow-up
+
+- branch/worktree: `codex/en-preset-text-content` / `D:/V_streamer_tools/.worktrees/en-preset-text-content`
+- base: `origin/codex/en-support-preview` after PR #164 merge (`2026-05-19T11:00:45Z`)
+- Thumbnail Editor:
+  - added `localizeThumbnailPresetTextLayerBodies()` in `lib/thumbnail-editor-copy.ts` with compact English initial body text for each preset text layer.
+  - applied the helper only when creating/applying preset drafts in English mode: initial new draft, preset apply, canvas-size change, variant change, and broken-draft fallback.
+  - kept Japanese mode preset text bodies unchanged.
+  - kept preset ids, stored `layer.name`, main-text matching keys (`見出し / 時刻 / サブ / ラベル`), weekly grouping layer names, storage keys, draft schema, backup/user-entered text, and handoff payload unchanged.
+  - Schedule Calendar handoff text still overrides localized preset initial text after preset apply.
+- Verification:
+  - PASS: RED -> GREEN `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `node scripts/en-c-scope-copy-contract.mjs`
+  - PASS: `node scripts/thumbnail-sns-copy-locale-contract.mjs`
+  - PASS: `node scripts/tool-handoff-contract.mjs`
+  - PASS: `node scripts/thumbnail-preset-variants-contract.mjs`
+  - PASS: `npm run lint`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `git diff --check` (only repo-normal LF -> CRLF working-copy warnings)
+  - Note: extra exploratory `node scripts/thumbnail-layer-management-contract.mjs` still fails on pre-existing weekly row y drift (`月曜` expected 75 / actual 95). It was not changed in this scope.
+- UI width check:
+  - method: local `next dev --webpack -p 3038` + Playwright-driven Chrome smoke.
+  - page: `/tools/thumbnail-editor`
+  - widths: `390 / 820 / 1024 / 1280 / 1366px`
+  - result: English mode new draft selected text was `Let's hang out together!` with no Japanese characters; preset cards stayed English; layer list / selected-layer input stayed English where visible; `document.documentElement.lang` was `en`; body/document horizontal overflow was `0`; console error/warn was `0`.
+  - preset apply smoke at `1280px`: applying `Whiteboard Plan` as-is kept selected text English (`21:00 START`) with no Japanese characters.
+  - Schedule Calendar handoff smoke at `1280px`: `HANDOFF TITLE` was present before and after applying `Whiteboard Plan` with schedule text, confirming handoff text priority over localized preset initial text.
+  - manual language switch + reload at `1280px`: `ja` and `en` selections persisted in `v-streamer-tools-locale`, and `document.documentElement.lang` matched after reload.
+- Remaining risk:
+  - existing saved drafts, user-entered custom text, backup JSON values, and handoff payload values remain untranslated by design.
+  - visual check confirmed selected text / UI state rather than OCR-reading every canvas glyph. Contract covers all preset text layer bodies for English mode.
+  - next PR: B+C integration smoke / main PR judgment.
+
 - B+C integration smoke:
   - `/`
   - `/tools`

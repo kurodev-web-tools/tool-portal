@@ -246,6 +246,7 @@
   - incorporated the supplied `cover_song_notice` English draft: applied the one-line headline, `20:00 public` time copy, label/headline layout adjustments, and aligned the contract width estimator with `M PLUS Rounded 1c`.
   - incorporated the supplied `event_notice` English draft: applied the one-line headline and headline layout adjustment, and aligned the contract width estimator with `Zen Kaku Gothic New`.
   - incorporated the supplied `privacy_notice` English draft: restored `20:00 START` and applied the headline layout adjustment.
+  - incorporated the supplied `karaoke` English draft: applied the `song/frame` headline, restored `20:00 START`, and applied headline/English-headline/time/sub layout adjustments.
   - kept Japanese preset text/layout unchanged, and kept preset ids, stored `layer.name`, matching keys, weekly grouping keys, storage/schema, and handoff payload unchanged.
   - Schedule Calendar handoff text still overrides English preset initial text and EN layout helper output after preset apply.
 - Verification:

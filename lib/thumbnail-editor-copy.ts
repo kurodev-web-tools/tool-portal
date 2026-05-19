@@ -1013,9 +1013,9 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     },
     karaoke: {
       "テキスト 4（ラベル）": "KARAOKE LIVE",
-      "テキスト 1（見出し）": "Karaoke\nLive",
+      "テキスト 1（見出し）": "song\nframe",
       "テキスト 5（見出し英字）": "SINGING STREAM",
-      "テキスト 2（時刻）": "20:00",
+      "テキスト 2（時刻）": "20:00 START",
       "テキスト 3（サブ）": "Requests welcome"
     },
     chatting: {
@@ -1125,7 +1125,10 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
       "テキスト 1（見出し）": { x: 109.55168059267987, y: 193.6542692509167 }
     },
     karaoke: {
-      "テキスト 1（見出し）": { fontSize: 166 }
+      "テキスト 1（見出し）": { x: 181.62079851830015, y: 119.27508792935723, fontSize: 166 },
+      "テキスト 5（見出し英字）": { x: 67.93088207437961, y: 464.89740327770704 },
+      "テキスト 2（時刻）": { x: 236.0691179256204, y: 555.0349472423857 },
+      "テキスト 3（サブ）": { x: 52.37920148169968, y: 650.241637356881 }
     }
   }
 };

@@ -134,7 +134,10 @@ const visualAdjustmentTargets = new Set([
   "cover_song_notice/テキスト 1（見出し）",
   "event_notice/テキスト 1（見出し）",
   "privacy_notice/テキスト 1（見出し）",
-  "karaoke/テキスト 1（見出し）"
+  "karaoke/テキスト 1（見出し）",
+  "karaoke/テキスト 5（見出し英字）",
+  "karaoke/テキスト 2（時刻）",
+  "karaoke/テキスト 3（サブ）"
 ]);
 
 for (const preset of thumbnailLib.thumbnailPresets) {
@@ -484,10 +487,64 @@ assert.equal(
   "Requests welcome",
   "Karaoke sub copy is shortened for English visual balance"
 );
+const enKaraokeHeadline = textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 1（見出し）");
 assert.equal(
-  textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 1（見出し）")?.fontSize,
+  enKaraokeHeadline?.text,
+  "song\nframe",
+  "Karaoke headline copy follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeHeadline?.fontSize,
   166,
   "Karaoke headline gets an English-only font size adjustment"
+);
+assert.equal(
+  enKaraokeHeadline?.x,
+  181.62079851830015,
+  "Karaoke headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeHeadline?.y,
+  119.27508792935723,
+  "Karaoke headline y follows the supplied English visual draft"
+);
+const enKaraokeEnglishHeadline = textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 5（見出し英字）");
+assert.equal(
+  enKaraokeEnglishHeadline?.x,
+  67.93088207437961,
+  "Karaoke English headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeEnglishHeadline?.y,
+  464.89740327770704,
+  "Karaoke English headline y follows the supplied English visual draft"
+);
+const enKaraokeTime = textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 2（時刻）");
+assert.equal(
+  enKaraokeTime?.text,
+  "20:00 START",
+  "Karaoke time copy follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeTime?.x,
+  236.0691179256204,
+  "Karaoke time x follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeTime?.y,
+  555.0349472423857,
+  "Karaoke time y follows the supplied English visual draft"
+);
+const enKaraokeSub = textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 3（サブ）");
+assert.equal(
+  enKaraokeSub?.x,
+  52.37920148169968,
+  "Karaoke sub x follows the supplied English visual draft"
+);
+assert.equal(
+  enKaraokeSub?.y,
+  650.241637356881,
+  "Karaoke sub y follows the supplied English visual draft"
 );
 
 for (const target of thumbnailLib.thumbnailMainTextCarryoverTargets) {

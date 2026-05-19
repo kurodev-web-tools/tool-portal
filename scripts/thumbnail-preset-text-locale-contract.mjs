@@ -682,7 +682,7 @@ assert.doesNotMatch(
 );
 assert.match(
   thumbnailAppSource,
-  /applyScheduleHandoffToThumbnailDraft\(next, handoffPayload\)/,
+  /applyScheduleHandoffToThumbnailDraft\(next, handoffPayload, locale\)/,
   "Schedule Calendar handoff text still overrides localized preset initial text"
 );
 

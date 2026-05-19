@@ -5,7 +5,7 @@ import { PortalToolsIndex } from "@/components/portal/PortalToolsIndex";
 import { portalMetadata } from "@/lib/portal-metadata";
 import { portalCopy } from "@/lib/portal-copy";
 
-const toolsMetadata = portalMetadata.ja.tools;
+const toolsMetadata = portalMetadata.en.tools;
 
 export const metadata: Metadata = {
   title: toolsMetadata.title,

@@ -308,6 +308,38 @@
   - `npx tsc --noEmit`
   - `git diff --check`
 
+### EN SNS Split / Remaining Polish
+
+- branch/worktree: `codex/en-sns-split-polish` / `D:/V_streamer_tools/.worktrees/en-sns-split-polish`
+- base: `origin/codex/en-support-preview` after PR #168 merge (`2026-05-19T13:35:56Z`)
+- SNS Split Image Maker:
+  - preset landing cards now use a flex body plus a dedicated CTA area, keeping the `Open editor` / `編集画面を開く` button height and card-bottom gap stable even when card text length differs.
+  - kept preset ids, storage key, draft schema, handoff payload shape, export behavior, and URL design unchanged.
+- Thumbnail Editor / EN support polish:
+  - preset-card category / usage chips now wrap within the card instead of relying on horizontal overflow, so `Project / viewer participation` stays inside the card.
+  - Schedule -> Thumbnail handoff canvas fallback text is locale-aware: EN mode uses `Untitled event` / `Stream notice` instead of `無題の予定` / `配信告知` when payload fields are missing.
+  - static metadata for root/home/tools/tool pages now uses conservative English copy where runtime locale metadata is not available.
+  - adjusted EN copy for Discord feedback aria, planned sign-in copy, and result count suffix (`visible`) so isolated labels read naturally.
+- Verification:
+  - PASS: RED -> GREEN `node scripts/en-c-scope-copy-contract.mjs`
+  - PASS: RED -> GREEN `node scripts/sns-split-image-maker-contract.mjs`
+  - PASS: RED -> GREEN `node scripts/portal-tools-copy-locale-contract.mjs`
+  - PASS: RED -> GREEN `node scripts/tool-portal-entry-contract.mjs`
+  - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `node scripts/tool-handoff-contract.mjs`
+  - PASS: `npm run lint`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `git diff --check` (only repo-normal LF -> CRLF working-copy warnings)
+- UI width check:
+  - method: local `next dev --webpack -p 3037` + Chrome DevTools MCP browser check on `http://localhost:3037`.
+  - SNS Split page: started from `/tools/sns-split-image-maker/?preset=split-2`, then opened the preset landing with the existing change-preset control.
+  - widths: requested `390 / 820 / 1280px`; Chrome DevTools could not reduce `window.innerWidth` below `500px`, so the smallest measured viewport was `500px`.
+  - JA/EN SNS preset cards: CTA button height delta `0`, card bottom-gap delta `0`, same-row button top delta `0` at `820 / 1280px`, and body/document horizontal overflow `0`.
+  - Thumbnail Editor preset cards: EN `Project / viewer participation` and JA `企画 / 視聴者参加` chips stayed within the visible card bounds at measured `500 / 820 / 1280px`; body/document horizontal overflow `0`.
+- Remaining risk:
+  - exact `390px` browser measurement was not available through Chrome DevTools MCP in this environment; smallest actual `window.innerWidth` was `500px`.
+  - static metadata is conservative English, not runtime locale-switched metadata.
+
 ## Completed EN Support Summary
 
 - PR #154 `codex/en-locale-foundation` -> `codex/en-support-preview`: locale foundation + language switch merged.

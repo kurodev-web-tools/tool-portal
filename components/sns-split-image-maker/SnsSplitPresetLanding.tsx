@@ -37,8 +37,8 @@ export function SnsSplitPresetLanding({
 
         <main className="grid gap-4 md:grid-cols-3">
           {presetCards.map((preset) => (
-            <article key={preset.id} className="panel flex min-h-[260px] flex-col justify-between gap-5 p-5 shadow-none">
-              <div>
+            <article key={preset.id} className="panel flex min-h-[260px] flex-col gap-5 p-5 shadow-none">
+              <div data-sns-preset-card="true" className="flex flex-1 flex-col">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold text-primary-strong">{preset.status}</p>
@@ -55,17 +55,19 @@ export function SnsSplitPresetLanding({
                   ))}
                 </ul>
               </div>
-              <button
-                type="button"
-                onClick={() => onOpenPreset(preset.id)}
-                disabled={!preset.available}
-                className={[
-                  "min-h-12 rounded-base px-4 py-2 text-sm font-black transition",
-                  preset.available ? "bg-primary text-white shadow-panel hover:opacity-90" : "cursor-not-allowed border border-border bg-surface-muted text-muted"
-                ].join(" ")}
-              >
-                {preset.available ? copy.common.openEditor : copy.common.unavailable}
-              </button>
+              <div className="mt-auto" data-sns-preset-cta="true">
+                <button
+                  type="button"
+                  onClick={() => onOpenPreset(preset.id)}
+                  disabled={!preset.available}
+                  className={[
+                    "min-h-12 w-full rounded-base px-4 py-2 text-sm font-black transition",
+                    preset.available ? "bg-primary text-white shadow-panel hover:opacity-90" : "cursor-not-allowed border border-border bg-surface-muted text-muted"
+                  ].join(" ")}
+                >
+                  {preset.available ? copy.common.openEditor : copy.common.unavailable}
+                </button>
+              </div>
             </article>
           ))}
         </main>

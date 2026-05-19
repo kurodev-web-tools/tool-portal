@@ -297,7 +297,7 @@ export const portalCopy = {
       title: "Tools",
       description: "Schedule Calendar, Thumbnail Editor, and SNS Split Image Maker are available now. Planned candidates stay separated so you can filter only when needed.",
       currentSuiteSuffix: "selected",
-      resultCountSuffix: "shown",
+      resultCountSuffix: "visible",
       listLabel: "Tool list",
       empty: "No tools match these filters yet."
     },
@@ -327,7 +327,7 @@ export const portalCopy = {
       body: "Send layout issues, operation bugs, or improvement requests by email, X, or Discord.",
       email: "Send email",
       xAria: "Open kurodev on X",
-      discordAria: "Open the Discord reception for the tool portal"
+      discordAria: "Open the Kuro Stream Kit Discord feedback channel"
     },
     navigation: {
       menuOpen: "Open menu",
@@ -339,9 +339,9 @@ export const portalCopy = {
       future: "Future features",
       futureItems: ["Favorites", "Recent tools", "Pinned tools"],
       comingSoon: "Planned",
-      loginTitle: "More useful after login",
-      loginBody: "Personalized features such as favorites and history are planned for a later phase.",
-      loginButton: "Login planned",
+      loginTitle: "Sign in features are planned",
+      loginBody: "Favorites, history, and other personalized features are planned for a later phase.",
+      loginButton: "Sign-in planned",
       toolTitles: {
         "schedule-calendar": "Schedule Calendar",
         "thumbnail-editor": "Thumbnail Editor",

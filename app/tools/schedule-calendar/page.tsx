@@ -4,7 +4,7 @@ import { ScheduleCalendarApp } from "@/components/schedule-calendar/ScheduleCale
 
 export const metadata: Metadata = {
   title: "Schedule Calendar",
-  description: "配信予定の追加、編集、確認、バックアップ運用ができるKuro Stream Kitの公開中ツールです。"
+  description: "A public Kuro Stream Kit tool for adding, editing, reviewing, backing up, and handing off stream schedules."
 };
 
 export default function ScheduleCalendarPage() {

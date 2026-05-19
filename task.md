@@ -112,6 +112,45 @@
 - fine-grained internal labels in `lib/thumbnail-editor.ts` / `lib/sns-split-image-maker.ts` that are primarily data identifiers, layer matching keys, generated canvas text, or saved draft compatibility strings remain as-is.
 - exhaustive aria translation and debug/internal exception text outside the public prelaunch path remain backlog scope.
 
+### EN Material / Layer Copy Follow-up Result
+
+- branch/worktree: `codex/en-material-layer-copy` / `D:/V_streamer_tools/.worktrees/en-material-layer-copy`
+- base: `origin/codex/en-support-preview` after PR #161 merge (`2026-05-19T06:52:11Z`)
+- Thumbnail Editor:
+  - localized built-in material library display helpers for `name / description / recommendedPlacement`, category labels, search matching, material toast / aria display names.
+  - added UI-only layer display-name localization for known preset/material/system layers while preserving stored `layer.name`, matching keys, handoff payload, backup JSON, localStorage, and IndexedDB schema.
+  - localized standee placement `name / description / group`, font language/category/mood metadata, and main-text carryover target labels while keeping internal `namePart` values unchanged.
+- SNS Split Image Maker:
+  - localized `getSnsSplitSlotLabel()` visible slot labels and no-image canvas placeholder.
+  - kept image ids, draft image names, export order, and saved draft shape unchanged.
+  - English mode export fallback now avoids surfacing raw Japanese exception messages in the user toast.
+- Portal / common:
+  - localized `ThemeToggle` visible label, aria, and title.
+  - moved `/tools` Suspense fallback copy into `portalCopy`.
+- Schedule Calendar:
+  - no code change in this follow-up. Default hashtag display localization was already covered by the existing schedule copy helper; saved/imported/custom hashtag data remains user data and untranslated by design.
+
+### EN Material / Layer Copy Follow-up Verification
+
+- PASS: `node scripts/en-c-scope-copy-contract.mjs`
+- PASS: `node scripts/thumbnail-sns-copy-locale-contract.mjs`
+- PASS: `node scripts/tool-handoff-contract.mjs`
+- PASS: `npm run lint`
+- PASS: `npx tsc --noEmit`
+- PASS: `git diff --check` (only repo-normal LF -> CRLF working-copy warnings)
+- UI width check:
+  - method: local `next dev --webpack -p 3037` + Playwright-driven browser check.
+  - pages: `/`, `/tools`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker`
+  - widths: `390 / 820 / 1024 / 1280 / 1366px`
+  - result: English display passed for material library cards/search/category filters, layer list display, text/font metadata, SNS additional slot labels, ThemeToggle desktop/mobile drawer labels, manual language switch + reload persistence, `document.documentElement.lang` sync, body/document horizontal overflow <= 1px, and no browser console error/warn.
+  - `/tools/schedule-calendar` was not rechecked in this follow-up because Schedule Calendar code was not changed.
+
+### EN Material / Layer Copy Follow-up Remaining Risks
+
+- per-tool static metadata remains mostly static unless already covered by previous EN PRs; larger metadata restructuring is deferred to B+C integration smoke / main PR judgment.
+- canvas text, preset body text, saved user input, custom layer names, backup JSON payload values, and handoff payload values remain untranslated by design.
+- exhaustive internal/debug exception text outside normal English-mode UI flow remains backlog scope.
+
 - B+C integration smoke:
   - `/`
   - `/tools`

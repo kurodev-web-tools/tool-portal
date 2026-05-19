@@ -318,23 +318,27 @@ export function SnsSplitImageMakerApp() {
     const snapshot = draft;
     try {
       if (editorCanvasRef.current) {
-        await drawSnsSplitTile(editorCanvasRef.current, snapshot, selectedTile, { includeGuides: snapshot.config.showSeam || snapshot.config.showGrid });
+        await drawSnsSplitTile(editorCanvasRef.current, snapshot, selectedTile, {
+          includeGuides: snapshot.config.showSeam || snapshot.config.showGrid,
+          placeholder: copy.preview.placeholder.mainImage
+        });
       }
       await Promise.all(
         tiles.map((tile, index) => {
           const canvas = postPreviewCanvasRefs.current[index];
-          return canvas ? drawSnsSplitMainTile(canvas, snapshot, tile) : Promise.resolve();
+          return canvas ? drawSnsSplitMainTile(canvas, snapshot, tile, { placeholder: copy.preview.placeholder.mainImage }) : Promise.resolve();
         })
       );
       if (compositeCanvasRef.current) {
         await drawSnsSplitComposite(compositeCanvasRef.current, snapshot, {
-          includeGuides: snapshot.config.showSeam || snapshot.config.showGrid
+          includeGuides: snapshot.config.showSeam || snapshot.config.showGrid,
+          placeholder: copy.preview.placeholder.mainImage
         });
       }
     } catch (error) {
       setToast({ tone: "error", message: locale === "ja" && error instanceof Error ? error.message : copy.messages.previewFailed });
     }
-  }, [copy.messages.previewFailed, draft, locale, selectedTile, setToast, tiles]);
+  }, [copy.messages.previewFailed, copy.preview.placeholder.mainImage, draft, locale, selectedTile, setToast, tiles]);
 
   useEffect(() => {
     void renderPreviews();
@@ -408,7 +412,8 @@ export function SnsSplitImageMakerApp() {
       };
       try {
         await drawSnsSplitTile(canvas, previewDraft, selectedTileRef.current, {
-          includeGuides: previewDraft.config.showSeam || previewDraft.config.showGrid
+          includeGuides: previewDraft.config.showSeam || previewDraft.config.showGrid,
+          placeholder: copy.preview.placeholder.mainImage
         });
       } finally {
         dragPreviewRenderingRef.current = false;
@@ -605,7 +610,7 @@ export function SnsSplitImageMakerApp() {
     exportCanvasRef.current = canvas;
     try {
       for (const tile of tiles) {
-        await drawSnsSplitTile(canvas, draft, tile, { forceJpegBackground: draft.exportSettings.format === "jpeg" });
+        await drawSnsSplitTile(canvas, draft, tile, { forceJpegBackground: draft.exportSettings.format === "jpeg", placeholder: copy.preview.placeholder.mainImage });
         const mime = draft.exportSettings.format === "jpeg" ? "image/jpeg" : "image/png";
         const dataUrl = canvas.toDataURL(mime, draft.exportSettings.quality);
         const link = document.createElement("a");
@@ -615,7 +620,7 @@ export function SnsSplitImageMakerApp() {
       }
       setToast({ tone: "success", message: copy.toasts.exportDone(getSnsSplitExportOrderLabel(draft.preset), postCount) });
     } catch (error) {
-      setToast({ tone: "error", message: error instanceof Error ? error.message : copy.toasts.exportFailed });
+      setToast({ tone: "error", message: locale === "ja" && error instanceof Error ? error.message : copy.toasts.exportFailed });
     }
   };
 
@@ -906,7 +911,7 @@ export function SnsSplitImageMakerApp() {
                         copy={copy}
                         image={image}
                         index={index + 1}
-                        roleLabel={getSnsSplitSlotLabel(draft.mode, index + 1, draft.preset, draft.config.joinType)}
+                        roleLabel={getSnsSplitSlotLabel(draft.mode, index + 1, draft.preset, draft.config.joinType, locale)}
                         mode={draft.mode}
                         onChange={handleFileChange}
                         onDropFile={handleImageFile}

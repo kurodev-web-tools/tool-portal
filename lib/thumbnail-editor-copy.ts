@@ -1,12 +1,19 @@
 import type { Locale } from "@/lib/locale";
 import type {
+  ThumbnailFontLanguage,
+  ThumbnailLayer,
+  ThumbnailMainTextCarryoverKey,
+  ThumbnailMaterial,
+  ThumbnailMaterialCategory,
   ThumbnailPreset,
   ThumbnailPresetCategory,
   ThumbnailPresetFilter,
   ThumbnailPresetId,
   ThumbnailPresetVariantId,
   ThumbnailQualityGuardItem,
-  ThumbnailQualityGuardSummary
+  ThumbnailQualityGuardSummary,
+  ThumbnailStandeePlacementPreset,
+  ThumbnailStandeePlacementPresetId
 } from "@/lib/thumbnail-editor";
 
 type ThumbnailPresetCopy = {
@@ -702,6 +709,417 @@ const usageLabels = {
   }
 } as const satisfies Record<Locale, Partial<Record<string, string>>>;
 
+const materialCategoryLabels = {
+  ja: {
+    "label-base": "ラベル土台",
+    "date-badge": "バッジ",
+    corner: "角飾り",
+    accent: "光 / グリント / エフェクト",
+    divider: "HUD線 / 区切り",
+    frame: "フレーム / パネル"
+  },
+  en: {
+    "label-base": "Label base",
+    "date-badge": "Date badge",
+    corner: "Corner accent",
+    accent: "Glow / effect",
+    divider: "HUD line / divider",
+    frame: "Frame / panel"
+  }
+} as const satisfies Record<Locale, Record<ThumbnailMaterialCategory, string>>;
+
+type MaterialCopy = {
+  name: string;
+  description: string;
+  recommendedPlacement: string;
+};
+
+const materialCopy: Record<Locale, Partial<Record<string, MaterialCopy>>> = {
+  ja: {},
+  en: {
+    "label-plaque-cyan": {
+      name: "Cyan Label Plate",
+      description: "A cyan glow plate for short label text.",
+      recommendedPlacement: "Upper-left label base"
+    },
+    "date-badge-navy-gold": {
+      name: "Navy Gold Date Badge",
+      description: "A wide navy and gold badge for dates, times, or release notes.",
+      recommendedPlacement: "Lower date or time badge"
+    },
+    "week-range-badge-blue": {
+      name: "Week Range Badge",
+      description: "A blue badge suited for week ranges or short period labels.",
+      recommendedPlacement: "Week range or short period label"
+    },
+    "corner-ornament-gold": {
+      name: "Gold Corner Ornament",
+      description: "A restrained gold corner ornament for info boxes and cards.",
+      recommendedPlacement: "Corners of information frames"
+    },
+    "soft-glint-gold": {
+      name: "Soft Gold Glint",
+      description: "Small gold sparkles for headlines or badge areas.",
+      recommendedPlacement: "Subtle glow near headlines"
+    },
+    "hud-corner-frame-green": {
+      name: "Green HUD Corner Frame",
+      description: "Green HUD corners that layer well over standees, video frames, or info blocks.",
+      recommendedPlacement: "Standee or information HUD corners"
+    },
+    "schedule-table-accent-cyan": {
+      name: "Cyan Schedule Accent",
+      description: "Cyan line accents for schedule tables, separators, and info grids.",
+      recommendedPlacement: "Schedule table or divider accent"
+    },
+    "duo-guide-spotlight": {
+      name: "Soft Multi-Guide Glow",
+      description: "A faint guide glow behind multi-person layouts, video frames, or comment areas.",
+      recommendedPlacement: "Soft guide for multi-person or video frames"
+    },
+    "hud-divider-cyan": {
+      name: "Cyan HUD Divider",
+      description: "A thin cyan HUD line for headline undersides or section breaks.",
+      recommendedPlacement: "Under headlines or between sections"
+    },
+    "video-comment-frame-blue": {
+      name: "Blue Video Comment Frame",
+      description: "A blue frame for video areas, comment boxes, or large information panels.",
+      recommendedPlacement: "Base for video or comment frames"
+    },
+    "label-tech-plate-navy-cyan": {
+      name: "Navy Cyan Tech Plate",
+      description: "A wide navy plate with cyan trim for headline backgrounds.",
+      recommendedPlacement: "Wide tech plate behind headlines"
+    },
+    "label-glass-plate-white-blue": {
+      name: "White Blue Glass Label",
+      description: "A white and pale-blue glass label for short supporting text.",
+      recommendedPlacement: "Glass label behind short support text"
+    },
+    "label-champagne-plaque-dark-trim": {
+      name: "Champagne Title Plaque",
+      description: "A champagne-gold plaque for refined announcement headlines.",
+      recommendedPlacement: "Elegant wide headline plaque"
+    },
+    "label-diagonal-ribbon-slate-cyan": {
+      name: "Diagonal Cut Ribbon",
+      description: "A wide diagonal-cut ribbon for subheads or short notes.",
+      recommendedPlacement: "Diagonal ribbon behind subheads"
+    },
+    "badge-status-magenta-cyan": {
+      name: "Magenta Round Badge",
+      description: "A compact magenta and cyan badge for dates or short status labels.",
+      recommendedPlacement: "Behind dates or short status text"
+    },
+    "badge-time-amber-charcoal": {
+      name: "Amber Time Pill",
+      description: "An amber and charcoal pill badge suited for time or release labels.",
+      recommendedPlacement: "Behind time labels"
+    },
+    "badge-notice-mint-white": {
+      name: "Mint Notice Tag",
+      description: "A small mint and white tag badge for light notices or short support text.",
+      recommendedPlacement: "Behind light notices or short notes"
+    },
+    "badge-tech-hex-cyan-violet": {
+      name: "Cyan Hex Tech Badge",
+      description: "A compact cyan and violet hex badge for short tech-style status text.",
+      recommendedPlacement: "Short tech-style status label"
+    },
+    "frame-smoke-glass-blue-rim": {
+      name: "Blue Rim Smoke Panel",
+      description: "A low-saturation smoke glass panel with a blue rim for video or info blocks.",
+      recommendedPlacement: "Behind video frames or info blocks"
+    },
+    "frame-offwhite-navy-info-panel": {
+      name: "Off-White Navy Info Panel",
+      description: "A readable off-white information panel with navy line accents.",
+      recommendedPlacement: "Behind readable information blocks"
+    },
+    "frame-thin-gold-technical": {
+      name: "Thin Gold Tech Frame",
+      description: "A thin gold technical frame for elegant video frames or standee spacing guides.",
+      recommendedPlacement: "Elegant frame or standee spacing guide"
+    },
+    "frame-translucent-comment-panel": {
+      name: "Translucent Comment Panel",
+      description: "A translucent wide panel for comment areas or short guidance text.",
+      recommendedPlacement: "Behind comment areas or short notes"
+    },
+    "frame-muted-schedule-panel": {
+      name: "Muted Schedule Panel",
+      description: "A subdued panel with faint rules for schedule or information areas.",
+      recommendedPlacement: "Schedule area or muted info frame"
+    },
+    "divider-cyan-thin-hud": {
+      name: "Thin Cyan HUD Line",
+      description: "A thin cyan HUD accent line that layers lightly under headlines.",
+      recommendedPlacement: "Thin accent line under headlines"
+    },
+    "divider-soft-white-dotted": {
+      name: "Soft White Dotted Divider",
+      description: "A pale white dotted divider for spacing information blocks.",
+      recommendedPlacement: "Dotted divider between information blocks"
+    },
+    "divider-muted-teal-l-corner-guide": {
+      name: "Muted Teal L Guide",
+      description: "A low-saturation teal L-shaped guide for schedule or information frame corners.",
+      recommendedPlacement: "L guide for schedule or info corners"
+    },
+    "divider-pale-cyan-segmented-underline": {
+      name: "Pale Cyan Segmented Underline",
+      description: "A pale cyan segmented underline for headlines or short explanations.",
+      recommendedPlacement: "Segmented underline for headlines"
+    },
+    "divider-navy-white-technical-rule": {
+      name: "Navy White Technical Rule",
+      description: "A subdued navy and white technical rule for schedule support lines.",
+      recommendedPlacement: "Support rule for schedule areas"
+    },
+    "effect-warm-gold-subtle-glint": {
+      name: "Warm Gold Glint",
+      description: "A restrained gold glint for the side of headlines or badges.",
+      recommendedPlacement: "Small gold glint beside headlines"
+    },
+    "effect-soft-white-sparkle-cluster": {
+      name: "Soft White Sparkles",
+      description: "Small pale white sparkles for CTA or key information areas.",
+      recommendedPlacement: "Near CTA or important information"
+    },
+    "effect-pale-cyan-diagonal-streak": {
+      name: "Pale Cyan Diagonal Streak",
+      description: "A pale cyan diagonal highlight for lightly layering over backgrounds.",
+      recommendedPlacement: "Light diagonal highlight over backgrounds"
+    },
+    "effect-blue-glow-wash": {
+      name: "Blue Glow Wash",
+      description: "A subtle blue glow wash that blends boundaries between assets.",
+      recommendedPlacement: "Soft blue glow between layered assets"
+    },
+    "corner-rose-gold-asymmetric-shard": {
+      name: "Rose Gold Shard",
+      description: "A restrained asymmetric rose and gold accent for headline or info-frame corners.",
+      recommendedPlacement: "Asymmetric accent near headlines or corners"
+    },
+    "corner-cyan-navy-tech-chevron": {
+      name: "Navy Cyan Chevron",
+      description: "A small navy and cyan chevron for directing attention beside key information.",
+      recommendedPlacement: "Small direction mark beside key information"
+    },
+    "corner-white-charcoal-diagonal-tab": {
+      name: "White Charcoal Diagonal Tab",
+      description: "A small white and charcoal diagonal tab for edges and open space.",
+      recommendedPlacement: "Diagonal tab at edges or open space"
+    },
+    "corner-champagne-glint-bracket": {
+      name: "Champagne Glint Bracket",
+      description: "A small champagne bracket accent that tightens another asset's corner.",
+      recommendedPlacement: "Small bracket accent on another asset corner"
+    },
+    "impact-arrow-cyan-black": {
+      name: "Cyan Arrow Accent",
+      description: "A compact cyan and black arrow accent for headlines or focus points.",
+      recommendedPlacement: "Arrow accent near headlines or focus points"
+    },
+    "impact-burst-yellow-black": {
+      name: "Yellow Black Impact Burst",
+      description: "An abstract yellow and black impact mark for emphasis behind or beside key elements.",
+      recommendedPlacement: "Behind or beside emphasized elements"
+    },
+    "impact-speed-lines-white-cyan": {
+      name: "White Cyan Speed Lines",
+      description: "White and cyan diagonal speed lines for headline undersides or screen edges.",
+      recommendedPlacement: "Speed lines under headlines or at screen edges"
+    },
+    "impact-focus-lines-monochrome": {
+      name: "Monochrome Focus Lines",
+      description: "Abstract black-and-white focus lines that can sit faintly behind a focal point.",
+      recommendedPlacement: "Faint focus lines behind key points"
+    },
+    "impact-outline-pop-base-white-black": {
+      name: "White Black Pop Base",
+      description: "A compact white-and-black outlined base for dates or short status text.",
+      recommendedPlacement: "Outlined base behind short dates or status text"
+    }
+  }
+};
+
+const materialNameTranslationsEn: Record<string, string> = {
+  シアンラベル土台: "Cyan Label Plate",
+  紺金日付バッジ: "Navy Gold Date Badge",
+  週範囲バッジ: "Week Range Badge",
+  金角飾り: "Gold Corner Ornament",
+  控えめ金グリント: "Soft Gold Glint",
+  HUD角フレーム: "Green HUD Corner Frame",
+  予定表アクセント: "Cyan Schedule Accent",
+  薄い複数枠ガイド: "Soft Multi-Guide Glow",
+  シアンHUD区切り: "Cyan HUD Divider",
+  動画コメント枠: "Blue Video Comment Frame",
+  紺シアン横長プレート: "Navy Cyan Tech Plate",
+  白青ガラスラベル: "White Blue Glass Label",
+  金縁タイトル台座: "Champagne Title Plaque",
+  斜めカットリボン: "Diagonal Cut Ribbon",
+  マゼンタ丸バッジ: "Magenta Round Badge",
+  琥珀時刻ピル: "Amber Time Pill",
+  ミント通知タグ: "Mint Notice Tag",
+  シアン六角バッジ: "Cyan Hex Tech Badge",
+  青縁スモークパネル: "Blue Rim Smoke Panel",
+  白紺情報パネル: "Off-White Navy Info Panel",
+  細金テック枠: "Thin Gold Tech Frame",
+  透けコメントパネル: "Translucent Comment Panel",
+  低彩度予定パネル: "Muted Schedule Panel",
+  細シアンHUDライン: "Thin Cyan HUD Line",
+  白点線セパレーター: "Soft White Dotted Divider",
+  ティールL字ガイド: "Muted Teal L Guide",
+  淡シアン分割下線: "Pale Cyan Segmented Underline",
+  紺白テクニカル罫線: "Navy White Technical Rule",
+  薄金グリント: "Warm Gold Glint",
+  白小粒スパークル: "Soft White Sparkles",
+  淡シアン斜光: "Pale Cyan Diagonal Streak",
+  青グロー光だまり: "Blue Glow Wash",
+  ローズ金斜め破片: "Rose Gold Shard",
+  紺シアン小シェブロン: "Navy Cyan Chevron",
+  白チャコール斜めタブ: "White Charcoal Diagonal Tab",
+  小金具グリント角: "Champagne Glint Bracket",
+  シアン矢印アクセント: "Cyan Arrow Accent",
+  黄黒衝撃マーク: "Yellow Black Impact Burst",
+  白シアンスピード線: "White Cyan Speed Lines",
+  白黒集中線: "Monochrome Focus Lines",
+  白黒フチ強調土台: "White Black Pop Base"
+};
+
+const standeePlacementCopy: Record<
+  Locale,
+  Partial<Record<ThumbnailStandeePlacementPresetId, { name: string; description: string }>>
+> = {
+  ja: {},
+  en: {
+    "solo-right-half": { name: "Right / half body", description: "Basic right-side placement for a half-body standee." },
+    "solo-left-half": { name: "Left / half body", description: "Basic left-side placement for a half-body standee." },
+    "solo-center-half": { name: "Center / half body", description: "Basic center placement for a half-body standee." },
+    "solo-right-bust": { name: "Right / bust", description: "A larger right-side bust-up placement." },
+    "solo-center-face": { name: "Center / face close-up", description: "A large center placement cropped closer to the face." },
+    "duo-left": { name: "Duo / left", description: "Left slot for a two-person collab layout." },
+    "duo-right": { name: "Duo / right", description: "Right slot for a two-person collab layout." },
+    "trio-left": { name: "Trio / left", description: "Left slot for a three-person collab layout." },
+    "trio-center": { name: "Trio / center", description: "Center slot for a three-person collab layout." },
+    "trio-right": { name: "Trio / right", description: "Right slot for a three-person collab layout." }
+  }
+};
+
+const standeeGroupLabels = {
+  ja: { "1人": "1人", "2人": "2人", "3人": "3人" },
+  en: { "1人": "1 person", "2人": "2 people", "3人": "3 people" }
+} as const;
+
+const fontLanguageLabels: Record<Locale, Record<ThumbnailFontLanguage, string>> = {
+  ja: { ja: "日本語", en: "English" },
+  en: { ja: "Japanese", en: "English" }
+};
+
+const fontCategoryLabels: Record<Locale, Partial<Record<string, string>>> = {
+  ja: {},
+  en: {
+    "太字見出し / 汎用": "Bold headline / general",
+    "読みやすいゴシック": "Readable gothic",
+    "かわいい / 丸ゴ": "Cute / rounded",
+    "上品 / 和風": "Elegant / Japanese",
+    "上品 / レトロ": "Elegant / retro",
+    "手書き / ラフ": "Handwritten / rough",
+    "手書き / ポップ": "Handwritten / pop",
+    "レトロ / ポップ": "Retro / pop",
+    "レトロ / ピクセル": "Retro / pixel"
+  }
+};
+
+const fontMoodLabels: Record<Locale, Partial<Record<string, string>>> = {
+  ja: {},
+  en: {
+    "太字見出し、読みやすいゴシック": "Bold headline, readable gothic",
+    "ポップ、現代的、太字向き": "Pop, modern, suited for bold text",
+    "読みやすい、実用、情報整理": "Readable, practical, good for organized information",
+    "すっきり、上品、配信告知向き": "Clean, elegant, suited for stream announcements",
+    "かわいい、やわらかい、親しみ": "Cute, soft, friendly",
+    "やさしい、丸い、軽い": "Gentle, rounded, light",
+    "上品、和風、落ち着き": "Elegant, Japanese, calm",
+    "ほんのりレトロ、上品、丸み": "Slightly retro, elegant, rounded",
+    "手書き、ゆるい、親近感": "Handwritten, relaxed, approachable",
+    "手書き、かわいい、個性強め": "Handwritten, cute, distinctive",
+    "レトロ、元気、ポップ": "Retro, energetic, pop",
+    "ピクセル、ゲーム風、レトロ": "Pixel, game-like, retro",
+    "太字、圧縮、インパクト": "Bold, condensed, high impact",
+    "スタイリッシュ、縦長、サムネ向き": "Stylish, tall, good for thumbnails",
+    "読みやすい、配信 UI、凝縮": "Readable, stream UI, condensed",
+    "モダン、安定、読みやすい": "Modern, stable, readable",
+    "丸み、現代的、親しみ": "Rounded, modern, friendly",
+    "丸い、軽快、読みやすい": "Rounded, lively, readable",
+    "かわいい、丸い、ポップ": "Cute, rounded, pop",
+    "コミック、派手、強い": "Comic, flashy, strong",
+    "上品、クラシック、ファッション寄り": "Elegant, classic, fashion-oriented",
+    "手書き、華やか、親しみ": "Handwritten, expressive, friendly",
+    "近未来、テック、ゲーム風": "Futuristic, tech, game-like",
+    "ピクセル、ゲーム、強い個性": "Pixel, game, distinctive"
+  }
+};
+
+const mainTextCarryoverLabels: Record<Locale, Record<ThumbnailMainTextCarryoverKey, string>> = {
+  ja: { headline: "見出し", time: "時刻", sub: "サブ", label: "ラベル" },
+  en: { headline: "Headline", time: "Time", sub: "Sub text", label: "Label" }
+};
+
+const layerTokenLabels: Record<Locale, Record<string, string>> = {
+  ja: {},
+  en: {
+    テキスト: "Text",
+    画像: "Image",
+    図形: "Shape",
+    素材: "Asset",
+    見出し: "Headline",
+    時刻: "Time",
+    サブ: "Sub text",
+    ラベル: "Label",
+    背景: "Background",
+    曜日: "Day",
+    時間: "Time",
+    予定: "Schedule",
+    立ち絵挿入ガイド: "Standee guide",
+    右立ち絵枠の発光: "Right standee frame glow",
+    見出し下ライン: "Headline underline",
+    見出し左下アクセント: "Lower-left headline accent",
+    見出し右アクセント: "Right headline accent",
+    ラベル横ライン: "Label side line",
+    ラベル土台: "Label base",
+    小粒スパーク: "Small sparkles",
+    時刻バッジ土台: "Time badge base",
+    時刻下ライン: "Time underline",
+    サブ下ライン: "Sub underline",
+    予定表アクセント: "Schedule table accent",
+    控えめな角グリント: "Subtle corner glints",
+    週範囲バッジ土台: "Week range badge base",
+    立ち絵guide枠: "Standee guide frame",
+    本文カード: "Body card",
+    本文罫線: "Body rule",
+    日付バッジ: "Date badge",
+    角飾り: "Corner ornament",
+    右側きらめき: "Right sparkle",
+    左上リボン: "Upper-left ribbon",
+    右下リボン: "Lower-right ribbon",
+    小粒きらめき: "Small sparkles",
+    コピー: "Copy",
+    削除済み: "Deleted",
+    差し替え待ち: "Needs replacement",
+    読み込み失敗: "Load failed",
+    月曜: "Monday",
+    火曜: "Tuesday",
+    水曜: "Wednesday",
+    木曜: "Thursday",
+    金曜: "Friday",
+    土曜: "Saturday",
+    日曜: "Sunday"
+  }
+};
+
 const qualityGuardMessageCopy: Record<Locale, Partial<Record<string, string>>> = {
   ja: {},
   en: {
@@ -744,6 +1162,135 @@ export function getThumbnailPresetCategoryLabel(category: ThumbnailPresetCategor
 export function getThumbnailPresetUsageLabel(usageLabel: string, locale: Locale): string {
   const localizedUsageLabels: Partial<Record<string, string>> = usageLabels[locale];
   return localizedUsageLabels[usageLabel] ?? usageLabel;
+}
+
+export function getThumbnailMaterialCategoryLabel(category: ThumbnailMaterialCategory, locale: Locale): string {
+  return materialCategoryLabels[locale][category] ?? materialCategoryLabels.ja[category];
+}
+
+export function getThumbnailMaterialName(materialId: string, locale: Locale, fallback = materialId): string {
+  return materialCopy[locale][materialId]?.name ?? fallback;
+}
+
+export function getThumbnailMaterialDescription(
+  material: Pick<ThumbnailMaterial, "id" | "description">,
+  locale: Locale
+): string {
+  return materialCopy[locale][material.id]?.description ?? material.description;
+}
+
+export function getThumbnailMaterialRecommendedPlacement(
+  material: Pick<ThumbnailMaterial, "id" | "recommendedPlacement">,
+  locale: Locale
+): string {
+  return materialCopy[locale][material.id]?.recommendedPlacement ?? material.recommendedPlacement;
+}
+
+export function filterLocalizedThumbnailMaterials<T extends ThumbnailMaterial>(
+  materials: T[],
+  query: string,
+  category: ThumbnailMaterialCategory | "all",
+  locale: Locale
+): T[] {
+  const normalizedQuery = query.trim().toLocaleLowerCase(locale === "ja" ? "ja-JP" : "en-US");
+
+  return materials.filter((material) => {
+    if (category !== "all" && material.category !== category) {
+      return false;
+    }
+    if (!normalizedQuery) {
+      return true;
+    }
+
+    return [
+      material.name,
+      material.description,
+      material.recommendedPlacement,
+      material.category,
+      getThumbnailMaterialName(material.id, locale, material.name),
+      getThumbnailMaterialDescription(material, locale),
+      getThumbnailMaterialRecommendedPlacement(material, locale),
+      getThumbnailMaterialCategoryLabel(material.category, locale)
+    ]
+      .join(" ")
+      .toLocaleLowerCase(locale === "ja" ? "ja-JP" : "en-US")
+      .includes(normalizedQuery);
+  });
+}
+
+export function getThumbnailStandeePlacementName(
+  presetId: string,
+  locale: Locale,
+  fallback = presetId
+): string {
+  return standeePlacementCopy[locale][presetId as ThumbnailStandeePlacementPresetId]?.name ?? fallback;
+}
+
+export function getThumbnailStandeePlacementDescription(
+  preset: Pick<ThumbnailStandeePlacementPreset, "id" | "description">,
+  locale: Locale
+): string {
+  return standeePlacementCopy[locale][preset.id]?.description ?? preset.description;
+}
+
+export function getThumbnailStandeePlacementGroup(group: "1人" | "2人" | "3人", locale: Locale): string {
+  return standeeGroupLabels[locale][group] ?? standeeGroupLabels.ja[group];
+}
+
+export function getThumbnailFontLanguageLabel(language: ThumbnailFontLanguage, locale: Locale): string {
+  return fontLanguageLabels[locale][language] ?? fontLanguageLabels.ja[language];
+}
+
+export function getThumbnailFontCategoryLabel(category: string, locale: Locale): string {
+  return fontCategoryLabels[locale][category] ?? category;
+}
+
+export function getThumbnailFontMoodLabel(mood: string, locale: Locale): string {
+  return fontMoodLabels[locale][mood] ?? mood;
+}
+
+export function getThumbnailMainTextCarryoverLabel(targetId: ThumbnailMainTextCarryoverKey, locale: Locale): string {
+  return mainTextCarryoverLabels[locale][targetId] ?? mainTextCarryoverLabels.ja[targetId];
+}
+
+function localizeLayerToken(value: string, locale: Locale): string {
+  if (locale === "ja") {
+    return value;
+  }
+
+  return layerTokenLabels.en[value] ?? value;
+}
+
+export function getThumbnailLayerDisplayName(
+  layer: Pick<ThumbnailLayer, "name" | "type">,
+  locale: Locale,
+  displayName = layer.name
+): string {
+  if (locale === "ja") {
+    return displayName;
+  }
+
+  const materialPrefixMatch = displayName.match(/^素材: (.+?)(?:（(.+)）)?$/);
+  if (materialPrefixMatch) {
+    const fallbackMaterialName = materialNameTranslationsEn[materialPrefixMatch[1]] ?? materialPrefixMatch[1];
+    const fallbackStatus = materialPrefixMatch[2] ? ` (${localizeLayerToken(materialPrefixMatch[2], locale)})` : "";
+    return `Asset: ${fallbackMaterialName}${fallbackStatus}`;
+  }
+
+  if (layerTokenLabels.en[displayName]) {
+    return localizeLayerToken(displayName, locale);
+  }
+
+  const presetLayerMatch = displayName.match(/^(テキスト|画像|図形) (\d+)(?:（(.+)）)?(?: (コピー)(?: (\d+))?)?$/);
+  if (!presetLayerMatch) {
+    return displayName;
+  }
+
+  const [, kind, index, role, copySuffix, copyIndex] = presetLayerMatch;
+  const localizedKind = localizeLayerToken(kind, locale);
+  const localizedRole = role ? ` (${localizeLayerToken(role, locale)})` : "";
+  const localizedCopy = copySuffix ? ` ${localizeLayerToken(copySuffix, locale)}${copyIndex ? ` ${copyIndex}` : ""}` : "";
+  return `${localizedKind} ${index}${localizedRole}${localizedCopy}`;
 }
 
 export function getThumbnailPresetVariantLabel(variantId: ThumbnailPresetVariantId, locale: Locale, fallback: string): string {

@@ -214,6 +214,9 @@ export const portalCopy = {
       listLabel: "ツール一覧",
       empty: "条件に一致するツールはまだありません。"
     },
+    loading: {
+      tools: "ツール一覧を読み込んでいます。"
+    },
     filters: {
       suite: "スイートで絞り込む",
       category: "カテゴリで絞り込む",
@@ -258,6 +261,13 @@ export const portalCopy = {
         "sns-split-image-maker": "SNS分割画像メーカー",
         tools: "ツール一覧"
       }
+    },
+    themeToggle: {
+      groupLabel: "テーマ切替",
+      toggleAria: "ライトモードとダークモードを切り替える",
+      title: "表示テーマ",
+      light: "ライト",
+      dark: "ダーク"
     }
   },
   en: {
@@ -290,6 +300,9 @@ export const portalCopy = {
       resultCountSuffix: "shown",
       listLabel: "Tool list",
       empty: "No tools match these filters yet."
+    },
+    loading: {
+      tools: "Loading tools."
     },
     filters: {
       suite: "Filter by suite",
@@ -335,6 +348,13 @@ export const portalCopy = {
         "sns-split-image-maker": "SNS Split Image Maker",
         tools: "Tools"
       }
+    },
+    themeToggle: {
+      groupLabel: "Theme toggle",
+      toggleAria: "Switch between light and dark mode",
+      title: "Theme",
+      light: "Light",
+      dark: "Dark"
     }
   }
 } as const satisfies Record<Locale, object>;

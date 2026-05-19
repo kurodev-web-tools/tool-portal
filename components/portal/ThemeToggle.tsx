@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "@/components/portal/LocaleProvider";
+import { portalCopy } from "@/lib/portal-copy";
 
 type Theme = "light" | "dark";
 type ThemeToggleVariant = "default" | "compact";
@@ -21,6 +23,8 @@ function getInitialTheme(): Theme {
 }
 
 export function ThemeToggle({ variant = "default" }: { variant?: ThemeToggleVariant }) {
+  const { locale } = useLocale();
+  const copy = portalCopy[locale].themeToggle;
   const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
@@ -43,9 +47,9 @@ export function ThemeToggle({ variant = "default" }: { variant?: ThemeToggleVari
     return (
       <button
         type="button"
-        aria-label="ライトモードとダークモードを切り替える"
+        aria-label={copy.toggleAria}
         aria-pressed={theme === "dark"}
-        title="表示テーマ"
+        title={copy.title}
         onClick={() => setTheme((current) => (current === "light" ? "dark" : "light"))}
         className="relative h-7 w-12 rounded-full border border-border bg-surface-muted transition hover:border-primary/60"
       >
@@ -60,11 +64,11 @@ export function ThemeToggle({ variant = "default" }: { variant?: ThemeToggleVari
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm font-semibold text-muted" aria-label="テーマ切替">
-      <span className={theme === "light" ? "text-primary-strong" : ""}>ライト</span>
+    <div className="flex items-center gap-2 text-sm font-semibold text-muted" aria-label={copy.groupLabel}>
+      <span className={theme === "light" ? "text-primary-strong" : ""}>{copy.light}</span>
       <button
         type="button"
-        aria-label="ライトモードとダークモードを切り替える"
+        aria-label={copy.toggleAria}
         aria-pressed={theme === "dark"}
         onClick={() => setTheme((current) => (current === "light" ? "dark" : "light"))}
         className="relative h-7 w-12 rounded-full border border-border bg-surface-muted transition hover:border-primary/60"
@@ -76,7 +80,7 @@ export function ThemeToggle({ variant = "default" }: { variant?: ThemeToggleVari
           ].join(" ")}
         />
       </button>
-      <span className={theme === "dark" ? "text-primary-strong" : ""}>ダーク</span>
+      <span className={theme === "dark" ? "text-primary-strong" : ""}>{copy.dark}</span>
     </div>
   );
 }

@@ -988,9 +988,9 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     cover_song_notice: {
       "テキスト 5（カバーアート注記）": "COVER ART / MV",
       "テキスト 4（ラベル）": "PREMIERE",
-      "テキスト 1（見出し）": "Cover\nSong",
+      "テキスト 1（見出し）": "Cover Song",
       "テキスト 3（サブ）": "New cover release",
-      "テキスト 2（時刻）": "20:00"
+      "テキスト 2（時刻）": "20:00 public"
     },
     event_notice: {
       "テキスト 5（キービジュアル注記）": "KEY VISUAL",
@@ -1113,6 +1113,10 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
       "テキスト 5（英字）": { x: 70.72194906920748, y: 43.83235373903608 },
       "テキスト 1（見出し）": { x: 152.27771184429145, y: 91.05362148476354 },
       "テキスト 3（サブ）": { x: 169.72228815570855, y: 497.0004521204449 }
+    },
+    cover_song_notice: {
+      "テキスト 4（ラベル）": { x: 258.3120469977875 },
+      "テキスト 1（見出し）": { x: 18.186999313344018, y: 241.06307222787393 }
     },
     karaoke: {
       "テキスト 1（見出し）": { fontSize: 166 }

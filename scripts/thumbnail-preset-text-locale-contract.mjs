@@ -101,7 +101,13 @@ const layoutSnapshot = (draft) =>
   }));
 const estimateAsciiTextWidth = (line, layer) => {
   const fontWidthRatio =
-    layer.fontFamily === "Bebas Neue" ? 0.28 : layer.fontFamily === "Orbitron" || layer.fontFamily === "Montserrat" ? 0.42 : 0.55;
+    layer.fontFamily === "Bebas Neue"
+      ? 0.28
+      : layer.fontFamily === "Orbitron" || layer.fontFamily === "Montserrat"
+        ? 0.42
+        : layer.fontFamily === "M PLUS Rounded 1c"
+          ? 0.49
+          : 0.55;
   return Array.from(line).reduce((total, character) => total + (/[ -~]/.test(character) ? fontWidthRatio : 1), 0) * layer.fontSize * 0.9;
 };
 const maxEstimatedTextWidthRatio = (layer) =>
@@ -122,6 +128,8 @@ const visualAdjustmentTargets = new Set([
   "project_stream/テキスト 5（英字）",
   "project_stream/テキスト 1（見出し）",
   "project_stream/テキスト 3（サブ）",
+  "cover_song_notice/テキスト 4（ラベル）",
+  "cover_song_notice/テキスト 1（見出し）",
   "karaoke/テキスト 1（見出し）"
 ]);
 
@@ -394,6 +402,37 @@ assert.equal(
   textLayers(enProjectDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
   "20:30 START",
   "Project Stream time copy follows the supplied English visual draft"
+);
+const enCoverSongDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("cover_song_notice"),
+  "en"
+);
+const enCoverSongLabel = textLayers(enCoverSongDraft).find((layer) => layer.name === "テキスト 4（ラベル）");
+assert.equal(
+  enCoverSongLabel?.x,
+  258.3120469977875,
+  "Cover Song Notice label x follows the supplied English visual draft"
+);
+const enCoverSongHeadline = textLayers(enCoverSongDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enCoverSongHeadline?.text,
+  "Cover Song",
+  "Cover Song Notice headline copy follows the supplied English visual draft"
+);
+assert.equal(
+  enCoverSongHeadline?.x,
+  18.186999313344018,
+  "Cover Song Notice headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enCoverSongHeadline?.y,
+  241.06307222787393,
+  "Cover Song Notice headline y follows the supplied English visual draft"
+);
+assert.equal(
+  textLayers(enCoverSongDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "20:00 public",
+  "Cover Song Notice time copy follows the supplied English visual draft"
 );
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(

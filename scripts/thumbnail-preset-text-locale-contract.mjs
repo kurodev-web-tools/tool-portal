@@ -110,6 +110,9 @@ const visualAdjustmentTargets = new Set([
   "first_stream/テキスト 1（見出し）",
   "first_stream/テキスト 2（時刻）",
   "first_stream/テキスト 3（サブ）",
+  "anniversary_stream/テキスト 1（見出し）",
+  "anniversary_stream/テキスト 2（時刻）",
+  "anniversary_stream/テキスト 3（サブ）",
   "endurance_stream/テキスト 1（見出し）",
   "karaoke/テキスト 1（見出し）"
 ]);
@@ -220,6 +223,58 @@ assert.equal(
   enFirstSub?.y,
   608.3884618862465,
   "First Stream sub y follows the supplied English visual draft"
+);
+const enAnniversaryDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("anniversary_stream"),
+  "en"
+);
+const enAnniversaryHeadline = textLayers(enAnniversaryDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enAnniversaryHeadline?.text,
+  "1st Anniv.",
+  "Anniversary Stream headline copy follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversaryHeadline?.x,
+  73.66627106574896,
+  "Anniversary Stream headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversaryHeadline?.y,
+  214.6669680802966,
+  "Anniversary Stream headline y follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversaryHeadline?.align,
+  "center",
+  "Anniversary Stream headline align follows the supplied English visual draft"
+);
+const enAnniversarySub = textLayers(enAnniversaryDraft).find((layer) => layer.name === "テキスト 3（サブ）");
+assert.equal(
+  enAnniversarySub?.x,
+  103.55559323183354,
+  "Anniversary Stream sub x follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversarySub?.y,
+  477.77737589293787,
+  "Anniversary Stream sub y follows the supplied English visual draft"
+);
+const enAnniversaryTime = textLayers(enAnniversaryDraft).find((layer) => layer.name === "テキスト 2（時刻）");
+assert.equal(
+  enAnniversaryTime?.text,
+  "21:00 START",
+  "Anniversary Stream time copy follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversaryTime?.x,
+  276.61110169204164,
+  "Anniversary Stream time x follows the supplied English visual draft"
+);
+assert.equal(
+  enAnniversaryTime?.y,
+  588.3889140066914,
+  "Anniversary Stream time y follows the supplied English visual draft"
 );
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(

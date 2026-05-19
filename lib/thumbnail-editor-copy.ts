@@ -966,10 +966,10 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 3（サブ）": "Nice to meet you!"
     },
     anniversary_stream: {
-      "テキスト 1（見出し）": "1st\nAnniv.",
+      "テキスト 1（見出し）": "1st Anniv.",
       "テキスト 4（ラベル）": "ANNIV. LIVE",
       "テキスト 3（サブ）": "A special night of thanks",
-      "テキスト 2（時刻）": "21:00"
+      "テキスト 2（時刻）": "21:00 START"
     },
     endurance_stream: {
       "テキスト 4（ラベル）": "CHALLENGE",
@@ -1096,6 +1096,11 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
       "テキスト 1（見出し）": { x: 106.72245769895892, y: 175.77737589293787 },
       "テキスト 2（時刻）": { x: 140.83330507612487, y: 528.3343882810381 },
       "テキスト 3（サブ）": { x: 86.83313553287445, y: 608.3884618862465 }
+    },
+    anniversary_stream: {
+      "テキスト 1（見出し）": { x: 73.66627106574896, y: 214.6669680802966, align: "center" },
+      "テキスト 3（サブ）": { x: 103.55559323183354, y: 477.77737589293787 },
+      "テキスト 2（時刻）": { x: 276.61110169204164, y: 588.3889140066914 }
     },
     endurance_stream: {
       "テキスト 1（見出し）": { fontSize: 140 }

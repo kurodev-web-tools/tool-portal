@@ -240,6 +240,7 @@
   - limited layout adjustment to targeted English text layers during English draft creation/apply only.
   - incorporated the supplied `stream_announce` English draft: restored `21:00 START` time text and applied the headline `x/y` adjustment from the draft JSON.
   - incorporated the supplied `first_stream` English draft: applied headline/time/sub `x/y` adjustments from the draft JSON while keeping text copy unchanged.
+  - incorporated the supplied `anniversary_stream` English draft: applied the one-line headline/time copy and headline/sub/time layout adjustments from the draft JSON.
   - kept Japanese preset text/layout unchanged, and kept preset ids, stored `layer.name`, matching keys, weekly grouping keys, storage/schema, and handoff payload unchanged.
   - Schedule Calendar handoff text still overrides English preset initial text and EN layout helper output after preset apply.
 - Verification:

@@ -3,6 +3,7 @@ import type {
   CalendarView,
   EventCategory,
   EventRecurrence,
+  HashtagSet,
   PostTemplate,
   PostTemplateUsageCategory
 } from "@/lib/schedule-calendar";
@@ -14,6 +15,7 @@ type OptionCopy<T extends string | number> = {
 };
 
 type BuiltInTemplateCopy = Pick<PostTemplate, "name" | "description" | "body" | "hashtags">;
+type BuiltInHashtagSetCopy = Pick<HashtagSet, "name" | "hashtags">;
 
 export const scheduleCalendarCopy = {
   ja: {
@@ -540,6 +542,24 @@ const builtInPostTemplateCopy: Record<Locale, Partial<Record<string, BuiltInTemp
   }
 };
 
+const builtInHashtagSetCopy: Record<Locale, Partial<Record<string, BuiltInHashtagSetCopy>>> = {
+  ja: {},
+  en: {
+    "hashtag-vtuber-basic": {
+      name: "VTuber basic",
+      hashtags: "#VTuber #ENVtuber"
+    },
+    "hashtag-stream-notice": {
+      name: "Stream notice",
+      hashtags: "#ENVtuber #LiveStream"
+    },
+    "hashtag-youtube-basic": {
+      name: "YouTube",
+      hashtags: "#YouTube"
+    }
+  }
+};
+
 export function getScheduleCalendarCopy(locale: Locale): ScheduleCalendarCopy {
   return scheduleCalendarCopy[locale] ?? scheduleCalendarCopy.ja;
 }
@@ -616,5 +636,14 @@ export function getLocalizedPostTemplates(templates: PostTemplate[], locale: Loc
   return templates.map((template) => ({
     ...template,
     ...(localizedTemplates[template.id] ?? {})
+  }));
+}
+
+export function getLocalizedHashtagSets(hashtagSets: HashtagSet[], locale: Locale): HashtagSet[] {
+  const localizedHashtagSets = builtInHashtagSetCopy[locale];
+
+  return hashtagSets.map((hashtagSet) => ({
+    ...hashtagSet,
+    ...(localizedHashtagSets[hashtagSet.id] ?? {})
   }));
 }

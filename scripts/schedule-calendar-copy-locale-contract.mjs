@@ -54,6 +54,30 @@ assert.match(
   /JSON backup/i,
   "English backup and restore copy explains the data boundary"
 );
+assert.equal(typeof copyModule.getLocalizedHashtagSets, "function", "Schedule Calendar exposes localized hashtag set helper");
+const localizedHashtagSets = copyModule.getLocalizedHashtagSets(
+  [
+    { id: "hashtag-vtuber-basic", name: "VTuber基本", hashtags: "#VTuber #配信告知" },
+    { id: "hashtag-stream-notice", name: "配信告知", hashtags: "#配信 #生配信" },
+    { id: "hashtag-youtube-basic", name: "YouTube", hashtags: "#YouTube" }
+  ],
+  "en"
+);
+assert.deepEqual(
+  localizedHashtagSets.map((hashtagSet) => hashtagSet.name),
+  ["VTuber basic", "Stream notice", "YouTube"],
+  "English locale localizes built-in hashtag set names"
+);
+assert.deepEqual(
+  localizedHashtagSets.map((hashtagSet) => hashtagSet.hashtags),
+  ["#VTuber #ENVtuber", "#ENVtuber #LiveStream", "#YouTube"],
+  "English locale localizes built-in hashtag set tags for overseas-facing posts"
+);
+assert.doesNotMatch(
+  JSON.stringify(localizedHashtagSets),
+  /配信|告知|生配信|基本/,
+  "English built-in hashtag sets do not leave Japanese tags visible"
+);
 assert.doesNotMatch(
   JSON.stringify(copyModule.scheduleCalendarCopy.en),
   /Google Calendar|external posting|IndexedDB|localStorage key/i,
@@ -62,6 +86,8 @@ assert.doesNotMatch(
 
 assert.match(appSource, /useLocale\(\)/, "Schedule Calendar reads the active locale");
 assert.match(appSource, /getScheduleCalendarCopy\(locale\)/, "Schedule Calendar resolves copy from the active locale");
+assert.match(appSource, /getLocalizedHashtagSets/, "Schedule Calendar localizes built-in hashtag sets from the active locale");
+assert.match(appSource, /localizedHashtagSets/, "Schedule Calendar uses localized hashtag sets for display and post assist");
 assert.match(appSource, /scheduleCopy/, "Schedule Calendar passes localized copy into panels");
 assert.match(scheduleLibSource, /export const scheduleStorageVersion = 2;/, "Schedule Calendar copy work does not change storage version");
 assert.match(scheduleLibSource, /v-streamer-tools:schedule-calendar-events:v1/, "Schedule Calendar copy work does not change the storage key");

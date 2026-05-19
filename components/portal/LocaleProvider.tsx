@@ -10,6 +10,7 @@ import {
 
 type LocaleContextValue = {
   locale: Locale;
+  isLocaleReady: boolean;
   setLocale: (locale: Locale) => void;
 };
 
@@ -41,9 +42,11 @@ function getNavigatorLanguages() {
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(defaultLocale);
+  const [isLocaleReady, setIsLocaleReady] = useState(false);
 
   useEffect(() => {
     setLocaleState(resolveInitialLocale(readStoredLocale(), getNavigatorLanguages()));
+    setIsLocaleReady(true);
   }, []);
 
   useEffect(() => {
@@ -52,10 +55,11 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   const setLocale = useCallback((nextLocale: Locale) => {
     setLocaleState(nextLocale);
+    setIsLocaleReady(true);
     writeStoredLocale(nextLocale);
   }, []);
 
-  const value = useMemo(() => ({ locale, setLocale }), [locale, setLocale]);
+  const value = useMemo(() => ({ locale, isLocaleReady, setLocale }), [isLocaleReady, locale, setLocale]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

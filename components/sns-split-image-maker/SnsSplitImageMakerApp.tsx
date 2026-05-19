@@ -177,7 +177,7 @@ const createDraftForPreset = (current: SnsSplitDraft, preset: SnsSplitPreset) =>
 };
 
 export function SnsSplitImageMakerApp() {
-  const { locale } = useLocale();
+  const { locale, isLocaleReady } = useLocale();
   const copy = getSnsSplitImageMakerCopy(locale);
   const [draft, setDraft] = useState<SnsSplitDraft>(() => createSnsSplitDraft());
   const [activePreset, setActivePreset] = useState<SnsSplitPreset | null>(null);
@@ -243,6 +243,9 @@ export function SnsSplitImageMakerApp() {
   useEffect(() => {
     let active = true;
     const hydrateDraft = async () => {
+      if (!isLocaleReady) {
+        return;
+      }
       const result = await restoreDraft();
       if (active && result.invalidStoredDraft) {
         setToast({ tone: "warning", message: copy.toasts.restoredInvalid });
@@ -301,7 +304,16 @@ export function SnsSplitImageMakerApp() {
     return () => {
       active = false;
     };
-  }, [copy.handoff.scheduleReceived, copy.handoff.thumbnailMissing, copy.handoff.thumbnailReceived, copy.toasts.imageRestoreFailed, copy.toasts.restored, copy.toasts.restoredBroken, copy.toasts.restoredInvalid]);
+  }, [
+    copy.handoff.scheduleReceived,
+    copy.handoff.thumbnailMissing,
+    copy.handoff.thumbnailReceived,
+    copy.toasts.imageRestoreFailed,
+    copy.toasts.restored,
+    copy.toasts.restoredBroken,
+    copy.toasts.restoredInvalid,
+    isLocaleReady
+  ]);
 
   useEffect(() => {
     if (!hydrated) {

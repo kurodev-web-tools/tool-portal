@@ -36,6 +36,7 @@ const snsSource = read("components/sns-split-image-maker/SnsSplitImageMakerApp.t
 const thumbnailLibSource = read("lib/thumbnail-editor.ts");
 const snsLib = loadTsModule("lib/sns-split-image-maker.ts");
 const snsLibSource = read("lib/sns-split-image-maker.ts");
+const localeProviderSource = read("components/portal/LocaleProvider.tsx");
 const themeToggleSource = read("components/portal/ThemeToggle.tsx");
 const toolsPageSource = read("app/tools/page.tsx");
 
@@ -76,6 +77,9 @@ assert.match(thumbnailSource, /getThumbnailStandeePlacementName\(preset\.id,\s*l
 assert.match(thumbnailSource, /getThumbnailFontCategoryLabel\(fontCategory\.label,\s*locale/, "Thumbnail font listbox uses localized category labels");
 assert.match(thumbnailSource, /getThumbnailMainTextCarryoverLabel\(target\.id,\s*locale/, "Thumbnail preset apply dialog uses localized carryover labels");
 assert.match(thumbnailSource, /applyScheduleHandoffToThumbnailDraft\(next,\s*handoffPayload,\s*locale\)/, "Schedule -> Thumbnail handoff applies locale-aware canvas fallback text");
+assert.match(localeProviderSource, /isLocaleReady/, "LocaleProvider exposes locale initialization readiness");
+assert.match(thumbnailSource, /const \{\s*locale,\s*isLocaleReady\s*\} = useLocale\(\)/, "Thumbnail Editor reads locale readiness before one-time handoff consumption");
+assert.match(thumbnailSource, /if \(!isLocaleReady\) \{\s*return;\s*\}[\s\S]*readToolHandoff\("thumbnail-editor"\)/, "Thumbnail Editor waits for stored/browser locale resolution before consuming one-time handoff payloads");
 assert.doesNotMatch(thumbnailSource, /payload\.title \|\| "無題の予定"| \|\| "配信告知"/, "Schedule -> Thumbnail handoff avoids Japanese canvas fallback literals in EN mode");
 assert.match(thumbnailSource, /data-thumbnail-preset-card="true"[\s\S]*flex[\s\S]*flex-col/, "Thumbnail preset cards use a column layout for stable CTA placement");
 assert.match(thumbnailSource, /data-thumbnail-preset-card-chips="true"[\s\S]*whitespace-normal[\s\S]*break-words/, "Thumbnail preset card chips can wrap long EN labels inside the card");
@@ -96,6 +100,8 @@ assert.match(snsSource, /getSnsSplitSlotLabel\(draft\.mode,\s*index \+ 1,\s*draf
 assert.match(snsSource, /placeholder:\s*copy\.preview\.placeholder\.mainImage/, "SNS Split passes localized no-image canvas placeholder");
 assert.match(snsSource, /copy\.messages\.previewFailed/, "SNS Split uses localized preview error");
 assert.match(snsSource, /copy\.aria\.mobileActions/, "SNS Split uses localized mobile nav aria");
+assert.match(snsSource, /const \{\s*locale,\s*isLocaleReady\s*\} = useLocale\(\)/, "SNS Split reads locale readiness before one-time handoff consumption");
+assert.match(snsSource, /if \(!isLocaleReady\) \{\s*return;\s*\}[\s\S]*readToolHandoff\("sns-split-image-maker"\)/, "SNS Split waits for stored/browser locale resolution before consuming one-time handoff payloads");
 assert.doesNotMatch(snsSource, /message:\s*error instanceof Error \? error\.message : copy\.toasts\.exportFailed/, "SNS Split export error does not expose raw Japanese errors in English mode");
 assert.doesNotMatch(snsSource, /プレビュー生成に失敗|作業状態の保存に失敗|モバイル操作|通知を閉じる/, "SNS Split avoids C-scope Japanese UI/status literals");
 assert.match(snsLibSource, /v-streamer-tools:sns-split-image-maker:draft:v1/, "SNS Split draft storage key remains unchanged");

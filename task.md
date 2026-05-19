@@ -346,6 +346,44 @@
   - verification: `node scripts/en-c-scope-copy-contract.mjs` RED -> GREEN, `npx tsc --noEmit` passed.
   - browser check: local `next dev --webpack -p 3037` + Chrome DevTools MCP on `/tools/thumbnail-editor/`; JA/EN at `820px` showed per-row button top delta `0`, bottom-gap delta `0`, height delta `0`, and body overflow `0`; EN at `1280px` also showed row deltas `0`; requested `390px` still measured as actual `500px`, with button height delta `0`, bottom-gap delta `0`, body overflow `0`.
 
+### Final EN Support Integration Check
+
+- branch/worktree: `codex/en-support-final-check` / `D:/V_streamer_tools/.worktrees/en-support-final-check`
+- base: `origin/codex/en-support-preview` after PR #170 merge (`2026-05-19T14:20:33Z`, merge commit `1f242b6d977d31d74cc1dd9a77233f9f5c18e91f`)
+- implementation:
+  - added locale readiness to `LocaleProvider` so one-time handoff consumers wait until stored/browser locale resolution completes.
+  - gated Thumbnail Editor and SNS Split Image Maker handoff hydration on locale readiness.
+  - fixed EN mode Schedule -> Thumbnail empty-payload fallback so `Untitled event` / `Stream notice` are used instead of the default JA fallback.
+- verification:
+  - PASS: `node scripts/en-c-scope-copy-contract.mjs` (RED -> GREEN for locale-ready handoff consumption)
+  - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `node scripts/tool-handoff-contract.mjs`
+  - PASS: `node scripts/sns-split-image-maker-contract.mjs`
+  - PASS: `node scripts/portal-tools-copy-locale-contract.mjs`
+  - PASS: `node scripts/tool-portal-entry-contract.mjs`
+  - PASS: `npm run lint`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `git diff --check`
+- UI width check:
+  - method: local `next dev --webpack -p 3047 --hostname 127.0.0.1` + Playwright with installed Chrome.
+  - pages: `/`, `/tools`, `/tools/schedule-calendar`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker`
+  - locales: `ja / en`
+  - widths: `390 / 820 / 1024 / 1280 / 1366px`
+  - result: target pages passed visible copy checks, `document.documentElement.lang` checks, metadata presence checks, body/document horizontal overflow <= 1px, and console error/warn checks.
+  - Thumbnail Editor preset card CTA: card CTAs stayed within cards at all target widths/locales.
+  - SNS Split Image Maker preset card CTA: landing card CTAs stayed within cards at all target widths/locales.
+  - Project Stream category/usage labels: `Project / viewer participation` stayed inside the preset card with no chip overflow at all target widths.
+  - Schedule -> Thumbnail handoff fallback: EN mode empty-payload fallback showed `Untitled event` / `Stream notice` in editable draft fields and did not surface `無題の予定` / `配信告知`.
+  - manual language switch + reload: `/tools` at `1280px` persisted `en` and `ja` selections and restored matching visible copy after reload.
+- remaining risks:
+  - static metadata remains conservative English and is not runtime locale-switched.
+  - saved custom data, user-entered text, backup JSON values, and handoff payload values remain untranslated by design.
+  - visual checks use DOM metrics and editable draft field values; they do not OCR canvas text.
+- main PR judgment:
+  - PR #170 merge gate passed.
+  - Final check found one EN handoff hydration issue, fixed it in this branch, and rechecked the affected flow.
+  - Main-bound draft PR is appropriate after this branch passes final verification.
+
 ## Completed EN Support Summary
 
 - PR #154 `codex/en-locale-foundation` -> `codex/en-support-preview`: locale foundation + language switch merged.

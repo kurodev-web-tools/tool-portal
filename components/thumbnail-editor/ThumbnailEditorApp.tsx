@@ -468,7 +468,7 @@ const createThumbnailDraftFromHandoff = (payload: ScheduleHandoffPayload, locale
   applyScheduleHandoffToThumbnailDraft(createDraftFromPreset("stream_announce", canvas), payload, locale);
 
 export function ThumbnailEditorApp() {
-  const { locale } = useLocale();
+  const { locale, isLocaleReady } = useLocale();
   const copy = getThumbnailEditorCopy(locale);
   const createPresetDraftForLocale = useCallback(
     (presetId: ThumbnailPresetId = "stream_announce", canvas: ThumbnailCanvas = thumbnailCanvasSizes.hd) =>
@@ -674,6 +674,9 @@ export function ThumbnailEditorApp() {
   }, []);
 
   useEffect(() => {
+    if (!isLocaleReady) {
+      return;
+    }
     try {
       const handoffPayload = readToolHandoff("thumbnail-editor");
       if (handoffPayload) {
@@ -710,7 +713,7 @@ export function ThumbnailEditorApp() {
     } finally {
       setHydrated(true);
     }
-  }, [copy.toasts.brokenDraft, copy.toasts.handoffApplied, copy.toasts.restored, createPresetDraftForLocale, locale, showToast]);
+  }, [copy.toasts.brokenDraft, copy.toasts.handoffApplied, copy.toasts.restored, createPresetDraftForLocale, isLocaleReady, locale, showToast]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

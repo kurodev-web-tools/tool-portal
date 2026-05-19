@@ -112,6 +112,90 @@
 - fine-grained internal labels in `lib/thumbnail-editor.ts` / `lib/sns-split-image-maker.ts` that are primarily data identifiers, layer matching keys, generated canvas text, or saved draft compatibility strings remain as-is.
 - exhaustive aria translation and debug/internal exception text outside the public prelaunch path remain backlog scope.
 
+### EN Follow-up Audit Before B+C Smoke
+
+- audit date: 2026-05-19
+- scan basis:
+  - `rg "[ぁ-んァ-ン一-龯]" app components lib --glob "!**/*-copy.ts"`
+  - focused scans for material metadata, layer names, font / standee metadata, SNS split slot labels, portal metadata, and Schedule Calendar saved defaults.
+- judgment:
+  - PR #161 is still valid as the C scope UI chrome copy PR.
+  - However, B+C integration smoke should not be treated as the final main-readiness pass until the visible follow-up items below are either fixed or explicitly accepted as residual risk.
+
+#### Next PR: EN material / layer / data-label display follow-up
+
+- recommended base: `origin/codex/en-support-preview` after PR #161 merge.
+- recommended branch: `codex/en-material-layer-copy`
+- recommended worktree: `D:/V_streamer_tools/.worktrees/en-material-layer-copy`
+- recommended target: `codex/en-support-preview`
+- purpose: English mode should avoid prominent Japanese in data-driven labels that users are likely to see before export or smoke verification.
+
+Primary scope:
+
+- Thumbnail Editor material library:
+  - `thumbnailMaterialLibrary` currently keeps Japanese `name`, `description`, and `recommendedPlacement`.
+  - `ThumbnailEditorApp` displays and searches those raw fields in the material library.
+  - Add display/search helpers in `lib/thumbnail-editor-copy.ts` or a small adjacent helper, and keep the source material ids / storage shape unchanged.
+  - Also cover `thumbnailMaterialCategoryLabels` in English display/search.
+- Thumbnail Editor layer display:
+  - preset / generated layer names such as `画像 1（背景）`, `テキスト 1（見出し）`, `素材: ...`, copy suffixes, and weekly schedule layer names remain Japanese internally.
+  - Do not rename saved `layer.name`, preset data, matching keys, handoff payloads, backup JSON, or localStorage/IndexedDB schema.
+  - Add UI-only display helpers such as `getThumbnailLayerDisplayName(layer, locale)` and use them in layer list, selected-layer badges, quick-adjust aria labels, standee target text, and preset-apply comparison labels where safe.
+  - Keep user-entered custom layer names as-is.
+- Thumbnail Editor related visible data labels:
+  - standee placement `name` / `description` / `group` are still Japanese data labels in the placement panel.
+  - font listbox category / mood metadata includes Japanese text and is visible in English mode.
+  - `thumbnailMainTextCarryoverTargets` labels (`見出し`, `時刻`, `サブ`, `ラベル`) are shown in the preset-apply dialog; localize display labels without changing `namePart` matching.
+- SNS Split Image Maker:
+  - `getSnsSplitSlotLabel()` returns visible Japanese slot labels such as `投稿1 フレーム`, `画像1 左`, `追加画像 1`.
+  - canvas placeholder text in `drawPlaceholder(..., "ベース画像を選択してください")` is Japanese.
+  - export error fallback currently may surface raw `Error.message` in English mode; align with the existing locale-guarded error handling used by preview/read/save paths.
+  - Add locale-aware slot label / placeholder helpers without changing image ids, draft image names, export order, or saved draft shape.
+- Portal / common:
+  - `ThemeToggle` still has Japanese visible labels / aria (`ライト`, `ダーク`, `表示テーマ`) in English mode.
+  - `/tools` Suspense fallback still says `ツール一覧を読み込んでいます。`.
+  - per-tool Next metadata in `app/tools/*/page.tsx` remains static Japanese; root/home/tools metadata already has `ja/en` data but server metadata is still selected statically.
+  - Fix ThemeToggle and fallback in the follow-up if small. If dynamic per-tool metadata grows, leave it as documented residual risk.
+- Schedule Calendar:
+  - built-in post templates are already displayed through `getLocalizedPostTemplates()` for the current locale.
+  - built-in saved hashtag set names from `defaultHashtagSets` remain Japanese when visible in settings / post assist.
+  - Treat saved/imported/custom template and hashtag names as user data and do not translate them. If fixing defaults, use display-only helpers or localized default seed data without changing backup compatibility.
+
+Out of scope / keep as residual risk:
+
+- saved custom data, imported backup JSON strings, existing user-entered layer names, user material names, template bodies, hashtags, and handoff payload values.
+- internal matching keys such as `見出し` / `時刻` / `サブ` / `ラベル`, weekly schedule layer grouping keys, and preset layer `name` values.
+- generated canvas text that is content/preset body rather than UI chrome, unless a later content-localization PR explicitly handles it.
+- exhaustive debug/internal exception strings where English mode already falls back to a localized generic message.
+
+Suggested contract:
+
+- Add or extend a contract script that checks English display helpers exist for:
+  - material library display/search copy.
+  - material category labels.
+  - layer display names while preserving raw `layer.name`.
+  - standee placement and font metadata display.
+  - SNS split slot labels and canvas placeholder copy.
+  - ThemeToggle visible labels / aria.
+- Contract should explicitly assert no storage keys, handoff payload fields, draft schema, IndexedDB key, localStorage key, or URL paths changed.
+
+Suggested verification:
+
+- target contract script.
+- `node scripts/en-c-scope-copy-contract.mjs`
+- `node scripts/tool-handoff-contract.mjs`
+- `npm run lint`
+- `npx tsc --noEmit`
+- `git diff --check`
+- UI width check at `390 / 820 / 1024 / 1280 / 1366px` for `/`, `/tools`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker`, plus `/tools/schedule-calendar` if default hashtag display is touched.
+- English-mode visual points:
+  - material library cards/search/category filters.
+  - layer list and selected layer controls.
+  - standee placement panel.
+  - font listbox.
+  - SNS additional image slot labels and no-image canvas placeholder.
+  - ThemeToggle in desktop header / mobile drawer.
+
 - B+C integration smoke:
   - `/`
   - `/tools`

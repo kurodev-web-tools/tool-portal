@@ -481,6 +481,15 @@ assert.equal(
   "20:00 START",
   "Privacy Notice time copy follows the supplied English visual draft"
 );
+const enChattingDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
+  thumbnailLib.createDraftFromPreset("chatting"),
+  "en"
+);
+assert.equal(
+  textLayers(enChattingDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
+  "21:00 START",
+  "Chatting time copy follows the supplied English visual draft"
+);
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(
   textLayers(enKaraokeDraft).find((layer) => layer.name === "テキスト 3（サブ）")?.text,

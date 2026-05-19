@@ -42,8 +42,10 @@ const toolsPageSource = read("app/tools/page.tsx");
 assert.equal(scheduleCopy.getScheduleCalendarCopy("en").aria.previousMonth, "Previous month", "Schedule Calendar exposes English month navigation aria");
 assert.equal(scheduleCopy.getScheduleCalendarCopy("en").aria.closeSchedulePanel, "Close schedule panel", "Schedule Calendar exposes English panel close aria");
 assert.equal(scheduleCopy.getScheduleCalendarCopy("en").dragMoveGuide("20:00", "21:00"), "Move here 20:00 - 21:00", "Schedule Calendar exposes localized drag move guide");
+assert.equal(scheduleCopy.getPostTemplateVariableLabel(scheduleCopy.getScheduleCalendarCopy("en"), "{announcementText}", "告知文"), "Announcement", "Schedule Calendar exposes English template variable button labels");
 assert.match(scheduleSource, /scheduleCopy\.aria\.previousMonth/, "Schedule Calendar uses localized month navigation aria");
 assert.match(scheduleSource, /scheduleCopy\.dragMoveGuide/, "Schedule Calendar uses localized drag move guide");
+assert.match(scheduleSource, /getPostTemplateVariableLabel\(scheduleCopy,\s*option\.token,\s*option\.label\)/, "Schedule Calendar uses localized template variable labels without changing tokens");
 assert.doesNotMatch(scheduleSource, /ariaLabel="カテゴリで絞り込み"|aria-label="予定パネルを閉じる"|ここに移動/, "Schedule Calendar avoids C-scope Japanese UI copy literals in visible/aria paths");
 
 assert.equal(thumbnailCopy.getThumbnailEditorCopy("en").messages.canvasRenderFailed, "Could not render the canvas.", "Thumbnail Editor exposes English render error");

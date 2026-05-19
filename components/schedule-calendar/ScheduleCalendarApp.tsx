@@ -20,6 +20,7 @@ import {
   getLocalizedHashtagSets,
   getLocalizedPostTemplates,
   getPostTemplateUsageOptions,
+  getPostTemplateVariableLabel,
   getRecurrenceOptions,
   getScheduleCalendarCopy,
   getWeekStartOptions,
@@ -1905,7 +1906,7 @@ function TemplateDraftEditor({
         <div className="mt-2 flex flex-wrap gap-1.5">
           {postTemplateVariableOptions.map((option) => (
             <button key={option.token} type="button" onClick={() => insertVariable(option.token)} className="flat-control px-2 py-1 text-xs">
-              {option.label}
+              {getPostTemplateVariableLabel(scheduleCopy, option.token, option.label)}
             </button>
           ))}
         </div>

@@ -956,7 +956,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     stream_announce: {
       "テキスト 4（ラベル）": "Stream / YouTube",
       "テキスト 1（見出し）": "FIRST TIME\nWELCOME!",
-      "テキスト 2（時刻）": "21:00",
+      "テキスト 2（時刻）": "21:00 START",
       "テキスト 3（サブ）": "Hang out together!"
     },
     first_stream: {
@@ -1089,6 +1089,9 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
 > = {
   ja: {},
   en: {
+    stream_announce: {
+      "テキスト 1（見出し）": { x: 116.33322030449972, y: 145.33348404014833 }
+    },
     endurance_stream: {
       "テキスト 1（見出し）": { fontSize: 140 }
     },

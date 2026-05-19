@@ -99,10 +99,14 @@ const layoutSnapshot = (draft) =>
     lineHeight: layer.lineHeight,
     align: layer.align
   }));
-const estimateAsciiTextWidth = (line, fontSize) => Array.from(line).reduce((total, character) => total + (/[ -~]/.test(character) ? 0.55 : 1), 0) * fontSize * 0.9;
+const estimateAsciiTextWidth = (line, layer) => {
+  const fontWidthRatio = layer.fontFamily === "Bebas Neue" ? 0.28 : 0.55;
+  return Array.from(line).reduce((total, character) => total + (/[ -~]/.test(character) ? fontWidthRatio : 1), 0) * layer.fontSize * 0.9;
+};
 const maxEstimatedTextWidthRatio = (layer) =>
-  Math.max(...layer.text.split("\n").map((line) => (line.trim() ? estimateAsciiTextWidth(line.trim(), layer.fontSize) / layer.width : 0)));
+  Math.max(...layer.text.split("\n").map((line) => (line.trim() ? estimateAsciiTextWidth(line.trim(), layer) / layer.width : 0)));
 const visualAdjustmentTargets = new Set([
+  "stream_announce/テキスト 1（見出し）",
   "endurance_stream/テキスト 1（見出し）",
   "karaoke/テキスト 1（見出し）"
 ]);
@@ -166,8 +170,19 @@ for (const preset of thumbnailLib.thumbnailPresets) {
 const enStreamDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("stream_announce"), "en");
 assert.equal(
   textLayers(enStreamDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
-  "21:00",
-  "Stream Announcement time copy is shortened for English visual balance"
+  "21:00 START",
+  "Stream Announcement time copy follows the supplied English visual draft"
+);
+const enStreamHeadline = textLayers(enStreamDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enStreamHeadline?.x,
+  116.33322030449972,
+  "Stream Announcement headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enStreamHeadline?.y,
+  145.33348404014833,
+  "Stream Announcement headline y follows the supplied English visual draft"
 );
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(

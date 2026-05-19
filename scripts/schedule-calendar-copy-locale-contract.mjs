@@ -37,7 +37,7 @@ assert.equal(copyModule.getScheduleCalendarCopy("ja").toolbar.title, "予定・�
 assert.equal(copyModule.getScheduleCalendarCopy("en").toolbar.title, "Schedule & stream planning", "English toolbar title is available");
 assert.equal(copyModule.getScheduleCalendarCopy("ja").tabs.schedule, "予定管理", "Japanese schedule tab stays unchanged");
 assert.equal(copyModule.getScheduleCalendarCopy("en").tabs.schedule, "Schedule", "English schedule tab is available");
-assert.equal(copyModule.getScheduleCalendarCopy("ja").empty.events, "予定はまだありません。", "Japanese empty state stays unchanged");
+assert.equal(copyModule.getScheduleCalendarCopy("ja").empty.events, "予定なし", "Japanese empty state stays compact");
 assert.equal(copyModule.getScheduleCalendarCopy("en").empty.events, "No events yet.", "English empty state is available");
 assert.match(
   copyModule.getScheduleCalendarCopy("en").postAssist.startGuide,

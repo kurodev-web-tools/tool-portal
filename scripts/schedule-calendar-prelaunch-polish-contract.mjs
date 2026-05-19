@@ -48,6 +48,12 @@ assert.match(
   "input guard copy stays practical and not punitive"
 );
 assert.match(appSource, /getScheduleCalendarCopy\(locale\)/, "schedule app resolves localized copy through the active locale");
+assert.match(appSource, /schedulePanelScrollRef/, "schedule panel owns an explicit scroll ref for action-driven reset");
+assert.match(
+  appSource,
+  /schedulePanelScrollRef\.current\?\.scrollTo\(\{ top: 0 \}\)/,
+  "new-event actions reset the right panel scroll position instead of leaving focus-induced top whitespace"
+);
 assert.match(scheduleLibSource, /export const scheduleStorageVersion = 2;/, "prelaunch polish does not change the schedule storage version");
 assert.match(handoffSource, /const handoffTtlMs = 30 \* 60 \* 1000;/, "prelaunch polish does not change the handoff TTL");
 assert.doesNotMatch(handoffSource, /imageData|data:image/, "schedule handoff contract does not start carrying image bodies");

@@ -107,6 +107,9 @@ const maxEstimatedTextWidthRatio = (layer) =>
   Math.max(...layer.text.split("\n").map((line) => (line.trim() ? estimateAsciiTextWidth(line.trim(), layer) / layer.width : 0)));
 const visualAdjustmentTargets = new Set([
   "stream_announce/テキスト 1（見出し）",
+  "first_stream/テキスト 1（見出し）",
+  "first_stream/テキスト 2（時刻）",
+  "first_stream/テキスト 3（サブ）",
   "endurance_stream/テキスト 1（見出し）",
   "karaoke/テキスト 1（見出し）"
 ]);
@@ -183,6 +186,40 @@ assert.equal(
   enStreamHeadline?.y,
   145.33348404014833,
   "Stream Announcement headline y follows the supplied English visual draft"
+);
+const enFirstStreamDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("first_stream"), "en");
+const enFirstHeadline = textLayers(enFirstStreamDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(
+  enFirstHeadline?.x,
+  106.72245769895892,
+  "First Stream headline x follows the supplied English visual draft"
+);
+assert.equal(
+  enFirstHeadline?.y,
+  175.77737589293787,
+  "First Stream headline y follows the supplied English visual draft"
+);
+const enFirstTime = textLayers(enFirstStreamDraft).find((layer) => layer.name === "テキスト 2（時刻）");
+assert.equal(
+  enFirstTime?.x,
+  140.83330507612487,
+  "First Stream time x follows the supplied English visual draft"
+);
+assert.equal(
+  enFirstTime?.y,
+  528.3343882810381,
+  "First Stream time y follows the supplied English visual draft"
+);
+const enFirstSub = textLayers(enFirstStreamDraft).find((layer) => layer.name === "テキスト 3（サブ）");
+assert.equal(
+  enFirstSub?.x,
+  86.83313553287445,
+  "First Stream sub x follows the supplied English visual draft"
+);
+assert.equal(
+  enFirstSub?.y,
+  608.3884618862465,
+  "First Stream sub y follows the supplied English visual draft"
 );
 const enKaraokeDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("karaoke"), "en");
 assert.equal(

@@ -247,6 +247,18 @@ export const scheduleCalendarCopy = {
       description: "説明",
       body: "本文",
       bodyWarning: "長文テンプレートはプレビューとコピーの見通しが悪くなります。",
+      variableLabels: {
+        "{title}": "タイトル",
+        "{date}": "日付",
+        "{startTime}": "開始時刻",
+        "{endTime}": "終了時刻",
+        "{weekday}": "曜日",
+        "{category}": "カテゴリ",
+        "{platform}": "プラットフォーム",
+        "{memo}": "メモ",
+        "{announcementText}": "告知文",
+        "{hashtags}": "ハッシュタグ"
+      },
       hashtags: "ハッシュタグ",
       hashtagsWarning: "タグが多いと投稿補助とhandoffが読みにくくなります。",
       hashtagsHelp: "本文とは別に保存し、コピー時に予定側のハッシュタグと結合します。",
@@ -521,6 +533,18 @@ export const scheduleCalendarCopy = {
       description: "Description",
       body: "Body",
       bodyWarning: "Long templates make preview and copy harder to review.",
+      variableLabels: {
+        "{title}": "Title",
+        "{date}": "Date",
+        "{startTime}": "Start time",
+        "{endTime}": "End time",
+        "{weekday}": "Day",
+        "{category}": "Category",
+        "{platform}": "Platform",
+        "{memo}": "Memo",
+        "{announcementText}": "Announcement",
+        "{hashtags}": "Hashtags"
+      },
       hashtags: "Hashtags",
       hashtagsWarning: "Too many tags make post assist and handoff harder to read.",
       hashtagsHelp: "Saved separately from the body and merged with event hashtags when copied.",
@@ -669,6 +693,10 @@ export function getRecurrenceOptions(copy: ScheduleCalendarCopy): Array<OptionCo
 
 export function getPostTemplateUsageOptions(copy: ScheduleCalendarCopy): Array<OptionCopy<PostTemplateUsageCategory>> {
   return (Object.keys(copy.templateUsage) as PostTemplateUsageCategory[]).map((value) => ({ value, label: copy.templateUsage[value] }));
+}
+
+export function getPostTemplateVariableLabel(copy: ScheduleCalendarCopy, token: string, fallback: string): string {
+  return copy.templateEditor.variableLabels[token as keyof typeof copy.templateEditor.variableLabels] ?? fallback;
 }
 
 export function getEventPeriodOptions(copy: ScheduleCalendarCopy): Array<OptionCopy<"all" | "today" | "week" | "month">> {

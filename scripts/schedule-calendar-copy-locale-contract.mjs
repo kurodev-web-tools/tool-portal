@@ -54,6 +54,16 @@ assert.match(
   /JSON backup/i,
   "English backup and restore copy explains the data boundary"
 );
+assert.equal(
+  copyModule.getPostTemplateVariableLabel(copyModule.getScheduleCalendarCopy("en"), "{title}", "タイトル"),
+  "Title",
+  "English locale localizes post template variable button labels"
+);
+assert.equal(
+  copyModule.getPostTemplateVariableLabel(copyModule.getScheduleCalendarCopy("ja"), "{title}", "タイトル"),
+  "タイトル",
+  "Japanese post template variable button labels stay unchanged"
+);
 assert.equal(typeof copyModule.getLocalizedHashtagSets, "function", "Schedule Calendar exposes localized hashtag set helper");
 const localizedHashtagSets = copyModule.getLocalizedHashtagSets(
   [
@@ -89,6 +99,7 @@ assert.match(appSource, /getScheduleCalendarCopy\(locale\)/, "Schedule Calendar 
 assert.match(appSource, /getLocalizedHashtagSets/, "Schedule Calendar localizes built-in hashtag sets from the active locale");
 assert.match(appSource, /localizedHashtagSets/, "Schedule Calendar uses localized hashtag sets for display and post assist");
 assert.match(appSource, /scheduleCopy/, "Schedule Calendar passes localized copy into panels");
+assert.match(appSource, /getPostTemplateVariableLabel\(scheduleCopy,\s*option\.token,\s*option\.label\)/, "Schedule Calendar localizes post template variable button labels without changing tokens");
 assert.match(scheduleLibSource, /export const scheduleStorageVersion = 2;/, "Schedule Calendar copy work does not change storage version");
 assert.match(scheduleLibSource, /v-streamer-tools:schedule-calendar-events:v1/, "Schedule Calendar copy work does not change the storage key");
 

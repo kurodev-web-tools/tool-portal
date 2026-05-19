@@ -174,6 +174,29 @@
 - Remaining risk:
   - user-entered custom layer names remain untranslated by design.
 
+### EN Schedule Token Label Review Follow-up
+
+- branch/worktree: `codex/en-schedule-token-labels` / `D:/V_streamer_tools/.worktrees/en-schedule-token-labels`
+- base: `origin/codex/en-support-preview` after PR #163 merge (`2026-05-19T10:40:22Z`)
+- Schedule Calendar:
+  - localized the Post assist template variable button labels shown under `Body`.
+  - kept insertion tokens such as `{title}`, `{date}`, `{announcementText}`, saved templates, backup JSON, localStorage keys, and handoff payload unchanged.
+  - added `getPostTemplateVariableLabel()` so the existing static token list can keep compatibility labels while UI display comes from `scheduleCalendarCopy`.
+- Verification:
+  - PASS: RED -> GREEN `node scripts/schedule-calendar-copy-locale-contract.mjs`
+  - PASS: `node scripts/en-c-scope-copy-contract.mjs`
+  - PASS: `node scripts/tool-handoff-contract.mjs`
+  - PASS: `npm run lint`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `git diff --check` (only repo-normal LF -> CRLF working-copy warnings)
+- UI width check:
+  - method: local `next dev --webpack -p 3042 --hostname 127.0.0.1` + Playwright CLI.
+  - page: `/tools/schedule-calendar`
+  - widths: `390 / 820 / 1024 / 1280 / 1366px`
+  - result: English mode variable labels displayed `Title / Date / Start time / End time / Day / Category / Platform / Memo / Announcement / Hashtags`; Japanese token labels were not visible in that panel; clicking `Title` inserted `{title}`; `document.documentElement.lang` was `en`; body/document horizontal overflow was `0`; console error/warn was `0`.
+- Remaining risk:
+  - Thumbnail preset text layer canvas contents remain preset body/content, not display labels. Translating those should be a separate localized preset-content PR because it changes the actual generated thumbnail text rather than UI chrome.
+
 - B+C integration smoke:
   - `/`
   - `/tools`

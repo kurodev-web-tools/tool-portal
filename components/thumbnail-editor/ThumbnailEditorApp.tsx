@@ -50,6 +50,7 @@ import {
   type ThumbnailHandleKind,
   type ThumbnailMainTextCarryover,
   type ThumbnailResizeHandle,
+  type ThumbnailCanvas,
   type ThumbnailCanvasSizeId,
   type ThumbnailEditorDraft,
   type ThumbnailLayer,
@@ -92,7 +93,8 @@ import {
   getThumbnailPresetUsageLabel,
   getThumbnailStandeePlacementDescription,
   getThumbnailStandeePlacementGroup,
-  getThumbnailStandeePlacementName
+  getThumbnailStandeePlacementName,
+  localizeThumbnailPresetTextLayerBodies
 } from "@/lib/thumbnail-editor-copy";
 import { createHandoffFileNameBase } from "@/lib/file-name";
 import {
@@ -463,7 +465,14 @@ const createThumbnailDraftFromHandoff = (payload: ScheduleHandoffPayload, canvas
 export function ThumbnailEditorApp() {
   const { locale } = useLocale();
   const copy = getThumbnailEditorCopy(locale);
-  const [draft, setDraft] = useState<ThumbnailEditorDraft>(() => createDraftFromPreset());
+  const createPresetDraftForLocale = useCallback(
+    (presetId: ThumbnailPresetId = "stream_announce", canvas: ThumbnailCanvas = thumbnailCanvasSizes.hd) =>
+      localizeThumbnailPresetTextLayerBodies(createDraftFromPreset(presetId, canvas), locale),
+    [locale]
+  );
+  const [draft, setDraft] = useState<ThumbnailEditorDraft>(() =>
+    localizeThumbnailPresetTextLayerBodies(createDraftFromPreset(), locale)
+  );
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const [exportFormat, setExportFormat] = useState<"png" | "jpeg">("png");
@@ -541,8 +550,8 @@ export function ThumbnailEditorApp() {
   );
   const currentMainTextCarryover = useMemo(() => getThumbnailMainTextCarryover(draft), [draft]);
   const pendingPresetDefaultText = useMemo(
-    () => (pendingPreset ? getThumbnailMainTextCarryover(createDraftFromPreset(pendingPreset.id, draft.canvas)) : {}),
-    [draft.canvas, pendingPreset]
+    () => (pendingPreset ? getThumbnailMainTextCarryover(createPresetDraftForLocale(pendingPreset.id, draft.canvas)) : {}),
+    [createPresetDraftForLocale, draft.canvas, pendingPreset]
   );
   const userMaterialUsageSummary = useMemo(() => getThumbnailUserMaterialUsageSummary(userMaterialRefs), [userMaterialRefs]);
 
@@ -672,6 +681,11 @@ export function ThumbnailEditorApp() {
 
       const saved = window.localStorage.getItem(thumbnailDraftStorageKey);
       if (!saved) {
+        setDraft((current) =>
+          locale === "en" && isThumbnailDraftPristineForPreset(current)
+            ? localizeThumbnailPresetTextLayerBodies(current, locale)
+            : current
+        );
         setHydrated(true);
         return;
       }
@@ -681,17 +695,17 @@ export function ThumbnailEditorApp() {
         showToast("info", copy.toasts.restored);
       } else {
         window.localStorage.removeItem(thumbnailDraftStorageKey);
-        setDraft(createDraftFromPreset());
+        setDraft(createPresetDraftForLocale());
         showToast("warning", copy.toasts.brokenDraft);
       }
     } catch {
       window.localStorage.removeItem(thumbnailDraftStorageKey);
-      setDraft(createDraftFromPreset());
+      setDraft(createPresetDraftForLocale());
       showToast("warning", copy.toasts.brokenDraft);
     } finally {
       setHydrated(true);
     }
-  }, [copy.toasts.brokenDraft, copy.toasts.handoffApplied, copy.toasts.restored, showToast]);
+  }, [copy.toasts.brokenDraft, copy.toasts.handoffApplied, copy.toasts.restored, createPresetDraftForLocale, locale, showToast]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1114,12 +1128,12 @@ export function ThumbnailEditorApp() {
 
   const applyPreset = (presetId: ThumbnailPresetId, mode: PresetApplyMode) => {
     recordPresetUse(presetId);
-    const next = createDraftFromPreset(presetId, draft.canvas);
+    const next = createPresetDraftForLocale(presetId, draft.canvas);
     const nextDraft =
       mode === "handoff" && handoffPayload
         ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
         : mode === "carryover"
-          ? applyThumbnailPresetPartial(draft, presetId)
+          ? applyThumbnailPresetPartial(draft, presetId, next)
           : next;
     replaceDraft(nextDraft, { recordHistory: true });
     setMobilePanel("canvas");
@@ -1136,7 +1150,7 @@ export function ThumbnailEditorApp() {
 
   const changeCanvasSize = (sizeId: ThumbnailCanvasSizeId) => {
     const canvas = thumbnailCanvasSizes[sizeId];
-    const next = createDraftFromPreset(draft.presetId, canvas);
+    const next = createPresetDraftForLocale(draft.presetId, canvas);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
@@ -1146,7 +1160,7 @@ export function ThumbnailEditorApp() {
 
   const changePresetVariant = (variantId: ThumbnailPresetVariantId) => {
     const variant = thumbnailPresetVariants[variantId];
-    const next = createDraftFromPresetVariant(draft.presetId, variantId);
+    const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(draft.presetId, variantId), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload)
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
@@ -1175,7 +1189,7 @@ export function ThumbnailEditorApp() {
   };
 
   const newDraft = () => {
-    replaceDraft(createDraftFromPreset(draft.presetId, draft.canvas), { recordHistory: true });
+    replaceDraft(createPresetDraftForLocale(draft.presetId, draft.canvas), { recordHistory: true });
     setMobilePanel("canvas");
     showToast("info", copy.toasts.newDraft);
   };

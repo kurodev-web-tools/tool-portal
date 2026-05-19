@@ -58,6 +58,7 @@
     - 実装内容: JA の週グリッド空状態 copy を `予定はまだありません。` から `予定なし` に短縮。右パネルの `この日に新しい予定を追加` / 時間枠クリックから新規予定作成へ入る際、パネル scroll root を delayed reset して上部に余白が残らないようにした。
     - 検証結果: `node scripts/schedule-calendar-copy-locale-contract.mjs`、`node scripts/schedule-calendar-prelaunch-polish-contract.mjs`、`node scripts/schedule-calendar-storage-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check` を実行済み。`git diff --check` は LF -> CRLF warning のみで exit 0。
     - 幅別確認: dev server `http://localhost:3056` で `/tools/schedule-calendar` を `390 / 820 / 1024 / 1280 / 1366px` 確認。`390 / 820px` は対象の週グリッド / desktop 右パネルが非表示のため横 overflow なしを確認。`1024 / 1280 / 1366px` は `予定なし` 表示、旧文言が残らないこと、右パネル scroll root を 80px ずらしてから `この日に新しい予定を追加` をクリックして `scrollTop=0` に戻ること、body / document 横 overflow なし、console error / warn なしを確認。
+    - review follow-up: クリック後に desktop 右パネルの4タブ上へ余白が残る原因は、desktop 幅でも `mobileSheetOpen=true` になり mobile sheet 用の `lg:!py-3` が当たることだった。新規作成 / 時間枠 / 編集 / 複製 / 移動導線は `openSchedulePanelForCurrentLayout()` 経由にし、desktop では mobile sheet state を立てないようにした。`1024 / 1280 / 1366px` でクリック後も `asidePaddingTop=0px`、tab top と aside top が一致、`mobileBackdrop=false`、横 overflow なしを確認。`390 / 820px` は対象 right panel 非表示で横 overflow なしを確認。
 
 ## Backlog
 

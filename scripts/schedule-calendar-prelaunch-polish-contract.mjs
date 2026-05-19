@@ -54,6 +54,16 @@ assert.match(
   /schedulePanelScrollRef\.current\?\.scrollTo\(\{ top: 0 \}\)/,
   "new-event actions reset the right panel scroll position instead of leaving focus-induced top whitespace"
 );
+assert.match(
+  appSource,
+  /function openSchedulePanelForCurrentLayout\(\)/,
+  "schedule actions use a layout-aware panel opener"
+);
+assert.doesNotMatch(
+  appSource,
+  /setMobileSheetOpen\(true\)/,
+  "desktop schedule actions must not enable mobile sheet padding above the right-panel tabs"
+);
 assert.match(scheduleLibSource, /export const scheduleStorageVersion = 2;/, "prelaunch polish does not change the schedule storage version");
 assert.match(handoffSource, /const handoffTtlMs = 30 \* 60 \* 1000;/, "prelaunch polish does not change the handoff TTL");
 assert.doesNotMatch(handoffSource, /imageData|data:image/, "schedule handoff contract does not start carrying image bodies");

@@ -3483,6 +3483,10 @@ export function ScheduleCalendarApp() {
     );
   }
 
+  function openSchedulePanelForCurrentLayout() {
+    setMobileSheetOpen(isMobileLayout());
+  }
+
   function restoreUndoEvent() {
     if (!pendingUndo) {
       return;
@@ -3523,7 +3527,7 @@ export function ScheduleCalendarApp() {
   function selectDateAndOpenSheet(dateKey: string) {
     selectDate(dateKey);
     setActiveTab("schedule");
-    setMobileSheetOpen(true);
+    openSchedulePanelForCurrentLayout();
   }
 
   function selectEvent(event: ScheduleEvent) {
@@ -3570,7 +3574,7 @@ export function ScheduleCalendarApp() {
 
     setActiveTab("schedule");
     setMobileScheduleMode("edit");
-    setMobileSheetOpen(true);
+    openSchedulePanelForCurrentLayout();
     setStatusMessage("");
   }
 
@@ -3580,7 +3584,7 @@ export function ScheduleCalendarApp() {
     setDraft(next);
     setActiveTab("schedule");
     setMobileScheduleMode("edit");
-    setMobileSheetOpen(true);
+    openSchedulePanelForCurrentLayout();
     setStatusMessage("");
     resetSchedulePanelScroll();
   }
@@ -3600,7 +3604,7 @@ export function ScheduleCalendarApp() {
     setDraft(next);
     setActiveTab("schedule");
     setMobileScheduleMode("edit");
-    setMobileSheetOpen(true);
+    openSchedulePanelForCurrentLayout();
     setStatusMessage("");
     resetSchedulePanelScroll();
   }
@@ -3695,7 +3699,7 @@ export function ScheduleCalendarApp() {
     setDraft(duplicatedEvent);
     setActiveTab("schedule");
     setMobileScheduleMode("edit");
-    setMobileSheetOpen(true);
+    openSchedulePanelForCurrentLayout();
     setStatusMessage(scheduleCopy.common.duplicate);
   }
 
@@ -3718,7 +3722,7 @@ export function ScheduleCalendarApp() {
     setDraft(nextEvent);
     setActiveTab("schedule");
     setMobileScheduleMode("edit");
-    setMobileSheetOpen(true);
+    openSchedulePanelForCurrentLayout();
     showUndoToast({
       title: scheduleCopy.messages.moved,
       detail: nextEvent.title || scheduleCopy.common.untitled,

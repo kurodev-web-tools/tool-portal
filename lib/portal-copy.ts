@@ -245,6 +245,7 @@ export const portalCopy = {
     navigation: {
       menuOpen: "メニューを開く",
       menuClose: "メニューを閉じる",
+      settings: "Settings",
       language: "表示言語",
       theme: "表示テーマ",
       fixed: "固定ナビ",
@@ -332,6 +333,7 @@ export const portalCopy = {
     navigation: {
       menuOpen: "Open menu",
       menuClose: "Close menu",
+      settings: "Settings",
       language: "Language",
       theme: "Theme",
       fixed: "Pinned nav",

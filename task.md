@@ -14,7 +14,7 @@
 ## Active Priorities
 
 1. Portal shell settings visibility polish
-   - status: 次タスク。
+   - status: 実装・検証済み。branch `codex/portal-shell-settings-polish` で確認用に push 予定。
    - user context:
      - PC 表示で各ツールを開いている際、左パネル内のテーマ切り替えが見えない。
      - 左パネル自体にはスクロールを適用しない方針。
@@ -44,6 +44,24 @@
      - in-app browser で `/`, `/tools`, `/tools/schedule-calendar`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker` を確認する。
      - width: `390 / 820 / 1024 / 1280 / 1366px`
      - JA / EN、Light / Dark、body/document 横 overflow、header / sidebar / drawer の切替導線を確認する。
+   - implementation notes:
+     - `PortalSettingsPanel` を追加し、workspace sidebar / drawer の `Language` と `Theme` を `Settings` block に集約した。
+     - 各ツール画面の `1024 - 1279px` は左 rail 下部に歯車中心の compact Settings block、`1280px+` は `Settings` label 付き panel を表示する。
+     - HOME / Tools の header 側 `Language` / `Theme` は維持した。
+     - workspace sidebar では将来機能 list を隠し、`Sign-in planned` を compact notice にして Settings を押し出さない配置にした。
+   - verification results:
+     - Passed: `node scripts/portal-tools-copy-locale-contract.mjs`
+     - Passed: `node scripts/tool-portal-entry-contract.mjs`
+     - Passed: `npm run lint`
+     - Passed: `npx tsc --noEmit`
+     - Passed: `git diff --check`
+     - Width / locale / theme matrix: Chrome DevTools で `/`, `/tools`, `/tools/schedule-calendar`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker` を `390 / 820 / 1024 / 1280 / 1366px`、JA / EN、Light / Dark で確認。`documentElement.lang`、dark class、header/sidebar/drawer controls、Settings visibility、body/document 横 overflow なしを確認。
+     - Visual spot check: `820px` drawer EN/Dark、`1024px` tool rail、`1280px` tool sidebar label 付き Settings を確認。
+   - remaining risk:
+     - Dev server の Next dev indicator は左下に表示されるが、production UI では出ない。
+     - 確認は Chrome DevTools automation 中心。通常の最終目視は確認用 branch 取り込み時に Codex app browser で再確認するとよい。
+   - handoff to next candidate:
+     - 次候補は `Thumbnail Editor inline text edit`。今回の Portal shell 変更は tool body の schema / canvas / editor state には触れていないため、`codex/thumbnail-inline-text-edit` はこの branch の merge 判断後に独立 worktree で開始する。
 
 2. Thumbnail Editor inline text edit
    - status: Portal shell settings polish 後の公開版 UX 改善候補。

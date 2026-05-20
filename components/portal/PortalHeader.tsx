@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LanguageSwitch } from "@/components/portal/LanguageSwitch";
 import { useLocale } from "@/components/portal/LocaleProvider";
+import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
 import { sidebarTools } from "@/lib/tools";
@@ -114,7 +115,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
                 ×
               </button>
             </div>
-            <nav className="mt-6 space-y-2">
+            <nav className="mt-6 min-h-0 flex-1 space-y-2 overflow-y-auto pb-4">
               {navItems.map((item) => {
                 const active =
                   item.href === "/" || item.href === "/tools"
@@ -135,16 +136,7 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
                 );
               })}
             </nav>
-            <div className="mt-auto space-y-3 rounded-base border border-border bg-surface-muted/45 px-3 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-bold text-foreground">{copy.language}</span>
-                <LanguageSwitch variant="drawer" />
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-bold text-foreground">{copy.theme}</span>
-                <ThemeToggle />
-              </div>
-            </div>
+            <PortalSettingsPanel variant="drawer" />
           </aside>
         </>
       ) : null}

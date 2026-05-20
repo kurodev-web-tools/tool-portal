@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, MouseEvent, PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import {
   cloneThumbnailLayer,
   applyThumbnailMainTextCarryover,
@@ -143,6 +144,10 @@ type CanvasPanState = {
   startScrollLeft: number;
   startScrollTop: number;
   moved: boolean;
+};
+type InlineTextEditState = {
+  layerId: string;
+  value: string;
 };
 type LastTapState = {
   time: number;
@@ -496,6 +501,7 @@ export function ThumbnailEditorApp() {
   const [userMaterialImageUrls, setUserMaterialImageUrls] = useState<Record<string, string>>({});
   const [replaceUserMaterialRef, setReplaceUserMaterialRef] = useState<ThumbnailUserMaterialRef | null>(null);
   const [pendingPresetApplyId, setPendingPresetApplyId] = useState<ThumbnailPresetId | null>(null);
+  const [inlineTextEdit, setInlineTextEdit] = useState<InlineTextEditState | null>(null);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const [canvasAttachVersion, setCanvasAttachVersion] = useState(0);
   const [mobilePreviewCanvasAttachVersion, setMobilePreviewCanvasAttachVersion] = useState(0);
@@ -504,6 +510,7 @@ export function ThumbnailEditorApp() {
   const canvasViewportRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const userMaterialFileInputRef = useRef<HTMLInputElement | null>(null);
+  const inlineTextEditTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const draftRef = useRef<ThumbnailEditorDraft>(draft);
   const draftHistoryRef = useRef<DraftHistoryState>({ past: [], future: [] });
   const interactionRef = useRef<CanvasInteractionState | null>(null);
@@ -520,6 +527,32 @@ export function ThumbnailEditorApp() {
   const selectedLayer = useMemo(
     () => draft.layers.find((layer) => layer.id === draft.selectedLayerId) ?? null,
     [draft.layers, draft.selectedLayerId]
+  );
+  const inlineTextEditLayerId = inlineTextEdit?.layerId ?? null;
+  const inlinePreviewDraft = useMemo<ThumbnailEditorDraft>(
+    () =>
+      inlineTextEdit
+        ? {
+            ...draft,
+            layers: draft.layers.map((layer) =>
+              layer.id === inlineTextEdit.layerId && layer.type === "text" && !layer.locked && !layer.hidden
+                ? { ...layer, text: inlineTextEdit.value }
+                : layer
+            )
+          }
+        : draft,
+    [draft, inlineTextEdit]
+  );
+  const resolvedPreviewDraft = useMemo(
+    () => ({
+      ...inlinePreviewDraft,
+      layers: inlinePreviewDraft.layers.map((layer) =>
+        layer.type === "image" && layer.materialRef
+          ? { ...layer, src: userMaterialImageUrls[layer.materialRef.storageId] ?? layer.src }
+          : layer
+      )
+    }),
+    [inlinePreviewDraft, userMaterialImageUrls]
   );
   const resolvedDraft = useMemo(
     () => ({
@@ -559,6 +592,40 @@ export function ThumbnailEditorApp() {
     [createPresetDraftForLocale, draft.canvas, pendingPreset]
   );
   const userMaterialUsageSummary = useMemo(() => getThumbnailUserMaterialUsageSummary(userMaterialRefs), [userMaterialRefs]);
+  const inlineTextEditLayer = useMemo<Extract<ThumbnailLayer, { type: "text" }> | null>(() => {
+    const layer = draft.layers.find((item) => item.id === inlineTextEditLayerId);
+    return layer && layer.type === "text" && !layer.locked && !layer.hidden ? layer : null;
+  }, [draft.layers, inlineTextEditLayerId]);
+  const inlineTextEditStyle = useMemo<CSSProperties | null>(() => {
+    if (!inlineTextEditLayer) {
+      return null;
+    }
+    const minCanvasWidth = Math.min(160, draft.canvas.width);
+    const minCanvasHeight = Math.min(48, draft.canvas.height);
+    const safeLeft = clamp(inlineTextEditLayer.x, 0, Math.max(0, draft.canvas.width - minCanvasWidth));
+    const safeTop = clamp(inlineTextEditLayer.y, 0, Math.max(0, draft.canvas.height - minCanvasHeight));
+    const safeWidth = clamp(inlineTextEditLayer.width, minCanvasWidth, Math.max(minCanvasWidth, draft.canvas.width - safeLeft));
+    const safeHeight = clamp(inlineTextEditLayer.height, minCanvasHeight, Math.max(minCanvasHeight, draft.canvas.height - safeTop));
+
+    return {
+      left: `${safeLeft * zoom}px`,
+      top: `${safeTop * zoom}px`,
+      width: `${safeWidth * zoom}px`,
+      height: `${safeHeight * zoom}px`,
+      transform: `rotate(${inlineTextEditLayer.rotation}deg)`,
+      transformOrigin: "center",
+      fontFamily: inlineTextEditLayer.fontFamily,
+      fontSize: `${clamp(inlineTextEditLayer.fontSize * zoom, 12, 96)}px`,
+      lineHeight: inlineTextEditLayer.lineHeight,
+      fontWeight: inlineTextEditLayer.bold ? 800 : 500,
+      fontStyle: inlineTextEditLayer.italic ? "italic" : "normal",
+      textAlign: inlineTextEditLayer.align,
+      color: "transparent",
+      caretColor: "#1ed7c6",
+      opacity: clamp(inlineTextEditLayer.opacity, 0.2, 1),
+      overflow: "hidden"
+    };
+  }, [draft.canvas.height, draft.canvas.width, inlineTextEditLayer, zoom]);
 
   useEffect(() => {
     setFontMenuOpen(false);
@@ -593,6 +660,22 @@ export function ThumbnailEditorApp() {
   useEffect(() => {
     setCanvasCursor(editorMode === "pan" ? "grab" : "default");
   }, [editorMode]);
+  useEffect(() => {
+    if (!inlineTextEdit) {
+      return;
+    }
+    if (!inlineTextEditLayer) {
+      setInlineTextEdit(null);
+    }
+  }, [inlineTextEdit, inlineTextEditLayer]);
+  useEffect(() => {
+    if (!inlineTextEditLayerId) {
+      return;
+    }
+    const textarea = inlineTextEditTextareaRef.current;
+    textarea?.focus();
+    textarea?.setSelectionRange(textarea.value.length, textarea.value.length);
+  }, [inlineTextEditLayerId]);
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(thumbnailPresetDiscoveryStorageKey);
@@ -725,7 +808,7 @@ export function ThumbnailEditorApp() {
     const renderThumbnailPreview = async () => {
       const buffer = document.createElement("canvas");
       try {
-        await drawThumbnail(buffer, resolvedDraft, { selectedLayerId: draft.selectedLayerId, includeSelection: true });
+        await drawThumbnail(buffer, resolvedPreviewDraft, { selectedLayerId: draft.selectedLayerId, includeSelection: true });
         if (canvasRenderVersionRef.current !== renderVersion || canvasRef.current !== canvas) {
           return;
         }
@@ -741,13 +824,13 @@ export function ThumbnailEditorApp() {
       }
     };
     const renderThumbnailPreviewAfterFonts = async () => {
-      await waitForThumbnailDraftFonts(resolvedDraft);
+      await waitForThumbnailDraftFonts(resolvedPreviewDraft);
       await renderThumbnailPreview();
     };
 
     void renderThumbnailPreview();
     void renderThumbnailPreviewAfterFonts();
-  }, [canvasAttachVersion, copy.messages.canvasRenderFailed, draft.selectedLayerId, resolvedDraft, showToast]);
+  }, [canvasAttachVersion, copy.messages.canvasRenderFailed, draft.selectedLayerId, resolvedPreviewDraft, showToast]);
 
   useEffect(() => {
     if (!mobilePreviewOpen) {
@@ -1050,6 +1133,46 @@ export function ThumbnailEditorApp() {
     [draft.canvas.height, draft.canvas.width]
   );
 
+  const beginInlineTextEdit = useCallback((target: ThumbnailLayer) => {
+    if (target.type !== "text" || target.locked || target.hidden) {
+      return false;
+    }
+    setDraft((current) => ({ ...current, selectedLayerId: target.id }));
+    setSidePanelCollapsed(false);
+    setInlineTextEdit({ layerId: target.id, value: target.text });
+    return true;
+  }, []);
+
+  const commitInlineTextEdit = useCallback(() => {
+    if (!inlineTextEdit) {
+      return;
+    }
+    updateDraft((current) => ({
+      ...current,
+      layers: current.layers.map((layer) =>
+        layer.id === inlineTextEdit.layerId && layer.type === "text" && !layer.locked && !layer.hidden
+          ? { ...layer, text: inlineTextEdit.value }
+          : layer
+      ),
+      selectedLayerId: inlineTextEdit.layerId
+    }));
+    setInlineTextEdit(null);
+  }, [inlineTextEdit, updateDraft]);
+
+  const cancelInlineTextEdit = useCallback(() => {
+    setInlineTextEdit(null);
+  }, []);
+
+  const selectLayerFromEditor = useCallback(
+    (layerId: string) => {
+      if (inlineTextEditLayerId && inlineTextEditLayerId !== layerId) {
+        commitInlineTextEdit();
+      }
+      setDraft((current) => ({ ...current, selectedLayerId: layerId }));
+    },
+    [commitInlineTextEdit, inlineTextEditLayerId]
+  );
+
   const openLayerPanelForPoint = useCallback(
     (point: { x: number; y: number }) => {
       if (typeof window === "undefined" || window.innerWidth < 1024) {
@@ -1059,11 +1182,11 @@ export function ThumbnailEditorApp() {
       if (!target) {
         return null;
       }
-      setDraft((current) => ({ ...current, selectedLayerId: target.id }));
+      selectLayerFromEditor(target.id);
       setSidePanelCollapsed(false);
       return target.id;
     },
-    [draft.layers]
+    [draft.layers, selectLayerFromEditor]
   );
 
   const handleCanvasDoubleClick = useCallback(
@@ -1072,11 +1195,16 @@ export function ThumbnailEditorApp() {
       if (!point) {
         return;
       }
+      const target = [...draft.layers].reverse().find((layer) => layerContainsPoint(layer, point));
+      if (target && beginInlineTextEdit(target)) {
+        event.preventDefault();
+        return;
+      }
       if (openLayerPanelForPoint(point)) {
         event.preventDefault();
       }
     },
-    [getCanvasPointFromClient, openLayerPanelForPoint]
+    [beginInlineTextEdit, draft.layers, getCanvasPointFromClient, openLayerPanelForPoint]
   );
 
   const handleTapEditIntent = useCallback(
@@ -1105,12 +1233,17 @@ export function ThumbnailEditorApp() {
         layerId: target?.id ?? null
       };
 
+      if (isDoubleTap && target && beginInlineTextEdit(target)) {
+        lastTapRef.current = null;
+        event.preventDefault();
+        return;
+      }
       if (isDoubleTap && target && openLayerPanelForPoint(point)) {
         lastTapRef.current = null;
         event.preventDefault();
       }
     },
-    [draft.layers, getCanvasPointFromClient, openLayerPanelForPoint]
+    [beginInlineTextEdit, draft.layers, getCanvasPointFromClient, openLayerPanelForPoint]
   );
 
   const constrainLayer = useCallback(
@@ -1437,7 +1570,7 @@ export function ThumbnailEditorApp() {
         return;
       }
 
-      setDraft((current) => ({ ...current, selectedLayerId: activeLayer.id }));
+      selectLayerFromEditor(activeLayer.id);
       if (activeLayer.locked) {
         return;
       }
@@ -1464,7 +1597,7 @@ export function ThumbnailEditorApp() {
       event.currentTarget.setPointerCapture(event.pointerId);
       event.preventDefault();
     },
-    [draft, editorMode, getCanvasPointFromClient]
+    [draft, editorMode, getCanvasPointFromClient, selectLayerFromEditor]
   );
 
   const resizeLayerFromHandle = useCallback((state: CanvasInteractionState, point: { x: number; y: number }) => {
@@ -1972,6 +2105,34 @@ export function ThumbnailEditorApp() {
                         aria-label={copy.canvas.canvasAria}
                       />
                       {showCenterGuide ? <CanvasCenterGuideOverlay /> : null}
+                      {inlineTextEdit && inlineTextEditLayer && inlineTextEditStyle ? (
+                        <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden rounded-base">
+                          <textarea
+                            ref={inlineTextEditTextareaRef}
+                            data-thumbnail-inline-text-editor
+                            className="pointer-events-auto absolute resize-none overflow-hidden rounded-sm border border-primary/70 bg-transparent px-0 py-0 text-transparent caret-primary outline-none ring-1 ring-primary/20 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                            style={inlineTextEditStyle}
+                            maxLength={150}
+                            spellCheck={false}
+                            value={inlineTextEdit.value}
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onChange={(event) => setInlineTextEdit((current) => (current ? { ...current, value: event.target.value } : current))}
+                            onBlur={() => commitInlineTextEdit()}
+                            onKeyDown={(event) => {
+                              if (event.key === "Escape") {
+                                event.preventDefault();
+                                cancelInlineTextEdit();
+                                return;
+                              }
+                              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                                event.preventDefault();
+                                commitInlineTextEdit();
+                              }
+                            }}
+                            aria-label={copy.canvas.inlineTextEditorAria}
+                          />
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -2038,7 +2199,7 @@ export function ThumbnailEditorApp() {
                   layers={draft.layers}
                   presetId={draft.presetId}
                   selectedLayerId={draft.selectedLayerId}
-                  onSelect={(id) => setDraft((current) => ({ ...current, selectedLayerId: id }))}
+                  onSelect={selectLayerFromEditor}
                   onMove={moveLayer}
                   onDuplicate={duplicateLayer}
                   onDelete={deleteLayer}
@@ -2111,7 +2272,7 @@ export function ThumbnailEditorApp() {
                 layers={draft.layers}
                 presetId={draft.presetId}
                 selectedLayerId={draft.selectedLayerId}
-                onSelect={(id) => setDraft((current) => ({ ...current, selectedLayerId: id }))}
+                onSelect={selectLayerFromEditor}
                 onMove={moveLayer}
                 onDuplicate={duplicateLayer}
                 onDelete={deleteLayer}

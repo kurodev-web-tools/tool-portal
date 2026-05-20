@@ -39,7 +39,7 @@ second batch 後は、同じ「配信告知の雰囲気違い」を増やすよ�
 
 | Candidate id | Display name | Existing category | Usage label | Initial text | Mock |
 | --- | --- | --- | --- | --- | --- |
-| `goods_notice` | グッズ告知 | 告知画像 | 物販 / merch release | `新グッズ` / `MERCH DROP` / `20:00 START` / `販売ページ公開` | production implemented in `codex/thumbnail-goods-notice-preset` |
+| `goods_notice` | グッズ告知 | 告知画像 | 物販 / merch release | `新グッズ` / `MERCH DROP` / `20:00 START` / `販売ページ公開` | not generated |
 | `membership_stream` | メン限配信 | 配信ジャンル | 限定配信 / members | `メン限配信` / `MEMBERS ONLY` / `21:00 START` / `今夜だけの作戦会議` | not generated |
 | `asmr_stream` | ASMR配信 | 配信ジャンル | ASMR / sleep aid | `ASMR` / `RELAX NIGHT` / `23:00 START` / `耳元でゆっくり話す夜` | not generated |
 | `relay_stream` | リレー配信 | 配信ジャンル | リレー / multi slot | `リレー配信` / `STREAM RELAY` / `NEXT 20:30` / `次の枠へつなぐ` | not generated |
@@ -48,8 +48,6 @@ second batch 後は、同じ「配信告知の雰囲気違い」を増やすよ�
 ## Recommended Follow-up Split
 
 1. `goods_notice`
-   - 2026-05-20 実装: `codex/thumbnail-goods-notice-preset` で production preset body / generated base background / generated decoration assets / contract を追加。
-   - Review反映: 商品カード、price badge、release badge、時刻 pill、CTA、注意書き panel は背景焼き込みではなく asset layer として分離。
    - 物販 / booth / digital goods の告知は、既存 `イベント告知` の参加情報とも `歌ってみた告知` の動画公開とも違う。
    - product card、price / release badge、注意書き panel が必要で、asset 方針を分けやすい。
 2. `membership_stream`

@@ -115,7 +115,7 @@
      - 次候補は `goods_notice` preset。今回の PR は inline edit DOM / local state / copy / contract に閉じており、preset body、font、export、crop、Portal shell は触っていない。
 
 3. Thumbnail Editor `goods_notice` preset
-   - status: 実装・検証済み。branch `codex/thumbnail-goods-notice-preset` で commit 済みにする。
+   - status: 公開版 polish 後の次期機能候補。
    - reason: 英語対応公開後の追加価値として分かりやすく、既存 `イベント告知` / `歌ってみた告知` と用途が重なりにくい。
    - scope:
      - `goods_notice` 1 preset の body、必要 production asset、専用 contract、既存 thumbnail preset contracts。
@@ -132,31 +132,6 @@
      - `npx tsc --noEmit`
      - `git diff --check`
      - `/tools/thumbnail-editor` の JA / EN、preset card CTA、canvas nonblank、横 overflow。
-   - implementation notes:
-     - `goods_notice` / `グッズ告知` preset を `告知画像` / `物販 / merch release` として追加した。
-     - レビュー反映で、完成絵寄りだった v1 背景を外し、built-in `imagegen` 生成の控えめな base 背景 `public/assets/images/thumbnail-editor/phase5/goods-notice-background-v2.png` に差し替えた。
-     - 商品カード、価格 badge、release badge、時刻 pill、販売 CTA、注意書き panel は generated decoration asset として `public/assets/images/thumbnail-editor/decorations/phase5/goods-notice-*.png` に分離した。
-     - 追加レビュー反映で、ユーザーが調整した draft JSON に合わせて商品カード、price badge、時刻 pill、CTA、注意書き panel、対応 text layer の位置を preset default へ反映した。
-     - 見出し、英字 label、商品名、価格、時刻、CTA、補足、release badge は text layer として編集可能にした。
-     - schema / canvas rendering / export / crop / font UI には触れていない。
-     - JA / EN の preset name / description / initial text body / layer display alias を追加した。EN 見出しのみ既存の locale visual adjustment 経路で fontSize を調整した。
-     - 専用 contract `scripts/thumbnail-usecase-goods-notice-preset-contract.mjs` を追加した。
-   - verification results:
-     - PASS: `node scripts/thumbnail-usecase-goods-notice-preset-contract.mjs`
-     - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
-     - PASS: `npm run lint`
-     - PASS: `npx tsc --noEmit`
-     - PASS: `git diff --check` (repo-normal LF -> CRLF working-copy warnings only)
-     - PASS: Playwright smoke via temporary spec against local `next dev --webpack -p 3057 --hostname 127.0.0.1`.
-     - Width / locale / theme: `/tools/thumbnail-editor` passed at `390 ja/light`, `820 en/dark`, `1024 ja/dark`, `1280 en/light`, `1366 ja/light`; `documentElement.lang`, dark class, active preset CTA, canvas nonblank, body/document horizontal overflow `0` を確認。
-     - Edit flow: `goods_notice` text layer の canvas inline edit と右パネル textarea edit を確認。
-     - Optional check: `node scripts/thumbnail-material-assets-contract.mjs` は material library 既存文言の location drift で失敗した。今回 material library / material asset は変更していないため、blocking scope から外した。
-   - remaining risks:
-     - visual check は Playwright automation と generated asset preview 中心。最終の見た目判断は PR 確認時に Codex app browser / 人間目視で行うとよい。
-     - generated asset は text を焼き込まない方針で作成したが、商品カードの装飾密度や badge の強さは後続 polish 余地がある。
-   - handoff to next candidate:
-     - 次候補は `membership_stream`。今回の PR は `goods_notice` preset body、production background、locale copy、contract に閉じており、schema、canvas rendering pipeline、export / crop、font search / recently used UI、Portal shell、Schedule Calendar、SNS Split Image Maker は触っていない。
-     - `membership_stream` では member badge、locked / members-only visual、soft premium label、限定配信らしい CTA / 補足を text layer 化し、1 preset / 1 PR で開始する。
 
 4. Kuro Live Comment Translator planning
    - status: 新規ツール候補。すぐ実装せず、まず repo 内 future plan に落とす。

@@ -40,7 +40,7 @@ second batch 後は、同じ「配信告知の雰囲気違い」を増やすよ�
 | Candidate id | Display name | Existing category | Usage label | Initial text | Mock |
 | --- | --- | --- | --- | --- | --- |
 | `goods_notice` | グッズ告知 | 告知画像 | 物販 / merch release | `新グッズ` / `MERCH DROP` / `20:00 START` / `販売ページ公開` | production implemented in `codex/thumbnail-goods-notice-preset` |
-| `membership_stream` | メン限配信 | 配信ジャンル | 限定配信 / members | `メン限配信` / `MEMBERS ONLY` / `21:00 START` / `今夜だけの作戦会議` | not generated |
+| `membership_stream` | メン限配信 | 配信ジャンル | メン限 / members only | `メン限配信` / `MEMBERS ONLY` / `21:00 START` / `メンバー限定で公開` | production implemented in `codex/thumbnail-membership-stream-preset` |
 | `asmr_stream` | ASMR配信 | 配信ジャンル | ASMR / sleep aid | `ASMR` / `RELAX NIGHT` / `23:00 START` / `耳元でゆっくり話す夜` | not generated |
 | `relay_stream` | リレー配信 | 配信ジャンル | リレー / multi slot | `リレー配信` / `STREAM RELAY` / `NEXT 20:30` / `次の枠へつなぐ` | not generated |
 | `collab_recruit_notice` | コラボ募集 | 告知画像 | 募集 / partner call | `コラボ募集` / `COLLAB CALL` / `応募締切 06.30` / `一緒に企画しませんか` | not generated |
@@ -53,6 +53,9 @@ second batch 後は、同じ「配信告知の雰囲気違い」を増やすよ�
    - 物販 / booth / digital goods の告知は、既存 `イベント告知` の参加情報とも `歌ってみた告知` の動画公開とも違う。
    - product card、price / release badge、注意書き panel が必要で、asset 方針を分けやすい。
 2. `membership_stream`
+   - 2026-05-20 実装: `codex/thumbnail-membership-stream-preset` で production preset body / generated base background / generated decoration assets / contract を追加。
+   - 背景は控えめな premium base asset、member badge、lock badge、premium label、time pill、note panel は decoration asset として分離。
+   - 見出し、英字、時刻、補足、member label、badge copy は text layer として編集可能にした。
    - 配信ジャンル側で「限定公開 / community perk」を扱える。通常の `配信告知` や `雑談` と違い、closed / premium な見た目が必要。
    - member badge、locked room frame、soft premium label を使い、本文は text layer 化する。
 3. `asmr_stream`

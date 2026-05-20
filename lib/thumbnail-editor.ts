@@ -8,6 +8,7 @@ export type ThumbnailPresetId =
   | "cover_song_notice"
   | "event_notice"
   | "goods_notice"
+  | "membership_stream"
   | "privacy_notice"
   | "whiteboard_plan"
   | "karaoke"
@@ -1565,6 +1566,30 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 106.1873807888914, y: 624.938962360122, width: 230, height: 52, fontSize: 45, color: "#0b2a56", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#3bd7d0", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Bebas Neue", align: "center" }),
       textLayer({ name: "テキスト 3（CTA）", text: "販売ページ公開", x: 494.0007629510949, y: 621.0630722278739, width: 360, height: 42, fontSize: 36, color: "#0b2a56", strokeColor: "#ffffff", strokeWidth: 1, shadowColor: "#7ff4ef", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
       textLayer({ name: "テキスト 4（補足）", text: "数量限定アイテムあり!", x: 938.5001907377739, y: 634.1261444557476, width: 292, height: 36, fontSize: 28, color: "#0b2a56", strokeColor: "#ffffff", strokeWidth: 1, shadowColor: "#f1d198", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" })
+    ]
+  },
+  {
+    id: "membership_stream",
+    name: "メン限配信",
+    category: "配信ジャンル",
+    usageLabel: "メン限 / members only",
+    description: "限定公開、community perk、member-only stream を premium label と CTA で見せるメンバー向け配信告知。",
+    accent: "#d6b15e",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}membership-stream-background-v1.png`),
+      assetDecorationLayer({ name: "画像 2（メンバーバッジ）", src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-member-badge-v1.png`, x: 38, y: 47, width: 180, height: 180, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 3（ロックバッジ）", src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-lock-badge-v1.png`, x: 497.1820401312275, y: -1.503560528992864, width: 342, height: 342, opacity: 0.88 }),
+      assetDecorationLayer({ name: "画像 4（プレミアムラベル）", src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-premium-label-v1.png`, x: 29.83443961242088, y: 336.06307222787393, width: 575.7904173342488, height: 292.08748728382494, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 5（時刻ピル）", src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-time-pill-v1.png`, x: -10.813763637750867, y: 558.4374364191252, width: 390, height: 152, opacity: 0.98 }),
+      assetDecorationLayer({ name: "画像 7（補足パネル）", src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-note-panel-v1.png`, x: 304.1782253757533, y: 566.5615462868769, width: 350, height: 118, opacity: 0.98 }),
+      shapeLayer({ name: "図形 2（限定公開フレーム）", shapeType: "frame", x: 806.8757152666515, y: 166.43947100712103, width: 394, height: 438, fillColor: "#ffffff08", strokeColor: "#d8b768", strokeWidth: 3, borderRadius: 34, opacity: 0.42 }),
+      shapeLayer({ name: "図形 3（見出し下ライン）", shapeType: "line", x: 80, y: 326, width: 500, height: 16, fillColor: "#d8b768", strokeColor: "#d8b768", strokeWidth: 3, borderRadius: 8, opacity: 0.72 }),
+      textLayer({ name: "テキスト 7（バッジ）", text: "VIP", x: 88, y: 122, width: 82, height: 38, fontSize: 34, color: "#fff8db", strokeColor: "#083b43", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 6（会員ラベル）", text: "MEMBER PERK", x: 194, y: 172, width: 260, height: 36, fontSize: 30, color: "#fff8db", strokeColor: "#082a32", strokeWidth: 2, shadowColor: "#d8b768", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "メン限配信", x: 55, y: 204, width: 610, height: 126, fontSize: 104, lineHeight: 0.96, color: "#ffe8a8", strokeColor: "#082a32", strokeWidth: 10, shadowColor: "#d8b768", shadowBlur: 9, shadowOffsetX: 4, shadowOffsetY: 6, fontFamily: "M PLUS 1p", bold: true }),
+      textLayer({ name: "テキスト 5（英字）", text: "MEMBERS ONLY", x: 99.74990463111317, y: 459.3774160732452, width: 430, height: 54, fontSize: 48, color: "#082a32", strokeColor: "#fff8db", strokeWidth: 4, shadowColor: "#d8b768", shadowBlur: 3, shadowOffsetX: 1, shadowOffsetY: 2, fontFamily: "Montserrat", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 63.123521782253704, y: 613.3123092573753, width: 238, height: 46, fontSize: 40, color: "#fff8db", strokeColor: "#082a32", strokeWidth: 3, shadowColor: "#d8b768", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Bebas Neue", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 4（補足）", text: "限定アーカイブあり", x: 350.42832074464036, y: 614.3743641912513, width: 270, height: 34, fontSize: 26, color: "#12333a", strokeColor: "#fff8db", strokeWidth: 1, shadowColor: "#d8b768", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", bold: true, align: "center" })
     ]
   },
   {

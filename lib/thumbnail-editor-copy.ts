@@ -650,6 +650,7 @@ const thumbnailPresetCopy: Record<Locale, Partial<Record<ThumbnailPresetId, Thum
     event_notice: { name: "イベント告知", description: "日付、参加情報、key visual 枠を整理して見せる event flyer 向け。" },
     goods_notice: { name: "グッズ告知", description: "BOOTH や digital goods の販売開始を商品カード中心に見せる物販告知向け。" },
     membership_stream: { name: "メン限配信", description: "member-only stream や限定公開を premium label と CTA で見せるメンバー向け配信告知。" },
+    asmr_stream: { name: "ASMR配信", description: "ASMR、sleep aid、quiet talk を低彩度の night gradient と mic motif で見せるリラックス配信向け。" },
     privacy_notice: { name: "プライバシー告知", description: "予定テキストを活かしつつ、細かい内容を出しすぎない事前告知向け。" },
     whiteboard_plan: { name: "ホワイトボード", description: "企画内容や配信の流れを、白板風に軽く整理して見せる告知向け。" },
     karaoke: { name: "歌枠", description: "音楽配信に合う強いコントラスト。" },
@@ -671,6 +672,7 @@ const thumbnailPresetCopy: Record<Locale, Partial<Record<ThumbnailPresetId, Thum
     event_notice: { name: "Event Notice", description: "An event flyer layout for dates, participation notes, and key visuals." },
     goods_notice: { name: "Merch Notice", description: "A merch release layout for BOOTH, digital goods, product cards, and shop CTAs." },
     membership_stream: { name: "Members-Only Stream", description: "A premium member-only stream layout for limited access, community perks, and closed stream CTAs." },
+    asmr_stream: { name: "ASMR Stream", description: "A low-contrast relax night layout for ASMR, sleep-aid streams, and quiet talk." },
     privacy_notice: { name: "Privacy Notice", description: "A pre-announcement layout that keeps schedule details from showing too much." },
     whiteboard_plan: { name: "Whiteboard Plan", description: "A whiteboard-style layout for lightly organizing a stream plan or flow." },
     karaoke: { name: "Karaoke", description: "Strong contrast for music streams." },
@@ -1027,6 +1029,13 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 2（時刻）": "21:00 START",
       "テキスト 4（補足）": "Archive included"
     },
+    asmr_stream: {
+      "テキスト 5（ラベル）": "SLEEP AID",
+      "テキスト 1（見出し）": "ASMR\nStream",
+      "テキスト 3（英字）": "RELAX NIGHT",
+      "テキスト 2（時刻）": "23:00 START",
+      "テキスト 4（補足）": "Sleep aid / quiet talk"
+    },
     privacy_notice: {
       "テキスト 4（ラベル）": "SAFE NOTICE",
       "テキスト 1（見出し）": "Schedule\nNotice",
@@ -1155,6 +1164,10 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
     membership_stream: {
       "テキスト 1（見出し）": { x: 54, y: 190, fontSize: 92 },
       "テキスト 4（補足）": { fontSize: 24 }
+    },
+    asmr_stream: {
+      "テキスト 1（見出し）": { x: 112, y: 186, fontSize: 90 },
+      "テキスト 4（補足）": { fontSize: 27 }
     },
     privacy_notice: {
       "テキスト 1（見出し）": { x: 109.55168059267987, y: 193.6542692509167 }
@@ -1423,6 +1436,9 @@ const layerTokenLabels: Record<Locale, Record<string, string>> = {
     限定公開フレーム: "Limited access frame",
     会員ラベル: "Member label",
     バッジ: "Badge",
+    マイクシルエット: "Mic silhouette",
+    サウンドリング: "Sound ring",
+    低彩度ラベル: "Muted label",
     プライバシーロックバッジ: "Privacy lock badge",
     プライバシー目隠しパネル: "Privacy mask panel",
     プライバシー目隠しバー: "Privacy mask bar",

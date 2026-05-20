@@ -158,7 +158,39 @@
      - 次候補は `membership_stream`。今回の PR は `goods_notice` preset body、production background、locale copy、contract に閉じており、schema、canvas rendering pipeline、export / crop、font search / recently used UI、Portal shell、Schedule Calendar、SNS Split Image Maker は触っていない。
      - `membership_stream` では member badge、locked / members-only visual、soft premium label、限定配信らしい CTA / 補足を text layer 化し、1 preset / 1 PR で開始する。
 
-4. Kuro Live Comment Translator planning
+4. Thumbnail Editor `membership_stream` preset
+   - status: 実装・検証済み。branch `codex/thumbnail-membership-stream-preset` で commit 済みにする。
+   - reason: 通常の配信告知 / 雑談と違い、member-only stream、community perk、限定公開、premium label を扱える用途差がある。
+   - scope:
+     - `membership_stream` 1 preset の body、production background、generated decoration assets、専用 contract、locale copy、layer display alias。
+     - member badge、locked / members-only visual、soft premium label、限定配信らしい CTA / 補足 panel を中心にする。
+   - out of scope:
+     - schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker、Portal shell。
+   - implementation notes:
+     - `membership_stream` / `メン限配信` preset を `配信ジャンル` / `メン限 / members only` として追加した。
+     - built-in `imagegen` 生成の控えめな base 背景 `public/assets/images/thumbnail-editor/phase5/membership-stream-background-v1.png` を locked background として追加した。
+     - member badge、lock badge、premium label、time pill、note panel は generated decoration asset として `public/assets/images/thumbnail-editor/decorations/phase5/membership-stream-*.png` に分離した。
+     - 見出し、英字 label、時刻、補足、member label、badge copy は text layer として編集可能にした。
+     - Review draft 反映で、lock badge、premium label、time pill、note panel、limited access frame、英字 label、時刻、補足 text の位置を preset default へ反映し、未使用になった CTA panel / CTA text layer は default から外した。
+     - JA / EN の preset name / description / initial text body / layer display alias を追加した。EN 見出しと補足は既存の locale visual adjustment 経路で収まりを調整した。
+     - 専用 contract `scripts/thumbnail-usecase-membership-stream-preset-contract.mjs` を追加した。
+   - verification results:
+     - PASS: `node scripts/thumbnail-usecase-membership-stream-preset-contract.mjs`
+     - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+     - PASS: `npm run lint`
+     - PASS: `npx tsc --noEmit`
+     - PASS: `git diff --check` (repo-normal LF -> CRLF working-copy warnings only)
+     - Browser smoke: local `next dev --webpack -p 3058 --hostname 127.0.0.1` + Codex app browser.
+     - UI result: `/tools/thumbnail-editor` で preset count `19 / 19種`、usage label `メン限 / members only`、preset card `メン限配信`、preset apply 後の canvas nonblank / member badge / editable text preview を確認。
+   - remaining risks:
+     - Browser smoke は 1280px 相当の通常表示で確認。最終 PR review では `390 / 820 / 1024 / 1280 / 1366px` の幅別目視を Codex app browser で必要に応じて追加するとよい。
+     - Final human review should still judge whether the generated member badge and lock badge feel sufficiently premium and not too security-heavy.
+     - The background and decoration assets are generated raster assets; text is editable, but the visual motifs themselves may need a later small polish if PR review asks for stronger or quieter premium tone.
+   - handoff to next candidate:
+     - 次候補は `asmr_stream`。今回の PR は `membership_stream` preset body、production background、decoration assets、locale copy、contract に閉じており、schema、canvas rendering pipeline、export / crop、font search / recently used UI、Portal shell、Schedule Calendar、SNS Split Image Maker は触っていない。
+     - `asmr_stream` では mic silhouette / sound ring / night gradient / low-contrast label を背景焼き込みと editable text layer に分け、1 preset / 1 PR で開始する。
+
+5. Kuro Live Comment Translator planning
    - status: 新規ツール候補。すぐ実装せず、まず repo 内 future plan に落とす。
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
@@ -172,7 +204,7 @@
    - next action:
      - 添付 plan を repo 向けに要約し、`docs/future` に保存するかを判断する。
 
-5. Thumbnail Editor font / preset typography follow-up
+6. Thumbnail Editor font / preset typography follow-up
    - status: 後続候補。優先度は公開版 polish と `goods_notice` より下。
    - current direction:
      - 単純な font 追加より、preset ごとの font application、weight-aware UI、必要なら不足 font の小規模追加を優先する。
@@ -184,9 +216,9 @@
 
 公開後の preset 追加は、用途差が大きいものから 1 preset / 1 PR で進める。
 
-1. `goods_notice` - グッズ告知 / merch release
-2. `membership_stream` - メン限配信 / members only
-3. `asmr_stream` - ASMR 配信 / relax night
+1. `goods_notice` - グッズ告知 / merch release (implemented)
+2. `membership_stream` - メン限配信 / members only (implemented)
+3. `asmr_stream` - ASMR 配信 / relax night (next)
 4. `relay_stream` - リレー配信 / stream relay
 5. `collab_recruit_notice` - コラボ募集 / collab call
 
@@ -200,51 +232,39 @@ Reference: `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`
 D:/V_streamer_tools で作業してください。
 
 目的:
-公開版 polish の PR1 として、Portal shell の settings 導線を整理してください。
+Thumbnail Editor の次期 preset 追加として、`asmr_stream` preset を 1 preset / 1 PR で実装してください。
 
 前提:
 - main 直作業は禁止です。
-- `git fetch origin --prune` 後、`origin/main` 起点で branch / worktree を作成してください。
-- 推奨 branch: `codex/portal-shell-settings-polish`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/portal-shell-settings-polish`
+- `git fetch origin --prune` を実行してください。
+- 確認用ブランチ `origin/codex/thumbnail-preset-review` 起点で branch / worktree を作成してください。
+- 推奨 branch: `codex/thumbnail-asmr-stream-preset`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/thumbnail-asmr-stream-preset`
+- PR base は `codex/thumbnail-preset-review` にしてください。`main` へ直接 PR / merge しないでください。
 - `AGENTS.md` と `task.md` を確認してから実装してください。
+- 直前の `membership_stream` と同じく、背景は控えめな base asset、主要 UI 部品は decoration asset、文言は editable text layer に分けてください。
 
 実装方針:
-- HOME / Tools の header にある言語切り替えと表示切り替えは当面残してください。
-- 各ツール画面の PC / タブレット横表示では、左パネル下部に `Settings` を常時見える位置で設置してください。
-- `1024 - 1279px` の狭い left rail は歯車アイコン中心の compact button、`1280px+` は `Settings` label 付きにしてください。
-- Settings 内に `Language` / `Theme` をまとめてください。
-- 左パネル自体にはスクロールを適用しないでください。
-- タブレット縦 / `820px` 前後では drawer 下部に Settings block を置き、`Language` / `Theme` を見やすくしてください。
-- `Sign-in planned` は将来ログイン導線として残しつつ、ツール画面では Settings を押し出さないよう compact 化または配置整理してください。
+- `asmr_stream` / ASMR 配信 preset を追加してください。
+- 用途は ASMR / relax night / sleep aid / quiet talk。
+- 背景 + 必要 decoration asset は built-in `imagegen` で生成してください。
+- mic silhouette、sound ring、night gradient、low-contrast label、時刻 pill、補足 panel を中心にしてください。
+- 見出し、英字ラベル、時刻、CTA または補足文は Thumbnail Editor の text layer として編集可能にしてください。
+- 既存 preset category / usage label / locale copy / layer display alias の流れに合わせて追加してください。
+- 必要なら専用 contract を追加してください。
 
 Out of scope:
-- 設定ページ新設。
-- ログイン実装。
-- 多言語 tips / 初回案内の実装。
-- Thumbnail Editor inline text edit。
-
-確認:
-- JA / EN 両方。
-- Light / Dark 両方。
-- `/`
-- `/tools`
-- `/tools/schedule-calendar`
-- `/tools/thumbnail-editor`
-- `/tools/sns-split-image-maker`
-- width: `390 / 820 / 1024 / 1280 / 1366px`
-- header / sidebar / drawer の言語・テーマ・Settings 導線が見やすいこと。
-- body/document 横 overflow がないこと。
+- schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker、Portal shell。
 
 検証:
-- node scripts/portal-tools-copy-locale-contract.mjs
-- node scripts/tool-portal-entry-contract.mjs
+- 追加した専用 contract
+- node scripts/thumbnail-preset-text-locale-contract.mjs
 - npm run lint
 - npx tsc --noEmit
 - git diff --check
 
 完了時:
-- `task.md` に実装内容、確認結果、残リスク、次候補の Thumbnail Editor inline text edit への引き継ぎを追記してください。
+- `task.md` に実装内容、確認結果、残リスク、次候補への引き継ぎを追記してください。
 - 問題なければ commit まで行ってください。push / PR は指示があるまで行わないでください。
 ```
 

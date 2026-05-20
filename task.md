@@ -47,6 +47,7 @@
    - implementation notes:
      - `PortalSettingsPanel` を追加し、workspace sidebar / drawer の `Language` と `Theme` を `Settings` block に集約した。
      - 各ツール画面の `1024 - 1279px` は左 rail 下部に歯車中心の compact Settings block、`1280px+` は `Settings` label 付き panel を表示する。
+     - PC 表示の日本語 Settings で改行が出ないよう、テーマ行の label を `表示テーマ` から `テーマ` に短縮した。
      - HOME / Tools の header 側 `Language` / `Theme` は維持した。
      - workspace sidebar では将来機能 list を隠し、`Sign-in planned` を compact notice にして Settings を押し出さない配置にした。
    - verification results:

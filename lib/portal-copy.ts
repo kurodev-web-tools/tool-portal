@@ -247,7 +247,7 @@ export const portalCopy = {
       menuClose: "メニューを閉じる",
       settings: "Settings",
       language: "表示言語",
-      theme: "表示テーマ",
+      theme: "テーマ",
       fixed: "固定ナビ",
       availableTools: "実装済みツール",
       future: "将来の機能（予定）",
@@ -266,7 +266,7 @@ export const portalCopy = {
     themeToggle: {
       groupLabel: "テーマ切替",
       toggleAria: "ライトモードとダークモードを切り替える",
-      title: "表示テーマ",
+      title: "テーマ",
       light: "ライト",
       dark: "ダーク"
     }

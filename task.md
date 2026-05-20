@@ -252,6 +252,7 @@ UI / 表示文言を触った場合のみ、幅別確認結果をこのファイ
 - 2026-04 の履歴: `docs/archive/TASK_HISTORY_2026-04.md`
 - 2026-05 の履歴: `docs/archive/TASK_HISTORY_2026-05.md`
 - Schedule Calendar future tasks: `docs/future/SCHEDULE_CALENDAR_FUTURE_TASKS.md`
+- Portal settings future direction: `docs/future/PORTAL_SETTINGS_FUTURE.md`
 - Thumbnail Editor next PR scope: `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md`
 - Thumbnail Editor usecase preset candidates: `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`
 - Thumbnail Editor font candidates: `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`

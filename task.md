@@ -65,7 +65,7 @@
      - 次候補は `Thumbnail Editor inline text edit`。今回の Portal shell 変更は tool body の schema / canvas / editor state には触れていないため、`codex/thumbnail-inline-text-edit` はこの branch の merge 判断後に独立 worktree で開始する。
 
 2. Thumbnail Editor inline text edit
-   - status: Portal shell settings polish 後の公開版 UX 改善候補。
+   - status: 実装・検証済み。branch `codex/thumbnail-inline-text-edit` で確認用に push / draft PR 作成予定。
    - user context:
      - テキストレイヤーを選択し、右パネルをスクロールして本文を書き換える流れは手間が大きい。
      - 既存の右パネル編集は維持しつつ、追加操作として canvas preview 上で直接編集できるとよい。
@@ -83,6 +83,13 @@
    - suggested branch/worktree:
      - branch: `codex/thumbnail-inline-text-edit`
      - worktree: `D:/V_streamer_tools/.worktrees/thumbnail-inline-text-edit`
+   - implementation notes:
+     - canvas preview 上の text layer をダブルクリック / ダブルタップすると、同じ preview stack 内に `textarea` overlay を表示して `layer.text` を直接編集できるようにした。
+     - blur で確定、Esc でキャンセル、Ctrl/Cmd+Enter で確定する。確定時のみ既存 draft history / autosave 経路に乗せる。
+     - direct edit 対象は visible / unlocked の text layer のみ。text 以外、locked、hidden layer は既存どおり selection / panel open に寄せる。
+     - 既存右パネル `TextControls`、drag / resize / selection、canvas rendering pipeline、layer schema、preset/export/font/crop は変更していない。
+     - overlay は layer の位置・サイズ・font family / size / line height / align / rotation を preview zoom に合わせて配置し、preview 外へのはみ出しは canvas stack 内で clip する。
+     - follow-up polish: 入力中の見た目は canvas 側の live preview に寄せ、textarea は透明な入力面として caret / focus ring だけを薄く出す。textarea の青い全選択表示、背景、内部 scrollbar は出さない。
    - verification:
      - Thumbnail Editor 関連 contract。必要なら inline edit 用 contract / browser smoke を追加する。
      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
@@ -90,6 +97,22 @@
      - `npx tsc --noEmit`
      - `git diff --check`
      - `/tools/thumbnail-editor` の `390 / 820 / 1024 / 1280 / 1366px` で、text layer direct edit、既存右パネル編集、drag / resize / selection、JA / EN、横 overflow を確認する。
+   - verification results:
+     - PASS: `node scripts/thumbnail-inline-text-edit-contract.mjs`
+     - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+     - PASS: `npm run lint`
+     - PASS: `npx tsc --noEmit`
+     - PASS: `git diff --check` (repo-normal LF -> CRLF working-copy warnings only)
+     - Browser smoke: local `next dev --webpack -p 3044 --hostname 127.0.0.1` + Chrome DevTools automation.
+     - Interaction result: direct edit open, blur commit, Esc cancel, Ctrl+Enter commit, right-panel `TextControls` edit reflection, locked/hidden exclusion, drag, resize, and no overlay during drag/resize all passed.
+     - Follow-up visual/input result: local `http://localhost:3000/tools/thumbnail-editor` で textarea text color / background が transparent、overflow hidden、caret visible、初期 caret が末尾、commit 前は保存 draft 未変更、Ctrl+Enter commit 後に保存 draft 反映を確認。
+     - Follow-up selection result: inline text edit 中に別 text layer をクリックすると、編集中 text が確定され、overlay が閉じ、新しい layer selection に移ることを確認。
+     - Width / locale / theme result: `/tools/thumbnail-editor` passed at `390 / 820 / 1024 / 1280 / 1366px` for `ja/light` and `en/dark`; `1280px` spot checked `ja/dark` and `en/light`. `documentElement.lang`, dark class, canvas presence, body/document horizontal overflow `0`, and console error/warn `0` passed.
+   - remaining risks:
+     - Browser smoke used Chrome DevTools automation with scripted events for repeatability. A final human visual pass can still judge whether transparent input surface / rotated text overlay placement feels natural for heavily rotated custom layers.
+     - Overlay follows the text layer rectangle and clips to the preview; rich text and per-character styling remain out of scope.
+   - handoff to next candidate:
+     - 次候補は `goods_notice` preset。今回の PR は inline edit DOM / local state / copy / contract に閉じており、preset body、font、export、crop、Portal shell は触っていない。
 
 3. Thumbnail Editor `goods_notice` preset
    - status: 公開版 polish 後の次期機能候補。

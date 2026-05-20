@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LanguageSwitch } from "@/components/portal/LanguageSwitch";
 import { useLocale } from "@/components/portal/LocaleProvider";
-import { ThemeToggle } from "@/components/portal/ThemeToggle";
+import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
 import { sidebarTools } from "@/lib/tools";
 
@@ -48,7 +47,7 @@ function SidebarLink({
 
 export function PortalSidebar({ mode = "default" }: { mode?: "default" | "workspace" }) {
   const { locale } = useLocale();
-  const showWorkspaceThemeToggle = mode === "workspace";
+  const showWorkspaceSettings = mode === "workspace";
   const copy = portalCopy[locale].navigation;
 
   return (
@@ -79,7 +78,7 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
           </div>
         </section>
 
-        <section className="hidden border-t border-dashed border-border pt-6 xl:block">
+        <section className={["border-t border-dashed border-border pt-6", showWorkspaceSettings ? "hidden" : "hidden xl:block"].join(" ")}>
           <p className="mb-3 px-2 text-xs font-semibold text-muted">{copy.future}</p>
           <div className="space-y-2">
             {copy.futureItems.map((item) => (
@@ -92,31 +91,32 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
         </section>
       </nav>
 
-      {showWorkspaceThemeToggle ? (
-        <div className="mt-auto flex flex-col items-center gap-3 pt-8 xl:hidden">
-          <LanguageSwitch variant="compact" />
-          <ThemeToggle variant="compact" />
+      {showWorkspaceSettings ? (
+        <div className="mt-auto flex flex-col items-center gap-3 pt-5 xl:hidden">
+          <PortalSettingsPanel variant="rail" />
         </div>
       ) : null}
 
-      <div className="mt-auto hidden space-y-5 pt-8 xl:block">
-        <div className="panel p-4 shadow-none">
-          <p className="text-sm font-bold text-foreground">{copy.loginTitle}</p>
-          <p className="mt-2 text-xs leading-5 text-muted">
-            {copy.loginBody}
-          </p>
-          <button className="mt-4 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white opacity-80" disabled>
-            {copy.loginButton}
-          </button>
-        </div>
-        {showWorkspaceThemeToggle ? (
-          <div className="panel p-4 shadow-none">
-            <div className="flex flex-col items-center gap-4">
-              <LanguageSwitch />
-              <ThemeToggle />
+      <div className="mt-auto hidden space-y-3 pt-5 xl:block">
+        {showWorkspaceSettings ? <PortalSettingsPanel /> : null}
+        {showWorkspaceSettings ? (
+          <div className="rounded-base border border-dashed border-border bg-surface-muted/35 px-3 py-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-bold text-muted">{copy.loginButton}</span>
+              <span className="rounded-base bg-surface px-2 py-1 text-[11px] font-bold text-muted">{copy.comingSoon}</span>
             </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="panel p-4 shadow-none">
+            <p className="text-sm font-bold text-foreground">{copy.loginTitle}</p>
+            <p className="mt-2 text-xs leading-5 text-muted">
+              {copy.loginBody}
+            </p>
+            <button className="mt-4 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white opacity-80" disabled>
+              {copy.loginButton}
+            </button>
+          </div>
+        )}
         <p className="px-2 text-xs text-muted">© 2026 Kuro Stream Kit</p>
       </div>
     </aside>

@@ -648,6 +648,7 @@ const thumbnailPresetCopy: Record<Locale, Partial<Record<ThumbnailPresetId, Thum
     project_stream: { name: "企画配信", description: "特別企画や視聴者参加型の内容を明るく整理して見せる variety show 向け。" },
     cover_song_notice: { name: "歌ってみた告知", description: "cover MV や歌ってみた公開を premiere 感のある構成で見せる release 告知向け。" },
     event_notice: { name: "イベント告知", description: "日付、参加情報、key visual 枠を整理して見せる event flyer 向け。" },
+    goods_notice: { name: "グッズ告知", description: "BOOTH や digital goods の販売開始を商品カード中心に見せる物販告知向け。" },
     privacy_notice: { name: "プライバシー告知", description: "予定テキストを活かしつつ、細かい内容を出しすぎない事前告知向け。" },
     whiteboard_plan: { name: "ホワイトボード", description: "企画内容や配信の流れを、白板風に軽く整理して見せる告知向け。" },
     karaoke: { name: "歌枠", description: "音楽配信に合う強いコントラスト。" },
@@ -667,6 +668,7 @@ const thumbnailPresetCopy: Record<Locale, Partial<Record<ThumbnailPresetId, Thum
     project_stream: { name: "Project Stream", description: "A clear variety-show layout for special plans and viewer participation." },
     cover_song_notice: { name: "Cover Song Notice", description: "A release-style layout for cover MV or song upload announcements." },
     event_notice: { name: "Event Notice", description: "An event flyer layout for dates, participation notes, and key visuals." },
+    goods_notice: { name: "Merch Notice", description: "A merch release layout for BOOTH, digital goods, product cards, and shop CTAs." },
     privacy_notice: { name: "Privacy Notice", description: "A pre-announcement layout that keeps schedule details from showing too much." },
     whiteboard_plan: { name: "Whiteboard Plan", description: "A whiteboard-style layout for lightly organizing a stream plan or flow." },
     karaoke: { name: "Karaoke", description: "Strong contrast for music streams." },
@@ -1001,6 +1003,20 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 2（時刻）": "06.15 SAT",
       "テキスト 3（サブ）": "Event details inside"
     },
+    goods_notice: {
+      "テキスト 12（発売バッジ）": "NEW",
+      "テキスト 1（見出し）": "New Merch",
+      "テキスト 5（英字）": "MERCH DROP",
+      "テキスト 6（商品1）": "ACRYLIC STAND",
+      "テキスト 7（商品2）": "STICKER SET",
+      "テキスト 8（商品3）": "DIGITAL GOODS",
+      "テキスト 9（価格1）": "¥1,800",
+      "テキスト 10（価格2）": "¥800",
+      "テキスト 11（価格3）": "¥1,200",
+      "テキスト 2（時刻）": "20:00 START",
+      "テキスト 3（CTA）": "Shop page open",
+      "テキスト 4（補足）": "Limited stock"
+    },
     privacy_notice: {
       "テキスト 4（ラベル）": "SAFE NOTICE",
       "テキスト 1（見出し）": "Schedule\nNotice",
@@ -1122,6 +1138,9 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
     },
     event_notice: {
       "テキスト 1（見出し）": { x: 35.03487466588092, y: 157.82750879293576 }
+    },
+    goods_notice: {
+      "テキスト 1（見出し）": { fontSize: 104 }
     },
     privacy_notice: {
       "テキスト 1（見出し）": { x: 109.55168059267987, y: 193.6542692509167 }
@@ -1361,6 +1380,27 @@ const layerTokenLabels: Record<Locale, Record<string, string>> = {
     キービジュアル挿入ガイド: "Key visual guide",
     キービジュアル枠: "Key visual frame",
     キービジュアル注記: "Key visual note",
+    商品カード1: "Product card 1",
+    商品カード2: "Product card 2",
+    商品カード3: "Product card 3",
+    商品カード1ガイド: "Product card 1 guide",
+    商品カード2ガイド: "Product card 2 guide",
+    商品カード3ガイド: "Product card 3 guide",
+    商品1: "Product 1",
+    商品2: "Product 2",
+    商品3: "Product 3",
+    価格1: "Price 1",
+    価格2: "Price 2",
+    価格3: "Price 3",
+    価格バッジ1: "Price badge 1",
+    価格バッジ2: "Price badge 2",
+    価格バッジ3: "Price badge 3",
+    発売バッジ: "Release badge",
+    時刻ピル: "Time pill",
+    販売CTA: "Shop CTA",
+    CTA: "CTA",
+    注意書きパネル: "Notice panel",
+    補足: "Note",
     プライバシーロックバッジ: "Privacy lock badge",
     プライバシー目隠しパネル: "Privacy mask panel",
     プライバシー目隠しバー: "Privacy mask bar",

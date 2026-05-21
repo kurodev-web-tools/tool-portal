@@ -25,6 +25,7 @@ type ThumbnailPresetCopy = {
 
 type ThumbnailPresetTextBodyCopy = Partial<Record<ThumbnailPresetId, Record<string, string>>>;
 type ThumbnailPresetTextLayerVisualAdjustment = Partial<Pick<ThumbnailTextLayer, "x" | "y" | "width" | "height" | "fontSize" | "lineHeight" | "align">>;
+type ThumbnailPresetLayerVisualAdjustment = Partial<Pick<ThumbnailLayer, "x" | "y" | "width" | "height">>;
 
 export const thumbnailEditorCopy = {
   ja: {
@@ -648,6 +649,9 @@ const thumbnailPresetCopy: Record<Locale, Partial<Record<ThumbnailPresetId, Thum
     project_stream: { name: "企画配信", description: "特別企画や視聴者参加型の内容を明るく整理して見せる variety show 向け。" },
     cover_song_notice: { name: "歌ってみた告知", description: "cover MV や歌ってみた公開を premiere 感のある構成で見せる release 告知向け。" },
     event_notice: { name: "イベント告知", description: "日付、参加情報、key visual 枠を整理して見せる event flyer 向け。" },
+    goods_notice: { name: "グッズ告知", description: "BOOTH や digital goods の販売開始を商品カード中心に見せる物販告知向け。" },
+    membership_stream: { name: "メン限配信", description: "member-only stream や限定公開を premium label と CTA で見せるメンバー向け配信告知。" },
+    asmr_stream: { name: "ASMR配信", description: "ASMR、sleep aid、quiet talk を低彩度の night gradient と mic motif で見せるリラックス配信向け。" },
     privacy_notice: { name: "プライバシー告知", description: "予定テキストを活かしつつ、細かい内容を出しすぎない事前告知向け。" },
     whiteboard_plan: { name: "ホワイトボード", description: "企画内容や配信の流れを、白板風に軽く整理して見せる告知向け。" },
     karaoke: { name: "歌枠", description: "音楽配信に合う強いコントラスト。" },
@@ -667,6 +671,9 @@ const thumbnailPresetCopy: Record<Locale, Partial<Record<ThumbnailPresetId, Thum
     project_stream: { name: "Project Stream", description: "A clear variety-show layout for special plans and viewer participation." },
     cover_song_notice: { name: "Cover Song Notice", description: "A release-style layout for cover MV or song upload announcements." },
     event_notice: { name: "Event Notice", description: "An event flyer layout for dates, participation notes, and key visuals." },
+    goods_notice: { name: "Merch Notice", description: "A merch release layout for BOOTH, digital goods, product cards, and shop CTAs." },
+    membership_stream: { name: "Members-Only Stream", description: "A premium member-only stream layout for limited access, community perks, and closed stream CTAs." },
+    asmr_stream: { name: "ASMR Stream", description: "A low-contrast relax night layout for ASMR, sleep-aid streams, and quiet talk." },
     privacy_notice: { name: "Privacy Notice", description: "A pre-announcement layout that keeps schedule details from showing too much." },
     whiteboard_plan: { name: "Whiteboard Plan", description: "A whiteboard-style layout for lightly organizing a stream plan or flow." },
     karaoke: { name: "Karaoke", description: "Strong contrast for music streams." },
@@ -703,6 +710,9 @@ const usageLabels = {
     "企画 / 視聴者参加": "Project / viewer participation",
     "動画公開 / cover": "Video release / cover",
     "イベント / 参加情報": "Event / participation",
+    "物販 / merch release": "Merch release",
+    "メン限 / members only": "Members only",
+    "ASMR / relax night": "ASMR / relax night",
     "予定 / 非公開情報配慮": "Schedule / privacy",
     "予定 / 説明整理": "Schedule / explanation",
     音楽配信: "Singing stream",
@@ -1001,6 +1011,35 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 2（時刻）": "06.15 SAT",
       "テキスト 3（サブ）": "Event details inside"
     },
+    goods_notice: {
+      "テキスト 12（発売バッジ）": "NEW",
+      "テキスト 1（見出し）": "New Merch",
+      "テキスト 5（英字）": "MERCH DROP",
+      "テキスト 6（商品1）": "ACRYLIC STAND",
+      "テキスト 7（商品2）": "STICKER SET",
+      "テキスト 8（商品3）": "DIGITAL GOODS",
+      "テキスト 9（価格1）": "¥1,800",
+      "テキスト 10（価格2）": "¥800",
+      "テキスト 11（価格3）": "¥1,200",
+      "テキスト 2（時刻）": "20:00 START",
+      "テキスト 3（CTA）": "Shop page open",
+      "テキスト 4（補足）": "Limited stock"
+    },
+    membership_stream: {
+      "テキスト 7（バッジ）": "VIP",
+      "テキスト 6（会員ラベル）": "MEMBER PERK",
+      "テキスト 1（見出し）": "Members\nOnly",
+      "テキスト 5（英字）": "PREMIUM LIVE",
+      "テキスト 2（時刻）": "21:00 START",
+      "テキスト 4（補足）": "Archive included"
+    },
+    asmr_stream: {
+      "テキスト 5（ラベル）": "SLEEP AID",
+      "テキスト 1（見出し）": "ASMR Stream",
+      "テキスト 3（英字）": "RELAX NIGHT",
+      "テキスト 2（時刻）": "23:00 START",
+      "テキスト 4（補足）": "Sleep aid / quiet talk"
+    },
     privacy_notice: {
       "テキスト 4（ラベル）": "SAFE NOTICE",
       "テキスト 1（見出し）": "Schedule\nNotice",
@@ -1123,6 +1162,17 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
     event_notice: {
       "テキスト 1（見出し）": { x: 35.03487466588092, y: 157.82750879293576 }
     },
+    goods_notice: {
+      "テキスト 1（見出し）": { fontSize: 104 }
+    },
+    membership_stream: {
+      "テキスト 1（見出し）": { x: 54, y: 190, fontSize: 92 },
+      "テキスト 4（補足）": { fontSize: 24 }
+    },
+    asmr_stream: {
+      "テキスト 1（見出し）": { x: 51.061464187204706, y: 301.5199753987606, height: 150, fontSize: 82 },
+      "テキスト 4（補足）": { fontSize: 27 }
+    },
     privacy_notice: {
       "テキスト 1（見出し）": { x: 109.55168059267987, y: 193.6542692509167 }
     },
@@ -1139,6 +1189,19 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
       "テキスト 5（見出し英字）": { x: 67.93088207437961, y: 464.89740327770704 },
       "テキスト 2（時刻）": { x: 236.0691179256204, y: 555.0349472423857 },
       "テキスト 3（サブ）": { x: 52.37920148169968, y: 650.241637356881 }
+    }
+  }
+};
+
+const thumbnailPresetLayerVisualAdjustments: Record<
+  Locale,
+  Partial<Record<ThumbnailPresetId, Record<string, ThumbnailPresetLayerVisualAdjustment>>>
+> = {
+  ja: {},
+  en: {
+    membership_stream: {
+      "画像 7（補足パネル）": { x: 304, y: 567, width: 361.2822895120545, height: 123.29026132561717 },
+      "図形 3（見出し下ライン）": { x: 59.16652538062459, y: 392.66787232118634 }
     }
   }
 };
@@ -1361,6 +1424,38 @@ const layerTokenLabels: Record<Locale, Record<string, string>> = {
     キービジュアル挿入ガイド: "Key visual guide",
     キービジュアル枠: "Key visual frame",
     キービジュアル注記: "Key visual note",
+    商品カード1: "Product card 1",
+    商品カード2: "Product card 2",
+    商品カード3: "Product card 3",
+    商品カード1ガイド: "Product card 1 guide",
+    商品カード2ガイド: "Product card 2 guide",
+    商品カード3ガイド: "Product card 3 guide",
+    商品1: "Product 1",
+    商品2: "Product 2",
+    商品3: "Product 3",
+    価格1: "Price 1",
+    価格2: "Price 2",
+    価格3: "Price 3",
+    価格バッジ1: "Price badge 1",
+    価格バッジ2: "Price badge 2",
+    価格バッジ3: "Price badge 3",
+    発売バッジ: "Release badge",
+    時刻ピル: "Time pill",
+    販売CTA: "Shop CTA",
+    CTA: "CTA",
+    注意書きパネル: "Notice panel",
+    補足: "Note",
+    メンバーバッジ: "Member badge",
+    ロックバッジ: "Lock badge",
+    プレミアムラベル: "Premium label",
+    限定CTA: "Members-only CTA",
+    補足パネル: "Note panel",
+    限定公開フレーム: "Limited access frame",
+    会員ラベル: "Member label",
+    バッジ: "Badge",
+    マイクシルエット: "Mic silhouette",
+    サウンドリング: "Sound ring",
+    低彩度ラベル: "Muted label",
     プライバシーロックバッジ: "Privacy lock badge",
     プライバシー目隠しパネル: "Privacy mask panel",
     プライバシー目隠しバー: "Privacy mask bar",
@@ -1452,6 +1547,18 @@ export function getThumbnailPresetTextLayerVisualAdjustment(
   return thumbnailPresetTextLayerVisualAdjustments[locale][presetId]?.[layerName] ?? null;
 }
 
+export function getThumbnailPresetLayerVisualAdjustment(
+  presetId: ThumbnailPresetId,
+  layerName: string,
+  locale: Locale
+): ThumbnailPresetLayerVisualAdjustment | null {
+  if (locale === "ja") {
+    return null;
+  }
+
+  return thumbnailPresetLayerVisualAdjustments[locale][presetId]?.[layerName] ?? null;
+}
+
 export function localizeThumbnailPresetTextLayerBodies(
   draft: ThumbnailEditorDraft,
   locale: Locale
@@ -1463,15 +1570,17 @@ export function localizeThumbnailPresetTextLayerBodies(
   return {
     ...draft,
     layers: draft.layers.map((layer) => {
-      if (layer.type !== "text") {
-        return layer;
+      const layerVisualAdjustment = getThumbnailPresetLayerVisualAdjustment(draft.presetId, layer.name, locale);
+      const adjustedLayer = layerVisualAdjustment ? { ...layer, ...layerVisualAdjustment } : layer;
+      if (adjustedLayer.type !== "text") {
+        return adjustedLayer;
       }
 
-      const visualAdjustment = getThumbnailPresetTextLayerVisualAdjustment(draft.presetId, layer.name, locale);
+      const visualAdjustment = getThumbnailPresetTextLayerVisualAdjustment(draft.presetId, adjustedLayer.name, locale);
       return {
-        ...layer,
+        ...adjustedLayer,
         ...visualAdjustment,
-        text: getThumbnailPresetTextLayerBody(draft.presetId, layer.name, locale, layer.text)
+        text: getThumbnailPresetTextLayerBody(draft.presetId, adjustedLayer.name, locale, adjustedLayer.text)
       };
     })
   };

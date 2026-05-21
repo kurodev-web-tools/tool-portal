@@ -46,6 +46,29 @@ assert.equal(
   "function",
   "Thumbnail preset text visual adjustment helper is exported from copy layer"
 );
+assert.equal(
+  typeof thumbnailCopy.getThumbnailPresetUsageLabel,
+  "function",
+  "Thumbnail preset usage label locale helper is exported from copy layer"
+);
+
+const recentPresetUsageLabelExpectations = [
+  ["物販 / merch release", "Merch release"],
+  ["メン限 / members only", "Members only"],
+  ["ASMR / relax night", "ASMR / relax night"]
+];
+for (const [usageLabel, expectedEnglishLabel] of recentPresetUsageLabelExpectations) {
+  assert.equal(
+    thumbnailCopy.getThumbnailPresetUsageLabel(usageLabel, "en"),
+    expectedEnglishLabel,
+    `${usageLabel} has a compact English usage label`
+  );
+  assert.equal(
+    containsJapanese(thumbnailCopy.getThumbnailPresetUsageLabel(usageLabel, "en")),
+    false,
+    `${usageLabel} English usage label does not expose Japanese text`
+  );
+}
 
 assert.match(
   thumbnailCopySource,
@@ -71,6 +94,9 @@ const expectedPresetIds = [
   "project_stream",
   "cover_song_notice",
   "event_notice",
+  "goods_notice",
+  "membership_stream",
+  "asmr_stream",
   "privacy_notice",
   "whiteboard_plan",
   "karaoke",
@@ -135,6 +161,11 @@ const visualAdjustmentTargets = new Set([
   "cover_song_notice/テキスト 4（ラベル）",
   "cover_song_notice/テキスト 1（見出し）",
   "event_notice/テキスト 1（見出し）",
+  "goods_notice/テキスト 1（見出し）",
+  "membership_stream/テキスト 1（見出し）",
+  "membership_stream/テキスト 4（補足）",
+  "asmr_stream/テキスト 1（見出し）",
+  "asmr_stream/テキスト 4（補足）",
   "privacy_notice/テキスト 1（見出し）",
   "clip/テキスト 4（ラベル）",
   "clip/テキスト 1（見出し）",
@@ -635,6 +666,42 @@ assert.equal(
   enKaraokeSub?.y,
   650.241637356881,
   "Karaoke sub y follows the supplied English visual draft"
+);
+
+const enMembershipDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("membership_stream"), "en");
+const expectMembershipLayerGeometry = (layerName, expectedGeometry) => {
+  const layer = enMembershipDraft.layers.find((item) => item.name === layerName);
+  assert.ok(layer, `Members-only English draft keeps ${layerName}`);
+  for (const [property, value] of Object.entries(expectedGeometry)) {
+    assert.equal(
+      layer[property],
+      value,
+      `Members-only ${layerName} ${property} follows the supplied English visual draft`
+    );
+  }
+};
+expectMembershipLayerGeometry("画像 3（ロックバッジ）", { x: 497, y: -2 });
+expectMembershipLayerGeometry("画像 4（プレミアムラベル）", { x: 30, y: 336, width: 576, height: 292 });
+expectMembershipLayerGeometry("画像 5（時刻ピル）", { x: -11, y: 558 });
+expectMembershipLayerGeometry("画像 7（補足パネル）", { x: 304, y: 567, width: 361.2822895120545, height: 123.29026132561717 });
+expectMembershipLayerGeometry("図形 2（限定公開フレーム）", { x: 807, y: 166 });
+expectMembershipLayerGeometry("図形 3（見出し下ライン）", { x: 59.16652538062459, y: 392.66787232118634 });
+expectMembershipLayerGeometry("テキスト 5（英字）", { x: 100, y: 459 });
+expectMembershipLayerGeometry("テキスト 2（時刻）", { x: 63, y: 613 });
+expectMembershipLayerGeometry("テキスト 4（補足）", { x: 350, y: 614, fontSize: 24 });
+
+const enAsmrDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("asmr_stream"), "en");
+const enAsmrHeadline = textLayers(enAsmrDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(enAsmrHeadline?.text, "ASMR Stream", "ASMR English headline follows the supplied one-line visual draft");
+assert.equal(
+  enAsmrHeadline?.x,
+  51.061464187204706,
+  "ASMR English headline x follows the supplied visual draft"
+);
+assert.equal(
+  enAsmrHeadline?.y,
+  301.5199753987606,
+  "ASMR English headline y follows the supplied visual draft"
 );
 
 for (const target of thumbnailLib.thumbnailMainTextCarryoverTargets) {

@@ -7,6 +7,9 @@ export type ThumbnailPresetId =
   | "project_stream"
   | "cover_song_notice"
   | "event_notice"
+  | "goods_notice"
+  | "membership_stream"
+  | "asmr_stream"
   | "privacy_notice"
   | "whiteboard_plan"
   | "karaoke"
@@ -1530,6 +1533,87 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       assetDecorationLayer({ name: "画像 8（マップラインディバイダー）", src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-map-line-divider-emerald-gold-uniform-cell.png`, x: 76, y: 417, width: 646, height: 397, rotation: -2, opacity: 0.78 }),
       textLayer({ name: "テキスト 3（サブ）", text: "参加情報まとめ", x: 99, y: 584, width: 540, height: 58, fontSize: 47, align: "center", color: "#092746", strokeColor: "#fffaf0", strokeWidth: 4, shadowColor: "#0d8b63", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "BIZ UDPGothic", bold: true }),
       shapeLayer({ name: "図形 6（情報区切りライン）", shapeType: "line", x: 146.5001907377737, y: 634.439471007121, width: 470, height: 16, fillColor: "#0b6d4a", strokeColor: "#0b6d4a", strokeWidth: 3, borderRadius: 8, opacity: 0.62 })
+    ]
+  },
+  {
+    id: "goods_notice",
+    name: "グッズ告知",
+    category: "告知画像",
+    usageLabel: "物販 / merch release",
+    description: "グッズ、BOOTH、digital goods の販売開始を商品カード中心に見せる物販告知向け。",
+    accent: "#19c7bd",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}goods-notice-background-v2.png`),
+      assetDecorationLayer({ name: "画像 2（商品カード1）", src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-product-card-v1.png`, x: 460, y: 110, width: 285, height: 460, opacity: 0.98 }),
+      assetDecorationLayer({ name: "画像 3（商品カード2）", src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-product-card-v1.png`, x: 730, y: 110, width: 285, height: 460, opacity: 0.98 }),
+      assetDecorationLayer({ name: "画像 4（商品カード3）", src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-product-card-v1.png`, x: 1000, y: 110, width: 285, height: 460, opacity: 0.98 }),
+      assetDecorationLayer({ name: "画像 5（発売バッジ）", src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-release-badge-v1.png`, x: 60, y: 94, width: 132, height: 136, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 6（価格バッジ1）", src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-price-badge-v1.png`, x: 636.124666208896, y: 455.3794506612412, width: 110, height: 110, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 7（価格バッジ2）", src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-price-badge-v1.png`, x: 908.3128099488822, y: 458.37945066124115, width: 110, height: 110, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 8（価格バッジ3）", src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-price-badge-v1.png`, x: 1179.1885252155337, y: 452.6917599186166, width: 110, height: 110, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 9（時刻ピル）", src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-time-pill-v1.png`, x: 20.624856946669695, y: 597.6887080366225, width: 354, height: 92, opacity: 0.98 }),
+      assetDecorationLayer({ name: "画像 10（販売CTA）", src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-cta-panel-v1.png`, x: 395.1877622644389, y: 561.5625635808749, width: 512, height: 150, opacity: 0.98 }),
+      assetDecorationLayer({ name: "画像 11（注意書きパネル）", src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-note-panel-v1.png`, x: 910.0627145799954, y: 589.8758901322483, width: 350, height: 116, opacity: 0.98 }),
+      textLayer({ name: "テキスト 12（発売バッジ）", text: "NEW", x: 86, y: 145, width: 80, height: 34, fontSize: 30, color: "#ffffff", strokeColor: "#a41755", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 2, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "新グッズ", x: 42, y: 180, width: 520, height: 126, fontSize: 116, lineHeight: 0.96, color: "#21c8bb", strokeColor: "#ffffff", strokeWidth: 13, shadowColor: "#09264f", shadowBlur: 3, shadowOffsetX: 6, shadowOffsetY: 7, fontFamily: "M PLUS 1p", bold: true }),
+      textLayer({ name: "テキスト 5（英字）", text: "MERCH DROP", x: 42, y: 315, width: 500, height: 82, fontSize: 72, color: "#0b2a56", strokeColor: "#ffffff", strokeWidth: 8, shadowColor: "#18c7bd", shadowBlur: 4, shadowOffsetX: 3, shadowOffsetY: 5, fontFamily: "Montserrat", bold: true }),
+      shapeLayer({ name: "図形 5（見出し下ライン）", shapeType: "line", x: 62, y: 421, width: 452, height: 14, fillColor: "#0b2a56", strokeColor: "#0b2a56", strokeWidth: 3, borderRadius: 8, opacity: 0.72 }),
+      textLayer({ name: "テキスト 6（商品1）", text: "ACRYLIC STAND", x: 530.686427100023, y: 144.37639877924718, width: 152, height: 26, fontSize: 19, color: "#ffffff", strokeColor: "#078d8a", strokeWidth: 2, shadowColor: "#053a48", shadowBlur: 3, shadowOffsetX: 1, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 7（商品2）", text: "STICKER SET", x: 810.1246662088961, y: 141.31332655137334, width: 142, height: 26, fontSize: 19, color: "#ffffff", strokeColor: "#051b42", strokeWidth: 2, shadowColor: "#07152c", shadowBlur: 3, shadowOffsetX: 1, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 8（商品3）", text: "DIGITAL GOODS", x: 1071.625238422217, y: 141.00101729399793, width: 152, height: 26, fontSize: 19, color: "#ffffff", strokeColor: "#078d8a", strokeWidth: 2, shadowColor: "#053a48", shadowBlur: 3, shadowOffsetX: 1, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 9（価格1）", text: "¥1,800", x: 638.3120469977874, y: 496.50457782299077, width: 100, height: 30, fontSize: 24, color: "#ffffff", strokeColor: "#071a34", strokeWidth: 2, shadowColor: "#36c9c0", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Oswald", align: "center" }),
+      textLayer({ name: "テキスト 10（価格2）", text: "¥800", x: 920.7502861066605, y: 500.0671414038657, width: 82, height: 30, fontSize: 24, color: "#ffffff", strokeColor: "#071a34", strokeWidth: 2, shadowColor: "#36c9c0", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Oswald", align: "center" }),
+      textLayer({ name: "テキスト 11（価格3）", text: "¥1,200", x: 1178.2508583199817, y: 498.50457782299077, width: 100, height: 30, fontSize: 24, color: "#ffffff", strokeColor: "#071a34", strokeWidth: 2, shadowColor: "#36c9c0", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Oswald", align: "center" }),
+      textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 106.1873807888914, y: 624.938962360122, width: 230, height: 52, fontSize: 45, color: "#0b2a56", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#3bd7d0", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Bebas Neue", align: "center" }),
+      textLayer({ name: "テキスト 3（CTA）", text: "販売ページ公開", x: 494.0007629510949, y: 621.0630722278739, width: 360, height: 42, fontSize: 36, color: "#0b2a56", strokeColor: "#ffffff", strokeWidth: 1, shadowColor: "#7ff4ef", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
+      textLayer({ name: "テキスト 4（補足）", text: "数量限定アイテムあり!", x: 938.5001907377739, y: 634.1261444557476, width: 292, height: 36, fontSize: 28, color: "#0b2a56", strokeColor: "#ffffff", strokeWidth: 1, shadowColor: "#f1d198", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" })
+    ]
+  },
+  {
+    id: "membership_stream",
+    name: "メン限配信",
+    category: "配信ジャンル",
+    usageLabel: "メン限 / members only",
+    description: "限定公開、community perk、member-only stream を premium label と CTA で見せるメンバー向け配信告知。",
+    accent: "#d6b15e",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}membership-stream-background-v1.png`),
+      assetDecorationLayer({ name: "画像 2（メンバーバッジ）", src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-member-badge-v1.png`, x: 38, y: 47, width: 180, height: 180, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 3（ロックバッジ）", src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-lock-badge-v1.png`, x: 497.1820401312275, y: -1.503560528992864, width: 342, height: 342, opacity: 0.88 }),
+      assetDecorationLayer({ name: "画像 4（プレミアムラベル）", src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-premium-label-v1.png`, x: 29.83443961242088, y: 336.06307222787393, width: 575.7904173342488, height: 292.08748728382494, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 5（時刻ピル）", src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-time-pill-v1.png`, x: -10.813763637750867, y: 558.4374364191252, width: 390, height: 152, opacity: 0.98 }),
+      assetDecorationLayer({ name: "画像 7（補足パネル）", src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-note-panel-v1.png`, x: 304.1782253757533, y: 566.5615462868769, width: 350, height: 118, opacity: 0.98 }),
+      shapeLayer({ name: "図形 2（限定公開フレーム）", shapeType: "frame", x: 806.8757152666515, y: 166.43947100712103, width: 394, height: 438, fillColor: "#ffffff08", strokeColor: "#d8b768", strokeWidth: 3, borderRadius: 34, opacity: 0.42 }),
+      shapeLayer({ name: "図形 3（見出し下ライン）", shapeType: "line", x: 80, y: 326, width: 500, height: 16, fillColor: "#d8b768", strokeColor: "#d8b768", strokeWidth: 3, borderRadius: 8, opacity: 0.72 }),
+      textLayer({ name: "テキスト 7（バッジ）", text: "VIP", x: 88, y: 122, width: 82, height: 38, fontSize: 34, color: "#fff8db", strokeColor: "#083b43", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 6（会員ラベル）", text: "MEMBER PERK", x: 194, y: 172, width: 260, height: 36, fontSize: 30, color: "#fff8db", strokeColor: "#082a32", strokeWidth: 2, shadowColor: "#d8b768", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "メン限配信", x: 55, y: 204, width: 610, height: 126, fontSize: 104, lineHeight: 0.96, color: "#ffe8a8", strokeColor: "#082a32", strokeWidth: 10, shadowColor: "#d8b768", shadowBlur: 9, shadowOffsetX: 4, shadowOffsetY: 6, fontFamily: "M PLUS 1p", bold: true }),
+      textLayer({ name: "テキスト 5（英字）", text: "MEMBERS ONLY", x: 99.74990463111317, y: 459.3774160732452, width: 430, height: 54, fontSize: 48, color: "#082a32", strokeColor: "#fff8db", strokeWidth: 4, shadowColor: "#d8b768", shadowBlur: 3, shadowOffsetX: 1, shadowOffsetY: 2, fontFamily: "Montserrat", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 63.123521782253704, y: 613.3123092573753, width: 238, height: 46, fontSize: 40, color: "#fff8db", strokeColor: "#082a32", strokeWidth: 3, shadowColor: "#d8b768", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Bebas Neue", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 4（補足）", text: "限定アーカイブあり", x: 350.42832074464036, y: 614.3743641912513, width: 270, height: 34, fontSize: 26, color: "#12333a", strokeColor: "#fff8db", strokeWidth: 1, shadowColor: "#d8b768", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", bold: true, align: "center" })
+    ]
+  },
+  {
+    id: "asmr_stream",
+    name: "ASMR配信",
+    category: "配信ジャンル",
+    usageLabel: "ASMR / relax night",
+    description: "ASMR、sleep aid、quiet talk を低彩度の night gradient と mic motif で見せるリラックス配信向け。",
+    accent: "#9cc7ff",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}asmr-stream-background-v1.png`),
+      assetDecorationLayer({ name: "画像 2（サウンドリング）", src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-sound-ring-v1.png`, x: 446.6875715266651, y: 147.25127161749748, width: 382, height: 410, opacity: 0.5 }),
+      assetDecorationLayer({ name: "画像 3（低彩度ラベル）", src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-soft-label-v1.png`, x: 17.373617151140536, y: 12.810783316378462, width: 430, height: 170, opacity: 0.9 }),
+      assetDecorationLayer({ name: "画像 4（マイクシルエット）", src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-mic-silhouette-v1.png`, x: 828.2485694666971, y: 323.45066124109866, width: 190.6634622720685, height: 300.1749745676501, opacity: 0.82 }),
+      assetDecorationLayer({ name: "画像 5（時刻ピル）", src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-time-pill-v1.png`, x: 18.998855573357787, y: 580.3133265513734, width: 360, height: 147, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 6（補足パネル）", src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-note-panel-v1.png`, x: 397.50019073777366, y: 526.6246185147508, width: 760, height: 289, opacity: 0.9 }),
+      shapeLayer({ name: "図形 2（見出し下ライン）", shapeType: "line", x: 85.56176089112682, y: 430.0671414038657, width: 478, height: 16, fillColor: "#b8d8ff", strokeColor: "#b8d8ff", strokeWidth: 3, borderRadius: 8, opacity: 0.42 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 869.0634775310901, y: 119.43845371312307, width: 390, height: 540, fillColor: "#ffffff06", strokeColor: "#b8d8ff", strokeWidth: 2, borderRadius: 48, opacity: 0.24 }),
+      textLayer({ name: "テキスト 5（ラベル）", text: "SLEEP AID", x: 95.24856946669723, y: 86.06103763987791, width: 260, height: 38, fontSize: 30, color: "#dbeaff", strokeColor: "#122343", strokeWidth: 2, shadowColor: "#9cc7ff", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "ASMR配信", x: 69.81185626001371, y: 313.6297049847406, width: 600, height: 116, fontSize: 104, lineHeight: 0.96, color: "#eef5ff", strokeColor: "#14213f", strokeWidth: 9, shadowColor: "#94bfff", shadowBlur: 12, shadowOffsetX: 3, shadowOffsetY: 5, fontFamily: "M PLUS Rounded 1c", bold: true }),
+      textLayer({ name: "テキスト 3（英字）", text: "RELAX NIGHT", x: 91.12428473334853, y: 460.7548321464904, width: 450, height: 54, fontSize: 48, color: "#b8d8ff", strokeColor: "#182342", strokeWidth: 3, shadowColor: "#d6c7ff", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Montserrat", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 2（時刻）", text: "23:00 START", x: 72.99885557335773, y: 632.3133265513732, width: 250, height: 48, fontSize: 42, color: "#edf5ff", strokeColor: "#14213f", strokeWidth: 2, shadowColor: "#9cc7ff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Bebas Neue", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 4（補足）", text: "睡眠導入 / quiet talk", x: 504.50019073777366, y: 648.563580874873, width: 536, height: 42, fontSize: 30, color: "#eef5ff", strokeColor: "#14213f", strokeWidth: 2, shadowColor: "#9cc7ff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", bold: true, align: "center" })
     ]
   },
   {

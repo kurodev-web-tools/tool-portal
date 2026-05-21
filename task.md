@@ -13,7 +13,31 @@
 
 ## Active Priorities
 
-1. Portal shell settings visibility polish
+1. Thumbnail Editor EN preset usage label follow-up
+   - status: 実装・検証済み。branch `codex/thumbnail-preset-en-usage-labels` で commit 済みにする。
+   - user context:
+     - EN 表示で追加 preset 3件の usage chip のうち、`goods_notice` と `membership_stream` が `物販 / merch release` / `メン限 / members only` のまま表示されていた。
+   - implementation notes:
+     - `getThumbnailPresetUsageLabel` の EN mapping に `goods_notice` / `membership_stream` / `asmr_stream` の scoped usage labels を追加した。
+     - preset card と usage filter chip は既存どおり `getThumbnailPresetUsageLabel(...)` を通るため、表示経路や filtering value は変更していない。
+     - `scripts/thumbnail-preset-text-locale-contract.mjs` に recent preset usage label の EN 表示 contract を追加し、日本語混じり fallback が残らないことを固定した。
+   - verification results:
+     - RED: `node scripts/thumbnail-preset-text-locale-contract.mjs` が `物販 / merch release` fallback で失敗することを確認。
+     - PASS: `node scripts/thumbnail-usecase-goods-notice-preset-contract.mjs`
+     - PASS: `node scripts/thumbnail-usecase-membership-stream-preset-contract.mjs`
+     - PASS: `node scripts/thumbnail-usecase-asmr-stream-preset-contract.mjs`
+     - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+     - PASS: `npm run lint`
+     - PASS: `npx tsc --noEmit`
+     - PASS: `git diff --check` (repo-normal LF -> CRLF working-copy warnings only)
+     - Browser smoke: local `next dev --webpack -p 3061 --hostname 127.0.0.1` + Chrome DevTools automation.
+     - Width result: `/tools/thumbnail-editor` EN/Dark at `390 / 820 / 1024 / 1280 / 1366px`; `Merch release` / `Members only` / `ASMR / relax night` 表示、`物販 / merch release` / `メン限 / members only` 非表示、`documentElement.lang=en`、body/document horizontal overflow `0`、console error/warn `0` を確認。
+   - remaining risks:
+     - 変更は usage label copy dictionary と contract に限定。最終の見た目目視は確認用 branch 取り込み時に Codex app browser で再確認するとよい。
+   - handoff to next candidate:
+     - 次候補は引き続き `relay_stream` preset。今回の fix は `codex/thumbnail-preset-review` 上の EN copy 漏れ修正に閉じ、preset body / schema / canvas / export / Portal shell は触っていない。
+
+2. Portal shell settings visibility polish
    - status: 実装・検証済み。branch `codex/portal-shell-settings-polish` で確認用に push 予定。
    - user context:
      - PC 表示で各ツールを開いている際、左パネル内のテーマ切り替えが見えない。
@@ -64,7 +88,7 @@
    - handoff to next candidate:
      - 次候補は `Thumbnail Editor inline text edit`。今回の Portal shell 変更は tool body の schema / canvas / editor state には触れていないため、`codex/thumbnail-inline-text-edit` はこの branch の merge 判断後に独立 worktree で開始する。
 
-2. Thumbnail Editor inline text edit
+3. Thumbnail Editor inline text edit
    - status: 実装・検証済み。branch `codex/thumbnail-inline-text-edit` で確認用に push / draft PR 作成予定。
    - user context:
      - テキストレイヤーを選択し、右パネルをスクロールして本文を書き換える流れは手間が大きい。
@@ -114,7 +138,7 @@
    - handoff to next candidate:
      - 次候補は `goods_notice` preset。今回の PR は inline edit DOM / local state / copy / contract に閉じており、preset body、font、export、crop、Portal shell は触っていない。
 
-3. Thumbnail Editor `goods_notice` preset
+4. Thumbnail Editor `goods_notice` preset
    - status: 実装・検証済み。branch `codex/thumbnail-goods-notice-preset` で commit 済みにする。
    - reason: 英語対応公開後の追加価値として分かりやすく、既存 `イベント告知` / `歌ってみた告知` と用途が重なりにくい。
    - scope:
@@ -158,7 +182,7 @@
      - 次候補は `membership_stream`。今回の PR は `goods_notice` preset body、production background、locale copy、contract に閉じており、schema、canvas rendering pipeline、export / crop、font search / recently used UI、Portal shell、Schedule Calendar、SNS Split Image Maker は触っていない。
      - `membership_stream` では member badge、locked / members-only visual、soft premium label、限定配信らしい CTA / 補足を text layer 化し、1 preset / 1 PR で開始する。
 
-4. Thumbnail Editor `membership_stream` preset
+5. Thumbnail Editor `membership_stream` preset
    - status: 実装・検証済み。branch `codex/thumbnail-membership-stream-preset` で commit 済みにする。
    - reason: 通常の配信告知 / 雑談と違い、member-only stream、community perk、限定公開、premium label を扱える用途差がある。
    - scope:
@@ -190,7 +214,7 @@
      - 次候補は `asmr_stream`。今回の PR は `membership_stream` preset body、production background、decoration assets、locale copy、contract に閉じており、schema、canvas rendering pipeline、export / crop、font search / recently used UI、Portal shell、Schedule Calendar、SNS Split Image Maker は触っていない。
      - `asmr_stream` では mic silhouette / sound ring / night gradient / low-contrast label を背景焼き込みと editable text layer に分け、1 preset / 1 PR で開始する。
 
-5. Thumbnail Editor `asmr_stream` preset
+6. Thumbnail Editor `asmr_stream` preset
    - status: 実装・検証済み。branch `codex/thumbnail-asmr-stream-preset` で commit 済みにする。
    - reason: ASMR / relax night / sleep aid / quiet talk は通常の配信告知や雑談と違い、低彩度・夜・音のモチーフを中心にした用途差がある。
    - scope:
@@ -223,7 +247,7 @@
      - 次候補は `relay_stream`。今回の PR は `asmr_stream` preset body、production background、decoration assets、locale copy、contract に閉じており、schema、canvas rendering pipeline、export / crop、font search / recently used UI、Portal shell、Schedule Calendar、SNS Split Image Maker は触っていない。
      - `relay_stream` では relay order、multi-slot card、next channel label、time chain、補足 panel を背景 / decoration asset / editable text layer に分け、1 preset / 1 PR で開始する。
 
-6. Kuro Live Comment Translator planning
+7. Kuro Live Comment Translator planning
    - status: 新規ツール候補。すぐ実装せず、まず repo 内 future plan に落とす。
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
@@ -237,7 +261,7 @@
    - next action:
      - 添付 plan を repo 向けに要約し、`docs/future` に保存するかを判断する。
 
-7. Thumbnail Editor font / preset typography follow-up
+8. Thumbnail Editor font / preset typography follow-up
    - status: 後続候補。優先度は公開版 polish と `goods_notice` より下。
    - current direction:
      - 単純な font 追加より、preset ごとの font application、weight-aware UI、必要なら不足 font の小規模追加を優先する。

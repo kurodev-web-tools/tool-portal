@@ -46,6 +46,29 @@ assert.equal(
   "function",
   "Thumbnail preset text visual adjustment helper is exported from copy layer"
 );
+assert.equal(
+  typeof thumbnailCopy.getThumbnailPresetUsageLabel,
+  "function",
+  "Thumbnail preset usage label locale helper is exported from copy layer"
+);
+
+const recentPresetUsageLabelExpectations = [
+  ["物販 / merch release", "Merch release"],
+  ["メン限 / members only", "Members only"],
+  ["ASMR / relax night", "ASMR / relax night"]
+];
+for (const [usageLabel, expectedEnglishLabel] of recentPresetUsageLabelExpectations) {
+  assert.equal(
+    thumbnailCopy.getThumbnailPresetUsageLabel(usageLabel, "en"),
+    expectedEnglishLabel,
+    `${usageLabel} has a compact English usage label`
+  );
+  assert.equal(
+    containsJapanese(thumbnailCopy.getThumbnailPresetUsageLabel(usageLabel, "en")),
+    false,
+    `${usageLabel} English usage label does not expose Japanese text`
+  );
+}
 
 assert.match(
   thumbnailCopySource,

@@ -25,6 +25,7 @@ type ThumbnailPresetCopy = {
 
 type ThumbnailPresetTextBodyCopy = Partial<Record<ThumbnailPresetId, Record<string, string>>>;
 type ThumbnailPresetTextLayerVisualAdjustment = Partial<Pick<ThumbnailTextLayer, "x" | "y" | "width" | "height" | "fontSize" | "lineHeight" | "align">>;
+type ThumbnailPresetLayerVisualAdjustment = Partial<Pick<ThumbnailLayer, "x" | "y" | "width" | "height">>;
 
 export const thumbnailEditorCopy = {
   ja: {
@@ -1192,6 +1193,19 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
   }
 };
 
+const thumbnailPresetLayerVisualAdjustments: Record<
+  Locale,
+  Partial<Record<ThumbnailPresetId, Record<string, ThumbnailPresetLayerVisualAdjustment>>>
+> = {
+  ja: {},
+  en: {
+    membership_stream: {
+      "画像 7（補足パネル）": { x: 304, y: 567, width: 361.2822895120545, height: 123.29026132561717 },
+      "図形 3（見出し下ライン）": { x: 59.16652538062459, y: 392.66787232118634 }
+    }
+  }
+};
+
 const materialNameTranslationsEn: Record<string, string> = {
   シアンラベル土台: "Cyan Label Plate",
   紺金日付バッジ: "Navy Gold Date Badge",
@@ -1533,6 +1547,18 @@ export function getThumbnailPresetTextLayerVisualAdjustment(
   return thumbnailPresetTextLayerVisualAdjustments[locale][presetId]?.[layerName] ?? null;
 }
 
+export function getThumbnailPresetLayerVisualAdjustment(
+  presetId: ThumbnailPresetId,
+  layerName: string,
+  locale: Locale
+): ThumbnailPresetLayerVisualAdjustment | null {
+  if (locale === "ja") {
+    return null;
+  }
+
+  return thumbnailPresetLayerVisualAdjustments[locale][presetId]?.[layerName] ?? null;
+}
+
 export function localizeThumbnailPresetTextLayerBodies(
   draft: ThumbnailEditorDraft,
   locale: Locale
@@ -1544,15 +1570,17 @@ export function localizeThumbnailPresetTextLayerBodies(
   return {
     ...draft,
     layers: draft.layers.map((layer) => {
-      if (layer.type !== "text") {
-        return layer;
+      const layerVisualAdjustment = getThumbnailPresetLayerVisualAdjustment(draft.presetId, layer.name, locale);
+      const adjustedLayer = layerVisualAdjustment ? { ...layer, ...layerVisualAdjustment } : layer;
+      if (adjustedLayer.type !== "text") {
+        return adjustedLayer;
       }
 
-      const visualAdjustment = getThumbnailPresetTextLayerVisualAdjustment(draft.presetId, layer.name, locale);
+      const visualAdjustment = getThumbnailPresetTextLayerVisualAdjustment(draft.presetId, adjustedLayer.name, locale);
       return {
-        ...layer,
+        ...adjustedLayer,
         ...visualAdjustment,
-        text: getThumbnailPresetTextLayerBody(draft.presetId, layer.name, locale, layer.text)
+        text: getThumbnailPresetTextLayerBody(draft.presetId, adjustedLayer.name, locale, adjustedLayer.text)
       };
     })
   };

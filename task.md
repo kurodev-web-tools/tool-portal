@@ -21,8 +21,11 @@
      - `getThumbnailPresetUsageLabel` の EN mapping に `goods_notice` / `membership_stream` / `asmr_stream` の scoped usage labels を追加した。
      - preset card と usage filter chip は既存どおり `getThumbnailPresetUsageLabel(...)` を通るため、表示経路や filtering value は変更していない。
      - `scripts/thumbnail-preset-text-locale-contract.mjs` に recent preset usage label の EN 表示 contract を追加し、日本語混じり fallback が残らないことを固定した。
+     - follow-up: supplied JSON を元に、EN `membership_stream` の初期位置を `thumbnailPresetLayerVisualAdjustments` / `thumbnailPresetTextLayerVisualAdjustments` 経由で反映した。特に `図形 3（見出し下ライン）` と `画像 7（補足パネル）` を EN 見出し配置に合わせた。
+     - JA base preset、preset schema、canvas/export、filtering value は変更していない。
    - verification results:
      - RED: `node scripts/thumbnail-preset-text-locale-contract.mjs` が `物販 / merch release` fallback で失敗することを確認。
+     - RED: `node scripts/thumbnail-preset-text-locale-contract.mjs` が EN `membership_stream` の `図形 3（見出し下ライン）` base geometry で失敗することを確認。
      - PASS: `node scripts/thumbnail-usecase-goods-notice-preset-contract.mjs`
      - PASS: `node scripts/thumbnail-usecase-membership-stream-preset-contract.mjs`
      - PASS: `node scripts/thumbnail-usecase-asmr-stream-preset-contract.mjs`
@@ -32,6 +35,8 @@
      - PASS: `git diff --check` (repo-normal LF -> CRLF working-copy warnings only)
      - Browser smoke: local `next dev --webpack -p 3061 --hostname 127.0.0.1` + Chrome DevTools automation.
      - Width result: `/tools/thumbnail-editor` EN/Dark at `390 / 820 / 1024 / 1280 / 1366px`; `Merch release` / `Members only` / `ASMR / relax night` 表示、`物販 / merch release` / `メン限 / members only` 非表示、`documentElement.lang=en`、body/document horizontal overflow `0`、console error/warn `0` を確認。
+     - Membership position result: EN `membership_stream` 適用直後に `図形 3（見出し下ライン）` が `x=59.16652538062459 / y=392.66787232118634`、`画像 7（補足パネル）` が `x=304 / y=567 / width=361.2822895120545 / height=123.29026132561717` になることを確認。
+     - Membership width result: `/tools/thumbnail-editor` EN/Dark at `390 / 820 / 1024 / 1280 / 1366px`; `membership_stream` draft、supplied line/panel geometry、body/document horizontal overflow `0`、console error/warn `0` を確認。
    - remaining risks:
      - 変更は usage label copy dictionary と contract に限定。最終の見た目目視は確認用 branch 取り込み時に Codex app browser で再確認するとよい。
    - handoff to next candidate:

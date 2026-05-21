@@ -668,6 +668,28 @@ assert.equal(
   "Karaoke sub y follows the supplied English visual draft"
 );
 
+const enMembershipDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("membership_stream"), "en");
+const expectMembershipLayerGeometry = (layerName, expectedGeometry) => {
+  const layer = enMembershipDraft.layers.find((item) => item.name === layerName);
+  assert.ok(layer, `Members-only English draft keeps ${layerName}`);
+  for (const [property, value] of Object.entries(expectedGeometry)) {
+    assert.equal(
+      layer[property],
+      value,
+      `Members-only ${layerName} ${property} follows the supplied English visual draft`
+    );
+  }
+};
+expectMembershipLayerGeometry("画像 3（ロックバッジ）", { x: 497, y: -2 });
+expectMembershipLayerGeometry("画像 4（プレミアムラベル）", { x: 30, y: 336, width: 576, height: 292 });
+expectMembershipLayerGeometry("画像 5（時刻ピル）", { x: -11, y: 558 });
+expectMembershipLayerGeometry("画像 7（補足パネル）", { x: 304, y: 567, width: 361.2822895120545, height: 123.29026132561717 });
+expectMembershipLayerGeometry("図形 2（限定公開フレーム）", { x: 807, y: 166 });
+expectMembershipLayerGeometry("図形 3（見出し下ライン）", { x: 59.16652538062459, y: 392.66787232118634 });
+expectMembershipLayerGeometry("テキスト 5（英字）", { x: 100, y: 459 });
+expectMembershipLayerGeometry("テキスト 2（時刻）", { x: 63, y: 613 });
+expectMembershipLayerGeometry("テキスト 4（補足）", { x: 350, y: 614, fontSize: 24 });
+
 for (const target of thumbnailLib.thumbnailMainTextCarryoverTargets) {
   assert.ok(["見出し", "時刻", "サブ", "ラベル"].includes(target.namePart), `${target.id} matching key remains Japanese namePart`);
 }

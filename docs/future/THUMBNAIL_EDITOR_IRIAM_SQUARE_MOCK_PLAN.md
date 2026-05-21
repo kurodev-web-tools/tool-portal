@@ -47,6 +47,46 @@ Thumbnail Editor の 1:1 IRIAM 向け preset / material workflow を、productio
 | `耐久` | 目標と勢いが伝わる challenge square。16:9 より文字数を削る。 | `pop_bubble` / yellow or blue | 太い `耐久`。少し斜めの勢い、強めの縁取り。 | `目標 100回`、`19:00 START` | 小ラベル、手描きライン、星、progress 風 divider |
 | `闇ガチャ` | dark cute / suspense。怖すぎず、配信企画として遊べる不穏さに留める。 | `dark_cute` / purple or pink | `闇ガチャ` を少し上品で怪しい title image にする。 | `一回だけ...`、`23:00 START` | ハート、きらきら、雲、ダーク小ラベル |
 
+## Generated Mock Set
+
+2026-05-21 に `imagegen` built-in mode で5種の direction mock を生成し、title text は後続 review がしやすいように project-local copy へ正確な日本語 title overlay を加えた。
+この overlay は production title image asset ではなく、mock review 用の仮処理として扱う。
+
+| Genre | Mock path | Review note |
+| --- | --- | --- |
+| `歌枠` | `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-karaoke-mock.png` | soft cloud / ribbon / music accent の方向確認用。title image phase では overlay ではなく transparent PNG title を作る。 |
+| `雑談` | `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-chat-mock.png` | speech bubble / mint-yellow palette の方向確認用。情報量は少なく保つ。 |
+| `初配信` | `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-first-stream-mock.png` | debut / welcome / ribbon frame の方向確認用。豪華にしすぎない。 |
+| `耐久` | `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-endurance-mock.png` | yellow-blue challenge palette と goal label の方向確認用。title の勢いは後続 title image phase で再調整する。 |
+| `闇ガチャ` | `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-dark-gacha-mock.png` | dark cute / suspense palette の方向確認用。horror ではなく配信企画感を維持する。 |
+
+Mock generation note:
+
+- Japanese title glyphs from direct image generation can drift, so final review files use a deterministic overlay for exact title text.
+- Production phase should not reuse the overlay as-is. Instead, create transparent title PNG assets with the selected font / stroke / shadow treatment.
+- Keep these files as direction mocks only; do not register them as production material assets.
+
+## Standee Layout Mock Set
+
+IRIAM 実用では中央または左右どちらかに立ち絵バストアップが入る前提が強いため、5種の standee placeholder 入り layout mock も追加した。
+こちらは「背景 / title / decoration の雰囲気」より、立ち絵安全領域と title / editable text の逃がし方を確認するための mock とする。
+
+| Genre | Placement | Mock path | Layout note |
+| --- | --- | --- | --- |
+| `歌枠` | right bust-up | `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-karaoke-standee-right-mock.png` | 右立ち絵なら title / time を左へ逃がせる。音符や ribbon は端に留める。 |
+| `雑談` | left bust-up | `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-chat-standee-left-mock.png` | 左立ち絵なら title / topic / time を右へ集約できる。吹き出しは背景寄りに薄く使う。 |
+| `初配信` | center bust-up | `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-first-stream-standee-center-mock.png` | 中央立ち絵は title を上部、time を下部へ固定する必要がある。装飾密度は抑える。 |
+| `耐久` | right bust-up | `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-endurance-standee-right-mock.png` | 右立ち絵 + 左 title / goal / time が最も情報整理しやすい。goal label を title image に含めない。 |
+| `闇ガチャ` | left bust-up | `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-dark-gacha-standee-left-mock.png` | 左立ち絵 + 右 title で企画感を保てる。暗背景では avatar outline の明度を強めに取る。 |
+
+Standee layout conclusion:
+
+- Side bust-up layouts are the safest default for starter presets because title image and editable text can sit on the opposite side.
+- Center bust-up is usable for `初配信` など本人を主役にする用途だけに絞る。title は top band、time / short phrase は bottom band に逃がす。
+- Background asset phase should keep center-left / center-right / top / bottom safe zones open and avoid strong focal decoration in the bust-up area.
+- Title image phase should produce placement-aware sizes: side-layout title, top-band title, and compact label variants.
+- These standee layout mocks are not production assets and should not be registered in the material library.
+
 ## Background Asset Production Plan
 
 後続 phase の目標は 15枚。全て文字なし、transparent title / decoration と重ねても読める 1080 x 1080 PNG とする。

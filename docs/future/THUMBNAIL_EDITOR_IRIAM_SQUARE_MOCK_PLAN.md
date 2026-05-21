@@ -47,6 +47,25 @@ Thumbnail Editor の 1:1 IRIAM 向け preset / material workflow を、productio
 | `耐久` | 目標と勢いが伝わる challenge square。16:9 より文字数を削る。 | `pop_bubble` / yellow or blue | 太い `耐久`。少し斜めの勢い、強めの縁取り。 | `目標 100回`、`19:00 START` | 小ラベル、手描きライン、星、progress 風 divider |
 | `闇ガチャ` | dark cute / suspense。怖すぎず、配信企画として遊べる不穏さに留める。 | `dark_cute` / purple or pink | `闇ガチャ` を少し上品で怪しい title image にする。 | `一回だけ...`、`23:00 START` | ハート、きらきら、雲、ダーク小ラベル |
 
+## Generated Mock Set
+
+2026-05-21 に `imagegen` built-in mode で5種の direction mock を生成し、title text は後続 review がしやすいように project-local copy へ正確な日本語 title overlay を加えた。
+この overlay は production title image asset ではなく、mock review 用の仮処理として扱う。
+
+| Genre | Mock path | Review note |
+| --- | --- | --- |
+| `歌枠` | `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-karaoke-mock.png` | soft cloud / ribbon / music accent の方向確認用。title image phase では overlay ではなく transparent PNG title を作る。 |
+| `雑談` | `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-chat-mock.png` | speech bubble / mint-yellow palette の方向確認用。情報量は少なく保つ。 |
+| `初配信` | `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-first-stream-mock.png` | debut / welcome / ribbon frame の方向確認用。豪華にしすぎない。 |
+| `耐久` | `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-endurance-mock.png` | yellow-blue challenge palette と goal label の方向確認用。title の勢いは後続 title image phase で再調整する。 |
+| `闇ガチャ` | `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-dark-gacha-mock.png` | dark cute / suspense palette の方向確認用。horror ではなく配信企画感を維持する。 |
+
+Mock generation note:
+
+- Japanese title glyphs from direct image generation can drift, so final review files use a deterministic overlay for exact title text.
+- Production phase should not reuse the overlay as-is. Instead, create transparent title PNG assets with the selected font / stroke / shadow treatment.
+- Keep these files as direction mocks only; do not register them as production material assets.
+
 ## Background Asset Production Plan
 
 後続 phase の目標は 15枚。全て文字なし、transparent title / decoration と重ねても読める 1080 x 1080 PNG とする。

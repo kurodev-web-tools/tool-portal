@@ -66,6 +66,27 @@ Mock generation note:
 - Production phase should not reuse the overlay as-is. Instead, create transparent title PNG assets with the selected font / stroke / shadow treatment.
 - Keep these files as direction mocks only; do not register them as production material assets.
 
+## Standee Layout Mock Set
+
+IRIAM 実用では中央または左右どちらかに立ち絵バストアップが入る前提が強いため、5種の standee placeholder 入り layout mock も追加した。
+こちらは「背景 / title / decoration の雰囲気」より、立ち絵安全領域と title / editable text の逃がし方を確認するための mock とする。
+
+| Genre | Placement | Mock path | Layout note |
+| --- | --- | --- | --- |
+| `歌枠` | right bust-up | `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-karaoke-standee-right-mock.png` | 右立ち絵なら title / time を左へ逃がせる。音符や ribbon は端に留める。 |
+| `雑談` | left bust-up | `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-chat-standee-left-mock.png` | 左立ち絵なら title / topic / time を右へ集約できる。吹き出しは背景寄りに薄く使う。 |
+| `初配信` | center bust-up | `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-first-stream-standee-center-mock.png` | 中央立ち絵は title を上部、time を下部へ固定する必要がある。装飾密度は抑える。 |
+| `耐久` | right bust-up | `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-endurance-standee-right-mock.png` | 右立ち絵 + 左 title / goal / time が最も情報整理しやすい。goal label を title image に含めない。 |
+| `闇ガチャ` | left bust-up | `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-dark-gacha-standee-left-mock.png` | 左立ち絵 + 右 title で企画感を保てる。暗背景では avatar outline の明度を強めに取る。 |
+
+Standee layout conclusion:
+
+- Side bust-up layouts are the safest default for starter presets because title image and editable text can sit on the opposite side.
+- Center bust-up is usable for `初配信` など本人を主役にする用途だけに絞る。title は top band、time / short phrase は bottom band に逃がす。
+- Background asset phase should keep center-left / center-right / top / bottom safe zones open and avoid strong focal decoration in the bust-up area.
+- Title image phase should produce placement-aware sizes: side-layout title, top-band title, and compact label variants.
+- These standee layout mocks are not production assets and should not be registered in the material library.
+
 ## Background Asset Production Plan
 
 後続 phase の目標は 15枚。全て文字なし、transparent title / decoration と重ねても読める 1080 x 1080 PNG とする。

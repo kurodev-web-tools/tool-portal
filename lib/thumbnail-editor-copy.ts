@@ -1166,7 +1166,7 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
       "テキスト 4（補足）": { fontSize: 24 }
     },
     asmr_stream: {
-      "テキスト 1（見出し）": { x: 112, y: 186, fontSize: 90 },
+      "テキスト 1（見出し）": { x: 69.81185626001371, y: 287.6297049847406, height: 150, fontSize: 82 },
       "テキスト 4（補足）": { fontSize: 27 }
     },
     privacy_notice: {

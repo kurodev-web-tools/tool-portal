@@ -88,6 +88,31 @@ for (const editableAssetName of ["マイクシルエット", "サウンドリン
   );
 }
 
+const expectedLayerGeometry = new Map([
+  ["画像 2（サウンドリング）", { x: 446.6875715266651, y: 147.25127161749748, width: 382, height: 410 }],
+  ["画像 3（低彩度ラベル）", { x: 17.373617151140536, y: 12.810783316378462, width: 430, height: 170 }],
+  ["画像 4（マイクシルエット）", { x: 828.2485694666971, y: 323.45066124109866, width: 190.6634622720685, height: 300.1749745676501 }],
+  ["画像 5（時刻ピル）", { x: 18.998855573357787, y: 580.3133265513734, width: 360, height: 147 }],
+  ["画像 6（補足パネル）", { x: 397.50019073777366, y: 526.6246185147508, width: 760, height: 289 }],
+  ["図形 2（見出し下ライン）", { x: 85.56176089112682, y: 430.0671414038657, width: 478, height: 16 }],
+  ["図形 3（立ち絵挿入ガイド）", { x: 869.0634775310901, y: 119.43845371312307, width: 390, height: 540 }],
+  ["テキスト 5（ラベル）", { x: 95.24856946669723, y: 86.06103763987791, width: 260, height: 38 }],
+  ["テキスト 1（見出し）", { x: 69.81185626001371, y: 313.6297049847406, width: 600, height: 116 }],
+  ["テキスト 3（英字）", { x: 91.12428473334853, y: 460.7548321464904, width: 450, height: 54 }],
+  ["テキスト 2（時刻）", { x: 72.99885557335773, y: 632.3133265513732, width: 250, height: 48 }],
+  ["テキスト 4（補足）", { x: 504.50019073777366, y: 648.563580874873, width: 536, height: 42 }]
+]);
+
+for (const [layerName, geometry] of expectedLayerGeometry) {
+  const layer = preset.layers.find((item) => item.name === layerName);
+  assert.ok(layer, `asmr_stream keeps reviewed layer ${layerName}`);
+  assert.deepEqual(
+    { x: layer.x, y: layer.y, width: layer.width, height: layer.height },
+    geometry,
+    `asmr_stream keeps reviewed geometry for ${layerName}`
+  );
+}
+
 assert.equal(
   preset.layers.filter((layer) => layer.type === "text").length >= expectedEditableText.size,
   true,

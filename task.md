@@ -203,7 +203,7 @@
      - built-in `imagegen` 生成の控えめな base 背景 `public/assets/images/thumbnail-editor/phase5/asmr-stream-background-v1.png` を locked background として追加した。
      - mic silhouette、sound ring、low-contrast label、time pill、note panel は generated decoration asset として `public/assets/images/thumbnail-editor/decorations/phase5/asmr-stream-*.png` に分離した。
      - 見出し、英字 label、時刻、補足、sleep-aid label は text layer として編集可能にした。
-     - editor preview の左ツールバーで主見出しが見切れにくいよう、左側 text / label / time pill を少し右寄せした。
+     - Review draft 反映で、sound ring、low-contrast label、mic silhouette、time pill、note panel、standee guide、見出し、英字 label、時刻、補足 text の位置を preset default へ反映した。
      - JA / EN の preset name / description / initial text body / layer display alias を追加した。EN 見出しと補足は既存の locale visual adjustment 経路で収まりを調整した。
      - 専用 contract `scripts/thumbnail-usecase-asmr-stream-preset-contract.mjs` を追加した。
    - verification results:
@@ -212,6 +212,7 @@
      - PASS: `npm run lint`
      - PASS: `npx tsc --noEmit`
      - PASS: `git diff --check` (repo-normal LF -> CRLF working-copy warnings only)
+     - Review draft geometry: supplied `asmr_stream` JSON placement was added to the dedicated contract and reflected in preset defaults.
      - Browser smoke: local `next dev --webpack -p 3059 --hostname 127.0.0.1` + Chrome DevTools automation.
      - UI result: `/tools/thumbnail-editor` で preset count `20 / 20種`、usage label `ASMR / relax night`、preset card `ASMR配信`、preset apply 後の canvas nonblank、editable text layers、layer display alias を確認。
      - Width smoke: `390 / 820 / 1024 / 1280 / 1366px` で active preset、preset count、ASMR usage label、canvas presence、body/document horizontal overflow `0` を確認。

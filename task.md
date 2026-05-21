@@ -13,67 +13,52 @@
 
 ## Active Priorities
 
-1. Thumbnail Editor usecase presets main PR
-   - status: draft PR #180 作成済み。base `main`、branch `codex/thumbnail-preset-en-usage-labels`。
-   - scope:
-     - `goods_notice` / `membership_stream` / `asmr_stream` の 3 preset。
-     - generated background / decoration assets。
-     - 専用 preset contracts。
-     - EN usage label 修正。
-     - EN `membership_stream` / `asmr_stream` 初期位置 follow-up。
-   - verification completed:
-     - `node scripts/thumbnail-usecase-goods-notice-preset-contract.mjs`
-     - `node scripts/thumbnail-usecase-membership-stream-preset-contract.mjs`
-     - `node scripts/thumbnail-usecase-asmr-stream-preset-contract.mjs`
-     - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-     - `npm run lint`
-     - `npx tsc --noEmit`
-     - `git diff --check`
-     - `/tools/thumbnail-editor` EN/Dark at `390 / 820 / 1024 / 1280 / 1366px`
-   - next action:
-     - #180 review / merge 後、この active item は Completed / Archive Summary に落とす。
-     - #180 merge 後の次作業は 1:1 IRIAM mock planning から開始する。
+1. Thumbnail Editor 1:1 IRIAM preset / material planning
+   - status: planning PR branch `codex/thumbnail-iriam-square-mock-plan` で docs/task 整理中。production preset、asset、UI、schema は触らない。
+   - planning doc: `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md`
+   - implementation summary:
+     - 1:1 IRIAM は `background image + title transparent image layer + generic decoration asset + minimal editable text layer` の starter kit として扱う。
+     - 5ジャンルは `歌枠` / `雑談` / `初配信` / `耐久` / `闇ガチャ`。
+     - 背景は `soft_cloud` / `pop_bubble` / `dark_cute` x `pink` / `blue` / `yellow` / `purple` / `mint` = 15枚を後続 production target にする。
+     - title image は 5ジャンル x 5色 = 25枚を候補にし、font 系統は `M PLUS Rounded 1c` と `Noto Serif JP` に抑える。
+     - font license は既存 bundled font note と同じ `SIL Open Font License 1.1` を前提に記録し、Google Fonts CDN / CSP / font expansion は変更しない。
+     - 装飾 asset は吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベルから小さく始める。
+   - verification for this PR:
+     - 2026-05-21: `git diff --check` passed. Output included the existing LF/CRLF normalization warning for `task.md` only.
+     - UI / asset / preset body を触らないため幅別 browser 確認は不要。
+   - remaining risks:
+     - 実際の生成 asset で title image の縁取り、影、背景との contrast を再確認する必要がある。
+     - `耐久` title は `M PLUS Rounded 1c` で勢いが不足する可能性があるため、後続 title image phase で必要なら `M PLUS 1p` 追加候補を判断する。
+     - 25 title image を一度に入れるとレビューが重くなるため、生成・採用は genre / color を絞って確認してから増やす。
+   - next handoff:
+     - 次は background asset phase。まず 15枚の文字なし背景を生成 / 選別し、title / decoration / preset body には進まない。
 
-2. Thumbnail Editor 1:1 IRIAM preset / material planning
-   - status: 次の最優先。まずは実装ではなく 1:1 mock / asset direction の planning PR から開始する。
-   - direction:
-     - IRIAM 向けは YouTube 16:9 より情報量を少なくする。
-     - 完成品サムネより、背景 + title image layer + 汎用ゆる装飾 asset + 最小 text layer の starter kit として設計する。
-     - 背景焼き込み文字は避ける。配信タイトルは透過 PNG title image layer として扱う。
-     - 時刻や短い一言など、ユーザーが頻繁に変える要素だけ editable text layer に残す。
-   - mock phase:
-     - まず 5ジャンルの 1:1 完成モックを作る。
-     - 初回候補: `歌枠` / `雑談` / `初配信` / `耐久` / `闇ガチャ`。
-     - この時点で title image に使う font 方針を決める。
-     - 使用 font は Google Fonts などライセンス確認できるものに限定し、font 名と license を task / doc に残す。
-   - background asset phase:
-     - 見た目 3種 x カラバリ 5種 = 背景 15枚を目標にする。
-     - 例: `soft_cloud` / `pop_bubble` / `dark_cute`。
-     - カラバリ例: pink / blue / yellow / purple / mint。
-     - まず背景のみ確認し、その後 title / decoration に進む。
-   - title image asset phase:
-     - 5ジャンル x カラバリ 5種 = 25枚を候補にする。
-     - ただし font 系統は 1-2 種に絞る。最終的に text layer 用 font 追加が入るため、title image を増やしすぎない。
-     - title image は背景に焼き込まず、透明 PNG image layer として配置する。
-   - decoration asset phase:
-     - 吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベルを候補にする。
-     - 16:9 preset でも使える汎用 asset として library に追加する。
-     - 初回は asset 種類と色数を抑え、使われ方を見て第2弾で増やす。
-   - preset body phase:
-     - 背景 / title / decoration の確認後に preset 化する。
-     - 初回 preset 候補: `iriam_square_soft` / `iriam_square_pop` / `iriam_square_dark_cute`。
-     - 1 preset / 1 PR に閉じるか、mock / asset / preset body を段階 PR に分ける。
+2. Thumbnail Editor 1:1 IRIAM background asset phase
+   - status: 次候補。planning PR merge 後に開始する。
+   - target:
+     - `soft_cloud` / `pop_bubble` / `dark_cute` x `pink` / `blue` / `yellow` / `purple` / `mint` = 15 background PNG。
+     - 1080 x 1080、文字なし、title image と editable text を重ねる余白あり。
+     - production asset path / naming / contract は実装 PR で確定する。
    - out of scope:
-     - schema 変更。
-     - canvas export 変更。
-     - 9:16 preset 実装。
-     - font search / recently used UI 変更。
-     - 新規ツール実装。
-   - suggested first branch/worktree:
-     - branch: `codex/thumbnail-iriam-square-mock-plan`
-     - worktree: `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-mock-plan`
+     - title image asset。
+     - decoration asset。
+     - preset body。
+     - 9:16 preset。
+     - font expansion / font UI。
 
-3. Thumbnail Editor font / preset typography follow-up
+3. Thumbnail Editor title image / decoration asset phases
+   - status: background asset 確認後に分割して着手する。
+   - title image:
+     - 5ジャンル x 5色 = 25 transparent PNG 候補。
+     - font 系統は `M PLUS Rounded 1c` / `Noto Serif JP` を基本にし、必要時だけ追加候補を検討する。
+   - decoration:
+     - 吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベル。
+     - 16:9 preset にも流用できる generic material として登録する。
+   - out of scope:
+     - starter preset body との同時実装。
+     - schema / canvas export / handoff payload 変更。
+
+4. Thumbnail Editor font / preset typography follow-up
    - status: 1:1 IRIAM mock / first asset direction の後に着手する。
    - direction:
      - 単純な font 追加より、preset / title image / editable text の実需要を見てから増やす。
@@ -83,7 +68,7 @@
      - 1:1 preset body 実装との同時実装。
      - material asset 大量追加との同時実装。
 
-4. Kuro Live Comment Translator planning
+5. Kuro Live Comment Translator planning
    - status: 新規ツール候補。1:1 preset と font follow-up の後に planning へ戻る。
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
@@ -97,14 +82,13 @@
 
 ## Recommended Roadmap
 
-1. #180 merge / task cleanup
-2. 1:1 IRIAM mock planning
-3. 1:1 IRIAM background assets
-4. 1:1 IRIAM title image assets
-5. 1:1 IRIAM decoration assets
-6. 1:1 IRIAM starter presets
-7. Font / preset typography follow-up
-8. New tool planning: Kuro Live Comment Translator
+1. 1:1 IRIAM mock planning docs PR
+2. 1:1 IRIAM background assets
+3. 1:1 IRIAM title image assets
+4. 1:1 IRIAM decoration assets
+5. 1:1 IRIAM starter presets
+6. Font / preset typography follow-up
+7. New tool planning: Kuro Live Comment Translator
 
 9:16 presets are still valuable for YouTube Shorts / vertical streams, but should follow after the 1:1 IRIAM workflow proves the square asset / title image pattern.
 
@@ -116,29 +100,28 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Thumbnail Editor の 1:1 IRIAM 向け preset / material workflow の最初の planning PR として、5ジャンルの mock 方針と asset production plan を `task.md` / `docs/future` に整理してください。
+Thumbnail Editor の 1:1 IRIAM 向け preset / material workflow の次 PR として、文字なし background asset phase を進めてください。
 
 前提:
 - main 直作業は禁止です。
 - `git fetch origin --prune` を実行してください。
-- #180 merge 後の `origin/main` 起点で branch / worktree を作成してください。
-- 推奨 branch: `codex/thumbnail-iriam-square-mock-plan`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-mock-plan`
-- `AGENTS.md` と `task.md` を確認してから作業してください。
+- `codex/thumbnail-iriam-square-mock-plan` の planning PR が merge 済みであることを確認し、merge 後の `origin/main` 起点で branch / worktree を作成してください。
+- 推奨 branch: `codex/thumbnail-iriam-square-background-assets`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-background-assets`
+- `AGENTS.md`、`task.md`、`docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md` を確認してから作業してください。
 
 実装方針:
-- 今回は planning / mock direction のみ。production preset 実装や大量 asset 生成はしない。
-- IRIAM 向け 1:1 は、背景 + title transparent image layer + 汎用装飾 asset + 最小 editable text layer の starter kit として設計する。
-- 5ジャンル mock 候補は `歌枠` / `雑談` / `初配信` / `耐久` / `闇ガチャ`。
-- 背景は見た目 3種 x カラバリ 5種 = 15枚を後続 asset phase の目標にする。
-- title image は 5ジャンル x カラバリ 5種を候補にするが、font 系統は 1-2 種に絞る。
-- title image に使う font は Google Fonts など license-free で確認できるものに限定し、font 名 / license / use case を記録する。
-- 装飾 asset は吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベルを候補にする。
+- 1080 x 1080 の文字なし background PNG を生成 / 選別してください。
+- 対象は `soft_cloud` / `pop_bubble` / `dark_cute` x `pink` / `blue` / `yellow` / `purple` / `mint` = 15枚。
+- 背景にはジャンル名、時刻、ロゴ、固定テキストを焼き込まないでください。
+- title transparent image、decoration asset、preset body はこの PR では実装しないでください。
+- asset naming / path / registration / contract は既存 Thumbnail Editor material patterns に合わせて最小限で追加してください。
 - 9:16 preset、font expansion、新規ツール実装は out of scope。
 
 検証:
-- docs/task のみなら `git diff --check`
-- 必要なら `node scripts/thumbnail-preset-text-locale-contract.mjs`
+- 追加した asset / registration に対応する最小 contract
+- `git diff --check`
+- 必要なら `node scripts/thumbnail-material-assets-contract.mjs`
 
 完了時:
 - `task.md` に実装内容、確認結果、残リスク、次候補への引き継ぎを追記してください。
@@ -193,7 +176,11 @@ UI / 表示文言を触った場合のみ、幅別確認結果をこのファイ
 
 - Thumbnail Editor usecase presets:
   - PR #180: `goods_notice` / `membership_stream` / `asmr_stream` plus EN usage label and initial placement follow-ups.
+  - PR #181: IRIAM square roadmap refresh after #180.
   - Previous staged PRs: #178 / #179 and related preset branches are summarized in PR bodies.
+- Thumbnail Editor 1:1 IRIAM planning:
+  - Current planning doc: `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md`
+  - Planning PR scope: 5 genre mock direction, layer model, background / title / decoration asset production plan, title image font / license boundary.
 - Portal / public prelaunch:
   - Portal settings visibility polish, Thumbnail Editor inline text edit, and EN support are completed or tracked by their PR bodies.
 - EN support:
@@ -207,3 +194,4 @@ UI / 表示文言を触った場合のみ、幅別確認結果をこのファイ
 - Thumbnail Editor next PR scope: `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md`
 - Thumbnail Editor usecase preset candidates: `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`
 - Thumbnail Editor font candidates: `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`
+- Thumbnail Editor IRIAM square mock plan: `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md`

@@ -9,6 +9,7 @@ export type ThumbnailPresetId =
   | "event_notice"
   | "goods_notice"
   | "membership_stream"
+  | "asmr_stream"
   | "privacy_notice"
   | "whiteboard_plan"
   | "karaoke"
@@ -1590,6 +1591,29 @@ export const thumbnailPresets: ThumbnailPreset[] = [
       textLayer({ name: "テキスト 5（英字）", text: "MEMBERS ONLY", x: 99.74990463111317, y: 459.3774160732452, width: 430, height: 54, fontSize: 48, color: "#082a32", strokeColor: "#fff8db", strokeWidth: 4, shadowColor: "#d8b768", shadowBlur: 3, shadowOffsetX: 1, shadowOffsetY: 2, fontFamily: "Montserrat", bold: true, align: "center" }),
       textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 63.123521782253704, y: 613.3123092573753, width: 238, height: 46, fontSize: 40, color: "#fff8db", strokeColor: "#082a32", strokeWidth: 3, shadowColor: "#d8b768", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Bebas Neue", bold: true, align: "center" }),
       textLayer({ name: "テキスト 4（補足）", text: "限定アーカイブあり", x: 350.42832074464036, y: 614.3743641912513, width: 270, height: 34, fontSize: 26, color: "#12333a", strokeColor: "#fff8db", strokeWidth: 1, shadowColor: "#d8b768", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", bold: true, align: "center" })
+    ]
+  },
+  {
+    id: "asmr_stream",
+    name: "ASMR配信",
+    category: "配信ジャンル",
+    usageLabel: "ASMR / relax night",
+    description: "ASMR、sleep aid、quiet talk を低彩度の night gradient と mic motif で見せるリラックス配信向け。",
+    accent: "#9cc7ff",
+    layers: [
+      assetBackgroundLayer("画像 1（背景）", `${thumbnailPhase5BackgroundAssetPrefix}asmr-stream-background-v1.png`),
+      assetDecorationLayer({ name: "画像 2（サウンドリング）", src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-sound-ring-v1.png`, x: 446.6875715266651, y: 147.25127161749748, width: 382, height: 410, opacity: 0.5 }),
+      assetDecorationLayer({ name: "画像 3（低彩度ラベル）", src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-soft-label-v1.png`, x: 17.373617151140536, y: 12.810783316378462, width: 430, height: 170, opacity: 0.9 }),
+      assetDecorationLayer({ name: "画像 4（マイクシルエット）", src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-mic-silhouette-v1.png`, x: 828.2485694666971, y: 323.45066124109866, width: 190.6634622720685, height: 300.1749745676501, opacity: 0.82 }),
+      assetDecorationLayer({ name: "画像 5（時刻ピル）", src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-time-pill-v1.png`, x: 18.998855573357787, y: 580.3133265513734, width: 360, height: 147, opacity: 0.96 }),
+      assetDecorationLayer({ name: "画像 6（補足パネル）", src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-note-panel-v1.png`, x: 397.50019073777366, y: 526.6246185147508, width: 760, height: 289, opacity: 0.9 }),
+      shapeLayer({ name: "図形 2（見出し下ライン）", shapeType: "line", x: 85.56176089112682, y: 430.0671414038657, width: 478, height: 16, fillColor: "#b8d8ff", strokeColor: "#b8d8ff", strokeWidth: 3, borderRadius: 8, opacity: 0.42 }),
+      shapeLayer({ name: "図形 3（立ち絵挿入ガイド）", shapeType: "frame", x: 869.0634775310901, y: 119.43845371312307, width: 390, height: 540, fillColor: "#ffffff06", strokeColor: "#b8d8ff", strokeWidth: 2, borderRadius: 48, opacity: 0.24 }),
+      textLayer({ name: "テキスト 5（ラベル）", text: "SLEEP AID", x: 95.24856946669723, y: 86.06103763987791, width: 260, height: 38, fontSize: 30, color: "#dbeaff", strokeColor: "#122343", strokeWidth: 2, shadowColor: "#9cc7ff", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Montserrat", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 1（見出し）", text: "ASMR配信", x: 69.81185626001371, y: 313.6297049847406, width: 600, height: 116, fontSize: 104, lineHeight: 0.96, color: "#eef5ff", strokeColor: "#14213f", strokeWidth: 9, shadowColor: "#94bfff", shadowBlur: 12, shadowOffsetX: 3, shadowOffsetY: 5, fontFamily: "M PLUS Rounded 1c", bold: true }),
+      textLayer({ name: "テキスト 3（英字）", text: "RELAX NIGHT", x: 91.12428473334853, y: 460.7548321464904, width: 450, height: 54, fontSize: 48, color: "#b8d8ff", strokeColor: "#182342", strokeWidth: 3, shadowColor: "#d6c7ff", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Montserrat", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 2（時刻）", text: "23:00 START", x: 72.99885557335773, y: 632.3133265513732, width: 250, height: 48, fontSize: 42, color: "#edf5ff", strokeColor: "#14213f", strokeWidth: 2, shadowColor: "#9cc7ff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Bebas Neue", bold: true, align: "center" }),
+      textLayer({ name: "テキスト 4（補足）", text: "睡眠導入 / quiet talk", x: 504.50019073777366, y: 648.563580874873, width: 536, height: 42, fontSize: 30, color: "#eef5ff", strokeColor: "#14213f", strokeWidth: 2, shadowColor: "#9cc7ff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", bold: true, align: "center" })
     ]
   },
   {

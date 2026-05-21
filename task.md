@@ -190,7 +190,40 @@
      - 次候補は `asmr_stream`。今回の PR は `membership_stream` preset body、production background、decoration assets、locale copy、contract に閉じており、schema、canvas rendering pipeline、export / crop、font search / recently used UI、Portal shell、Schedule Calendar、SNS Split Image Maker は触っていない。
      - `asmr_stream` では mic silhouette / sound ring / night gradient / low-contrast label を背景焼き込みと editable text layer に分け、1 preset / 1 PR で開始する。
 
-5. Kuro Live Comment Translator planning
+5. Thumbnail Editor `asmr_stream` preset
+   - status: 実装・検証済み。branch `codex/thumbnail-asmr-stream-preset` で commit 済みにする。
+   - reason: ASMR / relax night / sleep aid / quiet talk は通常の配信告知や雑談と違い、低彩度・夜・音のモチーフを中心にした用途差がある。
+   - scope:
+     - `asmr_stream` 1 preset の body、production background、generated decoration assets、専用 contract、locale copy、layer display alias。
+     - mic silhouette、sound ring、night gradient、low-contrast label、時刻 pill、補足 panel を中心にする。
+   - out of scope:
+     - schema、canvas export、font loading helper、font search / recently used UI、Schedule Calendar、SNS Split Image Maker、Portal shell。
+   - implementation notes:
+     - `asmr_stream` / `ASMR配信` preset を `配信ジャンル` / `ASMR / relax night` として追加した。
+     - built-in `imagegen` 生成の控えめな base 背景 `public/assets/images/thumbnail-editor/phase5/asmr-stream-background-v1.png` を locked background として追加した。
+     - mic silhouette、sound ring、low-contrast label、time pill、note panel は generated decoration asset として `public/assets/images/thumbnail-editor/decorations/phase5/asmr-stream-*.png` に分離した。
+     - 見出し、英字 label、時刻、補足、sleep-aid label は text layer として編集可能にした。
+     - Review draft 反映で、sound ring、low-contrast label、mic silhouette、time pill、note panel、standee guide、見出し、英字 label、時刻、補足 text の位置を preset default へ反映した。
+     - JA / EN の preset name / description / initial text body / layer display alias を追加した。EN 見出しと補足は既存の locale visual adjustment 経路で収まりを調整した。
+     - 専用 contract `scripts/thumbnail-usecase-asmr-stream-preset-contract.mjs` を追加した。
+   - verification results:
+     - PASS: `node scripts/thumbnail-usecase-asmr-stream-preset-contract.mjs`
+     - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+     - PASS: `npm run lint`
+     - PASS: `npx tsc --noEmit`
+     - PASS: `git diff --check` (repo-normal LF -> CRLF working-copy warnings only)
+     - Review draft geometry: supplied `asmr_stream` JSON placement was added to the dedicated contract and reflected in preset defaults.
+     - Browser smoke: local `next dev --webpack -p 3059 --hostname 127.0.0.1` + Chrome DevTools automation.
+     - UI result: `/tools/thumbnail-editor` で preset count `20 / 20種`、usage label `ASMR / relax night`、preset card `ASMR配信`、preset apply 後の canvas nonblank、editable text layers、layer display alias を確認。
+     - Width smoke: `390 / 820 / 1024 / 1280 / 1366px` で active preset、preset count、ASMR usage label、canvas presence、body/document horizontal overflow `0` を確認。
+   - remaining risks:
+     - visual check は Chrome DevTools automation と generated asset preview 中心。最終 PR review では Codex app browser / 人間目視で、夜背景と mic motif の強さが ASMR らしく控えめかを確認するとよい。
+     - generated asset は text を焼き込まない方針で作成したが、mic silhouette / sound ring の強さは後続 polish 余地がある。
+   - handoff to next candidate:
+     - 次候補は `relay_stream`。今回の PR は `asmr_stream` preset body、production background、decoration assets、locale copy、contract に閉じており、schema、canvas rendering pipeline、export / crop、font search / recently used UI、Portal shell、Schedule Calendar、SNS Split Image Maker は触っていない。
+     - `relay_stream` では relay order、multi-slot card、next channel label、time chain、補足 panel を背景 / decoration asset / editable text layer に分け、1 preset / 1 PR で開始する。
+
+6. Kuro Live Comment Translator planning
    - status: 新規ツール候補。すぐ実装せず、まず repo 内 future plan に落とす。
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
@@ -204,7 +237,7 @@
    - next action:
      - 添付 plan を repo 向けに要約し、`docs/future` に保存するかを判断する。
 
-6. Thumbnail Editor font / preset typography follow-up
+7. Thumbnail Editor font / preset typography follow-up
    - status: 後続候補。優先度は公開版 polish と `goods_notice` より下。
    - current direction:
      - 単純な font 追加より、preset ごとの font application、weight-aware UI、必要なら不足 font の小規模追加を優先する。
@@ -218,8 +251,8 @@
 
 1. `goods_notice` - グッズ告知 / merch release (implemented)
 2. `membership_stream` - メン限配信 / members only (implemented)
-3. `asmr_stream` - ASMR 配信 / relax night (next)
-4. `relay_stream` - リレー配信 / stream relay
+3. `asmr_stream` - ASMR 配信 / relax night (implemented)
+4. `relay_stream` - リレー配信 / stream relay (next)
 5. `collab_recruit_notice` - コラボ募集 / collab call
 
 Reference: `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`
@@ -232,23 +265,23 @@ Reference: `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`
 D:/V_streamer_tools で作業してください。
 
 目的:
-Thumbnail Editor の次期 preset 追加として、`asmr_stream` preset を 1 preset / 1 PR で実装してください。
+Thumbnail Editor の次期 preset 追加として、`relay_stream` preset を 1 preset / 1 PR で実装してください。
 
 前提:
 - main 直作業は禁止です。
 - `git fetch origin --prune` を実行してください。
 - 確認用ブランチ `origin/codex/thumbnail-preset-review` 起点で branch / worktree を作成してください。
-- 推奨 branch: `codex/thumbnail-asmr-stream-preset`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/thumbnail-asmr-stream-preset`
+- 推奨 branch: `codex/thumbnail-relay-stream-preset`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/thumbnail-relay-stream-preset`
 - PR base は `codex/thumbnail-preset-review` にしてください。`main` へ直接 PR / merge しないでください。
 - `AGENTS.md` と `task.md` を確認してから実装してください。
-- 直前の `membership_stream` と同じく、背景は控えめな base asset、主要 UI 部品は decoration asset、文言は editable text layer に分けてください。
+- 直前の `asmr_stream` と同じく、背景は控えめな base asset、主要 UI 部品は decoration asset、文言は editable text layer に分けてください。
 
 実装方針:
-- `asmr_stream` / ASMR 配信 preset を追加してください。
-- 用途は ASMR / relax night / sleep aid / quiet talk。
+- `relay_stream` / リレー配信 preset を追加してください。
+- 用途は stream relay / multi-channel handoff / time chain / next channel notice。
 - 背景 + 必要 decoration asset は built-in `imagegen` で生成してください。
-- mic silhouette、sound ring、night gradient、low-contrast label、時刻 pill、補足 panel を中心にしてください。
+- relay order、multi-slot card、next channel label、time chain、補足 panel を中心にしてください。
 - 見出し、英字ラベル、時刻、CTA または補足文は Thumbnail Editor の text layer として編集可能にしてください。
 - 既存 preset category / usage label / locale copy / layer display alias の流れに合わせて追加してください。
 - 必要なら専用 contract を追加してください。

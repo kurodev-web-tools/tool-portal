@@ -690,6 +690,20 @@ expectMembershipLayerGeometry("テキスト 5（英字）", { x: 100, y: 459 });
 expectMembershipLayerGeometry("テキスト 2（時刻）", { x: 63, y: 613 });
 expectMembershipLayerGeometry("テキスト 4（補足）", { x: 350, y: 614, fontSize: 24 });
 
+const enAsmrDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(thumbnailLib.createDraftFromPreset("asmr_stream"), "en");
+const enAsmrHeadline = textLayers(enAsmrDraft).find((layer) => layer.name === "テキスト 1（見出し）");
+assert.equal(enAsmrHeadline?.text, "ASMR Stream", "ASMR English headline follows the supplied one-line visual draft");
+assert.equal(
+  enAsmrHeadline?.x,
+  51.061464187204706,
+  "ASMR English headline x follows the supplied visual draft"
+);
+assert.equal(
+  enAsmrHeadline?.y,
+  301.5199753987606,
+  "ASMR English headline y follows the supplied visual draft"
+);
+
 for (const target of thumbnailLib.thumbnailMainTextCarryoverTargets) {
   assert.ok(["見出し", "時刻", "サブ", "ラベル"].includes(target.namePart), `${target.id} matching key remains Japanese namePart`);
 }

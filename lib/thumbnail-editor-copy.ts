@@ -1035,7 +1035,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     },
     asmr_stream: {
       "テキスト 5（ラベル）": "SLEEP AID",
-      "テキスト 1（見出し）": "ASMR\nStream",
+      "テキスト 1（見出し）": "ASMR Stream",
       "テキスト 3（英字）": "RELAX NIGHT",
       "テキスト 2（時刻）": "23:00 START",
       "テキスト 4（補足）": "Sleep aid / quiet talk"
@@ -1170,7 +1170,7 @@ const thumbnailPresetTextLayerVisualAdjustments: Record<
       "テキスト 4（補足）": { fontSize: 24 }
     },
     asmr_stream: {
-      "テキスト 1（見出し）": { x: 69.81185626001371, y: 287.6297049847406, height: 150, fontSize: 82 },
+      "テキスト 1（見出し）": { x: 51.061464187204706, y: 301.5199753987606, height: 150, fontSize: 82 },
       "テキスト 4（補足）": { fontSize: 27 }
     },
     privacy_notice: {

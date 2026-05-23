@@ -140,6 +140,33 @@ assert.equal(
   "karaoke square title image survives normalization"
 );
 
+const configuredDraft = lib.createKaraokeIriamSquareDraft({
+  backgroundStyle: "dark_cute",
+  backgroundColorway: "blue",
+  titleColorway: "purple"
+});
+assert.deepEqual(configuredDraft.canvas, { width: 1080, height: 1080 }, "configured karaoke square draft keeps the 1:1 IRIAM canvas");
+assert.equal(
+  configuredDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("背景"))?.src,
+  `${backgroundPrefix}karaoke-square-dark-cute-blue-v1.png`,
+  "configured karaoke square draft uses the selected background style and colorway"
+);
+assert.equal(
+  configuredDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("タイトル"))?.src,
+  `${titlePrefix}karaoke-square-title-purple-v1.png`,
+  "configured karaoke square draft can choose a title colorway independently from the background"
+);
+const matchedTitleDraft = lib.createKaraokeIriamSquareDraft({
+  backgroundStyle: "pop_bubble",
+  backgroundColorway: "mint",
+  titleColorway: "match-background"
+});
+assert.equal(
+  matchedTitleDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("タイトル"))?.src,
+  `${titlePrefix}karaoke-square-title-mint-v1.png`,
+  "match-background title selection follows the chosen background colorway"
+);
+
 assert.equal(
   componentSource.includes('const disabled = !["landscape-16-9", "square-1-1"].includes(variant.id)'),
   true,
@@ -177,8 +204,23 @@ assert.equal(
 );
 assert.equal(
   componentSource.includes('currentVariantId === "square-1-1" && preset.id !== "karaoke"'),
+  false,
+  "square variant removes non-karaoke presets from lists instead of rendering disabled 16:9 cards"
+);
+assert.equal(
+  componentSource.includes("getThumbnailPresetsForVariant"),
   true,
-  "square variant disables non-karaoke presets until they have dedicated square bodies"
+  "preset lists are derived from the active variant support instead of raw thumbnailPresets"
+);
+assert.equal(
+  componentSource.includes("data-thumbnail-iriam-square-modal"),
+  true,
+  "karaoke square preset opens a dedicated settings modal"
+);
+assert.equal(
+  componentSource.includes("titleColorway: \"match-background\""),
+  true,
+  "karaoke square modal defaults title color to background matching"
 );
 
 console.log("thumbnail iriam karaoke square preset contract checks passed");

@@ -9,6 +9,7 @@ import {
   applyThumbnailStandeePlacementPreset,
   applyThumbnailUserMaterialLayerFallback,
   createNextRecentThumbnailPresetIds,
+  createKaraokeIriamSquareDraft,
   createDraftFromPreset,
   createDraftFromPresetVariant,
   createImageLayer,
@@ -37,9 +38,13 @@ import {
   normalizeThumbnailPresetDiscoveryState,
   pointToLayerLocal,
   replaceThumbnailUserMaterialLayerRef,
+  getThumbnailIriamSquareKaraokeBackgroundAsset,
+  getThumbnailIriamSquareKaraokeTitleAsset,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
   thumbnailFontRecentStorageKey,
+  thumbnailIriamSquareColorways,
+  thumbnailIriamSquareKaraokeBackgroundStyles,
   thumbnailMainTextCarryoverTargets,
   thumbnailMaterialLibrary,
   thumbnailPresetDiscoveryStorageKey,
@@ -54,6 +59,10 @@ import {
   type ThumbnailCanvas,
   type ThumbnailCanvasSizeId,
   type ThumbnailEditorDraft,
+  type ThumbnailIriamSquareColorway,
+  type ThumbnailIriamSquareKaraokeBackgroundStyle,
+  type ThumbnailIriamSquareKaraokePresetConfig,
+  type ThumbnailIriamSquareKaraokeTitleColorway,
   type ThumbnailLayer,
   type ThumbnailMaterialCategory,
   type ThumbnailPreset,
@@ -413,14 +422,19 @@ const getWeeklyScheduleLayerGroup = (layer: ThumbnailLayer) => {
     itemLabel: match[2]
   };
 };
-const thumbnailPresetCategories = Array.from(new Set(thumbnailPresets.map((preset) => preset.category))) as ThumbnailPresetCategory[];
-const thumbnailPresetUsageLabels = Array.from(new Set(thumbnailPresets.map((preset) => preset.usageLabel)));
 const getPresetsByIds = (presetIds: ThumbnailPresetId[]) =>
   presetIds
     .map((presetId) => thumbnailPresets.find((preset) => preset.id === presetId))
     .filter((preset): preset is ThumbnailPreset => Boolean(preset));
 const isPresetSelectableForVariant = (presetId: ThumbnailPresetId, variantId: ThumbnailPresetVariantId) =>
   variantId !== "square-1-1" || presetId === "karaoke";
+const getThumbnailPresetsForVariant = (variantId: ThumbnailPresetVariantId) =>
+  thumbnailPresets.filter((preset) => isPresetSelectableForVariant(preset.id, variantId));
+const defaultThumbnailIriamSquarePresetConfig: ThumbnailIriamSquareKaraokePresetConfig = {
+  backgroundStyle: "soft_cloud",
+  backgroundColorway: "pink-blue",
+  titleColorway: "match-background"
+};
 const createThumbnailToSnsImageStorageId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${thumbnailToSnsImageStoragePrefix}-${crypto.randomUUID()}`;
@@ -503,6 +517,8 @@ export function ThumbnailEditorApp() {
   const [userMaterialImageUrls, setUserMaterialImageUrls] = useState<Record<string, string>>({});
   const [replaceUserMaterialRef, setReplaceUserMaterialRef] = useState<ThumbnailUserMaterialRef | null>(null);
   const [pendingPresetApplyId, setPendingPresetApplyId] = useState<ThumbnailPresetId | null>(null);
+  const [iriamSquarePresetModalOpen, setIriamSquarePresetModalOpen] = useState(false);
+  const [thumbnailIriamSquarePresetConfig, setThumbnailIriamSquarePresetConfig] = useState<ThumbnailIriamSquareKaraokePresetConfig>(defaultThumbnailIriamSquarePresetConfig);
   const [inlineTextEdit, setInlineTextEdit] = useState<InlineTextEditState | null>(null);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const [canvasAttachVersion, setCanvasAttachVersion] = useState(0);
@@ -1268,6 +1284,13 @@ export function ThumbnailEditorApp() {
       setHeaderMenuOpen(null);
       return;
     }
+    if (currentVariantId === "square-1-1" && presetId === "karaoke") {
+      setThumbnailIriamSquarePresetConfig(defaultThumbnailIriamSquarePresetConfig);
+      setIriamSquarePresetModalOpen(true);
+      setPendingPresetApplyId(null);
+      setHeaderMenuOpen(null);
+      return;
+    }
     if (!handoffPayload && isThumbnailDraftPristineForPreset(draft)) {
       applyPreset(presetId, "plain");
       return;
@@ -1296,6 +1319,19 @@ export function ThumbnailEditorApp() {
           ? copy.toasts.applyCarryover
           : copy.toasts.applyPlain
     );
+  };
+
+  const applyKaraokeIriamSquarePreset = (config: ThumbnailIriamSquareKaraokePresetConfig) => {
+    recordPresetUse("karaoke");
+    const next = localizeThumbnailPresetTextLayerBodies(createKaraokeIriamSquareDraft(config), locale);
+    const nextDraft = handoffPayload
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
+      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+    replaceDraft(nextDraft, { recordHistory: true });
+    setThumbnailIriamSquarePresetConfig(config);
+    setIriamSquarePresetModalOpen(false);
+    setMobilePanel("canvas");
+    showToast("success", copy.toasts.applyPlain);
   };
 
   const changeCanvasSize = (sizeId: ThumbnailCanvasSizeId) => {
@@ -1873,7 +1909,8 @@ export function ThumbnailEditorApp() {
       disabled
     };
   });
-  const presetOptions = thumbnailPresets.map((preset) => {
+  const availablePresets = getThumbnailPresetsForVariant(currentVariantId);
+  const presetOptions = availablePresets.map((preset) => {
     const disabled = !isPresetSelectableForVariant(preset.id, currentVariantId);
     return {
       id: preset.id,
@@ -2364,6 +2401,16 @@ export function ThumbnailEditorApp() {
             {copy.canvas.previewNote}
           </p>
         </div>
+      ) : null}
+
+      {iriamSquarePresetModalOpen ? (
+        <IriamSquareKaraokePresetDialog
+          copy={copy}
+          config={thumbnailIriamSquarePresetConfig}
+          onConfigChange={setThumbnailIriamSquarePresetConfig}
+          onApply={() => applyKaraokeIriamSquarePreset(thumbnailIriamSquarePresetConfig)}
+          onCancel={() => setIriamSquarePresetModalOpen(false)}
+        />
       ) : null}
 
       {pendingPreset ? (
@@ -3396,6 +3443,128 @@ function PresetApplyConfirmDialog({
   );
 }
 
+function IriamSquareKaraokePresetDialog({
+  copy,
+  config,
+  onConfigChange,
+  onApply,
+  onCancel
+}: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  config: ThumbnailIriamSquareKaraokePresetConfig;
+  onConfigChange: (config: ThumbnailIriamSquareKaraokePresetConfig) => void;
+  onApply: () => void;
+  onCancel: () => void;
+}) {
+  const background = getThumbnailIriamSquareKaraokeBackgroundAsset(config.backgroundStyle, config.backgroundColorway);
+  const title = getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway, config.backgroundColorway);
+  const updateConfig = (partial: Partial<ThumbnailIriamSquareKaraokePresetConfig>) => onConfigChange({ ...config, ...partial });
+  const titleColorOptions: ThumbnailIriamSquareKaraokeTitleColorway[] = ["match-background", ...thumbnailIriamSquareColorways];
+
+  return (
+    <div
+      className="fixed inset-0 z-[110] flex items-end bg-black/62 p-3 text-foreground min-[760px]:items-center min-[760px]:justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="iriam-square-preset-title"
+      data-thumbnail-iriam-square-modal="true"
+    >
+      <div className="grid max-h-[94vh] w-full max-w-5xl overflow-hidden rounded-base border border-border bg-background shadow-panel min-[900px]:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-h-0 overflow-auto border-b border-border p-4 min-[900px]:border-b-0 min-[900px]:border-r md:p-5">
+          <p className="text-xs font-bold text-primary-strong">{copy.iriamSquareDialog.eyebrow}</p>
+          <h2 id="iriam-square-preset-title" className="mt-1 text-lg font-black text-foreground">
+            {copy.iriamSquareDialog.title}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-muted">{copy.iriamSquareDialog.body}</p>
+          <div className="mx-auto mt-4 w-full max-w-[34rem]">
+            <p className="mb-2 text-xs font-bold text-muted">{copy.iriamSquareDialog.preview}</p>
+            <div className="relative aspect-square overflow-hidden rounded-base border border-border bg-surface-muted shadow-panel">
+              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${background.src})` }} />
+              <div className="absolute left-[14%] top-[7%] h-[40%] w-[72%] rounded-full bg-white/15 blur-xl" />
+              <div className="absolute left-[14.8%] top-[11.7%] aspect-[760/320] w-[70.4%] bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${title.src})` }} />
+              <div className="absolute bottom-[13%] left-[9%] h-[10.5%] w-[42%] rounded-full border border-white/65 bg-white/78" />
+              <div className="absolute bottom-[8%] right-[11%] h-[38%] w-[31%] rounded-[2.4rem] border-2 border-white/75 bg-white/10" />
+            </div>
+          </div>
+        </div>
+        <div className="min-h-0 overflow-auto p-4 md:p-5">
+          <div className="space-y-4">
+            <IriamSquareOptionGroup
+              label={copy.iriamSquareDialog.backgroundStyle}
+              options={thumbnailIriamSquareKaraokeBackgroundStyles}
+              value={config.backgroundStyle}
+              getLabel={(value) => copy.iriamSquareDialog.styleLabels[value as ThumbnailIriamSquareKaraokeBackgroundStyle]}
+              onChange={(value) => updateConfig({ backgroundStyle: value as ThumbnailIriamSquareKaraokeBackgroundStyle })}
+            />
+            <IriamSquareOptionGroup
+              label={copy.iriamSquareDialog.backgroundColor}
+              options={thumbnailIriamSquareColorways}
+              value={config.backgroundColorway}
+              getLabel={(value) => copy.iriamSquareDialog.colorLabels[value as ThumbnailIriamSquareColorway]}
+              onChange={(value) => updateConfig({ backgroundColorway: value as ThumbnailIriamSquareColorway })}
+            />
+            <IriamSquareOptionGroup
+              label={copy.iriamSquareDialog.titleColor}
+              options={titleColorOptions}
+              value={config.titleColorway}
+              getLabel={(value) =>
+                value === "match-background"
+                  ? copy.iriamSquareDialog.matchBackground
+                  : copy.iriamSquareDialog.colorLabels[value as ThumbnailIriamSquareColorway]
+              }
+              onChange={(value) => updateConfig({ titleColorway: value as ThumbnailIriamSquareKaraokeTitleColorway })}
+            />
+          </div>
+          <div className="mt-5 flex flex-col-reverse gap-2 min-[520px]:flex-row min-[520px]:justify-end">
+            <button className="flat-control px-4 py-2 text-sm font-bold" type="button" onClick={onCancel}>
+              {copy.iriamSquareDialog.cancel}
+            </button>
+            <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onApply}>
+              {copy.iriamSquareDialog.create}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IriamSquareOptionGroup({
+  label,
+  options,
+  value,
+  getLabel,
+  onChange
+}: {
+  label: string;
+  options: string[];
+  value: string;
+  getLabel: (value: string) => string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <fieldset className="space-y-2">
+      <legend className="text-xs font-bold text-muted">{label}</legend>
+      <div className="grid grid-cols-2 gap-2 min-[520px]:grid-cols-3 min-[900px]:grid-cols-2">
+        {options.map((option) => (
+          <button
+            key={option}
+            className={[
+              "min-h-10 rounded-base border px-3 py-2 text-xs font-bold transition",
+              value === option ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface text-muted hover:text-foreground"
+            ].join(" ")}
+            type="button"
+            onClick={() => onChange(option)}
+            aria-pressed={value === option}
+          >
+            {getLabel(option)}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 function PresetCards({
   copy,
   locale,
@@ -3420,23 +3589,40 @@ function PresetCards({
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ThumbnailPresetCategory | "all">("all");
   const [selectedUsageLabel, setSelectedUsageLabel] = useState<string | "all">("all");
+  const availablePresets = useMemo(() => getThumbnailPresetsForVariant(currentVariantId), [currentVariantId]);
+  const availablePresetCategories = useMemo(() => Array.from(new Set(availablePresets.map((preset) => preset.category))) as ThumbnailPresetCategory[], [availablePresets]);
+  const availablePresetUsageLabels = useMemo(() => Array.from(new Set(availablePresets.map((preset) => preset.usageLabel))), [availablePresets]);
   const filteredPresets = useMemo(
     () =>
-      filterLocalizedThumbnailPresets(thumbnailPresets, {
+      filterLocalizedThumbnailPresets(availablePresets, {
         query,
         category: selectedCategory,
         usageLabel: selectedUsageLabel
       }, locale),
-    [locale, query, selectedCategory, selectedUsageLabel]
+    [availablePresets, locale, query, selectedCategory, selectedUsageLabel]
   );
-  const favoritePresets = useMemo(() => getPresetsByIds(favoritePresetIds), [favoritePresetIds]);
-  const recentPresets = useMemo(() => getPresetsByIds(recentPresetIds), [recentPresetIds]);
+  const favoritePresets = useMemo(
+    () => getPresetsByIds(favoritePresetIds).filter((preset) => isPresetSelectableForVariant(preset.id, currentVariantId)),
+    [currentVariantId, favoritePresetIds]
+  );
+  const recentPresets = useMemo(
+    () => getPresetsByIds(recentPresetIds).filter((preset) => isPresetSelectableForVariant(preset.id, currentVariantId)),
+    [currentVariantId, recentPresetIds]
+  );
   const hasActiveFilters = query.trim() !== "" || selectedCategory !== "all" || selectedUsageLabel !== "all";
   const clearFilters = () => {
     setQuery("");
     setSelectedCategory("all");
     setSelectedUsageLabel("all");
   };
+  useEffect(() => {
+    if (selectedCategory !== "all" && !availablePresetCategories.includes(selectedCategory)) {
+      setSelectedCategory("all");
+    }
+    if (selectedUsageLabel !== "all" && !availablePresetUsageLabels.includes(selectedUsageLabel)) {
+      setSelectedUsageLabel("all");
+    }
+  }, [availablePresetCategories, availablePresetUsageLabels, selectedCategory, selectedUsageLabel]);
 
   return (
     <section className="panel min-w-0 space-y-4 p-4">
@@ -3450,7 +3636,7 @@ function PresetCards({
           </p>
         </div>
         <p className="text-xs font-bold text-muted">
-          {filteredPresets.length} / {thumbnailPresets.length}{copy.panels.presets.countUnit}
+          {filteredPresets.length} / {availablePresets.length}{copy.panels.presets.countUnit}
         </p>
       </div>
 
@@ -3484,7 +3670,7 @@ function PresetCards({
       <PresetFilterChips
         label={copy.panels.presets.category}
         value={selectedCategory}
-        options={thumbnailPresetCategories}
+        options={availablePresetCategories}
         allLabel={copy.panels.presets.all}
         getOptionLabel={(category) => getThumbnailPresetCategoryLabel(category as ThumbnailPresetCategory, locale)}
         onChange={(category) => setSelectedCategory(category as ThumbnailPresetCategory | "all")}
@@ -3492,7 +3678,7 @@ function PresetCards({
       <PresetFilterChips
         label={copy.panels.presets.usage}
         value={selectedUsageLabel}
-        options={thumbnailPresetUsageLabels}
+        options={availablePresetUsageLabels}
         allLabel={copy.panels.presets.all}
         getOptionLabel={(usageLabel) => getThumbnailPresetUsageLabel(usageLabel, locale)}
         onChange={setSelectedUsageLabel}
@@ -3504,15 +3690,13 @@ function PresetCards({
       <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {filteredPresets.map((preset) => {
           const isFavorite = favoritePresetIds.includes(preset.id);
-          const disabledForVariant = currentVariantId === "square-1-1" && preset.id !== "karaoke";
           return (
           <article
             key={preset.id}
             data-thumbnail-preset-card="true"
             className={[
               "flex min-w-0 flex-col rounded-base border bg-surface p-3 text-left transition",
-              currentPresetId === preset.id ? "border-primary bg-primary-soft/55" : "border-border",
-              disabledForVariant ? "opacity-55" : ""
+              currentPresetId === preset.id ? "border-primary bg-primary-soft/55" : "border-border"
             ].join(" ")}
           >
             <div className="relative mb-3 aspect-video rounded-base border border-border" style={{ background: `linear-gradient(135deg, #07111c, ${preset.accent})` }}>
@@ -3544,8 +3728,6 @@ function PresetCards({
               className="mt-auto inline-flex self-start rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong transition hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent"
               type="button"
               onClick={() => onApply(preset.id)}
-              disabled={disabledForVariant}
-              aria-disabled={disabledForVariant || undefined}
               aria-pressed={currentPresetId === preset.id}
             >
               {copy.panels.presets.usePreset}
@@ -3621,21 +3803,16 @@ function PresetShortcutRow({
     <div className="space-y-2 rounded-base border border-border bg-surface-muted p-3">
       <p className="text-xs font-black text-foreground">{title}</p>
       <div className="scrollbar-accent -mx-1 flex max-w-full flex-nowrap gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible md:pb-0">
-        {presets.map((preset) => {
-          const disabledForVariant = currentVariantId === "square-1-1" && preset.id !== "karaoke";
-          return (
+        {presets.filter((preset) => isPresetSelectableForVariant(preset.id, currentVariantId)).map((preset) => (
             <button
               key={preset.id}
-              className="shrink-0 rounded-base border border-border bg-surface px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary hover:text-primary-strong disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-border disabled:hover:text-foreground"
+              className="shrink-0 rounded-base border border-border bg-surface px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary hover:text-primary-strong"
               type="button"
               onClick={() => onApply(preset.id)}
-              disabled={disabledForVariant}
-              aria-disabled={disabledForVariant || undefined}
             >
               {getThumbnailPresetName(preset.id, locale, preset.name)}
             </button>
-          );
-        })}
+          ))}
       </div>
     </div>
   );

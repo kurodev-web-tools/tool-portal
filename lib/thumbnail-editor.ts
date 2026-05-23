@@ -129,6 +129,20 @@ export type ThumbnailPresetVariantRef = {
   presetId: ThumbnailPresetId;
   variantId: ThumbnailPresetVariantId;
 };
+export type ThumbnailIriamSquareColorway = "pink-blue" | "blue" | "yellow" | "purple" | "mint";
+export type ThumbnailIriamSquareKaraokeBackgroundStyle = "soft_cloud" | "pop_bubble" | "dark_cute";
+export type ThumbnailIriamSquareKaraokeBackgroundAsset = {
+  style: ThumbnailIriamSquareKaraokeBackgroundStyle;
+  colorway: ThumbnailIriamSquareColorway;
+  src: string;
+};
+export type ThumbnailIriamSquareKaraokeTitleAsset = {
+  colorway: ThumbnailIriamSquareColorway;
+  src: string;
+  titleText: "歌枠";
+  fontFamily: "Mochiy Pop P One";
+  source: "generated-title-image";
+};
 export type ThumbnailPresetVariantRelation = {
   presetId: ThumbnailPresetId;
   familyId: string;
@@ -1217,6 +1231,9 @@ const thumbnailPhase3BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase
 const thumbnailPhase4DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decorations/phase4/`;
 const thumbnailPhase5BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase5/`;
 const thumbnailPhase5DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decorations/phase5/`;
+const thumbnailIriamSquareKaraokeAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/karaoke/`;
+const thumbnailIriamSquareKaraokeBackgroundAssetPrefix = `${thumbnailIriamSquareKaraokeAssetPrefix}backgrounds/`;
+const thumbnailIriamSquareKaraokeTitleAssetPrefix = `${thumbnailIriamSquareKaraokeAssetPrefix}titles/`;
 const thumbnailMaterialBatch1AssetPrefix = `${thumbnailPresetAssetPrefix}materials/batch1/`;
 const thumbnailMaterialLabelAssetPrefix = `${thumbnailPresetAssetPrefix}materials/labels/`;
 const thumbnailMaterialBadgeAssetPrefix = `${thumbnailPresetAssetPrefix}materials/badges/`;
@@ -1225,6 +1242,31 @@ const thumbnailMaterialDividerAssetPrefix = `${thumbnailPresetAssetPrefix}materi
 const thumbnailMaterialEffectAssetPrefix = `${thumbnailPresetAssetPrefix}materials/effects/`;
 const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/corners/`;
 const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materials/impact/`;
+
+export const thumbnailIriamSquareKaraokeBackgroundAssets: ThumbnailIriamSquareKaraokeBackgroundAsset[] = [
+  { style: "soft_cloud", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-pink-blue-v1.png` },
+  { style: "soft_cloud", colorway: "blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-blue-v1.png` },
+  { style: "soft_cloud", colorway: "yellow", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-yellow-v1.png` },
+  { style: "soft_cloud", colorway: "purple", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-purple-v1.png` },
+  { style: "soft_cloud", colorway: "mint", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-mint-v1.png` },
+  { style: "pop_bubble", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-pop-bubble-pink-blue-v1.png` },
+  { style: "pop_bubble", colorway: "blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-pop-bubble-blue-v1.png` },
+  { style: "pop_bubble", colorway: "yellow", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-pop-bubble-yellow-v1.png` },
+  { style: "pop_bubble", colorway: "purple", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-pop-bubble-purple-v1.png` },
+  { style: "pop_bubble", colorway: "mint", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-pop-bubble-mint-v1.png` },
+  { style: "dark_cute", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-pink-blue-v1.png` },
+  { style: "dark_cute", colorway: "blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-blue-v1.png` },
+  { style: "dark_cute", colorway: "yellow", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-yellow-v1.png` },
+  { style: "dark_cute", colorway: "purple", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-purple-v1.png` },
+  { style: "dark_cute", colorway: "mint", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-mint-v1.png` }
+];
+export const thumbnailIriamSquareKaraokeTitleAssets: ThumbnailIriamSquareKaraokeTitleAsset[] = [
+  { colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-pink-blue-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { colorway: "blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-blue-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { colorway: "yellow", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-yellow-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { colorway: "purple", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-purple-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { colorway: "mint", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-mint-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" }
+];
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -1344,6 +1386,34 @@ const shapeLayer = (partial: Partial<ThumbnailShapeLayer> & Pick<ThumbnailShapeL
   borderRadius: 20,
   ...partial
 });
+
+const createKaraokeIriamSquareDraft = (): ThumbnailEditorDraft => {
+  const background = thumbnailIriamSquareKaraokeBackgroundAssets[0];
+  const title = thumbnailIriamSquareKaraokeTitleAssets[0];
+  const layers: ThumbnailLayer[] = [
+    assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
+    shapeLayer({ name: "図形 1（上部ソフトライト）", shapeType: "circle", x: 110, y: 76, width: 860, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.18, blur: 8 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 歌枠）", src: title.src, x: 160, y: 126, width: 760, height: 320, opacity: 1 }),
+    assetDecorationLayer({ name: "画像 3（小粒きらめき）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-sparkle-cluster-rose-cyan-uniform-cell.png`, x: 120, y: 214, width: 330, height: 220, rotation: -6, opacity: 0.42 }),
+    assetDecorationLayer({ name: "画像 4（ピンク音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-rose-uniform-cell.png`, x: 40, y: 742, width: 230, height: 153, rotation: -9, opacity: 0.5 }),
+    assetDecorationLayer({ name: "画像 5（金色音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-gold-uniform-cell.png`, x: 830, y: 112, width: 210, height: 140, rotation: 8, opacity: 0.38 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 620, y: 352, width: 338, height: 620, fillColor: "#ffffff14", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 62, opacity: 0.3 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 98, y: 720, width: 450, height: 112, fillColor: "#ffffffcc", strokeColor: "#ff9fd0", strokeWidth: 4, borderRadius: 56, opacity: 0.86 }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 158, y: 748, width: 330, height: 58, fontSize: 54, color: "#7a3f86", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
+    textLayer({ name: "テキスト 1（見出し補助）", text: "SINGING STREAM", x: 220, y: 430, width: 640, height: 56, fontSize: 44, color: "#8d64bd", strokeColor: "#ffffff", strokeWidth: 4, shadowColor: "#a0d8ff", shadowBlur: 7, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Fredoka", align: "center" }),
+    textLayer({ name: "テキスト 3（サブ）", text: "リクエスト歓迎 / 初見さん歓迎", x: 94, y: 856, width: 540, height: 48, fontSize: 33, color: "#7d5d97", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" }),
+    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / 歌枠", x: 78, y: 60, width: 248, height: 42, fontSize: 30, color: "#84629b", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+  ];
+
+  return {
+    version: 1,
+    canvas: { width: 1080, height: 1080 },
+    presetId: "karaoke",
+    layers,
+    selectedLayerId: layers[layers.length - 1]?.id ?? null,
+    updatedAt: nowIso()
+  };
+};
 
 export const thumbnailPresets: ThumbnailPreset[] = [
   {
@@ -3016,6 +3086,10 @@ export const createDraftFromPresetVariant = (
   presetId: ThumbnailPresetId = "stream_announce",
   variantId: ThumbnailPresetVariantId = thumbnailPresetVariantRelations[presetId].defaultVariantId
 ): ThumbnailEditorDraft => {
+  if (presetId === "karaoke" && variantId === "square-1-1") {
+    return createKaraokeIriamSquareDraft();
+  }
+
   const canvas = getThumbnailPresetCanvasFromVariant(presetId, variantId) ?? thumbnailPresetVariants[thumbnailDefaultPresetVariantId].canvas;
   return createDraftFromPreset(presetId, canvas);
 };

@@ -419,6 +419,8 @@ const getPresetsByIds = (presetIds: ThumbnailPresetId[]) =>
   presetIds
     .map((presetId) => thumbnailPresets.find((preset) => preset.id === presetId))
     .filter((preset): preset is ThumbnailPreset => Boolean(preset));
+const isPresetSelectableForVariant = (presetId: ThumbnailPresetId, variantId: ThumbnailPresetVariantId) =>
+  variantId !== "square-1-1" || presetId === "karaoke";
 const createThumbnailToSnsImageStorageId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${thumbnailToSnsImageStoragePrefix}-${crypto.randomUUID()}`;
@@ -582,6 +584,9 @@ export function ThumbnailEditorApp() {
     [draft.presetId]
   );
   const selectedPresetName = getThumbnailPresetName(selectedPresetBase.id, locale, selectedPresetBase.name);
+  const currentVariantId: ThumbnailPresetVariantId =
+    (Object.values(thumbnailPresetVariants).find((variant) => variant.canvas.width === draft.canvas.width && variant.canvas.height === draft.canvas.height)?.id as ThumbnailPresetVariantId | undefined) ??
+    "landscape-16-9";
   const pendingPreset = useMemo(
     () => thumbnailPresets.find((preset) => preset.id === pendingPresetApplyId) ?? null,
     [pendingPresetApplyId]
@@ -1259,6 +1264,10 @@ export function ThumbnailEditorApp() {
   );
 
   const requestPresetApply = (presetId: ThumbnailPresetId) => {
+    if (!isPresetSelectableForVariant(presetId, currentVariantId)) {
+      setHeaderMenuOpen(null);
+      return;
+    }
     if (!handoffPayload && isThumbnailDraftPristineForPreset(draft)) {
       applyPreset(presetId, "plain");
       return;
@@ -1301,7 +1310,8 @@ export function ThumbnailEditorApp() {
 
   const changePresetVariant = (variantId: ThumbnailPresetVariantId) => {
     const variant = thumbnailPresetVariants[variantId];
-    const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(draft.presetId, variantId), locale);
+    const targetPresetId = variantId === "square-1-1" ? "karaoke" : draft.presetId;
+    const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, variantId), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
@@ -1850,22 +1860,31 @@ export function ThumbnailEditorApp() {
   };
 
   const canvasSizeId: ThumbnailCanvasSizeId = draft.canvas.width === 1920 ? "full-hd" : "hd";
-  const currentVariantId: ThumbnailPresetVariantId =
-    (Object.values(thumbnailPresetVariants).find((variant) => variant.canvas.width === draft.canvas.width && variant.canvas.height === draft.canvas.height)?.id as ThumbnailPresetVariantId | undefined) ??
-    "landscape-16-9";
   const currentVariant = thumbnailPresetVariants[currentVariantId];
   const currentVariantLabel = getThumbnailPresetVariantLabel(currentVariant.id, locale, currentVariant.label);
   const canvasSizeLabel =
     currentVariantId === "landscape-16-9" ? thumbnailCanvasSizes[canvasSizeId].label : `${draft.canvas.width} x ${draft.canvas.height} (${currentVariant.aspectRatio})`;
-  const variantOptions = Object.values(thumbnailPresetVariants).map((variant) => ({
-    id: variant.id,
-    label:
-      variant.aspectRatio === "16:9"
-        ? getThumbnailPresetVariantLabel(variant.id, locale, variant.label)
-        : `${getThumbnailPresetVariantLabel(variant.id, locale, variant.label)}${copy.header.laterCandidateSuffix}`,
-    description: getThumbnailPresetVariantDescription(variant.id, locale, variant.intendedUse, variant.aspectRatio !== "16:9"),
-    disabled: variant.aspectRatio !== "16:9"
-  }));
+  const variantOptions = Object.values(thumbnailPresetVariants).map((variant) => {
+    const disabled = !["landscape-16-9", "square-1-1"].includes(variant.id);
+    return {
+      id: variant.id,
+      label: disabled ? `${getThumbnailPresetVariantLabel(variant.id, locale, variant.label)}${copy.header.laterCandidateSuffix}` : getThumbnailPresetVariantLabel(variant.id, locale, variant.label),
+      description: getThumbnailPresetVariantDescription(variant.id, locale, variant.intendedUse, disabled),
+      disabled
+    };
+  });
+  const presetOptions = thumbnailPresets.map((preset) => {
+    const disabled = !isPresetSelectableForVariant(preset.id, currentVariantId);
+    return {
+      id: preset.id,
+      label: disabled ? `${getThumbnailPresetName(preset.id, locale, preset.name)}${copy.header.laterCandidateSuffix}` : getThumbnailPresetName(preset.id, locale, preset.name),
+      disabled
+    };
+  });
+  const mobilePreviewFrameStyle: CSSProperties = {
+    aspectRatio: `${draft.canvas.width} / ${draft.canvas.height}`,
+    maxWidth: `min(100%, calc((100vh - 8rem) * ${draft.canvas.width} / ${draft.canvas.height}))`
+  };
 
   return (
     <div className={`flex h-full min-h-0 flex-col bg-background text-foreground ${thumbnailFontAssets.thumbnailFontAssetScope}`}>
@@ -1888,10 +1907,7 @@ export function ThumbnailEditorApp() {
                 value={selectedPresetName}
                 openLabel={copy.header.openOptions}
                 onToggle={() => setHeaderMenuOpen((current) => (current === "preset" ? null : "preset"))}
-                options={thumbnailPresets.map((preset) => ({
-                  id: preset.id,
-                  label: getThumbnailPresetName(preset.id, locale, preset.name)
-                }))}
+                options={presetOptions}
                 onSelect={(id) => {
                   setHeaderMenuOpen(null);
                   requestPresetApply(id as ThumbnailPresetId);
@@ -1970,10 +1986,7 @@ export function ThumbnailEditorApp() {
                     value={selectedPresetName}
                     openLabel={copy.header.openOptions}
                     onToggle={() => setHeaderMenuOpen((current) => (current === "preset" ? null : "preset"))}
-                    options={thumbnailPresets.map((preset) => ({
-                      id: preset.id,
-                      label: getThumbnailPresetName(preset.id, locale, preset.name)
-                    }))}
+                    options={presetOptions}
                     onSelect={(id) => {
                       setHeaderMenuOpen(null);
                       requestPresetApply(id as ThumbnailPresetId);
@@ -2095,8 +2108,8 @@ export function ThumbnailEditorApp() {
                     <div className="relative mx-auto w-fit">
                       <canvas
                         ref={setCanvasRef}
-                        className="block aspect-video max-w-none touch-none rounded-base border border-border bg-[#081117] shadow-lg"
-                        style={{ width: `${draft.canvas.width * zoom}px`, cursor: canvasCursor }}
+                        className="block max-w-none touch-none rounded-base border border-border bg-[#081117] shadow-lg"
+                        style={{ width: `${draft.canvas.width * zoom}px`, height: `${draft.canvas.height * zoom}px`, cursor: canvasCursor }}
                         onPointerDown={beginInteraction}
                         onPointerMove={updateInteraction}
                         onPointerUp={endInteraction}
@@ -2172,6 +2185,7 @@ export function ThumbnailEditorApp() {
                   currentPresetId={draft.presetId}
                   favoritePresetIds={presetDiscoveryState.favoritePresetIds}
                   recentPresetIds={presetDiscoveryState.recentPresetIds}
+                  currentVariantId={currentVariantId}
                   hasScheduleHandoff={Boolean(handoffPayload)}
                   onApply={requestPresetApply}
                   onFavoriteToggle={togglePresetFavorite}
@@ -2239,6 +2253,7 @@ export function ThumbnailEditorApp() {
                 currentPresetId={draft.presetId}
                 favoritePresetIds={presetDiscoveryState.favoritePresetIds}
                 recentPresetIds={presetDiscoveryState.recentPresetIds}
+                currentVariantId={currentVariantId}
                 hasScheduleHandoff={Boolean(handoffPayload)}
                 onApply={requestPresetApply}
                 onFavoriteToggle={togglePresetFavorite}
@@ -2336,7 +2351,7 @@ export function ThumbnailEditorApp() {
             </button>
           </div>
           <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
-            <div className="relative aspect-video w-full max-w-[min(100%,calc((100vh-8rem)*16/9))]">
+            <div className="relative w-full" style={mobilePreviewFrameStyle}>
               <canvas
                 ref={setMobilePreviewCanvasRef}
                 className="h-full w-full rounded-base border border-border bg-[#081117] object-contain shadow-panel"
@@ -3387,6 +3402,7 @@ function PresetCards({
   currentPresetId,
   favoritePresetIds,
   recentPresetIds,
+  currentVariantId,
   hasScheduleHandoff,
   onApply,
   onFavoriteToggle
@@ -3396,6 +3412,7 @@ function PresetCards({
   currentPresetId: ThumbnailPresetId;
   favoritePresetIds: ThumbnailPresetId[];
   recentPresetIds: ThumbnailPresetId[];
+  currentVariantId: ThumbnailPresetVariantId;
   hasScheduleHandoff: boolean;
   onApply: (id: ThumbnailPresetId) => void;
   onFavoriteToggle: (id: ThumbnailPresetId) => void;
@@ -3481,19 +3498,21 @@ function PresetCards({
         onChange={setSelectedUsageLabel}
       />
 
-      {favoritePresets.length > 0 ? <PresetShortcutRow title={copy.panels.presets.favorites} locale={locale} presets={favoritePresets} onApply={onApply} /> : null}
-      {recentPresets.length > 0 ? <PresetShortcutRow title={copy.panels.presets.recent} locale={locale} presets={recentPresets} onApply={onApply} /> : null}
+      {favoritePresets.length > 0 ? <PresetShortcutRow title={copy.panels.presets.favorites} locale={locale} presets={favoritePresets} currentVariantId={currentVariantId} onApply={onApply} /> : null}
+      {recentPresets.length > 0 ? <PresetShortcutRow title={copy.panels.presets.recent} locale={locale} presets={recentPresets} currentVariantId={currentVariantId} onApply={onApply} /> : null}
 
       <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {filteredPresets.map((preset) => {
           const isFavorite = favoritePresetIds.includes(preset.id);
+          const disabledForVariant = currentVariantId === "square-1-1" && preset.id !== "karaoke";
           return (
           <article
             key={preset.id}
             data-thumbnail-preset-card="true"
             className={[
               "flex min-w-0 flex-col rounded-base border bg-surface p-3 text-left transition",
-              currentPresetId === preset.id ? "border-primary bg-primary-soft/55" : "border-border"
+              currentPresetId === preset.id ? "border-primary bg-primary-soft/55" : "border-border",
+              disabledForVariant ? "opacity-55" : ""
             ].join(" ")}
           >
             <div className="relative mb-3 aspect-video rounded-base border border-border" style={{ background: `linear-gradient(135deg, #07111c, ${preset.accent})` }}>
@@ -3522,9 +3541,11 @@ function PresetCards({
             <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{getThumbnailPresetDescription(preset, locale)}</p>
             <button
               data-thumbnail-preset-cta="true"
-              className="mt-auto inline-flex self-start rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong transition hover:bg-primary-soft"
+              className="mt-auto inline-flex self-start rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong transition hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent"
               type="button"
               onClick={() => onApply(preset.id)}
+              disabled={disabledForVariant}
+              aria-disabled={disabledForVariant || undefined}
               aria-pressed={currentPresetId === preset.id}
             >
               {copy.panels.presets.usePreset}
@@ -3583,21 +3604,38 @@ function PresetFilterChips({
   );
 }
 
-function PresetShortcutRow({ title, locale, presets, onApply }: { title: string; locale: Locale; presets: ThumbnailPreset[]; onApply: (id: ThumbnailPresetId) => void }) {
+function PresetShortcutRow({
+  title,
+  locale,
+  presets,
+  currentVariantId,
+  onApply
+}: {
+  title: string;
+  locale: Locale;
+  presets: ThumbnailPreset[];
+  currentVariantId: ThumbnailPresetVariantId;
+  onApply: (id: ThumbnailPresetId) => void;
+}) {
   return (
     <div className="space-y-2 rounded-base border border-border bg-surface-muted p-3">
       <p className="text-xs font-black text-foreground">{title}</p>
       <div className="scrollbar-accent -mx-1 flex max-w-full flex-nowrap gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible md:pb-0">
-        {presets.map((preset) => (
-          <button
-            key={preset.id}
-            className="shrink-0 rounded-base border border-border bg-surface px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary hover:text-primary-strong"
-            type="button"
-            onClick={() => onApply(preset.id)}
-          >
-            {getThumbnailPresetName(preset.id, locale, preset.name)}
-          </button>
-        ))}
+        {presets.map((preset) => {
+          const disabledForVariant = currentVariantId === "square-1-1" && preset.id !== "karaoke";
+          return (
+            <button
+              key={preset.id}
+              className="shrink-0 rounded-base border border-border bg-surface px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary hover:text-primary-strong disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-border disabled:hover:text-foreground"
+              type="button"
+              onClick={() => onApply(preset.id)}
+              disabled={disabledForVariant}
+              aria-disabled={disabledForVariant || undefined}
+            >
+              {getThumbnailPresetName(preset.id, locale, preset.name)}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

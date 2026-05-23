@@ -23,7 +23,7 @@ assert.ok(source.includes("data-thumbnail-header-menu-layer"), "header menu laye
 assert.ok(source.includes("relative z-[80]"), "desktop header sits above the editor canvas stack");
 assert.ok(source.includes("absolute left-0 right-0 z-[120]"), "listbox menus render above the editor surface");
 
-assert.ok(source.includes("disabled: variant.aspectRatio !== \"16:9\""), "non-16:9 output ratio variants are disabled");
+assert.ok(source.includes('const disabled = !["landscape-16-9", "square-1-1"].includes(variant.id)'), "square output ratio can be selected while portrait remains disabled");
 assert.ok(source.includes("後続候補"), "disabled output ratio variants explain they are later candidates");
 assert.ok(source.includes("aria-disabled={option.disabled || undefined}"), "disabled listbox options expose disabled state to assistive tech");
 

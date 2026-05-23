@@ -52,19 +52,152 @@
    - next handoff:
      - mock 確認後は background asset phase。まず 15枚の文字なし背景を生成 / 選別し、title / decoration / preset body には進まない。
 
-2. Thumbnail Editor 1:1 IRIAM background asset phase
-   - status: 次候補。planning PR merge 後に開始する。
-   - target:
-     - `soft_cloud` / `pop_bubble` / `dark_cute` x `pink` / `blue` / `yellow` / `purple` / `mint` = 15 background PNG。
-     - 1080 x 1080、文字なし、title image と editable text を重ねる余白あり。
-     - production asset path / naming / contract は実装 PR で確定する。
+2. Thumbnail Editor 1:1 IRIAM preset / material planning
+   - status: `歌枠` は 1:1 IRIAM square の production asset 登録と `karaoke / square-1-1` preset body まで作成済み。`pop_bubble v1` / `dark_cute v1` は比較用 mock のまま残し、採用版からは外す。
+   - direction:
+     - IRIAM 向けは YouTube 16:9 より情報量を少なくする。
+     - 完成品サムネより、背景 + title image layer + 汎用ゆる装飾 asset + 最小 text layer の starter kit として設計する。
+     - 背景焼き込み文字は避ける。配信タイトルは透過 PNG title image layer として扱う。
+     - 時刻や短い一言など、ユーザーが頻繁に変える要素だけ editable text layer に残す。
+   - mock phase:
+     - まず 5ジャンルの 1:1 完成モックを作る。
+     - 初回候補: `歌枠` / `雑談` / `初配信` / `耐久` / `闇ガチャ`。
+     - この時点で title image に使う font 方針を決める。
+     - 使用 font は Google Fonts などライセンス確認できるものに限定し、font 名と license を task / doc に残す。
+   - background asset phase:
+     - created baseline: `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-soft-cloud-pink-blue-baseline.png`
+     - created color variations:
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-soft-cloud-blue.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-soft-cloud-yellow.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-soft-cloud-purple.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-soft-cloud-mint.png`
+     - created `pop_bubble` variations:
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-pop-bubble-pink-blue-baseline.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-pop-bubble-blue.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-pop-bubble-yellow.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-pop-bubble-purple.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-pop-bubble-mint.png`
+     - created `pop_bubble v2` variations:
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-pop-bubble-v2-pink-blue-baseline.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-pop-bubble-v2-blue.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-pop-bubble-v2-yellow.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-pop-bubble-v2-purple.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-pop-bubble-v2-mint.png`
+     - created `dark_cute` variations:
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-dark-cute-pink-blue-baseline.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-dark-cute-blue.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-dark-cute-yellow.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-dark-cute-purple.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-dark-cute-mint.png`
+     - created `dark_cute v2` variations:
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-dark-cute-v2-pink-blue-baseline.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-dark-cute-v2-blue.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-dark-cute-v2-yellow.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-dark-cute-v2-purple.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-backgrounds/karaoke/karaoke-dark-cute-v2-mint.png`
+     - baseline constraints:
+       - 1080 x 1080 PNG。
+       - `pink / blue baseline`、`blue`、`yellow`、`purple`、`mint` の `soft_cloud` / `pop_bubble` / `dark_cute`。
+       - 焼き込みは pastel cloud / sky gradient、pastel bubble pattern、soft vignette、cloud haze、lace/dot texture、soft spotlight、淡い bokeh / sparkle texture、低コントラスト模様まで。
+       - text / genre name / time / logo / title image / music notes / strong star or heart accents / character / person / face は含めない。
+     - current direction:
+       - `pop_bubble` は v2 の方が bubble layout / density のセット感が強いため、採用候補は v2 優先。
+       - `dark_cute` は v2 の方が lace / doily / ornate pattern が減り、AI 感が弱いため、採用候補は v2 優先。
+       - v1 は比較用 mock として残し、production registration 前に採用版だけ整理する。
+     - production registered backgrounds:
+       - `public/assets/images/thumbnail-editor/iriam-square/karaoke/backgrounds/karaoke-square-soft-cloud-*-v1.png`
+       - `public/assets/images/thumbnail-editor/iriam-square/karaoke/backgrounds/karaoke-square-pop-bubble-*-v1.png`
+       - `public/assets/images/thumbnail-editor/iriam-square/karaoke/backgrounds/karaoke-square-dark-cute-*-v1.png`
+       - registered set: `soft_cloud` / `pop_bubble v2` / `dark_cute v2` x `pink-blue` / `blue` / `yellow` / `purple` / `mint` = 15 assets.
+     - 見た目 3種 x カラバリ 5種 = 背景 15枚を目標にする。
+     - 例: `soft_cloud` / `pop_bubble` / `dark_cute`。
+     - カラバリ例: pink / blue / yellow / purple / mint。
+     - まず背景のみ確認し、その後 title / decoration に進む。
+   - title image asset phase:
+     - created baseline: `docs/mockups/thumbnail-editor-iriam-square-title-images/karaoke/karaoke-title-pink-blue-baseline.png`
+     - created preview: `docs/mockups/thumbnail-editor-iriam-square-title-images/karaoke/karaoke-title-pink-blue-on-soft-cloud-preview.png`
+     - created rounded font candidates:
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/karaoke/karaoke-title-mochiy-pop-p-one-pink-blue-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/karaoke/karaoke-title-kiwi-maru-pink-blue-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/karaoke/karaoke-title-hachi-maru-pop-pink-blue-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/karaoke/karaoke-title-kosugi-maru-pink-blue-candidate.png`
+     - created font candidate preview: `docs/mockups/thumbnail-editor-iriam-square-title-images/karaoke/karaoke-title-font-candidates-on-soft-cloud-preview.png`
+     - created font candidate preview with `Mochiy Pop P One`: `docs/mockups/thumbnail-editor-iriam-square-title-images/karaoke/karaoke-title-font-candidates-with-mochiy-on-soft-cloud-preview.png`
+     - production registered title images:
+       - `public/assets/images/thumbnail-editor/iriam-square/karaoke/titles/karaoke-square-title-pink-blue-v1.png`
+       - `public/assets/images/thumbnail-editor/iriam-square/karaoke/titles/karaoke-square-title-blue-v1.png`
+       - `public/assets/images/thumbnail-editor/iriam-square/karaoke/titles/karaoke-square-title-yellow-v1.png`
+       - `public/assets/images/thumbnail-editor/iriam-square/karaoke/titles/karaoke-square-title-purple-v1.png`
+       - `public/assets/images/thumbnail-editor/iriam-square/karaoke/titles/karaoke-square-title-mint-v1.png`
+     - created production default preview: `docs/mockups/thumbnail-editor-iriam-square-preset-previews/karaoke/karaoke-square-production-default-preview.png`
+     - title text: `歌枠`
+     - font: `M PLUS Rounded 1c` 900 from existing self-hosted Thumbnail Editor font assets.
+     - rounded font candidate direction:
+       - `Mochiy Pop P One` は太く丸く、歌枠 title image として最もポップ感が強い。production registration する場合は font asset 追加 PR で self-host 登録する。
+       - `Kiwi Maru` は丸さと可読性のバランスが良く、次の採用候補優先。
+       - `Hachi Maru Pop` は最も手書き / cute 寄りだが、細く見えやすいため太め stroke 前提。
+       - `Kosugi Maru` は安定して読みやすいが、雰囲気は少し通常ゴシック寄り。
+     - `Mochiy Pop P One` license/source: SIL Open Font License 1.1, Google Fonts `ofl/mochiypoppone`.
+     - license: SIL Open Font License 1.1 as recorded in `public/fonts/thumbnail-editor/LICENSES.md`.
+     - output: transparent PNG, 760 x 320.
+     - title image production registration is in scope for `歌枠` only. Other genres are still out of scope.
+     - 5ジャンル x カラバリ 5種 = 25枚を候補にする。
+     - ただし font 系統は 1-2 種に絞る。最終的に text layer 用 font 追加が入るため、title image を増やしすぎない。
+     - title image は背景に焼き込まず、透明 PNG image layer として配置する。
+   - decoration asset phase:
+     - 吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベルを候補にする。
+     - 16:9 preset でも使える汎用 asset として library に追加する。
+     - 初回は asset 種類と色数を抑え、使われ方を見て第2弾で増やす。
+   - preset body phase:
+     - `karaoke / square-1-1` now uses a dedicated 1080 x 1080 body instead of scaling the existing 16:9 `karaoke` body.
+     - default square body uses `soft_cloud pink-blue` background and `Mochiy Pop P One` pink-blue title PNG.
+     - `lib/thumbnail-editor.ts` exports `thumbnailIriamSquareKaraokeBackgroundAssets` and `thumbnailIriamSquareKaraokeTitleAssets` for the adopted asset set.
+     - alternate background styles / colorways are production assets and metadata, but UI-level background switching is not implemented in this pass.
+     - variant selector now allows `square-1-1` for local review of the IRIAM preset body. `portrait-9-16` remains disabled as a later candidate.
+     - `square-1-1` selected state now renders the editor / full-preview canvas with the active draft aspect ratio instead of a fixed 16:9 preview frame.
+     - `square-1-1` selected state now routes to `karaoke` and disables non-`karaoke` presets until those presets have dedicated square bodies.
+     - existing `karaoke / landscape-16-9` preset body remains unchanged.
+     - 初回 preset 候補: `iriam_square_soft` / `iriam_square_pop` / `iriam_square_dark_cute`。
+     - 1 preset / 1 PR に閉じるか、mock / asset / preset body を段階 PR に分ける。
    - out of scope:
-     - title image asset。
-     - decoration asset。
-     - preset body。
-     - 9:16 preset。
-     - font expansion / font UI。
-
+     - schema 変更。
+     - canvas export 変更。
+     - 9:16 preset 実装。
+     - font search / recently used UI 変更。
+     - 新規ツール実装。
+   - suggested first branch/worktree:
+     - branch: `codex/thumbnail-iriam-karaoke-soft-cloud-bg`
+     - worktree: `D:/V_streamer_tools/.worktrees/thumbnail-iriam-karaoke-soft-cloud-bg`
+   - latest verification:
+     - generated sources inspected visually for no text / no person / no logo / no title image.
+     - saved mocks resized to 1080 x 1080 PNG.
+     - `pop_bubble mint` includes tiny low-contrast diamond sparkle texture; keep for direction check, but revisit if it competes with title / standee layers.
+     - `dark_cute` has stronger edge texture than `soft_cloud` / `pop_bubble`; keep for direction check, but title / standee compositing should decide whether the lace texture needs to be softened.
+     - `pop_bubble v2` and `dark_cute v2` were generated from one baseline each to reduce per-color layout drift.
+     - `歌枠` title baseline was generated deterministically from existing `M PLUS Rounded 1c` font assets; no AI-generated text was used.
+     - title preview checked on `karaoke-soft-cloud-pink-blue-baseline.png` for basic readability.
+     - rounded title font candidates were generated deterministically from existing self-hosted `Kiwi Maru` / `Hachi Maru Pop` / `Kosugi Maru` font assets.
+     - `Mochiy Pop P One` was fetched from Google Fonts only for this comparison mock; no production font registration was added.
+     - title candidate PNGs were checked as 760 x 320 transparent PNGs; comparison previews were checked as 1080 x 1080 PNG.
+     - `Mochiy Pop P One` title colorways were generated as production title PNGs; runtime font registration was not added because the preset uses transparent title image layers.
+     - `karaoke / square-1-1` has a dedicated contract: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`.
+     - `square-1-1` UI regression fix:
+       - editor canvas style now sets both visual width and height from the active draft canvas.
+       - mobile full preview frame now uses the active draft canvas aspect ratio.
+       - preset menu / preset cards / recent-favorite shortcuts disable non-`karaoke` presets while `square-1-1` is active.
+     - verification completed:
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+       - sampled PNG size check for production backgrounds / titles / preview.
+       - local dev server on `http://localhost:3003/tools/thumbnail-editor` returned HTTP 200.
+       - Playwright local check on `http://localhost:3003/tools/thumbnail-editor/`: selecting `square-1-1` produced `1080 x 1080 / 1:1`, canvas attr `1080 x 1080`, and square CSS preview at `390 / 820 / 1024 / 1280 / 1366px`.
+       - Playwright local check confirmed non-`karaoke` preset buttons are disabled while `square-1-1` is active; preset menu shows `配信告知（後続候補）` disabled and `歌枠` enabled.
+       - `git diff --check` passed with LF/CRLF warnings only.
+     - attempted verification:
+       - `node scripts/thumbnail-preset-discovery-contract.mjs` currently fails because that existing script still expects the category filter list before `membership_stream` / `asmr_stream` were added. This is not introduced by the `karaoke / square-1-1` change.
+     - UI width checks for the reported 1:1 preview regression are recorded above.
 3. Thumbnail Editor title image / decoration asset phases
    - status: background asset 確認後に分割して着手する。
    - title image:
@@ -119,32 +252,58 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Thumbnail Editor の 1:1 IRIAM 向け preset / material workflow の次 PR として、文字なし background asset phase を進めてください。
+Thumbnail Editor の 1:1 IRIAM 向け workflow follow-up として、1:1 専用プリセット一覧と `歌枠` プリセット設定モーダルを実装してください。
 
 前提:
 - main 直作業は禁止です。
 - `git fetch origin --prune` を実行してください。
-- `codex/thumbnail-iriam-square-mock-plan` の planning PR が merge 済みであることを確認し、merge 後の `origin/main` 起点で branch / worktree を作成してください。
-- 推奨 branch: `codex/thumbnail-iriam-square-background-assets`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-background-assets`
-- `AGENTS.md`、`task.md`、`docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md` を確認してから作業してください。
+- `codex/thumbnail-iriam-karaoke-soft-cloud-bg` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-karaoke-soft-cloud-bg` の差分から確認してください。
+- その確認用 PR が未 merge の場合は、新規実装へ進まず merge 待ち / review 対応が必要かだけを blocker summary として返してください。
+- `AGENTS.md` と `task.md` を確認してから作業してください。
 
 実装方針:
-- 1080 x 1080 の文字なし background PNG を生成 / 選別してください。
-- 対象は `soft_cloud` / `pop_bubble` / `dark_cute` x `pink` / `blue` / `yellow` / `purple` / `mint` = 15枚。
-- 背景にはジャンル名、時刻、ロゴ、固定テキストを焼き込まないでください。
-- title transparent image、decoration asset、preset body はこの PR では実装しないでください。
-- asset naming / path / registration / contract は既存 Thumbnail Editor material patterns に合わせて最小限で追加してください。
-- 9:16 preset、font expansion、新規ツール実装は out of scope。
+- `lib/thumbnail-editor.ts` に `thumbnailIriamSquareKaraokeBackgroundAssets` 15件と `thumbnailIriamSquareKaraokeTitleAssets` 5件を追加済み。
+- production backgrounds は `public/assets/images/thumbnail-editor/iriam-square/karaoke/backgrounds/`。
+- production title images は `public/assets/images/thumbnail-editor/iriam-square/karaoke/titles/`。
+- default square preset preview は `docs/mockups/thumbnail-editor-iriam-square-preset-previews/karaoke/karaoke-square-production-default-preview.png`。
+- `karaoke / square-1-1` は existing `karaoke` preset ID の variant body として追加済み。16:9 body は変更しない。
+- default square body は `soft_cloud pink-blue` background + `Mochiy Pop P One` pink-blue title PNG + 最小 editable text layer。
+- `Mochiy Pop P One` は title PNG 生成に使った。runtime font 登録はしていない。
+- alternate background styles / colorways は production asset metadata まで。UI-level switching は未実装。
+- `pop_bubble v1` / `dark_cute v1` は比較用 mock のまま。採用版は `pop_bubble v2` / `dark_cute v2`。
+- `1:1` 選択時のプリセット一覧は 1:1 対応ジャンルだけ表示する。16:9 専用プリセットはグレーアウトではなく一覧から外す。
+- 初回の実対応ジャンルは `歌枠` のみ。`雑談` / `初配信` / `耐久` / `闇ガチャ` などは必要なら構造上の候補に留め、production body は追加しない。
+- `歌枠` card 選択時にプリセット設定モーダルを開く。
+- モーダル内で 1:1 preview を見ながら次を選べるようにする:
+  - 背景タイプ: `soft_cloud` / `pop_bubble` / `dark_cute`
+  - 背景カラー: `pink-blue` / `blue` / `yellow` / `purple` / `mint`
+  - タイトルカラー: `背景に合わせる` または `pink-blue` / `blue` / `yellow` / `purple` / `mint`
+- 初期選択は `歌枠` / `soft_cloud` / `pink-blue` / `タイトルカラー=背景に合わせる`。
+- 背景 15種と `歌枠` title image 5種は modal preview と draft 作成に使う。
+- 背景色とタイトル色は独立選択できるようにする。例: 背景 `pink-blue` + タイトル `blue`。
+- 作成後は通常の image / text / shape layer として配置する。draft schema は変更しない。
+- 右パネルでの背景・タイトル・装飾差し替え UI は次 PR に分ける。
+- out of scope:
+  - 他ジャンルの title image 生成。
+  - decoration asset 追加。
+  - 右パネルでの後付け差し替え UI。
+  - schema 変更。
+  - 9:16 preset。
+  - 16:9 preset body 変更。
+  - 新規ツール実装。
 
 検証:
-- 追加した asset / registration に対応する最小 contract
+- `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+- `node scripts/thumbnail-preset-text-locale-contract.mjs`
+- `npx tsc --noEmit`
+- `npm run lint`
 - `git diff --check`
-- 必要なら `node scripts/thumbnail-material-assets-contract.mjs`
+- UI 変更なので `390 / 820 / 1024 / 1280 / 1366px` の幅別確認結果を `task.md` に残す。
+- 注意: `node scripts/thumbnail-preset-discovery-contract.mjs` は既存 script が `membership_stream` / `asmr_stream` 追加前の category expectation のため失敗する。今回差分起因ではない。
 
 完了時:
-- `task.md` に実装内容、確認結果、残リスク、次候補への引き継ぎを追記してください。
-- 問題なければ commit まで行ってください。push / PR は指示があるまで行わないでください。
+- `task.md` に確認結果、残リスク、次候補への引き継ぎを追記してください。
+- commit / push / PR は指示があるまで行わないでください。
 ```
 
 ## Backlog

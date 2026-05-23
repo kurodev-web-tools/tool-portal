@@ -13,26 +13,44 @@
 
 ## Active Priorities
 
-1. Thumbnail Editor usecase presets main PR
-   - status: draft PR #180 作成済み。base `main`、branch `codex/thumbnail-preset-en-usage-labels`。
-   - scope:
-     - `goods_notice` / `membership_stream` / `asmr_stream` の 3 preset。
-     - generated background / decoration assets。
-     - 専用 preset contracts。
-     - EN usage label 修正。
-     - EN `membership_stream` / `asmr_stream` 初期位置 follow-up。
-   - verification completed:
-     - `node scripts/thumbnail-usecase-goods-notice-preset-contract.mjs`
-     - `node scripts/thumbnail-usecase-membership-stream-preset-contract.mjs`
-     - `node scripts/thumbnail-usecase-asmr-stream-preset-contract.mjs`
-     - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-     - `npm run lint`
-     - `npx tsc --noEmit`
-     - `git diff --check`
-     - `/tools/thumbnail-editor` EN/Dark at `390 / 820 / 1024 / 1280 / 1366px`
-   - next action:
-     - #180 review / merge 後、この active item は Completed / Archive Summary に落とす。
-     - #180 merge 後の次作業は 1:1 IRIAM mock planning から開始する。
+1. Thumbnail Editor 1:1 IRIAM preset / material planning
+   - status: planning PR #182 の上に `codex/thumbnail-iriam-square-mocks` を積み、5ジャンルの direction mock を作成中。production preset、asset registration、UI、schema は触らない。
+   - planning doc: `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md`
+   - implementation summary:
+     - 1:1 IRIAM は `background image + title transparent image layer + generic decoration asset + minimal editable text layer` の starter kit として扱う。
+     - 5ジャンルは `歌枠` / `雑談` / `初配信` / `耐久` / `闇ガチャ`。
+     - 背景は `soft_cloud` / `pop_bubble` / `dark_cute` x `pink` / `blue` / `yellow` / `purple` / `mint` = 15枚を後続 production target にする。
+     - title image は 5ジャンル x 5色 = 25枚を候補にし、font 系統は `M PLUS Rounded 1c` と `Noto Serif JP` に抑える。
+     - font license は既存 bundled font note と同じ `SIL Open Font License 1.1` を前提に記録し、Google Fonts CDN / CSP / font expansion は変更しない。
+     - 装飾 asset は吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベルから小さく始める。
+     - 2026-05-21: `imagegen` built-in mode で 5種 mock を生成し、review 用に正確な日本語 title overlay を加えた project-local copy を `docs/mockups/thumbnail-editor-iriam-square-mocks/` に保存。
+     - 2026-05-21: IRIAM 実用向けに standee bust-up placeholder 入り layout mock 5枚を追加。中央 / 左 / 右の立ち絵安全領域を確認できるようにした。
+   - generated mock paths:
+     - `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-karaoke-mock.png`
+     - `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-chat-mock.png`
+     - `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-first-stream-mock.png`
+     - `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-endurance-mock.png`
+     - `docs/mockups/thumbnail-editor-iriam-square-mocks/iriam-square-dark-gacha-mock.png`
+   - generated standee layout mock paths:
+     - `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-karaoke-standee-right-mock.png`
+     - `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-chat-standee-left-mock.png`
+     - `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-first-stream-standee-center-mock.png`
+     - `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-endurance-standee-right-mock.png`
+     - `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/iriam-square-dark-gacha-standee-left-mock.png`
+   - verification for this PR:
+     - 2026-05-21: `git diff --check` passed. Output included the existing LF/CRLF normalization warning for `task.md` only.
+     - 2026-05-21 mock branch: `git diff --check` passed. Output included LF/CRLF normalization warnings for `task.md` and `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md` only.
+     - 2026-05-21 standee layout update: `git diff --check` passed. Output included LF/CRLF normalization warnings for `task.md` and `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md` only.
+     - UI / asset / preset body を触らないため幅別 browser 確認は不要。
+   - remaining risks:
+     - side bust-up layout は実用性が高いが、center bust-up は title / time の逃がし先が少ないため `初配信` など本人主役の用途に絞る。
+     - background asset phase では center-left / center-right / top / bottom の safe zone を塞ぐ強い装飾を避ける必要がある。
+     - 生成元 mock の日本語 title glyph は崩れやすいため、現在の overlay は review 用。後続 title image phase では transparent PNG title を作り直す。
+     - 実際の生成 asset で title image の縁取り、影、背景との contrast を再確認する必要がある。
+     - `耐久` title は `M PLUS Rounded 1c` で勢いが不足する可能性があるため、後続 title image phase で必要なら `M PLUS 1p` 追加候補を判断する。
+     - 25 title image を一度に入れるとレビューが重くなるため、生成・採用は genre / color を絞って確認してから増やす。
+   - next handoff:
+     - mock 確認後は background asset phase。まず 15枚の文字なし背景を生成 / 選別し、title / decoration / preset body には進まない。
 
 2. Thumbnail Editor 1:1 IRIAM preset / material planning
    - status: `歌枠` は 1:1 IRIAM square の production asset 登録と `karaoke / square-1-1` preset body まで作成済み。`pop_bubble v1` / `dark_cute v1` は比較用 mock のまま残し、採用版からは外す。
@@ -180,8 +198,19 @@
      - attempted verification:
        - `node scripts/thumbnail-preset-discovery-contract.mjs` currently fails because that existing script still expects the category filter list before `membership_stream` / `asmr_stream` were added. This is not introduced by the `karaoke / square-1-1` change.
      - UI width checks for the reported 1:1 preview regression are recorded above.
+3. Thumbnail Editor title image / decoration asset phases
+   - status: background asset 確認後に分割して着手する。
+   - title image:
+     - 5ジャンル x 5色 = 25 transparent PNG 候補。
+     - font 系統は `M PLUS Rounded 1c` / `Noto Serif JP` を基本にし、必要時だけ追加候補を検討する。
+   - decoration:
+     - 吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベル。
+     - 16:9 preset にも流用できる generic material として登録する。
+   - out of scope:
+     - starter preset body との同時実装。
+     - schema / canvas export / handoff payload 変更。
 
-3. Thumbnail Editor font / preset typography follow-up
+4. Thumbnail Editor font / preset typography follow-up
    - status: 1:1 IRIAM mock / first asset direction の後に着手する。
    - direction:
      - 単純な font 追加より、preset / title image / editable text の実需要を見てから増やす。
@@ -191,7 +220,7 @@
      - 1:1 preset body 実装との同時実装。
      - material asset 大量追加との同時実装。
 
-4. Kuro Live Comment Translator planning
+5. Kuro Live Comment Translator planning
    - status: 新規ツール候補。1:1 preset と font follow-up の後に planning へ戻る。
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
@@ -205,14 +234,13 @@
 
 ## Recommended Roadmap
 
-1. #180 merge / task cleanup
-2. 1:1 IRIAM mock planning
-3. 1:1 IRIAM background assets
-4. 1:1 IRIAM title image assets
-5. 1:1 IRIAM decoration assets
-6. 1:1 IRIAM starter presets
-7. Font / preset typography follow-up
-8. New tool planning: Kuro Live Comment Translator
+1. 1:1 IRIAM mock planning docs PR
+2. 1:1 IRIAM background assets
+3. 1:1 IRIAM title image assets
+4. 1:1 IRIAM decoration assets
+5. 1:1 IRIAM starter presets
+6. Font / preset typography follow-up
+7. New tool planning: Kuro Live Comment Translator
 
 9:16 presets are still valuable for YouTube Shorts / vertical streams, but should follow after the 1:1 IRIAM workflow proves the square asset / title image pattern.
 
@@ -326,7 +354,13 @@ UI / 表示文言を触った場合のみ、幅別確認結果をこのファイ
 
 - Thumbnail Editor usecase presets:
   - PR #180: `goods_notice` / `membership_stream` / `asmr_stream` plus EN usage label and initial placement follow-ups.
+  - PR #181: IRIAM square roadmap refresh after #180.
   - Previous staged PRs: #178 / #179 and related preset branches are summarized in PR bodies.
+- Thumbnail Editor 1:1 IRIAM planning:
+  - Current planning doc: `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md`
+  - Planning PR scope: 5 genre mock direction, layer model, background / title / decoration asset production plan, title image font / license boundary.
+  - Mock branch scope: 5 direction mock images under `docs/mockups/thumbnail-editor-iriam-square-mocks/`.
+  - Standee layout mock scope: 5 bust-up placeholder layouts under `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/`.
 - Portal / public prelaunch:
   - Portal settings visibility polish, Thumbnail Editor inline text edit, and EN support are completed or tracked by their PR bodies.
 - EN support:
@@ -340,3 +374,4 @@ UI / 表示文言を触った場合のみ、幅別確認結果をこのファイ
 - Thumbnail Editor next PR scope: `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md`
 - Thumbnail Editor usecase preset candidates: `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`
 - Thumbnail Editor font candidates: `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`
+- Thumbnail Editor IRIAM square mock plan: `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md`

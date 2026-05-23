@@ -190,6 +190,30 @@ export const thumbnailEditorCopy = {
       applyHandoff: "予定テキストで適用",
       applyCarryover: "主要テキストを引き継いで適用"
     },
+    iriamSquareDialog: {
+      eyebrow: "1:1 IRIAM プリセット",
+      title: "歌枠プリセット設定",
+      body: "背景とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
+      preview: "プレビュー",
+      backgroundStyle: "背景タイプ",
+      backgroundColor: "背景カラー",
+      titleColor: "タイトルカラー",
+      matchBackground: "背景に合わせる",
+      cancel: "キャンセル",
+      create: "この設定で作成",
+      styleLabels: {
+        soft_cloud: "soft_cloud",
+        pop_bubble: "pop_bubble",
+        dark_cute: "dark_cute"
+      },
+      colorLabels: {
+        "pink-blue": "pink-blue",
+        blue: "blue",
+        yellow: "yellow",
+        purple: "purple",
+        mint: "mint"
+      }
+    },
     toasts: {
       handoffApplied: "Schedule Calendarの予定を反映しました。用途に合わせてプリセットを選べます。",
       restored: "前回の下書きを復元しました。",
@@ -486,6 +510,30 @@ export const thumbnailEditorCopy = {
       applyPlain: "Apply preset as-is",
       applyHandoff: "Apply with schedule text",
       applyCarryover: "Apply with main text"
+    },
+    iriamSquareDialog: {
+      eyebrow: "1:1 IRIAM preset",
+      title: "Karaoke preset settings",
+      body: "Choose the background and title image color, then create a 1:1 draft.",
+      preview: "Preview",
+      backgroundStyle: "Background type",
+      backgroundColor: "Background color",
+      titleColor: "Title color",
+      matchBackground: "Match background",
+      cancel: "Cancel",
+      create: "Create with these settings",
+      styleLabels: {
+        soft_cloud: "soft_cloud",
+        pop_bubble: "pop_bubble",
+        dark_cute: "dark_cute"
+      },
+      colorLabels: {
+        "pink-blue": "pink-blue",
+        blue: "blue",
+        yellow: "yellow",
+        purple: "purple",
+        mint: "mint"
+      }
     },
     toasts: {
       handoffApplied: "Schedule Calendar text was applied. Choose a preset that fits the use case.",

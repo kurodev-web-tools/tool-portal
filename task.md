@@ -53,7 +53,7 @@
      - mock 確認後は background asset phase。まず 15枚の文字なし背景を生成 / 選別し、title / decoration / preset body には進まない。
 
 2. Thumbnail Editor 1:1 IRIAM preset / material planning
-   - status: `歌枠` は 1:1 IRIAM square の production asset 登録と `karaoke / square-1-1` preset body まで作成済み。`pop_bubble v1` / `dark_cute v1` は比較用 mock のまま残し、採用版からは外す。
+   - status: `歌枠` は 1:1 IRIAM square の production asset 登録、`karaoke / square-1-1` preset body、1:1 専用 preset list、設定モーダルまで作成済み。`pop_bubble v1` / `dark_cute v1` は比較用 mock のまま残し、採用版からは外す。
    - direction:
      - IRIAM 向けは YouTube 16:9 より情報量を少なくする。
      - 完成品サムネより、背景 + title image layer + 汎用ゆる装飾 asset + 最小 text layer の starter kit として設計する。
@@ -152,10 +152,14 @@
      - `karaoke / square-1-1` now uses a dedicated 1080 x 1080 body instead of scaling the existing 16:9 `karaoke` body.
      - default square body uses `soft_cloud pink-blue` background and `Mochiy Pop P One` pink-blue title PNG.
      - `lib/thumbnail-editor.ts` exports `thumbnailIriamSquareKaraokeBackgroundAssets` and `thumbnailIriamSquareKaraokeTitleAssets` for the adopted asset set.
-     - alternate background styles / colorways are production assets and metadata, but UI-level background switching is not implemented in this pass.
+     - `lib/thumbnail-editor.ts` now also exports configurable `createKaraokeIriamSquareDraft(config)` so background style / background color / title color can be selected without changing the draft schema.
+     - `square-1-1` preset lists show only the currently supported square genre (`歌枠`) instead of rendering unsupported 16:9 presets as disabled cards.
+     - `歌枠` card selection opens a settings modal with 1:1 preview and options for `soft_cloud` / `pop_bubble` / `dark_cute`, `pink-blue` / `blue` / `yellow` / `purple` / `mint`, and title color `背景に合わせる` or an independent colorway.
+     - modal initial selection is `歌枠` / `soft_cloud` / `pink-blue` / `タイトルカラー=背景に合わせる`.
+     - modal apply creates normal image / text / shape layers from the selected assets; draft schema is unchanged.
      - variant selector now allows `square-1-1` for local review of the IRIAM preset body. `portrait-9-16` remains disabled as a later candidate.
      - `square-1-1` selected state now renders the editor / full-preview canvas with the active draft aspect ratio instead of a fixed 16:9 preview frame.
-     - `square-1-1` selected state now routes to `karaoke` and disables non-`karaoke` presets until those presets have dedicated square bodies.
+     - `square-1-1` selected state now routes to `karaoke` and removes non-`karaoke` presets until those presets have dedicated square bodies.
      - existing `karaoke / landscape-16-9` preset body remains unchanged.
      - 初回 preset 候補: `iriam_square_soft` / `iriam_square_pop` / `iriam_square_dark_cute`。
      - 1 preset / 1 PR に閉じるか、mock / asset / preset body を段階 PR に分ける。
@@ -169,6 +173,16 @@
      - branch: `codex/thumbnail-iriam-karaoke-soft-cloud-bg`
      - worktree: `D:/V_streamer_tools/.worktrees/thumbnail-iriam-karaoke-soft-cloud-bg`
    - latest verification:
+     - 2026-05-23 modal follow-up:
+       - #185 state: `MERGED` into `codex/thumbnail-iriam-square-preview`.
+       - branch/worktree: `codex/thumbnail-iriam-square-preset-modal` at `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-preset-modal`, based on `origin/codex/thumbnail-iriam-square-preview`.
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` passed.
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs` passed.
+       - `npx tsc --noEmit` passed.
+       - `npm run lint` passed.
+       - `git diff --check` passed with existing LF/CRLF normalization warnings for touched files only.
+       - Chrome DevTools local check at `http://localhost:3005/tools/thumbnail-editor/`: 1:1 switch showed `1 / 1` preset count, only `歌枠`, modal opened from the card, `dark_cute` background + purple title was selectable independently, and apply returned to normal image / text / shape layers.
+       - width checks: `390 / 820 / 1024 / 1280 / 1366px` all kept square label, `1 / 1` preset list, visible 1:1 canvas ratio, and no horizontal overflow.
      - generated sources inspected visually for no text / no person / no logo / no title image.
      - saved mocks resized to 1080 x 1080 PNG.
      - `pop_bubble mint` includes tiny low-contrast diamond sparkle texture; keep for direction check, but revisit if it competes with title / standee layers.

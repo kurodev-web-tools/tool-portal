@@ -131,6 +131,12 @@ export type ThumbnailPresetVariantRef = {
 };
 export type ThumbnailIriamSquareColorway = "pink-blue" | "blue" | "yellow" | "purple" | "mint";
 export type ThumbnailIriamSquareKaraokeBackgroundStyle = "soft_cloud" | "pop_bubble" | "dark_cute";
+export type ThumbnailIriamSquareKaraokeTitleColorway = "match-background" | ThumbnailIriamSquareColorway;
+export type ThumbnailIriamSquareKaraokePresetConfig = {
+  backgroundStyle: ThumbnailIriamSquareKaraokeBackgroundStyle;
+  backgroundColorway: ThumbnailIriamSquareColorway;
+  titleColorway: ThumbnailIriamSquareKaraokeTitleColorway;
+};
 export type ThumbnailIriamSquareKaraokeBackgroundAsset = {
   style: ThumbnailIriamSquareKaraokeBackgroundStyle;
   colorway: ThumbnailIriamSquareColorway;
@@ -1243,6 +1249,13 @@ const thumbnailMaterialEffectAssetPrefix = `${thumbnailPresetAssetPrefix}materia
 const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/corners/`;
 const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materials/impact/`;
 
+export const thumbnailIriamSquareColorways: ThumbnailIriamSquareColorway[] = ["pink-blue", "blue", "yellow", "purple", "mint"];
+export const thumbnailIriamSquareKaraokeBackgroundStyles: ThumbnailIriamSquareKaraokeBackgroundStyle[] = ["soft_cloud", "pop_bubble", "dark_cute"];
+export const defaultThumbnailIriamSquareKaraokePresetConfig: ThumbnailIriamSquareKaraokePresetConfig = {
+  backgroundStyle: "soft_cloud",
+  backgroundColorway: "pink-blue",
+  titleColorway: "match-background"
+};
 export const thumbnailIriamSquareKaraokeBackgroundAssets: ThumbnailIriamSquareKaraokeBackgroundAsset[] = [
   { style: "soft_cloud", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-pink-blue-v1.png` },
   { style: "soft_cloud", colorway: "blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-blue-v1.png` },
@@ -1267,6 +1280,21 @@ export const thumbnailIriamSquareKaraokeTitleAssets: ThumbnailIriamSquareKaraoke
   { colorway: "purple", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-purple-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
   { colorway: "mint", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-mint-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" }
 ];
+
+export const getThumbnailIriamSquareKaraokeBackgroundAsset = (
+  style: ThumbnailIriamSquareKaraokeBackgroundStyle,
+  colorway: ThumbnailIriamSquareColorway
+) =>
+  thumbnailIriamSquareKaraokeBackgroundAssets.find((asset) => asset.style === style && asset.colorway === colorway) ??
+  thumbnailIriamSquareKaraokeBackgroundAssets[0];
+
+export const getThumbnailIriamSquareKaraokeTitleAsset = (
+  colorway: ThumbnailIriamSquareKaraokeTitleColorway,
+  backgroundColorway: ThumbnailIriamSquareColorway
+) => {
+  const resolvedColorway = colorway === "match-background" ? backgroundColorway : colorway;
+  return thumbnailIriamSquareKaraokeTitleAssets.find((asset) => asset.colorway === resolvedColorway) ?? thumbnailIriamSquareKaraokeTitleAssets[0];
+};
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -1387,9 +1415,11 @@ const shapeLayer = (partial: Partial<ThumbnailShapeLayer> & Pick<ThumbnailShapeL
   ...partial
 });
 
-const createKaraokeIriamSquareDraft = (): ThumbnailEditorDraft => {
-  const background = thumbnailIriamSquareKaraokeBackgroundAssets[0];
-  const title = thumbnailIriamSquareKaraokeTitleAssets[0];
+export const createKaraokeIriamSquareDraft = (
+  config: ThumbnailIriamSquareKaraokePresetConfig = defaultThumbnailIriamSquareKaraokePresetConfig
+): ThumbnailEditorDraft => {
+  const background = getThumbnailIriamSquareKaraokeBackgroundAsset(config.backgroundStyle, config.backgroundColorway);
+  const title = getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
     shapeLayer({ name: "図形 1（上部ソフトライト）", shapeType: "circle", x: 110, y: 76, width: 860, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.18, blur: 8 }),

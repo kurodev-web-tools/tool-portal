@@ -132,7 +132,7 @@ export type ThumbnailPresetVariantRef = {
 };
 export type ThumbnailIriamSquareColorway = "pink-blue" | "blue" | "yellow" | "purple" | "mint";
 export type ThumbnailIriamSquareKaraokeBackgroundStyle = "soft_cloud" | "pop_bubble" | "dark_cute";
-export type ThumbnailIriamSquareTitleGenre = "karaoke" | "dark_gacha" | "chatting";
+export type ThumbnailIriamSquareTitleGenre = "karaoke" | "dark_gacha" | "chatting" | "first_stream";
 export type ThumbnailIriamSquareTitleColorway = "match-background" | ThumbnailIriamSquareColorway;
 export type ThumbnailIriamSquareKaraokeTitleColorway = ThumbnailIriamSquareTitleColorway;
 export type ThumbnailIriamSquareKaraokePresetConfig = {
@@ -148,6 +148,10 @@ export type ThumbnailIriamSquareChattingPresetConfig = {
   backgroundColorway: ThumbnailIriamSquareColorway;
   titleColorway: ThumbnailIriamSquareTitleColorway;
 };
+export type ThumbnailIriamSquareFirstStreamPresetConfig = {
+  backgroundColorway: ThumbnailIriamSquareColorway;
+  titleColorway: ThumbnailIriamSquareTitleColorway;
+};
 export type ThumbnailIriamSquareKaraokeBackgroundAsset = {
   style: ThumbnailIriamSquareKaraokeBackgroundStyle;
   colorway: ThumbnailIriamSquareColorway;
@@ -157,8 +161,8 @@ export type ThumbnailIriamSquareTitleAsset = {
   genre: ThumbnailIriamSquareTitleGenre;
   colorway: ThumbnailIriamSquareColorway;
   src: string;
-  titleText: "歌枠" | "闇ガチャ" | "雑談";
-  fontFamily: "Mochiy Pop P One" | "New Tegomin" | "Yusei Magic";
+  titleText: "歌枠" | "闇ガチャ" | "雑談" | "初配信";
+  fontFamily: "Mochiy Pop P One" | "New Tegomin" | "Yusei Magic" | "Mochiy Pop One";
   source: "generated-title-image";
 };
 export type ThumbnailIriamSquareKaraokeTitleAsset = ThumbnailIriamSquareTitleAsset & {
@@ -175,6 +179,11 @@ export type ThumbnailIriamSquareChattingTitleAsset = ThumbnailIriamSquareTitleAs
   genre: "chatting";
   titleText: "雑談";
   fontFamily: "Yusei Magic";
+};
+export type ThumbnailIriamSquareFirstStreamTitleAsset = ThumbnailIriamSquareTitleAsset & {
+  genre: "first_stream";
+  titleText: "初配信";
+  fontFamily: "Mochiy Pop One";
 };
 export type ThumbnailPresetVariantRelation = {
   presetId: ThumbnailPresetId;
@@ -1305,6 +1314,7 @@ const thumbnailIriamSquareKaraokeBackgroundAssetPrefix = `${thumbnailIriamSquare
 const thumbnailIriamSquareKaraokeTitleAssetPrefix = `${thumbnailIriamSquareKaraokeAssetPrefix}titles/`;
 const thumbnailIriamSquareDarkGachaTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/dark-gacha/titles/`;
 const thumbnailIriamSquareChattingTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/chatting/titles/`;
+const thumbnailIriamSquareFirstStreamTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/first-stream/titles/`;
 const thumbnailMaterialBatch1AssetPrefix = `${thumbnailPresetAssetPrefix}materials/batch1/`;
 const thumbnailMaterialLabelAssetPrefix = `${thumbnailPresetAssetPrefix}materials/labels/`;
 const thumbnailMaterialBadgeAssetPrefix = `${thumbnailPresetAssetPrefix}materials/badges/`;
@@ -1315,7 +1325,7 @@ const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materia
 const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materials/impact/`;
 
 export const thumbnailIriamSquareColorways: ThumbnailIriamSquareColorway[] = ["pink-blue", "blue", "yellow", "purple", "mint"];
-export const thumbnailIriamSquareTitleGenres: ThumbnailIriamSquareTitleGenre[] = ["karaoke", "dark_gacha", "chatting"];
+export const thumbnailIriamSquareTitleGenres: ThumbnailIriamSquareTitleGenre[] = ["karaoke", "dark_gacha", "chatting", "first_stream"];
 export const thumbnailIriamSquareKaraokeBackgroundStyles: ThumbnailIriamSquareKaraokeBackgroundStyle[] = ["soft_cloud", "pop_bubble", "dark_cute"];
 export const defaultThumbnailIriamSquareKaraokePresetConfig: ThumbnailIriamSquareKaraokePresetConfig = {
   backgroundStyle: "soft_cloud",
@@ -1327,6 +1337,10 @@ export const defaultThumbnailIriamSquareDarkGachaPresetConfig: ThumbnailIriamSqu
   titleColorway: "match-background"
 };
 export const defaultThumbnailIriamSquareChattingPresetConfig: ThumbnailIriamSquareChattingPresetConfig = {
+  backgroundColorway: "pink-blue",
+  titleColorway: "match-background"
+};
+export const defaultThumbnailIriamSquareFirstStreamPresetConfig: ThumbnailIriamSquareFirstStreamPresetConfig = {
   backgroundColorway: "pink-blue",
   titleColorway: "match-background"
 };
@@ -1368,10 +1382,18 @@ export const thumbnailIriamSquareChattingTitleAssets: ThumbnailIriamSquareChatti
   { genre: "chatting", colorway: "purple", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-title-purple-v1.png`, titleText: "雑談", fontFamily: "Yusei Magic", source: "generated-title-image" },
   { genre: "chatting", colorway: "mint", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-title-mint-v1.png`, titleText: "雑談", fontFamily: "Yusei Magic", source: "generated-title-image" }
 ];
+export const thumbnailIriamSquareFirstStreamTitleAssets: ThumbnailIriamSquareFirstStreamTitleAsset[] = [
+  { genre: "first_stream", colorway: "pink-blue", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-pink-blue-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "blue", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-blue-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "yellow", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-yellow-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "purple", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-purple-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "mint", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-mint-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" }
+];
 export const thumbnailIriamSquareTitleAssetsByGenre: Record<ThumbnailIriamSquareTitleGenre, ThumbnailIriamSquareTitleAsset[]> = {
   karaoke: thumbnailIriamSquareKaraokeTitleAssets,
   dark_gacha: thumbnailIriamSquareDarkGachaTitleAssets,
-  chatting: thumbnailIriamSquareChattingTitleAssets
+  chatting: thumbnailIriamSquareChattingTitleAssets,
+  first_stream: thumbnailIriamSquareFirstStreamTitleAssets
 };
 
 export const getThumbnailIriamSquareKaraokeBackgroundAsset = (
@@ -1600,6 +1622,33 @@ export const createChattingIriamSquareDraft = (
     version: 1,
     canvas: { width: 1080, height: 1080 },
     presetId: "chatting",
+    layers,
+    selectedLayerId: layers[layers.length - 1]?.id ?? null,
+    updatedAt: nowIso()
+  };
+};
+
+export const createFirstStreamIriamSquareDraft = (
+  config: ThumbnailIriamSquareFirstStreamPresetConfig = defaultThumbnailIriamSquareFirstStreamPresetConfig
+): ThumbnailEditorDraft => {
+  const background = getThumbnailIriamSquareKaraokeBackgroundAsset("soft_cloud", config.backgroundColorway);
+  const title = getThumbnailIriamSquareTitleAsset("first_stream", config.titleColorway, config.backgroundColorway);
+  const layers: ThumbnailLayer[] = [
+    assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
+    shapeLayer({ name: "図形 1（上部ウェルカムライト）", shapeType: "circle", x: 92, y: 58, width: 896, height: 438, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.2, blur: 8 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 初配信）", src: title?.src ?? thumbnailIriamSquareFirstStreamTitleAssets[0].src, x: 160, y: 112, width: 760, height: 320, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 370, y: 374, width: 340, height: 590, fillColor: "#ffffff16", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 76, opacity: 0.3 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 102, y: 732, width: 438, height: 108, fillColor: "#ffffffd6", strokeColor: "#ff9fc7", strokeWidth: 4, borderRadius: 54, opacity: 0.88 }),
+    textLayer({ name: "テキスト 1（見出し補助）", text: "はじめまして", x: 154, y: 438, width: 772, height: 72, fontSize: 58, color: "#fffaf4", strokeColor: "#4c7fb2", strokeWidth: 6, shadowColor: "#ffacd2", shadowBlur: 9, shadowOffsetX: 0, shadowOffsetY: 3, fontFamily: "M PLUS Rounded 1c", align: "center" }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 154, y: 758, width: 334, height: 58, fontSize: 54, color: "#456f9f", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
+    textLayer({ name: "テキスト 3（サブ）", text: "自己紹介 / 初見さん歓迎", x: 514, y: 836, width: 456, height: 48, fontSize: 32, color: "#5f6798", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
+    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / DEBUT", x: 78, y: 62, width: 286, height: 42, fontSize: 30, color: "#5b7da8", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+  ];
+
+  return {
+    version: 1,
+    canvas: { width: 1080, height: 1080 },
+    presetId: "first_stream",
     layers,
     selectedLayerId: layers[layers.length - 1]?.id ?? null,
     updatedAt: nowIso()
@@ -3297,6 +3346,10 @@ export const createDraftFromPresetVariant = (
   presetId: ThumbnailPresetId = "stream_announce",
   variantId: ThumbnailPresetVariantId = thumbnailPresetVariantRelations[presetId].defaultVariantId
 ): ThumbnailEditorDraft => {
+  if (presetId === "first_stream" && variantId === "square-1-1") {
+    return createFirstStreamIriamSquareDraft();
+  }
+
   if (presetId === "chatting" && variantId === "square-1-1") {
     return createChattingIriamSquareDraft();
   }

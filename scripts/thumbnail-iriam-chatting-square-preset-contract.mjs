@@ -134,9 +134,9 @@ assert.equal(
 );
 
 assert.equal(
-  componentSource.includes('variantId === "square-1-1" ? presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" : presetId !== "dark_gacha"'),
+  componentSource.includes('variantId === "square-1-1" ? presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream" : presetId !== "dark_gacha"'),
   true,
-  "preset list exposes karaoke, dark gacha, and chatting while the square variant is active"
+  "preset list exposes karaoke, dark gacha, chatting, and first_stream while the square variant is active"
 );
 assert.equal(
   componentSource.includes('type IriamSquarePresetModalPresetId = "karaoke" | "dark_gacha" | "chatting"'),

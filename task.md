@@ -13,6 +13,43 @@
 
 ## Current Work Log
 
+### 2026-05-24 - Thumbnail Editor 1:1 IRIAM first_stream square preset body
+
+- base check:
+  - `git fetch origin --prune` 済み。
+  - PR #196 (`codex/thumbnail-iriam-chatting-square-settings-modal` -> `codex/thumbnail-iriam-square-preview`) は `MERGED`。merge commit `ca52c327572143a2ddab15796d0dd8ea5cb2bc77`。
+  - 新規 branch / worktree: `codex/thumbnail-iriam-first-stream-square-body`, `D:/V_streamer_tools/.worktrees/thumbnail-iriam-first-stream-square-body`。
+- implementation:
+  - `初配信` / `first_stream` を square variant の preset body に接続した。
+  - `first_stream` title image 5色を IRIAM square title registry に追加し、既存 production asset の transparent PNG layer として配置した。
+  - `createFirstStreamIriamSquareDraft()` を追加。background style は `soft_cloud` 固定、default colorway は `pink-blue`、title colorway は `match-background` default。
+  - square variant の preset list に `first_stream` を追加した。settings modal は既存の `karaoke` / `dark_gacha` / `chatting` のみ維持し、`first_stream` は body 接続だけに閉じた。
+  - schema / 右パネル / 9:16 preset / settings modal / title image 生成 / font 追加 / background style 追加は未変更。
+- verification:
+  - RED: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` が、`first_stream` square が 16:9 body の scaled image layers のままだったため失敗することを確認。
+  - PASS: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+  - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `npm run lint`
+  - PASS: `git diff --check`（whitespace error なし。Windows 改行 warning のみ）
+- width check:
+  - Playwright CLI / `http://localhost:3018/tools/thumbnail-editor` / `npm run dev -- --webpack -p 3018`。
+  - `390px`: initial page screenshot capture 成功。
+  - `820px`: initial page screenshot capture 成功。
+  - `1024px`: initial page screenshot capture 成功。
+  - `1280px`: initial page screenshot capture 成功。
+  - `1366px`: initial page screenshot capture 成功。
+  - 今回の visual check は page load / layout smoke。square body の `first_stream` 適用内容は contract で確認。
+- remaining risk:
+  - `first_stream` の background colorway / title colorway は helper API では選べるが、今回 UI modal には接続していない。
+  - `first_stream` square card からの作成導線は有効化したが、右パネルでの background / title 後付け変更 UI は未対応。
+- next action:
+  - review / merge 後、必要なら `first_stream` square settings modal 接続、または `耐久` square preset body 接続を別 PR で検討する。
+
 ### 2026-05-24 - Thumbnail Editor 1:1 IRIAM chatting settings modal
 
 - base check:

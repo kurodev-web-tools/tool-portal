@@ -13,6 +13,44 @@
 
 ## Current Work Log
 
+### 2026-05-24 - Thumbnail Editor 1:1 IRIAM first_stream square settings modal
+
+- base check:
+  - `git fetch origin --prune` 済み。
+  - PR #198 (`codex/thumbnail-iriam-endurance-square-body` -> `codex/thumbnail-iriam-square-preview`) は `MERGED`。merge commit `27d991de64ae57f97feceff6127aeafa2d007c04`。
+  - 新規 branch / worktree: `codex/thumbnail-iriam-first-stream-square-modal`, `D:/V_streamer_tools/.worktrees/thumbnail-iriam-first-stream-square-modal`。
+- implementation:
+  - `初配信` / `first_stream` を既存 IRIAM square settings modal に接続した。
+  - `first_stream` modal は background style を `soft_cloud` 固定にし、background colorway 5色と title colorway `match-background` + 5色のみを選択可能にした。
+  - modal apply は `createFirstStreamIriamSquareDraft(config)` を使い、既存の handoff / main text carryover / recent preset record flow に合わせた。
+  - settings modal copy を JA / EN に追加した。
+  - schema / 右パネル / 9:16 preset / `endurance_stream` settings modal / title image 生成 / font 追加 / background style 追加は未変更。
+- verification:
+  - RED: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` が `square settings modal type includes first_stream` で失敗することを確認。
+  - PASS: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+  - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `npm run lint`
+- width check:
+  - Playwright CLI / `http://127.0.0.1:3007/tools/thumbnail-editor` / `npm run dev -- --hostname 127.0.0.1 -p 3007`。
+  - 操作: `square-1-1` に切り替え、`初配信` card から settings modal を開いた。
+  - `390px`: modal title / `soft_cloud` body copy visible、background style group hidden、background colorway 5、title colorway 6、create button visible、dialog fits viewport。
+  - `820px`: modal title / `soft_cloud` body copy visible、background style group hidden、background colorway 5、title colorway 6、create button visible、dialog fits viewport。
+  - `1024px`: modal title / `soft_cloud` body copy visible、background style group hidden、background colorway 5、title colorway 6、create button visible、dialog fits viewport。
+  - `1280px`: modal title / `soft_cloud` body copy visible、background style group hidden、background colorway 5、title colorway 6、create button visible、dialog fits viewport。
+  - `1366px`: modal title / `soft_cloud` body copy visible、background style group hidden、background colorway 5、title colorway 6、create button visible、dialog fits viewport。
+  - Playwright console check: errors 0 / warnings 0。
+- remaining risk:
+  - `first_stream` は settings modal からの initial draft 作成のみ。右パネルでの background / title 後付け変更 UI は未対応。
+  - `endurance_stream` は引き続き body 接続のみで、settings modal は未対応。
+- next action:
+  - review / merge 後、必要なら次 slice で `endurance_stream` square settings modal 接続に進む。
+
 ### 2026-05-24 - Thumbnail Editor 1:1 IRIAM endurance_stream square preset body
 
 - base check:

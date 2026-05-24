@@ -10,6 +10,7 @@ import {
   applyThumbnailUserMaterialLayerFallback,
   createChattingIriamSquareDraft,
   createDarkGachaIriamSquareDraft,
+  createEnduranceStreamIriamSquareDraft,
   createFirstStreamIriamSquareDraft,
   createNextRecentThumbnailPresetIds,
   createKaraokeIriamSquareDraft,
@@ -20,6 +21,7 @@ import {
   createThumbnailUserMaterialLayer,
   createShapeLayer,
   createTextLayer,
+  defaultThumbnailIriamSquareEndurancePresetConfig,
   canAddThumbnailUserMaterialRef,
   drawThumbnail,
   formatThumbnailUserMaterialBytes,
@@ -66,6 +68,7 @@ import {
   type ThumbnailIriamSquareChattingPresetConfig,
   type ThumbnailIriamSquareColorway,
   type ThumbnailIriamSquareDarkGachaPresetConfig,
+  type ThumbnailIriamSquareEndurancePresetConfig,
   type ThumbnailIriamSquareFirstStreamPresetConfig,
   type ThumbnailIriamSquareKaraokeBackgroundStyle,
   type ThumbnailIriamSquareKaraokePresetConfig,
@@ -140,8 +143,13 @@ type EditorMode = "edit" | "pan";
 type PresetApplyMode = "plain" | "carryover" | "handoff";
 type CanvasInteractionMode = "drag" | "resize" | "rotate";
 type CanvasCursor = "default" | "move" | "grab" | "grabbing" | "crosshair" | "nwse-resize" | "nesw-resize";
-type IriamSquarePresetModalPresetId = "karaoke" | "dark_gacha" | "chatting" | "first_stream";
-type IriamSquarePresetModalConfig = ThumbnailIriamSquareKaraokePresetConfig | ThumbnailIriamSquareDarkGachaPresetConfig | ThumbnailIriamSquareChattingPresetConfig | ThumbnailIriamSquareFirstStreamPresetConfig;
+type IriamSquarePresetModalPresetId = "karaoke" | "dark_gacha" | "chatting" | "first_stream" | "endurance_stream";
+type IriamSquarePresetModalConfig =
+  | ThumbnailIriamSquareKaraokePresetConfig
+  | ThumbnailIriamSquareDarkGachaPresetConfig
+  | ThumbnailIriamSquareChattingPresetConfig
+  | ThumbnailIriamSquareFirstStreamPresetConfig
+  | ThumbnailIriamSquareEndurancePresetConfig;
 type CanvasInteractionState = {
   pointerId: number;
   pointerType: string;
@@ -544,6 +552,7 @@ export function ThumbnailEditorApp() {
   const [thumbnailIriamSquareDarkGachaPresetConfig, setThumbnailIriamSquareDarkGachaPresetConfig] = useState<ThumbnailIriamSquareDarkGachaPresetConfig>(defaultThumbnailIriamSquareDarkGachaPresetConfig);
   const [thumbnailIriamSquareChattingPresetConfig, setThumbnailIriamSquareChattingPresetConfig] = useState<ThumbnailIriamSquareChattingPresetConfig>(defaultThumbnailIriamSquareChattingPresetConfig);
   const [thumbnailIriamSquareFirstStreamPresetConfig, setThumbnailIriamSquareFirstStreamPresetConfig] = useState<ThumbnailIriamSquareFirstStreamPresetConfig>(defaultThumbnailIriamSquareFirstStreamPresetConfig);
+  const [thumbnailIriamSquareEndurancePresetConfig, setThumbnailIriamSquareEndurancePresetConfig] = useState<ThumbnailIriamSquareEndurancePresetConfig>(defaultThumbnailIriamSquareEndurancePresetConfig);
   const [inlineTextEdit, setInlineTextEdit] = useState<InlineTextEditState | null>(null);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const [canvasAttachVersion, setCanvasAttachVersion] = useState(0);
@@ -1309,15 +1318,17 @@ export function ThumbnailEditorApp() {
       setHeaderMenuOpen(null);
       return;
     }
-    if (currentVariantId === "square-1-1" && (presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream")) {
+    if (currentVariantId === "square-1-1" && (presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream" || presetId === "endurance_stream")) {
       if (presetId === "karaoke") {
         setThumbnailIriamSquarePresetConfig(defaultThumbnailIriamSquarePresetConfig);
       } else if (presetId === "dark_gacha") {
         setThumbnailIriamSquareDarkGachaPresetConfig(defaultThumbnailIriamSquareDarkGachaPresetConfig);
       } else if (presetId === "chatting") {
         setThumbnailIriamSquareChattingPresetConfig(defaultThumbnailIriamSquareChattingPresetConfig);
-      } else {
+      } else if (presetId === "first_stream") {
         setThumbnailIriamSquareFirstStreamPresetConfig(defaultThumbnailIriamSquareFirstStreamPresetConfig);
+      } else {
+        setThumbnailIriamSquareEndurancePresetConfig(defaultThumbnailIriamSquareEndurancePresetConfig);
       }
       setIriamSquarePresetModalPresetId(presetId);
       setPendingPresetApplyId(null);
@@ -1404,6 +1415,19 @@ export function ThumbnailEditorApp() {
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
     replaceDraft(nextDraft, { recordHistory: true });
     setThumbnailIriamSquareFirstStreamPresetConfig(config);
+    setIriamSquarePresetModalPresetId(null);
+    setMobilePanel("canvas");
+    showToast("success", copy.toasts.applyPlain);
+  };
+
+  const applyEnduranceIriamSquarePreset = (config: ThumbnailIriamSquareEndurancePresetConfig) => {
+    recordPresetUse("endurance_stream");
+    const next = localizeThumbnailPresetTextLayerBodies(createEnduranceStreamIriamSquareDraft(config), locale);
+    const nextDraft = handoffPayload
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
+      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+    replaceDraft(nextDraft, { recordHistory: true });
+    setThumbnailIriamSquareEndurancePresetConfig(config);
     setIriamSquarePresetModalPresetId(null);
     setMobilePanel("canvas");
     showToast("success", copy.toasts.applyPlain);
@@ -2497,7 +2521,9 @@ export function ThumbnailEditorApp() {
                 ? thumbnailIriamSquareChattingPresetConfig
                 : iriamSquarePresetModalPresetId === "first_stream"
                   ? thumbnailIriamSquareFirstStreamPresetConfig
-                  : thumbnailIriamSquarePresetConfig
+                  : iriamSquarePresetModalPresetId === "endurance_stream"
+                    ? thumbnailIriamSquareEndurancePresetConfig
+                    : thumbnailIriamSquarePresetConfig
           }
           onConfigChange={(config) => {
             if (iriamSquarePresetModalPresetId === "dark_gacha") {
@@ -2506,6 +2532,8 @@ export function ThumbnailEditorApp() {
               setThumbnailIriamSquareChattingPresetConfig(config as ThumbnailIriamSquareChattingPresetConfig);
             } else if (iriamSquarePresetModalPresetId === "first_stream") {
               setThumbnailIriamSquareFirstStreamPresetConfig(config as ThumbnailIriamSquareFirstStreamPresetConfig);
+            } else if (iriamSquarePresetModalPresetId === "endurance_stream") {
+              setThumbnailIriamSquareEndurancePresetConfig(config as ThumbnailIriamSquareEndurancePresetConfig);
             } else {
               setThumbnailIriamSquarePresetConfig(config as ThumbnailIriamSquareKaraokePresetConfig);
             }
@@ -2517,6 +2545,8 @@ export function ThumbnailEditorApp() {
               applyChattingIriamSquarePreset(thumbnailIriamSquareChattingPresetConfig);
             } else if (iriamSquarePresetModalPresetId === "first_stream") {
               applyFirstStreamIriamSquarePreset(thumbnailIriamSquareFirstStreamPresetConfig);
+            } else if (iriamSquarePresetModalPresetId === "endurance_stream") {
+              applyEnduranceIriamSquarePreset(thumbnailIriamSquareEndurancePresetConfig);
             } else {
               applyKaraokeIriamSquarePreset(thumbnailIriamSquarePresetConfig);
             }
@@ -3571,7 +3601,7 @@ function IriamSquareKaraokePresetDialog({
   onCancel: () => void;
 }) {
   const backgroundStyle: ThumbnailIriamSquareKaraokeBackgroundStyle =
-    presetId === "dark_gacha" ? "dark_cute" : presetId === "chatting" ? "pop_bubble" : presetId === "first_stream" ? "soft_cloud" : (config as ThumbnailIriamSquareKaraokePresetConfig).backgroundStyle;
+    presetId === "dark_gacha" ? "dark_cute" : presetId === "chatting" ? "pop_bubble" : presetId === "first_stream" ? "soft_cloud" : presetId === "endurance_stream" ? "pop_bubble" : (config as ThumbnailIriamSquareKaraokePresetConfig).backgroundStyle;
   const background = getThumbnailIriamSquareKaraokeBackgroundAsset(backgroundStyle, config.backgroundColorway);
   const title =
     presetId === "dark_gacha"
@@ -3580,7 +3610,9 @@ function IriamSquareKaraokePresetDialog({
         ? getThumbnailIriamSquareTitleAsset("chatting", config.titleColorway, config.backgroundColorway)
         : presetId === "first_stream"
           ? getThumbnailIriamSquareTitleAsset("first_stream", config.titleColorway, config.backgroundColorway)
-      : getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway as ThumbnailIriamSquareKaraokeTitleColorway, config.backgroundColorway);
+          : presetId === "endurance_stream"
+            ? getThumbnailIriamSquareTitleAsset("endurance_stream", config.titleColorway, config.backgroundColorway)
+            : getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway as ThumbnailIriamSquareKaraokeTitleColorway, config.backgroundColorway);
   const updateConfig = (partial: Partial<IriamSquarePresetModalConfig>) => onConfigChange({ ...config, ...partial } as IriamSquarePresetModalConfig);
   const titleColorOptions: ThumbnailIriamSquareTitleColorway[] = ["match-background", ...thumbnailIriamSquareColorways];
 

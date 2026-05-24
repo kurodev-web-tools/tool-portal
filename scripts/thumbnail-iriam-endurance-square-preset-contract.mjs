@@ -7,8 +7,10 @@ import ts from "typescript";
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "thumbnail-editor.ts");
 const componentSourcePath = path.join(root, "components", "thumbnail-editor", "ThumbnailEditorApp.tsx");
+const copySourcePath = path.join(root, "lib", "thumbnail-editor-copy.ts");
 const source = fs.readFileSync(sourcePath, "utf8");
 const componentSource = fs.readFileSync(componentSourcePath, "utf8");
+const copySource = fs.readFileSync(copySourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -137,9 +139,39 @@ assert.equal(
   "preset list exposes karaoke, dark gacha, chatting, first_stream, and endurance_stream while the square variant is active"
 );
 assert.equal(
-  componentSource.includes('currentVariantId === "square-1-1" && (presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream")'),
+  componentSource.includes('type IriamSquarePresetModalPresetId = "karaoke" | "dark_gacha" | "chatting" | "first_stream" | "endurance_stream"'),
   true,
-  "endurance_stream square body does not join the settings modal in this slice"
+  "square settings modal type includes endurance_stream"
+);
+assert.equal(
+  componentSource.includes('presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream" || presetId === "endurance_stream"'),
+  true,
+  "square preset cards open the settings modal for karaoke, dark gacha, chatting, first_stream, and endurance_stream"
+);
+assert.equal(
+  componentSource.includes("defaultThumbnailIriamSquareEndurancePresetConfig"),
+  true,
+  "endurance_stream square modal uses a dedicated default config"
+);
+assert.equal(
+  componentSource.includes("createEnduranceStreamIriamSquareDraft(config)"),
+  true,
+  "endurance_stream square modal applies the configured square draft helper"
+);
+assert.equal(
+  /presetId === "endurance_stream"\s*\?\s*"pop_bubble"/.test(componentSource),
+  true,
+  "endurance_stream settings modal keeps the background style fixed to pop_bubble"
+);
+assert.equal(
+  copySource.includes('endurance_stream: "耐久プリセット設定"'),
+  true,
+  "Japanese endurance_stream square settings modal title is localized"
+);
+assert.equal(
+  copySource.includes('endurance_stream: "Endurance Stream preset settings"'),
+  true,
+  "English endurance_stream square settings modal title is localized"
 );
 assert.equal(
   source.includes("createEnduranceStreamIriamSquareDraft"),

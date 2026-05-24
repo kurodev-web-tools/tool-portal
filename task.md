@@ -13,6 +13,43 @@
 
 ## Current Work Log
 
+### 2026-05-24 - Thumbnail Editor 1:1 IRIAM endurance_stream square settings modal
+
+- base check:
+  - `git fetch origin --prune` 済み。
+  - PR #199 (`codex/thumbnail-iriam-first-stream-square-modal` -> `codex/thumbnail-iriam-square-preview`) は `MERGED`。merge commit `b1bce62ff17fc4861b1530b01d5888bdc84f2596`。
+  - 新規 branch / worktree: `codex/thumbnail-iriam-endurance-square-modal`, `D:/V_streamer_tools/.worktrees/thumbnail-iriam-endurance-square-modal`。
+- implementation:
+  - `耐久` / `endurance_stream` を既存 IRIAM square settings modal に接続した。
+  - `endurance_stream` modal は background style を `pop_bubble` 固定にし、background colorway 5色と title colorway `match-background` + 5色のみを選択可能にした。
+  - modal apply は `createEnduranceStreamIriamSquareDraft(config)` を使い、既存の handoff / main text carryover / recent preset record flow に合わせた。
+  - settings modal copy を JA / EN に追加した。
+  - schema / 右パネル / 9:16 preset / title image 生成 / font 追加 / background style 追加は未変更。
+- verification:
+  - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` が `square settings modal type includes endurance_stream` で失敗することを確認。
+  - PASS: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+  - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `npm run lint`
+- width check:
+  - Playwright / `http://localhost:3011/tools/thumbnail-editor` / `npm run dev -- --webpack -p 3011`。
+  - 操作: `square-1-1` に切り替え、`耐久配信` preset から settings modal を開いた。
+  - `390px`: modal preset `endurance_stream`、`pop_bubble` body copy visible、background style group hidden、background colorway 5、title colorway 6、horizontal overflow なし、console error なし。
+  - `820px`: modal preset `endurance_stream`、`pop_bubble` body copy visible、background style group hidden、background colorway 5、title colorway 6、horizontal overflow なし、console error なし。
+  - `1024px`: modal preset `endurance_stream`、`pop_bubble` body copy visible、background style group hidden、background colorway 5、title colorway 6、horizontal overflow なし、console error なし。
+  - `1280px`: modal preset `endurance_stream`、`pop_bubble` body copy visible、background style group hidden、background colorway 5、title colorway 6、horizontal overflow なし、console error なし。
+  - `1366px`: modal preset `endurance_stream`、`pop_bubble` body copy visible、background style group hidden、background colorway 5、title colorway 6、horizontal overflow なし、console error なし。
+- remaining risk:
+  - settings modal からの initial draft 作成のみ。右パネルでの background / title 後付け変更 UI は未対応。
+  - visual check は modal control boundary と overflow の確認まで。最終的な見た目の微調整は review で扱う。
+- next action:
+  - review / merge 後、IRIAM square modal 接続済み範囲を task board で整理し、必要なら次の square preset / 右パネル / schema slice を別 PR で検討する。
+
 ### 2026-05-24 - Thumbnail Editor 1:1 IRIAM first_stream square settings modal
 
 - base check:

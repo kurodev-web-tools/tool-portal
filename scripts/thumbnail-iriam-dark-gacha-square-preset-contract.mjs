@@ -103,6 +103,31 @@ assert.equal(
   "dark gacha square title image survives normalization"
 );
 
+const configuredDraft = lib.createDarkGachaIriamSquareDraft({
+  backgroundColorway: "blue",
+  titleColorway: "yellow"
+});
+assert.deepEqual(configuredDraft.canvas, { width: 1080, height: 1080 }, "configured dark gacha square draft keeps the IRIAM canvas");
+assert.equal(
+  configuredDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("背景"))?.src,
+  `${backgroundPrefix}karaoke-square-dark-cute-blue-v1.png`,
+  "configured dark gacha square draft keeps dark_cute fixed while changing the background colorway"
+);
+assert.equal(
+  configuredDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("タイトル"))?.src,
+  `${titlePrefix}dark-gacha-square-title-yellow-v1.png`,
+  "configured dark gacha square draft can choose a title colorway independently from the background"
+);
+const matchedTitleDraft = lib.createDarkGachaIriamSquareDraft({
+  backgroundColorway: "mint",
+  titleColorway: "match-background"
+});
+assert.equal(
+  matchedTitleDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("タイトル"))?.src,
+  `${titlePrefix}dark-gacha-square-title-mint-v1.png`,
+  "dark gacha match-background title selection follows the chosen background colorway"
+);
+
 const karaokeSquareDraft = lib.createDraftFromPresetVariant("karaoke", "square-1-1");
 assert.equal(karaokeSquareDraft.presetId, "karaoke", "karaoke square preset remains the existing square default");
 assert.equal(
@@ -120,6 +145,26 @@ assert.equal(
   componentSource.includes('createDraftFromPresetVariant(presetId, currentVariantId)'),
   true,
   "square preset application uses the variant body instead of scaling a 16:9 preset"
+);
+assert.equal(
+  componentSource.includes('presetId === "karaoke" || presetId === "dark_gacha"'),
+  true,
+  "square preset cards open the settings modal for karaoke and dark gacha"
+);
+assert.equal(
+  componentSource.includes("createDarkGachaIriamSquareDraft(config)"),
+  true,
+  "dark gacha settings modal applies the configured square draft"
+);
+assert.equal(
+  componentSource.includes('presetId === "dark_gacha" ? "dark_cute"'),
+  true,
+  "dark gacha settings modal keeps the background style fixed to dark_cute"
+);
+assert.equal(
+  componentSource.includes('data-thumbnail-iriam-square-modal-preset={presetId}'),
+  true,
+  "square settings modal exposes the active preset for UI verification"
 );
 
 console.log("thumbnail iriam dark gacha square preset contract checks passed");

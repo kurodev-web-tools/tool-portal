@@ -8,6 +8,7 @@ import {
   applyThumbnailPresetPartial,
   applyThumbnailStandeePlacementPreset,
   applyThumbnailUserMaterialLayerFallback,
+  createDarkGachaIriamSquareDraft,
   createNextRecentThumbnailPresetIds,
   createKaraokeIriamSquareDraft,
   createDraftFromPreset,
@@ -40,6 +41,7 @@ import {
   replaceThumbnailUserMaterialLayerRef,
   getThumbnailIriamSquareKaraokeBackgroundAsset,
   getThumbnailIriamSquareKaraokeTitleAsset,
+  getThumbnailIriamSquareTitleAsset,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
   thumbnailFontRecentStorageKey,
@@ -60,9 +62,11 @@ import {
   type ThumbnailCanvasSizeId,
   type ThumbnailEditorDraft,
   type ThumbnailIriamSquareColorway,
+  type ThumbnailIriamSquareDarkGachaPresetConfig,
   type ThumbnailIriamSquareKaraokeBackgroundStyle,
   type ThumbnailIriamSquareKaraokePresetConfig,
   type ThumbnailIriamSquareKaraokeTitleColorway,
+  type ThumbnailIriamSquareTitleColorway,
   type ThumbnailLayer,
   type ThumbnailMaterialCategory,
   type ThumbnailPreset,
@@ -132,6 +136,8 @@ type EditorMode = "edit" | "pan";
 type PresetApplyMode = "plain" | "carryover" | "handoff";
 type CanvasInteractionMode = "drag" | "resize" | "rotate";
 type CanvasCursor = "default" | "move" | "grab" | "grabbing" | "crosshair" | "nwse-resize" | "nesw-resize";
+type IriamSquarePresetModalPresetId = "karaoke" | "dark_gacha";
+type IriamSquarePresetModalConfig = ThumbnailIriamSquareKaraokePresetConfig | ThumbnailIriamSquareDarkGachaPresetConfig;
 type CanvasInteractionState = {
   pointerId: number;
   pointerType: string;
@@ -435,6 +441,10 @@ const defaultThumbnailIriamSquarePresetConfig: ThumbnailIriamSquareKaraokePreset
   backgroundColorway: "pink-blue",
   titleColorway: "match-background"
 };
+const defaultThumbnailIriamSquareDarkGachaPresetConfig: ThumbnailIriamSquareDarkGachaPresetConfig = {
+  backgroundColorway: "purple",
+  titleColorway: "match-background"
+};
 const createThumbnailToSnsImageStorageId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${thumbnailToSnsImageStoragePrefix}-${crypto.randomUUID()}`;
@@ -517,8 +527,9 @@ export function ThumbnailEditorApp() {
   const [userMaterialImageUrls, setUserMaterialImageUrls] = useState<Record<string, string>>({});
   const [replaceUserMaterialRef, setReplaceUserMaterialRef] = useState<ThumbnailUserMaterialRef | null>(null);
   const [pendingPresetApplyId, setPendingPresetApplyId] = useState<ThumbnailPresetId | null>(null);
-  const [iriamSquarePresetModalOpen, setIriamSquarePresetModalOpen] = useState(false);
+  const [iriamSquarePresetModalPresetId, setIriamSquarePresetModalPresetId] = useState<IriamSquarePresetModalPresetId | null>(null);
   const [thumbnailIriamSquarePresetConfig, setThumbnailIriamSquarePresetConfig] = useState<ThumbnailIriamSquareKaraokePresetConfig>(defaultThumbnailIriamSquarePresetConfig);
+  const [thumbnailIriamSquareDarkGachaPresetConfig, setThumbnailIriamSquareDarkGachaPresetConfig] = useState<ThumbnailIriamSquareDarkGachaPresetConfig>(defaultThumbnailIriamSquareDarkGachaPresetConfig);
   const [inlineTextEdit, setInlineTextEdit] = useState<InlineTextEditState | null>(null);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const [canvasAttachVersion, setCanvasAttachVersion] = useState(0);
@@ -1284,9 +1295,13 @@ export function ThumbnailEditorApp() {
       setHeaderMenuOpen(null);
       return;
     }
-    if (currentVariantId === "square-1-1" && presetId === "karaoke") {
-      setThumbnailIriamSquarePresetConfig(defaultThumbnailIriamSquarePresetConfig);
-      setIriamSquarePresetModalOpen(true);
+    if (currentVariantId === "square-1-1" && (presetId === "karaoke" || presetId === "dark_gacha")) {
+      if (presetId === "karaoke") {
+        setThumbnailIriamSquarePresetConfig(defaultThumbnailIriamSquarePresetConfig);
+      } else {
+        setThumbnailIriamSquareDarkGachaPresetConfig(defaultThumbnailIriamSquareDarkGachaPresetConfig);
+      }
+      setIriamSquarePresetModalPresetId(presetId);
       setPendingPresetApplyId(null);
       setHeaderMenuOpen(null);
       return;
@@ -1332,7 +1347,20 @@ export function ThumbnailEditorApp() {
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
     replaceDraft(nextDraft, { recordHistory: true });
     setThumbnailIriamSquarePresetConfig(config);
-    setIriamSquarePresetModalOpen(false);
+    setIriamSquarePresetModalPresetId(null);
+    setMobilePanel("canvas");
+    showToast("success", copy.toasts.applyPlain);
+  };
+
+  const applyDarkGachaIriamSquarePreset = (config: ThumbnailIriamSquareDarkGachaPresetConfig) => {
+    recordPresetUse("dark_gacha");
+    const next = localizeThumbnailPresetTextLayerBodies(createDarkGachaIriamSquareDraft(config), locale);
+    const nextDraft = handoffPayload
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
+      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+    replaceDraft(nextDraft, { recordHistory: true });
+    setThumbnailIriamSquareDarkGachaPresetConfig(config);
+    setIriamSquarePresetModalPresetId(null);
     setMobilePanel("canvas");
     showToast("success", copy.toasts.applyPlain);
   };
@@ -2407,13 +2435,26 @@ export function ThumbnailEditorApp() {
         </div>
       ) : null}
 
-      {iriamSquarePresetModalOpen ? (
+      {iriamSquarePresetModalPresetId ? (
         <IriamSquareKaraokePresetDialog
           copy={copy}
-          config={thumbnailIriamSquarePresetConfig}
-          onConfigChange={setThumbnailIriamSquarePresetConfig}
-          onApply={() => applyKaraokeIriamSquarePreset(thumbnailIriamSquarePresetConfig)}
-          onCancel={() => setIriamSquarePresetModalOpen(false)}
+          presetId={iriamSquarePresetModalPresetId}
+          config={iriamSquarePresetModalPresetId === "dark_gacha" ? thumbnailIriamSquareDarkGachaPresetConfig : thumbnailIriamSquarePresetConfig}
+          onConfigChange={(config) => {
+            if (iriamSquarePresetModalPresetId === "dark_gacha") {
+              setThumbnailIriamSquareDarkGachaPresetConfig(config as ThumbnailIriamSquareDarkGachaPresetConfig);
+            } else {
+              setThumbnailIriamSquarePresetConfig(config as ThumbnailIriamSquareKaraokePresetConfig);
+            }
+          }}
+          onApply={() => {
+            if (iriamSquarePresetModalPresetId === "dark_gacha") {
+              applyDarkGachaIriamSquarePreset(thumbnailIriamSquareDarkGachaPresetConfig);
+            } else {
+              applyKaraokeIriamSquarePreset(thumbnailIriamSquarePresetConfig);
+            }
+          }}
+          onCancel={() => setIriamSquarePresetModalPresetId(null)}
         />
       ) : null}
 
@@ -3449,21 +3490,27 @@ function PresetApplyConfirmDialog({
 
 function IriamSquareKaraokePresetDialog({
   copy,
+  presetId,
   config,
   onConfigChange,
   onApply,
   onCancel
 }: {
   copy: ReturnType<typeof getThumbnailEditorCopy>;
-  config: ThumbnailIriamSquareKaraokePresetConfig;
-  onConfigChange: (config: ThumbnailIriamSquareKaraokePresetConfig) => void;
+  presetId: IriamSquarePresetModalPresetId;
+  config: IriamSquarePresetModalConfig;
+  onConfigChange: (config: IriamSquarePresetModalConfig) => void;
   onApply: () => void;
   onCancel: () => void;
 }) {
-  const background = getThumbnailIriamSquareKaraokeBackgroundAsset(config.backgroundStyle, config.backgroundColorway);
-  const title = getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway, config.backgroundColorway);
-  const updateConfig = (partial: Partial<ThumbnailIriamSquareKaraokePresetConfig>) => onConfigChange({ ...config, ...partial });
-  const titleColorOptions: ThumbnailIriamSquareKaraokeTitleColorway[] = ["match-background", ...thumbnailIriamSquareColorways];
+  const backgroundStyle: ThumbnailIriamSquareKaraokeBackgroundStyle = presetId === "dark_gacha" ? "dark_cute" : (config as ThumbnailIriamSquareKaraokePresetConfig).backgroundStyle;
+  const background = getThumbnailIriamSquareKaraokeBackgroundAsset(backgroundStyle, config.backgroundColorway);
+  const title =
+    presetId === "dark_gacha"
+      ? getThumbnailIriamSquareTitleAsset("dark_gacha", config.titleColorway, config.backgroundColorway)
+      : getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway as ThumbnailIriamSquareKaraokeTitleColorway, config.backgroundColorway);
+  const updateConfig = (partial: Partial<IriamSquarePresetModalConfig>) => onConfigChange({ ...config, ...partial } as IriamSquarePresetModalConfig);
+  const titleColorOptions: ThumbnailIriamSquareTitleColorway[] = ["match-background", ...thumbnailIriamSquareColorways];
 
   return (
     <div
@@ -3472,20 +3519,21 @@ function IriamSquareKaraokePresetDialog({
       aria-modal="true"
       aria-labelledby="iriam-square-preset-title"
       data-thumbnail-iriam-square-modal="true"
+      data-thumbnail-iriam-square-modal-preset={presetId}
     >
       <div className="grid max-h-[94vh] w-full max-w-5xl overflow-hidden rounded-base border border-border bg-background shadow-panel min-[900px]:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-h-0 overflow-auto border-b border-border p-4 min-[900px]:border-b-0 min-[900px]:border-r md:p-5">
           <p className="text-xs font-bold text-primary-strong">{copy.iriamSquareDialog.eyebrow}</p>
           <h2 id="iriam-square-preset-title" className="mt-1 text-lg font-black text-foreground">
-            {copy.iriamSquareDialog.title}
+            {copy.iriamSquareDialog.presetTitles[presetId]}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-muted">{copy.iriamSquareDialog.body}</p>
+          <p className="mt-2 text-sm leading-6 text-muted">{copy.iriamSquareDialog.presetBodies[presetId]}</p>
           <div className="mx-auto mt-4 w-full max-w-[34rem]">
             <p className="mb-2 text-xs font-bold text-muted">{copy.iriamSquareDialog.preview}</p>
             <div className="relative aspect-square overflow-hidden rounded-base border border-border bg-surface-muted shadow-panel">
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${background.src})` }} />
               <div className="absolute left-[14%] top-[7%] h-[40%] w-[72%] rounded-full bg-white/15 blur-xl" />
-              <div className="absolute left-[14.8%] top-[11.7%] aspect-[760/320] w-[70.4%] bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${title.src})` }} />
+              <div className="absolute left-[14.8%] top-[11.7%] aspect-[760/320] w-[70.4%] bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${title?.src ?? ""})` }} />
               <div className="absolute bottom-[13%] left-[9%] h-[10.5%] w-[42%] rounded-full border border-white/65 bg-white/78" />
               <div className="absolute bottom-[8%] right-[11%] h-[38%] w-[31%] rounded-[2.4rem] border-2 border-white/75 bg-white/10" />
             </div>
@@ -3493,13 +3541,15 @@ function IriamSquareKaraokePresetDialog({
         </div>
         <div className="min-h-0 overflow-auto p-4 md:p-5">
           <div className="space-y-4">
-            <IriamSquareOptionGroup
-              label={copy.iriamSquareDialog.backgroundStyle}
-              options={thumbnailIriamSquareKaraokeBackgroundStyles}
-              value={config.backgroundStyle}
-              getLabel={(value) => copy.iriamSquareDialog.styleLabels[value as ThumbnailIriamSquareKaraokeBackgroundStyle]}
-              onChange={(value) => updateConfig({ backgroundStyle: value as ThumbnailIriamSquareKaraokeBackgroundStyle })}
-            />
+            {presetId === "karaoke" ? (
+              <IriamSquareOptionGroup
+                label={copy.iriamSquareDialog.backgroundStyle}
+                options={thumbnailIriamSquareKaraokeBackgroundStyles}
+                value={(config as ThumbnailIriamSquareKaraokePresetConfig).backgroundStyle}
+                getLabel={(value) => copy.iriamSquareDialog.styleLabels[value as ThumbnailIriamSquareKaraokeBackgroundStyle]}
+                onChange={(value) => updateConfig({ backgroundStyle: value as ThumbnailIriamSquareKaraokeBackgroundStyle })}
+              />
+            ) : null}
             <IriamSquareOptionGroup
               label={copy.iriamSquareDialog.backgroundColor}
               options={thumbnailIriamSquareColorways}
@@ -3516,7 +3566,7 @@ function IriamSquareKaraokePresetDialog({
                   ? copy.iriamSquareDialog.matchBackground
                   : copy.iriamSquareDialog.colorLabels[value as ThumbnailIriamSquareColorway]
               }
-              onChange={(value) => updateConfig({ titleColorway: value as ThumbnailIriamSquareKaraokeTitleColorway })}
+              onChange={(value) => updateConfig({ titleColorway: value as ThumbnailIriamSquareTitleColorway })}
             />
           </div>
           <div className="mt-5 flex flex-col-reverse gap-2 min-[520px]:flex-row min-[520px]:justify-end">

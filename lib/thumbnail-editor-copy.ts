@@ -1044,6 +1044,7 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     first_stream: {
       "テキスト 4（ラベル）": "DEBUT STREAM",
       "テキスト 1（見出し）": "Debut\nStream",
+      "テキスト 1（見出し補助）": "Nice to meet you",
       "テキスト 2（時刻）": "20:00 START",
       "テキスト 3（サブ）": "Nice to meet you!"
     },

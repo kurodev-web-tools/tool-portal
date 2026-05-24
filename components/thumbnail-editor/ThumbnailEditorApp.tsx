@@ -433,7 +433,7 @@ const getPresetsByIds = (presetIds: ThumbnailPresetId[]) =>
     .map((presetId) => thumbnailPresets.find((preset) => preset.id === presetId))
     .filter((preset): preset is ThumbnailPreset => Boolean(preset));
 const isPresetSelectableForVariant = (presetId: ThumbnailPresetId, variantId: ThumbnailPresetVariantId) =>
-  variantId === "square-1-1" ? presetId === "karaoke" || presetId === "dark_gacha" : presetId !== "dark_gacha";
+  variantId === "square-1-1" ? presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" : presetId !== "dark_gacha";
 const getThumbnailPresetsForVariant = (variantId: ThumbnailPresetVariantId) =>
   thumbnailPresets.filter((preset) => isPresetSelectableForVariant(preset.id, variantId));
 const defaultThumbnailIriamSquarePresetConfig: ThumbnailIriamSquareKaraokePresetConfig = {
@@ -1378,7 +1378,14 @@ export function ThumbnailEditorApp() {
 
   const changePresetVariant = (variantId: ThumbnailPresetVariantId) => {
     const variant = thumbnailPresetVariants[variantId];
-    const targetPresetId = variantId === "square-1-1" ? "karaoke" : draft.presetId === "dark_gacha" ? "karaoke" : draft.presetId;
+    const targetPresetId =
+      variantId === "square-1-1"
+        ? isPresetSelectableForVariant(draft.presetId, variantId)
+          ? draft.presetId
+          : "karaoke"
+        : draft.presetId === "dark_gacha"
+          ? "karaoke"
+          : draft.presetId;
     const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, variantId), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)

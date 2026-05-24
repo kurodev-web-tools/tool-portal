@@ -198,9 +198,9 @@ assert.equal(
   "editor canvas preview sets visual height from the active draft canvas"
 );
 assert.equal(
-  componentSource.includes('const targetPresetId = variantId === "square-1-1" ? "karaoke" : draft.presetId'),
+  componentSource.includes('isPresetSelectableForVariant(draft.presetId, variantId)'),
   true,
-  "switching to square routes to the karaoke IRIAM preset body instead of scaling unrelated 16:9 presets"
+  "switching to square preserves square-capable presets and falls back to karaoke for unrelated 16:9 presets"
 );
 assert.equal(
   componentSource.includes('currentVariantId === "square-1-1" && preset.id !== "karaoke"'),

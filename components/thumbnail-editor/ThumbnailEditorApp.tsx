@@ -35,6 +35,7 @@ import {
   getThumbnailUserMaterialUsageSummary,
   getLayerCenter,
   getThumbnailIriamSquareBackgroundPanelModel,
+  getThumbnailIriamSquareTitlePanelModel,
   hitTestLayerHandle,
   isThumbnailDraftPristineForPreset,
   layerContainsPoint,
@@ -45,6 +46,7 @@ import {
   pointToLayerLocal,
   replaceThumbnailUserMaterialLayerRef,
   replaceThumbnailIriamSquareBackgroundLayerSource,
+  replaceThumbnailIriamSquareTitleLayerSource,
   getThumbnailIriamSquareKaraokeBackgroundAsset,
   getThumbnailIriamSquareKaraokeTitleAsset,
   getThumbnailIriamSquareTitleAsset,
@@ -3028,6 +3030,7 @@ function PropertyPanel({
         : null;
   const layerNameDisplayValue = getThumbnailLayerDisplayName(layer, locale);
   const iriamSquareBackgroundModel = getThumbnailIriamSquareBackgroundPanelModel(currentVariantId, presetId, layer);
+  const iriamSquareTitleModel = getThumbnailIriamSquareTitlePanelModel(currentVariantId, layer);
 
   return (
     <section className="panel min-w-0 space-y-4 p-4">
@@ -3062,6 +3065,13 @@ function PropertyPanel({
           copy={copy}
           model={iriamSquareBackgroundModel}
           onChange={(next) => onChange((item) => replaceThumbnailIriamSquareBackgroundLayerSource(item, presetId, next))}
+        />
+      ) : null}
+      {iriamSquareTitleModel ? (
+        <IriamSquareTitleSwapPanel
+          copy={copy}
+          model={iriamSquareTitleModel}
+          onChange={(colorway) => onChange((item) => replaceThumbnailIriamSquareTitleLayerSource(item, colorway))}
         />
       ) : null}
       <LayerQuickAdjustPanel copy={copy} locale={locale} layer={layer} canvas={canvas} onChange={onChange} />
@@ -3135,6 +3145,39 @@ function IriamSquareBackgroundSwapPanel({
           }
         />
       </div>
+    </div>
+  );
+}
+
+function IriamSquareTitleSwapPanel({
+  copy,
+  model,
+  onChange
+}: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  model: NonNullable<ReturnType<typeof getThumbnailIriamSquareTitlePanelModel>>;
+  onChange: (colorway: ThumbnailIriamSquareColorway) => void;
+}) {
+  return (
+    <div className="rounded-base border border-primary/35 bg-primary-soft/35 p-3" data-thumbnail-iriam-square-title-swap="true">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-black text-foreground">{copy.iriamSquareTitleSwap.title}</h3>
+        <span className="text-[10px] font-bold text-muted">{copy.iriamSquareTitleSwap.note}</span>
+      </div>
+      <div className="mb-3 flex items-center gap-3 rounded-base border border-border bg-surface/80 p-2">
+        <div className="h-14 w-14 shrink-0 rounded-base border border-border bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${model.selectedSrc})` }} />
+        <div className="min-w-0 text-[11px] font-bold text-muted">
+          <p className="truncate text-foreground">{model.selectedTitleText}</p>
+          <p className="mt-0.5 truncate">{copy.iriamSquareDialog.colorLabels[model.selectedColorway]}</p>
+        </div>
+      </div>
+      <IriamSquareOptionGroup
+        label={copy.iriamSquareDialog.titleColor}
+        options={model.colorways}
+        value={model.selectedColorway}
+        getLabel={(value) => copy.iriamSquareDialog.colorLabels[value as ThumbnailIriamSquareColorway]}
+        onChange={(colorway) => onChange(colorway as ThumbnailIriamSquareColorway)}
+      />
     </div>
   );
 }

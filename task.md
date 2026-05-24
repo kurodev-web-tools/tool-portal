@@ -317,6 +317,23 @@
        - visual result: 5色とも soft_cloud 1:1 背景上で読める。装飾要素は追加せず、可読性用の fill / stroke / light outline のみに限定。
        - verification result: 5 title images are 760 x 320 PNG RGBA with transparent pixels. 5 previews are 1080 x 1080 PNG RGBA.
        - remaining risk: preview は既存 `karaoke` soft_cloud 背景での確認用。`初配信` 専用 1:1 背景や preset body にはまだ接続していない。
+     - 2026-05-24 `雑談` 5色 title image slice:
+       - created title images:
+         - `public/assets/images/thumbnail-editor/iriam-square/chatting/titles/chatting-square-title-pink-blue-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/chatting/titles/chatting-square-title-blue-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/chatting/titles/chatting-square-title-yellow-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/chatting/titles/chatting-square-title-purple-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/chatting/titles/chatting-square-title-mint-v1.png`
+       - created previews:
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-yusei-magic-pink-blue-on-pop-bubble-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-yusei-magic-blue-on-pop-bubble-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-yusei-magic-yellow-on-pop-bubble-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-yusei-magic-purple-on-pop-bubble-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-yusei-magic-mint-on-pop-bubble-preview.png`
+       - visual result: 5色とも `pop_bubble` 1:1 背景上で読める。title image 内の星、ハート、リボン、小丸、カーブ線などは追加せず、可読性用の fill / stroke / shadow / light outline のみに限定。
+       - verification result: 5 title images are 760 x 320 PNG RGBA with transparent pixels. 5 previews are 1080 x 1080 PNG RGBA.
+       - remaining risk: preview は既存 `karaoke` `pop_bubble` 背景での確認用。`雑談` 専用 1:1 背景、preset body、settings modal option にはまだ接続していない。
+       - next genre candidate: `耐久`。`Dela Gothic One` 400 で5色展開し、stroke / shadow の勢いを `pop_bubble` または `dark_cute` 背景上で確認する。
    - decoration:
      - 吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベル。
      - 16:9 preset にも流用できる generic material として登録する。

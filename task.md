@@ -13,6 +13,40 @@
 
 ## Current Work Log
 
+### 2026-05-24 - Thumbnail Editor 1:1 IRIAM chatting settings modal
+
+- base check:
+  - `git fetch origin --prune` 済み。
+  - PR #195 (`codex/thumbnail-iriam-chatting-square-body` -> `codex/thumbnail-iriam-square-preview`) は `MERGED`。merge commit `9353a00896e201f94affd69a1203414670093eac`。
+  - 新規 branch / worktree: `codex/thumbnail-iriam-chatting-square-settings-modal`, `D:/V_streamer_tools/.worktrees/thumbnail-iriam-chatting-square-settings-modal`。
+- implementation:
+  - `雑談` / `chatting` を既存 IRIAM square settings modal に接続した。
+  - `chatting` modal は background style を `pop_bubble` 固定にし、background colorway 5色と title colorway `match-background` + 5色のみを選択可能にした。
+  - `雑談` 用の modal title / body copy を JA / EN に追加した。
+  - schema / 右パネル / 9:16 preset / 他ジャンル preset body / title image 生成 / font 追加は未変更。
+- verification:
+  - RED: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs` が `square settings modal type includes chatting` で失敗することを確認。
+  - PASS: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+  - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `npm run lint`
+  - PASS: `git diff --check`（whitespace error なし。Windows 改行 warning のみ）
+- width check:
+  - Chrome DevTools MCP / `http://localhost:3017/tools/thumbnail-editor` / `npx next dev --webpack -p 3017`。
+  - `390px`: `雑談` modal 表示、`pop_bubble` copy 表示、background style 非表示、background color / title color controls のみ、horizontal overflow なし。
+  - `820px`: `雑談` modal 表示、`pop_bubble` copy 表示、background style 非表示、background color / title color controls のみ、horizontal overflow なし。
+  - `1024px`: `雑談` modal 表示、`pop_bubble` copy 表示、background style 非表示、background color / title color controls のみ、horizontal overflow なし。
+  - `1280px`: `雑談` modal 表示、`pop_bubble` copy 表示、background style 非表示、background color / title color controls のみ、horizontal overflow なし。
+  - `1366px`: `雑談` modal 表示、`pop_bubble` copy 表示、background style 非表示、background color / title color controls のみ、horizontal overflow なし。console error / warn なし。
+- remaining risk:
+  - settings modal からの initial draft 作成のみ。右パネルでの background / title 後付け変更 UI は未対応。
+  - visual check は modal control boundary と overflow の確認まで。配色バランスの追加調整は後続 review で扱う。
+- next action:
+  - review / merge 後、次 slice は同じ base 上で別ジャンルまたは square modal polish を 1 PR に分ける。
+
 ### 2026-05-24 - Thumbnail Editor 1:1 IRIAM chatting square preset body
 
 - base check:

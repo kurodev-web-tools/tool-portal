@@ -13,6 +13,45 @@
 
 ## Current Work Log
 
+### 2026-05-24 - Thumbnail Editor 1:1 IRIAM endurance_stream square preset body
+
+- base check:
+  - `git fetch origin --prune` 済み。
+  - PR #197 (`codex/thumbnail-iriam-first-stream-square-body` -> `codex/thumbnail-iriam-square-preview`) は `MERGED`。merge commit `273f9176e0704e07c80cb4818f9f1fd114a837ea`。
+  - 新規 branch / worktree: `codex/thumbnail-iriam-endurance-square-body`, `D:/V_streamer_tools/.worktrees/thumbnail-iriam-endurance-square-body`。
+- implementation:
+  - `耐久` / `endurance_stream` を square variant の preset body に接続した。
+  - `endurance_stream` title image 5色を IRIAM square title registry に追加し、既存 production asset の transparent PNG layer として配置した。
+  - `createEnduranceStreamIriamSquareDraft()` を追加。background style は `pop_bubble` 固定、default colorway は `yellow`、title colorway は `match-background` default。
+  - square variant の preset list に `endurance_stream` を追加した。settings modal は既存の `karaoke` / `dark_gacha` / `chatting` のみ維持し、`endurance_stream` は body 接続だけに閉じた。
+  - schema / 右パネル / 9:16 preset / settings modal / title image 生成 / font 追加 / background style 追加は未変更。
+- verification:
+  - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` が、`endurance_stream` square が 16:9 body の scaled image layers のままだったため失敗することを確認。
+  - RED: `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs` が、square title registry に `endurance_stream` がないため失敗することを確認。
+  - PASS: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+  - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `npm run lint`
+  - PASS: `git diff --check`（whitespace error なし。Windows 改行 warning のみ）
+- width check:
+  - Playwright CLI / `http://localhost:3019/tools/thumbnail-editor` / `npm run dev -- --webpack -p 3019`。
+  - `390px`: initial page screenshot capture 成功。
+  - `820px`: initial page screenshot capture 成功。
+  - `1024px`: initial page screenshot capture 成功。
+  - `1280px`: initial page screenshot capture 成功。
+  - `1366px`: initial page screenshot capture 成功。
+  - 今回の visual check は page load / layout smoke。square body の `endurance_stream` 適用内容は contract で確認。
+- remaining risk:
+  - `endurance_stream` の background colorway / title colorway は helper API では選べるが、今回 UI modal には接続していない。
+  - `endurance_stream` square card からの作成導線は有効化したが、右パネルでの background / title 後付け変更 UI は未対応。
+- next action:
+  - review / merge 後、必要なら `first_stream` / `endurance_stream` square settings modal 接続、または残り square preset body follow-up を別 PR で検討する。
+
 ### 2026-05-24 - Thumbnail Editor 1:1 IRIAM first_stream square preset body
 
 - base check:

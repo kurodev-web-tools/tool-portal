@@ -287,12 +287,12 @@
        - `node scripts/thumbnail-preset-discovery-contract.mjs` currently fails because that existing script still expects the category filter list before `membership_stream` / `asmr_stream` were added. This is not introduced by the `karaoke / square-1-1` change.
      - UI width checks for the reported 1:1 preview regression are recorded above.
 3. Thumbnail Editor title image / decoration asset phases
-   - status: `雑談` title image は `Yusei Magic`、`初配信` は `Mochiy Pop One`、`耐久` は `Dela Gothic One`、`闇ガチャ` は `New Tegomin` で確定。4フォントは selected title font として self-host 登録済み。次は各ジャンルを1つずつ5色カラバリへ進める。
+   - status: `初配信` title image 5色 slice を作成済み。`雑談` title image は `Yusei Magic`、`初配信` は `Mochiy Pop One`、`耐久` は `Dela Gothic One`、`闇ガチャ` は `New Tegomin` で確定。4フォントは selected title font として self-host 登録済み。次は残りジャンルを1つずつ5色カラバリへ進める。
    - title image:
      - 5ジャンル x 5色 = 25 transparent PNG 候補。
      - font 系統は `handwritten soft`（`Yusei Magic`）、`pop rounded`（`Mochiy Pop One` / `M PLUS Rounded 1c`）、`impact gothic`（`Dela Gothic One` / `Reggae One`）、`serif accent`（`Kaisei Opti` / `Noto Serif JP`）を基本にし、必要時だけ追加候補を検討する。
      - decoration policy: title image 内の星、ハート、リボン、小丸、カーブ線などの飾りは入れない。可読性のための fill / stroke / shadow のみで作る。
-     - next genre候補: `初配信`。`Mochiy Pop One` は方向が固まっているため、pink-blue 5色展開の前に 1:1 standee placeholder と重ねて過度に太すぎないか確認する。
+     - next genre候補: `雑談`。`Yusei Magic` 400 の方向が固まっており、同じ 5色 title image slice に切り出しやすい。
      - remaining risk: `耐久` は `Dela Gothic One` が汎用的な一方で、勢いを出すには stroke / shadow / rotation で補う必要がある。`闇ガチャ` は `New Tegomin` が有力だが、崩れを出しすぎると読みにくいため 5色展開前に dark background 上の縁取り太さを調整する。
      - 2026-05-24 visual check: selected baseline previews were re-opened locally:
        - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-yusei-magic-mint-on-pop-bubble-preview.png`
@@ -301,6 +301,22 @@
        - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-new-tegomin-glyph-verified-purple-on-dark-cute-preview.png`
      - 2026-05-24 verification: `node scripts/thumbnail-font-policy-contract.mjs`, `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`, `npx tsc --noEmit`, and `git diff --check` passed. `git diff --check` reported only LF/CRLF normalization warnings for touched files.
      - 2026-05-24 font asset check: selected title font files were re-downloaded with `font/woff2` accept headers and verified as WOFF2 (`wOF2`) before final verification.
+     - 2026-05-24 `初配信` 5色 title image slice:
+       - created title images:
+         - `public/assets/images/thumbnail-editor/iriam-square/first-stream/titles/first-stream-square-title-pink-blue-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/first-stream/titles/first-stream-square-title-blue-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/first-stream/titles/first-stream-square-title-yellow-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/first-stream/titles/first-stream-square-title-purple-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/first-stream/titles/first-stream-square-title-mint-v1.png`
+       - created previews:
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-mochiy-pop-one-pink-blue-on-soft-cloud-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-mochiy-pop-one-blue-on-soft-cloud-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-mochiy-pop-one-yellow-on-soft-cloud-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-mochiy-pop-one-purple-on-soft-cloud-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-mochiy-pop-one-mint-on-soft-cloud-preview.png`
+       - visual result: 5色とも soft_cloud 1:1 背景上で読める。装飾要素は追加せず、可読性用の fill / stroke / light outline のみに限定。
+       - verification result: 5 title images are 760 x 320 PNG RGBA with transparent pixels. 5 previews are 1080 x 1080 PNG RGBA.
+       - remaining risk: preview は既存 `karaoke` soft_cloud 背景での確認用。`初配信` 専用 1:1 背景や preset body にはまだ接続していない。
    - decoration:
      - 吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベル。
      - 16:9 preset にも流用できる generic material として登録する。

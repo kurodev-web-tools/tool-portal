@@ -137,7 +137,7 @@ assert.equal(
   "preset list exposes karaoke, dark gacha, chatting, first_stream, and endurance_stream while the square variant is active"
 );
 assert.equal(
-  componentSource.includes('currentVariantId === "square-1-1" && (presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting")'),
+  componentSource.includes('currentVariantId === "square-1-1" && (presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream")'),
   true,
   "endurance_stream square body does not join the settings modal in this slice"
 );

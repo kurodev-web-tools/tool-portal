@@ -139,14 +139,14 @@ assert.equal(
   "preset list exposes karaoke, dark gacha, chatting, first_stream, and endurance_stream while the square variant is active"
 );
 assert.equal(
-  componentSource.includes('type IriamSquarePresetModalPresetId = "karaoke" | "dark_gacha" | "chatting"'),
+  componentSource.includes('type IriamSquarePresetModalPresetId = "karaoke" | "dark_gacha" | "chatting" | "first_stream"'),
   true,
-  "square settings modal type includes chatting"
+  "square settings modal type includes chatting and first_stream"
 );
 assert.equal(
-  componentSource.includes('presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting"'),
+  componentSource.includes('presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream"'),
   true,
-  "square preset cards open the settings modal for karaoke, dark gacha, and chatting"
+  "square preset cards open the settings modal for karaoke, dark gacha, chatting, and first_stream"
 );
 assert.equal(
   componentSource.includes("defaultThumbnailIriamSquareChattingPresetConfig"),

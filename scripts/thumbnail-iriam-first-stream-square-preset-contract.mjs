@@ -7,8 +7,10 @@ import ts from "typescript";
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "thumbnail-editor.ts");
 const componentSourcePath = path.join(root, "components", "thumbnail-editor", "ThumbnailEditorApp.tsx");
+const copySourcePath = path.join(root, "lib", "thumbnail-editor-copy.ts");
 const source = fs.readFileSync(sourcePath, "utf8");
 const componentSource = fs.readFileSync(componentSourcePath, "utf8");
+const copySource = fs.readFileSync(copySourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -137,9 +139,39 @@ assert.equal(
   "preset list exposes karaoke, dark gacha, chatting, first_stream, and endurance_stream while the square variant is active"
 );
 assert.equal(
-  componentSource.includes('currentVariantId === "square-1-1" && (presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting")'),
+  componentSource.includes('type IriamSquarePresetModalPresetId = "karaoke" | "dark_gacha" | "chatting" | "first_stream"'),
   true,
-  "first_stream square body does not join the settings modal in this slice"
+  "square settings modal type includes first_stream"
+);
+assert.equal(
+  componentSource.includes('presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream"'),
+  true,
+  "square preset cards open the settings modal for karaoke, dark gacha, chatting, and first_stream"
+);
+assert.equal(
+  componentSource.includes("defaultThumbnailIriamSquareFirstStreamPresetConfig"),
+  true,
+  "first_stream square modal uses a dedicated default config"
+);
+assert.equal(
+  componentSource.includes("createFirstStreamIriamSquareDraft(config)"),
+  true,
+  "first_stream square modal applies the configured square draft helper"
+);
+assert.equal(
+  componentSource.includes('presetId === "first_stream" ? "soft_cloud"'),
+  true,
+  "first_stream settings modal keeps the background style fixed to soft_cloud"
+);
+assert.equal(
+  copySource.includes('first_stream: "初配信プリセット設定"'),
+  true,
+  "Japanese first_stream square settings modal title is localized"
+);
+assert.equal(
+  copySource.includes('first_stream: "First Stream preset settings"'),
+  true,
+  "English first_stream square settings modal title is localized"
 );
 assert.equal(
   source.includes("createFirstStreamIriamSquareDraft"),

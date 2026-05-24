@@ -194,6 +194,14 @@ export const thumbnailEditorCopy = {
       eyebrow: "1:1 IRIAM プリセット",
       title: "歌枠プリセット設定",
       body: "背景とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
+      presetTitles: {
+        karaoke: "歌枠プリセット設定",
+        dark_gacha: "闇ガチャプリセット設定"
+      },
+      presetBodies: {
+        karaoke: "背景とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
+        dark_gacha: "dark_cute 背景の色とタイトル画像の色を選んで、1:1 の下書きとして作成します。"
+      },
       preview: "プレビュー",
       backgroundStyle: "背景タイプ",
       backgroundColor: "背景カラー",
@@ -515,6 +523,14 @@ export const thumbnailEditorCopy = {
       eyebrow: "1:1 IRIAM preset",
       title: "Karaoke preset settings",
       body: "Choose the background and title image color, then create a 1:1 draft.",
+      presetTitles: {
+        karaoke: "Karaoke preset settings",
+        dark_gacha: "Dark Gacha preset settings"
+      },
+      presetBodies: {
+        karaoke: "Choose the background and title image color, then create a 1:1 draft.",
+        dark_gacha: "Choose the dark_cute background color and title image color, then create a 1:1 draft."
+      },
       preview: "Preview",
       backgroundStyle: "Background type",
       backgroundColor: "Background color",

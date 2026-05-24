@@ -13,6 +13,41 @@
 
 ## Current Work Log
 
+### 2026-05-24 - Thumbnail Editor 1:1 IRIAM dark_gacha settings modal
+
+- base check:
+  - `git fetch origin --prune` 済み。
+  - PR #193 (`codex/thumbnail-iriam-dark-cute-square-preset` -> `codex/thumbnail-iriam-square-preview`) は `MERGED`。merge commit `8543eb7115debc5b6c3b2066fe90a6b67a5e4dbd`。
+  - 新規 branch / worktree: `codex/thumbnail-iriam-dark-gacha-settings-modal`, `D:/V_streamer_tools/.worktrees/thumbnail-iriam-dark-gacha-settings-modal`。
+- implementation:
+  - square preset settings modal を `dark_gacha` にも対応させ、`歌枠` と同じ modal pattern で開くようにした。
+  - `dark_gacha` modal は background style を `dark_cute` 固定にし、background colorway 5色と title colorway `match-background` + 5色のみを選択可能にした。
+  - `闇ガチャ` 用の modal title / body copy を JA / EN に追加した。
+  - `createDarkGachaIriamSquareDraft(config)` の configurable contract を追加し、background と title を独立選択できることを固定した。
+  - schema / 右パネル / 9:16 preset / 他ジャンル preset body / title image 生成 / font 追加は未変更。
+- verification:
+  - RED: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs` が `dark gacha settings modal applies the configured square draft` で失敗することを確認。
+  - PASS: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+  - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `npm run lint`
+  - PASS: `git diff --check`
+- width check:
+  - headless Chrome CDP / `http://localhost:3005/tools/thumbnail-editor` / `npm run dev -- --webpack -p 3005`。
+  - `390px`: `闇ガチャ` modal 表示、background style 非表示、background 5色 / title 6択、blue background + yellow title preview 反映、適用後 1080 x 1080 canvas、horizontal overflow なし。
+  - `820px`: `闇ガチャ` modal 表示、background style 非表示、background 5色 / title 6択、blue background + yellow title preview 反映、適用後 1080 x 1080 canvas、horizontal overflow なし。
+  - `1024px`: `闇ガチャ` modal 表示、background style 非表示、background 5色 / title 6択、blue background + yellow title preview 反映、適用後 1080 x 1080 canvas、horizontal overflow なし。
+  - `1280px`: `闇ガチャ` modal 表示、background style 非表示、background 5色 / title 6択、blue background + yellow title preview 反映、適用後 1080 x 1080 canvas、horizontal overflow なし。
+  - `1366px`: `闇ガチャ` modal 表示、background style 非表示、background 5色 / title 6択、blue background + yellow title preview 反映、適用後 1080 x 1080 canvas、horizontal overflow なし。
+  - console error なし。
+- remaining risk:
+  - `dark_gacha` は settings modal からの initial draft 作成のみ。右パネルでの background / title 後付け変更 UI は未対応。
+  - 9:16 preset、保存 schema、user material 経由の title image 差し替え導線は未対応。
+- next action:
+  - review / merge 後、必要なら `雑談` / `初配信` / `耐久` の square preset body 接続を 1 genre / 1 PR で進める。
+
 ### 2026-05-24 - Thumbnail Editor 1:1 IRIAM dark_gacha square preset body
 
 - base check:

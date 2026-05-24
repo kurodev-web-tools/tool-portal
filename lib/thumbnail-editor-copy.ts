@@ -196,11 +196,13 @@ export const thumbnailEditorCopy = {
       body: "背景とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
       presetTitles: {
         karaoke: "歌枠プリセット設定",
-        dark_gacha: "闇ガチャプリセット設定"
+        dark_gacha: "闇ガチャプリセット設定",
+        chatting: "雑談プリセット設定"
       },
       presetBodies: {
         karaoke: "背景とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
-        dark_gacha: "dark_cute 背景の色とタイトル画像の色を選んで、1:1 の下書きとして作成します。"
+        dark_gacha: "dark_cute 背景の色とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
+        chatting: "pop_bubble 背景の色とタイトル画像の色を選んで、1:1 の下書きとして作成します。"
       },
       preview: "プレビュー",
       backgroundStyle: "背景タイプ",
@@ -525,11 +527,13 @@ export const thumbnailEditorCopy = {
       body: "Choose the background and title image color, then create a 1:1 draft.",
       presetTitles: {
         karaoke: "Karaoke preset settings",
-        dark_gacha: "Dark Gacha preset settings"
+        dark_gacha: "Dark Gacha preset settings",
+        chatting: "Chatting preset settings"
       },
       presetBodies: {
         karaoke: "Choose the background and title image color, then create a 1:1 draft.",
-        dark_gacha: "Choose the dark_cute background color and title image color, then create a 1:1 draft."
+        dark_gacha: "Choose the dark_cute background color and title image color, then create a 1:1 draft.",
+        chatting: "Choose the pop_bubble background color and title image color, then create a 1:1 draft."
       },
       preview: "Preview",
       backgroundStyle: "Background type",

@@ -7,8 +7,10 @@ import ts from "typescript";
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "thumbnail-editor.ts");
 const componentSourcePath = path.join(root, "components", "thumbnail-editor", "ThumbnailEditorApp.tsx");
+const copySourcePath = path.join(root, "lib", "thumbnail-editor-copy.ts");
 const source = fs.readFileSync(sourcePath, "utf8");
 const componentSource = fs.readFileSync(componentSourcePath, "utf8");
+const copySource = fs.readFileSync(copySourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,
@@ -137,9 +139,39 @@ assert.equal(
   "preset list exposes karaoke, dark gacha, and chatting while the square variant is active"
 );
 assert.equal(
-  componentSource.includes('presetId === "karaoke" || presetId === "dark_gacha"'),
+  componentSource.includes('type IriamSquarePresetModalPresetId = "karaoke" | "dark_gacha" | "chatting"'),
   true,
-  "square settings modal remains scoped to karaoke and dark gacha"
+  "square settings modal type includes chatting"
+);
+assert.equal(
+  componentSource.includes('presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting"'),
+  true,
+  "square preset cards open the settings modal for karaoke, dark gacha, and chatting"
+);
+assert.equal(
+  componentSource.includes("defaultThumbnailIriamSquareChattingPresetConfig"),
+  true,
+  "chatting square modal uses a dedicated default config"
+);
+assert.equal(
+  componentSource.includes("createChattingIriamSquareDraft(config)"),
+  true,
+  "chatting square modal applies the configured square draft helper"
+);
+assert.equal(
+  componentSource.includes('presetId === "chatting" ? "pop_bubble"'),
+  true,
+  "chatting settings modal keeps the background style fixed to pop_bubble"
+);
+assert.equal(
+  copySource.includes('chatting: "雑談プリセット設定"'),
+  true,
+  "Japanese chatting square settings modal title is localized"
+);
+assert.equal(
+  copySource.includes('chatting: "Chatting preset settings"'),
+  true,
+  "English chatting square settings modal title is localized"
 );
 assert.equal(
   source.includes("createChattingIriamSquareDraft"),

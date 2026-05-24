@@ -141,6 +141,62 @@
      - license: SIL Open Font License 1.1 as recorded in `public/fonts/thumbnail-editor/LICENSES.md`.
      - output: transparent PNG, 760 x 320.
      - title image production registration is in scope for `歌枠` only. Other genres are still out of scope.
+     - 2026-05-23 follow-up: `雑談` / `初配信` / `耐久` / `闇ガチャ` の title image font 方針を確認し、まず `雑談` baseline を作成。
+     - 2026-05-23 font selection:
+       - `雑談`: `Yusei Magic` 400 で確定。Google Fonts / `google/fonts` `ofl/yuseimagic` / SIL Open Font License 1.1。装飾なしでも少し手書き感が出て、ゆるい chat starter に合う。
+       - `初配信`: `Mochiy Pop One` 400 を第一候補。Google Fonts / `google/fonts` `ofl/mochiypopone` / SIL Open Font License 1.1。歓迎感とポップさがあり、装飾なしでも debut title として成立しやすい。
+       - `耐久`: glyph verified 比較後、汎用性を優先して `Dela Gothic One` 400 を第一候補にする。Google Fonts / `google/fonts` `ofl/delagothicone` / SIL Open Font License 1.1。`Rampart One` は強いが用途が狭く、`Dela Gothic One` の方が後続カラバリ / 他背景へ展開しやすい。
+       - `闇ガチャ`: glyph verified 比較では `New Tegomin` 400 が第一候補。Google Fonts / `google/fonts` `ofl/newtegomin` / SIL Open Font License 1.1。強烈すぎず、少し崩れた手触りを出しやすい。
+     - 2026-05-23 font boundary:
+       - `雑談` は Google Fonts から `Yusei Magic` を候補採用。2026-05-24 follow-up で selected title fonts の self-host registration まで実施。
+       - `Mochiy Pop P One` は既存 `歌枠` title image の生成済み asset で使うが、今回の 4ジャンル baseline では追加採用しない。
+       - 系統は `handwritten soft`（`Yusei Magic`）、`pop rounded`（`Mochiy Pop One` / `M PLUS Rounded 1c`）、`impact gothic`（`Dela Gothic One` / `Reggae One`）、`serif accent`（`Kaisei Opti` / `Noto Serif JP`）までに抑える。
+       - 個人制作の一般配布 font は、商用利用可でも再配布 / 改変 / Web 配信 / subset 化の条件が font ごとに揺れやすいため、初回 title image baseline では採用しない。Google Fonts / OFL など source と redistribution 条件を確認しやすいものに限定する。
+     - 2026-05-24 selected title font self-host registration:
+       - `Yusei Magic` 400: `public/fonts/thumbnail-editor/yusei-magic/yusei-magic-400-ja-seed-v1.woff2`
+       - `Mochiy Pop One` 400: `public/fonts/thumbnail-editor/mochiy-pop-one/mochiy-pop-one-400-ja-seed-v1.woff2`
+       - `Dela Gothic One` 400: `public/fonts/thumbnail-editor/dela-gothic-one/dela-gothic-one-400-ja-seed-v1.woff2`
+       - `New Tegomin` 400: `public/fonts/thumbnail-editor/new-tegomin/new-tegomin-400-ja-seed-v1.woff2`
+       - Runtime registration: `components/thumbnail-editor/thumbnailFontAssets.module.css` `@font-face` + `lib/thumbnail-editor.ts` `thumbnailFontManifest` only. Preset body / schema / right panel UI / title image post-edit UI remain out of scope.
+     - 2026-05-23 created chat no-decoration candidates:
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-yusei-magic-mint-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-kiwi-maru-mint-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-m-plus-rounded-1c-mint-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-no-decoration-font-candidates-on-pop-bubble-preview.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-yusei-magic-mint-on-pop-bubble-preview.png`
+     - 2026-05-23 created first-stream no-decoration candidates:
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-mochiy-pop-one-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-dela-gothic-one-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-m-plus-rounded-1c-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-no-decoration-font-candidates-on-soft-cloud-preview.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-mochiy-pop-one-pink-blue-on-soft-cloud-preview.png`
+     - 2026-05-23 created endurance no-decoration candidates, superseded by the 2026-05-24 glyph-verified comparison below because the original `sharp` SVG path did not reliably prove font rendering.
+     - 2026-05-24 created endurance angular follow-up candidates:
+       - root cause: previous `sharp` SVG font comparison looked too similar because font loading / fallback could not be distinguished reliably in that path.
+       - validation: checked `cmap` glyph coverage for `耐久` first, then regenerated with Playwright / Chromium from real `@font-face` rendering.
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-train-one-glyph-verified-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-rampart-one-glyph-verified-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-stick-glyph-verified-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-dela-gothic-one-glyph-verified-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-rocknroll-one-glyph-verified-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-glyph-verified-font-candidates-on-pop-bubble-preview.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-dela-gothic-one-yellow-on-pop-bubble-glyph-verified-preview.png`
+     - 2026-05-23 created dark-gacha no-decoration candidates, superseded by the 2026-05-24 glyph-verified comparison below because the original `sharp` SVG path did not reliably prove font rendering.
+     - 2026-05-24 created dark-gacha rough / handwritten follow-up candidates:
+       - root cause: previous `sharp` SVG font comparison looked too similar because font loading / fallback could not be distinguished reliably in that path.
+       - validation: checked `cmap` glyph coverage for `闇ガチャ` first, then regenerated with Playwright / Chromium from real `@font-face` rendering.
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-new-tegomin-glyph-verified-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-yuji-mai-glyph-verified-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-yuji-boku-glyph-verified-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-zen-antique-glyph-verified-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-kaisei-opti-glyph-verified-no-decoration-candidate.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-glyph-verified-font-candidates-on-dark-cute-preview.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-new-tegomin-glyph-verified-purple-on-dark-cute-preview.png`
+     - 2026-05-23 chat color variation plan:
+       - baseline は `mint`。`pop_bubble` mint 背景上で白系 fill、mint outer stroke、warm peach inner stroke を使い、左 standee 想定の右上寄せでも読める密度にする。
+       - 5色展開は `pink-blue` / `blue` / `yellow` / `purple` / `mint`。背景色に合わせて fill は白系で固定し、outer stroke と inner stroke だけを変える。
+       - 5色展開前に、baseline preview で title が背景 bubble / sparkle に埋もれないこと、standee placeholder と競合しないことを確認する。
+       - 5色展開しても production registration / preset body / settings modal option 追加には進まない。
      - 5ジャンル x カラバリ 5種 = 25枚を候補にする。
      - ただし font 系統は 1-2 種に絞る。最終的に text layer 用 font 追加が入るため、title image を増やしすぎない。
      - title image は背景に焼き込まず、透明 PNG image layer として配置する。
@@ -194,6 +250,24 @@
      - `Mochiy Pop P One` was fetched from Google Fonts only for this comparison mock; no production font registration was added.
      - title candidate PNGs were checked as 760 x 320 transparent PNGs; comparison previews were checked as 1080 x 1080 PNG.
      - `Mochiy Pop P One` title colorways were generated as production title PNGs; runtime font registration was not added because the preset uses transparent title image layers.
+     - 2026-05-23 `雑談` title candidates were generated deterministically from `Yusei Magic` 400, existing self-hosted `Kiwi Maru` 500, and existing self-hosted `M PLUS Rounded 1c` 900; no AI-generated text was used.
+     - 2026-05-23 `Yusei Magic` source/license: Google Fonts `google/fonts` `ofl/yuseimagic`, SIL Open Font License 1.1. The TTF was used only for mock generation and was not committed as a production font asset.
+     - 2026-05-23 `雑談` candidate PNGs were checked as 760 x 320 RGBA PNGs; comparison and single-font previews were checked as 1080 x 1080 RGBA PNG and visually reviewed on the existing `pop_bubble mint` square background.
+     - 2026-05-23 `初配信` / `耐久` / `闇ガチャ` title candidates were generated deterministically from temporary Google Fonts downloads and existing self-hosted fonts; no AI-generated text was used.
+     - 2026-05-23 additional Google Fonts source/license:
+       - `Mochiy Pop One`: Google Fonts `google/fonts` `ofl/mochiypopone`, SIL Open Font License 1.1.
+       - `Dela Gothic One`: Google Fonts `google/fonts` `ofl/delagothicone`, SIL Open Font License 1.1.
+       - `Reggae One`: Google Fonts listing / Fontworks `Reggae`, SIL Open Font License 1.1.
+       - `Kaisei Opti`: Google Fonts `google/fonts` `ofl/kaiseiopti`, SIL Open Font License 1.1.
+       - `Zen Old Mincho`: Google Fonts / `googlefonts/zen-oldmincho`, SIL Open Font License 1.1.
+       - `Train One`: Google Fonts / Fontworks `Train`, SIL Open Font License 1.1.
+       - `Rampart One`: Google Fonts / Fontworks `Rampart`, SIL Open Font License 1.1.
+       - `Stick`: Google Fonts `google/fonts` `ofl/stick`, SIL Open Font License 1.1.
+       - `New Tegomin`: Google Fonts `google/fonts` `ofl/newtegomin`, SIL Open Font License 1.1.
+       - `Yuji Boku`: Google Fonts `google/fonts` `ofl/yujiboku`, SIL Open Font License 1.1.
+       - `Zen Antique`: Google Fonts `google/fonts` `ofl/zenantique`, SIL Open Font License 1.1.
+       - `Yuji Mai`: Google Fonts `google/fonts` `ofl/yujimai`, SIL Open Font License 1.1.
+     - 2026-05-23 additional candidate PNGs were checked as 760 x 320 RGBA PNGs; comparison and first-candidate previews were checked as 1080 x 1080 RGBA PNG and visually reviewed on existing square backgrounds.
      - `karaoke / square-1-1` has a dedicated contract: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`.
      - `square-1-1` UI regression fix:
        - editor canvas style now sets both visual width and height from the active draft canvas.
@@ -213,10 +287,20 @@
        - `node scripts/thumbnail-preset-discovery-contract.mjs` currently fails because that existing script still expects the category filter list before `membership_stream` / `asmr_stream` were added. This is not introduced by the `karaoke / square-1-1` change.
      - UI width checks for the reported 1:1 preview regression are recorded above.
 3. Thumbnail Editor title image / decoration asset phases
-   - status: background asset 確認後に分割して着手する。
+   - status: `雑談` title image は `Yusei Magic`、`初配信` は `Mochiy Pop One`、`耐久` は `Dela Gothic One`、`闇ガチャ` は `New Tegomin` で確定。4フォントは selected title font として self-host 登録済み。次は各ジャンルを1つずつ5色カラバリへ進める。
    - title image:
      - 5ジャンル x 5色 = 25 transparent PNG 候補。
-     - font 系統は `M PLUS Rounded 1c` / `Noto Serif JP` を基本にし、必要時だけ追加候補を検討する。
+     - font 系統は `handwritten soft`（`Yusei Magic`）、`pop rounded`（`Mochiy Pop One` / `M PLUS Rounded 1c`）、`impact gothic`（`Dela Gothic One` / `Reggae One`）、`serif accent`（`Kaisei Opti` / `Noto Serif JP`）を基本にし、必要時だけ追加候補を検討する。
+     - decoration policy: title image 内の星、ハート、リボン、小丸、カーブ線などの飾りは入れない。可読性のための fill / stroke / shadow のみで作る。
+     - next genre候補: `初配信`。`Mochiy Pop One` は方向が固まっているため、pink-blue 5色展開の前に 1:1 standee placeholder と重ねて過度に太すぎないか確認する。
+     - remaining risk: `耐久` は `Dela Gothic One` が汎用的な一方で、勢いを出すには stroke / shadow / rotation で補う必要がある。`闇ガチャ` は `New Tegomin` が有力だが、崩れを出しすぎると読みにくいため 5色展開前に dark background 上の縁取り太さを調整する。
+     - 2026-05-24 visual check: selected baseline previews were re-opened locally:
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-yusei-magic-mint-on-pop-bubble-preview.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-mochiy-pop-one-pink-blue-on-soft-cloud-preview.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-dela-gothic-one-yellow-on-pop-bubble-glyph-verified-preview.png`
+       - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-new-tegomin-glyph-verified-purple-on-dark-cute-preview.png`
+     - 2026-05-24 verification: `node scripts/thumbnail-font-policy-contract.mjs`, `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`, `npx tsc --noEmit`, and `git diff --check` passed. `git diff --check` reported only LF/CRLF normalization warnings for touched files.
+     - 2026-05-24 font asset check: selected title font files were re-downloaded with `font/woff2` accept headers and verified as WOFF2 (`wOF2`) before final verification.
    - decoration:
      - 吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベル。
      - 16:9 preset にも流用できる generic material として登録する。

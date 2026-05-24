@@ -65,8 +65,8 @@ assert.deepEqual(
   "canvas fallback stack stays local/browser-resolved"
 );
 
-assert.equal(lib.thumbnailFontManifest.length, 24, "planning PR's 24 font candidates are available as metadata");
-assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "ja").length, 12, "manifest keeps 12 Japanese candidates");
+assert.equal(lib.thumbnailFontManifest.length, 28, "planning PR's 24 font candidates plus 4 selected IRIAM title fonts are available as metadata");
+assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "ja").length, 16, "manifest keeps 12 Japanese candidates plus 4 selected IRIAM title fonts");
 assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "en").length, 12, "manifest keeps 12 English candidates");
 for (const font of lib.thumbnailFontManifest) {
   assert.equal(typeof font.family, "string", "manifest font family is a string");
@@ -105,10 +105,14 @@ assert.deepEqual(
     "Kiwi Maru": [400, 500],
     Yomogi: [400],
     "Hachi Maru Pop": [400],
+    "Yusei Magic": [400],
+    "Mochiy Pop One": [400],
     "RocknRoll One": [400],
+    "Dela Gothic One": [400],
+    "New Tegomin": [400],
     DotGothic16: [400]
   },
-  "Japanese batch keeps only the selected weight set"
+  "Japanese batch keeps only the selected weight set including selected IRIAM title fonts"
 );
 for (const font of englishFontManifest) {
   assert.equal(typeof font.assetBasePath, "string", `${font.family} English asset path is recorded`);
@@ -154,7 +158,11 @@ assert.deepEqual(
     "Kiwi Maru",
     "Yomogi",
     "Hachi Maru Pop",
+    "Yusei Magic",
+    "Mochiy Pop One",
     "RocknRoll One",
+    "Dela Gothic One",
+    "New Tegomin",
     "DotGothic16",
     "Anton",
     "Bebas Neue",
@@ -180,7 +188,7 @@ assert.deepEqual(
     count: group.categories.reduce((total, category) => total + category.options.length, 0)
   })),
   [
-    { label: "日本語", count: 12 },
+    { label: "日本語", count: 16 },
     { label: "English", count: 12 }
   ],
   "font listbox groups expose all self-hosted manifest fonts by language"

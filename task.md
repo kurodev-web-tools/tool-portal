@@ -192,6 +192,12 @@
        - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-kaisei-opti-glyph-verified-no-decoration-candidate.png`
        - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-glyph-verified-font-candidates-on-dark-cute-preview.png`
        - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-new-tegomin-glyph-verified-purple-on-dark-cute-preview.png`
+     - 2026-05-24 dark-gacha square title registration boundary:
+       - PR #191 state: `MERGED` into `codex/thumbnail-iriam-square-preview`.
+       - branch/worktree: `codex/thumbnail-iriam-square-registration-boundary` at `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-registration-boundary`, based on `origin/codex/thumbnail-iriam-square-preview`.
+       - `lib/thumbnail-editor.ts` now exports generic square title metadata for `karaoke` / `dark_gacha`, plus `thumbnailIriamSquareDarkGachaTitleAssets` and `getThumbnailIriamSquareTitleAsset()`.
+       - registered only `闇ガチャ` / `dark_gacha` title PNG 5 colorways as project-owned transparent title image candidates.
+       - UI, schema, settings modal, 9:16 preset, and `dark_cute` preset body remain out of scope.
      - 2026-05-23 chat color variation plan:
        - baseline は `mint`。`pop_bubble` mint 背景上で白系 fill、mint outer stroke、warm peach inner stroke を使い、左 standee 想定の右上寄せでも読める密度にする。
        - 5色展開は `pink-blue` / `blue` / `yellow` / `purple` / `mint`。背景色に合わせて fill は白系で固定し、outer stroke と inner stroke だけを変える。
@@ -269,6 +275,15 @@
        - `Yuji Mai`: Google Fonts `google/fonts` `ofl/yujimai`, SIL Open Font License 1.1.
      - 2026-05-23 additional candidate PNGs were checked as 760 x 320 RGBA PNGs; comparison and first-candidate previews were checked as 1080 x 1080 RGBA PNG and visually reviewed on existing square backgrounds.
      - `karaoke / square-1-1` has a dedicated contract: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`.
+     - 2026-05-24 dark-gacha registration boundary verification:
+       - RED: `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs` failed before implementation because `thumbnailIriamSquareTitleGenres` was not exported.
+       - GREEN: `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs` passed.
+       - regression: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` passed.
+       - `npx tsc --noEmit` passed.
+       - `git diff --check` passed with LF/CRLF normalization warnings for `lib/thumbnail-editor.ts` and `task.md` only.
+       - UI was not changed, so width-based browser verification is not required for this slice.
+     - remaining risk for the next slice: `dark_gacha` title assets are registered as candidates only; `dark_cute` background connection, preset body layout, and square preset list exposure are still unimplemented.
+     - next action: after this registration PR is reviewed / merged, implement `闇ガチャ` / `dark_cute` square preset body as a separate 1-genre PR with its own contract.
      - `square-1-1` UI regression fix:
        - editor canvas style now sets both visual width and height from the active draft canvas.
        - mobile full preview frame now uses the active draft canvas aspect ratio.

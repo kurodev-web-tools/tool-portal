@@ -131,7 +131,9 @@ export type ThumbnailPresetVariantRef = {
 };
 export type ThumbnailIriamSquareColorway = "pink-blue" | "blue" | "yellow" | "purple" | "mint";
 export type ThumbnailIriamSquareKaraokeBackgroundStyle = "soft_cloud" | "pop_bubble" | "dark_cute";
-export type ThumbnailIriamSquareKaraokeTitleColorway = "match-background" | ThumbnailIriamSquareColorway;
+export type ThumbnailIriamSquareTitleGenre = "karaoke" | "dark_gacha";
+export type ThumbnailIriamSquareTitleColorway = "match-background" | ThumbnailIriamSquareColorway;
+export type ThumbnailIriamSquareKaraokeTitleColorway = ThumbnailIriamSquareTitleColorway;
 export type ThumbnailIriamSquareKaraokePresetConfig = {
   backgroundStyle: ThumbnailIriamSquareKaraokeBackgroundStyle;
   backgroundColorway: ThumbnailIriamSquareColorway;
@@ -142,12 +144,23 @@ export type ThumbnailIriamSquareKaraokeBackgroundAsset = {
   colorway: ThumbnailIriamSquareColorway;
   src: string;
 };
-export type ThumbnailIriamSquareKaraokeTitleAsset = {
+export type ThumbnailIriamSquareTitleAsset = {
+  genre: ThumbnailIriamSquareTitleGenre;
   colorway: ThumbnailIriamSquareColorway;
   src: string;
+  titleText: "歌枠" | "闇ガチャ";
+  fontFamily: "Mochiy Pop P One" | "New Tegomin";
+  source: "generated-title-image";
+};
+export type ThumbnailIriamSquareKaraokeTitleAsset = ThumbnailIriamSquareTitleAsset & {
+  genre: "karaoke";
   titleText: "歌枠";
   fontFamily: "Mochiy Pop P One";
-  source: "generated-title-image";
+};
+export type ThumbnailIriamSquareDarkGachaTitleAsset = ThumbnailIriamSquareTitleAsset & {
+  genre: "dark_gacha";
+  titleText: "闇ガチャ";
+  fontFamily: "New Tegomin";
 };
 export type ThumbnailPresetVariantRelation = {
   presetId: ThumbnailPresetId;
@@ -1276,6 +1289,7 @@ const thumbnailPhase5DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decor
 const thumbnailIriamSquareKaraokeAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/karaoke/`;
 const thumbnailIriamSquareKaraokeBackgroundAssetPrefix = `${thumbnailIriamSquareKaraokeAssetPrefix}backgrounds/`;
 const thumbnailIriamSquareKaraokeTitleAssetPrefix = `${thumbnailIriamSquareKaraokeAssetPrefix}titles/`;
+const thumbnailIriamSquareDarkGachaTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/dark-gacha/titles/`;
 const thumbnailMaterialBatch1AssetPrefix = `${thumbnailPresetAssetPrefix}materials/batch1/`;
 const thumbnailMaterialLabelAssetPrefix = `${thumbnailPresetAssetPrefix}materials/labels/`;
 const thumbnailMaterialBadgeAssetPrefix = `${thumbnailPresetAssetPrefix}materials/badges/`;
@@ -1286,6 +1300,7 @@ const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materia
 const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materials/impact/`;
 
 export const thumbnailIriamSquareColorways: ThumbnailIriamSquareColorway[] = ["pink-blue", "blue", "yellow", "purple", "mint"];
+export const thumbnailIriamSquareTitleGenres: ThumbnailIriamSquareTitleGenre[] = ["karaoke", "dark_gacha"];
 export const thumbnailIriamSquareKaraokeBackgroundStyles: ThumbnailIriamSquareKaraokeBackgroundStyle[] = ["soft_cloud", "pop_bubble", "dark_cute"];
 export const defaultThumbnailIriamSquareKaraokePresetConfig: ThumbnailIriamSquareKaraokePresetConfig = {
   backgroundStyle: "soft_cloud",
@@ -1310,12 +1325,23 @@ export const thumbnailIriamSquareKaraokeBackgroundAssets: ThumbnailIriamSquareKa
   { style: "dark_cute", colorway: "mint", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-mint-v1.png` }
 ];
 export const thumbnailIriamSquareKaraokeTitleAssets: ThumbnailIriamSquareKaraokeTitleAsset[] = [
-  { colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-pink-blue-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
-  { colorway: "blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-blue-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
-  { colorway: "yellow", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-yellow-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
-  { colorway: "purple", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-purple-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
-  { colorway: "mint", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-mint-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" }
+  { genre: "karaoke", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-pink-blue-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-blue-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "yellow", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-yellow-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "purple", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-purple-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "mint", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-mint-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" }
 ];
+export const thumbnailIriamSquareDarkGachaTitleAssets: ThumbnailIriamSquareDarkGachaTitleAsset[] = [
+  { genre: "dark_gacha", colorway: "pink-blue", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-title-pink-blue-v1.png`, titleText: "闇ガチャ", fontFamily: "New Tegomin", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "blue", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-title-blue-v1.png`, titleText: "闇ガチャ", fontFamily: "New Tegomin", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "yellow", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-title-yellow-v1.png`, titleText: "闇ガチャ", fontFamily: "New Tegomin", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "purple", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-title-purple-v1.png`, titleText: "闇ガチャ", fontFamily: "New Tegomin", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "mint", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-title-mint-v1.png`, titleText: "闇ガチャ", fontFamily: "New Tegomin", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareTitleAssetsByGenre: Record<ThumbnailIriamSquareTitleGenre, ThumbnailIriamSquareTitleAsset[]> = {
+  karaoke: thumbnailIriamSquareKaraokeTitleAssets,
+  dark_gacha: thumbnailIriamSquareDarkGachaTitleAssets
+};
 
 export const getThumbnailIriamSquareKaraokeBackgroundAsset = (
   style: ThumbnailIriamSquareKaraokeBackgroundStyle,
@@ -1330,6 +1356,20 @@ export const getThumbnailIriamSquareKaraokeTitleAsset = (
 ) => {
   const resolvedColorway = colorway === "match-background" ? backgroundColorway : colorway;
   return thumbnailIriamSquareKaraokeTitleAssets.find((asset) => asset.colorway === resolvedColorway) ?? thumbnailIriamSquareKaraokeTitleAssets[0];
+};
+
+export const getThumbnailIriamSquareTitleAsset = (
+  genre: string,
+  colorway: ThumbnailIriamSquareTitleColorway,
+  backgroundColorway: ThumbnailIriamSquareColorway = "pink-blue"
+) => {
+  const assets = thumbnailIriamSquareTitleAssetsByGenre[genre as ThumbnailIriamSquareTitleGenre];
+  if (!assets) {
+    return null;
+  }
+
+  const resolvedColorway = colorway === "match-background" ? backgroundColorway : colorway;
+  return assets.find((asset) => asset.colorway === resolvedColorway) ?? null;
 };
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({

@@ -18,7 +18,7 @@
    - status: 次の最優先。`codex/thumbnail-iriam-square-preview` 上で background swap panel と title swap panel まで完了済み。次は decoration / material の最小 scope と contract を固定する。
    - base:
      - `origin/codex/thumbnail-iriam-square-preview`
-     - latest integrated PR: #203 `thumbnail-iriam-square-title-swap`
+     - latest integrated PR: #204 `Refresh IRIAM square task board`
    - current completed state:
      - `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久` は `square-1-1` preset body 接続済み。
      - 同 5ジャンルは square settings modal 対応済み。
@@ -33,6 +33,42 @@
      - `node scripts/thumbnail-material-assets-contract.mjs`
      - 必要なら IRIAM square decoration / material 専用 contract を追加する。
      - 既存 5ジャンル contract と `thumbnail-preset-text-locale-contract` は周辺回帰として維持する。
+   - 2026-05-25 implementation update:
+     - branch / worktree: `codex/thumbnail-iriam-square-accent-assets` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-accent-assets`
+     - PR #204 merge confirmed before implementation: `9516b22` on `origin/codex/thumbnail-iriam-square-preview`.
+     - scope: first small `accent` material batch only. No schema, preset body, swap UI, export, handoff payload, font, 9:16, or title image changes.
+     - contract-first:
+       - RED: `node scripts/thumbnail-material-assets-contract.mjs` failed as expected with `41 !== 45` after adding the 4 expected IRIAM accent materials to the contract.
+       - GREEN: registered the 4 project-bound assets in `thumbnailMaterialLibrary`, added EN material copy, and kept user material refs / `storageId` / `materialRef` out of project material entries.
+     - generated assets:
+       - `public/assets/images/thumbnail-editor/materials/iriam-square-accent/iriam-square-accent-puffy-star-pink-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/iriam-square-accent/iriam-square-accent-soft-heart-blue-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/iriam-square-accent/iriam-square-accent-sparkle-mint-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/iriam-square-accent/iriam-square-accent-hand-line-yellow-v1.png`
+     - generation notes:
+       - built-in `image_gen` was used once per asset.
+       - Each source was generated on a flat chroma-key background, converted with `remove_chroma_key.py`, then saved as a 768x512 RGBA PNG under project `public/assets`.
+       - Final visual check found no readable text, logo, person, character, or official UI-like element.
+     - verification completed:
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+     - width check:
+       - Not run. This PR does not change UI layout or responsive rendering.
+     - residual risk:
+       - The assets are intentionally generic and library-only; actual preset composition balance should be judged when a later decoration swap / placement slice uses them in context.
+     - next action:
+       - Open draft PR against `codex/thumbnail-iriam-square-preview`.
+       - After review / merge, continue with either the next small material category (`label-base` speech bubble / small label) or the separate decoration swap UI slice.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

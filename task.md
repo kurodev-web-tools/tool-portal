@@ -11,6 +11,43 @@
 - URL 設計、大規模 i18n framework、保存 schema / IndexedDB / localStorage 既存 key / handoff payload、外部投稿連携は、個別タスクで明示されない限り変更しない。
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
 
+## Current Work Log
+
+### 2026-05-24 - Thumbnail Editor 1:1 IRIAM dark_gacha square preset body
+
+- base check:
+  - `git fetch origin --prune` 済み。
+  - PR #192 (`codex/thumbnail-iriam-square-registration-boundary` -> `codex/thumbnail-iriam-square-preview`) は `MERGED`。merge commit `a84b6f54abf8afaef10bf400db420b629d7635c3`。
+  - 新規 branch / worktree: `codex/thumbnail-iriam-dark-cute-square-preset`, `D:/V_streamer_tools/.worktrees/thumbnail-iriam-dark-cute-square-preset`。
+- implementation:
+  - `闇ガチャ` / `dark_gacha` を square-only preset body として最小登録。
+  - `createDarkGachaIriamSquareDraft()` を追加し、1080 x 1080 canvas で `dark_cute` purple background と `dark_gacha` purple transparent title image を接続。
+  - `dark_gacha` は 16:9 preset list から除外し、square preset list では `歌枠` と `闇ガチャ` のみに限定。
+  - square preset apply は 16:9 body の拡縮ではなく `createDraftFromPresetVariant()` 経由に変更。
+  - schema / settings modal / right panel / 9:16 preset / title image 追加 / font 追加は未変更。
+- verification:
+  - RED: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs` が `dark_gacha` 未登録で失敗することを確認。
+  - PASS: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+  - PASS: `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+  - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `npm run lint`
+  - PASS: `git diff --check`
+- width check:
+  - Chrome DevTools MCP / `http://localhost:3004/tools/thumbnail-editor` / `next dev --webpack -p 3004`。
+  - `390px`: `闇ガチャ` 選択後 1080 x 1080 canvas 表示、horizontal overflow なし。
+  - `820px`: `闇ガチャ` 選択後 1080 x 1080 canvas 表示、horizontal overflow なし。
+  - `1024px`: `闇ガチャ` 選択後 1080 x 1080 canvas 表示、horizontal overflow なし。
+  - `1280px`: `闇ガチャ` 選択後 1080 x 1080 canvas 表示、horizontal overflow なし。
+  - `1366px`: `闇ガチャ` 選択後 1080 x 1080 canvas 表示、horizontal overflow なし。
+  - console error なし。
+- remaining risk:
+  - `dark_gacha` は fixed purple body のみ。背景 / title colorway の UI 選択は out of scope。
+  - settings modal、右パネル、保存 schema、9:16 preset は未対応。
+- next action:
+  - review / merge 後、必要なら次 slice で square preset settings modal の genre-aware 化、または別ジャンルの square body 接続へ進む。
+
 ## Active Priorities
 
 1. Thumbnail Editor 1:1 IRIAM preset / material planning

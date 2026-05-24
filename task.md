@@ -346,8 +346,8 @@
          - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-dela-gothic-one-yellow-on-pop-bubble-preview.png`
          - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-dela-gothic-one-purple-on-pop-bubble-preview.png`
          - `docs/mockups/thumbnail-editor-iriam-square-title-images/endurance/endurance-title-dela-gothic-one-mint-on-pop-bubble-preview.png`
-       - visual result: 5色とも `pop_bubble` 1:1 背景上で読める。`Dela Gothic One` 400 に stroke / shadow / light outline と軽い rotation を加え、title image 内の星、ハート、リボン、小丸、カーブ線などは追加していない。
-       - verification result: 5 title images are 760 x 320 PNG RGBA with transparent pixels. 5 previews are 1080 x 1080 PNG RGBA. `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` passed.
+       - visual result: 5色とも `pop_bubble` 1:1 背景上で読める。既存 glyph-verified `Dela Gothic One` 400 title を基準に色展開し、title image 内の星、ハート、リボン、小丸、カーブ線などは追加していない。
+       - verification result: 5 title images are 760 x 320 PNG RGBA with transparent pixels. 5 previews are 1080 x 1080 PNG RGBA. Yellow preview was matched back to the existing glyph-verified reference to avoid the earlier `sharp` SVG glyph rendering drift. `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` passed.
        - remaining risk: preview は既存 `karaoke` `pop_bubble` 背景での確認用。`耐久` 専用 1:1 背景、preset body、settings modal option にはまだ接続していない。
        - next genre candidate: `闇ガチャ`。`New Tegomin` 400 で dark_cute 背景上の readable stroke を先に確認する。
    - decoration:

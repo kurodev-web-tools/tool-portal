@@ -80,13 +80,13 @@ assert.equal(
 
 assert.equal(
   lib.thumbnailPresets.some((preset) => preset.id === "dark_gacha"),
-  false,
-  "dark gacha title registration does not add a square preset body"
+  true,
+  "dark gacha title registration now connects to a dedicated square preset body"
 );
 assert.equal(
   source.includes("createDarkGachaIriamSquareDraft"),
-  false,
-  "dark gacha title registration stays before preset body implementation"
+  true,
+  "dark gacha title registration has a follow-up square preset body"
 );
 
 console.log("thumbnail iriam square title asset boundary contract checks passed");

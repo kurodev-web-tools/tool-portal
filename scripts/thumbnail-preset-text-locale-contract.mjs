@@ -100,6 +100,7 @@ const expectedPresetIds = [
   "privacy_notice",
   "whiteboard_plan",
   "karaoke",
+  "dark_gacha",
   "chatting",
   "clip",
   "game_live",

@@ -703,6 +703,7 @@ const thumbnailPresetCopy: Record<Locale, Partial<Record<ThumbnailPresetId, Thum
     privacy_notice: { name: "プライバシー告知", description: "予定テキストを活かしつつ、細かい内容を出しすぎない事前告知向け。" },
     whiteboard_plan: { name: "ホワイトボード", description: "企画内容や配信の流れを、白板風に軽く整理して見せる告知向け。" },
     karaoke: { name: "歌枠", description: "音楽配信に合う強いコントラスト。" },
+    dark_gacha: { name: "闇ガチャ", description: "IRIAM向けの正方形 starter preset。dark_cute background と透明 title image を使う。" },
     chatting: { name: "雑談", description: "トーク配信・近況報告に使いやすい余白設計。" },
     clip: { name: "切り抜き", description: "短い強調語と勢いを出す切り抜き向け。" },
     game_live: { name: "ゲーム実況", description: "ゲームタイトルと配信時刻を分けて見せる実況向け。" },
@@ -725,6 +726,7 @@ const thumbnailPresetCopy: Record<Locale, Partial<Record<ThumbnailPresetId, Thum
     privacy_notice: { name: "Privacy Notice", description: "A pre-announcement layout that keeps schedule details from showing too much." },
     whiteboard_plan: { name: "Whiteboard Plan", description: "A whiteboard-style layout for lightly organizing a stream plan or flow." },
     karaoke: { name: "Karaoke", description: "Strong contrast for music streams." },
+    dark_gacha: { name: "Dark Gacha", description: "A square IRIAM starter preset using a dark_cute background and transparent title image." },
     chatting: { name: "Chatting", description: "A relaxed layout for talk streams and updates." },
     clip: { name: "Clip", description: "A punchy layout for short highlight or clip announcements." },
     game_live: { name: "Game Stream", description: "A game-stream layout that separates title and stream time clearly." },
@@ -1106,6 +1108,12 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 5（見出し英字）": "SINGING STREAM",
       "テキスト 2（時刻）": "20:00 START",
       "テキスト 3（サブ）": "Requests welcome"
+    },
+    dark_gacha: {
+      "テキスト 1（見出し補助）": "SSR WISH",
+      "テキスト 2（時刻）": "22:00 START",
+      "テキスト 3（サブ）": "Pull or pass?",
+      "テキスト 4（ラベル）": "IRIAM / DARK GACHA"
     },
     chatting: {
       "テキスト 4（ラベル）": "CHATTING / YouTube",

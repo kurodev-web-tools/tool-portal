@@ -132,7 +132,7 @@ export type ThumbnailPresetVariantRef = {
 };
 export type ThumbnailIriamSquareColorway = "pink-blue" | "blue" | "yellow" | "purple" | "mint";
 export type ThumbnailIriamSquareKaraokeBackgroundStyle = "soft_cloud" | "pop_bubble" | "dark_cute";
-export type ThumbnailIriamSquareTitleGenre = "karaoke" | "dark_gacha" | "chatting" | "first_stream";
+export type ThumbnailIriamSquareTitleGenre = "karaoke" | "dark_gacha" | "chatting" | "first_stream" | "endurance_stream";
 export type ThumbnailIriamSquareTitleColorway = "match-background" | ThumbnailIriamSquareColorway;
 export type ThumbnailIriamSquareKaraokeTitleColorway = ThumbnailIriamSquareTitleColorway;
 export type ThumbnailIriamSquareKaraokePresetConfig = {
@@ -152,6 +152,10 @@ export type ThumbnailIriamSquareFirstStreamPresetConfig = {
   backgroundColorway: ThumbnailIriamSquareColorway;
   titleColorway: ThumbnailIriamSquareTitleColorway;
 };
+export type ThumbnailIriamSquareEndurancePresetConfig = {
+  backgroundColorway: ThumbnailIriamSquareColorway;
+  titleColorway: ThumbnailIriamSquareTitleColorway;
+};
 export type ThumbnailIriamSquareKaraokeBackgroundAsset = {
   style: ThumbnailIriamSquareKaraokeBackgroundStyle;
   colorway: ThumbnailIriamSquareColorway;
@@ -161,8 +165,8 @@ export type ThumbnailIriamSquareTitleAsset = {
   genre: ThumbnailIriamSquareTitleGenre;
   colorway: ThumbnailIriamSquareColorway;
   src: string;
-  titleText: "歌枠" | "闇ガチャ" | "雑談" | "初配信";
-  fontFamily: "Mochiy Pop P One" | "New Tegomin" | "Yusei Magic" | "Mochiy Pop One";
+  titleText: "歌枠" | "闇ガチャ" | "雑談" | "初配信" | "耐久";
+  fontFamily: "Mochiy Pop P One" | "New Tegomin" | "Yusei Magic" | "Mochiy Pop One" | "Dela Gothic One";
   source: "generated-title-image";
 };
 export type ThumbnailIriamSquareKaraokeTitleAsset = ThumbnailIriamSquareTitleAsset & {
@@ -184,6 +188,11 @@ export type ThumbnailIriamSquareFirstStreamTitleAsset = ThumbnailIriamSquareTitl
   genre: "first_stream";
   titleText: "初配信";
   fontFamily: "Mochiy Pop One";
+};
+export type ThumbnailIriamSquareEnduranceTitleAsset = ThumbnailIriamSquareTitleAsset & {
+  genre: "endurance_stream";
+  titleText: "耐久";
+  fontFamily: "Dela Gothic One";
 };
 export type ThumbnailPresetVariantRelation = {
   presetId: ThumbnailPresetId;
@@ -1315,6 +1324,7 @@ const thumbnailIriamSquareKaraokeTitleAssetPrefix = `${thumbnailIriamSquareKarao
 const thumbnailIriamSquareDarkGachaTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/dark-gacha/titles/`;
 const thumbnailIriamSquareChattingTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/chatting/titles/`;
 const thumbnailIriamSquareFirstStreamTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/first-stream/titles/`;
+const thumbnailIriamSquareEnduranceTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/endurance/titles/`;
 const thumbnailMaterialBatch1AssetPrefix = `${thumbnailPresetAssetPrefix}materials/batch1/`;
 const thumbnailMaterialLabelAssetPrefix = `${thumbnailPresetAssetPrefix}materials/labels/`;
 const thumbnailMaterialBadgeAssetPrefix = `${thumbnailPresetAssetPrefix}materials/badges/`;
@@ -1325,7 +1335,7 @@ const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materia
 const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materials/impact/`;
 
 export const thumbnailIriamSquareColorways: ThumbnailIriamSquareColorway[] = ["pink-blue", "blue", "yellow", "purple", "mint"];
-export const thumbnailIriamSquareTitleGenres: ThumbnailIriamSquareTitleGenre[] = ["karaoke", "dark_gacha", "chatting", "first_stream"];
+export const thumbnailIriamSquareTitleGenres: ThumbnailIriamSquareTitleGenre[] = ["karaoke", "dark_gacha", "chatting", "first_stream", "endurance_stream"];
 export const thumbnailIriamSquareKaraokeBackgroundStyles: ThumbnailIriamSquareKaraokeBackgroundStyle[] = ["soft_cloud", "pop_bubble", "dark_cute"];
 export const defaultThumbnailIriamSquareKaraokePresetConfig: ThumbnailIriamSquareKaraokePresetConfig = {
   backgroundStyle: "soft_cloud",
@@ -1342,6 +1352,10 @@ export const defaultThumbnailIriamSquareChattingPresetConfig: ThumbnailIriamSqua
 };
 export const defaultThumbnailIriamSquareFirstStreamPresetConfig: ThumbnailIriamSquareFirstStreamPresetConfig = {
   backgroundColorway: "pink-blue",
+  titleColorway: "match-background"
+};
+export const defaultThumbnailIriamSquareEndurancePresetConfig: ThumbnailIriamSquareEndurancePresetConfig = {
+  backgroundColorway: "yellow",
   titleColorway: "match-background"
 };
 export const thumbnailIriamSquareKaraokeBackgroundAssets: ThumbnailIriamSquareKaraokeBackgroundAsset[] = [
@@ -1389,11 +1403,19 @@ export const thumbnailIriamSquareFirstStreamTitleAssets: ThumbnailIriamSquareFir
   { genre: "first_stream", colorway: "purple", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-purple-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" },
   { genre: "first_stream", colorway: "mint", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-mint-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" }
 ];
+export const thumbnailIriamSquareEnduranceTitleAssets: ThumbnailIriamSquareEnduranceTitleAsset[] = [
+  { genre: "endurance_stream", colorway: "pink-blue", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-pink-blue-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "blue", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-blue-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "yellow", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-yellow-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "purple", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-purple-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "mint", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-mint-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" }
+];
 export const thumbnailIriamSquareTitleAssetsByGenre: Record<ThumbnailIriamSquareTitleGenre, ThumbnailIriamSquareTitleAsset[]> = {
   karaoke: thumbnailIriamSquareKaraokeTitleAssets,
   dark_gacha: thumbnailIriamSquareDarkGachaTitleAssets,
   chatting: thumbnailIriamSquareChattingTitleAssets,
-  first_stream: thumbnailIriamSquareFirstStreamTitleAssets
+  first_stream: thumbnailIriamSquareFirstStreamTitleAssets,
+  endurance_stream: thumbnailIriamSquareEnduranceTitleAssets
 };
 
 export const getThumbnailIriamSquareKaraokeBackgroundAsset = (
@@ -1649,6 +1671,33 @@ export const createFirstStreamIriamSquareDraft = (
     version: 1,
     canvas: { width: 1080, height: 1080 },
     presetId: "first_stream",
+    layers,
+    selectedLayerId: layers[layers.length - 1]?.id ?? null,
+    updatedAt: nowIso()
+  };
+};
+
+export const createEnduranceStreamIriamSquareDraft = (
+  config: ThumbnailIriamSquareEndurancePresetConfig = defaultThumbnailIriamSquareEndurancePresetConfig
+): ThumbnailEditorDraft => {
+  const background = getThumbnailIriamSquareKaraokeBackgroundAsset("pop_bubble", config.backgroundColorway);
+  const title = getThumbnailIriamSquareTitleAsset("endurance_stream", config.titleColorway, config.backgroundColorway);
+  const layers: ThumbnailLayer[] = [
+    assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
+    shapeLayer({ name: "図形 1（上部チャレンジライト）", shapeType: "circle", x: 92, y: 58, width: 896, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.14, blur: 8 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 耐久）", src: title?.src ?? thumbnailIriamSquareEnduranceTitleAssets[0].src, x: 160, y: 112, width: 760, height: 320, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 626, y: 342, width: 340, height: 626, fillColor: "#ffffff12", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 52, opacity: 0.3 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 96, y: 716, width: 450, height: 112, fillColor: "#ffffffdc", strokeColor: "#ffb03d", strokeWidth: 4, borderRadius: 54, opacity: 0.9 }),
+    textLayer({ name: "テキスト 1（見出し補助）", text: "CHALLENGE", x: 164, y: 402, width: 568, height: 78, fontSize: 66, color: "#fffdf2", strokeColor: "#263238", strokeWidth: 6, shadowColor: "#c9ff00", shadowBlur: 11, shadowOffsetX: 2, shadowOffsetY: 4, fontFamily: "Anton", italic: true, align: "center" }),
+    textLayer({ name: "テキスト 2（時刻）", text: "19:00 START", x: 156, y: 746, width: 330, height: 58, fontSize: 54, color: "#f47d18", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#c9ff00", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
+    textLayer({ name: "テキスト 3（サブ）", text: "達成するまで終われない", x: 98, y: 850, width: 554, height: 48, fontSize: 33, color: "#4b5f7a", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
+    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / 耐久", x: 78, y: 62, width: 260, height: 42, fontSize: 30, color: "#5b6f8f", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+  ];
+
+  return {
+    version: 1,
+    canvas: { width: 1080, height: 1080 },
+    presetId: "endurance_stream",
     layers,
     selectedLayerId: layers[layers.length - 1]?.id ?? null,
     updatedAt: nowIso()
@@ -3346,6 +3395,10 @@ export const createDraftFromPresetVariant = (
   presetId: ThumbnailPresetId = "stream_announce",
   variantId: ThumbnailPresetVariantId = thumbnailPresetVariantRelations[presetId].defaultVariantId
 ): ThumbnailEditorDraft => {
+  if (presetId === "endurance_stream" && variantId === "square-1-1") {
+    return createEnduranceStreamIriamSquareDraft();
+  }
+
   if (presetId === "first_stream" && variantId === "square-1-1") {
     return createFirstStreamIriamSquareDraft();
   }

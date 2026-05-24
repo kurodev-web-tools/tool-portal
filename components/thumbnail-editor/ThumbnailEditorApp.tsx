@@ -435,7 +435,7 @@ const getPresetsByIds = (presetIds: ThumbnailPresetId[]) =>
     .map((presetId) => thumbnailPresets.find((preset) => preset.id === presetId))
     .filter((preset): preset is ThumbnailPreset => Boolean(preset));
 const isPresetSelectableForVariant = (presetId: ThumbnailPresetId, variantId: ThumbnailPresetVariantId) =>
-  variantId === "square-1-1" ? presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream" : presetId !== "dark_gacha";
+  variantId === "square-1-1" ? presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream" || presetId === "endurance_stream" : presetId !== "dark_gacha";
 const getThumbnailPresetsForVariant = (variantId: ThumbnailPresetVariantId) =>
   thumbnailPresets.filter((preset) => isPresetSelectableForVariant(preset.id, variantId));
 const defaultThumbnailIriamSquarePresetConfig: ThumbnailIriamSquareKaraokePresetConfig = {

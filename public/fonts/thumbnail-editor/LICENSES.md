@@ -20,7 +20,11 @@ Families included in this Japanese batch:
 - Kiwi Maru: 400 / 500
 - Yomogi: 400
 - Hachi Maru Pop: 400
+- Yusei Magic: 400
+- Mochiy Pop One: 400
 - RocknRoll One: 400
+- Dela Gothic One: 400
+- New Tegomin: 400
 - DotGothic16: 400
 
 Families included in this English batch:

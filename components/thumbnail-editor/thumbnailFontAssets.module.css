@@ -179,11 +179,43 @@
 }
 
 @font-face {
+  font-family: "Yusei Magic";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/yusei-magic/yusei-magic-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Mochiy Pop One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/mochiy-pop-one/mochiy-pop-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
   font-family: "RocknRoll One";
   font-style: normal;
   font-weight: 400 900;
   font-display: swap;
   src: url("/fonts/thumbnail-editor/rocknroll-one/rocknroll-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Dela Gothic One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/dela-gothic-one/dela-gothic-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "New Tegomin";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/new-tegomin/new-tegomin-400-ja-seed-v1.woff2") format("woff2");
 }
 
 @font-face {

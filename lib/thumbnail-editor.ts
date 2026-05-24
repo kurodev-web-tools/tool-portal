@@ -819,6 +819,24 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     sourceUrl: "https://fonts.google.com/specimen/Hachi+Maru+Pop"
   }, "hachi-maru-pop", [400]),
   withThumbnailJapaneseFontAssets({
+    family: "Yusei Magic",
+    language: "ja",
+    category: "手書き / やわらか",
+    mood: "ゆるい、親しみ、雑談向き",
+    bestFor: "IRIAM 雑談 title image、やわらかい短い見出し",
+    caution: "長文や細かい注記では読みにくい。大きめの title image 前提で使う。",
+    sourceUrl: "https://fonts.google.com/specimen/Yusei+Magic"
+  }, "yusei-magic", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Mochiy Pop One",
+    language: "ja",
+    category: "かわいい / 太丸ゴ",
+    mood: "ポップ、歓迎感、初配信向き",
+    bestFor: "IRIAM 初配信 title image、明るい告知見出し",
+    caution: "太く丸いので狭い枠では窮屈になりやすい。縁取りは控えめにする。",
+    sourceUrl: "https://fonts.google.com/specimen/Mochiy+Pop+One"
+  }, "mochiy-pop-one", [400]),
+  withThumbnailJapaneseFontAssets({
     family: "RocknRoll One",
     language: "ja",
     category: "レトロ / ポップ",
@@ -827,6 +845,24 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     caution: "weight 選択が少ない。繊細な用途には不向き。",
     sourceUrl: "https://fonts.google.com/specimen/RocknRoll+One"
   }, "rocknroll-one", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Dela Gothic One",
+    language: "ja",
+    category: "太字見出し / 企画",
+    mood: "力強い、角ばった、耐久向き",
+    bestFor: "IRIAM 耐久 title image、勢いのある企画タイトル",
+    caution: "字面が重い。1:1 では余白を広めに取り、shadow / rotation で勢いを補う。",
+    sourceUrl: "https://fonts.google.com/specimen/Dela+Gothic+One"
+  }, "dela-gothic-one", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "New Tegomin",
+    language: "ja",
+    category: "手書き / 崩し",
+    mood: "少し不穏、崩れ、闇ガチャ向き",
+    bestFor: "IRIAM 闇ガチャ title image、dark cute な短い見出し",
+    caution: "崩しが強いため小サイズは読みにくい。縁取り太さと背景コントラストを先に確認する。",
+    sourceUrl: "https://fonts.google.com/specimen/New+Tegomin"
+  }, "new-tegomin", [400]),
   withThumbnailJapaneseFontAssets({
     family: "DotGothic16",
     language: "ja",

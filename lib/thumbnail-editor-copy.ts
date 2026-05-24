@@ -233,6 +233,10 @@ export const thumbnailEditorCopy = {
       note: "選択中の背景画像だけ差し替え",
       fixedStyle: (style: string) => `${style} 固定`
     },
+    iriamSquareTitleSwap: {
+      title: "IRIAM タイトル",
+      note: "選択中のタイトル画像だけ差し替え"
+    },
     toasts: {
       handoffApplied: "Schedule Calendarの予定を反映しました。用途に合わせてプリセットを選べます。",
       restored: "前回の下書きを復元しました。",
@@ -572,6 +576,10 @@ export const thumbnailEditorCopy = {
       title: "IRIAM background",
       note: "Replace only the selected background image",
       fixedStyle: (style: string) => `${style} fixed`
+    },
+    iriamSquareTitleSwap: {
+      title: "IRIAM title",
+      note: "Replace only the selected title image"
     },
     toasts: {
       handoffApplied: "Schedule Calendar text was applied. Choose a preset that fits the use case.",

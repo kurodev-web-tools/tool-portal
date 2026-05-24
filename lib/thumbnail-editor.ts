@@ -174,6 +174,13 @@ export type ThumbnailIriamSquareBackgroundPanelModel = {
   selectedColorway: ThumbnailIriamSquareColorway;
   selectedSrc: string;
 };
+export type ThumbnailIriamSquareTitlePanelModel = {
+  selectedGenre: ThumbnailIriamSquareTitleGenre;
+  selectedColorway: ThumbnailIriamSquareColorway;
+  selectedSrc: string;
+  selectedTitleText: ThumbnailIriamSquareTitleAsset["titleText"];
+  colorways: ThumbnailIriamSquareColorway[];
+};
 export type ThumbnailIriamSquareTitleAsset = {
   genre: ThumbnailIriamSquareTitleGenre;
   colorway: ThumbnailIriamSquareColorway;
@@ -1519,6 +1526,52 @@ export const replaceThumbnailIriamSquareBackgroundLayerSource = (
   const style = rule.fixedStyle ?? (next.style && rule.styles.includes(next.style) ? next.style : selected.style);
   const asset = getThumbnailIriamSquareKaraokeBackgroundAsset(style, next.colorway);
   return { ...layer, src: asset.src };
+};
+
+export const getThumbnailIriamSquareTitleLayerMatch = (layer: ThumbnailLayer | null | undefined): ThumbnailIriamSquareTitleAsset | null => {
+  if (!layer || layer.type !== "image") {
+    return null;
+  }
+
+  return thumbnailIriamSquareTitleGenres
+    .flatMap((genre) => thumbnailIriamSquareTitleAssetsByGenre[genre])
+    .find((asset) => asset.src === layer.src) ?? null;
+};
+
+export const getThumbnailIriamSquareTitlePanelModel = (
+  variantId: ThumbnailPresetVariantId,
+  layer: ThumbnailLayer | null | undefined
+): ThumbnailIriamSquareTitlePanelModel | null => {
+  if (variantId !== "square-1-1") {
+    return null;
+  }
+
+  const selected = getThumbnailIriamSquareTitleLayerMatch(layer);
+  if (!selected) {
+    return null;
+  }
+
+  return {
+    selectedGenre: selected.genre,
+    selectedColorway: selected.colorway,
+    selectedSrc: selected.src,
+    selectedTitleText: selected.titleText,
+    colorways: thumbnailIriamSquareColorways
+  };
+};
+
+export const replaceThumbnailIriamSquareTitleLayerSource = (layer: ThumbnailLayer, colorway: string): ThumbnailLayer => {
+  const selected = getThumbnailIriamSquareTitleLayerMatch(layer);
+  if (!selected || layer.type !== "image") {
+    return layer;
+  }
+
+  const nextAsset = thumbnailIriamSquareTitleAssetsByGenre[selected.genre].find((asset) => asset.colorway === colorway);
+  if (!nextAsset) {
+    return layer;
+  }
+
+  return { ...layer, src: nextAsset.src };
 };
 
 export const getThumbnailIriamSquareKaraokeTitleAsset = (

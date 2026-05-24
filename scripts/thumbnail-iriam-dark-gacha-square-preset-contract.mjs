@@ -137,9 +137,9 @@ assert.equal(
 );
 
 assert.equal(
-  componentSource.includes('variantId === "square-1-1" ? presetId === "karaoke" || presetId === "dark_gacha" : presetId !== "dark_gacha"'),
+  componentSource.includes('variantId === "square-1-1" ? presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" : presetId !== "dark_gacha"'),
   true,
-  "preset list exposes only karaoke and dark gacha while the square variant is active"
+  "preset list exposes karaoke, dark gacha, and chatting while the square variant is active"
 );
 assert.equal(
   componentSource.includes('createDraftFromPresetVariant(presetId, currentVariantId)'),

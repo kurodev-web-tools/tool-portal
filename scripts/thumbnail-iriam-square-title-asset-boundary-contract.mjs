@@ -30,22 +30,36 @@ const readPngSize = (filePath) => {
   };
 };
 
-const titlePrefix = "/assets/images/thumbnail-editor/iriam-square/dark-gacha/titles/";
-const expectedTitleFiles = [
+const darkGachaTitlePrefix = "/assets/images/thumbnail-editor/iriam-square/dark-gacha/titles/";
+const chattingTitlePrefix = "/assets/images/thumbnail-editor/iriam-square/chatting/titles/";
+const expectedDarkGachaTitleFiles = [
   "dark-gacha-square-title-pink-blue-v1.png",
   "dark-gacha-square-title-blue-v1.png",
   "dark-gacha-square-title-yellow-v1.png",
   "dark-gacha-square-title-purple-v1.png",
   "dark-gacha-square-title-mint-v1.png"
 ];
+const expectedChattingTitleFiles = [
+  "chatting-square-title-pink-blue-v1.png",
+  "chatting-square-title-blue-v1.png",
+  "chatting-square-title-yellow-v1.png",
+  "chatting-square-title-purple-v1.png",
+  "chatting-square-title-mint-v1.png"
+];
 
 assert.ok(Array.isArray(lib.thumbnailIriamSquareTitleGenres), "square title genre registry is exported");
-assert.deepEqual(lib.thumbnailIriamSquareTitleGenres, ["karaoke", "dark_gacha"], "square title registry adds only one non-karaoke genre");
+assert.deepEqual(lib.thumbnailIriamSquareTitleGenres, ["karaoke", "dark_gacha", "chatting"], "square title registry includes the connected square preset title genres");
 assert.ok(Array.isArray(lib.thumbnailIriamSquareDarkGachaTitleAssets), "dark gacha square title asset metadata is exported");
 assert.deepEqual(
   lib.thumbnailIriamSquareDarkGachaTitleAssets.map((asset) => path.basename(asset.src)),
-  expectedTitleFiles,
+  expectedDarkGachaTitleFiles,
   "dark gacha square registers the adopted New Tegomin title colorways"
+);
+assert.ok(Array.isArray(lib.thumbnailIriamSquareChattingTitleAssets), "chatting square title asset metadata is exported");
+assert.deepEqual(
+  lib.thumbnailIriamSquareChattingTitleAssets.map((asset) => path.basename(asset.src)),
+  expectedChattingTitleFiles,
+  "chatting square registers the adopted Yusei Magic title colorways"
 );
 
 for (const asset of lib.thumbnailIriamSquareDarkGachaTitleAssets) {
@@ -62,15 +76,39 @@ for (const asset of lib.thumbnailIriamSquareDarkGachaTitleAssets) {
   assert.ok(fs.statSync(publicPath).size < 160_000, `${path.basename(asset.src)} stays reasonably lightweight`);
 }
 
+for (const asset of lib.thumbnailIriamSquareChattingTitleAssets) {
+  assert.equal(asset.genre, "chatting", "chatting title asset carries its square title genre");
+  assert.equal(asset.titleText, "雑談", "chatting title asset keeps the fixed rendered text");
+  assert.equal(asset.fontFamily, "Yusei Magic", "chatting title asset records the selected rendered font");
+  assert.equal(asset.source, "generated-title-image", "chatting title asset is treated as a generated transparent PNG layer candidate");
+  assert.equal(Object.hasOwn(asset, "storageId"), false, "chatting title asset does not mix user storage ids into project assets");
+  assert.equal(Object.hasOwn(asset, "materialRef"), false, "chatting title asset does not mix user material refs into project assets");
+
+  const publicPath = path.join(root, "public", asset.src.replace(/^\//, ""));
+  assert.equal(fs.existsSync(publicPath), true, `${path.basename(asset.src)} production title image exists`);
+  assert.deepEqual(readPngSize(publicPath), { width: 760, height: 320 }, `${path.basename(asset.src)} keeps the title image layer size`);
+  assert.ok(fs.statSync(publicPath).size < 160_000, `${path.basename(asset.src)} stays reasonably lightweight`);
+}
+
 assert.equal(
   lib.getThumbnailIriamSquareTitleAsset("dark_gacha", "purple")?.src,
-  `${titlePrefix}dark-gacha-square-title-purple-v1.png`,
+  `${darkGachaTitlePrefix}dark-gacha-square-title-purple-v1.png`,
   "generic square title helper resolves dark gacha by genre and colorway"
 );
 assert.equal(
   lib.getThumbnailIriamSquareTitleAsset("dark_gacha", "match-background", "mint")?.src,
-  `${titlePrefix}dark-gacha-square-title-mint-v1.png`,
+  `${darkGachaTitlePrefix}dark-gacha-square-title-mint-v1.png`,
   "generic square title helper can match the background colorway without a preset body"
+);
+assert.equal(
+  lib.getThumbnailIriamSquareTitleAsset("chatting", "blue")?.src,
+  `${chattingTitlePrefix}chatting-square-title-blue-v1.png`,
+  "generic square title helper resolves chatting by genre and colorway"
+);
+assert.equal(
+  lib.getThumbnailIriamSquareTitleAsset("chatting", "match-background", "yellow")?.src,
+  `${chattingTitlePrefix}chatting-square-title-yellow-v1.png`,
+  "generic square title helper can match the chatting background colorway"
 );
 assert.equal(
   lib.getThumbnailIriamSquareTitleAsset("unknown", "purple"),
@@ -84,9 +122,9 @@ assert.equal(
   "dark gacha title registration now connects to a dedicated square preset body"
 );
 assert.equal(
-  source.includes("createDarkGachaIriamSquareDraft"),
+  source.includes("createChattingIriamSquareDraft"),
   true,
-  "dark gacha title registration has a follow-up square preset body"
+  "chatting title registration has a follow-up square preset body"
 );
 
 console.log("thumbnail iriam square title asset boundary contract checks passed");

@@ -133,6 +133,7 @@ export type ThumbnailPresetVariantRef = {
 export type ThumbnailIriamSquareColorway = "pink-blue" | "blue" | "yellow" | "purple" | "mint";
 export type ThumbnailIriamSquareKaraokeBackgroundStyle = "soft_cloud" | "pop_bubble" | "dark_cute";
 export type ThumbnailIriamSquareTitleGenre = "karaoke" | "dark_gacha" | "chatting" | "first_stream" | "endurance_stream";
+export type ThumbnailIriamSquareBackgroundSwapPresetId = Extract<ThumbnailPresetId, ThumbnailIriamSquareTitleGenre>;
 export type ThumbnailIriamSquareTitleColorway = "match-background" | ThumbnailIriamSquareColorway;
 export type ThumbnailIriamSquareKaraokeTitleColorway = ThumbnailIriamSquareTitleColorway;
 export type ThumbnailIriamSquareKaraokePresetConfig = {
@@ -160,6 +161,18 @@ export type ThumbnailIriamSquareKaraokeBackgroundAsset = {
   style: ThumbnailIriamSquareKaraokeBackgroundStyle;
   colorway: ThumbnailIriamSquareColorway;
   src: string;
+};
+export type ThumbnailIriamSquareBackgroundSwapRule = {
+  presetId: ThumbnailIriamSquareBackgroundSwapPresetId;
+  styles: ThumbnailIriamSquareKaraokeBackgroundStyle[];
+  colorways: ThumbnailIriamSquareColorway[];
+  fixedStyle?: ThumbnailIriamSquareKaraokeBackgroundStyle;
+};
+export type ThumbnailIriamSquareBackgroundPanelModel = {
+  rule: ThumbnailIriamSquareBackgroundSwapRule;
+  selectedStyle: ThumbnailIriamSquareKaraokeBackgroundStyle;
+  selectedColorway: ThumbnailIriamSquareColorway;
+  selectedSrc: string;
 };
 export type ThumbnailIriamSquareTitleAsset = {
   genre: ThumbnailIriamSquareTitleGenre;
@@ -1375,6 +1388,38 @@ export const thumbnailIriamSquareKaraokeBackgroundAssets: ThumbnailIriamSquareKa
   { style: "dark_cute", colorway: "purple", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-purple-v1.png` },
   { style: "dark_cute", colorway: "mint", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-mint-v1.png` }
 ];
+export const thumbnailIriamSquareBackgroundAssets = thumbnailIriamSquareKaraokeBackgroundAssets;
+export const thumbnailIriamSquareBackgroundSwapRules: Record<ThumbnailIriamSquareBackgroundSwapPresetId, ThumbnailIriamSquareBackgroundSwapRule> = {
+  karaoke: {
+    presetId: "karaoke",
+    styles: thumbnailIriamSquareKaraokeBackgroundStyles,
+    colorways: thumbnailIriamSquareColorways
+  },
+  dark_gacha: {
+    presetId: "dark_gacha",
+    styles: ["dark_cute"],
+    colorways: thumbnailIriamSquareColorways,
+    fixedStyle: "dark_cute"
+  },
+  chatting: {
+    presetId: "chatting",
+    styles: ["pop_bubble"],
+    colorways: thumbnailIriamSquareColorways,
+    fixedStyle: "pop_bubble"
+  },
+  first_stream: {
+    presetId: "first_stream",
+    styles: ["soft_cloud"],
+    colorways: thumbnailIriamSquareColorways,
+    fixedStyle: "soft_cloud"
+  },
+  endurance_stream: {
+    presetId: "endurance_stream",
+    styles: ["pop_bubble"],
+    colorways: thumbnailIriamSquareColorways,
+    fixedStyle: "pop_bubble"
+  }
+};
 export const thumbnailIriamSquareKaraokeTitleAssets: ThumbnailIriamSquareKaraokeTitleAsset[] = [
   { genre: "karaoke", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-pink-blue-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
   { genre: "karaoke", colorway: "blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-blue-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
@@ -1424,6 +1469,57 @@ export const getThumbnailIriamSquareKaraokeBackgroundAsset = (
 ) =>
   thumbnailIriamSquareKaraokeBackgroundAssets.find((asset) => asset.style === style && asset.colorway === colorway) ??
   thumbnailIriamSquareKaraokeBackgroundAssets[0];
+
+export const getThumbnailIriamSquareBackgroundLayerMatch = (layer: ThumbnailLayer | null | undefined): ThumbnailIriamSquareKaraokeBackgroundAsset | null => {
+  if (!layer || layer.type !== "image") {
+    return null;
+  }
+
+  return thumbnailIriamSquareBackgroundAssets.find((asset) => asset.src === layer.src) ?? null;
+};
+
+export const getThumbnailIriamSquareBackgroundSwapRule = (presetId: string): ThumbnailIriamSquareBackgroundSwapRule | null =>
+  thumbnailIriamSquareBackgroundSwapRules[presetId as ThumbnailIriamSquareBackgroundSwapPresetId] ?? null;
+
+export const getThumbnailIriamSquareBackgroundPanelModel = (
+  variantId: ThumbnailPresetVariantId,
+  presetId: string,
+  layer: ThumbnailLayer | null | undefined
+): ThumbnailIriamSquareBackgroundPanelModel | null => {
+  if (variantId !== "square-1-1") {
+    return null;
+  }
+
+  const rule = getThumbnailIriamSquareBackgroundSwapRule(presetId);
+  const selected = getThumbnailIriamSquareBackgroundLayerMatch(layer);
+  if (!rule || !selected) {
+    return null;
+  }
+
+  const selectedStyle = rule.fixedStyle ?? selected.style;
+  return {
+    rule,
+    selectedStyle,
+    selectedColorway: selected.colorway,
+    selectedSrc: selected.src
+  };
+};
+
+export const replaceThumbnailIriamSquareBackgroundLayerSource = (
+  layer: ThumbnailLayer,
+  presetId: string,
+  next: { style?: ThumbnailIriamSquareKaraokeBackgroundStyle; colorway: ThumbnailIriamSquareColorway }
+): ThumbnailLayer => {
+  const selected = getThumbnailIriamSquareBackgroundLayerMatch(layer);
+  const rule = getThumbnailIriamSquareBackgroundSwapRule(presetId);
+  if (!selected || !rule || layer.type !== "image") {
+    return layer;
+  }
+
+  const style = rule.fixedStyle ?? (next.style && rule.styles.includes(next.style) ? next.style : selected.style);
+  const asset = getThumbnailIriamSquareKaraokeBackgroundAsset(style, next.colorway);
+  return { ...layer, src: asset.src };
+};
 
 export const getThumbnailIriamSquareKaraokeTitleAsset = (
   colorway: ThumbnailIriamSquareKaraokeTitleColorway,

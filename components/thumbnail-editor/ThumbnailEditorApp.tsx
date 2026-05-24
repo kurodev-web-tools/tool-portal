@@ -34,6 +34,7 @@ import {
   getThumbnailQualityGuardSummary,
   getThumbnailUserMaterialUsageSummary,
   getLayerCenter,
+  getThumbnailIriamSquareBackgroundPanelModel,
   hitTestLayerHandle,
   isThumbnailDraftPristineForPreset,
   layerContainsPoint,
@@ -43,6 +44,7 @@ import {
   normalizeThumbnailPresetDiscoveryState,
   pointToLayerLocal,
   replaceThumbnailUserMaterialLayerRef,
+  replaceThumbnailIriamSquareBackgroundLayerSource,
   getThumbnailIriamSquareKaraokeBackgroundAsset,
   getThumbnailIriamSquareKaraokeTitleAsset,
   getThumbnailIriamSquareTitleAsset,
@@ -2370,6 +2372,8 @@ export function ThumbnailEditorApp() {
                   locale={locale}
                   layer={selectedLayer}
                   canvas={draft.canvas}
+                  presetId={draft.presetId}
+                  currentVariantId={currentVariantId}
                   qualityGuardItems={localizedQualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
@@ -2443,6 +2447,8 @@ export function ThumbnailEditorApp() {
                   locale={locale}
                   layer={selectedLayer}
                   canvas={draft.canvas}
+                  presetId={draft.presetId}
+                  currentVariantId={currentVariantId}
                   qualityGuardItems={localizedQualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
@@ -2994,6 +3000,8 @@ function PropertyPanel({
   locale,
   layer,
   canvas,
+  presetId,
+  currentVariantId,
   qualityGuardItems,
   fontMenuOpen,
   onFontMenuOpenChange,
@@ -3004,6 +3012,8 @@ function PropertyPanel({
   locale: Locale;
   layer: ThumbnailLayer;
   canvas: ThumbnailEditorDraft["canvas"];
+  presetId: ThumbnailPresetId;
+  currentVariantId: ThumbnailPresetVariantId;
   qualityGuardItems: ThumbnailQualityGuardItem[];
   fontMenuOpen: boolean;
   onFontMenuOpenChange: (open: boolean) => void;
@@ -3017,6 +3027,7 @@ function PropertyPanel({
         ? copy.panels.property.imageGuide
         : null;
   const layerNameDisplayValue = getThumbnailLayerDisplayName(layer, locale);
+  const iriamSquareBackgroundModel = getThumbnailIriamSquareBackgroundPanelModel(currentVariantId, presetId, layer);
 
   return (
     <section className="panel min-w-0 space-y-4 p-4">
@@ -3046,6 +3057,13 @@ function PropertyPanel({
         />
       </label>
       <ThumbnailQualityGuardPanel copy={copy} items={qualityGuardItems} />
+      {iriamSquareBackgroundModel ? (
+        <IriamSquareBackgroundSwapPanel
+          copy={copy}
+          model={iriamSquareBackgroundModel}
+          onChange={(next) => onChange((item) => replaceThumbnailIriamSquareBackgroundLayerSource(item, presetId, next))}
+        />
+      ) : null}
       <LayerQuickAdjustPanel copy={copy} locale={locale} layer={layer} canvas={canvas} onChange={onChange} />
 
       <div className="grid grid-cols-2 gap-3">
@@ -3060,6 +3078,64 @@ function PropertyPanel({
       {layer.type === "image" && <StandeePlacementPanel copy={copy} locale={locale} layer={layer} onApply={onStandeePlacement} />}
       <EffectControls copy={copy} layer={layer} onChange={onChange} />
     </section>
+  );
+}
+
+function IriamSquareBackgroundSwapPanel({
+  copy,
+  model,
+  onChange
+}: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  model: NonNullable<ReturnType<typeof getThumbnailIriamSquareBackgroundPanelModel>>;
+  onChange: (next: { style?: ThumbnailIriamSquareKaraokeBackgroundStyle; colorway: ThumbnailIriamSquareColorway }) => void;
+}) {
+  const canChangeStyle = model.rule.styles.length > 1;
+
+  return (
+    <div className="rounded-base border border-primary/35 bg-primary-soft/35 p-3" data-thumbnail-iriam-square-background-swap="true">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-black text-foreground">{copy.iriamSquareBackgroundSwap.title}</h3>
+        <span className="text-[10px] font-bold text-muted">{copy.iriamSquareBackgroundSwap.note}</span>
+      </div>
+      <div className="mb-3 flex items-center gap-3 rounded-base border border-border bg-surface/80 p-2">
+        <div className="h-14 w-14 shrink-0 rounded-base border border-border bg-cover bg-center" style={{ backgroundImage: `url(${model.selectedSrc})` }} />
+        <div className="min-w-0 text-[11px] font-bold text-muted">
+          <p className="truncate text-foreground">{copy.iriamSquareDialog.styleLabels[model.selectedStyle]}</p>
+          <p className="mt-0.5 truncate">{copy.iriamSquareDialog.colorLabels[model.selectedColorway]}</p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {canChangeStyle ? (
+          <IriamSquareOptionGroup
+            label={copy.iriamSquareDialog.backgroundStyle}
+            options={model.rule.styles}
+            value={model.selectedStyle}
+            getLabel={(value) => copy.iriamSquareDialog.styleLabels[value as ThumbnailIriamSquareKaraokeBackgroundStyle]}
+            onChange={(style) =>
+              onChange({
+                style: style as ThumbnailIriamSquareKaraokeBackgroundStyle,
+                colorway: model.selectedColorway
+              })
+            }
+          />
+        ) : (
+          <p className="text-[11px] font-bold text-muted">{copy.iriamSquareBackgroundSwap.fixedStyle(copy.iriamSquareDialog.styleLabels[model.selectedStyle])}</p>
+        )}
+        <IriamSquareOptionGroup
+          label={copy.iriamSquareDialog.backgroundColor}
+          options={model.rule.colorways}
+          value={model.selectedColorway}
+          getLabel={(value) => copy.iriamSquareDialog.colorLabels[value as ThumbnailIriamSquareColorway]}
+          onChange={(colorway) =>
+            onChange({
+              style: model.selectedStyle,
+              colorway: colorway as ThumbnailIriamSquareColorway
+            })
+          }
+        />
+      </div>
+    </div>
   );
 }
 

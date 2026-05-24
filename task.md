@@ -13,6 +13,42 @@
 
 ## Current Work Log
 
+### 2026-05-24 - Thumbnail Editor 1:1 IRIAM square background swap panel
+
+- base check:
+  - `git fetch origin --prune` 済み。
+  - PR #201 (`codex/thumbnail-iriam-square-task-cleanup` -> `codex/thumbnail-iriam-square-preview`) は `MERGED`。merge commit `d95dfaa4dc82512a6fb606ee7dd01bfe23bdd233`。
+  - 新規 branch / worktree: `codex/thumbnail-iriam-square-bg-swap`, `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-bg-swap`。
+- implementation:
+  - IRIAM square background registry alias と swap rule helper を `lib/thumbnail-editor.ts` に追加。
+  - 選択中 layer が IRIAM square background かどうかは layer name ではなく registry `src` で判定。
+  - `PropertyPanel` に `square-1-1` かつ選択中 layer が IRIAM square background の場合だけ出る小さな背景差し替え UI を追加。
+  - 背景差し替えは selected image layer の `src` のみ変更し、`x` / `y` / `width` / `height` / `locked` / `opacity` などは維持。
+  - `歌枠` は `soft_cloud` / `pop_bubble` / `dark_cute` と colorway を変更可能。
+  - `闇ガチャ` は `dark_cute` 固定、`雑談` / `耐久` は `pop_bubble` 固定、`初配信` は `soft_cloud` 固定で colorway のみ変更可能。
+- RED / GREEN:
+  - RED: `node scripts/thumbnail-iriam-square-background-swap-contract.mjs` が `shared IRIAM square background registry is exported` で失敗。
+  - GREEN: helper / UI 実装後、同 contract が PASS。
+- verification:
+  - PASS: `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+  - PASS: `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `npm run lint`
+  - PASS: `git diff --check`（Windows 改行 warning のみ）
+- width verification:
+  - dev server: `npm run dev -- --webpack -p 3004`
+  - 390px: `square-1-1` + selected IRIAM background で UI 表示、`dark_cute` / `mint` への src 差し替え確認、16:9 では非表示、canvas `1080 x 1080`、horizontal overflow `0`。
+  - 820px: `square-1-1` + selected IRIAM background で UI 表示、`dark_cute` / `mint` への src 差し替え確認、16:9 では非表示、canvas `1080 x 1080`、horizontal overflow `0`。
+  - 1024px: `square-1-1` + selected IRIAM background で UI 表示、`dark_cute` / `mint` への src 差し替え確認、16:9 では非表示、canvas `1080 x 1080`、horizontal overflow `0`。
+  - 1280px: `square-1-1` + selected IRIAM background で UI 表示、`dark_cute` / `mint` への src 差し替え確認、16:9 では非表示、canvas `1080 x 1080`、horizontal overflow `0`。
+  - 1366px: `square-1-1` + selected IRIAM background で UI 表示、`dark_cute` / `mint` への src 差し替え確認、16:9 では非表示、canvas `1080 x 1080`、horizontal overflow `0`。
+- remaining risk:
+  - title transparent image layer の差し替え UI は未実装。
+  - decoration asset / layer 差し替え UI は未実装。
+  - schema、9:16 preset、新規 font、追加 title image 生成、preset settings modal 拡張は引き続き out of scope。
+- next action:
+  - この PR の review / merge 後、次の最小 slice は title transparent image layer の差し替え UI を contract-first で検討する。
+
 ### 2026-05-24 - Thumbnail Editor 1:1 IRIAM square preset task board cleanup
 
 - base check:
@@ -42,7 +78,7 @@
 ## Active Priorities
 
 1. Thumbnail Editor 1:1 IRIAM square preset / modal follow-up
-   - status: PR #200 merge 後、初回 5ジャンルの square preset body と settings modal は接続済み。
+   - status: PR #200 merge 後、初回 5ジャンルの square preset body と settings modal は接続済み。今回の background swap panel で、`square-1-1` 表示時の selected IRIAM background image layer だけを右パネルから差し替え可能にした。
    - connected genres:
      - `歌枠` / `karaoke`: body + modal。background style は modal で `soft_cloud` / `pop_bubble` / `dark_cute` を選択可能。
      - `闇ガチャ` / `dark_gacha`: body + modal。background style は `dark_cute` 固定。
@@ -52,8 +88,9 @@
    - fixed boundaries:
      - 1:1 IRIAM title image は背景に焼き込まず、透明 PNG image layer として扱う。
      - 新規 font は追加しない。
-     - `schema`、右パネル UI、9:16 preset、追加 title image 生成は触らない。
+     - `schema`、9:16 preset、追加 title image 生成、preset settings modal 拡張は触らない。
    - current contract commands:
+     - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
@@ -62,8 +99,8 @@
      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
    - next recommended slice:
-     - 右パネル UI に進む前の scope / contract planning。
-     - 目的は UI 実装ではなく、background / title / decoration の後付け変更をどの layer / helper / contract で扱うかを小さく固定すること。
+     - title transparent image layer の差し替え UI を contract-first で検討する。
+     - background swap と同じく、layer name ではなく asset registry / `src` ベースで判定する。
 
 2. Thumbnail Editor 1:1 IRIAM decoration asset phase
    - status: square preset body / modal 完了後の候補。右パネル planning と同時に進めない。
@@ -98,8 +135,8 @@
 ## Recommended Roadmap
 
 1. 1:1 IRIAM square preset / modal task board cleanup
-2. Right panel scope / contract planning
-3. Right panel background / title replacement UI, if the contract plan is approved
+2. Right panel background replacement UI
+3. Right panel title replacement UI, if the background swap PR is merged
 4. 1:1 IRIAM decoration assets
 5. Font / preset typography follow-up
 6. New tool planning: Kuro Live Comment Translator
@@ -114,13 +151,13 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Thumbnail Editor 1:1 IRIAM square preset follow-up として、右パネル UI に進む前の scope / contract planning を `task.md` / 必要最小限の docs に整理してください。
+Thumbnail Editor 1:1 IRIAM square preset follow-up として、右パネルで IRIAM square の title transparent image layer だけを差し替えできる最小 UI の scope / contract を整理してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- 直前の task cleanup PR / branch `codex/thumbnail-iriam-square-task-cleanup` の merge 状態を確認してください。
+- 直前の background swap PR / branch `codex/thumbnail-iriam-square-bg-swap` の merge 状態を確認してください。
 - 未 merge の場合は、新規実装へ進まず blocker summary を返してください。
 - merge 済みなら、`codex/thumbnail-iriam-square-preview` を base に新規 feature branch / worktree を切ってください。
 
@@ -132,27 +169,32 @@ Thumbnail Editor 1:1 IRIAM square preset follow-up として、右パネル UI �
 - `闇ガチャ` background style は `dark_cute` 固定。
 - `雑談` / `耐久` background style は `pop_bubble` 固定。
 - `初配信` background style は `soft_cloud` 固定。
-- schema、右パネル、9:16 preset はまだ触らない。
+- 右パネルの background swap UI は実装済み。
+- schema、9:16 preset、追加 title image 生成は触らない。
 
 今回の scope:
-- 実 UI 実装ではなく、右パネルで後付け変更したい対象と contract を整理する。
-- 対象候補は background image layer、title transparent image layer、将来 decoration layer まで。
-- layer 判定に既存 layer name / asset src / metadata のどれを使うか、schema 変更なしで成立するかを確認する。
-- contract にする場合は、既存 helper と script のどこへ足すかを決める。
-- UI を触る場合の幅別確認観点だけ先に `task.md` に残す。
+- まず helper / contract を先に作り、選択中 layer が IRIAM square title image かを asset registry / src ベースで判定する。
+- layer name だけに依存しない。
+- background swap UI と同じく、`square-1-1` かつ selected title image layer の場合だけ右パネルに出す前提で scope を固定する。
+- 実装に進む場合も selected layer の `src` だけ差し替え、geometry / locked / opacity は維持する。
 
 Out of scope:
-- 右パネル UI 実装。
 - schema 変更。
 - 9:16 preset。
 - 新規 font 追加。
 - 追加 title image 生成。
 - decoration asset 実装。
+- background swap UI の再設計。
 - 複数 slice の同時実装。
 
 検証:
-- docs/task cleanup のみなら `git diff --check`
-- contract を触る場合は該当 script と `node scripts/thumbnail-preset-text-locale-contract.mjs`
+- まず RED として追加 contract が実装前に失敗することを確認。
+- 該当 contract script。
+- `node scripts/thumbnail-preset-text-locale-contract.mjs`
+- `npx tsc --noEmit`
+- `npm run lint`
+- `git diff --check`
+- UI を触る場合は `390 / 820 / 1024 / 1280 / 1366px` の幅別確認を `task.md` に残す。
 
 完了時:
 - `task.md` に実装内容、確認結果、残リスク、次アクションを追記してください。

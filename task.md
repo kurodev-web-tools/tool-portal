@@ -287,13 +287,13 @@
        - `node scripts/thumbnail-preset-discovery-contract.mjs` currently fails because that existing script still expects the category filter list before `membership_stream` / `asmr_stream` were added. This is not introduced by the `karaoke / square-1-1` change.
      - UI width checks for the reported 1:1 preview regression are recorded above.
 3. Thumbnail Editor title image / decoration asset phases
-   - status: `初配信` / `雑談` / `耐久` title image 5色 slice を作成済み。`雑談` title image は `Yusei Magic`、`初配信` は `Mochiy Pop One`、`耐久` は `Dela Gothic One`、`闇ガチャ` は `New Tegomin` で確定。4フォントは selected title font として self-host 登録済み。次は残りジャンルを1つずつ5色カラバリへ進める。
+   - status: `初配信` / `雑談` / `耐久` / `闇ガチャ` title image 5色 slice を作成済み。`雑談` title image は `Yusei Magic`、`初配信` は `Mochiy Pop One`、`耐久` は `Dela Gothic One`、`闇ガチャ` は `New Tegomin`。4フォントは selected title font として self-host 登録済み。title image phase は初回5ジャンル分が揃ったため、次は preset body / settings modal へ接続する前の asset registration boundary を決める。
    - title image:
      - 5ジャンル x 5色 = 25 transparent PNG 候補。
      - font 系統は `handwritten soft`（`Yusei Magic`）、`pop rounded`（`Mochiy Pop One` / `M PLUS Rounded 1c`）、`impact gothic`（`Dela Gothic One` / `Reggae One`）、`serif accent`（`Kaisei Opti` / `Noto Serif JP`）を基本にし、必要時だけ追加候補を検討する。
      - decoration policy: title image 内の星、ハート、リボン、小丸、カーブ線などの飾りは入れない。可読性のための fill / stroke / shadow のみで作る。
-     - next genre候補: `闇ガチャ`。`New Tegomin` 400 で dark_cute 背景上の可読性を確認してから5色展開する。
-     - remaining risk: `闇ガチャ` は `New Tegomin` が有力だが、崩れを出しすぎると読みにくいため 5色展開前に dark background 上の縁取り太さを調整する。
+     - next action: title image 25枚は揃ったため、次は `闇ガチャ` / `dark_cute` を preset body に接続するか、先に decoration asset phase を小さく切るかを決める。
+     - remaining risk: `闇ガチャ` title は `dark_cute` 背景上では読めるが、専用 preset body / settings modal option / title image post-edit UI にはまだ接続していない。
      - 2026-05-24 visual check: selected baseline previews were re-opened locally:
        - `docs/mockups/thumbnail-editor-iriam-square-title-images/chatting/chatting-title-yusei-magic-mint-on-pop-bubble-preview.png`
        - `docs/mockups/thumbnail-editor-iriam-square-title-images/first-stream/first-stream-title-mochiy-pop-one-pink-blue-on-soft-cloud-preview.png`
@@ -349,7 +349,24 @@
        - visual result: 5色とも `pop_bubble` 1:1 背景上で読める。既存 glyph-verified `Dela Gothic One` 400 title を基準に色展開し、title image 内の星、ハート、リボン、小丸、カーブ線などは追加していない。
        - verification result: 5 title images are 760 x 320 PNG RGBA with transparent pixels. 5 previews are 1080 x 1080 PNG RGBA. Yellow preview was matched back to the existing glyph-verified reference to avoid the earlier `sharp` SVG glyph rendering drift. `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` passed.
        - remaining risk: preview は既存 `karaoke` `pop_bubble` 背景での確認用。`耐久` 専用 1:1 背景、preset body、settings modal option にはまだ接続していない。
-       - next genre candidate: `闇ガチャ`。`New Tegomin` 400 で dark_cute 背景上の readable stroke を先に確認する。
+     - 2026-05-24 `闇ガチャ` 5色 title image slice:
+       - generated with Chrome headless / real `@font-face` rendering from self-hosted `New Tegomin` 400; `sharp` was used only for preview compositing.
+       - created title images:
+         - `public/assets/images/thumbnail-editor/iriam-square/dark-gacha/titles/dark-gacha-square-title-pink-blue-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/dark-gacha/titles/dark-gacha-square-title-blue-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/dark-gacha/titles/dark-gacha-square-title-yellow-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/dark-gacha/titles/dark-gacha-square-title-purple-v1.png`
+         - `public/assets/images/thumbnail-editor/iriam-square/dark-gacha/titles/dark-gacha-square-title-mint-v1.png`
+       - created previews:
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-new-tegomin-pink-blue-on-dark-cute-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-new-tegomin-blue-on-dark-cute-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-new-tegomin-yellow-on-dark-cute-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-new-tegomin-purple-on-dark-cute-preview.png`
+         - `docs/mockups/thumbnail-editor-iriam-square-title-images/dark-gacha/dark-gacha-title-new-tegomin-mint-on-dark-cute-preview.png`
+       - visual result: 5色とも `dark_cute` 1:1 背景上で読める。yellow は背景に近いが、濃い outer stroke / shadow で文字境界は維持できている。title image 内の星、ハート、リボン、小丸、カーブ線などは追加していない。
+       - verification result: 5 title images are 760 x 320 PNG RGBA with transparent pixels. 5 previews are 1080 x 1080 PNG RGBA. `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` passed.
+       - remaining risk: preview は既存 `karaoke` `dark_cute` 背景での確認用。`闇ガチャ` 専用 1:1 背景、preset body、settings modal option にはまだ接続していない。
+       - title image phase next action: 25枚を preset candidate として使う前に、non-`karaoke` genre の square preset body / option naming / registration helper の分割単位を決める。
    - decoration:
      - 吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベル。
      - 16:9 preset にも流用できる generic material として登録する。

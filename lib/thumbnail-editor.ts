@@ -1724,17 +1724,17 @@ export const createKaraokeIriamSquareDraft = (
   const title = getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
-    shapeLayer({ name: "図形 1（上部ソフトライト）", shapeType: "circle", x: 110, y: 76, width: 860, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.18, blur: 8 }),
-    assetDecorationLayer({ name: "画像 2（タイトル 歌枠）", src: title.src, x: 160, y: 126, width: 760, height: 320, opacity: 1 }),
+    shapeLayer({ name: "図形 1（上部ソフトライト）", shapeType: "circle", x: 110, y: 76, width: 860, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.18, blur: 8 }),
+    assetDecorationLayer({ name: "画像 4（ピンク音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-rose-uniform-cell.png`, x: 464.14427897927123, y: 940.2788296041309, width: 230, height: 153, rotation: -9, opacity: 0.5 }),
+    assetDecorationLayer({ name: "画像 5（金色音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-gold-uniform-cell.png`, x: 924.8290054628452, y: 656.8357404774378, width: 210, height: 140, rotation: 8, opacity: 0.38 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 歌枠）", src: title.src, x: 323.79555489036886, y: 644.8372371473471, width: 991.2295143306144, height: 468.41412856394516, opacity: 1 }),
     assetDecorationLayer({ name: "画像 3（小粒きらめき）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-sparkle-cluster-rose-cyan-uniform-cell.png`, x: 120, y: 214, width: 330, height: 220, rotation: -6, opacity: 0.42 }),
-    assetDecorationLayer({ name: "画像 4（ピンク音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-rose-uniform-cell.png`, x: 40, y: 742, width: 230, height: 153, rotation: -9, opacity: 0.5 }),
-    assetDecorationLayer({ name: "画像 5（金色音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-gold-uniform-cell.png`, x: 830, y: 112, width: 210, height: 140, rotation: 8, opacity: 0.38 }),
     shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 620, y: 352, width: 338, height: 620, fillColor: "#ffffff14", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 62, opacity: 0.3 }),
-    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 98, y: 720, width: 450, height: 112, fillColor: "#ffffffcc", strokeColor: "#ff9fd0", strokeWidth: 4, borderRadius: 56, opacity: 0.86 }),
-    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 158, y: 748, width: 330, height: 58, fontSize: 54, color: "#7a3f86", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
-    textLayer({ name: "テキスト 1（見出し補助）", text: "SINGING STREAM", x: 220, y: 430, width: 640, height: 56, fontSize: 44, color: "#8d64bd", strokeColor: "#ffffff", strokeWidth: 4, shadowColor: "#a0d8ff", shadowBlur: 7, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Fredoka", align: "center" }),
-    textLayer({ name: "テキスト 3（サブ）", text: "リクエスト歓迎 / 初見さん歓迎", x: 94, y: 856, width: 540, height: 48, fontSize: 33, color: "#7d5d97", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" }),
-    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / 歌枠", x: 78, y: 60, width: 248, height: 42, fontSize: 30, color: "#84629b", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+    assetDecorationLayer({ name: "素材: 青雲ラベル", src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`, x: 582.4475791364213, y: 184.48551971862605, width: 434.29716381052174, height: 304.02596722292895, opacity: 1 }),
+    assetDecorationLayer({ name: "素材: 青雲ラベル", src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`, x: 813.4855197186262, y: -0.9056349622090636, width: 304, height: 267, opacity: 1 }),
+    assetDecorationLayer({ name: "素材: 青雲ラベル", src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`, x: 841.0721394896357, y: 335.3062934969693, width: 304, height: 267, opacity: 1 }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 639.0416822569782, y: 313.5107386066003, width: 330, height: 58, fontSize: 54, color: "#7a3f86", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
+    assetDecorationLayer({ name: "素材: ミントきらきら", src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-sparkle-mint-v1.png`, x: 885.7082990346481, y: 922.4275985931303, width: 244.83125046770948, height: 203.45132081119505, opacity: 1 })
   ];
 
   return {
@@ -1754,14 +1754,13 @@ export const createDarkGachaIriamSquareDraft = (
   const title = getThumbnailIriamSquareTitleAsset("dark_gacha", config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
-    shapeLayer({ name: "図形 1（上部ライトアウトライン）", shapeType: "circle", x: 96, y: 50, width: 888, height: 390, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.09, blur: 10 }),
-    assetDecorationLayer({ name: "画像 2（タイトル 闇ガチャ）", src: title?.src ?? thumbnailIriamSquareDarkGachaTitleAssets[0].src, x: 260, y: 94, width: 760, height: 320, opacity: 1 }),
-    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 92, y: 316, width: 360, height: 628, fillColor: "#12091f33", strokeColor: "#f2d6ff", strokeWidth: 2, borderRadius: 56, opacity: 0.32 }),
-    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 566, y: 704, width: 398, height: 108, fillColor: "#1c1136dd", strokeColor: "#f4d5ff", strokeWidth: 3, borderRadius: 54, opacity: 0.9 }),
-    textLayer({ name: "テキスト 1（見出し補助）", text: "SSR祈願", x: 526, y: 420, width: 464, height: 82, fontSize: 68, color: "#fff4ff", strokeColor: "#26113f", strokeWidth: 6, shadowColor: "#b163ff", shadowBlur: 12, shadowOffsetX: 2, shadowOffsetY: 4, fontFamily: "M PLUS Rounded 1c", align: "center" }),
-    textLayer({ name: "テキスト 2（時刻）", text: "22:00 START", x: 612, y: 734, width: 306, height: 58, fontSize: 52, color: "#fff5d6", strokeColor: "#160925", strokeWidth: 3, shadowColor: "#a96dff", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Bebas Neue", align: "center" }),
-    textLayer({ name: "テキスト 3（サブ）", text: "単発も10連も歓迎", x: 520, y: 844, width: 486, height: 50, fontSize: 34, color: "#f9efff", strokeColor: "#201039", strokeWidth: 4, shadowColor: "#8d50dd", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "BIZ UDPGothic", align: "center" }),
-    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / 闇ガチャ", x: 70, y: 70, width: 298, height: 44, fontSize: 30, color: "#f6e9ff", strokeColor: "#1d0d32", strokeWidth: 3, shadowColor: "#b56dff", shadowBlur: 5, shadowOffsetX: 1, shadowOffsetY: 2, fontFamily: "M PLUS Rounded 1c", align: "center" })
+    shapeLayer({ name: "図形 1（上部ライトアウトライン）", shapeType: "circle", x: 96, y: 50, width: 888, height: 390, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.09, blur: 10 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 闇ガチャ）", src: title?.src ?? thumbnailIriamSquareDarkGachaTitleAssets[0].src, x: -246.87378115188247, y: 599.3330692685978, width: 1302.6268929693151, height: 553.0603199787986, rotation: 21.60856614090952, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 440.281074608995, y: 98.75536930330026, width: 360, height: 628, fillColor: "#12091f33", strokeColor: "#f2d6ff", strokeWidth: 2, borderRadius: 56, opacity: 0.32 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 754.6718551223528, y: 1005.1874579061588, width: 320.6944548379854, height: 61.98877497567915, fillColor: "#1c1136dd", strokeColor: "#f4d5ff", strokeWidth: 3, borderRadius: 54, opacity: 0.9 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台） コピー", shapeType: "rect", x: 773.4993639152884, y: 935.5219636309212, width: 301.72865374541647, height: 61.988774975679064, fillColor: "#1c1136dd", strokeColor: "#f4d5ff", strokeWidth: 3, borderRadius: 54, opacity: 0.9 }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 758.5539175334877, y: 1008.1420339744074, width: 308, height: 58, fontSize: 52, color: "#fff5d6", strokeColor: "#160925", strokeWidth: 3, shadowColor: "#a96dff", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "New Tegomin", align: "center" }),
+    textLayer({ name: "テキスト 3（サブ）", text: "単発も10連も歓迎", x: 682.0713911546809, y: 947.4498241412856, width: 486, height: 50, fontSize: 34, color: "#f9efff", strokeColor: "#201039", strokeWidth: 4, shadowColor: "#8d50dd", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "New Tegomin", align: "center" })
   ];
 
   return {
@@ -1781,14 +1780,12 @@ export const createChattingIriamSquareDraft = (
   const title = getThumbnailIriamSquareTitleAsset("chatting", config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
-    shapeLayer({ name: "図形 1（上部やわらかライト）", shapeType: "circle", x: 120, y: 64, width: 840, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.16, blur: 8 }),
-    assetDecorationLayer({ name: "画像 2（タイトル 雑談）", src: title?.src ?? thumbnailIriamSquareChattingTitleAssets[0].src, x: 160, y: 118, width: 760, height: 320, opacity: 1 }),
-    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 626, y: 354, width: 340, height: 616, fillColor: "#ffffff14", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 72, opacity: 0.3 }),
-    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 96, y: 714, width: 450, height: 112, fillColor: "#ffffffd6", strokeColor: "#72c8ff", strokeWidth: 4, borderRadius: 56, opacity: 0.88 }),
-    textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n話そう", x: 166, y: 392, width: 560, height: 146, fontSize: 66, lineHeight: 1.02, color: "#fffaf4", strokeColor: "#5f6798", strokeWidth: 6, shadowColor: "#9bdcff", shadowBlur: 10, shadowOffsetX: 0, shadowOffsetY: 3, fontFamily: "Kiwi Maru", align: "center" }),
-    textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 156, y: 744, width: 330, height: 58, fontSize: 54, color: "#4870a7", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
-    textLayer({ name: "テキスト 3（サブ）", text: "近況報告 / 初見さん歓迎", x: 96, y: 850, width: 540, height: 48, fontSize: 33, color: "#5f6798", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
-    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / 雑談", x: 78, y: 62, width: 248, height: 42, fontSize: 30, color: "#5b7da8", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+    shapeLayer({ name: "図形 1（上部やわらかライト）", shapeType: "circle", x: 120, y: 64, width: 840, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.16, blur: 8 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 雑談）", src: title?.src ?? thumbnailIriamSquareChattingTitleAssets[0].src, x: -347.0687719823392, y: -105.17398787697368, width: 1286.0345730749082, height: 556.9672977624786, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 639.7933098855048, y: 378.13829229963335, width: 340, height: 616, fillColor: "#ffffff14", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 72, opacity: 0.3 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 11.515976951283392, y: 968.9800194567088, width: 363.8398563196887, height: 84.60959365411952, fillColor: "#ffffffd6", strokeColor: "#72c8ff", strokeWidth: 4, borderRadius: 56, opacity: 0.88 }),
+    textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと話そう", x: 99.55167252862384, y: 331.51672528623817, width: 400, height: 105, fontSize: 50, lineHeight: 1.02, color: "#fffaf4", strokeColor: "#5f6798", strokeWidth: 6, shadowColor: "#9bdcff", shadowBlur: 10, shadowOffsetX: 0, shadowOffsetY: 3, fontFamily: "Kiwi Maru", align: "center" }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 30.136047294769185, y: 987.1070867320212, width: 330, height: 58, fontSize: 54, color: "#4870a7", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" })
   ];
 
   return {
@@ -1808,14 +1805,13 @@ export const createFirstStreamIriamSquareDraft = (
   const title = getThumbnailIriamSquareTitleAsset("first_stream", config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
-    shapeLayer({ name: "図形 1（上部ウェルカムライト）", shapeType: "circle", x: 92, y: 58, width: 896, height: 438, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.2, blur: 8 }),
-    assetDecorationLayer({ name: "画像 2（タイトル 初配信）", src: title?.src ?? thumbnailIriamSquareFirstStreamTitleAssets[0].src, x: 160, y: 112, width: 760, height: 320, opacity: 1 }),
-    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 370, y: 374, width: 340, height: 590, fillColor: "#ffffff16", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 76, opacity: 0.3 }),
-    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 102, y: 732, width: 438, height: 108, fillColor: "#ffffffd6", strokeColor: "#ff9fc7", strokeWidth: 4, borderRadius: 54, opacity: 0.88 }),
-    textLayer({ name: "テキスト 1（見出し補助）", text: "はじめまして", x: 154, y: 438, width: 772, height: 72, fontSize: 58, color: "#fffaf4", strokeColor: "#4c7fb2", strokeWidth: 6, shadowColor: "#ffacd2", shadowBlur: 9, shadowOffsetX: 0, shadowOffsetY: 3, fontFamily: "M PLUS Rounded 1c", align: "center" }),
-    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 154, y: 758, width: 334, height: 58, fontSize: 54, color: "#456f9f", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
-    textLayer({ name: "テキスト 3（サブ）", text: "自己紹介 / 初見さん歓迎", x: 514, y: 836, width: 456, height: 48, fontSize: 32, color: "#5f6798", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
-    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / DEBUT", x: 78, y: 62, width: 286, height: 42, fontSize: 30, color: "#5b7da8", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+    shapeLayer({ name: "図形 1（上部ウェルカムライト）", shapeType: "circle", x: 96.16670015673355, y: 17.72189848490939, width: 896, height: 438, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.2, blur: 8 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 初配信）", src: title?.src ?? thumbnailIriamSquareFirstStreamTitleAssets[0].src, x: 155.16277247637902, y: 588.1284435103, width: 1134.867178394888, height: 662.5574086725878, rotation: -2.3893123941288716, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 804.7257163525296, y: 51.77518787927494, width: 340, height: 590, fillColor: "#ffffff16", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 76, opacity: 0.3 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 0.6, y: 23, width: 367.86054736165255, height: 76.33983040630156, fillColor: "#ffffffd6", strokeColor: "#ff9fc7", strokeWidth: 4, borderRadius: 54, opacity: 0.88 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台） コピー", shapeType: "rect", x: 0.6, y: 105, width: 367.86054736165255, height: 76.33983040630156, fillColor: "#ffffffd6", strokeColor: "#ff9fc7", strokeWidth: 4, borderRadius: 54, opacity: 0.88 }),
+    textLayer({ name: "テキスト 2（時刻）", text: "23:00 START", x: 22.054495036772124, y: 37.16087288510222, width: 334, height: 58, fontSize: 41, color: "#456f9f", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Hachi Maru Pop", align: "center" }),
+    textLayer({ name: "テキスト 3（サブ）", text: "初見さん歓迎", x: -37.39332074106815, y: 123.4942731985694, width: 456, height: 48, fontSize: 40, color: "#5f6798", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Hachi Maru Pop", align: "center" })
   ];
 
   return {
@@ -1835,14 +1831,11 @@ export const createEnduranceStreamIriamSquareDraft = (
   const title = getThumbnailIriamSquareTitleAsset("endurance_stream", config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
-    shapeLayer({ name: "図形 1（上部チャレンジライト）", shapeType: "circle", x: 92, y: 58, width: 896, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.14, blur: 8 }),
-    assetDecorationLayer({ name: "画像 2（タイトル 耐久）", src: title?.src ?? thumbnailIriamSquareEnduranceTitleAssets[0].src, x: 160, y: 112, width: 760, height: 320, opacity: 1 }),
-    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 626, y: 342, width: 340, height: 626, fillColor: "#ffffff12", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 52, opacity: 0.3 }),
-    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 96, y: 716, width: 450, height: 112, fillColor: "#ffffffdc", strokeColor: "#ffb03d", strokeWidth: 4, borderRadius: 54, opacity: 0.9 }),
-    textLayer({ name: "テキスト 1（見出し補助）", text: "CHALLENGE", x: 164, y: 402, width: 568, height: 78, fontSize: 66, color: "#fffdf2", strokeColor: "#263238", strokeWidth: 6, shadowColor: "#c9ff00", shadowBlur: 11, shadowOffsetX: 2, shadowOffsetY: 4, fontFamily: "Anton", italic: true, align: "center" }),
-    textLayer({ name: "テキスト 2（時刻）", text: "19:00 START", x: 156, y: 746, width: 330, height: 58, fontSize: 54, color: "#f47d18", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#c9ff00", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
-    textLayer({ name: "テキスト 3（サブ）", text: "達成するまで終われない", x: 98, y: 850, width: 554, height: 48, fontSize: 33, color: "#4b5f7a", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
-    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / 耐久", x: 78, y: 62, width: 260, height: 42, fontSize: 30, color: "#5b6f8f", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+    shapeLayer({ name: "図形 1（上部チャレンジライト）", shapeType: "circle", x: 92, y: 58, width: 896, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.14, blur: 8 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 耐久）", src: title?.src ?? thumbnailIriamSquareEnduranceTitleAssets[0].src, x: -160.17249120706424, y: 588.4141285639453, width: 1384, height: 836, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 750.1397889695427, y: 167.85946269550243, width: 340, height: 626, fillColor: "#ffffff12", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 52, opacity: 0.3 }),
+    assetDecorationLayer({ name: "素材: 黄桃リボン", src: "/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-tiny-ribbon-yellow-pink-v1.png", x: -151.55167252862395, y: -291.37918132155954, width: 1378, height: 801, opacity: 1 }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 371.5204669610119, y: 66.67948813889099, width: 330, height: 58, fontSize: 54, color: "#f47d18", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#c9ff00", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Dela Gothic One", align: "center" })
   ];
 
   return {

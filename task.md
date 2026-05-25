@@ -142,6 +142,297 @@
      - next action:
        - Open draft PR against `codex/thumbnail-iriam-square-preview`.
        - After review / merge, continue with preview branch final QA / main merge preparation.
+   - 2026-05-25 final QA / main merge preparation update:
+     - branch / worktree: `codex/thumbnail-iriam-square-final-qa` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-final-qa`
+     - PR #208 merge confirmed before QA: `1eb42f6` on `origin/codex/thumbnail-iriam-square-preview` (`mergedAt` 2026-05-25T11:07:56Z).
+     - scope: preview branch final QA only. No schema, canvas export, handoff payload, 9:16 preset, font, title asset, swap UI redesign, decoration / material swap UI, material library redesign, or additional material batch changes.
+     - browser QA:
+       - in-app browser: `/tools/thumbnail-editor` opened on local dev server, switched from 16:9 to `正方形 1:1`, and confirmed the existing material library panel remains the add-from-library flow.
+       - Playwright fixed-width check: `390 / 820 / 1024 / 1280 / 1366px` with `1080 x 1080 / 1:1`.
+       - All fixed-width checks had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`; no page-level horizontal overflow was detected.
+       - `390 / 820px`: mobile panel mode, material panel hidden until selected.
+       - `1024 / 1280 / 1366px`: desktop side material panel visible with `49 / 49` materials.
+       - `1280px` with both left nav and right material panel visible can still require internal canvas panning or panel hide to inspect the far right edge; this is existing editor surface behavior, not a preset layer overlap found in this QA.
+     - preset visual check:
+       - Checked `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久配信` at `1366px`.
+       - No initial preset position / size / layer-overlap issue requiring this scope's minimal adjustment was found.
+       - Current draft JSON was not acquired because no suspicious preset geometry needed layer-level diagnosis.
+       - Initial preset position adjustment: none.
+     - material library flow:
+       - Added `シアンラベル土台` from the existing material library.
+       - Confirmed it appears as a normal image layer (`素材: シアンラベル土台`) in `レイヤー一覧`.
+       - Confirmed deleting that top layer from `レイヤー一覧` removes the placed material layer while the library entry remains available.
+     - verification completed:
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+       - `git diff --check`
+       - `git diff --check`
+     - residual risk:
+       - Fixed-width screenshots are QA evidence for the current default flow, not a full manual review of every background / title colorway combination.
+       - Material library small follow-up should stay feedback-gated; no extra material batch is needed from this QA alone.
+     - next action:
+       - Open draft PR against `codex/thumbnail-iriam-square-preview`.
+       - Next order remains `material library small follow-up only if needed` -> `final confirmation` -> `codex/thumbnail-iriam-square-preview` main merge preparation.
+   - 2026-05-25 first_stream initial placement follow-up:
+     - source: user-provided current draft JSON for `presetId: "first_stream"` after local visual adjustment.
+     - scope: `first_stream` / `square-1-1` initial preset body only.
+     - applied:
+       - Moved the transparent title image to the lower-right oversized composition from the draft JSON.
+       - Moved the standee guide to the upper-right placement from the draft JSON.
+       - Reworked the editable short text stack to three left-side pill rows (`23:00 START`, `リクエスト歓迎`, `初見さん歓迎`) with matching badge bases.
+       - Kept the existing `soft_cloud` background registry / colorway behavior instead of hard-coding the pasted draft's current background `src`.
+       - Added EN body copy for the new `テキスト 3（サブ） コピー` layer so square variant localization remains non-Japanese in English mode.
+     - current draft JSON:
+       - Acquired from the user paste; no separate browser JSON export was needed.
+     - verification completed:
+       - RED: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` failed on the old title image placement before implementation.
+       - GREEN: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+     - width check:
+       - Rechecked generated `first_stream` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+       - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+     - residual risk:
+       - This follows the pasted draft's intentionally oversized lower-right title composition; other background / title colorway combinations were not exhaustively re-reviewed in this follow-up.
+   - 2026-05-25 first_stream additional placement follow-up:
+     - source: user-provided current draft JSON for `presetId: "first_stream"` after additional local visual adjustment.
+     - scope: `first_stream` / `square-1-1` initial preset body only.
+     - applied:
+       - Moved and slightly rotated the transparent title image to the latest lower-right oversized composition from the draft JSON.
+       - Reduced the left badge stack from three rows to two rows.
+       - Removed the `リクエスト歓迎` row and kept `初見さん歓迎` as the only sub text.
+       - Kept the standee guide, background registry, and title registry behavior unchanged.
+     - current draft JSON:
+       - Acquired from the user paste; no separate browser JSON export was needed.
+     - verification completed:
+       - RED: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` failed on the old title rotation before implementation.
+       - GREEN: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+     - width check:
+       - Rechecked generated `first_stream` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+       - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+       - Screenshots: `output/playwright/thumbnail-iriam-square-final-qa-first-stream-adjust-2/`.
+     - residual risk:
+       - This follows the latest pasted draft's intentionally oversized lower-right title composition.
+       - EN square sub copy still uses the existing preset-layer localization mapping; it was not broadened in this follow-up to avoid changing non-square first_stream copy.
+   - 2026-05-25 endurance_stream initial placement follow-up:
+     - source: user-provided current draft JSON for `presetId: "endurance_stream"` after local visual adjustment.
+     - scope: `endurance_stream` / `square-1-1` initial preset body only.
+     - applied:
+       - Moved the transparent title image to the oversized lower composition from the draft JSON.
+       - Moved the standee guide to the upper-right placement from the draft JSON.
+       - Added the existing project-bound `黄桃リボン` material asset as an initial normal image layer in the preset body.
+       - Reduced editable text to the top `20:00 START` text layer using `Dela Gothic One`.
+       - Kept the existing `pop_bubble` background registry / colorway behavior instead of hard-coding a one-off background path.
+     - current draft JSON:
+       - Acquired from the user paste; no separate browser JSON export was needed.
+     - verification completed:
+       - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` failed before implementation because the final QA ribbon material layer was absent.
+       - GREEN: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+       - `git diff --check`
+     - width check:
+       - Rechecked generated `endurance_stream` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+       - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+     - residual risk:
+       - This intentionally promotes one existing material-library asset into the endurance starter composition; it does not add a material swap UI or new material batch.
+  - 2026-05-25 karaoke initial placement follow-up:
+    - source: user-provided current draft JSON for `presetId: "karaoke"` after local visual adjustment.
+    - scope: `karaoke` / `square-1-1` initial preset body only.
+    - applied:
+      - Moved the transparent title image to the oversized lower-right composition from the draft JSON.
+      - Moved the pink / gold note decorations to the lower and right-side draft positions.
+      - Added existing project-bound `青雲ラベル` material layers x3 and `ミントきらきら` x1 as normal image layers in the starter composition.
+      - Reduced editable text to the right-side `20:00 START` text layer using `Fredoka`.
+      - Kept the existing karaoke background / title registry behavior instead of hard-coding a one-off background or title path.
+    - current draft JSON:
+      - Acquired from the user paste; no separate browser JSON export was needed.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation on the old title image x position.
+      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-material-assets-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+      - `git diff --check`
+      - `git diff --check`
+    - width check:
+      - Rechecked generated `karaoke` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+      - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+      - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-karaoke-adjust/`.
+    - residual risk:
+      - This intentionally promotes existing material-library assets into the karaoke starter composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
+  - 2026-05-25 dark_gacha initial placement follow-up:
+    - source: user-provided current draft JSON for `presetId: "dark_gacha"` after local visual adjustment.
+    - scope: `dark_gacha` / `square-1-1` initial preset body only.
+    - applied:
+      - Moved the transparent title image to the oversized rotated lower composition from the draft JSON.
+      - Moved the standee guide to the upper-right draft position.
+      - Reworked the bottom-right text stack to two compact badge rows (`20:00 START`, `単発も10連も歓迎`).
+      - Removed the old editable heading / label text from the starter composition.
+      - Kept the existing `dark_cute` background registry and title registry behavior instead of hard-coding one-off asset paths.
+      - Increased the time text box width from the pasted `306px` to `308px` only to satisfy the existing English visual-balance contract after switching that layer to `New Tegomin`.
+    - current draft JSON:
+      - Acquired from the user paste; no separate browser JSON export was needed.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs` failed before implementation on the old title image x position.
+      - GREEN: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-material-assets-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+      - `git diff --check`
+    - width check:
+      - Rechecked generated `dark_gacha` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+      - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+      - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-dark-gacha-adjust/`.
+    - residual risk:
+      - This follows the pasted draft's intentionally oversized / rotated title composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
+  - 2026-05-25 chatting initial placement follow-up:
+    - source: user-provided current draft JSON for `presetId: "chatting"` after local visual adjustment.
+    - scope: `chatting` / `square-1-1` initial preset body only.
+    - applied:
+      - Moved the transparent title image to the oversized top-left composition from the draft JSON.
+      - Moved the standee guide to the right-side draft position.
+      - Moved the time badge / `20:00 START` text to the lower-left draft position.
+      - Reduced editable text to `ゆるっと話そう` and `20:00 START`; removed the old editable sub / label text from the starter composition.
+      - Updated the English preset body copy for `テキスト 2（時刻）` from `21:00 START` to `20:00 START` so localization matches the new initial text.
+      - Kept the existing `pop_bubble` background registry and title registry behavior instead of hard-coding one-off asset paths.
+    - current draft JSON:
+      - Acquired from the user paste; no separate browser JSON export was needed.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs` failed before implementation on the old title image x position.
+      - GREEN: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-material-assets-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+      - `git diff --check`
+    - width check:
+      - Rechecked generated `chatting` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+      - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+      - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-chatting-adjust/`.
+    - residual risk:
+      - This follows the pasted draft's intentionally oversized top title composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
+  - 2026-05-25 square new-draft variant bugfix:
+    - source: user report from local browser that pressing `新規` while a `1:1` output ratio preset is selected kept the square canvas but rebuilt the layers from the 16:9 preset body.
+    - root cause:
+      - `newDraft` used `createPresetDraftForLocale(draft.presetId, draft.canvas)`, which scales the legacy 16:9 preset body onto the current canvas for square-capable presets.
+    - applied:
+      - Changed `newDraft` to resolve the current `currentVariantId`, keep the current preset only when it is selectable for that variant, and rebuild through `createDraftFromPresetVariant(targetPresetId, currentVariantId)`.
+      - Added a regression contract so the new draft action cannot return to the legacy `createPresetDraftForLocale(draft.presetId, draft.canvas)` path.
+    - current draft JSON:
+      - No new user draft JSON was required; this was a handler bug reproduced from the app state.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation because `newDraft` did not use the active variant body.
+      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-material-assets-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+      - `git diff --check`
+    - browser check:
+      - Seeded a generated `chatting` / `square-1-1` draft on `http://localhost:3000/tools/thumbnail-editor`, clicked `新規`, waited for autosave, and confirmed the saved draft remained `presetId: "chatting"` with `1080 x 1080`, square chatting title asset / placement, only `テキスト 1（見出し）` and `テキスト 2（時刻）`, and no horizontal overflow at `1366px`.
+    - residual risk:
+      - This fixes the new-draft creation path only; it does not alter preset application, canvas export, handoff payload, material flow, or preset geometry.
+  - 2026-05-25 square preset text carryover bugfix:
+    - source: user report from local browser that switching from one `1:1` IRIAM preset to another could leave the previous preset's editable text in the newly selected preset.
+    - root cause:
+      - The five IRIAM square preset modal apply handlers still used the 16:9-oriented `applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft))` fallback when no Schedule Calendar handoff payload was active.
+      - `changePresetVariant` also carried text when switching into `square-1-1`, which is inconsistent with the fixed-composition IRIAM square presets.
+    - applied:
+      - Kept explicit Schedule Calendar handoff application unchanged.
+      - Changed normal IRIAM square preset modal application to use the selected preset body as-is, without pulling text from the previous preset.
+      - Changed variant switching into `square-1-1` to start from the selected square preset body instead of carrying text from the previous aspect.
+      - Added a regression contract covering all five IRIAM square modal apply handlers and the square variant switch path.
+    - current draft JSON:
+      - No new user draft JSON was required; this was a handler behavior bug reproduced from the app state.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation because `applyKaraokeIriamSquarePreset` still referenced `applyThumbnailMainTextCarryover`, and then because `changePresetVariant` still carried text into `square-1-1`.
+      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-preset-apply-safety-contract.mjs`
+      - `node scripts/thumbnail-material-assets-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+    - browser check:
+      - Seeded a generated `karaoke` / `square-1-1` draft with its editable text changed to `SHOULD_NOT_CARRY`, opened `http://localhost:3000/tools/thumbnail-editor`, switched to `雑談` through the preset dropdown, applied the IRIAM square preset modal, waited for autosave, and confirmed the saved draft became `presetId: "chatting"` with `1080 x 1080`, text layers `ゆるっと話そう` / `20:00 START`, and no `SHOULD_NOT_CARRY` text.
+    - residual risk:
+      - This intentionally changes only IRIAM square normal preset application. 16:9 preset carryover and explicit Schedule Calendar handoff behavior remain unchanged.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

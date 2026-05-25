@@ -58,8 +58,8 @@ assert.equal(Object.hasOwn(squareDraft, "variantId"), false, "endurance_stream s
 const imageLayers = squareDraft.layers.filter((layer) => layer.type === "image");
 assert.deepEqual(
   imageLayers.map((layer) => layer.name),
-  ["画像 1（背景）", "画像 2（タイトル 耐久）"],
-  "endurance_stream square keeps image layers to the fixed background and transparent title"
+  ["画像 1（背景）", "画像 2（タイトル 耐久）", "素材: 黄桃リボン"],
+  "endurance_stream square keeps the fixed background, transparent title, and final QA ribbon material"
 );
 
 const backgroundLayer = imageLayers.find((layer) => layer.name.includes("背景"));
@@ -80,20 +80,63 @@ assert.equal(
   `${titlePrefix}endurance-square-title-yellow-v1.png`,
   "endurance_stream square uses the matching Dela Gothic One transparent title image"
 );
-assert.equal(titleLayer.width, 760, "endurance_stream square title image keeps its source width");
-assert.equal(titleLayer.height, 320, "endurance_stream square title image keeps its source height");
+assert.deepEqual(
+  {
+    x: titleLayer.x,
+    y: titleLayer.y,
+    width: titleLayer.width,
+    height: titleLayer.height
+  },
+  {
+    x: -160.17249120706424,
+    y: 588.4141285639453,
+    width: 1384,
+    height: 836
+  },
+  "endurance_stream square title image uses the final QA placement"
+);
+
+const ribbonLayer = imageLayers.find((layer) => layer.name === "素材: 黄桃リボン");
+assert.ok(ribbonLayer, "endurance_stream square has the final QA ribbon material layer");
+assert.deepEqual(
+  {
+    src: ribbonLayer.src,
+    x: ribbonLayer.x,
+    y: ribbonLayer.y,
+    width: ribbonLayer.width,
+    height: ribbonLayer.height
+  },
+  {
+    src: "/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-tiny-ribbon-yellow-pink-v1.png",
+    x: -151.55167252862395,
+    y: -291.37918132155954,
+    width: 1378,
+    height: 801
+  },
+  "endurance_stream square ribbon material uses the final QA placement"
+);
 
 assert.equal(
   squareDraft.layers.some((layer) => layer.type === "text" && layer.text === "耐久"),
   false,
   "endurance_stream square does not duplicate the fixed title image as editable text"
 );
-for (const roleName of ["見出し", "時刻", "サブ", "ラベル"]) {
+for (const roleName of ["時刻"]) {
   assert.ok(
     squareDraft.layers.some((layer) => layer.type === "text" && layer.name.includes(roleName)),
     `endurance_stream square keeps editable ${roleName} text`
   );
 }
+assert.equal(
+  squareDraft.layers.filter((layer) => layer.type === "text").length,
+  1,
+  "endurance_stream square keeps only the final QA editable time text"
+);
+assert.equal(
+  squareDraft.layers.find((layer) => layer.type === "text" && layer.name.includes("時刻"))?.fontFamily,
+  "Dela Gothic One",
+  "endurance_stream square time text uses the final QA font"
+);
 assert.ok(
   squareDraft.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),
   "endurance_stream square keeps a standee placement guide"

@@ -31,6 +31,11 @@ const readPngSize = (filePath) => {
     height: buffer.readUInt32BE(20)
   };
 };
+const getComponentHandlerBody = (name) => {
+  const body = componentSource.match(new RegExp(`const ${name} = \\([^)]*\\) => \\{[\\s\\S]*?\\n  \\};`))?.[0] ?? "";
+  assert.ok(body.length > 0, `${name} handler exists`);
+  return body;
+};
 
 const expectedBackgroundFiles = [
   "karaoke-square-soft-cloud-pink-blue-v1.png",
@@ -112,23 +117,92 @@ assert.equal(squareBackground.height, 1080, "karaoke square background fills the
 const titleLayer = squareDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("タイトル"));
 assert.ok(titleLayer, "karaoke square has a title image layer");
 assert.equal(titleLayer.src, `${titlePrefix}karaoke-square-title-pink-blue-v1.png`, "karaoke square uses the adopted Mochiy title image");
-assert.equal(titleLayer.width, 760, "karaoke square title image keeps its source width");
-assert.equal(titleLayer.height, 320, "karaoke square title image keeps its source height");
+assert.equal(titleLayer.x, 323.79555489036886, "karaoke square title image uses the adjusted x position");
+assert.equal(titleLayer.y, 644.8372371473471, "karaoke square title image uses the adjusted y position");
+assert.equal(titleLayer.width, 991.2295143306144, "karaoke square title image uses the adjusted display width");
+assert.equal(titleLayer.height, 468.41412856394516, "karaoke square title image uses the adjusted display height");
+
+assert.deepEqual(
+  squareDraft.layers.filter((layer) => layer.type === "image").map((layer) => layer.name),
+  [
+    "画像 1（背景）",
+    "画像 4（ピンク音符）",
+    "画像 5（金色音符）",
+    "画像 2（タイトル 歌枠）",
+    "画像 3（小粒きらめき）",
+    "素材: 青雲ラベル",
+    "素材: 青雲ラベル",
+    "素材: 青雲ラベル",
+    "素材: ミントきらきら"
+  ],
+  "karaoke square image layers match the final QA starter composition order"
+);
+
+const cloudLabelSrc = "/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-cloud-blue-v1.png";
+const cloudLabels = squareDraft.layers.filter((layer) => layer.type === "image" && layer.name === "素材: 青雲ラベル");
+assert.equal(cloudLabels.length, 3, "karaoke square includes three existing blue cloud label material layers");
+assert.deepEqual(
+  cloudLabels.map((layer) => ({ src: layer.src, x: layer.x, y: layer.y, width: layer.width, height: layer.height })),
+  [
+    { src: cloudLabelSrc, x: 582.4475791364213, y: 184.48551971862605, width: 434.29716381052174, height: 304.02596722292895 },
+    { src: cloudLabelSrc, x: 813.4855197186262, y: -0.9056349622090636, width: 304, height: 267 },
+    { src: cloudLabelSrc, x: 841.0721394896357, y: 335.3062934969693, width: 304, height: 267 }
+  ],
+  "karaoke square blue cloud label material layers use the final QA positions"
+);
+
+const mintSparkle = squareDraft.layers.find((layer) => layer.type === "image" && layer.name === "素材: ミントきらきら");
+assert.ok(mintSparkle, "karaoke square includes the existing mint sparkle material layer");
+assert.deepEqual(
+  { src: mintSparkle.src, x: mintSparkle.x, y: mintSparkle.y, width: mintSparkle.width, height: mintSparkle.height },
+  {
+    src: "/assets/images/thumbnail-editor/materials/iriam-square-accent/iriam-square-accent-sparkle-mint-v1.png",
+    x: 885.7082990346481,
+    y: 922.4275985931303,
+    width: 244.83125046770948,
+    height: 203.45132081119505
+  },
+  "karaoke square mint sparkle material layer uses the final QA position"
+);
 
 assert.equal(
   squareDraft.layers.some((layer) => layer.type === "text" && layer.text === "歌枠"),
   false,
   "karaoke square does not duplicate the genre title as editable text"
 );
-for (const roleName of ["見出し", "時刻", "サブ", "ラベル"]) {
-  assert.ok(
-    squareDraft.layers.some((layer) => layer.type === "text" && layer.name.includes(roleName)),
-    `karaoke square keeps editable ${roleName} text`
-  );
-}
-assert.ok(
-  squareDraft.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),
-  "karaoke square keeps a standee placement guide"
+const textLayers = squareDraft.layers.filter((layer) => layer.type === "text");
+assert.equal(textLayers.length, 1, "karaoke square keeps only the time text editable by default");
+assert.deepEqual(
+  {
+    name: textLayers[0].name,
+    text: textLayers[0].text,
+    x: textLayers[0].x,
+    y: textLayers[0].y,
+    width: textLayers[0].width,
+    height: textLayers[0].height,
+    fontFamily: textLayers[0].fontFamily,
+    fontSize: textLayers[0].fontSize,
+    color: textLayers[0].color
+  },
+  {
+    name: "テキスト 2（時刻）",
+    text: "20:00 START",
+    x: 639.0416822569782,
+    y: 313.5107386066003,
+    width: 330,
+    height: 58,
+    fontFamily: "Fredoka",
+    fontSize: 54,
+    color: "#7a3f86"
+  },
+  "karaoke square time text uses the final QA position"
+);
+const standeeGuide = squareDraft.layers.find((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド"));
+assert.ok(standeeGuide, "karaoke square keeps a standee placement guide");
+assert.deepEqual(
+  { x: standeeGuide.x, y: standeeGuide.y, width: standeeGuide.width, height: standeeGuide.height },
+  { x: 620, y: 352, width: 338, height: 620 },
+  "karaoke square standee guide keeps the final QA position"
 );
 
 const normalized = lib.normalizeThumbnailDraft(squareDraft);
@@ -222,5 +296,45 @@ assert.equal(
   true,
   "karaoke square modal defaults title color to background matching"
 );
+assert.equal(
+  componentSource.includes('const targetPresetId = isPresetSelectableForVariant(draft.presetId, currentVariantId) ? draft.presetId : "karaoke";'),
+  true,
+  "new draft action keeps the current square-capable preset when recreating a 1:1 draft"
+);
+assert.equal(
+  componentSource.includes("localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, currentVariantId), locale)"),
+  true,
+  "new draft action recreates the selected preset through the active variant body"
+);
+assert.equal(
+  componentSource.includes("replaceDraft(createPresetDraftForLocale(draft.presetId, draft.canvas), { recordHistory: true });"),
+  false,
+  "new draft action does not rebuild a square canvas by scaling the legacy 16:9 preset body"
+);
+const changePresetVariantBody = getComponentHandlerBody("changePresetVariant");
+assert.equal(
+  changePresetVariantBody.includes('variantId === "square-1-1" ? next : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft))'),
+  true,
+  "switching into the square variant starts from the selected IRIAM square preset body instead of carrying text from the previous aspect"
+);
+for (const handlerName of [
+  "applyKaraokeIriamSquarePreset",
+  "applyDarkGachaIriamSquarePreset",
+  "applyChattingIriamSquarePreset",
+  "applyFirstStreamIriamSquarePreset",
+  "applyEnduranceIriamSquarePreset"
+]) {
+  const handlerBody = getComponentHandlerBody(handlerName);
+  assert.equal(
+    handlerBody.includes("applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)"),
+    true,
+    `${handlerName} still applies explicit schedule handoff payloads`
+  );
+  assert.equal(
+    handlerBody.includes("applyThumbnailMainTextCarryover"),
+    false,
+    `${handlerName} does not pull editable text from the previous preset during normal 1:1 preset changes`
+  );
+}
 
 console.log("thumbnail iriam karaoke square preset contract checks passed");

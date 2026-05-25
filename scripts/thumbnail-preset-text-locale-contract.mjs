@@ -525,7 +525,7 @@ const enChattingDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
 );
 assert.equal(
   textLayers(enChattingDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
-  "21:00 START",
+  "20:00 START",
   "Chatting time copy follows the supplied English visual draft"
 );
 const enClipDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(

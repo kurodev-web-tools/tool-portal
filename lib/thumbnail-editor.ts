@@ -1780,14 +1780,12 @@ export const createChattingIriamSquareDraft = (
   const title = getThumbnailIriamSquareTitleAsset("chatting", config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
-    shapeLayer({ name: "図形 1（上部やわらかライト）", shapeType: "circle", x: 120, y: 64, width: 840, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.16, blur: 8 }),
-    assetDecorationLayer({ name: "画像 2（タイトル 雑談）", src: title?.src ?? thumbnailIriamSquareChattingTitleAssets[0].src, x: 160, y: 118, width: 760, height: 320, opacity: 1 }),
-    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 626, y: 354, width: 340, height: 616, fillColor: "#ffffff14", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 72, opacity: 0.3 }),
-    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 96, y: 714, width: 450, height: 112, fillColor: "#ffffffd6", strokeColor: "#72c8ff", strokeWidth: 4, borderRadius: 56, opacity: 0.88 }),
-    textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと\n話そう", x: 166, y: 392, width: 560, height: 146, fontSize: 66, lineHeight: 1.02, color: "#fffaf4", strokeColor: "#5f6798", strokeWidth: 6, shadowColor: "#9bdcff", shadowBlur: 10, shadowOffsetX: 0, shadowOffsetY: 3, fontFamily: "Kiwi Maru", align: "center" }),
-    textLayer({ name: "テキスト 2（時刻）", text: "21:00 START", x: 156, y: 744, width: 330, height: 58, fontSize: 54, color: "#4870a7", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
-    textLayer({ name: "テキスト 3（サブ）", text: "近況報告 / 初見さん歓迎", x: 96, y: 850, width: 540, height: 48, fontSize: 33, color: "#5f6798", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
-    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / 雑談", x: 78, y: 62, width: 248, height: 42, fontSize: 30, color: "#5b7da8", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+    shapeLayer({ name: "図形 1（上部やわらかライト）", shapeType: "circle", x: 120, y: 64, width: 840, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.16, blur: 8 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 雑談）", src: title?.src ?? thumbnailIriamSquareChattingTitleAssets[0].src, x: -347.0687719823392, y: -105.17398787697368, width: 1286.0345730749082, height: 556.9672977624786, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 639.7933098855048, y: 378.13829229963335, width: 340, height: 616, fillColor: "#ffffff14", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 72, opacity: 0.3 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 11.515976951283392, y: 968.9800194567088, width: 363.8398563196887, height: 84.60959365411952, fillColor: "#ffffffd6", strokeColor: "#72c8ff", strokeWidth: 4, borderRadius: 56, opacity: 0.88 }),
+    textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと話そう", x: 99.55167252862384, y: 331.51672528623817, width: 400, height: 105, fontSize: 50, lineHeight: 1.02, color: "#fffaf4", strokeColor: "#5f6798", strokeWidth: 6, shadowColor: "#9bdcff", shadowBlur: 10, shadowOffsetX: 0, shadowOffsetY: 3, fontFamily: "Kiwi Maru", align: "center" }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 30.136047294769185, y: 987.1070867320212, width: 330, height: 58, fontSize: 54, color: "#4870a7", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" })
   ];
 
   return {

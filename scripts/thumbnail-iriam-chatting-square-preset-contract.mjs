@@ -80,23 +80,70 @@ assert.equal(
   `${titlePrefix}chatting-square-title-pink-blue-v1.png`,
   "chatting square uses the matching Yusei Magic transparent title image"
 );
-assert.equal(titleLayer.width, 760, "chatting square title image keeps its source width");
-assert.equal(titleLayer.height, 320, "chatting square title image keeps its source height");
+assert.equal(titleLayer.x, -347.0687719823392, "chatting square title image uses the adjusted x position");
+assert.equal(titleLayer.y, -105.17398787697368, "chatting square title image uses the adjusted y position");
+assert.equal(titleLayer.width, 1286.0345730749082, "chatting square title image uses the adjusted display width");
+assert.equal(titleLayer.height, 556.9672977624786, "chatting square title image uses the adjusted display height");
 
 assert.equal(
   squareDraft.layers.some((layer) => layer.type === "text" && layer.text === "雑談"),
   false,
   "chatting square does not duplicate the fixed title image as editable text"
 );
-for (const roleName of ["見出し", "時刻", "サブ", "ラベル"]) {
-  assert.ok(
-    squareDraft.layers.some((layer) => layer.type === "text" && layer.name.includes(roleName)),
-    `chatting square keeps editable ${roleName} text`
-  );
-}
-assert.ok(
-  squareDraft.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),
-  "chatting square keeps a standee placement guide"
+const textLayers = squareDraft.layers.filter((layer) => layer.type === "text");
+assert.deepEqual(
+  textLayers.map((layer) => layer.name),
+  ["テキスト 1（見出し）", "テキスト 2（時刻）"],
+  "chatting square keeps only the heading and time editable text by default"
+);
+assert.deepEqual(
+  textLayers.map((layer) => ({
+    name: layer.name,
+    text: layer.text,
+    x: layer.x,
+    y: layer.y,
+    width: layer.width,
+    height: layer.height,
+    fontSize: layer.fontSize,
+    fontFamily: layer.fontFamily
+  })),
+  [
+    {
+      name: "テキスト 1（見出し）",
+      text: "ゆるっと話そう",
+      x: 99.55167252862384,
+      y: 331.51672528623817,
+      width: 400,
+      height: 105,
+      fontSize: 50,
+      fontFamily: "Kiwi Maru"
+    },
+    {
+      name: "テキスト 2（時刻）",
+      text: "20:00 START",
+      x: 30.136047294769185,
+      y: 987.1070867320212,
+      width: 330,
+      height: 58,
+      fontSize: 54,
+      fontFamily: "Fredoka"
+    }
+  ],
+  "chatting square text layers use the final QA positions"
+);
+const standeeGuide = squareDraft.layers.find((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド"));
+assert.ok(standeeGuide, "chatting square keeps a standee placement guide");
+assert.deepEqual(
+  { x: standeeGuide.x, y: standeeGuide.y, width: standeeGuide.width, height: standeeGuide.height },
+  { x: 639.7933098855048, y: 378.13829229963335, width: 340, height: 616 },
+  "chatting square standee guide uses the final QA position"
+);
+const timeBadge = squareDraft.layers.find((layer) => layer.type === "shape" && layer.name.includes("時刻バッジ土台"));
+assert.ok(timeBadge, "chatting square keeps a time badge base");
+assert.deepEqual(
+  { x: timeBadge.x, y: timeBadge.y, width: timeBadge.width, height: timeBadge.height },
+  { x: 11.515976951283392, y: 968.9800194567088, width: 363.8398563196887, height: 84.60959365411952 },
+  "chatting square time badge uses the final QA position"
 );
 
 const normalized = lib.normalizeThumbnailDraft(squareDraft);

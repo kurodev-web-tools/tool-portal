@@ -291,5 +291,20 @@ assert.equal(
   true,
   "karaoke square modal defaults title color to background matching"
 );
+assert.equal(
+  componentSource.includes('const targetPresetId = isPresetSelectableForVariant(draft.presetId, currentVariantId) ? draft.presetId : "karaoke";'),
+  true,
+  "new draft action keeps the current square-capable preset when recreating a 1:1 draft"
+);
+assert.equal(
+  componentSource.includes("localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, currentVariantId), locale)"),
+  true,
+  "new draft action recreates the selected preset through the active variant body"
+);
+assert.equal(
+  componentSource.includes("replaceDraft(createPresetDraftForLocale(draft.presetId, draft.canvas), { recordHistory: true });"),
+  false,
+  "new draft action does not rebuild a square canvas by scaling the legacy 16:9 preset body"
+);
 
 console.log("thumbnail iriam karaoke square preset contract checks passed");

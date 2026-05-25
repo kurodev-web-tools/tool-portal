@@ -1487,7 +1487,8 @@ export function ThumbnailEditorApp() {
   };
 
   const newDraft = () => {
-    replaceDraft(createPresetDraftForLocale(draft.presetId, draft.canvas), { recordHistory: true });
+    const targetPresetId = isPresetSelectableForVariant(draft.presetId, currentVariantId) ? draft.presetId : "karaoke";
+    replaceDraft(localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, currentVariantId), locale), { recordHistory: true });
     setMobilePanel("canvas");
     showToast("info", copy.toasts.newDraft);
   };

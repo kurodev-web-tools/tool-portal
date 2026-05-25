@@ -342,6 +342,34 @@
       - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-chatting-adjust/`.
     - residual risk:
       - This follows the pasted draft's intentionally oversized top title composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
+  - 2026-05-25 square new-draft variant bugfix:
+    - source: user report from local browser that pressing `新規` while a `1:1` output ratio preset is selected kept the square canvas but rebuilt the layers from the 16:9 preset body.
+    - root cause:
+      - `newDraft` used `createPresetDraftForLocale(draft.presetId, draft.canvas)`, which scales the legacy 16:9 preset body onto the current canvas for square-capable presets.
+    - applied:
+      - Changed `newDraft` to resolve the current `currentVariantId`, keep the current preset only when it is selectable for that variant, and rebuild through `createDraftFromPresetVariant(targetPresetId, currentVariantId)`.
+      - Added a regression contract so the new draft action cannot return to the legacy `createPresetDraftForLocale(draft.presetId, draft.canvas)` path.
+    - current draft JSON:
+      - No new user draft JSON was required; this was a handler bug reproduced from the app state.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation because `newDraft` did not use the active variant body.
+      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-material-assets-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+      - `git diff --check`
+    - browser check:
+      - Seeded a generated `chatting` / `square-1-1` draft on `http://localhost:3000/tools/thumbnail-editor`, clicked `新規`, waited for autosave, and confirmed the saved draft remained `presetId: "chatting"` with `1080 x 1080`, square chatting title asset / placement, only `テキスト 1（見出し）` and `テキスト 2（時刻）`, and no horizontal overflow at `1366px`.
+    - residual risk:
+      - This fixes the new-draft creation path only; it does not alter preset application, canvas export, handoff payload, material flow, or preset geometry.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

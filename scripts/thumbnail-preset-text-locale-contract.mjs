@@ -743,6 +743,11 @@ assert.match(
   /localizeThumbnailPresetTextLayerBodies\(createDraftFromPreset\(/,
   "Thumbnail Editor localizes preset text bodies only at draft creation/apply time"
 );
+assert.match(
+  thumbnailAppSource,
+  /createDraftFromPresetVariant\([^)]*,\s*locale\)/,
+  "Thumbnail Editor passes the resolved locale into square variant draft creation"
+);
 assert.doesNotMatch(
   thumbnailAppSource,
   /getThumbnailPresetTextLayerVisualAdjustment/,

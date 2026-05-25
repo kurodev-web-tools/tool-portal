@@ -1351,7 +1351,7 @@ export function ThumbnailEditorApp() {
     recordPresetUse(presetId);
     const next =
       currentVariantId === "square-1-1"
-        ? localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(presetId, currentVariantId), locale)
+        ? localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(presetId, currentVariantId, locale), locale)
         : createPresetDraftForLocale(presetId, draft.canvas);
     const nextDraft =
       mode === "handoff" && handoffPayload
@@ -1374,7 +1374,7 @@ export function ThumbnailEditorApp() {
 
   const applyKaraokeIriamSquarePreset = (config: ThumbnailIriamSquareKaraokePresetConfig) => {
     recordPresetUse("karaoke");
-    const next = localizeThumbnailPresetTextLayerBodies(createKaraokeIriamSquareDraft(config), locale);
+    const next = localizeThumbnailPresetTextLayerBodies(createKaraokeIriamSquareDraft(config, locale), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : next;
@@ -1387,7 +1387,7 @@ export function ThumbnailEditorApp() {
 
   const applyDarkGachaIriamSquarePreset = (config: ThumbnailIriamSquareDarkGachaPresetConfig) => {
     recordPresetUse("dark_gacha");
-    const next = localizeThumbnailPresetTextLayerBodies(createDarkGachaIriamSquareDraft(config), locale);
+    const next = localizeThumbnailPresetTextLayerBodies(createDarkGachaIriamSquareDraft(config, locale), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : next;
@@ -1400,7 +1400,7 @@ export function ThumbnailEditorApp() {
 
   const applyChattingIriamSquarePreset = (config: ThumbnailIriamSquareChattingPresetConfig) => {
     recordPresetUse("chatting");
-    const next = localizeThumbnailPresetTextLayerBodies(createChattingIriamSquareDraft(config), locale);
+    const next = localizeThumbnailPresetTextLayerBodies(createChattingIriamSquareDraft(config, locale), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : next;
@@ -1413,7 +1413,7 @@ export function ThumbnailEditorApp() {
 
   const applyFirstStreamIriamSquarePreset = (config: ThumbnailIriamSquareFirstStreamPresetConfig) => {
     recordPresetUse("first_stream");
-    const next = localizeThumbnailPresetTextLayerBodies(createFirstStreamIriamSquareDraft(config), locale);
+    const next = localizeThumbnailPresetTextLayerBodies(createFirstStreamIriamSquareDraft(config, locale), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : next;
@@ -1426,7 +1426,7 @@ export function ThumbnailEditorApp() {
 
   const applyEnduranceIriamSquarePreset = (config: ThumbnailIriamSquareEndurancePresetConfig) => {
     recordPresetUse("endurance_stream");
-    const next = localizeThumbnailPresetTextLayerBodies(createEnduranceStreamIriamSquareDraft(config), locale);
+    const next = localizeThumbnailPresetTextLayerBodies(createEnduranceStreamIriamSquareDraft(config, locale), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : next;
@@ -1458,7 +1458,7 @@ export function ThumbnailEditorApp() {
         : draft.presetId === "dark_gacha"
           ? "karaoke"
           : draft.presetId;
-    const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, variantId), locale);
+    const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, variantId, locale), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : variantId === "square-1-1" ? next : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
@@ -1488,7 +1488,7 @@ export function ThumbnailEditorApp() {
 
   const newDraft = () => {
     const targetPresetId = isPresetSelectableForVariant(draft.presetId, currentVariantId) ? draft.presetId : "karaoke";
-    replaceDraft(localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, currentVariantId), locale), { recordHistory: true });
+    replaceDraft(localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, currentVariantId, locale), locale), { recordHistory: true });
     setMobilePanel("canvas");
     showToast("info", copy.toasts.newDraft);
   };
@@ -2522,6 +2522,7 @@ export function ThumbnailEditorApp() {
       {iriamSquarePresetModalPresetId ? (
         <IriamSquareKaraokePresetDialog
           copy={copy}
+          locale={locale}
           presetId={iriamSquarePresetModalPresetId}
           config={
             iriamSquarePresetModalPresetId === "dark_gacha"
@@ -3707,6 +3708,7 @@ function PresetApplyConfirmDialog({
 
 function IriamSquareKaraokePresetDialog({
   copy,
+  locale,
   presetId,
   config,
   onConfigChange,
@@ -3714,6 +3716,7 @@ function IriamSquareKaraokePresetDialog({
   onCancel
 }: {
   copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
   presetId: IriamSquarePresetModalPresetId;
   config: IriamSquarePresetModalConfig;
   onConfigChange: (config: IriamSquarePresetModalConfig) => void;
@@ -3725,14 +3728,14 @@ function IriamSquareKaraokePresetDialog({
   const background = getThumbnailIriamSquareKaraokeBackgroundAsset(backgroundStyle, config.backgroundColorway);
   const title =
     presetId === "dark_gacha"
-      ? getThumbnailIriamSquareTitleAsset("dark_gacha", config.titleColorway, config.backgroundColorway)
+      ? getThumbnailIriamSquareTitleAsset("dark_gacha", config.titleColorway, config.backgroundColorway, locale)
       : presetId === "chatting"
-        ? getThumbnailIriamSquareTitleAsset("chatting", config.titleColorway, config.backgroundColorway)
+        ? getThumbnailIriamSquareTitleAsset("chatting", config.titleColorway, config.backgroundColorway, locale)
         : presetId === "first_stream"
-          ? getThumbnailIriamSquareTitleAsset("first_stream", config.titleColorway, config.backgroundColorway)
+          ? getThumbnailIriamSquareTitleAsset("first_stream", config.titleColorway, config.backgroundColorway, locale)
           : presetId === "endurance_stream"
-            ? getThumbnailIriamSquareTitleAsset("endurance_stream", config.titleColorway, config.backgroundColorway)
-            : getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway as ThumbnailIriamSquareKaraokeTitleColorway, config.backgroundColorway);
+            ? getThumbnailIriamSquareTitleAsset("endurance_stream", config.titleColorway, config.backgroundColorway, locale)
+            : getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway as ThumbnailIriamSquareKaraokeTitleColorway, config.backgroundColorway, locale);
   const updateConfig = (partial: Partial<IriamSquarePresetModalConfig>) => onConfigChange({ ...config, ...partial } as IriamSquarePresetModalConfig);
   const titleColorOptions: ThumbnailIriamSquareTitleColorway[] = ["match-background", ...thumbnailIriamSquareColorways];
 

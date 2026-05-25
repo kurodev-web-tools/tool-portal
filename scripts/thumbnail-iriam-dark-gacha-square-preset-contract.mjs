@@ -204,7 +204,7 @@ assert.equal(
   "preset list exposes karaoke, dark gacha, chatting, first_stream, and endurance_stream while the square variant is active"
 );
 assert.equal(
-  componentSource.includes('createDraftFromPresetVariant(presetId, currentVariantId)'),
+  componentSource.includes('createDraftFromPresetVariant(presetId, currentVariantId, locale)'),
   true,
   "square preset application uses the variant body instead of scaling a 16:9 preset"
 );
@@ -214,7 +214,7 @@ assert.equal(
   "square preset cards open the settings modal for karaoke and dark gacha"
 );
 assert.equal(
-  componentSource.includes("createDarkGachaIriamSquareDraft(config)"),
+  componentSource.includes("createDarkGachaIriamSquareDraft(config, locale)"),
   true,
   "dark gacha settings modal applies the configured square draft"
 );

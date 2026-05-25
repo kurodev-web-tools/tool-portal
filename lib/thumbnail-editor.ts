@@ -185,10 +185,11 @@ export type ThumbnailIriamSquareTitleAsset = {
   genre: ThumbnailIriamSquareTitleGenre;
   colorway: ThumbnailIriamSquareColorway;
   src: string;
-  titleText: "歌枠" | "闇ガチャ" | "雑談" | "初配信" | "耐久";
-  fontFamily: "Mochiy Pop P One" | "New Tegomin" | "Yusei Magic" | "Mochiy Pop One" | "Dela Gothic One";
+  titleText: "歌枠" | "闇ガチャ" | "雑談" | "初配信" | "耐久" | "Karaoke" | "Dark Gacha" | "Chatting" | "Debut Stream" | "Endurance";
+  fontFamily: "Mochiy Pop P One" | "New Tegomin" | "Yusei Magic" | "Mochiy Pop One" | "Dela Gothic One" | "Lilita One" | "Pirata One" | "Fredoka" | "Lobster" | "Anton";
   source: "generated-title-image";
 };
+export type ThumbnailIriamSquareTitleLocale = "ja" | "en";
 export type ThumbnailIriamSquareKaraokeTitleAsset = ThumbnailIriamSquareTitleAsset & {
   genre: "karaoke";
   titleText: "歌枠";
@@ -1464,6 +1465,41 @@ export const thumbnailIriamSquareEnduranceTitleAssets: ThumbnailIriamSquareEndur
   { genre: "endurance_stream", colorway: "purple", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-purple-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" },
   { genre: "endurance_stream", colorway: "mint", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-mint-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" }
 ];
+export const thumbnailIriamSquareKaraokeEnTitleAssets: ThumbnailIriamSquareTitleAsset[] = [
+  { genre: "karaoke", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-en-title-pink-blue-v1.png`, titleText: "Karaoke", fontFamily: "Lilita One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-en-title-blue-v1.png`, titleText: "Karaoke", fontFamily: "Lilita One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "yellow", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-en-title-yellow-v1.png`, titleText: "Karaoke", fontFamily: "Lilita One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "purple", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-en-title-purple-v1.png`, titleText: "Karaoke", fontFamily: "Lilita One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "mint", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-en-title-mint-v1.png`, titleText: "Karaoke", fontFamily: "Lilita One", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareDarkGachaEnTitleAssets: ThumbnailIriamSquareTitleAsset[] = [
+  { genre: "dark_gacha", colorway: "pink-blue", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-en-title-pink-blue-v1.png`, titleText: "Dark Gacha", fontFamily: "Pirata One", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "blue", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-en-title-blue-v1.png`, titleText: "Dark Gacha", fontFamily: "Pirata One", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "yellow", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-en-title-yellow-v1.png`, titleText: "Dark Gacha", fontFamily: "Pirata One", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "purple", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-en-title-purple-v1.png`, titleText: "Dark Gacha", fontFamily: "Pirata One", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "mint", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-en-title-mint-v1.png`, titleText: "Dark Gacha", fontFamily: "Pirata One", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareChattingEnTitleAssets: ThumbnailIriamSquareTitleAsset[] = [
+  { genre: "chatting", colorway: "pink-blue", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-en-title-pink-blue-v1.png`, titleText: "Chatting", fontFamily: "Fredoka", source: "generated-title-image" },
+  { genre: "chatting", colorway: "blue", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-en-title-blue-v1.png`, titleText: "Chatting", fontFamily: "Fredoka", source: "generated-title-image" },
+  { genre: "chatting", colorway: "yellow", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-en-title-yellow-v1.png`, titleText: "Chatting", fontFamily: "Fredoka", source: "generated-title-image" },
+  { genre: "chatting", colorway: "purple", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-en-title-purple-v1.png`, titleText: "Chatting", fontFamily: "Fredoka", source: "generated-title-image" },
+  { genre: "chatting", colorway: "mint", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-en-title-mint-v1.png`, titleText: "Chatting", fontFamily: "Fredoka", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareFirstStreamEnTitleAssets: ThumbnailIriamSquareTitleAsset[] = [
+  { genre: "first_stream", colorway: "pink-blue", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-en-title-pink-blue-v1.png`, titleText: "Debut Stream", fontFamily: "Lobster", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "blue", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-en-title-blue-v1.png`, titleText: "Debut Stream", fontFamily: "Lobster", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "yellow", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-en-title-yellow-v1.png`, titleText: "Debut Stream", fontFamily: "Lobster", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "purple", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-en-title-purple-v1.png`, titleText: "Debut Stream", fontFamily: "Lobster", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "mint", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-en-title-mint-v1.png`, titleText: "Debut Stream", fontFamily: "Lobster", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareEnduranceEnTitleAssets: ThumbnailIriamSquareTitleAsset[] = [
+  { genre: "endurance_stream", colorway: "pink-blue", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-en-title-pink-blue-v1.png`, titleText: "Endurance", fontFamily: "Anton", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "blue", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-en-title-blue-v1.png`, titleText: "Endurance", fontFamily: "Anton", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "yellow", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-en-title-yellow-v1.png`, titleText: "Endurance", fontFamily: "Anton", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "purple", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-en-title-purple-v1.png`, titleText: "Endurance", fontFamily: "Anton", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "mint", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-en-title-mint-v1.png`, titleText: "Endurance", fontFamily: "Anton", source: "generated-title-image" }
+];
 export const thumbnailIriamSquareTitleAssetsByGenre: Record<ThumbnailIriamSquareTitleGenre, ThumbnailIriamSquareTitleAsset[]> = {
   karaoke: thumbnailIriamSquareKaraokeTitleAssets,
   dark_gacha: thumbnailIriamSquareDarkGachaTitleAssets,
@@ -1471,6 +1507,21 @@ export const thumbnailIriamSquareTitleAssetsByGenre: Record<ThumbnailIriamSquare
   first_stream: thumbnailIriamSquareFirstStreamTitleAssets,
   endurance_stream: thumbnailIriamSquareEnduranceTitleAssets
 };
+export const thumbnailIriamSquareEnTitleAssetsByGenre: Record<ThumbnailIriamSquareTitleGenre, ThumbnailIriamSquareTitleAsset[]> = {
+  karaoke: thumbnailIriamSquareKaraokeEnTitleAssets,
+  dark_gacha: thumbnailIriamSquareDarkGachaEnTitleAssets,
+  chatting: thumbnailIriamSquareChattingEnTitleAssets,
+  first_stream: thumbnailIriamSquareFirstStreamEnTitleAssets,
+  endurance_stream: thumbnailIriamSquareEnduranceEnTitleAssets
+};
+export const thumbnailIriamSquareTitleAssetsByLocaleAndGenre: Record<ThumbnailIriamSquareTitleLocale, Record<ThumbnailIriamSquareTitleGenre, ThumbnailIriamSquareTitleAsset[]>> = {
+  ja: thumbnailIriamSquareTitleAssetsByGenre,
+  en: thumbnailIriamSquareEnTitleAssetsByGenre
+};
+const thumbnailIriamSquareAllTitleAssets = thumbnailIriamSquareTitleGenres.flatMap((genre) => [
+  ...thumbnailIriamSquareTitleAssetsByGenre[genre],
+  ...thumbnailIriamSquareEnTitleAssetsByGenre[genre]
+]);
 
 export const getThumbnailIriamSquareKaraokeBackgroundAsset = (
   style: ThumbnailIriamSquareKaraokeBackgroundStyle,
@@ -1535,10 +1586,11 @@ export const getThumbnailIriamSquareTitleLayerMatch = (layer: ThumbnailLayer | n
     return null;
   }
 
-  return thumbnailIriamSquareTitleGenres
-    .flatMap((genre) => thumbnailIriamSquareTitleAssetsByGenre[genre])
-    .find((asset) => asset.src === layer.src) ?? null;
+  return thumbnailIriamSquareAllTitleAssets.find((asset) => asset.src === layer.src) ?? null;
 };
+
+const getThumbnailIriamSquareTitleAssetLocale = (asset: ThumbnailIriamSquareTitleAsset): ThumbnailIriamSquareTitleLocale =>
+  thumbnailIriamSquareEnTitleAssetsByGenre[asset.genre].some((candidate) => candidate.src === asset.src) ? "en" : "ja";
 
 export const getThumbnailIriamSquareTitlePanelModel = (
   variantId: ThumbnailPresetVariantId,
@@ -1568,7 +1620,8 @@ export const replaceThumbnailIriamSquareTitleLayerSource = (layer: ThumbnailLaye
     return layer;
   }
 
-  const nextAsset = thumbnailIriamSquareTitleAssetsByGenre[selected.genre].find((asset) => asset.colorway === colorway);
+  const locale = getThumbnailIriamSquareTitleAssetLocale(selected);
+  const nextAsset = thumbnailIriamSquareTitleAssetsByLocaleAndGenre[locale][selected.genre].find((asset) => asset.colorway === colorway);
   if (!nextAsset) {
     return layer;
   }
@@ -1578,18 +1631,21 @@ export const replaceThumbnailIriamSquareTitleLayerSource = (layer: ThumbnailLaye
 
 export const getThumbnailIriamSquareKaraokeTitleAsset = (
   colorway: ThumbnailIriamSquareKaraokeTitleColorway,
-  backgroundColorway: ThumbnailIriamSquareColorway
+  backgroundColorway: ThumbnailIriamSquareColorway,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
 ) => {
+  const assets = thumbnailIriamSquareTitleAssetsByLocaleAndGenre[locale].karaoke;
   const resolvedColorway = colorway === "match-background" ? backgroundColorway : colorway;
-  return thumbnailIriamSquareKaraokeTitleAssets.find((asset) => asset.colorway === resolvedColorway) ?? thumbnailIriamSquareKaraokeTitleAssets[0];
+  return assets.find((asset) => asset.colorway === resolvedColorway) ?? assets[0];
 };
 
 export const getThumbnailIriamSquareTitleAsset = (
   genre: string,
   colorway: ThumbnailIriamSquareTitleColorway,
-  backgroundColorway: ThumbnailIriamSquareColorway = "pink-blue"
+  backgroundColorway: ThumbnailIriamSquareColorway = "pink-blue",
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
 ) => {
-  const assets = thumbnailIriamSquareTitleAssetsByGenre[genre as ThumbnailIriamSquareTitleGenre];
+  const assets = thumbnailIriamSquareTitleAssetsByLocaleAndGenre[locale][genre as ThumbnailIriamSquareTitleGenre];
   if (!assets) {
     return null;
   }
@@ -1718,10 +1774,11 @@ const shapeLayer = (partial: Partial<ThumbnailShapeLayer> & Pick<ThumbnailShapeL
 });
 
 export const createKaraokeIriamSquareDraft = (
-  config: ThumbnailIriamSquareKaraokePresetConfig = defaultThumbnailIriamSquareKaraokePresetConfig
+  config: ThumbnailIriamSquareKaraokePresetConfig = defaultThumbnailIriamSquareKaraokePresetConfig,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
 ): ThumbnailEditorDraft => {
   const background = getThumbnailIriamSquareKaraokeBackgroundAsset(config.backgroundStyle, config.backgroundColorway);
-  const title = getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway, config.backgroundColorway);
+  const title = getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway, config.backgroundColorway, locale);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
     shapeLayer({ name: "図形 1（上部ソフトライト）", shapeType: "circle", x: 110, y: 76, width: 860, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.18, blur: 8 }),
@@ -1748,10 +1805,11 @@ export const createKaraokeIriamSquareDraft = (
 };
 
 export const createDarkGachaIriamSquareDraft = (
-  config: ThumbnailIriamSquareDarkGachaPresetConfig = defaultThumbnailIriamSquareDarkGachaPresetConfig
+  config: ThumbnailIriamSquareDarkGachaPresetConfig = defaultThumbnailIriamSquareDarkGachaPresetConfig,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
 ): ThumbnailEditorDraft => {
   const background = getThumbnailIriamSquareKaraokeBackgroundAsset("dark_cute", config.backgroundColorway);
-  const title = getThumbnailIriamSquareTitleAsset("dark_gacha", config.titleColorway, config.backgroundColorway);
+  const title = getThumbnailIriamSquareTitleAsset("dark_gacha", config.titleColorway, config.backgroundColorway, locale);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
     shapeLayer({ name: "図形 1（上部ライトアウトライン）", shapeType: "circle", x: 96, y: 50, width: 888, height: 390, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.09, blur: 10 }),
@@ -1774,10 +1832,11 @@ export const createDarkGachaIriamSquareDraft = (
 };
 
 export const createChattingIriamSquareDraft = (
-  config: ThumbnailIriamSquareChattingPresetConfig = defaultThumbnailIriamSquareChattingPresetConfig
+  config: ThumbnailIriamSquareChattingPresetConfig = defaultThumbnailIriamSquareChattingPresetConfig,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
 ): ThumbnailEditorDraft => {
   const background = getThumbnailIriamSquareKaraokeBackgroundAsset("pop_bubble", config.backgroundColorway);
-  const title = getThumbnailIriamSquareTitleAsset("chatting", config.titleColorway, config.backgroundColorway);
+  const title = getThumbnailIriamSquareTitleAsset("chatting", config.titleColorway, config.backgroundColorway, locale);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
     shapeLayer({ name: "図形 1（上部やわらかライト）", shapeType: "circle", x: 120, y: 64, width: 840, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.16, blur: 8 }),
@@ -1799,10 +1858,11 @@ export const createChattingIriamSquareDraft = (
 };
 
 export const createFirstStreamIriamSquareDraft = (
-  config: ThumbnailIriamSquareFirstStreamPresetConfig = defaultThumbnailIriamSquareFirstStreamPresetConfig
+  config: ThumbnailIriamSquareFirstStreamPresetConfig = defaultThumbnailIriamSquareFirstStreamPresetConfig,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
 ): ThumbnailEditorDraft => {
   const background = getThumbnailIriamSquareKaraokeBackgroundAsset("soft_cloud", config.backgroundColorway);
-  const title = getThumbnailIriamSquareTitleAsset("first_stream", config.titleColorway, config.backgroundColorway);
+  const title = getThumbnailIriamSquareTitleAsset("first_stream", config.titleColorway, config.backgroundColorway, locale);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
     shapeLayer({ name: "図形 1（上部ウェルカムライト）", shapeType: "circle", x: 96.16670015673355, y: 17.72189848490939, width: 896, height: 438, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.2, blur: 8 }),
@@ -1825,10 +1885,11 @@ export const createFirstStreamIriamSquareDraft = (
 };
 
 export const createEnduranceStreamIriamSquareDraft = (
-  config: ThumbnailIriamSquareEndurancePresetConfig = defaultThumbnailIriamSquareEndurancePresetConfig
+  config: ThumbnailIriamSquareEndurancePresetConfig = defaultThumbnailIriamSquareEndurancePresetConfig,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
 ): ThumbnailEditorDraft => {
   const background = getThumbnailIriamSquareKaraokeBackgroundAsset("pop_bubble", config.backgroundColorway);
-  const title = getThumbnailIriamSquareTitleAsset("endurance_stream", config.titleColorway, config.backgroundColorway);
+  const title = getThumbnailIriamSquareTitleAsset("endurance_stream", config.titleColorway, config.backgroundColorway, locale);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
     shapeLayer({ name: "図形 1（上部チャレンジライト）", shapeType: "circle", x: 92, y: 58, width: 896, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.14, blur: 8 }),
@@ -3617,26 +3678,27 @@ export const createDraftFromPreset = (
 
 export const createDraftFromPresetVariant = (
   presetId: ThumbnailPresetId = "stream_announce",
-  variantId: ThumbnailPresetVariantId = thumbnailPresetVariantRelations[presetId].defaultVariantId
+  variantId: ThumbnailPresetVariantId = thumbnailPresetVariantRelations[presetId].defaultVariantId,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
 ): ThumbnailEditorDraft => {
   if (presetId === "endurance_stream" && variantId === "square-1-1") {
-    return createEnduranceStreamIriamSquareDraft();
+    return createEnduranceStreamIriamSquareDraft(defaultThumbnailIriamSquareEndurancePresetConfig, locale);
   }
 
   if (presetId === "first_stream" && variantId === "square-1-1") {
-    return createFirstStreamIriamSquareDraft();
+    return createFirstStreamIriamSquareDraft(defaultThumbnailIriamSquareFirstStreamPresetConfig, locale);
   }
 
   if (presetId === "chatting" && variantId === "square-1-1") {
-    return createChattingIriamSquareDraft();
+    return createChattingIriamSquareDraft(defaultThumbnailIriamSquareChattingPresetConfig, locale);
   }
 
   if (presetId === "dark_gacha" && variantId === "square-1-1") {
-    return createDarkGachaIriamSquareDraft();
+    return createDarkGachaIriamSquareDraft(defaultThumbnailIriamSquareDarkGachaPresetConfig, locale);
   }
 
   if (presetId === "karaoke" && variantId === "square-1-1") {
-    return createKaraokeIriamSquareDraft();
+    return createKaraokeIriamSquareDraft(defaultThumbnailIriamSquareKaraokePresetConfig, locale);
   }
 
   const canvas = getThumbnailPresetCanvasFromVariant(presetId, variantId) ?? thumbnailPresetVariants[thumbnailDefaultPresetVariantId].canvas;

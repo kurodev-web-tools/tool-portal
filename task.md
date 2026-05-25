@@ -213,6 +213,37 @@
        - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
      - residual risk:
        - This follows the pasted draft's intentionally oversized lower-right title composition; other background / title colorway combinations were not exhaustively re-reviewed in this follow-up.
+   - 2026-05-25 first_stream additional placement follow-up:
+     - source: user-provided current draft JSON for `presetId: "first_stream"` after additional local visual adjustment.
+     - scope: `first_stream` / `square-1-1` initial preset body only.
+     - applied:
+       - Moved and slightly rotated the transparent title image to the latest lower-right oversized composition from the draft JSON.
+       - Reduced the left badge stack from three rows to two rows.
+       - Removed the `リクエスト歓迎` row and kept `初見さん歓迎` as the only sub text.
+       - Kept the standee guide, background registry, and title registry behavior unchanged.
+     - current draft JSON:
+       - Acquired from the user paste; no separate browser JSON export was needed.
+     - verification completed:
+       - RED: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` failed on the old title rotation before implementation.
+       - GREEN: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+     - width check:
+       - Rechecked generated `first_stream` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+       - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+       - Screenshots: `output/playwright/thumbnail-iriam-square-final-qa-first-stream-adjust-2/`.
+     - residual risk:
+       - This follows the latest pasted draft's intentionally oversized lower-right title composition.
+       - EN square sub copy still uses the existing preset-layer localization mapping; it was not broadened in this follow-up to avoid changing non-square first_stream copy.
    - 2026-05-25 endurance_stream initial placement follow-up:
      - source: user-provided current draft JSON for `presetId: "endurance_stream"` after local visual adjustment.
      - scope: `endurance_stream` / `square-1-1` initial preset body only.

@@ -82,6 +82,7 @@ assert.equal(
 );
 assert.equal(titleLayer.width, 1134.867178394888, "first_stream square title image keeps its final QA width");
 assert.equal(titleLayer.height, 662.5574086725878, "first_stream square title image keeps its final QA height");
+assert.equal(titleLayer.rotation, -2.3893123941288716, "first_stream square title image uses the adjusted rotation");
 assert.deepEqual(
   {
     x: titleLayer.x,
@@ -90,12 +91,12 @@ assert.deepEqual(
     height: titleLayer.height
   },
   {
-    x: 158.61109994775518,
-    y: 427.78121609130716,
+    x: 155.16277247637902,
+    y: 588.1284435103,
     width: 1134.867178394888,
     height: 662.5574086725878
   },
-  "first_stream square title image uses the final QA placement"
+  "first_stream square title image uses the additional final QA placement"
 );
 
 assert.equal(
@@ -111,13 +112,43 @@ for (const roleName of ["時刻", "サブ"]) {
 }
 assert.equal(
   squareDraft.layers.filter((layer) => layer.type === "shape" && layer.name.includes("時刻バッジ土台")).length,
-  3,
-  "first_stream square keeps the final QA stacked editable text badge bases"
-);
-assert.equal(
-  squareDraft.layers.filter((layer) => layer.type === "text" && layer.name.includes("サブ")).length,
   2,
-  "first_stream square keeps the final QA stacked editable sub text fields"
+  "first_stream square keeps the additional final QA two-row badge stack"
+);
+assert.deepEqual(
+  squareDraft.layers.filter((layer) => layer.type === "text").map((layer) => ({
+    name: layer.name,
+    text: layer.text,
+    x: layer.x,
+    y: layer.y,
+    width: layer.width,
+    height: layer.height,
+    fontSize: layer.fontSize,
+    fontFamily: layer.fontFamily
+  })),
+  [
+    {
+      name: "テキスト 2（時刻）",
+      text: "23:00 START",
+      x: 22.054495036772124,
+      y: 37.16087288510222,
+      width: 334,
+      height: 58,
+      fontSize: 41,
+      fontFamily: "Hachi Maru Pop"
+    },
+    {
+      name: "テキスト 3（サブ）",
+      text: "初見さん歓迎",
+      x: -37.39332074106815,
+      y: 123.4942731985694,
+      width: 456,
+      height: 48,
+      fontSize: 40,
+      fontFamily: "Hachi Maru Pop"
+    }
+  ],
+  "first_stream square text layers use the additional final QA two-row placement"
 );
 assert.ok(
   squareDraft.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),

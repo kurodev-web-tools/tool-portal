@@ -15,10 +15,10 @@
 ## Active Priorities
 
 1. Thumbnail Editor 1:1 IRIAM preview branch final QA / main merge preparation
-   - status: 次の最優先。`codex/thumbnail-iriam-square-preview` 上の 1:1 IRIAM slice 群を main 結合前にまとめて確認し、必要なら目視確認結果から JSON を取得して preset 初期位置だけを小さく調整する。
+   - status: PR #209 merge 済み。main 結合前 final confirmation に入る前に、EN locale でも出力物として成立するよう IRIAM square EN title image support を 1 slice 挟む。
    - base:
      - `origin/codex/thumbnail-iriam-square-preview`
-     - latest integrated PR: #207 `Confirm cross-aspect material reuse`
+     - latest integrated PR: #209 `Thumbnail Editor 1:1 IRIAM square final QA / main merge preparation`
    - current completed state:
      - `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久` は `square-1-1` preset body 接続済み。
      - 同 5ジャンルは square settings modal 対応済み。
@@ -32,10 +32,9 @@
      - 調整対象は IRIAM square preset の初期位置 / サイズ / レイヤー重なりに限定し、schema、export、handoff、font、9:16、material swap UI は触らない。
      - material library は現状の「素材ライブラリから追加 / 通常レイヤーとして削除」運用を維持し、swap UI は実利用フィードバックが出るまで作らない。
    - next flow:
-     - 1. Preview branch final QA / main merge preparation（目視確認、JSON取得、必要最小限の preset 初期位置修正）
-     - 2. Material library small follow-up only if needed（フィードバックで足りない素材が明確になった場合だけ 1 category / small batch）
-     - 3. Final confirmation（contracts / tsc / lint / width check / task.md 整理）
-     - 4. Merge preview branch to `main`
+     - 1. IRIAM square EN title image support（5ジャンル x 5 colorway を 1 PR に閉じる）
+     - 2. Final confirmation（contracts / tsc / lint / width check / task.md 整理）
+     - 3. Merge preview branch to `main`
    - 2026-05-25 implementation update:
      - branch / worktree: `codex/thumbnail-iriam-square-accent-assets` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-accent-assets`
      - PR #204 merge confirmed before implementation: `9516b22` on `origin/codex/thumbnail-iriam-square-preview`.
@@ -441,7 +440,39 @@
      - background swap UI / title swap UI の再設計。
      - right panel decoration / material swap UI（実利用フィードバックが出るまで保留）。
 
-2. Thumbnail Editor material library small follow-up only if needed
+2. Thumbnail Editor 1:1 IRIAM EN title image support
+   - status: 次の最優先。`codex/thumbnail-iriam-square-preview` を main へ接続する前に、EN locale で 1:1 IRIAM 出力が日本語 title image のままにならないようにする。
+   - reason:
+     - 1:1 IRIAM preset は title transparent image が出力物の主役なので、EN UI で使う時に日本語 title image のままだと EN output support の穴として見えやすい。
+     - font 追加は表現幅の拡張だが、EN title image は EN 出力の成立性に近いため、font / typography follow-up より先に扱う。
+   - next-session scope:
+     - 25枚生成は 1 PR に閉じる。
+     - まず 5ジャンルそれぞれ 1枚ずつ、元になる EN title image を生成して方向を決める。
+     - その後、既存 JA title と同じ 5 colorway parity へ派生する。
+     - 最初に font selection と title text selection を行い、`task.md` か PR body に font / license / title wording を残す。
+   - title wording candidates to confirm:
+     - `歌枠` -> `Karaoke`
+     - `闇ガチャ` -> `Dark Gacha`
+     - `雑談` -> `Chatting`
+     - `初配信` -> `First Stream` or `Debut Stream`（次セッションで決める）
+     - `耐久` -> `Endurance`
+   - asset workflow:
+     - Use built-in `$imagegen` / `image_gen` one asset at a time; do not batch distinct title concepts into a single generation call.
+     - Generate each source on a flat chroma-key background, remove background locally with `remove_chroma_key.py`, then save final transparent PNGs under the existing IRIAM square title asset tree.
+     - Use filename suffixes that keep genre / square / EN / colorway / version clear.
+     - Validate that each title has no unintended readable text beyond the chosen EN title, no logo, no person / character, no official UI-like element, and enough transparent padding.
+   - implementation boundary:
+     - Keep genre fixed. EN title swap should not let a genre choose another genre's title asset.
+     - Keep existing background / title colorway model; do not redesign title swap UI.
+     - Prefer locale-aware registry / asset selection over schema changes.
+   - out of scope:
+     - New editable font self-hosting or font picker work.
+     - Canvas export / handoff payload / saved draft schema changes.
+     - 9:16 preset.
+     - Decoration / material swap UI.
+     - Additional material batch.
+
+3. Thumbnail Editor material library small follow-up only if needed
    - status: feedback-gated。final QA またはユーザー目視確認で不足素材が明確になった場合だけ進める。
    - direction:
      - 追加する場合も 1 category または小さな asset batch に閉じる。
@@ -453,15 +484,15 @@
      - preset settings modal の拡張。
      - schema / export / handoff payload 変更。
 
-3. Preview branch final confirmation / main merge
-   - status: final QA と必要な small follow-up が終わった後に実施する。
+4. Preview branch final confirmation / main merge
+   - status: EN title image support と必要な small follow-up が終わった後に実施する。
    - direction:
      - `codex/thumbnail-iriam-square-preview` の全 IRIAM 1:1 scope を最終確認し、`main` へ結合する。
      - main merge 前に contracts / `npx tsc --noEmit` / `npm run lint` / `git diff --check` / 必要な幅別確認を揃える。
      - merge 後は `task.md` を active-only に戻し、完了済み詳細は PR body / archive summary に寄せる。
 
-4. Thumbnail Editor font / preset typography follow-up
-   - status: IRIAM square の preset / title image / editable text の実需要を見てから戻る。
+5. Thumbnail Editor font / preset typography follow-up
+   - status: IRIAM square EN title image support の後に戻る。
    - direction:
      - 単純な font 追加より、title image と editable text の不足を確認してから増やす。
      - language / mood category、font search、recently used は既に主要導線が入っているため、大きな UI 改修と混ぜない。
@@ -469,7 +500,7 @@
      - 1:1 preset body 実装との同時実装。
      - material asset 大量追加との同時実装。
 
-5. Kuro Live Comment Translator planning
+6. Kuro Live Comment Translator planning
    - status: 新規ツール候補。IRIAM 1:1 material / typography が落ち着いた後に planning へ戻る。
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
@@ -480,7 +511,7 @@
 
 ## Recommended Roadmap
 
-1. Preview branch final QA / main merge preparation
+1. IRIAM 1:1 EN title image support
 2. Material library small follow-up only if needed
 3. Final confirmation
 4. Merge `codex/thumbnail-iriam-square-preview` to `main`
@@ -497,14 +528,17 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Thumbnail Editor 1:1 IRIAM square preview branch final QA / main merge preparation として、`codex/thumbnail-iriam-square-preview` を base に main 結合前の確認と必要最小限の preset 初期位置調整をしてください。
+Thumbnail Editor 1:1 IRIAM EN title image support として、`codex/thumbnail-iriam-square-preview` を base に、5ジャンル x 5 colorway の EN title transparent PNG を 1 PR に閉じて生成・反映してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
 - `origin/codex/thumbnail-iriam-square-preview` を base に新規 feature branch / worktree を切ってください。
+- 推奨 branch: `codex/thumbnail-iriam-square-en-titles`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-en-titles`
 - すべての IRIAM 1:1 slice 完了後に preview branch を main へ結合する前提です。
+- 今回は `main` 接続前に EN title image support を挟む task です。
 
 ここまでの状態:
 - `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久` は square preset body 接続済み。
@@ -514,28 +548,34 @@ Thumbnail Editor 1:1 IRIAM square preview branch final QA / main merge preparati
 - 1:1 IRIAM title image は背景に焼き込まず透明 PNG image layer として扱う。
 - `accent` / `label-base` の project-bound material batch は登録済み。
 - project-bound material は 16:9 / IRIAM 1:1 の両方で素材ライブラリから通常 image layer として追加できる contract 済み。
-- 新規フォント追加はしない。
-- schema、9:16 preset、追加 title image 生成は触らない。
+- PR #209 で final QA / preset 初期位置調整 / 1:1 preset text carryover bugfix は merge 済み。
 
 今回の scope:
-- preview branch 全体の IRIAM 1:1 flow を main merge 前に確認する。
-- contract / typecheck / lint と、必要な幅別 browser 目視確認を行う。
-- 私の目視確認で気になる箇所があれば、現在 draft JSON を取得してから原因を見て、preset 初期位置 / サイズ / レイヤー重なりだけを最小修正する。
-- 調整対象は IRIAM square preset 初期状態に限定する。
-- material library は既存の「素材ライブラリから追加 / 通常レイヤーとして削除」フローのまま確認する。
-- decoration / material swap UI は、実利用フィードバックが出るまで作らない。
-- 必要になった material library small follow-up は final QA 後に別 slice として判断する。
+- 5ジャンルそれぞれ 1枚ずつ、元になる EN title image を生成して方向を決める。
+- 最初に font selection と title text selection を行い、font 名 / license / title wording を `task.md` または PR body に残す。
+- title wording は次を候補にし、生成前に最終決定する:
+  - `歌枠` -> `Karaoke`
+  - `闇ガチャ` -> `Dark Gacha`
+  - `雑談` -> `Chatting`
+  - `初配信` -> `First Stream` or `Debut Stream`
+  - `耐久` -> `Endurance`
+- `$imagegen` / built-in `image_gen` を使い、distinct title concept は 1枚ずつ生成する。1 call に複数ジャンルを詰めない。
+- 透明 PNG は built-in image generation -> flat chroma-key source -> `remove_chroma_key.py` -> alpha PNG 検証の流れで作る。
+- 5つの元 title が揃ったら、既存 JA title と同じ 5 colorway parity に派生し、合計 25枚を同じ PR に収める。
+- 生成 asset は existing IRIAM square title asset tree に保存し、genre / square / EN / colorway / version が分かる filename にする。
+- EN locale 時の preset 初期 title / title swap candidate が EN title asset を使うように反映する。
+- JA locale / 既存 JA title / 既存 background swap / existing material library flow は維持する。
 
 Out of scope:
 - schema 変更。
 - canvas export / handoff payload 変更。
 - 9:16 preset。
-- 新規 font 追加。
-- 追加 title image 生成。
+- 新規 editable font self-hosting / font picker work。
 - background swap UI / title swap UI の再設計。
 - decoration / material swap UI。
 - material library 全体 UI の再設計。
 - 追加 material batch の同時実装。
+- 追加 title image 以外の新規 visual asset generation。
 
 検証:
 - `node scripts/thumbnail-material-assets-contract.mjs`
@@ -547,11 +587,12 @@ Out of scope:
 - `npx tsc --noEmit`
 - `npm run lint`
 - `git diff --check`
-- main merge 前 QA として、必要な場合は `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
+- asset 検証として、生成 PNG のサイズ / alpha / transparent padding / unintended text absence / logo-person-character absence を確認する。
+- EN title 反映後、必要な場合は `/tools/thumbnail-editor` を EN locale で `390 / 820 / 1024 / 1280 / 1366px` 確認し、結果を `task.md` に残す。
 
 完了時:
-- `task.md` に確認内容、JSON 取得の有無、初期位置調整の有無、検証結果、残リスク、次アクションを追記してください。
-- final QA 後の次順は `material library small follow-up only if needed` → `final confirmation` → `codex/thumbnail-iriam-square-preview` の `main` 結合準備です。
+- `task.md` に title wording、font / license、生成 asset、反映内容、検証結果、残リスク、次アクションを追記してください。
+- 次順は `material library small follow-up only if needed` → `final confirmation` → `codex/thumbnail-iriam-square-preview` の `main` 結合準備 → `font / preset typography follow-up` です。
 - 変更範囲と検証結果を確認してから commit / push / draft PR 作成まで行ってください。
 ```
 

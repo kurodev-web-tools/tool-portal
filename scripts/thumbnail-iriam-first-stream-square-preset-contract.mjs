@@ -80,20 +80,45 @@ assert.equal(
   `${titlePrefix}first-stream-square-title-pink-blue-v1.png`,
   "first_stream square uses the matching Mochiy Pop One transparent title image"
 );
-assert.equal(titleLayer.width, 760, "first_stream square title image keeps its source width");
-assert.equal(titleLayer.height, 320, "first_stream square title image keeps its source height");
+assert.equal(titleLayer.width, 1134.867178394888, "first_stream square title image keeps its final QA width");
+assert.equal(titleLayer.height, 662.5574086725878, "first_stream square title image keeps its final QA height");
+assert.deepEqual(
+  {
+    x: titleLayer.x,
+    y: titleLayer.y,
+    width: titleLayer.width,
+    height: titleLayer.height
+  },
+  {
+    x: 158.61109994775518,
+    y: 427.78121609130716,
+    width: 1134.867178394888,
+    height: 662.5574086725878
+  },
+  "first_stream square title image uses the final QA placement"
+);
 
 assert.equal(
   squareDraft.layers.some((layer) => layer.type === "text" && layer.text === "初配信"),
   false,
   "first_stream square does not duplicate the fixed title image as editable text"
 );
-for (const roleName of ["見出し", "時刻", "サブ", "ラベル"]) {
+for (const roleName of ["時刻", "サブ"]) {
   assert.ok(
     squareDraft.layers.some((layer) => layer.type === "text" && layer.name.includes(roleName)),
     `first_stream square keeps editable ${roleName} text`
   );
 }
+assert.equal(
+  squareDraft.layers.filter((layer) => layer.type === "shape" && layer.name.includes("時刻バッジ土台")).length,
+  3,
+  "first_stream square keeps the final QA stacked editable text badge bases"
+);
+assert.equal(
+  squareDraft.layers.filter((layer) => layer.type === "text" && layer.name.includes("サブ")).length,
+  2,
+  "first_stream square keeps the final QA stacked editable sub text fields"
+);
 assert.ok(
   squareDraft.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),
   "first_stream square keeps a standee placement guide"

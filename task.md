@@ -176,12 +176,43 @@
        - `npx tsc --noEmit`
        - `npm run lint`
        - `git diff --check`
+       - `git diff --check`
      - residual risk:
        - Fixed-width screenshots are QA evidence for the current default flow, not a full manual review of every background / title colorway combination.
        - Material library small follow-up should stay feedback-gated; no extra material batch is needed from this QA alone.
      - next action:
        - Open draft PR against `codex/thumbnail-iriam-square-preview`.
        - Next order remains `material library small follow-up only if needed` -> `final confirmation` -> `codex/thumbnail-iriam-square-preview` main merge preparation.
+   - 2026-05-25 first_stream initial placement follow-up:
+     - source: user-provided current draft JSON for `presetId: "first_stream"` after local visual adjustment.
+     - scope: `first_stream` / `square-1-1` initial preset body only.
+     - applied:
+       - Moved the transparent title image to the lower-right oversized composition from the draft JSON.
+       - Moved the standee guide to the upper-right placement from the draft JSON.
+       - Reworked the editable short text stack to three left-side pill rows (`23:00 START`, `リクエスト歓迎`, `初見さん歓迎`) with matching badge bases.
+       - Kept the existing `soft_cloud` background registry / colorway behavior instead of hard-coding the pasted draft's current background `src`.
+       - Added EN body copy for the new `テキスト 3（サブ） コピー` layer so square variant localization remains non-Japanese in English mode.
+     - current draft JSON:
+       - Acquired from the user paste; no separate browser JSON export was needed.
+     - verification completed:
+       - RED: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` failed on the old title image placement before implementation.
+       - GREEN: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+     - width check:
+       - Rechecked generated `first_stream` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+       - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+     - residual risk:
+       - This follows the pasted draft's intentionally oversized lower-right title composition; other background / title colorway combinations were not exhaustively re-reviewed in this follow-up.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

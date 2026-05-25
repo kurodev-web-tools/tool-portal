@@ -1808,14 +1808,15 @@ export const createFirstStreamIriamSquareDraft = (
   const title = getThumbnailIriamSquareTitleAsset("first_stream", config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
-    shapeLayer({ name: "図形 1（上部ウェルカムライト）", shapeType: "circle", x: 92, y: 58, width: 896, height: 438, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.2, blur: 8 }),
-    assetDecorationLayer({ name: "画像 2（タイトル 初配信）", src: title?.src ?? thumbnailIriamSquareFirstStreamTitleAssets[0].src, x: 160, y: 112, width: 760, height: 320, opacity: 1 }),
-    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 370, y: 374, width: 340, height: 590, fillColor: "#ffffff16", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 76, opacity: 0.3 }),
-    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 102, y: 732, width: 438, height: 108, fillColor: "#ffffffd6", strokeColor: "#ff9fc7", strokeWidth: 4, borderRadius: 54, opacity: 0.88 }),
-    textLayer({ name: "テキスト 1（見出し補助）", text: "はじめまして", x: 154, y: 438, width: 772, height: 72, fontSize: 58, color: "#fffaf4", strokeColor: "#4c7fb2", strokeWidth: 6, shadowColor: "#ffacd2", shadowBlur: 9, shadowOffsetX: 0, shadowOffsetY: 3, fontFamily: "M PLUS Rounded 1c", align: "center" }),
-    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 154, y: 758, width: 334, height: 58, fontSize: 54, color: "#456f9f", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
-    textLayer({ name: "テキスト 3（サブ）", text: "自己紹介 / 初見さん歓迎", x: 514, y: 836, width: 456, height: 48, fontSize: 32, color: "#5f6798", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
-    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / DEBUT", x: 78, y: 62, width: 286, height: 42, fontSize: 30, color: "#5b7da8", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+    shapeLayer({ name: "図形 1（上部ウェルカムライト）", shapeType: "circle", x: 96.16670015673355, y: 17.72189848490939, width: 896, height: 438, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.2, blur: 8 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 初配信）", src: title?.src ?? thumbnailIriamSquareFirstStreamTitleAssets[0].src, x: 158.61109994775518, y: 427.78121609130716, width: 1134.867178394888, height: 662.5574086725878, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 804.7257163525296, y: 51.77518787927494, width: 340, height: 590, fillColor: "#ffffff16", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 76, opacity: 0.3 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 0.6, y: 23, width: 367.86054736165255, height: 76.33983040630156, fillColor: "#ffffffd6", strokeColor: "#ff9fc7", strokeWidth: 4, borderRadius: 54, opacity: 0.88 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台） コピー", shapeType: "rect", x: 0.6, y: 105, width: 367.86054736165255, height: 76.33983040630156, fillColor: "#ffffffd6", strokeColor: "#ff9fc7", strokeWidth: 4, borderRadius: 54, opacity: 0.88 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台） コピー 2", shapeType: "rect", x: 0.6, y: 187, width: 367.86054736165255, height: 76.33983040630156, fillColor: "#ffffffd6", strokeColor: "#ff9fc7", strokeWidth: 4, borderRadius: 54, opacity: 0.88 }),
+    textLayer({ name: "テキスト 2（時刻）", text: "23:00 START", x: 22.054495036772124, y: 37.16087288510222, width: 334, height: 58, fontSize: 41, color: "#456f9f", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Hachi Maru Pop", align: "center" }),
+    textLayer({ name: "テキスト 3（サブ）", text: "リクエスト歓迎 ", x: -37.39332074106815, y: 123.4942731985694, width: 456, height: 48, fontSize: 40, color: "#5f6798", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Hachi Maru Pop", align: "center" }),
+    textLayer({ name: "テキスト 3（サブ） コピー", text: "初見さん歓迎", x: -38.78222079331269, y: 201.66137523610504, width: 456, height: 48, fontSize: 40, color: "#5f6798", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Hachi Maru Pop", align: "center" })
   ];
 
   return {

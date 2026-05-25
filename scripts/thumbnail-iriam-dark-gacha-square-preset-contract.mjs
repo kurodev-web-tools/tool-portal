@@ -75,23 +75,85 @@ assert.equal(
   `${titlePrefix}dark-gacha-square-title-purple-v1.png`,
   "dark gacha square uses the matching New Tegomin transparent title image"
 );
-assert.equal(titleLayer.width, 760, "dark gacha square title image keeps its source width");
-assert.equal(titleLayer.height, 320, "dark gacha square title image keeps its source height");
+assert.equal(titleLayer.x, -246.87378115188247, "dark gacha square title image uses the adjusted x position");
+assert.equal(titleLayer.y, 599.3330692685978, "dark gacha square title image uses the adjusted y position");
+assert.equal(titleLayer.width, 1302.6268929693151, "dark gacha square title image uses the adjusted display width");
+assert.equal(titleLayer.height, 553.0603199787986, "dark gacha square title image uses the adjusted display height");
+assert.equal(titleLayer.rotation, 21.60856614090952, "dark gacha square title image uses the adjusted rotation");
 
 assert.equal(
   squareDraft.layers.some((layer) => layer.type === "text" && layer.text === "闇ガチャ"),
   false,
   "dark gacha square does not duplicate the fixed title image as editable text"
 );
-for (const roleName of ["見出し", "時刻", "サブ", "ラベル"]) {
-  assert.ok(
-    squareDraft.layers.some((layer) => layer.type === "text" && layer.name.includes(roleName)),
-    `dark gacha square keeps editable ${roleName} text`
-  );
-}
-assert.ok(
-  squareDraft.layers.some((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド")),
-  "dark gacha square keeps a standee placement guide"
+const textLayers = squareDraft.layers.filter((layer) => layer.type === "text");
+assert.deepEqual(
+  textLayers.map((layer) => layer.name),
+  ["テキスト 2（時刻）", "テキスト 3（サブ）"],
+  "dark gacha square keeps only the time and sub editable text by default"
+);
+assert.deepEqual(
+  textLayers.map((layer) => ({
+    name: layer.name,
+    text: layer.text,
+    x: layer.x,
+    y: layer.y,
+    width: layer.width,
+    height: layer.height,
+    fontFamily: layer.fontFamily,
+    fontSize: layer.fontSize
+  })),
+  [
+    {
+      name: "テキスト 2（時刻）",
+      text: "20:00 START",
+      x: 758.5539175334877,
+      y: 1008.1420339744074,
+      width: 308,
+      height: 58,
+      fontFamily: "New Tegomin",
+      fontSize: 52
+    },
+    {
+      name: "テキスト 3（サブ）",
+      text: "単発も10連も歓迎",
+      x: 682.0713911546809,
+      y: 947.4498241412856,
+      width: 486,
+      height: 50,
+      fontFamily: "New Tegomin",
+      fontSize: 34
+    }
+  ],
+  "dark gacha square text layers use the final QA positions"
+);
+const standeeGuide = squareDraft.layers.find((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド"));
+assert.ok(standeeGuide, "dark gacha square keeps a standee placement guide");
+assert.deepEqual(
+  { x: standeeGuide.x, y: standeeGuide.y, width: standeeGuide.width, height: standeeGuide.height },
+  { x: 440.281074608995, y: 98.75536930330026, width: 360, height: 628 },
+  "dark gacha square standee guide uses the final QA position"
+);
+const badgeShapes = squareDraft.layers.filter((layer) => layer.type === "shape" && layer.name.includes("時刻バッジ土台"));
+assert.deepEqual(
+  badgeShapes.map((layer) => ({ name: layer.name, x: layer.x, y: layer.y, width: layer.width, height: layer.height })),
+  [
+    {
+      name: "図形 3（時刻バッジ土台）",
+      x: 754.6718551223528,
+      y: 1005.1874579061588,
+      width: 320.6944548379854,
+      height: 61.98877497567915
+    },
+    {
+      name: "図形 3（時刻バッジ土台） コピー",
+      x: 773.4993639152884,
+      y: 935.5219636309212,
+      width: 301.72865374541647,
+      height: 61.988774975679064
+    }
+  ],
+  "dark gacha square badge shapes use the final QA positions"
 );
 
 const normalized = lib.normalizeThumbnailDraft(squareDraft);

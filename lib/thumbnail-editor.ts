@@ -1754,14 +1754,13 @@ export const createDarkGachaIriamSquareDraft = (
   const title = getThumbnailIriamSquareTitleAsset("dark_gacha", config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
-    shapeLayer({ name: "図形 1（上部ライトアウトライン）", shapeType: "circle", x: 96, y: 50, width: 888, height: 390, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.09, blur: 10 }),
-    assetDecorationLayer({ name: "画像 2（タイトル 闇ガチャ）", src: title?.src ?? thumbnailIriamSquareDarkGachaTitleAssets[0].src, x: 260, y: 94, width: 760, height: 320, opacity: 1 }),
-    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 92, y: 316, width: 360, height: 628, fillColor: "#12091f33", strokeColor: "#f2d6ff", strokeWidth: 2, borderRadius: 56, opacity: 0.32 }),
-    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 566, y: 704, width: 398, height: 108, fillColor: "#1c1136dd", strokeColor: "#f4d5ff", strokeWidth: 3, borderRadius: 54, opacity: 0.9 }),
-    textLayer({ name: "テキスト 1（見出し補助）", text: "SSR祈願", x: 526, y: 420, width: 464, height: 82, fontSize: 68, color: "#fff4ff", strokeColor: "#26113f", strokeWidth: 6, shadowColor: "#b163ff", shadowBlur: 12, shadowOffsetX: 2, shadowOffsetY: 4, fontFamily: "M PLUS Rounded 1c", align: "center" }),
-    textLayer({ name: "テキスト 2（時刻）", text: "22:00 START", x: 612, y: 734, width: 306, height: 58, fontSize: 52, color: "#fff5d6", strokeColor: "#160925", strokeWidth: 3, shadowColor: "#a96dff", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "Bebas Neue", align: "center" }),
-    textLayer({ name: "テキスト 3（サブ）", text: "単発も10連も歓迎", x: 520, y: 844, width: 486, height: 50, fontSize: 34, color: "#f9efff", strokeColor: "#201039", strokeWidth: 4, shadowColor: "#8d50dd", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "BIZ UDPGothic", align: "center" }),
-    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / 闇ガチャ", x: 70, y: 70, width: 298, height: 44, fontSize: 30, color: "#f6e9ff", strokeColor: "#1d0d32", strokeWidth: 3, shadowColor: "#b56dff", shadowBlur: 5, shadowOffsetX: 1, shadowOffsetY: 2, fontFamily: "M PLUS Rounded 1c", align: "center" })
+    shapeLayer({ name: "図形 1（上部ライトアウトライン）", shapeType: "circle", x: 96, y: 50, width: 888, height: 390, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.09, blur: 10 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 闇ガチャ）", src: title?.src ?? thumbnailIriamSquareDarkGachaTitleAssets[0].src, x: -246.87378115188247, y: 599.3330692685978, width: 1302.6268929693151, height: 553.0603199787986, rotation: 21.60856614090952, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 440.281074608995, y: 98.75536930330026, width: 360, height: 628, fillColor: "#12091f33", strokeColor: "#f2d6ff", strokeWidth: 2, borderRadius: 56, opacity: 0.32 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 754.6718551223528, y: 1005.1874579061588, width: 320.6944548379854, height: 61.98877497567915, fillColor: "#1c1136dd", strokeColor: "#f4d5ff", strokeWidth: 3, borderRadius: 54, opacity: 0.9 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台） コピー", shapeType: "rect", x: 773.4993639152884, y: 935.5219636309212, width: 301.72865374541647, height: 61.988774975679064, fillColor: "#1c1136dd", strokeColor: "#f4d5ff", strokeWidth: 3, borderRadius: 54, opacity: 0.9 }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 758.5539175334877, y: 1008.1420339744074, width: 308, height: 58, fontSize: 52, color: "#fff5d6", strokeColor: "#160925", strokeWidth: 3, shadowColor: "#a96dff", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "New Tegomin", align: "center" }),
+    textLayer({ name: "テキスト 3（サブ）", text: "単発も10連も歓迎", x: 682.0713911546809, y: 947.4498241412856, width: 486, height: 50, fontSize: 34, color: "#f9efff", strokeColor: "#201039", strokeWidth: 4, shadowColor: "#8d50dd", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "New Tegomin", align: "center" })
   ];
 
   return {

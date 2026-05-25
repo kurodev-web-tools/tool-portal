@@ -276,6 +276,39 @@
       - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-karaoke-adjust/`.
     - residual risk:
       - This intentionally promotes existing material-library assets into the karaoke starter composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
+  - 2026-05-25 dark_gacha initial placement follow-up:
+    - source: user-provided current draft JSON for `presetId: "dark_gacha"` after local visual adjustment.
+    - scope: `dark_gacha` / `square-1-1` initial preset body only.
+    - applied:
+      - Moved the transparent title image to the oversized rotated lower composition from the draft JSON.
+      - Moved the standee guide to the upper-right draft position.
+      - Reworked the bottom-right text stack to two compact badge rows (`20:00 START`, `単発も10連も歓迎`).
+      - Removed the old editable heading / label text from the starter composition.
+      - Kept the existing `dark_cute` background registry and title registry behavior instead of hard-coding one-off asset paths.
+      - Increased the time text box width from the pasted `306px` to `308px` only to satisfy the existing English visual-balance contract after switching that layer to `New Tegomin`.
+    - current draft JSON:
+      - Acquired from the user paste; no separate browser JSON export was needed.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs` failed before implementation on the old title image x position.
+      - GREEN: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-material-assets-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+      - `git diff --check`
+    - width check:
+      - Rechecked generated `dark_gacha` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+      - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+      - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-dark-gacha-adjust/`.
+    - residual risk:
+      - This follows the pasted draft's intentionally oversized / rotated title composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

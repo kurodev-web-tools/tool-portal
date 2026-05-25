@@ -105,6 +105,40 @@
      - next action:
        - Open draft PR against `codex/thumbnail-iriam-square-preview`.
        - After review / merge, continue with the separate decoration swap UI slice or another single-category material batch only if needed.
+   - 2026-05-25 cross-aspect material reuse contract update:
+     - branch / worktree: `codex/thumbnail-iriam-cross-aspect-material-contract` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-cross-aspect-material-contract`
+     - PR #206 merge confirmed before implementation: `76f351e` on `origin/codex/thumbnail-iriam-square-preview`.
+     - scope: contract-first confirmation that project-bound `thumbnailMaterialLibrary` assets can be added from the existing material library flow to both 16:9 and IRIAM 1:1 canvases. No swap UI, schema, export, handoff payload, preset body, user material storage, font, 9:16, or image generation changes.
+     - contract-first:
+       - RED: `node scripts/thumbnail-material-assets-contract.mjs` failed as expected on `localized project material display names stay generic instead of IRIAM-only` after adding the cross-aspect / generic-display assertions.
+       - GREEN: kept `createThumbnailMaterialLayer` behavior unchanged and adjusted only the registered material display names / EN localized names so IRIAM-added assets read as generic reusable materials.
+     - confirmed cross-aspect boundary:
+       - Every project-bound material creates a normal unlocked image layer on `landscape-16-9` and `square-1-1`.
+       - Generated material layers keep positive size, start inside the target canvas, fit within target canvas width / height, and keep the same project asset `src`.
+       - Project-bound material entries and generated layers do not include user material `storageId` / `materialRef`.
+       - Existing material categories remain limited to `label-base` / `date-badge` / `corner` / `accent` / `divider` / `frame`.
+       - Material-only assets are still not inserted into preset initial layers.
+     - verification completed:
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+       - `git diff --check`
+     - width check:
+       - Not run. This PR does not touch UI layout, responsive classes, canvas rendering geometry, or browser interaction; it only tightens the contract and adjusts material display copy.
+     - residual risk:
+       - Contract confirms addition / deletion as normal layers and cross-aspect canvas bounds, but actual visual composition balance still needs human review when a later decoration placement / swap UI slice uses these assets in context.
+     - next action:
+       - Open draft PR against `codex/thumbnail-iriam-square-preview`.
+       - After review / merge, continue with the separate decoration swap UI slice or another single-category material batch only if needed.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

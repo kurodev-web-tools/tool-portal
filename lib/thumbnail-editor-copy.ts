@@ -1074,6 +1074,26 @@ const materialCopy: Record<Locale, Partial<Record<string, MaterialCopy>>> = {
       name: "IRIAM Yellow Hand Line",
       description: "A warm hand-drawn yellow underline for short headlines or time labels.",
       recommendedPlacement: "Hand-drawn underline below short text"
+    },
+    "iriam-square-label-speech-bubble-pink": {
+      name: "IRIAM Pink Speech Bubble",
+      description: "A rounded pink speech-bubble base for short comments or time labels in square or 16:9 thumbnails.",
+      recommendedPlacement: "Behind a short comment or time label"
+    },
+    "iriam-square-label-rounded-mint": {
+      name: "IRIAM Mint Small Label",
+      description: "A compact mint label base for small notes, tags, or short status text.",
+      recommendedPlacement: "Behind a small note or tag"
+    },
+    "iriam-square-label-cloud-blue": {
+      name: "IRIAM Blue Cloud Label",
+      description: "A soft blue cloud-shaped label base for casual notices or chat notes.",
+      recommendedPlacement: "Behind a soft notice or chat note"
+    },
+    "iriam-square-label-tiny-ribbon-yellow-pink": {
+      name: "IRIAM Yellow Pink Ribbon",
+      description: "A compact yellow and pink ribbon base for short status text or small annotations.",
+      recommendedPlacement: "Behind short status text or annotations"
     }
   }
 };

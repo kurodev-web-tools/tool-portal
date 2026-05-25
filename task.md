@@ -142,6 +142,46 @@
      - next action:
        - Open draft PR against `codex/thumbnail-iriam-square-preview`.
        - After review / merge, continue with preview branch final QA / main merge preparation.
+   - 2026-05-25 final QA / main merge preparation update:
+     - branch / worktree: `codex/thumbnail-iriam-square-final-qa` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-final-qa`
+     - PR #208 merge confirmed before QA: `1eb42f6` on `origin/codex/thumbnail-iriam-square-preview` (`mergedAt` 2026-05-25T11:07:56Z).
+     - scope: preview branch final QA only. No schema, canvas export, handoff payload, 9:16 preset, font, title asset, swap UI redesign, decoration / material swap UI, material library redesign, or additional material batch changes.
+     - browser QA:
+       - in-app browser: `/tools/thumbnail-editor` opened on local dev server, switched from 16:9 to `正方形 1:1`, and confirmed the existing material library panel remains the add-from-library flow.
+       - Playwright fixed-width check: `390 / 820 / 1024 / 1280 / 1366px` with `1080 x 1080 / 1:1`.
+       - All fixed-width checks had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`; no page-level horizontal overflow was detected.
+       - `390 / 820px`: mobile panel mode, material panel hidden until selected.
+       - `1024 / 1280 / 1366px`: desktop side material panel visible with `49 / 49` materials.
+       - `1280px` with both left nav and right material panel visible can still require internal canvas panning or panel hide to inspect the far right edge; this is existing editor surface behavior, not a preset layer overlap found in this QA.
+     - preset visual check:
+       - Checked `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久配信` at `1366px`.
+       - No initial preset position / size / layer-overlap issue requiring this scope's minimal adjustment was found.
+       - Current draft JSON was not acquired because no suspicious preset geometry needed layer-level diagnosis.
+       - Initial preset position adjustment: none.
+     - material library flow:
+       - Added `シアンラベル土台` from the existing material library.
+       - Confirmed it appears as a normal image layer (`素材: シアンラベル土台`) in `レイヤー一覧`.
+       - Confirmed deleting that top layer from `レイヤー一覧` removes the placed material layer while the library entry remains available.
+     - verification completed:
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+       - `git diff --check`
+     - residual risk:
+       - Fixed-width screenshots are QA evidence for the current default flow, not a full manual review of every background / title colorway combination.
+       - Material library small follow-up should stay feedback-gated; no extra material batch is needed from this QA alone.
+     - next action:
+       - Open draft PR against `codex/thumbnail-iriam-square-preview`.
+       - Next order remains `material library small follow-up only if needed` -> `final confirmation` -> `codex/thumbnail-iriam-square-preview` main merge preparation.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

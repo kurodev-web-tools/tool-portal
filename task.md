@@ -14,25 +14,28 @@
 
 ## Active Priorities
 
-1. Thumbnail Editor 1:1 IRIAM decoration / material phase
-   - status: 次の最優先。`codex/thumbnail-iriam-square-preview` 上で background swap panel と title swap panel まで完了済み。次は decoration / material の最小 scope と contract を固定する。
+1. Thumbnail Editor 1:1 IRIAM preview branch final QA / main merge preparation
+   - status: 次の最優先。`codex/thumbnail-iriam-square-preview` 上の 1:1 IRIAM slice 群を main 結合前にまとめて確認し、必要なら目視確認結果から JSON を取得して preset 初期位置だけを小さく調整する。
    - base:
      - `origin/codex/thumbnail-iriam-square-preview`
-     - latest integrated PR: #204 `Refresh IRIAM square task board`
+     - latest integrated PR: #207 `Confirm cross-aspect material reuse`
    - current completed state:
      - `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久` は `square-1-1` preset body 接続済み。
      - 同 5ジャンルは square settings modal 対応済み。
      - background style / colorway swap UI は右パネルに実装済み。
      - title transparent image layer colorway swap UI は右パネルに実装済み。
+     - `accent` / `label-base` の small project-bound material batch は登録済み。
+     - project-bound material は 16:9 / IRIAM 1:1 の両方で素材ライブラリから通常 image layer として追加できる contract 済み。
    - direction:
-     - 吹き出し、雲、星、ハート、リボン、きらきら、手描きライン、小ラベルを候補にする。
-     - 16:9 preset にも流用できる generic project-bound material として扱う。
-     - background / title swap UI とは混ぜず、まず素材登録と使われ方を固定する。
-     - 初回は 1 category または小さな asset batch に閉じる。
-   - contract candidates:
-     - `node scripts/thumbnail-material-assets-contract.mjs`
-     - 必要なら IRIAM square decoration / material 専用 contract を追加する。
-     - 既存 5ジャンル contract と `thumbnail-preset-text-locale-contract` は周辺回帰として維持する。
+     - preview branch 全体を、contract / typecheck / lint / browser 目視で main merge 前に確認する。
+     - 目視で気になる preset 初期位置があれば、現在 draft JSON を取得して原因を見てから preset 初期値だけを調整する。
+     - 調整対象は IRIAM square preset の初期位置 / サイズ / レイヤー重なりに限定し、schema、export、handoff、font、9:16、material swap UI は触らない。
+     - material library は現状の「素材ライブラリから追加 / 通常レイヤーとして削除」運用を維持し、swap UI は実利用フィードバックが出るまで作らない。
+   - next flow:
+     - 1. Preview branch final QA / main merge preparation（目視確認、JSON取得、必要最小限の preset 初期位置修正）
+     - 2. Material library small follow-up only if needed（フィードバックで足りない素材が明確になった場合だけ 1 category / small batch）
+     - 3. Final confirmation（contracts / tsc / lint / width check / task.md 整理）
+     - 4. Merge preview branch to `main`
    - 2026-05-25 implementation update:
      - branch / worktree: `codex/thumbnail-iriam-square-accent-assets` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-accent-assets`
      - PR #204 merge confirmed before implementation: `9516b22` on `origin/codex/thumbnail-iriam-square-preview`.
@@ -138,26 +141,35 @@
        - Contract confirms addition / deletion as normal layers and cross-aspect canvas bounds, but actual visual composition balance still needs human review when a later decoration placement / swap UI slice uses these assets in context.
      - next action:
        - Open draft PR against `codex/thumbnail-iriam-square-preview`.
-       - After review / merge, continue with the separate decoration swap UI slice or another single-category material batch only if needed.
+       - After review / merge, continue with preview branch final QA / main merge preparation.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。
      - 新規 font 追加。
      - 追加 title image 生成。
      - background swap UI / title swap UI の再設計。
-     - right panel decoration swap UI の同時実装。
+     - right panel decoration / material swap UI（実利用フィードバックが出るまで保留）。
 
-2. Thumbnail Editor 1:1 IRIAM decoration swap UI
-   - status: decoration / material asset boundary が固まった後の候補。素材登録 PR と同時に進めない。
+2. Thumbnail Editor material library small follow-up only if needed
+   - status: feedback-gated。final QA またはユーザー目視確認で不足素材が明確になった場合だけ進める。
    - direction:
-     - background / title swap と同じく、選択中 decoration layer の source だけを差し替える小さな右パネル UI に留める。
-     - geometry、locked、opacity、crop、layer name は維持する。
+     - 追加する場合も 1 category または小さな asset batch に閉じる。
+     - 16:9 / 1:1 の両方で使える generic project-bound material として登録する。
+     - 既存の「素材ライブラリから追加 / 通常レイヤーとして削除」フローだけを前提にする。
    - out of scope:
+     - decoration / material swap UI。
      - material library 全体 UI の再設計。
      - preset settings modal の拡張。
-     - genre を跨いだ自動変換。
+     - schema / export / handoff payload 変更。
 
-3. Thumbnail Editor font / preset typography follow-up
+3. Preview branch final confirmation / main merge
+   - status: final QA と必要な small follow-up が終わった後に実施する。
+   - direction:
+     - `codex/thumbnail-iriam-square-preview` の全 IRIAM 1:1 scope を最終確認し、`main` へ結合する。
+     - main merge 前に contracts / `npx tsc --noEmit` / `npm run lint` / `git diff --check` / 必要な幅別確認を揃える。
+     - merge 後は `task.md` を active-only に戻し、完了済み詳細は PR body / archive summary に寄せる。
+
+4. Thumbnail Editor font / preset typography follow-up
    - status: IRIAM square の preset / title image / editable text の実需要を見てから戻る。
    - direction:
      - 単純な font 追加より、title image と editable text の不足を確認してから増やす。
@@ -166,7 +178,7 @@
      - 1:1 preset body 実装との同時実装。
      - material asset 大量追加との同時実装。
 
-4. Kuro Live Comment Translator planning
+5. Kuro Live Comment Translator planning
    - status: 新規ツール候補。IRIAM 1:1 material / typography が落ち着いた後に planning へ戻る。
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
@@ -177,11 +189,11 @@
 
 ## Recommended Roadmap
 
-1. IRIAM square decoration / material scope + contract cleanup
-2. IRIAM square decoration / material asset batch
-3. IRIAM square decoration swap UI
-4. Font / preset typography follow-up
-5. Preview branch final QA and `main` merge preparation
+1. Preview branch final QA / main merge preparation
+2. Material library small follow-up only if needed
+3. Final confirmation
+4. Merge `codex/thumbnail-iriam-square-preview` to `main`
+5. Font / preset typography follow-up
 6. New tool planning: Kuro Live Comment Translator
 
 9:16 presets are still valuable for YouTube Shorts / vertical streams, but should follow after the 1:1 IRIAM workflow proves the square asset / title image / decoration pattern.
@@ -194,7 +206,7 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Thumbnail Editor 1:1 IRIAM square preset follow-up として、`codex/thumbnail-iriam-square-preview` を base に decoration / material phase の最小 scope と contract を整理してください。
+Thumbnail Editor 1:1 IRIAM square preview branch final QA / main merge preparation として、`codex/thumbnail-iriam-square-preview` を base に main 結合前の確認と必要最小限の preset 初期位置調整をしてください。
 
 前提:
 - main 直作業は禁止です。
@@ -209,13 +221,19 @@ Thumbnail Editor 1:1 IRIAM square preset follow-up として、`codex/thumbnail-
 - 右パネルの background style / colorway swap UI は実装済み。
 - 右パネルの title transparent image layer colorway swap UI は実装済み。
 - 1:1 IRIAM title image は背景に焼き込まず透明 PNG image layer として扱う。
+- `accent` / `label-base` の project-bound material batch は登録済み。
+- project-bound material は 16:9 / IRIAM 1:1 の両方で素材ライブラリから通常 image layer として追加できる contract 済み。
 - 新規フォント追加はしない。
 - schema、9:16 preset、追加 title image 生成は触らない。
 
 今回の scope:
-- docs / contract で IRIAM square decoration asset の最小カテゴリ、登録境界、既存 16:9 material library との関係を固定する。
-- 初回は汎用性が高い小物だけに絞り、background / title swap UI と同時改修しない。
-- 実装に進む場合も 1 PR = 1カテゴリまたは小さな asset batch に閉じる。
+- preview branch 全体の IRIAM 1:1 flow を main merge 前に確認する。
+- contract / typecheck / lint と、必要な幅別 browser 目視確認を行う。
+- 私の目視確認で気になる箇所があれば、現在 draft JSON を取得してから原因を見て、preset 初期位置 / サイズ / レイヤー重なりだけを最小修正する。
+- 調整対象は IRIAM square preset 初期状態に限定する。
+- material library は既存の「素材ライブラリから追加 / 通常レイヤーとして削除」フローのまま確認する。
+- decoration / material swap UI は、実利用フィードバックが出るまで作らない。
+- 必要になった material library small follow-up は final QA 後に別 slice として判断する。
 
 Out of scope:
 - schema 変更。
@@ -224,30 +242,33 @@ Out of scope:
 - 新規 font 追加。
 - 追加 title image 生成。
 - background swap UI / title swap UI の再設計。
-- decoration swap UI の同時実装。
-- 複数 slice の同時実装。
+- decoration / material swap UI。
+- material library 全体 UI の再設計。
+- 追加 material batch の同時実装。
 
 検証:
-- docs/task のみなら `git diff --check`。
-- 実装に進む場合は RED として追加 contract が実装前に失敗することを確認。
-- 必要に応じて該当 decoration / material contract script。
 - `node scripts/thumbnail-material-assets-contract.mjs`
 - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+- `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+- `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+- `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+- 5ジャンルの `thumbnail-iriam-*-square-preset-contract.mjs`
 - `npx tsc --noEmit`
 - `npm run lint`
 - `git diff --check`
-- UI を触る場合は `390 / 820 / 1024 / 1280 / 1366px` の幅別確認を `task.md` に残す。
+- main merge 前 QA として、必要な場合は `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
 
 完了時:
-- `task.md` に実装内容、確認結果、残リスク、次アクションを追記してください。
-- 実装がある場合は変更範囲と検証結果を確認してから commit / push / draft PR 作成まで行ってください。
+- `task.md` に確認内容、JSON 取得の有無、初期位置調整の有無、検証結果、残リスク、次アクションを追記してください。
+- final QA 後の次順は `material library small follow-up only if needed` → `final confirmation` → `codex/thumbnail-iriam-square-preview` の `main` 結合準備です。
+- 変更範囲と検証結果を確認してから commit / push / draft PR 作成まで行ってください。
 ```
 
 ## Backlog
 
 - Thumbnail Editor:
   - 1:1 IRIAM decoration / material workflow。
-  - 1:1 IRIAM decoration swap UI。
+  - 1:1 IRIAM decoration / material swap UI（実利用フィードバックが出た場合のみ）。
   - 9:16 preset for YouTube Shorts / vertical streams。
   - crop 仕様。
   - text / image layer schema。

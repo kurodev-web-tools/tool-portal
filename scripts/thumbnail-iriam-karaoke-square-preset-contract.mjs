@@ -31,6 +31,11 @@ const readPngSize = (filePath) => {
     height: buffer.readUInt32BE(20)
   };
 };
+const getComponentHandlerBody = (name) => {
+  const body = componentSource.match(new RegExp(`const ${name} = \\([^)]*\\) => \\{[\\s\\S]*?\\n  \\};`))?.[0] ?? "";
+  assert.ok(body.length > 0, `${name} handler exists`);
+  return body;
+};
 
 const expectedBackgroundFiles = [
   "karaoke-square-soft-cloud-pink-blue-v1.png",
@@ -306,5 +311,30 @@ assert.equal(
   false,
   "new draft action does not rebuild a square canvas by scaling the legacy 16:9 preset body"
 );
+const changePresetVariantBody = getComponentHandlerBody("changePresetVariant");
+assert.equal(
+  changePresetVariantBody.includes('variantId === "square-1-1" ? next : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft))'),
+  true,
+  "switching into the square variant starts from the selected IRIAM square preset body instead of carrying text from the previous aspect"
+);
+for (const handlerName of [
+  "applyKaraokeIriamSquarePreset",
+  "applyDarkGachaIriamSquarePreset",
+  "applyChattingIriamSquarePreset",
+  "applyFirstStreamIriamSquarePreset",
+  "applyEnduranceIriamSquarePreset"
+]) {
+  const handlerBody = getComponentHandlerBody(handlerName);
+  assert.equal(
+    handlerBody.includes("applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)"),
+    true,
+    `${handlerName} still applies explicit schedule handoff payloads`
+  );
+  assert.equal(
+    handlerBody.includes("applyThumbnailMainTextCarryover"),
+    false,
+    `${handlerName} does not pull editable text from the previous preset during normal 1:1 preset changes`
+  );
+}
 
 console.log("thumbnail iriam karaoke square preset contract checks passed");

@@ -301,6 +301,7 @@
       - `npx tsc --noEmit`
       - `npm run lint`
       - `git diff --check`
+      - `git diff --check`
     - width check:
       - Rechecked generated `karaoke` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
       - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
@@ -401,6 +402,37 @@
       - Seeded a generated `chatting` / `square-1-1` draft on `http://localhost:3000/tools/thumbnail-editor`, clicked `新規`, waited for autosave, and confirmed the saved draft remained `presetId: "chatting"` with `1080 x 1080`, square chatting title asset / placement, only `テキスト 1（見出し）` and `テキスト 2（時刻）`, and no horizontal overflow at `1366px`.
     - residual risk:
       - This fixes the new-draft creation path only; it does not alter preset application, canvas export, handoff payload, material flow, or preset geometry.
+  - 2026-05-25 square preset text carryover bugfix:
+    - source: user report from local browser that switching from one `1:1` IRIAM preset to another could leave the previous preset's editable text in the newly selected preset.
+    - root cause:
+      - The five IRIAM square preset modal apply handlers still used the 16:9-oriented `applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft))` fallback when no Schedule Calendar handoff payload was active.
+      - `changePresetVariant` also carried text when switching into `square-1-1`, which is inconsistent with the fixed-composition IRIAM square presets.
+    - applied:
+      - Kept explicit Schedule Calendar handoff application unchanged.
+      - Changed normal IRIAM square preset modal application to use the selected preset body as-is, without pulling text from the previous preset.
+      - Changed variant switching into `square-1-1` to start from the selected square preset body instead of carrying text from the previous aspect.
+      - Added a regression contract covering all five IRIAM square modal apply handlers and the square variant switch path.
+    - current draft JSON:
+      - No new user draft JSON was required; this was a handler behavior bug reproduced from the app state.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation because `applyKaraokeIriamSquarePreset` still referenced `applyThumbnailMainTextCarryover`, and then because `changePresetVariant` still carried text into `square-1-1`.
+      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-preset-apply-safety-contract.mjs`
+      - `node scripts/thumbnail-material-assets-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+    - browser check:
+      - Seeded a generated `karaoke` / `square-1-1` draft with its editable text changed to `SHOULD_NOT_CARRY`, opened `http://localhost:3000/tools/thumbnail-editor`, switched to `雑談` through the preset dropdown, applied the IRIAM square preset modal, waited for autosave, and confirmed the saved draft became `presetId: "chatting"` with `1080 x 1080`, text layers `ゆるっと話そう` / `20:00 START`, and no `SHOULD_NOT_CARRY` text.
+    - residual risk:
+      - This intentionally changes only IRIAM square normal preset application. 16:9 preset carryover and explicit Schedule Calendar handoff behavior remain unchanged.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

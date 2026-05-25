@@ -1377,7 +1377,7 @@ export function ThumbnailEditorApp() {
     const next = localizeThumbnailPresetTextLayerBodies(createKaraokeIriamSquareDraft(config), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
-      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+      : next;
     replaceDraft(nextDraft, { recordHistory: true });
     setThumbnailIriamSquarePresetConfig(config);
     setIriamSquarePresetModalPresetId(null);
@@ -1390,7 +1390,7 @@ export function ThumbnailEditorApp() {
     const next = localizeThumbnailPresetTextLayerBodies(createDarkGachaIriamSquareDraft(config), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
-      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+      : next;
     replaceDraft(nextDraft, { recordHistory: true });
     setThumbnailIriamSquareDarkGachaPresetConfig(config);
     setIriamSquarePresetModalPresetId(null);
@@ -1403,7 +1403,7 @@ export function ThumbnailEditorApp() {
     const next = localizeThumbnailPresetTextLayerBodies(createChattingIriamSquareDraft(config), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
-      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+      : next;
     replaceDraft(nextDraft, { recordHistory: true });
     setThumbnailIriamSquareChattingPresetConfig(config);
     setIriamSquarePresetModalPresetId(null);
@@ -1416,7 +1416,7 @@ export function ThumbnailEditorApp() {
     const next = localizeThumbnailPresetTextLayerBodies(createFirstStreamIriamSquareDraft(config), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
-      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+      : next;
     replaceDraft(nextDraft, { recordHistory: true });
     setThumbnailIriamSquareFirstStreamPresetConfig(config);
     setIriamSquarePresetModalPresetId(null);
@@ -1429,7 +1429,7 @@ export function ThumbnailEditorApp() {
     const next = localizeThumbnailPresetTextLayerBodies(createEnduranceStreamIriamSquareDraft(config), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
-      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+      : next;
     replaceDraft(nextDraft, { recordHistory: true });
     setThumbnailIriamSquareEndurancePresetConfig(config);
     setIriamSquarePresetModalPresetId(null);
@@ -1461,7 +1461,7 @@ export function ThumbnailEditorApp() {
     const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, variantId), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
-      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+      : variantId === "square-1-1" ? next : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
     replaceDraft(nextDraft, { recordHistory: true });
     setMobilePanel("canvas");
     setHeaderMenuOpen(null);

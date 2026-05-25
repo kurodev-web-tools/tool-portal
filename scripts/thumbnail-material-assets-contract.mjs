@@ -36,6 +36,7 @@ const effectMaterialPrefix = "/assets/images/thumbnail-editor/materials/effects/
 const cornerMaterialPrefix = "/assets/images/thumbnail-editor/materials/corners/";
 const impactMaterialPrefix = "/assets/images/thumbnail-editor/materials/impact/";
 const iriamSquareAccentMaterialPrefix = "/assets/images/thumbnail-editor/materials/iriam-square-accent/";
+const iriamSquareLabelBaseMaterialPrefix = "/assets/images/thumbnail-editor/materials/iriam-square-label-base/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -397,6 +398,38 @@ const expectedMaterials = [
     width: 420,
     height: 110,
     recommended: "短い見出し下へ置く手描きライン"
+  },
+  {
+    id: "iriam-square-label-speech-bubble-pink",
+    category: "label-base",
+    src: `${iriamSquareLabelBaseMaterialPrefix}iriam-square-label-speech-bubble-pink-v1.png`,
+    width: 390,
+    height: 210,
+    recommended: "短い一言や時刻の背面に置くピンク吹き出し"
+  },
+  {
+    id: "iriam-square-label-rounded-mint",
+    category: "label-base",
+    src: `${iriamSquareLabelBaseMaterialPrefix}iriam-square-label-rounded-mint-v1.png`,
+    width: 340,
+    height: 136,
+    recommended: "小さな補足やタグの背面に置くミントラベル"
+  },
+  {
+    id: "iriam-square-label-cloud-blue",
+    category: "label-base",
+    src: `${iriamSquareLabelBaseMaterialPrefix}iriam-square-label-cloud-blue-v1.png`,
+    width: 360,
+    height: 178,
+    recommended: "ゆるい告知や雑談メモの背面に置く青い雲ラベル"
+  },
+  {
+    id: "iriam-square-label-tiny-ribbon-yellow-pink",
+    category: "label-base",
+    src: `${iriamSquareLabelBaseMaterialPrefix}iriam-square-label-tiny-ribbon-yellow-pink-v1.png`,
+    width: 420,
+    height: 150,
+    recommended: "短いステータスや注釈の背面に置く小型リボン"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -597,6 +630,9 @@ for (const expected of expectedMaterials) {
   if (expected.src.startsWith(iriamSquareAccentMaterialPrefix)) {
     assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
   }
+  if (expected.src.startsWith(iriamSquareLabelBaseMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
 
   const layer = lib.createThumbnailMaterialLayer(expected.id);
   assert.equal(layer.type, "image", `${expected.id} creates an image layer`);
@@ -780,6 +816,9 @@ for (const item of expectedMaterials.filter((item) => item.src.startsWith(impact
   newMaterialSources.add(item.src);
 }
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(iriamSquareAccentMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(iriamSquareLabelBaseMaterialPrefix))) {
   newMaterialSources.add(item.src);
 }
 for (const preset of lib.thumbnailPresets) {

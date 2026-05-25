@@ -69,6 +69,42 @@
      - next action:
        - Open draft PR against `codex/thumbnail-iriam-square-preview`.
        - After review / merge, continue with either the next small material category (`label-base` speech bubble / small label) or the separate decoration swap UI slice.
+   - 2026-05-25 label-base batch update:
+     - branch / worktree: `codex/thumbnail-iriam-square-label-base-assets` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-label-base-assets`
+     - PR #205 merge confirmed before implementation: `c93abb2` on `origin/codex/thumbnail-iriam-square-preview`.
+     - scope: small `label-base` material batch only. No schema, preset body, swap UI, export, handoff payload, font, 9:16, title image, or material library redesign changes.
+     - contract-first:
+       - RED: `node scripts/thumbnail-material-assets-contract.mjs` failed as expected with `45 !== 49` after adding the 4 expected label-base materials to the contract.
+       - GREEN: registered the 4 project-bound `label-base` assets in `thumbnailMaterialLibrary`, added EN material copy, and kept user material refs / `storageId` / `materialRef` out of project material entries.
+     - generated assets:
+       - `public/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-speech-bubble-pink-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-rounded-mint-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-cloud-blue-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-tiny-ribbon-yellow-pink-v1.png`
+     - generation notes:
+       - built-in `image_gen` was used once per asset.
+       - Each source was generated on a flat chroma-key background, copied into `tmp/imagegen/`, converted with `remove_chroma_key.py`, resized, then saved as a 768x512 RGBA PNG under project `public/assets`.
+       - Final visual check found no readable text, logo, person, character, or official UI-like element.
+     - verification completed:
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+     - width check:
+       - Not run. This PR does not change UI layout or responsive rendering.
+     - residual risk:
+       - The label-base assets are intentionally generic and library-only; actual square preset composition balance should be judged when a later decoration swap / placement slice uses them in context.
+     - next action:
+       - Open draft PR against `codex/thumbnail-iriam-square-preview`.
+       - After review / merge, continue with the separate decoration swap UI slice or another single-category material batch only if needed.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

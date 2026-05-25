@@ -1354,6 +1354,7 @@ const thumbnailMaterialEffectAssetPrefix = `${thumbnailPresetAssetPrefix}materia
 const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/corners/`;
 const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materials/impact/`;
 const thumbnailIriamSquareAccentMaterialAssetPrefix = `${thumbnailPresetAssetPrefix}materials/iriam-square-accent/`;
+const thumbnailIriamSquareLabelBaseMaterialAssetPrefix = `${thumbnailPresetAssetPrefix}materials/iriam-square-label-base/`;
 
 export const thumbnailIriamSquareColorways: ThumbnailIriamSquareColorway[] = ["pink-blue", "blue", "yellow", "purple", "mint"];
 export const thumbnailIriamSquareTitleGenres: ThumbnailIriamSquareTitleGenre[] = ["karaoke", "dark_gacha", "chatting", "first_stream", "endurance_stream"];
@@ -3467,6 +3468,46 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 420, height: 110 },
     initialPosition: { x: 180, y: 478 },
     recommendedPlacement: "短い見出し下へ置く手描きライン"
+  },
+  {
+    id: "iriam-square-label-speech-bubble-pink",
+    name: "IRIAMピンク吹き出し",
+    category: "label-base",
+    description: "1:1でも16:9でも短い一言を載せやすい、丸いピンクの吹き出し土台。",
+    src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-speech-bubble-pink-v1.png`,
+    initialSize: { width: 390, height: 210 },
+    initialPosition: { x: 132, y: 410 },
+    recommendedPlacement: "短い一言や時刻の背面に置くピンク吹き出し"
+  },
+  {
+    id: "iriam-square-label-rounded-mint",
+    name: "IRIAMミント小ラベル",
+    category: "label-base",
+    description: "補足タグや短いステータスの背面へ置ける、淡いミントの小型ラベル。",
+    src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-rounded-mint-v1.png`,
+    initialSize: { width: 340, height: 136 },
+    initialPosition: { x: 124, y: 96 },
+    recommendedPlacement: "小さな補足やタグの背面に置くミントラベル"
+  },
+  {
+    id: "iriam-square-label-cloud-blue",
+    name: "IRIAM青雲ラベル",
+    category: "label-base",
+    description: "雑談や軽い告知に使いやすい、やわらかな青い雲形ラベル土台。",
+    src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`,
+    initialSize: { width: 360, height: 178 },
+    initialPosition: { x: 746, y: 404 },
+    recommendedPlacement: "ゆるい告知や雑談メモの背面に置く青い雲ラベル"
+  },
+  {
+    id: "iriam-square-label-tiny-ribbon-yellow-pink",
+    name: "IRIAM黄桃リボン",
+    category: "label-base",
+    description: "短いステータスや注釈を載せるための、黄色とピンクの小型リボン。",
+    src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-tiny-ribbon-yellow-pink-v1.png`,
+    initialSize: { width: 420, height: 150 },
+    initialPosition: { x: 740, y: 116 },
+    recommendedPlacement: "短いステータスや注釈の背面に置く小型リボン"
   }
 ] satisfies ThumbnailMaterial[];
 

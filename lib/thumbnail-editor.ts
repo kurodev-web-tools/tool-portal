@@ -1836,14 +1836,11 @@ export const createEnduranceStreamIriamSquareDraft = (
   const title = getThumbnailIriamSquareTitleAsset("endurance_stream", config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
-    shapeLayer({ name: "図形 1（上部チャレンジライト）", shapeType: "circle", x: 92, y: 58, width: 896, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.14, blur: 8 }),
-    assetDecorationLayer({ name: "画像 2（タイトル 耐久）", src: title?.src ?? thumbnailIriamSquareEnduranceTitleAssets[0].src, x: 160, y: 112, width: 760, height: 320, opacity: 1 }),
-    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 626, y: 342, width: 340, height: 626, fillColor: "#ffffff12", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 52, opacity: 0.3 }),
-    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 96, y: 716, width: 450, height: 112, fillColor: "#ffffffdc", strokeColor: "#ffb03d", strokeWidth: 4, borderRadius: 54, opacity: 0.9 }),
-    textLayer({ name: "テキスト 1（見出し補助）", text: "CHALLENGE", x: 164, y: 402, width: 568, height: 78, fontSize: 66, color: "#fffdf2", strokeColor: "#263238", strokeWidth: 6, shadowColor: "#c9ff00", shadowBlur: 11, shadowOffsetX: 2, shadowOffsetY: 4, fontFamily: "Anton", italic: true, align: "center" }),
-    textLayer({ name: "テキスト 2（時刻）", text: "19:00 START", x: 156, y: 746, width: 330, height: 58, fontSize: 54, color: "#f47d18", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#c9ff00", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
-    textLayer({ name: "テキスト 3（サブ）", text: "達成するまで終われない", x: 98, y: 850, width: 554, height: 48, fontSize: 33, color: "#4b5f7a", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "BIZ UDPGothic", align: "center" }),
-    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / 耐久", x: 78, y: 62, width: 260, height: 42, fontSize: 30, color: "#5b6f8f", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+    shapeLayer({ name: "図形 1（上部チャレンジライト）", shapeType: "circle", x: 92, y: 58, width: 896, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.14, blur: 8 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 耐久）", src: title?.src ?? thumbnailIriamSquareEnduranceTitleAssets[0].src, x: -160.17249120706424, y: 588.4141285639453, width: 1384, height: 836, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 750.1397889695427, y: 167.85946269550243, width: 340, height: 626, fillColor: "#ffffff12", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 52, opacity: 0.3 }),
+    assetDecorationLayer({ name: "素材: 黄桃リボン", src: "/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-tiny-ribbon-yellow-pink-v1.png", x: -151.55167252862395, y: -291.37918132155954, width: 1378, height: 801, opacity: 1 }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 371.5204669610119, y: 66.67948813889099, width: 330, height: 58, fontSize: 54, color: "#f47d18", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#c9ff00", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Dela Gothic One", align: "center" })
   ];
 
   return {

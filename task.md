@@ -213,6 +213,37 @@
        - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
      - residual risk:
        - This follows the pasted draft's intentionally oversized lower-right title composition; other background / title colorway combinations were not exhaustively re-reviewed in this follow-up.
+   - 2026-05-25 endurance_stream initial placement follow-up:
+     - source: user-provided current draft JSON for `presetId: "endurance_stream"` after local visual adjustment.
+     - scope: `endurance_stream` / `square-1-1` initial preset body only.
+     - applied:
+       - Moved the transparent title image to the oversized lower composition from the draft JSON.
+       - Moved the standee guide to the upper-right placement from the draft JSON.
+       - Added the existing project-bound `黄桃リボン` material asset as an initial normal image layer in the preset body.
+       - Reduced editable text to the top `20:00 START` text layer using `Dela Gothic One`.
+       - Kept the existing `pop_bubble` background registry / colorway behavior instead of hard-coding a one-off background path.
+     - current draft JSON:
+       - Acquired from the user paste; no separate browser JSON export was needed.
+     - verification completed:
+       - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` failed before implementation because the final QA ribbon material layer was absent.
+       - GREEN: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `npx tsc --noEmit`
+       - `npm run lint`
+       - `git diff --check`
+     - width check:
+       - Rechecked generated `endurance_stream` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+       - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+     - residual risk:
+       - This intentionally promotes one existing material-library asset into the endurance starter composition; it does not add a material swap UI or new material batch.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

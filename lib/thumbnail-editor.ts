@@ -1353,6 +1353,7 @@ const thumbnailMaterialDividerAssetPrefix = `${thumbnailPresetAssetPrefix}materi
 const thumbnailMaterialEffectAssetPrefix = `${thumbnailPresetAssetPrefix}materials/effects/`;
 const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/corners/`;
 const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materials/impact/`;
+const thumbnailIriamSquareAccentMaterialAssetPrefix = `${thumbnailPresetAssetPrefix}materials/iriam-square-accent/`;
 
 export const thumbnailIriamSquareColorways: ThumbnailIriamSquareColorway[] = ["pink-blue", "blue", "yellow", "purple", "mint"];
 export const thumbnailIriamSquareTitleGenres: ThumbnailIriamSquareTitleGenre[] = ["karaoke", "dark_gacha", "chatting", "first_stream", "endurance_stream"];
@@ -3426,6 +3427,46 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 340, height: 150 },
     initialPosition: { x: 116, y: 438 },
     recommendedPlacement: "短い日付やステータスを載せる白黒フチ風の小型土台"
+  },
+  {
+    id: "iriam-square-accent-puffy-star-pink",
+    name: "IRIAM星ピンク",
+    category: "accent",
+    description: "1:1でも16:9でもタイトル横へ足せる、丸みのあるピンクの星飾り。",
+    src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-puffy-star-pink-v1.png`,
+    initialSize: { width: 220, height: 220 },
+    initialPosition: { x: 824, y: 112 },
+    recommendedPlacement: "タイトル横や余白に置く小さな星飾り"
+  },
+  {
+    id: "iriam-square-accent-soft-heart-blue",
+    name: "IRIAMハート青",
+    category: "accent",
+    description: "雑談や告知の余白に添えやすい、淡い青の丸いハート飾り。",
+    src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-soft-heart-blue-v1.png`,
+    initialSize: { width: 220, height: 200 },
+    initialPosition: { x: 138, y: 118 },
+    recommendedPlacement: "ゆるい告知や雑談向けの小さなハート"
+  },
+  {
+    id: "iriam-square-accent-sparkle-mint",
+    name: "IRIAMミントきらきら",
+    category: "accent",
+    description: "見出しや小ラベルの近くに重ねる、軽いミント色のきらきら。",
+    src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-sparkle-mint-v1.png`,
+    initialSize: { width: 260, height: 210 },
+    initialPosition: { x: 792, y: 378 },
+    recommendedPlacement: "見出し周辺に重ねる軽いきらきら"
+  },
+  {
+    id: "iriam-square-accent-hand-line-yellow",
+    name: "IRIAM手描き黄ライン",
+    category: "accent",
+    description: "短い見出しや時刻表示の下へ置ける、手描き風の黄色いライン。",
+    src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-hand-line-yellow-v1.png`,
+    initialSize: { width: 420, height: 110 },
+    initialPosition: { x: 180, y: 478 },
+    recommendedPlacement: "短い見出し下へ置く手描きライン"
   }
 ] satisfies ThumbnailMaterial[];
 

@@ -7,9 +7,11 @@ import ts from "typescript";
 
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "thumbnail-editor.ts");
+const copyPath = path.join(root, "lib", "thumbnail-editor-copy.ts");
 const componentPath = path.join(root, "components", "thumbnail-editor", "ThumbnailEditorApp.tsx");
 const userMaterialStoragePath = path.join(root, "components", "thumbnail-editor", "thumbnailUserMaterialStorage.ts");
 const source = fs.readFileSync(sourcePath, "utf8");
+const copySource = fs.readFileSync(copyPath, "utf8");
 const componentSource = fs.readFileSync(componentPath, "utf8");
 const userMaterialStorageSource = fs.existsSync(userMaterialStoragePath) ? fs.readFileSync(userMaterialStoragePath, "utf8") : "";
 const compiled = ts.transpileModule(source, {
@@ -33,6 +35,7 @@ const dividerMaterialPrefix = "/assets/images/thumbnail-editor/materials/divider
 const effectMaterialPrefix = "/assets/images/thumbnail-editor/materials/effects/";
 const cornerMaterialPrefix = "/assets/images/thumbnail-editor/materials/corners/";
 const impactMaterialPrefix = "/assets/images/thumbnail-editor/materials/impact/";
+const iriamSquareAccentMaterialPrefix = "/assets/images/thumbnail-editor/materials/iriam-square-accent/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -362,6 +365,38 @@ const expectedMaterials = [
     width: 340,
     height: 150,
     recommended: "短い日付やステータスを載せる白黒フチ風の小型土台"
+  },
+  {
+    id: "iriam-square-accent-puffy-star-pink",
+    category: "accent",
+    src: `${iriamSquareAccentMaterialPrefix}iriam-square-accent-puffy-star-pink-v1.png`,
+    width: 220,
+    height: 220,
+    recommended: "タイトル横や余白に置く小さな星飾り"
+  },
+  {
+    id: "iriam-square-accent-soft-heart-blue",
+    category: "accent",
+    src: `${iriamSquareAccentMaterialPrefix}iriam-square-accent-soft-heart-blue-v1.png`,
+    width: 220,
+    height: 200,
+    recommended: "ゆるい告知や雑談向けの小さなハート"
+  },
+  {
+    id: "iriam-square-accent-sparkle-mint",
+    category: "accent",
+    src: `${iriamSquareAccentMaterialPrefix}iriam-square-accent-sparkle-mint-v1.png`,
+    width: 260,
+    height: 210,
+    recommended: "見出し周辺に重ねる軽いきらきら"
+  },
+  {
+    id: "iriam-square-accent-hand-line-yellow",
+    category: "accent",
+    src: `${iriamSquareAccentMaterialPrefix}iriam-square-accent-hand-line-yellow-v1.png`,
+    width: 420,
+    height: 110,
+    recommended: "短い見出し下へ置く手描きライン"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -559,6 +594,9 @@ for (const expected of expectedMaterials) {
   if (expected.src.startsWith(impactMaterialPrefix)) {
     assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
   }
+  if (expected.src.startsWith(iriamSquareAccentMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
 
   const layer = lib.createThumbnailMaterialLayer(expected.id);
   assert.equal(layer.type, "image", `${expected.id} creates an image layer`);
@@ -741,6 +779,9 @@ for (const item of expectedMaterials.filter((item) => item.src.startsWith(corner
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(impactMaterialPrefix))) {
   newMaterialSources.add(item.src);
 }
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(iriamSquareAccentMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
 for (const preset of lib.thumbnailPresets) {
   for (const layer of preset.layers) {
     assert.equal(newMaterialSources.has(layer.src), false, `${preset.id} does not receive new material-only assets in initial layers`);
@@ -751,27 +792,27 @@ assert.ok(componentSource.includes("MaterialLibraryPanel"), "Thumbnail Editor re
 assert.ok(componentSource.includes("onMaterial"), "quick add controls expose material insertion");
 assert.ok(componentSource.includes("thumbnailMaterialLibrary"), "component uses the shared material library data");
 assert.ok(
-  componentSource.includes("素材はプリセットに後から足す飾りです。選ぶとレイヤーへ追加されます。"),
+  copySource.includes("素材はプリセットに後から足す飾りです。選ぶとレイヤーへ追加されます。"),
   "material library reads as a light supporting route for decorating a chosen preset"
 );
 assert.ok(componentSource.includes("materialSearchQuery"), "material library keeps local search state");
-assert.ok(componentSource.includes("素材名・説明・推奨配置で検索"), "material library exposes lightweight search copy");
+assert.ok(copySource.includes("素材名・説明・推奨配置で検索"), "material library exposes lightweight search copy");
 assert.ok(componentSource.includes("materialCategoryCounts"), "material library shows category counts");
 assert.ok(componentSource.includes("max-h-[min(60vh,38rem)]"), "material library keeps dense results scrollable");
-assert.ok(componentSource.includes("material.description"), "material cards keep descriptions visible and searchable");
+assert.ok(componentSource.includes("materialDescription"), "material cards keep descriptions visible and searchable");
 assert.ok(userMaterialStorageSource.includes("indexedDB.open"), "user material image bodies are stored through IndexedDB");
 assert.ok(userMaterialStorageSource.includes("thumbnailUserMaterialRefsStorageKey"), "user material metadata has an explicit storage key");
 assert.equal(userMaterialStorageSource.includes("localStorage.setItem") && userMaterialStorageSource.includes("data:image"), false, "user material metadata persistence does not write image bodies to localStorage");
 assert.ok(componentSource.includes("UserMaterialLibraryPanel"), "Thumbnail Editor renders a separate user material library panel");
-assert.ok(componentSource.includes("ユーザー素材"), "user-added material UI is visible as a separate responsibility");
-assert.ok(componentSource.includes("登録済み素材"), "registered material UI remains visually separate from user-added material UI");
-assert.ok(componentSource.includes("追加した画像はこのブラウザに保存され、下書きには参照だけを残します。"), "user material panel explains storage without mixing it with registered material copy");
-assert.ok(componentSource.includes("最大24件 / 1点8MB / 合計48MB"), "user material panel shows the lightweight capacity boundary");
-assert.ok(componentSource.includes("要再追加の素材は置換で復旧できます。不要な素材は削除してください。"), "user material panel gives concise recovery and cleanup guidance");
+assert.ok(copySource.includes("ユーザー素材"), "user-added material UI is visible as a separate responsibility");
+assert.ok(copySource.includes("登録済み素材"), "registered material UI remains visually separate from user-added material UI");
+assert.ok(copySource.includes("追加した画像はこのブラウザに保存され、下書きには参照だけを残します。"), "user material panel explains storage without mixing it with registered material copy");
+assert.ok(copySource.includes("最大24件 / 1点8MB / 合計48MB"), "user material panel shows the lightweight capacity boundary");
+assert.ok(copySource.includes("要再追加の素材は置換で復旧できます。不要な素材は削除してください。"), "user material panel gives concise recovery and cleanup guidance");
 assert.equal(componentSource.includes(">fallback<"), false, "user material fallback preview does not expose English implementation copy");
-assert.ok(componentSource.includes(">要再追加<"), "user material fallback preview makes clear the image must be added again");
+assert.ok(copySource.includes("要再追加"), "user material fallback preview makes clear the image must be added again");
 assert.equal(componentSource.includes(">復元待ち<"), false, "user material fallback preview does not imply waiting will restore the image");
-assert.ok(componentSource.includes("配置済みレイヤーは残ります"), "user material delete copy explains existing layers are preserved");
+assert.ok(copySource.includes("配置済みレイヤーは残ります"), "user material delete copy explains existing layers are preserved");
 assert.ok(componentSource.includes("onReplaceUserMaterial"), "user-added material UI exposes replace without changing geometry");
 assert.ok(componentSource.includes("onDeleteUserMaterial"), "user-added material UI exposes delete with fallback handling");
 assert.ok(componentSource.includes("replaceThumbnailUserMaterialLayerRef"), "user material replace uses the shared geometry-preserving helper");

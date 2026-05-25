@@ -1054,6 +1054,26 @@ const materialCopy: Record<Locale, Partial<Record<string, MaterialCopy>>> = {
       name: "White Black Pop Base",
       description: "A compact white-and-black outlined base for dates or short status text.",
       recommendedPlacement: "Outlined base behind short dates or status text"
+    },
+    "iriam-square-accent-puffy-star-pink": {
+      name: "IRIAM Pink Puffy Star",
+      description: "A rounded pink star decoration that works beside titles in square or 16:9 thumbnails.",
+      recommendedPlacement: "Small star beside titles or open space"
+    },
+    "iriam-square-accent-soft-heart-blue": {
+      name: "IRIAM Soft Blue Heart",
+      description: "A soft blue rounded heart for casual chat, notice, or open-space decoration.",
+      recommendedPlacement: "Small heart for chat or soft notice layouts"
+    },
+    "iriam-square-accent-sparkle-mint": {
+      name: "IRIAM Mint Sparkles",
+      description: "A light mint sparkle cluster for layering around headlines or small labels.",
+      recommendedPlacement: "Light sparkles around headline areas"
+    },
+    "iriam-square-accent-hand-line-yellow": {
+      name: "IRIAM Yellow Hand Line",
+      description: "A warm hand-drawn yellow underline for short headlines or time labels.",
+      recommendedPlacement: "Hand-drawn underline below short text"
     }
   }
 };

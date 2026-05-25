@@ -1056,42 +1056,42 @@ const materialCopy: Record<Locale, Partial<Record<string, MaterialCopy>>> = {
       recommendedPlacement: "Outlined base behind short dates or status text"
     },
     "iriam-square-accent-puffy-star-pink": {
-      name: "IRIAM Pink Puffy Star",
+      name: "Pink Puffy Star",
       description: "A rounded pink star decoration that works beside titles in square or 16:9 thumbnails.",
       recommendedPlacement: "Small star beside titles or open space"
     },
     "iriam-square-accent-soft-heart-blue": {
-      name: "IRIAM Soft Blue Heart",
+      name: "Soft Blue Heart",
       description: "A soft blue rounded heart for casual chat, notice, or open-space decoration.",
       recommendedPlacement: "Small heart for chat or soft notice layouts"
     },
     "iriam-square-accent-sparkle-mint": {
-      name: "IRIAM Mint Sparkles",
+      name: "Mint Sparkles",
       description: "A light mint sparkle cluster for layering around headlines or small labels.",
       recommendedPlacement: "Light sparkles around headline areas"
     },
     "iriam-square-accent-hand-line-yellow": {
-      name: "IRIAM Yellow Hand Line",
+      name: "Yellow Hand Line",
       description: "A warm hand-drawn yellow underline for short headlines or time labels.",
       recommendedPlacement: "Hand-drawn underline below short text"
     },
     "iriam-square-label-speech-bubble-pink": {
-      name: "IRIAM Pink Speech Bubble",
+      name: "Pink Speech Bubble",
       description: "A rounded pink speech-bubble base for short comments or time labels in square or 16:9 thumbnails.",
       recommendedPlacement: "Behind a short comment or time label"
     },
     "iriam-square-label-rounded-mint": {
-      name: "IRIAM Mint Small Label",
+      name: "Mint Small Label",
       description: "A compact mint label base for small notes, tags, or short status text.",
       recommendedPlacement: "Behind a small note or tag"
     },
     "iriam-square-label-cloud-blue": {
-      name: "IRIAM Blue Cloud Label",
+      name: "Blue Cloud Label",
       description: "A soft blue cloud-shaped label base for casual notices or chat notes.",
       recommendedPlacement: "Behind a soft notice or chat note"
     },
     "iriam-square-label-tiny-ribbon-yellow-pink": {
-      name: "IRIAM Yellow Pink Ribbon",
+      name: "Yellow Pink Ribbon",
       description: "A compact yellow and pink ribbon base for short status text or small annotations.",
       recommendedPlacement: "Behind short status text or annotations"
     }

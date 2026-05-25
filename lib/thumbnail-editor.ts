@@ -3431,7 +3431,7 @@ export const thumbnailMaterialLibrary = [
   },
   {
     id: "iriam-square-accent-puffy-star-pink",
-    name: "IRIAM星ピンク",
+    name: "丸星ピンク",
     category: "accent",
     description: "1:1でも16:9でもタイトル横へ足せる、丸みのあるピンクの星飾り。",
     src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-puffy-star-pink-v1.png`,
@@ -3441,7 +3441,7 @@ export const thumbnailMaterialLibrary = [
   },
   {
     id: "iriam-square-accent-soft-heart-blue",
-    name: "IRIAMハート青",
+    name: "青ハート",
     category: "accent",
     description: "雑談や告知の余白に添えやすい、淡い青の丸いハート飾り。",
     src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-soft-heart-blue-v1.png`,
@@ -3451,7 +3451,7 @@ export const thumbnailMaterialLibrary = [
   },
   {
     id: "iriam-square-accent-sparkle-mint",
-    name: "IRIAMミントきらきら",
+    name: "ミントきらきら",
     category: "accent",
     description: "見出しや小ラベルの近くに重ねる、軽いミント色のきらきら。",
     src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-sparkle-mint-v1.png`,
@@ -3461,7 +3461,7 @@ export const thumbnailMaterialLibrary = [
   },
   {
     id: "iriam-square-accent-hand-line-yellow",
-    name: "IRIAM手描き黄ライン",
+    name: "手描き黄ライン",
     category: "accent",
     description: "短い見出しや時刻表示の下へ置ける、手描き風の黄色いライン。",
     src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-hand-line-yellow-v1.png`,
@@ -3471,7 +3471,7 @@ export const thumbnailMaterialLibrary = [
   },
   {
     id: "iriam-square-label-speech-bubble-pink",
-    name: "IRIAMピンク吹き出し",
+    name: "ピンク吹き出し",
     category: "label-base",
     description: "1:1でも16:9でも短い一言を載せやすい、丸いピンクの吹き出し土台。",
     src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-speech-bubble-pink-v1.png`,
@@ -3481,7 +3481,7 @@ export const thumbnailMaterialLibrary = [
   },
   {
     id: "iriam-square-label-rounded-mint",
-    name: "IRIAMミント小ラベル",
+    name: "ミント小ラベル",
     category: "label-base",
     description: "補足タグや短いステータスの背面へ置ける、淡いミントの小型ラベル。",
     src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-rounded-mint-v1.png`,
@@ -3491,7 +3491,7 @@ export const thumbnailMaterialLibrary = [
   },
   {
     id: "iriam-square-label-cloud-blue",
-    name: "IRIAM青雲ラベル",
+    name: "青雲ラベル",
     category: "label-base",
     description: "雑談や軽い告知に使いやすい、やわらかな青い雲形ラベル土台。",
     src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`,
@@ -3501,7 +3501,7 @@ export const thumbnailMaterialLibrary = [
   },
   {
     id: "iriam-square-label-tiny-ribbon-yellow-pink",
-    name: "IRIAM黄桃リボン",
+    name: "黄桃リボン",
     category: "label-base",
     description: "短いステータスや注釈を載せるための、黄色とピンクの小型リボン。",
     src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-tiny-ribbon-yellow-pink-v1.png`,

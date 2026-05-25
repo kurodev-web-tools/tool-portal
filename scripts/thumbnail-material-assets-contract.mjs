@@ -435,6 +435,10 @@ const expectedMaterials = [
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const minimumAlphaPadding = 40;
 const categories = new Set(["label-base", "date-badge", "corner", "accent", "divider", "frame"]);
+const reusableMaterialCanvases = [
+  { label: "16:9", canvas: lib.thumbnailPresetVariants["landscape-16-9"].canvas },
+  { label: "1:1", canvas: lib.thumbnailPresetVariants["square-1-1"].canvas }
+];
 
 const readPngSize = (filePath) => {
   const buffer = fs.readFileSync(filePath);
@@ -538,6 +542,10 @@ const readPngAlphaBounds = (filePath) => {
   return { width, height, minX, minY, maxX, maxY, chromaKeyGreenPixels };
 };
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const getMaterialCopyBlock = (materialId) =>
+  copySource.match(new RegExp(`"${escapeRegExp(materialId)}": \\{[\\s\\S]*?\\n    \\}`, "u"))?.[0] ?? "";
+
 assert.ok(Array.isArray(lib.thumbnailMaterialLibrary), "thumbnail material library is exported");
 assert.equal(typeof lib.createThumbnailMaterialLayer, "function", "material layer factory is exported");
 assert.equal(typeof lib.thumbnailProjectMaterialBoundary, "object", "project material boundary is exported");
@@ -562,6 +570,9 @@ assert.deepEqual(
   expectedMaterials.map((material) => material.id),
   "material library exposes the expected first batch in review order"
 );
+for (const expected of expectedMaterials.filter((material) => material.id.startsWith("iriam-square-"))) {
+  assert.equal(getMaterialCopyBlock(expected.id).includes('name: "IRIAM'), false, `${expected.id} localized display name stays generic instead of IRIAM-only`);
+}
 
 assert.deepEqual(
   lib.thumbnailProjectMaterialBoundary,
@@ -598,6 +609,7 @@ for (const expected of expectedMaterials) {
   assert.equal(material.src, expected.src, `${expected.id} source is stable`);
   assert.equal(typeof material.name, "string", `${expected.id} has a display name`);
   assert.ok(material.name.length > 0 && material.name.length <= 24, `${expected.id} display name is concise`);
+  assert.equal(material.name.includes("IRIAM"), false, `${expected.id} display name stays generic and reusable across aspect ratios`);
   assert.equal(typeof material.description, "string", `${expected.id} has an alt-style description`);
   assert.ok(material.description.length >= 12, `${expected.id} description is useful`);
   assert.equal(material.initialSize.width, expected.width, `${expected.id} initial width is defined`);
@@ -641,6 +653,19 @@ for (const expected of expectedMaterials) {
   assert.equal(layer.width, expected.width, `${expected.id} layer width uses initial size`);
   assert.equal(layer.height, expected.height, `${expected.id} layer height uses initial size`);
   assert.equal(layer.locked, false, `${expected.id} layer is editable after insertion`);
+
+  for (const { label, canvas } of reusableMaterialCanvases) {
+    const reusableLayer = lib.createThumbnailMaterialLayer(expected.id, canvas);
+    assert.equal(reusableLayer.type, "image", `${expected.id} creates a ${label} image layer`);
+    assert.equal(reusableLayer.src, expected.src, `${expected.id} ${label} layer source matches material`);
+    assert.equal(Object.hasOwn(reusableLayer, "storageId"), false, `${expected.id} ${label} layer does not mix user storage ids`);
+    assert.equal(Object.hasOwn(reusableLayer, "materialRef"), false, `${expected.id} ${label} layer does not mix user material refs`);
+    assert.equal(reusableLayer.locked, false, `${expected.id} ${label} layer remains deletable as a normal layer`);
+    assert.ok(reusableLayer.width > 0 && reusableLayer.height > 0, `${expected.id} ${label} layer has positive size`);
+    assert.ok(reusableLayer.x >= 0 && reusableLayer.y >= 0, `${expected.id} ${label} layer starts inside the canvas`);
+    assert.ok(reusableLayer.x + reusableLayer.width <= canvas.width, `${expected.id} ${label} layer fits the canvas width`);
+    assert.ok(reusableLayer.y + reusableLayer.height <= canvas.height, `${expected.id} ${label} layer fits the canvas height`);
+  }
 }
 
 assert.equal(lib.createThumbnailMaterialLayer("missing-material"), null, "unknown material ids are ignored");

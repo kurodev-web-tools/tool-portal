@@ -244,6 +244,38 @@
        - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
      - residual risk:
        - This intentionally promotes one existing material-library asset into the endurance starter composition; it does not add a material swap UI or new material batch.
+  - 2026-05-25 karaoke initial placement follow-up:
+    - source: user-provided current draft JSON for `presetId: "karaoke"` after local visual adjustment.
+    - scope: `karaoke` / `square-1-1` initial preset body only.
+    - applied:
+      - Moved the transparent title image to the oversized lower-right composition from the draft JSON.
+      - Moved the pink / gold note decorations to the lower and right-side draft positions.
+      - Added existing project-bound `青雲ラベル` material layers x3 and `ミントきらきら` x1 as normal image layers in the starter composition.
+      - Reduced editable text to the right-side `20:00 START` text layer using `Fredoka`.
+      - Kept the existing karaoke background / title registry behavior instead of hard-coding a one-off background or title path.
+    - current draft JSON:
+      - Acquired from the user paste; no separate browser JSON export was needed.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation on the old title image x position.
+      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-material-assets-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+      - `git diff --check`
+    - width check:
+      - Rechecked generated `karaoke` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+      - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
+      - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-karaoke-adjust/`.
+    - residual risk:
+      - This intentionally promotes existing material-library assets into the karaoke starter composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
    - out of scope:
      - schema / canvas export / handoff payload 変更。
      - 9:16 preset。

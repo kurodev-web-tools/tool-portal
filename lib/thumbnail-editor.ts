@@ -1724,17 +1724,17 @@ export const createKaraokeIriamSquareDraft = (
   const title = getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway, config.backgroundColorway);
   const layers: ThumbnailLayer[] = [
     assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
-    shapeLayer({ name: "図形 1（上部ソフトライト）", shapeType: "circle", x: 110, y: 76, width: 860, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 999, opacity: 0.18, blur: 8 }),
-    assetDecorationLayer({ name: "画像 2（タイトル 歌枠）", src: title.src, x: 160, y: 126, width: 760, height: 320, opacity: 1 }),
+    shapeLayer({ name: "図形 1（上部ソフトライト）", shapeType: "circle", x: 110, y: 76, width: 860, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.18, blur: 8 }),
+    assetDecorationLayer({ name: "画像 4（ピンク音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-rose-uniform-cell.png`, x: 464.14427897927123, y: 940.2788296041309, width: 230, height: 153, rotation: -9, opacity: 0.5 }),
+    assetDecorationLayer({ name: "画像 5（金色音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-gold-uniform-cell.png`, x: 924.8290054628452, y: 656.8357404774378, width: 210, height: 140, rotation: 8, opacity: 0.38 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 歌枠）", src: title.src, x: 323.79555489036886, y: 644.8372371473471, width: 991.2295143306144, height: 468.41412856394516, opacity: 1 }),
     assetDecorationLayer({ name: "画像 3（小粒きらめき）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-sparkle-cluster-rose-cyan-uniform-cell.png`, x: 120, y: 214, width: 330, height: 220, rotation: -6, opacity: 0.42 }),
-    assetDecorationLayer({ name: "画像 4（ピンク音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-rose-uniform-cell.png`, x: 40, y: 742, width: 230, height: 153, rotation: -9, opacity: 0.5 }),
-    assetDecorationLayer({ name: "画像 5（金色音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-gold-uniform-cell.png`, x: 830, y: 112, width: 210, height: 140, rotation: 8, opacity: 0.38 }),
     shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 620, y: 352, width: 338, height: 620, fillColor: "#ffffff14", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 62, opacity: 0.3 }),
-    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 98, y: 720, width: 450, height: 112, fillColor: "#ffffffcc", strokeColor: "#ff9fd0", strokeWidth: 4, borderRadius: 56, opacity: 0.86 }),
-    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 158, y: 748, width: 330, height: 58, fontSize: 54, color: "#7a3f86", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
-    textLayer({ name: "テキスト 1（見出し補助）", text: "SINGING STREAM", x: 220, y: 430, width: 640, height: 56, fontSize: 44, color: "#8d64bd", strokeColor: "#ffffff", strokeWidth: 4, shadowColor: "#a0d8ff", shadowBlur: 7, shadowOffsetX: 0, shadowOffsetY: 2, fontFamily: "Fredoka", align: "center" }),
-    textLayer({ name: "テキスト 3（サブ）", text: "リクエスト歓迎 / 初見さん歓迎", x: 94, y: 856, width: 540, height: 48, fontSize: 33, color: "#7d5d97", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" }),
-    textLayer({ name: "テキスト 4（ラベル）", text: "IRIAM / 歌枠", x: 78, y: 60, width: 248, height: 42, fontSize: 30, color: "#84629b", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 3, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "M PLUS Rounded 1c", align: "center" })
+    assetDecorationLayer({ name: "素材: 青雲ラベル", src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`, x: 582.4475791364213, y: 184.48551971862605, width: 434.29716381052174, height: 304.02596722292895, opacity: 1 }),
+    assetDecorationLayer({ name: "素材: 青雲ラベル", src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`, x: 813.4855197186262, y: -0.9056349622090636, width: 304, height: 267, opacity: 1 }),
+    assetDecorationLayer({ name: "素材: 青雲ラベル", src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`, x: 841.0721394896357, y: 335.3062934969693, width: 304, height: 267, opacity: 1 }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: 639.0416822569782, y: 313.5107386066003, width: 330, height: 58, fontSize: 54, color: "#7a3f86", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
+    assetDecorationLayer({ name: "素材: ミントきらきら", src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-sparkle-mint-v1.png`, x: 885.7082990346481, y: 922.4275985931303, width: 244.83125046770948, height: 203.45132081119505, opacity: 1 })
   ];
 
   return {

@@ -596,6 +596,65 @@ Out of scope:
 - 変更範囲と検証結果を確認してから commit / push / draft PR 作成まで行ってください。
 ```
 
+### 2026-05-25 implementation update: IRIAM square EN title image support
+
+- Branch / worktree:
+  - `codex/thumbnail-iriam-square-en-titles`
+  - `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-en-titles`
+- Base / merge gate:
+  - Ran `git fetch origin --prune`.
+  - Confirmed PR #210 `[codex] Plan IRIAM square EN title support` was merged into `codex/thumbnail-iriam-square-preview` at merge commit `d2fc58f7394fc3104c5121fcbb0947ca554203c6`.
+- Direction change:
+  - Initial decorative imagegen direction was rejected because it overpowered the existing JA title assets.
+  - Final direction uses Google Fonts rendered text logos only: no icons, no character/person/logo, no extra decorative motifs; stroke and shadow are allowed.
+- Final title wording / font selection:
+  - `歌枠` -> `Karaoke` / `Lilita One`
+  - `闇ガチャ` -> `Dark Gacha` / `Pirata One`
+  - `雑談` -> `Chatting` / `Fredoka`
+  - `初配信` -> `Debut Stream` / `Lobster`
+  - `耐久` -> `Endurance` / `Anton`
+  - License: Google Fonts, SIL Open Font License 1.1.
+- Generated assets:
+  - Added 25 transparent PNGs under existing IRIAM square title asset directories:
+    - `public/assets/images/thumbnail-editor/iriam-square/karaoke/titles/karaoke-square-en-title-{pink-blue,blue,yellow,purple,mint}-v1.png`
+    - `public/assets/images/thumbnail-editor/iriam-square/dark-gacha/titles/dark-gacha-square-en-title-{pink-blue,blue,yellow,purple,mint}-v1.png`
+    - `public/assets/images/thumbnail-editor/iriam-square/chatting/titles/chatting-square-en-title-{pink-blue,blue,yellow,purple,mint}-v1.png`
+    - `public/assets/images/thumbnail-editor/iriam-square/first-stream/titles/first-stream-square-en-title-{pink-blue,blue,yellow,purple,mint}-v1.png`
+    - `public/assets/images/thumbnail-editor/iriam-square/endurance/titles/endurance-square-en-title-{pink-blue,blue,yellow,purple,mint}-v1.png`
+  - Asset validation passed for all 25 PNGs: `760x320`, `RGBA`, non-empty alpha, transparent corners, minimum transparent padding >= 20px, file size < 160KB.
+  - Visual contact sheet confirmed no unintended extra text, no logo, no person/character, and no ornament beyond text stroke/shadow.
+- Implementation:
+  - Added EN title asset registries alongside the existing JA title registries.
+  - `createDraftFromPresetVariant` and the five IRIAM square draft helpers now accept a title locale while defaulting to JA.
+  - EN locale square presets now start with EN title image assets.
+  - Title swap detects whether the selected title layer is JA or EN by registered `src` and stays within the same locale and genre.
+  - IRIAM square settings modal preview now uses EN title assets when the editor locale is EN.
+  - JA locale, existing JA title assets, background swap, title swap UI shape, schema, canvas export, handoff payload, and material library flow were preserved.
+- Verification:
+  - `node scripts/thumbnail-material-assets-contract.mjs` passed.
+  - `node scripts/thumbnail-preset-text-locale-contract.mjs` passed.
+  - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs` passed.
+  - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs` passed.
+  - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs` passed.
+  - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` passed.
+  - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs` passed.
+  - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs` passed.
+  - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` passed.
+  - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` passed.
+  - `npx tsc --noEmit` passed.
+  - `npm run lint` passed.
+  - `git diff --check` passed.
+- Width check:
+  - Not run. This slice changes title image assets and locale-aware asset selection only; no layout, responsive, or panel redesign was introduced.
+- Residual risks:
+  - Final visual balance should be reviewed in the composed 1:1 presets after PR review, especially `Dark Gacha` gothic tone and `Debut Stream` script readability at thumbnail scale.
+  - Fonts are rasterized into PNG title assets; this PR does not add new editable font self-hosting or font picker behavior.
+- Next action order:
+  - `material library small follow-up only if needed`
+  - `final confirmation`
+  - prepare `codex/thumbnail-iriam-square-preview` for `main` merge
+  - `font / preset typography follow-up`
+
 ## Backlog
 
 - Thumbnail Editor:

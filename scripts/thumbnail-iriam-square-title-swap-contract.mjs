@@ -26,6 +26,7 @@ const titlePrefix = "/assets/images/thumbnail-editor/iriam-square/";
 const karaokeTitlePrefix = `${titlePrefix}karaoke/titles/`;
 const darkGachaTitlePrefix = `${titlePrefix}dark-gacha/titles/`;
 const chattingTitlePrefix = `${titlePrefix}chatting/titles/`;
+const firstStreamTitlePrefix = `${titlePrefix}first-stream/titles/`;
 
 assert.equal(typeof lib.getThumbnailIriamSquareTitleLayerMatch, "function", "title layer registry matcher is exported");
 assert.equal(typeof lib.getThumbnailIriamSquareTitlePanelModel, "function", "title swap panel model helper is exported");
@@ -106,6 +107,27 @@ assert.equal(
   lib.replaceThumbnailIriamSquareTitleLayerSource(chattingTitleLayer, "mint").src,
   `${chattingTitlePrefix}chatting-square-title-mint-v1.png`,
   "title swap keeps chatting inside the detected title genre"
+);
+
+const englishFirstStreamDraft = lib.createDraftFromPresetVariant("first_stream", "square-1-1", "en");
+const englishFirstStreamTitleLayer = englishFirstStreamDraft.layers.find((layer) => layer.type === "image" && layer.src.startsWith(firstStreamTitlePrefix));
+assert.ok(englishFirstStreamTitleLayer, "English first_stream square draft has a transparent English title image layer");
+assert.equal(
+  englishFirstStreamTitleLayer.src,
+  `${firstStreamTitlePrefix}first-stream-square-en-title-pink-blue-v1.png`,
+  "English first_stream square draft starts with the English title source"
+);
+const englishTitleModel = lib.getThumbnailIriamSquareTitlePanelModel("square-1-1", englishFirstStreamTitleLayer);
+assert.equal(englishTitleModel?.selectedTitleText, "Debut Stream", "English title panel model exposes English title wording");
+assert.equal(
+  lib.replaceThumbnailIriamSquareTitleLayerSource(englishFirstStreamTitleLayer, "mint").src,
+  `${firstStreamTitlePrefix}first-stream-square-en-title-mint-v1.png`,
+  "title swap keeps English first_stream inside the English title asset set"
+);
+assert.notEqual(
+  lib.replaceThumbnailIriamSquareTitleLayerSource(englishFirstStreamTitleLayer, "mint").src,
+  `${firstStreamTitlePrefix}first-stream-square-title-mint-v1.png`,
+  "title swap does not cross from English first_stream back to Japanese title assets"
 );
 
 assert.ok(componentSource.includes("IriamSquareTitleSwapPanel"), "PropertyPanel wires a small IRIAM square title swap panel");

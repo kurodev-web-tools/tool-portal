@@ -302,7 +302,7 @@ assert.equal(
   "new draft action keeps the current square-capable preset when recreating a 1:1 draft"
 );
 assert.equal(
-  componentSource.includes("localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, currentVariantId), locale)"),
+  componentSource.includes("localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, currentVariantId, locale), locale)"),
   true,
   "new draft action recreates the selected preset through the active variant body"
 );

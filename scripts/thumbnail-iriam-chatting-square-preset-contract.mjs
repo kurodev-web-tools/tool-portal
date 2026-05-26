@@ -201,7 +201,7 @@ assert.equal(
   "chatting square modal uses a dedicated default config"
 );
 assert.equal(
-  componentSource.includes("createChattingIriamSquareDraft(config)"),
+  componentSource.includes("createChattingIriamSquareDraft(config, locale)"),
   true,
   "chatting square modal applies the configured square draft helper"
 );

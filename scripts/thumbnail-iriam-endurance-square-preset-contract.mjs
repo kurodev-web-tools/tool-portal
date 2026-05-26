@@ -197,7 +197,7 @@ assert.equal(
   "endurance_stream square modal uses a dedicated default config"
 );
 assert.equal(
-  componentSource.includes("createEnduranceStreamIriamSquareDraft(config)"),
+  componentSource.includes("createEnduranceStreamIriamSquareDraft(config, locale)"),
   true,
   "endurance_stream square modal applies the configured square draft helper"
 );

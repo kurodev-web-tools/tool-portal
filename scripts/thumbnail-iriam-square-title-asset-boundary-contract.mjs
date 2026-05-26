@@ -34,6 +34,45 @@ const darkGachaTitlePrefix = "/assets/images/thumbnail-editor/iriam-square/dark-
 const chattingTitlePrefix = "/assets/images/thumbnail-editor/iriam-square/chatting/titles/";
 const firstStreamTitlePrefix = "/assets/images/thumbnail-editor/iriam-square/first-stream/titles/";
 const enduranceTitlePrefix = "/assets/images/thumbnail-editor/iriam-square/endurance/titles/";
+const karaokeTitlePrefix = "/assets/images/thumbnail-editor/iriam-square/karaoke/titles/";
+const colorways = ["pink-blue", "blue", "yellow", "purple", "mint"];
+const expectedEnTitleMeta = {
+  karaoke: {
+    exportName: "thumbnailIriamSquareKaraokeEnTitleAssets",
+    prefix: karaokeTitlePrefix,
+    filePrefix: "karaoke",
+    titleText: "Karaoke",
+    fontFamily: "Lilita One"
+  },
+  dark_gacha: {
+    exportName: "thumbnailIriamSquareDarkGachaEnTitleAssets",
+    prefix: darkGachaTitlePrefix,
+    filePrefix: "dark-gacha",
+    titleText: "Dark Gacha",
+    fontFamily: "Pirata One"
+  },
+  chatting: {
+    exportName: "thumbnailIriamSquareChattingEnTitleAssets",
+    prefix: chattingTitlePrefix,
+    filePrefix: "chatting",
+    titleText: "Chatting",
+    fontFamily: "Fredoka"
+  },
+  first_stream: {
+    exportName: "thumbnailIriamSquareFirstStreamEnTitleAssets",
+    prefix: firstStreamTitlePrefix,
+    filePrefix: "first-stream",
+    titleText: "Debut Stream",
+    fontFamily: "Lobster"
+  },
+  endurance_stream: {
+    exportName: "thumbnailIriamSquareEnduranceEnTitleAssets",
+    prefix: enduranceTitlePrefix,
+    filePrefix: "endurance",
+    titleText: "Endurance",
+    fontFamily: "Anton"
+  }
+};
 const expectedDarkGachaTitleFiles = [
   "dark-gacha-square-title-pink-blue-v1.png",
   "dark-gacha-square-title-blue-v1.png",
@@ -190,6 +229,67 @@ assert.equal(
   lib.getThumbnailIriamSquareTitleAsset("unknown", "purple"),
   null,
   "generic square title helper does not fall back across genres"
+);
+
+assert.deepEqual(
+  Object.keys(lib.thumbnailIriamSquareEnTitleAssetsByGenre),
+  lib.thumbnailIriamSquareTitleGenres,
+  "English square title registry mirrors the Japanese title genres"
+);
+for (const [genre, meta] of Object.entries(expectedEnTitleMeta)) {
+  const assets = lib[meta.exportName];
+  assert.ok(Array.isArray(assets), `${genre} English title asset metadata is exported`);
+  assert.deepEqual(
+    assets.map((asset) => path.basename(asset.src)),
+    colorways.map((colorway) => `${meta.filePrefix}-square-en-title-${colorway}-v1.png`),
+    `${genre} registers five English title colorways`
+  );
+  assert.deepEqual(
+    lib.thumbnailIriamSquareEnTitleAssetsByGenre[genre].map((asset) => path.basename(asset.src)),
+    assets.map((asset) => path.basename(asset.src)),
+    `${genre} English title registry points at its exported asset list`
+  );
+
+  for (const asset of assets) {
+    assert.equal(asset.genre, genre, `${genre} English title asset carries its square title genre`);
+    assert.equal(asset.titleText, meta.titleText, `${genre} English title asset records the final wording`);
+    assert.equal(asset.fontFamily, meta.fontFamily, `${genre} English title asset records the selected Google Font`);
+    assert.equal(asset.source, "generated-title-image", `${genre} English title asset is treated as a generated transparent PNG layer candidate`);
+    assert.equal(Object.hasOwn(asset, "storageId"), false, `${genre} English title asset does not mix user storage ids into project assets`);
+    assert.equal(Object.hasOwn(asset, "materialRef"), false, `${genre} English title asset does not mix user material refs into project assets`);
+
+    const publicPath = path.join(root, "public", asset.src.replace(/^\//, ""));
+    assert.equal(fs.existsSync(publicPath), true, `${path.basename(asset.src)} production English title image exists`);
+    assert.deepEqual(readPngSize(publicPath), { width: 760, height: 320 }, `${path.basename(asset.src)} keeps the title image layer size`);
+    assert.ok(fs.statSync(publicPath).size < 160_000, `${path.basename(asset.src)} stays reasonably lightweight`);
+  }
+
+  assert.equal(
+    lib.getThumbnailIriamSquareTitleAsset(genre, "purple", "pink-blue", "en")?.src,
+    `${meta.prefix}${meta.filePrefix}-square-en-title-purple-v1.png`,
+    `${genre} generic square title helper resolves English purple title by locale`
+  );
+  assert.equal(
+    lib.getThumbnailIriamSquareTitleAsset(genre, "match-background", "mint", "en")?.src,
+    `${meta.prefix}${meta.filePrefix}-square-en-title-mint-v1.png`,
+    `${genre} generic square title helper can match the English background colorway`
+  );
+}
+
+assert.equal(
+  lib.createDraftFromPresetVariant("karaoke", "square-1-1", "en").layers.some((layer) => layer.type === "image" && layer.src === `${karaokeTitlePrefix}karaoke-square-en-title-pink-blue-v1.png`),
+  true,
+  "English square variant draft starts with the English karaoke title image"
+);
+assert.equal(
+  lib.createDraftFromPresetVariant("karaoke", "square-1-1", "ja").layers.some((layer) => layer.type === "image" && layer.src === `${karaokeTitlePrefix}karaoke-square-title-pink-blue-v1.png`),
+  true,
+  "Japanese square variant draft keeps the Japanese karaoke title image"
+);
+assert.equal(
+  lib.createDraftFromPresetVariant("karaoke", "square-1-1").layers.some((layer) => layer.type === "image" && layer.src === `${karaokeTitlePrefix}karaoke-square-title-pink-blue-v1.png`),
+  true,
+  "default square variant draft remains Japanese"
 );
 
 assert.equal(

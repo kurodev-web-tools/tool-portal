@@ -38,6 +38,7 @@ const impactMaterialPrefix = "/assets/images/thumbnail-editor/materials/impact/"
 const iriamSquareAccentMaterialPrefix = "/assets/images/thumbnail-editor/materials/iriam-square-accent/";
 const iriamSquareLabelBaseMaterialPrefix = "/assets/images/thumbnail-editor/materials/iriam-square-label-base/";
 const darkMaterialPrefix = "/assets/images/thumbnail-editor/materials/dark/";
+const neutralMaterialPrefix = "/assets/images/thumbnail-editor/materials/neutral/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -654,6 +655,62 @@ const expectedMaterials = [
     width: 420,
     height: 260,
     recommended: "暗い背景へ足す黒紫の粒子"
+  },
+  {
+    id: "neutral-chandelier-gold",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-chandelier-gold-v1.png`,
+    width: 220,
+    height: 180,
+    recommended: "上部や角へ置く小さなシャンデリア"
+  },
+  {
+    id: "neutral-antique-key-brass",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-antique-key-brass-v1.png`,
+    width: 260,
+    height: 118,
+    recommended: "告知や企画枠の余白に置く鍵"
+  },
+  {
+    id: "neutral-pocket-watch-brass",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-pocket-watch-brass-v1.png`,
+    width: 210,
+    height: 210,
+    recommended: "時刻や耐久告知の横に置く懐中時計"
+  },
+  {
+    id: "neutral-candle-warm",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-candle-warm-v1.png`,
+    width: 160,
+    height: 220,
+    recommended: "雑談やASMRの余白に置く小さな蝋燭"
+  },
+  {
+    id: "neutral-blank-card-ivory",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-blank-card-ivory-v1.png`,
+    width: 190,
+    height: 260,
+    recommended: "文字なしカードを情報枠の補助に置く"
+  },
+  {
+    id: "neutral-ribbon-seal-rose",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-ribbon-seal-rose-v1.png`,
+    width: 260,
+    height: 170,
+    recommended: "見出し端や告知枠へ置く封蝋リボン"
+  },
+  {
+    id: "neutral-small-ornate-frame-gold",
+    category: "frame",
+    src: `${neutralMaterialPrefix}neutral-small-ornate-frame-gold-v1.png`,
+    width: 360,
+    height: 240,
+    recommended: "立ち絵や小さな情報枠の補助フレーム"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -877,6 +934,9 @@ for (const expected of expectedMaterials) {
   if (expected.src.startsWith(darkMaterialPrefix)) {
     assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
   }
+  if (expected.src.startsWith(neutralMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
 
   const layer = lib.createThumbnailMaterialLayer(expected.id);
   assert.equal(layer.type, "image", `${expected.id} creates an image layer`);
@@ -1079,6 +1139,9 @@ for (const item of expectedMaterials.filter((item) => item.src.startsWith(iriamS
   newMaterialSources.add(item.src);
 }
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(darkMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(neutralMaterialPrefix))) {
   newMaterialSources.add(item.src);
 }
 for (const preset of lib.thumbnailPresets) {

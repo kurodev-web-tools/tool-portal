@@ -1219,6 +1219,41 @@ const materialCopy: Record<Locale, Partial<Record<string, MaterialCopy>>> = {
       name: "Dark Sparkle Dust",
       description: "Sparse black-purple particles and subtle glow for dark background accents.",
       recommendedPlacement: "Particle dust over dark backgrounds"
+    },
+    "neutral-chandelier-gold": {
+      name: "Gold Chandelier",
+      description: "A small gold chandelier prop for top edges, corners, or elegant open space.",
+      recommendedPlacement: "Small chandelier near top edges or corners"
+    },
+    "neutral-antique-key-brass": {
+      name: "Antique Brass Key",
+      description: "An ornate brass key prop for notices, project thumbnails, and story-like layouts.",
+      recommendedPlacement: "Key prop in open space around notice frames"
+    },
+    "neutral-pocket-watch-brass": {
+      name: "Brass Pocket Watch",
+      description: "A brass pocket watch prop for time labels, endurance streams, and schedule notices.",
+      recommendedPlacement: "Beside time, endurance, or schedule blocks"
+    },
+    "neutral-candle-warm": {
+      name: "Small Warm Candle",
+      description: "A small candle prop for chatting, ASMR, dark, or cozy thumbnail layouts.",
+      recommendedPlacement: "Warm candle in open space for cozy layouts"
+    },
+    "neutral-blank-card-ivory": {
+      name: "Blank Ivory Card",
+      description: "A text-free ivory card prop for info blocks, game motifs, or announcement accents.",
+      recommendedPlacement: "Blank card beside information or project frames"
+    },
+    "neutral-ribbon-seal-rose": {
+      name: "Ribbon Wax Seal",
+      description: "A text-free ribbon and wax seal accent for notice edges and event thumbnails.",
+      recommendedPlacement: "Seal accent near headlines or notice frames"
+    },
+    "neutral-small-ornate-frame-gold": {
+      name: "Small Ornate Frame",
+      description: "A small gold ornate frame for character cutouts, icons, or compact information areas.",
+      recommendedPlacement: "Support frame around small visuals or info areas"
     }
   }
 };

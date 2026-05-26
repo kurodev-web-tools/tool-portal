@@ -15,10 +15,10 @@
 ## Active Priorities
 
 1. Thumbnail Editor registered material library expansion for IRIAM / cross-aspect use
-   - status: Batch A PR #215 は `codex/thumbnail-iriam-square-preview` に merge 済み。Batch B implementation branch `codex/thumbnail-material-dark-batch` で dark / horror / smoke 系の新規生成素材 5件を追加済み。
+   - status: Batch A PR #215 と Batch B PR #216 は `codex/thumbnail-iriam-square-preview` に merge 済み。Batch C implementation branch `codex/thumbnail-material-neutral-props` で neutral prop 系の新規生成素材 7件を追加済み。
    - base:
      - `origin/codex/thumbnail-iriam-square-preview`
-     - latest integrated PR: #215 `[codex] Add existing decoration materials batch`
+     - latest integrated PR: #216 `[codex] Add dark thumbnail materials`
    - planning doc:
      - `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_DECORATION_MATERIAL_CONTRACT.md`
    - goal:
@@ -78,8 +78,8 @@
      - `git diff --check`
      - UI を触った場合のみ `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認する。
    - next action:
-     - Batch B branch を review / PR 化する。
-     - Batch C は neutral prop の新規生成に進む。Batch B と同じ PR へ混ぜない。
+     - Batch C branch を review / PR 化する。
+     - Batch C merge 後は preview branch final confirmation に戻る。
    - Batch A implementation result:
      - added materials: 19件。
        - `label-base`: 2件。
@@ -154,6 +154,47 @@
        - Start from `origin/codex/thumbnail-iriam-square-preview` after Batch B is merged.
        - Keep scope to neutral prop registered materials only: chandelier, antique key, pocket watch, candle, blank card, ribbon seal, and small ornate frame are the current candidates.
        - Continue one asset per imagegen generation, reuse existing `frame` / `accent` / `corner` categories, and avoid preset body / schema / export / handoff / swap UI changes.
+   - Batch C implementation result:
+     - added materials: 7件。
+       - `frame`: 1件。
+       - `accent`: 6件。
+     - added families:
+       - `neutral-chandelier-gold`: 上部や角へ置ける小さな金シャンデリア。
+       - `neutral-antique-key-brass`: 告知や企画枠に使いやすい真鍮アンティーク鍵。
+       - `neutral-pocket-watch-brass`: 時刻 / 耐久 / 予定告知に使える真鍮懐中時計。
+       - `neutral-candle-warm`: 雑談 / ASMR / dark 系の余白に置ける小さな蝋燭。
+       - `neutral-blank-card-ivory`: 文字なしのカード素材。
+       - `neutral-ribbon-seal-rose`: 文字なしの封蝋 / リボンアクセント。
+       - `neutral-small-ornate-frame-gold`: 立ち絵や小さな情報枠の補助フレーム。
+     - project-bound source assets:
+       - `public/assets/images/thumbnail-editor/materials/neutral/neutral-chandelier-gold-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/neutral/neutral-antique-key-brass-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/neutral/neutral-pocket-watch-brass-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/neutral/neutral-candle-warm-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/neutral/neutral-blank-card-ivory-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/neutral/neutral-ribbon-seal-rose-v1.png`
+       - `public/assets/images/thumbnail-editor/materials/neutral/neutral-small-ornate-frame-gold-v1.png`
+     - imagegen source directory:
+       - `C:/Users/taka/.codex/generated_images/019e6492-2930-76d2-91ed-71a7e126a997/`
+     - contract updates:
+       - `thumbnail-material-assets-contract` now expects 80 registered project-bound materials.
+       - Added `materials/neutral/` to the expected source prefixes and checks each Batch C PNG as `768 x 512` RGBA with alpha padding.
+       - Added neutral-prefix chroma-key-green rejection so generated source cleanup is locked by contract.
+       - Existing project-bound / user-material boundary checks, 16:9 / 1:1 insertion checks, and material-only initial-layer exclusion remain in place.
+     - verification completed:
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-preset-apply-safety-contract.mjs`
+       - `node scripts/thumbnail-preset-variants-contract.mjs`
+       - `node scripts/tool-handoff-contract.mjs`
+       - `npm run lint`
+       - `npx tsc --noEmit`
+       - `git diff --check`
+     - UI verification:
+       - Component UI code was not changed. Width-based browser confirmation is not required for this branch.
+     - residual risk:
+       - Batch C uses built-in imagegen plus local chroma-key removal, so the neutral props are generated raster assets rather than hand-authored vectors.
+       - The material library gains only the 7 neutral prop candidates requested here; any additional prop families should be a separate follow-up.
 
 2. Thumbnail Editor 1:1 IRIAM preview branch main merge preparation
    - status: material library expansion の必要分を preview branch に入れた後に戻る。
@@ -201,46 +242,33 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Thumbnail Editor registered material library expansion Batch C として、neutral prop 系の新規素材を、16:9 / 1:1 の両方で使える project-bound registered material として追加してください。
+Thumbnail Editor IRIAM square preview branch の final confirmation として、material expansion Batch A-C merge 後の `codex/thumbnail-iriam-square-preview` を最終確認し、main merge preparation に進める状態か確認してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- PR #215 と Batch B dark / horror / smoke material PR が `codex/thumbnail-iriam-square-preview` に merge 済みであることを確認してください。
+- PR #215、PR #216、Batch C neutral prop material PR が `codex/thumbnail-iriam-square-preview` に merge 済みであることを確認してください。
 - 未 merge の場合は、新規作業へ進まず blocker summary を返してください。
 - merge 済みなら、`origin/codex/thumbnail-iriam-square-preview` を base に作業 branch / worktree を切ってください。
-- 新規素材生成は imagegen を使い、1素材につき1生成で進めてください。複数素材を1枚にまとめたシート生成は禁止です。
 
 推奨 branch:
-- `codex/thumbnail-material-neutral-props-batch`
+- `codex/thumbnail-iriam-square-final-confirmation-after-materials`
 
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/thumbnail-material-neutral-props-batch`
+- `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-final-confirmation-after-materials`
 
 今回の scope:
-- Batch C only。
-- 男女問わず使える小物系の registered material を新規生成する。
-- category は既存の `frame` / `accent` / `corner` を優先し、新カテゴリは作らない。
-- 追加素材は `thumbnailMaterialLibrary` から通常 image layer として追加できる project-bound material にする。
-- 候補:
-  - chandelier
-  - antique key
-  - pocket watch
-  - candle
-  - blank card
-  - ribbon seal
-  - small ornate frame
+- `codex/thumbnail-iriam-square-preview` 上の final confirmation。
+- 1:1 IRIAM 5 preset、settings modal、background / title swap、EN title asset、registered material Batch A-C の contract 状態を確認する。
+- material library count / category / search / 16:9 と 1:1 への registered material add flow に破綻がないか確認する。
+- main merge preparation に必要な blocker が残っていれば、修正ではなく blocker summary と次の最小 follow-up scope を返す。
 
 Out of scope:
-- Batch A existing preset decoration registration。
-- Batch B dark / horror / smoke material。
-- preset body / 初期配置変更。
-- background / title image asset 変更。
-- material swap UI / title swap UI / background swap UI 変更。
+- 新規素材生成。
+- preset body / 初期配置の新規変更。
 - schema、canvas export、handoff payload、IndexedDB / localStorage key 変更。
-- 9:16 preset。
-- editable font self-hosting / font picker。
+- 9:16 preset、font picker、新規 tool 実装。
 
 検証:
 - `node scripts/thumbnail-material-assets-contract.mjs`
@@ -248,21 +276,20 @@ Out of scope:
 - `node scripts/thumbnail-preset-apply-safety-contract.mjs`
 - `node scripts/thumbnail-preset-variants-contract.mjs`
 - `node scripts/tool-handoff-contract.mjs`
+- 必要なら square preset / swap / title asset boundary の関連 contract
 - `npm run lint`
 - `npx tsc --noEmit`
 - `git diff --check`
-- UI を触っていない場合、幅別ブラウザ確認は不要。素材パネルの表示件数や category 表示に不安がある場合のみ `/tools/thumbnail-editor` を確認してください。
+- `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認する。
 
 完了時:
-- `task.md` に追加した素材 family / 件数、source asset path、contract 更新内容、検証結果、残リスク、preview branch final confirmation への引き継ぎを追記してください。
+- `task.md` に final confirmation の検証結果、幅別確認結果、残 blocker、main merge preparation への判断を追記してください。
 - 問題なければ commit まで行ってください。push / PR は指示があるまで行わないでください。
 ```
 
 ## Backlog
 
 - Thumbnail Editor:
-  - Batch B dark / horror / smoke registered materials。
-  - Batch C neutral prop registered materials。
   - 1:1 IRIAM preview branch main merge preparation。
   - 9:16 preset for YouTube Shorts / vertical streams。
   - crop 仕様。

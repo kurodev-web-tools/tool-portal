@@ -15,10 +15,10 @@
 ## Active Priorities
 
 1. Thumbnail Editor 1:1 IRIAM preview branch final QA / main merge preparation
-   - status: PR #209 merge 済み。main 結合前 final confirmation に入る前に、EN locale でも出力物として成立するよう IRIAM square EN title image support を 1 slice 挟む。
+   - status: PR #212 merge 済み。final confirmation で `first_stream` EN layer label のみ最小修正が必要だったため、修正 branch を preview branch に入れてから main merge preparation へ進む。
    - base:
      - `origin/codex/thumbnail-iriam-square-preview`
-     - latest integrated PR: #209 `Thumbnail Editor 1:1 IRIAM square final QA / main merge preparation`
+     - latest integrated PR: #212 `[codex] Adjust IRIAM square EN preset placements`
    - current completed state:
      - `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久` は `square-1-1` preset body 接続済み。
      - 同 5ジャンルは square settings modal 対応済み。
@@ -32,9 +32,8 @@
      - 調整対象は IRIAM square preset の初期位置 / サイズ / レイヤー重なりに限定し、schema、export、handoff、font、9:16、material swap UI は触らない。
      - material library は現状の「素材ライブラリから追加 / 通常レイヤーとして削除」運用を維持し、swap UI は実利用フィードバックが出るまで作らない。
    - next flow:
-     - 1. IRIAM square EN title image support（5ジャンル x 5 colorway を 1 PR に閉じる）
-     - 2. Final confirmation（contracts / tsc / lint / width check / task.md 整理）
-     - 3. Merge preview branch to `main`
+     - 1. Merge this final confirmation minimal fix into `codex/thumbnail-iriam-square-preview`.
+     - 2. Merge preview branch to `main`.
    - 2026-05-25 implementation update:
      - branch / worktree: `codex/thumbnail-iriam-square-accent-assets` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-accent-assets`
      - PR #204 merge confirmed before implementation: `9516b22` on `origin/codex/thumbnail-iriam-square-preview`.
@@ -791,10 +790,47 @@ Out of scope:
   - Final visual balance should be reviewed in the composed 1:1 presets after PR review, especially `Dark Gacha` gothic tone and `Debut Stream` script readability at thumbnail scale.
   - Fonts are rasterized into PNG title assets; this PR does not add new editable font self-hosting or font picker behavior.
 - Next action order:
-  - `material library small follow-up only if needed`
   - `final confirmation`
   - prepare `codex/thumbnail-iriam-square-preview` for `main` merge
   - `font / preset typography follow-up`
+
+### 2026-05-26 final confirmation update: IRIAM square preview branch
+
+- Branch / worktree:
+  - `codex/thumbnail-iriam-square-final-confirmation`
+  - `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-final-confirmation`
+- Base / merge gate:
+  - Ran `git fetch origin --prune`.
+  - Confirmed PR #212 `[codex] Adjust IRIAM square EN preset placements` was merged into `codex/thumbnail-iriam-square-preview` at merge commit `127302f91a64e1417d51bdb235d56d66eb26ad7b`.
+- Scope:
+  - Final confirmation for the 1:1 IRIAM presets `karaoke`, `dark_gacha`, `chatting`, `first_stream`, and `endurance_stream`.
+  - No font, schema, export, handoff payload, title asset regeneration, material UI, 9:16, or extra placement changes.
+- Finding / minimal fix:
+  - `first_stream` EN square draft used the EN title asset but kept the JA layer label `画像 2（タイトル 初配信）`.
+  - Fixed only that label to `Image 2 (First Stream title)` in EN mode.
+  - Tightened `scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` so the EN title layer label must be locale-correct.
+- Browser confirmation:
+  - EN at `1366px`: all 5 presets opened settings modal, showed preview / background color / title color controls, completed modal create flow, and produced expected EN title layer labels.
+  - JA at `1366px`: all 5 presets opened settings modal, showed preview / background color / title color controls, completed modal create flow, and produced expected JA title layer labels.
+  - Top `New` flow was available and created a 1:1 canvas without leaving a modal open.
+  - Width checks in Chrome DevTools MCP for EN / JA at `820 / 1024 / 1280 / 1366px` had no page-level horizontal overflow and kept `1080 x 1080 / 1:1`, 5 presets, New, and canvas visible.
+  - `390px` could not be represented exactly through Chrome DevTools MCP in this local session because the browser window clamped to `500px`; the `500px` mobile-like check had no page-level horizontal overflow.
+- Verification completed:
+  - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+  - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+  - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+  - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+  - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+  - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+  - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+  - `npx tsc --noEmit`
+  - `npm run lint`
+  - `git diff --check`
+- Residual risks:
+  - Browser confirmation covered the default modal create flow and default colorway path, not every background / title colorway combination.
+  - Exact `390px` browser verification remains unchecked in this session because of the DevTools window-size clamp.
+- Next action:
+  - Merge this final-confirmation fix into `codex/thumbnail-iriam-square-preview`, then prepare the preview branch for `main` merge.
 
 ## Backlog
 

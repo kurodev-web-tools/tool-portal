@@ -1357,6 +1357,7 @@ const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materia
 const thumbnailIriamSquareAccentMaterialAssetPrefix = `${thumbnailPresetAssetPrefix}materials/iriam-square-accent/`;
 const thumbnailIriamSquareLabelBaseMaterialAssetPrefix = `${thumbnailPresetAssetPrefix}materials/iriam-square-label-base/`;
 const thumbnailMaterialDarkAssetPrefix = `${thumbnailPresetAssetPrefix}materials/dark/`;
+const thumbnailMaterialNeutralAssetPrefix = `${thumbnailPresetAssetPrefix}materials/neutral/`;
 
 export const thumbnailIriamSquareColorways: ThumbnailIriamSquareColorway[] = ["pink-blue", "blue", "yellow", "purple", "mint"];
 export const thumbnailIriamSquareTitleGenres: ThumbnailIriamSquareTitleGenre[] = ["karaoke", "dark_gacha", "chatting", "first_stream", "endurance_stream"];
@@ -3808,6 +3809,76 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 420, height: 260 },
     initialPosition: { x: 720, y: 120 },
     recommendedPlacement: "暗い背景へ足す黒紫の粒子"
+  },
+  {
+    id: "neutral-chandelier-gold",
+    name: "金シャンデリア",
+    category: "accent",
+    description: "上部や角へ小さく添えられる、金色のシャンデリア小物。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-chandelier-gold-v1.png`,
+    initialSize: { width: 220, height: 180 },
+    initialPosition: { x: 820, y: 60 },
+    recommendedPlacement: "上部や角へ置く小さなシャンデリア"
+  },
+  {
+    id: "neutral-antique-key-brass",
+    name: "真鍮アンティーク鍵",
+    category: "accent",
+    description: "告知、企画、物語風の余白に置ける、真鍮色のアンティーク鍵。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-antique-key-brass-v1.png`,
+    initialSize: { width: 260, height: 118 },
+    initialPosition: { x: 860, y: 470 },
+    recommendedPlacement: "告知や企画枠の余白に置く鍵"
+  },
+  {
+    id: "neutral-pocket-watch-brass",
+    name: "真鍮懐中時計",
+    category: "accent",
+    description: "時刻、耐久、予定告知の横へ置きやすい、真鍮色の懐中時計。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-pocket-watch-brass-v1.png`,
+    initialSize: { width: 210, height: 210 },
+    initialPosition: { x: 84, y: 420 },
+    recommendedPlacement: "時刻や耐久告知の横に置く懐中時計"
+  },
+  {
+    id: "neutral-candle-warm",
+    name: "小さな蝋燭",
+    category: "accent",
+    description: "雑談、ASMR、暗めの告知に温かさを足す、小さな蝋燭小物。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-candle-warm-v1.png`,
+    initialSize: { width: 160, height: 220 },
+    initialPosition: { x: 980, y: 350 },
+    recommendedPlacement: "雑談やASMRの余白に置く小さな蝋燭"
+  },
+  {
+    id: "neutral-blank-card-ivory",
+    name: "無地カード",
+    category: "accent",
+    description: "文字なしのカードを、情報枠や企画モチーフの補助として置ける素材。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-blank-card-ivory-v1.png`,
+    initialSize: { width: 190, height: 260 },
+    initialPosition: { x: 100, y: 260 },
+    recommendedPlacement: "文字なしカードを情報枠の補助に置く"
+  },
+  {
+    id: "neutral-ribbon-seal-rose",
+    name: "封蝋リボン",
+    category: "accent",
+    description: "告知枠や見出し端へ置ける、文字なしの封蝋とリボンアクセント。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-ribbon-seal-rose-v1.png`,
+    initialSize: { width: 260, height: 170 },
+    initialPosition: { x: 850, y: 110 },
+    recommendedPlacement: "見出し端や告知枠へ置く封蝋リボン"
+  },
+  {
+    id: "neutral-small-ornate-frame-gold",
+    name: "小さな装飾フレーム",
+    category: "frame",
+    description: "立ち絵、アイコン、小さな情報枠を囲う補助に使える金色の装飾フレーム。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-small-ornate-frame-gold-v1.png`,
+    initialSize: { width: 360, height: 240 },
+    initialPosition: { x: 460, y: 240 },
+    recommendedPlacement: "立ち絵や小さな情報枠の補助フレーム"
   }
 ] satisfies ThumbnailMaterial[];
 

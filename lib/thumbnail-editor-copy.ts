@@ -1194,6 +1194,31 @@ const materialCopy: Record<Locale, Partial<Record<string, MaterialCopy>>> = {
       name: "Mic Silhouette",
       description: "A simple microphone silhouette for audio, karaoke, or ASMR-style layouts.",
       recommendedPlacement: "Small prop in open space for audio layouts"
+    },
+    "dark-smoke-wash": {
+      name: "Black Smoke Wash",
+      description: "A black-violet smoke wash for softly darkening backgrounds or title areas.",
+      recommendedPlacement: "Subtle dark smoke over backgrounds"
+    },
+    "dark-smoky-edge-frame": {
+      name: "Smoky Edge Frame",
+      description: "An open-center black-violet smoke frame for thumbnail edges or video areas.",
+      recommendedPlacement: "Dark smoke around screen edges"
+    },
+    "dark-shadow-corner-fog": {
+      name: "Shadow Corner Fog",
+      description: "A dark corner fog accent for adding depth to thumbnail corners.",
+      recommendedPlacement: "Dark haze on thumbnail corners"
+    },
+    "dark-ink-drip-accent": {
+      name: "Black Ink Drip",
+      description: "A black ink drip accent for title edges, top borders, or dark notices.",
+      recommendedPlacement: "Ink drips near edges or headlines"
+    },
+    "dark-sparkle-dust": {
+      name: "Dark Sparkle Dust",
+      description: "Sparse black-purple particles and subtle glow for dark background accents.",
+      recommendedPlacement: "Particle dust over dark backgrounds"
     }
   }
 };
@@ -1494,7 +1519,12 @@ const materialNameTranslationsEn: Record<string, string> = {
   白黒フチ強調土台: "White Black Pop Base",
   青雲ラベル: "Blue Cloud Label",
   ミントきらきら: "Mint Sparkles",
-  黄桃リボン: "Yellow Pink Ribbon"
+  黄桃リボン: "Yellow Pink Ribbon",
+  黒煙ウォッシュ: "Black Smoke Wash",
+  黒煙エッジ枠: "Smoky Edge Frame",
+  影もや角: "Shadow Corner Fog",
+  黒インク滴り: "Black Ink Drip",
+  黒紫粒子: "Dark Sparkle Dust"
 };
 
 const standeePlacementCopy: Record<

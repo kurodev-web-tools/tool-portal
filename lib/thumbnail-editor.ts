@@ -1356,6 +1356,7 @@ const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materia
 const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materials/impact/`;
 const thumbnailIriamSquareAccentMaterialAssetPrefix = `${thumbnailPresetAssetPrefix}materials/iriam-square-accent/`;
 const thumbnailIriamSquareLabelBaseMaterialAssetPrefix = `${thumbnailPresetAssetPrefix}materials/iriam-square-label-base/`;
+const thumbnailMaterialDarkAssetPrefix = `${thumbnailPresetAssetPrefix}materials/dark/`;
 
 export const thumbnailIriamSquareColorways: ThumbnailIriamSquareColorway[] = ["pink-blue", "blue", "yellow", "purple", "mint"];
 export const thumbnailIriamSquareTitleGenres: ThumbnailIriamSquareTitleGenre[] = ["karaoke", "dark_gacha", "chatting", "first_stream", "endurance_stream"];
@@ -3757,6 +3758,56 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 150, height: 236 },
     initialPosition: { x: 930, y: 250 },
     recommendedPlacement: "音声配信や歌枠の余白に置く小物"
+  },
+  {
+    id: "dark-smoke-wash",
+    name: "黒煙ウォッシュ",
+    category: "accent",
+    description: "背景やタイトル背面へ薄く重ねる、黒紫の煙ウォッシュ。",
+    src: `${thumbnailMaterialDarkAssetPrefix}dark-smoke-wash-v1.png`,
+    initialSize: { width: 560, height: 340 },
+    initialPosition: { x: 360, y: 190 },
+    recommendedPlacement: "背景へ薄く重ねる暗い煙"
+  },
+  {
+    id: "dark-smoky-edge-frame",
+    name: "黒煙エッジ枠",
+    category: "frame",
+    description: "画面端や動画枠へ重ねる、黒紫の煙でできた開口フレーム。",
+    src: `${thumbnailMaterialDarkAssetPrefix}dark-smoky-edge-frame-v1.png`,
+    initialSize: { width: 760, height: 506 },
+    initialPosition: { x: 260, y: 108 },
+    recommendedPlacement: "画面端を囲う暗い煙フレーム"
+  },
+  {
+    id: "dark-shadow-corner-fog",
+    name: "影もや角",
+    category: "corner",
+    description: "サムネの角へ足して暗い奥行きを作る、黒紫のもや。",
+    src: `${thumbnailMaterialDarkAssetPrefix}dark-shadow-corner-fog-v1.png`,
+    initialSize: { width: 300, height: 220 },
+    initialPosition: { x: 790, y: 82 },
+    recommendedPlacement: "角へ足す暗いもや"
+  },
+  {
+    id: "dark-ink-drip-accent",
+    name: "黒インク滴り",
+    category: "accent",
+    description: "タイトル端や画面上部へ置く、黒いインクの滴りアクセント。",
+    src: `${thumbnailMaterialDarkAssetPrefix}dark-ink-drip-accent-v1.png`,
+    initialSize: { width: 320, height: 220 },
+    initialPosition: { x: 86, y: 72 },
+    recommendedPlacement: "端や見出し周辺の黒い滴り"
+  },
+  {
+    id: "dark-sparkle-dust",
+    name: "黒紫粒子",
+    category: "accent",
+    description: "暗い背景や余白へ散らす、黒紫の粒子と控えめな光。",
+    src: `${thumbnailMaterialDarkAssetPrefix}dark-sparkle-dust-v1.png`,
+    initialSize: { width: 420, height: 260 },
+    initialPosition: { x: 720, y: 120 },
+    recommendedPlacement: "暗い背景へ足す黒紫の粒子"
   }
 ] satisfies ThumbnailMaterial[];
 

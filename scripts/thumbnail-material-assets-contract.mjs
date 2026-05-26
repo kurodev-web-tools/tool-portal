@@ -37,6 +37,7 @@ const cornerMaterialPrefix = "/assets/images/thumbnail-editor/materials/corners/
 const impactMaterialPrefix = "/assets/images/thumbnail-editor/materials/impact/";
 const iriamSquareAccentMaterialPrefix = "/assets/images/thumbnail-editor/materials/iriam-square-accent/";
 const iriamSquareLabelBaseMaterialPrefix = "/assets/images/thumbnail-editor/materials/iriam-square-label-base/";
+const darkMaterialPrefix = "/assets/images/thumbnail-editor/materials/dark/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -613,6 +614,46 @@ const expectedMaterials = [
     assetHeight: 660,
     minimumAlphaPadding: 0,
     recommended: "音声配信や歌枠の余白に置く小物"
+  },
+  {
+    id: "dark-smoke-wash",
+    category: "accent",
+    src: `${darkMaterialPrefix}dark-smoke-wash-v1.png`,
+    width: 560,
+    height: 340,
+    recommended: "背景へ薄く重ねる暗い煙"
+  },
+  {
+    id: "dark-smoky-edge-frame",
+    category: "frame",
+    src: `${darkMaterialPrefix}dark-smoky-edge-frame-v1.png`,
+    width: 760,
+    height: 506,
+    recommended: "画面端を囲う暗い煙フレーム"
+  },
+  {
+    id: "dark-shadow-corner-fog",
+    category: "corner",
+    src: `${darkMaterialPrefix}dark-shadow-corner-fog-v1.png`,
+    width: 300,
+    height: 220,
+    recommended: "角へ足す暗いもや"
+  },
+  {
+    id: "dark-ink-drip-accent",
+    category: "accent",
+    src: `${darkMaterialPrefix}dark-ink-drip-accent-v1.png`,
+    width: 320,
+    height: 220,
+    recommended: "端や見出し周辺の黒い滴り"
+  },
+  {
+    id: "dark-sparkle-dust",
+    category: "accent",
+    src: `${darkMaterialPrefix}dark-sparkle-dust-v1.png`,
+    width: 420,
+    height: 260,
+    recommended: "暗い背景へ足す黒紫の粒子"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -833,6 +874,9 @@ for (const expected of expectedMaterials) {
   if (expected.src.startsWith(iriamSquareLabelBaseMaterialPrefix)) {
     assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
   }
+  if (expected.src.startsWith(darkMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
 
   const layer = lib.createThumbnailMaterialLayer(expected.id);
   assert.equal(layer.type, "image", `${expected.id} creates an image layer`);
@@ -1032,6 +1076,9 @@ for (const item of expectedMaterials.filter((item) => item.src.startsWith(iriamS
   newMaterialSources.add(item.src);
 }
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(iriamSquareLabelBaseMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(darkMaterialPrefix))) {
   newMaterialSources.add(item.src);
 }
 for (const preset of lib.thumbnailPresets) {

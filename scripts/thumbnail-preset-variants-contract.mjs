@@ -33,6 +33,7 @@ assert.equal(typeof lib.createDraftFromPresetVariant, "function", "variant body 
 assert.equal(typeof lib.normalizeThumbnailPresetVariantRefs, "function", "variant ref normalizer is exported");
 
 const presetIds = lib.thumbnailPresets.map((preset) => preset.id);
+const squareOnlyPresetIds = new Set(["dark_gacha"]);
 assert.deepEqual(
   presetIds,
   [
@@ -43,9 +44,13 @@ assert.deepEqual(
     "project_stream",
     "cover_song_notice",
     "event_notice",
+    "goods_notice",
+    "membership_stream",
+    "asmr_stream",
     "privacy_notice",
     "whiteboard_plan",
     "karaoke",
+    "dark_gacha",
     "chatting",
     "clip",
     "game_live",
@@ -79,12 +84,15 @@ assert.deepEqual(lib.thumbnailPresetVariants["square-1-1"].canvas, { width: 1080
 
 for (const preset of lib.thumbnailPresets) {
   const relation = lib.thumbnailPresetVariantRelations[preset.id];
+  const expectedDefaultVariantId = squareOnlyPresetIds.has(preset.id) ? "square-1-1" : "landscape-16-9";
+  const expectedVariantIds = squareOnlyPresetIds.has(preset.id) ? ["square-1-1"] : ["landscape-16-9", "portrait-9-16", "square-1-1"];
+  const expectedDefaultCanvas = squareOnlyPresetIds.has(preset.id) ? { width: 1080, height: 1080 } : { width: 1280, height: 720 };
   assert.ok(relation, `${preset.id} has variant relation metadata`);
   assert.equal(relation.presetId, preset.id, `${preset.id} relation keeps existing preset id`);
-  assert.equal(relation.defaultVariantId, "landscape-16-9", `${preset.id} defaults to existing landscape output`);
+  assert.equal(relation.defaultVariantId, expectedDefaultVariantId, `${preset.id} defaults to its supported output`);
   assert.deepEqual(
     relation.variantIds,
-    ["landscape-16-9", "portrait-9-16", "square-1-1"],
+    expectedVariantIds,
     `${preset.id} exposes only the scoped variant bodies`
   );
   assert.equal(typeof relation.familyId, "string", `${preset.id} has a family id for future batches`);
@@ -95,12 +103,12 @@ for (const preset of lib.thumbnailPresets) {
   );
   assert.equal(
     lib.getDefaultThumbnailPresetVariantRef(preset.id).variantId,
-    "landscape-16-9",
-    `${preset.id} default variant ref resolves to landscape`
+    expectedDefaultVariantId,
+    `${preset.id} default variant ref resolves to its supported default`
   );
   assert.deepEqual(
     lib.getThumbnailPresetCanvasFromVariant(preset.id),
-    { width: 1280, height: 720 },
+    expectedDefaultCanvas,
     `${preset.id} canvas can be read from its default variant`
   );
 }
@@ -192,7 +200,7 @@ const materialIdsBefore = JSON.stringify(lib.thumbnailMaterialLibrary.map((mater
 
 for (const presetId of presetIds) {
   lib.createDraftFromPreset(presetId);
-  for (const variantId of Object.keys(lib.thumbnailPresetVariants)) {
+  for (const variantId of lib.thumbnailPresetVariantRelations[presetId].variantIds) {
     const variantDraft = lib.createDraftFromPresetVariant(presetId, variantId);
     const variant = lib.thumbnailPresetVariants[variantId];
     assert.equal(variantDraft.version, 1, `${presetId}/${variantId} keeps draft schema version`);
@@ -200,7 +208,11 @@ for (const presetId of presetIds) {
     assert.deepEqual(variantDraft.canvas, variant.canvas, `${presetId}/${variantId} uses variant canvas`);
     assert.equal(Object.hasOwn(variantDraft, "variantId"), false, `${presetId}/${variantId} does not add variantId to draft schema`);
     assert.ok(variantDraft.layers.length > 0, `${presetId}/${variantId} creates a non-empty body`);
-    assert.ok(variantDraft.layers.some((layer) => layer.type === "text" && layer.name.includes("見出し")), `${presetId}/${variantId} keeps a headline text layer`);
+    assert.ok(
+      variantDraft.layers.some((layer) => layer.type === "text" && layer.name.includes("見出し")) ||
+        variantDraft.layers.some((layer) => layer.type === "image" && layer.name.includes("タイトル")),
+      `${presetId}/${variantId} keeps a headline text layer or title image layer`
+    );
     for (const layer of variantDraft.layers) {
       assert.ok(Number.isFinite(layer.x), `${presetId}/${variantId}/${layer.name} has finite x`);
       assert.ok(Number.isFinite(layer.y), `${presetId}/${variantId}/${layer.name} has finite y`);
@@ -246,7 +258,7 @@ assert.ok(source.includes("crop?: ThumbnailImageCrop"), "crop schema remains own
 assert.ok(componentSource.includes("createDraftFromPresetVariant"), "UI variant route uses the scoped draft helper instead of adding preset bodies");
 assert.ok(componentSource.includes('headerMenuOpen === "variant"'), "UI exposes variant choices through the existing lightweight listbox boundary");
 assert.ok(
-  componentSource.includes("createDraftFromPresetVariant(draft.presetId, variantId)"),
+  componentSource.includes("createDraftFromPresetVariant(targetPresetId, variantId, locale)"),
   "UI variant selection creates the current preset body for the selected variant"
 );
 assert.equal(handoffSource.includes("variantId"), false, "Schedule Calendar / SNS Split Image Maker handoff contract is unchanged");

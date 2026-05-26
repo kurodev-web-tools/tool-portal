@@ -3567,6 +3567,196 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 420, height: 150 },
     initialPosition: { x: 740, y: 116 },
     recommendedPlacement: "短いステータスや注釈の背面に置く小型リボン"
+  },
+  {
+    id: "label-ivory-plaque-soft",
+    name: "淡アイボリー台座",
+    category: "label-base",
+    description: "短いラベルやサブ見出しを載せやすい、淡いアイボリーのラベル台座。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}announcement-label-plaque-ivory-uniform-cell.png`,
+    initialSize: { width: 300, height: 192 },
+    initialPosition: { x: 110, y: 84 },
+    recommendedPlacement: "短いラベルやサブ見出しの背面"
+  },
+  {
+    id: "label-cozy-plaque-warm",
+    name: "暖色メモ台座",
+    category: "label-base",
+    description: "雑談メモや短い案内文に使いやすい、暖かい色味のラベル台座。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}chatting-label-plaque-cozy-uniform-cell.png`,
+    initialSize: { width: 360, height: 208 },
+    initialPosition: { x: 124, y: 104 },
+    recommendedPlacement: "雑談メモや短い案内の背面"
+  },
+  {
+    id: "panel-soft-note-blue",
+    name: "青やわ補足パネル",
+    category: "frame",
+    description: "補足文や注意書きの背面に置きやすい、やわらかな青系パネル。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-note-panel-v1.png`,
+    initialSize: { width: 600, height: 228 },
+    initialPosition: { x: 116, y: 360 },
+    recommendedPlacement: "補足文や注意書きの背面パネル"
+  },
+  {
+    id: "panel-rounded-cta-pink",
+    name: "丸CTAパネル",
+    category: "frame",
+    description: "CTAや短い告知をまとめるための、丸みのある横長ピンクパネル。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-cta-panel-v1.png`,
+    initialSize: { width: 500, height: 146 },
+    initialPosition: { x: 116, y: 444 },
+    recommendedPlacement: "CTAや短い告知の横長パネル"
+  },
+  {
+    id: "panel-display-card-pink",
+    name: "表示カードピンク",
+    category: "frame",
+    description: "商品画像や小さな情報枠を見せるための、縦長のピンク系カード。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-product-card-v1.png`,
+    initialSize: { width: 260, height: 420 },
+    initialPosition: { x: 830, y: 170 },
+    recommendedPlacement: "商品画像や小さな情報枠のカード"
+  },
+  {
+    id: "badge-premiere-violet",
+    name: "紫プレミアバッジ",
+    category: "date-badge",
+    description: "公開予定や注目ステータスの背面に置く、紫系の丸いバッジ。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-premiere-badge-violet-uniform-cell.png`,
+    initialSize: { width: 360, height: 216 },
+    initialPosition: { x: 104, y: 420 },
+    recommendedPlacement: "公開予定や注目ステータスのバッジ"
+  },
+  {
+    id: "badge-member-gold",
+    name: "金メンバーバッジ",
+    category: "date-badge",
+    description: "限定公開やメンバー向け表示に添える、小さな金色バッジ。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-member-badge-v1.png`,
+    initialSize: { width: 180, height: 180 },
+    initialPosition: { x: 100, y: 420 },
+    recommendedPlacement: "限定公開やメンバー向け表示の小バッジ"
+  },
+  {
+    id: "frame-standee-glow-cyan",
+    name: "立ち絵グロー枠",
+    category: "frame",
+    description: "立ち絵やメイン素材の背面に置く、淡いシアン発光の縦長フレーム。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}stream-standee-frame-glow-uniform-cell.png`,
+    initialSize: { width: 420, height: 465 },
+    initialPosition: { x: 760, y: 120 },
+    recommendedPlacement: "立ち絵やメイン素材の背面発光枠"
+  },
+  {
+    id: "frame-cover-art-magenta-cyan",
+    name: "マゼンタシアン枠",
+    category: "frame",
+    description: "キービジュアル、動画枠、画像カードを強調するマゼンタとシアンの枠。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-cover-art-frame-magenta-cyan-uniform-cell.png`,
+    initialSize: { width: 560, height: 370 },
+    initialPosition: { x: 116, y: 170 },
+    recommendedPlacement: "キービジュアルや動画枠の強調フレーム"
+  },
+  {
+    id: "corner-emerald-gold-mark",
+    name: "エメ金角マーク",
+    category: "corner",
+    description: "情報枠やラベル端へ小さく添える、エメラルドと金色の角飾り。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-corner-mark-emerald-gold-uniform-cell.png`,
+    initialSize: { width: 180, height: 120 },
+    initialPosition: { x: 920, y: 86 },
+    recommendedPlacement: "情報枠やラベル端の小さな角飾り"
+  },
+  {
+    id: "corner-lime-cyan-frame",
+    name: "ライムシアン角枠",
+    category: "corner",
+    description: "画面端やフレーム角に置きやすい、ライムとシアンのネオン角ガイド。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-frame-corner-left-lime-cyan-uniform-cell.png`,
+    initialSize: { width: 360, height: 240 },
+    initialPosition: { x: 790, y: 90 },
+    recommendedPlacement: "画面端やフレーム角のネオンガイド"
+  },
+  {
+    id: "accent-soft-glow-dots",
+    name: "やわらか光粒",
+    category: "accent",
+    description: "背景や見出し周辺へ薄く重ねて奥行きを足す、やわらかな光粒。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}chatting-soft-glow-dots-uniform-cell.png`,
+    initialSize: { width: 560, height: 400 },
+    initialPosition: { x: 610, y: 188 },
+    recommendedPlacement: "背景や見出し周辺へ薄く重ねる光粒"
+  },
+  {
+    id: "accent-music-note-gold",
+    name: "金色音符",
+    category: "accent",
+    description: "歌枠や音楽系告知のタイトル横に添えやすい、小さな金色の音符。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-gold-uniform-cell.png`,
+    initialSize: { width: 220, height: 146 },
+    initialPosition: { x: 830, y: 108 },
+    recommendedPlacement: "タイトル横や余白に添える音符"
+  },
+  {
+    id: "accent-ribbon-cyan-pink",
+    name: "シアン桃リボン",
+    category: "accent",
+    description: "ラベル角や画面端に軽く重ねる、シアンとピンクのリボン飾り。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}first-stream-ribbon-accent-cyan-pink-uniform-cell.png`,
+    initialSize: { width: 320, height: 214 },
+    initialPosition: { x: 104, y: 100 },
+    recommendedPlacement: "ラベル角や画面端の軽いリボン飾り"
+  },
+  {
+    id: "accent-lightning-cyan",
+    name: "シアン稲妻",
+    category: "accent",
+    description: "数字、チャレンジ、見出しの横へ足す、小さなシアンの稲妻アクセント。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-lightning-bolt-cyan-uniform-cell.png`,
+    initialSize: { width: 220, height: 146 },
+    initialPosition: { x: 860, y: 360 },
+    recommendedPlacement: "強調したい数字や見出し横の稲妻"
+  },
+  {
+    id: "divider-progress-lime-cyan",
+    name: "進捗ディバイダー",
+    category: "divider",
+    description: "進捗表示、チャレンジ枠、セクション間の区切りに使うネオンライン。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-progress-divider-lime-cyan-orange-uniform-cell.png`,
+    initialSize: { width: 620, height: 104 },
+    initialPosition: { x: 110, y: 500 },
+    recommendedPlacement: "進捗表示やセクション間の区切り"
+  },
+  {
+    id: "divider-soundwave-magenta-cyan",
+    name: "音波ディバイダー",
+    category: "divider",
+    description: "音楽系、告知枠、動画枠の下部に置きやすいマゼンタとシアンの音波。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-soundwave-magenta-cyan-uniform-cell.png`,
+    initialSize: { width: 520, height: 346 },
+    initialPosition: { x: 108, y: 374 },
+    recommendedPlacement: "音楽系や告知枠の下部アクセント"
+  },
+  {
+    id: "icon-clock-cozy",
+    name: "小時計アイコン",
+    category: "accent",
+    description: "時刻表示や予定ラベルの横に添える、暖色系の小さな時計アイコン。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}chatting-clock-icon-cozy-v1.png`,
+    initialSize: { width: 96, height: 96 },
+    initialPosition: { x: 96, y: 490 },
+    recommendedPlacement: "時刻表示や予定ラベル横の小アイコン"
+  },
+  {
+    id: "prop-mic-silhouette",
+    name: "マイクシルエット",
+    category: "accent",
+    description: "音声配信、歌枠、ASMR系の余白に置ける、シンプルなマイク小物。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-mic-silhouette-v1.png`,
+    initialSize: { width: 150, height: 236 },
+    initialPosition: { x: 930, y: 250 },
+    recommendedPlacement: "音声配信や歌枠の余白に置く小物"
   }
 ] satisfies ThumbnailMaterial[];
 

@@ -15,7 +15,7 @@
 ## Active Priorities
 
 1. Thumbnail Editor registered material library expansion for IRIAM / cross-aspect use
-   - status: PR #213 merge 済み。main merge 前に、登録済み素材へ追加したい装飾素材を Batch A-C として整理し、実装順を固定する。
+   - status: Batch A implementation branch `codex/thumbnail-material-existing-decoration-batch` で既存 preset decoration 19件を登録済み。PR 作成 / merge は未実施。
    - base:
      - `origin/codex/thumbnail-iriam-square-preview`
      - latest integrated PR: #213 `[codex] Finalize IRIAM square preview confirmation`
@@ -78,7 +78,40 @@
      - `git diff --check`
      - UI を触った場合のみ `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認する。
    - next action:
-     - Batch A の登録対象を「既存 preset decoration から汎用性の高いもの」に絞り、最初の implementation PR を切る。
+     - Batch A branch を review / PR 化する。
+     - Batch B は dark / horror / smoke の新規生成に進む。Batch C は neutral prop の新規生成に進む。Batch A と同じ PR へ混ぜない。
+   - Batch A implementation result:
+     - added materials: 19件。
+       - `label-base`: 2件。
+       - `frame`: 5件。
+       - `date-badge`: 2件。
+       - `corner`: 2件。
+       - `accent`: 6件。
+       - `divider`: 2件。
+     - representative source assets:
+       - `public/assets/images/thumbnail-editor/decorations/phase5/announcement-label-plaque-ivory-uniform-cell.png`
+       - `public/assets/images/thumbnail-editor/decorations/phase5/goods-notice-product-card-v1.png`
+       - `public/assets/images/thumbnail-editor/decorations/phase5/stream-standee-frame-glow-uniform-cell.png`
+       - `public/assets/images/thumbnail-editor/decorations/phase5/endurance-stream-progress-divider-lime-cyan-orange-uniform-cell.png`
+       - `public/assets/images/thumbnail-editor/decorations/phase5/asmr-stream-mic-silhouette-v1.png`
+     - contract updates:
+       - `thumbnail-material-assets-contract` now expects 68 registered project-bound materials and covers the 19 Batch A ids in review order.
+       - Batch A keeps existing repo PNGs as source assets. Some preset-native PNGs are not the older 768x512 material canvas, so the contract records their native canvas size while still checking PNG type, project asset path, layer creation, 16:9 / 1:1 insertion, and absence of user material metadata.
+       - `thumbnail-preset-variants-contract` was refreshed to match the current preview branch preset catalog, including `goods_notice` / `membership_stream` / `asmr_stream` / `dark_gacha`, square-only `dark_gacha`, and square title-image presets.
+     - verification completed:
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-preset-apply-safety-contract.mjs`
+       - `node scripts/thumbnail-preset-variants-contract.mjs`
+       - `node scripts/tool-handoff-contract.mjs`
+       - `npm run lint`
+       - `npx tsc --noEmit`
+       - `git diff --check`
+     - UI verification:
+       - UI code was not changed. Width-based browser confirmation is not required for this branch.
+     - residual risk:
+       - Batch A registers a representative subset of the 94 unregistered phase5 decoration sources found in existing presets, not the full backlog.
+       - Some registered existing sources use preset-native canvases with minimal alpha padding. They are intentionally not regenerated in Batch A.
 
 2. Thumbnail Editor 1:1 IRIAM preview branch main merge preparation
    - status: material library expansion の必要分を preview branch に入れた後に戻る。

@@ -430,6 +430,189 @@ const expectedMaterials = [
     width: 420,
     height: 150,
     recommended: "短いステータスや注釈の背面に置く小型リボン"
+  },
+  {
+    id: "label-ivory-plaque-soft",
+    category: "label-base",
+    src: `${phase5Prefix}announcement-label-plaque-ivory-uniform-cell.png`,
+    width: 300,
+    height: 192,
+    minimumAlphaPadding: 0,
+    recommended: "短いラベルやサブ見出しの背面"
+  },
+  {
+    id: "label-cozy-plaque-warm",
+    category: "label-base",
+    src: `${phase5Prefix}chatting-label-plaque-cozy-uniform-cell.png`,
+    width: 360,
+    height: 208,
+    minimumAlphaPadding: 0,
+    recommended: "雑談メモや短い案内の背面"
+  },
+  {
+    id: "panel-soft-note-blue",
+    category: "frame",
+    src: `${phase5Prefix}asmr-stream-note-panel-v1.png`,
+    width: 600,
+    height: 228,
+    assetWidth: 900,
+    assetHeight: 342,
+    minimumAlphaPadding: 0,
+    recommended: "補足文や注意書きの背面パネル"
+  },
+  {
+    id: "panel-rounded-cta-pink",
+    category: "frame",
+    src: `${phase5Prefix}goods-notice-cta-panel-v1.png`,
+    width: 500,
+    height: 146,
+    assetWidth: 1686,
+    assetHeight: 492,
+    minimumAlphaPadding: 0,
+    recommended: "CTAや短い告知の横長パネル"
+  },
+  {
+    id: "panel-display-card-pink",
+    category: "frame",
+    src: `${phase5Prefix}goods-notice-product-card-v1.png`,
+    width: 260,
+    height: 420,
+    assetWidth: 847,
+    assetHeight: 1271,
+    minimumAlphaPadding: 0,
+    recommended: "商品画像や小さな情報枠のカード"
+  },
+  {
+    id: "badge-premiere-violet",
+    category: "date-badge",
+    src: `${phase5Prefix}cover-song-notice-premiere-badge-violet-uniform-cell.png`,
+    width: 360,
+    height: 216,
+    minimumAlphaPadding: 0,
+    recommended: "公開予定や注目ステータスのバッジ"
+  },
+  {
+    id: "badge-member-gold",
+    category: "date-badge",
+    src: `${phase5Prefix}membership-stream-member-badge-v1.png`,
+    width: 180,
+    height: 180,
+    assetWidth: 1254,
+    assetHeight: 1254,
+    minimumAlphaPadding: 0,
+    recommended: "限定公開やメンバー向け表示の小バッジ"
+  },
+  {
+    id: "frame-standee-glow-cyan",
+    category: "frame",
+    src: `${phase5Prefix}stream-standee-frame-glow-uniform-cell.png`,
+    width: 420,
+    height: 465,
+    minimumAlphaPadding: 0,
+    recommended: "立ち絵やメイン素材の背面発光枠"
+  },
+  {
+    id: "frame-cover-art-magenta-cyan",
+    category: "frame",
+    src: `${phase5Prefix}cover-song-notice-cover-art-frame-magenta-cyan-uniform-cell.png`,
+    width: 560,
+    height: 370,
+    minimumAlphaPadding: 0,
+    recommended: "キービジュアルや動画枠の強調フレーム"
+  },
+  {
+    id: "corner-emerald-gold-mark",
+    category: "corner",
+    src: `${phase5Prefix}event-notice-corner-mark-emerald-gold-uniform-cell.png`,
+    width: 180,
+    height: 120,
+    minimumAlphaPadding: 0,
+    recommended: "情報枠やラベル端の小さな角飾り"
+  },
+  {
+    id: "corner-lime-cyan-frame",
+    category: "corner",
+    src: `${phase5Prefix}endurance-stream-frame-corner-left-lime-cyan-uniform-cell.png`,
+    width: 360,
+    height: 240,
+    minimumAlphaPadding: 0,
+    recommended: "画面端やフレーム角のネオンガイド"
+  },
+  {
+    id: "accent-soft-glow-dots",
+    category: "accent",
+    src: `${phase5Prefix}chatting-soft-glow-dots-uniform-cell.png`,
+    width: 560,
+    height: 400,
+    minimumAlphaPadding: 0,
+    recommended: "背景や見出し周辺へ薄く重ねる光粒"
+  },
+  {
+    id: "accent-music-note-gold",
+    category: "accent",
+    src: `${phase5Prefix}karaoke-music-note-gold-uniform-cell.png`,
+    width: 220,
+    height: 146,
+    minimumAlphaPadding: 0,
+    recommended: "タイトル横や余白に添える音符"
+  },
+  {
+    id: "accent-ribbon-cyan-pink",
+    category: "accent",
+    src: `${phase5Prefix}first-stream-ribbon-accent-cyan-pink-uniform-cell.png`,
+    width: 320,
+    height: 214,
+    minimumAlphaPadding: 0,
+    recommended: "ラベル角や画面端の軽いリボン飾り"
+  },
+  {
+    id: "accent-lightning-cyan",
+    category: "accent",
+    src: `${phase5Prefix}endurance-stream-lightning-bolt-cyan-uniform-cell.png`,
+    width: 220,
+    height: 146,
+    minimumAlphaPadding: 0,
+    recommended: "強調したい数字や見出し横の稲妻"
+  },
+  {
+    id: "divider-progress-lime-cyan",
+    category: "divider",
+    src: `${phase5Prefix}endurance-stream-progress-divider-lime-cyan-orange-uniform-cell.png`,
+    width: 620,
+    height: 104,
+    minimumAlphaPadding: 0,
+    recommended: "進捗表示やセクション間の区切り"
+  },
+  {
+    id: "divider-soundwave-magenta-cyan",
+    category: "divider",
+    src: `${phase5Prefix}cover-song-notice-soundwave-magenta-cyan-uniform-cell.png`,
+    width: 520,
+    height: 346,
+    minimumAlphaPadding: 0,
+    recommended: "音楽系や告知枠の下部アクセント"
+  },
+  {
+    id: "icon-clock-cozy",
+    category: "accent",
+    src: `${phase5Prefix}chatting-clock-icon-cozy-v1.png`,
+    width: 96,
+    height: 96,
+    assetWidth: 512,
+    assetHeight: 512,
+    minimumAlphaPadding: 0,
+    recommended: "時刻表示や予定ラベル横の小アイコン"
+  },
+  {
+    id: "prop-mic-silhouette",
+    category: "accent",
+    src: `${phase5Prefix}asmr-stream-mic-silhouette-v1.png`,
+    width: 150,
+    height: 236,
+    assetWidth: 293,
+    assetHeight: 660,
+    minimumAlphaPadding: 0,
+    recommended: "音声配信や歌枠の余白に置く小物"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -618,12 +801,17 @@ for (const expected of expectedMaterials) {
 
   const publicPath = path.join(root, "public", material.src.replace(/^\//, ""));
   assert.equal(fs.existsSync(publicPath), true, `${expected.id} material file exists`);
-  assert.deepEqual(readPngSize(publicPath), { width: 768, height: 512 }, `${expected.id} uses the shared 768x512 material canvas`);
+  assert.deepEqual(
+    readPngSize(publicPath),
+    { width: expected.assetWidth ?? 768, height: expected.assetHeight ?? 512 },
+    `${expected.id} uses the expected project asset canvas`
+  );
   const bounds = readPngAlphaBounds(publicPath);
-  assert.ok(bounds.minX >= minimumAlphaPadding, `${expected.id} keeps left alpha padding`);
-  assert.ok(bounds.width - bounds.maxX - 1 >= minimumAlphaPadding, `${expected.id} keeps right alpha padding`);
-  assert.ok(bounds.minY >= minimumAlphaPadding, `${expected.id} keeps top alpha padding`);
-  assert.ok(bounds.height - bounds.maxY - 1 >= minimumAlphaPadding, `${expected.id} keeps bottom alpha padding`);
+  const expectedAlphaPadding = expected.minimumAlphaPadding ?? minimumAlphaPadding;
+  assert.ok(bounds.minX >= expectedAlphaPadding, `${expected.id} keeps left alpha padding`);
+  assert.ok(bounds.width - bounds.maxX - 1 >= expectedAlphaPadding, `${expected.id} keeps right alpha padding`);
+  assert.ok(bounds.minY >= expectedAlphaPadding, `${expected.id} keeps top alpha padding`);
+  assert.ok(bounds.height - bounds.maxY - 1 >= expectedAlphaPadding, `${expected.id} keeps bottom alpha padding`);
   if (expected.src.startsWith(frameMaterialPrefix)) {
     assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
   }

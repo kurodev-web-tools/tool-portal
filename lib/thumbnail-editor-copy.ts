@@ -1099,6 +1099,101 @@ const materialCopy: Record<Locale, Partial<Record<string, MaterialCopy>>> = {
       name: "Yellow Pink Ribbon",
       description: "A compact yellow and pink ribbon base for short status text or small annotations.",
       recommendedPlacement: "Behind short status text or annotations"
+    },
+    "label-ivory-plaque-soft": {
+      name: "Soft Ivory Plaque",
+      description: "A soft ivory label base for short labels or supporting headlines.",
+      recommendedPlacement: "Behind short labels or subheads"
+    },
+    "label-cozy-plaque-warm": {
+      name: "Warm Cozy Plaque",
+      description: "A warm label plaque for chat notes, casual notices, or short guidance.",
+      recommendedPlacement: "Behind chat notes or short guidance"
+    },
+    "panel-soft-note-blue": {
+      name: "Soft Blue Note Panel",
+      description: "A soft blue panel for supporting copy, notes, or caution text.",
+      recommendedPlacement: "Behind notes or caution text"
+    },
+    "panel-rounded-cta-pink": {
+      name: "Rounded CTA Panel",
+      description: "A rounded pink panel for calls to action or short announcement text.",
+      recommendedPlacement: "Wide panel for CTA or short notices"
+    },
+    "panel-display-card-pink": {
+      name: "Pink Display Card",
+      description: "A vertical pink card for small product images or compact information blocks.",
+      recommendedPlacement: "Card for product images or small info"
+    },
+    "badge-premiere-violet": {
+      name: "Violet Premiere Badge",
+      description: "A violet badge for premiere, release, or highlighted status labels.",
+      recommendedPlacement: "Badge for release or highlight status"
+    },
+    "badge-member-gold": {
+      name: "Gold Member Badge",
+      description: "A small gold badge for member-only, limited, or premium notes.",
+      recommendedPlacement: "Small badge beside limited notes"
+    },
+    "frame-standee-glow-cyan": {
+      name: "Cyan Standee Glow Frame",
+      description: "A cyan glow frame for standees, main assets, or vertical focal areas.",
+      recommendedPlacement: "Behind standees or main assets"
+    },
+    "frame-cover-art-magenta-cyan": {
+      name: "Magenta Cyan Cover Frame",
+      description: "A magenta and cyan frame for key visuals, video areas, or image cards.",
+      recommendedPlacement: "Frame for key visuals or video blocks"
+    },
+    "corner-emerald-gold-mark": {
+      name: "Emerald Gold Corner",
+      description: "A small emerald and gold corner mark for labels and information frames.",
+      recommendedPlacement: "Small corner on labels or info frames"
+    },
+    "corner-lime-cyan-frame": {
+      name: "Lime Cyan Frame Corner",
+      description: "A neon lime and cyan corner guide for edges, frames, or focal areas.",
+      recommendedPlacement: "Neon guide on frame corners"
+    },
+    "accent-soft-glow-dots": {
+      name: "Soft Glow Dots",
+      description: "Soft glow dots for subtle depth around backgrounds and headlines.",
+      recommendedPlacement: "Light overlay near headlines or backgrounds"
+    },
+    "accent-music-note-gold": {
+      name: "Gold Music Note",
+      description: "A small gold music note for karaoke, song, or audio-focused layouts.",
+      recommendedPlacement: "Small note beside titles or open space"
+    },
+    "accent-ribbon-cyan-pink": {
+      name: "Cyan Pink Ribbon",
+      description: "A light cyan and pink ribbon accent for label corners or screen edges.",
+      recommendedPlacement: "Ribbon accent on label corners or edges"
+    },
+    "accent-lightning-cyan": {
+      name: "Cyan Lightning",
+      description: "A compact cyan lightning accent for numbers, challenge text, or headlines.",
+      recommendedPlacement: "Beside emphasized numbers or headlines"
+    },
+    "divider-progress-lime-cyan": {
+      name: "Lime Cyan Progress Divider",
+      description: "A neon progress divider for challenge layouts and section breaks.",
+      recommendedPlacement: "Between progress or section blocks"
+    },
+    "divider-soundwave-magenta-cyan": {
+      name: "Magenta Cyan Soundwave",
+      description: "A magenta and cyan soundwave divider for music notices or lower-frame accents.",
+      recommendedPlacement: "Lower accent for music or notice frames"
+    },
+    "icon-clock-cozy": {
+      name: "Cozy Clock Icon",
+      description: "A small warm clock icon for time labels, schedule notes, and quick reminders.",
+      recommendedPlacement: "Small icon beside time or schedule labels"
+    },
+    "prop-mic-silhouette": {
+      name: "Mic Silhouette",
+      description: "A simple microphone silhouette for audio, karaoke, or ASMR-style layouts.",
+      recommendedPlacement: "Small prop in open space for audio layouts"
     }
   }
 };

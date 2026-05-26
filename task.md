@@ -14,634 +14,91 @@
 
 ## Active Priorities
 
-1. Thumbnail Editor 1:1 IRIAM preview branch final QA / main merge preparation
-   - status: PR #212 merge 済み。final confirmation で `first_stream` EN layer label のみ最小修正が必要だったため、修正 branch を preview branch に入れてから main merge preparation へ進む。
+1. Thumbnail Editor registered material library expansion for IRIAM / cross-aspect use
+   - status: PR #213 merge 済み。main merge 前に、登録済み素材へ追加したい装飾素材を Batch A-C として整理し、実装順を固定する。
    - base:
      - `origin/codex/thumbnail-iriam-square-preview`
-     - latest integrated PR: #212 `[codex] Adjust IRIAM square EN preset placements`
-   - current completed state:
-     - `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久` は `square-1-1` preset body 接続済み。
-     - 同 5ジャンルは square settings modal 対応済み。
-     - background style / colorway swap UI は右パネルに実装済み。
-     - title transparent image layer colorway swap UI は右パネルに実装済み。
-     - `accent` / `label-base` の small project-bound material batch は登録済み。
-     - project-bound material は 16:9 / IRIAM 1:1 の両方で素材ライブラリから通常 image layer として追加できる contract 済み。
-   - direction:
-     - preview branch 全体を、contract / typecheck / lint / browser 目視で main merge 前に確認する。
-     - 目視で気になる preset 初期位置があれば、現在 draft JSON を取得して原因を見てから preset 初期値だけを調整する。
-     - 調整対象は IRIAM square preset の初期位置 / サイズ / レイヤー重なりに限定し、schema、export、handoff、font、9:16、material swap UI は触らない。
-     - material library は現状の「素材ライブラリから追加 / 通常レイヤーとして削除」運用を維持し、swap UI は実利用フィードバックが出るまで作らない。
-   - next flow:
-     - 1. Merge this final confirmation minimal fix into `codex/thumbnail-iriam-square-preview`.
-     - 2. Merge preview branch to `main`.
-   - 2026-05-25 implementation update:
-     - branch / worktree: `codex/thumbnail-iriam-square-accent-assets` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-accent-assets`
-     - PR #204 merge confirmed before implementation: `9516b22` on `origin/codex/thumbnail-iriam-square-preview`.
-     - scope: first small `accent` material batch only. No schema, preset body, swap UI, export, handoff payload, font, 9:16, or title image changes.
-     - contract-first:
-       - RED: `node scripts/thumbnail-material-assets-contract.mjs` failed as expected with `41 !== 45` after adding the 4 expected IRIAM accent materials to the contract.
-       - GREEN: registered the 4 project-bound assets in `thumbnailMaterialLibrary`, added EN material copy, and kept user material refs / `storageId` / `materialRef` out of project material entries.
-     - generated assets:
-       - `public/assets/images/thumbnail-editor/materials/iriam-square-accent/iriam-square-accent-puffy-star-pink-v1.png`
-       - `public/assets/images/thumbnail-editor/materials/iriam-square-accent/iriam-square-accent-soft-heart-blue-v1.png`
-       - `public/assets/images/thumbnail-editor/materials/iriam-square-accent/iriam-square-accent-sparkle-mint-v1.png`
-       - `public/assets/images/thumbnail-editor/materials/iriam-square-accent/iriam-square-accent-hand-line-yellow-v1.png`
-     - generation notes:
-       - built-in `image_gen` was used once per asset.
-       - Each source was generated on a flat chroma-key background, converted with `remove_chroma_key.py`, then saved as a 768x512 RGBA PNG under project `public/assets`.
-       - Final visual check found no readable text, logo, person, character, or official UI-like element.
-     - verification completed:
-       - `node scripts/thumbnail-material-assets-contract.mjs`
-       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-       - `npx tsc --noEmit`
-       - `npm run lint`
-     - width check:
-       - Not run. This PR does not change UI layout or responsive rendering.
-     - residual risk:
-       - The assets are intentionally generic and library-only; actual preset composition balance should be judged when a later decoration swap / placement slice uses them in context.
-     - next action:
-       - Open draft PR against `codex/thumbnail-iriam-square-preview`.
-       - After review / merge, continue with either the next small material category (`label-base` speech bubble / small label) or the separate decoration swap UI slice.
-   - 2026-05-25 label-base batch update:
-     - branch / worktree: `codex/thumbnail-iriam-square-label-base-assets` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-label-base-assets`
-     - PR #205 merge confirmed before implementation: `c93abb2` on `origin/codex/thumbnail-iriam-square-preview`.
-     - scope: small `label-base` material batch only. No schema, preset body, swap UI, export, handoff payload, font, 9:16, title image, or material library redesign changes.
-     - contract-first:
-       - RED: `node scripts/thumbnail-material-assets-contract.mjs` failed as expected with `45 !== 49` after adding the 4 expected label-base materials to the contract.
-       - GREEN: registered the 4 project-bound `label-base` assets in `thumbnailMaterialLibrary`, added EN material copy, and kept user material refs / `storageId` / `materialRef` out of project material entries.
-     - generated assets:
-       - `public/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-speech-bubble-pink-v1.png`
-       - `public/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-rounded-mint-v1.png`
-       - `public/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-cloud-blue-v1.png`
-       - `public/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-tiny-ribbon-yellow-pink-v1.png`
-     - generation notes:
-       - built-in `image_gen` was used once per asset.
-       - Each source was generated on a flat chroma-key background, copied into `tmp/imagegen/`, converted with `remove_chroma_key.py`, resized, then saved as a 768x512 RGBA PNG under project `public/assets`.
-       - Final visual check found no readable text, logo, person, character, or official UI-like element.
-     - verification completed:
-       - `node scripts/thumbnail-material-assets-contract.mjs`
-       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-       - `npx tsc --noEmit`
-       - `npm run lint`
-     - width check:
-       - Not run. This PR does not change UI layout or responsive rendering.
-     - residual risk:
-       - The label-base assets are intentionally generic and library-only; actual square preset composition balance should be judged when a later decoration swap / placement slice uses them in context.
-     - next action:
-       - Open draft PR against `codex/thumbnail-iriam-square-preview`.
-       - After review / merge, continue with the separate decoration swap UI slice or another single-category material batch only if needed.
-   - 2026-05-25 cross-aspect material reuse contract update:
-     - branch / worktree: `codex/thumbnail-iriam-cross-aspect-material-contract` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-cross-aspect-material-contract`
-     - PR #206 merge confirmed before implementation: `76f351e` on `origin/codex/thumbnail-iriam-square-preview`.
-     - scope: contract-first confirmation that project-bound `thumbnailMaterialLibrary` assets can be added from the existing material library flow to both 16:9 and IRIAM 1:1 canvases. No swap UI, schema, export, handoff payload, preset body, user material storage, font, 9:16, or image generation changes.
-     - contract-first:
-       - RED: `node scripts/thumbnail-material-assets-contract.mjs` failed as expected on `localized project material display names stay generic instead of IRIAM-only` after adding the cross-aspect / generic-display assertions.
-       - GREEN: kept `createThumbnailMaterialLayer` behavior unchanged and adjusted only the registered material display names / EN localized names so IRIAM-added assets read as generic reusable materials.
-     - confirmed cross-aspect boundary:
-       - Every project-bound material creates a normal unlocked image layer on `landscape-16-9` and `square-1-1`.
-       - Generated material layers keep positive size, start inside the target canvas, fit within target canvas width / height, and keep the same project asset `src`.
-       - Project-bound material entries and generated layers do not include user material `storageId` / `materialRef`.
-       - Existing material categories remain limited to `label-base` / `date-badge` / `corner` / `accent` / `divider` / `frame`.
-       - Material-only assets are still not inserted into preset initial layers.
-     - verification completed:
-       - `node scripts/thumbnail-material-assets-contract.mjs`
-       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-       - `npx tsc --noEmit`
-       - `npm run lint`
-       - `git diff --check`
-     - width check:
-       - Not run. This PR does not touch UI layout, responsive classes, canvas rendering geometry, or browser interaction; it only tightens the contract and adjusts material display copy.
-     - residual risk:
-       - Contract confirms addition / deletion as normal layers and cross-aspect canvas bounds, but actual visual composition balance still needs human review when a later decoration placement / swap UI slice uses these assets in context.
-     - next action:
-       - Open draft PR against `codex/thumbnail-iriam-square-preview`.
-       - After review / merge, continue with preview branch final QA / main merge preparation.
-   - 2026-05-25 final QA / main merge preparation update:
-     - branch / worktree: `codex/thumbnail-iriam-square-final-qa` / `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-final-qa`
-     - PR #208 merge confirmed before QA: `1eb42f6` on `origin/codex/thumbnail-iriam-square-preview` (`mergedAt` 2026-05-25T11:07:56Z).
-     - scope: preview branch final QA only. No schema, canvas export, handoff payload, 9:16 preset, font, title asset, swap UI redesign, decoration / material swap UI, material library redesign, or additional material batch changes.
-     - browser QA:
-       - in-app browser: `/tools/thumbnail-editor` opened on local dev server, switched from 16:9 to `正方形 1:1`, and confirmed the existing material library panel remains the add-from-library flow.
-       - Playwright fixed-width check: `390 / 820 / 1024 / 1280 / 1366px` with `1080 x 1080 / 1:1`.
-       - All fixed-width checks had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`; no page-level horizontal overflow was detected.
-       - `390 / 820px`: mobile panel mode, material panel hidden until selected.
-       - `1024 / 1280 / 1366px`: desktop side material panel visible with `49 / 49` materials.
-       - `1280px` with both left nav and right material panel visible can still require internal canvas panning or panel hide to inspect the far right edge; this is existing editor surface behavior, not a preset layer overlap found in this QA.
-     - preset visual check:
-       - Checked `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久配信` at `1366px`.
-       - No initial preset position / size / layer-overlap issue requiring this scope's minimal adjustment was found.
-       - Current draft JSON was not acquired because no suspicious preset geometry needed layer-level diagnosis.
-       - Initial preset position adjustment: none.
-     - material library flow:
-       - Added `シアンラベル土台` from the existing material library.
-       - Confirmed it appears as a normal image layer (`素材: シアンラベル土台`) in `レイヤー一覧`.
-       - Confirmed deleting that top layer from `レイヤー一覧` removes the placed material layer while the library entry remains available.
-     - verification completed:
-       - `node scripts/thumbnail-material-assets-contract.mjs`
-       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-       - `npx tsc --noEmit`
-       - `npm run lint`
-       - `git diff --check`
-       - `git diff --check`
-     - residual risk:
-       - Fixed-width screenshots are QA evidence for the current default flow, not a full manual review of every background / title colorway combination.
-       - Material library small follow-up should stay feedback-gated; no extra material batch is needed from this QA alone.
-     - next action:
-       - Open draft PR against `codex/thumbnail-iriam-square-preview`.
-       - Next order remains `material library small follow-up only if needed` -> `final confirmation` -> `codex/thumbnail-iriam-square-preview` main merge preparation.
-   - 2026-05-25 first_stream initial placement follow-up:
-     - source: user-provided current draft JSON for `presetId: "first_stream"` after local visual adjustment.
-     - scope: `first_stream` / `square-1-1` initial preset body only.
-     - applied:
-       - Moved the transparent title image to the lower-right oversized composition from the draft JSON.
-       - Moved the standee guide to the upper-right placement from the draft JSON.
-       - Reworked the editable short text stack to three left-side pill rows (`23:00 START`, `リクエスト歓迎`, `初見さん歓迎`) with matching badge bases.
-       - Kept the existing `soft_cloud` background registry / colorway behavior instead of hard-coding the pasted draft's current background `src`.
-       - Added EN body copy for the new `テキスト 3（サブ） コピー` layer so square variant localization remains non-Japanese in English mode.
-     - current draft JSON:
-       - Acquired from the user paste; no separate browser JSON export was needed.
-     - verification completed:
-       - RED: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` failed on the old title image placement before implementation.
-       - GREEN: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-       - `node scripts/thumbnail-material-assets-contract.mjs`
-       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-       - `npx tsc --noEmit`
-       - `npm run lint`
-     - width check:
-       - Rechecked generated `first_stream` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
-       - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
-     - residual risk:
-       - This follows the pasted draft's intentionally oversized lower-right title composition; other background / title colorway combinations were not exhaustively re-reviewed in this follow-up.
-   - 2026-05-25 first_stream additional placement follow-up:
-     - source: user-provided current draft JSON for `presetId: "first_stream"` after additional local visual adjustment.
-     - scope: `first_stream` / `square-1-1` initial preset body only.
-     - applied:
-       - Moved and slightly rotated the transparent title image to the latest lower-right oversized composition from the draft JSON.
-       - Reduced the left badge stack from three rows to two rows.
-       - Removed the `リクエスト歓迎` row and kept `初見さん歓迎` as the only sub text.
-       - Kept the standee guide, background registry, and title registry behavior unchanged.
-     - current draft JSON:
-       - Acquired from the user paste; no separate browser JSON export was needed.
-     - verification completed:
-       - RED: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` failed on the old title rotation before implementation.
-       - GREEN: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-       - `node scripts/thumbnail-material-assets-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-       - `npx tsc --noEmit`
-       - `npm run lint`
-     - width check:
-       - Rechecked generated `first_stream` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
-       - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
-       - Screenshots: `output/playwright/thumbnail-iriam-square-final-qa-first-stream-adjust-2/`.
-     - residual risk:
-       - This follows the latest pasted draft's intentionally oversized lower-right title composition.
-       - EN square sub copy still uses the existing preset-layer localization mapping; it was not broadened in this follow-up to avoid changing non-square first_stream copy.
-   - 2026-05-25 endurance_stream initial placement follow-up:
-     - source: user-provided current draft JSON for `presetId: "endurance_stream"` after local visual adjustment.
-     - scope: `endurance_stream` / `square-1-1` initial preset body only.
-     - applied:
-       - Moved the transparent title image to the oversized lower composition from the draft JSON.
-       - Moved the standee guide to the upper-right placement from the draft JSON.
-       - Added the existing project-bound `黄桃リボン` material asset as an initial normal image layer in the preset body.
-       - Reduced editable text to the top `20:00 START` text layer using `Dela Gothic One`.
-       - Kept the existing `pop_bubble` background registry / colorway behavior instead of hard-coding a one-off background path.
-     - current draft JSON:
-       - Acquired from the user paste; no separate browser JSON export was needed.
-     - verification completed:
-       - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` failed before implementation because the final QA ribbon material layer was absent.
-       - GREEN: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-       - `node scripts/thumbnail-material-assets-contract.mjs`
-       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-       - `npx tsc --noEmit`
-       - `npm run lint`
-       - `git diff --check`
-     - width check:
-       - Rechecked generated `endurance_stream` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
-       - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
-     - residual risk:
-       - This intentionally promotes one existing material-library asset into the endurance starter composition; it does not add a material swap UI or new material batch.
-  - 2026-05-25 karaoke initial placement follow-up:
-    - source: user-provided current draft JSON for `presetId: "karaoke"` after local visual adjustment.
-    - scope: `karaoke` / `square-1-1` initial preset body only.
-    - applied:
-      - Moved the transparent title image to the oversized lower-right composition from the draft JSON.
-      - Moved the pink / gold note decorations to the lower and right-side draft positions.
-      - Added existing project-bound `青雲ラベル` material layers x3 and `ミントきらきら` x1 as normal image layers in the starter composition.
-      - Reduced editable text to the right-side `20:00 START` text layer using `Fredoka`.
-      - Kept the existing karaoke background / title registry behavior instead of hard-coding a one-off background or title path.
-    - current draft JSON:
-      - Acquired from the user paste; no separate browser JSON export was needed.
-    - verification completed:
-      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation on the old title image x position.
-      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-      - `node scripts/thumbnail-material-assets-contract.mjs`
-      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-      - `npx tsc --noEmit`
-      - `npm run lint`
-      - `git diff --check`
-      - `git diff --check`
-    - width check:
-      - Rechecked generated `karaoke` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
-      - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
-      - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-karaoke-adjust/`.
-    - residual risk:
-      - This intentionally promotes existing material-library assets into the karaoke starter composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
-  - 2026-05-26 karaoke EN placement follow-up:
-    - source: user-provided EN locale current draft JSON for `presetId: "karaoke"`.
-    - scope: `karaoke` / `square-1-1` EN locale initial placement only. JA placement, title asset registry, schema, export, handoff payload, material UI, and title swap UI are unchanged.
-    - applied:
-      - Kept the existing JA square starter placement as the default path.
-      - Applied EN-only placement offsets for the transparent title image, pink / gold note decorations, standee guide, and `20:00 START` text when `createKaraokeIriamSquareDraft(..., "en")` is used.
-      - Re-adjusted `20:00 START` to the latest supplied EN JSON position `x: 638.4556146531436 / y: 316.93642846870324`.
-      - Fixed the root cause of `New` / modal apply drifting the time text: legacy 16:9 EN visual adjustments are no longer applied to IRIAM `square-1-1` drafts, while text body localization remains available.
-      - Kept background, title asset selection, cloud label materials, sparkle material, layer order, and editable text copy unchanged.
-    - current draft JSON:
-      - Acquired from the user paste; no separate browser JSON export was needed.
-    - verification completed:
-      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation on the old EN title image x / y position.
-      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed on the localization pass overwriting the square EN time position with the legacy 16:9 karaoke coordinate.
-      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-    - width check:
-      - Rechecked saved EN `karaoke` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
-      - All checked widths had `documentScrollWidth === documentClientWidth`, `bodyScrollWidth === bodyClientWidth`, one nonblank canvas, `locale: "en"`, `presetId: "karaoke"`, EN title placement `x: 38.07979288349691 / y: 714.4804541365222`, and EN time placement `x: 638.4556146531436 / y: 316.93642846870324`.
-    - residual risk:
-      - Only the pasted `karaoke` EN default colorway placement was adjusted in this step.
-  - 2026-05-26 first_stream EN placement follow-up:
-    - source: user-provided EN locale current draft JSON for `presetId: "first_stream"` after local visual adjustment.
-    - scope: `first_stream` / `square-1-1` EN locale initial placement only. JA placement, title asset registry, schema, export, handoff payload, material UI, and title swap UI are unchanged.
-    - applied:
-      - Kept the existing JA square starter placement as the default path.
-      - Applied EN-only placement for the transparent title image: `x: -23.224409463599443 / y: 602.2911120569338`.
-      - Applied EN-only size adjustment for the second time badge base: `x: 0.5999999999999659 / y: 105 / width: 476.020766269667 / height: 82.50096881700985`.
-      - Applied EN-only editable text body / placement for `20:00 START` and `Requests welcome`; the sub text uses `x: 16.178384635220397 / y: 121.70854968602646`.
-      - Confirmed the existing IRIAM square localization guard preserves these square coordinates when `New` / modal apply calls text localization.
-    - current draft JSON:
-      - Acquired from the user paste; no separate browser JSON export was needed.
-    - verification completed:
-      - RED: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` failed before implementation on the old EN title image x / y position.
-      - GREEN: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-      - `npx tsc --noEmit`
-      - `npm run lint`
-    - width check:
-      - Rechecked EN `first_stream` / `square-1-1` `New` draft flow at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
-      - All checked widths had `documentScrollWidth === documentClientWidth`, `bodyScrollWidth === bodyClientWidth`, one nonblank canvas, `locale: "en"`, `presetId: "first_stream"`, EN title placement `x: -23.224409463599443 / y: 602.2911120569338`, second badge size `width: 476.020766269667 / height: 82.50096881700985`, and EN text placement `20:00 START x: 22.054495036772124 / y: 37.16087288510222`, `Requests welcome x: 16.178384635220397 / y: 121.70854968602646`.
-    - residual risk:
-      - Only the pasted `first_stream` EN default colorway placement was adjusted in this step.
-  - 2026-05-26 endurance_stream EN placement follow-up:
-    - source: user-provided EN locale current draft JSON for `presetId: "endurance_stream"`.
-    - scope: `endurance_stream` / `square-1-1` EN locale initial placement only. JA placement, title asset registry, schema, export, handoff payload, material UI, and title swap UI are unchanged.
-    - applied:
-      - Kept the existing JA square starter placement as the default path.
-      - Applied EN-only placement / scale / rotation for the transparent title image: `x: 275.5477981487745 / y: 611.9131932483637 / width: 918.0326358849836 / height: 488.6869497833735 / rotation: -30.20164646321526`.
-      - Replaced the EN-only ribbon material with `label-diagonal-ribbon-slate-cyan.png` and applied the supplied diagonal placement `x: 437.1478941878667 / y: 715.6389829891508 / width: 851.754878781992 / height: 609.929600414004 / rotation: -31.003891253382996`.
-      - Applied EN-only time text body `19:00 START` with the supplied diagonal placement `x: 750.0938516201176 / y: 952.3983503601947 / rotation: -31.269613517036777 / fontSize: 50`.
-      - Applied EN-only exported layer labels for IRIAM square draft JSON. The `endurance_stream` initial layers now export as `Image 1 (Background)`, `Shape 1 (Top challenge light)`, `Image 2 (Endurance title)`, `Shape 2 (Standee guide)`, `Asset: Diagonal Cut Ribbon`, and `Text 2 (Time)`.
-      - Confirmed the existing IRIAM square localization guard preserves these square coordinates when `New` / modal apply calls text localization.
-      - Fixed the square preset settings modal preview root cause: the modal no longer uses a fixed CSS mock for background / title / standee placeholders, and instead renders the same configured IRIAM square draft to a canvas. This keeps JA / EN title assets, material layers, rotations, and layer placements visible before pressing create.
-    - current draft JSON:
-      - Acquired from the user paste, then rechecked through browser-created EN `endurance_stream` draft JSON after the layer-label localization fix.
-    - verification completed:
-      - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` failed before implementation on the old EN title image placement / size / rotation.
-      - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` failed while the square settings modal still used the fixed CSS preview mock.
-      - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` failed while EN exported layer labels remained Japanese in the draft JSON.
-      - GREEN: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-      - `npx tsc --noEmit`
-      - `npm run lint`
-      - `git diff --check`
-    - width check:
-      - Rechecked EN `endurance_stream` / `square-1-1` `New` draft flow at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
-      - All checked widths had `documentScrollWidth === documentClientWidth`, `bodyScrollWidth === bodyClientWidth`, one nonblank canvas, `locale: "en"`, `presetId: "endurance_stream"`, EN title placement `x: 275.5477981487745 / y: 611.9131932483637`, diagonal ribbon placement `x: 437.1478941878667 / y: 715.6389829891508`, and EN time text `19:00 START x: 750.0938516201176 / y: 952.3983503601947`.
-      - Rechecked the `endurance_stream` square settings modal preview at `390 / 820 / 1024 / 1280 / 1366px`; all checked widths had no page-level horizontal overflow and a nonblank `1080 x 1080` modal preview canvas.
-      - Rechecked browser-created EN `endurance_stream` draft JSON on `http://localhost:3000/tools/thumbnail-editor`; exported layer labels are now English for background, challenge light, title, standee guide, diagonal ribbon asset, and time text.
-    - residual risk:
-      - Only the pasted `endurance_stream` EN default colorway placement was adjusted in this step. `chatting` EN placement was handled in the later EN follow-up below.
-  - 2026-05-26 dark_gacha EN placement follow-up:
-    - source: user-provided EN locale current draft JSON for `presetId: "dark_gacha"`.
-    - scope: `dark_gacha` / `square-1-1` EN locale initial placement only. JA placement, title asset registry, schema, export, handoff payload, material UI, and title swap UI are unchanged.
-    - applied:
-      - Kept the existing JA square starter placement as the default path.
-      - Applied EN-only title placement `x: -80.80149448538796 / y: 27.901545254853488 / width: 1302.6268929693151 / height: 553.0603199787986 / rotation: 21.60856614090952`.
-      - Applied EN-only standee guide placement `x: 140.27952450177935 / y: 427.3284956112033 / width: 360 / height: 628`.
-      - Applied EN-only editable text bodies `22:00 START` and `Pull or pass?` while keeping the supplied text placements.
-      - Applied EN-only exported layer labels for the initial layers: `Image 1 (Background)`, `Shape 1 (Top light outline)`, `Image 2 (Dark gacha title)`, `Shape 2 (Standee guide)`, `Shape 3 (Time badge base)`, `Shape 3 (Time badge base) Copy`, `Text 2 (Time)`, and `Text 3 (Sub text)`.
-    - current draft JSON:
-      - Acquired from the user paste, then rechecked through browser-created EN `dark_gacha` draft JSON after pressing `Create with these settings` in the square settings modal.
-    - verification completed:
-      - RED: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs` failed before implementation while EN `dark_gacha` exported layer labels and placement still used the JA/default values.
-      - GREEN: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-      - `npx tsc --noEmit`
-      - `npm run lint`
-      - `git diff --check`
-    - width check:
-      - Rechecked browser-created EN `dark_gacha` draft JSON on `http://localhost:3000/tools/thumbnail-editor`; exported layer labels are English and the title / standee / text values match the supplied JSON.
-    - residual risk:
-      - Only the pasted `dark_gacha` EN default colorway placement was adjusted in this step. `chatting` EN placement was handled in the later EN follow-up below.
-  - 2026-05-25 dark_gacha initial placement follow-up:
-    - source: user-provided current draft JSON for `presetId: "dark_gacha"` after local visual adjustment.
-    - scope: `dark_gacha` / `square-1-1` initial preset body only.
-    - applied:
-      - Moved the transparent title image to the oversized rotated lower composition from the draft JSON.
-      - Moved the standee guide to the upper-right draft position.
-      - Reworked the bottom-right text stack to two compact badge rows (`20:00 START`, `単発も10連も歓迎`).
-      - Removed the old editable heading / label text from the starter composition.
-      - Kept the existing `dark_cute` background registry and title registry behavior instead of hard-coding one-off asset paths.
-      - Increased the time text box width from the pasted `306px` to `308px` only to satisfy the existing English visual-balance contract after switching that layer to `New Tegomin`.
-    - current draft JSON:
-      - Acquired from the user paste; no separate browser JSON export was needed.
-    - verification completed:
-      - RED: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs` failed before implementation on the old title image x position.
-      - GREEN: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-      - `node scripts/thumbnail-material-assets-contract.mjs`
-      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-      - `npx tsc --noEmit`
-      - `npm run lint`
-      - `git diff --check`
-    - width check:
-      - Rechecked generated `dark_gacha` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
-      - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
-      - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-dark-gacha-adjust/`.
-    - residual risk:
-      - This follows the pasted draft's intentionally oversized / rotated title composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
-  - 2026-05-25 chatting initial placement follow-up:
-    - source: user-provided current draft JSON for `presetId: "chatting"` after local visual adjustment.
-    - scope: `chatting` / `square-1-1` initial preset body only.
-    - applied:
-      - Moved the transparent title image to the oversized top-left composition from the draft JSON.
-      - Moved the standee guide to the right-side draft position.
-      - Moved the time badge / `20:00 START` text to the lower-left draft position.
-      - Reduced editable text to `ゆるっと話そう` and `20:00 START`; removed the old editable sub / label text from the starter composition.
-      - Updated the English preset body copy for `テキスト 2（時刻）` from `21:00 START` to `20:00 START` so localization matches the new initial text.
-      - Kept the existing `pop_bubble` background registry and title registry behavior instead of hard-coding one-off asset paths.
-    - current draft JSON:
-      - Acquired from the user paste; no separate browser JSON export was needed.
-    - verification completed:
-      - RED: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs` failed before implementation on the old title image x position.
-      - GREEN: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-      - `node scripts/thumbnail-material-assets-contract.mjs`
-      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-      - `npx tsc --noEmit`
-      - `npm run lint`
-      - `git diff --check`
-    - width check:
-      - Rechecked generated `chatting` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
-      - All checked widths had `documentScrollWidth === documentClientWidth` and `bodyScrollWidth === bodyClientWidth`.
-      - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-chatting-adjust/`.
-    - residual risk:
-      - This follows the pasted draft's intentionally oversized top title composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
-  - 2026-05-26 chatting EN placement follow-up:
-    - source: user-provided EN locale current draft JSON for `presetId: "chatting"`.
-    - scope: `chatting` / `square-1-1` EN locale initial placement only. JA placement, title asset registry, schema, export, handoff payload, material UI, and title swap UI are unchanged.
-    - applied:
-      - Kept the existing JA square starter placement as the default path.
-      - Applied EN-only title placement `x: -23.25478645013129 / y: 680.9617636927318 / width: 1071.5951240319432 / height: 439.8883839468208`.
-      - Applied EN-only standee guide placement `x: 387.40887998540126 / y: 187.6594772806876 / width: 340 / height: 616`.
-      - Removed the JA-only headline text layer from the EN starter composition and kept only `Text 2 (Time)` / `20:00 START` at the supplied lower-left placement.
-      - Applied EN-only exported layer labels for the initial layers: `Image 1 (Background)`, `Shape 1 (Top soft light)`, `Image 2 (Chatting title)`, `Shape 2 (Standee guide)`, `Shape 3 (Time badge base)`, and `Text 2 (Time)`.
-    - current draft JSON:
-      - Acquired from the user paste, then rechecked through browser-created EN `chatting` draft JSON after pressing `Create with these settings` in the square settings modal.
-    - verification completed:
-      - RED: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs` failed before implementation while EN `chatting` exported layer labels and placement still used the JA/default values.
-      - GREEN: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-      - `npx tsc --noEmit`
-      - `npm run lint`
-      - `git diff --check`
-    - width check:
-      - Rechecked browser-created EN `chatting` draft JSON on `http://localhost:3000/tools/thumbnail-editor`; exported layer labels are English and the title / standee / time text values match the supplied JSON.
-    - residual risk:
-      - Only the pasted `chatting` EN default colorway placement was adjusted in this step.
-  - 2026-05-25 square new-draft variant bugfix:
-    - source: user report from local browser that pressing `新規` while a `1:1` output ratio preset is selected kept the square canvas but rebuilt the layers from the 16:9 preset body.
-    - root cause:
-      - `newDraft` used `createPresetDraftForLocale(draft.presetId, draft.canvas)`, which scales the legacy 16:9 preset body onto the current canvas for square-capable presets.
-    - applied:
-      - Changed `newDraft` to resolve the current `currentVariantId`, keep the current preset only when it is selectable for that variant, and rebuild through `createDraftFromPresetVariant(targetPresetId, currentVariantId)`.
-      - Added a regression contract so the new draft action cannot return to the legacy `createPresetDraftForLocale(draft.presetId, draft.canvas)` path.
-    - current draft JSON:
-      - No new user draft JSON was required; this was a handler bug reproduced from the app state.
-    - verification completed:
-      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation because `newDraft` did not use the active variant body.
-      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-      - `node scripts/thumbnail-material-assets-contract.mjs`
-      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-      - `npx tsc --noEmit`
-      - `npm run lint`
-      - `git diff --check`
-    - browser check:
-      - Seeded a generated `chatting` / `square-1-1` draft on `http://localhost:3000/tools/thumbnail-editor`, clicked `新規`, waited for autosave, and confirmed the saved draft remained `presetId: "chatting"` with `1080 x 1080`, square chatting title asset / placement, only `テキスト 1（見出し）` and `テキスト 2（時刻）`, and no horizontal overflow at `1366px`.
-    - residual risk:
-      - This fixes the new-draft creation path only; it does not alter preset application, canvas export, handoff payload, material flow, or preset geometry.
-  - 2026-05-25 square preset text carryover bugfix:
-    - source: user report from local browser that switching from one `1:1` IRIAM preset to another could leave the previous preset's editable text in the newly selected preset.
-    - root cause:
-      - The five IRIAM square preset modal apply handlers still used the 16:9-oriented `applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft))` fallback when no Schedule Calendar handoff payload was active.
-      - `changePresetVariant` also carried text when switching into `square-1-1`, which is inconsistent with the fixed-composition IRIAM square presets.
-    - applied:
-      - Kept explicit Schedule Calendar handoff application unchanged.
-      - Changed normal IRIAM square preset modal application to use the selected preset body as-is, without pulling text from the previous preset.
-      - Changed variant switching into `square-1-1` to start from the selected square preset body instead of carrying text from the previous aspect.
-      - Added a regression contract covering all five IRIAM square modal apply handlers and the square variant switch path.
-    - current draft JSON:
-      - No new user draft JSON was required; this was a handler behavior bug reproduced from the app state.
-    - verification completed:
-      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation because `applyKaraokeIriamSquarePreset` still referenced `applyThumbnailMainTextCarryover`, and then because `changePresetVariant` still carried text into `square-1-1`.
-      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-      - `node scripts/thumbnail-preset-apply-safety-contract.mjs`
-      - `node scripts/thumbnail-material-assets-contract.mjs`
-      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-      - `npx tsc --noEmit`
-      - `npm run lint`
-    - browser check:
-      - Seeded a generated `karaoke` / `square-1-1` draft with its editable text changed to `SHOULD_NOT_CARRY`, opened `http://localhost:3000/tools/thumbnail-editor`, switched to `雑談` through the preset dropdown, applied the IRIAM square preset modal, waited for autosave, and confirmed the saved draft became `presetId: "chatting"` with `1080 x 1080`, text layers `ゆるっと話そう` / `20:00 START`, and no `SHOULD_NOT_CARRY` text.
-    - residual risk:
-      - This intentionally changes only IRIAM square normal preset application. 16:9 preset carryover and explicit Schedule Calendar handoff behavior remain unchanged.
+     - latest integrated PR: #213 `[codex] Finalize IRIAM square preview confirmation`
+   - planning doc:
+     - `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_DECORATION_MATERIAL_CONTRACT.md`
+   - goal:
+     - 16:9 / 1:1 の両方で使える project-bound registered material を増やす。
+     - A preset の装飾を B preset でも使えるよう、既存 preset 内の良い装飾を素材ライブラリへ出す。
+     - `dark_gacha` などに合う dark / horror 系と、性別を問わず使える小物系も登録候補に入れる。
+   - Batch A: existing preset decoration registration
+     - 既存 preset で使われているが `thumbnailMaterialLibrary` にない装飾を、登録済み素材として再利用可能にする。
+     - 新規生成は不要。`public/assets/images/thumbnail-editor/decorations/phase5/` など既存 asset を参照する。
+     - 候補:
+       - label / badge / panel: ラベル土台、時刻バッジ、CTA / note panel、商品カード、premiere badge。
+       - frame / corner: 立ち絵枠発光、HUD角、金角飾り、key visual frame、cover art frame。
+       - accent / effect: きらめき、glint、音符、三角 burst、soft glow dots、connection accent。
+       - divider / line: progress divider、map-line divider、soundwave、table accent。
+       - small icon / prop: clock icon、lock badge、member badge、mic silhouette、lightning / chevron。
+     - 101件前後の未登録 preset decoration があるため、全量を一度に登録するより、汎用性の高いものから PR を分ける。
+   - Batch B: dark / horror / smoke materials
+     - `dark_gacha` や暗めの告知に足せる黒いスモッグ、煙、影、暗い縁取りを新規生成する。
+     - 候補:
+       - black smoke wash: 背景へ薄く重ねる暗い煙。
+       - smoky edge frame: 画面端を囲う黒い煙フレーム。
+       - shadow corner fog: 角だけに足す暗いもや。
+       - ink drip accent: 端やタイトル周辺に置く黒い滴り。
+       - dark sparkle dust: 黒紫の細かい粒子。
+     - category は用途に応じて `frame` / `accent` / `corner` に寄せる。新カテゴリは作らない。
+   - Batch C: neutral prop materials
+     - 男女問わず使える小物系の registered material を新規生成する。
+     - 候補:
+       - chandelier: 画面上部や角に置ける小さなシャンデリア。
+       - antique key: 告知や企画に使いやすい鍵。
+       - pocket watch: 時刻 / 耐久 / 告知に使える懐中時計。
+       - candle: dark / ASMR / 雑談に使える小さな蝋燭。
+       - blank card: トランプ / タロット風だが文字なしのカード。
+       - ribbon seal: 配信ジャンルを問わない封蝋 / リボン風アクセント。
+       - small ornate frame: 立ち絵や情報枠の補助に使う小フレーム。
+   - implementation rules:
+     - 素材数に固定上限は置かない。ただし review しやすいよう、実装 PR は Batch / category / source type ごとに分ける。
+     - 追加素材は `thumbnailMaterialLibrary` から通常 image layer として追加できる registered material にする。
+     - project-bound material に `storageId` / `materialRef` など user material metadata を混ぜない。
+     - material-only PR では preset 初期 layer に自動挿入しない。
+     - 既存 asset を登録する Batch A と、新規生成が必要な Batch B/C を同じ PR に混ぜない。
    - out of scope:
-     - schema / canvas export / handoff payload 変更。
+     - preset body / 初期配置の変更。
+     - background asset / title image asset の再生成。
+     - schema、canvas export、handoff payload、IndexedDB / localStorage key 変更。
+     - material swap UI / title swap UI / background swap UI の再設計。
      - 9:16 preset。
-     - 新規 font 追加。
-     - 追加 title image 生成。
-     - background swap UI / title swap UI の再設計。
-     - right panel decoration / material swap UI（実利用フィードバックが出るまで保留）。
+     - editable font self-hosting / font picker。
+   - verification:
+     - `node scripts/thumbnail-material-assets-contract.mjs`
+     - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+     - `node scripts/thumbnail-preset-apply-safety-contract.mjs`
+     - `node scripts/thumbnail-preset-variants-contract.mjs`
+     - `node scripts/tool-handoff-contract.mjs`
+     - `npm run lint`
+     - `npx tsc --noEmit`
+     - `git diff --check`
+     - UI を触った場合のみ `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認する。
+   - next action:
+     - Batch A の登録対象を「既存 preset decoration から汎用性の高いもの」に絞り、最初の implementation PR を切る。
 
-2. Thumbnail Editor 1:1 IRIAM EN title image support
-   - status: 次の最優先。`codex/thumbnail-iriam-square-preview` を main へ接続する前に、EN locale で 1:1 IRIAM 出力が日本語 title image のままにならないようにする。
-   - reason:
-     - 1:1 IRIAM preset は title transparent image が出力物の主役なので、EN UI で使う時に日本語 title image のままだと EN output support の穴として見えやすい。
-     - font 追加は表現幅の拡張だが、EN title image は EN 出力の成立性に近いため、font / typography follow-up より先に扱う。
-   - next-session scope:
-     - 25枚生成は 1 PR に閉じる。
-     - まず 5ジャンルそれぞれ 1枚ずつ、元になる EN title image を生成して方向を決める。
-     - その後、既存 JA title と同じ 5 colorway parity へ派生する。
-     - 最初に font selection と title text selection を行い、`task.md` か PR body に font / license / title wording を残す。
-   - title wording candidates to confirm:
-     - `歌枠` -> `Karaoke`
-     - `闇ガチャ` -> `Dark Gacha`
-     - `雑談` -> `Chatting`
-     - `初配信` -> `First Stream` or `Debut Stream`（次セッションで決める）
-     - `耐久` -> `Endurance`
-   - asset workflow:
-     - Use built-in `$imagegen` / `image_gen` one asset at a time; do not batch distinct title concepts into a single generation call.
-     - Generate each source on a flat chroma-key background, remove background locally with `remove_chroma_key.py`, then save final transparent PNGs under the existing IRIAM square title asset tree.
-     - Use filename suffixes that keep genre / square / EN / colorway / version clear.
-     - Validate that each title has no unintended readable text beyond the chosen EN title, no logo, no person / character, no official UI-like element, and enough transparent padding.
-   - implementation boundary:
-     - Keep genre fixed. EN title swap should not let a genre choose another genre's title asset.
-     - Keep existing background / title colorway model; do not redesign title swap UI.
-     - Prefer locale-aware registry / asset selection over schema changes.
-   - out of scope:
-     - New editable font self-hosting or font picker work.
-     - Canvas export / handoff payload / saved draft schema changes.
-     - 9:16 preset.
-     - Decoration / material swap UI.
-     - Additional material batch.
-
-3. Thumbnail Editor material library small follow-up only if needed
-   - status: feedback-gated。final QA またはユーザー目視確認で不足素材が明確になった場合だけ進める。
+2. Thumbnail Editor 1:1 IRIAM preview branch main merge preparation
+   - status: material library expansion の必要分を preview branch に入れた後に戻る。
    - direction:
-     - 追加する場合も 1 category または小さな asset batch に閉じる。
-     - 16:9 / 1:1 の両方で使える generic project-bound material として登録する。
-     - 既存の「素材ライブラリから追加 / 通常レイヤーとして削除」フローだけを前提にする。
-   - out of scope:
-     - decoration / material swap UI。
-     - material library 全体 UI の再設計。
-     - preset settings modal の拡張。
-     - schema / export / handoff payload 変更。
+     - `codex/thumbnail-iriam-square-preview` の final state を contract / typecheck / lint / browser 目視で再確認してから `main` へ結合する。
+     - material library follow-up が入った場合は、registered material count / search / category表示 / cross-aspect add flow を確認する。
+   - blocker:
+     - Batch A-C のうち、main merge 前に必須と判断したものが未実装なら main merge preparation へ進まない。
 
-4. Preview branch final confirmation / main merge
-   - status: EN title image support と必要な small follow-up が終わった後に実施する。
+3. Thumbnail Editor font / preset typography follow-up
+   - status: IRIAM square preview branch を main に統合した後に戻る。
    - direction:
-     - `codex/thumbnail-iriam-square-preview` の全 IRIAM 1:1 scope を最終確認し、`main` へ結合する。
-     - main merge 前に contracts / `npx tsc --noEmit` / `npm run lint` / `git diff --check` / 必要な幅別確認を揃える。
-     - merge 後は `task.md` を active-only に戻し、完了済み詳細は PR body / archive summary に寄せる。
-
-5. Thumbnail Editor font / preset typography follow-up
-   - status: IRIAM square EN title image support の後に戻る。
-   - direction:
-     - 単純な font 追加より、title image と editable text の不足を確認してから増やす。
+     - IRIAM title image で使った license-free font を、必要に応じて editable text layer 用にも追加する。
      - language / mood category、font search、recently used は既に主要導線が入っているため、大きな UI 改修と混ぜない。
    - out of scope:
-     - 1:1 preset body 実装との同時実装。
-     - material asset 大量追加との同時実装。
+     - material asset 追加との同時実装。
+     - 1:1 preset body / main merge preparation との同時実装。
 
-6. Kuro Live Comment Translator planning
-   - status: 新規ツール候補。IRIAM 1:1 material / typography が落ち着いた後に planning へ戻る。
+4. Kuro Live Comment Translator planning
+   - status: IRIAM square / font follow-up の後に planning へ戻る。
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
      - OBS Browser Dock 前提の read-only MVP。
@@ -651,12 +108,13 @@
 
 ## Recommended Roadmap
 
-1. IRIAM 1:1 EN title image support
-2. Material library small follow-up only if needed
-3. Final confirmation
-4. Merge `codex/thumbnail-iriam-square-preview` to `main`
-5. Font / preset typography follow-up
-6. New tool planning: Kuro Live Comment Translator
+1. Batch A: existing preset decoration registration
+2. Batch B: dark / horror / smoke materials
+3. Batch C: neutral prop materials
+4. Preview branch final confirmation after material expansion
+5. Merge `codex/thumbnail-iriam-square-preview` to `main`
+6. Font / preset typography follow-up
+7. New tool planning: Kuro Live Comment Translator
 
 9:16 presets are still valuable for YouTube Shorts / vertical streams, but should follow after the 1:1 IRIAM workflow proves the square asset / title image / decoration pattern.
 
@@ -668,175 +126,68 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Thumbnail Editor 1:1 IRIAM EN title image support として、`codex/thumbnail-iriam-square-preview` を base に、5ジャンル x 5 colorway の EN title transparent PNG を 1 PR に閉じて生成・反映してください。
+Thumbnail Editor の登録済み素材ライブラリ拡張 Batch A として、既存 preset で使われているが素材リストにない装飾 asset を、16:9 / 1:1 の両方で使える project-bound registered material として追加してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- `origin/codex/thumbnail-iriam-square-preview` を base に新規 feature branch / worktree を切ってください。
-- 推奨 branch: `codex/thumbnail-iriam-square-en-titles`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-en-titles`
-- すべての IRIAM 1:1 slice 完了後に preview branch を main へ結合する前提です。
-- 今回は `main` 接続前に EN title image support を挟む task です。
+- PR #213 `[codex] Finalize IRIAM square preview confirmation` が `codex/thumbnail-iriam-square-preview` に merge 済みであることを確認してください。
+- 未 merge の場合は、新規作業へ進まず blocker summary を返してください。
+- merge 済みなら、`origin/codex/thumbnail-iriam-square-preview` を base に作業 branch / worktree を切ってください。
 
-ここまでの状態:
-- `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久` は square preset body 接続済み。
-- 同 5ジャンルは square settings modal 対応済み。
-- 右パネルの background style / colorway swap UI は実装済み。
-- 右パネルの title transparent image layer colorway swap UI は実装済み。
-- 1:1 IRIAM title image は背景に焼き込まず透明 PNG image layer として扱う。
-- `accent` / `label-base` の project-bound material batch は登録済み。
-- project-bound material は 16:9 / IRIAM 1:1 の両方で素材ライブラリから通常 image layer として追加できる contract 済み。
-- PR #209 で final QA / preset 初期位置調整 / 1:1 preset text carryover bugfix は merge 済み。
+推奨 branch:
+- `codex/thumbnail-material-existing-decoration-batch`
+
+推奨 worktree:
+- `D:/V_streamer_tools/.worktrees/thumbnail-material-existing-decoration-batch`
 
 今回の scope:
-- 5ジャンルそれぞれ 1枚ずつ、元になる EN title image を生成して方向を決める。
-- 最初に font selection と title text selection を行い、font 名 / license / title wording を `task.md` または PR body に残す。
-- title wording は次を候補にし、生成前に最終決定する:
-  - `歌枠` -> `Karaoke`
-  - `闇ガチャ` -> `Dark Gacha`
-  - `雑談` -> `Chatting`
-  - `初配信` -> `First Stream` or `Debut Stream`
-  - `耐久` -> `Endurance`
-- `$imagegen` / built-in `image_gen` を使い、distinct title concept は 1枚ずつ生成する。1 call に複数ジャンルを詰めない。
-- 透明 PNG は built-in image generation -> flat chroma-key source -> `remove_chroma_key.py` -> alpha PNG 検証の流れで作る。
-- 5つの元 title が揃ったら、既存 JA title と同じ 5 colorway parity に派生し、合計 25枚を同じ PR に収める。
-- 生成 asset は existing IRIAM square title asset tree に保存し、genre / square / EN / colorway / version が分かる filename にする。
-- EN locale 時の preset 初期 title / title swap candidate が EN title asset を使うように反映する。
-- JA locale / 既存 JA title / 既存 background swap / existing material library flow は維持する。
+- Batch A only。
+- 既存 preset decoration asset のうち、登録済み素材にないものを素材ライブラリへ追加する。
+- 新規 image generation はしない。
+- 既存 asset source は `public/assets/images/thumbnail-editor/decorations/phase5/` など repo 内の既存ファイルを使う。
+- A preset の装飾を B preset でも使えるよう、素材名 / description / recommendedPlacement は特定 preset 名に寄せすぎず汎用名にする。
+- 追加素材は `thumbnailMaterialLibrary` から通常 image layer として追加できる project-bound material にする。
+- 可能なら最初は汎用性の高い family を優先:
+  - label / badge / panel
+  - frame / corner
+  - accent / effect
+  - divider / line
+  - small icon / prop
 
 Out of scope:
-- schema 変更。
-- canvas export / handoff payload 変更。
+- Batch B dark / horror / smoke の新規生成。
+- Batch C neutral prop の新規生成。
+- preset body / 初期配置変更。
+- background / title image asset 変更。
+- material swap UI / title swap UI / background swap UI 変更。
+- schema、canvas export、handoff payload、IndexedDB / localStorage key 変更。
 - 9:16 preset。
-- 新規 editable font self-hosting / font picker work。
-- background swap UI / title swap UI の再設計。
-- decoration / material swap UI。
-- material library 全体 UI の再設計。
-- 追加 material batch の同時実装。
-- 追加 title image 以外の新規 visual asset generation。
+- editable font self-hosting / font picker。
 
 検証:
 - `node scripts/thumbnail-material-assets-contract.mjs`
 - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-- `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-- `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-- `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-- 5ジャンルの `thumbnail-iriam-*-square-preset-contract.mjs`
-- `npx tsc --noEmit`
+- `node scripts/thumbnail-preset-apply-safety-contract.mjs`
+- `node scripts/thumbnail-preset-variants-contract.mjs`
+- `node scripts/tool-handoff-contract.mjs`
 - `npm run lint`
+- `npx tsc --noEmit`
 - `git diff --check`
-- asset 検証として、生成 PNG のサイズ / alpha / transparent padding / unintended text absence / logo-person-character absence を確認する。
-- EN title 反映後、必要な場合は `/tools/thumbnail-editor` を EN locale で `390 / 820 / 1024 / 1280 / 1366px` 確認し、結果を `task.md` に残す。
+- UI を触っていない場合、幅別ブラウザ確認は不要。素材パネルの表示件数や category 表示に不安がある場合のみ `/tools/thumbnail-editor` を確認してください。
 
 完了時:
-- `task.md` に title wording、font / license、生成 asset、反映内容、検証結果、残リスク、次アクションを追記してください。
-- 次順は `material library small follow-up only if needed` → `final confirmation` → `codex/thumbnail-iriam-square-preview` の `main` 結合準備 → `font / preset typography follow-up` です。
-- 変更範囲と検証結果を確認してから commit / push / draft PR 作成まで行ってください。
+- `task.md` に追加した素材 family、検証結果、残リスク、次の Batch B / C への引き継ぎを追記してください。
+- 問題なければ commit まで行ってください。push / PR は指示があるまで行わないでください。
 ```
-
-### 2026-05-25 implementation update: IRIAM square EN title image support
-
-- Branch / worktree:
-  - `codex/thumbnail-iriam-square-en-titles`
-  - `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-en-titles`
-- Base / merge gate:
-  - Ran `git fetch origin --prune`.
-  - Confirmed PR #210 `[codex] Plan IRIAM square EN title support` was merged into `codex/thumbnail-iriam-square-preview` at merge commit `d2fc58f7394fc3104c5121fcbb0947ca554203c6`.
-- Direction change:
-  - Initial decorative imagegen direction was rejected because it overpowered the existing JA title assets.
-  - Final direction uses Google Fonts rendered text logos only: no icons, no character/person/logo, no extra decorative motifs; stroke and shadow are allowed.
-- Final title wording / font selection:
-  - `歌枠` -> `Karaoke` / `Lilita One`
-  - `闇ガチャ` -> `Dark Gacha` / `Pirata One`
-  - `雑談` -> `Chatting` / `Fredoka`
-  - `初配信` -> `Debut Stream` / `Lobster`
-  - `耐久` -> `Endurance` / `Anton`
-  - License: Google Fonts, SIL Open Font License 1.1.
-- Generated assets:
-  - Added 25 transparent PNGs under existing IRIAM square title asset directories:
-    - `public/assets/images/thumbnail-editor/iriam-square/karaoke/titles/karaoke-square-en-title-{pink-blue,blue,yellow,purple,mint}-v1.png`
-    - `public/assets/images/thumbnail-editor/iriam-square/dark-gacha/titles/dark-gacha-square-en-title-{pink-blue,blue,yellow,purple,mint}-v1.png`
-    - `public/assets/images/thumbnail-editor/iriam-square/chatting/titles/chatting-square-en-title-{pink-blue,blue,yellow,purple,mint}-v1.png`
-    - `public/assets/images/thumbnail-editor/iriam-square/first-stream/titles/first-stream-square-en-title-{pink-blue,blue,yellow,purple,mint}-v1.png`
-    - `public/assets/images/thumbnail-editor/iriam-square/endurance/titles/endurance-square-en-title-{pink-blue,blue,yellow,purple,mint}-v1.png`
-  - Asset validation passed for all 25 PNGs: `760x320`, `RGBA`, non-empty alpha, transparent corners, minimum transparent padding >= 20px, file size < 160KB.
-  - Visual contact sheet confirmed no unintended extra text, no logo, no person/character, and no ornament beyond text stroke/shadow.
-- Implementation:
-  - Added EN title asset registries alongside the existing JA title registries.
-  - `createDraftFromPresetVariant` and the five IRIAM square draft helpers now accept a title locale while defaulting to JA.
-  - EN locale square presets now start with EN title image assets.
-  - Title swap detects whether the selected title layer is JA or EN by registered `src` and stays within the same locale and genre.
-  - IRIAM square settings modal preview now uses EN title assets when the editor locale is EN.
-  - JA locale, existing JA title assets, background swap, title swap UI shape, schema, canvas export, handoff payload, and material library flow were preserved.
-- Verification:
-  - `node scripts/thumbnail-material-assets-contract.mjs` passed.
-  - `node scripts/thumbnail-preset-text-locale-contract.mjs` passed.
-  - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs` passed.
-  - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs` passed.
-  - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs` passed.
-  - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` passed.
-  - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs` passed.
-  - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs` passed.
-  - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` passed.
-  - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` passed.
-  - `npx tsc --noEmit` passed.
-  - `npm run lint` passed.
-  - `git diff --check` passed.
-- Width check:
-  - Not run. This slice changes title image assets and locale-aware asset selection only; no layout, responsive, or panel redesign was introduced.
-- Residual risks:
-  - Final visual balance should be reviewed in the composed 1:1 presets after PR review, especially `Dark Gacha` gothic tone and `Debut Stream` script readability at thumbnail scale.
-  - Fonts are rasterized into PNG title assets; this PR does not add new editable font self-hosting or font picker behavior.
-- Next action order:
-  - `final confirmation`
-  - prepare `codex/thumbnail-iriam-square-preview` for `main` merge
-  - `font / preset typography follow-up`
-
-### 2026-05-26 final confirmation update: IRIAM square preview branch
-
-- Branch / worktree:
-  - `codex/thumbnail-iriam-square-final-confirmation`
-  - `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-final-confirmation`
-- Base / merge gate:
-  - Ran `git fetch origin --prune`.
-  - Confirmed PR #212 `[codex] Adjust IRIAM square EN preset placements` was merged into `codex/thumbnail-iriam-square-preview` at merge commit `127302f91a64e1417d51bdb235d56d66eb26ad7b`.
-- Scope:
-  - Final confirmation for the 1:1 IRIAM presets `karaoke`, `dark_gacha`, `chatting`, `first_stream`, and `endurance_stream`.
-  - No font, schema, export, handoff payload, title asset regeneration, material UI, 9:16, or extra placement changes.
-- Finding / minimal fix:
-  - `first_stream` EN square draft used the EN title asset but kept the JA layer label `画像 2（タイトル 初配信）`.
-  - Fixed only that label to `Image 2 (First Stream title)` in EN mode.
-  - Tightened `scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` so the EN title layer label must be locale-correct.
-- Browser confirmation:
-  - EN at `1366px`: all 5 presets opened settings modal, showed preview / background color / title color controls, completed modal create flow, and produced expected EN title layer labels.
-  - JA at `1366px`: all 5 presets opened settings modal, showed preview / background color / title color controls, completed modal create flow, and produced expected JA title layer labels.
-  - Top `New` flow was available and created a 1:1 canvas without leaving a modal open.
-  - Width checks in Chrome DevTools MCP for EN / JA at `820 / 1024 / 1280 / 1366px` had no page-level horizontal overflow and kept `1080 x 1080 / 1:1`, 5 presets, New, and canvas visible.
-  - `390px` could not be represented exactly through Chrome DevTools MCP in this local session because the browser window clamped to `500px`; the `500px` mobile-like check had no page-level horizontal overflow.
-- Verification completed:
-  - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-  - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-  - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-  - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-  - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
-  - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-  - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-  - `npx tsc --noEmit`
-  - `npm run lint`
-  - `git diff --check`
-- Residual risks:
-  - Browser confirmation covered the default modal create flow and default colorway path, not every background / title colorway combination.
-  - Exact `390px` browser verification remains unchecked in this session because of the DevTools window-size clamp.
-- Next action:
-  - Merge this final-confirmation fix into `codex/thumbnail-iriam-square-preview`, then prepare the preview branch for `main` merge.
 
 ## Backlog
 
 - Thumbnail Editor:
-  - 1:1 IRIAM decoration / material workflow。
-  - 1:1 IRIAM decoration / material swap UI（実利用フィードバックが出た場合のみ）。
+  - Batch B dark / horror / smoke registered materials。
+  - Batch C neutral prop registered materials。
+  - 1:1 IRIAM preview branch main merge preparation。
   - 9:16 preset for YouTube Shorts / vertical streams。
   - crop 仕様。
   - text / image layer schema。
@@ -860,7 +211,7 @@ Out of scope:
 
 ## Verification Baseline
 
-docs / contract 変更時は、必要に応じて次を実行する。
+docs / contract / material 変更時は、必要に応じて次を実行する。
 
 - `node scripts/static-export-rsc-aliases.mjs --check`
 - `node scripts/tool-portal-entry-contract.mjs`
@@ -869,14 +220,8 @@ docs / contract 変更時は、必要に応じて次を実行する。
 - `node scripts/thumbnail-quality-guard-contract.mjs`
 - `node scripts/thumbnail-standee-placement-contract.mjs`
 - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-- `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
-- `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
-- `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
-- `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
-- `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
-- `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
-- `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
-- `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+- `node scripts/thumbnail-preset-apply-safety-contract.mjs`
+- `node scripts/thumbnail-preset-variants-contract.mjs`
 - `node scripts/sns-split-image-maker-contract.mjs`
 - `node scripts/portal-tools-copy-locale-contract.mjs`
 - `npm run lint`
@@ -887,23 +232,13 @@ UI / 表示文言を触った場合のみ、幅別確認結果をこのファイ
 
 ## Completed / Archive Summary
 
+- Thumbnail Editor IRIAM square preview branch:
+  - PR #200 - #213 で 1:1 IRIAM 5 preset、settings modal、background / title swap、EN title asset、material cross-aspect boundary、final confirmation を `codex/thumbnail-iriam-square-preview` へ統合済み。
+  - 完了済み詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` に寄せる。
 - Thumbnail Editor usecase presets:
-  - PR #180: `goods_notice` / `membership_stream` / `asmr_stream` plus EN usage label and initial placement follow-ups.
-  - PR #181: IRIAM square roadmap refresh after #180.
-  - Previous staged PRs: #178 / #179 and related preset branches are summarized in PR bodies.
-- Thumbnail Editor 1:1 IRIAM planning / assets:
-  - Current planning doc: `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md`
-  - Planning PR scope: 5 genre mock direction, layer model, background / title / decoration asset production plan, title image font / license boundary.
-  - Mock branch scope: 5 direction mock images under `docs/mockups/thumbnail-editor-iriam-square-mocks/`.
-  - Standee layout mock scope: 5 bust-up placeholder layouts under `docs/mockups/thumbnail-editor-iriam-square-standee-layouts/`.
-  - Background / title production asset details are kept in PR bodies and the future planning doc.
-- Thumbnail Editor 1:1 IRIAM square starter presets:
-  - PR #193 - #200 connected `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久` to square preset body and settings modal.
-  - PR #202 added the right-panel background swap UI.
-  - PR #203 added the right-panel title transparent image swap UI.
-  - Detailed width checks and contract evidence are kept in the individual PR bodies.
+  - `goods_notice` / `membership_stream` / `asmr_stream` などの usecase preset sequence は完了済み。詳細は PR bodies と archive history を参照する。
 - Portal / public prelaunch:
-  - Portal settings visibility polish, Thumbnail Editor inline text edit, and EN support are completed or tracked by their PR bodies.
+  - Portal settings visibility polish、Thumbnail Editor inline text edit、EN support は完了または各 PR body に集約済み。
 - EN support:
   - PR #154 - #171 で EN support preview から main 向け final integration check まで完了。
   - main merge: 2026-05-20, merge commit `270b81f`。
@@ -915,4 +250,4 @@ UI / 表示文言を触った場合のみ、幅別確認結果をこのファイ
 - Thumbnail Editor next PR scope: `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md`
 - Thumbnail Editor usecase preset candidates: `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`
 - Thumbnail Editor font candidates: `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`
-- Thumbnail Editor IRIAM square mock plan: `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_MOCK_PLAN.md`
+- Thumbnail Editor registered material expansion plan: `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_DECORATION_MATERIAL_CONTRACT.md`

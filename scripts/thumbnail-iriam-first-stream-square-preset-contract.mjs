@@ -169,7 +169,7 @@ assert.ok(
 const enSquareDraft = lib.createDraftFromPresetVariant("first_stream", "square-1-1", "en");
 assert.deepEqual(enSquareDraft.canvas, { width: 1080, height: 1080 }, "first_stream EN square draft uses the IRIAM canvas");
 assert.equal(enSquareDraft.presetId, "first_stream", "first_stream EN square keeps the existing preset id");
-const enTitleLayer = enSquareDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("タイトル"));
+const enTitleLayer = enSquareDraft.layers.find((layer) => layer.type === "image" && layer.name === "Image 2 (First Stream title)");
 assert.ok(enTitleLayer, "first_stream EN square has a title image layer");
 assert.equal(
   enTitleLayer.src,

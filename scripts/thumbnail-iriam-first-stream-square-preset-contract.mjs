@@ -23,6 +23,17 @@ testModule.filename = sourcePath;
 testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
 testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
+const compiledCopy = ts.transpileModule(copySource, {
+  compilerOptions: {
+    module: ts.ModuleKind.CommonJS,
+    target: ts.ScriptTarget.ES2022
+  }
+}).outputText;
+const copyModule = new Module(copySourcePath);
+copyModule.filename = copySourcePath;
+copyModule.paths = Module._nodeModulePaths(path.dirname(copySourcePath));
+copyModule._compile(compiledCopy, copySourcePath);
+const copyLib = copyModule.exports;
 
 const backgroundPrefix = "/assets/images/thumbnail-editor/iriam-square/karaoke/backgrounds/";
 const titlePrefix = "/assets/images/thumbnail-editor/iriam-square/first-stream/titles/";
@@ -155,6 +166,116 @@ assert.ok(
   "first_stream square keeps a standee placement guide"
 );
 
+const enSquareDraft = lib.createDraftFromPresetVariant("first_stream", "square-1-1", "en");
+assert.deepEqual(enSquareDraft.canvas, { width: 1080, height: 1080 }, "first_stream EN square draft uses the IRIAM canvas");
+assert.equal(enSquareDraft.presetId, "first_stream", "first_stream EN square keeps the existing preset id");
+const enTitleLayer = enSquareDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("タイトル"));
+assert.ok(enTitleLayer, "first_stream EN square has a title image layer");
+assert.equal(
+  enTitleLayer.src,
+  `${titlePrefix}first-stream-square-en-title-pink-blue-v1.png`,
+  "first_stream EN square uses the matching transparent EN title image"
+);
+assert.deepEqual(
+  {
+    x: enTitleLayer.x,
+    y: enTitleLayer.y,
+    width: enTitleLayer.width,
+    height: enTitleLayer.height,
+    rotation: enTitleLayer.rotation
+  },
+  {
+    x: -23.224409463599443,
+    y: 602.2911120569338,
+    width: 1134.867178394888,
+    height: 662.5574086725878,
+    rotation: -2.3893123941288716
+  },
+  "first_stream EN square title image uses the latest user-provided placement"
+);
+const enBadgeCopyLayer = enSquareDraft.layers.find((layer) => layer.type === "shape" && layer.name === "図形 3（時刻バッジ土台） コピー");
+assert.ok(enBadgeCopyLayer, "first_stream EN square keeps the second badge base");
+assert.deepEqual(
+  {
+    x: enBadgeCopyLayer.x,
+    y: enBadgeCopyLayer.y,
+    width: enBadgeCopyLayer.width,
+    height: enBadgeCopyLayer.height
+  },
+  {
+    x: 0.5999999999999659,
+    y: 105,
+    width: 476.020766269667,
+    height: 82.50096881700985
+  },
+  "first_stream EN square second badge base uses the latest user-provided placement"
+);
+assert.deepEqual(
+  enSquareDraft.layers.filter((layer) => layer.type === "text").map((layer) => ({
+    name: layer.name,
+    text: layer.text,
+    x: layer.x,
+    y: layer.y,
+    width: layer.width,
+    height: layer.height,
+    fontSize: layer.fontSize,
+    fontFamily: layer.fontFamily
+  })),
+  [
+    {
+      name: "テキスト 2（時刻）",
+      text: "20:00 START",
+      x: 22.054495036772124,
+      y: 37.16087288510222,
+      width: 334,
+      height: 58,
+      fontSize: 41,
+      fontFamily: "Hachi Maru Pop"
+    },
+    {
+      name: "テキスト 3（サブ）",
+      text: "Requests welcome",
+      x: 16.178384635220397,
+      y: 121.70854968602646,
+      width: 456,
+      height: 48,
+      fontSize: 40,
+      fontFamily: "Hachi Maru Pop"
+    }
+  ],
+  "first_stream EN square text layers use the latest user-provided EN two-row placement"
+);
+const localizedEnSquareDraft = copyLib.localizeThumbnailPresetTextLayerBodies(enSquareDraft, "en");
+assert.deepEqual(
+  localizedEnSquareDraft.layers.filter((layer) => layer.type === "text").map((layer) => ({
+    name: layer.name,
+    text: layer.text,
+    x: layer.x,
+    y: layer.y,
+    width: layer.width,
+    height: layer.height
+  })),
+  [
+    {
+      name: "Text 2 (Time)",
+      text: "20:00 START",
+      x: 22.054495036772124,
+      y: 37.16087288510222,
+      width: 334,
+      height: 58
+    },
+    {
+      name: "Text 3 (Sub text)",
+      text: "Requests welcome",
+      x: 16.178384635220397,
+      y: 121.70854968602646,
+      width: 456,
+      height: 48
+    }
+  ],
+  "first_stream EN square text localization preserves IRIAM square placement instead of applying legacy 16:9 visual offsets"
+);
+
 const normalized = lib.normalizeThumbnailDraft(squareDraft);
 assert.ok(normalized, "first_stream square draft normalizes");
 assert.deepEqual(normalized.canvas, { width: 1080, height: 1080 }, "first_stream square canvas survives normalization");
@@ -215,9 +336,9 @@ assert.equal(
   "first_stream square modal applies the configured square draft helper"
 );
 assert.equal(
-  componentSource.includes('presetId === "first_stream" ? "soft_cloud"'),
+  source.includes('getThumbnailIriamSquareKaraokeBackgroundAsset("soft_cloud", config.backgroundColorway)'),
   true,
-  "first_stream settings modal keeps the background style fixed to soft_cloud"
+  "first_stream square draft helper keeps the background style fixed to soft_cloud"
 );
 assert.equal(
   copySource.includes('first_stream: "初配信プリセット設定"'),

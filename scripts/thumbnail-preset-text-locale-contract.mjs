@@ -193,10 +193,14 @@ for (const preset of thumbnailLib.thumbnailPresets) {
   );
 
   const enDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(jaDraft, "en");
+  const expectedEnLayerNames =
+    jaDraft.canvas.width === 1080 && jaDraft.canvas.height === 1080
+      ? jaDraft.layers.map((layer) => thumbnailCopy.getThumbnailLayerDisplayName(layer, "en"))
+      : jaDraft.layers.map((layer) => layer.name);
   assert.deepEqual(
     enDraft.layers.map((layer) => layer.name),
-    jaDraft.layers.map((layer) => layer.name),
-    `${preset.id} keeps layer.name stable when localizing text bodies`
+    expectedEnLayerNames,
+    `${preset.id} localizes layer.name only for IRIAM square drafts`
   );
   assert.deepEqual(
     enDraft.layers.map((layer) => layer.id),

@@ -156,6 +156,90 @@ assert.deepEqual(
   "dark gacha square badge shapes use the final QA positions"
 );
 
+const enSquareDraft = lib.createDraftFromPresetVariant("dark_gacha", "square-1-1", "en");
+assert.deepEqual(enSquareDraft.canvas, { width: 1080, height: 1080 }, "dark gacha EN square draft uses the IRIAM canvas");
+assert.equal(enSquareDraft.presetId, "dark_gacha", "dark gacha EN square keeps its dedicated preset id");
+assert.deepEqual(
+  enSquareDraft.layers.map((layer) => layer.name),
+  [
+    "Image 1 (Background)",
+    "Shape 1 (Top light outline)",
+    "Image 2 (Dark gacha title)",
+    "Shape 2 (Standee guide)",
+    "Shape 3 (Time badge base)",
+    "Shape 3 (Time badge base) Copy",
+    "Text 2 (Time)",
+    "Text 3 (Sub text)"
+  ],
+  "dark gacha EN square draft uses English layer labels in exported JSON"
+);
+const enTitleLayer = enSquareDraft.layers.find((layer) => layer.type === "image" && layer.name === "Image 2 (Dark gacha title)");
+assert.ok(enTitleLayer, "dark gacha EN square has a title image layer");
+assert.equal(
+  enTitleLayer.src,
+  `${titlePrefix}dark-gacha-square-en-title-purple-v1.png`,
+  "dark gacha EN square uses the matching transparent EN title image"
+);
+assert.deepEqual(
+  {
+    x: enTitleLayer.x,
+    y: enTitleLayer.y,
+    width: enTitleLayer.width,
+    height: enTitleLayer.height,
+    rotation: enTitleLayer.rotation
+  },
+  {
+    x: -80.80149448538796,
+    y: 27.901545254853488,
+    width: 1302.6268929693151,
+    height: 553.0603199787986,
+    rotation: 21.60856614090952
+  },
+  "dark gacha EN square title image uses the latest user-provided placement"
+);
+const enStandeeGuide = enSquareDraft.layers.find((layer) => layer.type === "shape" && layer.name === "Shape 2 (Standee guide)");
+assert.ok(enStandeeGuide, "dark gacha EN square keeps a standee placement guide");
+assert.deepEqual(
+  { x: enStandeeGuide.x, y: enStandeeGuide.y, width: enStandeeGuide.width, height: enStandeeGuide.height },
+  { x: 140.27952450177935, y: 427.3284956112033, width: 360, height: 628 },
+  "dark gacha EN square standee guide uses the latest user-provided placement"
+);
+assert.deepEqual(
+  enSquareDraft.layers.filter((layer) => layer.type === "text").map((layer) => ({
+    name: layer.name,
+    text: layer.text,
+    x: layer.x,
+    y: layer.y,
+    width: layer.width,
+    height: layer.height,
+    fontFamily: layer.fontFamily,
+    fontSize: layer.fontSize
+  })),
+  [
+    {
+      name: "Text 2 (Time)",
+      text: "22:00 START",
+      x: 758.5539175334877,
+      y: 1008.1420339744074,
+      width: 308,
+      height: 58,
+      fontFamily: "New Tegomin",
+      fontSize: 52
+    },
+    {
+      name: "Text 3 (Sub text)",
+      text: "Pull or pass?",
+      x: 682.0713911546809,
+      y: 947.4498241412856,
+      width: 486,
+      height: 50,
+      fontFamily: "New Tegomin",
+      fontSize: 34
+    }
+  ],
+  "dark gacha EN square text layers use the latest user-provided EN placement"
+);
+
 const normalized = lib.normalizeThumbnailDraft(squareDraft);
 assert.ok(normalized, "dark gacha square draft normalizes");
 assert.deepEqual(normalized.canvas, { width: 1080, height: 1080 }, "dark gacha square canvas survives normalization");
@@ -219,9 +303,9 @@ assert.equal(
   "dark gacha settings modal applies the configured square draft"
 );
 assert.equal(
-  componentSource.includes('presetId === "dark_gacha" ? "dark_cute"'),
+  source.includes('getThumbnailIriamSquareKaraokeBackgroundAsset("dark_cute", config.backgroundColorway)'),
   true,
-  "dark gacha settings modal keeps the background style fixed to dark_cute"
+  "dark gacha square draft helper keeps the background style fixed to dark_cute"
 );
 assert.equal(
   componentSource.includes('data-thumbnail-iriam-square-modal-preset={presetId}'),

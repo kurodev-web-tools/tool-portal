@@ -6,8 +6,10 @@ import ts from "typescript";
 
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "thumbnail-editor.ts");
+const copySourcePath = path.join(root, "lib", "thumbnail-editor-copy.ts");
 const componentSourcePath = path.join(root, "components", "thumbnail-editor", "ThumbnailEditorApp.tsx");
 const source = fs.readFileSync(sourcePath, "utf8");
+const copySource = fs.readFileSync(copySourcePath, "utf8");
 const componentSource = fs.readFileSync(componentSourcePath, "utf8");
 const compiled = ts.transpileModule(source, {
   compilerOptions: {
@@ -21,6 +23,17 @@ testModule.filename = sourcePath;
 testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
 testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
+const compiledCopy = ts.transpileModule(copySource, {
+  compilerOptions: {
+    module: ts.ModuleKind.CommonJS,
+    target: ts.ScriptTarget.ES2022
+  }
+}).outputText;
+const copyModule = new Module(copySourcePath);
+copyModule.filename = copySourcePath;
+copyModule.paths = Module._nodeModulePaths(path.dirname(copySourcePath));
+copyModule._compile(compiledCopy, copySourcePath);
+const copyLib = copyModule.exports;
 
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const readPngSize = (filePath) => {
@@ -239,6 +252,84 @@ assert.equal(
   matchedTitleDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("タイトル"))?.src,
   `${titlePrefix}karaoke-square-title-mint-v1.png`,
   "match-background title selection follows the chosen background colorway"
+);
+
+const enSquareDraft = lib.createDraftFromPresetVariant("karaoke", "square-1-1", "en");
+const enTitleLayer = enSquareDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("タイトル"));
+assert.ok(enTitleLayer, "karaoke English square has a title image layer");
+assert.equal(
+  enTitleLayer.src,
+  `${titlePrefix}karaoke-square-en-title-pink-blue-v1.png`,
+  "karaoke English square uses the English title asset"
+);
+assert.deepEqual(
+  { x: enTitleLayer.x, y: enTitleLayer.y, width: enTitleLayer.width, height: enTitleLayer.height },
+  {
+    x: 38.07979288349691,
+    y: 714.4804541365222,
+    width: 991.2295143306144,
+    height: 468.41412856394516
+  },
+  "karaoke English square title image follows the supplied English placement JSON"
+);
+const enRoseNote = enSquareDraft.layers.find((layer) => layer.type === "image" && layer.name === "画像 4（ピンク音符）");
+assert.deepEqual(
+  { x: enRoseNote?.x, y: enRoseNote?.y },
+  { x: -53.71553965818441, y: 938.493106091588 },
+  "karaoke English square rose note follows the supplied English placement JSON"
+);
+const enGoldNote = enSquareDraft.layers.find((layer) => layer.type === "image" && layer.name === "画像 5（金色音符）");
+assert.deepEqual(
+  { x: enGoldNote?.x, y: enGoldNote?.y },
+  { x: 865.9001295489278, y: 810.4079625561315 },
+  "karaoke English square gold note follows the supplied English placement JSON"
+);
+const enStandeeGuide = enSquareDraft.layers.find((layer) => layer.type === "shape" && layer.name.includes("立ち絵挿入ガイド"));
+assert.deepEqual(
+  { x: enStandeeGuide?.x, y: enStandeeGuide?.y, width: enStandeeGuide?.width, height: enStandeeGuide?.height },
+  { x: 673.5717053762885, y: 223.42790709690757, width: 338, height: 620 },
+  "karaoke English square standee guide follows the supplied English placement JSON"
+);
+const enTimeText = enSquareDraft.layers.find((layer) => layer.type === "text" && layer.name === "テキスト 2（時刻）");
+assert.deepEqual(
+  { x: enTimeText?.x, y: enTimeText?.y, width: enTimeText?.width, height: enTimeText?.height },
+  { x: 638.4556146531436, y: 316.93642846870324, width: 330, height: 58 },
+  "karaoke English square time text follows the supplied English placement JSON"
+);
+const localizedEnSquareDraft = copyLib.localizeThumbnailPresetTextLayerBodies(enSquareDraft, "en");
+assert.deepEqual(
+  localizedEnSquareDraft.layers.map((layer) => layer.name),
+  [
+    "Image 1 (Background)",
+    "Shape 1 (Top soft light)",
+    "Image 4 (Pink music notes)",
+    "Image 5 (Gold music notes)",
+    "Image 2 (Karaoke title)",
+    "Image 3 (Small sparkles)",
+    "Shape 2 (Standee guide)",
+    "Asset: Blue Cloud Label",
+    "Asset: Blue Cloud Label",
+    "Asset: Blue Cloud Label",
+    "Text 2 (Time)",
+    "Asset: Mint Sparkles"
+  ],
+  "karaoke EN square text localization also localizes exported layer labels"
+);
+const localizedEnTimeText = localizedEnSquareDraft.layers.find((layer) => layer.type === "text" && layer.name === "Text 2 (Time)");
+assert.deepEqual(
+  { x: localizedEnTimeText?.x, y: localizedEnTimeText?.y, width: localizedEnTimeText?.width, height: localizedEnTimeText?.height },
+  { x: 638.4556146531436, y: 316.93642846870324, width: 330, height: 58 },
+  "karaoke English square time text keeps the square placement after localization"
+);
+assert.equal(
+  squareDraft.layers.find((layer) => layer.type === "image" && layer.name.includes("タイトル"))?.x,
+  323.79555489036886,
+  "karaoke Japanese square title image keeps the existing final QA x position"
+);
+assert.equal(
+  squareDraft.layers.find((layer) => layer.type === "image" && layer.name === "画像 4（ピンク音符）")?.x,
+  464.14427897927123,
+  "karaoke Japanese square rose note keeps the existing final QA x position"
 );
 
 assert.equal(

@@ -26,6 +26,11 @@ type ThumbnailPresetCopy = {
 type ThumbnailPresetTextBodyCopy = Partial<Record<ThumbnailPresetId, Record<string, string>>>;
 type ThumbnailPresetTextLayerVisualAdjustment = Partial<Pick<ThumbnailTextLayer, "x" | "y" | "width" | "height" | "fontSize" | "lineHeight" | "align">>;
 type ThumbnailPresetLayerVisualAdjustment = Partial<Pick<ThumbnailLayer, "x" | "y" | "width" | "height">>;
+const thumbnailIriamSquarePresetIds = new Set<ThumbnailPresetId>(["karaoke", "dark_gacha", "chatting", "first_stream", "endurance_stream"]);
+
+function isThumbnailIriamSquareDraft(draft: ThumbnailEditorDraft): boolean {
+  return thumbnailIriamSquarePresetIds.has(draft.presetId) && draft.canvas.width === draft.canvas.height;
+}
 
 export const thumbnailEditorCopy = {
   ja: {
@@ -1391,7 +1396,10 @@ const materialNameTranslationsEn: Record<string, string> = {
   黄黒衝撃マーク: "Yellow Black Impact Burst",
   白シアンスピード線: "White Cyan Speed Lines",
   白黒集中線: "Monochrome Focus Lines",
-  白黒フチ強調土台: "White Black Pop Base"
+  白黒フチ強調土台: "White Black Pop Base",
+  青雲ラベル: "Blue Cloud Label",
+  ミントきらきら: "Mint Sparkles",
+  黄桃リボン: "Yellow Pink Ribbon"
 };
 
 const standeePlacementCopy: Record<
@@ -1487,9 +1495,18 @@ const layerTokenLabels: Record<Locale, Record<string, string>> = {
     英字: "English text",
     目標: "Goal",
     背景: "Background",
+    タイトル: "Title",
+    "タイトル 歌枠": "Karaoke title",
+    "タイトル 闇ガチャ": "Dark gacha title",
+    "タイトル 雑談": "Chatting title",
+    "タイトル 耐久": "Endurance title",
     曜日: "Day",
     時間: "Time",
     予定: "Schedule",
+    上部ソフトライト: "Top soft light",
+    上部やわらかライト: "Top soft light",
+    上部ライトアウトライン: "Top light outline",
+    上部チャレンジライト: "Top challenge light",
     立ち絵挿入ガイド: "Standee guide",
     左立ち絵ガイド: "Left standee guide",
     右立ち絵ガイド: "Right standee guide",
@@ -1711,19 +1728,26 @@ export function localizeThumbnailPresetTextLayerBodies(
     return draft;
   }
 
+  const applyVisualAdjustments = !isThumbnailIriamSquareDraft(draft);
+  const localizeLayerNames = isThumbnailIriamSquareDraft(draft);
   return {
     ...draft,
     layers: draft.layers.map((layer) => {
-      const layerVisualAdjustment = getThumbnailPresetLayerVisualAdjustment(draft.presetId, layer.name, locale);
+      const layerVisualAdjustment = applyVisualAdjustments ? getThumbnailPresetLayerVisualAdjustment(draft.presetId, layer.name, locale) : null;
       const adjustedLayer = layerVisualAdjustment ? { ...layer, ...layerVisualAdjustment } : layer;
+      const localizedName = localizeLayerNames ? getThumbnailLayerDisplayName(adjustedLayer, locale) : adjustedLayer.name;
       if (adjustedLayer.type !== "text") {
-        return adjustedLayer;
+        return {
+          ...adjustedLayer,
+          name: localizedName
+        };
       }
 
-      const visualAdjustment = getThumbnailPresetTextLayerVisualAdjustment(draft.presetId, adjustedLayer.name, locale);
+      const visualAdjustment = applyVisualAdjustments ? getThumbnailPresetTextLayerVisualAdjustment(draft.presetId, adjustedLayer.name, locale) : null;
       return {
         ...adjustedLayer,
         ...visualAdjustment,
+        name: localizedName,
         text: getThumbnailPresetTextLayerBody(draft.presetId, adjustedLayer.name, locale, adjustedLayer.text)
       };
     })

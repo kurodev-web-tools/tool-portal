@@ -23,6 +23,17 @@ testModule.filename = sourcePath;
 testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
 testModule._compile(compiled, sourcePath);
 const lib = testModule.exports;
+const compiledCopy = ts.transpileModule(copySource, {
+  compilerOptions: {
+    module: ts.ModuleKind.CommonJS,
+    target: ts.ScriptTarget.ES2022
+  }
+}).outputText;
+const copyModule = new Module(copySourcePath);
+copyModule.filename = copySourcePath;
+copyModule.paths = Module._nodeModulePaths(path.dirname(copySourcePath));
+copyModule._compile(compiledCopy, copySourcePath);
+const copyLib = copyModule.exports;
 
 const backgroundPrefix = "/assets/images/thumbnail-editor/iriam-square/karaoke/backgrounds/";
 const titlePrefix = "/assets/images/thumbnail-editor/iriam-square/endurance/titles/";
@@ -142,6 +153,121 @@ assert.ok(
   "endurance_stream square keeps a standee placement guide"
 );
 
+const enSquareDraft = lib.createDraftFromPresetVariant("endurance_stream", "square-1-1", "en");
+assert.deepEqual(enSquareDraft.canvas, { width: 1080, height: 1080 }, "endurance_stream EN square draft uses the IRIAM canvas");
+assert.equal(enSquareDraft.presetId, "endurance_stream", "endurance_stream EN square keeps the existing preset id");
+assert.deepEqual(
+  enSquareDraft.layers.map((layer) => layer.name),
+  [
+    "Image 1 (Background)",
+    "Shape 1 (Top challenge light)",
+    "Image 2 (Endurance title)",
+    "Shape 2 (Standee guide)",
+    "Asset: Diagonal Cut Ribbon",
+    "Text 2 (Time)"
+  ],
+  "endurance_stream EN square draft uses English layer labels in exported JSON"
+);
+const enTitleLayer = enSquareDraft.layers.find((layer) => layer.type === "image" && layer.name === "Image 2 (Endurance title)");
+assert.ok(enTitleLayer, "endurance_stream EN square has a title image layer");
+assert.equal(
+  enTitleLayer.src,
+  `${titlePrefix}endurance-square-en-title-yellow-v1.png`,
+  "endurance_stream EN square uses the matching transparent EN title image"
+);
+assert.deepEqual(
+  {
+    x: enTitleLayer.x,
+    y: enTitleLayer.y,
+    width: enTitleLayer.width,
+    height: enTitleLayer.height,
+    rotation: enTitleLayer.rotation
+  },
+  {
+    x: 275.5477981487745,
+    y: 611.9131932483637,
+    width: 918.0326358849836,
+    height: 488.6869497833735,
+    rotation: -30.20164646321526
+  },
+  "endurance_stream EN square title image uses the latest user-provided placement"
+);
+const enRibbonLayer = enSquareDraft.layers.find((layer) => layer.type === "image" && layer.name === "Asset: Diagonal Cut Ribbon");
+assert.ok(enRibbonLayer, "endurance_stream EN square keeps the ribbon material layer");
+assert.equal(
+  enRibbonLayer.src,
+  "/assets/images/thumbnail-editor/materials/labels/label-diagonal-ribbon-slate-cyan.png",
+  "endurance_stream EN square uses the diagonal ribbon material"
+);
+assert.deepEqual(
+  {
+    x: enRibbonLayer.x,
+    y: enRibbonLayer.y,
+    width: enRibbonLayer.width,
+    height: enRibbonLayer.height,
+    rotation: enRibbonLayer.rotation
+  },
+  {
+    x: 437.1478941878667,
+    y: 715.6389829891508,
+    width: 851.754878781992,
+    height: 609.929600414004,
+    rotation: -31.003891253382996
+  },
+  "endurance_stream EN square ribbon material uses the latest user-provided placement"
+);
+assert.deepEqual(
+  enSquareDraft.layers.filter((layer) => layer.type === "text").map((layer) => ({
+    name: layer.name,
+    text: layer.text,
+    x: layer.x,
+    y: layer.y,
+    width: layer.width,
+    height: layer.height,
+    rotation: layer.rotation,
+    fontSize: layer.fontSize,
+    fontFamily: layer.fontFamily
+  })),
+  [
+    {
+      name: "Text 2 (Time)",
+      text: "19:00 START",
+      x: 750.0938516201176,
+      y: 952.3983503601947,
+      width: 330,
+      height: 58,
+      rotation: -31.269613517036777,
+      fontSize: 50,
+      fontFamily: "Dela Gothic One"
+    }
+  ],
+  "endurance_stream EN square text layer uses the latest user-provided EN placement"
+);
+const localizedEnSquareDraft = copyLib.localizeThumbnailPresetTextLayerBodies(enSquareDraft, "en");
+assert.deepEqual(
+  localizedEnSquareDraft.layers.filter((layer) => layer.type === "text").map((layer) => ({
+    name: layer.name,
+    text: layer.text,
+    x: layer.x,
+    y: layer.y,
+    width: layer.width,
+    height: layer.height,
+    rotation: layer.rotation
+  })),
+  [
+    {
+      name: "Text 2 (Time)",
+      text: "19:00 START",
+      x: 750.0938516201176,
+      y: 952.3983503601947,
+      width: 330,
+      height: 58,
+      rotation: -31.269613517036777
+    }
+  ],
+  "endurance_stream EN square text localization preserves IRIAM square placement instead of applying legacy 16:9 visual offsets"
+);
+
 const normalized = lib.normalizeThumbnailDraft(squareDraft);
 assert.ok(normalized, "endurance_stream square draft normalizes");
 assert.deepEqual(normalized.canvas, { width: 1080, height: 1080 }, "endurance_stream square canvas survives normalization");
@@ -202,9 +328,24 @@ assert.equal(
   "endurance_stream square modal applies the configured square draft helper"
 );
 assert.equal(
-  /presetId === "endurance_stream"\s*\?\s*"pop_bubble"/.test(componentSource),
+  componentSource.includes("function IriamSquarePresetDialogPreview"),
   true,
-  "endurance_stream settings modal keeps the background style fixed to pop_bubble"
+  "square settings modal has a real draft-based preview component"
+);
+assert.equal(
+  componentSource.includes("drawThumbnail(buffer, previewDraft"),
+  true,
+  "square settings modal preview renders the same draft helper output instead of a fixed CSS mock"
+);
+assert.equal(
+  componentSource.includes('className="absolute left-[14.8%] top-[11.7%] aspect-[760/320] w-[70.4%] bg-contain bg-center bg-no-repeat"'),
+  false,
+  "square settings modal preview no longer uses a fixed title placement mock"
+);
+assert.equal(
+  source.includes('getThumbnailIriamSquareKaraokeBackgroundAsset("pop_bubble", config.backgroundColorway)'),
+  true,
+  "endurance_stream square draft helper keeps the background style fixed to pop_bubble"
 );
 assert.equal(
   copySource.includes('endurance_stream: "耐久プリセット設定"'),

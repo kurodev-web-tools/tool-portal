@@ -307,6 +307,120 @@
       - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-karaoke-adjust/`.
     - residual risk:
       - This intentionally promotes existing material-library assets into the karaoke starter composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
+  - 2026-05-26 karaoke EN placement follow-up:
+    - source: user-provided EN locale current draft JSON for `presetId: "karaoke"`.
+    - scope: `karaoke` / `square-1-1` EN locale initial placement only. JA placement, title asset registry, schema, export, handoff payload, material UI, and title swap UI are unchanged.
+    - applied:
+      - Kept the existing JA square starter placement as the default path.
+      - Applied EN-only placement offsets for the transparent title image, pink / gold note decorations, standee guide, and `20:00 START` text when `createKaraokeIriamSquareDraft(..., "en")` is used.
+      - Re-adjusted `20:00 START` to the latest supplied EN JSON position `x: 638.4556146531436 / y: 316.93642846870324`.
+      - Fixed the root cause of `New` / modal apply drifting the time text: legacy 16:9 EN visual adjustments are no longer applied to IRIAM `square-1-1` drafts, while text body localization remains available.
+      - Kept background, title asset selection, cloud label materials, sparkle material, layer order, and editable text copy unchanged.
+    - current draft JSON:
+      - Acquired from the user paste; no separate browser JSON export was needed.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed before implementation on the old EN title image x / y position.
+      - RED: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs` failed on the localization pass overwriting the square EN time position with the legacy 16:9 karaoke coordinate.
+      - GREEN: `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+    - width check:
+      - Rechecked saved EN `karaoke` / `square-1-1` draft at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+      - All checked widths had `documentScrollWidth === documentClientWidth`, `bodyScrollWidth === bodyClientWidth`, one nonblank canvas, `locale: "en"`, `presetId: "karaoke"`, EN title placement `x: 38.07979288349691 / y: 714.4804541365222`, and EN time placement `x: 638.4556146531436 / y: 316.93642846870324`.
+    - residual risk:
+      - Only the pasted `karaoke` EN default colorway placement was adjusted in this step.
+  - 2026-05-26 first_stream EN placement follow-up:
+    - source: user-provided EN locale current draft JSON for `presetId: "first_stream"` after local visual adjustment.
+    - scope: `first_stream` / `square-1-1` EN locale initial placement only. JA placement, title asset registry, schema, export, handoff payload, material UI, and title swap UI are unchanged.
+    - applied:
+      - Kept the existing JA square starter placement as the default path.
+      - Applied EN-only placement for the transparent title image: `x: -23.224409463599443 / y: 602.2911120569338`.
+      - Applied EN-only size adjustment for the second time badge base: `x: 0.5999999999999659 / y: 105 / width: 476.020766269667 / height: 82.50096881700985`.
+      - Applied EN-only editable text body / placement for `20:00 START` and `Requests welcome`; the sub text uses `x: 16.178384635220397 / y: 121.70854968602646`.
+      - Confirmed the existing IRIAM square localization guard preserves these square coordinates when `New` / modal apply calls text localization.
+    - current draft JSON:
+      - Acquired from the user paste; no separate browser JSON export was needed.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs` failed before implementation on the old EN title image x / y position.
+      - GREEN: `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+    - width check:
+      - Rechecked EN `first_stream` / `square-1-1` `New` draft flow at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+      - All checked widths had `documentScrollWidth === documentClientWidth`, `bodyScrollWidth === bodyClientWidth`, one nonblank canvas, `locale: "en"`, `presetId: "first_stream"`, EN title placement `x: -23.224409463599443 / y: 602.2911120569338`, second badge size `width: 476.020766269667 / height: 82.50096881700985`, and EN text placement `20:00 START x: 22.054495036772124 / y: 37.16087288510222`, `Requests welcome x: 16.178384635220397 / y: 121.70854968602646`.
+    - residual risk:
+      - Only the pasted `first_stream` EN default colorway placement was adjusted in this step.
+  - 2026-05-26 endurance_stream EN placement follow-up:
+    - source: user-provided EN locale current draft JSON for `presetId: "endurance_stream"`.
+    - scope: `endurance_stream` / `square-1-1` EN locale initial placement only. JA placement, title asset registry, schema, export, handoff payload, material UI, and title swap UI are unchanged.
+    - applied:
+      - Kept the existing JA square starter placement as the default path.
+      - Applied EN-only placement / scale / rotation for the transparent title image: `x: 275.5477981487745 / y: 611.9131932483637 / width: 918.0326358849836 / height: 488.6869497833735 / rotation: -30.20164646321526`.
+      - Replaced the EN-only ribbon material with `label-diagonal-ribbon-slate-cyan.png` and applied the supplied diagonal placement `x: 437.1478941878667 / y: 715.6389829891508 / width: 851.754878781992 / height: 609.929600414004 / rotation: -31.003891253382996`.
+      - Applied EN-only time text body `19:00 START` with the supplied diagonal placement `x: 750.0938516201176 / y: 952.3983503601947 / rotation: -31.269613517036777 / fontSize: 50`.
+      - Applied EN-only exported layer labels for IRIAM square draft JSON. The `endurance_stream` initial layers now export as `Image 1 (Background)`, `Shape 1 (Top challenge light)`, `Image 2 (Endurance title)`, `Shape 2 (Standee guide)`, `Asset: Diagonal Cut Ribbon`, and `Text 2 (Time)`.
+      - Confirmed the existing IRIAM square localization guard preserves these square coordinates when `New` / modal apply calls text localization.
+      - Fixed the square preset settings modal preview root cause: the modal no longer uses a fixed CSS mock for background / title / standee placeholders, and instead renders the same configured IRIAM square draft to a canvas. This keeps JA / EN title assets, material layers, rotations, and layer placements visible before pressing create.
+    - current draft JSON:
+      - Acquired from the user paste, then rechecked through browser-created EN `endurance_stream` draft JSON after the layer-label localization fix.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` failed before implementation on the old EN title image placement / size / rotation.
+      - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` failed while the square settings modal still used the fixed CSS preview mock.
+      - RED: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs` failed while EN exported layer labels remained Japanese in the draft JSON.
+      - GREEN: `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+      - `git diff --check`
+    - width check:
+      - Rechecked EN `endurance_stream` / `square-1-1` `New` draft flow at `390 / 820 / 1024 / 1280 / 1366px` on `http://localhost:3000/tools/thumbnail-editor`.
+      - All checked widths had `documentScrollWidth === documentClientWidth`, `bodyScrollWidth === bodyClientWidth`, one nonblank canvas, `locale: "en"`, `presetId: "endurance_stream"`, EN title placement `x: 275.5477981487745 / y: 611.9131932483637`, diagonal ribbon placement `x: 437.1478941878667 / y: 715.6389829891508`, and EN time text `19:00 START x: 750.0938516201176 / y: 952.3983503601947`.
+      - Rechecked the `endurance_stream` square settings modal preview at `390 / 820 / 1024 / 1280 / 1366px`; all checked widths had no page-level horizontal overflow and a nonblank `1080 x 1080` modal preview canvas.
+      - Rechecked browser-created EN `endurance_stream` draft JSON on `http://localhost:3000/tools/thumbnail-editor`; exported layer labels are now English for background, challenge light, title, standee guide, diagonal ribbon asset, and time text.
+    - residual risk:
+      - Only the pasted `endurance_stream` EN default colorway placement was adjusted in this step. `chatting` EN placement was handled in the later EN follow-up below.
+  - 2026-05-26 dark_gacha EN placement follow-up:
+    - source: user-provided EN locale current draft JSON for `presetId: "dark_gacha"`.
+    - scope: `dark_gacha` / `square-1-1` EN locale initial placement only. JA placement, title asset registry, schema, export, handoff payload, material UI, and title swap UI are unchanged.
+    - applied:
+      - Kept the existing JA square starter placement as the default path.
+      - Applied EN-only title placement `x: -80.80149448538796 / y: 27.901545254853488 / width: 1302.6268929693151 / height: 553.0603199787986 / rotation: 21.60856614090952`.
+      - Applied EN-only standee guide placement `x: 140.27952450177935 / y: 427.3284956112033 / width: 360 / height: 628`.
+      - Applied EN-only editable text bodies `22:00 START` and `Pull or pass?` while keeping the supplied text placements.
+      - Applied EN-only exported layer labels for the initial layers: `Image 1 (Background)`, `Shape 1 (Top light outline)`, `Image 2 (Dark gacha title)`, `Shape 2 (Standee guide)`, `Shape 3 (Time badge base)`, `Shape 3 (Time badge base) Copy`, `Text 2 (Time)`, and `Text 3 (Sub text)`.
+    - current draft JSON:
+      - Acquired from the user paste, then rechecked through browser-created EN `dark_gacha` draft JSON after pressing `Create with these settings` in the square settings modal.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs` failed before implementation while EN `dark_gacha` exported layer labels and placement still used the JA/default values.
+      - GREEN: `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+      - `git diff --check`
+    - width check:
+      - Rechecked browser-created EN `dark_gacha` draft JSON on `http://localhost:3000/tools/thumbnail-editor`; exported layer labels are English and the title / standee / text values match the supplied JSON.
+    - residual risk:
+      - Only the pasted `dark_gacha` EN default colorway placement was adjusted in this step. `chatting` EN placement was handled in the later EN follow-up below.
   - 2026-05-25 dark_gacha initial placement follow-up:
     - source: user-provided current draft JSON for `presetId: "dark_gacha"` after local visual adjustment.
     - scope: `dark_gacha` / `square-1-1` initial preset body only.
@@ -373,6 +487,33 @@
       - Screenshots are under `output/playwright/thumbnail-iriam-square-final-qa-chatting-adjust/`.
     - residual risk:
       - This follows the pasted draft's intentionally oversized top title composition; it does not add a material swap UI, new material batch, export change, or handoff payload change.
+  - 2026-05-26 chatting EN placement follow-up:
+    - source: user-provided EN locale current draft JSON for `presetId: "chatting"`.
+    - scope: `chatting` / `square-1-1` EN locale initial placement only. JA placement, title asset registry, schema, export, handoff payload, material UI, and title swap UI are unchanged.
+    - applied:
+      - Kept the existing JA square starter placement as the default path.
+      - Applied EN-only title placement `x: -23.25478645013129 / y: 680.9617636927318 / width: 1071.5951240319432 / height: 439.8883839468208`.
+      - Applied EN-only standee guide placement `x: 387.40887998540126 / y: 187.6594772806876 / width: 340 / height: 616`.
+      - Removed the JA-only headline text layer from the EN starter composition and kept only `Text 2 (Time)` / `20:00 START` at the supplied lower-left placement.
+      - Applied EN-only exported layer labels for the initial layers: `Image 1 (Background)`, `Shape 1 (Top soft light)`, `Image 2 (Chatting title)`, `Shape 2 (Standee guide)`, `Shape 3 (Time badge base)`, and `Text 2 (Time)`.
+    - current draft JSON:
+      - Acquired from the user paste, then rechecked through browser-created EN `chatting` draft JSON after pressing `Create with these settings` in the square settings modal.
+    - verification completed:
+      - RED: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs` failed before implementation while EN `chatting` exported layer labels and placement still used the JA/default values.
+      - GREEN: `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+      - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+      - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+      - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+      - `npx tsc --noEmit`
+      - `npm run lint`
+      - `git diff --check`
+    - width check:
+      - Rechecked browser-created EN `chatting` draft JSON on `http://localhost:3000/tools/thumbnail-editor`; exported layer labels are English and the title / standee / time text values match the supplied JSON.
+    - residual risk:
+      - Only the pasted `chatting` EN default colorway placement was adjusted in this step.
   - 2026-05-25 square new-draft variant bugfix:
     - source: user report from local browser that pressing `新規` while a `1:1` output ratio preset is selected kept the square canvas but rebuilt the layers from the 16:9 preset body.
     - root cause:

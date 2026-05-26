@@ -146,6 +146,85 @@ assert.deepEqual(
   "chatting square time badge uses the final QA position"
 );
 
+const enSquareDraft = lib.createDraftFromPresetVariant("chatting", "square-1-1", "en");
+assert.deepEqual(enSquareDraft.canvas, { width: 1080, height: 1080 }, "chatting EN square draft uses the IRIAM canvas");
+assert.equal(enSquareDraft.presetId, "chatting", "chatting EN square keeps the existing preset id");
+assert.deepEqual(
+  enSquareDraft.layers.map((layer) => layer.name),
+  [
+    "Image 1 (Background)",
+    "Shape 1 (Top soft light)",
+    "Image 2 (Chatting title)",
+    "Shape 2 (Standee guide)",
+    "Shape 3 (Time badge base)",
+    "Text 2 (Time)"
+  ],
+  "chatting EN square draft uses English layer labels in exported JSON"
+);
+const enTitleLayer = enSquareDraft.layers.find((layer) => layer.type === "image" && layer.name === "Image 2 (Chatting title)");
+assert.ok(enTitleLayer, "chatting EN square has a title image layer");
+assert.equal(
+  enTitleLayer.src,
+  `${titlePrefix}chatting-square-en-title-pink-blue-v1.png`,
+  "chatting EN square uses the matching transparent EN title image"
+);
+assert.deepEqual(
+  {
+    x: enTitleLayer.x,
+    y: enTitleLayer.y,
+    width: enTitleLayer.width,
+    height: enTitleLayer.height,
+    rotation: enTitleLayer.rotation
+  },
+  {
+    x: -23.25478645013129,
+    y: 680.9617636927318,
+    width: 1071.5951240319432,
+    height: 439.8883839468208,
+    rotation: 0
+  },
+  "chatting EN square title image uses the latest user-provided placement"
+);
+const enStandeeGuide = enSquareDraft.layers.find((layer) => layer.type === "shape" && layer.name === "Shape 2 (Standee guide)");
+assert.ok(enStandeeGuide, "chatting EN square keeps a standee placement guide");
+assert.deepEqual(
+  { x: enStandeeGuide.x, y: enStandeeGuide.y, width: enStandeeGuide.width, height: enStandeeGuide.height },
+  { x: 387.40887998540126, y: 187.6594772806876, width: 340, height: 616 },
+  "chatting EN square standee guide uses the latest user-provided placement"
+);
+const enTimeBadge = enSquareDraft.layers.find((layer) => layer.type === "shape" && layer.name === "Shape 3 (Time badge base)");
+assert.ok(enTimeBadge, "chatting EN square keeps a time badge base");
+assert.deepEqual(
+  { x: enTimeBadge.x, y: enTimeBadge.y, width: enTimeBadge.width, height: enTimeBadge.height },
+  { x: 11.515976951283392, y: 968.9800194567088, width: 363.8398563196887, height: 84.60959365411952 },
+  "chatting EN square time badge uses the latest user-provided placement"
+);
+assert.deepEqual(
+  enSquareDraft.layers.filter((layer) => layer.type === "text").map((layer) => ({
+    name: layer.name,
+    text: layer.text,
+    x: layer.x,
+    y: layer.y,
+    width: layer.width,
+    height: layer.height,
+    fontSize: layer.fontSize,
+    fontFamily: layer.fontFamily
+  })),
+  [
+    {
+      name: "Text 2 (Time)",
+      text: "20:00 START",
+      x: 30.136047294769185,
+      y: 987.1070867320212,
+      width: 330,
+      height: 58,
+      fontSize: 54,
+      fontFamily: "Fredoka"
+    }
+  ],
+  "chatting EN square text layers use the latest user-provided EN placement"
+);
+
 const normalized = lib.normalizeThumbnailDraft(squareDraft);
 assert.ok(normalized, "chatting square draft normalizes");
 assert.deepEqual(normalized.canvas, { width: 1080, height: 1080 }, "chatting square canvas survives normalization");
@@ -206,9 +285,9 @@ assert.equal(
   "chatting square modal applies the configured square draft helper"
 );
 assert.equal(
-  componentSource.includes('presetId === "chatting" ? "pop_bubble"'),
+  source.includes('getThumbnailIriamSquareKaraokeBackgroundAsset("pop_bubble", config.backgroundColorway)'),
   true,
-  "chatting settings modal keeps the background style fixed to pop_bubble"
+  "chatting square draft helper keeps the background style fixed to pop_bubble"
 );
 assert.equal(
   copySource.includes('chatting: "雑談プリセット設定"'),

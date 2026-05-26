@@ -47,9 +47,6 @@ import {
   replaceThumbnailUserMaterialLayerRef,
   replaceThumbnailIriamSquareBackgroundLayerSource,
   replaceThumbnailIriamSquareTitleLayerSource,
-  getThumbnailIriamSquareKaraokeBackgroundAsset,
-  getThumbnailIriamSquareKaraokeTitleAsset,
-  getThumbnailIriamSquareTitleAsset,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
   thumbnailFontRecentStorageKey,
@@ -154,6 +151,24 @@ type IriamSquarePresetModalConfig =
   | ThumbnailIriamSquareChattingPresetConfig
   | ThumbnailIriamSquareFirstStreamPresetConfig
   | ThumbnailIriamSquareEndurancePresetConfig;
+const createIriamSquarePresetDialogPreviewDraft = (
+  presetId: IriamSquarePresetModalPresetId,
+  config: IriamSquarePresetModalConfig,
+  locale: Locale
+): ThumbnailEditorDraft => {
+  const draft =
+    presetId === "dark_gacha"
+      ? createDarkGachaIriamSquareDraft(config as ThumbnailIriamSquareDarkGachaPresetConfig, locale)
+      : presetId === "chatting"
+        ? createChattingIriamSquareDraft(config as ThumbnailIriamSquareChattingPresetConfig, locale)
+        : presetId === "first_stream"
+          ? createFirstStreamIriamSquareDraft(config as ThumbnailIriamSquareFirstStreamPresetConfig, locale)
+          : presetId === "endurance_stream"
+            ? createEnduranceStreamIriamSquareDraft(config as ThumbnailIriamSquareEndurancePresetConfig, locale)
+            : createKaraokeIriamSquareDraft(config as ThumbnailIriamSquareKaraokePresetConfig, locale);
+
+  return localizeThumbnailPresetTextLayerBodies(draft, locale);
+};
 type CanvasInteractionState = {
   pointerId: number;
   pointerType: string;
@@ -3723,19 +3738,6 @@ function IriamSquareKaraokePresetDialog({
   onApply: () => void;
   onCancel: () => void;
 }) {
-  const backgroundStyle: ThumbnailIriamSquareKaraokeBackgroundStyle =
-    presetId === "dark_gacha" ? "dark_cute" : presetId === "chatting" ? "pop_bubble" : presetId === "first_stream" ? "soft_cloud" : presetId === "endurance_stream" ? "pop_bubble" : (config as ThumbnailIriamSquareKaraokePresetConfig).backgroundStyle;
-  const background = getThumbnailIriamSquareKaraokeBackgroundAsset(backgroundStyle, config.backgroundColorway);
-  const title =
-    presetId === "dark_gacha"
-      ? getThumbnailIriamSquareTitleAsset("dark_gacha", config.titleColorway, config.backgroundColorway, locale)
-      : presetId === "chatting"
-        ? getThumbnailIriamSquareTitleAsset("chatting", config.titleColorway, config.backgroundColorway, locale)
-        : presetId === "first_stream"
-          ? getThumbnailIriamSquareTitleAsset("first_stream", config.titleColorway, config.backgroundColorway, locale)
-          : presetId === "endurance_stream"
-            ? getThumbnailIriamSquareTitleAsset("endurance_stream", config.titleColorway, config.backgroundColorway, locale)
-            : getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway as ThumbnailIriamSquareKaraokeTitleColorway, config.backgroundColorway, locale);
   const updateConfig = (partial: Partial<IriamSquarePresetModalConfig>) => onConfigChange({ ...config, ...partial } as IriamSquarePresetModalConfig);
   const titleColorOptions: ThumbnailIriamSquareTitleColorway[] = ["match-background", ...thumbnailIriamSquareColorways];
 
@@ -3758,11 +3760,7 @@ function IriamSquareKaraokePresetDialog({
           <div className="mx-auto mt-4 w-full max-w-[34rem]">
             <p className="mb-2 text-xs font-bold text-muted">{copy.iriamSquareDialog.preview}</p>
             <div className="relative aspect-square overflow-hidden rounded-base border border-border bg-surface-muted shadow-panel">
-              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${background.src})` }} />
-              <div className="absolute left-[14%] top-[7%] h-[40%] w-[72%] rounded-full bg-white/15 blur-xl" />
-              <div className="absolute left-[14.8%] top-[11.7%] aspect-[760/320] w-[70.4%] bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${title?.src ?? ""})` }} />
-              <div className="absolute bottom-[13%] left-[9%] h-[10.5%] w-[42%] rounded-full border border-white/65 bg-white/78" />
-              <div className="absolute bottom-[8%] right-[11%] h-[38%] w-[31%] rounded-[2.4rem] border-2 border-white/75 bg-white/10" />
+              <IriamSquarePresetDialogPreview copy={copy} locale={locale} presetId={presetId} config={config} />
             </div>
           </div>
         </div>
@@ -3843,6 +3841,55 @@ function IriamSquareOptionGroup({
         ))}
       </div>
     </fieldset>
+  );
+}
+
+function IriamSquarePresetDialogPreview({
+  copy,
+  locale,
+  presetId,
+  config
+}: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
+  presetId: IriamSquarePresetModalPresetId;
+  config: IriamSquarePresetModalConfig;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const renderVersionRef = useRef(0);
+  const previewDraft = useMemo(() => createIriamSquarePresetDialogPreviewDraft(presetId, config, locale), [config, locale, presetId]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const renderVersion = renderVersionRef.current + 1;
+    renderVersionRef.current = renderVersion;
+    const buffer = document.createElement("canvas");
+
+    void drawThumbnail(buffer, previewDraft, { selectedLayerId: null, includeSelection: false }).then(() => {
+      if (renderVersionRef.current !== renderVersion || canvasRef.current !== canvas) {
+        return;
+      }
+      canvas.width = buffer.width;
+      canvas.height = buffer.height;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        return;
+      }
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(buffer, 0, 0);
+    });
+  }, [previewDraft]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="h-full w-full bg-[#081117] object-contain"
+      aria-label={copy.iriamSquareDialog.preview}
+    />
   );
 }
 

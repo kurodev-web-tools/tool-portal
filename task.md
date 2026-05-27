@@ -15,18 +15,47 @@
 ## Active Priorities
 
 1. User account / preferences foundation
-   - status: 次の planning 候補。
+   - status: planning complete in this branch. Foundation plan is `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md`。
    - direction:
      - 今後の複数ツールと paid plan を前提にした共通基盤として設計する。
      - Thumbnail Editor、Schedule Calendar、Kuro Live Comment Translator、将来の local font feature で使い回す。
      - 保存対象候補は user preferences、recent fonts、tool settings、language / translation settings、plan / quota state。
-     - auth provider、DB schema、billing、plan boundary、migration はこのタスク開始時に詳細設計する。
+     - auth provider、DB schema、billing、plan boundary、migration は候補比較に留め、実装は次 scope へ分ける。
    - first scope:
-     - 既存ツールの local-only 保存境界と、将来 account 保存へ移す候補を棚卸しする。
-     - login / paid plan / server sync の実装に進む前に、保存対象、非保存対象、移行しない payload を文書化する。
+     - completed: 既存ツールの local-only 保存境界と、将来 account 保存へ移す候補を棚卸しした。
+     - completed: login / paid plan / server sync の実装に進む前に、保存対象、非保存対象、移行しない payload を文書化した。
+   - planning results:
+     - sync candidate は locale / theme、Thumbnail recent / favorite preset ids、recent fonts、Schedule default view / week start / default time / duration、Translator target language / display preference、local font selected family refs などの軽量 preference に限定する。
+     - explicit user action only は Thumbnail project draft、server asset library upload、Schedule events / templates / hashtag sets、Translator glossary / moderation terms / session settings。
+     - local-only は tool handoff、IndexedDB image blobs、undo / draft history、Local Font Access permission / full scan result、browser-specific recovery state。
+     - store禁止または初期対象外は browser `localStorage` の OAuth tokens、raw credentials、local font binary、full comment logs by default、viewer identifiers、handoff expired payload。
+     - server sync 前提不可は local IndexedDB ref を含む draft、legacy localStorage schedule payload、handoff payload、local font availability、translator live session state。
+   - recommended next implementation candidates:
+     - first: preference contract foundation。保存分類の小さな shared contract / docs を追加し、既存 storage key と payload は変更しない。
+     - second: account / preferences shell。Auth 未接続のアカウント設定ページ、プラン表示枠、preferences 表示枠を作り、local-only 状態で確認する。
+     - third: local preference adapter。既存 localStorage keys を維持し、migration なしで読み書き境界を薄く包む。
+     - fourth: auth/provider decision spike。Supabase Auth / Clerk / Auth.js などを plan と quota 境界込みで比較する。
+     - fifth: Auth 実装。ログイン / ログアウト、account session、profile / preferences の最小保存に閉じる。
+     - sixth: account sync MVP。locale / theme + Thumbnail small preferences までに閉じ、draft / schedule / user material / translator tokens / billing を混ぜない。
+     - seventh: Stripe Billing。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 scope で扱う。
+   - account settings shell direction:
+     - 言語切り替えとテーマ切り替えは、ガワ制作時にアカウント設定ページへ持っていく。
+     - 初回 shell PR では既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` の localStorage key を維持する。
+     - 既存 header / drawer / rail の language / theme 導線は、設定ページ側で確認できる状態を作ってから重複整理する。
+     - Auth 未接続時は「ログインすると同期できます」程度の placeholder に留め、実 sync / DB / Stripe は入れない。
+   - unresolved:
+     - 最初の account MVP を global locale/theme のみにするか、Thumbnail recent/favorite preset ids も含めるか。
+     - Schedule Calendar は初回から sync するか、explicit import-only で始めるか。
+     - auth provider と DB の最終候補。
+     - paid plan が storage、translation quota、export convenience のどれを gate するか。
+     - Translator session summary / glossary の retention。
+     - account deletion 時の projects / uploaded assets / schedules / quota handling。
    - out of scope:
      - この段階の `task.md` では provider / schema / billing 実装を固定しない。
      - 個別ツールの大きな UI 実装と同時に進めない。
+     - Thumbnail Editor preset / material / font / schema / export / handoff payload は変更しない。
+   - verification:
+     - `git diff --check` passed。docs-only のため lint / typecheck / browser width check は不要。
 
 2. Kuro Live Comment Translator planning
    - status: user foundation の後に設計を見直す。
@@ -55,10 +84,15 @@
 ## Recommended Roadmap
 
 1. User account / preferences foundation planning。
-2. Kuro Live Comment Translator planning。
-3. Local font loading after user foundation。
-4. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement は、それぞれ別 PR で扱う。
-5. Schedule Calendar Google Calendar 連携や server sync は、account foundation の方針が固まってから再評価する。
+2. Preference contract foundation。
+3. Account / preferences shell。Auth 未接続のまま、アカウント設定ページ、プラン表示枠、preferences 表示枠を作り、言語 / テーマ切り替えを設定ページへ移す。
+4. Auth implementation。Supabase Auth などを接続し、ログイン / ログアウト、account session、最小 profile / preferences 保存を扱う。
+5. Preferences sync MVP。locale / theme + Thumbnail small preferences までに閉じる。
+6. Stripe Billing / quota foundation。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 PR で扱う。
+7. Kuro Live Comment Translator planning。
+8. Local font loading after user foundation。
+9. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement は、それぞれ別 PR で扱う。
+10. Schedule Calendar Google Calendar 連携や server sync は、account foundation の方針が固まってから再評価する。
 
 ## Next Session Prompt
 
@@ -68,25 +102,26 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-複数ツール共通の user account / preferences foundation を planning してください。
+複数ツール共通の user account / preferences foundation の次 slice として、preference contract foundation を実装計画してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- 実装に進む前に、既存ツールの local-only 保存境界と、将来 account / preferences へ移す候補を棚卸ししてください。
+- `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を確認してください。
+- 既存ツールの local-only 保存境界と、将来 account / preferences へ移す候補は planning 済みです。
 
 推奨 branch:
-- `codex/user-preferences-foundation-plan`
+- `codex/preference-contract-foundation`
 
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/user-preferences-foundation-plan`
+- `D:/V_streamer_tools/.worktrees/preference-contract-foundation`
 
 今回の scope:
-- planning / docs / task.md 更新のみ。
-- Thumbnail Editor、Schedule Calendar、Kuro Live Comment Translator、local font loading の共通 preference 候補を整理する。
-- 保存する情報、保存しない情報、local-only に残す情報、server sync 前提にできない情報を分ける。
-- auth provider / DB schema / billing / quota は候補比較までに留め、実装しない。
+- preference contract foundation の小さな実装計画、または docs + contract-only 実装に留める。
+- 既存 storage key / payload / localStorage / IndexedDB / sessionStorage の shape は変更しない。
+- `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` の分類を source of truth として、sync candidate / explicit-only / local-only / do-not-store / cannot-assume-server-sync を検証できる形にする。
+- auth provider / DB schema / billing / quota は候補比較までに留める。
 
 Out of scope:
 - login UI 実装。
@@ -94,14 +129,16 @@ Out of scope:
 - paid plan / billing 実装。
 - 個別ツールの UI 改修。
 - Thumbnail Editor preset / material / font / schema / export / handoff payload 変更。
+- Schedule Calendar storage payload / handoff payload 変更。
+- Kuro Live Comment Translator 本体実装。
 
 検証:
 - docs-only なら `git diff --check`。
-- 実装ファイルを触った場合は、影響範囲に応じて lint / typecheck / contract を追加する。
+- contract-only 実装を触った場合は、追加した contract script、`npm run lint`、`npx tsc --noEmit`、`git diff --check`。
 
 完了時:
-- `task.md` に planning 結果、未決事項、次の実装候補、検証結果を残してください。
-- 必要なら `docs/future` に foundation plan を追加してください。既存 docs と重複させないでください。
+- `task.md` に実装内容、確認結果、残リスク、次候補への引き継ぎを残してください。
+- provider / DB / billing 実装へ進む場合は別 branch / worktree / PR に分けてください。
 ```
 
 ## Backlog

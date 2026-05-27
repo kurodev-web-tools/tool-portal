@@ -254,35 +254,64 @@
    - main merge preparation judgment:
      - No main-merge blocker found. Next scope can be a merge-preparation PR from `codex/thumbnail-iriam-square-preview` to `main` without adding new thumbnail functionality.
 
-3. Thumbnail Editor font / preset typography follow-up
-   - status: IRIAM square preview branch を main に統合した後に戻る。
+3. Thumbnail Editor Google Fonts standard batch / IRIAM title font parity
+   - status: 次の実装候補。まず確認用 branch `codex/thumbnail-font-expansion-check` を base にして作業 branch / worktree を切る。
    - direction:
-     - IRIAM title image で使った license-free font を、必要に応じて editable text layer 用にも追加する。
+     - Google Fonts 由来で license を確認できる font のみを標準 font として追加する。
+     - まず IRIAM title image で使った font と editable text layer 用 manifest を照合し、不足分を埋める。
+     - 追加量は小規模に閉じ、目安は +8-12 family 程度までにする。
+     - 既存方針どおり route-scoped self-host font loading / manifest / license note / contract を揃える。
      - language / mood category、font search、recently used は既に主要導線が入っているため、大きな UI 改修と混ぜない。
+     - font 追加後は確認用 branch へ merge してローカル目視確認し、問題なければ確認用 branch から `main` へ結合する。
    - out of scope:
      - material asset 追加との同時実装。
      - 1:1 preset body / main merge preparation との同時実装。
+     - ローカル端末フォント読み込み。
+     - ログイン / user settings / paid plan 基盤。
 
-4. Kuro Live Comment Translator planning
-   - status: IRIAM square / font follow-up の後に planning へ戻る。
+4. User account / preferences foundation
+   - status: font standard batch の後に planning から開始する。
+   - direction:
+     - 今後の複数ツールと paid plan を前提にした共通基盤として設計する。
+     - Thumbnail Editor、Schedule Calendar、Kuro Live Comment Translator、将来の local font feature で使い回す。
+     - 保存対象候補は user preferences、recent fonts、tool settings、language / translation settings、plan / quota state。
+     - auth provider、DB schema、billing、plan boundary、migration はこのタスク開始時に詳細設計する。
+   - out of scope:
+     - この段階の `task.md` では詳細設計を固定しない。
+     - 個別ツールの大きな UI 実装と同時に進めない。
+
+5. Kuro Live Comment Translator planning
+   - status: font standard batch と user foundation の後に設計を見直す。
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
      - OBS Browser Dock 前提の read-only MVP。
      - 1 platform から開始。
      - owner-only / OAuth / rate limit / quota / moderation を前提にする。
      - コメント翻訳、短い要約、用語集を中心にし、返信生成や自動投稿は初期 scope に入れない。
+     - ログイン / user settings / paid plan 基盤の方針に合わせて、保存項目と制限設計をタスク開始時に見直す。
+
+6. Local font loading
+   - status: user account / preferences foundation 後の later scope。
+   - direction:
+     - 端末に入っている font を直接読む Local Font Access 系は、ログイン / user settings 基盤の後に扱う。
+     - DB に保存する場合も、基本は font family / PostScript name / style / fallback / last-seen state などの選択情報に留める。
+     - font file 本体の保存は、ユーザーが明示的に upload した場合だけ別途検討する。
+   - out of scope:
+     - Google Fonts standard batch と同じ PR に混ぜない。
+     - preset 初期値、handoff payload、schema に local font を混ぜない。
 
 ## Recommended Roadmap
 
-1. Batch A: existing preset decoration registration
-2. Batch B: dark / horror / smoke materials
-3. Batch C: neutral prop materials
-4. Preview branch final confirmation after material expansion
-5. Merge `codex/thumbnail-iriam-square-preview` to `main`
-6. Font / preset typography follow-up
-7. New tool planning: Kuro Live Comment Translator
+1. Font expansion confirmation branch setup: `codex/thumbnail-font-expansion-check`
+2. Thumbnail Editor Google Fonts standard batch / IRIAM title font parity
+3. Confirm the font addition on `codex/thumbnail-font-expansion-check`, then merge that confirmation branch to `main`
+4. User account / preferences foundation for future tools and paid plans
+5. New tool planning: Kuro Live Comment Translator
+6. Local font loading after user foundation
+7. 1:1 IRIAM preset / material follow-up as needed
+8. 9:16 preset follow-up after square workflow settles
 
-9:16 presets are still valuable for YouTube Shorts / vertical streams, but should follow after the 1:1 IRIAM workflow proves the square asset / title image / decoration pattern.
+9:16 presets are still valuable for YouTube Shorts / vertical streams, but should follow after the 1:1 IRIAM workflow and user-facing account direction settle.
 
 ## Next Session Prompt
 
@@ -292,60 +321,63 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Thumbnail Editor IRIAM square preview branch の final confirmation として、material expansion Batch A-C merge 後の `codex/thumbnail-iriam-square-preview` を最終確認し、main merge preparation に進める状態か確認してください。
+Thumbnail Editor の Google Fonts standard batch / IRIAM title font parity として、IRIAM square title image で使った font と editable text layer 用 font catalog を照合し、不足している Google Fonts 由来 font を小規模に追加してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- PR #215、PR #216、Batch C neutral prop material PR が `codex/thumbnail-iriam-square-preview` に merge 済みであることを確認してください。
-- 未 merge の場合は、新規作業へ進まず blocker summary を返してください。
-- merge 済みなら、`origin/codex/thumbnail-iriam-square-preview` を base に作業 branch / worktree を切ってください。
+- `codex/thumbnail-font-expansion-check` が remote に存在し、`origin/main` の最新を含んでいることを確認してください。
+- 確認用 branch が未作成 / stale の場合は、新規実装へ進まず blocker summary を返してください。
+- 問題なければ `origin/codex/thumbnail-font-expansion-check` を base に作業 branch / worktree を切ってください。
 
 推奨 branch:
-- `codex/thumbnail-iriam-square-final-confirmation-after-materials`
+- `codex/thumbnail-google-fonts-standard-batch`
 
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/thumbnail-iriam-square-final-confirmation-after-materials`
+- `D:/V_streamer_tools/.worktrees/thumbnail-google-fonts-standard-batch`
 
 今回の scope:
-- `codex/thumbnail-iriam-square-preview` 上の final confirmation。
-- 1:1 IRIAM 5 preset、settings modal、background / title swap、EN title asset、registered material Batch A-C の contract 状態を確認する。
-- material library count / category / search / 16:9 と 1:1 への registered material add flow に破綻がないか確認する。
-- main merge preparation に必要な blocker が残っていれば、修正ではなく blocker summary と次の最小 follow-up scope を返す。
+- Google Fonts 由来で license を確認できる font のみを標準 font として追加する。
+- IRIAM title image で使った font と `thumbnailFontManifest` / CSS / license note を照合し、不足分だけ追加する。
+- 追加量は小規模に閉じ、目安は +8-12 family 程度までにする。
+- route-scoped self-host font loading、manifest-backed listbox、license note、contract を維持する。
+- font 追加作業 PR は `codex/thumbnail-font-expansion-check` を base に作成する。
 
 Out of scope:
-- 新規素材生成。
-- preset body / 初期配置の新規変更。
+- local font loading。
+- login / user settings / paid plan。
+- comment translator。
+- 新規 preset body / 初期配置変更。
+- material asset 追加。
 - schema、canvas export、handoff payload、IndexedDB / localStorage key 変更。
-- 9:16 preset、font picker、新規 tool 実装。
+- language / mood category、font search、recently used の大きな UI 改修。
 
 検証:
-- `node scripts/thumbnail-material-assets-contract.mjs`
+- `node scripts/thumbnail-font-policy-contract.mjs`
 - `node scripts/thumbnail-preset-text-locale-contract.mjs`
-- `node scripts/thumbnail-preset-apply-safety-contract.mjs`
-- `node scripts/thumbnail-preset-variants-contract.mjs`
-- `node scripts/tool-handoff-contract.mjs`
-- 必要なら square preset / swap / title asset boundary の関連 contract
 - `npm run lint`
 - `npx tsc --noEmit`
 - `git diff --check`
-- `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認する。
+- UI 表示を触った場合のみ `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
 
 完了時:
-- `task.md` に final confirmation の検証結果、幅別確認結果、残 blocker、main merge preparation への判断を追記してください。
-- 問題なければ commit まで行ってください。push / PR は指示があるまで行わないでください。
+- `task.md` に実装内容、確認結果、残リスク、確認用 branch への引き継ぎを追記してください。
+- 問題なければ commit / push / draft PR 作成まで進めてください。
 ```
 
 ## Backlog
 
 - Thumbnail Editor:
-  - 1:1 IRIAM preview branch main merge preparation。
   - 9:16 preset for YouTube Shorts / vertical streams。
   - crop 仕様。
   - text / image layer schema。
-  - public asset / font follow-up。
+  - Google Fonts standard batch / IRIAM title font parity。
+  - local font loading after user account / preferences foundation。
   - preset typography refinement。
+- Account / monetization:
+  - user account / preferences foundation。
+  - paid plan / quota foundation。
 - Schedule Calendar:
   - Google Calendar 連携。
   - ログイン / サーバー同期。

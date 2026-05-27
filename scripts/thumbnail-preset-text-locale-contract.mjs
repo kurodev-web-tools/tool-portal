@@ -100,6 +100,7 @@ const expectedPresetIds = [
   "privacy_notice",
   "whiteboard_plan",
   "karaoke",
+  "dark_gacha",
   "chatting",
   "clip",
   "game_live",
@@ -192,10 +193,14 @@ for (const preset of thumbnailLib.thumbnailPresets) {
   );
 
   const enDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(jaDraft, "en");
+  const expectedEnLayerNames =
+    jaDraft.canvas.width === 1080 && jaDraft.canvas.height === 1080
+      ? jaDraft.layers.map((layer) => thumbnailCopy.getThumbnailLayerDisplayName(layer, "en"))
+      : jaDraft.layers.map((layer) => layer.name);
   assert.deepEqual(
     enDraft.layers.map((layer) => layer.name),
-    jaDraft.layers.map((layer) => layer.name),
-    `${preset.id} keeps layer.name stable when localizing text bodies`
+    expectedEnLayerNames,
+    `${preset.id} localizes layer.name only for IRIAM square drafts`
   );
   assert.deepEqual(
     enDraft.layers.map((layer) => layer.id),
@@ -524,7 +529,7 @@ const enChattingDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
 );
 assert.equal(
   textLayers(enChattingDraft).find((layer) => layer.name === "テキスト 2（時刻）")?.text,
-  "21:00 START",
+  "20:00 START",
   "Chatting time copy follows the supplied English visual draft"
 );
 const enClipDraft = thumbnailCopy.localizeThumbnailPresetTextLayerBodies(
@@ -741,6 +746,11 @@ assert.match(
   thumbnailAppSource,
   /localizeThumbnailPresetTextLayerBodies\(createDraftFromPreset\(/,
   "Thumbnail Editor localizes preset text bodies only at draft creation/apply time"
+);
+assert.match(
+  thumbnailAppSource,
+  /createDraftFromPresetVariant\([^)]*,\s*locale\)/,
+  "Thumbnail Editor passes the resolved locale into square variant draft creation"
 );
 assert.doesNotMatch(
   thumbnailAppSource,

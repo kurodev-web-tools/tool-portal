@@ -8,7 +8,12 @@ import {
   applyThumbnailPresetPartial,
   applyThumbnailStandeePlacementPreset,
   applyThumbnailUserMaterialLayerFallback,
+  createChattingIriamSquareDraft,
+  createDarkGachaIriamSquareDraft,
+  createEnduranceStreamIriamSquareDraft,
+  createFirstStreamIriamSquareDraft,
   createNextRecentThumbnailPresetIds,
+  createKaraokeIriamSquareDraft,
   createDraftFromPreset,
   createDraftFromPresetVariant,
   createImageLayer,
@@ -16,6 +21,7 @@ import {
   createThumbnailUserMaterialLayer,
   createShapeLayer,
   createTextLayer,
+  defaultThumbnailIriamSquareEndurancePresetConfig,
   canAddThumbnailUserMaterialRef,
   drawThumbnail,
   formatThumbnailUserMaterialBytes,
@@ -28,6 +34,8 @@ import {
   getThumbnailQualityGuardSummary,
   getThumbnailUserMaterialUsageSummary,
   getLayerCenter,
+  getThumbnailIriamSquareBackgroundPanelModel,
+  getThumbnailIriamSquareTitlePanelModel,
   hitTestLayerHandle,
   isThumbnailDraftPristineForPreset,
   layerContainsPoint,
@@ -37,9 +45,13 @@ import {
   normalizeThumbnailPresetDiscoveryState,
   pointToLayerLocal,
   replaceThumbnailUserMaterialLayerRef,
+  replaceThumbnailIriamSquareBackgroundLayerSource,
+  replaceThumbnailIriamSquareTitleLayerSource,
   thumbnailCanvasSizes,
   thumbnailDraftStorageKey,
   thumbnailFontRecentStorageKey,
+  thumbnailIriamSquareColorways,
+  thumbnailIriamSquareKaraokeBackgroundStyles,
   thumbnailMainTextCarryoverTargets,
   thumbnailMaterialLibrary,
   thumbnailPresetDiscoveryStorageKey,
@@ -54,6 +66,15 @@ import {
   type ThumbnailCanvas,
   type ThumbnailCanvasSizeId,
   type ThumbnailEditorDraft,
+  type ThumbnailIriamSquareChattingPresetConfig,
+  type ThumbnailIriamSquareColorway,
+  type ThumbnailIriamSquareDarkGachaPresetConfig,
+  type ThumbnailIriamSquareEndurancePresetConfig,
+  type ThumbnailIriamSquareFirstStreamPresetConfig,
+  type ThumbnailIriamSquareKaraokeBackgroundStyle,
+  type ThumbnailIriamSquareKaraokePresetConfig,
+  type ThumbnailIriamSquareKaraokeTitleColorway,
+  type ThumbnailIriamSquareTitleColorway,
   type ThumbnailLayer,
   type ThumbnailMaterialCategory,
   type ThumbnailPreset,
@@ -123,6 +144,31 @@ type EditorMode = "edit" | "pan";
 type PresetApplyMode = "plain" | "carryover" | "handoff";
 type CanvasInteractionMode = "drag" | "resize" | "rotate";
 type CanvasCursor = "default" | "move" | "grab" | "grabbing" | "crosshair" | "nwse-resize" | "nesw-resize";
+type IriamSquarePresetModalPresetId = "karaoke" | "dark_gacha" | "chatting" | "first_stream" | "endurance_stream";
+type IriamSquarePresetModalConfig =
+  | ThumbnailIriamSquareKaraokePresetConfig
+  | ThumbnailIriamSquareDarkGachaPresetConfig
+  | ThumbnailIriamSquareChattingPresetConfig
+  | ThumbnailIriamSquareFirstStreamPresetConfig
+  | ThumbnailIriamSquareEndurancePresetConfig;
+const createIriamSquarePresetDialogPreviewDraft = (
+  presetId: IriamSquarePresetModalPresetId,
+  config: IriamSquarePresetModalConfig,
+  locale: Locale
+): ThumbnailEditorDraft => {
+  const draft =
+    presetId === "dark_gacha"
+      ? createDarkGachaIriamSquareDraft(config as ThumbnailIriamSquareDarkGachaPresetConfig, locale)
+      : presetId === "chatting"
+        ? createChattingIriamSquareDraft(config as ThumbnailIriamSquareChattingPresetConfig, locale)
+        : presetId === "first_stream"
+          ? createFirstStreamIriamSquareDraft(config as ThumbnailIriamSquareFirstStreamPresetConfig, locale)
+          : presetId === "endurance_stream"
+            ? createEnduranceStreamIriamSquareDraft(config as ThumbnailIriamSquareEndurancePresetConfig, locale)
+            : createKaraokeIriamSquareDraft(config as ThumbnailIriamSquareKaraokePresetConfig, locale);
+
+  return localizeThumbnailPresetTextLayerBodies(draft, locale);
+};
 type CanvasInteractionState = {
   pointerId: number;
   pointerType: string;
@@ -413,12 +459,31 @@ const getWeeklyScheduleLayerGroup = (layer: ThumbnailLayer) => {
     itemLabel: match[2]
   };
 };
-const thumbnailPresetCategories = Array.from(new Set(thumbnailPresets.map((preset) => preset.category))) as ThumbnailPresetCategory[];
-const thumbnailPresetUsageLabels = Array.from(new Set(thumbnailPresets.map((preset) => preset.usageLabel)));
 const getPresetsByIds = (presetIds: ThumbnailPresetId[]) =>
   presetIds
     .map((presetId) => thumbnailPresets.find((preset) => preset.id === presetId))
     .filter((preset): preset is ThumbnailPreset => Boolean(preset));
+const isPresetSelectableForVariant = (presetId: ThumbnailPresetId, variantId: ThumbnailPresetVariantId) =>
+  variantId === "square-1-1" ? presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream" || presetId === "endurance_stream" : presetId !== "dark_gacha";
+const getThumbnailPresetsForVariant = (variantId: ThumbnailPresetVariantId) =>
+  thumbnailPresets.filter((preset) => isPresetSelectableForVariant(preset.id, variantId));
+const defaultThumbnailIriamSquarePresetConfig: ThumbnailIriamSquareKaraokePresetConfig = {
+  backgroundStyle: "soft_cloud",
+  backgroundColorway: "pink-blue",
+  titleColorway: "match-background"
+};
+const defaultThumbnailIriamSquareDarkGachaPresetConfig: ThumbnailIriamSquareDarkGachaPresetConfig = {
+  backgroundColorway: "purple",
+  titleColorway: "match-background"
+};
+const defaultThumbnailIriamSquareChattingPresetConfig: ThumbnailIriamSquareChattingPresetConfig = {
+  backgroundColorway: "pink-blue",
+  titleColorway: "match-background"
+};
+const defaultThumbnailIriamSquareFirstStreamPresetConfig: ThumbnailIriamSquareFirstStreamPresetConfig = {
+  backgroundColorway: "pink-blue",
+  titleColorway: "match-background"
+};
 const createThumbnailToSnsImageStorageId = () => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${thumbnailToSnsImageStoragePrefix}-${crypto.randomUUID()}`;
@@ -501,6 +566,12 @@ export function ThumbnailEditorApp() {
   const [userMaterialImageUrls, setUserMaterialImageUrls] = useState<Record<string, string>>({});
   const [replaceUserMaterialRef, setReplaceUserMaterialRef] = useState<ThumbnailUserMaterialRef | null>(null);
   const [pendingPresetApplyId, setPendingPresetApplyId] = useState<ThumbnailPresetId | null>(null);
+  const [iriamSquarePresetModalPresetId, setIriamSquarePresetModalPresetId] = useState<IriamSquarePresetModalPresetId | null>(null);
+  const [thumbnailIriamSquarePresetConfig, setThumbnailIriamSquarePresetConfig] = useState<ThumbnailIriamSquareKaraokePresetConfig>(defaultThumbnailIriamSquarePresetConfig);
+  const [thumbnailIriamSquareDarkGachaPresetConfig, setThumbnailIriamSquareDarkGachaPresetConfig] = useState<ThumbnailIriamSquareDarkGachaPresetConfig>(defaultThumbnailIriamSquareDarkGachaPresetConfig);
+  const [thumbnailIriamSquareChattingPresetConfig, setThumbnailIriamSquareChattingPresetConfig] = useState<ThumbnailIriamSquareChattingPresetConfig>(defaultThumbnailIriamSquareChattingPresetConfig);
+  const [thumbnailIriamSquareFirstStreamPresetConfig, setThumbnailIriamSquareFirstStreamPresetConfig] = useState<ThumbnailIriamSquareFirstStreamPresetConfig>(defaultThumbnailIriamSquareFirstStreamPresetConfig);
+  const [thumbnailIriamSquareEndurancePresetConfig, setThumbnailIriamSquareEndurancePresetConfig] = useState<ThumbnailIriamSquareEndurancePresetConfig>(defaultThumbnailIriamSquareEndurancePresetConfig);
   const [inlineTextEdit, setInlineTextEdit] = useState<InlineTextEditState | null>(null);
   const [canvasCursor, setCanvasCursor] = useState<CanvasCursor>("grab");
   const [canvasAttachVersion, setCanvasAttachVersion] = useState(0);
@@ -582,6 +653,9 @@ export function ThumbnailEditorApp() {
     [draft.presetId]
   );
   const selectedPresetName = getThumbnailPresetName(selectedPresetBase.id, locale, selectedPresetBase.name);
+  const currentVariantId: ThumbnailPresetVariantId =
+    (Object.values(thumbnailPresetVariants).find((variant) => variant.canvas.width === draft.canvas.width && variant.canvas.height === draft.canvas.height)?.id as ThumbnailPresetVariantId | undefined) ??
+    "landscape-16-9";
   const pendingPreset = useMemo(
     () => thumbnailPresets.find((preset) => preset.id === pendingPresetApplyId) ?? null,
     [pendingPresetApplyId]
@@ -1259,6 +1333,27 @@ export function ThumbnailEditorApp() {
   );
 
   const requestPresetApply = (presetId: ThumbnailPresetId) => {
+    if (!isPresetSelectableForVariant(presetId, currentVariantId)) {
+      setHeaderMenuOpen(null);
+      return;
+    }
+    if (currentVariantId === "square-1-1" && (presetId === "karaoke" || presetId === "dark_gacha" || presetId === "chatting" || presetId === "first_stream" || presetId === "endurance_stream")) {
+      if (presetId === "karaoke") {
+        setThumbnailIriamSquarePresetConfig(defaultThumbnailIriamSquarePresetConfig);
+      } else if (presetId === "dark_gacha") {
+        setThumbnailIriamSquareDarkGachaPresetConfig(defaultThumbnailIriamSquareDarkGachaPresetConfig);
+      } else if (presetId === "chatting") {
+        setThumbnailIriamSquareChattingPresetConfig(defaultThumbnailIriamSquareChattingPresetConfig);
+      } else if (presetId === "first_stream") {
+        setThumbnailIriamSquareFirstStreamPresetConfig(defaultThumbnailIriamSquareFirstStreamPresetConfig);
+      } else {
+        setThumbnailIriamSquareEndurancePresetConfig(defaultThumbnailIriamSquareEndurancePresetConfig);
+      }
+      setIriamSquarePresetModalPresetId(presetId);
+      setPendingPresetApplyId(null);
+      setHeaderMenuOpen(null);
+      return;
+    }
     if (!handoffPayload && isThumbnailDraftPristineForPreset(draft)) {
       applyPreset(presetId, "plain");
       return;
@@ -1269,7 +1364,10 @@ export function ThumbnailEditorApp() {
 
   const applyPreset = (presetId: ThumbnailPresetId, mode: PresetApplyMode) => {
     recordPresetUse(presetId);
-    const next = createPresetDraftForLocale(presetId, draft.canvas);
+    const next =
+      currentVariantId === "square-1-1"
+        ? localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(presetId, currentVariantId, locale), locale)
+        : createPresetDraftForLocale(presetId, draft.canvas);
     const nextDraft =
       mode === "handoff" && handoffPayload
         ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
@@ -1289,9 +1387,75 @@ export function ThumbnailEditorApp() {
     );
   };
 
+  const applyKaraokeIriamSquarePreset = (config: ThumbnailIriamSquareKaraokePresetConfig) => {
+    recordPresetUse("karaoke");
+    const next = localizeThumbnailPresetTextLayerBodies(createKaraokeIriamSquareDraft(config, locale), locale);
+    const nextDraft = handoffPayload
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
+      : next;
+    replaceDraft(nextDraft, { recordHistory: true });
+    setThumbnailIriamSquarePresetConfig(config);
+    setIriamSquarePresetModalPresetId(null);
+    setMobilePanel("canvas");
+    showToast("success", copy.toasts.applyPlain);
+  };
+
+  const applyDarkGachaIriamSquarePreset = (config: ThumbnailIriamSquareDarkGachaPresetConfig) => {
+    recordPresetUse("dark_gacha");
+    const next = localizeThumbnailPresetTextLayerBodies(createDarkGachaIriamSquareDraft(config, locale), locale);
+    const nextDraft = handoffPayload
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
+      : next;
+    replaceDraft(nextDraft, { recordHistory: true });
+    setThumbnailIriamSquareDarkGachaPresetConfig(config);
+    setIriamSquarePresetModalPresetId(null);
+    setMobilePanel("canvas");
+    showToast("success", copy.toasts.applyPlain);
+  };
+
+  const applyChattingIriamSquarePreset = (config: ThumbnailIriamSquareChattingPresetConfig) => {
+    recordPresetUse("chatting");
+    const next = localizeThumbnailPresetTextLayerBodies(createChattingIriamSquareDraft(config, locale), locale);
+    const nextDraft = handoffPayload
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
+      : next;
+    replaceDraft(nextDraft, { recordHistory: true });
+    setThumbnailIriamSquareChattingPresetConfig(config);
+    setIriamSquarePresetModalPresetId(null);
+    setMobilePanel("canvas");
+    showToast("success", copy.toasts.applyPlain);
+  };
+
+  const applyFirstStreamIriamSquarePreset = (config: ThumbnailIriamSquareFirstStreamPresetConfig) => {
+    recordPresetUse("first_stream");
+    const next = localizeThumbnailPresetTextLayerBodies(createFirstStreamIriamSquareDraft(config, locale), locale);
+    const nextDraft = handoffPayload
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
+      : next;
+    replaceDraft(nextDraft, { recordHistory: true });
+    setThumbnailIriamSquareFirstStreamPresetConfig(config);
+    setIriamSquarePresetModalPresetId(null);
+    setMobilePanel("canvas");
+    showToast("success", copy.toasts.applyPlain);
+  };
+
+  const applyEnduranceIriamSquarePreset = (config: ThumbnailIriamSquareEndurancePresetConfig) => {
+    recordPresetUse("endurance_stream");
+    const next = localizeThumbnailPresetTextLayerBodies(createEnduranceStreamIriamSquareDraft(config, locale), locale);
+    const nextDraft = handoffPayload
+      ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
+      : next;
+    replaceDraft(nextDraft, { recordHistory: true });
+    setThumbnailIriamSquareEndurancePresetConfig(config);
+    setIriamSquarePresetModalPresetId(null);
+    setMobilePanel("canvas");
+    showToast("success", copy.toasts.applyPlain);
+  };
+
   const changeCanvasSize = (sizeId: ThumbnailCanvasSizeId) => {
     const canvas = thumbnailCanvasSizes[sizeId];
-    const next = createPresetDraftForLocale(draft.presetId, canvas);
+    const targetPresetId = draft.presetId === "dark_gacha" ? "karaoke" : draft.presetId;
+    const next = createPresetDraftForLocale(targetPresetId, canvas);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
       : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
@@ -1301,10 +1465,18 @@ export function ThumbnailEditorApp() {
 
   const changePresetVariant = (variantId: ThumbnailPresetVariantId) => {
     const variant = thumbnailPresetVariants[variantId];
-    const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(draft.presetId, variantId), locale);
+    const targetPresetId =
+      variantId === "square-1-1"
+        ? isPresetSelectableForVariant(draft.presetId, variantId)
+          ? draft.presetId
+          : "karaoke"
+        : draft.presetId === "dark_gacha"
+          ? "karaoke"
+          : draft.presetId;
+    const next = localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, variantId, locale), locale);
     const nextDraft = handoffPayload
       ? applyScheduleHandoffToThumbnailDraft(next, handoffPayload, locale)
-      : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
+      : variantId === "square-1-1" ? next : applyThumbnailMainTextCarryover(next, getThumbnailMainTextCarryover(draft));
     replaceDraft(nextDraft, { recordHistory: true });
     setMobilePanel("canvas");
     setHeaderMenuOpen(null);
@@ -1330,7 +1502,8 @@ export function ThumbnailEditorApp() {
   };
 
   const newDraft = () => {
-    replaceDraft(createPresetDraftForLocale(draft.presetId, draft.canvas), { recordHistory: true });
+    const targetPresetId = isPresetSelectableForVariant(draft.presetId, currentVariantId) ? draft.presetId : "karaoke";
+    replaceDraft(localizeThumbnailPresetTextLayerBodies(createDraftFromPresetVariant(targetPresetId, currentVariantId, locale), locale), { recordHistory: true });
     setMobilePanel("canvas");
     showToast("info", copy.toasts.newDraft);
   };
@@ -1850,22 +2023,45 @@ export function ThumbnailEditorApp() {
   };
 
   const canvasSizeId: ThumbnailCanvasSizeId = draft.canvas.width === 1920 ? "full-hd" : "hd";
-  const currentVariantId: ThumbnailPresetVariantId =
-    (Object.values(thumbnailPresetVariants).find((variant) => variant.canvas.width === draft.canvas.width && variant.canvas.height === draft.canvas.height)?.id as ThumbnailPresetVariantId | undefined) ??
-    "landscape-16-9";
   const currentVariant = thumbnailPresetVariants[currentVariantId];
   const currentVariantLabel = getThumbnailPresetVariantLabel(currentVariant.id, locale, currentVariant.label);
   const canvasSizeLabel =
     currentVariantId === "landscape-16-9" ? thumbnailCanvasSizes[canvasSizeId].label : `${draft.canvas.width} x ${draft.canvas.height} (${currentVariant.aspectRatio})`;
-  const variantOptions = Object.values(thumbnailPresetVariants).map((variant) => ({
-    id: variant.id,
-    label:
-      variant.aspectRatio === "16:9"
-        ? getThumbnailPresetVariantLabel(variant.id, locale, variant.label)
-        : `${getThumbnailPresetVariantLabel(variant.id, locale, variant.label)}${copy.header.laterCandidateSuffix}`,
-    description: getThumbnailPresetVariantDescription(variant.id, locale, variant.intendedUse, variant.aspectRatio !== "16:9"),
-    disabled: variant.aspectRatio !== "16:9"
-  }));
+  const canvasSizeOptions =
+    currentVariantId === "landscape-16-9"
+      ? Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
+          id,
+          label: size.label
+        }))
+      : [
+          {
+            id: currentVariantId,
+            label: `${currentVariant.canvas.width} x ${currentVariant.canvas.height} (${currentVariant.aspectRatio})`,
+            disabled: true
+          }
+        ];
+  const variantOptions = Object.values(thumbnailPresetVariants).map((variant) => {
+    const disabled = !["landscape-16-9", "square-1-1"].includes(variant.id);
+    return {
+      id: variant.id,
+      label: disabled ? `${getThumbnailPresetVariantLabel(variant.id, locale, variant.label)}${copy.header.laterCandidateSuffix}` : getThumbnailPresetVariantLabel(variant.id, locale, variant.label),
+      description: getThumbnailPresetVariantDescription(variant.id, locale, variant.intendedUse, disabled),
+      disabled
+    };
+  });
+  const availablePresets = getThumbnailPresetsForVariant(currentVariantId);
+  const presetOptions = availablePresets.map((preset) => {
+    const disabled = !isPresetSelectableForVariant(preset.id, currentVariantId);
+    return {
+      id: preset.id,
+      label: disabled ? `${getThumbnailPresetName(preset.id, locale, preset.name)}${copy.header.laterCandidateSuffix}` : getThumbnailPresetName(preset.id, locale, preset.name),
+      disabled
+    };
+  });
+  const mobilePreviewFrameStyle: CSSProperties = {
+    aspectRatio: `${draft.canvas.width} / ${draft.canvas.height}`,
+    maxWidth: `min(100%, calc((100vh - 8rem) * ${draft.canvas.width} / ${draft.canvas.height}))`
+  };
 
   return (
     <div className={`flex h-full min-h-0 flex-col bg-background text-foreground ${thumbnailFontAssets.thumbnailFontAssetScope}`}>
@@ -1888,10 +2084,7 @@ export function ThumbnailEditorApp() {
                 value={selectedPresetName}
                 openLabel={copy.header.openOptions}
                 onToggle={() => setHeaderMenuOpen((current) => (current === "preset" ? null : "preset"))}
-                options={thumbnailPresets.map((preset) => ({
-                  id: preset.id,
-                  label: getThumbnailPresetName(preset.id, locale, preset.name)
-                }))}
+                options={presetOptions}
                 onSelect={(id) => {
                   setHeaderMenuOpen(null);
                   requestPresetApply(id as ThumbnailPresetId);
@@ -1906,10 +2099,7 @@ export function ThumbnailEditorApp() {
                 value={canvasSizeLabel}
                 openLabel={copy.header.openOptions}
                 onToggle={() => setHeaderMenuOpen((current) => (current === "canvas" ? null : "canvas"))}
-                options={Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
-                  id,
-                  label: size.label
-                }))}
+                options={canvasSizeOptions}
                 onSelect={(id) => {
                   setHeaderMenuOpen(null);
                   changeCanvasSize(id as ThumbnailCanvasSizeId);
@@ -1970,10 +2160,7 @@ export function ThumbnailEditorApp() {
                     value={selectedPresetName}
                     openLabel={copy.header.openOptions}
                     onToggle={() => setHeaderMenuOpen((current) => (current === "preset" ? null : "preset"))}
-                    options={thumbnailPresets.map((preset) => ({
-                      id: preset.id,
-                      label: getThumbnailPresetName(preset.id, locale, preset.name)
-                    }))}
+                    options={presetOptions}
                     onSelect={(id) => {
                       setHeaderMenuOpen(null);
                       requestPresetApply(id as ThumbnailPresetId);
@@ -1988,10 +2175,7 @@ export function ThumbnailEditorApp() {
                     value={canvasSizeLabel}
                     openLabel={copy.header.openOptions}
                     onToggle={() => setHeaderMenuOpen((current) => (current === "canvas" ? null : "canvas"))}
-                    options={Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
-                      id,
-                      label: size.label
-                    }))}
+                    options={canvasSizeOptions}
                     onSelect={(id) => {
                       setHeaderMenuOpen(null);
                       changeCanvasSize(id as ThumbnailCanvasSizeId);
@@ -2095,8 +2279,8 @@ export function ThumbnailEditorApp() {
                     <div className="relative mx-auto w-fit">
                       <canvas
                         ref={setCanvasRef}
-                        className="block aspect-video max-w-none touch-none rounded-base border border-border bg-[#081117] shadow-lg"
-                        style={{ width: `${draft.canvas.width * zoom}px`, cursor: canvasCursor }}
+                        className="block max-w-none touch-none rounded-base border border-border bg-[#081117] shadow-lg"
+                        style={{ width: `${draft.canvas.width * zoom}px`, height: `${draft.canvas.height * zoom}px`, cursor: canvasCursor }}
                         onPointerDown={beginInteraction}
                         onPointerMove={updateInteraction}
                         onPointerUp={endInteraction}
@@ -2172,6 +2356,7 @@ export function ThumbnailEditorApp() {
                   currentPresetId={draft.presetId}
                   favoritePresetIds={presetDiscoveryState.favoritePresetIds}
                   recentPresetIds={presetDiscoveryState.recentPresetIds}
+                  currentVariantId={currentVariantId}
                   hasScheduleHandoff={Boolean(handoffPayload)}
                   onApply={requestPresetApply}
                   onFavoriteToggle={togglePresetFavorite}
@@ -2212,6 +2397,8 @@ export function ThumbnailEditorApp() {
                   locale={locale}
                   layer={selectedLayer}
                   canvas={draft.canvas}
+                  presetId={draft.presetId}
+                  currentVariantId={currentVariantId}
                   qualityGuardItems={localizedQualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
@@ -2239,6 +2426,7 @@ export function ThumbnailEditorApp() {
                 currentPresetId={draft.presetId}
                 favoritePresetIds={presetDiscoveryState.favoritePresetIds}
                 recentPresetIds={presetDiscoveryState.recentPresetIds}
+                currentVariantId={currentVariantId}
                 hasScheduleHandoff={Boolean(handoffPayload)}
                 onApply={requestPresetApply}
                 onFavoriteToggle={togglePresetFavorite}
@@ -2284,6 +2472,8 @@ export function ThumbnailEditorApp() {
                   locale={locale}
                   layer={selectedLayer}
                   canvas={draft.canvas}
+                  presetId={draft.presetId}
+                  currentVariantId={currentVariantId}
                   qualityGuardItems={localizedQualityGuardItems}
                   fontMenuOpen={fontMenuOpen}
                   onFontMenuOpenChange={setFontMenuOpen}
@@ -2336,7 +2526,7 @@ export function ThumbnailEditorApp() {
             </button>
           </div>
           <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto p-4">
-            <div className="relative aspect-video w-full max-w-[min(100%,calc((100vh-8rem)*16/9))]">
+            <div className="relative w-full" style={mobilePreviewFrameStyle}>
               <canvas
                 ref={setMobilePreviewCanvasRef}
                 className="h-full w-full rounded-base border border-border bg-[#081117] object-contain shadow-panel"
@@ -2349,6 +2539,52 @@ export function ThumbnailEditorApp() {
             {copy.canvas.previewNote}
           </p>
         </div>
+      ) : null}
+
+      {iriamSquarePresetModalPresetId ? (
+        <IriamSquareKaraokePresetDialog
+          copy={copy}
+          locale={locale}
+          presetId={iriamSquarePresetModalPresetId}
+          config={
+            iriamSquarePresetModalPresetId === "dark_gacha"
+              ? thumbnailIriamSquareDarkGachaPresetConfig
+              : iriamSquarePresetModalPresetId === "chatting"
+                ? thumbnailIriamSquareChattingPresetConfig
+                : iriamSquarePresetModalPresetId === "first_stream"
+                  ? thumbnailIriamSquareFirstStreamPresetConfig
+                  : iriamSquarePresetModalPresetId === "endurance_stream"
+                    ? thumbnailIriamSquareEndurancePresetConfig
+                    : thumbnailIriamSquarePresetConfig
+          }
+          onConfigChange={(config) => {
+            if (iriamSquarePresetModalPresetId === "dark_gacha") {
+              setThumbnailIriamSquareDarkGachaPresetConfig(config as ThumbnailIriamSquareDarkGachaPresetConfig);
+            } else if (iriamSquarePresetModalPresetId === "chatting") {
+              setThumbnailIriamSquareChattingPresetConfig(config as ThumbnailIriamSquareChattingPresetConfig);
+            } else if (iriamSquarePresetModalPresetId === "first_stream") {
+              setThumbnailIriamSquareFirstStreamPresetConfig(config as ThumbnailIriamSquareFirstStreamPresetConfig);
+            } else if (iriamSquarePresetModalPresetId === "endurance_stream") {
+              setThumbnailIriamSquareEndurancePresetConfig(config as ThumbnailIriamSquareEndurancePresetConfig);
+            } else {
+              setThumbnailIriamSquarePresetConfig(config as ThumbnailIriamSquareKaraokePresetConfig);
+            }
+          }}
+          onApply={() => {
+            if (iriamSquarePresetModalPresetId === "dark_gacha") {
+              applyDarkGachaIriamSquarePreset(thumbnailIriamSquareDarkGachaPresetConfig);
+            } else if (iriamSquarePresetModalPresetId === "chatting") {
+              applyChattingIriamSquarePreset(thumbnailIriamSquareChattingPresetConfig);
+            } else if (iriamSquarePresetModalPresetId === "first_stream") {
+              applyFirstStreamIriamSquarePreset(thumbnailIriamSquareFirstStreamPresetConfig);
+            } else if (iriamSquarePresetModalPresetId === "endurance_stream") {
+              applyEnduranceIriamSquarePreset(thumbnailIriamSquareEndurancePresetConfig);
+            } else {
+              applyKaraokeIriamSquarePreset(thumbnailIriamSquarePresetConfig);
+            }
+          }}
+          onCancel={() => setIriamSquarePresetModalPresetId(null)}
+        />
       ) : null}
 
       {pendingPreset ? (
@@ -2790,6 +3026,8 @@ function PropertyPanel({
   locale,
   layer,
   canvas,
+  presetId,
+  currentVariantId,
   qualityGuardItems,
   fontMenuOpen,
   onFontMenuOpenChange,
@@ -2800,6 +3038,8 @@ function PropertyPanel({
   locale: Locale;
   layer: ThumbnailLayer;
   canvas: ThumbnailEditorDraft["canvas"];
+  presetId: ThumbnailPresetId;
+  currentVariantId: ThumbnailPresetVariantId;
   qualityGuardItems: ThumbnailQualityGuardItem[];
   fontMenuOpen: boolean;
   onFontMenuOpenChange: (open: boolean) => void;
@@ -2813,6 +3053,8 @@ function PropertyPanel({
         ? copy.panels.property.imageGuide
         : null;
   const layerNameDisplayValue = getThumbnailLayerDisplayName(layer, locale);
+  const iriamSquareBackgroundModel = getThumbnailIriamSquareBackgroundPanelModel(currentVariantId, presetId, layer);
+  const iriamSquareTitleModel = getThumbnailIriamSquareTitlePanelModel(currentVariantId, layer);
 
   return (
     <section className="panel min-w-0 space-y-4 p-4">
@@ -2842,6 +3084,20 @@ function PropertyPanel({
         />
       </label>
       <ThumbnailQualityGuardPanel copy={copy} items={qualityGuardItems} />
+      {iriamSquareBackgroundModel ? (
+        <IriamSquareBackgroundSwapPanel
+          copy={copy}
+          model={iriamSquareBackgroundModel}
+          onChange={(next) => onChange((item) => replaceThumbnailIriamSquareBackgroundLayerSource(item, presetId, next))}
+        />
+      ) : null}
+      {iriamSquareTitleModel ? (
+        <IriamSquareTitleSwapPanel
+          copy={copy}
+          model={iriamSquareTitleModel}
+          onChange={(colorway) => onChange((item) => replaceThumbnailIriamSquareTitleLayerSource(item, colorway))}
+        />
+      ) : null}
       <LayerQuickAdjustPanel copy={copy} locale={locale} layer={layer} canvas={canvas} onChange={onChange} />
 
       <div className="grid grid-cols-2 gap-3">
@@ -2856,6 +3112,97 @@ function PropertyPanel({
       {layer.type === "image" && <StandeePlacementPanel copy={copy} locale={locale} layer={layer} onApply={onStandeePlacement} />}
       <EffectControls copy={copy} layer={layer} onChange={onChange} />
     </section>
+  );
+}
+
+function IriamSquareBackgroundSwapPanel({
+  copy,
+  model,
+  onChange
+}: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  model: NonNullable<ReturnType<typeof getThumbnailIriamSquareBackgroundPanelModel>>;
+  onChange: (next: { style?: ThumbnailIriamSquareKaraokeBackgroundStyle; colorway: ThumbnailIriamSquareColorway }) => void;
+}) {
+  const canChangeStyle = model.rule.styles.length > 1;
+
+  return (
+    <div className="rounded-base border border-primary/35 bg-primary-soft/35 p-3" data-thumbnail-iriam-square-background-swap="true">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-black text-foreground">{copy.iriamSquareBackgroundSwap.title}</h3>
+        <span className="text-[10px] font-bold text-muted">{copy.iriamSquareBackgroundSwap.note}</span>
+      </div>
+      <div className="mb-3 flex items-center gap-3 rounded-base border border-border bg-surface/80 p-2">
+        <div className="h-14 w-14 shrink-0 rounded-base border border-border bg-cover bg-center" style={{ backgroundImage: `url(${model.selectedSrc})` }} />
+        <div className="min-w-0 text-[11px] font-bold text-muted">
+          <p className="truncate text-foreground">{copy.iriamSquareDialog.styleLabels[model.selectedStyle]}</p>
+          <p className="mt-0.5 truncate">{copy.iriamSquareDialog.colorLabels[model.selectedColorway]}</p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {canChangeStyle ? (
+          <IriamSquareOptionGroup
+            label={copy.iriamSquareDialog.backgroundStyle}
+            options={model.rule.styles}
+            value={model.selectedStyle}
+            getLabel={(value) => copy.iriamSquareDialog.styleLabels[value as ThumbnailIriamSquareKaraokeBackgroundStyle]}
+            onChange={(style) =>
+              onChange({
+                style: style as ThumbnailIriamSquareKaraokeBackgroundStyle,
+                colorway: model.selectedColorway
+              })
+            }
+          />
+        ) : (
+          <p className="text-[11px] font-bold text-muted">{copy.iriamSquareBackgroundSwap.fixedStyle(copy.iriamSquareDialog.styleLabels[model.selectedStyle])}</p>
+        )}
+        <IriamSquareOptionGroup
+          label={copy.iriamSquareDialog.backgroundColor}
+          options={model.rule.colorways}
+          value={model.selectedColorway}
+          getLabel={(value) => copy.iriamSquareDialog.colorLabels[value as ThumbnailIriamSquareColorway]}
+          onChange={(colorway) =>
+            onChange({
+              style: model.selectedStyle,
+              colorway: colorway as ThumbnailIriamSquareColorway
+            })
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+function IriamSquareTitleSwapPanel({
+  copy,
+  model,
+  onChange
+}: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  model: NonNullable<ReturnType<typeof getThumbnailIriamSquareTitlePanelModel>>;
+  onChange: (colorway: ThumbnailIriamSquareColorway) => void;
+}) {
+  return (
+    <div className="rounded-base border border-primary/35 bg-primary-soft/35 p-3" data-thumbnail-iriam-square-title-swap="true">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-black text-foreground">{copy.iriamSquareTitleSwap.title}</h3>
+        <span className="text-[10px] font-bold text-muted">{copy.iriamSquareTitleSwap.note}</span>
+      </div>
+      <div className="mb-3 flex items-center gap-3 rounded-base border border-border bg-surface/80 p-2">
+        <div className="h-14 w-14 shrink-0 rounded-base border border-border bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${model.selectedSrc})` }} />
+        <div className="min-w-0 text-[11px] font-bold text-muted">
+          <p className="truncate text-foreground">{model.selectedTitleText}</p>
+          <p className="mt-0.5 truncate">{copy.iriamSquareDialog.colorLabels[model.selectedColorway]}</p>
+        </div>
+      </div>
+      <IriamSquareOptionGroup
+        label={copy.iriamSquareDialog.titleColor}
+        options={model.colorways}
+        value={model.selectedColorway}
+        getLabel={(value) => copy.iriamSquareDialog.colorLabels[value as ThumbnailIriamSquareColorway]}
+        onChange={(colorway) => onChange(colorway as ThumbnailIriamSquareColorway)}
+      />
+    </div>
   );
 }
 
@@ -3381,12 +3728,185 @@ function PresetApplyConfirmDialog({
   );
 }
 
+function IriamSquareKaraokePresetDialog({
+  copy,
+  locale,
+  presetId,
+  config,
+  onConfigChange,
+  onApply,
+  onCancel
+}: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
+  presetId: IriamSquarePresetModalPresetId;
+  config: IriamSquarePresetModalConfig;
+  onConfigChange: (config: IriamSquarePresetModalConfig) => void;
+  onApply: () => void;
+  onCancel: () => void;
+}) {
+  const updateConfig = (partial: Partial<IriamSquarePresetModalConfig>) => onConfigChange({ ...config, ...partial } as IriamSquarePresetModalConfig);
+  const titleColorOptions: ThumbnailIriamSquareTitleColorway[] = ["match-background", ...thumbnailIriamSquareColorways];
+
+  return (
+    <div
+      className="fixed inset-0 z-[110] flex items-end bg-black/62 p-3 text-foreground min-[760px]:items-center min-[760px]:justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="iriam-square-preset-title"
+      data-thumbnail-iriam-square-modal="true"
+      data-thumbnail-iriam-square-modal-preset={presetId}
+    >
+      <div className="grid max-h-[94vh] w-full max-w-5xl overflow-hidden rounded-base border border-border bg-background shadow-panel min-[900px]:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-h-0 overflow-auto border-b border-border p-4 min-[900px]:border-b-0 min-[900px]:border-r md:p-5">
+          <p className="text-xs font-bold text-primary-strong">{copy.iriamSquareDialog.eyebrow}</p>
+          <h2 id="iriam-square-preset-title" className="mt-1 text-lg font-black text-foreground">
+            {copy.iriamSquareDialog.presetTitles[presetId]}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-muted">{copy.iriamSquareDialog.presetBodies[presetId]}</p>
+          <div className="mx-auto mt-4 w-full max-w-[34rem]">
+            <p className="mb-2 text-xs font-bold text-muted">{copy.iriamSquareDialog.preview}</p>
+            <div className="relative aspect-square overflow-hidden rounded-base border border-border bg-surface-muted shadow-panel">
+              <IriamSquarePresetDialogPreview copy={copy} locale={locale} presetId={presetId} config={config} />
+            </div>
+          </div>
+        </div>
+        <div className="min-h-0 overflow-auto p-4 md:p-5">
+          <div className="space-y-4">
+            {presetId === "karaoke" ? (
+              <IriamSquareOptionGroup
+                label={copy.iriamSquareDialog.backgroundStyle}
+                options={thumbnailIriamSquareKaraokeBackgroundStyles}
+                value={(config as ThumbnailIriamSquareKaraokePresetConfig).backgroundStyle}
+                getLabel={(value) => copy.iriamSquareDialog.styleLabels[value as ThumbnailIriamSquareKaraokeBackgroundStyle]}
+                onChange={(value) => updateConfig({ backgroundStyle: value as ThumbnailIriamSquareKaraokeBackgroundStyle })}
+              />
+            ) : null}
+            <IriamSquareOptionGroup
+              label={copy.iriamSquareDialog.backgroundColor}
+              options={thumbnailIriamSquareColorways}
+              value={config.backgroundColorway}
+              getLabel={(value) => copy.iriamSquareDialog.colorLabels[value as ThumbnailIriamSquareColorway]}
+              onChange={(value) => updateConfig({ backgroundColorway: value as ThumbnailIriamSquareColorway })}
+            />
+            <IriamSquareOptionGroup
+              label={copy.iriamSquareDialog.titleColor}
+              options={titleColorOptions}
+              value={config.titleColorway}
+              getLabel={(value) =>
+                value === "match-background"
+                  ? copy.iriamSquareDialog.matchBackground
+                  : copy.iriamSquareDialog.colorLabels[value as ThumbnailIriamSquareColorway]
+              }
+              onChange={(value) => updateConfig({ titleColorway: value as ThumbnailIriamSquareTitleColorway })}
+            />
+          </div>
+          <div className="mt-5 flex flex-col-reverse gap-2 min-[520px]:flex-row min-[520px]:justify-end">
+            <button className="flat-control px-4 py-2 text-sm font-bold" type="button" onClick={onCancel}>
+              {copy.iriamSquareDialog.cancel}
+            </button>
+            <button className="rounded-base bg-primary px-4 py-2 text-sm font-bold text-white" type="button" onClick={onApply}>
+              {copy.iriamSquareDialog.create}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IriamSquareOptionGroup({
+  label,
+  options,
+  value,
+  getLabel,
+  onChange
+}: {
+  label: string;
+  options: string[];
+  value: string;
+  getLabel: (value: string) => string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <fieldset className="space-y-2">
+      <legend className="text-xs font-bold text-muted">{label}</legend>
+      <div className="grid grid-cols-2 gap-2 min-[520px]:grid-cols-3 min-[900px]:grid-cols-2">
+        {options.map((option) => (
+          <button
+            key={option}
+            className={[
+              "min-h-10 rounded-base border px-3 py-2 text-xs font-bold transition",
+              value === option ? "border-primary bg-primary-soft text-primary-strong" : "border-border bg-surface text-muted hover:text-foreground"
+            ].join(" ")}
+            type="button"
+            onClick={() => onChange(option)}
+            aria-pressed={value === option}
+          >
+            {getLabel(option)}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+function IriamSquarePresetDialogPreview({
+  copy,
+  locale,
+  presetId,
+  config
+}: {
+  copy: ReturnType<typeof getThumbnailEditorCopy>;
+  locale: Locale;
+  presetId: IriamSquarePresetModalPresetId;
+  config: IriamSquarePresetModalConfig;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const renderVersionRef = useRef(0);
+  const previewDraft = useMemo(() => createIriamSquarePresetDialogPreviewDraft(presetId, config, locale), [config, locale, presetId]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const renderVersion = renderVersionRef.current + 1;
+    renderVersionRef.current = renderVersion;
+    const buffer = document.createElement("canvas");
+
+    void drawThumbnail(buffer, previewDraft, { selectedLayerId: null, includeSelection: false }).then(() => {
+      if (renderVersionRef.current !== renderVersion || canvasRef.current !== canvas) {
+        return;
+      }
+      canvas.width = buffer.width;
+      canvas.height = buffer.height;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        return;
+      }
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(buffer, 0, 0);
+    });
+  }, [previewDraft]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="h-full w-full bg-[#081117] object-contain"
+      aria-label={copy.iriamSquareDialog.preview}
+    />
+  );
+}
+
 function PresetCards({
   copy,
   locale,
   currentPresetId,
   favoritePresetIds,
   recentPresetIds,
+  currentVariantId,
   hasScheduleHandoff,
   onApply,
   onFavoriteToggle
@@ -3396,6 +3916,7 @@ function PresetCards({
   currentPresetId: ThumbnailPresetId;
   favoritePresetIds: ThumbnailPresetId[];
   recentPresetIds: ThumbnailPresetId[];
+  currentVariantId: ThumbnailPresetVariantId;
   hasScheduleHandoff: boolean;
   onApply: (id: ThumbnailPresetId) => void;
   onFavoriteToggle: (id: ThumbnailPresetId) => void;
@@ -3403,23 +3924,40 @@ function PresetCards({
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<ThumbnailPresetCategory | "all">("all");
   const [selectedUsageLabel, setSelectedUsageLabel] = useState<string | "all">("all");
+  const availablePresets = useMemo(() => getThumbnailPresetsForVariant(currentVariantId), [currentVariantId]);
+  const availablePresetCategories = useMemo(() => Array.from(new Set(availablePresets.map((preset) => preset.category))) as ThumbnailPresetCategory[], [availablePresets]);
+  const availablePresetUsageLabels = useMemo(() => Array.from(new Set(availablePresets.map((preset) => preset.usageLabel))), [availablePresets]);
   const filteredPresets = useMemo(
     () =>
-      filterLocalizedThumbnailPresets(thumbnailPresets, {
+      filterLocalizedThumbnailPresets(availablePresets, {
         query,
         category: selectedCategory,
         usageLabel: selectedUsageLabel
       }, locale),
-    [locale, query, selectedCategory, selectedUsageLabel]
+    [availablePresets, locale, query, selectedCategory, selectedUsageLabel]
   );
-  const favoritePresets = useMemo(() => getPresetsByIds(favoritePresetIds), [favoritePresetIds]);
-  const recentPresets = useMemo(() => getPresetsByIds(recentPresetIds), [recentPresetIds]);
+  const favoritePresets = useMemo(
+    () => getPresetsByIds(favoritePresetIds).filter((preset) => isPresetSelectableForVariant(preset.id, currentVariantId)),
+    [currentVariantId, favoritePresetIds]
+  );
+  const recentPresets = useMemo(
+    () => getPresetsByIds(recentPresetIds).filter((preset) => isPresetSelectableForVariant(preset.id, currentVariantId)),
+    [currentVariantId, recentPresetIds]
+  );
   const hasActiveFilters = query.trim() !== "" || selectedCategory !== "all" || selectedUsageLabel !== "all";
   const clearFilters = () => {
     setQuery("");
     setSelectedCategory("all");
     setSelectedUsageLabel("all");
   };
+  useEffect(() => {
+    if (selectedCategory !== "all" && !availablePresetCategories.includes(selectedCategory)) {
+      setSelectedCategory("all");
+    }
+    if (selectedUsageLabel !== "all" && !availablePresetUsageLabels.includes(selectedUsageLabel)) {
+      setSelectedUsageLabel("all");
+    }
+  }, [availablePresetCategories, availablePresetUsageLabels, selectedCategory, selectedUsageLabel]);
 
   return (
     <section className="panel min-w-0 space-y-4 p-4">
@@ -3433,7 +3971,7 @@ function PresetCards({
           </p>
         </div>
         <p className="text-xs font-bold text-muted">
-          {filteredPresets.length} / {thumbnailPresets.length}{copy.panels.presets.countUnit}
+          {filteredPresets.length} / {availablePresets.length}{copy.panels.presets.countUnit}
         </p>
       </div>
 
@@ -3467,7 +4005,7 @@ function PresetCards({
       <PresetFilterChips
         label={copy.panels.presets.category}
         value={selectedCategory}
-        options={thumbnailPresetCategories}
+        options={availablePresetCategories}
         allLabel={copy.panels.presets.all}
         getOptionLabel={(category) => getThumbnailPresetCategoryLabel(category as ThumbnailPresetCategory, locale)}
         onChange={(category) => setSelectedCategory(category as ThumbnailPresetCategory | "all")}
@@ -3475,14 +4013,14 @@ function PresetCards({
       <PresetFilterChips
         label={copy.panels.presets.usage}
         value={selectedUsageLabel}
-        options={thumbnailPresetUsageLabels}
+        options={availablePresetUsageLabels}
         allLabel={copy.panels.presets.all}
         getOptionLabel={(usageLabel) => getThumbnailPresetUsageLabel(usageLabel, locale)}
         onChange={setSelectedUsageLabel}
       />
 
-      {favoritePresets.length > 0 ? <PresetShortcutRow title={copy.panels.presets.favorites} locale={locale} presets={favoritePresets} onApply={onApply} /> : null}
-      {recentPresets.length > 0 ? <PresetShortcutRow title={copy.panels.presets.recent} locale={locale} presets={recentPresets} onApply={onApply} /> : null}
+      {favoritePresets.length > 0 ? <PresetShortcutRow title={copy.panels.presets.favorites} locale={locale} presets={favoritePresets} currentVariantId={currentVariantId} onApply={onApply} /> : null}
+      {recentPresets.length > 0 ? <PresetShortcutRow title={copy.panels.presets.recent} locale={locale} presets={recentPresets} currentVariantId={currentVariantId} onApply={onApply} /> : null}
 
       <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {filteredPresets.map((preset) => {
@@ -3522,7 +4060,7 @@ function PresetCards({
             <p className="mt-1 min-h-10 text-xs leading-5 text-muted">{getThumbnailPresetDescription(preset, locale)}</p>
             <button
               data-thumbnail-preset-cta="true"
-              className="mt-auto inline-flex self-start rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong transition hover:bg-primary-soft"
+              className="mt-auto inline-flex self-start rounded-base border border-primary/50 px-3 py-1 text-xs font-bold text-primary-strong transition hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent"
               type="button"
               onClick={() => onApply(preset.id)}
               aria-pressed={currentPresetId === preset.id}
@@ -3583,21 +4121,33 @@ function PresetFilterChips({
   );
 }
 
-function PresetShortcutRow({ title, locale, presets, onApply }: { title: string; locale: Locale; presets: ThumbnailPreset[]; onApply: (id: ThumbnailPresetId) => void }) {
+function PresetShortcutRow({
+  title,
+  locale,
+  presets,
+  currentVariantId,
+  onApply
+}: {
+  title: string;
+  locale: Locale;
+  presets: ThumbnailPreset[];
+  currentVariantId: ThumbnailPresetVariantId;
+  onApply: (id: ThumbnailPresetId) => void;
+}) {
   return (
     <div className="space-y-2 rounded-base border border-border bg-surface-muted p-3">
       <p className="text-xs font-black text-foreground">{title}</p>
       <div className="scrollbar-accent -mx-1 flex max-w-full flex-nowrap gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible md:pb-0">
-        {presets.map((preset) => (
-          <button
-            key={preset.id}
-            className="shrink-0 rounded-base border border-border bg-surface px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary hover:text-primary-strong"
-            type="button"
-            onClick={() => onApply(preset.id)}
-          >
-            {getThumbnailPresetName(preset.id, locale, preset.name)}
-          </button>
-        ))}
+        {presets.filter((preset) => isPresetSelectableForVariant(preset.id, currentVariantId)).map((preset) => (
+            <button
+              key={preset.id}
+              className="shrink-0 rounded-base border border-border bg-surface px-3 py-1.5 text-xs font-bold text-foreground transition hover:border-primary hover:text-primary-strong"
+              type="button"
+              onClick={() => onApply(preset.id)}
+            >
+              {getThumbnailPresetName(preset.id, locale, preset.name)}
+            </button>
+          ))}
       </div>
     </div>
   );

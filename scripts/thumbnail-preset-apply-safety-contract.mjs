@@ -253,7 +253,7 @@ assert.ok(
   "canvas size changes preserve manually edited main text when no schedule handoff is active"
 );
 assert.ok(
-  componentSource.includes("applyThumbnailPresetPartial(draft, presetId)"),
+  componentSource.includes("applyThumbnailPresetPartial(draft, presetId, next)"),
   "edited preset changes use partial apply to preserve text and user standee/image layers"
 );
 

@@ -13,6 +13,7 @@ export type ThumbnailPresetId =
   | "privacy_notice"
   | "whiteboard_plan"
   | "karaoke"
+  | "dark_gacha"
   | "chatting"
   | "clip"
   | "game_live"
@@ -128,6 +129,91 @@ export type ThumbnailPresetVariant = {
 export type ThumbnailPresetVariantRef = {
   presetId: ThumbnailPresetId;
   variantId: ThumbnailPresetVariantId;
+};
+export type ThumbnailIriamSquareColorway = "pink-blue" | "blue" | "yellow" | "purple" | "mint";
+export type ThumbnailIriamSquareKaraokeBackgroundStyle = "soft_cloud" | "pop_bubble" | "dark_cute";
+export type ThumbnailIriamSquareTitleGenre = "karaoke" | "dark_gacha" | "chatting" | "first_stream" | "endurance_stream";
+export type ThumbnailIriamSquareBackgroundSwapPresetId = Extract<ThumbnailPresetId, ThumbnailIriamSquareTitleGenre>;
+export type ThumbnailIriamSquareTitleColorway = "match-background" | ThumbnailIriamSquareColorway;
+export type ThumbnailIriamSquareKaraokeTitleColorway = ThumbnailIriamSquareTitleColorway;
+export type ThumbnailIriamSquareKaraokePresetConfig = {
+  backgroundStyle: ThumbnailIriamSquareKaraokeBackgroundStyle;
+  backgroundColorway: ThumbnailIriamSquareColorway;
+  titleColorway: ThumbnailIriamSquareKaraokeTitleColorway;
+};
+export type ThumbnailIriamSquareDarkGachaPresetConfig = {
+  backgroundColorway: ThumbnailIriamSquareColorway;
+  titleColorway: ThumbnailIriamSquareTitleColorway;
+};
+export type ThumbnailIriamSquareChattingPresetConfig = {
+  backgroundColorway: ThumbnailIriamSquareColorway;
+  titleColorway: ThumbnailIriamSquareTitleColorway;
+};
+export type ThumbnailIriamSquareFirstStreamPresetConfig = {
+  backgroundColorway: ThumbnailIriamSquareColorway;
+  titleColorway: ThumbnailIriamSquareTitleColorway;
+};
+export type ThumbnailIriamSquareEndurancePresetConfig = {
+  backgroundColorway: ThumbnailIriamSquareColorway;
+  titleColorway: ThumbnailIriamSquareTitleColorway;
+};
+export type ThumbnailIriamSquareKaraokeBackgroundAsset = {
+  style: ThumbnailIriamSquareKaraokeBackgroundStyle;
+  colorway: ThumbnailIriamSquareColorway;
+  src: string;
+};
+export type ThumbnailIriamSquareBackgroundSwapRule = {
+  presetId: ThumbnailIriamSquareBackgroundSwapPresetId;
+  styles: ThumbnailIriamSquareKaraokeBackgroundStyle[];
+  colorways: ThumbnailIriamSquareColorway[];
+  fixedStyle?: ThumbnailIriamSquareKaraokeBackgroundStyle;
+};
+export type ThumbnailIriamSquareBackgroundPanelModel = {
+  rule: ThumbnailIriamSquareBackgroundSwapRule;
+  selectedStyle: ThumbnailIriamSquareKaraokeBackgroundStyle;
+  selectedColorway: ThumbnailIriamSquareColorway;
+  selectedSrc: string;
+};
+export type ThumbnailIriamSquareTitlePanelModel = {
+  selectedGenre: ThumbnailIriamSquareTitleGenre;
+  selectedColorway: ThumbnailIriamSquareColorway;
+  selectedSrc: string;
+  selectedTitleText: ThumbnailIriamSquareTitleAsset["titleText"];
+  colorways: ThumbnailIriamSquareColorway[];
+};
+export type ThumbnailIriamSquareTitleAsset = {
+  genre: ThumbnailIriamSquareTitleGenre;
+  colorway: ThumbnailIriamSquareColorway;
+  src: string;
+  titleText: "歌枠" | "闇ガチャ" | "雑談" | "初配信" | "耐久" | "Karaoke" | "Dark Gacha" | "Chatting" | "Debut Stream" | "Endurance";
+  fontFamily: "Mochiy Pop P One" | "New Tegomin" | "Yusei Magic" | "Mochiy Pop One" | "Dela Gothic One" | "Lilita One" | "Pirata One" | "Fredoka" | "Lobster" | "Anton";
+  source: "generated-title-image";
+};
+export type ThumbnailIriamSquareTitleLocale = "ja" | "en";
+export type ThumbnailIriamSquareKaraokeTitleAsset = ThumbnailIriamSquareTitleAsset & {
+  genre: "karaoke";
+  titleText: "歌枠";
+  fontFamily: "Mochiy Pop P One";
+};
+export type ThumbnailIriamSquareDarkGachaTitleAsset = ThumbnailIriamSquareTitleAsset & {
+  genre: "dark_gacha";
+  titleText: "闇ガチャ";
+  fontFamily: "New Tegomin";
+};
+export type ThumbnailIriamSquareChattingTitleAsset = ThumbnailIriamSquareTitleAsset & {
+  genre: "chatting";
+  titleText: "雑談";
+  fontFamily: "Yusei Magic";
+};
+export type ThumbnailIriamSquareFirstStreamTitleAsset = ThumbnailIriamSquareTitleAsset & {
+  genre: "first_stream";
+  titleText: "初配信";
+  fontFamily: "Mochiy Pop One";
+};
+export type ThumbnailIriamSquareEnduranceTitleAsset = ThumbnailIriamSquareTitleAsset & {
+  genre: "endurance_stream";
+  titleText: "耐久";
+  fontFamily: "Dela Gothic One";
 };
 export type ThumbnailPresetVariantRelation = {
   presetId: ThumbnailPresetId;
@@ -799,6 +885,24 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     sourceUrl: "https://fonts.google.com/specimen/Hachi+Maru+Pop"
   }, "hachi-maru-pop", [400]),
   withThumbnailJapaneseFontAssets({
+    family: "Yusei Magic",
+    language: "ja",
+    category: "手書き / やわらか",
+    mood: "ゆるい、親しみ、雑談向き",
+    bestFor: "IRIAM 雑談 title image、やわらかい短い見出し",
+    caution: "長文や細かい注記では読みにくい。大きめの title image 前提で使う。",
+    sourceUrl: "https://fonts.google.com/specimen/Yusei+Magic"
+  }, "yusei-magic", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Mochiy Pop One",
+    language: "ja",
+    category: "かわいい / 太丸ゴ",
+    mood: "ポップ、歓迎感、初配信向き",
+    bestFor: "IRIAM 初配信 title image、明るい告知見出し",
+    caution: "太く丸いので狭い枠では窮屈になりやすい。縁取りは控えめにする。",
+    sourceUrl: "https://fonts.google.com/specimen/Mochiy+Pop+One"
+  }, "mochiy-pop-one", [400]),
+  withThumbnailJapaneseFontAssets({
     family: "RocknRoll One",
     language: "ja",
     category: "レトロ / ポップ",
@@ -807,6 +911,24 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     caution: "weight 選択が少ない。繊細な用途には不向き。",
     sourceUrl: "https://fonts.google.com/specimen/RocknRoll+One"
   }, "rocknroll-one", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Dela Gothic One",
+    language: "ja",
+    category: "太字見出し / 企画",
+    mood: "力強い、角ばった、耐久向き",
+    bestFor: "IRIAM 耐久 title image、勢いのある企画タイトル",
+    caution: "字面が重い。1:1 では余白を広めに取り、shadow / rotation で勢いを補う。",
+    sourceUrl: "https://fonts.google.com/specimen/Dela+Gothic+One"
+  }, "dela-gothic-one", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "New Tegomin",
+    language: "ja",
+    category: "手書き / 崩し",
+    mood: "少し不穏、崩れ、闇ガチャ向き",
+    bestFor: "IRIAM 闇ガチャ title image、dark cute な短い見出し",
+    caution: "崩しが強いため小サイズは読みにくい。縁取り太さと背景コントラストを先に確認する。",
+    sourceUrl: "https://fonts.google.com/specimen/New+Tegomin"
+  }, "new-tegomin", [400]),
   withThumbnailJapaneseFontAssets({
     family: "DotGothic16",
     language: "ja",
@@ -1217,6 +1339,13 @@ const thumbnailPhase3BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase
 const thumbnailPhase4DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decorations/phase4/`;
 const thumbnailPhase5BackgroundAssetPrefix = `${thumbnailPresetAssetPrefix}phase5/`;
 const thumbnailPhase5DecorationAssetPrefix = `${thumbnailPresetAssetPrefix}decorations/phase5/`;
+const thumbnailIriamSquareKaraokeAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/karaoke/`;
+const thumbnailIriamSquareKaraokeBackgroundAssetPrefix = `${thumbnailIriamSquareKaraokeAssetPrefix}backgrounds/`;
+const thumbnailIriamSquareKaraokeTitleAssetPrefix = `${thumbnailIriamSquareKaraokeAssetPrefix}titles/`;
+const thumbnailIriamSquareDarkGachaTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/dark-gacha/titles/`;
+const thumbnailIriamSquareChattingTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/chatting/titles/`;
+const thumbnailIriamSquareFirstStreamTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/first-stream/titles/`;
+const thumbnailIriamSquareEnduranceTitleAssetPrefix = `${thumbnailPresetAssetPrefix}iriam-square/endurance/titles/`;
 const thumbnailMaterialBatch1AssetPrefix = `${thumbnailPresetAssetPrefix}materials/batch1/`;
 const thumbnailMaterialLabelAssetPrefix = `${thumbnailPresetAssetPrefix}materials/labels/`;
 const thumbnailMaterialBadgeAssetPrefix = `${thumbnailPresetAssetPrefix}materials/badges/`;
@@ -1225,6 +1354,307 @@ const thumbnailMaterialDividerAssetPrefix = `${thumbnailPresetAssetPrefix}materi
 const thumbnailMaterialEffectAssetPrefix = `${thumbnailPresetAssetPrefix}materials/effects/`;
 const thumbnailMaterialCornerAssetPrefix = `${thumbnailPresetAssetPrefix}materials/corners/`;
 const thumbnailMaterialImpactAssetPrefix = `${thumbnailPresetAssetPrefix}materials/impact/`;
+const thumbnailIriamSquareAccentMaterialAssetPrefix = `${thumbnailPresetAssetPrefix}materials/iriam-square-accent/`;
+const thumbnailIriamSquareLabelBaseMaterialAssetPrefix = `${thumbnailPresetAssetPrefix}materials/iriam-square-label-base/`;
+const thumbnailMaterialDarkAssetPrefix = `${thumbnailPresetAssetPrefix}materials/dark/`;
+const thumbnailMaterialNeutralAssetPrefix = `${thumbnailPresetAssetPrefix}materials/neutral/`;
+
+export const thumbnailIriamSquareColorways: ThumbnailIriamSquareColorway[] = ["pink-blue", "blue", "yellow", "purple", "mint"];
+export const thumbnailIriamSquareTitleGenres: ThumbnailIriamSquareTitleGenre[] = ["karaoke", "dark_gacha", "chatting", "first_stream", "endurance_stream"];
+export const thumbnailIriamSquareKaraokeBackgroundStyles: ThumbnailIriamSquareKaraokeBackgroundStyle[] = ["soft_cloud", "pop_bubble", "dark_cute"];
+export const defaultThumbnailIriamSquareKaraokePresetConfig: ThumbnailIriamSquareKaraokePresetConfig = {
+  backgroundStyle: "soft_cloud",
+  backgroundColorway: "pink-blue",
+  titleColorway: "match-background"
+};
+export const defaultThumbnailIriamSquareDarkGachaPresetConfig: ThumbnailIriamSquareDarkGachaPresetConfig = {
+  backgroundColorway: "purple",
+  titleColorway: "match-background"
+};
+export const defaultThumbnailIriamSquareChattingPresetConfig: ThumbnailIriamSquareChattingPresetConfig = {
+  backgroundColorway: "pink-blue",
+  titleColorway: "match-background"
+};
+export const defaultThumbnailIriamSquareFirstStreamPresetConfig: ThumbnailIriamSquareFirstStreamPresetConfig = {
+  backgroundColorway: "pink-blue",
+  titleColorway: "match-background"
+};
+export const defaultThumbnailIriamSquareEndurancePresetConfig: ThumbnailIriamSquareEndurancePresetConfig = {
+  backgroundColorway: "yellow",
+  titleColorway: "match-background"
+};
+export const thumbnailIriamSquareKaraokeBackgroundAssets: ThumbnailIriamSquareKaraokeBackgroundAsset[] = [
+  { style: "soft_cloud", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-pink-blue-v1.png` },
+  { style: "soft_cloud", colorway: "blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-blue-v1.png` },
+  { style: "soft_cloud", colorway: "yellow", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-yellow-v1.png` },
+  { style: "soft_cloud", colorway: "purple", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-purple-v1.png` },
+  { style: "soft_cloud", colorway: "mint", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-soft-cloud-mint-v1.png` },
+  { style: "pop_bubble", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-pop-bubble-pink-blue-v1.png` },
+  { style: "pop_bubble", colorway: "blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-pop-bubble-blue-v1.png` },
+  { style: "pop_bubble", colorway: "yellow", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-pop-bubble-yellow-v1.png` },
+  { style: "pop_bubble", colorway: "purple", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-pop-bubble-purple-v1.png` },
+  { style: "pop_bubble", colorway: "mint", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-pop-bubble-mint-v1.png` },
+  { style: "dark_cute", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-pink-blue-v1.png` },
+  { style: "dark_cute", colorway: "blue", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-blue-v1.png` },
+  { style: "dark_cute", colorway: "yellow", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-yellow-v1.png` },
+  { style: "dark_cute", colorway: "purple", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-purple-v1.png` },
+  { style: "dark_cute", colorway: "mint", src: `${thumbnailIriamSquareKaraokeBackgroundAssetPrefix}karaoke-square-dark-cute-mint-v1.png` }
+];
+export const thumbnailIriamSquareBackgroundAssets = thumbnailIriamSquareKaraokeBackgroundAssets;
+export const thumbnailIriamSquareBackgroundSwapRules: Record<ThumbnailIriamSquareBackgroundSwapPresetId, ThumbnailIriamSquareBackgroundSwapRule> = {
+  karaoke: {
+    presetId: "karaoke",
+    styles: thumbnailIriamSquareKaraokeBackgroundStyles,
+    colorways: thumbnailIriamSquareColorways
+  },
+  dark_gacha: {
+    presetId: "dark_gacha",
+    styles: ["dark_cute"],
+    colorways: thumbnailIriamSquareColorways,
+    fixedStyle: "dark_cute"
+  },
+  chatting: {
+    presetId: "chatting",
+    styles: ["pop_bubble"],
+    colorways: thumbnailIriamSquareColorways,
+    fixedStyle: "pop_bubble"
+  },
+  first_stream: {
+    presetId: "first_stream",
+    styles: ["soft_cloud"],
+    colorways: thumbnailIriamSquareColorways,
+    fixedStyle: "soft_cloud"
+  },
+  endurance_stream: {
+    presetId: "endurance_stream",
+    styles: ["pop_bubble"],
+    colorways: thumbnailIriamSquareColorways,
+    fixedStyle: "pop_bubble"
+  }
+};
+export const thumbnailIriamSquareKaraokeTitleAssets: ThumbnailIriamSquareKaraokeTitleAsset[] = [
+  { genre: "karaoke", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-pink-blue-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-blue-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "yellow", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-yellow-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "purple", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-purple-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "mint", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-title-mint-v1.png`, titleText: "歌枠", fontFamily: "Mochiy Pop P One", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareDarkGachaTitleAssets: ThumbnailIriamSquareDarkGachaTitleAsset[] = [
+  { genre: "dark_gacha", colorway: "pink-blue", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-title-pink-blue-v1.png`, titleText: "闇ガチャ", fontFamily: "New Tegomin", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "blue", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-title-blue-v1.png`, titleText: "闇ガチャ", fontFamily: "New Tegomin", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "yellow", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-title-yellow-v1.png`, titleText: "闇ガチャ", fontFamily: "New Tegomin", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "purple", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-title-purple-v1.png`, titleText: "闇ガチャ", fontFamily: "New Tegomin", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "mint", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-title-mint-v1.png`, titleText: "闇ガチャ", fontFamily: "New Tegomin", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareChattingTitleAssets: ThumbnailIriamSquareChattingTitleAsset[] = [
+  { genre: "chatting", colorway: "pink-blue", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-title-pink-blue-v1.png`, titleText: "雑談", fontFamily: "Yusei Magic", source: "generated-title-image" },
+  { genre: "chatting", colorway: "blue", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-title-blue-v1.png`, titleText: "雑談", fontFamily: "Yusei Magic", source: "generated-title-image" },
+  { genre: "chatting", colorway: "yellow", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-title-yellow-v1.png`, titleText: "雑談", fontFamily: "Yusei Magic", source: "generated-title-image" },
+  { genre: "chatting", colorway: "purple", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-title-purple-v1.png`, titleText: "雑談", fontFamily: "Yusei Magic", source: "generated-title-image" },
+  { genre: "chatting", colorway: "mint", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-title-mint-v1.png`, titleText: "雑談", fontFamily: "Yusei Magic", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareFirstStreamTitleAssets: ThumbnailIriamSquareFirstStreamTitleAsset[] = [
+  { genre: "first_stream", colorway: "pink-blue", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-pink-blue-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "blue", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-blue-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "yellow", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-yellow-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "purple", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-purple-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "mint", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-title-mint-v1.png`, titleText: "初配信", fontFamily: "Mochiy Pop One", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareEnduranceTitleAssets: ThumbnailIriamSquareEnduranceTitleAsset[] = [
+  { genre: "endurance_stream", colorway: "pink-blue", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-pink-blue-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "blue", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-blue-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "yellow", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-yellow-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "purple", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-purple-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "mint", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-title-mint-v1.png`, titleText: "耐久", fontFamily: "Dela Gothic One", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareKaraokeEnTitleAssets: ThumbnailIriamSquareTitleAsset[] = [
+  { genre: "karaoke", colorway: "pink-blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-en-title-pink-blue-v1.png`, titleText: "Karaoke", fontFamily: "Lilita One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "blue", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-en-title-blue-v1.png`, titleText: "Karaoke", fontFamily: "Lilita One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "yellow", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-en-title-yellow-v1.png`, titleText: "Karaoke", fontFamily: "Lilita One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "purple", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-en-title-purple-v1.png`, titleText: "Karaoke", fontFamily: "Lilita One", source: "generated-title-image" },
+  { genre: "karaoke", colorway: "mint", src: `${thumbnailIriamSquareKaraokeTitleAssetPrefix}karaoke-square-en-title-mint-v1.png`, titleText: "Karaoke", fontFamily: "Lilita One", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareDarkGachaEnTitleAssets: ThumbnailIriamSquareTitleAsset[] = [
+  { genre: "dark_gacha", colorway: "pink-blue", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-en-title-pink-blue-v1.png`, titleText: "Dark Gacha", fontFamily: "Pirata One", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "blue", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-en-title-blue-v1.png`, titleText: "Dark Gacha", fontFamily: "Pirata One", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "yellow", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-en-title-yellow-v1.png`, titleText: "Dark Gacha", fontFamily: "Pirata One", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "purple", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-en-title-purple-v1.png`, titleText: "Dark Gacha", fontFamily: "Pirata One", source: "generated-title-image" },
+  { genre: "dark_gacha", colorway: "mint", src: `${thumbnailIriamSquareDarkGachaTitleAssetPrefix}dark-gacha-square-en-title-mint-v1.png`, titleText: "Dark Gacha", fontFamily: "Pirata One", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareChattingEnTitleAssets: ThumbnailIriamSquareTitleAsset[] = [
+  { genre: "chatting", colorway: "pink-blue", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-en-title-pink-blue-v1.png`, titleText: "Chatting", fontFamily: "Fredoka", source: "generated-title-image" },
+  { genre: "chatting", colorway: "blue", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-en-title-blue-v1.png`, titleText: "Chatting", fontFamily: "Fredoka", source: "generated-title-image" },
+  { genre: "chatting", colorway: "yellow", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-en-title-yellow-v1.png`, titleText: "Chatting", fontFamily: "Fredoka", source: "generated-title-image" },
+  { genre: "chatting", colorway: "purple", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-en-title-purple-v1.png`, titleText: "Chatting", fontFamily: "Fredoka", source: "generated-title-image" },
+  { genre: "chatting", colorway: "mint", src: `${thumbnailIriamSquareChattingTitleAssetPrefix}chatting-square-en-title-mint-v1.png`, titleText: "Chatting", fontFamily: "Fredoka", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareFirstStreamEnTitleAssets: ThumbnailIriamSquareTitleAsset[] = [
+  { genre: "first_stream", colorway: "pink-blue", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-en-title-pink-blue-v1.png`, titleText: "Debut Stream", fontFamily: "Lobster", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "blue", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-en-title-blue-v1.png`, titleText: "Debut Stream", fontFamily: "Lobster", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "yellow", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-en-title-yellow-v1.png`, titleText: "Debut Stream", fontFamily: "Lobster", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "purple", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-en-title-purple-v1.png`, titleText: "Debut Stream", fontFamily: "Lobster", source: "generated-title-image" },
+  { genre: "first_stream", colorway: "mint", src: `${thumbnailIriamSquareFirstStreamTitleAssetPrefix}first-stream-square-en-title-mint-v1.png`, titleText: "Debut Stream", fontFamily: "Lobster", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareEnduranceEnTitleAssets: ThumbnailIriamSquareTitleAsset[] = [
+  { genre: "endurance_stream", colorway: "pink-blue", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-en-title-pink-blue-v1.png`, titleText: "Endurance", fontFamily: "Anton", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "blue", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-en-title-blue-v1.png`, titleText: "Endurance", fontFamily: "Anton", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "yellow", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-en-title-yellow-v1.png`, titleText: "Endurance", fontFamily: "Anton", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "purple", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-en-title-purple-v1.png`, titleText: "Endurance", fontFamily: "Anton", source: "generated-title-image" },
+  { genre: "endurance_stream", colorway: "mint", src: `${thumbnailIriamSquareEnduranceTitleAssetPrefix}endurance-square-en-title-mint-v1.png`, titleText: "Endurance", fontFamily: "Anton", source: "generated-title-image" }
+];
+export const thumbnailIriamSquareTitleAssetsByGenre: Record<ThumbnailIriamSquareTitleGenre, ThumbnailIriamSquareTitleAsset[]> = {
+  karaoke: thumbnailIriamSquareKaraokeTitleAssets,
+  dark_gacha: thumbnailIriamSquareDarkGachaTitleAssets,
+  chatting: thumbnailIriamSquareChattingTitleAssets,
+  first_stream: thumbnailIriamSquareFirstStreamTitleAssets,
+  endurance_stream: thumbnailIriamSquareEnduranceTitleAssets
+};
+export const thumbnailIriamSquareEnTitleAssetsByGenre: Record<ThumbnailIriamSquareTitleGenre, ThumbnailIriamSquareTitleAsset[]> = {
+  karaoke: thumbnailIriamSquareKaraokeEnTitleAssets,
+  dark_gacha: thumbnailIriamSquareDarkGachaEnTitleAssets,
+  chatting: thumbnailIriamSquareChattingEnTitleAssets,
+  first_stream: thumbnailIriamSquareFirstStreamEnTitleAssets,
+  endurance_stream: thumbnailIriamSquareEnduranceEnTitleAssets
+};
+export const thumbnailIriamSquareTitleAssetsByLocaleAndGenre: Record<ThumbnailIriamSquareTitleLocale, Record<ThumbnailIriamSquareTitleGenre, ThumbnailIriamSquareTitleAsset[]>> = {
+  ja: thumbnailIriamSquareTitleAssetsByGenre,
+  en: thumbnailIriamSquareEnTitleAssetsByGenre
+};
+const thumbnailIriamSquareAllTitleAssets = thumbnailIriamSquareTitleGenres.flatMap((genre) => [
+  ...thumbnailIriamSquareTitleAssetsByGenre[genre],
+  ...thumbnailIriamSquareEnTitleAssetsByGenre[genre]
+]);
+
+export const getThumbnailIriamSquareKaraokeBackgroundAsset = (
+  style: ThumbnailIriamSquareKaraokeBackgroundStyle,
+  colorway: ThumbnailIriamSquareColorway
+) =>
+  thumbnailIriamSquareKaraokeBackgroundAssets.find((asset) => asset.style === style && asset.colorway === colorway) ??
+  thumbnailIriamSquareKaraokeBackgroundAssets[0];
+
+export const getThumbnailIriamSquareBackgroundLayerMatch = (layer: ThumbnailLayer | null | undefined): ThumbnailIriamSquareKaraokeBackgroundAsset | null => {
+  if (!layer || layer.type !== "image") {
+    return null;
+  }
+
+  return thumbnailIriamSquareBackgroundAssets.find((asset) => asset.src === layer.src) ?? null;
+};
+
+export const getThumbnailIriamSquareBackgroundSwapRule = (presetId: string): ThumbnailIriamSquareBackgroundSwapRule | null =>
+  thumbnailIriamSquareBackgroundSwapRules[presetId as ThumbnailIriamSquareBackgroundSwapPresetId] ?? null;
+
+export const getThumbnailIriamSquareBackgroundPanelModel = (
+  variantId: ThumbnailPresetVariantId,
+  presetId: string,
+  layer: ThumbnailLayer | null | undefined
+): ThumbnailIriamSquareBackgroundPanelModel | null => {
+  if (variantId !== "square-1-1") {
+    return null;
+  }
+
+  const rule = getThumbnailIriamSquareBackgroundSwapRule(presetId);
+  const selected = getThumbnailIriamSquareBackgroundLayerMatch(layer);
+  if (!rule || !selected) {
+    return null;
+  }
+
+  const selectedStyle = rule.fixedStyle ?? selected.style;
+  return {
+    rule,
+    selectedStyle,
+    selectedColorway: selected.colorway,
+    selectedSrc: selected.src
+  };
+};
+
+export const replaceThumbnailIriamSquareBackgroundLayerSource = (
+  layer: ThumbnailLayer,
+  presetId: string,
+  next: { style?: ThumbnailIriamSquareKaraokeBackgroundStyle; colorway: ThumbnailIriamSquareColorway }
+): ThumbnailLayer => {
+  const selected = getThumbnailIriamSquareBackgroundLayerMatch(layer);
+  const rule = getThumbnailIriamSquareBackgroundSwapRule(presetId);
+  if (!selected || !rule || layer.type !== "image") {
+    return layer;
+  }
+
+  const style = rule.fixedStyle ?? (next.style && rule.styles.includes(next.style) ? next.style : selected.style);
+  const asset = getThumbnailIriamSquareKaraokeBackgroundAsset(style, next.colorway);
+  return { ...layer, src: asset.src };
+};
+
+export const getThumbnailIriamSquareTitleLayerMatch = (layer: ThumbnailLayer | null | undefined): ThumbnailIriamSquareTitleAsset | null => {
+  if (!layer || layer.type !== "image") {
+    return null;
+  }
+
+  return thumbnailIriamSquareAllTitleAssets.find((asset) => asset.src === layer.src) ?? null;
+};
+
+const getThumbnailIriamSquareTitleAssetLocale = (asset: ThumbnailIriamSquareTitleAsset): ThumbnailIriamSquareTitleLocale =>
+  thumbnailIriamSquareEnTitleAssetsByGenre[asset.genre].some((candidate) => candidate.src === asset.src) ? "en" : "ja";
+
+export const getThumbnailIriamSquareTitlePanelModel = (
+  variantId: ThumbnailPresetVariantId,
+  layer: ThumbnailLayer | null | undefined
+): ThumbnailIriamSquareTitlePanelModel | null => {
+  if (variantId !== "square-1-1") {
+    return null;
+  }
+
+  const selected = getThumbnailIriamSquareTitleLayerMatch(layer);
+  if (!selected) {
+    return null;
+  }
+
+  return {
+    selectedGenre: selected.genre,
+    selectedColorway: selected.colorway,
+    selectedSrc: selected.src,
+    selectedTitleText: selected.titleText,
+    colorways: thumbnailIriamSquareColorways
+  };
+};
+
+export const replaceThumbnailIriamSquareTitleLayerSource = (layer: ThumbnailLayer, colorway: string): ThumbnailLayer => {
+  const selected = getThumbnailIriamSquareTitleLayerMatch(layer);
+  if (!selected || layer.type !== "image") {
+    return layer;
+  }
+
+  const locale = getThumbnailIriamSquareTitleAssetLocale(selected);
+  const nextAsset = thumbnailIriamSquareTitleAssetsByLocaleAndGenre[locale][selected.genre].find((asset) => asset.colorway === colorway);
+  if (!nextAsset) {
+    return layer;
+  }
+
+  return { ...layer, src: nextAsset.src };
+};
+
+export const getThumbnailIriamSquareKaraokeTitleAsset = (
+  colorway: ThumbnailIriamSquareKaraokeTitleColorway,
+  backgroundColorway: ThumbnailIriamSquareColorway,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
+) => {
+  const assets = thumbnailIriamSquareTitleAssetsByLocaleAndGenre[locale].karaoke;
+  const resolvedColorway = colorway === "match-background" ? backgroundColorway : colorway;
+  return assets.find((asset) => asset.colorway === resolvedColorway) ?? assets[0];
+};
+
+export const getThumbnailIriamSquareTitleAsset = (
+  genre: string,
+  colorway: ThumbnailIriamSquareTitleColorway,
+  backgroundColorway: ThumbnailIriamSquareColorway = "pink-blue",
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
+) => {
+  const assets = thumbnailIriamSquareTitleAssetsByLocaleAndGenre[locale][genre as ThumbnailIriamSquareTitleGenre];
+  if (!assets) {
+    return null;
+  }
+
+  const resolvedColorway = colorway === "match-background" ? backgroundColorway : colorway;
+  return assets.find((asset) => asset.colorway === resolvedColorway) ?? null;
+};
 
 const assetBackgroundLayer = (name: string, src: string): ThumbnailImageLayer => ({
   id: createId("image"),
@@ -1344,6 +1774,147 @@ const shapeLayer = (partial: Partial<ThumbnailShapeLayer> & Pick<ThumbnailShapeL
   borderRadius: 20,
   ...partial
 });
+
+export const createKaraokeIriamSquareDraft = (
+  config: ThumbnailIriamSquareKaraokePresetConfig = defaultThumbnailIriamSquareKaraokePresetConfig,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
+): ThumbnailEditorDraft => {
+  const background = getThumbnailIriamSquareKaraokeBackgroundAsset(config.backgroundStyle, config.backgroundColorway);
+  const title = getThumbnailIriamSquareKaraokeTitleAsset(config.titleColorway, config.backgroundColorway, locale);
+  const enPlacement = locale === "en";
+  const layers: ThumbnailLayer[] = [
+    assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
+    shapeLayer({ name: "図形 1（上部ソフトライト）", shapeType: "circle", x: 110, y: 76, width: 860, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.18, blur: 8 }),
+    assetDecorationLayer({ name: "画像 4（ピンク音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-rose-uniform-cell.png`, x: enPlacement ? -53.71553965818441 : 464.14427897927123, y: enPlacement ? 938.493106091588 : 940.2788296041309, width: 230, height: 153, rotation: -9, opacity: 0.5 }),
+    assetDecorationLayer({ name: "画像 5（金色音符）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-gold-uniform-cell.png`, x: enPlacement ? 865.9001295489278 : 924.8290054628452, y: enPlacement ? 810.4079625561315 : 656.8357404774378, width: 210, height: 140, rotation: 8, opacity: 0.38 }),
+    assetDecorationLayer({ name: "画像 2（タイトル 歌枠）", src: title.src, x: enPlacement ? 38.07979288349691 : 323.79555489036886, y: enPlacement ? 714.4804541365222 : 644.8372371473471, width: 991.2295143306144, height: 468.41412856394516, opacity: 1 }),
+    assetDecorationLayer({ name: "画像 3（小粒きらめき）", src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-sparkle-cluster-rose-cyan-uniform-cell.png`, x: 120, y: 214, width: 330, height: 220, rotation: -6, opacity: 0.42 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: enPlacement ? 673.5717053762885 : 620, y: enPlacement ? 223.42790709690757 : 352, width: 338, height: 620, fillColor: "#ffffff14", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 62, opacity: 0.3 }),
+    assetDecorationLayer({ name: "素材: 青雲ラベル", src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`, x: 582.4475791364213, y: 184.48551971862605, width: 434.29716381052174, height: 304.02596722292895, opacity: 1 }),
+    assetDecorationLayer({ name: "素材: 青雲ラベル", src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`, x: 813.4855197186262, y: -0.9056349622090636, width: 304, height: 267, opacity: 1 }),
+    assetDecorationLayer({ name: "素材: 青雲ラベル", src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`, x: 841.0721394896357, y: 335.3062934969693, width: 304, height: 267, opacity: 1 }),
+    textLayer({ name: "テキスト 2（時刻）", text: "20:00 START", x: enPlacement ? 638.4556146531436 : 639.0416822569782, y: enPlacement ? 316.93642846870324 : 313.5107386066003, width: 330, height: 58, fontSize: 54, color: "#7a3f86", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" }),
+    assetDecorationLayer({ name: "素材: ミントきらきら", src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-sparkle-mint-v1.png`, x: 885.7082990346481, y: 922.4275985931303, width: 244.83125046770948, height: 203.45132081119505, opacity: 1 })
+  ];
+
+  return {
+    version: 1,
+    canvas: { width: 1080, height: 1080 },
+    presetId: "karaoke",
+    layers,
+    selectedLayerId: layers[layers.length - 1]?.id ?? null,
+    updatedAt: nowIso()
+  };
+};
+
+export const createDarkGachaIriamSquareDraft = (
+  config: ThumbnailIriamSquareDarkGachaPresetConfig = defaultThumbnailIriamSquareDarkGachaPresetConfig,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
+): ThumbnailEditorDraft => {
+  const background = getThumbnailIriamSquareKaraokeBackgroundAsset("dark_cute", config.backgroundColorway);
+  const title = getThumbnailIriamSquareTitleAsset("dark_gacha", config.titleColorway, config.backgroundColorway, locale);
+  const enPlacement = locale === "en";
+  const layers: ThumbnailLayer[] = [
+    assetDecorationLayer({ name: enPlacement ? "Image 1 (Background)" : "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
+    shapeLayer({ name: enPlacement ? "Shape 1 (Top light outline)" : "図形 1（上部ライトアウトライン）", shapeType: "circle", x: 96, y: 50, width: 888, height: 390, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.09, blur: 10 }),
+    assetDecorationLayer({ name: enPlacement ? "Image 2 (Dark gacha title)" : "画像 2（タイトル 闇ガチャ）", src: title?.src ?? thumbnailIriamSquareDarkGachaTitleAssets[0].src, x: enPlacement ? -80.80149448538796 : -246.87378115188247, y: enPlacement ? 27.901545254853488 : 599.3330692685978, width: 1302.6268929693151, height: 553.0603199787986, rotation: 21.60856614090952, opacity: 1 }),
+    shapeLayer({ name: enPlacement ? "Shape 2 (Standee guide)" : "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: enPlacement ? 140.27952450177935 : 440.281074608995, y: enPlacement ? 427.3284956112033 : 98.75536930330026, width: 360, height: 628, fillColor: "#12091f33", strokeColor: "#f2d6ff", strokeWidth: 2, borderRadius: 56, opacity: 0.32 }),
+    shapeLayer({ name: enPlacement ? "Shape 3 (Time badge base)" : "図形 3（時刻バッジ土台）", shapeType: "rect", x: 754.6718551223528, y: 1005.1874579061588, width: 320.6944548379854, height: 61.98877497567915, fillColor: "#1c1136dd", strokeColor: "#f4d5ff", strokeWidth: 3, borderRadius: 54, opacity: 0.9 }),
+    shapeLayer({ name: enPlacement ? "Shape 3 (Time badge base) Copy" : "図形 3（時刻バッジ土台） コピー", shapeType: "rect", x: 773.4993639152884, y: 935.5219636309212, width: 301.72865374541647, height: 61.988774975679064, fillColor: "#1c1136dd", strokeColor: "#f4d5ff", strokeWidth: 3, borderRadius: 54, opacity: 0.9 }),
+    textLayer({ name: enPlacement ? "Text 2 (Time)" : "テキスト 2（時刻）", text: enPlacement ? "22:00 START" : "20:00 START", x: 758.5539175334877, y: 1008.1420339744074, width: 308, height: 58, fontSize: 52, color: "#fff5d6", strokeColor: "#160925", strokeWidth: 3, shadowColor: "#a96dff", shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "New Tegomin", align: "center" }),
+    textLayer({ name: enPlacement ? "Text 3 (Sub text)" : "テキスト 3（サブ）", text: enPlacement ? "Pull or pass?" : "単発も10連も歓迎", x: 682.0713911546809, y: 947.4498241412856, width: 486, height: 50, fontSize: 34, color: "#f9efff", strokeColor: "#201039", strokeWidth: 4, shadowColor: "#8d50dd", shadowBlur: 7, shadowOffsetX: 2, shadowOffsetY: 3, fontFamily: "New Tegomin", align: "center" })
+  ];
+
+  return {
+    version: 1,
+    canvas: { width: 1080, height: 1080 },
+    presetId: "dark_gacha",
+    layers,
+    selectedLayerId: layers[layers.length - 1]?.id ?? null,
+    updatedAt: nowIso()
+  };
+};
+
+export const createChattingIriamSquareDraft = (
+  config: ThumbnailIriamSquareChattingPresetConfig = defaultThumbnailIriamSquareChattingPresetConfig,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
+): ThumbnailEditorDraft => {
+  const background = getThumbnailIriamSquareKaraokeBackgroundAsset("pop_bubble", config.backgroundColorway);
+  const title = getThumbnailIriamSquareTitleAsset("chatting", config.titleColorway, config.backgroundColorway, locale);
+  const enPlacement = locale === "en";
+  const layers: ThumbnailLayer[] = [
+    assetDecorationLayer({ name: enPlacement ? "Image 1 (Background)" : "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
+    shapeLayer({ name: enPlacement ? "Shape 1 (Top soft light)" : "図形 1（上部やわらかライト）", shapeType: "circle", x: 120, y: 64, width: 840, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.16, blur: 8 }),
+    assetDecorationLayer({ name: enPlacement ? "Image 2 (Chatting title)" : "画像 2（タイトル 雑談）", src: title?.src ?? thumbnailIriamSquareChattingTitleAssets[0].src, x: enPlacement ? -23.25478645013129 : -347.0687719823392, y: enPlacement ? 680.9617636927318 : -105.17398787697368, width: enPlacement ? 1071.5951240319432 : 1286.0345730749082, height: enPlacement ? 439.8883839468208 : 556.9672977624786, opacity: 1 }),
+    shapeLayer({ name: enPlacement ? "Shape 2 (Standee guide)" : "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: enPlacement ? 387.40887998540126 : 639.7933098855048, y: enPlacement ? 187.6594772806876 : 378.13829229963335, width: 340, height: 616, fillColor: "#ffffff14", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 72, opacity: 0.3 }),
+    shapeLayer({ name: enPlacement ? "Shape 3 (Time badge base)" : "図形 3（時刻バッジ土台）", shapeType: "rect", x: 11.515976951283392, y: 968.9800194567088, width: 363.8398563196887, height: 84.60959365411952, fillColor: "#ffffffd6", strokeColor: "#72c8ff", strokeWidth: 4, borderRadius: 56, opacity: 0.88 }),
+    ...(enPlacement ? [] : [textLayer({ name: "テキスト 1（見出し）", text: "ゆるっと話そう", x: 99.55167252862384, y: 331.51672528623817, width: 400, height: 105, fontSize: 50, lineHeight: 1.02, color: "#fffaf4", strokeColor: "#5f6798", strokeWidth: 6, shadowColor: "#9bdcff", shadowBlur: 10, shadowOffsetX: 0, shadowOffsetY: 3, fontFamily: "Kiwi Maru", align: "center" })]),
+    textLayer({ name: enPlacement ? "Text 2 (Time)" : "テキスト 2（時刻）", text: "20:00 START", x: 30.136047294769185, y: 987.1070867320212, width: 330, height: 58, fontSize: 54, color: "#4870a7", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Fredoka", align: "center" })
+  ];
+
+  return {
+    version: 1,
+    canvas: { width: 1080, height: 1080 },
+    presetId: "chatting",
+    layers,
+    selectedLayerId: layers[layers.length - 1]?.id ?? null,
+    updatedAt: nowIso()
+  };
+};
+
+export const createFirstStreamIriamSquareDraft = (
+  config: ThumbnailIriamSquareFirstStreamPresetConfig = defaultThumbnailIriamSquareFirstStreamPresetConfig,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
+): ThumbnailEditorDraft => {
+  const background = getThumbnailIriamSquareKaraokeBackgroundAsset("soft_cloud", config.backgroundColorway);
+  const title = getThumbnailIriamSquareTitleAsset("first_stream", config.titleColorway, config.backgroundColorway, locale);
+  const enPlacement = locale === "en";
+  const layers: ThumbnailLayer[] = [
+    assetDecorationLayer({ name: "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
+    shapeLayer({ name: "図形 1（上部ウェルカムライト）", shapeType: "circle", x: 96.16670015673355, y: 17.72189848490939, width: 896, height: 438, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.2, blur: 8 }),
+    assetDecorationLayer({ name: enPlacement ? "Image 2 (First Stream title)" : "画像 2（タイトル 初配信）", src: title?.src ?? thumbnailIriamSquareFirstStreamTitleAssets[0].src, x: enPlacement ? -23.224409463599443 : 155.16277247637902, y: enPlacement ? 602.2911120569338 : 588.1284435103, width: 1134.867178394888, height: 662.5574086725878, rotation: -2.3893123941288716, opacity: 1 }),
+    shapeLayer({ name: "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 804.7257163525296, y: 51.77518787927494, width: 340, height: 590, fillColor: "#ffffff16", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 76, opacity: 0.3 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台）", shapeType: "rect", x: 0.6, y: 23, width: 367.86054736165255, height: 76.33983040630156, fillColor: "#ffffffd6", strokeColor: "#ff9fc7", strokeWidth: 4, borderRadius: 54, opacity: 0.88 }),
+    shapeLayer({ name: "図形 3（時刻バッジ土台） コピー", shapeType: "rect", x: enPlacement ? 0.5999999999999659 : 0.6, y: 105, width: enPlacement ? 476.020766269667 : 367.86054736165255, height: enPlacement ? 82.50096881700985 : 76.33983040630156, fillColor: "#ffffffd6", strokeColor: "#ff9fc7", strokeWidth: 4, borderRadius: 54, opacity: 0.88 }),
+    textLayer({ name: "テキスト 2（時刻）", text: enPlacement ? "20:00 START" : "23:00 START", x: 22.054495036772124, y: 37.16087288510222, width: 334, height: 58, fontSize: 41, color: "#456f9f", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Hachi Maru Pop", align: "center" }),
+    textLayer({ name: "テキスト 3（サブ）", text: enPlacement ? "Requests welcome" : "初見さん歓迎", x: enPlacement ? 16.178384635220397 : -37.39332074106815, y: enPlacement ? 121.70854968602646 : 123.4942731985694, width: 456, height: 48, fontSize: 40, color: "#5f6798", strokeColor: "#ffffff", strokeWidth: 3, shadowColor: "#ffffff", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Hachi Maru Pop", align: "center" })
+  ];
+
+  return {
+    version: 1,
+    canvas: { width: 1080, height: 1080 },
+    presetId: "first_stream",
+    layers,
+    selectedLayerId: layers[layers.length - 1]?.id ?? null,
+    updatedAt: nowIso()
+  };
+};
+
+export const createEnduranceStreamIriamSquareDraft = (
+  config: ThumbnailIriamSquareEndurancePresetConfig = defaultThumbnailIriamSquareEndurancePresetConfig,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
+): ThumbnailEditorDraft => {
+  const background = getThumbnailIriamSquareKaraokeBackgroundAsset("pop_bubble", config.backgroundColorway);
+  const title = getThumbnailIriamSquareTitleAsset("endurance_stream", config.titleColorway, config.backgroundColorway, locale);
+  const enPlacement = locale === "en";
+  const layers: ThumbnailLayer[] = [
+    assetDecorationLayer({ name: enPlacement ? "Image 1 (Background)" : "画像 1（背景）", src: background.src, x: 0, y: 0, width: 1080, height: 1080, locked: true }),
+    shapeLayer({ name: enPlacement ? "Shape 1 (Top challenge light)" : "図形 1（上部チャレンジライト）", shapeType: "circle", x: 92, y: 58, width: 896, height: 420, fillColor: "#ffffff", strokeColor: "#ffffff", strokeWidth: 0, borderRadius: 120, opacity: 0.14, blur: 8 }),
+    assetDecorationLayer({ name: enPlacement ? "Image 2 (Endurance title)" : "画像 2（タイトル 耐久）", src: title?.src ?? thumbnailIriamSquareEnduranceTitleAssets[0].src, x: enPlacement ? 275.5477981487745 : -160.17249120706424, y: enPlacement ? 611.9131932483637 : 588.4141285639453, width: enPlacement ? 918.0326358849836 : 1384, height: enPlacement ? 488.6869497833735 : 836, rotation: enPlacement ? -30.20164646321526 : 0, opacity: 1 }),
+    shapeLayer({ name: enPlacement ? "Shape 2 (Standee guide)" : "図形 2（立ち絵挿入ガイド）", shapeType: "frame", x: 750.1397889695427, y: 167.85946269550243, width: 340, height: 626, fillColor: "#ffffff12", strokeColor: "#ffffff", strokeWidth: 2, borderRadius: 52, opacity: 0.3 }),
+    assetDecorationLayer({ name: enPlacement ? "Asset: Diagonal Cut Ribbon" : "素材: 黄桃リボン", src: enPlacement ? "/assets/images/thumbnail-editor/materials/labels/label-diagonal-ribbon-slate-cyan.png" : "/assets/images/thumbnail-editor/materials/iriam-square-label-base/iriam-square-label-tiny-ribbon-yellow-pink-v1.png", x: enPlacement ? 437.1478941878667 : -151.55167252862395, y: enPlacement ? 715.6389829891508 : -291.37918132155954, width: enPlacement ? 851.754878781992 : 1378, height: enPlacement ? 609.929600414004 : 801, rotation: enPlacement ? -31.003891253382996 : 0, opacity: 1 }),
+    textLayer({ name: enPlacement ? "Text 2 (Time)" : "テキスト 2（時刻）", text: enPlacement ? "19:00 START" : "20:00 START", x: enPlacement ? 750.0938516201176 : 371.5204669610119, y: enPlacement ? 952.3983503601947 : 66.67948813889099, width: 330, height: 58, rotation: enPlacement ? -31.269613517036777 : 0, fontSize: enPlacement ? 50 : 54, color: "#f47d18", strokeColor: "#ffffff", strokeWidth: 2, shadowColor: "#c9ff00", shadowBlur: 5, shadowOffsetX: 0, shadowOffsetY: 1, fontFamily: "Dela Gothic One", align: "center" })
+  ];
+
+  return {
+    version: 1,
+    canvas: { width: 1080, height: 1080 },
+    presetId: "endurance_stream",
+    layers,
+    selectedLayerId: layers[layers.length - 1]?.id ?? null,
+    updatedAt: nowIso()
+  };
+};
 
 export const thumbnailPresets: ThumbnailPreset[] = [
   {
@@ -1682,6 +2253,15 @@ export const thumbnailPresets: ThumbnailPreset[] = [
     ]
   },
   {
+    id: "dark_gacha",
+    name: "闇ガチャ",
+    category: "配信ジャンル",
+    usageLabel: "IRIAM / 1:1",
+    description: "IRIAM向けの正方形 starter preset。dark_cute background と透明 title image を使う。",
+    accent: "#7b4cff",
+    layers: []
+  },
+  {
     id: "chatting",
     name: "雑談",
     category: "配信ジャンル",
@@ -1845,12 +2425,19 @@ const thumbnailSupportedPresetVariantIds: ThumbnailPresetVariantId[] = ["landsca
 export const thumbnailPresetVariantRelations = Object.fromEntries(
   thumbnailPresets.map((preset) => [
     preset.id,
-    {
-      presetId: preset.id,
-      familyId: preset.id.replace(/_/g, "-"),
-      defaultVariantId: thumbnailDefaultPresetVariantId,
-      variantIds: [...thumbnailSupportedPresetVariantIds]
-    }
+    preset.id === "dark_gacha"
+      ? {
+          presetId: preset.id,
+          familyId: "dark-gacha",
+          defaultVariantId: "square-1-1",
+          variantIds: ["square-1-1"]
+        }
+      : {
+          presetId: preset.id,
+          familyId: preset.id.replace(/_/g, "-"),
+          defaultVariantId: thumbnailDefaultPresetVariantId,
+          variantIds: [...thumbnailSupportedPresetVariantIds]
+        }
   ])
 ) as Record<ThumbnailPresetId, ThumbnailPresetVariantRelation>;
 
@@ -2902,6 +3489,396 @@ export const thumbnailMaterialLibrary = [
     initialSize: { width: 340, height: 150 },
     initialPosition: { x: 116, y: 438 },
     recommendedPlacement: "短い日付やステータスを載せる白黒フチ風の小型土台"
+  },
+  {
+    id: "iriam-square-accent-puffy-star-pink",
+    name: "丸星ピンク",
+    category: "accent",
+    description: "1:1でも16:9でもタイトル横へ足せる、丸みのあるピンクの星飾り。",
+    src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-puffy-star-pink-v1.png`,
+    initialSize: { width: 220, height: 220 },
+    initialPosition: { x: 824, y: 112 },
+    recommendedPlacement: "タイトル横や余白に置く小さな星飾り"
+  },
+  {
+    id: "iriam-square-accent-soft-heart-blue",
+    name: "青ハート",
+    category: "accent",
+    description: "雑談や告知の余白に添えやすい、淡い青の丸いハート飾り。",
+    src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-soft-heart-blue-v1.png`,
+    initialSize: { width: 220, height: 200 },
+    initialPosition: { x: 138, y: 118 },
+    recommendedPlacement: "ゆるい告知や雑談向けの小さなハート"
+  },
+  {
+    id: "iriam-square-accent-sparkle-mint",
+    name: "ミントきらきら",
+    category: "accent",
+    description: "見出しや小ラベルの近くに重ねる、軽いミント色のきらきら。",
+    src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-sparkle-mint-v1.png`,
+    initialSize: { width: 260, height: 210 },
+    initialPosition: { x: 792, y: 378 },
+    recommendedPlacement: "見出し周辺に重ねる軽いきらきら"
+  },
+  {
+    id: "iriam-square-accent-hand-line-yellow",
+    name: "手描き黄ライン",
+    category: "accent",
+    description: "短い見出しや時刻表示の下へ置ける、手描き風の黄色いライン。",
+    src: `${thumbnailIriamSquareAccentMaterialAssetPrefix}iriam-square-accent-hand-line-yellow-v1.png`,
+    initialSize: { width: 420, height: 110 },
+    initialPosition: { x: 180, y: 478 },
+    recommendedPlacement: "短い見出し下へ置く手描きライン"
+  },
+  {
+    id: "iriam-square-label-speech-bubble-pink",
+    name: "ピンク吹き出し",
+    category: "label-base",
+    description: "1:1でも16:9でも短い一言を載せやすい、丸いピンクの吹き出し土台。",
+    src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-speech-bubble-pink-v1.png`,
+    initialSize: { width: 390, height: 210 },
+    initialPosition: { x: 132, y: 410 },
+    recommendedPlacement: "短い一言や時刻の背面に置くピンク吹き出し"
+  },
+  {
+    id: "iriam-square-label-rounded-mint",
+    name: "ミント小ラベル",
+    category: "label-base",
+    description: "補足タグや短いステータスの背面へ置ける、淡いミントの小型ラベル。",
+    src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-rounded-mint-v1.png`,
+    initialSize: { width: 340, height: 136 },
+    initialPosition: { x: 124, y: 96 },
+    recommendedPlacement: "小さな補足やタグの背面に置くミントラベル"
+  },
+  {
+    id: "iriam-square-label-cloud-blue",
+    name: "青雲ラベル",
+    category: "label-base",
+    description: "雑談や軽い告知に使いやすい、やわらかな青い雲形ラベル土台。",
+    src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-cloud-blue-v1.png`,
+    initialSize: { width: 360, height: 178 },
+    initialPosition: { x: 746, y: 404 },
+    recommendedPlacement: "ゆるい告知や雑談メモの背面に置く青い雲ラベル"
+  },
+  {
+    id: "iriam-square-label-tiny-ribbon-yellow-pink",
+    name: "黄桃リボン",
+    category: "label-base",
+    description: "短いステータスや注釈を載せるための、黄色とピンクの小型リボン。",
+    src: `${thumbnailIriamSquareLabelBaseMaterialAssetPrefix}iriam-square-label-tiny-ribbon-yellow-pink-v1.png`,
+    initialSize: { width: 420, height: 150 },
+    initialPosition: { x: 740, y: 116 },
+    recommendedPlacement: "短いステータスや注釈の背面に置く小型リボン"
+  },
+  {
+    id: "label-ivory-plaque-soft",
+    name: "淡アイボリー台座",
+    category: "label-base",
+    description: "短いラベルやサブ見出しを載せやすい、淡いアイボリーのラベル台座。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}announcement-label-plaque-ivory-uniform-cell.png`,
+    initialSize: { width: 300, height: 192 },
+    initialPosition: { x: 110, y: 84 },
+    recommendedPlacement: "短いラベルやサブ見出しの背面"
+  },
+  {
+    id: "label-cozy-plaque-warm",
+    name: "暖色メモ台座",
+    category: "label-base",
+    description: "雑談メモや短い案内文に使いやすい、暖かい色味のラベル台座。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}chatting-label-plaque-cozy-uniform-cell.png`,
+    initialSize: { width: 360, height: 208 },
+    initialPosition: { x: 124, y: 104 },
+    recommendedPlacement: "雑談メモや短い案内の背面"
+  },
+  {
+    id: "panel-soft-note-blue",
+    name: "青やわ補足パネル",
+    category: "frame",
+    description: "補足文や注意書きの背面に置きやすい、やわらかな青系パネル。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-note-panel-v1.png`,
+    initialSize: { width: 600, height: 228 },
+    initialPosition: { x: 116, y: 360 },
+    recommendedPlacement: "補足文や注意書きの背面パネル"
+  },
+  {
+    id: "panel-rounded-cta-pink",
+    name: "丸CTAパネル",
+    category: "frame",
+    description: "CTAや短い告知をまとめるための、丸みのある横長ピンクパネル。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-cta-panel-v1.png`,
+    initialSize: { width: 500, height: 146 },
+    initialPosition: { x: 116, y: 444 },
+    recommendedPlacement: "CTAや短い告知の横長パネル"
+  },
+  {
+    id: "panel-display-card-pink",
+    name: "表示カードピンク",
+    category: "frame",
+    description: "商品画像や小さな情報枠を見せるための、縦長のピンク系カード。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}goods-notice-product-card-v1.png`,
+    initialSize: { width: 260, height: 420 },
+    initialPosition: { x: 830, y: 170 },
+    recommendedPlacement: "商品画像や小さな情報枠のカード"
+  },
+  {
+    id: "badge-premiere-violet",
+    name: "紫プレミアバッジ",
+    category: "date-badge",
+    description: "公開予定や注目ステータスの背面に置く、紫系の丸いバッジ。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-premiere-badge-violet-uniform-cell.png`,
+    initialSize: { width: 360, height: 216 },
+    initialPosition: { x: 104, y: 420 },
+    recommendedPlacement: "公開予定や注目ステータスのバッジ"
+  },
+  {
+    id: "badge-member-gold",
+    name: "金メンバーバッジ",
+    category: "date-badge",
+    description: "限定公開やメンバー向け表示に添える、小さな金色バッジ。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}membership-stream-member-badge-v1.png`,
+    initialSize: { width: 180, height: 180 },
+    initialPosition: { x: 100, y: 420 },
+    recommendedPlacement: "限定公開やメンバー向け表示の小バッジ"
+  },
+  {
+    id: "frame-standee-glow-cyan",
+    name: "立ち絵グロー枠",
+    category: "frame",
+    description: "立ち絵やメイン素材の背面に置く、淡いシアン発光の縦長フレーム。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}stream-standee-frame-glow-uniform-cell.png`,
+    initialSize: { width: 420, height: 465 },
+    initialPosition: { x: 760, y: 120 },
+    recommendedPlacement: "立ち絵やメイン素材の背面発光枠"
+  },
+  {
+    id: "frame-cover-art-magenta-cyan",
+    name: "マゼンタシアン枠",
+    category: "frame",
+    description: "キービジュアル、動画枠、画像カードを強調するマゼンタとシアンの枠。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-cover-art-frame-magenta-cyan-uniform-cell.png`,
+    initialSize: { width: 560, height: 370 },
+    initialPosition: { x: 116, y: 170 },
+    recommendedPlacement: "キービジュアルや動画枠の強調フレーム"
+  },
+  {
+    id: "corner-emerald-gold-mark",
+    name: "エメ金角マーク",
+    category: "corner",
+    description: "情報枠やラベル端へ小さく添える、エメラルドと金色の角飾り。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}event-notice-corner-mark-emerald-gold-uniform-cell.png`,
+    initialSize: { width: 180, height: 120 },
+    initialPosition: { x: 920, y: 86 },
+    recommendedPlacement: "情報枠やラベル端の小さな角飾り"
+  },
+  {
+    id: "corner-lime-cyan-frame",
+    name: "ライムシアン角枠",
+    category: "corner",
+    description: "画面端やフレーム角に置きやすい、ライムとシアンのネオン角ガイド。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-frame-corner-left-lime-cyan-uniform-cell.png`,
+    initialSize: { width: 360, height: 240 },
+    initialPosition: { x: 790, y: 90 },
+    recommendedPlacement: "画面端やフレーム角のネオンガイド"
+  },
+  {
+    id: "accent-soft-glow-dots",
+    name: "やわらか光粒",
+    category: "accent",
+    description: "背景や見出し周辺へ薄く重ねて奥行きを足す、やわらかな光粒。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}chatting-soft-glow-dots-uniform-cell.png`,
+    initialSize: { width: 560, height: 400 },
+    initialPosition: { x: 610, y: 188 },
+    recommendedPlacement: "背景や見出し周辺へ薄く重ねる光粒"
+  },
+  {
+    id: "accent-music-note-gold",
+    name: "金色音符",
+    category: "accent",
+    description: "歌枠や音楽系告知のタイトル横に添えやすい、小さな金色の音符。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}karaoke-music-note-gold-uniform-cell.png`,
+    initialSize: { width: 220, height: 146 },
+    initialPosition: { x: 830, y: 108 },
+    recommendedPlacement: "タイトル横や余白に添える音符"
+  },
+  {
+    id: "accent-ribbon-cyan-pink",
+    name: "シアン桃リボン",
+    category: "accent",
+    description: "ラベル角や画面端に軽く重ねる、シアンとピンクのリボン飾り。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}first-stream-ribbon-accent-cyan-pink-uniform-cell.png`,
+    initialSize: { width: 320, height: 214 },
+    initialPosition: { x: 104, y: 100 },
+    recommendedPlacement: "ラベル角や画面端の軽いリボン飾り"
+  },
+  {
+    id: "accent-lightning-cyan",
+    name: "シアン稲妻",
+    category: "accent",
+    description: "数字、チャレンジ、見出しの横へ足す、小さなシアンの稲妻アクセント。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-lightning-bolt-cyan-uniform-cell.png`,
+    initialSize: { width: 220, height: 146 },
+    initialPosition: { x: 860, y: 360 },
+    recommendedPlacement: "強調したい数字や見出し横の稲妻"
+  },
+  {
+    id: "divider-progress-lime-cyan",
+    name: "進捗ディバイダー",
+    category: "divider",
+    description: "進捗表示、チャレンジ枠、セクション間の区切りに使うネオンライン。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}endurance-stream-progress-divider-lime-cyan-orange-uniform-cell.png`,
+    initialSize: { width: 620, height: 104 },
+    initialPosition: { x: 110, y: 500 },
+    recommendedPlacement: "進捗表示やセクション間の区切り"
+  },
+  {
+    id: "divider-soundwave-magenta-cyan",
+    name: "音波ディバイダー",
+    category: "divider",
+    description: "音楽系、告知枠、動画枠の下部に置きやすいマゼンタとシアンの音波。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}cover-song-notice-soundwave-magenta-cyan-uniform-cell.png`,
+    initialSize: { width: 520, height: 346 },
+    initialPosition: { x: 108, y: 374 },
+    recommendedPlacement: "音楽系や告知枠の下部アクセント"
+  },
+  {
+    id: "icon-clock-cozy",
+    name: "小時計アイコン",
+    category: "accent",
+    description: "時刻表示や予定ラベルの横に添える、暖色系の小さな時計アイコン。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}chatting-clock-icon-cozy-v1.png`,
+    initialSize: { width: 96, height: 96 },
+    initialPosition: { x: 96, y: 490 },
+    recommendedPlacement: "時刻表示や予定ラベル横の小アイコン"
+  },
+  {
+    id: "prop-mic-silhouette",
+    name: "マイクシルエット",
+    category: "accent",
+    description: "音声配信、歌枠、ASMR系の余白に置ける、シンプルなマイク小物。",
+    src: `${thumbnailPhase5DecorationAssetPrefix}asmr-stream-mic-silhouette-v1.png`,
+    initialSize: { width: 150, height: 236 },
+    initialPosition: { x: 930, y: 250 },
+    recommendedPlacement: "音声配信や歌枠の余白に置く小物"
+  },
+  {
+    id: "dark-smoke-wash",
+    name: "黒煙ウォッシュ",
+    category: "accent",
+    description: "背景やタイトル背面へ薄く重ねる、黒紫の煙ウォッシュ。",
+    src: `${thumbnailMaterialDarkAssetPrefix}dark-smoke-wash-v1.png`,
+    initialSize: { width: 560, height: 340 },
+    initialPosition: { x: 360, y: 190 },
+    recommendedPlacement: "背景へ薄く重ねる暗い煙"
+  },
+  {
+    id: "dark-smoky-edge-frame",
+    name: "黒煙エッジ枠",
+    category: "frame",
+    description: "画面端や動画枠へ重ねる、黒紫の煙でできた開口フレーム。",
+    src: `${thumbnailMaterialDarkAssetPrefix}dark-smoky-edge-frame-v1.png`,
+    initialSize: { width: 760, height: 506 },
+    initialPosition: { x: 260, y: 108 },
+    recommendedPlacement: "画面端を囲う暗い煙フレーム"
+  },
+  {
+    id: "dark-shadow-corner-fog",
+    name: "影もや角",
+    category: "corner",
+    description: "サムネの角へ足して暗い奥行きを作る、黒紫のもや。",
+    src: `${thumbnailMaterialDarkAssetPrefix}dark-shadow-corner-fog-v1.png`,
+    initialSize: { width: 300, height: 220 },
+    initialPosition: { x: 790, y: 82 },
+    recommendedPlacement: "角へ足す暗いもや"
+  },
+  {
+    id: "dark-ink-drip-accent",
+    name: "黒インク滴り",
+    category: "accent",
+    description: "タイトル端や画面上部へ置く、黒いインクの滴りアクセント。",
+    src: `${thumbnailMaterialDarkAssetPrefix}dark-ink-drip-accent-v1.png`,
+    initialSize: { width: 320, height: 220 },
+    initialPosition: { x: 86, y: 72 },
+    recommendedPlacement: "端や見出し周辺の黒い滴り"
+  },
+  {
+    id: "dark-sparkle-dust",
+    name: "黒紫粒子",
+    category: "accent",
+    description: "暗い背景や余白へ散らす、黒紫の粒子と控えめな光。",
+    src: `${thumbnailMaterialDarkAssetPrefix}dark-sparkle-dust-v1.png`,
+    initialSize: { width: 420, height: 260 },
+    initialPosition: { x: 720, y: 120 },
+    recommendedPlacement: "暗い背景へ足す黒紫の粒子"
+  },
+  {
+    id: "neutral-chandelier-gold",
+    name: "金シャンデリア",
+    category: "accent",
+    description: "上部や角へ小さく添えられる、金色のシャンデリア小物。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-chandelier-gold-v1.png`,
+    initialSize: { width: 220, height: 180 },
+    initialPosition: { x: 820, y: 60 },
+    recommendedPlacement: "上部や角へ置く小さなシャンデリア"
+  },
+  {
+    id: "neutral-antique-key-brass",
+    name: "真鍮アンティーク鍵",
+    category: "accent",
+    description: "告知、企画、物語風の余白に置ける、真鍮色のアンティーク鍵。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-antique-key-brass-v1.png`,
+    initialSize: { width: 260, height: 118 },
+    initialPosition: { x: 860, y: 470 },
+    recommendedPlacement: "告知や企画枠の余白に置く鍵"
+  },
+  {
+    id: "neutral-pocket-watch-brass",
+    name: "真鍮懐中時計",
+    category: "accent",
+    description: "時刻、耐久、予定告知の横へ置きやすい、真鍮色の懐中時計。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-pocket-watch-brass-v1.png`,
+    initialSize: { width: 210, height: 210 },
+    initialPosition: { x: 84, y: 420 },
+    recommendedPlacement: "時刻や耐久告知の横に置く懐中時計"
+  },
+  {
+    id: "neutral-candle-warm",
+    name: "小さな蝋燭",
+    category: "accent",
+    description: "雑談、ASMR、暗めの告知に温かさを足す、小さな蝋燭小物。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-candle-warm-v1.png`,
+    initialSize: { width: 160, height: 220 },
+    initialPosition: { x: 980, y: 350 },
+    recommendedPlacement: "雑談やASMRの余白に置く小さな蝋燭"
+  },
+  {
+    id: "neutral-blank-card-ivory",
+    name: "無地カード",
+    category: "accent",
+    description: "文字なしのカードを、情報枠や企画モチーフの補助として置ける素材。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-blank-card-ivory-v1.png`,
+    initialSize: { width: 190, height: 260 },
+    initialPosition: { x: 100, y: 260 },
+    recommendedPlacement: "文字なしカードを情報枠の補助に置く"
+  },
+  {
+    id: "neutral-ribbon-seal-rose",
+    name: "封蝋リボン",
+    category: "accent",
+    description: "告知枠や見出し端へ置ける、文字なしの封蝋とリボンアクセント。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-ribbon-seal-rose-v1.png`,
+    initialSize: { width: 260, height: 170 },
+    initialPosition: { x: 850, y: 110 },
+    recommendedPlacement: "見出し端や告知枠へ置く封蝋リボン"
+  },
+  {
+    id: "neutral-small-ornate-frame-gold",
+    name: "小さな装飾フレーム",
+    category: "frame",
+    description: "立ち絵、アイコン、小さな情報枠を囲う補助に使える金色の装飾フレーム。",
+    src: `${thumbnailMaterialNeutralAssetPrefix}neutral-small-ornate-frame-gold-v1.png`,
+    initialSize: { width: 360, height: 240 },
+    initialPosition: { x: 460, y: 240 },
+    recommendedPlacement: "立ち絵や小さな情報枠の補助フレーム"
   }
 ] satisfies ThumbnailMaterial[];
 
@@ -2975,6 +3952,10 @@ export const createDraftFromPreset = (
   presetId: ThumbnailPresetId = "stream_announce",
   canvas: ThumbnailCanvas = thumbnailCanvasSizes.hd
 ): ThumbnailEditorDraft => {
+  if (presetId === "dark_gacha") {
+    return createDarkGachaIriamSquareDraft();
+  }
+
   const preset = thumbnailPresets.find((item) => item.id === presetId) ?? thumbnailPresets[0];
   const scaleX = canvas.width / 1280;
   const scaleY = canvas.height / 720;
@@ -3014,8 +3995,29 @@ export const createDraftFromPreset = (
 
 export const createDraftFromPresetVariant = (
   presetId: ThumbnailPresetId = "stream_announce",
-  variantId: ThumbnailPresetVariantId = thumbnailPresetVariantRelations[presetId].defaultVariantId
+  variantId: ThumbnailPresetVariantId = thumbnailPresetVariantRelations[presetId].defaultVariantId,
+  locale: ThumbnailIriamSquareTitleLocale = "ja"
 ): ThumbnailEditorDraft => {
+  if (presetId === "endurance_stream" && variantId === "square-1-1") {
+    return createEnduranceStreamIriamSquareDraft(defaultThumbnailIriamSquareEndurancePresetConfig, locale);
+  }
+
+  if (presetId === "first_stream" && variantId === "square-1-1") {
+    return createFirstStreamIriamSquareDraft(defaultThumbnailIriamSquareFirstStreamPresetConfig, locale);
+  }
+
+  if (presetId === "chatting" && variantId === "square-1-1") {
+    return createChattingIriamSquareDraft(defaultThumbnailIriamSquareChattingPresetConfig, locale);
+  }
+
+  if (presetId === "dark_gacha" && variantId === "square-1-1") {
+    return createDarkGachaIriamSquareDraft(defaultThumbnailIriamSquareDarkGachaPresetConfig, locale);
+  }
+
+  if (presetId === "karaoke" && variantId === "square-1-1") {
+    return createKaraokeIriamSquareDraft(defaultThumbnailIriamSquareKaraokePresetConfig, locale);
+  }
+
   const canvas = getThumbnailPresetCanvasFromVariant(presetId, variantId) ?? thumbnailPresetVariants[thumbnailDefaultPresetVariantId].canvas;
   return createDraftFromPreset(presetId, canvas);
 };

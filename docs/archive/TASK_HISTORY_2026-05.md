@@ -523,6 +523,16 @@
 - EN 対応前の運用整理として `codex/en-support-preview` を `origin/main` 起点で作成し、B scope の EN 対応 PR を同 branch 宛てに積む方針にした。B 完了後に main へ持っていくか判断し、C scope は main 起点の小分け PR とする。
 - `task.md` は EN 対応の active board と backlog / verification baseline に圧縮し、完了済みの長いログはこの archive entry と各 PR 本文 / merge history を参照する。
 
+#### P30: Thumbnail Editor IRIAM square preview branch through final confirmation
+
+- 2026-05-25 から 2026-05-26 にかけて、`codex/thumbnail-iriam-square-preview` を統合 base とする IRIAM 1:1 preview branch の主要 slice を完了した。
+- PR #200 - #213 で `歌枠` / `闇ガチャ` / `雑談` / `初配信` / `耐久` の 5 preset body、square settings modal、background colorway swap、title transparent image swap、EN title asset / locale-aware selection、EN placement adjustment、final confirmation を preview branch に統合した。
+- small project-bound material として `accent` / `label-base` batch を追加し、登録済み素材が 16:9 / IRIAM 1:1 の両方へ通常 image layer として追加できる cross-aspect boundary を contract 化した。
+- final confirmation では PR #212 merge 後の preview branch を確認し、`first_stream` EN square draft の title layer label だけを `Image 2 (First Stream title)` に最小修正した。PR #213 は 2026-05-26 に `codex/thumbnail-iriam-square-preview` へ merge 済み。
+- Browser confirmation では EN / JA で 5 preset の settings modal preview、background color、title color、modal create flow、title layer label を確認した。`820 / 1024 / 1280 / 1366px` では page-level horizontal overflow なし。`390px` は Chrome DevTools MCP の window clamp により exact check 未実施で、500px mobile-like check まで。
+- 旧 `task.md` に残っていた長い implementation update 群はこの archive entry と各 PR body に寄せ、active board は registered material library expansion / main merge preparation / font follow-up へ圧縮した。
+- 次の active direction は registered material library expansion。Batch A は既存 preset decoration の登録、Batch B は dark / horror / smoke material、Batch C は neutral prop material とする。素材数に固定上限は置かないが、PR は Batch / category / source type ごとに分ける。
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

@@ -26,6 +26,11 @@ type ThumbnailPresetCopy = {
 type ThumbnailPresetTextBodyCopy = Partial<Record<ThumbnailPresetId, Record<string, string>>>;
 type ThumbnailPresetTextLayerVisualAdjustment = Partial<Pick<ThumbnailTextLayer, "x" | "y" | "width" | "height" | "fontSize" | "lineHeight" | "align">>;
 type ThumbnailPresetLayerVisualAdjustment = Partial<Pick<ThumbnailLayer, "x" | "y" | "width" | "height">>;
+const thumbnailIriamSquarePresetIds = new Set<ThumbnailPresetId>(["karaoke", "dark_gacha", "chatting", "first_stream", "endurance_stream"]);
+
+function isThumbnailIriamSquareDraft(draft: ThumbnailEditorDraft): boolean {
+  return thumbnailIriamSquarePresetIds.has(draft.presetId) && draft.canvas.width === draft.canvas.height;
+}
 
 export const thumbnailEditorCopy = {
   ja: {
@@ -189,6 +194,53 @@ export const thumbnailEditorCopy = {
       applyPlain: "プリセットをそのまま適用",
       applyHandoff: "予定テキストで適用",
       applyCarryover: "主要テキストを引き継いで適用"
+    },
+    iriamSquareDialog: {
+      eyebrow: "1:1 IRIAM プリセット",
+      title: "歌枠プリセット設定",
+      body: "背景とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
+      presetTitles: {
+        karaoke: "歌枠プリセット設定",
+        dark_gacha: "闇ガチャプリセット設定",
+        chatting: "雑談プリセット設定",
+        first_stream: "初配信プリセット設定",
+        endurance_stream: "耐久プリセット設定"
+      },
+      presetBodies: {
+        karaoke: "背景とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
+        dark_gacha: "dark_cute 背景の色とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
+        chatting: "pop_bubble 背景の色とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
+        first_stream: "soft_cloud 背景の色とタイトル画像の色を選んで、1:1 の下書きとして作成します。",
+        endurance_stream: "pop_bubble 背景の色とタイトル画像の色を選んで、1:1 の下書きとして作成します。"
+      },
+      preview: "プレビュー",
+      backgroundStyle: "背景タイプ",
+      backgroundColor: "背景カラー",
+      titleColor: "タイトルカラー",
+      matchBackground: "背景に合わせる",
+      cancel: "キャンセル",
+      create: "この設定で作成",
+      styleLabels: {
+        soft_cloud: "soft_cloud",
+        pop_bubble: "pop_bubble",
+        dark_cute: "dark_cute"
+      },
+      colorLabels: {
+        "pink-blue": "pink-blue",
+        blue: "blue",
+        yellow: "yellow",
+        purple: "purple",
+        mint: "mint"
+      }
+    },
+    iriamSquareBackgroundSwap: {
+      title: "IRIAM 背景",
+      note: "選択中の背景画像だけ差し替え",
+      fixedStyle: (style: string) => `${style} 固定`
+    },
+    iriamSquareTitleSwap: {
+      title: "IRIAM タイトル",
+      note: "選択中のタイトル画像だけ差し替え"
     },
     toasts: {
       handoffApplied: "Schedule Calendarの予定を反映しました。用途に合わせてプリセットを選べます。",
@@ -487,6 +539,53 @@ export const thumbnailEditorCopy = {
       applyHandoff: "Apply with schedule text",
       applyCarryover: "Apply with main text"
     },
+    iriamSquareDialog: {
+      eyebrow: "1:1 IRIAM preset",
+      title: "Karaoke preset settings",
+      body: "Choose the background and title image color, then create a 1:1 draft.",
+      presetTitles: {
+        karaoke: "Karaoke preset settings",
+        dark_gacha: "Dark Gacha preset settings",
+        chatting: "Chatting preset settings",
+        first_stream: "First Stream preset settings",
+        endurance_stream: "Endurance Stream preset settings"
+      },
+      presetBodies: {
+        karaoke: "Choose the background and title image color, then create a 1:1 draft.",
+        dark_gacha: "Choose the dark_cute background color and title image color, then create a 1:1 draft.",
+        chatting: "Choose the pop_bubble background color and title image color, then create a 1:1 draft.",
+        first_stream: "Choose the soft_cloud background color and title image color, then create a 1:1 draft.",
+        endurance_stream: "Choose the pop_bubble background color and title image color, then create a 1:1 draft."
+      },
+      preview: "Preview",
+      backgroundStyle: "Background type",
+      backgroundColor: "Background color",
+      titleColor: "Title color",
+      matchBackground: "Match background",
+      cancel: "Cancel",
+      create: "Create with these settings",
+      styleLabels: {
+        soft_cloud: "soft_cloud",
+        pop_bubble: "pop_bubble",
+        dark_cute: "dark_cute"
+      },
+      colorLabels: {
+        "pink-blue": "pink-blue",
+        blue: "blue",
+        yellow: "yellow",
+        purple: "purple",
+        mint: "mint"
+      }
+    },
+    iriamSquareBackgroundSwap: {
+      title: "IRIAM background",
+      note: "Replace only the selected background image",
+      fixedStyle: (style: string) => `${style} fixed`
+    },
+    iriamSquareTitleSwap: {
+      title: "IRIAM title",
+      note: "Replace only the selected title image"
+    },
     toasts: {
       handoffApplied: "Schedule Calendar text was applied. Choose a preset that fits the use case.",
       restored: "Previous draft restored.",
@@ -655,6 +754,7 @@ const thumbnailPresetCopy: Record<Locale, Partial<Record<ThumbnailPresetId, Thum
     privacy_notice: { name: "プライバシー告知", description: "予定テキストを活かしつつ、細かい内容を出しすぎない事前告知向け。" },
     whiteboard_plan: { name: "ホワイトボード", description: "企画内容や配信の流れを、白板風に軽く整理して見せる告知向け。" },
     karaoke: { name: "歌枠", description: "音楽配信に合う強いコントラスト。" },
+    dark_gacha: { name: "闇ガチャ", description: "IRIAM向けの正方形 starter preset。dark_cute background と透明 title image を使う。" },
     chatting: { name: "雑談", description: "トーク配信・近況報告に使いやすい余白設計。" },
     clip: { name: "切り抜き", description: "短い強調語と勢いを出す切り抜き向け。" },
     game_live: { name: "ゲーム実況", description: "ゲームタイトルと配信時刻を分けて見せる実況向け。" },
@@ -677,6 +777,7 @@ const thumbnailPresetCopy: Record<Locale, Partial<Record<ThumbnailPresetId, Thum
     privacy_notice: { name: "Privacy Notice", description: "A pre-announcement layout that keeps schedule details from showing too much." },
     whiteboard_plan: { name: "Whiteboard Plan", description: "A whiteboard-style layout for lightly organizing a stream plan or flow." },
     karaoke: { name: "Karaoke", description: "Strong contrast for music streams." },
+    dark_gacha: { name: "Dark Gacha", description: "A square IRIAM starter preset using a dark_cute background and transparent title image." },
     chatting: { name: "Chatting", description: "A relaxed layout for talk streams and updates." },
     clip: { name: "Clip", description: "A punchy layout for short highlight or clip announcements." },
     game_live: { name: "Game Stream", description: "A game-stream layout that separates title and stream time clearly." },
@@ -958,6 +1059,201 @@ const materialCopy: Record<Locale, Partial<Record<string, MaterialCopy>>> = {
       name: "White Black Pop Base",
       description: "A compact white-and-black outlined base for dates or short status text.",
       recommendedPlacement: "Outlined base behind short dates or status text"
+    },
+    "iriam-square-accent-puffy-star-pink": {
+      name: "Pink Puffy Star",
+      description: "A rounded pink star decoration that works beside titles in square or 16:9 thumbnails.",
+      recommendedPlacement: "Small star beside titles or open space"
+    },
+    "iriam-square-accent-soft-heart-blue": {
+      name: "Soft Blue Heart",
+      description: "A soft blue rounded heart for casual chat, notice, or open-space decoration.",
+      recommendedPlacement: "Small heart for chat or soft notice layouts"
+    },
+    "iriam-square-accent-sparkle-mint": {
+      name: "Mint Sparkles",
+      description: "A light mint sparkle cluster for layering around headlines or small labels.",
+      recommendedPlacement: "Light sparkles around headline areas"
+    },
+    "iriam-square-accent-hand-line-yellow": {
+      name: "Yellow Hand Line",
+      description: "A warm hand-drawn yellow underline for short headlines or time labels.",
+      recommendedPlacement: "Hand-drawn underline below short text"
+    },
+    "iriam-square-label-speech-bubble-pink": {
+      name: "Pink Speech Bubble",
+      description: "A rounded pink speech-bubble base for short comments or time labels in square or 16:9 thumbnails.",
+      recommendedPlacement: "Behind a short comment or time label"
+    },
+    "iriam-square-label-rounded-mint": {
+      name: "Mint Small Label",
+      description: "A compact mint label base for small notes, tags, or short status text.",
+      recommendedPlacement: "Behind a small note or tag"
+    },
+    "iriam-square-label-cloud-blue": {
+      name: "Blue Cloud Label",
+      description: "A soft blue cloud-shaped label base for casual notices or chat notes.",
+      recommendedPlacement: "Behind a soft notice or chat note"
+    },
+    "iriam-square-label-tiny-ribbon-yellow-pink": {
+      name: "Yellow Pink Ribbon",
+      description: "A compact yellow and pink ribbon base for short status text or small annotations.",
+      recommendedPlacement: "Behind short status text or annotations"
+    },
+    "label-ivory-plaque-soft": {
+      name: "Soft Ivory Plaque",
+      description: "A soft ivory label base for short labels or supporting headlines.",
+      recommendedPlacement: "Behind short labels or subheads"
+    },
+    "label-cozy-plaque-warm": {
+      name: "Warm Cozy Plaque",
+      description: "A warm label plaque for chat notes, casual notices, or short guidance.",
+      recommendedPlacement: "Behind chat notes or short guidance"
+    },
+    "panel-soft-note-blue": {
+      name: "Soft Blue Note Panel",
+      description: "A soft blue panel for supporting copy, notes, or caution text.",
+      recommendedPlacement: "Behind notes or caution text"
+    },
+    "panel-rounded-cta-pink": {
+      name: "Rounded CTA Panel",
+      description: "A rounded pink panel for calls to action or short announcement text.",
+      recommendedPlacement: "Wide panel for CTA or short notices"
+    },
+    "panel-display-card-pink": {
+      name: "Pink Display Card",
+      description: "A vertical pink card for small product images or compact information blocks.",
+      recommendedPlacement: "Card for product images or small info"
+    },
+    "badge-premiere-violet": {
+      name: "Violet Premiere Badge",
+      description: "A violet badge for premiere, release, or highlighted status labels.",
+      recommendedPlacement: "Badge for release or highlight status"
+    },
+    "badge-member-gold": {
+      name: "Gold Member Badge",
+      description: "A small gold badge for member-only, limited, or premium notes.",
+      recommendedPlacement: "Small badge beside limited notes"
+    },
+    "frame-standee-glow-cyan": {
+      name: "Cyan Standee Glow Frame",
+      description: "A cyan glow frame for standees, main assets, or vertical focal areas.",
+      recommendedPlacement: "Behind standees or main assets"
+    },
+    "frame-cover-art-magenta-cyan": {
+      name: "Magenta Cyan Cover Frame",
+      description: "A magenta and cyan frame for key visuals, video areas, or image cards.",
+      recommendedPlacement: "Frame for key visuals or video blocks"
+    },
+    "corner-emerald-gold-mark": {
+      name: "Emerald Gold Corner",
+      description: "A small emerald and gold corner mark for labels and information frames.",
+      recommendedPlacement: "Small corner on labels or info frames"
+    },
+    "corner-lime-cyan-frame": {
+      name: "Lime Cyan Frame Corner",
+      description: "A neon lime and cyan corner guide for edges, frames, or focal areas.",
+      recommendedPlacement: "Neon guide on frame corners"
+    },
+    "accent-soft-glow-dots": {
+      name: "Soft Glow Dots",
+      description: "Soft glow dots for subtle depth around backgrounds and headlines.",
+      recommendedPlacement: "Light overlay near headlines or backgrounds"
+    },
+    "accent-music-note-gold": {
+      name: "Gold Music Note",
+      description: "A small gold music note for karaoke, song, or audio-focused layouts.",
+      recommendedPlacement: "Small note beside titles or open space"
+    },
+    "accent-ribbon-cyan-pink": {
+      name: "Cyan Pink Ribbon",
+      description: "A light cyan and pink ribbon accent for label corners or screen edges.",
+      recommendedPlacement: "Ribbon accent on label corners or edges"
+    },
+    "accent-lightning-cyan": {
+      name: "Cyan Lightning",
+      description: "A compact cyan lightning accent for numbers, challenge text, or headlines.",
+      recommendedPlacement: "Beside emphasized numbers or headlines"
+    },
+    "divider-progress-lime-cyan": {
+      name: "Lime Cyan Progress Divider",
+      description: "A neon progress divider for challenge layouts and section breaks.",
+      recommendedPlacement: "Between progress or section blocks"
+    },
+    "divider-soundwave-magenta-cyan": {
+      name: "Magenta Cyan Soundwave",
+      description: "A magenta and cyan soundwave divider for music notices or lower-frame accents.",
+      recommendedPlacement: "Lower accent for music or notice frames"
+    },
+    "icon-clock-cozy": {
+      name: "Cozy Clock Icon",
+      description: "A small warm clock icon for time labels, schedule notes, and quick reminders.",
+      recommendedPlacement: "Small icon beside time or schedule labels"
+    },
+    "prop-mic-silhouette": {
+      name: "Mic Silhouette",
+      description: "A simple microphone silhouette for audio, karaoke, or ASMR-style layouts.",
+      recommendedPlacement: "Small prop in open space for audio layouts"
+    },
+    "dark-smoke-wash": {
+      name: "Black Smoke Wash",
+      description: "A black-violet smoke wash for softly darkening backgrounds or title areas.",
+      recommendedPlacement: "Subtle dark smoke over backgrounds"
+    },
+    "dark-smoky-edge-frame": {
+      name: "Smoky Edge Frame",
+      description: "An open-center black-violet smoke frame for thumbnail edges or video areas.",
+      recommendedPlacement: "Dark smoke around screen edges"
+    },
+    "dark-shadow-corner-fog": {
+      name: "Shadow Corner Fog",
+      description: "A dark corner fog accent for adding depth to thumbnail corners.",
+      recommendedPlacement: "Dark haze on thumbnail corners"
+    },
+    "dark-ink-drip-accent": {
+      name: "Black Ink Drip",
+      description: "A black ink drip accent for title edges, top borders, or dark notices.",
+      recommendedPlacement: "Ink drips near edges or headlines"
+    },
+    "dark-sparkle-dust": {
+      name: "Dark Sparkle Dust",
+      description: "Sparse black-purple particles and subtle glow for dark background accents.",
+      recommendedPlacement: "Particle dust over dark backgrounds"
+    },
+    "neutral-chandelier-gold": {
+      name: "Gold Chandelier",
+      description: "A small gold chandelier prop for top edges, corners, or elegant open space.",
+      recommendedPlacement: "Small chandelier near top edges or corners"
+    },
+    "neutral-antique-key-brass": {
+      name: "Antique Brass Key",
+      description: "An ornate brass key prop for notices, project thumbnails, and story-like layouts.",
+      recommendedPlacement: "Key prop in open space around notice frames"
+    },
+    "neutral-pocket-watch-brass": {
+      name: "Brass Pocket Watch",
+      description: "A brass pocket watch prop for time labels, endurance streams, and schedule notices.",
+      recommendedPlacement: "Beside time, endurance, or schedule blocks"
+    },
+    "neutral-candle-warm": {
+      name: "Small Warm Candle",
+      description: "A small candle prop for chatting, ASMR, dark, or cozy thumbnail layouts.",
+      recommendedPlacement: "Warm candle in open space for cozy layouts"
+    },
+    "neutral-blank-card-ivory": {
+      name: "Blank Ivory Card",
+      description: "A text-free ivory card prop for info blocks, game motifs, or announcement accents.",
+      recommendedPlacement: "Blank card beside information or project frames"
+    },
+    "neutral-ribbon-seal-rose": {
+      name: "Ribbon Wax Seal",
+      description: "A text-free ribbon and wax seal accent for notice edges and event thumbnails.",
+      recommendedPlacement: "Seal accent near headlines or notice frames"
+    },
+    "neutral-small-ornate-frame-gold": {
+      name: "Small Ornate Frame",
+      description: "A small gold ornate frame for character cutouts, icons, or compact information areas.",
+      recommendedPlacement: "Support frame around small visuals or info areas"
     }
   }
 };
@@ -974,8 +1270,10 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
     first_stream: {
       "テキスト 4（ラベル）": "DEBUT STREAM",
       "テキスト 1（見出し）": "Debut\nStream",
+      "テキスト 1（見出し補助）": "Nice to meet you",
       "テキスト 2（時刻）": "20:00 START",
-      "テキスト 3（サブ）": "Nice to meet you!"
+      "テキスト 3（サブ）": "Requests welcome",
+      "テキスト 3（サブ） コピー": "First-timers welcome"
     },
     anniversary_stream: {
       "テキスト 1（見出し）": "1st Anniv.",
@@ -1059,10 +1357,16 @@ const thumbnailPresetTextBodyCopy: Record<Locale, ThumbnailPresetTextBodyCopy> =
       "テキスト 2（時刻）": "20:00 START",
       "テキスト 3（サブ）": "Requests welcome"
     },
+    dark_gacha: {
+      "テキスト 1（見出し補助）": "SSR WISH",
+      "テキスト 2（時刻）": "22:00 START",
+      "テキスト 3（サブ）": "Pull or pass?",
+      "テキスト 4（ラベル）": "IRIAM / DARK GACHA"
+    },
     chatting: {
       "テキスト 4（ラベル）": "CHATTING / YouTube",
       "テキスト 1（見出し）": "Chat\nStream",
-      "テキスト 2（時刻）": "21:00 START",
+      "テキスト 2（時刻）": "20:00 START",
       "テキスト 3（サブ）": "Let's sort out today's topics"
     },
     clip: {
@@ -1247,7 +1551,15 @@ const materialNameTranslationsEn: Record<string, string> = {
   黄黒衝撃マーク: "Yellow Black Impact Burst",
   白シアンスピード線: "White Cyan Speed Lines",
   白黒集中線: "Monochrome Focus Lines",
-  白黒フチ強調土台: "White Black Pop Base"
+  白黒フチ強調土台: "White Black Pop Base",
+  青雲ラベル: "Blue Cloud Label",
+  ミントきらきら: "Mint Sparkles",
+  黄桃リボン: "Yellow Pink Ribbon",
+  黒煙ウォッシュ: "Black Smoke Wash",
+  黒煙エッジ枠: "Smoky Edge Frame",
+  影もや角: "Shadow Corner Fog",
+  黒インク滴り: "Black Ink Drip",
+  黒紫粒子: "Dark Sparkle Dust"
 };
 
 const standeePlacementCopy: Record<
@@ -1343,9 +1655,18 @@ const layerTokenLabels: Record<Locale, Record<string, string>> = {
     英字: "English text",
     目標: "Goal",
     背景: "Background",
+    タイトル: "Title",
+    "タイトル 歌枠": "Karaoke title",
+    "タイトル 闇ガチャ": "Dark gacha title",
+    "タイトル 雑談": "Chatting title",
+    "タイトル 耐久": "Endurance title",
     曜日: "Day",
     時間: "Time",
     予定: "Schedule",
+    上部ソフトライト: "Top soft light",
+    上部やわらかライト: "Top soft light",
+    上部ライトアウトライン: "Top light outline",
+    上部チャレンジライト: "Top challenge light",
     立ち絵挿入ガイド: "Standee guide",
     左立ち絵ガイド: "Left standee guide",
     右立ち絵ガイド: "Right standee guide",
@@ -1567,19 +1888,26 @@ export function localizeThumbnailPresetTextLayerBodies(
     return draft;
   }
 
+  const applyVisualAdjustments = !isThumbnailIriamSquareDraft(draft);
+  const localizeLayerNames = isThumbnailIriamSquareDraft(draft);
   return {
     ...draft,
     layers: draft.layers.map((layer) => {
-      const layerVisualAdjustment = getThumbnailPresetLayerVisualAdjustment(draft.presetId, layer.name, locale);
+      const layerVisualAdjustment = applyVisualAdjustments ? getThumbnailPresetLayerVisualAdjustment(draft.presetId, layer.name, locale) : null;
       const adjustedLayer = layerVisualAdjustment ? { ...layer, ...layerVisualAdjustment } : layer;
+      const localizedName = localizeLayerNames ? getThumbnailLayerDisplayName(adjustedLayer, locale) : adjustedLayer.name;
       if (adjustedLayer.type !== "text") {
-        return adjustedLayer;
+        return {
+          ...adjustedLayer,
+          name: localizedName
+        };
       }
 
-      const visualAdjustment = getThumbnailPresetTextLayerVisualAdjustment(draft.presetId, adjustedLayer.name, locale);
+      const visualAdjustment = applyVisualAdjustments ? getThumbnailPresetTextLayerVisualAdjustment(draft.presetId, adjustedLayer.name, locale) : null;
       return {
         ...adjustedLayer,
         ...visualAdjustment,
+        name: localizedName,
         text: getThumbnailPresetTextLayerBody(draft.presetId, adjustedLayer.name, locale, adjustedLayer.text)
       };
     })

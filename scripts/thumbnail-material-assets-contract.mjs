@@ -7,9 +7,11 @@ import ts from "typescript";
 
 const root = process.cwd();
 const sourcePath = path.join(root, "lib", "thumbnail-editor.ts");
+const copyPath = path.join(root, "lib", "thumbnail-editor-copy.ts");
 const componentPath = path.join(root, "components", "thumbnail-editor", "ThumbnailEditorApp.tsx");
 const userMaterialStoragePath = path.join(root, "components", "thumbnail-editor", "thumbnailUserMaterialStorage.ts");
 const source = fs.readFileSync(sourcePath, "utf8");
+const copySource = fs.readFileSync(copyPath, "utf8");
 const componentSource = fs.readFileSync(componentPath, "utf8");
 const userMaterialStorageSource = fs.existsSync(userMaterialStoragePath) ? fs.readFileSync(userMaterialStoragePath, "utf8") : "";
 const compiled = ts.transpileModule(source, {
@@ -33,6 +35,10 @@ const dividerMaterialPrefix = "/assets/images/thumbnail-editor/materials/divider
 const effectMaterialPrefix = "/assets/images/thumbnail-editor/materials/effects/";
 const cornerMaterialPrefix = "/assets/images/thumbnail-editor/materials/corners/";
 const impactMaterialPrefix = "/assets/images/thumbnail-editor/materials/impact/";
+const iriamSquareAccentMaterialPrefix = "/assets/images/thumbnail-editor/materials/iriam-square-accent/";
+const iriamSquareLabelBaseMaterialPrefix = "/assets/images/thumbnail-editor/materials/iriam-square-label-base/";
+const darkMaterialPrefix = "/assets/images/thumbnail-editor/materials/dark/";
+const neutralMaterialPrefix = "/assets/images/thumbnail-editor/materials/neutral/";
 const phase5Prefix = "/assets/images/thumbnail-editor/decorations/phase5/";
 const expectedMaterials = [
   {
@@ -362,11 +368,358 @@ const expectedMaterials = [
     width: 340,
     height: 150,
     recommended: "短い日付やステータスを載せる白黒フチ風の小型土台"
+  },
+  {
+    id: "iriam-square-accent-puffy-star-pink",
+    category: "accent",
+    src: `${iriamSquareAccentMaterialPrefix}iriam-square-accent-puffy-star-pink-v1.png`,
+    width: 220,
+    height: 220,
+    recommended: "タイトル横や余白に置く小さな星飾り"
+  },
+  {
+    id: "iriam-square-accent-soft-heart-blue",
+    category: "accent",
+    src: `${iriamSquareAccentMaterialPrefix}iriam-square-accent-soft-heart-blue-v1.png`,
+    width: 220,
+    height: 200,
+    recommended: "ゆるい告知や雑談向けの小さなハート"
+  },
+  {
+    id: "iriam-square-accent-sparkle-mint",
+    category: "accent",
+    src: `${iriamSquareAccentMaterialPrefix}iriam-square-accent-sparkle-mint-v1.png`,
+    width: 260,
+    height: 210,
+    recommended: "見出し周辺に重ねる軽いきらきら"
+  },
+  {
+    id: "iriam-square-accent-hand-line-yellow",
+    category: "accent",
+    src: `${iriamSquareAccentMaterialPrefix}iriam-square-accent-hand-line-yellow-v1.png`,
+    width: 420,
+    height: 110,
+    recommended: "短い見出し下へ置く手描きライン"
+  },
+  {
+    id: "iriam-square-label-speech-bubble-pink",
+    category: "label-base",
+    src: `${iriamSquareLabelBaseMaterialPrefix}iriam-square-label-speech-bubble-pink-v1.png`,
+    width: 390,
+    height: 210,
+    recommended: "短い一言や時刻の背面に置くピンク吹き出し"
+  },
+  {
+    id: "iriam-square-label-rounded-mint",
+    category: "label-base",
+    src: `${iriamSquareLabelBaseMaterialPrefix}iriam-square-label-rounded-mint-v1.png`,
+    width: 340,
+    height: 136,
+    recommended: "小さな補足やタグの背面に置くミントラベル"
+  },
+  {
+    id: "iriam-square-label-cloud-blue",
+    category: "label-base",
+    src: `${iriamSquareLabelBaseMaterialPrefix}iriam-square-label-cloud-blue-v1.png`,
+    width: 360,
+    height: 178,
+    recommended: "ゆるい告知や雑談メモの背面に置く青い雲ラベル"
+  },
+  {
+    id: "iriam-square-label-tiny-ribbon-yellow-pink",
+    category: "label-base",
+    src: `${iriamSquareLabelBaseMaterialPrefix}iriam-square-label-tiny-ribbon-yellow-pink-v1.png`,
+    width: 420,
+    height: 150,
+    recommended: "短いステータスや注釈の背面に置く小型リボン"
+  },
+  {
+    id: "label-ivory-plaque-soft",
+    category: "label-base",
+    src: `${phase5Prefix}announcement-label-plaque-ivory-uniform-cell.png`,
+    width: 300,
+    height: 192,
+    minimumAlphaPadding: 0,
+    recommended: "短いラベルやサブ見出しの背面"
+  },
+  {
+    id: "label-cozy-plaque-warm",
+    category: "label-base",
+    src: `${phase5Prefix}chatting-label-plaque-cozy-uniform-cell.png`,
+    width: 360,
+    height: 208,
+    minimumAlphaPadding: 0,
+    recommended: "雑談メモや短い案内の背面"
+  },
+  {
+    id: "panel-soft-note-blue",
+    category: "frame",
+    src: `${phase5Prefix}asmr-stream-note-panel-v1.png`,
+    width: 600,
+    height: 228,
+    assetWidth: 900,
+    assetHeight: 342,
+    minimumAlphaPadding: 0,
+    recommended: "補足文や注意書きの背面パネル"
+  },
+  {
+    id: "panel-rounded-cta-pink",
+    category: "frame",
+    src: `${phase5Prefix}goods-notice-cta-panel-v1.png`,
+    width: 500,
+    height: 146,
+    assetWidth: 1686,
+    assetHeight: 492,
+    minimumAlphaPadding: 0,
+    recommended: "CTAや短い告知の横長パネル"
+  },
+  {
+    id: "panel-display-card-pink",
+    category: "frame",
+    src: `${phase5Prefix}goods-notice-product-card-v1.png`,
+    width: 260,
+    height: 420,
+    assetWidth: 847,
+    assetHeight: 1271,
+    minimumAlphaPadding: 0,
+    recommended: "商品画像や小さな情報枠のカード"
+  },
+  {
+    id: "badge-premiere-violet",
+    category: "date-badge",
+    src: `${phase5Prefix}cover-song-notice-premiere-badge-violet-uniform-cell.png`,
+    width: 360,
+    height: 216,
+    minimumAlphaPadding: 0,
+    recommended: "公開予定や注目ステータスのバッジ"
+  },
+  {
+    id: "badge-member-gold",
+    category: "date-badge",
+    src: `${phase5Prefix}membership-stream-member-badge-v1.png`,
+    width: 180,
+    height: 180,
+    assetWidth: 1254,
+    assetHeight: 1254,
+    minimumAlphaPadding: 0,
+    recommended: "限定公開やメンバー向け表示の小バッジ"
+  },
+  {
+    id: "frame-standee-glow-cyan",
+    category: "frame",
+    src: `${phase5Prefix}stream-standee-frame-glow-uniform-cell.png`,
+    width: 420,
+    height: 465,
+    minimumAlphaPadding: 0,
+    recommended: "立ち絵やメイン素材の背面発光枠"
+  },
+  {
+    id: "frame-cover-art-magenta-cyan",
+    category: "frame",
+    src: `${phase5Prefix}cover-song-notice-cover-art-frame-magenta-cyan-uniform-cell.png`,
+    width: 560,
+    height: 370,
+    minimumAlphaPadding: 0,
+    recommended: "キービジュアルや動画枠の強調フレーム"
+  },
+  {
+    id: "corner-emerald-gold-mark",
+    category: "corner",
+    src: `${phase5Prefix}event-notice-corner-mark-emerald-gold-uniform-cell.png`,
+    width: 180,
+    height: 120,
+    minimumAlphaPadding: 0,
+    recommended: "情報枠やラベル端の小さな角飾り"
+  },
+  {
+    id: "corner-lime-cyan-frame",
+    category: "corner",
+    src: `${phase5Prefix}endurance-stream-frame-corner-left-lime-cyan-uniform-cell.png`,
+    width: 360,
+    height: 240,
+    minimumAlphaPadding: 0,
+    recommended: "画面端やフレーム角のネオンガイド"
+  },
+  {
+    id: "accent-soft-glow-dots",
+    category: "accent",
+    src: `${phase5Prefix}chatting-soft-glow-dots-uniform-cell.png`,
+    width: 560,
+    height: 400,
+    minimumAlphaPadding: 0,
+    recommended: "背景や見出し周辺へ薄く重ねる光粒"
+  },
+  {
+    id: "accent-music-note-gold",
+    category: "accent",
+    src: `${phase5Prefix}karaoke-music-note-gold-uniform-cell.png`,
+    width: 220,
+    height: 146,
+    minimumAlphaPadding: 0,
+    recommended: "タイトル横や余白に添える音符"
+  },
+  {
+    id: "accent-ribbon-cyan-pink",
+    category: "accent",
+    src: `${phase5Prefix}first-stream-ribbon-accent-cyan-pink-uniform-cell.png`,
+    width: 320,
+    height: 214,
+    minimumAlphaPadding: 0,
+    recommended: "ラベル角や画面端の軽いリボン飾り"
+  },
+  {
+    id: "accent-lightning-cyan",
+    category: "accent",
+    src: `${phase5Prefix}endurance-stream-lightning-bolt-cyan-uniform-cell.png`,
+    width: 220,
+    height: 146,
+    minimumAlphaPadding: 0,
+    recommended: "強調したい数字や見出し横の稲妻"
+  },
+  {
+    id: "divider-progress-lime-cyan",
+    category: "divider",
+    src: `${phase5Prefix}endurance-stream-progress-divider-lime-cyan-orange-uniform-cell.png`,
+    width: 620,
+    height: 104,
+    minimumAlphaPadding: 0,
+    recommended: "進捗表示やセクション間の区切り"
+  },
+  {
+    id: "divider-soundwave-magenta-cyan",
+    category: "divider",
+    src: `${phase5Prefix}cover-song-notice-soundwave-magenta-cyan-uniform-cell.png`,
+    width: 520,
+    height: 346,
+    minimumAlphaPadding: 0,
+    recommended: "音楽系や告知枠の下部アクセント"
+  },
+  {
+    id: "icon-clock-cozy",
+    category: "accent",
+    src: `${phase5Prefix}chatting-clock-icon-cozy-v1.png`,
+    width: 96,
+    height: 96,
+    assetWidth: 512,
+    assetHeight: 512,
+    minimumAlphaPadding: 0,
+    recommended: "時刻表示や予定ラベル横の小アイコン"
+  },
+  {
+    id: "prop-mic-silhouette",
+    category: "accent",
+    src: `${phase5Prefix}asmr-stream-mic-silhouette-v1.png`,
+    width: 150,
+    height: 236,
+    assetWidth: 293,
+    assetHeight: 660,
+    minimumAlphaPadding: 0,
+    recommended: "音声配信や歌枠の余白に置く小物"
+  },
+  {
+    id: "dark-smoke-wash",
+    category: "accent",
+    src: `${darkMaterialPrefix}dark-smoke-wash-v1.png`,
+    width: 560,
+    height: 340,
+    recommended: "背景へ薄く重ねる暗い煙"
+  },
+  {
+    id: "dark-smoky-edge-frame",
+    category: "frame",
+    src: `${darkMaterialPrefix}dark-smoky-edge-frame-v1.png`,
+    width: 760,
+    height: 506,
+    recommended: "画面端を囲う暗い煙フレーム"
+  },
+  {
+    id: "dark-shadow-corner-fog",
+    category: "corner",
+    src: `${darkMaterialPrefix}dark-shadow-corner-fog-v1.png`,
+    width: 300,
+    height: 220,
+    recommended: "角へ足す暗いもや"
+  },
+  {
+    id: "dark-ink-drip-accent",
+    category: "accent",
+    src: `${darkMaterialPrefix}dark-ink-drip-accent-v1.png`,
+    width: 320,
+    height: 220,
+    recommended: "端や見出し周辺の黒い滴り"
+  },
+  {
+    id: "dark-sparkle-dust",
+    category: "accent",
+    src: `${darkMaterialPrefix}dark-sparkle-dust-v1.png`,
+    width: 420,
+    height: 260,
+    recommended: "暗い背景へ足す黒紫の粒子"
+  },
+  {
+    id: "neutral-chandelier-gold",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-chandelier-gold-v1.png`,
+    width: 220,
+    height: 180,
+    recommended: "上部や角へ置く小さなシャンデリア"
+  },
+  {
+    id: "neutral-antique-key-brass",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-antique-key-brass-v1.png`,
+    width: 260,
+    height: 118,
+    recommended: "告知や企画枠の余白に置く鍵"
+  },
+  {
+    id: "neutral-pocket-watch-brass",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-pocket-watch-brass-v1.png`,
+    width: 210,
+    height: 210,
+    recommended: "時刻や耐久告知の横に置く懐中時計"
+  },
+  {
+    id: "neutral-candle-warm",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-candle-warm-v1.png`,
+    width: 160,
+    height: 220,
+    recommended: "雑談やASMRの余白に置く小さな蝋燭"
+  },
+  {
+    id: "neutral-blank-card-ivory",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-blank-card-ivory-v1.png`,
+    width: 190,
+    height: 260,
+    recommended: "文字なしカードを情報枠の補助に置く"
+  },
+  {
+    id: "neutral-ribbon-seal-rose",
+    category: "accent",
+    src: `${neutralMaterialPrefix}neutral-ribbon-seal-rose-v1.png`,
+    width: 260,
+    height: 170,
+    recommended: "見出し端や告知枠へ置く封蝋リボン"
+  },
+  {
+    id: "neutral-small-ornate-frame-gold",
+    category: "frame",
+    src: `${neutralMaterialPrefix}neutral-small-ornate-frame-gold-v1.png`,
+    width: 360,
+    height: 240,
+    recommended: "立ち絵や小さな情報枠の補助フレーム"
   }
 ];
 const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const minimumAlphaPadding = 40;
 const categories = new Set(["label-base", "date-badge", "corner", "accent", "divider", "frame"]);
+const reusableMaterialCanvases = [
+  { label: "16:9", canvas: lib.thumbnailPresetVariants["landscape-16-9"].canvas },
+  { label: "1:1", canvas: lib.thumbnailPresetVariants["square-1-1"].canvas }
+];
 
 const readPngSize = (filePath) => {
   const buffer = fs.readFileSync(filePath);
@@ -470,6 +823,10 @@ const readPngAlphaBounds = (filePath) => {
   return { width, height, minX, minY, maxX, maxY, chromaKeyGreenPixels };
 };
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const getMaterialCopyBlock = (materialId) =>
+  copySource.match(new RegExp(`"${escapeRegExp(materialId)}": \\{[\\s\\S]*?\\n    \\}`, "u"))?.[0] ?? "";
+
 assert.ok(Array.isArray(lib.thumbnailMaterialLibrary), "thumbnail material library is exported");
 assert.equal(typeof lib.createThumbnailMaterialLayer, "function", "material layer factory is exported");
 assert.equal(typeof lib.thumbnailProjectMaterialBoundary, "object", "project material boundary is exported");
@@ -494,6 +851,9 @@ assert.deepEqual(
   expectedMaterials.map((material) => material.id),
   "material library exposes the expected first batch in review order"
 );
+for (const expected of expectedMaterials.filter((material) => material.id.startsWith("iriam-square-"))) {
+  assert.equal(getMaterialCopyBlock(expected.id).includes('name: "IRIAM'), false, `${expected.id} localized display name stays generic instead of IRIAM-only`);
+}
 
 assert.deepEqual(
   lib.thumbnailProjectMaterialBoundary,
@@ -530,6 +890,7 @@ for (const expected of expectedMaterials) {
   assert.equal(material.src, expected.src, `${expected.id} source is stable`);
   assert.equal(typeof material.name, "string", `${expected.id} has a display name`);
   assert.ok(material.name.length > 0 && material.name.length <= 24, `${expected.id} display name is concise`);
+  assert.equal(material.name.includes("IRIAM"), false, `${expected.id} display name stays generic and reusable across aspect ratios`);
   assert.equal(typeof material.description, "string", `${expected.id} has an alt-style description`);
   assert.ok(material.description.length >= 12, `${expected.id} description is useful`);
   assert.equal(material.initialSize.width, expected.width, `${expected.id} initial width is defined`);
@@ -538,12 +899,17 @@ for (const expected of expectedMaterials) {
 
   const publicPath = path.join(root, "public", material.src.replace(/^\//, ""));
   assert.equal(fs.existsSync(publicPath), true, `${expected.id} material file exists`);
-  assert.deepEqual(readPngSize(publicPath), { width: 768, height: 512 }, `${expected.id} uses the shared 768x512 material canvas`);
+  assert.deepEqual(
+    readPngSize(publicPath),
+    { width: expected.assetWidth ?? 768, height: expected.assetHeight ?? 512 },
+    `${expected.id} uses the expected project asset canvas`
+  );
   const bounds = readPngAlphaBounds(publicPath);
-  assert.ok(bounds.minX >= minimumAlphaPadding, `${expected.id} keeps left alpha padding`);
-  assert.ok(bounds.width - bounds.maxX - 1 >= minimumAlphaPadding, `${expected.id} keeps right alpha padding`);
-  assert.ok(bounds.minY >= minimumAlphaPadding, `${expected.id} keeps top alpha padding`);
-  assert.ok(bounds.height - bounds.maxY - 1 >= minimumAlphaPadding, `${expected.id} keeps bottom alpha padding`);
+  const expectedAlphaPadding = expected.minimumAlphaPadding ?? minimumAlphaPadding;
+  assert.ok(bounds.minX >= expectedAlphaPadding, `${expected.id} keeps left alpha padding`);
+  assert.ok(bounds.width - bounds.maxX - 1 >= expectedAlphaPadding, `${expected.id} keeps right alpha padding`);
+  assert.ok(bounds.minY >= expectedAlphaPadding, `${expected.id} keeps top alpha padding`);
+  assert.ok(bounds.height - bounds.maxY - 1 >= expectedAlphaPadding, `${expected.id} keeps bottom alpha padding`);
   if (expected.src.startsWith(frameMaterialPrefix)) {
     assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
   }
@@ -559,6 +925,18 @@ for (const expected of expectedMaterials) {
   if (expected.src.startsWith(impactMaterialPrefix)) {
     assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
   }
+  if (expected.src.startsWith(iriamSquareAccentMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
+  if (expected.src.startsWith(iriamSquareLabelBaseMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
+  if (expected.src.startsWith(darkMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
+  if (expected.src.startsWith(neutralMaterialPrefix)) {
+    assert.equal(bounds.chromaKeyGreenPixels, 0, `${expected.id} does not keep visible chroma-key green pixels`);
+  }
 
   const layer = lib.createThumbnailMaterialLayer(expected.id);
   assert.equal(layer.type, "image", `${expected.id} creates an image layer`);
@@ -567,6 +945,19 @@ for (const expected of expectedMaterials) {
   assert.equal(layer.width, expected.width, `${expected.id} layer width uses initial size`);
   assert.equal(layer.height, expected.height, `${expected.id} layer height uses initial size`);
   assert.equal(layer.locked, false, `${expected.id} layer is editable after insertion`);
+
+  for (const { label, canvas } of reusableMaterialCanvases) {
+    const reusableLayer = lib.createThumbnailMaterialLayer(expected.id, canvas);
+    assert.equal(reusableLayer.type, "image", `${expected.id} creates a ${label} image layer`);
+    assert.equal(reusableLayer.src, expected.src, `${expected.id} ${label} layer source matches material`);
+    assert.equal(Object.hasOwn(reusableLayer, "storageId"), false, `${expected.id} ${label} layer does not mix user storage ids`);
+    assert.equal(Object.hasOwn(reusableLayer, "materialRef"), false, `${expected.id} ${label} layer does not mix user material refs`);
+    assert.equal(reusableLayer.locked, false, `${expected.id} ${label} layer remains deletable as a normal layer`);
+    assert.ok(reusableLayer.width > 0 && reusableLayer.height > 0, `${expected.id} ${label} layer has positive size`);
+    assert.ok(reusableLayer.x >= 0 && reusableLayer.y >= 0, `${expected.id} ${label} layer starts inside the canvas`);
+    assert.ok(reusableLayer.x + reusableLayer.width <= canvas.width, `${expected.id} ${label} layer fits the canvas width`);
+    assert.ok(reusableLayer.y + reusableLayer.height <= canvas.height, `${expected.id} ${label} layer fits the canvas height`);
+  }
 }
 
 assert.equal(lib.createThumbnailMaterialLayer("missing-material"), null, "unknown material ids are ignored");
@@ -741,6 +1132,18 @@ for (const item of expectedMaterials.filter((item) => item.src.startsWith(corner
 for (const item of expectedMaterials.filter((item) => item.src.startsWith(impactMaterialPrefix))) {
   newMaterialSources.add(item.src);
 }
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(iriamSquareAccentMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(iriamSquareLabelBaseMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(darkMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
+for (const item of expectedMaterials.filter((item) => item.src.startsWith(neutralMaterialPrefix))) {
+  newMaterialSources.add(item.src);
+}
 for (const preset of lib.thumbnailPresets) {
   for (const layer of preset.layers) {
     assert.equal(newMaterialSources.has(layer.src), false, `${preset.id} does not receive new material-only assets in initial layers`);
@@ -751,27 +1154,27 @@ assert.ok(componentSource.includes("MaterialLibraryPanel"), "Thumbnail Editor re
 assert.ok(componentSource.includes("onMaterial"), "quick add controls expose material insertion");
 assert.ok(componentSource.includes("thumbnailMaterialLibrary"), "component uses the shared material library data");
 assert.ok(
-  componentSource.includes("素材はプリセットに後から足す飾りです。選ぶとレイヤーへ追加されます。"),
+  copySource.includes("素材はプリセットに後から足す飾りです。選ぶとレイヤーへ追加されます。"),
   "material library reads as a light supporting route for decorating a chosen preset"
 );
 assert.ok(componentSource.includes("materialSearchQuery"), "material library keeps local search state");
-assert.ok(componentSource.includes("素材名・説明・推奨配置で検索"), "material library exposes lightweight search copy");
+assert.ok(copySource.includes("素材名・説明・推奨配置で検索"), "material library exposes lightweight search copy");
 assert.ok(componentSource.includes("materialCategoryCounts"), "material library shows category counts");
 assert.ok(componentSource.includes("max-h-[min(60vh,38rem)]"), "material library keeps dense results scrollable");
-assert.ok(componentSource.includes("material.description"), "material cards keep descriptions visible and searchable");
+assert.ok(componentSource.includes("materialDescription"), "material cards keep descriptions visible and searchable");
 assert.ok(userMaterialStorageSource.includes("indexedDB.open"), "user material image bodies are stored through IndexedDB");
 assert.ok(userMaterialStorageSource.includes("thumbnailUserMaterialRefsStorageKey"), "user material metadata has an explicit storage key");
 assert.equal(userMaterialStorageSource.includes("localStorage.setItem") && userMaterialStorageSource.includes("data:image"), false, "user material metadata persistence does not write image bodies to localStorage");
 assert.ok(componentSource.includes("UserMaterialLibraryPanel"), "Thumbnail Editor renders a separate user material library panel");
-assert.ok(componentSource.includes("ユーザー素材"), "user-added material UI is visible as a separate responsibility");
-assert.ok(componentSource.includes("登録済み素材"), "registered material UI remains visually separate from user-added material UI");
-assert.ok(componentSource.includes("追加した画像はこのブラウザに保存され、下書きには参照だけを残します。"), "user material panel explains storage without mixing it with registered material copy");
-assert.ok(componentSource.includes("最大24件 / 1点8MB / 合計48MB"), "user material panel shows the lightweight capacity boundary");
-assert.ok(componentSource.includes("要再追加の素材は置換で復旧できます。不要な素材は削除してください。"), "user material panel gives concise recovery and cleanup guidance");
+assert.ok(copySource.includes("ユーザー素材"), "user-added material UI is visible as a separate responsibility");
+assert.ok(copySource.includes("登録済み素材"), "registered material UI remains visually separate from user-added material UI");
+assert.ok(copySource.includes("追加した画像はこのブラウザに保存され、下書きには参照だけを残します。"), "user material panel explains storage without mixing it with registered material copy");
+assert.ok(copySource.includes("最大24件 / 1点8MB / 合計48MB"), "user material panel shows the lightweight capacity boundary");
+assert.ok(copySource.includes("要再追加の素材は置換で復旧できます。不要な素材は削除してください。"), "user material panel gives concise recovery and cleanup guidance");
 assert.equal(componentSource.includes(">fallback<"), false, "user material fallback preview does not expose English implementation copy");
-assert.ok(componentSource.includes(">要再追加<"), "user material fallback preview makes clear the image must be added again");
+assert.ok(copySource.includes("要再追加"), "user material fallback preview makes clear the image must be added again");
 assert.equal(componentSource.includes(">復元待ち<"), false, "user material fallback preview does not imply waiting will restore the image");
-assert.ok(componentSource.includes("配置済みレイヤーは残ります"), "user material delete copy explains existing layers are preserved");
+assert.ok(copySource.includes("配置済みレイヤーは残ります"), "user material delete copy explains existing layers are preserved");
 assert.ok(componentSource.includes("onReplaceUserMaterial"), "user-added material UI exposes replace without changing geometry");
 assert.ok(componentSource.includes("onDeleteUserMaterial"), "user-added material UI exposes delete with fallback handling");
 assert.ok(componentSource.includes("replaceThumbnailUserMaterialLayerRef"), "user material replace uses the shared geometry-preserving helper");

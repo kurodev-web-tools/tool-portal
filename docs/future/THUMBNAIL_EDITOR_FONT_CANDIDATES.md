@@ -131,6 +131,79 @@ Thumbnail Editor の font asset / preset batch 本体へ進む前に、初期フ
 - 既存の fontFamily 選択、draft schema、canvas export、font loading helper は変更しない。
 - search / recently used、preset body への font 適用、preset font application は後続 PR に残す。
 
+## Standard Batch B Candidate Plan
+
+2026-05-27 の planning では、PR #222 `[codex] Add IRIAM title font parity batch` が `codex/thumbnail-font-expansion-check` に merge 済みであることを確認したうえで、次の Google Fonts standard batch B 候補だけを整理する。
+この planning では font file、manifest、CSS、contract、preset body、schema、canvas export、handoff payload、local font loading、login / user settings / paid plan、material asset は変更しない。
+
+Selection notes:
+
+- Existing `thumbnailFontManifest` / `public/fonts/thumbnail-editor/LICENSES.md` already cover 31 families: Japanese 16 / English 15.
+- The tables below exclude all existing catalog families and use only Google Fonts families whose specimen URL and `google/fonts` repository `ofl/<slug>/OFL.txt` returned `200`.
+- License memo is intentionally conservative: `Google Fonts specimen 200 / google/fonts OFL.txt 200; SIL Open Font License 1.1`.
+- User selection gate: pick Japanese 5 and English 5 from these tables before implementation.
+- Implementation target after approval: self-host only, no runtime Google Fonts CDN. Japanese weights default to `400`; add `700` only when headline strength is needed. English weights default to `400`; add `700` only for readable label / display families that benefit from it.
+
+### Japanese Recommended 10
+
+| Font family | Google Fonts specimen URL | License confirmation memo | Intended use | Mood / category | Caution | Recommended implementation weight |
+| --- | --- | --- | --- | --- | --- | --- |
+| Zen Maru Gothic | https://fonts.google.com/specimen/Zen+Maru+Gothic | Google Fonts specimen 200 / google/fonts `ofl/zenmarugothic/OFL.txt` 200; SIL Open Font License 1.1 | 雑談、歌枠、かわいい告知、読みやすい短文 | かわいい / 丸ゴ、やわらかい、親しみ | 既存 `M PLUS Rounded 1c` と近いので、より素直な本文寄り丸ゴとして使い分ける。 | `400`; 見出し採用なら `700` |
+| Tsukimi Rounded | https://fonts.google.com/specimen/Tsukimi+Rounded | Google Fonts specimen 200 / google/fonts `ofl/tsukimirounded/OFL.txt` 200; SIL Open Font License 1.1 | 月・夜・ASMR・ゆるい予定告知 | かわいい / 上品丸ゴ、静か、夜向き | 細い weight はサムネで弱い。背景コントラストと縁取りで補う。 | `400`; 見出し採用なら `700` |
+| Shippori Antique | https://fonts.google.com/specimen/Shippori+Antique | Google Fonts specimen 200 / google/fonts `ofl/shipporiantique/OFL.txt` 200; SIL Open Font License 1.1 | レトロ雑談、落ち着いた企画、サブ見出し | レトロ / 読みやすい、昭和感、上品 | 1 weight 前提。強い見出しでは stroke / shadow が必要。 | `400` |
+| Shippori Mincho | https://fonts.google.com/specimen/Shippori+Mincho | Google Fonts specimen 200 / google/fonts `ofl/shipporimincho/OFL.txt` 200; SIL Open Font License 1.1 | 記念配信、重要告知、和風タイトル | 和風 / 上品、明朝、きちんと感 | 日本語 serif は容量が重くなりやすい。短い見出し中心にする。 | `400`; 採用用途が見出しなら `700` |
+| Kaisei Decol | https://fonts.google.com/specimen/Kaisei+Decol | Google Fonts specimen 200 / google/fonts `ofl/kaiseidecol/OFL.txt` 200; SIL Open Font License 1.1 | かわいい和風、記念日、企画タイトル | 和風 / かわいい、装飾 serif、柔らかい | 既存 serif より装飾性が高い。本文や細かい日程には使わない。 | `400`; 必要なら `700` |
+| Kaisei Tokumin | https://fonts.google.com/specimen/Kaisei+Tokumin | Google Fonts specimen 200 / google/fonts `ofl/kaiseitokumin/OFL.txt` 200; SIL Open Font License 1.1 | 強い和風見出し、物語系、告知タイトル | 和風 / インパクト、太め serif、硬派 | 字面が重い。1:1 では余白を広めに取る。 | `400`; 見出し採用なら `700` |
+| Zen Kurenaido | https://fonts.google.com/specimen/Zen+Kurenaido | Google Fonts specimen 200 / google/fonts `ofl/zenkurenaido/OFL.txt` 200; SIL Open Font License 1.1 | 手書きコメント、ゆるい雑談、短い一言 | 手書き / 上品、細め、親近感 | 小サイズでは弱い。アクセント用途を基本にする。 | `400` |
+| Reggae One | https://fonts.google.com/specimen/Reggae+One | Google Fonts specimen 200 / google/fonts `ofl/reggaeone/OFL.txt` 200; SIL Open Font License 1.1 | 企画名、勢いのある見出し、バラエティ | インパクト / ポップ、太い、楽しい | 個性が強い。長文や情報整理には向かない。 | `400` |
+| Rampart One | https://fonts.google.com/specimen/Rampart+One | Google Fonts specimen 200 / google/fonts `ofl/rampartone/OFL.txt` 200; SIL Open Font License 1.1 | サムネ主役見出し、企画ロゴ風テキスト | インパクト / アウトライン、レトロ、派手 | outline 形状のため小サイズ非推奨。縁取りと干渉しやすい。 | `400` |
+| Darumadrop One | https://fonts.google.com/specimen/Darumadrop+One | Google Fonts specimen 200 / google/fonts `ofl/darumadropone/OFL.txt` 200; SIL Open Font License 1.1 | かわいい一言、初配信、ゆるい企画タイトル | 手書き / かわいい、丸い、個性強め | かな混在の可読性を実装時に確認する。本文用途にはしない。 | `400` |
+
+### Japanese Alternates 10
+
+| Font family | Google Fonts specimen URL | License confirmation memo | Intended use | Mood / category | Caution | Recommended implementation weight |
+| --- | --- | --- | --- | --- | --- | --- |
+| Kaisei Opti | https://fonts.google.com/specimen/Kaisei+Opti | Google Fonts specimen 200 / google/fonts `ofl/kaiseiopti/OFL.txt` 200; SIL Open Font License 1.1 | 上品な見出し、記念配信、落ち着いた告知 | 和風 / 上品、serif、柔らかい | `Kaisei Decol` / `Kaisei Tokumin` と同系統。最終 5 種ではどれかに絞る。 | `400`; 必要なら `700` |
+| Shippori Antique B1 | https://fonts.google.com/specimen/Shippori+Antique+B1 | Google Fonts specimen 200 / google/fonts `ofl/shipporiantiqueb1/OFL.txt` 200; SIL Open Font License 1.1 | レトロ告知、読みやすいサブ、落ち着いた雑談 | レトロ / 読みやすい、実用寄り | `Shippori Antique` と近い。B1 の雰囲気差を実装前に確認する。 | `400` |
+| Zen Old Mincho | https://fonts.google.com/specimen/Zen+Old+Mincho | Google Fonts specimen 200 / google/fonts `ofl/zenoldmincho/OFL.txt` 200; SIL Open Font License 1.1 | 和風、朗読、物語系、上品タイトル | 和風 / 古典、明朝、落ち着き | 細部が細い。太い縁取りや小サイズでは潰れやすい。 | `400`; 見出し採用なら `700` |
+| Train One | https://fonts.google.com/specimen/Train+One | Google Fonts specimen 200 / google/fonts `ofl/trainone/OFL.txt` 200; SIL Open Font License 1.1 | レトロゲーム、強い企画ロゴ、短いタイトル | レトロ / アウトライン、ゲーム風、派手 | display 専用。細い stroke と重ねると読みにくい。 | `400` |
+| Yuji Syuku | https://fonts.google.com/specimen/Yuji+Syuku | Google Fonts specimen 200 / google/fonts `ofl/yujisyuku/OFL.txt` 200; SIL Open Font License 1.1 | 和風、書道風タイトル、記念配信 | 和風 / 筆文字、上品、静か | 小さいサブテキストには不向き。 | `400` |
+| Yuji Boku | https://fonts.google.com/specimen/Yuji+Boku | Google Fonts specimen 200 / google/fonts `ofl/yujiboku/OFL.txt` 200; SIL Open Font License 1.1 | 怪談、物語、暗めの企画タイトル | 和風 / 筆文字、崩し、不穏 | 崩しが強い。可読性確認を優先する。 | `400` |
+| Yuji Mai | https://fonts.google.com/specimen/Yuji+Mai | Google Fonts specimen 200 / google/fonts `ofl/yujimai/OFL.txt` 200; SIL Open Font License 1.1 | 上品な和風アクセント、記念日、雅な見出し | 和風 / 筆文字、優雅、細め | かなり繊細。大きめ短文だけにする。 | `400` |
+| Klee One | https://fonts.google.com/specimen/Klee+One | Google Fonts specimen 200 / google/fonts `ofl/kleeone/OFL.txt` 200; SIL Open Font License 1.1 | 手書き補足、やさしい説明、雑談サブ | 手書き / 読みやすい、自然、柔らかい | サムネの強い主見出しには弱い。 | `400`; 必要なら `600` |
+| Hina Mincho | https://fonts.google.com/specimen/Hina+Mincho | Google Fonts specimen 200 / google/fonts `ofl/hinamincho/OFL.txt` 200; SIL Open Font License 1.1 | レトロ上品、和風サブ、静かなタイトル | 和風 / レトロ、細め serif | 小サイズと低コントラスト背景に弱い。 | `400` |
+| Stick | https://fonts.google.com/specimen/Stick | Google Fonts specimen 200 / google/fonts `ofl/stick/OFL.txt` 200; SIL Open Font License 1.1 | 勢いのある短い見出し、企画タイトル | インパクト / 手書き、角ばり、力強い | 字形のクセが強い。長文では読みにくい。 | `400` |
+
+### English Recommended 10
+
+| Font family | Google Fonts specimen URL | License confirmation memo | Intended use | Mood / category | Caution | Recommended implementation weight |
+| --- | --- | --- | --- | --- | --- | --- |
+| Archivo Black | https://fonts.google.com/specimen/Archivo+Black | Google Fonts specimen 200 / google/fonts `ofl/archivoblack/OFL.txt` 200; SIL Open Font License 1.1 | 強い英字見出し、short label、CTA | Impact headline / bold sans、読みやすい | `Anton` と近いが、より横幅があり安定する。大文字中心。 | `400` |
+| Staatliches | https://fonts.google.com/specimen/Staatliches | Google Fonts specimen 200 / google/fonts `ofl/staatliches/OFL.txt` 200; SIL Open Font License 1.1 | 時刻、配信ラベル、縦長見出し | Condensed / stylish、サムネ向き | `Bebas Neue` と用途が近い。文字幅差で選ぶ。 | `400` |
+| Alfa Slab One | https://fonts.google.com/specimen/Alfa+Slab+One | Google Fonts specimen 200 / google/fonts `ofl/alfaslabone/OFL.txt` 200; SIL Open Font License 1.1 | 企画タイトル、レトロ見出し、強調ワード | Impact / slab serif、レトロ、太い | 太く重い。長い英字列には向かない。 | `400` |
+| Righteous | https://fonts.google.com/specimen/Righteous | Google Fonts specimen 200 / google/fonts `ofl/righteous/OFL.txt` 200; SIL Open Font License 1.1 | レトロゲーム、ポップな英字ロゴ、企画ラベル | Retro / game、丸み、近未来 | 小文字や長文ではやや癖が出る。短文向き。 | `400` |
+| Space Grotesk | https://fonts.google.com/specimen/Space+Grotesk | Google Fonts specimen 200 / google/fonts `ofl/spacegrotesk/OFL.txt` 200; SIL Open Font License 1.1 | modern label、説明、サブ、時刻 | Readable sans / modern、少し tech | display の派手さは低い。見出しは weight と色で補う。 | `400`; label 強調なら `700` |
+| Sora | https://fonts.google.com/specimen/Sora | Google Fonts specimen 200 / google/fonts `ofl/sora/OFL.txt` 200; SIL Open Font License 1.1 | UI 風ラベル、告知サブ、英字アクセント | Readable sans / clean、配信 UI | 個性は控えめ。汎用 readable 枠として採用する。 | `400`; label 強調なら `700` |
+| Exo 2 | https://fonts.google.com/specimen/Exo+2 | Google Fonts specimen 200 / google/fonts `ofl/exo2/OFL.txt` 200; SIL Open Font License 1.1 | SF、ゲーム、近未来配信、数字 | Game / futuristic、丸い tech | `Orbitron` より柔らかい。日本語混在は fallback 前提。 | `400`; 見出しなら `700` |
+| Rajdhani | https://fonts.google.com/specimen/Rajdhani | Google Fonts specimen 200 / google/fonts `ofl/rajdhani/OFL.txt` 200; SIL Open Font License 1.1 | 時刻、スコア、ゲーム UI、短い英字 | Tech / condensed、数字向き、読みやすい | 細い weight は弱い。サムネでは中太以上を使う。 | `400`; 数字見出しなら `700` |
+| DM Serif Display | https://fonts.google.com/specimen/DM+Serif+Display | Google Fonts specimen 200 / google/fonts `ofl/dmserifdisplay/OFL.txt` 200; SIL Open Font License 1.1 | 記念配信、上品な英字タイトル、告知 label | Elegant / serif、クラシック、上品 | 細部が潰れやすい。太い stroke は避ける。 | `400` |
+| Caveat | https://fonts.google.com/specimen/Caveat | Google Fonts specimen 200 / google/fonts `ofl/caveat/OFL.txt` 200; SIL Open Font License 1.1 | 手書き note、サイン風、ゆるい補足 | Handwritten / casual、親しみ | display / accent 専用。大文字羅列や長文には向かない。 | `400`; accent 強調なら `700` |
+
+### English Alternates 10
+
+| Font family | Google Fonts specimen URL | License confirmation memo | Intended use | Mood / category | Caution | Recommended implementation weight |
+| --- | --- | --- | --- | --- | --- | --- |
+| Cinzel | https://fonts.google.com/specimen/Cinzel | Google Fonts specimen 200 / google/fonts `ofl/cinzel/OFL.txt` 200; SIL Open Font License 1.1 | ファンタジー、記念、重厚な英字 title | Elegant / cinematic、古典、品格 | 小文字主体の短文には硬い。大文字タイトル向き。 | `400`; 必要なら `700` |
+| Abril Fatface | https://fonts.google.com/specimen/Abril+Fatface | Google Fonts specimen 200 / google/fonts `ofl/abrilfatface/OFL.txt` 200; SIL Open Font License 1.1 | editorial headline、記念告知、上品な強調 | Elegant / bold serif、ファッション寄り | 太く装飾的。細い stroke と小サイズに注意。 | `400` |
+| Unbounded | https://fonts.google.com/specimen/Unbounded | Google Fonts specimen 200 / google/fonts `ofl/unbounded/OFL.txt` 200; SIL Open Font License 1.1 | SF、近未来、強い label、ゲーム | Futuristic / geometric、重い、個性強め | 横幅が広くなりやすい。短い英字に限定する。 | `400`; 見出しなら `700` |
+| Black Ops One | https://fonts.google.com/specimen/Black+Ops+One | Google Fonts specimen 200 / google/fonts `ofl/blackopsone/OFL.txt` 200; SIL Open Font License 1.1 | バトル、耐久、企画タイトル、強い CTA | Impact / military、ゲーム、硬派 | 用途が限定的。かわいい系には合いにくい。 | `400` |
+| Monoton | https://fonts.google.com/specimen/Monoton | Google Fonts specimen 200 / google/fonts `ofl/monoton/OFL.txt` 200; SIL Open Font License 1.1 | neon、レトロ、music label、短い title | Retro / neon、display、派手 | 線構造が複雑。小サイズと太い縁取りは避ける。 | `400` |
+| Bungee | https://fonts.google.com/specimen/Bungee | Google Fonts specimen 200 / google/fonts `ofl/bungee/OFL.txt` 200; SIL Open Font License 1.1 | 配信 label、企画ロゴ、ポップな強調 | Display / urban、太い、楽しい | 太さが強い。長い文では詰まりやすい。 | `400` |
+| Bungee Shade | https://fonts.google.com/specimen/Bungee+Shade | Google Fonts specimen 200 / google/fonts `ofl/bungeeshade/OFL.txt` 200; SIL Open Font License 1.1 | レトロロゴ風、強い一語、イベント title | Display / shaded、レトロ、装飾 | 影付き形状なので stroke / shadow との干渉に注意。 | `400` |
+| Rye | https://fonts.google.com/specimen/Rye | Google Fonts specimen 200 / google/fonts `ofl/rye/OFL.txt` 200; SIL Open Font License 1.1 | レトロ、怪しい告知、western / carnival 風 | Retro / decorative、個性強め | 用途が狭い。採用するなら補欠枠で十分。 | `400` |
+| Creepster | https://fonts.google.com/specimen/Creepster | Google Fonts specimen 200 / google/fonts `ofl/creepster/OFL.txt` 200; SIL Open Font License 1.1 | horror、dark cute、闇ガチャ英字 | Dark / horror、崩し、強い個性 | 可読性が低い。短い英字だけにする。 | `400` |
+| VT323 | https://fonts.google.com/specimen/VT323 | Google Fonts specimen 200 / google/fonts `ofl/vt323/OFL.txt` 200; SIL Open Font License 1.1 | レトロゲーム、terminal、数字、短い label | Pixel / retro game、mono 風 | `Press Start 2P` より軽いが、本文には向かない。 | `400` |
+
 ### Google Fonts CDN
 
 - 速く候補検証できるが、runtime 外部依存、CSP、offline / static export、canvas export 前の race が増える。

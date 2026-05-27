@@ -255,7 +255,7 @@
      - No main-merge blocker found. Next scope can be a merge-preparation PR from `codex/thumbnail-iriam-square-preview` to `main` without adding new thumbnail functionality.
 
 3. Thumbnail Editor Google Fonts standard batch / IRIAM title font parity
-   - status: implementation branch `codex/thumbnail-google-fonts-standard-batch` で不足分の追加を完了。draft PR は `codex/thumbnail-font-expansion-check` base にする。
+   - status: standard batch B planning branch `codex/thumbnail-font-standard-batch-b-plan` で追加候補を整理中。ユーザーが日本語 5 種 / 英語 5 種を選ぶまで実装へ進まない。
    - direction:
      - Google Fonts 由来で license を確認できる font のみを標準 font として追加する。
      - まず IRIAM title image で使った font と editable text layer 用 manifest を照合し、不足分を埋める。
@@ -306,6 +306,27 @@
      - Merge the font addition PR into `codex/thumbnail-font-expansion-check`.
      - After merge, run the same font policy / locale / lint / typecheck / diff checks on the confirmation branch and do one final `/tools/thumbnail-editor` local visual confirmation.
      - If clean, connect `codex/thumbnail-font-expansion-check` to `main` as the final integration path.
+   - standard batch B planning result:
+     - merge gate:
+       - `git fetch origin --prune` completed.
+       - PR #222 `[codex] Add IRIAM title font parity batch` is `MERGED` into `codex/thumbnail-font-expansion-check`.
+       - planning worktree: `D:/V_streamer_tools/.worktrees/thumbnail-font-standard-batch-b-plan`, base `origin/codex/thumbnail-font-expansion-check` at merge commit `e552e00`.
+     - checked current sources:
+       - `thumbnailFontManifest` currently includes 31 families: Japanese 16 / English 15.
+       - `public/fonts/thumbnail-editor/LICENSES.md` records the bundled Japanese / English / IRIAM title parity batches as Google Fonts / SIL Open Font License 1.1 self-hosted assets.
+       - `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md` now contains the standard batch B candidate tables.
+     - candidate selection state:
+       - Japanese recommended 10 and alternate 10 are listed in `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`.
+       - English recommended 10 and alternate 10 are listed in `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`.
+       - All listed candidates exclude existing catalog families and had both Google Fonts specimen URL and `google/fonts` `ofl/<slug>/OFL.txt` checked with `200`.
+     - user confirmation gate:
+       - User should choose Japanese 5 / English 5 before implementation.
+       - Next implementation PR should add only the approved families, keep self-host route-scoped loading, update manifest / license note / contract, and avoid runtime Google Fonts CDN.
+     - out of scope for this planning PR:
+       - font assets, manifest entries, CSS, contracts, local font loading, login / user settings / paid plan, preset body, initial placement, material asset, schema, canvas export, handoff payload, language / mood category UI, font search, recently used UI.
+     - verification for planning PR:
+       - `git diff --check` completed.
+       - lint / typecheck / UI width checks are intentionally skipped because this PR changes only docs / task planning notes.
 
 4. User account / preferences foundation
    - status: font standard batch の後に planning から開始する。

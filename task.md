@@ -25,6 +25,8 @@
      - completed: 既存ツールの local-only 保存境界と、将来 account 保存へ移す候補を棚卸しした。
      - completed: login / paid plan / server sync の実装に進む前に、保存対象、非保存対象、移行しない payload を文書化した。
      - completed: `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を source of truth として、分類と禁止境界を検証する `scripts/preference-classification-contract.mjs` を追加した。
+     - completed: account / preferences shell として `/account` route、local-only account status、plan placeholder、preferences placeholder、provider / billing placeholder を追加した。
+     - completed: 設定ページ側で既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` key を表示し、既存 `LanguageSwitch` / `ThemeToggle` から言語 / テーマを切り替えられる状態にした。
    - planning results:
      - sync candidate は locale / theme、Thumbnail recent / favorite preset ids、recent fonts、Schedule default view / week start / default time / duration、Translator target language / display preference、local font selected family refs などの軽量 preference に限定する。
      - explicit user action only は Thumbnail project draft、server asset library upload、Schedule events / templates / hashtag sets、Translator glossary / moderation terms / session settings。
@@ -33,8 +35,8 @@
      - server sync 前提不可は local IndexedDB ref を含む draft、legacy localStorage schedule payload、handoff payload、local font availability、translator live session state。
    - recommended next implementation candidates:
      - first: preference contract foundation。保存分類の contract script / docs を追加し、既存 storage key と payload は変更しない。今回 branch で対応済み。
-     - second: account / preferences shell。Auth 未接続のアカウント設定ページ、プラン表示枠、preferences 表示枠を作り、local-only 状態で確認する。次候補。
-     - third: local preference adapter。既存 localStorage keys を維持し、migration なしで読み書き境界を薄く包む。
+     - second: account / preferences shell。Auth 未接続のアカウント設定ページ、プラン表示枠、preferences 表示枠を作り、local-only 状態で確認する。今回 branch で対応済み。
+     - third: local preference adapter。既存 localStorage keys を維持し、migration なしで読み書き境界を薄く包む。次候補。
      - fourth: auth/provider decision spike。Supabase Auth / Clerk / Auth.js などを plan と quota 境界込みで比較する。
      - fifth: Auth 実装。ログイン / ログアウト、account session、profile / preferences の最小保存に閉じる。
      - sixth: account sync MVP。locale / theme + Thumbnail small preferences までに閉じ、draft / schedule / user material / translator tokens / billing を混ぜない。
@@ -44,6 +46,10 @@
      - 初回 shell PR では既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` の localStorage key を維持する。
      - 既存 header / drawer / rail の language / theme 導線は、設定ページ側で確認できる状態を作ってから重複整理する。
      - Auth 未接続時は「ログインすると同期できます」程度の placeholder に留め、実 sync / DB / Stripe は入れない。
+     - completed shell scope:
+       - `/account` で `Local Free` plan frame、preferences frame、future sync candidates、provider / billing placeholder を表示。
+       - header / drawer / rail は account link と account title の最小追加のみ。既存 language / theme 導線の重複整理は未実施。
+       - `ThemeToggle` は既存 key を維持したまま、複数 toggle instance の表示が同一ページ内で同期するようにした。
    - unresolved:
      - 最初の account MVP を global locale/theme のみにするか、Thumbnail recent/favorite preset ids も含めるか。
      - Schedule Calendar は初回から sync するか、explicit import-only で始めるか。
@@ -57,10 +63,20 @@
      - Thumbnail Editor preset / material / font / schema / export / handoff payload は変更しない。
    - verification:
      - `node scripts/preference-classification-contract.mjs` passed。
+     - `node scripts/account-preferences-shell-contract.mjs` passed。
      - `npm run lint` passed。
      - `npx tsc --noEmit` passed。
      - `git diff --check` passed。
-     - UI 変更なしのため browser width check は不要。
+     - `/account` width check:
+       - `390px`: account title / Local Free plan / preferences frame / locale-theme controls visible, horizontal overflowなし。
+       - `820px`: account title / plan / preferences / key labels visible, horizontal overflowなし。main 内の English と theme toggle 操作を確認。
+       - `1024px`: desktop rail + account content visible, horizontal overflowなし。
+       - `1280px`: two-column layout visible, horizontal overflowなし。
+       - `1366px`: two-column layout visible, horizontal overflowなし。
+     - remaining risks:
+       - Auth provider / DB schema / billing / quota は placeholder のまま。
+       - 既存 header / drawer / rail の language / theme 導線整理は次以降。
+       - Next dev server は worktree 内起動時に親 checkout の lockfile を workspace root 候補として警告するが、`/account` は worktree の変更内容で表示確認済み。
 
 2. Kuro Live Comment Translator planning
    - status: user foundation の後に設計を見直す。
@@ -90,14 +106,15 @@
 
 1. User account / preferences foundation planning。
 2. Preference contract foundation。
-3. Account / preferences shell。Auth 未接続のまま、アカウント設定ページ、プラン表示枠、preferences 表示枠を作り、言語 / テーマ切り替えを設定ページへ移す。
-4. Auth implementation。Supabase Auth などを接続し、ログイン / ログアウト、account session、最小 profile / preferences 保存を扱う。
-5. Preferences sync MVP。locale / theme + Thumbnail small preferences までに閉じる。
-6. Stripe Billing / quota foundation。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 PR で扱う。
-7. Kuro Live Comment Translator planning。
-8. Local font loading after user foundation。
-9. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement は、それぞれ別 PR で扱う。
-10. Schedule Calendar Google Calendar 連携や server sync は、account foundation の方針が固まってから再評価する。
+3. Account / preferences shell。Auth 未接続のまま、アカウント設定ページ、プラン表示枠、preferences 表示枠を作り、言語 / テーマ切り替えを設定ページへ移す。今回 branch で対応済み。
+4. Local preference adapter。既存 localStorage keys を維持し、migration なしで locale / theme の読み書き境界を薄く包む。
+5. Auth implementation。Supabase Auth などを接続し、ログイン / ログアウト、account session、最小 profile / preferences 保存を扱う。
+6. Preferences sync MVP。locale / theme + Thumbnail small preferences までに閉じる。
+7. Stripe Billing / quota foundation。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 PR で扱う。
+8. Kuro Live Comment Translator planning。
+9. Local font loading after user foundation。
+10. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement は、それぞれ別 PR で扱う。
+11. Schedule Calendar Google Calendar 連携や server sync は、account foundation の方針が固まってから再評価する。
 
 ## Next Session Prompt
 
@@ -107,32 +124,31 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-複数ツール共通の user account / preferences foundation の次 slice として、account / preferences shell を小さく実装してください。
+複数ツール共通の user account / preferences foundation の次 slice として、local preference adapter を小さく実装してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
 - `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を確認してください。
-- preference contract foundation は `codex/account-preferences-confirmation` に積まれている前提です。
-- 既存ツールの local-only 保存境界と、将来 account / preferences へ移す候補は planning / contract 済みです。
+- account / preferences shell は `codex/account-preferences-shell` で実装済みの前提です。
+- merge 済みでなければ新規実装へ進まず blocker summary を返してください。
 
 確認用 integration branch:
-- `codex/account-preferences-confirmation`
-
-推奨 branch:
 - `codex/account-preferences-shell`
 
+推奨 branch:
+- `codex/local-preference-adapter`
+
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/account-preferences-shell`
+- `D:/V_streamer_tools/.worktrees/local-preference-adapter`
 
 今回の scope:
-- Auth 未接続の account / preferences shell に留める。
-- アカウント設定ページ、プラン表示枠、preferences 表示枠を local-only placeholder として確認できる状態にする。
-- 既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` の localStorage key は維持する。
-- 言語 / テーマ切り替えを設定ページ側で確認できる状態にするが、既存 header / drawer / rail 導線の大きな整理は次に回す。
+- 既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` key を維持したまま、locale / theme の読み書き境界を薄く包む。
+- adapter は local-only に留め、server sync / account merge / migration は実装しない。
+- `/account` shell がその adapter 経由の key 表示や state 確認に寄せられるなら小さく反映する。
 - 既存 storage key / payload / localStorage / IndexedDB / sessionStorage の shape は変更しない。
-- auth provider / DB schema / billing / quota は候補比較または placeholder 表示までに留める。
+- Thumbnail recent / favorite preset ids、Schedule settings、translator settings は候補比較または type placeholder までに留める。
 
 Out of scope:
 - 実ログイン / logout 実装。
@@ -146,15 +162,16 @@ Out of scope:
 
 検証:
 - `node scripts/preference-classification-contract.mjs`
+- local preference adapter 用に追加した contract script
 - `npm run lint`
 - `npx tsc --noEmit`
 - `git diff --check`
-- UI を触るため `/account` または追加した account route を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
+- UI を触った場合のみ `/account` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
 
 完了時:
 - `task.md` に実装内容、確認結果、残リスク、次候補への引き継ぎを残してください。
 - commit / push / draft PR 作成まで進めてください。
-- PR の base は `main` ではなく `codex/account-preferences-confirmation` にしてください。
+- PR の base は `main` ではなく `codex/account-preferences-shell` にしてください。
 ```
 
 ## Backlog

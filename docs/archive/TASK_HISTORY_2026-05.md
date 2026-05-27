@@ -533,6 +533,32 @@
 - 旧 `task.md` に残っていた長い implementation update 群はこの archive entry と各 PR body に寄せ、active board は registered material library expansion / main merge preparation / font follow-up へ圧縮した。
 - 次の active direction は registered material library expansion。Batch A は既存 preset decoration の登録、Batch B は dark / horror / smoke material、Batch C は neutral prop material とする。素材数に固定上限は置かないが、PR は Batch / category / source type ごとに分ける。
 
+#### P31: Thumbnail Editor IRIAM material expansion and main integration
+
+- PR #214 `[codex] Plan IRIAM registered material expansion` は 2026-05-26 に `codex/thumbnail-iriam-square-preview` へ merge 済み。
+- PR #215 `[codex] Add existing decoration materials batch`、PR #216 `[codex] Add dark thumbnail materials`、PR #217 `[codex] Add neutral thumbnail materials` は 2026-05-26 に `codex/thumbnail-iriam-square-preview` へ merge 済み。
+- registered material library は Batch A 既存 decoration 19件、Batch B dark / smoke 5件、Batch C neutral props 7件を追加し、合計 80件の project-bound material として整理した。
+- Batch A は既存 preset decoration asset を登録し、Batch B / C は generated raster asset を `public/assets/images/thumbnail-editor/materials/dark/` と `public/assets/images/thumbnail-editor/materials/neutral/` に追加した。
+- `thumbnail-material-assets-contract` は 16:9 / 1:1 の両方で通常 image layer として追加できること、user material metadata を混ぜないこと、生成素材の alpha padding / chroma-key cleanup を確認する形に更新した。
+- PR #218 `[codex] Confirm IRIAM square preview after materials` で material expansion 後の final confirmation を実施し、registered material count / category counts / search / add flow / square preset modal / background swap / title swap / width check を確認した。
+- PR #219 `[codex] Scope thumbnail canvas size menu by output ratio` で、`square-1-1` 選択中は canvas size menu を `1080 x 1080 (1:1)` のみに絞り、16:9 sizes が square output で表示されないようにした。
+- PR #220 `[codex] Merge Thumbnail Editor IRIAM square preview` は 2026-05-27 に `main` へ merge 済み。merge commit は `41c1284`。
+- 検証は各 PR で `node scripts/thumbnail-material-assets-contract.mjs`、`node scripts/thumbnail-preset-text-locale-contract.mjs`、`node scripts/thumbnail-preset-apply-safety-contract.mjs`、`node scripts/thumbnail-preset-variants-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、IRIAM square preset / swap / title boundary contracts、`npm run lint`、`npx tsc --noEmit`、`git diff --check` を必要範囲で実施した。
+- 旧 `task.md` に残っていた material Batch A-C と IRIAM main merge preparation の長いログは、この archive entry と各 PR body に寄せた。`task.md` には active priority と参照だけを残す。
+
+#### P32: Thumbnail Editor font expansion through Standard Batch B and main integration
+
+- PR #221 `[codex] Prepare thumbnail font expansion check` は 2026-05-27 に `main` へ merge 済み。以後の font expansion は `codex/thumbnail-font-expansion-check` を確認用 branch として進めた。
+- PR #222 `[codex] Add IRIAM title font parity batch` は `codex/thumbnail-font-expansion-check` へ merge 済み。IRIAM title image で使ったが editable text catalog に無かった `Lilita One`、`Pirata One`、`Lobster` を self-hosted Google Fonts / SIL Open Font License 1.1 として追加した。
+- PR #223 `[codex] Plan thumbnail font standard batch B` は `codex/thumbnail-font-expansion-check` へ merge 済み。Standard Batch B Candidate Plan を `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md` に整理し、Batch B-JA 11 families と Batch B-EN 12 families に分割する方針を固定した。
+- PR #224 `[codex] Add thumbnail font standard batch B-JA` は `codex/thumbnail-font-expansion-check` へ merge 済み。`Zen Maru Gothic`、`Tsukimi Rounded`、`Shippori Antique`、`Shippori Mincho`、`Kaisei Decol`、`Kaisei Tokumin`、`Zen Kurenaido`、`Reggae One`、`Rampart One`、`Darumadrop One`、`Train One` を追加した。
+- PR #225 `[codex] Add thumbnail font standard batch B-EN` は `codex/thumbnail-font-expansion-check` へ merge 済み。`Cinzel`、`Abril Fatface`、`Unbounded`、`Black Ops One`、`Monoton`、`Bungee`、`Bungee Shade`、`Rye`、`Creepster`、`VT323`、`Caveat`、`Righteous` を追加した。
+- Final catalog は 54 families total、Japanese 27 / English 27。runtime Google Fonts CDN 依存は追加せず、route-scoped CSS と `public/fonts/thumbnail-editor/` の self-hosted `.woff2` asset、`public/fonts/thumbnail-editor/LICENSES.md`、`thumbnailFontManifest`、`scripts/thumbnail-font-policy-contract.mjs` を同期した。
+- confirmation branch final check では PR #225 merge 後の `codex/thumbnail-font-expansion-check` で `node scripts/thumbnail-font-policy-contract.mjs`、`node scripts/thumbnail-preset-text-locale-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`git diff --check`、`npm run build` を実行した。
+- `/tools/thumbnail-editor` の font listbox は `390 / 820 / 1024 / 1280 / 1366px` で Batch B-JA 11 と Batch B-EN 12 families が表示されること、横 overflow と console error がないことを確認した。
+- PR #226 `[codex] Integrate thumbnail font expansion` は 2026-05-27 に `main` へ merge 済み。merge commit は `fdd2fe3`。
+- 旧 `task.md` に残っていた font expansion check / IRIAM title parity / Standard Batch B planning / Batch B-JA / Batch B-EN / final integration の長いログは、この archive entry と各 PR body に寄せた。完了済み prompt と backlog 項目は `task.md` から削除した。
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

@@ -5,10 +5,8 @@ import path from "node:path";
 const root = process.cwd();
 const planPath = path.join(root, "docs", "future", "USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md");
 const taskPath = path.join(root, "task.md");
-const packagePath = path.join(root, "package.json");
 const plan = fs.readFileSync(planPath, "utf8");
 const task = fs.readFileSync(taskPath, "utf8");
-const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
 
 function section(title) {
   const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -135,9 +133,6 @@ assertExcludes(
   ],
   "docs-only boundary"
 );
-
-assert.equal(packageJson.dependencies["@supabase/supabase-js"], undefined, "no Supabase SDK dependency added");
-assert.equal(packageJson.dependencies["@supabase/ssr"], undefined, "no Supabase SSR dependency added");
 
 assert.match(
   task,

@@ -91,27 +91,44 @@
        - FutureLocalPreferenceCandidate は型 placeholder のみ。Thumbnail / Schedule / Translator の storage payload には触れていない。
        - Next dev server は worktree 内起動時に親 checkout の lockfile を workspace root 候補として警告するが、`/account` は worktree の変更内容で表示確認済み。
    - current slice result:
-     - `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` の `Supabase Auth Boundary Design` を source of truth とする。
-     - Supabase Auth 採用前提だが、実ログイン / logout、Supabase SDK dependency、`.env.local`、secret 保存、SQL migration、API route / Server Action、preferences server sync、paid plan / billing、個別 tool UI、既存 storage key / payload 変更はしない。
-     - env 名は `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` を公開 client 用候補、`SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` を trusted server only として分ける。secret / service_role key は要求・表示・保存しない。
-     - 最小 DB shape draft は `user_profiles` / `user_preferences` / `tool_preferences` / `usage_quotas` に閉じる。
-     - exposed schema table は RLS 有効前提、`Automatically expose new tables` OFF 前提、Data API は必要 table だけ explicit `GRANT`、user-owned rows は authenticated owner 限定、quota write は trusted server only とする。
-     - 初回 account merge は `v-streamer-tools-locale` / `v-streamer-tools-theme` のみに閉じる。
+     - Supabase Auth first slice として、`docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` の `Supabase Auth Boundary Design` を source of truth にし、Next.js App Router / SSR cookie session の最小 foundation を実装した。
+     - `@supabase/supabase-js` / `@supabase/ssr` を追加し、browser / SSR client は `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` の publishable key 前提に限定した。
+     - secret / service_role key は要求・表示・保存していない。`SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` は trusted server only の境界名として docs / env boundary に残すだけで、この slice の runtime では読まない。
+     - `/account` に email magic link login、logout、account session 表示、明示操作による locale/theme account 保存導線を追加した。
+     - SSR cookie session / `proxy.ts` は `output: "export"` と両立しないため、Next.js runtime は server runtime に寄せた。
+     - `scripts/static-export-rsc-aliases.mjs` は server runtime build で `out` が無い場合は postbuild を skip する。
+     - 初回 account merge は `v-streamer-tools-locale` / `v-streamer-tools-theme` の local snapshot を `user_preferences.locale` / `user_preferences.theme` に保存する範囲だけに閉じた。
+     - `supabase/migrations/20260527000000_account_preferences_foundation.sql` を reviewable SQL として追加し、`user_profiles` / `user_preferences` / `tool_preferences` / `usage_quotas` の additive tables、RLS、explicit GRANT を定義した。
+     - `usage_quotas` は authenticated owner read のみ。quota update は trusted server only のままで、browser writable にしていない。
+     - 既存 storage key / payload / localStorage / IndexedDB / sessionStorage の shape は変更していない。
+     - Supabase CLI は workspace に未導入だったため、`supabase migration new` は実行できず、migration SQL は直接 reviewable file として作成した。
      - verification completed:
        - `node scripts/preference-classification-contract.mjs` passed。
        - `node scripts/local-preference-adapter-contract.mjs` passed。
        - `node scripts/auth-provider-decision-spike-contract.mjs` passed。
        - `node scripts/supabase-auth-boundary-design-contract.mjs` passed。
+       - `node scripts/supabase-auth-first-slice-contract.mjs` passed。
        - `npm run lint` passed。
        - `npx tsc --noEmit` passed。
        - `git diff --check` passed。LF/CRLF conversion warning only。
+       - `npm run build` passed。`/account` と `/auth/confirm` は dynamic server route、postbuild は server-runtime build のため static export alias を skip。
      - width verification:
-       - UI / runtime copy 変更なしの docs-only + contract slice のため不要。
+       - `/account` at `390px`: account title / auth panel / sign-in form / preferences / save button visible, horizontal overflowなし。
+       - `/account` at `820px`: account title / auth panel / preferences / account preference panel visible, horizontal overflowなし。
+       - `/account` at `1024px`: desktop rail + account content + auth / preference panels visible, horizontal overflowなし。
+       - `/account` at `1280px`: two-column layout + auth / DB boundary panels visible, horizontal overflowなし。
+       - `/account` at `1366px`: two-column layout + account session / locale-theme save導線 visible, horizontal overflowなし。
+       - Console error / warn なし。
      - remaining risks:
-       - Supabase SDK dependency、SSR client utility、login / logout、DB migration / SQL execution、API route / Server Action、locale/theme merge UI、server sync は未実装。
+       - Supabase project URL / publishable key の実値は user-managed env 前提。repository には保存していない。
+       - migration SQL は未適用。Supabase project 側で review / apply 後に magic-link auth と `user_preferences` 保存を実環境確認する必要がある。
+       - `output: "export"` は SSR cookie session / proxy と両立しないため外した。既存 static export / Cloudflare Pages deploy 前提が残っている場合は、auth 対応 hosting に合わせた deploy workflow 更新が次 scope。
+       - Supabase CLI はこの workspace では利用できなかったため、local migration list / advisors は未実行。
+       - profile / tool preference / quota table は additive boundary のみ。runtime write は `user_preferences` の locale/theme に限定。
+       - `usage_quotas` は trusted-server-only write path 未実装。billing / Stripe は別 scope。
        - Supabase project URL / publishable key はユーザー確認済み前提だが、この branch では値を要求・表示・保存していない。
        - secret / service_role key は今後も browser / docs / source-controlled file に入れない。
-       - `usage_quotas` は shape draft のみ。trusted server write path と billing / Stripe は別 scope。
+       - Thumbnail / Schedule / Translator preferences server sync、既存 payload migration、paid plan / billing は未実装。
 
 2. Kuro Live Comment Translator planning
    - status: user foundation の後に設計を見直す。

@@ -499,6 +499,45 @@ Migration risks:
   - `node scripts/auth-provider-decision-spike-contract.mjs`
 - UI width verification is not required for this docs-only / contract-only slice.
 
+## Supabase Auth Implementation First Slice
+
+Status: first implementation contract, 2026-05-27. This section promotes the boundary design into the smallest runtime slice.
+
+Implementation scope:
+
+- Add only `@supabase/supabase-js` and `@supabase/ssr`.
+- Use `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser and SSR public clients.
+- Keep `SUPABASE_SECRET_KEY` and `SUPABASE_SERVICE_ROLE_KEY` documented as trusted-server-only names. They are not required, read, displayed, or saved in this first slice.
+- Add request-scoped SSR cookie clients and a Next.js `proxy.ts` refresh boundary using `auth.getClaims()`.
+- Switch the Next.js runtime away from static export because SSR cookie session and proxy are not compatible with `output: "export"`.
+- Add `/auth/confirm` for magic-link confirmation and `/account` actions for email magic-link sign-in, sign-out, and explicit locale/theme account save.
+- Keep the first account save limited to `user_preferences.locale` and `user_preferences.theme`.
+- Keep local fallback intact. Existing `v-streamer-tools-locale` and `v-streamer-tools-theme` keys are read as local values and are not renamed or migrated.
+
+Reviewable SQL:
+
+- Migration file: `supabase/migrations/20260527000000_account_preferences_foundation.sql`.
+- The Supabase CLI was not installed in the workspace, so the migration file is authored directly for review instead of generated with `supabase migration new`.
+- Tables stay additive and limited to the boundary set: `user_profiles`, `user_preferences`, `tool_preferences`, `usage_quotas`.
+- RLS is enabled on all four tables.
+- `user_profiles`, `user_preferences`, and `tool_preferences` are owner-scoped for authenticated select / insert / update.
+- `usage_quotas` grants owner read only to authenticated users. quota writes are trusted-server-only and are not browser writable.
+
+Out of scope remains:
+
+- Paid plan / billing implementation.
+- Thumbnail / Schedule / Translator preferences server sync.
+- Individual tool UI changes.
+- Existing storage key / payload / localStorage / IndexedDB / sessionStorage shape changes.
+- `.env.local` creation or real Supabase value storage.
+- Browser code that uses secret / service_role keys.
+
+Verification:
+
+- Required implementation contract: `node scripts/supabase-auth-first-slice-contract.mjs`.
+- Continue to run the previous preference/auth boundary contracts before merging.
+- UI width verification is required because `/account` runtime UI is updated.
+
 ## Migration Principles
 
 - Existing localStorage remains source of truth until the user signs in and explicitly opts into import/sync.

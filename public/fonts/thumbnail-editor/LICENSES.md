@@ -7,6 +7,7 @@ The Japanese and English font batches under this directory are self-hosted for T
 - Japanese subset: `thumbnail-editor-ja-seed-v1`, a small seed subset covering current Thumbnail Editor preset text, common schedule labels, numbers, basic Latin, and common punctuation.
 - English subset: `thumbnail-editor-en-seed-v1`, a Latin subset from Google Fonts CSS2 covering English display labels, numbers, common punctuation, and basic Latin fallback characters.
 - IRIAM title parity subset: selected Latin display fonts used by IRIAM square English title images and exposed to editable text layers.
+- Standard batch B-JA subset: selected Japanese Google Fonts from `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`, exposed to editable text layers with the same `thumbnail-editor-ja-seed-v1` subset boundary.
 - Runtime boundary: these files are loaded from `/fonts/thumbnail-editor/...` by the Thumbnail Editor route. This batch does not add Google Fonts CDN or CSP changes.
 
 Families included in this Japanese batch:
@@ -27,6 +28,17 @@ Families included in this Japanese batch:
 - Dela Gothic One: 400
 - New Tegomin: 400
 - DotGothic16: 400
+- Zen Maru Gothic: 400
+- Tsukimi Rounded: 400
+- Shippori Antique: 400
+- Shippori Mincho: 400
+- Kaisei Decol: 400
+- Kaisei Tokumin: 400
+- Zen Kurenaido: 400
+- Reggae One: 400
+- Rampart One: 400
+- Darumadrop One: 400
+- Train One: 400
 
 Families included in this English batch:
 

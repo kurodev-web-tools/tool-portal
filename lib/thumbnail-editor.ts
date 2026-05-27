@@ -938,6 +938,105 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     caution: "小サイズでは潰れやすい。本文や細かい日程には使わない。",
     sourceUrl: "https://fonts.google.com/specimen/DotGothic16"
   }, "dotgothic16", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Zen Maru Gothic",
+    language: "ja",
+    category: "かわいい / 丸ゴ",
+    mood: "やわらかい、親しみ、素直",
+    bestFor: "雑談、歌枠、かわいい告知、読みやすい短文",
+    caution: "M PLUS Rounded 1c と近い。本文寄りの素直な丸ゴとして使い分ける。",
+    sourceUrl: "https://fonts.google.com/specimen/Zen+Maru+Gothic"
+  }, "zen-maru-gothic", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Tsukimi Rounded",
+    language: "ja",
+    category: "かわいい / 丸ゴ",
+    mood: "上品丸ゴ、静か、夜向き",
+    bestFor: "月、夜、ASMR、ゆるい予定告知",
+    caution: "細い字面はサムネで弱い。背景コントラストと縁取りで補う。",
+    sourceUrl: "https://fonts.google.com/specimen/Tsukimi+Rounded"
+  }, "tsukimi-rounded", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Shippori Antique",
+    language: "ja",
+    category: "上品 / レトロ",
+    mood: "読みやすい、昭和感、落ち着き",
+    bestFor: "レトロ雑談、落ち着いた企画、サブ見出し",
+    caution: "1 weight 前提。強い見出しでは stroke / shadow が必要。",
+    sourceUrl: "https://fonts.google.com/specimen/Shippori+Antique"
+  }, "shippori-antique", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Shippori Mincho",
+    language: "ja",
+    category: "上品 / 和風",
+    mood: "明朝、きちんと感、記念向き",
+    bestFor: "記念配信、重要告知、和風タイトル",
+    caution: "日本語 serif は細部が重い。短い見出し中心にする。",
+    sourceUrl: "https://fonts.google.com/specimen/Shippori+Mincho"
+  }, "shippori-mincho", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Kaisei Decol",
+    language: "ja",
+    category: "上品 / 和風",
+    mood: "かわいい、装飾 serif、柔らかい",
+    bestFor: "かわいい和風、記念日、企画タイトル",
+    caution: "装飾性が高い。本文や細かい日程には使わない。",
+    sourceUrl: "https://fonts.google.com/specimen/Kaisei+Decol"
+  }, "kaisei-decol", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Kaisei Tokumin",
+    language: "ja",
+    category: "上品 / 和風",
+    mood: "インパクト、太め serif、硬派",
+    bestFor: "強い和風見出し、物語系、告知タイトル",
+    caution: "字面が重い。1:1 では余白を広めに取る。",
+    sourceUrl: "https://fonts.google.com/specimen/Kaisei+Tokumin"
+  }, "kaisei-tokumin", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Zen Kurenaido",
+    language: "ja",
+    category: "手書き / やわらか",
+    mood: "上品、細め、親近感",
+    bestFor: "手書きコメント、ゆるい雑談、短い一言",
+    caution: "小サイズでは弱い。アクセント用途を基本にする。",
+    sourceUrl: "https://fonts.google.com/specimen/Zen+Kurenaido"
+  }, "zen-kurenaido", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Reggae One",
+    language: "ja",
+    category: "太字見出し / 企画",
+    mood: "ポップ、太い、楽しい",
+    bestFor: "企画名、勢いのある見出し、バラエティ",
+    caution: "個性が強い。長文や情報整理には向かない。",
+    sourceUrl: "https://fonts.google.com/specimen/Reggae+One"
+  }, "reggae-one", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Rampart One",
+    language: "ja",
+    category: "レトロ / ポップ",
+    mood: "アウトライン、レトロ、派手",
+    bestFor: "サムネ主役見出し、企画ロゴ風テキスト",
+    caution: "outline 形状のため小サイズ非推奨。縁取りと干渉しやすい。",
+    sourceUrl: "https://fonts.google.com/specimen/Rampart+One"
+  }, "rampart-one", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Darumadrop One",
+    language: "ja",
+    category: "手書き / ポップ",
+    mood: "かわいい、丸い、個性強め",
+    bestFor: "かわいい一言、初配信、ゆるい企画タイトル",
+    caution: "かな混在の可読性に注意。本文用途にはしない。",
+    sourceUrl: "https://fonts.google.com/specimen/Darumadrop+One"
+  }, "darumadrop-one", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Train One",
+    language: "ja",
+    category: "レトロ / ピクセル",
+    mood: "アウトライン、ゲーム風、派手",
+    bestFor: "レトロゲーム、強い企画ロゴ、短いタイトル",
+    caution: "display 専用。細い stroke と重ねると読みにくい。",
+    sourceUrl: "https://fonts.google.com/specimen/Train+One"
+  }, "train-one", [400]),
   withThumbnailEnglishFontAssets({
     family: "Anton",
     language: "en",

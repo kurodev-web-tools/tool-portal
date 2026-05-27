@@ -1,5 +1,5 @@
 .thumbnailFontAssetScope {
-  --thumbnail-editor-font-assets: "ja-seed-v1 en-seed-v1 iriam-title-en-v1";
+  --thumbnail-editor-font-assets: "ja-seed-v1 ja-standard-b-v1 en-seed-v1 iriam-title-en-v1";
 }
 
 @font-face {
@@ -224,6 +224,94 @@
   font-weight: 400 900;
   font-display: swap;
   src: url("/fonts/thumbnail-editor/dotgothic16/dotgothic16-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Zen Maru Gothic";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/zen-maru-gothic/zen-maru-gothic-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tsukimi Rounded";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/tsukimi-rounded/tsukimi-rounded-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Shippori Antique";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/shippori-antique/shippori-antique-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Shippori Mincho";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/shippori-mincho/shippori-mincho-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Kaisei Decol";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/kaisei-decol/kaisei-decol-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Kaisei Tokumin";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/kaisei-tokumin/kaisei-tokumin-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Zen Kurenaido";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/zen-kurenaido/zen-kurenaido-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Reggae One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/reggae-one/reggae-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rampart One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/rampart-one/rampart-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Darumadrop One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/darumadrop-one/darumadrop-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Train One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/train-one/train-one-400-ja-seed-v1.woff2") format("woff2");
 }
 
 @font-face {

@@ -374,6 +374,131 @@ Do not proceed to login implementation until the next slice has all of the follo
 - Quota read/write ownership defined separately from preferences.
 - Explicit out-of-scope list preserving current storage keys, local payloads, IndexedDB blobs, `sessionStorage` handoff, and individual tool UI behavior.
 
+## Supabase Auth Boundary Design
+
+Status: docs-only contract, 2026-05-27. This section refines the Supabase Auth adoption premise from the auth/provider decision spike before login, database, or server sync work starts.
+
+No SDK dependency, `.env.local`, migration, SQL, API route, Server Action, login UI, or storage payload change is authorized by this section.
+
+### Official Reference Snapshot
+
+Use these as the reference points for the first implementation slice:
+
+- Supabase SSR client setup for Next.js / App Router: https://supabase.com/docs/guides/auth/server-side/creating-a-client
+- Supabase SSR advanced guide: https://supabase.com/docs/guides/auth/server-side/advanced-guide
+- Supabase API key model: https://supabase.com/docs/guides/getting-started/api-keys
+- Supabase RLS guide: https://supabase.com/docs/guides/database/postgres/row-level-security
+- Supabase Data API exposure changelog: https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically
+
+Recent points that affect this repo:
+
+- Next.js App Router / SSR should use cookie-backed session boundary via `@supabase/ssr` when implementation begins.
+- Server-side authorization should not trust a raw cookie session alone. Use Supabase token validation helpers such as `getClaims()` / `getUser()` at the server boundary before protected user data is used.
+- Supabase publishable keys are public application keys. A logged-in user still gets the `authenticated` Postgres role through the user's JWT and RLS policies.
+- Supabase secret keys and legacy `service_role` keys are elevated backend credentials and bypass or exceed normal client-side RLS assumptions. They do not belong in browser code, public docs, chat, `.env.local` examples with real values, or source-controlled files.
+- New Supabase projects can run with `Automatically expose new tables` OFF, and this project should design for that stricter default.
+
+### Next.js App Router / SSR Session Boundary
+
+The first auth implementation should keep the runtime boundary small:
+
+- Browser UI can use a browser Supabase client only after the SDK dependency is intentionally added. It uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- Server Components, Route Handlers, Server Actions, and any future account API should create a request-scoped server client. Do not keep a global request-authenticated Supabase client.
+- The cookie-backed session boundary is the only auth transport considered for SSR. Do not store Supabase access tokens or refresh tokens in `localStorage`, IndexedDB, or `sessionStorage`.
+- A future `proxy.ts` / session-refresh boundary may refresh cookies and pass them to Server Components. It must preserve Supabase-set cookies when wrapping responses.
+- Protected server work should validate the user through Supabase auth helpers before reading or writing user-owned rows.
+- The existing local-only app behavior remains valid when no Supabase session exists.
+
+### Environment And Key Handling
+
+Environment names for the later implementation:
+
+| Name | Scope | Handling |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Browser and server config | Public project URL. May appear in client bundle. Do not put a secret here. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser and server public client | Public low-privilege key. It can be bundled, but all user data access still depends on Auth + RLS. |
+| `SUPABASE_SECRET_KEY` | Trusted server only, later quota/admin work only | Not needed for the first locale/theme auth slice. Must never use the `NEXT_PUBLIC_` prefix. Do not request, display, commit, paste into docs, or store a secret / service_role key. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Legacy trusted server only | Avoid for the first slice. If a later backend-only operation requires it, keep it outside browser/runtime-public env and document the narrow operation. Must never use the `NEXT_PUBLIC_` prefix. |
+
+Implementation notes:
+
+- Do not create `.env.local` in repo work unless a separate implementation task explicitly asks for a placeholder file with no real values.
+- Do not include actual Supabase project URL, publishable key, secret key, or service_role key in docs.
+- Do not add public env names for secret keys.
+- Secret and service_role variables must never use the `NEXT_PUBLIC_` prefix.
+
+### Minimal DB Shape Draft
+
+This is a shape contract, not a migration.
+
+| Table | Ownership | Initial purpose | Client access direction |
+| --- | --- | --- | --- |
+| `user_profiles` | one row per Supabase Auth user | Account shell metadata and display-safe profile state. No provider tokens. | Owner read/update only after Auth. Insert/upsert path decided during implementation. |
+| `user_preferences` | one row per user | Global locale/theme and future cross-tool flags. | Owner read/update. Initial account merge is limited to locale/theme only. |
+| `tool_preferences` | one row per user/tool or versioned user/tool record | Small approved sync candidates such as future Thumbnail preset IDs, recent font IDs, or tool UI preferences. | Owner read/update only after each tool preference contract is promoted. Not part of first merge. |
+| `usage_quotas` | one row per user/plan/period or normalized quota window | Plan id, period start/end, counters, reset timestamp, and quota state. | Owner read. quota writes are trusted-server-only and server-authoritative. Not editable as preference JSON. |
+
+Columns should stay additive and explicit:
+
+- Use `user_id` anchored to Supabase Auth user identity.
+- Include server schema version fields for preference tables. Do not reuse localStorage version numbers as server schema versions.
+- Include timestamps for account rows, but do not backfill existing local-only data implicitly.
+- Keep quota data separate from preference JSON.
+
+### RLS And GRANT Direction
+
+RLS enabled before any Data API access is the default rule for exposed schema tables.
+
+Baseline direction for later SQL work:
+
+- Treat `Automatically expose new tables` OFF as the expected project setting.
+- Grant Data API access only for tables needed by the implementation. Use explicit `GRANT` for the required role/table/action set instead of assuming public schema defaults.
+- Every exposed app table needs RLS before it can be used through browser or SSR clients.
+- User-owned rows are limited to the authenticated owner. Policy expressions should explicitly account for unauthenticated requests and use `authenticated` plus `auth.uid()` ownership checks.
+- `user_profiles`, `user_preferences`, and `tool_preferences` are user-owned. The first implementation should avoid cross-user reads.
+- `usage_quotas` read for owner only is acceptable for account UI. quota writes are trusted-server-only and must not be writable by the browser client.
+- Do not rely on `raw_user_meta_data` or user-editable JWT claims for authorization decisions.
+- Keep any future elevated helper outside exposed schemas and out of the first auth slice.
+
+### Initial Account Merge Policy
+
+Initial account merge is limited to locale/theme only:
+
+- Candidate local keys: `v-streamer-tools-locale` and `v-streamer-tools-theme`.
+- If no remote value exists, the signed-in user can copy the local locale/theme into account preferences.
+- If remote and local values conflict, show a one-time choice: keep this browser value, keep account value, or apply account value to this browser.
+- Do not silently upload or merge any other stored data.
+- No Thumbnail, Schedule Calendar, Translator, IndexedDB, handoff, local font, project, asset, or billing data participates in the first merge.
+- Existing local preference fallback remains available if Supabase is unavailable or the user signs out.
+
+### Rollback Path And Migration Risks
+
+Rollback path:
+
+- Keep all first tables additive and unused by existing tools until the account implementation explicitly reads them.
+- Use additive tables only for the first database slice.
+- If Supabase Auth is disabled or removed, local-first behavior remains intact because existing storage keys and payloads are unchanged.
+- Do not make account data required for portal rendering, tool loading, or export flows in the first auth slice.
+- No existing localStorage, IndexedDB, or sessionStorage key is renamed, deleted, migrated, or rewritten in this slice.
+
+Migration risks:
+
+- RLS or explicit `GRANT` mistakes can either block all reads or expose rows too broadly.
+- Cookie/session refresh mistakes in SSR can cause signed-in users to appear signed out.
+- Secret/service_role key misuse can bypass intended RLS boundaries.
+- Quota counters in preference JSON would be hard to make server-authoritative later, so quota stays separate from the start.
+- Locale/theme merge copy must be clear before implementation to avoid surprising users who already rely on browser-local settings.
+- Schedule Calendar payloads, Thumbnail drafts/materials, translator state, local font availability, and handoff payloads remain separate explicit migration problems.
+
+### Contract And Verification
+
+- Required contract check: `node scripts/supabase-auth-boundary-design-contract.mjs`
+- Continue to run:
+  - `node scripts/preference-classification-contract.mjs`
+  - `node scripts/local-preference-adapter-contract.mjs`
+  - `node scripts/auth-provider-decision-spike-contract.mjs`
+- UI width verification is not required for this docs-only / contract-only slice.
+
 ## Migration Principles
 
 - Existing localStorage remains source of truth until the user signs in and explicitly opts into import/sync.

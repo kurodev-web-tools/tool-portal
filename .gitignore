@@ -1,6 +1,7 @@
 # Node / Next.js
 node_modules/
 .next/
+.open-next/
 out/
 dist/
 build/
@@ -20,6 +21,8 @@ dev-server*.log
 .env.development.local
 .env.test.local
 .env.production.local
+.dev.vars*
+!.dev.vars.example
 
 # Coverage / caches
 coverage/

@@ -129,6 +129,43 @@
        - Supabase project URL / publishable key はユーザー確認済み前提だが、この branch では値を要求・表示・保存していない。
        - secret / service_role key は今後も browser / docs / source-controlled file に入れない。
        - Thumbnail / Schedule / Translator preferences server sync、既存 payload migration、paid plan / billing は未実装。
+   - Cloudflare SSR deploy foundation:
+     - cause:
+       - PR #234 は Next.js App Router の SSR cookie session、request boundary、dynamic route、`proxy.ts` を使うため、Cloudflare Pages の static export `out/` 前提と両立しない。
+       - Preview deploy の `Output directory "out" not found` は、server runtime build では `out/` を生成しない一方で、Cloudflare Pages 側がまだ static output directory を要求していたことが原因。
+       - Cloudflare / OpenNext docs では、full stack SSR Next.js は Pages static output ではなく Cloudflare Workers + `@opennextjs/cloudflare` adapter へ移す案内になっている。
+     - implementation:
+       - `@opennextjs/cloudflare` と `wrangler` を devDependency に追加した。
+       - `wrangler.jsonc` を追加し、`.open-next/worker.js`、`.open-next/assets`、`nodejs_compat`、`compatibility_date: 2026-05-27`、Workers Assets binding を定義した。
+       - `open-next.config.ts` を追加し、OpenNext Cloudflare adapter の default config を明示した。R2 cache binding は今回 scope では追加していない。
+       - `package.json` に `build:cloudflare` / `preview:cloudflare` / `deploy:cloudflare` / `upload:cloudflare` / `cf-typegen` を追加した。
+       - `.open-next/` と `.dev.vars*` を ignore し、ESLint でも `.open-next/**` を対象外にした。
+       - worktree 内 build tracing が親 checkout の lockfile を拾わないよう、`next.config.mjs` に `outputFileTracingRoot` を project root で固定した。
+       - OpenNext adapter は Next.js 16 の Node.js `proxy.ts` をまだ support していないため、PR #234 の session refresh boundary を同じ matcher のまま Edge Middleware `middleware.ts` に戻した。これは Cloudflare deploy compatibility のための最小差分で、auth UI / DB write / Supabase secret handling は広げていない。
+     - Cloudflare dashboard / CI setting:
+       - Existing Pages static deploy の output directory `out` 前提は解除する。
+       - SSR 対応 target は Cloudflare Workers + OpenNext に移す。
+       - deploy command は `npm run deploy:cloudflare` を推奨する。build-only validation では `npm run build:cloudflare`。
+       - static output directory は設定しない。生成物は `.open-next/worker.js` と `.open-next/assets`。
+       - Build variables / secrets には `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` を dashboard 側で設定する。secret / service_role key は要求・表示・保存しない。
+     - verification completed:
+       - `npm run build:cloudflare` passed。`.open-next/worker.js` / `.open-next/assets` generated。
+       - `npm run build` passed。server-runtime build のため static export alias postbuild は `out/` missing を正常 skip。
+       - `npm run lint` passed。
+       - `npx tsc --noEmit` passed。
+       - `git diff --check` passed。LF/CRLF conversion warning only。
+       - `npx wrangler deploy --dry-run` passed。assets 530 files、Worker upload size 6609.29 KiB / gzip 1519.44 KiB。
+       - local Worker preview: `npx wrangler dev --port 8789 --local` で `GET /` が HTTP 200。
+     - remaining risks:
+       - Windows 上の OpenNext build は adapter から compatibility warning が出る。CI / Cloudflare 側は Linux runtime を想定する。
+       - Next.js 16 では `middleware.ts` が deprecated で `proxy.ts` 推奨だが、現時点の OpenNext Cloudflare adapter は Node.js middleware / `proxy.ts` 未対応。adapter が対応したら `proxy.ts` へ戻す。
+       - 実 Cloudflare deploy は未実行。Cloudflare account / Workers project / dashboard env vars / custom domain は user-managed。
+       - R2 incremental cache は未設定。ISR / cache-heavy routes を増やす場合は別 PR で binding と cache config を検討する。
+     - PR #234への戻し方:
+       - PR #234 は draft のまま維持し、この deploy foundation branch を base `codex/supabase-auth-first-slice` の stacked PR として先に review する。
+       - この foundation が通ったら Cloudflare target を Workers + OpenNext 設定へ変更し、PR #234 の preview deploy を再実行する。
+       - Foundation を採用しない場合は、この stacked PR だけを revert / close すれば PR #234 の auth 実装差分には戻れる。ただし static Pages `out/` blocker は残る。
+       - `middleware.ts` を `proxy.ts` に戻すのは、OpenNext Cloudflare adapter が Next.js Node.js middleware / proxy を support した後に限定する。
 
 2. Kuro Live Comment Translator planning
    - status: user foundation の後に設計を見直す。

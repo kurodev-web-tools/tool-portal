@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { LanguageSwitch } from "@/components/portal/LanguageSwitch";
 import { useLocale } from "@/components/portal/LocaleProvider";
-import { ThemeToggle, themePreferenceStorageKey } from "@/components/portal/ThemeToggle";
-import { localePreferenceStorageKey } from "@/lib/locale";
+import { ThemeToggle } from "@/components/portal/ThemeToggle";
+import { localPreferenceStorageKeys } from "@/lib/local-preferences";
 
 const accountCopy = {
   ja: {
@@ -145,10 +145,10 @@ export function AccountPreferencesShell() {
             <h2 className="mt-2 text-xl font-black text-foreground">{copy.preferencesTitle}</h2>
             <p className="mt-3 text-sm leading-7 text-muted">{copy.preferencesBody}</p>
           </div>
-          <PreferenceRow label={copy.language} storageKey={localePreferenceStorageKey}>
+          <PreferenceRow label={copy.language} storageKey={localPreferenceStorageKeys.locale}>
             <LanguageSwitch />
           </PreferenceRow>
-          <PreferenceRow label={copy.theme} storageKey={themePreferenceStorageKey}>
+          <PreferenceRow label={copy.theme} storageKey={localPreferenceStorageKeys.theme}>
             <ThemeToggle />
           </PreferenceRow>
         </div>

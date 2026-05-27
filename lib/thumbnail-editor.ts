@@ -938,6 +938,105 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     caution: "小サイズでは潰れやすい。本文や細かい日程には使わない。",
     sourceUrl: "https://fonts.google.com/specimen/DotGothic16"
   }, "dotgothic16", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Zen Maru Gothic",
+    language: "ja",
+    category: "かわいい / 丸ゴ",
+    mood: "やわらかい、親しみ、素直",
+    bestFor: "雑談、歌枠、かわいい告知、読みやすい短文",
+    caution: "M PLUS Rounded 1c と近い。本文寄りの素直な丸ゴとして使い分ける。",
+    sourceUrl: "https://fonts.google.com/specimen/Zen+Maru+Gothic"
+  }, "zen-maru-gothic", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Tsukimi Rounded",
+    language: "ja",
+    category: "かわいい / 丸ゴ",
+    mood: "上品丸ゴ、静か、夜向き",
+    bestFor: "月、夜、ASMR、ゆるい予定告知",
+    caution: "細い字面はサムネで弱い。背景コントラストと縁取りで補う。",
+    sourceUrl: "https://fonts.google.com/specimen/Tsukimi+Rounded"
+  }, "tsukimi-rounded", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Shippori Antique",
+    language: "ja",
+    category: "上品 / レトロ",
+    mood: "読みやすい、昭和感、落ち着き",
+    bestFor: "レトロ雑談、落ち着いた企画、サブ見出し",
+    caution: "1 weight 前提。強い見出しでは stroke / shadow が必要。",
+    sourceUrl: "https://fonts.google.com/specimen/Shippori+Antique"
+  }, "shippori-antique", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Shippori Mincho",
+    language: "ja",
+    category: "上品 / 和風",
+    mood: "明朝、きちんと感、記念向き",
+    bestFor: "記念配信、重要告知、和風タイトル",
+    caution: "日本語 serif は細部が重い。短い見出し中心にする。",
+    sourceUrl: "https://fonts.google.com/specimen/Shippori+Mincho"
+  }, "shippori-mincho", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Kaisei Decol",
+    language: "ja",
+    category: "上品 / 和風",
+    mood: "かわいい、装飾 serif、柔らかい",
+    bestFor: "かわいい和風、記念日、企画タイトル",
+    caution: "装飾性が高い。本文や細かい日程には使わない。",
+    sourceUrl: "https://fonts.google.com/specimen/Kaisei+Decol"
+  }, "kaisei-decol", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Kaisei Tokumin",
+    language: "ja",
+    category: "上品 / 和風",
+    mood: "インパクト、太め serif、硬派",
+    bestFor: "強い和風見出し、物語系、告知タイトル",
+    caution: "字面が重い。1:1 では余白を広めに取る。",
+    sourceUrl: "https://fonts.google.com/specimen/Kaisei+Tokumin"
+  }, "kaisei-tokumin", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Zen Kurenaido",
+    language: "ja",
+    category: "手書き / やわらか",
+    mood: "上品、細め、親近感",
+    bestFor: "手書きコメント、ゆるい雑談、短い一言",
+    caution: "小サイズでは弱い。アクセント用途を基本にする。",
+    sourceUrl: "https://fonts.google.com/specimen/Zen+Kurenaido"
+  }, "zen-kurenaido", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Reggae One",
+    language: "ja",
+    category: "太字見出し / 企画",
+    mood: "ポップ、太い、楽しい",
+    bestFor: "企画名、勢いのある見出し、バラエティ",
+    caution: "個性が強い。長文や情報整理には向かない。",
+    sourceUrl: "https://fonts.google.com/specimen/Reggae+One"
+  }, "reggae-one", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Rampart One",
+    language: "ja",
+    category: "レトロ / ポップ",
+    mood: "アウトライン、レトロ、派手",
+    bestFor: "サムネ主役見出し、企画ロゴ風テキスト",
+    caution: "outline 形状のため小サイズ非推奨。縁取りと干渉しやすい。",
+    sourceUrl: "https://fonts.google.com/specimen/Rampart+One"
+  }, "rampart-one", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Darumadrop One",
+    language: "ja",
+    category: "手書き / ポップ",
+    mood: "かわいい、丸い、個性強め",
+    bestFor: "かわいい一言、初配信、ゆるい企画タイトル",
+    caution: "かな混在の可読性に注意。本文用途にはしない。",
+    sourceUrl: "https://fonts.google.com/specimen/Darumadrop+One"
+  }, "darumadrop-one", [400]),
+  withThumbnailJapaneseFontAssets({
+    family: "Train One",
+    language: "ja",
+    category: "レトロ / ピクセル",
+    mood: "アウトライン、ゲーム風、派手",
+    bestFor: "レトロゲーム、強い企画ロゴ、短いタイトル",
+    caution: "display 専用。細い stroke と重ねると読みにくい。",
+    sourceUrl: "https://fonts.google.com/specimen/Train+One"
+  }, "train-one", [400]),
   withThumbnailEnglishFontAssets({
     family: "Anton",
     language: "en",
@@ -947,6 +1046,15 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     caution: "日本語は不可。英字大文字中心で使う。",
     sourceUrl: "https://fonts.google.com/specimen/Anton"
   }, "anton", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Lilita One",
+    language: "en",
+    category: "Impact headline",
+    mood: "丸太字、ポップ、歌枠向き",
+    bestFor: "IRIAM Karaoke title image、明るい英字見出し",
+    caution: "太く丸い display 専用。長文や小サイズには使わない。",
+    sourceUrl: "https://fonts.google.com/specimen/Lilita+One"
+  }, "lilita-one", [400]),
   withThumbnailEnglishFontAssets({
     family: "Bebas Neue",
     language: "en",
@@ -1020,6 +1128,15 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     sourceUrl: "https://fonts.google.com/specimen/Playfair+Display"
   }, "playfair-display", [400, 700, 900]),
   withThumbnailEnglishFontAssets({
+    family: "Pirata One",
+    language: "en",
+    category: "Elegant / stylish",
+    mood: "ゴシック、不穏、dark cute",
+    bestFor: "IRIAM Dark Gacha title image、怪しい英字見出し",
+    caution: "装飾が強い。読みやすさが必要な本文や小さいラベルには使わない。",
+    sourceUrl: "https://fonts.google.com/specimen/Pirata+One"
+  }, "pirata-one", [400]),
+  withThumbnailEnglishFontAssets({
     family: "Pacifico",
     language: "en",
     category: "Handwritten / personal",
@@ -1028,6 +1145,15 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     caution: "display / accent 専用。大文字羅列や長文には向かない。",
     sourceUrl: "https://fonts.google.com/specimen/Pacifico"
   }, "pacifico", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Lobster",
+    language: "en",
+    category: "Handwritten / personal",
+    mood: "筆記体、華やか、デビュー感",
+    bestFor: "IRIAM Debut Stream title image、サイン風の英字見出し",
+    caution: "筆記体のため大文字羅列や長文には向かない。短い見出しに限定する。",
+    sourceUrl: "https://fonts.google.com/specimen/Lobster"
+  }, "lobster", [400]),
   withThumbnailEnglishFontAssets({
     family: "Orbitron",
     language: "en",
@@ -1045,7 +1171,115 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "レトロゲーム、ドット風短文",
     caution: "大容量ではないが可読性が低い。大きめ短文だけにする。",
     sourceUrl: "https://fonts.google.com/specimen/Press+Start+2P"
-  }, "press-start-2p", [400])
+  }, "press-start-2p", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Cinzel",
+    language: "en",
+    category: "Elegant / cinematic",
+    mood: "古典、重厚、ファンタジー",
+    bestFor: "記念、ファンタジー、重厚な英字タイトル",
+    caution: "小文字主体の短文には硬い。大文字タイトル向き。",
+    sourceUrl: "https://fonts.google.com/specimen/Cinzel"
+  }, "cinzel", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Abril Fatface",
+    language: "en",
+    category: "Elegant / bold serif",
+    mood: "上品、太い、editorial",
+    bestFor: "記念告知、上品な強調、短い headline",
+    caution: "太く装飾的。小サイズや細い stroke では潰れやすい。",
+    sourceUrl: "https://fonts.google.com/specimen/Abril+Fatface"
+  }, "abril-fatface", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Unbounded",
+    language: "en",
+    category: "Futuristic / geometric",
+    mood: "近未来、幾何学、個性強め",
+    bestFor: "SF、ゲーム、強い英字ラベル",
+    caution: "横幅が広くなりやすい。短い英字に限定する。",
+    sourceUrl: "https://fonts.google.com/specimen/Unbounded"
+  }, "unbounded", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Black Ops One",
+    language: "en",
+    category: "Impact / military",
+    mood: "硬派、バトル、強い",
+    bestFor: "耐久、バトル、企画タイトル、強い CTA",
+    caution: "用途が限定的。かわいい系には合いにくい。",
+    sourceUrl: "https://fonts.google.com/specimen/Black+Ops+One"
+  }, "black-ops-one", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Monoton",
+    language: "en",
+    category: "Retro / neon",
+    mood: "ネオン、レトロ、派手",
+    bestFor: "music label、短い title、レトロ演出",
+    caution: "線構造が複雑。小サイズと太い縁取りは避ける。",
+    sourceUrl: "https://fonts.google.com/specimen/Monoton"
+  }, "monoton", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Bungee",
+    language: "en",
+    category: "Display / urban",
+    mood: "太い、楽しい、企画ロゴ風",
+    bestFor: "配信 label、企画ロゴ、ポップな強調",
+    caution: "太さが強い。長い文では詰まりやすい。",
+    sourceUrl: "https://fonts.google.com/specimen/Bungee"
+  }, "bungee", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Bungee Shade",
+    language: "en",
+    category: "Display / shaded",
+    mood: "影付き、レトロ、装飾",
+    bestFor: "イベント title、強い一語、レトロロゴ風",
+    caution: "影付き形状なので stroke / shadow との干渉に注意。",
+    sourceUrl: "https://fonts.google.com/specimen/Bungee+Shade"
+  }, "bungee-shade", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Rye",
+    language: "en",
+    category: "Retro / decorative",
+    mood: "western、carnival、怪しい",
+    bestFor: "レトロ、怪しい告知、western 風アクセント",
+    caution: "用途が狭い。短いアクセントに限定する。",
+    sourceUrl: "https://fonts.google.com/specimen/Rye"
+  }, "rye", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Creepster",
+    language: "en",
+    category: "Dark / horror",
+    mood: "horror、dark cute、崩し",
+    bestFor: "闇ガチャ、horror、dark cute な短い英字",
+    caution: "可読性が低い。短い英字だけにする。",
+    sourceUrl: "https://fonts.google.com/specimen/Creepster"
+  }, "creepster", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "VT323",
+    language: "en",
+    category: "Pixel / retro terminal",
+    mood: "terminal、数字、レトロ",
+    bestFor: "レトロゲーム、terminal、数字、短い label",
+    caution: "本文には向かない。大きめの数字や短文で使う。",
+    sourceUrl: "https://fonts.google.com/specimen/VT323"
+  }, "vt323", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Caveat",
+    language: "en",
+    category: "Handwritten / casual",
+    mood: "手書き、サイン風、ゆるい",
+    bestFor: "note、サイン風、ゆるい補足、accent",
+    caution: "display / accent 専用。大文字羅列や長文には向かない。",
+    sourceUrl: "https://fonts.google.com/specimen/Caveat"
+  }, "caveat", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Righteous",
+    language: "en",
+    category: "Retro / game",
+    mood: "丸み、近未来、レトロ",
+    bestFor: "レトロゲーム、ポップな英字ロゴ、企画ラベル",
+    caution: "小文字や長文では癖が出る。短文向き。",
+    sourceUrl: "https://fonts.google.com/specimen/Righteous"
+  }, "righteous", [400])
 ];
 const thumbnailFontLanguageLabels: Record<ThumbnailFontLanguage, string> = {
   ja: "日本語",

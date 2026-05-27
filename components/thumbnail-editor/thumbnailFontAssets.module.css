@@ -1,5 +1,5 @@
 .thumbnailFontAssetScope {
-  --thumbnail-editor-font-assets: "ja-seed-v1 en-seed-v1";
+  --thumbnail-editor-font-assets: "ja-seed-v1 ja-standard-b-v1 en-seed-v1 iriam-title-en-v1 en-standard-b-v1";
 }
 
 @font-face {
@@ -227,11 +227,115 @@
 }
 
 @font-face {
+  font-family: "Zen Maru Gothic";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/zen-maru-gothic/zen-maru-gothic-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tsukimi Rounded";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/tsukimi-rounded/tsukimi-rounded-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Shippori Antique";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/shippori-antique/shippori-antique-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Shippori Mincho";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/shippori-mincho/shippori-mincho-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Kaisei Decol";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/kaisei-decol/kaisei-decol-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Kaisei Tokumin";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/kaisei-tokumin/kaisei-tokumin-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Zen Kurenaido";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/zen-kurenaido/zen-kurenaido-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Reggae One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/reggae-one/reggae-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rampart One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/rampart-one/rampart-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Darumadrop One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/darumadrop-one/darumadrop-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Train One";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/train-one/train-one-400-ja-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
   font-family: "Anton";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
   src: url("/fonts/thumbnail-editor/anton/anton-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Lilita One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/lilita-one/lilita-one-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Pirata One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/pirata-one/pirata-one-400-en-seed-v1.woff2") format("woff2");
 }
 
 @font-face {
@@ -347,6 +451,14 @@
 }
 
 @font-face {
+  font-family: "Lobster";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/lobster/lobster-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
   font-family: "Bangers";
   font-style: normal;
   font-weight: 400;
@@ -416,4 +528,100 @@
   font-weight: 400;
   font-display: swap;
   src: url("/fonts/thumbnail-editor/press-start-2p/press-start-2p-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Cinzel";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/cinzel/cinzel-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Abril Fatface";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/abril-fatface/abril-fatface-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Unbounded";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/unbounded/unbounded-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Black Ops One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/black-ops-one/black-ops-one-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Monoton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/monoton/monoton-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Bungee";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/bungee/bungee-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Bungee Shade";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/bungee-shade/bungee-shade-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rye";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/rye/rye-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Creepster";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/creepster/creepster-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "VT323";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/vt323/vt323-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/caveat/caveat-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Righteous";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/righteous/righteous-400-en-seed-v1.woff2") format("woff2");
 }

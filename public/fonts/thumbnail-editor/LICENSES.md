@@ -6,6 +6,9 @@ The Japanese and English font batches under this directory are self-hosted for T
 - License: SIL Open Font License 1.1 for the bundled families in this batch.
 - Japanese subset: `thumbnail-editor-ja-seed-v1`, a small seed subset covering current Thumbnail Editor preset text, common schedule labels, numbers, basic Latin, and common punctuation.
 - English subset: `thumbnail-editor-en-seed-v1`, a Latin subset from Google Fonts CSS2 covering English display labels, numbers, common punctuation, and basic Latin fallback characters.
+- IRIAM title parity subset: selected Latin display fonts used by IRIAM square English title images and exposed to editable text layers.
+- Standard batch B-JA subset: selected Japanese Google Fonts from `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`, exposed to editable text layers with the same `thumbnail-editor-ja-seed-v1` subset boundary.
+- Standard batch B-EN subset: selected English Google Fonts from `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`, exposed to editable text layers with the same `thumbnail-editor-en-seed-v1` subset boundary.
 - Runtime boundary: these files are loaded from `/fonts/thumbnail-editor/...` by the Thumbnail Editor route. This batch does not add Google Fonts CDN or CSP changes.
 
 Families included in this Japanese batch:
@@ -26,18 +29,44 @@ Families included in this Japanese batch:
 - Dela Gothic One: 400
 - New Tegomin: 400
 - DotGothic16: 400
+- Zen Maru Gothic: 400
+- Tsukimi Rounded: 400
+- Shippori Antique: 400
+- Shippori Mincho: 400
+- Kaisei Decol: 400
+- Kaisei Tokumin: 400
+- Zen Kurenaido: 400
+- Reggae One: 400
+- Rampart One: 400
+- Darumadrop One: 400
+- Train One: 400
 
 Families included in this English batch:
 
 - Anton: 400
+- Lilita One: 400
+- Pirata One: 400
 - Bebas Neue: 400
 - Oswald: 400 / 700
 - Montserrat: 400 / 700 / 900
 - Poppins: 400 / 700 / 900
 - Rubik: 400 / 700 / 900
 - Fredoka: 400 / 700
+- Lobster: 400
 - Bangers: 400
 - Playfair Display: 400 / 700 / 900
 - Pacifico: 400
 - Orbitron: 400 / 700 / 900
 - Press Start 2P: 400
+- Cinzel: 400
+- Abril Fatface: 400
+- Unbounded: 400
+- Black Ops One: 400
+- Monoton: 400
+- Bungee: 400
+- Bungee Shade: 400
+- Rye: 400
+- Creepster: 400
+- VT323: 400
+- Caveat: 400
+- Righteous: 400

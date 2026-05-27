@@ -284,6 +284,96 @@ Keep billing and quota out of the first implementation.
 - Asset storage quota should count uploaded server assets only, not IndexedDB local blobs.
 - Free plan should not require migrating existing local-only data.
 
+## Auth Provider Decision Spike
+
+Status: docs-only comparison snapshot, 2026-05-27. This section does not authorize login, database, migration, API route, billing, or tool payload changes.
+
+Reference snapshot:
+
+- Supabase Auth overview: https://supabase.com/docs/guides/auth
+- Supabase SSR client setup for Next.js: https://supabase.com/docs/guides/auth/server-side/nextjs
+- Supabase RLS guide: https://supabase.com/docs/guides/database/postgres/row-level-security
+- Supabase Clerk third-party auth guide: https://supabase.com/docs/guides/auth/third-party/clerk
+- Supabase changelog checked on 2026-05-27: https://supabase.com/changelog
+- Clerk Next.js SDK reference: https://clerk.com/docs/reference/nextjs/overview
+- Clerk user management guide: https://clerk.com/docs/guides/users/managing
+- Clerk Billing overview: https://clerk.com/docs/guides/billing/overview
+- Clerk Supabase integration guide: https://clerk.com/docs/guides/development/integrations/databases/supabase
+- Auth.js session strategies: https://authjs.dev/concepts/session-strategies
+- Auth.js database adapters: https://authjs.dev/getting-started/database
+
+Recent Supabase notes that affect this spike:
+
+- Supabase Auth uses JWTs and integrates with Postgres / RLS, so it matches a server-authoritative quota and preference schema if RLS is designed first.
+- Supabase SSR for Next.js uses cookie-backed clients via `@supabase/ssr`; public clients should use publishable keys, while secret/service keys remain server-only.
+- RLS must be enabled on exposed schema tables and policies must account for unauthenticated requests because `auth.uid()` can be `null`.
+- New Supabase projects are moving toward stricter Data API exposure defaults, so future DB work must explicitly verify grants and RLS exposure before client access.
+- Supabase changelog includes upcoming runtime/platform changes such as Node.js 20 support ending for Supabase JS packages on 2026-06-30 and Postgres 14 support ending on 2026-07-01. A later implementation should pin runtime assumptions before adding SDKs or migrations.
+
+### Decision Matrix
+
+| Criterion | Supabase Auth | Clerk | Auth.js |
+| --- | --- | --- | --- |
+| Fit for this plan | Strongest fit when preferences, quotas, explicit projects, uploaded assets, and future schedules live in Postgres. Auth identity and RLS can be designed together. | Strong fit for fast sign-in UI, account portal, and user management. Needs a separate application DB strategy for preferences, quota, and project data. | Strong fit when this project wants full session/provider ownership inside Next.js. Requires more auth UI, adapter, session, and security ownership. |
+| DB shape | `auth.users` can anchor app-owned tables such as `user_profiles`, `user_preferences`, `tool_preferences`, `usage_quotas`, explicit `thumbnail_projects`, explicit `user_assets`, and later schedule / translator tables. | App DB should store Clerk user IDs as external IDs, for example `auth_provider_user_id`, or use Supabase third-party auth with Clerk session claims. Clerk does not automatically sync user records to Supabase. | App DB must include Auth.js adapter models or custom equivalents plus app tables. User IDs and session/account tables become this app's responsibility. |
+| RLS / session handling | Use Supabase SSR cookie clients and RLS policies scoped by `auth.uid() = user_id`. Every exposed table needs RLS and explicit grants. | Use Clerk session tokens with Supabase third-party auth when using Supabase DB/RLS. RLS policies need `auth.jwt()` claim mapping such as Clerk `sub`; user sync requires webhooks if app tables need mirrored profile data. | JWT sessions are HttpOnly cookie based by default unless a database adapter is configured; database sessions need adapter tables. RLS against Supabase/Postgres would need a custom trusted server boundary or token-to-user mapping. |
+| Account merge policy | Prefer provider-native identity linking only after verified email / provider checks. Local-only preferences import explicitly after sign-in; never silently upload drafts, schedules, images, comments, or font inventory. | Similar explicit local import policy, but merge must reconcile Clerk user IDs with app DB rows and webhook-delivered profile state. Email collisions should be manual until trust rules are defined. | Merge rules are fully app-owned. This is flexible but increases risk around duplicate users, provider account linking, and session invalidation edge cases. |
+| Quota / paid plan boundary | Best fit for server-authoritative `usage_quotas` tables and RLS-protected entitlements. Billing remains separate, likely Stripe later; quota is not preference JSON. | Clerk Billing exists but is beta and experimental, so do not make it the paid-plan foundation now. Use separate server-authoritative quota tables if Clerk is selected for auth only. | Billing and quota are entirely custom. Good for control, but it expands first auth implementation beyond the current foundation goal. |
+| Rollback / migration risk | Main risks are RLS mistakes, Data API exposure, SDK/runtime drift, and Postgres migration discipline. Rollback can leave local-only app behavior intact if account sync is opt-in and tables are additive. | Main risks are auth vendor coupling, separate user identity mapping, webhook drift, and migration away from Clerk IDs. Easier UX start, harder provider exit. | Main risks are security/session ownership, adapter schema changes, and custom account UI. Provider exit is easier than Clerk, but operational burden is highest. |
+
+### Provisional Recommendation
+
+Use Supabase Auth as the provisional candidate for the next auth implementation slice, with Supabase Postgres / RLS as the eventual preference and quota store.
+
+Reasoning:
+
+- It keeps auth identity, preference DB shape, RLS, and quota accounting in one architecture.
+- It best matches the existing plan's need for small preference sync first, explicit project / schedule / asset migration later, and server-authoritative paid-plan boundaries.
+- It avoids making Clerk Billing beta or custom Auth.js session ownership part of the first account foundation.
+- It preserves a local-only fallback because current `localStorage`, IndexedDB, and `sessionStorage` payloads stay unchanged until a user explicitly signs in and opts into import/sync.
+
+Clerk should remain the fallback if prebuilt auth/account UI speed becomes more important than first-party DB/RLS simplicity. If Clerk is selected later, use Clerk as auth only at first, keep app data in Supabase/Postgres or another app-owned DB, and avoid Clerk Billing until its beta / breaking-change risk is acceptable.
+
+Auth.js should remain the fallback if self-hosted auth ownership becomes a project requirement. It should not be the first implementation choice unless the project is ready to own session strategy, adapter schema, account UI, provider linking, and security maintenance.
+
+### Minimal Future DB Shape
+
+If Supabase Auth remains the chosen path, the first schema should stay additive and small:
+
+- `user_profiles`: `user_id uuid primary key references auth.users(id)`, display/account shell metadata only, no provider tokens.
+- `user_preferences`: `user_id`, schema version, global locale/theme preference and other cross-tool flags.
+- `tool_preferences`: `user_id`, `tool_id`, schema version, small `preferences_json` for approved sync candidates only.
+- `usage_quotas`: `user_id`, plan id, period start/end, counters, reset timestamp. This table is server-authoritative and not editable as preference JSON.
+- Later explicit-save tables only after separate design: `thumbnail_projects`, `user_assets`, `schedule_items`, `schedule_templates`, `hashtag_sets`, `translator_connections`.
+
+RLS policy direction:
+
+- All exposed app tables must enable RLS before client access.
+- User-owned preference rows should be scoped to the authenticated user id.
+- `usage_quotas` should be readable by the owner but updated only by trusted server code.
+- Uploaded assets and explicit projects need separate quota and deletion policy before implementation.
+- Never use browser-local OAuth tokens, raw credentials, local font binaries, IndexedDB blob refs, handoff payloads, or translator live session logs as sync candidates.
+
+### Account Merge And Migration Policy
+
+- First sign-in starts with local app behavior unchanged.
+- Initial sync candidate set should be only global locale/theme, then small Thumbnail preference IDs after a separate confirmation.
+- Local values may be imported only through an explicit user action. Do not auto-upload current drafts, schedules, user materials, comments, local font inventory, or handoff payloads.
+- If remote and local values conflict, prefer a visible one-time choice: keep local, keep account, or merge where the data is an append-only ID list.
+- Schedule Calendar legacy payloads require explicit import/backup flow before server sync.
+- Account deletion policy must be defined before storing projects, assets, schedules, translator connection metadata, or quota history.
+
+### Next Slice Gate
+
+Do not proceed to login implementation until the next slice has all of the following:
+
+- Supabase project/runtime target and supported Node version pinned.
+- Minimal additive DB schema draft with RLS policies and rollback plan.
+- Session boundary for Next.js App Router defined, including publishable vs secret key handling.
+- Account merge policy copy and conflict behavior for locale/theme.
+- Quota read/write ownership defined separately from preferences.
+- Explicit out-of-scope list preserving current storage keys, local payloads, IndexedDB blobs, `sessionStorage` handoff, and individual tool UI behavior.
+
 ## Migration Principles
 
 - Existing localStorage remains source of truth until the user signs in and explicitly opts into import/sync.

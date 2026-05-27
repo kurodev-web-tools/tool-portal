@@ -30,6 +30,8 @@
      - completed: local preference adapter として `lib/local-preferences.ts` を追加し、既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` key を維持したまま locale / theme の読み書き境界を local-only で薄く包んだ。
      - completed: `LocaleProvider` / `ThemeToggle` の localStorage 直接 read/write を adapter 経由へ寄せ、`/account` の storage key 表示も adapter の `localPreferenceStorageKeys` を参照する形にした。
      - completed: Thumbnail recent / favorite preset ids、Schedule settings、translator settings は `FutureLocalPreferenceCandidate` の type placeholder に留め、payload / migration / server sync は実装していない。
+     - completed: auth/provider decision spike として Supabase Auth / Clerk / Auth.js を、DB shape、RLS / session handling、account merge policy、quota / paid plan boundary、rollback / migration risk で比較し、Supabase Auth + Supabase Postgres / RLS を次 auth implementation の仮推奨にした。
+     - completed: spike は docs-only に閉じ、実ログイン、database / migration、API route、paid plan / billing、preferences server sync、個別 tool UI、既存 storage key / payload 変更は実施していない。
    - planning results:
      - sync candidate は locale / theme、Thumbnail recent / favorite preset ids、recent fonts、Schedule default view / week start / default time / duration、Translator target language / display preference、local font selected family refs などの軽量 preference に限定する。
      - explicit user action only は Thumbnail project draft、server asset library upload、Schedule events / templates / hashtag sets、Translator glossary / moderation terms / session settings。
@@ -40,8 +42,8 @@
      - first: preference contract foundation。保存分類の contract script / docs を追加し、既存 storage key と payload は変更しない。今回 branch で対応済み。
      - second: account / preferences shell。Auth 未接続のアカウント設定ページ、プラン表示枠、preferences 表示枠を作り、local-only 状態で確認する。今回 branch で対応済み。
      - third: local preference adapter。既存 localStorage keys を維持し、migration なしで読み書き境界を薄く包む。今回 branch で対応済み。
-     - fourth: auth/provider decision spike。Supabase Auth / Clerk / Auth.js などを plan と quota 境界込みで比較する。次候補。
-     - fifth: Auth 実装。ログイン / ログアウト、account session、profile / preferences の最小保存に閉じる。
+     - fourth: auth/provider decision spike。Supabase Auth / Clerk / Auth.js などを plan と quota 境界込みで比較する。今回 branch で対応済み。
+     - fifth: Auth 実装。Supabase Auth 仮推奨を前提に、ログイン / ログアウト、account session、profile / preferences の最小保存に閉じる。ただし実装前に Supabase project/runtime target、RLS 付き最小 DB schema draft、publishable / secret key handling、locale/theme account merge policy、quota ownership を固定する。
      - sixth: account sync MVP。locale / theme + Thumbnail small preferences までに閉じ、draft / schedule / user material / translator tokens / billing を混ぜない。
      - seventh: Stripe Billing。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 scope で扱う。
    - account settings shell direction:
@@ -68,6 +70,7 @@
      - `node scripts/preference-classification-contract.mjs` passed。
      - `node scripts/account-preferences-shell-contract.mjs` passed。
      - `node scripts/local-preference-adapter-contract.mjs` passed。
+     - `node scripts/auth-provider-decision-spike-contract.mjs` passed。
      - `npm run lint` passed。
      - `npx tsc --noEmit` passed。
      - `git diff --check` passed。
@@ -79,6 +82,8 @@
        - `1366px`: two-column layout + storage key labels visible, horizontal overflowなし。
      - remaining risks:
        - Auth provider / DB schema / billing / quota は placeholder のまま。
+       - Supabase Auth は仮推奨のみ。Supabase project/runtime target、RLS policy、Data API exposure、Node version、rollback plan は次 slice で固定する。
+       - Clerk は fast auth UI の fallback、Auth.js は self-owned auth fallback として残すが、どちらも現時点では実装候補に昇格していない。
        - 既存 header / drawer / rail の language / theme 導線整理は次以降。
        - adapter は local-only で、account merge / server sync / migration policy は未実装。
        - FutureLocalPreferenceCandidate は型 placeholder のみ。Thumbnail / Schedule / Translator の storage payload には触れていない。

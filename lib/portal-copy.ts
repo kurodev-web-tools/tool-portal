@@ -245,6 +245,9 @@ export const portalCopy = {
     navigation: {
       menuOpen: "メニューを開く",
       menuClose: "メニューを閉じる",
+      home: "Home",
+      tools: "Tools",
+      account: "アカウント",
       settings: "Settings",
       language: "表示言語",
       theme: "テーマ",
@@ -260,6 +263,7 @@ export const portalCopy = {
         "schedule-calendar": "スケジュールカレンダー",
         "thumbnail-editor": "Thumbnail Editor",
         "sns-split-image-maker": "SNS分割画像メーカー",
+        account: "アカウント設定",
         tools: "ツール一覧"
       }
     },
@@ -333,6 +337,9 @@ export const portalCopy = {
     navigation: {
       menuOpen: "Open menu",
       menuClose: "Close menu",
+      home: "Home",
+      tools: "Tools",
+      account: "Account",
       settings: "Settings",
       language: "Language",
       theme: "Theme",
@@ -348,6 +355,7 @@ export const portalCopy = {
         "schedule-calendar": "Schedule Calendar",
         "thumbnail-editor": "Thumbnail Editor",
         "sns-split-image-maker": "SNS Split Image Maker",
+        account: "Account",
         tools: "Tools"
       }
     },

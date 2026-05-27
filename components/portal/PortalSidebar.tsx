@@ -7,11 +7,6 @@ import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
 import { sidebarTools } from "@/lib/tools";
 
-const fixedItems = [
-  { label: "Home", href: "/", icon: "H" },
-  { label: "Tools", href: "/tools", icon: "T" }
-];
-
 function SidebarLink({
   href,
   label,
@@ -49,6 +44,11 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
   const { locale } = useLocale();
   const showWorkspaceSettings = mode === "workspace";
   const copy = portalCopy[locale].navigation;
+  const fixedItems = [
+    { label: copy.home, href: "/", icon: "H" },
+    { label: copy.tools, href: "/tools", icon: "T" },
+    { label: copy.account, href: "/account", icon: "A" }
+  ];
 
   return (
     <aside className="hidden w-20 shrink-0 border-r border-border bg-surface/78 px-2 py-5 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-hidden xl:w-72 xl:px-4 xl:py-6">

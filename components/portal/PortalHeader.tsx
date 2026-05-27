@@ -37,6 +37,10 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
       return copy.toolTitles.tools;
     }
 
+    if (pathname.startsWith("/account")) {
+      return copy.toolTitles.account;
+    }
+
     return "Kuro Stream Kit";
   }, [copy.toolTitles, pathname]);
 
@@ -54,8 +58,9 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
   }, [drawerOpen]);
 
   const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/tools", label: "Tools" },
+    { href: "/", label: copy.home },
+    { href: "/tools", label: copy.tools },
+    { href: "/account", label: copy.account },
     ...sidebarTools.map((tool) => ({
       href: tool.href,
       label: getToolCopy(tool.id, locale).name

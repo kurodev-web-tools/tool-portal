@@ -65,9 +65,9 @@ assert.deepEqual(
   "canvas fallback stack stays local/browser-resolved"
 );
 
-assert.equal(lib.thumbnailFontManifest.length, 28, "planning PR's 24 font candidates plus 4 selected IRIAM title fonts are available as metadata");
+assert.equal(lib.thumbnailFontManifest.length, 31, "planning PR's 24 font candidates plus selected IRIAM title fonts are available as metadata");
 assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "ja").length, 16, "manifest keeps 12 Japanese candidates plus 4 selected IRIAM title fonts");
-assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "en").length, 12, "manifest keeps 12 English candidates");
+assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "en").length, 15, "manifest keeps 12 English candidates plus 3 selected IRIAM title fonts");
 for (const font of lib.thumbnailFontManifest) {
   assert.equal(typeof font.family, "string", "manifest font family is a string");
   assert.ok(["ja", "en"].includes(font.language), `${font.family} has a supported language`);
@@ -80,6 +80,28 @@ for (const font of lib.thumbnailFontManifest) {
 
 const japaneseFontManifest = lib.thumbnailFontManifest.filter((font) => font.language === "ja");
 const englishFontManifest = lib.thumbnailFontManifest.filter((font) => font.language === "en");
+const englishIriamTitleFonts = Array.from(
+  new Set(
+    [
+      ...lib.thumbnailIriamSquareKaraokeEnTitleAssets,
+      ...lib.thumbnailIriamSquareDarkGachaEnTitleAssets,
+      ...lib.thumbnailIriamSquareChattingEnTitleAssets,
+      ...lib.thumbnailIriamSquareFirstStreamEnTitleAssets,
+      ...lib.thumbnailIriamSquareEnduranceEnTitleAssets
+    ].map((asset) => asset.fontFamily)
+  )
+);
+assert.deepEqual(
+  englishIriamTitleFonts,
+  ["Lilita One", "Pirata One", "Fredoka", "Lobster", "Anton"],
+  "IRIAM English title image font set stays explicit"
+);
+for (const fontFamily of englishIriamTitleFonts) {
+  assert.ok(
+    englishFontManifest.some((font) => font.family === fontFamily),
+    `${fontFamily} used by IRIAM English title images is available in the editable text font catalog`
+  );
+}
 for (const font of japaneseFontManifest) {
   assert.equal(font.assetBasePath.startsWith("/fonts/thumbnail-editor/"), true, `${font.family} asset path is tool-scoped`);
   assert.equal(font.assetSubset, "thumbnail-editor-ja-seed-v1", `${font.family} records the Japanese seed subset`);
@@ -131,6 +153,7 @@ assert.deepEqual(
   Object.fromEntries(englishFontManifest.map((font) => [font.family, font.assets.map((asset) => asset.weight)])),
   {
     Anton: [400],
+    "Lilita One": [400],
     "Bebas Neue": [400],
     Oswald: [400, 700],
     Montserrat: [400, 700, 900],
@@ -139,7 +162,9 @@ assert.deepEqual(
     Fredoka: [400, 700],
     Bangers: [400],
     "Playfair Display": [400, 700, 900],
+    "Pirata One": [400],
     Pacifico: [400],
+    Lobster: [400],
     Orbitron: [400, 700, 900],
     "Press Start 2P": [400]
   },
@@ -165,6 +190,7 @@ assert.deepEqual(
     "New Tegomin",
     "DotGothic16",
     "Anton",
+    "Lilita One",
     "Bebas Neue",
     "Oswald",
     "Montserrat",
@@ -173,7 +199,9 @@ assert.deepEqual(
     "Fredoka",
     "Bangers",
     "Playfair Display",
+    "Pirata One",
     "Pacifico",
+    "Lobster",
     "Orbitron",
     "Press Start 2P"
   ],
@@ -189,7 +217,7 @@ assert.deepEqual(
   })),
   [
     { label: "日本語", count: 16 },
-    { label: "English", count: 12 }
+    { label: "English", count: 15 }
   ],
   "font listbox groups expose all self-hosted manifest fonts by language"
 );

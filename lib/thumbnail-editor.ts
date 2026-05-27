@@ -948,6 +948,15 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     sourceUrl: "https://fonts.google.com/specimen/Anton"
   }, "anton", [400]),
   withThumbnailEnglishFontAssets({
+    family: "Lilita One",
+    language: "en",
+    category: "Impact headline",
+    mood: "丸太字、ポップ、歌枠向き",
+    bestFor: "IRIAM Karaoke title image、明るい英字見出し",
+    caution: "太く丸い display 専用。長文や小サイズには使わない。",
+    sourceUrl: "https://fonts.google.com/specimen/Lilita+One"
+  }, "lilita-one", [400]),
+  withThumbnailEnglishFontAssets({
     family: "Bebas Neue",
     language: "en",
     category: "Impact headline",
@@ -1020,6 +1029,15 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     sourceUrl: "https://fonts.google.com/specimen/Playfair+Display"
   }, "playfair-display", [400, 700, 900]),
   withThumbnailEnglishFontAssets({
+    family: "Pirata One",
+    language: "en",
+    category: "Elegant / stylish",
+    mood: "ゴシック、不穏、dark cute",
+    bestFor: "IRIAM Dark Gacha title image、怪しい英字見出し",
+    caution: "装飾が強い。読みやすさが必要な本文や小さいラベルには使わない。",
+    sourceUrl: "https://fonts.google.com/specimen/Pirata+One"
+  }, "pirata-one", [400]),
+  withThumbnailEnglishFontAssets({
     family: "Pacifico",
     language: "en",
     category: "Handwritten / personal",
@@ -1028,6 +1046,15 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     caution: "display / accent 専用。大文字羅列や長文には向かない。",
     sourceUrl: "https://fonts.google.com/specimen/Pacifico"
   }, "pacifico", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Lobster",
+    language: "en",
+    category: "Handwritten / personal",
+    mood: "筆記体、華やか、デビュー感",
+    bestFor: "IRIAM Debut Stream title image、サイン風の英字見出し",
+    caution: "筆記体のため大文字羅列や長文には向かない。短い見出しに限定する。",
+    sourceUrl: "https://fonts.google.com/specimen/Lobster"
+  }, "lobster", [400]),
   withThumbnailEnglishFontAssets({
     family: "Orbitron",
     language: "en",

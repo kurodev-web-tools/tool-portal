@@ -255,7 +255,7 @@
      - No main-merge blocker found. Next scope can be a merge-preparation PR from `codex/thumbnail-iriam-square-preview` to `main` without adding new thumbnail functionality.
 
 3. Thumbnail Editor Google Fonts standard batch / IRIAM title font parity
-   - status: Batch B-JA PR #224 は `codex/thumbnail-font-expansion-check` に merge 済み。Batch B-EN implementation branch `codex/thumbnail-font-standard-batch-b-en` で英語 12 種を追加済み。
+   - status: Batch B-JA PR #224 と Batch B-EN PR #225 は `codex/thumbnail-font-expansion-check` に merge 済み。confirmation branch の final check まで完了し、`main` 向け PR 準備へ進める。
    - direction:
      - Google Fonts 由来で license を確認できる font のみを標準 font として追加する。
      - まず IRIAM title image で使った font と editable text layer 用 manifest を照合し、不足分を埋める。
@@ -398,6 +398,29 @@
        - merge this PR into `codex/thumbnail-font-expansion-check`.
        - after merge, run the same font policy / locale / lint / typecheck / diff checks on the confirmation branch and do one final `/tools/thumbnail-editor` local visual confirmation.
        - if clean, connect `codex/thumbnail-font-expansion-check` to `main` as the final integration path.
+   - confirmation branch final check:
+     - merge gate:
+       - `git fetch origin --prune` completed.
+       - PR #225 `[codex] Add thumbnail font standard batch B-EN` is `MERGED` into `codex/thumbnail-font-expansion-check`.
+       - `D:/V_streamer_tools/.worktrees/thumbnail-font-expansion-check` was fast-forwarded to merge commit `3367daf`.
+     - verification:
+       - `node scripts/thumbnail-font-policy-contract.mjs` passed.
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs` passed.
+       - `npm run lint` passed.
+       - `npx tsc --noEmit` passed.
+       - `git diff --check` passed.
+       - `npm run build` passed; `next-env.d.ts` generated route-type drift was reverted because it was scope-external.
+     - UI width check:
+       - local URL: `http://localhost:3006/tools/thumbnail-editor`.
+       - in-app browser confirmed the font listbox contains all Batch B-JA 11 and Batch B-EN 12 families.
+       - `390px`: no horizontal overflow, visible listbox, 108 option nodes in compact duplicate layout, no missing Batch B fonts, no console errors.
+       - `820px`: no horizontal overflow, visible listbox, 108 option nodes in compact duplicate layout, no missing Batch B fonts, no console errors.
+       - `1024px`: no horizontal overflow, visible listbox, 54 options, no missing Batch B fonts, no console errors.
+       - `1280px`: no horizontal overflow, visible listbox, 54 options, no missing Batch B fonts, no console errors.
+       - `1366px`: no horizontal overflow, visible listbox, 54 options, no missing Batch B fonts, no console errors.
+     - main integration handoff:
+       - Open a draft PR from `codex/thumbnail-font-expansion-check` to `main`.
+       - Scope is final integration of the font loading foundation, IRIAM title parity fonts, standard batch B planning, Batch B-JA, and Batch B-EN. Do not add local font loading, preset body changes, schema changes, canvas export changes, handoff payload changes, or user account settings in this PR.
 
 4. User account / preferences foundation
    - status: font standard batch の後に planning から開始する。

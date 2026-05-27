@@ -1,5 +1,5 @@
 .thumbnailFontAssetScope {
-  --thumbnail-editor-font-assets: "ja-seed-v1 ja-standard-b-v1 en-seed-v1 iriam-title-en-v1";
+  --thumbnail-editor-font-assets: "ja-seed-v1 ja-standard-b-v1 en-seed-v1 iriam-title-en-v1 en-standard-b-v1";
 }
 
 @font-face {
@@ -528,4 +528,100 @@
   font-weight: 400;
   font-display: swap;
   src: url("/fonts/thumbnail-editor/press-start-2p/press-start-2p-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Cinzel";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/cinzel/cinzel-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Abril Fatface";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/abril-fatface/abril-fatface-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Unbounded";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/unbounded/unbounded-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Black Ops One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/black-ops-one/black-ops-one-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Monoton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/monoton/monoton-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Bungee";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/bungee/bungee-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Bungee Shade";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/bungee-shade/bungee-shade-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rye";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/rye/rye-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Creepster";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/creepster/creepster-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "VT323";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/vt323/vt323-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/caveat/caveat-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Righteous";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/righteous/righteous-400-en-seed-v1.woff2") format("woff2");
 }

@@ -2027,6 +2027,19 @@ export function ThumbnailEditorApp() {
   const currentVariantLabel = getThumbnailPresetVariantLabel(currentVariant.id, locale, currentVariant.label);
   const canvasSizeLabel =
     currentVariantId === "landscape-16-9" ? thumbnailCanvasSizes[canvasSizeId].label : `${draft.canvas.width} x ${draft.canvas.height} (${currentVariant.aspectRatio})`;
+  const canvasSizeOptions =
+    currentVariantId === "landscape-16-9"
+      ? Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
+          id,
+          label: size.label
+        }))
+      : [
+          {
+            id: currentVariantId,
+            label: `${currentVariant.canvas.width} x ${currentVariant.canvas.height} (${currentVariant.aspectRatio})`,
+            disabled: true
+          }
+        ];
   const variantOptions = Object.values(thumbnailPresetVariants).map((variant) => {
     const disabled = !["landscape-16-9", "square-1-1"].includes(variant.id);
     return {
@@ -2086,10 +2099,7 @@ export function ThumbnailEditorApp() {
                 value={canvasSizeLabel}
                 openLabel={copy.header.openOptions}
                 onToggle={() => setHeaderMenuOpen((current) => (current === "canvas" ? null : "canvas"))}
-                options={Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
-                  id,
-                  label: size.label
-                }))}
+                options={canvasSizeOptions}
                 onSelect={(id) => {
                   setHeaderMenuOpen(null);
                   changeCanvasSize(id as ThumbnailCanvasSizeId);
@@ -2165,10 +2175,7 @@ export function ThumbnailEditorApp() {
                     value={canvasSizeLabel}
                     openLabel={copy.header.openOptions}
                     onToggle={() => setHeaderMenuOpen((current) => (current === "canvas" ? null : "canvas"))}
-                    options={Object.entries(thumbnailCanvasSizes).map(([id, size]) => ({
-                      id,
-                      label: size.label
-                    }))}
+                    options={canvasSizeOptions}
                     onSelect={(id) => {
                       setHeaderMenuOpen(null);
                       changeCanvasSize(id as ThumbnailCanvasSizeId);

@@ -237,6 +237,18 @@
        - `1280px`: no horizontal overflow; square canvas, material count, layer list, and export panel visible.
        - `1366px`: no horizontal overflow; square canvas, material count, layer list, and export panel visible.
      - browser console: no warning/error entries from the page during Playwright confirmation.
+   - follow-up UI fix after local visual review:
+     - Scoped the canvas size dropdown by output ratio.
+     - `landscape-16-9` keeps the selectable `1280 x 720` / `1920 x 1080` canvas size choices.
+     - `square-1-1` now shows only the fixed `1080 x 1080 (1:1)` canvas size in the menu, so 16:9 sizes are not offered while square output is selected.
+     - Browser confirmation: switching to `square-1-1`, opening the canvas size menu, and switching back to `landscape-16-9` confirmed the expected menu contents with no horizontal overflow.
+     - Additional verification:
+       - `node scripts/thumbnail-responsive-control-polish-contract.mjs`
+       - `node scripts/thumbnail-preset-variants-contract.mjs`
+       - `node scripts/thumbnail-preset-apply-safety-contract.mjs`
+       - `npm run lint`
+       - `npx tsc --noEmit`
+       - `git diff --check`
    - residual note:
      - `next dev` in the project-local worktree emits a Next.js workspace-root inference warning because both the root checkout and worktree have `package-lock.json`. This is worktree environment noise, not a Thumbnail Editor blocker.
    - main merge preparation judgment:

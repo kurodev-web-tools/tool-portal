@@ -32,6 +32,7 @@
      - completed: Thumbnail recent / favorite preset ids、Schedule settings、translator settings は `FutureLocalPreferenceCandidate` の type placeholder に留め、payload / migration / server sync は実装していない。
      - completed: auth/provider decision spike として Supabase Auth / Clerk / Auth.js を、DB shape、RLS / session handling、account merge policy、quota / paid plan boundary、rollback / migration risk で比較し、Supabase Auth + Supabase Postgres / RLS を次 auth implementation の仮推奨にした。
      - completed: spike は docs-only に閉じ、実ログイン、database / migration、API route、paid plan / billing、preferences server sync、個別 tool UI、既存 storage key / payload 変更は実施していない。
+     - completed: Supabase Auth implementation 前の DB/RLS/session boundary design として、Next.js App Router / SSR cookie session、env/key handling、最小 DB shape、RLS / GRANT、locale/theme 初回 merge、rollback / migration risk を docs-only + contract に閉じて整理した。
    - planning results:
      - sync candidate は locale / theme、Thumbnail recent / favorite preset ids、recent fonts、Schedule default view / week start / default time / duration、Translator target language / display preference、local font selected family refs などの軽量 preference に限定する。
      - explicit user action only は Thumbnail project draft、server asset library upload、Schedule events / templates / hashtag sets、Translator glossary / moderation terms / session settings。
@@ -43,9 +44,10 @@
      - second: account / preferences shell。Auth 未接続のアカウント設定ページ、プラン表示枠、preferences 表示枠を作り、local-only 状態で確認する。今回 branch で対応済み。
      - third: local preference adapter。既存 localStorage keys を維持し、migration なしで読み書き境界を薄く包む。今回 branch で対応済み。
      - fourth: auth/provider decision spike。Supabase Auth / Clerk / Auth.js などを plan と quota 境界込みで比較する。今回 branch で対応済み。
-     - fifth: Auth 実装。Supabase Auth 仮推奨を前提に、ログイン / ログアウト、account session、profile / preferences の最小保存に閉じる。ただし実装前に Supabase project/runtime target、RLS 付き最小 DB schema draft、publishable / secret key handling、locale/theme account merge policy、quota ownership を固定する。
-     - sixth: account sync MVP。locale / theme + Thumbnail small preferences までに閉じ、draft / schedule / user material / translator tokens / billing を混ぜない。
-     - seventh: Stripe Billing。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 scope で扱う。
+     - fifth: Supabase Auth boundary design。Supabase Auth 仮推奨を前提に、ログイン実装前の DB/RLS/session/env/merge/rollback contract を docs-only で固定する。今回 branch で対応済み。
+     - sixth: Auth 実装。ログイン / ログアウト、account session、profile / preferences の最小保存に閉じる。Supabase SDK dependency、env placeholder、SSR cookie client、locale/theme 初回 merge UI はこの scope で初めて扱う。
+     - seventh: account sync MVP。locale / theme + Thumbnail small preferences までに閉じ、draft / schedule / user material / translator tokens / billing を混ぜない。
+     - eighth: Stripe Billing。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 scope で扱う。
    - account settings shell direction:
      - 言語切り替えとテーマ切り替えは、ガワ制作時にアカウント設定ページへ持っていく。
      - 初回 shell PR では既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` の localStorage key を維持する。
@@ -88,6 +90,28 @@
        - adapter は local-only で、account merge / server sync / migration policy は未実装。
        - FutureLocalPreferenceCandidate は型 placeholder のみ。Thumbnail / Schedule / Translator の storage payload には触れていない。
        - Next dev server は worktree 内起動時に親 checkout の lockfile を workspace root 候補として警告するが、`/account` は worktree の変更内容で表示確認済み。
+   - current slice result:
+     - `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` の `Supabase Auth Boundary Design` を source of truth とする。
+     - Supabase Auth 採用前提だが、実ログイン / logout、Supabase SDK dependency、`.env.local`、secret 保存、SQL migration、API route / Server Action、preferences server sync、paid plan / billing、個別 tool UI、既存 storage key / payload 変更はしない。
+     - env 名は `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` を公開 client 用候補、`SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` を trusted server only として分ける。secret / service_role key は要求・表示・保存しない。
+     - 最小 DB shape draft は `user_profiles` / `user_preferences` / `tool_preferences` / `usage_quotas` に閉じる。
+     - exposed schema table は RLS 有効前提、`Automatically expose new tables` OFF 前提、Data API は必要 table だけ explicit `GRANT`、user-owned rows は authenticated owner 限定、quota write は trusted server only とする。
+     - 初回 account merge は `v-streamer-tools-locale` / `v-streamer-tools-theme` のみに閉じる。
+     - verification completed:
+       - `node scripts/preference-classification-contract.mjs` passed。
+       - `node scripts/local-preference-adapter-contract.mjs` passed。
+       - `node scripts/auth-provider-decision-spike-contract.mjs` passed。
+       - `node scripts/supabase-auth-boundary-design-contract.mjs` passed。
+       - `npm run lint` passed。
+       - `npx tsc --noEmit` passed。
+       - `git diff --check` passed。LF/CRLF conversion warning only。
+     - width verification:
+       - UI / runtime copy 変更なしの docs-only + contract slice のため不要。
+     - remaining risks:
+       - Supabase SDK dependency、SSR client utility、login / logout、DB migration / SQL execution、API route / Server Action、locale/theme merge UI、server sync は未実装。
+       - Supabase project URL / publishable key はユーザー確認済み前提だが、この branch では値を要求・表示・保存していない。
+       - secret / service_role key は今後も browser / docs / source-controlled file に入れない。
+       - `usage_quotas` は shape draft のみ。trusted server write path と billing / Stripe は別 scope。
 
 2. Kuro Live Comment Translator planning
    - status: user foundation の後に設計を見直す。
@@ -119,14 +143,15 @@
 2. Preference contract foundation。
 3. Account / preferences shell。Auth 未接続のまま、アカウント設定ページ、プラン表示枠、preferences 表示枠を作り、言語 / テーマ切り替えを設定ページへ移す。今回 branch で対応済み。
 4. Local preference adapter。既存 localStorage keys を維持し、migration なしで locale / theme の読み書き境界を薄く包む。今回 branch で対応済み。
-5. Auth/provider decision spike。Supabase Auth / Clerk / Auth.js と DB / quota / account merge policy を比較し、実ログイン前の採用条件を文書化する。
-6. Auth implementation。採用 provider が決まった後、ログイン / ログアウト、account session、最小 profile / preferences 保存を扱う。
-7. Preferences sync MVP。locale / theme + Thumbnail small preferences までに閉じる。
-8. Stripe Billing / quota foundation。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 PR で扱う。
-9. Kuro Live Comment Translator planning。
-10. Local font loading after user foundation。
-11. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement は、それぞれ別 PR で扱う。
-12. Schedule Calendar Google Calendar 連携や server sync は、account foundation の方針が固まってから再評価する。
+5. Auth/provider decision spike。Supabase Auth / Clerk / Auth.js と DB / quota / account merge policy を比較し、実ログイン前の採用条件を文書化する。今回 branch の前提として完了済み。
+6. Supabase Auth boundary design。Supabase Auth 採用前提の DB/RLS/session/env/merge/rollback contract を docs-only で固定する。今回 branch で対応済み。
+7. Auth implementation。採用 provider が決まった後、ログイン / ログアウト、account session、最小 profile / preferences 保存を扱う。
+8. Preferences sync MVP。locale / theme + Thumbnail small preferences までに閉じる。
+9. Stripe Billing / quota foundation。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 PR で扱う。
+10. Kuro Live Comment Translator planning。
+11. Local font loading after user foundation。
+12. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement は、それぞれ別 PR で扱う。
+13. Schedule Calendar Google Calendar 連携や server sync は、account foundation の方針が固まってから再評価する。
 
 ## Next Session Prompt
 
@@ -136,54 +161,61 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-複数ツール共通の user account / preferences foundation の次 slice として、auth/provider decision spike を docs-only で整理してください。
+User account / preferences foundation の次 slice として、Supabase Auth implementation の最小 first slice に入ってください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
 - `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を確認してください。
-- local preference adapter PR が integration branch に merge 済みであることを確認してください。
-- 未 merge なら新規 spike へ進まず blocker summary を返してください。
+- Supabase Auth boundary design PR が `codex/account-preferences-shell` に merge 済みであることを確認してください。
+- 未 merge なら新規 implementation へ進まず blocker summary を返してください。
+- Supabase project は作成済み。Supabase project URL / publishable key はユーザー側で確認済み想定。
+- secret / service_role key は要求・表示・保存しないでください。
 
 確認用 integration branch:
-- `codex/local-preference-adapter`
+- `codex/supabase-auth-boundary-design`
 
 推奨 branch:
-- `codex/auth-provider-decision-spike`
+- `codex/supabase-auth-first-slice`
 
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/auth-provider-decision-spike`
+- `D:/V_streamer_tools/.worktrees/supabase-auth-first-slice`
 
 今回の scope:
-- `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を source of truth として、Supabase Auth / Clerk / Auth.js を比較する。
-- DB shape、RLS / session handling、account merge policy、quota / paid plan boundary、rollback / migration risk を比較する。
-- 採用候補を 1つに仮推奨してもよいが、実ログイン実装へ進まない。
+- `Supabase Auth Boundary Design` を source of truth として、Next.js App Router / SSR cookie session の最小 foundation を実装する。
+- Supabase SDK dependency を追加する場合は必要最小限にし、env は placeholder / docs のみで real value を保存しない。
+- publishable key と secret/service_role key の扱いを分け、browser 側は publishable key のみを前提にする。
+- login / logout / account session の最小導線と、locale/theme 初回 merge の実装範囲を小さく切る。
+- DB / RLS / GRANT を扱う場合は、migration SQL を reviewable にし、`user_profiles` / `user_preferences` / `tool_preferences` / `usage_quotas` の boundary を守る。
+- quota update は trusted server only のままにし、browser writable にしない。
 - 既存 storage key / payload / localStorage / IndexedDB / sessionStorage の shape は変更しない。
 
 Out of scope:
-- 実ログイン / logout 実装。
-- database / migration / API route 実装。
 - paid plan / billing 実装。
-- preferences server sync 実装。
+- Thumbnail / Schedule / Translator の preferences server sync。
 - 個別ツールの UI 改修。
 - Thumbnail Editor preset / material / font / schema / export / handoff payload 変更。
 - Schedule Calendar storage payload / handoff payload 変更。
 - Kuro Live Comment Translator 本体実装。
+- `.env.local` 作成や secret 保存。
+- service_role / secret key を使う browser code。
 
 検証:
 - `node scripts/preference-classification-contract.mjs`
 - `node scripts/local-preference-adapter-contract.mjs`
-- docs-only spike 用に追加または更新した contract script
+- `node scripts/auth-provider-decision-spike-contract.mjs`
+- `node scripts/supabase-auth-boundary-design-contract.mjs`
+- 今回追加または更新した implementation contract script
 - `npm run lint`
 - `npx tsc --noEmit`
 - `git diff --check`
-- UI を触った場合のみ `/account` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
+- UI を触った場合は `/account` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
 
 完了時:
 - `task.md` に実装内容、確認結果、残リスク、次候補への引き継ぎを残してください。
 - commit / push / draft PR 作成まで進めてください。
-- PR の base は `main` ではなく local preference adapter の merge 先 integration branch にしてください。
+- PR の base は `main` ではなく Supabase Auth boundary design の merge 先 integration branch にしてください。
 ```
 
 ## Backlog

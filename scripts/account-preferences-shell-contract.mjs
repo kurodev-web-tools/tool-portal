@@ -18,7 +18,7 @@ assert.ok(exists("components/account/AccountPreferencesShell.tsx"), "account pre
 const accountPage = read("app/account/page.tsx");
 const accountShell = read("components/account/AccountPreferencesShell.tsx");
 const localeLib = read("lib/locale.ts");
-const themeToggle = read("components/portal/ThemeToggle.tsx");
+const localPreferenceAdapter = read("lib/local-preferences.ts");
 
 assert.match(accountPage, /<PortalShell>/, "/account route uses PortalShell");
 assert.match(accountPage, /<AccountPreferencesShell \/>/, "/account route renders account shell");
@@ -31,7 +31,8 @@ assert.match(accountShell, /plan|プラン/, "account shell includes plan placeh
 assert.match(accountShell, /preferences|設定/, "account shell includes preferences placeholder");
 
 assert.match(localeLib, /localePreferenceStorageKey = "v-streamer-tools-locale"/, "locale storage key is unchanged");
-assert.match(themeToggle, /themePreferenceStorageKey = "v-streamer-tools-theme"/, "theme storage key is unchanged");
+assert.match(localPreferenceAdapter, /themePreferenceStorageKey = "v-streamer-tools-theme"/, "theme storage key is unchanged");
+assert.match(accountShell, /localPreferenceStorageKeys/, "account shell reads storage key labels through local preference adapter");
 
 assert.doesNotMatch(accountShell, /localStorage\.setItem\((?!themePreferenceStorageKey|localePreferenceStorageKey)/, "account shell does not introduce new localStorage writes");
 assert.doesNotMatch(accountShell, /indexedDB|sessionStorage|fetch\(|\/api\//, "account shell does not touch IndexedDB, sessionStorage, or API routes");

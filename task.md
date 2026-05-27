@@ -27,6 +27,9 @@
      - completed: `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を source of truth として、分類と禁止境界を検証する `scripts/preference-classification-contract.mjs` を追加した。
      - completed: account / preferences shell として `/account` route、local-only account status、plan placeholder、preferences placeholder、provider / billing placeholder を追加した。
      - completed: 設定ページ側で既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` key を表示し、既存 `LanguageSwitch` / `ThemeToggle` から言語 / テーマを切り替えられる状態にした。
+     - completed: local preference adapter として `lib/local-preferences.ts` を追加し、既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` key を維持したまま locale / theme の読み書き境界を local-only で薄く包んだ。
+     - completed: `LocaleProvider` / `ThemeToggle` の localStorage 直接 read/write を adapter 経由へ寄せ、`/account` の storage key 表示も adapter の `localPreferenceStorageKeys` を参照する形にした。
+     - completed: Thumbnail recent / favorite preset ids、Schedule settings、translator settings は `FutureLocalPreferenceCandidate` の type placeholder に留め、payload / migration / server sync は実装していない。
    - planning results:
      - sync candidate は locale / theme、Thumbnail recent / favorite preset ids、recent fonts、Schedule default view / week start / default time / duration、Translator target language / display preference、local font selected family refs などの軽量 preference に限定する。
      - explicit user action only は Thumbnail project draft、server asset library upload、Schedule events / templates / hashtag sets、Translator glossary / moderation terms / session settings。
@@ -36,8 +39,8 @@
    - recommended next implementation candidates:
      - first: preference contract foundation。保存分類の contract script / docs を追加し、既存 storage key と payload は変更しない。今回 branch で対応済み。
      - second: account / preferences shell。Auth 未接続のアカウント設定ページ、プラン表示枠、preferences 表示枠を作り、local-only 状態で確認する。今回 branch で対応済み。
-     - third: local preference adapter。既存 localStorage keys を維持し、migration なしで読み書き境界を薄く包む。次候補。
-     - fourth: auth/provider decision spike。Supabase Auth / Clerk / Auth.js などを plan と quota 境界込みで比較する。
+     - third: local preference adapter。既存 localStorage keys を維持し、migration なしで読み書き境界を薄く包む。今回 branch で対応済み。
+     - fourth: auth/provider decision spike。Supabase Auth / Clerk / Auth.js などを plan と quota 境界込みで比較する。次候補。
      - fifth: Auth 実装。ログイン / ログアウト、account session、profile / preferences の最小保存に閉じる。
      - sixth: account sync MVP。locale / theme + Thumbnail small preferences までに閉じ、draft / schedule / user material / translator tokens / billing を混ぜない。
      - seventh: Stripe Billing。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 scope で扱う。
@@ -64,18 +67,21 @@
    - verification:
      - `node scripts/preference-classification-contract.mjs` passed。
      - `node scripts/account-preferences-shell-contract.mjs` passed。
+     - `node scripts/local-preference-adapter-contract.mjs` passed。
      - `npm run lint` passed。
      - `npx tsc --noEmit` passed。
      - `git diff --check` passed。
      - `/account` width check:
-       - `390px`: account title / Local Free plan / preferences frame / locale-theme controls visible, horizontal overflowなし。
-       - `820px`: account title / plan / preferences / key labels visible, horizontal overflowなし。main 内の English と theme toggle 操作を確認。
-       - `1024px`: desktop rail + account content visible, horizontal overflowなし。
-       - `1280px`: two-column layout visible, horizontal overflowなし。
-       - `1366px`: two-column layout visible, horizontal overflowなし。
+       - `390px`: account title / Local Free plan / preferences frame / `v-streamer-tools-locale` / `v-streamer-tools-theme` visible, horizontal overflowなし。
+       - `820px`: account title / plan / preferences / storage key labels visible, horizontal overflowなし。
+       - `1024px`: desktop rail + account content + storage key labels visible, horizontal overflowなし。
+       - `1280px`: two-column layout + storage key labels visible, horizontal overflowなし。
+       - `1366px`: two-column layout + storage key labels visible, horizontal overflowなし。
      - remaining risks:
        - Auth provider / DB schema / billing / quota は placeholder のまま。
        - 既存 header / drawer / rail の language / theme 導線整理は次以降。
+       - adapter は local-only で、account merge / server sync / migration policy は未実装。
+       - FutureLocalPreferenceCandidate は型 placeholder のみ。Thumbnail / Schedule / Translator の storage payload には触れていない。
        - Next dev server は worktree 内起動時に親 checkout の lockfile を workspace root 候補として警告するが、`/account` は worktree の変更内容で表示確認済み。
 
 2. Kuro Live Comment Translator planning
@@ -107,14 +113,15 @@
 1. User account / preferences foundation planning。
 2. Preference contract foundation。
 3. Account / preferences shell。Auth 未接続のまま、アカウント設定ページ、プラン表示枠、preferences 表示枠を作り、言語 / テーマ切り替えを設定ページへ移す。今回 branch で対応済み。
-4. Local preference adapter。既存 localStorage keys を維持し、migration なしで locale / theme の読み書き境界を薄く包む。
-5. Auth implementation。Supabase Auth などを接続し、ログイン / ログアウト、account session、最小 profile / preferences 保存を扱う。
-6. Preferences sync MVP。locale / theme + Thumbnail small preferences までに閉じる。
-7. Stripe Billing / quota foundation。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 PR で扱う。
-8. Kuro Live Comment Translator planning。
-9. Local font loading after user foundation。
-10. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement は、それぞれ別 PR で扱う。
-11. Schedule Calendar Google Calendar 連携や server sync は、account foundation の方針が固まってから再評価する。
+4. Local preference adapter。既存 localStorage keys を維持し、migration なしで locale / theme の読み書き境界を薄く包む。今回 branch で対応済み。
+5. Auth/provider decision spike。Supabase Auth / Clerk / Auth.js と DB / quota / account merge policy を比較し、実ログイン前の採用条件を文書化する。
+6. Auth implementation。採用 provider が決まった後、ログイン / ログアウト、account session、最小 profile / preferences 保存を扱う。
+7. Preferences sync MVP。locale / theme + Thumbnail small preferences までに閉じる。
+8. Stripe Billing / quota foundation。Checkout Sessions、Customer Portal、webhook、server-authoritative quota を別 PR で扱う。
+9. Kuro Live Comment Translator planning。
+10. Local font loading after user foundation。
+11. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement は、それぞれ別 PR で扱う。
+12. Schedule Calendar Google Calendar 連携や server sync は、account foundation の方針が固まってから再評価する。
 
 ## Next Session Prompt
 
@@ -124,31 +131,30 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-複数ツール共通の user account / preferences foundation の次 slice として、local preference adapter を小さく実装してください。
+複数ツール共通の user account / preferences foundation の次 slice として、auth/provider decision spike を docs-only で整理してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
 - `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を確認してください。
-- account / preferences shell は `codex/account-preferences-shell` で実装済みの前提です。
-- merge 済みでなければ新規実装へ進まず blocker summary を返してください。
+- local preference adapter PR が integration branch に merge 済みであることを確認してください。
+- 未 merge なら新規 spike へ進まず blocker summary を返してください。
 
 確認用 integration branch:
-- `codex/account-preferences-shell`
-
-推奨 branch:
 - `codex/local-preference-adapter`
 
+推奨 branch:
+- `codex/auth-provider-decision-spike`
+
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/local-preference-adapter`
+- `D:/V_streamer_tools/.worktrees/auth-provider-decision-spike`
 
 今回の scope:
-- 既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` key を維持したまま、locale / theme の読み書き境界を薄く包む。
-- adapter は local-only に留め、server sync / account merge / migration は実装しない。
-- `/account` shell がその adapter 経由の key 表示や state 確認に寄せられるなら小さく反映する。
+- `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を source of truth として、Supabase Auth / Clerk / Auth.js を比較する。
+- DB shape、RLS / session handling、account merge policy、quota / paid plan boundary、rollback / migration risk を比較する。
+- 採用候補を 1つに仮推奨してもよいが、実ログイン実装へ進まない。
 - 既存 storage key / payload / localStorage / IndexedDB / sessionStorage の shape は変更しない。
-- Thumbnail recent / favorite preset ids、Schedule settings、translator settings は候補比較または type placeholder までに留める。
 
 Out of scope:
 - 実ログイン / logout 実装。
@@ -162,7 +168,8 @@ Out of scope:
 
 検証:
 - `node scripts/preference-classification-contract.mjs`
-- local preference adapter 用に追加した contract script
+- `node scripts/local-preference-adapter-contract.mjs`
+- docs-only spike 用に追加または更新した contract script
 - `npm run lint`
 - `npx tsc --noEmit`
 - `git diff --check`
@@ -171,7 +178,7 @@ Out of scope:
 完了時:
 - `task.md` に実装内容、確認結果、残リスク、次候補への引き継ぎを残してください。
 - commit / push / draft PR 作成まで進めてください。
-- PR の base は `main` ではなく `codex/account-preferences-shell` にしてください。
+- PR の base は `main` ではなく local preference adapter の merge 先 integration branch にしてください。
 ```
 
 ## Backlog

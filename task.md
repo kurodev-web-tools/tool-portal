@@ -255,7 +255,7 @@
      - No main-merge blocker found. Next scope can be a merge-preparation PR from `codex/thumbnail-iriam-square-preview` to `main` without adding new thumbnail functionality.
 
 3. Thumbnail Editor Google Fonts standard batch / IRIAM title font parity
-   - status: Batch B-JA implementation branch `codex/thumbnail-font-standard-batch-b-ja` で日本語 11 種を追加済み。次はこの PR の review / merge 後に Batch B-EN を別 PR で進める。
+   - status: Batch B-JA PR #224 は `codex/thumbnail-font-expansion-check` に merge 済み。Batch B-EN implementation branch `codex/thumbnail-font-standard-batch-b-en` で英語 12 種を追加済み。
    - direction:
      - Google Fonts 由来で license を確認できる font のみを標準 font として追加する。
      - まず IRIAM title image で使った font と editable text layer 用 manifest を照合し、不足分を埋める。
@@ -363,11 +363,41 @@
      - remaining risks:
        - `thumbnail-editor-ja-seed-v1` is still a seed subset, not full arbitrary Japanese coverage; fallback stack remains the safety path for missing glyphs.
        - dev server in nested worktree prints the existing Next.js multiple-lockfile root warning, but `/tools/thumbnail-editor` returned 200 and UI checks completed.
-     - Batch B-EN handoff:
-       - wait for Batch B-JA PR review / merge first.
-       - next PR should add only the selected English 12: `Cinzel`, `Abril Fatface`, `Unbounded`, `Black Ops One`, `Monoton`, `Bungee`, `Bungee Shade`, `Rye`, `Creepster`, `VT323`, `Caveat`, `Righteous`.
-       - keep the same self-hosted route-scoped font loading, manifest, license note, and contract pattern.
-       - keep local font loading, login / user settings / paid plan, preset body / initial placement, material asset, schema, canvas export, handoff payload, language / mood category UI, font search, recently used UI, Google Fonts CDN, and CSP changes out of scope.
+   - standard batch B-EN implementation result:
+     - merge gate:
+       - `git fetch origin --prune` completed.
+       - PR #224 `[codex] Add thumbnail font standard batch B-JA` is `MERGED` into `codex/thumbnail-font-expansion-check`.
+       - implementation worktree: `D:/V_streamer_tools/.worktrees/thumbnail-font-standard-batch-b-en`, base `origin/codex/thumbnail-font-expansion-check` at merge commit `dc64656`.
+     - added selected English 12 to editable text layer standard font catalog:
+       - `Cinzel`, `Abril Fatface`, `Unbounded`, `Black Ops One`, `Monoton`, `Bungee`, `Bungee Shade`, `Rye`, `Creepster`, `VT323`, `Caveat`, `Righteous`.
+     - implementation notes:
+       - updated `thumbnailFontManifest` to 54 families total: Japanese 27 / English 27.
+       - added route-scoped `@font-face` entries in `components/thumbnail-editor/thumbnailFontAssets.module.css`.
+       - added self-hosted `400` woff2 assets under `public/fonts/thumbnail-editor/<slug>/<slug>-400-en-seed-v1.woff2`.
+       - kept runtime Google Fonts CDN / CSP changes out of scope.
+       - updated `public/fonts/thumbnail-editor/LICENSES.md` and `scripts/thumbnail-font-policy-contract.mjs`.
+       - source/license spot check: all 12 `google/fonts` `ofl/<slug>/OFL.txt` URLs returned `200`; added `.woff2` files have `wOF2` headers.
+     - verification:
+       - `node scripts/thumbnail-font-policy-contract.mjs` passed.
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs` passed.
+       - `npm run lint` passed.
+       - `npx tsc --noEmit` passed.
+       - `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+     - UI width check:
+       - local URL: `http://localhost:3005/tools/thumbnail-editor`.
+       - in-app browser confirmed the font listbox contains all 12 new English families.
+       - `390px`: no horizontal overflow, visible listbox, no missing Batch B-EN fonts, no console errors.
+       - `820px`: no horizontal overflow, visible listbox, no missing Batch B-EN fonts, no console errors.
+       - `1024px`: no horizontal overflow, visible listbox, no missing Batch B-EN fonts, no console errors.
+       - `1280px`: no horizontal overflow, visible listbox, no missing Batch B-EN fonts, no console errors.
+       - `1366px`: no horizontal overflow, visible listbox, no missing Batch B-EN fonts, no console errors.
+     - remaining risks:
+       - `thumbnail-editor-en-seed-v1` is a seed subset, not full arbitrary Latin coverage; fallback stack remains the safety path for missing glyphs.
+       - dev server in nested worktree prints the existing Next.js multiple-lockfile root warning, but the new font asset URL returned `200` and UI checks completed against the worktree server.
+     - confirmation branch / main integration handoff:
+       - merge this PR into `codex/thumbnail-font-expansion-check`.
+       - after merge, run the same font policy / locale / lint / typecheck / diff checks on the confirmation branch and do one final `/tools/thumbnail-editor` local visual confirmation.
+       - if clean, connect `codex/thumbnail-font-expansion-check` to `main` as the final integration path.
 
 4. User account / preferences foundation
    - status: font standard batch の後に planning から開始する。

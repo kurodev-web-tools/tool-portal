@@ -1171,7 +1171,115 @@ export const thumbnailFontManifest: ThumbnailFontManifestEntry[] = [
     bestFor: "レトロゲーム、ドット風短文",
     caution: "大容量ではないが可読性が低い。大きめ短文だけにする。",
     sourceUrl: "https://fonts.google.com/specimen/Press+Start+2P"
-  }, "press-start-2p", [400])
+  }, "press-start-2p", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Cinzel",
+    language: "en",
+    category: "Elegant / cinematic",
+    mood: "古典、重厚、ファンタジー",
+    bestFor: "記念、ファンタジー、重厚な英字タイトル",
+    caution: "小文字主体の短文には硬い。大文字タイトル向き。",
+    sourceUrl: "https://fonts.google.com/specimen/Cinzel"
+  }, "cinzel", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Abril Fatface",
+    language: "en",
+    category: "Elegant / bold serif",
+    mood: "上品、太い、editorial",
+    bestFor: "記念告知、上品な強調、短い headline",
+    caution: "太く装飾的。小サイズや細い stroke では潰れやすい。",
+    sourceUrl: "https://fonts.google.com/specimen/Abril+Fatface"
+  }, "abril-fatface", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Unbounded",
+    language: "en",
+    category: "Futuristic / geometric",
+    mood: "近未来、幾何学、個性強め",
+    bestFor: "SF、ゲーム、強い英字ラベル",
+    caution: "横幅が広くなりやすい。短い英字に限定する。",
+    sourceUrl: "https://fonts.google.com/specimen/Unbounded"
+  }, "unbounded", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Black Ops One",
+    language: "en",
+    category: "Impact / military",
+    mood: "硬派、バトル、強い",
+    bestFor: "耐久、バトル、企画タイトル、強い CTA",
+    caution: "用途が限定的。かわいい系には合いにくい。",
+    sourceUrl: "https://fonts.google.com/specimen/Black+Ops+One"
+  }, "black-ops-one", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Monoton",
+    language: "en",
+    category: "Retro / neon",
+    mood: "ネオン、レトロ、派手",
+    bestFor: "music label、短い title、レトロ演出",
+    caution: "線構造が複雑。小サイズと太い縁取りは避ける。",
+    sourceUrl: "https://fonts.google.com/specimen/Monoton"
+  }, "monoton", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Bungee",
+    language: "en",
+    category: "Display / urban",
+    mood: "太い、楽しい、企画ロゴ風",
+    bestFor: "配信 label、企画ロゴ、ポップな強調",
+    caution: "太さが強い。長い文では詰まりやすい。",
+    sourceUrl: "https://fonts.google.com/specimen/Bungee"
+  }, "bungee", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Bungee Shade",
+    language: "en",
+    category: "Display / shaded",
+    mood: "影付き、レトロ、装飾",
+    bestFor: "イベント title、強い一語、レトロロゴ風",
+    caution: "影付き形状なので stroke / shadow との干渉に注意。",
+    sourceUrl: "https://fonts.google.com/specimen/Bungee+Shade"
+  }, "bungee-shade", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Rye",
+    language: "en",
+    category: "Retro / decorative",
+    mood: "western、carnival、怪しい",
+    bestFor: "レトロ、怪しい告知、western 風アクセント",
+    caution: "用途が狭い。短いアクセントに限定する。",
+    sourceUrl: "https://fonts.google.com/specimen/Rye"
+  }, "rye", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Creepster",
+    language: "en",
+    category: "Dark / horror",
+    mood: "horror、dark cute、崩し",
+    bestFor: "闇ガチャ、horror、dark cute な短い英字",
+    caution: "可読性が低い。短い英字だけにする。",
+    sourceUrl: "https://fonts.google.com/specimen/Creepster"
+  }, "creepster", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "VT323",
+    language: "en",
+    category: "Pixel / retro terminal",
+    mood: "terminal、数字、レトロ",
+    bestFor: "レトロゲーム、terminal、数字、短い label",
+    caution: "本文には向かない。大きめの数字や短文で使う。",
+    sourceUrl: "https://fonts.google.com/specimen/VT323"
+  }, "vt323", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Caveat",
+    language: "en",
+    category: "Handwritten / casual",
+    mood: "手書き、サイン風、ゆるい",
+    bestFor: "note、サイン風、ゆるい補足、accent",
+    caution: "display / accent 専用。大文字羅列や長文には向かない。",
+    sourceUrl: "https://fonts.google.com/specimen/Caveat"
+  }, "caveat", [400]),
+  withThumbnailEnglishFontAssets({
+    family: "Righteous",
+    language: "en",
+    category: "Retro / game",
+    mood: "丸み、近未来、レトロ",
+    bestFor: "レトロゲーム、ポップな英字ロゴ、企画ラベル",
+    caution: "小文字や長文では癖が出る。短文向き。",
+    sourceUrl: "https://fonts.google.com/specimen/Righteous"
+  }, "righteous", [400])
 ];
 const thumbnailFontLanguageLabels: Record<ThumbnailFontLanguage, string> = {
   ja: "日本語",

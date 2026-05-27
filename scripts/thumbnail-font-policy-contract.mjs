@@ -65,9 +65,9 @@ assert.deepEqual(
   "canvas fallback stack stays local/browser-resolved"
 );
 
-assert.equal(lib.thumbnailFontManifest.length, 42, "standard batch B-JA adds 11 selected Japanese Google Fonts to the manifest");
+assert.equal(lib.thumbnailFontManifest.length, 54, "standard batch B-EN adds 12 selected English Google Fonts to the manifest");
 assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "ja").length, 27, "manifest keeps existing Japanese fonts plus selected standard batch B-JA fonts");
-assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "en").length, 15, "manifest keeps 12 English candidates plus 3 selected IRIAM title fonts");
+assert.equal(lib.thumbnailFontManifest.filter((font) => font.language === "en").length, 27, "manifest keeps existing English fonts plus selected standard batch B-EN fonts");
 for (const font of lib.thumbnailFontManifest) {
   assert.equal(typeof font.family, "string", "manifest font family is a string");
   assert.ok(["ja", "en"].includes(font.language), `${font.family} has a supported language`);
@@ -177,9 +177,21 @@ assert.deepEqual(
     Pacifico: [400],
     Lobster: [400],
     Orbitron: [400, 700, 900],
-    "Press Start 2P": [400]
+    "Press Start 2P": [400],
+    Cinzel: [400],
+    "Abril Fatface": [400],
+    Unbounded: [400],
+    "Black Ops One": [400],
+    Monoton: [400],
+    Bungee: [400],
+    "Bungee Shade": [400],
+    Rye: [400],
+    Creepster: [400],
+    VT323: [400],
+    Caveat: [400],
+    Righteous: [400]
   },
-  "English batch keeps only the selected weight set"
+  "English batch keeps only the selected weight set including standard batch B-EN"
 );
 assert.deepEqual(
   lib.thumbnailFontManifest.map((font) => font.family),
@@ -225,9 +237,21 @@ assert.deepEqual(
     "Pacifico",
     "Lobster",
     "Orbitron",
-    "Press Start 2P"
+    "Press Start 2P",
+    "Cinzel",
+    "Abril Fatface",
+    "Unbounded",
+    "Black Ops One",
+    "Monoton",
+    "Bungee",
+    "Bungee Shade",
+    "Rye",
+    "Creepster",
+    "VT323",
+    "Caveat",
+    "Righteous"
   ],
-  "manifest preserves the planned candidate order with standard batch B-JA before English fonts"
+  "manifest preserves the planned candidate order with standard batch B-JA before existing English fonts and standard batch B-EN"
 );
 assert.equal(lib.getThumbnailFontManifestEntry(" Oswald ").family, "Oswald", "manifest lookup trims known values");
 assert.equal(lib.getThumbnailFontManifestEntry("Unknown Fancy Font"), null, "manifest lookup rejects unknown values");
@@ -239,7 +263,7 @@ assert.deepEqual(
   })),
   [
     { label: "日本語", count: 27 },
-    { label: "English", count: 15 }
+    { label: "English", count: 27 }
   ],
   "font listbox groups expose all self-hosted manifest fonts by language"
 );
@@ -304,7 +328,19 @@ assert.deepEqual(
     "Pacifico",
     "Lobster",
     "Orbitron",
-    "Press Start 2P"
+    "Press Start 2P",
+    "Cinzel",
+    "Abril Fatface",
+    "Unbounded",
+    "Black Ops One",
+    "Monoton",
+    "Bungee",
+    "Bungee Shade",
+    "Rye",
+    "Creepster",
+    "VT323",
+    "Caveat",
+    "Righteous"
   ],
   "font listbox order stays grouped by language and category without changing draft schema"
 );
@@ -320,7 +356,7 @@ assert.deepEqual(
 );
 assert.deepEqual(
   lib.filterThumbnailFontListboxGroups("noto").flatMap((group) => group.categories.flatMap((category) => category.options.map((option) => option.family))),
-  ["Noto Sans JP", "Noto Serif JP"],
+  ["Noto Sans JP", "Noto Serif JP", "Monoton"],
   "font listbox search can match family names"
 );
 assert.deepEqual(
@@ -354,6 +390,7 @@ assert.equal(lib.normalizeThumbnailFontFamily(null), "Noto Sans JP", "non-string
 assert.equal(lib.normalizeThumbnailFontFamily("Unknown Fancy Font"), "Noto Sans JP", "unknown fontFamily falls back");
 assert.equal(lib.normalizeThumbnailFontFamily("RocknRoll One"), "RocknRoll One", "self-hosted Japanese manifest fonts are accepted without changing the UI groups");
 assert.equal(lib.normalizeThumbnailFontFamily("DotGothic16"), "DotGothic16", "self-hosted Japanese display fonts are accepted without changing the UI groups");
+assert.equal(lib.normalizeThumbnailFontFamily("Righteous"), "Righteous", "self-hosted standard batch B-EN manifest fonts are accepted without changing the UI groups");
 assert.equal(lib.normalizeThumbnailFontFamily("https://fonts.example/font.css"), "Noto Sans JP", "URL fontFamily falls back");
 assert.equal(lib.normalizeThumbnailFontFamily("@import url('https://fonts.example/font.css')"), "Noto Sans JP", "import-like fontFamily falls back");
 assert.equal(lib.normalizeThumbnailFontFamily("Noto Sans JP, serif"), "Noto Sans JP", "stack injection falls back to policy family");
@@ -632,5 +669,6 @@ assert.equal(/fonts\.googleapis|fonts\.gstatic|@import\s+url/i.test(source), fal
 assert.equal(fontNetworkPattern.test(componentSource), false, "thumbnail editor component has no external font URL/import/CDN dependency");
 assert.equal(fs.existsSync(path.join(root, "public", "fonts", "thumbnail-editor")), true, "Japanese font batch adds self-hosted thumbnail editor font assets");
 assert.equal(fs.existsSync(path.join(root, "public", "fonts", "thumbnail-editor", "orbitron", "orbitron-700-en-seed-v1.woff2")), true, "English font batch adds self-hosted thumbnail editor font assets");
+assert.equal(fs.existsSync(path.join(root, "public", "fonts", "thumbnail-editor", "righteous", "righteous-400-en-seed-v1.woff2")), true, "standard batch B-EN adds self-hosted thumbnail editor font assets");
 
 console.log("thumbnail font policy contract checks passed");

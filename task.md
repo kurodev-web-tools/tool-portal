@@ -255,7 +255,7 @@
      - No main-merge blocker found. Next scope can be a merge-preparation PR from `codex/thumbnail-iriam-square-preview` to `main` without adding new thumbnail functionality.
 
 3. Thumbnail Editor Google Fonts standard batch / IRIAM title font parity
-   - status: standard batch B planning branch `codex/thumbnail-font-standard-batch-b-plan` で追加候補を整理済み。ユーザー選定は日本語 11 種 / 英語 12 種で確定し、次は実装 PR を分割して進める。
+   - status: Batch B-JA implementation branch `codex/thumbnail-font-standard-batch-b-ja` で日本語 11 種を追加済み。次はこの PR の review / merge 後に Batch B-EN を別 PR で進める。
    - direction:
      - Google Fonts 由来で license を確認できる font のみを標準 font として追加する。
      - まず IRIAM title image で使った font と editable text layer 用 manifest を照合し、不足分を埋める。
@@ -332,6 +332,42 @@
      - verification for planning PR:
        - `git diff --check` completed.
        - lint / typecheck / UI width checks are intentionally skipped because this PR changes only docs / task planning notes.
+   - standard batch B-JA implementation result:
+     - merge gate:
+       - `git fetch origin --prune` completed.
+       - PR #223 `[codex] Plan thumbnail font standard batch B` is `MERGED` into `codex/thumbnail-font-expansion-check`.
+       - implementation worktree: `D:/V_streamer_tools/.worktrees/thumbnail-font-standard-batch-b-ja`, base `origin/codex/thumbnail-font-expansion-check` at merge commit `539bf67`.
+     - added selected Japanese 11 to editable text layer standard font catalog:
+       - `Zen Maru Gothic`, `Tsukimi Rounded`, `Shippori Antique`, `Shippori Mincho`, `Kaisei Decol`, `Kaisei Tokumin`, `Zen Kurenaido`, `Reggae One`, `Rampart One`, `Darumadrop One`, `Train One`.
+     - implementation notes:
+       - updated `thumbnailFontManifest` to 42 families total: Japanese 27 / English 15.
+       - added route-scoped `@font-face` entries in `components/thumbnail-editor/thumbnailFontAssets.module.css`.
+       - added self-hosted `400` woff2 assets under `public/fonts/thumbnail-editor/<slug>/<slug>-400-ja-seed-v1.woff2`.
+       - kept runtime Google Fonts CDN / CSP changes out of scope.
+       - updated `public/fonts/thumbnail-editor/LICENSES.md` and `scripts/thumbnail-font-policy-contract.mjs`.
+       - source/license spot check: all 11 Google Fonts specimen URLs and `google/fonts` `ofl/<slug>/OFL.txt` URLs returned `200`.
+     - verification:
+       - `node scripts/thumbnail-font-policy-contract.mjs` passed.
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs` passed.
+       - `npm run lint` passed.
+       - `npx tsc --noEmit` passed.
+       - `git diff --check` passed with LF-to-CRLF working-copy warnings only.
+     - UI width check:
+       - local URL: `http://localhost:3003/tools/thumbnail-editor`.
+       - in-app browser confirmed the font listbox contains all 11 new Japanese families.
+       - `390px`: no horizontal overflow, visible listbox, 42 options, no missing Batch B-JA fonts, no option text overflow.
+       - `820px`: no horizontal overflow, visible listbox, 42 options, no missing Batch B-JA fonts, no option text overflow.
+       - `1024px`: no horizontal overflow, visible listbox, 42 options, no missing Batch B-JA fonts, no option text overflow.
+       - `1280px`: no horizontal overflow, visible listbox, 42 options, no missing Batch B-JA fonts, no option text overflow.
+       - `1366px`: no horizontal overflow, visible listbox, 42 options, no missing Batch B-JA fonts, no option text overflow.
+     - remaining risks:
+       - `thumbnail-editor-ja-seed-v1` is still a seed subset, not full arbitrary Japanese coverage; fallback stack remains the safety path for missing glyphs.
+       - dev server in nested worktree prints the existing Next.js multiple-lockfile root warning, but `/tools/thumbnail-editor` returned 200 and UI checks completed.
+     - Batch B-EN handoff:
+       - wait for Batch B-JA PR review / merge first.
+       - next PR should add only the selected English 12: `Cinzel`, `Abril Fatface`, `Unbounded`, `Black Ops One`, `Monoton`, `Bungee`, `Bungee Shade`, `Rye`, `Creepster`, `VT323`, `Caveat`, `Righteous`.
+       - keep the same self-hosted route-scoped font loading, manifest, license note, and contract pattern.
+       - keep local font loading, login / user settings / paid plan, preset body / initial placement, material asset, schema, canvas export, handoff payload, language / mood category UI, font search, recently used UI, Google Fonts CDN, and CSP changes out of scope.
 
 4. User account / preferences foundation
    - status: font standard batch の後に planning から開始する。
@@ -385,37 +421,40 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Thumbnail Editor の Google Fonts standard batch / IRIAM title font parity として、IRIAM square title image で使った font と editable text layer 用 font catalog を照合し、不足している Google Fonts 由来 font を小規模に追加してください。
+Thumbnail Editor の Google Fonts standard batch B-EN として、確定済みの英語 font 12 種を editable text layer 用標準 font catalog に追加してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- `codex/thumbnail-font-expansion-check` が remote に存在し、`origin/main` の最新を含んでいることを確認してください。
-- 確認用 branch が未作成 / stale の場合は、新規実装へ進まず blocker summary を返してください。
+- Batch B-JA PR が `codex/thumbnail-font-expansion-check` に merge 済みか確認してください。
+- 未 merge / stale の場合は、新規実装へ進まず blocker summary を返してください。
 - 問題なければ `origin/codex/thumbnail-font-expansion-check` を base に作業 branch / worktree を切ってください。
 
 推奨 branch:
-- `codex/thumbnail-google-fonts-standard-batch`
+- `codex/thumbnail-font-standard-batch-b-en`
 
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/thumbnail-google-fonts-standard-batch`
+- `D:/V_streamer_tools/.worktrees/thumbnail-font-standard-batch-b-en`
 
 今回の scope:
-- Google Fonts 由来で license を確認できる font のみを標準 font として追加する。
-- IRIAM title image で使った font と `thumbnailFontManifest` / CSS / license note を照合し、不足分だけ追加する。
-- 追加量は小規模に閉じ、目安は +8-12 family 程度までにする。
-- route-scoped self-host font loading、manifest-backed listbox、license note、contract を維持する。
-- font 追加作業 PR は `codex/thumbnail-font-expansion-check` を base に作成する。
+- 追加対象は `Cinzel`, `Abril Fatface`, `Unbounded`, `Black Ops One`, `Monoton`, `Bungee`, `Bungee Shade`, `Rye`, `Creepster`, `VT323`, `Caveat`, `Righteous` の 12 種のみ。
+- `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md` の Standard Batch B Candidate Plan を正として進める。
+- Google Fonts 由来で license 確認済みの family のみを追加する。
+- runtime Google Fonts CDN 依存は入れない。self-host 前提。
+- `thumbnailFontManifest`、route-scoped font CSS、`public/fonts/thumbnail-editor/LICENSES.md`、font policy contract を更新する。
+- English font は基本 400 のみ。見出し用途で必要な family だけ 700 を検討する。
+- 追加 asset は既存 English batch と同じ subset / naming / directory pattern に揃える。
+- 既存 catalog と重複させない。
 
 Out of scope:
+- 日本語 font 追加。
 - local font loading。
 - login / user settings / paid plan。
-- comment translator。
-- 新規 preset body / 初期配置変更。
-- material asset 追加。
-- schema、canvas export、handoff payload、IndexedDB / localStorage key 変更。
-- language / mood category、font search、recently used の大きな UI 改修。
+- preset body / 初期配置 / material asset。
+- schema / canvas export / handoff payload。
+- language / mood category UI、font search、recently used UI の改修。
+- Google Fonts CDN / CSP 変更。
 
 検証:
 - `node scripts/thumbnail-font-policy-contract.mjs`
@@ -426,8 +465,9 @@ Out of scope:
 - UI 表示を触った場合のみ `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
 
 完了時:
-- `task.md` に実装内容、確認結果、残リスク、確認用 branch への引き継ぎを追記してください。
+- `task.md` に実装内容、確認結果、残リスク、次の確認用 branch / main integration への引き継ぎを追記してください。
 - 問題なければ commit / push / draft PR 作成まで進めてください。
+- PR base は `codex/thumbnail-font-expansion-check` にしてください。
 ```
 
 ## Backlog

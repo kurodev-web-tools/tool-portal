@@ -299,6 +299,7 @@ Keep billing and quota out of the first implementation.
    - Add docs plus a small shared type/contract for preference classification.
    - No login UI, DB, API, billing, or tool UI changes.
    - Contract should assert that handoff, IndexedDB blobs, OAuth tokens, and local font binaries are not sync candidates.
+   - Verification command: `node scripts/preference-classification-contract.mjs`.
 2. `local preference adapter`
    - Optional helper around existing localStorage keys.
    - Keep existing keys and payloads unchanged.
@@ -330,8 +331,9 @@ Keep billing and quota out of the first implementation.
 
 ## Verification
 
-This planning scope is docs / `task.md` only.
+This planning document is the source of truth for preference classification until a later implementation intentionally promotes the contract into shared runtime types.
 
-- Required check: `git diff --check`
+- Required contract check: `node scripts/preference-classification-contract.mjs`
+- Required whitespace check: `git diff --check`
 - UI width verification is not required because no UI or copy surfaced in runtime was changed.
-- lint / typecheck / contract checks are not required unless implementation files are touched.
+- `npm run lint` and `npx tsc --noEmit` are required when contract-only implementation files are touched.

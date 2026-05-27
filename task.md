@@ -15,7 +15,7 @@
 ## Active Priorities
 
 1. User account / preferences foundation
-   - status: planning complete in this branch. Foundation plan is `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md`。
+   - status: preference contract foundation completed on `codex/preference-contract-foundation`。Foundation plan is `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md`。
    - direction:
      - 今後の複数ツールと paid plan を前提にした共通基盤として設計する。
      - Thumbnail Editor、Schedule Calendar、Kuro Live Comment Translator、将来の local font feature で使い回す。
@@ -24,6 +24,7 @@
    - first scope:
      - completed: 既存ツールの local-only 保存境界と、将来 account 保存へ移す候補を棚卸しした。
      - completed: login / paid plan / server sync の実装に進む前に、保存対象、非保存対象、移行しない payload を文書化した。
+     - completed: `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を source of truth として、分類と禁止境界を検証する `scripts/preference-classification-contract.mjs` を追加した。
    - planning results:
      - sync candidate は locale / theme、Thumbnail recent / favorite preset ids、recent fonts、Schedule default view / week start / default time / duration、Translator target language / display preference、local font selected family refs などの軽量 preference に限定する。
      - explicit user action only は Thumbnail project draft、server asset library upload、Schedule events / templates / hashtag sets、Translator glossary / moderation terms / session settings。
@@ -31,8 +32,8 @@
      - store禁止または初期対象外は browser `localStorage` の OAuth tokens、raw credentials、local font binary、full comment logs by default、viewer identifiers、handoff expired payload。
      - server sync 前提不可は local IndexedDB ref を含む draft、legacy localStorage schedule payload、handoff payload、local font availability、translator live session state。
    - recommended next implementation candidates:
-     - first: preference contract foundation。保存分類の小さな shared contract / docs を追加し、既存 storage key と payload は変更しない。
-     - second: account / preferences shell。Auth 未接続のアカウント設定ページ、プラン表示枠、preferences 表示枠を作り、local-only 状態で確認する。
+     - first: preference contract foundation。保存分類の contract script / docs を追加し、既存 storage key と payload は変更しない。今回 branch で対応済み。
+     - second: account / preferences shell。Auth 未接続のアカウント設定ページ、プラン表示枠、preferences 表示枠を作り、local-only 状態で確認する。次候補。
      - third: local preference adapter。既存 localStorage keys を維持し、migration なしで読み書き境界を薄く包む。
      - fourth: auth/provider decision spike。Supabase Auth / Clerk / Auth.js などを plan と quota 境界込みで比較する。
      - fifth: Auth 実装。ログイン / ログアウト、account session、profile / preferences の最小保存に閉じる。
@@ -55,7 +56,11 @@
      - 個別ツールの大きな UI 実装と同時に進めない。
      - Thumbnail Editor preset / material / font / schema / export / handoff payload は変更しない。
    - verification:
-     - `git diff --check` passed。docs-only のため lint / typecheck / browser width check は不要。
+     - `node scripts/preference-classification-contract.mjs` passed。
+     - `npm run lint` passed。
+     - `npx tsc --noEmit` passed。
+     - `git diff --check` passed。
+     - UI 変更なしのため browser width check は不要。
 
 2. Kuro Live Comment Translator planning
    - status: user foundation の後に設計を見直す。
@@ -102,43 +107,54 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-複数ツール共通の user account / preferences foundation の次 slice として、preference contract foundation を実装計画してください。
+複数ツール共通の user account / preferences foundation の次 slice として、account / preferences shell を小さく実装してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
 - `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を確認してください。
-- 既存ツールの local-only 保存境界と、将来 account / preferences へ移す候補は planning 済みです。
+- preference contract foundation は `codex/account-preferences-confirmation` に積まれている前提です。
+- 既存ツールの local-only 保存境界と、将来 account / preferences へ移す候補は planning / contract 済みです。
+
+確認用 integration branch:
+- `codex/account-preferences-confirmation`
 
 推奨 branch:
-- `codex/preference-contract-foundation`
+- `codex/account-preferences-shell`
 
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/preference-contract-foundation`
+- `D:/V_streamer_tools/.worktrees/account-preferences-shell`
 
 今回の scope:
-- preference contract foundation の小さな実装計画、または docs + contract-only 実装に留める。
+- Auth 未接続の account / preferences shell に留める。
+- アカウント設定ページ、プラン表示枠、preferences 表示枠を local-only placeholder として確認できる状態にする。
+- 既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` の localStorage key は維持する。
+- 言語 / テーマ切り替えを設定ページ側で確認できる状態にするが、既存 header / drawer / rail 導線の大きな整理は次に回す。
 - 既存 storage key / payload / localStorage / IndexedDB / sessionStorage の shape は変更しない。
-- `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` の分類を source of truth として、sync candidate / explicit-only / local-only / do-not-store / cannot-assume-server-sync を検証できる形にする。
-- auth provider / DB schema / billing / quota は候補比較までに留める。
+- auth provider / DB schema / billing / quota は候補比較または placeholder 表示までに留める。
 
 Out of scope:
-- login UI 実装。
+- 実ログイン / logout 実装。
 - database / migration / API route 実装。
 - paid plan / billing 実装。
+- preferences server sync 実装。
 - 個別ツールの UI 改修。
 - Thumbnail Editor preset / material / font / schema / export / handoff payload 変更。
 - Schedule Calendar storage payload / handoff payload 変更。
 - Kuro Live Comment Translator 本体実装。
 
 検証:
-- docs-only なら `git diff --check`。
-- contract-only 実装を触った場合は、追加した contract script、`npm run lint`、`npx tsc --noEmit`、`git diff --check`。
+- `node scripts/preference-classification-contract.mjs`
+- `npm run lint`
+- `npx tsc --noEmit`
+- `git diff --check`
+- UI を触るため `/account` または追加した account route を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
 
 完了時:
 - `task.md` に実装内容、確認結果、残リスク、次候補への引き継ぎを残してください。
-- provider / DB / billing 実装へ進む場合は別 branch / worktree / PR に分けてください。
+- commit / push / draft PR 作成まで進めてください。
+- PR の base は `main` ではなく `codex/account-preferences-confirmation` にしてください。
 ```
 
 ## Backlog
@@ -175,6 +191,7 @@ docs / contract / material / font 変更時は、必要に応じて次を実行�
 - `node scripts/static-export-rsc-aliases.mjs --check`
 - `node scripts/tool-portal-entry-contract.mjs`
 - `node scripts/tool-handoff-contract.mjs`
+- `node scripts/preference-classification-contract.mjs`
 - `node scripts/thumbnail-material-assets-contract.mjs`
 - `node scripts/thumbnail-font-policy-contract.mjs`
 - `node scripts/thumbnail-quality-guard-contract.mjs`

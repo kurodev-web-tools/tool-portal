@@ -255,7 +255,7 @@
      - No main-merge blocker found. Next scope can be a merge-preparation PR from `codex/thumbnail-iriam-square-preview` to `main` without adding new thumbnail functionality.
 
 3. Thumbnail Editor Google Fonts standard batch / IRIAM title font parity
-   - status: standard batch B planning branch `codex/thumbnail-font-standard-batch-b-plan` で追加候補を整理中。ユーザーが日本語 5 種 / 英語 5 種を選ぶまで実装へ進まない。
+   - status: standard batch B planning branch `codex/thumbnail-font-standard-batch-b-plan` で追加候補を整理済み。ユーザー選定は日本語 11 種 / 英語 12 種で確定し、次は実装 PR を分割して進める。
    - direction:
      - Google Fonts 由来で license を確認できる font のみを標準 font として追加する。
      - まず IRIAM title image で使った font と editable text layer 用 manifest を照合し、不足分を埋める。
@@ -319,9 +319,14 @@
        - Japanese recommended 10 and alternate 10 are listed in `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`.
        - English recommended 10 and alternate 10 are listed in `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`.
        - All listed candidates exclude existing catalog families and had both Google Fonts specimen URL and `google/fonts` `ofl/<slug>/OFL.txt` checked with `200`.
-     - user confirmation gate:
-       - User should choose Japanese 5 / English 5 before implementation.
-       - Next implementation PR should add only the approved families, keep self-host route-scoped loading, update manifest / license note / contract, and avoid runtime Google Fonts CDN.
+     - user selection:
+       - Japanese target: recommended 10 plus `Train One`.
+       - English target: alternate 10 plus `Caveat` / `Righteous`.
+       - Total target is 23 families, which is larger than the original +8-12 family guideline.
+     - next implementation split:
+       - Batch B-JA: add the selected Japanese 11 only.
+       - Batch B-EN: add the selected English 12 only after Batch B-JA is merged or as a separate reviewable PR.
+       - Each implementation PR should keep self-host route-scoped loading, update manifest / license note / contract, and avoid runtime Google Fonts CDN.
      - out of scope for this planning PR:
        - font assets, manifest entries, CSS, contracts, local font loading, login / user settings / paid plan, preset body, initial placement, material asset, schema, canvas export, handoff payload, language / mood category UI, font search, recently used UI.
      - verification for planning PR:

@@ -141,8 +141,19 @@ Selection notes:
 - Existing `thumbnailFontManifest` / `public/fonts/thumbnail-editor/LICENSES.md` already cover 31 families: Japanese 16 / English 15.
 - The tables below exclude all existing catalog families and use only Google Fonts families whose specimen URL and `google/fonts` repository `ofl/<slug>/OFL.txt` returned `200`.
 - License memo is intentionally conservative: `Google Fonts specimen 200 / google/fonts OFL.txt 200; SIL Open Font License 1.1`.
-- User selection gate: pick Japanese 5 and English 5 from these tables before implementation.
+- User selection gate: resolved on 2026-05-27. The implementation target is Japanese recommended 10 plus `Train One`, and English alternates 10 plus `Caveat` / `Righteous`.
 - Implementation target after approval: self-host only, no runtime Google Fonts CDN. Japanese weights default to `400`; add `700` only when headline strength is needed. English weights default to `400`; add `700` only for readable label / display families that benefit from it.
+
+### User-Selected Implementation Target
+
+The selected scope is intentionally larger than the original +8-12 family guideline. To keep review and verification manageable, implement it as two follow-up PRs instead of one mixed asset PR.
+
+- Japanese selected 11: `Zen Maru Gothic`, `Tsukimi Rounded`, `Shippori Antique`, `Shippori Mincho`, `Kaisei Decol`, `Kaisei Tokumin`, `Zen Kurenaido`, `Reggae One`, `Rampart One`, `Darumadrop One`, `Train One`.
+- English selected 12: `Cinzel`, `Abril Fatface`, `Unbounded`, `Black Ops One`, `Monoton`, `Bungee`, `Bungee Shade`, `Rye`, `Creepster`, `VT323`, `Caveat`, `Righteous`.
+- Recommended implementation split:
+  - Batch B-JA: add the selected Japanese 11 only.
+  - Batch B-EN: add the selected English 12 only after Batch B-JA is merged or when review capacity allows a separate PR.
+- Keep each implementation PR self-hosted and route-scoped. Do not add runtime Google Fonts CDN, local font loading, user settings, preset body changes, schema changes, canvas export changes, handoff payload changes, or material asset changes.
 
 ### Japanese Recommended 10
 

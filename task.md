@@ -15,10 +15,10 @@
 ## Active Priorities
 
 1. Thumbnail Editor registered material library expansion for IRIAM / cross-aspect use
-   - status: Batch A PR #215 と Batch B PR #216 は `codex/thumbnail-iriam-square-preview` に merge 済み。Batch C implementation branch `codex/thumbnail-material-neutral-props` で neutral prop 系の新規生成素材 7件を追加済み。
+   - status: Batch A PR #215、Batch B PR #216、Batch C PR #217 は `codex/thumbnail-iriam-square-preview` に merge 済み。
    - base:
      - `origin/codex/thumbnail-iriam-square-preview`
-     - latest integrated PR: #216 `[codex] Add dark thumbnail materials`
+     - latest integrated PR: #217 `[codex] Add neutral thumbnail materials`
    - planning doc:
      - `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_DECORATION_MATERIAL_CONTRACT.md`
    - goal:
@@ -78,8 +78,7 @@
      - `git diff --check`
      - UI を触った場合のみ `/tools/thumbnail-editor` を `390 / 820 / 1024 / 1280 / 1366px` で確認する。
    - next action:
-     - Batch C branch を review / PR 化する。
-     - Batch C merge 後は preview branch final confirmation に戻る。
+     - Completed. Preview branch final confirmation after material expansion に戻る。
    - Batch A implementation result:
      - added materials: 19件。
        - `label-base`: 2件。
@@ -197,12 +196,51 @@
        - The material library gains only the 7 neutral prop candidates requested here; any additional prop families should be a separate follow-up.
 
 2. Thumbnail Editor 1:1 IRIAM preview branch main merge preparation
-   - status: material library expansion の必要分を preview branch に入れた後に戻る。
+   - status: final confirmation completed after material expansion Batch A-C. Main merge preparation に進める。
    - direction:
      - `codex/thumbnail-iriam-square-preview` の final state を contract / typecheck / lint / browser 目視で再確認してから `main` へ結合する。
      - material library follow-up が入った場合は、registered material count / search / category表示 / cross-aspect add flow を確認する。
    - blocker:
-     - Batch A-C のうち、main merge 前に必須と判断したものが未実装なら main merge preparation へ進まない。
+     - None found in this confirmation pass.
+   - final confirmation result:
+     - merge gate: PR #215 / #216 / #217 are `MERGED`, all base `codex/thumbnail-iriam-square-preview`, and each merge commit is an ancestor of `origin/codex/thumbnail-iriam-square-preview`.
+     - contract verification passed:
+       - `node scripts/thumbnail-material-assets-contract.mjs`
+       - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+       - `node scripts/thumbnail-preset-apply-safety-contract.mjs`
+       - `node scripts/thumbnail-preset-variants-contract.mjs`
+       - `node scripts/tool-handoff-contract.mjs`
+       - `node scripts/thumbnail-iriam-karaoke-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-dark-gacha-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-chatting-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-first-stream-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-endurance-square-preset-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-background-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-swap-contract.mjs`
+       - `node scripts/thumbnail-iriam-square-title-asset-boundary-contract.mjs`
+     - static verification passed:
+       - `npm run lint`
+       - `npx tsc --noEmit`
+       - `git diff --check`
+     - material library confirmation:
+       - registered material count is `80 / 80点`.
+       - category counts shown in UI: `label-base` 11, `date-badge` 9, `corner` 9, `accent` 26, `frame` 16, `divider` 9.
+       - search confirmed with `シャンデリア` and `懐中時計`, both narrowed to `1 / 80点`.
+       - registered material add flow confirmed in 1:1 with `金シャンデリア` and in 16:9 with `真鍮懐中時計`.
+     - IRIAM square UI confirmation:
+       - 5 square presets `karaoke` / `dark_gacha` / `chatting` / `first_stream` / `endurance_stream` open the square settings modal.
+       - square draft creation, background swap panel, title swap panel, and EN title asset boundary remain contract-covered.
+     - width verification for `/tools/thumbnail-editor`:
+       - `390px`: no horizontal overflow; mobile canvas / material / layer / export tabs reachable.
+       - `820px`: no horizontal overflow; mobile canvas / material / layer / export tabs reachable.
+       - `1024px`: no horizontal overflow; square canvas, material count, layer list, and export panel visible.
+       - `1280px`: no horizontal overflow; square canvas, material count, layer list, and export panel visible.
+       - `1366px`: no horizontal overflow; square canvas, material count, layer list, and export panel visible.
+     - browser console: no warning/error entries from the page during Playwright confirmation.
+   - residual note:
+     - `next dev` in the project-local worktree emits a Next.js workspace-root inference warning because both the root checkout and worktree have `package-lock.json`. This is worktree environment noise, not a Thumbnail Editor blocker.
+   - main merge preparation judgment:
+     - No main-merge blocker found. Next scope can be a merge-preparation PR from `codex/thumbnail-iriam-square-preview` to `main` without adding new thumbnail functionality.
 
 3. Thumbnail Editor font / preset typography follow-up
    - status: IRIAM square preview branch を main に統合した後に戻る。

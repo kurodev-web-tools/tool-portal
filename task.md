@@ -255,7 +255,7 @@
      - No main-merge blocker found. Next scope can be a merge-preparation PR from `codex/thumbnail-iriam-square-preview` to `main` without adding new thumbnail functionality.
 
 3. Thumbnail Editor Google Fonts standard batch / IRIAM title font parity
-   - status: 次の実装候補。まず確認用 branch `codex/thumbnail-font-expansion-check` を base にして作業 branch / worktree を切る。
+   - status: implementation branch `codex/thumbnail-google-fonts-standard-batch` で不足分の追加を完了。draft PR は `codex/thumbnail-font-expansion-check` base にする。
    - direction:
      - Google Fonts 由来で license を確認できる font のみを標準 font として追加する。
      - まず IRIAM title image で使った font と editable text layer 用 manifest を照合し、不足分を埋める。
@@ -268,6 +268,44 @@
      - 1:1 preset body / main merge preparation との同時実装。
      - ローカル端末フォント読み込み。
      - ログイン / user settings / paid plan 基盤。
+   - implementation result:
+     - merge gate:
+       - `git fetch origin --prune` completed.
+       - PR #221 `[codex] Prepare thumbnail font expansion check` is `MERGED`.
+       - `origin/codex/thumbnail-font-expansion-check` was fast-forwarded to `origin/main` merge commit `6e3f072`, then re-fetched and confirmed to include latest `origin/main`.
+     - compared IRIAM square English title image fonts against `thumbnailFontManifest` / route-scoped CSS / license note.
+     - already covered by editable text catalog:
+       - `Anton`
+       - `Fredoka`
+     - added missing Google Fonts / SIL Open Font License 1.1 families:
+       - `Lilita One`: 400, used by `Karaoke` title images.
+       - `Pirata One`: 400, used by `Dark Gacha` title images.
+       - `Lobster`: 400, used by `Debut Stream` title images.
+     - self-hosted assets added under `public/fonts/thumbnail-editor/` with `thumbnail-editor-en-seed-v1` filenames.
+     - updated `thumbnailFontManifest`, `thumbnailFontAssets.module.css`, `public/fonts/thumbnail-editor/LICENSES.md`, and `thumbnail-font-policy-contract`.
+     - route-scoped self-host loading, manifest-backed listbox, no Google Fonts runtime CDN, and no schema / export / handoff payload changes remain in place.
+   - verification completed:
+     - `node scripts/thumbnail-font-policy-contract.mjs`
+     - `node scripts/thumbnail-preset-text-locale-contract.mjs`
+     - `npm run lint`
+     - `npx tsc --noEmit`
+     - `git diff --check`
+   - UI verification:
+     - UI-visible font listbox catalog changed, so `/tools/thumbnail-editor` was checked on local dev server `http://localhost:3004`.
+     - `390px`: no horizontal overflow; `Thumbnail Editor` visible; new font CSS present.
+     - `820px`: no horizontal overflow; `Thumbnail Editor` visible; new font CSS present.
+     - `1024px`: no horizontal overflow; `Thumbnail Editor` visible; new font CSS present.
+     - `1280px`: no horizontal overflow; `Thumbnail Editor` visible; new font CSS present.
+     - `1366px`: no horizontal overflow; `Thumbnail Editor` visible; new font CSS present.
+     - browser warning/error logs: none from the page during width confirmation.
+   - residual risk:
+     - This PR intentionally adds only the 3 missing IRIAM English title-image families, not a broad +8-12 exploratory batch.
+     - The downloaded assets are Latin Google Fonts CSS2 woff2 subsets; Japanese title-image parity was already covered by the previous 4 selected IRIAM title fonts.
+     - `next dev` in the project-local worktree emits the known Next.js workspace-root inference warning because both the root checkout and worktree have `package-lock.json`.
+   - confirmation branch handoff:
+     - Merge the font addition PR into `codex/thumbnail-font-expansion-check`.
+     - After merge, run the same font policy / locale / lint / typecheck / diff checks on the confirmation branch and do one final `/tools/thumbnail-editor` local visual confirmation.
+     - If clean, connect `codex/thumbnail-font-expansion-check` to `main` as the final integration path.
 
 4. User account / preferences foundation
    - status: font standard batch の後に planning から開始する。

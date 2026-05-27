@@ -1,5 +1,5 @@
 .thumbnailFontAssetScope {
-  --thumbnail-editor-font-assets: "ja-seed-v1 en-seed-v1";
+  --thumbnail-editor-font-assets: "ja-seed-v1 en-seed-v1 iriam-title-en-v1";
 }
 
 @font-face {
@@ -235,6 +235,22 @@
 }
 
 @font-face {
+  font-family: "Lilita One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/lilita-one/lilita-one-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Pirata One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/pirata-one/pirata-one-400-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
   font-family: "Bebas Neue";
   font-style: normal;
   font-weight: 400;
@@ -344,6 +360,14 @@
   font-weight: 700;
   font-display: swap;
   src: url("/fonts/thumbnail-editor/fredoka/fredoka-700-en-seed-v1.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Lobster";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/thumbnail-editor/lobster/lobster-400-en-seed-v1.woff2") format("woff2");
 }
 
 @font-face {

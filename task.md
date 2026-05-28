@@ -14,7 +14,54 @@
 
 ## Active Priorities
 
-1. User account / preferences foundation
+1. Account auth public readiness before PR #234 main merge
+   - status: next immediate task。PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、検証用 account UI / magic link 導線を公開初期版として違和感の少ない Email + Password account flow へ整える。
+   - base / branch policy:
+     - PR #234 は draft のまま維持する。
+     - 直接 `main` では作業しない。
+     - 実装は `codex/supabase-auth-first-slice` を base にした stacked branch / PR に分ける。
+     - 完了後は stacked PR を #234 branch へ merge し、Workers production branch `codex/supabase-auth-first-slice` で再検証する。
+   - auth method decision:
+     - 初期公開の主導線は Email + Password。
+     - Magic link は表の主要導線から外す。必要なら fallback / later option として docs に留める。
+     - Google / Apple など外部アカウント連携は later scope。初期 account id を安定させてから別 PR で追加する。
+   - pages / routes:
+     - `/login`: email + password login、forgot password 導線、create account への link。
+     - `/signup`: email + password registration、利用開始の説明、login への link。
+     - `/reset-password`: reset email request。パスワードリセットは都度メールリンクを送り、そのリンクから新 password を設定する方式にする。
+     - `/account/security` または `/update-password`: reset link 後の new password 設定先。route 名は実装前に既存構成と Supabase redirect flow に合わせて決める。
+     - `/account`: ログイン済みユーザー用の account / shared preferences page。未ログイン時は `/login?next=/account` へ誘導、または最小案内のみ表示する。
+   - account page cleanup:
+     - 残す: ログイン中 email、共通設定 language / theme、保存状態、ログアウト、将来機能の控えめな説明。
+     - 将来機能の説明には、有料プラン契約状況や外部アカウント連携が後続で入ることを軽く示す。
+     - ユーザー向け画面から弱める / 消す: `Supabase Auth`、`Auth / DB boundary`、`publishable key`、`migration / RLS / GRANT`、`Local Free`、`quota writes trusted server only` などの実装者向け文言。
+   - portal account CTA:
+     - PC 左下の「ログイン予定」カードを実導線に変える。
+     - 未ログイン: 見出し `アカウントで設定を保存`、button `ログイン / 登録`、href `/login`。
+     - ログイン済み: 見出し `アカウント`、email または account 状態、button `アカウント設定`、href `/account`。
+     - mobile drawer / narrow layout に同等の account 導線が必要か確認する。
+   - Supabase / Cloudflare environment notes:
+     - Workers runtime / build variables に `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` を設定する。
+     - `service_role` / secret key は入れない。
+     - ローカルから Cloudflare deploy する場合は Dashboard vars を消さないよう、`npm run build:cloudflare` then `npx wrangler deploy --keep-vars` を使う。
+     - Supabase URL Configuration、Email templates、Custom SMTP、migration SQL 適用は実環境確認の前提。
+   - out of scope:
+     - Google / Apple OAuth 実装。
+     - paid plan / billing / Stripe 実装。
+     - translation tool 本体、logged-in-only tool boundary、quota enforcement。
+     - Thumbnail / Schedule / SNS tool の既存 payload migration。
+     - service_role / secret key を browser / source-controlled docs に入れること。
+   - verification targets:
+     - signup with email + password。
+     - login with email + password。
+     - logout。
+     - password reset email request / reset link / new password update。
+     - logged-in `/account` access and signed-out redirect / 案内。
+     - language / theme save to `user_preferences` after switching to EN / Light。
+     - sidebar / drawer account CTA in signed-out and signed-in states。
+     - Workers production URL smoke on `/`, `/tools`, `/login`, `/signup`, `/reset-password`, `/account`。
+
+2. User account / preferences foundation
    - status: preference contract foundation completed on `codex/preference-contract-foundation`。Foundation plan is `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md`。
    - direction:
      - 今後の複数ツールと paid plan を前提にした共通基盤として設計する。
@@ -178,7 +225,7 @@
        - `npx tsc --noEmit` passed。
        - `git diff --check` passed。LF/CRLF conversion warning only。
 
-2. Kuro Live Comment Translator planning
+3. Kuro Live Comment Translator planning
    - status: user foundation の後に設計を見直す。
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
@@ -192,7 +239,7 @@
      - 自動返信 / 自動投稿。
      - quota / moderation 未設計の外部 API 実装。
 
-3. Local font loading
+4. Local font loading
    - status: user account / preferences foundation 後の later scope。
    - direction:
      - 端末に入っている font を直接読む Local Font Access 系は、ログイン / user settings 基盤の後に扱う。
@@ -226,61 +273,72 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-User account / preferences foundation の次 slice として、Supabase Auth implementation の最小 first slice に入ってください。
+PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、Account auth public readiness として、検証用 magic-link account UI を公開初期版の Email + Password signup/login/reset flow と account page 導線へ整理してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
 - `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を確認してください。
-- Supabase Auth boundary design PR が `codex/account-preferences-shell` に merge 済みであることを確認してください。
-- 未 merge なら新規 implementation へ進まず blocker summary を返してください。
-- Supabase project は作成済み。Supabase project URL / publishable key はユーザー側で確認済み想定。
-- secret / service_role key は要求・表示・保存しないでください。
+- PR #235 Cloudflare SSR deploy foundation は PR #234 branch へ merge 済み。
+- Cloudflare Workers production branch は検証中のみ `codex/supabase-auth-first-slice`。
+- Supabase project、Workers URL、publishable env、migration SQL 適用、Custom SMTP、Email template 調整はユーザー側で確認済み。
+- secret / service_role key は要求・表示・保存しない。
+- ローカルから Workers deploy する場合は Dashboard vars を消さないよう、`npm run build:cloudflare` then `npx wrangler deploy --keep-vars` を使う。
 
-確認用 integration branch:
-- `codex/supabase-auth-boundary-design`
-
-推奨 branch:
+確認元 branch:
 - `codex/supabase-auth-first-slice`
 
+推奨 stacked branch:
+- `codex/account-email-password-public-readiness`
+
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/supabase-auth-first-slice`
+- `D:/V_streamer_tools/.worktrees/account-email-password-public-readiness`
 
 今回の scope:
-- `Supabase Auth Boundary Design` を source of truth として、Next.js App Router / SSR cookie session の最小 foundation を実装する。
-- Supabase SDK dependency を追加する場合は必要最小限にし、env は placeholder / docs のみで real value を保存しない。
-- publishable key と secret/service_role key の扱いを分け、browser 側は publishable key のみを前提にする。
-- login / logout / account session の最小導線と、locale/theme 初回 merge の実装範囲を小さく切る。
-- DB / RLS / GRANT を扱う場合は、migration SQL を reviewable にし、`user_profiles` / `user_preferences` / `tool_preferences` / `usage_quotas` の boundary を守る。
-- quota update は trusted server only のままにし、browser writable にしない。
-- 既存 storage key / payload / localStorage / IndexedDB / sessionStorage の shape は変更しない。
+- 初期公開の主導線を Email + Password にする。
+- Magic link は表の主要導線から外す。必要なら fallback / later note に留める。
+- `/login` を作成し、email + password login、forgot password 導線、create account への link を置く。
+- `/signup` を作成し、email + password registration、利用開始の説明、login への link を置く。
+- `/reset-password` を作成し、reset email request を実装する。
+- reset link 後の new password 設定 route を作る。route 名は `/account/security` または `/update-password` のどちらが既存構成に合うか確認して決める。
+- `/account` はログイン済みユーザー向けの account / shared preferences page として整理する。未ログイン時は `/login?next=/account` へ誘導、または最小案内にする。
+- PC 左下の「ログイン予定」カードを実導線に変更する。
+  - 未ログイン: `アカウントで設定を保存` / `ログイン / 登録` / `/login`
+  - ログイン済み: `アカウント` / email または account 状態 / `アカウント設定` / `/account`
+- mobile drawer / narrow layout の account 導線も確認する。
+- `/account` から実装者向け文言を弱める / 消す。
+  - 消す候補: `Supabase Auth`、`Auth / DB boundary`、`publishable key`、`migration / RLS / GRANT`、`Local Free`、`quota writes trusted server only`
+  - 残す: ログイン中 email、共通設定 language / theme、保存状態、ログアウト、将来機能の控えめな説明
+- 将来機能の説明には、有料プラン契約状況や外部アカウント連携が後続で入ることを控えめに示す。
+- Account / Auth 関連 contract script を追加または更新する。
 
 Out of scope:
-- paid plan / billing 実装。
-- Thumbnail / Schedule / Translator の preferences server sync。
-- 個別ツールの UI 改修。
-- Thumbnail Editor preset / material / font / schema / export / handoff payload 変更。
-- Schedule Calendar storage payload / handoff payload 変更。
-- Kuro Live Comment Translator 本体実装。
-- `.env.local` 作成や secret 保存。
-- service_role / secret key を使う browser code。
+- Google / Apple OAuth 実装。
+- paid plan / billing / Stripe 実装。
+- translation tool 本体、logged-in-only tool boundary、quota enforcement。
+- Thumbnail / Schedule / SNS tool の既存 payload migration。
+- service_role / secret key を browser / source-controlled docs に入れること。
 
 検証:
 - `node scripts/preference-classification-contract.mjs`
 - `node scripts/local-preference-adapter-contract.mjs`
-- `node scripts/auth-provider-decision-spike-contract.mjs`
-- `node scripts/supabase-auth-boundary-design-contract.mjs`
-- 今回追加または更新した implementation contract script
+- `node scripts/account-preferences-shell-contract.mjs`
+- `node scripts/supabase-auth-first-slice-contract.mjs`
+- 今回追加または更新した auth/account contract script
+- `npm run build`
+- `npm run build:cloudflare`
 - `npm run lint`
 - `npx tsc --noEmit`
 - `git diff --check`
-- UI を触った場合は `/account` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
+- Workers local preview または production URL smoke。
+- UI を触った場合は `/login`、`/signup`、`/reset-password`、`/account` と sidebar / drawer account CTA を `390 / 820 / 1024 / 1280 / 1366px` の必要幅で確認し、結果を `task.md` に残す。
+- Supabase 実環境で signup / login / logout / password reset / locale-theme save を確認する。
 
 完了時:
 - `task.md` に実装内容、確認結果、残リスク、次候補への引き継ぎを残してください。
 - commit / push / draft PR 作成まで進めてください。
-- PR の base は `main` ではなく Supabase Auth boundary design の merge 先 integration branch にしてください。
+- PR の base は `main` ではなく `codex/supabase-auth-first-slice` にしてください。
 ```
 
 ## Backlog

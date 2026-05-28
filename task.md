@@ -228,7 +228,8 @@
      - Cloudflare dashboard / CI setting:
        - Existing Pages static deploy の output directory `out` 前提は解除する。
        - SSR 対応 target は Cloudflare Workers + OpenNext に移す。
-       - deploy command は `npm run deploy:cloudflare` を推奨する。build-only validation では `npm run build:cloudflare`。
+       - deploy command は Dashboard vars を保持するため、build は `npm run build:cloudflare`、deploy は `npx wrangler deploy --keep-vars` を推奨する。
+       - `package.json` の `deploy:cloudflare` / `upload:cloudflare` も `wrangler ... --keep-vars` 経由に揃えた。非本番 branch upload では `npx wrangler versions upload --keep-vars` を使う。
        - static output directory は設定しない。生成物は `.open-next/worker.js` と `.open-next/assets`。
        - Build variables / secrets には `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` を dashboard 側で設定する。secret / service_role key は要求・表示・保存しない。
      - verification completed:

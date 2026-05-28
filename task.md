@@ -166,6 +166,17 @@
        - この foundation が通ったら Cloudflare target を Workers + OpenNext 設定へ変更し、PR #234 の preview deploy を再実行する。
        - Foundation を採用しない場合は、この stacked PR だけを revert / close すれば PR #234 の auth 実装差分には戻れる。ただし static Pages `out/` blocker は残る。
        - `middleware.ts` を `proxy.ts` に戻すのは、OpenNext Cloudflare adapter が Next.js Node.js middleware / proxy を support した後に限定する。
+   - Workers auth verification follow-up:
+     - Cloudflare Workers URL `https://v-streamer-tools.kurodev-web-tools.workers.dev` で magic link login と session 維持を確認した。
+     - Supabase Auth は URL Configuration、Magic Link / Confirm signup template、Custom SMTP、email rate limit、migration SQL 適用が実環境確認に必要だった。
+     - `supabase/migrations/20260527000000_account_preferences_foundation.sql` 適用後、`user_preferences` への locale / theme 保存は通った。
+     - follow-up fix: Account save form の locale hidden value が初回 local snapshot に固定され、言語切替後も `ja` を送る問題を修正した。locale は current `useLocale()` value、theme は `ThemeToggle` の change event / storage change で更新した snapshot を送る。
+     - verification:
+       - `node scripts/account-preferences-shell-contract.mjs` passed。
+       - `node scripts/supabase-auth-first-slice-contract.mjs` passed。
+       - `npm run lint` passed。
+       - `npx tsc --noEmit` passed。
+       - `git diff --check` passed。LF/CRLF conversion warning only。
 
 2. Kuro Live Comment Translator planning
    - status: user foundation の後に設計を見直す。

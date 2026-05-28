@@ -40,7 +40,7 @@ const requiredFiles = [
   "lib/supabase/session.ts",
   "app/account/actions.ts",
   "app/auth/confirm/route.ts",
-  "proxy.ts",
+  "middleware.ts",
   "next.config.mjs",
   "supabase/migrations/20260527000000_account_preferences_foundation.sql"
 ];
@@ -94,9 +94,9 @@ assertExcludes(
 const confirmRoute = read("app/auth/confirm/route.ts");
 assertIncludes(confirmRoute, ["verifyOtp", "token_hash", "type", "NextResponse.redirect"], "auth confirm route");
 
-const proxySource = read("proxy.ts");
-assertIncludes(proxySource, ["createServerClient", "auth.getClaims", "request.cookies", "response.cookies"], "SSR cookie refresh proxy");
-assertExcludes(proxySource, ["SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY"], "proxy public-key boundary");
+const middlewareSource = read("middleware.ts");
+assertIncludes(middlewareSource, ["createServerClient", "auth.getClaims", "request.cookies", "response.cookies"], "SSR cookie refresh middleware");
+assertExcludes(middlewareSource, ["SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY"], "middleware public-key boundary");
 
 const nextConfig = read("next.config.mjs");
 assertExcludes(nextConfig, ["output: \"export\""], "server runtime config boundary");

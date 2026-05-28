@@ -8,6 +8,8 @@ import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import {
   localPreferenceStorageKeys,
   readLocalPreferenceSnapshot,
+  themePreferenceChangeEvent,
+  themePreferenceStorageKey,
   type ThemePreference
 } from "@/lib/local-preferences";
 import type { Locale } from "@/lib/locale";
@@ -181,10 +183,33 @@ export function AccountPreferencesShell({
         ? copy.authSignedOut
         : copy.authUnavailable;
   const message = authMessage ? copy.authMessages[authMessage as keyof typeof copy.authMessages] : null;
+  const hiddenLocale = locale;
+  const hiddenTheme = localSnapshot?.theme ?? "";
 
   useEffect(() => {
-    setLocalSnapshot(readLocalPreferenceSnapshot());
-  }, []);
+    function refreshLocalSnapshot() {
+      const snapshot = readLocalPreferenceSnapshot();
+      setLocalSnapshot({
+        locale,
+        theme: snapshot.theme
+      });
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key === themePreferenceStorageKey || event.key === localPreferenceStorageKeys.locale) {
+        refreshLocalSnapshot();
+      }
+    }
+
+    refreshLocalSnapshot();
+    window.addEventListener(themePreferenceChangeEvent, refreshLocalSnapshot);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener(themePreferenceChangeEvent, refreshLocalSnapshot);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [locale]);
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
@@ -275,10 +300,10 @@ export function AccountPreferencesShell({
             <ThemeToggle />
           </PreferenceRow>
           <form action={saveLocaleThemePreferenceAction} className="mt-5 border-t border-border pt-4">
-            <input name="locale" type="hidden" value={localSnapshot?.locale ?? ""} />
-            <input name="theme" type="hidden" value={localSnapshot?.theme ?? ""} />
+            <input name="locale" type="hidden" value={hiddenLocale} />
+            <input name="theme" type="hidden" value={hiddenTheme} />
             <button
-              disabled={!isSignedIn || !localSnapshot?.locale || !localSnapshot?.theme}
+              disabled={!isSignedIn || !hiddenLocale || !hiddenTheme}
               className="rounded-base bg-primary px-4 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted"
             >
               {localSnapshot ? copy.saveLocalPreferences : copy.localSnapshotPending}

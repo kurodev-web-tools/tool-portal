@@ -68,11 +68,11 @@ export function PortalSidebar({
   const { locale } = useLocale();
   const showWorkspaceSettings = mode === "workspace";
   const copy = portalCopy[locale].navigation;
-  const { accountHref, accountCta } = getAccountCta(copy, accountStatus);
+  const { signedIn, accountHref, accountCta } = getAccountCta(copy, accountStatus);
+  const accountRailLabel = signedIn ? copy.accountSettingsButton : copy.loginButton;
   const fixedItems = [
     { label: copy.home, href: "/", icon: "H" },
-    { label: copy.tools, href: "/tools", icon: "T" },
-    { label: copy.account, href: "/account", icon: "A" }
+    { label: copy.tools, href: "/tools", icon: "T" }
   ];
 
   return (
@@ -116,11 +116,17 @@ export function PortalSidebar({
         </section>
       </nav>
 
-      {showWorkspaceSettings ? (
-        <div className="mt-auto flex flex-col items-center gap-3 pt-5 xl:hidden">
-          <PortalSettingsPanel variant="rail" />
-        </div>
-      ) : null}
+      <div className="mt-auto flex flex-col items-center gap-3 pt-5 xl:hidden">
+        {showWorkspaceSettings ? <PortalSettingsPanel variant="rail" /> : null}
+        <Link
+          href={accountHref}
+          className="grid h-10 w-10 place-items-center rounded-base border border-border bg-surface text-xs font-black text-primary-strong transition hover:bg-surface-muted"
+          aria-label={accountRailLabel}
+          title={accountRailLabel}
+        >
+          A
+        </Link>
+      </div>
 
       <div className="mt-auto hidden space-y-3 pt-5 xl:block">
         {showWorkspaceSettings ? <PortalSettingsPanel /> : null}

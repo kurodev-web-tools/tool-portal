@@ -35,6 +35,24 @@
      - Workers production smoke: `/`, `/tools`, `/tools/schedule-calendar`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker`, `/login`, `/signup`, `/reset-password`, `/account`。
      - UI 変更時は `390 / 820 / 1024 / 1280 / 1366px` で account/login pages と sidebar/drawer/rail account CTA を確認する。
      - `task.md` に Workers 500 調査結果、UI 整理結果、残リスク、PR #234 merge 可否を残す。
+   - current slice result:
+     - root cause: `/` と tool 系 page は `PortalShell` で account session を読むが、build 時には Supabase env が無い前提で static route (`○`) として最適化されていた。Cloudflare Workers production / remote dev では `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` が存在するため、static route 上で cookie-backed Supabase session read に進み、Server Components render error で 500 になっていた。
+     - fix: `PortalShell` を使う public routes `/`、`/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` に `dynamic = "force-dynamic"` を追加し、Workers 上でも account session read と route mode を一致させた。
+     - account nav polish: account / login 系 page の desktop header 右上 language / theme controls は visible 表示しない。drawer / wide sidebar の固定ナビから account link を外し、下部 account CTA に集約した。collapsed rail には compact account CTA を追加し、signed-out は `/login`、signed-in は `/account` に向ける。
+     - verification:
+       - Before fix production smoke: `/`、`/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` が 500。`/login`、`/signup`、`/reset-password`、`/account` redirect は 200。
+       - `npm run build:cloudflare` after fix: affected routes are `ƒ Dynamic` and build passed。
+       - Cloudflare remote dev after fix: `/`、`/tools/`、`/tools/schedule-calendar/`、`/tools/thumbnail-editor/`、`/tools/sns-split-image-maker/`、`/login/`、`/signup/`、`/reset-password/`、`/account/` redirect all returned non-500。
+       - `npm run deploy:cloudflare` deployed with `--keep-vars`; current Workers version id `748fd6c6-85c2-4560-80c5-5f40b075559c`。
+       - Production smoke after deploy: `/`、`/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker`、`/login`、`/signup`、`/reset-password` all 200; `/account` redirects to `/login/?next=%2Faccount` and returns 200。
+       - Width checks with Chrome DevTools / local production server: `390 / 820 / 1024 / 1280 / 1366px` representative checks showed no horizontal overflow. account/login routes had 0 visible header language/theme controls. wide sidebar fixed account link count was 0. collapsed rail showed compact account CTA.
+       - Contracts passed: `node scripts/preference-classification-contract.mjs`, `node scripts/local-preference-adapter-contract.mjs`, `node scripts/account-preferences-shell-contract.mjs`, `node scripts/supabase-auth-first-slice-contract.mjs`, `node scripts/account-auth-public-readiness-contract.mjs`, `node scripts/workers-route-smoke-account-nav-contract.mjs`。
+       - Checks passed: `npm run build`, `npm run build:cloudflare`, `npm run lint`, `npx tsc --noEmit`, `git diff --check`, `npx wrangler deploy --dry-run --keep-vars`。
+     - remaining risks:
+       - Next.js 16 middleware deprecation warning remains because OpenNext Cloudflare compatibility still uses `middleware.ts` in this branch。
+       - OpenNext on Windows continues to print compatibility warnings; deploy/build passed, but CI / Cloudflare runtime should remain the final deployment judge。
+       - Supabase actual signup / login / logout / password reset / locale-theme save flows were not re-exercised in this slice beyond route smoke。
+     - PR #234 merge judgment: Workers route 500 blocker is resolved on production after deploy. From this blocker perspective, PR #234 can proceed after this stacked PR is reviewed and merged into `codex/supabase-auth-first-slice`; Supabase auth flow smoke remains a separate final pre-main confirmation item。
 
 2. Account auth public readiness before PR #234 main merge
    - status: implemented on `codex/account-email-password-public-readiness`。PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、検証用 account UI / magic link 導線を公開初期版として違和感の少ない Email + Password account flow へ整えた。

@@ -40,6 +40,8 @@ export function PortalHeader({
   const showDesktopTitle = mode !== "workspace";
   const copy = portalCopy[locale].navigation;
   const { accountHref, accountCta } = getAccountCta(copy, accountStatus);
+  const isAccountRoute = pathname.startsWith("/account") || pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/reset-password");
+  const showSettingsControls = mode !== "workspace" && !isAccountRoute;
   const title = useMemo(() => {
     if (pathname === "/") {
       return "Kuro Stream Kit";
@@ -84,7 +86,6 @@ export function PortalHeader({
   const navItems = [
     { href: "/", label: copy.home },
     { href: "/tools", label: copy.tools },
-    { href: "/account", label: copy.account },
     ...sidebarTools.map((tool) => ({
       href: tool.href,
       label: getToolCopy(tool.id, locale).name
@@ -101,7 +102,7 @@ export function PortalHeader({
           <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
         </div>
         {showDesktopTitle ? <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span> : <span className="hidden lg:block" />}
-        <div className={mode === "workspace" ? "hidden" : "hidden items-center gap-3 lg:flex"}>
+        <div className={showSettingsControls ? "hidden items-center gap-3 lg:flex" : "hidden"}>
           <LanguageSwitch />
           <ThemeToggle />
         </div>

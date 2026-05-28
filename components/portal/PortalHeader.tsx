@@ -8,14 +8,38 @@ import { useLocale } from "@/components/portal/LocaleProvider";
 import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
+import type { AccountSessionState } from "@/lib/supabase/session";
 import { sidebarTools } from "@/lib/tools";
 
-export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspace" }) {
+type NavigationCopy = (typeof portalCopy)["ja"]["navigation"] | (typeof portalCopy)["en"]["navigation"];
+
+function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState) {
+  const signedIn = accountStatus.authStatus === "signed-in";
+  const email = accountStatus.user?.email ?? null;
+
+  return {
+    accountHref: signedIn ? "/account" : "/login",
+    accountCta: {
+      title: signedIn ? copy.loginSignedInTitle : copy.loginTitle,
+      body: signedIn ? (email ?? copy.loginSignedInBody) : copy.loginBody,
+      button: signedIn ? copy.accountSettingsButton : copy.loginButton
+    }
+  };
+}
+
+export function PortalHeader({
+  mode = "default",
+  accountStatus
+}: {
+  mode?: "default" | "workspace";
+  accountStatus: AccountSessionState;
+}) {
   const { locale } = useLocale();
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const showDesktopTitle = mode !== "workspace";
   const copy = portalCopy[locale].navigation;
+  const { accountHref, accountCta } = getAccountCta(copy, accountStatus);
   const title = useMemo(() => {
     if (pathname === "/") {
       return "Kuro Stream Kit";
@@ -141,6 +165,17 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
                 );
               })}
             </nav>
+            <div className="mb-4 rounded-base border border-border bg-surface-muted/55 p-3">
+              <p className="text-sm font-black text-foreground">{accountCta.title}</p>
+              <p className="mt-1 break-words text-xs leading-5 text-muted">{accountCta.body}</p>
+              <Link
+                href={accountHref}
+                onClick={() => setDrawerOpen(false)}
+                className="mt-3 inline-flex w-full justify-center rounded-base bg-primary px-3 py-2 text-sm font-bold text-white transition hover:bg-primary-strong"
+              >
+                {accountCta.button}
+              </Link>
+            </div>
             <PortalSettingsPanel variant="drawer" />
           </aside>
         </>

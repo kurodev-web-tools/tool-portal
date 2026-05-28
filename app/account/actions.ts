@@ -6,8 +6,21 @@ import { normalizeLocale } from "@/lib/locale";
 import { normalizeThemePreference } from "@/lib/local-preferences";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+function safeNextPath(value: string | null, fallback = "/account") {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : fallback;
+}
+
+function pathWithAuth(path: string, status: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}auth=${encodeURIComponent(status)}`;
+}
+
+function redirectWithAuth(path: string, status: string): never {
+  redirect(pathWithAuth(path, status));
+}
+
 function accountRedirect(status: string): never {
-  redirect(`/account?auth=${encodeURIComponent(status)}`);
+  redirectWithAuth("/account", status);
 }
 
 function readRequiredString(formData: FormData, name: string): string | null {
@@ -20,43 +33,138 @@ async function getOrigin() {
   return headerStore.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
 
-export async function signInWithEmailAction(formData: FormData) {
+export async function signInWithPasswordAction(formData: FormData) {
   const email = readRequiredString(formData, "email");
+  const password = readRequiredString(formData, "password");
+  const next = safeNextPath(readRequiredString(formData, "next"));
 
-  if (!email) {
-    accountRedirect("email-required");
+  if (!email || !password) {
+    redirectWithAuth(`/login?next=${encodeURIComponent(next)}`, "credentials-required");
   }
 
   const supabase = await createServerSupabaseClient();
 
   if (!supabase) {
-    accountRedirect("supabase-env-missing");
+    redirectWithAuth(`/login?next=${encodeURIComponent(next)}`, "supabase-env-missing");
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    redirectWithAuth(`/login?next=${encodeURIComponent(next)}`, "login-error");
+  }
+
+  redirectWithAuth(next, "signed-in");
+}
+
+export async function signUpWithPasswordAction(formData: FormData) {
+  const email = readRequiredString(formData, "email");
+  const password = readRequiredString(formData, "password");
+  const next = safeNextPath(readRequiredString(formData, "next"));
+
+  if (!email || !password) {
+    redirectWithAuth("/signup", "credentials-required");
+  }
+
+  if (password.length < 8) {
+    redirectWithAuth("/signup", "password-too-short");
+  }
+
+  const supabase = await createServerSupabaseClient();
+
+  if (!supabase) {
+    redirectWithAuth("/signup", "supabase-env-missing");
   }
 
   const origin = await getOrigin();
-  const { error } = await supabase.auth.signInWithOtp({
+  const { error } = await supabase.auth.signUp({
     email,
+    password,
     options: {
-      emailRedirectTo: `${origin}/auth/confirm?next=/account`
+      emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(next)}`
     }
   });
 
   if (error) {
-    accountRedirect("sign-in-error");
+    redirectWithAuth("/signup", "signup-error");
   }
 
-  accountRedirect("magic-link-sent");
+  redirectWithAuth(`/login?next=${encodeURIComponent(next)}`, "signup-check-email");
+}
+
+export async function resetPasswordEmailAction(formData: FormData) {
+  const email = readRequiredString(formData, "email");
+
+  if (!email) {
+    redirectWithAuth("/reset-password", "email-required");
+  }
+
+  const supabase = await createServerSupabaseClient();
+
+  if (!supabase) {
+    redirectWithAuth("/reset-password", "supabase-env-missing");
+  }
+
+  const origin = await getOrigin();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/confirm?next=/account/security`
+  });
+
+  if (error) {
+    redirectWithAuth("/reset-password", "reset-error");
+  }
+
+  redirectWithAuth("/reset-password", "reset-email-sent");
+}
+
+export async function updatePasswordAction(formData: FormData) {
+  const password = readRequiredString(formData, "password");
+  const passwordConfirm = readRequiredString(formData, "passwordConfirm");
+
+  if (!password || !passwordConfirm) {
+    redirectWithAuth("/account/security", "password-required");
+  }
+
+  if (password.length < 8) {
+    redirectWithAuth("/account/security", "password-too-short");
+  }
+
+  if (password !== passwordConfirm) {
+    redirectWithAuth("/account/security", "password-mismatch");
+  }
+
+  const supabase = await createServerSupabaseClient();
+
+  if (!supabase) {
+    redirectWithAuth("/account/security", "supabase-env-missing");
+  }
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirectWithAuth("/login?next=/account/security", "sign-in-required");
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    redirectWithAuth("/account/security", "password-update-error");
+  }
+
+  redirectWithAuth("/account/security", "password-updated");
 }
 
 export async function signOutAction() {
   const supabase = await createServerSupabaseClient();
 
   if (!supabase) {
-    accountRedirect("supabase-env-missing");
+    redirectWithAuth("/login", "supabase-env-missing");
   }
 
   await supabase.auth.signOut();
-  accountRedirect("signed-out");
+  redirectWithAuth("/login", "signed-out");
 }
 
 export async function saveLocaleThemePreferenceAction(formData: FormData) {

@@ -21,13 +21,14 @@ const localeLib = read("lib/locale.ts");
 const localPreferenceAdapter = read("lib/local-preferences.ts");
 
 assert.match(accountPage, /<PortalShell>/, "/account route uses PortalShell");
-assert.match(accountPage, /<AccountPreferencesShell[\s\S]*signInAction={signInWithEmailAction}[\s\S]*signOutAction={signOutAction}[\s\S]*\/>/, "/account route renders account shell");
+assert.match(accountPage, /redirect\("\/login\?next=\/account"\)/, "/account redirects signed-out users to login");
+assert.match(accountPage, /<AccountPreferencesShell[\s\S]*saveLocaleThemePreferenceAction={saveLocaleThemePreferenceAction}[\s\S]*signOutAction={signOutAction}[\s\S]*\/>/, "/account route renders signed-in account shell");
 
 assert.match(accountShell, /LanguageSwitch/, "account shell exposes language switch");
 assert.match(accountShell, /ThemeToggle/, "account shell exposes theme switch");
 assert.match(accountShell, /local-only/i, "account shell states local-only boundary");
-assert.match(accountShell, /Auth|login|sign-in|ログイン/, "account shell keeps auth as placeholder");
-assert.match(accountShell, /plan|プラン/, "account shell includes plan placeholder");
+assert.match(accountShell, /ログイン中|Signed in|account/i, "account shell keeps signed-in account state");
+assert.match(accountShell, /有料プラン|Paid plan/, "account shell includes restrained future plan note");
 assert.match(accountShell, /preferences|設定/, "account shell includes preferences placeholder");
 
 assert.match(localeLib, /localePreferenceStorageKey = "v-streamer-tools-locale"/, "locale storage key is unchanged");

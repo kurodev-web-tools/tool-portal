@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import {
-  saveLocaleThemePreferenceAction,
-  signInWithEmailAction,
-  signOutAction
-} from "@/app/account/actions";
+import { redirect } from "next/navigation";
+import { saveLocaleThemePreferenceAction, signOutAction } from "@/app/account/actions";
 import { AccountPreferencesShell } from "@/components/account/AccountPreferencesShell";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { portalMetadata } from "@/lib/portal-metadata";
@@ -25,13 +22,16 @@ type AccountPageProps = {
 export default async function AccountPage({ searchParams }: AccountPageProps) {
   const [authMessage, accountSession] = await Promise.all([(await searchParams)?.auth ?? null, getAccountSessionState()]);
 
+  if (accountSession.authStatus === "signed-out") {
+    redirect("/login?next=/account");
+  }
+
   return (
     <PortalShell>
       <AccountPreferencesShell
         authMessage={authMessage}
         authStatus={accountSession}
         saveLocaleThemePreferenceAction={saveLocaleThemePreferenceAction}
-        signInAction={signInWithEmailAction}
         signOutAction={signOutAction}
       />
     </PortalShell>

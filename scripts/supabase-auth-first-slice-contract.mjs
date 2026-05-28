@@ -40,6 +40,10 @@ const requiredFiles = [
   "lib/supabase/session.ts",
   "app/account/actions.ts",
   "app/auth/confirm/route.ts",
+  "app/login/page.tsx",
+  "app/signup/page.tsx",
+  "app/reset-password/page.tsx",
+  "app/account/security/page.tsx",
   "middleware.ts",
   "next.config.mjs",
   "supabase/migrations/20260527000000_account_preferences_foundation.sql"
@@ -82,17 +86,26 @@ assertExcludes(sessionSource, ["tool_preferences", "usage_quotas", "localStorage
 const actionSource = read("app/account/actions.ts");
 assertIncludes(
   actionSource,
-  ["use server", "signInWithOtp", "auth.signOut", "saveLocaleThemePreferenceAction", "user_preferences"],
+  [
+    "use server",
+    "signInWithPassword",
+    "signUp",
+    "resetPasswordForEmail",
+    "updateUser",
+    "auth.signOut",
+    "saveLocaleThemePreferenceAction",
+    "user_preferences"
+  ],
   "account auth actions"
 );
 assertExcludes(
   actionSource,
-  ["tool_preferences", "usage_quotas", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY", "localStorage.setItem", "indexedDB.open"],
+  ["signInWithOtp", "tool_preferences", "usage_quotas", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY", "localStorage.setItem", "indexedDB.open"],
   "account action first slice scope"
 );
 
 const confirmRoute = read("app/auth/confirm/route.ts");
-assertIncludes(confirmRoute, ["verifyOtp", "token_hash", "type", "NextResponse.redirect"], "auth confirm route");
+assertIncludes(confirmRoute, ["verifyOtp", "token_hash", "type", "recovery", "/account/security", "NextResponse.redirect"], "auth confirm route");
 
 const middlewareSource = read("middleware.ts");
 assertIncludes(middlewareSource, ["createServerClient", "auth.getClaims", "request.cookies", "response.cookies"], "SSR cookie refresh middleware");
@@ -104,14 +117,14 @@ assertExcludes(nextConfig, ["output: \"export\""], "server runtime config bounda
 const accountPage = read("app/account/page.tsx");
 assertIncludes(
   accountPage,
-  ["getAccountSessionState", "signInWithEmailAction", "signOutAction", "saveLocaleThemePreferenceAction"],
+  ["getAccountSessionState", "redirect", "/login?next=/account", "signOutAction", "saveLocaleThemePreferenceAction"],
   "account page server wiring"
 );
 
 const accountShell = read("components/account/AccountPreferencesShell.tsx");
 assertIncludes(
   accountShell,
-  ["signInAction", "signOutAction", "saveLocaleThemePreferenceAction", "authStatus", "remotePreferences"],
+  ["signOutAction", "saveLocaleThemePreferenceAction", "authStatus", "remotePreferences"],
   "account shell auth UI"
 );
 assertExcludes(

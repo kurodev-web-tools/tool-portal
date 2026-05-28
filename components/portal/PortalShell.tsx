@@ -1,14 +1,16 @@
 import type { ReactNode } from "react";
 import { PortalHeader } from "@/components/portal/PortalHeader";
 import { PortalSidebar } from "@/components/portal/PortalSidebar";
+import { getAccountSessionState } from "@/lib/supabase/session";
 
-export function PortalShell({
+export async function PortalShell({
   children,
   mode = "default"
 }: {
   children: ReactNode;
   mode?: "default" | "workspace";
 }) {
+  const accountStatus = await getAccountSessionState();
   const mainClassName =
     mode === "workspace"
       ? "h-[calc(100vh-4rem)] w-full overflow-hidden lg:h-screen"
@@ -17,10 +19,10 @@ export function PortalShell({
 
   return (
     <div className={shellClassName}>
-      <PortalSidebar mode={mode} />
+      <PortalSidebar mode={mode} accountStatus={accountStatus} />
       <div className="min-w-0 flex-1">
         <div className={mode === "workspace" ? "lg:hidden" : undefined}>
-          <PortalHeader mode={mode} />
+          <PortalHeader mode={mode} accountStatus={accountStatus} />
         </div>
         <main className={mainClassName}>{children}</main>
       </div>

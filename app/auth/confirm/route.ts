@@ -2,15 +2,22 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-function safeNextPath(value: string | null) {
-  return value?.startsWith("/") ? value : "/account";
+const allowedNextPaths = new Set(["/account", "/account/security"]);
+const passwordRecoveryOtpType: EmailOtpType = "recovery";
+
+function safeNextPath(value: string | null, type: EmailOtpType | null) {
+  if (type === passwordRecoveryOtpType) {
+    return "/account/security";
+  }
+
+  return value && allowedNextPaths.has(value) ? value : "/account";
 }
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type") as EmailOtpType | null;
-  const next = safeNextPath(requestUrl.searchParams.get("next"));
+  const next = safeNextPath(requestUrl.searchParams.get("next"), type);
   const redirectUrl = new URL(next, requestUrl.origin);
 
   if (!tokenHash || !type) {

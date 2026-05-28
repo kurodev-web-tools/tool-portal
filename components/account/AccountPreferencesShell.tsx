@@ -21,40 +21,34 @@ const accountCopy = {
   ja: {
     eyebrow: "Account / Preferences",
     title: "アカウントと共通設定",
-    lead: "Supabase Auth の最小接続として、ログイン状態と locale / theme の account 保存だけを確認できます。",
+    lead: "ログイン中のアカウントで、表示言語とテーマを共通設定として保存できます。",
     authSignedOut: "未ログイン",
     authSignedIn: "ログイン中",
-    authUnavailable: "Auth 設定待ち",
-    authBody: "Email magic link でログインできます。既存 localStorage / IndexedDB / sessionStorage payload は変更せず、初回保存対象は locale / theme のみに閉じています。",
-    configMissing: "Supabase URL / publishable key が未設定です。実値は repository に保存しません。",
-    emailLabel: "メールアドレス",
-    emailPlaceholder: "you@example.com",
-    signIn: "ログインリンクを送る",
+    authUnavailable: "アカウント設定待ち",
+    authBody: "初期公開版では、共通設定の保存だけを小さく扱います。制作データや予定は自動でアップロードしません。",
+    configMissing: "アカウント機能の公開設定が未完了です。",
     signOut: "ログアウト",
     signedInAs: "ログイン中",
     remotePreferenceTitle: "Account preference",
     remotePreferenceEmpty: "account 側の locale / theme はまだ保存されていません。",
-    remotePreferenceUnavailable: "user_preferences table 未適用、または RLS / GRANT 未設定の可能性があります。",
+    remotePreferenceUnavailable: "account 側の保存状態を読み込めませんでした。",
     saveLocalPreferences: "このブラウザの設定を account に保存",
     localSnapshotPending: "ブラウザ設定を確認中",
     authMessages: {
-      "magic-link-sent": "ログインリンクを送信しました。メール内のリンクから戻ると session cookie が設定されます。",
       "signed-in": "ログインしました。",
       "signed-out": "ログアウトしました。",
       "preferences-saved": "locale / theme を account preference に保存しました。",
-      "email-required": "メールアドレスを入力してください。",
       "sign-in-required": "保存するにはログインしてください。",
       "local-preference-required": "保存対象の locale / theme が見つかりません。",
-      "supabase-env-missing": "Supabase public env が未設定です。",
-      "sign-in-error": "ログインリンクの送信に失敗しました。",
+      "supabase-env-missing": "アカウント機能の公開設定が未完了です。",
       "confirm-link-invalid": "ログイン確認リンクが不正です。",
       "confirm-error": "ログイン確認に失敗しました。",
-      "preference-save-error": "account preference の保存に失敗しました。migration / RLS / GRANT を確認してください。"
+      "preference-save-error": "account preference の保存に失敗しました。時間をおいて再度お試しください。"
     },
-    openPlan: "現在の枠",
-    planName: "Local Free",
-    planBody: "ログインしても paid plan、billing、quota 更新はまだ扱いません。既存ローカルデータも自動アップロードしません。",
-    planItems: ["Email magic link", "locale / theme のみ", "既存 payload 変更なし"],
+    openPlan: "現在のアカウント",
+    planName: "共通設定",
+    planBody: "有料プランの契約状況や外部アカウント連携は後続で追加予定です。いまは表示言語とテーマの保存に限定します。",
+    planItems: ["共通設定を保存", "有料プラン状況は後続対応", "外部アカウント連携は後続対応"],
     preferencesTitle: "Preferences",
     preferencesBody: "既存の localStorage key を維持したまま、言語とテーマをこのページから切り替えられます。ログイン中だけ account 側へ明示保存できます。",
     language: "表示言語",
@@ -63,48 +57,42 @@ const accountCopy = {
     localOnly: "local-only",
     syncFrameTitle: "将来の sync 候補",
     syncFrameBody: "初期候補は locale / theme と軽量 preference に限定します。draft、schedule events、画像、handoff payload は自動同期しません。",
-    providerTitle: "Auth / DB boundary",
-    providerBody: "Browser 側は publishable key のみを使い、secret / service_role key は要求・表示・保存しません。quota writes は trusted server only のままです。",
-    boundaryItems: ["Supabase SSR cookie session", "user_preferences は locale / theme のみ", "billing / quota 更新なし", "既存 storage payload 変更なし"],
+    providerTitle: "今後追加予定",
+    providerBody: "契約状況の表示、外部アカウント連携、ツール別の軽い設定保存は、公開後の段階で追加します。",
+    boundaryItems: ["有料プラン契約状況の表示", "外部アカウント連携", "ツール別の軽い設定保存", "既存ローカルデータは自動移行しない"],
     backToTools: "ツール一覧へ戻る"
   },
   en: {
     eyebrow: "Account / Preferences",
     title: "Account and shared preferences",
-    lead: "This first Supabase Auth slice verifies sign-in state and account storage for locale / theme only.",
+    lead: "Save display language and theme as shared settings for your signed-in account.",
     authSignedOut: "Signed out",
     authSignedIn: "Signed in",
-    authUnavailable: "Auth setup pending",
-    authBody: "Email magic links are available. Existing localStorage / IndexedDB / sessionStorage payloads stay unchanged, and the first account save is limited to locale / theme.",
-    configMissing: "Supabase URL / publishable key is not configured. Real values are not stored in the repository.",
-    emailLabel: "Email",
-    emailPlaceholder: "you@example.com",
-    signIn: "Send sign-in link",
+    authUnavailable: "Account setup pending",
+    authBody: "The first public account version only saves shared settings. Creative drafts and schedules are not uploaded automatically.",
+    configMissing: "Account publishing settings are not ready.",
     signOut: "Sign out",
     signedInAs: "Signed in as",
     remotePreferenceTitle: "Account preference",
     remotePreferenceEmpty: "No account locale / theme preference has been saved yet.",
-    remotePreferenceUnavailable: "The user_preferences table may be unapplied, or RLS / GRANT may be missing.",
+    remotePreferenceUnavailable: "Could not load the saved account settings.",
     saveLocalPreferences: "Save this browser's settings to account",
     localSnapshotPending: "Checking browser settings",
     authMessages: {
-      "magic-link-sent": "Sign-in link sent. Open the email link to set the session cookie.",
       "signed-in": "Signed in.",
       "signed-out": "Signed out.",
       "preferences-saved": "Saved locale / theme to account preferences.",
-      "email-required": "Enter an email address.",
       "sign-in-required": "Sign in before saving.",
       "local-preference-required": "Locale / theme was not found in this browser.",
-      "supabase-env-missing": "Supabase public env is missing.",
-      "sign-in-error": "Could not send the sign-in link.",
+      "supabase-env-missing": "Account publishing settings are not ready.",
       "confirm-link-invalid": "The sign-in confirmation link is invalid.",
       "confirm-error": "Could not confirm sign-in.",
-      "preference-save-error": "Could not save account preferences. Check migration / RLS / GRANT."
+      "preference-save-error": "Could not save account preferences. Please try again later."
     },
-    openPlan: "Current frame",
-    planName: "Local Free",
-    planBody: "Signing in does not add paid plans, billing, or quota updates yet. Existing local data is not uploaded automatically.",
-    planItems: ["Email magic link", "Locale / theme only", "No existing payload changes"],
+    openPlan: "Current account",
+    planName: "Shared settings",
+    planBody: "Paid plan status and external account connections are planned for later. This version is limited to language and theme.",
+    planItems: ["Save shared settings", "Paid plan status later", "External account links later"],
     preferencesTitle: "Preferences",
     preferencesBody: "Language and theme can be changed here while preserving the existing localStorage keys. Signed-in users can explicitly save them to the account.",
     language: "Language",
@@ -113,9 +101,9 @@ const accountCopy = {
     localOnly: "local-only",
     syncFrameTitle: "Future sync candidates",
     syncFrameBody: "The first sync candidates stay limited to locale / theme and lightweight preferences. Drafts, schedule events, images, and handoff payloads are not auto-synced.",
-    providerTitle: "Auth / DB boundary",
-    providerBody: "Browser code assumes the publishable key only. Secret / service_role keys are not requested, displayed, or saved. Quota writes stay trusted-server-only.",
-    boundaryItems: ["Supabase SSR cookie session", "user_preferences stores locale / theme only", "No billing or quota updates", "No existing storage payload changes"],
+    providerTitle: "Planned next",
+    providerBody: "Plan status, external account connections, and lightweight tool settings can be added in later phases.",
+    boundaryItems: ["Paid plan status", "External account connections", "Lightweight tool settings", "No automatic migration of local data"],
     backToTools: "Back to tools"
   }
 } as const;
@@ -160,13 +148,11 @@ export function AccountPreferencesShell({
   authMessage,
   authStatus,
   saveLocaleThemePreferenceAction,
-  signInAction,
   signOutAction
 }: {
   authMessage: string | null;
   authStatus: AccountSessionState;
   saveLocaleThemePreferenceAction: AccountFormAction;
-  signInAction: AccountFormAction;
   signOutAction: AccountFormAction;
 }) {
   const { locale } = useLocale();
@@ -222,7 +208,7 @@ export function AccountPreferencesShell({
         <div className="rounded-base border border-dashed border-border bg-surface-muted/45 p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-black text-foreground">{authStatusLabel}</p>
-            <StatusPill>{authStatus.configStatus === "missing" ? copy.authUnavailable : "Supabase Auth"}</StatusPill>
+            <StatusPill>{authStatus.configStatus === "missing" ? copy.authUnavailable : copy.authSignedIn}</StatusPill>
           </div>
           <p className="mt-3 text-xs leading-6 text-muted">{copy.authBody}</p>
           {authStatus.configStatus === "missing" ? (
@@ -239,24 +225,9 @@ export function AccountPreferencesShell({
               </button>
             </form>
           ) : (
-            <form action={signInAction} className="mt-4 grid gap-2">
-              <label className="text-xs font-black uppercase tracking-widest text-muted" htmlFor="account-email">
-                {copy.emailLabel}
-              </label>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input
-                  id="account-email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder={copy.emailPlaceholder}
-                  className="min-w-0 flex-1 rounded-base border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary"
-                />
-                <button className="rounded-base bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong">
-                  {copy.signIn}
-                </button>
-              </div>
-            </form>
+            <Link href="/login?next=/account" className="mt-4 inline-flex rounded-base bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong">
+              {locale === "ja" ? "ログイン / 登録" : "Log in / Sign up"}
+            </Link>
           )}
         </div>
       </section>

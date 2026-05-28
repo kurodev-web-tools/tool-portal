@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
+import type { AccountSessionState } from "@/lib/supabase/session";
 import { sidebarTools } from "@/lib/tools";
 
 function SidebarLink({
@@ -40,10 +41,34 @@ function SidebarLink({
   );
 }
 
-export function PortalSidebar({ mode = "default" }: { mode?: "default" | "workspace" }) {
+type NavigationCopy = (typeof portalCopy)["ja"]["navigation"] | (typeof portalCopy)["en"]["navigation"];
+
+function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState) {
+  const signedIn = accountStatus.authStatus === "signed-in";
+  const email = accountStatus.user?.email ?? null;
+
+  return {
+    signedIn,
+    accountHref: signedIn ? "/account" : "/login",
+    accountCta: {
+      title: signedIn ? copy.loginSignedInTitle : copy.loginTitle,
+      body: signedIn ? (email ?? copy.loginSignedInBody) : copy.loginBody,
+      button: signedIn ? copy.accountSettingsButton : copy.loginButton
+    }
+  };
+}
+
+export function PortalSidebar({
+  mode = "default",
+  accountStatus
+}: {
+  mode?: "default" | "workspace";
+  accountStatus: AccountSessionState;
+}) {
   const { locale } = useLocale();
   const showWorkspaceSettings = mode === "workspace";
   const copy = portalCopy[locale].navigation;
+  const { accountHref, accountCta } = getAccountCta(copy, accountStatus);
   const fixedItems = [
     { label: copy.home, href: "/", icon: "H" },
     { label: copy.tools, href: "/tools", icon: "T" },
@@ -102,19 +127,19 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
         {showWorkspaceSettings ? (
           <div className="rounded-base border border-dashed border-border bg-surface-muted/35 px-3 py-2">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-bold text-muted">{copy.loginButton}</span>
-              <span className="rounded-base bg-surface px-2 py-1 text-[11px] font-bold text-muted">{copy.comingSoon}</span>
+              <span className="text-xs font-bold text-muted">{accountCta.title}</span>
+              <Link href={accountHref} className="rounded-base bg-surface px-2 py-1 text-[11px] font-bold text-primary-strong">
+                {accountCta.button}
+              </Link>
             </div>
           </div>
         ) : (
           <div className="panel p-4 shadow-none">
-            <p className="text-sm font-bold text-foreground">{copy.loginTitle}</p>
-            <p className="mt-2 text-xs leading-5 text-muted">
-              {copy.loginBody}
-            </p>
-            <button className="mt-4 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white opacity-80" disabled>
-              {copy.loginButton}
-            </button>
+            <p className="text-sm font-bold text-foreground">{accountCta.title}</p>
+            <p className="mt-2 break-words text-xs leading-5 text-muted">{accountCta.body}</p>
+            <Link href={accountHref} className="mt-4 inline-flex w-full justify-center rounded-base bg-primary px-3 py-2 text-sm font-bold text-white transition hover:bg-primary-strong">
+              {accountCta.button}
+            </Link>
           </div>
         )}
         <p className="px-2 text-xs text-muted">© 2026 Kuro Stream Kit</p>

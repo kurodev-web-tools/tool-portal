@@ -15,7 +15,7 @@
 ## Active Priorities
 
 1. Account auth public readiness before PR #234 main merge
-   - status: next immediate task。PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、検証用 account UI / magic link 導線を公開初期版として違和感の少ない Email + Password account flow へ整える。
+   - status: implemented on `codex/account-email-password-public-readiness`。PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、検証用 account UI / magic link 導線を公開初期版として違和感の少ない Email + Password account flow へ整えた。
    - base / branch policy:
      - PR #234 は draft のまま維持する。
      - 直接 `main` では作業しない。
@@ -60,6 +60,42 @@
      - language / theme save to `user_preferences` after switching to EN / Light。
      - sidebar / drawer account CTA in signed-out and signed-in states。
      - Workers production URL smoke on `/`, `/tools`, `/login`, `/signup`, `/reset-password`, `/account`。
+   - current slice result:
+     - `/login` を追加し、email + password login、forgot password、create account link を公開導線にした。
+     - `/signup` を追加し、email + password registration と login link を置いた。登録確認後の戻り先は `/auth/confirm?next=/account`。
+     - `/reset-password` を追加し、reset email request を実装した。reset link 後の new password 設定 route は account 設定配下に揃えて `/account/security` にした。
+     - `/account/security` を追加し、reset session / signed-in session から new password を更新する Server Action を置いた。
+     - `/account` は signed-in account / shared preferences page に整理し、signed-out user は `/login?next=/account` へ誘導する。account env missing 時は最小案内を表示する。
+     - `/account` から magic link 主導線と実装者向け copy を弱め、ログイン中 email、language / theme、保存状態、logout、将来の有料プラン契約状況 / 外部アカウント連携の控えめな説明に寄せた。
+     - PC 左下 CTA と mobile drawer CTA を実導線に変更した。未ログイン相当では `アカウントで設定を保存` / `ログイン / 登録` / `/login`、ログイン済み state では account settings copy / `/account` へ切り替わる。
+     - `scripts/account-auth-public-readiness-contract.mjs` を追加し、既存 `account-preferences-shell` / `supabase-auth-first-slice` contracts を Email + Password 公開導線に合わせて更新した。
+     - secret / service_role key は要求・表示・保存していない。既存 storage key / payload / IndexedDB / sessionStorage shape は変更していない。
+   - verification completed:
+     - `node scripts/preference-classification-contract.mjs` passed。
+     - `node scripts/local-preference-adapter-contract.mjs` passed。
+     - `node scripts/account-preferences-shell-contract.mjs` passed。
+     - `node scripts/supabase-auth-first-slice-contract.mjs` passed。
+     - `node scripts/account-auth-public-readiness-contract.mjs` passed。
+     - `npm run build` passed。server-runtime build のため static export alias postbuild は `out` missing を正常 skip。Next.js middleware deprecation warning は既存 Cloudflare deploy foundation と同じ残リスク。
+     - `npm run build:cloudflare` passed。OpenNext Windows compatibility warning と middleware deprecation warning あり。
+     - `npm run lint` passed。
+     - `npx tsc --noEmit` passed。
+     - Workers local preview: `npx wrangler dev --port 8789 --local` で `GET /` が HTTP 200。
+   - width verification:
+     - production server `next start -p 3014` + Playwright で確認。
+     - `/login` at `390 / 820 / 1024 / 1280 / 1366px`: login form、create account link、forgot password link visible、horizontal overflowなし。
+     - `/signup` at `390 / 820 / 1024 / 1280 / 1366px`: signup form、login link visible、horizontal overflowなし。
+     - `/reset-password` at `390 / 820 / 1024 / 1280 / 1366px`: reset email form、login link visible、horizontal overflowなし。
+     - `/account` at `390 / 820 / 1024 / 1280 / 1366px`: account / shared preferences shell、login/register CTA visible、horizontal overflowなし。
+     - mobile drawer account CTA at `390 / 820px`: `アカウントで設定を保存` / `ログイン / 登録` visible、horizontal overflowなし。
+     - desktop sidebar account CTA at `1280 / 1366px`: `アカウントで設定を保存` / `ログイン / 登録` visible、horizontal overflowなし。
+   - remaining risks:
+     - Supabase 実環境の signup / login / logout / password reset / locale-theme save は、この local branch を production deploy していないため未実行。ユーザー管理の env / SMTP / template / migration 前提で、stacked PR merge 後に Workers branch で再 smoke する。
+     - signed-in sidebar / drawer CTA は code path と contract で確認。実 session での visual smoke は stacked PR merge / deploy 後に実施する。
+     - Next.js 16 では `middleware.ts` deprecated だが、OpenNext Cloudflare adapter の現行互換性に合わせて既存方針を維持している。
+   - next handoff:
+     - Draft PR は base `codex/supabase-auth-first-slice` にする。
+     - merge 後、Cloudflare Workers production branch `codex/supabase-auth-first-slice` で `/login`、`/signup`、`/reset-password`、`/account`、signup / login / logout / password reset / locale-theme save を実環境 smoke する。
 
 2. User account / preferences foundation
    - status: preference contract foundation completed on `codex/preference-contract-foundation`。Foundation plan is `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md`。

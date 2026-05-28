@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: homeMetadata.description
 };
 
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   return (
     <PortalShell>

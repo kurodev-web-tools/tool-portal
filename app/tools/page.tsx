@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: toolsMetadata.description
 };
 
+export const dynamic = "force-dynamic";
+
 export default function ToolsPage() {
   return (
     <PortalShell>

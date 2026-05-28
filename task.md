@@ -14,7 +14,29 @@
 
 ## Active Priorities
 
-1. Account auth public readiness before PR #234 main merge
+1. Workers production route 500 investigation / account navigation polish
+   - status: next immediate blocker before PR #234 main merge。
+   - trigger:
+     - Workers production URL で `/account` と login 系は表示できる一方、account / login 系以外の page が `Internal Server Error` になることを確認した。
+     - PR #234 を main に入れる前に、public routes 全体が Workers 上で正常表示されることを確認する。
+   - blocker investigation:
+     - 対象 URL: `https://v-streamer-tools.kurodev-web-tools.workers.dev`
+     - 最優先で `/`、`/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` の Workers 500 原因を特定する。
+     - `wrangler tail`、Cloudflare deployment logs、`npm run build:cloudflare`、`npx wrangler deploy --dry-run --keep-vars`、local Worker preview を使って、Cloudflare runtime 固有か build artifact / route 実装由来かを切り分ける。
+     - 500 が残る場合、PR #234 の main merge 判断は止めて blocker summary を返す。
+   - account navigation polish:
+     - Account/settings page ができたため、account / login 系 page の header 右上 language / theme controls は重複を避けて非表示または整理する。
+     - Wide desktop sidebar では固定ナビの `アカウント` link と下部 account card が重複しているため、固定ナビ側 account link を削除または wide sidebar で非表示にする。
+     - Tablet landscape / collapsed rail では下部 account card が見えないため、rail 下部に compact account/settings button を追加する。
+       - logged out: `/login`
+       - logged in: `/account`
+       - 表示は既存デザインに合わせた小さい account / settings icon 相当。歯車マークなど、状態が分かる形を検討する。
+   - verification target:
+     - Workers production smoke: `/`, `/tools`, `/tools/schedule-calendar`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker`, `/login`, `/signup`, `/reset-password`, `/account`。
+     - UI 変更時は `390 / 820 / 1024 / 1280 / 1366px` で account/login pages と sidebar/drawer/rail account CTA を確認する。
+     - `task.md` に Workers 500 調査結果、UI 整理結果、残リスク、PR #234 merge 可否を残す。
+
+2. Account auth public readiness before PR #234 main merge
    - status: implemented on `codex/account-email-password-public-readiness`。PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、検証用 account UI / magic link 導線を公開初期版として違和感の少ない Email + Password account flow へ整えた。
    - base / branch policy:
      - PR #234 は draft のまま維持する。
@@ -97,7 +119,7 @@
      - Draft PR は base `codex/supabase-auth-first-slice` にする。
      - merge 後、Cloudflare Workers production branch `codex/supabase-auth-first-slice` で `/login`、`/signup`、`/reset-password`、`/account`、signup / login / logout / password reset / locale-theme save を実環境 smoke する。
 
-2. User account / preferences foundation
+3. User account / preferences foundation
    - status: preference contract foundation completed on `codex/preference-contract-foundation`。Foundation plan is `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md`。
    - direction:
      - 今後の複数ツールと paid plan を前提にした共通基盤として設計する。
@@ -310,7 +332,7 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、Account auth public readiness として、検証用 magic-link account UI を公開初期版の Email + Password signup/login/reset flow と account page 導線へ整理してください。
+PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、Workers 実環境で account/login 系以外が `Internal Server Error` になる原因を最優先で特定・修正し、その後 account 導線の重複整理を行ってください。
 
 前提:
 - main 直作業は禁止です。
@@ -318,7 +340,10 @@ PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、Account 
 - AGENTS.md と task.md を確認してください。
 - `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を確認してください。
 - PR #235 Cloudflare SSR deploy foundation は PR #234 branch へ merge 済み。
+- PR #236 account email/password public readiness は `codex/supabase-auth-first-slice` へ merge 済み。
 - Cloudflare Workers production branch は検証中のみ `codex/supabase-auth-first-slice`。
+- Cloudflare Dashboard 側の `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` は Text variables として設定済み。
+- `package.json` の `deploy:cloudflare` / `upload:cloudflare` は `--keep-vars` 対応済み。
 - Supabase project、Workers URL、publishable env、migration SQL 適用、Custom SMTP、Email template 調整はユーザー側で確認済み。
 - secret / service_role key は要求・表示・保存しない。
 - ローカルから Workers deploy する場合は Dashboard vars を消さないよう、`npm run build:cloudflare` then `npx wrangler deploy --keep-vars` を使う。
@@ -327,28 +352,24 @@ PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、Account 
 - `codex/supabase-auth-first-slice`
 
 推奨 stacked branch:
-- `codex/account-email-password-public-readiness`
+- `codex/workers-route-smoke-account-nav-polish`
 
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/account-email-password-public-readiness`
+- `D:/V_streamer_tools/.worktrees/workers-route-smoke-account-nav-polish`
 
 今回の scope:
-- 初期公開の主導線を Email + Password にする。
-- Magic link は表の主要導線から外す。必要なら fallback / later note に留める。
-- `/login` を作成し、email + password login、forgot password 導線、create account への link を置く。
-- `/signup` を作成し、email + password registration、利用開始の説明、login への link を置く。
-- `/reset-password` を作成し、reset email request を実装する。
-- reset link 後の new password 設定 route を作る。route 名は `/account/security` または `/update-password` のどちらが既存構成に合うか確認して決める。
-- `/account` はログイン済みユーザー向けの account / shared preferences page として整理する。未ログイン時は `/login?next=/account` へ誘導、または最小案内にする。
-- PC 左下の「ログイン予定」カードを実導線に変更する。
-  - 未ログイン: `アカウントで設定を保存` / `ログイン / 登録` / `/login`
-  - ログイン済み: `アカウント` / email または account 状態 / `アカウント設定` / `/account`
-- mobile drawer / narrow layout の account 導線も確認する。
-- `/account` から実装者向け文言を弱める / 消す。
-  - 消す候補: `Supabase Auth`、`Auth / DB boundary`、`publishable key`、`migration / RLS / GRANT`、`Local Free`、`quota writes trusted server only`
-  - 残す: ログイン中 email、共通設定 language / theme、保存状態、ログアウト、将来機能の控えめな説明
-- 将来機能の説明には、有料プラン契約状況や外部アカウント連携が後続で入ることを控えめに示す。
-- Account / Auth 関連 contract script を追加または更新する。
+- 最優先で Workers production URL の `Internal Server Error` を調査する。
+  - `/`、`/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` を確認する。
+  - `/login`、`/signup`、`/reset-password`、`/account` は比較対象として確認する。
+  - `wrangler tail`、Cloudflare deployment logs、local Worker preview、`npm run build:cloudflare`、`npx wrangler deploy --dry-run --keep-vars` で原因を切り分ける。
+- 500 の原因が分かったら最小修正する。原因が外部設定や未確認 runtime にある場合は blocker summary を返す。
+- 500 が解消できた後、account 導線を整理する。
+  - account / login 系 page の header 右上 language / theme controls は、account settings と重複するため非表示または整理する。
+  - wide desktop sidebar では固定ナビの `アカウント` link と下部 account card が重複するため、固定ナビ側 account link を削除または wide sidebar で非表示にする。
+  - tablet landscape / collapsed rail では下部 account card が見えないため、rail 下部に compact account/settings button を追加する。
+    - logged out: `/login`
+    - logged in: `/account`
+    - 表示は既存デザインに合わせた小さい account / settings icon 相当。歯車マークなど分かりやすい icon を検討する。
 
 Out of scope:
 - Google / Apple OAuth 実装。
@@ -362,18 +383,29 @@ Out of scope:
 - `node scripts/local-preference-adapter-contract.mjs`
 - `node scripts/account-preferences-shell-contract.mjs`
 - `node scripts/supabase-auth-first-slice-contract.mjs`
-- 今回追加または更新した auth/account contract script
+- `node scripts/account-auth-public-readiness-contract.mjs`
 - `npm run build`
 - `npm run build:cloudflare`
 - `npm run lint`
 - `npx tsc --noEmit`
 - `git diff --check`
+- `npx wrangler deploy --dry-run --keep-vars`
 - Workers local preview または production URL smoke。
-- UI を触った場合は `/login`、`/signup`、`/reset-password`、`/account` と sidebar / drawer account CTA を `390 / 820 / 1024 / 1280 / 1366px` の必要幅で確認し、結果を `task.md` に残す。
+- Workers production URL smoke:
+  - `/`
+  - `/tools`
+  - `/tools/schedule-calendar`
+  - `/tools/thumbnail-editor`
+  - `/tools/sns-split-image-maker`
+  - `/login`
+  - `/signup`
+  - `/reset-password`
+  - `/account`
+- UI を触った場合は account/login pages と sidebar / drawer / rail account CTA を `390 / 820 / 1024 / 1280 / 1366px` の必要幅で確認し、結果を `task.md` に残す。
 - Supabase 実環境で signup / login / logout / password reset / locale-theme save を確認する。
 
 完了時:
-- `task.md` に実装内容、確認結果、残リスク、次候補への引き継ぎを残してください。
+- `task.md` に Workers 500 調査結果、修正内容、account 導線整理、確認結果、残リスク、PR #234 の merge 可否判断を残してください。
 - commit / push / draft PR 作成まで進めてください。
 - PR の base は `main` ではなく `codex/supabase-auth-first-slice` にしてください。
 ```

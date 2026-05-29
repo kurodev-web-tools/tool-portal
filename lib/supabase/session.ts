@@ -1,12 +1,13 @@
 import { normalizeLocale, type Locale } from "@/lib/locale";
 import { normalizeThemePreference, type ThemePreference } from "@/lib/local-preferences";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
+import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type AccountSessionState = {
   configStatus: "ready" | "missing";
   missingEnv: string[];
-  authStatus: "signed-in" | "signed-out" | "unavailable";
+  authStatus: "signed-in" | "signed-out" | "recovery-pending" | "unavailable";
   user: {
     id: string;
     email: string | null;
@@ -55,12 +56,24 @@ export async function getAccountSessionState(): Promise<AccountSessionState> {
   const {
     data: { user }
   } = await supabase.auth.getUser();
+  const recoveryPending = await isRecoverySessionPending();
 
   if (!user) {
     return {
       configStatus: "ready",
       missingEnv: [],
       authStatus: "signed-out",
+      user: null,
+      remotePreferences: null,
+      remotePreferenceStatus: "not-signed-in"
+    };
+  }
+
+  if (recoveryPending) {
+    return {
+      configStatus: "ready",
+      missingEnv: [],
+      authStatus: "recovery-pending",
       user: null,
       remotePreferences: null,
       remotePreferenceStatus: "not-signed-in"

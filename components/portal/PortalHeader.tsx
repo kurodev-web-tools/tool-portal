@@ -16,14 +16,15 @@ type NavigationCopy = (typeof portalCopy)["ja"]["navigation"] | (typeof portalCo
 
 function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState) {
   const signedIn = accountStatus.authStatus === "signed-in";
+  const recoveryPending = accountStatus.authStatus === "recovery-pending";
   const email = accountStatus.user?.email ?? null;
 
   return {
-    accountHref: signedIn ? "/account" : "/login",
+    accountHref: recoveryPending ? "/account/security" : signedIn ? "/account" : "/login",
     accountCta: {
-      title: signedIn ? copy.loginSignedInTitle : copy.loginTitle,
-      body: signedIn ? (email ?? copy.loginSignedInBody) : copy.loginBody,
-      button: signedIn ? copy.accountSettingsButton : copy.loginButton
+      title: recoveryPending ? copy.recoveryPendingTitle : signedIn ? copy.loginSignedInTitle : copy.loginTitle,
+      body: recoveryPending ? copy.recoveryPendingBody : signedIn ? (email ?? copy.loginSignedInBody) : copy.loginBody,
+      button: recoveryPending ? copy.recoveryPendingButton : signedIn ? copy.accountSettingsButton : copy.loginButton
     }
   };
 }

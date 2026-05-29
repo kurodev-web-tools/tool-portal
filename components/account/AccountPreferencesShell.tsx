@@ -33,6 +33,9 @@ const accountCopy = {
     remotePreferenceEmpty: "アカウントにはまだ表示言語とテーマが保存されていません。",
     remotePreferenceUnavailable: "アカウント側の保存状態を読み込めませんでした。",
     saveLocalPreferences: "このブラウザの表示設定をアカウントに保存",
+    securityTitle: "セキュリティ",
+    securityBody: "パスワードを変更するときは、現在のパスワードを確認してから新しいパスワードを保存します。",
+    changePassword: "パスワード変更",
     localSnapshotPending: "ブラウザ設定を確認中",
     authMessages: {
       "signed-in": "ログインしました。",
@@ -77,6 +80,9 @@ const accountCopy = {
     remotePreferenceEmpty: "No language or theme setting has been saved to the account yet.",
     remotePreferenceUnavailable: "Could not load the saved account settings.",
     saveLocalPreferences: "Save this browser's display settings to account",
+    securityTitle: "Security",
+    securityBody: "Password changes confirm the current password before saving a new password.",
+    changePassword: "Change password",
     localSnapshotPending: "Checking browser settings",
     authMessages: {
       "signed-in": "Signed in.",
@@ -301,6 +307,16 @@ export function AccountPreferencesShell({
                 {authStatus.remotePreferenceStatus === "unavailable" ? copy.remotePreferenceUnavailable : copy.remotePreferenceEmpty}
               </p>
             )}
+          </div>
+          <div className="panel p-4 shadow-none sm:p-5">
+            <h2 className="text-base font-black text-foreground">{copy.securityTitle}</h2>
+            <p className="mt-3 text-sm leading-7 text-muted">{copy.securityBody}</p>
+            <Link
+              href="/account/security"
+              className="mt-4 inline-flex rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
+            >
+              {copy.changePassword}
+            </Link>
           </div>
           <div className="panel p-4 shadow-none sm:p-5">
             <h2 className="text-base font-black text-foreground">{copy.syncFrameTitle}</h2>

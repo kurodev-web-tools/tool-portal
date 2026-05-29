@@ -41,6 +41,38 @@
      - account flow if safe credentials/session are available: login, account preference save, remote display settings apply, logout, protected route redirect。
 
 2. Auth recovery-session hardening follow-up
+   - status: implemented on `codex/auth-recovery-session-hardening`.
+   - implementation summary:
+     - `/auth/confirm?type=recovery` success is marked as recovery pending instead of normal `signed-in`.
+     - recovery pending is held in a short-lived httpOnly cookie and is not stored in localStorage, IndexedDB, Supabase schema, migrations, or RLS.
+     - recovery pending users are kept on `/account/security`; normal `/account` access redirects back to `/account/security?auth=recovery-pending`.
+     - password update success from recovery pending signs out and redirects to `/login?auth=password-updated`.
+     - normal signed-in password change shows a `currentPassword` field, passes it to Supabase `updateUser` as the local SDK's `current_password` payload, and returns to `/account?auth=password-updated`.
+     - `/account` exposes a password change entry point to `/account/security`.
+     - secret / service_role key は要求・表示・保存していない。
+   - verification completed:
+     - `node scripts/auth-recovery-session-hardening-contract.mjs`
+     - `node scripts/auth-security-hardening-contract.mjs`
+     - `node scripts/account-auth-public-readiness-contract.mjs`
+     - `node scripts/supabase-auth-first-slice-contract.mjs`
+     - `npm run build:cloudflare`
+       - passed with existing warnings: OpenNext Windows compatibility, middleware convention deprecation, webpack cache serialization, Node `punycode` deprecation.
+     - `npm run build`
+       - passed with existing middleware convention deprecation warning.
+     - `npm run lint`
+     - `npx tsc --noEmit`
+     - `git diff --check`
+       - passed; Git reported LF-to-CRLF working-copy normalization warnings only.
+   - UI verification completed:
+     - DevTools composite check on `http://127.0.0.1:3000` for `/account`, `/account/security`, `/login` at `390 / 820 / 1024 / 1280 / 1366px`.
+     - All 15 cases reported `overflowX=false`.
+     - `/account` rendered account setup pending state and the new `セキュリティ` / `パスワード変更` entry point at all widths.
+     - `/account/security` redirected to `/login/?next=%2Faccount%2Fsecurity` without a signed-in session at all widths.
+     - `/login` rendered normally at all widths.
+     - Evidence: `output/playwright/auth-recovery-session-hardening/devtools-width-results.json` and `output/playwright/auth-recovery-session-hardening/devtools-width-composite.png` are local ignored artifacts.
+   - unverified scope / residual risk:
+     - Signed-in `/account/security` current-password form and recovery pending password-reset form were not visually smoked with real credentials.
+     - Production/custom domain password reset email link -> password update -> sign-out/login redirect smoke requires a real safe account session and was not run; credentials and secrets were not requested.
    - recommended branch / worktree:
      - branch: `codex/auth-recovery-session-hardening`
      - worktree: `D:/V_streamer_tools/.worktrees/auth-recovery-session-hardening`

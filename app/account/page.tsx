@@ -4,6 +4,7 @@ import { saveLocaleThemePreferenceAction, signOutAction } from "@/app/account/ac
 import { AccountPreferencesShell } from "@/components/account/AccountPreferencesShell";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { portalMetadata } from "@/lib/portal-metadata";
+import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { getAccountSessionState } from "@/lib/supabase/session";
 
 const accountMetadata = portalMetadata.en.account;
@@ -20,10 +21,18 @@ type AccountPageProps = {
 };
 
 export default async function AccountPage({ searchParams }: AccountPageProps) {
-  const [authMessage, accountSession] = await Promise.all([(await searchParams)?.auth ?? null, getAccountSessionState()]);
+  const [authMessage, accountSession, recoveryPending] = await Promise.all([
+    (await searchParams)?.auth ?? null,
+    getAccountSessionState(),
+    isRecoverySessionPending()
+  ]);
 
   if (accountSession.authStatus === "signed-out") {
     redirect("/login?next=/account");
+  }
+
+  if (recoveryPending) {
+    redirect("/account/security?auth=recovery-pending");
   }
 
   return (

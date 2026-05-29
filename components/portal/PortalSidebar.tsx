@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
+import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
 import type { AccountSessionState } from "@/lib/supabase/session";
 import { sidebarTools } from "@/lib/tools";
@@ -66,6 +67,7 @@ export function PortalSidebar({
   accountStatus: AccountSessionState;
 }) {
   const { locale } = useLocale();
+  const pathname = usePathname();
   const showWorkspaceSettings = mode === "workspace";
   const copy = portalCopy[locale].navigation;
   const { signedIn, accountHref, accountCta } = getAccountCta(copy, accountStatus);
@@ -117,6 +119,7 @@ export function PortalSidebar({
       </nav>
 
       <div className="mt-auto flex flex-col items-center gap-3 pt-5 xl:hidden">
+        {showWorkspaceSettings ? <SiteTipsDialog pathname={pathname} variant="rail" /> : null}
         {showWorkspaceSettings ? <PortalSettingsPanel variant="rail" /> : null}
         <Link
           href={accountHref}
@@ -129,6 +132,7 @@ export function PortalSidebar({
       </div>
 
       <div className="mt-auto hidden space-y-3 pt-5 xl:block">
+        {showWorkspaceSettings ? <SiteTipsDialog pathname={pathname} variant="panel" /> : null}
         {showWorkspaceSettings ? <PortalSettingsPanel /> : null}
         {showWorkspaceSettings ? (
           <div className="rounded-base border border-dashed border-border bg-surface-muted/35 px-3 py-2">

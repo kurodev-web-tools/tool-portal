@@ -90,6 +90,24 @@
    - PR #238 browser comment follow-up remaining risks:
      - Supabase 実 session での signed-in email 位置は code path / contract で確認。実 session visual smoke は stacked PR merge / deploy 後の Workers branch で確認する。
      - 実環境の signup / login / logout / password reset / locale-theme save flow はこの slice では再実行していない。
+   - Tool page desktop settings compact follow-up result:
+     - branch / worktree: `codex/tool-sidebar-settings-compact` / `D:/V_streamer_tools/.worktrees/tool-sidebar-settings-compact`。
+     - PC 幅の各 tool page sidebar 下部に出る global `Settings` panel を、通常時は compact summary に折りたたむ形へ変更した。
+     - summary には現在の表示言語 / テーマを小さく表示し、クリックで既存の `LanguageSwitch` / `ThemeToggle` controls を展開する。
+     - collapsed rail (`1024px` 付近) と mobile drawer の settings controls は既存表示を維持した。
+     - `/account` の表示設定 section、既存 storage key / payload / Supabase schema は変更していない。
+   - Tool page desktop settings compact verification:
+     - RED: `node scripts/workers-route-smoke-account-nav-contract.mjs` failed before implementation because desktop settings compact summary was missing。
+     - Relevant contracts passed: `node scripts/workers-route-smoke-account-nav-contract.mjs`, `node scripts/local-preference-adapter-contract.mjs`, `node scripts/account-preferences-shell-contract.mjs`, `node scripts/tool-portal-entry-contract.mjs`。
+     - `npm run build` passed。server-runtime build のため static export alias postbuild は `out` missing を正常 skip。Next.js middleware deprecation warning と webpack cache warning は既存残リスク。
+     - `npm run lint` passed。
+     - `npx tsc --noEmit` passed。
+     - `git diff --check` passed。LF/CRLF conversion warning only。
+     - `/tools/schedule-calendar` width check passed at `390 / 820 / 1024 / 1280 / 1366px` using local production server `next start -p 3029` and Playwright: no horizontal overflow, no console error/warn, `1280 / 1366px` desktop settings closed by default and expands controls on click, `1024px` rail settings remains visible。
+     - PC tool page smoke passed at `1280 / 1366px` for `/tools/schedule-calendar`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker`: each page showed one compact sidebar settings details closed by default, with no horizontal overflow or console error/warn。
+   - Tool page desktop settings compact remaining risks:
+     - `node scripts/portal-locale-foundation-contract.mjs` and `node scripts/portal-tools-copy-locale-contract.mjs` are stale against the current base and still fail on pre-existing locale/account copy expectations unrelated to this PR。
+     - 実 Workers URL への deploy 後 smoke は未実施。local production server での visual / interaction smoke に留めた。
 
 2. Account auth public readiness before PR #234 main merge
    - status: implemented on `codex/account-email-password-public-readiness`。PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、検証用 account UI / magic link 導線を公開初期版として違和感の少ない Email + Password account flow へ整えた。

@@ -262,8 +262,11 @@ export const portalCopy = {
       loginBody: "ログインすると表示言語とテーマを別ブラウザやスマホでも引き継げます。下書き、予定本文、画像、handoff payload は自動アップロードしません。",
       loginSignedInTitle: "アカウント",
       loginSignedInBody: "ログイン中のアカウント設定と共通設定を確認できます。",
+      recoveryPendingTitle: "パスワード再設定中",
+      recoveryPendingBody: "再設定を完了するまで通常のアカウント設定には入れません。",
       loginButton: "ログイン / 登録",
       accountSettingsButton: "アカウント設定",
+      recoveryPendingButton: "再設定へ戻る",
       toolTitles: {
         "schedule-calendar": "スケジュールカレンダー",
         "thumbnail-editor": "Thumbnail Editor",
@@ -359,8 +362,11 @@ export const portalCopy = {
       loginBody: "Carry language and theme across browsers and phones when you log in. Drafts, schedule text, images, and handoff payloads are not uploaded automatically.",
       loginSignedInTitle: "Account",
       loginSignedInBody: "Review your account settings and shared preferences.",
+      recoveryPendingTitle: "Password reset in progress",
+      recoveryPendingBody: "Finish the reset before opening normal account settings.",
       loginButton: "Log in / Sign up",
       accountSettingsButton: "Account settings",
+      recoveryPendingButton: "Back to reset",
       toolTitles: {
         "schedule-calendar": "Schedule Calendar",
         "thumbnail-editor": "Thumbnail Editor",

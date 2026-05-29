@@ -20,7 +20,7 @@ type AccountSecurityPageProps = {
 export default async function AccountSecurityPage({ searchParams }: AccountSecurityPageProps) {
   const [params, accountSession, recoveryPending] = await Promise.all([searchParams, getAccountSessionState(), isRecoverySessionPending()]);
 
-  if (accountSession.authStatus !== "signed-in") {
+  if (accountSession.authStatus !== "signed-in" && accountSession.authStatus !== "recovery-pending") {
     redirect("/login?next=/account/security");
   }
 

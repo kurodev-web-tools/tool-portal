@@ -49,9 +49,11 @@
      - Normalize account pathnames before the recovery pending middleware allowlist check.
      - Keep `/account/security` and `/account/security/` both allowed while recovery pending.
      - Keep `/account` and other account paths redirected back to `/account/security?auth=recovery-pending`.
+     - Treat recovery pending as a separate account session state for shared navigation, so Portal sidebar/header do not expose the signed-in email or normal `/account` CTA while the reset is unfinished.
+     - Show recovery pending navigation copy that points back to `/account/security` until the reset is completed.
    - hotfix verification completed:
      - `node scripts/auth-recovery-session-hardening-contract.mjs`
-       - includes trailing slash guard coverage.
+       - includes trailing slash guard coverage and recovery-pending navigation coverage.
      - `node scripts/auth-security-hardening-contract.mjs`
      - `node scripts/account-auth-public-readiness-contract.mjs`
      - `node scripts/supabase-auth-first-slice-contract.mjs`
@@ -64,8 +66,9 @@
      - Local dev redirect check with recovery pending cookie:
        - `/account/security/?auth=recovery-pending` no longer loops; without Supabase env/session it redirects to `/login/?next=%2Faccount%2Fsecurity`.
        - `/account/?auth=recovery-pending` redirects to `/account/security/?auth=recovery-pending` and then, in local no-session state, to login.
+     - Type/build checks confirm `AccountSessionState.authStatus` now accepts `recovery-pending`.
    - hotfix UI verification:
-     - No visible UI/layout/copy change; width checks were not rerun for this middleware-only redirect fix.
+     - Visible copy changed only in the recovery-pending account CTA; full width checks were not rerun because the change is limited to an existing sidebar/header CTA block.
    - hotfix residual risk:
      - Production recovery email link smoke should be repeated after deploy with a fresh reset email link.
    - status: implemented on `codex/auth-recovery-session-hardening`.

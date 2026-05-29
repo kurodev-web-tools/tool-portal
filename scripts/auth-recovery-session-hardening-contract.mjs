@@ -90,10 +90,75 @@ assertIncludes(
   "account page blocks recovery pending sessions"
 );
 
+const sessionSource = read("lib/supabase/session.ts");
+assertIncludes(
+  sessionSource,
+  [
+    "\"recovery-pending\"",
+    "isRecoverySessionPending",
+    "const recoveryPending = await isRecoverySessionPending()",
+    "authStatus: \"recovery-pending\"",
+    "remotePreferenceStatus: \"not-signed-in\""
+  ],
+  "account session state separates recovery pending from normal signed-in navigation"
+);
+
+const portalShell = read("components/portal/PortalShell.tsx");
+assertIncludes(
+  portalShell,
+  ["getAccountSessionState", "accountStatus"],
+  "portal shell receives recovery-aware account status"
+);
+
+const portalSidebar = read("components/portal/PortalSidebar.tsx");
+assertIncludes(
+  portalSidebar,
+  [
+    "const recoveryPending = accountStatus.authStatus === \"recovery-pending\"",
+    "accountHref: recoveryPending ? \"/account/security\"",
+    "copy.recoveryPendingTitle",
+    "copy.recoveryPendingBody",
+    "copy.recoveryPendingButton"
+  ],
+  "sidebar does not expose normal account settings while recovery is pending"
+);
+
+const portalHeader = read("components/portal/PortalHeader.tsx");
+assertIncludes(
+  portalHeader,
+  [
+    "const recoveryPending = accountStatus.authStatus === \"recovery-pending\"",
+    "accountHref: recoveryPending ? \"/account/security\"",
+    "copy.recoveryPendingTitle",
+    "copy.recoveryPendingBody",
+    "copy.recoveryPendingButton"
+  ],
+  "mobile drawer does not expose normal account settings while recovery is pending"
+);
+
+const portalCopy = read("lib/portal-copy.ts");
+assertIncludes(
+  portalCopy,
+  [
+    "パスワード再設定中",
+    "再設定を完了するまで通常のアカウント設定には入れません。",
+    "再設定へ戻る",
+    "Password reset in progress",
+    "Finish the reset before opening normal account settings.",
+    "Back to reset"
+  ],
+  "navigation copy explains recovery pending account state"
+);
+
 const securityPage = read("app/account/security/page.tsx");
 assertIncludes(
   securityPage,
-  ["isRecoverySessionPending", "passwordFlow={recoveryPending ? \"recovery\" : \"signed-in\"}", "updatePasswordAction"],
+  [
+    "isRecoverySessionPending",
+    "accountSession.authStatus !== \"signed-in\" && accountSession.authStatus !== \"recovery-pending\"",
+    "passwordFlow={recoveryPending ? \"recovery\" : \"signed-in\"}",
+    "updatePasswordAction"
+  ],
   "account security page tells UI which password flow is active"
 );
 

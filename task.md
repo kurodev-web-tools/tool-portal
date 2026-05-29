@@ -12,6 +12,147 @@
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
 - 完了済みの Thumbnail Editor IRIAM 1:1 / material / font expansion の詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` に寄せる。
 
+## Current Slice: Supabase auth security hardening before PR #234 main merge
+
+- branch / worktree for this handoff note: `codex/supabase-auth-security-hardening-plan` / `D:/V_streamer_tools/.worktrees/supabase-auth-security-hardening-plan`。
+- base / merge gate:
+  - PR #245 final readiness note is merged into `codex/supabase-auth-first-slice`; current base commit is `d6c40ce`。
+  - PR #234 remains the main merge candidate after this hardening pass.
+- security posture from the quick review:
+  - No direct evidence was found that browser code uses `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY`.
+  - `user_preferences` writes use the current authenticated user id from `auth.getUser()` server-side.
+  - RLS is enabled on `user_profiles`, `user_preferences`, `tool_preferences`, and `usage_quotas`; anon grants are revoked and owner policies scope rows to `auth.uid() = user_id`.
+  - `usage_quotas` is owner-read only for authenticated clients; quota writes remain trusted-server-only.
+  - Therefore, with the current migration applied correctly, browser devtools using a normal signed-in user session should not be able to read or write another user's account rows unless Supabase/RLS/policy configuration is broken or an elevated key is exposed.
+- next implementation scope:
+  - Harden auth redirect origin handling in `app/account/actions.ts`.
+    - Prefer a configured public site URL such as `NEXT_PUBLIC_SITE_URL`.
+    - Only fall back to request `origin` when it matches an explicit allowlist / same-site rule.
+    - Keep auth `next` paths relative and allowlisted.
+  - Gate `/account/security` at the page level.
+    - If no signed-in user session exists, redirect to `/login?next=/account/security` before rendering the password update form.
+    - Keep the Server Action `auth.getUser()` guard as the final enforcement point.
+  - Add or extend a small contract script for auth hardening.
+    - Assert redirect origin handling does not blindly trust arbitrary `Origin`.
+    - Assert `/account/security` renders the update form only behind a signed-in session check.
+    - Assert secret / service_role env names are not used in browser/auth actions.
+  - Smoke CSRF / Origin expectations as far as practical without secrets.
+    - Verify cross-site-style POST attempts do not perform sign-out, password update, or preference save under a normal browser/session setup.
+    - If this cannot be fully automated without a logged-in test account, record the unchecked scope.
+  - Re-run live Workers auth smoke if a safe authenticated session / test account is available.
+    - login
+    - account preference save
+    - remote display settings apply
+    - logout
+    - sign-out redirect
+- strict out of scope:
+  - No Supabase schema / migration change unless a concrete security blocker is found.
+  - No storage key / payload / IndexedDB / handoff payload migration.
+  - No OAuth, billing, quota implementation, tool data sync, or broad auth UI redesign.
+  - Do not request, display, or store secret / service_role keys.
+- verification target:
+  - New/updated auth hardening contract script.
+  - `node scripts/site-tips-dialog-contract.mjs`
+  - `node scripts/account-cta-display-settings-copy-contract.mjs`
+  - `node scripts/account-remote-display-settings-contract.mjs`
+  - `node scripts/preference-classification-contract.mjs`
+  - `node scripts/local-preference-adapter-contract.mjs`
+  - `node scripts/account-preferences-shell-contract.mjs`
+  - `node scripts/supabase-auth-first-slice-contract.mjs`
+  - `node scripts/account-auth-public-readiness-contract.mjs`
+  - `node scripts/workers-route-smoke-account-nav-contract.mjs`
+  - `npm run build:cloudflare`
+  - `npm run build`
+  - `npm run lint`
+  - `npx tsc --noEmit`
+  - `git diff --check`
+  - Workers route smoke for `/login`, `/signup`, `/reset-password`, `/account`, `/account/security`, plus public route sanity for `/` and `/tools`。
+  - Width check for changed auth routes at `390 / 820 / 1024 / 1280 / 1366px` only if visible UI changes.
+- completion expectation:
+  - Update this section with implemented hardening, verification result, live login smoke result / unchecked scope, and PR #234 main merge judgment.
+  - Commit / push / draft PR against `codex/supabase-auth-first-slice` if code or task docs changed.
+
+## Next Session Prompt
+
+```text
+D:/V_streamer_tools で作業してください。
+
+目的:
+PR #234 `codex/supabase-auth-first-slice` を main に入れる前の security hardening として、auth redirect origin、`/account/security` の session gate、CSRF/Origin smoke、実ログイン smoke を最小範囲で確認・修正してください。
+
+前提:
+- main 直作業は禁止です。
+- まず `git fetch origin --prune` を実行してください。
+- AGENTS.md と task.md を確認してください。
+- `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を確認してください。
+- PR #245 final readiness note は `codex/supabase-auth-first-slice` へ merge 済み。
+- secret / service_role key は要求・表示・保存しない。
+- 既存 storage key / payload / Supabase schema / migration は原則変更しない。変更が必要な blocker を見つけた場合は、実装へ進まず blocker summary を返す。
+- 新規機能追加ではなく、PR #234 main merge 前の auth security hardening に閉じる。
+
+確認元 branch:
+- `codex/supabase-auth-first-slice`
+
+推奨 branch:
+- `codex/supabase-auth-security-hardening`
+
+推奨 worktree:
+- `D:/V_streamer_tools/.worktrees/supabase-auth-security-hardening`
+
+scope:
+- `app/account/actions.ts` の auth redirect origin handling を強化する。
+  - `NEXT_PUBLIC_SITE_URL` などの configured public URL を優先する。
+  - request `origin` を使う場合は、同一 site / allowlist を満たす場合だけにする。
+  - `next` は相対 path かつ許可 path に限定する。
+- `/account/security` page を signed-in session で gate する。
+  - 未ログインなら `/login?next=/account/security` へ redirect。
+  - Server Action 側の `auth.getUser()` guard は残す。
+- auth hardening contract を追加または既存 contract に追加する。
+  - arbitrary Origin を email redirect URL に使わないこと。
+  - `/account/security` が page-level session gate を持つこと。
+  - secret / service_role key が browser/auth actions に入らないこと。
+- 可能なら CSRF / Origin smoke を行う。
+  - sign-out、password update、account preference save が cross-site-style POST で成立しないことを確認する。
+  - 自動化できない場合は、未確認範囲を task.md に明記する。
+- 可能なら Workers 実ログイン smoke を行う。
+  - login
+  - account preference save
+  - remote display settings apply
+  - logout
+  - sign-out 後 redirect
+  - 実ログイン smoke ができない場合は、未確認範囲を task.md に明記する。
+
+Out of scope:
+- Supabase schema / migration / RLS policy の変更。ただし concrete security blocker が見つかった場合は blocker summary。
+- OAuth、billing、quota implementation、tool data sync。
+- storage key / payload / IndexedDB / handoff payload migration。
+- 下書き、予定本文、画像、handoff payload、tool data の自動アップロード / 自動同期。
+
+検証:
+- new/updated auth hardening contract
+- `node scripts/site-tips-dialog-contract.mjs`
+- `node scripts/account-cta-display-settings-copy-contract.mjs`
+- `node scripts/account-remote-display-settings-contract.mjs`
+- `node scripts/preference-classification-contract.mjs`
+- `node scripts/local-preference-adapter-contract.mjs`
+- `node scripts/account-preferences-shell-contract.mjs`
+- `node scripts/supabase-auth-first-slice-contract.mjs`
+- `node scripts/account-auth-public-readiness-contract.mjs`
+- `node scripts/workers-route-smoke-account-nav-contract.mjs`
+- `npm run build:cloudflare`
+- `npm run build`
+- `npm run lint`
+- `npx tsc --noEmit`
+- `git diff --check`
+- Workers route smoke: `/login`, `/signup`, `/reset-password`, `/account`, `/account/security`, plus `/` and `/tools` sanity。
+- UI を変えた場合は対象 auth routes を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を task.md に残す。
+
+完了時:
+- task.md に実装内容、検証結果、CSRF/Origin smoke 結果、実ログイン smoke の実施可否と結果、残リスク、PR #234 を draft 解除 / main merge 判断へ進められるかを残してください。
+- 問題なければ commit / push / draft PR 作成まで進めてください。
+- PR base は `main` ではなく `codex/supabase-auth-first-slice` にしてください。
+```
+
 ## Current Slice: PR #234 final readiness after PR #244
 
 - branch / worktree: `codex/supabase-auth-final-readiness` / `D:/V_streamer_tools/.worktrees/supabase-auth-final-readiness`。

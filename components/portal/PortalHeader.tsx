@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { LanguageSwitch } from "@/components/portal/LanguageSwitch";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
+import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
 import type { AccountSessionState } from "@/lib/supabase/session";
@@ -41,6 +42,7 @@ export function PortalHeader({
   const copy = portalCopy[locale].navigation;
   const { accountHref, accountCta } = getAccountCta(copy, accountStatus);
   const isAccountRoute = pathname.startsWith("/account") || pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/reset-password");
+  const showTipsButton = !isAccountRoute;
   const showSettingsControls = mode !== "workspace" && !isAccountRoute;
   const title = useMemo(() => {
     if (pathname === "/") {
@@ -102,23 +104,26 @@ export function PortalHeader({
           <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
         </div>
         {showDesktopTitle ? <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span> : <span className="hidden lg:block" />}
-        <div className={showSettingsControls ? "hidden items-center gap-3 lg:flex" : "hidden"}>
-          <LanguageSwitch />
-          <ThemeToggle />
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {showTipsButton ? <SiteTipsDialog pathname={pathname} variant="header" /> : null}
+          <div className={showSettingsControls ? "hidden items-center gap-3 lg:flex" : "hidden"}>
+            <LanguageSwitch />
+            <ThemeToggle />
+          </div>
+          <button
+            type="button"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-base border border-border bg-surface text-foreground lg:hidden"
+            aria-label={copy.menuOpen}
+            aria-expanded={drawerOpen}
+            onClick={() => setDrawerOpen(true)}
+          >
+            <span className="flex flex-col gap-1">
+              <span className="block h-0.5 w-5 rounded-full bg-current" />
+              <span className="block h-0.5 w-5 rounded-full bg-current" />
+              <span className="block h-0.5 w-5 rounded-full bg-current" />
+            </span>
+          </button>
         </div>
-        <button
-          type="button"
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-base border border-border bg-surface text-foreground lg:hidden"
-          aria-label={copy.menuOpen}
-          aria-expanded={drawerOpen}
-          onClick={() => setDrawerOpen(true)}
-        >
-          <span className="flex flex-col gap-1">
-            <span className="block h-0.5 w-5 rounded-full bg-current" />
-            <span className="block h-0.5 w-5 rounded-full bg-current" />
-            <span className="block h-0.5 w-5 rounded-full bg-current" />
-          </span>
-        </button>
       </header>
       {drawerOpen ? (
         <>

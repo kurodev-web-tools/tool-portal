@@ -12,6 +12,59 @@
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
 - 完了済みの Thumbnail Editor IRIAM 1:1 / material / font expansion の詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` に寄せる。
 
+## Current Slice: Portal tips modal follow-up
+
+- branch / worktree: `codex/portal-tips-modal` / `D:/V_streamer_tools/.worktrees/portal-tips-modal`。
+- base / merge gate:
+  - PR #243 `codex/account-cta-display-settings-copy` は PR #234 branch `codex/supabase-auth-first-slice` へ merge 済み。merge commit は `617480a`。
+  - この PR は `main` ではなく `codex/supabase-auth-first-slice` base の stacked PR として扱う。
+- scope:
+  - 共通 header に控えめな Tips button を追加する。
+  - workspace tool の desktop 幅では共通 header が非表示になるため、同じ `SiteTipsDialog` trigger を sidebar rail / panel に出す。
+  - `/`、`/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` で tips を表示する。
+  - `/account`、`/login`、`/signup`、`/reset-password`、`/account/security` では Tips button を非表示にする。
+  - modal は default `このページ` tab で開き、`このページ` / `アカウント` を切り替える。
+  - account tab は、ログイン時の表示言語 / テーマ引き継ぎ、下書き・予定本文・画像・handoff payload を自動アップロードしないこと、今後はツールごとの軽い設定だけを保存対象にする予定であることだけを説明する。
+- out of scope:
+  - auth flow、remote preference apply、DB、migration、billing、OAuth、tool data sync の変更。
+  - 既存 storage key / payload / Supabase schema / migration の変更。
+  - secret / service_role key の要求・表示・保存。
+- verification plan:
+  - RED: `node scripts/site-tips-dialog-contract.mjs` は `components/portal/SiteTipsDialog.tsx` 未存在で失敗確認済み。
+  - GREEN: `node scripts/site-tips-dialog-contract.mjs`。
+  - Account / portal / route related contracts: `node scripts/account-cta-display-settings-copy-contract.mjs`、`node scripts/account-remote-display-settings-contract.mjs`、`node scripts/preference-classification-contract.mjs`、`node scripts/local-preference-adapter-contract.mjs`、`node scripts/account-preferences-shell-contract.mjs`、`node scripts/supabase-auth-first-slice-contract.mjs`、`node scripts/account-auth-public-readiness-contract.mjs`、`node scripts/workers-route-smoke-account-nav-contract.mjs`。
+  - `npm run build`、`npm run lint`、`npx tsc --noEmit`、`git diff --check`。
+  - UI: `/`、`/tools`、`/tools/schedule-calendar`、`/account` を `390 / 820 / 1024 / 1280 / 1366px` で確認する。
+- verification result:
+  - RED: `node scripts/site-tips-dialog-contract.mjs` failed before implementation because `components/portal/SiteTipsDialog.tsx` did not exist.
+  - GREEN: `node scripts/site-tips-dialog-contract.mjs` passed。
+  - Account / portal / route related contracts passed:
+    - `node scripts/account-cta-display-settings-copy-contract.mjs`
+    - `node scripts/account-remote-display-settings-contract.mjs`
+    - `node scripts/preference-classification-contract.mjs`
+    - `node scripts/local-preference-adapter-contract.mjs`
+    - `node scripts/account-preferences-shell-contract.mjs`
+    - `node scripts/supabase-auth-first-slice-contract.mjs`
+    - `node scripts/account-auth-public-readiness-contract.mjs`
+    - `node scripts/workers-route-smoke-account-nav-contract.mjs`
+  - `npm run build` passed。server-runtime build のため static export alias postbuild は `out` missing を正常 skip。Next.js `middleware` deprecation warning は既存残リスク。
+  - `npm run lint` passed。
+  - `npx tsc --noEmit` passed。
+  - `git diff --check` passed。LF/CRLF conversion warning only。
+  - UI width check passed with local production server `next start -p 3031` and Playwright raw smoke:
+    - `/`、`/tools`、`/tools/schedule-calendar`、`/account` at `390 / 820 / 1024 / 1280 / 1366px`。
+    - public routes showed visible Tips button。
+    - `/account` redirected to auth flow and showed no Tips button。
+    - modal open / close worked。
+    - `このページ` / `アカウント` tab switch worked。
+    - route-specific page tips and account storage-boundary copy were visible。
+    - horizontal overflow / console error / page error were not detected。
+- remaining risks:
+  - Supabase 実ログイン smoke は、認証済み browser session / test account credential が無いため未実施。今回の変更は auth flow、remote preference apply、DB、migration、storage key / payload に触れていない。
+- PR #234 main merge 前に残る確認事項:
+  - この stacked PR を `codex/supabase-auth-first-slice` に merge 後、Workers branch / production 相当で public routes と account/auth routes の最終 smoke を行う。
+  - 実 account session で account preference save / remote display settings apply / sign-out 周辺が退行していないことを最終確認する。
+
 ## Active Priorities
 
 1. Workers production route 500 investigation / account navigation polish

@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { normalizeLocale } from "@/lib/locale";
 import { normalizeThemePreference } from "@/lib/local-preferences";
+import { clearRecoverySessionPending, isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const allowedAuthNextPaths = new Set([
@@ -126,6 +127,7 @@ export async function signInWithPasswordAction(formData: FormData) {
     redirectWithAuth(`/login?next=${encodeURIComponent(next)}`, "login-error");
   }
 
+  await clearRecoverySessionPending();
   redirectWithAuth(next, "signed-in");
 }
 
@@ -190,11 +192,23 @@ export async function resetPasswordEmailAction(formData: FormData) {
 }
 
 export async function updatePasswordAction(formData: FormData) {
+  const recoveryPending = await isRecoverySessionPending();
+  const currentPassword = readRequiredString(formData, "currentPassword");
   const password = readRequiredString(formData, "password");
   const passwordConfirm = readRequiredString(formData, "passwordConfirm");
 
   if (!password || !passwordConfirm) {
     redirectWithAuth("/account/security", "password-required");
+  }
+
+  const passwordAttributes: { password: string; current_password?: string } = { password };
+
+  if (!recoveryPending) {
+    if (!currentPassword) {
+      redirectWithAuth("/account/security", "current-password-required");
+    }
+
+    passwordAttributes.current_password = currentPassword;
   }
 
   if (password.length < 8) {
@@ -219,12 +233,19 @@ export async function updatePasswordAction(formData: FormData) {
     redirectWithAuth("/login?next=/account/security", "sign-in-required");
   }
 
-  const { error } = await supabase.auth.updateUser({ password });
+  const { error } = await supabase.auth.updateUser(recoveryPending ? { password } : passwordAttributes);
 
   if (error) {
     redirectWithAuth("/account/security", "password-update-error");
   }
 
+  if (recoveryPending) {
+    await supabase.auth.signOut();
+    await clearRecoverySessionPending();
+    redirectWithAuth("/login", "password-updated");
+  }
+
+  await clearRecoverySessionPending();
   redirectWithAuth("/account", "password-updated");
 }
 
@@ -236,6 +257,7 @@ export async function signOutAction() {
   }
 
   await supabase.auth.signOut();
+  await clearRecoverySessionPending();
   redirectWithAuth("/login", "signed-out");
 }
 

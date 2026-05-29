@@ -1,5 +1,6 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { clearRecoverySessionResponse, markRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const allowedNextPaths = new Set(["/account", "/account/security"]);
@@ -45,6 +46,19 @@ export async function GET(request: NextRequest) {
         type: type as EmailOtpType
       });
 
-  redirectUrl.searchParams.set("auth", error ? "confirm-error" : "signed-in");
-  return NextResponse.redirect(redirectUrl);
+  const isPasswordRecovery = type === passwordRecoveryOtpType;
+  if (error) {
+    redirectUrl.searchParams.set("auth", "confirm-error");
+  } else if (isPasswordRecovery) {
+    redirectUrl.searchParams.set("auth", "recovery-pending");
+  } else {
+    redirectUrl.searchParams.set("auth", "signed-in");
+  }
+  const response = NextResponse.redirect(redirectUrl);
+
+  if (!error && isPasswordRecovery) {
+    return markRecoverySessionPending(response);
+  }
+
+  return clearRecoverySessionResponse(response);
 }

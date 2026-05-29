@@ -1,9 +1,22 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
+import { authRecoverySessionCookieName } from "@/lib/supabase/recovery-session";
 
 export async function middleware(request: NextRequest) {
   const config = getSupabasePublicConfig();
+  const pathname = request.nextUrl.pathname;
+
+  if (
+    request.cookies.get(authRecoverySessionCookieName)?.value === "1" &&
+    pathname.startsWith("/account") &&
+    pathname !== "/account/security"
+  ) {
+    const redirectUrl = new URL("/account/security", request.url);
+    redirectUrl.searchParams.set("auth", "recovery-pending");
+    return NextResponse.redirect(redirectUrl);
+  }
+
   let response = NextResponse.next({
     request
   });

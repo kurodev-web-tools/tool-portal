@@ -473,6 +473,13 @@ Out of scope:
 - service_role / secret key を browser / source-controlled docs に入れること。
 
 検証:
+- account remote display settings apply:
+  - `components/account/AccountRemoteDisplaySettingsApplier.tsx` を追加し、signed-in session の `remotePreferences.locale/theme` を既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` key へ反映する。
+  - `PortalShell` に applier を接続し、redirect 先が `/`、`/tools`、tool page、`/account` のいずれでも shared account session から反映できる形にした。
+  - remote に保存済み値が無い場合は何もしない。反映対象は `locale` / `theme` のみ。
+  - 既存 storage key / payload / Supabase schema / migration は変更しない。secret / service_role key は要求・表示・保存しない。
+  - 次の CTA 強化 PR: Home / sidebar / account CTA の文言を、`アカウントを作ると、表示言語とテーマを別のブラウザやスマホでも引き継げます。` の方向へ強める。
+- `node scripts/account-remote-display-settings-contract.mjs`
 - `node scripts/preference-classification-contract.mjs`
 - `node scripts/local-preference-adapter-contract.mjs`
 - `node scripts/account-preferences-shell-contract.mjs`
@@ -486,6 +493,27 @@ Out of scope:
 - UI / visible copy を触った場合は対象 page を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
 - 可能なら Supabase 実環境で、別ブラウザ相当の localStorage 空状態から login し、保存済み locale/theme が反映されることを確認する。
 - 実環境 smoke ができない場合は、contract / Playwright / local production server で確認できた範囲と未確認範囲を `task.md` に明記する。
+
+current slice verification:
+- RED: `node scripts/account-remote-display-settings-contract.mjs` failed before implementation because `components/account/AccountRemoteDisplaySettingsApplier.tsx` did not exist.
+- Account related contracts passed:
+  - `node scripts/account-remote-display-settings-contract.mjs`
+  - `node scripts/preference-classification-contract.mjs`
+  - `node scripts/local-preference-adapter-contract.mjs`
+  - `node scripts/account-preferences-shell-contract.mjs`
+  - `node scripts/supabase-auth-first-slice-contract.mjs`
+  - `node scripts/account-auth-public-readiness-contract.mjs`
+  - `node scripts/workers-route-smoke-account-nav-contract.mjs`
+- `npm run build` passed。server-runtime build のため static export alias postbuild は `out` missing を正常 skip。Next.js middleware deprecation warning と webpack cache warning は既存残リスク。
+- `npm run lint` passed。
+- `npx tsc --noEmit` passed。
+- `git diff --check` passed。LF/CRLF conversion warning only。
+- UI visible copy / layout は変更していないため、幅別 visual check は未実施。
+
+current slice remaining risks:
+- Supabase 実環境での「別ブラウザ相当の localStorage 空状態から login し、保存済み locale/theme が反映される」smoke は、テスト用 account credential / authenticated browser session が無いため未実施。
+- remote preference apply は code path / contract で確認。stacked PR merge 後、Workers branch 上で `/`、`/tools`、tool page、`/account` それぞれの login redirect 後に `v-streamer-tools-locale` / `v-streamer-tools-theme` が保存済み値へ反映されることを最終確認する。
+- 次の CTA 強化 PR では、Home / sidebar / account CTA の登録訴求 copy を強める。ただし下書き、予定本文、画像、handoff payload は自動アップロードされないことを明記する。
 
 完了時:
 - `task.md` に実装内容、確認結果、残リスク、次の CTA 強化 PR への引き継ぎを残してください。

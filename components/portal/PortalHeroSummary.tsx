@@ -7,10 +7,12 @@ import {
   suiteCount
 } from "@/lib/suites";
 import { portalCopy } from "@/lib/portal-copy";
+import type { AccountSessionState } from "@/lib/supabase/session";
 
-export function PortalHeroSummary() {
+export function PortalHeroSummary({ accountStatus }: { accountStatus: AccountSessionState }) {
   const { locale } = useLocale();
   const copy = portalCopy[locale].home.hero;
+  const accountHref = accountStatus.authStatus === "signed-in" ? "/account" : "/login";
   const summaryItems = [
     {
       label: copy.summary.availableTools.label,
@@ -56,7 +58,7 @@ export function PortalHeroSummary() {
         </div>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">
           {copy.accountNote}
-          <Link href="/login" className="ml-2 font-bold text-primary-strong underline-offset-4 hover:underline">
+          <Link href={accountHref} className="ml-2 font-bold text-primary-strong underline-offset-4 hover:underline">
             {copy.accountCta}
           </Link>
         </p>

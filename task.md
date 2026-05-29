@@ -12,6 +12,61 @@
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
 - 完了済みの Thumbnail Editor IRIAM 1:1 / material / font expansion の詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` に寄せる。
 
+## Current Slice: PR #234 final main readiness after PR #247
+
+- branch / worktree: `codex/supabase-auth-final-main-readiness` / `D:/V_streamer_tools/.worktrees/supabase-auth-final-main-readiness`。
+- base / merge gate:
+  - `git fetch origin --prune` completed on 2026-05-29。
+  - confirmation source branch is `origin/codex/supabase-auth-first-slice` at `6b4f580`。
+  - PR #247 `codex/supabase-auth-security-hardening` is merged into `codex/supabase-auth-first-slice`; merge commit is `6b4f58048f87b8fa373bec27bfd57d0028b4316b`, merged at 2026-05-29T11:23:06Z。
+  - PR #234 is still OPEN / draft at this check (`head=codex/supabase-auth-first-slice`, `base=codex/account-preferences-shell`)。
+- code / security boundary review:
+  - `app/account/actions.ts` keeps auth `next` values relative and allowlisted only, rejects `//...` and absolute URL payloads, and falls back to `/account`。
+  - auth email redirect origin prefers `NEXT_PUBLIC_SITE_URL`; request `Origin` fallback is accepted only when it is in `NEXT_PUBLIC_AUTH_REDIRECT_ORIGINS` or matches request `host` / `x-forwarded-host`。
+  - `/account/security` keeps page-level `getAccountSessionState()` gate and redirects signed-out users to `/login?next=/account/security` before rendering the password update form。
+  - `updatePasswordAction()` and `saveLocaleThemePreferenceAction()` still validate the server-side user via `auth.getUser()` before protected updates。
+  - Browser/client UI and auth actions do not use `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `service_role` for runtime access. The trusted env names remain documented only in the boundary contract.
+  - No storage key / payload / IndexedDB / Supabase schema / migration / RLS policy change was made in this readiness branch.
+- Workers route smoke on `https://v-streamer-tools.kurodev-web-tools.workers.dev`:
+  - Playwright CLI was used for scripted browser smoke because an in-app browser control was not callable from this run.
+  - `/`, `/tools`, `/tools/schedule-calendar`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker`, `/login`, `/signup`, and `/reset-password` returned 200 with no console error, no page error, and no horizontal overflow at 1366px。
+  - `/account` ended at `/login/?next=%2Faccount` with no console error, no page error, and no horizontal overflow。
+  - `/account/security` ended at `/login/?next=%2Faccount%2Fsecurity`; `input[name="passwordConfirm"]` count was 0, so the password update form was not exposed while signed out。
+  - Protected route width smoke at `390 / 820 / 1024 / 1280 / 1366px` confirmed `/account` and `/account/security` both redirect to login with no horizontal overflow. `/account/security` did not expose `passwordConfirm` at any checked width。
+- `next` / pseudo-attack smoke:
+  - Playwright checked `/login?next=//evil.example`, `/login?next=https://evil.example`, encoded `//evil.example`, and encoded `https://evil.example/phish`; the rendered hidden `next` value was `/account` in all cases and did not contain `evil.example`。
+  - Safe single POSTs with `Origin: https://evil.example` were sent to `/account/security/`, `/account/`, `/login/?next=https%3A%2F%2Fevil.example`, and `/reset-password/`。
+  - `/account/security/` returned 307 to `/login?next=/account/security`; `/account/` returned 307 to `/login?next=/account`。
+  - The login/reset POST probes did not return success auth markers. No probe produced `auth=signed-in`, `auth=signed-out`, `auth=password-updated`, `auth=preferences-saved`, an external `Location`, or a 5xx response。
+  - Live arbitrary-Origin email redirect behavior was not exercised because that would require a real signup/reset flow. Code inspection and `node scripts/auth-security-hardening-contract.mjs` cover the configured-origin-first and allowlisted/same-host fallback behavior.
+- live login smoke:
+  - Not executed in this run because no safe authenticated browser session or test account credential was available. Credentials were not requested, displayed, or stored.
+  - Therefore login / account preference save / remote display settings apply / logout / sign-out redirect were not freshly re-exercised here. Prior Workers auth verification exists in earlier task history, but this readiness entry treats the current run as unauthenticated-only.
+- verification result:
+  - `node scripts/auth-security-hardening-contract.mjs` passed。
+  - `node scripts/site-tips-dialog-contract.mjs` passed。
+  - `node scripts/account-cta-display-settings-copy-contract.mjs` passed。
+  - `node scripts/account-remote-display-settings-contract.mjs` passed。
+  - `node scripts/preference-classification-contract.mjs` passed。
+  - `node scripts/local-preference-adapter-contract.mjs` passed。
+  - `node scripts/account-preferences-shell-contract.mjs` passed。
+  - `node scripts/supabase-auth-first-slice-contract.mjs` passed。
+  - `node scripts/account-auth-public-readiness-contract.mjs` passed。
+  - `node scripts/workers-route-smoke-account-nav-contract.mjs` passed。
+  - `npm run build:cloudflare` passed after `npm ci` was run in the new worktree. Known residual warnings remain: OpenNext Windows compatibility warning, Next.js `middleware` deprecation warning, webpack cache warnings, and Node `punycode` deprecation warning。
+  - `npm run build` passed. Server-runtime build skipped static export aliases because `out/` is absent, as expected。
+  - `npm run lint` passed。
+  - `npx tsc --noEmit` passed。
+  - `git diff --check` passed after this docs-only update。
+- remaining risks:
+  - Fresh live authenticated Supabase smoke was not possible without credentials/session, so current-run coverage is unauthenticated Workers route smoke, open-redirect-style `next` smoke, pseudo-CSRF simple POST smoke, code review, and contracts.
+  - No live DB/RLS probe was run because this task explicitly avoids secret/service_role keys and no authenticated test user was available.
+  - OpenNext Windows / middleware deprecation warnings remain known non-blocking warnings for this branch.
+- PR #234 readiness judgment:
+  - No blocker was found that requires schema / migration / RLS policy / storage payload changes.
+  - Based on PR #247 merge state, code/security boundary review, live Workers unauthenticated route smoke, pseudo-attack smoke, and full local verification, PR #234 can move to draft解除 / main merge judgment.
+  - If the release gate requires a same-run authenticated smoke, treat login / preference save / remote display settings apply / logout as the only remaining manual account-session check before landing.
+
 ## Current Slice: Supabase auth security hardening before PR #234 main merge
 
 - branch / worktree for this handoff note: `codex/supabase-auth-security-hardening-plan` / `D:/V_streamer_tools/.worktrees/supabase-auth-security-hardening-plan`。

@@ -12,6 +12,54 @@
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
 - 完了済みの Thumbnail Editor IRIAM 1:1 / material / font expansion の詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` に寄せる。
 
+## Current Slice: PR #234 final readiness after PR #244
+
+- branch / worktree: `codex/supabase-auth-final-readiness` / `D:/V_streamer_tools/.worktrees/supabase-auth-final-readiness`。
+- base / merge gate:
+  - `origin/codex/supabase-auth-first-slice` fetched on 2026-05-29。
+  - PR #244 `codex/portal-tips-modal` is merged into `codex/supabase-auth-first-slice`; merge commit is `60e9155` and head commit is `667900c`。
+  - This check is a readiness-only stacked branch before PR #234 main merge judgment. No storage key / payload / Supabase schema / migration / auth flow changes were made.
+- verification completed:
+  - `node scripts/site-tips-dialog-contract.mjs` passed。
+  - `node scripts/account-cta-display-settings-copy-contract.mjs` passed。
+  - `node scripts/account-remote-display-settings-contract.mjs` passed。
+  - `node scripts/preference-classification-contract.mjs` passed。
+  - `node scripts/local-preference-adapter-contract.mjs` passed。
+  - `node scripts/account-preferences-shell-contract.mjs` passed。
+  - `node scripts/supabase-auth-first-slice-contract.mjs` passed。
+  - `node scripts/account-auth-public-readiness-contract.mjs` passed。
+  - `node scripts/workers-route-smoke-account-nav-contract.mjs` passed。
+  - `npm run build:cloudflare` passed。OpenNext Windows compatibility warning, Next.js `middleware` deprecation warning, and webpack cache warnings remain as known residual warnings.
+  - `npm run build` passed。server-runtime build のため static export alias postbuild は `out` missing を normal skip。
+  - `npm run lint` passed。
+  - `npx tsc --noEmit` passed。
+  - `git diff --check` passed。
+- Workers route smoke on `https://v-streamer-tools.kurodev-web-tools.workers.dev/`:
+  - Public routes returned 200 and showed one visible Tips trigger: `/`, `/tools`, `/tools/schedule-calendar`, `/tools/thumbnail-editor`, `/tools/sns-split-image-maker`。
+  - Account/auth routes returned non-500 and showed no Tips trigger: `/login` 200, `/signup` 200, `/reset-password` 200, `/account` redirected to `/login/?next=%2Faccount` with 200, `/account/security` 200。
+  - No horizontal overflow, console error, or page error was detected in the scripted smoke.
+- Tips modal result:
+  - Public routes opened the modal from the visible Tips trigger.
+  - Default `このページ` tab was visible and route-specific copy matched each route.
+  - `アカウント` tab switching worked.
+  - Account storage-boundary copy was visible: drafts, schedule text, images, and handoff payloads are not uploaded automatically and remain browser-local work.
+  - Close button and Escape close both worked.
+  - Account/auth routes did not expose the Tips trigger.
+- Width-based Workers smoke:
+  - `/`, `/tools`, `/tools/schedule-calendar`, and `/account` were checked at `390 / 820 / 1024 / 1280 / 1366px`。
+  - Public routes showed one visible Tips trigger at every checked width.
+  - `/account` redirected to `/login/?next=%2Faccount`, showed no Tips trigger, and had no horizontal overflow at every checked width.
+- Supabase actual login smoke:
+  - Not executed in this isolated Playwright context because there was no authenticated Supabase browser session or test account credential available. Credentials were not requested.
+  - Therefore live login / logout / account preference save / remote display settings apply / sign-out redirect were not re-exercised in this final readiness run.
+- remaining risks:
+  - The authenticated Supabase flow was not freshly exercised after PR #244 in this run.
+  - OpenNext on Windows still emits compatibility warnings; Cloudflare Workers production smoke is the runtime evidence for this check.
+  - Next.js `middleware` deprecation warning remains because this branch keeps the current OpenNext-compatible middleware boundary.
+- PR #234 readiness judgment:
+  - No blocker was found in PR #244 merge state, Workers public/account/auth route smoke, Tips visibility boundary, modal interaction, or local contract/build/lint/type verification.
+  - From this final readiness check, PR #234 can move from draft toward main merge judgment. If the release gate requires a fresh authenticated Supabase session smoke, perform that as the only remaining manual/live-account check before landing.
+
 ## Current Slice: Portal tips modal follow-up
 
 - branch / worktree: `codex/portal-tips-modal` / `D:/V_streamer_tools/.worktrees/portal-tips-modal`。

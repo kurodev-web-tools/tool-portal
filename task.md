@@ -12,6 +12,40 @@
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
 - 完了済みの Thumbnail Editor IRIAM 1:1 / material / font expansion の詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` に寄せる。
 
+## Current Slice: Auth production flow polish after custom domain smoke
+
+- branch / worktree: `codex/auth-flow-prod-polish` / `D:/V_streamer_tools/.worktrees/auth-flow-prod-polish`。
+- trigger:
+  - `https://streamer-tools.kuro-lab.com` の signup confirmation / login / logout / account preference save は user-side smoke で通過。
+  - HOME の `アカウントを確認` CTA は logged-in 状態でも `/login` 固定だった。
+  - password reset email は Supabase hosted verify URL -> app redirect の PKCE `code` flow になり、既存 `/auth/confirm` が `token_hash` 専用だったため recovery session handoff が不安定だった。
+  - password update 後も `/account/security` に留まり、password form が残る UX だった。
+- implementation result:
+  - HOME は server-side `getAccountSessionState()` を `PortalShell` / `PortalHome` / `PortalHeroSummary` に渡し、signed-in なら CTA を `/account`、signed-out なら `/login` にする。
+  - `/auth/confirm` は既存 `token_hash` + `verifyOtp` flow に加えて、Supabase PKCE redirect の `code` を `exchangeCodeForSession(code)` で処理する。
+  - password recovery type は引き続き `/account/security` に固定し、open redirect surface を広げない。
+  - password update success は `/account?auth=password-updated` へ戻す。
+  - `/account` toast copy に `password-updated` を追加した。
+  - password inputs に `inputMode="text"` / `autoCapitalize="none"` / `autoCorrect="off"` / `spellCheck={false}` / printable ASCII pattern を追加し、半角英数字入力を促す。password 値の server-side silent normalization は行わない。
+  - 既存 storage key / payload / IndexedDB / Supabase schema / migration / RLS policy は変更していない。
+  - secret / service_role key / Turnstile secret key は要求・表示・保存していない。
+- verification result:
+  - PASS: `node scripts/account-auth-public-readiness-contract.mjs`
+  - PASS: `node scripts/account-cta-display-settings-copy-contract.mjs`
+  - PASS: `node scripts/auth-security-hardening-contract.mjs`
+  - PASS: `node scripts/account-remote-display-settings-contract.mjs`
+  - PASS: `node scripts/supabase-auth-first-slice-contract.mjs`
+  - PASS: `node scripts/workers-route-smoke-account-nav-contract.mjs`
+  - PASS: `npm run build:cloudflare`（OpenNext Windows compatibility / middleware deprecation / Node punycode warnings only）
+  - PASS: `npm run build`（middleware deprecation / webpack cache warnings only）
+  - PASS: `npm run lint`
+  - PASS: `npx tsc --noEmit`
+  - PASS: `git diff --check`
+- post-deploy smoke:
+  - logged-in HOME `アカウントを確認` -> `/account`。
+  - password reset email link -> `/auth/confirm` -> `/account/security` with recovery session。
+  - password update -> `/account?auth=password-updated`。
+
 ## Current Slice: PR #234 final main readiness after PR #247
 
 - branch / worktree: `codex/supabase-auth-final-main-readiness` / `D:/V_streamer_tools/.worktrees/supabase-auth-final-main-readiness`。

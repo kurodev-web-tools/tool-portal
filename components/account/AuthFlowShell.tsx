@@ -207,6 +207,11 @@ export function AuthFlowShell({
                 name="password"
                 type="password"
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
+                inputMode="text"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                pattern="[\x21-\x7E]*"
                 placeholder={copy.passwordPlaceholder}
                 className="min-w-0 rounded-base border border-border bg-surface px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary"
               />
@@ -219,6 +224,11 @@ export function AuthFlowShell({
                 name="passwordConfirm"
                 type="password"
                 autoComplete="new-password"
+                inputMode="text"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                pattern="[\x21-\x7E]*"
                 placeholder={copy.passwordPlaceholder}
                 className="min-w-0 rounded-base border border-border bg-surface px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary"
               />

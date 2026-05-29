@@ -35,7 +35,7 @@ assertIncludes(
 const portalHero = read("components/portal/PortalHeroSummary.tsx");
 assertIncludes(
   portalHero,
-  ["copy.accountCta", "href=\"/login\"", "copy.accountNote"],
+  ["copy.accountCta", "href={accountHref}", "copy.accountNote", "accountStatus.authStatus === \"signed-in\" ? \"/account\" : \"/login\""],
   "home account CTA"
 );
 

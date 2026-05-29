@@ -43,6 +43,7 @@ const accountCopy = {
       "supabase-env-missing": "アカウント機能の公開設定が未完了です。",
       "confirm-link-invalid": "ログイン確認リンクが不正です。",
       "confirm-error": "ログイン確認に失敗しました。",
+      "password-updated": "パスワードを更新しました。",
       "preference-save-error": "表示設定の保存に失敗しました。時間をおいて再度お試しください。"
     },
     openPlan: "現在のアカウント",
@@ -86,6 +87,7 @@ const accountCopy = {
       "supabase-env-missing": "Account publishing settings are not ready.",
       "confirm-link-invalid": "The sign-in confirmation link is invalid.",
       "confirm-error": "Could not confirm sign-in.",
+      "password-updated": "Password updated.",
       "preference-save-error": "Could not save display settings. Please try again later."
     },
     openPlan: "Current account",

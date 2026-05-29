@@ -57,6 +57,11 @@ function walkForNextDirs(currentDir) {
 }
 
 if (!existsSync(outDir) || !statSync(outDir).isDirectory()) {
+  if (!checkOnly) {
+    console.log("Static export RSC aliases skipped: out directory is missing for server-runtime build.");
+    process.exit(0);
+  }
+
   console.error("out directory is missing. Run npm run build before checking static export RSC aliases.");
   process.exit(1);
 }

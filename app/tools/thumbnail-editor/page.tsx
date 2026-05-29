@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: "A Kuro Stream Kit tool for choosing purpose-built presets and replacing text or standee images to assemble VTuber thumbnails."
 };
 
+export const dynamic = "force-dynamic";
+
 export default function ThumbnailEditorPage() {
   return (
     <PortalShell mode="workspace">

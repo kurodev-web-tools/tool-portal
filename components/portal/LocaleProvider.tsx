@@ -1,12 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  defaultLocale,
-  localePreferenceStorageKey,
-  resolveInitialLocale,
-  type Locale
-} from "@/lib/locale";
+import { defaultLocale, getBrowserPreferredLocale, type Locale } from "@/lib/locale";
+import { readLocalLocalePreference, writeLocalLocalePreference } from "@/lib/local-preferences";
 
 type LocaleContextValue = {
   locale: Locale;
@@ -15,22 +11,6 @@ type LocaleContextValue = {
 };
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
-
-function readStoredLocale() {
-  try {
-    return window.localStorage.getItem(localePreferenceStorageKey);
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredLocale(locale: Locale) {
-  try {
-    window.localStorage.setItem(localePreferenceStorageKey, locale);
-  } catch {
-    // Storage can be unavailable in privacy-restricted contexts.
-  }
-}
 
 function getNavigatorLanguages() {
   if (window.navigator.languages.length > 0) {
@@ -45,7 +25,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const [isLocaleReady, setIsLocaleReady] = useState(false);
 
   useEffect(() => {
-    setLocaleState(resolveInitialLocale(readStoredLocale(), getNavigatorLanguages()));
+    setLocaleState(readLocalLocalePreference() ?? getBrowserPreferredLocale(getNavigatorLanguages()));
     setIsLocaleReady(true);
   }, []);
 
@@ -56,7 +36,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const setLocale = useCallback((nextLocale: Locale) => {
     setLocaleState(nextLocale);
     setIsLocaleReady(true);
-    writeStoredLocale(nextLocale);
+    writeLocalLocalePreference(nextLocale);
   }, []);
 
   const value = useMemo(() => ({ locale, isLocaleReady, setLocale }), [isLocaleReady, locale, setLocale]);

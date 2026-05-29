@@ -2,6 +2,7 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 
 const ignoredPaths = [
   ".next/**",
+  ".open-next/**",
   ".worktrees/**",
   "out/**",
   "output/**",

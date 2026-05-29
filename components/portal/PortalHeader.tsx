@@ -6,16 +6,44 @@ import { usePathname } from "next/navigation";
 import { LanguageSwitch } from "@/components/portal/LanguageSwitch";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
+import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
+import type { AccountSessionState } from "@/lib/supabase/session";
 import { sidebarTools } from "@/lib/tools";
 
-export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspace" }) {
+type NavigationCopy = (typeof portalCopy)["ja"]["navigation"] | (typeof portalCopy)["en"]["navigation"];
+
+function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState) {
+  const signedIn = accountStatus.authStatus === "signed-in";
+  const email = accountStatus.user?.email ?? null;
+
+  return {
+    accountHref: signedIn ? "/account" : "/login",
+    accountCta: {
+      title: signedIn ? copy.loginSignedInTitle : copy.loginTitle,
+      body: signedIn ? (email ?? copy.loginSignedInBody) : copy.loginBody,
+      button: signedIn ? copy.accountSettingsButton : copy.loginButton
+    }
+  };
+}
+
+export function PortalHeader({
+  mode = "default",
+  accountStatus
+}: {
+  mode?: "default" | "workspace";
+  accountStatus: AccountSessionState;
+}) {
   const { locale } = useLocale();
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const showDesktopTitle = mode !== "workspace";
   const copy = portalCopy[locale].navigation;
+  const { accountHref, accountCta } = getAccountCta(copy, accountStatus);
+  const isAccountRoute = pathname.startsWith("/account") || pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/reset-password");
+  const showTipsButton = !isAccountRoute;
+  const showSettingsControls = mode !== "workspace" && !isAccountRoute;
   const title = useMemo(() => {
     if (pathname === "/") {
       return "Kuro Stream Kit";
@@ -37,6 +65,10 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
       return copy.toolTitles.tools;
     }
 
+    if (pathname.startsWith("/account")) {
+      return copy.toolTitles.account;
+    }
+
     return "Kuro Stream Kit";
   }, [copy.toolTitles, pathname]);
 
@@ -54,8 +86,8 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
   }, [drawerOpen]);
 
   const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/tools", label: "Tools" },
+    { href: "/", label: copy.home },
+    { href: "/tools", label: copy.tools },
     ...sidebarTools.map((tool) => ({
       href: tool.href,
       label: getToolCopy(tool.id, locale).name
@@ -72,23 +104,26 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
           <span className="min-w-0 truncate text-base font-bold tracking-tight text-foreground">{title}</span>
         </div>
         {showDesktopTitle ? <span className="hidden min-w-0 truncate text-base font-bold tracking-tight text-foreground lg:block">{title}</span> : <span className="hidden lg:block" />}
-        <div className={mode === "workspace" ? "hidden" : "hidden items-center gap-3 lg:flex"}>
-          <LanguageSwitch />
-          <ThemeToggle />
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {showTipsButton ? <SiteTipsDialog pathname={pathname} variant="header" /> : null}
+          <div className={showSettingsControls ? "hidden items-center gap-3 lg:flex" : "hidden"}>
+            <LanguageSwitch />
+            <ThemeToggle />
+          </div>
+          <button
+            type="button"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-base border border-border bg-surface text-foreground lg:hidden"
+            aria-label={copy.menuOpen}
+            aria-expanded={drawerOpen}
+            onClick={() => setDrawerOpen(true)}
+          >
+            <span className="flex flex-col gap-1">
+              <span className="block h-0.5 w-5 rounded-full bg-current" />
+              <span className="block h-0.5 w-5 rounded-full bg-current" />
+              <span className="block h-0.5 w-5 rounded-full bg-current" />
+            </span>
+          </button>
         </div>
-        <button
-          type="button"
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-base border border-border bg-surface text-foreground lg:hidden"
-          aria-label={copy.menuOpen}
-          aria-expanded={drawerOpen}
-          onClick={() => setDrawerOpen(true)}
-        >
-          <span className="flex flex-col gap-1">
-            <span className="block h-0.5 w-5 rounded-full bg-current" />
-            <span className="block h-0.5 w-5 rounded-full bg-current" />
-            <span className="block h-0.5 w-5 rounded-full bg-current" />
-          </span>
-        </button>
       </header>
       {drawerOpen ? (
         <>
@@ -136,6 +171,17 @@ export function PortalHeader({ mode = "default" }: { mode?: "default" | "workspa
                 );
               })}
             </nav>
+            <div className="mb-4 rounded-base border border-border bg-surface-muted/55 p-3">
+              <p className="text-sm font-black text-foreground">{accountCta.title}</p>
+              <p className="mt-1 break-words text-xs leading-5 text-muted">{accountCta.body}</p>
+              <Link
+                href={accountHref}
+                onClick={() => setDrawerOpen(false)}
+                className="mt-3 inline-flex w-full justify-center rounded-base bg-primary px-3 py-2 text-sm font-bold text-white transition hover:bg-primary-strong"
+              >
+                {accountCta.button}
+              </Link>
+            </div>
             <PortalSettingsPanel variant="drawer" />
           </aside>
         </>

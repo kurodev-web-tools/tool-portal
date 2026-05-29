@@ -193,6 +193,8 @@ export const portalCopy = {
         ],
         primaryCta: "ツール一覧を見る",
         secondaryCta: "Schedule Calendar を開く",
+        accountNote: "ログインすると表示言語とテーマを別ブラウザやスマホでも引き継げます。下書き、予定本文、画像、handoff payload は自動アップロードしません。",
+        accountCta: "アカウントを確認",
         panelTitle: "公開中の使い方",
         panelLead: "入口では今すぐ使える3ツールを優先し、追加予定の候補は状態を分けて表示します。",
         summary: {
@@ -245,6 +247,9 @@ export const portalCopy = {
     navigation: {
       menuOpen: "メニューを開く",
       menuClose: "メニューを閉じる",
+      home: "Home",
+      tools: "Tools",
+      account: "アカウント",
       settings: "Settings",
       language: "表示言語",
       theme: "テーマ",
@@ -253,13 +258,17 @@ export const portalCopy = {
       future: "将来の機能（予定）",
       futureItems: ["お気に入り", "最近使ったツール", "ピン留め"],
       comingSoon: "近日対応",
-      loginTitle: "ログインするともっと便利に",
-      loginBody: "お気に入りや履歴の保存など、あなた専用の体験は後続フェーズで追加予定です。",
-      loginButton: "ログイン予定",
+      loginTitle: "表示設定をアカウントに保存",
+      loginBody: "ログインすると表示言語とテーマを別ブラウザやスマホでも引き継げます。下書き、予定本文、画像、handoff payload は自動アップロードしません。",
+      loginSignedInTitle: "アカウント",
+      loginSignedInBody: "ログイン中のアカウント設定と共通設定を確認できます。",
+      loginButton: "ログイン / 登録",
+      accountSettingsButton: "アカウント設定",
       toolTitles: {
         "schedule-calendar": "スケジュールカレンダー",
         "thumbnail-editor": "Thumbnail Editor",
         "sns-split-image-maker": "SNS分割画像メーカー",
+        account: "アカウント設定",
         tools: "ツール一覧"
       }
     },
@@ -281,6 +290,8 @@ export const portalCopy = {
         ],
         primaryCta: "View tools",
         secondaryCta: "Open Schedule Calendar",
+        accountNote: "Carry language and theme across browsers and phones when you log in. Drafts, schedule text, images, and handoff payloads are not uploaded automatically.",
+        accountCta: "Check account",
         panelTitle: "Current workflow",
         panelLead: "The portal prioritizes the three public tools now available and separates planned candidates by status.",
         summary: {
@@ -333,6 +344,9 @@ export const portalCopy = {
     navigation: {
       menuOpen: "Open menu",
       menuClose: "Close menu",
+      home: "Home",
+      tools: "Tools",
+      account: "Account",
       settings: "Settings",
       language: "Language",
       theme: "Theme",
@@ -341,13 +355,17 @@ export const portalCopy = {
       future: "Future features",
       futureItems: ["Favorites", "Recent tools", "Pinned tools"],
       comingSoon: "Planned",
-      loginTitle: "Sign in features are planned",
-      loginBody: "Favorites, history, and other personalized features are planned for a later phase.",
-      loginButton: "Sign-in planned",
+      loginTitle: "Save display settings",
+      loginBody: "Carry language and theme across browsers and phones when you log in. Drafts, schedule text, images, and handoff payloads are not uploaded automatically.",
+      loginSignedInTitle: "Account",
+      loginSignedInBody: "Review your account settings and shared preferences.",
+      loginButton: "Log in / Sign up",
+      accountSettingsButton: "Account settings",
       toolTitles: {
         "schedule-calendar": "Schedule Calendar",
         "thumbnail-editor": "Thumbnail Editor",
         "sns-split-image-maker": "SNS Split Image Maker",
+        account: "Account",
         tools: "Tools"
       }
     },

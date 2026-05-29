@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: "A public Kuro Stream Kit tool for adding, editing, reviewing, backing up, and handing off stream schedules."
 };
 
+export const dynamic = "force-dynamic";
+
 export default function ScheduleCalendarPage() {
   return (
     <PortalShell mode="workspace">

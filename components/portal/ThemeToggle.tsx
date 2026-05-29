@@ -2,30 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { useLocale } from "@/components/portal/LocaleProvider";
+import {
+  readLocalThemePreference,
+  themePreferenceChangeEvent,
+  themePreferenceStorageKey,
+  writeLocalThemePreference,
+  type ThemePreference
+} from "@/lib/local-preferences";
 import { portalCopy } from "@/lib/portal-copy";
 
-type Theme = "light" | "dark";
 type ThemeToggleVariant = "default" | "compact";
 
-const storageKey = "v-streamer-tools-theme";
+export { themePreferenceStorageKey } from "@/lib/local-preferences";
 
-function getInitialTheme(): Theme {
+function getInitialTheme(): ThemePreference {
   if (typeof window === "undefined") {
     return "light";
   }
 
-  const stored = window.localStorage.getItem(storageKey);
-  if (stored === "light" || stored === "dark") {
-    return stored;
-  }
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return readLocalThemePreference() ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
 }
 
 export function ThemeToggle({ variant = "default" }: { variant?: ThemeToggleVariant }) {
   const { locale } = useLocale();
   const copy = portalCopy[locale].themeToggle;
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<ThemePreference>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -35,12 +36,40 @@ export function ThemeToggle({ variant = "default" }: { variant?: ThemeToggleVari
   }, []);
 
   useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== themePreferenceStorageKey) {
+        return;
+      }
+
+      if (event.newValue === "light" || event.newValue === "dark") {
+        setTheme(event.newValue);
+      }
+    };
+
+    const handleThemeChange = (event: Event) => {
+      const nextTheme = (event as CustomEvent<ThemePreference>).detail;
+      if (nextTheme === "light" || nextTheme === "dark") {
+        setTheme(nextTheme);
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener(themePreferenceChangeEvent, handleThemeChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(themePreferenceChangeEvent, handleThemeChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!mounted) {
       return;
     }
 
     document.documentElement.classList.toggle("dark", theme === "dark");
-    window.localStorage.setItem(storageKey, theme);
+    writeLocalThemePreference(theme);
+    window.dispatchEvent(new CustomEvent(themePreferenceChangeEvent, { detail: theme }));
   }, [mounted, theme]);
 
   if (variant === "compact") {

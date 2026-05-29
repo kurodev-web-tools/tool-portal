@@ -4,13 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
+import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
+import type { AccountSessionState } from "@/lib/supabase/session";
 import { sidebarTools } from "@/lib/tools";
-
-const fixedItems = [
-  { label: "Home", href: "/", icon: "H" },
-  { label: "Tools", href: "/tools", icon: "T" }
-];
 
 function SidebarLink({
   href,
@@ -45,10 +42,40 @@ function SidebarLink({
   );
 }
 
-export function PortalSidebar({ mode = "default" }: { mode?: "default" | "workspace" }) {
+type NavigationCopy = (typeof portalCopy)["ja"]["navigation"] | (typeof portalCopy)["en"]["navigation"];
+
+function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState) {
+  const signedIn = accountStatus.authStatus === "signed-in";
+  const email = accountStatus.user?.email ?? null;
+
+  return {
+    signedIn,
+    accountHref: signedIn ? "/account" : "/login",
+    accountCta: {
+      title: signedIn ? copy.loginSignedInTitle : copy.loginTitle,
+      body: signedIn ? (email ?? copy.loginSignedInBody) : copy.loginBody,
+      button: signedIn ? copy.accountSettingsButton : copy.loginButton
+    }
+  };
+}
+
+export function PortalSidebar({
+  mode = "default",
+  accountStatus
+}: {
+  mode?: "default" | "workspace";
+  accountStatus: AccountSessionState;
+}) {
   const { locale } = useLocale();
+  const pathname = usePathname();
   const showWorkspaceSettings = mode === "workspace";
   const copy = portalCopy[locale].navigation;
+  const { signedIn, accountHref, accountCta } = getAccountCta(copy, accountStatus);
+  const accountRailLabel = signedIn ? copy.accountSettingsButton : copy.loginButton;
+  const fixedItems = [
+    { label: copy.home, href: "/", icon: "H" },
+    { label: copy.tools, href: "/tools", icon: "T" }
+  ];
 
   return (
     <aside className="hidden w-20 shrink-0 border-r border-border bg-surface/78 px-2 py-5 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:overflow-hidden xl:w-72 xl:px-4 xl:py-6">
@@ -91,30 +118,38 @@ export function PortalSidebar({ mode = "default" }: { mode?: "default" | "worksp
         </section>
       </nav>
 
-      {showWorkspaceSettings ? (
-        <div className="mt-auto flex flex-col items-center gap-3 pt-5 xl:hidden">
-          <PortalSettingsPanel variant="rail" />
-        </div>
-      ) : null}
+      <div className="mt-auto flex flex-col items-center gap-3 pt-5 xl:hidden">
+        {showWorkspaceSettings ? <SiteTipsDialog pathname={pathname} variant="rail" /> : null}
+        {showWorkspaceSettings ? <PortalSettingsPanel variant="rail" /> : null}
+        <Link
+          href={accountHref}
+          className="grid h-10 w-10 place-items-center rounded-base border border-border bg-surface text-xs font-black text-primary-strong transition hover:bg-surface-muted"
+          aria-label={accountRailLabel}
+          title={accountRailLabel}
+        >
+          A
+        </Link>
+      </div>
 
       <div className="mt-auto hidden space-y-3 pt-5 xl:block">
+        {showWorkspaceSettings ? <SiteTipsDialog pathname={pathname} variant="panel" /> : null}
         {showWorkspaceSettings ? <PortalSettingsPanel /> : null}
         {showWorkspaceSettings ? (
           <div className="rounded-base border border-dashed border-border bg-surface-muted/35 px-3 py-2">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-bold text-muted">{copy.loginButton}</span>
-              <span className="rounded-base bg-surface px-2 py-1 text-[11px] font-bold text-muted">{copy.comingSoon}</span>
+              <span className="text-xs font-bold text-muted">{accountCta.title}</span>
+              <Link href={accountHref} className="rounded-base bg-surface px-2 py-1 text-[11px] font-bold text-primary-strong">
+                {accountCta.button}
+              </Link>
             </div>
           </div>
         ) : (
           <div className="panel p-4 shadow-none">
-            <p className="text-sm font-bold text-foreground">{copy.loginTitle}</p>
-            <p className="mt-2 text-xs leading-5 text-muted">
-              {copy.loginBody}
-            </p>
-            <button className="mt-4 w-full rounded-base bg-primary px-3 py-2 text-sm font-bold text-white opacity-80" disabled>
-              {copy.loginButton}
-            </button>
+            <p className="text-sm font-bold text-foreground">{accountCta.title}</p>
+            <p className="mt-2 break-words text-xs leading-5 text-muted">{accountCta.body}</p>
+            <Link href={accountHref} className="mt-4 inline-flex w-full justify-center rounded-base bg-primary px-3 py-2 text-sm font-bold text-white transition hover:bg-primary-strong">
+              {accountCta.button}
+            </Link>
           </div>
         )}
         <p className="px-2 text-xs text-muted">© 2026 Kuro Stream Kit</p>

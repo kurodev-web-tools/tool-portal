@@ -71,6 +71,41 @@
 - completion expectation:
   - Update this section with implemented hardening, verification result, live login smoke result / unchecked scope, and PR #234 main merge judgment.
   - Commit / push / draft PR against `codex/supabase-auth-first-slice` if code or task docs changed.
+- current implementation result:
+  - branch / worktree: `codex/supabase-auth-security-hardening` / `D:/V_streamer_tools/.worktrees/supabase-auth-security-hardening`。
+  - `app/account/actions.ts` の email redirect origin は `NEXT_PUBLIC_SITE_URL` を優先し、configured URL が無い場合だけ request `Origin` を `NEXT_PUBLIC_AUTH_REDIRECT_ORIGINS` allowlist または request `host` / `x-forwarded-host` と同一 host のときに採用する形へ絞った。
+  - auth `next` は relative path のうち `/`、`/tools`、主要 tool routes、`/account`、`/account/security` の allowlist のみに限定した。既存 storage key / payload / Supabase schema / migration は変更していない。
+  - `/account/security` は page-level で `getAccountSessionState()` を確認し、signed-in 以外は `/login?next=/account/security` へ redirect する。Server Action 側の `auth.getUser()` guard は維持した。
+  - `scripts/auth-security-hardening-contract.mjs` を追加し、arbitrary Origin を email redirect URL に使わないこと、`/account/security` の page-level session gate、browser/account UI と auth actions に secret / service_role key が入らないことを contract 化した。
+- verification result:
+  - RED: `node scripts/auth-security-hardening-contract.mjs` failed before implementation because `allowedAuthNextPaths` was missing。
+  - GREEN / regression contracts passed:
+    - `node scripts/auth-security-hardening-contract.mjs`
+    - `node scripts/site-tips-dialog-contract.mjs`
+    - `node scripts/account-cta-display-settings-copy-contract.mjs`
+    - `node scripts/account-remote-display-settings-contract.mjs`
+    - `node scripts/preference-classification-contract.mjs`
+    - `node scripts/local-preference-adapter-contract.mjs`
+    - `node scripts/account-preferences-shell-contract.mjs`
+    - `node scripts/supabase-auth-first-slice-contract.mjs`
+    - `node scripts/account-auth-public-readiness-contract.mjs`
+    - `node scripts/workers-route-smoke-account-nav-contract.mjs`
+  - `npm run build:cloudflare` passed。既存の OpenNext Windows compatibility warning、Next.js `middleware` deprecation warning、webpack cache / punycode warnings は残る。
+  - `npm run build` passed。server-runtime build のため static export alias postbuild は `out` missing を正常 skip。Next.js `middleware` deprecation warning は残る。
+  - `npm run lint` passed。
+  - `npx tsc --noEmit` passed。
+  - `git diff --check` passed。LF/CRLF conversion warning only。
+- CSRF / Origin smoke:
+  - local production server `next start -p 3042` で `/account/security/` 未ログイン GET は `/login?next=/account/security` へ 307 redirect し、password update form は表示されなかった。
+  - `Origin: https://evil.example` の simple form POST を `/account/security/`、`/account/`、`/login/?next=%2Faccount%2Fsecurity`、`/reset-password/` に送ったが、`auth=signed-in`、`auth=signed-out`、`auth=password-updated`、`auth=preferences-saved` の成功系 auth 状態へは到達せず、500 も出なかった。
+  - Server Action の署名つき cross-site POST は、ログイン済み test account / authenticated browser session が無いため未実施。
+- Workers smoke / live login smoke:
+  - unauthenticated Workers route smoke on `https://v-streamer-tools.kurodev-web-tools.workers.dev`: `/` 200、`/tools/` 200、`/login/` 200、`/signup/` 200、`/reset-password/` 200、`/account/` 307 to `/login?next=/account`。
+  - current deployed Workers `/account/security/` は 200 で password update form を表示した。これはこの hardening branch が未deployのためで、local branch では page-level gate 済み。branch merge / deploy 後に同 route が `/login?next=/account/security` へ redirect することを再確認する。
+  - 実ログイン smoke（login、account preference save、remote display settings apply、logout、sign-out redirect）は、safe authenticated session / test account credential が無いため未実施。credential は要求・表示・保存していない。
+- remaining risks / PR #234 judgment:
+  - 本 branch の local contract/build/lint/typecheck と local CSRF/Origin simple POST smoke では blocker なし。
+  - PR #234 を draft 解除 / main merge 判断へ進める前に、この stacked PR を `codex/supabase-auth-first-slice` へ merge し、Workers deploy 後の `/account/security` redirect smoke と、必要なら実 account session での login / preference save / remote display settings apply / logout を最終 gate とする。
 
 ## Next Session Prompt
 

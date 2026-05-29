@@ -6,8 +6,28 @@ import { normalizeLocale } from "@/lib/locale";
 import { normalizeThemePreference } from "@/lib/local-preferences";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+const allowedAuthNextPaths = new Set([
+  "/",
+  "/tools",
+  "/tools/schedule-calendar",
+  "/tools/thumbnail-editor",
+  "/tools/sns-split-image-maker",
+  "/account",
+  "/account/security"
+]);
+const localDevelopmentOrigin = "http://localhost:3000";
+
 function safeNextPath(value: string | null, fallback = "/account") {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : fallback;
+  if (!value?.startsWith("/") || value.startsWith("//")) {
+    return fallback;
+  }
+
+  try {
+    const url = new URL(value, "http://localhost");
+    return allowedAuthNextPaths.has(url.pathname) ? `${url.pathname}${url.search}` : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function pathWithAuth(path: string, status: string) {
@@ -29,8 +49,60 @@ function readRequiredString(formData: FormData, name: string): string | null {
 }
 
 async function getOrigin() {
+  return getAuthRedirectOrigin();
+}
+
+function normalizeHttpOrigin(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeHeaderHost(value: string | null) {
+  return value?.split(",")[0]?.trim().toLowerCase() || null;
+}
+
+function getAllowedAuthRedirectOrigins() {
+  return new Set(
+    [process.env.NEXT_PUBLIC_SITE_URL, ...(process.env.NEXT_PUBLIC_AUTH_REDIRECT_ORIGINS?.split(",") ?? [])]
+      .map((value) => normalizeHttpOrigin(value?.trim()))
+      .filter((value): value is string => Boolean(value))
+  );
+}
+
+function isTrustedRequestOrigin(origin: string | null, headerStore: Headers) {
+  const normalizedOrigin = normalizeHttpOrigin(origin);
+
+  if (!normalizedOrigin) {
+    return null;
+  }
+
+  if (getAllowedAuthRedirectOrigins().has(normalizedOrigin)) {
+    return normalizedOrigin;
+  }
+
+  const originHost = normalizeHeaderHost(new URL(normalizedOrigin).host);
+  const requestHosts = [headerStore.get("x-forwarded-host"), headerStore.get("host")].map(normalizeHeaderHost);
+
+  return originHost && requestHosts.includes(originHost) ? normalizedOrigin : null;
+}
+
+async function getAuthRedirectOrigin() {
+  const configuredOrigin = normalizeHttpOrigin(process.env.NEXT_PUBLIC_SITE_URL);
+
+  if (configuredOrigin) {
+    return configuredOrigin;
+  }
+
   const headerStore = await headers();
-  return headerStore.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  return isTrustedRequestOrigin(headerStore.get("origin"), headerStore) ?? localDevelopmentOrigin;
 }
 
 export async function signInWithPasswordAction(formData: FormData) {

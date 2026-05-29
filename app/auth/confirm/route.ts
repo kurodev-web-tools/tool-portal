@@ -15,12 +15,18 @@ function safeNextPath(value: string | null, type: EmailOtpType | null) {
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type") as EmailOtpType | null;
   const next = safeNextPath(requestUrl.searchParams.get("next"), type);
   const redirectUrl = new URL(next, requestUrl.origin);
 
-  if (!tokenHash || !type) {
+  if (requestUrl.searchParams.has("error")) {
+    redirectUrl.searchParams.set("auth", "confirm-error");
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (!code && (!tokenHash || !type)) {
     redirectUrl.searchParams.set("auth", "confirm-link-invalid");
     return NextResponse.redirect(redirectUrl);
   }
@@ -32,10 +38,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  const { error } = await supabase.auth.verifyOtp({
-    token_hash: tokenHash,
-    type
-  });
+  const { error } = code
+    ? await supabase.auth.exchangeCodeForSession(code)
+    : await supabase.auth.verifyOtp({
+        token_hash: tokenHash as string,
+        type: type as EmailOtpType
+      });
 
   redirectUrl.searchParams.set("auth", error ? "confirm-error" : "signed-in");
   return NextResponse.redirect(redirectUrl);

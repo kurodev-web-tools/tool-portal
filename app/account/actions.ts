@@ -225,7 +225,7 @@ export async function updatePasswordAction(formData: FormData) {
     redirectWithAuth("/account/security", "password-update-error");
   }
 
-  redirectWithAuth("/account/security", "password-updated");
+  redirectWithAuth("/account", "password-updated");
 }
 
 export async function signOutAction() {

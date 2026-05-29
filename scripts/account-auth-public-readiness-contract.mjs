@@ -118,7 +118,31 @@ assertIncludes(portalSidebar, ["href={accountHref}", "accountCta"], "desktop sid
 const portalHeader = read("components/portal/PortalHeader.tsx");
 assertIncludes(portalHeader, ["accountCta", "href={accountHref}"], "mobile drawer account CTA uses real auth destination");
 
+const portalHero = read("components/portal/PortalHeroSummary.tsx");
+assertIncludes(
+  portalHero,
+  ["accountStatus.authStatus === \"signed-in\" ? \"/account\" : \"/login\"", "href={accountHref}", "copy.accountCta"],
+  "home account CTA uses signed-in account destination"
+);
+assertExcludes(portalHero, ["href=\"/login\""], "home account CTA avoids hardcoded login destination");
+
 const authConfirmRoute = read("app/auth/confirm/route.ts");
-assertIncludes(authConfirmRoute, ["/account/security", "recovery"], "auth confirm allows password recovery redirect");
+assertIncludes(
+  authConfirmRoute,
+  ["requestUrl.searchParams.get(\"code\")", "exchangeCodeForSession", "/account/security", "recovery"],
+  "auth confirm handles PKCE code and password recovery redirect"
+);
+
+assertIncludes(
+  actionSource,
+  ["redirectWithAuth(\"/account\", \"password-updated\")"],
+  "password update redirects back to account after success"
+);
+
+assertIncludes(
+  authFlowShell,
+  ["inputMode=\"text\"", "autoCapitalize=\"none\"", "autoCorrect=\"off\"", "spellCheck={false}", "pattern=\"[\\x21-\\x7E]*\""],
+  "password fields hint and constrain half-width printable input"
+);
 
 console.log("account auth public readiness contract checks passed");

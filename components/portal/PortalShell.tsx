@@ -6,12 +6,14 @@ import { getAccountSessionState } from "@/lib/supabase/session";
 
 export async function PortalShell({
   children,
-  mode = "default"
+  mode = "default",
+  accountStatus: providedAccountStatus
 }: {
   children: ReactNode;
   mode?: "default" | "workspace";
+  accountStatus?: Awaited<ReturnType<typeof getAccountSessionState>>;
 }) {
-  const accountStatus = await getAccountSessionState();
+  const accountStatus = providedAccountStatus ?? await getAccountSessionState();
   const mainClassName =
     mode === "workspace"
       ? "h-[calc(100vh-4rem)] w-full overflow-hidden lg:h-screen"

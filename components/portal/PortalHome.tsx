@@ -5,16 +5,17 @@ import { FeedbackNotice } from "@/components/portal/FeedbackNotice";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { SuiteCard } from "@/components/portal/SuiteCard";
 import { portalCopy } from "@/lib/portal-copy";
+import type { AccountSessionState } from "@/lib/supabase/session";
 import { suites } from "@/lib/suites";
 
-export function PortalHome() {
+export function PortalHome({ accountStatus }: { accountStatus: AccountSessionState }) {
   const { locale } = useLocale();
   const copy = portalCopy[locale].home;
 
   return (
     <div className="space-y-7 lg:space-y-8">
       <section className="panel p-5 sm:p-7 lg:p-8">
-        <PortalHeroSummary />
+        <PortalHeroSummary accountStatus={accountStatus} />
       </section>
 
       <section aria-labelledby="suite-heading" className="space-y-4">

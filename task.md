@@ -40,7 +40,37 @@
      - auth routes: `/login`, `/signup`, `/reset-password`, `/account`, `/account/security`。
      - account flow if safe credentials/session are available: login, account preference save, remote display settings apply, logout, protected route redirect。
 
-2. Auth Turnstile CAPTCHA follow-up
+2. Auth recovery-session hardening follow-up
+   - recommended branch / worktree:
+     - branch: `codex/auth-recovery-session-hardening`
+     - worktree: `D:/V_streamer_tools/.worktrees/auth-recovery-session-hardening`
+     - base: `origin/main`
+   - scope:
+     - Treat `/auth/confirm?type=recovery` sessions as password-reset-only pending sessions, not normal account login.
+     - While recovery is pending, keep the user on `/account/security`; block or sign out before allowing normal `/account` access.
+     - After successful password update, sign out and redirect to `/login?auth=password-updated`.
+     - Add an account-page password-change entry point that sends normal signed-in users to `/account/security`.
+     - Add current-password UI for normal signed-in password changes and pass `currentPassword` to Supabase `updateUser`.
+   - dashboard sequence:
+     - Keep Supabase `Require current password when updating` OFF until the current-password UI is deployed.
+     - After deploy and smoke, enable `Require current password when updating`.
+   - out of scope:
+     - Do not change Supabase schema / RLS / migrations / storage payloads.
+     - Do not request, display, or store secret / service_role keys.
+     - Do not add CAPTCHA, OAuth, billing, quota enforcement, or tool data sync in this PR.
+   - verification target:
+     - new/updated auth recovery hardening contract.
+     - `node scripts/auth-security-hardening-contract.mjs`
+     - `node scripts/account-auth-public-readiness-contract.mjs`
+     - `node scripts/supabase-auth-first-slice-contract.mjs`
+     - `npm run build:cloudflare`
+     - `npm run build`
+     - `npm run lint`
+     - `npx tsc --noEmit`
+     - `git diff --check`
+     - width check for `/account` and `/account/security` at `390 / 820 / 1024 / 1280 / 1366px` if visible form layout changes.
+
+3. Auth Turnstile CAPTCHA follow-up
    - recommended branch / worktree:
      - branch: `codex/auth-turnstile-captcha`
      - worktree: `D:/V_streamer_tools/.worktrees/auth-turnstile-captcha`
@@ -74,19 +104,19 @@
      - `git diff --check`
      - width check for `/login`, `/signup`, `/reset-password` at `390 / 820 / 1024 / 1280 / 1366px` if visible form layout changes.
 
-3. Account / monetization follow-ups
+4. Account / monetization follow-ups
    - Password hardening dashboard settings:
      - `Confirm email` stays ON.
      - `Allow anonymous sign-ins` stays OFF.
      - `Allow manual linking` stays OFF unless a separate provider-linking design exists.
      - `Minimum password length` should be aligned to 8 because app validation already requires 8+ characters.
      - `Prevent use of leaked passwords` is recommended if plan availability allows it.
-     - `Require current password when updating` stays OFF until `/account/security` has current-password UI and flow coverage.
+     - `Require current password when updating` stays OFF until the auth recovery-session hardening PR deploys current-password UI and flow coverage.
    - Stripe Billing / quota foundation:
      - Checkout Sessions, Customer Portal, webhooks, and server-authoritative quota remain a separate PR sequence.
      - `usage_quotas` remains owner-read only for browser clients; quota writes stay trusted-server-only.
 
-4. Kuro Live Comment Translator planning
+5. Kuro Live Comment Translator planning
    - status: user foundation is now on `main`; design can be revisited after Cloudflare production handoff and Turnstile follow-up.
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
@@ -96,7 +126,7 @@
      - コメント翻訳、短い要約、用語集を中心にし、返信生成や自動投稿は初期 scope に入れない。
      - ログイン / user settings / paid plan 基盤の方針に合わせて、保存項目と制限設計をタスク開始時に見直す。
 
-5. Local font loading
+6. Local font loading
    - status: user account / preferences foundation 後の later scope。
    - direction:
      - 端末に入っている font を直接読む Local Font Access 系は、ログイン / user settings 基盤の後に扱う。
@@ -106,14 +136,15 @@
 ## Recommended Roadmap
 
 1. Cloudflare production handoff: custom domain to Workers, production branch back to `main`, route/auth smoke。
-2. Auth Turnstile CAPTCHA: app token forwarding first, Dashboard CAPTCHA ON after deploy。
-3. Password hardening dashboard alignment: minimum length 8 and leaked-password protection if available。
-4. Preferences sync MVP: only after CAPTCHA / production handoff, and still limited to approved lightweight preferences。
-5. Stripe Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
-6. Kuro Live Comment Translator planning。
-7. Local font loading after user foundation。
-8. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
-9. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
+2. Auth recovery-session hardening: recovery link should not become a normal login before password update。
+3. Password hardening dashboard alignment: enable current-password requirement after matching UI deploy, minimum length 8, leaked-password protection if available。
+4. Auth Turnstile CAPTCHA: app token forwarding first, Dashboard CAPTCHA ON after deploy。
+5. Preferences sync MVP: only after CAPTCHA / production handoff, and still limited to approved lightweight preferences。
+6. Stripe Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
+7. Kuro Live Comment Translator planning。
+8. Local font loading after user foundation。
+9. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
+10. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
 
 ## Next Session Prompt
 
@@ -121,39 +152,42 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Cloudflare Turnstile CAPTCHA を Supabase Auth の `/signup`、`/login`、`/reset-password` に導入する前段として、アプリ側で Turnstile widget と captcha token forwarding を実装してください。
+password reset recovery link が通常ログイン扱いにならないよう、recovery session hardening を実装してください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
 - PR #234 Supabase Auth first slice は main merge 済み。
+- PR #250 auth production flow polish は main merge 済み。
 - Cloudflare production custom domain / branch handoff は user-managed dashboard 作業。
-- Supabase Dashboard の CAPTCHA ON は、この PR が deploy されて token forwarding smoke ができてから行う。
-- secret / service_role key / Turnstile secret key は要求・表示・保存しない。
+- Supabase reset password email template は `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery` 形式へ user 側で更新済み。
+- Supabase Dashboard の `Require current password when updating` は、この PR が deploy されて current-password UI smoke ができてから ON にする。
+- secret / service_role key は要求・表示・保存しない。
 - 既存 storage key / payload / IndexedDB / Supabase schema / migration / RLS policy は変更しない。
 
 推奨 branch:
-- `codex/auth-turnstile-captcha`
+- `codex/auth-recovery-session-hardening`
 
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/auth-turnstile-captcha`
+- `D:/V_streamer_tools/.worktrees/auth-recovery-session-hardening`
 
 scope:
-- Cloudflare Turnstile widget component を追加する。
-- `/signup`、`/login`、`/reset-password` form から captcha token を Server Action へ渡す。
-- Supabase Auth call に captcha token option を渡す。
-- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` 未設定時は既存 form が壊れないよう CAPTCHA なしで動作させる。
-- secret boundary と graceful missing-site-key behavior を contract 化する。
+- `/auth/confirm?type=recovery` で session を作ったら、通常ログインではなく recovery pending として扱う。
+- recovery pending 中は `/account/security` 以外へ行こうとした場合、通常 `/account` へ入れず password reset flow へ戻す、または sign out して `/login` へ戻す。
+- password update success 後は `signOut()` して `/login?auth=password-updated` へ戻す。
+- `/account` に「パスワード変更」導線を追加し、通常 signed-in user は `/account/security` へ移動できるようにする。
+- 通常 signed-in password change では current password field を出し、`updateUser` に `currentPassword` を渡す。
+- recovery session 由来の password reset と通常 signed-in password change を UI / action 側で区別する。
+- auth recovery hardening contract を追加または既存 contract に追加する。
 
 Out of scope:
-- Supabase Dashboard の CAPTCHA ON。
-- Turnstile secret key の保存・表示・repo への追加。
+- Supabase Dashboard の `Require current password when updating` をこの PR 実装前に ON にすること。
 - Supabase schema / migration / RLS policy 変更。
-- OAuth、billing、quota enforcement、tool data sync。
+- CAPTCHA、OAuth、billing、quota enforcement、tool data sync。
 
 検証:
-- new/updated Turnstile auth contract
+- new/updated auth recovery hardening contract
 - `node scripts/auth-security-hardening-contract.mjs`
 - `node scripts/account-auth-public-readiness-contract.mjs`
 - `node scripts/supabase-auth-first-slice-contract.mjs`
@@ -162,7 +196,8 @@ Out of scope:
 - `npm run lint`
 - `npx tsc --noEmit`
 - `git diff --check`
-- UI を変えた場合は `/login`、`/signup`、`/reset-password` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を task.md に残す。
+- UI を変えた場合は `/account`、`/account/security`、`/login` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を task.md に残す。
+- 可能なら production/custom domain で password reset email link -> password update -> sign-out/login redirect を smoke する。credential / secret は要求しない。
 ```
 
 ## Backlog

@@ -623,6 +623,35 @@
   - Cloudflare Turnstile CAPTCHA is next auth hardening. App-side widget + token forwarding must be deployed before enabling Supabase Auth CAPTCHA in Dashboard.
   - Password hardening dashboard alignment: minimum password length 8 and leaked-password protection if available. `Require current password when updating` stays OFF until `/account/security` UI supports current password.
 
+#### P34: Auth production flow polish after custom domain smoke
+
+- PR #250 `[codex] Polish production auth recovery flow` は 2026-05-29 に `main` へ merge 済み。
+- merge commit は `5980e59259bcdc4515c7c6300567a106c023be0d`。
+- User-side custom domain smoke で `https://streamer-tools.kuro-lab.com` の signup confirmation email receive、confirmation link -> `/account`、logout、settings save が通過した。
+- HOME の `アカウントを確認` CTA は logged-in 状態でも `/login` 固定だったため、server-side `getAccountSessionState()` を `PortalShell` / `PortalHome` / `PortalHeroSummary` に渡し、signed-in なら `/account`、signed-out なら `/login` へ向けるようにした。
+- Password reset email が Supabase hosted verify URL -> app redirect の PKCE `code` flow になる場合に備え、`/auth/confirm` は既存 `token_hash` + `verifyOtp` flow に加えて `exchangeCodeForSession(code)` を処理するようにした。
+- `type=recovery` は引き続き `/account/security` に固定し、open redirect surface は広げていない。
+- password update success は `/account?auth=password-updated` へ戻し、`/account` toast copy に `password-updated` を追加した。
+- password inputs には `inputMode="text"` / `autoCapitalize="none"` / `autoCorrect="off"` / `spellCheck={false}` / printable ASCII pattern を追加した。password 値の server-side silent normalization は行っていない。
+- 既存 storage key / payload / IndexedDB / Supabase schema / migration / RLS policy は変更していない。
+- secret / service_role key / Turnstile secret key は要求・表示・保存していない。
+- 検証:
+  - `node scripts/account-auth-public-readiness-contract.mjs`
+  - `node scripts/account-cta-display-settings-copy-contract.mjs`
+  - `node scripts/auth-security-hardening-contract.mjs`
+  - `node scripts/account-remote-display-settings-contract.mjs`
+  - `node scripts/supabase-auth-first-slice-contract.mjs`
+  - `node scripts/workers-route-smoke-account-nav-contract.mjs`
+  - `npm run build:cloudflare`
+  - `npm run build`
+  - `npm run lint`
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Known warnings は OpenNext Windows compatibility、Next middleware deprecation、webpack cache warning、Node punycode deprecation のみ。
+- Follow-up hardening:
+  - Recovery link click currently creates a Supabase session for password update. This is required for `updateUser`, but it should not behave as a normal account login before the password is changed.
+  - Next auth hardening should treat recovery sessions as password-reset-only pending sessions, keep users on `/account/security`, sign out after successful password update, and add current-password UI for normal signed-in password changes before enabling Supabase Dashboard `Require current password when updating`.
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

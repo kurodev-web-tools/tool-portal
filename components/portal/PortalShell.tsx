@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AccountRemoteDisplaySettingsApplier } from "@/components/account/AccountRemoteDisplaySettingsApplier";
 import { PortalHeader } from "@/components/portal/PortalHeader";
 import { PortalSidebar } from "@/components/portal/PortalSidebar";
 import { getAccountSessionState } from "@/lib/supabase/session";
@@ -19,6 +20,7 @@ export async function PortalShell({
 
   return (
     <div className={shellClassName}>
+      <AccountRemoteDisplaySettingsApplier accountStatus={accountStatus} />
       <PortalSidebar mode={mode} accountStatus={accountStatus} />
       <div className="min-w-0 flex-1">
         <div className={mode === "workspace" ? "lg:hidden" : undefined}>

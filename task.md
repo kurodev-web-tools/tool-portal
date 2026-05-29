@@ -108,6 +108,27 @@
    - Tool page desktop settings compact remaining risks:
      - `node scripts/portal-locale-foundation-contract.mjs` and `node scripts/portal-tools-copy-locale-contract.mjs` are stale against the current base and still fail on pre-existing locale/account copy expectations unrelated to this PR。
      - 実 Workers URL への deploy 後 smoke は未実施。local production server での visual / interaction smoke に留めた。
+   - Next account registration / remote display settings sequence:
+     - order:
+       1. ログイン直後に、アカウントに保存済みの `user_preferences.locale/theme` をこのブラウザの既存 local preference keys へ反映する。
+       2. その後、Home / sidebar / account CTA でアカウント登録導線を少し強める。
+     - rationale:
+       - アカウント登録を促すなら、まず `別ブラウザやスマホでも、ログインすると表示言語とテーマを引き継げる` 状態にしておく。
+       - 現状は account に `locale/theme` を保存できるが、ログイン直後に別端末の local preference へ自動反映する導線は未実装。
+     - first implementation scope:
+       - 対象は `locale` / `theme` のみ。
+       - login success 後、ログイン済みユーザー自身の `user_preferences` を読み、保存済み値があれば client 側で既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` に反映する。
+       - 反映後は必要に応じて軽い toast / transient notice を出す。
+       - 既存 storage key / payload / Supabase schema は変更しない。
+       - `service_role` / secret key は要求・表示・保存しない。
+     - out of scope:
+       - 下書き、予定本文、画像、handoff payload、tool data の自動アップロード / 自動同期。
+       - Google / Apple OAuth、有料プラン、billing、quota enforcement。
+       - 登録導線の強化は remote display settings apply の後続 PR に分ける。
+     - follow-up CTA wording direction:
+       - `アカウントを作ると、表示言語とテーマを別のブラウザやスマホでも引き継げます。`
+       - `今後はツールごとの軽い設定も保存できるようにしていきます。`
+       - `下書きや画像、予定本文は自動ではアップロードされません。`
 
 2. Account auth public readiness before PR #234 main merge
    - status: implemented on `codex/account-email-password-public-readiness`。PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、検証用 account UI / magic link 導線を公開初期版として違和感の少ない Email + Password account flow へ整えた。
@@ -405,7 +426,7 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、Workers 実環境で account/login 系以外が `Internal Server Error` になる原因を最優先で特定・修正し、その後 account 導線の重複整理を行ってください。
+PR #234 `codex/supabase-auth-first-slice` を main に入れる前の account follow-up として、ログイン直後にアカウント保存済みの表示言語 / テーマをこのブラウザへ反映できるようにしてください。
 
 前提:
 - main 直作業は禁止です。
@@ -414,41 +435,41 @@ PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、Workers 
 - `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を確認してください。
 - PR #235 Cloudflare SSR deploy foundation は PR #234 branch へ merge 済み。
 - PR #236 account email/password public readiness は `codex/supabase-auth-first-slice` へ merge 済み。
-- Cloudflare Workers production branch は検証中のみ `codex/supabase-auth-first-slice`。
+- PR #237 / #238 / #239 / #240 の account / public copy / account status / tool sidebar settings follow-ups は `codex/supabase-auth-first-slice` へ merge 済み。
 - Cloudflare Dashboard 側の `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` は Text variables として設定済み。
 - `package.json` の `deploy:cloudflare` / `upload:cloudflare` は `--keep-vars` 対応済み。
 - Supabase project、Workers URL、publishable env、migration SQL 適用、Custom SMTP、Email template 調整はユーザー側で確認済み。
 - secret / service_role key は要求・表示・保存しない。
-- ローカルから Workers deploy する場合は Dashboard vars を消さないよう、`npm run build:cloudflare` then `npx wrangler deploy --keep-vars` を使う。
+- ローカルから Workers deploy する場合は Dashboard vars を消さないよう、`npm run build:cloudflare` then `npx wrangler deploy --keep-vars` を使う。ただし今回 scope では deploy は必須ではなく、必要ならユーザー確認する。
 
 確認元 branch:
 - `codex/supabase-auth-first-slice`
 
 推奨 stacked branch:
-- `codex/workers-route-smoke-account-nav-polish`
+- `codex/account-remote-display-settings-apply`
 
 推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/workers-route-smoke-account-nav-polish`
+- `D:/V_streamer_tools/.worktrees/account-remote-display-settings-apply`
 
 今回の scope:
-- 最優先で Workers production URL の `Internal Server Error` を調査する。
-  - `/`、`/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker` を確認する。
-  - `/login`、`/signup`、`/reset-password`、`/account` は比較対象として確認する。
-  - `wrangler tail`、Cloudflare deployment logs、local Worker preview、`npm run build:cloudflare`、`npx wrangler deploy --dry-run --keep-vars` で原因を切り分ける。
-- 500 の原因が分かったら最小修正する。原因が外部設定や未確認 runtime にある場合は blocker summary を返す。
-- 500 が解消できた後、account 導線を整理する。
-  - account / login 系 page の header 右上 language / theme controls は、account settings と重複するため非表示または整理する。
-  - wide desktop sidebar では固定ナビの `アカウント` link と下部 account card が重複するため、固定ナビ側 account link を削除または wide sidebar で非表示にする。
-  - tablet landscape / collapsed rail では下部 account card が見えないため、rail 下部に compact account/settings button を追加する。
-    - logged out: `/login`
-    - logged in: `/account`
-    - 表示は既存デザインに合わせた小さい account / settings icon 相当。歯車マークなど分かりやすい icon を検討する。
+- ログイン成功直後に、ログイン済みユーザー自身の `user_preferences.locale/theme` を読み、このブラウザの既存 local preference keys へ反映する。
+  - locale key: `v-streamer-tools-locale`
+  - theme key: `v-streamer-tools-theme`
+- 保存済み `locale/theme` が無い場合は何もしない。
+- 反映対象は `locale` / `theme` のみ。
+- 反映後は UI state と `document.documentElement.lang` / dark class が自然に更新されるようにする。
+- 必要なら軽い toast / transient notice を出す。
+- ログイン直後の redirect 先が `/`、`/tools`、tool page、`/account` のいずれでも反映できる形にする。
+- 既存 storage key / payload / Supabase schema / migration は変更しない。
+- この PR では登録 CTA の文言強化はまだ行わない。登録 CTA 強化はこの反映導線が入った後の次 PR に分ける。
 
 Out of scope:
 - Google / Apple OAuth 実装。
 - paid plan / billing / Stripe 実装。
 - translation tool 本体、logged-in-only tool boundary、quota enforcement。
 - Thumbnail / Schedule / SNS tool の既存 payload migration。
+- 下書き、予定本文、画像、handoff payload、tool data の自動アップロード / 自動同期。
+- Home / sidebar / account CTA の強い訴求 copy 実装。
 - service_role / secret key を browser / source-controlled docs に入れること。
 
 検証:
@@ -457,28 +478,17 @@ Out of scope:
 - `node scripts/account-preferences-shell-contract.mjs`
 - `node scripts/supabase-auth-first-slice-contract.mjs`
 - `node scripts/account-auth-public-readiness-contract.mjs`
+- `node scripts/workers-route-smoke-account-nav-contract.mjs`
 - `npm run build`
-- `npm run build:cloudflare`
 - `npm run lint`
 - `npx tsc --noEmit`
 - `git diff --check`
-- `npx wrangler deploy --dry-run --keep-vars`
-- Workers local preview または production URL smoke。
-- Workers production URL smoke:
-  - `/`
-  - `/tools`
-  - `/tools/schedule-calendar`
-  - `/tools/thumbnail-editor`
-  - `/tools/sns-split-image-maker`
-  - `/login`
-  - `/signup`
-  - `/reset-password`
-  - `/account`
-- UI を触った場合は account/login pages と sidebar / drawer / rail account CTA を `390 / 820 / 1024 / 1280 / 1366px` の必要幅で確認し、結果を `task.md` に残す。
-- Supabase 実環境で signup / login / logout / password reset / locale-theme save を確認する。
+- UI / visible copy を触った場合は対象 page を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を `task.md` に残す。
+- 可能なら Supabase 実環境で、別ブラウザ相当の localStorage 空状態から login し、保存済み locale/theme が反映されることを確認する。
+- 実環境 smoke ができない場合は、contract / Playwright / local production server で確認できた範囲と未確認範囲を `task.md` に明記する。
 
 完了時:
-- `task.md` に Workers 500 調査結果、修正内容、account 導線整理、確認結果、残リスク、PR #234 の merge 可否判断を残してください。
+- `task.md` に実装内容、確認結果、残リスク、次の CTA 強化 PR への引き継ぎを残してください。
 - commit / push / draft PR 作成まで進めてください。
 - PR の base は `main` ではなく `codex/supabase-auth-first-slice` にしてください。
 ```

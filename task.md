@@ -53,6 +53,25 @@
        - OpenNext on Windows continues to print compatibility warnings; deploy/build passed, but CI / Cloudflare runtime should remain the final deployment judge。
        - Supabase actual signup / login / logout / password reset / locale-theme save flows were not re-exercised in this slice beyond route smoke。
      - PR #234 merge judgment: Workers route 500 blocker is resolved on production after deploy. From this blocker perspective, PR #234 can proceed after this stacked PR is reviewed and merged into `codex/supabase-auth-first-slice`; Supabase auth flow smoke remains a separate final pre-main confirmation item。
+   - PR #237 follow-up result:
+     - branch / worktree: `codex/account-public-copy-polish` / `D:/V_streamer_tools/.worktrees/account-public-copy-polish`。
+     - `/account` 上部右の signed-in card を削除し、hero は title / lead のみにした。
+     - ログイン中 email は共通の表示設定セクション内に小さく表示する形へ移した。
+     - ログアウトはページ最下部の右端寄せ secondary button に移した。
+     - `preferences-saved` などの account message は inline 表示ではなく、`role="status"` の transient toast として表示し、一定時間後に URL の `auth` query も消す。
+     - 日本語表示の `Preferences` / `Account preference` / `sync候補` / `locale / theme` / `local-only` / `保存 key` などの実装寄り copy を、`表示設定`、`アカウントに保存済みの設定`、`今後保存できるようにする項目`、`表示言語`、`テーマ`、`このブラウザに保存` に寄せた。
+     - 未ログインでも表示言語 / テーマがこのブラウザで使えることを hero / 表示設定 copy で説明した。
+     - 既存 storage key / payload / Supabase schema は変更していない。
+   - PR #237 follow-up verification:
+     - RED: `node scripts/account-preferences-shell-contract.mjs` failed on missing user-facing display settings copy before implementation。
+     - Account related contracts passed: `node scripts/preference-classification-contract.mjs`, `node scripts/local-preference-adapter-contract.mjs`, `node scripts/account-preferences-shell-contract.mjs`, `node scripts/supabase-auth-first-slice-contract.mjs`, `node scripts/account-auth-public-readiness-contract.mjs`, `node scripts/workers-route-smoke-account-nav-contract.mjs`。
+     - `npm run build` passed。server-runtime build のため static export alias postbuild は `out` missing を正常 skip。Next.js middleware deprecation warning と webpack cache warning は既存残リスク。
+     - `npm run lint` passed。
+     - `npx tsc --noEmit` passed。
+     - `/account` width check passed at `390 / 820 / 1024 / 1280 / 1366px` using local production server `next start -p 3027` and Playwright: Japanese copy visible, toast visible, no horizontal overflow, no console error/warn, and no visible `Account preference` / `sync候補` / `将来の sync 候補` / `local-only` / `locale / theme` / `保存 key`。
+   - PR #237 follow-up remaining risks:
+     - Supabase 実 session での signed-in email / logout button の visual smoke は未実施。local production server は Supabase env missing state での `/account` 表示確認に留まる。
+     - 実環境の signup / login / logout / password reset / locale-theme save flow はこの slice では再実行していない。stacked PR merge / deploy 後の Workers branch smoke で確認する。
 
 2. Account auth public readiness before PR #234 main merge
    - status: implemented on `codex/account-email-password-public-readiness`。PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、検証用 account UI / magic link 導線を公開初期版として違和感の少ない Email + Password account flow へ整えた。

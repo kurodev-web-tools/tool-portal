@@ -26,10 +26,20 @@ assert.match(accountPage, /<AccountPreferencesShell[\s\S]*saveLocaleThemePrefere
 
 assert.match(accountShell, /LanguageSwitch/, "account shell exposes language switch");
 assert.match(accountShell, /ThemeToggle/, "account shell exposes theme switch");
-assert.match(accountShell, /local-only/i, "account shell states local-only boundary");
 assert.match(accountShell, /ログイン中|Signed in|account/i, "account shell keeps signed-in account state");
 assert.match(accountShell, /有料プラン|Paid plan/, "account shell includes restrained future plan note");
-assert.match(accountShell, /preferences|設定/, "account shell includes preferences placeholder");
+assert.match(accountShell, /表示設定/, "Japanese account shell uses user-facing display settings copy");
+assert.match(accountShell, /アカウントに保存済みの設定/, "Japanese account shell labels saved account settings for users");
+assert.match(accountShell, /今後保存できるようにする項目/, "Japanese account shell avoids implementation-facing sync candidate copy");
+assert.match(accountShell, /表示言語/, "Japanese account shell labels locale as display language");
+assert.match(accountShell, /テーマ/, "Japanese account shell labels theme as theme");
+assert.match(accountShell, /このブラウザに保存/, "Japanese account shell explains local-first settings without local-only wording");
+assert.match(accountShell, /role="status"[\s\S]*fixed/, "account save result is shown as a transient toast status");
+assert.match(accountShell, /<form action={signOutAction} className="flex justify-end">/, "account sign out control is moved to the bottom end of the page");
+assert.doesNotMatch(accountShell, /lg:grid-cols-\[minmax\(0,1fr\)_18rem\]/, "account hero no longer keeps a top-right signed-in card");
+assert.doesNotMatch(accountShell, /{copy\.signedInAs}: {authStatus\.user\.email \?\? authStatus\.user\.id}/, "signed-in email is no longer rendered in the hero card");
+assert.doesNotMatch(accountShell, /<StatusPill>{copy\.localOnly}<\/StatusPill>/, "local-only badge is not shown in the public account UI");
+assert.doesNotMatch(accountShell, /locale \/ theme|account preference|sync候補|将来の sync 候補|local-only/, "Japanese-facing implementation terms are not present in account shell source");
 
 assert.match(localeLib, /localePreferenceStorageKey = "v-streamer-tools-locale"/, "locale storage key is unchanged");
 assert.match(localPreferenceAdapter, /themePreferenceStorageKey = "v-streamer-tools-theme"/, "theme storage key is unchanged");

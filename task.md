@@ -41,6 +41,33 @@
      - account flow if safe credentials/session are available: login, account preference save, remote display settings apply, logout, protected route redirect。
 
 2. Auth recovery-session hardening follow-up
+   - hotfix status: trailing slash redirect loop fixed on `codex/auth-recovery-trailing-slash-hotfix`.
+   - hotfix root cause:
+     - Production normalized `/account/security` to `/account/security/`.
+     - Recovery pending middleware allowed only exact `/account/security`, so `/account/security/` was treated as normal account access and redirected back to `/account/security?auth=recovery-pending`, causing `ERR_TOO_MANY_REDIRECTS`.
+   - hotfix implementation:
+     - Normalize account pathnames before the recovery pending middleware allowlist check.
+     - Keep `/account/security` and `/account/security/` both allowed while recovery pending.
+     - Keep `/account` and other account paths redirected back to `/account/security?auth=recovery-pending`.
+   - hotfix verification completed:
+     - `node scripts/auth-recovery-session-hardening-contract.mjs`
+       - includes trailing slash guard coverage.
+     - `node scripts/auth-security-hardening-contract.mjs`
+     - `node scripts/account-auth-public-readiness-contract.mjs`
+     - `node scripts/supabase-auth-first-slice-contract.mjs`
+     - `npm run lint`
+     - `npx tsc --noEmit`
+     - `npm run build`
+     - `npm run build:cloudflare`
+     - `git diff --check`
+       - passed; Git reported LF-to-CRLF working-copy normalization warnings only.
+     - Local dev redirect check with recovery pending cookie:
+       - `/account/security/?auth=recovery-pending` no longer loops; without Supabase env/session it redirects to `/login/?next=%2Faccount%2Fsecurity`.
+       - `/account/?auth=recovery-pending` redirects to `/account/security/?auth=recovery-pending` and then, in local no-session state, to login.
+   - hotfix UI verification:
+     - No visible UI/layout/copy change; width checks were not rerun for this middleware-only redirect fix.
+   - hotfix residual risk:
+     - Production recovery email link smoke should be repeated after deploy with a fresh reset email link.
    - status: implemented on `codex/auth-recovery-session-hardening`.
    - implementation summary:
      - `/auth/confirm?type=recovery` success is marked as recovery pending instead of normal `signed-in`.

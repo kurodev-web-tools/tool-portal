@@ -68,12 +68,19 @@ assertIncludes(
   [
     "authRecoverySessionCookieName",
     "request.nextUrl.pathname",
+    "normalizeAccountPathname",
+    "const normalizedPathname = normalizeAccountPathname(pathname)",
     "pathname.startsWith(\"/account\")",
-    "pathname !== \"/account/security\"",
+    "normalizedPathname !== \"/account/security\"",
     "/account/security",
     "recovery-pending"
   ],
   "middleware keeps recovery pending sessions out of normal account pages"
+);
+assertExcludes(
+  middleware,
+  ["pathname !== \"/account/security\""],
+  "middleware does not redirect-loop on /account/security/ trailing slash"
 );
 
 const accountPage = read("app/account/page.tsx");

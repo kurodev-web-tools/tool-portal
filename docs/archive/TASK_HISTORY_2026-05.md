@@ -559,6 +559,70 @@
 - PR #226 `[codex] Integrate thumbnail font expansion` は 2026-05-27 に `main` へ merge 済み。merge commit は `fdd2fe3`。
 - 旧 `task.md` に残っていた font expansion check / IRIAM title parity / Standard Batch B planning / Batch B-JA / Batch B-EN / final integration の長いログは、この archive entry と各 PR body に寄せた。完了済み prompt と backlog 項目は `task.md` から削除した。
 
+#### P33: Account preferences foundation, Supabase Auth, and Cloudflare Workers main integration
+
+- PR #229 - #234 で user account / preferences foundation を planning から main integration まで完了した。
+- Main merge:
+  - PR #234 `[codex] Add Supabase auth first slice` は 2026-05-29 に `main` へ merge 済み。
+  - merge commit は `5d7dd09eb460f195a31d7603f1a7e44380abf089`。
+  - PR #248 `[codex] Record Supabase auth final main readiness` は PR #234 branch へ merge 済みで、最終確認ログは `task.md` 経由でこの archive へ退避した。
+- Planning / contract sequence:
+  - `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md` を account / preferences foundation の durable source of truth とした。
+  - preference classification、account shell、local preference adapter、auth/provider decision spike、Supabase Auth boundary design を docs / contract で段階化した。
+  - 既存 localStorage / IndexedDB / sessionStorage の key / payload shape は維持し、server sync 対象は最初から `locale` / `theme` に限定した。
+- Runtime / auth implementation:
+  - `@supabase/supabase-js` / `@supabase/ssr` を追加し、browser / SSR clients は `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` の publishable key 前提に限定した。
+  - `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` / `service_role` は browser / auth actions / client UI に入れていない。
+  - `/login`、`/signup`、`/reset-password`、`/account`、`/account/security`、`/auth/confirm` を追加し、`/account` は signed-out 時に `/login?next=/account`、`/account/security` は `/login?next=/account/security` へ redirect する。
+  - `signInWithPasswordAction`、`signUpWithPasswordAction`、`resetPasswordEmailAction`、`updatePasswordAction`、`saveLocaleThemePreferenceAction` を追加し、protected updates は `auth.getUser()` guard を維持した。
+  - `next` parameter は relative path かつ allowlist のみに限定し、`//evil.example`、absolute URL、encoded open redirect 風 payload は `/account` fallback へ落とす。
+  - auth email redirect origin は `NEXT_PUBLIC_SITE_URL` を優先し、request `Origin` fallback は allowlist または same-host 条件のみとした。
+- Database / RLS:
+  - `supabase/migrations/20260527000000_account_preferences_foundation.sql` を reviewable SQL として追加した。
+  - `user_profiles`、`user_preferences`、`tool_preferences`、`usage_quotas` は additive tables。
+  - RLS は全 table で enabled。`user_profiles` / `user_preferences` / `tool_preferences` は owner select / insert / update。
+  - `usage_quotas` は owner read only。quota writes は trusted-server-only のまま。
+  - Supabase CLI は当時 workspace に無かったため、migration file は CLI 生成ではなく直接 authored SQL として review 対象にした。
+- Cloudflare / hosting:
+  - SSR cookie session / middleware は static export `out/` と両立しないため、Cloudflare Pages static deploy から Workers + OpenNext へ移行した。
+  - `@opennextjs/cloudflare` / `wrangler`、`wrangler.jsonc`、`open-next.config.ts`、`build:cloudflare` / `preview:cloudflare` / `deploy:cloudflare` / `upload:cloudflare` / `cf-typegen` scripts を追加した。
+  - Dashboard variables を保持するため、deploy path は `wrangler deploy --keep-vars` に揃えた。
+  - OpenNext Cloudflare adapter compatibility のため、Next.js 16 推奨の `proxy.ts` ではなく `middleware.ts` を当面維持する。adapter 対応後に戻す。
+- Public / account follow-ups:
+  - account public copy、account status card、tool sidebar settings compact、remote display settings apply、account CTA copy、SiteTipsDialog を PR #237 - #244 で stacked integration した。
+  - ログイン後は `user_preferences.locale/theme` を既存 `v-streamer-tools-locale` / `v-streamer-tools-theme` に反映できる。
+  - Home / sidebar / drawer / account / signup copy では、表示言語とテーマはアカウントで引き継げる一方、下書き、予定本文、画像、handoff payload は自動アップロードしないことを明記した。
+- Security hardening / final readiness:
+  - PR #247 で redirect origin、`next` allowlist、`/account/security` page-level gate、secret boundary contract を harden した。
+  - Final readiness では Workers URL `https://v-streamer-tools.kurodev-web-tools.workers.dev` で public routes、auth routes、protected redirects、open redirect 風 `next` payload、safe pseudo-CSRF POST を確認した。
+  - User-side Supabase Dashboard 確認では `Confirm email` ON、anonymous sign-ins OFF、manual linking OFF、custom SMTP / rate limits 有効を確認し、架空メール signup 後に login 不可 / `/account` 未到達であることを確認した。
+  - 実ログイン smoke は user-side で別途確認。credentials / secret / service_role key は要求・表示・保存していない。
+- Post-merge production smoke:
+  - PR #234 main merge 後、Workers URL で `/`、`/tools`、`/tools/schedule-calendar`、`/tools/thumbnail-editor`、`/tools/sns-split-image-maker`、`/login`、`/signup`、`/reset-password` が 200。
+  - `/account` は `/login/?next=%2Faccount`、`/account/security` は `/login/?next=%2Faccount%2Fsecurity` へ redirect し 200。
+- Verification accumulated across the stack:
+  - `node scripts/preference-classification-contract.mjs`
+  - `node scripts/local-preference-adapter-contract.mjs`
+  - `node scripts/account-preferences-shell-contract.mjs`
+  - `node scripts/auth-provider-decision-spike-contract.mjs`
+  - `node scripts/supabase-auth-boundary-design-contract.mjs`
+  - `node scripts/supabase-auth-first-slice-contract.mjs`
+  - `node scripts/account-auth-public-readiness-contract.mjs`
+  - `node scripts/workers-route-smoke-account-nav-contract.mjs`
+  - `node scripts/account-remote-display-settings-contract.mjs`
+  - `node scripts/account-cta-display-settings-copy-contract.mjs`
+  - `node scripts/site-tips-dialog-contract.mjs`
+  - `node scripts/auth-security-hardening-contract.mjs`
+  - `npm run build:cloudflare`
+  - `npm run build`
+  - `npm run lint`
+  - `npx tsc --noEmit`
+  - `git diff --check`
+- Remaining / next:
+  - User-managed Cloudflare dashboard handoff remains: move custom domain from Pages to Workers, return production branch setting to `main`, confirm Workers production env vars.
+  - Cloudflare Turnstile CAPTCHA is next auth hardening. App-side widget + token forwarding must be deployed before enabling Supabase Auth CAPTCHA in Dashboard.
+  - Password hardening dashboard alignment: minimum password length 8 and leaked-password protection if available. `Require current password when updating` stays OFF until `/account/security` UI supports current password.
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

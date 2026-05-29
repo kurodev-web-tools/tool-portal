@@ -3,14 +3,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 import { authRecoverySessionCookieName } from "@/lib/supabase/recovery-session";
 
+function normalizeAccountPathname(pathname: string) {
+  return pathname.length > 1 ? pathname.replace(/\/+$/, "") || "/" : pathname;
+}
+
 export async function middleware(request: NextRequest) {
   const config = getSupabasePublicConfig();
   const pathname = request.nextUrl.pathname;
+  const normalizedPathname = normalizeAccountPathname(pathname);
 
   if (
     request.cookies.get(authRecoverySessionCookieName)?.value === "1" &&
     pathname.startsWith("/account") &&
-    pathname !== "/account/security"
+    normalizedPathname !== "/account/security"
   ) {
     const redirectUrl = new URL("/account/security", request.url);
     redirectUrl.searchParams.set("auth", "recovery-pending");

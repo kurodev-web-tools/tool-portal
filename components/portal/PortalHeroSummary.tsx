@@ -54,6 +54,12 @@ export function PortalHeroSummary() {
             {copy.secondaryCta}
           </Link>
         </div>
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">
+          {copy.accountNote}
+          <Link href="/login" className="ml-2 font-bold text-primary-strong underline-offset-4 hover:underline">
+            {copy.accountCta}
+          </Link>
+        </p>
       </div>
       <div className="rounded-base border border-border bg-primary-soft/55 p-4 sm:p-6 lg:p-7">
         <div>

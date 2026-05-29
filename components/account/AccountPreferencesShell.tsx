@@ -46,7 +46,7 @@ const accountCopy = {
       "preference-save-error": "表示設定の保存に失敗しました。時間をおいて再度お試しください。"
     },
     openPlan: "現在のアカウント",
-    planName: "表示設定",
+    planName: "アカウント状況",
     planBody: "有料プランの契約状況や外部アカウント連携は後続で追加予定です。いまは表示言語とテーマの保存に限定します。",
     planItems: ["表示設定を保存", "有料プラン状況は後続対応", "外部アカウント連携は後続対応"],
     preferencesTitle: "表示設定",
@@ -89,7 +89,7 @@ const accountCopy = {
       "preference-save-error": "Could not save display settings. Please try again later."
     },
     openPlan: "Current account",
-    planName: "Display settings",
+    planName: "Account status",
     planBody: "Paid plan status and external account connections are planned for later. This version is limited to language and theme.",
     planItems: ["Save display settings", "Paid plan status later", "External account links later"],
     preferencesTitle: "Display settings",
@@ -228,7 +228,7 @@ export function AccountPreferencesShell({
         <p className="mt-4 max-w-3xl text-sm leading-7 text-muted sm:text-base">{copy.lead}</p>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+      <section>
         <div className="panel p-4 shadow-none sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -238,6 +238,11 @@ export function AccountPreferencesShell({
             <StatusPill>{authStatusLabel}</StatusPill>
           </div>
           <p className="mt-4 text-sm leading-7 text-muted">{copy.planBody}</p>
+          {isSignedIn && signedInEmail ? (
+            <p className="mt-3 break-all text-xs font-bold text-muted">
+              {copy.signedInAs}: <span className="text-foreground">{signedInEmail}</span>
+            </p>
+          ) : null}
           {authStatus.configStatus === "missing" ? (
             <p className="mt-3 text-xs font-bold leading-6 text-red-700 dark:text-red-300">{copy.configMissing}</p>
           ) : null}
@@ -249,11 +254,6 @@ export function AccountPreferencesShell({
             ))}
           </div>
         </div>
-
-        <div className="panel p-4 shadow-none sm:p-5">
-          <h2 className="text-base font-black text-foreground">{copy.providerTitle}</h2>
-          <p className="mt-3 text-sm leading-7 text-muted">{copy.providerBody}</p>
-        </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
@@ -262,11 +262,6 @@ export function AccountPreferencesShell({
             <p className="text-xs font-black uppercase tracking-widest text-primary-strong">{copy.preferencesTitle}</p>
             <h2 className="mt-2 text-xl font-black text-foreground">{copy.preferencesTitle}</h2>
             <p className="mt-3 text-sm leading-7 text-muted">{copy.preferencesBody}</p>
-            {isSignedIn && signedInEmail ? (
-              <p className="mt-3 break-all text-xs font-bold text-muted">
-                {copy.signedInAs}: <span className="text-foreground">{signedInEmail}</span>
-              </p>
-            ) : null}
           </div>
           <PreferenceRow label={copy.language}>
             <LanguageSwitch />

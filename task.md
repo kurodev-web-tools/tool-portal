@@ -72,6 +72,24 @@
    - PR #237 follow-up remaining risks:
      - Supabase 実 session での signed-in email / logout button の visual smoke は未実施。local production server は Supabase env missing state での `/account` 表示確認に留まる。
      - 実環境の signup / login / logout / password reset / locale-theme save flow はこの slice では再実行していない。stacked PR merge / deploy 後の Workers branch smoke で確認する。
+   - PR #238 browser comment follow-up result:
+     - branch / worktree: `codex/account-status-card-layout` / `D:/V_streamer_tools/.worktrees/account-status-card-layout`。
+     - 上部の `現在のアカウント` card 見出しを `アカウント状況` / `Account status` に変更した。
+     - ログイン中 email 表示を共通の表示設定 section から上部の account status card へ移動した。
+     - 右上の重複していた `今後追加予定` card を削除し、account status card を横幅いっぱいの 1 card にした。
+     - 下段右側の `アカウントに保存済みの設定`、`今後保存できるようにする項目`、`今後追加予定` は維持した。
+     - 既存 storage key / payload / Supabase schema は変更していない。
+   - PR #238 browser comment follow-up verification:
+     - RED: `node scripts/account-preferences-shell-contract.mjs` failed before implementation because `アカウント状況` / top-card layout expectations were missing。
+     - Account related contracts passed: `node scripts/preference-classification-contract.mjs`, `node scripts/local-preference-adapter-contract.mjs`, `node scripts/account-preferences-shell-contract.mjs`, `node scripts/supabase-auth-first-slice-contract.mjs`, `node scripts/account-auth-public-readiness-contract.mjs`, `node scripts/workers-route-smoke-account-nav-contract.mjs`。
+     - `npm run build` passed。server-runtime build のため static export alias postbuild は `out` missing を正常 skip。Next.js middleware deprecation warning と webpack cache warning は既存残リスク。
+     - `npm run lint` passed。
+     - `npx tsc --noEmit` passed。
+     - `git diff --check` passed。LF/CRLF conversion warning only。
+     - `/account` width check passed at `390 / 820 / 1024 / 1280 / 1366px` using local production server `next start -p 3028` and Playwright: Japanese account status / display settings copy visible, top `今後追加予定` duplicate removed, lower planned card remains one, no horizontal overflow, no console error/warn, and no visible `Account preference` / `sync候補` / `将来の sync 候補` / `local-only` / `locale / theme` / `保存 key`。
+   - PR #238 browser comment follow-up remaining risks:
+     - Supabase 実 session での signed-in email 位置は code path / contract で確認。実 session visual smoke は stacked PR merge / deploy 後の Workers branch で確認する。
+     - 実環境の signup / login / logout / password reset / locale-theme save flow はこの slice では再実行していない。
 
 2. Account auth public readiness before PR #234 main merge
    - status: implemented on `codex/account-email-password-public-readiness`。PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、検証用 account UI / magic link 導線を公開初期版として違和感の少ない Email + Password account flow へ整えた。

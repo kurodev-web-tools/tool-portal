@@ -29,6 +29,8 @@ assert.match(accountShell, /ThemeToggle/, "account shell exposes theme switch");
 assert.match(accountShell, /ログイン中|Signed in|account/i, "account shell keeps signed-in account state");
 assert.match(accountShell, /有料プラン|Paid plan/, "account shell includes restrained future plan note");
 assert.match(accountShell, /表示設定/, "Japanese account shell uses user-facing display settings copy");
+assert.match(accountShell, /アカウント状況/, "Japanese account shell labels the top card as account status");
+assert.match(accountShell, /Account status/, "English account shell labels the top card as account status");
 assert.match(accountShell, /アカウントに保存済みの設定/, "Japanese account shell labels saved account settings for users");
 assert.match(accountShell, /今後保存できるようにする項目/, "Japanese account shell avoids implementation-facing sync candidate copy");
 assert.match(accountShell, /表示言語/, "Japanese account shell labels locale as display language");
@@ -37,7 +39,13 @@ assert.match(accountShell, /このブラウザに保存/, "Japanese account shel
 assert.match(accountShell, /role="status"[\s\S]*fixed/, "account save result is shown as a transient toast status");
 assert.match(accountShell, /<form action={signOutAction} className="flex justify-end">/, "account sign out control is moved to the bottom end of the page");
 assert.doesNotMatch(accountShell, /lg:grid-cols-\[minmax\(0,1fr\)_18rem\]/, "account hero no longer keeps a top-right signed-in card");
-assert.doesNotMatch(accountShell, /{copy\.signedInAs}: {authStatus\.user\.email \?\? authStatus\.user\.id}/, "signed-in email is no longer rendered in the hero card");
+assert.equal(accountShell.match(/<section className="grid gap-4 lg:grid-cols-\[minmax\(0,1fr\)_minmax\(18rem,24rem\)\]">/g)?.length, 1, "only the lower account layout keeps the two-column right rail");
+assert.equal(accountShell.match(/\{copy\.providerTitle\}/g)?.length, 1, "planned-next card is not duplicated in the top account status row");
+assert.ok(
+  accountShell.indexOf("{copy.signedInAs}") > accountShell.indexOf("{copy.planBody}") &&
+    accountShell.indexOf("{copy.signedInAs}") < accountShell.indexOf("copy.planItems.map"),
+  "signed-in email is rendered inside the account status card"
+);
 assert.doesNotMatch(accountShell, /<StatusPill>{copy\.localOnly}<\/StatusPill>/, "local-only badge is not shown in the public account UI");
 assert.doesNotMatch(accountShell, /locale \/ theme|account preference|sync候補|将来の sync 候補|local-only/, "Japanese-facing implementation terms are not present in account shell source");
 

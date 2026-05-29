@@ -129,6 +129,37 @@
        - `アカウントを作ると、表示言語とテーマを別のブラウザやスマホでも引き継げます。`
        - `今後はツールごとの軽い設定も保存できるようにしていきます。`
        - `下書きや画像、予定本文は自動ではアップロードされません。`
+   - Account CTA display settings copy follow-up result:
+     - branch / worktree: `codex/account-cta-display-settings-copy` / `D:/V_streamer_tools/.worktrees/account-cta-display-settings-copy`。
+     - PR #242 `codex/account-remote-display-settings-apply` が PR #234 branch `codex/supabase-auth-first-slice` へ merge 済みであることを確認してから作業した。merge commit は `a0283fe`。
+     - Home hero 下部に控えめな account note / account link を追加し、ログインすると表示言語とテーマを別ブラウザやスマホでも引き継げることを明記した。
+     - sidebar / drawer の account CTA copy を、表示言語とテーマの引き継ぎ価値が分かる文言へ更新した。
+     - `/account` と login / signup の account copy も同じ範囲へ揃えた。
+     - 下書き、予定本文、画像、handoff payload は自動アップロードしないことを Home / sidebar / drawer / account / signup copy に明記した。
+     - 既存 storage key / payload / Supabase schema / migration / auth flow / remote preference apply / billing / OAuth / tool data sync は変更していない。
+     - secret / service_role key は要求・表示・保存していない。
+   - Account CTA display settings copy verification:
+     - RED: `node scripts/account-cta-display-settings-copy-contract.mjs` failed before implementation because the display-settings carryover and upload-boundary copy was missing。
+     - Account / portal / route related contracts passed:
+       - `node scripts/account-cta-display-settings-copy-contract.mjs`
+       - `node scripts/account-remote-display-settings-contract.mjs`
+       - `node scripts/preference-classification-contract.mjs`
+       - `node scripts/local-preference-adapter-contract.mjs`
+       - `node scripts/account-preferences-shell-contract.mjs`
+       - `node scripts/supabase-auth-first-slice-contract.mjs`
+       - `node scripts/account-auth-public-readiness-contract.mjs`
+       - `node scripts/workers-route-smoke-account-nav-contract.mjs`
+     - `npm run build` passed。server-runtime build のため static export alias postbuild は `out` missing を正常 skip。Next.js middleware deprecation warning と webpack cache warning は既存残リスク。
+     - `npm run lint` passed。
+     - `npx tsc --noEmit` passed after `npm run build` completed。並列実行時は `.next/types` 更新中の race で一度失敗した。
+     - `git diff --check` passed。LF/CRLF conversion warning only。
+     - `npm install` と `npm install --no-save playwright` は worktree の一時依存配置のみ。package files は変更していない。
+     - Local production server `next start -p 3031` + Playwright width check passed for `/`、`/tools`、`/tools/schedule-calendar`、`/account` at `390 / 820 / 1024 / 1280 / 1366px`: no horizontal overflow, no console warning/error, Home/account copy visible, drawer account CTA visible at `390 / 820px`, collapsed rail account CTA visible at `1024px`, normal wide sidebar account CTA visible at `1280 / 1366px`。
+     - `/tools/schedule-calendar` の `1280 / 1366px` workspace sidebar は既存 compact account CTA のため title / button のみ確認。upload-boundary copy は Home / drawer / normal sidebar / account page で確認した。
+   - Account CTA display settings copy remaining risks:
+     - Supabase 実ログイン smoke は、テスト用 account credential / authenticated browser session が無いため未実施。
+     - ローカル `/account` は Supabase public env missing state の account page 表示確認に留まる。実 Workers branch では signup / login / logout / locale-theme save / remote apply を PR #234 main merge 前に最終確認する。
+     - PR #234 main merge 前に残る確認事項: この CTA PR を `codex/supabase-auth-first-slice` へ merge 後、Workers branch 上で `/`、`/tools`、代表 tool page、`/account`、`/login`、`/signup` の account copy と実ログイン後の表示言語 / テーマ反映を確認する。
 
 2. Account auth public readiness before PR #234 main merge
    - status: implemented on `codex/account-email-password-public-readiness`。PR #234 `codex/supabase-auth-first-slice` を main に入れる前に、検証用 account UI / magic link 導線を公開初期版として違和感の少ない Email + Password account flow へ整えた。

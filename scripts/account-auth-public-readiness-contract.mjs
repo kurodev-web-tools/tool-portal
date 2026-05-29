@@ -97,10 +97,14 @@ const portalCopy = read("lib/portal-copy.ts");
 assertIncludes(
   portalCopy,
   [
-    "アカウントで設定を保存",
+    "表示設定をアカウントに保存",
+    "別ブラウザやスマホでも引き継げます",
+    "下書き、予定本文、画像、handoff payload は自動アップロードしません",
     "ログイン / 登録",
     "アカウント設定",
-    "Save settings with an account",
+    "Save display settings",
+    "Carry language and theme across browsers and phones",
+    "Drafts, schedule text, images, and handoff payloads are not uploaded automatically",
     "Log in / Sign up",
     "Account settings"
   ],

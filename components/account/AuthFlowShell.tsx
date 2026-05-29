@@ -12,7 +12,7 @@ const authFlowCopy = {
     login: {
       eyebrow: "Account",
       title: "ログイン",
-      lead: "メールアドレスとパスワードでログインすると、共通設定をアカウントに保存できます。",
+      lead: "メールアドレスとパスワードでログインすると、表示言語とテーマを別ブラウザやスマホでも引き継げます。",
       submit: "ログイン",
       secondary: "アカウントを作成",
       secondaryHref: "/signup",
@@ -24,11 +24,11 @@ const authFlowCopy = {
     signup: {
       eyebrow: "Account",
       title: "アカウント作成",
-      lead: "初期公開版では、言語とテーマなどの共通設定を保存するためのアカウントを作成できます。",
+      lead: "初期公開版では、表示言語とテーマを別ブラウザやスマホでも引き継げるアカウントを作成できます。",
       submit: "登録する",
       secondary: "すでにアカウントがある場合",
       secondaryHref: "/login",
-      helper: "登録後、確認メールからログインを完了します。",
+      helper: "登録後、確認メールからログインを完了します。下書き、予定本文、画像、handoff payload は自動アップロードしません。",
       helperHref: null,
       emailLabel: "メールアドレス",
       passwordLabel: "パスワード"
@@ -85,7 +85,7 @@ const authFlowCopy = {
     login: {
       eyebrow: "Account",
       title: "Log in",
-      lead: "Log in with email and password to save shared settings to your account.",
+      lead: "Log in with email and password to carry language and theme across browsers and phones.",
       submit: "Log in",
       secondary: "Create account",
       secondaryHref: "/signup",
@@ -97,11 +97,11 @@ const authFlowCopy = {
     signup: {
       eyebrow: "Account",
       title: "Create account",
-      lead: "The first public account flow stores shared settings such as language and theme.",
+      lead: "The first public account flow carries language and theme across browsers and phones.",
       submit: "Sign up",
       secondary: "Already have an account?",
       secondaryHref: "/login",
-      helper: "After signup, complete registration from the confirmation email.",
+      helper: "After signup, complete registration from the confirmation email. Drafts, schedule text, images, and handoff payloads are not uploaded automatically.",
       helperHref: null,
       emailLabel: "Email",
       passwordLabel: "Password"

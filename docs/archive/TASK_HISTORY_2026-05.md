@@ -681,6 +681,45 @@
   - Legal text は foundation draft であり、専門家レビュー完了扱いではない。
   - Production/custom-domain smoke はこの PR では未実施。
 
+#### P36: Auth recovery hardening and Turnstile CAPTCHA closeout
+
+- PR #251 `[codex] Harden auth recovery sessions` は 2026-05-30 に `main` へ merge 済み。
+- PR #252 `[codex] Fix recovery redirect trailing slash` は 2026-05-30 に `main` へ merge 済み。
+- PR #253 `[codex] Separate recovery pending navigation` は 2026-05-30 に `main` へ merge 済み。
+- PR #257 `[codex] Add auth Turnstile CAPTCHA wiring` は 2026-05-30 に `main` へ merge 済み。
+- PR #258 `[codex] Fix Turnstile runtime site key hydration` は 2026-05-30 に `main` へ merge 済み。
+- PR #259 `[codex] Render Turnstile after client navigation` は 2026-05-30 に `main` へ merge 済み。merge commit は `84f84cfa2660b12e6d8a4a5e4b4dd0bdad37db21`。
+- Recovery hardening:
+  - `/auth/confirm?type=recovery` success を通常 signed-in state ではなく recovery pending として扱うようにした。
+  - recovery pending は短期 httpOnly cookie で保持し、localStorage / IndexedDB / Supabase schema / migration / RLS は変更していない。
+  - recovery pending 中は `/account/security` に戻し、password update success 後は sign out して `/login?auth=password-updated` へ戻す。
+  - 通常 signed-in password change には current password UI を追加し、Supabase `updateUser` に current-password payload を渡す。
+  - Production trailing slash normalization による `/account/security/` redirect loop を修正し、recovery pending navigation copy が通常 account CTA / email 表示を露出しないよう分離した。
+- Turnstile CAPTCHA:
+  - `/login`、`/signup`、`/reset-password` に Cloudflare Turnstile widget を追加し、`cf-turnstile-response` を Supabase Auth actions の `captchaToken` へ渡すようにした。
+  - Public site key は auth route server page で runtime env から読み、client component に prop として渡す。client component は browser runtime `process.env` を読まない。
+  - SPA navigation では implicit rendering に依存せず、`https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit` と `window.turnstile.render(...)` で mount 後に明示 render する。
+  - Turnstile secret / Supabase service_role / private credential は source、docs、browser code に入れていない。
+- Verification:
+  - `node scripts/auth-recovery-session-hardening-contract.mjs`
+  - `node scripts/auth-turnstile-captcha-contract.mjs`
+  - `node scripts/auth-security-hardening-contract.mjs`
+  - `node scripts/account-auth-public-readiness-contract.mjs`
+  - `node scripts/supabase-auth-first-slice-contract.mjs`
+  - `npm run lint`
+  - `npx tsc --noEmit`
+  - `npm run build`
+  - `npm run build:cloudflare`
+  - `git diff --check`
+- UI / runtime smoke:
+  - Recovery hardening: local dev / account pages for `/account`、`/account/security`、`/login` at `390 / 820 / 1024 / 1280 / 1366px`。
+  - Turnstile wiring: local dev with Cloudflare dummy site key on `/login`、`/signup`、`/reset-password` at `390 / 820 / 1024 / 1280 / 1366px`。
+  - Runtime site key hotfix: local production runtime started with dummy site key and confirmed `.cf-turnstile` survived hydration while browser `process.env` was absent。
+  - SPA render hotfix: local production runtime confirmed `/` -> `/login`、`/login` -> `/signup`、`/login` -> `/reset-password` client-side navigation produced token input without manual refresh。
+- Residual risk:
+  - Live production signup/login/reset smoke depends on safe user credentials and user-managed dashboard state. Credentials and secrets were not requested or recorded。
+  - Supabase Dashboard CAPTCHA / password hardening settings remain user-managed operational controls。
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

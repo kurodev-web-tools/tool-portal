@@ -135,6 +135,32 @@
      - review comment はなし。PR comment は Cloudflare Workers deployment success のみ。
      - GitHub checks: `Workers Builds: v-streamer-tools` PASS。`Cloudflare Pages` は PR base `5e7dcb2` でも failure の既存 check で、現行 Workers preview の merge blocker ではない。
      - follow-up code change は不要。次は `Translation provider boundary design` の計画に進む。
+   - provider boundary design implementation completed 2026-05-31:
+     - `lib/comment-translator-provider-boundary.ts` を追加し、`import "server-only";` で server runtime 専用の pure type boundary を作った。
+     - `CommentTranslationProvider`、`CommentTranslationProviderRequest`、`CommentTranslationProviderResponse`、`CommentTranslationProviderRecoverableError`、`CommentTranslationProviderTerminalError`、`CommentTranslationUsageHandoff` を分離した。
+     - provider secret 境界は server runtime env only、client bundle / fixtures / task docs / PR body は `no-secret-values` として固定した。secret / service_role key / private credential は要求・表示・保存していない。
+     - quota / billing / usage logging は handoff type だけを定義し、`enforcement: "not-implemented"` / `databaseWrite: "not-implemented"` のままにした。DB write、billing実装、quota enforcement は入れていない。
+     - provider比較軸は latency / cost / language-coverage / streaming-suitability / glossary-support / rate-limit / data-retention / failure-semantics で固定した。
+     - `docs/future/COMMENT_TRANSLATOR_PROVIDER_BOUNDARY_DESIGN.md` に、input-source independent request、YouTube OAuth / owner verification / Live Chat polling との分離、short-lived log、PII minimization、moderation skip reason、cache key material の設計メモをまとめた。
+     - `scripts/comment-translator-provider-boundary-contract.mjs` を追加し、server-only boundary、secret非露出、禁止runtime integration、storage / schema / handoff / UI path非変更を固定した。
+     - `server-only` packageを追加した。これは provider boundary module の server/client import guard 用で、実 provider runtimeや外部接続は追加していない。
+     - UI変更なし。`components/comment-translator/*` と `/tools/comment-translator` route は変更していないため、幅別確認は今回対象外。
+     - 実翻訳API、YouTube実接続、OAuth、Google API、Live Chat polling、owner verification、server action、quota DB write、storage key、IndexedDB、localStorage、Supabase schema / migration / RLS、handoff payload は変更していない。
+   - provider boundary design verification completed 2026-05-31:
+     - `node scripts/comment-translator-provider-boundary-contract.mjs` RED first: `server-only provider boundary module exists` で期待どおり失敗、その後 PASS。
+     - `node scripts/comment-translator-manual-input-mvp-contract.mjs` PASS
+     - `node scripts/comment-translator-interactive-shell-contract.mjs` PASS
+     - `node scripts/comment-translator-mock-foundation-contract.mjs` PASS
+     - `node scripts/tool-portal-entry-contract.mjs` PASS
+     - `npm run lint` PASS
+     - `npx tsc --noEmit` PASS
+     - `npm run build` PASS (`/tools/comment-translator` included in app routes; server-runtime buildのため `static-export-rsc-aliases` はskip、`middleware` deprecation warningあり)
+     - `git diff --check` PASS (`task.md` CRLF変換warningのみ)
+   - provider boundary design unchecked scope / residual risk:
+     - 実 provider prototype、runtime credential resolver、external network call、server action、quota DB writer、billing integration は未実装。次の `Server-side translation prototype` 以降で扱う。
+     - YouTube OAuth / owner verification / Live Chat polling は未実装。translation request boundary とは別PRで設計する。
+     - provider comparison は判断軸までで、個別 provider の実測 latency / cost / retention evidence は未確認。
+     - UI変更なしのため `/tools` と `/tools/comment-translator` の幅別再確認は未実施。
 
 2. Analytics / consent decision
    - status: no immediate implementation。

@@ -16,12 +16,13 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: mock foundation and interactive shell are merged into `codex/comment-translator-preview`; do not merge to `main` yet because the tool is not functionally usable without real input / translation flow。
+   - status: mock foundation、interactive shell、Manual / Paste Input MVP are merged into `codex/comment-translator-preview`; do not merge to `main` yet because real translation provider / YouTube input / quota boundary is still not designed or implemented。
    - branch stack:
-     - preview: `codex/comment-translator-preview` at `D:/V_streamer_tools/.worktrees/comment-translator-preview`
-     - feature: `codex/comment-translator-mock-foundation` at `D:/V_streamer_tools/.worktrees/comment-translator-mock-foundation`
-     - feature: `codex/comment-translator-interactive-shell` at `D:/V_streamer_tools/.worktrees/comment-translator-interactive-shell`
-     - next feature: `codex/comment-translator-manual-input-mvp` at `D:/V_streamer_tools/.worktrees/comment-translator-manual-input-mvp`
+     - preview: `codex/comment-translator-preview`
+     - merged feature: `codex/comment-translator-mock-foundation` at `D:/V_streamer_tools/.worktrees/comment-translator-mock-foundation`
+     - merged feature: `codex/comment-translator-interactive-shell` at `D:/V_streamer_tools/.worktrees/comment-translator-interactive-shell`
+     - merged feature: `codex/comment-translator-manual-input-mvp` at `D:/V_streamer_tools/.worktrees/comment-translator-manual-input-mvp`
+     - planning follow-up: `codex/comment-translator-provider-boundary-plan` at `D:/V_streamer_tools/.worktrees/comment-translator-provider-boundary-plan`
    - seed:
      - `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
      - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
@@ -33,11 +34,11 @@
      - Real translation provider は、YouTube OAuth / owner check / quota / billing boundary が固まった後に別 PR で比較する。
      - 2026-05-30 decision: まだ実際に使える翻訳ツールではないため、`codex/comment-translator-preview` を `main` へ統合せず、preview branch 上に使える状態へ近づけるPRを刻む。
    - next slice target:
-     - `Manual / Paste Input MVP` を `codex/comment-translator-preview` 宛てに切る。
-     - YouTube OAuth / Google API / Live Chat polling なしで、配信者がコメントを手入力または貼り付けして、UI上で追加・検索・絞り込み・表示切替できる状態にする。
-     - 翻訳 provider はまだ fixture / deterministic mock のまま。外部API call、API key、server action、quota DB write は入れない。
+     - `Translation provider boundary design` を `codex/comment-translator-preview` 宛てに切る。
+     - 実翻訳APIを呼ばずに、server-side only provider boundary、request / response / error contract、secret非露出、quota / billing handoff、provider比較の判断軸を設計する。
+     - UI は必要最小限の copy / state planning に留め、外部 API call、API key、provider secret、server action、quota DB write は入れない。
      - このsliceで storage key / IndexedDB / localStorage key / Supabase schema / migration / RLS / handoff payload は変更しない。
-     - 実翻訳provider、YouTube OAuth / owner verification / Live Chat polling、billing / quota enforcement は後続の別PRで扱う。
+     - YouTube OAuth / owner verification / Live Chat polling、billing / quota enforcement、実 provider prototype は後続の別PRで扱う。
    - first PR scope:
      - OBS Browser Dock / narrow viewport を主対象に、`390 / 820 / 1024 / 1280 / 1366px` の mock を先に作る。
      - 承認後、`/tools/comment-translator` など既存 tools routing pattern に沿った UI shell を追加する。
@@ -129,6 +130,11 @@
      - feature -> preview のdraft PRでmock方向のuser確認を受け、main向けintegration PRはpreview branch完成後に別途出す。
      - interactive shell も実 YouTube connection / translation provider / quota enforcement / account sync は未実装。後続の設計 slice で扱う。
      - manual session rowsは現在のpreview UI stateのみで、reloadすると消える。永続化、user preference sync、quota enforcementは後続PRで扱う。
+   - PR #264 review / merge check completed 2026-05-31:
+     - PR #264 (`codex/comment-translator-manual-input-mvp` -> `codex/comment-translator-preview`) は merge commit `5a405dd` で merged。
+     - review comment はなし。PR comment は Cloudflare Workers deployment success のみ。
+     - GitHub checks: `Workers Builds: v-streamer-tools` PASS。`Cloudflare Pages` は PR base `5e7dcb2` でも failure の既存 check で、現行 Workers preview の merge blocker ではない。
+     - follow-up code change は不要。次は `Translation provider boundary design` の計画に進む。
 
 2. Analytics / consent decision
    - status: no immediate implementation。
@@ -158,8 +164,8 @@
 
 ## Recommended Roadmap
 
-1. Comment Translator Manual / Paste Input MVP: real APIなしで、貼り付け・手入力のコメントをUI上で扱える状態にする。
-2. Translation provider boundary design: server-side only、secret非露出、quota/billing境界、provider比較を設計する。
+1. Comment Translator Manual / Paste Input MVP: PR #264 で `codex/comment-translator-preview` へ merge 済み。
+2. Translation provider boundary design: server-side only、secret非露出、quota/billing境界、provider比較を設計する。実API実装はまだしない。
 3. Server-side translation prototype: 1 providerのみ、env var前提、quota DB writeなしで最小実験する。
 4. YouTube OAuth / owner verification / Live Chat polling design spike。
 5. Live Chat polling MVP: YouTube read-only polling と owner boundary を translation provider から分離して実装する。
@@ -174,53 +180,48 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Kuro Live Comment Translator の次 slice として、実APIなしの Manual / Paste Input MVP を追加し、mock UI shell から「実際に入力したコメントを扱える preview tool」に進めてください。
+Kuro Live Comment Translator の次 slice として、実APIをまだ呼ばない `Translation provider boundary design` を整理してください。Manual / Paste Input MVP は PR #264 で `codex/comment-translator-preview` に merge 済みなので、次は provider 境界、secret 非露出、quota / billing handoff、provider 比較軸を設計する計画PRにしてください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- `codex/comment-translator-preview` に mock foundation と interactive shell が merge 済みであることを確認してください。
+- `codex/comment-translator-preview` に mock foundation、interactive shell、Manual / Paste Input MVP が merge 済みであることを確認してください。
 - 作業は `codex/comment-translator-preview` から新しい feature branch を切ってください。
-- 推奨 branch: `codex/comment-translator-manual-input-mvp`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-manual-input-mvp`
+- 推奨 branch: `codex/comment-translator-provider-boundary-design`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-provider-boundary-design`
 - 初回 platform は YouTube。
 - secret / service_role key / private credential は要求・表示・保存しない。
 - 既存 storage key / payload / IndexedDB / localStorage key / Supabase schema / migration / RLS policy / handoff payload は変更しない。
 - main へはまだ統合しない。`codex/comment-translator-preview` 宛てのPRとして進める。
 
 scope:
+- provider boundary は設計 / contract / docs / pure type boundary まで。実翻訳API呼び出しはまだ入れない。
 - YouTube OAuth、Google API、Live Chat polling、owner verification は実装しない。
-- 実翻訳API、OpenAI / Google / DeepL / Gemini 等の実API call、API key、provider secret、server action、quota DB write は入れない。
+- OpenAI / Google / DeepL / Gemini 等の実API call、API key、provider secret、server action、quota DB write は入れない。
 - GA4、cookie consent、Stripe、billing、quota enforcement は入れない。
-- fixture / deterministic mock translation provider 相当だけで UI state を動かす。
+- fixture / deterministic mock translation provider 相当の既存preview挙動は壊さない。
 - 新しい storage key / IndexedDB / localStorage key / Supabase schema / migration / RLS policy / handoff payload は追加・変更しない。
 
 実装したいこと:
-- Manual / Paste Input panel を追加する。
-  - single comment input
-  - multiline paste input
-  - sample comments insert
-  - add to live comment list
-  - clear draft / clear manual session
-- 追加したコメントを既存 live comment list に統合する。
-  - fixture rows と manual rows を区別できる badge / source 表示
-  - status tabs / search / original-translated-both 表示切替に manual rows も反映
-  - skip / error-like state の絞り込みに manual rows も反映
-- mock translation state を UI 上で操作可能にする。
-  - translated / skipped / error の deterministic mock result
-  - cache hit / miss 表示
-  - empty state
-  - manual rows の件数と mock quota preview の整合
-- Portal 表示言語 ja/en に追随する copy を維持する。
-- OBS Browser Dock / narrow viewport で左 portal sidebar や本文に干渉しない layout にする。
-- 外側の `PortalShell` / `PortalSidebar` の共通仕様は崩さない。
+- Translation provider boundary design をまとめる。
+  - server-only provider interface / request / response / recoverable error / terminal error の責務分離
+  - provider secret は server runtime env だけで扱い、client bundle / fixtures / task docs / PR body に露出しない境界
+  - quota / billing / usage logging の handoff point。DB write や enforcement はまだ実装しない。
+  - provider比較軸: latency、cost、language coverage、streaming suitability、glossary support、rate limit、data retention、failure semantics
+  - YouTube polling / owner verification とは分離し、入力元に依存しない translation request 境界にする
+  - short-lived log / PII minimization / moderation skip reason / cache key の設計メモ。ただし storage key や DB schema はまだ変えない。
+- 必要なら contract script を追加し、禁止境界を固定する。
+  - client component から実 provider secret / external API call に触れない
+  - `lib/comment-translator.ts` の mock provider / fixture 境界を壊さない
+  - storage key / IndexedDB / localStorage / Supabase schema / migration / RLS / handoff payload を変更しない
+- UI変更は原則なし。設計上どうしても必要な copy / mock state だけに限定する。
 
 実装方針:
-- 既存 `lib/comment-translator.ts` の fixture/provider 境界を再利用し、必要なら manual input 用の pure helper を追加する。
-- contract-first で進める。manual input MVP contract を追加または interactive shell contract を拡張して、外部API境界と storage境界を固定する。
-- UI は landing page ではなく、最初の画面から usable tool surface にする。
-- 既存 ja/en copy、display mode、status filters、cache/quota preview を壊さない。
+- 設計PRとして閉じる。実API prototype は次の `Server-side translation prototype` PR に残す。
+- contract-first で進める。provider boundary contract を追加し、secret / external runtime / storage / quota write の禁止境界を固定する。
+- 既存 `MockTranslationProvider` / manual input / interactive shell の挙動は維持する。
+- docs を増やす場合は `docs/future` か既存 task context に寄せ、重複する長文 docs を作らない。
 
 Out of scope:
 - YouTube OAuth、Google API、Live Chat polling、owner verification の実装。
@@ -233,7 +234,8 @@ Out of scope:
 - main integration PR。
 
 検証:
-- new/updated comment translator manual input MVP contract
+- new/updated comment translator provider boundary contract
+- `node scripts/comment-translator-manual-input-mvp-contract.mjs`
 - `node scripts/comment-translator-interactive-shell-contract.mjs`
 - `node scripts/comment-translator-mock-foundation-contract.mjs`
 - `node scripts/tool-portal-entry-contract.mjs`
@@ -241,18 +243,10 @@ Out of scope:
 - `npx tsc --noEmit`
 - `npm run build`
 - `git diff --check`
-- `/tools` and `/tools/comment-translator` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、manual input panel / live comment list / sidebar が干渉しないことを task.md に残す。
-- Japanese portal settingで manual input panel / controls / status labels が日本語表示になることを確認する。
-- 操作 smoke:
-  - single comment add
-  - multiline paste add
-  - sample insert
-  - search / status filter
-  - original / translated / both display
-  - mock skipped / error-like state
+- UI変更がある場合だけ、`/tools` and `/tools/comment-translator` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、task.md に残す。
 
 完了時:
-- `task.md` に実装内容、検証結果、幅別確認結果、未確認範囲、残リスクを記録してください。
+- `task.md` に設計内容、検証結果、未確認範囲、残リスクを記録してください。
 - 問題なければ feature branch から `codex/comment-translator-preview` 宛てに draft PR を作成してください。
 ```
 

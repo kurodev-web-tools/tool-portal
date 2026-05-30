@@ -15,11 +15,12 @@
 
 ## Active Priorities
 
-1. Kuro Live Comment Translator mock foundation
-   - status: first mock foundation implemented on `codex/comment-translator-mock-foundation`; draft PR target is `codex/comment-translator-preview`。
+1. Kuro Live Comment Translator mock foundation / interactive shell
+   - status: first mock foundation merged into `codex/comment-translator-preview`; next interactive shell slice implemented on `codex/comment-translator-interactive-shell` for draft PR to `codex/comment-translator-preview`。
    - branch stack:
      - preview: `codex/comment-translator-preview` at `D:/V_streamer_tools/.worktrees/comment-translator-preview`
      - feature: `codex/comment-translator-mock-foundation` at `D:/V_streamer_tools/.worktrees/comment-translator-mock-foundation`
+     - feature: `codex/comment-translator-interactive-shell` at `D:/V_streamer_tools/.worktrees/comment-translator-interactive-shell`
    - seed:
      - `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
      - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
@@ -67,10 +68,37 @@
      - method: local dev server `http://localhost:3051` + in-app Browser viewport override, height 900。
      - `/tools`: `390 / 820 / 1024 / 1280 / 1366px` PASS。document-level horizontal overflowなし。comment translator card visible。narrow widthの既存filter rowは横スクロール内に収まる。
      - `/tools/comment-translator`: `390 / 820 / 1024 / 1280 / 1366px` PASS。document-level horizontal overflowなし。desktop sidebar overlapなし。setup / connection mock、live comment list、original / translated text、language label、skip reason、cache / quota preview、empty state、error-like stateが表示される。
+   - interactive shell implementation completed 2026-05-30:
+     - `CommentTranslatorDock` を client component 化し、fixture state だけで操作できる UI shell に更新した。
+     - `Setup / Connection`: YouTube mock connection state、stream selection mock、read-only broadcaster dock status を native select と fixture status 表示で切替可能にした。外部接続へ進む導線は追加していない。
+     - `Display Settings`: source language、target language、original / translated / both、OBS Browser Dock / narrow viewport surface を実 control 化した。
+     - live comment list: status tabs、search、display mode による original / translated 表示切替、skip / error state filtering を追加した。
+     - cache / quota preview: normal / warning / empty / error-like mock state と hit / miss 表示を追加した。
+     - `MockTranslationProvider` 境界、fixture-only、YouTube first、read-only broadcaster dock 方針を維持した。
+     - 実翻訳API、YouTube実接続、provider secret、server action、quota DB write、storage key、payload、IndexedDB、localStorage、Supabase schema / migration / RLS、handoff payload は変更していない。
+   - interactive shell verification completed 2026-05-30:
+     - `node scripts/comment-translator-interactive-shell-contract.mjs` PASS
+     - `node scripts/comment-translator-mock-foundation-contract.mjs` PASS
+     - `node scripts/tool-portal-entry-contract.mjs` PASS
+     - `npm run lint` PASS
+     - `npx tsc --noEmit` PASS
+     - `npm run build` PASS (`/tools/comment-translator` included in app routes; server-runtime buildのため `static-export-rsc-aliases` はskip、`middleware` deprecation warningあり)
+     - `git diff --check` PASS (CRLF変換warningのみ)
+   - interactive shell width / operation check completed 2026-05-30:
+     - method: local dev server `http://127.0.0.1:3052` + in-app Browser viewport override, height 900。
+     - `/tools`: `390 / 820 / 1024 / 1280 / 1366px` PASS。document-level horizontal overflowなし。comment translator card visible。desktop sidebar と main overlap なし。
+     - `/tools/comment-translator`: `390 / 820 / 1024 / 1280 / 1366px` PASS。document-level horizontal overflowなし。desktop sidebar と main overlap なし。Setup / Connection、Display Settings、Live Comments、Cache / Quota Preview が表示される。
+     - operation smoke at 390px PASS: display `Translated` で original text が隠れ、translated text が残る。`Skipped` tab + `Spam` search で 1 row に絞り込み。quota `warning` と surface `narrow-viewport` 切替後も horizontal overflow なし。
+   - review follow-up completed 2026-05-30:
+     - browser annotation 1: `Comment text` の `Both / Original / Translated` control を縦積みにして、左カラムで `Translated` が窮屈に見える状態を解消した。
+     - browser annotation 2: live comment header を title row と filter/search row の2段構成にした。
+     - Comment Translator tool body を Portal の表示言語に追随させ、主要UI label / control / filter / quota / skip reason を ja/en copy で切替可能にした。
+     - in-app Browser at `http://127.0.0.1:3052/tools/comment-translator/`: Japanese portal settingで `セットアップ / 接続`、`表示設定`、`コメントを検索`、`同一言語` 表示、document-level horizontal overflowなしを確認した。
    - unchecked scope / residual risk:
      - safe live YouTube login / OAuth / Live Chat / owner verification smokeは未実施。初回PRのscope外。
      - 生成mock内の文字は方向性確認用。正確な表示文言はReact UI側で固定した。
      - feature -> preview のdraft PRでmock方向のuser確認を受け、main向けintegration PRはpreview branch完成後に別途出す。
+     - interactive shell も実 YouTube connection / translation provider / quota enforcement / account sync は未実装。後続の設計 slice で扱う。
 
 2. Analytics / consent decision
    - status: no immediate implementation。

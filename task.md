@@ -189,6 +189,35 @@
     - YouTube OAuth / owner verification / Live Chat polling、client component からの provider 呼び出し、server action / route handler 公開API化は未実装。
     - usage handoff は object 生成まで。DB write、billing state update、quota enforcement、paid plan integration は未実装。
     - DeepL provider の latency / cost / data-retention 実測、provider比較、glossary support の provider-specific検証は後続。
+  - YouTube input boundary design changes added 2026-05-31:
+    - `lib/comment-translator-youtube-input-boundary.ts` を追加し、`import "server-only";` で YouTube OAuth / owner verification / Live Chat polling の pure type boundary を server-only に閉じた。
+    - OAuth access token / refresh token は server-only、client component / fixture / task docs / PR body / localStorage / IndexedDB への露出禁止として固定した。secret / service role key / private credential は要求・表示・保存していない。
+    - owner verification は future server OAuth orchestrator の責務、broadcaster read-only dock は client では approved / blocked state を表示するだけの責務として分離した。
+    - Live Chat polling は `nextPageToken` cursor、`pollingIntervalMillis`、`rateLimitExceeded` recoverable backoff、bounded retry + jitter、terminal states を型境界として固定した。polling runtime は入れていない。
+    - provider request に渡してよい最小 comment payload を `commentId` / `publishedAt` / `text` / `platformLanguageHint` に限定し、OAuth token、refresh token、channel secret、viewer identifier、raw OAuth state、polling cursor は禁止した。
+    - provider module と YouTube input module の direct import / direct call を禁止し、将来の bridge owner を future server orchestrator として分離した。
+    - `docs/future/COMMENT_TRANSLATOR_YOUTUBE_INPUT_BOUNDARY_DESIGN.md` を追加し、short-lived diagnostic log、PII minimization、cache key material contact、runtime non-goals、Google official docsで確認した `youtube.readonly` / `mine=true` / `nextPageToken` / `pollingIntervalMillis` / `rateLimitExceeded` を secret 値なしで記録した。
+    - `scripts/comment-translator-youtube-input-boundary-contract.mjs` を追加し、comment translator YouTube input boundary contract として token非露出、client/runtime非結合、provider direct coupling禁止、storage / schema / handoff / UI path非変更を固定した。
+    - 既存 `MockTranslationProvider`、Manual / Paste Input MVP、interactive shell、DeepL provider prototype、storage key、IndexedDB、localStorage、Supabase schema / migration / RLS、handoff payload は変更していない。
+    - UI変更なし。`components/comment-translator/*` と `/tools/comment-translator` route は変更していないため、幅別確認は今回対象外。
+  - YouTube input boundary design verification completed 2026-05-31:
+    - `node scripts/comment-translator-youtube-input-boundary-contract.mjs` RED first: `server-only YouTube input boundary module exists` で期待どおり失敗、その後 PASS。
+    - `node scripts/comment-translator-server-provider-prototype-contract.mjs` PASS
+    - `node scripts/comment-translator-provider-boundary-contract.mjs` PASS
+    - `node scripts/comment-translator-manual-input-mvp-contract.mjs` PASS
+    - `node scripts/comment-translator-interactive-shell-contract.mjs` PASS
+    - `node scripts/comment-translator-mock-foundation-contract.mjs` PASS
+    - `node scripts/tool-portal-entry-contract.mjs` PASS
+    - `npm run lint` PASS
+    - `npx tsc --noEmit` PASS
+    - `npm run build` PASS (`/tools/comment-translator` included in app routes; server-runtime buildのため `static-export-rsc-aliases` はskip、`middleware` deprecation warningとwebpack cache warningあり)
+    - `git diff --check` PASS (`task.md` CRLF変換warningのみ)
+  - YouTube input boundary design unchecked scope / residual risk:
+    - 実 YouTube OAuth / consent / callback / token refresh / revocation / encrypted token store は未実装。
+    - Google API / YouTube Data API / Live Chat API の live call、owner verification runtime、Live Chat polling runtime、streamList runtime は未実装。
+    - provider request bridge は設計のみ。server orchestrator、server action / route handler 公開API化、client component からの provider / Google API 呼び出しは未実装。
+    - safe live YouTube login / OAuth / owner verification / Live Chat polling smoke は未実施。secret / private credential を扱わない方針のため、このPRでは contract / build verification まで。
+    - 次 implementation PR 候補は `YouTube owner verification + polling runtime foundation`。このPR merge後、server-only OAuth orchestrator / owner-owned broadcast lookup / read-only polling loop / sanitized comment bridge を分割して扱う。
 
 2. Analytics / consent decision
    - status: no immediate implementation。
@@ -220,9 +249,9 @@
 
 1. Comment Translator Manual / Paste Input MVP: PR #264 で `codex/comment-translator-preview` へ merge 済み。
 2. Translation provider boundary design: PR #266 で `codex/comment-translator-preview` へ merge 済み。
-3. Server-side translation prototype: this branchで 1 provider / server env / quota DB writeなしの DeepL prototype を実装。
-4. YouTube OAuth / owner verification / Live Chat polling design spike。
-5. Live Chat polling MVP: YouTube read-only polling と owner boundary を translation provider から分離して実装する。
+3. Server-side translation prototype: PR #267 で `codex/comment-translator-preview` へ merge 済み。
+4. YouTube OAuth / owner verification / Live Chat polling input boundary design: this branchで server-only type boundary / contract / docs までを追加。
+5. YouTube owner verification + polling runtime foundation: YouTube read-only polling と owner boundary を translation provider から分離して実装する。
 6. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
 7. Tool-specific persistence / preference sync only after data boundary and quota policy are fixed。
 8. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
@@ -234,53 +263,43 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Kuro Live Comment Translator の次 slice として、YouTube OAuth / owner verification / Live Chat polling の input boundary design spike を整理してください。Translation provider boundary design は PR #266 で `codex/comment-translator-preview` に merge 済みで、Server-side translation prototype も preview branch へ merge 済みであることを確認してから進めてください。
+Kuro Live Comment Translator の次 implementation PR 候補として、YouTube owner verification + Live Chat polling runtime foundation を server-only に小さく開始してください。YouTube input boundary design PR が `codex/comment-translator-preview` に merge 済みであることを確認してから進めてください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- `codex/comment-translator-preview` に mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype が merge 済みであることを確認してください。
+- `codex/comment-translator-preview` に mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype、YouTube input boundary design が merge 済みであることを確認してください。
 - 作業は `codex/comment-translator-preview` から新しい feature branch を切ってください。
-- 推奨 branch: `codex/comment-translator-youtube-input-boundary-design`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-youtube-input-boundary-design`
+- 推奨 branch: `codex/comment-translator-youtube-owner-polling-runtime-foundation`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-youtube-owner-polling-runtime-foundation`
 - 初回 platform は YouTube。
 - secret / service_role key / private credential は要求・表示・保存しない。
-- OAuth token / refresh token は client storage、fixture、task docs、PR body に出さない。
+- OAuth access token / refresh token は client component、fixture、task docs、PR body、localStorage、IndexedDB に出さない。
 - 既存 storage key / payload / IndexedDB / localStorage key / Supabase schema / migration / RLS policy / handoff payload は変更しない。
 - main へはまだ統合しない。`codex/comment-translator-preview` 宛てのPRとして進める。
 
 scope:
-- YouTube input boundary は設計 / contract / docs / pure type boundary まで。実 OAuth flow、Google API call、Live Chat polling はまだ入れない。
-- owner-only / broadcaster read-only dock、OAuth scope、token handling、polling cursor、rate limit、provider request への橋渡し境界を整理する。
-- Translation provider prototype は変更しない。DeepL provider の env / failure semantics / usage handoff はそのまま維持する。
-- Stripe、billing、quota enforcement、GA4、cookie consent は入れない。
-- fixture / deterministic mock translation provider 相当の既存preview挙動は壊さない。
-- 新しい storage key / IndexedDB / localStorage key / Supabase schema / migration / RLS policy / handoff payload は追加・変更しない。
+- `docs/future/COMMENT_TRANSLATOR_YOUTUBE_INPUT_BOUNDARY_DESIGN.md` と `lib/comment-translator-youtube-input-boundary.ts` の境界に沿って、server-only runtime foundation を最小で切る。
+- 最初の implementation PR では OAuth token storage / refresh / revocation / encrypted token store を本実装しない。必要なら interface / adapter seam までに閉じる。
+- owner verification、owned broadcast lookup、Live Chat polling loop、sanitized comment bridge は translation provider module と直接結合しない。
+- client component から Google API / provider / polling runtime を直接呼ばない。
+- DeepL provider prototype、MockTranslationProvider、Manual / Paste Input MVP、interactive shell の既存挙動は壊さない。
 
 実装したいこと:
-- YouTube input boundary design をまとめる。
-  - OAuth flow / consent / token storage の server-only 境界
-  - owner verification と broadcaster read-only dock の判定責務
-  - Live Chat polling cursor / retry / rate limit / backoff の責務
-  - provider request へ渡してよい最小 comment payload と渡してはいけない token / channel / viewer identifier
-  - short-lived diagnostic log、PII minimization、cache key material との接点
-- 必要なら contract script を追加し、禁止境界を固定する。
-  - client component から OAuth token / Google API / polling runtime に触れない
-  - translation provider module と YouTube input module を直接結合しない
-  - `lib/comment-translator.ts` の mock provider / fixture 境界を壊さない
-  - storage key / IndexedDB / localStorage / Supabase schema / migration / RLS / handoff payload を変更しない
-- UI変更は原則なし。設計上どうしても必要な copy / mock state だけに限定する。
+- まず implementation scope をさらに小さく定義する。OAuth runtimeまで入れるか、server-only interface + deterministic adapter contract に閉じるかを着手時に判断する。
+- YouTube owner verification / polling runtime contract を追加する。
+- token / client storage / provider coupling / storage / quota write の禁止境界を維持する。
+- sanitized comment bridge は `commentId` / `publishedAt` / `text` / `platformLanguageHint` だけを通す。
+- UI変更は原則なし。必要な場合だけ幅別確認を行う。
 
 実装方針:
-- 設計PRとして閉じる。実 OAuth / Google API / polling runtime は次の implementation PR に残す。
-- contract-first で進める。YouTube input boundary contract を追加し、token / client storage / provider coupling / storage / quota write の禁止境界を固定する。
-- 既存 `MockTranslationProvider` / manual input / interactive shell の挙動は維持する。
-- docs を増やす場合は `docs/future` か既存 task context に寄せ、重複する長文 docs を作らない。
+- contract-first で進める。
+- 実 credential や private token は扱わない。
+- 実 Google API live smoke が安全にできない場合は未実施範囲として task.md / PR body に明記する。
 
 Out of scope:
-- YouTube OAuth flow、Google API、Live Chat polling、owner verification runtime の実装。
-- client component からの provider / Google API 呼び出し。
+- client component からの provider / Google API / polling runtime 呼び出し。
 - DeepL / translation provider prototype の変更。
 - Stripe checkout / billing、server-authoritative quota、paid plan enforcement。
 - GA4 実装、cookie consent banner。
@@ -290,7 +309,8 @@ Out of scope:
 - main integration PR。
 
 検証:
-- new/updated comment translator YouTube input boundary contract
+- new/updated YouTube owner verification / polling runtime contract
+- `node scripts/comment-translator-youtube-input-boundary-contract.mjs`
 - `node scripts/comment-translator-server-provider-prototype-contract.mjs`
 - `node scripts/comment-translator-provider-boundary-contract.mjs`
 - `node scripts/comment-translator-manual-input-mvp-contract.mjs`
@@ -304,7 +324,7 @@ Out of scope:
 - UI変更がある場合だけ、`/tools` and `/tools/comment-translator` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、task.md に残す。
 
 完了時:
-- `task.md` に設計内容、検証結果、未確認範囲、残リスク、次 implementation PR の候補を記録してください。
+- `task.md` に実装内容、検証結果、未確認範囲、残リスク、次 PR 候補を記録してください。
 - 問題なければ feature branch から `codex/comment-translator-preview` 宛てに draft PR を作成してください。
 ```
 

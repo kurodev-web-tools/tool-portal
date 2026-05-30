@@ -33,14 +33,23 @@ assertIncludes(
   [
     "turnstileSiteKey",
     "turnstileSiteKey?: string",
-    "https://challenges.cloudflare.com/turnstile/v0/api.js",
+    "useEffect",
+    "useRef",
+    "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
     "cf-turnstile",
-    "data-sitekey={turnstileSiteKey}",
-    "data-size=\"flexible\"",
-    "data-response-field-name=\"cf-turnstile-response\"",
+    "const turnstileResponseFieldName = \"cf-turnstile-response\";",
+    "window.turnstile.render",
+    "window.turnstile.remove",
+    "responseFieldName: turnstileResponseFieldName",
+    "size: \"flexible\"",
     "return null"
   ],
-  "Turnstile component keeps local/dev graceful and uses Cloudflare form integration"
+  "Turnstile component keeps local/dev graceful and explicitly renders on SPA navigation"
+);
+assertExcludes(
+  turnstileSource,
+  ["data-sitekey={turnstileSiteKey}", "data-response-field-name=\"cf-turnstile-response\""],
+  "Turnstile component avoids implicit render attributes that miss client-side route transitions"
 );
 assertExcludes(turnstileSource, ["process.env"], "Turnstile client component avoids browser runtime env reads");
 assertExcludes(

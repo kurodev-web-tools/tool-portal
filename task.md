@@ -14,7 +14,38 @@
 
 ## Active Priorities
 
-1. Cloudflare production handoff after PR #234 main merge
+1. Legal foundation pages / footer
+   - status: implemented on `codex/legal-foundation-pages`.
+   - implementation summary:
+     - Added `/terms`, `/privacy`, and `/legal/tokushoho` for Kuro Stream Kit.
+     - Added a normal-flow legal footer to the right-side main area for non-workspace `PortalShell` pages.
+     - Kept workspace tool pages out of the footer path so tool canvases/workspaces are not covered or resized by footer content.
+     - Used `feedback@kuro-lab.com` as the public contact address for the legal/tokushoho page.
+     - Included future paid-plan terms without implementing Stripe checkout, billing, GA4, or a cookie consent banner.
+     - Clarified that current tool data is principally browser-local, and did not change existing storage key / IndexedDB / localStorage key / handoff payload behavior.
+     - Clarified that user-used/uploaded/edited images, materials, schedule text, drafts, and similar tool data are not used by us for AI model training.
+     - Aligned `scripts/portal-tools-copy-locale-contract.mjs` with the current post-auth EN account display settings copy so the required portal copy contract reflects `origin/main`.
+     - secret / service_role key は要求・表示・保存していない。
+   - contract coverage:
+     - Added `node scripts/legal-foundation-contract.mjs`.
+     - Contract checks route page existence, footer links, Kuro Stream Kit-specific terms/privacy/tokushoho wording, absence of HP Portal template / Web production wording, AI training non-use copy, tokushoho disclosure policy, paid-plan preparation note, and no Supabase/storage/payload boundary file changes against `origin/main...HEAD`.
+   - verification completed:
+     - `node scripts/legal-foundation-contract.mjs`
+     - `node scripts/portal-tools-copy-locale-contract.mjs`
+     - `npm run lint`
+     - `npx tsc --noEmit`
+     - `npm run build`
+   - UI verification completed:
+     - Local production server: `http://127.0.0.1:3047`.
+     - Chrome DevTools same-origin iframe matrix checked `/`, `/tools`, `/terms`, `/privacy`, `/legal/tokushoho` at `390 / 820 / 1024 / 1280 / 1366px`.
+     - All 25 cases reported footer present, 3 legal links present, footer normal-flow, footer after main content, `overflowX=false`, and no visible sidebar overlap/interference.
+     - Evidence: `output/playwright/legal-foundation/width-results.json` is a local ignored artifact.
+   - unverified scope / residual risk:
+     - Legal text is a foundation draft, not legal professional review.
+     - Production/custom-domain smoke was not run in this branch.
+     - Stripe checkout / billing, GA4, cookie consent banner, Supabase schema / migration / RLS, storage key, IndexedDB, localStorage key, and handoff payload changes remain out of scope.
+
+2. Cloudflare production handoff after PR #234 main merge
    - status: user-managed dashboard handoff。
    - completed repo state:
      - PR #234 `codex/supabase-auth-first-slice` は `main` へ merge 済み。merge commit は `5d7dd09`。
@@ -40,7 +71,7 @@
      - auth routes: `/login`, `/signup`, `/reset-password`, `/account`, `/account/security`。
      - account flow if safe credentials/session are available: login, account preference save, remote display settings apply, logout, protected route redirect。
 
-2. Auth recovery-session hardening follow-up
+3. Auth recovery-session hardening follow-up
    - hotfix status: trailing slash redirect loop fixed on `codex/auth-recovery-trailing-slash-hotfix`.
    - hotfix root cause:
      - Production normalized `/account/security` to `/account/security/`.
@@ -132,7 +163,7 @@
      - `git diff --check`
      - width check for `/account` and `/account/security` at `390 / 820 / 1024 / 1280 / 1366px` if visible form layout changes.
 
-3. Auth Turnstile CAPTCHA follow-up
+4. Auth Turnstile CAPTCHA follow-up
    - recommended branch / worktree:
      - branch: `codex/auth-turnstile-captcha`
      - worktree: `D:/V_streamer_tools/.worktrees/auth-turnstile-captcha`
@@ -166,7 +197,7 @@
      - `git diff --check`
      - width check for `/login`, `/signup`, `/reset-password` at `390 / 820 / 1024 / 1280 / 1366px` if visible form layout changes.
 
-4. Account / monetization follow-ups
+5. Account / monetization follow-ups
    - Password hardening dashboard settings:
      - `Confirm email` stays ON.
      - `Allow anonymous sign-ins` stays OFF.
@@ -178,7 +209,7 @@
      - Checkout Sessions, Customer Portal, webhooks, and server-authoritative quota remain a separate PR sequence.
      - `usage_quotas` remains owner-read only for browser clients; quota writes stay trusted-server-only.
 
-5. Kuro Live Comment Translator planning
+6. Kuro Live Comment Translator planning
    - status: user foundation is now on `main`; design can be revisited after Cloudflare production handoff and Turnstile follow-up.
    - seed: `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
    - recommended first scope:
@@ -188,7 +219,7 @@
      - コメント翻訳、短い要約、用語集を中心にし、返信生成や自動投稿は初期 scope に入れない。
      - ログイン / user settings / paid plan 基盤の方針に合わせて、保存項目と制限設計をタスク開始時に見直す。
 
-6. Local font loading
+7. Local font loading
    - status: user account / preferences foundation 後の later scope。
    - direction:
      - 端末に入っている font を直接読む Local Font Access 系は、ログイン / user settings 基盤の後に扱う。

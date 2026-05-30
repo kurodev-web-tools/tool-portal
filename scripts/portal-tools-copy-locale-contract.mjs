@@ -96,6 +96,6 @@ assert.match(homePageSource, /portalMetadata\.en\.home/, "home static metadata u
 assert.match(toolsPageSource, /portalMetadata\.en\.tools/, "tools static metadata uses conservative English copy for EN support");
 assert.equal(portalCopy.portalCopy.en.tools.resultCountSuffix, "visible", "English result count copy reads naturally in isolation");
 assert.equal(portalCopy.portalCopy.en.feedback.discordAria, "Open the Kuro Stream Kit Discord feedback channel", "English Discord feedback aria is natural");
-assert.equal(portalCopy.portalCopy.en.navigation.loginTitle, "Sign in features are planned", "English login title avoids implying an active login flow");
+assert.equal(portalCopy.portalCopy.en.navigation.loginTitle, "Save display settings", "English login title matches active account display settings copy");
 
 console.log("portal tools copy locale contract checks passed");

@@ -102,11 +102,33 @@
      - browser annotation 2: live comment header を title row と filter/search row の2段構成にした。
      - Comment Translator tool body を Portal の表示言語に追随させ、主要UI label / control / filter / quota / skip reason を ja/en copy で切替可能にした。
      - in-app Browser at `http://127.0.0.1:3052/tools/comment-translator/`: Japanese portal settingで `セットアップ / 接続`、`表示設定`、`コメントを検索`、`同一言語` 表示、document-level horizontal overflowなしを確認した。
+   - manual input MVP implementation completed 2026-05-30:
+     - `Manual / Paste Input` panelを追加し、single comment input、multiline paste input、sample insert、add to live comment list、clear draft、clear manual sessionを扱えるようにした。
+     - `lib/comment-translator.ts` に `splitManualCommentInput`、`createManualCommentRows`、`commentTranslatorManualSamples` を追加し、translated / skipped / error のdeterministic mock rowsを生成する境界を固定した。
+     - manual rowsは `source: "manual"` / `badge: "manual"` でfixture rowsと区別し、既存 status tabs、search、original / translated / both表示、skip / error-like filter、cache / quota previewに統合した。
+     - Portal表示言語に追随するja/en copyを追加した。Japanese portal settingでは `手入力 / 貼り付け`、`単一コメント`、`複数行貼り付け`、`手入力mock結果`、`手入力セッション` が表示される。
+     - 実翻訳API、YouTube実接続、OAuth、Google API、Live Chat polling、owner verification、provider secret、server action、quota DB write、storage key、IndexedDB、localStorage、Supabase schema / migration / RLS、handoff payload は変更していない。
+   - manual input MVP verification completed 2026-05-30:
+     - `node scripts/comment-translator-manual-input-mvp-contract.mjs` RED first: `manual input sample comments are exported` で期待どおり失敗、その後 PASS。
+     - `node scripts/comment-translator-interactive-shell-contract.mjs` PASS
+     - `node scripts/comment-translator-mock-foundation-contract.mjs` PASS
+     - `node scripts/tool-portal-entry-contract.mjs` PASS
+     - `npm run lint` PASS
+     - `npx tsc --noEmit` PASS
+     - `npm run build` PASS (`/tools/comment-translator` included in app routes; server-runtime buildのため `static-export-rsc-aliases` はskip、`middleware` deprecation warningあり)
+     - `git diff --check` PASS (CRLF変換warningのみ)
+   - manual input MVP width / operation check completed 2026-05-30:
+     - width method: production server `http://127.0.0.1:3054` + in-app Browser viewport override, height 900。
+     - `/tools`: `390 / 820 / 1024 / 1280 / 1366px` PASS。document-level / body horizontal overflowなし。comment translator card visible。sidebar overlap候補なし。
+     - `/tools/comment-translator`: `390 / 820 / 1024 / 1280 / 1366px` PASS。document-level / body horizontal overflowなし。manual input panel、live comment list、Portal sidebarが干渉しない。
+     - operation smoke at 390px PASS via Chrome DevTools on production server: single add、multiline paste add、sample insert、search (`Unique single` -> 1 row)、status filter (`スキップ` -> manual `ok` + `短すぎる`)、display mode (`翻訳文` -> original fixture hidden / translated fixture visible)、mock error state (`Force manual error` + `Manual mock error for 日本語`)。
+     - production operation smoke中の console error はなし。
    - unchecked scope / residual risk:
      - safe live YouTube login / OAuth / Live Chat / owner verification smokeは未実施。初回PRのscope外。
      - 生成mock内の文字は方向性確認用。正確な表示文言はReact UI側で固定した。
      - feature -> preview のdraft PRでmock方向のuser確認を受け、main向けintegration PRはpreview branch完成後に別途出す。
      - interactive shell も実 YouTube connection / translation provider / quota enforcement / account sync は未実装。後続の設計 slice で扱う。
+     - manual session rowsは現在のpreview UI stateのみで、reloadすると消える。永続化、user preference sync、quota enforcementは後続PRで扱う。
 
 2. Analytics / consent decision
    - status: no immediate implementation。

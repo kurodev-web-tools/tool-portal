@@ -156,11 +156,39 @@
      - `npx tsc --noEmit` PASS
      - `npm run build` PASS (`/tools/comment-translator` included in app routes; server-runtime buildのため `static-export-rsc-aliases` はskip、`middleware` deprecation warningあり)
      - `git diff --check` PASS (`task.md` CRLF変換warningのみ)
-   - provider boundary design unchecked scope / residual risk:
-     - 実 provider prototype、runtime credential resolver、external network call、server action、quota DB writer、billing integration は未実装。次の `Server-side translation prototype` 以降で扱う。
-     - YouTube OAuth / owner verification / Live Chat polling は未実装。translation request boundary とは別PRで設計する。
-     - provider comparison は判断軸までで、個別 provider の実測 latency / cost / retention evidence は未確認。
-     - UI変更なしのため `/tools` と `/tools/comment-translator` の幅別再確認は未実施。
+  - provider boundary design unchecked scope / residual risk:
+    - 実 provider prototype、runtime credential resolver、external network call、server action、quota DB writer、billing integration は未実装。次の `Server-side translation prototype` 以降で扱う。
+    - YouTube OAuth / owner verification / Live Chat polling は未実装。translation request boundary とは別PRで設計する。
+    - provider comparison は判断軸までで、個別 provider の実測 latency / cost / retention evidence は未確認。
+    - UI変更なしのため `/tools` と `/tools/comment-translator` の幅別再確認は未実施。
+  - server-side provider prototype implementation completed 2026-05-31:
+    - `lib/comment-translator-deepl-provider.ts` を追加し、`import "server-only";` で DeepL Text Translation API v2 の 1 provider prototype を server runtime 専用に閉じた。
+    - provider id は `deepl-text-v2`。server env name は `DEEPL_AUTH_KEY`、`DEEPL_API_BASE_URL`、`DEEPL_TIMEOUT_MS` に固定した。実 secret 値は要求・表示・保存していない。
+    - `CommentTranslationProviderRequest` を受け取り、`CommentTranslationProviderResult` を返す provider factory / env resolver を追加した。UI / route / fixture からは呼び出していない。
+    - missing credential、invalid request、unsupported language、provider configuration rejection、policy rejection は terminal error にした。rate limit、timeout、5xx / temporary unavailable は recoverable error にした。
+    - success / recoverable error は `CommentTranslationUsageHandoff` を返す。`usage_quotas` write、billing更新、quota enforcement、server action、route handler 公開API化は入れていない。
+    - provider request body は text / source language / target language / billed character request に限定し、author/channel/viewer/stream id や credential material を cache key / diagnostic scope に混ぜていない。
+    - `scripts/comment-translator-server-provider-prototype-contract.mjs` を追加し、server-only provider、client import禁止、public secret env禁止、secret値非混入、usage DB write禁止、YouTube OAuth / Live Chat polling / owner verification 非混入を固定した。
+    - `docs/future/COMMENT_TRANSLATOR_PROVIDER_BOUNDARY_DESIGN.md` を prototype 現状に合わせ、env name / config shape / failure semantics を secret 値なしで追記した。
+    - 既存 `MockTranslationProvider`、Manual / Paste Input MVP、interactive shell、storage key、IndexedDB、localStorage、Supabase schema / migration / RLS、handoff payload は変更していない。
+    - UI変更なし。`components/comment-translator/*` と `/tools/comment-translator` route は変更していないため、幅別確認は今回対象外。
+  - server-side provider prototype verification completed 2026-05-31:
+    - `node scripts/comment-translator-server-provider-prototype-contract.mjs` RED first: `server-side DeepL provider prototype module exists` で期待どおり失敗、その後 PASS。
+    - `node scripts/comment-translator-provider-boundary-contract.mjs` PASS
+    - comment translator provider boundary contract remains in the verification bundle for this slice.
+    - `node scripts/comment-translator-manual-input-mvp-contract.mjs` PASS
+    - `node scripts/comment-translator-interactive-shell-contract.mjs` PASS
+    - `node scripts/comment-translator-mock-foundation-contract.mjs` PASS
+    - `node scripts/tool-portal-entry-contract.mjs` PASS
+    - `npm run lint` PASS
+    - `npx tsc --noEmit` PASS
+    - `npm run build` PASS (`/tools/comment-translator` included in app routes; server-runtime buildのため `static-export-rsc-aliases` はskip、`middleware` deprecation warningとwebpack cache warningあり)
+    - `git diff --check` PASS (`docs/future/COMMENT_TRANSLATOR_PROVIDER_BOUNDARY_DESIGN.md` CRLF変換warningのみ)
+  - server-side provider prototype unchecked scope / residual risk:
+    - 実 credential を使った DeepL live smoke は未実施。secret 値を扱わない方針のため、このPRでは fake fetch contract と build verification まで。
+    - YouTube OAuth / owner verification / Live Chat polling、client component からの provider 呼び出し、server action / route handler 公開API化は未実装。
+    - usage handoff は object 生成まで。DB write、billing state update、quota enforcement、paid plan integration は未実装。
+    - DeepL provider の latency / cost / data-retention 実測、provider比較、glossary support の provider-specific検証は後続。
 
 2. Analytics / consent decision
    - status: no immediate implementation。
@@ -191,8 +219,8 @@
 ## Recommended Roadmap
 
 1. Comment Translator Manual / Paste Input MVP: PR #264 で `codex/comment-translator-preview` へ merge 済み。
-2. Translation provider boundary design: server-side only、secret非露出、quota/billing境界、provider比較を設計する。実API実装はまだしない。
-3. Server-side translation prototype: 1 providerのみ、env var前提、quota DB writeなしで最小実験する。
+2. Translation provider boundary design: PR #266 で `codex/comment-translator-preview` へ merge 済み。
+3. Server-side translation prototype: this branchで 1 provider / server env / quota DB writeなしの DeepL prototype を実装。
 4. YouTube OAuth / owner verification / Live Chat polling design spike。
 5. Live Chat polling MVP: YouTube read-only polling と owner boundary を translation provider から分離して実装する。
 6. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
@@ -206,52 +234,54 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Kuro Live Comment Translator の次 slice として、実APIをまだ呼ばない `Translation provider boundary design` を整理してください。Manual / Paste Input MVP は PR #264 で `codex/comment-translator-preview` に merge 済みなので、次は provider 境界、secret 非露出、quota / billing handoff、provider 比較軸を設計する計画PRにしてください。
+Kuro Live Comment Translator の次 slice として、YouTube OAuth / owner verification / Live Chat polling の input boundary design spike を整理してください。Translation provider boundary design は PR #266 で `codex/comment-translator-preview` に merge 済みで、Server-side translation prototype も preview branch へ merge 済みであることを確認してから進めてください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- `codex/comment-translator-preview` に mock foundation、interactive shell、Manual / Paste Input MVP が merge 済みであることを確認してください。
+- `codex/comment-translator-preview` に mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype が merge 済みであることを確認してください。
 - 作業は `codex/comment-translator-preview` から新しい feature branch を切ってください。
-- 推奨 branch: `codex/comment-translator-provider-boundary-design`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-provider-boundary-design`
+- 推奨 branch: `codex/comment-translator-youtube-input-boundary-design`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-youtube-input-boundary-design`
 - 初回 platform は YouTube。
 - secret / service_role key / private credential は要求・表示・保存しない。
+- OAuth token / refresh token は client storage、fixture、task docs、PR body に出さない。
 - 既存 storage key / payload / IndexedDB / localStorage key / Supabase schema / migration / RLS policy / handoff payload は変更しない。
 - main へはまだ統合しない。`codex/comment-translator-preview` 宛てのPRとして進める。
 
 scope:
-- provider boundary は設計 / contract / docs / pure type boundary まで。実翻訳API呼び出しはまだ入れない。
-- YouTube OAuth、Google API、Live Chat polling、owner verification は実装しない。
-- OpenAI / Google / DeepL / Gemini 等の実API call、API key、provider secret、server action、quota DB write は入れない。
-- GA4、cookie consent、Stripe、billing、quota enforcement は入れない。
+- YouTube input boundary は設計 / contract / docs / pure type boundary まで。実 OAuth flow、Google API call、Live Chat polling はまだ入れない。
+- owner-only / broadcaster read-only dock、OAuth scope、token handling、polling cursor、rate limit、provider request への橋渡し境界を整理する。
+- Translation provider prototype は変更しない。DeepL provider の env / failure semantics / usage handoff はそのまま維持する。
+- Stripe、billing、quota enforcement、GA4、cookie consent は入れない。
 - fixture / deterministic mock translation provider 相当の既存preview挙動は壊さない。
 - 新しい storage key / IndexedDB / localStorage key / Supabase schema / migration / RLS policy / handoff payload は追加・変更しない。
 
 実装したいこと:
-- Translation provider boundary design をまとめる。
-  - server-only provider interface / request / response / recoverable error / terminal error の責務分離
-  - provider secret は server runtime env だけで扱い、client bundle / fixtures / task docs / PR body に露出しない境界
-  - quota / billing / usage logging の handoff point。DB write や enforcement はまだ実装しない。
-  - provider比較軸: latency、cost、language coverage、streaming suitability、glossary support、rate limit、data retention、failure semantics
-  - YouTube polling / owner verification とは分離し、入力元に依存しない translation request 境界にする
-  - short-lived log / PII minimization / moderation skip reason / cache key の設計メモ。ただし storage key や DB schema はまだ変えない。
+- YouTube input boundary design をまとめる。
+  - OAuth flow / consent / token storage の server-only 境界
+  - owner verification と broadcaster read-only dock の判定責務
+  - Live Chat polling cursor / retry / rate limit / backoff の責務
+  - provider request へ渡してよい最小 comment payload と渡してはいけない token / channel / viewer identifier
+  - short-lived diagnostic log、PII minimization、cache key material との接点
 - 必要なら contract script を追加し、禁止境界を固定する。
-  - client component から実 provider secret / external API call に触れない
+  - client component から OAuth token / Google API / polling runtime に触れない
+  - translation provider module と YouTube input module を直接結合しない
   - `lib/comment-translator.ts` の mock provider / fixture 境界を壊さない
   - storage key / IndexedDB / localStorage / Supabase schema / migration / RLS / handoff payload を変更しない
 - UI変更は原則なし。設計上どうしても必要な copy / mock state だけに限定する。
 
 実装方針:
-- 設計PRとして閉じる。実API prototype は次の `Server-side translation prototype` PR に残す。
-- contract-first で進める。provider boundary contract を追加し、secret / external runtime / storage / quota write の禁止境界を固定する。
+- 設計PRとして閉じる。実 OAuth / Google API / polling runtime は次の implementation PR に残す。
+- contract-first で進める。YouTube input boundary contract を追加し、token / client storage / provider coupling / storage / quota write の禁止境界を固定する。
 - 既存 `MockTranslationProvider` / manual input / interactive shell の挙動は維持する。
 - docs を増やす場合は `docs/future` か既存 task context に寄せ、重複する長文 docs を作らない。
 
 Out of scope:
-- YouTube OAuth、Google API、Live Chat polling、owner verification の実装。
-- OpenAI / Google / DeepL / Gemini 等の実翻訳 API 呼び出し。
+- YouTube OAuth flow、Google API、Live Chat polling、owner verification runtime の実装。
+- client component からの provider / Google API 呼び出し。
+- DeepL / translation provider prototype の変更。
 - Stripe checkout / billing、server-authoritative quota、paid plan enforcement。
 - GA4 実装、cookie consent banner。
 - Supabase schema / migration / RLS policy 変更。
@@ -260,7 +290,9 @@ Out of scope:
 - main integration PR。
 
 検証:
-- new/updated comment translator provider boundary contract
+- new/updated comment translator YouTube input boundary contract
+- `node scripts/comment-translator-server-provider-prototype-contract.mjs`
+- `node scripts/comment-translator-provider-boundary-contract.mjs`
 - `node scripts/comment-translator-manual-input-mvp-contract.mjs`
 - `node scripts/comment-translator-interactive-shell-contract.mjs`
 - `node scripts/comment-translator-mock-foundation-contract.mjs`
@@ -272,7 +304,7 @@ Out of scope:
 - UI変更がある場合だけ、`/tools` and `/tools/comment-translator` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、task.md に残す。
 
 完了時:
-- `task.md` に設計内容、検証結果、未確認範囲、残リスクを記録してください。
+- `task.md` に設計内容、検証結果、未確認範囲、残リスク、次 implementation PR の候補を記録してください。
 - 問題なければ feature branch から `codex/comment-translator-preview` 宛てに draft PR を作成してください。
 ```
 

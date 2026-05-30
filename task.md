@@ -157,6 +157,29 @@
        - Built without `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, then started `next start` on `http://127.0.0.1:3052` with runtime dummy site key `1x00000000000000000000AA`.
        - Browser check confirmed `.cf-turnstile` and `input[name="cf-turnstile-response"]` remained after hydration even though `globalThis.process?.env?.NEXT_PUBLIC_TURNSTILE_SITE_KEY` was `null`.
        - No console messages were reported on `/login`; temporary server was stopped after verification.
+   - SPA navigation hotfix root cause:
+     - Cloudflare Turnstile implicit rendering only rendered reliably on full page load.
+     - When moving to auth pages through Next client-side navigation, or between `/login`, `/signup`, and `/reset-password`, the `.cf-turnstile` container could mount after the script had already scanned the page.
+     - This left the form without `cf-turnstile-response` until a manual refresh.
+   - SPA navigation hotfix implementation:
+     - `AuthTurnstile` now loads `https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit`.
+     - The component calls `window.turnstile.render(...)` after mount/script readiness and removes the previous widget on unmount.
+     - The token field name stays `cf-turnstile-response`; no server action or Supabase boundary changes were needed.
+   - SPA navigation hotfix verification completed:
+     - RED: `node scripts/auth-turnstile-captcha-contract.mjs` failed before the hotfix because the component still used implicit rendering.
+     - `node scripts/auth-turnstile-captcha-contract.mjs`
+     - `node scripts/auth-security-hardening-contract.mjs`
+     - `node scripts/account-auth-public-readiness-contract.mjs`
+     - `node scripts/supabase-auth-first-slice-contract.mjs`
+     - `npm run lint`
+     - `npx tsc --noEmit`
+     - `npm run build`
+     - `npm run build:cloudflare`
+     - Local production runtime smoke:
+       - Built without `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, then started `next start` on `http://127.0.0.1:3053` with runtime dummy site key `1x00000000000000000000AA`.
+       - Browser check confirmed token generation after `/` -> `/login`, `/login` -> `/signup`, and `/login` -> `/reset-password` client-side navigation without refresh.
+       - Width check covered direct `/login`, `/signup`, `/reset-password` at `390 / 820 / 1024 / 1280 / 1366px`; all 15 cases had `overflowX=false`, token input present, and no submit-button overlap.
+       - Navigation plus width evidence covered 18 cases total; ignored local artifact: `output/playwright/auth-turnstile-spa-render-hotfix/width-results.json`.
    - implementation summary:
      - Added `components/account/AuthTurnstile.tsx` as a small Cloudflare Turnstile widget for auth forms.
      - The widget uses the public site key passed from the server page; when it is missing, it returns `null` so local/dev/pre-dashboard auth forms keep working.

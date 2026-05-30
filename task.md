@@ -16,7 +16,10 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator mock foundation
-   - status: next implementation target。
+   - status: first mock foundation implemented on `codex/comment-translator-mock-foundation`; draft PR target is `codex/comment-translator-preview`。
+   - branch stack:
+     - preview: `codex/comment-translator-preview` at `D:/V_streamer_tools/.worktrees/comment-translator-preview`
+     - feature: `codex/comment-translator-mock-foundation` at `D:/V_streamer_tools/.worktrees/comment-translator-mock-foundation`
    - seed:
      - `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
      - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
@@ -47,6 +50,27 @@
      - `npm run build`
      - `git diff --check`
      - `/tools` and new comment translator route width checks at `390 / 820 / 1024 / 1280 / 1366px`。
+   - implementation completed 2026-05-30:
+     - `imagegen` built-in modeで `390 / 820 / 1024 / 1280 / 1366` 向け方向性mockを生成し、`docs/mockups/comment-translator/` にproject-bound PNGとして保存した。
+     - `/tools/comment-translator` を追加し、`MockTranslationProvider` / static fixtureだけで YouTube read-only broadcaster dock のUI shellを再現した。
+     - `/tools`、sidebar、mobile header、Site Tips、portal copy / metadata / suite copy を4ツール前提に更新した。
+     - 実翻訳API、YouTube実接続、provider secret、server action、quota DB write、storage key、IndexedDB、localStorage、Supabase schema / migration / RLS、handoff payload は変更していない。
+   - verification completed 2026-05-30:
+     - `node scripts/comment-translator-mock-foundation-contract.mjs` PASS
+     - `node scripts/tool-portal-entry-contract.mjs` PASS
+     - `node scripts/portal-tools-copy-locale-contract.mjs` PASS
+     - `npm run lint` PASS
+     - `npx tsc --noEmit` PASS
+     - `npm run build` PASS (`/tools/comment-translator` included in app routes; server-runtime buildのため `static-export-rsc-aliases` はskip、`middleware` deprecation warningあり)
+     - `git diff --check` PASS (CRLF変換warningのみ)
+   - width check completed 2026-05-30:
+     - method: local dev server `http://localhost:3051` + in-app Browser viewport override, height 900。
+     - `/tools`: `390 / 820 / 1024 / 1280 / 1366px` PASS。document-level horizontal overflowなし。comment translator card visible。narrow widthの既存filter rowは横スクロール内に収まる。
+     - `/tools/comment-translator`: `390 / 820 / 1024 / 1280 / 1366px` PASS。document-level horizontal overflowなし。desktop sidebar overlapなし。setup / connection mock、live comment list、original / translated text、language label、skip reason、cache / quota preview、empty state、error-like stateが表示される。
+   - unchecked scope / residual risk:
+     - safe live YouTube login / OAuth / Live Chat / owner verification smokeは未実施。初回PRのscope外。
+     - 生成mock内の文字は方向性確認用。正確な表示文言はReact UI側で固定した。
+     - feature -> preview のdraft PRでmock方向のuser確認を受け、main向けintegration PRはpreview branch完成後に別途出す。
 
 2. Analytics / consent decision
    - status: no immediate implementation。

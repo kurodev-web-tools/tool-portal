@@ -54,6 +54,10 @@ export function PortalHeader({
       return copy.toolTitles["schedule-calendar"];
     }
 
+    if (pathname.startsWith("/tools/comment-translator")) {
+      return copy.toolTitles["comment-translator"];
+    }
+
     if (pathname.startsWith("/tools/thumbnail-editor")) {
       return copy.toolTitles["thumbnail-editor"];
     }

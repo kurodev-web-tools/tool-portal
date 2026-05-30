@@ -21,6 +21,7 @@ function safeNextPath(value: string | undefined) {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   return (
     <PortalShell>
@@ -29,6 +30,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         action={signInWithPasswordAction}
         authMessage={params?.auth ?? null}
         nextPath={safeNextPath(params?.next)}
+        turnstileSiteKey={turnstileSiteKey}
       />
     </PortalShell>
   );

@@ -16,10 +16,11 @@ type SignupPageProps = {
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
   const params = await searchParams;
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   return (
     <PortalShell>
-      <AuthFlowShell mode="signup" action={signUpWithPasswordAction} authMessage={params?.auth ?? null} />
+      <AuthFlowShell mode="signup" action={signUpWithPasswordAction} authMessage={params?.auth ?? null} turnstileSiteKey={turnstileSiteKey} />
     </PortalShell>
   );
 }

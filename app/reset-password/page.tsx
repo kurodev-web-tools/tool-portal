@@ -16,10 +16,11 @@ type ResetPasswordPageProps = {
 
 export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
   const params = await searchParams;
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   return (
     <PortalShell>
-      <AuthFlowShell mode="reset" action={resetPasswordEmailAction} authMessage={params?.auth ?? null} />
+      <AuthFlowShell mode="reset" action={resetPasswordEmailAction} authMessage={params?.auth ?? null} turnstileSiteKey={turnstileSiteKey} />
     </PortalShell>
   );
 }

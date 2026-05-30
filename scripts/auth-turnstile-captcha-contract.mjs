@@ -31,7 +31,8 @@ const turnstileSource = read("components/account/AuthTurnstile.tsx");
 assertIncludes(
   turnstileSource,
   [
-    "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+    "turnstileSiteKey",
+    "turnstileSiteKey?: string",
     "https://challenges.cloudflare.com/turnstile/v0/api.js",
     "cf-turnstile",
     "data-sitekey={turnstileSiteKey}",
@@ -41,6 +42,7 @@ assertIncludes(
   ],
   "Turnstile component keeps local/dev graceful and uses Cloudflare form integration"
 );
+assertExcludes(turnstileSource, ["process.env"], "Turnstile client component avoids browser runtime env reads");
 assertExcludes(
   turnstileSource,
   ["TURNSTILE_SECRET", "CF_TURNSTILE_SECRET", "CAPTCHA_SECRET", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY", "service_role"],
@@ -52,11 +54,21 @@ assertIncludes(
   authFlowShell,
   [
     "import { AuthTurnstile } from \"@/components/account/AuthTurnstile\";",
+    "turnstileSiteKey?: string;",
     "const showTurnstile = mode === \"login\" || mode === \"signup\" || mode === \"reset\";",
-    "{showTurnstile ? <AuthTurnstile /> : null}"
+    "{showTurnstile ? <AuthTurnstile turnstileSiteKey={turnstileSiteKey} /> : null}"
   ],
   "auth forms render Turnstile only for login/signup/reset"
 );
+
+for (const routeFile of ["app/login/page.tsx", "app/signup/page.tsx", "app/reset-password/page.tsx"]) {
+  const routeSource = read(routeFile);
+  assertIncludes(
+    routeSource,
+    ["process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY", "turnstileSiteKey={turnstileSiteKey}"],
+    `${routeFile} passes the public site key from the server page into the client form`
+  );
+}
 
 const actionSource = read("app/account/actions.ts");
 assertIncludes(

@@ -133,6 +133,38 @@
      - width check for `/account` and `/account/security` at `390 / 820 / 1024 / 1280 / 1366px` if visible form layout changes.
 
 3. Auth Turnstile CAPTCHA follow-up
+   - status: implemented on `codex/auth-turnstile-captcha`; PR pending.
+   - implementation summary:
+     - Added `components/account/AuthTurnstile.tsx` as a small Cloudflare Turnstile widget for auth forms.
+     - The widget reads only `NEXT_PUBLIC_TURNSTILE_SITE_KEY`; when it is missing, it returns `null` so local/dev/pre-dashboard auth forms keep working.
+     - `/login`, `/signup`, and `/reset-password` render Turnstile through the shared `AuthFlowShell`; `update-password` remains outside CAPTCHA scope.
+     - Server Actions read `cf-turnstile-response` and pass it to Supabase Auth as `captchaToken` for `signInWithPassword`, `signUp`, and `resetPasswordForEmail`.
+     - The widget explicitly keeps the response field name aligned to `cf-turnstile-response`.
+     - Supabase schema, migrations, RLS policy, storage keys, IndexedDB, localStorage keys, and handoff payloads were not changed.
+     - Turnstile secret / Supabase service_role / private credential values were not requested, displayed, stored, or added to source.
+   - verification completed:
+     - RED: `node scripts/auth-turnstile-captcha-contract.mjs` initially failed because `components/account/AuthTurnstile.tsx` did not exist.
+     - `node scripts/auth-turnstile-captcha-contract.mjs`
+     - `node scripts/auth-security-hardening-contract.mjs`
+     - `node scripts/account-auth-public-readiness-contract.mjs`
+     - `node scripts/supabase-auth-first-slice-contract.mjs`
+     - `npm run lint`
+     - `npx tsc --noEmit`
+     - `npm run build`
+       - passed with existing middleware convention warning.
+     - `npm run build:cloudflare`
+       - passed with existing warnings: OpenNext Windows compatibility, middleware convention deprecation, Node `punycode` deprecation.
+     - `git diff --check`
+       - passed; Git reported LF-to-CRLF working-copy normalization warnings only.
+   - UI verification completed:
+     - Started a temporary local dev server on `http://127.0.0.1:3051` with Cloudflare Turnstile dummy site key `1x00000000000000000000AA`, then stopped it after verification.
+     - Playwright width check covered `/login`, `/signup`, `/reset-password` at `390 / 820 / 1024 / 1280 / 1366px`.
+     - All 15 cases passed: Turnstile container present, dummy public site key present, flexible sizing present, `overflowX=false`, no submit-button overlap, and no console errors.
+     - Evidence is in ignored local artifacts: `output/playwright/auth-turnstile-captcha/width-results.json`.
+   - unverified scope / residual risk:
+     - Headless Playwright did not verify a completed Cloudflare challenge token or Supabase Dashboard CAPTCHA enforcement.
+     - Production smoke after deploy still needs Dashboard setup: public `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in Workers, Turnstile secret only in Supabase Auth CAPTCHA settings, then `/signup`, `/login`, and `/reset-password` smoke.
+     - Do not enable Supabase CAPTCHA in Dashboard until this app-side token forwarding is deployed.
    - recommended branch / worktree:
      - branch: `codex/auth-turnstile-captcha`
      - worktree: `D:/V_streamer_tools/.worktrees/auth-turnstile-captcha`

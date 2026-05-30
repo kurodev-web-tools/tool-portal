@@ -1,8 +1,8 @@
 # Kuro Live Comment Translator Provider Boundary Design
 
-Status: design / contract slice for `codex/comment-translator-preview`.
+Status: provider boundary design plus server-only prototype notes for `codex/comment-translator-preview`.
 
-This note defines the translation provider boundary before any real provider call is added. It keeps the Manual / Paste Input MVP and mock provider behavior intact.
+This note defines the translation provider boundary and the first server-only provider prototype. It keeps the Manual / Paste Input MVP and mock provider behavior intact.
 
 ## Scope
 
@@ -12,7 +12,7 @@ This note defines the translation provider boundary before any real provider cal
 - No database write, quota enforcement, billing implementation, or usage persistence is included.
 - No YouTube OAuth, owner verification, Google API, or platform token handling is included.
 - No Live Chat polling is included.
-- No real provider endpoint, network call, server action, storage key, IndexedDB key, localStorage key, Supabase schema, migration, RLS policy, or handoff payload change is included.
+- No public provider endpoint, server action, storage key, IndexedDB key, localStorage key, Supabase schema, migration, RLS policy, or handoff payload change is included.
 
 ## Boundary Shape
 
@@ -35,9 +35,36 @@ Provider credentials belong to server runtime env only.
 - Client bundle: forbidden.
 - Fixtures: forbidden.
 - `task.md`, docs, and PR body: no secret values.
-- Runtime reading: not implemented in this slice.
+- Runtime reading: implemented only in the server-only DeepL prototype module.
 
-The first real provider prototype can add the runtime resolver later, but it must stay in server-only code and remain separate from the client component and mock fixture module.
+The first real provider prototype stays in server-only code and remains separate from the client component and mock fixture module.
+
+## Server-Side Prototype
+
+The prototype module is `lib/comment-translator-deepl-provider.ts` and starts with `import "server-only";`.
+
+Prototype provider:
+
+- provider id: `deepl-text-v2`
+- provider candidate: DeepL Text Translation API v2
+- server env names: `DEEPL_AUTH_KEY`, `DEEPL_API_BASE_URL`, `DEEPL_TIMEOUT_MS`
+- default API base URL: `https://api-free.deepl.com`
+- public env prefix: forbidden
+- UI / route usage: not wired
+
+Failure semantics:
+
+- Missing server runtime credential returns terminal `credential-missing`.
+- Empty text returns terminal `invalid-request`.
+- Unsupported source or target language returns terminal `unsupported-language`.
+- 429 returns recoverable `rate-limited` with `retryAfterMs` when available.
+- Request abort, 408, or 504 returns recoverable `timeout`.
+- 5xx returns recoverable `temporary-unavailable`.
+- 400 / 413 returns terminal `invalid-request`.
+- 401 / 403 / 404 returns terminal `provider-not-configured`.
+- Other provider rejections return terminal `policy-blocked`.
+
+Successful responses and recoverable errors include `CommentTranslationUsageHandoff`. The module does not write usage data, enforce quota, or update billing state.
 
 ## Quota / Billing / Usage Logging Handoff
 
@@ -79,6 +106,6 @@ The later server-side prototype may emit this object to a trusted server writer.
 
 ## Future Slices
 
-1. Server-side translation prototype: one provider, server-only runtime resolver, no quota database write.
-2. YouTube OAuth / owner verification / Live Chat polling design: platform input boundary separate from provider translation boundary.
-3. Billing / quota foundation: trusted server writer, plan state, quota enforcement, and audit policy.
+1. YouTube OAuth / owner verification / Live Chat polling design: platform input boundary separate from provider translation boundary.
+2. Billing / quota foundation: trusted server writer, plan state, quota enforcement, and audit policy.
+3. Provider comparison follow-up: measure latency, cost, and failure behavior with safe server-only credentials outside source control.

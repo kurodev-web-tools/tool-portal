@@ -2,9 +2,7 @@
 
 import Script from "next/script";
 
-const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-
-export function AuthTurnstile() {
+export function AuthTurnstile({ turnstileSiteKey }: { turnstileSiteKey?: string }) {
   if (!turnstileSiteKey) {
     return null;
   }

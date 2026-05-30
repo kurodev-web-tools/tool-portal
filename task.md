@@ -133,10 +133,33 @@
      - width check for `/account` and `/account/security` at `390 / 820 / 1024 / 1280 / 1366px` if visible form layout changes.
 
 3. Auth Turnstile CAPTCHA follow-up
-   - status: implemented on `codex/auth-turnstile-captcha`; PR pending.
+   - status: implemented on `main`; runtime site key hydration hotfix pending on `codex/auth-turnstile-runtime-sitekey-hotfix`.
+   - hotfix root cause:
+     - Production server HTML rendered the Turnstile widget because Workers runtime had `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
+     - The hydrated browser bundle could not read `process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY`, so the client component returned `null`.
+     - This removed `.cf-turnstile` after hydration, produced React minified error #418, and left Supabase Auth CAPTCHA enabled without a submitted token.
+   - hotfix implementation:
+     - Auth route server pages read `process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY` and pass the public site key into `AuthFlowShell`.
+     - `AuthTurnstile` now receives `turnstileSiteKey` as a prop and no longer reads `process.env` in the client component.
+     - Contract coverage asserts the client component avoids browser runtime env reads and the three auth pages pass the site key from server to client.
+   - hotfix verification completed:
+     - RED: `node scripts/auth-turnstile-captcha-contract.mjs` failed before the hotfix because the client component still read runtime env directly.
+     - `node scripts/auth-turnstile-captcha-contract.mjs`
+     - `node scripts/auth-security-hardening-contract.mjs`
+     - `node scripts/account-auth-public-readiness-contract.mjs`
+     - `node scripts/supabase-auth-first-slice-contract.mjs`
+     - `npm run lint`
+     - `npx tsc --noEmit`
+     - `npm run build`
+     - `npm run build:cloudflare`
+     - `git diff --check`
+     - Local production runtime smoke:
+       - Built without `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, then started `next start` on `http://127.0.0.1:3052` with runtime dummy site key `1x00000000000000000000AA`.
+       - Browser check confirmed `.cf-turnstile` and `input[name="cf-turnstile-response"]` remained after hydration even though `globalThis.process?.env?.NEXT_PUBLIC_TURNSTILE_SITE_KEY` was `null`.
+       - No console messages were reported on `/login`; temporary server was stopped after verification.
    - implementation summary:
      - Added `components/account/AuthTurnstile.tsx` as a small Cloudflare Turnstile widget for auth forms.
-     - The widget reads only `NEXT_PUBLIC_TURNSTILE_SITE_KEY`; when it is missing, it returns `null` so local/dev/pre-dashboard auth forms keep working.
+     - The widget uses the public site key passed from the server page; when it is missing, it returns `null` so local/dev/pre-dashboard auth forms keep working.
      - `/login`, `/signup`, and `/reset-password` render Turnstile through the shared `AuthFlowShell`; `update-password` remains outside CAPTCHA scope.
      - Server Actions read `cf-turnstile-response` and pass it to Supabase Auth as `captchaToken` for `signInWithPassword`, `signUp`, and `resetPasswordForEmail`.
      - The widget explicitly keeps the response field name aligned to `cf-turnstile-response`.

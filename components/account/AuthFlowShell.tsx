@@ -173,13 +173,15 @@ export function AuthFlowShell({
   passwordFlow = "recovery",
   action,
   authMessage,
-  nextPath = "/account"
+  nextPath = "/account",
+  turnstileSiteKey
 }: {
   mode: AuthFlowMode;
   passwordFlow?: PasswordFlow;
   action: AuthFormAction;
   authMessage: string | null;
   nextPath?: string;
+  turnstileSiteKey?: string;
 }) {
   const { locale } = useLocale();
   const copy = authFlowCopy[locale];
@@ -269,7 +271,7 @@ export function AuthFlowShell({
               />
             </label>
           ) : null}
-          {showTurnstile ? <AuthTurnstile /> : null}
+          {showTurnstile ? <AuthTurnstile turnstileSiteKey={turnstileSiteKey} /> : null}
           <button className="rounded-base bg-primary px-4 py-2.5 text-sm font-black text-white transition hover:bg-primary-strong">
             {modeCopy.submit}
           </button>

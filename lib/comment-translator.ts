@@ -9,6 +9,8 @@ export type CommentTranslatorSurfaceMode = "obs-browser-dock" | "narrow-viewport
 export type CommentTranslatorStatusFilter = "all" | "translated" | "skipped" | "error";
 export type CommentTranslatorQuotaScenarioId = "normal" | "warning" | "empty" | "error";
 export type CommentTranslatorStreamId = "saturday-setup" | "karaoke-preview" | "archive-check";
+export type CommentTranslatorCommentSource = "fixture" | "manual";
+export type CommentTranslatorManualResultMode = "translated" | "skipped" | "error";
 
 export type CommentTranslatorPlatform = {
   id: "youtube";
@@ -53,6 +55,8 @@ export type CommentTranslatorComment = {
   id: string;
   timestamp: string;
   authorName: string;
+  source?: CommentTranslatorCommentSource;
+  sourceLabel?: string;
   sourceLanguage: string;
   targetLanguage: string;
   originalText: string;
@@ -63,6 +67,11 @@ export type CommentTranslatorComment = {
   errorMessage?: string;
   badge?: string;
   unitCost: number;
+};
+
+export type CommentTranslatorManualSample = {
+  id: string;
+  text: string;
 };
 
 export type CommentTranslatorConnectionState = {
@@ -108,6 +117,7 @@ export const commentTranslatorUiCopy = {
     },
     sections: {
       setup: "セットアップ / 接続",
+      manualInput: "手入力 / 貼り付け",
       display: "表示設定",
       comments: "ライブコメント",
       quota: "キャッシュ / クォータ確認",
@@ -119,6 +129,9 @@ export const commentTranslatorUiCopy = {
       stream: "配信選択",
       sourceLanguage: "翻訳元言語",
       targetLanguage: "翻訳先言語",
+      singleComment: "単一コメント",
+      multilinePaste: "複数行貼り付け",
+      manualResult: "手入力mock結果",
       commentText: "コメント本文",
       surface: "表示面",
       currentPair: "現在の組み合わせ",
@@ -137,7 +150,27 @@ export const commentTranslatorUiCopy = {
       used: "使用中",
       hits: "hits",
       fixtureMisses: "fixture miss",
-      recoverable: "復帰可能な状態"
+      recoverable: "復帰可能な状態",
+      manualRows: "手入力行",
+      manualSession: "手入力セッション"
+    },
+    manualInput: {
+      helper: "実APIなしで、入力したコメントをfixture feedに追加します。",
+      singlePlaceholder: "1件だけ追加するコメント",
+      pastePlaceholder: "貼り付けたコメントを1行ずつ追加",
+      sourceBadge: "手入力",
+      sampleLabel: "sample"
+    },
+    actions: {
+      addManualComments: "コメントを追加",
+      insertSample: "サンプル挿入",
+      clearDraft: "下書きをクリア",
+      clearManualSession: "手入力セッションをクリア"
+    },
+    manualResults: {
+      translated: { label: "翻訳済みmock", helper: "決定的なmock翻訳を付ける" },
+      skipped: { label: "スキップmock", helper: "スキップ理由つきで追加" },
+      error: { label: "エラーmock", helper: "復帰可能なエラー行として追加" }
     },
     fields: {
       mode: "モード",
@@ -238,6 +271,7 @@ export const commentTranslatorUiCopy = {
     },
     sections: {
       setup: "Setup / Connection",
+      manualInput: "Manual / Paste Input",
       display: "Display Settings",
       comments: "Live Comments",
       quota: "Cache / Quota Preview",
@@ -249,6 +283,9 @@ export const commentTranslatorUiCopy = {
       stream: "Stream selection",
       sourceLanguage: "Source language",
       targetLanguage: "Target language",
+      singleComment: "Single comment",
+      multilinePaste: "Multiline paste",
+      manualResult: "Manual mock result",
       commentText: "Comment text",
       surface: "Surface",
       currentPair: "Current pair",
@@ -267,7 +304,27 @@ export const commentTranslatorUiCopy = {
       used: "used",
       hits: "hits",
       fixtureMisses: "Fixture misses",
-      recoverable: "Recoverable state"
+      recoverable: "Recoverable state",
+      manualRows: "manual rows",
+      manualSession: "manual session"
+    },
+    manualInput: {
+      helper: "Add comments you typed or pasted to the fixture feed without using a real API.",
+      singlePlaceholder: "Add one comment",
+      pastePlaceholder: "Paste one comment per line",
+      sourceBadge: "manual",
+      sampleLabel: "sample"
+    },
+    actions: {
+      addManualComments: "Add comments",
+      insertSample: "Insert samples",
+      clearDraft: "Clear draft",
+      clearManualSession: "Clear manual session"
+    },
+    manualResults: {
+      translated: { label: "Translated mock", helper: "Attach deterministic mock translation" },
+      skipped: { label: "Skipped mock", helper: "Add with a skip reason" },
+      error: { label: "Error mock", helper: "Add as a recoverable error row" }
     },
     fields: {
       mode: "Mode",
@@ -545,6 +602,12 @@ export const commentTranslatorSkipReasons: CommentTranslatorSkipReason[] = [
   { id: "spam-filter", label: "Spam filter", count: 1 }
 ];
 
+export const commentTranslatorManualSamples: CommentTranslatorManualSample[] = [
+  { id: "sample-hello", text: "Hello from the manual preview!" },
+  { id: "sample-es", text: "Gracias por el stream de hoy!" },
+  { id: "sample-ja", text: "日本語コメントはスキップ確認にも使えます" }
+];
+
 export const commentTranslatorComments: CommentTranslatorComment[] = [
   {
     id: "c-001",
@@ -654,6 +717,73 @@ export function findCommentTranslatorOption<TOption extends { id: string }>(
   return options.find((option) => option.id === id) ?? fallback;
 }
 
+export function splitManualCommentInput({
+  singleComment,
+  multilinePaste
+}: {
+  singleComment: string;
+  multilinePaste: string;
+}) {
+  return [singleComment, ...multilinePaste.split(/\r?\n/)]
+    .map((text) => text.trim())
+    .filter(Boolean);
+}
+
+export function createManualCommentRows({
+  texts,
+  resultMode,
+  targetLanguage,
+  targetLanguageLabel,
+  startIndex
+}: {
+  texts: string[];
+  resultMode: CommentTranslatorManualResultMode;
+  targetLanguage: CommentTranslatorTargetLanguageId;
+  targetLanguageLabel: string;
+  startIndex: number;
+}): CommentTranslatorComment[] {
+  const targetLanguageCode = targetLanguage.toLocaleUpperCase();
+
+  return texts.map((text, index) => {
+    const rowNumber = startIndex + index;
+    const baseComment: CommentTranslatorComment = {
+      id: `manual-${String(rowNumber).padStart(3, "0")}`,
+      timestamp: `manual ${String(rowNumber).padStart(2, "0")}`,
+      authorName: "Manual input",
+      source: "manual",
+      sourceLabel: "Manual input",
+      sourceLanguage: "MANUAL",
+      targetLanguage: targetLanguageCode,
+      originalText: text,
+      badge: "manual",
+      unitCost: 0,
+      status: resultMode,
+      cacheStatus: "none"
+    };
+
+    if (resultMode === "translated") {
+      return {
+        ...baseComment,
+        translatedText: `[Mock ${targetLanguageCode} / ${targetLanguageLabel}] preview translation ${String(rowNumber).padStart(2, "0")}`,
+        cacheStatus: "miss",
+        unitCost: 1
+      };
+    }
+
+    if (resultMode === "skipped") {
+      return {
+        ...baseComment,
+        skipReason: text.length <= 2 ? "Too short" : "Same language"
+      };
+    }
+
+    return {
+      ...baseComment,
+      errorMessage: `Manual mock error for ${targetLanguageLabel}`
+    };
+  });
+}
+
 export function filterCommentTranslatorComments(
   comments: CommentTranslatorComment[],
   {
@@ -683,7 +813,10 @@ export function filterCommentTranslatorComments(
       comment.originalText,
       comment.translatedText ?? "",
       comment.skipReason ?? "",
-      comment.errorMessage ?? ""
+      comment.errorMessage ?? "",
+      comment.badge ?? "",
+      comment.source ?? "",
+      comment.sourceLabel ?? ""
     ]
       .join(" ")
       .toLocaleLowerCase()
@@ -708,6 +841,7 @@ export class MockTranslationProvider {
       statusFilters: commentTranslatorStatusFilters,
       quotaScenarios: commentTranslatorQuotaScenarios,
       skipReasons: commentTranslatorSkipReasons,
+      manualSamples: commentTranslatorManualSamples,
       comments: commentTranslatorComments
     };
   }

@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import {
+  commentTranslatorManualSamples,
   commentTranslatorUiCopy,
+  createManualCommentRows,
   filterCommentTranslatorComments,
   findCommentTranslatorOption,
   mockTranslationProvider,
+  splitManualCommentInput,
   type CommentTranslatorComment,
   type CommentTranslatorConnectionStateId,
   type CommentTranslatorDisplayMode,
+  type CommentTranslatorManualResultMode,
   type CommentTranslatorQuotaScenarioId,
   type CommentTranslatorSourceLanguageId,
   type CommentTranslatorStatusFilter,
@@ -186,7 +190,12 @@ function CommentCard({
             <span className="rounded-base bg-surface-muted px-2 py-1 text-[11px] font-bold text-muted">
               {comment.timestamp}
             </span>
-            {comment.badge ? (
+            {comment.source === "manual" ? (
+              <span className="rounded-base border border-cyan-200 bg-cyan-50 px-2 py-1 text-[11px] font-bold text-cyan-700">
+                {copy.manualInput.sourceBadge}
+              </span>
+            ) : null}
+            {comment.badge && comment.source !== "manual" ? (
               <span className="rounded-base border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
                 {comment.badge}
               </span>
@@ -274,6 +283,12 @@ export function CommentTranslatorDock() {
   const [statusFilter, setStatusFilter] = useState<CommentTranslatorStatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [quotaScenarioId, setQuotaScenarioId] = useState<CommentTranslatorQuotaScenarioId>(quota.id);
+  const [singleCommentDraft, setSingleCommentDraft] = useState("");
+  const [multilinePasteDraft, setMultilinePasteDraft] = useState("");
+  const [manualResultMode, setManualResultMode] = useState<CommentTranslatorManualResultMode>("translated");
+  const [manualComments, setManualComments] = useState<CommentTranslatorComment[]>([]);
+  const singleCommentInputRef = useRef<HTMLInputElement>(null);
+  const multilinePasteInputRef = useRef<HTMLTextAreaElement>(null);
 
   const selectedConnection = findCommentTranslatorOption(connectionStates, connectionId);
   const selectedStream = findCommentTranslatorOption(streams, streamId);
@@ -347,10 +362,79 @@ export function CommentTranslatorDock() {
     label: copy.quotaScenarios[scenario.id].label,
     helper: copy.quotaScenarios[scenario.id].helper
   }));
-  const filteredComments = filterCommentTranslatorComments(comments, { statusFilter, searchQuery });
-  const quotaPercent = localizedQuotaPreview.limitUnits > 0 ? Math.min(100, Math.round((localizedQuotaPreview.usedUnits / localizedQuotaPreview.limitUnits) * 100)) : 0;
+  const manualResultOptions = (["translated", "skipped", "error"] as const).map((mode) => ({
+    id: mode,
+    label: copy.manualResults[mode].label,
+    helper: copy.manualResults[mode].helper
+  }));
+  const allComments = [...manualComments, ...comments];
+  const filteredComments = filterCommentTranslatorComments(allComments, { statusFilter, searchQuery });
+  const liveStats = {
+    translated: allComments.filter((comment) => comment.status === "translated").length,
+    skipped: allComments.filter((comment) => comment.status === "skipped").length,
+    errors: allComments.filter((comment) => comment.status === "error").length,
+    cacheHits: allComments.filter((comment) => comment.cacheStatus === "hit").length,
+    cacheMisses: allComments.filter((comment) => comment.cacheStatus === "miss").length,
+    manualRows: manualComments.length,
+    manualUnits: manualComments.reduce((total, comment) => total + comment.unitCost, 0)
+  };
+  const skipReasonCounts = skipReasons.map((reason) => ({
+    ...reason,
+    count: allComments.filter((comment) => comment.skipReason === reason.label).length
+  }));
+  const effectiveUsedUnits = Math.min(
+    localizedQuotaPreview.limitUnits,
+    localizedQuotaPreview.usedUnits + liveStats.manualUnits
+  );
+  const effectiveCacheTotal = liveStats.cacheHits + liveStats.cacheMisses;
+  const effectiveCacheHitRate = effectiveCacheTotal > 0 ? Math.round((liveStats.cacheHits / effectiveCacheTotal) * 100) : 0;
+  const quotaPercent = localizedQuotaPreview.limitUnits > 0 ? Math.min(100, Math.round((effectiveUsedUnits / localizedQuotaPreview.limitUnits) * 100)) : 0;
   const shellIsNarrow = surfaceMode === "narrow-viewport";
   const dockStatusLabel = localizedConnection.dockStatus === "blocked" ? localizedConnection.dockStatusLabel : localizedStream.dockStatusLabel;
+  function clearManualDraft() {
+    setSingleCommentDraft("");
+    setMultilinePasteDraft("");
+    if (singleCommentInputRef.current) {
+      singleCommentInputRef.current.value = "";
+    }
+    if (multilinePasteInputRef.current) {
+      multilinePasteInputRef.current.value = "";
+    }
+  }
+
+  function clearManualSession() {
+    setManualComments([]);
+  }
+
+  function insertManualSamples() {
+    const sampleText = commentTranslatorManualSamples.map((sample) => sample.text).join("\n");
+    setMultilinePasteDraft(sampleText);
+    if (multilinePasteInputRef.current) {
+      multilinePasteInputRef.current.value = sampleText;
+    }
+  }
+
+  function addManualComments() {
+    const texts = splitManualCommentInput({
+      singleComment: singleCommentDraft || singleCommentInputRef.current?.value || "",
+      multilinePaste: multilinePasteDraft || multilinePasteInputRef.current?.value || ""
+    });
+
+    if (texts.length === 0) {
+      return;
+    }
+
+    const rows = createManualCommentRows({
+      texts,
+      resultMode: manualResultMode,
+      targetLanguage,
+      targetLanguageLabel: localizedTargetLanguage.label,
+      startIndex: manualComments.length + 1
+    });
+
+    setManualComments((currentComments) => [...rows, ...currentComments]);
+    clearManualDraft();
+  }
 
   return (
     <div className="h-full min-h-0 overflow-auto bg-background px-2 py-3 sm:px-4 lg:px-5">
@@ -438,6 +522,89 @@ export function CommentTranslatorDock() {
             </section>
 
             <section className="panel p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-base font-black text-foreground">{copy.sections.manualInput}</h2>
+                  <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
+                    {copy.manualInput.helper}
+                  </p>
+                </div>
+                <span className="rounded-base border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-black text-cyan-700">
+                  {manualComments.length} {copy.stats.manualRows}
+                </span>
+              </div>
+              <form
+                className="mt-4 grid gap-3"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addManualComments();
+                }}
+              >
+                <label className="grid min-w-0 gap-1.5 text-sm">
+                  <span className="text-xs font-black uppercase tracking-normal text-muted">
+                    {copy.controls.singleComment}
+                  </span>
+                  <input
+                    ref={singleCommentInputRef}
+                    value={singleCommentDraft}
+                    onChange={(event) => setSingleCommentDraft(event.target.value)}
+                    placeholder={copy.manualInput.singlePlaceholder}
+                    className="min-h-10 w-full min-w-0 rounded-base border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
+                  />
+                </label>
+                <label className="grid min-w-0 gap-1.5 text-sm">
+                  <span className="text-xs font-black uppercase tracking-normal text-muted">
+                    {copy.controls.multilinePaste}
+                  </span>
+                  <textarea
+                    ref={multilinePasteInputRef}
+                    rows={5}
+                    value={multilinePasteDraft}
+                    onChange={(event) => setMultilinePasteDraft(event.target.value)}
+                    placeholder={copy.manualInput.pastePlaceholder}
+                    className="w-full min-w-0 resize-y rounded-base border border-border bg-surface px-3 py-2 text-sm font-semibold leading-6 text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
+                  />
+                </label>
+                <ControlSelect
+                  label={copy.controls.manualResult}
+                  value={manualResultMode}
+                  options={manualResultOptions}
+                  onChange={(value) => setManualResultMode(value as CommentTranslatorManualResultMode)}
+                />
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                  <button
+                    type="submit"
+                    className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
+                  >
+                    {copy.actions.addManualComments}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={insertManualSamples}
+                    className="min-h-10 rounded-base border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"
+                  >
+                    {copy.actions.insertSample}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearManualDraft}
+                    className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40"
+                  >
+                    {copy.actions.clearDraft}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearManualSession}
+                    disabled={manualComments.length === 0}
+                    className="min-h-10 rounded-base border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                  >
+                    {copy.actions.clearManualSession}
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <section className="panel p-4">
               <h2 className="text-base font-black text-foreground">{copy.sections.display}</h2>
               <div className="mt-4 grid gap-3">
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
@@ -521,9 +688,9 @@ export function CommentTranslatorDock() {
 
             <div className="grid grid-cols-2 gap-2 border-b border-border bg-surface-muted/30 p-3 text-center text-xs font-bold text-muted sm:grid-cols-4">
               <span className="rounded-base bg-surface px-2 py-2">{filteredComments.length} {copy.stats.shown}</span>
-              <span className="rounded-base bg-surface px-2 py-2">{comments.length} {copy.stats.total}</span>
-              <span className="rounded-base bg-emerald-50 px-2 py-2 text-emerald-700">{localizedQuotaPreview.translatedCount} {copy.stats.translated}</span>
-              <span className="rounded-base bg-amber-50 px-2 py-2 text-amber-700">{localizedQuotaPreview.skippedCount} {copy.stats.skipped}</span>
+              <span className="rounded-base bg-surface px-2 py-2">{allComments.length} {copy.stats.total}</span>
+              <span className="rounded-base bg-emerald-50 px-2 py-2 text-emerald-700">{liveStats.translated} {copy.stats.translated}</span>
+              <span className="rounded-base bg-amber-50 px-2 py-2 text-amber-700">{liveStats.skipped} {copy.stats.skipped}</span>
             </div>
 
             <div className="scrollbar-accent min-h-0 flex-1 space-y-3 overflow-auto p-3 sm:p-4">
@@ -571,10 +738,11 @@ export function CommentTranslatorDock() {
                 </div>
                 <p className="break-words text-xs font-semibold leading-5 text-muted">{localizedQuotaPreview.helper}</p>
                 <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
-                  <StatTile label={copy.stats.quota} value={`${formatNumber(localizedQuotaPreview.usedUnits)} / ${formatNumber(localizedQuotaPreview.limitUnits)}`} helper={`${quotaPercent}% ${copy.stats.used}`} />
-                  <StatTile label={copy.stats.cacheHit} value={`${localizedQuotaPreview.cacheHitRate}%`} helper={`${formatNumber(localizedQuotaPreview.cacheHits)} ${copy.stats.hits}`} />
-                  <StatTile label={copy.stats.cacheMiss} value={formatNumber(localizedQuotaPreview.cacheMisses)} helper={copy.stats.fixtureMisses} />
-                  <StatTile label={copy.stats.errorRows} value={formatNumber(localizedQuotaPreview.errorCount)} helper={copy.stats.recoverable} />
+                  <StatTile label={copy.stats.quota} value={`${formatNumber(effectiveUsedUnits)} / ${formatNumber(localizedQuotaPreview.limitUnits)}`} helper={`${quotaPercent}% ${copy.stats.used}`} />
+                  <StatTile label={copy.stats.cacheHit} value={`${effectiveCacheHitRate}%`} helper={`${formatNumber(liveStats.cacheHits)} ${copy.stats.hits}`} />
+                  <StatTile label={copy.stats.cacheMiss} value={formatNumber(liveStats.cacheMisses)} helper={copy.stats.fixtureMisses} />
+                  <StatTile label={copy.stats.manualSession} value={formatNumber(liveStats.manualRows)} helper={copy.stats.manualRows} />
+                  <StatTile label={copy.stats.errorRows} value={formatNumber(liveStats.errors)} helper={copy.stats.recoverable} />
                 </div>
               </div>
             </section>
@@ -582,7 +750,7 @@ export function CommentTranslatorDock() {
             <section className="panel p-4">
               <h2 className="text-base font-black text-foreground">{copy.sections.skipped}</h2>
               <div className="mt-4 grid gap-3">
-                {skipReasons.map((reason) => (
+                {skipReasonCounts.map((reason) => (
                   <div key={reason.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-sm">
                     <span className="min-w-0 break-words text-muted">{copy.skipReasonLabels[reason.id as keyof typeof copy.skipReasonLabels] ?? reason.label}</span>
                     <span className="rounded-base bg-amber-50 px-2 py-1 font-black text-amber-700">{reason.count}</span>

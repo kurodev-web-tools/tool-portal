@@ -15,12 +15,13 @@
 
 ## Active Priorities
 
-1. Kuro Live Comment Translator mock foundation / interactive shell
-   - status: first mock foundation merged into `codex/comment-translator-preview`; next interactive shell slice implemented on `codex/comment-translator-interactive-shell` for draft PR to `codex/comment-translator-preview`。
+1. Kuro Live Comment Translator preview branch
+   - status: mock foundation and interactive shell are merged into `codex/comment-translator-preview`; do not merge to `main` yet because the tool is not functionally usable without real input / translation flow。
    - branch stack:
      - preview: `codex/comment-translator-preview` at `D:/V_streamer_tools/.worktrees/comment-translator-preview`
      - feature: `codex/comment-translator-mock-foundation` at `D:/V_streamer_tools/.worktrees/comment-translator-mock-foundation`
      - feature: `codex/comment-translator-interactive-shell` at `D:/V_streamer_tools/.worktrees/comment-translator-interactive-shell`
+     - next feature: `codex/comment-translator-manual-input-mvp` at `D:/V_streamer_tools/.worktrees/comment-translator-manual-input-mvp`
    - seed:
      - `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
      - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
@@ -30,6 +31,13 @@
      - 初回 PR は `/imagegen` を使った各端末 mock 作成 -> user 確認 -> 承認 mock の再現まで。
      - 翻訳 API の実接続は初回 PR では扱わない。fixtures / `MockTranslationProvider` 相当で UI shell のみ作る。
      - Real translation provider は、YouTube OAuth / owner check / quota / billing boundary が固まった後に別 PR で比較する。
+     - 2026-05-30 decision: まだ実際に使える翻訳ツールではないため、`codex/comment-translator-preview` を `main` へ統合せず、preview branch 上に使える状態へ近づけるPRを刻む。
+   - next slice target:
+     - `Manual / Paste Input MVP` を `codex/comment-translator-preview` 宛てに切る。
+     - YouTube OAuth / Google API / Live Chat polling なしで、配信者がコメントを手入力または貼り付けして、UI上で追加・検索・絞り込み・表示切替できる状態にする。
+     - 翻訳 provider はまだ fixture / deterministic mock のまま。外部API call、API key、server action、quota DB write は入れない。
+     - このsliceで storage key / IndexedDB / localStorage key / Supabase schema / migration / RLS / handoff payload は変更しない。
+     - 実翻訳provider、YouTube OAuth / owner verification / Live Chat polling、billing / quota enforcement は後続の別PRで扱う。
    - first PR scope:
      - OBS Browser Dock / narrow viewport を主対象に、`390 / 820 / 1024 / 1280 / 1366px` の mock を先に作る。
      - 承認後、`/tools/comment-translator` など既存 tools routing pattern に沿った UI shell を追加する。
@@ -128,14 +136,15 @@
 
 ## Recommended Roadmap
 
-1. Kuro Live Comment Translator first PR: `/imagegen` device mock -> user confirmation -> UI shell reproduction with fixtures / mock provider only。
-2. Comment Translator contract and route hardening: route, tool card, responsive layout, fixture states。
-3. YouTube OAuth / owner verification / Live Chat polling design spike。
-4. Translation provider spike: latest docs / pricing / latency / privacy boundary を確認し、server-side only の provider abstraction を決める。
-5. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
-6. Tool-specific persistence / preference sync only after data boundary and quota policy are fixed。
-7. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
-8. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
+1. Comment Translator Manual / Paste Input MVP: real APIなしで、貼り付け・手入力のコメントをUI上で扱える状態にする。
+2. Translation provider boundary design: server-side only、secret非露出、quota/billing境界、provider比較を設計する。
+3. Server-side translation prototype: 1 providerのみ、env var前提、quota DB writeなしで最小実験する。
+4. YouTube OAuth / owner verification / Live Chat polling design spike。
+5. Live Chat polling MVP: YouTube read-only polling と owner boundary を translation provider から分離して実装する。
+6. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
+7. Tool-specific persistence / preference sync only after data boundary and quota policy are fixed。
+8. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
+9. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
 
 ## Next Session Prompt
 
@@ -143,35 +152,53 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Kuro Live Comment Translator の初回 PR として、YouTube 向け read-only broadcaster dock の各端末 mock を `/imagegen` で作成し、確認後に承認 mock を UI shell として再現してください。
+Kuro Live Comment Translator の次 slice として、実APIなしの Manual / Paste Input MVP を追加し、mock UI shell から「実際に入力したコメントを扱える preview tool」に進めてください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- seed document は `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`。
-- 関連 idea docs:
-  - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
-  - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/リアルタイムAI音声翻訳オーバーレイ.md`
+- `codex/comment-translator-preview` に mock foundation と interactive shell が merge 済みであることを確認してください。
+- 作業は `codex/comment-translator-preview` から新しい feature branch を切ってください。
+- 推奨 branch: `codex/comment-translator-manual-input-mvp`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-manual-input-mvp`
 - 初回 platform は YouTube。
-- 初回 PR は mock-first。各端末 mock 作成 -> user 確認 -> UI shell 再現まで。
-- 翻訳 API の実接続は初回 PR では行わない。fixtures / MockTranslationProvider 相当だけを使う。
 - secret / service_role key / private credential は要求・表示・保存しない。
 - 既存 storage key / payload / IndexedDB / localStorage key / Supabase schema / migration / RLS policy / handoff payload は変更しない。
-
-推奨 branch:
-- `codex/comment-translator-mock-foundation`
-
-推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/comment-translator-mock-foundation`
+- main へはまだ統合しない。`codex/comment-translator-preview` 宛てのPRとして進める。
 
 scope:
-- OBS Browser Dock / narrow viewport を主対象に、`390 / 820 / 1024 / 1280 / 1366px` の mock を `/imagegen` で作成する。
-- user 確認後、既存 tools routing / card / layout pattern に沿って comment translator の UI shell を追加する。
-- YouTube first と分かる setup state、接続 mock、live comment list、original / translated text、language label、skip reason、cache / quota preview、empty state を fixture で表現する。
+- YouTube OAuth、Google API、Live Chat polling、owner verification は実装しない。
+- 実翻訳API、OpenAI / Google / DeepL / Gemini 等の実API call、API key、provider secret、server action、quota DB write は入れない。
+- GA4、cookie consent、Stripe、billing、quota enforcement は入れない。
+- fixture / deterministic mock translation provider 相当だけで UI state を動かす。
+- 新しい storage key / IndexedDB / localStorage key / Supabase schema / migration / RLS policy / handoff payload は追加・変更しない。
+
+実装したいこと:
+- Manual / Paste Input panel を追加する。
+  - single comment input
+  - multiline paste input
+  - sample comments insert
+  - add to live comment list
+  - clear draft / clear manual session
+- 追加したコメントを既存 live comment list に統合する。
+  - fixture rows と manual rows を区別できる badge / source 表示
+  - status tabs / search / original-translated-both 表示切替に manual rows も反映
+  - skip / error-like state の絞り込みに manual rows も反映
+- mock translation state を UI 上で操作可能にする。
+  - translated / skipped / error の deterministic mock result
+  - cache hit / miss 表示
+  - empty state
+  - manual rows の件数と mock quota preview の整合
+- Portal 表示言語 ja/en に追随する copy を維持する。
+- OBS Browser Dock / narrow viewport で左 portal sidebar や本文に干渉しない layout にする。
+- 外側の `PortalShell` / `PortalSidebar` の共通仕様は崩さない。
+
+実装方針:
+- 既存 `lib/comment-translator.ts` の fixture/provider 境界を再利用し、必要なら manual input 用の pure helper を追加する。
+- contract-first で進める。manual input MVP contract を追加または interactive shell contract を拡張して、外部API境界と storage境界を固定する。
 - UI は landing page ではなく、最初の画面から usable tool surface にする。
-- 翻訳は mock provider / fixture のみ。実 API call、API key、provider secret、server action、quota DB write は入れない。
-- comment translator mock foundation contract を追加または既存 contract に追加する。
+- 既存 ja/en copy、display mode、status filters、cache/quota preview を壊さない。
 
 Out of scope:
 - YouTube OAuth、Google API、Live Chat polling、owner verification の実装。
@@ -181,19 +208,30 @@ Out of scope:
 - Supabase schema / migration / RLS policy 変更。
 - 既存ツールの保存 payload / IndexedDB / localStorage key 変更。
 - コメント返信生成、自動投稿、viewer overlay、OBS plugin、ASR / 音声翻訳。
+- main integration PR。
 
 検証:
-- new/updated comment translator mock foundation contract
-- tool portal entry / route contract if a new route is added
+- new/updated comment translator manual input MVP contract
+- `node scripts/comment-translator-interactive-shell-contract.mjs`
+- `node scripts/comment-translator-mock-foundation-contract.mjs`
+- `node scripts/tool-portal-entry-contract.mjs`
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
 - `git diff --check`
-- `/tools` and new comment translator route を `390 / 820 / 1024 / 1280 / 1366px` で確認し、mock / UI が本文と重ならず、左サイドパネルに干渉しないことを task.md に残す。
+- `/tools` and `/tools/comment-translator` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、manual input panel / live comment list / sidebar が干渉しないことを task.md に残す。
+- Japanese portal settingで manual input panel / controls / status labels が日本語表示になることを確認する。
+- 操作 smoke:
+  - single comment add
+  - multiline paste add
+  - sample insert
+  - search / status filter
+  - original / translated / both display
+  - mock skipped / error-like state
 
 完了時:
 - `task.md` に実装内容、検証結果、幅別確認結果、未確認範囲、残リスクを記録してください。
-- 問題なければ commit / push / draft PR 作成まで進めてください。
+- 問題なければ feature branch から `codex/comment-translator-preview` 宛てに draft PR を作成してください。
 ```
 
 ## Backlog

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AuthTurnstile } from "@/components/account/AuthTurnstile";
 import { useLocale } from "@/components/portal/LocaleProvider";
 
 type AuthFormAction = (formData: FormData) => void | Promise<void>;
@@ -188,6 +189,7 @@ export function AuthFlowShell({
   const showCurrentPassword = mode === "update-password" && passwordFlow === "signed-in";
   const showPassword = mode === "login" || mode === "signup" || mode === "update-password";
   const showPasswordConfirm = mode === "update-password";
+  const showTurnstile = mode === "login" || mode === "signup" || mode === "reset";
   const currentPasswordLabel = "currentPasswordLabel" in modeCopy ? modeCopy.currentPasswordLabel : "";
   const passwordConfirmLabel = "passwordConfirmLabel" in modeCopy ? modeCopy.passwordConfirmLabel : "";
   const leadText = mode === "update-password" && passwordFlow === "signed-in" && "signedInLead" in modeCopy ? modeCopy.signedInLead : modeCopy.lead;
@@ -267,6 +269,7 @@ export function AuthFlowShell({
               />
             </label>
           ) : null}
+          {showTurnstile ? <AuthTurnstile /> : null}
           <button className="rounded-base bg-primary px-4 py-2.5 text-sm font-black text-white transition hover:bg-primary-strong">
             {modeCopy.submit}
           </button>

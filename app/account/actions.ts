@@ -17,6 +17,7 @@ const allowedAuthNextPaths = new Set([
   "/account/security"
 ]);
 const localDevelopmentOrigin = "http://localhost:3000";
+const turnstileTokenFieldName = "cf-turnstile-response";
 
 function safeNextPath(value: string | null, fallback = "/account") {
   if (!value?.startsWith("/") || value.startsWith("//")) {
@@ -47,6 +48,16 @@ function accountRedirect(status: string): never {
 function readRequiredString(formData: FormData, name: string): string | null {
   const value = formData.get(name);
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function readTurnstileCaptchaToken(formData: FormData) {
+  const value = formData.get(turnstileTokenFieldName);
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function getAuthCaptchaOptions(formData: FormData): { captchaToken: string } | undefined {
+  const captchaToken = readTurnstileCaptchaToken(formData);
+  return captchaToken ? { captchaToken } : undefined;
 }
 
 async function getOrigin() {
@@ -110,6 +121,7 @@ export async function signInWithPasswordAction(formData: FormData) {
   const email = readRequiredString(formData, "email");
   const password = readRequiredString(formData, "password");
   const next = safeNextPath(readRequiredString(formData, "next"));
+  const captchaOptions = getAuthCaptchaOptions(formData);
 
   if (!email || !password) {
     redirectWithAuth(`/login?next=${encodeURIComponent(next)}`, "credentials-required");
@@ -121,7 +133,7 @@ export async function signInWithPasswordAction(formData: FormData) {
     redirectWithAuth(`/login?next=${encodeURIComponent(next)}`, "supabase-env-missing");
   }
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({ email, password, options: captchaOptions });
 
   if (error) {
     redirectWithAuth(`/login?next=${encodeURIComponent(next)}`, "login-error");
@@ -135,6 +147,7 @@ export async function signUpWithPasswordAction(formData: FormData) {
   const email = readRequiredString(formData, "email");
   const password = readRequiredString(formData, "password");
   const next = safeNextPath(readRequiredString(formData, "next"));
+  const captchaOptions = getAuthCaptchaOptions(formData);
 
   if (!email || !password) {
     redirectWithAuth("/signup", "credentials-required");
@@ -155,7 +168,8 @@ export async function signUpWithPasswordAction(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(next)}`
+      emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(next)}`,
+      ...captchaOptions
     }
   });
 
@@ -168,6 +182,7 @@ export async function signUpWithPasswordAction(formData: FormData) {
 
 export async function resetPasswordEmailAction(formData: FormData) {
   const email = readRequiredString(formData, "email");
+  const captchaOptions = getAuthCaptchaOptions(formData);
 
   if (!email) {
     redirectWithAuth("/reset-password", "email-required");
@@ -181,7 +196,8 @@ export async function resetPasswordEmailAction(formData: FormData) {
 
   const origin = await getOrigin();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/confirm?next=/account/security`
+    redirectTo: `${origin}/auth/confirm?next=/account/security`,
+    ...captchaOptions
   });
 
   if (error) {

@@ -52,6 +52,17 @@ export const tools: ToolDefinition[] = [
     icon: "SC"
   },
   {
+    id: "comment-translator",
+    name: "Kuro Live Comment Translator",
+    description: "YouTube向けの読み取り専用OBS Dockで、外国語コメントの原文と翻訳表示をmock dataで確認できます。",
+    category: "stream",
+    status: "available",
+    suite: "stream-workflow",
+    href: "/tools/comment-translator",
+    sidebar: true,
+    icon: "CT"
+  },
+  {
     id: "thumbnail-editor",
     name: "Thumbnail Editor",
     description: "用途別プリセットを選んで、文字と立ち絵を差し替えるVTuber向けサムネ組み立てツールです。",

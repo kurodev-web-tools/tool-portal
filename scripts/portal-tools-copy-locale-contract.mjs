@@ -59,7 +59,16 @@ const streamWorkflowJa = portalCopy.getSuiteCopy("stream-workflow", "ja");
 const streamWorkflowEn = portalCopy.getSuiteCopy("stream-workflow", "en");
 assert.equal(streamWorkflowJa.name, "配信ワークフロー", "Japanese suite name stays unchanged");
 assert.equal(streamWorkflowEn.name, "Stream Workflow", "English suite name is available");
-assert.deepEqual(streamWorkflowEn.tags.slice(0, 3), ["Schedule Calendar", "Thumbnail Editor", "SNS Split Image Maker"], "English suite tags keep the public flow");
+assert.deepEqual(streamWorkflowEn.tags, ["Schedule Calendar", "Comment Translator", "Thumbnail Editor", "SNS Split Image Maker"], "English suite tags keep the public flow");
+
+const commentTranslatorJa = portalCopy.getToolCopy("comment-translator", "ja");
+const commentTranslatorEn = portalCopy.getToolCopy("comment-translator", "en");
+assert.equal(commentTranslatorJa.name, "Kuro Live Comment Translator", "Japanese comment translator name is available");
+assert.equal(commentTranslatorEn.name, "Kuro Live Comment Translator", "English comment translator name is available");
+assert.match(commentTranslatorJa.description, /YouTube/, "Japanese comment translator description is YouTube-first");
+assert.match(commentTranslatorJa.description, /読み取り専用OBS Dock/, "Japanese comment translator description keeps read-only dock scope");
+assert.match(commentTranslatorEn.description, /YouTube-first read-only OBS Dock/, "English comment translator description keeps read-only dock scope");
+assert.doesNotMatch(commentTranslatorEn.description, /OAuth|API key|billing|Stripe|GA4/, "English comment translator copy does not promise out-of-scope integration");
 
 const snsJa = portalCopy.getToolCopy("sns-split-image-maker", "ja");
 const snsEn = portalCopy.getToolCopy("sns-split-image-maker", "en");

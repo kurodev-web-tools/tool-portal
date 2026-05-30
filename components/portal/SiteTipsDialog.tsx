@@ -32,9 +32,10 @@ const hiddenRoutePrefixes = ["/account", "/login", "/signup", "/reset-password"]
 const pageTipsByRoute = {
   ja: {
     "/": {
-      title: "公開中 3 ツールの流れ",
+      title: "公開中ツールの流れ",
       items: [
         "Schedule Calendar で予定を整理し、告知文を作ります。",
+        "Kuro Live Comment Translator で配信者向けのコメント翻訳Dockを確認します。",
         "Thumbnail Editor へ handoff してサムネの下書きを作ります。",
         "SNS分割画像メーカーで投稿順に合わせた画像を書き出します。"
       ]
@@ -44,7 +45,15 @@ const pageTipsByRoute = {
       items: [
         "公開中 / 準備中の状態を分けて確認できます。",
         "スイート、カテゴリ、実装状態で必要な候補だけに絞り込めます。",
-        "まずは公開中の Schedule -> Thumbnail -> SNS の流れから開くと迷いにくいです。"
+        "まずは公開中ツールを用途ごとに開くと迷いにくいです。"
+      ]
+    },
+    "/tools/comment-translator": {
+      title: "Kuro Live Comment Translator の使い方",
+      items: [
+        "YouTube向けの読み取り専用OBS Dockとして、配信者が見る画面を確認します。",
+        "原文、翻訳文、言語ラベル、skip理由、cache / quota previewをmock dataで確認できます。",
+        "初回PRでは外部翻訳や実接続は使わず、fixtureだけで表示します。"
       ]
     },
     "/tools/schedule-calendar": {
@@ -74,9 +83,10 @@ const pageTipsByRoute = {
   },
   en: {
     "/": {
-      title: "Flow for the 3 public tools",
+      title: "Flow for the public tools",
       items: [
         "Use Schedule Calendar to organize plans and announcement copy.",
+        "Review the broadcaster comment translation dock with Kuro Live Comment Translator.",
         "Hand off to Thumbnail Editor to draft the thumbnail.",
         "Export posting-order images with SNS Split Image Maker."
       ]
@@ -86,7 +96,15 @@ const pageTipsByRoute = {
       items: [
         "Available and planned tools are separated by status.",
         "Filter by suite, category, or status when you only need a narrower set.",
-        "Start with the available Schedule -> Thumbnail -> SNS flow when you want the shortest path."
+        "Start from the available tool that matches the current stream-prep job."
+      ]
+    },
+    "/tools/comment-translator": {
+      title: "Using Kuro Live Comment Translator",
+      items: [
+        "Review a YouTube-first read-only OBS Dock surface for broadcasters.",
+        "Check original text, translated text, language labels, skip reasons, and cache / quota preview with mock data.",
+        "The first PR uses fixtures only and does not connect to external translation services."
       ]
     },
     "/tools/schedule-calendar": {
@@ -170,7 +188,7 @@ function isTipsSupportedRoute(pathname: string) {
 function getPageTips(pathname: string, locale: Locale): PageTips {
   const normalizedPathname = normalizePathname(pathname);
   const localizedTips = pageTipsByRoute[locale];
-  const orderedRoutes = ["/tools/schedule-calendar", "/tools/thumbnail-editor", "/tools/sns-split-image-maker", "/tools", "/"] as const;
+  const orderedRoutes = ["/tools/comment-translator", "/tools/schedule-calendar", "/tools/thumbnail-editor", "/tools/sns-split-image-maker", "/tools", "/"] as const;
   const matchedRoute = orderedRoutes.find((route) => (route === "/" || route === "/tools" ? normalizedPathname === route : normalizedPathname.startsWith(route)));
   return matchedRoute ? localizedTips[matchedRoute] : { title: tipsCopy[locale].fallbackTitle, items: tipsCopy[locale].fallbackItems };
 }

@@ -652,6 +652,35 @@
   - Recovery link click currently creates a Supabase session for password update. This is required for `updateUser`, but it should not behave as a normal account login before the password is changed.
   - Next auth hardening should treat recovery sessions as password-reset-only pending sessions, keep users on `/account/security`, sign out after successful password update, and add current-password UI for normal signed-in password changes before enabling Supabase Dashboard `Require current password when updating`.
 
+#### P35: Legal foundation pages and footer
+
+- PR #254 `[codex] Add legal foundation pages` は 2026-05-30 に `main` へ merge 済み。
+- merge commit は `9731229a6acd4cf8ef53340fa249be5e39014296`。
+- `/terms`、`/privacy`、`/legal/tokushoho` を追加し、Kuro Stream Kit 向けの利用規約、プライバシーポリシー、特定商取引法に基づく表記を公開導線に載せた。
+- 右側メイン領域の通常フロー footer に、利用規約、プライバシーポリシー、特定商取引法に基づく表記の3リンクを追加した。
+- workspace tool 画面は footer の対象外にし、tool canvas / workspace に重ならないよう `PortalShell` の non-workspace path に限定した。
+- privacy では、現時点のツール内データは原則ブラウザ内保存であること、既存 storage key / IndexedDB / localStorage key / handoff payload を変更しないこと、ユーザーが使用・アップロード・編集した画像、素材、予定文、下書き等を当方がAIモデルの学習目的で使用しないことを明記した。
+- tokushoho では、販売業者を KuroDev とし、運営責任者 / 所在地 / 電話番号は請求があった場合には遅滞なく開示する方針、公開連絡先 `feedback@kuro-lab.com`、有料プラン準備中注記を記載した。
+- HP Portal 由来の template / Web制作代行向け文言は入れていない。
+- Stripe checkout / billing、GA4、cookie consent banner、Supabase schema / migration / RLS、storage key、IndexedDB、localStorage key、handoff payload は変更していない。
+- secret / service_role key は要求・表示・保存していない。
+- 追加 contract:
+  - `node scripts/legal-foundation-contract.mjs`
+- 検証:
+  - `node scripts/legal-foundation-contract.mjs`
+  - `node scripts/portal-tools-copy-locale-contract.mjs`
+  - `npm run lint`
+  - `npx tsc --noEmit`
+  - `npm run build`
+  - `git diff --check`
+  - `git diff --cached --check`
+- UI verification:
+  - local production server `http://127.0.0.1:3047` で `/`、`/tools`、`/terms`、`/privacy`、`/legal/tokushoho` を `390 / 820 / 1024 / 1280 / 1366px` で確認した。
+  - 全25ケースで footer present、3 legal links present、footer normal-flow、footer after main content、`overflowX=false`、visible sidebar overlap/interference なし。
+- 残リスク:
+  - Legal text は foundation draft であり、専門家レビュー完了扱いではない。
+  - Production/custom-domain smoke はこの PR では未実施。
+
 ## 参照ドキュメント
 
 - `docs/design-thumbnail-editor.md`

@@ -89,6 +89,11 @@
      - `/tools`: `390 / 820 / 1024 / 1280 / 1366px` PASS。document-level horizontal overflowなし。comment translator card visible。desktop sidebar と main overlap なし。
      - `/tools/comment-translator`: `390 / 820 / 1024 / 1280 / 1366px` PASS。document-level horizontal overflowなし。desktop sidebar と main overlap なし。Setup / Connection、Display Settings、Live Comments、Cache / Quota Preview が表示される。
      - operation smoke at 390px PASS: display `Translated` で original text が隠れ、translated text が残る。`Skipped` tab + `Spam` search で 1 row に絞り込み。quota `warning` と surface `narrow-viewport` 切替後も horizontal overflow なし。
+   - review follow-up completed 2026-05-30:
+     - browser annotation 1: `Comment text` の `Both / Original / Translated` control を縦積みにして、左カラムで `Translated` が窮屈に見える状態を解消した。
+     - browser annotation 2: live comment header を title row と filter/search row の2段構成にした。
+     - Comment Translator tool body を Portal の表示言語に追随させ、主要UI label / control / filter / quota / skip reason を ja/en copy で切替可能にした。
+     - in-app Browser at `http://127.0.0.1:3052/tools/comment-translator/`: Japanese portal settingで `セットアップ / 接続`、`表示設定`、`コメントを検索`、`同一言語` 表示、document-level horizontal overflowなしを確認した。
    - unchecked scope / residual risk:
      - safe live YouTube login / OAuth / Live Chat / owner verification smokeは未実施。初回PRのscope外。
      - 生成mock内の文字は方向性確認用。正確な表示文言はReact UI側で固定した。

@@ -34,12 +34,15 @@ assert.match(routeSource, /PortalShell mode="workspace"/, "comment translator st
 
 assert.match(componentSource, /^"use client";/, "interactive shell is a client component");
 assert.match(componentSource, /useState/, "interactive shell uses local fixture-driven state");
+assert.match(componentSource, /useLocale/, "interactive shell follows the portal display language");
 assert.match(componentSource, /<select[\s>]/, "setup and settings controls use real select menus");
 assert.match(componentSource, /<input[\s>]/, "live comments can be searched");
 assert.match(componentSource, /statusFilter/, "live comments expose a status filter");
 assert.match(componentSource, /displayMode/, "comment text can switch between original, translated, and both");
 assert.match(componentSource, /quotaScenarioId/, "cache and quota preview exposes selectable mock states");
 assert.match(componentSource, /surfaceMode/, "display settings expose OBS dock and narrow viewport surfaces");
+assert.match(componentSource, /data-layout="stacked-display-mode"/, "comment text display controls stay vertically stacked");
+assert.match(componentSource, /data-layout="live-header-two-row"/, "live comment header separates title from filters and search");
 assert.doesNotMatch(componentSource, /href=|oauth|authorize|sign.?in with google/i, "interactive shell does not add an external connection path");
 
 assert.ok(Array.isArray(lib.commentTranslatorConnectionStates), "mock connection states are exported");
@@ -83,6 +86,11 @@ assert.deepEqual(
   ["all", "translated", "skipped", "error"],
   "status tabs cover all, translated, skipped, and error states"
 );
+assert.equal(lib.commentTranslatorUiCopy.en.sections.setup, "Setup / Connection", "English UI copy keeps the setup heading");
+assert.equal(lib.commentTranslatorUiCopy.ja.sections.setup, "セットアップ / 接続", "Japanese UI copy localizes the setup heading");
+assert.equal(lib.commentTranslatorUiCopy.ja.sections.display, "表示設定", "Japanese UI copy localizes display settings");
+assert.equal(lib.commentTranslatorUiCopy.ja.filters.translated, "翻訳済み", "Japanese UI copy localizes status filters");
+assert.equal(lib.commentTranslatorUiCopy.ja.displayModes.translated.helper, "翻訳文を優先表示", "Japanese UI copy localizes display mode helper text");
 
 assert.ok(Array.isArray(lib.commentTranslatorQuotaScenarios), "quota preview scenarios are exported");
 assert.deepEqual(

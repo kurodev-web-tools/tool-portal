@@ -8,6 +8,7 @@ export type CommentTranslatorDisplayMode = "both" | "original" | "translated";
 export type CommentTranslatorSurfaceMode = "obs-browser-dock" | "narrow-viewport";
 export type CommentTranslatorStatusFilter = "all" | "translated" | "skipped" | "error";
 export type CommentTranslatorQuotaScenarioId = "normal" | "warning" | "empty" | "error";
+export type CommentTranslatorStreamId = "saturday-setup" | "karaoke-preview" | "archive-check";
 
 export type CommentTranslatorPlatform = {
   id: "youtube";
@@ -76,7 +77,7 @@ export type CommentTranslatorConnectionState = {
 };
 
 export type CommentTranslatorStreamOption = {
-  id: string;
+  id: CommentTranslatorStreamId;
   title: string;
   channelName: string;
   scheduledLabel: string;
@@ -96,6 +97,269 @@ export type CommentTranslatorControlOption<TId extends string> = {
   label: string;
   helper: string;
 };
+
+export const commentTranslatorUiCopy = {
+  ja: {
+    header: {
+      subtitle: "YouTube優先 / OBS Browser Dock",
+      readOnlyDock: "読み取り専用Dock",
+      target: "表示先",
+      feedTitle: "YouTubeチャットfixture"
+    },
+    sections: {
+      setup: "セットアップ / 接続",
+      display: "表示設定",
+      comments: "ライブコメント",
+      quota: "キャッシュ / クォータ確認",
+      skipped: "スキップ理由",
+      safety: "読み取り専用の安全性"
+    },
+    controls: {
+      connection: "YouTube mock接続",
+      stream: "配信選択",
+      sourceLanguage: "翻訳元言語",
+      targetLanguage: "翻訳先言語",
+      commentText: "コメント本文",
+      surface: "表示面",
+      currentPair: "現在の組み合わせ",
+      mockState: "mock状態",
+      searchPlaceholder: "コメントを検索"
+    },
+    stats: {
+      shown: "表示中",
+      total: "合計",
+      translated: "翻訳済み",
+      skipped: "スキップ",
+      quota: "クォータ",
+      cacheHit: "キャッシュhit",
+      cacheMiss: "キャッシュmiss",
+      errorRows: "エラー行",
+      used: "使用中",
+      hits: "hits",
+      fixtureMisses: "fixture miss",
+      recoverable: "復帰可能な状態"
+    },
+    fields: {
+      mode: "モード",
+      channel: "チャンネル",
+      dock: "Dock"
+    },
+    connections: {
+      connected: "接続中mock",
+      syncing: "同期中fixture",
+      offline: "未接続fixture"
+    },
+    connectionStatus: {
+      connected: "ライブmock",
+      syncing: "同期中",
+      offline: "オフラインmock"
+    },
+    connectionDockStatus: {
+      connected: "Broadcaster Dock準備完了",
+      syncing: "Dock待機中",
+      offline: "Dock停止中"
+    },
+    streams: {
+      "saturday-setup": { label: "土曜配信セットアップ", helper: "配信中" },
+      "karaoke-preview": { label: "歌枠リハーサル確認", helper: "20分後に開始" },
+      "archive-check": { label: "アーカイブコメント確認", helper: "終了済みfixture" }
+    },
+    dockStatus: {
+      ready: "準備完了",
+      standby: "待機中",
+      blocked: "確認のみ"
+    },
+    languages: {
+      auto: "自動判定",
+      en: "英語",
+      es: "スペイン語",
+      ko: "韓国語",
+      ja: "日本語"
+    },
+    displayModes: {
+      both: { label: "両方", helper: "原文と翻訳文" },
+      original: { label: "原文", helper: "翻訳元コメントのみ" },
+      translated: { label: "翻訳文", helper: "翻訳文を優先表示" }
+    },
+    surfaces: {
+      "obs-browser-dock": { label: "OBS Browser Dock", helper: "配信者向けの密な表示" },
+      "narrow-viewport": { label: "狭い画面", helper: "1カラム確認用" }
+    },
+    filters: {
+      all: "すべて",
+      translated: "翻訳済み",
+      skipped: "スキップ",
+      error: "エラー"
+    },
+    skipReasonLabels: {
+      "same-language": "同一言語",
+      "too-short": "短すぎる",
+      "spam-filter": "スパム判定"
+    },
+    skipReasonText: {
+      "Same language": "同一言語",
+      "Too short": "短すぎる",
+      "Spam filter": "スパム判定"
+    },
+    quotaScenarios: {
+      normal: { label: "通常のcache mix", status: "正常", helper: "fixture feedにhitとmissの行が表示されます" },
+      warning: { label: "クォータ警告", status: "警告", helper: "preview上限に近づいている状態です" },
+      empty: { label: "空のセッション", status: "行なし", helper: "fixture cacheにコメントが届いていません" },
+      error: { label: "cache利用不可", status: "cache警告", helper: "cache統計が使えない間もfixture表示は継続します" }
+    },
+    statusBadges: {
+      cached: "cached",
+      translated: "翻訳済み",
+      skipped: "スキップ",
+      error: "エラー"
+    },
+    commentMeta: {
+      cache: "cache",
+      skipped: "スキップ",
+      error: "エラー",
+      noTranslatedText: "翻訳文はありません"
+    },
+    empty: {
+      title: "一致するコメントはありません",
+      body: "検索語やステータスタブを変えるとfixture行を表示できます。"
+    },
+    safety: [
+      "視聴者向けoverlayは含めていません。",
+      "返信生成と自動投稿は含めていません。",
+      "すべてUI確認用のfixture値です。"
+    ]
+  },
+  en: {
+    header: {
+      subtitle: "YouTube first / OBS Browser Dock",
+      readOnlyDock: "Read-only Dock",
+      target: "Target",
+      feedTitle: "YouTube chat fixture"
+    },
+    sections: {
+      setup: "Setup / Connection",
+      display: "Display Settings",
+      comments: "Live Comments",
+      quota: "Cache / Quota Preview",
+      skipped: "Skipped Reasons",
+      safety: "Read-only Safety"
+    },
+    controls: {
+      connection: "YouTube mock connection",
+      stream: "Stream selection",
+      sourceLanguage: "Source language",
+      targetLanguage: "Target language",
+      commentText: "Comment text",
+      surface: "Surface",
+      currentPair: "Current pair",
+      mockState: "Mock state",
+      searchPlaceholder: "Search comments"
+    },
+    stats: {
+      shown: "shown",
+      total: "total",
+      translated: "translated",
+      skipped: "skipped",
+      quota: "Quota",
+      cacheHit: "Cache hit",
+      cacheMiss: "Cache miss",
+      errorRows: "Error rows",
+      used: "used",
+      hits: "hits",
+      fixtureMisses: "Fixture misses",
+      recoverable: "Recoverable state"
+    },
+    fields: {
+      mode: "Mode",
+      channel: "Channel",
+      dock: "Dock"
+    },
+    connections: {
+      connected: "Connected mock",
+      syncing: "Syncing fixture",
+      offline: "Disconnected fixture"
+    },
+    connectionStatus: {
+      connected: "Live mock",
+      syncing: "Syncing",
+      offline: "Offline mock"
+    },
+    connectionDockStatus: {
+      connected: "Broadcaster dock ready",
+      syncing: "Dock waiting",
+      offline: "Dock paused"
+    },
+    streams: {
+      "saturday-setup": { label: "Saturday stream setup", helper: "Live now" },
+      "karaoke-preview": { label: "Karaoke practice preview", helper: "Starts in 20 min" },
+      "archive-check": { label: "Archive chat review", helper: "Ended fixture" }
+    },
+    dockStatus: {
+      ready: "Ready",
+      standby: "Standby",
+      blocked: "Read review only"
+    },
+    languages: {
+      auto: "Auto detect",
+      en: "English",
+      es: "Spanish",
+      ko: "Korean",
+      ja: "Japanese"
+    },
+    displayModes: {
+      both: { label: "Both", helper: "Original and translated" },
+      original: { label: "Original", helper: "Source comments only" },
+      translated: { label: "Translated", helper: "Translated rows first" }
+    },
+    surfaces: {
+      "obs-browser-dock": { label: "OBS Browser Dock", helper: "Dense broadcaster view" },
+      "narrow-viewport": { label: "Narrow Viewport", helper: "Single-column review" }
+    },
+    filters: {
+      all: "All",
+      translated: "Translated",
+      skipped: "Skipped",
+      error: "Error"
+    },
+    skipReasonLabels: {
+      "same-language": "Same language",
+      "too-short": "Too short",
+      "spam-filter": "Spam filter"
+    },
+    skipReasonText: {
+      "Same language": "Same language",
+      "Too short": "Too short",
+      "Spam filter": "Spam filter"
+    },
+    quotaScenarios: {
+      normal: { label: "Normal cache mix", status: "Healthy", helper: "Hit and miss rows are visible in the fixture feed" },
+      warning: { label: "Quota warning", status: "Warning", helper: "Usage is close to the preview limit" },
+      empty: { label: "Empty session", status: "No rows", helper: "No comments have reached the fixture cache" },
+      error: { label: "Cache unavailable", status: "Cache warning", helper: "Preview keeps reading fixtures while cache stats are unavailable" }
+    },
+    statusBadges: {
+      cached: "cached",
+      translated: "translated",
+      skipped: "skipped",
+      error: "error"
+    },
+    commentMeta: {
+      cache: "cache",
+      skipped: "skipped",
+      error: "error",
+      noTranslatedText: "No translated text for"
+    },
+    empty: {
+      title: "No matching comments",
+      body: "Adjust the search or status tab to show fixture rows."
+    },
+    safety: [
+      "Viewer-facing overlay is absent.",
+      "Reply generation and auto-posting are absent.",
+      "All values are fixture-only for UI review."
+    ]
+  }
+} as const;
 
 export const commentTranslatorConnectionStates: CommentTranslatorConnectionState[] = [
   {

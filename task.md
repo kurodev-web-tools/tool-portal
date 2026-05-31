@@ -555,6 +555,7 @@
   - YouTube token store migration implementation blocker review added 2026-05-31:
     - PR #277 (`YouTube token store final review gate`) は `2026-05-31T11:13:46Z` に `codex/comment-translator-preview` へ merge 済みで、merge commit `fa6fbc5398c9d67358135d52583010e6311af4a2` が `origin/codex/comment-translator-preview` に含まれることを確認した。
     - PR #277 checks は `Workers Builds: v-streamer-tools` PASS / `Cloudflare Pages` FAIL。PR #275 / PR #276 も Pages FAIL / Workers PASS の履歴だったため、dashboard log review が必要な外部 Pages risk として扱い、local build failure とは扱わない。
+    - draft PR #278 作成後の external checks も `Workers Builds: v-streamer-tools` PASS / `Cloudflare Pages` FAIL。Pages は同じ dashboard log review item として扱う。
     - `docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md` に post-PR #277 implementation gate review を追加し、final review gate が `blocked-pending-final-table-rls-key-management-review` のままであることを記録した。
     - `scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs` を更新し、PR #277 merge 後も explicit implementation approval missing の場合は implementation に進まないことを contract で固定した。
     - No SQL migration / No RLS policy / No token persistence runtime。Supabase schema、migration、RLS policy、token persistence runtime、storage key、payload、IndexedDB、localStorage、handoff payload、quota write、billing integration は変更していない。

@@ -185,6 +185,55 @@ Safe live Google API smoke is not run for this readiness PR. It remains blocked 
 
 Unchecked scope while this gate is closed: no safe live YouTube login / OAuth / owner verification / Live Chat polling smoke, no Google API live call, no token persistence runtime, and no Supabase migration or RLS smoke.
 
+## Separate Approved Migration PR Final Review Blocker
+
+PR #276 is merged into `codex/comment-translator-preview`, so the next PR can review the separate approved migration shape. The final implementation review is still `final-table-rls-key-management-review-required` / `blocked-pending-final-table-rls-key-management-review`.
+
+This PR is contract-only. It records the table shape, RLS posture, migration order, rollback, managed secret or KMS, Rotation, Emergency disable, and No client decrypt review package. It does not add a Supabase migration, RLS policy, token persistence, runtime token resolver write, Google API live call, client storage change, provider coupling, or quota write.
+
+### Table Shape Candidate
+
+- Table name: `youtube_oauth_credentials`.
+- Ownership: server-owned rows bound to `owner_user_id`; browser state only receives a `credential_reference_id`.
+- Non-secret metadata: provider, provider channel id, read-only YouTube OAuth scope set, expiry status, revoked state, timestamps, and key version.
+- Encrypted fields: encrypted access token ciphertext reference and encrypted refresh token ciphertext reference. Token values, authorization codes, raw Google responses, and private credentials are not written to docs, fixtures, PR body, browser storage, or client components.
+
+### RLS Posture
+
+- RLS enabled before runtime use.
+- No browser client policy can read or write token material.
+- Trusted server runtime only may access encrypted credential rows.
+- Any browser-readable state must be redacted and exclude ciphertext, raw credential fields, and decrypt capability.
+- No client decrypt.
+
+### Migration Order
+
+1. Create table after final review.
+2. Enable RLS before any token write.
+3. Add indexes for owner and credential reference lookup.
+4. Do not backfill live credentials.
+5. Do not enable runtime token resolver writes before key-management review is complete.
+
+### Key Management Review
+
+- Choose managed secret or KMS before SQL or runtime writes.
+- Use a server-only envelope decrypt boundary.
+- Store key version metadata with each encrypted credential row.
+- Define rotation with an old-key decrypt window and re-encrypt path.
+- Add an emergency disable path for credential resolution and token writes.
+- Preserve no client decrypt and no secret printing.
+
+### Rollback Review
+
+- Disable credential resolution before rollback if token resolution is deployed.
+- Use a reviewed database rollback path.
+- Keep no token value logging during rollback or investigation.
+- Revoke or invalidate credential references if rollback leaves unusable credential rows.
+
+### Final Review Gate
+
+The migration implementation remains blocked until Product/Data/Security owners explicitly approve final table shape, RLS posture, key management, and rollback in reviewable task/docs/PR context. Even complete final review evidence only allows a follow-up explicit implementation approval before any SQL, migration, RLS policy, or token persistence runtime is added.
+
 ## Non-Goals
 
 - No OAuth token persistence.

@@ -313,6 +313,76 @@ export type YouTubeEncryptedTokenStoreSeparateMigrationReadinessResult =
       nextAction: "draft-separate-approved-migration-pr-readiness-note";
     };
 
+export type YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea =
+  | "table-shape"
+  | "rls-posture"
+  | "key-management"
+  | "rollback";
+
+export type YouTubeEncryptedTokenStoreSeparateApprovedMigrationFinalReviewEvidence = {
+  area: YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea;
+  approved: boolean;
+  scope: string;
+};
+
+export type YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate = {
+  implementationStage: "separate-approved-migration-pr-final-review-blocker";
+  prerequisitePullRequest: "#276";
+  prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview";
+  sourceReadinessApprovalState: YouTubeEncryptedTokenStoreSeparateMigrationReadiness["currentApprovalState"];
+  finalReviewStatus: "blocked-pending-final-table-rls-key-management-review";
+  approvalEvidenceSource: "task-docs-pr-context";
+  requiredFinalReviewAreas: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea[];
+  tableShape: {
+    tableName: "youtube_oauth_credentials";
+    ownership: readonly string[];
+    columns: readonly string[];
+    browserReadableState: readonly string[];
+    forbiddenFields: readonly string[];
+  };
+  rlsPosture: {
+    status: "final-review-required";
+    rules: readonly string[];
+  };
+  migrationOrder: readonly string[];
+  keyManagementReview: {
+    status: "final-review-required";
+    requirements: readonly string[];
+  };
+  rollbackReview: {
+    status: "final-review-required";
+    requiredReviewItems: readonly string[];
+  };
+  safeLiveSmoke: YouTubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint["safeLiveSmoke"];
+  contractOnlyInThisPr: true;
+  finalMigrationImplementationApprovalRequired: true;
+  migrationImplementationAllowedInThisPr: false;
+  tokenPersistence: "still-blocked";
+  schemaMutation: "forbidden-until-final-review";
+  rlsMutation: "forbidden-until-final-review";
+  storageKeyMutation: "forbidden";
+  clientStorage: "forbidden";
+  providerCoupling: "forbidden-direct-import-or-call";
+  quotaWrite: "not-implemented";
+  forbiddenInThisSlice: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewResult =
+  | {
+      status: "blocked-pending-final-review";
+      missingReviewAreas: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea[];
+      contractOnly: true;
+      migrationImplementationAllowedInThisPr: false;
+      nextAction: "collect-final-table-rls-key-management-review";
+    }
+  | {
+      status: "final-review-ready-for-separate-implementation";
+      approvedReviewAreas: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea[];
+      contractOnly: true;
+      migrationImplementationAllowedInThisPr: false;
+      nextAction: "request-explicit-implementation-approval-before-sql";
+    };
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -779,6 +849,13 @@ const youtubeEncryptedTokenStoreSeparateMigrationReadinessApprovalScopeRequireme
   }
 ] as const satisfies readonly YouTubeEncryptedTokenStoreApprovalScopeRequirement[];
 
+const youtubeEncryptedTokenStoreSeparateApprovedMigrationReviewAreas = [
+  "table-shape",
+  "rls-posture",
+  "key-management",
+  "rollback"
+] as const satisfies readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea[];
+
 export const youtubeEncryptedTokenStoreSeparateMigrationReadiness = {
   implementationStage: "separate-approved-migration-readiness",
   prerequisitePullRequest: "#275",
@@ -846,6 +923,101 @@ export const youtubeEncryptedTokenStoreSeparateMigrationReadiness = {
   ],
   forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
 } as const satisfies YouTubeEncryptedTokenStoreSeparateMigrationReadiness;
+
+export const youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate = {
+  implementationStage: "separate-approved-migration-pr-final-review-blocker",
+  prerequisitePullRequest: "#276",
+  prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview",
+  sourceReadinessApprovalState: youtubeEncryptedTokenStoreSeparateMigrationReadiness.currentApprovalState,
+  finalReviewStatus: "blocked-pending-final-table-rls-key-management-review",
+  approvalEvidenceSource: "task-docs-pr-context",
+  requiredFinalReviewAreas: youtubeEncryptedTokenStoreSeparateApprovedMigrationReviewAreas,
+  tableShape: {
+    tableName: "youtube_oauth_credentials",
+    ownership: [
+      "server-owned YouTube credential table bound to owner_user_id",
+      "credential_reference_id is the only browser-safe identifier",
+      "provider_channel_id stores the YouTube owner channel reference without token material"
+    ],
+    columns: [
+      "id",
+      "owner_user_id",
+      "credential_reference_id",
+      "provider",
+      "provider_channel_id",
+      "scope_set for read-only YouTube OAuth scope",
+      "expires_at",
+      "revoked_at / revoked at timestamp",
+      "key version",
+      "encrypted access token ciphertext reference",
+      "encrypted refresh token ciphertext reference",
+      "created_at",
+      "updated_at"
+    ],
+    browserReadableState: [
+      "credential reference id",
+      "connection status",
+      "scope label",
+      "expiry status",
+      "revoked state"
+    ],
+    forbiddenFields: [
+      "no token values",
+      "no authorization code values",
+      "no raw Google response payload",
+      "no private credential values"
+    ]
+  },
+  rlsPosture: {
+    status: "final-review-required",
+    rules: [
+      "RLS enabled before runtime use",
+      "no browser client policy can read or write token material",
+      "trusted server runtime only for encrypted credential rows",
+      "redacted browser state must exclude ciphertext and decrypt capability",
+      "no client decrypt"
+    ]
+  },
+  migrationOrder: [
+    "create table after final review",
+    "enable RLS before any token write",
+    "add indexes for owner and credential reference lookup",
+    "do not backfill live credentials",
+    "no runtime token resolver write before key-management review"
+  ],
+  keyManagementReview: {
+    status: "final-review-required",
+    requirements: [
+      "managed secret or KMS selection must be reviewed before SQL or runtime writes",
+      "server-only envelope decrypt boundary",
+      "key version metadata on each encrypted credential row",
+      "rotation plan with old-key decrypt window and re-encrypt path",
+      "emergency disable for credential resolution and token writes",
+      "no client decrypt"
+    ]
+  },
+  rollbackReview: {
+    status: "final-review-required",
+    requiredReviewItems: [
+      "disable credential resolution before rollback if token resolution is deployed",
+      "reviewed database rollback path",
+      "no token value logging during rollback or investigation",
+      "revoke or invalidate credential references if rollback leaves unusable credential rows"
+    ]
+  },
+  safeLiveSmoke: youtubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint.safeLiveSmoke,
+  contractOnlyInThisPr: true,
+  finalMigrationImplementationApprovalRequired: true,
+  migrationImplementationAllowedInThisPr: false,
+  tokenPersistence: "still-blocked",
+  schemaMutation: "forbidden-until-final-review",
+  rlsMutation: "forbidden-until-final-review",
+  storageKeyMutation: "forbidden",
+  clientStorage: "forbidden",
+  providerCoupling: "forbidden-direct-import-or-call",
+  quotaWrite: "not-implemented",
+  forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+} as const satisfies YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate;
 
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
@@ -1104,6 +1276,46 @@ export function createYouTubeEncryptedTokenStoreSeparateMigrationReadinessSummar
     `Migration readiness: ${readinessResult.migrationReadiness}.`,
     `Safe live smoke: ${youtubeEncryptedTokenStoreSeparateMigrationReadiness.safeLiveSmoke.status}.`,
     "The actual migration remains separate."
+  ].join(" ");
+}
+
+export function assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview(
+  finalReviewEvidence: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationFinalReviewEvidence[]
+): YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewResult {
+  const approvedReviewAreas = youtubeEncryptedTokenStoreSeparateApprovedMigrationReviewAreas.filter((area) =>
+    finalReviewEvidence.some((evidence) => evidence.area === area && evidence.approved)
+  );
+  const missingReviewAreas = youtubeEncryptedTokenStoreSeparateApprovedMigrationReviewAreas.filter(
+    (area) => !approvedReviewAreas.includes(area)
+  );
+
+  if (missingReviewAreas.length > 0) {
+    return {
+      status: "blocked-pending-final-review",
+      missingReviewAreas,
+      contractOnly: true,
+      migrationImplementationAllowedInThisPr: false,
+      nextAction: "collect-final-table-rls-key-management-review"
+    };
+  }
+
+  return {
+    status: "final-review-ready-for-separate-implementation",
+    approvedReviewAreas,
+    contractOnly: true,
+    migrationImplementationAllowedInThisPr: false,
+    nextAction: "request-explicit-implementation-approval-before-sql"
+  };
+}
+
+export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary(): string {
+  return [
+    youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.finalReviewStatus,
+    `Table candidate: ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.tableShape.tableName}.`,
+    `RLS review: ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.rlsPosture.status}.`,
+    "Key review: managed secret or KMS with rotation and emergency disable.",
+    `Rollback review: ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.rollbackReview.status}.`,
+    "This PR stays contract-only; migration implementation remains blocked."
   ].join(" ");
 }
 

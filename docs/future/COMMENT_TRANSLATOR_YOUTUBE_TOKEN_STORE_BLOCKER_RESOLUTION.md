@@ -244,6 +244,32 @@ After reading `youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate`,
 
 No SQL migration, No RLS policy, and No token persistence runtime may be added until final table shape, RLS posture, key management, rollback, and explicit implementation approval are all recorded in reviewable task/docs/PR context. The next allowed follow-up without those approvals is docs/contract-only approval evidence or blocker summary work.
 
+## Post-PR #278 Final Implementation Approval Review
+
+PR #278 is merged into `codex/comment-translator-preview` with merge commit `4a4e1e77a671e63600f846d8a537e90a9b9f870f`.
+
+The PR #278 check pattern is still Cloudflare Pages failed / Workers Builds passed. PR #275, PR #276, and PR #277 had the same Pages fail / Workers pass history, so this remains an external Cloudflare Pages dashboard log review item rather than evidence of a local build blocker.
+
+Current task/docs/PR context does not record final approval evidence for final table/RLS/key-management/rollback review and does not record explicit implementation approval. The approval collection status is `blocked-pending-final-table-rls-key-management-review` with `explicit implementation approval` still `missing`.
+
+### Final Approval Evidence Inventory
+
+| Area | Required evidence | Status |
+|---|---|---|
+| final table shape | Product/Data/Security review of `youtube_oauth_credentials`, owner binding, credential reference id semantics, non-secret metadata, encrypted ciphertext references, and no browser-readable token material. | Missing |
+| final RLS posture | Product/Data/Security review that RLS is enabled before runtime use, browser clients cannot read or write token material, trusted server runtime is the only encrypted row accessor, redacted browser state excludes ciphertext, and no client decrypt is allowed. | Missing |
+| key-management | Security review of managed secret or KMS selection, server-only envelope decrypt boundary, key version metadata, rotation with old-key decrypt window and re-encrypt path, emergency disable, and no secret printing. | Missing |
+| rollback | Product/Data/Security review of disabling credential resolution before rollback, reviewed database rollback path, no token value logging during rollback or investigation, and revoke/invalidate behavior for unusable credential references. | Missing |
+| explicit implementation approval | Explicit approval to open a separate implementation PR for SQL migration, RLS policy, and token persistence runtime after final review evidence is complete. | Missing |
+
+### Implementation Gate Outcome
+
+`assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview([])` remains blocked with missing `table-shape`, `rls-posture`, `key-management`, and `rollback` review areas. If those four review areas are later approved but explicit implementation approval is still absent, the helper returns `blocked-pending-explicit-implementation-approval` and the next action is to collect explicit implementation approval before SQL.
+
+If final table/RLS/key-management/rollback review and explicit implementation approval are all recorded later, this docs/contract-only PR still does not add SQL. The only allowed next action is a separate implementation PR for SQL migration, RLS policy, and token persistence runtime, still without token values, private credentials, client storage changes, provider coupling, quota writes, or Google API live calls.
+
+No SQL migration, No RLS policy, and No token persistence runtime are added here. The next allowed follow-up while approval is missing is blocker summary or approval evidence collection only. The next separate implementation PR candidate, after all approvals are explicit, is `codex/comment-translator-youtube-token-store-migration-implementation-review`.
+
 ## Non-Goals
 
 - No OAuth token persistence.
@@ -264,9 +290,9 @@ No SQL migration, No RLS policy, and No token persistence runtime may be added u
 
 ## Next PR Candidate
 
-The next implementation PR should not start until the decision owners approve the required items. A reasonable next slice is a dedicated encrypted token store schema/key-management approval PR that contains either:
+The next implementation PR should not start until the decision owners approve the required items and explicit implementation approval is recorded. A reasonable next slice is a dedicated final implementation approval PR that contains either:
 
-1. a proposal-only approval artifact if schema/key details still need review, or
-2. a separate approved migration PR if schema, RLS posture, rollback, and key-management policy are explicitly approved.
+1. a docs/contract-only blocker summary if final table shape, RLS posture, key-management, rollback, or explicit implementation approval is still missing, or
+2. a separate implementation PR only after final table shape, RLS posture, rollback, key-management policy, and explicit implementation approval are all recorded.
 
 Until then, token persistence remains blocked.

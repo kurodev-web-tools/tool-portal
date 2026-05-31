@@ -325,12 +325,23 @@ export type YouTubeEncryptedTokenStoreSeparateApprovedMigrationFinalReviewEviden
   scope: string;
 };
 
+export type YouTubeEncryptedTokenStoreSeparateApprovedMigrationImplementationApprovalEvidence = {
+  approved: boolean;
+  scope: string;
+};
+
 export type YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate = {
   implementationStage: "separate-approved-migration-pr-final-review-blocker";
   prerequisitePullRequest: "#276";
   prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview";
   sourceReadinessApprovalState: YouTubeEncryptedTokenStoreSeparateMigrationReadiness["currentApprovalState"];
+  postReviewPullRequest: "#278";
+  postReviewMergeStatus: "merged-into-codex-comment-translator-preview";
+  workersCheckDisposition: "pass";
+  cloudflarePagesDisposition: "dashboard-log-review-item";
   finalReviewStatus: "blocked-pending-final-table-rls-key-management-review";
+  finalReviewEvidenceStatus: "missing-from-current-task-docs-pr-context";
+  explicitImplementationApprovalStatus: "missing";
   approvalEvidenceSource: "task-docs-pr-context";
   requiredFinalReviewAreas: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea[];
   tableShape: {
@@ -376,11 +387,20 @@ export type YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewResult =
       nextAction: "collect-final-table-rls-key-management-review";
     }
   | {
-      status: "final-review-ready-for-separate-implementation";
+      status: "blocked-pending-explicit-implementation-approval";
       approvedReviewAreas: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea[];
+      missingImplementationApproval: true;
       contractOnly: true;
       migrationImplementationAllowedInThisPr: false;
-      nextAction: "request-explicit-implementation-approval-before-sql";
+      nextAction: "collect-explicit-implementation-approval-before-sql";
+    }
+  | {
+      status: "ready-for-separate-implementation-pr";
+      approvedReviewAreas: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea[];
+      implementationApprovalScope: string;
+      contractOnly: true;
+      migrationImplementationAllowedInThisPr: false;
+      nextAction: "open-separate-sql-rls-token-persistence-implementation-pr";
     };
 
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
@@ -929,7 +949,13 @@ export const youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate = {
   prerequisitePullRequest: "#276",
   prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview",
   sourceReadinessApprovalState: youtubeEncryptedTokenStoreSeparateMigrationReadiness.currentApprovalState,
+  postReviewPullRequest: "#278",
+  postReviewMergeStatus: "merged-into-codex-comment-translator-preview",
+  workersCheckDisposition: "pass",
+  cloudflarePagesDisposition: "dashboard-log-review-item",
   finalReviewStatus: "blocked-pending-final-table-rls-key-management-review",
+  finalReviewEvidenceStatus: "missing-from-current-task-docs-pr-context",
+  explicitImplementationApprovalStatus: "missing",
   approvalEvidenceSource: "task-docs-pr-context",
   requiredFinalReviewAreas: youtubeEncryptedTokenStoreSeparateApprovedMigrationReviewAreas,
   tableShape: {
@@ -1280,7 +1306,8 @@ export function createYouTubeEncryptedTokenStoreSeparateMigrationReadinessSummar
 }
 
 export function assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview(
-  finalReviewEvidence: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationFinalReviewEvidence[]
+  finalReviewEvidence: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationFinalReviewEvidence[],
+  implementationApproval?: YouTubeEncryptedTokenStoreSeparateApprovedMigrationImplementationApprovalEvidence
 ): YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewResult {
   const approvedReviewAreas = youtubeEncryptedTokenStoreSeparateApprovedMigrationReviewAreas.filter((area) =>
     finalReviewEvidence.some((evidence) => evidence.area === area && evidence.approved)
@@ -1299,22 +1326,36 @@ export function assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrRevie
     };
   }
 
+  if (!implementationApproval?.approved || !approvalScopeIncludes(implementationApproval.scope, "separate implementation PR")) {
+    return {
+      status: "blocked-pending-explicit-implementation-approval",
+      approvedReviewAreas,
+      missingImplementationApproval: true,
+      contractOnly: true,
+      migrationImplementationAllowedInThisPr: false,
+      nextAction: "collect-explicit-implementation-approval-before-sql"
+    };
+  }
+
   return {
-    status: "final-review-ready-for-separate-implementation",
+    status: "ready-for-separate-implementation-pr",
     approvedReviewAreas,
+    implementationApprovalScope: implementationApproval.scope,
     contractOnly: true,
     migrationImplementationAllowedInThisPr: false,
-    nextAction: "request-explicit-implementation-approval-before-sql"
+    nextAction: "open-separate-sql-rls-token-persistence-implementation-pr"
   };
 }
 
 export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary(): string {
   return [
+    `Post review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postReviewPullRequest}.`,
     youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.finalReviewStatus,
     `Table candidate: ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.tableShape.tableName}.`,
     `RLS review: ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.rlsPosture.status}.`,
     "Key review: managed secret or KMS with rotation and emergency disable.",
     `Rollback review: ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.rollbackReview.status}.`,
+    "Explicit implementation approval missing.",
     "This PR stays contract-only; migration implementation remains blocked."
   ].join(" ");
 }

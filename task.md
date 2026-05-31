@@ -24,7 +24,8 @@
      - merged feature: `codex/comment-translator-manual-input-mvp` at `D:/V_streamer_tools/.worktrees/comment-translator-manual-input-mvp`
      - planning follow-up: `codex/comment-translator-provider-boundary-plan` at `D:/V_streamer_tools/.worktrees/comment-translator-provider-boundary-plan`
      - merged feature: `codex/comment-translator-youtube-api-adapter-token-reference-design` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-api-adapter-token-reference-design`
-     - active feature: `codex/comment-translator-youtube-oauth-token-store-foundation` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-oauth-token-store-foundation`
+     - merged feature: `codex/comment-translator-youtube-oauth-token-store-foundation` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-oauth-token-store-foundation`
+     - active feature: `codex/comment-translator-youtube-token-store-blocker-resolution` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-blocker-resolution`
    - seed:
      - `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
      - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
@@ -36,10 +37,11 @@
      - Real translation provider は、YouTube OAuth / owner check / quota / billing boundary が固まった後に別 PR で比較する。
      - 2026-05-30 decision: まだ実際に使える翻訳ツールではないため、`codex/comment-translator-preview` を `main` へ統合せず、preview branch 上に使える状態へ近づけるPRを刻む。
    - current slice target:
-     - `YouTube OAuth token store + consent runtime foundation` を `codex/comment-translator-preview` 宛てに切る。
-     - `lib/comment-translator-youtube-api-adapter.ts` の `youtubeGoogleApiSafeLiveSmokePolicy` と token reference resolver contract に沿って、OAuth consent / callback / encrypted token store / token resolver runtime の責務境界を contract-first で固定する。
-     - 実 token value を扱わず、client component、fixture、task docs、PR body、localStorage、IndexedDB に出さない。
-     - encrypted token store 本実装に必要な schema / key management / revocation / refresh / audit / retention blocker は明記するが、schema / migration / RLS は追加しない。
+     - `YouTube encrypted token store implementation plan / blocker resolution` を `codex/comment-translator-preview` 宛てに切る。
+     - PR #271 (`YouTube OAuth token store + consent runtime foundation`) が `2026-05-31T04:24:56Z` に `codex/comment-translator-preview` へ merged 済みで、merge commit `70a55ccb24bccfa6bad7fba9a7e382e11d41bceb` が `origin/codex/comment-translator-preview` 先頭に含まれることを確認した。
+     - `lib/comment-translator-youtube-oauth-token-store-foundation.ts` の blocker list に沿って、schema approval / key management / token refresh / revocation / audit log / retention policy / safe live smoke approval を実装可能な判断単位へ分解する。
+     - このPRでは plan / contract / blocker resolution memo に閉じ、schema / migration / RLS を追加しない。
+     - 実装が必要と判断した場合も、まず blocker summary と required approval を返し、token persistence 本実装へ進まない。
      - Google API live call は safe live smoke 条件が揃うまで実行しない。
      - owner verification、owned broadcast lookup、Live Chat polling step、sanitized comment bridge は translation provider module と直接結合しない。
      - client component から Google API / provider / polling runtime を直接呼ばない。
@@ -317,6 +319,40 @@
     - Supabase schema / migration / RLS、key management、audit writer、retention cleanup は未実装。実装前に separate approved migration / key policy / revocation policy / audit policy が必要。
     - Google API / YouTube Data API / Live Chat API の live call、safe live Google API smoke、safe live YouTube login / OAuth / owner verification / Live Chat polling smoke は未実施。secret / private credential を扱わない方針のため、このPRでは contract / build verification まで。
     - 次 PR 候補は `YouTube encrypted token store implementation plan / blocker resolution`。schema / key management / refresh / revocation / audit / retention を承認可能な設計に分解し、実 migration は別承認後に切る。
+  - PR #271 merge gate completed 2026-05-31:
+    - PR #271 (`codex/comment-translator-youtube-oauth-token-store-foundation` -> `codex/comment-translator-preview`) は `2026-05-31T04:24:56Z` に merged。
+    - merge commit `70a55ccb24bccfa6bad7fba9a7e382e11d41bceb` は `origin/codex/comment-translator-preview` の先頭として確認済み。
+  - YouTube encrypted token store implementation plan / blocker resolution implementation added 2026-05-31:
+    - `lib/comment-translator-youtube-oauth-token-store-foundation.ts` に `youtubeEncryptedTokenStoreBlockerResolutionDecisions`、`youtubeEncryptedTokenStoreBlockerResolutionPlan`、`createYouTubeEncryptedTokenStoreBlockerResolutionMemo`、`assessYouTubeEncryptedTokenStoreImplementationReadiness` を追加した。
+    - schema approval / key management / token refresh / revocation / audit log / retention policy / safe live smoke approval をそれぞれ decision unit、proposal、required approval、separate PR gate へ分解した。
+    - `assessYouTubeEncryptedTokenStoreImplementationReadiness([])` は blocker 未承認なら `blocked` を返し、全 blocker 承認済みでもこのPR内では token persistence を開始せず `ready-for-separate-implementation-pr` に留める。
+    - `docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md` に blocker resolution memo、safe live smoke 条件、未確認範囲、次 PR 候補を記録した。
+    - token persistence、token refresh、revocation、encrypted token store 本実装、Supabase schema / migration / RLS、Google API live call、storage key、payload、IndexedDB、localStorage、handoff payload、quota write、billing integration は変更していない。
+    - translation provider module との direct import / direct call、client component からの Google API / provider / polling runtime 呼び出し、DeepL provider prototype、MockTranslationProvider、Manual / Paste Input MVP、interactive shell は変更していない。
+    - UI変更なし。`components/comment-translator/*` と `/tools/comment-translator` route は変更していないため、幅別確認は今回対象外。
+  - YouTube encrypted token store implementation plan / blocker resolution verification:
+    - RED first: `node scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs` は `YouTube encrypted token store blocker resolution memo exists` で期待どおり失敗。
+    - `node scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs` PASS。
+    - `node scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs` PASS。
+    - `node scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs` PASS。
+    - `node scripts/comment-translator-youtube-runtime-foundation-contract.mjs` PASS。
+    - `node scripts/comment-translator-youtube-input-boundary-contract.mjs` PASS。
+    - `node scripts/comment-translator-server-provider-prototype-contract.mjs` PASS。
+    - `node scripts/comment-translator-provider-boundary-contract.mjs` PASS。
+    - `node scripts/comment-translator-manual-input-mvp-contract.mjs` PASS。
+    - `node scripts/comment-translator-interactive-shell-contract.mjs` PASS。
+    - `node scripts/comment-translator-mock-foundation-contract.mjs` PASS。
+    - `node scripts/tool-portal-entry-contract.mjs` PASS。
+    - `npm run lint` PASS。
+    - `npx tsc --noEmit` PASS。
+    - `npm run build` PASS (`/tools/comment-translator` included in app routes; server-runtime buildのため `static-export-rsc-aliases` はskip、`middleware` deprecation warningとwebpack cache warningあり)。
+    - `git diff --check` PASS (`lib/comment-translator-youtube-oauth-token-store-foundation.ts` / `task.md` CRLF変換warningのみ)。
+    - UI変更なしのため `/tools` と `/tools/comment-translator` の幅別確認は未実施。
+  - YouTube encrypted token store implementation plan / blocker resolution unchecked scope / residual risk:
+    - OAuth token persistence、token refresh、revocation、encrypted token store 本実装は未実装。
+    - Supabase schema / migration / RLS、key management implementation、audit writer、retention cleanup は未実装。implementation は required approval と separate PR が必要。
+    - Google API / YouTube Data API / Live Chat API の live call、safe live Google API smoke、safe live YouTube login / OAuth / owner verification / Live Chat polling smoke は未実施。secret / private credential を扱わない方針のため、このPRでは contract / memo / build verification まで。
+    - 次 PR 候補は `YouTube encrypted token store schema/key approval checkpoint`。blocker resolution memo の required approval を user / security / data-owner が承認するまで、migration や token persistence 実装へ進まない。
 
 2. Analytics / consent decision
    - status: no immediate implementation。
@@ -352,12 +388,13 @@
 4. YouTube OAuth / owner verification / Live Chat polling input boundary design: PR #268 で `codex/comment-translator-preview` へ merge 済み。
 5. YouTube owner verification + polling runtime foundation: PR #269 で `codex/comment-translator-preview` へ merge 済み。
 6. YouTube Google API adapter + token reference resolver design: PR #270 で `codex/comment-translator-preview` へ merge 済み。
-7. YouTube OAuth token store + consent runtime foundation: this branchで consent / callback / encrypted token store blocker / resolver runtime foundation を server-only design contract として追加。
-8. YouTube encrypted token store implementation plan / blocker resolution: schema / key management / refresh / revocation / audit / retention を承認可能な粒度へ分解する。
-9. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
-10. Tool-specific persistence / preference sync only after data boundary and quota policy are fixed。
-11. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
-12. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
+7. YouTube OAuth token store + consent runtime foundation: PR #271 で `codex/comment-translator-preview` へ merge 済み。
+8. YouTube encrypted token store implementation plan / blocker resolution: this branchで schema / key management / refresh / revocation / audit / retention / safe live smoke を承認可能な粒度へ分解する。
+9. YouTube encrypted token store schema/key approval checkpoint: blocker resolution memo の required approval を確認し、proposal-only で足りるか approved migration PR に進めるか判断する。
+10. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
+11. Tool-specific persistence / preference sync only after data boundary and quota policy are fixed。
+12. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
+13. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
 
 ## Next Session Prompt
 
@@ -365,16 +402,17 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Kuro Live Comment Translator の次 PR 候補として、YouTube encrypted token store implementation plan / blocker resolution を小さく整理してください。YouTube OAuth token store + consent runtime foundation PR が `codex/comment-translator-preview` に merge 済みであることを確認してから進めてください。
+Kuro Live Comment Translator の次 PR 候補として、YouTube encrypted token store schema/key approval checkpoint を小さく整理してください。YouTube encrypted token store implementation plan / blocker resolution PR が `codex/comment-translator-preview` に merge 済みであることを確認してから進めてください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- `codex/comment-translator-preview` に mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype、YouTube input boundary design、YouTube owner verification + polling runtime foundation、YouTube Google API adapter + token reference resolver design、YouTube OAuth token store + consent runtime foundation が merge 済みであることを確認してください。
+- PR #271 は merge 済みです。今回の前提として、blocker resolution PR も `codex/comment-translator-preview` に merge 済みであることを確認してください。
+- blocker resolution PR が未mergeなら新規実装へ進まず、blocker summary を返してください。
 - 作業は `codex/comment-translator-preview` から新しい feature branch を切ってください。
-- 推奨 branch: `codex/comment-translator-youtube-token-store-blocker-resolution`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-blocker-resolution`
+- 推奨 branch: `codex/comment-translator-youtube-token-store-schema-key-approval`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-schema-key-approval`
 - 初回 platform は YouTube。
 - secret / service_role key / private credential は要求・表示・保存しない。
 - OAuth access token / refresh token は client component、fixture、task docs、PR body、localStorage、IndexedDB に出さない。
@@ -382,17 +420,17 @@ Kuro Live Comment Translator の次 PR 候補として、YouTube encrypted token
 - main へはまだ統合しない。`codex/comment-translator-preview` 宛てのPRとして進める。
 
 scope:
-- `lib/comment-translator-youtube-oauth-token-store-foundation.ts` の blocker list に沿って、schema approval / key management / token refresh / revocation / audit log / retention policy / safe live smoke approval を実装可能な判断単位へ分解する。
-- このPRでは原則 plan / contract / blocker resolution memo に閉じ、勝手に schema / migration / RLS を追加しない。
-- もし実装が必要と判断した場合も、まず blocker summary と required approval を返し、token persistence 本実装へ進まない。
+- `docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md` と `youtubeEncryptedTokenStoreBlockerResolutionPlan` を読み、schema approval / key management の required approval を次に進めるか判断できる proposal に整理する。
+- このPRでは approval checkpoint / proposal / contract に閉じ、明示承認なしに schema / migration / RLS を追加しない。
+- migration が必要と判断した場合も、このPRでは blocker summary、required approval、separate migration PR 条件に留める。
 - Google API live call は safe live smoke 条件が揃うまで実行しない。
 - owner verification、owned broadcast lookup、Live Chat polling step、sanitized comment bridge は translation provider module と直接結合しない。
 - client component から Google API / provider / polling runtime を直接呼ばない。
 - DeepL provider prototype、MockTranslationProvider、Manual / Paste Input MVP、interactive shell の既存挙動は壊さない。
 
 実装したいこと:
-- encrypted token store 実装前に必要な schema / key management / revocation / refresh / audit / retention / safe live smoke approval を、次に実装へ進めるか判断できる形へ整理する。
-- schema / migration / RLS を実装する必要があるなら、このPRでは proposal と blocker summary に留める。
+- encrypted token store 実装前に schema/key policy を approval checkpoint として整理する。
+- approved migration PR に進める条件、まだ proposal-only に留める条件、承認者/確認項目を明確にする。
 - safe live smoke を実行できる条件と、実行しない場合の未確認範囲を task.md / PR body に明記する。
 - token / client storage / provider coupling / storage / quota write の禁止境界を維持する。
 - UI変更は原則なし。必要な場合だけ幅別確認を行う。
@@ -415,7 +453,8 @@ Out of scope:
 - main integration PR。
 
 検証:
-- new/updated YouTube token store blocker resolution contract
+- new/updated YouTube token store schema/key approval checkpoint contract
+- `node scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs`
 - `node scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs`
 - `node scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs`
 - `node scripts/comment-translator-youtube-runtime-foundation-contract.mjs`

@@ -32,6 +32,44 @@ Each decision remains `blocked-until-approved` and requires a separate implement
 
 The current plan status is `blocked-until-approvals-and-separate-implementation`.
 
+## Schema/Key Approval Checkpoint
+
+`youtubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint` narrows the next decision to only `schema-approval` and `key-management`. The checkpoint status is `proposal-only-pending-explicit-approval`: it records what must be approved before an implementation PR can exist, but it still does not allow token persistence, schema mutation, migration, RLS policy, storage key changes, client storage changes, provider coupling, quota writes, or Google API live calls in this PR.
+
+### Approvers And Confirmation Items
+
+| Area | Required approvers | Confirmation items |
+|---|---|---|
+| Schema | Product owner, Data owner | Server-owned YouTube credential table ownership model; owner binding and credential reference id semantics; RLS posture that never exposes token material to browser clients; migration rollout order and rollback path; no existing storage key, payload, IndexedDB key, localStorage key, handoff payload, or quota write change. |
+| Key management | Security owner | Managed secret or KMS owner selection; server-only envelope and decrypt access boundary; rotation cadence and versioned key metadata; emergency disable and incident handling path; no client decrypt, no secret printing, and no privileged server key exposure. |
+| Approved migration PR | Product owner, Data owner, Security owner | The migration PR must target `codex/comment-translator-preview`, stay separate from this proposal-only PR, and contain no OAuth token values or private credentials in code, task docs, PR body, fixtures, browser storage, or client components. |
+
+### Proposal-Only Conditions
+
+Keep the work proposal-only when any of these remain true:
+
+- schema/RLS/table shape approval is missing or incomplete;
+- managed secret or KMS owner and rotation policy are not approved;
+- safe live smoke owner/account/endpoints are not approved;
+- migration rollback or data-owner review is pending;
+- implementation would touch Supabase schema, migration, RLS, storage keys, payloads, browser storage, provider coupling, or quota writes in this PR.
+
+### Approved Migration PR Conditions
+
+Only move to a separate approved migration PR when all of these are true:
+
+- product and data-owner approve table shape, RLS posture, migration order, and rollback;
+- security approves managed secret/KMS selection, rotation procedure, emergency disable path, and no client decrypt;
+- the migration PR targets `codex/comment-translator-preview` and is reviewed independently;
+- no OAuth token values or private credentials appear in the migration PR, task docs, PR body, fixtures, browser storage, or client components;
+- Google API live smoke remains separate until safe live smoke conditions are satisfied.
+
+### Safe Live Smoke Gate
+
+Safe live Google API smoke remains not run in this slice. It can only run after explicit user approval for a safe test YouTube owner account, a server-only token resolver, encrypted server token store review, read-only YouTube OAuth scope, bounded calls to `channels.list`, `liveBroadcasts.list`, and one `liveChatMessages.list` step, and no OAuth token value in client components, fixtures, task docs, PR body, localStorage, or IndexedDB.
+
+Unchecked scope while this gate is closed: no safe live YouTube login / OAuth smoke, no owner verification smoke, no owned broadcast lookup smoke, no Live Chat polling smoke, and no Google API live call.
+
 ## Safe Live Smoke
 
 Safe live Google API smoke is not run in this slice.

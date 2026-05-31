@@ -109,6 +109,7 @@ assert.match(foundationSource, /^import "server-only";/m, "approved migration PR
 for (const exportedType of [
   "YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate",
   "YouTubeEncryptedTokenStoreSeparateApprovedMigrationFinalReviewEvidence",
+  "YouTubeEncryptedTokenStoreSeparateApprovedMigrationImplementationApprovalEvidence",
   "YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewResult"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `exports ${exportedType}`);
@@ -148,11 +149,25 @@ assert.equal(
   "readiness-approved-not-migration-implementation",
   "gate is sourced from readiness-only approval"
 );
+assert.equal(gate.postReviewPullRequest, "#278", "gate records PR #278 prerequisite");
+assert.equal(gate.postReviewMergeStatus, "merged-into-codex-comment-translator-preview", "PR #278 is merged");
+assert.equal(gate.workersCheckDisposition, "pass", "PR #278 Workers check is recorded as pass");
+assert.equal(
+  gate.cloudflarePagesDisposition,
+  "dashboard-log-review-item",
+  "PR #278 Cloudflare Pages failure remains a dashboard log review item"
+);
 assert.equal(
   gate.finalReviewStatus,
   "blocked-pending-final-table-rls-key-management-review",
   "final implementation review remains blocked"
 );
+assert.equal(
+  gate.finalReviewEvidenceStatus,
+  "missing-from-current-task-docs-pr-context",
+  "final review evidence is explicitly missing until recorded"
+);
+assert.equal(gate.explicitImplementationApprovalStatus, "missing", "explicit implementation approval is missing");
 assert.equal(gate.contractOnlyInThisPr, true, "this PR remains contract/docs only");
 assert.equal(gate.finalMigrationImplementationApprovalRequired, true, "final implementation approval is required");
 assert.equal(gate.migrationImplementationAllowedInThisPr, false, "this PR cannot add migration implementation");
@@ -243,22 +258,50 @@ const readyResult = foundation.assessYouTubeEncryptedTokenStoreSeparateApprovedM
 assert.deepEqual(
   readyResult,
   {
-    status: "final-review-ready-for-separate-implementation",
+    status: "blocked-pending-explicit-implementation-approval",
     approvedReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
+    missingImplementationApproval: true,
     contractOnly: true,
     migrationImplementationAllowedInThisPr: false,
-    nextAction: "request-explicit-implementation-approval-before-sql"
+    nextAction: "collect-explicit-implementation-approval-before-sql"
   },
-  "final review evidence still does not allow SQL in this PR"
+  "final review evidence still blocks implementation when explicit implementation approval is missing"
+);
+
+const implementationReadyResult = foundation.assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview(
+  [
+    { area: "table-shape", approved: true, scope: "final table shape review" },
+    { area: "rls-posture", approved: true, scope: "final RLS posture review" },
+    { area: "key-management", approved: true, scope: "final managed secret or KMS key-management review" },
+    { area: "rollback", approved: true, scope: "final rollback review" }
+  ],
+  {
+    approved: true,
+    scope: "explicit implementation approval for a separate implementation PR only"
+  }
+);
+assert.deepEqual(
+  implementationReadyResult,
+  {
+    status: "ready-for-separate-implementation-pr",
+    approvedReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
+    implementationApprovalScope: "explicit implementation approval for a separate implementation PR only",
+    contractOnly: true,
+    migrationImplementationAllowedInThisPr: false,
+    nextAction: "open-separate-sql-rls-token-persistence-implementation-pr"
+  },
+  "complete final review and explicit implementation approval only unlock a separate implementation PR"
 );
 
 const summary = foundation.createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary();
 for (const fragment of [
   "blocked-pending-final-table-rls-key-management-review",
+  "PR #278",
   "youtube_oauth_credentials",
   "RLS",
   "managed secret or KMS",
   "rollback",
+  "explicit implementation approval missing",
   "contract-only",
   "migration implementation remains blocked"
 ]) {
@@ -298,6 +341,23 @@ for (const docFragment of [
   assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #277 implementation blocker: ${docFragment}`);
 }
 
+for (const docFragment of [
+  "Post-PR #278 Final Implementation Approval Review",
+  "PR #278 is merged",
+  "Cloudflare Pages",
+  "Workers Builds",
+  "dashboard log review item",
+  "final table/RLS/key-management/rollback review",
+  "explicit implementation approval",
+  "missing",
+  "No SQL migration",
+  "No RLS policy",
+  "No token persistence runtime",
+  "separate implementation PR"
+]) {
+  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #278 final approval gate: ${docFragment}`);
+}
+
 assert.match(taskSource, /PR #276 .*merged|PR #276 .*merge/i, "task.md records the PR #276 merge gate");
 assert.match(
   taskSource,
@@ -329,6 +389,22 @@ assert.match(
   taskSource,
   /migration \/ RLS policy \/ token persistence runtime.*追加しない|No SQL migration.*No RLS policy.*No token persistence runtime/i,
   "task.md records that migration, RLS policy, and token persistence runtime were not added"
+);
+assert.match(taskSource, /PR #278 .*merged|PR #278 .*merge/i, "task.md records the PR #278 merge gate");
+assert.match(
+  taskSource,
+  /Cloudflare Pages.*dashboard log review item|dashboard log review item.*Cloudflare Pages/i,
+  "task.md records PR #278 Cloudflare Pages as a dashboard log review item"
+);
+assert.match(
+  taskSource,
+  /final table\/RLS\/key-management\/rollback review.*未承認|final table\/RLS\/key-management\/rollback review.*missing/i,
+  "task.md records missing final table/RLS/key-management/rollback review approval"
+);
+assert.match(
+  taskSource,
+  /separate implementation PR|別 PR/,
+  "task.md sends any future implementation to a separate PR"
 );
 
 const allowedChangedFiles = new Set([

@@ -118,6 +118,40 @@ export type YouTubeEncryptedTokenStoreBlockerResolutionPlan = {
   safeLiveSmoke: YouTubeGoogleApiSafeLiveSmokePolicy;
 };
 
+export type YouTubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint = {
+  implementationStage: "schema-key-approval-checkpoint";
+  status: "proposal-only-pending-explicit-approval";
+  sourcePlanStatus: YouTubeEncryptedTokenStoreBlockerResolutionPlan["tokenPersistence"];
+  sourceDecisionIds: readonly ["schema-approval", "key-management"];
+  requiredApprovers: {
+    schema: readonly string[];
+    keyManagement: readonly string[];
+    approvedMigrationPr: readonly string[];
+  };
+  requiredConfirmationItems: {
+    schema: readonly string[];
+    keyManagement: readonly string[];
+    boundaries: readonly string[];
+  };
+  proposalOnlyConditions: readonly string[];
+  approvedMigrationPrConditions: readonly string[];
+  separateMigrationPrRequired: true;
+  implementationAllowedInThisPr: false;
+  tokenPersistence: "still-blocked";
+  schemaMutation: "forbidden-in-this-slice";
+  rlsMutation: "forbidden-in-this-slice";
+  storageKeyMutation: "forbidden-in-this-slice";
+  clientStorage: "forbidden";
+  providerCoupling: "forbidden-direct-import-or-call";
+  quotaWrite: "not-implemented";
+  safeLiveSmoke: {
+    status: "not-run-until-safe-live-smoke-conditions";
+    requiredConditions: readonly string[];
+    uncheckedScopeWhenNotRun: readonly string[];
+  };
+  forbiddenInThisSlice: readonly string[];
+};
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -359,6 +393,83 @@ export const youtubeEncryptedTokenStoreBlockerResolutionPlan = {
   quotaWrite: "not-implemented",
   safeLiveSmoke: youtubeGoogleApiSafeLiveSmokePolicy
 } as const satisfies YouTubeEncryptedTokenStoreBlockerResolutionPlan;
+
+export const youtubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint = {
+  implementationStage: "schema-key-approval-checkpoint",
+  status: "proposal-only-pending-explicit-approval",
+  sourcePlanStatus: youtubeEncryptedTokenStoreBlockerResolutionPlan.tokenPersistence,
+  sourceDecisionIds: ["schema-approval", "key-management"],
+  requiredApprovers: {
+    schema: ["Product owner", "Data owner"],
+    keyManagement: ["Security owner"],
+    approvedMigrationPr: ["Product owner", "Data owner", "Security owner"]
+  },
+  requiredConfirmationItems: {
+    schema: [
+      "server-owned YouTube credential table ownership model",
+      "owner binding and credential reference id semantics",
+      "RLS posture that never exposes token material to browser clients",
+      "migration rollout order and rollback path",
+      "no existing storage key, payload, IndexedDB key, localStorage key, handoff payload, or quota write change"
+    ],
+    keyManagement: [
+      "managed secret or KMS owner selection",
+      "server-only envelope and decrypt access boundary",
+      "rotation cadence and versioned key metadata",
+      "emergency disable and incident handling path",
+      "no client decrypt, no secret printing, and no privileged server key exposure"
+    ],
+    boundaries: [
+      "no OAuth token persistence implementation in this PR",
+      "no Supabase schema, migration, or RLS policy change in this PR",
+      "no client component Google API, provider, or polling runtime call",
+      "no translation provider coupling",
+      "no storage key, payload, IndexedDB, localStorage, handoff payload, or quota write change"
+    ]
+  },
+  proposalOnlyConditions: [
+    "schema/RLS/table shape approval is missing or incomplete",
+    "managed secret or KMS owner and rotation policy are not approved",
+    "safe live smoke owner/account/endpoints are not approved",
+    "migration rollback or data-owner review is pending",
+    "implementation would touch Supabase schema, migration, RLS, storage keys, payloads, browser storage, provider coupling, or quota writes in this PR"
+  ],
+  approvedMigrationPrConditions: [
+    "product and data-owner approve table shape, RLS posture, migration order, and rollback",
+    "security approves managed secret/KMS selection, rotation procedure, emergency disable path, and no client decrypt",
+    "separate migration PR targets codex/comment-translator-preview and is reviewed independently",
+    "no OAuth token values or private credentials appear in the migration PR, task docs, PR body, fixtures, browser storage, or client components",
+    "Google API live smoke remains separate until safe live smoke conditions are satisfied"
+  ],
+  separateMigrationPrRequired: true,
+  implementationAllowedInThisPr: false,
+  tokenPersistence: "still-blocked",
+  schemaMutation: "forbidden-in-this-slice",
+  rlsMutation: "forbidden-in-this-slice",
+  storageKeyMutation: "forbidden-in-this-slice",
+  clientStorage: "forbidden",
+  providerCoupling: "forbidden-direct-import-or-call",
+  quotaWrite: "not-implemented",
+  safeLiveSmoke: {
+    status: "not-run-until-safe-live-smoke-conditions",
+    requiredConditions: [
+      "explicit user approval for a safe test YouTube owner account",
+      "server-only token resolver implementation that can obtain token material without returning it to callers",
+      "encrypted server token store implemented and reviewed without hidden schema changes",
+      "read-only YouTube OAuth scope",
+      "bounded calls to channels.list, liveBroadcasts.list, and one liveChatMessages.list step",
+      "no OAuth token value in client components, fixtures, task docs, PR body, localStorage, or IndexedDB"
+    ],
+    uncheckedScopeWhenNotRun: [
+      "no safe live YouTube login or OAuth smoke",
+      "no owner verification smoke",
+      "no owned broadcast lookup smoke",
+      "no Live Chat polling smoke",
+      "no Google API live call"
+    ]
+  },
+  forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+} as const satisfies YouTubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint;
 
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",

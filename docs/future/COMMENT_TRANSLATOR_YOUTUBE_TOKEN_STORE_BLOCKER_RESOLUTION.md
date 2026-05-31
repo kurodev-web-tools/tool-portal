@@ -148,6 +148,43 @@ Safe live Google API smoke is not run for explicit approval collection. It remai
 
 Unchecked scope while this gate is closed: no safe live YouTube login / OAuth / owner verification / Live Chat polling smoke, no Google API live call, and no token persistence runtime.
 
+## Separate Approved Migration Readiness
+
+PR #275 is merged into `codex/comment-translator-preview`. After reviewing the current proposal/contract-only state, the task/docs/PR context now records Product owner, Data owner, and Security owner approval to proceed to a separate migration readiness PR. The approval state is `readiness-approved-not-migration-implementation`.
+
+This approval is readiness-only. It allows approval evidence review, separate migration PR readiness, rollback review gate confirmation, and safe live smoke gate confirmation. It does not allow OAuth token persistence, token refresh, token revocation, encrypted token store implementation, Supabase schema mutation, migration, RLS policy changes, storage key changes, client storage changes, provider coupling, quota writes, billing integration, or Google API live calls in this PR.
+
+### Readiness Approval Evidence
+
+| Role | Approval scope | Status |
+|---|---|---|
+| Product owner | Approved table shape, RLS posture, migration order, rollback, disconnect/revocation UX, and no existing storage key/payload/IndexedDB/localStorage/handoff payload/quota write change for readiness review only. Actual migration is not approved here. | Approved for readiness |
+| Data owner | Approved browser-unreadable token material, credential-reference-only browser state, audit fields, retention, rollback, account deletion cleanup, and no token values/auth codes/raw Google responses/private credentials in code/docs/fixtures/PR body/browser storage for readiness review only. Final table/RLS implementation is not approved here. | Approved for readiness |
+| Security owner | Approved managed secret or KMS review, server-only decrypt, no client decrypt, no secret printing, rotation, emergency disable, and privileged key exposure controls for readiness review only. Production token persistence and live credential handling are not approved here. | Approved for readiness |
+
+### Readiness Note
+
+- Approval evidence is sufficient to draft a separate migration readiness PR.
+- Actual Supabase migration and RLS implementation stay out of this PR.
+- The separate migration PR must target `codex/comment-translator-preview` and receive independent review.
+- Final table and RLS implementation review is still required before applying any migration.
+- OAuth token values and private credentials must remain out of code, task docs, PR body, fixtures, browser storage, and client components.
+
+### Rollback Review Gate
+
+Rollback remains `review-required-before-migration-implementation`. The separate migration PR must review:
+
+- disable credential resolution before rollback if token resolution is deployed;
+- reviewed database rollback path;
+- no token value logging during rollback or investigation;
+- revoke or invalidate credential references if rollback leaves unusable credential rows.
+
+### Safe Live Smoke Gate
+
+Safe live Google API smoke is not run for this readiness PR. It remains blocked until there is explicit approval for a safe test YouTube owner account, server-only token resolver implementation, encrypted server token store review, read-only YouTube OAuth scope, bounded calls to `channels.list`, `liveBroadcasts.list`, and one `liveChatMessages.list` step, and no OAuth token value in client components, fixtures, task docs, PR body, localStorage, or IndexedDB.
+
+Unchecked scope while this gate is closed: no safe live YouTube login / OAuth / owner verification / Live Chat polling smoke, no Google API live call, no token persistence runtime, and no Supabase migration or RLS smoke.
+
 ## Non-Goals
 
 - No OAuth token persistence.

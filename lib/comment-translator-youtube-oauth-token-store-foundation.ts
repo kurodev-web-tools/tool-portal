@@ -254,6 +254,65 @@ export type YouTubeEncryptedTokenStoreExplicitApprovalCollectionResult =
       nextAction: "draft-separate-approved-migration-pr";
     };
 
+export type YouTubeEncryptedTokenStoreApprovalScopeRequirement = {
+  role: YouTubeEncryptedTokenStoreApprovalRole;
+  requiredScopeItems: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStoreMissingApprovalScopeItem = {
+  role: YouTubeEncryptedTokenStoreApprovalRole;
+  item: string;
+};
+
+export type YouTubeEncryptedTokenStoreSeparateMigrationReadiness = {
+  implementationStage: "separate-approved-migration-readiness";
+  prerequisitePullRequest: "#275";
+  prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview";
+  approvalEvidenceSource: "task-docs-pr-context";
+  approvalScope: "readiness-pr-only";
+  currentApprovalState: "readiness-approved-not-migration-implementation";
+  requiredApprovalRoles: readonly YouTubeEncryptedTokenStoreApprovalRole[];
+  collectedApprovalEvidence: readonly YouTubeEncryptedTokenStoreApprovalEvidence[];
+  approvalScopeRequirements: readonly YouTubeEncryptedTokenStoreApprovalScopeRequirement[];
+  readinessNote: readonly string[];
+  rollbackReviewGate: {
+    status: "review-required-before-migration-implementation";
+    requiredReviewItems: readonly string[];
+  };
+  separateMigrationPrRequired: true;
+  finalMigrationImplementationApprovalRequired: true;
+  migrationImplementationAllowedInThisPr: false;
+  tokenPersistence: "still-blocked";
+  schemaMutation: "forbidden-in-this-slice";
+  rlsMutation: "forbidden-in-this-slice";
+  storageKeyMutation: "forbidden-in-this-slice";
+  clientStorage: "forbidden";
+  providerCoupling: "forbidden-direct-import-or-call";
+  quotaWrite: "not-implemented";
+  safeLiveSmoke: YouTubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint["safeLiveSmoke"];
+  uncheckedScopeWhenNotRun: readonly string[];
+  forbiddenInThisSlice: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStoreSeparateMigrationReadinessResult =
+  | {
+      status: "blocked-missing-readiness-approval-evidence";
+      missingApprovalRoles: readonly YouTubeEncryptedTokenStoreApprovalRole[];
+      missingScopeItems: readonly YouTubeEncryptedTokenStoreMissingApprovalScopeItem[];
+      migrationReadiness: "blocked";
+      migrationImplementationAllowedInThisPr: false;
+      nextAction: "collect-readiness-approval-evidence";
+    }
+  | {
+      status: "readiness-ready-for-separate-approved-migration-pr";
+      approvedRoles: readonly YouTubeEncryptedTokenStoreApprovalRole[];
+      missingScopeItems: readonly [];
+      migrationReadiness: "ready-for-separate-approved-migration-pr";
+      migrationImplementationAllowedInThisPr: false;
+      finalMigrationImplementationApprovalRequired: true;
+      nextAction: "draft-separate-approved-migration-pr-readiness-note";
+    };
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -685,6 +744,109 @@ export const youtubeEncryptedTokenStoreExplicitApprovalCollection = {
   forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
 } as const satisfies YouTubeEncryptedTokenStoreExplicitApprovalCollection;
 
+const youtubeEncryptedTokenStoreSeparateMigrationReadinessApprovalScopeRequirements = [
+  {
+    role: "Product owner",
+    requiredScopeItems: [
+      "table shape",
+      "RLS posture",
+      "migration order",
+      "rollback",
+      "disconnect/revocation UX",
+      "no existing storage key/payload/IndexedDB/localStorage/handoff payload/quota write change"
+    ]
+  },
+  {
+    role: "Data owner",
+    requiredScopeItems: [
+      "browser-unreadable token material",
+      "credential-reference-only browser state",
+      "audit fields",
+      "retention",
+      "rollback",
+      "account deletion cleanup"
+    ]
+  },
+  {
+    role: "Security owner",
+    requiredScopeItems: [
+      "managed secret or KMS",
+      "server-only decrypt",
+      "rotation",
+      "emergency disable",
+      "no client decrypt"
+    ]
+  }
+] as const satisfies readonly YouTubeEncryptedTokenStoreApprovalScopeRequirement[];
+
+export const youtubeEncryptedTokenStoreSeparateMigrationReadiness = {
+  implementationStage: "separate-approved-migration-readiness",
+  prerequisitePullRequest: "#275",
+  prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview",
+  approvalEvidenceSource: "task-docs-pr-context",
+  approvalScope: "readiness-pr-only",
+  currentApprovalState: "readiness-approved-not-migration-implementation",
+  requiredApprovalRoles: youtubeEncryptedTokenStoreApprovalRoles,
+  collectedApprovalEvidence: [
+    {
+      role: "Product owner",
+      approved: true,
+      scope:
+        "table shape; RLS posture; migration order; rollback; disconnect/revocation UX; no existing storage key/payload/IndexedDB/localStorage/handoff payload/quota write change; readiness PR only; actual migration not approved"
+    },
+    {
+      role: "Data owner",
+      approved: true,
+      scope:
+        "browser-unreadable token material; credential-reference-only browser state; audit fields; retention; rollback; account deletion cleanup; no token values/auth codes/raw Google responses/private credentials in code/docs/fixtures/PR body/browser storage; final table/RLS implementation not approved"
+    },
+    {
+      role: "Security owner",
+      approved: true,
+      scope:
+        "managed secret or KMS; server-only decrypt; no client decrypt; no secret printing; rotation; emergency disable; privileged key exposure controls; production token persistence not approved"
+    }
+  ],
+  approvalScopeRequirements: youtubeEncryptedTokenStoreSeparateMigrationReadinessApprovalScopeRequirements,
+  readinessNote: [
+    "Product owner, Data owner, and Security owner approval evidence is sufficient to draft a separate migration readiness PR.",
+    "This approval is readiness-pr-only; actual Supabase migration and RLS implementation stay out of this PR.",
+    "The separate migration PR must target codex/comment-translator-preview and receive independent review.",
+    "Final table and RLS implementation review is still required before applying any migration.",
+    "OAuth token values and private credentials must remain out of code, task docs, PR body, fixtures, browser storage, and client components."
+  ],
+  rollbackReviewGate: {
+    status: "review-required-before-migration-implementation",
+    requiredReviewItems: [
+      "disable credential resolution before rollback if token resolution is deployed",
+      "reviewed database rollback path",
+      "no token value logging during rollback or investigation",
+      "revoke or invalidate credential references if rollback leaves unusable credential rows"
+    ]
+  },
+  separateMigrationPrRequired: true,
+  finalMigrationImplementationApprovalRequired: true,
+  migrationImplementationAllowedInThisPr: false,
+  tokenPersistence: "still-blocked",
+  schemaMutation: "forbidden-in-this-slice",
+  rlsMutation: "forbidden-in-this-slice",
+  storageKeyMutation: "forbidden-in-this-slice",
+  clientStorage: "forbidden",
+  providerCoupling: "forbidden-direct-import-or-call",
+  quotaWrite: "not-implemented",
+  safeLiveSmoke: youtubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint.safeLiveSmoke,
+  uncheckedScopeWhenNotRun: [
+    "no safe live YouTube login or OAuth smoke",
+    "no owner verification smoke",
+    "no owned broadcast lookup smoke",
+    "no Live Chat polling smoke",
+    "no Google API live call",
+    "no token persistence runtime",
+    "no Supabase migration or RLS smoke"
+  ],
+  forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+} as const satisfies YouTubeEncryptedTokenStoreSeparateMigrationReadiness;
+
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
   storageOwner: youtubeEncryptedTokenStoreDesignPolicy.storageOwner,
@@ -893,6 +1055,78 @@ export function createYouTubeEncryptedTokenStoreExplicitApprovalCollectionSummar
     `Missing roles: ${youtubeEncryptedTokenStoreExplicitApprovalCollection.missingApprovalRoles.join(", ")}.`,
     `Safe live smoke: ${youtubeEncryptedTokenStoreExplicitApprovalCollection.safeLiveSmoke.status}.`
   ].join(" ");
+}
+
+export function assessYouTubeEncryptedTokenStoreSeparateMigrationReadiness(
+  approvalEvidence: readonly YouTubeEncryptedTokenStoreApprovalEvidence[]
+): YouTubeEncryptedTokenStoreSeparateMigrationReadinessResult {
+  const approvedRoles = youtubeEncryptedTokenStoreApprovalRoles.filter((role) =>
+    approvalEvidence.some((evidence) => evidence.role === role && evidence.approved)
+  );
+  const missingApprovalRoles = youtubeEncryptedTokenStoreApprovalRoles.filter(
+    (role) => !approvedRoles.includes(role)
+  );
+  const missingScopeItems =
+    missingApprovalRoles.length > 0 ? [] : collectMissingReadinessApprovalScopeItems(approvalEvidence);
+
+  if (missingApprovalRoles.length > 0 || missingScopeItems.length > 0) {
+    return {
+      status: "blocked-missing-readiness-approval-evidence",
+      missingApprovalRoles,
+      missingScopeItems,
+      migrationReadiness: "blocked",
+      migrationImplementationAllowedInThisPr: false,
+      nextAction: "collect-readiness-approval-evidence"
+    };
+  }
+
+  return {
+    status: "readiness-ready-for-separate-approved-migration-pr",
+    approvedRoles,
+    missingScopeItems: [],
+    migrationReadiness: "ready-for-separate-approved-migration-pr",
+    migrationImplementationAllowedInThisPr: false,
+    finalMigrationImplementationApprovalRequired: true,
+    nextAction: "draft-separate-approved-migration-pr-readiness-note"
+  };
+}
+
+export function createYouTubeEncryptedTokenStoreSeparateMigrationReadinessSummary(): string {
+  const readinessResult = assessYouTubeEncryptedTokenStoreSeparateMigrationReadiness(
+    youtubeEncryptedTokenStoreSeparateMigrationReadiness.collectedApprovalEvidence
+  );
+
+  return [
+    youtubeEncryptedTokenStoreSeparateMigrationReadiness.currentApprovalState,
+    `Approved roles: ${youtubeEncryptedTokenStoreSeparateMigrationReadiness.collectedApprovalEvidence
+      .map((evidence) => evidence.role)
+      .join(", ")}.`,
+    `Migration readiness: ${readinessResult.migrationReadiness}.`,
+    `Safe live smoke: ${youtubeEncryptedTokenStoreSeparateMigrationReadiness.safeLiveSmoke.status}.`,
+    "The actual migration remains separate."
+  ].join(" ");
+}
+
+function collectMissingReadinessApprovalScopeItems(
+  approvalEvidence: readonly YouTubeEncryptedTokenStoreApprovalEvidence[]
+): YouTubeEncryptedTokenStoreMissingApprovalScopeItem[] {
+  return youtubeEncryptedTokenStoreSeparateMigrationReadinessApprovalScopeRequirements.flatMap((requirement) => {
+    const evidence = approvalEvidence.find((candidate) => candidate.role === requirement.role && candidate.approved);
+    if (!evidence) {
+      return [];
+    }
+
+    return requirement.requiredScopeItems
+      .filter((item) => !approvalScopeIncludes(evidence.scope, item))
+      .map((item) => ({
+        role: requirement.role,
+        item
+      }));
+  });
+}
+
+function approvalScopeIncludes(scope: string, item: string): boolean {
+  return scope.toLocaleLowerCase().includes(item.toLocaleLowerCase());
 }
 
 function callbackBlocked(

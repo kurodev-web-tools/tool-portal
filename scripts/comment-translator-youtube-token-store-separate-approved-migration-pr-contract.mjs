@@ -283,6 +283,21 @@ for (const docFragment of [
   assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records approved migration PR final blocker: ${docFragment}`);
 }
 
+for (const docFragment of [
+  "Post-PR #277 Implementation Gate Review",
+  "PR #277 is merged",
+  "Cloudflare Pages",
+  "Workers Builds",
+  "blocked-pending-final-table-rls-key-management-review",
+  "explicit implementation approval is missing",
+  "request explicit implementation approval before SQL",
+  "No SQL migration",
+  "No RLS policy",
+  "No token persistence runtime"
+]) {
+  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #277 implementation blocker: ${docFragment}`);
+}
+
 assert.match(taskSource, /PR #276 .*merged|PR #276 .*merge/i, "task.md records the PR #276 merge gate");
 assert.match(
   taskSource,
@@ -298,6 +313,22 @@ assert.match(
   taskSource,
   /UI変更なし|UI change was not made/i,
   "task.md records no UI width check requirement"
+);
+assert.match(taskSource, /PR #277 .*merged|PR #277 .*merge/i, "task.md records the PR #277 merge gate");
+assert.match(
+  taskSource,
+  /Cloudflare Pages.*PR #275.*PR #276.*Workers|PR #275.*PR #276.*Cloudflare Pages.*Workers/i,
+  "task.md records PR #277 Pages failure against PR #275/#276 Workers pass history"
+);
+assert.match(
+  taskSource,
+  /explicit implementation approval.*未承認|explicit implementation approval.*missing/i,
+  "task.md records missing explicit implementation approval"
+);
+assert.match(
+  taskSource,
+  /migration \/ RLS policy \/ token persistence runtime.*追加しない|No SQL migration.*No RLS policy.*No token persistence runtime/i,
+  "task.md records that migration, RLS policy, and token persistence runtime were not added"
 );
 
 const allowedChangedFiles = new Set([

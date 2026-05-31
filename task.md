@@ -16,13 +16,14 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: mock foundation、interactive shell、Manual / Paste Input MVP are merged into `codex/comment-translator-preview`; do not merge to `main` yet because real translation provider / YouTube input / quota boundary is still not designed or implemented。
+   - status: mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype、YouTube input boundary design、YouTube owner polling runtime foundation are merged into `codex/comment-translator-preview`; do not merge to `main` yet because live OAuth / token persistence / quota boundary is still not implemented。
    - branch stack:
      - preview: `codex/comment-translator-preview`
      - merged feature: `codex/comment-translator-mock-foundation` at `D:/V_streamer_tools/.worktrees/comment-translator-mock-foundation`
      - merged feature: `codex/comment-translator-interactive-shell` at `D:/V_streamer_tools/.worktrees/comment-translator-interactive-shell`
      - merged feature: `codex/comment-translator-manual-input-mvp` at `D:/V_streamer_tools/.worktrees/comment-translator-manual-input-mvp`
      - planning follow-up: `codex/comment-translator-provider-boundary-plan` at `D:/V_streamer_tools/.worktrees/comment-translator-provider-boundary-plan`
+     - active feature: `codex/comment-translator-youtube-api-adapter-token-reference-design` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-api-adapter-token-reference-design`
    - seed:
      - `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
      - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
@@ -33,12 +34,12 @@
      - 翻訳 API の実接続は初回 PR では扱わない。fixtures / `MockTranslationProvider` 相当で UI shell のみ作る。
      - Real translation provider は、YouTube OAuth / owner check / quota / billing boundary が固まった後に別 PR で比較する。
      - 2026-05-30 decision: まだ実際に使える翻訳ツールではないため、`codex/comment-translator-preview` を `main` へ統合せず、preview branch 上に使える状態へ近づけるPRを刻む。
-   - next slice target:
-     - `Translation provider boundary design` を `codex/comment-translator-preview` 宛てに切る。
-     - 実翻訳APIを呼ばずに、server-side only provider boundary、request / response / error contract、secret非露出、quota / billing handoff、provider比較の判断軸を設計する。
-     - UI は必要最小限の copy / state planning に留め、外部 API call、API key、provider secret、server action、quota DB write は入れない。
-     - このsliceで storage key / IndexedDB / localStorage key / Supabase schema / migration / RLS / handoff payload は変更しない。
-     - YouTube OAuth / owner verification / Live Chat polling、billing / quota enforcement、実 provider prototype は後続の別PRで扱う。
+   - current slice target:
+     - `YouTube Google API adapter + token reference resolver design` を `codex/comment-translator-preview` 宛てに切る。
+     - 実 token value を扱わず、server-only token reference resolver interface、encrypted token store 方針、Google API fake-fetch adapter seam、safe live smoke 条件を contract-first で固定する。
+     - OAuth token storage / refresh / revocation / encrypted token store の本実装、live Google API call、client component からの Google API / provider / polling runtime 呼び出しは入れない。
+     - owner verification、owned broadcast lookup、Live Chat polling step、sanitized comment bridge は translation provider module と直接結合しない。
+     - この slice で storage key / IndexedDB / localStorage key / Supabase schema / migration / RLS / handoff payload は変更しない。
    - first PR scope:
      - OBS Browser Dock / narrow viewport を主対象に、`390 / 820 / 1024 / 1280 / 1366px` の mock を先に作る。
      - 承認後、`/tools/comment-translator` など既存 tools routing pattern に沿った UI shell を追加する。
@@ -246,6 +247,37 @@
     - Google API / YouTube Data API / Live Chat API の live call、safe live YouTube login、owner verification、Live Chat polling smoke は未実施。secret / private credential を扱わない方針のため、このPRでは deterministic adapter contract と build verification まで。
     - polling loop は single-step state transition foundation まで。long-running scheduler、route handler / server action 公開API化、streaming transport、quota write、billing integration は未実装。
     - 次 PR 候補は `YouTube Google API adapter + token reference resolver design`。実 token value を扱う前に server-only token reference resolver、encrypted token store 方針、Google API fake-fetch adapter contract、safe live smoke 条件を別PRで固定する。
+  - PR #269 merge gate completed 2026-05-31:
+    - PR #269 (`codex/comment-translator-youtube-owner-polling-runtime-foundation` -> `codex/comment-translator-preview`) は `2026-05-31T03:10:00Z` に merged。
+    - merge commit `11be554c9c8741e5bac80cb022343a78e2c40cc5` は `origin/codex/comment-translator-preview` に含まれることを確認した。
+  - YouTube Google API adapter + token reference resolver design implementation added 2026-05-31:
+    - `lib/comment-translator-youtube-api-adapter.ts` を追加し、`import "server-only";` で YouTube Google API adapter + token reference resolver design を server-only に閉じた。
+    - `youtubeEncryptedTokenStoreDesignPolicy` で future server encrypted token store 方針を固定した。access token / refresh token persistence は encrypted server-only 方針に留め、refresh / revocation / schema mutation / encrypted store 本実装は入れていない。
+    - `YouTubeTokenReferenceResolver` / `createStaticYouTubeTokenReferenceResolver` は `credentialReferenceId` を解決して server fetch authorization binding を返すだけにし、token value / refresh token value は `never-returned-by-design` として固定した。
+    - `createDeterministicYouTubeGoogleApiAdapter` は fake-fetch seam で `channels.list`、`liveBroadcasts.list`、`liveChatMessages.list` 相当の owner verification / owned broadcast lookup / polling step を deterministic に検証する。実 `fetch`、`googleapis` client、OAuth runtime、process env secret は使っていない。
+    - adapter は `comment-translator-youtube-runtime-foundation` を compose し、sanitized comment bridge は `commentId` / `publishedAt` / `text` / `platformLanguageHint` のみに限定した。
+    - translation provider module との direct import / direct call、client component からの Google API / provider / polling runtime 呼び出し、DeepL provider prototype、MockTranslationProvider、Manual / Paste Input MVP、interactive shell、storage key、payload、IndexedDB、localStorage、Supabase schema / migration / RLS、handoff payload は変更していない。
+    - UI変更なし。`components/comment-translator/*` と `/tools/comment-translator` route は変更していないため、幅別確認は今回対象外。
+  - YouTube Google API adapter + token reference resolver design verification completed 2026-05-31:
+    - RED first: `node scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs` は `server-only YouTube Google API adapter + token reference module exists` で期待どおり失敗。
+    - `node scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs` PASS。
+    - `node scripts/comment-translator-youtube-runtime-foundation-contract.mjs` PASS。
+    - `node scripts/comment-translator-youtube-input-boundary-contract.mjs` PASS。
+    - `node scripts/comment-translator-server-provider-prototype-contract.mjs` PASS。
+    - `node scripts/comment-translator-provider-boundary-contract.mjs` PASS。
+    - `node scripts/comment-translator-manual-input-mvp-contract.mjs` PASS。
+    - `node scripts/comment-translator-interactive-shell-contract.mjs` PASS。
+    - `node scripts/comment-translator-mock-foundation-contract.mjs` PASS。
+    - `node scripts/tool-portal-entry-contract.mjs` PASS。
+    - `npm run lint` PASS。
+    - `npx tsc --noEmit` PASS。
+    - `npm run build` PASS (`/tools/comment-translator` included in app routes; server-runtime buildのため `static-export-rsc-aliases` はskip、`middleware` deprecation warningあり)。
+    - `git diff --check` PASS (`task.md` CRLF変換warningのみ)。
+  - YouTube Google API adapter + token reference resolver design unchecked scope / residual risk:
+    - OAuth token persistence、refresh、revocation、encrypted token store 本実装は未実装。token value は client component、fixture、task docs、PR body、localStorage、IndexedDB に出していない。
+    - Google API / YouTube Data API / Live Chat API の live call、safe live Google API smoke、safe live YouTube login / OAuth / owner verification / Live Chat polling smoke は未実施。必要条件は `youtubeGoogleApiSafeLiveSmokePolicy` に固定したが、このPRでは secret / private credential を扱わない。
+    - adapter は deterministic fake-fetch seam まで。route handler / server action 公開API化、long-running scheduler、streaming transport、quota write、billing integration は未実装。
+    - 次 PR 候補は `YouTube OAuth token store + consent runtime foundation`。実施する場合も user-approved safe test account、server-only token handling、encrypted token store 実装、read-only scope、token value 非表示を hard boundary にする。
 
 2. Analytics / consent decision
    - status: no immediate implementation。
@@ -279,12 +311,13 @@
 2. Translation provider boundary design: PR #266 で `codex/comment-translator-preview` へ merge 済み。
 3. Server-side translation prototype: PR #267 で `codex/comment-translator-preview` へ merge 済み。
 4. YouTube OAuth / owner verification / Live Chat polling input boundary design: PR #268 で `codex/comment-translator-preview` へ merge 済み。
-5. YouTube owner verification + polling runtime foundation: this branchで server-only runtime interface / deterministic adapter / sanitized bridge までを追加。
-6. YouTube Google API adapter + token reference resolver design: encrypted token store 方針と safe live smoke 条件を先に固定する。
-7. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
-8. Tool-specific persistence / preference sync only after data boundary and quota policy are fixed。
-9. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
-10. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
+5. YouTube owner verification + polling runtime foundation: PR #269 で `codex/comment-translator-preview` へ merge 済み。
+6. YouTube Google API adapter + token reference resolver design: this branchで server-only token reference resolver、encrypted token store 方針、deterministic fake-fetch adapter、safe live smoke 条件を追加。
+7. YouTube OAuth token store + consent runtime foundation: user-approved safe test account / encrypted store / read-only scope / token value非表示を前提に別PRで検討。
+8. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
+9. Tool-specific persistence / preference sync only after data boundary and quota policy are fixed。
+10. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
+11. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
 
 ## Next Session Prompt
 
@@ -292,16 +325,16 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Kuro Live Comment Translator の次 PR 候補として、YouTube Google API adapter + token reference resolver design を server-only に小さく開始してください。YouTube owner verification + Live Chat polling runtime foundation PR が `codex/comment-translator-preview` に merge 済みであることを確認してから進めてください。
+Kuro Live Comment Translator の次 PR 候補として、YouTube OAuth token store + consent runtime foundation を server-only に小さく設計してください。YouTube Google API adapter + token reference resolver design PR が `codex/comment-translator-preview` に merge 済みであることを確認してから進めてください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- `codex/comment-translator-preview` に mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype、YouTube input boundary design、YouTube owner verification + polling runtime foundation が merge 済みであることを確認してください。
+- `codex/comment-translator-preview` に mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype、YouTube input boundary design、YouTube owner verification + polling runtime foundation、YouTube Google API adapter + token reference resolver design が merge 済みであることを確認してください。
 - 作業は `codex/comment-translator-preview` から新しい feature branch を切ってください。
-- 推奨 branch: `codex/comment-translator-youtube-api-adapter-token-reference-design`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-youtube-api-adapter-token-reference-design`
+- 推奨 branch: `codex/comment-translator-youtube-oauth-token-store-foundation`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-youtube-oauth-token-store-foundation`
 - 初回 platform は YouTube。
 - secret / service_role key / private credential は要求・表示・保存しない。
 - OAuth access token / refresh token は client component、fixture、task docs、PR body、localStorage、IndexedDB に出さない。
@@ -309,16 +342,18 @@ Kuro Live Comment Translator の次 PR 候補として、YouTube Google API adap
 - main へはまだ統合しない。`codex/comment-translator-preview` 宛てのPRとして進める。
 
 scope:
-- `lib/comment-translator-youtube-input-boundary.ts` と `lib/comment-translator-youtube-runtime-foundation.ts` の境界に沿って、実 token value を扱わない adapter design に閉じる。
-- OAuth token storage / refresh / revocation / encrypted token store の本実装はしない。server-only token reference resolver interface と encrypted store 方針の設計まで。
-- Google API adapter は fake-fetch / deterministic contract で閉じ、live API call は安全条件が揃うまで実行しない。
+- `lib/comment-translator-youtube-api-adapter.ts` の `youtubeGoogleApiSafeLiveSmokePolicy` と token reference resolver contract に沿って進める。
+- まず OAuth consent / callback / encrypted token store / token resolver runtime の責務境界を design contract に閉じる。
+- 実 token value を fixture、task docs、PR body、client component、localStorage、IndexedDB に出さない。
+- encrypted token store 本実装や schema 変更が必要なら、このPRでは設計と blocker summary に留め、勝手に schema / migration / RLS を追加しない。
+- Google API live call は safe live smoke 条件が揃うまで実行しない。
 - owner verification、owned broadcast lookup、Live Chat polling step、sanitized comment bridge は translation provider module と直接結合しない。
 - client component から Google API / provider / polling runtime を直接呼ばない。
 - DeepL provider prototype、MockTranslationProvider、Manual / Paste Input MVP、interactive shell の既存挙動は壊さない。
 
 実装したいこと:
-- token reference resolver / encrypted token store design contract を追加する。
-- Google API adapter boundary contract を追加する。必要なら fake-fetch adapter seam までに閉じる。
+- OAuth consent / token store / resolver runtime foundation の design contract を追加する。
+- encrypted token store を実装する場合の schema / key management / revocation / refresh / audit blocker を明確にする。
 - safe live smoke を実行できる条件と、実行しない場合の未確認範囲を task.md / PR body に明記する。
 - token / client storage / provider coupling / storage / quota write の禁止境界を維持する。
 - UI変更は原則なし。必要な場合だけ幅別確認を行う。
@@ -341,7 +376,8 @@ Out of scope:
 - main integration PR。
 
 検証:
-- new/updated YouTube API adapter / token reference resolver contract
+- new/updated YouTube OAuth token store / consent runtime foundation contract
+- `node scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs`
 - `node scripts/comment-translator-youtube-runtime-foundation-contract.mjs`
 - `node scripts/comment-translator-youtube-input-boundary-contract.mjs`
 - `node scripts/comment-translator-server-provider-prototype-contract.mjs`

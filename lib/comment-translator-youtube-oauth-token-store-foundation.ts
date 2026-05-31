@@ -202,6 +202,58 @@ export type YouTubeEncryptedTokenStoreApprovedMigrationProposalGateResult =
       nextAction: "draft-separate-approved-migration-pr";
     };
 
+export type YouTubeEncryptedTokenStoreExplicitApprovalCollection = {
+  implementationStage: "explicit-approval-collection";
+  prerequisitePullRequest: "#274";
+  prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview";
+  sourceApprovedMigrationProposalGateStatus: YouTubeEncryptedTokenStoreApprovedMigrationProposalGate["currentApprovalState"];
+  approvalEvidenceSource: "task-docs-pr-context";
+  currentApprovalState: "blocked-missing-explicit-owner-approvals";
+  requiredApprovalRoles: readonly YouTubeEncryptedTokenStoreApprovalRole[];
+  collectedApprovalEvidence: readonly YouTubeEncryptedTokenStoreApprovalEvidence[];
+  missingApprovalRoles: readonly YouTubeEncryptedTokenStoreApprovalRole[];
+  blockerSummary: readonly string[];
+  requiredConfirmationItems: YouTubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint["requiredConfirmationItems"];
+  ownerConfirmationQuestions: {
+    productOwner: readonly string[];
+    dataOwner: readonly string[];
+    securityOwner: readonly string[];
+  };
+  boundaries: readonly string[];
+  approvalEvidenceOnlyInThisPr: true;
+  separateMigrationPrRequired: true;
+  migrationImplementationAllowedInThisPr: false;
+  migrationReadiness: "blocked-until-explicit-owner-approvals";
+  tokenPersistence: "still-blocked";
+  schemaMutation: "forbidden-in-this-slice";
+  rlsMutation: "forbidden-in-this-slice";
+  storageKeyMutation: "forbidden-in-this-slice";
+  clientStorage: "forbidden";
+  providerCoupling: "forbidden-direct-import-or-call";
+  quotaWrite: "not-implemented";
+  safeLiveSmoke: YouTubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint["safeLiveSmoke"];
+  uncheckedScopeWhenBlocked: readonly string[];
+  forbiddenInThisSlice: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStoreExplicitApprovalCollectionResult =
+  | {
+      status: "blocked-missing-explicit-owner-approvals";
+      missingApprovalRoles: readonly YouTubeEncryptedTokenStoreApprovalRole[];
+      approvalEvidenceOnlyInThisPr: true;
+      migrationImplementationAllowedInThisPr: false;
+      migrationReadiness: "blocked";
+      nextAction: "collect-explicit-owner-approvals";
+    }
+  | {
+      status: "approval-evidence-ready-for-separate-migration-pr";
+      approvedRoles: readonly YouTubeEncryptedTokenStoreApprovalRole[];
+      approvalEvidenceOnlyInThisPr: true;
+      migrationImplementationAllowedInThisPr: false;
+      migrationReadiness: "ready-for-separate-approved-migration-pr";
+      nextAction: "draft-separate-approved-migration-pr";
+    };
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -569,6 +621,70 @@ export const youtubeEncryptedTokenStoreApprovedMigrationProposalGate = {
   forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
 } as const satisfies YouTubeEncryptedTokenStoreApprovedMigrationProposalGate;
 
+export const youtubeEncryptedTokenStoreExplicitApprovalCollection = {
+  implementationStage: "explicit-approval-collection",
+  prerequisitePullRequest: "#274",
+  prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview",
+  sourceApprovedMigrationProposalGateStatus: youtubeEncryptedTokenStoreApprovedMigrationProposalGate.currentApprovalState,
+  approvalEvidenceSource: "task-docs-pr-context",
+  currentApprovalState: "blocked-missing-explicit-owner-approvals",
+  requiredApprovalRoles: youtubeEncryptedTokenStoreApprovalRoles,
+  collectedApprovalEvidence: [],
+  missingApprovalRoles: youtubeEncryptedTokenStoreApprovalRoles,
+  blockerSummary: [
+    "Product owner explicit approval is missing for table shape, RLS posture, migration order, rollback, and disconnect UX readiness.",
+    "Data owner explicit approval is missing for browser-unreadable token material, audit/retention fields, rollback, and account deletion cleanup.",
+    "Security owner explicit approval is missing for managed secret or KMS selection, rotation, emergency disable, server-only decrypt access, and no client decrypt.",
+    "Because owner approvals are missing, migration readiness remains blocked and this PR stays approval-evidence-only."
+  ],
+  requiredConfirmationItems: youtubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint.requiredConfirmationItems,
+  ownerConfirmationQuestions: {
+    productOwner: [
+      "Approve the server-owned YouTube credential table shape and owner binding semantics.",
+      "Approve the RLS posture, migration order, rollback path, and disconnect/revocation user state.",
+      "Confirm no existing storage key, payload, IndexedDB key, localStorage key, handoff payload, or quota write changes are included."
+    ],
+    dataOwner: [
+      "Approve browser-unreadable token material for OAuth access/refresh tokens that is only referenced by credential reference id.",
+      "Approve allowed audit fields, retention period, stale/revoked cleanup timing, rollback handling, and account deletion cleanup.",
+      "Confirm no token values, authorization codes, raw Google responses, or private credentials appear in docs, fixtures, PR body, or browser storage."
+    ],
+    securityOwner: [
+      "Approve managed secret or KMS ownership, server-only envelope handling, and decrypt access boundary.",
+      "Approve rotation cadence, versioned key metadata, emergency disable path, and incident handling.",
+      "Confirm no client decrypt, no secret printing, and no privileged server key exposure."
+    ]
+  },
+  boundaries: [
+    "no OAuth token persistence implementation in this PR",
+    "no Supabase schema, migration, or RLS policy change in this PR",
+    "no client component Google API, provider, or polling runtime call",
+    "no translation provider coupling",
+    "no storage key, payload, IndexedDB, localStorage, handoff payload, or quota write change"
+  ],
+  approvalEvidenceOnlyInThisPr: true,
+  separateMigrationPrRequired: true,
+  migrationImplementationAllowedInThisPr: false,
+  migrationReadiness: "blocked-until-explicit-owner-approvals",
+  tokenPersistence: "still-blocked",
+  schemaMutation: "forbidden-in-this-slice",
+  rlsMutation: "forbidden-in-this-slice",
+  storageKeyMutation: "forbidden-in-this-slice",
+  clientStorage: "forbidden",
+  providerCoupling: "forbidden-direct-import-or-call",
+  quotaWrite: "not-implemented",
+  safeLiveSmoke: youtubeEncryptedTokenStoreSchemaKeyApprovalCheckpoint.safeLiveSmoke,
+  uncheckedScopeWhenBlocked: [
+    "no safe live YouTube login or OAuth smoke",
+    "no owner verification smoke",
+    "no owned broadcast lookup smoke",
+    "no Live Chat polling smoke",
+    "no Google API live call",
+    "no token persistence runtime"
+  ],
+  forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+} as const satisfies YouTubeEncryptedTokenStoreExplicitApprovalCollection;
+
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
   storageOwner: youtubeEncryptedTokenStoreDesignPolicy.storageOwner,
@@ -737,6 +853,46 @@ export function assessYouTubeEncryptedTokenStoreApprovedMigrationProposalGate(
 
 export function createYouTubeEncryptedTokenStoreApprovalCollectionNote(): string {
   return youtubeEncryptedTokenStoreApprovedMigrationProposalGate.approvalCollectionNote.join(" ");
+}
+
+export function assessYouTubeEncryptedTokenStoreExplicitApprovalCollection(
+  approvalEvidence: readonly YouTubeEncryptedTokenStoreApprovalEvidence[]
+): YouTubeEncryptedTokenStoreExplicitApprovalCollectionResult {
+  const approvedRoles = youtubeEncryptedTokenStoreApprovalRoles.filter((role) =>
+    approvalEvidence.some((evidence) => evidence.role === role && evidence.approved)
+  );
+  const missingApprovalRoles = youtubeEncryptedTokenStoreApprovalRoles.filter(
+    (role) => !approvedRoles.includes(role)
+  );
+
+  if (missingApprovalRoles.length > 0) {
+    return {
+      status: "blocked-missing-explicit-owner-approvals",
+      missingApprovalRoles,
+      approvalEvidenceOnlyInThisPr: true,
+      migrationImplementationAllowedInThisPr: false,
+      migrationReadiness: "blocked",
+      nextAction: "collect-explicit-owner-approvals"
+    };
+  }
+
+  return {
+    status: "approval-evidence-ready-for-separate-migration-pr",
+    approvedRoles,
+    approvalEvidenceOnlyInThisPr: true,
+    migrationImplementationAllowedInThisPr: false,
+    migrationReadiness: "ready-for-separate-approved-migration-pr",
+    nextAction: "draft-separate-approved-migration-pr"
+  };
+}
+
+export function createYouTubeEncryptedTokenStoreExplicitApprovalCollectionSummary(): string {
+  return [
+    youtubeEncryptedTokenStoreExplicitApprovalCollection.currentApprovalState,
+    youtubeEncryptedTokenStoreExplicitApprovalCollection.blockerSummary.join(" "),
+    `Missing roles: ${youtubeEncryptedTokenStoreExplicitApprovalCollection.missingApprovalRoles.join(", ")}.`,
+    `Safe live smoke: ${youtubeEncryptedTokenStoreExplicitApprovalCollection.safeLiveSmoke.status}.`
+  ].join(" ");
 }
 
 function callbackBlocked(

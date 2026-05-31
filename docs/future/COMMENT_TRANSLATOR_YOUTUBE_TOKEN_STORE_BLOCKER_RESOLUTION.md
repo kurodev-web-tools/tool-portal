@@ -70,6 +70,32 @@ Safe live Google API smoke remains not run in this slice. It can only run after 
 
 Unchecked scope while this gate is closed: no safe live YouTube login / OAuth smoke, no owner verification smoke, no owned broadcast lookup smoke, no Live Chat polling smoke, and no Google API live call.
 
+## Approved Migration Proposal Gate
+
+PR #273 is merged into `codex/comment-translator-preview`, but the current task/docs/PR context does not contain explicit Product owner, Data owner, or Security owner approval. The gate status is `blocked-missing-explicit-owner-approvals`.
+
+This keeps the work proposal-only. It does not allow token persistence, Supabase schema mutation, migration, RLS policy changes, storage key changes, client storage changes, provider coupling, quota writes, or Google API live calls in this PR.
+
+### Approval Collection Note
+
+- Product owner approval for table shape, RLS posture, migration order, and rollback is still required.
+- Data owner approval for browser-unreadable token material and rollback is still required.
+- Security owner approval for managed secret or KMS selection, rotation, emergency disable, and no client decrypt is still required.
+
+### Migration Proposal Conditions
+
+- The separate migration PR must target `codex/comment-translator-preview`.
+- The separate migration PR must receive independent review for schema shape, RLS posture, key management, and rollback plan.
+- No OAuth token values or private credentials may appear in code, task docs, PR body, fixtures, browser storage, or client components.
+- Google API live smoke remains separate until safe live smoke conditions are satisfied.
+
+### Rollback Plan
+
+- Disable credential resolution before rollback if token resolution is deployed.
+- Revert migration through a reviewed database rollback path.
+- Keep no token value logging during rollback or investigation.
+- Revoke or invalidate credential references if rollback leaves unusable credential rows.
+
 ## Safe Live Smoke
 
 Safe live Google API smoke is not run in this slice.

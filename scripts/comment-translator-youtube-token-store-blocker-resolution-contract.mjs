@@ -333,6 +333,7 @@ const allowedChangedFiles = new Set([
   blockerMemoPath,
   "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
   "scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs",
+  "scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs",
   "task.md"
 ]);
 

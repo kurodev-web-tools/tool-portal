@@ -343,6 +343,10 @@ export type YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate = {
   postFinalImplementationApprovalMergeStatus: "merged-into-codex-comment-translator-preview";
   postFinalImplementationApprovalWorkersCheckDisposition: "pass";
   postFinalImplementationApprovalCloudflarePagesDisposition: "dashboard-log-review-item";
+  postImplementationApprovalEvidencePullRequest: "#280";
+  postImplementationApprovalEvidenceMergeStatus: "merged-into-codex-comment-translator-preview";
+  postImplementationApprovalEvidenceWorkersCheckDisposition: "pass";
+  postImplementationApprovalEvidenceCloudflarePagesDisposition: "dashboard-log-review-item";
   finalReviewStatus: "blocked-pending-final-table-rls-key-management-review";
   finalReviewEvidenceStatus: "missing-from-current-task-docs-pr-context";
   explicitImplementationApprovalStatus: "missing";
@@ -961,6 +965,10 @@ export const youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate = {
   postFinalImplementationApprovalMergeStatus: "merged-into-codex-comment-translator-preview",
   postFinalImplementationApprovalWorkersCheckDisposition: "pass",
   postFinalImplementationApprovalCloudflarePagesDisposition: "dashboard-log-review-item",
+  postImplementationApprovalEvidencePullRequest: "#280",
+  postImplementationApprovalEvidenceMergeStatus: "merged-into-codex-comment-translator-preview",
+  postImplementationApprovalEvidenceWorkersCheckDisposition: "pass",
+  postImplementationApprovalEvidenceCloudflarePagesDisposition: "dashboard-log-review-item",
   finalReviewStatus: "blocked-pending-final-table-rls-key-management-review",
   finalReviewEvidenceStatus: "missing-from-current-task-docs-pr-context",
   explicitImplementationApprovalStatus: "missing",
@@ -1358,7 +1366,8 @@ export function assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrRevie
 export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary(): string {
   return [
     `Post review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postReviewPullRequest}.`,
-    `Latest approval evidence review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postFinalImplementationApprovalPullRequest}.`,
+    `Final implementation approval baseline: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postFinalImplementationApprovalPullRequest}.`,
+    `Latest approval evidence review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postImplementationApprovalEvidencePullRequest}.`,
     youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.finalReviewStatus,
     `Table candidate: ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.tableShape.tableName}.`,
     `RLS review: ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.rlsPosture.status}.`,

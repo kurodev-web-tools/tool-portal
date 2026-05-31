@@ -86,6 +86,55 @@ export type YouTubeEncryptedTokenStoreImplementationBlocker = {
   blocker: string;
 };
 
+export type YouTubeEncryptedTokenStoreBlockerId = YouTubeEncryptedTokenStoreImplementationBlocker["id"];
+
+export type YouTubeEncryptedTokenStoreBlockerResolutionDecision = {
+  id: YouTubeEncryptedTokenStoreBlockerId;
+  implementationStage: "approval-required-before-implementation";
+  decisionUnit: string;
+  proposedResolution: string;
+  requiredApproval: string;
+  implementationGate: "blocked-until-approved";
+  separatePrRequired: true;
+  forbiddenInThisSlice: readonly [
+    "token persistence implementation",
+    "Supabase schema, migration, or RLS policy change",
+    "OAuth access token or refresh token value handling",
+    "Google API live call"
+  ];
+};
+
+export type YouTubeEncryptedTokenStoreBlockerResolutionPlan = {
+  implementationStage: "blocker-resolution-plan-only";
+  sourceBlockerIds: readonly YouTubeEncryptedTokenStoreBlockerId[];
+  decisions: readonly YouTubeEncryptedTokenStoreBlockerResolutionDecision[];
+  tokenPersistence: "blocked-until-approvals-and-separate-implementation";
+  schemaMutation: "forbidden-in-this-slice";
+  rlsMutation: "forbidden-in-this-slice";
+  storageKeyMutation: "forbidden-in-this-slice";
+  clientStorage: "forbidden";
+  providerCoupling: "forbidden-direct-import-or-call";
+  quotaWrite: "not-implemented";
+  safeLiveSmoke: YouTubeGoogleApiSafeLiveSmokePolicy;
+};
+
+export type YouTubeEncryptedTokenStoreImplementationReadiness =
+  | {
+      status: "blocked";
+      missingDecisionIds: readonly YouTubeEncryptedTokenStoreBlockerId[];
+      requiredApprovals: readonly string[];
+      tokenPersistence: "forbidden";
+      schemaMutation: "forbidden-in-this-slice";
+      liveSmoke: "not-run-in-this-slice";
+    }
+  | {
+      status: "ready-for-separate-implementation-pr";
+      approvedDecisionIds: readonly YouTubeEncryptedTokenStoreBlockerId[];
+      tokenPersistence: "still-not-implemented-in-this-slice";
+      schemaMutation: "still-forbidden-in-this-slice";
+      liveSmoke: "still-not-run-in-this-slice";
+    };
+
 export type YouTubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only";
   storageOwner: "future-server-encrypted-token-store";
@@ -196,6 +245,121 @@ export const youtubeEncryptedTokenStoreImplementationBlockers = [
   }
 ] as const satisfies readonly YouTubeEncryptedTokenStoreImplementationBlocker[];
 
+const forbiddenTokenStoreImplementationActions = [
+  "token persistence implementation",
+  "Supabase schema, migration, or RLS policy change",
+  "OAuth access token or refresh token value handling",
+  "Google API live call"
+] as const;
+
+export const youtubeEncryptedTokenStoreBlockerResolutionDecisions = [
+  {
+    id: "schema-approval",
+    implementationStage: "approval-required-before-implementation",
+    decisionUnit:
+      "Approve the credential record ownership model, minimum metadata fields, RLS posture, migration rollout, and rollback plan.",
+    proposedResolution:
+      "Keep this PR proposal-only. A separate approved migration must define a server-owned YouTube credential table, owner binding, credential reference id, scope set, expiry metadata, revoked state, and encrypted token ciphertext fields without exposing token values to browser clients.",
+    requiredApproval:
+      "Product and data-owner approval for the table shape, RLS posture, migration order, rollback path, and no browser-readable token material before any schema implementation PR.",
+    implementationGate: "blocked-until-approved",
+    separatePrRequired: true,
+    forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+  },
+  {
+    id: "key-management",
+    implementationStage: "approval-required-before-implementation",
+    decisionUnit:
+      "Choose the encryption boundary, managed secret or KMS owner, rotation semantics, and decryption access rules.",
+    proposedResolution:
+      "Use a server-only envelope where token values can be decrypted only inside trusted runtime code. The final implementation must choose managed secret or KMS handling, rotation cadence, versioned key metadata, and a no-client-decrypt rule.",
+    requiredApproval:
+      "Security approval for managed secret or KMS selection, rotation procedure, emergency disable path, and secret handling rules before any encrypted token write.",
+    implementationGate: "blocked-until-approved",
+    separatePrRequired: true,
+    forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+  },
+  {
+    id: "token-refresh",
+    implementationStage: "approval-required-before-implementation",
+    decisionUnit:
+      "Define refresh timing, expiry states, bounded retry, backoff, concurrent refresh locking, and user-visible failure states.",
+    proposedResolution:
+      "Refresh should be server-only, triggered before expiry or on expired reference resolution, use bounded retry with backoff, avoid direct provider coupling, and mark credentials expired or reconnect-required after terminal failures.",
+    requiredApproval:
+      "Runtime approval for expiry thresholds, retry/backoff limits, lock behavior, terminal expired states, and no quota or billing write in the refresh path.",
+    implementationGate: "blocked-until-approved",
+    separatePrRequired: true,
+    forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+  },
+  {
+    id: "revocation",
+    implementationStage: "approval-required-before-implementation",
+    decisionUnit:
+      "Define broadcaster disconnect behavior, Google revoke handling, local cleanup, and post-revocation user state.",
+    proposedResolution:
+      "Disconnect should be server-only, mark the credential revoked before or with cleanup, call the provider revoke endpoint only from trusted runtime code when approved, and remove or invalidate encrypted token material after a bounded cleanup step.",
+    requiredApproval:
+      "Product and security approval for disconnect UX state, revoke endpoint usage, cleanup order, retry policy, and failure display before revocation implementation.",
+    implementationGate: "blocked-until-approved",
+    separatePrRequired: true,
+    forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+  },
+  {
+    id: "audit-log",
+    implementationStage: "approval-required-before-implementation",
+    decisionUnit:
+      "Define which sensitive token-store actions need audit events and which fields are allowed without token material.",
+    proposedResolution:
+      "Audit should record event type, owner reference, credential reference id, non-secret status, timestamp, and failure class only. It must never record OAuth access tokens, refresh tokens, authorization codes, raw Google responses, or private credentials.",
+    requiredApproval:
+      "Privacy and security approval for allowed audit event fields, retention period, redaction rules, and whether audit storage needs a separate schema PR.",
+    implementationGate: "blocked-until-approved",
+    separatePrRequired: true,
+    forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+  },
+  {
+    id: "retention-policy",
+    implementationStage: "approval-required-before-implementation",
+    decisionUnit:
+      "Define credential lifetime, stale credential cleanup, revoked credential cleanup, and account deletion behavior.",
+    proposedResolution:
+      "Retention should keep encrypted token records only while the broadcaster connection is active, clean up stale or revoked credentials on a documented schedule, and delete credential material during account deletion or explicit disconnect cleanup.",
+    requiredApproval:
+      "Privacy and product approval for active credential lifetime, stale cleanup timing, revoked cleanup timing, and account deletion behavior before persistence implementation.",
+    implementationGate: "blocked-until-approved",
+    separatePrRequired: true,
+    forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+  },
+  {
+    id: "live-smoke-approval",
+    implementationStage: "approval-required-before-implementation",
+    decisionUnit:
+      "Define the safe live smoke owner account, endpoints, credential handling, logging limits, and abort conditions.",
+    proposedResolution:
+      "Safe live smoke may only run after explicit approval for a safe test YouTube owner account, server-only token handling, read-only scope, and bounded calls to channels.list, liveBroadcasts.list, and one liveChatMessages.list step with no token printing.",
+    requiredApproval:
+      "User approval for the safe test YouTube owner account, target endpoints, no-print credential handling, and documented unchecked scope before any live Google API call.",
+    implementationGate: "blocked-until-approved",
+    separatePrRequired: true,
+    forbiddenInThisSlice: forbiddenTokenStoreImplementationActions
+  }
+] as const satisfies readonly YouTubeEncryptedTokenStoreBlockerResolutionDecision[];
+
+export const youtubeEncryptedTokenStoreBlockerResolutionPlan = {
+  implementationStage: "blocker-resolution-plan-only",
+  sourceBlockerIds: youtubeEncryptedTokenStoreImplementationBlockers.map((blocker) => blocker.id),
+  decisions: youtubeEncryptedTokenStoreBlockerResolutionDecisions,
+  tokenPersistence: "blocked-until-approvals-and-separate-implementation",
+  schemaMutation: "forbidden-in-this-slice",
+  rlsMutation: "forbidden-in-this-slice",
+  storageKeyMutation: "forbidden-in-this-slice",
+  clientStorage: "forbidden",
+  providerCoupling: "forbidden-direct-import-or-call",
+  quotaWrite: "not-implemented",
+  safeLiveSmoke: youtubeGoogleApiSafeLiveSmokePolicy
+} as const satisfies YouTubeEncryptedTokenStoreBlockerResolutionPlan;
+
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
   storageOwner: youtubeEncryptedTokenStoreDesignPolicy.storageOwner,
@@ -291,6 +455,46 @@ export function createYouTubeOAuthTokenStoreBlockerSummary(): string {
   return youtubeEncryptedTokenStoreImplementationBlockers
     .map((blocker) => blocker.blocker)
     .join(" ");
+}
+
+export function createYouTubeEncryptedTokenStoreBlockerResolutionMemo(): string {
+  const decisionSummary = youtubeEncryptedTokenStoreBlockerResolutionDecisions
+    .map((decision) => `${decision.id}: ${decision.requiredApproval}`)
+    .join(" ");
+
+  return `${youtubeEncryptedTokenStoreBlockerResolutionPlan.tokenPersistence}. ${decisionSummary}`;
+}
+
+export function assessYouTubeEncryptedTokenStoreImplementationReadiness(
+  approvedDecisionIds: readonly YouTubeEncryptedTokenStoreBlockerId[]
+): YouTubeEncryptedTokenStoreImplementationReadiness {
+  const approved = new Set(approvedDecisionIds);
+  const missingDecisionIds = youtubeEncryptedTokenStoreBlockerResolutionPlan.sourceBlockerIds.filter(
+    (id) => !approved.has(id)
+  );
+
+  if (missingDecisionIds.length > 0) {
+    const missing = new Set(missingDecisionIds);
+
+    return {
+      status: "blocked",
+      missingDecisionIds,
+      requiredApprovals: youtubeEncryptedTokenStoreBlockerResolutionDecisions
+        .filter((decision) => missing.has(decision.id))
+        .map((decision) => decision.requiredApproval),
+      tokenPersistence: "forbidden",
+      schemaMutation: "forbidden-in-this-slice",
+      liveSmoke: "not-run-in-this-slice"
+    };
+  }
+
+  return {
+    status: "ready-for-separate-implementation-pr",
+    approvedDecisionIds: youtubeEncryptedTokenStoreBlockerResolutionPlan.sourceBlockerIds,
+    tokenPersistence: "still-not-implemented-in-this-slice",
+    schemaMutation: "still-forbidden-in-this-slice",
+    liveSmoke: "still-not-run-in-this-slice"
+  };
 }
 
 function callbackBlocked(

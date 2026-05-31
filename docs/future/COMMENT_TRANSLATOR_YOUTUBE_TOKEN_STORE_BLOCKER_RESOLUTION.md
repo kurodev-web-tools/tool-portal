@@ -111,6 +111,43 @@ It remains blocked until all of these are true:
 
 Unchecked scope for this PR: no safe live YouTube login / OAuth / owner verification / Live Chat polling smoke, no Google API live call, and no token persistence runtime.
 
+## Explicit Approval Collection
+
+PR #274 is merged into `codex/comment-translator-preview`, but the current task/docs/PR context still does not contain explicit Product owner, Data owner, or Security owner approval. The approval collection status is `blocked-missing-explicit-owner-approvals`.
+
+This slice is an approval-evidence-only checkpoint. It records the approval inventory, blocker summary, and required confirmation items, but it does not allow token persistence, Supabase schema mutation, migration, RLS policy changes, storage key changes, client storage changes, provider coupling, quota writes, or Google API live calls.
+
+### Evidence Inventory
+
+| Role | Current evidence | Status |
+|---|---|---|
+| Product owner | No explicit approval in task/docs/PR context for table shape, RLS posture, migration order, rollback, or disconnect UX readiness. | Missing |
+| Data owner | No explicit approval in task/docs/PR context for browser-unreadable token material, audit/retention fields, rollback, or account deletion cleanup. | Missing |
+| Security owner | No explicit approval in task/docs/PR context for managed secret or KMS selection, rotation, emergency disable, server-only decrypt access, or no client decrypt. | Missing |
+
+### Blocker Summary
+
+- Product owner explicit approval is missing.
+- Data owner explicit approval is missing.
+- Security owner explicit approval is missing.
+- Migration readiness remains blocked until all three explicit approvals are recorded in reviewable task/docs/PR context.
+
+### Required Confirmation Items
+
+- Product owner: approve the server-owned YouTube credential table shape, owner binding semantics, RLS posture, migration order, rollback path, disconnect/revocation user state, and no existing storage key, payload, IndexedDB key, localStorage key, handoff payload, or quota write change.
+- Data owner: approve browser-unreadable token material, credential-reference-only browser state, allowed audit fields, retention period, stale/revoked cleanup timing, rollback handling, and account deletion cleanup.
+- Security owner: approve managed secret or KMS ownership, server-only envelope handling, decrypt access boundary, rotation cadence, versioned key metadata, emergency disable path, incident handling, no client decrypt, no secret printing, and no privileged server key exposure.
+
+### Migration Readiness
+
+Migration readiness remains `blocked-until-explicit-owner-approvals`. If Product owner, Data owner, and Security owner approvals are later recorded, this PR may only record approval evidence and readiness for a separate approved migration PR. The separate migration PR must target `codex/comment-translator-preview`, receive independent review, and keep OAuth token values and private credentials out of code, task docs, PR body, fixtures, browser storage, and client components.
+
+### Safe Live Smoke
+
+Safe live Google API smoke is not run for explicit approval collection. It remains blocked until there is explicit approval for a safe test YouTube owner account, server-only token resolver implementation, encrypted server token store review, read-only YouTube OAuth scope, bounded calls to `channels.list`, `liveBroadcasts.list`, and one `liveChatMessages.list` step, and no OAuth token value in client components, fixtures, task docs, PR body, localStorage, or IndexedDB.
+
+Unchecked scope while this gate is closed: no safe live YouTube login / OAuth / owner verification / Live Chat polling smoke, no Google API live call, and no token persistence runtime.
+
 ## Non-Goals
 
 - No OAuth token persistence.

@@ -102,21 +102,19 @@ const routeSource = read("app/tools/comment-translator/page.tsx");
 const providerBoundarySource = read("lib/comment-translator-provider-boundary.ts");
 const deeplProviderSource = read("lib/comment-translator-deepl-provider.ts");
 
-assert.match(foundationSource, /^import "server-only";/m, "approved migration proposal gate stays server-only");
+assert.match(foundationSource, /^import "server-only";/m, "explicit approval collection stays server-only");
 
 for (const exportedType of [
-  "YouTubeEncryptedTokenStoreApprovalRole",
-  "YouTubeEncryptedTokenStoreApprovalEvidence",
-  "YouTubeEncryptedTokenStoreApprovedMigrationProposalGate",
-  "YouTubeEncryptedTokenStoreApprovedMigrationProposalGateResult"
+  "YouTubeEncryptedTokenStoreExplicitApprovalCollection",
+  "YouTubeEncryptedTokenStoreExplicitApprovalCollectionResult"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `exports ${exportedType}`);
 }
 
 for (const exportedConstOrFunction of [
-  "youtubeEncryptedTokenStoreApprovedMigrationProposalGate",
-  "assessYouTubeEncryptedTokenStoreApprovedMigrationProposalGate",
-  "createYouTubeEncryptedTokenStoreApprovalCollectionNote"
+  "youtubeEncryptedTokenStoreExplicitApprovalCollection",
+  "assessYouTubeEncryptedTokenStoreExplicitApprovalCollection",
+  "createYouTubeEncryptedTokenStoreExplicitApprovalCollectionSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -137,142 +135,157 @@ assert.doesNotMatch(
 );
 
 const foundation = loadTsModule(foundationPath);
-const gate = foundation.youtubeEncryptedTokenStoreApprovedMigrationProposalGate;
+const collection = foundation.youtubeEncryptedTokenStoreExplicitApprovalCollection;
 
-assert.equal(gate.implementationStage, "approved-migration-proposal-gate", "gate stage is explicit");
-assert.equal(gate.prerequisitePullRequest, "#273", "gate records the prerequisite PR");
-assert.equal(gate.prerequisiteMergeStatus, "merged-into-codex-comment-translator-preview", "PR #273 is merged");
-assert.equal(gate.currentApprovalState, "blocked-missing-explicit-owner-approvals", "gate blocks on missing approvals");
-assert.deepEqual(gate.requiredApprovalRoles, ["Product owner", "Data owner", "Security owner"], "gate requires owner approvals");
-assert.deepEqual(gate.missingApprovalRoles, ["Product owner", "Data owner", "Security owner"], "current context has no explicit owner approvals");
-assert.equal(gate.migrationImplementationAllowedInThisPr, false, "migration implementation is not allowed in this PR");
-assert.equal(gate.separateMigrationPrRequired, true, "migration still needs a separate PR");
-assert.equal(gate.proposalOnlyWhenApprovalMissing, true, "missing approval keeps work proposal-only");
-assert.equal(gate.tokenPersistence, "still-blocked", "token persistence remains blocked");
-assert.equal(gate.schemaMutation, "forbidden-in-this-slice", "schema mutation remains forbidden");
-assert.equal(gate.rlsMutation, "forbidden-in-this-slice", "RLS mutation remains forbidden");
-assert.equal(gate.safeLiveSmoke.status, "not-run-until-safe-live-smoke-conditions", "safe live smoke remains gated");
+assert.equal(collection.implementationStage, "explicit-approval-collection", "collection stage is explicit");
+assert.equal(collection.prerequisitePullRequest, "#274", "collection records the prerequisite PR");
+assert.equal(collection.prerequisiteMergeStatus, "merged-into-codex-comment-translator-preview", "PR #274 is merged");
+assert.equal(
+  collection.sourceApprovedMigrationProposalGateStatus,
+  "blocked-missing-explicit-owner-approvals",
+  "collection starts from the approved migration proposal gate blocker"
+);
+assert.equal(collection.approvalEvidenceSource, "task-docs-pr-context", "collection scopes evidence to reviewable text context");
+assert.equal(collection.currentApprovalState, "blocked-missing-explicit-owner-approvals", "collection remains blocked");
+assert.deepEqual(collection.requiredApprovalRoles, ["Product owner", "Data owner", "Security owner"]);
+assert.deepEqual(collection.collectedApprovalEvidence, [], "current context does not manufacture approvals");
+assert.deepEqual(collection.missingApprovalRoles, ["Product owner", "Data owner", "Security owner"]);
+assert.equal(collection.approvalEvidenceOnlyInThisPr, true, "this PR only records approval evidence/readiness");
+assert.equal(collection.separateMigrationPrRequired, true, "migration still needs a separate PR");
+assert.equal(collection.migrationImplementationAllowedInThisPr, false, "migration implementation is not allowed here");
+assert.equal(collection.migrationReadiness, "blocked-until-explicit-owner-approvals", "migration readiness stays blocked");
+assert.equal(collection.tokenPersistence, "still-blocked", "token persistence remains blocked");
+assert.equal(collection.schemaMutation, "forbidden-in-this-slice", "schema mutation remains forbidden");
+assert.equal(collection.rlsMutation, "forbidden-in-this-slice", "RLS mutation remains forbidden");
+assert.equal(collection.safeLiveSmoke.status, "not-run-until-safe-live-smoke-conditions", "safe live smoke remains gated");
 
 for (const fragment of [
-  "Product owner approval for table shape, RLS posture, migration order, and rollback",
-  "Data owner approval for browser-unreadable token material and rollback",
-  "Security owner approval for managed secret or KMS selection, rotation, emergency disable, and no client decrypt"
+  "Product owner explicit approval is missing",
+  "Data owner explicit approval is missing",
+  "Security owner explicit approval is missing",
+  "migration readiness remains blocked"
 ]) {
-  assert.match(gate.approvalCollectionNote.join("\n"), new RegExp(fragment, "i"), `approval collection note records: ${fragment}`);
+  assert.match(collection.blockerSummary.join("\n"), new RegExp(fragment, "i"), `blocker summary records: ${fragment}`);
 }
 
 for (const fragment of [
-  "server-owned YouTube credential table",
+  "table shape",
   "RLS posture",
-  "migration rollout order",
-  "rollback path",
+  "migration order",
+  "rollback",
+  "browser-unreadable token material",
+  "retention",
+  "audit",
   "managed secret or KMS",
   "rotation",
   "emergency disable",
   "no client decrypt"
 ]) {
-  assert.match(JSON.stringify(gate.requiredConfirmationItems), new RegExp(fragment, "i"), `gate records confirmation item: ${fragment}`);
+  assert.match(
+    JSON.stringify({
+      requiredConfirmationItems: collection.requiredConfirmationItems,
+      ownerConfirmationQuestions: collection.ownerConfirmationQuestions
+    }),
+    new RegExp(fragment, "i"),
+    `collection records confirmation item: ${fragment}`
+  );
 }
 
 for (const fragment of [
-  "separate migration PR",
-  "codex/comment-translator-preview",
-  "independent review",
-  "no OAuth token values or private credentials",
-  "rollback plan",
-  "Google API live smoke remains separate"
+  "no OAuth token persistence",
+  "no Supabase schema, migration, or RLS policy change",
+  "no client component Google API, provider, or polling runtime call",
+  "no storage key, payload, IndexedDB, localStorage, handoff payload, or quota write change"
 ]) {
-  assert.match(gate.migrationProposalConditions.join("\n"), new RegExp(fragment, "i"), `migration proposal condition is explicit: ${fragment}`);
+  assert.match(collection.boundaries.join("\n"), new RegExp(fragment, "i"), `collection boundary is explicit: ${fragment}`);
 }
 
-for (const fragment of [
-  "disable credential resolution",
-  "revert migration",
-  "no token value logging",
-  "revoke or invalidate credential references"
-]) {
-  assert.match(gate.rollbackPlan.join("\n"), new RegExp(fragment, "i"), `rollback plan records: ${fragment}`);
-}
-
-const blockedResult = foundation.assessYouTubeEncryptedTokenStoreApprovedMigrationProposalGate([]);
+const blockedResult = foundation.assessYouTubeEncryptedTokenStoreExplicitApprovalCollection([]);
 assert.deepEqual(
   blockedResult,
   {
     status: "blocked-missing-explicit-owner-approvals",
     missingApprovalRoles: ["Product owner", "Data owner", "Security owner"],
-    proposalOnly: true,
+    approvalEvidenceOnlyInThisPr: true,
     migrationImplementationAllowedInThisPr: false,
+    migrationReadiness: "blocked",
     nextAction: "collect-explicit-owner-approvals"
   },
-  "gate blocks when explicit owner approvals are missing"
+  "collection blocks when explicit owner approvals are missing"
 );
 
-const readyResult = foundation.assessYouTubeEncryptedTokenStoreApprovedMigrationProposalGate([
+const partialResult = foundation.assessYouTubeEncryptedTokenStoreExplicitApprovalCollection([
+  { role: "Product owner", approved: true, scope: "table-shape-rls-migration-rollback" }
+]);
+assert.deepEqual(partialResult.missingApprovalRoles, ["Data owner", "Security owner"], "partial approval still blocks");
+assert.equal(partialResult.migrationReadiness, "blocked", "partial approval does not unlock migration readiness");
+
+const readyResult = foundation.assessYouTubeEncryptedTokenStoreExplicitApprovalCollection([
   { role: "Product owner", approved: true, scope: "table-shape-rls-migration-rollback" },
-  { role: "Data owner", approved: true, scope: "browser-unreadable-token-material-and-data-rollback" },
+  { role: "Data owner", approved: true, scope: "browser-unreadable-token-material-retention-audit-rollback" },
   { role: "Security owner", approved: true, scope: "managed-secret-or-kms-rotation-emergency-disable-no-client-decrypt" }
 ]);
 assert.deepEqual(
   readyResult,
   {
-    status: "proposal-ready-for-separate-migration-pr",
+    status: "approval-evidence-ready-for-separate-migration-pr",
     approvedRoles: ["Product owner", "Data owner", "Security owner"],
-    proposalOnly: true,
+    approvalEvidenceOnlyInThisPr: true,
     migrationImplementationAllowedInThisPr: false,
+    migrationReadiness: "ready-for-separate-approved-migration-pr",
     nextAction: "draft-separate-approved-migration-pr"
   },
-  "explicit approvals only allow a separate migration proposal PR"
+  "complete explicit approvals only allow a separate migration PR"
 );
 
-const note = foundation.createYouTubeEncryptedTokenStoreApprovalCollectionNote();
+const summary = foundation.createYouTubeEncryptedTokenStoreExplicitApprovalCollectionSummary();
 for (const fragment of [
-  "Product owner",
-  "Data owner",
-  "Security owner",
-  "table shape",
-  "RLS posture",
-  "rollback",
-  "managed secret or KMS",
-  "no client decrypt",
-  "proposal-only"
-]) {
-  assert.match(note, new RegExp(fragment, "i"), `approval collection note includes ${fragment}`);
-}
-
-for (const docFragment of [
-  "Approved Migration Proposal Gate",
-  "PR #273",
   "blocked-missing-explicit-owner-approvals",
   "Product owner",
   "Data owner",
   "Security owner",
-  "Approval Collection Note",
-  "Rollback Plan",
+  "migration readiness remains blocked",
+  "safe live smoke"
+]) {
+  assert.match(summary, new RegExp(fragment, "i"), `summary includes ${fragment}`);
+}
+
+for (const docFragment of [
+  "Explicit Approval Collection",
+  "PR #274",
+  "blocked-missing-explicit-owner-approvals",
+  "Product owner",
+  "Data owner",
+  "Security owner",
+  "Evidence Inventory",
+  "Required Confirmation Items",
+  "Migration Readiness",
   "No Supabase schema",
   "No migration",
   "No RLS policy",
   "No token persistence",
-  "not run in this slice"
+  "Safe Live Smoke"
 ]) {
-  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records approved migration proposal gate: ${docFragment}`);
+  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records explicit approval collection: ${docFragment}`);
 }
 
-assert.match(taskSource, /PR #273 .*merged|PR #273 .*merge/i, "task.md records the PR #273 merge gate");
+assert.match(taskSource, /PR #274 .*merged|PR #274 .*merge/i, "task.md records the PR #274 merge gate");
 assert.match(
   taskSource,
-  /Product owner .* Data owner .* Security owner .*明示承認.*ない|blocked-missing-explicit-owner-approvals/i,
-  "task.md records missing explicit owner approvals"
+  /YouTube encrypted token store explicit approval collection/i,
+  "task.md records the explicit approval collection slice"
 );
 assert.match(
   taskSource,
-  /YouTube encrypted token store approved migration proposal/i,
-  "task.md records the approved migration proposal slice"
+  /Product owner .* Data owner .* Security owner .*明示承認.*不足|blocked-missing-explicit-owner-approvals/i,
+  "task.md records missing explicit owner approvals"
 );
 assert.match(
   taskSource,
   /safe live Google API smoke.*未実施|safe live YouTube login \/ OAuth \/ owner verification \/ Live Chat polling smoke は未実施/i,
   "task.md records live smoke unchecked scope"
 );
+assert.match(taskSource, /UI変更なし|UI change was not made/i, "task.md records no UI width check requirement");
 
 const allowedChangedFiles = new Set([
   foundationPath,
@@ -285,9 +298,9 @@ const allowedChangedFiles = new Set([
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `approved migration proposal change stays in allowed files: ${file}`);
-  assert.ok(!file.startsWith("supabase/"), `approved migration proposal does not touch Supabase schema files: ${file}`);
-  assert.ok(!file.endsWith(".sql"), `approved migration proposal does not add migrations: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `explicit approval collection change stays in allowed files: ${file}`);
+  assert.ok(!file.startsWith("supabase/"), `explicit approval collection does not touch Supabase schema files: ${file}`);
+  assert.ok(!file.endsWith(".sql"), `explicit approval collection does not add migrations: ${file}`);
 
   if (!file.endsWith(".mjs")) {
     const source = read(file);
@@ -299,4 +312,4 @@ for (const file of changedFiles()) {
   }
 }
 
-console.log("comment translator YouTube token store approved migration proposal contract checks passed");
+console.log("comment translator YouTube token store explicit approval collection contract checks passed");

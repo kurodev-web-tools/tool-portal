@@ -13,6 +13,11 @@
 - secret / service_role key / private credential は要求・表示・保存しない。
 - 完了済みの account / preferences foundation、Supabase Auth first slice、Cloudflare Workers / OpenNext migration、auth recovery hardening、Turnstile CAPTCHA、Thumbnail Editor IRIAM 1:1 / material / font expansion、legal foundation の詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` に寄せる。
 
+## Mock-only Notes
+
+- Future tool mock catalog PR: `docs/mockups/future-tools/*` に 5候補 x 3 viewport の imagegen mock を追加し、`docs/future/FUTURE_TOOL_MOCK_CATALOG.md` に比較表と推奨次候補を記録する。mock-only / docs-only で、Next route、React/CSS、storage/schema/auth/billing/quota、OAuth/API、既存 tool behavior は未着手。
+- lint / build / width check は、実 UI / route / component / CSS / runtime 変更がないため不要。確認は画像 15 files の存在、README / catalog の filename 一致、`git diff --check`、`git status --short` に閉じる。
+
 ## Active Priorities
 
 1. Kuro Live Comment Translator mock foundation

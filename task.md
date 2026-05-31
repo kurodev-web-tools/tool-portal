@@ -16,7 +16,7 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype、YouTube input boundary design、YouTube owner polling runtime foundation、YouTube Google API adapter + token reference resolver design、YouTube OAuth token store + consent runtime foundation、YouTube encrypted token store implementation plan / blocker resolution、YouTube encrypted token store schema/key approval checkpoint、YouTube encrypted token store approved migration proposal gate、YouTube encrypted token store explicit approval collection、YouTube encrypted token store separate approved migration readiness、YouTube token store final review gate PR #277 are merged into `codex/comment-translator-preview`; do not merge to `main` yet because live OAuth / token persistence / quota boundary is still not implemented。
+   - status: mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype、YouTube input boundary design、YouTube owner polling runtime foundation、YouTube Google API adapter + token reference resolver design、YouTube OAuth token store + consent runtime foundation、YouTube encrypted token store implementation plan / blocker resolution、YouTube encrypted token store schema/key approval checkpoint、YouTube encrypted token store approved migration proposal gate、YouTube encrypted token store explicit approval collection、YouTube encrypted token store separate approved migration readiness、YouTube token store final review gate PR #277、migration implementation blocker review PR #278、final implementation approval PR #279 are merged into `codex/comment-translator-preview`; do not merge to `main` yet because live OAuth / token persistence / quota boundary is still not implemented。
    - branch stack:
      - preview: `codex/comment-translator-preview`
      - merged feature: `codex/comment-translator-mock-foundation` at `D:/V_streamer_tools/.worktrees/comment-translator-mock-foundation`
@@ -32,7 +32,8 @@
      - merged feature: `codex/comment-translator-youtube-token-store-separate-migration-readiness` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-separate-migration-readiness`
      - merged feature: `codex/comment-translator-youtube-token-store-separate-approved-migration-pr` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-separate-approved-migration-pr`
      - merged feature: `codex/comment-translator-youtube-token-store-migration-blocker-review` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-migration-blocker-review`
-     - active feature: `codex/comment-translator-youtube-token-store-final-implementation-approval` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-final-implementation-approval`
+     - merged feature: `codex/comment-translator-youtube-token-store-final-implementation-approval` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-final-implementation-approval`
+     - active feature: `codex/comment-translator-youtube-token-store-implementation-approval-evidence` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-implementation-approval-evidence`
    - seed:
      - `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
      - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
@@ -44,19 +45,51 @@
      - Real translation provider は、YouTube OAuth / owner check / quota / billing boundary が固まった後に別 PR で比較する。
      - 2026-05-30 decision: まだ実際に使える翻訳ツールではないため、`codex/comment-translator-preview` を `main` へ統合せず、preview branch 上に使える状態へ近づけるPRを刻む。
    - current slice target:
-     - `YouTube token store final implementation approval` を `codex/comment-translator-preview` 宛ての docs/contract-only follow-up に閉じる。
-     - PR #278 (`YouTube token store migration implementation blocker review`) は `2026-05-31T11:45:27Z` に `codex/comment-translator-preview` へ merged 済みで、merge commit `4a4e1e77a671e63600f846d8a537e90a9b9f870f` が `origin/codex/comment-translator-preview` に含まれることを確認した。
-     - PR #278 checks は `Workers Builds: v-streamer-tools` PASS / `Cloudflare Pages` FAIL。PR #275 / #276 / #277 と同じ Pages fail / Workers pass 履歴のため、Cloudflare Pages は dashboard log review item として扱い、local build failure とは扱わない。
-     - `docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md`、`youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate`、`assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview` を更新し、final table/RLS/key-management/rollback review と explicit implementation approval の両方が揃うまで implementation に進まない gate を固定する。
-     - final table/RLS/key-management/rollback review は未承認 / missing。explicit implementation approval も未承認 / missing。
+     - `YouTube token store implementation approval evidence review` を `codex/comment-translator-preview` 宛ての docs/contract-only follow-up に閉じる。
+     - 前提 PR #278 (`YouTube token store migration implementation blocker review`) は merge 済みで、PR #279 の前提 gate として `origin/codex/comment-translator-preview` に含まれる。
+     - PR #279 (`YouTube token store final implementation approval`) は `2026-05-31T12:15:27Z` に `codex/comment-translator-preview` へ merged 済みで、merge commit `3f542071b5542c651eaf01767cb28fb11cde8423` が `origin/codex/comment-translator-preview` に含まれることを確認した。
+     - PR #279 checks は `Workers Builds: v-streamer-tools` PASS / `Cloudflare Pages` FAIL。PR #275 / #276 / #277 / #278 と同じ Pages fail / Workers pass 履歴のため、Cloudflare Pages は dashboard log review item として扱い、local build failure とは扱わない。
+     - 今回の prompt / task docs / PR #279 body・comments・reviews を確認したが、final table/RLS/key-management/rollback review の explicit approval evidence は missing。explicit implementation approval も missing。
+     - `docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md`、`youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate`、`assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview` は、final review evidence と explicit implementation approval を別 gate として扱う。
      - `assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview([])` は `table-shape`、`rls-posture`、`key-management`、`rollback` missing で blocked。仮に final review evidence が揃っても explicit implementation approval が missing の場合は `blocked-pending-explicit-implementation-approval` で、同じ PR 内の SQL / RLS implementation は許可されない。
-     - すべて明示承認済みになった場合でも、この PR では No SQL migration / No RLS policy / No token persistence runtime。migration / RLS policy / token persistence runtime は次の separate implementation PR に送る。
+     - approval evidence が欠けるため、この PR は blocker summary / missing evidence の docs/contract-only 記録に留める。すべて明示承認済みになった場合でも、この PR では No SQL migration / No RLS policy / No token persistence runtime。migration / RLS policy / token persistence runtime は次の separate implementation PR に送る。
      - owner verification、owned broadcast lookup、Live Chat polling step、sanitized comment bridge は translation provider module と直接結合しない。
      - client component から Google API / provider / polling runtime を直接呼ばない。
      - DeepL provider prototype、MockTranslationProvider、Manual / Paste Input MVP、interactive shell の既存挙動は壊さない。
      - この slice で storage key / payload / IndexedDB / localStorage key / Supabase schema / migration / RLS / handoff payload / quota write は変更しない。
-     - UI変更なし。`/tools` と `/tools/comment-translator` の幅別確認は対象外。
+     - UI変更なし。docs/contract/server-only gate の記録のみで rendered route / component / CSS を変更しないため、`/tools` と `/tools/comment-translator` の幅別確認は不要。
      - 残リスク: final approval evidence が task/docs/PR context にまだ存在しないため、実 migration / RLS policy / token persistence runtime は blocked。safe live YouTube login / OAuth / owner verification / Live Chat polling smoke、Google API live call、Supabase migration / RLS smoke は未実施。
+     - 次 PR 候補は approval evidence が揃わない場合は blocker summary / approval collection の docs/contract-only follow-up。すべて明示承認済みになった場合のみ、別 branch `codex/comment-translator-youtube-token-store-migration-implementation-review` で実 migration / RLS implementation を検討する。
+   - YouTube token store implementation approval evidence review verification completed 2026-05-31:
+     - PR #279 merge gate: `gh pr view 279` で `MERGED`、base `codex/comment-translator-preview`、merge commit `3f542071b5542c651eaf01767cb28fb11cde8423`、Workers PASS / Cloudflare Pages FAIL を確認した。Pages は dashboard log review item。
+     - PR #279 body / comments / reviews、今回の prompt、task docs を確認し、final table/RLS/key-management/rollback review の explicit approval evidence は missing。explicit implementation approval も missing。
+     - RED first: `node scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs` は `gate records PR #279 as the latest approval evidence prerequisite` で期待どおり FAIL、その後 PASS。
+     - updated YouTube token store approval / implementation gate contract: `node scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs` PASS。
+     - existing YouTube token store contract bundle:
+       - `node scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-token-store-explicit-approval-collection-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-runtime-foundation-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-input-boundary-contract.mjs` PASS。
+       - `node scripts/comment-translator-server-provider-prototype-contract.mjs` PASS。
+       - `node scripts/comment-translator-provider-boundary-contract.mjs` PASS。
+       - `node scripts/comment-translator-manual-input-mvp-contract.mjs` PASS。
+       - `node scripts/comment-translator-interactive-shell-contract.mjs` PASS。
+       - `node scripts/comment-translator-mock-foundation-contract.mjs` PASS。
+       - `node scripts/tool-portal-entry-contract.mjs` PASS。
+     - `npm run lint` PASS。
+     - `npx tsc --noEmit` PASS。
+     - `npm run build` PASS (`Static export RSC aliases skipped: out directory is missing for server-runtime build.`、`middleware` deprecation warning、webpack cache warningsあり)。
+     - `git diff --check` PASS (CRLF conversion warnings only)。
+   - YouTube token store implementation approval evidence review unchecked scope / residual risk:
+     - final table/RLS/key-management/rollback review は未承認 / missing。explicit implementation approval も未承認 / missing。
+     - SQL migration / RLS policy / token persistence runtime は追加していない。Supabase schema、migration、RLS policy、token persistence runtime、storage key、payload、IndexedDB、localStorage、handoff payload、quota write、billing integration は変更していない。
+     - safe live YouTube login / OAuth / owner verification / Live Chat polling smoke、Google API live call、Supabase migration / RLS smoke は未実施。
+     - UI変更なし。rendered route / component / CSS を変更していないため、`/tools` と `/tools/comment-translator` の幅別確認は不要。
      - 次 PR 候補は approval evidence が揃わない場合は blocker summary / approval collection の docs/contract-only follow-up。すべて明示承認済みになった場合のみ、別 branch `codex/comment-translator-youtube-token-store-migration-implementation-review` で実 migration / RLS implementation を検討する。
    - YouTube token store final implementation approval verification completed 2026-05-31:
      - RED first: `node scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs` は `exports YouTubeEncryptedTokenStoreSeparateApprovedMigrationImplementationApprovalEvidence` missing で期待どおり FAIL、その後 PASS。
@@ -661,11 +694,12 @@
 10. YouTube encrypted token store approved migration proposal gate: PR #274 で `codex/comment-translator-preview` へ merge 済み。
 11. YouTube encrypted token store explicit approval collection: PR #275 で `codex/comment-translator-preview` へ merge 済み。
 12. YouTube encrypted token store separate approved migration readiness: PR #276 で `codex/comment-translator-preview` へ merge 済み。
-13. YouTube encrypted token store separate approved migration PR: this branch で table/RLS/key-management の具体案を final review blocker として固定し、実 token values / private credentials は扱わない。
-14. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
-15. Tool-specific persistence / preference sync only after data boundary and quota policy are fixed。
-16. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
-17. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
+13. YouTube encrypted token store separate approved migration PR: PR #277 で table/RLS/key-management の具体案を final review blocker として固定済み。
+14. YouTube token store final implementation approval / implementation approval evidence: PR #278 / #279 merge 後も final table/RLS/key-management/rollback review と explicit implementation approval は missing。approval が揃うまでは docs/contract-only blocker summary / approval collection に留める。
+15. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
+16. Tool-specific persistence / preference sync only after data boundary and quota policy are fixed。
+17. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
+18. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
 
 ## Next Session Prompt
 
@@ -673,18 +707,18 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Kuro Live Comment Translator の次タスクとして、YouTube encrypted token store separate approved migration PR final review blocker の状態を確認してください。final table/RLS/key-management review が明示承認済みの場合のみ、実 migration / RLS implementation の separate PR に進んでください。
+Kuro Live Comment Translator の次タスクとして、YouTube token store implementation approval evidence review の merge 状態を確認し、final table/RLS/key-management/rollback review と explicit implementation approval の新しい evidence があるか確認してください。承認 evidence が欠ける場合は、実装へ進まず docs/contract-only の blocker summary / missing evidence 記録に留めてください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- separate approved migration PR final review blocker が未mergeなら、新規実装へ進まず review / CI / blocker summary を返してください。
-- final review blocker で `blocked-pending-final-table-rls-key-management-review`、table shape、RLS posture、migration order、rollback、managed secret or KMS、rotation、emergency disable、no client decrypt が記録されていることを確認してください。
-- final table/RLS/key-management implementation review が未承認なら、SQL migration / RLS policy / token persistence runtime へ進まないでください。
+- この approval evidence review PR が未mergeなら、新規作業へ進まず review / CI / blocker summary を返してください。
+- final review blocker で `blocked-pending-final-table-rls-key-management-review`、table shape、RLS posture、migration order、rollback、managed secret or KMS、rotation、emergency disable、no client decrypt が記録され、PR #279 後も approval evidence missing と記録されていることを確認してください。
+- final table/RLS/key-management/rollback review と explicit implementation approval がどちらも明示承認済みでなければ、SQL migration / RLS policy / token persistence runtime へ進まないでください。
 - 作業は `codex/comment-translator-preview` から新しい feature branch を切ってください。
-- 推奨 branch: `codex/comment-translator-youtube-token-store-migration-implementation-review`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-migration-implementation-review`
+- 推奨 branch: `codex/comment-translator-youtube-token-store-explicit-implementation-approval-collection`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-youtube-token-store-explicit-implementation-approval-collection`
 - 初回 platform は YouTube。
 - secret / service_role key / private credential は要求・表示・保存しない。
 - OAuth access token / refresh token は client component、fixture、task docs、PR body、localStorage、IndexedDB に出さない。
@@ -693,8 +727,9 @@ Kuro Live Comment Translator の次タスクとして、YouTube encrypted token 
 
 scope:
 - `docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md`、`youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate`、rollback review、safe live smoke gate を読み、実装へ進める明示承認があるか確認する。
-- 実 migration / RLS policy を入れる場合は、final table/RLS/key-management/rollback review と explicit implementation approval が明示承認済みであることを先に確認する。
+- final table/RLS/key-management/rollback review と explicit implementation approval が明示承認済みかを先に確認する。
 - 承認が欠ける場合は docs/contract-only の review follow-up / blocker summary に留める。
+- 承認が全部揃った場合でも、この PR では実 migration / RLS policy / token persistence runtime を追加せず、次の separate implementation PR へ送る。
 - Google API live call は safe live smoke 条件が揃うまで実行しない。
 - owner verification、owned broadcast lookup、Live Chat polling step、sanitized comment bridge は translation provider module と直接結合しない。
 - client component から Google API / provider / polling runtime を直接呼ばない。
@@ -702,8 +737,9 @@ scope:
 - UI変更は原則なし。
 
 実装したいこと:
-- final review approval と SQL/RLS implementation approval の境界を保つ。
-- implementation に進む場合も token values / client storage / provider coupling / quota write の禁止境界を維持する。
+- final review approval と explicit implementation approval の境界を保つ。
+- 承認が欠ける場合は blocker summary / missing evidence を docs/contract-only で記録する。
+- 承認が全部揃った場合でも、この PR では SQL / RLS / token persistence runtime を追加せず、次の separate implementation PR へ送る。
 - safe live smoke を実行できる条件と、実行しない場合の未確認範囲を task.md / PR body に明記する。
 
 実装方針:

@@ -158,6 +158,26 @@ assert.equal(
   "PR #278 Cloudflare Pages failure remains a dashboard log review item"
 );
 assert.equal(
+  gate.postFinalImplementationApprovalPullRequest,
+  "#279",
+  "gate records PR #279 as the latest approval evidence prerequisite"
+);
+assert.equal(
+  gate.postFinalImplementationApprovalMergeStatus,
+  "merged-into-codex-comment-translator-preview",
+  "PR #279 is merged"
+);
+assert.equal(
+  gate.postFinalImplementationApprovalWorkersCheckDisposition,
+  "pass",
+  "PR #279 Workers check is recorded as pass"
+);
+assert.equal(
+  gate.postFinalImplementationApprovalCloudflarePagesDisposition,
+  "dashboard-log-review-item",
+  "PR #279 Cloudflare Pages failure remains a dashboard log review item"
+);
+assert.equal(
   gate.finalReviewStatus,
   "blocked-pending-final-table-rls-key-management-review",
   "final implementation review remains blocked"
@@ -358,6 +378,24 @@ for (const docFragment of [
   assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #278 final approval gate: ${docFragment}`);
 }
 
+for (const docFragment of [
+  "Post-PR #279 Implementation Approval Evidence Review",
+  "PR #279 is merged",
+  "Cloudflare Pages",
+  "Workers Builds",
+  "dashboard log review item",
+  "final table/RLS/key-management/rollback review",
+  "explicit implementation approval",
+  "missing",
+  "blocker summary",
+  "No SQL migration",
+  "No RLS policy",
+  "No token persistence runtime",
+  "separate implementation PR"
+]) {
+  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #279 approval evidence review: ${docFragment}`);
+}
+
 assert.match(taskSource, /PR #276 .*merged|PR #276 .*merge/i, "task.md records the PR #276 merge gate");
 assert.match(
   taskSource,
@@ -405,6 +443,27 @@ assert.match(
   taskSource,
   /separate implementation PR|別 PR/,
   "task.md sends any future implementation to a separate PR"
+);
+assert.match(taskSource, /PR #279 .*merged|PR #279 .*merge/i, "task.md records the PR #279 merge gate");
+assert.match(
+  taskSource,
+  /PR #279.*Workers.*PASS|Workers.*PASS.*PR #279/i,
+  "task.md records PR #279 Workers success"
+);
+assert.match(
+  taskSource,
+  /PR #279.*Cloudflare Pages.*dashboard log review item|Cloudflare Pages.*PR #279.*dashboard log review item/i,
+  "task.md records PR #279 Cloudflare Pages as a dashboard log review item"
+);
+assert.match(
+  taskSource,
+  /approval evidence.*欠ける|missing evidence|承認 evidence.*missing/i,
+  "task.md records missing approval evidence"
+);
+assert.match(
+  taskSource,
+  /幅別確認.*不要|width.*not required/i,
+  "task.md records why width checks are not required"
 );
 
 const allowedChangedFiles = new Set([

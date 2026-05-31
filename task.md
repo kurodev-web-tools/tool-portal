@@ -15,6 +15,8 @@
 
 ## Mock-only Notes
 
+- Future tool mock catalog expansion PR: `docs/mockups/future-tools/*` に追加 5候補 x 3 viewport の imagegen mock を追加し、`docs/future/FUTURE_TOOL_MOCK_CATALOG.md` に未実装候補 10件、比較表、更新後の推奨次候補を記録する。mock-only / docs-only で、Next route、React/CSS、storage/schema/auth/billing/quota、OAuth/API、OBS連携、動画処理、既存 tool behavior は未着手。
+- expansion PR の lint / build / width check は、実 UI / route / component / CSS / runtime 変更がないため不要。確認は追加画像 15 files の存在、README / catalog の filename 一致、`git diff --check`、`git status --short` に閉じる。
 - Future tool mock catalog PR: `docs/mockups/future-tools/*` に 5候補 x 3 viewport の imagegen mock を追加し、`docs/future/FUTURE_TOOL_MOCK_CATALOG.md` に比較表と推奨次候補を記録する。mock-only / docs-only で、Next route、React/CSS、storage/schema/auth/billing/quota、OAuth/API、既存 tool behavior は未着手。
 - lint / build / width check は、実 UI / route / component / CSS / runtime 変更がないため不要。確認は画像 15 files の存在、README / catalog の filename 一致、`git diff --check`、`git status --short` に閉じる。
 

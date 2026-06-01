@@ -343,7 +343,7 @@ export type YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate = {
   postFinalImplementationApprovalMergeStatus: "merged-into-codex-comment-translator-preview";
   postFinalImplementationApprovalWorkersCheckDisposition: "pass";
   postFinalImplementationApprovalCloudflarePagesDisposition: "dashboard-log-review-item";
-  postImplementationApprovalEvidencePullRequest: "#283";
+  postImplementationApprovalEvidencePullRequest: "#285";
   postImplementationApprovalEvidenceMergeStatus: "merged-into-codex-comment-translator-preview";
   postImplementationApprovalEvidenceWorkersCheckDisposition: "pass";
   postImplementationApprovalEvidenceCloudflarePagesDisposition: "dashboard-log-review-item";
@@ -965,7 +965,7 @@ export const youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate = {
   postFinalImplementationApprovalMergeStatus: "merged-into-codex-comment-translator-preview",
   postFinalImplementationApprovalWorkersCheckDisposition: "pass",
   postFinalImplementationApprovalCloudflarePagesDisposition: "dashboard-log-review-item",
-  postImplementationApprovalEvidencePullRequest: "#283",
+  postImplementationApprovalEvidencePullRequest: "#285",
   postImplementationApprovalEvidenceMergeStatus: "merged-into-codex-comment-translator-preview",
   postImplementationApprovalEvidenceWorkersCheckDisposition: "pass",
   postImplementationApprovalEvidenceCloudflarePagesDisposition: "dashboard-log-review-item",

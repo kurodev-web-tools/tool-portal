@@ -459,6 +459,12 @@ assert.match(
   "task.md records the live smoke unchecked scope"
 );
 
+const separateImplementationFiles = new Set([
+  "lib/comment-translator-youtube-token-store-runtime.ts",
+  "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
+  "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs"
+]);
+
 for (const file of changedFiles()) {
   for (const pattern of [
     /^components\/comment-translator\//,
@@ -470,7 +476,9 @@ for (const file of changedFiles()) {
     /^lib\/tool-handoff/,
     /^lib\/.*storage/i
   ]) {
-    assert.doesNotMatch(file, pattern, `API adapter design does not change forbidden path: ${file}`);
+    if (!separateImplementationFiles.has(file)) {
+      assert.doesNotMatch(file, pattern, `API adapter design does not change forbidden path: ${file}`);
+    }
   }
 
   if (!file.endsWith("comment-translator-youtube-api-adapter-token-reference-contract.mjs")) {

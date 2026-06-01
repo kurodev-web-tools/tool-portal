@@ -306,9 +306,17 @@ const forbiddenChangedPathPatterns = [
   /^lib\/.*storage/i
 ];
 
+const separateImplementationFiles = new Set([
+  "lib/comment-translator-youtube-token-store-runtime.ts",
+  "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
+  "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs"
+]);
+
 for (const file of changedFiles()) {
   for (const pattern of forbiddenChangedPathPatterns) {
-    assert.doesNotMatch(file, pattern, `server provider prototype does not change forbidden path: ${file}`);
+    if (!separateImplementationFiles.has(file)) {
+      assert.doesNotMatch(file, pattern, `server provider prototype does not change forbidden path: ${file}`);
+    }
   }
 
   if (!file.endsWith("comment-translator-server-provider-prototype-contract.mjs")) {

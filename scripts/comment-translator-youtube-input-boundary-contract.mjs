@@ -270,6 +270,12 @@ for (const pattern of [
   assert.doesNotMatch(boundarySource, pattern, `YouTube boundary stays pure design/type-only: ${pattern}`);
 }
 
+const separateImplementationFiles = new Set([
+  "lib/comment-translator-youtube-token-store-runtime.ts",
+  "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
+  "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs"
+]);
+
 for (const file of changedFiles()) {
   for (const pattern of [
     /^components\/comment-translator\//,
@@ -281,7 +287,9 @@ for (const file of changedFiles()) {
     /^lib\/tool-handoff/,
     /^lib\/.*storage/i
   ]) {
-    assert.doesNotMatch(file, pattern, `YouTube input boundary design does not change forbidden path: ${file}`);
+    if (!separateImplementationFiles.has(file)) {
+      assert.doesNotMatch(file, pattern, `YouTube input boundary design does not change forbidden path: ${file}`);
+    }
   }
 
   if (!file.endsWith("comment-translator-youtube-input-boundary-contract.mjs")) {

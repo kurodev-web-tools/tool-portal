@@ -179,23 +179,23 @@ assert.equal(
 );
 assert.equal(
   gate.postImplementationApprovalEvidencePullRequest,
-  "#283",
-  "gate records PR #283 as the latest post-PR #282 approval evidence review prerequisite"
+  "#285",
+  "gate records PR #285 as the latest post-PR #283 approval evidence review prerequisite"
 );
 assert.equal(
   gate.postImplementationApprovalEvidenceMergeStatus,
   "merged-into-codex-comment-translator-preview",
-  "PR #283 is merged"
+  "PR #285 is merged"
 );
 assert.equal(
   gate.postImplementationApprovalEvidenceWorkersCheckDisposition,
   "pass",
-  "PR #283 Workers check is recorded as pass"
+  "PR #285 Workers check is recorded as pass"
 );
 assert.equal(
   gate.postImplementationApprovalEvidenceCloudflarePagesDisposition,
   "dashboard-log-review-item",
-  "PR #283 Cloudflare Pages failure remains a dashboard log review item"
+  "PR #285 Cloudflare Pages failure remains a dashboard log review item"
 );
 assert.equal(
   gate.finalReviewStatus,
@@ -337,7 +337,7 @@ const summary = foundation.createYouTubeEncryptedTokenStoreSeparateApprovedMigra
 for (const fragment of [
   "blocked-pending-final-table-rls-key-management-review",
   "PR #278",
-  "PR #283",
+  "PR #285",
   "youtube_oauth_credentials",
   "RLS",
   "managed secret or KMS",
@@ -433,6 +433,24 @@ for (const docFragment of [
   "separate implementation PR"
 ]) {
   assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #280 approval collection: ${docFragment}`);
+}
+
+for (const docFragment of [
+  "Post-PR #285 Approval Evidence Review",
+  "PR #285 is merged",
+  "Cloudflare Pages",
+  "Workers Builds",
+  "dashboard log review item",
+  "final table/RLS/key-management/rollback review",
+  "explicit implementation approval",
+  "missing",
+  "blocker summary",
+  "No SQL migration",
+  "No RLS policy",
+  "No token persistence runtime",
+  "separate implementation PR"
+]) {
+  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #285 approval evidence review: ${docFragment}`);
 }
 
 for (const docFragment of [
@@ -553,6 +571,22 @@ assert.match(
   taskSource,
   /PR #283 body.*comments.*reviews.*missing|PR #283 body.*comments.*reviews.*明示承認.*ない/i,
   "task.md records PR #283 context does not contain approval evidence"
+);
+assert.match(taskSource, /PR #285 .*merged|PR #285 .*merge/i, "task.md records the PR #285 merge gate");
+assert.match(
+  taskSource,
+  /PR #285.*Workers.*PASS|Workers.*PASS.*PR #285/i,
+  "task.md records PR #285 Workers success"
+);
+assert.match(
+  taskSource,
+  /PR #285.*Cloudflare Pages.*dashboard log review item|Cloudflare Pages.*PR #285.*dashboard log review item/i,
+  "task.md records PR #285 Cloudflare Pages as a dashboard log review item"
+);
+assert.match(
+  taskSource,
+  /PR #285 body.*comments.*reviews.*missing|PR #285 body.*comments.*reviews.*明示承認.*ない/i,
+  "task.md records PR #285 context does not contain approval evidence"
 );
 
 const allowedChangedFiles = new Set([

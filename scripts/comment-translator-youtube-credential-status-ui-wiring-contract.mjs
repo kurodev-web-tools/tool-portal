@@ -380,8 +380,10 @@ assert.match(taskSource, /PR #293.*merge/i, "task.md records the PR #293 merge p
 assert.match(taskSource, /credential status UI wiring contract/i, "task.md records this UI wiring readiness follow-up");
 
 const allowedChangedFiles = new Set([
+  "lib/comment-translator-youtube-client-safe-credential-reference-source.ts",
   uiWiringPath,
   statusBoundaryPath,
+  "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
   "scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs",
   "scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs",
   "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",

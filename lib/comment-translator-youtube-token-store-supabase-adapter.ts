@@ -52,8 +52,12 @@ type SupabaseSingleQuery = {
   single: () => Promise<SupabaseSingleResult>;
 };
 
+type SupabaseFilteredSelectQuery = SupabaseSingleQuery & {
+  eq: (column: "credential_reference_id", value: string) => SupabaseSingleQuery;
+};
+
 type SupabaseSelectQuery = {
-  select: (columns: typeof youtubeOAuthCredentialSupabaseAdapterContract.trustedSelectColumns) => SupabaseSingleQuery;
+  select: (columns: typeof youtubeOAuthCredentialSupabaseAdapterContract.trustedSelectColumns) => SupabaseFilteredSelectQuery;
 };
 
 type SupabaseUpdateFilter = {
@@ -61,6 +65,7 @@ type SupabaseUpdateFilter = {
 };
 
 type SupabaseTableQuery = {
+  select: (columns: typeof youtubeOAuthCredentialSupabaseAdapterContract.trustedSelectColumns) => SupabaseFilteredSelectQuery;
   upsert: (
     row: YouTubeOAuthCredentialSupabaseInsert,
     options: { onConflict: "credential_reference_id" }
@@ -75,6 +80,7 @@ export type TrustedYouTubeOAuthCredentialSupabaseClient = {
 };
 
 export type TrustedYouTubeOAuthCredentialSupabaseAdapter = {
+  getCredentialStatus: (request: { credentialReferenceId: string }) => Promise<YouTubeOAuthCredentialSupabaseStatus>;
   upsertCredentialStatus: (
     draft: YouTubeOAuthCredentialPersistenceDraft
   ) => Promise<YouTubeOAuthCredentialSupabaseStatus>;
@@ -152,6 +158,15 @@ export function createTrustedYouTubeOAuthCredentialSupabaseAdapter({
   nowIso: () => string;
 }): TrustedYouTubeOAuthCredentialSupabaseAdapter {
   return {
+    async getCredentialStatus(request) {
+      const result = await supabase
+        .from(youtubeOAuthCredentialSupabaseAdapterContract.tableName)
+        .select(youtubeOAuthCredentialSupabaseAdapterContract.trustedSelectColumns)
+        .eq("credential_reference_id", request.credentialReferenceId)
+        .single();
+
+      return createYouTubeOAuthCredentialSupabaseStatus(requireSupabaseRow(result));
+    },
     async upsertCredentialStatus(draft) {
       const result = await supabase
         .from(youtubeOAuthCredentialSupabaseAdapterContract.tableName)

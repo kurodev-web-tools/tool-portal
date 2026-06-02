@@ -7,6 +7,9 @@ import ts from "typescript";
 
 const root = process.cwd();
 const adapterPath = "lib/comment-translator-youtube-token-store-supabase-adapter.ts";
+const statusBoundaryPath = "lib/comment-translator-youtube-credential-status-boundary.ts";
+const statusRoutePath = "app/api/comment-translator/youtube/credential-status/route.ts";
+const statusActionPath = "app/tools/comment-translator/actions.ts";
 const runtimePath = "lib/comment-translator-youtube-token-store-runtime.ts";
 const migrationPath = "supabase/migrations/20260601000000_youtube_oauth_credentials.sql";
 const taskPath = "task.md";
@@ -88,10 +91,16 @@ function loadTsModule(relativePath) {
 }
 
 assert.ok(exists(adapterPath), "trusted Supabase adapter skeleton exists");
+assert.ok(exists(statusBoundaryPath), "credential sanitized status boundary exists");
+assert.ok(exists(statusRoutePath), "credential status endpoint skeleton exists");
+assert.ok(exists(statusActionPath), "credential status server action skeleton exists");
 assert.ok(exists(runtimePath), "server-only token store runtime remains available");
 assert.ok(exists(migrationPath), "youtube_oauth_credentials migration remains available");
 
 const adapterSource = read(adapterPath);
+const statusBoundarySource = read(statusBoundaryPath);
+const statusRouteSource = read(statusRoutePath);
+const statusActionSource = read(statusActionPath);
 const runtimeSource = read(runtimePath);
 const migrationSource = read(migrationPath);
 const componentSource = read("components/comment-translator/CommentTranslatorDock.tsx");
@@ -99,20 +108,23 @@ const routeSource = read("app/tools/comment-translator/page.tsx");
 const taskSource = read(taskPath);
 
 assert.match(adapterSource, /^import "server-only";/m, "trusted Supabase adapter boundary is server-only");
+assert.match(statusBoundarySource, /^import "server-only";/m, "credential sanitized status boundary is server-only");
+assert.match(statusActionSource, /^"use server";/m, "credential status server action is a server action");
+assert.match(statusRouteSource, /NextResponse\.json/, "credential status endpoint returns JSON");
 assert.doesNotMatch(
   `${componentSource}\n${routeSource}`,
-  /comment-translator-youtube-token-store-supabase-adapter|youtube_oauth_credentials|access_token_ciphertext_ref|refresh_token_ciphertext_ref|encryption_key_ref|decrypt|localStorage|indexedDB/i,
+  /comment-translator-youtube-token-store-supabase-adapter|comment-translator-youtube-credential-status-boundary|youtube_oauth_credentials|access_token_ciphertext_ref|refresh_token_ciphertext_ref|encryption_key_ref|decrypt|localStorage|indexedDB/i,
   "client component and route shell are not coupled to encrypted row access or decrypt capability"
 );
 assert.doesNotMatch(
-  adapterSource,
+  `${adapterSource}\n${statusBoundarySource}\n${statusRouteSource}\n${statusActionSource}`,
   /\baccessToken(Plaintext|Secret)\b|\brefreshToken(Plaintext|Secret)\b|\bauthorizationCode(Value|Plaintext|Secret)\b|oauthAccessToken|oauthRefreshToken|authorization_code|refresh_token\s*[:=]|access_token\s*[:=]|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i,
-  "adapter source never accepts, returns, or documents OAuth token values, auth codes, private keys, or service role key values"
+  "credential status boundary never accepts, returns, or documents OAuth token values, auth codes, private keys, or service role key values"
 );
 assert.doesNotMatch(
-  adapterSource,
+  `${adapterSource}\n${statusBoundarySource}\n${statusRouteSource}\n${statusActionSource}`,
   /localStorage\.|indexedDB\.|youtube\.googleapis|OAuth2Client|GoogleAuth|from\s+["']googleapis["']|require\(["']googleapis["']\)|stripe|checkout|gtag|GA4|cookie consent/i,
-  "adapter avoids client storage, live Google API calls, provider coupling, quota, billing, and analytics integration"
+  "credential status boundary avoids client storage, live Google API calls, provider coupling, quota, billing, and analytics integration"
 );
 
 for (const exportedType of [
@@ -138,6 +150,36 @@ for (const exportedConstOrFunction of [
   );
 }
 
+for (const exportedType of [
+  "YouTubeOAuthCredentialBrowserReadableStatus",
+  "ReadYouTubeOAuthCredentialStatusRequest"
+]) {
+  assert.match(statusBoundarySource, new RegExp(`export type ${exportedType}\\b`), `status boundary exports ${exportedType}`);
+}
+
+for (const exportedConstOrFunction of [
+  "youtubeOAuthCredentialStatusBoundaryContract",
+  "createYouTubeOAuthCredentialBrowserReadableStatus",
+  "createYouTubeOAuthCredentialStatusUnavailablePayload",
+  "readYouTubeOAuthCredentialStatus"
+]) {
+  assert.match(
+    statusBoundarySource,
+    new RegExp(`export (?:const|function|async function) ${exportedConstOrFunction}\\b`),
+    `status boundary exports ${exportedConstOrFunction}`
+  );
+}
+
+assert.match(adapterSource, /getCredentialStatus/, "trusted Supabase adapter exposes a server-only status read method");
+assert.match(statusRouteSource, /YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED/, "endpoint preserves emergency disable boundary");
+assert.match(statusRouteSource, /credentialReferenceId/, "endpoint accepts credential reference id only");
+assert.match(statusActionSource, /getYouTubeOAuthCredentialStatusAction/, "server action exports credential status skeleton");
+assert.doesNotMatch(
+  `${statusBoundarySource}\n${statusRouteSource}\n${statusActionSource}`,
+  /tokenValue|refreshTokenValue|decryptCapability|access_token_ciphertext_ref|refresh_token_ciphertext_ref|encryption_key_ref/i,
+  "browser-readable credential status boundary strips token markers, ciphertext references, and decrypt capability"
+);
+
 for (const fragment of [
   "access_token_ciphertext_ref text not null",
   "refresh_token_ciphertext_ref text not null",
@@ -152,6 +194,7 @@ for (const fragment of [
 
 const runtime = loadTsModule(runtimePath);
 const adapter = loadTsModule(adapterPath);
+const statusBoundary = loadTsModule(statusBoundaryPath);
 
 assert.equal(
   adapter.youtubeOAuthCredentialSupabaseAdapterContract.tableName,
@@ -177,6 +220,24 @@ assert.equal(
   adapter.youtubeOAuthCredentialSupabaseAdapterContract.emergencyDisableEnv,
   "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
   "adapter preserves emergency disable reference"
+);
+assert.equal(
+  statusBoundary.youtubeOAuthCredentialStatusBoundaryContract.browserReadableOutput,
+  "credential-status-metadata-only",
+  "status boundary exposes only credential metadata"
+);
+assert.deepEqual(
+  statusBoundary.youtubeOAuthCredentialStatusBoundaryContract.forbiddenBrowserOutput,
+  [
+    "encrypted-row",
+    "ciphertext-reference",
+    "decrypt-capability",
+    "service-role-key",
+    "managed-secret-value",
+    "oauth-token-value",
+    "authorization-code-value"
+  ],
+  "status boundary documents forbidden browser output"
 );
 
 const draft = runtime.createYouTubeOAuthCredentialPersistenceDraft({
@@ -234,6 +295,70 @@ assert.deepEqual(status, {
   decryptCapability: "forbidden"
 });
 
+const browserStatus = statusBoundary.createYouTubeOAuthCredentialBrowserReadableStatus(status);
+assert.deepEqual(browserStatus, {
+  status: "available",
+  credentialReferenceId: "ytcred_status_reference_001",
+  provider: "youtube",
+  providerChannelId: "UC_status_reference_only",
+  scopeLabel: "youtube.readonly",
+  scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+  expiresAtIso: "2026-06-02T15:00:00.000Z",
+  expiryStatus: "active",
+  revoked: false,
+  revokedAtIso: null,
+  reconnectRequired: false
+});
+assert.deepEqual(
+  Object.keys(browserStatus).sort(),
+  [
+    "credentialReferenceId",
+    "expiresAtIso",
+    "expiryStatus",
+    "provider",
+    "providerChannelId",
+    "reconnectRequired",
+    "revoked",
+    "revokedAtIso",
+    "scopeLabel",
+    "scopeSet",
+    "status"
+  ].sort(),
+  "browser-readable status has no token, ciphertext, decrypt, secret, quota, or billing fields"
+);
+assert.equal(
+  statusBoundary.createYouTubeOAuthCredentialBrowserReadableStatus({
+    ...status,
+    expiryStatus: "expired"
+  }).reconnectRequired,
+  true,
+  "expired credentials require reconnect"
+);
+assert.equal(
+  statusBoundary.createYouTubeOAuthCredentialBrowserReadableStatus({
+    ...status,
+    expiryStatus: "revoked",
+    revoked: true,
+    revokedAtIso: "2026-06-02T14:05:00.000Z"
+  }).reconnectRequired,
+  true,
+  "revoked credentials require reconnect"
+);
+assert.deepEqual(
+  statusBoundary.createYouTubeOAuthCredentialStatusUnavailablePayload({
+    credentialReferenceId: "ytcred_status_reference_001",
+    reason: "trusted-adapter-not-wired"
+  }),
+  {
+    status: "unavailable",
+    credentialReferenceId: "ytcred_status_reference_001",
+    provider: "youtube",
+    reason: "trusted-adapter-not-wired",
+    reconnectRequired: true
+  },
+  "unwired skeleton returns sanitized unavailable state"
+);
+
 assert.equal(
   adapter.createYouTubeOAuthCredentialSupabaseStatus({
     ...insert,
@@ -259,6 +384,26 @@ const supabase = {
   from(tableName) {
     events.push({ type: "from", tableName });
     return {
+      select(columns) {
+        events.push({ type: "select", columns });
+        return {
+          eq(column, value) {
+            events.push({ type: "eq", column, value });
+            return {
+              single: async () => ({
+                data: {
+                  ...insert,
+                  id: "00000000-0000-4000-8000-000000000099",
+                  revoked_at: "2026-06-02T14:05:00.000Z",
+                  revocation_reason: "rollback-unusable-reference",
+                  updated_at: "2026-06-02T14:05:00.000Z"
+                },
+                error: null
+              })
+            };
+          }
+        };
+      },
       upsert(row, options) {
         events.push({ type: "upsert", row, options });
         return {
@@ -323,17 +468,63 @@ assert.equal(revoked.revokedAtIso, "2026-06-02T14:05:00.000Z", "trusted adapter 
 assert.equal(revoked.tokenValue, "never-returned-by-design", "revoked status never returns token value");
 assert.equal(revoked.ciphertext, "never-returned-by-design", "revoked status never returns ciphertext");
 
+assert.deepEqual(
+  await trustedAdapter.getCredentialStatus({
+    credentialReferenceId: "ytcred_status_reference_001"
+  }),
+  revoked,
+  "trusted adapter status read returns sanitized status"
+);
+assert.deepEqual(
+  await statusBoundary.readYouTubeOAuthCredentialStatus({
+    credentialReferenceId: "ytcred_status_reference_001",
+    trustedAdapter,
+    credentialResolutionDisabled: false
+  }),
+  {
+    status: "available",
+    credentialReferenceId: "ytcred_status_reference_001",
+    provider: "youtube",
+    providerChannelId: "UC_status_reference_only",
+    scopeLabel: "youtube.readonly",
+    scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+    expiresAtIso: "2026-06-02T15:00:00.000Z",
+    expiryStatus: "revoked",
+    revoked: true,
+    revokedAtIso: "2026-06-02T14:05:00.000Z",
+    reconnectRequired: true
+  },
+  "status boundary reads through trusted adapter and returns browser-safe metadata only"
+);
+assert.deepEqual(
+  await statusBoundary.readYouTubeOAuthCredentialStatus({
+    credentialReferenceId: "ytcred_status_reference_001",
+    trustedAdapter,
+    credentialResolutionDisabled: true
+  }),
+  {
+    status: "credential-resolution-disabled",
+    credentialReferenceId: "ytcred_status_reference_001",
+    provider: "youtube",
+    reconnectRequired: true
+  },
+  "emergency disable returns sanitized reconnect-required state without adapter access"
+);
+
 for (const event of events) {
   const serialized = JSON.stringify(event);
   assert.doesNotMatch(serialized, /oauthAccessToken|oauthRefreshToken|authorizationCode|secretValue|SUPABASE_SERVICE_ROLE_KEY|SERVICE_ROLE_KEY/i);
 }
 
-assert.match(taskSource, /trusted Supabase adapter \/ credential sanitized status boundary/i, "task.md records this follow-up");
-assert.match(taskSource, /PR #289.*merge/i, "task.md records the PR #289 merge premise");
+assert.match(taskSource, /credential status endpoint \/ server action skeleton/i, "task.md records this follow-up");
+assert.match(taskSource, /PR #290.*merge/i, "task.md records the PR #290 merge premise");
 assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary");
 
 const allowedChangedFiles = new Set([
   adapterPath,
+  statusBoundaryPath,
+  statusRoutePath,
+  statusActionPath,
   runtimePath,
   "docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md",
   "scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs",

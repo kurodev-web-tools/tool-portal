@@ -410,6 +410,8 @@ assert.match(
 
 const separateImplementationFiles = new Set([
   "lib/comment-translator-youtube-token-store-runtime.ts",
+  "app/api/comment-translator/youtube/credential-status/route.ts",
+  "app/tools/comment-translator/actions.ts",
   "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs"
 ]);

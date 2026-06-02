@@ -4,6 +4,7 @@ import {
   createYouTubeOAuthCredentialStatusUnavailablePayload,
   readYouTubeOAuthCredentialStatus
 } from "@/lib/comment-translator-youtube-credential-status-boundary";
+import { createTrustedYouTubeOAuthCredentialSupabaseStatusReader } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
 
 const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
@@ -23,11 +24,16 @@ export async function getYouTubeOAuthCredentialStatusAction(formData: FormData) 
     });
   }
 
+  const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled({
+    [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
+  });
+  const trustedStatusReader = credentialResolutionDisabled
+    ? null
+    : createTrustedYouTubeOAuthCredentialSupabaseStatusReader();
+
   return readYouTubeOAuthCredentialStatus({
     credentialReferenceId,
-    trustedAdapter: null,
-    credentialResolutionDisabled: isYouTubeOAuthCredentialResolutionDisabled({
-      [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
-    })
+    trustedAdapter: trustedStatusReader?.trustedAdapter ?? null,
+    credentialResolutionDisabled
   });
 }

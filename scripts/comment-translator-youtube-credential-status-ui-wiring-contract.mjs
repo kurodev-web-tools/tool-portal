@@ -143,7 +143,8 @@ for (const exportedType of [
 for (const exportedConstOrFunction of [
   "youtubeOAuthCredentialStatusUiWiringContract",
   "createYouTubeOAuthCredentialStatusUiWiring",
-  "createYouTubeOAuthCredentialStatusUiWiringReadiness"
+  "createYouTubeOAuthCredentialStatusUiWiringReadiness",
+  "assessYouTubeOAuthCredentialStatusDisplayWiringReadiness"
 ]) {
   assert.match(
     uiWiringSource,
@@ -173,6 +174,11 @@ assert.equal(
   uiWiring.youtubeOAuthCredentialStatusUiWiringContract.credentialReferenceClientPayload,
   "readiness-only-no-new-client-payload",
   "UI wiring contract does not add new credential reference client payload wiring"
+);
+assert.equal(
+  uiWiring.youtubeOAuthCredentialStatusUiWiringContract.displayWiringStage,
+  "blocked-until-approved-client-safe-credential-reference-source",
+  "display wiring stage is explicitly blocked until an approved client-safe credential reference source exists"
 );
 assert.equal(
   uiWiring.youtubeOAuthCredentialStatusUiWiringContract.emergencyDisableEnv,
@@ -320,6 +326,53 @@ assert.deepEqual(
   "readiness can become ready only when an approved sanitized credential reference payload already exists"
 );
 
+assert.deepEqual(
+  uiWiring.assessYouTubeOAuthCredentialStatusDisplayWiringReadiness({
+    serverAction: "getYouTubeOAuthCredentialStatusAction",
+    approvedClientCredentialReferenceSource: "missing-client-safe-credential-reference",
+    surface: "/tools/comment-translator"
+  }),
+  {
+    status: "blocked-pending-client-reference-source",
+    surface: "/tools/comment-translator",
+    serverAction: "getYouTubeOAuthCredentialStatusAction",
+    approvedClientCredentialReferenceSource: "missing-client-safe-credential-reference",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "approved-client-safe-credential-reference-source-required",
+    nextPrConditions: [
+      "define-approved-client-safe-credential-reference-source",
+      "keep-client-payload-to-sanitized-credential-status-metadata-only",
+      "preserve-no-localStorage-indexedDB-or-handoff-payload-change",
+      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+    ]
+  },
+  "display wiring readiness returns blocker summary when no approved client-safe credential reference source exists"
+);
+
+assert.deepEqual(
+  uiWiring.assessYouTubeOAuthCredentialStatusDisplayWiringReadiness({
+    serverAction: "getYouTubeOAuthCredentialStatusAction",
+    approvedClientCredentialReferenceSource: "existing-approved-client-safe-credential-reference",
+    surface: "/tools/comment-translator"
+  }),
+  {
+    status: "ready-for-display-wiring-pr",
+    surface: "/tools/comment-translator",
+    serverAction: "getYouTubeOAuthCredentialStatusAction",
+    approvedClientCredentialReferenceSource: "existing-approved-client-safe-credential-reference",
+    clientPayloadBoundary: "sanitized-credential-status-metadata-only",
+    safeStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
+    nextStep: "wire-status-display-to-existing-approved-client-safe-reference"
+  },
+  "display wiring can become ready only with an existing approved client-safe credential reference source"
+);
+
+assert.doesNotMatch(
+  componentSource,
+  /getYouTubeOAuthCredentialStatusAction|credentialReferenceId/i,
+  "current dock does not add new credential status action calls or credential reference payload wiring"
+);
 assert.match(statusBoundarySource, /credential-status-metadata-only/, "server-only status boundary remains metadata-only");
 assert.match(statusActionSource, /getYouTubeOAuthCredentialStatusAction/, "existing server action remains the readiness target");
 assert.match(statusActionSource, /YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED/, "server action preserves emergency disable boundary");

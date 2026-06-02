@@ -7,6 +7,12 @@ import ts from "typescript";
 
 const root = process.cwd();
 
+const migrationPath = "supabase/migrations/20260601000000_youtube_oauth_credentials.sql";
+const runtimePath = "lib/comment-translator-youtube-token-store-runtime.ts";
+const foundationPath = "lib/comment-translator-youtube-oauth-token-store-foundation.ts";
+const blockerMemoPath = "docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md";
+const taskPath = "task.md";
+
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
 }
@@ -16,26 +22,22 @@ function exists(relativePath) {
 }
 
 function changedFiles() {
-  try {
-    const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
-      cwd: root,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"]
-    })
-      .split(/\r?\n/)
-      .filter(Boolean);
-    const untracked = execSync("git ls-files --others --exclude-standard", {
-      cwd: root,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"]
-    })
-      .split(/\r?\n/)
-      .filter(Boolean);
+  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"]
+  })
+    .split(/\r?\n/)
+    .filter(Boolean);
+  const untracked = execSync("git ls-files --others --exclude-standard", {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"]
+  })
+    .split(/\r?\n/)
+    .filter(Boolean);
 
-    return [...new Set([...committedDiff, ...untracked])].map((file) => file.replace(/\\/g, "/"));
-  } catch {
-    return [];
-  }
+  return [...new Set([...committedDiff, ...untracked])].map((file) => file.replace(/\\/g, "/"));
 }
 
 function loadTsModule(relativePath) {
@@ -87,15 +89,13 @@ function loadTsModule(relativePath) {
   }
 }
 
-const foundationPath = "lib/comment-translator-youtube-oauth-token-store-foundation.ts";
-const blockerMemoPath = "docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md";
-const taskPath = "task.md";
-const approvedMigrationPrContractPath =
-  "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs";
-
+assert.ok(exists(migrationPath), "YouTube OAuth credential SQL migration exists");
+assert.ok(exists(runtimePath), "server-only YouTube token store runtime skeleton exists");
 assert.ok(exists(foundationPath), "YouTube OAuth token store foundation remains available");
 assert.ok(exists(blockerMemoPath), "YouTube encrypted token store blocker resolution memo exists");
 
+const migration = read(migrationPath);
+const runtimeSource = read(runtimePath);
 const foundationSource = read(foundationPath);
 const blockerMemo = read(blockerMemoPath);
 const taskSource = read(taskPath);
@@ -104,516 +104,237 @@ const routeSource = read("app/tools/comment-translator/page.tsx");
 const providerBoundarySource = read("lib/comment-translator-provider-boundary.ts");
 const deeplProviderSource = read("lib/comment-translator-deepl-provider.ts");
 
-assert.match(foundationSource, /^import "server-only";/m, "approved migration PR review gate stays server-only");
+assert.match(runtimeSource, /^import "server-only";/m, "token persistence runtime is server-only");
+assert.match(foundationSource, /youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate/, "final review gate boundary remains in place");
 
 for (const exportedType of [
-  "YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate",
-  "YouTubeEncryptedTokenStoreSeparateApprovedMigrationFinalReviewEvidence",
-  "YouTubeEncryptedTokenStoreSeparateApprovedMigrationImplementationApprovalEvidence",
-  "YouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewResult"
+  "YouTubeOAuthCredentialPersistenceDraft",
+  "YouTubeOAuthCredentialPersistenceResult",
+  "YouTubeOAuthCredentialStore",
+  "YouTubeOAuthCredentialSanitizedStatus"
 ]) {
-  assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `exports ${exportedType}`);
+  assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `runtime exports ${exportedType}`);
 }
 
 for (const exportedConstOrFunction of [
-  "youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate",
-  "assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview",
-  "createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary"
+  "youtubeOAuthCredentialTokenStoreRuntimeContract",
+  "youtubeOAuthTokenStoreKeyManagementReferences",
+  "createYouTubeOAuthCredentialPersistenceDraft",
+  "persistYouTubeOAuthCredentialReference",
+  "invalidateYouTubeOAuthCredentialReference",
+  "isYouTubeOAuthCredentialResolutionDisabled"
 ]) {
   assert.match(
-    foundationSource,
-    new RegExp(`export (?:const|function) ${exportedConstOrFunction}\\b`),
-    `exports ${exportedConstOrFunction}`
+    runtimeSource,
+    new RegExp(`export (?:const|function|async function) ${exportedConstOrFunction}\\b`),
+    `runtime exports ${exportedConstOrFunction}`
   );
 }
 
 assert.doesNotMatch(
   `${componentSource}\n${routeSource}`,
-  /comment-translator-youtube-oauth-token-store-foundation|comment-translator-youtube-api-adapter|comment-translator-youtube-runtime-foundation|youtube\.googleapis|OAuth2Client|GoogleAuth|refresh_token|access_token|localStorage|indexedDB/,
+  /comment-translator-youtube-token-store-runtime|comment-translator-youtube-oauth-token-store-foundation|comment-translator-youtube-api-adapter|comment-translator-youtube-runtime-foundation|youtube\.googleapis|OAuth2Client|GoogleAuth|refresh_token|access_token|localStorage|indexedDB/,
   "client component and route shell are not coupled to token store, Google API, or polling runtime"
 );
 assert.doesNotMatch(
   `${providerBoundarySource}\n${deeplProviderSource}`,
-  /comment-translator-youtube-oauth-token-store-foundation|comment-translator-youtube-api-adapter|comment-translator-youtube-runtime-foundation/,
+  /comment-translator-youtube-token-store-runtime|comment-translator-youtube-oauth-token-store-foundation|comment-translator-youtube-api-adapter|comment-translator-youtube-runtime-foundation/,
   "translation provider modules do not import YouTube token store or runtime modules"
 );
 
-const foundation = loadTsModule(foundationPath);
-const gate = foundation.youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate;
-
-assert.equal(gate.implementationStage, "separate-approved-migration-pr-final-review-blocker", "gate stage is explicit");
-assert.equal(gate.prerequisitePullRequest, "#276", "gate records PR #276 prerequisite");
-assert.equal(gate.prerequisiteMergeStatus, "merged-into-codex-comment-translator-preview", "PR #276 is merged");
-assert.equal(
-  gate.sourceReadinessApprovalState,
-  "readiness-approved-not-migration-implementation",
-  "gate is sourced from readiness-only approval"
-);
-assert.equal(gate.postReviewPullRequest, "#278", "gate records PR #278 prerequisite");
-assert.equal(gate.postReviewMergeStatus, "merged-into-codex-comment-translator-preview", "PR #278 is merged");
-assert.equal(gate.workersCheckDisposition, "pass", "PR #278 Workers check is recorded as pass");
-assert.equal(
-  gate.cloudflarePagesDisposition,
-  "dashboard-log-review-item",
-  "PR #278 Cloudflare Pages failure remains a dashboard log review item"
-);
-assert.equal(
-  gate.postFinalImplementationApprovalPullRequest,
-  "#279",
-  "gate records PR #279 as the latest approval evidence prerequisite"
-);
-assert.equal(
-  gate.postFinalImplementationApprovalMergeStatus,
-  "merged-into-codex-comment-translator-preview",
-  "PR #279 is merged"
-);
-assert.equal(
-  gate.postFinalImplementationApprovalWorkersCheckDisposition,
-  "pass",
-  "PR #279 Workers check is recorded as pass"
-);
-assert.equal(
-  gate.postFinalImplementationApprovalCloudflarePagesDisposition,
-  "dashboard-log-review-item",
-  "PR #279 Cloudflare Pages failure remains a dashboard log review item"
-);
-assert.equal(
-  gate.postImplementationApprovalEvidencePullRequest,
-  "#287",
-  "gate records PR #287 as the latest post-PR #285 approval evidence review prerequisite"
-);
-assert.equal(
-  gate.postImplementationApprovalEvidenceMergeStatus,
-  "merged-into-codex-comment-translator-preview",
-  "PR #287 is merged"
-);
-assert.equal(
-  gate.postImplementationApprovalEvidenceWorkersCheckDisposition,
-  "pass",
-  "PR #287 Workers check is recorded as pass"
-);
-assert.equal(
-  gate.postImplementationApprovalEvidenceCloudflarePagesDisposition,
-  "dashboard-log-review-item",
-  "PR #287 Cloudflare Pages failure remains a dashboard log review item"
-);
-assert.equal(
-  gate.finalReviewStatus,
-  "blocked-pending-final-table-rls-key-management-review",
-  "final implementation review remains blocked"
-);
-assert.equal(
-  gate.finalReviewEvidenceStatus,
-  "missing-from-current-task-docs-pr-context",
-  "final review evidence is explicitly missing until recorded"
-);
-assert.equal(gate.explicitImplementationApprovalStatus, "missing", "explicit implementation approval is missing");
-assert.equal(gate.contractOnlyInThisPr, true, "this PR remains contract/docs only");
-assert.equal(gate.finalMigrationImplementationApprovalRequired, true, "final implementation approval is required");
-assert.equal(gate.migrationImplementationAllowedInThisPr, false, "this PR cannot add migration implementation");
-assert.equal(gate.schemaMutation, "forbidden-until-final-review", "schema mutation remains forbidden");
-assert.equal(gate.rlsMutation, "forbidden-until-final-review", "RLS mutation remains forbidden");
-assert.equal(gate.tokenPersistence, "still-blocked", "token persistence remains blocked");
-assert.equal(gate.clientStorage, "forbidden", "browser storage remains forbidden");
-assert.equal(gate.providerCoupling, "forbidden-direct-import-or-call", "provider coupling remains forbidden");
-assert.equal(gate.quotaWrite, "not-implemented", "quota write remains out of scope");
-
 for (const fragment of [
+  "create table if not exists public.youtube_oauth_credentials",
+  "owner_user_id uuid not null references auth.users",
+  "credential_reference_id text not null",
+  "provider text not null",
+  "provider_channel_id text not null",
+  "scope_set text[] not null",
+  "expires_at timestamptz not null",
+  "revoked_at timestamptz",
+  "access_token_ciphertext_ref text not null",
+  "refresh_token_ciphertext_ref text not null",
+  "encryption_key_version text not null",
+  "encryption_key_ref text not null"
+]) {
+  assert.match(migration, new RegExp(fragment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), `migration includes ${fragment}`);
+}
+
+assert.ok(
+  migration.indexOf("alter table public.youtube_oauth_credentials enable row level security") <
+    migration.indexOf("create policy \"youtube_oauth_credentials_service_role_all\""),
+  "RLS is enabled before trusted-server policy"
+);
+assert.match(migration, /revoke all on table public\.youtube_oauth_credentials from anon/i, "anon receives no direct table access");
+assert.match(migration, /revoke all on table public\.youtube_oauth_credentials from authenticated/i, "authenticated browser clients receive no direct table access");
+assert.doesNotMatch(
+  migration,
+  /grant\s+select[^;]+public\.youtube_oauth_credentials\s+to\s+authenticated/i,
+  "browser clients are not granted direct select on encrypted credential rows"
+);
+assert.match(
+  migration,
+  /create policy "youtube_oauth_credentials_service_role_all"[\s\S]+for all[\s\S]+to service_role[\s\S]+using \(true\)[\s\S]+with check \(true\)/i,
+  "trusted server service role is the only explicit credential row policy"
+);
+assert.match(migration, /create unique index if not exists youtube_oauth_credentials_reference_key/i, "credential reference lookup index exists");
+assert.match(migration, /credential resolution disable/i, "migration comments preserve emergency disable rollback language");
+assert.match(migration, /no token value logging/i, "migration comments preserve no token value logging rollback language");
+
+const runtime = loadTsModule(runtimePath);
+assert.equal(
+  runtime.youtubeOAuthCredentialTokenStoreRuntimeContract.implementationStage,
+  "server-only-token-persistence-runtime-skeleton",
+  "runtime stage is implementation skeleton"
+);
+assert.equal(runtime.youtubeOAuthCredentialTokenStoreRuntimeContract.tableName, "youtube_oauth_credentials", "runtime targets the approved table");
+assert.equal(runtime.youtubeOAuthCredentialTokenStoreRuntimeContract.tokenValueOutput, "never-returned-by-design", "runtime never returns token values");
+assert.equal(runtime.youtubeOAuthCredentialTokenStoreRuntimeContract.clientDecrypt, "forbidden", "client decrypt is forbidden");
+assert.equal(runtime.youtubeOAuthCredentialTokenStoreRuntimeContract.googleApiLiveCall, "not-implemented", "runtime does not call Google APIs");
+assert.equal(runtime.youtubeOAuthCredentialTokenStoreRuntimeContract.quotaWrite, "not-implemented", "runtime does not write quota");
+
+assert.deepEqual(
+  runtime.youtubeOAuthTokenStoreKeyManagementReferences,
+  {
+    keyReferenceEnv: "YOUTUBE_OAUTH_TOKEN_STORE_KEY_REF",
+    keyVersionEnv: "YOUTUBE_OAUTH_TOKEN_STORE_KEY_VERSION",
+    credentialResolutionDisabledEnv: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
+    managedSecretReference: "managed-secret-or-kms-reference-only",
+    secretValueHandling: "never-read-or-printed-by-this-contract",
+    clientDecrypt: "forbidden"
+  },
+  "key management is fixed to env/reference names without secret values"
+);
+
+const draft = runtime.createYouTubeOAuthCredentialPersistenceDraft({
+  ownerUserId: "00000000-0000-4000-8000-000000000001",
+  credentialReferenceId: "ytcred_test_reference_001",
+  providerChannelId: "UC_reference_only",
+  scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+  expiresAtIso: "2026-06-01T15:00:00.000Z",
+  accessTokenCiphertextReference: "kms://youtube-token-store/access/credential-reference-only",
+  refreshTokenCiphertextReference: "kms://youtube-token-store/refresh/credential-reference-only",
+  encryptionKeyReference: "kms://youtube-token-store/key-reference-only",
+  encryptionKeyVersion: "v1",
+  nowIso: "2026-06-01T14:00:00.000Z"
+});
+
+assert.equal(draft.provider, "youtube", "draft provider is YouTube");
+assert.equal(draft.credentialReferenceId, "ytcred_test_reference_001", "draft keeps browser-safe reference");
+assert.equal(draft.status, "active", "draft starts active");
+assert.equal(draft.tokenValue, "never-accepted-by-design", "draft rejects token values");
+assert.equal(draft.refreshTokenValue, "never-accepted-by-design", "draft rejects refresh token values");
+
+const capturedRows = [];
+const store = {
+  async upsertEncryptedCredential(row) {
+    capturedRows.push(row);
+    return row;
+  },
+  async markCredentialRevoked(referenceId, reason) {
+    return { credentialReferenceId: referenceId, revokedAtIso: "2026-06-01T14:05:00.000Z", reason };
+  }
+};
+
+const persisted = await runtime.persistYouTubeOAuthCredentialReference({
+  draft,
+  store,
+  credentialResolutionDisabled: false
+});
+
+assert.equal(capturedRows.length, 1, "runtime writes one encrypted credential reference row through trusted store");
+assert.deepEqual(persisted, {
+  status: "persisted",
+  credentialReferenceId: "ytcred_test_reference_001",
+  provider: "youtube",
+  providerChannelId: "UC_reference_only",
+  scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+  expiresAtIso: "2026-06-01T15:00:00.000Z",
+  revoked: false,
+  tokenValue: "never-returned-by-design",
+  refreshTokenValue: "never-returned-by-design"
+});
+
+const disabled = await runtime.persistYouTubeOAuthCredentialReference({
+  draft,
+  store,
+  credentialResolutionDisabled: true
+});
+assert.equal(disabled.status, "credential-resolution-disabled", "emergency disable prevents token persistence");
+assert.equal(capturedRows.length, 1, "emergency disable does not write another row");
+
+const revoked = await runtime.invalidateYouTubeOAuthCredentialReference({
+  credentialReferenceId: "ytcred_test_reference_001",
+  reason: "rollback-unusable-reference",
+  store
+});
+assert.deepEqual(revoked, {
+  status: "revoked",
+  credentialReferenceId: "ytcred_test_reference_001",
+  revokedAtIso: "2026-06-01T14:05:00.000Z",
+  tokenValue: "never-returned-by-design",
+  refreshTokenValue: "never-returned-by-design"
+});
+
+assert.equal(runtime.isYouTubeOAuthCredentialResolutionDisabled({ YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED: "1" }), true);
+assert.equal(runtime.isYouTubeOAuthCredentialResolutionDisabled({ YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED: "false" }), false);
+
+for (const docFragment of [
+  "Separate Implementation PR",
+  "PR #288",
   "youtube_oauth_credentials",
-  "owner_user_id",
-  "credential_reference_id",
-  "provider_channel_id",
-  "read-only YouTube OAuth scope",
-  "encrypted access token ciphertext reference",
-  "encrypted refresh token ciphertext reference",
-  "key version",
-  "revoked at",
-  "no token values"
-]) {
-  assert.match(JSON.stringify(gate.tableShape), new RegExp(fragment, "i"), `table shape records ${fragment}`);
-}
-
-for (const fragment of [
-  "RLS enabled before runtime use",
-  "no browser client policy can read or write token material",
-  "trusted server runtime only",
-  "redacted browser state",
-  "no client decrypt"
-]) {
-  assert.match(JSON.stringify(gate.rlsPosture), new RegExp(fragment, "i"), `RLS posture records ${fragment}`);
-}
-
-for (const fragment of [
-  "create table after final review",
-  "enable RLS before any token write",
-  "add indexes for owner and credential reference lookup",
-  "do not backfill live credentials",
-  "no runtime token resolver write before key-management review"
-]) {
-  assert.match(JSON.stringify(gate.migrationOrder), new RegExp(fragment, "i"), `migration order records ${fragment}`);
-}
-
-for (const fragment of [
-  "managed secret or KMS",
-  "server-only envelope",
-  "key version metadata",
-  "rotation",
-  "emergency disable",
-  "no client decrypt"
-]) {
-  assert.match(JSON.stringify(gate.keyManagementReview), new RegExp(fragment, "i"), `key review records ${fragment}`);
-}
-
-for (const fragment of [
-  "disable credential resolution",
+  "RLS enabled before runtime token write",
+  "trusted server runtime",
+  "credential resolution disable",
   "reviewed database rollback path",
   "no token value logging",
-  "revoke or invalidate credential references"
+  "No Google API live call",
+  "No client component change"
 ]) {
-  assert.match(JSON.stringify(gate.rollbackReview), new RegExp(fragment, "i"), `rollback review records ${fragment}`);
+  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records implementation boundary: ${docFragment}`);
 }
 
-assert.equal(gate.safeLiveSmoke.status, "not-run-until-safe-live-smoke-conditions", "safe live smoke remains gated");
-assert.ok(gate.safeLiveSmoke.uncheckedScopeWhenNotRun.length > 0, "safe live smoke unchecked scope is explicit");
-
-const blockedResult = foundation.assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview([]);
-assert.deepEqual(
-  blockedResult,
-  {
-    status: "blocked-pending-final-review",
-    missingReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
-    contractOnly: true,
-    migrationImplementationAllowedInThisPr: false,
-    nextAction: "collect-final-table-rls-key-management-review"
-  },
-  "approved migration PR stays blocked without final review evidence"
-);
-
-const readyResult = foundation.assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview([
-  { area: "table-shape", approved: true, scope: "final table shape review" },
-  { area: "rls-posture", approved: true, scope: "final RLS posture review" },
-  { area: "key-management", approved: true, scope: "final managed secret or KMS key-management review" },
-  { area: "rollback", approved: true, scope: "final rollback review" }
-]);
-assert.deepEqual(
-  readyResult,
-  {
-    status: "blocked-pending-explicit-implementation-approval",
-    approvedReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
-    missingImplementationApproval: true,
-    contractOnly: true,
-    migrationImplementationAllowedInThisPr: false,
-    nextAction: "collect-explicit-implementation-approval-before-sql"
-  },
-  "final review evidence still blocks implementation when explicit implementation approval is missing"
-);
-
-const implementationReadyResult = foundation.assessYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReview(
-  [
-    { area: "table-shape", approved: true, scope: "final table shape review" },
-    { area: "rls-posture", approved: true, scope: "final RLS posture review" },
-    { area: "key-management", approved: true, scope: "final managed secret or KMS key-management review" },
-    { area: "rollback", approved: true, scope: "final rollback review" }
-  ],
-  {
-    approved: true,
-    scope: "explicit implementation approval for a separate implementation PR only"
-  }
-);
-assert.deepEqual(
-  implementationReadyResult,
-  {
-    status: "ready-for-separate-implementation-pr",
-    approvedReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
-    implementationApprovalScope: "explicit implementation approval for a separate implementation PR only",
-    contractOnly: true,
-    migrationImplementationAllowedInThisPr: false,
-    nextAction: "open-separate-sql-rls-token-persistence-implementation-pr"
-  },
-  "complete final review and explicit implementation approval only unlock a separate implementation PR"
-);
-
-const summary = foundation.createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary();
-for (const fragment of [
-  "blocked-pending-final-table-rls-key-management-review",
-  "PR #278",
-  "PR #287",
-  "youtube_oauth_credentials",
-  "RLS",
-  "managed secret or KMS",
-  "rollback",
-  "explicit implementation approval missing",
-  "contract-only",
-  "migration implementation remains blocked"
+for (const taskFragment of [
+  "PR #288",
+  "YouTube encrypted token store separate implementation",
+  "Product owner / Data owner / Security owner",
+  "SQL migration",
+  "RLS policy",
+  "server-only token persistence runtime skeleton",
+  "safe live YouTube login / OAuth",
+  "Supabase migration / RLS smoke は未実施",
+  "幅別確認は不要"
 ]) {
-  assert.match(summary, new RegExp(fragment, "i"), `summary includes ${fragment}`);
+  assert.match(taskSource, new RegExp(taskFragment, "i"), `task.md records implementation closeout: ${taskFragment}`);
 }
-
-for (const docFragment of [
-  "Separate Approved Migration PR Final Review Blocker",
-  "PR #276",
-  "final-table-rls-key-management-review-required",
-  "youtube_oauth_credentials",
-  "RLS enabled before runtime use",
-  "managed secret or KMS",
-  "Rotation",
-  "Emergency disable",
-  "No client decrypt",
-  "Rollback review",
-  "No Supabase migration",
-  "No RLS policy",
-  "No token persistence"
-]) {
-  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records approved migration PR final blocker: ${docFragment}`);
-}
-
-for (const docFragment of [
-  "Post-PR #277 Implementation Gate Review",
-  "PR #277 is merged",
-  "Cloudflare Pages",
-  "Workers Builds",
-  "blocked-pending-final-table-rls-key-management-review",
-  "explicit implementation approval is missing",
-  "request explicit implementation approval before SQL",
-  "No SQL migration",
-  "No RLS policy",
-  "No token persistence runtime"
-]) {
-  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #277 implementation blocker: ${docFragment}`);
-}
-
-for (const docFragment of [
-  "Post-PR #278 Final Implementation Approval Review",
-  "PR #278 is merged",
-  "Cloudflare Pages",
-  "Workers Builds",
-  "dashboard log review item",
-  "final table/RLS/key-management/rollback review",
-  "explicit implementation approval",
-  "missing",
-  "No SQL migration",
-  "No RLS policy",
-  "No token persistence runtime",
-  "separate implementation PR"
-]) {
-  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #278 final approval gate: ${docFragment}`);
-}
-
-for (const docFragment of [
-  "Post-PR #279 Implementation Approval Evidence Review",
-  "PR #279 is merged",
-  "Cloudflare Pages",
-  "Workers Builds",
-  "dashboard log review item",
-  "final table/RLS/key-management/rollback review",
-  "explicit implementation approval",
-  "missing",
-  "blocker summary",
-  "No SQL migration",
-  "No RLS policy",
-  "No token persistence runtime",
-  "separate implementation PR"
-]) {
-  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #279 approval evidence review: ${docFragment}`);
-}
-
-for (const docFragment of [
-  "Post-PR #280 Explicit Implementation Approval Collection",
-  "PR #280 is merged",
-  "Cloudflare Pages",
-  "Workers Builds",
-  "dashboard log review item",
-  "final table/RLS/key-management/rollback review",
-  "explicit implementation approval",
-  "missing",
-  "blocker summary",
-  "No SQL migration",
-  "No RLS policy",
-  "No token persistence runtime",
-  "separate implementation PR"
-]) {
-  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #280 approval collection: ${docFragment}`);
-}
-
-for (const docFragment of [
-  "Post-PR #287 Approval Evidence Review",
-  "PR #287 is merged",
-  "Cloudflare Pages",
-  "Workers Builds",
-  "dashboard log review item",
-  "final table/RLS/key-management/rollback review",
-  "explicit implementation approval",
-  "missing",
-  "blocker summary",
-  "No SQL migration",
-  "No RLS policy",
-  "No token persistence runtime",
-  "separate implementation PR"
-]) {
-  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #287 approval evidence review: ${docFragment}`);
-}
-
-for (const docFragment of [
-  "Post-PR #283 Approval Evidence Review",
-  "PR #283 is merged",
-  "Cloudflare Pages",
-  "Workers Builds",
-  "dashboard log review item",
-  "final table/RLS/key-management/rollback review",
-  "explicit implementation approval",
-  "missing",
-  "blocker summary",
-  "No SQL migration",
-  "No RLS policy",
-  "No token persistence runtime",
-  "separate implementation PR"
-]) {
-  assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records post-PR #283 approval evidence review: ${docFragment}`);
-}
-
-assert.match(taskSource, /PR #276 .*merged|PR #276 .*merge/i, "task.md records the PR #276 merge gate");
-assert.match(
-  taskSource,
-  /Cloudflare Pages.*PR #275.*Workers|PR #275.*Cloudflare Pages.*Workers/i,
-  "task.md records the PR #276 Pages failure compared with PR #275 Workers pass history"
-);
-assert.match(
-  taskSource,
-  /final table\/RLS\/key-management review.*未承認|blocked-pending-final-table-rls-key-management-review/i,
-  "task.md records missing final table/RLS/key-management implementation approval"
-);
-assert.match(
-  taskSource,
-  /UI変更なし|UI change was not made/i,
-  "task.md records no UI width check requirement"
-);
-assert.match(taskSource, /PR #277 .*merged|PR #277 .*merge/i, "task.md records the PR #277 merge gate");
-assert.match(
-  taskSource,
-  /Cloudflare Pages.*PR #275.*PR #276.*Workers|PR #275.*PR #276.*Cloudflare Pages.*Workers/i,
-  "task.md records PR #277 Pages failure against PR #275/#276 Workers pass history"
-);
-assert.match(
-  taskSource,
-  /explicit implementation approval.*未承認|explicit implementation approval.*missing/i,
-  "task.md records missing explicit implementation approval"
-);
-assert.match(
-  taskSource,
-  /migration \/ RLS policy \/ token persistence runtime.*追加しない|No SQL migration.*No RLS policy.*No token persistence runtime/i,
-  "task.md records that migration, RLS policy, and token persistence runtime were not added"
-);
-assert.match(taskSource, /PR #278 .*merged|PR #278 .*merge/i, "task.md records the PR #278 merge gate");
-assert.match(
-  taskSource,
-  /Cloudflare Pages.*dashboard log review item|dashboard log review item.*Cloudflare Pages/i,
-  "task.md records PR #278 Cloudflare Pages as a dashboard log review item"
-);
-assert.match(
-  taskSource,
-  /final table\/RLS\/key-management\/rollback review.*未承認|final table\/RLS\/key-management\/rollback review.*missing/i,
-  "task.md records missing final table/RLS/key-management/rollback review approval"
-);
-assert.match(
-  taskSource,
-  /separate implementation PR|別 PR/,
-  "task.md sends any future implementation to a separate PR"
-);
-assert.match(taskSource, /PR #279 .*merged|PR #279 .*merge/i, "task.md records the PR #279 merge gate");
-assert.match(
-  taskSource,
-  /PR #279.*Workers.*PASS|Workers.*PASS.*PR #279/i,
-  "task.md records PR #279 Workers success"
-);
-assert.match(
-  taskSource,
-  /PR #279.*Cloudflare Pages.*dashboard log review item|Cloudflare Pages.*PR #279.*dashboard log review item/i,
-  "task.md records PR #279 Cloudflare Pages as a dashboard log review item"
-);
-assert.match(
-  taskSource,
-  /approval evidence.*欠ける|missing evidence|承認 evidence.*missing/i,
-  "task.md records missing approval evidence"
-);
-assert.match(
-  taskSource,
-  /幅別確認.*不要|width.*not required/i,
-  "task.md records why width checks are not required"
-);
-assert.match(taskSource, /PR #280 .*merged|PR #280 .*merge/i, "task.md records the PR #280 merge gate");
-assert.match(
-  taskSource,
-  /PR #280.*Workers.*PASS|Workers.*PASS.*PR #280/i,
-  "task.md records PR #280 Workers success"
-);
-assert.match(
-  taskSource,
-  /PR #280.*Cloudflare Pages.*dashboard log review item|Cloudflare Pages.*PR #280.*dashboard log review item/i,
-  "task.md records PR #280 Cloudflare Pages as a dashboard log review item"
-);
-assert.match(
-  taskSource,
-  /PR #280 body.*comments.*reviews.*missing|PR #280 body.*comments.*reviews.*明示承認.*ない/i,
-  "task.md records PR #280 context does not contain approval evidence"
-);
-assert.match(taskSource, /PR #283 .*merged|PR #283 .*merge/i, "task.md records the PR #283 merge gate");
-assert.match(
-  taskSource,
-  /PR #283.*Workers.*PASS|Workers.*PASS.*PR #283/i,
-  "task.md records PR #283 Workers success"
-);
-assert.match(
-  taskSource,
-  /PR #283.*Cloudflare Pages.*dashboard log review item|Cloudflare Pages.*PR #283.*dashboard log review item/i,
-  "task.md records PR #283 Cloudflare Pages as a dashboard log review item"
-);
-assert.match(
-  taskSource,
-  /PR #283 body.*comments.*reviews.*missing|PR #283 body.*comments.*reviews.*明示承認.*ない/i,
-  "task.md records PR #283 context does not contain approval evidence"
-);
-assert.match(taskSource, /PR #287 .*merged|PR #287 .*merge/i, "task.md records the PR #287 merge gate");
-assert.match(
-  taskSource,
-  /PR #287.*Workers.*PASS|Workers.*PASS.*PR #287/i,
-  "task.md records PR #287 Workers success"
-);
-assert.match(
-  taskSource,
-  /PR #287.*Cloudflare Pages.*dashboard log review item|Cloudflare Pages.*PR #287.*dashboard log review item/i,
-  "task.md records PR #287 Cloudflare Pages as a dashboard log review item"
-);
-assert.match(
-  taskSource,
-  /PR #287 body.*comments.*reviews.*missing|PR #287 body.*comments.*reviews.*明示承認.*ない/i,
-  "task.md records PR #287 context does not contain approval evidence"
-);
 
 const allowedChangedFiles = new Set([
-  foundationPath,
+  migrationPath,
+  runtimePath,
   blockerMemoPath,
   "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
   "scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs",
   "scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs",
   "scripts/comment-translator-youtube-token-store-explicit-approval-collection-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs",
-  approvedMigrationPrContractPath,
+  "scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs",
+  "scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs",
+  "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
+  "scripts/comment-translator-youtube-input-boundary-contract.mjs",
+  "scripts/comment-translator-server-provider-prototype-contract.mjs",
+  "scripts/comment-translator-provider-boundary-contract.mjs",
+  "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
   taskPath
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `approved migration PR review change stays in allowed files: ${file}`);
-  assert.ok(!file.startsWith("supabase/"), `approved migration PR review does not touch Supabase schema files: ${file}`);
-  assert.ok(!file.endsWith(".sql"), `approved migration PR review does not add migrations: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `implementation PR change stays in allowed files: ${file}`);
 
-  if (!file.endsWith(".mjs")) {
-    const source = read(file);
-    assert.doesNotMatch(
-      source,
-      /access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]/i,
-      `${file} does not contain token or privileged server key material`
-    );
-  }
+  const source = read(file);
+  assert.doesNotMatch(
+    source,
+    /access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN PRIVATE KEY/i,
+    `${file} does not contain OAuth token values, authorization codes, private keys, or service role key values`
+  );
 }
 
-console.log("comment translator YouTube token store separate approved migration PR contract checks passed");
+console.log("comment translator YouTube token store separate implementation contract checks passed");

@@ -330,6 +330,8 @@ assert.match(
 
 const allowedChangedFiles = new Set([
   foundationPath,
+  "lib/comment-translator-youtube-token-store-runtime.ts",
+  "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
   blockerMemoPath,
   "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
   "scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs",
@@ -337,6 +339,12 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-token-store-explicit-approval-collection-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
+  "scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs",
+  "scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs",
+  "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
+  "scripts/comment-translator-youtube-input-boundary-contract.mjs",
+  "scripts/comment-translator-server-provider-prototype-contract.mjs",
+  "scripts/comment-translator-provider-boundary-contract.mjs",
   "task.md"
 ]);
 

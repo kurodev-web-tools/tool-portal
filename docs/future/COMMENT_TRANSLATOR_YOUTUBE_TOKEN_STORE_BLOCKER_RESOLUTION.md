@@ -438,6 +438,52 @@ Review of the current prompt, task docs, PR #287 body, PR #287 comments, and PR 
 
 Because approval evidence is missing, this PR remains docs/contract-only. No SQL migration, No RLS policy, and No token persistence runtime are added. The next allowed follow-up is blocker summary / approval evidence collection, or a separate implementation PR only after final table/RLS/key-management/rollback review and explicit implementation approval are all recorded in reviewable task/docs/PR context. OAuth access token values, refresh token values, authorization code values, private credentials, and service role keys are not recorded.
 
+## Separate Implementation PR
+
+PR #288 is merged into `codex/comment-translator-preview` with merge commit `48cad58019157cbc186b73ce19aee9698bdecdfa`. The current implementation PR is based on explicit Product owner / Data owner / Security owner approval for the final table shape, RLS posture, key-management, rollback review, and explicit permission to open a separate implementation PR for SQL migration, RLS policy, and token persistence runtime skeleton.
+
+This implementation stays minimal and server-only. It adds a reviewable Supabase SQL migration for `youtube_oauth_credentials`, enables RLS enabled before runtime token write, grants encrypted row access only to trusted server runtime via `service_role`, and keeps browser clients without direct table access to token material, ciphertext references, or decrypt capability. Browser-visible state remains limited to a credential reference and sanitized status produced by server-only runtime code.
+
+### Table / RLS Implementation Boundary
+
+- Table: `youtube_oauth_credentials`.
+- Owner binding: `owner_user_id` references `auth.users(id)`.
+- Browser-safe reference: `credential_reference_id`.
+- Provider metadata: `provider`, `provider_channel_id`, read-only YouTube OAuth `scope_set`, `scope_metadata`, expiry, and revoked state.
+- Encrypted references: access and refresh token ciphertext references only. OAuth token values, authorization code values, raw Google response payloads, private credentials, and service role key values are not recorded.
+- Key metadata: managed secret or KMS reference name plus key version metadata only.
+- RLS policy: no anon or authenticated browser-client direct table access; trusted server `service_role` policy is the only explicit encrypted row accessor.
+
+### Runtime Skeleton Boundary
+
+The runtime module is `lib/comment-translator-youtube-token-store-runtime.ts` and starts with `import "server-only";`. It accepts ciphertext references and key reference metadata, persists through an injected trusted store boundary, and returns only `credentialReferenceId`, provider/channel metadata, scope, expiry, revoked state, and `never-returned-by-design` token markers. It does not perform refresh, Google API live calls, quota writes, billing integration, provider coupling, client decrypt, localStorage, or IndexedDB changes.
+
+### Key-Management References
+
+The implementation records only reference names:
+
+- `YOUTUBE_OAUTH_TOKEN_STORE_KEY_REF`
+- `YOUTUBE_OAUTH_TOKEN_STORE_KEY_VERSION`
+- `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`
+
+No secret values are required, printed, committed, or documented. Managed secret / KMS selection and rotation remain operational configuration, with key version metadata stored per credential row.
+
+### Rollback / Emergency Disable
+
+- Use credential resolution disable before rollback if token resolution is deployed.
+- Follow a reviewed database rollback path before removing or changing credential rows.
+- Keep no token value logging during rollback or investigation.
+- Revoke or invalidate unusable credential references if rollback leaves rows that cannot be resolved.
+
+### Unchecked Scope
+
+- No remote Supabase migration apply.
+- No Supabase migration / RLS smoke.
+- No Google API live call.
+- No safe live YouTube login / OAuth / owner verification / Live Chat polling smoke.
+- No refresh or revocation runtime beyond sanitized reference invalidation.
+- No client component change.
+
 ## Non-Goals
 
 - No OAuth token persistence.

@@ -156,9 +156,17 @@ const forbiddenPathPatterns = [
   /^app\/tools\/comment-translator\//
 ];
 
+const separateImplementationFiles = new Set([
+  "lib/comment-translator-youtube-token-store-runtime.ts",
+  "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
+  "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs"
+]);
+
 for (const file of changedFiles()) {
   for (const pattern of forbiddenPathPatterns) {
-    assert.doesNotMatch(file, pattern, `provider boundary design slice does not change forbidden path: ${file}`);
+    if (!separateImplementationFiles.has(file)) {
+      assert.doesNotMatch(file, pattern, `provider boundary design slice does not change forbidden path: ${file}`);
+    }
   }
 }
 

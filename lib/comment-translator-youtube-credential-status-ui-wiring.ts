@@ -67,12 +67,41 @@ export type YouTubeOAuthCredentialStatusUiWiringReadiness =
       safeFallbackStates: readonly ["unavailable", "credential-resolution-disabled"];
     };
 
+export type YouTubeOAuthCredentialStatusDisplayWiringReadiness =
+  | {
+      status: "ready-for-display-wiring-pr";
+      surface: "/tools/comment-translator";
+      serverAction: "getYouTubeOAuthCredentialStatusAction";
+      approvedClientCredentialReferenceSource: "existing-approved-client-safe-credential-reference";
+      clientPayloadBoundary: "sanitized-credential-status-metadata-only";
+      safeStates: readonly YouTubeOAuthCredentialStatusUiStateId[];
+      nextStep: "wire-status-display-to-existing-approved-client-safe-reference";
+    }
+  | {
+      status: "blocked-pending-client-reference-source";
+      surface: "/tools/comment-translator";
+      serverAction: "getYouTubeOAuthCredentialStatusAction";
+      approvedClientCredentialReferenceSource:
+        | "missing-client-safe-credential-reference"
+        | "new-client-payload-required";
+      currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled";
+      blocker: "approved-client-safe-credential-reference-source-required";
+      nextPrConditions: readonly [
+        "define-approved-client-safe-credential-reference-source",
+        "keep-client-payload-to-sanitized-credential-status-metadata-only",
+        "preserve-no-localStorage-indexedDB-or-handoff-payload-change",
+        "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+        "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+      ];
+    };
+
 export const youtubeOAuthCredentialStatusUiWiringContract = {
-  implementationStage: "credential-status-ui-wiring-readiness-contract",
+  implementationStage: "credential-status-display-wiring-readiness-contract",
   clientReadableInput: "sanitized-credential-status-metadata-only",
   uiStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
   serverAction: "getYouTubeOAuthCredentialStatusAction",
   credentialReferenceClientPayload: "readiness-only-no-new-client-payload",
+  displayWiringStage: "blocked-until-approved-client-safe-credential-reference-source",
   emergencyDisableEnv: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
   forbiddenClientValues: [
     "encrypted-row",
@@ -142,6 +171,47 @@ export function createYouTubeOAuthCredentialStatusUiWiringReadiness({
     clientCredentialReferencePayload,
     blocker: "new-client-credential-reference-payload-requires-separate-approval",
     safeFallbackStates: ["unavailable", "credential-resolution-disabled"]
+  };
+}
+
+export function assessYouTubeOAuthCredentialStatusDisplayWiringReadiness({
+  serverAction,
+  approvedClientCredentialReferenceSource,
+  surface
+}: {
+  serverAction: "getYouTubeOAuthCredentialStatusAction";
+  approvedClientCredentialReferenceSource:
+    | "existing-approved-client-safe-credential-reference"
+    | "missing-client-safe-credential-reference"
+    | "new-client-payload-required";
+  surface: "/tools/comment-translator";
+}): YouTubeOAuthCredentialStatusDisplayWiringReadiness {
+  if (approvedClientCredentialReferenceSource === "existing-approved-client-safe-credential-reference") {
+    return {
+      status: "ready-for-display-wiring-pr",
+      surface,
+      serverAction,
+      approvedClientCredentialReferenceSource,
+      clientPayloadBoundary: "sanitized-credential-status-metadata-only",
+      safeStates,
+      nextStep: "wire-status-display-to-existing-approved-client-safe-reference"
+    };
+  }
+
+  return {
+    status: "blocked-pending-client-reference-source",
+    surface,
+    serverAction,
+    approvedClientCredentialReferenceSource,
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "approved-client-safe-credential-reference-source-required",
+    nextPrConditions: [
+      "define-approved-client-safe-credential-reference-source",
+      "keep-client-payload-to-sanitized-credential-status-metadata-only",
+      "preserve-no-localStorage-indexedDB-or-handoff-payload-change",
+      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+    ]
   };
 }
 

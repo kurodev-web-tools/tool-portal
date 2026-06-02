@@ -180,6 +180,11 @@ assert.equal(
   "blocked-until-approved-client-safe-credential-reference-source",
   "display wiring stage is explicitly blocked until an approved client-safe credential reference source exists"
 );
+assert.match(
+  uiWiringSource,
+  /approved-source-definition-only-not-surfaced/,
+  "display wiring readiness distinguishes an approved source definition from a source surfaced to the page or dock"
+);
 assert.equal(
   uiWiring.youtubeOAuthCredentialStatusUiWiringContract.emergencyDisableEnv,
   "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
@@ -348,6 +353,29 @@ assert.deepEqual(
     ]
   },
   "display wiring readiness returns blocker summary when no approved client-safe credential reference source exists"
+);
+assert.deepEqual(
+  uiWiring.assessYouTubeOAuthCredentialStatusDisplayWiringReadiness({
+    serverAction: "getYouTubeOAuthCredentialStatusAction",
+    approvedClientCredentialReferenceSource: "approved-source-definition-only-not-surfaced",
+    surface: "/tools/comment-translator"
+  }),
+  {
+    status: "blocked-pending-client-reference-source",
+    surface: "/tools/comment-translator",
+    serverAction: "getYouTubeOAuthCredentialStatusAction",
+    approvedClientCredentialReferenceSource: "approved-source-definition-only-not-surfaced",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "approved-client-safe-credential-reference-source-required",
+    nextPrConditions: [
+      "surface-existing-approved-client-safe-credential-reference-to-comment-translator",
+      "keep-client-payload-to-sanitized-credential-status-metadata-only",
+      "preserve-no-localStorage-indexedDB-or-handoff-payload-change",
+      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+    ]
+  },
+  "approved source definition without a surfaced reference returns blocker summary instead of wiring the dock"
 );
 
 assert.deepEqual(

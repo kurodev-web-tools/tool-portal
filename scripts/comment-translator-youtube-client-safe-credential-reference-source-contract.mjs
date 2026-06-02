@@ -146,7 +146,9 @@ for (const exportedType of [
   "YouTubeOAuthClientSafeCredentialReferenceSourceId",
   "YouTubeOAuthClientSafeCredentialReferenceIdentifier",
   "YouTubeOAuthClientSafeCredentialReferenceSourceDefinition",
-  "YouTubeOAuthClientSafeCredentialReferenceSourceReadiness"
+  "YouTubeOAuthClientSafeCredentialReferenceSourceReadiness",
+  "YouTubeOAuthClientSafeCredentialReferenceSurfaceSource",
+  "YouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadiness"
 ]) {
   assert.match(referenceSource, new RegExp(`export type ${exportedType}\\b`), `reference source module exports ${exportedType}`);
 }
@@ -154,7 +156,8 @@ for (const exportedType of [
 for (const exportedConstOrFunction of [
   "youtubeOAuthClientSafeCredentialReferenceSourceContract",
   "defineYouTubeOAuthClientSafeCredentialReferenceSource",
-  "assessYouTubeOAuthClientSafeCredentialReferenceSourceReadiness"
+  "assessYouTubeOAuthClientSafeCredentialReferenceSourceReadiness",
+  "assessYouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadiness"
 ]) {
   assert.match(
     referenceSource,
@@ -288,6 +291,56 @@ assert.equal(
   }).status,
   "blocked-pending-approved-client-safe-reference-source",
   "new client payload requests remain blocked even when a source shape is documented"
+);
+assert.deepEqual(
+  referenceModule.assessYouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadiness({
+    approvedSource,
+    surfaceClientReferenceSource: "definition-only-not-surfaced",
+    requestedClientPayloadChange: "none"
+  }),
+  {
+    status: "blocked-approved-source-not-available-to-surface",
+    approvedSource,
+    surfaceClientReferenceSource: "definition-only-not-surfaced",
+    currentClientPayloadSource: "not-wired",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "approved-source-definition-is-not-surfaced-to-comment-translator",
+    nextPrConditions: [
+      "surface-existing-approved-client-safe-credential-reference-to-comment-translator",
+      "do-not-add-new-client-payload-without-explicit-source-approval",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+      "preserve-owner-authorization-before-status-read",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+    ]
+  },
+  "approved source definition alone does not permit display wiring when it is not surfaced to the page or dock"
+);
+assert.equal(
+  referenceModule.assessYouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadiness({
+    approvedSource,
+    surfaceClientReferenceSource: "new-client-payload-required",
+    requestedClientPayloadChange: "new-client-payload"
+  }).status,
+  "blocked-approved-source-not-available-to-surface",
+  "display wiring stays blocked when it would require a new client payload source"
+);
+assert.deepEqual(
+  referenceModule.assessYouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadiness({
+    approvedSource,
+    surfaceClientReferenceSource: "existing-page-or-dock-client-safe-credential-reference",
+    requestedClientPayloadChange: "none"
+  }),
+  {
+    status: "ready-for-display-wiring-to-approved-source",
+    approvedSource,
+    surfaceClientReferenceSource: "existing-page-or-dock-client-safe-credential-reference",
+    currentClientPayloadSource: "existing-approved-client-safe-source",
+    clientPayloadBoundary: "sanitized-credential-status-metadata-only",
+    nextStep: "wire-status-display-to-approved-source-without-storage-or-handoff-changes"
+  },
+  "display wiring becomes ready only when an approved client-safe source is already surfaced to the page or dock"
 );
 assert.equal(
   uiWiring.assessYouTubeOAuthCredentialStatusDisplayWiringReadiness({

@@ -310,6 +310,7 @@ for (const taskFragment of [
 const allowedChangedFiles = new Set([
   migrationPath,
   runtimePath,
+  "lib/comment-translator-youtube-token-store-supabase-adapter.ts",
   blockerMemoPath,
   "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
   "scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs",
@@ -323,6 +324,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-server-provider-prototype-contract.mjs",
   "scripts/comment-translator-provider-boundary-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
+  "scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs",
   taskPath
 ]);
 
@@ -332,7 +334,7 @@ for (const file of changedFiles()) {
   const source = read(file);
   assert.doesNotMatch(
     source,
-    /access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN PRIVATE KEY/i,
+    /access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i,
     `${file} does not contain OAuth token values, authorization codes, private keys, or service role key values`
   );
 }

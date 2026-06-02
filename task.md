@@ -70,6 +70,7 @@
      - 次 PR 候補は `YouTube credential status UI wiring contract`。ただし remote apply、live OAuth、Google API live call、refresh / revocation 本実装は別承認のまま維持し、UI wiring に進む場合も client-readable output は sanitized status metadata のみに閉じる。
    - credential status owner authorization verification completed 2026-06-02:
      - branch: `codex/comment-translator-youtube-credential-status-owner-authorization` -> base `codex/comment-translator-preview`。
+     - draft PR #293: `codex/comment-translator-youtube-credential-status-owner-authorization` -> `codex/comment-translator-preview`。作成直後は draft / open / mergeable、`Cloudflare Pages` と `Workers Builds: v-streamer-tools` は IN_PROGRESS。
      - RED first: `node scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs` は `adapter exports YouTubeOAuthCredentialStatusOwnerAuthorizedReadRequest` で期待どおり FAIL。その後 owner authorization boundary / owner-filtered status read / route wiring / server action wiring / contract を追加して PASS。
      - updated credential status owner authorization / status wiring contract: `node scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs` PASS。
      - existing YouTube token store contract bundle:

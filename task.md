@@ -67,7 +67,8 @@
      - 残リスク: trusted status reader は env reference が揃う場合の read-only wiring contract まで。credential owner authorization policy、operational KMS / managed secret resolver、rotation re-encrypt path、audit / retention writer、safe live smoke、UI wiring は後続 PR。
      - 次 PR 候補は `YouTube credential status owner authorization / UI wiring contract`。ただし remote apply、live OAuth、Google API live call、refresh / revocation 本実装、client UI wiring は別承認のまま維持する。
    - trusted service-role status wiring verification completed 2026-06-02:
-     - draft PR target: `codex/comment-translator-youtube-token-store-service-role-status-wiring` -> `codex/comment-translator-preview`。
+     - draft PR #292 target: `codex/comment-translator-youtube-token-store-service-role-status-wiring` -> `codex/comment-translator-preview`。
+     - PR #292 creation check: draft / open / mergeable。作成直後の external checks は `Cloudflare Pages` FAILURE、`Workers Builds: v-streamer-tools` IN_PROGRESS。Pages failure はこの preview line で繰り返し発生している dashboard log review item として扱い、local build failure とは扱わない。
      - PR #291 merge gate: `gh pr view 291 --json number,title,state,mergedAt,baseRefName,headRefName,mergeCommit,url` で `MERGED`、base `codex/comment-translator-preview`、merge commit `6bc89b5d3380cf8220f745612b76d7a527f69eae`、mergedAt `2026-06-02T12:26:38Z` を確認した。`git log --oneline origin/codex/comment-translator-preview` で preview head `6bc89b5` が #291 merge commit であることも確認した。
      - RED first: `node scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs` は `adapter exports TrustedYouTubeOAuthCredentialStatusReaderFactoryEnvName` で期待どおり FAIL。その後 trusted service-role status reader factory / route wiring / server action wiring / contract を追加して PASS。
      - updated trusted service-role status wiring contract: `node scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs` PASS。

@@ -138,6 +138,7 @@ for (const exportedType of [
   "YouTubeOAuthCredentialSupabaseRow",
   "YouTubeOAuthCredentialSupabaseInsert",
   "YouTubeOAuthCredentialSupabaseStatus",
+  "YouTubeOAuthCredentialStatusOwnerAuthorizedReadRequest",
   "TrustedYouTubeOAuthCredentialSupabaseClient",
   "TrustedYouTubeOAuthCredentialSupabaseAdapter",
   "TrustedYouTubeOAuthCredentialStatusReaderFactoryEnvName",
@@ -163,6 +164,7 @@ for (const exportedConstOrFunction of [
 
 for (const exportedType of [
   "YouTubeOAuthCredentialBrowserReadableStatus",
+  "YouTubeOAuthCredentialStatusCallerAuthorization",
   "ReadYouTubeOAuthCredentialStatusRequest"
 ]) {
   assert.match(statusBoundarySource, new RegExp(`export type ${exportedType}\\b`), `status boundary exports ${exportedType}`);
@@ -170,6 +172,7 @@ for (const exportedType of [
 
 for (const exportedConstOrFunction of [
   "youtubeOAuthCredentialStatusBoundaryContract",
+  "authorizeYouTubeOAuthCredentialStatusCaller",
   "createYouTubeOAuthCredentialBrowserReadableStatus",
   "createYouTubeOAuthCredentialStatusUnavailablePayload",
   "readYouTubeOAuthCredentialStatus"
@@ -188,6 +191,9 @@ assert.match(adapterSource, /persistSession:\s*false/, "trusted service-role cli
 assert.match(adapterSource, /autoRefreshToken:\s*false/, "trusted service-role client does not refresh user sessions");
 assert.match(statusRouteSource, /YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED/, "endpoint preserves emergency disable boundary");
 assert.match(statusRouteSource, /credentialReferenceId/, "endpoint accepts credential reference id only");
+assert.match(statusRouteSource, /createServerSupabaseClient/, "endpoint uses the server Supabase client to authenticate the caller");
+assert.match(statusRouteSource, /auth\.getUser\(\)/, "endpoint reads the authenticated caller before trusted credential status access");
+assert.match(statusRouteSource, /authorizeYouTubeOAuthCredentialStatusCaller/, "endpoint applies owner authorization before credential status access");
 assert.match(
   statusRouteSource,
   /createTrustedYouTubeOAuthCredentialSupabaseStatusReader/,
@@ -195,6 +201,9 @@ assert.match(
 );
 assert.doesNotMatch(statusRouteSource, /trustedAdapter:\s*null/, "endpoint no longer hard-codes an unwired adapter");
 assert.match(statusActionSource, /getYouTubeOAuthCredentialStatusAction/, "server action exports credential status skeleton");
+assert.match(statusActionSource, /createServerSupabaseClient/, "server action uses the server Supabase client to authenticate the caller");
+assert.match(statusActionSource, /auth\.getUser\(\)/, "server action reads the authenticated caller before trusted credential status access");
+assert.match(statusActionSource, /authorizeYouTubeOAuthCredentialStatusCaller/, "server action applies owner authorization before credential status access");
 assert.match(
   statusActionSource,
   /createTrustedYouTubeOAuthCredentialSupabaseStatusReader/,
@@ -267,6 +276,16 @@ assert.equal(
   statusBoundary.youtubeOAuthCredentialStatusBoundaryContract.browserReadableOutput,
   "credential-status-metadata-only",
   "status boundary exposes only credential metadata"
+);
+assert.equal(
+  statusBoundary.youtubeOAuthCredentialStatusBoundaryContract.authorizationBoundary,
+  "caller-must-own-credential-before-status-read",
+  "status boundary requires owner authorization before credential status read"
+);
+assert.deepEqual(
+  statusBoundary.youtubeOAuthCredentialStatusBoundaryContract.authorizationFailureState,
+  ["auth-unavailable", "caller-not-authenticated"],
+  "status boundary documents sanitized authorization failure states"
 );
 assert.deepEqual(
   statusBoundary.youtubeOAuthCredentialStatusBoundaryContract.forbiddenBrowserOutput,
@@ -400,6 +419,39 @@ assert.deepEqual(
   },
   "unwired skeleton returns sanitized unavailable state"
 );
+assert.deepEqual(
+  statusBoundary.authorizeYouTubeOAuthCredentialStatusCaller({
+    callerUserId: "00000000-0000-4000-8000-000000000001"
+  }),
+  {
+    status: "authorized",
+    ownerUserId: "00000000-0000-4000-8000-000000000001"
+  },
+  "caller authorization returns owner id only when an authenticated caller exists"
+);
+assert.deepEqual(
+  statusBoundary.authorizeYouTubeOAuthCredentialStatusCaller({
+    callerUserId: null
+  }),
+  {
+    status: "unavailable",
+    reason: "caller-not-authenticated",
+    reconnectRequired: true
+  },
+  "missing caller degrades to sanitized reconnect-required state"
+);
+assert.deepEqual(
+  statusBoundary.authorizeYouTubeOAuthCredentialStatusCaller({
+    callerUserId: null,
+    authUnavailable: true
+  }),
+  {
+    status: "unavailable",
+    reason: "auth-unavailable",
+    reconnectRequired: true
+  },
+  "missing auth configuration degrades to sanitized reconnect-required state"
+);
 
 assert.equal(
   adapter.createYouTubeOAuthCredentialSupabaseStatus({
@@ -428,23 +480,23 @@ const supabase = {
     return {
       select(columns) {
         events.push({ type: "select", columns });
-        return {
+        const filteredSelect = {
           eq(column, value) {
             events.push({ type: "eq", column, value });
-            return {
-              single: async () => ({
-                data: {
-                  ...insert,
-                  id: "00000000-0000-4000-8000-000000000099",
-                  revoked_at: "2026-06-02T14:05:00.000Z",
-                  revocation_reason: "rollback-unusable-reference",
-                  updated_at: "2026-06-02T14:05:00.000Z"
-                },
-                error: null
-              })
-            };
-          }
+            return filteredSelect;
+          },
+          single: async () => ({
+            data: {
+              ...insert,
+              id: "00000000-0000-4000-8000-000000000099",
+              revoked_at: "2026-06-02T14:05:00.000Z",
+              revocation_reason: "rollback-unusable-reference",
+              updated_at: "2026-06-02T14:05:00.000Z"
+            },
+            error: null
+          })
         };
+        return filteredSelect;
       },
       upsert(row, options) {
         events.push({ type: "upsert", row, options });
@@ -517,6 +569,10 @@ assert.deepEqual(
   await statusBoundary.readYouTubeOAuthCredentialStatus({
     credentialReferenceId: "ytcred_status_reference_001",
     trustedAdapter: missingTrustedReader.trustedAdapter,
+    callerAuthorization: {
+      status: "authorized",
+      ownerUserId: "00000000-0000-4000-8000-000000000001"
+    },
     credentialResolutionDisabled: false
   }),
   {
@@ -528,6 +584,34 @@ assert.deepEqual(
   },
   "missing trusted service-role reader degrades to browser-safe unavailable state"
 );
+
+let unauthorizedReadAttempts = 0;
+assert.deepEqual(
+  await statusBoundary.readYouTubeOAuthCredentialStatus({
+    credentialReferenceId: "ytcred_status_reference_001",
+    trustedAdapter: {
+      getCredentialStatus: async () => {
+        unauthorizedReadAttempts += 1;
+        throw new Error("trusted adapter must not read before owner authorization");
+      }
+    },
+    callerAuthorization: {
+      status: "unavailable",
+      reason: "caller-not-authenticated",
+      reconnectRequired: true
+    },
+    credentialResolutionDisabled: false
+  }),
+  {
+    status: "unavailable",
+    credentialReferenceId: "ytcred_status_reference_001",
+    provider: "youtube",
+    reason: "caller-not-authenticated",
+    reconnectRequired: true
+  },
+  "unauthenticated caller gets browser-safe unavailable state before trusted adapter access"
+);
+assert.equal(unauthorizedReadAttempts, 0, "status boundary never reads credential reference before caller owner authorization");
 
 const readerEvents = [];
 const readyTrustedReader = adapter.createTrustedYouTubeOAuthCredentialSupabaseStatusReader({
@@ -573,15 +657,20 @@ assert.equal(revoked.ciphertext, "never-returned-by-design", "revoked status nev
 
 assert.deepEqual(
   await trustedAdapter.getCredentialStatus({
-    credentialReferenceId: "ytcred_status_reference_001"
+    credentialReferenceId: "ytcred_status_reference_001",
+    ownerUserId: "00000000-0000-4000-8000-000000000001"
   }),
   revoked,
-  "trusted adapter status read returns sanitized status"
+  "trusted adapter status read returns sanitized status for the authorized owner"
 );
 assert.deepEqual(
   await statusBoundary.readYouTubeOAuthCredentialStatus({
     credentialReferenceId: "ytcred_status_reference_001",
     trustedAdapter,
+    callerAuthorization: {
+      status: "authorized",
+      ownerUserId: "00000000-0000-4000-8000-000000000001"
+    },
     credentialResolutionDisabled: false
   }),
   {
@@ -603,6 +692,10 @@ assert.deepEqual(
   await statusBoundary.readYouTubeOAuthCredentialStatus({
     credentialReferenceId: "ytcred_status_reference_001",
     trustedAdapter,
+    callerAuthorization: {
+      status: "authorized",
+      ownerUserId: "00000000-0000-4000-8000-000000000001"
+    },
     credentialResolutionDisabled: true
   }),
   {
@@ -619,8 +712,8 @@ for (const event of events) {
   assert.doesNotMatch(serialized, /oauthAccessToken|oauthRefreshToken|authorizationCode|secretValue|SUPABASE_SERVICE_ROLE_KEY|SERVICE_ROLE_KEY/i);
 }
 
-assert.match(taskSource, /trusted service-role status wiring/i, "task.md records this follow-up");
-assert.match(taskSource, /PR #291.*merge/i, "task.md records the PR #291 merge premise");
+assert.match(taskSource, /credential status owner authorization/i, "task.md records this follow-up");
+assert.match(taskSource, /PR #292.*merge/i, "task.md records the PR #292 merge premise");
 assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary");
 
 const allowedChangedFiles = new Set([

@@ -3,6 +3,7 @@ import {
   createYouTubeOAuthCredentialStatusUnavailablePayload,
   readYouTubeOAuthCredentialStatus
 } from "@/lib/comment-translator-youtube-credential-status-boundary";
+import { createTrustedYouTubeOAuthCredentialSupabaseStatusReader } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
 
 export const dynamic = "force-dynamic";
@@ -23,12 +24,17 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled({
+    [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
+  });
+  const trustedStatusReader = credentialResolutionDisabled
+    ? null
+    : createTrustedYouTubeOAuthCredentialSupabaseStatusReader();
+
   const status = await readYouTubeOAuthCredentialStatus({
     credentialReferenceId,
-    trustedAdapter: null,
-    credentialResolutionDisabled: isYouTubeOAuthCredentialResolutionDisabled({
-      [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
-    })
+    trustedAdapter: trustedStatusReader?.trustedAdapter ?? null,
+    credentialResolutionDisabled
   });
 
   return NextResponse.json(status);

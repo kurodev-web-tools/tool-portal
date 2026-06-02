@@ -30,6 +30,13 @@ function changedFiles() {
   })
     .split(/\r?\n/)
     .filter(Boolean);
+  const uncommittedDiff = execSync("git diff --name-only", {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"]
+  })
+    .split(/\r?\n/)
+    .filter(Boolean);
   const untracked = execSync("git ls-files --others --exclude-standard", {
     cwd: root,
     encoding: "utf8",
@@ -38,7 +45,7 @@ function changedFiles() {
     .split(/\r?\n/)
     .filter(Boolean);
 
-  return [...new Set([...committedDiff, ...untracked])].map((file) => file.replace(/\\/g, "/"));
+  return [...new Set([...committedDiff, ...uncommittedDiff, ...untracked])].map((file) => file.replace(/\\/g, "/"));
 }
 
 function loadTsModule(relativePath) {
@@ -132,16 +139,20 @@ for (const exportedType of [
   "YouTubeOAuthCredentialSupabaseInsert",
   "YouTubeOAuthCredentialSupabaseStatus",
   "TrustedYouTubeOAuthCredentialSupabaseClient",
-  "TrustedYouTubeOAuthCredentialSupabaseAdapter"
+  "TrustedYouTubeOAuthCredentialSupabaseAdapter",
+  "TrustedYouTubeOAuthCredentialStatusReaderFactoryEnvName",
+  "TrustedYouTubeOAuthCredentialStatusReaderFactoryResult"
 ]) {
   assert.match(adapterSource, new RegExp(`export type ${exportedType}\\b`), `adapter exports ${exportedType}`);
 }
 
 for (const exportedConstOrFunction of [
   "youtubeOAuthCredentialSupabaseAdapterContract",
+  "youtubeOAuthCredentialTrustedServiceRoleStatusReaderContract",
   "createYouTubeOAuthCredentialSupabaseInsert",
   "createYouTubeOAuthCredentialSupabaseStatus",
-  "createTrustedYouTubeOAuthCredentialSupabaseAdapter"
+  "createTrustedYouTubeOAuthCredentialSupabaseAdapter",
+  "createTrustedYouTubeOAuthCredentialSupabaseStatusReader"
 ]) {
   assert.match(
     adapterSource,
@@ -171,9 +182,25 @@ for (const exportedConstOrFunction of [
 }
 
 assert.match(adapterSource, /getCredentialStatus/, "trusted Supabase adapter exposes a server-only status read method");
+assert.match(adapterSource, /@supabase\/supabase-js/, "trusted status reader uses Supabase server SDK");
+assert.match(adapterSource, /createClient/, "trusted status reader creates a server-only Supabase client");
+assert.match(adapterSource, /persistSession:\s*false/, "trusted service-role client does not persist sessions");
+assert.match(adapterSource, /autoRefreshToken:\s*false/, "trusted service-role client does not refresh user sessions");
 assert.match(statusRouteSource, /YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED/, "endpoint preserves emergency disable boundary");
 assert.match(statusRouteSource, /credentialReferenceId/, "endpoint accepts credential reference id only");
+assert.match(
+  statusRouteSource,
+  /createTrustedYouTubeOAuthCredentialSupabaseStatusReader/,
+  "endpoint wires the trusted service-role status reader factory"
+);
+assert.doesNotMatch(statusRouteSource, /trustedAdapter:\s*null/, "endpoint no longer hard-codes an unwired adapter");
 assert.match(statusActionSource, /getYouTubeOAuthCredentialStatusAction/, "server action exports credential status skeleton");
+assert.match(
+  statusActionSource,
+  /createTrustedYouTubeOAuthCredentialSupabaseStatusReader/,
+  "server action wires the trusted service-role status reader factory"
+);
+assert.doesNotMatch(statusActionSource, /trustedAdapter:\s*null/, "server action no longer hard-codes an unwired adapter");
 assert.doesNotMatch(
   `${statusBoundarySource}\n${statusRouteSource}\n${statusActionSource}`,
   /tokenValue|refreshTokenValue|decryptCapability|access_token_ciphertext_ref|refresh_token_ciphertext_ref|encryption_key_ref/i,
@@ -220,6 +247,21 @@ assert.equal(
   adapter.youtubeOAuthCredentialSupabaseAdapterContract.emergencyDisableEnv,
   "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
   "adapter preserves emergency disable reference"
+);
+assert.deepEqual(
+  adapter.youtubeOAuthCredentialTrustedServiceRoleStatusReaderContract.requiredEnvReferences,
+  ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+  "trusted status reader records env references without values"
+);
+assert.equal(
+  adapter.youtubeOAuthCredentialTrustedServiceRoleStatusReaderContract.unavailableState,
+  "sanitized-unavailable-reconnect-required",
+  "trusted status reader falls back to sanitized unavailable state"
+);
+assert.equal(
+  adapter.youtubeOAuthCredentialTrustedServiceRoleStatusReaderContract.outputTokenValues,
+  "never-returned-by-design",
+  "trusted status reader never returns token values"
 );
 assert.equal(
   statusBoundary.youtubeOAuthCredentialStatusBoundaryContract.browserReadableOutput,
@@ -453,6 +495,67 @@ const trustedAdapter = adapter.createTrustedYouTubeOAuthCredentialSupabaseAdapte
   nowIso: () => "2026-06-02T14:05:00.000Z"
 });
 
+const missingTrustedReader = adapter.createTrustedYouTubeOAuthCredentialSupabaseStatusReader({
+  env: {},
+  createSupabaseClient: () => {
+    throw new Error("trusted client must not be created when env references are missing");
+  },
+  nowIso: () => "2026-06-02T14:05:00.000Z"
+});
+assert.deepEqual(
+  missingTrustedReader,
+  {
+    status: "unavailable",
+    trustedAdapter: null,
+    missingEnvReferences: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+    reconnectRequired: true,
+    reason: "trusted-service-role-env-missing"
+  },
+  "trusted status reader reports only missing env references when service-role wiring is unavailable"
+);
+assert.deepEqual(
+  await statusBoundary.readYouTubeOAuthCredentialStatus({
+    credentialReferenceId: "ytcred_status_reference_001",
+    trustedAdapter: missingTrustedReader.trustedAdapter,
+    credentialResolutionDisabled: false
+  }),
+  {
+    status: "unavailable",
+    credentialReferenceId: "ytcred_status_reference_001",
+    provider: "youtube",
+    reason: "trusted-adapter-not-wired",
+    reconnectRequired: true
+  },
+  "missing trusted service-role reader degrades to browser-safe unavailable state"
+);
+
+const readerEvents = [];
+const readyTrustedReader = adapter.createTrustedYouTubeOAuthCredentialSupabaseStatusReader({
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+    [adapter.youtubeOAuthCredentialTrustedServiceRoleStatusReaderContract.requiredEnvReferences[1]]:
+      "trusted-env-reference-present"
+  },
+  createSupabaseClient: (url, serviceRoleKey) => {
+    readerEvents.push({ type: "trusted-client-created", url, serviceRoleKeyShape: serviceRoleKey ? "provided" : "missing" });
+    return supabase;
+  },
+  nowIso: () => "2026-06-02T14:05:00.000Z"
+});
+assert.deepEqual(
+  readerEvents,
+  [{ type: "trusted-client-created", url: "https://example.supabase.co", serviceRoleKeyShape: "provided" }],
+  "trusted status reader creates a service-role client without exposing the service role key value"
+);
+assert.equal(readyTrustedReader.status, "ready", "trusted status reader is ready when required env references are present");
+assert.deepEqual(readyTrustedReader.missingEnvReferences, [], "ready trusted status reader has no missing env references");
+assert.equal(typeof readyTrustedReader.trustedAdapter?.getCredentialStatus, "function", "ready trusted status reader exposes status read only");
+assert.deepEqual(
+  Object.keys(readyTrustedReader.trustedAdapter).sort(),
+  ["getCredentialStatus"],
+  "trusted status reader exposes only the credential status read method to endpoint and server action"
+);
+
 assert.deepEqual(await trustedAdapter.upsertCredentialStatus(draft), status, "trusted adapter upsert returns sanitized status");
 assert.deepEqual(events[0], { type: "from", tableName: "youtube_oauth_credentials" }, "trusted adapter uses approved table");
 assert.equal(events[1].type, "upsert", "trusted adapter upserts one credential row");
@@ -516,8 +619,8 @@ for (const event of events) {
   assert.doesNotMatch(serialized, /oauthAccessToken|oauthRefreshToken|authorizationCode|secretValue|SUPABASE_SERVICE_ROLE_KEY|SERVICE_ROLE_KEY/i);
 }
 
-assert.match(taskSource, /credential status endpoint \/ server action skeleton/i, "task.md records this follow-up");
-assert.match(taskSource, /PR #290.*merge/i, "task.md records the PR #290 merge premise");
+assert.match(taskSource, /trusted service-role status wiring/i, "task.md records this follow-up");
+assert.match(taskSource, /PR #291.*merge/i, "task.md records the PR #291 merge premise");
 assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary");
 
 const allowedChangedFiles = new Set([

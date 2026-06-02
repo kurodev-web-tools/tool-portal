@@ -44,6 +44,11 @@ export type YouTubeOAuthCredentialSupabaseStatus = {
   decryptCapability: "forbidden";
 };
 
+export type YouTubeOAuthCredentialStatusOwnerAuthorizedReadRequest = {
+  credentialReferenceId: string;
+  ownerUserId: string;
+};
+
 type SupabaseSingleResult = {
   data: YouTubeOAuthCredentialSupabaseRow | null;
   error: { message?: string } | null;
@@ -54,7 +59,10 @@ type SupabaseSingleQuery = {
 };
 
 type SupabaseFilteredSelectQuery = SupabaseSingleQuery & {
-  eq: (column: "credential_reference_id", value: string) => SupabaseSingleQuery;
+  eq: (
+    column: "credential_reference_id" | "owner_user_id",
+    value: string
+  ) => SupabaseFilteredSelectQuery;
 };
 
 type SupabaseSelectQuery = {
@@ -81,7 +89,9 @@ export type TrustedYouTubeOAuthCredentialSupabaseClient = {
 };
 
 export type TrustedYouTubeOAuthCredentialSupabaseAdapter = {
-  getCredentialStatus: (request: { credentialReferenceId: string }) => Promise<YouTubeOAuthCredentialSupabaseStatus>;
+  getCredentialStatus: (
+    request: YouTubeOAuthCredentialStatusOwnerAuthorizedReadRequest
+  ) => Promise<YouTubeOAuthCredentialSupabaseStatus>;
   upsertCredentialStatus: (
     draft: YouTubeOAuthCredentialPersistenceDraft
   ) => Promise<YouTubeOAuthCredentialSupabaseStatus>;
@@ -196,6 +206,7 @@ export function createTrustedYouTubeOAuthCredentialSupabaseAdapter({
       const result = await supabase
         .from(youtubeOAuthCredentialSupabaseAdapterContract.tableName)
         .select(youtubeOAuthCredentialSupabaseAdapterContract.trustedSelectColumns)
+        .eq("owner_user_id", request.ownerUserId)
         .eq("credential_reference_id", request.credentialReferenceId)
         .single();
 

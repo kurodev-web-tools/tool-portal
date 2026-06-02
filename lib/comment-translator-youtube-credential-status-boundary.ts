@@ -6,6 +6,12 @@ import {
 } from "./comment-translator-youtube-token-store-supabase-adapter";
 import { type YouTubeReadOnlyOAuthScope } from "./comment-translator-youtube-api-adapter";
 
+export type YouTubeOAuthCredentialStatusUnavailableReason =
+  | "trusted-adapter-not-wired"
+  | "trusted-adapter-query-failed"
+  | "auth-unavailable"
+  | "caller-not-authenticated";
+
 export type YouTubeOAuthCredentialBrowserReadableStatus =
   | {
       status: "available";
@@ -30,13 +36,25 @@ export type YouTubeOAuthCredentialBrowserReadableStatus =
       status: "unavailable";
       credentialReferenceId: string;
       provider: "youtube";
-      reason: "trusted-adapter-not-wired" | "trusted-adapter-query-failed";
+      reason: YouTubeOAuthCredentialStatusUnavailableReason;
+      reconnectRequired: true;
+    };
+
+export type YouTubeOAuthCredentialStatusCallerAuthorization =
+  | {
+      status: "authorized";
+      ownerUserId: string;
+    }
+  | {
+      status: "unavailable";
+      reason: "auth-unavailable" | "caller-not-authenticated";
       reconnectRequired: true;
     };
 
 export type ReadYouTubeOAuthCredentialStatusRequest = {
   credentialReferenceId: string;
   trustedAdapter: Pick<TrustedYouTubeOAuthCredentialSupabaseAdapter, "getCredentialStatus"> | null;
+  callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   credentialResolutionDisabled: boolean;
 };
 
@@ -46,6 +64,8 @@ export const youtubeOAuthCredentialStatusBoundaryContract = {
   browserReadableOutput: "credential-status-metadata-only",
   endpoint: "/api/comment-translator/youtube/credential-status",
   serverAction: "getYouTubeOAuthCredentialStatusAction",
+  authorizationBoundary: "caller-must-own-credential-before-status-read",
+  authorizationFailureState: ["auth-unavailable", "caller-not-authenticated"],
   emergencyDisableEnv: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
   forbiddenBrowserOutput: [
     "encrypted-row",
@@ -59,6 +79,35 @@ export const youtubeOAuthCredentialStatusBoundaryContract = {
   rollbackBoundary: "revoke-or-invalidate-unusable-credential-reference",
   loggingPolicy: "no-token-value-logging"
 } as const;
+
+export function authorizeYouTubeOAuthCredentialStatusCaller({
+  callerUserId,
+  authUnavailable = false
+}: {
+  callerUserId: string | null;
+  authUnavailable?: boolean;
+}): YouTubeOAuthCredentialStatusCallerAuthorization {
+  if (authUnavailable) {
+    return {
+      status: "unavailable",
+      reason: "auth-unavailable",
+      reconnectRequired: true
+    };
+  }
+
+  if (!callerUserId) {
+    return {
+      status: "unavailable",
+      reason: "caller-not-authenticated",
+      reconnectRequired: true
+    };
+  }
+
+  return {
+    status: "authorized",
+    ownerUserId: callerUserId
+  };
+}
 
 export function createYouTubeOAuthCredentialBrowserReadableStatus(
   status: YouTubeOAuthCredentialSupabaseStatus
@@ -83,7 +132,7 @@ export function createYouTubeOAuthCredentialStatusUnavailablePayload({
   reason
 }: {
   credentialReferenceId: string;
-  reason: "trusted-adapter-not-wired" | "trusted-adapter-query-failed";
+  reason: YouTubeOAuthCredentialStatusUnavailableReason;
 }): YouTubeOAuthCredentialBrowserReadableStatus {
   return {
     status: "unavailable",
@@ -106,6 +155,13 @@ export async function readYouTubeOAuthCredentialStatus(
     };
   }
 
+  if (request.callerAuthorization.status !== "authorized") {
+    return createYouTubeOAuthCredentialStatusUnavailablePayload({
+      credentialReferenceId: request.credentialReferenceId,
+      reason: request.callerAuthorization.reason
+    });
+  }
+
   if (!request.trustedAdapter) {
     return createYouTubeOAuthCredentialStatusUnavailablePayload({
       credentialReferenceId: request.credentialReferenceId,
@@ -116,7 +172,8 @@ export async function readYouTubeOAuthCredentialStatus(
   try {
     return createYouTubeOAuthCredentialBrowserReadableStatus(
       await request.trustedAdapter.getCredentialStatus({
-        credentialReferenceId: request.credentialReferenceId
+        credentialReferenceId: request.credentialReferenceId,
+        ownerUserId: request.callerAuthorization.ownerUserId
       })
     );
   } catch {

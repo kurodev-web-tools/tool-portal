@@ -301,6 +301,7 @@ assert.match(taskSource, /UI変更なし|UI change was not made/i, "task.md reco
 const allowedChangedFiles = new Set([
   foundationPath,
   "lib/comment-translator-youtube-token-store-runtime.ts",
+  "lib/comment-translator-youtube-token-store-supabase-adapter.ts",
   "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
   blockerMemoPath,
   "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
@@ -309,6 +310,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-token-store-explicit-approval-collection-contract.mjs",
   readinessContractPath,
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
+  "scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs",
   "scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs",
   "scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs",
   "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",

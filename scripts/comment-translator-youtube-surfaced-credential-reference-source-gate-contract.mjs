@@ -125,6 +125,16 @@ assert.match(
   /export function assessYouTubeOAuthSurfacedApprovedClientSafeCredentialReferenceSourceGate\b/,
   "reference source module exports the surfaced approved source gate helper"
 );
+assert.match(
+  referenceSource,
+  /export type YouTubeOAuthCredentialReferenceSourceSurfacingApprovalGate\b/,
+  "reference source module exports the source-surfacing approval gate type"
+);
+assert.match(
+  referenceSource,
+  /export function assessYouTubeOAuthCredentialReferenceSourceSurfacingApprovalGate\b/,
+  "reference source module exports the source-surfacing approval gate helper"
+);
 
 assert.doesNotMatch(
   `${componentSource}\n${pageSource}`,
@@ -159,6 +169,71 @@ const approvedSource = referenceModule.defineYouTubeOAuthClientSafeCredentialRef
   ownerAuthorizationBoundary: "caller-must-own-credential-before-status-read",
   emergencyDisableEnv: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"
 });
+
+assert.deepEqual(
+  referenceModule.assessYouTubeOAuthCredentialReferenceSourceSurfacingApprovalGate({
+    approvedSource,
+    surface: "/tools/comment-translator",
+    sourceSurfacingApproval: "missing",
+    pageOrDockHasSurfacedCredentialReferenceId: false,
+    requestedClientPayloadChange: "none"
+  }),
+  {
+    status: "blocked-pending-source-surfacing-approval",
+    surface: "/tools/comment-translator",
+    approvedSource,
+    sourceSurfacingApproval: "missing",
+    surfacedCredentialReferenceSource: null,
+    currentClientPayloadSource: "not-wired",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "source-surfacing-approval-required-before-status-display-wiring",
+    nextPrConditions: [
+      "obtain-explicit-approval-for-surfacing-existing-approved-client-safe-credentialReferenceId-source",
+      "do-not-call-status-action-until-source-surfacing-is-approved-and-present",
+      "do-not-add-new-client-payload-without-explicit-source-approval",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+      "preserve-owner-authorization-before-status-read",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+    ]
+  },
+  "source-surfacing approval gate blocks display wiring until an approved source is explicitly approved to surface"
+);
+
+assert.equal(
+  referenceModule.assessYouTubeOAuthCredentialReferenceSourceSurfacingApprovalGate({
+    approvedSource,
+    surface: "/tools/comment-translator",
+    sourceSurfacingApproval: "approved",
+    pageOrDockHasSurfacedCredentialReferenceId: true,
+    requestedClientPayloadChange: "new-client-payload"
+  }).status,
+  "blocked-pending-source-surfacing-approval",
+  "source-surfacing approval gate blocks display wiring when surfacing would require a new client payload source"
+);
+
+assert.deepEqual(
+  referenceModule.assessYouTubeOAuthCredentialReferenceSourceSurfacingApprovalGate({
+    approvedSource,
+    surface: "/tools/comment-translator",
+    sourceSurfacingApproval: "approved",
+    pageOrDockHasSurfacedCredentialReferenceId: true,
+    requestedClientPayloadChange: "none"
+  }),
+  {
+    status: "ready-for-surfaced-source-display-wiring-contract",
+    surface: "/tools/comment-translator",
+    approvedSource,
+    sourceSurfacingApproval: "approved",
+    surfacedCredentialReferenceSource: "existing-page-or-dock-client-safe-credential-reference",
+    currentClientPayloadSource: "existing-approved-client-safe-source",
+    clientPayloadBoundary: "sanitized-credential-status-metadata-only",
+    safeStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
+    nextStep: "wire-status-display-to-approved-surfaced-source-in-separate-pr"
+  },
+  "source-surfacing approval gate allows display wiring only after explicit surfacing approval and an existing surfaced source"
+);
 
 assert.deepEqual(
   referenceModule.assessYouTubeOAuthSurfacedApprovedClientSafeCredentialReferenceSourceGate({

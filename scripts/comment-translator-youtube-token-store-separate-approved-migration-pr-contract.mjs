@@ -318,6 +318,7 @@ const allowedChangedFiles = new Set([
   "app/tools/comment-translator/actions.ts",
   blockerMemoPath,
   "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
+  "scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs",
   "scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs",
   "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
   "scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs",

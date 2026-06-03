@@ -84,6 +84,37 @@ export type YouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadiness =
       ];
     };
 
+export type YouTubeOAuthSurfacedApprovedClientSafeCredentialReferenceSourceGate =
+  | {
+      status: "ready-for-status-display-wiring-contract";
+      surface: "/tools/comment-translator";
+      approvedSource: YouTubeOAuthClientSafeCredentialReferenceSourceDefinition;
+      surfacedCredentialReferenceSource: "existing-page-or-dock-client-safe-credential-reference";
+      currentClientPayloadSource: "existing-approved-client-safe-source";
+      clientPayloadBoundary: "sanitized-credential-status-metadata-only";
+      safeStates: readonly YouTubeOAuthCredentialStatusUiStateId[];
+      nextStep: "wire-status-display-to-surfaced-approved-source-without-storage-or-handoff-changes";
+    }
+  | {
+      status: "blocked-no-surfaced-approved-client-safe-credential-reference-source";
+      surface: "/tools/comment-translator";
+      approvedSource: YouTubeOAuthClientSafeCredentialReferenceSourceDefinition | null;
+      surfacedCredentialReferenceSource: null;
+      currentClientPayloadSource: "not-wired";
+      currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled";
+      blocker: "surface-approved-client-safe-credential-reference-before-status-display-wiring";
+      nextPrConditions: readonly [
+        "identify-an-existing-page-or-dock-surfaced-approved-client-safe-credentialReferenceId-source",
+        "do-not-call-status-action-until-that-source-exists",
+        "do-not-add-new-client-payload-without-explicit-source-approval",
+        "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+        "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+        "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+        "preserve-owner-authorization-before-status-read",
+        "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+      ];
+    };
+
 export const youtubeOAuthClientSafeCredentialReferenceSourceContract = {
   implementationStage: "approved-client-safe-credential-reference-source-readiness-definition",
   currentClientPayloadSource: "not-wired",
@@ -191,6 +222,51 @@ export function assessYouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadi
     blocker: "approved-source-definition-is-not-surfaced-to-comment-translator",
     nextPrConditions: [
       "surface-existing-approved-client-safe-credential-reference-to-comment-translator",
+      "do-not-add-new-client-payload-without-explicit-source-approval",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+      "preserve-owner-authorization-before-status-read",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+    ]
+  };
+}
+
+export function assessYouTubeOAuthSurfacedApprovedClientSafeCredentialReferenceSourceGate({
+  approvedSource,
+  surface,
+  pageOrDockHasSurfacedCredentialReferenceId,
+  requestedClientPayloadChange
+}: {
+  approvedSource: YouTubeOAuthClientSafeCredentialReferenceSourceDefinition | null;
+  surface: "/tools/comment-translator";
+  pageOrDockHasSurfacedCredentialReferenceId: boolean;
+  requestedClientPayloadChange: "none" | "new-client-payload";
+}): YouTubeOAuthSurfacedApprovedClientSafeCredentialReferenceSourceGate {
+  if (approvedSource && pageOrDockHasSurfacedCredentialReferenceId && requestedClientPayloadChange === "none") {
+    return {
+      status: "ready-for-status-display-wiring-contract",
+      surface,
+      approvedSource,
+      surfacedCredentialReferenceSource: "existing-page-or-dock-client-safe-credential-reference",
+      currentClientPayloadSource: "existing-approved-client-safe-source",
+      clientPayloadBoundary: "sanitized-credential-status-metadata-only",
+      safeStates: youtubeOAuthClientSafeCredentialReferenceSourceContract.safeStates,
+      nextStep: "wire-status-display-to-surfaced-approved-source-without-storage-or-handoff-changes"
+    };
+  }
+
+  return {
+    status: "blocked-no-surfaced-approved-client-safe-credential-reference-source",
+    surface,
+    approvedSource,
+    surfacedCredentialReferenceSource: null,
+    currentClientPayloadSource: "not-wired",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "surface-approved-client-safe-credential-reference-before-status-display-wiring",
+    nextPrConditions: [
+      "identify-an-existing-page-or-dock-surfaced-approved-client-safe-credentialReferenceId-source",
+      "do-not-call-status-action-until-that-source-exists",
       "do-not-add-new-client-payload-without-explicit-source-approval",
       "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
       "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",

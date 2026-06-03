@@ -16,7 +16,7 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype、YouTube input boundary design、YouTube owner polling runtime foundation、YouTube Google API adapter + token reference resolver design、YouTube OAuth token store + consent runtime foundation、YouTube encrypted token store implementation plan / blocker resolution、YouTube encrypted token store schema/key approval checkpoint、YouTube encrypted token store approved migration proposal gate、YouTube encrypted token store explicit approval collection、YouTube encrypted token store separate approved migration readiness、YouTube token store final review gate PR #277、migration implementation blocker review PR #278、final implementation approval PR #279、implementation approval evidence PR #280、explicit implementation approval collection PR #281、post-PR #281 approval blocker PR #282、post-PR #282 approval blocker PR #283、post-PR #283 approval blocker PR #285、post-PR #285 approval blocker PR #287、YouTube token store implementation skeleton PR #289、trusted Supabase adapter / credential sanitized status boundary PR #290、credential status endpoint / server action skeleton PR #291、trusted service-role status wiring PR #292、credential status owner authorization PR #293、credential status UI wiring contract PR #294、YouTube credential status display wiring readiness PR #295、approved client-safe credential reference source readiness PR #296、approved-source definition-only blocker PR #297、surfaced credential reference source gate PR #298、source-surfacing approval gate PR #299、credential source approval evidence PR #300、credential reference surface source recheck PR #301、credential source approval after PR301 recheck PR #302、credential source final gate after PR302 PR #303、credential status source intake gate after PR303 PR #304 are merged into `codex/comment-translator-preview`; do not merge to `main` yet because live OAuth / refresh runtime / quota boundary is still not implemented。
+   - status: mock foundation、interactive shell、Manual / Paste Input MVP、Translation provider boundary design、Server-side translation prototype、YouTube input boundary design、YouTube owner polling runtime foundation、YouTube Google API adapter + token reference resolver design、YouTube OAuth token store + consent runtime foundation、YouTube encrypted token store implementation plan / blocker resolution、YouTube encrypted token store schema/key approval checkpoint、YouTube encrypted token store approved migration proposal gate、YouTube encrypted token store explicit approval collection、YouTube encrypted token store separate approved migration readiness、YouTube token store final review gate PR #277、migration implementation blocker review PR #278、final implementation approval PR #279、implementation approval evidence PR #280、explicit implementation approval collection PR #281、post-PR #281 approval blocker PR #282、post-PR #282 approval blocker PR #283、post-PR #283 approval blocker PR #285、post-PR #285 approval blocker PR #287、YouTube token store implementation skeleton PR #289、trusted Supabase adapter / credential sanitized status boundary PR #290、credential status endpoint / server action skeleton PR #291、trusted service-role status wiring PR #292、credential status owner authorization PR #293、credential status UI wiring contract PR #294、YouTube credential status display wiring readiness PR #295、approved client-safe credential reference source readiness PR #296、approved-source definition-only blocker PR #297、surfaced credential reference source gate PR #298、source-surfacing approval gate PR #299、credential source approval evidence PR #300、credential reference surface source recheck PR #301、credential source approval after PR301 recheck PR #302、credential source final gate after PR302 PR #303、credential status source intake gate after PR303 PR #304、credential status source/evidence final readiness PR #305 are merged into `codex/comment-translator-preview`; do not merge to `main` yet because live OAuth / refresh runtime / quota boundary is still not implemented。
    - branch stack:
      - preview: `codex/comment-translator-preview`
      - merged feature: `codex/comment-translator-mock-foundation` at `D:/V_streamer_tools/.worktrees/comment-translator-mock-foundation`
@@ -52,7 +52,8 @@
      - merged feature: `codex/comment-translator-youtube-credential-reference-surface-approval-gate` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-credential-reference-surface-approval-gate`
      - merged feature: `codex/comment-translator-youtube-credential-reference-surface-approval-evidence` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-credential-reference-surface-approval-evidence`
      - merged feature: `codex/comment-translator-youtube-credential-reference-surface-source-recheck` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-credential-reference-surface-source-recheck`
-     - active feature: `codex/comment-translator-youtube-credential-status-display-source-evidence-final-readiness` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-credential-status-display-source-evidence-final-readiness`
+     - merged feature: `codex/comment-translator-youtube-credential-status-display-source-evidence-final-readiness` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-credential-status-display-source-evidence-final-readiness`
+     - active feature: `codex/comment-translator-youtube-credential-status-source-evidence-post-pr305-review` at `D:/V_streamer_tools/.worktrees/comment-translator-youtube-credential-status-source-evidence-post-pr305-review`
    - seed:
      - `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
      - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
@@ -64,13 +65,13 @@
      - Real translation provider は、YouTube OAuth / owner check / quota / billing boundary が固まった後に別 PR で比較する。
      - 2026-05-30 decision: まだ実際に使える翻訳ツールではないため、`codex/comment-translator-preview` を `main` へ統合せず、preview branch 上に使える状態へ近づけるPRを刻む。
    - current slice target:
-     - `source/evidence final readiness gate` を PR #304 (`[codex] Gate credential status source intake after PR303`) merge 後の follow-up として確認する。
-     - 前提 PR #304 は 2026-06-03 に `codex/comment-translator-preview` へ merge 済みで、merge commit `3c4058768ff46954deaa1c5bbe15eb58328ba427` が `origin/codex/comment-translator-preview` に含まれることを確認した。
-     - PR #300 / #301 / #302 / #303 merge 前提も維持し、merge commit `a4c272817bab3234eb7a360331c7b54ea419e1b9` / `9b0a3e518262dee4058dca4154a888fe079f48cc` / `7b08186833350e21814385fa7294e90c36b919de` / `1c82713dbeea54ffe0990415618adbb5d8ee55b2` が current branch に含まれることを contract で確認する。
+     - `post-PR #305 source/evidence review gate` を PR #305 (`[codex] Gate PR304 credential status final readiness`) merge 後の follow-up として確認する。
+     - 前提 PR #305 は 2026-06-03 に `codex/comment-translator-preview` へ merge 済みで、merge commit `78dd0f1edc43828e008285efda01b07ca6bd5053` が `origin/codex/comment-translator-preview` に含まれることを確認した。
+     - PR #300 / #301 / #302 / #303 / #304 merge 前提も維持し、merge commit `a4c272817bab3234eb7a360331c7b54ea419e1b9` / `9b0a3e518262dee4058dca4154a888fe079f48cc` / `7b08186833350e21814385fa7294e90c36b919de` / `1c82713dbeea54ffe0990415618adbb5d8ee55b2` / `3c4058768ff46954deaa1c5bbe15eb58328ba427` が current branch に含まれることを contract で確認する。
      - 既存の `/tools/comment-translator` page / `CommentTranslatorDock` / mock snapshot / server action / route / token-store boundary / `lib/comment-translator-youtube-client-safe-credential-reference-source.ts` / `lib/comment-translator-youtube-credential-status-ui-wiring.ts` を再確認した。
      - 実画面に surfaced できる existing approved client-safe `credentialReferenceId` source は page / dock / mock snapshot / handoff payload にまだ無い。source-surfacing explicit approval evidence も実画面 source と結びついた形では揃っていない。
      - そのため YouTube credential status display UI wiring、status action の UI 呼び出し、新規 client payload source、localStorage、IndexedDB、sessionStorage、existing handoff payload は実装しない。
-     - `scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs` と `lib/comment-translator-youtube-client-safe-credential-reference-source.ts` の PR #304 final readiness gate helper で、PR #304 merge 後も source と evidence が両方揃わない状態を `blocked-pr304-final-readiness-missing-surfaced-source-or-approval-evidence` として扱う。
+     - `scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs` と `lib/comment-translator-youtube-client-safe-credential-reference-source.ts` の post-PR #305 source/evidence review gate helper で、PR #305 merge 後も source と evidence が両方揃わない状態を `blocked-pr305-source-evidence-review-missing-surfaced-source-or-approval-evidence` として扱う。
      - 新規 client payload source が必要な場合も、この PR では payload 実装へ進まず、explicit source approval が必要な next PR 条件として扱う。
      - client-readable output は引き続き opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみに閉じる。client に出せる状態は `available` / `reconnect-required` / `unavailable` / `credential-resolution-disabled` のみに閉じる。
      - encrypted row、ciphertext reference、decrypt capability、service_role key、managed secret value、OAuth access token / refresh token / authorization code value は要求・表示・保存・client-readable output 化しない。
@@ -80,6 +81,40 @@
      - 未確認範囲: remote Supabase DB への migration apply、Supabase migration / RLS smoke、safe live service_role status read smoke、safe live YouTube login / OAuth / owner verification / Live Chat polling smoke、Google API live call、refresh runtime、full revocation runtime、実 credentialReferenceId client payload wiring、実画面への credential status 表示、Cloudflare Pages dashboard log。
      - 残リスク: approved source は definition-only / contract-only で、実画面に surfaced された existing client-safe `credentialReferenceId` source と source-surfacing explicit approval evidence はまだ無い。別 PR で source を page/dock に安全に surfaced できることが確定するまで display wiring は進めない。
      - 次 PR 条件: existing approved client-safe credential reference を `/tools/comment-translator` に surfaced する source と explicit source-surfacing approval evidence を明示する。新規 client payload source が必要な場合は別 approval PR に戻る。両方が揃った場合も status display UI wiring は別 PR 条件に切る。client-readable 値は `credentialReferenceId` と sanitized status metadata のみ、localStorage / IndexedDB / sessionStorage / handoff payload 非変更、token / secret / ciphertext / decrypt capability 非出力、owner authorization before status read、`YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` rollback boundary 維持を必須にする。
+   - post-PR #305 source/evidence review gate verification completed 2026-06-03:
+     - branch: `codex/comment-translator-youtube-credential-status-source-evidence-post-pr305-review` -> base `codex/comment-translator-preview`。
+     - merge gate: `git fetch origin --prune` 後、PR #305 は `MERGED`、base `codex/comment-translator-preview`、merge commit `78dd0f1edc43828e008285efda01b07ca6bd5053`。`origin/codex/comment-translator-preview` head が PR #305 merge commit であることを確認した。
+     - RED first: `node scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs` は `reference source module exports the PR #305 credential status display source/evidence post-merge review gate type` で期待どおり FAIL。その後 post-PR #305 review gate helper / task repoint を追加して PASS。
+     - post-PR #305 source/evidence review gate contract: `node scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs` PASS。
+     - approval evidence recheck contract: `node scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs` PASS。
+     - surfaced credential reference source gate contract: `node scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs` PASS。
+     - client-safe credential reference source contract: `node scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs` PASS。
+     - credential status UI wiring contract: `node scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs` PASS。
+     - token store status contract: `node scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs` PASS after dependency install。
+     - existing YouTube token store contract bundle:
+       - `node scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-token-store-explicit-approval-collection-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs` PASS。
+     - translator boundary contracts:
+       - `node scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-runtime-foundation-contract.mjs` PASS。
+       - `node scripts/comment-translator-youtube-input-boundary-contract.mjs` PASS。
+       - `node scripts/comment-translator-server-provider-prototype-contract.mjs` PASS。
+       - `node scripts/comment-translator-provider-boundary-contract.mjs` PASS。
+       - `node scripts/comment-translator-manual-input-mvp-contract.mjs` PASS。
+       - `node scripts/comment-translator-interactive-shell-contract.mjs` PASS。
+       - `node scripts/comment-translator-mock-foundation-contract.mjs` PASS。
+       - `node scripts/tool-portal-entry-contract.mjs` PASS。
+     - dependency install: initial `npm ci` failed with `ERR_SSL_CIPHER_OPERATION_FAILED`; `npm ci --prefer-offline` PASS。
+     - `npm run lint` PASS。
+     - `npx tsc --noEmit` PASS。
+     - `npm run build` PASS (`Static export RSC aliases skipped: out directory is missing for server-runtime build.`、`middleware` deprecation warning、webpack cache warningsあり)。
+     - `git diff --check` PASS (CRLF conversion warnings only)。
+     - UI変更なし。client-safe lib / contract script / task board の変更のみで component、rendered text、CSS、layout を変更していないため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
    - credential status display source/evidence final readiness gate verification completed 2026-06-03:
      - branch: `codex/comment-translator-youtube-credential-status-display-source-evidence-final-readiness` -> base `codex/comment-translator-preview`。
      - merge gate: `git fetch origin --prune` 後、PR #304 は `MERGED`、base `codex/comment-translator-preview`、merge commit `3c4058768ff46954deaa1c5bbe15eb58328ba427`。`git merge-base --is-ancestor` で `origin/codex/comment-translator-preview` に含まれることを確認した。

@@ -1299,6 +1299,7 @@ assert.match(taskSource, /幅別確認は不要/i, "task.md records why width ch
 
 const allowedChangedFiles = new Set([
   referenceSourcePath,
+  "scripts/comment-translator-youtube-credential-source-decision-contract.mjs",
   "scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs",
   "scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs",
   "scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs",

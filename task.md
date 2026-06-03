@@ -80,6 +80,8 @@
      - 次 PR 条件: existing approved client-safe credential reference を `/tools/comment-translator` に surfaced する source と explicit source-surfacing approval evidence を明示する。新規 client payload source が必要な場合は別 approval PR に戻る。client-readable 値は `credentialReferenceId` と sanitized status metadata のみ、localStorage / IndexedDB / sessionStorage / handoff payload 非変更、token / secret / ciphertext / decrypt capability 非出力、owner authorization before status read、`YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` rollback boundary 維持を必須にする。
    - credential reference surface source recheck verification completed 2026-06-03:
      - branch: `codex/comment-translator-youtube-credential-reference-surface-source-recheck` -> base `codex/comment-translator-preview`。
+     - draft PR #301: `codex/comment-translator-youtube-credential-reference-surface-source-recheck` -> `codex/comment-translator-preview`。作成直後は draft / open / mergeable。
+     - PR #301 external checks: `Cloudflare Pages` pending、`Workers Builds: v-streamer-tools` pending。
      - merge gate: `git fetch origin --prune` 後、PR #300 merge commit `a4c272817bab3234eb7a360331c7b54ea419e1b9` が `origin/codex/comment-translator-preview` に含まれることを確認した。
      - RED first: `node scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs` は `reference source module exports the PR #300 surface source recheck type` で期待どおり FAIL。その後 recheck helper / task repoint / allowlist 追従を追加して PASS。
      - new surface source recheck contract: `node scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs` PASS。

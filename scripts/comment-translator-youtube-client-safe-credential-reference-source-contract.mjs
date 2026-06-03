@@ -148,7 +148,8 @@ for (const exportedType of [
   "YouTubeOAuthClientSafeCredentialReferenceSourceDefinition",
   "YouTubeOAuthClientSafeCredentialReferenceSourceReadiness",
   "YouTubeOAuthClientSafeCredentialReferenceSurfaceSource",
-  "YouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadiness"
+  "YouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadiness",
+  "YouTubeOAuthCredentialReferenceSurfaceSourceFinalGate"
 ]) {
   assert.match(referenceSource, new RegExp(`export type ${exportedType}\\b`), `reference source module exports ${exportedType}`);
 }
@@ -157,7 +158,8 @@ for (const exportedConstOrFunction of [
   "youtubeOAuthClientSafeCredentialReferenceSourceContract",
   "defineYouTubeOAuthClientSafeCredentialReferenceSource",
   "assessYouTubeOAuthClientSafeCredentialReferenceSourceReadiness",
-  "assessYouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadiness"
+  "assessYouTubeOAuthApprovedClientSafeCredentialDisplayWiringReadiness",
+  "assessYouTubeOAuthCredentialReferenceSurfaceSourceFinalGate"
 ]) {
   assert.match(
     referenceSource,

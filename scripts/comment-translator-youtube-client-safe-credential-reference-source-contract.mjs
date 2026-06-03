@@ -360,6 +360,7 @@ const allowedChangedFiles = new Set([
   referenceSourcePath,
   uiWiringPath,
   "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
+  "scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs",
   "scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs",
   "scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs",
   "scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs",

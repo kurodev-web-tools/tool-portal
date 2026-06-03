@@ -19,6 +19,7 @@ const pr301MergeCommit = "9b0a3e518262dee4058dca4154a888fe079f48cc";
 const pr302MergeCommit = "7b08186833350e21814385fa7294e90c36b919de";
 const pr303MergeCommit = "1c82713dbeea54ffe0990415618adbb5d8ee55b2";
 const pr304MergeCommit = "3c4058768ff46954deaa1c5bbe15eb58328ba427";
+const pr305MergeCommit = "78dd0f1edc43828e008285efda01b07ca6bd5053";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -148,6 +149,15 @@ assert.equal(
   "yes",
   "PR #304 merge commit is included in the current preview-derived branch"
 );
+assert.equal(
+  execSync(`git merge-base --is-ancestor ${pr305MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
+    cwd: root,
+    encoding: "utf8",
+    shell: "powershell.exe"
+  }).trim(),
+  "yes",
+  "PR #305 merge commit is included in the current preview-derived branch"
+);
 
 for (const requiredPath of [
   referenceSourcePath,
@@ -220,6 +230,16 @@ assert.match(
   referenceSource,
   /export function assessYouTubeOAuthCredentialStatusDisplaySourceEvidenceFinalReadinessGate\b/,
   "reference source module exports the PR #304 credential status display source/evidence final readiness gate helper"
+);
+assert.match(
+  referenceSource,
+  /export type YouTubeOAuthCredentialStatusDisplaySourceEvidencePostPr305ReviewGate\b/,
+  "reference source module exports the PR #305 credential status display source/evidence post-merge review gate type"
+);
+assert.match(
+  referenceSource,
+  /export function assessYouTubeOAuthCredentialStatusDisplaySourceEvidencePostPr305ReviewGate\b/,
+  "reference source module exports the PR #305 credential status display source/evidence post-merge review gate helper"
 );
 
 assert.doesNotMatch(
@@ -580,6 +600,72 @@ assert.equal(
   "PR #304 final readiness gate can only become ready when source and approval evidence are both present without a new payload source"
 );
 
+assert.deepEqual(
+  referenceModule.assessYouTubeOAuthCredentialStatusDisplaySourceEvidencePostPr305ReviewGate({
+    approvedSource,
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 305,
+    prerequisiteMergeCommit: pr305MergeCommit,
+    pageOrDockHasSurfacedCredentialReferenceId: false,
+    sourceSurfacingApprovalEvidence: "missing",
+    requestedClientPayloadChange: "none"
+  }),
+  {
+    status: "blocked-pr305-source-evidence-review-missing-surfaced-source-or-approval-evidence",
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 305,
+    prerequisiteMergeCommit: pr305MergeCommit,
+    approvedSource,
+    surfacedCredentialReferenceSource: null,
+    sourceSurfacingApprovalEvidence: "missing",
+    currentClientPayloadSource: "not-wired",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker:
+      "existing-approved-client-safe-credentialReferenceId-source-and-explicit-source-surfacing-approval-evidence-required-before-status-display-wiring",
+    nextPrConditions: [
+      "identify-existing-approved-client-safe-credentialReferenceId-source-surfaced-to-comment-translator",
+      "record-explicit-source-surfacing-approval-evidence-before-status-display-wiring",
+      "do-not-call-status-action-until-source-and-approval-evidence-are-present",
+      "do-not-add-new-client-payload-without-explicit-source-approval",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+      "preserve-owner-authorization-before-status-read",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary",
+      "defer-status-display-ui-wiring-to-separate-pr-even-if-source-and-approval-evidence-are-present"
+    ]
+  },
+  "PR #305 post-merge review gate blocks display wiring when surfaced source or explicit approval evidence is still missing"
+);
+
+assert.equal(
+  referenceModule.assessYouTubeOAuthCredentialStatusDisplaySourceEvidencePostPr305ReviewGate({
+    approvedSource,
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 305,
+    prerequisiteMergeCommit: pr305MergeCommit,
+    pageOrDockHasSurfacedCredentialReferenceId: true,
+    sourceSurfacingApprovalEvidence: "approved",
+    requestedClientPayloadChange: "new-client-payload"
+  }).status,
+  "blocked-pr305-source-evidence-review-missing-surfaced-source-or-approval-evidence",
+  "PR #305 post-merge review gate still blocks if readiness would require a new client payload source"
+);
+
+assert.equal(
+  referenceModule.assessYouTubeOAuthCredentialStatusDisplaySourceEvidencePostPr305ReviewGate({
+    approvedSource,
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 305,
+    prerequisiteMergeCommit: pr305MergeCommit,
+    pageOrDockHasSurfacedCredentialReferenceId: true,
+    sourceSurfacingApprovalEvidence: "approved",
+    requestedClientPayloadChange: "none"
+  }).status,
+  "ready-for-status-display-wiring-after-pr305-source-evidence-review-gate",
+  "PR #305 post-merge review gate only records readiness when source and approval evidence are both present without a new payload source"
+);
+
 assert.match(taskSource, /PR #300.*merge/i, "task.md records the PR #300 merge premise");
 assert.match(taskSource, /a4c272817bab3234eb7a360331c7b54ea419e1b9/, "task.md records the PR #300 merge commit");
 assert.match(taskSource, /PR #301.*merge/i, "task.md records the PR #301 merge premise");
@@ -590,7 +676,9 @@ assert.match(taskSource, /PR #303.*merge/i, "task.md records the PR #303 merge p
 assert.match(taskSource, /1c82713dbeea54ffe0990415618adbb5d8ee55b2/, "task.md records the PR #303 merge commit");
 assert.match(taskSource, /PR #304.*merge/i, "task.md records the PR #304 merge premise");
 assert.match(taskSource, /3c4058768ff46954deaa1c5bbe15eb58328ba427/, "task.md records the PR #304 merge commit");
-assert.match(taskSource, /source\/evidence final readiness gate/i, "task.md records the current source/evidence final readiness gate target");
+assert.match(taskSource, /PR #305.*merge/i, "task.md records the PR #305 merge premise");
+assert.match(taskSource, /78dd0f1edc43828e008285efda01b07ca6bd5053/, "task.md records the PR #305 merge commit");
+assert.match(taskSource, /post-PR #305 source\/evidence review gate/i, "task.md records the current post-PR #305 source/evidence review gate target");
 assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary when UI is untouched");
 
 const allowedChangedFiles = new Set([

@@ -99,7 +99,7 @@ function loadTsModule(relativePath) {
 }
 
 assert.ok(exists(referenceSourcePath), "client-safe credential reference source module exists");
-assert.ok(exists(uiWiringPath), "credential status UI wiring module exists");
+assert.ok(exists(uiWiringPath), "credential status UI wiring readiness module exists");
 assert.ok(exists(componentPath), "comment translator dock exists");
 assert.ok(exists(pagePath), "comment translator page exists");
 assert.ok(exists(statusActionPath), "credential status server action exists");
@@ -117,29 +117,19 @@ const taskSource = read(taskPath);
 
 assert.match(
   referenceSource,
-  /export type YouTubeOAuthSurfacedApprovedClientSafeCredentialReferenceSourceGate\b/,
-  "reference source module exports the surfaced approved source gate type"
+  /export type YouTubeOAuthCredentialReferenceSurfaceApprovalEvidenceGate\b/,
+  "reference source module exports the source approval evidence gate type"
 );
 assert.match(
   referenceSource,
-  /export function assessYouTubeOAuthSurfacedApprovedClientSafeCredentialReferenceSourceGate\b/,
-  "reference source module exports the surfaced approved source gate helper"
-);
-assert.match(
-  referenceSource,
-  /export type YouTubeOAuthCredentialReferenceSourceSurfacingApprovalGate\b/,
-  "reference source module exports the source-surfacing approval gate type"
-);
-assert.match(
-  referenceSource,
-  /export function assessYouTubeOAuthCredentialReferenceSourceSurfacingApprovalGate\b/,
-  "reference source module exports the source-surfacing approval gate helper"
+  /export function assessYouTubeOAuthCredentialReferenceSurfaceApprovalEvidenceGate\b/,
+  "reference source module exports the source approval evidence gate helper"
 );
 
 assert.doesNotMatch(
   `${componentSource}\n${pageSource}`,
   /getYouTubeOAuthCredentialStatusAction|credentialReferenceId|comment-translator-youtube-credential-status/i,
-  "current page and dock do not wire credential status action or credentialReferenceId"
+  "current page and dock still do not wire credential status action or credentialReferenceId"
 );
 assert.equal(
   toolHandoffSource.includes("credentialReferenceId"),
@@ -149,12 +139,12 @@ assert.equal(
 assert.doesNotMatch(
   `${referenceSource}\n${uiWiringSource}\n${statusActionSource}\n${statusRouteSource}`,
   /localStorage\.|indexedDB\.|sessionStorage\.|readToolHandoff|writeToolHandoff|youtube\.googleapis|OAuth2Client|GoogleAuth|from\s+["']googleapis["']|require\(["']googleapis["']\)|stripe|checkout|quota|billing|gtag|GA4/i,
-  "surfaced source gate does not add storage, handoff, live Google API, quota, billing, or analytics wiring"
+  "approval evidence gate does not add storage, handoff, live Google API, quota, billing, or analytics wiring"
 );
 assert.doesNotMatch(
   `${referenceSource}\n${uiWiringSource}\n${componentSource}\n${pageSource}\n${statusActionSource}\n${statusRouteSource}`,
   /access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|oauthAccessToken|oauthRefreshToken|authorizationCodeValue|managedSecretValue|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i,
-  "surfaced source gate does not expose token values, authorization code values, managed secrets, private keys, or service role key values"
+  "approval evidence gate does not expose token values, authorization code values, managed secrets, private keys, or service role key values"
 );
 
 const referenceModule = loadTsModule(referenceSourcePath);
@@ -171,25 +161,26 @@ const approvedSource = referenceModule.defineYouTubeOAuthClientSafeCredentialRef
 });
 
 assert.deepEqual(
-  referenceModule.assessYouTubeOAuthCredentialReferenceSourceSurfacingApprovalGate({
+  referenceModule.assessYouTubeOAuthCredentialReferenceSurfaceApprovalEvidenceGate({
     approvedSource,
     surface: "/tools/comment-translator",
-    sourceSurfacingApproval: "missing",
     pageOrDockHasSurfacedCredentialReferenceId: false,
+    sourceSurfacingApprovalEvidence: "missing",
     requestedClientPayloadChange: "none"
   }),
   {
-    status: "blocked-pending-source-surfacing-approval",
+    status: "blocked-missing-surfaced-source-or-approval-evidence",
     surface: "/tools/comment-translator",
     approvedSource,
-    sourceSurfacingApproval: "missing",
     surfacedCredentialReferenceSource: null,
+    sourceSurfacingApprovalEvidence: "missing",
     currentClientPayloadSource: "not-wired",
     currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
-    blocker: "source-surfacing-approval-required-before-status-display-wiring",
+    blocker: "existing-surfaced-source-and-source-surfacing-approval-evidence-required-before-status-display-wiring",
     nextPrConditions: [
-      "obtain-explicit-approval-for-surfacing-existing-approved-client-safe-credentialReferenceId-source",
-      "do-not-call-status-action-until-source-surfacing-is-approved-and-present",
+      "identify-existing-approved-client-safe-credentialReferenceId-source-surfaced-to-comment-translator",
+      "record-explicit-source-surfacing-approval-evidence-before-status-display-wiring",
+      "do-not-call-status-action-until-source-and-approval-evidence-are-present",
       "do-not-add-new-client-payload-without-explicit-source-approval",
       "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
       "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
@@ -198,112 +189,52 @@ assert.deepEqual(
       "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
     ]
   },
-  "source-surfacing approval gate blocks display wiring until an approved source is explicitly approved to surface"
+  "approval evidence gate blocks display wiring when the approved source is not surfaced and evidence is missing"
 );
 
 assert.equal(
-  referenceModule.assessYouTubeOAuthCredentialReferenceSourceSurfacingApprovalGate({
+  referenceModule.assessYouTubeOAuthCredentialReferenceSurfaceApprovalEvidenceGate({
     approvedSource,
     surface: "/tools/comment-translator",
-    sourceSurfacingApproval: "approved",
     pageOrDockHasSurfacedCredentialReferenceId: true,
+    sourceSurfacingApprovalEvidence: "approved",
     requestedClientPayloadChange: "new-client-payload"
   }).status,
-  "blocked-pending-source-surfacing-approval",
-  "source-surfacing approval gate blocks display wiring when surfacing would require a new client payload source"
+  "blocked-missing-surfaced-source-or-approval-evidence",
+  "approval evidence gate blocks display wiring when readiness would require a new client payload source"
 );
 
 assert.deepEqual(
-  referenceModule.assessYouTubeOAuthCredentialReferenceSourceSurfacingApprovalGate({
-    approvedSource,
-    surface: "/tools/comment-translator",
-    sourceSurfacingApproval: "approved",
-    pageOrDockHasSurfacedCredentialReferenceId: true,
-    requestedClientPayloadChange: "none"
-  }),
-  {
-    status: "ready-for-surfaced-source-display-wiring-contract",
-    surface: "/tools/comment-translator",
-    approvedSource,
-    sourceSurfacingApproval: "approved",
-    surfacedCredentialReferenceSource: "existing-page-or-dock-client-safe-credential-reference",
-    currentClientPayloadSource: "existing-approved-client-safe-source",
-    clientPayloadBoundary: "sanitized-credential-status-metadata-only",
-    safeStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
-    nextStep: "wire-status-display-to-approved-surfaced-source-in-separate-pr"
-  },
-  "source-surfacing approval gate allows display wiring only after explicit surfacing approval and an existing surfaced source"
-);
-
-assert.deepEqual(
-  referenceModule.assessYouTubeOAuthSurfacedApprovedClientSafeCredentialReferenceSourceGate({
-    approvedSource,
-    surface: "/tools/comment-translator",
-    pageOrDockHasSurfacedCredentialReferenceId: false,
-    requestedClientPayloadChange: "none"
-  }),
-  {
-    status: "blocked-no-surfaced-approved-client-safe-credential-reference-source",
-    surface: "/tools/comment-translator",
-    approvedSource,
-    surfacedCredentialReferenceSource: null,
-    currentClientPayloadSource: "not-wired",
-    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
-    blocker: "surface-approved-client-safe-credential-reference-before-status-display-wiring",
-    nextPrConditions: [
-      "identify-an-existing-page-or-dock-surfaced-approved-client-safe-credentialReferenceId-source",
-      "do-not-call-status-action-until-that-source-exists",
-      "do-not-add-new-client-payload-without-explicit-source-approval",
-      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
-      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
-      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
-      "preserve-owner-authorization-before-status-read",
-      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
-    ]
-  },
-  "gate blocks display wiring when the approved source definition is not surfaced to the page or dock"
-);
-
-assert.equal(
-  referenceModule.assessYouTubeOAuthSurfacedApprovedClientSafeCredentialReferenceSourceGate({
+  referenceModule.assessYouTubeOAuthCredentialReferenceSurfaceApprovalEvidenceGate({
     approvedSource,
     surface: "/tools/comment-translator",
     pageOrDockHasSurfacedCredentialReferenceId: true,
-    requestedClientPayloadChange: "new-client-payload"
-  }).status,
-  "blocked-no-surfaced-approved-client-safe-credential-reference-source",
-  "gate blocks display wiring when readiness would require a new client payload source"
-);
-
-assert.deepEqual(
-  referenceModule.assessYouTubeOAuthSurfacedApprovedClientSafeCredentialReferenceSourceGate({
-    approvedSource,
-    surface: "/tools/comment-translator",
-    pageOrDockHasSurfacedCredentialReferenceId: true,
+    sourceSurfacingApprovalEvidence: "approved",
     requestedClientPayloadChange: "none"
   }),
   {
-    status: "ready-for-status-display-wiring-contract",
+    status: "ready-for-status-display-wiring-after-source-approval-evidence",
     surface: "/tools/comment-translator",
     approvedSource,
     surfacedCredentialReferenceSource: "existing-page-or-dock-client-safe-credential-reference",
+    sourceSurfacingApprovalEvidence: "approved",
     currentClientPayloadSource: "existing-approved-client-safe-source",
     clientPayloadBoundary: "sanitized-credential-status-metadata-only",
     safeStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
-    nextStep: "wire-status-display-to-surfaced-approved-source-without-storage-or-handoff-changes"
+    nextStep: "wire-status-display-to-approved-surfaced-source-in-separate-pr-without-storage-or-handoff-changes"
   },
-  "gate allows display wiring only after an approved client-safe credentialReferenceId source is already surfaced"
+  "approval evidence gate allows display wiring only after the source is surfaced and explicit approval evidence exists"
 );
 
-assert.match(taskSource, /PR #297.*merge/i, "task.md records the PR #297 merge premise");
-assert.match(taskSource, /surfaced approved client-safe credential reference source gate/i, "task.md records this surfaced source gate follow-up");
+assert.match(taskSource, /PR #299.*merge/i, "task.md records the PR #299 merge premise");
+assert.match(taskSource, /source-surfacing explicit approval evidence/i, "task.md records the source-surfacing approval evidence follow-up");
 assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary when UI is untouched");
 
 const allowedChangedFiles = new Set([
   referenceSourcePath,
+  "scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs",
   "scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs",
   "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
-  "scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs",
   "scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs",
   "scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs",
   "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
@@ -316,7 +247,7 @@ const allowedChangedFiles = new Set([
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `surfaced source gate change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `approval evidence gate change stays in allowed files: ${file}`);
 
   const source = read(file);
   assert.doesNotMatch(
@@ -326,4 +257,4 @@ for (const file of changedFiles()) {
   );
 }
 
-console.log("comment translator YouTube surfaced credential reference source gate contract checks passed");
+console.log("comment translator YouTube credential reference surface approval evidence contract checks passed");

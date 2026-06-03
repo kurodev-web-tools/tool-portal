@@ -83,16 +83,11 @@ export type YouTubeOAuthCredentialStatusDisplayWiringReadiness =
       serverAction: "getYouTubeOAuthCredentialStatusAction";
       approvedClientCredentialReferenceSource:
         | "missing-client-safe-credential-reference"
+        | "approved-source-definition-only-not-surfaced"
         | "new-client-payload-required";
       currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled";
       blocker: "approved-client-safe-credential-reference-source-required";
-      nextPrConditions: readonly [
-        "define-approved-client-safe-credential-reference-source",
-        "keep-client-payload-to-sanitized-credential-status-metadata-only",
-        "preserve-no-localStorage-indexedDB-or-handoff-payload-change",
-        "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
-        "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
-      ];
+      nextPrConditions: readonly string[];
     };
 
 export const youtubeOAuthCredentialStatusUiWiringContract = {
@@ -183,6 +178,7 @@ export function assessYouTubeOAuthCredentialStatusDisplayWiringReadiness({
   approvedClientCredentialReferenceSource:
     | "existing-approved-client-safe-credential-reference"
     | "missing-client-safe-credential-reference"
+    | "approved-source-definition-only-not-surfaced"
     | "new-client-payload-required";
   surface: "/tools/comment-translator";
 }): YouTubeOAuthCredentialStatusDisplayWiringReadiness {
@@ -198,6 +194,23 @@ export function assessYouTubeOAuthCredentialStatusDisplayWiringReadiness({
     };
   }
 
+  const nextPrConditions =
+    approvedClientCredentialReferenceSource === "approved-source-definition-only-not-surfaced"
+      ? [
+          "surface-existing-approved-client-safe-credential-reference-to-comment-translator",
+          "keep-client-payload-to-sanitized-credential-status-metadata-only",
+          "preserve-no-localStorage-indexedDB-or-handoff-payload-change",
+          "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+          "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+        ]
+      : [
+          "define-approved-client-safe-credential-reference-source",
+          "keep-client-payload-to-sanitized-credential-status-metadata-only",
+          "preserve-no-localStorage-indexedDB-or-handoff-payload-change",
+          "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+          "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+        ];
+
   return {
     status: "blocked-pending-client-reference-source",
     surface,
@@ -205,13 +218,7 @@ export function assessYouTubeOAuthCredentialStatusDisplayWiringReadiness({
     approvedClientCredentialReferenceSource,
     currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
     blocker: "approved-client-safe-credential-reference-source-required",
-    nextPrConditions: [
-      "define-approved-client-safe-credential-reference-source",
-      "keep-client-payload-to-sanitized-credential-status-metadata-only",
-      "preserve-no-localStorage-indexedDB-or-handoff-payload-change",
-      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
-      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
-    ]
+    nextPrConditions
   };
 }
 

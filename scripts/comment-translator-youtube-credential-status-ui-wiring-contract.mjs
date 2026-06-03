@@ -411,6 +411,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-youtube-client-safe-credential-reference-source.ts",
   uiWiringPath,
   statusBoundaryPath,
+  "scripts/comment-translator-youtube-credential-source-decision-contract.mjs",
   "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
   "scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs",
   "scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs",

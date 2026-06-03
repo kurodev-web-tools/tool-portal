@@ -17,16 +17,16 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: `codex/comment-translator-preview` は PR #313 (`[codex] Gate post-PR312 credential source evidence review`) merge 済み。latest preview head 確認時点: `aea6934e8f82ef4505cc4fc7b9a2000edca6b5ee`。
+   - status: `codex/comment-translator-preview` は PR #313 (`[codex] Gate post-PR312 credential source evidence review`) と PR #314 (`[codex] Clean up comment translator task board`) merge 済み。latest preview head 確認時点: `324e51ad718c5d31b7d0768ebcfed6258c43dd4f`。
    - current blocker: `/tools/comment-translator` に surfaced できる existing approved client-safe `credentialReferenceId` source と、その source に紐づく source-surfacing explicit approval evidence がまだ両方揃っていない。
    - hard stop: 両方が揃うまで YouTube credential status display UI wiring、status action の UI 呼び出し、新規 client payload source、localStorage、IndexedDB、sessionStorage、existing handoff payload 変更へ進まない。
    - current source boundary: client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみ。status は `available` / `reconnect-required` / `unavailable` / `credential-resolution-disabled` のみに閉じる。
    - current server boundary: `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`、owner authorization before status read、no token value logging、unusable credential reference revoke / invalidate rollback boundary を維持する。
-   - latest local review result: post-PR #312 source/evidence review gate は blocker summary。実画面 source と explicit approval evidence が揃っていないため UI wiring readiness には進めない。
+   - latest local review result: post-PR #314 source decision は blocker summary。`/tools/comment-translator` page / `CommentTranslatorDock` / existing handoff payload に surfaced `credentialReferenceId` source は無く、explicit source-surfacing approval evidence も UI wiring に使える形では揃っていないため、UI wiring readiness には進めない。
    - Cloudflare checks note: PR #302 以降は Cloudflare Pages FAILURE / Workers Builds SUCCESS が継続。local build が通る slice では base history 由来の可能性を分離し、Cloudflare dashboard log は未確認範囲に残す。
-   - immediate next decision: これ以上 gate-only PR を重ねず、既存 payload / page / dock / handoff の中に approved client-safe source を surfacing できる根拠があるか、または新規 client payload source の explicit approval が必要かを決める。
-   - next PR candidate: `comment-translator-credential-source-decision`。新規 source が必要なら payload 実装ではなく source-surfacing approval evidence PR に切る。source/evidence が揃った場合でも、実 display UI wiring はさらに別 PR 条件に切る。
-   - out of scope for next decision PR: UI wiring、new client payload implementation、localStorage / IndexedDB / sessionStorage / handoff payload 変更、remote Supabase DB migration apply、Google API live call、safe live YouTube OAuth smoke、refresh runtime、full revocation runtime、provider coupling、quota write、billing integration、main integration。
+   - immediate next condition: 新規 client payload source が必要なら、この payload 実装前に explicit source-surfacing approval evidence を別 PR 条件として揃える。
+   - next PR candidate: source-surfacing approval evidence / approved client payload source decision。payload 実装はまだ行わず、source と evidence が揃った場合でも実 display UI wiring はさらに別 PR 条件に切る。
+   - out of scope for source decision PR: UI wiring、new client payload implementation、localStorage / IndexedDB / sessionStorage / handoff payload 変更、remote Supabase DB migration apply、Google API live call、safe live YouTube OAuth smoke、refresh runtime、full revocation runtime、provider coupling、quota write、billing integration、main integration。
    - remaining route after source decision:
      1. approved source と explicit source-surfacing approval evidence を確定する。
      2. readiness-only PR で UI wiring 条件が揃ったことを記録する。
@@ -43,6 +43,15 @@
      - UI / rendered text / CSS は変更していない。docs と contract allowlist の整理のみのため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
      - 未確認範囲: Cloudflare Pages dashboard log、remote Supabase DB apply、safe live service_role status read smoke、safe live YouTube OAuth / owner verification / Live Chat polling smoke、Google API live call、refresh runtime、full revocation runtime、実 credentialReferenceId client payload wiring、実 credential status display wiring。
      - 残リスク: `task.md` には古い contract 向け互換アンカーを残している。将来 contract が archive も読む形に更新できたら、このアンカー section はさらに縮小できる。
+   - source decision completed 2026-06-03:
+     - branch: `codex/comment-translator-credential-source-decision` -> base `codex/comment-translator-preview`。
+     - merge-state: PR #314 merge commit `324e51ad718c5d31b7d0768ebcfed6258c43dd4f` が preview-derived branch に含まれることを確認した。
+     - decision: existing approved client-safe source definition はあるが、`/tools/comment-translator` page / `CommentTranslatorDock` / existing handoff payload に surfaced `credentialReferenceId` source は無い。source に紐づく explicit source-surfacing approval evidence も display wiring に使える形では揃っていない。
+     - blocker summary: `blocked-pr314-source-decision-missing-surfaced-source-or-approval-evidence`。この PR では UI wiring、status action の UI 呼び出し、新規 client payload source、storage / handoff payload 変更へ進まない。
+     - next PR condition: 新規 client payload source が必要なら、payload 実装前に explicit source-surfacing approval evidence を取る。source と evidence が揃った場合も、readiness-only PR を挟み、実 credential status display UI wiring は別 PR に切る。
+     - UI / rendered text / CSS は変更していない。contract / boundary / task board の source decision のみのため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
+     - 未確認範囲: Cloudflare Pages dashboard log、remote Supabase DB apply、safe live service_role status read smoke、safe live YouTube OAuth / owner verification / Live Chat polling smoke、Google API live call、refresh runtime、full revocation runtime、実 credentialReferenceId client payload wiring、実 credential status display wiring。
+     - 検証: source decision contract は RED (`reference source module exports the PR #314 source decision gate type` assertion failure) -> GREEN。`node scripts/comment-translator-youtube-credential-source-decision-contract.mjs`、source/evidence gate bundle、credential status UI wiring contract、token-store status contract、existing YouTube token store contract bundle、translator boundary contracts、`node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` PASS。`git diff --check` は既知の CRLF conversion warning のみ。`node scripts/static-export-rsc-aliases.mjs --check` は build 前後とも `out directory is missing` で FAIL。今回の `npm run build` は server-runtime build として exit 0 で、postbuild は `out directory is missing for server-runtime build` として skip。
 
 2. Analytics / consent later scope
    - status: legal foundation は main に統合済み。GA4 や cookie consent banner は未着手。
@@ -178,6 +187,8 @@ UI / 表示文言 / CSS を触った場合のみ、幅別確認結果をこの�
 - PR #311 merge commit `d57a21a9f2c705b541d48f1f4098d71cb31abdee`。
 - PR #312 merge commit `05292e79bb5f8a6d9916c417f1e7fcb672ae5b6e`。
 - post-PR #312 source/evidence review gate は blocker summary。幅別確認は不要。
+- PR #314 merge commit `324e51ad718c5d31b7d0768ebcfed6258c43dd4f`。
+- post-PR #314 source decision は blocker summary。幅別確認は不要。
 
 ## Completed / Archive Summary
 

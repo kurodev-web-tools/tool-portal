@@ -335,6 +335,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-provider-boundary-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
   "scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs",
+  "docs/archive/TASK_HISTORY_2026-06.md",
   taskPath
 ]);
 

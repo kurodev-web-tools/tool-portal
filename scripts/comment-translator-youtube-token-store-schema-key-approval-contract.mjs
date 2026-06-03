@@ -272,6 +272,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-input-boundary-contract.mjs",
   "scripts/comment-translator-server-provider-prototype-contract.mjs",
   "scripts/comment-translator-provider-boundary-contract.mjs",
+  "docs/archive/TASK_HISTORY_2026-06.md",
   taskPath
 ]);
 

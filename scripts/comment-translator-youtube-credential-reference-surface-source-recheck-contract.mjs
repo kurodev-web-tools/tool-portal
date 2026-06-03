@@ -1311,6 +1311,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs",
+  "docs/archive/TASK_HISTORY_2026-06.md",
   taskPath
 ]);
 

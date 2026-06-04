@@ -17,6 +17,7 @@ const taskPath = "task.md";
 const pr314MergeCommit = "324e51ad718c5d31b7d0768ebcfed6258c43dd4f";
 const pr315MergeCommit = "8fb6df6e20149dd83e8204c1a17a937c2d7497ee";
 const pr316MergeCommit = "1adf68b47d418c2127c45aeb5d13269b2a82ece6";
+const pr317MergeCommit = "8c5c4c3ed5b38a1cb667e520125bf1469dce6b5b";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -128,6 +129,15 @@ assert.equal(
   "yes",
   "PR #316 merge commit is included in the current preview-derived branch"
 );
+assert.equal(
+  execSync(`git merge-base --is-ancestor ${pr317MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
+    cwd: root,
+    encoding: "utf8",
+    shell: "powershell.exe"
+  }).trim(),
+  "yes",
+  "PR #317 merge commit is included in the current preview-derived branch"
+);
 
 for (const requiredPath of [
   referenceSourcePath,
@@ -180,6 +190,16 @@ assert.match(
   referenceSource,
   /export function assessYouTubeOAuthSourceSurfacingApprovalEvidenceCollectionReadiness\b/,
   "reference source module exports the PR #316 source-surfacing approval evidence collection readiness helper"
+);
+assert.match(
+  referenceSource,
+  /export type YouTubeOAuthSourceSurfacingApprovalEvidenceReadinessPostPr317Gate\b/,
+  "reference source module exports the PR #317 source-surfacing approval evidence readiness type"
+);
+assert.match(
+  referenceSource,
+  /export function assessYouTubeOAuthSourceSurfacingApprovalEvidenceReadinessPostPr317Gate\b/,
+  "reference source module exports the PR #317 source-surfacing approval evidence readiness helper"
 );
 
 assert.doesNotMatch(
@@ -453,14 +473,100 @@ assert.deepEqual(
   "PR #316 evidence collection can only record readiness, not implement payload or display UI wiring"
 );
 
+assert.deepEqual(
+  referenceModule.assessYouTubeOAuthSourceSurfacingApprovalEvidenceReadinessPostPr317Gate({
+    approvedSource,
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 317,
+    prerequisiteMergeCommit: pr317MergeCommit,
+    requestedClientPayloadSource: "new-client-payload-required",
+    sourceSurfacingApprovalEvidence: { status: "missing" }
+  }),
+  {
+    status: "blocked-pr317-source-surfacing-approval-evidence-readiness-missing-explicit-evidence",
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 317,
+    prerequisiteMergeCommit: pr317MergeCommit,
+    approvedSource,
+    requestedClientPayloadSource: "new-client-payload-required",
+    sourceSurfacingApprovalEvidence: "missing",
+    currentClientPayloadSource: "not-wired",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "explicit-source-surfacing-approval-evidence-required-before-readiness-or-payload-implementation",
+    requiredEvidenceShape: [
+      "approver-role",
+      "approval-statement",
+      "target-source-new-client-payload-credentialReferenceId-source",
+      "target-surface-tools-comment-translator",
+      "target-boundary-credentialReferenceId-and-sanitized-status-metadata-only-no-storage-or-handoff-change"
+    ],
+    nextPrConditions: [
+      "collect-explicit-approval-evidence-with-approver-role-approval-statement-target-source-target-surface-target-boundary",
+      "do-not-implement-new-client-payload-source-in-this-readiness-pr",
+      "do-not-wire-credential-status-display-ui-in-this-readiness-pr",
+      "do-not-call-status-action-until-source-and-approval-evidence-are-present",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+      "preserve-owner-authorization-before-status-read",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+    ]
+  },
+  "PR #317 readiness gate stays blocked when explicit source-surfacing approval evidence is missing"
+);
+
+assert.deepEqual(
+  referenceModule.assessYouTubeOAuthSourceSurfacingApprovalEvidenceReadinessPostPr317Gate({
+    approvedSource,
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 317,
+    prerequisiteMergeCommit: pr317MergeCommit,
+    requestedClientPayloadSource: "new-client-payload-required",
+    sourceSurfacingApprovalEvidence: {
+      status: "approved",
+      approverRole: "authorized-product-or-security-owner",
+      approvalStatement: "explicitly-approves-new-client-payload-source-before-implementation",
+      targetSource: "new-client-payload-credentialReferenceId-source",
+      targetSurface: "/tools/comment-translator",
+      targetBoundary: "credentialReferenceId-and-sanitized-status-metadata-only-no-storage-or-handoff-change",
+      approvedFor: "readiness-only-not-display-ui-wiring"
+    }
+  }),
+  {
+    status: "ready-for-new-client-payload-source-readiness-only-after-pr317-source-surfacing-approval-evidence",
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 317,
+    prerequisiteMergeCommit: pr317MergeCommit,
+    approvedSource,
+    requestedClientPayloadSource: "new-client-payload-required",
+    sourceSurfacingApprovalEvidence: {
+      status: "approved",
+      approverRole: "authorized-product-or-security-owner",
+      approvalStatement: "explicitly-approves-new-client-payload-source-before-implementation",
+      targetSource: "new-client-payload-credentialReferenceId-source",
+      targetSurface: "/tools/comment-translator",
+      targetBoundary: "credentialReferenceId-and-sanitized-status-metadata-only-no-storage-or-handoff-change",
+      approvedFor: "readiness-only-not-display-ui-wiring"
+    },
+    currentClientPayloadSource: "not-wired",
+    clientPayloadBoundary: "sanitized-credential-status-metadata-only",
+    safeStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
+    nextStep: "record-readiness-only-and-defer-new-client-payload-source-implementation-and-display-ui-wiring-to-separate-prs"
+  },
+  "PR #317 readiness gate can only record readiness, not implement payload or display UI wiring"
+);
+
 assert.match(taskSource, /PR #314.*merge/i, "task.md records the PR #314 merge premise");
 assert.match(taskSource, /324e51ad718c5d31b7d0768ebcfed6258c43dd4f/, "task.md records the PR #314 merge commit");
 assert.match(taskSource, /PR #315.*merge/i, "task.md records the PR #315 merge premise");
 assert.match(taskSource, /8fb6df6e20149dd83e8204c1a17a937c2d7497ee/, "task.md records the PR #315 merge commit");
 assert.match(taskSource, /PR #316.*merge/i, "task.md records the PR #316 merge premise");
 assert.match(taskSource, /1adf68b47d418c2127c45aeb5d13269b2a82ece6/, "task.md records the PR #316 merge commit");
+assert.match(taskSource, /PR #317.*merge/i, "task.md records the PR #317 merge premise");
+assert.match(taskSource, /8c5c4c3ed5b38a1cb667e520125bf1469dce6b5b/, "task.md records the PR #317 merge commit");
 assert.match(taskSource, /approver.*role|approval.*statement|target source|target surface|target boundary/i, "task.md records the explicit approval evidence shape required before any new client payload source");
 assert.match(taskSource, /source-surfacing approval evidence collection/i, "task.md records the PR #316 source-surfacing approval evidence collection result");
+assert.match(taskSource, /source-surfacing approval evidence readiness/i, "task.md records the PR #317 source-surfacing approval evidence readiness result");
 assert.match(taskSource, /source decision/i, "task.md records the current source decision result");
 assert.match(taskSource, /blocker summary/i, "task.md records the blocker summary result");
 assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary when UI is untouched");

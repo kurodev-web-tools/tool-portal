@@ -17,15 +17,15 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: `codex/comment-translator-preview` は PR #316 (`[codex] Gate source surfacing approval evidence`) merge 済み。latest preview head 確認時点: `1adf68b47d418c2127c45aeb5d13269b2a82ece6`。
+   - status: `codex/comment-translator-preview` は PR #317 (`[codex] Gate source surfacing approval evidence collection`) merge 済み。latest preview head 確認時点: `8c5c4c3ed5b38a1cb667e520125bf1469dce6b5b`。
    - current blocker: `/tools/comment-translator` に surfaced できる existing approved client-safe `credentialReferenceId` source と、その source に紐づく source-surfacing explicit approval evidence がまだ両方揃っていない。
    - hard stop: 両方が揃うまで YouTube credential status display UI wiring、status action の UI 呼び出し、新規 client payload source、localStorage、IndexedDB、sessionStorage、existing handoff payload 変更へ進まない。
    - current source boundary: client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみ。status は `available` / `reconnect-required` / `unavailable` / `credential-resolution-disabled` のみに閉じる。
    - current server boundary: `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`、owner authorization before status read、no token value logging、unusable credential reference revoke / invalidate rollback boundary を維持する。
-   - latest local review result: post-PR #316 source-surfacing approval evidence collection / readiness-only 判定は blocker / approval-evidence summary。`/tools/comment-translator` page / `CommentTranslatorDock` / existing handoff payload に surfaced `credentialReferenceId` source は無く、新規 client payload source を許可する explicit source-surfacing approval evidence も揃っていないため、payload implementation / display UI wiring readiness には進めない。
+   - latest local review result: post-PR #317 source-surfacing approval evidence readiness 判定は blocker / approval-evidence summary。`/tools/comment-translator` page / `CommentTranslatorDock` / existing handoff payload に surfaced `credentialReferenceId` source は無く、新規 client payload source を許可する explicit source-surfacing approval evidence も揃っていないため、payload implementation / display UI wiring readiness には進めない。
    - Cloudflare checks note: PR #302 以降は Cloudflare Pages FAILURE / Workers Builds SUCCESS が継続。local build が通る slice では base history 由来の可能性を分離し、Cloudflare dashboard log は未確認範囲に残す。
    - immediate next condition: 新規 client payload source が必要なら、この payload 実装前に explicit source-surfacing approval evidence を別 PR 条件として揃える。必要 evidence shape は approver role、approval statement、target source、target surface、target boundary を含む。
-   - next PR candidate: source-surfacing approval evidence collection with actual explicit evidence / approved client payload source readiness-only。payload 実装はまだ行わず、source と evidence が揃った場合でも実 display UI wiring はさらに別 PR 条件に切る。
+   - next PR candidate: source-surfacing explicit approval evidence collection with actual evidence / approved client payload source readiness-only。payload 実装はまだ行わず、source と evidence が揃った場合でも実 display UI wiring はさらに別 PR 条件に切る。
    - out of scope for source decision PR: UI wiring、new client payload implementation、localStorage / IndexedDB / sessionStorage / handoff payload 変更、remote Supabase DB migration apply、Google API live call、safe live YouTube OAuth smoke、refresh runtime、full revocation runtime、provider coupling、quota write、billing integration、main integration。
    - remaining route after source decision:
      1. approved source と explicit source-surfacing approval evidence を確定する。
@@ -74,6 +74,17 @@
      - 未確認範囲: Cloudflare Pages dashboard log、remote Supabase DB apply、safe live service_role status read smoke、safe live YouTube OAuth / owner verification / Live Chat polling smoke、Google API live call、refresh runtime、full revocation runtime、実 credentialReferenceId client payload wiring、実 credential status display wiring。
      - 残リスク: explicit approval evidence はまだ無い。今回の helper は evidence collection の blocker 条件と readiness-only の出口を固定するだけで、承認取得や payload source 実装を行わない。
      - 検証: `node scripts/comment-translator-youtube-credential-source-decision-contract.mjs` は RED (`reference source module exports the PR #316 source-surfacing approval evidence collection readiness type` assertion failure) -> GREEN。`node scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs`、`node scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs`、`node scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs`、`node scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs`、`node scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs`、`node scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs`、existing YouTube token store contract bundle、translator boundary contracts、`node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` PASS。fresh worktree では `node_modules` 不在のため `npm ci` を実行した。`git diff --check` は既知の LF -> CRLF warning のみ。`npm run build` は exit 0、postbuild は `out directory is missing for server-runtime build` として static export RSC aliases を skip。
+   - source-surfacing approval evidence readiness / post-PR #317 recheck completed 2026-06-04:
+     - branch: `codex/comment-translator-source-surfacing-approval-evidence-readiness` -> base `codex/comment-translator-preview`。
+     - merge-state: PR #317 merge commit `8c5c4c3ed5b38a1cb667e520125bf1469dce6b5b` が preview-derived branch に含まれることを確認した。
+     - implementation: `lib/comment-translator-youtube-client-safe-credential-reference-source.ts` に PR #317 後の source-surfacing approval evidence readiness helper を contract-only で追加した。新規 client payload source、status display UI wiring、storage / handoff payload 変更は追加していない。
+     - blocker / approval-evidence summary: `blocked-pr317-source-surfacing-approval-evidence-readiness-missing-explicit-evidence`。新規 client payload source に進むには、approver role、approval statement、target source、target surface、target boundary を含む explicit source-surfacing approval evidence が必要。
+     - explicit approval evidence shape: approver role、approval statement、target source、target surface、target boundary。対象 source は `new-client-payload-credentialReferenceId-source`、対象 surface は `/tools/comment-translator`、boundary は `credentialReferenceId` と sanitized status metadata のみ、no localStorage / IndexedDB / sessionStorage / existing handoff payload change、owner authorization と `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` 維持、readiness-only / not display UI wiring。
+     - next PR condition: explicit evidence が揃った場合も、まず readiness-only に留める。実 credential status display UI wiring と新規 payload source implementation は別 PR 条件に切る。
+     - UI / rendered text / CSS は変更していない。contract / boundary / task board の source-surfacing approval evidence readiness 判定のみのため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
+     - 未確認範囲: Cloudflare Pages dashboard log、remote Supabase DB apply、safe live service_role status read smoke、safe live YouTube OAuth / owner verification / Live Chat polling smoke、Google API live call、refresh runtime、full revocation runtime、実 credentialReferenceId client payload wiring、実 credential status display wiring。
+     - 残リスク: explicit approval evidence はまだ無い。今回の helper は readiness の blocker 条件と readiness-only の出口を固定するだけで、承認取得や payload source 実装を行わない。
+     - 検証: `node scripts/comment-translator-youtube-credential-source-decision-contract.mjs` は RED (`reference source module exports the PR #317 source-surfacing approval evidence readiness type` assertion failure) -> GREEN。`node scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs`、`node scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs`、`node scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs`、`node scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs`、`node scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs`、`node scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs`、existing YouTube token store contract bundle、translator boundary contracts、`node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` PASS。fresh worktree では `node_modules` 不在のため `npm ci --prefer-offline` を実行した。`git diff --check` は既知の LF -> CRLF warning のみ。`npm run build` は exit 0、postbuild は `out directory is missing for server-runtime build` として static export RSC aliases を skip。
 
 2. Analytics / consent later scope
    - status: legal foundation は main に統合済み。GA4 や cookie consent banner は未着手。
@@ -104,16 +115,16 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Kuro Live Comment Translator の次タスクとして、PR #316 (`[codex] Gate source surfacing approval evidence`) と source-surfacing approval evidence collection / readiness-only PR の merge 状態を確認し、YouTube credential status display wiring に進む前の explicit source-surfacing approval evidence が揃っているかを再確認してください。新規 client payload source が必要な場合は、approver role、approval statement、target source、target surface、target boundary が揃った explicit approval evidence が無い限り、UI wiring や payload 実装へ進まず blocker / approval-evidence summary に留めてください。
+Kuro Live Comment Translator の次タスクとして、PR #317 (`[codex] Gate source surfacing approval evidence collection`) と source-surfacing approval evidence readiness PR の merge 状態を確認し、YouTube credential status display wiring に進む前の explicit source-surfacing approval evidence が揃っているかを再確認してください。新規 client payload source が必要な場合は、approver role、approval statement、target source、target surface、target boundary が揃った explicit approval evidence が無い限り、UI wiring や payload 実装へ進まず blocker / approval-evidence summary に留めてください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- source-surfacing approval evidence collection / readiness-only PR が `codex/comment-translator-preview` に merge 済みであることを確認してください。未mergeなら新規実装へ進まず review / CI / blocker summary を返してください。
+- source-surfacing approval evidence readiness PR が `codex/comment-translator-preview` に merge 済みであることを確認してください。未mergeなら新規実装へ進まず review / CI / blocker summary を返してください。
 - merge 済みなら `codex/comment-translator-preview` から新しい feature branch / worktree を切ってください。
-- 推奨 branch: `codex/comment-translator-source-surfacing-approval-evidence-readiness`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-source-surfacing-approval-evidence-readiness`
+- 推奨 branch: `codex/comment-translator-source-surfacing-explicit-approval-evidence`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-source-surfacing-explicit-approval-evidence`
 
 scope:
 - contract-first / merge-state-first で進める。
@@ -133,7 +144,7 @@ Out of scope:
 - service_role key 値、managed secret value、OAuth access token / refresh token / authorization code value の要求・表示・保存。
 
 検証:
-- source-surfacing approval evidence collection / readiness contract を RED -> GREEN で確認する。
+- source-surfacing explicit approval evidence contract を RED -> GREEN で確認する。
 - `node scripts/comment-translator-youtube-credential-source-decision-contract.mjs`
 - `node scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs`
 - `node scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs`
@@ -216,6 +227,8 @@ UI / 表示文言 / CSS を触った場合のみ、幅別確認結果をこの�
 - post-PR #315 source-surfacing approval evidence requirement は blocker / approval-evidence summary。幅別確認は不要。
 - PR #316 merge commit `1adf68b47d418c2127c45aeb5d13269b2a82ece6`。
 - post-PR #316 source-surfacing approval evidence collection / readiness-only は blocker / approval-evidence summary。幅別確認は不要。
+- PR #317 merge commit `8c5c4c3ed5b38a1cb667e520125bf1469dce6b5b`。
+- post-PR #317 source-surfacing approval evidence readiness は blocker / approval-evidence summary。幅別確認は不要。
 
 ## Completed / Archive Summary
 

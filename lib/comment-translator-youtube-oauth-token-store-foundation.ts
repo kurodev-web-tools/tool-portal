@@ -458,6 +458,46 @@ export type YouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRe
       nextAction: "open-small-separate-server-only-runtime-or-apply-pr";
     };
 
+export type YouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection = {
+  implementationStage: "post-final-approval-recheck-evidence-collection";
+  prerequisitePullRequest: "#323";
+  prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview";
+  prerequisiteMergeCommit: "07b221999f302477645160278ae50f8ad3eb043c";
+  prerequisiteMergedAtUtc: "2026-06-04T07:32:53Z";
+  approvalEvidenceSource: "task-docs-pr-323-context";
+  currentEvidenceStatus: "missing-final-review-and-explicit-implementation-approval";
+  sourceRecheckStatus: YouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck["finalReviewStatus"];
+  requiredFinalReviewAreas: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea[];
+  requiredExplicitImplementationApproval: true;
+  prContextChecks: {
+    workersBuilds: "success";
+    cloudflarePages: "failure-known-pages-disconnect-noise";
+  };
+  evidenceRequirements: readonly string[];
+  remoteSupabaseApply: "forbidden-in-this-slice";
+  serverOnlyTokenPersistenceRuntime: "blocked-beyond-existing-skeleton";
+  googleApiLiveSmoke: "forbidden-in-this-slice";
+  ownerAuthorization: "preserved-before-status-read";
+  credentialResolutionDisable: "preserved";
+  clientReadableOutput: readonly string[];
+  forbiddenInThisSlice: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollectionResult =
+  | {
+      status: "blocked-pending-final-review";
+      missingReviewAreas: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationReviewArea[];
+      explicitImplementationApproval: "not-evaluated-until-final-review-complete";
+      remoteSupabaseApplyAllowedInThisPr: false;
+      tokenPersistenceRuntimeAllowedInThisPr: false;
+      googleApiLiveSmokeAllowedInThisPr: false;
+      nextAction: "record-evidence-requirements-and-collect-final-review-evidence";
+    }
+  | Extract<
+      YouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheckResult,
+      { status: "blocked-pending-explicit-implementation-approval" | "ready-for-separate-runtime-or-apply-pr" }
+    >;
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -1135,6 +1175,37 @@ export const youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalR
   ]
 } as const satisfies YouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck;
 
+export const youtubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection = {
+  implementationStage: "post-final-approval-recheck-evidence-collection",
+  prerequisitePullRequest: "#323",
+  prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview",
+  prerequisiteMergeCommit: "07b221999f302477645160278ae50f8ad3eb043c",
+  prerequisiteMergedAtUtc: "2026-06-04T07:32:53Z",
+  approvalEvidenceSource: "task-docs-pr-323-context",
+  currentEvidenceStatus: "missing-final-review-and-explicit-implementation-approval",
+  sourceRecheckStatus: youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck.finalReviewStatus,
+  requiredFinalReviewAreas: youtubeEncryptedTokenStoreSeparateApprovedMigrationReviewAreas,
+  requiredExplicitImplementationApproval: true,
+  prContextChecks: {
+    workersBuilds: "success",
+    cloudflarePages: "failure-known-pages-disconnect-noise"
+  },
+  evidenceRequirements: [
+    "final table shape review evidence for youtube_oauth_credentials after PR #323",
+    "final RLS posture review evidence proving no browser-readable token material",
+    "key-management review evidence for managed secret or KMS, rotation, and emergency disable",
+    "rollback review evidence for credential resolution disable, reviewed database rollback, and no token logging",
+    "explicit implementation approval for a separate remote apply or server-only runtime expansion PR"
+  ],
+  remoteSupabaseApply: "forbidden-in-this-slice",
+  serverOnlyTokenPersistenceRuntime: "blocked-beyond-existing-skeleton",
+  googleApiLiveSmoke: "forbidden-in-this-slice",
+  ownerAuthorization: "preserved-before-status-read",
+  credentialResolutionDisable: "preserved",
+  clientReadableOutput: ["opaque non-secret credentialReferenceId", "sanitized credential status metadata"],
+  forbiddenInThisSlice: youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck.forbiddenInThisSlice
+} as const satisfies YouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection;
+
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
   storageOwner: youtubeEncryptedTokenStoreDesignPolicy.storageOwner,
@@ -1481,6 +1552,25 @@ export function assessYouTubeEncryptedTokenStorePostCredentialStatusDisplayFinal
   };
 }
 
+export function assessYouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection(
+  finalReviewEvidence: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationFinalReviewEvidence[],
+  implementationApproval?: YouTubeEncryptedTokenStoreSeparateApprovedMigrationImplementationApprovalEvidence
+): YouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollectionResult {
+  const result = assessYouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck(
+    finalReviewEvidence,
+    implementationApproval
+  );
+
+  if (result.status === "blocked-pending-final-review") {
+    return {
+      ...result,
+      nextAction: "record-evidence-requirements-and-collect-final-review-evidence"
+    };
+  }
+
+  return result;
+}
+
 export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary(): string {
   return [
     `Post review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postReviewPullRequest}.`,
@@ -1493,6 +1583,16 @@ export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrRevie
     `Rollback review: ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.rollbackReview.status}.`,
     "Explicit implementation approval missing.",
     "This PR stays contract-only; migration implementation remains blocked."
+  ].join(" ");
+}
+
+export function createYouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceSummary(): string {
+  return [
+    `PR ${youtubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection.prerequisitePullRequest} evidence collection.`,
+    "Status: blocked-pending-final-review.",
+    "Required evidence: final table/RLS/key-management/rollback review.",
+    "Explicit implementation approval missing.",
+    "Remote apply, runtime expansion, and Google API live smoke stay out of this PR."
   ].join(" ");
 }
 

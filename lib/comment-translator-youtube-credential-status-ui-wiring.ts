@@ -1,3 +1,5 @@
+import type { YouTubeOAuthNewClientPayloadCredentialReferenceSource } from "./comment-translator-youtube-client-safe-credential-reference-source";
+
 export type YouTubeOAuthCredentialStatusUiStateId =
   | "available"
   | "reconnect-required"
@@ -88,6 +90,42 @@ export type YouTubeOAuthCredentialStatusDisplayWiringReadiness =
       currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled";
       blocker: "approved-client-safe-credential-reference-source-required";
       nextPrConditions: readonly string[];
+    };
+
+export type YouTubeOAuthCredentialStatusDisplayReadinessAfterPayloadSource =
+  | {
+      status: "ready-for-display-ui-wiring-pr-after-pr320-payload-source-readiness";
+      surface: "/tools/comment-translator";
+      prerequisitePullRequest: 320;
+      prerequisiteMergeCommit: string;
+      serverAction: "getYouTubeOAuthCredentialStatusAction";
+      payloadSource: YouTubeOAuthNewClientPayloadCredentialReferenceSource;
+      currentClientPayloadSource: "new-client-payload-credentialReferenceId-source";
+      clientPayloadBoundary: "credentialReferenceId-and-sanitized-status-metadata-only";
+      clientReadableValues: readonly ["credentialReferenceId", "sanitizedCredentialStatusMetadata"];
+      safeStates: readonly YouTubeOAuthCredentialStatusUiStateId[];
+      storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change";
+      serverBoundary: "owner-authorization-and-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-preserved";
+      displayUiWiring: "deferred-to-separate-pr-after-readiness-pr-merge";
+      nextStep: "wire-status-display-in-separate-pr-after-readiness-merge";
+    }
+  | {
+      status: "blocked-pr320-payload-source-readiness-missing-payload-source";
+      surface: "/tools/comment-translator";
+      prerequisitePullRequest: 320;
+      prerequisiteMergeCommit: string;
+      serverAction: "getYouTubeOAuthCredentialStatusAction";
+      payloadSource: null;
+      currentClientPayloadSource: "not-wired";
+      currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled";
+      blocker: "new-client-payload-credentialReferenceId-source-required-before-display-ui-wiring-readiness";
+      nextPrConditions: readonly [
+        "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+        "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+        "preserve-owner-authorization-before-status-read",
+        "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary",
+        "defer-display-ui-wiring-to-separate-pr-after-readiness-pr-merge"
+      ];
     };
 
 export const youtubeOAuthCredentialStatusUiWiringContract = {
@@ -219,6 +257,58 @@ export function assessYouTubeOAuthCredentialStatusDisplayWiringReadiness({
     currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
     blocker: "approved-client-safe-credential-reference-source-required",
     nextPrConditions
+  };
+}
+
+export function assessYouTubeOAuthCredentialStatusDisplayReadinessAfterPayloadSource({
+  serverAction,
+  payloadSource,
+  prerequisiteMergeCommit,
+  prerequisitePullRequest,
+  surface
+}: {
+  serverAction: "getYouTubeOAuthCredentialStatusAction";
+  payloadSource: YouTubeOAuthNewClientPayloadCredentialReferenceSource | null;
+  prerequisiteMergeCommit: string;
+  prerequisitePullRequest: 320;
+  surface: "/tools/comment-translator";
+}): YouTubeOAuthCredentialStatusDisplayReadinessAfterPayloadSource {
+  if (payloadSource) {
+    return {
+      status: "ready-for-display-ui-wiring-pr-after-pr320-payload-source-readiness",
+      surface,
+      prerequisitePullRequest,
+      prerequisiteMergeCommit,
+      serverAction,
+      payloadSource,
+      currentClientPayloadSource: "new-client-payload-credentialReferenceId-source",
+      clientPayloadBoundary: "credentialReferenceId-and-sanitized-status-metadata-only",
+      clientReadableValues: ["credentialReferenceId", "sanitizedCredentialStatusMetadata"],
+      safeStates,
+      storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      serverBoundary: "owner-authorization-and-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-preserved",
+      displayUiWiring: "deferred-to-separate-pr-after-readiness-pr-merge",
+      nextStep: "wire-status-display-in-separate-pr-after-readiness-merge"
+    };
+  }
+
+  return {
+    status: "blocked-pr320-payload-source-readiness-missing-payload-source",
+    surface,
+    prerequisitePullRequest,
+    prerequisiteMergeCommit,
+    serverAction,
+    payloadSource: null,
+    currentClientPayloadSource: "not-wired",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "new-client-payload-credentialReferenceId-source-required-before-display-ui-wiring-readiness",
+    nextPrConditions: [
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      "preserve-owner-authorization-before-status-read",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary",
+      "defer-display-ui-wiring-to-separate-pr-after-readiness-pr-merge"
+    ]
   };
 }
 

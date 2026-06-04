@@ -14,6 +14,7 @@ const statusActionPath = "app/tools/comment-translator/actions.ts";
 const statusRoutePath = "app/api/comment-translator/youtube/credential-status/route.ts";
 const toolHandoffPath = "lib/tool-handoff.ts";
 const taskPath = "task.md";
+const pr319MergeCommit = "9b0e1977c1efde0ef9e04b5889fd1fb992c052c4";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -98,13 +99,28 @@ function loadTsModule(relativePath) {
   }
 }
 
-assert.ok(exists(referenceSourcePath), "client-safe credential reference source module exists");
-assert.ok(exists(uiWiringPath), "credential status UI wiring readiness module exists");
-assert.ok(exists(componentPath), "comment translator dock exists");
-assert.ok(exists(pagePath), "comment translator page exists");
-assert.ok(exists(statusActionPath), "credential status server action exists");
-assert.ok(exists(statusRoutePath), "credential status route exists");
-assert.ok(exists(toolHandoffPath), "tool handoff boundary exists");
+assert.equal(
+  execSync(`git merge-base --is-ancestor ${pr319MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
+    cwd: root,
+    encoding: "utf8",
+    shell: "powershell.exe"
+  }).trim(),
+  "yes",
+  "PR #319 merge commit is included in the current preview-derived branch"
+);
+
+for (const requiredPath of [
+  referenceSourcePath,
+  uiWiringPath,
+  componentPath,
+  pagePath,
+  statusActionPath,
+  statusRoutePath,
+  toolHandoffPath,
+  taskPath
+]) {
+  assert.ok(exists(requiredPath), `${requiredPath} exists`);
+}
 
 const referenceSource = read(referenceSourcePath);
 const uiWiringSource = read(uiWiringPath);
@@ -117,127 +133,143 @@ const taskSource = read(taskPath);
 
 assert.match(
   referenceSource,
-  /export type YouTubeOAuthCredentialReferenceSurfaceApprovalEvidenceGate\b/,
-  "reference source module exports the source approval evidence gate type"
+  /export type YouTubeOAuthNewClientPayloadCredentialReferenceSourceImplementationPostPr319\b/,
+  "reference source module exports the PR #319 new client payload source implementation type"
 );
 assert.match(
   referenceSource,
-  /export function assessYouTubeOAuthCredentialReferenceSurfaceApprovalEvidenceGate\b/,
-  "reference source module exports the source approval evidence gate helper"
+  /export function createYouTubeOAuthNewClientPayloadCredentialReferenceSource\b/,
+  "reference source module exports the new client payload credential reference source helper"
+);
+assert.match(
+  referenceSource,
+  /export function assessYouTubeOAuthNewClientPayloadCredentialReferenceSourceImplementationPostPr319\b/,
+  "reference source module exports the PR #319 new client payload source implementation gate"
 );
 
 assert.doesNotMatch(
   `${componentSource}\n${pageSource}`,
-  /getYouTubeOAuthCredentialStatusAction|credentialReferenceId|comment-translator-youtube-credential-status/i,
-  "current page and dock still do not wire credential status action or credentialReferenceId"
+  /getYouTubeOAuthCredentialStatusAction|comment-translator-youtube-credential-status/i,
+  "this source implementation PR does not wire credential status display UI or status action calls"
 );
-assert.equal(
-  toolHandoffSource.includes("credentialReferenceId"),
-  false,
-  "existing handoff payload remains free of YouTube credential reference fields"
-);
+assert.equal(toolHandoffSource.includes("credentialReferenceId"), false, "existing handoff payload remains unchanged");
 assert.doesNotMatch(
   `${referenceSource}\n${uiWiringSource}\n${statusActionSource}\n${statusRouteSource}`,
   /localStorage\.|indexedDB\.|sessionStorage\.|readToolHandoff|writeToolHandoff|youtube\.googleapis|OAuth2Client|GoogleAuth|from\s+["']googleapis["']|require\(["']googleapis["']\)|stripe|checkout|quota|billing|gtag|GA4/i,
-  "approval evidence gate does not add storage, handoff, live Google API, quota, billing, or analytics wiring"
+  "new payload source does not add storage, handoff, live Google API, quota, billing, or analytics wiring"
 );
 assert.doesNotMatch(
   `${referenceSource}\n${uiWiringSource}\n${componentSource}\n${pageSource}\n${statusActionSource}\n${statusRouteSource}`,
   /access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|oauthAccessToken|oauthRefreshToken|authorizationCodeValue|managedSecretValue|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i,
-  "approval evidence gate does not expose token values, authorization code values, managed secrets, private keys, or service role key values"
+  "new payload source does not expose token values, authorization code values, managed secrets, private keys, or service role key values"
 );
 
 const referenceModule = loadTsModule(referenceSourcePath);
+const approvalEvidence = {
+  status: "approved",
+  approverRole: "authorized-product-or-security-owner",
+  approvalStatement:
+    "approves-new-client-payload-credentialReferenceId-source-for-comment-translator-source-surfacing-before-implementation",
+  targetSource: "new-client-payload-credentialReferenceId-source",
+  targetSurface: "/tools/comment-translator",
+  targetBoundary: "credentialReferenceId-and-sanitized-status-metadata-only-no-storage-or-handoff-change",
+  approvedFor: "readiness-only-not-display-ui-wiring",
+  approvalEvidenceSource: "user-thread-explicit-approval"
+};
 
-const approvedSource = referenceModule.defineYouTubeOAuthClientSafeCredentialReferenceSource({
-  sourceId: "existing-owned-session-credential-reference",
-  approvalStatus: "approved",
-  identifierShape: "opaque-non-secret-credential-reference-id",
-  sourceBoundary: "existing-client-safe-source-only",
-  payloadBoundary: "sanitized-credential-status-metadata-only",
-  storageBoundary: "no-localStorage-indexedDB-or-handoff-payload-change",
-  ownerAuthorizationBoundary: "caller-must-own-credential-before-status-read",
-  emergencyDisableEnv: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"
+const payloadSource = referenceModule.createYouTubeOAuthNewClientPayloadCredentialReferenceSource({
+  credentialReferenceId: "ytcred_contract_opaque_001",
+  statusMetadata: {
+    status: "reconnect-required",
+    provider: "youtube",
+    reconnectRequired: true,
+    providerChannelId: "UC_contract_channel",
+    scopeLabel: "youtube.readonly",
+    expiresAtIso: "2026-06-04T12:00:00.000Z",
+    reason: null
+  },
+  sourceSurfacingApprovalEvidence: approvalEvidence
 });
 
 assert.deepEqual(
-  referenceModule.assessYouTubeOAuthCredentialReferenceSurfaceApprovalEvidenceGate({
-    approvedSource,
-    surface: "/tools/comment-translator",
-    pageOrDockHasSurfacedCredentialReferenceId: false,
-    sourceSurfacingApprovalEvidence: "missing",
-    requestedClientPayloadChange: "none"
-  }),
+  payloadSource,
   {
-    status: "blocked-missing-surfaced-source-or-approval-evidence",
-    surface: "/tools/comment-translator",
-    approvedSource,
-    surfacedCredentialReferenceSource: null,
-    sourceSurfacingApprovalEvidence: "missing",
-    currentClientPayloadSource: "not-wired",
-    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
-    blocker: "existing-surfaced-source-and-source-surfacing-approval-evidence-required-before-status-display-wiring",
-    nextPrConditions: [
-      "identify-existing-approved-client-safe-credentialReferenceId-source-surfaced-to-comment-translator",
-      "record-explicit-source-surfacing-approval-evidence-before-status-display-wiring",
-      "do-not-call-status-action-until-source-and-approval-evidence-are-present",
-      "do-not-add-new-client-payload-without-explicit-source-approval",
-      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
-      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
-      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
-      "preserve-owner-authorization-before-status-read",
-      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
-    ]
+    sourceId: "new-client-payload-credentialReferenceId-source",
+    implementationStage: "new-client-payload-credential-reference-source-implemented-not-display-ui-wiring",
+    credentialReference: {
+      credentialReferenceId: "ytcred_contract_opaque_001",
+      identifierShape: "opaque-non-secret-credential-reference-id"
+    },
+    statusMetadata: {
+      status: "reconnect-required",
+      provider: "youtube",
+      reconnectRequired: true,
+      providerChannelId: "UC_contract_channel",
+      scopeLabel: "youtube.readonly",
+      expiresAtIso: "2026-06-04T12:00:00.000Z",
+      reason: null,
+      payloadBoundary: "sanitized-credential-status-metadata-only"
+    },
+    sourceSurfacingApprovalEvidence: approvalEvidence,
+    clientReadableValues: ["credentialReferenceId", "sanitizedCredentialStatusMetadata"],
+    storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+    serverBoundary: "owner-authorization-and-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-preserved",
+    displayUiWiring: "deferred-to-separate-pr-after-payload-source-merge"
   },
-  "approval evidence gate blocks display wiring when the approved source is not surfaced and evidence is missing"
-);
-
-assert.equal(
-  referenceModule.assessYouTubeOAuthCredentialReferenceSurfaceApprovalEvidenceGate({
-    approvedSource,
-    surface: "/tools/comment-translator",
-    pageOrDockHasSurfacedCredentialReferenceId: true,
-    sourceSurfacingApprovalEvidence: "approved",
-    requestedClientPayloadChange: "new-client-payload"
-  }).status,
-  "blocked-missing-surfaced-source-or-approval-evidence",
-  "approval evidence gate blocks display wiring when readiness would require a new client payload source"
+  "new client payload source returns only an opaque credentialReferenceId and sanitized status metadata"
 );
 
 assert.deepEqual(
-  referenceModule.assessYouTubeOAuthCredentialReferenceSurfaceApprovalEvidenceGate({
-    approvedSource,
+  referenceModule.assessYouTubeOAuthNewClientPayloadCredentialReferenceSourceImplementationPostPr319({
     surface: "/tools/comment-translator",
-    pageOrDockHasSurfacedCredentialReferenceId: true,
-    sourceSurfacingApprovalEvidence: "approved",
-    requestedClientPayloadChange: "none"
+    prerequisitePullRequest: 319,
+    prerequisiteMergeCommit: pr319MergeCommit,
+    sourceSurfacingApprovalEvidence: approvalEvidence,
+    payloadSource
   }),
   {
-    status: "ready-for-status-display-wiring-after-source-approval-evidence",
+    status: "ready-for-display-ui-wiring-readiness-after-pr319-payload-source-implementation",
     surface: "/tools/comment-translator",
-    approvedSource,
-    surfacedCredentialReferenceSource: "existing-page-or-dock-client-safe-credential-reference",
-    sourceSurfacingApprovalEvidence: "approved",
-    currentClientPayloadSource: "existing-approved-client-safe-source",
-    clientPayloadBoundary: "sanitized-credential-status-metadata-only",
+    prerequisitePullRequest: 319,
+    prerequisiteMergeCommit: pr319MergeCommit,
+    sourceSurfacingApprovalEvidence: approvalEvidence,
+    payloadSource,
+    currentClientPayloadSource: "new-client-payload-credentialReferenceId-source",
+    clientPayloadBoundary: "credentialReferenceId-and-sanitized-status-metadata-only",
     safeStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
-    nextStep: "wire-status-display-to-approved-surfaced-source-in-separate-pr-without-storage-or-handoff-changes"
+    storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+    serverBoundary: "owner-authorization-and-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-preserved",
+    nextStep: "record-display-ui-wiring-readiness-in-separate-pr-before-actual-display-wiring"
   },
-  "approval evidence gate allows display wiring only after the source is surfaced and explicit approval evidence exists"
+  "PR #319 payload source implementation enables only the next readiness PR, not display UI wiring in this PR"
 );
 
-assert.match(taskSource, /PR #299.*merge/i, "task.md records the PR #299 merge premise");
-assert.match(taskSource, /source-surfacing explicit approval evidence/i, "task.md records the source-surfacing approval evidence follow-up");
+assert.equal(
+  referenceModule.assessYouTubeOAuthNewClientPayloadCredentialReferenceSourceImplementationPostPr319({
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 319,
+    prerequisiteMergeCommit: pr319MergeCommit,
+    sourceSurfacingApprovalEvidence: { status: "missing" },
+    payloadSource: null
+  }).status,
+  "blocked-pr319-new-client-payload-source-missing-approved-source-or-payload",
+  "PR #319 payload source implementation blocks when approval evidence or payload source is missing"
+);
+
+assert.match(taskSource, /PR #319.*merge/i, "task.md records the PR #319 merge premise");
+assert.match(taskSource, /9b0e1977c1efde0ef9e04b5889fd1fb992c052c4/, "task.md records the PR #319 merge commit");
+assert.match(taskSource, /new client payload `credentialReferenceId` source implementation/i, "task.md records this implementation slice");
+assert.match(taskSource, /display UI wiring.*別 PR|別 PR.*display UI wiring/i, "task.md keeps display UI wiring as a separate PR condition");
 assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary when UI is untouched");
 
 const allowedChangedFiles = new Set([
   referenceSourcePath,
+  "scripts/comment-translator-youtube-new-client-payload-credential-reference-source-contract.mjs",
   "scripts/comment-translator-youtube-credential-source-decision-contract.mjs",
+  "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
   "scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs",
   "scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs",
   "scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs",
-  "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
-  "scripts/comment-translator-youtube-new-client-payload-credential-reference-source-contract.mjs",
   "scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs",
   "scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs",
   "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
@@ -251,7 +283,7 @@ const allowedChangedFiles = new Set([
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `approval evidence gate change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `new client payload credential reference source change stays in allowed files: ${file}`);
 
   const source = read(file);
   assert.doesNotMatch(
@@ -261,4 +293,4 @@ for (const file of changedFiles()) {
   );
 }
 
-console.log("comment translator YouTube credential reference surface approval evidence contract checks passed");
+console.log("comment translator YouTube new client payload credential reference source contract checks passed");

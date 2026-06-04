@@ -340,6 +340,7 @@ const allowedChangedFiles = new Set([
   "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
   blockerMemoPath,
   "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
+  "scripts/comment-translator-youtube-new-client-payload-credential-reference-source-contract.mjs",
   "scripts/comment-translator-youtube-credential-source-decision-contract.mjs",
   "scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs",
   "scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs",

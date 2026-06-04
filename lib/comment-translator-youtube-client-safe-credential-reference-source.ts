@@ -794,6 +794,54 @@ export type YouTubeOAuthNewClientPayloadSourceSurfacingApprovalEvidenceRequireme
       ];
     };
 
+export type YouTubeOAuthSourceSurfacingApprovalEvidenceCollectionReadiness =
+  | {
+      status: "ready-for-new-client-payload-source-readiness-only-after-pr316-evidence-collection";
+      surface: "/tools/comment-translator";
+      prerequisitePullRequest: 316;
+      prerequisiteMergeCommit: string;
+      approvedSource: YouTubeOAuthClientSafeCredentialReferenceSourceDefinition | null;
+      requestedClientPayloadSource: "new-client-payload-required";
+      sourceSurfacingApprovalEvidence: Extract<
+        YouTubeOAuthNewClientPayloadSourceSurfacingApprovalEvidence,
+        { status: "approved" }
+      >;
+      currentClientPayloadSource: "not-wired";
+      clientPayloadBoundary: "sanitized-credential-status-metadata-only";
+      safeStates: readonly YouTubeOAuthCredentialStatusUiStateId[];
+      nextStep: "record-readiness-only-and-defer-new-client-payload-source-implementation-and-display-ui-wiring-to-separate-prs";
+    }
+  | {
+      status: "blocked-pr316-source-surfacing-approval-evidence-not-collected";
+      surface: "/tools/comment-translator";
+      prerequisitePullRequest: 316;
+      prerequisiteMergeCommit: string;
+      approvedSource: YouTubeOAuthClientSafeCredentialReferenceSourceDefinition | null;
+      requestedClientPayloadSource: "new-client-payload-required";
+      sourceSurfacingApprovalEvidence: "missing";
+      currentClientPayloadSource: "not-wired";
+      currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled";
+      blocker: "explicit-source-surfacing-approval-evidence-collection-required-before-readiness";
+      requiredEvidenceShape: readonly [
+        "approver-identity-and-role",
+        "explicit-approval-statement-for-new-client-payload-source",
+        "target-source-new-client-payload-credentialReferenceId-source",
+        "target-surface-tools-comment-translator",
+        "target-boundary-credentialReferenceId-and-sanitized-status-metadata-only-no-storage-or-handoff-change"
+      ];
+      nextPrConditions: readonly [
+        "collect-explicit-approval-evidence-with-approver-role-statement-source-surface-boundary",
+        "do-not-implement-new-client-payload-source-until-evidence-is-collected",
+        "do-not-call-status-action-until-source-and-approval-evidence-are-present",
+        "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+        "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+        "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+        "preserve-owner-authorization-before-status-read",
+        "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary",
+        "defer-status-display-ui-wiring-to-separate-pr-even-if-source-and-approval-evidence-are-present"
+      ];
+    };
+
 export const youtubeOAuthClientSafeCredentialReferenceSourceContract = {
   implementationStage: "approved-client-safe-credential-reference-source-readiness-definition",
   currentClientPayloadSource: "not-wired",
@@ -2029,6 +2077,70 @@ export function assessYouTubeOAuthNewClientPayloadSourceSurfacingApprovalEvidenc
       "record-explicit-approval-statement-for-new-client-payload-source-before-implementation",
       "record-target-source-surface-and-boundaries",
       "do-not-implement-new-client-payload-source-in-this-approval-evidence-pr",
+      "do-not-call-status-action-until-source-and-approval-evidence-are-present",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      "preserve-no-token-secret-ciphertext-or-decrypt-capability-output",
+      "preserve-owner-authorization-before-status-read",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary",
+      "defer-status-display-ui-wiring-to-separate-pr-even-if-source-and-approval-evidence-are-present"
+    ]
+  };
+}
+
+export function assessYouTubeOAuthSourceSurfacingApprovalEvidenceCollectionReadiness({
+  approvedSource,
+  surface,
+  prerequisitePullRequest,
+  prerequisiteMergeCommit,
+  requestedClientPayloadSource,
+  sourceSurfacingApprovalEvidence
+}: {
+  approvedSource: YouTubeOAuthClientSafeCredentialReferenceSourceDefinition | null;
+  surface: "/tools/comment-translator";
+  prerequisitePullRequest: 316;
+  prerequisiteMergeCommit: string;
+  requestedClientPayloadSource: "new-client-payload-required";
+  sourceSurfacingApprovalEvidence: YouTubeOAuthNewClientPayloadSourceSurfacingApprovalEvidence;
+}): YouTubeOAuthSourceSurfacingApprovalEvidenceCollectionReadiness {
+  if (sourceSurfacingApprovalEvidence.status === "approved") {
+    return {
+      status: "ready-for-new-client-payload-source-readiness-only-after-pr316-evidence-collection",
+      surface,
+      prerequisitePullRequest,
+      prerequisiteMergeCommit,
+      approvedSource,
+      requestedClientPayloadSource,
+      sourceSurfacingApprovalEvidence,
+      currentClientPayloadSource: "not-wired",
+      clientPayloadBoundary: "sanitized-credential-status-metadata-only",
+      safeStates: youtubeOAuthClientSafeCredentialReferenceSourceContract.safeStates,
+      nextStep:
+        "record-readiness-only-and-defer-new-client-payload-source-implementation-and-display-ui-wiring-to-separate-prs"
+    };
+  }
+
+  return {
+    status: "blocked-pr316-source-surfacing-approval-evidence-not-collected",
+    surface,
+    prerequisitePullRequest,
+    prerequisiteMergeCommit,
+    approvedSource,
+    requestedClientPayloadSource,
+    sourceSurfacingApprovalEvidence: "missing",
+    currentClientPayloadSource: "not-wired",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "explicit-source-surfacing-approval-evidence-collection-required-before-readiness",
+    requiredEvidenceShape: [
+      "approver-identity-and-role",
+      "explicit-approval-statement-for-new-client-payload-source",
+      "target-source-new-client-payload-credentialReferenceId-source",
+      "target-surface-tools-comment-translator",
+      "target-boundary-credentialReferenceId-and-sanitized-status-metadata-only-no-storage-or-handoff-change"
+    ],
+    nextPrConditions: [
+      "collect-explicit-approval-evidence-with-approver-role-statement-source-surface-boundary",
+      "do-not-implement-new-client-payload-source-until-evidence-is-collected",
       "do-not-call-status-action-until-source-and-approval-evidence-are-present",
       "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
       "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",

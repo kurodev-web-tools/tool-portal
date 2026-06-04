@@ -484,6 +484,24 @@ No secret values are required, printed, committed, or documented. Managed secret
 - No refresh or revocation runtime beyond sanitized reference invalidation.
 - No client component change.
 
+## Post Credential Status Display Final Approval Recheck
+
+PR #322 is merged into `codex/comment-translator-preview` with merge commit `fe6ae5062c91157c50c762fea3a63cc87e8575c3`. The credential status display is now wired to the sanitized status action boundary, but this does not grant new authority for remote Supabase migration apply, server-only token persistence runtime beyond the existing skeleton, or Google API live smoke.
+
+This post credential status display final approval recheck remains `blocked-pending-final-review`. Current task/docs/PR context does not newly record final table/RLS/key-management/rollback review evidence for the post-display state, and explicit implementation approval for remote apply or runtime expansion is still absent.
+
+Required evidence before any follow-up implementation remains:
+
+| Area | Required evidence | Current status |
+| --- | --- | --- |
+| final table shape | Explicit Product/Data/Security review of `youtube_oauth_credentials`, owner binding, credential reference id semantics, non-secret metadata, encrypted ciphertext references, and no browser-readable token material after PR #322 display wiring. | Missing |
+| final RLS posture | Explicit Product/Data/Security review that RLS remains enabled before runtime use, browser clients cannot read or write token material, trusted server runtime is the only encrypted row accessor, and sanitized display output stays metadata-only. | Missing |
+| key-management | Explicit Security review of managed secret or KMS selection, server-only envelope decrypt boundary, key version metadata, rotation, emergency disable, and no secret printing after display wiring. | Missing |
+| rollback | Explicit Product/Data/Security review of disabling credential resolution before rollback, reviewed database rollback path, no token value logging, and revoke/invalidate behavior for unusable credential references. | Missing |
+| explicit implementation approval | Explicit approval to open a separate PR for remote Supabase apply, server-only token persistence runtime expansion, or related implementation after final review evidence is complete. | Missing |
+
+No remote Supabase migration apply, No Google API live smoke, No safe live YouTube OAuth smoke, and No runtime expansion are performed in this recheck. Owner authorization before status read, `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`, opaque non-secret `credentialReferenceId`, and sanitized credential status metadata remain the only allowed client-readable boundary.
+
 ## Non-Goals
 
 - No OAuth token persistence.

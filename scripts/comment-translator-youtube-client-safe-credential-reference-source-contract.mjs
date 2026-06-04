@@ -368,6 +368,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator.ts",
   referenceSourcePath,
   uiWiringPath,
+  "lib/comment-translator-youtube-oauth-token-store-foundation.ts",
   "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
   "scripts/comment-translator-youtube-new-client-payload-credential-reference-source-contract.mjs",
   "scripts/comment-translator-youtube-credential-status-display-readiness-after-payload-source-contract.mjs",
@@ -388,6 +389,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-interactive-shell-contract.mjs",
   "scripts/comment-translator-mock-foundation-contract.mjs",
   "docs/archive/TASK_HISTORY_2026-06.md",
+  "docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md",
   taskPath
 ]);
 

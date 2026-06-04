@@ -727,6 +727,7 @@ const allowedChangedFiles = new Set([
   statusRoutePath,
   statusActionPath,
   runtimePath,
+  "lib/comment-translator-youtube-oauth-token-store-foundation.ts",
   "docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md",
   "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
   "scripts/comment-translator-youtube-new-client-payload-credential-reference-source-contract.mjs",

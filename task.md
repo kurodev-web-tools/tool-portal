@@ -17,19 +17,31 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: `codex/comment-translator-preview` は PR #321 (`[codex] Record credential status display readiness after payload source`) merge 済み。latest preview head 確認時点: `8dcbb969b25e027201a0c35770845d03a5aae813`。
-   - current implementation: PR #321 merge 前提を確認し、credential status display UI wiring 本実装を contract-first で進める。`CommentTranslatorDock` は approved `new-client-payload-credentialReferenceId-source` の opaque `credentialReferenceId` だけを `getYouTubeOAuthCredentialStatusAction` に渡し、返却された sanitized credential status metadata を表示する。
-   - hard stop: localStorage、IndexedDB、sessionStorage、existing handoff payload 変更、secret / token 値の client-readable output、remote Supabase DB migration apply、Google API live call、safe live YouTube OAuth smoke へ進まない。
+   - status: `codex/comment-translator-preview` は PR #322 (`[codex] Wire credential status display`) merge 済み。latest preview head 確認時点: `fe6ae5062c91157c50c762fea3a63cc87e8575c3`。
+   - current implementation: PR #322 merge 前提を確認し、token store final table/RLS/key-management/rollback review と explicit implementation approval の残件を blocker-first / contract-first で再確認する。approval が揃うまで remote Supabase DB migration apply、server-only token persistence runtime expansion、Google API live smoke へ進まない。
+   - hard stop: credential status display UI wiring の再実装、localStorage、IndexedDB、sessionStorage、existing handoff payload 変更、secret / token 値の client-readable output、remote Supabase DB migration apply、Google API live call、safe live YouTube OAuth smoke、refresh runtime、full revocation runtime へ進まない。
    - current source boundary: client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみ。status は `available` / `reconnect-required` / `unavailable` / `credential-resolution-disabled` のみに閉じる。
    - current server boundary: `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`、owner authorization before status read、no token value logging、unusable credential reference revoke / invalidate rollback boundary を維持する。
-   - latest local review result: PR #321 merge commit `8dcbb969b25e027201a0c35770845d03a5aae813` が `origin/codex/comment-translator-preview` に含まれることを確認した。`new-client-payload-credentialReferenceId-source` を前提に credential status display UI wiring を client-safe / sanitized metadata only で実装する。
+   - latest local review result: PR #322 merge commit `fe6ae5062c91157c50c762fea3a63cc87e8575c3` が `origin/codex/comment-translator-preview` に含まれることを確認した。post-PR #322 token-store approval recheck は `blocked-pending-final-review`。current task/docs/PR context には post-display state に対する final table/RLS/key-management/rollback review evidence と explicit implementation approval が不足している。
    - Cloudflare checks note: PR #302 以降は Cloudflare Pages FAILURE / Workers Builds SUCCESS が継続。local build が通る slice では base history 由来の可能性を分離し、Cloudflare dashboard log は未確認範囲に残す。
-   - immediate next condition: この display wiring PR を `codex/comment-translator-preview` 宛て draft PR にし、review / merge 後に token store final table/RLS/key-management/rollback review と explicit implementation approval の残件を再確認する。
-   - next PR candidate: display wiring merge 後、token store final table/RLS/key-management/rollback review と explicit implementation approval の残件を blocker-first で再確認する。approval が揃うまで remote migration apply / token persistence runtime へ進まない。
-   - out of scope for display wiring PR: readiness-only PR の再実装、new client payload source implementation の再実装、localStorage / IndexedDB / sessionStorage / handoff payload 変更、remote Supabase DB migration apply、Google API live call、safe live YouTube OAuth smoke、refresh runtime、full revocation runtime、provider coupling、quota write、billing integration、main integration。
-   - width verification completed for this PR: UI / rendered text を変更したため in-app Browser で `/tools/comment-translator` を `390 / 820 / 1024 / 1280 / 1366px` で確認した。全幅で page identity、non-blank DOM、framework overlay なし、console error/warn なし、credential status panel 表示、opaque `credentialReferenceId` 表示、sanitized metadata boundary copy 表示、root / panel / value overflow なし。390px では `認証ステータスを確認` interaction 後も許容 status 表示、secret-like value 表示なし。
+   - immediate next condition: final table/RLS/key-management/rollback review evidence と explicit implementation approval を収集する。揃わない場合は blocker summary / readiness 記録のみを継続する。
+   - next PR candidate: `comment-translator-token-store-final-approval-evidence`。approval evidence が揃うまでは remote migration apply / server-only token persistence runtime expansion / Google API live smoke へ進まない。approval が揃った場合も、remote apply や live smoke は別途明示された小さい PR に分ける。
+   - out of scope for token-store final approval recheck PR: credential status display UI wiring の再実装、new client payload source implementation の再実装、localStorage / IndexedDB / sessionStorage / handoff payload 変更、remote Supabase DB migration apply、Google API live call、safe live YouTube OAuth smoke、refresh runtime、full revocation runtime、provider coupling、quota write、billing integration、main integration。
+   - width verification for this PR: UI / rendered text / CSS は変更しない docs / contract / task board の recheck のみのため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
+   - token store final approval recheck completed 2026-06-04:
+     - branch: `codex/comment-translator-token-store-final-approval-recheck` -> base `codex/comment-translator-preview`。
+     - merge-state: `git fetch origin --prune` 後、PR #322 merge commit `fe6ae5062c91157c50c762fea3a63cc87e8575c3` が `origin/codex/comment-translator-preview` に含まれることを確認した。
+     - blocker summary: `blocked-pending-final-review`。post-display state に対する final table/RLS/key-management/rollback review evidence と explicit implementation approval は current task/docs/PR context では不足している。
+     - preserved boundaries: client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみ。owner authorization と `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` は維持する。service_role key 値、managed secret value、OAuth access token / refresh token / authorization code value は要求・表示・保存しない。
+     - implementation boundary: remote Supabase DB migration apply、server-only token persistence runtime expansion、Google API live smoke、safe live YouTube OAuth smoke は実施しない。既存 skeleton を超える runtime wiring は別 PR 条件。
+     - verification: token-store blocker resolution contract は RED (`exports YouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck` assertion failure) -> GREEN。fresh worktree では `@supabase/supabase-js` 不足により Supabase adapter status contract が一度止まったため、`npm ci --prefer-offline` を実行して再検証した。`node scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs`、`node scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs`、`node scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs`、`node scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs`、`node scripts/comment-translator-youtube-runtime-foundation-contract.mjs`、`node scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs`、`node scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs`、source/evidence gate bundle、existing YouTube token store contract bundle、translator boundary contracts、`node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` PASS。`git diff --check` は既知の LF -> CRLF warning のみ。`npm run build` は exit 0、postbuild は `out directory is missing for server-runtime build` として static export RSC aliases を skip。
+     - UI / rendered text / CSS は変更していない。docs / contract / task board の recheck のみのため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
+     - 未確認範囲: Cloudflare Pages dashboard log、Workers Builds dashboard log、remote Supabase DB apply、safe live service_role status read smoke、safe live YouTube OAuth / owner verification / Live Chat polling smoke、Google API live call、refresh runtime、full revocation runtime。
+     - 残リスク: PR #322 で display UI は sanitized action boundary に接続済みだが、post-display state の final approval evidence がまだ不足しているため remote apply / runtime expansion / live smoke には進めない。
+     - next PR condition: final table shape、RLS posture、key-management、rollback、explicit implementation approval の reviewable evidence を収集する。揃った場合も remote Supabase apply、server-only runtime expansion、Google API live smoke は明示された別 PR に分ける。
    - credential status display UI wiring completed 2026-06-04:
      - branch: `codex/comment-translator-credential-status-display-wiring` -> base `codex/comment-translator-preview`。
+     - prerequisite: PR #321 credential status display UI wiring readiness after payload source was merged before this UI wiring slice.
      - merge-state: `git fetch origin --prune` 後、PR #321 merge commit `8dcbb969b25e027201a0c35770845d03a5aae813` が `origin/codex/comment-translator-preview` に含まれることを確認した。
      - implementation: `/tools/comment-translator` page で approved `new-client-payload-credentialReferenceId-source` を作成し、`CommentTranslatorDock` に渡す。Dock は opaque non-secret `credentialReferenceId` を `getYouTubeOAuthCredentialStatusAction` に渡し、`createYouTubeOAuthCredentialStatusUiWiring` で sanitized credential status metadata だけを表示する。長い opaque ID / reason は mobile でも折り返す。
      - preserved boundaries: client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみ。status は `available` / `reconnect-required` / `unavailable` / `credential-resolution-disabled` のみに閉じる。localStorage / IndexedDB / sessionStorage / existing handoff payload は変更しない。owner authorization と `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` は維持する。service_role key 値、managed secret value、OAuth access token / refresh token / authorization code value は要求・表示・保存しない。
@@ -156,26 +168,27 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Kuro Live Comment Translator の次タスクとして、credential status display UI wiring PR が `codex/comment-translator-preview` に merge 済みであることを確認し、token store final table/RLS/key-management/rollback review と explicit implementation approval の残件を blocker-first で再確認してください。approval が揃うまで remote migration apply / server-only token persistence runtime / Google API live smoke へ進まないでください。
+Kuro Live Comment Translator の次タスクとして、token-store final approval recheck PR が `codex/comment-translator-preview` に merge 済みであることを確認し、final table/RLS/key-management/rollback review evidence と explicit implementation approval の収集状況を blocker-first で確認してください。approval が揃うまで remote migration apply / server-only token persistence runtime expansion / Google API live smoke へ進まないでください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- credential status display UI wiring PR が `codex/comment-translator-preview` に merge 済みであることを確認してください。未mergeなら新規実装へ進まず review / CI / blocker summary を返してください。
+- token-store final approval recheck PR が `codex/comment-translator-preview` に merge 済みであることを確認してください。未mergeなら新規実装へ進まず review / CI / blocker summary を返してください。
 - merge 済みなら `codex/comment-translator-preview` から新しい feature branch / worktree を切ってください。
-- 推奨 branch: `codex/comment-translator-token-store-final-approval-recheck`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-token-store-final-approval-recheck`
+- 推奨 branch: `codex/comment-translator-token-store-final-approval-evidence`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-token-store-final-approval-evidence`
 
 scope:
 - merge-state-first / blocker-first / contract-first で進める。
-- token store foundation、approved migration proposal、blocker resolution、service-role status reader、owner authorization、credential status endpoint/action、current display wiring boundary を再確認する。
-- final table/RLS/key-management/rollback review と explicit implementation approval が揃っているかを contract / docs / task.md で確認する。
-- approval が不足している場合は blocker summary と readiness 記録に留め、migration / runtime 実装へ進まない。
-- approval が揃っている場合も、remote Supabase apply や live smoke は別途明示された範囲に限り、server-only / no-secret-output を維持して小さい PR に分ける。
+- token store foundation、approved migration proposal、blocker resolution、separate implementation skeleton、service-role status reader、owner authorization、credential status endpoint/action、current display wiring boundary を再確認する。
+- final table/RLS/key-management/rollback review と explicit implementation approval evidence が揃っているかを contract / docs / task.md / PR context で確認する。
+- approval が不足している場合は blocker summary と evidence requirement 記録に留め、migration / runtime 実装へ進まない。
+- approval が揃っている場合も、この PR では readiness / evidence 記録までに留め、remote Supabase apply や live smoke は別途明示された範囲に限り、server-only / no-secret-output を維持して小さい PR に分ける。
 
 Out of scope:
 - credential status display UI wiring の再実装。
+- token-store final approval recheck の再実装。
 - localStorage / IndexedDB / sessionStorage / existing handoff payload 変更。
 - remote Supabase DB migration apply。
 - Google API live call / safe live YouTube OAuth smoke。
@@ -201,7 +214,7 @@ Out of scope:
 - UI / rendered text / CSS を触った場合のみ `/tools/comment-translator` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を task.md に残す。
 
 完了時:
-- `task.md` に display wiring PR merge 前提、approval / blocker 再確認結果、検証結果、未確認範囲、残リスク、次 PR 条件を記録してください。
+- `task.md` に token-store final approval recheck PR merge 前提、approval evidence 確認結果、検証結果、未確認範囲、残リスク、次 PR 条件を記録してください。
 - UI 変更なしの場合、幅別確認が不要な理由を `task.md` に残してください。
 - 問題なければ commit / push / `codex/comment-translator-preview` 宛て draft PR 作成まで進めてください。
 ```

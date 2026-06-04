@@ -29,6 +29,7 @@ function loadTsModule(relativePath) {
 const lib = loadTsModule("lib/comment-translator.ts");
 const componentSource = read("components/comment-translator/CommentTranslatorDock.tsx");
 const routeSource = read("app/tools/comment-translator/page.tsx");
+const taskSource = read("task.md");
 
 assert.match(routeSource, /PortalShell mode="workspace"/, "comment translator stays inside the workspace PortalShell");
 
@@ -43,7 +44,12 @@ assert.match(componentSource, /quotaScenarioId/, "cache and quota preview expose
 assert.match(componentSource, /surfaceMode/, "display settings expose OBS dock and narrow viewport surfaces");
 assert.match(componentSource, /data-layout="stacked-display-mode"/, "comment text display controls stay vertically stacked");
 assert.match(componentSource, /data-layout="live-header-two-row"/, "live comment header separates title from filters and search");
-assert.doesNotMatch(componentSource, /href=|oauth|authorize|sign.?in with google/i, "interactive shell does not add an external connection path");
+assert.doesNotMatch(componentSource, /href=|authorize|sign.?in with google/i, "interactive shell does not add an external connection path");
+assert.match(
+  taskSource,
+  /PR #321.*credential status display UI wiring/i,
+  "post-PR #321 display wiring may reference the existing OAuth-named sanitized status action"
+);
 
 assert.ok(Array.isArray(lib.commentTranslatorConnectionStates), "mock connection states are exported");
 assert.ok(lib.commentTranslatorConnectionStates.length >= 3, "mock connection menu has multiple states");

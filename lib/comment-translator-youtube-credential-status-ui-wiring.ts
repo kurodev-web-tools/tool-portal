@@ -129,12 +129,12 @@ export type YouTubeOAuthCredentialStatusDisplayReadinessAfterPayloadSource =
     };
 
 export const youtubeOAuthCredentialStatusUiWiringContract = {
-  implementationStage: "credential-status-display-wiring-readiness-contract",
+  implementationStage: "credential-status-display-ui-wiring-implemented",
   clientReadableInput: "sanitized-credential-status-metadata-only",
   uiStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
   serverAction: "getYouTubeOAuthCredentialStatusAction",
-  credentialReferenceClientPayload: "readiness-only-no-new-client-payload",
-  displayWiringStage: "blocked-until-approved-client-safe-credential-reference-source",
+  credentialReferenceClientPayload: "new-client-payload-credentialReferenceId-source",
+  displayWiringStage: "display-ui-wiring-implemented-after-pr321-readiness",
   emergencyDisableEnv: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
   forbiddenClientValues: [
     "encrypted-row",

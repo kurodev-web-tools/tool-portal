@@ -11,7 +11,9 @@ const statusBoundaryPath = "lib/comment-translator-youtube-credential-status-bou
 const statusActionPath = "app/tools/comment-translator/actions.ts";
 const componentPath = "components/comment-translator/CommentTranslatorDock.tsx";
 const pagePath = "app/tools/comment-translator/page.tsx";
+const commentTranslatorPath = "lib/comment-translator.ts";
 const taskPath = "task.md";
+const pr321MergeCommit = "8dcbb969b25e027201a0c35770845d03a5aae813";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -107,7 +109,18 @@ const statusBoundarySource = read(statusBoundaryPath);
 const statusActionSource = read(statusActionPath);
 const componentSource = read(componentPath);
 const pageSource = read(pagePath);
+const commentTranslatorSource = read(commentTranslatorPath);
 const taskSource = read(taskPath);
+
+assert.equal(
+  execSync(`git merge-base --is-ancestor ${pr321MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
+    cwd: root,
+    encoding: "utf8",
+    shell: "powershell.exe"
+  }).trim(),
+  "yes",
+  "PR #321 merge commit is included in the current preview-derived branch"
+);
 
 assert.doesNotMatch(uiWiringSource, /^import "server-only";/m, "UI wiring module is client-readable and does not import server-only");
 assert.doesNotMatch(
@@ -129,6 +142,47 @@ assert.doesNotMatch(
   `${componentSource}\n${pageSource}`,
   /comment-translator-youtube-credential-status-boundary|comment-translator-youtube-token-store-supabase-adapter/i,
   "client component and page do not import server-only credential status boundaries"
+);
+
+assert.match(
+  pageSource,
+  /createYouTubeOAuthNewClientPayloadCredentialReferenceSource/,
+  "page creates the approved new-client-payload credentialReferenceId source"
+);
+assert.match(
+  pageSource,
+  /<CommentTranslatorDock\s+youtubeCredentialReferenceSource=/,
+  "page passes the client-safe credential reference source into the dock"
+);
+assert.match(
+  componentSource,
+  /import\s+\{\s*getYouTubeOAuthCredentialStatusAction\s*\}/,
+  "dock imports the existing server action for sanitized credential status reads"
+);
+assert.match(
+  componentSource,
+  /createYouTubeOAuthCredentialStatusUiWiring/,
+  "dock converts server action output through the sanitized UI wiring view model helper"
+);
+assert.match(
+  componentSource,
+  /youtubeCredentialReferenceSource:\s*YouTubeOAuthNewClientPayloadCredentialReferenceSource/,
+  "dock accepts only the approved client-safe credential reference payload source"
+);
+assert.match(
+  componentSource,
+  /formData\.append\("credentialReferenceId",\s*credentialReferenceId\)/,
+  "dock submits only the opaque credentialReferenceId to the server action"
+);
+assert.match(
+  componentSource,
+  /credentialStatusView\s*\?\./,
+  "dock renders sanitized credential status metadata when the action returns"
+);
+assert.match(
+  commentTranslatorSource,
+  /credentialStatus:\s*\{/,
+  "localized copy includes credential status display labels"
 );
 
 for (const exportedType of [
@@ -172,13 +226,13 @@ assert.equal(
 );
 assert.equal(
   uiWiring.youtubeOAuthCredentialStatusUiWiringContract.credentialReferenceClientPayload,
-  "readiness-only-no-new-client-payload",
-  "UI wiring contract does not add new credential reference client payload wiring"
+  "new-client-payload-credentialReferenceId-source",
+  "UI wiring contract records the approved credential reference client payload"
 );
 assert.equal(
   uiWiring.youtubeOAuthCredentialStatusUiWiringContract.displayWiringStage,
-  "blocked-until-approved-client-safe-credential-reference-source",
-  "display wiring stage is explicitly blocked until an approved client-safe credential reference source exists"
+  "display-ui-wiring-implemented-after-pr321-readiness",
+  "display wiring stage records this actual UI wiring PR"
 );
 assert.match(
   uiWiringSource,
@@ -396,18 +450,18 @@ assert.deepEqual(
   "display wiring can become ready only with an existing approved client-safe credential reference source"
 );
 
-assert.doesNotMatch(
-  componentSource,
-  /getYouTubeOAuthCredentialStatusAction|credentialReferenceId/i,
-  "current dock does not add new credential status action calls or credential reference payload wiring"
-);
 assert.match(statusBoundarySource, /credential-status-metadata-only/, "server-only status boundary remains metadata-only");
 assert.match(statusActionSource, /getYouTubeOAuthCredentialStatusAction/, "existing server action remains the readiness target");
 assert.match(statusActionSource, /YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED/, "server action preserves emergency disable boundary");
-assert.match(taskSource, /PR #293.*merge/i, "task.md records the PR #293 merge premise");
-assert.match(taskSource, /credential status UI wiring contract/i, "task.md records this UI wiring readiness follow-up");
+assert.match(taskSource, /PR #321.*merge/i, "task.md records the PR #321 merge premise");
+assert.match(taskSource, /8dcbb969b25e027201a0c35770845d03a5aae813/, "task.md records the PR #321 merge commit");
+assert.match(taskSource, /credential status display UI wiring/i, "task.md records this display wiring implementation");
+assert.match(taskSource, /390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i, "task.md records required width verification for UI changes");
 
 const allowedChangedFiles = new Set([
+  commentTranslatorPath,
+  componentPath,
+  pagePath,
   "lib/comment-translator-youtube-client-safe-credential-reference-source.ts",
   uiWiringPath,
   statusBoundaryPath,
@@ -426,6 +480,10 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs",
   "scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs",
+  "scripts/comment-translator-provider-boundary-contract.mjs",
+  "scripts/comment-translator-manual-input-mvp-contract.mjs",
+  "scripts/comment-translator-interactive-shell-contract.mjs",
+  "scripts/comment-translator-mock-foundation-contract.mjs",
   "docs/archive/TASK_HISTORY_2026-06.md",
   taskPath
 ]);

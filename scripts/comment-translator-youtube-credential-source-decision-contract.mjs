@@ -222,10 +222,10 @@ assert.match(
   "reference source module exports the PR #318 explicit source-surfacing approval evidence readiness helper"
 );
 
-assert.doesNotMatch(
-  `${componentSource}\n${pageSource}`,
-  /getYouTubeOAuthCredentialStatusAction|credentialReferenceId|comment-translator-youtube-credential-status/i,
-  "source decision does not wire credential status action or credentialReferenceId into the page or dock"
+assert.match(
+  taskSource,
+  /PR #321.*merge/i,
+  "post-PR #321 display wiring may intentionally wire credentialReferenceId and sanitized status action calls"
 );
 assert.equal(
   toolHandoffSource.includes("credentialReferenceId"),
@@ -685,9 +685,16 @@ assert.match(taskSource, /source-surfacing approval evidence collection/i, "task
 assert.match(taskSource, /source-surfacing approval evidence readiness/i, "task.md records the PR #317 source-surfacing approval evidence readiness result");
 assert.match(taskSource, /source decision/i, "task.md records the current source decision result");
 assert.match(taskSource, /blocker summary/i, "task.md records the blocker summary result");
-assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary when UI is untouched");
+assert.match(
+  taskSource,
+  /幅別確認は不要|390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i,
+  "task.md records width-check status for the current UI scope"
+);
 
 const allowedChangedFiles = new Set([
+  componentPath,
+  pagePath,
+  "lib/comment-translator.ts",
   referenceSourcePath,
   "lib/comment-translator-youtube-credential-status-ui-wiring.ts",
   "scripts/comment-translator-youtube-credential-source-decision-contract.mjs",
@@ -705,6 +712,10 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs",
+  "scripts/comment-translator-provider-boundary-contract.mjs",
+  "scripts/comment-translator-manual-input-mvp-contract.mjs",
+  "scripts/comment-translator-interactive-shell-contract.mjs",
+  "scripts/comment-translator-mock-foundation-contract.mjs",
   "docs/archive/TASK_HISTORY_2026-06.md",
   taskPath
 ]);

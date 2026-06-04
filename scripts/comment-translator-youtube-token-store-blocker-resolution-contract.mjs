@@ -108,7 +108,8 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreBlockerResolutionPlan",
   "YouTubeEncryptedTokenStoreImplementationReadiness",
   "YouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck",
-  "YouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection"
+  "YouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection",
+  "YouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `exports ${exportedType}`);
 }
@@ -118,11 +119,14 @@ for (const exportedConstOrFunction of [
   "youtubeEncryptedTokenStoreBlockerResolutionPlan",
   "youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck",
   "youtubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection",
+  "youtubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate",
   "createYouTubeEncryptedTokenStoreBlockerResolutionMemo",
   "createYouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceSummary",
+  "createYouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceSummary",
   "assessYouTubeEncryptedTokenStoreImplementationReadiness",
   "assessYouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck",
-  "assessYouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection"
+  "assessYouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection",
+  "assessYouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate"
 ]) {
   assert.match(
     foundationSource,
@@ -416,6 +420,78 @@ assert.match(
   /PR #323|blocked-pending-final-review|final table\/RLS\/key-management\/rollback|explicit implementation approval/i,
   "post-PR #323 evidence summary records blocker and required evidence"
 );
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate.implementationStage,
+  "post-pr-324-final-implementation-approval-evidence-gate",
+  "post-PR #324 final implementation approval evidence gate stage is explicit"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate.prerequisitePullRequest,
+  "#324",
+  "post-PR #324 final implementation approval evidence gate records the evidence collection prerequisite"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate.prerequisiteMergeCommit,
+  "7fd49532509cf634e220145eb143469f9bd4e49b",
+  "post-PR #324 final implementation approval evidence gate records the merge commit"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate.prerequisiteMergedAtUtc,
+  "2026-06-04T10:57:23Z",
+  "post-PR #324 final implementation approval evidence gate records the merge time"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate.currentEvidenceStatus,
+  "missing-final-review-and-explicit-implementation-approval",
+  "post-PR #324 final implementation approval evidence gate records missing evidence"
+);
+assert.deepEqual(
+  foundation.youtubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate.prContextChecks,
+  {
+    workersBuilds: "success",
+    cloudflarePages: "failure-known-pages-disconnect-noise"
+  },
+  "post-PR #324 final implementation approval evidence gate records PR check disposition"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate([]),
+  {
+    status: "blocked-pending-final-review",
+    missingReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
+    explicitImplementationApproval: "not-evaluated-until-final-review-complete",
+    remoteSupabaseApplyAllowedInThisPr: false,
+    tokenPersistenceRuntimeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "record-blocker-summary-and-evidence-requirements"
+  },
+  "post-PR #324 final implementation approval evidence gate remains blocked when evidence is absent"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate(
+    [
+      { area: "table-shape", approved: true, scope: "final table shape" },
+      { area: "rls-posture", approved: true, scope: "final RLS posture" },
+      { area: "key-management", approved: true, scope: "key-management" },
+      { area: "rollback", approved: true, scope: "rollback" }
+    ],
+    { approved: true, scope: "separate implementation PR for runtime or apply after final review" }
+  ),
+  {
+    status: "ready-for-separate-runtime-or-apply-pr",
+    approvedReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
+    implementationApprovalScope: "separate implementation PR for runtime or apply after final review",
+    remoteSupabaseApplyAllowedInThisPr: false,
+    tokenPersistenceRuntimeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "open-small-separate-server-only-runtime-or-apply-pr"
+  },
+  "post-PR #324 final implementation approval evidence gate only records readiness for a separate PR when all evidence is approved"
+);
+assert.match(
+  foundation.createYouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceSummary(),
+  /PR #324|blocked-pending-final-review|final table\/RLS\/key-management\/rollback|explicit implementation approval/i,
+  "post-PR #324 evidence summary records blocker and required evidence"
+);
 
 const memo = foundation.createYouTubeEncryptedTokenStoreBlockerResolutionMemo();
 for (const fragment of [
@@ -454,6 +530,8 @@ for (const docFragment of [
   "blocked-pending-final-review",
   "PR #323",
   "Post-PR #323 Approval Evidence Collection",
+  "PR #324",
+  "Post-PR #324 Final Implementation Approval Evidence Gate",
   "failure-known-pages-disconnect-noise",
   "No remote Supabase migration apply",
   "No Google API live smoke"
@@ -477,6 +555,11 @@ assert.match(
   taskSource,
   /PR #323 .*merge commit `07b221999f302477645160278ae50f8ad3eb043c`/i,
   "task.md records PR #323 merge prerequisite"
+);
+assert.match(
+  taskSource,
+  /PR #324 .*merge commit `7fd49532509cf634e220145eb143469f9bd4e49b`/i,
+  "task.md records PR #324 merge prerequisite"
 );
 assert.match(
   taskSource,

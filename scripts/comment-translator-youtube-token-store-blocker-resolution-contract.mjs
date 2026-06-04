@@ -106,7 +106,8 @@ assert.match(foundationSource, /^import "server-only";/m, "token store blocker r
 for (const exportedType of [
   "YouTubeEncryptedTokenStoreBlockerResolutionDecision",
   "YouTubeEncryptedTokenStoreBlockerResolutionPlan",
-  "YouTubeEncryptedTokenStoreImplementationReadiness"
+  "YouTubeEncryptedTokenStoreImplementationReadiness",
+  "YouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `exports ${exportedType}`);
 }
@@ -114,8 +115,10 @@ for (const exportedType of [
 for (const exportedConstOrFunction of [
   "youtubeEncryptedTokenStoreBlockerResolutionDecisions",
   "youtubeEncryptedTokenStoreBlockerResolutionPlan",
+  "youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck",
   "createYouTubeEncryptedTokenStoreBlockerResolutionMemo",
-  "assessYouTubeEncryptedTokenStoreImplementationReadiness"
+  "assessYouTubeEncryptedTokenStoreImplementationReadiness",
+  "assessYouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck"
 ]) {
   assert.match(
     foundationSource,
@@ -280,6 +283,68 @@ assert.deepEqual(
   "all approvals only allow a separate implementation PR"
 );
 
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck.implementationStage,
+  "post-credential-status-display-token-store-final-approval-recheck",
+  "post-PR #322 recheck stage is explicit"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck.prerequisitePullRequest,
+  "#322",
+  "post-PR #322 recheck records the credential status display wiring prerequisite"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck.credentialStatusDisplayBoundary,
+  "client-safe-sanitized-metadata-only",
+  "post-PR #322 recheck preserves the credential status display boundary"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck.remoteSupabaseApply,
+  "forbidden-in-this-slice",
+  "post-PR #322 recheck does not allow remote Supabase apply"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck.serverOnlyTokenPersistenceRuntime,
+  "blocked-beyond-existing-skeleton",
+  "post-PR #322 recheck does not expand token persistence runtime"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck.googleApiLiveSmoke,
+  "forbidden-in-this-slice",
+  "post-PR #322 recheck does not allow Google API live smoke"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck([]),
+  {
+    status: "blocked-pending-final-review",
+    missingReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
+    explicitImplementationApproval: "not-evaluated-until-final-review-complete",
+    remoteSupabaseApplyAllowedInThisPr: false,
+    tokenPersistenceRuntimeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "record-blocker-summary-and-collect-final-review-evidence"
+  },
+  "post-PR #322 recheck remains blocked when final review evidence is absent"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck([
+    { area: "table-shape", approved: true, scope: "final table shape" },
+    { area: "rls-posture", approved: true, scope: "final RLS posture" },
+    { area: "key-management", approved: true, scope: "key-management" },
+    { area: "rollback", approved: true, scope: "rollback" }
+  ]),
+  {
+    status: "blocked-pending-explicit-implementation-approval",
+    approvedReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
+    missingImplementationApproval: true,
+    remoteSupabaseApplyAllowedInThisPr: false,
+    tokenPersistenceRuntimeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "collect-explicit-implementation-approval-before-separate-runtime-or-apply-pr"
+  },
+  "post-PR #322 recheck still blocks when explicit implementation approval is absent"
+);
+
 const memo = foundation.createYouTubeEncryptedTokenStoreBlockerResolutionMemo();
 for (const fragment of [
   "schema-approval",
@@ -311,7 +376,12 @@ for (const docFragment of [
   "No localStorage",
   "No IndexedDB",
   "not run in this slice",
-  "PR #271"
+  "PR #271",
+  "PR #322",
+  "post credential status display final approval recheck",
+  "blocked-pending-final-review",
+  "No remote Supabase migration apply",
+  "No Google API live smoke"
 ]) {
   assert.match(blockerMemo, new RegExp(docFragment, "i"), `blocker memo records: ${docFragment}`);
 }
@@ -326,6 +396,12 @@ assert.match(
   taskSource,
   /safe live Google API smoke.*未実施|safe live YouTube login \/ OAuth \/ owner verification \/ Live Chat polling smoke は未実施/i,
   "task.md records live smoke unchecked scope"
+);
+assert.match(taskSource, /PR #322 .*merge commit `fe6ae5062c91157c50c762fea3a63cc87e8575c3`/i, "task.md records PR #322 merge prerequisite");
+assert.match(
+  taskSource,
+  /blocked-pending-final-review|final table\/RLS\/key-management\/rollback review/i,
+  "task.md records the post-PR #322 token-store approval blocker"
 );
 
 const allowedChangedFiles = new Set([

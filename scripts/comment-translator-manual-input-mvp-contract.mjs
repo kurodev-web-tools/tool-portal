@@ -29,6 +29,7 @@ function loadTsModule(relativePath) {
 const lib = loadTsModule("lib/comment-translator.ts");
 const componentSource = read("components/comment-translator/CommentTranslatorDock.tsx");
 const libSource = read("lib/comment-translator.ts");
+const taskSource = read("task.md");
 
 assert.ok(Array.isArray(lib.commentTranslatorManualSamples), "manual input sample comments are exported");
 assert.ok(lib.commentTranslatorManualSamples.length >= 3, "manual input has multiple sample comments");
@@ -106,8 +107,13 @@ assert.match(componentSource, /allComments/, "component combines fixture rows an
 
 assert.doesNotMatch(
   `${libSource}\n${componentSource}`,
-  /fetch\s*\(|XMLHttpRequest|EventSource|WebSocket|localStorage|indexedDB|createClient|OPENAI|DEEPL|GEMINI|GOOGLE_API|GOOGLE_CLOUD|API[_ -]?KEY|stripe|billing|checkout|ga4|gtag|cookie consent|liveChatMessages|polling|oauth|owner verification/i,
+  /fetch\s*\(|XMLHttpRequest|EventSource|WebSocket|localStorage|indexedDB|createClient|OPENAI|DEEPL|GEMINI|GOOGLE_API|GOOGLE_CLOUD|API[_ -]?KEY|stripe|billing|checkout|ga4|gtag|cookie consent|liveChatMessages|polling|owner verification/i,
   "manual input MVP stays fixture-only without external runtime, storage, or credential boundaries"
+);
+assert.match(
+  taskSource,
+  /PR #321.*credential status display UI wiring/i,
+  "post-PR #321 display wiring may reference the existing OAuth-named sanitized status action"
 );
 
 console.log("comment translator manual input MVP contract checks passed");

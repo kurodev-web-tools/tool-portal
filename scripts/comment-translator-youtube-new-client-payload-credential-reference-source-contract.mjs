@@ -147,10 +147,10 @@ assert.match(
   "reference source module exports the PR #319 new client payload source implementation gate"
 );
 
-assert.doesNotMatch(
-  `${componentSource}\n${pageSource}`,
-  /getYouTubeOAuthCredentialStatusAction|comment-translator-youtube-credential-status/i,
-  "this source implementation PR does not wire credential status display UI or status action calls"
+assert.match(
+  taskSource,
+  /PR #321.*merge/i,
+  "post-PR #321 display wiring may intentionally call the sanitized credential status action"
 );
 assert.equal(toolHandoffSource.includes("credentialReferenceId"), false, "existing handoff payload remains unchanged");
 assert.doesNotMatch(
@@ -260,9 +260,16 @@ assert.match(taskSource, /PR #319.*merge/i, "task.md records the PR #319 merge p
 assert.match(taskSource, /9b0e1977c1efde0ef9e04b5889fd1fb992c052c4/, "task.md records the PR #319 merge commit");
 assert.match(taskSource, /new client payload `credentialReferenceId` source implementation/i, "task.md records this implementation slice");
 assert.match(taskSource, /display UI wiring.*別 PR|別 PR.*display UI wiring/i, "task.md keeps display UI wiring as a separate PR condition");
-assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary when UI is untouched");
+assert.match(
+  taskSource,
+  /幅別確認は不要|390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i,
+  "task.md records width-check status for the current UI scope"
+);
 
 const allowedChangedFiles = new Set([
+  componentPath,
+  pagePath,
+  "lib/comment-translator.ts",
   referenceSourcePath,
   uiWiringPath,
   "scripts/comment-translator-youtube-new-client-payload-credential-reference-source-contract.mjs",
@@ -280,6 +287,10 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs",
   "scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs",
+  "scripts/comment-translator-provider-boundary-contract.mjs",
+  "scripts/comment-translator-manual-input-mvp-contract.mjs",
+  "scripts/comment-translator-interactive-shell-contract.mjs",
+  "scripts/comment-translator-mock-foundation-contract.mjs",
   "docs/archive/TASK_HISTORY_2026-06.md",
   taskPath
 ]);

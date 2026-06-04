@@ -737,7 +737,7 @@ export type YouTubeOAuthNewClientPayloadSourceSurfacingApprovalEvidence =
       targetSource: "new-client-payload-credentialReferenceId-source";
       targetSurface: "/tools/comment-translator";
       targetBoundary: "credentialReferenceId-and-sanitized-status-metadata-only-no-storage-or-handoff-change";
-      approvedFor: "readiness-only-not-display-ui-wiring";
+      approvedFor: "readiness-only-not-display-ui-wiring" | "display-ui-wiring-after-pr321-readiness";
       approvalEvidenceSource?: "user-thread-explicit-approval";
     }
   | {

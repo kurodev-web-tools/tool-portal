@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
+import { getYouTubeOAuthCredentialStatusAction } from "@/app/tools/comment-translator/actions";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import {
   commentTranslatorManualSamples,
@@ -21,6 +22,12 @@ import {
   type CommentTranslatorSurfaceMode,
   type CommentTranslatorTargetLanguageId
 } from "@/lib/comment-translator";
+import { type YouTubeOAuthNewClientPayloadCredentialReferenceSource } from "@/lib/comment-translator-youtube-client-safe-credential-reference-source";
+import {
+  createYouTubeOAuthCredentialStatusUiWiring,
+  type YouTubeOAuthCredentialStatusUiStateId,
+  type YouTubeOAuthCredentialStatusUiWiringViewModel
+} from "@/lib/comment-translator-youtube-credential-status-ui-wiring";
 
 type SelectOption = {
   id: string;
@@ -61,6 +68,18 @@ function toneClassName(tone: "normal" | "warning" | "empty" | "error") {
   }
 
   return "border-emerald-200 bg-emerald-50/45 text-emerald-700";
+}
+
+function credentialStatusTone(state: YouTubeOAuthCredentialStatusUiStateId) {
+  if (state === "available") {
+    return "normal";
+  }
+
+  if (state === "unavailable") {
+    return "error";
+  }
+
+  return "warning";
 }
 
 function statusLabel(comment: CommentTranslatorComment, copy: CommentTranslatorUiCopy) {
@@ -153,6 +172,15 @@ function StatTile({ label, value, helper }: { label: string; value: string; help
       <p className="text-xs font-bold text-muted">{label}</p>
       <p className="mt-2 break-words text-2xl font-black tracking-normal text-foreground">{value}</p>
       <p className="mt-1 break-words text-xs font-semibold text-primary-strong">{helper}</p>
+    </div>
+  );
+}
+
+function CredentialStatusRow({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="grid min-w-0 gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-3">
+      <dt className="min-w-0 break-words text-muted">{label}</dt>
+      <dd className="min-w-0 break-all font-semibold text-foreground sm:text-right">{value ?? "-"}</dd>
     </div>
   );
 }
@@ -256,7 +284,11 @@ function CommentCard({
   );
 }
 
-export function CommentTranslatorDock() {
+export function CommentTranslatorDock({
+  youtubeCredentialReferenceSource
+}: {
+  youtubeCredentialReferenceSource: YouTubeOAuthNewClientPayloadCredentialReferenceSource;
+}) {
   const { locale } = useLocale();
   const {
     platform,
@@ -287,8 +319,14 @@ export function CommentTranslatorDock() {
   const [multilinePasteDraft, setMultilinePasteDraft] = useState("");
   const [manualResultMode, setManualResultMode] = useState<CommentTranslatorManualResultMode>("translated");
   const [manualComments, setManualComments] = useState<CommentTranslatorComment[]>([]);
+  const [credentialStatusView, setCredentialStatusView] = useState<YouTubeOAuthCredentialStatusUiWiringViewModel | null>(
+    null
+  );
+  const [credentialStatusError, setCredentialStatusError] = useState<string | null>(null);
+  const [isCredentialStatusPending, startCredentialStatusTransition] = useTransition();
   const singleCommentInputRef = useRef<HTMLInputElement>(null);
   const multilinePasteInputRef = useRef<HTMLTextAreaElement>(null);
+  const credentialReferenceId = youtubeCredentialReferenceSource.credentialReference.credentialReferenceId;
 
   const selectedConnection = findCommentTranslatorOption(connectionStates, connectionId);
   const selectedStream = findCommentTranslatorOption(streams, streamId);
@@ -391,6 +429,31 @@ export function CommentTranslatorDock() {
   const quotaPercent = localizedQuotaPreview.limitUnits > 0 ? Math.min(100, Math.round((effectiveUsedUnits / localizedQuotaPreview.limitUnits) * 100)) : 0;
   const shellIsNarrow = surfaceMode === "narrow-viewport";
   const dockStatusLabel = localizedConnection.dockStatus === "blocked" ? localizedConnection.dockStatusLabel : localizedStream.dockStatusLabel;
+  const credentialStatusMetadata = youtubeCredentialReferenceSource.statusMetadata;
+  const credentialStatusState = credentialStatusView?.state ?? credentialStatusMetadata.status;
+  const credentialStatusLabel = copy.credentialStatus.states[credentialStatusState];
+  const credentialStatusProviderChannelId =
+    credentialStatusView?.providerChannelId ?? credentialStatusMetadata.providerChannelId;
+  const credentialStatusScopeLabel = credentialStatusView?.scopeLabel ?? credentialStatusMetadata.scopeLabel;
+  const credentialStatusExpiresAtIso = credentialStatusView?.expiresAtIso ?? credentialStatusMetadata.expiresAtIso;
+  const credentialStatusReason =
+    credentialStatusError ?? credentialStatusView?.reason ?? credentialStatusMetadata.reason ?? null;
+
+  function refreshCredentialStatus() {
+    startCredentialStatusTransition(async () => {
+      const formData = new FormData();
+      formData.append("credentialReferenceId", credentialReferenceId);
+
+      try {
+        const status = await getYouTubeOAuthCredentialStatusAction(formData);
+        setCredentialStatusView(createYouTubeOAuthCredentialStatusUiWiring(status));
+        setCredentialStatusError(null);
+      } catch {
+        setCredentialStatusError(copy.credentialStatus.refreshFailed);
+      }
+    });
+  }
+
   function clearManualDraft() {
     setSingleCommentDraft("");
     setMultilinePasteDraft("");
@@ -517,6 +580,40 @@ export function CommentTranslatorDock() {
                       <dd className="break-words text-right font-semibold text-foreground">{dockStatusLabel}</dd>
                     </div>
                   </dl>
+                </div>
+                <div
+                  data-credential-status-display-wiring="sanitized-metadata-only"
+                  className="min-w-0 overflow-hidden rounded-base border border-border bg-background/65 p-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="text-sm font-black text-foreground">{copy.sections.credentialStatus}</h3>
+                    <span
+                      className={[
+                        "rounded-base border px-2 py-1 text-xs font-black",
+                        toneClassName(credentialStatusTone(credentialStatusState))
+                      ].join(" ")}
+                    >
+                      {isCredentialStatusPending ? copy.credentialStatus.pending : credentialStatusLabel}
+                    </span>
+                  </div>
+                  <dl className="mt-3 grid gap-2 text-sm">
+                    <CredentialStatusRow label={copy.fields.credentialReference} value={credentialReferenceId} />
+                    <CredentialStatusRow label={copy.fields.providerChannel} value={credentialStatusProviderChannelId} />
+                    <CredentialStatusRow label={copy.fields.scope} value={credentialStatusScopeLabel} />
+                    <CredentialStatusRow label={copy.fields.expires} value={credentialStatusExpiresAtIso} />
+                    <CredentialStatusRow label={copy.fields.reason} value={credentialStatusReason} />
+                  </dl>
+                  <button
+                    type="button"
+                    onClick={refreshCredentialStatus}
+                    disabled={isCredentialStatusPending}
+                    className="mt-3 min-h-10 w-full rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                  >
+                    {isCredentialStatusPending ? copy.credentialStatus.pending : copy.actions.refreshCredentialStatus}
+                  </button>
+                  <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
+                    {copy.credentialStatus.safeBoundary}
+                  </p>
                 </div>
               </div>
             </section>

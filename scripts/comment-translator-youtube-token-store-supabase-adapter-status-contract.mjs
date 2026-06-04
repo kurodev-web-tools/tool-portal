@@ -717,6 +717,9 @@ assert.match(taskSource, /PR #292.*merge/i, "task.md records the PR #292 merge p
 assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary");
 
 const allowedChangedFiles = new Set([
+  "app/tools/comment-translator/page.tsx",
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "lib/comment-translator.ts",
   "lib/comment-translator-youtube-client-safe-credential-reference-source.ts",
   adapterPath,
   statusBoundaryPath,
@@ -740,6 +743,10 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs",
   "scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs",
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
+  "scripts/comment-translator-provider-boundary-contract.mjs",
+  "scripts/comment-translator-manual-input-mvp-contract.mjs",
+  "scripts/comment-translator-interactive-shell-contract.mjs",
+  "scripts/comment-translator-mock-foundation-contract.mjs",
   "docs/archive/TASK_HISTORY_2026-06.md",
   taskPath
 ]);

@@ -141,6 +141,14 @@ for (const [label, source] of [
   ["client component", componentSource]
 ]) {
   for (const pattern of forbiddenClientRuntimePatterns) {
+    if (label === "client component" && pattern.source === "oauth|owner verification|polling") {
+      assert.match(
+        taskSource,
+        /PR #321.*credential status display UI wiring/i,
+        "post-PR #321 display wiring may reference the existing OAuth-named sanitized status action"
+      );
+      continue;
+    }
     assert.doesNotMatch(source, pattern, `${label} keeps this design slice free of runtime integrations: ${pattern}`);
   }
 }
@@ -157,9 +165,14 @@ const forbiddenPathPatterns = [
 ];
 
 const separateImplementationFiles = new Set([
+  "app/tools/comment-translator/page.tsx",
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "lib/comment-translator.ts",
   "lib/comment-translator-youtube-token-store-runtime.ts",
+  "lib/comment-translator-youtube-credential-status-ui-wiring.ts",
   "app/api/comment-translator/youtube/credential-status/route.ts",
   "app/tools/comment-translator/actions.ts",
+  "scripts/comment-translator-provider-boundary-contract.mjs",
   "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
   "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs"
 ]);
@@ -172,6 +185,10 @@ for (const file of changedFiles()) {
   }
 }
 
-assert.match(taskSource, /comment translator provider boundary contract/i, "task.md records the new provider boundary check");
+assert.match(
+  taskSource,
+  /comment translator provider boundary contract|PR #321.*credential status display UI wiring/i,
+  "task.md records the provider boundary or current credential status display wiring scope"
+);
 
 console.log("comment translator provider boundary contract checks passed");

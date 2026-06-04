@@ -122,6 +122,7 @@ export const commentTranslatorUiCopy = {
       comments: "ライブコメント",
       quota: "キャッシュ / クォータ確認",
       skipped: "スキップ理由",
+      credentialStatus: "YouTube認証ステータス",
       safety: "読み取り専用の安全性"
     },
     controls: {
@@ -165,7 +166,8 @@ export const commentTranslatorUiCopy = {
       addManualComments: "コメントを追加",
       insertSample: "サンプル挿入",
       clearDraft: "下書きをクリア",
-      clearManualSession: "手入力セッションをクリア"
+      clearManualSession: "手入力セッションをクリア",
+      refreshCredentialStatus: "認証ステータスを確認"
     },
     manualResults: {
       translated: { label: "翻訳済みmock", helper: "決定的なmock翻訳を付ける" },
@@ -175,7 +177,24 @@ export const commentTranslatorUiCopy = {
     fields: {
       mode: "モード",
       channel: "チャンネル",
-      dock: "Dock"
+      dock: "Dock",
+      credentialReference: "Credential reference",
+      providerChannel: "Provider channel",
+      scope: "Scope",
+      expires: "Expires",
+      reason: "Reason"
+    },
+    credentialStatus: {
+      pending: "確認中",
+      unchecked: "未確認",
+      refreshFailed: "認証ステータスを確認できませんでした",
+      safeBoundary: "画面にはopaqueなcredentialReferenceIdとsanitized metadataだけを表示します。",
+      states: {
+        available: "利用可能",
+        "reconnect-required": "再接続が必要",
+        unavailable: "未利用",
+        "credential-resolution-disabled": "解決を停止中"
+      }
     },
     connections: {
       connected: "接続中mock",
@@ -276,6 +295,7 @@ export const commentTranslatorUiCopy = {
       comments: "Live Comments",
       quota: "Cache / Quota Preview",
       skipped: "Skipped Reasons",
+      credentialStatus: "YouTube Credential Status",
       safety: "Read-only Safety"
     },
     controls: {
@@ -319,7 +339,8 @@ export const commentTranslatorUiCopy = {
       addManualComments: "Add comments",
       insertSample: "Insert samples",
       clearDraft: "Clear draft",
-      clearManualSession: "Clear manual session"
+      clearManualSession: "Clear manual session",
+      refreshCredentialStatus: "Check credential status"
     },
     manualResults: {
       translated: { label: "Translated mock", helper: "Attach deterministic mock translation" },
@@ -329,7 +350,24 @@ export const commentTranslatorUiCopy = {
     fields: {
       mode: "Mode",
       channel: "Channel",
-      dock: "Dock"
+      dock: "Dock",
+      credentialReference: "Credential reference",
+      providerChannel: "Provider channel",
+      scope: "Scope",
+      expires: "Expires",
+      reason: "Reason"
+    },
+    credentialStatus: {
+      pending: "Checking",
+      unchecked: "Unchecked",
+      refreshFailed: "Could not check credential status",
+      safeBoundary: "The client displays only an opaque credentialReferenceId and sanitized metadata.",
+      states: {
+        available: "Available",
+        "reconnect-required": "Reconnect required",
+        unavailable: "Unavailable",
+        "credential-resolution-disabled": "Resolution disabled"
+      }
     },
     connections: {
       connected: "Connected mock",

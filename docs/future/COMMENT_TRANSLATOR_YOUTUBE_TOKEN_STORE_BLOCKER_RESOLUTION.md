@@ -522,6 +522,26 @@ Required evidence before any follow-up implementation remains:
 
 This PR is evidence-collection only. No remote Supabase migration apply, No server-only token persistence runtime expansion, No Google API live smoke, and No safe live YouTube OAuth smoke are performed. Owner authorization before status read, `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`, opaque non-secret `credentialReferenceId`, and sanitized credential status metadata remain preserved.
 
+## Post-PR #324 Final Implementation Approval Evidence Gate
+
+PR #324 is merged into `codex/comment-translator-preview` with merge commit `7fd49532509cf634e220145eb143469f9bd4e49b` at `2026-06-04T10:57:23Z`.
+
+PR #324 context confirms Workers Builds success and Cloudflare Pages failure. The Pages failure is treated as `failure-known-pages-disconnect-noise`, consistent with the existing Pages disconnect noise pattern, so it is not implementation approval and does not override the blocker.
+
+Review of current task/docs/PR #324 context found no new final table/RLS/key-management/rollback review evidence and no explicit implementation approval for remote Supabase apply, server-only token persistence runtime expansion, or Google API live smoke. The final implementation approval evidence gate remains `missing-final-review-and-explicit-implementation-approval`.
+
+Required evidence before any follow-up implementation remains:
+
+| Area | Required evidence | Current status |
+| --- | --- | --- |
+| final table shape | Explicit Product/Data/Security review of `youtube_oauth_credentials`, owner binding, credential reference id semantics, non-secret metadata, encrypted ciphertext references, and no browser-readable token material after PR #324. | Missing |
+| final RLS posture | Explicit Product/Data/Security review that RLS remains enabled before runtime use, browser clients cannot read or write token material, trusted server runtime is the only encrypted row accessor, and sanitized display output stays metadata-only. | Missing |
+| key-management | Explicit Security review of managed secret or KMS selection, server-only envelope decrypt boundary, key version metadata, rotation, emergency disable, and no secret printing after PR #324. | Missing |
+| rollback | Explicit Product/Data/Security review of disabling credential resolution before rollback, reviewed database rollback path, no token value logging, and revoke/invalidate behavior for unusable credential references. | Missing |
+| explicit implementation approval | Explicit approval to open a separate PR for remote Supabase apply, server-only token persistence runtime expansion, or related implementation after final review evidence is complete. | Missing |
+
+This PR is final implementation approval evidence-gate only. No remote Supabase migration apply, No server-only token persistence runtime expansion, No Google API live smoke, and No safe live YouTube OAuth smoke are performed. Owner authorization before status read, `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`, opaque non-secret `credentialReferenceId`, and sanitized credential status metadata remain preserved.
+
 ## Non-Goals
 
 - No OAuth token persistence.

@@ -691,6 +691,26 @@ Target metadata confirmation checks recorded here:
 
 The next PR may proceed to apply-command-only only after repo-local non-secret Supabase config or CLI link metadata uniquely identifies the target, the reviewed migration file still matches `supabase/migrations/20260601000000_youtube_oauth_credentials.sql`, `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` is preserved before apply, and a final operator confirmation is given for that separate apply-command-only PR. Service-role smoke execution remains a further separate PR after a confirmed remote apply.
 
+## Remote Supabase Apply Command Gate After PR #333
+
+PR #333 is merged into `codex/comment-translator-preview` with merge commit `ebe6b1baccaf18459d7e606f5d3d7150641dea71` and head commit `ff8c15aef43b39109a7c37327cd30331d635e54d`. PR #333 recorded target metadata confirmation as `blocked-missing-repo-local-non-secret-target-metadata` and actual apply as `not-run-target-confirmation-only`.
+
+This follow-up records the operator-local Supabase CLI link metadata state only. The target metadata source is `confirmed-from-supabase-cli-local-link-metadata`: `supabase/.temp/project-ref present`, `supabase/.temp/linked-project.json present`, the project reference is a single non-secret 20-character project ref, and `supabase/.temp/` is ignored and not committed.
+
+Apply-command gate checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #333 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `ebe6b1baccaf18459d7e606f5d3d7150641dea71`. |
+| local link metadata confirmed | Supabase CLI local link metadata in supabase/.temp is present in the operator worktree. |
+| metadata commit boundary fixed | `supabase/.temp/` is ignored; local link metadata is not committed. |
+| target source remains non-secret | The project ref is non-secret target metadata; service_role key value, managed secret value, OAuth token value, browser storage, and existing handoff payload do not qualify. |
+| migration file reviewed | `supabase/migrations/20260601000000_youtube_oauth_credentials.sql` remains the only reviewed apply candidate. |
+| credential resolution disable required | Keep `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` before any future apply. |
+| final operator confirmation required | Actual apply remains `not-run-pending-final-operator-confirmation`. |
+
+No remote Supabase migration apply is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

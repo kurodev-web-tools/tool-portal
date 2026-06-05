@@ -459,6 +459,7 @@ assert.match(taskSource, /credential status display UI wiring/i, "task.md record
 assert.match(taskSource, /390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i, "task.md records required width verification for UI changes");
 
 const allowedChangedFiles = new Set([
+  ".gitignore",
   commentTranslatorPath,
   componentPath,
   pagePath,

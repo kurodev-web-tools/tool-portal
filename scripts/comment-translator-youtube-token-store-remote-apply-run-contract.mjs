@@ -95,7 +95,10 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationAssessment",
   "YouTubeEncryptedTokenStoreRemoteApplyCommandGateInput",
   "YouTubeEncryptedTokenStoreRemoteApplyCommandGateContract",
-  "YouTubeEncryptedTokenStoreRemoteApplyCommandGateAssessment"
+  "YouTubeEncryptedTokenStoreRemoteApplyCommandGateAssessment",
+  "YouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateInput",
+  "YouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateContract",
+  "YouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateAssessment"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -109,7 +112,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationSummary",
   "youtubeEncryptedTokenStoreRemoteApplyCommandGateContract",
   "assessYouTubeEncryptedTokenStoreRemoteApplyCommandGate",
-  "createYouTubeEncryptedTokenStoreRemoteApplyCommandGateSummary"
+  "createYouTubeEncryptedTokenStoreRemoteApplyCommandGateSummary",
+  "youtubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate",
+  "assessYouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate",
+  "createYouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -426,6 +432,87 @@ assert.deepEqual(
   "final operator confirmation is still required before an apply command can run"
 );
 
+const dryRunSingleMigrationGate = foundation.youtubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate;
+
+assert.equal(
+  dryRunSingleMigrationGate.prerequisiteRemoteApplyCommandGate.pullRequest,
+  "#334",
+  "dry-run single migration gate records PR #334 command gate as prerequisite"
+);
+assert.equal(
+  dryRunSingleMigrationGate.prerequisiteDryRunBlockerRecord.pullRequest,
+  "#337",
+  "dry-run single migration gate records PR #337 blocker record as prerequisite evidence"
+);
+assert.equal(
+  dryRunSingleMigrationGate.prerequisiteDryRunBlockerRecord.mergeCommit,
+  "ffb1337011a15df635b7f830c6a2704a0b927b39",
+  "dry-run single migration gate records the PR #337 merge commit"
+);
+assert.equal(
+  dryRunSingleMigrationGate.prerequisiteDryRunBlockerRecord.headCommit,
+  "55a79ff684ad7a629d686a05dc111e77ce5e74a5",
+  "dry-run single migration gate records the PR #337 head commit"
+);
+assert.equal(
+  dryRunSingleMigrationGate.remoteSupabaseApply,
+  "not-run-blocked-pending-single-reviewed-migration-only",
+  "dry-run single migration gate records that actual apply remains blocked"
+);
+assert.equal(
+  dryRunSingleMigrationGate.exactBlockingMigration,
+  "20260527000000_account_preferences_foundation.sql",
+  "dry-run single migration gate records the non-reviewed blocking migration"
+);
+assert.deepEqual(
+  dryRunSingleMigrationGate.pendingMigrationEvidence,
+  [
+    "20260527000000_account_preferences_foundation.sql pending in linked remote migration history",
+    "20260601000000_youtube_oauth_credentials.sql pending in linked remote migration history",
+    "linked remote migration history is missing the account/preferences foundation baseline",
+    "single reviewed migration only is not satisfied"
+  ],
+  "dry-run single migration gate records the linked remote baseline-history blocker"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate({
+    applyCommandGateReady: true,
+    pendingMigrationNames: [
+      "20260527000000_account_preferences_foundation.sql",
+      "20260601000000_youtube_oauth_credentials.sql"
+    ],
+    reviewedMigrationName: "20260601000000_youtube_oauth_credentials.sql"
+  }),
+  {
+    status: "blocked-pending-single-reviewed-migration-only",
+    blockingPendingMigrationNames: [
+      "20260527000000_account_preferences_foundation.sql",
+      "20260601000000_youtube_oauth_credentials.sql"
+    ],
+    remoteSupabaseApplyAllowedInThisPr: false,
+    remoteSupabaseApplyExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "record-dry-run-blocker-without-running-remote-apply"
+  },
+  "dry-run single migration gate blocks when non-reviewed pending migrations remain"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate({
+    applyCommandGateReady: true,
+    pendingMigrationNames: ["20260601000000_youtube_oauth_credentials.sql"],
+    reviewedMigrationName: "20260601000000_youtube_oauth_credentials.sql"
+  }),
+  {
+    status: "ready-for-reviewed-migration-apply-command-only",
+    blockingPendingMigrationNames: [],
+    remoteSupabaseApplyAllowedInThisPr: true,
+    remoteSupabaseApplyExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "run-reviewed-migration-apply-command-only"
+  },
+  "dry-run single migration gate allows apply only when the reviewed migration is the sole pending migration"
+);
+
 for (const fragment of [
   "PR #331",
   "42f03817563f047e3703be27d9b9cc6c92654305",
@@ -464,6 +551,19 @@ for (const fragment of [
   assert.match(blockerMemo, new RegExp(fragment.replace(".", "\\."), "i"), `blocker memo records command gate: ${fragment}`);
 }
 
+for (const fragment of [
+  "PR #337",
+  "ffb1337011a15df635b7f830c6a2704a0b927b39",
+  "55a79ff684ad7a629d686a05dc111e77ce5e74a5",
+  "single reviewed migration",
+  "20260527000000_account_preferences_foundation.sql",
+  "20260601000000_youtube_oauth_credentials.sql",
+  "not-run-blocked-pending-single-reviewed-migration-only",
+  "No remote Supabase migration apply"
+]) {
+  assert.match(blockerMemo, new RegExp(fragment.replace(".", "\\."), "i"), `blocker memo records dry-run single migration gate: ${fragment}`);
+}
+
 assert.match(taskSource, /PR #331.*42f03817563f047e3703be27d9b9cc6c92654305/i, "task.md records PR #331 merge premise");
 assert.match(taskSource, /PR #332.*85998d2265eaa6348a265241f13799bfbc46759e/i, "task.md records PR #332 merge premise");
 assert.match(
@@ -491,6 +591,22 @@ assert.match(
   taskSource,
   /actual apply.*未実行/i,
   "task.md records that actual apply remains unexecuted after target metadata confirmation"
+);
+assert.match(taskSource, /PR #337.*ffb1337011a15df635b7f830c6a2704a0b927b39/i, "task.md records PR #337 merge premise");
+assert.match(
+  taskSource,
+  /20260527000000_account_preferences_foundation\.sql.*20260601000000_youtube_oauth_credentials\.sql/s,
+  "task.md records both pending migrations from the linked dry-run"
+);
+assert.match(
+  taskSource,
+  /migration list --linked.*remote.*blank/i,
+  "task.md records that linked remote migration history is blank for both local migrations"
+);
+assert.match(
+  taskSource,
+  /actual apply.*not-run-blocked-pending-single-reviewed-migration-only/i,
+  "task.md records the dry-run single reviewed migration blocker result"
 );
 assert.match(
   taskSource,

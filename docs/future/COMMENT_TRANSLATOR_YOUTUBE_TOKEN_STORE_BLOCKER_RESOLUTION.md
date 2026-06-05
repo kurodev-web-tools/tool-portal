@@ -671,6 +671,26 @@ Apply-run checks recorded here:
 
 No remote Supabase migration apply is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## Safe Concrete Remote Supabase Target Metadata Confirmation After PR #332
+
+PR #332 is merged into `codex/comment-translator-preview` with merge commit `85998d2265eaa6348a265241f13799bfbc46759e` and head commit `7ed1c5de42f73a3e403d30605e23f9b6f5a81577`. PR #332 recorded the remote apply target blocker as `not-run-blocked-pending-safe-concrete-remote-target`.
+
+This follow-up records safe concrete remote Supabase target metadata confirmation only. The target confirmation result is `blocked-missing-repo-local-non-secret-target-metadata`. The actual apply state is `not-run-target-confirmation-only`: No remote Supabase migration apply is run, No service-role smoke execution is run or mixed into this PR, No Google API live smoke is run, and No safe live YouTube OAuth smoke is run.
+
+Target metadata confirmation checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #332 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `85998d2265eaa6348a265241f13799bfbc46759e`. |
+| prior target blocker confirmed | PR #332 remains `not-run-blocked-pending-safe-concrete-remote-target`. |
+| allowed metadata sources fixed | Only `supabase/config.toml` and Supabase CLI link metadata in `.supabase` can confirm the target. |
+| current target metadata discovery | `supabase/config.toml missing`, `.supabase link metadata missing`, and `no repo-local non-secret project target metadata found`. |
+| rejected target sources fixed | service_role key value, managed secret value, OAuth token value, human-pasted private credential, browser storage, and existing handoff payload do not qualify as target metadata. |
+| ambiguous target blocker fixed | Multiple candidates or an otherwise non-unique non-secret project reference block actual apply. |
+| separate apply PR condition fixed | Even if a safe concrete target is later confirmed, this PR only records readiness and the apply-command-only run stays a separate PR condition. |
+
+The next PR may proceed to apply-command-only only after repo-local non-secret Supabase config or CLI link metadata uniquely identifies the target, the reviewed migration file still matches `supabase/migrations/20260601000000_youtube_oauth_credentials.sql`, `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` is preserved before apply, and a final operator confirmation is given for that separate apply-command-only PR. Service-role smoke execution remains a further separate PR after a confirmed remote apply.
+
 ## Non-Goals
 
 - No OAuth token persistence.

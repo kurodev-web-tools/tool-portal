@@ -89,7 +89,10 @@ assert.match(foundationSource, /^import "server-only";/m, "remote apply run boun
 for (const exportedType of [
   "YouTubeEncryptedTokenStoreRemoteApplyRunDecision",
   "YouTubeEncryptedTokenStoreRemoteApplyRunContract",
-  "YouTubeEncryptedTokenStoreRemoteApplyRunAssessment"
+  "YouTubeEncryptedTokenStoreRemoteApplyRunAssessment",
+  "YouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationInput",
+  "YouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationContract",
+  "YouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationAssessment"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -97,7 +100,10 @@ for (const exportedType of [
 for (const exportedConstOrFunction of [
   "youtubeEncryptedTokenStoreRemoteApplyRunContract",
   "assessYouTubeEncryptedTokenStoreRemoteApplyRun",
-  "createYouTubeEncryptedTokenStoreRemoteApplyRunSummary"
+  "createYouTubeEncryptedTokenStoreRemoteApplyRunSummary",
+  "youtubeEncryptedTokenStoreRemoteTargetMetadataConfirmationContract",
+  "assessYouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmation",
+  "createYouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -195,6 +201,143 @@ assert.deepEqual(
   "target and approval would allow only the reviewed migration apply command, not smoke"
 );
 
+const targetConfirmationContract = foundation.youtubeEncryptedTokenStoreRemoteTargetMetadataConfirmationContract;
+
+assert.equal(
+  targetConfirmationContract.prerequisiteRemoteApplyTargetBlocker.pullRequest,
+  "#332",
+  "target confirmation records PR #332 prerequisite"
+);
+assert.equal(
+  targetConfirmationContract.prerequisiteRemoteApplyTargetBlocker.mergeCommit,
+  "85998d2265eaa6348a265241f13799bfbc46759e",
+  "target confirmation records the PR #332 merge commit"
+);
+assert.equal(
+  targetConfirmationContract.prerequisiteRemoteApplyTargetBlocker.headCommit,
+  "7ed1c5de42f73a3e403d30605e23f9b6f5a81577",
+  "target confirmation records the PR #332 head commit"
+);
+assert.equal(
+  targetConfirmationContract.prerequisiteRemoteApplyTargetBlocker.status,
+  "not-run-blocked-pending-safe-concrete-remote-target",
+  "target confirmation records the prior target blocker"
+);
+assert.equal(
+  targetConfirmationContract.targetConfirmation,
+  "blocked-missing-repo-local-non-secret-target-metadata",
+  "target confirmation remains blocked when repo-local target metadata is missing"
+);
+assert.equal(
+  targetConfirmationContract.remoteSupabaseApply,
+  "not-run-target-confirmation-only",
+  "target confirmation contract does not run the remote apply"
+);
+assert.equal(
+  targetConfirmationContract.actualServiceRoleSmoke,
+  "out-of-scope-separate-pr",
+  "target confirmation keeps service-role smoke out of scope"
+);
+assert.deepEqual(
+  targetConfirmationContract.targetDiscoveryEvidence,
+  [
+    "supabase/config.toml missing",
+    ".supabase link metadata missing",
+    "no repo-local non-secret project target metadata found"
+  ],
+  "target confirmation records current non-secret discovery evidence"
+);
+assert.deepEqual(
+  targetConfirmationContract.allowedTargetMetadataSources,
+  ["supabase/config.toml", "Supabase CLI link metadata in .supabase"],
+  "target confirmation only accepts repo-local non-secret target metadata sources"
+);
+assert.ok(
+  targetConfirmationContract.rejectedTargetSources.includes("service_role key value") &&
+    targetConfirmationContract.rejectedTargetSources.includes("managed secret value") &&
+    targetConfirmationContract.rejectedTargetSources.includes("OAuth token value") &&
+    targetConfirmationContract.rejectedTargetSources.includes("human-pasted private credential"),
+  "target confirmation rejects secret, token, and private credential sources"
+);
+assert.ok(
+  targetConfirmationContract.rollbackAbortConditions.includes("abort-if-target-is-ambiguous-or-multiple-candidates"),
+  "target confirmation aborts on ambiguous or multiple target candidates"
+);
+assert.ok(
+  targetConfirmationContract.forbiddenInThisSlice.includes("remote Supabase DB migration apply") &&
+    targetConfirmationContract.forbiddenInThisSlice.includes("service-role smoke execution"),
+  "target confirmation excludes remote apply and service-role smoke execution"
+);
+
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmation({
+    supabaseConfigTomlPresent: false,
+    supabaseCliLinkMetadataPresent: false,
+    nonSecretProjectReferenceUnique: false,
+    multipleTargetCandidates: false,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "blocked-missing-repo-local-target-metadata",
+    remoteTargetConfirmed: false,
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "record-target-metadata-blocker-without-running-remote-apply"
+  },
+  "missing repo-local metadata blocks target confirmation without requesting secrets"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmation({
+    supabaseConfigTomlPresent: true,
+    supabaseCliLinkMetadataPresent: false,
+    nonSecretProjectReferenceUnique: false,
+    multipleTargetCandidates: true,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "blocked-ambiguous-remote-target",
+    remoteTargetConfirmed: false,
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "record-ambiguous-target-blocker-without-running-remote-apply"
+  },
+  "ambiguous or multiple non-secret target candidates block actual apply"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmation({
+    supabaseConfigTomlPresent: true,
+    supabaseCliLinkMetadataPresent: true,
+    nonSecretProjectReferenceUnique: true,
+    multipleTargetCandidates: false,
+    requiresSecretOrTokenValue: true
+  }),
+  {
+    status: "blocked-secret-required-for-target-confirmation",
+    remoteTargetConfirmed: false,
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "record-secret-required-blocker-without-requesting-secret-values"
+  },
+  "target confirmation blocks if a secret or token value would be required"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmation({
+    supabaseConfigTomlPresent: true,
+    supabaseCliLinkMetadataPresent: true,
+    nonSecretProjectReferenceUnique: true,
+    multipleTargetCandidates: false,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "ready-for-separate-apply-command-pr",
+    remoteTargetConfirmed: true,
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "record-target-confirmed-readiness-and-open-separate-apply-command-pr"
+  },
+  "even a safely confirmed target only allows readiness recording in this PR"
+);
+
 for (const fragment of [
   "PR #331",
   "42f03817563f047e3703be27d9b9cc6c92654305",
@@ -208,11 +351,36 @@ for (const fragment of [
   assert.match(blockerMemo, new RegExp(fragment.replace(".", "\\."), "i"), `blocker memo records remote apply run blocker: ${fragment}`);
 }
 
+for (const fragment of [
+  "PR #332",
+  "85998d2265eaa6348a265241f13799bfbc46759e",
+  "safe concrete remote Supabase target metadata confirmation",
+  "blocked-missing-repo-local-non-secret-target-metadata",
+  "not-run-target-confirmation-only",
+  "supabase/config.toml missing",
+  ".supabase link metadata missing",
+  "No remote Supabase migration apply",
+  "No service-role smoke execution"
+]) {
+  assert.match(blockerMemo, new RegExp(fragment.replace(".", "\\."), "i"), `blocker memo records target confirmation: ${fragment}`);
+}
+
 assert.match(taskSource, /PR #331.*42f03817563f047e3703be27d9b9cc6c92654305/i, "task.md records PR #331 merge premise");
+assert.match(taskSource, /PR #332.*85998d2265eaa6348a265241f13799bfbc46759e/i, "task.md records PR #332 merge premise");
 assert.match(
   taskSource,
   /apply run.*not-run-blocked-pending-safe-concrete-remote-target/i,
   "task.md records that actual apply did not run because the safe target is missing"
+);
+assert.match(
+  taskSource,
+  /target confirmation.*blocked-missing-repo-local-non-secret-target-metadata/i,
+  "task.md records target confirmation blocker result"
+);
+assert.match(
+  taskSource,
+  /actual apply.*not-run-target-confirmation-only/i,
+  "task.md records that actual apply did not run in the target confirmation PR"
 );
 assert.match(
   taskSource,

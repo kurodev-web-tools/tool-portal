@@ -807,6 +807,31 @@ Baseline apply checks recorded here:
 
 No YouTube OAuth credential migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## YouTube OAuth Credentials Remote Apply Run After PR #341
+
+PR #341 is merged into `codex/comment-translator-preview` with merge commit `dff517199f099488a43d67f7e31cc775b1b913f6`. The previous preview head was `781cc7a361ee02047632a678c2f0861c5961f257`. PR #341 recorded the account/preferences foundation baseline apply as `applied-account-preferences-foundation-baseline-only` and restored the linked dry-run to `single-reviewed-youtube-migration-only`.
+
+This follow-up records the reviewed YouTube OAuth credentials migration apply confirmation only. The current thread recorded `explicit-human-youtube-oauth-credentials-apply-approval-recorded`, but the Codex process did not directly execute the apply command because the DB auth env was unavailable in this process. Operator-local command evidence reported `remote-database-up-to-date`, and local CLI evidence confirmed `20260601000000` is now present in both local and remote migration history. The remote apply result recorded here is `remote-applied-youtube-oauth-credentials-migration-confirmed`.
+
+YouTube apply checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #341 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `dff517199f099488a43d67f7e31cc775b1b913f6`. |
+| approval | `explicit-human-youtube-oauth-credentials-apply-approval-recorded`. |
+| reviewed migration | `20260601000000_youtube_oauth_credentials.sql`. |
+| pre-apply migration list | `account-preferences-remote-present-youtube-remote-blank`. |
+| Codex dry-run attempt | `blocked-db-auth-env-missing-before-pending-list-confirmation`. |
+| operator-local dry-run evidence | `remote-database-up-to-date`. |
+| apply command execution by Codex process | `not-executed-by-codex-process-db-password-unavailable`. |
+| remote apply result | `remote-applied-youtube-oauth-credentials-migration-confirmed`. |
+| post-apply migration list | `account-preferences-and-youtube-migrations-local-remote-present`. |
+| post-apply dry-run | `remote-database-up-to-date-no-pending-migrations`. |
+| migration-history repair | `not-run-not-needed`. |
+| service-role smoke | `out-of-scope-separate-pr`. |
+
+No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. No remote Supabase migration history repair is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

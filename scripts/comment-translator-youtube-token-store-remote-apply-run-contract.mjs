@@ -107,7 +107,10 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateAssessment",
   "YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunInput",
   "YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunContract",
-  "YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunAssessment"
+  "YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunAssessment",
+  "YouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunInput",
+  "YouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunContract",
+  "YouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunAssessment"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -133,7 +136,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateSummary",
   "youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun",
   "assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun",
-  "createYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunSummary"
+  "createYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunSummary",
+  "youtubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun",
+  "assessYouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun",
+  "createYouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -778,6 +784,99 @@ assert.deepEqual(
   "account/preferences baseline apply run returns to YouTube apply confirmation only after baseline apply and single reviewed dry-run"
 );
 
+const youtubeOAuthCredentialsRemoteApplyRun =
+  foundation.youtubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun;
+
+assert.equal(
+  youtubeOAuthCredentialsRemoteApplyRun.prerequisiteAccountPreferencesBaselineApplyRun.pullRequest,
+  "#341",
+  "YouTube OAuth credentials remote apply run records PR #341 baseline apply run as prerequisite"
+);
+assert.equal(
+  youtubeOAuthCredentialsRemoteApplyRun.prerequisiteAccountPreferencesBaselineApplyRun.mergeCommit,
+  "dff517199f099488a43d67f7e31cc775b1b913f6",
+  "YouTube OAuth credentials remote apply run records the PR #341 merge commit"
+);
+assert.equal(
+  youtubeOAuthCredentialsRemoteApplyRun.threadApproval,
+  "explicit-human-youtube-oauth-credentials-apply-approval-recorded",
+  "YouTube OAuth credentials remote apply run records fresh human approval for the reviewed YouTube migration"
+);
+assert.equal(
+  youtubeOAuthCredentialsRemoteApplyRun.reviewedTargetMigration,
+  "20260601000000_youtube_oauth_credentials.sql",
+  "YouTube OAuth credentials remote apply run keeps the reviewed target migration"
+);
+assert.equal(
+  youtubeOAuthCredentialsRemoteApplyRun.remoteSupabaseApply,
+  "remote-applied-youtube-oauth-credentials-migration-confirmed",
+  "YouTube OAuth credentials remote apply run records remote applied confirmation"
+);
+assert.equal(
+  youtubeOAuthCredentialsRemoteApplyRun.applyCommandExecution,
+  "not-executed-by-codex-process-db-password-unavailable",
+  "YouTube OAuth credentials remote apply run records that Codex did not directly run the apply command"
+);
+assert.equal(
+  youtubeOAuthCredentialsRemoteApplyRun.postApplyMigrationList,
+  "account-preferences-and-youtube-migrations-local-remote-present",
+  "YouTube OAuth credentials remote apply run records both migrations present in local and remote history"
+);
+assert.equal(
+  youtubeOAuthCredentialsRemoteApplyRun.postApplyDryRun,
+  "remote-database-up-to-date-no-pending-migrations",
+  "YouTube OAuth credentials remote apply run records no pending migrations after remote apply confirmation"
+);
+assert.equal(
+  youtubeOAuthCredentialsRemoteApplyRun.actualServiceRoleSmoke,
+  "out-of-scope-separate-pr",
+  "YouTube OAuth credentials remote apply run keeps service-role smoke out of scope"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun({
+    youtubeOAuthCredentialsMigrationRemoteApplied: true,
+    postApplyPendingMigrationNames: [],
+    reviewedTargetMigrationName: "20260601000000_youtube_oauth_credentials.sql",
+    credentialResolutionDisabledMaintained: true,
+    serviceRoleSmokeExecuted: false,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "ready-for-separate-service-role-smoke-pr",
+    blockingMigrationNames: [],
+    remoteSupabaseApplyAllowedInThisPr: false,
+    remoteSupabaseApplyExecuted: true,
+    migrationHistoryRepairAllowedInThisPr: false,
+    migrationHistoryRepairExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    serviceRoleSmokeExecuted: false,
+    nextAction: "open-separate-service-role-smoke-readiness-or-execution-pr"
+  },
+  "confirmed YouTube remote apply unlocks only a separate service-role smoke PR"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun({
+    youtubeOAuthCredentialsMigrationRemoteApplied: false,
+    postApplyPendingMigrationNames: ["20260601000000_youtube_oauth_credentials.sql"],
+    reviewedTargetMigrationName: "20260601000000_youtube_oauth_credentials.sql",
+    credentialResolutionDisabledMaintained: true,
+    serviceRoleSmokeExecuted: false,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "blocked-youtube-oauth-credentials-migration-not-confirmed-applied",
+    blockingMigrationNames: ["20260601000000_youtube_oauth_credentials.sql"],
+    remoteSupabaseApplyAllowedInThisPr: false,
+    remoteSupabaseApplyExecuted: false,
+    migrationHistoryRepairAllowedInThisPr: false,
+    migrationHistoryRepairExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    serviceRoleSmokeExecuted: false,
+    nextAction: "record-youtube-apply-confirmation-blocker-without-service-role-smoke"
+  },
+  "YouTube remote apply run blocks when the reviewed migration is not confirmed applied"
+);
+
 for (const fragment of [
   "PR #331",
   "42f03817563f047e3703be27d9b9cc6c92654305",
@@ -878,6 +977,23 @@ for (const fragment of [
   );
 }
 
+for (const fragment of [
+  "PR #341",
+  "dff517199f099488a43d67f7e31cc775b1b913f6",
+  "explicit-human-youtube-oauth-credentials-apply-approval-recorded",
+  "remote-applied-youtube-oauth-credentials-migration-confirmed",
+  "not-executed-by-codex-process-db-password-unavailable",
+  "account-preferences-and-youtube-migrations-local-remote-present",
+  "remote-database-up-to-date-no-pending-migrations",
+  "No service-role smoke execution"
+]) {
+  assert.match(
+    blockerMemo,
+    new RegExp(fragment.replace(".", "\\."), "i"),
+    `blocker memo records YouTube OAuth credentials remote apply run: ${fragment}`
+  );
+}
+
 assert.match(taskSource, /PR #331.*42f03817563f047e3703be27d9b9cc6c92654305/i, "task.md records PR #331 merge premise");
 assert.match(taskSource, /PR #332.*85998d2265eaa6348a265241f13799bfbc46759e/i, "task.md records PR #332 merge premise");
 assert.match(
@@ -954,6 +1070,22 @@ assert.match(
   taskSource,
   /single-reviewed-youtube-migration-only/i,
   "task.md records that post-apply dry-run is single reviewed YouTube migration only"
+);
+assert.match(taskSource, /PR #341.*dff517199f099488a43d67f7e31cc775b1b913f6/i, "task.md records PR #341 merge premise");
+assert.match(
+  taskSource,
+  /remote-applied-youtube-oauth-credentials-migration-confirmed/i,
+  "task.md records the YouTube OAuth credentials remote apply confirmation"
+);
+assert.match(
+  taskSource,
+  /not-executed-by-codex-process-db-password-unavailable/i,
+  "task.md records that Codex did not directly execute the apply command"
+);
+assert.match(
+  taskSource,
+  /remote-database-up-to-date-no-pending-migrations/i,
+  "task.md records the post-apply dry-run no-pending state"
 );
 assert.match(
   taskSource,

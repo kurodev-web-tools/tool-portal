@@ -602,6 +602,28 @@ Readiness checks recorded here:
 
 No service-role smoke is run in this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Owner authorization before status read and `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` remain preserved. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## Safe Live Service-Role Status/Persistence Smoke Readiness After PR #329
+
+PR #329 is merged into `codex/comment-translator-preview` with merge commit `c773a52155fafc2f1148c947745688eb89dd8d76`. PR #329 recorded remote Supabase migration apply readiness as `not-applied-readiness-only`, so this follow-up records safe-live service-role status/persistence smoke readiness only and remains `blocked-pending-remote-apply`.
+
+This slice records `safe-live-service-role-status-persistence-smoke-readiness` only. The actual service-role smoke state is `not-run-readiness-only`: no remote Supabase migration apply is run, no service-role status or persistence smoke is executed, no Google API live smoke is run, and no safe live YouTube OAuth smoke is run. The selected follow-up is readiness/blocker recording for service-role status/persistence smoke after a future confirmed remote apply.
+
+Readiness checks recorded here:
+
+| Check | State |
+| --- | --- |
+| preview merge state verified | PR #329 merge commit is contained in `origin/codex/comment-translator-preview`. |
+| remote apply readiness merged | PR #329 remote apply readiness is the prerequisite and remains `not-applied-readiness-only`. |
+| env reference names recorded | `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are reference names only; values are not requested, printed, stored, or placed in PR text. |
+| missing env sanitized state recorded | Missing env references must degrade to sanitized unavailable / reconnect-required metadata. |
+| credential resolution disable preserved | `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` remains the emergency `credential-resolution-disabled` state. |
+| owner authorization before read/write recorded | Owner authorization is required before any trusted service-role status read or persistence write smoke. |
+| post-apply verification scope recorded | After a future confirmed remote apply, smoke scope is limited to schema/RLS presence, sanitized status metadata, and opaque `credentialReferenceId` persistence verification. |
+| remote apply confirmed before smoke | Blocking external action; safe live service-role smoke can run only after remote Supabase migration apply is confirmed. |
+| Cloudflare Pages noise separated | Pages failure remains known disconnect noise; Workers Builds and local verification remain the actionable signals. |
+
+No remote Supabase migration apply is run in this PR. No service-role smoke is run. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Owner authorization before status read/write and `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` remain preserved. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

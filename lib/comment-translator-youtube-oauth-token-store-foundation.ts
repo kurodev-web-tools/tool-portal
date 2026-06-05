@@ -661,6 +661,67 @@ export type YouTubeEncryptedTokenStoreRemoteSupabaseApplyReadinessResult =
       nextAction: "request-explicit-human-remote-apply-run-approval-in-a-separate-step";
     };
 
+export type YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessCheck = {
+  id:
+    | "preview-merge-state-verified"
+    | "remote-apply-readiness-merged"
+    | "service-role-env-reference-names-recorded"
+    | "missing-env-sanitized-state-recorded"
+    | "credential-resolution-disable-preserved"
+    | "owner-authorization-before-read-write-recorded"
+    | "post-apply-verification-scope-recorded"
+    | "remote-apply-confirmed-before-smoke"
+    | "cloudflare-pages-noise-separated";
+  status: "recorded" | "blocking-external-action";
+  evidence: string;
+};
+
+export type YouTubeEncryptedTokenStoreServiceRoleSmokeReadiness = {
+  implementationStage: "safe-live-service-role-status-persistence-smoke-readiness";
+  selectedFollowUp: "service-role-status-persistence-smoke-readiness-only";
+  prerequisiteRemoteApplyReadiness: {
+    pullRequest: "#329";
+    mergeCommit: "c773a52155fafc2f1148c947745688eb89dd8d76";
+    status: "not-applied-readiness-only";
+  };
+  migrationPath: "supabase/migrations/20260601000000_youtube_oauth_credentials.sql";
+  requiredReadinessChecks: readonly YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessCheck[];
+  remoteSupabaseApply: "forbidden-in-this-pr";
+  actualServiceRoleSmoke: "not-run-readiness-only";
+  postApplyPrerequisite: "blocked-pending-remote-apply";
+  requiredEnvReferences: readonly ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
+  missingEnvState: "sanitized-unavailable-reconnect-required";
+  credentialResolutionDisabledState: "credential-resolution-disabled";
+  ownerAuthorization: "required-before-status-read-or-persistence-write";
+  statusReadSmoke: "sanitized-status-only-after-remote-apply-confirmed";
+  persistenceWriteSmoke: "sanitized-reference-only-after-remote-apply-confirmed";
+  googleApiLiveCall: "forbidden-in-this-pr";
+  safeLiveYouTubeOAuthSmoke: "forbidden-in-this-pr";
+  clientReadableOutput: readonly ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"];
+  secretHandling: "env-reference-names-only-no-values";
+  browserStorage: "unchanged";
+  nextExternalAction: "wait-for-remote-apply-confirmation-before-safe-live-service-role-smoke";
+  forbiddenInThisSlice: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessResult =
+  | {
+      status: "blocked-missing-service-role-smoke-readiness-checks";
+      missingCheckIds: readonly YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessCheck["id"][];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      googleApiLiveSmokeAllowedInThisPr: false;
+      nextAction: "record-service-role-smoke-readiness-blockers-without-remote-db-connection";
+    }
+  | {
+      status: "blocked-pending-remote-apply";
+      completedCheckIds: readonly YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessCheck["id"][];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      googleApiLiveSmokeAllowedInThisPr: false;
+      nextAction: "wait-for-remote-apply-confirmation-before-safe-live-service-role-smoke";
+    };
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -1564,6 +1625,88 @@ export const youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness = {
   ]
 } as const satisfies YouTubeEncryptedTokenStoreRemoteSupabaseApplyReadiness;
 
+export const youtubeEncryptedTokenStoreServiceRoleSmokeReadiness = {
+  implementationStage: "safe-live-service-role-status-persistence-smoke-readiness",
+  selectedFollowUp: "service-role-status-persistence-smoke-readiness-only",
+  prerequisiteRemoteApplyReadiness: {
+    pullRequest: "#329",
+    mergeCommit: "c773a52155fafc2f1148c947745688eb89dd8d76",
+    status: "not-applied-readiness-only"
+  },
+  migrationPath: "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
+  requiredReadinessChecks: [
+    {
+      id: "preview-merge-state-verified",
+      status: "recorded",
+      evidence: "origin/codex/comment-translator-preview includes PR #329 merge commit c773a52155fafc2f1148c947745688eb89dd8d76."
+    },
+    {
+      id: "remote-apply-readiness-merged",
+      status: "recorded",
+      evidence: "PR #329 recorded remote Supabase apply readiness as not-applied-readiness-only."
+    },
+    {
+      id: "service-role-env-reference-names-recorded",
+      status: "recorded",
+      evidence: "Only NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY reference names are recorded; values are not requested or printed."
+    },
+    {
+      id: "missing-env-sanitized-state-recorded",
+      status: "recorded",
+      evidence: "Missing env references map to sanitized unavailable/reconnect-required status metadata."
+    },
+    {
+      id: "credential-resolution-disable-preserved",
+      status: "recorded",
+      evidence: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED remains the emergency credential-resolution-disabled state."
+    },
+    {
+      id: "owner-authorization-before-read-write-recorded",
+      status: "recorded",
+      evidence: "Owner authorization is required before any trusted service-role status read or persistence write smoke."
+    },
+    {
+      id: "post-apply-verification-scope-recorded",
+      status: "recorded",
+      evidence: "The smoke scope is limited to sanitized status metadata and opaque credentialReferenceId persistence verification after apply."
+    },
+    {
+      id: "remote-apply-confirmed-before-smoke",
+      status: "blocking-external-action",
+      evidence: "Safe live service-role smoke can run only after remote Supabase migration apply is confirmed by the operator."
+    },
+    {
+      id: "cloudflare-pages-noise-separated",
+      status: "recorded",
+      evidence: "Cloudflare Pages failure remains known Pages disconnect noise; Workers Builds and local verification remain the actionable signals."
+    }
+  ],
+  remoteSupabaseApply: "forbidden-in-this-pr",
+  actualServiceRoleSmoke: "not-run-readiness-only",
+  postApplyPrerequisite: "blocked-pending-remote-apply",
+  requiredEnvReferences: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+  missingEnvState: "sanitized-unavailable-reconnect-required",
+  credentialResolutionDisabledState: "credential-resolution-disabled",
+  ownerAuthorization: "required-before-status-read-or-persistence-write",
+  statusReadSmoke: "sanitized-status-only-after-remote-apply-confirmed",
+  persistenceWriteSmoke: "sanitized-reference-only-after-remote-apply-confirmed",
+  googleApiLiveCall: "forbidden-in-this-pr",
+  safeLiveYouTubeOAuthSmoke: "forbidden-in-this-pr",
+  clientReadableOutput: ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"],
+  secretHandling: "env-reference-names-only-no-values",
+  browserStorage: "unchanged",
+  nextExternalAction: "wait-for-remote-apply-confirmation-before-safe-live-service-role-smoke",
+  forbiddenInThisSlice: [
+    "remote Supabase DB migration apply",
+    "safe live service-role status or persistence smoke execution",
+    "Google API live call",
+    "safe live YouTube OAuth smoke",
+    "OAuth token value handling",
+    "service_role key value handling",
+    "localStorage, IndexedDB, sessionStorage, or handoff payload change"
+  ]
+} as const satisfies YouTubeEncryptedTokenStoreServiceRoleSmokeReadiness;
+
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
   storageOwner: youtubeEncryptedTokenStoreDesignPolicy.storageOwner,
@@ -2003,6 +2146,38 @@ export function assessYouTubeEncryptedTokenStoreRemoteSupabaseApplyReadiness(
   };
 }
 
+export function assessYouTubeEncryptedTokenStoreServiceRoleSmokeReadiness(
+  completedChecks: readonly YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessCheck[]
+): YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessResult {
+  const completedCheckIds = completedChecks.map((check) => check.id);
+  const missingRecordedCheckIds = youtubeEncryptedTokenStoreServiceRoleSmokeReadiness.requiredReadinessChecks
+    .filter((check) => check.status === "recorded")
+    .map((check) => check.id)
+    .filter((id) => !completedCheckIds.includes(id));
+
+  if (missingRecordedCheckIds.length > 0) {
+    return {
+      status: "blocked-missing-service-role-smoke-readiness-checks",
+      missingCheckIds: youtubeEncryptedTokenStoreServiceRoleSmokeReadiness.requiredReadinessChecks
+        .map((check) => check.id)
+        .filter((id) => !completedCheckIds.includes(id)),
+      remoteSupabaseApplyAllowedInThisPr: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      googleApiLiveSmokeAllowedInThisPr: false,
+      nextAction: "record-service-role-smoke-readiness-blockers-without-remote-db-connection"
+    };
+  }
+
+  return {
+    status: "blocked-pending-remote-apply",
+    completedCheckIds,
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: youtubeEncryptedTokenStoreServiceRoleSmokeReadiness.nextExternalAction
+  };
+}
+
 export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary(): string {
   return [
     `Post review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postReviewPullRequest}.`,
@@ -2071,6 +2246,21 @@ export function createYouTubeEncryptedTokenStoreRemoteSupabaseApplyReadinessSumm
     `Status: ${result.status}.`,
     `Remote apply: ${youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.remoteSupabaseApply}.`,
     "No service-role smoke, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
+  ].join(" ");
+}
+
+export function createYouTubeEncryptedTokenStoreServiceRoleSmokeReadinessSummary(): string {
+  const recordedChecks = youtubeEncryptedTokenStoreServiceRoleSmokeReadiness.requiredReadinessChecks.filter(
+    (check) => check.status === "recorded"
+  );
+  const result = assessYouTubeEncryptedTokenStoreServiceRoleSmokeReadiness(recordedChecks);
+
+  return [
+    `PR ${youtubeEncryptedTokenStoreServiceRoleSmokeReadiness.prerequisiteRemoteApplyReadiness.pullRequest} remote apply readiness is merged.`,
+    `Stage: ${youtubeEncryptedTokenStoreServiceRoleSmokeReadiness.implementationStage}.`,
+    `Status: ${result.status}.`,
+    `Post-apply prerequisite: ${youtubeEncryptedTokenStoreServiceRoleSmokeReadiness.postApplyPrerequisite}.`,
+    "No remote Supabase migration apply, No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
   ].join(" ");
 }
 

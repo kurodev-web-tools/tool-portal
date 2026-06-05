@@ -832,6 +832,27 @@ YouTube apply checks recorded here:
 
 No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. No remote Supabase migration history repair is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## Post-Remote-Apply Service-Role Smoke Gate After PR #342
+
+PR #342 is merged into `codex/comment-translator-preview` with merge commit `9102011f3b11ffb03f7ee92314d99a5af219d20a`. The previous preview head was `dff517199f099488a43d67f7e31cc775b1b913f6`. PR #342 recorded the YouTube OAuth credentials remote apply result as `remote-applied-youtube-oauth-credentials-migration-confirmed`.
+
+This follow-up records the `post-remote-apply-service-role-smoke-gate` only. Remote apply is confirmed, but actual service-role smoke remains `not-run-blocked-pending-env-and-final-operator-confirmation`: this Codex process has no `NEXT_PUBLIC_SUPABASE_URL` env reference, no `SUPABASE_SERVICE_ROLE_KEY` env reference, and no fresh final operator confirmation for service-role smoke execution. Env reference names only are recorded; values are not requested, printed, stored, or placed in docs.
+
+Post-remote-apply smoke gate checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #342 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `9102011f3b11ffb03f7ee92314d99a5af219d20a`. |
+| remote apply state | `remote-applied-youtube-oauth-credentials-migration-confirmed`. |
+| migration history state | `account-preferences-and-youtube-migrations-local-remote-present`. |
+| dry-run state | `remote-database-up-to-date-no-pending-migrations`. |
+| service-role smoke approval | `not-recorded-for-service-role-smoke-execution`. |
+| env reference presence | `missing-in-codex-process`. |
+| actual service-role smoke | `not-run-blocked-pending-env-and-final-operator-confirmation`. |
+| service-role smoke scope | `bounded-status-read-and-persistence-write-smoke-only-after-final-confirmation`. |
+
+No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

@@ -78,7 +78,10 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessResult",
   "YouTubeEncryptedTokenStoreRemoteApplyExecutionHandoff",
   "YouTubeEncryptedTokenStoreRemoteApplyExecutionHandoffCheck",
-  "YouTubeEncryptedTokenStoreRemoteApplyExecutionHandoffResult"
+  "YouTubeEncryptedTokenStoreRemoteApplyExecutionHandoffResult",
+  "YouTubeEncryptedTokenStorePostRemoteApplyServiceRoleSmokeGateInput",
+  "YouTubeEncryptedTokenStorePostRemoteApplyServiceRoleSmokeGateContract",
+  "YouTubeEncryptedTokenStorePostRemoteApplyServiceRoleSmokeGateAssessment"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -89,7 +92,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeEncryptedTokenStoreServiceRoleSmokeReadinessSummary",
   "youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff",
   "assessYouTubeEncryptedTokenStoreRemoteApplyExecutionHandoff",
-  "createYouTubeEncryptedTokenStoreRemoteApplyExecutionHandoffSummary"
+  "createYouTubeEncryptedTokenStoreRemoteApplyExecutionHandoffSummary",
+  "youtubeEncryptedTokenStorePostRemoteApplyServiceRoleSmokeGate",
+  "assessYouTubeEncryptedTokenStorePostRemoteApplyServiceRoleSmokeGate",
+  "createYouTubeEncryptedTokenStorePostRemoteApplyServiceRoleSmokeGateSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -314,6 +320,88 @@ assert.deepEqual(
   "complete local handoff readiness still blocks until explicit human target and run approval"
 );
 
+const postRemoteApplyServiceRoleSmokeGate = foundation.youtubeEncryptedTokenStorePostRemoteApplyServiceRoleSmokeGate;
+
+assert.deepEqual(
+  postRemoteApplyServiceRoleSmokeGate.prerequisiteYouTubeOAuthCredentialsRemoteApplyRun,
+  {
+    pullRequest: "#342",
+    mergeCommit: "9102011f3b11ffb03f7ee92314d99a5af219d20a",
+    previousPreviewHead: "dff517199f099488a43d67f7e31cc775b1b913f6",
+    status: "remote-applied-youtube-oauth-credentials-migration-confirmed"
+  },
+  "post-remote-apply service-role smoke gate records PR #342 prerequisite"
+);
+assert.equal(
+  postRemoteApplyServiceRoleSmokeGate.implementationStage,
+  "post-remote-apply-service-role-smoke-gate",
+  "post-remote-apply service-role smoke gate stage is explicit"
+);
+assert.equal(
+  postRemoteApplyServiceRoleSmokeGate.threadApproval,
+  "not-recorded-for-service-role-smoke-execution",
+  "post-remote-apply service-role smoke gate records missing fresh smoke approval"
+);
+assert.equal(
+  postRemoteApplyServiceRoleSmokeGate.envReferencePresence,
+  "missing-in-codex-process",
+  "post-remote-apply service-role smoke gate records missing env references without values"
+);
+assert.equal(
+  postRemoteApplyServiceRoleSmokeGate.actualServiceRoleSmoke,
+  "not-run-blocked-pending-env-and-final-operator-confirmation",
+  "post-remote-apply service-role smoke gate does not run live service-role smoke"
+);
+assert.deepEqual(
+  postRemoteApplyServiceRoleSmokeGate.requiredEnvReferences,
+  ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+  "post-remote-apply service-role smoke gate records env reference names only"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStorePostRemoteApplyServiceRoleSmokeGate({
+    remoteApplyConfirmed: true,
+    supabaseUrlEnvReferencePresent: false,
+    serviceRoleKeyEnvReferencePresent: false,
+    finalOperatorConfirmationForServiceRoleSmoke: false,
+    ownerAuthorizationConfirmed: false,
+    credentialResolutionBoundaryReviewed: true,
+    serviceRoleSmokeExecuted: false,
+    googleApiLiveSmokeRequested: false,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "blocked-pending-service-role-smoke-env-and-final-operator-confirmation",
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    serviceRoleSmokeExecuted: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "request-env-reference-presence-and-fresh-final-operator-confirmation-before-service-role-smoke"
+  },
+  "post-remote-apply service-role smoke gate blocks when env references and final confirmation are missing"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStorePostRemoteApplyServiceRoleSmokeGate({
+    remoteApplyConfirmed: true,
+    supabaseUrlEnvReferencePresent: true,
+    serviceRoleKeyEnvReferencePresent: true,
+    finalOperatorConfirmationForServiceRoleSmoke: true,
+    ownerAuthorizationConfirmed: true,
+    credentialResolutionBoundaryReviewed: true,
+    serviceRoleSmokeExecuted: false,
+    googleApiLiveSmokeRequested: false,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "ready-for-service-role-smoke-execution-command-only",
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: true,
+    serviceRoleSmokeExecuted: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "run-bounded-service-role-status-persistence-smoke-only-after-final-confirmation"
+  },
+  "post-remote-apply service-role smoke gate only allows bounded service-role smoke when every gate is present"
+);
+
 for (const fragment of [
   "PR #329",
   "PR #330",
@@ -334,6 +422,21 @@ for (const fragment of [
   assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records readiness/handoff: ${fragment}`);
 }
 
+for (const fragment of [
+  "PR #342",
+  "9102011f3b11ffb03f7ee92314d99a5af219d20a",
+  "post-remote-apply-service-role-smoke-gate",
+  "remote-applied-youtube-oauth-credentials-migration-confirmed",
+  "not-recorded-for-service-role-smoke-execution",
+  "missing-in-codex-process",
+  "not-run-blocked-pending-env-and-final-operator-confirmation",
+  "No service-role smoke execution",
+  "No Google API live smoke",
+  "No safe live YouTube OAuth smoke"
+]) {
+  assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records post-remote-apply smoke gate: ${fragment}`);
+}
+
 assert.match(taskSource, /PR #330.*70ff213/i, "task.md records PR #330 merge premise");
 assert.match(
   taskSource,
@@ -345,6 +448,12 @@ assert.match(
   taskSource,
   /service-role status\/persistence smoke readiness.*blocked-pending-remote-apply/i,
   "task.md records service-role smoke readiness blocker"
+);
+assert.match(taskSource, /PR #342.*9102011f3b11ffb03f7ee92314d99a5af219d20a/i, "task.md records PR #342 merge premise");
+assert.match(
+  taskSource,
+  /post-remote-apply-service-role-smoke-gate.*not-run-blocked-pending-env-and-final-operator-confirmation/i,
+  "task.md records post-remote-apply service-role smoke gate blocker"
 );
 assert.match(
   taskSource,

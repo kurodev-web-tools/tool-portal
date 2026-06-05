@@ -1001,6 +1001,74 @@ export type YouTubeEncryptedTokenStoreRemoteApplyCommandGateAssessment =
       nextAction: "run-reviewed-migration-apply-command-only";
     };
 
+export type YouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateInput = {
+  applyCommandGateReady: boolean;
+  pendingMigrationNames: readonly string[];
+  reviewedMigrationName: string;
+};
+
+export type YouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateContract = {
+  implementationStage: "remote-supabase-apply-dry-run-single-reviewed-migration-gate";
+  selectedFollowUp: "dry-run-blocker-summary-only";
+  prerequisiteRemoteApplyCommandGate: {
+    pullRequest: "#334";
+    mergeCommit: "cc3b95e59efbe028075e210e3b8ae405b75e2806";
+    headCommit: "8a4ae6aeac6f35f5877585a95e5c7bb1c09b905d";
+    status: "not-run-pending-final-operator-confirmation";
+  };
+  prerequisiteDryRunBlockerRecord: {
+    pullRequest: "#337";
+    mergeCommit: "ffb1337011a15df635b7f830c6a2704a0b927b39";
+    headCommit: "55a79ff684ad7a629d686a05dc111e77ce5e74a5";
+    status: "not-run-blocked-pending-single-reviewed-migration-only";
+  };
+  migrationPath: "supabase/migrations/20260601000000_youtube_oauth_credentials.sql";
+  reviewedMigrationName: "20260601000000_youtube_oauth_credentials.sql";
+  dryRunCommand: "npx supabase db push --linked --dry-run";
+  pendingMigrationEvidence: readonly [
+    "20260527000000_account_preferences_foundation.sql pending in linked remote migration history",
+    "20260601000000_youtube_oauth_credentials.sql pending in linked remote migration history",
+    "linked remote migration history is missing the account/preferences foundation baseline",
+    "single reviewed migration only is not satisfied"
+  ];
+  exactBlockingMigration: "20260527000000_account_preferences_foundation.sql";
+  remoteMigrationHistoryStatus: "linked-remote-history-missing-reviewed-baseline";
+  remoteSupabaseApply: "not-run-blocked-pending-single-reviewed-migration-only";
+  actualServiceRoleSmoke: "out-of-scope-separate-pr";
+  clientReadableOutput: readonly ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"];
+  secretHandling: "env-reference-names-only-no-values";
+  browserStorage: "unchanged";
+  rollbackAbortConditions: readonly string[];
+  nextAction: "record-dry-run-blocker-without-running-remote-apply";
+  forbiddenInThisSlice: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateAssessment =
+  | {
+      status: "blocked-pending-apply-command-gate";
+      blockingPendingMigrationNames: readonly string[];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      remoteSupabaseApplyExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "record-apply-command-gate-blocker-without-running-remote-apply";
+    }
+  | {
+      status: "blocked-pending-single-reviewed-migration-only";
+      blockingPendingMigrationNames: readonly string[];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      remoteSupabaseApplyExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "record-dry-run-blocker-without-running-remote-apply";
+    }
+  | {
+      status: "ready-for-reviewed-migration-apply-command-only";
+      blockingPendingMigrationNames: readonly [];
+      remoteSupabaseApplyAllowedInThisPr: true;
+      remoteSupabaseApplyExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "run-reviewed-migration-apply-command-only";
+    };
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -2263,6 +2331,59 @@ export const youtubeEncryptedTokenStoreRemoteApplyCommandGateContract = {
   ]
 } as const satisfies YouTubeEncryptedTokenStoreRemoteApplyCommandGateContract;
 
+export const youtubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate = {
+  implementationStage: "remote-supabase-apply-dry-run-single-reviewed-migration-gate",
+  selectedFollowUp: "dry-run-blocker-summary-only",
+  prerequisiteRemoteApplyCommandGate: {
+    pullRequest: "#334",
+    mergeCommit: "cc3b95e59efbe028075e210e3b8ae405b75e2806",
+    headCommit: "8a4ae6aeac6f35f5877585a95e5c7bb1c09b905d",
+    status: "not-run-pending-final-operator-confirmation"
+  },
+  prerequisiteDryRunBlockerRecord: {
+    pullRequest: "#337",
+    mergeCommit: "ffb1337011a15df635b7f830c6a2704a0b927b39",
+    headCommit: "55a79ff684ad7a629d686a05dc111e77ce5e74a5",
+    status: "not-run-blocked-pending-single-reviewed-migration-only"
+  },
+  migrationPath: "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
+  reviewedMigrationName: "20260601000000_youtube_oauth_credentials.sql",
+  dryRunCommand: "npx supabase db push --linked --dry-run",
+  pendingMigrationEvidence: [
+    "20260527000000_account_preferences_foundation.sql pending in linked remote migration history",
+    "20260601000000_youtube_oauth_credentials.sql pending in linked remote migration history",
+    "linked remote migration history is missing the account/preferences foundation baseline",
+    "single reviewed migration only is not satisfied"
+  ],
+  exactBlockingMigration: "20260527000000_account_preferences_foundation.sql",
+  remoteMigrationHistoryStatus: "linked-remote-history-missing-reviewed-baseline",
+  remoteSupabaseApply: "not-run-blocked-pending-single-reviewed-migration-only",
+  actualServiceRoleSmoke: "out-of-scope-separate-pr",
+  clientReadableOutput: ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"],
+  secretHandling: "env-reference-names-only-no-values",
+  browserStorage: "unchanged",
+  rollbackAbortConditions: [
+    "abort-if-apply-command-gate-is-not-satisfied",
+    "abort-if-dry-run-does-not-show-the-reviewed-migration-as-the-only-pending-migration",
+    "abort-if-a-non-reviewed-migration-is-pending-in-linked-remote-history",
+    "abort-if-migration-diff-does-not-match-reviewed-file",
+    "abort-if-credential-resolution-is-not-disabled-before-apply",
+    "abort-if-service-role-smoke-would-be-mixed-into-this-pr",
+    "abort-if-any-secret-or-token-value-would-be-printed"
+  ],
+  nextAction: "record-dry-run-blocker-without-running-remote-apply",
+  forbiddenInThisSlice: [
+    "remote Supabase DB migration apply",
+    "service-role smoke execution",
+    "Google API live call",
+    "safe live YouTube OAuth smoke",
+    "OAuth token value handling",
+    "service_role key value handling",
+    "managed secret value handling",
+    "localStorage, IndexedDB, sessionStorage, or handoff payload change"
+  ]
+} as const satisfies YouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateContract;
+
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
   storageOwner: youtubeEncryptedTokenStoreDesignPolicy.storageOwner,
@@ -2907,6 +3028,44 @@ export function assessYouTubeEncryptedTokenStoreRemoteApplyCommandGate(
   };
 }
 
+export function assessYouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate(
+  input: YouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateInput
+): YouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateAssessment {
+  if (!input.applyCommandGateReady) {
+    return {
+      status: "blocked-pending-apply-command-gate",
+      blockingPendingMigrationNames: [],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      nextAction: "record-apply-command-gate-blocker-without-running-remote-apply"
+    };
+  }
+
+  const isSingleReviewedMigrationOnly =
+    input.pendingMigrationNames.length === 1 && input.pendingMigrationNames[0] === input.reviewedMigrationName;
+
+  if (!isSingleReviewedMigrationOnly) {
+    return {
+      status: "blocked-pending-single-reviewed-migration-only",
+      blockingPendingMigrationNames: [...input.pendingMigrationNames],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      nextAction: "record-dry-run-blocker-without-running-remote-apply"
+    };
+  }
+
+  return {
+    status: "ready-for-reviewed-migration-apply-command-only",
+    blockingPendingMigrationNames: [],
+    remoteSupabaseApplyAllowedInThisPr: true,
+    remoteSupabaseApplyExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "run-reviewed-migration-apply-command-only"
+  };
+}
+
 export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary(): string {
   return [
     `Post review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postReviewPullRequest}.`,
@@ -3063,6 +3222,26 @@ export function createYouTubeEncryptedTokenStoreRemoteApplyCommandGateSummary():
     `Target metadata: ${youtubeEncryptedTokenStoreRemoteApplyCommandGateContract.operatorLocalTargetMetadata}.`,
     `Actual apply: ${youtubeEncryptedTokenStoreRemoteApplyCommandGateContract.remoteSupabaseApply}.`,
     "Supabase CLI local link metadata in supabase/.temp is ignored and not committed.",
+    "No remote Supabase migration apply, No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
+  ].join(" ");
+}
+
+export function createYouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateSummary(): string {
+  const result = assessYouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate({
+    applyCommandGateReady: true,
+    pendingMigrationNames: [
+      "20260527000000_account_preferences_foundation.sql",
+      "20260601000000_youtube_oauth_credentials.sql"
+    ],
+    reviewedMigrationName: youtubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate.reviewedMigrationName
+  });
+
+  return [
+    `PR ${youtubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate.prerequisiteDryRunBlockerRecord.pullRequest} dry-run blocker record is merged.`,
+    `Stage: ${youtubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate.implementationStage}.`,
+    `Status: ${result.status}.`,
+    `Remote apply: ${youtubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGate.remoteSupabaseApply}.`,
+    "Dry-run and migration-list evidence show both 20260527000000_account_preferences_foundation.sql and 20260601000000_youtube_oauth_credentials.sql pending in linked remote history.",
     "No remote Supabase migration apply, No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
   ].join(" ");
 }

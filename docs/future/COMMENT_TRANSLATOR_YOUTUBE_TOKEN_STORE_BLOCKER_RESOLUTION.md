@@ -711,6 +711,26 @@ Apply-command gate checks recorded here:
 
 No remote Supabase migration apply is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## Remote Supabase Apply Dry-Run Single Reviewed Migration Gate After PR #337
+
+PR #337 is merged into `codex/comment-translator-preview` with merge commit `ffb1337011a15df635b7f830c6a2704a0b927b39` and head commit `55a79ff684ad7a629d686a05dc111e77ce5e74a5`. PR #337 recorded the dry-run blocker as `not-run-blocked-pending-single-reviewed-migration-only`.
+
+This follow-up records the single reviewed migration gate only. The reviewed migration file remains `supabase/migrations/20260601000000_youtube_oauth_credentials.sql`, but `npx supabase db push --linked --dry-run` showed both `20260527000000_account_preferences_foundation.sql` and `20260601000000_youtube_oauth_credentials.sql` as pending. `npx supabase migration list --linked` also showed both local migrations with remote status blank, so the linked remote migration history is missing the account/preferences foundation baseline and single reviewed migration only is not satisfied.
+
+Dry-run single reviewed migration gate checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #337 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `ffb1337011a15df635b7f830c6a2704a0b927b39`. |
+| prior command gate preserved | PR #334 command gate remains `confirmed-from-supabase-cli-local-link-metadata` / `not-run-pending-final-operator-confirmation`. |
+| local link metadata rechecked | `supabase/.temp/project-ref present` and `supabase/.temp/linked-project.json present`; values were not read or displayed. |
+| dry-run pending migrations recorded | `20260527000000_account_preferences_foundation.sql` and `20260601000000_youtube_oauth_credentials.sql` are both pending in the linked remote migration history. |
+| linked remote baseline mismatch confirmed | `npx supabase migration list --linked` shows both local migrations with blank remote status. |
+| single reviewed migration gate blocked | Actual apply remains `not-run-blocked-pending-single-reviewed-migration-only`. |
+| actual apply remains excluded | No remote Supabase migration apply. No service-role smoke execution. |
+
+No remote Supabase migration apply is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

@@ -650,6 +650,27 @@ Handoff checks recorded here:
 
 The handoff result remains `blocked-pending-explicit-human-remote-apply-target-and-run-approval`. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. No Google API live smoke and No safe live YouTube OAuth smoke are run. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## Remote Supabase Migration Apply Run Target Blocker After PR #331
+
+PR #331 is merged into `codex/comment-translator-preview` with merge commit `42f03817563f047e3703be27d9b9cc6c92654305` and head commit `ed22885d01e481ac7432fd9a77d4bbcbfe3f4e30`. PR #331 recorded the remote apply execution handoff as `blocked-pending-explicit-human-remote-apply-target-and-run-approval`.
+
+This follow-up records the current apply-run decision only. The current thread has `explicit-human-remote-apply-run-approval-recorded`, but the safe concrete remote Supabase target is `not-confirmed-no-repo-supabase-cli-target-metadata`. Target discovery found `supabase/config.toml missing`, `.supabase link metadata missing`, and `no repo-local non-secret project target metadata found`. Therefore the apply run remains `not-run-blocked-pending-safe-concrete-remote-target`.
+
+Apply-run checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #331 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `42f03817563f047e3703be27d9b9cc6c92654305`. |
+| PR #331 checks separated | Workers Builds passed; Cloudflare Pages failed as known Pages disconnect noise. |
+| thread approval recorded | The current thread explicitly approved a remote apply run. |
+| safe concrete target missing | No repo-local non-secret Supabase CLI target metadata was found. |
+| migration file reviewed | `supabase/migrations/20260601000000_youtube_oauth_credentials.sql` remains the only reviewed apply candidate. |
+| credential resolution disable required | Keep `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` before any future apply. |
+| rollback / abort conditions recorded | Abort if safe target is missing, migration diff changes, credential resolution is not disabled, service-role smoke would be mixed in, or any secret/token value would be printed. |
+| post-apply verification boundary recorded | If a future target-confirmed apply runs, verification is limited to schema/RLS presence. |
+
+No remote Supabase migration apply is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

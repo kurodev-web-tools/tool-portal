@@ -794,6 +794,75 @@ export type YouTubeEncryptedTokenStoreRemoteApplyExecutionHandoffResult =
       nextAction: "handoff-apply-run-checklist-without-connecting-to-remote-db";
     };
 
+export type YouTubeEncryptedTokenStoreRemoteApplyRunDecision = {
+  explicitHumanRunApproval: boolean;
+  safeConcreteRemoteTargetConfirmed: boolean;
+  migrationDiffMatchesReviewedFile: boolean;
+  credentialResolutionDisabledBeforeApply: boolean;
+};
+
+export type YouTubeEncryptedTokenStoreRemoteApplyRunContract = {
+  implementationStage: "remote-supabase-migration-apply-run-target-blocker";
+  selectedFollowUp: "remote-supabase-migration-apply-run-only";
+  prerequisiteRemoteApplyExecutionHandoff: {
+    pullRequest: "#331";
+    mergeCommit: "42f03817563f047e3703be27d9b9cc6c92654305";
+    headCommit: "ed22885d01e481ac7432fd9a77d4bbcbfe3f4e30";
+    status: "blocked-pending-explicit-human-remote-apply-target-and-run-approval";
+  };
+  migrationPath: "supabase/migrations/20260601000000_youtube_oauth_credentials.sql";
+  threadApproval: "explicit-human-remote-apply-run-approval-recorded";
+  safeConcreteRemoteTarget: "not-confirmed-no-repo-supabase-cli-target-metadata";
+  targetDiscoveryEvidence: readonly [
+    "supabase/config.toml missing",
+    ".supabase link metadata missing",
+    "no repo-local non-secret project target metadata found"
+  ];
+  approvalScope: "apply-reviewed-youtube-oauth-credentials-migration-only";
+  migrationDiff: "reviewed-file-only";
+  remoteSupabaseApply: "not-run-blocked-pending-safe-concrete-remote-target";
+  applyCommand: "not-run";
+  actualServiceRoleSmoke: "out-of-scope-separate-pr";
+  postApplyVerification: "schema-and-rls-presence-only-if-apply-runs";
+  credentialResolutionDisabledState: "credential-resolution-disabled-before-apply-required";
+  clientReadableOutput: readonly ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"];
+  secretHandling: "env-reference-names-only-no-values";
+  browserStorage: "unchanged";
+  rollbackAbortConditions: readonly string[];
+  nextAction: "record-target-blocker-without-running-remote-apply";
+  forbiddenInThisSlice: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStoreRemoteApplyRunAssessment =
+  | {
+      status: "blocked-pending-human-remote-apply-run-approval";
+      remoteSupabaseApplyAllowed: false;
+      remoteSupabaseApplyExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "record-approval-blocker-without-running-remote-apply";
+    }
+  | {
+      status: "blocked-pending-safe-concrete-remote-target";
+      remoteSupabaseApplyAllowed: false;
+      remoteSupabaseApplyExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "record-target-blocker-without-running-remote-apply";
+    }
+  | {
+      status: "blocked-pending-reviewed-apply-preconditions";
+      remoteSupabaseApplyAllowed: false;
+      remoteSupabaseApplyExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "record-apply-precondition-blocker-without-running-remote-apply";
+    }
+  | {
+      status: "ready-for-remote-apply-command-only";
+      remoteSupabaseApplyAllowed: true;
+      remoteSupabaseApplyExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "run-reviewed-migration-apply-command-only-after-final-operator-confirmation";
+    };
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -1900,6 +1969,52 @@ export const youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff = {
   ]
 } as const satisfies YouTubeEncryptedTokenStoreRemoteApplyExecutionHandoff;
 
+export const youtubeEncryptedTokenStoreRemoteApplyRunContract = {
+  implementationStage: "remote-supabase-migration-apply-run-target-blocker",
+  selectedFollowUp: "remote-supabase-migration-apply-run-only",
+  prerequisiteRemoteApplyExecutionHandoff: {
+    pullRequest: "#331",
+    mergeCommit: "42f03817563f047e3703be27d9b9cc6c92654305",
+    headCommit: "ed22885d01e481ac7432fd9a77d4bbcbfe3f4e30",
+    status: "blocked-pending-explicit-human-remote-apply-target-and-run-approval"
+  },
+  migrationPath: "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
+  threadApproval: "explicit-human-remote-apply-run-approval-recorded",
+  safeConcreteRemoteTarget: "not-confirmed-no-repo-supabase-cli-target-metadata",
+  targetDiscoveryEvidence: [
+    "supabase/config.toml missing",
+    ".supabase link metadata missing",
+    "no repo-local non-secret project target metadata found"
+  ],
+  approvalScope: "apply-reviewed-youtube-oauth-credentials-migration-only",
+  migrationDiff: "reviewed-file-only",
+  remoteSupabaseApply: "not-run-blocked-pending-safe-concrete-remote-target",
+  applyCommand: "not-run",
+  actualServiceRoleSmoke: "out-of-scope-separate-pr",
+  postApplyVerification: "schema-and-rls-presence-only-if-apply-runs",
+  credentialResolutionDisabledState: "credential-resolution-disabled-before-apply-required",
+  clientReadableOutput: ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"],
+  secretHandling: "env-reference-names-only-no-values",
+  browserStorage: "unchanged",
+  rollbackAbortConditions: [
+    "abort-if-safe-concrete-remote-target-is-not-confirmed",
+    "abort-if-migration-diff-does-not-match-reviewed-file",
+    "abort-if-credential-resolution-is-not-disabled-before-apply",
+    "abort-if-service-role-smoke-would-be-mixed-into-this-pr",
+    "abort-if-any-secret-or-token-value-would-be-printed"
+  ],
+  nextAction: "record-target-blocker-without-running-remote-apply",
+  forbiddenInThisSlice: [
+    "service-role smoke execution",
+    "Google API live call",
+    "safe live YouTube OAuth smoke",
+    "OAuth token value handling",
+    "service_role key value handling",
+    "managed secret value handling",
+    "localStorage, IndexedDB, sessionStorage, or handoff payload change"
+  ]
+} as const satisfies YouTubeEncryptedTokenStoreRemoteApplyRunContract;
+
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
   storageOwner: youtubeEncryptedTokenStoreDesignPolicy.storageOwner,
@@ -2403,6 +2518,48 @@ export function assessYouTubeEncryptedTokenStoreRemoteApplyExecutionHandoff(
   };
 }
 
+export function assessYouTubeEncryptedTokenStoreRemoteApplyRun(
+  decision: YouTubeEncryptedTokenStoreRemoteApplyRunDecision
+): YouTubeEncryptedTokenStoreRemoteApplyRunAssessment {
+  if (!decision.explicitHumanRunApproval) {
+    return {
+      status: "blocked-pending-human-remote-apply-run-approval",
+      remoteSupabaseApplyAllowed: false,
+      remoteSupabaseApplyExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      nextAction: "record-approval-blocker-without-running-remote-apply"
+    };
+  }
+
+  if (!decision.safeConcreteRemoteTargetConfirmed) {
+    return {
+      status: "blocked-pending-safe-concrete-remote-target",
+      remoteSupabaseApplyAllowed: false,
+      remoteSupabaseApplyExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      nextAction: "record-target-blocker-without-running-remote-apply"
+    };
+  }
+
+  if (!decision.migrationDiffMatchesReviewedFile || !decision.credentialResolutionDisabledBeforeApply) {
+    return {
+      status: "blocked-pending-reviewed-apply-preconditions",
+      remoteSupabaseApplyAllowed: false,
+      remoteSupabaseApplyExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      nextAction: "record-apply-precondition-blocker-without-running-remote-apply"
+    };
+  }
+
+  return {
+    status: "ready-for-remote-apply-command-only",
+    remoteSupabaseApplyAllowed: true,
+    remoteSupabaseApplyExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "run-reviewed-migration-apply-command-only-after-final-operator-confirmation"
+  };
+}
+
 export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary(): string {
   return [
     `Post review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postReviewPullRequest}.`,
@@ -2501,6 +2658,24 @@ export function createYouTubeEncryptedTokenStoreRemoteApplyExecutionHandoffSumma
     `Status: ${result.status}.`,
     `Remote apply: ${youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.remoteSupabaseApply}.`,
     "No remote Supabase migration apply, No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
+  ].join(" ");
+}
+
+export function createYouTubeEncryptedTokenStoreRemoteApplyRunSummary(): string {
+  const result = assessYouTubeEncryptedTokenStoreRemoteApplyRun({
+    explicitHumanRunApproval: true,
+    safeConcreteRemoteTargetConfirmed: false,
+    migrationDiffMatchesReviewedFile: true,
+    credentialResolutionDisabledBeforeApply: true
+  });
+
+  return [
+    `PR ${youtubeEncryptedTokenStoreRemoteApplyRunContract.prerequisiteRemoteApplyExecutionHandoff.pullRequest} remote apply execution handoff is merged.`,
+    `Stage: ${youtubeEncryptedTokenStoreRemoteApplyRunContract.implementationStage}.`,
+    `Status: ${result.status}.`,
+    `Remote apply: ${youtubeEncryptedTokenStoreRemoteApplyRunContract.remoteSupabaseApply}.`,
+    "Thread approval is recorded, but no safe concrete remote Supabase target was found in repo-local non-secret config or Supabase CLI metadata.",
+    "No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
   ].join(" ");
 }
 

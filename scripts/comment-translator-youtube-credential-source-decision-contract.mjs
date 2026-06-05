@@ -708,6 +708,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-credential-status-display-readiness-after-payload-source-contract.mjs",
   "scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs",
   "scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs",
+  "scripts/comment-translator-youtube-token-store-service-role-smoke-readiness-contract.mjs",
   "scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs",
   "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
   "scripts/comment-translator-youtube-token-store-explicit-approval-collection-contract.mjs",

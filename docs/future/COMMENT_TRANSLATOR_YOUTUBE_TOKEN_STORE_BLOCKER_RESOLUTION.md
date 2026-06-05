@@ -785,6 +785,28 @@ Path-specific boundaries:
 
 No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## Account Preferences Baseline Apply Run After PR #340
+
+PR #340 is merged into `codex/comment-translator-preview` with merge commit `781cc7a361ee02047632a678c2f0861c5961f257`. The previous preview head was `a334f3f4eded06ed4e44f27a1658e1d3f6de0a05`. PR #340 recorded the account/preferences baseline resolution path gate as `not-run-blocked-pending-safe-baseline-resolution-path`.
+
+This follow-up selected `account-preferences-foundation-baseline-apply` after explicit human approval in this thread. The pre-apply dry-run was narrowed to the reviewed baseline migration only, and the remote apply result is `applied-account-preferences-foundation-baseline-only`. The apply output reported existing account/preferences relations skipped by `if not exists`, and the migration history is now recorded for `20260527000000_account_preferences_foundation.sql`.
+
+Baseline apply checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #340 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `781cc7a361ee02047632a678c2f0861c5961f257`. |
+| selected path | `account-preferences-foundation-baseline-apply`. |
+| approval | `explicit-human-account-preferences-baseline-apply-approval-recorded`. |
+| pre-apply dry-run | `single-account-preferences-foundation-migration-only`: only `20260527000000_account_preferences_foundation.sql` would be pushed. |
+| baseline apply | `applied-account-preferences-foundation-baseline-only`. |
+| migration-history repair | `not-run-not-needed-for-account-preferences-baseline`. |
+| post-apply migration list | `20260527000000` is present in local and remote history; `20260601000000` remains local-only / remote blank. |
+| post-apply dry-run | `single-reviewed-youtube-migration-only`: only `20260601000000_youtube_oauth_credentials.sql` would be pushed. |
+| YouTube apply | `not-run-pending-fresh-final-operator-confirmation`. |
+
+No YouTube OAuth credential migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

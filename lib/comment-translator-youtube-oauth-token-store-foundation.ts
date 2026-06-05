@@ -1270,6 +1270,94 @@ export type YouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateAs
       nextAction: "recheck-youtube-dry-run-single-reviewed-migration-before-fresh-apply-confirmation";
     };
 
+export type YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunInput = {
+  accountPreferencesBaselineApplied: boolean;
+  pendingMigrationNamesAfterApply: readonly string[];
+  reviewedTargetMigrationName: string;
+  finalOperatorConfirmationForYoutubeApply: boolean;
+  requiresSecretOrTokenValue: boolean;
+};
+
+export type YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunContract = {
+  implementationStage: "account-preferences-foundation-baseline-apply-run";
+  selectedResolutionPath: "account-preferences-foundation-baseline-apply";
+  prerequisiteBaselineResolutionGate: {
+    pullRequest: "#340";
+    mergeCommit: "781cc7a361ee02047632a678c2f0861c5961f257";
+    previousPreviewHead: "a334f3f4eded06ed4e44f27a1658e1d3f6de0a05";
+    status: "not-run-blocked-pending-safe-baseline-resolution-path";
+  };
+  threadApproval: "explicit-human-account-preferences-baseline-apply-approval-recorded";
+  accountPreferencesFoundationMigration: "20260527000000_account_preferences_foundation.sql";
+  reviewedTargetMigration: "20260601000000_youtube_oauth_credentials.sql";
+  preApplyDryRun: "single-account-preferences-foundation-migration-only";
+  remoteSupabaseApply: "applied-account-preferences-foundation-baseline-only";
+  applyResultNote: "existing-account-preferences-relations-skipped-by-if-not-exists-and-migration-history-recorded";
+  postApplyMigrationList: "account-preferences-remote-present-youtube-remote-blank";
+  postApplyDryRun: "single-reviewed-youtube-migration-only";
+  youtubeRemoteApply: "not-run-pending-fresh-final-operator-confirmation";
+  migrationHistoryRepair: "not-run-not-needed-for-account-preferences-baseline";
+  actualServiceRoleSmoke: "out-of-scope-separate-pr";
+  clientReadableOutput: readonly ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"];
+  secretHandling: "env-reference-names-only-no-values";
+  browserStorage: "unchanged";
+  rollbackAbortConditions: readonly string[];
+  nextAction: "request-fresh-final-operator-confirmation-for-youtube-apply-command-only";
+  forbiddenInThisSlice: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunAssessment =
+  | {
+      status: "blocked-secret-required-for-post-baseline-apply";
+      blockingMigrationNames: readonly string[];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      remoteSupabaseApplyExecuted: true;
+      migrationHistoryRepairAllowedInThisPr: false;
+      migrationHistoryRepairExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "record-secret-required-blocker-without-requesting-secret-values";
+    }
+  | {
+      status: "blocked-account-preferences-baseline-not-applied";
+      blockingMigrationNames: readonly string[];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      remoteSupabaseApplyExecuted: false;
+      migrationHistoryRepairAllowedInThisPr: false;
+      migrationHistoryRepairExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "do-not-run-youtube-apply-until-baseline-apply-is-confirmed";
+    }
+  | {
+      status: "blocked-post-apply-dry-run-not-single-reviewed-youtube-migration-only";
+      blockingMigrationNames: readonly string[];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      remoteSupabaseApplyExecuted: true;
+      migrationHistoryRepairAllowedInThisPr: false;
+      migrationHistoryRepairExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "record-post-baseline-apply-dry-run-blocker";
+    }
+  | {
+      status: "ready-for-fresh-final-operator-confirmation-before-youtube-apply";
+      blockingMigrationNames: readonly [];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      remoteSupabaseApplyExecuted: true;
+      migrationHistoryRepairAllowedInThisPr: false;
+      migrationHistoryRepairExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "request-fresh-final-operator-confirmation-for-youtube-apply-command-only";
+    }
+  | {
+      status: "ready-for-reviewed-youtube-apply-command-only";
+      blockingMigrationNames: readonly [];
+      remoteSupabaseApplyAllowedInThisPr: true;
+      remoteSupabaseApplyExecuted: true;
+      migrationHistoryRepairAllowedInThisPr: false;
+      migrationHistoryRepairExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      nextAction: "run-reviewed-youtube-migration-apply-command-only";
+    };
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -2683,6 +2771,51 @@ export const youtubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGate 
   ]
 } as const satisfies YouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateContract;
 
+export const youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun = {
+  implementationStage: "account-preferences-foundation-baseline-apply-run",
+  selectedResolutionPath: "account-preferences-foundation-baseline-apply",
+  prerequisiteBaselineResolutionGate: {
+    pullRequest: "#340",
+    mergeCommit: "781cc7a361ee02047632a678c2f0861c5961f257",
+    previousPreviewHead: "a334f3f4eded06ed4e44f27a1658e1d3f6de0a05",
+    status: "not-run-blocked-pending-safe-baseline-resolution-path"
+  },
+  threadApproval: "explicit-human-account-preferences-baseline-apply-approval-recorded",
+  accountPreferencesFoundationMigration: "20260527000000_account_preferences_foundation.sql",
+  reviewedTargetMigration: "20260601000000_youtube_oauth_credentials.sql",
+  preApplyDryRun: "single-account-preferences-foundation-migration-only",
+  remoteSupabaseApply: "applied-account-preferences-foundation-baseline-only",
+  applyResultNote: "existing-account-preferences-relations-skipped-by-if-not-exists-and-migration-history-recorded",
+  postApplyMigrationList: "account-preferences-remote-present-youtube-remote-blank",
+  postApplyDryRun: "single-reviewed-youtube-migration-only",
+  youtubeRemoteApply: "not-run-pending-fresh-final-operator-confirmation",
+  migrationHistoryRepair: "not-run-not-needed-for-account-preferences-baseline",
+  actualServiceRoleSmoke: "out-of-scope-separate-pr",
+  clientReadableOutput: ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"],
+  secretHandling: "env-reference-names-only-no-values",
+  browserStorage: "unchanged",
+  rollbackAbortConditions: [
+    "abort-if-baseline-apply-dry-run-is-not-single-account-preferences-migration-only",
+    "abort-if-youtube-migration-would-be-bundled-with-account-preferences-baseline-apply",
+    "abort-if-post-apply-dry-run-is-not-single-reviewed-youtube-migration-only",
+    "abort-if-youtube-apply-would-run-without-fresh-final-confirmation",
+    "abort-if-service-role-smoke-would-be-mixed-into-this-pr",
+    "abort-if-any-secret-or-token-value-would-be-printed"
+  ],
+  nextAction: "request-fresh-final-operator-confirmation-for-youtube-apply-command-only",
+  forbiddenInThisSlice: [
+    "YouTube OAuth credential migration apply",
+    "remote Supabase migration history repair",
+    "service-role smoke execution",
+    "Google API live call",
+    "safe live YouTube OAuth smoke",
+    "OAuth token value handling",
+    "service_role key value handling",
+    "managed secret value handling",
+    "localStorage, IndexedDB, sessionStorage, or handoff payload change"
+  ]
+} as const satisfies YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunContract;
+
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
   storageOwner: youtubeEncryptedTokenStoreDesignPolicy.storageOwner,
@@ -3526,6 +3659,77 @@ export function assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolu
   };
 }
 
+export function assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun(
+  input: YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunInput
+): YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunAssessment {
+  if (input.requiresSecretOrTokenValue) {
+    return {
+      status: "blocked-secret-required-for-post-baseline-apply",
+      blockingMigrationNames: [...input.pendingMigrationNamesAfterApply],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: true,
+      migrationHistoryRepairAllowedInThisPr: false,
+      migrationHistoryRepairExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      nextAction: "record-secret-required-blocker-without-requesting-secret-values"
+    };
+  }
+
+  if (!input.accountPreferencesBaselineApplied) {
+    return {
+      status: "blocked-account-preferences-baseline-not-applied",
+      blockingMigrationNames: [...input.pendingMigrationNamesAfterApply],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: false,
+      migrationHistoryRepairAllowedInThisPr: false,
+      migrationHistoryRepairExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      nextAction: "do-not-run-youtube-apply-until-baseline-apply-is-confirmed"
+    };
+  }
+
+  const isSingleReviewedTargetOnly =
+    input.pendingMigrationNamesAfterApply.length === 1 &&
+    input.pendingMigrationNamesAfterApply[0] === input.reviewedTargetMigrationName;
+
+  if (!isSingleReviewedTargetOnly) {
+    return {
+      status: "blocked-post-apply-dry-run-not-single-reviewed-youtube-migration-only",
+      blockingMigrationNames: [...input.pendingMigrationNamesAfterApply],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: true,
+      migrationHistoryRepairAllowedInThisPr: false,
+      migrationHistoryRepairExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      nextAction: "record-post-baseline-apply-dry-run-blocker"
+    };
+  }
+
+  if (!input.finalOperatorConfirmationForYoutubeApply) {
+    return {
+      status: "ready-for-fresh-final-operator-confirmation-before-youtube-apply",
+      blockingMigrationNames: [],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: true,
+      migrationHistoryRepairAllowedInThisPr: false,
+      migrationHistoryRepairExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      nextAction: "request-fresh-final-operator-confirmation-for-youtube-apply-command-only"
+    };
+  }
+
+  return {
+    status: "ready-for-reviewed-youtube-apply-command-only",
+    blockingMigrationNames: [],
+    remoteSupabaseApplyAllowedInThisPr: true,
+    remoteSupabaseApplyExecuted: true,
+    migrationHistoryRepairAllowedInThisPr: false,
+    migrationHistoryRepairExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "run-reviewed-youtube-migration-apply-command-only"
+  };
+}
+
 export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary(): string {
   return [
     `Post review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postReviewPullRequest}.`,
@@ -3753,6 +3957,26 @@ export function createYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolu
     `Remote apply: ${youtubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGate.remoteSupabaseApply}.`,
     "The conditional approval is not runnable while account/preferences baseline apply, migration-history repair, and target reselection remain multiple candidate paths.",
     "No remote Supabase migration apply, No remote Supabase migration history repair, No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
+  ].join(" ");
+}
+
+export function createYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunSummary(): string {
+  const result = assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun({
+    accountPreferencesBaselineApplied: true,
+    pendingMigrationNamesAfterApply: ["20260601000000_youtube_oauth_credentials.sql"],
+    reviewedTargetMigrationName: youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun.reviewedTargetMigration,
+    finalOperatorConfirmationForYoutubeApply: false,
+    requiresSecretOrTokenValue: false
+  });
+
+  return [
+    `PR ${youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun.prerequisiteBaselineResolutionGate.pullRequest} baseline resolution gate is merged.`,
+    `Stage: ${youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun.implementationStage}.`,
+    `Status: ${result.status}.`,
+    `Baseline apply: ${youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun.remoteSupabaseApply}.`,
+    `Post-apply dry-run: ${youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun.postApplyDryRun}.`,
+    "The account/preferences foundation baseline is applied, but the reviewed YouTube migration apply still requires a fresh final operator confirmation.",
+    "No YouTube OAuth credential migration apply, No migration-history repair, No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
   ].join(" ");
 }
 

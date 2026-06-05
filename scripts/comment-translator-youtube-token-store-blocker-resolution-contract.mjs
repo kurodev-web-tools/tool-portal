@@ -109,7 +109,8 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreImplementationReadiness",
   "YouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck",
   "YouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection",
-  "YouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate"
+  "YouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate",
+  "YouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `exports ${exportedType}`);
 }
@@ -120,13 +121,16 @@ for (const exportedConstOrFunction of [
   "youtubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck",
   "youtubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection",
   "youtubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate",
+  "youtubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck",
   "createYouTubeEncryptedTokenStoreBlockerResolutionMemo",
   "createYouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceSummary",
   "createYouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceSummary",
+  "createYouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheckSummary",
   "assessYouTubeEncryptedTokenStoreImplementationReadiness",
   "assessYouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck",
   "assessYouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection",
-  "assessYouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate"
+  "assessYouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate",
+  "assessYouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck"
 ]) {
   assert.match(
     foundationSource,
@@ -492,6 +496,78 @@ assert.match(
   /PR #324|blocked-pending-final-review|final table\/RLS\/key-management\/rollback|explicit implementation approval/i,
   "post-PR #324 evidence summary records blocker and required evidence"
 );
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck.implementationStage,
+  "post-pr-325-final-approval-evidence-recheck",
+  "post-PR #325 final approval evidence recheck stage is explicit"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck.prerequisitePullRequest,
+  "#325",
+  "post-PR #325 final approval evidence recheck records the final implementation approval evidence gate prerequisite"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck.prerequisiteMergeCommit,
+  "b97a39f3a32ecfef2024d2ceb3290aea35283ad5",
+  "post-PR #325 final approval evidence recheck records the merge commit"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck.prerequisiteMergedAtUtc,
+  "2026-06-04T14:14:31Z",
+  "post-PR #325 final approval evidence recheck records the merge time"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck.currentEvidenceStatus,
+  "missing-final-review-and-explicit-implementation-approval",
+  "post-PR #325 final approval evidence recheck records missing evidence"
+);
+assert.deepEqual(
+  foundation.youtubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck.prContextChecks,
+  {
+    workersBuilds: "success",
+    cloudflarePages: "failure-known-pages-disconnect-noise"
+  },
+  "post-PR #325 final approval evidence recheck records PR check disposition"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck([]),
+  {
+    status: "blocked-pending-final-review",
+    missingReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
+    explicitImplementationApproval: "not-evaluated-until-final-review-complete",
+    remoteSupabaseApplyAllowedInThisPr: false,
+    tokenPersistenceRuntimeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "record-blocker-summary-and-collect-final-review-evidence"
+  },
+  "post-PR #325 final approval evidence recheck remains blocked when evidence is absent"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck(
+    [
+      { area: "table-shape", approved: true, scope: "final table shape" },
+      { area: "rls-posture", approved: true, scope: "final RLS posture" },
+      { area: "key-management", approved: true, scope: "key-management" },
+      { area: "rollback", approved: true, scope: "rollback" }
+    ],
+    { approved: true, scope: "separate implementation PR for runtime or apply after final review" }
+  ),
+  {
+    status: "ready-for-separate-runtime-or-apply-pr",
+    approvedReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
+    implementationApprovalScope: "separate implementation PR for runtime or apply after final review",
+    remoteSupabaseApplyAllowedInThisPr: false,
+    tokenPersistenceRuntimeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "open-small-separate-server-only-runtime-or-apply-pr"
+  },
+  "post-PR #325 final approval evidence recheck only records readiness for a separate PR when all evidence is approved"
+);
+assert.match(
+  foundation.createYouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheckSummary(),
+  /PR #325|blocked-pending-final-review|final table\/RLS\/key-management\/rollback|explicit implementation approval/i,
+  "post-PR #325 evidence recheck summary records blocker and required evidence"
+);
 
 const memo = foundation.createYouTubeEncryptedTokenStoreBlockerResolutionMemo();
 for (const fragment of [
@@ -532,6 +608,8 @@ for (const docFragment of [
   "Post-PR #323 Approval Evidence Collection",
   "PR #324",
   "Post-PR #324 Final Implementation Approval Evidence Gate",
+  "PR #325",
+  "Post-PR #325 Final Approval Evidence Recheck",
   "failure-known-pages-disconnect-noise",
   "No remote Supabase migration apply",
   "No Google API live smoke"
@@ -560,6 +638,11 @@ assert.match(
   taskSource,
   /PR #324 .*merge commit `7fd49532509cf634e220145eb143469f9bd4e49b`/i,
   "task.md records PR #324 merge prerequisite"
+);
+assert.match(
+  taskSource,
+  /PR #325 .*merge commit `b97a39f3a32ecfef2024d2ceb3290aea35283ad5`/i,
+  "task.md records PR #325 merge prerequisite"
 );
 assert.match(
   taskSource,

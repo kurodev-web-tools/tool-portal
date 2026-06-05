@@ -75,7 +75,10 @@ assert.match(foundationSource, /^import "server-only";/m, "service-role smoke re
 for (const exportedType of [
   "YouTubeEncryptedTokenStoreServiceRoleSmokeReadiness",
   "YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessCheck",
-  "YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessResult"
+  "YouTubeEncryptedTokenStoreServiceRoleSmokeReadinessResult",
+  "YouTubeEncryptedTokenStoreRemoteApplyExecutionHandoff",
+  "YouTubeEncryptedTokenStoreRemoteApplyExecutionHandoffCheck",
+  "YouTubeEncryptedTokenStoreRemoteApplyExecutionHandoffResult"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -83,7 +86,10 @@ for (const exportedType of [
 for (const exportedConstOrFunction of [
   "youtubeEncryptedTokenStoreServiceRoleSmokeReadiness",
   "assessYouTubeEncryptedTokenStoreServiceRoleSmokeReadiness",
-  "createYouTubeEncryptedTokenStoreServiceRoleSmokeReadinessSummary"
+  "createYouTubeEncryptedTokenStoreServiceRoleSmokeReadinessSummary",
+  "youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff",
+  "assessYouTubeEncryptedTokenStoreRemoteApplyExecutionHandoff",
+  "createYouTubeEncryptedTokenStoreRemoteApplyExecutionHandoffSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -198,21 +204,142 @@ assert.deepEqual(
   "complete local readiness still blocks until remote apply confirmation"
 );
 
+assert.deepEqual(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.prerequisiteServiceRoleSmokeReadiness,
+  {
+    pullRequest: "#330",
+    mergeCommit: "70ff213bd203ee979336d059253999ea2ce33565",
+    status: "blocked-pending-remote-apply"
+  },
+  "remote apply execution handoff records PR #330 service-role smoke readiness prerequisite"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.implementationStage,
+  "human-approved-remote-supabase-migration-apply-execution-handoff",
+  "remote apply execution handoff stage is explicit"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.remoteSupabaseApply,
+  "not-run-pending-explicit-human-target-and-run-approval",
+  "remote apply execution handoff does not run remote DB migrations"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.actualServiceRoleSmoke,
+  "out-of-scope-this-pr",
+  "remote apply execution handoff does not mix in service-role smoke execution"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.remoteTarget,
+  "required-opaque-project-target-reference",
+  "remote apply execution handoff requires an operator-selected opaque target reference"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.explicitHumanRunApproval,
+  "required-before-any-remote-db-mutation",
+  "remote apply execution handoff requires explicit human run approval before mutation"
+);
+assert.deepEqual(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.requiredEnvReferences,
+  ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+  "remote apply execution handoff records env reference names only for post-apply readiness"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.missingEnvState,
+  "sanitized-unavailable-reconnect-required",
+  "remote apply execution handoff maps missing env to sanitized unavailable/reconnect-required state"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.credentialResolutionDisabledState,
+  "credential-resolution-disabled",
+  "remote apply execution handoff preserves credential resolution disable"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.ownerAuthorization,
+  "required-before-post-apply-status-read-or-persistence-write",
+  "remote apply execution handoff preserves owner authorization before post-apply smoke"
+);
+assert.deepEqual(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.clientReadableOutput,
+  ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"],
+  "remote apply execution handoff preserves client-readable output boundary"
+);
+assert.ok(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.requiredReadinessChecks.some(
+    (check) => check.id === "explicit-human-run-approval-required" && check.status === "blocking-external-action"
+  ),
+  "remote apply execution handoff records explicit human run approval as the external blocker"
+);
+assert.ok(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.rollbackAbortConditions.includes(
+    "abort-if-remote-target-or-approval-is-ambiguous"
+  ),
+  "remote apply execution handoff records ambiguous target/approval abort condition"
+);
+assert.ok(
+  foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.dashboardLogUnverifiedScope.includes(
+    "Cloudflare Pages dashboard log"
+  ),
+  "remote apply execution handoff keeps dashboard logs in unchecked scope"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteApplyExecutionHandoff([]),
+  {
+    status: "blocked-missing-remote-apply-execution-handoff-checks",
+    missingCheckIds: foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.requiredReadinessChecks.map(
+      (check) => check.id
+    ),
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "record-apply-execution-handoff-blockers-without-remote-db-connection"
+  },
+  "remote apply execution handoff blocks when checklist evidence is absent"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteApplyExecutionHandoff(
+    foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.requiredReadinessChecks.filter(
+      (check) => check.status === "recorded"
+    )
+  ),
+  {
+    status: "blocked-pending-explicit-human-remote-apply-target-and-run-approval",
+    completedCheckIds: foundation.youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "handoff-apply-run-checklist-without-connecting-to-remote-db"
+  },
+  "complete local handoff readiness still blocks until explicit human target and run approval"
+);
+
 for (const fragment of [
   "PR #329",
+  "PR #330",
   "safe-live-service-role-status-persistence-smoke-readiness",
+  "human-approved-remote-supabase-migration-apply-execution-handoff",
+  "not-run-pending-explicit-human-target-and-run-approval",
+  "blocked-pending-explicit-human-remote-apply-target-and-run-approval",
   "not-run-readiness-only",
   "blocked-pending-remote-apply",
   "NEXT_PUBLIC_SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
   "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
   "No remote Supabase migration apply",
+  "No service-role smoke execution",
   "No Google API live smoke",
   "No safe live YouTube OAuth smoke"
 ]) {
-  assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records service-role smoke readiness: ${fragment}`);
+  assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records readiness/handoff: ${fragment}`);
 }
 
+assert.match(taskSource, /PR #330.*70ff213/i, "task.md records PR #330 merge premise");
+assert.match(
+  taskSource,
+  /remote apply execution handoff.*blocked-pending-explicit-human-remote-apply-target-and-run-approval/i,
+  "task.md records remote apply execution handoff blocker"
+);
 assert.match(taskSource, /PR #329.*c773a52/i, "task.md records PR #329 merge premise");
 assert.match(
   taskSource,

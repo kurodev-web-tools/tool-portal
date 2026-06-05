@@ -17,17 +17,25 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: `codex/comment-translator-preview` は PR #329 (`[codex] Record token store remote apply readiness`) merge 済み。latest preview head 確認時点: `c773a52155fafc2f1148c947745688eb89dd8d76`。
-   - current implementation: PR #329 merge 前提、PR #327 `ready-for-separate-runtime-or-apply-pr` approval evidence gate、PR #328 server-only persistence runtime expansion、PR #329 remote apply readiness `not-applied-readiness-only` を確認し、safe live service-role status/persistence smoke readiness を `blocked-pending-remote-apply` として contract / docs / task board に記録した。remote Supabase DB migration apply と safe live service-role smoke は実行していない。
+   - status: `codex/comment-translator-preview` は PR #330 (`[codex] Record service-role smoke readiness`) merge 済み。latest preview head 確認時点: `70ff213bd203ee979336d059253999ea2ce33565`。
+   - current implementation: PR #330 merge 前提、PR #327 `ready-for-separate-runtime-or-apply-pr` approval evidence gate、PR #328 server-only persistence runtime expansion、PR #329 remote apply readiness `not-applied-readiness-only`、PR #330 service-role status/persistence smoke readiness `blocked-pending-remote-apply` を確認し、remote apply execution handoff を `blocked-pending-explicit-human-remote-apply-target-and-run-approval` として contract / docs / task board に記録した。remote Supabase DB migration apply と safe live service-role smoke は実行していない。
    - hard stop: credential status display UI wiring の再実装、localStorage、IndexedDB、sessionStorage、existing handoff payload 変更、secret / token 値の client-readable output、remote Supabase DB migration apply の実行、safe live service-role status/persistence smoke、Google API live call、safe live YouTube OAuth smoke、refresh runtime、full revocation runtime へ進まない。
    - current source boundary: client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみ。status は `available` / `reconnect-required` / `unavailable` / `credential-resolution-disabled` のみに閉じる。
    - current server boundary: trusted Supabase persistence runtime は server-only のまま `SUPABASE_SERVICE_ROLE_KEY` を env reference として読むだけで値を表示・保存しない。`YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`、owner authorization before status read、no token value logging、unusable credential reference revoke / invalidate rollback boundary を維持する。
-   - latest local review result: `git fetch origin --prune` 後、PR #329 merge commit `c773a52155fafc2f1148c947745688eb89dd8d76` が `origin/codex/comment-translator-preview` に含まれることを確認した。PR #327 approval evidence は `ready-for-separate-runtime-or-apply-pr`、PR #328 は server-only persistence runtime expansion merge 済み、PR #329 は remote apply readiness `not-applied-readiness-only` の merge 済み前提として扱う。
+   - latest local review result: `git fetch origin --prune` 後、PR #330 merge commit `70ff213bd203ee979336d059253999ea2ce33565` が `origin/codex/comment-translator-preview` に含まれることを確認した。GitHub PR metadata は PR #330 `MERGED`、merge time `2026-06-05T04:17:13Z`、head commit `e2929f6f5f81dee0d91191da31f92f8d468bdf5f`。PR #327 approval evidence は `ready-for-separate-runtime-or-apply-pr`、PR #328 は server-only persistence runtime expansion merge 済み、PR #329 は remote apply readiness `not-applied-readiness-only`、PR #330 は service-role smoke readiness `blocked-pending-remote-apply` の merge 済み前提として扱う。
    - Cloudflare checks note: PR #302 以降は Cloudflare Pages FAILURE / Workers Builds SUCCESS が継続。local build が通る slice では base history 由来の可能性を分離し、Cloudflare dashboard log は未確認範囲に残す。
-   - immediate next condition: safe live service-role status/persistence smoke readiness は remote Supabase apply confirmation を blocking external action として記録済み。次 PR は human-approved remote Supabase migration apply run / apply execution handoff、または remote apply confirmed 後の actual safe live service-role status/persistence smoke のどちらか一方に切る。remote apply と smoke execution は混ぜない。
-   - next PR candidate: human-approved remote Supabase migration apply run readiness / apply execution handoff。remote apply confirmed 後だけ、別 PR で actual safe live service-role status/persistence smoke を検討する。client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみに閉じ、secret / token 値を出さない。
-   - out of scope for service-role smoke readiness PR: credential status display UI wiring の再実装、token-store final approval evidence collection / recheck の再実装、server-only token persistence runtime expansion の再実装、localStorage / IndexedDB / sessionStorage / handoff payload 変更、remote Supabase DB migration apply の実行、safe live service-role status/persistence smoke の実行、Google API live call、safe live YouTube OAuth smoke、refresh runtime、full revocation runtime、provider coupling、quota write、billing integration、main integration。
-   - width verification for this PR: UI / rendered text / CSS は変更していない。server-only contract / blocker memo / task board の service-role smoke readiness 記録のみのため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
+   - immediate next condition: remote apply execution handoff は concrete remote Supabase target と explicit human apply run approval を blocking external action として記録済み。承認がこのスレッド外で揃うまで actual remote apply へ進まない。remote apply confirmed 後だけ、別 PR で actual safe live service-role status/persistence smoke を検討する。remote apply と smoke execution は混ぜない。
+   - next PR candidate: explicit human-approved remote Supabase migration apply run。次 PR で扱う場合も、concrete remote target と明示承認範囲を再確認し、secret / service_role key / managed secret value / OAuth token 値を要求・表示・保存しない。
+   - out of scope for remote apply execution handoff PR: credential status display UI wiring の再実装、token-store final approval evidence collection / recheck の再実装、server-only token persistence runtime expansion の再実装、localStorage / IndexedDB / sessionStorage / handoff payload 変更、remote Supabase DB migration apply の実行、safe live service-role status/persistence smoke の実行、Google API live call、safe live YouTube OAuth smoke、refresh runtime、full revocation runtime、provider coupling、quota write、billing integration、main integration。
+   - width verification for this PR: UI / rendered text / CSS は変更していない。server-only contract / blocker memo / task board の remote apply execution handoff 記録のみのため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
+   - remote apply execution handoff completed 2026-06-05:
+     - branch: `codex/comment-translator-remote-apply-execution-handoff` -> base `codex/comment-translator-preview`。
+     - merge-state: `git fetch origin --prune` 後、PR #330 merge commit `70ff213bd203ee979336d059253999ea2ce33565` が `origin/codex/comment-translator-preview` に含まれることを確認した。GitHub PR metadata は PR #330 `MERGED`、merge time `2026-06-05T04:17:13Z`、head commit `e2929f6f5f81dee0d91191da31f92f8d468bdf5f`。
+     - readiness: `youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff` を追加し、PR #330 service-role smoke readiness `blocked-pending-remote-apply`、PR #329 remote apply readiness `not-applied-readiness-only`、remote target required、explicit human run approval required、apply command boundary not run、env reference names only、missing-env sanitized unavailable/reconnect-required、`YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`、owner authorization before post-apply read/write、rollback/abort conditions、dashboard log unverified scope を記録した。
+     - preserved boundaries: remote Supabase migration apply は実行していない。safe live service-role status/persistence smoke は実行していない。Google API live smoke / safe live YouTube OAuth smoke は未実施。client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみ。service_role key 値、managed secret value、OAuth access token / refresh token / authorization code value は要求・表示・保存しない。localStorage / IndexedDB / sessionStorage / existing handoff payload は変更しない。
+     - verification: remote apply execution handoff contract は RED (`foundation exports YouTubeEncryptedTokenStoreRemoteApplyExecutionHandoff` assertion failure) -> GREEN。`node scripts/comment-translator-youtube-token-store-service-role-smoke-readiness-contract.mjs`、`node scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs`、`node scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs`、`node scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs`、`node scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs`、`node scripts/comment-translator-youtube-runtime-foundation-contract.mjs`、`node scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs`、`node scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs`、source/evidence gate bundle、existing YouTube token store contract bundle、translator boundary contracts、`node scripts/tool-portal-entry-contract.mjs`、`node scripts/tool-handoff-contract.mjs`、`npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` PASS。fresh worktree では `@supabase/supabase-js` 不足により Supabase adapter status contract が一度止まったため、`npm ci --prefer-offline` を実行して再検証した。`git diff --check` は既知の LF -> CRLF warning のみ。`npm run build` は exit 0、postbuild は `out directory is missing for server-runtime build` として static export RSC aliases を skip。Next.js は既存の middleware deprecation warning と webpack cache warning を出した。
+     - 未確認範囲: Cloudflare Pages dashboard log、Workers Builds dashboard log、Supabase dashboard migration/apply history、remote database schema/RLS inspection logs、remote Supabase DB apply、safe live service_role persistence/status read smoke、safe live YouTube OAuth / owner verification / Live Chat polling smoke、Google API live call、refresh runtime、full revocation runtime。
+     - 残リスク: remote Supabase apply は外部 DB mutation なので未実行。次に進む場合は concrete remote target と explicit human apply run approval が必要。remote apply confirmed 後の actual safe live service-role smoke はさらに別 PR 条件。
    - safe live service-role status/persistence smoke readiness completed 2026-06-05:
      - branch: `codex/comment-translator-service-role-smoke-readiness` -> base `codex/comment-translator-preview`。
      - merge-state: `git fetch origin --prune` 後、PR #329 merge commit `c773a52155fafc2f1148c947745688eb89dd8d76` が `origin/codex/comment-translator-preview` に含まれることを確認した。
@@ -247,39 +255,41 @@
 D:/V_streamer_tools で作業してください。
 
 目的:
-Kuro Live Comment Translator の次タスクとして、server-only token persistence runtime expansion PR が `codex/comment-translator-preview` に merge 済みであることを merge-state-first で確認し、別の小さい PR として remote Supabase migration apply readiness か safe live service-role status/persistence smoke readiness のどちらか一方を contract-first / blocker-first で進めてください。Google API live smoke / safe live YouTube OAuth smoke へはまだ進まないでください。
+Kuro Live Comment Translator の次タスクとして、remote apply execution handoff PR が `codex/comment-translator-preview` に merge 済みであることを merge-state-first で確認し、その後、具体的 remote Supabase target と explicit human apply run approval がこのスレッド内で別途与えられている場合だけ、remote Supabase migration apply run を扱ってください。target / approval が無い場合は actual apply へ進まず blocker summary に留めてください。service-role smoke execution は別 PR に切り、Google API live smoke / safe live YouTube OAuth smoke へはまだ進まないでください。
 
 前提:
 - main 直作業は禁止です。
 - まず `git fetch origin --prune` を実行してください。
 - AGENTS.md と task.md を確認してください。
-- server-only token persistence runtime expansion PR が `codex/comment-translator-preview` に merge 済みであることを確認してください。未mergeなら新規実装へ進まず review / CI / blocker summary を返してください。
+- remote apply execution handoff PR が `codex/comment-translator-preview` に merge 済みであることを確認してください。未mergeなら新規実装へ進まず review / CI / blocker summary を返してください。
 - merge 済みなら `codex/comment-translator-preview` から新しい feature branch / worktree を切ってください。
-- 推奨 branch: `codex/comment-translator-token-store-remote-apply-or-service-role-smoke-readiness`
-- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-token-store-remote-apply-or-service-role-smoke-readiness`
+- 推奨 branch: `codex/comment-translator-remote-apply-run`
+- 推奨 worktree: `D:/V_streamer_tools/.worktrees/comment-translator-remote-apply-run`
 
 scope:
 - merge-state-first / blocker-first / contract-first で進める。
-- token store foundation、approved migration proposal、blocker resolution、separate implementation skeleton、service-role status reader、owner authorization、credential status endpoint/action、current display wiring boundary、PR #327 approval evidence gate、server-only persistence runtime expansion、task.md を再確認する。
-- approval evidence が `ready-for-separate-runtime-or-apply-pr` で、server-only persistence runtime expansion が merge 済みであることを contract / docs / task.md / PR context で確認する。
-- 次 PR は remote Supabase migration apply readiness か safe live service-role status/persistence smoke readiness のどちらか一方に小さく切る。remote apply と smoke は混ぜない。
+- token store foundation、approved migration proposal、blocker resolution、separate implementation skeleton、service-role status reader、owner authorization、credential status endpoint/action、current display wiring boundary、PR #327 approval evidence gate、PR #328 server-only runtime expansion、PR #329 remote apply readiness、PR #330 service-role smoke readiness、remote apply execution handoff、task.md を再確認する。
+- approval evidence が `ready-for-separate-runtime-or-apply-pr`、PR #328 server-only persistence runtime expansion が merge 済み、PR #329 remote apply readiness が `not-applied-readiness-only`、PR #330 service-role smoke readiness が `blocked-pending-remote-apply`、remote apply execution handoff が `blocked-pending-explicit-human-remote-apply-target-and-run-approval` で merge 済みであることを contract / docs / task.md / PR context で確認する。
+- remote target と explicit human apply run approval が無ければ、actual remote apply は実行せず blocker summary / next conditions のみ。
+- target と approval がある場合も、承認範囲を再確認し、migration file diff、rollback/abort conditions、credential resolution disable、post-apply verification boundary を先に contract で固定する。service-role smoke execution は混ぜない。
 - client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみに閉じる。
 
 Out of scope:
 - credential status display UI wiring の再実装。
 - token-store final approval recheck の再実装。
 - token-store final approval evidence collection の再実装。
-- post-PR #325 final approval evidence recheck / evidence gate の再実装。
 - server-only token persistence runtime expansion の再実装。
 - localStorage / IndexedDB / sessionStorage / existing handoff payload 変更。
-- remote Supabase DB migration apply と service-role smoke readiness を同じ PR に混ぜること。
+- service-role smoke execution。
+- remote Supabase DB migration apply と service-role smoke execution を同じ PR に混ぜること。
 - Google API live call / safe live YouTube OAuth smoke。
 - refresh runtime / full revocation runtime。
 - provider coupling、quota write、billing integration、main integration。
 - service_role key 値、managed secret value、OAuth access token / refresh token / authorization code value の要求・表示・保存。
 
 検証:
-- token-store remote apply または service-role smoke readiness contract を RED -> GREEN で確認する。
+- target / approval が無い場合は blocker contract を RED -> GREEN で確認する。target / approval がある場合は apply-run contract を RED -> GREEN で確認する。
+- `node scripts/comment-translator-youtube-token-store-service-role-smoke-readiness-contract.mjs`
 - `node scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs`
 - `node scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs`
 - `node scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs`
@@ -297,7 +307,7 @@ Out of scope:
 - UI / rendered text / CSS を触った場合のみ `/tools/comment-translator` を `390 / 820 / 1024 / 1280 / 1366px` で確認し、結果を task.md に残す。
 
 完了時:
-- `task.md` に server-only token persistence runtime expansion PR merge 前提、readiness / blocker / 実装結果、検証結果、未確認範囲、残リスク、次 PR 条件を記録してください。
+- `task.md` に remote apply execution handoff PR merge 前提、apply run の実施有無、blocker / 実装結果、検証結果、未確認範囲、残リスク、次 PR 条件を記録してください。
 - UI 変更なしの場合、幅別確認が不要な理由を `task.md` に残してください。
 - 問題なければ commit / push / `codex/comment-translator-preview` 宛て draft PR 作成まで進めてください。
 ```

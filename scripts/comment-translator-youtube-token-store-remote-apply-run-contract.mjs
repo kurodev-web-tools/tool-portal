@@ -104,7 +104,10 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreRemoteBaselineMismatchGateAssessment",
   "YouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateInput",
   "YouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateContract",
-  "YouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateAssessment"
+  "YouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateAssessment",
+  "YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunInput",
+  "YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunContract",
+  "YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunAssessment"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -127,7 +130,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeEncryptedTokenStoreRemoteBaselineMismatchGateSummary",
   "youtubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGate",
   "assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGate",
-  "createYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateSummary"
+  "createYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateSummary",
+  "youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun",
+  "assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun",
+  "createYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -724,6 +730,54 @@ assert.deepEqual(
   "account/preferences baseline resolution gate allows returning to YouTube dry-run only after baseline is resolved"
 );
 
+const accountPreferencesBaselineApplyRun = foundation.youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun;
+
+assert.equal(
+  accountPreferencesBaselineApplyRun.prerequisiteBaselineResolutionGate.pullRequest,
+  "#340",
+  "account/preferences baseline apply run records PR #340 selected path gate as prerequisite"
+);
+assert.equal(
+  accountPreferencesBaselineApplyRun.prerequisiteBaselineResolutionGate.mergeCommit,
+  "781cc7a361ee02047632a678c2f0861c5961f257",
+  "account/preferences baseline apply run records the PR #340 merge commit"
+);
+assert.equal(
+  accountPreferencesBaselineApplyRun.threadApproval,
+  "explicit-human-account-preferences-baseline-apply-approval-recorded",
+  "account/preferences baseline apply run records the fresh human approval for the selected baseline apply path"
+);
+assert.equal(
+  accountPreferencesBaselineApplyRun.remoteSupabaseApply,
+  "applied-account-preferences-foundation-baseline-only",
+  "account/preferences baseline apply run records the baseline-only remote apply"
+);
+assert.equal(
+  accountPreferencesBaselineApplyRun.postApplyDryRun,
+  "single-reviewed-youtube-migration-only",
+  "account/preferences baseline apply run records the post-apply dry-run as single reviewed YouTube migration only"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun({
+    accountPreferencesBaselineApplied: true,
+    pendingMigrationNamesAfterApply: ["20260601000000_youtube_oauth_credentials.sql"],
+    reviewedTargetMigrationName: "20260601000000_youtube_oauth_credentials.sql",
+    finalOperatorConfirmationForYoutubeApply: false,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "ready-for-fresh-final-operator-confirmation-before-youtube-apply",
+    blockingMigrationNames: [],
+    remoteSupabaseApplyAllowedInThisPr: false,
+    remoteSupabaseApplyExecuted: true,
+    migrationHistoryRepairAllowedInThisPr: false,
+    migrationHistoryRepairExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "request-fresh-final-operator-confirmation-for-youtube-apply-command-only"
+  },
+  "account/preferences baseline apply run returns to YouTube apply confirmation only after baseline apply and single reviewed dry-run"
+);
+
 for (const fragment of [
   "PR #331",
   "42f03817563f047e3703be27d9b9cc6c92654305",
@@ -806,6 +860,24 @@ for (const fragment of [
   );
 }
 
+for (const fragment of [
+  "PR #340",
+  "781cc7a361ee02047632a678c2f0861c5961f257",
+  "explicit-human-account-preferences-baseline-apply-approval-recorded",
+  "applied-account-preferences-foundation-baseline-only",
+  "20260527000000_account_preferences_foundation.sql",
+  "single-reviewed-youtube-migration-only",
+  "20260601000000_youtube_oauth_credentials.sql",
+  "No remote Supabase migration history repair",
+  "No service-role smoke execution"
+]) {
+  assert.match(
+    blockerMemo,
+    new RegExp(fragment.replace(".", "\\."), "i"),
+    `blocker memo records account/preferences baseline apply run: ${fragment}`
+  );
+}
+
 assert.match(taskSource, /PR #331.*42f03817563f047e3703be27d9b9cc6c92654305/i, "task.md records PR #331 merge premise");
 assert.match(taskSource, /PR #332.*85998d2265eaa6348a265241f13799bfbc46759e/i, "task.md records PR #332 merge premise");
 assert.match(
@@ -871,6 +943,17 @@ assert.match(
   taskSource,
   /not-run-blocked-pending-safe-baseline-resolution-path/i,
   "task.md records the account/preferences baseline resolution path blocker"
+);
+assert.match(taskSource, /PR #340.*781cc7a361ee02047632a678c2f0861c5961f257/i, "task.md records PR #340 merge premise");
+assert.match(
+  taskSource,
+  /applied-account-preferences-foundation-baseline-only/i,
+  "task.md records the account/preferences baseline apply result"
+);
+assert.match(
+  taskSource,
+  /single-reviewed-youtube-migration-only/i,
+  "task.md records that post-apply dry-run is single reviewed YouTube migration only"
 );
 assert.match(
   taskSource,

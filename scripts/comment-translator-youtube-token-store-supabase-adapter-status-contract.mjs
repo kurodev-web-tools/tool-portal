@@ -142,7 +142,8 @@ for (const exportedType of [
   "TrustedYouTubeOAuthCredentialSupabaseClient",
   "TrustedYouTubeOAuthCredentialSupabaseAdapter",
   "TrustedYouTubeOAuthCredentialStatusReaderFactoryEnvName",
-  "TrustedYouTubeOAuthCredentialStatusReaderFactoryResult"
+  "TrustedYouTubeOAuthCredentialStatusReaderFactoryResult",
+  "TrustedYouTubeOAuthCredentialPersistenceRuntimeFactoryResult"
 ]) {
   assert.match(adapterSource, new RegExp(`export type ${exportedType}\\b`), `adapter exports ${exportedType}`);
 }
@@ -150,10 +151,13 @@ for (const exportedType of [
 for (const exportedConstOrFunction of [
   "youtubeOAuthCredentialSupabaseAdapterContract",
   "youtubeOAuthCredentialTrustedServiceRoleStatusReaderContract",
+  "youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract",
   "createYouTubeOAuthCredentialSupabaseInsert",
   "createYouTubeOAuthCredentialSupabaseStatus",
   "createTrustedYouTubeOAuthCredentialSupabaseAdapter",
-  "createTrustedYouTubeOAuthCredentialSupabaseStatusReader"
+  "createTrustedYouTubeOAuthCredentialSupabaseStatusReader",
+  "createTrustedYouTubeOAuthCredentialSupabasePersistenceStore",
+  "createTrustedYouTubeOAuthCredentialSupabasePersistenceRuntime"
 ]) {
   assert.match(
     adapterSource,
@@ -271,6 +275,50 @@ assert.equal(
   adapter.youtubeOAuthCredentialTrustedServiceRoleStatusReaderContract.outputTokenValues,
   "never-returned-by-design",
   "trusted status reader never returns token values"
+);
+assert.deepEqual(
+  adapter.youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract.prerequisiteApprovalGate,
+  {
+    pullRequest: "#327",
+    mergeCommit: "22c66bb8928e4594a9c732a12e22af63b4254bed",
+    status: "ready-for-separate-runtime-or-apply-pr"
+  },
+  "persistence runtime expansion records the PR #327 approval gate"
+);
+assert.equal(
+  adapter.youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract.implementationStage,
+  "trusted-service-role-token-persistence-runtime-expansion",
+  "persistence runtime expansion stage is explicit"
+);
+assert.equal(
+  adapter.youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract.runtime,
+  "server-only",
+  "persistence runtime expansion is server-only"
+);
+assert.equal(
+  adapter.youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract.remoteSupabaseApply,
+  "forbidden-in-this-slice",
+  "persistence runtime expansion does not apply remote Supabase migrations"
+);
+assert.equal(
+  adapter.youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract.browserReadableOutput,
+  "credential-reference-and-sanitized-status-only",
+  "persistence runtime expansion keeps browser output sanitized"
+);
+assert.equal(
+  adapter.youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract.credentialResolutionDisabledEnv,
+  "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
+  "persistence runtime expansion preserves the emergency disable env reference"
+);
+assert.equal(
+  adapter.youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract.outputTokenValues,
+  "never-returned-by-design",
+  "persistence runtime expansion never returns OAuth token values"
+);
+assert.equal(
+  adapter.youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract.liveGoogleApiCall,
+  "not-implemented",
+  "persistence runtime expansion does not call Google APIs"
 );
 assert.equal(
   statusBoundary.youtubeOAuthCredentialStatusBoundaryContract.browserReadableOutput,
@@ -640,11 +688,104 @@ assert.deepEqual(
   "trusted status reader exposes only the credential status read method to endpoint and server action"
 );
 
+const persistenceRuntimeEvents = [];
+const readyPersistenceRuntime = adapter.createTrustedYouTubeOAuthCredentialSupabasePersistenceRuntime({
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+    [adapter.youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract.requiredEnvReferences[1]]:
+      "trusted-env-reference-present"
+  },
+  createSupabaseClient: (url, serviceRoleKey) => {
+    persistenceRuntimeEvents.push({
+      type: "trusted-persistence-client-created",
+      url,
+      serviceRoleKeyShape: serviceRoleKey ? "provided" : "missing"
+    });
+    return supabase;
+  },
+  nowIso: () => "2026-06-02T14:05:00.000Z"
+});
+assert.deepEqual(
+  persistenceRuntimeEvents,
+  [
+    {
+      type: "trusted-persistence-client-created",
+      url: "https://example.supabase.co",
+      serviceRoleKeyShape: "provided"
+    }
+  ],
+  "trusted persistence runtime creates a service-role client without exposing the service role key value"
+);
+assert.equal(readyPersistenceRuntime.status, "ready", "trusted persistence runtime is ready when env references exist");
+assert.deepEqual(
+  Object.keys(readyPersistenceRuntime.trustedStore).sort(),
+  ["markCredentialRevoked", "upsertEncryptedCredential"],
+  "trusted persistence runtime exposes only the token store interface"
+);
+
+const missingPersistenceRuntime = adapter.createTrustedYouTubeOAuthCredentialSupabasePersistenceRuntime({
+  env: {},
+  createSupabaseClient: () => {
+    throw new Error("trusted persistence client must not be created when env references are missing");
+  },
+  nowIso: () => "2026-06-02T14:05:00.000Z"
+});
+assert.deepEqual(
+  missingPersistenceRuntime,
+  {
+    status: "unavailable",
+    trustedStore: null,
+    missingEnvReferences: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+    reconnectRequired: true,
+    reason: "trusted-service-role-env-missing"
+  },
+  "trusted persistence runtime reports only missing env references when service-role wiring is unavailable"
+);
+
 assert.deepEqual(await trustedAdapter.upsertCredentialStatus(draft), status, "trusted adapter upsert returns sanitized status");
 assert.deepEqual(events[0], { type: "from", tableName: "youtube_oauth_credentials" }, "trusted adapter uses approved table");
 assert.equal(events[1].type, "upsert", "trusted adapter upserts one credential row");
 assert.equal(events[1].options.onConflict, "credential_reference_id", "trusted adapter upserts by credential reference only");
 assert.equal(events[2].columns, adapter.youtubeOAuthCredentialSupabaseAdapterContract.trustedSelectColumns, "trusted select includes row metadata for server mapping");
+
+const trustedPersistenceStore = adapter.createTrustedYouTubeOAuthCredentialSupabasePersistenceStore({
+  supabase,
+  nowIso: () => "2026-06-02T14:05:00.000Z"
+});
+assert.deepEqual(
+  await runtime.persistYouTubeOAuthCredentialReference({
+    draft,
+    store: trustedPersistenceStore,
+    credentialResolutionDisabled: true
+  }),
+  {
+    status: "credential-resolution-disabled",
+    credentialReferenceId: "ytcred_status_reference_001",
+    tokenValue: "never-returned-by-design",
+    refreshTokenValue: "never-returned-by-design"
+  },
+  "credential resolution disable blocks persistence before trusted store access"
+);
+const persistedViaRuntime = await runtime.persistYouTubeOAuthCredentialReference({
+  draft,
+  store: trustedPersistenceStore,
+  credentialResolutionDisabled: false
+});
+assert.deepEqual(
+  persistedViaRuntime,
+  {
+    status: "persisted",
+    credentialReferenceId: "ytcred_status_reference_001",
+    provider: "youtube",
+    providerChannelId: "UC_status_reference_only",
+    scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+    expiresAtIso: "2026-06-02T15:00:00.000Z",
+    revoked: false,
+    tokenValue: "never-returned-by-design",
+    refreshTokenValue: "never-returned-by-design"
+  },
+  "server-only persistence runtime writes through the trusted Supabase store and returns sanitized metadata"
+);
 
 const revoked = await trustedAdapter.markCredentialRevokedStatus({
   credentialReferenceId: "ytcred_status_reference_001",
@@ -654,6 +795,21 @@ assert.equal(revoked.revoked, true, "trusted adapter returns revoked sanitized s
 assert.equal(revoked.revokedAtIso, "2026-06-02T14:05:00.000Z", "trusted adapter records revocation timestamp metadata");
 assert.equal(revoked.tokenValue, "never-returned-by-design", "revoked status never returns token value");
 assert.equal(revoked.ciphertext, "never-returned-by-design", "revoked status never returns ciphertext");
+assert.deepEqual(
+  await runtime.invalidateYouTubeOAuthCredentialReference({
+    credentialReferenceId: "ytcred_status_reference_001",
+    reason: "rollback-unusable-reference",
+    store: trustedPersistenceStore
+  }),
+  {
+    status: "revoked",
+    credentialReferenceId: "ytcred_status_reference_001",
+    revokedAtIso: "2026-06-02T14:05:00.000Z",
+    tokenValue: "never-returned-by-design",
+    refreshTokenValue: "never-returned-by-design"
+  },
+  "server-only persistence runtime invalidates unusable credential references through the trusted Supabase store"
+);
 
 assert.deepEqual(
   await trustedAdapter.getCredentialStatus({

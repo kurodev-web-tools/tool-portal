@@ -310,6 +310,7 @@ const allowedChangedFiles = new Set([
   referenceSourcePath,
   "lib/comment-translator-youtube-credential-status-ui-wiring.ts",
   "lib/comment-translator-youtube-oauth-token-store-foundation.ts",
+  "lib/comment-translator-youtube-token-store-supabase-adapter.ts",
   "scripts/comment-translator-youtube-credential-source-decision-contract.mjs",
   "scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs",
   "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",

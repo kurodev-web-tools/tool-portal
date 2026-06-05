@@ -731,6 +731,32 @@ Dry-run single reviewed migration gate checks recorded here:
 
 No remote Supabase migration apply is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## Remote Baseline Mismatch Gate After PR #338
+
+PR #338 is merged into `codex/comment-translator-preview` with merge commit `eddc49f573dcb98320dfa4ee337de2a1ac34b07c`. The previous preview head was `ffb1337011a15df635b7f830c6a2704a0b927b39`. PR #338 recorded the dry-run single reviewed migration gate as `not-run-blocked-pending-single-reviewed-migration-only`.
+
+This follow-up records the linked remote migration history baseline mismatch. The linked target still shows `20260527000000_account_preferences_foundation.sql` and `20260601000000_youtube_oauth_credentials.sql` as pending / remote blank. That means the account/preferences foundation baseline is missing before the reviewed YouTube migration. The YouTube apply command must not bundle the account/preferences baseline with `20260601000000_youtube_oauth_credentials.sql`.
+
+Safe resolution paths recorded here:
+
+| Path | Boundary |
+| --- | --- |
+| `separate-reviewed-account-preferences-foundation-baseline-pr-before-youtube-apply` | Apply or otherwise resolve `20260527000000_account_preferences_foundation.sql` in a separate reviewed baseline path before retrying YouTube apply. |
+| `separate-reviewed-migration-history-repair-only-if-account-preferences-schema-already-exists` | If a human verifies the account/preferences schema already exists remotely, migration-history repair is still a separate reviewed remote mutation requiring explicit approval. |
+| `select-different-linked-target-with-account-preferences-baseline-already-applied` | A different linked target is acceptable only when non-secret metadata identifies one unique target and dry-run shows the reviewed YouTube migration as the sole pending migration. |
+
+Baseline mismatch checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #338 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `eddc49f573dcb98320dfa4ee337de2a1ac34b07c`. |
+| linked remote migration history baseline mismatch | `20260527000000_account_preferences_foundation.sql` remains pending / remote blank before the reviewed YouTube migration. |
+| reviewed target preserved | The reviewed YouTube apply target remains `20260601000000_youtube_oauth_credentials.sql`. |
+| bundling blocked | Account/preferences foundation and YouTube OAuth credential migrations must not be applied together in the YouTube apply PR. |
+| actual apply remains excluded | Actual apply is `not-run-blocked-pending-linked-remote-baseline-resolution`. No remote Supabase migration apply. No remote Supabase migration history repair. No service-role smoke execution. |
+
+No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

@@ -267,6 +267,7 @@ assert.match(
 );
 
 const allowedChangedFiles = new Set([
+  ".gitignore",
   componentPath,
   pagePath,
   "lib/comment-translator.ts",

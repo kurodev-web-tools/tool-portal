@@ -92,7 +92,10 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreRemoteApplyRunAssessment",
   "YouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationInput",
   "YouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationContract",
-  "YouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationAssessment"
+  "YouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationAssessment",
+  "YouTubeEncryptedTokenStoreRemoteApplyCommandGateInput",
+  "YouTubeEncryptedTokenStoreRemoteApplyCommandGateContract",
+  "YouTubeEncryptedTokenStoreRemoteApplyCommandGateAssessment"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -103,7 +106,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeEncryptedTokenStoreRemoteApplyRunSummary",
   "youtubeEncryptedTokenStoreRemoteTargetMetadataConfirmationContract",
   "assessYouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmation",
-  "createYouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationSummary"
+  "createYouTubeEncryptedTokenStoreRemoteTargetMetadataConfirmationSummary",
+  "youtubeEncryptedTokenStoreRemoteApplyCommandGateContract",
+  "assessYouTubeEncryptedTokenStoreRemoteApplyCommandGate",
+  "createYouTubeEncryptedTokenStoreRemoteApplyCommandGateSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -338,6 +344,88 @@ assert.deepEqual(
   "even a safely confirmed target only allows readiness recording in this PR"
 );
 
+const commandGateContract = foundation.youtubeEncryptedTokenStoreRemoteApplyCommandGateContract;
+
+assert.equal(commandGateContract.prerequisiteRemoteTargetMetadataConfirmation.pullRequest, "#333", "command gate records PR #333 prerequisite");
+assert.equal(
+  commandGateContract.prerequisiteRemoteTargetMetadataConfirmation.mergeCommit,
+  "ebe6b1baccaf18459d7e606f5d3d7150641dea71",
+  "command gate records the PR #333 merge commit"
+);
+assert.equal(
+  commandGateContract.operatorLocalTargetMetadata,
+  "confirmed-from-supabase-cli-local-link-metadata",
+  "command gate records operator-local Supabase CLI target metadata"
+);
+assert.deepEqual(
+  commandGateContract.targetDiscoveryEvidence,
+  [
+    "supabase/.temp/project-ref present",
+    "supabase/.temp/linked-project.json present",
+    "project reference is a single non-secret 20-character project ref",
+    "supabase/.temp/ is ignored and not committed"
+  ],
+  "command gate records sanitized local link metadata evidence"
+);
+assert.deepEqual(
+  commandGateContract.allowedTargetMetadataSources,
+  ["supabase/config.toml", "Supabase CLI local link metadata in supabase/.temp"],
+  "command gate accepts current Supabase CLI local link metadata"
+);
+assert.equal(
+  commandGateContract.remoteSupabaseApply,
+  "not-run-pending-final-operator-confirmation",
+  "command gate does not run the remote apply"
+);
+assert.equal(
+  commandGateContract.applyCommandOnlyGate,
+  "ready-after-final-operator-confirmation",
+  "command gate only reaches command readiness after final operator confirmation"
+);
+assert.ok(
+  commandGateContract.forbiddenInThisSlice.includes("remote Supabase DB migration apply") &&
+    commandGateContract.forbiddenInThisSlice.includes("service-role smoke execution"),
+  "command gate excludes remote apply and service-role smoke execution"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteApplyCommandGate({
+    supabaseCliLocalLinkMetadataPresent: true,
+    nonSecretProjectReferenceUnique: true,
+    metadataIgnoredAndNotCommitted: true,
+    migrationDiffMatchesReviewedFile: true,
+    credentialResolutionDisabledBeforeApply: true,
+    finalOperatorConfirmation: false
+  }),
+  {
+    status: "ready-for-final-operator-confirmation-before-apply-command",
+    remoteTargetConfirmed: true,
+    remoteSupabaseApplyAllowedInThisPr: false,
+    remoteSupabaseApplyExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "record-apply-command-gate-without-running-remote-apply"
+  },
+  "local link metadata only reaches final-operator-confirmation gate in this PR"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteApplyCommandGate({
+    supabaseCliLocalLinkMetadataPresent: true,
+    nonSecretProjectReferenceUnique: true,
+    metadataIgnoredAndNotCommitted: true,
+    migrationDiffMatchesReviewedFile: true,
+    credentialResolutionDisabledBeforeApply: true,
+    finalOperatorConfirmation: true
+  }),
+  {
+    status: "ready-for-remote-apply-command-only",
+    remoteTargetConfirmed: true,
+    remoteSupabaseApplyAllowedInThisPr: true,
+    remoteSupabaseApplyExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "run-reviewed-migration-apply-command-only"
+  },
+  "final operator confirmation is still required before an apply command can run"
+);
+
 for (const fragment of [
   "PR #331",
   "42f03817563f047e3703be27d9b9cc6c92654305",
@@ -365,6 +453,17 @@ for (const fragment of [
   assert.match(blockerMemo, new RegExp(fragment.replace(".", "\\."), "i"), `blocker memo records target confirmation: ${fragment}`);
 }
 
+for (const fragment of [
+  "PR #333",
+  "ebe6b1baccaf18459d7e606f5d3d7150641dea71",
+  "Supabase CLI local link metadata in supabase/.temp",
+  "confirmed-from-supabase-cli-local-link-metadata",
+  "not-run-pending-final-operator-confirmation",
+  "No remote Supabase migration apply"
+]) {
+  assert.match(blockerMemo, new RegExp(fragment.replace(".", "\\."), "i"), `blocker memo records command gate: ${fragment}`);
+}
+
 assert.match(taskSource, /PR #331.*42f03817563f047e3703be27d9b9cc6c92654305/i, "task.md records PR #331 merge premise");
 assert.match(taskSource, /PR #332.*85998d2265eaa6348a265241f13799bfbc46759e/i, "task.md records PR #332 merge premise");
 assert.match(
@@ -381,6 +480,17 @@ assert.match(
   taskSource,
   /actual apply.*not-run-target-confirmation-only/i,
   "task.md records that actual apply did not run in the target confirmation PR"
+);
+assert.match(taskSource, /PR #333.*ebe6b1baccaf18459d7e606f5d3d7150641dea71/i, "task.md records PR #333 merge premise");
+assert.match(
+  taskSource,
+  /supabase\/\.temp\/project-ref.*present/i,
+  "task.md records sanitized local Supabase CLI link metadata presence"
+);
+assert.match(
+  taskSource,
+  /actual apply.*未実行/i,
+  "task.md records that actual apply remains unexecuted after target metadata confirmation"
 );
 assert.match(
   taskSource,

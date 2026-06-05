@@ -1013,6 +1013,7 @@ assert.match(taskSource, /PR #292.*merge/i, "task.md records the PR #292 merge p
 assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary");
 
 const allowedChangedFiles = new Set([
+  ".gitignore",
   "app/tools/comment-translator/page.tsx",
   "components/comment-translator/CommentTranslatorDock.tsx",
   "lib/comment-translator.ts",

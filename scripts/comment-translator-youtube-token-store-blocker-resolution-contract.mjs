@@ -110,7 +110,8 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck",
   "YouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection",
   "YouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate",
-  "YouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck"
+  "YouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck",
+  "YouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `exports ${exportedType}`);
 }
@@ -122,15 +123,18 @@ for (const exportedConstOrFunction of [
   "youtubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection",
   "youtubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate",
   "youtubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck",
+  "youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence",
   "createYouTubeEncryptedTokenStoreBlockerResolutionMemo",
   "createYouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceSummary",
   "createYouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceSummary",
   "createYouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheckSummary",
+  "createYouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidenceSummary",
   "assessYouTubeEncryptedTokenStoreImplementationReadiness",
   "assessYouTubeEncryptedTokenStorePostCredentialStatusDisplayFinalApprovalRecheck",
   "assessYouTubeEncryptedTokenStorePostFinalApprovalRecheckEvidenceCollection",
   "assessYouTubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate",
-  "assessYouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck"
+  "assessYouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck",
+  "assessYouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence"
 ]) {
   assert.match(
     foundationSource,
@@ -568,6 +572,61 @@ assert.match(
   /PR #325|blocked-pending-final-review|final table\/RLS\/key-management\/rollback|explicit implementation approval/i,
   "post-PR #325 evidence recheck summary records blocker and required evidence"
 );
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence.implementationStage,
+  "final-review-and-explicit-implementation-approval-evidence",
+  "final review and implementation approval evidence stage is explicit"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence.prerequisitePullRequest,
+  "#326",
+  "final review and implementation approval evidence records the post-PR #325 recheck prerequisite"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence.prerequisiteMergeCommit,
+  "cb490fb2f9a9f5e218a054d84b6c3c5e5d102bd9",
+  "final review and implementation approval evidence records the PR #326 merge commit"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence.prerequisiteMergedAtUtc,
+  "2026-06-05T02:20:23Z",
+  "final review and implementation approval evidence records the PR #326 merge time"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence.currentEvidenceStatus,
+  "final-review-and-explicit-implementation-approved-for-separate-pr",
+  "final review and implementation approval evidence records the approval status"
+);
+assert.deepEqual(
+  foundation.youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence.finalReviewEvidence.map(
+    (evidence) => evidence.area
+  ),
+  ["table-shape", "rls-posture", "key-management", "rollback"],
+  "final review evidence covers table, RLS, key-management, and rollback"
+);
+for (const evidence of foundation.youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence.finalReviewEvidence) {
+  assert.equal(evidence.approved, true, `${evidence.area} final review evidence is approved`);
+  assert.match(evidence.scope, /credentialReferenceId|sanitized|token|server-only|rollback|RLS|key|table/i, `${evidence.area} scope is specific`);
+}
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence(),
+  {
+    status: "ready-for-separate-runtime-or-apply-pr",
+    approvedReviewAreas: ["table-shape", "rls-posture", "key-management", "rollback"],
+    implementationApprovalScope:
+      "separate implementation PR for remote Supabase apply or server-only token persistence runtime expansion after final review evidence",
+    remoteSupabaseApplyAllowedInThisPr: false,
+    tokenPersistenceRuntimeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "open-small-separate-server-only-runtime-or-apply-pr"
+  },
+  "final review and implementation approval only opens the next separate implementation PR"
+);
+assert.match(
+  foundation.createYouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidenceSummary(),
+  /PR #326|ready-for-separate-runtime-or-apply-pr|final table\/RLS\/key-management\/rollback|explicit implementation approval/i,
+  "final review and implementation approval summary records readiness and evidence scope"
+);
 
 const memo = foundation.createYouTubeEncryptedTokenStoreBlockerResolutionMemo();
 for (const fragment of [
@@ -610,6 +669,8 @@ for (const docFragment of [
   "Post-PR #324 Final Implementation Approval Evidence Gate",
   "PR #325",
   "Post-PR #325 Final Approval Evidence Recheck",
+  "PR #326",
+  "Final Review And Implementation Approval Evidence",
   "failure-known-pages-disconnect-noise",
   "No remote Supabase migration apply",
   "No Google API live smoke"
@@ -643,6 +704,16 @@ assert.match(
   taskSource,
   /PR #325 .*merge commit `b97a39f3a32ecfef2024d2ceb3290aea35283ad5`/i,
   "task.md records PR #325 merge prerequisite"
+);
+assert.match(
+  taskSource,
+  /PR #326 .*merge commit `cb490fb2f9a9f5e218a054d84b6c3c5e5d102bd9`/i,
+  "task.md records PR #326 merge prerequisite"
+);
+assert.match(
+  taskSource,
+  /final table shape、RLS posture、key-management、rollback.*explicit implementation approval.*承認済み|ready-for-separate-runtime-or-apply-pr/i,
+  "task.md records the final review and explicit implementation approval evidence"
 );
 assert.match(
   taskSource,

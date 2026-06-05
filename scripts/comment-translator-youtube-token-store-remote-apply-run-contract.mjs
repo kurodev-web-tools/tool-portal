@@ -101,7 +101,10 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateAssessment",
   "YouTubeEncryptedTokenStoreRemoteBaselineMismatchGateInput",
   "YouTubeEncryptedTokenStoreRemoteBaselineMismatchGateContract",
-  "YouTubeEncryptedTokenStoreRemoteBaselineMismatchGateAssessment"
+  "YouTubeEncryptedTokenStoreRemoteBaselineMismatchGateAssessment",
+  "YouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateInput",
+  "YouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateContract",
+  "YouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateAssessment"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -121,7 +124,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeEncryptedTokenStoreRemoteApplyDryRunSingleMigrationGateSummary",
   "youtubeEncryptedTokenStoreRemoteBaselineMismatchGate",
   "assessYouTubeEncryptedTokenStoreRemoteBaselineMismatchGate",
-  "createYouTubeEncryptedTokenStoreRemoteBaselineMismatchGateSummary"
+  "createYouTubeEncryptedTokenStoreRemoteBaselineMismatchGateSummary",
+  "youtubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGate",
+  "assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGate",
+  "createYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGateSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -601,6 +607,123 @@ assert.deepEqual(
   "remote baseline mismatch gate requires fresh final operator confirmation after the baseline is resolved"
 );
 
+const accountPreferencesBaselineResolutionGate =
+  foundation.youtubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGate;
+
+assert.equal(
+  accountPreferencesBaselineResolutionGate.prerequisiteBaselineMismatchGate.pullRequest,
+  "#339",
+  "account/preferences baseline resolution gate records PR #339 baseline mismatch gate as prerequisite"
+);
+assert.equal(
+  accountPreferencesBaselineResolutionGate.prerequisiteBaselineMismatchGate.mergeCommit,
+  "a334f3f4eded06ed4e44f27a1658e1d3f6de0a05",
+  "account/preferences baseline resolution gate records the PR #339 merge commit"
+);
+assert.equal(
+  accountPreferencesBaselineResolutionGate.threadApproval,
+  "conditional-human-approval-not-sufficient-for-ambiguous-remote-mutation",
+  "account/preferences baseline resolution gate does not treat conditional approval as a runnable remote mutation"
+);
+assert.equal(
+  accountPreferencesBaselineResolutionGate.remoteSupabaseApply,
+  "not-run-blocked-pending-safe-baseline-resolution-path",
+  "account/preferences baseline resolution gate keeps remote apply blocked until one safe path is selected"
+);
+assert.deepEqual(
+  accountPreferencesBaselineResolutionGate.separateRemoteMutationPaths,
+  [
+    "account-preferences-foundation-baseline-apply",
+    "account-preferences-migration-history-repair",
+    "different-linked-target-reselection"
+  ],
+  "account/preferences baseline resolution gate keeps baseline apply, repair, and target reselection as separate paths"
+);
+assert.ok(
+  accountPreferencesBaselineResolutionGate.rollbackAbortConditions.includes(
+    "abort-if-remote-mutation-path-is-ambiguous-or-multiple"
+  ),
+  "account/preferences baseline resolution gate aborts if the remote mutation path is ambiguous"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGate({
+    pendingMigrationNames: [
+      "20260527000000_account_preferences_foundation.sql",
+      "20260601000000_youtube_oauth_credentials.sql"
+    ],
+    accountPreferencesMigrationName: "20260527000000_account_preferences_foundation.sql",
+    reviewedTargetMigrationName: "20260601000000_youtube_oauth_credentials.sql",
+    selectedResolutionPath: "none-selected",
+    accountPreferencesRemoteSchemaVerified: false,
+    dryRunShowsOnlyReviewedTargetAfterResolution: false,
+    finalOperatorConfirmationForSelectedRemoteMutation: true,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "blocked-pending-safe-baseline-resolution-path",
+    blockingMigrationNames: [
+      "20260527000000_account_preferences_foundation.sql",
+      "20260601000000_youtube_oauth_credentials.sql"
+    ],
+    remoteSupabaseApplyAllowedInThisPr: false,
+    remoteSupabaseApplyExecuted: false,
+    migrationHistoryRepairAllowedInThisPr: false,
+    migrationHistoryRepairExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "record-baseline-resolution-path-blocker-without-remote-db-mutation"
+  },
+  "account/preferences baseline resolution gate blocks even with conditional approval when no single remote mutation path is selected"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGate({
+    pendingMigrationNames: [
+      "20260527000000_account_preferences_foundation.sql",
+      "20260601000000_youtube_oauth_credentials.sql"
+    ],
+    accountPreferencesMigrationName: "20260527000000_account_preferences_foundation.sql",
+    reviewedTargetMigrationName: "20260601000000_youtube_oauth_credentials.sql",
+    selectedResolutionPath: "account-preferences-migration-history-repair",
+    accountPreferencesRemoteSchemaVerified: false,
+    dryRunShowsOnlyReviewedTargetAfterResolution: false,
+    finalOperatorConfirmationForSelectedRemoteMutation: true,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "blocked-pending-remote-schema-existence-confirmation-before-repair",
+    blockingMigrationNames: ["20260527000000_account_preferences_foundation.sql"],
+    remoteSupabaseApplyAllowedInThisPr: false,
+    remoteSupabaseApplyExecuted: false,
+    migrationHistoryRepairAllowedInThisPr: false,
+    migrationHistoryRepairExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "confirm-account-preferences-schema-before-migration-history-repair"
+  },
+  "account/preferences baseline resolution gate blocks repair until the remote schema existence is confirmed"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineResolutionGate({
+    pendingMigrationNames: ["20260601000000_youtube_oauth_credentials.sql"],
+    accountPreferencesMigrationName: "20260527000000_account_preferences_foundation.sql",
+    reviewedTargetMigrationName: "20260601000000_youtube_oauth_credentials.sql",
+    selectedResolutionPath: "different-linked-target-reselection",
+    accountPreferencesRemoteSchemaVerified: true,
+    dryRunShowsOnlyReviewedTargetAfterResolution: true,
+    finalOperatorConfirmationForSelectedRemoteMutation: false,
+    requiresSecretOrTokenValue: false
+  }),
+  {
+    status: "ready-for-youtube-single-reviewed-migration-recheck-after-baseline-resolution",
+    blockingMigrationNames: [],
+    remoteSupabaseApplyAllowedInThisPr: false,
+    remoteSupabaseApplyExecuted: false,
+    migrationHistoryRepairAllowedInThisPr: false,
+    migrationHistoryRepairExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    nextAction: "recheck-youtube-dry-run-single-reviewed-migration-before-fresh-apply-confirmation"
+  },
+  "account/preferences baseline resolution gate allows returning to YouTube dry-run only after baseline is resolved"
+);
+
 for (const fragment of [
   "PR #331",
   "42f03817563f047e3703be27d9b9cc6c92654305",
@@ -665,6 +788,24 @@ for (const fragment of [
   assert.match(blockerMemo, new RegExp(fragment.replace(".", "\\."), "i"), `blocker memo records remote baseline mismatch gate: ${fragment}`);
 }
 
+for (const fragment of [
+  "PR #339",
+  "a334f3f4eded06ed4e44f27a1658e1d3f6de0a05",
+  "conditional-human-approval-not-sufficient-for-ambiguous-remote-mutation",
+  "account-preferences-foundation-baseline-apply",
+  "account-preferences-migration-history-repair",
+  "different-linked-target-reselection",
+  "not-run-blocked-pending-safe-baseline-resolution-path",
+  "No remote Supabase migration apply",
+  "No remote Supabase migration history repair"
+]) {
+  assert.match(
+    blockerMemo,
+    new RegExp(fragment.replace(".", "\\."), "i"),
+    `blocker memo records account/preferences baseline resolution gate: ${fragment}`
+  );
+}
+
 assert.match(taskSource, /PR #331.*42f03817563f047e3703be27d9b9cc6c92654305/i, "task.md records PR #331 merge premise");
 assert.match(taskSource, /PR #332.*85998d2265eaa6348a265241f13799bfbc46759e/i, "task.md records PR #332 merge premise");
 assert.match(
@@ -719,6 +860,17 @@ assert.match(
   taskSource,
   /not-run-blocked-pending-linked-remote-baseline-resolution/i,
   "task.md records the baseline mismatch blocker result"
+);
+assert.match(taskSource, /PR #339.*a334f3f4eded06ed4e44f27a1658e1d3f6de0a05/i, "task.md records PR #339 merge premise");
+assert.match(
+  taskSource,
+  /conditional-human-approval-not-sufficient-for-ambiguous-remote-mutation/i,
+  "task.md records that conditional approval is not sufficient while the safe remote mutation path is ambiguous"
+);
+assert.match(
+  taskSource,
+  /not-run-blocked-pending-safe-baseline-resolution-path/i,
+  "task.md records the account/preferences baseline resolution path blocker"
 );
 assert.match(
   taskSource,

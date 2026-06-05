@@ -757,6 +757,34 @@ Baseline mismatch checks recorded here:
 
 No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## Account Preferences Baseline Resolution Gate After PR #339
+
+PR #339 is merged into `codex/comment-translator-preview` with merge commit `a334f3f4eded06ed4e44f27a1658e1d3f6de0a05`. The previous preview head was `eddc49f573dcb98320dfa4ee337de2a1ac34b07c`. PR #339 recorded the linked remote migration history baseline mismatch as `not-run-blocked-pending-linked-remote-baseline-resolution`.
+
+This follow-up records the account/preferences baseline resolution gate. The thread contains conditional human approval language, but it is recorded as `conditional-human-approval-not-sufficient-for-ambiguous-remote-mutation` because three different safe paths still exist: `account-preferences-foundation-baseline-apply`, `account-preferences-migration-history-repair`, and `different-linked-target-reselection`. A remote mutation must not run until exactly one path is selected with fresh final confirmation for that path.
+
+Baseline resolution checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #339 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `a334f3f4eded06ed4e44f27a1658e1d3f6de0a05`. |
+| linked dry-run still blocked | `20260527000000_account_preferences_foundation.sql` and `20260601000000_youtube_oauth_credentials.sql` are both still pending. |
+| linked migration list still blank | Both local migration versions still have blank remote status. |
+| conditional approval handling | `conditional-human-approval-not-sufficient-for-ambiguous-remote-mutation`. |
+| selected safe path | `none-selected`. |
+| actual apply remains excluded | Actual apply is `not-run-blocked-pending-safe-baseline-resolution-path`. |
+| migration-history repair remains excluded | Repair is `not-run-blocked-pending-confirmed-existing-schema-and-fresh-approval`. |
+
+Path-specific boundaries:
+
+| Path | Required before command execution |
+| --- | --- |
+| `account-preferences-foundation-baseline-apply` | One reviewed command path that applies only `20260527000000_account_preferences_foundation.sql`, with fresh final confirmation for that baseline mutation. It must not bundle the YouTube migration. |
+| `account-preferences-migration-history-repair` | Non-secret evidence that the account/preferences tables, grants, and RLS policies already exist remotely, plus fresh final confirmation for repair. |
+| `different-linked-target-reselection` | One unique non-secret linked target where the account/preferences baseline is already applied and dry-run shows only `20260601000000_youtube_oauth_credentials.sql` pending. |
+
+No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run or mixed into this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

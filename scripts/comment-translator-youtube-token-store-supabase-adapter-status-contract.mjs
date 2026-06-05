@@ -11,6 +11,8 @@ const statusBoundaryPath = "lib/comment-translator-youtube-credential-status-bou
 const statusRoutePath = "app/api/comment-translator/youtube/credential-status/route.ts";
 const statusActionPath = "app/tools/comment-translator/actions.ts";
 const runtimePath = "lib/comment-translator-youtube-token-store-runtime.ts";
+const foundationPath = "lib/comment-translator-youtube-oauth-token-store-foundation.ts";
+const blockerMemoPath = "docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md";
 const migrationPath = "supabase/migrations/20260601000000_youtube_oauth_credentials.sql";
 const taskPath = "task.md";
 
@@ -102,6 +104,8 @@ assert.ok(exists(statusBoundaryPath), "credential sanitized status boundary exis
 assert.ok(exists(statusRoutePath), "credential status endpoint skeleton exists");
 assert.ok(exists(statusActionPath), "credential status server action skeleton exists");
 assert.ok(exists(runtimePath), "server-only token store runtime remains available");
+assert.ok(exists(foundationPath), "YouTube OAuth token store foundation remains available");
+assert.ok(exists(blockerMemoPath), "YouTube encrypted token store blocker resolution memo exists");
 assert.ok(exists(migrationPath), "youtube_oauth_credentials migration remains available");
 
 const adapterSource = read(adapterPath);
@@ -109,6 +113,8 @@ const statusBoundarySource = read(statusBoundaryPath);
 const statusRouteSource = read(statusRoutePath);
 const statusActionSource = read(statusActionPath);
 const runtimeSource = read(runtimePath);
+const foundationSource = read(foundationPath);
+const blockerMemo = read(blockerMemoPath);
 const migrationSource = read(migrationPath);
 const componentSource = read("components/comment-translator/CommentTranslatorDock.tsx");
 const routeSource = read("app/tools/comment-translator/page.tsx");
@@ -116,6 +122,7 @@ const taskSource = read(taskPath);
 
 assert.match(adapterSource, /^import "server-only";/m, "trusted Supabase adapter boundary is server-only");
 assert.match(statusBoundarySource, /^import "server-only";/m, "credential sanitized status boundary is server-only");
+assert.match(foundationSource, /^import "server-only";/m, "remote apply readiness boundary is server-only");
 assert.match(statusActionSource, /^"use server";/m, "credential status server action is a server action");
 assert.match(statusRouteSource, /NextResponse\.json/, "credential status endpoint returns JSON");
 assert.doesNotMatch(
@@ -234,6 +241,7 @@ for (const fragment of [
 
 const runtime = loadTsModule(runtimePath);
 const adapter = loadTsModule(adapterPath);
+const foundation = loadTsModule(foundationPath);
 const statusBoundary = loadTsModule(statusBoundaryPath);
 
 assert.equal(
@@ -319,6 +327,138 @@ assert.equal(
   adapter.youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract.liveGoogleApiCall,
   "not-implemented",
   "persistence runtime expansion does not call Google APIs"
+);
+
+for (const exportedType of [
+  "YouTubeEncryptedTokenStoreRemoteSupabaseApplyReadiness",
+  "YouTubeEncryptedTokenStoreRemoteSupabaseApplyReadinessCheck",
+  "YouTubeEncryptedTokenStoreRemoteSupabaseApplyReadinessResult"
+]) {
+  assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
+}
+
+for (const exportedConstOrFunction of [
+  "youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness",
+  "assessYouTubeEncryptedTokenStoreRemoteSupabaseApplyReadiness",
+  "createYouTubeEncryptedTokenStoreRemoteSupabaseApplyReadinessSummary"
+]) {
+  assert.match(
+    foundationSource,
+    new RegExp(`export (?:const|function) ${exportedConstOrFunction}\\b`),
+    `foundation exports ${exportedConstOrFunction}`
+  );
+}
+
+assert.deepEqual(
+  foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.prerequisiteApprovalGate,
+  {
+    pullRequest: "#327",
+    mergeCommit: "22c66bb8928e4594a9c732a12e22af63b4254bed",
+    status: "ready-for-separate-runtime-or-apply-pr"
+  },
+  "remote apply readiness records the PR #327 approval gate"
+);
+assert.deepEqual(
+  foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.prerequisiteRuntimeExpansion,
+  {
+    pullRequest: "#328",
+    mergeCommit: "62de91361a93633c314b03ab162cc0acf3c081b7",
+    status: "merged-into-codex-comment-translator-preview"
+  },
+  "remote apply readiness records the PR #328 server runtime expansion merge"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.implementationStage,
+  "remote-supabase-migration-apply-readiness",
+  "remote apply readiness stage is explicit"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.selectedFollowUp,
+  "remote-supabase-migration-apply-readiness-only",
+  "remote apply readiness is the only selected follow-up"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.remoteSupabaseApply,
+  "not-applied-readiness-only",
+  "remote apply readiness does not apply migrations"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.serviceRoleSmoke,
+  "out-of-scope-this-pr",
+  "remote apply readiness does not mix in service-role smoke readiness"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.googleApiLiveCall,
+  "forbidden-in-this-pr",
+  "remote apply readiness forbids Google API live calls"
+);
+assert.equal(
+  foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.safeLiveYouTubeOAuthSmoke,
+  "forbidden-in-this-pr",
+  "remote apply readiness forbids safe live YouTube OAuth smoke"
+);
+assert.deepEqual(
+  foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.clientReadableOutput,
+  ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"],
+  "remote apply readiness preserves the client-readable output boundary"
+);
+assert.ok(
+  foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.requiredReadinessChecks.some(
+    (check) => check.id === "human-remote-apply-approval-required" && check.status === "blocking-external-action"
+  ),
+  "remote apply readiness records human approval as the external action blocker"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteSupabaseApplyReadiness([]),
+  {
+    status: "blocked-missing-remote-apply-readiness-checks",
+    missingCheckIds: foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.requiredReadinessChecks.map(
+      (check) => check.id
+    ),
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "record-readiness-blockers-without-remote-db-connection"
+  },
+  "remote apply readiness blocks when checklist evidence is absent"
+);
+assert.deepEqual(
+  foundation.assessYouTubeEncryptedTokenStoreRemoteSupabaseApplyReadiness(
+    foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.requiredReadinessChecks
+  ),
+  {
+    status: "readiness-recorded-remote-apply-blocked-pending-human-apply-approval",
+    completedCheckIds: foundation.youtubeEncryptedTokenStoreRemoteSupabaseApplyReadiness.requiredReadinessChecks.map(
+      (check) => check.id
+    ),
+    remoteSupabaseApplyAllowedInThisPr: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    googleApiLiveSmokeAllowedInThisPr: false,
+    nextAction: "request-explicit-human-remote-apply-run-approval-in-a-separate-step"
+  },
+  "complete remote apply readiness still does not allow remote DB mutation in this PR"
+);
+for (const fragment of [
+  "PR #328",
+  "remote-supabase-migration-apply-readiness",
+  "not-applied-readiness-only",
+  "human-remote-apply-approval-required",
+  "No service-role smoke",
+  "No Google API live smoke",
+  "No safe live YouTube OAuth smoke"
+]) {
+  assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records remote apply readiness: ${fragment}`);
+}
+assert.match(taskSource, /PR #328.*62de91361a93633c314b03ab162cc0acf3c081b7/i, "task.md records PR #328 merge premise");
+assert.match(
+  taskSource,
+  /remote Supabase migration apply readiness.*not-applied-readiness-only/i,
+  "task.md records remote apply readiness without applying the migration"
+);
+assert.match(
+  taskSource,
+  /service-role status\/persistence smoke.*別 PR|service-role smoke.*out of scope/i,
+  "task.md records that service-role smoke readiness is not mixed into this PR"
 );
 assert.equal(
   statusBoundary.youtubeOAuthCredentialStatusBoundaryContract.browserReadableOutput,

@@ -580,6 +580,28 @@ Approved evidence:
 
 This PR remains evidence-recording only. No remote Supabase migration apply, No server-only token persistence runtime expansion, No Google API live smoke, and No safe live YouTube OAuth smoke are performed here. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, displayed, logged, stored in docs, or included in PR text.
 
+## Remote Supabase Migration Apply Readiness After PR #328
+
+PR #328 is merged into `codex/comment-translator-preview` with merge commit `62de91361a93633c314b03ab162cc0acf3c081b7`. The PR #327 approval gate remains `ready-for-separate-runtime-or-apply-pr`, and the PR #328 server-only persistence runtime expansion is now available as the prerequisite for a separate remote apply readiness slice.
+
+This slice records `remote-supabase-migration-apply-readiness` only. The remote apply state is `not-applied-readiness-only`; no Supabase remote DB mutation is run, and no service-role smoke is mixed into this PR. The selected follow-up is remote Supabase migration apply readiness, not live status/persistence smoke readiness.
+
+Readiness checks recorded here:
+
+| Check | State |
+| --- | --- |
+| preview merge-state verified | PR #328 merge commit is the preview head used for this branch. |
+| approval gate ready | PR #327 final review and explicit implementation approval is `ready-for-separate-runtime-or-apply-pr`. |
+| server runtime expansion merged | PR #328 server-only persistence runtime expansion is merged before apply readiness. |
+| migration file reviewed | `supabase/migrations/20260601000000_youtube_oauth_credentials.sql` remains the reviewed candidate. |
+| human-remote-apply-approval-required | Blocking external action; the remote Supabase project target and apply run need explicit human approval. |
+| apply command reviewed, not run | This PR records the apply boundary without connecting to a remote DB. |
+| rollback plan reviewed | Credential resolution disable, reviewed database rollback path, no token logging, and revoke/invalidate unusable references remain required. |
+| post-apply verification plan recorded | Schema/RLS presence and sanitized service-role status/persistence smoke belong to a separate step after apply approval. |
+| Cloudflare Pages noise separated | Pages failure remains known disconnect noise; Workers Builds and local verification remain the actionable signals. |
+
+No service-role smoke is run in this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Owner authorization before status read and `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` remain preserved. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

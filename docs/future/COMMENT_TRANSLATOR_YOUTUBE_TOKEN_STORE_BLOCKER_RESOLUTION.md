@@ -624,6 +624,32 @@ Readiness checks recorded here:
 
 No remote Supabase migration apply is run in this PR. No service-role smoke is run. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Owner authorization before status read/write and `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` remain preserved. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## Human-Approved Remote Supabase Migration Apply Execution Handoff After PR #330
+
+PR #330 is merged into `codex/comment-translator-preview` with merge commit `70ff213bd203ee979336d059253999ea2ce33565`. PR #330 records service-role status/persistence smoke readiness as `blocked-pending-remote-apply`, and PR #329 remote apply readiness remains `not-applied-readiness-only`. This follow-up records only `human-approved-remote-supabase-migration-apply-execution-handoff`.
+
+The remote apply state is `not-run-pending-explicit-human-target-and-run-approval`. No remote Supabase migration apply is run here, and No service-role smoke execution is mixed into this PR. The next action is an apply-run checklist handoff that still requires a concrete remote Supabase target and explicit human run approval before any external DB mutation.
+
+Handoff checks recorded here:
+
+| Check | State |
+| --- | --- |
+| preview merge state verified | PR #330 merge commit is contained in `origin/codex/comment-translator-preview`. |
+| service-role smoke readiness merged | PR #330 readiness is the prerequisite and remains `blocked-pending-remote-apply`. |
+| remote apply readiness not-applied confirmed | PR #329 remains `not-applied-readiness-only`; no remote apply confirmation is recorded. |
+| remote target selection required | Blocking external action; the operator must provide an opaque project target reference. |
+| explicit human run approval required | Blocking external action; the apply run requires explicit human approval before mutation. |
+| apply execution command boundary recorded | This PR records the apply-run checklist only and does not connect to a remote DB. |
+| env reference names recorded | `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are reference names only for post-apply readiness; values are not requested, printed, stored, or placed in PR text. |
+| missing env sanitized state recorded | Missing env references must degrade to sanitized unavailable / reconnect-required metadata. |
+| credential resolution disable preserved | `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` remains the emergency `credential-resolution-disabled` state. |
+| owner authorization before post-apply smoke recorded | Owner authorization is required before any post-apply trusted service-role status read or persistence write smoke. |
+| rollback abort conditions recorded | Abort if target or approval is ambiguous, migration diff differs from reviewed file, rollback path is not confirmed, credential resolution is enabled before apply, or any secret/token value would be printed. |
+| dashboard log unverified scope recorded | Cloudflare Pages, Workers Builds, Supabase dashboard apply history, and remote database schema/RLS inspection logs remain unchecked locally. |
+| Cloudflare Pages noise separated | Pages failure remains known Pages disconnect noise; Workers Builds and local verification remain the actionable signals. |
+
+The handoff result remains `blocked-pending-explicit-human-remote-apply-target-and-run-approval`. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. No Google API live smoke and No safe live YouTube OAuth smoke are run. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

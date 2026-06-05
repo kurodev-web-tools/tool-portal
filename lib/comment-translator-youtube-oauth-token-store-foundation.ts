@@ -1358,6 +1358,93 @@ export type YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunAssessme
       nextAction: "run-reviewed-youtube-migration-apply-command-only";
     };
 
+export type YouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunInput = {
+  youtubeOAuthCredentialsMigrationRemoteApplied: boolean;
+  postApplyPendingMigrationNames: readonly string[];
+  reviewedTargetMigrationName: string;
+  credentialResolutionDisabledMaintained: boolean;
+  serviceRoleSmokeExecuted: boolean;
+  requiresSecretOrTokenValue: boolean;
+};
+
+export type YouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunContract = {
+  implementationStage: "youtube-oauth-credentials-remote-apply-run";
+  selectedFollowUp: "youtube-oauth-credentials-apply-confirmation-only";
+  prerequisiteAccountPreferencesBaselineApplyRun: {
+    pullRequest: "#341";
+    mergeCommit: "dff517199f099488a43d67f7e31cc775b1b913f6";
+    previousPreviewHead: "781cc7a361ee02047632a678c2f0861c5961f257";
+    status: "applied-account-preferences-foundation-baseline-only";
+  };
+  threadApproval: "explicit-human-youtube-oauth-credentials-apply-approval-recorded";
+  accountPreferencesFoundationMigration: "20260527000000_account_preferences_foundation.sql";
+  reviewedTargetMigration: "20260601000000_youtube_oauth_credentials.sql";
+  preApplyMigrationList: "account-preferences-remote-present-youtube-remote-blank";
+  preApplyDryRunCodexAttempt: "blocked-db-auth-env-missing-before-pending-list-confirmation";
+  operatorLocalDryRunEvidence: "remote-database-up-to-date";
+  remoteSupabaseApply: "remote-applied-youtube-oauth-credentials-migration-confirmed";
+  applyCommandExecution: "not-executed-by-codex-process-db-password-unavailable";
+  postApplyMigrationList: "account-preferences-and-youtube-migrations-local-remote-present";
+  postApplyDryRun: "remote-database-up-to-date-no-pending-migrations";
+  migrationHistoryRepair: "not-run-not-needed";
+  actualServiceRoleSmoke: "out-of-scope-separate-pr";
+  clientReadableOutput: readonly ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"];
+  secretHandling: "env-reference-names-only-no-values";
+  browserStorage: "unchanged";
+  rollbackAbortConditions: readonly string[];
+  nextAction: "open-separate-service-role-smoke-readiness-or-execution-pr";
+  forbiddenInThisSlice: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunAssessment =
+  | {
+      status: "blocked-secret-required-for-youtube-remote-apply-confirmation";
+      blockingMigrationNames: readonly string[];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      remoteSupabaseApplyExecuted: false;
+      migrationHistoryRepairAllowedInThisPr: false;
+      migrationHistoryRepairExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      serviceRoleSmokeExecuted: false;
+      nextAction: "record-secret-required-blocker-without-requesting-secret-values";
+    }
+  | {
+      status: "blocked-youtube-oauth-credentials-migration-not-confirmed-applied";
+      blockingMigrationNames: readonly string[];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      remoteSupabaseApplyExecuted: false;
+      migrationHistoryRepairAllowedInThisPr: false;
+      migrationHistoryRepairExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      serviceRoleSmokeExecuted: false;
+      nextAction: "record-youtube-apply-confirmation-blocker-without-service-role-smoke";
+    }
+  | {
+      status:
+        | "blocked-post-youtube-apply-dry-run-still-pending"
+        | "blocked-credential-resolution-disable-not-maintained"
+        | "blocked-service-role-smoke-mixed-into-apply-pr";
+      blockingMigrationNames: readonly string[];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      remoteSupabaseApplyExecuted: true;
+      migrationHistoryRepairAllowedInThisPr: false;
+      migrationHistoryRepairExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      serviceRoleSmokeExecuted: boolean;
+      nextAction: "record-post-youtube-apply-boundary-blocker";
+    }
+  | {
+      status: "ready-for-separate-service-role-smoke-pr";
+      blockingMigrationNames: readonly [];
+      remoteSupabaseApplyAllowedInThisPr: false;
+      remoteSupabaseApplyExecuted: true;
+      migrationHistoryRepairAllowedInThisPr: false;
+      migrationHistoryRepairExecuted: false;
+      serviceRoleSmokeAllowedInThisPr: false;
+      serviceRoleSmokeExecuted: false;
+      nextAction: "open-separate-service-role-smoke-readiness-or-execution-pr";
+    };
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -2816,6 +2903,49 @@ export const youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun = {
   ]
 } as const satisfies YouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyRunContract;
 
+export const youtubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun = {
+  implementationStage: "youtube-oauth-credentials-remote-apply-run",
+  selectedFollowUp: "youtube-oauth-credentials-apply-confirmation-only",
+  prerequisiteAccountPreferencesBaselineApplyRun: {
+    pullRequest: "#341",
+    mergeCommit: "dff517199f099488a43d67f7e31cc775b1b913f6",
+    previousPreviewHead: "781cc7a361ee02047632a678c2f0861c5961f257",
+    status: "applied-account-preferences-foundation-baseline-only"
+  },
+  threadApproval: "explicit-human-youtube-oauth-credentials-apply-approval-recorded",
+  accountPreferencesFoundationMigration: "20260527000000_account_preferences_foundation.sql",
+  reviewedTargetMigration: "20260601000000_youtube_oauth_credentials.sql",
+  preApplyMigrationList: "account-preferences-remote-present-youtube-remote-blank",
+  preApplyDryRunCodexAttempt: "blocked-db-auth-env-missing-before-pending-list-confirmation",
+  operatorLocalDryRunEvidence: "remote-database-up-to-date",
+  remoteSupabaseApply: "remote-applied-youtube-oauth-credentials-migration-confirmed",
+  applyCommandExecution: "not-executed-by-codex-process-db-password-unavailable",
+  postApplyMigrationList: "account-preferences-and-youtube-migrations-local-remote-present",
+  postApplyDryRun: "remote-database-up-to-date-no-pending-migrations",
+  migrationHistoryRepair: "not-run-not-needed",
+  actualServiceRoleSmoke: "out-of-scope-separate-pr",
+  clientReadableOutput: ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"],
+  secretHandling: "env-reference-names-only-no-values",
+  browserStorage: "unchanged",
+  rollbackAbortConditions: [
+    "abort-if-youtube-oauth-credentials-migration-is-not-confirmed-in-remote-history",
+    "abort-if-post-apply-dry-run-still-shows-pending-migrations",
+    "abort-if-credential-resolution-disable-is-not-maintained",
+    "abort-if-service-role-smoke-would-be-mixed-into-this-pr",
+    "abort-if-any-secret-or-token-value-would-be-printed"
+  ],
+  nextAction: "open-separate-service-role-smoke-readiness-or-execution-pr",
+  forbiddenInThisSlice: [
+    "service-role smoke execution",
+    "Google API live call",
+    "safe live YouTube OAuth smoke",
+    "OAuth token value handling",
+    "service_role key value handling",
+    "managed secret value handling",
+    "localStorage, IndexedDB, sessionStorage, or handoff payload change"
+  ]
+} as const satisfies YouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunContract;
+
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
   storageOwner: youtubeEncryptedTokenStoreDesignPolicy.storageOwner,
@@ -3730,6 +3860,92 @@ export function assessYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyR
   };
 }
 
+export function assessYouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun(
+  input: YouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunInput
+): YouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunAssessment {
+  if (input.requiresSecretOrTokenValue) {
+    return {
+      status: "blocked-secret-required-for-youtube-remote-apply-confirmation",
+      blockingMigrationNames: [...input.postApplyPendingMigrationNames],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: false,
+      migrationHistoryRepairAllowedInThisPr: false,
+      migrationHistoryRepairExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      serviceRoleSmokeExecuted: false,
+      nextAction: "record-secret-required-blocker-without-requesting-secret-values"
+    };
+  }
+
+  if (!input.youtubeOAuthCredentialsMigrationRemoteApplied) {
+    return {
+      status: "blocked-youtube-oauth-credentials-migration-not-confirmed-applied",
+      blockingMigrationNames: [...input.postApplyPendingMigrationNames],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: false,
+      migrationHistoryRepairAllowedInThisPr: false,
+      migrationHistoryRepairExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      serviceRoleSmokeExecuted: false,
+      nextAction: "record-youtube-apply-confirmation-blocker-without-service-role-smoke"
+    };
+  }
+
+  if (input.postApplyPendingMigrationNames.length > 0) {
+    return {
+      status: "blocked-post-youtube-apply-dry-run-still-pending",
+      blockingMigrationNames: [...input.postApplyPendingMigrationNames],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: true,
+      migrationHistoryRepairAllowedInThisPr: false,
+      migrationHistoryRepairExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      serviceRoleSmokeExecuted: input.serviceRoleSmokeExecuted,
+      nextAction: "record-post-youtube-apply-boundary-blocker"
+    };
+  }
+
+  if (!input.credentialResolutionDisabledMaintained) {
+    return {
+      status: "blocked-credential-resolution-disable-not-maintained",
+      blockingMigrationNames: [],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: true,
+      migrationHistoryRepairAllowedInThisPr: false,
+      migrationHistoryRepairExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      serviceRoleSmokeExecuted: input.serviceRoleSmokeExecuted,
+      nextAction: "record-post-youtube-apply-boundary-blocker"
+    };
+  }
+
+  if (input.serviceRoleSmokeExecuted) {
+    return {
+      status: "blocked-service-role-smoke-mixed-into-apply-pr",
+      blockingMigrationNames: [],
+      remoteSupabaseApplyAllowedInThisPr: false,
+      remoteSupabaseApplyExecuted: true,
+      migrationHistoryRepairAllowedInThisPr: false,
+      migrationHistoryRepairExecuted: false,
+      serviceRoleSmokeAllowedInThisPr: false,
+      serviceRoleSmokeExecuted: true,
+      nextAction: "record-post-youtube-apply-boundary-blocker"
+    };
+  }
+
+  return {
+    status: "ready-for-separate-service-role-smoke-pr",
+    blockingMigrationNames: [],
+    remoteSupabaseApplyAllowedInThisPr: false,
+    remoteSupabaseApplyExecuted: true,
+    migrationHistoryRepairAllowedInThisPr: false,
+    migrationHistoryRepairExecuted: false,
+    serviceRoleSmokeAllowedInThisPr: false,
+    serviceRoleSmokeExecuted: false,
+    nextAction: "open-separate-service-role-smoke-readiness-or-execution-pr"
+  };
+}
+
 export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary(): string {
   return [
     `Post review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postReviewPullRequest}.`,
@@ -3977,6 +4193,28 @@ export function createYouTubeEncryptedTokenStoreAccountPreferencesBaselineApplyR
     `Post-apply dry-run: ${youtubeEncryptedTokenStoreAccountPreferencesBaselineApplyRun.postApplyDryRun}.`,
     "The account/preferences foundation baseline is applied, but the reviewed YouTube migration apply still requires a fresh final operator confirmation.",
     "No YouTube OAuth credential migration apply, No migration-history repair, No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
+  ].join(" ");
+}
+
+export function createYouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRunSummary(): string {
+  const result = assessYouTubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun({
+    youtubeOAuthCredentialsMigrationRemoteApplied: true,
+    postApplyPendingMigrationNames: [],
+    reviewedTargetMigrationName:
+      youtubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun.reviewedTargetMigration,
+    credentialResolutionDisabledMaintained: true,
+    serviceRoleSmokeExecuted: false,
+    requiresSecretOrTokenValue: false
+  });
+
+  return [
+    `PR ${youtubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun.prerequisiteAccountPreferencesBaselineApplyRun.pullRequest} account/preferences baseline apply run is merged.`,
+    `Stage: ${youtubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun.implementationStage}.`,
+    `Status: ${result.status}.`,
+    `Remote apply: ${youtubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun.remoteSupabaseApply}.`,
+    `Post-apply dry-run: ${youtubeEncryptedTokenStoreYouTubeOAuthCredentialsRemoteApplyRun.postApplyDryRun}.`,
+    "The reviewed YouTube OAuth credentials migration is confirmed in remote migration history, but the Codex process did not directly execute the apply command because the DB auth env was unavailable.",
+    "No migration-history repair, No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
   ].join(" ");
 }
 

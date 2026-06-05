@@ -578,6 +578,27 @@ export type YouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGat
       { status: "blocked-pending-explicit-implementation-approval" | "ready-for-separate-runtime-or-apply-pr" }
     >;
 
+export type YouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence = {
+  implementationStage: "final-review-and-explicit-implementation-approval-evidence";
+  prerequisitePullRequest: "#326";
+  prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview";
+  prerequisiteMergeCommit: "cb490fb2f9a9f5e218a054d84b6c3c5e5d102bd9";
+  prerequisiteMergedAtUtc: "2026-06-05T02:20:23Z";
+  approvalEvidenceSource: "current-thread-owner-approval";
+  currentEvidenceStatus: "final-review-and-explicit-implementation-approved-for-separate-pr";
+  ownerApprovalRole: "Product/Data/Security owner";
+  finalReviewEvidence: readonly YouTubeEncryptedTokenStoreSeparateApprovedMigrationFinalReviewEvidence[];
+  implementationApproval: YouTubeEncryptedTokenStoreSeparateApprovedMigrationImplementationApprovalEvidence;
+  clientReadableOutput: readonly string[];
+  forbiddenInThisSlice: readonly string[];
+};
+
+export type YouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidenceResult =
+  Extract<
+    YouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheckResult,
+    { status: "ready-for-separate-runtime-or-apply-pr" }
+  >;
+
 export type YouTubeEncryptedTokenStoreImplementationReadiness =
   | {
       status: "blocked";
@@ -1350,6 +1371,50 @@ export const youtubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGa
   forbiddenInThisSlice: youtubeEncryptedTokenStoreFinalImplementationApprovalEvidenceGate.forbiddenInThisSlice
 } as const satisfies YouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck;
 
+export const youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence = {
+  implementationStage: "final-review-and-explicit-implementation-approval-evidence",
+  prerequisitePullRequest: "#326",
+  prerequisiteMergeStatus: "merged-into-codex-comment-translator-preview",
+  prerequisiteMergeCommit: "cb490fb2f9a9f5e218a054d84b6c3c5e5d102bd9",
+  prerequisiteMergedAtUtc: "2026-06-05T02:20:23Z",
+  approvalEvidenceSource: "current-thread-owner-approval",
+  currentEvidenceStatus: "final-review-and-explicit-implementation-approved-for-separate-pr",
+  ownerApprovalRole: "Product/Data/Security owner",
+  finalReviewEvidence: [
+    {
+      area: "table-shape",
+      approved: true,
+      scope:
+        "final table shape for youtube_oauth_credentials with owner binding, opaque credentialReferenceId, sanitized metadata, and no browser-readable OAuth token material"
+    },
+    {
+      area: "rls-posture",
+      approved: true,
+      scope:
+        "final RLS posture keeps browser clients away from token material and limits encrypted row access to trusted server-only runtime"
+    },
+    {
+      area: "key-management",
+      approved: true,
+      scope:
+        "key-management uses managed secret or KMS server-only handling, rotation, emergency disable, and no key or token value output"
+    },
+    {
+      area: "rollback",
+      approved: true,
+      scope:
+        "rollback keeps credential resolution disable, reviewed database rollback path, no token logging, and revoke or invalidate unusable credential references"
+    }
+  ],
+  implementationApproval: {
+    approved: true,
+    scope:
+      "separate implementation PR for remote Supabase apply or server-only token persistence runtime expansion after final review evidence"
+  },
+  clientReadableOutput: ["opaque non-secret credentialReferenceId", "sanitized credential status metadata"],
+  forbiddenInThisSlice: youtubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck.forbiddenInThisSlice
+} as const satisfies YouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence;
+
 export const youtubeEncryptedTokenStoreRuntimeDesign = {
   implementationStage: "blocked-design-only",
   storageOwner: youtubeEncryptedTokenStoreDesignPolicy.storageOwner,
@@ -1753,6 +1818,13 @@ export function assessYouTubeEncryptedTokenStorePostFinalImplementationApprovalE
   return result;
 }
 
+export function assessYouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence(): YouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidenceResult {
+  return assessYouTubeEncryptedTokenStorePostFinalImplementationApprovalEvidenceGateRecheck(
+    youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence.finalReviewEvidence,
+    youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence.implementationApproval
+  ) as YouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidenceResult;
+}
+
 export function createYouTubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewSummary(): string {
   return [
     `Post review: PR ${youtubeEncryptedTokenStoreSeparateApprovedMigrationPrReviewGate.postReviewPullRequest}.`,
@@ -1795,6 +1867,18 @@ export function createYouTubeEncryptedTokenStorePostFinalImplementationApprovalE
     "Required evidence: final table/RLS/key-management/rollback review.",
     "Explicit implementation approval missing.",
     "Remote apply, runtime expansion, and Google API live smoke stay out of this PR."
+  ].join(" ");
+}
+
+export function createYouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidenceSummary(): string {
+  const result = assessYouTubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence();
+
+  return [
+    `PR ${youtubeEncryptedTokenStoreFinalReviewAndImplementationApprovalEvidence.prerequisitePullRequest} final review and explicit implementation approval evidence.`,
+    `Status: ${result.status}.`,
+    "Approved evidence: final table/RLS/key-management/rollback review.",
+    "Explicit implementation approval: separate implementation PR for remote Supabase apply or server-only token persistence runtime expansion.",
+    "Remote apply, runtime expansion, and Google API live smoke stay out of this evidence-recording PR."
   ].join(" ");
 }
 

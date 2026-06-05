@@ -562,6 +562,24 @@ Required evidence before any follow-up implementation remains:
 
 This PR is post-PR #325 final approval evidence recheck only. No remote Supabase migration apply, No server-only token persistence runtime expansion, No Google API live smoke, and No safe live YouTube OAuth smoke are performed. Owner authorization before status read, `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`, opaque non-secret `credentialReferenceId`, and sanitized credential status metadata remain preserved.
 
+## Final Review And Implementation Approval Evidence
+
+PR #326 is merged into `codex/comment-translator-preview` with merge commit `cb490fb2f9a9f5e218a054d84b6c3c5e5d102bd9` at `2026-06-05T02:20:23Z`.
+
+The current-thread owner approval records final review evidence for the YouTube token store table, RLS posture, key-management, rollback, and explicit implementation approval for a separate implementation PR. This evidence changes the gate from `blocked-pending-final-review` to `ready-for-separate-runtime-or-apply-pr`.
+
+Approved evidence:
+
+| Area | Approved scope | Current status |
+| --- | --- | --- |
+| final table shape | `youtube_oauth_credentials` owner binding, opaque `credentialReferenceId`, sanitized metadata, encrypted token material, and no browser-readable OAuth token material. | Approved |
+| final RLS posture | Browser clients cannot read or write token material; trusted server-only runtime is the encrypted row accessor. | Approved |
+| key-management | Managed secret or KMS server-only handling, rotation, emergency disable, and no key or token value output. | Approved |
+| rollback | Credential resolution disable, reviewed database rollback path, no token logging, and revoke or invalidate unusable credential references. | Approved |
+| explicit implementation approval | A separate small PR may proceed for remote Supabase apply or server-only token persistence runtime expansion after this evidence-recording PR. | Approved |
+
+This PR remains evidence-recording only. No remote Supabase migration apply, No server-only token persistence runtime expansion, No Google API live smoke, and No safe live YouTube OAuth smoke are performed here. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, displayed, logged, stored in docs, or included in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

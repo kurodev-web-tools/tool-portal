@@ -920,6 +920,43 @@ export type YouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGate
   forbiddenInThisSlice: readonly string[];
 };
 
+export type YouTubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGateContract = {
+  implementationStage: "post-pr347-operator-local-service-role-smoke-command-gate";
+  selectedFollowUp: "operator-local-bounded-service-role-status-persistence-smoke-after-pr347-merge";
+  prerequisitePostPr346LiveServiceRoleSmokeGate: {
+    pullRequest: "#347";
+    mergeCommit: "1f5aa57527ea22b6ef6e6a67ea0e0668070e6dd1";
+    previousPreviewHead: "2e68c0c58f6766d02248b585975833a80aab1ac3";
+    status: "post-pr346-service-role-smoke-gate-merged";
+  };
+  operatorLocalSupabaseLinkMetadata: "present-in-operator-session";
+  operatorInitialEnvReferencePresence: "present-before-operator-cleanup";
+  commandEnvReferencePresence: "missing-after-operator-cleanup";
+  credentialResolutionDisabledEnvPresence: "present-in-operator-session";
+  supabaseTempIgnore: "ignored-by-gitignore";
+  migrationListState: "account-preferences-and-youtube-migrations-local-remote-present";
+  dryRunState: "remote-database-up-to-date-no-pending-migrations";
+  commandHelper: "bounded-service-role-status-persistence-smoke-command-only";
+  placeholderGuard: "blocks-literal-placeholder-values";
+  commandCheckState: "blocked-missing-env-or-fixture-references";
+  commandExecuteState: "blocked-missing-env-or-fixture-references";
+  commandMissingEnvReferences: readonly ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
+  requiredEnvReferences: readonly ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
+  optionalEnvReferences: readonly ["YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"];
+  remoteSupabaseApply: "forbidden-in-this-pr";
+  actualServiceRoleSmoke: "not-run-blocked-pending-operator-env-reference-presence";
+  serviceRoleSmokeScope: "bounded-status-read-and-persistence-write-smoke-only";
+  ownerAuthorization: "operator-provided-safe-owner-reference-not-printed";
+  credentialResolutionDisabledState: "operator-set-disabled-env-to-zero-for-command-attempt";
+  clientReadableOutput: readonly ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"];
+  googleApiLiveCall: "forbidden-in-this-pr";
+  safeLiveYouTubeOAuthSmoke: "forbidden-in-this-pr";
+  secretHandling: "presence-and-sanitized-output-only-no-values";
+  browserStorage: "unchanged";
+  nextAction: "rerun-command-from-operator-session-with-required-env-references-preserved";
+  forbiddenInThisSlice: readonly string[];
+};
+
 export type YouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGateAssessment =
   | {
       status: "blocked-secret-required-for-bounded-service-role-smoke";
@@ -2851,6 +2888,54 @@ export const youtubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGat
   ]
 } as const satisfies YouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGateContract;
 
+export const youtubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGate = {
+  implementationStage: "post-pr347-operator-local-service-role-smoke-command-gate",
+  selectedFollowUp: "operator-local-bounded-service-role-status-persistence-smoke-after-pr347-merge",
+  prerequisitePostPr346LiveServiceRoleSmokeGate: {
+    pullRequest: "#347",
+    mergeCommit: "1f5aa57527ea22b6ef6e6a67ea0e0668070e6dd1",
+    previousPreviewHead: "2e68c0c58f6766d02248b585975833a80aab1ac3",
+    status: "post-pr346-service-role-smoke-gate-merged"
+  },
+  operatorLocalSupabaseLinkMetadata: "present-in-operator-session",
+  operatorInitialEnvReferencePresence: "present-before-operator-cleanup",
+  commandEnvReferencePresence: "missing-after-operator-cleanup",
+  credentialResolutionDisabledEnvPresence: "present-in-operator-session",
+  supabaseTempIgnore: "ignored-by-gitignore",
+  migrationListState: "account-preferences-and-youtube-migrations-local-remote-present",
+  dryRunState: "remote-database-up-to-date-no-pending-migrations",
+  commandHelper: "bounded-service-role-status-persistence-smoke-command-only",
+  placeholderGuard: "blocks-literal-placeholder-values",
+  commandCheckState: "blocked-missing-env-or-fixture-references",
+  commandExecuteState: "blocked-missing-env-or-fixture-references",
+  commandMissingEnvReferences: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+  requiredEnvReferences: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+  optionalEnvReferences: ["YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"],
+  remoteSupabaseApply: "forbidden-in-this-pr",
+  actualServiceRoleSmoke: "not-run-blocked-pending-operator-env-reference-presence",
+  serviceRoleSmokeScope: "bounded-status-read-and-persistence-write-smoke-only",
+  ownerAuthorization: "operator-provided-safe-owner-reference-not-printed",
+  credentialResolutionDisabledState: "operator-set-disabled-env-to-zero-for-command-attempt",
+  clientReadableOutput: ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"],
+  googleApiLiveCall: "forbidden-in-this-pr",
+  safeLiveYouTubeOAuthSmoke: "forbidden-in-this-pr",
+  secretHandling: "presence-and-sanitized-output-only-no-values",
+  browserStorage: "unchanged",
+  nextAction: "rerun-command-from-operator-session-with-required-env-references-preserved",
+  forbiddenInThisSlice: [
+    "remote Supabase DB migration apply",
+    "remote Supabase migration history repair",
+    "Google API live call",
+    "safe live YouTube OAuth smoke",
+    "refresh runtime",
+    "full revocation runtime",
+    "OAuth token value handling",
+    "service_role key value handling",
+    "managed secret value handling",
+    "localStorage, IndexedDB, sessionStorage, or handoff payload change"
+  ]
+} as const satisfies YouTubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGateContract;
+
 export const youtubeEncryptedTokenStoreRemoteApplyExecutionHandoff = {
   implementationStage: "human-approved-remote-supabase-migration-apply-execution-handoff",
   selectedFollowUp: "remote-supabase-migration-apply-execution-handoff-only",
@@ -4661,6 +4746,18 @@ export function createYouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExe
     `Stage: ${youtubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGate.implementationStage}.`,
     `Actual service-role smoke: ${youtubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGate.actualServiceRoleSmoke}.`,
     "Operator-local Supabase link metadata is present and linked migration list / dry-run are clean, but this Codex process lacks the required env references.",
+    "No remote Supabase migration apply, No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
+  ].join(" ");
+}
+
+export function createYouTubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGateSummary(): string {
+  return [
+    `PR ${youtubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGate.prerequisitePostPr346LiveServiceRoleSmokeGate.pullRequest} post-PR346 service-role smoke gate is merged.`,
+    `Stage: ${youtubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGate.implementationStage}.`,
+    `Command check: ${youtubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGate.commandCheckState}.`,
+    `Command execute: ${youtubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGate.commandExecuteState}.`,
+    `Actual service-role smoke: ${youtubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGate.actualServiceRoleSmoke}.`,
+    "Operator-local Supabase link metadata and linked migration list / dry-run are clean, and the command helper now blocks literal placeholder values, but the operator command attempt ended with missing env references.",
     "No remote Supabase migration apply, No service-role smoke execution, No Google API live smoke, and No safe live YouTube OAuth smoke are run in this PR."
   ].join(" ");
 }

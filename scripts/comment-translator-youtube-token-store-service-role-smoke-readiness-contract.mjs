@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import Module from "node:module";
 import path from "node:path";
@@ -9,6 +10,7 @@ const foundationPath = "lib/comment-translator-youtube-oauth-token-store-foundat
 const adapterPath = "lib/comment-translator-youtube-token-store-supabase-adapter.ts";
 const statusBoundaryPath = "lib/comment-translator-youtube-credential-status-boundary.ts";
 const blockerMemoPath = "docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md";
+const commandSmokePath = "scripts/comment-translator-youtube-token-store-service-role-smoke-command.mjs";
 const taskPath = "task.md";
 
 function read(relativePath) {
@@ -69,6 +71,7 @@ const adapterSource = read(adapterPath);
 const statusBoundarySource = read(statusBoundaryPath);
 const blockerMemo = read(blockerMemoPath);
 const taskSource = read(taskPath);
+const commandSmokeSource = read(commandSmokePath);
 
 assert.match(foundationSource, /^import "server-only";/m, "service-role smoke readiness boundary stays server-only");
 
@@ -86,7 +89,8 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGateContract",
   "YouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGateAssessment",
   "YouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGateContract",
-  "YouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGateContract"
+  "YouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGateContract",
+  "YouTubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGateContract"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -104,10 +108,12 @@ for (const exportedConstOrFunction of [
   "youtubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGate",
   "youtubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGate",
   "youtubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGate",
+  "youtubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGate",
   "assessYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGate",
   "createYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGateSummary",
   "createYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGateSummary",
-  "createYouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGateSummary"
+  "createYouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGateSummary",
+  "createYouTubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGateSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -125,6 +131,90 @@ assert.doesNotMatch(
   `${foundationSource}\n${adapterSource}\n${statusBoundarySource}`,
   /localStorage\.|indexedDB\.|sessionStorage\.|youtube\.googleapis|OAuth2Client|GoogleAuth|from\s+["']googleapis["']|require\(["']googleapis["']\)|stripe|checkout|gtag|GA4|cookie consent/i,
   "service-role smoke readiness avoids browser storage, Google API calls, quota, billing, and analytics"
+);
+assert.match(
+  commandSmokeSource,
+  /createTrustedYouTubeOAuthCredentialSupabasePersistenceRuntime/,
+  "command-only smoke helper uses the existing trusted Supabase persistence runtime"
+);
+assert.match(
+  commandSmokeSource,
+  /readYouTubeOAuthCredentialStatus/,
+  "command-only smoke helper uses the existing sanitized credential status boundary"
+);
+assert.match(
+  commandSmokeSource,
+  /YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED/,
+  "command-only smoke helper keeps the credential resolution disabled boundary explicit"
+);
+assert.doesNotMatch(
+  commandSmokeSource,
+  /console\.(?:log|error)\([^)]*(?:process\.env|ownerUserId|providerChannelId|serviceRoleKey|NEXT_PUBLIC_SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY|accessToken|refreshToken|authorizationCode)/is,
+  "command-only smoke helper does not print env values, owner ids, provider channel ids, secrets, or token material"
+);
+assert.doesNotMatch(
+  commandSmokeSource,
+  /localStorage\.|indexedDB\.|sessionStorage\.|youtube\.googleapis|OAuth2Client|GoogleAuth|from\s+["']googleapis["']|require\(["']googleapis["']\)|refresh_token\s*[:=]|access_token\s*[:=]|authorization_code\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i,
+  "command-only smoke helper avoids browser storage, Google API calls, and raw token material"
+);
+
+const commandCheck = spawnSync(process.execPath, [commandSmokePath, "--check-env-only", "--json"], {
+  cwd: root,
+  encoding: "utf8",
+  env: {
+    PATH: process.env.PATH,
+    SystemRoot: process.env.SystemRoot,
+    ComSpec: process.env.ComSpec
+  }
+});
+assert.equal(commandCheck.status, 2, "command-only smoke helper exits with a blocker code when required env is absent");
+const commandCheckOutput = JSON.parse(commandCheck.stdout);
+assert.equal(
+  commandCheckOutput.status,
+  "blocked-missing-env-or-fixture-references",
+  "command-only smoke helper reports a sanitized blocker when env or fixture references are missing"
+);
+assert.deepEqual(
+  commandCheckOutput.missingEnvReferences,
+  ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"],
+  "command-only smoke helper reports missing env reference names only"
+);
+assert.ok(
+  !("ownerUserId" in commandCheckOutput) && !("providerChannelId" in commandCheckOutput),
+  "command-only smoke helper omits owner and provider channel identifiers from sanitized output"
+);
+
+const placeholderCheck = spawnSync(process.execPath, [commandSmokePath, "--check-env-only", "--json"], {
+  cwd: root,
+  encoding: "utf8",
+  env: {
+    PATH: process.env.PATH,
+    SystemRoot: process.env.SystemRoot,
+    ComSpec: process.env.ComSpec,
+    NEXT_PUBLIC_SUPABASE_URL: "<set locally; do not paste value>",
+    ["SUPABASE_SERVICE_ROLE_KEY"]: "<set locally; do not paste value>",
+    YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED: "0",
+    YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID: "<safe owner user id; do not paste back>",
+    YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID: "smoke-post-pr347-placeholder",
+    YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID: "<safe test provider channel id; do not paste back>"
+  }
+});
+assert.equal(placeholderCheck.status, 2, "command-only smoke helper blocks literal placeholder values");
+const placeholderCheckOutput = JSON.parse(placeholderCheck.stdout);
+assert.equal(
+  placeholderCheckOutput.status,
+  "blocked-placeholder-env-or-fixture-references",
+  "command-only smoke helper reports placeholder values as a sanitized blocker"
+);
+assert.deepEqual(
+  placeholderCheckOutput.placeholderReferences,
+  [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID",
+    "YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"
+  ],
+  "command-only smoke helper reports placeholder reference names only"
 );
 
 const foundation = loadTsModule(foundationPath);
@@ -613,6 +703,60 @@ for (const fragment of [
   "No safe live YouTube OAuth smoke"
 ]) {
   assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records post-PR346 live service-role smoke gate: ${fragment}`);
+}
+
+const postPr347OperatorLocalServiceRoleSmokeCommandGate =
+  foundation.youtubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGate;
+
+assert.deepEqual(
+  postPr347OperatorLocalServiceRoleSmokeCommandGate.prerequisitePostPr346LiveServiceRoleSmokeGate,
+  {
+    pullRequest: "#347",
+    mergeCommit: "1f5aa57527ea22b6ef6e6a67ea0e0668070e6dd1",
+    previousPreviewHead: "2e68c0c58f6766d02248b585975833a80aab1ac3",
+    status: "post-pr346-service-role-smoke-gate-merged"
+  },
+  "post-PR347 operator-local command gate records PR #347 prerequisite"
+);
+assert.equal(
+  postPr347OperatorLocalServiceRoleSmokeCommandGate.placeholderGuard,
+  "blocks-literal-placeholder-values",
+  "post-PR347 command gate records placeholder guard"
+);
+assert.deepEqual(
+  postPr347OperatorLocalServiceRoleSmokeCommandGate.commandMissingEnvReferences,
+  ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+  "post-PR347 command gate records missing env reference names only"
+);
+assert.equal(
+  postPr347OperatorLocalServiceRoleSmokeCommandGate.commandCheckState,
+  "blocked-missing-env-or-fixture-references",
+  "post-PR347 command check records sanitized env blocker"
+);
+assert.equal(
+  postPr347OperatorLocalServiceRoleSmokeCommandGate.commandExecuteState,
+  "blocked-missing-env-or-fixture-references",
+  "post-PR347 command execute records sanitized env blocker"
+);
+assert.equal(
+  postPr347OperatorLocalServiceRoleSmokeCommandGate.actualServiceRoleSmoke,
+  "not-run-blocked-pending-operator-env-reference-presence",
+  "post-PR347 command gate blocks actual smoke when operator env references are missing"
+);
+
+for (const fragment of [
+  "PR #347",
+  "1f5aa57527ea22b6ef6e6a67ea0e0668070e6dd1",
+  "post-pr347-operator-local-service-role-smoke-command-gate",
+  "present-in-operator-session",
+  "blocks-literal-placeholder-values",
+  "blocked-missing-env-or-fixture-references",
+  "not-run-blocked-pending-operator-env-reference-presence",
+  "No service-role smoke execution",
+  "No Google API live smoke",
+  "No safe live YouTube OAuth smoke"
+]) {
+  assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records post-PR347 operator-local command gate: ${fragment}`);
 }
 
 assert.match(taskSource, /PR #330.*70ff213/i, "task.md records PR #330 merge premise");

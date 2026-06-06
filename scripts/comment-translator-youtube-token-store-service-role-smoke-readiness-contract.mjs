@@ -93,7 +93,8 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGateContract",
   "YouTubeEncryptedTokenStorePostPr348OperatorLocalServiceRoleSmokeRerunGateContract",
   "YouTubeEncryptedTokenStorePostPr349OperatorLocalServiceRoleSmokeRerunGateContract",
-  "YouTubeEncryptedTokenStorePostPr350OperatorLocalServiceRoleSmokeRerunGateContract"
+  "YouTubeEncryptedTokenStorePostPr350OperatorLocalServiceRoleSmokeRerunGateContract",
+  "YouTubeEncryptedTokenStorePostPr351OperatorLocalServiceRoleSmokeSuccessEvidenceContract"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -115,6 +116,7 @@ for (const exportedConstOrFunction of [
   "youtubeEncryptedTokenStorePostPr348OperatorLocalServiceRoleSmokeRerunGate",
   "youtubeEncryptedTokenStorePostPr349OperatorLocalServiceRoleSmokeRerunGate",
   "youtubeEncryptedTokenStorePostPr350OperatorLocalServiceRoleSmokeRerunGate",
+  "youtubeEncryptedTokenStorePostPr351OperatorLocalServiceRoleSmokeSuccessEvidence",
   "assessYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGate",
   "createYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGateSummary",
   "createYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGateSummary",
@@ -122,7 +124,8 @@ for (const exportedConstOrFunction of [
   "createYouTubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGateSummary",
   "createYouTubeEncryptedTokenStorePostPr348OperatorLocalServiceRoleSmokeRerunGateSummary",
   "createYouTubeEncryptedTokenStorePostPr349OperatorLocalServiceRoleSmokeRerunGateSummary",
-  "createYouTubeEncryptedTokenStorePostPr350OperatorLocalServiceRoleSmokeRerunGateSummary"
+  "createYouTubeEncryptedTokenStorePostPr350OperatorLocalServiceRoleSmokeRerunGateSummary",
+  "createYouTubeEncryptedTokenStorePostPr351OperatorLocalServiceRoleSmokeSuccessEvidenceSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -987,6 +990,86 @@ for (const fragment of [
   assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records post-PR350 rerun gate: ${fragment}`);
 }
 
+const postPr351OperatorLocalServiceRoleSmokeSuccessEvidence =
+  foundation.youtubeEncryptedTokenStorePostPr351OperatorLocalServiceRoleSmokeSuccessEvidence;
+
+assert.deepEqual(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.prerequisitePostPr350OperatorLocalServiceRoleSmokeRerunGate,
+  {
+    pullRequest: "#351",
+    mergeCommit: "5b63d103f0488f64c730c35a37460b159e7729eb",
+    previousPreviewHead: "02ff599743b9d33c2289477439f978233d6a5741",
+    status: "post-pr350-operator-local-service-role-smoke-rerun-gate-merged"
+  },
+  "post-PR351 success evidence records PR #351 prerequisite"
+);
+assert.equal(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.commandCheckState,
+  "ready-for-bounded-service-role-smoke-command",
+  "post-PR351 success evidence records ready command check"
+);
+assert.equal(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.commandExecuteState,
+  "passed",
+  "post-PR351 success evidence records passed command execute"
+);
+assert.equal(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.persistenceStatus,
+  "persisted",
+  "post-PR351 success evidence records persistence success"
+);
+assert.equal(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.readStatus,
+  "available",
+  "post-PR351 success evidence records sanitized available read status"
+);
+assert.equal(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.credentialReferenceId,
+  "smoke-pr351-local-20260606a",
+  "post-PR351 success evidence records only the opaque non-secret credential reference id"
+);
+assert.equal(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.googleApiLiveCall,
+  "not-run",
+  "post-PR351 success evidence does not run Google API live calls"
+);
+assert.equal(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.youtubeOAuthLiveSmoke,
+  "not-run",
+  "post-PR351 success evidence does not run YouTube OAuth live smoke"
+);
+assert.equal(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.remoteMigrationApply,
+  "not-run",
+  "post-PR351 success evidence does not apply remote migrations"
+);
+assert.equal(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.migrationListState,
+  "not-recorded-in-shared-success-output",
+  "post-PR351 success evidence does not claim linked migration list success without shared output"
+);
+assert.equal(
+  postPr351OperatorLocalServiceRoleSmokeSuccessEvidence.dryRunState,
+  "not-recorded-in-shared-success-output",
+  "post-PR351 success evidence does not claim linked dry-run success without shared output"
+);
+
+for (const fragment of [
+  "PR #351",
+  "5b63d103f0488f64c730c35a37460b159e7729eb",
+  "post-pr351-operator-local-service-role-smoke-success-evidence",
+  "ready-for-bounded-service-role-smoke-command",
+  "passed",
+  "persisted",
+  "available",
+  "smoke-pr351-local-20260606a",
+  "No Google API live smoke",
+  "No safe live YouTube OAuth smoke",
+  "No remote Supabase migration apply"
+]) {
+  assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records post-PR351 success evidence: ${fragment}`);
+}
+
 assert.match(taskSource, /PR #330.*70ff213/i, "task.md records PR #330 merge premise");
 assert.match(
   taskSource,
@@ -1034,6 +1117,12 @@ assert.match(
   taskSource,
   /post-pr350-operator-local-service-role-smoke-rerun-gate.*not-run-blocked-pending-operator-env-and-fixture-reference-presence/i,
   "task.md records post-PR350 service-role smoke rerun blocker"
+);
+assert.match(taskSource, /PR #351.*5b63d10/i, "task.md records PR #351 merge premise");
+assert.match(
+  taskSource,
+  /post-pr351-operator-local-service-role-smoke-success-evidence.*passed-bounded-service-role-status-persistence-smoke/i,
+  "task.md records post-PR351 bounded service-role smoke success evidence"
 );
 assert.match(
   taskSource,

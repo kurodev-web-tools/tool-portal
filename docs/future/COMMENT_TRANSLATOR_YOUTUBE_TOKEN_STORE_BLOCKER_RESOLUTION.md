@@ -875,6 +875,29 @@ Bounded service-role smoke execution checks recorded here:
 
 No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
 
+## Bounded Service-Role Smoke Execution Retry Gate After PR #344
+
+PR #344 is merged into `codex/comment-translator-preview` with merge commit `b9a708f76952174659b278ddfe0baea2c2598630`. The previous preview head was `6c81a7764194dc4997f7d40862d616fd02aed43d`. PR #344 recorded the bounded service-role smoke blocker.
+
+This follow-up records the `bounded-service-role-smoke-execution-retry-gate`. The retry has approval for env reference presence and bounded service-role smoke execution, but actual service-role smoke remains `not-run-blocked-pending-linked-metadata-and-env-reference-presence`: this worktree has no `supabase/.temp/project-ref`, no `supabase/.temp/linked-project.json`, no `NEXT_PUBLIC_SUPABASE_URL` env reference, and no `SUPABASE_SERVICE_ROLE_KEY` env reference. Presence was checked without reading or printing values.
+
+Bounded service-role smoke execution retry checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #344 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `b9a708f76952174659b278ddfe0baea2c2598630`. |
+| current-thread approval | `recorded-for-env-reference-presence-and-bounded-service-role-smoke-execution`. |
+| operator-local Supabase link metadata | `missing-in-worktree`. |
+| process env reference presence | `missing-in-codex-process`. |
+| dotenv env reference presence | `missing-in-worktree`. |
+| `supabase/.temp/` ignore state | `ignored-by-gitignore`. |
+| migration list | `not-run-blocked-missing-linked-project-ref`; CLI returned `Cannot find project ref`. |
+| dry-run | `not-run-blocked-missing-linked-project-ref`; CLI returned `Cannot find project ref`. |
+| actual service-role smoke | `not-run-blocked-pending-linked-metadata-and-env-reference-presence`. |
+| service-role smoke scope | `bounded-status-read-and-persistence-write-smoke-only`. |
+
+No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, and authorization code values must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

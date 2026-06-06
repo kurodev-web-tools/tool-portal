@@ -1020,6 +1020,32 @@ Post-PR350 operator-local service-role smoke rerun checks recorded here:
 
 No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run in this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, authorization code values, owner user id, and provider channel id must not be requested, printed, stored, or placed in PR text.
 
+## Post-PR351 Operator-Local Service-Role Smoke Success Evidence
+
+PR #351 is merged into `codex/comment-translator-preview` with merge commit `5b63d103f0488f64c730c35a37460b159e7729eb`. The previous preview head was `02ff599743b9d33c2289477439f978233d6a5741`. PR #351 recorded the post-PR350 service-role smoke rerun blocker before the operator-local environment and fixture references were restored.
+
+This follow-up records the `post-pr351-operator-local-service-role-smoke-success-evidence`. The operator-local PowerShell session later reran the bounded command helper and shared sanitized JSON output only. `--check-env-only` returned `ready-for-bounded-service-role-smoke-command`. `--execute` returned `passed`, with `persistenceStatus` `persisted`, `readStatus` `available`, opaque non-secret `credentialReferenceId` `smoke-pr351-local-20260606a`, provider `youtube`, scope label `youtube.readonly`, expiry status `active`, `revoked` false, and `reconnectRequired` false. The output policy remained `sanitized-metadata-only`; token values and refresh token values were never returned by design.
+
+Post-PR351 operator-local service-role smoke success checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #351 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `5b63d103f0488f64c730c35a37460b159e7729eb`. |
+| command helper | `bounded-service-role-status-persistence-smoke-command-only`. |
+| command check state | `ready-for-bounded-service-role-smoke-command`. |
+| command execute state | `passed`. |
+| actual service-role smoke | `passed-bounded-service-role-status-persistence-smoke`. |
+| persistence status | `persisted`. |
+| sanitized read status | `available`. |
+| opaque credential reference | `smoke-pr351-local-20260606a`; non-secret by contract. |
+| provider / scope | `youtube` / `youtube.readonly`. |
+| expiry / revocation / reconnect metadata | `active`, `false`, `false`. |
+| linked migration list | `not-recorded-in-shared-success-output`; do not infer fresh CLI state from this smoke evidence. |
+| linked dry-run | `not-recorded-in-shared-success-output`; do not infer fresh CLI state from this smoke evidence. |
+| service-role smoke scope | `bounded-status-read-and-persistence-write-smoke-only`. |
+
+No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. No refresh runtime or full revocation runtime is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, authorization code values, owner user id, and provider channel id must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

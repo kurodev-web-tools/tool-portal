@@ -16,6 +16,7 @@ const taskPath = "task.md";
 const pr321MergeCommit = "8dcbb969b25e027201a0c35770845d03a5aae813";
 const pr352MergeCommit = "6bf1951082e1ba90360e00be1b573a2bee33e5b1";
 const pr353MergeCommit = "4608faba38a220df8a9248d6885fe47c02bf0647";
+const pr354MergeCommit = "2a1436f13ccbaf641be4dbb9dbef12356bcd309f";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -141,6 +142,15 @@ assert.equal(
   "yes",
   "PR #353 merge commit is included in the current preview-derived branch"
 );
+assert.equal(
+  execSync(`git merge-base --is-ancestor ${pr354MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
+    cwd: root,
+    encoding: "utf8",
+    shell: "powershell.exe"
+  }).trim(),
+  "yes",
+  "PR #354 merge commit is included in the current preview-derived branch"
+);
 
 assert.doesNotMatch(uiWiringSource, /^import "server-only";/m, "UI wiring module is client-readable and does not import server-only");
 assert.doesNotMatch(
@@ -211,7 +221,8 @@ for (const exportedType of [
   "YouTubeOAuthCredentialStatusUiWiringViewModel",
   "YouTubeOAuthCredentialStatusUiWiringReadiness",
   "YouTubeOAuthCredentialStatusDisplayFollowupPostPr352Readiness",
-  "YouTubeOAuthCredentialStatusDisplayHumanReviewPostPr353Readiness"
+  "YouTubeOAuthCredentialStatusDisplayHumanReviewPostPr353Readiness",
+  "YouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence"
 ]) {
   assert.match(uiWiringSource, new RegExp(`export type ${exportedType}\\b`), `UI wiring exports ${exportedType}`);
 }
@@ -222,7 +233,8 @@ for (const exportedConstOrFunction of [
   "createYouTubeOAuthCredentialStatusUiWiringReadiness",
   "assessYouTubeOAuthCredentialStatusDisplayWiringReadiness",
   "assessYouTubeOAuthCredentialStatusDisplayFollowupPostPr352Readiness",
-  "assessYouTubeOAuthCredentialStatusDisplayHumanReviewPostPr353Readiness"
+  "assessYouTubeOAuthCredentialStatusDisplayHumanReviewPostPr353Readiness",
+  "assessYouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence"
 ]) {
   assert.match(
     uiWiringSource,
@@ -277,6 +289,11 @@ assert.equal(
   uiWiring.youtubeOAuthCredentialStatusUiWiringContract.postPr353HumanReviewReadiness,
   "human-review-only-after-pr353-display-followup-readiness",
   "UI wiring contract records the post-PR353 display follow-up as human-review-only"
+);
+assert.equal(
+  uiWiring.youtubeOAuthCredentialStatusUiWiringContract.postPr354HumanReviewResult,
+  "actual-human-review-result-after-pr354-readiness-non-secret-repo-local-evidence",
+  "UI wiring contract records the post-PR354 human review result as non-secret repo-local evidence"
 );
 assert.deepEqual(
   uiWiring.youtubeOAuthCredentialStatusUiWiringContract.forbiddenClientValues,
@@ -616,6 +633,94 @@ assert.deepEqual(
   "PR #353 human-review-only readiness remains blocked if the post-service-role display readiness is not recorded"
 );
 
+assert.deepEqual(
+  uiWiring.assessYouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence({
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 354,
+    prerequisiteMergeCommit: pr354MergeCommit,
+    previousReadiness: "ready-for-human-review-only-after-pr353-display-followup-readiness",
+    browserReview: "completed-non-secret-repo-local-evidence",
+    displayWiringStage: "display-ui-wiring-implemented-after-pr321-readiness",
+    clientPayloadSource: "new-client-payload-credentialReferenceId-source",
+    serverAction: "getYouTubeOAuthCredentialStatusAction",
+    observedFallbackReason: "auth-unavailable"
+  }),
+  {
+    status: "human-review-completed-after-pr354-readiness",
+    surface: "/tools/comment-translator",
+    browserUrl: "http://localhost:3000/tools/comment-translator/",
+    pageTitle: "Kuro Live Comment Translator | Kuro Stream Kit",
+    prerequisitePullRequest: 354,
+    prerequisiteMergeCommit: pr354MergeCommit,
+    previousReadiness: "ready-for-human-review-only-after-pr353-display-followup-readiness",
+    browserReview: "completed-non-secret-repo-local-evidence",
+    displayWiringStage: "display-ui-wiring-implemented-after-pr321-readiness",
+    clientPayloadSource: "new-client-payload-credentialReferenceId-source",
+    serverAction: "getYouTubeOAuthCredentialStatusAction",
+    renderedResult: "meaningful-app-content-no-nextjs-framework-overlay",
+    consoleResult: "no-warn-or-error-observed",
+    interactionResult: "credential-status-refresh-clicked-once-no-runtime-error",
+    observedFallbackReason: "auth-unavailable",
+    fallbackBoundary: "sanitized-fallback-not-secret-bearing-failure",
+    clientReadableValues: ["opaqueCredentialReferenceId", "sanitizedCredentialStatusMetadata"],
+    safeStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
+    forbiddenExposureScan: [
+      "no-service-role-marker",
+      "no-service-role-env-reference",
+      "no-oauth-access-token-marker",
+      "no-oauth-refresh-token-marker",
+      "no-oauth-authorization-code-marker",
+      "no-private-key-marker",
+      "no-owner-user-id-value",
+      "no-provider-channel-id-value"
+    ],
+    visualObservation: "credential-reference-wraps-inside-left-panel-without-obvious-overlap-or-broken-layout",
+    visualFollowupBoundary: "non-blocking-unless-future-ui-text-layout-or-accessibility-pr",
+    storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+    liveProviderBoundary:
+      "no-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-or-full-revocation-runtime",
+    remoteMutationBoundary: "no-remote-supabase-mutation",
+    nextPrConditions: [
+      "separate-ui-text-layout-or-accessibility-follow-up-only-if-human-review-finds-a-specific-issue",
+      "run-width-checks-for-any-future-ui-text-layout-or-css-follow-up",
+      "keep-client-readable-values-to-opaque-credentialReferenceId-and-sanitized-status-metadata"
+    ]
+  },
+  "PR #354 actual human review result records non-secret repo-local evidence without new UI, storage, live provider work, or remote mutation"
+);
+
+assert.deepEqual(
+  uiWiring.assessYouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence({
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 354,
+    prerequisiteMergeCommit: pr354MergeCommit,
+    previousReadiness: "blocked-or-not-reviewed",
+    browserReview: "not-completed-or-secret-bearing",
+    displayWiringStage: "display-ui-wiring-implemented-after-pr321-readiness",
+    clientPayloadSource: "new-client-payload-credentialReferenceId-source",
+    serverAction: "getYouTubeOAuthCredentialStatusAction",
+    observedFallbackReason: "auth-unavailable"
+  }),
+  {
+    status: "blocked-pr354-human-review-result-missing-readiness-or-safe-evidence",
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 354,
+    prerequisiteMergeCommit: pr354MergeCommit,
+    previousReadiness: "blocked-or-not-reviewed",
+    browserReview: "not-completed-or-secret-bearing",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "post-pr354-human-review-result-requires-pr353-readiness-and-non-secret-browser-evidence",
+    nextPrConditions: [
+      "complete-human-review-against-existing-pr321-display-wiring",
+      "record-only-non-secret-repo-local-evidence",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      "do-not-run-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-full-revocation-runtime-or-remote-supabase-mutation"
+    ]
+  },
+  "PR #354 result evidence stays blocked when readiness or safe evidence is missing"
+);
+
 assert.match(statusBoundarySource, /credential-status-metadata-only/, "server-only status boundary remains metadata-only");
 assert.match(statusActionSource, /getYouTubeOAuthCredentialStatusAction/, "existing server action remains the readiness target");
 assert.match(statusActionSource, /YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED/, "server action preserves emergency disable boundary");
@@ -623,6 +728,7 @@ assert.match(taskSource, /PR #321.*merge/i, "task.md records the PR #321 merge p
 assert.match(taskSource, /8dcbb969b25e027201a0c35770845d03a5aae813/, "task.md records the PR #321 merge commit");
 assert.match(taskSource, /PR #352.*6bf1951/i, "task.md records the PR #352 merge premise");
 assert.match(taskSource, /PR #353.*4608faba/i, "task.md records the PR #353 merge premise");
+assert.match(taskSource, /PR #354.*2a1436f/i, "task.md records the PR #354 merge premise");
 assert.match(
   taskSource,
   /credential status display follow-up.*readiness|display follow-up.*credential status.*readiness/i,
@@ -632,6 +738,17 @@ assert.match(
   taskSource,
   /credential status display human-review-only|human-review-only.*credential status display/i,
   "task.md records the post-PR353 credential status display human-review-only result"
+);
+assert.match(
+  taskSource,
+  /credential status display actual human-review evidence|actual human-review evidence.*credential status display/i,
+  "task.md records the post-PR354 credential status display actual human-review evidence"
+);
+assert.match(taskSource, /auth-unavailable/i, "task.md records auth-unavailable as the sanitized fallback observed in human review");
+assert.match(
+  taskSource,
+  /Credential reference.*wraps|credentialReference.*wrap/i,
+  "task.md records the non-blocking credential reference wrapping visual observation"
 );
 assert.match(taskSource, /credential status display UI wiring/i, "task.md records this display wiring implementation");
 assert.match(taskSource, /390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i, "task.md records required width verification for UI changes");

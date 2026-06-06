@@ -210,6 +210,65 @@ export type YouTubeOAuthCredentialStatusDisplayHumanReviewPostPr353Readiness =
       ];
     };
 
+export type YouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence =
+  | {
+      status: "human-review-completed-after-pr354-readiness";
+      surface: "/tools/comment-translator";
+      browserUrl: "http://localhost:3000/tools/comment-translator/";
+      pageTitle: "Kuro Live Comment Translator | Kuro Stream Kit";
+      prerequisitePullRequest: 354;
+      prerequisiteMergeCommit: string;
+      previousReadiness: "ready-for-human-review-only-after-pr353-display-followup-readiness";
+      browserReview: "completed-non-secret-repo-local-evidence";
+      displayWiringStage: "display-ui-wiring-implemented-after-pr321-readiness";
+      clientPayloadSource: "new-client-payload-credentialReferenceId-source";
+      serverAction: "getYouTubeOAuthCredentialStatusAction";
+      renderedResult: "meaningful-app-content-no-nextjs-framework-overlay";
+      consoleResult: "no-warn-or-error-observed";
+      interactionResult: "credential-status-refresh-clicked-once-no-runtime-error";
+      observedFallbackReason: "auth-unavailable";
+      fallbackBoundary: "sanitized-fallback-not-secret-bearing-failure";
+      clientReadableValues: readonly ["opaqueCredentialReferenceId", "sanitizedCredentialStatusMetadata"];
+      safeStates: readonly YouTubeOAuthCredentialStatusUiStateId[];
+      forbiddenExposureScan: readonly [
+        "no-service-role-marker",
+        "no-service-role-env-reference",
+        "no-oauth-access-token-marker",
+        "no-oauth-refresh-token-marker",
+        "no-oauth-authorization-code-marker",
+        "no-private-key-marker",
+        "no-owner-user-id-value",
+        "no-provider-channel-id-value"
+      ];
+      visualObservation: "credential-reference-wraps-inside-left-panel-without-obvious-overlap-or-broken-layout";
+      visualFollowupBoundary: "non-blocking-unless-future-ui-text-layout-or-accessibility-pr";
+      storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change";
+      liveProviderBoundary: "no-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-or-full-revocation-runtime";
+      remoteMutationBoundary: "no-remote-supabase-mutation";
+      nextPrConditions: readonly [
+        "separate-ui-text-layout-or-accessibility-follow-up-only-if-human-review-finds-a-specific-issue",
+        "run-width-checks-for-any-future-ui-text-layout-or-css-follow-up",
+        "keep-client-readable-values-to-opaque-credentialReferenceId-and-sanitized-status-metadata"
+      ];
+    }
+  | {
+      status: "blocked-pr354-human-review-result-missing-readiness-or-safe-evidence";
+      surface: "/tools/comment-translator";
+      prerequisitePullRequest: 354;
+      prerequisiteMergeCommit: string;
+      previousReadiness: "blocked-or-not-reviewed";
+      browserReview: "not-completed-or-secret-bearing";
+      currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled";
+      blocker: "post-pr354-human-review-result-requires-pr353-readiness-and-non-secret-browser-evidence";
+      nextPrConditions: readonly [
+        "complete-human-review-against-existing-pr321-display-wiring",
+        "record-only-non-secret-repo-local-evidence",
+        "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+        "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+        "do-not-run-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-full-revocation-runtime-or-remote-supabase-mutation"
+      ];
+    };
+
 export const youtubeOAuthCredentialStatusUiWiringContract = {
   implementationStage: "credential-status-display-ui-wiring-implemented",
   clientReadableInput: "sanitized-credential-status-metadata-only",
@@ -220,6 +279,7 @@ export const youtubeOAuthCredentialStatusUiWiringContract = {
   postServiceRoleSmokeDisplayFollowup:
     "readiness-only-after-pr352-bounded-service-role-status-persistence-smoke-success",
   postPr353HumanReviewReadiness: "human-review-only-after-pr353-display-followup-readiness",
+  postPr354HumanReviewResult: "actual-human-review-result-after-pr354-readiness-non-secret-repo-local-evidence",
   emergencyDisableEnv: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
   forbiddenClientValues: [
     "encrypted-row",
@@ -518,6 +578,93 @@ export function assessYouTubeOAuthCredentialStatusDisplayHumanReviewPostPr353Rea
       "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
       "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
       "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary",
+      "do-not-run-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-full-revocation-runtime-or-remote-supabase-mutation"
+    ]
+  };
+}
+
+export function assessYouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence({
+  surface,
+  prerequisitePullRequest,
+  prerequisiteMergeCommit,
+  previousReadiness,
+  browserReview,
+  displayWiringStage,
+  clientPayloadSource,
+  serverAction,
+  observedFallbackReason
+}: {
+  surface: "/tools/comment-translator";
+  prerequisitePullRequest: 354;
+  prerequisiteMergeCommit: string;
+  previousReadiness: "ready-for-human-review-only-after-pr353-display-followup-readiness" | "blocked-or-not-reviewed";
+  browserReview: "completed-non-secret-repo-local-evidence" | "not-completed-or-secret-bearing";
+  displayWiringStage: "display-ui-wiring-implemented-after-pr321-readiness";
+  clientPayloadSource: "new-client-payload-credentialReferenceId-source";
+  serverAction: "getYouTubeOAuthCredentialStatusAction";
+  observedFallbackReason: "auth-unavailable";
+}): YouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence {
+  if (
+    previousReadiness === "ready-for-human-review-only-after-pr353-display-followup-readiness" &&
+    browserReview === "completed-non-secret-repo-local-evidence"
+  ) {
+    return {
+      status: "human-review-completed-after-pr354-readiness",
+      surface,
+      browserUrl: "http://localhost:3000/tools/comment-translator/",
+      pageTitle: "Kuro Live Comment Translator | Kuro Stream Kit",
+      prerequisitePullRequest,
+      prerequisiteMergeCommit,
+      previousReadiness,
+      browserReview,
+      displayWiringStage,
+      clientPayloadSource,
+      serverAction,
+      renderedResult: "meaningful-app-content-no-nextjs-framework-overlay",
+      consoleResult: "no-warn-or-error-observed",
+      interactionResult: "credential-status-refresh-clicked-once-no-runtime-error",
+      observedFallbackReason,
+      fallbackBoundary: "sanitized-fallback-not-secret-bearing-failure",
+      clientReadableValues: ["opaqueCredentialReferenceId", "sanitizedCredentialStatusMetadata"],
+      safeStates,
+      forbiddenExposureScan: [
+        "no-service-role-marker",
+        "no-service-role-env-reference",
+        "no-oauth-access-token-marker",
+        "no-oauth-refresh-token-marker",
+        "no-oauth-authorization-code-marker",
+        "no-private-key-marker",
+        "no-owner-user-id-value",
+        "no-provider-channel-id-value"
+      ],
+      visualObservation: "credential-reference-wraps-inside-left-panel-without-obvious-overlap-or-broken-layout",
+      visualFollowupBoundary: "non-blocking-unless-future-ui-text-layout-or-accessibility-pr",
+      storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      liveProviderBoundary:
+        "no-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-or-full-revocation-runtime",
+      remoteMutationBoundary: "no-remote-supabase-mutation",
+      nextPrConditions: [
+        "separate-ui-text-layout-or-accessibility-follow-up-only-if-human-review-finds-a-specific-issue",
+        "run-width-checks-for-any-future-ui-text-layout-or-css-follow-up",
+        "keep-client-readable-values-to-opaque-credentialReferenceId-and-sanitized-status-metadata"
+      ]
+    };
+  }
+
+  return {
+    status: "blocked-pr354-human-review-result-missing-readiness-or-safe-evidence",
+    surface,
+    prerequisitePullRequest,
+    prerequisiteMergeCommit,
+    previousReadiness: "blocked-or-not-reviewed",
+    browserReview: "not-completed-or-secret-bearing",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "post-pr354-human-review-result-requires-pr353-readiness-and-non-secret-browser-evidence",
+    nextPrConditions: [
+      "complete-human-review-against-existing-pr321-display-wiring",
+      "record-only-non-secret-repo-local-evidence",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
       "do-not-run-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-full-revocation-runtime-or-remote-supabase-mutation"
     ]
   };

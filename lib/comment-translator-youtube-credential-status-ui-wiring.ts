@@ -269,6 +269,54 @@ export type YouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidenc
       ];
     };
 
+export type YouTubeOAuthCredentialStatusDisplayWidthReviewPostPr355Evidence =
+  | {
+      status: "width-layout-review-completed-after-pr355-human-review-result";
+      surface: "/tools/comment-translator";
+      browserUrl: "http://127.0.0.1:3210/tools/comment-translator/";
+      pageTitle: "Kuro Live Comment Translator | Kuro Stream Kit";
+      prerequisitePullRequest: 355;
+      prerequisiteMergeCommit: string;
+      previewMergeInclusion: "confirmed-in-codex-comment-translator-preview";
+      previousHumanReview: "human-review-completed-after-pr354-readiness";
+      widthReview: "completed-non-secret-repo-local-text-evidence";
+      reviewedWidthsPx: readonly [390, 820, 1024, 1280, 1366];
+      interactionResult: "credential-status-refresh-clicked-at-each-width-and-returned-enabled";
+      observedFallbackReason: "auth-unavailable";
+      fallbackBoundary: "sanitized-fallback-not-secret-bearing-failure";
+      layoutResult: "credential-reference-wraps-inside-container-no-overflow-overlap-or-broken-layout";
+      wrappingBoundary: "acceptable-only-while-contained-with-no-overlap-or-broken-layout";
+      consoleResult: "no-warn-or-error-observed";
+      clientReadableValues: readonly ["opaqueCredentialReferenceId", "sanitizedCredentialStatusMetadata"];
+      safeStates: readonly YouTubeOAuthCredentialStatusUiStateId[];
+      storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change";
+      liveProviderBoundary: "no-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-or-full-revocation-runtime";
+      remoteMutationBoundary: "no-remote-supabase-mutation";
+      nextPrConditions: readonly [
+        "no-ui-follow-up-needed-unless-a-specific-width-layout-or-accessibility-issue-is-found",
+        "keep-client-readable-values-to-opaque-credentialReferenceId-and-sanitized-status-metadata",
+        "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+      ];
+    }
+  | {
+      status: "blocked-pr355-width-layout-review-missing-merge-or-safe-evidence";
+      surface: "/tools/comment-translator";
+      prerequisitePullRequest: 355;
+      prerequisiteMergeCommit: string;
+      previewMergeInclusion: "not-confirmed";
+      previousHumanReview: "blocked-or-not-reviewed";
+      widthReview: "not-completed-or-secret-bearing";
+      currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled";
+      blocker: "post-pr355-width-layout-review-requires-merge-inclusion-pr354-human-review-result-and-non-secret-width-evidence";
+      nextPrConditions: readonly [
+        "confirm-pr355-merge-commit-in-preview",
+        "complete-width-checks-at-390-820-1024-1280-1366px",
+        "record-only-non-secret-repo-local-text-evidence",
+        "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+        "do-not-run-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-full-revocation-runtime-or-remote-supabase-mutation"
+      ];
+    };
+
 export const youtubeOAuthCredentialStatusUiWiringContract = {
   implementationStage: "credential-status-display-ui-wiring-implemented",
   clientReadableInput: "sanitized-credential-status-metadata-only",
@@ -280,6 +328,7 @@ export const youtubeOAuthCredentialStatusUiWiringContract = {
     "readiness-only-after-pr352-bounded-service-role-status-persistence-smoke-success",
   postPr353HumanReviewReadiness: "human-review-only-after-pr353-display-followup-readiness",
   postPr354HumanReviewResult: "actual-human-review-result-after-pr354-readiness-non-secret-repo-local-evidence",
+  postPr355WidthLayoutReview: "width-layout-review-after-pr355-human-review-result-no-ui-followup-needed",
   emergencyDisableEnv: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
   forbiddenClientValues: [
     "encrypted-row",
@@ -665,6 +714,85 @@ export function assessYouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr
       "record-only-non-secret-repo-local-evidence",
       "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
       "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      "do-not-run-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-full-revocation-runtime-or-remote-supabase-mutation"
+    ]
+  };
+}
+
+export function assessYouTubeOAuthCredentialStatusDisplayWidthReviewPostPr355Evidence({
+  surface,
+  prerequisitePullRequest,
+  prerequisiteMergeCommit,
+  previewMergeInclusion,
+  previousHumanReview,
+  widthReview,
+  layoutResult,
+  observedFallbackReason
+}: {
+  surface: "/tools/comment-translator";
+  prerequisitePullRequest: 355;
+  prerequisiteMergeCommit: string;
+  previewMergeInclusion: "confirmed-in-codex-comment-translator-preview" | "not-confirmed";
+  previousHumanReview: "human-review-completed-after-pr354-readiness" | "blocked-or-not-reviewed";
+  widthReview: "completed-non-secret-repo-local-text-evidence" | "not-completed-or-secret-bearing";
+  layoutResult:
+    | "credential-reference-wraps-inside-container-no-overflow-overlap-or-broken-layout"
+    | "issue-found-needs-separate-ui-follow-up";
+  observedFallbackReason: "auth-unavailable";
+}): YouTubeOAuthCredentialStatusDisplayWidthReviewPostPr355Evidence {
+  if (
+    previewMergeInclusion === "confirmed-in-codex-comment-translator-preview" &&
+    previousHumanReview === "human-review-completed-after-pr354-readiness" &&
+    widthReview === "completed-non-secret-repo-local-text-evidence" &&
+    layoutResult === "credential-reference-wraps-inside-container-no-overflow-overlap-or-broken-layout"
+  ) {
+    return {
+      status: "width-layout-review-completed-after-pr355-human-review-result",
+      surface,
+      browserUrl: "http://127.0.0.1:3210/tools/comment-translator/",
+      pageTitle: "Kuro Live Comment Translator | Kuro Stream Kit",
+      prerequisitePullRequest,
+      prerequisiteMergeCommit,
+      previewMergeInclusion,
+      previousHumanReview,
+      widthReview,
+      reviewedWidthsPx: [390, 820, 1024, 1280, 1366],
+      interactionResult: "credential-status-refresh-clicked-at-each-width-and-returned-enabled",
+      observedFallbackReason,
+      fallbackBoundary: "sanitized-fallback-not-secret-bearing-failure",
+      layoutResult,
+      wrappingBoundary: "acceptable-only-while-contained-with-no-overlap-or-broken-layout",
+      consoleResult: "no-warn-or-error-observed",
+      clientReadableValues: ["opaqueCredentialReferenceId", "sanitizedCredentialStatusMetadata"],
+      safeStates,
+      storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      liveProviderBoundary:
+        "no-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-or-full-revocation-runtime",
+      remoteMutationBoundary: "no-remote-supabase-mutation",
+      nextPrConditions: [
+        "no-ui-follow-up-needed-unless-a-specific-width-layout-or-accessibility-issue-is-found",
+        "keep-client-readable-values-to-opaque-credentialReferenceId-and-sanitized-status-metadata",
+        "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+      ]
+    };
+  }
+
+  return {
+    status: "blocked-pr355-width-layout-review-missing-merge-or-safe-evidence",
+    surface,
+    prerequisitePullRequest,
+    prerequisiteMergeCommit,
+    previewMergeInclusion: "not-confirmed",
+    previousHumanReview: "blocked-or-not-reviewed",
+    widthReview: "not-completed-or-secret-bearing",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker:
+      "post-pr355-width-layout-review-requires-merge-inclusion-pr354-human-review-result-and-non-secret-width-evidence",
+    nextPrConditions: [
+      "confirm-pr355-merge-commit-in-preview",
+      "complete-width-checks-at-390-820-1024-1280-1366px",
+      "record-only-non-secret-repo-local-text-evidence",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
       "do-not-run-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-full-revocation-runtime-or-remote-supabase-mutation"
     ]
   };

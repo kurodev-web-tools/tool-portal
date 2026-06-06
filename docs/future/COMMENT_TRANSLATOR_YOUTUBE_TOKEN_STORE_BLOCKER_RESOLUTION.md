@@ -970,6 +970,31 @@ Post-PR348 operator-local service-role smoke rerun checks recorded here:
 
 No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, authorization code values, owner user id, and provider channel id must not be requested, printed, stored, or placed in PR text.
 
+## Post-PR349 Operator-Local Service-Role Smoke Rerun Gate
+
+PR #349 is merged into `codex/comment-translator-preview` with merge commit `5f1e58c8fb4fc126b2fc8cb2457f7a5d3fcfd140`. The previous preview head was `03bdc0c4383960cc31bc28e8d623ef3ebcd49627`. PR #349 recorded the post-PR348 service-role smoke rerun blocker.
+
+This follow-up records the `post-pr349-operator-local-service-role-smoke-rerun-gate`. In this Codex worktree, Supabase CLI link metadata is `missing-in-codex-worktree`; existence-only checks for `supabase/.temp/project-ref` and `supabase/.temp/linked-project.json` were false, and no values were read or displayed. `npx supabase migration list --linked` and `npx supabase db push --linked --dry-run` both stop at `not-run-blocked-missing-linked-project-ref`. The command-only smoke helper was rerun after local dependencies were installed; sanitized output for both `--check-env-only` and `--execute` is `blocked-missing-env-or-fixture-references` with missing env reference names `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`, plus missing fixture reference names only. Actual service-role smoke remains `not-run-blocked-pending-operator-env-and-fixture-reference-presence`.
+
+Post-PR349 operator-local service-role smoke rerun checks recorded here:
+
+| Check | State |
+| --- | --- |
+| PR #349 merge state verified | `origin/codex/comment-translator-preview` contains merge commit `5f1e58c8fb4fc126b2fc8cb2457f7a5d3fcfd140`. |
+| worktree Supabase link metadata | `missing-in-codex-worktree`; values were not read or displayed. |
+| `supabase/.temp/` ignore state | `ignored-by-gitignore`. |
+| linked migration list | `not-run-blocked-missing-linked-project-ref`. |
+| linked dry-run | `not-run-blocked-missing-linked-project-ref`. |
+| command helper | `bounded-service-role-status-persistence-smoke-command-only`. |
+| command check state | `blocked-missing-env-or-fixture-references`. |
+| command execute state | `blocked-missing-env-or-fixture-references`. |
+| command missing env references | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`; names only. |
+| command missing fixture references | `YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID`, `YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID`, `YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID`; names only. |
+| actual service-role smoke | `not-run-blocked-pending-operator-env-and-fixture-reference-presence`. |
+| service-role smoke scope | `bounded-status-read-and-persistence-write-smoke-only`. |
+
+No remote Supabase migration apply is run in this PR. No remote Supabase migration history repair is run in this PR. No service-role smoke execution is run in this PR. No Google API live smoke is run. No safe live YouTube OAuth smoke is run. Client-readable output remains limited to opaque non-secret `credentialReferenceId` and sanitized credential status metadata. Service-role key values, managed secret values, OAuth access token values, OAuth refresh token values, authorization code values, owner user id, and provider channel id must not be requested, printed, stored, or placed in PR text.
+
 ## Non-Goals
 
 - No OAuth token persistence.

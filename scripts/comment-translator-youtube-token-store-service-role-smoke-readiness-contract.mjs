@@ -85,7 +85,8 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGateInput",
   "YouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGateContract",
   "YouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGateAssessment",
-  "YouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGateContract"
+  "YouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGateContract",
+  "YouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGateContract"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -102,9 +103,11 @@ for (const exportedConstOrFunction of [
   "createYouTubeEncryptedTokenStorePostRemoteApplyServiceRoleSmokeGateSummary",
   "youtubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGate",
   "youtubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGate",
+  "youtubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGate",
   "assessYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGate",
   "createYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGateSummary",
-  "createYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGateSummary"
+  "createYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGateSummary",
+  "createYouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGateSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -555,6 +558,61 @@ for (const fragment of [
   "No safe live YouTube OAuth smoke"
 ]) {
   assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records bounded service-role smoke execution retry gate: ${fragment}`);
+}
+
+const postPr346LiveServiceRoleSmokeExecutionGate =
+  foundation.youtubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGate;
+
+assert.deepEqual(
+  postPr346LiveServiceRoleSmokeExecutionGate.prerequisitePostPr345ServiceRoleSmokeRecheck,
+  {
+    pullRequest: "#346",
+    mergeCommit: "2e68c0c58f6766d02248b585975833a80aab1ac3",
+    previousPreviewHead: "6992d3437e6dee3b27f8dc284ebfad2096332ed5",
+    status: "post-pr345-service-role-smoke-recheck-merged"
+  },
+  "post-PR346 live service-role smoke execution gate records PR #346 prerequisite"
+);
+assert.equal(
+  postPr346LiveServiceRoleSmokeExecutionGate.operatorLocalSupabaseLinkMetadata,
+  "present-in-worktree",
+  "post-PR346 live service-role smoke execution gate records present link metadata without reading values"
+);
+assert.equal(
+  postPr346LiveServiceRoleSmokeExecutionGate.processEnvReferencePresence,
+  "missing-in-codex-process",
+  "post-PR346 live service-role smoke execution gate records missing Codex process env references"
+);
+assert.equal(
+  postPr346LiveServiceRoleSmokeExecutionGate.migrationListState,
+  "account-preferences-and-youtube-migrations-local-remote-present",
+  "post-PR346 live service-role smoke execution gate records linked migration history"
+);
+assert.equal(
+  postPr346LiveServiceRoleSmokeExecutionGate.dryRunState,
+  "remote-database-up-to-date-no-pending-migrations",
+  "post-PR346 live service-role smoke execution gate records dry-run no-pending state"
+);
+assert.equal(
+  postPr346LiveServiceRoleSmokeExecutionGate.actualServiceRoleSmoke,
+  "not-run-blocked-pending-codex-process-env-reference-presence",
+  "post-PR346 live service-role smoke execution gate blocks actual smoke when Codex process env is missing"
+);
+
+for (const fragment of [
+  "PR #346",
+  "2e68c0c58f6766d02248b585975833a80aab1ac3",
+  "post-pr346-live-service-role-smoke-execution-gate",
+  "present-in-worktree",
+  "missing-in-codex-process",
+  "account-preferences-and-youtube-migrations-local-remote-present",
+  "remote-database-up-to-date-no-pending-migrations",
+  "not-run-blocked-pending-codex-process-env-reference-presence",
+  "No service-role smoke execution",
+  "No Google API live smoke",
+  "No safe live YouTube OAuth smoke"
+]) {
+  assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records post-PR346 live service-role smoke gate: ${fragment}`);
 }
 
 assert.match(taskSource, /PR #330.*70ff213/i, "task.md records PR #330 merge premise");

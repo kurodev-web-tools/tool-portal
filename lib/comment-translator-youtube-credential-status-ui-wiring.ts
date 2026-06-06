@@ -128,6 +128,41 @@ export type YouTubeOAuthCredentialStatusDisplayReadinessAfterPayloadSource =
       ];
     };
 
+export type YouTubeOAuthCredentialStatusDisplayFollowupPostPr352Readiness =
+  | {
+      status: "ready-for-credential-status-display-human-review-after-pr352-service-role-smoke-success";
+      surface: "/tools/comment-translator";
+      prerequisitePullRequest: 352;
+      prerequisiteMergeCommit: string;
+      serviceRoleSmokeResult: "passed-bounded-service-role-status-persistence-smoke";
+      displayWiringStage: "display-ui-wiring-implemented-after-pr321-readiness";
+      clientPayloadSource: "new-client-payload-credentialReferenceId-source";
+      serverAction: "getYouTubeOAuthCredentialStatusAction";
+      clientPayloadBoundary: "credentialReferenceId-and-sanitized-status-metadata-only";
+      safeStates: readonly YouTubeOAuthCredentialStatusUiStateId[];
+      storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change";
+      serverBoundary: "owner-authorization-and-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-preserved";
+      liveProviderBoundary: "no-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-or-full-revocation-runtime";
+      nextStep: "human-review-existing-display-wiring-or-plan-separate-ux-follow-up-with-width-checks";
+    }
+  | {
+      status: "blocked-pr352-display-followup-missing-bounded-service-role-smoke-success";
+      surface: "/tools/comment-translator";
+      prerequisitePullRequest: 352;
+      prerequisiteMergeCommit: string;
+      serviceRoleSmokeResult: "not-run-or-blocked";
+      currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled";
+      blocker: "bounded-service-role-status-persistence-smoke-success-required-before-display-followup-readiness";
+      nextPrConditions: readonly [
+        "record-sanitized-bounded-service-role-status-persistence-smoke-success",
+        "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+        "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+        "preserve-owner-authorization-before-status-read",
+        "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary",
+        "do-not-run-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-or-full-revocation-runtime"
+      ];
+    };
+
 export const youtubeOAuthCredentialStatusUiWiringContract = {
   implementationStage: "credential-status-display-ui-wiring-implemented",
   clientReadableInput: "sanitized-credential-status-metadata-only",
@@ -135,6 +170,8 @@ export const youtubeOAuthCredentialStatusUiWiringContract = {
   serverAction: "getYouTubeOAuthCredentialStatusAction",
   credentialReferenceClientPayload: "new-client-payload-credentialReferenceId-source",
   displayWiringStage: "display-ui-wiring-implemented-after-pr321-readiness",
+  postServiceRoleSmokeDisplayFollowup:
+    "readiness-only-after-pr352-bounded-service-role-status-persistence-smoke-success",
   emergencyDisableEnv: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED",
   forbiddenClientValues: [
     "encrypted-row",
@@ -308,6 +345,62 @@ export function assessYouTubeOAuthCredentialStatusDisplayReadinessAfterPayloadSo
       "preserve-owner-authorization-before-status-read",
       "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary",
       "defer-display-ui-wiring-to-separate-pr-after-readiness-pr-merge"
+    ]
+  };
+}
+
+export function assessYouTubeOAuthCredentialStatusDisplayFollowupPostPr352Readiness({
+  surface,
+  prerequisitePullRequest,
+  prerequisiteMergeCommit,
+  serviceRoleSmokeResult,
+  displayWiringStage,
+  clientPayloadSource,
+  serverAction
+}: {
+  surface: "/tools/comment-translator";
+  prerequisitePullRequest: 352;
+  prerequisiteMergeCommit: string;
+  serviceRoleSmokeResult: "passed-bounded-service-role-status-persistence-smoke" | "not-run-or-blocked";
+  displayWiringStage: "display-ui-wiring-implemented-after-pr321-readiness";
+  clientPayloadSource: "new-client-payload-credentialReferenceId-source";
+  serverAction: "getYouTubeOAuthCredentialStatusAction";
+}): YouTubeOAuthCredentialStatusDisplayFollowupPostPr352Readiness {
+  if (serviceRoleSmokeResult === "passed-bounded-service-role-status-persistence-smoke") {
+    return {
+      status: "ready-for-credential-status-display-human-review-after-pr352-service-role-smoke-success",
+      surface,
+      prerequisitePullRequest,
+      prerequisiteMergeCommit,
+      serviceRoleSmokeResult,
+      displayWiringStage,
+      clientPayloadSource,
+      serverAction,
+      clientPayloadBoundary: "credentialReferenceId-and-sanitized-status-metadata-only",
+      safeStates,
+      storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      serverBoundary: "owner-authorization-and-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-preserved",
+      liveProviderBoundary:
+        "no-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-or-full-revocation-runtime",
+      nextStep: "human-review-existing-display-wiring-or-plan-separate-ux-follow-up-with-width-checks"
+    };
+  }
+
+  return {
+    status: "blocked-pr352-display-followup-missing-bounded-service-role-smoke-success",
+    surface,
+    prerequisitePullRequest,
+    prerequisiteMergeCommit,
+    serviceRoleSmokeResult,
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "bounded-service-role-status-persistence-smoke-success-required-before-display-followup-readiness",
+    nextPrConditions: [
+      "record-sanitized-bounded-service-role-status-persistence-smoke-success",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+      "preserve-owner-authorization-before-status-read",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary",
+      "do-not-run-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-or-full-revocation-runtime"
     ]
   };
 }

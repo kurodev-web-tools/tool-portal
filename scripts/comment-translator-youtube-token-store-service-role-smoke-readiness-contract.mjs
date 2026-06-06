@@ -91,7 +91,8 @@ for (const exportedType of [
   "YouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGateContract",
   "YouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGateContract",
   "YouTubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGateContract",
-  "YouTubeEncryptedTokenStorePostPr348OperatorLocalServiceRoleSmokeRerunGateContract"
+  "YouTubeEncryptedTokenStorePostPr348OperatorLocalServiceRoleSmokeRerunGateContract",
+  "YouTubeEncryptedTokenStorePostPr349OperatorLocalServiceRoleSmokeRerunGateContract"
 ]) {
   assert.match(foundationSource, new RegExp(`export type ${exportedType}\\b`), `foundation exports ${exportedType}`);
 }
@@ -111,12 +112,14 @@ for (const exportedConstOrFunction of [
   "youtubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGate",
   "youtubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGate",
   "youtubeEncryptedTokenStorePostPr348OperatorLocalServiceRoleSmokeRerunGate",
+  "youtubeEncryptedTokenStorePostPr349OperatorLocalServiceRoleSmokeRerunGate",
   "assessYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGate",
   "createYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionGateSummary",
   "createYouTubeEncryptedTokenStoreBoundedServiceRoleSmokeExecutionRetryGateSummary",
   "createYouTubeEncryptedTokenStorePostPr346LiveServiceRoleSmokeExecutionGateSummary",
   "createYouTubeEncryptedTokenStorePostPr347OperatorLocalServiceRoleSmokeCommandGateSummary",
-  "createYouTubeEncryptedTokenStorePostPr348OperatorLocalServiceRoleSmokeRerunGateSummary"
+  "createYouTubeEncryptedTokenStorePostPr348OperatorLocalServiceRoleSmokeRerunGateSummary",
+  "createYouTubeEncryptedTokenStorePostPr349OperatorLocalServiceRoleSmokeRerunGateSummary"
 ]) {
   assert.match(
     foundationSource,
@@ -835,6 +838,79 @@ for (const fragment of [
   assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records post-PR348 rerun gate: ${fragment}`);
 }
 
+const postPr349OperatorLocalServiceRoleSmokeRerunGate =
+  foundation.youtubeEncryptedTokenStorePostPr349OperatorLocalServiceRoleSmokeRerunGate;
+
+assert.deepEqual(
+  postPr349OperatorLocalServiceRoleSmokeRerunGate.prerequisitePostPr348OperatorLocalServiceRoleSmokeRerunGate,
+  {
+    pullRequest: "#349",
+    mergeCommit: "5f1e58c8fb4fc126b2fc8cb2457f7a5d3fcfd140",
+    previousPreviewHead: "03bdc0c4383960cc31bc28e8d623ef3ebcd49627",
+    status: "post-pr348-operator-local-service-role-smoke-rerun-gate-merged"
+  },
+  "post-PR349 rerun gate records PR #349 prerequisite"
+);
+assert.equal(
+  postPr349OperatorLocalServiceRoleSmokeRerunGate.codexWorktreeSupabaseLinkMetadata,
+  "missing-in-codex-worktree",
+  "post-PR349 rerun gate records missing worktree-local Supabase link metadata"
+);
+assert.deepEqual(
+  postPr349OperatorLocalServiceRoleSmokeRerunGate.commandMissingEnvReferences,
+  ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"],
+  "post-PR349 rerun gate records missing env reference names only"
+);
+assert.deepEqual(
+  postPr349OperatorLocalServiceRoleSmokeRerunGate.commandMissingFixtureReferences,
+  [
+    "YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID",
+    "YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID",
+    "YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"
+  ],
+  "post-PR349 rerun gate records missing fixture reference names only"
+);
+assert.equal(
+  postPr349OperatorLocalServiceRoleSmokeRerunGate.migrationListState,
+  "not-run-blocked-missing-linked-project-ref",
+  "post-PR349 rerun gate records linked migration list blocker"
+);
+assert.equal(
+  postPr349OperatorLocalServiceRoleSmokeRerunGate.dryRunState,
+  "not-run-blocked-missing-linked-project-ref",
+  "post-PR349 rerun gate records linked dry-run blocker"
+);
+assert.equal(
+  postPr349OperatorLocalServiceRoleSmokeRerunGate.commandCheckState,
+  "blocked-missing-env-or-fixture-references",
+  "post-PR349 rerun command check records sanitized blocker"
+);
+assert.equal(
+  postPr349OperatorLocalServiceRoleSmokeRerunGate.commandExecuteState,
+  "blocked-missing-env-or-fixture-references",
+  "post-PR349 rerun command execute records sanitized blocker"
+);
+assert.equal(
+  postPr349OperatorLocalServiceRoleSmokeRerunGate.actualServiceRoleSmoke,
+  "not-run-blocked-pending-operator-env-and-fixture-reference-presence",
+  "post-PR349 rerun gate blocks actual smoke when env and fixture references are missing"
+);
+
+for (const fragment of [
+  "PR #349",
+  "5f1e58c8fb4fc126b2fc8cb2457f7a5d3fcfd140",
+  "post-pr349-operator-local-service-role-smoke-rerun-gate",
+  "missing-in-codex-worktree",
+  "not-run-blocked-missing-linked-project-ref",
+  "blocked-missing-env-or-fixture-references",
+  "not-run-blocked-pending-operator-env-and-fixture-reference-presence",
+  "No service-role smoke execution",
+  "No Google API live smoke",
+  "No safe live YouTube OAuth smoke"
+]) {
+  assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records post-PR349 rerun gate: ${fragment}`);
+}
+
 assert.match(taskSource, /PR #330.*70ff213/i, "task.md records PR #330 merge premise");
 assert.match(
   taskSource,
@@ -870,6 +946,12 @@ assert.match(
   taskSource,
   /post-pr348-operator-local-service-role-smoke-rerun-gate.*not-run-blocked-pending-operator-env-and-fixture-reference-presence/i,
   "task.md records post-PR348 service-role smoke rerun blocker"
+);
+assert.match(taskSource, /PR #349.*5f1e58c/i, "task.md records PR #349 merge premise");
+assert.match(
+  taskSource,
+  /post-pr349-operator-local-service-role-smoke-rerun-gate.*not-run-blocked-pending-operator-env-and-fixture-reference-presence/i,
+  "task.md records post-PR349 service-role smoke rerun blocker"
 );
 assert.match(
   taskSource,

@@ -203,6 +203,7 @@ async function main() {
       credentialReferenceId: result.payload.credentialReferenceId,
       ownerAuthorizationPreflight: "confirmed-by-reference-only",
       targetMetadata: "present-by-reference-only",
+      serverOnlyLiveTokenResolutionRuntime: "not-implemented-readiness-only",
       reason:
         "actual-live-google-api-smoke-requires-server-only-token-resolution-runtime-that-obtains-token-material-without-returning-or-printing-it",
       safeLiveYouTubeOAuthSmoke: "not-run",

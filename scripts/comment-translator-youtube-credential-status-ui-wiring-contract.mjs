@@ -17,6 +17,7 @@ const pr321MergeCommit = "8dcbb969b25e027201a0c35770845d03a5aae813";
 const pr352MergeCommit = "6bf1951082e1ba90360e00be1b573a2bee33e5b1";
 const pr353MergeCommit = "4608faba38a220df8a9248d6885fe47c02bf0647";
 const pr354MergeCommit = "2a1436f13ccbaf641be4dbb9dbef12356bcd309f";
+const pr355MergeCommit = "33dfa8b0142a675fea261963e0c4a80129d36341";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -151,6 +152,15 @@ assert.equal(
   "yes",
   "PR #354 merge commit is included in the current preview-derived branch"
 );
+assert.equal(
+  execSync(`git merge-base --is-ancestor ${pr355MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
+    cwd: root,
+    encoding: "utf8",
+    shell: "powershell.exe"
+  }).trim(),
+  "yes",
+  "PR #355 merge commit is included in the current preview-derived branch"
+);
 
 assert.doesNotMatch(uiWiringSource, /^import "server-only";/m, "UI wiring module is client-readable and does not import server-only");
 assert.doesNotMatch(
@@ -222,7 +232,8 @@ for (const exportedType of [
   "YouTubeOAuthCredentialStatusUiWiringReadiness",
   "YouTubeOAuthCredentialStatusDisplayFollowupPostPr352Readiness",
   "YouTubeOAuthCredentialStatusDisplayHumanReviewPostPr353Readiness",
-  "YouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence"
+  "YouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence",
+  "YouTubeOAuthCredentialStatusDisplayWidthReviewPostPr355Evidence"
 ]) {
   assert.match(uiWiringSource, new RegExp(`export type ${exportedType}\\b`), `UI wiring exports ${exportedType}`);
 }
@@ -234,7 +245,8 @@ for (const exportedConstOrFunction of [
   "assessYouTubeOAuthCredentialStatusDisplayWiringReadiness",
   "assessYouTubeOAuthCredentialStatusDisplayFollowupPostPr352Readiness",
   "assessYouTubeOAuthCredentialStatusDisplayHumanReviewPostPr353Readiness",
-  "assessYouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence"
+  "assessYouTubeOAuthCredentialStatusDisplayHumanReviewResultPostPr354Evidence",
+  "assessYouTubeOAuthCredentialStatusDisplayWidthReviewPostPr355Evidence"
 ]) {
   assert.match(
     uiWiringSource,
@@ -294,6 +306,11 @@ assert.equal(
   uiWiring.youtubeOAuthCredentialStatusUiWiringContract.postPr354HumanReviewResult,
   "actual-human-review-result-after-pr354-readiness-non-secret-repo-local-evidence",
   "UI wiring contract records the post-PR354 human review result as non-secret repo-local evidence"
+);
+assert.equal(
+  uiWiring.youtubeOAuthCredentialStatusUiWiringContract.postPr355WidthLayoutReview,
+  "width-layout-review-after-pr355-human-review-result-no-ui-followup-needed",
+  "UI wiring contract records the post-PR355 width/layout review as no-UI-follow-up-needed evidence"
 );
 assert.deepEqual(
   uiWiring.youtubeOAuthCredentialStatusUiWiringContract.forbiddenClientValues,
@@ -721,6 +738,81 @@ assert.deepEqual(
   "PR #354 result evidence stays blocked when readiness or safe evidence is missing"
 );
 
+assert.deepEqual(
+  uiWiring.assessYouTubeOAuthCredentialStatusDisplayWidthReviewPostPr355Evidence({
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 355,
+    prerequisiteMergeCommit: pr355MergeCommit,
+    previewMergeInclusion: "confirmed-in-codex-comment-translator-preview",
+    previousHumanReview: "human-review-completed-after-pr354-readiness",
+    widthReview: "completed-non-secret-repo-local-text-evidence",
+    layoutResult: "credential-reference-wraps-inside-container-no-overflow-overlap-or-broken-layout",
+    observedFallbackReason: "auth-unavailable"
+  }),
+  {
+    status: "width-layout-review-completed-after-pr355-human-review-result",
+    surface: "/tools/comment-translator",
+    browserUrl: "http://127.0.0.1:3210/tools/comment-translator/",
+    pageTitle: "Kuro Live Comment Translator | Kuro Stream Kit",
+    prerequisitePullRequest: 355,
+    prerequisiteMergeCommit: pr355MergeCommit,
+    previewMergeInclusion: "confirmed-in-codex-comment-translator-preview",
+    previousHumanReview: "human-review-completed-after-pr354-readiness",
+    widthReview: "completed-non-secret-repo-local-text-evidence",
+    reviewedWidthsPx: [390, 820, 1024, 1280, 1366],
+    interactionResult: "credential-status-refresh-clicked-at-each-width-and-returned-enabled",
+    observedFallbackReason: "auth-unavailable",
+    fallbackBoundary: "sanitized-fallback-not-secret-bearing-failure",
+    layoutResult: "credential-reference-wraps-inside-container-no-overflow-overlap-or-broken-layout",
+    wrappingBoundary: "acceptable-only-while-contained-with-no-overlap-or-broken-layout",
+    consoleResult: "no-warn-or-error-observed",
+    clientReadableValues: ["opaqueCredentialReferenceId", "sanitizedCredentialStatusMetadata"],
+    safeStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
+    storageBoundary: "no-localStorage-indexedDB-sessionStorage-or-handoff-payload-change",
+    liveProviderBoundary:
+      "no-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-or-full-revocation-runtime",
+    remoteMutationBoundary: "no-remote-supabase-mutation",
+    nextPrConditions: [
+      "no-ui-follow-up-needed-unless-a-specific-width-layout-or-accessibility-issue-is-found",
+      "keep-client-readable-values-to-opaque-credentialReferenceId-and-sanitized-status-metadata",
+      "preserve-YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-rollback-boundary"
+    ]
+  },
+  "PR #355 width/layout review records text evidence that wrapping stays contained and no UI follow-up is needed"
+);
+
+assert.deepEqual(
+  uiWiring.assessYouTubeOAuthCredentialStatusDisplayWidthReviewPostPr355Evidence({
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 355,
+    prerequisiteMergeCommit: pr355MergeCommit,
+    previewMergeInclusion: "not-confirmed",
+    previousHumanReview: "blocked-or-not-reviewed",
+    widthReview: "not-completed-or-secret-bearing",
+    layoutResult: "issue-found-needs-separate-ui-follow-up",
+    observedFallbackReason: "auth-unavailable"
+  }),
+  {
+    status: "blocked-pr355-width-layout-review-missing-merge-or-safe-evidence",
+    surface: "/tools/comment-translator",
+    prerequisitePullRequest: 355,
+    prerequisiteMergeCommit: pr355MergeCommit,
+    previewMergeInclusion: "not-confirmed",
+    previousHumanReview: "blocked-or-not-reviewed",
+    widthReview: "not-completed-or-secret-bearing",
+    currentSafeFallback: "sanitized-unavailable-or-credential-resolution-disabled",
+    blocker: "post-pr355-width-layout-review-requires-merge-inclusion-pr354-human-review-result-and-non-secret-width-evidence",
+    nextPrConditions: [
+      "confirm-pr355-merge-commit-in-preview",
+      "complete-width-checks-at-390-820-1024-1280-1366px",
+      "record-only-non-secret-repo-local-text-evidence",
+      "keep-client-readable-values-to-credentialReferenceId-and-sanitized-status-metadata",
+      "do-not-run-google-api-live-call-safe-live-youtube-oauth-smoke-refresh-runtime-full-revocation-runtime-or-remote-supabase-mutation"
+    ]
+  },
+  "PR #355 width/layout review stays blocked without merge inclusion, prior human-review evidence, and safe text evidence"
+);
+
 assert.match(statusBoundarySource, /credential-status-metadata-only/, "server-only status boundary remains metadata-only");
 assert.match(statusActionSource, /getYouTubeOAuthCredentialStatusAction/, "existing server action remains the readiness target");
 assert.match(statusActionSource, /YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED/, "server action preserves emergency disable boundary");
@@ -729,6 +821,7 @@ assert.match(taskSource, /8dcbb969b25e027201a0c35770845d03a5aae813/, "task.md re
 assert.match(taskSource, /PR #352.*6bf1951/i, "task.md records the PR #352 merge premise");
 assert.match(taskSource, /PR #353.*4608faba/i, "task.md records the PR #353 merge premise");
 assert.match(taskSource, /PR #354.*2a1436f/i, "task.md records the PR #354 merge premise");
+assert.match(taskSource, /PR #355.*33dfa8b/i, "task.md records the PR #355 merge premise");
 assert.match(
   taskSource,
   /credential status display follow-up.*readiness|display follow-up.*credential status.*readiness/i,
@@ -749,6 +842,11 @@ assert.match(
   taskSource,
   /Credential reference.*wraps|credentialReference.*wrap/i,
   "task.md records the non-blocking credential reference wrapping visual observation"
+);
+assert.match(
+  taskSource,
+  /390 \/ 820 \/ 1024 \/ 1280 \/ 1366px[\s\S]*no actual UI follow-up|no actual UI follow-up[\s\S]*390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i,
+  "task.md records the post-PR355 width/layout review result and no actual UI follow-up decision"
 );
 assert.match(taskSource, /credential status display UI wiring/i, "task.md records this display wiring implementation");
 assert.match(taskSource, /390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i, "task.md records required width verification for UI changes");

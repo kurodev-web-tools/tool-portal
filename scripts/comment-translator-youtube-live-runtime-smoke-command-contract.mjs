@@ -60,7 +60,11 @@ for (const exportedType of [
   "YouTubeRuntimeSafeLiveSmokeCommandPostPr358Assessment",
   "YouTubeRuntimeLiveTokenResolutionReadinessPostPr359Check",
   "YouTubeRuntimeLiveTokenResolutionReadinessPostPr359",
-  "YouTubeRuntimeLiveTokenResolutionReadinessPostPr359Assessment"
+  "YouTubeRuntimeLiveTokenResolutionReadinessPostPr359Assessment",
+  "YouTubeServerOnlyLiveTokenMaterialResolver",
+  "YouTubeServerFetchAuthorizationConsumer",
+  "YouTubeLiveTokenResolutionRuntimeRequest",
+  "YouTubeLiveTokenResolutionRuntimeResult"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `runtime exports ${exportedType}`);
 }
@@ -71,11 +75,13 @@ for (const exportedConstOrFunction of [
   "createYouTubeRuntimeSafeLiveSmokeCommandPostPr358Summary",
   "youtubeRuntimeLiveTokenResolutionReadinessPostPr359",
   "assessYouTubeRuntimeLiveTokenResolutionReadinessPostPr359",
-  "createYouTubeRuntimeLiveTokenResolutionReadinessPostPr359Summary"
+  "createYouTubeRuntimeLiveTokenResolutionReadinessPostPr359Summary",
+  "youtubeLiveTokenResolutionRuntimeContract",
+  "resolveYouTubeLiveTokenForServerFetch"
 ]) {
   assert.match(
     runtimeSource,
-    new RegExp(`export (?:const|function) ${exportedConstOrFunction}\\b`),
+    new RegExp(`export (?:const|(?:async\\s+)?function) ${exportedConstOrFunction}\\b`),
     `runtime exports ${exportedConstOrFunction}`
   );
 }
@@ -254,22 +260,30 @@ const executeCheck = spawnSync(process.execPath, [commandPath, "--execute", "--j
     YOUTUBE_LIVE_RUNTIME_SMOKE_OWNER_AUTHORIZATION_CONFIRMED: "1"
   }
 });
-assert.equal(executeCheck.status, 2, "execute mode stops before live provider calls when token material resolution is not implemented");
+assert.equal(executeCheck.status, 0, "execute mode can resolve server-only token material without live provider calls");
 const executePayload = JSON.parse(executeCheck.stdout);
 assert.equal(
   executePayload.status,
-  "blocked-pending-server-only-live-token-resolution-runtime",
-  "execute mode records readiness blocker instead of printing or requesting OAuth token material"
+  "resolved-for-server-fetch",
+  "execute mode records sanitized server-only token resolution instead of printing OAuth token material"
 );
 assert.equal(
   executePayload.serverOnlyLiveTokenResolutionRuntime,
-  "not-implemented-readiness-only",
-  "execute mode reports the server-only live token resolution runtime blocker as sanitized metadata"
+  "implemented-server-only-sanitized-runtime",
+  "execute mode reports the server-only live token resolution runtime as implemented sanitized metadata"
 );
+assert.equal(executePayload.serverFetchBinding, "resolved-for-server-fetch", "execute output includes sanitized binding status");
 assert.equal(executePayload.safeLiveYouTubeOAuthSmoke, "not-run", "execute mode does not run OAuth live smoke");
 assert.equal(executePayload.ownerVerificationSmoke, "not-run", "execute mode does not run owner verification smoke");
 assert.equal(executePayload.liveChatPollingSmoke, "not-run", "execute mode does not run Live Chat polling smoke");
 assert.equal(executePayload.googleApiLiveCall, "not-run", "execute mode does not run Google API live calls");
+assert.ok(
+  !("ownerUserId" in executePayload) &&
+    !("providerChannelId" in executePayload) &&
+    !("authorizationHeader" in executePayload) &&
+    !("serverAuthorizationHeader" in executePayload),
+  "execute output omits owner, provider channel, and token material values"
+);
 
 const runtime = loadTsModule(runtimePath);
 const commandBoundary = runtime.youtubeRuntimeSafeLiveSmokeCommandPostPr358;
@@ -371,6 +385,203 @@ assert.match(
   "post-PR359 token resolution readiness summary records the blocker"
 );
 
+const runtimeContract = runtime.youtubeLiveTokenResolutionRuntimeContract;
+assert.deepEqual(
+  runtimeContract,
+  {
+    implementationStage: "post-pr360-server-only-live-token-resolution-runtime",
+    prerequisiteReadiness: {
+      pullRequest: "#360",
+      mergeCommit: "5aba3649083352f7daad83791e7ee4fa811c22c9",
+      status: "post-pr359-server-only-live-token-resolution-readiness-merged"
+    },
+    input: "credentialReferenceId-and-owner-authorization-context",
+    requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+    tokenMaterialHandling: "internal-server-fetch-consumer-only",
+    outputPolicy: "sanitized-metadata-only",
+    tokenValue: "never-returned-by-design",
+    refreshTokenValue: "never-returned-by-design",
+    liveGoogleApiCall: "not-run",
+    refreshRuntime: "not-implemented",
+    revocationRuntime: "not-implemented",
+    browserStorage: "unchanged"
+  },
+  "post-PR360 runtime contract records server-only token resolution boundaries"
+);
+
+let materialConsumed = false;
+const resolvedForFetch = await runtime.resolveYouTubeLiveTokenForServerFetch({
+  credentialReferenceId: "smoke-post-pr360-runtime-001",
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-presence-only"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-07T07:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus(request) {
+      assert.deepEqual(
+        request,
+        {
+          credentialReferenceId: "smoke-post-pr360-runtime-001",
+          ownerUserId: "owner-reference-presence-only"
+        },
+        "runtime performs owner-authorized status read before token material resolution"
+      );
+
+      return {
+        credentialReferenceId: "smoke-post-pr360-runtime-001",
+        provider: "youtube",
+        providerChannelId: "provider-channel-reference-presence-only",
+        scopeLabel: "youtube.readonly",
+        scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+        expiresAtIso: "2026-06-07T08:00:00.000Z",
+        expiryStatus: "active",
+        revoked: false,
+        revokedAtIso: null,
+        tokenValue: "never-returned-by-design",
+        refreshTokenValue: "never-returned-by-design",
+        ciphertext: "never-returned-by-design",
+        decryptCapability: "forbidden"
+      };
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial(request) {
+      assert.deepEqual(
+        request,
+        {
+          credentialReferenceId: "smoke-post-pr360-runtime-001",
+          ownerUserId: "owner-reference-presence-only",
+          requiredScope: "https://www.googleapis.com/auth/youtube.readonly"
+        },
+        "runtime passes only server-side authorization references to the token material resolver"
+      );
+
+      return {
+        status: "available",
+        serverAuthorizationHeader: "server-only-test-authorization",
+        expiresAtIso: "2026-06-07T08:00:00.000Z"
+      };
+    }
+  },
+  async consumeServerFetchAuthorization(binding) {
+    materialConsumed = true;
+    assert.equal(binding.serverAuthorizationHeader, "server-only-test-authorization", "token material is available only inside the server fetch consumer");
+    return {
+      serverFetchBinding: "resolved-for-server-fetch"
+    };
+  }
+});
+
+assert.equal(materialConsumed, true, "runtime consumes token material internally");
+assert.deepEqual(
+  resolvedForFetch,
+  {
+    status: "resolved-for-server-fetch",
+    credentialReferenceId: "smoke-post-pr360-runtime-001",
+    provider: "youtube",
+    scopeLabel: "youtube.readonly",
+    expiryStatus: "active",
+    serverFetchBinding: "resolved-for-server-fetch",
+    tokenValue: "never-returned-by-design",
+    refreshTokenValue: "never-returned-by-design"
+  },
+  "runtime returns only sanitized token resolution metadata"
+);
+
+for (const blockedCase of [
+  {
+    name: "credential resolution disabled",
+    request: {
+      credentialResolutionDisabled: true
+    },
+    expectedStatus: "credential-resolution-disabled"
+  },
+  {
+    name: "owner authorization blocked",
+    request: {
+      ownerAuthorization: {
+        status: "blocked",
+        reason: "owner-authorization-preflight-not-confirmed"
+      }
+    },
+    expectedStatus: "blocked-owner-authorization"
+  }
+]) {
+  const result = await runtime.resolveYouTubeLiveTokenForServerFetch({
+    credentialReferenceId: "smoke-post-pr360-runtime-001",
+    ownerAuthorization: {
+      status: "authorized",
+      ownerUserId: "owner-reference-presence-only"
+    },
+    credentialResolutionDisabled: false,
+    requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+    nowIso: "2026-06-07T07:00:00.000Z",
+    trustedStatusReader: null,
+    tokenMaterialResolver: {
+      async resolveServerOnlyTokenMaterial() {
+        throw new Error(`must not resolve material for ${blockedCase.name}`);
+      }
+    },
+    async consumeServerFetchAuthorization() {
+      throw new Error(`must not consume material for ${blockedCase.name}`);
+    },
+    ...blockedCase.request
+  });
+
+  assert.equal(result.status, blockedCase.expectedStatus, `runtime blocks ${blockedCase.name}`);
+  assert.equal(result.tokenValue, "never-returned-by-design", "blocked result omits token values");
+  assert.equal(result.refreshTokenValue, "never-returned-by-design", "blocked result omits refresh token values");
+}
+
+assert.equal(
+  (
+    await runtime.resolveYouTubeLiveTokenForServerFetch({
+      credentialReferenceId: "smoke-post-pr360-runtime-001",
+      ownerAuthorization: {
+        status: "authorized",
+        ownerUserId: "owner-reference-presence-only"
+      },
+      credentialResolutionDisabled: false,
+      requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+      nowIso: "2026-06-07T07:00:00.000Z",
+      trustedStatusReader: null,
+      tokenMaterialResolver: {
+        async resolveServerOnlyTokenMaterial() {
+          throw new Error("must not resolve material without a trusted status reader");
+        }
+      },
+      async consumeServerFetchAuthorization() {
+        throw new Error("must not consume material without a trusted status reader");
+      }
+    })
+  ).status,
+  "unavailable",
+  "runtime reports unavailable when trusted status reader is not wired"
+);
+
+assert.match(
+  taskSource,
+  /PR #360 `MERGED`[\s\S]*2026-06-07T06:12:11Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
+  "task.md records fresh PR #360 metadata and check disposition"
+);
+assert.match(
+  taskSource,
+  /post-PR #360 server-only live token resolution runtime/i,
+  "task.md records the post-PR360 server-only live token resolution runtime slice"
+);
+assert.match(
+  taskSource,
+  /serverOnlyLiveTokenResolutionRuntime: implemented-server-only-sanitized-runtime/i,
+  "task.md records the implemented sanitized runtime result"
+);
+assert.match(
+  taskSource,
+  /actual safe live runtime smoke は `not-run-blocked-missing-env-fixture-or-target-references`/i,
+  "task.md records the actual live smoke blocker after post-PR360 runtime"
+);
 assert.match(
   taskSource,
   /PR #358 `MERGED`[\s\S]*2026-06-07T04:35:20Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,

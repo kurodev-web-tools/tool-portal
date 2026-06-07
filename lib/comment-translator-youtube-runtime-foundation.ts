@@ -520,6 +520,109 @@ export type YouTubeRuntimeLiveTokenResolutionReadinessPostPr359Assessment =
       nextAction: "implement-server-only-live-token-resolution-runtime-in-separate-approved-pr-before-actual-live-smoke";
     };
 
+export type YouTubeRuntimeReadOnlyOAuthScope = "https://www.googleapis.com/auth/youtube.readonly";
+
+export type YouTubeLiveTokenResolutionOwnerAuthorization =
+  | {
+      status: "authorized";
+      ownerUserId: string;
+    }
+  | {
+      status: "blocked";
+      reason: "owner-authorization-preflight-not-confirmed" | "caller-not-authenticated" | "auth-unavailable";
+    };
+
+export type YouTubeLiveTokenResolutionTrustedStatus = {
+  credentialReferenceId: string;
+  provider: "youtube";
+  providerChannelId: string;
+  scopeLabel: "youtube.readonly";
+  scopeSet: readonly YouTubeRuntimeReadOnlyOAuthScope[];
+  expiresAtIso: string;
+  expiryStatus: "active" | "expired" | "revoked";
+  revoked: boolean;
+  revokedAtIso: string | null;
+  tokenValue: "never-returned-by-design";
+  refreshTokenValue: "never-returned-by-design";
+  ciphertext: "never-returned-by-design";
+  decryptCapability: "forbidden";
+};
+
+export type YouTubeLiveTokenResolutionTrustedStatusReader = {
+  getCredentialStatus(request: {
+    credentialReferenceId: string;
+    ownerUserId: string;
+  }): Promise<YouTubeLiveTokenResolutionTrustedStatus>;
+};
+
+export type YouTubeServerOnlyLiveTokenMaterialRequest = {
+  credentialReferenceId: string;
+  ownerUserId: string;
+  requiredScope: YouTubeRuntimeReadOnlyOAuthScope;
+};
+
+export type YouTubeServerOnlyLiveTokenMaterial =
+  | {
+      status: "available";
+      serverAuthorizationHeader: string;
+      expiresAtIso: string;
+    }
+  | {
+      status: "unavailable" | "expired" | "scope-missing";
+      reason: string;
+    };
+
+export type YouTubeServerOnlyLiveTokenMaterialResolver = {
+  resolveServerOnlyTokenMaterial(
+    request: YouTubeServerOnlyLiveTokenMaterialRequest
+  ): Promise<YouTubeServerOnlyLiveTokenMaterial>;
+};
+
+export type YouTubeServerFetchAuthorizationConsumer = (binding: {
+  credentialReferenceId: string;
+  requiredScope: YouTubeRuntimeReadOnlyOAuthScope;
+  serverAuthorizationHeader: string;
+  expiresAtIso: string;
+}) => Promise<{
+  serverFetchBinding: "resolved-for-server-fetch";
+}>;
+
+export type YouTubeLiveTokenResolutionRuntimeRequest = {
+  credentialReferenceId: string;
+  ownerAuthorization: YouTubeLiveTokenResolutionOwnerAuthorization;
+  credentialResolutionDisabled: boolean;
+  requiredScope: YouTubeRuntimeReadOnlyOAuthScope;
+  nowIso: string;
+  trustedStatusReader: YouTubeLiveTokenResolutionTrustedStatusReader | null;
+  tokenMaterialResolver: YouTubeServerOnlyLiveTokenMaterialResolver;
+  consumeServerFetchAuthorization: YouTubeServerFetchAuthorizationConsumer;
+};
+
+export type YouTubeLiveTokenResolutionRuntimeResult =
+  | {
+      status: "resolved-for-server-fetch";
+      credentialReferenceId: string;
+      provider: "youtube";
+      scopeLabel: "youtube.readonly";
+      expiryStatus: "active";
+      serverFetchBinding: "resolved-for-server-fetch";
+      tokenValue: "never-returned-by-design";
+      refreshTokenValue: "never-returned-by-design";
+    }
+  | {
+      status:
+        | "unavailable"
+        | "scope-missing"
+        | "expired"
+        | "credential-resolution-disabled"
+        | "blocked-owner-authorization";
+      credentialReferenceId: string;
+      provider: "youtube";
+      reason: string;
+      tokenValue: "never-returned-by-design";
+      refreshTokenValue: "never-returned-by-design";
+    };
+
 export const youtubeOwnerPollingRuntimeContract = {
   implementationStage: "server-only-runtime-foundation",
   platform: "youtube",
@@ -956,6 +1059,25 @@ export const youtubeRuntimeLiveTokenResolutionReadinessPostPr359 = {
   ]
 } as const satisfies YouTubeRuntimeLiveTokenResolutionReadinessPostPr359;
 
+export const youtubeLiveTokenResolutionRuntimeContract = {
+  implementationStage: "post-pr360-server-only-live-token-resolution-runtime",
+  prerequisiteReadiness: {
+    pullRequest: "#360",
+    mergeCommit: "5aba3649083352f7daad83791e7ee4fa811c22c9",
+    status: "post-pr359-server-only-live-token-resolution-readiness-merged"
+  },
+  input: "credentialReferenceId-and-owner-authorization-context",
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  tokenMaterialHandling: "internal-server-fetch-consumer-only",
+  outputPolicy: "sanitized-metadata-only",
+  tokenValue: "never-returned-by-design",
+  refreshTokenValue: "never-returned-by-design",
+  liveGoogleApiCall: "not-run",
+  refreshRuntime: "not-implemented",
+  revocationRuntime: "not-implemented",
+  browserStorage: "unchanged"
+} as const;
+
 export function assessYouTubeRuntimeSafeLiveSmokeReadinessPostPr356(
   completedChecks: readonly YouTubeRuntimeSafeLiveSmokeReadinessPostPr356Check[]
 ): YouTubeRuntimeSafeLiveSmokeReadinessPostPr356Assessment {
@@ -1172,6 +1294,76 @@ export function createYouTubeRuntimeLiveTokenResolutionReadinessPostPr359Summary
   ].join(" ");
 }
 
+export async function resolveYouTubeLiveTokenForServerFetch(
+  request: YouTubeLiveTokenResolutionRuntimeRequest
+): Promise<YouTubeLiveTokenResolutionRuntimeResult> {
+  if (request.credentialResolutionDisabled) {
+    return unresolvedLiveTokenResolution(request.credentialReferenceId, "credential-resolution-disabled", "credential resolution is disabled");
+  }
+
+  if (request.ownerAuthorization.status !== "authorized") {
+    return unresolvedLiveTokenResolution(
+      request.credentialReferenceId,
+      "blocked-owner-authorization",
+      request.ownerAuthorization.reason
+    );
+  }
+
+  if (!request.trustedStatusReader) {
+    return unresolvedLiveTokenResolution(request.credentialReferenceId, "unavailable", "trusted status reader is not wired");
+  }
+
+  let status: YouTubeLiveTokenResolutionTrustedStatus;
+  try {
+    status = await request.trustedStatusReader.getCredentialStatus({
+      credentialReferenceId: request.credentialReferenceId,
+      ownerUserId: request.ownerAuthorization.ownerUserId
+    });
+  } catch {
+    return unresolvedLiveTokenResolution(request.credentialReferenceId, "unavailable", "trusted status read failed");
+  }
+
+  if (status.revoked || status.expiryStatus === "revoked") {
+    return unresolvedLiveTokenResolution(request.credentialReferenceId, "unavailable", "credential reference is revoked");
+  }
+
+  if (status.expiryStatus === "expired" || Date.parse(status.expiresAtIso) <= Date.parse(request.nowIso)) {
+    return unresolvedLiveTokenResolution(request.credentialReferenceId, "expired", "credential reference is expired");
+  }
+
+  if (!status.scopeSet.includes(request.requiredScope)) {
+    return unresolvedLiveTokenResolution(request.credentialReferenceId, "scope-missing", "credential reference lacks required scope");
+  }
+
+  const tokenMaterial = await request.tokenMaterialResolver.resolveServerOnlyTokenMaterial({
+    credentialReferenceId: request.credentialReferenceId,
+    ownerUserId: request.ownerAuthorization.ownerUserId,
+    requiredScope: request.requiredScope
+  });
+
+  if (tokenMaterial.status !== "available") {
+    return unresolvedLiveTokenResolution(request.credentialReferenceId, tokenMaterial.status, tokenMaterial.reason);
+  }
+
+  const binding = await request.consumeServerFetchAuthorization({
+    credentialReferenceId: request.credentialReferenceId,
+    requiredScope: request.requiredScope,
+    serverAuthorizationHeader: tokenMaterial.serverAuthorizationHeader,
+    expiresAtIso: tokenMaterial.expiresAtIso
+  });
+
+  return {
+    status: "resolved-for-server-fetch",
+    credentialReferenceId: request.credentialReferenceId,
+    provider: "youtube",
+    scopeLabel: "youtube.readonly",
+    expiryStatus: "active",
+    serverFetchBinding: binding.serverFetchBinding,
+    tokenValue: "never-returned-by-design",
+    refreshTokenValue: "never-returned-by-design"
+  };
+}
+
 export function createInitialYouTubeLiveChatPollingState({
   liveChatId,
   nowMs
@@ -1367,4 +1559,19 @@ function chooseRecoverableDelayMs({
 
 function clampPollingIntervalMs(pollingIntervalMillis: number): number {
   return Math.min(60_000, Math.max(1_000, pollingIntervalMillis));
+}
+
+function unresolvedLiveTokenResolution(
+  credentialReferenceId: string,
+  status: Exclude<YouTubeLiveTokenResolutionRuntimeResult["status"], "resolved-for-server-fetch">,
+  reason: string
+): YouTubeLiveTokenResolutionRuntimeResult {
+  return {
+    status,
+    credentialReferenceId,
+    provider: "youtube",
+    reason,
+    tokenValue: "never-returned-by-design",
+    refreshTokenValue: "never-returned-by-design"
+  };
 }

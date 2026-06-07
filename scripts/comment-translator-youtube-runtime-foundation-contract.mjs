@@ -70,6 +70,7 @@ function loadTsModule(relativePath) {
 const runtimePath = "lib/comment-translator-youtube-runtime-foundation.ts";
 const inputBoundaryPath = "lib/comment-translator-youtube-input-boundary.ts";
 const designDocPath = "docs/future/COMMENT_TRANSLATOR_YOUTUBE_INPUT_BOUNDARY_DESIGN.md";
+const pr356MergeCommit = "83f1d5c4d90183b6f7bf97df8150650bc011cded";
 
 assert.ok(exists(runtimePath), "server-only YouTube owner polling runtime foundation module exists");
 assert.ok(exists(inputBoundaryPath), "YouTube input boundary remains available");
@@ -97,7 +98,10 @@ for (const exportedType of [
   "YouTubeLiveChatPollingStepRequest",
   "YouTubeLiveChatPollingStepResult",
   "YouTubeLiveChatRuntimeAdapter",
-  "YouTubeSanitizedCommentBridgeResult"
+  "YouTubeSanitizedCommentBridgeResult",
+  "YouTubeRuntimeSafeLiveSmokeReadinessPostPr356Check",
+  "YouTubeRuntimeSafeLiveSmokeReadinessPostPr356",
+  "YouTubeRuntimeSafeLiveSmokeReadinessPostPr356Assessment"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `exports ${exportedType}`);
 }
@@ -108,7 +112,10 @@ for (const exportedConstOrFunction of [
   "authorizeYouTubeReadOnlyDock",
   "sanitizeYouTubeLiveChatMessage",
   "advanceYouTubeLiveChatPollingState",
-  "createDeterministicYouTubeOwnerPollingRuntime"
+  "createDeterministicYouTubeOwnerPollingRuntime",
+  "youtubeRuntimeSafeLiveSmokeReadinessPostPr356",
+  "assessYouTubeRuntimeSafeLiveSmokeReadinessPostPr356",
+  "createYouTubeRuntimeSafeLiveSmokeReadinessPostPr356Summary"
 ]) {
   assert.match(
     runtimeSource,
@@ -153,6 +160,16 @@ for (const pattern of [
 }
 
 const runtime = loadTsModule(runtimePath);
+
+assert.equal(
+  execSync(`git merge-base --is-ancestor ${pr356MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
+    cwd: root,
+    encoding: "utf8",
+    shell: "powershell.exe"
+  }).trim(),
+  "yes",
+  "PR #356 merge commit is included in the current preview-derived branch"
+);
 
 assert.equal(
   runtime.youtubeOwnerPollingRuntimeContract.implementationStage,
@@ -350,11 +367,123 @@ assert.deepEqual(
   "fake runtime emits sanitized comments"
 );
 
+const runtimeSmokeReadiness = runtime.youtubeRuntimeSafeLiveSmokeReadinessPostPr356;
+assert.deepEqual(
+  runtimeSmokeReadiness.prerequisiteCredentialStatusWidthReview,
+  {
+    pullRequest: "#356",
+    mergeCommit: pr356MergeCommit,
+    status: "credential-status-display-width-review-merged-no-ui-followup"
+  },
+  "post-PR356 runtime smoke readiness records the credential status width review merge premise"
+);
+assert.equal(
+  runtimeSmokeReadiness.implementationStage,
+  "post-pr356-youtube-runtime-safe-live-smoke-readiness",
+  "post-PR356 runtime smoke readiness stage is explicit"
+);
+assert.equal(
+  runtimeSmokeReadiness.mergeGate,
+  "fresh-pr356-merge-state-confirmed",
+  "post-PR356 runtime smoke readiness records fresh merge-state confirmation"
+);
+assert.equal(
+  runtimeSmokeReadiness.actualSafeLiveRuntimeSmoke,
+  "not-run-blocked-pending-fresh-operator-confirmation-target-metadata-env-and-no-secret-boundary",
+  "safe live runtime smoke is not run when this thread lacks final operator confirmation, target metadata, env references, or no-secret execution boundary"
+);
+assert.deepEqual(
+  runtimeSmokeReadiness.requiredEnvReferences,
+  [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"
+  ],
+  "runtime smoke readiness records env reference names only"
+);
+assert.deepEqual(
+  runtimeSmokeReadiness.requiredFixtureReferences,
+  [
+    "YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID",
+    "YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID",
+    "YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"
+  ],
+  "runtime smoke readiness records fixture reference names only"
+);
+assert.deepEqual(
+  runtimeSmokeReadiness.clientReadableOutput,
+  ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"],
+  "runtime smoke readiness preserves client-readable output boundary"
+);
+assert.equal(
+  runtimeSmokeReadiness.credentialResolutionDisabledBoundary,
+  "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-preserved",
+  "runtime smoke readiness preserves the credential resolution disabled boundary"
+);
+assert.equal(
+  runtimeSmokeReadiness.ownerAuthorization,
+  "required-before-owner-verification-status-read-or-live-chat-polling",
+  "owner authorization is required before owner verification or Live Chat polling smoke"
+);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeSafeLiveSmokeReadinessPostPr356([]),
+  {
+    status: "blocked-missing-youtube-runtime-safe-live-smoke-readiness-checks",
+    missingCheckIds: runtimeSmokeReadiness.requiredReadinessChecks.map((check) => check.id),
+    safeLiveYouTubeOAuthSmokeAllowedInThisPr: false,
+    ownerVerificationSmokeAllowedInThisPr: false,
+    liveChatPollingSmokeAllowedInThisPr: false,
+    googleApiLiveCallAllowedInThisPr: false,
+    nextAction: "record-post-pr356-youtube-runtime-safe-live-smoke-blockers-without-live-provider-call"
+  },
+  "runtime smoke readiness blocks when checklist evidence is absent"
+);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeSafeLiveSmokeReadinessPostPr356(
+    runtimeSmokeReadiness.requiredReadinessChecks.filter((check) => check.status === "recorded")
+  ),
+  {
+    status: "blocked-pending-final-operator-confirmation-target-metadata-env-and-no-secret-boundary",
+    completedCheckIds: runtimeSmokeReadiness.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    blockingCheckIds: runtimeSmokeReadiness.requiredReadinessChecks
+      .filter((check) => check.status === "blocking-external-action")
+      .map((check) => check.id),
+    safeLiveYouTubeOAuthSmokeAllowedInThisPr: false,
+    ownerVerificationSmokeAllowedInThisPr: false,
+    liveChatPollingSmokeAllowedInThisPr: false,
+    googleApiLiveCallAllowedInThisPr: false,
+    nextAction: "collect-final-operator-confirmation-target-metadata-env-references-and-no-secret-boundary-in-separate-runtime-smoke-thread"
+  },
+  "runtime smoke readiness remains blocked until final external preconditions are present"
+);
+assert.match(
+  runtime.createYouTubeRuntimeSafeLiveSmokeReadinessPostPr356Summary(),
+  /post-pr356-youtube-runtime-safe-live-smoke-readiness.*blocked-pending-final-operator-confirmation-target-metadata-env-and-no-secret-boundary/i,
+  "runtime smoke readiness summary records the blocked post-PR356 result"
+);
+
 assert.match(inputBoundarySource, /YouTubeProviderSafeCommentPayload/, "input boundary still owns the provider-safe payload");
 assert.match(
   taskSource,
   /YouTube owner verification \+ Live Chat polling runtime foundation contract/i,
   "task.md records the new runtime foundation contract"
+);
+assert.match(
+  taskSource,
+  /post-PR #356 YouTube runtime safe-live smoke readiness.*blocked-pending-final-operator-confirmation-target-metadata-env-and-no-secret-boundary/i,
+  "task.md records the post-PR356 runtime smoke readiness blocker"
+);
+assert.match(
+  taskSource,
+  /PR #356 `MERGED`[\s\S]*2026-06-07T03:10:53Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
+  "task.md records the fresh PR #356 metadata and check disposition"
+);
+assert.match(
+  taskSource,
+  /width verification: UI \/ rendered text \/ CSS は変更していない/i,
+  "task.md records the width-check skip reason for this non-UI slice"
 );
 
 const separateImplementationFiles = new Set([

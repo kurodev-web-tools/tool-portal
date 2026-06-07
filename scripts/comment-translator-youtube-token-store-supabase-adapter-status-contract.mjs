@@ -1049,6 +1049,9 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-interactive-shell-contract.mjs",
   "scripts/comment-translator-mock-foundation-contract.mjs",
   "docs/archive/TASK_HISTORY_2026-06.md",
+  "lib/comment-translator-youtube-runtime-foundation.ts",
+  "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
+
   taskPath
 ]);
 

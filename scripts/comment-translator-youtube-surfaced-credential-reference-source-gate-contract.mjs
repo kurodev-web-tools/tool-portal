@@ -336,6 +336,9 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-mock-foundation-contract.mjs",
   "docs/archive/TASK_HISTORY_2026-06.md",
   "docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md",
+  "lib/comment-translator-youtube-runtime-foundation.ts",
+  "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
+
   taskPath
 ]);
 

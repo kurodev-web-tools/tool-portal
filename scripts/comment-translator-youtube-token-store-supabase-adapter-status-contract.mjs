@@ -1051,6 +1051,8 @@ const allowedChangedFiles = new Set([
   "docs/archive/TASK_HISTORY_2026-06.md",
   "lib/comment-translator-youtube-runtime-foundation.ts",
   "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
+  "scripts/comment-translator-youtube-live-runtime-smoke-command-contract.mjs",
+  "scripts/comment-translator-youtube-live-runtime-smoke-command.mjs",
 
   taskPath
 ]);

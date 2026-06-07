@@ -71,6 +71,7 @@ const runtimePath = "lib/comment-translator-youtube-runtime-foundation.ts";
 const inputBoundaryPath = "lib/comment-translator-youtube-input-boundary.ts";
 const designDocPath = "docs/future/COMMENT_TRANSLATOR_YOUTUBE_INPUT_BOUNDARY_DESIGN.md";
 const pr356MergeCommit = "83f1d5c4d90183b6f7bf97df8150650bc011cded";
+const pr357MergeCommit = "98a702ff9741d586d75671cb0fd4536c934b8f82";
 
 assert.ok(exists(runtimePath), "server-only YouTube owner polling runtime foundation module exists");
 assert.ok(exists(inputBoundaryPath), "YouTube input boundary remains available");
@@ -101,7 +102,10 @@ for (const exportedType of [
   "YouTubeSanitizedCommentBridgeResult",
   "YouTubeRuntimeSafeLiveSmokeReadinessPostPr356Check",
   "YouTubeRuntimeSafeLiveSmokeReadinessPostPr356",
-  "YouTubeRuntimeSafeLiveSmokeReadinessPostPr356Assessment"
+  "YouTubeRuntimeSafeLiveSmokeReadinessPostPr356Assessment",
+  "YouTubeRuntimeSafeLiveSmokeReadinessPostPr357Check",
+  "YouTubeRuntimeSafeLiveSmokeReadinessPostPr357",
+  "YouTubeRuntimeSafeLiveSmokeReadinessPostPr357Assessment"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `exports ${exportedType}`);
 }
@@ -115,7 +119,10 @@ for (const exportedConstOrFunction of [
   "createDeterministicYouTubeOwnerPollingRuntime",
   "youtubeRuntimeSafeLiveSmokeReadinessPostPr356",
   "assessYouTubeRuntimeSafeLiveSmokeReadinessPostPr356",
-  "createYouTubeRuntimeSafeLiveSmokeReadinessPostPr356Summary"
+  "createYouTubeRuntimeSafeLiveSmokeReadinessPostPr356Summary",
+  "youtubeRuntimeSafeLiveSmokeReadinessPostPr357",
+  "assessYouTubeRuntimeSafeLiveSmokeReadinessPostPr357",
+  "createYouTubeRuntimeSafeLiveSmokeReadinessPostPr357Summary"
 ]) {
   assert.match(
     runtimeSource,
@@ -169,6 +176,15 @@ assert.equal(
   }).trim(),
   "yes",
   "PR #356 merge commit is included in the current preview-derived branch"
+);
+assert.equal(
+  execSync(`git merge-base --is-ancestor ${pr357MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
+    cwd: root,
+    encoding: "utf8",
+    shell: "powershell.exe"
+  }).trim(),
+  "yes",
+  "PR #357 merge commit is included in the current preview-derived branch"
 );
 
 assert.equal(
@@ -464,6 +480,86 @@ assert.match(
   "runtime smoke readiness summary records the blocked post-PR356 result"
 );
 
+const runtimeSmokeReadinessPostPr357 = runtime.youtubeRuntimeSafeLiveSmokeReadinessPostPr357;
+assert.deepEqual(
+  runtimeSmokeReadinessPostPr357.prerequisiteRuntimeSmokeReadiness,
+  {
+    pullRequest: "#357",
+    mergeCommit: pr357MergeCommit,
+    status: "post-pr356-youtube-runtime-safe-live-smoke-readiness-merged"
+  },
+  "post-PR357 runtime smoke readiness records the PR #357 merge premise"
+);
+assert.equal(
+  runtimeSmokeReadinessPostPr357.implementationStage,
+  "post-pr357-youtube-runtime-safe-live-smoke-execution-gate",
+  "post-PR357 runtime smoke execution gate stage is explicit"
+);
+assert.equal(
+  runtimeSmokeReadinessPostPr357.finalOperatorApproval,
+  "recorded-from-source-thread-for-safe-live-youtube-oauth-owner-verification-live-chat-polling-smoke",
+  "post-PR357 runtime smoke gate records the source-thread operator approval without private target values"
+);
+assert.equal(
+  runtimeSmokeReadinessPostPr357.actualSafeLiveRuntimeSmoke,
+  "not-run-blocked-pending-target-metadata-env-fixture-and-live-runtime-command-boundary",
+  "post-PR357 runtime smoke is blocked when target metadata, env, fixtures, or live command boundary are missing"
+);
+assert.deepEqual(
+  runtimeSmokeReadinessPostPr357.codexProcessReferencePresence,
+  {
+    requiredEnvReferences: [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"
+    ],
+    requiredFixtureReferences: [
+      "YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID",
+      "YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID",
+      "YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"
+    ],
+    presenceResult: "missing-by-presence-only-check",
+    valuesReadOrPrinted: false
+  },
+  "post-PR357 runtime smoke gate records reference names and presence state only"
+);
+assert.deepEqual(
+  runtimeSmokeReadinessPostPr357.assessedMissingPreconditions,
+  [
+    "concrete-non-secret-youtube-runtime-target-metadata",
+    "codex-process-env-reference-presence",
+    "codex-process-fixture-reference-presence",
+    "dedicated-sanitized-live-runtime-smoke-command",
+    "owner-authorization-execution-before-owner-verification-or-live-chat-polling"
+  ],
+  "post-PR357 runtime smoke gate records missing preconditions without private values"
+);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeSafeLiveSmokeReadinessPostPr357(
+    runtimeSmokeReadinessPostPr357.requiredReadinessChecks.filter((check) => check.status === "recorded")
+  ),
+  {
+    status: "blocked-pending-target-metadata-env-fixture-and-live-runtime-command-boundary",
+    completedCheckIds: runtimeSmokeReadinessPostPr357.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    blockingCheckIds: runtimeSmokeReadinessPostPr357.requiredReadinessChecks
+      .filter((check) => check.status === "blocking-external-action")
+      .map((check) => check.id),
+    safeLiveYouTubeOAuthSmokeExecuted: false,
+    ownerVerificationSmokeExecuted: false,
+    liveChatPollingSmokeExecuted: false,
+    googleApiLiveCallExecuted: false,
+    nextAction: "collect-safe-target-metadata-env-fixture-and-dedicated-sanitized-live-runtime-command-before-actual-smoke"
+  },
+  "post-PR357 runtime smoke gate stays blocked until all live-smoke preconditions are present"
+);
+assert.match(
+  runtime.createYouTubeRuntimeSafeLiveSmokeReadinessPostPr357Summary(),
+  /post-pr357-youtube-runtime-safe-live-smoke-execution-gate.*blocked-pending-target-metadata-env-fixture-and-live-runtime-command-boundary/i,
+  "runtime smoke readiness summary records the blocked post-PR357 result"
+);
+
 assert.match(inputBoundarySource, /YouTubeProviderSafeCommentPayload/, "input boundary still owns the provider-safe payload");
 assert.match(
   taskSource,
@@ -474,6 +570,16 @@ assert.match(
   taskSource,
   /post-PR #356 YouTube runtime safe-live smoke readiness.*blocked-pending-final-operator-confirmation-target-metadata-env-and-no-secret-boundary/i,
   "task.md records the post-PR356 runtime smoke readiness blocker"
+);
+assert.match(
+  taskSource,
+  /post-PR #357 YouTube runtime safe-live smoke execution gate.*blocked-pending-target-metadata-env-fixture-and-live-runtime-command-boundary/i,
+  "task.md records the post-PR357 runtime smoke execution gate blocker"
+);
+assert.match(
+  taskSource,
+  /PR #357 `MERGED`[\s\S]*2026-06-07T04:03:24Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
+  "task.md records the fresh PR #357 metadata and check disposition"
 );
 assert.match(
   taskSource,

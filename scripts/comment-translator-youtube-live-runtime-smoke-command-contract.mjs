@@ -70,7 +70,10 @@ for (const exportedType of [
   "YouTubeRuntimeActualSafeLiveSmokePostPr361Assessment",
   "YouTubeRuntimeActualSafeLiveSmokeReadinessPostPr362Check",
   "YouTubeRuntimeActualSafeLiveSmokeReadinessPostPr362",
-  "YouTubeRuntimeActualSafeLiveSmokeReadinessPostPr362Assessment"
+  "YouTubeRuntimeActualSafeLiveSmokeReadinessPostPr362Assessment",
+  "YouTubeRuntimeSafeLiveSmokeTargetMetadataPreflightPostPr364Check",
+  "YouTubeRuntimeSafeLiveSmokeTargetMetadataPreflightPostPr364",
+  "YouTubeRuntimeSafeLiveSmokeTargetMetadataPreflightPostPr364Assessment"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `runtime exports ${exportedType}`);
 }
@@ -89,7 +92,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeRuntimeActualSafeLiveSmokePostPr361Summary",
   "youtubeRuntimeActualSafeLiveSmokeReadinessPostPr362",
   "assessYouTubeRuntimeActualSafeLiveSmokeReadinessPostPr362",
-  "createYouTubeRuntimeActualSafeLiveSmokeReadinessPostPr362Summary"
+  "createYouTubeRuntimeActualSafeLiveSmokeReadinessPostPr362Summary",
+  "youtubeRuntimeSafeLiveSmokeTargetMetadataPreflightPostPr364",
+  "assessYouTubeRuntimeSafeLiveSmokeTargetMetadataPreflightPostPr364",
+  "createYouTubeRuntimeSafeLiveSmokeTargetMetadataPreflightPostPr364Summary"
 ]) {
   assert.match(
     runtimeSource,
@@ -592,6 +598,68 @@ assert.match(
   "post-PR362 readiness summary records the blocker"
 );
 
+const targetMetadataPreflightPostPr364 = runtime.youtubeRuntimeSafeLiveSmokeTargetMetadataPreflightPostPr364;
+assert.deepEqual(
+  targetMetadataPreflightPostPr364.prerequisiteSafeLiveSmokeBlocker,
+  {
+    pullRequest: "#364",
+    mergeCommit: "3b722a6c6d2f21ab32565e48a2d2727ca7da75a4",
+    status: "post-pr363-safe-live-smoke-blocker-merged"
+  },
+  "post-PR364 target metadata preflight records the PR #364 merge premise"
+);
+assert.equal(
+  targetMetadataPreflightPostPr364.implementationStage,
+  "post-pr364-safe-live-youtube-smoke-target-metadata-preflight",
+  "post-PR364 target metadata preflight stage is explicit"
+);
+assert.equal(
+  targetMetadataPreflightPostPr364.commandExecutionMode,
+  "check-env-only-first-execute-forbidden-while-sanitized-preflight-blocked",
+  "post-PR364 target metadata preflight forbids execute while preflight is blocked"
+);
+assert.deepEqual(
+  targetMetadataPreflightPostPr364.currentCodexProcessPreflight,
+  actualSafeLiveReadinessPostPr362.currentCodexProcessPreflight,
+  "post-PR364 target metadata preflight records the current sanitized blocker by reference names only"
+);
+assert.equal(
+  targetMetadataPreflightPostPr364.targetMetadataPreflight,
+  "blocked-missing-repo-local-concrete-non-secret-target-metadata-reference",
+  "post-PR364 target metadata preflight stays blocked without repo-local target metadata"
+);
+assert.equal(
+  targetMetadataPreflightPostPr364.commandExecuteResult,
+  "not-run-preflight-blocked",
+  "post-PR364 target metadata preflight does not run --execute"
+);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeSafeLiveSmokeTargetMetadataPreflightPostPr364(
+    targetMetadataPreflightPostPr364.requiredReadinessChecks.filter((check) => check.status === "recorded")
+  ),
+  {
+    status: "blocked-missing-env-fixture-or-target-references",
+    completedCheckIds: targetMetadataPreflightPostPr364.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    blockingCheckIds: targetMetadataPreflightPostPr364.requiredReadinessChecks
+      .filter((check) => check.status === "blocking-external-action")
+      .map((check) => check.id),
+    safeLiveYouTubeOAuthSmokeExecuted: false,
+    ownerVerificationSmokeExecuted: false,
+    liveChatPollingSmokeExecuted: false,
+    googleApiLiveCallExecuted: false,
+    commandExecuteAllowed: false,
+    nextAction: "collect-repo-local-non-secret-target-metadata-env-fixture-and-owner-authorization-before-actual-live-smoke"
+  },
+  "post-PR364 target metadata preflight remains blocker-only without all sanitized preconditions"
+);
+assert.match(
+  runtime.createYouTubeRuntimeSafeLiveSmokeTargetMetadataPreflightPostPr364Summary(),
+  /post-pr364-safe-live-youtube-smoke-target-metadata-preflight.*blocked-missing-env-fixture-or-target-references/i,
+  "post-PR364 target metadata preflight summary records the blocker"
+);
+
 let materialConsumed = false;
 const resolvedForFetch = await runtime.resolveYouTubeLiveTokenForServerFetch({
   credentialReferenceId: "smoke-post-pr360-runtime-001",
@@ -745,6 +813,21 @@ assert.equal(
   "runtime reports unavailable when trusted status reader is not wired"
 );
 
+assert.match(
+  taskSource,
+  /PR #364 `MERGED`[\s\S]*2026-06-07T11:26:31Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
+  "task.md records fresh PR #364 metadata and check disposition"
+);
+assert.match(
+  taskSource,
+  /post-PR #364 actual safe live YouTube OAuth \/ owner verification \/ Live Chat polling smoke target metadata preflight/i,
+  "task.md records the post-PR364 target metadata preflight"
+);
+assert.match(
+  taskSource,
+  /actual safe live runtime smoke は `not-run-blocked-missing-env-fixture-or-target-references`/i,
+  "task.md records the post-PR364 actual live smoke blocker"
+);
 assert.match(
   taskSource,
   /PR #361 `MERGED`[\s\S]*2026-06-07T06:50:57Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,

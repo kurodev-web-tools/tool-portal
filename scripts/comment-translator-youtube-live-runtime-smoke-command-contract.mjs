@@ -64,7 +64,10 @@ for (const exportedType of [
   "YouTubeServerOnlyLiveTokenMaterialResolver",
   "YouTubeServerFetchAuthorizationConsumer",
   "YouTubeLiveTokenResolutionRuntimeRequest",
-  "YouTubeLiveTokenResolutionRuntimeResult"
+  "YouTubeLiveTokenResolutionRuntimeResult",
+  "YouTubeRuntimeActualSafeLiveSmokePostPr361Check",
+  "YouTubeRuntimeActualSafeLiveSmokePostPr361",
+  "YouTubeRuntimeActualSafeLiveSmokePostPr361Assessment"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `runtime exports ${exportedType}`);
 }
@@ -77,7 +80,10 @@ for (const exportedConstOrFunction of [
   "assessYouTubeRuntimeLiveTokenResolutionReadinessPostPr359",
   "createYouTubeRuntimeLiveTokenResolutionReadinessPostPr359Summary",
   "youtubeLiveTokenResolutionRuntimeContract",
-  "resolveYouTubeLiveTokenForServerFetch"
+  "resolveYouTubeLiveTokenForServerFetch",
+  "youtubeRuntimeActualSafeLiveSmokePostPr361",
+  "assessYouTubeRuntimeActualSafeLiveSmokePostPr361",
+  "createYouTubeRuntimeActualSafeLiveSmokePostPr361Summary"
 ]) {
   assert.match(
     runtimeSource,
@@ -409,6 +415,94 @@ assert.deepEqual(
   "post-PR360 runtime contract records server-only token resolution boundaries"
 );
 
+const actualSafeLiveGatePostPr361 = runtime.youtubeRuntimeActualSafeLiveSmokePostPr361;
+assert.deepEqual(
+  actualSafeLiveGatePostPr361.prerequisiteServerOnlyLiveTokenResolutionRuntime,
+  {
+    pullRequest: "#361",
+    mergeCommit: "e3ad69d0499422dc7ea064e55ca7ee319782bb5b",
+    status: "post-pr360-server-only-live-token-resolution-runtime-merged"
+  },
+  "post-PR361 actual safe live smoke gate records the PR #361 merge premise"
+);
+assert.equal(
+  actualSafeLiveGatePostPr361.implementationStage,
+  "post-pr361-actual-safe-live-youtube-smoke-preflight-execution-gate",
+  "post-PR361 actual safe live smoke gate stage is explicit"
+);
+assert.equal(
+  actualSafeLiveGatePostPr361.dedicatedCommandPath,
+  commandPath,
+  "post-PR361 actual safe live smoke gate keeps the dedicated sanitized command boundary"
+);
+assert.equal(
+  actualSafeLiveGatePostPr361.commandExecutionMode,
+  "check-env-only-first-execute-only-after-sanitized-ready-preflight",
+  "post-PR361 actual safe live smoke gate requires preflight before execute"
+);
+assert.equal(
+  actualSafeLiveGatePostPr361.serverOnlyLiveTokenResolutionRuntime,
+  "implemented-server-only-sanitized-runtime",
+  "post-PR361 actual safe live smoke gate treats the PR #361 runtime as implemented"
+);
+assert.equal(
+  actualSafeLiveGatePostPr361.actualSafeLiveRuntimeSmoke,
+  "not-run-blocked-missing-env-fixture-or-target-references",
+  "post-PR361 actual safe live smoke stays blocked when current sanitized preflight is missing references"
+);
+assert.equal(
+  actualSafeLiveGatePostPr361.commandExecuteResult,
+  "not-run-preflight-blocked",
+  "post-PR361 gate does not run --execute while preflight is blocked"
+);
+assert.deepEqual(
+  actualSafeLiveGatePostPr361.currentCodexProcessPreflight,
+  {
+    command: "node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --check-env-only --json",
+    status: "blocked-missing-env-fixture-or-target-references",
+    missingEnvReferences: [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"
+    ],
+    missingFixtureReferences: [
+      "YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID",
+      "YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID",
+      "YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"
+    ],
+    missingTargetMetadataReferences: ["YOUTUBE_LIVE_RUNTIME_SMOKE_TARGET_METADATA_PRESENT"],
+    ownerAuthorizationPreflightReference: "YOUTUBE_LIVE_RUNTIME_SMOKE_OWNER_AUTHORIZATION_CONFIRMED",
+    valuesReadOrPrinted: false
+  },
+  "post-PR361 actual safe live smoke gate records current sanitized blocker by reference names only"
+);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeActualSafeLiveSmokePostPr361(
+    actualSafeLiveGatePostPr361.requiredReadinessChecks.filter((check) => check.status === "recorded")
+  ),
+  {
+    status: "blocked-missing-env-fixture-or-target-references",
+    completedCheckIds: actualSafeLiveGatePostPr361.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    blockingCheckIds: actualSafeLiveGatePostPr361.requiredReadinessChecks
+      .filter((check) => check.status === "blocking-external-action")
+      .map((check) => check.id),
+    safeLiveYouTubeOAuthSmokeExecuted: false,
+    ownerVerificationSmokeExecuted: false,
+    liveChatPollingSmokeExecuted: false,
+    googleApiLiveCallExecuted: false,
+    commandExecuteAllowed: false,
+    nextAction: "provide-sanitized-env-fixture-target-and-owner-authorization-references-before-actual-live-smoke"
+  },
+  "post-PR361 actual safe live smoke assessment blocks actual execution without all sanitized preconditions"
+);
+assert.match(
+  runtime.createYouTubeRuntimeActualSafeLiveSmokePostPr361Summary(),
+  /post-pr361-actual-safe-live-youtube-smoke-preflight-execution-gate.*blocked-missing-env-fixture-or-target-references/i,
+  "post-PR361 actual safe live smoke summary records the blocker"
+);
+
 let materialConsumed = false;
 const resolvedForFetch = await runtime.resolveYouTubeLiveTokenForServerFetch({
   credentialReferenceId: "smoke-post-pr360-runtime-001",
@@ -562,6 +656,21 @@ assert.equal(
   "runtime reports unavailable when trusted status reader is not wired"
 );
 
+assert.match(
+  taskSource,
+  /PR #361 `MERGED`[\s\S]*2026-06-07T06:50:57Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
+  "task.md records fresh PR #361 metadata and check disposition"
+);
+assert.match(
+  taskSource,
+  /post-PR #361 actual safe live YouTube OAuth \/ owner verification \/ Live Chat polling smoke preflight/i,
+  "task.md records the post-PR361 actual safe live smoke preflight gate"
+);
+assert.match(
+  taskSource,
+  /actual safe live runtime smoke は `not-run-blocked-missing-env-fixture-or-target-references`/i,
+  "task.md records the post-PR361 actual live smoke blocker"
+);
 assert.match(
   taskSource,
   /PR #360 `MERGED`[\s\S]*2026-06-07T06:12:11Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,

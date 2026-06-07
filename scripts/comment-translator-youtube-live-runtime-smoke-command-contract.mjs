@@ -57,7 +57,10 @@ const taskSource = read(taskPath);
 for (const exportedType of [
   "YouTubeRuntimeSafeLiveSmokeCommandPostPr358Check",
   "YouTubeRuntimeSafeLiveSmokeCommandPostPr358",
-  "YouTubeRuntimeSafeLiveSmokeCommandPostPr358Assessment"
+  "YouTubeRuntimeSafeLiveSmokeCommandPostPr358Assessment",
+  "YouTubeRuntimeLiveTokenResolutionReadinessPostPr359Check",
+  "YouTubeRuntimeLiveTokenResolutionReadinessPostPr359",
+  "YouTubeRuntimeLiveTokenResolutionReadinessPostPr359Assessment"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `runtime exports ${exportedType}`);
 }
@@ -65,7 +68,10 @@ for (const exportedType of [
 for (const exportedConstOrFunction of [
   "youtubeRuntimeSafeLiveSmokeCommandPostPr358",
   "assessYouTubeRuntimeSafeLiveSmokeCommandPostPr358",
-  "createYouTubeRuntimeSafeLiveSmokeCommandPostPr358Summary"
+  "createYouTubeRuntimeSafeLiveSmokeCommandPostPr358Summary",
+  "youtubeRuntimeLiveTokenResolutionReadinessPostPr359",
+  "assessYouTubeRuntimeLiveTokenResolutionReadinessPostPr359",
+  "createYouTubeRuntimeLiveTokenResolutionReadinessPostPr359Summary"
 ]) {
   assert.match(
     runtimeSource,
@@ -255,6 +261,11 @@ assert.equal(
   "blocked-pending-server-only-live-token-resolution-runtime",
   "execute mode records readiness blocker instead of printing or requesting OAuth token material"
 );
+assert.equal(
+  executePayload.serverOnlyLiveTokenResolutionRuntime,
+  "not-implemented-readiness-only",
+  "execute mode reports the server-only live token resolution runtime blocker as sanitized metadata"
+);
 assert.equal(executePayload.safeLiveYouTubeOAuthSmoke, "not-run", "execute mode does not run OAuth live smoke");
 assert.equal(executePayload.ownerVerificationSmoke, "not-run", "execute mode does not run owner verification smoke");
 assert.equal(executePayload.liveChatPollingSmoke, "not-run", "execute mode does not run Live Chat polling smoke");
@@ -308,10 +319,72 @@ assert.match(
   "post-PR358 command boundary summary records blocked command result"
 );
 
+const tokenResolutionReadiness = runtime.youtubeRuntimeLiveTokenResolutionReadinessPostPr359;
+
+assert.deepEqual(
+  tokenResolutionReadiness.prerequisiteLiveRuntimeSmokeCommand,
+  {
+    pullRequest: "#359",
+    mergeCommit: "6972c0c600acbbb8bd596d2635416921f4fa6751",
+    status: "post-pr358-dedicated-sanitized-live-runtime-smoke-command-merged"
+  },
+  "post-PR359 token resolution readiness records the PR #359 merge premise"
+);
+assert.equal(
+  tokenResolutionReadiness.implementationStage,
+  "post-pr359-server-only-live-token-resolution-readiness",
+  "post-PR359 token resolution readiness stage is explicit"
+);
+assert.equal(
+  tokenResolutionReadiness.serverOnlyLiveTokenResolutionRuntime,
+  "not-implemented-readiness-only",
+  "post-PR359 readiness records missing server-only live token resolution runtime"
+);
+assert.equal(
+  tokenResolutionReadiness.actualSafeLiveRuntimeSmoke,
+  "not-run-blocked-pending-server-only-live-token-resolution-runtime",
+  "post-PR359 readiness blocks actual live smoke on live token resolution runtime"
+);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeLiveTokenResolutionReadinessPostPr359(
+    tokenResolutionReadiness.requiredReadinessChecks.filter((check) => check.status === "recorded")
+  ),
+  {
+    status: "blocked-pending-server-only-live-token-resolution-runtime",
+    completedCheckIds: tokenResolutionReadiness.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    blockingCheckIds: tokenResolutionReadiness.requiredReadinessChecks
+      .filter((check) => check.status === "blocking-external-action")
+      .map((check) => check.id),
+    safeLiveYouTubeOAuthSmokeExecuted: false,
+    ownerVerificationSmokeExecuted: false,
+    liveChatPollingSmokeExecuted: false,
+    googleApiLiveCallExecuted: false,
+    nextAction: "implement-server-only-live-token-resolution-runtime-in-separate-approved-pr-before-actual-live-smoke"
+  },
+  "post-PR359 token resolution readiness stays blocked without live provider calls"
+);
+assert.match(
+  runtime.createYouTubeRuntimeLiveTokenResolutionReadinessPostPr359Summary(),
+  /post-pr359-server-only-live-token-resolution-readiness.*blocked-pending-server-only-live-token-resolution-runtime/i,
+  "post-PR359 token resolution readiness summary records the blocker"
+);
+
 assert.match(
   taskSource,
   /PR #358 `MERGED`[\s\S]*2026-06-07T04:35:20Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
   "task.md records fresh PR #358 metadata and check disposition"
+);
+assert.match(
+  taskSource,
+  /PR #359 `MERGED`[\s\S]*2026-06-07T05:46:13Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
+  "task.md records fresh PR #359 metadata and check disposition"
+);
+assert.match(
+  taskSource,
+  /post-PR #359 server-only live token resolution readiness/i,
+  "task.md records the post-PR359 server-only live token resolution readiness slice"
 );
 assert.match(
   taskSource,

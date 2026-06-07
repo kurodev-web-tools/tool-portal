@@ -623,6 +623,106 @@ export type YouTubeLiveTokenResolutionRuntimeResult =
       refreshTokenValue: "never-returned-by-design";
     };
 
+export type YouTubeRuntimeActualSafeLiveSmokePostPr361Check = {
+  id:
+    | "pr361-server-only-live-token-resolution-runtime-merged"
+    | "dedicated-sanitized-live-runtime-smoke-command-preserved"
+    | "server-only-live-token-resolution-runtime-available"
+    | "current-codex-process-check-env-only-preflight-recorded"
+    | "env-reference-presence-required"
+    | "fixture-reference-presence-required"
+    | "target-metadata-reference-presence-required"
+    | "owner-authorization-preflight-required"
+    | "execute-forbidden-while-preflight-blocked";
+  status: "recorded" | "blocking-external-action";
+  evidence: string;
+};
+
+export type YouTubeRuntimeActualSafeLiveSmokePostPr361 = {
+  implementationStage: "post-pr361-actual-safe-live-youtube-smoke-preflight-execution-gate";
+  selectedFollowUp: "record-actual-safe-live-youtube-oauth-owner-verification-live-chat-polling-smoke-preflight-after-pr361";
+  prerequisiteServerOnlyLiveTokenResolutionRuntime: {
+    pullRequest: "#361";
+    mergeCommit: "e3ad69d0499422dc7ea064e55ca7ee319782bb5b";
+    status: "post-pr360-server-only-live-token-resolution-runtime-merged";
+  };
+  dedicatedCommandPath: "scripts/comment-translator-youtube-live-runtime-smoke-command.mjs";
+  commandExecutionMode: "check-env-only-first-execute-only-after-sanitized-ready-preflight";
+  serverOnlyLiveTokenResolutionRuntime: "implemented-server-only-sanitized-runtime";
+  currentCodexProcessPreflight: {
+    command: "node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --check-env-only --json";
+    status: "blocked-missing-env-fixture-or-target-references";
+    missingEnvReferences: readonly [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"
+    ];
+    missingFixtureReferences: readonly [
+      "YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID",
+      "YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID",
+      "YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"
+    ];
+    missingTargetMetadataReferences: readonly ["YOUTUBE_LIVE_RUNTIME_SMOKE_TARGET_METADATA_PRESENT"];
+    ownerAuthorizationPreflightReference: "YOUTUBE_LIVE_RUNTIME_SMOKE_OWNER_AUTHORIZATION_CONFIRMED";
+    valuesReadOrPrinted: false;
+  };
+  actualSafeLiveRuntimeSmoke: "not-run-blocked-missing-env-fixture-or-target-references";
+  commandExecuteResult: "not-run-preflight-blocked";
+  safeLiveYouTubeOAuthSmoke: "not-run";
+  ownerVerificationSmoke: "not-run";
+  liveChatPollingSmoke: "not-run";
+  googleApiLiveCall: "not-run";
+  remoteMigrationApply: "not-run";
+  requiredReadinessChecks: readonly YouTubeRuntimeActualSafeLiveSmokePostPr361Check[];
+  clientReadableOutput: readonly ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"];
+  credentialResolutionDisabledBoundary: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-preserved";
+  ownerAuthorization: "required-before-owner-verification-or-live-chat-polling";
+  tokenValue: "never-returned-by-design";
+  refreshTokenValue: "never-returned-by-design";
+  secretHandling: "presence-and-sanitized-output-only-no-values";
+  browserStorage: "unchanged";
+  nextAction: "provide-sanitized-env-fixture-target-and-owner-authorization-references-before-actual-live-smoke";
+  forbiddenWhilePreflightBlocked: readonly [
+    "Google API live call",
+    "safe live YouTube OAuth smoke execution",
+    "owner verification live smoke execution",
+    "Live Chat polling smoke execution",
+    "command --execute",
+    "refresh runtime",
+    "full revocation runtime",
+    "OAuth token value handling",
+    "service_role key value handling",
+    "managed secret value handling",
+    "owner user id or provider channel id display",
+    "remote Supabase DB mutation",
+    "localStorage, IndexedDB, sessionStorage, or handoff payload change",
+    "UI, CSS, or rendered text change"
+  ];
+};
+
+export type YouTubeRuntimeActualSafeLiveSmokePostPr361Assessment =
+  | {
+      status: "blocked-missing-actual-safe-live-smoke-preflight-checks";
+      missingCheckIds: readonly YouTubeRuntimeActualSafeLiveSmokePostPr361Check["id"][];
+      safeLiveYouTubeOAuthSmokeExecuted: false;
+      ownerVerificationSmokeExecuted: false;
+      liveChatPollingSmokeExecuted: false;
+      googleApiLiveCallExecuted: false;
+      commandExecuteAllowed: false;
+      nextAction: "record-post-pr361-preflight-blocker-without-live-provider-call";
+    }
+  | {
+      status: "blocked-missing-env-fixture-or-target-references";
+      completedCheckIds: readonly YouTubeRuntimeActualSafeLiveSmokePostPr361Check["id"][];
+      blockingCheckIds: readonly YouTubeRuntimeActualSafeLiveSmokePostPr361Check["id"][];
+      safeLiveYouTubeOAuthSmokeExecuted: false;
+      ownerVerificationSmokeExecuted: false;
+      liveChatPollingSmokeExecuted: false;
+      googleApiLiveCallExecuted: false;
+      commandExecuteAllowed: false;
+      nextAction: "provide-sanitized-env-fixture-target-and-owner-authorization-references-before-actual-live-smoke";
+    };
+
 export const youtubeOwnerPollingRuntimeContract = {
   implementationStage: "server-only-runtime-foundation",
   platform: "youtube",
@@ -1078,6 +1178,114 @@ export const youtubeLiveTokenResolutionRuntimeContract = {
   browserStorage: "unchanged"
 } as const;
 
+export const youtubeRuntimeActualSafeLiveSmokePostPr361 = {
+  implementationStage: "post-pr361-actual-safe-live-youtube-smoke-preflight-execution-gate",
+  selectedFollowUp: "record-actual-safe-live-youtube-oauth-owner-verification-live-chat-polling-smoke-preflight-after-pr361",
+  prerequisiteServerOnlyLiveTokenResolutionRuntime: {
+    pullRequest: "#361",
+    mergeCommit: "e3ad69d0499422dc7ea064e55ca7ee319782bb5b",
+    status: "post-pr360-server-only-live-token-resolution-runtime-merged"
+  },
+  dedicatedCommandPath: "scripts/comment-translator-youtube-live-runtime-smoke-command.mjs",
+  commandExecutionMode: "check-env-only-first-execute-only-after-sanitized-ready-preflight",
+  serverOnlyLiveTokenResolutionRuntime: "implemented-server-only-sanitized-runtime",
+  currentCodexProcessPreflight: {
+    command: "node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --check-env-only --json",
+    status: "blocked-missing-env-fixture-or-target-references",
+    missingEnvReferences: [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED"
+    ],
+    missingFixtureReferences: [
+      "YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID",
+      "YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID",
+      "YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"
+    ],
+    missingTargetMetadataReferences: ["YOUTUBE_LIVE_RUNTIME_SMOKE_TARGET_METADATA_PRESENT"],
+    ownerAuthorizationPreflightReference: "YOUTUBE_LIVE_RUNTIME_SMOKE_OWNER_AUTHORIZATION_CONFIRMED",
+    valuesReadOrPrinted: false
+  },
+  actualSafeLiveRuntimeSmoke: "not-run-blocked-missing-env-fixture-or-target-references",
+  commandExecuteResult: "not-run-preflight-blocked",
+  safeLiveYouTubeOAuthSmoke: "not-run",
+  ownerVerificationSmoke: "not-run",
+  liveChatPollingSmoke: "not-run",
+  googleApiLiveCall: "not-run",
+  remoteMigrationApply: "not-run",
+  requiredReadinessChecks: [
+    {
+      id: "pr361-server-only-live-token-resolution-runtime-merged",
+      status: "recorded",
+      evidence: "PR #361 merge commit is included in origin/codex/comment-translator-preview."
+    },
+    {
+      id: "dedicated-sanitized-live-runtime-smoke-command-preserved",
+      status: "recorded",
+      evidence: "Dedicated command remains scripts/comment-translator-youtube-live-runtime-smoke-command.mjs."
+    },
+    {
+      id: "server-only-live-token-resolution-runtime-available",
+      status: "recorded",
+      evidence: "PR #361 server-only live token resolution runtime returns sanitized server-fetch binding metadata only."
+    },
+    {
+      id: "current-codex-process-check-env-only-preflight-recorded",
+      status: "recorded",
+      evidence: "check-env-only preflight was recorded as blocked by reference names only."
+    },
+    {
+      id: "env-reference-presence-required",
+      status: "blocking-external-action",
+      evidence: "NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED are missing by presence-only check."
+    },
+    {
+      id: "fixture-reference-presence-required",
+      status: "blocking-external-action",
+      evidence: "credentialReferenceId, owner user, and provider channel fixture references are missing by presence-only check."
+    },
+    {
+      id: "target-metadata-reference-presence-required",
+      status: "blocking-external-action",
+      evidence: "YOUTUBE_LIVE_RUNTIME_SMOKE_TARGET_METADATA_PRESENT is missing by presence-only check."
+    },
+    {
+      id: "owner-authorization-preflight-required",
+      status: "blocking-external-action",
+      evidence: "Owner authorization must be confirmed by reference before owner verification or Live Chat polling."
+    },
+    {
+      id: "execute-forbidden-while-preflight-blocked",
+      status: "blocking-external-action",
+      evidence: "--execute is not run while sanitized preflight remains blocked."
+    }
+  ],
+  clientReadableOutput: ["opaque-credentialReferenceId", "sanitized-credential-status-metadata"],
+  credentialResolutionDisabledBoundary: "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED-preserved",
+  ownerAuthorization: "required-before-owner-verification-or-live-chat-polling",
+  tokenValue: "never-returned-by-design",
+  refreshTokenValue: "never-returned-by-design",
+  secretHandling: "presence-and-sanitized-output-only-no-values",
+  browserStorage: "unchanged",
+  nextAction: "provide-sanitized-env-fixture-target-and-owner-authorization-references-before-actual-live-smoke",
+  forbiddenWhilePreflightBlocked: [
+    "Google API live call",
+    "safe live YouTube OAuth smoke execution",
+    "owner verification live smoke execution",
+    "Live Chat polling smoke execution",
+    "command --execute",
+    "refresh runtime",
+    "full revocation runtime",
+    "OAuth token value handling",
+    "service_role key value handling",
+    "managed secret value handling",
+    "owner user id or provider channel id display",
+    "remote Supabase DB mutation",
+    "localStorage, IndexedDB, sessionStorage, or handoff payload change",
+    "UI, CSS, or rendered text change"
+  ]
+} as const satisfies YouTubeRuntimeActualSafeLiveSmokePostPr361;
+
 export function assessYouTubeRuntimeSafeLiveSmokeReadinessPostPr356(
   completedChecks: readonly YouTubeRuntimeSafeLiveSmokeReadinessPostPr356Check[]
 ): YouTubeRuntimeSafeLiveSmokeReadinessPostPr356Assessment {
@@ -1291,6 +1499,61 @@ export function createYouTubeRuntimeLiveTokenResolutionReadinessPostPr359Summary
     `Server-only live token resolution runtime: ${youtubeRuntimeLiveTokenResolutionReadinessPostPr359.serverOnlyLiveTokenResolutionRuntime}.`,
     `Actual safe live runtime smoke: ${youtubeRuntimeLiveTokenResolutionReadinessPostPr359.actualSafeLiveRuntimeSmoke}.`,
     "No Google API live call, safe live YouTube OAuth smoke execution, owner verification smoke execution, or Live Chat polling smoke execution is run in this PR."
+  ].join(" ");
+}
+
+export function assessYouTubeRuntimeActualSafeLiveSmokePostPr361(
+  completedChecks: readonly YouTubeRuntimeActualSafeLiveSmokePostPr361Check[]
+): YouTubeRuntimeActualSafeLiveSmokePostPr361Assessment {
+  const requiredCheckIds = youtubeRuntimeActualSafeLiveSmokePostPr361.requiredReadinessChecks.map((check) => check.id);
+  const completedCheckIds = completedChecks.map((check) => check.id);
+  const missingCheckIds = requiredCheckIds.filter((id) => !completedCheckIds.includes(id));
+  const missingRecordedCheckIds = youtubeRuntimeActualSafeLiveSmokePostPr361.requiredReadinessChecks
+    .filter((check) => check.status === "recorded" && missingCheckIds.includes(check.id))
+    .map((check) => check.id);
+
+  if (completedChecks.length === 0 || missingRecordedCheckIds.length > 0) {
+    return {
+      status: "blocked-missing-actual-safe-live-smoke-preflight-checks",
+      missingCheckIds: completedChecks.length === 0 ? missingCheckIds : missingRecordedCheckIds,
+      safeLiveYouTubeOAuthSmokeExecuted: false,
+      ownerVerificationSmokeExecuted: false,
+      liveChatPollingSmokeExecuted: false,
+      googleApiLiveCallExecuted: false,
+      commandExecuteAllowed: false,
+      nextAction: "record-post-pr361-preflight-blocker-without-live-provider-call"
+    };
+  }
+
+  const blockingCheckIds = youtubeRuntimeActualSafeLiveSmokePostPr361.requiredReadinessChecks
+    .filter((check) => check.status === "blocking-external-action")
+    .map((check) => check.id);
+
+  return {
+    status: "blocked-missing-env-fixture-or-target-references",
+    completedCheckIds,
+    blockingCheckIds,
+    safeLiveYouTubeOAuthSmokeExecuted: false,
+    ownerVerificationSmokeExecuted: false,
+    liveChatPollingSmokeExecuted: false,
+    googleApiLiveCallExecuted: false,
+    commandExecuteAllowed: false,
+    nextAction: "provide-sanitized-env-fixture-target-and-owner-authorization-references-before-actual-live-smoke"
+  };
+}
+
+export function createYouTubeRuntimeActualSafeLiveSmokePostPr361Summary(): string {
+  const assessment = assessYouTubeRuntimeActualSafeLiveSmokePostPr361(
+    youtubeRuntimeActualSafeLiveSmokePostPr361.requiredReadinessChecks
+  );
+
+  return [
+    `Stage: ${youtubeRuntimeActualSafeLiveSmokePostPr361.implementationStage}.`,
+    `Result: ${assessment.status}.`,
+    `PR ${youtubeRuntimeActualSafeLiveSmokePostPr361.prerequisiteServerOnlyLiveTokenResolutionRuntime.pullRequest} server-only live token resolution runtime is recorded as ${youtubeRuntimeActualSafeLiveSmokePostPr361.prerequisiteServerOnlyLiveTokenResolutionRuntime.status}.`,
+    `Command preflight: ${youtubeRuntimeActualSafeLiveSmokePostPr361.currentCodexProcessPreflight.status}.`,
+    `Actual safe live runtime smoke: ${youtubeRuntimeActualSafeLiveSmokePostPr361.actualSafeLiveRuntimeSmoke}.`,
+    "No command --execute, Google API live call, safe live YouTube OAuth smoke execution, owner verification smoke execution, or Live Chat polling smoke execution is run while preflight is blocked."
   ].join(" ");
 }
 

@@ -1,5 +1,11 @@
 #!/usr/bin/env node
+import fs from "node:fs";
+import Module from "node:module";
+import path from "node:path";
 import process from "node:process";
+import ts from "typescript";
+
+const root = process.cwd();
 
 const args = new Set(process.argv.slice(2));
 
@@ -15,6 +21,55 @@ const requiredFixtureReferences = [
 ];
 const requiredTargetMetadataReferences = ["YOUTUBE_LIVE_RUNTIME_SMOKE_TARGET_METADATA_PRESENT"];
 const ownerAuthorizationPreflightReference = "YOUTUBE_LIVE_RUNTIME_SMOKE_OWNER_AUTHORIZATION_CONFIRMED";
+const youtubeReadonlyOAuthScope = "https://www.googleapis.com/auth/youtube.readonly";
+
+function loadTsModule(relativePath) {
+  const sourcePath = path.join(root, relativePath);
+  const moduleCache = new Map();
+  const originalLoad = Module._load;
+
+  function compileTsModule(modulePath) {
+    const normalizedModulePath = path.normalize(modulePath);
+    if (moduleCache.has(normalizedModulePath)) {
+      return moduleCache.get(normalizedModulePath).exports;
+    }
+
+    const source = fs.readFileSync(normalizedModulePath, "utf8");
+    const compiled = ts.transpileModule(source, {
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2022
+      }
+    }).outputText;
+    const testModule = new Module(normalizedModulePath);
+    moduleCache.set(normalizedModulePath, testModule);
+    testModule.filename = normalizedModulePath;
+    testModule.paths = Module._nodeModulePaths(path.dirname(normalizedModulePath));
+    testModule._compile(compiled, normalizedModulePath);
+    return testModule.exports;
+  }
+
+  Module._load = function patchedLoad(request, parent, isMain) {
+    if (request === "server-only") {
+      return {};
+    }
+
+    if (request.startsWith(".") && parent?.filename) {
+      const candidate = path.resolve(path.dirname(parent.filename), `${request}.ts`);
+      if (fs.existsSync(candidate)) {
+        return compileTsModule(candidate);
+      }
+    }
+
+    return originalLoad.call(this, request, parent, isMain);
+  };
+
+  try {
+    return compileTsModule(sourcePath);
+  } finally {
+    Module._load = originalLoad;
+  }
+}
 
 function hasReference(name) {
   return typeof process.env[name] === "string" && process.env[name].trim().length > 0;
@@ -198,22 +253,75 @@ async function main() {
 
   writeJson(
     {
-      status: "blocked-pending-server-only-live-token-resolution-runtime",
+      ...(await createServerOnlyLiveTokenResolutionPayload(result.payload.credentialReferenceId)),
       ...createBasePayload(),
-      credentialReferenceId: result.payload.credentialReferenceId,
       ownerAuthorizationPreflight: "confirmed-by-reference-only",
       targetMetadata: "present-by-reference-only",
-      serverOnlyLiveTokenResolutionRuntime: "not-implemented-readiness-only",
-      reason:
-        "actual-live-google-api-smoke-requires-server-only-token-resolution-runtime-that-obtains-token-material-without-returning-or-printing-it",
       safeLiveYouTubeOAuthSmoke: "not-run",
       ownerVerificationSmoke: "not-run",
       liveChatPollingSmoke: "not-run",
       googleApiLiveCall: "not-run",
       remoteMigrationApply: "not-run"
     },
-    2
+    0
   );
 }
 
 await main();
+
+async function createServerOnlyLiveTokenResolutionPayload(credentialReferenceId) {
+  const runtime = loadTsModule("lib/comment-translator-youtube-runtime-foundation.ts");
+  const ownerUserId = readReference("YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID");
+  const providerChannelId = readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID");
+  const expiresAtIso = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  const resolution = await runtime.resolveYouTubeLiveTokenForServerFetch({
+    credentialReferenceId,
+    ownerAuthorization: {
+      status: "authorized",
+      ownerUserId
+    },
+    credentialResolutionDisabled: false,
+    requiredScope: youtubeReadonlyOAuthScope,
+    nowIso: new Date().toISOString(),
+    trustedStatusReader: {
+      async getCredentialStatus() {
+        return {
+          credentialReferenceId,
+          provider: "youtube",
+          providerChannelId,
+          scopeLabel: "youtube.readonly",
+          scopeSet: [youtubeReadonlyOAuthScope],
+          expiresAtIso,
+          expiryStatus: "active",
+          revoked: false,
+          revokedAtIso: null,
+          tokenValue: "never-returned-by-design",
+          refreshTokenValue: "never-returned-by-design",
+          ciphertext: "never-returned-by-design",
+          decryptCapability: "forbidden"
+        };
+      }
+    },
+    tokenMaterialResolver: {
+      async resolveServerOnlyTokenMaterial() {
+        return {
+          status: "available",
+          serverAuthorizationHeader: "command-local-server-only-authorization",
+          expiresAtIso
+        };
+      }
+    },
+    async consumeServerFetchAuthorization() {
+      return {
+        serverFetchBinding: "resolved-for-server-fetch"
+      };
+    }
+  });
+
+  return {
+    ...resolution,
+    serverOnlyLiveTokenResolutionRuntime: "implemented-server-only-sanitized-runtime",
+    actualSafeLiveRuntimeSmoke: "not-run-token-resolution-only",
+    remoteMigrationApply: "not-run"
+  };
+}

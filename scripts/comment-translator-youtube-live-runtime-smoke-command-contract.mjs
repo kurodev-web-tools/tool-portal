@@ -91,7 +91,10 @@ for (const exportedType of [
   "YouTubeRuntimeSafeLiveSmokePostPr369ReadinessRecheckAssessment",
   "YouTubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheckCheck",
   "YouTubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck",
-  "YouTubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheckAssessment"
+  "YouTubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheckAssessment",
+  "YouTubeRuntimeSafeLiveSmokePostPr371ActualProviderSmokeGateCheck",
+  "YouTubeRuntimeSafeLiveSmokePostPr371ActualProviderSmokeGate",
+  "YouTubeRuntimeSafeLiveSmokePostPr371ActualProviderSmokeGateAssessment"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `runtime exports ${exportedType}`);
 }
@@ -131,7 +134,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeRuntimeSafeLiveSmokePostPr369ReadinessRecheckSummary",
   "youtubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck",
   "assessYouTubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck",
-  "createYouTubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheckSummary"
+  "createYouTubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheckSummary",
+  "youtubeRuntimeSafeLiveSmokePostPr371ActualProviderSmokeGate",
+  "assessYouTubeRuntimeSafeLiveSmokePostPr371ActualProviderSmokeGate",
+  "createYouTubeRuntimeSafeLiveSmokePostPr371ActualProviderSmokeGateSummary"
 ]) {
   assert.match(
     runtimeSource,
@@ -1089,6 +1095,68 @@ assert.match(
   "post-PR370 preflight-ready check summary records the current-process blocker"
 );
 
+const postPr371ActualProviderSmokeGate = runtime.youtubeRuntimeSafeLiveSmokePostPr371ActualProviderSmokeGate;
+assert.deepEqual(
+  postPr371ActualProviderSmokeGate.prerequisitePostPr370PreflightReadyCheck,
+  {
+    pullRequest: "#371",
+    mergeCommit: "11e19e4d510281d5c4d174a2da3e1c6d12620988",
+    status: "post-pr370-live-smoke-preflight-blocker-merged"
+  },
+  "post-PR371 actual-provider smoke gate records the PR #371 merge premise"
+);
+assert.equal(
+  postPr371ActualProviderSmokeGate.implementationStage,
+  "post-pr371-actual-provider-smoke-gate",
+  "post-PR371 actual-provider smoke gate stage is explicit"
+);
+assert.equal(
+  postPr371ActualProviderSmokeGate.currentCodexProcessPreflight.status,
+  "blocked-missing-env-fixture-or-target-references",
+  "post-PR371 records the fresh current-process sanitized blocker"
+);
+assert.equal(
+  postPr371ActualProviderSmokeGate.commandExecuteResult,
+  "not-run-preflight-blocked",
+  "post-PR371 does not run --execute when the same-process preflight is blocked"
+);
+assert.equal(
+  postPr371ActualProviderSmokeGate.actualProviderSmokeBoundary,
+  "not-implemented-dedicated-provider-smoke-gate-required",
+  "post-PR371 records that actual provider smoke still needs a dedicated gate"
+);
+assert.equal(
+  postPr371ActualProviderSmokeGate.actualSafeLiveRuntimeSmoke,
+  "not-run-blocked-missing-env-fixture-or-target-references",
+  "post-PR371 does not overclaim actual live smoke"
+);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeSafeLiveSmokePostPr371ActualProviderSmokeGate(
+    postPr371ActualProviderSmokeGate.requiredReadinessChecks.filter((check) => check.status === "recorded")
+  ),
+  {
+    status: "blocked-missing-env-fixture-or-target-references",
+    completedCheckIds: postPr371ActualProviderSmokeGate.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    blockingCheckIds: postPr371ActualProviderSmokeGate.requiredReadinessChecks
+      .filter((check) => check.status === "blocking-external-action")
+      .map((check) => check.id),
+    safeLiveYouTubeOAuthSmokeExecuted: false,
+    ownerVerificationSmokeExecuted: false,
+    liveChatPollingSmokeExecuted: false,
+    googleApiLiveCallExecuted: false,
+    commandExecuteAllowed: false,
+    nextAction: "add-dedicated-actual-provider-smoke-gate-after-same-process-preflight-ready"
+  },
+  "post-PR371 gate remains blocker-only until same-process preflight and dedicated provider gate are ready"
+);
+assert.match(
+  runtime.createYouTubeRuntimeSafeLiveSmokePostPr371ActualProviderSmokeGateSummary(),
+  /post-pr371-actual-provider-smoke-gate.*blocked-missing-env-fixture-or-target-references/i,
+  "post-PR371 actual-provider smoke gate summary records the current-process blocker"
+);
+
 let materialConsumed = false;
 const resolvedForFetch = await runtime.resolveYouTubeLiveTokenForServerFetch({
   credentialReferenceId: "smoke-post-pr360-runtime-001",
@@ -1331,6 +1399,41 @@ assert.match(
   taskSource,
   /post-PR #370[\s\S]*actual safe live YouTube OAuth \/ owner verification \/ Live Chat polling smoke は成功扱いにしない/i,
   "task.md does not overclaim operator-provided token resolution as actual live smoke"
+);
+assert.match(
+  taskSource,
+  /PR #371 `MERGED`[\s\S]*2026-06-08T04:43:31Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
+  "task.md records fresh PR #371 metadata and check disposition"
+);
+assert.match(
+  taskSource,
+  /post-PR #371 actual safe live YouTube OAuth \/ owner verification \/ Live Chat polling smoke actual-provider gate/i,
+  "task.md records the post-PR371 actual-provider gate"
+);
+assert.match(
+  taskSource,
+  /post-PR #371[\s\S]*current Codex process の再実行は sanitized blocker `blocked-missing-env-fixture-or-target-references`/i,
+  "task.md records the current-process post-PR371 blocker"
+);
+assert.match(
+  taskSource,
+  /post-PR #371[\s\S]*preflight が blocked のため `--execute` は実行していない/i,
+  "task.md records that --execute was not run for post-PR371"
+);
+assert.match(
+  taskSource,
+  /post-PR #371[\s\S]*operator-provided sanitized execute result[\s\S]*`resolved-for-server-fetch`[\s\S]*`not-run-token-resolution-only`/i,
+  "task.md records the post-PR371 operator-provided sanitized execute result as token-resolution-only"
+);
+assert.match(
+  taskSource,
+  /post-PR #371[\s\S]*actual-provider-smoke gate は `not-implemented-dedicated-provider-smoke-gate-required`/i,
+  "task.md records the dedicated actual-provider smoke gate requirement"
+);
+assert.match(
+  taskSource,
+  /post-PR #371[\s\S]*actual safe live YouTube OAuth \/ owner verification \/ Live Chat polling smoke は成功扱いにしない/i,
+  "task.md does not overclaim post-PR371 token resolution as actual live smoke"
 );
 assert.match(
   taskSource,

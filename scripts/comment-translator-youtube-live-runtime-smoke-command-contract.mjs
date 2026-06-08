@@ -75,6 +75,11 @@ const postPr379TaskSection = sectionBetween(
   "post-PR #379 Google API live call execution readiness updated",
   "post-PR #378 Google API live call execution gate preflight updated"
 );
+const postPr380TaskSection = sectionBetween(
+  taskSource,
+  "post-PR #380 Google API live call execution readiness recheck updated",
+  "post-PR #379 Google API live call execution readiness updated"
+);
 
 for (const exportedType of [
   "YouTubeRuntimeSafeLiveSmokeCommandPostPr358Check",
@@ -140,7 +145,10 @@ for (const exportedType of [
   "YouTubeRuntimeSafeLiveSmokePostPr378GoogleApiLiveCallExecutionGatePreflightAssessment",
   "YouTubeRuntimeSafeLiveSmokePostPr379GoogleApiLiveCallExecutionReadinessCheck",
   "YouTubeRuntimeSafeLiveSmokePostPr379GoogleApiLiveCallExecutionReadiness",
-  "YouTubeRuntimeSafeLiveSmokePostPr379GoogleApiLiveCallExecutionReadinessAssessment"
+  "YouTubeRuntimeSafeLiveSmokePostPr379GoogleApiLiveCallExecutionReadinessAssessment",
+  "YouTubeRuntimeSafeLiveSmokePostPr380GoogleApiLiveCallExecutionReadinessRecheckCheck",
+  "YouTubeRuntimeSafeLiveSmokePostPr380GoogleApiLiveCallExecutionReadinessRecheck",
+  "YouTubeRuntimeSafeLiveSmokePostPr380GoogleApiLiveCallExecutionReadinessRecheckAssessment"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `runtime exports ${exportedType}`);
 }
@@ -207,7 +215,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeRuntimeSafeLiveSmokePostPr378GoogleApiLiveCallExecutionGatePreflightSummary",
   "youtubeRuntimeSafeLiveSmokePostPr379GoogleApiLiveCallExecutionReadiness",
   "assessYouTubeRuntimeSafeLiveSmokePostPr379GoogleApiLiveCallExecutionReadiness",
-  "createYouTubeRuntimeSafeLiveSmokePostPr379GoogleApiLiveCallExecutionReadinessSummary"
+  "createYouTubeRuntimeSafeLiveSmokePostPr379GoogleApiLiveCallExecutionReadinessSummary",
+  "youtubeRuntimeSafeLiveSmokePostPr380GoogleApiLiveCallExecutionReadinessRecheck",
+  "assessYouTubeRuntimeSafeLiveSmokePostPr380GoogleApiLiveCallExecutionReadinessRecheck",
+  "createYouTubeRuntimeSafeLiveSmokePostPr380GoogleApiLiveCallExecutionReadinessRecheckSummary"
 ]) {
   assert.match(
     runtimeSource,
@@ -1818,6 +1829,73 @@ assert.match(
   "post-PR379 summary records execution readiness blockers without running Google API"
 );
 
+const postPr380GoogleApiLiveCallExecutionReadinessRecheck =
+  runtime.youtubeRuntimeSafeLiveSmokePostPr380GoogleApiLiveCallExecutionReadinessRecheck;
+assert.equal(
+  postPr380GoogleApiLiveCallExecutionReadinessRecheck.implementationStage,
+  "post-pr380-google-api-live-call-execution-readiness-recheck",
+  "post-PR380 Google API live call execution readiness recheck stage is explicit"
+);
+assert.deepEqual(
+  postPr380GoogleApiLiveCallExecutionReadinessRecheck.prerequisitePostPr379GoogleApiLiveCallExecutionReadiness,
+  {
+    pullRequest: "#380",
+    mergeCommit: "79fe26a7fe5d77dbc2ebe433c1dbbf5252d7912e",
+    mergedAt: "2026-06-08T11:48:48Z",
+    baseRefName: "codex/comment-translator-preview",
+    headRefName: "codex/comment-translator-google-api-live-call-execution-readiness-post-pr379",
+    status: "post-pr379-google-api-live-call-execution-readiness-merged"
+  },
+  "post-PR380 readiness recheck records PR #380 merge metadata"
+);
+assert.equal(
+  postPr380GoogleApiLiveCallExecutionReadinessRecheck.commandExecutionMode,
+  "contract-only-google-api-live-call-execution-readiness-recheck-provider-execution-not-run",
+  "post-PR380 readiness recheck remains contract-only and does not execute provider calls"
+);
+assert.deepEqual(
+  postPr380GoogleApiLiveCallExecutionReadinessRecheck.executionReadinessConditions,
+  postPr379GoogleApiLiveCallExecutionReadiness.executionReadinessConditions,
+  "post-PR380 readiness recheck preserves Google API live call execution readiness conditions"
+);
+assert.equal(postPr380GoogleApiLiveCallExecutionReadinessRecheck.googleApiLiveCall, "not-run");
+assert.equal(postPr380GoogleApiLiveCallExecutionReadinessRecheck.safeLiveYouTubeOAuthSmoke, "not-run");
+assert.equal(postPr380GoogleApiLiveCallExecutionReadinessRecheck.ownerVerificationSmoke, "not-run");
+assert.equal(postPr380GoogleApiLiveCallExecutionReadinessRecheck.liveChatPollingSmoke, "not-run");
+assert.equal(postPr380GoogleApiLiveCallExecutionReadinessRecheck.commandExecuteInvoked, false);
+assert.equal(postPr380GoogleApiLiveCallExecutionReadinessRecheck.actualProviderExecutionAllowed, false);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeSafeLiveSmokePostPr380GoogleApiLiveCallExecutionReadinessRecheck(
+    postPr380GoogleApiLiveCallExecutionReadinessRecheck.requiredReadinessChecks.filter(
+      (check) => check.status === "recorded"
+    )
+  ),
+  {
+    status: "blocked-google-api-live-call-execution-readiness-recheck-only",
+    completedCheckIds: postPr380GoogleApiLiveCallExecutionReadinessRecheck.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    blockingCheckIds: postPr380GoogleApiLiveCallExecutionReadinessRecheck.requiredReadinessChecks
+      .filter((check) => check.status === "blocking-external-action")
+      .map((check) => check.id),
+    tokenResolutionOnlyExecuteRecorded: true,
+    commandExecuteInvoked: false,
+    googleApiLiveCallExecuted: false,
+    safeLiveYouTubeOAuthSmokeExecuted: false,
+    ownerVerificationSmokeExecuted: false,
+    liveChatPollingSmokeExecuted: false,
+    actualProviderExecutionAllowed: false,
+    nextAction:
+      "stop-and-report-blocker-summary-until-explicit-human-approval-target-metadata-env-fixture-owner-authorization-and-same-process-evidence-are-present"
+  },
+  "post-PR380 Google API live call execution readiness recheck remains blocker-only"
+);
+assert.match(
+  runtime.createYouTubeRuntimeSafeLiveSmokePostPr380GoogleApiLiveCallExecutionReadinessRecheckSummary(),
+  /post-pr380-google-api-live-call-execution-readiness-recheck.*resolved-for-server-fetch.*not-run-token-resolution-only.*explicit-human-approval.*concrete-non-secret-target-metadata.*env-reference-presence.*fixture-reference-presence.*owner-authorization-preflight.*server-only-live-token-resolution-runtime.*sanitized-output-policy.*no-token-value-logging.*same-thread-same-process-evidence.*abort-conditions/i,
+  "post-PR380 summary records execution readiness blockers without running Google API"
+);
+
 let materialConsumed = false;
 const resolvedForFetch = await runtime.resolveYouTubeLiveTokenForServerFetch({
   credentialReferenceId: "smoke-post-pr360-runtime-001",
@@ -2275,6 +2353,26 @@ assert.match(
   postPr379TaskSection,
   /Google API live call.*not-run.*owner verification smoke.*後続候補.*Live Chat polling smoke.*後続候補.*`--execute` は実行していない/is,
   "task.md records that post-PR379 remains readiness-only and does not invoke execute"
+);
+assert.match(
+  postPr380TaskSection,
+  /PR #380 `MERGED`.*2026-06-08T11:48:48Z.*79fe26a7fe5d77dbc2ebe433c1dbbf5252d7912e.*Cloudflare Pages FAILURE.*Workers Builds SUCCESS/is,
+  "task.md records fresh PR #380 metadata and check disposition"
+);
+assert.match(
+  postPr380TaskSection,
+  /Google API live call execution readiness recheck.*resolved-for-server-fetch.*not-run-token-resolution-only.*actual provider execution ではない/is,
+  "task.md records post-PR380 token-resolution-only evidence is not actual provider execution"
+);
+assert.match(
+  postPr380TaskSection,
+  /explicit human approval.*concrete non-secret target metadata.*env reference presence.*fixture reference presence.*owner authorization preflight.*server-only live token resolution runtime.*sanitized output policy.*no token value logging.*same-thread\/same-process evidence.*abort conditions/is,
+  "task.md records post-PR380 Google API live call execution readiness recheck conditions"
+);
+assert.match(
+  postPr380TaskSection,
+  /Google API live call.*not-run.*owner verification smoke.*後続候補.*Live Chat polling smoke.*後続候補.*`--execute` は実行していない/is,
+  "task.md records that post-PR380 remains readiness-only and does not invoke execute"
 );
 assert.match(
   taskSource,

@@ -106,7 +106,10 @@ for (const exportedType of [
   "YouTubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGateAssessment",
   "YouTubeRuntimeSafeLiveSmokePostPr375TokenResolutionEvidenceCheck",
   "YouTubeRuntimeSafeLiveSmokePostPr375TokenResolutionEvidence",
-  "YouTubeRuntimeSafeLiveSmokePostPr375TokenResolutionEvidenceAssessment"
+  "YouTubeRuntimeSafeLiveSmokePostPr375TokenResolutionEvidenceAssessment",
+  "YouTubeRuntimeSafeLiveSmokePostPr376ActualProviderExecutionReadinessGateCheck",
+  "YouTubeRuntimeSafeLiveSmokePostPr376ActualProviderExecutionReadinessGate",
+  "YouTubeRuntimeSafeLiveSmokePostPr376ActualProviderExecutionReadinessGateAssessment"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `runtime exports ${exportedType}`);
 }
@@ -161,7 +164,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGateSummary",
   "youtubeRuntimeSafeLiveSmokePostPr375TokenResolutionEvidence",
   "assessYouTubeRuntimeSafeLiveSmokePostPr375TokenResolutionEvidence",
-  "createYouTubeRuntimeSafeLiveSmokePostPr375TokenResolutionEvidenceSummary"
+  "createYouTubeRuntimeSafeLiveSmokePostPr375TokenResolutionEvidenceSummary",
+  "youtubeRuntimeSafeLiveSmokePostPr376ActualProviderExecutionReadinessGate",
+  "assessYouTubeRuntimeSafeLiveSmokePostPr376ActualProviderExecutionReadinessGate",
+  "createYouTubeRuntimeSafeLiveSmokePostPr376ActualProviderExecutionReadinessGateSummary"
 ]) {
   assert.match(
     runtimeSource,
@@ -1447,6 +1453,70 @@ assert.match(
   "post-PR375 summary records token-resolution-only evidence and provider blockers"
 );
 
+const postPr376ActualProviderExecutionReadinessGate =
+  runtime.youtubeRuntimeSafeLiveSmokePostPr376ActualProviderExecutionReadinessGate;
+assert.equal(
+  postPr376ActualProviderExecutionReadinessGate.implementationStage,
+  "post-pr376-actual-provider-execution-readiness-gate",
+  "post-PR376 actual provider execution readiness gate stage is explicit"
+);
+assert.deepEqual(
+  postPr376ActualProviderExecutionReadinessGate.prerequisitePostPr375TokenResolutionEvidence,
+  {
+    pullRequest: "#376",
+    mergeCommit: "0aa4c2147db1cc3d2d4d529b9e3bdbe169a519e4",
+    status: "post-pr375-token-resolution-evidence-merged"
+  },
+  "post-PR376 readiness gate records PR #376 merge metadata"
+);
+assert.equal(
+  postPr376ActualProviderExecutionReadinessGate.tokenResolutionOnlyExecuteResult.status,
+  "resolved-for-server-fetch",
+  "post-PR376 readiness gate keeps resolved-for-server-fetch scoped to server-only token resolution"
+);
+assert.equal(
+  postPr376ActualProviderExecutionReadinessGate.tokenResolutionOnlyExecuteResult.actualSafeLiveRuntimeSmoke,
+  "not-run-token-resolution-only",
+  "post-PR376 readiness gate does not overclaim token-resolution-only evidence as provider execution"
+);
+assert.deepEqual(
+  postPr376ActualProviderExecutionReadinessGate.separateProviderExecutionGateOrder,
+  ["google-api-live-call-gate", "owner-verification-smoke-gate", "live-chat-polling-smoke-gate"],
+  "post-PR376 readiness gate records provider execution gate order"
+);
+assert.equal(postPr376ActualProviderExecutionReadinessGate.googleApiLiveCallGate, "blocked-pending-explicit-human-approval");
+assert.equal(postPr376ActualProviderExecutionReadinessGate.ownerVerificationSmokeGate, "blocked-pending-google-api-live-call-gate");
+assert.equal(postPr376ActualProviderExecutionReadinessGate.liveChatPollingSmokeGate, "blocked-pending-owner-verification-smoke-gate");
+assert.equal(postPr376ActualProviderExecutionReadinessGate.actualProviderExecutionAllowed, false);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeSafeLiveSmokePostPr376ActualProviderExecutionReadinessGate(
+    postPr376ActualProviderExecutionReadinessGate.requiredReadinessChecks.filter((check) => check.status === "recorded")
+  ),
+  {
+    status: "blocked-provider-execution-readiness-only",
+    completedCheckIds: postPr376ActualProviderExecutionReadinessGate.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    blockingCheckIds: postPr376ActualProviderExecutionReadinessGate.requiredReadinessChecks
+      .filter((check) => check.status === "blocking-external-action")
+      .map((check) => check.id),
+    tokenResolutionOnlyExecuteRecorded: true,
+    safeLiveYouTubeOAuthSmokeExecuted: false,
+    ownerVerificationSmokeExecuted: false,
+    liveChatPollingSmokeExecuted: false,
+    googleApiLiveCallExecuted: false,
+    actualProviderExecutionAllowed: false,
+    nextAction:
+      "collect-explicit-human-approval-before-running-google-api-live-call-then-owner-verification-then-live-chat-polling"
+  },
+  "post-PR376 actual provider execution readiness gate remains blocker-only"
+);
+assert.match(
+  runtime.createYouTubeRuntimeSafeLiveSmokePostPr376ActualProviderExecutionReadinessGateSummary(),
+  /post-pr376-actual-provider-execution-readiness-gate.*resolved-for-server-fetch.*not-run-token-resolution-only.*Google API live call gate.*owner verification smoke gate.*Live Chat polling smoke gate/i,
+  "post-PR376 summary records token-resolution-only evidence and separated provider execution gates"
+);
+
 let materialConsumed = false;
 const resolvedForFetch = await runtime.resolveYouTubeLiveTokenForServerFetch({
   credentialReferenceId: "smoke-post-pr360-runtime-001",
@@ -1824,6 +1894,26 @@ assert.match(
   taskSource,
   /post-PR #375[\s\S]*Google API live call[\s\S]*owner verification[\s\S]*Live Chat polling[\s\S]*not-run/i,
   "task.md records post-PR375 provider execution remains not-run"
+);
+assert.match(
+  taskSource,
+  /PR #376 `MERGED`[\s\S]*2026-06-08T10:00:08Z[\s\S]*0aa4c2147db1cc3d2d4d529b9e3bdbe169a519e4[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
+  "task.md records fresh PR #376 metadata and check disposition"
+);
+assert.match(
+  taskSource,
+  /post-PR #376[\s\S]*resolved-for-server-fetch[\s\S]*not-run-token-resolution-only[\s\S]*actual provider execution ではない/i,
+  "task.md records post-PR376 token-resolution-only evidence is not actual provider execution"
+);
+assert.match(
+  taskSource,
+  /post-PR #376[\s\S]*Google API live call gate[\s\S]*owner verification smoke gate[\s\S]*Live Chat polling smoke gate/i,
+  "task.md records post-PR376 separated provider execution gates"
+);
+assert.match(
+  taskSource,
+  /post-PR #376[\s\S]*Google API live call gate[\s\S]*owner verification smoke gate[\s\S]*Live Chat polling smoke gate[\s\S]*実行していない/i,
+  "task.md records that post-PR376 provider gates are not executed"
 );
 assert.match(
   taskSource,

@@ -100,7 +100,10 @@ for (const exportedType of [
   "YouTubeRuntimeSafeLiveSmokePostPr372DedicatedActualProviderSmokeGateAssessment",
   "YouTubeRuntimeSafeLiveSmokePostPr373ActualProviderSmokeBoundaryCheck",
   "YouTubeRuntimeSafeLiveSmokePostPr373ActualProviderSmokeBoundary",
-  "YouTubeRuntimeSafeLiveSmokePostPr373ActualProviderSmokeBoundaryAssessment"
+  "YouTubeRuntimeSafeLiveSmokePostPr373ActualProviderSmokeBoundaryAssessment",
+  "YouTubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGateCheck",
+  "YouTubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGate",
+  "YouTubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGateAssessment"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `runtime exports ${exportedType}`);
 }
@@ -149,7 +152,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeRuntimeSafeLiveSmokePostPr372DedicatedActualProviderSmokeGateSummary",
   "youtubeRuntimeSafeLiveSmokePostPr373ActualProviderSmokeBoundary",
   "assessYouTubeRuntimeSafeLiveSmokePostPr373ActualProviderSmokeBoundary",
-  "createYouTubeRuntimeSafeLiveSmokePostPr373ActualProviderSmokeBoundarySummary"
+  "createYouTubeRuntimeSafeLiveSmokePostPr373ActualProviderSmokeBoundarySummary",
+  "youtubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGate",
+  "assessYouTubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGate",
+  "createYouTubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGateSummary"
 ]) {
   assert.match(
     runtimeSource,
@@ -1301,6 +1307,76 @@ assert.match(
   "post-PR373 actual-provider boundary summary records token-resolution-only execute"
 );
 
+const postPr374ActualProviderExecutionGate =
+  runtime.youtubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGate;
+assert.deepEqual(
+  postPr374ActualProviderExecutionGate.prerequisitePostPr373ActualProviderSmokeBoundary,
+  {
+    pullRequest: "#374",
+    mergeCommit: "7d8a1b446d981851d3d3e4e85138902ac8186ee9",
+    status: "post-pr373-actual-provider-smoke-boundary-merged"
+  },
+  "post-PR374 actual-provider execution gate records the PR #374 merge premise"
+);
+assert.equal(
+  postPr374ActualProviderExecutionGate.implementationStage,
+  "post-pr374-actual-provider-execution-gate",
+  "post-PR374 actual-provider execution gate stage is explicit"
+);
+assert.equal(
+  postPr374ActualProviderExecutionGate.tokenResolutionOnlyExecuteResult.status,
+  "resolved-for-server-fetch",
+  "post-PR374 keeps token resolution execute separate from provider execution"
+);
+assert.equal(
+  postPr374ActualProviderExecutionGate.tokenResolutionOnlyExecuteResult.actualSafeLiveRuntimeSmoke,
+  "not-run-token-resolution-only",
+  "post-PR374 does not convert token resolution evidence into an actual provider smoke"
+);
+assert.deepEqual(
+  postPr374ActualProviderExecutionGate.actualProviderExecutionGates,
+  {
+    googleApiLiveCall: "blocked-pending-explicit-human-approval-and-dedicated-google-api-execution-gate",
+    ownerVerificationSmoke: "blocked-pending-explicit-human-approval-and-dedicated-owner-verification-gate",
+    liveChatPollingSmoke:
+      "blocked-pending-explicit-human-approval-owner-verification-success-and-dedicated-live-chat-polling-gate"
+  },
+  "post-PR374 separates Google API, owner verification, and Live Chat polling execution gates"
+);
+assert.equal(
+  postPr374ActualProviderExecutionGate.actualSafeLiveRuntimeSmoke,
+  "not-run-dedicated-actual-provider-execution-gate-only",
+  "post-PR374 remains an execution gate only"
+);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGate(
+    postPr374ActualProviderExecutionGate.requiredReadinessChecks.filter((check) => check.status === "recorded")
+  ),
+  {
+    status: "blocked-dedicated-actual-provider-execution-not-run",
+    completedCheckIds: postPr374ActualProviderExecutionGate.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    blockingCheckIds: postPr374ActualProviderExecutionGate.requiredReadinessChecks
+      .filter((check) => check.status === "blocking-external-action")
+      .map((check) => check.id),
+    tokenResolutionOnlyExecuteRecorded: true,
+    safeLiveYouTubeOAuthSmokeExecuted: false,
+    ownerVerificationSmokeExecuted: false,
+    liveChatPollingSmokeExecuted: false,
+    googleApiLiveCallExecuted: false,
+    actualProviderExecutionAllowed: false,
+    nextAction:
+      "require-explicit-human-approval-and-run-google-api-owner-verification-live-chat-polling-as-separate-gated-steps"
+  },
+  "post-PR374 actual-provider execution gate remains blocker-only"
+);
+assert.match(
+  runtime.createYouTubeRuntimeSafeLiveSmokePostPr374ActualProviderExecutionGateSummary(),
+  /post-pr374-actual-provider-execution-gate.*Google API.*owner verification.*Live Chat polling.*not-run/i,
+  "post-PR374 actual-provider execution gate summary records separated not-run blockers"
+);
+
 let materialConsumed = false;
 const resolvedForFetch = await runtime.resolveYouTubeLiveTokenForServerFetch({
   credentialReferenceId: "smoke-post-pr360-runtime-001",
@@ -1638,6 +1714,31 @@ assert.match(
   taskSource,
   /post-PR #373[\s\S]*dedicated gate/i,
   "task.md records the next dedicated provider execution gate"
+);
+assert.match(
+  taskSource,
+  /post-PR #374 dedicated actual-provider execution gate/i,
+  "task.md records the post-PR374 dedicated actual-provider execution gate"
+);
+assert.match(
+  taskSource,
+  /PR #374[\s\S]*7d8a1b446d981851d3d3e4e85138902ac8186ee9[\s\S]*2026-06-08T06:26:13Z/i,
+  "task.md records the post-PR374 merge premise"
+);
+assert.match(
+  taskSource,
+  /post-PR #374[\s\S]*resolved-for-server-fetch[\s\S]*not-run-token-resolution-only/i,
+  "task.md records that token-resolution-only evidence is not actual provider execution"
+);
+assert.match(
+  taskSource,
+  /post-PR #374[\s\S]*Google API live call[\s\S]*owner verification[\s\S]*Live Chat polling[\s\S]*separate/i,
+  "task.md records separated actual provider execution blockers"
+);
+assert.match(
+  taskSource,
+  /post-PR #374[\s\S]*actual provider execution not-run/i,
+  "task.md records actual provider execution not-run"
 );
 assert.match(
   taskSource,

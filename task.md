@@ -18,16 +18,16 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: `codex/comment-translator-preview` は PR #384 (`[codex] Clean up comment translator task board`) merge 済み。`git fetch origin --prune` 後、merge commit `cee1575b772cfa2768d3fd640442361998db96de` が `origin/codex/comment-translator-preview` history に含まれることを確認した。
-   - latest PR metadata: PR #384 `MERGED` at `2026-06-08T14:06:59Z`; base `codex/comment-translator-preview`; head `codex/comment-translator-google-api-live-call-preflight-post-pr383`; checks は Cloudflare Pages `FAILURE`、Workers Builds `SUCCESS`。
-   - latest operator evidence: operator PowerShell で `node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --check-env-only --json` が `ready-for-sanitized-youtube-live-runtime-smoke-command` を返した。続く operator 実行の `node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --execute --json` は `resolved-for-server-fetch` / `serverFetchBinding: resolved-for-server-fetch` / `actualSafeLiveRuntimeSmoke: not-run-token-resolution-only` を返した。これは server-only token resolution / server fetch binding の evidence であり、actual provider execution ではない。
-   - latest Codex same-process preflight: this branch ran `node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --check-env-only --json` only. Result was `blocked-missing-env-fixture-or-target-references`; missing categories were env references, fixture references, target metadata reference, and owner authorization preflight reference. No `--execute`, Google API live call, safe live smoke, owner verification smoke, or Live Chat polling smoke was run.
+   - status: `codex/comment-translator-preview` は PR #385 (`[codex] Record post-PR384 Google API live call gate blocker`) merge 済み。`git fetch origin --prune` 後、merge commit `5b08f8614d0efcdb10c464d86ff2ade6c9eed339` が `origin/codex/comment-translator-preview` history に含まれることを確認した。
+   - latest PR metadata: PR #385 `MERGED` at `2026-06-08T14:21:33Z`; base `codex/comment-translator-preview`; head `codex/comment-translator-google-api-live-call-gate-post-pr384`; checks は Cloudflare Pages `FAILURE`、Workers Builds `SUCCESS`。
+   - latest operator evidence: operator PowerShell で `node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --check-env-only --json` が `ready-for-sanitized-youtube-live-runtime-smoke-command` を返した。続く explicit in-thread approval 後の operator 実行 `node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --execute --json` は `resolved-for-server-fetch` / `serverFetchBinding: resolved-for-server-fetch` / `actualSafeLiveRuntimeSmoke: not-run-token-resolution-only` / `googleApiLiveCall: not-run` を返した。これは server-only token resolution / server fetch binding の evidence であり、actual provider execution ではない。
+   - root cause for repeated blocker PRs: `scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --execute --json` は current implementation / contract 上、actual Google API live call を実行しない。繰り返し実行しても `resolved-for-server-fetch` / `not-run-token-resolution-only` に戻るため、次は evidence 再記録ではなく actual Google API live call command foundation の実装 PR に進む。
    - preserved output boundary: command output は `sanitized-metadata-only`。`tokenValue` / `refreshTokenValue` は `never-returned-by-design`。client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみに閉じる。
-   - current blockers: Google API live call、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke はすべて `not-run`。Codex process 側では env / fixture / target metadata / owner authorization preflight references が揃っていないため、Codex が provider execution を行うには same-thread / same-process の `--check-env-only` ready evidence と explicit in-thread approval が必要。
-   - immediate next condition: first Google API live call gate は、fresh merge metadata、concrete non-secret target metadata、env reference presence、fixture reference presence、owner authorization preflight、server-only live token resolution runtime、sanitized output policy、no token value logging、same-thread/same-process evidence、explicit human approval が同一 thread / Codex process で揃った場合のみ進める。
-   - next PR candidate: env / fixture / target metadata / owner authorization preflight references が same-process で揃うまで blocker summary に留める。揃った後も Google API live call gate は explicit in-thread approval 後の separate PR として扱う。owner verification smoke / Live Chat polling smoke は Google API live call gate 後の別候補に留める。
-   - out of scope for current blocker-summary PR: Google API live call、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke、additional `--execute --json`、remote Supabase DB mutation、refresh runtime、full revocation runtime、credential status display UI rewiring、localStorage / IndexedDB / sessionStorage / handoff payload 変更、provider coupling、quota write、billing integration、main integration。
-   - width verification: UI / rendered text / CSS は変更しない task-board cleanup のため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
+   - current blockers: Google API live call、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke はすべて `not-run`。主 blocker は missing env ではなく、actual provider execution command / contract が未実装であること。
+   - immediate next condition: first Google API live call gate は、server-only actual Google API live call command foundation を contract-first で実装し、token value を出さない sanitized output と bounded readonly endpoint を固定してから進める。
+   - next PR candidate: actual Google API live call command foundation PR。PR completion は contract / runtime foundation 実装と verification まで。実 live execution は同じ thread 内で ready preflight と explicit approval が揃った場合だけ行う。揃わなければ PR を作らず blocker reason を返す。
+   - out of scope for current roadmap PR: actual Google API live call 実行、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke、remote Supabase DB mutation、refresh runtime、full revocation runtime、credential status display UI rewiring、localStorage / IndexedDB / sessionStorage / handoff payload 変更、provider coupling beyond scoped server-only command、quota write、billing integration、main integration。
+   - width verification: UI / rendered text / CSS は変更しない roadmap update のため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
 
 ## Task Board Retention Cleanup
 
@@ -43,15 +43,50 @@
   - Repeated per-PR post-merge sections for already completed PRs.
   - Old prompt variants and stale next-session instructions.
   - Duplicate compatibility anchor paragraphs already represented by the latest status and archive file.
-  - Historical Cloudflare Pages / Workers Builds repetitions except the latest relevant PR #383 check summary.
+  - Historical Cloudflare Pages / Workers Builds repetitions except the latest active PR metadata.
 
-## Recommended Roadmap
+## Completion-Oriented Roadmap
 
-1. Finish this task-board cleanup as a docs-only PR against `codex/comment-translator-preview`.
-2. Re-enter the Google API live call gate only after same-thread / same-process preflight evidence and explicit in-thread approval are available.
-3. After Google API live call gate, split owner verification smoke and Live Chat polling smoke into separate small PRs.
-4. Wire proven live comment intake into the translator pipeline only after provider smoke boundaries are verified.
-5. Treat UI/operator flow changes as a separate UI PR with width verification.
+Use one Codex thread / one feature branch / one PR per roadmap task. Do not create a PR for a task unless that task's completion criteria are satisfied and verification has been attempted. If a task cannot complete, stop in the thread and report the blocking reason, exact command/result reviewed, missing approval/evidence, and next unblock action.
+
+1. Roadmap and anti-loop operating rule
+   - Goal: Replace repeated token-resolution evidence loops with a completion-oriented task sequence.
+   - Completion criteria: `task.md` records the root cause that current `--execute --json` does not run Google APIs, defines per-task PR rules, and updates the next-session prompt.
+   - PR policy: create PR only after docs verification passes.
+2. Actual Google API live call command foundation
+   - Goal: Add a server-only, contract-first command path for one bounded readonly Google API call, separate from the existing token-resolution-only smoke command.
+   - Expected endpoint shape: a minimal readonly request such as `channels.list?mine=true` or an equivalent owner-safe metadata call, selected in implementation after checking existing adapter boundaries.
+   - Completion criteria: contract proves token values are never printed, output remains sanitized metadata only, endpoint is bounded, abort conditions are explicit, and current token-resolution-only command remains clearly scoped.
+   - PR policy: create PR only if contract/runtime foundation and relevant verification pass. If exact endpoint, target metadata, or approval boundary is unclear, do not create PR; report the missing decision.
+3. First actual Google API live call execution
+   - Goal: Run the new bounded server-only live-call command once.
+   - Completion criteria: same-thread / same-process ready preflight, explicit in-thread approval, sanitized result showing the Google API call outcome, and no token / owner user id / provider channel id / service_role key value exposure.
+   - PR policy: create PR only if the run succeeds and a small evidence/update change is needed. If approval, env, target metadata, or sanitized output review is missing, do not create PR; report the blocker.
+4. Owner verification smoke
+   - Goal: Prove the credential owner binding is checked before provider access.
+   - Completion criteria: bounded owner verification smoke with sanitized metadata only and explicit abort behavior for mismatch / missing owner authorization.
+   - PR policy: separate PR only after Google API live call execution is complete.
+5. Live Chat polling smoke
+   - Goal: Prove one bounded Live Chat polling step after owner verification.
+   - Completion criteria: one sanitized polling result, no broad polling loop, no quota write, no translator pipeline wiring.
+   - PR policy: separate PR only after owner verification smoke is complete.
+6. Live comment intake to translator pipeline
+   - Goal: Connect proven live comment intake into the translator pipeline.
+   - Completion criteria: server-only data flow, no browser storage / handoff payload expansion, focused contract coverage, and no UI rewiring unless explicitly scoped.
+   - PR policy: separate PR after provider smoke boundaries are verified.
+7. Operator UI flow
+   - Goal: Add or adjust UI/operator controls only after runtime smoke boundaries are proven.
+   - Completion criteria: UI behavior, status copy, and width checks at `390 / 820 / 1024 / 1280 / 1366px`.
+   - PR policy: separate UI PR only.
+
+## Thread And PR Handoff Rules
+
+- Start each roadmap task in a fresh Codex thread and fresh worktree / feature branch from `origin/codex/comment-translator-preview` after confirming the previous task PR is merged.
+- At thread start, run `git fetch origin --prune`, read `AGENTS.md` and `task.md`, and verify the latest merged PR commit is in `origin/codex/comment-translator-preview`.
+- For each task, first identify whether the task is implementation, execution, or evidence-only. If the task is execution, confirm same-thread / same-process ready preflight and explicit in-thread approval before running provider-affecting commands.
+- If the task completes and verification passes, update `task.md`, commit, push, and create a draft PR targeting `codex/comment-translator-preview`.
+- If the task does not complete, do not commit, push, or create a PR. Reply with: `blocked reason`, `attempted command or inspected file`, `why completion criteria are not met`, `what approval/evidence/implementation is missing`, and `next safe action`.
+- Do not create blocker-summary PRs just to record that the same token-resolution-only output appeared again.
 
 ## Next Session Prompt
 
@@ -62,7 +97,8 @@ D:/V_streamer_tools の Kuro Live Comment Translator preview line を続けま�
 - root checkout / main では作業しないでください。
 - 作業先は fresh worktree / feature branch にしてください。
 - secret / token / owner user id value / provider channel id value / service_role key value は表示・要求・保存しないでください。
-- Google API live call、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke、追加の `node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --execute --json` は、same-thread / same-process preflight ready と explicit in-thread approval が揃うまで実行しないでください。
+- Google API live call、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke は、same-thread / same-process preflight ready と explicit in-thread approval が揃うまで実行しないでください。
+- 既存の `node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --execute --json` は token-resolution-only command であり、actual Google API live call を実行しません。これを繰り返して blocker-summary PR を作らないでください。
 
 最初に確認:
 1. `git fetch origin --prune`
@@ -70,14 +106,17 @@ D:/V_streamer_tools の Kuro Live Comment Translator preview line を続けま�
 3. latest PR / branch / merge commit が `origin/codex/comment-translator-preview` に含まれることを確認
 
 現在地:
-- PR #384 は merge 済み。
-- operator 実行の sanitized `--execute --json` は `resolved-for-server-fetch` / `not-run-token-resolution-only`。
-- これは server-only token resolution / server fetch binding の evidence であり、Google API live call / safe live smoke / owner verification / Live Chat polling は未実行。
-- latest Codex same-process `--check-env-only --json` は `blocked-missing-env-fixture-or-target-references`。env / fixture / target metadata / owner authorization preflight references が揃っていない。
+- PR #385 は merge 済み。
+- operator PowerShell で ready preflight と explicit approval 後の sanitized `--execute --json` が確認済みだが、結果は `resolved-for-server-fetch` / `not-run-token-resolution-only` / `googleApiLiveCall: not-run`。
+- root cause: current `scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --execute --json` implementation and contract intentionally do not call Google APIs.
+- 次は evidence 再記録ではなく、actual Google API live call command foundation を contract-first で実装する。
 
 次にやること:
-- Google API live call gate に進む場合は、まず同じ Codex process で `--check-env-only --json` ready を確認し、同じ thread 内の explicit human approval を待つ。
-- readiness が揃わなければ blocker summary のみ返し、`--execute` や live API には進まない。
+- Fresh worktree / branch from `origin/codex/comment-translator-preview`.
+- Implement a small server-only actual Google API live call command foundation with sanitized metadata-only output and bounded readonly endpoint.
+- Keep token values, owner user id value, provider channel id value, service_role key value out of output, docs, fixtures, PR body, and browser storage.
+- Do not run the actual live call unless the new command has a ready preflight and this same thread receives explicit in-thread approval.
+- If the endpoint choice, target metadata, approval boundary, or sanitized output review is missing, stop and report the blocker without creating a PR.
 ```
 
 ## Verification Baseline

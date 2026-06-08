@@ -1259,6 +1259,27 @@ export type YouTubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck = {
   targetMetadataPreflight: "source-thread-present-by-reference-current-process-blocked-missing-reference";
   actualSafeLiveRuntimeSmoke: "not-run-blocked-missing-env-fixture-or-target-references";
   commandExecuteResult: "not-run-preflight-blocked";
+  operatorProvidedSanitizedExecuteResult: {
+    status: "resolved-for-server-fetch";
+    credentialReferenceId: "smoke-pr351-local-20260606a";
+    provider: "youtube";
+    scopeLabel: "youtube.readonly";
+    expiryStatus: "active";
+    serverFetchBinding: "resolved-for-server-fetch";
+    tokenValue: "never-returned-by-design";
+    refreshTokenValue: "never-returned-by-design";
+    serverOnlyLiveTokenResolutionRuntime: "implemented-server-only-sanitized-runtime";
+    actualSafeLiveRuntimeSmoke: "not-run-token-resolution-only";
+    remoteMigrationApply: "not-run";
+    command: "sanitized-youtube-live-runtime-smoke";
+    outputPolicy: "sanitized-metadata-only";
+    ownerAuthorizationPreflight: "confirmed-by-reference-only";
+    targetMetadata: "present-by-reference-only";
+    safeLiveYouTubeOAuthSmoke: "not-run";
+    ownerVerificationSmoke: "not-run";
+    liveChatPollingSmoke: "not-run";
+    googleApiLiveCall: "not-run";
+  };
   safeLiveYouTubeOAuthSmoke: "not-run";
   ownerVerificationSmoke: "not-run";
   liveChatPollingSmoke: "not-run";
@@ -2530,6 +2551,27 @@ export const youtubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck = {
   targetMetadataPreflight: "source-thread-present-by-reference-current-process-blocked-missing-reference",
   actualSafeLiveRuntimeSmoke: "not-run-blocked-missing-env-fixture-or-target-references",
   commandExecuteResult: "not-run-preflight-blocked",
+  operatorProvidedSanitizedExecuteResult: {
+    status: "resolved-for-server-fetch",
+    credentialReferenceId: "smoke-pr351-local-20260606a",
+    provider: "youtube",
+    scopeLabel: "youtube.readonly",
+    expiryStatus: "active",
+    serverFetchBinding: "resolved-for-server-fetch",
+    tokenValue: "never-returned-by-design",
+    refreshTokenValue: "never-returned-by-design",
+    serverOnlyLiveTokenResolutionRuntime: "implemented-server-only-sanitized-runtime",
+    actualSafeLiveRuntimeSmoke: "not-run-token-resolution-only",
+    remoteMigrationApply: "not-run",
+    command: "sanitized-youtube-live-runtime-smoke",
+    outputPolicy: "sanitized-metadata-only",
+    ownerAuthorizationPreflight: "confirmed-by-reference-only",
+    targetMetadata: "present-by-reference-only",
+    safeLiveYouTubeOAuthSmoke: "not-run",
+    ownerVerificationSmoke: "not-run",
+    liveChatPollingSmoke: "not-run",
+    googleApiLiveCall: "not-run"
+  },
   safeLiveYouTubeOAuthSmoke: "not-run",
   ownerVerificationSmoke: "not-run",
   liveChatPollingSmoke: "not-run",
@@ -3343,8 +3385,9 @@ export function createYouTubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheckSum
     `PR ${youtubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck.prerequisitePostPr369ReadinessRecheck.pullRequest} post-PR369 live smoke readiness blocker is recorded as ${youtubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck.prerequisitePostPr369ReadinessRecheck.status}.`,
     `Source-thread preflight evidence: ${youtubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck.sourceThreadPreflightEvidence.status}.`,
     `Current Codex process preflight: ${youtubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck.currentCodexProcessPreflight.status}.`,
+    `Operator-provided sanitized execute result: ${youtubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck.operatorProvidedSanitizedExecuteResult.status} / ${youtubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck.operatorProvidedSanitizedExecuteResult.actualSafeLiveRuntimeSmoke}.`,
     `Actual safe live runtime smoke: ${youtubeRuntimeSafeLiveSmokePostPr370PreflightReadyCheck.actualSafeLiveRuntimeSmoke}.`,
-    "No command --execute, Google API live call, safe live YouTube OAuth smoke execution, owner verification smoke execution, or Live Chat polling smoke execution is run while post-PR370 current-process preflight is blocked."
+    "The operator-provided execute result is token-resolution-only; Google API live call, safe live YouTube OAuth smoke execution, owner verification smoke execution, and Live Chat polling smoke execution remain not-run."
   ].join(" ");
 }
 

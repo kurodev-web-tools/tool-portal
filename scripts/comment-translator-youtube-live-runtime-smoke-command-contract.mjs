@@ -1032,6 +1032,31 @@ assert.equal(
   "not-run-preflight-blocked",
   "post-PR370 does not run --execute when the same-process preflight is blocked"
 );
+assert.deepEqual(
+  postPr370PreflightReadyCheck.operatorProvidedSanitizedExecuteResult,
+  {
+    status: "resolved-for-server-fetch",
+    credentialReferenceId: "smoke-pr351-local-20260606a",
+    provider: "youtube",
+    scopeLabel: "youtube.readonly",
+    expiryStatus: "active",
+    serverFetchBinding: "resolved-for-server-fetch",
+    tokenValue: "never-returned-by-design",
+    refreshTokenValue: "never-returned-by-design",
+    serverOnlyLiveTokenResolutionRuntime: "implemented-server-only-sanitized-runtime",
+    actualSafeLiveRuntimeSmoke: "not-run-token-resolution-only",
+    remoteMigrationApply: "not-run",
+    command: "sanitized-youtube-live-runtime-smoke",
+    outputPolicy: "sanitized-metadata-only",
+    ownerAuthorizationPreflight: "confirmed-by-reference-only",
+    targetMetadata: "present-by-reference-only",
+    safeLiveYouTubeOAuthSmoke: "not-run",
+    ownerVerificationSmoke: "not-run",
+    liveChatPollingSmoke: "not-run",
+    googleApiLiveCall: "not-run"
+  },
+  "post-PR370 records the operator-provided sanitized execute result as token-resolution-only"
+);
 assert.equal(
   postPr370PreflightReadyCheck.actualSafeLiveRuntimeSmoke,
   "not-run-blocked-missing-env-fixture-or-target-references",
@@ -1296,6 +1321,16 @@ assert.match(
   taskSource,
   /post-PR #370[\s\S]*preflight が blocked のため `--execute` は実行していない/i,
   "task.md records that --execute was not run for post-PR370"
+);
+assert.match(
+  taskSource,
+  /post-PR #370[\s\S]*operator-provided sanitized execute result[\s\S]*`resolved-for-server-fetch`[\s\S]*`not-run-token-resolution-only`/i,
+  "task.md records the operator-provided sanitized execute result as token-resolution-only"
+);
+assert.match(
+  taskSource,
+  /post-PR #370[\s\S]*actual safe live YouTube OAuth \/ owner verification \/ Live Chat polling smoke は成功扱いにしない/i,
+  "task.md does not overclaim operator-provided token resolution as actual live smoke"
 );
 assert.match(
   taskSource,

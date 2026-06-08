@@ -85,7 +85,10 @@ for (const exportedType of [
   "YouTubeRuntimeSafeLiveSmokePostPr367ReadinessRecheckAssessment",
   "YouTubeRuntimeSafeLiveSmokePostPr368ReadinessRecheckCheck",
   "YouTubeRuntimeSafeLiveSmokePostPr368ReadinessRecheck",
-  "YouTubeRuntimeSafeLiveSmokePostPr368ReadinessRecheckAssessment"
+  "YouTubeRuntimeSafeLiveSmokePostPr368ReadinessRecheckAssessment",
+  "YouTubeRuntimeSafeLiveSmokePostPr369ReadinessRecheckCheck",
+  "YouTubeRuntimeSafeLiveSmokePostPr369ReadinessRecheck",
+  "YouTubeRuntimeSafeLiveSmokePostPr369ReadinessRecheckAssessment"
 ]) {
   assert.match(runtimeSource, new RegExp(`export type ${exportedType}\\b`), `runtime exports ${exportedType}`);
 }
@@ -119,7 +122,10 @@ for (const exportedConstOrFunction of [
   "createYouTubeRuntimeSafeLiveSmokePostPr367ReadinessRecheckSummary",
   "youtubeRuntimeSafeLiveSmokePostPr368ReadinessRecheck",
   "assessYouTubeRuntimeSafeLiveSmokePostPr368ReadinessRecheck",
-  "createYouTubeRuntimeSafeLiveSmokePostPr368ReadinessRecheckSummary"
+  "createYouTubeRuntimeSafeLiveSmokePostPr368ReadinessRecheckSummary",
+  "youtubeRuntimeSafeLiveSmokePostPr369ReadinessRecheck",
+  "assessYouTubeRuntimeSafeLiveSmokePostPr369ReadinessRecheck",
+  "createYouTubeRuntimeSafeLiveSmokePostPr369ReadinessRecheckSummary"
 ]) {
   assert.match(
     runtimeSource,
@@ -928,6 +934,68 @@ assert.match(
   "post-PR368 readiness recheck summary records the blocker"
 );
 
+const postPr369ReadinessRecheck = runtime.youtubeRuntimeSafeLiveSmokePostPr369ReadinessRecheck;
+assert.deepEqual(
+  postPr369ReadinessRecheck.prerequisitePostPr368ReadinessRecheck,
+  {
+    pullRequest: "#369",
+    mergeCommit: "651bdc38a46a6a76d6745a06111e5a88534001aa",
+    status: "post-pr368-live-smoke-readiness-blocker-merged"
+  },
+  "post-PR369 readiness recheck records the PR #369 merge premise"
+);
+assert.equal(
+  postPr369ReadinessRecheck.implementationStage,
+  "post-pr369-safe-live-youtube-smoke-readiness-recheck",
+  "post-PR369 readiness recheck stage is explicit"
+);
+assert.equal(
+  postPr369ReadinessRecheck.commandExecutionMode,
+  "check-env-only-first-execute-forbidden-while-sanitized-preflight-blocked",
+  "post-PR369 readiness recheck forbids execute while preflight is blocked"
+);
+assert.deepEqual(
+  postPr369ReadinessRecheck.currentCodexProcessPreflight,
+  postPr368ReadinessRecheck.currentCodexProcessPreflight,
+  "post-PR369 readiness recheck keeps the current sanitized blocker by reference names only"
+);
+assert.equal(
+  postPr369ReadinessRecheck.actualSafeLiveRuntimeSmoke,
+  "not-run-blocked-missing-env-fixture-or-target-references",
+  "post-PR369 readiness recheck does not overclaim actual live smoke"
+);
+assert.equal(
+  postPr369ReadinessRecheck.commandExecuteResult,
+  "not-run-preflight-blocked",
+  "post-PR369 does not run --execute"
+);
+assert.deepEqual(
+  runtime.assessYouTubeRuntimeSafeLiveSmokePostPr369ReadinessRecheck(
+    postPr369ReadinessRecheck.requiredReadinessChecks.filter((check) => check.status === "recorded")
+  ),
+  {
+    status: "blocked-missing-env-fixture-or-target-references",
+    completedCheckIds: postPr369ReadinessRecheck.requiredReadinessChecks
+      .filter((check) => check.status === "recorded")
+      .map((check) => check.id),
+    blockingCheckIds: postPr369ReadinessRecheck.requiredReadinessChecks
+      .filter((check) => check.status === "blocking-external-action")
+      .map((check) => check.id),
+    safeLiveYouTubeOAuthSmokeExecuted: false,
+    ownerVerificationSmokeExecuted: false,
+    liveChatPollingSmokeExecuted: false,
+    googleApiLiveCallExecuted: false,
+    commandExecuteAllowed: false,
+    nextAction: "collect-concrete-target-metadata-env-fixture-owner-authorization-and-server-only-runtime-before-execute-in-separate-live-smoke-pr"
+  },
+  "post-PR369 readiness recheck remains blocker-only without all sanitized preconditions"
+);
+assert.match(
+  runtime.createYouTubeRuntimeSafeLiveSmokePostPr369ReadinessRecheckSummary(),
+  /post-pr369-safe-live-youtube-smoke-readiness-recheck.*blocked-missing-env-fixture-or-target-references/i,
+  "post-PR369 readiness recheck summary records the blocker"
+);
+
 let materialConsumed = false;
 const resolvedForFetch = await runtime.resolveYouTubeLiveTokenForServerFetch({
   credentialReferenceId: "smoke-post-pr360-runtime-001",
@@ -1125,6 +1193,21 @@ assert.match(
   taskSource,
   /post-PR #368[\s\S]*preflight が blocked のため `--execute` は実行していない/i,
   "task.md records that --execute was not run for post-PR368"
+);
+assert.match(
+  taskSource,
+  /PR #369 `MERGED`[\s\S]*2026-06-08T03:06:38Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
+  "task.md records fresh PR #369 metadata and check disposition"
+);
+assert.match(
+  taskSource,
+  /post-PR #369 actual safe live YouTube OAuth \/ owner verification \/ Live Chat polling smoke readiness recheck/i,
+  "task.md records the post-PR369 readiness recheck"
+);
+assert.match(
+  taskSource,
+  /post-PR #369[\s\S]*preflight が blocked のため `--execute` は実行していない/i,
+  "task.md records that --execute was not run for post-PR369"
 );
 assert.match(
   taskSource,

@@ -21,6 +21,9 @@ const requiredFixtureReferences = [
 const requiredTargetMetadataReferences = ["YOUTUBE_LIVE_RUNTIME_SMOKE_TARGET_METADATA_PRESENT"];
 const ownerAuthorizationPreflightReference = "YOUTUBE_LIVE_RUNTIME_SMOKE_OWNER_AUTHORIZATION_CONFIRMED";
 const googleApiLiveCallReadyPreflightReference = "YOUTUBE_GOOGLE_API_LIVE_CALL_READY_PREFLIGHT_CONFIRMED";
+const operatorLocalServerAuthorizationHeaderReference =
+  "YOUTUBE_GOOGLE_API_LIVE_CALL_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER";
+const operatorLocalTokenExpiresAtIsoReference = "YOUTUBE_GOOGLE_API_LIVE_CALL_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO";
 const youtubeReadonlyOAuthScope = "https://www.googleapis.com/auth/youtube.readonly";
 
 function loadTsModule(relativePath) {
@@ -109,7 +112,9 @@ function createReferenceReport() {
     ...requiredFixtureReferences,
     ...requiredTargetMetadataReferences,
     ownerAuthorizationPreflightReference,
-    googleApiLiveCallReadyPreflightReference
+    googleApiLiveCallReadyPreflightReference,
+    operatorLocalServerAuthorizationHeaderReference,
+    operatorLocalTokenExpiresAtIsoReference
   ].filter((name) => isPlaceholderReferenceValue(name));
 
   return {
@@ -327,7 +332,9 @@ async function createTokenMaterialAvailabilityPayload(credentialReferenceId) {
     credentialReferenceId,
     providerChannelId: readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"),
     requiredScope: youtubeReadonlyOAuthScope,
-    nowIso
+    nowIso,
+    operatorLocalServerAuthorizationHeader: readReference(operatorLocalServerAuthorizationHeaderReference),
+    operatorLocalTokenExpiresAtIso: readReference(operatorLocalTokenExpiresAtIsoReference)
   });
 
   return foundation.assessYouTubeGoogleApiLiveTokenMaterialAvailabilityGate({
@@ -352,7 +359,9 @@ async function createApprovedExecutionPayload(credentialReferenceId) {
     credentialReferenceId,
     providerChannelId: readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"),
     requiredScope: youtubeReadonlyOAuthScope,
-    nowIso
+    nowIso,
+    operatorLocalServerAuthorizationHeader: readReference(operatorLocalServerAuthorizationHeaderReference),
+    operatorLocalTokenExpiresAtIso: readReference(operatorLocalTokenExpiresAtIsoReference)
   });
 
   return foundation.runYouTubeGoogleApiLiveCallFoundation({

@@ -18,18 +18,18 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: `codex/comment-translator-preview` は PR #386 (`[codex] Document comment translator live call roadmap`) merge 済み。`git fetch origin --prune` 後、merge commit `02d4bf02b7057ce1186e4546a569fbeefcb05792` が `origin/codex/comment-translator-preview` history に含まれることを確認した。
-   - latest PR metadata: PR #386 `MERGED` at `2026-06-08T14:40:55Z`; base `codex/comment-translator-preview`; head `codex/comment-translator-live-call-roadmap-post-pr385`; checks は Cloudflare Pages `FAILURE`、Workers Builds `SUCCESS`。
+   - status: `codex/comment-translator-preview` は PR #387 (`[codex] Add Google API live call command foundation`) merge 済み。`git fetch origin --prune` 後、merge commit `f54817446dbbccfbfe21f06b6949cbed45efc239` が `origin/codex/comment-translator-preview` history に含まれることを確認した。
+   - latest PR metadata: PR #387 `MERGED` at `2026-06-09T02:44:51Z`; base `codex/comment-translator-preview`; head `codex/comment-translator-actual-google-api-live-call-command-foundation-post-pr386`; checks は Cloudflare Pages `FAILURE`、Workers Builds `SUCCESS`。
    - latest operator evidence: operator PowerShell で `node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --check-env-only --json` が `ready-for-sanitized-youtube-live-runtime-smoke-command` を返した。続く explicit in-thread approval 後の operator 実行 `node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --execute --json` は `resolved-for-server-fetch` / `serverFetchBinding: resolved-for-server-fetch` / `actualSafeLiveRuntimeSmoke: not-run-token-resolution-only` / `googleApiLiveCall: not-run` を返した。これは server-only token resolution / server fetch binding の evidence であり、actual provider execution ではない。
    - root cause for repeated blocker PRs: `scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --execute --json` は current implementation / contract 上、actual Google API live call を実行しない。繰り返し実行しても `resolved-for-server-fetch` / `not-run-token-resolution-only` に戻るため、次は evidence 再記録ではなく actual Google API live call command foundation の実装 PR に進む。
-   - current implementation slice: Task 2 actual Google API live call command foundation を contract-first で追加した。新規 `scripts/comment-translator-youtube-google-api-live-call-command.mjs` は既存 token-resolution-only command と分離され、`channels.list?mine=true` 相当の bounded readonly endpoint (`channels.list-mine`, `GET https://www.googleapis.com/youtube/v3/channels`, `part=id,status`, `mine=true`, sanitized `fields`) を固定する。`--check-env-only` は foundation-ready reference-only preflight、`--execute` は `--approved-live-google-api-call` が無ければ abort する。foundation contract は injected server fetch でのみ bounded provider call path を検証し、実 Google API はこの PR では呼ばない。
+   - current implementation slice: post-PR387 Task 3 blocker follow-up として、新 command の approved execution dependency wiring を inline stub から server-only foundation helper `createYouTubeGoogleApiLiveCallCommandRuntimeWiring` に移した。`--check-env-only` は same-process reference-only preflight を維持し、ready reference が揃う場合は `serverOnlyLiveTokenMaterialResolver: connected-sanitized-unavailable-runtime-adapter` / `approvedExecutionReadiness: blocked-until-token-material-resolver-returns-available` を返す。`--execute --approved-live-google-api-call` も token material resolver が unavailable の間は `googleApiLiveCall: not-run` の sanitized result で止まる。
    - preserved output boundary: command output は `sanitized-metadata-only`。`tokenValue` / `refreshTokenValue` は `never-returned-by-design`。client-readable output は opaque non-secret `credentialReferenceId` と sanitized credential status metadata のみに閉じる。
-   - current blockers: actual Google API live call、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke はすべて `not-run`。Task 2 では command foundation までで、server-only live token material resolver はまだ connected ではないため実 provider execution は未実行。
-   - immediate next condition: Task 2 PR が merge された後、first actual Google API live call execution thread で新 command の same-thread / same-process preflight、server-only live token material resolver readiness、sanitized output review を揃え、explicit in-thread approval を受けた場合だけ `--execute --approved-live-google-api-call` へ進む。approval / env / target metadata / token material resolver readiness / sanitized output review が不足する場合は実行せず blocker を返す。
-   - next PR candidate: first actual Google API live call execution PR。PR completion は same-thread preflight、explicit approval、sanitized Google API call outcome が揃った場合だけ。揃わなければ PR を作らず blocker reason を返す。
+   - current blockers: actual Google API live call、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke はすべて `not-run`。server-only live token material resolver は command runtime に接続されたが、token material retrieval は未実装 / sanitized unavailable のため実 provider execution は未実行。
+   - immediate next condition: この runtime wiring readiness PR が merge された後、first actual Google API live call execution thread で same-thread / same-process ready preflight、token material resolver が `available` を返す実装/evidence、sanitized output review、explicit in-thread approval を揃えた場合だけ `--execute --approved-live-google-api-call` へ進む。approval / env / target metadata / token material availability / sanitized output review が不足する場合は実行せず blocker を返す。
+   - next PR candidate: server-only token material retrieval implementation / availability PR。actual Google API live call execution PR は token material resolver availability が証明された後に分ける。
    - out of scope for current roadmap PR: actual Google API live call 実行、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke、remote Supabase DB mutation、refresh runtime、full revocation runtime、credential status display UI rewiring、localStorage / IndexedDB / sessionStorage / handoff payload 変更、provider coupling beyond scoped server-only command、quota write、billing integration、main integration。
-   - verification: `node scripts/comment-translator-youtube-google-api-live-call-command-contract.mjs`; `npm run lint`; `npx tsc --noEmit`; `npm run build`; `git diff --check` passed. Existing historical `node scripts/comment-translator-youtube-live-runtime-smoke-command-contract.mjs` was also attempted and fails because it still expects archived pre-PR386 `task.md` post-PR section markers, not because of the new live-call command foundation.
-   - width verification: UI / rendered text / CSS は変更しない server-only command foundation のため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
+   - verification: `node scripts/comment-translator-youtube-google-api-live-call-command-contract.mjs`; `npm run lint`; `npx tsc --noEmit`; `npm run build`; `git diff --check` passed. Current process `node scripts/comment-translator-youtube-google-api-live-call-command.mjs --check-env-only --json` returned sanitized blocker `blocked-missing-env-fixture-target-or-live-call-readiness-references`; actual Google API live call remains not-run.
+   - width verification: UI / rendered text / CSS は変更しない server-only command runtime wiring のため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
 
 ## Task Board Retention Cleanup
 
@@ -108,17 +108,17 @@ D:/V_streamer_tools の Kuro Live Comment Translator preview line を続けま�
 3. latest PR / branch / merge commit が `origin/codex/comment-translator-preview` に含まれることを確認
 
 現在地:
-- PR #386 は merge 済み。
+- PR #387 は merge 済み。
 - Task 2 actual Google API live call command foundation PR が追加した新規 command は `scripts/comment-translator-youtube-google-api-live-call-command.mjs`。
-- 新 command は existing token-resolution-only smoke command と分離され、bounded readonly `channels.list-mine` foundation、sanitized metadata-only output、explicit approval abort を固定している。server-only live token material resolver はまだ connected ではない。
+- post-PR387 runtime wiring readiness slice で、新 command の approved execution dependency wiring は `createYouTubeGoogleApiLiveCallCommandRuntimeWiring` に移った。server-only live token material resolver は command runtime に接続されたが、token material retrieval は未実装 / sanitized unavailable のため `--execute --approved-live-google-api-call` でも actual provider fetch には進まない。
 - actual Google API live call、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke はまだ実行していない。
 
 次にやること:
 - Fresh worktree / branch from `origin/codex/comment-translator-preview`.
-- First actual Google API live call execution gate を進める。新 command の `--check-env-only --json` で same-thread / same-process foundation preflight を取り、server-only live token material resolver readiness と sanitized output review を揃え、explicit in-thread approval が揃った場合だけ `--execute --approved-live-google-api-call --json` を検討する。
+- First actual Google API live call execution の前段として、server-only token material retrieval implementation / availability gate を contract-first で進める。新 command の `--check-env-only --json` で same-thread / same-process reference preflight を取り、token material resolver が `available` を返す実装/evidence と sanitized output review を揃える。actual Google API live call はまだ実行しない。
 - Keep token values, owner user id value, provider channel id value, service_role key value out of output, docs, fixtures, PR body, and browser storage.
-- Do not run the actual live call unless the new command has a ready preflight and this same thread receives explicit in-thread approval.
-- If the endpoint choice, target metadata, approval boundary, or sanitized output review is missing, stop and report the blocker without creating a PR.
+- Do not run the actual live call unless the new command has a ready preflight, token material resolver availability is proven, sanitized output review is complete, and this same thread receives explicit in-thread approval immediately before execution.
+- If token material availability, target metadata, approval boundary, or sanitized output review is missing, stop and report the blocker without creating an execution PR.
 ```
 
 ## Verification Baseline

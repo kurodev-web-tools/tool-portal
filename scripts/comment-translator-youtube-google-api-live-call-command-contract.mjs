@@ -114,10 +114,22 @@ const foundation = loadTsModule(foundationPath);
 for (const exportedName of [
   "youtubeGoogleApiLiveCallCommandFoundationContract",
   "createYouTubeChannelsListMineLiveCallRequest",
+  "createYouTubeGoogleApiLiveCallCommandRuntimeWiring",
   "runYouTubeGoogleApiLiveCallFoundation"
 ]) {
   assert.equal(typeof foundation[exportedName], exportedName.startsWith("create") || exportedName.startsWith("run") ? "function" : "object", `foundation exports ${exportedName}`);
 }
+
+assert.doesNotMatch(
+  commandSource,
+  /server-only live token material resolver is not connected in this command foundation/,
+  "command no longer uses an inline not-connected resolver stub"
+);
+assert.match(
+  commandSource,
+  /createYouTubeGoogleApiLiveCallCommandRuntimeWiring/,
+  "command builds approved execution dependencies through the server-only runtime wiring helper"
+);
 
 assert.deepEqual(
   foundation.youtubeGoogleApiLiveCallCommandFoundationContract,
@@ -299,10 +311,10 @@ assert.equal(checkEnvPayload.command, "sanitized-youtube-google-api-live-call");
 assert.equal(checkEnvPayload.endpoint, "channels.list-mine");
 assert.equal(checkEnvPayload.outputPolicy, "sanitized-metadata-only");
 assert.equal(checkEnvPayload.requiredApproval, "same-thread-explicit-in-thread-approval");
-assert.equal(checkEnvPayload.serverOnlyLiveTokenMaterialResolver, "not-connected-in-this-foundation");
+assert.equal(checkEnvPayload.serverOnlyLiveTokenMaterialResolver, "connected-sanitized-unavailable-runtime-adapter");
 assert.equal(
   checkEnvPayload.approvedExecutionReadiness,
-  "blocked-until-server-only-live-token-material-resolver-connected"
+  "blocked-until-token-material-resolver-returns-available"
 );
 assert.equal(checkEnvPayload.googleApiLiveCall, "not-run-preflight-only");
 
@@ -317,7 +329,25 @@ assert.equal(executeWithoutApprovalPayload.status, "blocked-pending-explicit-liv
 assert.equal(executeWithoutApprovalPayload.googleApiLiveCall, "not-run");
 assert.equal(executeWithoutApprovalPayload.requiredFlag, "--approved-live-google-api-call");
 
-for (const payload of [checkEnvPayload, executeWithoutApprovalPayload]) {
+const executeWithApproval = spawnSync(
+  process.execPath,
+  [commandPath, "--execute", "--approved-live-google-api-call", "--json"],
+  {
+    cwd: root,
+    env: readyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(executeWithApproval.status, 2, "approved execution remains blocked while token material resolver is sanitized unavailable");
+const executeWithApprovalPayload = parseJson(executeWithApproval.stdout);
+assert.equal(executeWithApprovalPayload.status, "unavailable");
+assert.equal(executeWithApprovalPayload.googleApiLiveCall, "not-run");
+assert.equal(
+  executeWithApprovalPayload.reason,
+  "server-only live token material resolver is wired but token material retrieval is not implemented in this command runtime"
+);
+
+for (const payload of [checkEnvPayload, executeWithoutApprovalPayload, executeWithApprovalPayload]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenField of [
     "ownerUserId",

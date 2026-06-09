@@ -257,8 +257,8 @@ function preflight() {
       credentialReferenceId,
       ownerAuthorizationPreflight: "confirmed-by-reference-only",
       targetMetadata: "present-by-reference-only",
-      serverOnlyLiveTokenMaterialResolver: "not-connected-in-this-foundation",
-      approvedExecutionReadiness: "blocked-until-server-only-live-token-material-resolver-connected",
+      serverOnlyLiveTokenMaterialResolver: "connected-sanitized-unavailable-runtime-adapter",
+      approvedExecutionReadiness: "blocked-until-token-material-resolver-returns-available",
       googleApiLiveCall: "not-run-preflight-only"
     }
   };
@@ -315,7 +315,13 @@ await main();
 async function createApprovedExecutionPayload(credentialReferenceId) {
   const foundation = loadTsModule("lib/comment-translator-youtube-google-api-live-call-foundation.ts");
   const ownerUserId = readReference("YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID");
-  const expiresAtIso = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  const nowIso = new Date().toISOString();
+  const runtimeWiring = foundation.createYouTubeGoogleApiLiveCallCommandRuntimeWiring({
+    credentialReferenceId,
+    providerChannelId: readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"),
+    requiredScope: youtubeReadonlyOAuthScope,
+    nowIso
+  });
 
   return foundation.runYouTubeGoogleApiLiveCallFoundation({
     credentialReferenceId,
@@ -325,36 +331,9 @@ async function createApprovedExecutionPayload(credentialReferenceId) {
     },
     credentialResolutionDisabled: false,
     requiredScope: youtubeReadonlyOAuthScope,
-    nowIso: new Date().toISOString(),
-    trustedStatusReader: {
-      async getCredentialStatus() {
-        return {
-          credentialReferenceId,
-          provider: "youtube",
-          providerChannelId: "never-returned-by-design",
-          scopeLabel: "youtube.readonly",
-          scopeSet: [youtubeReadonlyOAuthScope],
-          expiresAtIso,
-          expiryStatus: "active",
-          revoked: false,
-          revokedAtIso: null,
-          tokenValue: "never-returned-by-design",
-          refreshTokenValue: "never-returned-by-design",
-          ciphertext: "never-returned-by-design",
-          decryptCapability: "forbidden"
-        };
-      }
-    },
-    tokenMaterialResolver: {
-      async resolveServerOnlyTokenMaterial() {
-        return {
-          status: "unavailable",
-          reason: "server-only live token material resolver is not connected in this command foundation"
-        };
-      }
-    },
-    async fetchGoogleApi() {
-      throw new Error("provider fetch must not run without server-only live token material");
-    }
+    nowIso,
+    trustedStatusReader: runtimeWiring.trustedStatusReader,
+    tokenMaterialResolver: runtimeWiring.tokenMaterialResolver,
+    fetchGoogleApi: runtimeWiring.fetchGoogleApi
   });
 }

@@ -73,6 +73,23 @@ export type YouTubeGoogleApiLiveCallFoundationRequest = {
   fetchGoogleApi: YouTubeGoogleApiLiveCallFetch;
 };
 
+export type YouTubeGoogleApiLiveCallCommandRuntimeWiringRequest = {
+  credentialReferenceId: string;
+  providerChannelId: string;
+  requiredScope: YouTubeRuntimeReadOnlyOAuthScope;
+  nowIso: string;
+  tokenMaterialResolver?: YouTubeServerOnlyLiveTokenMaterialResolver;
+  fetchGoogleApi?: YouTubeGoogleApiLiveCallFetch;
+};
+
+export type YouTubeGoogleApiLiveCallCommandRuntimeWiring = {
+  trustedStatusReader: YouTubeLiveTokenResolutionTrustedStatusReader;
+  tokenMaterialResolver: YouTubeServerOnlyLiveTokenMaterialResolver;
+  fetchGoogleApi: YouTubeGoogleApiLiveCallFetch;
+  expiresAtIso: string;
+  serverOnlyLiveTokenMaterialResolver: "connected-sanitized-unavailable-runtime-adapter";
+};
+
 export type YouTubeGoogleApiLiveCallFoundationResult =
   | {
       status: "google-api-live-call-sanitized-result";
@@ -182,6 +199,39 @@ export function createYouTubeChannelsListMineLiveCallRequest({
     headers: {
       Authorization: serverAuthorizationHeader
     }
+  };
+}
+
+export function createYouTubeGoogleApiLiveCallCommandRuntimeWiring(
+  request: YouTubeGoogleApiLiveCallCommandRuntimeWiringRequest
+): YouTubeGoogleApiLiveCallCommandRuntimeWiring {
+  const expiresAtIso = new Date(Date.parse(request.nowIso) + 5 * 60 * 1000).toISOString();
+
+  return {
+    trustedStatusReader: {
+      async getCredentialStatus() {
+        return {
+          credentialReferenceId: request.credentialReferenceId,
+          provider: "youtube",
+          providerChannelId: request.providerChannelId,
+          scopeLabel: "youtube.readonly",
+          scopeSet: [request.requiredScope],
+          expiresAtIso,
+          expiryStatus: "active",
+          revoked: false,
+          revokedAtIso: null,
+          tokenValue: "never-returned-by-design",
+          refreshTokenValue: "never-returned-by-design",
+          ciphertext: "never-returned-by-design",
+          decryptCapability: "forbidden"
+        };
+      }
+    },
+    tokenMaterialResolver:
+      request.tokenMaterialResolver ?? createSanitizedUnavailableYouTubeGoogleApiLiveTokenMaterialResolver(),
+    fetchGoogleApi: request.fetchGoogleApi ?? fetchYouTubeGoogleApi,
+    expiresAtIso,
+    serverOnlyLiveTokenMaterialResolver: "connected-sanitized-unavailable-runtime-adapter"
   };
 }
 
@@ -295,4 +345,37 @@ function createSanitizedResponseMetadata(
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function createSanitizedUnavailableYouTubeGoogleApiLiveTokenMaterialResolver(): YouTubeServerOnlyLiveTokenMaterialResolver {
+  return {
+    async resolveServerOnlyTokenMaterial() {
+      return {
+        status: "unavailable",
+        reason: "server-only live token material resolver is wired but token material retrieval is not implemented in this command runtime"
+      };
+    }
+  };
+}
+
+async function fetchYouTubeGoogleApi(
+  request: YouTubeChannelsListMineLiveCallRequest
+): Promise<YouTubeGoogleApiLiveCallFetchResult> {
+  const response = await fetch(request.url, {
+    method: request.method,
+    headers: request.headers
+  });
+
+  let body: unknown = null;
+  try {
+    body = await response.json();
+  } catch {
+    body = null;
+  }
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    body
+  };
 }

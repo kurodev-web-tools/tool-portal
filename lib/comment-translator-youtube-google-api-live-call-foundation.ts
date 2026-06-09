@@ -90,6 +90,59 @@ export type YouTubeGoogleApiLiveCallCommandRuntimeWiring = {
   serverOnlyLiveTokenMaterialResolver: "connected-sanitized-unavailable-runtime-adapter";
 };
 
+export type YouTubeGoogleApiLiveTokenMaterialAvailabilityGateRequest = Omit<
+  YouTubeGoogleApiLiveCallFoundationRequest,
+  "fetchGoogleApi"
+>;
+
+export type YouTubeGoogleApiLiveTokenMaterialAvailabilityGateResult =
+  | {
+      status: "token-material-available";
+      command: "sanitized-youtube-google-api-live-call";
+      outputPolicy: "sanitized-metadata-only";
+      credentialReferenceId: string;
+      provider: "youtube";
+      endpoint: "channels.list-mine";
+      providerUrl: "https://www.googleapis.com/youtube/v3/channels";
+      httpMethod: "GET";
+      query: YouTubeGoogleApiLiveCallCommandFoundationContract["query"];
+      googleApiLiveCall: "not-run-token-material-availability-only";
+      authorizationHandling: "server-only-header-consumed-never-returned";
+      serverFetchBinding: "resolved-for-server-fetch";
+      approvedExecutionReadiness: "ready-for-approved-google-api-live-call";
+      tokenValue: "never-returned-by-design";
+      refreshTokenValue: "never-returned-by-design";
+      safeLiveYouTubeOAuthSmoke: "not-run";
+      ownerVerificationSmoke: "not-run";
+      liveChatPollingSmoke: "not-run";
+      remoteMigrationApply: "not-run";
+    }
+  | {
+      status:
+        | "unavailable"
+        | "scope-missing"
+        | "expired"
+        | "credential-resolution-disabled"
+        | "blocked-owner-authorization";
+      command: "sanitized-youtube-google-api-live-call";
+      outputPolicy: "sanitized-metadata-only";
+      credentialReferenceId: string;
+      provider: "youtube";
+      endpoint: "channels.list-mine";
+      providerUrl: "https://www.googleapis.com/youtube/v3/channels";
+      httpMethod: "GET";
+      query: YouTubeGoogleApiLiveCallCommandFoundationContract["query"];
+      googleApiLiveCall: "not-run-token-material-availability-only";
+      reason: string;
+      approvedExecutionReadiness: "blocked-until-token-material-resolver-returns-available";
+      tokenValue: "never-returned-by-design";
+      refreshTokenValue: "never-returned-by-design";
+      safeLiveYouTubeOAuthSmoke: "not-run";
+      ownerVerificationSmoke: "not-run";
+      liveChatPollingSmoke: "not-run";
+      remoteMigrationApply: "not-run";
+    };
+
 export type YouTubeGoogleApiLiveCallFoundationResult =
   | {
       status: "google-api-live-call-sanitized-result";
@@ -298,6 +351,44 @@ export async function runYouTubeGoogleApiLiveCallFoundation(
       reason: "provider-fetch-failed"
     };
   }
+}
+
+export async function assessYouTubeGoogleApiLiveTokenMaterialAvailabilityGate(
+  request: YouTubeGoogleApiLiveTokenMaterialAvailabilityGateRequest
+): Promise<YouTubeGoogleApiLiveTokenMaterialAvailabilityGateResult> {
+  const tokenResolution = await resolveYouTubeLiveTokenForServerFetch({
+    credentialReferenceId: request.credentialReferenceId,
+    ownerAuthorization: request.ownerAuthorization,
+    credentialResolutionDisabled: request.credentialResolutionDisabled,
+    requiredScope: request.requiredScope,
+    nowIso: request.nowIso,
+    trustedStatusReader: request.trustedStatusReader,
+    tokenMaterialResolver: request.tokenMaterialResolver,
+    async consumeServerFetchAuthorization() {
+      return {
+        serverFetchBinding: "resolved-for-server-fetch"
+      };
+    }
+  });
+
+  if (tokenResolution.status !== "resolved-for-server-fetch") {
+    return {
+      ...createBaseResult(request.credentialReferenceId),
+      status: tokenResolution.status,
+      googleApiLiveCall: "not-run-token-material-availability-only",
+      reason: tokenResolution.reason,
+      approvedExecutionReadiness: "blocked-until-token-material-resolver-returns-available"
+    };
+  }
+
+  return {
+    ...createBaseResult(request.credentialReferenceId),
+    status: "token-material-available",
+    googleApiLiveCall: "not-run-token-material-availability-only",
+    authorizationHandling: "server-only-header-consumed-never-returned",
+    serverFetchBinding: tokenResolution.serverFetchBinding,
+    approvedExecutionReadiness: "ready-for-approved-google-api-live-call"
+  };
 }
 
 function createBaseResult(credentialReferenceId: string) {

@@ -20,6 +20,9 @@ const requiredFixtureReferences = [
 ];
 const ownerAuthorizationPreflightReference = "YOUTUBE_LIVE_RUNTIME_SMOKE_OWNER_AUTHORIZATION_CONFIRMED";
 const ownerVerificationSuccessReference = "YOUTUBE_OWNER_VERIFICATION_SMOKE_SUCCESS_CONFIRMED";
+const liveChatTargetLookupReadyPreflightReference = "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_READY_PREFLIGHT_CONFIRMED";
+const liveChatTargetLookupPresenceOnlyEvidenceReference =
+  "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_PRESENCE_ONLY_EVIDENCE_CONFIRMED";
 const liveChatPollingReadyPreflightReference = "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_READY_PREFLIGHT_CONFIRMED";
 const liveChatTargetMetadataPresentReference = "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_TARGET_METADATA_PRESENT";
 const liveChatTargetReference = "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_LIVE_CHAT_ID";
@@ -116,11 +119,17 @@ function createReferenceReport() {
   const missingOwnerVerificationSuccessReferences = [ownerVerificationSuccessReference].filter(
     (name) => !hasReference(name)
   );
+  const missingTargetLookupPrerequisiteReferences = [
+    liveChatTargetLookupReadyPreflightReference,
+    liveChatTargetLookupPresenceOnlyEvidenceReference
+  ].filter((name) => !hasReference(name));
   const placeholderReferences = [
     ...requiredEnvReferences,
     ...requiredFixtureReferences,
     ownerAuthorizationPreflightReference,
     ownerVerificationSuccessReference,
+    liveChatTargetLookupReadyPreflightReference,
+    liveChatTargetLookupPresenceOnlyEvidenceReference,
     liveChatPollingReadyPreflightReference,
     liveChatTargetMetadataPresentReference,
     liveChatTargetReference,
@@ -132,6 +141,7 @@ function createReferenceReport() {
     missingEnvReferences,
     missingFixtureReferences,
     missingOwnerVerificationSuccessReferences,
+    missingTargetLookupPrerequisiteReferences,
     missingLiveChatReadinessReferences,
     missingLiveChatTargetReferences,
     placeholderReferences
@@ -151,6 +161,7 @@ function createBasePayload() {
     query: contract.query,
     prerequisite: contract.prerequisite,
     ownerBindingCheck: contract.ownerBindingCheck,
+    targetLookupPrerequisite: contract.targetLookupPrerequisite,
     targetMetadataHandling: contract.targetMetadataHandling,
     authorizationHandling: contract.authorizationHandling,
     requiredApproval: contract.requiredApproval,
@@ -189,6 +200,7 @@ function preflight() {
     report.missingEnvReferences.length > 0 ||
     report.missingFixtureReferences.length > 0 ||
     report.missingOwnerVerificationSuccessReferences.length > 0 ||
+    report.missingTargetLookupPrerequisiteReferences.length > 0 ||
     report.missingLiveChatReadinessReferences.length > 0 ||
     report.missingLiveChatTargetReferences.length > 0
   ) {
@@ -201,6 +213,7 @@ function preflight() {
         missingEnvReferences: report.missingEnvReferences,
         missingFixtureReferences: report.missingFixtureReferences,
         missingOwnerVerificationSuccessReferences: report.missingOwnerVerificationSuccessReferences,
+        missingTargetLookupPrerequisiteReferences: report.missingTargetLookupPrerequisiteReferences,
         missingLiveChatReadinessReferences: report.missingLiveChatReadinessReferences,
         missingLiveChatTargetReferences: report.missingLiveChatTargetReferences,
         ownerAuthorizationPreflightReference,
@@ -267,6 +280,35 @@ function preflight() {
     };
   }
 
+  if (!isTruthyReference(liveChatTargetLookupReadyPreflightReference)) {
+    return {
+      ok: false,
+      exitCode: 2,
+      payload: {
+        status: "blocked-live-chat-target-lookup-ready-preflight-not-confirmed",
+        ...createBasePayload(),
+        liveChatTargetLookupReadyPreflightReference,
+        liveChatPollingSmoke: "not-run",
+        providerAccess: "not-run"
+      }
+    };
+  }
+
+  if (!isTruthyReference(liveChatTargetLookupPresenceOnlyEvidenceReference)) {
+    return {
+      ok: false,
+      exitCode: 2,
+      payload: {
+        status: "blocked-live-chat-target-lookup-presence-only-evidence-not-confirmed",
+        ...createBasePayload(),
+        liveChatTargetLookupPresenceOnlyEvidenceReference,
+        liveChatTarget: "absent",
+        liveChatPollingSmoke: "not-run",
+        providerAccess: "not-run"
+      }
+    };
+  }
+
   if (!isTruthyReference(liveChatPollingReadyPreflightReference)) {
     return {
       ok: false,
@@ -314,6 +356,8 @@ function preflight() {
       credentialReferenceId,
       ownerAuthorizationPreflight: "confirmed-by-reference-only",
       ownerVerificationSmoke: "completed-prerequisite-reference-only",
+      liveChatTargetLookupReadiness: "confirmed-by-reference-only",
+      liveChatTargetLookupPresenceOnlyEvidence: "confirmed-presence-only",
       liveChatTarget: "present-by-reference-only",
       ownerBinding: "requires-check-owner-binding-only-before-approved-execution",
       approvedExecutionReadiness: "requires-owner-binding-token-material-and-explicit-approval-before-approved-execution",
@@ -410,6 +454,8 @@ function createFoundationBaseRequest(credentialReferenceId) {
     expectedProviderChannelReference: providerChannelId,
     liveChatId: readReference(liveChatTargetReference),
     ownerVerificationSmokeSuccess: true,
+    liveChatTargetLookupReadinessConfirmed: true,
+    liveChatTargetPresenceOnlyEvidence: true,
     ownerAuthorization: {
       status: "authorized",
       ownerUserId

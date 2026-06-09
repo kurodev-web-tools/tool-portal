@@ -133,7 +133,8 @@ assert.deepEqual(
     },
     outputPolicy: "sanitized-metadata-only",
     ownerBindingCheck: "trusted-status-provider-channel-match-before-live-chat-polling",
-    targetMetadataHandling: "operator-local-live-chat-id-consumed-never-returned",
+    targetLookupPrerequisite: "live-chat-target-lookup-readiness-and-presence-only-evidence-before-live-chat-polling",
+    targetMetadataHandling: "target-lookup-presence-only-evidence-consumed-live-chat-id-never-returned",
     authorizationHandling: "server-only-header-consumed-never-returned",
     tokenValue: "never-returned-by-design",
     refreshTokenValue: "never-returned-by-design",
@@ -154,6 +155,8 @@ const missingOwnerAuthorization = await foundation.runYouTubeLiveChatPollingSmok
   expectedProviderChannelReference: "provider-channel-reference-never-returned",
   liveChatId: "live-chat-id-never-returned",
   ownerVerificationSmokeSuccess: true,
+  liveChatTargetLookupReadinessConfirmed: true,
+  liveChatTargetPresenceOnlyEvidence: true,
   ownerAuthorization: {
     status: "blocked",
     reason: "owner-authorization-preflight-not-confirmed"
@@ -190,6 +193,8 @@ const missingOwnerVerificationSuccess = await foundation.runYouTubeLiveChatPolli
   expectedProviderChannelReference: "provider-channel-reference-never-returned",
   liveChatId: "live-chat-id-never-returned",
   ownerVerificationSmokeSuccess: false,
+  liveChatTargetLookupReadinessConfirmed: true,
+  liveChatTargetPresenceOnlyEvidence: true,
   ownerAuthorization: {
     status: "authorized",
     ownerUserId: "owner-reference-never-returned"
@@ -217,11 +222,81 @@ const missingOwnerVerificationSuccess = await foundation.runYouTubeLiveChatPolli
 assert.equal(missingOwnerVerificationSuccess.status, "blocked-owner-verification-smoke-success-prerequisite");
 assert.equal(missingOwnerVerificationSuccess.providerAccess, "not-run");
 
+const missingTargetLookupReadiness = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
+  credentialReferenceId: "smoke-livechat-polling-reference",
+  expectedProviderChannelReference: "provider-channel-reference-never-returned",
+  liveChatId: "live-chat-id-never-returned",
+  ownerVerificationSmokeSuccess: true,
+  liveChatTargetLookupReadinessConfirmed: false,
+  liveChatTargetPresenceOnlyEvidence: true,
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-never-returned"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-09T00:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus() {
+      statusReadCount += 1;
+      throw new Error("must not read status before target lookup readiness is confirmed");
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial() {
+      tokenMaterialResolutionCount += 1;
+      throw new Error("must not resolve token material before target lookup readiness is confirmed");
+    }
+  },
+  async fetchGoogleApi() {
+    providerFetchCount += 1;
+    throw new Error("must not poll provider before target lookup readiness is confirmed");
+  }
+});
+assert.equal(missingTargetLookupReadiness.status, "blocked-live-chat-target-lookup-readiness-prerequisite");
+assert.equal(missingTargetLookupReadiness.providerAccess, "not-run");
+
+const missingPresenceOnlyEvidence = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
+  credentialReferenceId: "smoke-livechat-polling-reference",
+  expectedProviderChannelReference: "provider-channel-reference-never-returned",
+  liveChatId: "live-chat-id-never-returned",
+  ownerVerificationSmokeSuccess: true,
+  liveChatTargetLookupReadinessConfirmed: true,
+  liveChatTargetPresenceOnlyEvidence: false,
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-never-returned"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-09T00:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus() {
+      statusReadCount += 1;
+      throw new Error("must not read status before target lookup presence-only evidence is confirmed");
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial() {
+      tokenMaterialResolutionCount += 1;
+      throw new Error("must not resolve token material before target lookup presence-only evidence is confirmed");
+    }
+  },
+  async fetchGoogleApi() {
+    providerFetchCount += 1;
+    throw new Error("must not poll provider before target lookup presence-only evidence is confirmed");
+  }
+});
+assert.equal(missingPresenceOnlyEvidence.status, "blocked-live-chat-target-presence-only-evidence-prerequisite");
+assert.equal(missingPresenceOnlyEvidence.providerAccess, "not-run");
+
 const missingTarget = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
   credentialReferenceId: "smoke-livechat-polling-reference",
   expectedProviderChannelReference: "provider-channel-reference-never-returned",
   liveChatId: "",
   ownerVerificationSmokeSuccess: true,
+  liveChatTargetLookupReadinessConfirmed: true,
+  liveChatTargetPresenceOnlyEvidence: true,
   ownerAuthorization: {
     status: "authorized",
     ownerUserId: "owner-reference-never-returned"
@@ -254,6 +329,8 @@ const ownerMismatch = await foundation.runYouTubeLiveChatPollingSmokeFoundation(
   expectedProviderChannelReference: "provider-channel-reference-never-returned",
   liveChatId: "live-chat-id-never-returned",
   ownerVerificationSmokeSuccess: true,
+  liveChatTargetLookupReadinessConfirmed: true,
+  liveChatTargetPresenceOnlyEvidence: true,
   ownerAuthorization: {
     status: "authorized",
     ownerUserId: "owner-reference-never-returned"
@@ -303,6 +380,8 @@ const success = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
   expectedProviderChannelReference: "provider-channel-reference-never-returned",
   liveChatId: "live-chat-id-never-returned",
   ownerVerificationSmokeSuccess: true,
+  liveChatTargetLookupReadinessConfirmed: true,
+  liveChatTargetPresenceOnlyEvidence: true,
   ownerAuthorization: {
     status: "authorized",
     ownerUserId: "owner-reference-never-returned"
@@ -390,7 +469,15 @@ assert.deepEqual(success.responseMetadata, {
   textPayload: "not-returned-by-design"
 });
 
-for (const payload of [missingOwnerAuthorization, missingOwnerVerificationSuccess, missingTarget, ownerMismatch, success]) {
+for (const payload of [
+  missingOwnerAuthorization,
+  missingOwnerVerificationSuccess,
+  missingTargetLookupReadiness,
+  missingPresenceOnlyEvidence,
+  missingTarget,
+  ownerMismatch,
+  success
+]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenValue of [
     "server-only-test-authorization",
@@ -425,6 +512,8 @@ const readyEnv = {
   YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID: "present",
   YOUTUBE_LIVE_RUNTIME_SMOKE_OWNER_AUTHORIZATION_CONFIRMED: "confirmed",
   YOUTUBE_OWNER_VERIFICATION_SMOKE_SUCCESS_CONFIRMED: "confirmed",
+  YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_READY_PREFLIGHT_CONFIRMED: "confirmed",
+  YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_PRESENCE_ONLY_EVIDENCE_CONFIRMED: "confirmed",
   YOUTUBE_LIVE_CHAT_POLLING_SMOKE_READY_PREFLIGHT_CONFIRMED: "confirmed",
   YOUTUBE_LIVE_CHAT_POLLING_SMOKE_TARGET_METADATA_PRESENT: "true",
   YOUTUBE_LIVE_CHAT_POLLING_SMOKE_LIVE_CHAT_ID: "present"
@@ -441,6 +530,10 @@ assert.equal(checkEnvPayload.status, "ready-for-bounded-live-chat-polling-smoke-
 assert.equal(checkEnvPayload.command, "sanitized-youtube-live-chat-polling-smoke");
 assert.equal(checkEnvPayload.endpoint, "liveChatMessages.list");
 assert.equal(checkEnvPayload.outputPolicy, "sanitized-metadata-only");
+assert.equal(
+  checkEnvPayload.targetLookupPrerequisite,
+  "live-chat-target-lookup-readiness-and-presence-only-evidence-before-live-chat-polling"
+);
 assert.equal(checkEnvPayload.liveChatPollingSmoke, "not-run-preflight-only");
 assert.equal(checkEnvPayload.liveChatTarget, "present-by-reference-only");
 

@@ -26,7 +26,8 @@ export type YouTubeLiveChatPollingSmokeCommandFoundationContract = {
   };
   outputPolicy: "sanitized-metadata-only";
   ownerBindingCheck: "trusted-status-provider-channel-match-before-live-chat-polling";
-  targetMetadataHandling: "operator-local-live-chat-id-consumed-never-returned";
+  targetLookupPrerequisite: "live-chat-target-lookup-readiness-and-presence-only-evidence-before-live-chat-polling";
+  targetMetadataHandling: "target-lookup-presence-only-evidence-consumed-live-chat-id-never-returned";
   authorizationHandling: "server-only-header-consumed-never-returned";
   tokenValue: "never-returned-by-design";
   refreshTokenValue: "never-returned-by-design";
@@ -64,6 +65,8 @@ export type YouTubeLiveChatPollingSmokeFoundationRequest = {
   expectedProviderChannelReference: string;
   liveChatId: string;
   ownerVerificationSmokeSuccess: boolean;
+  liveChatTargetLookupReadinessConfirmed: boolean;
+  liveChatTargetPresenceOnlyEvidence: boolean;
   ownerAuthorization: YouTubeLiveTokenResolutionOwnerAuthorization;
   credentialResolutionDisabled: boolean;
   requiredScope: YouTubeRuntimeReadOnlyOAuthScope;
@@ -87,6 +90,7 @@ type YouTubeLiveChatPollingSmokeBase = {
   providerUrl: "https://www.googleapis.com/youtube/v3/liveChat/messages";
   httpMethod: "GET";
   query: YouTubeLiveChatPollingSmokeCommandFoundationContract["query"];
+  targetLookupPrerequisite: "live-chat-target-lookup-readiness-and-presence-only-evidence-before-live-chat-polling";
   ownerVerificationSmoke: "completed-prerequisite-reference-only";
   safeLiveYouTubeOAuthSmoke: "not-run";
   tokenValue: "never-returned-by-design";
@@ -99,6 +103,8 @@ type YouTubeLiveChatPollingSmokeBase = {
 
 type YouTubeLiveChatPollingSmokeBlockingStatus =
   | "blocked-owner-verification-smoke-success-prerequisite"
+  | "blocked-live-chat-target-lookup-readiness-prerequisite"
+  | "blocked-live-chat-target-presence-only-evidence-prerequisite"
   | "blocked-missing-live-chat-target"
   | "credential-resolution-disabled"
   | "blocked-owner-authorization"
@@ -209,7 +215,8 @@ export const youtubeLiveChatPollingSmokeCommandFoundationContract = {
   query,
   outputPolicy: "sanitized-metadata-only",
   ownerBindingCheck: "trusted-status-provider-channel-match-before-live-chat-polling",
-  targetMetadataHandling: "operator-local-live-chat-id-consumed-never-returned",
+  targetLookupPrerequisite: "live-chat-target-lookup-readiness-and-presence-only-evidence-before-live-chat-polling",
+  targetMetadataHandling: "target-lookup-presence-only-evidence-consumed-live-chat-id-never-returned",
   authorizationHandling: "server-only-header-consumed-never-returned",
   tokenValue: "never-returned-by-design",
   refreshTokenValue: "never-returned-by-design",
@@ -432,6 +439,26 @@ function assessPrerequisites(
     );
   }
 
+  if (!request.liveChatTargetLookupReadinessConfirmed) {
+    return unresolvedReadiness(
+      request,
+      "blocked-live-chat-target-lookup-readiness-prerequisite",
+      "not-checked",
+      "not-run",
+      "Live Chat target lookup readiness must be confirmed before Live Chat polling smoke"
+    );
+  }
+
+  if (!request.liveChatTargetPresenceOnlyEvidence) {
+    return unresolvedReadiness(
+      request,
+      "blocked-live-chat-target-presence-only-evidence-prerequisite",
+      "not-checked",
+      "not-run",
+      "Live Chat target lookup presence-only evidence must be recorded before Live Chat polling smoke"
+    );
+  }
+
   if (!request.liveChatId.trim()) {
     return unresolvedReadiness(
       request,
@@ -455,6 +482,7 @@ function createBaseResult(credentialReferenceId: string): YouTubeLiveChatPolling
     providerUrl,
     httpMethod: "GET",
     query,
+    targetLookupPrerequisite: youtubeLiveChatPollingSmokeCommandFoundationContract.targetLookupPrerequisite,
     ownerVerificationSmoke: "completed-prerequisite-reference-only",
     safeLiveYouTubeOAuthSmoke: "not-run",
     tokenValue: "never-returned-by-design",

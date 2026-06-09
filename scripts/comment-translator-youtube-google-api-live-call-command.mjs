@@ -258,7 +258,8 @@ function preflight() {
       ownerAuthorizationPreflight: "confirmed-by-reference-only",
       targetMetadata: "present-by-reference-only",
       serverOnlyLiveTokenMaterialResolver: "connected-sanitized-unavailable-runtime-adapter",
-      approvedExecutionReadiness: "blocked-until-token-material-resolver-returns-available",
+      approvedExecutionReadiness: "requires-token-material-availability-gate-before-approved-execution",
+      tokenMaterialAvailabilityGate: "--check-token-material-availability",
       googleApiLiveCall: "not-run-preflight-only"
     }
   };
@@ -276,6 +277,12 @@ async function main() {
 
   if (args.has("--check-env-only")) {
     writeJson(result.payload, 0);
+    return;
+  }
+
+  if (args.has("--check-token-material-availability")) {
+    const availabilityPayload = await createTokenMaterialAvailabilityPayload(result.payload.credentialReferenceId);
+    writeJson(availabilityPayload, availabilityPayload.status === "token-material-available" ? 0 : 2);
     return;
   }
 
@@ -311,6 +318,31 @@ async function main() {
 }
 
 await main();
+
+async function createTokenMaterialAvailabilityPayload(credentialReferenceId) {
+  const foundation = loadTsModule("lib/comment-translator-youtube-google-api-live-call-foundation.ts");
+  const ownerUserId = readReference("YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID");
+  const nowIso = new Date().toISOString();
+  const runtimeWiring = foundation.createYouTubeGoogleApiLiveCallCommandRuntimeWiring({
+    credentialReferenceId,
+    providerChannelId: readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"),
+    requiredScope: youtubeReadonlyOAuthScope,
+    nowIso
+  });
+
+  return foundation.assessYouTubeGoogleApiLiveTokenMaterialAvailabilityGate({
+    credentialReferenceId,
+    ownerAuthorization: {
+      status: "authorized",
+      ownerUserId
+    },
+    credentialResolutionDisabled: false,
+    requiredScope: youtubeReadonlyOAuthScope,
+    nowIso,
+    trustedStatusReader: runtimeWiring.trustedStatusReader,
+    tokenMaterialResolver: runtimeWiring.tokenMaterialResolver
+  });
+}
 
 async function createApprovedExecutionPayload(credentialReferenceId) {
   const foundation = loadTsModule("lib/comment-translator-youtube-google-api-live-call-foundation.ts");

@@ -115,9 +115,16 @@ for (const exportedName of [
   "youtubeGoogleApiLiveCallCommandFoundationContract",
   "createYouTubeChannelsListMineLiveCallRequest",
   "createYouTubeGoogleApiLiveCallCommandRuntimeWiring",
+  "assessYouTubeGoogleApiLiveTokenMaterialAvailabilityGate",
   "runYouTubeGoogleApiLiveCallFoundation"
 ]) {
-  assert.equal(typeof foundation[exportedName], exportedName.startsWith("create") || exportedName.startsWith("run") ? "function" : "object", `foundation exports ${exportedName}`);
+  assert.equal(
+    typeof foundation[exportedName],
+    exportedName.startsWith("create") || exportedName.startsWith("run") || exportedName.startsWith("assess")
+      ? "function"
+      : "object",
+    `foundation exports ${exportedName}`
+  );
 }
 
 assert.doesNotMatch(
@@ -129,6 +136,11 @@ assert.match(
   commandSource,
   /createYouTubeGoogleApiLiveCallCommandRuntimeWiring/,
   "command builds approved execution dependencies through the server-only runtime wiring helper"
+);
+assert.match(
+  commandSource,
+  /--check-token-material-availability/,
+  "command supports a provider-fetch-free token material availability gate"
 );
 
 assert.deepEqual(
@@ -264,6 +276,60 @@ assert.equal(liveCallResult.ownerVerificationSmoke, "not-run", "owner verificati
 assert.equal(liveCallResult.liveChatPollingSmoke, "not-run", "live chat polling remains separate");
 assert.equal(liveCallResult.remoteMigrationApply, "not-run", "remote mutations remain out of scope");
 
+const availabilityGate = await foundation.assessYouTubeGoogleApiLiveTokenMaterialAvailabilityGate({
+  credentialReferenceId: "smoke-command-livecall-reference",
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-never-returned"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-08T00:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus() {
+      return {
+        credentialReferenceId: "smoke-command-livecall-reference",
+        provider: "youtube",
+        providerChannelId: "provider-channel-reference-never-returned",
+        scopeLabel: "youtube.readonly",
+        scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+        expiresAtIso: "2026-06-08T00:05:00.000Z",
+        expiryStatus: "active",
+        revoked: false,
+        revokedAtIso: null,
+        tokenValue: "never-returned-by-design",
+        refreshTokenValue: "never-returned-by-design",
+        ciphertext: "never-returned-by-design",
+        decryptCapability: "forbidden"
+      };
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial() {
+      return {
+        status: "available",
+        serverAuthorizationHeader: "server-only-test-authorization",
+        expiresAtIso: "2026-06-08T00:05:00.000Z"
+      };
+    }
+  }
+});
+assert.equal(availabilityGate.status, "token-material-available");
+assert.equal(availabilityGate.serverFetchBinding, "resolved-for-server-fetch");
+assert.equal(availabilityGate.googleApiLiveCall, "not-run-token-material-availability-only");
+assert.equal(availabilityGate.tokenValue, "never-returned-by-design");
+assert.equal(availabilityGate.refreshTokenValue, "never-returned-by-design");
+const serializedAvailabilityGate = JSON.stringify(availabilityGate);
+for (const forbiddenValue of [
+  "server-only-test-authorization",
+  "owner-reference-never-returned",
+  "provider-channel-reference-never-returned",
+  "Authorization",
+  "serverAuthorizationHeader"
+]) {
+  assert.doesNotMatch(serializedAvailabilityGate, new RegExp(forbiddenValue), `availability gate does not include ${forbiddenValue}`);
+}
+
 const blockedResult = await foundation.runYouTubeGoogleApiLiveCallFoundation({
   credentialReferenceId: "smoke-command-livecall-reference",
   ownerAuthorization: {
@@ -314,9 +380,29 @@ assert.equal(checkEnvPayload.requiredApproval, "same-thread-explicit-in-thread-a
 assert.equal(checkEnvPayload.serverOnlyLiveTokenMaterialResolver, "connected-sanitized-unavailable-runtime-adapter");
 assert.equal(
   checkEnvPayload.approvedExecutionReadiness,
-  "blocked-until-token-material-resolver-returns-available"
+  "requires-token-material-availability-gate-before-approved-execution"
 );
 assert.equal(checkEnvPayload.googleApiLiveCall, "not-run-preflight-only");
+
+const tokenMaterialAvailability = spawnSync(
+  process.execPath,
+  [commandPath, "--check-token-material-availability", "--json"],
+  {
+    cwd: root,
+    env: readyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(tokenMaterialAvailability.status, 2, "availability gate remains blocked while token retrieval is unavailable");
+const tokenMaterialAvailabilityPayload = parseJson(tokenMaterialAvailability.stdout);
+assert.equal(tokenMaterialAvailabilityPayload.status, "unavailable");
+assert.equal(tokenMaterialAvailabilityPayload.googleApiLiveCall, "not-run-token-material-availability-only");
+assert.equal(
+  tokenMaterialAvailabilityPayload.reason,
+  "server-only live token material resolver is wired but token material retrieval is not implemented in this command runtime"
+);
+assert.equal(tokenMaterialAvailabilityPayload.tokenValue, "never-returned-by-design");
+assert.equal(tokenMaterialAvailabilityPayload.refreshTokenValue, "never-returned-by-design");
 
 const executeWithoutApproval = spawnSync(process.execPath, [commandPath, "--execute", "--json"], {
   cwd: root,
@@ -347,7 +433,7 @@ assert.equal(
   "server-only live token material resolver is wired but token material retrieval is not implemented in this command runtime"
 );
 
-for (const payload of [checkEnvPayload, executeWithoutApprovalPayload, executeWithApprovalPayload]) {
+for (const payload of [checkEnvPayload, tokenMaterialAvailabilityPayload, executeWithoutApprovalPayload, executeWithApprovalPayload]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenField of [
     "ownerUserId",

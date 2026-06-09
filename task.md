@@ -18,18 +18,18 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: `codex/comment-translator-preview` は PR #393 (`[codex] Record owner verification smoke success`) merge 済み。`git fetch origin --prune` 後、merge commit `9171455bd7600d813ef7e2ae631343546a0caeee` が `origin/codex/comment-translator-preview` history に含まれることを確認した。
-   - latest PR metadata: PR #393 `MERGED` at `2026-06-09T06:06:26Z`; base `codex/comment-translator-preview`; head `codex/comment-translator-owner-verification-success-post-pr392`。
-   - current PR scope: Task 5 readiness/blocker PR。ユーザー判断により、Live Streaming availability 反映待ちの間に readiness gate と blocker evidence を PR 化する。Task 5 completion criteria の `one sanitized polling result` は未達のまま、execution PR は別 PR とする。
-   - current Task 5 foundation slice: `lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts`、`scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs`、`scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs` を追加した。owner verification smoke success prerequisite、owner authorization、owner binding match、Live Chat target metadata、token material availability が揃うまで `liveChatMessages.list` provider access へ進まないことを固定する。
-   - current Task 5 command boundary: command は `--check-env-only --json`、`--check-owner-binding-only --json`、`--check-token-material-availability --json`、`--execute --approved-live-chat-polling-smoke --json` を持つ。実行 path は one bounded `liveChatMessages.list` step のみで、polling loop / quota write / translator pipeline wiring / UI / browser storage / handoff payload changes は追加しない。
-   - current Task 5 blocker evidence: operator-local preflight progressed from missing prerequisite/target references to a single placeholder blocker on `YOUTUBE_LIVE_CHAT_POLLING_SMOKE_LIVE_CHAT_ID`. Google Developers API Explorer then returned HTTP 403 `liveStreamingNotEnabled` / `The user is not enabled for live streaming` while trying to obtain Live Chat target metadata. Provider polling remained `not-run`; no polling execution occurred.
+   - status: `codex/comment-translator-preview` は PR #394 (`[codex] Add Live Chat polling smoke readiness gate`) merge 済み。`git fetch origin --prune` 後、merge commit `1dbd1020b4c3f2f471b18d8054ab3c846ce2f42e` が `origin/codex/comment-translator-preview` history に含まれることを確認した。
+   - latest PR metadata: PR #394 `MERGED` at `2026-06-09T07:13:48Z`; base `codex/comment-translator-preview`; head `codex/comment-translator-live-chat-polling-smoke-post-pr393`。
+   - current PR scope: Live Chat target lookup 専用 preflight readiness。Task 5 completion criteria の `one sanitized polling result` は未達のまま、actual target lookup API execution と polling execution は別 approval / 別 PR とする。
+   - current target lookup foundation slice: `lib/comment-translator-youtube-live-chat-target-lookup-foundation.ts`、`scripts/comment-translator-youtube-live-chat-target-lookup-command.mjs`、`scripts/comment-translator-youtube-live-chat-target-lookup-command-contract.mjs` を追加した。既存境界に合わせて `liveBroadcasts.list` の `snippet.liveChatId` を source とし、出力は target presence / absence の sanitized metadata only に留める。
+   - current target lookup command boundary: command は `--check-env-only --json`、`--check-owner-binding-only --json`、`--check-token-material-availability --json`、`--execute --approved-live-chat-target-lookup --json` を持つ。missing owner authorization、owner verification prerequisite missing、owner mismatch、missing token material、no active owned broadcast、missing/disabled target、`liveStreamingNotEnabled` は polling execution へ進まない。
    - preserved output boundary: command output is `sanitized-metadata-only`。`tokenValue` / `refreshTokenValue` は `never-returned-by-design`。OAuth access token / refresh token / authorization code value、owner user id value、provider channel id value、liveChatId value、service_role key value、server authorization header は output / docs / PR body / browser storage に出していない。
-   - completed roadmap item: Completion-Oriented Roadmap Task 4 `Owner verification smoke` は完了。safe live YouTube OAuth smoke と Live Chat polling smoke execution は `not-run` のまま。
-   - immediate next condition: YouTube Live Streaming availability 反映後、operator-local に Live Chat target metadata を設定し、`--check-env-only`、`--check-owner-binding-only`、`--check-token-material-availability` の sanitized ready output を確認する。その後、同スレッド explicit approval の直後だけ `--execute --approved-live-chat-polling-smoke --json` を 1 回実行する。
-   - next PR candidate: Live Chat polling smoke execution evidence PR。Task 5 completion criteria は one sanitized polling result, no broad polling loop, no quota write, no translator pipeline wiring。
-   - out of scope for current readiness PR: safe live YouTube OAuth smoke、additional owner verification smoke rerun without fresh approval、actual Live Chat polling execution、translator pipeline wiring、operator UI flow、remote Supabase DB mutation、refresh runtime、full revocation runtime、credential status display UI rewiring、localStorage / IndexedDB / sessionStorage / handoff payload 変更、quota write、billing integration、main integration。
-   - verification: Task 5 RED -> GREEN contract `node scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs` passed. Regression contracts `node scripts/comment-translator-youtube-owner-verification-smoke-command-contract.mjs` and `node scripts/comment-translator-youtube-google-api-live-call-command-contract.mjs` passed. `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. Live Chat polling execution remains `not-run`.
+   - execution state: actual Live Chat target lookup API execution、Live Chat polling smoke execution、safe live YouTube OAuth smoke、additional owner verification smoke rerun は `not-run`。このスレッド開始時点のユーザー発話は live/provider execution approval ではないため、実 API は実行していない。
+   - current external blocker: Google Developers API Explorer で Live Chat target metadata 取得時に HTTP 403 `liveStreamingNotEnabled` / `The user is not enabled for live streaming` が出ており、YouTube Live Streaming availability 反映待ち。
+   - immediate next condition: YouTube Live Streaming availability 反映後、same-thread / operator-local same-command-process で target lookup readiness を確認し、sanitized output review と explicit in-thread approval が揃った直後だけ `--execute --approved-live-chat-target-lookup --json` を 1 回実行する。
+   - next PR candidate: Live Chat target lookup execution evidence PR。成功時も `liveChatId` value は PR body / docs / command output に出さず、presence-only evidence と polling command への operator-local handoff に留める。その後に Live Chat polling smoke execution evidence PR。
+   - out of scope for current readiness PR: actual Live Chat target lookup API execution、Live Chat polling smoke execution、safe live YouTube OAuth smoke、additional owner verification smoke rerun、translator pipeline wiring、operator UI flow、remote Supabase DB mutation、refresh runtime、full revocation runtime、credential status display UI rewiring、localStorage / IndexedDB / sessionStorage / handoff payload 変更、quota write、billing integration、main integration。
+   - verification: New RED -> GREEN contract `node scripts/comment-translator-youtube-live-chat-target-lookup-command-contract.mjs` passed. Regression contracts `node scripts/comment-translator-youtube-owner-verification-smoke-command-contract.mjs`, `node scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs`, and `node scripts/comment-translator-youtube-google-api-live-call-command-contract.mjs` passed. `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed.
    - width verification: UI / rendered text / CSS は変更しない server-only command/foundation/task update のため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
 
 ## Task Board Retention Cleanup
@@ -70,9 +70,9 @@ Use one Codex thread / one feature branch / one PR per roadmap task. Do not crea
    - Completion criteria: bounded owner verification smoke with sanitized metadata only and explicit abort behavior for mismatch / missing owner authorization.
    - PR policy: separate PR only after Google API live call execution is complete.
 5. Live Chat polling smoke
-   - Goal: Prove one bounded Live Chat polling step after owner verification.
+   - Goal: Prove one bounded Live Chat polling step after owner verification and Live Chat target lookup.
    - Completion criteria: one sanitized polling result, no broad polling loop, no quota write, no translator pipeline wiring.
-   - PR policy: separate PR only after owner verification smoke is complete. Current exception: user approved a readiness/blocker PR for command/foundation/preflight gates while YouTube Live Streaming availability blocks `liveChatId` lookup; the execution evidence PR remains separate.
+   - PR policy: separate PR only after owner verification smoke and Live Chat target lookup readiness are complete. Current exception: readiness/preflight PRs may be split while YouTube Live Streaming availability blocks target lookup execution; target lookup execution evidence and polling execution evidence remain separate.
 6. Live comment intake to translator pipeline
    - Goal: Connect proven live comment intake into the translator pipeline.
    - Completion criteria: server-only data flow, no browser storage / handoff payload expansion, focused contract coverage, and no UI rewiring unless explicitly scoped.
@@ -98,11 +98,13 @@ Use one Codex thread / one feature branch / one PR per roadmap task. Do not crea
 D:/V_streamer_tools の Kuro Live Comment Translator preview line を続けます。
 
 重要:
+- 最初に必ず `git fetch origin --prune` を実行してください。
+- `AGENTS.md` と `task.md` を読んでください。
 - root checkout / main では作業しないでください。
 - 作業先は fresh worktree / feature branch にしてください。
-- secret / token / owner user id value / provider channel id value / service_role key value は表示・要求・保存しないでください。
-- Google API live call、safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke は、same-thread / same-process preflight ready と explicit in-thread approval が揃うまで実行しないでください。
-- 既存の `node scripts/comment-translator-youtube-live-runtime-smoke-command.mjs --execute --json` は token-resolution-only command であり、actual Google API live call を実行しません。これを繰り返して blocker-summary PR を作らないでください。
+- secret / token / OAuth access token / refresh token / authorization code / owner user id value / provider channel id value / liveChatId value / service_role key value / Authorization header value は表示・要求・保存しないでください。
+- safe live YouTube OAuth smoke、additional owner verification smoke rerun、Live Chat target lookup execution、Live Chat polling smoke execution は、same-thread / operator-local same-command-process ready preflight、sanitized output review、explicit in-thread approval が揃うまで実行しないでください。
+- この prompt は live/provider execution 承認ではありません。まず merge gate と readiness / blocker を確認してください。
 
 最初に確認:
 1. `git fetch origin --prune`
@@ -110,20 +112,20 @@ D:/V_streamer_tools の Kuro Live Comment Translator preview line を続けま�
 3. latest PR / branch / merge commit が `origin/codex/comment-translator-preview` に含まれることを確認
 
 現在地:
-- PR #393 は merge 済み。
-- Task 2 actual Google API live call command foundation PR が追加した新規 command は `scripts/comment-translator-youtube-google-api-live-call-command.mjs`。
-- post-PR390 Task 3 execution evidence slice で、operator-local same-command-process preflight / token material availability / explicit in-thread approval 後に `--execute --approved-live-google-api-call --json` を 1 回だけ実行し、sanitized `google-api-live-call-sanitized-result` / `executed-bounded-readonly` / HTTP 200 / `ok: true` を記録した。
-- actual Google API live call は完了。Task 4 owner verification smoke は `owner-verification-smoke-sanitized-result` / `ownerChannelMatchesExpected: true` の sanitized success evidence を記録した。
-- Task 5 readiness PR adds `scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs`, `lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts`, and the dedicated contract. It proves preflight gates before `liveChatMessages.list`, but does not execute Live Chat polling.
-- Task 5 execution is blocked by YouTube Live Streaming availability. Google Developers API Explorer returned HTTP 403 `liveStreamingNotEnabled` while trying to obtain Live Chat target metadata. Live Chat polling execution remains `not-run`.
+- PR #394 `[codex] Add Live Chat polling smoke readiness gate` は merge 済み。merge commit は `1dbd1020b4c3f2f471b18d8054ab3c846ce2f42e`。
+- Task 3 actual Google API live call は完了。Task 4 owner verification smoke は sanitized success evidence を記録済み。
+- Task 5 polling readiness foundation は `scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs` と `lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts`。`liveChatMessages.list` 前の gates はあるが、polling execution は `not-run`。
+- Live Chat target lookup readiness slice は `scripts/comment-translator-youtube-live-chat-target-lookup-command.mjs`、`lib/comment-translator-youtube-live-chat-target-lookup-foundation.ts`、dedicated contract を追加した。`liveBroadcasts.list` の target lookup を server-only / sanitized metadata only / approval-gated にしている。
+- Google Developers API Explorer で Live Chat target metadata 取得時に HTTP 403 `liveStreamingNotEnabled` / `The user is not enabled for live streaming` が出た。YouTube Live Streaming availability 反映待ち。
+- actual Live Chat target lookup API execution と Live Chat polling smoke execution はまだ無い。
 
 次にやること:
 - Fresh worktree / branch from `origin/codex/comment-translator-preview`.
-- After the readiness PR is merged and YouTube Live Streaming availability is ready, continue Task 5 execution evidence as a separate PR. Task 4 owner verification success remains prerequisite; preserve one bounded polling result, no broad polling loop, no quota write, no translator pipeline wiring.
+- After target lookup readiness PR is merged and YouTube Live Streaming availability is ready, continue Live Chat target lookup execution evidence as a separate PR. Task 4 owner verification success remains prerequisite; preserve one bounded `liveBroadcasts.list` target lookup, no polling execution, no quota write, no translator pipeline wiring.
 - Current Task 4 foundation command is `scripts/comment-translator-youtube-owner-verification-smoke-command.mjs`; owner verification smoke is completed and should not be rerun unless a fresh same-process preflight, sanitized output review, and explicit in-thread approval are recorded.
-- Keep token values, owner user id value, provider channel id value, liveChatId value, service_role key value out of output, docs, fixtures, PR body, and browser storage.
-- Do not run safe live YouTube OAuth smoke, owner verification smoke, or Live Chat polling smoke unless the new task has a ready preflight, sanitized output review is complete, and this same thread receives explicit in-thread approval immediately before execution.
-- First rerun `--check-env-only --json`, `--check-owner-binding-only --json`, and `--check-token-material-availability --json` after setting operator-local Live Chat target metadata. If any returns blocker output, record sanitized blocker evidence and stop without execution.
+- For target lookup, first run `node scripts/comment-translator-youtube-live-chat-target-lookup-command.mjs --check-env-only --json`, then `--check-owner-binding-only --json`, then `--check-token-material-availability --json` in the same command-process context where operator-local references are available. If any returns blocker output, record sanitized blocker evidence and stop without execution.
+- Keep token values, owner user id value, provider channel id value, liveChatId value, service_role key value, Authorization header value out of output, docs, fixtures, PR body, and browser storage.
+- Do not run safe live YouTube OAuth smoke, owner verification smoke, target lookup execution, or Live Chat polling smoke unless the new task has ready preflight, sanitized output review is complete, and the same thread receives explicit in-thread approval immediately before execution.
 ```
 
 ## Verification Baseline

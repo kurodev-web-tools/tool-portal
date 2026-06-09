@@ -78,6 +78,8 @@ export type YouTubeGoogleApiLiveCallCommandRuntimeWiringRequest = {
   providerChannelId: string;
   requiredScope: YouTubeRuntimeReadOnlyOAuthScope;
   nowIso: string;
+  operatorLocalServerAuthorizationHeader?: string | null;
+  operatorLocalTokenExpiresAtIso?: string | null;
   tokenMaterialResolver?: YouTubeServerOnlyLiveTokenMaterialResolver;
   fetchGoogleApi?: YouTubeGoogleApiLiveCallFetch;
 };
@@ -87,7 +89,10 @@ export type YouTubeGoogleApiLiveCallCommandRuntimeWiring = {
   tokenMaterialResolver: YouTubeServerOnlyLiveTokenMaterialResolver;
   fetchGoogleApi: YouTubeGoogleApiLiveCallFetch;
   expiresAtIso: string;
-  serverOnlyLiveTokenMaterialResolver: "connected-sanitized-unavailable-runtime-adapter";
+  serverOnlyLiveTokenMaterialResolver:
+    | "connected-sanitized-unavailable-runtime-adapter"
+    | "connected-operator-local-runtime-adapter"
+    | "connected-injected-runtime-adapter";
 };
 
 export type YouTubeGoogleApiLiveTokenMaterialAvailabilityGateRequest = Omit<
@@ -259,6 +264,18 @@ export function createYouTubeGoogleApiLiveCallCommandRuntimeWiring(
   request: YouTubeGoogleApiLiveCallCommandRuntimeWiringRequest
 ): YouTubeGoogleApiLiveCallCommandRuntimeWiring {
   const expiresAtIso = new Date(Date.parse(request.nowIso) + 5 * 60 * 1000).toISOString();
+  const operatorLocalResolver =
+    request.operatorLocalServerAuthorizationHeader && request.operatorLocalTokenExpiresAtIso
+      ? createOperatorLocalYouTubeGoogleApiLiveTokenMaterialResolver({
+          serverAuthorizationHeader: request.operatorLocalServerAuthorizationHeader,
+          expiresAtIso: request.operatorLocalTokenExpiresAtIso,
+          nowIso: request.nowIso
+        })
+      : null;
+  const tokenMaterialResolver =
+    request.tokenMaterialResolver ??
+    operatorLocalResolver ??
+    createSanitizedUnavailableYouTubeGoogleApiLiveTokenMaterialResolver();
 
   return {
     trustedStatusReader: {
@@ -280,11 +297,58 @@ export function createYouTubeGoogleApiLiveCallCommandRuntimeWiring(
         };
       }
     },
-    tokenMaterialResolver:
-      request.tokenMaterialResolver ?? createSanitizedUnavailableYouTubeGoogleApiLiveTokenMaterialResolver(),
+    tokenMaterialResolver,
     fetchGoogleApi: request.fetchGoogleApi ?? fetchYouTubeGoogleApi,
     expiresAtIso,
-    serverOnlyLiveTokenMaterialResolver: "connected-sanitized-unavailable-runtime-adapter"
+    serverOnlyLiveTokenMaterialResolver: request.tokenMaterialResolver
+      ? "connected-injected-runtime-adapter"
+      : operatorLocalResolver
+        ? "connected-operator-local-runtime-adapter"
+        : "connected-sanitized-unavailable-runtime-adapter"
+  };
+}
+
+export function createOperatorLocalYouTubeGoogleApiLiveTokenMaterialResolver({
+  serverAuthorizationHeader,
+  expiresAtIso,
+  nowIso
+}: {
+  serverAuthorizationHeader: string;
+  expiresAtIso: string;
+  nowIso: string;
+}): YouTubeServerOnlyLiveTokenMaterialResolver {
+  return {
+    async resolveServerOnlyTokenMaterial() {
+      const trimmedHeader = serverAuthorizationHeader.trim();
+      const trimmedExpiresAtIso = expiresAtIso.trim();
+
+      if (!trimmedHeader || isPlaceholderReferenceValue(trimmedHeader)) {
+        return {
+          status: "unavailable",
+          reason: "operator-local server-only token material reference is missing"
+        };
+      }
+
+      if (!trimmedExpiresAtIso || Number.isNaN(Date.parse(trimmedExpiresAtIso))) {
+        return {
+          status: "unavailable",
+          reason: "operator-local server-only token material expiry reference is missing"
+        };
+      }
+
+      if (Date.parse(trimmedExpiresAtIso) <= Date.parse(nowIso)) {
+        return {
+          status: "expired",
+          reason: "operator-local server-only token material is expired"
+        };
+      }
+
+      return {
+        status: "available",
+        serverAuthorizationHeader: trimmedHeader,
+        expiresAtIso: trimmedExpiresAtIso
+      };
+    }
   };
 }
 
@@ -447,6 +511,10 @@ function createSanitizedUnavailableYouTubeGoogleApiLiveTokenMaterialResolver(): 
       };
     }
   };
+}
+
+function isPlaceholderReferenceValue(value: string): boolean {
+  return /^<.*>$/.test(value.trim()) || /\bdo not paste\b/i.test(value) || /\bset locally\b/i.test(value);
 }
 
 async function fetchYouTubeGoogleApi(

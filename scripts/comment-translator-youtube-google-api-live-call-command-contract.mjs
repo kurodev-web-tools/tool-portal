@@ -142,6 +142,16 @@ assert.match(
   /--check-token-material-availability/,
   "command supports a provider-fetch-free token material availability gate"
 );
+assert.match(
+  foundationSource,
+  /createOperatorLocalYouTubeGoogleApiLiveTokenMaterialResolver/,
+  "foundation exposes an explicit operator-local token material resolver boundary"
+);
+assert.match(
+  commandSource,
+  /YOUTUBE_GOOGLE_API_LIVE_CALL_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER/,
+  "command can read operator-local token material from a server-only env reference"
+);
 
 assert.deepEqual(
   foundation.youtubeGoogleApiLiveCallCommandFoundationContract,
@@ -403,6 +413,47 @@ assert.equal(
 );
 assert.equal(tokenMaterialAvailabilityPayload.tokenValue, "never-returned-by-design");
 assert.equal(tokenMaterialAvailabilityPayload.refreshTokenValue, "never-returned-by-design");
+
+const operatorLocalReadyEnv = {
+  ...readyEnv,
+  YOUTUBE_GOOGLE_API_LIVE_CALL_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER: "server-only-test-authorization",
+  YOUTUBE_GOOGLE_API_LIVE_CALL_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO: "2026-06-10T00:05:00.000Z"
+};
+const operatorLocalTokenMaterialAvailability = spawnSync(
+  process.execPath,
+  [commandPath, "--check-token-material-availability", "--json"],
+  {
+    cwd: root,
+    env: operatorLocalReadyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(
+  operatorLocalTokenMaterialAvailability.status,
+  0,
+  "availability gate passes when operator-local token material is wired by server-only env reference"
+);
+const operatorLocalTokenMaterialAvailabilityPayload = parseJson(operatorLocalTokenMaterialAvailability.stdout);
+assert.equal(operatorLocalTokenMaterialAvailabilityPayload.status, "token-material-available");
+assert.equal(
+  operatorLocalTokenMaterialAvailabilityPayload.googleApiLiveCall,
+  "not-run-token-material-availability-only"
+);
+assert.equal(
+  operatorLocalTokenMaterialAvailabilityPayload.serverFetchBinding,
+  "resolved-for-server-fetch"
+);
+assert.equal(
+  operatorLocalTokenMaterialAvailabilityPayload.approvedExecutionReadiness,
+  "ready-for-approved-google-api-live-call"
+);
+assert.equal(operatorLocalTokenMaterialAvailabilityPayload.tokenValue, "never-returned-by-design");
+assert.equal(operatorLocalTokenMaterialAvailabilityPayload.refreshTokenValue, "never-returned-by-design");
+assert.doesNotMatch(
+  JSON.stringify(operatorLocalTokenMaterialAvailabilityPayload),
+  /server-only-test-authorization|ownerUserId|providerChannelId|serverAuthorizationHeader|"Authorization"\s*:/i,
+  "operator-local availability output remains sanitized metadata only"
+);
 
 const executeWithoutApproval = spawnSync(process.execPath, [commandPath, "--execute", "--json"], {
   cwd: root,

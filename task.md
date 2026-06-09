@@ -18,17 +18,20 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator preview branch
-   - status: `codex/comment-translator-preview` は PR #390 (`[codex] Add operator-local token material resolver gate`) merge 済み。`git fetch origin --prune` 後、merge commit `0f8d5d2acdac20c905ac3d660a77a1e7874f5369` が `origin/codex/comment-translator-preview` history に含まれることを確認した。
-   - latest PR metadata: PR #390 `MERGED` at `2026-06-09T04:15:13Z`; base `codex/comment-translator-preview`; head `codex/comment-translator-token-material-retrieval-post-pr389`。
+   - status: `codex/comment-translator-preview` は PR #391 (`[codex] Record first Google API live call evidence`) merge 済み。`git fetch origin --prune` 後、merge commit `82f34ad38765c54356ab83d84f02d0517298408c` が `origin/codex/comment-translator-preview` history に含まれることを確認した。
+   - latest PR metadata: PR #391 `MERGED` at `2026-06-09T04:58:02Z`; base `codex/comment-translator-preview`; head `codex/comment-translator-first-google-api-live-call-execution-post-pr390`。
    - current implementation slice: post-PR390 Task 3 execution evidence として、operator-local same-command-process で first actual Google API live call を 1 回だけ実行した。`--check-env-only --json` は `ready-for-bounded-google-api-live-call-command-foundation`、`--check-token-material-availability --json` は `token-material-available`、実行直前の explicit in-thread approval 後の `--execute --approved-live-google-api-call --json` は `google-api-live-call-sanitized-result` / `executed-bounded-readonly` を返した。
+   - current Task 4 foundation slice: `lib/comment-translator-youtube-owner-verification-smoke-foundation.ts` と `scripts/comment-translator-youtube-owner-verification-smoke-command.mjs` を追加した。contract は owner authorization 欠落時に trusted status read / token material resolution / provider fetch へ進まないこと、provider channel mismatch 時に token material / provider fetch へ進まないこと、success path は owner binding verified before provider access 後に `channels.list-mine` だけを bounded readonly に実行し sanitized metadata only を返すことを固定する。
    - sanitized Google API result: endpoint `channels.list-mine`; HTTP status `200`; `ok: true`; `channelReference: present`; `returnedItemCount: 1`; `pageInfoTotalResults: 1`; `longUploadsStatus: present`; `madeForKids: absent`。Google API live call は bounded readonly で 1 回だけ実行。
    - preserved output boundary: command output は `sanitized-metadata-only`。`tokenValue` / `refreshTokenValue` は `never-returned-by-design`。OAuth access token / refresh token / authorization code value、owner user id value、provider channel id value、service_role key value、server authorization header は output / docs / PR body / browser storage に出していない。
    - completed roadmap item: Completion-Oriented Roadmap Task 3 `First actual Google API live call execution` は完了。safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke はすべて `not-run` のまま。
-   - immediate next condition: 次は Task 4 owner verification smoke。Task 4 は separate PR とし、provider access 前の credential owner binding を sanitized metadata only で証明する。実行前に same-thread / operator-local same-command-process ready preflight、sanitized output review、実行直前の explicit in-thread approval を揃える。
-   - next PR candidate: owner verification smoke readiness/execution PR。Live Chat polling smoke、translator pipeline wiring、operator UI flow、refresh runtime、full revocation runtime はまだ別 PR。
-   - out of scope for current roadmap PR: safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke、remote Supabase DB mutation、refresh runtime、full revocation runtime、credential status display UI rewiring、localStorage / IndexedDB / sessionStorage / handoff payload 変更、quota write、billing integration、main integration。
-   - verification: operator-local same-command-process evidence reviewed. Baseline contract `node scripts/comment-translator-youtube-google-api-live-call-command-contract.mjs` passed in this worktree before execution. Docs/evidence-only closeout verification `git diff --check` and targeted `task.md` inspection passed.
-   - width verification: UI / rendered text / CSS は変更しない evidence-only `task.md` update のため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
+   - current Task 4 preflight: operator-local same-command-process の `node scripts/comment-translator-youtube-owner-verification-smoke-command.mjs --check-env-only --json` は `ready-for-bounded-owner-verification-smoke-command-foundation`、`--check-owner-binding-only --json` は `owner-binding-verified-before-provider-access`、`--check-token-material-availability --json` は `owner-verification-token-material-available` を返した。すべて sanitized metadata only で、provider access は preflight / owner-binding-only / token-material-only では `not-run`。
+   - current Task 4 execution evidence: 同じ operator-local PowerShell と同スレッド explicit approval 後、`--execute --approved-owner-verification-smoke --json` を 1 回だけ実行した。結果は `owner-verification-provider-mismatch-sanitized` / `provider-return-mismatch` / `executed-bounded-readonly` / `providerAccess: channels-list-mine-owner-verification-only`。HTTP status `200`; `ok: true`; `channelReference: present`; `expectedProviderChannelReference: present`; `ownerChannelMatchesExpected: false`; `returnedItemCount: 1`; `pageInfoTotalResults: 1`; reason `provider-channel-reference-mismatch`。
+   - immediate next condition: Task 4 は mismatch abort evidence を記録した。Live Chat polling smoke は owner verification success ではなく provider return mismatch のため開始しない。次は target metadata / expected provider channel reference の operator-local 再確認、または separate corrected-target owner verification smoke rerun PR。
+   - next PR candidate: owner verification smoke mismatch-abort evidence/foundation PR。Live Chat polling smoke、translator pipeline wiring、operator UI flow、refresh runtime、full revocation runtime はまだ別 PR。
+   - out of scope for current roadmap PR: safe live YouTube OAuth smoke、Live Chat polling smoke、remote Supabase DB mutation、refresh runtime、full revocation runtime、credential status display UI rewiring、localStorage / IndexedDB / sessionStorage / handoff payload 変更、quota write、billing integration、main integration。
+   - verification: Task 4 RED -> GREEN contract `node scripts/comment-translator-youtube-owner-verification-smoke-command-contract.mjs` passed. Regression contract `node scripts/comment-translator-youtube-google-api-live-call-command-contract.mjs` passed. `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. Operator-local owner verification smoke output reviewed as sanitized mismatch-abort evidence; Live Chat polling remains `not-run`.
+   - width verification: UI / rendered text / CSS は変更しない server-only command/foundation/task update のため、`/tools/comment-translator` の `390 / 820 / 1024 / 1280 / 1366px` 幅別確認は不要。
 
 ## Task Board Retention Cleanup
 
@@ -107,14 +110,15 @@ D:/V_streamer_tools の Kuro Live Comment Translator preview line を続けま�
 3. latest PR / branch / merge commit が `origin/codex/comment-translator-preview` に含まれることを確認
 
 現在地:
-- PR #390 は merge 済み。
+- PR #391 は merge 済み。
 - Task 2 actual Google API live call command foundation PR が追加した新規 command は `scripts/comment-translator-youtube-google-api-live-call-command.mjs`。
 - post-PR390 Task 3 execution evidence slice で、operator-local same-command-process preflight / token material availability / explicit in-thread approval 後に `--execute --approved-live-google-api-call --json` を 1 回だけ実行し、sanitized `google-api-live-call-sanitized-result` / `executed-bounded-readonly` / HTTP 200 / `ok: true` を記録した。
-- actual Google API live call は完了。safe live YouTube OAuth smoke、owner verification smoke、Live Chat polling smoke はまだ実行していない。
+- actual Google API live call は完了。Task 4 owner verification smoke は `owner-verification-provider-mismatch-sanitized` / `provider-channel-reference-mismatch` の mismatch abort evidence を記録した。safe live YouTube OAuth smoke と Live Chat polling smoke はまだ実行していない。
 
 次にやること:
 - Fresh worktree / branch from `origin/codex/comment-translator-preview`.
 - Task 4 owner verification smoke を separate PR で進める。provider access 前の credential owner binding を sanitized metadata only で証明し、mismatch / missing owner authorization の explicit abort behavior を contract-first で固定する。
+- Current Task 4 foundation command is `scripts/comment-translator-youtube-owner-verification-smoke-command.mjs`; run `--check-env-only --json`, `--check-owner-binding-only --json`, and `--check-token-material-availability --json` before any approved execution.
 - Keep token values, owner user id value, provider channel id value, service_role key value out of output, docs, fixtures, PR body, and browser storage.
 - Do not run safe live YouTube OAuth smoke, owner verification smoke, or Live Chat polling smoke unless the new task has a ready preflight, sanitized output review is complete, and this same thread receives explicit in-thread approval immediately before execution.
 - If owner authorization evidence, target metadata, approval boundary, or sanitized output review is missing, stop and report the blocker without creating an execution PR.

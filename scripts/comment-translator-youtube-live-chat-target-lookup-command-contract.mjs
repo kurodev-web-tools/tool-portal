@@ -129,7 +129,6 @@ assert.deepEqual(
     query: {
       part: "id,snippet,status",
       mine: "true",
-      broadcastStatus: "active",
       fields: "items(id,snippet(liveChatId),status(lifeCycleStatus,privacyStatus)),pageInfo(totalResults,resultsPerPage)"
     },
     outputPolicy: "sanitized-metadata-only",
@@ -146,6 +145,11 @@ assert.deepEqual(
     browserStorage: "unchanged"
   },
   "foundation contract fixes the Live Chat target lookup boundary"
+);
+assert.equal(
+  "broadcastStatus" in foundation.youtubeLiveChatTargetLookupCommandFoundationContract.query,
+  false,
+  "liveBroadcasts.list request uses exactly one filter parameter"
 );
 
 let statusReadCount = 0;
@@ -435,6 +439,75 @@ assert.equal(missingLiveChatTarget.status, "blocked-missing-or-disabled-live-cha
 assert.equal(missingLiveChatTarget.liveChatTarget, "absent");
 assert.equal(missingLiveChatTarget.pollingExecution, "not-run");
 
+const noActiveOwnedBroadcast = await foundation.runYouTubeLiveChatTargetLookupFoundation({
+  credentialReferenceId: "smoke-livechat-target-reference",
+  expectedProviderChannelReference: "provider-channel-reference-never-returned",
+  ownerVerificationSmokeSuccess: true,
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-never-returned"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-09T00:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus() {
+      return {
+        credentialReferenceId: "smoke-livechat-target-reference",
+        provider: "youtube",
+        providerChannelId: "provider-channel-reference-never-returned",
+        scopeLabel: "youtube.readonly",
+        scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+        expiresAtIso: "2026-06-09T00:05:00.000Z",
+        expiryStatus: "active",
+        revoked: false,
+        revokedAtIso: null,
+        tokenValue: "never-returned-by-design",
+        refreshTokenValue: "never-returned-by-design",
+        ciphertext: "never-returned-by-design",
+        decryptCapability: "forbidden"
+      };
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial() {
+      return {
+        status: "available",
+        serverAuthorizationHeader: "server-only-test-authorization",
+        expiresAtIso: "2026-06-09T00:05:00.000Z"
+      };
+    }
+  },
+  async fetchGoogleApi(requestToFetch) {
+    consumedAuthorizationHeaders.push(requestToFetch.headers.Authorization);
+    return {
+      ok: true,
+      status: 200,
+      body: {
+        pageInfo: {
+          totalResults: 1,
+          resultsPerPage: 1
+        },
+        items: [
+          {
+            id: "broadcast-id-never-returned",
+            snippet: {
+              liveChatId: "live-chat-id-never-returned"
+            },
+            status: {
+              lifeCycleStatus: "ready",
+              privacyStatus: "public"
+            }
+          }
+        ]
+      }
+    };
+  }
+});
+assert.equal(noActiveOwnedBroadcast.status, "blocked-no-active-owned-broadcast");
+assert.equal(noActiveOwnedBroadcast.liveChatTarget, "absent");
+assert.equal(noActiveOwnedBroadcast.liveChatTargetLookup, "lookup-completed-no-usable-target");
+
 const liveStreamingNotEnabled = await foundation.runYouTubeLiveChatTargetLookupFoundation({
   credentialReferenceId: "smoke-livechat-target-reference",
   expectedProviderChannelReference: "provider-channel-reference-never-returned",
@@ -681,7 +754,7 @@ const success = await foundation.runYouTubeLiveChatTargetLookupFoundation({
     };
   }
 });
-assert.equal(consumedAuthorizationHeaders.length, 6, "provider fetch only occurs in approved target lookup paths");
+assert.equal(consumedAuthorizationHeaders.length, 7, "provider fetch only occurs in approved target lookup paths");
 assert.equal(success.status, "live-chat-target-lookup-sanitized-result");
 assert.equal(success.ownerBinding, "verified-before-live-chat-target-lookup");
 assert.equal(success.liveChatTargetLookup, "executed-bounded-readonly-one-step");
@@ -705,6 +778,7 @@ for (const payload of [
   tokenUnavailable,
   noActiveBroadcast,
   missingLiveChatTarget,
+  noActiveOwnedBroadcast,
   liveStreamingNotEnabled,
   genericProviderHttpFailure,
   providerFetchException,

@@ -22,7 +22,6 @@ export type YouTubeLiveChatTargetLookupCommandFoundationContract = {
   query: {
     part: "id,snippet,status";
     mine: "true";
-    broadcastStatus: "active";
     fields: "items(id,snippet(liveChatId),status(lifeCycleStatus,privacyStatus)),pageInfo(totalResults,resultsPerPage)";
   };
   outputPolicy: "sanitized-metadata-only";
@@ -214,7 +213,6 @@ const providerUrl = "https://www.googleapis.com/youtube/v3/liveBroadcasts" as co
 const query = {
   part: "id,snippet,status",
   mine: "true",
-  broadcastStatus: "active",
   fields: "items(id,snippet(liveChatId),status(lifeCycleStatus,privacyStatus)),pageInfo(totalResults,resultsPerPage)"
 } as const;
 
@@ -446,7 +444,23 @@ export async function runYouTubeLiveChatTargetLookupFoundation(
     );
   }
 
-  const firstItem = asRecord(items[0]);
+  const activeItems = items.filter((item) => {
+    const status = asRecord(asRecord(item).status);
+    return status.lifeCycleStatus === "live";
+  });
+  if (activeItems.length < 1) {
+    return unresolvedLookup(
+      request,
+      "blocked-no-active-owned-broadcast",
+      "verified-before-live-chat-target-lookup",
+      "lookup-completed-no-usable-target",
+      "liveBroadcasts-list-target-lookup-only",
+      "no active owned broadcast was returned by target lookup",
+      "absent"
+    );
+  }
+
+  const firstItem = asRecord(activeItems[0]);
   const snippet = asRecord(firstItem.snippet);
   const target = typeof snippet.liveChatId === "string" ? snippet.liveChatId.trim() : "";
 
@@ -619,7 +633,12 @@ function createSanitizedTargetLookupResponseMetadata(
 ): YouTubeLiveChatTargetLookupResponseMetadata {
   const body = asRecord(providerResponse.body);
   const items = Array.isArray(body.items) ? body.items : [];
-  const firstItem = asRecord(items[0]);
+  const firstItem = asRecord(
+    items.find((item) => {
+      const status = asRecord(asRecord(item).status);
+      return status.lifeCycleStatus === "live";
+    }) ?? items[0]
+  );
   const firstSnippet = asRecord(firstItem.snippet);
   const firstStatus = asRecord(firstItem.status);
   const pageInfo = asRecord(body.pageInfo);

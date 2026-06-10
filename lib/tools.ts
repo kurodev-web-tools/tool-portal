@@ -54,7 +54,8 @@ export const tools: ToolDefinition[] = [
   {
     id: "comment-translator",
     name: "Kuro Live Comment Translator",
-    description: "YouTube向けの読み取り専用OBS Dockで、外国語コメントの原文と翻訳表示をmock dataで確認できます。",
+    description:
+      "YouTubeコメントを明示Start後のセッション内で翻訳表示する公開版プレビューです。接続だけでは監視やAI翻訳を開始しません。",
     category: "stream",
     status: "available",
     suite: "stream-workflow",

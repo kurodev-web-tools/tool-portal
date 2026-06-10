@@ -2,8 +2,8 @@ export type CommentTranslationStatus = "translated" | "skipped" | "error";
 export type CommentCacheStatus = "hit" | "miss" | "none";
 export type CommentTranslatorConnectionStateId = "connected" | "syncing" | "offline";
 export type CommentTranslatorDockStatus = "ready" | "standby" | "blocked";
-export type CommentTranslatorSourceLanguageId = "auto" | "en" | "es" | "ko" | "ja";
-export type CommentTranslatorTargetLanguageId = "ja" | "en" | "ko" | "es";
+export type CommentTranslatorSourceLanguageId = "en" | "ko" | "zh" | "ja";
+export type CommentTranslatorTargetLanguageId = "ja" | "en";
 export type CommentTranslatorDisplayMode = "both" | "original" | "translated";
 export type CommentTranslatorSurfaceMode = "obs-browser-dock" | "narrow-viewport";
 export type CommentTranslatorStatusFilter = "all" | "translated" | "skipped" | "error";
@@ -120,10 +120,10 @@ export type CommentTranslatorControlOption<TId extends string> = {
 export const commentTranslatorUiCopy = {
   ja: {
     header: {
-      subtitle: "YouTube優先 / OBS Browser Dock",
+      subtitle: "YouTube優先 / 明示開始セッション",
       readOnlyDock: "読み取り専用Dock",
       target: "表示先",
-      feedTitle: "YouTubeチャットfixture"
+      feedTitle: "YouTubeチャット公開版プレビュー"
     },
     sections: {
       setup: "セットアップ / 接続",
@@ -134,20 +134,20 @@ export const commentTranslatorUiCopy = {
       skipped: "スキップ理由",
       credentialStatus: "YouTube認証ステータス",
       operatorFlow: "オペレーター確認フロー",
-      safety: "読み取り専用の安全性"
+      safety: "公開版の利用条件"
     },
     controls: {
-      connection: "YouTube mock接続",
+      connection: "YouTube接続状態",
       stream: "配信選択",
       sourceLanguage: "翻訳元言語",
       targetLanguage: "翻訳先言語",
       singleComment: "単一コメント",
       multilinePaste: "複数行貼り付け",
-      manualResult: "手入力mock結果",
+      manualResult: "手入力プレビュー結果",
       commentText: "コメント本文",
       surface: "表示面",
       currentPair: "現在の組み合わせ",
-      mockState: "mock状態",
+      mockState: "利用状態",
       searchPlaceholder: "コメントを検索"
     },
     stats: {
@@ -161,13 +161,13 @@ export const commentTranslatorUiCopy = {
       errorRows: "エラー行",
       used: "使用中",
       hits: "hits",
-      fixtureMisses: "fixture miss",
+      fixtureMisses: "preview miss",
       recoverable: "復帰可能な状態",
       manualRows: "手入力行",
       manualSession: "手入力セッション"
     },
     manualInput: {
-      helper: "実APIなしで、入力したコメントをfixture feedに追加します。",
+      helper: "この画面の手入力はプレビュー用です。実APIやAI翻訳はStart承認前に実行しません。",
       singlePlaceholder: "1件だけ追加するコメント",
       pastePlaceholder: "貼り付けたコメントを1行ずつ追加",
       sourceBadge: "手入力",
@@ -181,16 +181,14 @@ export const commentTranslatorUiCopy = {
       refreshCredentialStatus: "認証ステータスを確認"
     },
     manualResults: {
-      translated: { label: "翻訳済みmock", helper: "決定的なmock翻訳を付ける" },
-      skipped: { label: "スキップmock", helper: "スキップ理由つきで追加" },
-      error: { label: "エラーmock", helper: "復帰可能なエラー行として追加" }
+      translated: { label: "翻訳済みプレビュー", helper: "決定的なプレビュー翻訳を付ける" },
+      skipped: { label: "スキッププレビュー", helper: "スキップ理由つきで追加" },
+      error: { label: "エラープレビュー", helper: "復帰可能なエラー行として追加" }
     },
     fields: {
       mode: "モード",
-      channel: "チャンネル",
       dock: "Dock",
       credentialReference: "Credential reference",
-      providerChannel: "Provider channel",
       scope: "Scope",
       expires: "Expires",
       reason: "Reason"
@@ -199,7 +197,7 @@ export const commentTranslatorUiCopy = {
       pending: "確認中",
       unchecked: "未確認",
       refreshFailed: "認証ステータスを確認できませんでした",
-      safeBoundary: "画面にはopaqueなcredentialReferenceIdとsanitized metadataだけを表示します。",
+      safeBoundary: "画面にはopaqueなcredentialReferenceIdとsanitized metadataだけを表示し、provider channel / liveChatId / token値は表示しません。",
       states: {
         available: "利用可能",
         "reconnect-required": "再接続が必要",
@@ -241,24 +239,24 @@ export const commentTranslatorUiCopy = {
       }
     },
     connections: {
-      connected: "接続中mock",
-      syncing: "同期中fixture",
-      offline: "未接続fixture"
+      connected: "接続確認済み",
+      syncing: "接続確認中",
+      offline: "未接続"
     },
     connectionStatus: {
-      connected: "ライブmock",
+      connected: "開始前",
       syncing: "同期中",
-      offline: "オフラインmock"
+      offline: "オフライン"
     },
     connectionDockStatus: {
-      connected: "Broadcaster Dock準備完了",
-      syncing: "Dock待機中",
+      connected: "Start後に取得開始",
+      syncing: "接続だけでは監視しません",
       offline: "Dock停止中"
     },
     streams: {
-      "saturday-setup": { label: "土曜配信セットアップ", helper: "配信中" },
-      "karaoke-preview": { label: "歌枠リハーサル確認", helper: "20分後に開始" },
-      "archive-check": { label: "アーカイブコメント確認", helper: "終了済みfixture" }
+      "saturday-setup": { label: "Start対象の配信", helper: "ready状態のみ表示" },
+      "karaoke-preview": { label: "開始前の配信", helper: "standby状態のみ表示" },
+      "archive-check": { label: "終了済みの配信", helper: "target値は表示しません" }
     },
     dockStatus: {
       ready: "準備完了",
@@ -266,10 +264,9 @@ export const commentTranslatorUiCopy = {
       blocked: "確認のみ"
     },
     languages: {
-      auto: "自動判定",
       en: "英語",
-      es: "スペイン語",
       ko: "韓国語",
+      zh: "中国語",
       ja: "日本語"
     },
     displayModes: {
@@ -298,10 +295,10 @@ export const commentTranslatorUiCopy = {
       "Spam filter": "スパム判定"
     },
     quotaScenarios: {
-      normal: { label: "通常のcache mix", status: "正常", helper: "fixture feedにhitとmissの行が表示されます" },
-      warning: { label: "クォータ警告", status: "警告", helper: "preview上限に近づいている状態です" },
-      empty: { label: "空のセッション", status: "行なし", helper: "fixture cacheにコメントが届いていません" },
-      error: { label: "cache利用不可", status: "cache警告", helper: "cache統計が使えない間もfixture表示は継続します" }
+      normal: { label: "Free枠プレビュー", status: "正常", helper: "30分/日、30分/セッション、30翻訳/分の初期Free枠に合わせた表示です" },
+      warning: { label: "上限接近", status: "警告", helper: "Free枠またはサービス共通予算に近づくと停止理由を表示します" },
+      empty: { label: "開始前", status: "行なし", helper: "Start前はYouTube取得、AI翻訳、クォータ消費を開始しません" },
+      error: { label: "診断制限", status: "cache警告", helper: "raw text loggingは標準で無効、診断は短期間かつsanitizedに限定します" }
     },
     statusBadges: {
       cached: "cached",
@@ -317,20 +314,23 @@ export const commentTranslatorUiCopy = {
     },
     empty: {
       title: "一致するコメントはありません",
-      body: "検索語やステータスタブを変えるとfixture行を表示できます。"
+      body: "検索語やステータスタブを変えるとプレビュー行を表示できます。"
     },
     safety: [
-      "視聴者向けoverlayは含めていません。",
-      "返信生成と自動投稿は含めていません。",
-      "すべてUI確認用のfixture値です。"
+      "YouTube API取得とAI翻訳は、ログインユーザーがStartしたセッション内だけで実行します。",
+      "YouTube接続だけでは、バックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
+      "初期Free枠は30分/日、30分/セッション、1 active session、30翻訳メッセージ/分です。",
+      "OAuth token、provider channel、liveChatId、Authorization headerは画面やブラウザ保存領域に出しません。",
+      "raw text loggingは標準で無効です。診断は短期間かつsanitizedに限定します。",
+      "有料プランは準備中で、Stripe連携と上限緩和は後続タスクで扱います。"
     ]
   },
   en: {
     header: {
-      subtitle: "YouTube first / OBS Browser Dock",
+      subtitle: "YouTube first / explicit sessions",
       readOnlyDock: "Read-only Dock",
       target: "Target",
-      feedTitle: "YouTube chat fixture"
+      feedTitle: "YouTube chat public preview"
     },
     sections: {
       setup: "Setup / Connection",
@@ -341,20 +341,20 @@ export const commentTranslatorUiCopy = {
       skipped: "Skipped Reasons",
       credentialStatus: "YouTube Credential Status",
       operatorFlow: "Operator Flow",
-      safety: "Read-only Safety"
+      safety: "Public Release Terms"
     },
     controls: {
-      connection: "YouTube mock connection",
+      connection: "YouTube connection state",
       stream: "Stream selection",
       sourceLanguage: "Source language",
       targetLanguage: "Target language",
       singleComment: "Single comment",
       multilinePaste: "Multiline paste",
-      manualResult: "Manual mock result",
+      manualResult: "Manual preview result",
       commentText: "Comment text",
       surface: "Surface",
       currentPair: "Current pair",
-      mockState: "Mock state",
+      mockState: "Usage state",
       searchPlaceholder: "Search comments"
     },
     stats: {
@@ -368,13 +368,13 @@ export const commentTranslatorUiCopy = {
       errorRows: "Error rows",
       used: "used",
       hits: "hits",
-      fixtureMisses: "Fixture misses",
+      fixtureMisses: "Preview misses",
       recoverable: "Recoverable state",
       manualRows: "manual rows",
       manualSession: "manual session"
     },
     manualInput: {
-      helper: "Add comments you typed or pasted to the fixture feed without using a real API.",
+      helper: "Manual input is preview-only here. Real APIs and AI translation do not run before approved Start execution.",
       singlePlaceholder: "Add one comment",
       pastePlaceholder: "Paste one comment per line",
       sourceBadge: "manual",
@@ -388,16 +388,14 @@ export const commentTranslatorUiCopy = {
       refreshCredentialStatus: "Check credential status"
     },
     manualResults: {
-      translated: { label: "Translated mock", helper: "Attach deterministic mock translation" },
-      skipped: { label: "Skipped mock", helper: "Add with a skip reason" },
-      error: { label: "Error mock", helper: "Add as a recoverable error row" }
+      translated: { label: "Translated preview", helper: "Attach deterministic preview translation" },
+      skipped: { label: "Skipped preview", helper: "Add with a skip reason" },
+      error: { label: "Error preview", helper: "Add as a recoverable error row" }
     },
     fields: {
       mode: "Mode",
-      channel: "Channel",
       dock: "Dock",
       credentialReference: "Credential reference",
-      providerChannel: "Provider channel",
       scope: "Scope",
       expires: "Expires",
       reason: "Reason"
@@ -406,7 +404,7 @@ export const commentTranslatorUiCopy = {
       pending: "Checking",
       unchecked: "Unchecked",
       refreshFailed: "Could not check credential status",
-      safeBoundary: "The client displays only an opaque credentialReferenceId and sanitized metadata.",
+      safeBoundary: "The client displays only an opaque credentialReferenceId and sanitized metadata. Provider channel, liveChatId, and token values are not shown.",
       states: {
         available: "Available",
         "reconnect-required": "Reconnect required",
@@ -448,24 +446,24 @@ export const commentTranslatorUiCopy = {
       }
     },
     connections: {
-      connected: "Connected mock",
-      syncing: "Syncing fixture",
-      offline: "Disconnected fixture"
+      connected: "Connection checked",
+      syncing: "Checking connection",
+      offline: "Disconnected"
     },
     connectionStatus: {
-      connected: "Live mock",
+      connected: "Before start",
       syncing: "Syncing",
-      offline: "Offline mock"
+      offline: "Offline"
     },
     connectionDockStatus: {
-      connected: "Broadcaster dock ready",
-      syncing: "Dock waiting",
+      connected: "Reads only after Start",
+      syncing: "Connection alone does not monitor",
       offline: "Dock paused"
     },
     streams: {
-      "saturday-setup": { label: "Saturday stream setup", helper: "Live now" },
-      "karaoke-preview": { label: "Karaoke practice preview", helper: "Starts in 20 min" },
-      "archive-check": { label: "Archive chat review", helper: "Ended fixture" }
+      "saturday-setup": { label: "Start target stream", helper: "Ready state only" },
+      "karaoke-preview": { label: "Pre-start stream", helper: "Standby state only" },
+      "archive-check": { label: "Ended stream", helper: "Target values are not shown" }
     },
     dockStatus: {
       ready: "Ready",
@@ -473,10 +471,9 @@ export const commentTranslatorUiCopy = {
       blocked: "Read review only"
     },
     languages: {
-      auto: "Auto detect",
       en: "English",
-      es: "Spanish",
       ko: "Korean",
+      zh: "Chinese",
       ja: "Japanese"
     },
     displayModes: {
@@ -505,10 +502,10 @@ export const commentTranslatorUiCopy = {
       "Spam filter": "Spam filter"
     },
     quotaScenarios: {
-      normal: { label: "Normal cache mix", status: "Healthy", helper: "Hit and miss rows are visible in the fixture feed" },
-      warning: { label: "Quota warning", status: "Warning", helper: "Usage is close to the preview limit" },
-      empty: { label: "Empty session", status: "No rows", helper: "No comments have reached the fixture cache" },
-      error: { label: "Cache unavailable", status: "Cache warning", helper: "Preview keeps reading fixtures while cache stats are unavailable" }
+      normal: { label: "Free limit preview", status: "Healthy", helper: "Shows the initial Free limits: 30 min/day, 30 min/session, and 30 translated messages/min" },
+      warning: { label: "Near limit", status: "Warning", helper: "The session shows a stop reason before crossing Free limits or shared service budget" },
+      empty: { label: "Before start", status: "No rows", helper: "Before Start, YouTube reads, AI translation, and quota use do not begin" },
+      error: { label: "Diagnostic limited", status: "Cache warning", helper: "Raw text logging is off by default; diagnostics stay short-lived and sanitized" }
     },
     statusBadges: {
       cached: "cached",
@@ -524,12 +521,15 @@ export const commentTranslatorUiCopy = {
     },
     empty: {
       title: "No matching comments",
-      body: "Adjust the search or status tab to show fixture rows."
+      body: "Adjust the search or status tab to show preview rows."
     },
     safety: [
-      "Viewer-facing overlay is absent.",
-      "Reply generation and auto-posting are absent.",
-      "All values are fixture-only for UI review."
+      "YouTube API reads and AI translation run only inside a session explicitly started by the signed-in user.",
+      "Connecting YouTube alone does not start background monitoring, polling, translation, or quota use.",
+      "Initial Free limits are 30 min/day, 30 min/session, 1 active session, and 30 translated messages/min.",
+      "OAuth tokens, provider channel, liveChatId, and Authorization headers are not shown or stored in the browser.",
+      "Raw text logging is off by default. Diagnostics stay short-lived and sanitized.",
+      "Paid plans are planned; Stripe integration and higher limits are handled in later tasks."
     ]
   }
 } as const;
@@ -538,59 +538,59 @@ export const commentTranslatorConnectionStates: CommentTranslatorConnectionState
   {
     id: "connected",
     platformId: "youtube",
-    label: "Connected mock",
-    statusLabel: "Live mock",
+    label: "Connection checked",
+    statusLabel: "Before start",
     dockStatus: "ready",
-    dockStatusLabel: "Broadcaster dock ready",
-    channelName: "Kuro Channel",
-    helper: "Fixture feed is active"
+    dockStatusLabel: "Reads only after Start",
+    channelName: "Server-only target",
+    helper: "Ready state only"
   },
   {
     id: "syncing",
     platformId: "youtube",
-    label: "Syncing fixture",
+    label: "Checking connection",
     statusLabel: "Syncing",
     dockStatus: "standby",
-    dockStatusLabel: "Dock waiting",
-    channelName: "Kuro Channel",
-    helper: "Stream metadata is refreshing"
+    dockStatusLabel: "Connection alone does not monitor",
+    channelName: "Server-only target",
+    helper: "Target metadata stays server-only"
   },
   {
     id: "offline",
     platformId: "youtube",
-    label: "Disconnected fixture",
-    statusLabel: "Offline mock",
+    label: "Disconnected",
+    statusLabel: "Offline",
     dockStatus: "blocked",
     dockStatusLabel: "Dock paused",
-    channelName: "Kuro Channel",
-    helper: "No live fixture is selected"
+    channelName: "Server-only target",
+    helper: "No provider or AI usage starts"
   }
 ];
 
 export const commentTranslatorStreamOptions: CommentTranslatorStreamOption[] = [
   {
     id: "saturday-setup",
-    title: "Saturday stream setup",
-    channelName: "Kuro Channel",
-    scheduledLabel: "Live now",
+    title: "Start target stream",
+    channelName: "Server-only target",
+    scheduledLabel: "Ready state only",
     dockStatus: "ready",
     dockStatusLabel: "Ready",
     viewerMode: "broadcaster-read-only"
   },
   {
     id: "karaoke-preview",
-    title: "Karaoke practice preview",
-    channelName: "Kuro Channel",
-    scheduledLabel: "Starts in 20 min",
+    title: "Pre-start stream",
+    channelName: "Server-only target",
+    scheduledLabel: "Standby state only",
     dockStatus: "standby",
     dockStatusLabel: "Standby",
     viewerMode: "broadcaster-read-only"
   },
   {
     id: "archive-check",
-    title: "Archive chat review",
-    channelName: "Kuro Channel",
-    scheduledLabel: "Ended fixture",
+    title: "Ended stream",
+    channelName: "Server-only target",
+    scheduledLabel: "Target values are not shown",
     dockStatus: "blocked",
     dockStatusLabel: "Read review only",
     viewerMode: "broadcaster-read-only"
@@ -598,18 +598,15 @@ export const commentTranslatorStreamOptions: CommentTranslatorStreamOption[] = [
 ];
 
 export const commentTranslatorSourceLanguageOptions: CommentTranslatorLanguageOption<CommentTranslatorSourceLanguageId>[] = [
-  { id: "auto", label: "Auto detect", shortLabel: "AUTO" },
   { id: "en", label: "English", shortLabel: "EN" },
-  { id: "es", label: "Spanish", shortLabel: "ES" },
   { id: "ko", label: "Korean", shortLabel: "KO" },
+  { id: "zh", label: "Chinese", shortLabel: "CN" },
   { id: "ja", label: "Japanese", shortLabel: "JA" }
 ];
 
 export const commentTranslatorTargetLanguageOptions: CommentTranslatorLanguageOption<CommentTranslatorTargetLanguageId>[] = [
   { id: "ja", label: "Japanese", shortLabel: "JA" },
-  { id: "en", label: "English", shortLabel: "EN" },
-  { id: "ko", label: "Korean", shortLabel: "KO" },
-  { id: "es", label: "Spanish", shortLabel: "ES" }
+  { id: "en", label: "English", shortLabel: "EN" }
 ];
 
 export const commentTranslatorDisplayModeOptions: CommentTranslatorControlOption<CommentTranslatorDisplayMode>[] = [
@@ -624,7 +621,7 @@ export const commentTranslatorSurfaceOptions: CommentTranslatorControlOption<Com
 ];
 
 export const commentTranslatorStatusFilters: CommentTranslatorControlOption<CommentTranslatorStatusFilter>[] = [
-  { id: "all", label: "All", helper: "Every fixture row" },
+  { id: "all", label: "All", helper: "Every preview row" },
   { id: "translated", label: "Translated", helper: "Completed rows" },
   { id: "skipped", label: "Skipped", helper: "Skipped states" },
   { id: "error", label: "Error", helper: "Recoverable failures" }
@@ -634,13 +631,13 @@ export const commentTranslatorPlatform: CommentTranslatorPlatform = {
   id: "youtube",
   name: "YouTube",
   mode: "read-only-dock",
-  statusLabel: "Connected mock",
-  channelName: "Kuro Channel",
-  streamTitle: "Saturday stream setup"
+  statusLabel: "Before start",
+  channelName: "Server-only target",
+  streamTitle: "Start target stream"
 };
 
 export const commentTranslatorSettings: CommentTranslatorSettings = {
-  sourceLanguage: "auto",
+  sourceLanguage: "en",
   targetLanguage: "ja",
   targetLanguageLabel: "日本語",
   displayMode: "both",
@@ -650,10 +647,10 @@ export const commentTranslatorSettings: CommentTranslatorSettings = {
 export const commentTranslatorQuotaScenarios: CommentTranslatorQuotaPreview[] = [
   {
     id: "normal",
-    label: "Normal cache mix",
+    label: "Free limit preview",
     tone: "normal",
-    usedUnits: 1240,
-    limitUnits: 2000,
+    usedUnits: 12,
+    limitUnits: 30,
     cacheHits: 218,
     cacheMisses: 61,
     cacheHitRate: 78,
@@ -661,14 +658,14 @@ export const commentTranslatorQuotaScenarios: CommentTranslatorQuotaPreview[] = 
     skippedCount: 3,
     errorCount: 1,
     statusLabel: "Healthy",
-    helper: "Hit and miss rows are visible in the fixture feed"
+    helper: "Shows the initial Free limit preview"
   },
   {
     id: "warning",
-    label: "Quota warning",
+    label: "Near limit",
     tone: "warning",
-    usedUnits: 1840,
-    limitUnits: 2000,
+    usedUnits: 27,
+    limitUnits: 30,
     cacheHits: 232,
     cacheMisses: 102,
     cacheHitRate: 69,
@@ -676,14 +673,14 @@ export const commentTranslatorQuotaScenarios: CommentTranslatorQuotaPreview[] = 
     skippedCount: 4,
     errorCount: 1,
     statusLabel: "Warning",
-    helper: "Usage is close to the preview limit"
+    helper: "Usage is close to the Free or shared service budget limit"
   },
   {
     id: "empty",
-    label: "Empty session",
+    label: "Before start",
     tone: "empty",
     usedUnits: 0,
-    limitUnits: 2000,
+    limitUnits: 30,
     cacheHits: 0,
     cacheMisses: 0,
     cacheHitRate: 0,
@@ -691,14 +688,14 @@ export const commentTranslatorQuotaScenarios: CommentTranslatorQuotaPreview[] = 
     skippedCount: 0,
     errorCount: 0,
     statusLabel: "No rows",
-    helper: "No comments have reached the fixture cache"
+    helper: "No provider or AI usage starts before an explicit Start"
   },
   {
     id: "error",
-    label: "Cache unavailable",
+    label: "Diagnostic limited",
     tone: "error",
-    usedUnits: 1240,
-    limitUnits: 2000,
+    usedUnits: 12,
+    limitUnits: 30,
     cacheHits: 218,
     cacheMisses: 61,
     cacheHitRate: 78,
@@ -706,7 +703,7 @@ export const commentTranslatorQuotaScenarios: CommentTranslatorQuotaPreview[] = 
     skippedCount: 3,
     errorCount: 2,
     statusLabel: "Cache warning",
-    helper: "Preview keeps reading fixtures while cache stats are unavailable"
+    helper: "Diagnostics stay short-lived and sanitized"
   }
 ];
 
@@ -720,7 +717,7 @@ export const commentTranslatorSkipReasons: CommentTranslatorSkipReason[] = [
 
 export const commentTranslatorManualSamples: CommentTranslatorManualSample[] = [
   { id: "sample-hello", text: "Hello from the manual preview!" },
-  { id: "sample-es", text: "Gracias por el stream de hoy!" },
+  { id: "sample-zh", text: "今天的直播很开心!" },
   { id: "sample-ja", text: "日本語コメントはスキップ確認にも使えます" }
 ];
 
@@ -773,11 +770,11 @@ export const commentTranslatorComments: CommentTranslatorComment[] = [
   {
     id: "c-004",
     timestamp: "12:35:12",
-    authorName: "Mariposa_88",
-    sourceLanguage: "ES",
+    authorName: "Lantern_88",
+    sourceLanguage: "CN",
     targetLanguage: "JA",
-    originalText: "Saludos desde Espana! Me encanta tu directo!",
-    translatedText: "スペインからこんにちは！あなたの配信が大好きです！",
+    originalText: "今天的直播很开心!",
+    translatedText: "今日の配信はとても楽しいです！",
     status: "translated",
     cacheStatus: "hit",
     unitCost: 1
@@ -827,7 +824,7 @@ export const commentTranslatorComments: CommentTranslatorComment[] = [
     originalText: "Why is the boss so strong?!",
     status: "error",
     cacheStatus: "none",
-    errorMessage: "Translation failed in mock state",
+    errorMessage: "Translation failed in preview state",
     unitCost: 0
   }
 ];
@@ -902,7 +899,7 @@ export function createManualCommentRows({
 
     return {
       ...baseComment,
-      errorMessage: `Manual mock error for ${targetLanguageLabel}`
+      errorMessage: `Manual preview error for ${targetLanguageLabel}`
     };
   });
 }

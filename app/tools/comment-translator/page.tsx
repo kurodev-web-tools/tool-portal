@@ -5,7 +5,8 @@ import { createYouTubeOAuthNewClientPayloadCredentialReferenceSource } from "@/l
 
 export const metadata: Metadata = {
   title: "Kuro Live Comment Translator",
-  description: "A fixture-only Kuro Stream Kit tool shell for reviewing a YouTube-first read-only broadcaster dock."
+  description:
+    "A YouTube-first comment translation preview that keeps provider reads and AI translation behind explicit session start."
 };
 
 export const dynamic = "force-dynamic";

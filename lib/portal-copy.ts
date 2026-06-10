@@ -22,7 +22,8 @@ const toolCopy = {
     },
     "comment-translator": {
       name: "Kuro Live Comment Translator",
-      description: "YouTube向けの読み取り専用OBS Dockで、外国語コメントの原文と翻訳表示をmock dataで確認できます。"
+      description:
+        "YouTubeコメントを明示Start後のセッション内で翻訳表示する公開版プレビューです。接続だけでは監視やAI翻訳を開始しません。"
     },
     "thumbnail-editor": {
       name: "Thumbnail Editor",
@@ -69,7 +70,8 @@ const toolCopy = {
     },
     "comment-translator": {
       name: "Kuro Live Comment Translator",
-      description: "Review a YouTube-first read-only OBS Dock shell with original and translated live chat fixture rows."
+      description:
+        "Preview YouTube-first comment translation that runs only inside an explicitly started session. Connecting alone does not monitor or translate."
     },
     "thumbnail-editor": {
       name: "Thumbnail Editor",

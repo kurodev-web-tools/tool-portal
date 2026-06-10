@@ -19,15 +19,16 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, and PR #404 (`[codex] Outline comment translator public release roadmap`) is merged into `codex/comment-translator-preview`; merge commit `a737d0d58885e6fa46e2f8f2ca14faf276402831` is contained in `origin/codex/comment-translator-preview`.
-   - current PR scope: Public Release Roadmap Task 2, public requirements consolidation. Draft PR #405 is docs-only work.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-2 are merged, and PR #405 (`[codex] Consolidate comment translator public requirements`) merge commit `4a8e5268900cddb529da98283941730881023c8f` is contained in `origin/codex/comment-translator-preview`.
+   - current PR scope: Public Release Roadmap Task 3, public legal/privacy/product-copy recheck.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
-   - reviewed sources for Task 2: `task.md`, `docs/future/COMMENT_TRANSLATOR_API_INTEGRATION_LIMITS.md`, `docs/future/COMMENT_TRANSLATOR_PROVIDER_BOUNDARY_DESIGN.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_INPUT_BOUNDARY_DESIGN.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_TOKEN_STORE_FOUNDATION.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md`, `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md`, and `docs/future/PORTAL_SETTINGS_FUTURE.md`. Raw attachment `コメント翻訳 API 連携・制限要件ドラフト` was unavailable in this delegated thread, so Task 2 used the decisions already recorded in this file.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
-   - docs retention decision: keep the reviewed `docs/future` files in place. Their current content is only partially superseded because they retain boundary-specific contracts, historical approval/blocker evidence, account-preference context, or portal settings direction that the active public requirements document intentionally does not duplicate.
-   - completed in this PR: consolidated free/per-session limits, paid-plan release path, start/stop semantics, stop conditions, provider quota policy, YouTube polling policy, AI cost controls, filtering/language policy, usage display, admin metrics, sensitive-data boundaries, initial-release exclusions, and post-public candidates into the active requirements doc.
-   - not approved by this task: live/provider execution, token renewal, safe live OAuth smoke, owner verification smoke rerun, Live Chat target lookup execution, Live Chat polling execution, remote Supabase mutation/migration, quota write, billing enforcement, or browser storage / handoff payload expansion.
-   - verification for this PR: `git diff --check` passed; targeted markdown/content inspection covered the new canonical requirements doc and Task 2 board updates.
+   - inspected surfaces for Task 3: `/terms`, `/privacy`, `/legal/tokushoho`, footer links via `components/portal/PortalLegalFooter.tsx`, `/tools/comment-translator`, `/tools`, `components/portal/SiteTipsDialog.tsx`, `/account`, and account preference/integration copy in `components/account/AccountPreferencesShell.tsx`.
+   - completed in this PR: legal/privacy copy now states YouTube-first provider/API/AI translation behavior, explicit session start, Free usage limits, no background monitoring by connection alone, server-only token/target metadata boundaries, raw text logging disabled by default, short-lived sanitized diagnostics, support/contact path, and paid-plan preparation. Product/tool/account copy now matches the same public requirements, removes visible provider channel display, keeps provider target values generic, and limits visible language options to the initial JA / EN / KR / CN source and JA / EN target scope.
+   - unchanged in this PR: footer links already pointed to `/terms`, `/privacy`, and `/legal/tokushoho`, so no footer code change was needed. `/legal/tokushoho` already showed contact/support and paid-plan preparation, so only inspected/render-verified. No runtime, live/provider execution, token renewal, quota write, billing enforcement, browser storage, handoff payload, schema, or remote Supabase mutation changes were made.
+   - verification for this PR: `npm ci` initially failed with `ERR_SSL_CIPHER_OPERATION_FAILED`, then `npm ci --prefer-offline` succeeded; `npm run lint`, `npx tsc --noEmit`, and `npm run build` passed after the final changes. In-app browser render checks passed for `/terms`, `/privacy`, `/legal/tokushoho`, `/tools`, `/tools/comment-translator`, and `/account` on `http://localhost:3214` with required Task 3 copy present and no Next error. Width checks for `/tools/comment-translator` and `/account` at `390 / 820 / 1024 / 1280 / 1366px` found no horizontal overflow, required copy present, and no provider channel field.
+   - residual risk: legal/privacy wording is implementation-facing copy alignment, not legal advice. The actual `/account/integrations` route remains future Task 4 scope; Task 3 only aligned existing account copy and visible product/legal surfaces.
+   - next PR candidate: Public Release Roadmap Task 4, Account integrations entry point.
 
 ## Public Release Roadmap
 
@@ -52,6 +53,7 @@ Use one Codex thread, one feature branch, and one PR per task. Do not create a P
    - Scope: `/terms`, `/privacy`, `/legal/tokushoho`, footer links, `/tools/comment-translator` copy, and relevant account/integration copy.
    - Completion criteria: copy states the provider/API/AI translation behavior, usage limits, no background monitoring by connection alone, no token/client-storage exposure, data retention/logging policy, contact/support path, and paid-plan status if shown.
    - Verification: relevant route render checks, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`; width checks only if visible layout changes.
+   - Status: complete in current Task 3 PR. Footer links required no code change after inspection.
 
 4. Account integrations entry point
    - Goal: provide the operator-facing path for connecting and reviewing YouTube integration state outside the translator tool.
@@ -213,32 +215,34 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - この prompt は live/provider execution 承認ではありません。
 
 Merge gate:
-- PR #405 `[codex] Consolidate comment translator public requirements` が merge 済みであることを確認してください。
-- gh が使える場合は `gh pr view 405 --json number,title,state,mergedAt,mergeCommit,baseRefName,headRefName,url,statusCheckRollup` を確認してください。
-- gh が `HTTP 401: Requires authentication` になる場合は、PR #405 の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。
+- この Task 3 PR `[codex] Recheck comment translator public legal and copy` が merge 済みであることを確認してください。
+- gh が使える場合は Task 3 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- gh が `HTTP 401: Requires authentication` になる場合は、Task 3 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
-- Public Release Roadmap Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加されています。
+- Public Release Roadmap Task 1-3 は完了済みです。
+- Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加され、Task 3 で legal/privacy/product/account visible copy がその requirements と整合するように更新されています。
 - 最終ゴールは Public Release Roadmap の全タスク完了、verification 通過、必要な deployed/live smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
 次にやること:
-- Public Release Roadmap Task 3: Public legal, privacy, and product-copy recheck.
-- PR #405 が merge 済みであることを確認してから、既存 legal pages と comment translator visible copy が `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` と矛盾しないか確認・必要最小限の修正をしてください。
-- 対象は `/terms`, `/privacy`, `/legal/tokushoho`, footer links, `/tools/comment-translator` copy, and relevant account/integration copy です。
-- Provider/API/AI translation behavior、usage limits、connection alone does not start background monitoring、token/client-storage exposureなし、data retention/logging policy、contact/support path、paid-plan status が必要に応じて visible copy に反映されていることを確認してください。
-- Runtime / live/provider execution / token renewal / quota write / billing enforcement / browser storage / handoff payload は Task 3 で明示的に必要な最小範囲を超えて変更しないでください。
+- Public Release Roadmap Task 4: Account integrations entry point.
+- Task 3 PR が merge 済みであることを確認してから、`/account/integrations` route または同等の account settings entry を追加してください。
+- Scope は sanitized YouTube connection status、safe start/connect/reconnect/disconnect affordances、account navigation/copy の最小導線です。
+- UI は connection readiness を表示してよいですが、token、owner id、provider channel id、liveChatId、Authorization header、provider target metadata、service_role key、secret 値は表示・保存・PR本文掲載しないでください。
+- YouTube接続だけで background monitoring、polling、translation、quota consumption を開始しないことを visible copy と action boundary の両方で維持してください。
+- Runtime / live/provider execution / token renewal / quota write / billing enforcement / browser storage / handoff payload は Task 4 で明示的に必要な最小範囲を超えて変更しないでください。
 
 Verification:
-- relevant route render checks
+- relevant UI/action contracts
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
 - `git diff --check`
-- width checks only if visible layout changes
+- `/account/integrations` または該当 account entry の width checks at `390 / 820 / 1024 / 1280 / 1366px`
 
 Completion:
-- Task 3 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- Task 4 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
 - 未達なら commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

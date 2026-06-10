@@ -51,8 +51,8 @@ const accountCopy = {
     },
     openPlan: "現在のアカウント",
     planName: "アカウント状況",
-    planBody: "いまは表示言語とテーマを別ブラウザやスマホでも引き継げるようにする範囲へ限定します。有料プランの契約状況や外部アカウント連携は後続で追加予定です。",
-    planItems: ["表示設定を保存", "有料プラン状況は後続対応", "外部アカウント連携は後続対応"],
+    planBody: "いまは表示言語とテーマを別ブラウザやスマホでも引き継げるようにする範囲へ限定します。Comment Translator の有料プラン状況とYouTube連携管理は後続で追加予定です。",
+    planItems: ["表示設定を保存", "有料プラン状況は後続対応", "YouTube連携管理は後続対応"],
     preferencesTitle: "表示設定",
     preferencesBody: "表示言語とテーマはこのブラウザに保存されます。ログイン中は、同じ内容をアカウントにも明示的に保存でき、別ブラウザやスマホでも引き継げます。",
     language: "表示言語",
@@ -61,8 +61,8 @@ const accountCopy = {
     syncFrameTitle: "今後保存できるようにする項目",
     syncFrameBody: "今後はツールごとの軽い設定も保存対象にできます。下書き、予定本文、画像、handoff payload は自動アップロードしません。",
     providerTitle: "今後追加予定",
-    providerBody: "契約状況の表示、外部アカウント連携、ツール別の軽い設定保存は、公開後の段階で追加します。",
-    boundaryItems: ["有料プラン契約状況の表示", "外部アカウント連携", "ツール別の軽い設定保存", "既存ローカルデータは自動移行しない"],
+    providerBody: "Comment Translator のYouTube連携管理は後続で追加します。接続状態を確認できるようになっても、接続だけではバックグラウンド監視、ポーリング、AI翻訳、クォータ消費は開始しません。",
+    boundaryItems: ["有料プラン契約状況の表示", "YouTube連携管理", "tokenやprovider target値は画面に表示しない", "既存ローカルデータは自動移行しない"],
     backToTools: "ツール一覧へ戻る"
   },
   en: {
@@ -98,8 +98,8 @@ const accountCopy = {
     },
     openPlan: "Current account",
     planName: "Account status",
-    planBody: "This version is limited to carrying language and theme across browsers and phones. Paid plan status and external account connections are planned for later.",
-    planItems: ["Save display settings", "Paid plan status later", "External account links later"],
+    planBody: "This version is limited to carrying language and theme across browsers and phones. Comment Translator paid plan status and YouTube integration management are planned for later.",
+    planItems: ["Save display settings", "Paid plan status later", "YouTube integration later"],
     preferencesTitle: "Display settings",
     preferencesBody: "Language and theme are saved in this browser. Signed-in users can explicitly save the same values to the account and carry them across browsers and phones.",
     language: "Language",
@@ -108,8 +108,8 @@ const accountCopy = {
     syncFrameTitle: "Settings that can be saved later",
     syncFrameBody: "Later phases can add lightweight per-tool settings. Drafts, schedule text, images, and handoff payloads are not uploaded automatically.",
     providerTitle: "Planned next",
-    providerBody: "Plan status, external account connections, and lightweight tool settings can be added in later phases.",
-    boundaryItems: ["Paid plan status", "External account connections", "Lightweight tool settings", "No automatic migration of local data"],
+    providerBody: "YouTube integration management for Comment Translator is planned later. Even when connection state is visible, connecting alone will not start background monitoring, polling, AI translation, or quota use.",
+    boundaryItems: ["Paid plan status", "YouTube integration management", "No token or provider target values in UI", "No automatic migration of local data"],
     backToTools: "Back to tools"
   }
 } as const;
@@ -324,6 +324,7 @@ export function AccountPreferencesShell({
           </div>
           <div className="panel p-4 shadow-none sm:p-5">
             <h2 className="text-base font-black text-foreground">{copy.providerTitle}</h2>
+            <p className="mt-3 text-sm leading-7 text-muted">{copy.providerBody}</p>
             <ul className="mt-3 space-y-2">
               {copy.boundaryItems.map((item) => (
                 <li key={item} className="flex gap-2 text-sm font-bold leading-6 text-foreground">

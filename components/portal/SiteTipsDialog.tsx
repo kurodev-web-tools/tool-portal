@@ -51,9 +51,9 @@ const pageTipsByRoute = {
     "/tools/comment-translator": {
       title: "Kuro Live Comment Translator の使い方",
       items: [
-        "YouTube向けの読み取り専用OBS Dockとして、配信者が見る画面を確認します。",
-        "原文、翻訳文、言語ラベル、skip理由、cache / quota previewをmock dataで確認できます。",
-        "初回PRでは外部翻訳や実接続は使わず、fixtureだけで表示します。"
+        "YouTube優先のコメント翻訳Dockとして、配信者が見る画面を確認します。",
+        "YouTube API取得とAI翻訳は、ログインユーザーがStartしたセッション内だけで実行します。",
+        "接続だけではバックグラウンド監視、ポーリング、翻訳、クォータ消費を開始しません。"
       ]
     },
     "/tools/schedule-calendar": {
@@ -102,9 +102,9 @@ const pageTipsByRoute = {
     "/tools/comment-translator": {
       title: "Using Kuro Live Comment Translator",
       items: [
-        "Review a YouTube-first read-only OBS Dock surface for broadcasters.",
-        "Check original text, translated text, language labels, skip reasons, and cache / quota preview with mock data.",
-        "The first PR uses fixtures only and does not connect to external translation services."
+        "Review a YouTube-first comment translation dock for broadcasters.",
+        "YouTube API reads and AI translation run only inside a session explicitly started by the signed-in user.",
+        "Connecting alone does not start background monitoring, polling, translation, or quota use."
       ]
     },
     "/tools/schedule-calendar": {

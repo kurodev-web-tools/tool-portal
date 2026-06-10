@@ -446,8 +446,6 @@ export function CommentTranslatorDock({
   const credentialStatusMetadata = youtubeCredentialReferenceSource.statusMetadata;
   const credentialStatusState = credentialStatusView?.state ?? credentialStatusMetadata.status;
   const credentialStatusLabel = copy.credentialStatus.states[credentialStatusState];
-  const credentialStatusProviderChannelId =
-    credentialStatusView?.providerChannelId ?? credentialStatusMetadata.providerChannelId;
   const credentialStatusScopeLabel = credentialStatusView?.scopeLabel ?? credentialStatusMetadata.scopeLabel;
   const credentialStatusExpiresAtIso = credentialStatusView?.expiresAtIso ?? credentialStatusMetadata.expiresAtIso;
   const credentialStatusReason =
@@ -615,10 +613,6 @@ export function CommentTranslatorDock({
                       <dd className="break-words text-right font-black text-primary-strong">{localizedStream.viewerMode}</dd>
                     </div>
                     <div className="flex justify-between gap-3">
-                      <dt className="text-muted">{copy.fields.channel}</dt>
-                      <dd className="break-words text-right font-semibold text-foreground">{localizedConnection.channelName}</dd>
-                    </div>
-                    <div className="flex justify-between gap-3">
                       <dt className="text-muted">{copy.fields.dock}</dt>
                       <dd className="break-words text-right font-semibold text-foreground">{dockStatusLabel}</dd>
                     </div>
@@ -641,7 +635,6 @@ export function CommentTranslatorDock({
                   </div>
                   <dl className="mt-3 grid gap-2 text-sm">
                     <CredentialStatusRow label={copy.fields.credentialReference} value={credentialReferenceId} />
-                    <CredentialStatusRow label={copy.fields.providerChannel} value={credentialStatusProviderChannelId} />
                     <CredentialStatusRow label={copy.fields.scope} value={credentialStatusScopeLabel} />
                     <CredentialStatusRow label={copy.fields.expires} value={credentialStatusExpiresAtIso} />
                     <CredentialStatusRow label={copy.fields.reason} value={credentialStatusReason} />

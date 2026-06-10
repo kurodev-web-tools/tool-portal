@@ -11,6 +11,11 @@ export type CommentTranslatorQuotaScenarioId = "normal" | "warning" | "empty" | 
 export type CommentTranslatorStreamId = "saturday-setup" | "karaoke-preview" | "archive-check";
 export type CommentTranslatorCommentSource = "fixture" | "manual";
 export type CommentTranslatorManualResultMode = "translated" | "skipped" | "error";
+export type CommentTranslatorOperatorFlowStepId =
+  | "credential-status"
+  | "target-readiness"
+  | "intake-bridge"
+  | "explicit-approval";
 
 export type CommentTranslatorPlatform = {
   id: "youtube";
@@ -74,6 +79,11 @@ export type CommentTranslatorManualSample = {
   text: string;
 };
 
+export type CommentTranslatorOperatorFlowStep = {
+  id: CommentTranslatorOperatorFlowStepId;
+  source: "ui-local-status-only";
+};
+
 export type CommentTranslatorConnectionState = {
   id: CommentTranslatorConnectionStateId;
   platformId: "youtube";
@@ -123,6 +133,7 @@ export const commentTranslatorUiCopy = {
       quota: "キャッシュ / クォータ確認",
       skipped: "スキップ理由",
       credentialStatus: "YouTube認証ステータス",
+      operatorFlow: "オペレーター確認フロー",
       safety: "読み取り専用の安全性"
     },
     controls: {
@@ -194,6 +205,39 @@ export const commentTranslatorUiCopy = {
         "reconnect-required": "再接続が必要",
         unavailable: "未利用",
         "credential-resolution-disabled": "解決を停止中"
+      }
+    },
+    operatorFlow: {
+      ready: "UI確認OK",
+      standby: "確認待ち",
+      blocked: "認証確認待ち",
+      noLiveExecution: "この画面からlive/provider commandは実行しません。",
+      summaryReady: "runtime smoke済み境界の状態を、UI上の安全な確認手順として表示しています。",
+      summaryStandby: "配信選択または接続状態を確認してから、operator-local commandの準備に進みます。",
+      summaryBlocked: "まず認証ステータスを確認し、利用可能なsanitized metadataだけを画面で確認します。",
+      commandBoundary: "実行が必要な場合は、同じスレッドでpreflight、sanitized output review、明示承認を揃えてからCLIで実行します。",
+      stepState: {
+        done: "確認済み",
+        waiting: "待機",
+        gated: "承認待ち"
+      },
+      steps: {
+        "credential-status": {
+          label: "認証ステータス",
+          helper: "opaque referenceとsanitized metadataのみを確認"
+        },
+        "target-readiness": {
+          label: "配信ターゲット",
+          helper: "UIではready/standbyだけを表示し、target値は出さない"
+        },
+        "intake-bridge": {
+          label: "intake bridge",
+          helper: "Task 6のserver-only bridgeはUIから直接呼ばない"
+        },
+        "explicit-approval": {
+          label: "実行承認",
+          helper: "live/provider実行は別CLIと同スレッド承認が必要"
+        }
       }
     },
     connections: {
@@ -296,6 +340,7 @@ export const commentTranslatorUiCopy = {
       quota: "Cache / Quota Preview",
       skipped: "Skipped Reasons",
       credentialStatus: "YouTube Credential Status",
+      operatorFlow: "Operator Flow",
       safety: "Read-only Safety"
     },
     controls: {
@@ -367,6 +412,39 @@ export const commentTranslatorUiCopy = {
         "reconnect-required": "Reconnect required",
         unavailable: "Unavailable",
         "credential-resolution-disabled": "Resolution disabled"
+      }
+    },
+    operatorFlow: {
+      ready: "UI review ready",
+      standby: "Waiting for review",
+      blocked: "Credential review needed",
+      noLiveExecution: "This screen does not run live provider commands.",
+      summaryReady: "Runtime smoke boundaries are shown as a safe operator checklist in this UI.",
+      summaryStandby: "Check the selected stream or connection state before preparing operator-local commands.",
+      summaryBlocked: "Check credential status first and review only sanitized metadata on screen.",
+      commandBoundary: "If execution is needed, run CLI commands only after same-thread preflight, sanitized output review, and explicit approval.",
+      stepState: {
+        done: "Checked",
+        waiting: "Waiting",
+        gated: "Approval gated"
+      },
+      steps: {
+        "credential-status": {
+          label: "Credential status",
+          helper: "Review only opaque reference and sanitized metadata"
+        },
+        "target-readiness": {
+          label: "Stream target",
+          helper: "The UI shows ready/standby only and never target values"
+        },
+        "intake-bridge": {
+          label: "Intake bridge",
+          helper: "Task 6 server-only bridge is not called from the UI"
+        },
+        "explicit-approval": {
+          label: "Execution approval",
+          helper: "Live/provider execution needs separate CLI approval in this thread"
+        }
       }
     },
     connections: {
@@ -644,6 +722,13 @@ export const commentTranslatorManualSamples: CommentTranslatorManualSample[] = [
   { id: "sample-hello", text: "Hello from the manual preview!" },
   { id: "sample-es", text: "Gracias por el stream de hoy!" },
   { id: "sample-ja", text: "日本語コメントはスキップ確認にも使えます" }
+];
+
+export const commentTranslatorOperatorFlowSteps: CommentTranslatorOperatorFlowStep[] = [
+  { id: "credential-status", source: "ui-local-status-only" },
+  { id: "target-readiness", source: "ui-local-status-only" },
+  { id: "intake-bridge", source: "ui-local-status-only" },
+  { id: "explicit-approval", source: "ui-local-status-only" }
 ];
 
 export const commentTranslatorComments: CommentTranslatorComment[] = [

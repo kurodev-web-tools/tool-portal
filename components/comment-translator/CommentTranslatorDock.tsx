@@ -5,6 +5,7 @@ import { getYouTubeOAuthCredentialStatusAction } from "@/app/tools/comment-trans
 import { useLocale } from "@/components/portal/LocaleProvider";
 import {
   commentTranslatorManualSamples,
+  commentTranslatorOperatorFlowSteps,
   commentTranslatorUiCopy,
   createManualCommentRows,
   filterCommentTranslatorComments,
@@ -37,6 +38,7 @@ type SelectOption = {
 };
 
 type CommentTranslatorUiCopy = (typeof commentTranslatorUiCopy)[keyof typeof commentTranslatorUiCopy];
+type OperatorFlowChecklistState = "done" | "waiting" | "gated";
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
@@ -76,6 +78,18 @@ function credentialStatusTone(state: YouTubeOAuthCredentialStatusUiStateId) {
   }
 
   if (state === "unavailable") {
+    return "error";
+  }
+
+  return "warning";
+}
+
+function operatorFlowTone(status: "ready" | "standby" | "blocked") {
+  if (status === "ready") {
+    return "normal";
+  }
+
+  if (status === "blocked") {
     return "error";
   }
 
@@ -438,6 +452,35 @@ export function CommentTranslatorDock({
   const credentialStatusExpiresAtIso = credentialStatusView?.expiresAtIso ?? credentialStatusMetadata.expiresAtIso;
   const credentialStatusReason =
     credentialStatusError ?? credentialStatusView?.reason ?? credentialStatusMetadata.reason ?? null;
+  const operatorFlowCredentialReady = credentialStatusState === "available";
+  const operatorFlowTargetReady = selectedStream.dockStatus === "ready" && localizedConnection.dockStatus !== "blocked";
+  const operatorFlowStatus = operatorFlowCredentialReady ? (operatorFlowTargetReady ? "ready" : "standby") : "blocked";
+  const operatorFlowSummary =
+    operatorFlowStatus === "ready"
+      ? copy.operatorFlow.summaryReady
+      : operatorFlowStatus === "standby"
+        ? copy.operatorFlow.summaryStandby
+        : copy.operatorFlow.summaryBlocked;
+  const operatorFlowChecklist = commentTranslatorOperatorFlowSteps.map((step) => {
+    const state: OperatorFlowChecklistState =
+      step.id === "credential-status"
+        ? operatorFlowCredentialReady
+          ? "done"
+          : "waiting"
+        : step.id === "target-readiness"
+          ? operatorFlowTargetReady
+            ? "done"
+            : "waiting"
+          : step.id === "intake-bridge"
+            ? "done"
+            : "gated";
+
+    return {
+      ...step,
+      state,
+      copy: copy.operatorFlow.steps[step.id]
+    };
+  });
 
   function refreshCredentialStatus() {
     startCredentialStatusTransition(async () => {
@@ -816,6 +859,41 @@ export function CommentTranslatorDock({
           </main>
 
           <aside className={["grid min-w-0 content-start gap-3", shellIsNarrow ? "" : "lg:col-span-2 2xl:col-span-1"].join(" ")}>
+            <section
+              data-operator-ui-flow="local-status-only"
+              className="panel border-emerald-200 bg-emerald-50/30 p-4"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-base font-black text-foreground">{copy.sections.operatorFlow}</h2>
+                <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(operatorFlowTone(operatorFlowStatus))].join(" ")}>
+                  {copy.operatorFlow[operatorFlowStatus]}
+                </span>
+              </div>
+              <p className="mt-3 break-words text-sm font-semibold leading-6 text-foreground">
+                {operatorFlowSummary}
+              </p>
+              <div className="mt-4 grid gap-2">
+                {operatorFlowChecklist.map((step) => (
+                  <div
+                    key={step.id}
+                    className="grid min-w-0 gap-2 rounded-base border border-border bg-surface/85 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start"
+                  >
+                    <div className="min-w-0">
+                      <p className="break-words text-sm font-black text-foreground">{step.copy.label}</p>
+                      <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">{step.copy.helper}</p>
+                    </div>
+                    <span className={["w-fit rounded-base border px-2 py-1 text-xs font-black", toneClassName(step.state === "done" ? "normal" : step.state === "gated" ? "warning" : "empty")].join(" ")}>
+                      {copy.operatorFlow.stepState[step.state]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid gap-2 rounded-base border border-border bg-background/70 p-3 text-xs font-semibold leading-5 text-muted">
+                <p className="break-words">{copy.operatorFlow.noLiveExecution}</p>
+                <p className="break-words">{copy.operatorFlow.commandBoundary}</p>
+              </div>
+            </section>
+
             <section className="panel p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-base font-black text-foreground">{copy.sections.quota}</h2>

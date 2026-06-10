@@ -498,6 +498,124 @@ assert.equal(liveStreamingNotEnabled.providerErrorReason, "liveStreamingNotEnabl
 assert.equal(liveStreamingNotEnabled.liveChatTarget, "absent");
 assert.equal(liveStreamingNotEnabled.pollingExecution, "not-run");
 
+const genericProviderHttpFailure = await foundation.runYouTubeLiveChatTargetLookupFoundation({
+  credentialReferenceId: "smoke-livechat-target-reference",
+  expectedProviderChannelReference: "provider-channel-reference-never-returned",
+  ownerVerificationSmokeSuccess: true,
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-never-returned"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-09T00:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus() {
+      return {
+        credentialReferenceId: "smoke-livechat-target-reference",
+        provider: "youtube",
+        providerChannelId: "provider-channel-reference-never-returned",
+        scopeLabel: "youtube.readonly",
+        scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+        expiresAtIso: "2026-06-09T00:05:00.000Z",
+        expiryStatus: "active",
+        revoked: false,
+        revokedAtIso: null,
+        tokenValue: "never-returned-by-design",
+        refreshTokenValue: "never-returned-by-design",
+        ciphertext: "never-returned-by-design",
+        decryptCapability: "forbidden"
+      };
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial() {
+      return {
+        status: "available",
+        serverAuthorizationHeader: "server-only-test-authorization",
+        expiresAtIso: "2026-06-09T00:05:00.000Z"
+      };
+    }
+  },
+  async fetchGoogleApi(requestToFetch) {
+    consumedAuthorizationHeaders.push(requestToFetch.headers.Authorization);
+    return {
+      ok: false,
+      status: 401,
+      body: {
+        error: {
+          errors: [
+            {
+              reason: "authErrorShouldNotCross",
+              message: "must-not-cross"
+            }
+          ],
+          message: "must-not-cross"
+        }
+      }
+    };
+  }
+});
+assert.equal(genericProviderHttpFailure.status, "live-chat-target-lookup-failed-sanitized");
+assert.equal(genericProviderHttpFailure.providerErrorReason, "not-returned-by-design");
+assert.deepEqual(genericProviderHttpFailure.failureMetadata, {
+  providerFailureClass: "http-error",
+  httpStatus: 401,
+  ok: false
+});
+
+const providerFetchException = await foundation.runYouTubeLiveChatTargetLookupFoundation({
+  credentialReferenceId: "smoke-livechat-target-reference",
+  expectedProviderChannelReference: "provider-channel-reference-never-returned",
+  ownerVerificationSmokeSuccess: true,
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-never-returned"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-09T00:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus() {
+      return {
+        credentialReferenceId: "smoke-livechat-target-reference",
+        provider: "youtube",
+        providerChannelId: "provider-channel-reference-never-returned",
+        scopeLabel: "youtube.readonly",
+        scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+        expiresAtIso: "2026-06-09T00:05:00.000Z",
+        expiryStatus: "active",
+        revoked: false,
+        revokedAtIso: null,
+        tokenValue: "never-returned-by-design",
+        refreshTokenValue: "never-returned-by-design",
+        ciphertext: "never-returned-by-design",
+        decryptCapability: "forbidden"
+      };
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial() {
+      return {
+        status: "available",
+        serverAuthorizationHeader: "server-only-test-authorization",
+        expiresAtIso: "2026-06-09T00:05:00.000Z"
+      };
+    }
+  },
+  async fetchGoogleApi(requestToFetch) {
+    consumedAuthorizationHeaders.push(requestToFetch.headers.Authorization);
+    throw new Error("must-not-cross");
+  }
+});
+assert.equal(providerFetchException.status, "live-chat-target-lookup-failed-sanitized");
+assert.equal(providerFetchException.providerErrorReason, "not-returned-by-design");
+assert.deepEqual(providerFetchException.failureMetadata, {
+  providerFailureClass: "fetch-exception",
+  httpStatus: null,
+  ok: false
+});
+
 const success = await foundation.runYouTubeLiveChatTargetLookupFoundation({
   credentialReferenceId: "smoke-livechat-target-reference",
   expectedProviderChannelReference: "provider-channel-reference-never-returned",
@@ -563,7 +681,7 @@ const success = await foundation.runYouTubeLiveChatTargetLookupFoundation({
     };
   }
 });
-assert.equal(consumedAuthorizationHeaders.length, 4, "provider fetch only occurs in approved target lookup paths");
+assert.equal(consumedAuthorizationHeaders.length, 6, "provider fetch only occurs in approved target lookup paths");
 assert.equal(success.status, "live-chat-target-lookup-sanitized-result");
 assert.equal(success.ownerBinding, "verified-before-live-chat-target-lookup");
 assert.equal(success.liveChatTargetLookup, "executed-bounded-readonly-one-step");
@@ -588,6 +706,8 @@ for (const payload of [
   noActiveBroadcast,
   missingLiveChatTarget,
   liveStreamingNotEnabled,
+  genericProviderHttpFailure,
+  providerFetchException,
   success
 ]) {
   const serialized = JSON.stringify(payload);
@@ -657,7 +777,7 @@ assert.equal(tokenMaterialAvailabilityPayload.providerAccess, "not-run-token-mat
 const operatorLocalReadyEnv = {
   ...readyEnv,
   YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER: "server-only-test-authorization",
-  YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO: "2026-06-10T00:05:00.000Z"
+  YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO: "2099-06-10T00:05:00.000Z"
 };
 const operatorLocalTokenMaterialAvailability = spawnSync(
   process.execPath,

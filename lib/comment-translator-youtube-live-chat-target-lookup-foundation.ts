@@ -160,6 +160,12 @@ export type YouTubeLiveChatTargetLookupResponseMetadata = {
   targetIdValue: "not-returned-by-design";
 };
 
+export type YouTubeLiveChatTargetLookupFailureMetadata = {
+  providerFailureClass: "http-error" | "fetch-exception";
+  httpStatus: number | null;
+  ok: false;
+};
+
 export type YouTubeLiveChatTargetLookupFoundationResult =
   | (YouTubeLiveChatTargetLookupBase & {
       status: "live-chat-target-lookup-sanitized-result";
@@ -188,6 +194,7 @@ export type YouTubeLiveChatTargetLookupFoundationResult =
       providerAccess: "not-run" | "liveBroadcasts-list-target-lookup-only";
       reason: string;
       providerErrorReason?: "liveStreamingNotEnabled" | "not-returned-by-design";
+      failureMetadata?: YouTubeLiveChatTargetLookupFailureMetadata;
     });
 
 export type YouTubeLiveChatTargetLookupCommandRuntimeWiringRequest =
@@ -414,7 +421,10 @@ export async function runYouTubeLiveChatTargetLookupFoundation(
       "verified-before-live-chat-target-lookup",
       "failed-bounded-readonly-one-step",
       "liveBroadcasts-list-target-lookup-only",
-      "provider-fetch-failed"
+      "provider-fetch-failed",
+      "absent",
+      createSanitizedFailureMetadata("fetch-exception", null),
+      "not-returned-by-design"
     );
   }
 
@@ -545,7 +555,9 @@ function unresolvedLookup(
     | "failed-bounded-readonly-one-step",
   providerAccess: "not-run" | "liveBroadcasts-list-target-lookup-only",
   reason: string,
-  liveChatTarget: "unknown-until-approved-lookup" | "absent" = "unknown-until-approved-lookup"
+  liveChatTarget: "unknown-until-approved-lookup" | "absent" = "unknown-until-approved-lookup",
+  failureMetadata?: YouTubeLiveChatTargetLookupFailureMetadata,
+  providerErrorReason?: "not-returned-by-design"
 ): YouTubeLiveChatTargetLookupFoundationResult {
   return {
     ...createBaseResult(request.credentialReferenceId),
@@ -554,7 +566,9 @@ function unresolvedLookup(
     liveChatTarget,
     liveChatTargetLookup,
     providerAccess,
-    reason
+    reason,
+    ...(failureMetadata ? { failureMetadata } : {}),
+    ...(providerErrorReason ? { providerErrorReason } : {})
   };
 }
 
@@ -584,7 +598,19 @@ function unresolvedProviderResponse(
     liveChatTargetLookup: "failed-bounded-readonly-one-step",
     providerAccess: "liveBroadcasts-list-target-lookup-only",
     reason: "provider-fetch-failed",
-    providerErrorReason: "not-returned-by-design"
+    providerErrorReason: "not-returned-by-design",
+    failureMetadata: createSanitizedFailureMetadata("http-error", providerResponse.status)
+  };
+}
+
+function createSanitizedFailureMetadata(
+  providerFailureClass: YouTubeLiveChatTargetLookupFailureMetadata["providerFailureClass"],
+  httpStatus: number | null
+): YouTubeLiveChatTargetLookupFailureMetadata {
+  return {
+    providerFailureClass,
+    httpStatus,
+    ok: false
   };
 }
 

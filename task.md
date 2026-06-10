@@ -20,7 +20,7 @@
 
 1. Kuro Live Comment Translator public release roadmap
    - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, and PR #404 (`[codex] Outline comment translator public release roadmap`) is merged into `codex/comment-translator-preview`; merge commit `a737d0d58885e6fa46e2f8f2ca14faf276402831` is contained in `origin/codex/comment-translator-preview`.
-   - current PR scope: Public Release Roadmap Task 2, public requirements consolidation. This is docs-only work.
+   - current PR scope: Public Release Roadmap Task 2, public requirements consolidation. Draft PR #405 is docs-only work.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
    - reviewed sources for Task 2: `task.md`, `docs/future/COMMENT_TRANSLATOR_API_INTEGRATION_LIMITS.md`, `docs/future/COMMENT_TRANSLATOR_PROVIDER_BOUNDARY_DESIGN.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_INPUT_BOUNDARY_DESIGN.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_TOKEN_STORE_FOUNDATION.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md`, `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md`, and `docs/future/PORTAL_SETTINGS_FUTURE.md`. Raw attachment `コメント翻訳 API 連携・制限要件ドラフト` was unavailable in this delegated thread, so Task 2 used the decisions already recorded in this file.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
@@ -213,9 +213,9 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - この prompt は live/provider execution 承認ではありません。
 
 Merge gate:
-- Task 2 PR `[codex] Consolidate comment translator public requirements` が merge 済みであることを確認してください。
-- gh が使える場合は Task 2 PR の `number,title,state,mergedAt,mergeCommit,baseRefName,headRefName,url,statusCheckRollup` を確認してください。
-- gh が `HTTP 401: Requires authentication` になる場合は、Task 2 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。
+- PR #405 `[codex] Consolidate comment translator public requirements` が merge 済みであることを確認してください。
+- gh が使える場合は `gh pr view 405 --json number,title,state,mergedAt,mergeCommit,baseRefName,headRefName,url,statusCheckRollup` を確認してください。
+- gh が `HTTP 401: Requires authentication` になる場合は、PR #405 の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
@@ -224,7 +224,7 @@ Merge gate:
 
 次にやること:
 - Public Release Roadmap Task 3: Public legal, privacy, and product-copy recheck.
-- Task 2 PR が merge 済みであることを確認してから、既存 legal pages と comment translator visible copy が `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` と矛盾しないか確認・必要最小限の修正をしてください。
+- PR #405 が merge 済みであることを確認してから、既存 legal pages と comment translator visible copy が `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` と矛盾しないか確認・必要最小限の修正をしてください。
 - 対象は `/terms`, `/privacy`, `/legal/tokushoho`, footer links, `/tools/comment-translator` copy, and relevant account/integration copy です。
 - Provider/API/AI translation behavior、usage limits、connection alone does not start background monitoring、token/client-storage exposureなし、data retention/logging policy、contact/support path、paid-plan status が必要に応じて visible copy に反映されていることを確認してください。
 - Runtime / live/provider execution / token renewal / quota write / billing enforcement / browser storage / handoff payload は Task 3 で明示的に必要な最小範囲を超えて変更しないでください。

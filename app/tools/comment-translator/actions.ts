@@ -6,7 +6,14 @@ import {
   type YouTubeOAuthCredentialStatusCallerAuthorization,
   readYouTubeOAuthCredentialStatus
 } from "@/lib/comment-translator-youtube-credential-status-boundary";
-import { createTrustedYouTubeOAuthCredentialSupabaseStatusReader } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
+import {
+  createYouTubeOAuthCredentialDisconnectUnavailablePayload,
+  readYouTubeOAuthCredentialDisconnectResult
+} from "@/lib/comment-translator-youtube-disconnect-runtime";
+import {
+  createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime,
+  createTrustedYouTubeOAuthCredentialSupabaseStatusReader
+} from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -41,6 +48,35 @@ export async function getYouTubeOAuthCredentialStatusAction(formData: FormData) 
   return readYouTubeOAuthCredentialStatus({
     credentialReferenceId,
     trustedAdapter: trustedStatusReader?.trustedAdapter ?? null,
+    callerAuthorization,
+    credentialResolutionDisabled
+  });
+}
+
+export async function disconnectYouTubeOAuthCredentialAction(formData: FormData) {
+  const credentialReferenceId = readCredentialReferenceId(formData);
+
+  if (!credentialReferenceId) {
+    return createYouTubeOAuthCredentialDisconnectUnavailablePayload({
+      credentialReferenceId: "missing-credential-reference",
+      reason: "trusted-disconnect-adapter-not-wired"
+    });
+  }
+
+  const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled({
+    [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
+  });
+  const callerAuthorization = credentialResolutionDisabled
+    ? authorizeYouTubeOAuthCredentialStatusCaller({ callerUserId: null })
+    : await readCallerAuthorization();
+  const trustedDisconnectRuntime =
+    credentialResolutionDisabled || callerAuthorization.status !== "authorized"
+      ? null
+      : createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime();
+
+  return readYouTubeOAuthCredentialDisconnectResult({
+    credentialReferenceId,
+    trustedDisconnectAdapter: trustedDisconnectRuntime?.trustedDisconnectAdapter ?? null,
     callerAuthorization,
     credentialResolutionDisabled
   });

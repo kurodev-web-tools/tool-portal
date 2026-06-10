@@ -19,14 +19,15 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7. PR #403 (`[codex] Add operator UI flow`) was merged into `codex/comment-translator-preview` at `2026-06-10T14:20:35Z`; merge commit `00aac2b33a4b6960f6a6850adcd9045e26861245` is contained in `origin/codex/comment-translator-preview`.
-   - current PR scope: replace the completed preview Task 1-7 active board with a public-release task board. This is docs/task-board work only.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, and PR #404 (`[codex] Outline comment translator public release roadmap`) is merged into `codex/comment-translator-preview`; merge commit `a737d0d58885e6fa46e2f8f2ca14faf276402831` is contained in `origin/codex/comment-translator-preview`.
+   - current PR scope: Public Release Roadmap Task 2, public requirements consolidation. Draft PR #405 is docs-only work.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
-   - reviewed sources: attached `コメント翻訳 API 連携・制限要件ドラフト`, `docs/future/COMMENT_TRANSLATOR_API_INTEGRATION_LIMITS.md`, `docs/future/COMMENT_TRANSLATOR_PROVIDER_BOUNDARY_DESIGN.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_INPUT_BOUNDARY_DESIGN.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_TOKEN_STORE_FOUNDATION.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md`, `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md`, and `docs/future/PORTAL_SETTINGS_FUTURE.md`.
-   - docs retention decision: keep the relevant `docs/future` files as references for now. The attached API/limits draft is more concrete than the current future note, so consolidation is a separate roadmap task. Non-comment-translator future docs are outside this cleanup and remain untouched.
-   - removed from active board: completed preview Task 1-7 execution roadmap, stale next-session prompt, and repeated historical status details. Historical evidence remains recoverable from merged PRs and archived task-board history.
+   - reviewed sources for Task 2: `task.md`, `docs/future/COMMENT_TRANSLATOR_API_INTEGRATION_LIMITS.md`, `docs/future/COMMENT_TRANSLATOR_PROVIDER_BOUNDARY_DESIGN.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_INPUT_BOUNDARY_DESIGN.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_TOKEN_STORE_FOUNDATION.md`, `docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md`, `docs/future/USER_ACCOUNT_PREFERENCES_FOUNDATION_PLAN.md`, and `docs/future/PORTAL_SETTINGS_FUTURE.md`. Raw attachment `コメント翻訳 API 連携・制限要件ドラフト` was unavailable in this delegated thread, so Task 2 used the decisions already recorded in this file.
+   - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
+   - docs retention decision: keep the reviewed `docs/future` files in place. Their current content is only partially superseded because they retain boundary-specific contracts, historical approval/blocker evidence, account-preference context, or portal settings direction that the active public requirements document intentionally does not duplicate.
+   - completed in this PR: consolidated free/per-session limits, paid-plan release path, start/stop semantics, stop conditions, provider quota policy, YouTube polling policy, AI cost controls, filtering/language policy, usage display, admin metrics, sensitive-data boundaries, initial-release exclusions, and post-public candidates into the active requirements doc.
    - not approved by this task: live/provider execution, token renewal, safe live OAuth smoke, owner verification smoke rerun, Live Chat target lookup execution, Live Chat polling execution, remote Supabase mutation/migration, quota write, billing enforcement, or browser storage / handoff payload expansion.
-   - verification for this PR: `git diff --check` and targeted markdown/content inspection.
+   - verification for this PR: `git diff --check` passed; targeted markdown/content inspection covered the new canonical requirements doc and Task 2 board updates.
 
 ## Public Release Roadmap
 
@@ -44,6 +45,7 @@ Use one Codex thread, one feature branch, and one PR per task. Do not create a P
    - Completion criteria: canonical requirements cover free/per-session limits, paid-plan release path, start/stop semantics, stop conditions, provider quota policy, AI cost controls, source/target language policy, user usage display, admin metrics, sensitive-data boundaries, and initial-release exclusions.
    - Verification: `git diff --check` and targeted markdown/content inspection.
    - Fixed initial decisions: free limits, paid release path, YouTube-first scope, raw-text logging default, account integration route, and JA/EN target support are recorded in `Initial Release Decisions`.
+   - Status: complete in current Task 2 PR via `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
 
 3. Public legal, privacy, and product-copy recheck
    - Goal: confirm existing legal pages and visible product copy are accurate for the public comment translator.
@@ -211,28 +213,32 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - この prompt は live/provider execution 承認ではありません。
 
 Merge gate:
-- PR #403 `[codex] Add operator UI flow` は merge 済み。
-- merge commit は `00aac2b33a4b6960f6a6850adcd9045e26861245`。
-- `gh pr view 403 --json number,title,state,mergedAt,mergeCommit,baseRefName,headRefName,url,statusCheckRollup` を確認してください。
-- `00aac2b33a4b6960f6a6850adcd9045e26861245` が `origin/codex/comment-translator-preview` に含まれることを確認してください。
+- PR #405 `[codex] Consolidate comment translator public requirements` が merge 済みであることを確認してください。
+- gh が使える場合は `gh pr view 405 --json number,title,state,mergedAt,mergeCommit,baseRefName,headRefName,url,statusCheckRollup` を確認してください。
+- gh が `HTTP 401: Requires authentication` になる場合は、PR #405 の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
-- `task.md` は public release roadmap に更新されています。
+- Public Release Roadmap Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加されています。
 - 最終ゴールは Public Release Roadmap の全タスク完了、verification 通過、必要な deployed/live smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
 次にやること:
-- Public Release Roadmap Task 2: Public requirements consolidation.
-- 添付済みの「コメント翻訳 API 連携・制限要件ドラフト」と `docs/future/COMMENT_TRANSLATOR_API_INTEGRATION_LIMITS.md` などを統合し、公開版の canonical requirements doc を作ってください。
-- 古い future docs は内容が完全に移植できた場合だけ `docs/archive` へ移してください。判断が曖昧なものは残し、理由を `task.md` に書いてください。
-- Runtime / UI / live/provider execution / token renewal / quota write / billing enforcement / browser storage / handoff payload は Task 2 では out of scope です。
+- Public Release Roadmap Task 3: Public legal, privacy, and product-copy recheck.
+- PR #405 が merge 済みであることを確認してから、既存 legal pages と comment translator visible copy が `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` と矛盾しないか確認・必要最小限の修正をしてください。
+- 対象は `/terms`, `/privacy`, `/legal/tokushoho`, footer links, `/tools/comment-translator` copy, and relevant account/integration copy です。
+- Provider/API/AI translation behavior、usage limits、connection alone does not start background monitoring、token/client-storage exposureなし、data retention/logging policy、contact/support path、paid-plan status が必要に応じて visible copy に反映されていることを確認してください。
+- Runtime / live/provider execution / token renewal / quota write / billing enforcement / browser storage / handoff payload は Task 3 で明示的に必要な最小範囲を超えて変更しないでください。
 
 Verification:
+- relevant route render checks
+- `npm run lint`
+- `npx tsc --noEmit`
+- `npm run build`
 - `git diff --check`
-- targeted markdown/content inspection
+- width checks only if visible layout changes
 
 Completion:
-- Task 2 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- Task 3 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
 - 未達なら commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

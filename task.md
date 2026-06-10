@@ -19,16 +19,16 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-6 are merged, and PR #409 (`[codex] Add server-only disconnect revocation runtime`) merge commit `cd8b52a088a5c81e638c406c453e60a9a01fb201` is contained in `origin/codex/comment-translator-preview`.
-   - current PR scope: Public Release Roadmap Task 7, translation session model and start/stop contract.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-7 are merged, and PR #410 (`[codex] Add server-owned translation session start stop contract`) merge commit `b33372bbf124447fd77c94b0027019e0c3c19e0f` is contained in `origin/codex/comment-translator-preview`.
+   - current PR scope: Public Release Roadmap Task 8, usage, quota, and budget ledger foundation.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
-   - inspected surfaces for Task 7: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `lib/comment-translator-youtube-credential-status-boundary.ts`, `lib/comment-translator-youtube-token-refresh-runtime.ts`, `lib/comment-translator-youtube-disconnect-runtime.ts`, `app/tools/comment-translator/actions.ts`, `components/comment-translator/CommentTranslatorDock.tsx`, `lib/comment-translator-youtube-runtime-foundation.ts`, `lib/comment-translator-youtube-api-adapter.ts`, `app/api/comment-translator/youtube/credential-status/route.ts`, `app/api/comment-translator/youtube/disconnect/route.ts`, and relevant comment-translator contract scripts.
-   - completed in this PR: added a server-only translation session runtime contract, added `POST /api/comment-translator/session`, and added `startCommentTranslatorSessionAction`, `stopCommentTranslatorSessionAction`, and `heartbeatCommentTranslatorSessionAction`. The contract models one active session per user in the server-owned boundary, Free plan limits (`30 min/day/user`, `30 min/session`, `30 translated messages/min`, `1 active session/user`), heartbeat timeout, explicit user stop, browser disconnect, missing heartbeat, auth/token/reconnect-required stops, quota/budget/limit stops, stream end/unavailable, and terminal provider error. Client-readable state is sanitized session metadata only, and pre-start provider/API/AI usage is represented as `not-started-before-explicit-start`.
-   - unchanged in this PR: no live/provider execution, provider target lookup, `liveChatId` handling, quota write, billing enforcement, browser storage, handoff payload, remote Supabase mutation, schema migration, or visible UI layout/copy change was added. The new route/action use existing credential readiness boundaries and an in-process server-owned session contract only; durable cross-process session storage and ledger enforcement remain later roadmap work.
-   - verification for this PR: `npm ci --prefer-offline` succeeded; `node scripts/comment-translator-session-start-stop-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. UI width checks were skipped because this slice made no visible layout or text change.
-   - residual risk: the Task 7 session store is an in-process server-owned contract foundation, not durable shared storage. Cross-instance persistence, usage ledger writes, quota/budget enforcement, provider target lookup, and bounded polling execution remain separate later tasks.
-   - next PR candidate: Public Release Roadmap Task 8, Usage, quota, and budget ledger foundation.
+   - inspected surfaces for Task 8: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `lib/comment-translator-session-runtime.ts`, `app/api/comment-translator/session/route.ts`, `app/tools/comment-translator/actions.ts`, `lib/comment-translator-youtube-credential-status-boundary.ts`, `lib/comment-translator-youtube-token-refresh-runtime.ts`, `lib/comment-translator-youtube-disconnect-runtime.ts`, `lib/comment-translator-youtube-runtime-foundation.ts`, `lib/comment-translator-youtube-api-adapter.ts`, `scripts/comment-translator-session-start-stop-contract.mjs`, and relevant comment-translator contract scripts.
+   - completed in this PR: added `lib/comment-translator-usage-ledger-runtime.ts` as a server-only usage/quota/budget ledger foundation, added `scripts/comment-translator-usage-quota-budget-ledger-contract.mjs`, and wired the session route/actions to read server-owned usage snapshots instead of fixed usage values. The ledger models per-user daily/session minutes via a sanitized ledger reference, server-owned Free/Paid plan entitlement references, provider request estimates, AI message/character/cost estimates, quota/budget stop events, and admin-safe aggregate metrics. Session limit checks now derive Free/Paid limits from server-owned entitlement state.
+   - unchanged in this PR: no live/provider execution, provider target lookup, `liveChatId` handling, billing enforcement, paid prioritization, provider-usage charging, browser storage, handoff payload, remote Supabase mutation, schema migration, visible UI layout/copy change, or route-level client payload expansion was added.
+   - verification for this PR: `npm ci --prefer-offline` succeeded; `node scripts/comment-translator-usage-quota-budget-ledger-contract.mjs`, `node scripts/comment-translator-session-start-stop-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. UI width checks were skipped because this slice made no visible layout or text change.
+   - residual risk: the Task 8 ledger is an in-process server-owned contract foundation, not durable cross-instance storage. Durable persistence, remote schema/migration, real provider request recording, AI translation execution recording, admin UI/export surfaces, billing enforcement, provider target lookup, and bounded polling execution remain separate later tasks.
+   - next PR candidate: Public Release Roadmap Task 9, Filtering and language policy runtime.
 
 ## Public Release Roadmap
 
@@ -88,6 +88,7 @@ Use one Codex thread, one feature branch, and one PR per task. Do not create a P
    - Scope: per-user daily/session minutes, plan entitlement references, provider request estimates, AI messages/chars/cost estimates, quota/budget stop events, admin-safe aggregate metrics.
    - Completion criteria: records are server-owned and sanitized; Free/Paid limits can be enforced from server-owned entitlement state; no provider identifiers or token values in client-readable payloads; no paid prioritization or provider-usage charging unless separately scoped.
    - Verification: schema/contract/tests as applicable, lint, typecheck, build, `git diff --check`.
+   - Status: complete in current Task 8 PR. Ledger/admin/client output remains sanitized metadata only, and no durable schema, remote mutation, provider lookup, billing enforcement, paid prioritization, provider-usage charging, browser storage, handoff payload, or visible UI change was added.
 
 9. Filtering and language policy runtime
    - Goal: reduce provider and AI cost before translation execution.
@@ -219,27 +220,27 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - この prompt は live/provider execution 承認ではありません。
 
 Merge gate:
-- この Task 7 PR `[codex] Add server-owned translation session start stop contract` が merge 済みであることを確認してください。
-- gh が使える場合は Task 7 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
-- gh が `HTTP 401: Requires authentication` になる場合は、Task 7 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
+- この Task 8 PR `[codex] Add server-owned usage quota budget ledger foundation` が merge 済みであることを確認してください。
+- gh が使える場合は Task 8 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- gh が `HTTP 401: Requires authentication` になる場合は、Task 8 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
-- Public Release Roadmap Task 1-7 は完了済みです。
-- Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加され、Task 3 で legal/privacy/product/account visible copy がその requirements と整合し、Task 4 で `/account/integrations` の sanitized YouTube connection readiness entry と safe prepared connect/reconnect/disconnect affordances が追加され、Task 5 で expired / refresh-failed / reconnect-required の server-only sanitized boundary が追加され、Task 6 で user-initiated disconnect の server-only cleanup / revocation boundary と sanitized status transition が追加され、Task 7 で server-owned translation session start/stop contract が追加されています。
+- Public Release Roadmap Task 1-8 は完了済みです。
+- Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加され、Task 3 で legal/privacy/product/account visible copy がその requirements と整合し、Task 4 で `/account/integrations` の sanitized YouTube connection readiness entry と safe prepared connect/reconnect/disconnect affordances が追加され、Task 5 で expired / refresh-failed / reconnect-required の server-only sanitized boundary が追加され、Task 6 で user-initiated disconnect の server-only cleanup / revocation boundary と sanitized status transition が追加され、Task 7 で server-owned translation session start/stop contract が追加され、Task 8 で server-owned usage/quota/budget ledger foundation が追加されています。
 - 最終ゴールは Public Release Roadmap の全タスク完了、verification 通過、必要な deployed/live smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
 次にやること:
-- Public Release Roadmap Task 8: Usage, quota, and budget ledger foundation.
-- Task 7 PR が merge 済みであることを確認してから、public limits and shared-service protection に必要な server-owned usage / quota / budget ledger foundation を追加してください。
-- Scope は per-user daily/session minutes、plan entitlement references、provider request estimates、AI messages/chars/cost estimates、quota/budget stop events、admin-safe aggregate metrics です。
+- Public Release Roadmap Task 9: Filtering and language policy runtime.
+- Task 8 PR が merge 済みであることを確認してから、provider and AI cost を translation execution 前に減らす filtering/language policy runtime を追加してください。
+- Scope は source language selection、target language selection、same-language prevention、emoji-only / URL-only / symbol-only / duplicate / too-short / target-language / unselected-source-language / low-confidence comments の skip、mixed comments の dominant-language classification です。
 - token values、owner id value、provider channel id value、liveChatId value、Authorization header value、service_role key value、secret value、provider target metadata value は client/docs/PR body/browser storage/handoff payload に表示・保存しないでください。
-- Ledger records は server-owned and sanitized にし、Free/Paid limits can be enforced from server-owned entitlement state へ進める foundation にしてください。
-- Provider request estimates / AI cost estimates / quota and budget stop events は token/provider target/raw comment を含まない aggregate/reference-only metadata に閉じてください。
-- Live/provider execution、provider target lookup、billing enforcement、browser storage、handoff payload、remote Supabase mutation/schema change は Task 8 の completion に必要な最小範囲を超えて変更しないでください。schema/migration が必要な場合は、この Task 8 の範囲で本当に必要かを先に確認し、secret / identifier boundary を崩さないでください。
+- Initial source candidates are JA / EN / KR / CN, and initial target candidates include JA / EN. Source and target cannot be the same.
+- Cache/dedupe keys must exclude token values, provider target identifiers, polling cursors, owner identifiers, authorization headers, service-role keys, and browser-local handoff material.
+- Live/provider execution、provider target lookup、billing enforcement、browser storage、handoff payload、remote Supabase mutation/schema change は Task 9 の completion に必要な最小範囲を超えて変更しないでください。raw comment logging は追加しないでください。
 
 Verification:
-- focused usage/quota/budget ledger contracts
+- focused filtering/language policy contracts
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
@@ -247,7 +248,7 @@ Verification:
 - UI を変更した場合は `/tools/comment-translator` width checks at `390 / 820 / 1024 / 1280 / 1366px`
 
 Completion:
-- Task 8 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- Task 9 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
 - 未達なら commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

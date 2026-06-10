@@ -7,6 +7,7 @@ import ts from "typescript";
 
 const root = process.cwd();
 const sessionPath = "lib/comment-translator-session-runtime.ts";
+const ledgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
 const statusBoundaryPath = "lib/comment-translator-youtube-credential-status-boundary.ts";
 const disconnectPath = "lib/comment-translator-youtube-disconnect-runtime.ts";
 const routePath = "app/api/comment-translator/session/route.ts";
@@ -430,7 +431,15 @@ assert.equal(commandResult.status, "active", "heartbeat command keeps an active 
 assert.equal(commandResult.heartbeat.lastHeartbeatAtIso, "1970-01-01T00:00:02.000Z", "heartbeat timestamp is sanitized ISO metadata");
 
 for (const file of changedFiles()) {
-  const allowedChangedFiles = new Set([sessionPath, routePath, actionPath, "scripts/comment-translator-session-start-stop-contract.mjs", taskPath]);
+  const allowedChangedFiles = new Set([
+    sessionPath,
+    ledgerPath,
+    routePath,
+    actionPath,
+    "scripts/comment-translator-session-start-stop-contract.mjs",
+    "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+    taskPath
+  ]);
   assert.ok(allowedChangedFiles.has(file), `Task 7 change stays in allowed files: ${file}`);
   const source = read(file);
   assert.doesNotMatch(

@@ -14,6 +14,7 @@ const allowedAuthNextPaths = new Set([
   "/tools/thumbnail-editor",
   "/tools/sns-split-image-maker",
   "/account",
+  "/account/integrations",
   "/account/security"
 ]);
 const localDevelopmentOrigin = "http://localhost:3000";
@@ -43,6 +44,10 @@ function redirectWithAuth(path: string, status: string): never {
 
 function accountRedirect(status: string): never {
   redirectWithAuth("/account", status);
+}
+
+function accountIntegrationsRedirect(status: string): never {
+  redirect(`/account/integrations?integration=${encodeURIComponent(status)}`);
 }
 
 function readRequiredString(formData: FormData, name: string): string | null {
@@ -315,4 +320,16 @@ export async function saveLocaleThemePreferenceAction(formData: FormData) {
   }
 
   accountRedirect("preferences-saved");
+}
+
+export async function startYouTubeIntegrationConnectAction() {
+  accountIntegrationsRedirect("youtube-connect-prepared");
+}
+
+export async function reconnectYouTubeIntegrationAction() {
+  accountIntegrationsRedirect("youtube-reconnect-prepared");
+}
+
+export async function disconnectYouTubeIntegrationAction() {
+  accountIntegrationsRedirect("youtube-disconnect-prepared");
 }

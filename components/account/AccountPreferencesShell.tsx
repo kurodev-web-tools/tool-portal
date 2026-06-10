@@ -51,8 +51,8 @@ const accountCopy = {
     },
     openPlan: "現在のアカウント",
     planName: "アカウント状況",
-    planBody: "いまは表示言語とテーマを別ブラウザやスマホでも引き継げるようにする範囲へ限定します。Comment Translator の有料プラン状況とYouTube連携管理は後続で追加予定です。",
-    planItems: ["表示設定を保存", "有料プラン状況は後続対応", "YouTube連携管理は後続対応"],
+    planBody: "いまは表示言語とテーマを別ブラウザやスマホでも引き継げるようにする範囲へ限定します。Comment Translator のYouTube連携管理は専用ページで確認できます。有料プラン状況は後続で追加予定です。",
+    planItems: ["表示設定を保存", "有料プラン状況は後続対応", "YouTube連携管理"],
     preferencesTitle: "表示設定",
     preferencesBody: "表示言語とテーマはこのブラウザに保存されます。ログイン中は、同じ内容をアカウントにも明示的に保存でき、別ブラウザやスマホでも引き継げます。",
     language: "表示言語",
@@ -60,9 +60,10 @@ const accountCopy = {
     browserSaved: "このブラウザに保存",
     syncFrameTitle: "今後保存できるようにする項目",
     syncFrameBody: "今後はツールごとの軽い設定も保存対象にできます。下書き、予定本文、画像、handoff payload は自動アップロードしません。",
-    providerTitle: "今後追加予定",
-    providerBody: "Comment Translator のYouTube連携管理は後続で追加します。接続状態を確認できるようになっても、接続だけではバックグラウンド監視、ポーリング、AI翻訳、クォータ消費は開始しません。",
-    boundaryItems: ["有料プラン契約状況の表示", "YouTube連携管理", "tokenやprovider target値は画面に表示しない", "既存ローカルデータは自動移行しない"],
+    providerTitle: "YouTube連携",
+    providerBody: "Comment Translator のYouTube連携状態は専用ページで確認できます。接続だけではバックグラウンド監視、ポーリング、AI翻訳、クォータ消費は開始しません。",
+    boundaryItems: ["有料プラン契約状況の表示は後続対応", "YouTube連携管理", "tokenやprovider target値は画面に表示しない", "既存ローカルデータは自動移行しない"],
+    manageIntegrations: "連携設定を開く",
     backToTools: "ツール一覧へ戻る"
   },
   en: {
@@ -98,8 +99,8 @@ const accountCopy = {
     },
     openPlan: "Current account",
     planName: "Account status",
-    planBody: "This version is limited to carrying language and theme across browsers and phones. Comment Translator paid plan status and YouTube integration management are planned for later.",
-    planItems: ["Save display settings", "Paid plan status later", "YouTube integration later"],
+    planBody: "This version is limited to carrying language and theme across browsers and phones. Comment Translator YouTube integration management is available on its own page. Paid plan status is planned for later.",
+    planItems: ["Save display settings", "Paid plan status later", "YouTube integration"],
     preferencesTitle: "Display settings",
     preferencesBody: "Language and theme are saved in this browser. Signed-in users can explicitly save the same values to the account and carry them across browsers and phones.",
     language: "Language",
@@ -107,9 +108,10 @@ const accountCopy = {
     browserSaved: "Saved in this browser",
     syncFrameTitle: "Settings that can be saved later",
     syncFrameBody: "Later phases can add lightweight per-tool settings. Drafts, schedule text, images, and handoff payloads are not uploaded automatically.",
-    providerTitle: "Planned next",
-    providerBody: "YouTube integration management for Comment Translator is planned later. Even when connection state is visible, connecting alone will not start background monitoring, polling, AI translation, or quota use.",
-    boundaryItems: ["Paid plan status", "YouTube integration management", "No token or provider target values in UI", "No automatic migration of local data"],
+    providerTitle: "YouTube integration",
+    providerBody: "YouTube integration state for Comment Translator is available on its own page. Connecting alone will not start background monitoring, polling, AI translation, or quota use.",
+    boundaryItems: ["Paid plan status later", "YouTube integration management", "No token or provider target values in UI", "No automatic migration of local data"],
+    manageIntegrations: "Open integrations",
     backToTools: "Back to tools"
   }
 } as const;
@@ -333,6 +335,12 @@ export function AccountPreferencesShell({
                 </li>
               ))}
             </ul>
+            <Link
+              href="/account/integrations"
+              className="mt-4 inline-flex rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
+            >
+              {copy.manageIntegrations}
+            </Link>
           </div>
         </div>
       </section>

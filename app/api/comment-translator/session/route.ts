@@ -15,6 +15,10 @@ import {
   readInMemoryCommentTranslatorActiveSession,
   type CommentTranslatorSessionCommandIntent
 } from "@/lib/comment-translator-session-runtime";
+import {
+  readInMemoryCommentTranslatorUsageSnapshot,
+  recordInMemoryCommentTranslatorSessionLedgerState
+} from "@/lib/comment-translator-usage-ledger-runtime";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +29,13 @@ export async function POST(request: NextRequest) {
   const command = await readSessionCommand(request);
   const callerAuthorization = await readSessionCallerAuthorization();
   const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
+  const nowMs = Date.now();
+  const usage = readInMemoryCommentTranslatorUsageSnapshot({
+    callerAuthorization,
+    nowMs,
+    plan: "free",
+    activeSession
+  });
   const credentialReferenceId = command.credentialReferenceId ?? activeSession?.credentialReferenceId ?? null;
   const credentialReadiness = credentialReferenceId
     ? await readCredentialReadiness({ credentialReferenceId, callerAuthorization })
@@ -37,25 +48,25 @@ export async function POST(request: NextRequest) {
 
   const state = await readCommentTranslatorSessionCommand({
     intent: command.intent,
-    nowMs: Date.now(),
+    nowMs,
     plan: "free",
     callerAuthorization,
     credentialReadiness,
     activeSession,
-    usage: {
-      dailyUsedMs: 0,
-      translatedMessagesInCurrentMinute: 0,
-      providerBudgetAvailable: true,
-      globalBudgetAvailable: true,
-      aiBudgetAvailable: true,
-      translationProviderAvailable: true
-    },
+    usage,
     browserConnected: command.browserConnected,
     stopReason: command.stopReason,
     createSessionReferenceId: () => `cts_${randomUUID()}`
   });
 
   persistInMemoryCommentTranslatorActiveSession({ callerAuthorization, state });
+  recordInMemoryCommentTranslatorSessionLedgerState({
+    callerAuthorization,
+    intent: command.intent,
+    state,
+    occurredAtMs: nowMs,
+    planEntitlement: usage.planEntitlement
+  });
 
   return NextResponse.json(state);
 }

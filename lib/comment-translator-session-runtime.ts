@@ -5,6 +5,18 @@ import { type YouTubeOAuthCredentialTranslatorStartReadiness } from "./comment-t
 
 export type CommentTranslatorSessionPlan = "free" | "paid";
 
+export type CommentTranslatorSessionPlanEntitlement = {
+  plan: CommentTranslatorSessionPlan;
+  planEntitlementReferenceId: string;
+  entitlementSource: "server-owned";
+  dailyLimitMs: number;
+  sessionLimitMs: number;
+  translatedMessagesPerMinute: number;
+  activeSessionsPerUser: number;
+  paidPrioritization: "not-implemented";
+  providerUsageCharging: "not-implemented";
+};
+
 export type CommentTranslatorSessionStopReason =
   | "user-stop"
   | "stream-ended"
@@ -26,11 +38,13 @@ export type CommentTranslatorSessionStopReason =
 
 export type CommentTranslatorSessionUsageSnapshot = {
   dailyUsedMs: number;
+  currentSessionElapsedMs?: number;
   translatedMessagesInCurrentMinute: number;
   providerBudgetAvailable: boolean;
   globalBudgetAvailable: boolean;
   aiBudgetAvailable: boolean;
   translationProviderAvailable?: boolean;
+  planEntitlement?: CommentTranslatorSessionPlanEntitlement;
 };
 
 export type CommentTranslatorActiveSessionRecord = {
@@ -131,6 +145,7 @@ export type StopCommentTranslatorSessionRequest = {
   activeSession: CommentTranslatorActiveSessionRecord | CommentTranslatorSessionBrowserSafeState | null;
   nowMs: number;
   plan: CommentTranslatorSessionPlan;
+  usage?: CommentTranslatorSessionUsageSnapshot;
   reason: CommentTranslatorSessionStopReason;
 };
 
@@ -143,6 +158,7 @@ export type ReadCommentTranslatorSessionCommandRequest = StartCommentTranslatorS
 const secondsPerMinute = 60;
 const freeLimitMs = 30 * secondsPerMinute * 1_000;
 const heartbeatTimeoutMs = 45_000;
+const freePlanEntitlementReferenceId = "comment-translator-free-public-v1";
 
 export const commentTranslatorSessionRuntimeContract = {
   implementationStage: "server-owned-session-start-stop-contract",
@@ -158,6 +174,8 @@ export const commentTranslatorSessionRuntimeContract = {
   liveProviderExecution: "not-run-in-task-7",
   providerTargetLookup: "not-run-in-task-7",
   quotaWrite: "not-run-in-task-7",
+  usageQuotaBudgetLedger: "server-owned-usage-quota-budget-ledger-foundation-in-task-8",
+  entitlementState: "server-owned-plan-entitlement-reference",
   billingEnforcement: "not-run-in-task-7",
   browserStorage: "forbidden",
   handoffPayload: "unchanged",
@@ -261,7 +279,9 @@ export function startCommentTranslatorSession(
     });
   }
 
-  if (request.activeSession) {
+  const entitlement = resolveUsageEntitlement(request.usage, request.plan);
+
+  if (request.activeSession && entitlement.activeSessionsPerUser <= 1) {
     return createStoppedState({
       activeSession: request.activeSession,
       nowMs: request.nowMs,
@@ -313,11 +333,23 @@ export function evaluateCommentTranslatorSessionStopCondition(
   }
 
   if (!request.browserConnected) {
-    return stopCommentTranslatorSession({ activeSession, nowMs: request.nowMs, plan: request.plan, reason: "browser-disconnect" });
+    return stopCommentTranslatorSession({
+      activeSession,
+      nowMs: request.nowMs,
+      plan: request.plan,
+      usage: request.usage,
+      reason: "browser-disconnect"
+    });
   }
 
   if (request.callerAuthorization.status !== "authorized") {
-    return stopCommentTranslatorSession({ activeSession, nowMs: request.nowMs, plan: request.plan, reason: "auth-failed" });
+    return stopCommentTranslatorSession({
+      activeSession,
+      nowMs: request.nowMs,
+      plan: request.plan,
+      usage: request.usage,
+      reason: "auth-failed"
+    });
   }
 
   if (request.credentialReadiness.status !== "ready") {
@@ -325,25 +357,51 @@ export function evaluateCommentTranslatorSessionStopCondition(
       activeSession,
       nowMs: request.nowMs,
       plan: request.plan,
+      usage: request.usage,
       reason: mapCredentialReadinessToStopReason(request.credentialReadiness)
     });
   }
 
-  const usageStopReason = assessUsageStopReason(request.usage, request.plan);
+  const activeElapsedMs = elapsedMs(activeSession, request.nowMs);
+  const usageStopReason = assessUsageStopReason(request.usage, request.plan, activeElapsedMs);
   if (usageStopReason) {
-    return stopCommentTranslatorSession({ activeSession, nowMs: request.nowMs, plan: request.plan, reason: usageStopReason });
+    return stopCommentTranslatorSession({
+      activeSession,
+      nowMs: request.nowMs,
+      plan: request.plan,
+      usage: request.usage,
+      reason: usageStopReason
+    });
   }
 
-  if (elapsedMs(activeSession, request.nowMs) >= sessionLimitMs(request.plan)) {
-    return stopCommentTranslatorSession({ activeSession, nowMs: request.nowMs, plan: request.plan, reason: "session-time-limit" });
+  if (activeElapsedMs >= sessionLimitMs(request.plan, request.usage)) {
+    return stopCommentTranslatorSession({
+      activeSession,
+      nowMs: request.nowMs,
+      plan: request.plan,
+      usage: request.usage,
+      reason: "session-time-limit"
+    });
   }
 
   if (request.providerSignal) {
-    return stopCommentTranslatorSession({ activeSession, nowMs: request.nowMs, plan: request.plan, reason: request.providerSignal });
+    return stopCommentTranslatorSession({
+      activeSession,
+      nowMs: request.nowMs,
+      plan: request.plan,
+      usage: request.usage,
+      reason: request.providerSignal
+    });
   }
 
   if (request.nowMs - activeSession.lastHeartbeatAtMs > heartbeatTimeoutMs) {
-    return stopCommentTranslatorSession({ activeSession, nowMs: request.nowMs, plan: request.plan, reason: "missing-heartbeat" });
+    return stopCommentTranslatorSession({
+      activeSession,
+      nowMs: request.nowMs,
+      plan: request.plan,
+      usage: request.usage,
+      reason: "missing-heartbeat"
+    });
   }
 
   return createActiveState({
@@ -361,13 +419,14 @@ export function stopCommentTranslatorSession(
     activeSession: normalizeActiveSession(request.activeSession),
     nowMs: request.nowMs,
     plan: request.plan,
-    usage: {
-      dailyUsedMs: 0,
-      translatedMessagesInCurrentMinute: 0,
-      providerBudgetAvailable: true,
-      globalBudgetAvailable: true,
-      aiBudgetAvailable: true
-    },
+    usage:
+      request.usage ?? {
+        dailyUsedMs: 0,
+        translatedMessagesInCurrentMinute: 0,
+        providerBudgetAvailable: true,
+        globalBudgetAvailable: true,
+        aiBudgetAvailable: true
+      },
     reason: request.reason,
     nextAction: request.reason === "auth-failed" || request.reason === "reconnect-required" ? "reconnect-or-sign-in" : "session-stopped"
   });
@@ -385,6 +444,7 @@ export async function readCommentTranslatorSessionCommand(
       activeSession: request.activeSession,
       nowMs: request.nowMs,
       plan: request.plan,
+      usage: request.usage,
       reason: request.stopReason ?? "user-stop"
     });
   }
@@ -472,6 +532,7 @@ function createActiveState({
   usage: CommentTranslatorSessionUsageSnapshot;
 }): CommentTranslatorSessionBrowserSafeState {
   const elapsed = Math.max(0, elapsedMs(activeSession, nowMs));
+  const entitlement = resolveUsageEntitlement(usage, plan);
 
   return {
     status: "active",
@@ -482,8 +543,8 @@ function createActiveState({
     startedAtIso: new Date(activeSession.startedAtMs).toISOString(),
     stoppedAtIso: null,
     elapsedSeconds: Math.floor(elapsed / 1_000),
-    remainingSessionSeconds: Math.max(0, Math.ceil((sessionLimitMs(plan) - elapsed) / 1_000)),
-    remainingDailySeconds: remainingDailySeconds({ dailyUsedMs: usage.dailyUsedMs, elapsedMs: elapsed, plan }),
+    remainingSessionSeconds: Math.max(0, Math.ceil((entitlement.sessionLimitMs - elapsed) / 1_000)),
+    remainingDailySeconds: remainingDailySeconds({ dailyUsedMs: usage.dailyUsedMs, elapsedMs: elapsed, plan, entitlement }),
     heartbeat: createHeartbeatState(activeSession.lastHeartbeatAtMs),
     stopReason: null,
     nextAction: "send-heartbeat-or-stop",
@@ -512,6 +573,7 @@ function createStoppedState({
   credentialReferenceId?: string;
 }): CommentTranslatorSessionBrowserSafeState {
   const elapsed = activeSession ? Math.max(0, elapsedMs(activeSession, nowMs)) : 0;
+  const entitlement = resolveUsageEntitlement(usage, plan);
 
   return {
     status: "stopped",
@@ -522,8 +584,8 @@ function createStoppedState({
     startedAtIso: activeSession ? new Date(activeSession.startedAtMs).toISOString() : null,
     stoppedAtIso: new Date(nowMs).toISOString(),
     elapsedSeconds: Math.floor(elapsed / 1_000),
-    remainingSessionSeconds: Math.max(0, Math.ceil((sessionLimitMs(plan) - elapsed) / 1_000)),
-    remainingDailySeconds: remainingDailySeconds({ dailyUsedMs: usage.dailyUsedMs, elapsedMs: elapsed, plan }),
+    remainingSessionSeconds: Math.max(0, Math.ceil((entitlement.sessionLimitMs - elapsed) / 1_000)),
+    remainingDailySeconds: remainingDailySeconds({ dailyUsedMs: usage.dailyUsedMs, elapsedMs: elapsed, plan, entitlement }),
     heartbeat: createHeartbeatState(activeSession?.lastHeartbeatAtMs ?? null),
     stopReason: reason,
     nextAction,
@@ -537,13 +599,16 @@ function createStoppedState({
 
 function assessUsageStopReason(
   usage: CommentTranslatorSessionUsageSnapshot,
-  plan: CommentTranslatorSessionPlan
+  plan: CommentTranslatorSessionPlan,
+  activeElapsedMs = usage.currentSessionElapsedMs ?? 0
 ): CommentTranslatorSessionStopReason | null {
-  if (usage.dailyUsedMs >= sessionLimitMs(plan)) {
+  const entitlement = resolveUsageEntitlement(usage, plan);
+
+  if (usage.dailyUsedMs > 0 && usage.dailyUsedMs + Math.max(0, activeElapsedMs) >= entitlement.dailyLimitMs) {
     return "daily-time-limit";
   }
 
-  if (usage.translatedMessagesInCurrentMinute >= commentTranslatorSessionRuntimeContract.freePlanLimits.translatedMessagesPerMinute) {
+  if (usage.translatedMessagesInCurrentMinute >= entitlement.translatedMessagesPerMinute) {
     return "translated-message-cap";
   }
 
@@ -611,9 +676,41 @@ function createHeartbeatState(lastHeartbeatAtMs: number | null): CommentTranslat
   };
 }
 
-function sessionLimitMs(plan: CommentTranslatorSessionPlan): number {
-  void plan;
-  return freeLimitMs;
+export function createCommentTranslatorSessionPlanEntitlement({
+  plan,
+  paidEntitlement
+}: {
+  plan: CommentTranslatorSessionPlan;
+  paidEntitlement?: Pick<
+    CommentTranslatorSessionPlanEntitlement,
+    "planEntitlementReferenceId" | "dailyLimitMs" | "sessionLimitMs" | "translatedMessagesPerMinute" | "activeSessionsPerUser"
+  >;
+}): CommentTranslatorSessionPlanEntitlement {
+  if (plan === "paid" && paidEntitlement) {
+    return {
+      plan,
+      ...paidEntitlement,
+      entitlementSource: "server-owned",
+      paidPrioritization: "not-implemented",
+      providerUsageCharging: "not-implemented"
+    };
+  }
+
+  return {
+    plan: "free",
+    planEntitlementReferenceId: freePlanEntitlementReferenceId,
+    entitlementSource: "server-owned",
+    dailyLimitMs: freeLimitMs,
+    sessionLimitMs: freeLimitMs,
+    translatedMessagesPerMinute: commentTranslatorSessionRuntimeContract.freePlanLimits.translatedMessagesPerMinute,
+    activeSessionsPerUser: commentTranslatorSessionRuntimeContract.freePlanLimits.activeSessionsPerUser,
+    paidPrioritization: "not-implemented",
+    providerUsageCharging: "not-implemented"
+  };
+}
+
+function sessionLimitMs(plan: CommentTranslatorSessionPlan, usage?: CommentTranslatorSessionUsageSnapshot): number {
+  return resolveUsageEntitlement(usage, plan).sessionLimitMs;
 }
 
 function sessionLimitSeconds(plan: CommentTranslatorSessionPlan): number {
@@ -623,15 +720,27 @@ function sessionLimitSeconds(plan: CommentTranslatorSessionPlan): number {
 function remainingDailySeconds({
   dailyUsedMs,
   elapsedMs,
-  plan
+  plan,
+  entitlement
 }: {
   dailyUsedMs: number;
   elapsedMs: number;
   plan: CommentTranslatorSessionPlan;
+  entitlement?: CommentTranslatorSessionPlanEntitlement;
 }) {
-  return Math.max(0, Math.ceil((sessionLimitMs(plan) - dailyUsedMs - elapsedMs) / 1_000));
+  return Math.max(
+    0,
+    Math.ceil(((entitlement ?? createCommentTranslatorSessionPlanEntitlement({ plan })).dailyLimitMs - dailyUsedMs - elapsedMs) / 1_000)
+  );
 }
 
 function elapsedMs(activeSession: CommentTranslatorActiveSessionRecord, nowMs: number) {
   return nowMs - activeSession.startedAtMs;
+}
+
+function resolveUsageEntitlement(
+  usage: CommentTranslatorSessionUsageSnapshot | undefined,
+  plan: CommentTranslatorSessionPlan
+) {
+  return usage?.planEntitlement ?? createCommentTranslatorSessionPlanEntitlement({ plan });
 }

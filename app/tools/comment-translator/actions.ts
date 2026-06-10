@@ -20,6 +20,10 @@ import {
   type CommentTranslatorSessionStopReason
 } from "@/lib/comment-translator-session-runtime";
 import {
+  readInMemoryCommentTranslatorUsageSnapshot,
+  recordInMemoryCommentTranslatorSessionLedgerState
+} from "@/lib/comment-translator-usage-ledger-runtime";
+import {
   createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime,
   createTrustedYouTubeOAuthCredentialSupabaseStatusReader
 } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
@@ -124,6 +128,13 @@ async function readCommentTranslatorSessionActionResult({
 }) {
   const callerAuthorization = await readCallerAuthorization();
   const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
+  const nowMs = Date.now();
+  const usage = readInMemoryCommentTranslatorUsageSnapshot({
+    callerAuthorization,
+    nowMs,
+    plan: "free",
+    activeSession
+  });
   const credentialReferenceId = readCredentialReferenceId(formData) ?? activeSession?.credentialReferenceId ?? null;
   const credentialReadiness = credentialReferenceId
     ? await readCredentialReadiness({ credentialReferenceId, callerAuthorization })
@@ -135,25 +146,25 @@ async function readCommentTranslatorSessionActionResult({
       );
   const state = await readCommentTranslatorSessionCommand({
     intent,
-    nowMs: Date.now(),
+    nowMs,
     plan: "free",
     callerAuthorization,
     credentialReadiness,
     activeSession,
-    usage: {
-      dailyUsedMs: 0,
-      translatedMessagesInCurrentMinute: 0,
-      providerBudgetAvailable: true,
-      globalBudgetAvailable: true,
-      aiBudgetAvailable: true,
-      translationProviderAvailable: true
-    },
+    usage,
     browserConnected: intent !== "stop",
     stopReason,
     createSessionReferenceId: () => `cts_${randomUUID()}`
   });
 
   persistInMemoryCommentTranslatorActiveSession({ callerAuthorization, state });
+  recordInMemoryCommentTranslatorSessionLedgerState({
+    callerAuthorization,
+    intent,
+    state,
+    occurredAtMs: nowMs,
+    planEntitlement: usage.planEntitlement
+  });
 
   return state;
 }

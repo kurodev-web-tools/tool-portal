@@ -4,7 +4,12 @@ import {
   type TrustedYouTubeOAuthCredentialSupabaseAdapter,
   type YouTubeOAuthCredentialSupabaseStatus
 } from "./comment-translator-youtube-token-store-supabase-adapter";
-import { type YouTubeReadOnlyOAuthScope } from "./comment-translator-youtube-api-adapter";
+import {
+  type YouTubeOAuthCredentialRefreshBrowserReadableStatus,
+  type YouTubeOAuthCredentialRefreshRuntime,
+  createYouTubeOAuthCredentialRefreshBrowserReadableStatus,
+  readYouTubeOAuthCredentialRefreshStatus
+} from "./comment-translator-youtube-token-refresh-runtime";
 
 export type YouTubeOAuthCredentialStatusUnavailableReason =
   | "trusted-adapter-not-wired"
@@ -13,24 +18,13 @@ export type YouTubeOAuthCredentialStatusUnavailableReason =
   | "caller-not-authenticated";
 
 export type YouTubeOAuthCredentialBrowserReadableStatus =
-  | {
-      status: "available";
-      credentialReferenceId: string;
-      provider: "youtube";
-      providerChannelId: string;
-      scopeLabel: "youtube.readonly";
-      scopeSet: readonly YouTubeReadOnlyOAuthScope[];
-      expiresAtIso: string;
-      expiryStatus: "active" | "expired" | "revoked";
-      revoked: boolean;
-      revokedAtIso: string | null;
-      reconnectRequired: boolean;
-    }
+  | YouTubeOAuthCredentialRefreshBrowserReadableStatus
   | {
       status: "credential-resolution-disabled";
       credentialReferenceId: string;
       provider: "youtube";
       reconnectRequired: true;
+      reconnectGuidance: "reconnect-youtube";
     }
   | {
       status: "unavailable";
@@ -38,6 +32,7 @@ export type YouTubeOAuthCredentialBrowserReadableStatus =
       provider: "youtube";
       reason: YouTubeOAuthCredentialStatusUnavailableReason;
       reconnectRequired: true;
+      reconnectGuidance: "reconnect-youtube";
     };
 
 export type YouTubeOAuthCredentialStatusCallerAuthorization =
@@ -54,6 +49,7 @@ export type YouTubeOAuthCredentialStatusCallerAuthorization =
 export type ReadYouTubeOAuthCredentialStatusRequest = {
   credentialReferenceId: string;
   trustedAdapter: Pick<TrustedYouTubeOAuthCredentialSupabaseAdapter, "getCredentialStatus"> | null;
+  trustedRefreshRuntime?: YouTubeOAuthCredentialRefreshRuntime | null;
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   credentialResolutionDisabled: boolean;
 };
@@ -74,8 +70,11 @@ export const youtubeOAuthCredentialStatusBoundaryContract = {
     "service-role-key",
     "managed-secret-value",
     "oauth-token-value",
-    "authorization-code-value"
+    "authorization-code-value",
+    "provider-channel-id-value",
+    "provider-error-body"
   ],
+  tokenRefreshRuntime: "server-only-expired-token-refresh-and-reconnect-status",
   rollbackBoundary: "revoke-or-invalidate-unusable-credential-reference",
   loggingPolicy: "no-token-value-logging"
 } as const;
@@ -112,19 +111,10 @@ export function authorizeYouTubeOAuthCredentialStatusCaller({
 export function createYouTubeOAuthCredentialBrowserReadableStatus(
   status: YouTubeOAuthCredentialSupabaseStatus
 ): YouTubeOAuthCredentialBrowserReadableStatus {
-  return {
-    status: "available",
-    credentialReferenceId: status.credentialReferenceId,
-    provider: status.provider,
-    providerChannelId: status.providerChannelId,
-    scopeLabel: status.scopeLabel,
-    scopeSet: status.scopeSet,
-    expiresAtIso: status.expiresAtIso,
-    expiryStatus: status.expiryStatus,
-    revoked: status.revoked,
-    revokedAtIso: status.revokedAtIso,
-    reconnectRequired: status.expiryStatus !== "active" || status.revoked
-  };
+  return createYouTubeOAuthCredentialRefreshBrowserReadableStatus(status, {
+    refreshAttempted: false,
+    refreshStatus: "not-needed"
+  });
 }
 
 export function createYouTubeOAuthCredentialStatusUnavailablePayload({
@@ -139,7 +129,8 @@ export function createYouTubeOAuthCredentialStatusUnavailablePayload({
     credentialReferenceId,
     provider: "youtube",
     reason,
-    reconnectRequired: true
+    reconnectRequired: true,
+    reconnectGuidance: "reconnect-youtube"
   };
 }
 
@@ -151,7 +142,8 @@ export async function readYouTubeOAuthCredentialStatus(
       status: "credential-resolution-disabled",
       credentialReferenceId: request.credentialReferenceId,
       provider: "youtube",
-      reconnectRequired: true
+      reconnectRequired: true,
+      reconnectGuidance: "reconnect-youtube"
     };
   }
 
@@ -170,12 +162,13 @@ export async function readYouTubeOAuthCredentialStatus(
   }
 
   try {
-    return createYouTubeOAuthCredentialBrowserReadableStatus(
-      await request.trustedAdapter.getCredentialStatus({
+    return await readYouTubeOAuthCredentialRefreshStatus({
+      credentialStatus: await request.trustedAdapter.getCredentialStatus({
         credentialReferenceId: request.credentialReferenceId,
         ownerUserId: request.callerAuthorization.ownerUserId
-      })
-    );
+      }),
+      trustedRefreshRuntime: request.trustedRefreshRuntime ?? null
+    });
   } catch {
     return createYouTubeOAuthCredentialStatusUnavailablePayload({
       credentialReferenceId: request.credentialReferenceId,

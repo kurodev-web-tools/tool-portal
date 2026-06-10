@@ -12,14 +12,27 @@ type YouTubeOAuthCredentialStatusUiAvailableInput = {
   status: "available";
   credentialReferenceId: string;
   provider: "youtube";
-  providerChannelId: string;
   scopeLabel: "youtube.readonly";
   scopeSet: readonly YouTubeReadOnlyScope[];
   expiresAtIso: string;
-  expiryStatus: "active" | "expired" | "revoked";
+  expiryStatus: "active";
+  revoked: false;
+  revokedAtIso: null;
+  reconnectRequired: false;
+};
+
+type YouTubeOAuthCredentialStatusUiReconnectRequiredInput = {
+  status: "reconnect-required";
+  credentialReferenceId: string;
+  provider: "youtube";
+  reason: "expired" | "refresh-failed" | "revoked";
+  scopeLabel: "youtube.readonly";
+  scopeSet: readonly YouTubeReadOnlyScope[];
+  expiresAtIso: string;
+  expiryStatus: "expired" | "revoked";
   revoked: boolean;
   revokedAtIso: string | null;
-  reconnectRequired: boolean;
+  reconnectRequired: true;
 };
 
 type YouTubeOAuthCredentialStatusUiUnavailableInput = {
@@ -39,6 +52,7 @@ type YouTubeOAuthCredentialStatusUiDisabledInput = {
 
 export type YouTubeOAuthCredentialStatusUiWiringInput =
   | YouTubeOAuthCredentialStatusUiAvailableInput
+  | YouTubeOAuthCredentialStatusUiReconnectRequiredInput
   | YouTubeOAuthCredentialStatusUiUnavailableInput
   | YouTubeOAuthCredentialStatusUiDisabledInput;
 
@@ -50,7 +64,7 @@ export type YouTubeOAuthCredentialStatusUiWiringViewModel = {
   providerChannelId: string | null;
   scopeLabel: "youtube.readonly" | null;
   expiresAtIso: string | null;
-  reason: YouTubeOAuthCredentialStatusUiUnavailableInput["reason"] | null;
+  reason: YouTubeOAuthCredentialStatusUiUnavailableInput["reason"] | YouTubeOAuthCredentialStatusUiReconnectRequiredInput["reason"] | null;
   clientPayloadBoundary: "sanitized-credential-status-metadata-only";
 };
 
@@ -338,7 +352,8 @@ export const youtubeOAuthCredentialStatusUiWiringContract = {
     "managed-secret-value",
     "oauth-access-token-value",
     "oauth-refresh-token-value",
-    "authorization-code-value"
+    "authorization-code-value",
+    "provider-channel-id-value"
   ],
   rollbackBoundary: "revoke-or-invalidate-unusable-credential-reference",
   loggingPolicy: "no-token-value-logging"
@@ -368,8 +383,17 @@ export function createYouTubeOAuthCredentialStatusUiWiring(
     });
   }
 
-  return createBaseUiWiring(input, input.reconnectRequired ? "reconnect-required" : "available", {
-    providerChannelId: input.providerChannelId,
+  if (input.status === "reconnect-required") {
+    return createBaseUiWiring(input, "reconnect-required", {
+      providerChannelId: null,
+      scopeLabel: input.scopeLabel,
+      expiresAtIso: input.expiresAtIso,
+      reason: input.reason
+    });
+  }
+
+  return createBaseUiWiring(input, "available", {
+    providerChannelId: null,
     scopeLabel: input.scopeLabel,
     expiresAtIso: input.expiresAtIso,
     reason: null

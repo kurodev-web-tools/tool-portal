@@ -19,16 +19,16 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-3 are merged, and PR #406 (`[codex] Recheck comment translator public legal and copy`) merge commit `766baf332aa87cd33a55a17f8df4ddd9e8a11921` is contained in `origin/codex/comment-translator-preview`.
-   - current PR scope: Public Release Roadmap Task 4, account integrations entry point.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-4 are merged, and PR #407 (`[codex] Add account integrations entry point`) merge commit `6955db3a988979ec99455a5e7b5e890799df8d3f` is contained in `origin/codex/comment-translator-preview`.
+   - current PR scope: Public Release Roadmap Task 5, server-only token refresh and reconnect status.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
-   - inspected surfaces for Task 4: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `/account`, `app/account/actions.ts`, `app/account/integrations/page.tsx`, `components/account/AccountPreferencesShell.tsx`, `components/account/AccountIntegrationsShell.tsx`, `lib/comment-translator-youtube-account-integration.ts`, existing YouTube credential status boundary/action files, and account/comment-translator contract scripts.
-   - completed in this PR: added `/account/integrations` as the account settings entry for YouTube integration readiness, added a sanitized account integration view model, linked the existing `/account` page to the new entry, and added connect/reconnect/disconnect affordances whose current server actions only return local prepared messages. The UI states that YouTube connection alone does not start background monitoring, polling, AI translation, or quota consumption.
-   - unchanged in this PR: no live/provider execution, OAuth start, token renewal, quota write, billing enforcement, browser storage, handoff payload, schema, remote Supabase mutation, provider target lookup, or disconnect/revocation runtime was added. The entry point displays no token, owner id, provider channel id, `liveChatId`, Authorization header value, service role key value, secret value, or provider target metadata value.
-   - verification for this PR: `npm ci --prefer-offline` succeeded; `node scripts/comment-translator-account-integrations-entry-contract.mjs`, `node scripts/account-preferences-shell-contract.mjs`, `node scripts/account-auth-public-readiness-contract.mjs`, `node scripts/workers-route-smoke-account-nav-contract.mjs`, and `node scripts/comment-translator-operator-ui-flow-contract.mjs` passed. `npm run lint`, `npx tsc --noEmit`, and `npm run build` passed. In-app browser checks on `http://127.0.0.1:3215/account/integrations` found the sanitized YouTube integration shell, no-provider-start copy, and connect/reconnect/disconnect affordances at `390 / 820 / 1024 / 1280 / 1366px` with no horizontal overflow. A connect action click returned the local prepared-message URL and did not show provider execution text. `git diff --check` passed.
-   - residual risk: connect/reconnect/disconnect are intentionally safe prepared affordances only; actual OAuth start, token refresh, and disconnect/revocation behavior remain separate roadmap tasks.
-   - next PR candidate: Public Release Roadmap Task 5, Server-only token refresh and reconnect status.
+   - inspected surfaces for Task 5: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `lib/comment-translator-youtube-credential-status-boundary.ts`, `lib/comment-translator-youtube-token-store-runtime.ts`, `lib/comment-translator-youtube-token-store-supabase-adapter.ts`, `app/api/comment-translator/youtube/credential-status/route.ts`, `app/tools/comment-translator/actions.ts`, `app/account/integrations/page.tsx`, `components/comment-translator/CommentTranslatorDock.tsx`, `lib/comment-translator-youtube-credential-status-ui-wiring.ts`, and relevant credential/status contract scripts.
+   - completed in this PR: added a server-only token refresh/reconnect status boundary, mapped active credentials to sanitized available status, mapped expired credentials without a wired refresh runtime to sanitized reconnect guidance, mapped refresh failures to sanitized `reconnect-required` status, and kept provider error bodies out of browser-readable output. The existing credential status route/action continue through the owner-authorized server boundary and can accept an injected trusted refresh runtime without exposing token values.
+   - unchanged in this PR: no live/provider execution, concrete Google OAuth refresh endpoint call, provider target lookup, quota write, billing enforcement, browser storage, handoff payload, schema migration, remote Supabase mutation, or visible UI layout/copy change was added. Route/action default behavior does not run a live refresh provider call; it returns sanitized reconnect guidance when no trusted refresh runtime is wired.
+   - verification for this PR: `npm ci --prefer-offline` succeeded; `node scripts/comment-translator-youtube-token-refresh-reconnect-status-contract.mjs` passed; `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. `node scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs` and `node scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs` were inspected/attempted but are historical contracts tied to old `task.md` PR-premise assertions, so they were not used as Task 5 completion gates. UI width checks were skipped because this slice made no visible layout or text change.
+   - residual risk: actual decrypt/encrypt plus Google OAuth refresh transport remains a later server runtime wiring step; this PR defines and verifies the sanitized refresh/reconnect boundary and default reconnect fallback only.
+   - next PR candidate: Public Release Roadmap Task 6, Server-only disconnect and revocation runtime.
 
 ## Public Release Roadmap
 
@@ -67,6 +67,7 @@ Use one Codex thread, one feature branch, and one PR per task. Do not create a P
    - Scope: token refresh runtime, expired/refresh-failed/reconnect-required sanitized states, focused contract coverage.
    - Completion criteria: token values remain server-only; refresh failures do not leak provider body or credentials; client receives only sanitized status and reconnect guidance.
    - Verification: focused server contract/tests, lint, typecheck, build, `git diff --check`.
+   - Status: complete in current Task 5 PR. Live/provider refresh execution, provider target lookup, quota, billing, browser storage, handoff payload, schema migration, and remote Supabase mutation were intentionally not added.
 
 6. Server-only disconnect and revocation runtime
    - Goal: support user-initiated provider disconnect with safe server cleanup and revocation behavior.
@@ -216,27 +217,27 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - この prompt は live/provider execution 承認ではありません。
 
 Merge gate:
-- この Task 4 PR `[codex] Add account integrations entry point` が merge 済みであることを確認してください。
-- gh が使える場合は Task 4 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
-- gh が `HTTP 401: Requires authentication` になる場合は、Task 4 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
+- この Task 5 PR `[codex] Add server-only token refresh reconnect status` が merge 済みであることを確認してください。
+- gh が使える場合は Task 5 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- gh が `HTTP 401: Requires authentication` になる場合は、Task 5 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
-- Public Release Roadmap Task 1-4 は完了済みです。
-- Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加され、Task 3 で legal/privacy/product/account visible copy がその requirements と整合し、Task 4 で `/account/integrations` の sanitized YouTube connection readiness entry と safe prepared connect/reconnect/disconnect affordances が追加されています。
+- Public Release Roadmap Task 1-5 は完了済みです。
+- Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加され、Task 3 で legal/privacy/product/account visible copy がその requirements と整合し、Task 4 で `/account/integrations` の sanitized YouTube connection readiness entry と safe prepared connect/reconnect/disconnect affordances が追加され、Task 5 で expired / refresh-failed / reconnect-required の server-only sanitized boundary が追加されています。
 - 最終ゴールは Public Release Roadmap の全タスク完了、verification 通過、必要な deployed/live smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
 次にやること:
-- Public Release Roadmap Task 5: Server-only token refresh and reconnect status.
-- Task 4 PR が merge 済みであることを確認してから、expired / refresh-failed / reconnect-required の sanitized state と server-only refresh/reconnect boundary を追加してください。
-- Scope は token refresh runtime、refresh failure の sanitized status、reconnect guidance、focused contract coverage です。
+- Public Release Roadmap Task 6: Server-only disconnect and revocation runtime.
+- Task 5 PR が merge 済みであることを確認してから、user-initiated provider disconnect の server-only cleanup / revocation boundary と sanitized status transition を追加してください。
+- Scope は disconnect/revocation route or action、server cleanup、sanitized status transitions、audit-safe event shape です。
 - token values、owner id value、provider channel id value、liveChatId value、Authorization header value、service_role key value、secret value、provider target metadata value は client/docs/PR body/browser storage/handoff payload に表示・保存しないでください。
-- Refresh failure は provider body や credentials を leak せず、client には sanitized status と reconnect guidance だけを返してください。
+- Repeated disconnect は idempotent または安全に報告し、revoked credentials が translator start に使われない境界を contract で確認してください。
 - UI 変更は最小限にし、必要なら `/account/integrations` または `/tools/comment-translator` の既存 sanitized status surface だけに閉じてください。
-- Live/provider execution、quota write、billing enforcement、browser storage、handoff payload、remote Supabase mutation/schema change は Task 5 の completion に必要な最小範囲を超えて変更しないでください。
+- Live/provider execution、quota write、billing enforcement、browser storage、handoff payload、remote Supabase mutation/schema change は Task 6 の completion に必要な最小範囲を超えて変更しないでください。
 
 Verification:
-- focused server/action contracts for token refresh and reconnect status
+- focused server/action contracts for disconnect/revocation status
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
@@ -244,7 +245,7 @@ Verification:
 - UI を変更した場合は該当 route の width checks at `390 / 820 / 1024 / 1280 / 1366px`
 
 Completion:
-- Task 5 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- Task 6 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
 - 未達なら commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

@@ -322,7 +322,8 @@ assert.deepEqual(
     "managed-secret-value",
     "oauth-access-token-value",
     "oauth-refresh-token-value",
-    "authorization-code-value"
+    "authorization-code-value",
+    "provider-channel-id-value"
   ],
   "UI wiring contract documents forbidden client-readable values"
 );
@@ -332,7 +333,6 @@ assert.deepEqual(
     status: "available",
     credentialReferenceId: "ytcred_ui_contract_001",
     provider: "youtube",
-    providerChannelId: "UC_ui_contract",
     scopeLabel: "youtube.readonly",
     scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
     expiresAtIso: "2026-06-02T16:00:00.000Z",
@@ -346,7 +346,7 @@ assert.deepEqual(
     provider: "youtube",
     reconnectRequired: false,
     credentialReferenceId: "ytcred_ui_contract_001",
-    providerChannelId: "UC_ui_contract",
+    providerChannelId: null,
     scopeLabel: "youtube.readonly",
     expiresAtIso: "2026-06-02T16:00:00.000Z",
     reason: null,
@@ -357,10 +357,10 @@ assert.deepEqual(
 
 assert.equal(
   uiWiring.createYouTubeOAuthCredentialStatusUiWiring({
-    status: "available",
+    status: "reconnect-required",
     credentialReferenceId: "ytcred_ui_contract_expired",
     provider: "youtube",
-    providerChannelId: "UC_ui_contract",
+    reason: "expired",
     scopeLabel: "youtube.readonly",
     scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
     expiresAtIso: "2026-06-02T12:00:00.000Z",
@@ -375,10 +375,10 @@ assert.equal(
 
 assert.equal(
   uiWiring.createYouTubeOAuthCredentialStatusUiWiring({
-    status: "available",
+    status: "reconnect-required",
     credentialReferenceId: "ytcred_ui_contract_revoked",
     provider: "youtube",
-    providerChannelId: "UC_ui_contract",
+    reason: "revoked",
     scopeLabel: "youtube.readonly",
     scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
     expiresAtIso: "2026-06-02T16:00:00.000Z",
@@ -862,6 +862,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-youtube-runtime-foundation.ts",
   "lib/comment-translator-youtube-oauth-token-store-foundation.ts",
   "lib/comment-translator-youtube-token-store-supabase-adapter.ts",
+  "lib/comment-translator-youtube-token-refresh-runtime.ts",
   "scripts/comment-translator-youtube-credential-source-decision-contract.mjs",
   "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
   "scripts/comment-translator-youtube-new-client-payload-credential-reference-source-contract.mjs",
@@ -870,6 +871,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs",
   "scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs",
   "scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs",
+  "scripts/comment-translator-youtube-token-refresh-reconnect-status-contract.mjs",
   "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
   "scripts/comment-translator-youtube-live-runtime-smoke-command-contract.mjs",
   "scripts/comment-translator-youtube-live-runtime-smoke-command.mjs",

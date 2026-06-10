@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import {
   authorizeYouTubeOAuthCredentialStatusCaller,
   createYouTubeOAuthCredentialStatusUnavailablePayload,
@@ -7,9 +8,17 @@ import {
   readYouTubeOAuthCredentialStatus
 } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import {
+  assessYouTubeOAuthCredentialTranslatorStartReadiness,
   createYouTubeOAuthCredentialDisconnectUnavailablePayload,
   readYouTubeOAuthCredentialDisconnectResult
 } from "@/lib/comment-translator-youtube-disconnect-runtime";
+import {
+  persistInMemoryCommentTranslatorActiveSession,
+  readCommentTranslatorSessionCommand,
+  readInMemoryCommentTranslatorActiveSession,
+  type CommentTranslatorSessionCommandIntent,
+  type CommentTranslatorSessionStopReason
+} from "@/lib/comment-translator-session-runtime";
 import {
   createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime,
   createTrustedYouTubeOAuthCredentialSupabaseStatusReader
@@ -80,6 +89,97 @@ export async function disconnectYouTubeOAuthCredentialAction(formData: FormData)
     callerAuthorization,
     credentialResolutionDisabled
   });
+}
+
+export async function startCommentTranslatorSessionAction(formData: FormData) {
+  return readCommentTranslatorSessionActionResult({
+    intent: "start",
+    formData
+  });
+}
+
+export async function stopCommentTranslatorSessionAction(formData: FormData) {
+  return readCommentTranslatorSessionActionResult({
+    intent: "stop",
+    formData,
+    stopReason: "user-stop"
+  });
+}
+
+export async function heartbeatCommentTranslatorSessionAction(formData: FormData) {
+  return readCommentTranslatorSessionActionResult({
+    intent: "heartbeat",
+    formData
+  });
+}
+
+async function readCommentTranslatorSessionActionResult({
+  intent,
+  formData,
+  stopReason
+}: {
+  intent: CommentTranslatorSessionCommandIntent;
+  formData: FormData;
+  stopReason?: CommentTranslatorSessionStopReason;
+}) {
+  const callerAuthorization = await readCallerAuthorization();
+  const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
+  const credentialReferenceId = readCredentialReferenceId(formData) ?? activeSession?.credentialReferenceId ?? null;
+  const credentialReadiness = credentialReferenceId
+    ? await readCredentialReadiness({ credentialReferenceId, callerAuthorization })
+    : assessYouTubeOAuthCredentialTranslatorStartReadiness(
+        createYouTubeOAuthCredentialStatusUnavailablePayload({
+          credentialReferenceId: "missing-credential-reference",
+          reason: "trusted-adapter-not-wired"
+        })
+      );
+  const state = await readCommentTranslatorSessionCommand({
+    intent,
+    nowMs: Date.now(),
+    plan: "free",
+    callerAuthorization,
+    credentialReadiness,
+    activeSession,
+    usage: {
+      dailyUsedMs: 0,
+      translatedMessagesInCurrentMinute: 0,
+      providerBudgetAvailable: true,
+      globalBudgetAvailable: true,
+      aiBudgetAvailable: true,
+      translationProviderAvailable: true
+    },
+    browserConnected: intent !== "stop",
+    stopReason,
+    createSessionReferenceId: () => `cts_${randomUUID()}`
+  });
+
+  persistInMemoryCommentTranslatorActiveSession({ callerAuthorization, state });
+
+  return state;
+}
+
+async function readCredentialReadiness({
+  credentialReferenceId,
+  callerAuthorization
+}: {
+  credentialReferenceId: string;
+  callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
+}) {
+  const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled({
+    [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
+  });
+  const trustedStatusReader =
+    credentialResolutionDisabled || callerAuthorization.status !== "authorized"
+      ? null
+      : createTrustedYouTubeOAuthCredentialSupabaseStatusReader();
+  const status = await readYouTubeOAuthCredentialStatus({
+    credentialReferenceId,
+    trustedAdapter: trustedStatusReader?.trustedAdapter ?? null,
+    callerAuthorization,
+    credentialResolutionDisabled
+  });
+
+  return assessYouTubeOAuthCredentialTranslatorStartReadiness(status);
 }
 
 async function readCallerAuthorization(): Promise<YouTubeOAuthCredentialStatusCallerAuthorization> {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import {
   getCommentTranslatorSessionStatusAction,
   getYouTubeOAuthCredentialStatusAction,
@@ -800,6 +801,30 @@ export function CommentTranslatorDock({
                   <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
                     {copy.operatorSession.safeBoundary}
                   </p>
+                </div>
+                <div
+                  data-comment-translator-billing-entry="stripe-paid-plan"
+                  className="min-w-0 overflow-hidden rounded-base border border-cyan-200 bg-cyan-50/45 p-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="text-sm font-black text-foreground">
+                      {locale === "ja" ? "Free / Paid プラン" : "Free / Paid plan"}
+                    </h3>
+                    <span className="rounded-base border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-black text-cyan-700">
+                      {sessionState.plan === "paid" ? "Paid" : "Free"}
+                    </span>
+                  </div>
+                  <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
+                    {locale === "ja"
+                      ? "Free は常に利用できます。Paid の購入・管理はアカウントの billing 画面で扱います。"
+                      : "Free remains available. Paid purchase and management are handled from account billing."}
+                  </p>
+                  <Link
+                    href="/account/billing"
+                    className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-base border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"
+                  >
+                    {locale === "ja" ? "プランと支払いを開く" : "Open plans and billing"}
+                  </Link>
                 </div>
               </div>
             </section>

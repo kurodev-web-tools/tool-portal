@@ -19,6 +19,7 @@ import {
   readInMemoryCommentTranslatorUsageSnapshot,
   recordInMemoryCommentTranslatorSessionLedgerState
 } from "@/lib/comment-translator-usage-ledger-runtime";
+import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -30,11 +31,13 @@ export async function POST(request: NextRequest) {
   const callerAuthorization = await readSessionCallerAuthorization();
   const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
   const nowMs = Date.now();
+  const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const usage = readInMemoryCommentTranslatorUsageSnapshot({
     callerAuthorization,
     nowMs,
-    plan: "free",
-    activeSession
+    plan: billingSnapshot.plan,
+    activeSession,
+    paidEntitlement: billingSnapshot.plan === "paid" ? billingSnapshot.planEntitlement : undefined
   });
   const credentialReferenceId = command.credentialReferenceId ?? activeSession?.credentialReferenceId ?? null;
   const credentialReadiness = credentialReferenceId
@@ -49,7 +52,7 @@ export async function POST(request: NextRequest) {
   const state = await readCommentTranslatorSessionCommand({
     intent: command.intent,
     nowMs,
-    plan: "free",
+    plan: billingSnapshot.plan,
     callerAuthorization,
     credentialReadiness,
     activeSession,

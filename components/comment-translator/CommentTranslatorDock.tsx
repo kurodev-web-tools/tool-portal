@@ -1,7 +1,13 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { getYouTubeOAuthCredentialStatusAction } from "@/app/tools/comment-translator/actions";
+import {
+  getCommentTranslatorSessionStatusAction,
+  getYouTubeOAuthCredentialStatusAction,
+  heartbeatCommentTranslatorSessionAction,
+  startCommentTranslatorSessionAction,
+  stopCommentTranslatorSessionAction
+} from "@/app/tools/comment-translator/actions";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import {
   commentTranslatorManualSamples,
@@ -39,9 +45,39 @@ type SelectOption = {
 
 type CommentTranslatorUiCopy = (typeof commentTranslatorUiCopy)[keyof typeof commentTranslatorUiCopy];
 type OperatorFlowChecklistState = "done" | "waiting" | "gated";
+type OperatorSessionStopReason = keyof CommentTranslatorUiCopy["operatorSession"]["stopReasons"];
+type OperatorSessionNextAction = keyof CommentTranslatorUiCopy["operatorSession"]["nextActions"];
+type OperatorSessionState = {
+  status: keyof CommentTranslatorUiCopy["operatorSession"]["states"];
+  plan: "free" | "paid";
+  elapsedSeconds: number;
+  remainingSessionSeconds: number;
+  remainingDailySeconds: number;
+  stopReason: OperatorSessionStopReason | null;
+  nextAction: OperatorSessionNextAction;
+};
+
+const freeDailyLimitSeconds = 30 * 60;
+const initialOperatorSessionState: OperatorSessionState = {
+  status: "not-started",
+  plan: "free",
+  elapsedSeconds: 0,
+  remainingSessionSeconds: freeDailyLimitSeconds,
+  remainingDailySeconds: freeDailyLimitSeconds,
+  stopReason: null,
+  nextAction: "press-start"
+};
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
+}
+
+function formatDuration(seconds: number) {
+  const safeSeconds = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainingSeconds = safeSeconds % 60;
+
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
 }
 
 function statusClassName(status: CommentTranslatorComment["status"]) {
@@ -94,6 +130,18 @@ function operatorFlowTone(status: "ready" | "standby" | "blocked") {
   }
 
   return "warning";
+}
+
+function operatorSessionTone(status: OperatorSessionState["status"]) {
+  if (status === "active") {
+    return "normal";
+  }
+
+  if (status === "stopped") {
+    return "warning";
+  }
+
+  return "empty";
 }
 
 function statusLabel(comment: CommentTranslatorComment, copy: CommentTranslatorUiCopy) {
@@ -337,7 +385,10 @@ export function CommentTranslatorDock({
     null
   );
   const [credentialStatusError, setCredentialStatusError] = useState<string | null>(null);
+  const [sessionState, setSessionState] = useState<OperatorSessionState>(initialOperatorSessionState);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [isCredentialStatusPending, startCredentialStatusTransition] = useTransition();
+  const [isSessionPending, startSessionTransition] = useTransition();
   const singleCommentInputRef = useRef<HTMLInputElement>(null);
   const multilinePasteInputRef = useRef<HTMLTextAreaElement>(null);
   const credentialReferenceId = youtubeCredentialReferenceSource.credentialReference.credentialReferenceId;
@@ -479,6 +530,15 @@ export function CommentTranslatorDock({
       copy: copy.operatorFlow.steps[step.id]
     };
   });
+  const sessionDailyUsedSeconds = Math.max(0, freeDailyLimitSeconds - sessionState.remainingDailySeconds);
+  const sessionStopReason = sessionState.stopReason ? copy.operatorSession.stopReasons[sessionState.stopReason] : "-";
+  const sessionNextAction = copy.operatorSession.nextActions[sessionState.nextAction];
+  const showReconnectGuidance =
+    credentialStatusState !== "available" ||
+    sessionState.nextAction === "reconnect-or-sign-in" ||
+    sessionState.stopReason === "auth-failed" ||
+    sessionState.stopReason === "token-refresh-failed" ||
+    sessionState.stopReason === "reconnect-required";
 
   function refreshCredentialStatus() {
     startCredentialStatusTransition(async () => {
@@ -493,6 +553,32 @@ export function CommentTranslatorDock({
         setCredentialStatusError(copy.credentialStatus.refreshFailed);
       }
     });
+  }
+
+  function runSessionCommand(intent: "status" | "start" | "stop" | "heartbeat") {
+    startSessionTransition(async () => {
+      const formData = new FormData();
+      formData.append("credentialReferenceId", credentialReferenceId);
+
+      try {
+        const state =
+          intent === "start"
+            ? await startCommentTranslatorSessionAction(formData)
+            : intent === "stop"
+              ? await stopCommentTranslatorSessionAction(formData)
+              : intent === "heartbeat"
+                ? await heartbeatCommentTranslatorSessionAction(formData)
+                : await getCommentTranslatorSessionStatusAction(formData);
+        setSessionState(state);
+        setSessionError(null);
+      } catch {
+        setSessionError(copy.operatorSession.actionFailed);
+      }
+    });
+  }
+
+  function refreshSessionState() {
+    runSessionCommand(sessionState.status === "active" ? "heartbeat" : "status");
   }
 
   function clearManualDraft() {
@@ -649,6 +735,70 @@ export function CommentTranslatorDock({
                   </button>
                   <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
                     {copy.credentialStatus.safeBoundary}
+                  </p>
+                </div>
+                <div
+                  data-public-operator-session-ui="sanitized-session-usage-only"
+                  className="min-w-0 overflow-hidden rounded-base border border-border bg-background/65 p-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="text-sm font-black text-foreground">{copy.sections.operatorSession}</h3>
+                    <span
+                      className={[
+                        "rounded-base border px-2 py-1 text-xs font-black",
+                        toneClassName(operatorSessionTone(sessionState.status))
+                      ].join(" ")}
+                    >
+                      {isSessionPending ? copy.operatorSession.pending : copy.operatorSession.states[sessionState.status]}
+                    </span>
+                  </div>
+                  <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
+                    {copy.operatorSession.helper}
+                  </p>
+                  <dl className="mt-3 grid gap-2 text-sm">
+                    <CredentialStatusRow label={copy.fields.providerConnection} value={credentialStatusLabel} />
+                    <CredentialStatusRow label={copy.fields.sessionState} value={copy.operatorSession.states[sessionState.status]} />
+                    <CredentialStatusRow label={copy.fields.elapsed} value={formatDuration(sessionState.elapsedSeconds)} />
+                    <CredentialStatusRow label={copy.fields.dailyUsed} value={formatDuration(sessionDailyUsedSeconds)} />
+                    <CredentialStatusRow label={copy.fields.dailyRemaining} value={formatDuration(sessionState.remainingDailySeconds)} />
+                    <CredentialStatusRow label={copy.fields.sessionRemaining} value={formatDuration(sessionState.remainingSessionSeconds)} />
+                    <CredentialStatusRow label={copy.fields.stopReason} value={sessionError ?? sessionStopReason} />
+                    <CredentialStatusRow label={copy.fields.nextAction} value={sessionNextAction} />
+                    <CredentialStatusRow label={copy.fields.perMinuteCap} value={copy.operatorSession.perMinuteCapHelper} />
+                  </dl>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+                    <button
+                      type="button"
+                      onClick={() => runSessionCommand("start")}
+                      disabled={isSessionPending || sessionState.status === "active"}
+                      className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                    >
+                      {isSessionPending ? copy.operatorSession.pending : copy.actions.startSession}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => runSessionCommand("stop")}
+                      disabled={isSessionPending || sessionState.status !== "active"}
+                      className="min-h-10 rounded-base border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                    >
+                      {copy.actions.stopSession}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={refreshSessionState}
+                      disabled={isSessionPending}
+                      className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                    >
+                      {copy.actions.refreshSession}
+                    </button>
+                  </div>
+                  {showReconnectGuidance ? (
+                    <p className="mt-3 break-words rounded-base border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">
+                      {copy.operatorSession.reconnectGuidance}
+                    </p>
+                  ) : null}
+                  <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
+                    {copy.operatorSession.safeBoundary}
                   </p>
                 </div>
               </div>

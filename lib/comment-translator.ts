@@ -133,6 +133,7 @@ export const commentTranslatorUiCopy = {
       quota: "キャッシュ / クォータ確認",
       skipped: "スキップ理由",
       credentialStatus: "YouTube認証ステータス",
+      operatorSession: "セッション操作",
       operatorFlow: "オペレーター確認フロー",
       safety: "公開版の利用条件"
     },
@@ -178,7 +179,10 @@ export const commentTranslatorUiCopy = {
       insertSample: "サンプル挿入",
       clearDraft: "下書きをクリア",
       clearManualSession: "手入力セッションをクリア",
-      refreshCredentialStatus: "認証ステータスを確認"
+      refreshCredentialStatus: "認証ステータスを確認",
+      startSession: "Start",
+      stopSession: "Stop",
+      refreshSession: "状態更新"
     },
     manualResults: {
       translated: { label: "翻訳済みプレビュー", helper: "決定的なプレビュー翻訳を付ける" },
@@ -191,18 +195,66 @@ export const commentTranslatorUiCopy = {
       credentialReference: "Credential reference",
       scope: "Scope",
       expires: "Expires",
-      reason: "Reason"
+      reason: "Reason",
+      sessionState: "状態",
+      elapsed: "経過",
+      dailyUsed: "本日の使用",
+      dailyRemaining: "本日の残り",
+      sessionRemaining: "セッション残り",
+      stopReason: "停止理由",
+      nextAction: "次の操作",
+      providerConnection: "接続",
+      perMinuteCap: "分あたり上限"
     },
     credentialStatus: {
       pending: "確認中",
       unchecked: "未確認",
       refreshFailed: "認証ステータスを確認できませんでした",
-      safeBoundary: "画面にはopaqueなcredentialReferenceIdとsanitized metadataだけを表示し、provider channel / liveChatId / token値は表示しません。",
+      safeBoundary: "画面にはopaqueなcredentialReferenceIdとsanitized metadataだけを表示し、機密の接続値や配信ターゲット値は表示しません。",
       states: {
         available: "利用可能",
         "reconnect-required": "再接続が必要",
         unavailable: "未利用",
         "credential-resolution-disabled": "解決を停止中"
+      }
+    },
+    operatorSession: {
+      helper: "Start後にだけserver-owned sessionが進みます。このパネルはsanitized session / usage metadataだけを表示します。",
+      pending: "処理中",
+      actionFailed: "セッション状態を更新できませんでした",
+      reconnectGuidance: "アカウント連携でYouTubeを再接続してから、認証ステータスを再確認してください。",
+      safeBoundary: "機密の接続値、アカウント内部値、配信ターゲット値は表示・保存しません。",
+      perMinuteCapHelper: "Free枠は30翻訳メッセージ/分です。",
+      states: {
+        "not-started": "未開始",
+        active: "実行中",
+        stopped: "停止中"
+      },
+      nextActions: {
+        "press-start": "Startできます",
+        "send-heartbeat-or-stop": "状態更新またはStop",
+        "session-stopped": "必要なら再Start",
+        "reconnect-or-sign-in": "再接続またはサインイン",
+        "wait-for-limit-reset": "上限リセット待ち"
+      },
+      stopReasons: {
+        "user-stop": "ユーザー停止",
+        "stream-ended": "配信終了",
+        "stream-unavailable": "配信を利用できません",
+        "browser-disconnect": "ブラウザ切断",
+        "missing-heartbeat": "heartbeat未到達",
+        "auth-failed": "認証失敗",
+        "token-refresh-failed": "接続更新失敗",
+        "reconnect-required": "再接続が必要",
+        "daily-time-limit": "日次上限",
+        "session-time-limit": "セッション上限",
+        "translated-message-cap": "分あたり翻訳上限",
+        "provider-quota-stop": "provider quota停止",
+        "global-budget-stop": "共通予算停止",
+        "ai-budget-stop": "AI予算停止",
+        "translation-provider-limit": "翻訳provider制限",
+        "session-limit": "同時セッション上限",
+        "terminal-provider-error": "provider終端エラー"
       }
     },
     operatorFlow: {
@@ -320,7 +372,7 @@ export const commentTranslatorUiCopy = {
       "YouTube API取得とAI翻訳は、ログインユーザーがStartしたセッション内だけで実行します。",
       "YouTube接続だけでは、バックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
       "初期Free枠は30分/日、30分/セッション、1 active session、30翻訳メッセージ/分です。",
-      "OAuth token、provider channel、liveChatId、Authorization headerは画面やブラウザ保存領域に出しません。",
+      "機密の接続値、配信ターゲット値、認可関連の内部値は画面やブラウザ保存領域に出しません。",
       "raw text loggingは標準で無効です。診断は短期間かつsanitizedに限定します。",
       "有料プランは準備中で、Stripe連携と上限緩和は後続タスクで扱います。"
     ]
@@ -340,6 +392,7 @@ export const commentTranslatorUiCopy = {
       quota: "Cache / Quota Preview",
       skipped: "Skipped Reasons",
       credentialStatus: "YouTube Credential Status",
+      operatorSession: "Session Controls",
       operatorFlow: "Operator Flow",
       safety: "Public Release Terms"
     },
@@ -385,7 +438,10 @@ export const commentTranslatorUiCopy = {
       insertSample: "Insert samples",
       clearDraft: "Clear draft",
       clearManualSession: "Clear manual session",
-      refreshCredentialStatus: "Check credential status"
+      refreshCredentialStatus: "Check credential status",
+      startSession: "Start",
+      stopSession: "Stop",
+      refreshSession: "Refresh status"
     },
     manualResults: {
       translated: { label: "Translated preview", helper: "Attach deterministic preview translation" },
@@ -398,18 +454,66 @@ export const commentTranslatorUiCopy = {
       credentialReference: "Credential reference",
       scope: "Scope",
       expires: "Expires",
-      reason: "Reason"
+      reason: "Reason",
+      sessionState: "State",
+      elapsed: "Elapsed",
+      dailyUsed: "Daily used",
+      dailyRemaining: "Daily remaining",
+      sessionRemaining: "Session remaining",
+      stopReason: "Stop reason",
+      nextAction: "Next action",
+      providerConnection: "Connection",
+      perMinuteCap: "Per-minute cap"
     },
     credentialStatus: {
       pending: "Checking",
       unchecked: "Unchecked",
       refreshFailed: "Could not check credential status",
-      safeBoundary: "The client displays only an opaque credentialReferenceId and sanitized metadata. Provider channel, liveChatId, and token values are not shown.",
+      safeBoundary: "The client displays only an opaque credentialReferenceId and sanitized metadata. Sensitive connection values and stream target values are not shown.",
       states: {
         available: "Available",
         "reconnect-required": "Reconnect required",
         unavailable: "Unavailable",
         "credential-resolution-disabled": "Resolution disabled"
+      }
+    },
+    operatorSession: {
+      helper: "Only a server-owned session advances after Start. This panel displays sanitized session and usage metadata only.",
+      pending: "Working",
+      actionFailed: "Could not update session state",
+      reconnectGuidance: "Reconnect YouTube from account integrations, then check credential status again.",
+      safeBoundary: "Sensitive connection values, internal account values, and stream target values are not displayed or stored.",
+      perMinuteCapHelper: "Free plan allows 30 translated messages/min.",
+      states: {
+        "not-started": "Not started",
+        active: "Active",
+        stopped: "Stopped"
+      },
+      nextActions: {
+        "press-start": "Ready to Start",
+        "send-heartbeat-or-stop": "Refresh status or Stop",
+        "session-stopped": "Start again if needed",
+        "reconnect-or-sign-in": "Reconnect or sign in",
+        "wait-for-limit-reset": "Wait for limit reset"
+      },
+      stopReasons: {
+        "user-stop": "User stop",
+        "stream-ended": "Stream ended",
+        "stream-unavailable": "Stream unavailable",
+        "browser-disconnect": "Browser disconnected",
+        "missing-heartbeat": "Missing heartbeat",
+        "auth-failed": "Auth failed",
+        "token-refresh-failed": "Connection refresh failed",
+        "reconnect-required": "Reconnect required",
+        "daily-time-limit": "Daily time limit",
+        "session-time-limit": "Session time limit",
+        "translated-message-cap": "Translated-message cap",
+        "provider-quota-stop": "Provider quota stop",
+        "global-budget-stop": "Global budget stop",
+        "ai-budget-stop": "AI budget stop",
+        "translation-provider-limit": "Translation provider limit",
+        "session-limit": "Session limit",
+        "terminal-provider-error": "Terminal provider error"
       }
     },
     operatorFlow: {
@@ -527,7 +631,7 @@ export const commentTranslatorUiCopy = {
       "YouTube API reads and AI translation run only inside a session explicitly started by the signed-in user.",
       "Connecting YouTube alone does not start background monitoring, polling, translation, or quota use.",
       "Initial Free limits are 30 min/day, 30 min/session, 1 active session, and 30 translated messages/min.",
-      "OAuth tokens, provider channel, liveChatId, and Authorization headers are not shown or stored in the browser.",
+      "Sensitive connection values, stream target values, and internal authorization details are not shown or stored in the browser.",
       "Raw text logging is off by default. Diagnostics stay short-lived and sanitized.",
       "Paid plans are planned; Stripe integration and higher limits are handled in later tasks."
     ]

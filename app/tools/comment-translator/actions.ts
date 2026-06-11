@@ -95,6 +95,13 @@ export async function disconnectYouTubeOAuthCredentialAction(formData: FormData)
   });
 }
 
+export async function getCommentTranslatorSessionStatusAction(formData: FormData) {
+  return readCommentTranslatorSessionActionResult({
+    intent: "status",
+    formData
+  });
+}
+
 export async function startCommentTranslatorSessionAction(formData: FormData) {
   return readCommentTranslatorSessionActionResult({
     intent: "start",

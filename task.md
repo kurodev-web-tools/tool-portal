@@ -170,7 +170,7 @@ Use one Codex thread, one feature branch, and one PR per task. These tasks are r
 
 19. Translation provider and cost policy finalization
    - Goal: choose the public provider policy before live/provider smoke and paid launch.
-   - Scope: compare DeepL, Azure Translator, OpenAI mini, and Gemini Flash/Lite for cost, quality, privacy/data-use terms, supported JA/EN/KR/CN to JA/EN pairs, latency, fallback behavior, and monthly budget controls.
+   - Scope: compare DeepL, Azure Translator, OpenAI mini, Gemini Flash/Lite, and Cloudflare Workers AI for cost, quality, privacy/data-use terms, supported JA/EN/KR/CN to JA/EN pairs, latency, fallback behavior, deployment fit, and monthly budget controls.
    - Completion criteria: provider policy is recorded without secrets; initial recommendation covers Free/Paid provider selection, fallback on cap/error, budget stop thresholds, and provider-specific environment names only.
    - Verification: docs/contract inspection, provider policy contract, no-secret scan, `git diff --check`. No live provider calls unless separately approved.
 
@@ -236,7 +236,7 @@ These decisions are fixed for the current public-release roadmap unless the user
 - Provider scope: YouTube ships first; Twitch remains future unless explicitly pulled into public-release scope.
 - Raw text logging: disabled by default; diagnostics are short-lived and sanitized.
 - Account path: `/account/integrations` is the preferred provider settings entry; `/tools/comment-translator` should also show a direct integration CTA when YouTube is not connected.
-- Translation provider policy: current runtime includes DeepL provider support, but final public provider selection remains a pre-main task. The expected comparison set is Azure Translator for low-cost/free-tier baseline, OpenAI mini for paid higher-quality translation, Gemini Flash/Lite for cost comparison, and DeepL for quality comparison.
+- Translation provider policy: current runtime includes DeepL provider support, but final public provider selection remains a pre-main task. The expected comparison set is Azure Translator for low-cost/free-tier baseline, OpenAI mini for paid higher-quality translation, Gemini Flash/Lite for cost comparison, Cloudflare Workers AI for Cloudflare-native low-cost/fallback comparison, and DeepL for quality comparison.
 
 ## Thread And PR Handoff Rules
 

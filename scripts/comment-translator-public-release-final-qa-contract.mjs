@@ -140,7 +140,7 @@ assert.match(taskSource, /Chrome authenticated smoke[\s\S]*no console logs/i, "t
 assert.match(taskSource, /preview-only/i, "task board records preview-only limitation");
 assert.match(taskSource, /Pre-Main Launch Hardening Roadmap[\s\S]*17\. Private launch access gate/i, "task board records private launch gate follow-up");
 assert.match(taskSource, /18\. Operator UX readiness polish[\s\S]*\/account\/integrations/i, "task board records operator UX follow-up");
-assert.match(taskSource, /19\. Translation provider and cost policy finalization[\s\S]*Azure Translator[\s\S]*OpenAI mini[\s\S]*Gemini Flash\/Lite[\s\S]*DeepL/i, "task board records provider policy follow-up");
+assert.match(taskSource, /19\. Translation provider and cost policy finalization[\s\S]*Azure Translator[\s\S]*OpenAI mini[\s\S]*Gemini Flash\/Lite[\s\S]*Cloudflare Workers AI[\s\S]*DeepL/i, "task board records provider policy follow-up");
 assert.match(taskSource, /20\. Translation provider implementation alignment[\s\S]*Free\/Paid provider routing/i, "task board records provider implementation follow-up");
 assert.match(taskSource, /21\. Stripe live readiness and billing operations[\s\S]*live-mode actions only after explicit approval/i, "task board records Stripe live readiness follow-up");
 assert.match(taskSource, /22\. Security and privacy final review[\s\S]*no-secret scan/i, "task board records security review follow-up");

@@ -5,11 +5,13 @@ import {
   createCommentTranslatorBillingPortalAction
 } from "@/app/account/billing/actions";
 import { AccountBillingShell } from "@/components/account/AccountBillingShell";
+import { CommentTranslatorPrivateLaunchUnavailable } from "@/components/comment-translator/CommentTranslatorPrivateLaunchUnavailable";
 import { PortalShell } from "@/components/portal/PortalShell";
 import {
   createCommentTranslatorBillingBrowserSafeViewModel,
   readCommentTranslatorBillingEntitlementSnapshot
 } from "@/lib/comment-translator-billing-runtime";
+import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { authorizeYouTubeOAuthCredentialStatusCaller } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { getAccountSessionState } from "@/lib/supabase/session";
@@ -40,6 +42,16 @@ export default async function AccountBillingPage({ searchParams }: AccountBillin
 
   if (recoveryPending) {
     redirect("/account/security?auth=recovery-pending");
+  }
+
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+
+  if (launchAccess.status === "blocked") {
+    return (
+      <PortalShell>
+        <CommentTranslatorPrivateLaunchUnavailable surface="billing" access={launchAccess} />
+      </PortalShell>
+    );
   }
 
   const callerAuthorization = authorizeYouTubeOAuthCredentialStatusCaller({

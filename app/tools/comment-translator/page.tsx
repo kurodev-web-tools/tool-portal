@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { CommentTranslatorPrivateLaunchUnavailable } from "@/components/comment-translator/CommentTranslatorPrivateLaunchUnavailable";
 import { CommentTranslatorDock } from "@/components/comment-translator/CommentTranslatorDock";
 import { PortalShell } from "@/components/portal/PortalShell";
+import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { createYouTubeOAuthNewClientPayloadCredentialReferenceSource } from "@/lib/comment-translator-youtube-client-safe-credential-reference-source";
+import { getAccountSessionState } from "@/lib/supabase/session";
 
 export const metadata: Metadata = {
   title: "Kuro Live Comment Translator",
@@ -35,7 +38,18 @@ const youtubeCredentialReferenceSource = createYouTubeOAuthNewClientPayloadCrede
   }
 });
 
-export default function CommentTranslatorPage() {
+export default async function CommentTranslatorPage() {
+  const accountSession = await getAccountSessionState();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+
+  if (launchAccess.status === "blocked") {
+    return (
+      <PortalShell mode="workspace">
+        <CommentTranslatorPrivateLaunchUnavailable surface="tool" access={launchAccess} />
+      </PortalShell>
+    );
+  }
+
   return (
     <PortalShell mode="workspace">
       <CommentTranslatorDock youtubeCredentialReferenceSource={youtubeCredentialReferenceSource} />

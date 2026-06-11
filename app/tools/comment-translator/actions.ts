@@ -25,6 +25,10 @@ import {
 } from "@/lib/comment-translator-usage-ledger-runtime";
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import {
+  createCommentTranslatorPrivateLaunchBlockedSessionState,
+  readCommentTranslatorPrivateLaunchAccess
+} from "@/lib/comment-translator-private-launch-access-gate";
+import {
   createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime,
   createTrustedYouTubeOAuthCredentialSupabaseStatusReader
 } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
@@ -48,12 +52,18 @@ export async function getYouTubeOAuthCredentialStatusAction(formData: FormData) 
     });
   }
 
+  const callerAuthorization = await readCallerAuthorization();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  if (launchAccess.status === "blocked") {
+    return createYouTubeOAuthCredentialStatusUnavailablePayload({
+      credentialReferenceId,
+      reason: "private-launch-gated"
+    });
+  }
+
   const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled({
     [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
   });
-  const callerAuthorization = credentialResolutionDisabled
-    ? authorizeYouTubeOAuthCredentialStatusCaller({ callerUserId: null })
-    : await readCallerAuthorization();
   const trustedStatusReader =
     credentialResolutionDisabled || callerAuthorization.status !== "authorized"
       ? null
@@ -77,12 +87,18 @@ export async function disconnectYouTubeOAuthCredentialAction(formData: FormData)
     });
   }
 
+  const callerAuthorization = await readCallerAuthorization();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  if (launchAccess.status === "blocked") {
+    return createYouTubeOAuthCredentialDisconnectUnavailablePayload({
+      credentialReferenceId,
+      reason: "private-launch-gated"
+    });
+  }
+
   const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled({
     [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
   });
-  const callerAuthorization = credentialResolutionDisabled
-    ? authorizeYouTubeOAuthCredentialStatusCaller({ callerUserId: null })
-    : await readCallerAuthorization();
   const trustedDisconnectRuntime =
     credentialResolutionDisabled || callerAuthorization.status !== "authorized"
       ? null
@@ -135,6 +151,15 @@ async function readCommentTranslatorSessionActionResult({
   stopReason?: CommentTranslatorSessionStopReason;
 }) {
   const callerAuthorization = await readCallerAuthorization();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  if (launchAccess.status === "blocked") {
+    return createCommentTranslatorPrivateLaunchBlockedSessionState({
+      nowMs: Date.now(),
+      plan: "free",
+      access: launchAccess
+    });
+  }
+
   const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
   const nowMs = Date.now();
   const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });

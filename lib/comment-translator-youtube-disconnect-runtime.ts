@@ -11,7 +11,8 @@ export type YouTubeOAuthCredentialDisconnectUnavailableReason =
   | "trusted-disconnect-adapter-not-wired"
   | "trusted-disconnect-query-failed"
   | "auth-unavailable"
-  | "caller-not-authenticated";
+  | "caller-not-authenticated"
+  | "private-launch-gated";
 
 export type YouTubeOAuthCredentialDisconnectAuditEvent = {
   type: "youtube-oauth-credential-disconnect";
@@ -117,6 +118,7 @@ export type YouTubeOAuthCredentialTranslatorStartReadiness =
         | "trusted-adapter-query-failed"
         | "auth-unavailable"
         | "caller-not-authenticated"
+        | "private-launch-gated"
         | "credential-resolution-disabled";
       translatorStartAllowed: false;
       reconnectGuidance: "reconnect-youtube";

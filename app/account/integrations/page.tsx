@@ -7,6 +7,8 @@ import {
 } from "@/app/account/actions";
 import { AccountIntegrationsShell } from "@/components/account/AccountIntegrationsShell";
 import { PortalShell } from "@/components/portal/PortalShell";
+import { CommentTranslatorPrivateLaunchUnavailable } from "@/components/comment-translator/CommentTranslatorPrivateLaunchUnavailable";
+import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { createYouTubeAccountIntegrationViewModel } from "@/lib/comment-translator-youtube-account-integration";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { getAccountSessionState } from "@/lib/supabase/session";
@@ -37,6 +39,16 @@ export default async function AccountIntegrationsPage({ searchParams }: AccountI
 
   if (recoveryPending) {
     redirect("/account/security?auth=recovery-pending");
+  }
+
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+
+  if (launchAccess.status === "blocked") {
+    return (
+      <PortalShell>
+        <CommentTranslatorPrivateLaunchUnavailable surface="integrations" access={launchAccess} />
+      </PortalShell>
+    );
   }
 
   return (

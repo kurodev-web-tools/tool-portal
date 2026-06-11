@@ -2,10 +2,12 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { normalizeLocale } from "@/lib/locale";
 import { normalizeThemePreference } from "@/lib/local-preferences";
 import { clearRecoverySessionPending, isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getAccountSessionState } from "@/lib/supabase/session";
 
 const allowedAuthNextPaths = new Set([
   "/",
@@ -323,13 +325,31 @@ export async function saveLocaleThemePreferenceAction(formData: FormData) {
 }
 
 export async function startYouTubeIntegrationConnectAction() {
+  const accountSession = await getAccountSessionState();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    accountIntegrationsRedirect("private-launch-gated");
+  }
+
   accountIntegrationsRedirect("youtube-connect-prepared");
 }
 
 export async function reconnectYouTubeIntegrationAction() {
+  const accountSession = await getAccountSessionState();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    accountIntegrationsRedirect("private-launch-gated");
+  }
+
   accountIntegrationsRedirect("youtube-reconnect-prepared");
 }
 
 export async function disconnectYouTubeIntegrationAction() {
+  const accountSession = await getAccountSessionState();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    accountIntegrationsRedirect("private-launch-gated");
+  }
+
   accountIntegrationsRedirect("youtube-disconnect-prepared");
 }

@@ -6,11 +6,17 @@ import {
   createCommentTranslatorStripeCheckoutSessionResult,
   createCommentTranslatorStripePortalSessionResult
 } from "@/lib/comment-translator-billing-runtime";
+import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { authorizeYouTubeOAuthCredentialStatusCaller } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import { getAccountSessionState } from "@/lib/supabase/session";
 
 export async function createCommentTranslatorBillingCheckoutAction() {
   const accountSession = await getAccountSessionState();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    redirect("/account/billing?billing=private-launch-gated");
+  }
+
   const callerAuthorization = authorizeYouTubeOAuthCredentialStatusCaller({
     callerUserId: accountSession.authStatus === "signed-in" ? accountSession.user?.id ?? null : null,
     authUnavailable: accountSession.authStatus === "unavailable"
@@ -33,6 +39,11 @@ export async function createCommentTranslatorBillingCheckoutAction() {
 
 export async function createCommentTranslatorBillingPortalAction() {
   const accountSession = await getAccountSessionState();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    redirect("/account/billing?billing=private-launch-gated");
+  }
+
   const callerAuthorization = authorizeYouTubeOAuthCredentialStatusCaller({
     callerUserId: accountSession.authStatus === "signed-in" ? accountSession.user?.id ?? null : null,
     authUnavailable: accountSession.authStatus === "unavailable"

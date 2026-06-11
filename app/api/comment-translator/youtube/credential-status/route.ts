@@ -7,6 +7,7 @@ import {
 } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import { createTrustedYouTubeOAuthCredentialSupabaseStatusReader } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
+import { readCommentTranslatorPrivateLaunchAccess } from "@/lib/comment-translator-private-launch-access-gate";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -30,9 +31,18 @@ export async function GET(request: NextRequest) {
   const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled({
     [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
   });
-  const callerAuthorization = credentialResolutionDisabled
-    ? authorizeYouTubeOAuthCredentialStatusCaller({ callerUserId: null })
-    : await readCallerAuthorization();
+  const callerAuthorization = await readCallerAuthorization();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  if (launchAccess.status === "blocked") {
+    return NextResponse.json(
+      createYouTubeOAuthCredentialStatusUnavailablePayload({
+        credentialReferenceId,
+        reason: "private-launch-gated"
+      }),
+      { status: 403 }
+    );
+  }
+
   const trustedStatusReader =
     credentialResolutionDisabled || callerAuthorization.status !== "authorized"
       ? null

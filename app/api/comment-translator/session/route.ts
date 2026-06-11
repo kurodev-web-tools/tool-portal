@@ -20,6 +20,10 @@ import {
   recordInMemoryCommentTranslatorSessionLedgerState
 } from "@/lib/comment-translator-usage-ledger-runtime";
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
+import {
+  createCommentTranslatorPrivateLaunchBlockedSessionState,
+  readCommentTranslatorPrivateLaunchAccess
+} from "@/lib/comment-translator-private-launch-access-gate";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +33,18 @@ const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DIS
 export async function POST(request: NextRequest) {
   const command = await readSessionCommand(request);
   const callerAuthorization = await readSessionCallerAuthorization();
+  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  if (launchAccess.status === "blocked") {
+    return NextResponse.json(
+      createCommentTranslatorPrivateLaunchBlockedSessionState({
+        nowMs: Date.now(),
+        plan: "free",
+        access: launchAccess
+      }),
+      { status: 403 }
+    );
+  }
+
   const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
   const nowMs = Date.now();
   const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });

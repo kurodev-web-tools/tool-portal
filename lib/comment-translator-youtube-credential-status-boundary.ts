@@ -15,7 +15,8 @@ export type YouTubeOAuthCredentialStatusUnavailableReason =
   | "trusted-adapter-not-wired"
   | "trusted-adapter-query-failed"
   | "auth-unavailable"
-  | "caller-not-authenticated";
+  | "caller-not-authenticated"
+  | "private-launch-gated";
 
 export type YouTubeOAuthCredentialBrowserReadableStatus =
   | YouTubeOAuthCredentialRefreshBrowserReadableStatus

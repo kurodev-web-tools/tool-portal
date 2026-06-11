@@ -419,7 +419,7 @@ assert.equal(tokenMaterialAvailabilityPayload.providerAccess, "not-run-token-mat
 const operatorLocalReadyEnv = {
   ...readyEnv,
   YOUTUBE_OWNER_VERIFICATION_SMOKE_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER: "server-only-test-authorization",
-  YOUTUBE_OWNER_VERIFICATION_SMOKE_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO: "2026-06-10T00:05:00.000Z"
+  YOUTUBE_OWNER_VERIFICATION_SMOKE_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO: "2099-06-10T00:05:00.000Z"
 };
 const operatorLocalTokenMaterialAvailability = spawnSync(
   process.execPath,

@@ -86,6 +86,6 @@ assert.doesNotMatch(
   "Task 12 UI/action source avoids browser storage, provider calls, target metadata values, auth header values, and service-role key values"
 );
 
-assert.match(taskSource, /Public Release Roadmap Task 12/i, "task board records Task 12 completion state");
+assert.match(taskSource, /12\. Public operator UI start\/stop and usage display/i, "task board records Task 12 completion state");
 
 console.log("comment translator public operator session UI contract checks passed");

@@ -14,6 +14,12 @@ Target widths: `390 / 820 / 1024 / 1280 / 1366`.
 | 1280 | `comment-translator-1280.png` |
 | 1366 | `comment-translator-1366.png` |
 
+## Task 18 HTML Mock
+
+- `operator-ux-readiness-task18-mock.html`
+- Purpose: review the proposed account billing plan comparison and `/tools/comment-translator` start-blocked guidance before production implementation.
+- Status: review mock only. It is not a runtime route and does not create Stripe Prices, start Checkout, open Customer Portal, call providers, or mutate remote state.
+
 ## Boundary
 
 - Direction only: final UI text is reproduced in React rather than trusted from generated text.

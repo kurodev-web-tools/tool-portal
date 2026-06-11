@@ -51,8 +51,8 @@ const accountCopy = {
     },
     openPlan: "現在のアカウント",
     planName: "アカウント状況",
-    planBody: "いまは表示言語とテーマを別ブラウザやスマホでも引き継げるようにする範囲へ限定します。Comment Translator のYouTube連携管理は専用ページで確認できます。有料プラン状況は後続で追加予定です。",
-    planItems: ["表示設定を保存", "有料プラン状況は後続対応", "YouTube連携管理"],
+    planBody: "表示言語とテーマを別ブラウザやスマホでも引き継げます。Comment Translator のYouTube連携管理と Free / Paid プラン状況は専用ページで確認できます。",
+    planItems: ["表示設定を保存", "Free / Paid プラン", "YouTube連携管理"],
     preferencesTitle: "表示設定",
     preferencesBody: "表示言語とテーマはこのブラウザに保存されます。ログイン中は、同じ内容をアカウントにも明示的に保存でき、別ブラウザやスマホでも引き継げます。",
     language: "表示言語",
@@ -62,7 +62,8 @@ const accountCopy = {
     syncFrameBody: "今後はツールごとの軽い設定も保存対象にできます。下書き、予定本文、画像、handoff payload は自動アップロードしません。",
     providerTitle: "YouTube連携",
     providerBody: "Comment Translator のYouTube連携状態は専用ページで確認できます。接続だけではバックグラウンド監視、ポーリング、AI翻訳、クォータ消費は開始しません。",
-    boundaryItems: ["有料プラン契約状況の表示は後続対応", "YouTube連携管理", "tokenやprovider target値は画面に表示しない", "既存ローカルデータは自動移行しない"],
+    boundaryItems: ["Free は常に利用可能", "YouTube連携管理", "tokenやprovider target値は画面に表示しない", "既存ローカルデータは自動移行しない"],
+    manageBilling: "プランと支払いを開く",
     manageIntegrations: "連携設定を開く",
     backToTools: "ツール一覧へ戻る"
   },
@@ -99,8 +100,8 @@ const accountCopy = {
     },
     openPlan: "Current account",
     planName: "Account status",
-    planBody: "This version is limited to carrying language and theme across browsers and phones. Comment Translator YouTube integration management is available on its own page. Paid plan status is planned for later.",
-    planItems: ["Save display settings", "Paid plan status later", "YouTube integration"],
+    planBody: "Language and theme can be carried across browsers and phones. Comment Translator YouTube integration management and Free / Paid plan status are available on dedicated pages.",
+    planItems: ["Save display settings", "Free / Paid plan", "YouTube integration"],
     preferencesTitle: "Display settings",
     preferencesBody: "Language and theme are saved in this browser. Signed-in users can explicitly save the same values to the account and carry them across browsers and phones.",
     language: "Language",
@@ -110,7 +111,8 @@ const accountCopy = {
     syncFrameBody: "Later phases can add lightweight per-tool settings. Drafts, schedule text, images, and handoff payloads are not uploaded automatically.",
     providerTitle: "YouTube integration",
     providerBody: "YouTube integration state for Comment Translator is available on its own page. Connecting alone will not start background monitoring, polling, AI translation, or quota use.",
-    boundaryItems: ["Paid plan status later", "YouTube integration management", "No token or provider target values in UI", "No automatic migration of local data"],
+    boundaryItems: ["Free remains available", "YouTube integration management", "No token or provider target values in UI", "No automatic migration of local data"],
+    manageBilling: "Open plans and billing",
     manageIntegrations: "Open integrations",
     backToTools: "Back to tools"
   }
@@ -340,6 +342,12 @@ export function AccountPreferencesShell({
               className="mt-4 inline-flex rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
             >
               {copy.manageIntegrations}
+            </Link>
+            <Link
+              href="/account/billing"
+              className="ml-0 mt-3 inline-flex rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft sm:ml-2"
+            >
+              {copy.manageBilling}
             </Link>
           </div>
         </div>

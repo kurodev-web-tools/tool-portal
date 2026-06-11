@@ -23,6 +23,7 @@ import {
   readInMemoryCommentTranslatorUsageSnapshot,
   recordInMemoryCommentTranslatorSessionLedgerState
 } from "@/lib/comment-translator-usage-ledger-runtime";
+import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import {
   createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime,
   createTrustedYouTubeOAuthCredentialSupabaseStatusReader
@@ -136,11 +137,13 @@ async function readCommentTranslatorSessionActionResult({
   const callerAuthorization = await readCallerAuthorization();
   const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
   const nowMs = Date.now();
+  const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const usage = readInMemoryCommentTranslatorUsageSnapshot({
     callerAuthorization,
     nowMs,
-    plan: "free",
-    activeSession
+    plan: billingSnapshot.plan,
+    activeSession,
+    paidEntitlement: billingSnapshot.plan === "paid" ? billingSnapshot.planEntitlement : undefined
   });
   const credentialReferenceId = readCredentialReferenceId(formData) ?? activeSession?.credentialReferenceId ?? null;
   const credentialReadiness = credentialReferenceId
@@ -154,7 +157,7 @@ async function readCommentTranslatorSessionActionResult({
   const state = await readCommentTranslatorSessionCommand({
     intent,
     nowMs,
-    plan: "free",
+    plan: billingSnapshot.plan,
     callerAuthorization,
     credentialReadiness,
     activeSession,

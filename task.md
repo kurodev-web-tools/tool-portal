@@ -19,17 +19,17 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-13 are merged, and PR #416 (`[codex] Add admin operational visibility`) merge commit `6040d335270fb3edbe0143d01366afe4f4d5845c` is contained in `origin/codex/comment-translator-preview`. GitHub PR metadata was also checked: PR #416 is `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-admin-operational-visibility-post-pr415`, merged at `2026-06-11T05:56:51Z`; check rollup was Cloudflare Pages `FAILURE` and Workers Builds `SUCCESS`.
-   - current PR scope: Public Release Roadmap Task 14, Public deployment and live-smoke runbook.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-14 are merged, and PR #417 (`[codex] Add public deployment and live-smoke runbook`) merge commit `d8a3ae761ddff02426713dfc6cc55841ce47a0bf` is contained in `origin/codex/comment-translator-preview`. GitHub PR metadata was also checked: PR #417 is `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-public-deployment-runbook-post-pr416`, merged at `2026-06-11T06:29:50Z`; check rollup was Cloudflare Pages `FAILURE` and Workers Builds `SUCCESS`.
+   - current PR scope: Public Release Roadmap Task 15, Stripe paid-plan integration.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
-   - inspected surfaces for Task 14: `task.md`, `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `docs/active`, `docs/prompts`, `docs/archive` references via targeted search, `package.json`, and existing comment-translator smoke command contracts under `scripts/`, especially Google API live call, Live Chat target lookup, Live Chat polling smoke, and live runtime smoke command surfaces.
-   - completed in this PR: added `docs/active/COMMENT_TRANSLATOR_PUBLIC_DEPLOYMENT_LIVE_SMOKE_RUNBOOK.md` as the active public deployment and live-smoke runbook covering operator-local preconditions, safe local/build/deploy command order, sanitized output review, deployed URL smoke checklist, approval-gated live/provider smoke command order, rollback notes, and an evidence record template. Added `scripts/comment-translator-public-deployment-runbook-contract.mjs` to prove the runbook contains required approval gates and forbidden-value checks.
-   - unchanged in this PR: no deploy, live/provider execution, provider target lookup, browser storage write, handoff payload expansion, remote Supabase mutation, schema migration, billing enforcement, raw comment logging, credential value exposure, provider target value exposure, or UI/layout change was added or run.
-   - verification for this PR: docs inspection and forbidden-value scan, `npm ci --prefer-offline`, `node scripts/comment-translator-public-deployment-runbook-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. `npm run build` completed with existing non-blocking warnings about the deprecated `middleware` convention and skipped static-export RSC aliases for the server-runtime build.
-   - width verification: skipped because Task 14 adds no visible UI/layout change.
-   - residual risk: Task 14 documents and contract-checks the release execution sequence, but actual deployed URL smoke, approved deploy/upload, and approval-gated live/provider smoke evidence remain not run until a later explicitly approved release/smoke execution step.
-   - next PR candidate: Public Release Roadmap Task 15, Stripe paid-plan integration.
+   - inspected surfaces for Task 15: `task.md`, `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `package.json`, `app/account`, `app/tools/comment-translator`, `app/api/comment-translator/session`, `lib/comment-translator-*`, and existing comment-translator contract scripts. Stripe Billing references were checked for subscription billing with Checkout Sessions, Customer Portal management, and signed webhook verification.
+   - completed in this PR: added server-only `lib/comment-translator-billing-runtime.ts` for permanent Free entitlement, Stripe Checkout Sessions subscription URL creation boundary, Billing Customer Portal boundary, signed webhook entitlement sync, active/trialing Paid activation, and failed/expired/canceled/unavailable payment degradation to Free or inactive paid. Added `/account/billing`, billing server actions, `/api/comment-translator/billing/webhook`, a focused Task 15 contract script, account billing entry points, and a `/tools/comment-translator` paid-plan entry point. Session route/actions now read the server-owned billing entitlement snapshot before resolving usage limits.
+   - unchanged in this PR: no Stripe dashboard mutation, actual Stripe live-mode action, production Checkout Session creation, webhook registration, deploy/upload, live/provider execution, provider target lookup, browser storage write, handoff payload expansion, remote Supabase mutation, schema migration, raw comment logging, provider credential exposure, or provider target value exposure was added or run.
+   - verification for this PR: `npm ci --prefer-offline`, RED check for `node scripts/comment-translator-stripe-paid-plan-integration-contract.mjs`, `node scripts/comment-translator-stripe-paid-plan-integration-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. `npm run build` completed with existing non-blocking warnings about the deprecated `middleware` convention, skipped static-export RSC aliases for the server-runtime build, and webpack cache serialization warnings.
+   - width verification: Chrome DevTools MCP checks for `/tools/comment-translator` and `/account/billing` at `390 / 820 / 1024 / 1280 / 1366px` found no horizontal overflow; `/tools/comment-translator` billing entry and `/account/billing` pending billing state were visible. Browser console error check found no console errors.
+   - residual risk: actual Stripe live-mode checkout, Customer Portal redirect, Stripe webhook registration, durable remote entitlement persistence, deployed URL smoke, and approval-gated live/provider smoke remain not run until explicitly approved. The Task 15 runtime keeps entitlement sync server-owned and in-process for this PR, matching the current repository's contract-foundation pattern without applying a schema migration.
+   - next PR candidate: Public Release Roadmap Task 16, Public release final QA and launch gate.
 
 ## Public Release Roadmap
 
@@ -137,6 +137,7 @@ Use one Codex thread, one feature branch, and one PR per task. Do not create a P
    - Scope: Stripe checkout/customer/subscription or payment-link flow, plan entitlement sync, upgrade/downgrade/cancel states, paid limit activation, account billing entry points, and safe webhook handling.
    - Completion criteria: Free plan remains permanently available; paid upgrade path is visible before/at public launch; paid entitlement changes server-owned limits without exposing Stripe secrets or provider credentials; failed/expired/canceled payment states degrade to safe Free or inactive paid status.
    - Verification: Stripe-focused contract/tests, webhook signature handling tests where applicable, lint, typecheck, build, `git diff --check`, and billing/account UI width checks if visible UI changes.
+   - Status: complete in current Task 15 PR via server-only Stripe Billing/Checkout/Portal/webhook boundaries, account billing and translator paid-plan entry points, signed-webhook entitlement sync, and safe Free/inactive-paid degradation. Actual Stripe live-mode action, webhook registration, remote schema migration, deploy/upload, and live/provider execution remain approval-gated and not run.
 
 16. Public release final QA and launch gate
    - Goal: determine that all roadmap tasks are complete and the tool can be made public.
@@ -220,46 +221,40 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - `AGENTS.md` と `task.md` を読んでください。
 - root checkout / main では作業しないでください。
 - 作業先は fresh worktree / feature branch にしてください。
-- secret / token / OAuth access token / refresh token / authorization code / owner user id value / provider channel id value / liveChatId value / service_role key value / Authorization header value は表示・要求・保存しないでください。
+- secret / token / OAuth access token / refresh token / authorization code / owner user id value / provider channel id value / liveChatId value / service_role key value / Authorization header value / Stripe secret key / webhook signing secret は表示・要求・保存しないでください。
 - provider target metadata や liveChatId は operator-local env / server-only boundary で消費するだけにし、output / docs / PR body / browser storage / handoff payload に出さないでください。
 - live/provider execution は、same-thread / operator-local same-command-process ready preflight、sanitized output review、explicit in-thread approval が揃うまで実行しないでください。
-- この prompt は live/provider execution 承認ではありません。
+- この prompt は live/provider execution、deploy、remote mutation、Stripe live-mode action、billing setting mutation の承認ではありません。
 
 Merge gate:
-- この Task 14 PR `[codex] Add public deployment and live-smoke runbook` が merge 済みであることを確認してください。
-- gh が使える場合は Task 14 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
-- gh が `HTTP 401: Requires authentication` になる場合は、Task 14 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
+- この Task 15 PR `[codex] Add Stripe paid-plan integration` が merge 済みであることを確認してください。
+- gh が使える場合は Task 15 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- gh が `HTTP 401: Requires authentication` になる場合は、Task 15 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
-- Public Release Roadmap Task 1-14 は完了済みです。
-- Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加され、Task 3 で legal/privacy/product/account visible copy がその requirements と整合し、Task 4 で `/account/integrations` の sanitized YouTube connection readiness entry と safe prepared connect/reconnect/disconnect affordances が追加され、Task 5 で expired / refresh-failed / reconnect-required の server-only sanitized boundary が追加され、Task 6 で user-initiated disconnect の server-only cleanup / revocation boundary と sanitized status transition が追加され、Task 7 で server-owned translation session start/stop contract が追加され、Task 8 で server-owned usage/quota/budget ledger foundation が追加されています。
-- Task 9 で server-owned filtering/language policy runtime が追加され、source/target selection、same-language prevention、dominant-language classification、emoji-only / URL-only / symbol-only / duplicate / too-short / target-language / unselected-source-language / low-confidence skip、および sensitive material を除外する cache/dedupe key material が provider request 前に適用されるようになっています。
-- Task 10 で server-owned bounded polling session runtime が追加され、target lookup once at session start、deterministic `liveChatMessages.list` boundary、`pollingIntervalMillis` compliance、minimum interval、empty-chat backoff、retry caps、terminal stop states が fixed contract になっています。
-- Task 11 で server-owned translation provider execution runtime が追加され、provider-safe comments only、language-policy eligibility、bounded batching、dedupe/cache、per-minute message cap、recoverable retry cap、provider error classes、usage ledger estimates、lower-priority tail skip が fixed contract になっています。
-- Task 12 で `/tools/comment-translator` に public operator session controls と sanitized usage/session display が追加され、Start/Stop、elapsed、daily used/remaining、active/stopped、stop reason、provider connection state、reconnect guidance が UI で確認できるようになっています。
-- Task 13 で server-only sanitized aggregate/reference-only admin operational visibility が追加されています。
-- Task 14 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_DEPLOYMENT_LIVE_SMOKE_RUNBOOK.md` が追加され、operator-local preconditions、safe command order、sanitized output review、deployed URL smoke checklist、approval-gated live/provider smoke command order、rollback notes、evidence template が current runbook として定義されています。Actual deploy/upload、deployed URL smoke、live/provider execution は引き続き approval-gated で、この prompt は承認ではありません。
+- Public Release Roadmap Task 1-15 は完了済みです。
+- Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加され、Task 3-14 で public legal/copy、account integrations、token refresh/reconnect、disconnect/revocation、session lifecycle、usage/quota/budget ledger、filtering/language policy、bounded polling、translation provider execution、operator UI、admin operational visibility、deployment/live-smoke runbook が追加されています。
+- Task 15 で server-only Stripe Billing/Checkout/Portal/webhook boundaries、account billing entry point、translator paid-plan entry point、signed-webhook entitlement sync、active/trialing Paid activation、failed/expired/canceled/unavailable payment state の safe Free/inactive-paid degradation が追加されています。Actual Stripe live-mode action、Customer Portal redirect、webhook registration、remote schema migration、deploy/upload、deployed URL smoke、live/provider execution は引き続き approval-gated で、この prompt は承認ではありません。
 - 最終ゴールは Public Release Roadmap の全タスク完了、verification 通過、必要な deployed/live smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
 次にやること:
-- Public Release Roadmap Task 15: Stripe paid-plan integration.
-- Task 14 PR が merge 済みであることを確認してから、Free/Paid plan entitlement と Stripe paid-plan purchase/upgrade flow を最小実装してください。
-- Scope は Stripe checkout/customer/subscription or payment-link flow、plan entitlement sync、upgrade/downgrade/cancel states、paid limit activation、account billing entry points、safe webhook handling です。
-- Free plan remains permanently available。paid entitlement changes は server-owned limits に閉じ、Stripe secrets、provider credentials、token/id/header/provider target/liveChatId/service_role/authorization values を表示・要求・保存しないでください。
-- Browser storage、handoff payload、remote Supabase mutation/schema change、live/provider execution、raw comment logging は Task 15 の completion に必要な最小範囲を超えて変更しないでください。
+- Public Release Roadmap Task 16: Public release final QA and launch gate.
+- Task 15 PR が merge 済みであることを確認してから、final local/deployed verification、legal/copy review、no-secret scan、width checks、account/integration flow、session limits、start/stop、disconnect/reconnect、quota/budget stops、Stripe Free/Paid entitlement degradation、rollback readiness を確認してください。
+- Deploy/upload、deployed URL smoke、live/provider execution、Stripe live-mode action、billing setting mutation、remote mutation が必要になった場合は、same-thread/operator-local ready preflight、sanitized output review、explicit in-thread approval を揃えるまで実行しないでください。
 
 Verification:
-- Stripe-focused contract/tests
-- webhook signature handling tests where applicable
+- full release checklist
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
+- relevant contracts/tests
 - `git diff --check`
-- billing/account UI width checks if visible UI changes are added
+- deployed route checks only after explicit deploy/deployed-smoke approval
+- width checks at `390 / 820 / 1024 / 1280 / 1366px`
 
 Completion:
-- Task 15 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- Task 16 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
 - 未達なら commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

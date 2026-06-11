@@ -143,10 +143,14 @@ assert.match(taskSource, /18\. Operator UX readiness polish[\s\S]*\/account\/int
 assert.match(taskSource, /19\. Translation provider and cost policy finalization[\s\S]*Azure Translator[\s\S]*OpenAI mini[\s\S]*Gemini Flash\/Lite[\s\S]*Cloudflare Workers AI[\s\S]*DeepL/i, "task board records provider policy follow-up");
 assert.match(taskSource, /20\. Translation provider implementation alignment[\s\S]*Free\/Paid provider routing/i, "task board records provider implementation follow-up");
 assert.match(taskSource, /21\. Stripe live readiness and billing operations[\s\S]*live-mode actions only after explicit approval/i, "task board records Stripe live readiness follow-up");
-assert.match(taskSource, /22\. Security and privacy final review[\s\S]*no-secret scan/i, "task board records security review follow-up");
-assert.match(taskSource, /23\. Private-gated live\/provider smoke[\s\S]*raw comments/i, "task board records private live smoke follow-up");
-assert.match(taskSource, /24\. Private-gated main promotion and production smoke[\s\S]*general access remains blocked/i, "task board records private main promotion follow-up");
-assert.match(taskSource, /25\. Public launch gate flip[\s\S]*public-release capable/i, "task board records public launch gate flip follow-up");
+assert.match(taskSource, /22\. Abuse protection and rate-limit hardening[\s\S]*provider\/billing route abuse cases/i, "task board records abuse protection follow-up");
+assert.match(taskSource, /23\. Durable persistence and schema migration readiness[\s\S]*remote schema migration only after explicit approval/i, "task board records persistence readiness follow-up");
+assert.match(taskSource, /24\. Monitoring, alerting, and incident response readiness[\s\S]*webhook failures/i, "task board records monitoring readiness follow-up");
+assert.match(taskSource, /25\. Provider terms, privacy, and legal copy refresh[\s\S]*provider data-use\/retention\/training disclosures/i, "task board records provider legal refresh follow-up");
+assert.match(taskSource, /26\. Security and privacy final review[\s\S]*no-secret scan/i, "task board records security review follow-up");
+assert.match(taskSource, /27\. Private-gated live\/provider smoke[\s\S]*raw comments/i, "task board records private live smoke follow-up");
+assert.match(taskSource, /28\. Private-gated main promotion and production smoke[\s\S]*general access remains blocked/i, "task board records private main promotion follow-up");
+assert.match(taskSource, /29\. Public launch gate flip[\s\S]*public-release capable/i, "task board records public launch gate flip follow-up");
 assert.match(taskSource, /live\/provider smoke[\s\S]*not run/i, "task board records live/provider smoke as not run without approval");
 
 for (const file of [qaRecordPath, requirementsPath, runbookPath, taskPath, ...requiredSurfaces]) {

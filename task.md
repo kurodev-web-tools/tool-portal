@@ -186,25 +186,49 @@ Use one Codex thread, one feature branch, and one PR per task. These tasks are r
    - Completion criteria: dashboard/live-mode actions are either not run and recorded as blockers, or run only after explicit same-thread approval with sanitized evidence; no Stripe secret or webhook signing secret values are displayed or stored.
    - Verification: Stripe contracts/tests, webhook signature tests, billing route checks, lint, typecheck, build, `git diff --check`; live-mode actions only after explicit approval.
 
-22. Security and privacy final review
+22. Abuse protection and rate-limit hardening
+   - Goal: prevent public abuse, accidental cost spikes, and repeated session/API attempts before main promotion.
+   - Scope: per-user session/action limits, unauthenticated and unauthorized request throttling, coarse IP/request protection where appropriate, Workers Rate Limiting or equivalent edge/app-side controls, and provider/billing route abuse cases.
+   - Completion criteria: repeated Start/session/API attempts are bounded; non-allowed users cannot bypass private launch gate through repeated direct calls; cost-affecting provider/billing paths fail closed or degrade safely under abuse.
+   - Verification: focused rate-limit/abuse contracts, route/API negative checks, lint, typecheck, build, `git diff --check`.
+
+23. Durable persistence and schema migration readiness
+   - Goal: decide what must be durable before public operation and keep remote schema changes approval-gated.
+   - Scope: usage ledger durability, session history, entitlement persistence, admin aggregates, rollback plan, migration ordering, and in-memory fallback boundaries.
+   - Completion criteria: durable-vs-in-memory decisions are recorded; any Supabase/schema migration is separated behind explicit approval; public launch does not depend on undocumented in-memory-only state for required enforcement.
+   - Verification: docs/contracts, no-secret scan, `git diff --check`; remote schema migration only after explicit approval.
+
+24. Monitoring, alerting, and incident response readiness
+   - Goal: make cost, quota, billing, and runtime failures observable before public exposure.
+   - Scope: provider cost/quota alerts, YouTube quota stop counts, translation error classes, Stripe webhook failure visibility, session failure/timeout counts, rollback trigger notes, and support escalation path.
+   - Completion criteria: operators can detect provider-cost spikes, quota stops, webhook failures, and session failures without exposing secrets or raw comments; incident response and rollback notes are recorded.
+   - Verification: monitoring contract/docs inspection, sanitized log/output review where available, no-secret scan, `git diff --check`.
+
+25. Provider terms, privacy, and legal copy refresh
+   - Goal: align public legal/copy surfaces with the final translation provider policy.
+   - Scope: `/terms`, `/privacy`, `/legal/tokushoho`, `/tools/comment-translator`, `/account/integrations`, `/account/billing`, provider data-use/retention/training disclosures, support/contact copy, and paid-plan wording.
+   - Completion criteria: selected providers and fallback behavior are accurately described; no unselected provider is overclaimed as production; user-visible copy explains AI/provider processing without exposing sensitive metadata.
+   - Verification: route render checks, legal/copy contract, no-secret scan, lint, typecheck, build, `git diff --check`; width checks if visible layout changes.
+
+26. Security and privacy final review
    - Goal: verify public-launch sensitive boundaries after access, UX, provider, and billing changes.
    - Scope: route/API authorization, token/credential boundaries, browser storage, logs/output, docs/PR body safety, provider target metadata, liveChatId, quota/budget stop paths, and rollback readiness.
    - Completion criteria: no known high/critical launch blocker remains; accepted risks are documented; no secret/token/provider target values appear in client-readable surfaces or changed files.
    - Verification: focused security contracts, no-secret scan, route/API negative checks, lint, typecheck, build, `git diff --check`.
 
-23. Private-gated live/provider smoke
+27. Private-gated live/provider smoke
    - Goal: prove the live comment intake and translation path with sanitized evidence before main promotion.
    - Scope: same-thread/operator-local ready preflight, explicit approval, bounded YouTube live comment polling, provider translation execution, stop behavior, quota/budget stop behavior, and sanitized evidence recording.
    - Completion criteria: no live/provider command runs before explicit approval; evidence records counts/status/stop reasons only; no liveChatId, provider identifiers, OAuth values, raw comments, or Authorization headers are stored or displayed.
    - Verification: runbook preflight, approved live/provider smoke commands, sanitized output review, focused contracts, `git diff --check`.
 
-24. Private-gated main promotion and production smoke
+28. Private-gated main promotion and production smoke
    - Goal: merge to main and verify the production/custom URL while general access remains blocked.
    - Scope: main merge gate, production deploy trigger/verification, production/custom route smoke, allowed-tester access, non-allowed-user denial, rollback readiness.
    - Completion criteria: production/custom deployed target serves the current app; private launch gate blocks general users; allowed testers can complete account/plan/session smoke; evidence is sanitized.
    - Verification: production route checks only after explicit approval, width checks, console checks, access-gate negative checks, rollback notes.
 
-25. Public launch gate flip
+29. Public launch gate flip
    - Goal: make Comment Translator publicly available only after production smoke and accepted risks support it.
    - Scope: launch-gate setting change, final legal/copy check, final no-secret scan, public route smoke, monitoring/rollback readiness.
    - Completion criteria: `task.md` may say public-release capable only after all required evidence supports it; general users can access the intended public surface; rollback path is recorded.

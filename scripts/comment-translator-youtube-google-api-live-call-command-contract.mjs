@@ -417,7 +417,7 @@ assert.equal(tokenMaterialAvailabilityPayload.refreshTokenValue, "never-returned
 const operatorLocalReadyEnv = {
   ...readyEnv,
   YOUTUBE_GOOGLE_API_LIVE_CALL_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER: "server-only-test-authorization",
-  YOUTUBE_GOOGLE_API_LIVE_CALL_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO: "2026-06-10T00:05:00.000Z"
+  YOUTUBE_GOOGLE_API_LIVE_CALL_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO: "2099-06-10T00:05:00.000Z"
 };
 const operatorLocalTokenMaterialAvailability = spawnSync(
   process.execPath,

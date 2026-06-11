@@ -449,9 +449,14 @@ for (const payload of [firstRun, secondRun, blockedProviderRun, ...ledger.readIn
 }
 
 const allowedChangedFiles = new Set([
+  "lib/comment-translator-admin-operational-visibility.ts",
   providerExecutionPath,
   intakePath,
+  usageLedgerPath,
+  "scripts/comment-translator-admin-operational-visibility-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
   taskPath
 ]);

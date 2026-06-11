@@ -432,10 +432,14 @@ assert.equal(commandResult.heartbeat.lastHeartbeatAtIso, "1970-01-01T00:00:02.00
 
 for (const file of changedFiles()) {
   const allowedChangedFiles = new Set([
+    "lib/comment-translator-admin-operational-visibility.ts",
     sessionPath,
     ledgerPath,
+    "lib/comment-translator-provider-execution-runtime.ts",
     routePath,
     actionPath,
+    "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+    "scripts/comment-translator-provider-execution-runtime-contract.mjs",
     "scripts/comment-translator-session-start-stop-contract.mjs",
     "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
     taskPath

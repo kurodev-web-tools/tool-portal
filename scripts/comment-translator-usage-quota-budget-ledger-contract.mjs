@@ -380,10 +380,14 @@ assert.doesNotMatch(
 
 for (const file of changedFiles()) {
   const allowedChangedFiles = new Set([
+    "lib/comment-translator-admin-operational-visibility.ts",
     ledgerPath,
     sessionPath,
     routePath,
     actionPath,
+    "lib/comment-translator-provider-execution-runtime.ts",
+    "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+    "scripts/comment-translator-provider-execution-runtime-contract.mjs",
     "scripts/comment-translator-session-start-stop-contract.mjs",
     "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
     taskPath

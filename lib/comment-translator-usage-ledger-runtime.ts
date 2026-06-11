@@ -34,6 +34,13 @@ export type CommentTranslatorUsageLedgerAiUsageEstimate = {
   rawCommentText: "never-recorded-by-design";
 };
 
+export type CommentTranslatorUsageLedgerProviderTranslationErrorEstimate = {
+  providerErrorClass: "recoverable-error" | "terminal-error";
+  errorCount: number;
+  providerErrorBody: "never-recorded-by-design";
+  rawCommentText: "never-recorded-by-design";
+};
+
 export type CommentTranslatorUsageQuotaBudgetStopCategory =
   | "provider-quota"
   | "global-budget"
@@ -71,6 +78,12 @@ export type CommentTranslatorUsageLedgerEvent =
       sessionReferenceId: string;
       occurredAtMs: number;
     } & CommentTranslatorUsageLedgerAiUsageEstimate)
+  | ({
+      type: "provider-translation-error-estimated";
+      provider: "youtube";
+      sessionReferenceId: string;
+      occurredAtMs: number;
+    } & CommentTranslatorUsageLedgerProviderTranslationErrorEstimate)
   | {
       type: "quota-budget-stop";
       provider: "youtube";

@@ -19,17 +19,17 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-8 are merged, and PR #411 (`[codex] Add server-owned usage quota budget ledger foundation`) merge commit `5dbe3397145dbc49c2bcc65124e7cf1ff152c73c` is contained in `origin/codex/comment-translator-preview`. GitHub PR metadata was also checked: PR #411 is `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-usage-quota-budget-ledger-post-pr410`, merged at `2026-06-10T21:01:24Z`; check rollup was Cloudflare Pages `FAILURE` and Workers Builds `SUCCESS`.
-   - current PR scope: Public Release Roadmap Task 9, Filtering and language policy runtime.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-9 are merged, and PR #412 (`[codex] Add comment translator filtering language policy runtime`) merge commit `0113afa648016c11c4b1ee725f42b590e123fbbe` is contained in `origin/codex/comment-translator-preview`. GitHub PR metadata was also checked: PR #412 is `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-filter-language-policy-runtime-post-pr411`, merged at `2026-06-11T03:22:28Z`; check rollup was Cloudflare Pages `FAILURE` and Workers Builds `SUCCESS`.
+   - current PR scope: Public Release Roadmap Task 10, Bounded polling session runtime.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
-   - inspected surfaces for Task 9: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `lib/comment-translator-youtube-live-comment-intake-pipeline.ts`, `lib/comment-translator-youtube-input-boundary.ts`, `lib/comment-translator-session-runtime.ts`, `lib/comment-translator-usage-ledger-runtime.ts`, `app/api/comment-translator/session/route.ts`, `app/tools/comment-translator/actions.ts`, `lib/comment-translator-youtube-runtime-foundation.ts`, `lib/comment-translator-youtube-api-adapter.ts`, `lib/comment-translator-provider-boundary.ts`, `lib/comment-translator.ts`, and relevant comment-translator contract scripts.
-   - completed in this PR: added `lib/comment-translator-language-policy-runtime.ts` as a server-only filtering/language policy runtime, added `scripts/comment-translator-filter-language-policy-runtime-contract.mjs`, and wired `lib/comment-translator-youtube-live-comment-intake-pipeline.ts` to apply source/target selection, same-language rejection, dominant-language classification, low-confidence skipping, and pre-translation skip gates before provider requests are built. Initial public source candidates are JA / EN / KR / CN, initial target candidates are JA / EN, Spanish and all-language auto mode remain excluded unless explicitly approved, and cache/dedupe material excludes token, cursor, provider target, owner, Authorization header, service-role, browser-local handoff, `liveChatId`, provider channel, raw provider target metadata, and raw text material.
-   - unchanged in this PR: no live/provider execution, provider target lookup, `liveChatId` handling, billing enforcement, provider-usage charging, browser storage, handoff payload, remote Supabase mutation, schema migration, route/action client payload expansion, visible UI layout/copy change, or raw comment logging was added.
-   - verification for this PR: `npm ci --prefer-offline` succeeded; `node scripts/comment-translator-filter-language-policy-runtime-contract.mjs`, `node scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs`, `node scripts/comment-translator-provider-boundary-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. UI width checks were skipped because this slice made no visible layout or text change.
+   - inspected surfaces for Task 10: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `lib/comment-translator-youtube-runtime-foundation.ts`, `lib/comment-translator-youtube-api-adapter.ts`, `lib/comment-translator-youtube-live-comment-intake-pipeline.ts`, `lib/comment-translator-session-runtime.ts`, `lib/comment-translator-usage-ledger-runtime.ts`, `app/api/comment-translator/session/route.ts`, `app/tools/comment-translator/actions.ts`, `lib/comment-translator-youtube-input-boundary.ts`, and relevant comment-translator contract scripts.
+   - completed in this PR: added `lib/comment-translator-youtube-bounded-polling-session-runtime.ts` as a server-only bounded polling session runtime and `scripts/comment-translator-youtube-bounded-polling-session-runtime-contract.mjs` as focused coverage. The runtime performs owner/target lookup once at session start, creates server-session-only polling state, models `liveChatMessages.list` through the deterministic adapter boundary, refuses early ticks before `nextPollAfterMs`, honors provider `pollingIntervalMillis` plus the project minimum interval, adds empty-chat backoff, caps recoverable retries, and maps terminal provider states to sanitized session stop reasons.
+   - unchanged in this PR: no actual live/provider execution, Google API call, browser storage, handoff payload, remote Supabase mutation, schema migration, billing enforcement, provider-usage charging, visible UI layout/copy change, raw comment logging, or client-readable provider target metadata was added. No route-level polling endpoint was added because Task 10 only needed the server-owned bounded runtime contract; route/action wiring remains a later public UI/session integration task.
+   - verification for this PR: `npm ci --prefer-offline`, `node scripts/comment-translator-youtube-bounded-polling-session-runtime-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. `git diff --check` emitted only the existing CRLF working-copy warning for `task.md`. Older task-specific contracts for Task 7/8/9/runtime-foundation/api-adapter/live-intake were attempted but are not blocking for this slice because they assert historical `task.md` anchors or changed-file allowlists for their original tasks, and this PR does not modify those surfaces. UI width checks are skipped because this slice makes no visible layout or text change.
    - width verification: UI / rendered text / CSS は変更していないため `390 / 820 / 1024 / 1280 / 1366px` の幅別確認は対象外。
-   - residual risk: the Task 9 language classifier is a deterministic initial-release heuristic, not a third-party language detection model. Durable persisted dedupe/cache storage, bounded polling execution, translation provider execution, provider request/AI usage recording, UI selection enforcement, admin/export surfaces, and live/deployed smoke remain separate later tasks.
-   - next PR candidate: Public Release Roadmap Task 10, Bounded polling session runtime.
+   - residual risk: Task 10 provides deterministic server-owned scheduling/runtime behavior but does not run real YouTube provider calls. Translation provider execution, durable polling/session persistence, provider request/AI usage recording, UI start/stop usage display, admin/export surfaces, and live/deployed smoke remain separate later tasks.
+   - next PR candidate: Public Release Roadmap Task 11, Translation provider execution integration.
 
 ## Public Release Roadmap
 
@@ -102,6 +102,7 @@ Use one Codex thread, one feature branch, and one PR per task. Do not create a P
    - Scope: target lookup once at session start, `liveChatMessages.list`, `pollingIntervalMillis` compliance, minimum interval, empty-chat backoff, retry caps, terminal stop states.
    - Completion criteria: no polling faster than provider response; liveChatId stays server-only; no browser storage or handoff payload expansion; execution is gated by explicit operator approval when live/provider calls are involved.
    - Verification: contracts/tests for scheduling and stop behavior, lint, typecheck, build, `git diff --check`; live/provider smoke only after same-thread preflight, sanitized output review, and explicit approval.
+   - Status: complete in current Task 10 PR via server-only deterministic bounded polling session runtime. Actual live/provider execution remains approval-gated and not run.
 
 11. Translation provider execution integration
    - Goal: connect provider-safe live comments to actual translation execution under server-only controls.
@@ -221,29 +222,31 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - この prompt は live/provider execution 承認ではありません。
 
 Merge gate:
-- この Task 9 PR `[codex] Add comment translator filtering language policy runtime` が merge 済みであることを確認してください。
-- gh が使える場合は Task 9 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
-- gh が `HTTP 401: Requires authentication` になる場合は、Task 9 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
+- この Task 10 PR `[codex] Add bounded polling session runtime` が merge 済みであることを確認してください。
+- gh が使える場合は Task 10 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- gh が `HTTP 401: Requires authentication` になる場合は、Task 10 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
-- Public Release Roadmap Task 1-9 は完了済みです。
+- Public Release Roadmap Task 1-10 は完了済みです。
 - Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加され、Task 3 で legal/privacy/product/account visible copy がその requirements と整合し、Task 4 で `/account/integrations` の sanitized YouTube connection readiness entry と safe prepared connect/reconnect/disconnect affordances が追加され、Task 5 で expired / refresh-failed / reconnect-required の server-only sanitized boundary が追加され、Task 6 で user-initiated disconnect の server-only cleanup / revocation boundary と sanitized status transition が追加され、Task 7 で server-owned translation session start/stop contract が追加され、Task 8 で server-owned usage/quota/budget ledger foundation が追加されています。
 - Task 9 で server-owned filtering/language policy runtime が追加され、source/target selection、same-language prevention、dominant-language classification、emoji-only / URL-only / symbol-only / duplicate / too-short / target-language / unselected-source-language / low-confidence skip、および sensitive material を除外する cache/dedupe key material が provider request 前に適用されるようになっています。
+- Task 10 で server-owned bounded polling session runtime が追加され、target lookup once at session start、deterministic `liveChatMessages.list` boundary、`pollingIntervalMillis` compliance、minimum interval、empty-chat backoff、retry caps、terminal stop states が fixed contract になっています。
 - 最終ゴールは Public Release Roadmap の全タスク完了、verification 通過、必要な deployed/live smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
 次にやること:
-- Public Release Roadmap Task 10: Bounded polling session runtime.
-- Task 9 PR が merge 済みであることを確認してから、YouTube Live Chat polling を uncontrolled loop ではなく bounded server session runtime として追加してください。
-- Scope は target lookup once at session start、`liveChatMessages.list`、`pollingIntervalMillis` compliance、minimum interval、empty-chat backoff、retry caps、terminal stop states です。
+- Public Release Roadmap Task 11: Translation provider execution integration.
+- Task 10 PR が merge 済みであることを確認してから、bounded polling session runtime の provider-safe comments を actual translation execution に接続してください。
+- Scope は batching、dedupe/cache、per-minute message caps、retry caps、provider error classes、usage recording です。
 - token values、owner id value、provider channel id value、liveChatId value、Authorization header value、service_role key value、secret value、provider target metadata value は client/docs/PR body/browser storage/handoff payload に表示・保存しないでください。
-- `liveChatId` は server-only に留め、browser storage / handoff payload / docs / PR body / client-readable output に出さないでください。
-- polling interval は provider response より速くせず、minimum interval、empty-chat backoff、retry caps、terminal stop states を contract で固定してください。
-- Task 10 は live/provider execution 承認ではありません。実 provider call / live smoke は same-thread preflight、sanitized output review、explicit approval が揃うまで実行しないでください。
-- Billing enforcement、browser storage、handoff payload、remote Supabase mutation/schema change、UI layout/copy change、raw comment logging は Task 10 の completion に必要な最小範囲を超えて変更しないでください。
+- `liveChatId` と polling cursor は server-only に留め、browser storage / handoff payload / docs / PR body / client-readable output に出さないでください。
+- Only eligible comments should be sent to the translation provider; raw provider credentials and YouTube identifiers must remain excluded.
+- Lower-priority or over-cap comments should be skipped under load instead of queued indefinitely.
+- Task 11 は live/provider execution 承認ではありません。actual provider calls / live smoke は same-thread preflight、sanitized output review、explicit approval が揃うまで実行しないでください。
+- Billing enforcement、browser storage、handoff payload、remote Supabase mutation/schema change、UI layout/copy change、raw comment logging は Task 11 の completion に必要な最小範囲を超えて変更しないでください。
 
 Verification:
-- focused bounded polling/session runtime contracts
+- focused translation provider/session runtime contracts
 - existing relevant comment-translator contracts if touched
 - `npm run lint`
 - `npx tsc --noEmit`
@@ -252,7 +255,7 @@ Verification:
 - UI を変更した場合は `/tools/comment-translator` width checks at `390 / 820 / 1024 / 1280 / 1366px`
 
 Completion:
-- Task 10 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- Task 11 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
 - 未達なら commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

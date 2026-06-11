@@ -32,7 +32,25 @@ export type CommentTranslationCacheKeyMaterial = {
   providerCapabilityVersion: string;
   glossaryVersion: string | null;
   moderationPolicyVersion: string;
-  excludes: readonly ["authorName", "channelId", "viewerId", "streamId", "rawSecret"];
+  excludes: readonly [
+    "authorName",
+    "channelId",
+    "viewerId",
+    "streamId",
+    "rawSecret",
+    "oauthToken",
+    "refreshToken",
+    "authorizationCode",
+    "providerTargetIdentifier",
+    "pollingCursor",
+    "ownerIdentifier",
+    "authorizationHeader",
+    "serviceRoleKey",
+    "browserLocalHandoffMaterial",
+    "liveChatId",
+    "providerChannelId",
+    "rawProviderTargetMetadata"
+  ];
 };
 
 export type CommentTranslationUsageHandoff = {

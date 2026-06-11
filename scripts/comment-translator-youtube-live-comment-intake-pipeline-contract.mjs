@@ -158,10 +158,11 @@ assert.deepEqual(
     abortBehavior: [
       "abort-terminal-polling-state-before-provider-call",
       "skip-empty-polling-result-before-provider-call",
-      "skip-blank-comment-text-before-provider-call"
+      "skip-blank-comment-text-before-provider-call",
+      "apply-filtering-language-policy-before-provider-call"
     ]
   },
-  "bridge contract fixes Task 6 server-only intake-to-translator boundary"
+  "bridge contract fixes server-only intake-to-translator boundary with Task 9 language policy gate"
 );
 
 const baseState = {
@@ -267,10 +268,28 @@ for (const providerRequest of readyBridge.providerRequests) {
   assert.equal(providerRequest.privacy.piiMinimization, "exclude-author-and-channel-identifiers", "privacy boundary excludes author/channel identifiers");
   assert.equal(providerRequest.usageHandoff.enforcement, "not-implemented", "quota enforcement remains out of scope");
   assert.equal(providerRequest.usageHandoff.databaseWrite, "not-implemented", "quota database write remains out of scope");
-  assert.deepEqual(providerRequest.cache.keyMaterial.excludes, ["authorName", "channelId", "viewerId", "streamId", "rawSecret"]);
+  assert.deepEqual(providerRequest.cache.keyMaterial.excludes, [
+    "authorName",
+    "channelId",
+    "viewerId",
+    "streamId",
+    "rawSecret",
+    "oauthToken",
+    "refreshToken",
+    "authorizationCode",
+    "providerTargetIdentifier",
+    "pollingCursor",
+    "ownerIdentifier",
+    "authorizationHeader",
+    "serviceRoleKey",
+    "browserLocalHandoffMaterial",
+    "liveChatId",
+    "providerChannelId",
+    "rawProviderTargetMetadata"
+  ]);
 }
 assert.equal(readyBridge.providerRequests[0].input.sourceLanguage, "en");
-assert.equal(readyBridge.providerRequests[1].input.sourceLanguage, "auto");
+assert.equal(readyBridge.providerRequests[1].input.sourceLanguage, "en");
 
 let providerCallCount = 0;
 const provider = {
@@ -358,9 +377,7 @@ for (const payload of [terminalBridge, emptyBridge, readyBridge, translated, blo
     "oauthAccessToken",
     "oauthRefreshToken",
     "ownerUserId",
-    "providerChannelId",
-    "serverAuthorizationHeader",
-    "Authorization"
+    "serverAuthorizationHeader"
   ]) {
     assert.doesNotMatch(serialized, new RegExp(forbiddenValue, "i"), `bridge output does not include ${forbiddenValue}`);
   }
@@ -368,8 +385,8 @@ for (const payload of [terminalBridge, emptyBridge, readyBridge, translated, blo
 
 assert.match(
   taskSource,
-  /Task 6 live comment intake to translator pipeline/i,
-  "task.md records the Task 6 intake pipeline slice"
+  /Public Release Roadmap Task 9/i,
+  "task.md records the Task 9 filtering/language policy slice"
 );
 assert.match(
   taskSource,
@@ -378,7 +395,11 @@ assert.match(
 );
 
 const allowedChangedFiles = new Set([
+  "lib/comment-translator-language-policy-runtime.ts",
+  "lib/comment-translator-provider-boundary.ts",
   bridgePath,
+  "scripts/comment-translator-filter-language-policy-runtime-contract.mjs",
+  "scripts/comment-translator-provider-boundary-contract.mjs",
   "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
   "task.md"
 ]);

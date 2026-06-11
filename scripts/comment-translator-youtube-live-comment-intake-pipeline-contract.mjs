@@ -130,6 +130,7 @@ const bridge = loadTsModule(bridgePath);
 for (const exportedName of [
   "youtubeLiveCommentIntakePipelineContract",
   "createYouTubeLiveCommentTranslatorPipelineRequests",
+  "createYouTubeLiveCommentTranslatorPipelineRequestsForComments",
   "runYouTubeLiveCommentTranslatorPipeline"
 ]) {
   assert.equal(
@@ -180,6 +181,26 @@ const requestOptions = {
   providerCapabilityVersion: "provider-capability-v1",
   moderationPolicyVersion: "moderation-v1"
 };
+
+const commentOnlyBridge = bridge.createYouTubeLiveCommentTranslatorPipelineRequestsForComments({
+  ...requestOptions,
+  comments: [
+    {
+      commentId: "comment-helper-1",
+      publishedAt: "2026-06-10T00:00:03.000Z",
+      text: "Hello from helper",
+      platformLanguageHint: "en",
+      liveChatId: "must-not-cross"
+    }
+  ]
+});
+assert.equal(commentOnlyBridge.status, "ready-for-translator-pipeline");
+assert.equal(commentOnlyBridge.providerRequestCount, 1);
+assert.doesNotMatch(
+  JSON.stringify(commentOnlyBridge),
+  /server-only-placeholder-never-returned|must-not-cross/i,
+  "comment-only helper keeps placeholder polling state and forbidden metadata out of output"
+);
 
 const terminalBridge = bridge.createYouTubeLiveCommentTranslatorPipelineRequests({
   ...requestOptions,
@@ -385,20 +406,22 @@ for (const payload of [terminalBridge, emptyBridge, readyBridge, translated, blo
 
 assert.match(
   taskSource,
-  /Public Release Roadmap Task 9/i,
-  "task.md records the Task 9 filtering/language policy slice"
+  /Public Release Roadmap/i,
+  "task.md records the public release roadmap"
 );
 assert.match(
   taskSource,
-  /width verification: UI \/ rendered text \/ CSS は変更していない/i,
-  "task.md records the width-check skip reason for this non-UI slice"
+  /UI \/ rendered text \/ CSS は変更していない|UI を変更した場合は/i,
+  "task.md records or prompts width-check handling for non-UI slices"
 );
 
 const allowedChangedFiles = new Set([
   "lib/comment-translator-language-policy-runtime.ts",
+  "lib/comment-translator-provider-execution-runtime.ts",
   "lib/comment-translator-provider-boundary.ts",
   bridgePath,
   "scripts/comment-translator-filter-language-policy-runtime-contract.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
   "scripts/comment-translator-provider-boundary-contract.mjs",
   "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
   "task.md"

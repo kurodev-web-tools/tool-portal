@@ -46,6 +46,10 @@ export type YouTubeLiveCommentIntakePipelineRequest = {
   moderationPolicyVersion?: string;
 };
 
+export type YouTubeLiveCommentIntakePipelineCommentRequest = Omit<YouTubeLiveCommentIntakePipelineRequest, "pollingResult"> & {
+  comments: readonly YouTubeProviderSafeCommentPayload[];
+};
+
 export type YouTubeLiveCommentIntakePipelineRunRequest = YouTubeLiveCommentIntakePipelineRequest & {
   provider: CommentTranslationProvider;
 };
@@ -230,6 +234,24 @@ export function createYouTubeLiveCommentTranslatorPipelineRequests(
       skippedCommentCount: skippedCommentCount + policySkippedCommentCount
     })
   };
+}
+
+export function createYouTubeLiveCommentTranslatorPipelineRequestsForComments(
+  request: YouTubeLiveCommentIntakePipelineCommentRequest
+): YouTubeLiveCommentIntakePipelineBridgeResult {
+  return createYouTubeLiveCommentTranslatorPipelineRequests({
+    ...request,
+    pollingResult: {
+      state: {
+        liveChatId: "server-only-placeholder-never-returned",
+        nextPageToken: null,
+        retryCount: 0,
+        nextPollAfterMs: 0,
+        terminal: null
+      },
+      comments: request.comments
+    }
+  });
 }
 
 export async function runYouTubeLiveCommentTranslatorPipeline(

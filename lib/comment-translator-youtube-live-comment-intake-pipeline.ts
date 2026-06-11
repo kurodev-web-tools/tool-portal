@@ -7,6 +7,10 @@ import type {
   CommentTranslationProviderResult,
   CommentTranslationUsageHandoff
 } from "./comment-translator-provider-boundary";
+import {
+  evaluateCommentTranslatorLanguagePolicy,
+  type CommentTranslatorLanguagePolicyAcceptedComment
+} from "./comment-translator-language-policy-runtime";
 import type { YouTubeProviderSafeCommentPayload } from "./comment-translator-youtube-input-boundary";
 import type { YouTubeLiveChatPollingStepResult } from "./comment-translator-youtube-runtime-foundation";
 
@@ -27,13 +31,15 @@ export type YouTubeLiveCommentIntakePipelineContract = {
   abortBehavior: readonly [
     "abort-terminal-polling-state-before-provider-call",
     "skip-empty-polling-result-before-provider-call",
-    "skip-blank-comment-text-before-provider-call"
+    "skip-blank-comment-text-before-provider-call",
+    "apply-filtering-language-policy-before-provider-call"
   ];
 };
 
 export type YouTubeLiveCommentIntakePipelineRequest = {
   pollingResult: YouTubeLiveChatPollingStepResult;
   targetLanguage: string;
+  sourceLanguages?: readonly string[];
   glossaryTerms?: readonly string[];
   glossaryVersion?: string | null;
   providerCapabilityVersion?: string;
@@ -83,6 +89,14 @@ export type YouTubeLiveCommentIntakePipelineBridgeResult =
       skippedCommentCount: number;
       reason: string;
       sanitizedIntake: YouTubeLiveCommentIntakeSanitizedSummary;
+    })
+  | (YouTubeLiveCommentIntakePipelineResultBase & {
+      status: "language-policy-rejected";
+      providerRequests: readonly [];
+      providerRequestCount: 0;
+      skippedCommentCount: number;
+      reason: string;
+      sanitizedIntake: YouTubeLiveCommentIntakeSanitizedSummary;
     });
 
 export type YouTubeLiveCommentIntakePipelineRunResult =
@@ -97,6 +111,7 @@ export type YouTubeLiveCommentIntakePipelineRunResult =
       status:
         | "aborted-terminal-polling-state"
         | "no-live-comments-to-translate"
+        | "language-policy-rejected"
         | "blocked-non-server-translator-provider";
       providerRequestCount: 0;
       providerResultCount: 0;
@@ -125,7 +140,8 @@ export const youtubeLiveCommentIntakePipelineContract = {
   abortBehavior: [
     "abort-terminal-polling-state-before-provider-call",
     "skip-empty-polling-result-before-provider-call",
-    "skip-blank-comment-text-before-provider-call"
+    "skip-blank-comment-text-before-provider-call",
+    "apply-filtering-language-policy-before-provider-call"
   ]
 } as const satisfies YouTubeLiveCommentIntakePipelineContract;
 
@@ -165,9 +181,36 @@ export function createYouTubeLiveCommentTranslatorPipelineRequests(
     };
   }
 
-  const providerRequests = acceptedComments.map((comment) =>
+  const languagePolicy = evaluateCommentTranslatorLanguagePolicy({
+    sourceLanguages: request.sourceLanguages,
+    targetLanguage: request.targetLanguage,
+    comments: acceptedComments,
+    policyVersion: request.moderationPolicyVersion ?? "live-comment-moderation-v1"
+  });
+
+  if (languagePolicy.status === "rejected") {
+    return {
+      ...createResultBase(),
+      status: "language-policy-rejected",
+      providerRequests: [],
+      providerRequestCount: 0,
+      skippedCommentCount: request.pollingResult.comments.length,
+      reason: languagePolicy.clientReadableDetail,
+      sanitizedIntake: createSanitizedIntakeSummary({
+        acceptedCommentCount: 0,
+        skippedCommentCount: request.pollingResult.comments.length
+      })
+    };
+  }
+
+  const policyCommentByCommentId = new Map(languagePolicy.acceptedComments.map((comment) => [comment.commentId, comment]));
+  const policyAcceptedComments = acceptedComments.filter((comment) => policyCommentByCommentId.has(comment.commentId));
+  const policySkippedCommentCount = languagePolicy.skippedComments.length;
+
+  const providerRequests = policyAcceptedComments.map((comment) =>
     createProviderRequest({
       comment,
+      policyComment: policyCommentByCommentId.get(comment.commentId),
       targetLanguage: request.targetLanguage,
       glossaryTerms: request.glossaryTerms ?? [],
       glossaryVersion: request.glossaryVersion ?? null,
@@ -181,10 +224,10 @@ export function createYouTubeLiveCommentTranslatorPipelineRequests(
     status: "ready-for-translator-pipeline",
     providerRequests,
     providerRequestCount: providerRequests.length,
-    skippedCommentCount,
+    skippedCommentCount: skippedCommentCount + policySkippedCommentCount,
     sanitizedIntake: createSanitizedIntakeSummary({
       acceptedCommentCount: providerRequests.length,
-      skippedCommentCount
+      skippedCommentCount: skippedCommentCount + policySkippedCommentCount
     })
   };
 }
@@ -236,6 +279,7 @@ export async function runYouTubeLiveCommentTranslatorPipeline(
 
 function createProviderRequest({
   comment,
+  policyComment,
   targetLanguage,
   glossaryTerms,
   glossaryVersion,
@@ -243,6 +287,7 @@ function createProviderRequest({
   moderationPolicyVersion
 }: {
   comment: YouTubeProviderSafeCommentPayload;
+  policyComment?: CommentTranslatorLanguagePolicyAcceptedComment;
   targetLanguage: string;
   glossaryTerms: readonly string[];
   glossaryVersion: string | null;
@@ -250,7 +295,9 @@ function createProviderRequest({
   moderationPolicyVersion: string;
 }): CommentTranslationProviderRequest {
   const normalizedTextHash = createStableTextHash(comment.text);
-  const sourceLanguage = comment.platformLanguageHint?.trim() || "auto";
+  const sourceLanguage =
+    policyComment?.detectedLanguage.providerLanguageCode ?? normalizeProviderLanguageCode(comment.platformLanguageHint) ?? "auto";
+  const normalizedTargetLanguage = normalizeProviderLanguageCode(targetLanguage) ?? targetLanguage;
 
   return {
     requestId: `youtube-live-comment:${comment.commentId}`,
@@ -258,7 +305,7 @@ function createProviderRequest({
       kind: "live-comment",
       text: comment.text.trim(),
       sourceLanguage,
-      targetLanguage
+      targetLanguage: normalizedTargetLanguage
     },
     glossary: {
       terms: glossaryTerms,
@@ -269,7 +316,7 @@ function createProviderRequest({
         "youtube-live-comment",
         normalizedTextHash,
         sourceLanguage,
-        targetLanguage,
+        normalizedTargetLanguage,
         providerCapabilityVersion,
         glossaryVersion ?? "no-glossary",
         moderationPolicyVersion
@@ -277,7 +324,7 @@ function createProviderRequest({
       keyMaterial: createCacheKeyMaterial({
         normalizedTextHash,
         sourceLanguage,
-        targetLanguage,
+        targetLanguage: normalizedTargetLanguage,
         providerCapabilityVersion,
         glossaryVersion,
         moderationPolicyVersion
@@ -318,8 +365,51 @@ function createCacheKeyMaterial({
     providerCapabilityVersion,
     glossaryVersion,
     moderationPolicyVersion,
-    excludes: ["authorName", "channelId", "viewerId", "streamId", "rawSecret"]
+    excludes: [
+      "authorName",
+      "channelId",
+      "viewerId",
+      "streamId",
+      "rawSecret",
+      "oauthToken",
+      "refreshToken",
+      "authorizationCode",
+      "providerTargetIdentifier",
+      "pollingCursor",
+      "ownerIdentifier",
+      "authorizationHeader",
+      "serviceRoleKey",
+      "browserLocalHandoffMaterial",
+      "liveChatId",
+      "providerChannelId",
+      "rawProviderTargetMetadata"
+    ]
   };
+}
+
+function normalizeProviderLanguageCode(language: string | null | undefined) {
+  const normalized = language?.trim().toLocaleLowerCase();
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized === "kr" || normalized === "ko" || normalized === "korean") {
+    return "ko";
+  }
+
+  if (normalized === "cn" || normalized === "zh" || normalized === "chinese") {
+    return "zh";
+  }
+
+  if (normalized === "ja" || normalized === "jp" || normalized === "japanese") {
+    return "ja";
+  }
+
+  if (normalized === "en" || normalized === "eng" || normalized === "english") {
+    return "en";
+  }
+
+  return normalized;
 }
 
 function createUsageHandoff({

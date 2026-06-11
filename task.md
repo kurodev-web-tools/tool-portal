@@ -19,17 +19,17 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-11 are merged, and PR #414 (`[codex] Add translation provider execution runtime`) merge commit `f25cd10fdf64eeadf3cb1ee71242b4cf29d110f8` is contained in `origin/codex/comment-translator-preview`. GitHub PR metadata was also checked: PR #414 is `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-provider-execution-integration-post-pr413`, merged at `2026-06-11T04:22:13Z`; check rollup was Cloudflare Pages `FAILURE` and Workers Builds `SUCCESS`.
-   - current PR scope: Public Release Roadmap Task 12, Public operator UI start/stop and usage display.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-12 are merged, and PR #415 (`[codex] Add public operator session controls`) merge commit `fe7534a70ea6abd5a469801982819cde336f086e` is contained in `origin/codex/comment-translator-preview`. GitHub PR metadata was also checked: PR #415 is `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-public-operator-ui-usage-display-post-pr414`, merged at `2026-06-11T05:31:59Z`; check rollup was Cloudflare Pages `FAILURE` and Workers Builds `SUCCESS`.
+   - current PR scope: Public Release Roadmap Task 13, Admin and operational visibility.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
-   - inspected surfaces for Task 12: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `app/tools/comment-translator/page.tsx`, `components/comment-translator/CommentTranslatorDock.tsx`, `app/tools/comment-translator/actions.ts`, `app/api/comment-translator/session/route.ts`, `lib/comment-translator-session-runtime.ts`, `lib/comment-translator-usage-ledger-runtime.ts`, `lib/comment-translator-youtube-credential-status-ui-wiring.ts`, `lib/comment-translator-youtube-disconnect-runtime.ts`, `lib/comment-translator-provider-execution-runtime.ts`, and relevant comment-translator contract scripts.
-   - completed in this PR: wired `/tools/comment-translator` to existing sanitized server-owned session actions for Start, Stop, and status/heartbeat refresh; added a public operator session panel with active/stopped/not-started state, elapsed time, daily used/remaining time, session remaining time, per-minute cap copy, stop reason, next action, provider connection state, and reconnect guidance. Added `getCommentTranslatorSessionStatusAction` for explicit UI status refresh and `scripts/comment-translator-public-operator-session-ui-contract.mjs` as focused UI/action/session/usage coverage.
-   - unchanged in this PR: no route-level changes were needed; no actual live/provider execution, Google API call, live provider target lookup, billing enforcement, browser storage, handoff payload, remote Supabase mutation, schema migration, provider-usage charging, raw comment logging, durable session persistence, or client-readable provider target metadata was added.
-   - verification for this PR: `npm ci --prefer-offline`, `node scripts/comment-translator-public-operator-session-ui-contract.mjs`, `node scripts/comment-translator-operator-ui-flow-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. `npm run build` completed with existing non-blocking warnings about the deprecated `middleware` convention, webpack cache serialization, and skipped static-export RSC aliases for the server-runtime build.
-   - width verification: `http://localhost:3210/tools/comment-translator` was checked at `390 / 820 / 1024 / 1280 / 1366px` with the in-app browser. The Task 12 session panel was visible at every width; Start / Stop / 状態更新 controls were visible; no horizontal page overflow, no panel child overflow, no console errors, and no forbidden visible marker strings were observed. The 状態更新 button was clicked at `390px`; it returned a sanitized session state with no console error and no forbidden visible marker strings.
-   - residual risk: Task 12 exposes the public operator UI controls and sanitized usage/session display, but it still uses in-process session/usage state from earlier contracts and does not run real live/provider calls, persist durable polling/session state, enforce billing, expose admin/export surfaces, or record deployed/live smoke evidence.
-   - next PR candidate: Public Release Roadmap Task 13, Admin and operational visibility.
+   - inspected surfaces for Task 13: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `lib/comment-translator-usage-ledger-runtime.ts`, `lib/comment-translator-session-runtime.ts`, `lib/comment-translator-provider-execution-runtime.ts`, `lib/comment-translator-youtube-credential-status-boundary.ts`, `app/tools/comment-translator/actions.ts`, `app/api/comment-translator/session/route.ts`, `components/comment-translator/CommentTranslatorDock.tsx`, `app/account/integrations/page.tsx`, `components/account/AccountIntegrationsShell.tsx`, and relevant comment-translator contract scripts.
+   - completed in this PR: added a server-only admin operational visibility view model in `lib/comment-translator-admin-operational-visibility.ts` for active session count, per-user reference-only completed/active minutes, YouTube request/quota estimates, explicit Twitch zero/not-implemented estimate, AI message/character/cost estimates, provider/translation recoverable/terminal error counts, quota/budget/cap stop counts, heartbeat timeout counts, and reconnect-required counts. Provider execution now records sanitized provider/translation error-count ledger events when errors occur. Added `scripts/comment-translator-admin-operational-visibility-contract.mjs` and updated related contract allowlists for this Task 13 slice.
+   - unchanged in this PR: no admin UI, route, browser storage, handoff payload, remote Supabase mutation, schema migration, billing enforcement, live/provider execution, provider target lookup, raw comment logging, credential value exposure, provider target id exposure, or durable persistence was added.
+   - verification for this PR: `npm ci --prefer-offline`, `node scripts/comment-translator-admin-operational-visibility-contract.mjs`, `node scripts/comment-translator-usage-quota-budget-ledger-contract.mjs`, `node scripts/comment-translator-provider-execution-runtime-contract.mjs`, `node scripts/comment-translator-session-start-stop-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. `npm run build` completed with existing non-blocking warnings about the deprecated `middleware` convention and skipped static-export RSC aliases for the server-runtime build.
+   - width verification: skipped because Task 13 adds no admin UI, CSS, rendered text, or visible layout change.
+   - residual risk: Task 13 provides an in-process sanitized admin/operator visibility boundary and contract coverage, but does not add durable admin storage/export routes, deployed admin UI, live/provider smoke evidence, billing enforcement, or remote persistence.
+   - next PR candidate: Public Release Roadmap Task 14, Public deployment and live-smoke runbook.
 
 ## Public Release Roadmap
 
@@ -123,6 +123,7 @@ Use one Codex thread, one feature branch, and one PR per task. Do not create a P
    - Scope: active sessions, per-user minutes, YouTube/Twitch request estimates, AI messages/chars/cost, provider/translation errors, quota/budget stops, heartbeat timeouts.
    - Completion criteria: admin-visible data is aggregate or reference-only as appropriate; no credential values or provider target ids are exposed; export/log surfaces follow the same sanitization boundary.
    - Verification: focused contracts/tests, lint, typecheck, build, `git diff --check`; width checks if an admin UI is added.
+   - Status: complete in current Task 13 PR via server-only sanitized aggregate/reference-only admin operational visibility. No admin UI, live/provider execution, browser storage, handoff payload, remote Supabase mutation, schema migration, billing enforcement, raw comment logging, credential value exposure, or provider target id exposure was added.
 
 14. Public deployment and live-smoke runbook
    - Goal: define and prove the release execution steps without leaking sensitive values.
@@ -224,9 +225,9 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - この prompt は live/provider execution 承認ではありません。
 
 Merge gate:
-- この Task 12 PR `[codex] Add public operator session controls` が merge 済みであることを確認してください。
-- gh が使える場合は Task 12 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
-- gh が `HTTP 401: Requires authentication` になる場合は、Task 12 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
+- この Task 13 PR `[codex] Add admin operational visibility` が merge 済みであることを確認してください。
+- gh が使える場合は Task 13 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- gh が `HTTP 401: Requires authentication` になる場合は、Task 13 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
@@ -239,23 +240,24 @@ Merge gate:
 - 最終ゴールは Public Release Roadmap の全タスク完了、verification 通過、必要な deployed/live smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
 次にやること:
-- Public Release Roadmap Task 13: Admin and operational visibility.
-- Task 12 PR が merge 済みであることを確認してから、service operator/admin が public service を安全に運用するための sanitized visibility を追加してください。
-- Scope は active sessions、per-user minutes、YouTube/Twitch request estimates、AI messages/chars/cost、provider/translation errors、quota/budget stops、heartbeat timeouts、reconnect-required counts です。
-- admin-visible data は aggregate / reference-only / sanitized metadata に閉じ、credential values、provider target ids、raw authorization data、raw comment text は出さないでください。
-- Browser storage、handoff payload、remote Supabase mutation/schema change、billing enforcement、actual live/provider execution、raw comment logging は Task 13 の completion に必要な最小範囲を超えて変更しないでください。
+- Public Release Roadmap Task 14: Public deployment and live-smoke runbook.
+- Task 13 PR が merge 済みであることを確認してから、public deployment と live-smoke の安全な実行手順を runbook として追加してください。
+- Scope は operator-local env checklist、safe command order、sanitized output review checklist、deployed URL smoke checklist、rollback notes です。
+- live/provider smoke commands は approval-gated と明記し、same-thread / operator-local same-command-process ready preflight、sanitized output review、explicit in-thread approval が揃うまで実行しないでください。
+- runbook、task notes、PR body、browser storage、handoff payload に token/id/header/provider target/liveChatId/service_role/authorization values を出さないでください。
+- Browser storage、handoff payload、remote Supabase mutation/schema change、billing enforcement、actual live/provider execution、raw comment logging は Task 14 の completion に必要な最小範囲を超えて変更しないでください。
 
 Verification:
-- focused admin/usage/session visibility contracts
-- existing relevant comment-translator contracts if touched
+- docs inspection
+- relevant smoke/runbook scripts or contracts if added
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
 - `git diff --check`
-- width checks if an admin UI is added or visible layout changes
+- width checks only if visible UI/layout changes are added
 
 Completion:
-- Task 13 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- Task 14 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
 - 未達なら commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

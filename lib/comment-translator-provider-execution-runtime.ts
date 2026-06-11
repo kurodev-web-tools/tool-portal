@@ -269,7 +269,9 @@ export async function executeCommentTranslatorProviderBatch(
     sessionReferenceId: request.sessionReferenceId,
     occurredAtMs: request.occurredAtMs,
     providerCallCount,
-    translatedMessages: translations
+    translatedMessages: translations,
+    recoverableErrorCount,
+    terminalErrorCount
   });
 
   return {
@@ -359,13 +361,17 @@ function recordUsageEstimates({
   sessionReferenceId,
   occurredAtMs,
   providerCallCount,
-  translatedMessages
+  translatedMessages,
+  recoverableErrorCount,
+  terminalErrorCount
 }: {
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   sessionReferenceId: string;
   occurredAtMs: number;
   providerCallCount: number;
   translatedMessages: readonly CommentTranslatorProviderExecutionTranslation[];
+  recoverableErrorCount: number;
+  terminalErrorCount: number;
 }) {
   if (providerCallCount > 0) {
     recordUsage({
@@ -393,6 +399,38 @@ function recordUsageEstimates({
         translatedMessageEstimate: translatedMessages.length,
         translatedCharacterEstimate: translatedMessages.reduce((total, message) => total + Array.from(message.translatedText).length, 0),
         estimatedCostMicros: 0,
+        rawCommentText: "never-recorded-by-design"
+      }
+    });
+  }
+
+  if (recoverableErrorCount > 0) {
+    recordUsage({
+      callerAuthorization,
+      event: {
+        type: "provider-translation-error-estimated",
+        provider: "youtube",
+        sessionReferenceId,
+        occurredAtMs,
+        providerErrorClass: "recoverable-error",
+        errorCount: recoverableErrorCount,
+        providerErrorBody: "never-recorded-by-design",
+        rawCommentText: "never-recorded-by-design"
+      }
+    });
+  }
+
+  if (terminalErrorCount > 0) {
+    recordUsage({
+      callerAuthorization,
+      event: {
+        type: "provider-translation-error-estimated",
+        provider: "youtube",
+        sessionReferenceId,
+        occurredAtMs,
+        providerErrorClass: "terminal-error",
+        errorCount: terminalErrorCount,
+        providerErrorBody: "never-recorded-by-design",
         rawCommentText: "never-recorded-by-design"
       }
     });

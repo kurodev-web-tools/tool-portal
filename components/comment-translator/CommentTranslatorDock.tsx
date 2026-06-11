@@ -540,6 +540,7 @@ export function CommentTranslatorDock({
     sessionState.stopReason === "auth-failed" ||
     sessionState.stopReason === "token-refresh-failed" ||
     sessionState.stopReason === "reconnect-required";
+  const startBlockedByCredentialStatus = credentialStatusState !== "available";
 
   function refreshCredentialStatus() {
     startCredentialStatusTransition(async () => {
@@ -756,6 +757,23 @@ export function CommentTranslatorDock({
                   <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
                     {copy.operatorSession.helper}
                   </p>
+                  {startBlockedByCredentialStatus ? (
+                    <div
+                      data-comment-translator-start-blocked="youtube-connection-required"
+                      className="mt-3 rounded-base border border-amber-200 bg-amber-50/70 p-3"
+                    >
+                      <p className="break-words text-sm font-black text-amber-900">{copy.operatorSession.startBlockedTitle}</p>
+                      <p className="mt-1 break-words text-xs font-semibold leading-5 text-amber-800">
+                        {copy.operatorSession.startBlockedBody}
+                      </p>
+                      <Link
+                        href="/account/integrations"
+                        className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
+                      >
+                        {copy.operatorSession.openIntegrations}
+                      </Link>
+                    </div>
+                  ) : null}
                   <dl className="mt-3 grid gap-2 text-sm">
                     <CredentialStatusRow label={copy.fields.providerConnection} value={credentialStatusLabel} />
                     <CredentialStatusRow label={copy.fields.sessionState} value={copy.operatorSession.states[sessionState.status]} />
@@ -771,7 +789,7 @@ export function CommentTranslatorDock({
                     <button
                       type="button"
                       onClick={() => runSessionCommand("start")}
-                      disabled={isSessionPending || sessionState.status === "active"}
+                      disabled={isSessionPending || sessionState.status === "active" || startBlockedByCredentialStatus}
                       className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
                     >
                       {isSessionPending ? copy.operatorSession.pending : copy.actions.startSession}
@@ -804,24 +822,24 @@ export function CommentTranslatorDock({
                 </div>
                 <div
                   data-comment-translator-billing-entry="stripe-paid-plan"
-                  className="min-w-0 overflow-hidden rounded-base border border-cyan-200 bg-cyan-50/45 p-3"
+                  className="min-w-0 overflow-hidden rounded-base border border-primary/30 bg-primary-soft/45 p-3"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div data-comment-translator-billing-entry="free-pro-plan-state" className="flex flex-wrap items-center justify-between gap-3">
                     <h3 className="text-sm font-black text-foreground">
-                      {locale === "ja" ? "Free / Paid プラン" : "Free / Paid plan"}
+                      {locale === "ja" ? "Free / Kuro Stream Kit Pro" : "Free / Kuro Stream Kit Pro"}
                     </h3>
-                    <span className="rounded-base border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-black text-cyan-700">
-                      {sessionState.plan === "paid" ? "Paid" : "Free"}
+                    <span className="rounded-base border border-primary/30 bg-surface px-2 py-1 text-xs font-black text-primary-strong">
+                      {sessionState.plan === "paid" ? "Pro" : "Free"}
                     </span>
                   </div>
                   <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
                     {locale === "ja"
-                      ? "Free は常に利用できます。Paid の購入・管理はアカウントの billing 画面で扱います。"
-                      : "Free remains available. Paid purchase and management are handled from account billing."}
+                      ? "Free は常に利用できます。Pro の月額/年額表示、上限比較、支払い管理はアカウントの billing 画面で確認できます。"
+                      : "Free remains available. Pro monthly/yearly display, limit comparison, and billing management are handled from account billing."}
                   </p>
                   <Link
                     href="/account/billing"
-                    className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-base border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"
+                    className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
                   >
                     {locale === "ja" ? "プランと支払いを開く" : "Open plans and billing"}
                   </Link>

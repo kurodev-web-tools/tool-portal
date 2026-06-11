@@ -222,6 +222,10 @@ export const commentTranslatorUiCopy = {
       helper: "Start後にだけserver-owned sessionが進みます。このパネルはsanitized session / usage metadataだけを表示します。",
       pending: "処理中",
       actionFailed: "セッション状態を更新できませんでした",
+      startBlockedTitle: "YouTube接続が未準備のためStartできません",
+      startBlockedBody:
+        "Start が使えない場合は、アカウント連携でYouTubeの接続または再接続を完了してから、認証ステータスを再確認してください。",
+      openIntegrations: "YouTube連携を開く",
       reconnectGuidance: "アカウント連携でYouTubeを再接続してから、認証ステータスを再確認してください。",
       safeBoundary: "機密の接続値、アカウント内部値、配信ターゲット値は表示・保存しません。",
       perMinuteCapHelper: "Free枠は30翻訳メッセージ/分です。",
@@ -481,6 +485,10 @@ export const commentTranslatorUiCopy = {
       helper: "Only a server-owned session advances after Start. This panel displays sanitized session and usage metadata only.",
       pending: "Working",
       actionFailed: "Could not update session state",
+      startBlockedTitle: "Start is unavailable because YouTube is not ready",
+      startBlockedBody:
+        "If Start is unavailable, connect or reconnect YouTube from account integrations, then check credential status again.",
+      openIntegrations: "Open YouTube integrations",
       reconnectGuidance: "Reconnect YouTube from account integrations, then check credential status again.",
       safeBoundary: "Sensitive connection values, internal account values, and stream target values are not displayed or stored.",
       perMinuteCapHelper: "Free plan allows 30 translated messages/min.",

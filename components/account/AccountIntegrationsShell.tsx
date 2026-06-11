@@ -11,7 +11,7 @@ const integrationsCopy = {
   ja: {
     eyebrow: "アカウント連携",
     title: "外部サービス連携",
-    lead: "Comment Translator で使うYouTube連携状態を、翻訳ツールの外側で確認できます。",
+    lead: "Comment Translator で使うYouTube連携状態を、翻訳ツールの外側で確認できます。Start が使えない場合は、この画面で接続または再接続を確認してください。",
     signedInAs: "ログイン中のメールアドレス",
     youtubeTitle: "YouTube integration",
     youtubeBody:
@@ -51,7 +51,7 @@ const integrationsCopy = {
   en: {
     eyebrow: "Account integrations",
     title: "External service integrations",
-    lead: "Review the YouTube integration state used by Comment Translator outside the translation tool.",
+    lead: "Review the YouTube integration state used by Comment Translator outside the translation tool. If Start is unavailable, use this screen to connect or reconnect YouTube.",
     signedInAs: "Signed-in email",
     youtubeTitle: "YouTube integration",
     youtubeBody:

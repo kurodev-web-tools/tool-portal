@@ -82,6 +82,6 @@ assert.doesNotMatch(
   /localStorage\.|indexedDB\.|sessionStorage\.|youtube\.googleapis|OAuth2Client|GoogleAuth|from\s+["']googleapis["']|require\(["']googleapis["']\)|liveChatMessages|setInterval|EventSource|WebSocket/i,
   "Task 4 surface does not add browser storage, live provider execution, or background monitoring"
 );
-assert.match(task, /Public Release Roadmap Task 4/i, "task.md records Task 4 completion context");
+assert.match(task, /4\. Account integrations entry point/i, "task.md records Task 4 completion context");
 
 console.log("comment translator account integrations entry contract checks passed");

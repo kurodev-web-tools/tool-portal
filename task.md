@@ -19,19 +19,19 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420, Task 18 PR #421, Task 19 PR #422, Task 20 PR #423, Task 21 PR #424, and Task 22 PR #425 are merged. PR #425 merge commit `b35c2da2166317e7fd4e7429dfdda2397451ee8b` is contained in `origin/codex/comment-translator-preview`. GitHub PR metadata was also checked: PR #425 is `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-abuse-rate-limit-hardening-post-pr424`, merged at `2026-06-12T05:17:45Z`; check rollup was Cloudflare Pages `FAILURE`, treated as the known non-main Pages build posture rather than a fresh local regression by itself.
-   - current PR scope: Pre-Main Launch Hardening Roadmap Task 23, durable persistence and schema migration readiness.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420, Task 18 PR #421, Task 19 PR #422, Task 20 PR #423, Task 21 PR #424, Task 22 PR #425, and Task 23 PR #426 are merged. PR #426 merge commit `ae82aac99221d032b8d81d75827bd704ecc2c20c` is contained in `origin/codex/comment-translator-preview`. GitHub PR metadata was also checked: PR #426 is `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-durable-persistence-schema-readiness-post-pr425`, merged at `2026-06-12T06:08:00Z`; check rollup was Cloudflare Pages `FAILURE`, treated as the known non-main Pages build posture rather than a fresh local regression by itself.
+   - current PR scope: Pre-Main Launch Hardening Roadmap Task 24, monitoring, alerting, and incident response readiness.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
    - prior task evidence retained for contracts: Task 16 local final QA, Cloudflare preview smoke, Chrome authenticated account smoke, existing deployed URL 404 blocker, and pre-main hardening roadmap are recorded in `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_FINAL_QA.md`.
-   - inspected surfaces for Task 23: `task.md`, `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_FINAL_QA.md`, `lib/comment-translator-usage-ledger-runtime.ts`, `lib/comment-translator-session-runtime.ts`, `lib/comment-translator-admin-operational-visibility.ts`, `lib/comment-translator-abuse-rate-limit-runtime.ts`, `lib/comment-translator-billing-runtime.ts`, `lib/comment-translator-stripe-live-readiness-runtime.ts`, and the Task 8/13/21/22 contract scripts.
-   - completed in this branch: added `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md`, `lib/comment-translator-durable-persistence-readiness.ts`, and `scripts/comment-translator-durable-persistence-readiness-contract.mjs`. Durable-vs-in-memory decisions are recorded for usage ledger durability, active session state, session history, entitlement persistence, admin aggregates, abuse/rate-limit buckets, and provider target metadata. The readiness report keeps remote Supabase migration apply readiness as not-applied-readiness-only and records public launch as blocked until an approved durable store or approved edge-backed control exists.
-   - unchanged in this branch: no SQL migration file, RLS policy, remote Supabase migration apply, remote mutation, Stripe live-mode action, Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, deploy/upload, live/provider execution, provider target lookup, liveChatId lookup, browser storage expansion, handoff payload expansion, raw comment logging, credential value exposure, private provider target value exposure, or UI/CSS/layout change was added or run.
-   - verification for this branch: `npm ci --prefer-offline` succeeded. RED `node scripts/comment-translator-durable-persistence-readiness-contract.mjs` failed before implementation because the Task 23 readiness runtime/doc were missing; GREEN passed after implementation. `node scripts/comment-translator-stripe-live-readiness-contract.mjs` passed. `node scripts/comment-translator-usage-quota-budget-ledger-contract.mjs`, `node scripts/comment-translator-admin-operational-visibility-contract.mjs`, and `node scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs` were attempted and failed only on old task-specific changed-file allowlists that do not include this Task 23 readiness doc. No-secret scan over changed files, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed.
-   - width checks skipped: Task 23 changed only a server-only readiness module, active readiness documentation, a Node contract script, and this task note; no visible UI/CSS/layout change was made.
-   - public-release capable: no. Durable persistence and schema migration readiness decisions are now recorded, but actual durable store implementation/apply, monitoring, final security/privacy review, private-gated live/provider smoke, production/custom smoke, and final public launch gate flip remain incomplete or approval-gated.
-   - residual risk: required public enforcement still cannot rely on durable usage ledger/session/entitlement/admin/rate-limit state until a separate approved migration/runtime PR implements and verifies the durable backing. Live/provider execution, Stripe live-mode/dashboard actions, remote entitlement persistence apply, and deployed smoke were not run.
-   - next safe action: create this Task 23 readiness PR targeting `codex/comment-translator-preview`, then proceed to Task 24 monitoring, alerting, and incident response readiness as a separate PR after merge.
+   - inspected surfaces for Task 24: `task.md`, `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_FINAL_QA.md`, `docs/active/COMMENT_TRANSLATOR_PROVIDER_COST_POLICY.md`, `docs/active/COMMENT_TRANSLATOR_STRIPE_LIVE_READINESS.md`, `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md`, `docs/active/COMMENT_TRANSLATOR_PUBLIC_DEPLOYMENT_LIVE_SMOKE_RUNBOOK.md`, `lib/comment-translator-usage-ledger-runtime.ts`, `lib/comment-translator-session-runtime.ts`, `lib/comment-translator-admin-operational-visibility.ts`, `lib/comment-translator-provider-execution-runtime.ts`, `lib/comment-translator-provider-policy-runtime.ts`, `lib/comment-translator-billing-runtime.ts`, `lib/comment-translator-stripe-live-readiness-runtime.ts`, `lib/comment-translator-abuse-rate-limit-runtime.ts`, `lib/comment-translator-durable-persistence-readiness.ts`, `app/api/comment-translator/session/route.ts`, `app/api/comment-translator/billing/webhook/route.ts`, and the Task 8/13/20/21/22/23 contract scripts.
+   - completed in this branch: added `docs/active/COMMENT_TRANSLATOR_MONITORING_INCIDENT_READINESS.md`, `lib/comment-translator-monitoring-incident-readiness.ts`, and `scripts/comment-translator-monitoring-incident-readiness-contract.mjs`. The server-only readiness helper converts existing sanitized admin/usage/billing signals into alert classes for provider cost spike, YouTube quota stop, translation error classes, Stripe webhook failure, and session failure/timeout. The doc records incident response, rollback trigger notes, support escalation path, sanitized output policy, and public launch blockers.
+   - unchanged in this branch: no SQL migration file, RLS policy, remote Supabase migration apply, remote mutation, remote alert/dashboard mutation was not run, Stripe live-mode action, Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, deploy/upload, live/provider execution, provider target lookup, liveChatId lookup, browser storage expansion, handoff payload expansion, raw comment logging, credential value exposure, private provider target value exposure, or UI/CSS/layout change was added or run.
+   - verification for this branch: `npm ci --prefer-offline` succeeded. RED `node scripts/comment-translator-monitoring-incident-readiness-contract.mjs` failed before implementation because the Task 24 readiness runtime/doc were missing; GREEN passed after implementation. `node scripts/comment-translator-stripe-live-readiness-contract.mjs` passed. `node scripts/comment-translator-admin-operational-visibility-contract.mjs`, `node scripts/comment-translator-provider-implementation-alignment-contract.mjs`, `node scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs`, and `node scripts/comment-translator-durable-persistence-readiness-contract.mjs` were attempted and failed only on old task-specific changed-file allowlists that do not include this Task 24 readiness doc. No-secret scan over changed files, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed.
+   - width checks skipped: Task 24 changed only a server-only readiness module, active readiness documentation, a Node contract script, and this task note; no visible UI/CSS/layout change was made.
+   - public-release capable: no. Monitoring and incident response readiness are now recorded as sanitized server-only readiness evidence, but actual durable store implementation/apply, operator-owned remote alert/dashboard configuration, final security/privacy review, private-gated live/provider smoke, production/custom smoke, and final public launch gate flip remain incomplete or approval-gated.
+   - residual risk: current monitoring readiness consumes existing local/in-memory sanitized aggregates; public operation still needs approved durable backing or approved edge-backed controls so alerts survive restarts and distributed traffic. Remote dashboard setup, provider/billing dashboard checks, live/provider execution, Stripe live-mode/dashboard actions, remote entitlement persistence apply, deploy/upload, and deployed smoke were not run.
+   - next safe action: create this Task 24 readiness PR targeting `codex/comment-translator-preview`, then proceed to Task 25 provider terms, privacy, and legal copy refresh as a separate PR after merge.
 
 ## Public Release Roadmap
 
@@ -206,6 +206,7 @@ Use one Codex thread, one feature branch, and one PR per task. These tasks are r
    - Scope: provider cost/quota alerts, YouTube quota stop counts, translation error classes, Stripe webhook failure visibility, session failure/timeout counts, rollback trigger notes, and support escalation path.
    - Completion criteria: operators can detect provider-cost spikes, quota stops, webhook failures, and session failures without exposing secrets or raw comments; incident response and rollback notes are recorded.
    - Verification: monitoring contract/docs inspection, sanitized log/output review where available, no-secret scan, `git diff --check`.
+   - Status: complete in current Task 24 PR via server-only monitoring/incident readiness runtime, active readiness doc, and deterministic contract coverage. Remote alert/dashboard mutation, live/provider execution, Stripe live-mode action, webhook registration, deploy/upload, browser storage expansion, handoff payload expansion, raw comment logging, private provider target output, and UI changes were intentionally not added or run.
 
 25. Provider terms, privacy, and legal copy refresh
    - Goal: align public legal/copy surfaces with the final translation provider policy.
@@ -321,24 +322,27 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - この prompt は live/provider execution、deploy、remote mutation、Stripe live-mode action、billing setting mutation の承認ではありません。
 
 Merge gate:
-- Task 22 Abuse protection and rate-limit hardening PR が merge 済みであることを確認してください。
-- gh が使える場合は Task 22 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- Task 24 Monitoring, alerting, and incident response readiness PR が merge 済みであることを確認してください。
+- gh が使える場合は Task 24 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
 - merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認してください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
 - Public Release Roadmap Task 1-15 は完了済みです。
-- Pre-Main Launch Hardening Roadmap Task 17 PR #420、Task 18 PR #421、Task 19 PR #422、Task 20 PR #423、Task 21 PR #424 は merge 済みです。
+- Pre-Main Launch Hardening Roadmap Task 17 PR #420、Task 18 PR #421、Task 19 PR #422、Task 20 PR #423、Task 21 PR #424、Task 22 PR #425、Task 23 PR #426、Task 24 は merge 済みです。
 - Task 19 で provider/cost policy が記録され、Task 20 で server-only Azure/OpenAI mini provider policy runtime、Free/Paid routing、paid recoverable Azure fallback、strict OpenAI JSON parser、sanitized usage/cost estimate handoff が追加されています。
 - Task 21 で Stripe live readiness checklist、server-only readiness runtime、signed-webhook entitlement evidence review、failed/canceled/expired safe-degradation review、rollback notes が追加されています。
 - Task 22 で server-only app-side abuse/rate-limit guard、route/action/API negative checks、private-launch denial throttling、provider/billing fail-closed behavior が追加されています。
+- Task 23 で durable-vs-in-memory decisions、approval-gated schema proposal、migration ordering、rollback plan、in-memory fallback boundaries が追加されています。
+- Task 24 で server-only monitoring/incident readiness runtime、provider cost/quota alerts、YouTube quota stop counts、translation error classes、Stripe webhook failure visibility、session failure/timeout counts、rollback trigger notes、support escalation path が追加されています。
 - Actual Stripe live-mode action、Customer Portal redirect、webhook registration、remote schema migration、deploy/upload、deployed URL smoke、live/provider execution は引き続き approval-gated で、この prompt は承認ではありません。
 - `public-release capable: no` のままです。
 - 最終ゴールは Pre-Main Launch Hardening Roadmap の完了、private-gated main promotion、production/custom deployed smoke、必要な live/provider smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
 次にやること:
-- Pre-Main Launch Hardening Roadmap Task 24: Monitoring, alerting, and incident response readiness.
-- provider cost/quota alerts、YouTube quota stop counts、translation error classes、Stripe webhook failure visibility、session failure/timeout counts、rollback trigger notes、support escalation path を decision/readiness として整理してください。
+- Pre-Main Launch Hardening Roadmap Task 25: Provider terms, privacy, and legal copy refresh.
+- `/terms`、`/privacy`、`/legal/tokushoho`、`/tools/comment-translator`、`/account/integrations`、`/account/billing` の provider data-use/retention/training disclosures、support/contact copy、paid-plan wording を final provider policy と整合させてください。
+- selected providers and fallback behavior は正確に記述し、unselected provider を production として過剰に主張しないでください。
 - remote schema migration / Supabase migration apply は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。
 - Stripe live-mode actions、Customer Portal redirect、webhook registration、billing setting mutation、deploy/upload、remote mutation、live/provider execution は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。
 - secret / token / provider credential / OAuth token / private identifier の値は要求・表示・保存しないでください。必要な env は reference 名だけを扱ってください。
@@ -347,13 +351,13 @@ Verification:
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
-- relevant durable persistence/readiness contracts/tests and route/API negative checks
+- relevant legal/copy/provider-policy contracts/tests and route render checks
 - no-secret scan over changed files
 - `git diff --check`
 - width checks at `390 / 820 / 1024 / 1280 / 1366px` if visible UI changes; docs/contract-onlyなら省略理由を `task.md` に残してください。
 
 Completion:
-- Task 23 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- Task 25 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
 - 未達なら commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

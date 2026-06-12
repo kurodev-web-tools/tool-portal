@@ -58,6 +58,7 @@ export type CommentTranslationUsageHandoff = {
   providerId: string;
   billingCategory: "translation";
   estimatedUnits: number;
+  estimatedCostMicros?: number;
   cacheOutcome: CommentTranslationCacheOutcome;
   enforcement: "not-implemented";
   databaseWrite: "not-implemented";

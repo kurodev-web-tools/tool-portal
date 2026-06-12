@@ -19,19 +19,19 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Task 16 final QA/readiness PR #419 is merged, Task 17 private launch gate PR #420 is merged, and Task 18 operator UX readiness polish PR #421 is merged. PR #421 merge commit `c5e4ec687f6428063ead2a6f191a05cb593d3a1e` is contained in `origin/codex/comment-translator-preview`. GitHub PR metadata was also checked: PR #421 is `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-operator-ux-readiness-polish-post-pr420`, merged at `2026-06-11T15:07:55Z`; check rollup was Cloudflare Pages `FAILURE`, treated as the known non-main Pages build posture rather than a fresh local regression by itself.
-   - current PR scope: Pre-Main Launch Hardening Roadmap Task 19, Translation provider and cost policy finalization.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420, Task 18 PR #421, and Task 19 PR #422 are merged. PR #422 merge commit `4fb136ffd100ece4c5e16c9750501d085fc2cc2e` is contained in `origin/codex/comment-translator-preview`. GitHub PR metadata was also checked: PR #422 is `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-provider-cost-policy-finalization-post-pr421`, merged at `2026-06-12T03:53:58Z`; check rollup was Cloudflare Pages `FAILURE`, treated as the known non-main Pages build posture rather than a fresh local regression by itself.
+   - current PR scope: Pre-Main Launch Hardening Roadmap Task 20, Translation provider implementation alignment.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
    - prior task evidence retained for contracts: Task 16 local final QA, Cloudflare preview smoke, Chrome authenticated account smoke, existing deployed URL 404 blocker, and pre-main hardening roadmap are recorded in `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_FINAL_QA.md`.
-   - inspected surfaces for Task 19: `task.md`, `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`, `docs/future/COMMENT_TRANSLATOR_PROVIDER_BOUNDARY_DESIGN.md`, existing comment-translator provider/budget contract scripts, `lib/comment-translator-deepl-provider.ts`, `lib/comment-translator-provider-execution-runtime.ts`, and current official provider docs for DeepL, Azure Translator, OpenAI mini, Gemini Flash/Lite, and Cloudflare Workers AI.
-   - completed in this branch: added `docs/active/COMMENT_TRANSLATOR_PROVIDER_COST_POLICY.md` and `scripts/comment-translator-provider-cost-policy-contract.mjs`. The policy records Free plan primary as Azure Translator, Paid plan primary as OpenAI mini, Azure as paid deterministic fallback, DeepL as optional paid quality/comparison provider after account pricing confirmation, and Gemini Flash/Lite plus Cloudflare Workers AI as comparison-only candidates for initial launch. It records fallback-on-cap/error behavior, monthly budget soft/hard stops, Free Azure character cap stops, provider-specific environment names only, and the no-live-call boundary.
-   - unchanged in this branch: no runtime adapter alignment, provider API call, live/provider execution, deploy/upload, remote mutation, schema migration, provider target lookup, liveChatId lookup, Stripe live-mode action, new Stripe Price creation, billing setting mutation, browser storage expansion, handoff payload expansion, raw comment logging, provider credential exposure, or private provider target value exposure was added or run.
-   - verification for this branch: RED check for `node scripts/comment-translator-provider-cost-policy-contract.mjs` failed before implementation because the Task 19 provider policy document was missing; GREEN passed after policy/task update. No-secret scan over changed docs/scripts passed. `git diff --check` passed. `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run because this was docs/contract-only with no runtime, route, UI, or type surface changes.
-   - width checks skipped: Task 19 changed only docs and a Node contract script; no visible UI/CSS/layout text changed.
-   - public-release capable: no. Provider/cost policy is recorded, but provider implementation alignment, Stripe live readiness, abuse protection, durable persistence decisions, monitoring, final security/privacy review, private-gated live/provider smoke, production/custom smoke, and final public launch gate flip remain incomplete or approval-gated.
-   - residual risk: provider pricing, model availability, data-use terms, and region restrictions are current/unstable and must be rechecked in provider dashboards/accounts before Task 20 implementation alignment, live/provider smoke, and paid launch. Live/provider execution and Stripe live-mode actions remain separately approval-gated.
-   - next safe action: create this Task 19 docs/contract PR targeting `codex/comment-translator-preview`, then proceed to Task 20 Translation provider implementation alignment as a separate PR after merge.
+   - inspected surfaces for Task 20: `task.md`, `docs/active/COMMENT_TRANSLATOR_PROVIDER_COST_POLICY.md`, `scripts/comment-translator-provider-cost-policy-contract.mjs`, `lib/comment-translator-provider-boundary.ts`, `lib/comment-translator-provider-execution-runtime.ts`, `lib/comment-translator-deepl-provider.ts`, `lib/comment-translator-billing-runtime.ts`, `lib/comment-translator-session-runtime.ts`, `lib/comment-translator-usage-ledger-runtime.ts`, and existing provider execution / usage contract scripts.
+   - completed in this branch: added `lib/comment-translator-provider-policy-runtime.ts` and `scripts/comment-translator-provider-implementation-alignment-contract.mjs`, extended provider usage handoff with sanitized cost estimates, and connected `executeCommentTranslatorProviderPolicyBatch` to server-owned Free/Paid routing. Free plan routes to Azure only; Paid plan routes to OpenAI mini primary with Azure fallback only for recoverable primary errors. OpenAI mini output is strict JSON parsed and parser/policy terminal failures do not auto-fallback. Existing provider execution contract was updated to accept the Task 20 provider policy files.
+   - unchanged in this branch: no live provider call, YouTube live/provider smoke, deploy/upload, remote mutation, schema migration, provider target lookup, liveChatId lookup, Stripe live-mode action, new Stripe Price creation, billing setting mutation, browser storage expansion, handoff payload expansion, raw comment logging, provider credential value exposure, private provider target value exposure, or UI/CSS/layout change was added or run.
+   - verification for this branch: RED `node scripts/comment-translator-provider-implementation-alignment-contract.mjs` failed before implementation because the provider policy runtime was missing; GREEN passed after implementation. `node scripts/comment-translator-provider-execution-runtime-contract.mjs`, no-secret scan over changed files, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. `npm run build` emitted existing Next/SWC version and middleware/proxy warnings plus static export alias skip for server-runtime build. `git diff --check` emitted LF-to-CRLF working-copy warnings only.
+   - width checks skipped: Task 20 changed only server-only runtime/types and Node contract scripts plus this task note; no visible UI/CSS/layout text changed.
+   - public-release capable: no. Provider implementation alignment is now recorded in local runtime/contracts, but Stripe live readiness, abuse protection, durable persistence decisions, monitoring, final security/privacy review, private-gated live/provider smoke, production/custom smoke, and final public launch gate flip remain incomplete or approval-gated.
+   - residual risk: provider pricing, model availability, data-use terms, regions, dashboard hard caps, and actual provider response shapes remain live/account-specific and must be rechecked before approved live/provider smoke or paid launch. Current adapters are verified with deterministic/fake provider contracts only; no real Azure/OpenAI/DeepL/Gemini/Cloudflare call was made.
+   - next safe action: create this Task 20 implementation alignment PR targeting `codex/comment-translator-preview`, then proceed to Task 21 Stripe live readiness and billing operations as a separate approval-gated PR after merge.
 
 ## Public Release Roadmap
 
@@ -178,6 +178,7 @@ Use one Codex thread, one feature branch, and one PR per task. These tasks are r
    - Scope: add or adjust provider adapters, provider selection by entitlement, fallback behavior, strict output parsing for LLM providers if used, and usage/cost accounting.
    - Completion criteria: Free/Paid provider routing is server-owned; fallback is explicit and auditable; skipped comments are not sent; raw comments and provider identifiers are not logged or exposed.
    - Verification: focused provider execution contracts/tests, lint, typecheck, build, `git diff --check`; live provider smoke only after explicit approval.
+   - Status: complete in current Task 20 PR via server-only Azure/OpenAI mini provider policy runtime, entitlement-owned routing, paid recoverable fallback audit counts, strict OpenAI JSON output parsing, sanitized usage/cost estimates, and provider execution contracts. Actual live provider calls remain approval-gated and were not run.
 
 21. Stripe live readiness and billing operations
    - Goal: prepare billing for private-gated production without mutating live settings unexpectedly.
@@ -259,7 +260,7 @@ These decisions are fixed for the current public-release roadmap unless the user
 - Provider scope: YouTube ships first; Twitch remains future unless explicitly pulled into public-release scope.
 - Raw text logging: disabled by default; diagnostics are short-lived and sanitized.
 - Account path: `/account/integrations` is the preferred provider settings entry; `/tools/comment-translator` should also show a direct integration CTA when YouTube is not connected.
-- Translation provider policy: current runtime includes DeepL provider support, but final public provider selection remains a pre-main task. The expected comparison set is Azure Translator for low-cost/free-tier baseline, OpenAI mini for paid higher-quality translation, Gemini Flash/Lite for cost comparison, Cloudflare Workers AI for Cloudflare-native low-cost/fallback comparison, and DeepL for quality comparison.
+- Translation provider policy: Free plan routes to Azure Translator primary; Paid plan routes to OpenAI mini primary with Azure Translator as recoverable-error fallback. DeepL remains optional quality/comparison after account pricing confirmation. Gemini Flash/Lite and Cloudflare Workers AI remain initial-launch comparison-only.
 
 ## Thread And PR Handoff Rules
 
@@ -317,37 +318,36 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - この prompt は live/provider execution、deploy、remote mutation、Stripe live-mode action、billing setting mutation の承認ではありません。
 
 Merge gate:
-- この Task 16 readiness/blocker PR が merge 済みであることを確認してください。
-- gh が使える場合は Task 16 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
-- gh が `HTTP 401: Requires authentication` になる場合は、Task 16 PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認し、それを主 evidence にしてください。認証 token の値は要求・表示しないでください。
+- Task 20 Translation provider implementation alignment PR が merge 済みであることを確認してください。
+- gh が使える場合は Task 20 PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認してください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
 - Public Release Roadmap Task 1-15 は完了済みです。
-- Task 2 で `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md` が canonical requirements doc として追加され、Task 3-14 で public legal/copy、account integrations、token refresh/reconnect、disconnect/revocation、session lifecycle、usage/quota/budget ledger、filtering/language policy、bounded polling、translation provider execution、operator UI、admin operational visibility、deployment/live-smoke runbook が追加されています。
-- Task 15 で server-only Stripe Billing/Checkout/Portal/webhook boundaries、account billing entry point、translator paid-plan entry point、signed-webhook entitlement sync、active/trialing Paid activation、failed/expired/canceled/unavailable payment state の safe Free/inactive-paid degradation が追加されています。Actual Stripe live-mode action、Customer Portal redirect、webhook registration、remote schema migration、deploy/upload、deployed URL smoke、live/provider execution は引き続き approval-gated で、この prompt は承認ではありません。
-- Task 16 で final local QA、Cloudflare preview URL smoke、Chrome authenticated account smoke、existing deployed URL 404 blocker が sanitized evidence として記録されています。`public-release capable: no` のままです。
+- Pre-Main Launch Hardening Roadmap Task 17 PR #420、Task 18 PR #421、Task 19 PR #422 は merge 済みです。
+- Task 19 で provider/cost policy が記録され、Task 20 で server-only Azure/OpenAI mini provider policy runtime、Free/Paid routing、paid recoverable Azure fallback、strict OpenAI JSON parser、sanitized usage/cost estimate handoff が追加されています。
+- Actual Stripe live-mode action、Customer Portal redirect、webhook registration、remote schema migration、deploy/upload、deployed URL smoke、live/provider execution は引き続き approval-gated で、この prompt は承認ではありません。
+- `public-release capable: no` のままです。
 - 最終ゴールは Pre-Main Launch Hardening Roadmap の完了、private-gated main promotion、production/custom deployed smoke、必要な live/provider smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
 次にやること:
-- Pre-Main Launch Hardening Roadmap Task 17: Private launch access gate.
-- main に入っても一般ユーザーが Comment Translator を使えない server-side launch gate を実装してください。
-- 許可されたテストユーザーだけ `/tools/comment-translator`、account entry、comment-translator API/server actions を使えるようにし、一般ユーザーには準備中/disabled UI を返してください。
-- UI グレーアウトだけでなく、direct URL/API call でも provider/billing/session-affecting actions が止まることを確認してください。
-- deploy、live/provider execution、Stripe live-mode action、billing setting mutation、remote mutation が必要になった場合は、same-thread/operator-local ready preflight、sanitized output review、explicit in-thread approval を揃えるまで実行しないでください。
+- Pre-Main Launch Hardening Roadmap Task 21: Stripe live readiness and billing operations.
+- Stripe Product/Price/Checkout/Portal/webhook readiness checklist、signed webhook entitlement evidence、failed/canceled/expired state review、safe rollback notes を整理してください。
+- Dashboard/live-mode actions は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。必要なら blocker/readiness として記録してください。
+- Stripe secret key / webhook signing secret / provider credential / OAuth token / private identifier の値は要求・表示・保存しないでください。env 名・reference 名だけを扱ってください。
 
 Verification:
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
-- relevant access-gate contracts/tests
+- relevant Stripe readiness / billing operation contracts/tests
+- no-secret scan over changed files
 - `git diff --check`
-- route/API negative checks for non-allowed users
-- allowed-tester route/action checks with sanitized evidence only
-- width checks at `390 / 820 / 1024 / 1280 / 1366px` if visible UI changes
+- width checks at `390 / 820 / 1024 / 1280 / 1366px` if visible UI changes; docs/contract-onlyなら省略理由を `task.md` に残してください。
 
 Completion:
-- Task 17 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- Task 21 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
 - 未達なら commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

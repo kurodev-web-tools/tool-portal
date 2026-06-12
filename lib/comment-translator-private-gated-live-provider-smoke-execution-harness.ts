@@ -8,7 +8,7 @@ export type CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessContra
   providerTargetLookup: "approval-gated-same-command-process";
   liveChatPolling: "approval-gated-bounded-one-step";
   translatorPipelineWiring: "implemented-sanitized-summary-only";
-  providerTranslationExecution: "approval-gated-injected-server-only-provider";
+  providerTranslationExecution: "approval-gated-operator-local-server-only-provider";
   evidence: "counts-status-stop-reasons-only";
   browserStorage: "unchanged";
   handoffPayload: "unchanged";
@@ -60,6 +60,26 @@ export type CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessReques
   targetLookup: () => Promise<Task27ProviderTargetLookupResult>;
   pollLiveChatOnce: () => Promise<Task27LiveChatPollingResult>;
   translateEligibleComments: () => Promise<Task27TranslationProviderResult>;
+};
+
+export type CommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters = {
+  adapterWiring: "operator-local-runtime-adapters-connected";
+  targetLookup: CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessRequest["targetLookup"];
+  pollLiveChatOnce: CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessRequest["pollLiveChatOnce"];
+  translateEligibleComments: CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessRequest["translateEligibleComments"];
+};
+
+export type CommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapterSourceRequest = {
+  targetLookup: () => Promise<Record<string, unknown>>;
+  pollLiveChatOnce: () => Promise<Record<string, unknown>>;
+  translateEligibleComments: () => Promise<Record<string, unknown>>;
+};
+
+export type CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdaptersRequest = Omit<
+  CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessRequest,
+  "targetLookup" | "pollLiveChatOnce" | "translateEligibleComments"
+> & {
+  adapters: CommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters;
 };
 
 export type CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessResult =
@@ -126,11 +146,39 @@ export const commentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessContr
   providerTargetLookup: "approval-gated-same-command-process",
   liveChatPolling: "approval-gated-bounded-one-step",
   translatorPipelineWiring: "implemented-sanitized-summary-only",
-  providerTranslationExecution: "approval-gated-injected-server-only-provider",
+  providerTranslationExecution: "approval-gated-operator-local-server-only-provider",
   evidence: "counts-status-stop-reasons-only",
   browserStorage: "unchanged",
   handoffPayload: "unchanged"
 } as const satisfies CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessContract;
+
+export function createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters(
+  request: CommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapterSourceRequest
+): CommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters {
+  return {
+    adapterWiring: "operator-local-runtime-adapters-connected",
+    async targetLookup() {
+      return mapOperatorLocalTargetLookupResult(await request.targetLookup());
+    },
+    async pollLiveChatOnce() {
+      return mapOperatorLocalPollingResult(await request.pollLiveChatOnce());
+    },
+    async translateEligibleComments() {
+      return mapOperatorLocalTranslationResult(await request.translateEligibleComments());
+    }
+  };
+}
+
+export async function runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters(
+  request: CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdaptersRequest
+): Promise<CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessResult> {
+  return runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarness({
+    ...request,
+    targetLookup: request.adapters.targetLookup,
+    pollLiveChatOnce: request.adapters.pollLiveChatOnce,
+    translateEligibleComments: request.adapters.translateEligibleComments
+  });
+}
 
 export async function runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarness(
   request: CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessRequest
@@ -277,4 +325,126 @@ function blocked(
 
 function nonNegativeInteger(value: number) {
   return Number.isInteger(value) && value > 0 ? value : 0;
+}
+
+function mapOperatorLocalTargetLookupResult(result: Record<string, unknown>): Task27ProviderTargetLookupResult {
+  if (result.status === "live-chat-target-lookup-sanitized-result" && result.liveChatTarget === "present") {
+    return {
+      status: "target-present",
+      providerTargetLookup: "executed-presence-only",
+      liveChatTarget: "present"
+    };
+  }
+
+  if (typeof result.status === "string" && result.status.includes("failed")) {
+    return {
+      status: "target-lookup-failed",
+      providerTargetLookup: "failed-sanitized",
+      liveChatTarget: "absent",
+      stopReason: "terminal-provider-error"
+    };
+  }
+
+  return {
+    status: "target-absent",
+    providerTargetLookup: result.liveChatTargetLookup === "executed-bounded-readonly-one-step" ? "executed-presence-only" : "not-run",
+    liveChatTarget: "absent",
+    stopReason: "stream-unavailable"
+  };
+}
+
+function mapOperatorLocalPollingResult(result: Record<string, unknown>): Task27LiveChatPollingResult {
+  const responseMetadata = asRecord(result.responseMetadata);
+  const returnedItemCount = readCount(responseMetadata.returnedItemCount);
+  const eligibleCommentCount = readCount(result.eligibleCommentCount ?? responseMetadata.eligibleCommentCount ?? returnedItemCount);
+  const skippedCommentCount = readCount(result.skippedCommentCount);
+
+  if (result.status === "live-chat-polling-smoke-sanitized-result" && result.liveChatPollingSmoke === "executed-bounded-readonly-one-step") {
+    return {
+      status: "polling-completed",
+      liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+      returnedItemCount,
+      eligibleCommentCount,
+      skippedCommentCount,
+      stopReason: mapStopReason(result.stopReason)
+    };
+  }
+
+  if (typeof result.status === "string" && result.status.includes("failed")) {
+    return {
+      status: "polling-failed",
+      liveChatPollingSmoke: "failed-bounded-readonly-one-step",
+      returnedItemCount: 0,
+      eligibleCommentCount: 0,
+      skippedCommentCount: 0,
+      stopReason: "terminal-provider-error"
+    };
+  }
+
+  return {
+    status: "polling-stopped",
+    liveChatPollingSmoke: "not-run",
+    returnedItemCount: 0,
+    eligibleCommentCount: 0,
+    skippedCommentCount: 0,
+    stopReason: mapStopReason(result.stopReason) ?? "stream-unavailable"
+  };
+}
+
+function mapOperatorLocalTranslationResult(result: Record<string, unknown>): Task27TranslationProviderResult {
+  if (result.status === "completed") {
+    return {
+      status: "translation-completed",
+      providerRequestCount: readCount(result.providerRequestCount),
+      providerCallCount: readCount(result.providerCallCount),
+      translatedCount: readCount(result.translatedCount),
+      skippedCount: readCount(result.skippedCount),
+      stopReason: mapStopReason(result.stopReason)
+    };
+  }
+
+  if (result.status === "blocked-abuse-rate-limit") {
+    return {
+      status: "translation-stopped",
+      providerRequestCount: 0,
+      providerCallCount: 0,
+      translatedCount: 0,
+      skippedCount: readCount(result.skippedCount),
+      stopReason: "translated-message-cap"
+    };
+  }
+
+  return {
+    status: "translation-failed",
+    providerRequestCount: readCount(result.providerRequestCount),
+    providerCallCount: readCount(result.providerCallCount),
+    translatedCount: readCount(result.translatedCount),
+    skippedCount: readCount(result.skippedCount),
+    stopReason: mapStopReason(result.stopReason) ?? "terminal-provider-error"
+  };
+}
+
+function readCount(value: unknown) {
+  return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : 0;
+}
+
+function mapStopReason(value: unknown): Task27LiveProviderSmokeStopReason | null {
+  if (
+    value === "stream-ended" ||
+    value === "stream-unavailable" ||
+    value === "auth-failed" ||
+    value === "provider-quota-stop" ||
+    value === "global-budget-stop" ||
+    value === "ai-budget-stop" ||
+    value === "translated-message-cap" ||
+    value === "terminal-provider-error"
+  ) {
+    return value;
+  }
+
+  return null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }

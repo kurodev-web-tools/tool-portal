@@ -102,6 +102,16 @@ const readinessDoc = read(readinessDocPath);
 
 assert.match(foundationSource, /^import "server-only";/m, "harness foundation is server-only");
 assert.match(commandSource, /--approved-private-gated-live-provider-smoke/, "command requires explicit Task 27 approval flag");
+assert.match(
+  foundationSource,
+  /createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters/,
+  "harness exposes operator-local adapter wiring"
+);
+assert.match(
+  commandSource,
+  /createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters/,
+  "command wires the approved path through operator-local adapters"
+);
 assert.match(taskSource, /execution harness/i, "task.md records execution harness PR scope");
 assert.match(readinessDoc, /execution harness/i, "readiness doc records execution harness availability");
 
@@ -116,7 +126,7 @@ assert.deepEqual(
     providerTargetLookup: "approval-gated-same-command-process",
     liveChatPolling: "approval-gated-bounded-one-step",
     translatorPipelineWiring: "implemented-sanitized-summary-only",
-    providerTranslationExecution: "approval-gated-injected-server-only-provider",
+    providerTranslationExecution: "approval-gated-operator-local-server-only-provider",
     evidence: "counts-status-stop-reasons-only",
     browserStorage: "unchanged",
     handoffPayload: "unchanged"
@@ -165,6 +175,60 @@ assert.equal(blockedExecute.status, 2, "execute without approval is blocked");
 const blockedExecutePayload = parseJson(blockedExecute.stdout);
 assert.equal(blockedExecutePayload.status, "blocked-pending-explicit-private-gated-live-provider-smoke-approval");
 assert.equal(blockedExecutePayload.liveProviderExecution, "not-run");
+
+const approvedWithSandboxedAdapters = runCommand(
+  ["--execute", "--approved-private-gated-live-provider-smoke", "--use-sandboxed-adapters-for-contract"],
+  readyEnv
+);
+assert.equal(approvedWithSandboxedAdapters.status, 0, "approved sandboxed adapter path produces sanitized evidence");
+const approvedSandboxedPayload = parseJson(approvedWithSandboxedAdapters.stdout);
+assert.equal(approvedSandboxedPayload.status, "task-27-live-provider-smoke-sanitized-result");
+assert.equal(approvedSandboxedPayload.liveProviderExecution, "approved-bounded-execution");
+assert.equal(approvedSandboxedPayload.evidence.providerTargetLookup, "executed-presence-only");
+assert.equal(approvedSandboxedPayload.evidence.liveChatPollingSmoke, "executed-bounded-readonly-one-step");
+assert.equal(approvedSandboxedPayload.evidence.translationProviderExecution, "executed-server-only-provider");
+assert.equal(approvedSandboxedPayload.rawCommentText, "never-returned-by-design");
+
+const adapterHarnessResult =
+  await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({
+    credentialReferenceId: "smoke-task27-execution-harness",
+    providerTargetLookupReady: true,
+    liveChatTargetPresent: true,
+    liveChatPollingReady: true,
+    translationProviderReady: true,
+    sanitizedOutputReviewConfirmed: true,
+    explicitApprovalConfirmed: true,
+    adapters: foundation.createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters({
+      targetLookup: async () => ({
+        status: "live-chat-target-lookup-sanitized-result",
+        liveChatTarget: "present",
+        liveChatTargetLookup: "executed-bounded-readonly-one-step",
+        responseMetadata: {
+          returnedItemCount: 1
+        }
+      }),
+      pollLiveChatOnce: async () => ({
+        status: "live-chat-polling-smoke-sanitized-result",
+        liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+        responseMetadata: {
+          returnedItemCount: 2
+        }
+      }),
+      translateEligibleComments: async () => ({
+        status: "completed",
+        providerRequestCount: 1,
+        providerCallCount: 1,
+        translatedCount: 1,
+        skippedCount: 0
+      })
+    })
+  });
+
+assert.equal(adapterHarnessResult.status, "task-27-live-provider-smoke-sanitized-result");
+assert.equal(adapterHarnessResult.evidence.returnedItemCount, 2);
+assert.equal(adapterHarnessResult.evidence.eligibleCommentCount, 2);
+assert.equal(adapterHarnessResult.evidence.providerRequestCount, 1);
+assert.equal(adapterHarnessResult.evidence.providerCallCount, 1);
 
 const harnessResult = await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarness({
   credentialReferenceId: "smoke-task27-execution-harness",

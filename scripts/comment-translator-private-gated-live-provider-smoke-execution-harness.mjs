@@ -39,6 +39,13 @@ const truthyReferenceNames = [
 
 const exactOperatorLocalCommand =
   "node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed";
+const youtubeReadonlyOAuthScope = "https://www.googleapis.com/auth/youtube.readonly";
+const targetLookupOperatorLocalServerAuthorizationHeaderReference =
+  "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER";
+const targetLookupOperatorLocalTokenExpiresAtIsoReference = "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO";
+const pollingOperatorLocalServerAuthorizationHeaderReference =
+  "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER";
+const pollingOperatorLocalTokenExpiresAtIsoReference = "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO";
 
 function loadTsModule(relativePath) {
   const sourcePath = path.join(root, relativePath);
@@ -326,21 +333,8 @@ async function main() {
     return;
   }
 
-  writeJson(
-    {
-      status: "blocked-actual-operator-local-runtime-adapters-not-run-in-this-pr",
-      ...createBasePayload(),
-      credentialReferenceId: result.payload.credentialReferenceId,
-      liveProviderExecution: "not-run",
-      providerTargetLookup: "not-run",
-      liveChatPollingSmoke: "not-run",
-      translationProviderExecution: "not-run",
-      operatorLocalAdapterWiring: "available-through-server-only-harness-adapter-builder",
-      reason:
-        "this PR wires the Task 27 harness to operator-local adapter results; actual provider-affecting adapters remain a later exact-command execution step"
-    },
-    2
-  );
+  await createOperatorLocalRuntimeAdapterExecutionPayload(result.payload.credentialReferenceId);
+  return;
 }
 
 await main();
@@ -382,4 +376,369 @@ async function createSandboxedAdapterExecutionPayload(credentialReferenceId) {
     explicitApprovalConfirmed: true,
     adapters
   });
+}
+
+async function createOperatorLocalRuntimeAdapterExecutionPayload(credentialReferenceId) {
+  const foundation = loadTsModule("lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts");
+  let serverOnlyLiveComments = [];
+  let serverOnlyLiveChatId = "";
+  const adapters = foundation.createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters({
+    targetLookup: async () => {
+      const targetLookup = await runTask27OperatorLocalTargetLookupForPolling(credentialReferenceId);
+      serverOnlyLiveChatId = targetLookup.serverOnlyLiveChatId;
+      return targetLookup.sanitizedResult;
+    },
+    pollLiveChatOnce: async () => {
+      const polling = await runTask27OperatorLocalLiveChatPollingForTranslation(credentialReferenceId, serverOnlyLiveChatId);
+      serverOnlyLiveComments = polling.serverOnlyLiveComments;
+      return polling.sanitizedResult;
+    },
+    translateEligibleComments: async () => runTask27OperatorLocalTranslationProviderExecution(serverOnlyLiveComments)
+  });
+
+  const executionPayload = await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({
+    credentialReferenceId,
+    providerTargetLookupReady: true,
+    liveChatTargetPresent: true,
+    liveChatPollingReady: true,
+    translationProviderReady: true,
+    sanitizedOutputReviewConfirmed: true,
+    explicitApprovalConfirmed: true,
+    adapters
+  });
+
+  writeJson(
+    {
+      ...executionPayload,
+      operatorLocalAdapterWiring: "executed-through-server-only-harness-adapter-builder"
+    },
+    executionPayload.status === "task-27-live-provider-smoke-sanitized-result" ? 0 : 2
+  );
+  return undefined;
+}
+
+async function runTask27OperatorLocalTargetLookupForPolling(credentialReferenceId) {
+  const targetLookupFoundation = loadTsModule("lib/comment-translator-youtube-live-chat-target-lookup-foundation.ts");
+  const request = createTargetLookupFoundationBaseRequest(credentialReferenceId);
+  const tokenMaterial = await request.tokenMaterialResolver.resolveServerOnlyTokenMaterial({
+    credentialReferenceId: request.credentialReferenceId,
+    ownerUserId: request.ownerAuthorization.ownerUserId,
+    requiredScope: request.requiredScope
+  });
+
+  if (tokenMaterial.status !== "available") {
+    return {
+      sanitizedResult: await targetLookupFoundation.runYouTubeLiveChatTargetLookupFoundation(request),
+      serverOnlyLiveChatId: ""
+    };
+  }
+
+  let providerResponse;
+  try {
+    providerResponse = await request.fetchGoogleApi(
+      targetLookupFoundation.createYouTubeLiveBroadcastsListTargetLookupRequest({
+        serverAuthorizationHeader: tokenMaterial.serverAuthorizationHeader
+      })
+    );
+  } catch {
+    return {
+      sanitizedResult: await targetLookupFoundation.runYouTubeLiveChatTargetLookupFoundation({
+        ...request,
+        fetchGoogleApi: async () => {
+          throw new Error("provider-fetch-failed");
+        }
+      }),
+      serverOnlyLiveChatId: ""
+    };
+  }
+
+  const sanitizedResult = await targetLookupFoundation.runYouTubeLiveChatTargetLookupFoundation({
+    ...request,
+    fetchGoogleApi: async () => providerResponse
+  });
+
+  return {
+    sanitizedResult,
+    serverOnlyLiveChatId: readServerOnlyLiveChatIdFromTargetLookupBody(providerResponse.body)
+  };
+}
+
+async function runTask27OperatorLocalLiveChatPollingForTranslation(credentialReferenceId, serverOnlyLiveChatId) {
+  const pollingFoundation = loadTsModule("lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts");
+  const request = createPollingFoundationBaseRequest(credentialReferenceId, serverOnlyLiveChatId);
+  const readiness = await pollingFoundation.assessYouTubeLiveChatPollingSmokeReadinessGate(request);
+  if (readiness.status !== "owner-binding-verified-before-live-chat-polling") {
+    return {
+      sanitizedResult: readiness,
+      serverOnlyLiveComments: []
+    };
+  }
+
+  const tokenMaterial = await request.tokenMaterialResolver.resolveServerOnlyTokenMaterial({
+    credentialReferenceId: request.credentialReferenceId,
+    ownerUserId: request.ownerAuthorization.ownerUserId,
+    requiredScope: request.requiredScope
+  });
+  if (tokenMaterial.status !== "available") {
+    return {
+      sanitizedResult: createTask27PollingFailureResult({
+        credentialReferenceId,
+        reason: tokenMaterial.reason,
+        stopReason: tokenMaterial.status === "expired" || tokenMaterial.status === "scope-missing" ? "auth-failed" : "terminal-provider-error"
+      }),
+      serverOnlyLiveComments: []
+    };
+  }
+
+  try {
+    const providerResponse = await fetchTask27LiveChatMessagesForTranslation({
+      serverAuthorizationHeader: tokenMaterial.serverAuthorizationHeader,
+      liveChatId: request.liveChatId
+    });
+    const serverOnlyLiveComments = createTask27ProviderSafeComments(providerResponse.body);
+    const returnedItemCount = readCount(asRecord(providerResponse.body).items?.length);
+    const eligibleCommentCount = serverOnlyLiveComments.length;
+
+    if (!providerResponse.ok) {
+      return {
+        sanitizedResult: createTask27PollingFailureResult({
+          credentialReferenceId,
+          reason: "provider-fetch-failed",
+          httpStatus: providerResponse.status,
+          stopReason: "terminal-provider-error"
+        }),
+        serverOnlyLiveComments: []
+      };
+    }
+
+    return {
+      sanitizedResult: {
+        status: "live-chat-polling-smoke-sanitized-result",
+        liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+        responseMetadata: {
+          httpStatus: providerResponse.status,
+          ok: providerResponse.ok,
+          liveChatTarget: "present",
+          nextPageToken: asRecord(providerResponse.body).nextPageToken ? "present" : "absent",
+          pollingIntervalMillis: readNullableCount(asRecord(providerResponse.body).pollingIntervalMillis),
+          returnedItemCount,
+          eligibleCommentCount,
+          skippedCommentCount: Math.max(0, returnedItemCount - eligibleCommentCount),
+          pageInfoTotalResults: readNullableCount(asRecord(asRecord(providerResponse.body).pageInfo).totalResults),
+          textPayload: "server-only-translator-provider-input-never-returned"
+        },
+        eligibleCommentCount,
+        skippedCommentCount: Math.max(0, returnedItemCount - eligibleCommentCount),
+        stopReason: null
+      },
+      serverOnlyLiveComments
+    };
+  } catch {
+    return {
+      sanitizedResult: createTask27PollingFailureResult({
+        credentialReferenceId,
+        reason: "provider-fetch-failed",
+        stopReason: "terminal-provider-error"
+      }),
+      serverOnlyLiveComments: []
+    };
+  }
+}
+
+async function runTask27OperatorLocalTranslationProviderExecution(serverOnlyLiveComments) {
+  const providerExecution = loadTsModule("lib/comment-translator-provider-execution-runtime.ts");
+  const providerPolicy = loadTsModule("lib/comment-translator-provider-policy-runtime.ts");
+  const providers = providerPolicy.createCommentTranslatorDefaultTranslationProviderSet(process.env);
+
+  return providerExecution.executeCommentTranslatorProviderPolicyBatch({
+    providers,
+    callerAuthorization: {
+      status: "authorized",
+      ownerUserId: readReference("YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID")
+    },
+    sessionReferenceId: "task-27-private-gated-live-provider-smoke",
+    occurredAtMs: Date.now(),
+    usage: createTask27UsageSnapshot(),
+    targetLanguage: readReference("COMMENT_TRANSLATOR_TASK27_TARGET_LANGUAGE") || "ja",
+    sourceLanguages: readTask27SourceLanguages(),
+    comments: serverOnlyLiveComments
+  });
+}
+
+function createTargetLookupFoundationBaseRequest(credentialReferenceId) {
+  const targetLookupFoundation = loadTsModule("lib/comment-translator-youtube-live-chat-target-lookup-foundation.ts");
+  const runtimeWiring = targetLookupFoundation.createYouTubeLiveChatTargetLookupCommandRuntimeWiring({
+    credentialReferenceId,
+    providerChannelId: readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"),
+    requiredScope: youtubeReadonlyOAuthScope,
+    nowIso: new Date().toISOString(),
+    operatorLocalServerAuthorizationHeader: readReference(targetLookupOperatorLocalServerAuthorizationHeaderReference),
+    operatorLocalTokenExpiresAtIso: readReference(targetLookupOperatorLocalTokenExpiresAtIsoReference)
+  });
+
+  return {
+    credentialReferenceId,
+    expectedProviderChannelReference: readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"),
+    ownerVerificationSmokeSuccess: true,
+    ownerAuthorization: {
+      status: "authorized",
+      ownerUserId: readReference("YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID")
+    },
+    credentialResolutionDisabled: false,
+    requiredScope: youtubeReadonlyOAuthScope,
+    nowIso: new Date().toISOString(),
+    trustedStatusReader: runtimeWiring.trustedStatusReader,
+    tokenMaterialResolver: runtimeWiring.tokenMaterialResolver,
+    fetchGoogleApi: runtimeWiring.fetchGoogleApi
+  };
+}
+
+function createPollingFoundationBaseRequest(credentialReferenceId, serverOnlyLiveChatId = "") {
+  const pollingFoundation = loadTsModule("lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts");
+  const liveChatId = serverOnlyLiveChatId || readReference("YOUTUBE_LIVE_CHAT_POLLING_SMOKE_LIVE_CHAT_ID");
+  const runtimeWiring = pollingFoundation.createYouTubeLiveChatPollingSmokeCommandRuntimeWiring({
+    credentialReferenceId,
+    providerChannelId: readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"),
+    requiredScope: youtubeReadonlyOAuthScope,
+    nowIso: new Date().toISOString(),
+    operatorLocalServerAuthorizationHeader: readReference(pollingOperatorLocalServerAuthorizationHeaderReference),
+    operatorLocalTokenExpiresAtIso: readReference(pollingOperatorLocalTokenExpiresAtIsoReference)
+  });
+
+  return {
+    credentialReferenceId,
+    expectedProviderChannelReference: readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"),
+    liveChatId,
+    ownerVerificationSmokeSuccess: true,
+    liveChatTargetLookupReadinessConfirmed: true,
+    liveChatTargetPresenceOnlyEvidence: true,
+    ownerAuthorization: {
+      status: "authorized",
+      ownerUserId: readReference("YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID")
+    },
+    credentialResolutionDisabled: false,
+    requiredScope: youtubeReadonlyOAuthScope,
+    nowIso: new Date().toISOString(),
+    trustedStatusReader: runtimeWiring.trustedStatusReader,
+    tokenMaterialResolver: runtimeWiring.tokenMaterialResolver,
+    fetchGoogleApi: runtimeWiring.fetchGoogleApi
+  };
+}
+
+async function fetchTask27LiveChatMessagesForTranslation({ serverAuthorizationHeader, liveChatId }) {
+  const providerUrl = "https://www.googleapis.com/youtube/v3/liveChat/messages";
+  const params = new URLSearchParams({
+    liveChatId,
+    part: "id,snippet",
+    fields: "nextPageToken,pollingIntervalMillis,pageInfo(totalResults,resultsPerPage),items(id,snippet(publishedAt,type,displayMessage))"
+  });
+  const response = await fetch(`${providerUrl}?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      Authorization: serverAuthorizationHeader
+    }
+  });
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    body: await response.json()
+  };
+}
+
+function createTask27ProviderSafeComments(body) {
+  const items = Array.isArray(asRecord(body).items) ? asRecord(body).items : [];
+  return items
+    .map((item) => {
+      const record = asRecord(item);
+      const snippet = asRecord(record.snippet);
+      return {
+        commentId: typeof record.id === "string" ? record.id : "unknown-comment-reference",
+        publishedAt: typeof snippet.publishedAt === "string" ? snippet.publishedAt : new Date().toISOString(),
+        text: typeof snippet.displayMessage === "string" ? snippet.displayMessage : "",
+        platformLanguageHint: null
+      };
+    })
+    .filter((comment) => comment.text.trim().length > 0);
+}
+
+function readServerOnlyLiveChatIdFromTargetLookupBody(body) {
+  const items = Array.isArray(asRecord(body).items) ? asRecord(body).items : [];
+  const activeItem = items.find((item) => {
+    const status = asRecord(asRecord(item).status);
+    return status.lifeCycleStatus === "live";
+  });
+  const snippet = asRecord(asRecord(activeItem).snippet);
+  return typeof snippet.liveChatId === "string" ? snippet.liveChatId.trim() : "";
+}
+
+function createTask27PollingFailureResult({ credentialReferenceId, reason, httpStatus = null, stopReason }) {
+  return {
+    status: "live-chat-polling-smoke-failed-sanitized",
+    credentialReferenceId,
+    liveChatPollingSmoke: "failed-bounded-readonly-one-step",
+    providerAccess: "liveChatMessages-list-one-step-only",
+    responseMetadata: {
+      httpStatus,
+      ok: false,
+      liveChatTarget: "present",
+      returnedItemCount: 0,
+      eligibleCommentCount: 0,
+      skippedCommentCount: 0,
+      textPayload: "not-returned-by-design"
+    },
+    stopReason,
+    reason
+  };
+}
+
+function createTask27UsageSnapshot() {
+  const usageLedger = loadTsModule("lib/comment-translator-usage-ledger-runtime.ts");
+  return {
+    dailyUsedMs: 0,
+    currentSessionElapsedMs: 0,
+    translatedMessagesInCurrentMinute: 0,
+    providerBudgetAvailable: true,
+    globalBudgetAvailable: true,
+    aiBudgetAvailable: true,
+    translationProviderAvailable: true,
+    planEntitlement: usageLedger.resolveCommentTranslatorUsagePlanEntitlement({
+      plan: readTask27Plan()
+    }),
+    providerRequestEstimate: {
+      requestEstimateCount: 0,
+      quotaUnitEstimate: 0,
+      providerTargetMetadata: "forbidden"
+    },
+    aiUsageEstimate: {
+      translatedMessageEstimate: 0,
+      translatedCharacterEstimate: 0,
+      estimatedCostMicros: 0,
+      rawCommentText: "never-recorded-by-design"
+    }
+  };
+}
+
+function readTask27Plan() {
+  return readReference("COMMENT_TRANSLATOR_TASK27_PLAN").toLowerCase() === "paid" ? "paid" : "free";
+}
+
+function readTask27SourceLanguages() {
+  const value = readReference("COMMENT_TRANSLATOR_TASK27_SOURCE_LANGUAGES") || "EN,KR,CN";
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function asRecord(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
+function readCount(value) {
+  return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : 0;
+}
+
+function readNullableCount(value) {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
 }

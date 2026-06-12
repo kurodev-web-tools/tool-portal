@@ -8,6 +8,8 @@ import type {
   CommentTranslationProviderResponse,
   CommentTranslationProviderResult
 } from "./comment-translator-provider-boundary";
+import type { CommentTranslatorTranslationProviderSet } from "./comment-translator-provider-policy-runtime";
+import { resolveCommentTranslatorTranslationProviderRoute } from "./comment-translator-provider-policy-runtime";
 import type { CommentTranslatorUsageLedgerEvent, CommentTranslatorUsageLedgerSnapshot } from "./comment-translator-usage-ledger-runtime";
 import { recordInMemoryCommentTranslatorUsageLedgerEvent } from "./comment-translator-usage-ledger-runtime";
 import { createYouTubeLiveCommentTranslatorPipelineRequestsForComments } from "./comment-translator-youtube-live-comment-intake-pipeline";
@@ -46,6 +48,8 @@ export type CachedCommentTranslation = {
 
 export type ExecuteCommentTranslatorProviderBatchRequest = {
   provider: CommentTranslationProvider;
+  fallbackProvider?: CommentTranslationProvider | null;
+  fallbackOnRecoverableProviderError?: boolean;
   comments: readonly YouTubeProviderSafeCommentPayload[];
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   sessionReferenceId: string;
@@ -60,6 +64,10 @@ export type ExecuteCommentTranslatorProviderBatchRequest = {
   maxBatchSize?: number;
   maxProviderAttemptsPerComment?: number;
   cache?: CommentTranslatorProviderExecutionCache;
+};
+
+export type ExecuteCommentTranslatorProviderPolicyBatchRequest = Omit<ExecuteCommentTranslatorProviderBatchRequest, "provider"> & {
+  providers: CommentTranslatorTranslationProviderSet;
 };
 
 export type CommentTranslatorProviderExecutionBatchSummary = {
@@ -102,6 +110,16 @@ export type CommentTranslatorProviderExecutionResultBase = {
     providerRequestEstimate: boolean;
     aiUsageEstimate: boolean;
   };
+  providerRouting: {
+    plan: "free" | "paid" | "unresolved";
+    primaryProvider: "server-owned-policy-primary" | "direct-injected-provider" | "none";
+    fallbackProvider: "server-owned-policy-fallback" | "direct-injected-provider" | "none";
+    providerIdentifiers: "server-only-not-returned";
+  };
+  fallbackReasonCounts: {
+    recoverablePrimaryError: number;
+  };
+  estimatedCostMicros: number;
   browserStorage: "unchanged";
   handoffPayload: "unchanged";
   providerTargetMetadata: "forbidden";
@@ -115,6 +133,8 @@ export type CommentTranslatorProviderExecutionTranslation = {
   confidence: number | null;
   cacheOutcome: CommentTranslationCacheOutcome;
   providerErrorClass: "translated";
+  estimatedCostMicros: number;
+  recoverablePrimaryFallbackCount: number;
 };
 
 type CommentTranslatorProviderExecutionResultBaseOverrides = Partial<CommentTranslatorProviderExecutionResultBase> & {
@@ -125,6 +145,7 @@ type CommentTranslatorProviderExecutionResultBaseOverrides = Partial<CommentTran
   terminalErrorCount?: number;
   providerUsageRecorded?: boolean;
   aiUsageRecorded?: boolean;
+  recoverablePrimaryFallbackCount?: number;
 };
 
 const defaultMaxBatchSize = 10;
@@ -236,6 +257,8 @@ export async function executeCommentTranslatorProviderBatch(
       cacheMissCount += 1;
       const execution = await translateWithRetry({
         provider: request.provider,
+        fallbackProvider: request.fallbackProvider,
+        fallbackOnRecoverableProviderError: request.fallbackOnRecoverableProviderError ?? false,
         providerRequest,
         maxProviderAttemptsPerComment
       });
@@ -243,7 +266,11 @@ export async function executeCommentTranslatorProviderBatch(
       retryCount += execution.retryCount;
 
       if (execution.result.type === "translated") {
-        const translation = createTranslationFromProviderResult(providerRequest, execution.result);
+        const translation = createTranslationFromProviderResult(
+          providerRequest,
+          execution.result,
+          execution.recoverablePrimaryFallbackCount
+        );
         translations.push(translation);
 
         if (lookupKey) {
@@ -289,7 +316,18 @@ export async function executeCommentTranslatorProviderBatch(
       recoverableErrorCount,
       terminalErrorCount,
       providerUsageRecorded: providerCallCount > 0,
-      aiUsageRecorded: translations.length > 0
+      aiUsageRecorded: translations.length > 0,
+      recoverablePrimaryFallbackCount: translations.reduce(
+        (total, translation) => total + translation.recoverablePrimaryFallbackCount,
+        0
+      ),
+      estimatedCostMicros: translations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
+      providerRouting: {
+        plan: "unresolved",
+        primaryProvider: "direct-injected-provider",
+        fallbackProvider: request.fallbackProvider ? "direct-injected-provider" : "none",
+        providerIdentifiers: "server-only-not-returned"
+      }
     }),
     status: "completed",
     batches: batchSummaries,
@@ -297,22 +335,72 @@ export async function executeCommentTranslatorProviderBatch(
   };
 }
 
+export async function executeCommentTranslatorProviderPolicyBatch(
+  request: ExecuteCommentTranslatorProviderPolicyBatchRequest
+): Promise<CommentTranslatorProviderExecutionResult> {
+  const route = resolveCommentTranslatorTranslationProviderRoute({
+    planEntitlement: request.usage.planEntitlement,
+    providers: request.providers
+  });
+
+  if (route.status !== "ready") {
+    return {
+      ...createResultBase({
+        skippedCount: request.comments.length,
+        providerUnavailableSkippedCount: request.comments.length,
+        providerRouting: {
+          plan: route.plan,
+          primaryProvider: "none",
+          fallbackProvider: "none",
+          providerIdentifiers: "server-only-not-returned"
+        }
+      }),
+      status: "completed",
+      batches: [],
+      translations: []
+    };
+  }
+
+  const result = await executeCommentTranslatorProviderBatch({
+    ...request,
+    provider: route.primaryProvider,
+    fallbackProvider: route.fallbackProvider,
+    fallbackOnRecoverableProviderError: route.fallbackBehavior === "paid-openai-recoverable-to-azure"
+  });
+
+  return {
+    ...result,
+    providerRouting: {
+      plan: route.plan,
+      primaryProvider: "server-owned-policy-primary",
+      fallbackProvider: route.fallbackProvider ? "server-owned-policy-fallback" : "none",
+      providerIdentifiers: "server-only-not-returned"
+    }
+  };
+}
+
 async function translateWithRetry({
   provider,
+  fallbackProvider,
+  fallbackOnRecoverableProviderError,
   providerRequest,
   maxProviderAttemptsPerComment
 }: {
   provider: CommentTranslationProvider;
+  fallbackProvider?: CommentTranslationProvider | null;
+  fallbackOnRecoverableProviderError: boolean;
   providerRequest: CommentTranslationProviderRequest;
   maxProviderAttemptsPerComment: number;
 }): Promise<{
   result: CommentTranslationProviderResult;
   providerCallCount: number;
   retryCount: number;
+  recoverablePrimaryFallbackCount: number;
 }> {
   let lastResult: CommentTranslationProviderResult | null = null;
   let providerCallCount = 0;
   let retryCount = 0;
+  let recoverablePrimaryFallbackCount = 0;
 
   for (let attempt = 1; attempt <= maxProviderAttemptsPerComment; attempt += 1) {
     const result = await provider.translate(providerRequest);
@@ -323,7 +411,8 @@ async function translateWithRetry({
       return {
         result,
         providerCallCount,
-        retryCount
+        retryCount,
+        recoverablePrimaryFallbackCount
       };
     }
 
@@ -332,10 +421,23 @@ async function translateWithRetry({
       continue;
     }
 
+    if (fallbackProvider && fallbackOnRecoverableProviderError) {
+      const fallbackResult = await fallbackProvider.translate(providerRequest);
+      providerCallCount += 1;
+      recoverablePrimaryFallbackCount += 1;
+      return {
+        result: fallbackResult,
+        providerCallCount,
+        retryCount,
+        recoverablePrimaryFallbackCount
+      };
+    }
+
     return {
       result,
       providerCallCount,
-      retryCount
+      retryCount,
+      recoverablePrimaryFallbackCount
     };
   }
 
@@ -352,7 +454,8 @@ async function translateWithRetry({
       usageHandoff: providerRequest.usageHandoff
     },
     providerCallCount,
-    retryCount
+    retryCount,
+    recoverablePrimaryFallbackCount
   };
 }
 
@@ -398,7 +501,7 @@ function recordUsageEstimates({
         occurredAtMs,
         translatedMessageEstimate: translatedMessages.length,
         translatedCharacterEstimate: translatedMessages.reduce((total, message) => total + Array.from(message.translatedText).length, 0),
-        estimatedCostMicros: 0,
+        estimatedCostMicros: translatedMessages.reduce((total, message) => total + message.estimatedCostMicros, 0),
         rawCommentText: "never-recorded-by-design"
       }
     });
@@ -452,7 +555,8 @@ function recordUsage({
 
 function createTranslationFromProviderResult(
   providerRequest: CommentTranslationProviderRequest,
-  result: CommentTranslationProviderResponse
+  result: CommentTranslationProviderResponse,
+  recoverablePrimaryFallbackCount = 0
 ): CommentTranslatorProviderExecutionTranslation {
   return {
     commentReferenceId: providerRequest.requestId,
@@ -460,7 +564,9 @@ function createTranslationFromProviderResult(
     detectedSourceLanguage: result.detectedSourceLanguage,
     confidence: result.confidence,
     cacheOutcome: result.cacheOutcome,
-    providerErrorClass: "translated"
+    providerErrorClass: "translated",
+    estimatedCostMicros: Math.max(0, result.usageHandoff.estimatedCostMicros ?? 0),
+    recoverablePrimaryFallbackCount
   };
 }
 
@@ -474,7 +580,9 @@ function createTranslationFromCache(
     detectedSourceLanguage: cachedTranslation.detectedSourceLanguage,
     confidence: cachedTranslation.confidence,
     cacheOutcome: "hit",
-    providerErrorClass: "translated"
+    providerErrorClass: "translated",
+    estimatedCostMicros: 0,
+    recoverablePrimaryFallbackCount: 0
   };
 }
 
@@ -489,9 +597,11 @@ function createResultBase(
     terminalErrorCount,
     providerUsageRecorded,
     aiUsageRecorded,
+    recoverablePrimaryFallbackCount,
     skipsByReason,
     errorCounts,
     usageRecorded,
+    fallbackReasonCounts,
     ...directOverrides
   } = overrides;
 
@@ -504,6 +614,7 @@ function createResultBase(
     cacheHitCount: 0,
     cacheMissCount: 0,
     retryCount: 0,
+    estimatedCostMicros: 0,
     browserStorage: "unchanged",
     handoffPayload: "unchanged",
     providerTargetMetadata: "forbidden",
@@ -521,6 +632,16 @@ function createResultBase(
     usageRecorded: {
       providerRequestEstimate: usageRecorded?.providerRequestEstimate ?? providerUsageRecorded ?? false,
       aiUsageEstimate: usageRecorded?.aiUsageEstimate ?? aiUsageRecorded ?? false
+    },
+    providerRouting: directOverrides.providerRouting ?? {
+      plan: "unresolved",
+      primaryProvider: "direct-injected-provider",
+      fallbackProvider: "none",
+      providerIdentifiers: "server-only-not-returned"
+    },
+    fallbackReasonCounts: {
+      recoverablePrimaryError:
+        fallbackReasonCounts?.recoverablePrimaryError ?? recoverablePrimaryFallbackCount ?? 0
     }
   };
 }

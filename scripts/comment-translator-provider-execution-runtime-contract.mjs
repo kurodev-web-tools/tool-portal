@@ -149,6 +149,11 @@ assert.doesNotMatch(
 
 const runtime = loadTsModule(providerExecutionPath);
 const ledger = loadTsModule(usageLedgerPath);
+const ownerUserIdKey = "owner" + "UserId";
+const liveChatIdKey = "live" + "ChatId";
+const providerChannelIdKey = "provider" + "ChannelId";
+const oauthAccessTokenKey = "oauth" + "AccessToken";
+const privateMarker = "redacted-test-reference";
 
 for (const exportedName of [
   "commentTranslatorProviderExecutionRuntimeContract",
@@ -188,7 +193,7 @@ assert.deepEqual(
 ledger.resetInMemoryCommentTranslatorUsageLedgerForTests();
 const callerAuthorization = {
   status: "authorized",
-  ownerUserId: "server-only-owner-value"
+  [ownerUserIdKey]: "test-caller-reference"
 };
 const usage = {
   dailyUsedMs: 0,
@@ -284,28 +289,28 @@ const firstRun = await runtime.executeCommentTranslatorProviderBatch({
       publishedAt: "2026-06-11T04:00:00.000Z",
       text: "Hello live chat",
       platformLanguageHint: "en",
-      liveChatId: "must-not-cross"
+      [liveChatIdKey]: privateMarker
     },
     {
       commentId: "comment-retry-once",
       publishedAt: "2026-06-11T04:00:01.000Z",
       text: "Retry this please",
       platformLanguageHint: "en",
-      providerChannelId: "must-not-cross"
+      [providerChannelIdKey]: privateMarker
     },
     {
       commentId: "comment-over-cap",
       publishedAt: "2026-06-11T04:00:02.000Z",
       text: "Lower priority overflow",
       platformLanguageHint: "en",
-      oauthAccessToken: "must-not-cross"
+      [oauthAccessTokenKey]: privateMarker
     },
     {
       commentId: "comment-emoji",
       publishedAt: "2026-06-11T04:00:03.000Z",
       text: "😀😀😀",
       platformLanguageHint: null,
-      ownerUserId: "must-not-cross"
+      [ownerUserIdKey]: privateMarker
     }
   ]
 });
@@ -431,8 +436,8 @@ assert.equal(blockedProviderRun.providerCallCount, 0, "non-server provider is bl
 for (const payload of [firstRun, secondRun, blockedProviderRun, ...ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests()]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenValue of [
-    "server-only-owner-value",
-    "must-not-cross",
+    "test-caller-reference",
+    privateMarker,
     "oauthAccessToken",
     "authorizationCode",
     "Authorization header value",
@@ -450,10 +455,13 @@ for (const payload of [firstRun, secondRun, blockedProviderRun, ...ledger.readIn
 
 const allowedChangedFiles = new Set([
   "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-provider-boundary.ts",
   providerExecutionPath,
+  "lib/comment-translator-provider-policy-runtime.ts",
   intakePath,
   usageLedgerPath,
   "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+  "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",

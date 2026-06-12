@@ -37,6 +37,9 @@ const truthyReferenceNames = [
   "COMMENT_TRANSLATOR_TASK27_SANITIZED_OUTPUT_REVIEW_CONFIRMED"
 ];
 
+const exactOperatorLocalCommand =
+  "node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed";
+
 function loadTsModule(relativePath) {
   const sourcePath = path.join(root, relativePath);
   const moduleCache = new Map();
@@ -135,6 +138,23 @@ function createBasePayload() {
   };
 }
 
+function createExactCommandReviewPayload(credentialReferenceId) {
+  return {
+    ...createBasePayload(),
+    status: "ready-for-task-27-exact-command-review",
+    credentialReferenceId,
+    providerTargetLookup: "not-run-exact-command-review-only",
+    liveChatPollingSmoke: "not-run-exact-command-review-only",
+    translationProviderExecution: "not-run-exact-command-review-only",
+    liveProviderExecution: "not-run-exact-command-review-only",
+    exactCommand: exactOperatorLocalCommand,
+    requiredHumanApproval: "explicit-in-thread-approval-for-exact-command",
+    evidenceDestination: "sanitized-output-review-only-no-private-values",
+    operatorLocalAdapterSelection: "pending-explicit-approved-command",
+    approvalBoundary: "same-thread-explicit-in-thread-approval-required"
+  };
+}
+
 function preflight() {
   const missingReferences = requiredReferenceNames.filter((name) => !hasReference(name));
   const placeholderReferences = requiredReferenceNames.filter((name) => isPlaceholderReferenceValue(name));
@@ -229,6 +249,11 @@ async function main() {
     return;
   }
 
+  if (args.has("--print-exact-command-review")) {
+    writeJson(createExactCommandReviewPayload(result.payload.credentialReferenceId), 0);
+    return;
+  }
+
   if (!args.has("--execute")) {
     writeJson(
       {
@@ -276,6 +301,25 @@ async function main() {
         translationProviderExecution: "not-run",
         reason:
           "approved Task 27 execution requires an exact command that selects operator-local runtime adapters after sanitized output review"
+      },
+      2
+    );
+    return;
+  }
+
+  if (!args.has("--operator-local-ready-preflight-reviewed")) {
+    writeJson(
+      {
+        status: "blocked-pending-operator-local-ready-preflight-review-flag",
+        ...createBasePayload(),
+        credentialReferenceId: result.payload.credentialReferenceId,
+        requiredFlag: "--operator-local-ready-preflight-reviewed",
+        liveProviderExecution: "not-run",
+        providerTargetLookup: "not-run",
+        liveChatPollingSmoke: "not-run",
+        translationProviderExecution: "not-run",
+        reason:
+          "operator-local ready preflight and sanitized output review must be confirmed in the exact command before provider-affecting adapters can be selected"
       },
       2
     );

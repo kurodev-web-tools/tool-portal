@@ -102,6 +102,12 @@ const readinessDoc = read(readinessDocPath);
 
 assert.match(foundationSource, /^import "server-only";/m, "harness foundation is server-only");
 assert.match(commandSource, /--approved-private-gated-live-provider-smoke/, "command requires explicit Task 27 approval flag");
+assert.match(commandSource, /--print-exact-command-review/, "command can print sanitized exact-command review output");
+assert.match(
+  commandSource,
+  /--operator-local-ready-preflight-reviewed/,
+  "command requires ready preflight review before operator-local adapter execution"
+);
 assert.match(
   foundationSource,
   /createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters/,
@@ -170,11 +176,33 @@ assert.equal(readyPayload.liveProviderExecution, "not-run-preflight-only");
 assert.equal(readyPayload.translatorPipelineWiring, "implemented-sanitized-summary-only");
 assert.equal(readyPayload.requiredFlag, "--execute --approved-private-gated-live-provider-smoke");
 
+const exactCommandReview = runCommand(["--print-exact-command-review"], readyEnv);
+assert.equal(exactCommandReview.status, 0, "exact command review output is available without provider execution");
+const exactCommandReviewPayload = parseJson(exactCommandReview.stdout);
+assert.equal(exactCommandReviewPayload.status, "ready-for-task-27-exact-command-review");
+assert.equal(exactCommandReviewPayload.liveProviderExecution, "not-run-exact-command-review-only");
+assert.equal(
+  exactCommandReviewPayload.exactCommand,
+  "node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed"
+);
+assert.equal(exactCommandReviewPayload.requiredHumanApproval, "explicit-in-thread-approval-for-exact-command");
+assert.equal(exactCommandReviewPayload.evidenceDestination, "sanitized-output-review-only-no-private-values");
+
 const blockedExecute = runCommand(["--execute"], readyEnv);
 assert.equal(blockedExecute.status, 2, "execute without approval is blocked");
 const blockedExecutePayload = parseJson(blockedExecute.stdout);
 assert.equal(blockedExecutePayload.status, "blocked-pending-explicit-private-gated-live-provider-smoke-approval");
 assert.equal(blockedExecutePayload.liveProviderExecution, "not-run");
+
+const blockedMissingReviewFlag = runCommand(
+  ["--execute", "--approved-private-gated-live-provider-smoke", "--use-operator-local-runtime-adapters"],
+  readyEnv
+);
+assert.equal(blockedMissingReviewFlag.status, 2, "operator-local adapter execution requires ready preflight review flag");
+const blockedMissingReviewFlagPayload = parseJson(blockedMissingReviewFlag.stdout);
+assert.equal(blockedMissingReviewFlagPayload.status, "blocked-pending-operator-local-ready-preflight-review-flag");
+assert.equal(blockedMissingReviewFlagPayload.requiredFlag, "--operator-local-ready-preflight-reviewed");
+assert.equal(blockedMissingReviewFlagPayload.liveProviderExecution, "not-run");
 
 const approvedWithSandboxedAdapters = runCommand(
   ["--execute", "--approved-private-gated-live-provider-smoke", "--use-sandboxed-adapters-for-contract"],

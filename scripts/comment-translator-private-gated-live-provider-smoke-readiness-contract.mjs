@@ -51,23 +51,35 @@ const pollingCommand = read(pollingCommandPath);
 const targetLookupCommand = read(targetLookupCommandPath);
 const providerExecution = read(providerExecutionPath);
 
-assert.match(task, /Task 27 exact-command approval gate PR/i, "task.md records Task 27 exact-command approval gate PR scope");
-assert.match(task, /completion criteria.*not met/i, "task.md records Task 27 completion criteria are not met");
-assert.match(task, /operator-local adapter wiring.*implemented-sanitized-summary-only/i, "task.md records Task 27 adapter wiring state");
+assert.match(task, /Task 27 private-gated live\/provider smoke completion evidence/i, "task.md records Task 27 completion evidence scope");
+assert.match(task, /completion criteria: met for Task 27/i, "task.md records Task 27 completion criteria are met");
+assert.match(task, /operator-local runtime adapters through the server-only harness adapter builder/i, "task.md records Task 27 adapter wiring state");
 assert.match(task, /exact-command review output.*implemented-sanitized-output-only/i, "task.md records Task 27 exact-command review state");
 assert.match(task, /width checks skipped/i, "task.md records width-check decision for non-UI slice");
 
 assert.match(
   readinessDoc,
-  /Status: Task 27 execution harness, operator-local adapter wiring, and exact-command approval gate readiness/i,
+  /Status: Task 27 private-gated live\/provider smoke completion evidence/i,
   "readiness doc records status"
 );
-assert.match(readinessDoc, /Completion decision: not complete/i, "readiness doc does not overclaim Task 27 completion");
-assert.match(readinessDoc, /live\/provider execution: not-run/i, "readiness doc records live/provider execution was not run");
-assert.match(readinessDoc, /provider target lookup: not-run/i, "readiness doc records provider target lookup was not run");
+assert.match(readinessDoc, /Completion decision: complete for Task 27/i, "readiness doc records Task 27 completion");
+assert.match(
+  readinessDoc,
+  /live\/provider execution: approved-bounded-non-empty-provider-call-observed/i,
+  "readiness doc records live/provider non-empty provider-call state"
+);
+assert.match(readinessDoc, /provider target lookup: executed-presence-only/i, "readiness doc records provider target lookup state");
 assert.match(readinessDoc, /liveChatId lookup: not-run/i, "readiness doc records liveChatId lookup was not run");
-assert.match(readinessDoc, /translation provider API execution: not-run/i, "readiness doc records translation provider API execution was not run");
-assert.match(readinessDoc, /operator-local adapter wiring: implemented-sanitized-summary-only/i, "readiness doc records Task 27 adapter wiring");
+assert.match(
+  readinessDoc,
+  /translation provider API execution: executed-server-only-provider-with-positive-translations/i,
+  "readiness doc records translation provider execution with positive translations"
+);
+assert.match(
+  readinessDoc,
+  /operator-local adapter wiring: executed-through-server-only-harness-adapter-builder/i,
+  "readiness doc records Task 27 adapter wiring"
+);
 assert.match(readinessDoc, /exact-command review output: implemented-sanitized-output-only/i, "readiness doc records Task 27 exact-command review output");
 assert.match(readinessDoc, /sanitized-metadata-only/i, "readiness doc records sanitized output policy");
 assert.doesNotMatch(readinessDoc, /Bearer\s+[A-Za-z0-9._-]+/, "readiness doc does not contain Authorization bearer values");

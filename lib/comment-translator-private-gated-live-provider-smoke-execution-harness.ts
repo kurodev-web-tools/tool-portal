@@ -36,6 +36,11 @@ export type Task27TranslationProviderResult = {
   providerCallCount: number;
   translatedCount: number;
   skippedCount: number;
+  languagePolicySkippedCount: number;
+  perMinuteSkippedCount: number;
+  providerUnavailableSkippedCount: number;
+  recoverableErrorCount: number;
+  terminalErrorCount: number;
   stopReason: Task27LiveProviderSmokeStopReason | null;
 };
 
@@ -100,6 +105,11 @@ export type CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessResult
         providerCallCount: number;
         translatedCount: number;
         skippedCount: number;
+        languagePolicySkippedCount: number;
+        perMinuteSkippedCount: number;
+        providerUnavailableSkippedCount: number;
+        recoverableErrorCount: number;
+        terminalErrorCount: number;
         stopReason: Task27LiveProviderSmokeStopReason | null;
       };
       tokenValue: "never-returned-by-design";
@@ -212,6 +222,15 @@ export async function runCommentTranslatorPrivateGatedLiveProviderSmokeExecution
       reason: "bounded Live Chat polling did not complete with sanitized ready evidence"
     });
   }
+  if (nonNegativeInteger(polling.eligibleCommentCount) < 1) {
+    return blocked("blocked-polling-sanitized", request.credentialReferenceId, {
+      liveProviderExecution: "aborted-after-approved-target-lookup",
+      providerTargetLookup: "executed-presence-only",
+      liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+      stopReason: polling.stopReason,
+      reason: "bounded Live Chat polling did not include eligible comments"
+    });
+  }
 
   const translation = await request.translateEligibleComments();
   if (translation.status !== "translation-completed") {
@@ -241,6 +260,11 @@ export async function runCommentTranslatorPrivateGatedLiveProviderSmokeExecution
       providerCallCount: nonNegativeInteger(translation.providerCallCount),
       translatedCount: nonNegativeInteger(translation.translatedCount),
       skippedCount: nonNegativeInteger(polling.skippedCommentCount) + nonNegativeInteger(translation.skippedCount),
+      languagePolicySkippedCount: nonNegativeInteger(translation.languagePolicySkippedCount),
+      perMinuteSkippedCount: nonNegativeInteger(translation.perMinuteSkippedCount),
+      providerUnavailableSkippedCount: nonNegativeInteger(translation.providerUnavailableSkippedCount),
+      recoverableErrorCount: nonNegativeInteger(translation.recoverableErrorCount),
+      terminalErrorCount: nonNegativeInteger(translation.terminalErrorCount),
       stopReason: translation.stopReason ?? polling.stopReason
     },
     tokenValue: "never-returned-by-design",
@@ -399,6 +423,11 @@ function mapOperatorLocalTranslationResult(result: Record<string, unknown>): Tas
       providerCallCount: readCount(result.providerCallCount),
       translatedCount: readCount(result.translatedCount),
       skippedCount: readCount(result.skippedCount),
+      languagePolicySkippedCount: readCount(asRecord(result.skipsByReason).languagePolicy),
+      perMinuteSkippedCount: readCount(asRecord(result.skipsByReason).perMinuteCap),
+      providerUnavailableSkippedCount: readCount(asRecord(result.skipsByReason).providerUnavailable),
+      recoverableErrorCount: readCount(asRecord(result.errorCounts).recoverable),
+      terminalErrorCount: readCount(asRecord(result.errorCounts).terminal),
       stopReason: mapStopReason(result.stopReason)
     };
   }
@@ -410,6 +439,11 @@ function mapOperatorLocalTranslationResult(result: Record<string, unknown>): Tas
       providerCallCount: 0,
       translatedCount: 0,
       skippedCount: readCount(result.skippedCount),
+      languagePolicySkippedCount: readCount(asRecord(result.skipsByReason).languagePolicy),
+      perMinuteSkippedCount: readCount(asRecord(result.skipsByReason).perMinuteCap),
+      providerUnavailableSkippedCount: readCount(asRecord(result.skipsByReason).providerUnavailable),
+      recoverableErrorCount: readCount(asRecord(result.errorCounts).recoverable),
+      terminalErrorCount: readCount(asRecord(result.errorCounts).terminal),
       stopReason: "translated-message-cap"
     };
   }
@@ -420,6 +454,11 @@ function mapOperatorLocalTranslationResult(result: Record<string, unknown>): Tas
     providerCallCount: readCount(result.providerCallCount),
     translatedCount: readCount(result.translatedCount),
     skippedCount: readCount(result.skippedCount),
+    languagePolicySkippedCount: readCount(asRecord(result.skipsByReason).languagePolicy),
+    perMinuteSkippedCount: readCount(asRecord(result.skipsByReason).perMinuteCap),
+    providerUnavailableSkippedCount: readCount(asRecord(result.skipsByReason).providerUnavailable),
+    recoverableErrorCount: readCount(asRecord(result.errorCounts).recoverable),
+    terminalErrorCount: readCount(asRecord(result.errorCounts).terminal),
     stopReason: mapStopReason(result.stopReason) ?? "terminal-provider-error"
   };
 }

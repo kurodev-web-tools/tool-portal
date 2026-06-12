@@ -10,6 +10,8 @@ const foundationPath = "lib/comment-translator-private-gated-live-provider-smoke
 const commandPath = "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs";
 const taskPath = "task.md";
 const readinessDocPath = "docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_LIVE_PROVIDER_SMOKE_READINESS.md";
+const boundedPollingSessionPath = "lib/comment-translator-youtube-bounded-polling-session-runtime.ts";
+const usageLedgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -94,11 +96,15 @@ function parseJson(stdout) {
 
 assert.ok(exists(foundationPath), "Task 27 live/provider smoke execution harness foundation exists");
 assert.ok(exists(commandPath), "Task 27 live/provider smoke execution harness command exists");
+assert.ok(exists(boundedPollingSessionPath), "bounded polling session runtime exists for stop behavior evidence");
+assert.ok(exists(usageLedgerPath), "usage quota budget ledger runtime exists for quota/budget stop evidence");
 
 const foundationSource = read(foundationPath);
 const commandSource = read(commandPath);
 const taskSource = read(taskPath);
 const readinessDoc = read(readinessDocPath);
+const boundedPollingSessionSource = read(boundedPollingSessionPath);
+const usageLedgerSource = read(usageLedgerPath);
 
 assert.match(foundationSource, /^import "server-only";/m, "harness foundation is server-only");
 assert.match(commandSource, /--approved-private-gated-live-provider-smoke/, "command requires explicit Task 27 approval flag");
@@ -118,8 +124,57 @@ assert.match(
   /createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters/,
   "command wires the approved path through operator-local adapters"
 );
+assert.match(
+  commandSource,
+  /createOperatorLocalRuntimeAdapterExecutionPayload/,
+  "command can execute approved operator-local runtime adapters"
+);
+assert.match(
+  commandSource,
+  /runTask27OperatorLocalLiveChatPollingForTranslation/,
+  "command keeps live comment text server-only for translation execution"
+);
+assert.match(
+  commandSource,
+  /serverOnlyLiveChatId/,
+  "command carries the target lookup liveChatId server-only into polling"
+);
+assert.match(
+  commandSource,
+  /readServerOnlyLiveChatIdFromTargetLookupBody/,
+  "command extracts liveChatId only inside the server-only operator-local harness"
+);
+assert.match(
+  commandSource,
+  /executeCommentTranslatorProviderPolicyBatch/,
+  "command connects approved live comments to the provider execution runtime"
+);
+assert.doesNotMatch(
+  commandSource,
+  /blocked-actual-operator-local-runtime-adapters-not-run-in-this-pr/,
+  "approved operator-local runtime adapter path is no longer a placeholder blocker"
+);
 assert.match(taskSource, /execution harness/i, "task.md records execution harness PR scope");
 assert.match(readinessDoc, /execution harness/i, "readiness doc records execution harness availability");
+assert.match(
+  boundedPollingSessionSource,
+  /terminalStopStates:\s*\["liveChatEnded",\s*"liveChatDisabled",\s*"liveChatNotFound",\s*"owner-verification-failed"\]/,
+  "bounded polling runtime records terminal stop behavior"
+);
+assert.match(
+  boundedPollingSessionSource,
+  /stopReason:\s*"terminal-provider-error"/,
+  "bounded polling runtime maps retry cap to sanitized terminal-provider-error stop reason"
+);
+assert.match(usageLedgerSource, /"quota-budget-stop-event"/, "usage ledger records quota/budget stop events");
+for (const stopReason of [
+  "provider-quota-stop",
+  "global-budget-stop",
+  "ai-budget-stop",
+  "translated-message-cap"
+]) {
+  assert.match(usageLedgerSource, new RegExp(stopReason), `usage ledger supports ${stopReason}`);
+}
 
 const foundation = loadTsModule(foundationPath);
 assert.deepEqual(
@@ -204,6 +259,29 @@ assert.equal(blockedMissingReviewFlagPayload.status, "blocked-pending-operator-l
 assert.equal(blockedMissingReviewFlagPayload.requiredFlag, "--operator-local-ready-preflight-reviewed");
 assert.equal(blockedMissingReviewFlagPayload.liveProviderExecution, "not-run");
 
+const approvedOperatorLocalWithoutRuntimeMaterial = runCommand(
+  [
+    "--execute",
+    "--approved-private-gated-live-provider-smoke",
+    "--use-operator-local-runtime-adapters",
+    "--operator-local-ready-preflight-reviewed"
+  ],
+  readyEnv
+);
+assert.equal(
+  approvedOperatorLocalWithoutRuntimeMaterial.status,
+  2,
+  "approved operator-local runtime path blocks safely without runtime token material"
+);
+const approvedOperatorLocalWithoutRuntimeMaterialPayload = parseJson(approvedOperatorLocalWithoutRuntimeMaterial.stdout);
+assert.equal(
+  approvedOperatorLocalWithoutRuntimeMaterialPayload.status,
+  "blocked-target-lookup-sanitized",
+  "approved operator-local runtime path reaches sanitized target lookup boundary"
+);
+assert.equal(approvedOperatorLocalWithoutRuntimeMaterialPayload.liveProviderExecution, "not-run");
+assert.equal(approvedOperatorLocalWithoutRuntimeMaterialPayload.rawCommentText, "never-returned-by-design");
+
 const approvedWithSandboxedAdapters = runCommand(
   ["--execute", "--approved-private-gated-live-provider-smoke", "--use-sandboxed-adapters-for-contract"],
   readyEnv
@@ -247,7 +325,16 @@ const adapterHarnessResult =
         providerRequestCount: 1,
         providerCallCount: 1,
         translatedCount: 1,
-        skippedCount: 0
+        skippedCount: 0,
+        skipsByReason: {
+          languagePolicy: 0,
+          perMinuteCap: 0,
+          providerUnavailable: 0
+        },
+        errorCounts: {
+          recoverable: 0,
+          terminal: 0
+        }
       })
     })
   });
@@ -257,6 +344,48 @@ assert.equal(adapterHarnessResult.evidence.returnedItemCount, 2);
 assert.equal(adapterHarnessResult.evidence.eligibleCommentCount, 2);
 assert.equal(adapterHarnessResult.evidence.providerRequestCount, 1);
 assert.equal(adapterHarnessResult.evidence.providerCallCount, 1);
+assert.equal(adapterHarnessResult.evidence.languagePolicySkippedCount, 0);
+assert.equal(adapterHarnessResult.evidence.perMinuteSkippedCount, 0);
+assert.equal(adapterHarnessResult.evidence.providerUnavailableSkippedCount, 0);
+assert.equal(adapterHarnessResult.evidence.recoverableErrorCount, 0);
+assert.equal(adapterHarnessResult.evidence.terminalErrorCount, 0);
+
+const emptyPollingHarnessResult =
+  await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({
+    credentialReferenceId: "smoke-task27-execution-harness",
+    providerTargetLookupReady: true,
+    liveChatTargetPresent: true,
+    liveChatPollingReady: true,
+    translationProviderReady: true,
+    sanitizedOutputReviewConfirmed: true,
+    explicitApprovalConfirmed: true,
+    adapters: foundation.createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters({
+      targetLookup: async () => ({
+        status: "live-chat-target-lookup-sanitized-result",
+        liveChatTarget: "present",
+        liveChatTargetLookup: "executed-bounded-readonly-one-step",
+        responseMetadata: {
+          returnedItemCount: 1
+        }
+      }),
+      pollLiveChatOnce: async () => ({
+        status: "live-chat-polling-smoke-sanitized-result",
+        liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+        responseMetadata: {
+          returnedItemCount: 0,
+          eligibleCommentCount: 0
+        }
+      }),
+      translateEligibleComments: async () => {
+        throw new Error("translation provider must not run for empty polling evidence");
+      }
+    })
+  });
+assert.equal(emptyPollingHarnessResult.status, "blocked-polling-sanitized");
+assert.equal(emptyPollingHarnessResult.providerTargetLookup, "executed-presence-only");
+assert.equal(emptyPollingHarnessResult.liveChatPollingSmoke, "executed-bounded-readonly-one-step");
+assert.equal(emptyPollingHarnessResult.translationProviderExecution, "not-run");
+assert.equal(emptyPollingHarnessResult.reason, "bounded Live Chat polling did not include eligible comments");
 
 const harnessResult = await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarness({
   credentialReferenceId: "smoke-task27-execution-harness",
@@ -285,6 +414,11 @@ const harnessResult = await foundation.runCommentTranslatorPrivateGatedLiveProvi
     providerCallCount: 1,
     translatedCount: 1,
     skippedCount: 0,
+    languagePolicySkippedCount: 0,
+    perMinuteSkippedCount: 0,
+    providerUnavailableSkippedCount: 0,
+    recoverableErrorCount: 0,
+    terminalErrorCount: 0,
     stopReason: null
   })
 });
@@ -300,6 +434,11 @@ assert.deepEqual(harnessResult.evidence, {
   providerCallCount: 1,
   translatedCount: 1,
   skippedCount: 1,
+  languagePolicySkippedCount: 0,
+  perMinuteSkippedCount: 0,
+  providerUnavailableSkippedCount: 0,
+  recoverableErrorCount: 0,
+  terminalErrorCount: 0,
   stopReason: null
 });
 

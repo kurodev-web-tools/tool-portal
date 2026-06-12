@@ -8,6 +8,12 @@ import {
   type CommentTranslatorSessionPlanEntitlement
 } from "./comment-translator-session-runtime";
 import { type YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
+import {
+  assertCommentTranslatorAbuseRequestAllowed,
+  createCommentTranslatorBillingRateLimitUnavailableResult,
+  type CommentTranslatorAbuseRateLimitBlockedResult,
+  type CommentTranslatorAbuseRateLimitStore
+} from "./comment-translator-abuse-rate-limit-runtime";
 
 export type CommentTranslatorBillingUserReference = `ctbill_${string}`;
 export type CommentTranslatorBillingState = "free" | "paid-active" | "paid-inactive";
@@ -344,12 +350,20 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
   callerAuthorization,
   env,
   stripeAdapter,
-  customerEmail = null
+  customerEmail = null,
+  abuseRateLimit
 }: {
   callerAuthorization: CommentTranslatorBillingCallerAuthorization;
   env: CommentTranslatorStripeEnv;
   stripeAdapter: Pick<CommentTranslatorStripeAdapter, "createCheckoutSession">;
   customerEmail?: string | null;
+  abuseRateLimit?: {
+    nowMs?: number;
+    requestIp?: string | null;
+    rateLimitStore?: CommentTranslatorAbuseRateLimitStore;
+    precomputedCheck?: CommentTranslatorAbuseRateLimitBlockedResult;
+    rateLimitAlreadyChecked?: boolean;
+  };
 }): Promise<
   | {
       status: "redirect-ready";
@@ -358,10 +372,27 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     }
   | {
       status: "unavailable";
-      reason: "caller-not-authenticated" | "missing-config" | "stripe-session-url-missing";
+      reason: "caller-not-authenticated" | "missing-config" | "stripe-session-url-missing" | "rate-limit-exceeded";
       missingEnvReferences: CommentTranslatorStripeEnvName[];
+      retryAfterSeconds?: number;
     }
 > {
+  const abuseCheck =
+    abuseRateLimit?.rateLimitAlreadyChecked
+      ? null
+      : (abuseRateLimit?.precomputedCheck ??
+        assertCommentTranslatorAbuseRequestAllowed({
+          surface: "comment-translator-billing-actions",
+          action: "billing-checkout",
+          callerAuthorization,
+          nowMs: abuseRateLimit?.nowMs,
+          requestIp: abuseRateLimit?.requestIp,
+          rateLimitStore: abuseRateLimit?.rateLimitStore
+        }));
+  if (abuseCheck?.status === "blocked") {
+    return createCommentTranslatorBillingRateLimitUnavailableResult({ check: abuseCheck });
+  }
+
   const billingUserReferenceId = createCommentTranslatorBillingUserReference(callerAuthorization);
   if (!billingUserReferenceId) {
     return {
@@ -409,11 +440,19 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
 export async function createCommentTranslatorStripePortalSessionResult({
   callerAuthorization,
   env,
-  stripeAdapter
+  stripeAdapter,
+  abuseRateLimit
 }: {
   callerAuthorization: CommentTranslatorBillingCallerAuthorization;
   env: CommentTranslatorStripeEnv;
   stripeAdapter: Pick<CommentTranslatorStripeAdapter, "createPortalSession">;
+  abuseRateLimit?: {
+    nowMs?: number;
+    requestIp?: string | null;
+    rateLimitStore?: CommentTranslatorAbuseRateLimitStore;
+    precomputedCheck?: CommentTranslatorAbuseRateLimitBlockedResult;
+    rateLimitAlreadyChecked?: boolean;
+  };
 }): Promise<
   | {
       status: "redirect-ready";
@@ -421,10 +460,27 @@ export async function createCommentTranslatorStripePortalSessionResult({
     }
   | {
       status: "unavailable";
-      reason: "caller-not-authenticated" | "missing-config" | "missing-customer" | "stripe-session-url-missing";
+      reason: "caller-not-authenticated" | "missing-config" | "missing-customer" | "stripe-session-url-missing" | "rate-limit-exceeded";
       missingEnvReferences: CommentTranslatorStripeEnvName[];
+      retryAfterSeconds?: number;
     }
 > {
+  const abuseCheck =
+    abuseRateLimit?.rateLimitAlreadyChecked
+      ? null
+      : (abuseRateLimit?.precomputedCheck ??
+        assertCommentTranslatorAbuseRequestAllowed({
+          surface: "comment-translator-billing-actions",
+          action: "billing-portal",
+          callerAuthorization,
+          nowMs: abuseRateLimit?.nowMs,
+          requestIp: abuseRateLimit?.requestIp,
+          rateLimitStore: abuseRateLimit?.rateLimitStore
+        }));
+  if (abuseCheck?.status === "blocked") {
+    return createCommentTranslatorBillingRateLimitUnavailableResult({ check: abuseCheck });
+  }
+
   const snapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   if (!snapshot.billingUserReferenceId) {
     return {

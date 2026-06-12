@@ -24,6 +24,11 @@ import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
   readCommentTranslatorPrivateLaunchAccess
 } from "@/lib/comment-translator-private-launch-access-gate";
+import {
+  assertCommentTranslatorAbuseRequestAllowed,
+  createCommentTranslatorAbuseRateLimitedSessionState,
+  readCommentTranslatorRequestIp
+} from "@/lib/comment-translator-abuse-rate-limit-runtime";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -33,11 +38,49 @@ const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DIS
 export async function POST(request: NextRequest) {
   const command = await readSessionCommand(request);
   const callerAuthorization = await readSessionCallerAuthorization();
+  const nowMs = Date.now();
+  const requestIp = readCommentTranslatorRequestIp(request.headers);
+  const abuseCheck = assertCommentTranslatorAbuseRequestAllowed({
+    surface: "/api/comment-translator/session",
+    action: mapSessionIntentToAbuseAction(command.intent),
+    callerAuthorization,
+    requestIp,
+    nowMs
+  });
+  if (abuseCheck.status === "blocked") {
+    return NextResponse.json(
+      createCommentTranslatorAbuseRateLimitedSessionState({
+        nowMs,
+        plan: "free",
+        check: abuseCheck
+      }),
+      { status: 429 }
+    );
+  }
+
   const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
+    const privateLaunchAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
+      surface: "private-launch-gate-direct-call-denials",
+      action: "private-launch-denied",
+      callerAuthorization,
+      requestIp,
+      nowMs
+    });
+    if (privateLaunchAbuseCheck.status === "blocked") {
+      return NextResponse.json(
+        createCommentTranslatorAbuseRateLimitedSessionState({
+          nowMs,
+          plan: "free",
+          check: privateLaunchAbuseCheck
+        }),
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       createCommentTranslatorPrivateLaunchBlockedSessionState({
-        nowMs: Date.now(),
+        nowMs,
         plan: "free",
         access: launchAccess
       }),
@@ -46,7 +89,6 @@ export async function POST(request: NextRequest) {
   }
 
   const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
-  const nowMs = Date.now();
   const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const usage = readInMemoryCommentTranslatorUsageSnapshot({
     callerAuthorization,
@@ -88,6 +130,22 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json(state);
+}
+
+function mapSessionIntentToAbuseAction(intent: CommentTranslatorSessionCommandIntent) {
+  if (intent === "start") {
+    return "session-start";
+  }
+
+  if (intent === "stop") {
+    return "session-stop";
+  }
+
+  if (intent === "heartbeat") {
+    return "session-heartbeat";
+  }
+
+  return "session-status";
 }
 
 async function readSessionCommand(request: NextRequest): Promise<{

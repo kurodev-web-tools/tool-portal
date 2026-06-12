@@ -257,19 +257,85 @@ async function main() {
     return;
   }
 
+  if (args.has("--use-sandboxed-adapters-for-contract")) {
+    const executionPayload = await createSandboxedAdapterExecutionPayload(result.payload.credentialReferenceId);
+    writeJson(executionPayload, executionPayload.status === "task-27-live-provider-smoke-sanitized-result" ? 0 : 2);
+    return;
+  }
+
+  if (!args.has("--use-operator-local-runtime-adapters")) {
+    writeJson(
+      {
+        status: "blocked-pending-operator-local-runtime-adapter-selection",
+        ...createBasePayload(),
+        credentialReferenceId: result.payload.credentialReferenceId,
+        requiredFlag: "--use-operator-local-runtime-adapters",
+        liveProviderExecution: "not-run",
+        providerTargetLookup: "not-run",
+        liveChatPollingSmoke: "not-run",
+        translationProviderExecution: "not-run",
+        reason:
+          "approved Task 27 execution requires an exact command that selects operator-local runtime adapters after sanitized output review"
+      },
+      2
+    );
+    return;
+  }
+
   writeJson(
     {
-      status: "blocked-runtime-wiring-not-connected-in-this-pr",
+      status: "blocked-actual-operator-local-runtime-adapters-not-run-in-this-pr",
       ...createBasePayload(),
       credentialReferenceId: result.payload.credentialReferenceId,
       liveProviderExecution: "not-run",
       providerTargetLookup: "not-run",
       liveChatPollingSmoke: "not-run",
       translationProviderExecution: "not-run",
-      reason: "this PR adds the Task 27 execution harness contract and command gate; approved operator-local execution remains a later same-thread step"
+      operatorLocalAdapterWiring: "available-through-server-only-harness-adapter-builder",
+      reason:
+        "this PR wires the Task 27 harness to operator-local adapter results; actual provider-affecting adapters remain a later exact-command execution step"
     },
     2
   );
 }
 
 await main();
+
+async function createSandboxedAdapterExecutionPayload(credentialReferenceId) {
+  const foundation = loadTsModule("lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts");
+  const adapters = foundation.createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters({
+    targetLookup: async () => ({
+      status: "live-chat-target-lookup-sanitized-result",
+      liveChatTarget: "present",
+      liveChatTargetLookup: "executed-bounded-readonly-one-step",
+      responseMetadata: {
+        returnedItemCount: 1
+      }
+    }),
+    pollLiveChatOnce: async () => ({
+      status: "live-chat-polling-smoke-sanitized-result",
+      liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+      responseMetadata: {
+        returnedItemCount: 2
+      }
+    }),
+    translateEligibleComments: async () => ({
+      status: "completed",
+      providerRequestCount: 1,
+      providerCallCount: 1,
+      translatedCount: 1,
+      skippedCount: 0
+    })
+  });
+
+  return foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({
+    credentialReferenceId,
+    providerTargetLookupReady: true,
+    liveChatTargetPresent: true,
+    liveChatPollingReady: true,
+    translationProviderReady: true,
+    sanitizedOutputReviewConfirmed: true,
+    explicitApprovalConfirmed: true,
+    adapters
+  });
+}

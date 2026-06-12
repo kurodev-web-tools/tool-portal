@@ -29,6 +29,10 @@ import {
   readCommentTranslatorPrivateLaunchAccess
 } from "@/lib/comment-translator-private-launch-access-gate";
 import {
+  assertCommentTranslatorAbuseRequestAllowed,
+  createCommentTranslatorAbuseRateLimitedSessionState
+} from "@/lib/comment-translator-abuse-rate-limit-runtime";
+import {
   createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime,
   createTrustedYouTubeOAuthCredentialSupabaseStatusReader
 } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
@@ -53,8 +57,32 @@ export async function getYouTubeOAuthCredentialStatusAction(formData: FormData) 
   }
 
   const callerAuthorization = await readCallerAuthorization();
+  const actionAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
+    surface: "comment-translator-server-actions",
+    action: "credential-status",
+    callerAuthorization
+  });
+  if (actionAbuseCheck.status === "blocked") {
+    return createYouTubeOAuthCredentialStatusUnavailablePayload({
+      credentialReferenceId,
+      reason: "private-launch-gated"
+    });
+  }
+
   const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
+    const abuseCheck = assertCommentTranslatorAbuseRequestAllowed({
+      surface: "private-launch-gate-direct-call-denials",
+      action: "private-launch-denied",
+      callerAuthorization
+    });
+    if (abuseCheck.status === "blocked") {
+      return createYouTubeOAuthCredentialStatusUnavailablePayload({
+        credentialReferenceId,
+        reason: "private-launch-gated"
+      });
+    }
+
     return createYouTubeOAuthCredentialStatusUnavailablePayload({
       credentialReferenceId,
       reason: "private-launch-gated"
@@ -88,8 +116,32 @@ export async function disconnectYouTubeOAuthCredentialAction(formData: FormData)
   }
 
   const callerAuthorization = await readCallerAuthorization();
+  const actionAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
+    surface: "comment-translator-server-actions",
+    action: "credential-disconnect",
+    callerAuthorization
+  });
+  if (actionAbuseCheck.status === "blocked") {
+    return createYouTubeOAuthCredentialDisconnectUnavailablePayload({
+      credentialReferenceId,
+      reason: "private-launch-gated"
+    });
+  }
+
   const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
+    const abuseCheck = assertCommentTranslatorAbuseRequestAllowed({
+      surface: "private-launch-gate-direct-call-denials",
+      action: "private-launch-denied",
+      callerAuthorization
+    });
+    if (abuseCheck.status === "blocked") {
+      return createYouTubeOAuthCredentialDisconnectUnavailablePayload({
+        credentialReferenceId,
+        reason: "private-launch-gated"
+      });
+    }
+
     return createYouTubeOAuthCredentialDisconnectUnavailablePayload({
       credentialReferenceId,
       reason: "private-launch-gated"
@@ -151,17 +203,46 @@ async function readCommentTranslatorSessionActionResult({
   stopReason?: CommentTranslatorSessionStopReason;
 }) {
   const callerAuthorization = await readCallerAuthorization();
+  const nowMs = Date.now();
+  const action = mapSessionIntentToAbuseAction(intent);
+  const abuseCheck = assertCommentTranslatorAbuseRequestAllowed({
+    surface: "comment-translator-server-actions",
+    action,
+    callerAuthorization,
+    nowMs
+  });
+  if (abuseCheck.status === "blocked") {
+    return createCommentTranslatorAbuseRateLimitedSessionState({
+      nowMs,
+      plan: "free",
+      check: abuseCheck
+    });
+  }
+
   const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
+    const privateLaunchAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
+      surface: "private-launch-gate-direct-call-denials",
+      action: "private-launch-denied",
+      callerAuthorization,
+      nowMs
+    });
+    if (privateLaunchAbuseCheck.status === "blocked") {
+      return createCommentTranslatorAbuseRateLimitedSessionState({
+        nowMs,
+        plan: "free",
+        check: privateLaunchAbuseCheck
+      });
+    }
+
     return createCommentTranslatorPrivateLaunchBlockedSessionState({
-      nowMs: Date.now(),
+      nowMs,
       plan: "free",
       access: launchAccess
     });
   }
 
   const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
-  const nowMs = Date.now();
   const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const usage = readInMemoryCommentTranslatorUsageSnapshot({
     callerAuthorization,
@@ -202,6 +283,22 @@ async function readCommentTranslatorSessionActionResult({
   });
 
   return state;
+}
+
+function mapSessionIntentToAbuseAction(intent: CommentTranslatorSessionCommandIntent) {
+  if (intent === "start") {
+    return "session-start";
+  }
+
+  if (intent === "stop") {
+    return "session-stop";
+  }
+
+  if (intent === "heartbeat") {
+    return "session-heartbeat";
+  }
+
+  return "session-status";
 }
 
 async function readCredentialReadiness({

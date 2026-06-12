@@ -10,6 +10,10 @@ import {
 import { createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
 import { readCommentTranslatorPrivateLaunchAccess } from "@/lib/comment-translator-private-launch-access-gate";
+import {
+  assertCommentTranslatorAbuseRequestAllowed,
+  readCommentTranslatorRequestIp
+} from "@/lib/comment-translator-abuse-rate-limit-runtime";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +37,51 @@ export async function POST(request: NextRequest) {
     [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
   });
   const callerAuthorization = await readCallerAuthorization();
+  const requestIp = readCommentTranslatorRequestIp(request.headers);
+  const abuseCheck = assertCommentTranslatorAbuseRequestAllowed({
+    surface: "/api/comment-translator/youtube/disconnect",
+    action: "credential-disconnect",
+    callerAuthorization,
+    requestIp
+  });
+  if (abuseCheck.status === "blocked") {
+    return NextResponse.json(
+      {
+        ...createYouTubeOAuthCredentialDisconnectUnavailablePayload({
+          credentialReferenceId,
+          reason: "private-launch-gated"
+        }),
+        rateLimit: "exceeded",
+        rateLimitReason: abuseCheck.reason,
+        retryAfterSeconds: abuseCheck.retryAfterSeconds
+      },
+      { status: 429 }
+    );
+  }
+
   const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
+    const privateLaunchAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
+      surface: "private-launch-gate-direct-call-denials",
+      action: "private-launch-denied",
+      callerAuthorization,
+      requestIp
+    });
+    if (privateLaunchAbuseCheck.status === "blocked") {
+      return NextResponse.json(
+        {
+          ...createYouTubeOAuthCredentialDisconnectUnavailablePayload({
+            credentialReferenceId,
+            reason: "private-launch-gated"
+          }),
+          rateLimit: "exceeded",
+          rateLimitReason: privateLaunchAbuseCheck.reason,
+          retryAfterSeconds: privateLaunchAbuseCheck.retryAfterSeconds
+        },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       createYouTubeOAuthCredentialDisconnectUnavailablePayload({
         credentialReferenceId,

@@ -33,6 +33,7 @@ export const commentTranslatorPrivateLaunchAccessGateContract = {
   runtime: "server-only",
   defaultAccess: "closed-to-general-users",
   allowedTesterPolicy: "sha256-owner-user-id-allowlist",
+  abuseRateLimitBoundary: "assertCommentTranslatorAbuseRequestAllowed-before-private-launch-denial-retry",
   allowlistEnv: "COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES",
   gatedSurfaces: [
     "/tools/comment-translator",

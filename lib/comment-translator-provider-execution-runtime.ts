@@ -15,6 +15,11 @@ import { recordInMemoryCommentTranslatorUsageLedgerEvent } from "./comment-trans
 import { createYouTubeLiveCommentTranslatorPipelineRequestsForComments } from "./comment-translator-youtube-live-comment-intake-pipeline";
 import type { YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 import type { YouTubeProviderSafeCommentPayload } from "./comment-translator-youtube-input-boundary";
+import {
+  assertCommentTranslatorAbuseRequestAllowed,
+  type CommentTranslatorAbuseRateLimitBlockedResult,
+  type CommentTranslatorAbuseRateLimitStore
+} from "./comment-translator-abuse-rate-limit-runtime";
 
 export type CommentTranslatorProviderExecutionRuntimeContract = {
   implementationStage: "server-owned-translation-provider-execution-integration";
@@ -64,6 +69,12 @@ export type ExecuteCommentTranslatorProviderBatchRequest = {
   maxBatchSize?: number;
   maxProviderAttemptsPerComment?: number;
   cache?: CommentTranslatorProviderExecutionCache;
+  abuseRateLimit?: {
+    nowMs?: number;
+    requestIp?: string | null;
+    rateLimitStore?: CommentTranslatorAbuseRateLimitStore;
+    precomputedCheck?: CommentTranslatorAbuseRateLimitBlockedResult;
+  };
 };
 
 export type ExecuteCommentTranslatorProviderPolicyBatchRequest = Omit<ExecuteCommentTranslatorProviderBatchRequest, "provider"> & {
@@ -86,6 +97,13 @@ export type CommentTranslatorProviderExecutionResult =
       batches: readonly [];
       translations: readonly [];
       reason: "translator-provider-must-be-server-runtime-only";
+    })
+  | (CommentTranslatorProviderExecutionResultBase & {
+      status: "blocked-abuse-rate-limit";
+      batches: readonly [];
+      translations: readonly [];
+      reason: "rate-limit-exceeded";
+      rateLimit: Pick<CommentTranslatorAbuseRateLimitBlockedResult, "retryAfterSeconds" | "browserReadableOutput">;
     });
 
 export type CommentTranslatorProviderExecutionResultBase = {
@@ -186,6 +204,33 @@ export function createInMemoryCommentTranslatorProviderExecutionCache(): Comment
 export async function executeCommentTranslatorProviderBatch(
   request: ExecuteCommentTranslatorProviderBatchRequest
 ): Promise<CommentTranslatorProviderExecutionResult> {
+  const abuseCheck =
+    request.abuseRateLimit?.precomputedCheck ??
+    assertCommentTranslatorAbuseRequestAllowed({
+      surface: "comment-translator-provider-execution",
+      action: "provider-translation-batch",
+      callerAuthorization: request.callerAuthorization,
+      nowMs: request.abuseRateLimit?.nowMs ?? request.occurredAtMs,
+      requestIp: request.abuseRateLimit?.requestIp,
+      rateLimitStore: request.abuseRateLimit?.rateLimitStore
+    });
+  if (abuseCheck.status === "blocked") {
+    return {
+      ...createResultBase({
+        skippedCount: request.comments.length,
+        providerUnavailableSkippedCount: request.comments.length
+      }),
+      status: "blocked-abuse-rate-limit",
+      batches: [],
+      translations: [],
+      reason: abuseCheck.reason,
+      rateLimit: {
+        retryAfterSeconds: abuseCheck.retryAfterSeconds,
+        browserReadableOutput: abuseCheck.browserReadableOutput
+      }
+    };
+  }
+
   if (!isServerOnlyTranslatorProvider(request.provider)) {
     return {
       ...createResultBase(),

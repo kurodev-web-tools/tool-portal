@@ -375,6 +375,8 @@ export const commentTranslatorUiCopy = {
     safety: [
       "YouTube API取得とAI翻訳は、ログインユーザーがStartしたセッション内だけで実行します。",
       "YouTube接続だけでは、バックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
+      "FreeはAzure Translator、ProはOpenAI miniを優先し、復帰可能なprovider errorだけAzure fallbackを使います。",
+      "DeepL、Gemini、Workers AIは初期公開では比較用です。",
       "初期Free枠は30分/日、30分/セッション、1 active session、30翻訳メッセージ/分です。",
       "機密の接続値、配信ターゲット値、認可関連の内部値は画面やブラウザ保存領域に出しません。",
       "raw text loggingは標準で無効です。診断は短期間かつsanitizedに限定します。",
@@ -638,6 +640,8 @@ export const commentTranslatorUiCopy = {
     safety: [
       "YouTube API reads and AI translation run only inside a session explicitly started by the signed-in user.",
       "Connecting YouTube alone does not start background monitoring, polling, translation, or quota use.",
+      "Free uses Azure Translator. Pro uses an OpenAI mini model first, with Azure fallback only for recoverable provider errors.",
+      "DeepL, Gemini, and Workers AI are comparison-only for the initial launch.",
       "Initial Free limits are 30 min/day, 30 min/session, 1 active session, and 30 translated messages/min.",
       "Sensitive connection values, stream target values, and internal authorization details are not shown or stored in the browser.",
       "Raw text logging is off by default. Diagnostics stay short-lived and sanitized.",

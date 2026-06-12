@@ -28,7 +28,10 @@ const billingCopy = {
     checkoutUnavailable: "決済設定の準備中",
     portalUnavailable: "Paid 管理は契約反映後に利用できます",
     billingControlsTitle: "支払い操作",
-    billingControlsBody: "この画面ではプラン比較と現在状態を確認できます。実際の月額/年額 Price、Checkout、Portal、webhook、billing setting mutation は後続タスクで扱います。",
+    billingControlsBody: "この画面ではプラン比較と現在状態を確認できます。実際の月額/年額 Price、Checkout、Portal、webhook、billing setting mutation は承認ゲート付きで扱います。",
+    providerPolicyTitle: "翻訳provider方針",
+    providerPolicyBody:
+      "FreeはAzure Translator、ProはOpenAI miniを優先し、復帰可能なprovider errorだけAzure fallbackを使います。DeepL、Gemini、Workers AIは比較用で、現行production routingには含めません。",
     safeBoundary:
       "この画面は Stripe secret、webhook secret、token、owner id、provider channel id、liveChatId、Authorization header、provider target metadata を表示・保存しません。",
     messages: {
@@ -64,7 +67,10 @@ const billingCopy = {
     checkoutUnavailable: "Billing setup pending",
     portalUnavailable: "Paid management is available after a subscription is synced",
     billingControlsTitle: "Billing actions",
-    billingControlsBody: "Use this screen to compare plans and review current status. Actual monthly/yearly Prices, Checkout, Portal, webhooks, and billing setting mutations are handled in later tasks.",
+    billingControlsBody: "Use this screen to compare plans and review current status. Actual monthly/yearly Prices, Checkout, Portal, webhooks, and billing setting mutations stay approval-gated.",
+    providerPolicyTitle: "Translation provider policy",
+    providerPolicyBody:
+      "Free routes to Azure Translator. Pro routes to OpenAI mini with Azure fallback only for recoverable provider errors. DeepL, Gemini, and Workers AI remain comparison-only and are not included in current production routing.",
     safeBoundary:
       "This screen does not display or store Stripe secrets, webhook secrets, tokens, owner ids, provider channel ids, liveChatId, Authorization headers, or provider target metadata.",
     messages: {
@@ -285,6 +291,8 @@ export function AccountBillingShell({
         <aside className="panel p-4 shadow-none sm:p-5">
           <h2 className="text-base font-black text-foreground">{copy.freeAvailable}</h2>
           <p className="mt-3 text-sm leading-7 text-muted">{copy.safeBoundary}</p>
+          <h3 className="mt-5 text-sm font-black text-foreground">{copy.providerPolicyTitle}</h3>
+          <p className="mt-2 text-sm leading-7 text-muted">{copy.providerPolicyBody}</p>
         </aside>
       </section>
 

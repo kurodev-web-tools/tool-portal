@@ -22,6 +22,9 @@ const integrationsCopy = {
     boundaryTitle: "表示しない情報",
     boundaryBody:
       "この画面ではtoken、owner id、provider channel id、liveChatId、authorization header、service role key、secret値、provider target metadataを表示・保存しません。",
+    providerRoutingTitle: "翻訳provider方針",
+    providerRoutingBody:
+      "翻訳providerの切り替えは後続のserver-side Free/Paid policyで決まります。この画面でAzure、OpenAI mini、fallback providerは選択しません。",
     status: {
       "not-connected": "未接続",
       ready: "接続済み",
@@ -62,6 +65,9 @@ const integrationsCopy = {
     boundaryTitle: "Not displayed",
     boundaryBody:
       "This screen does not display or store token, owner id, provider channel id, liveChatId, authorization header, service role key, secret value, or provider target metadata.",
+    providerRoutingTitle: "Translation provider policy",
+    providerRoutingBody:
+      "Translation provider routing is decided later by server-side Free/Paid policy. This screen does not choose Azure, OpenAI mini, or fallback providers.",
     status: {
       "not-connected": "Not connected",
       ready: "Connected",
@@ -193,6 +199,9 @@ export function AccountIntegrationsShell({
             <StatusPill>{statusLabel}</StatusPill>
           </div>
           <p className="mt-4 text-sm leading-7 text-muted">{copy.youtubeBody}</p>
+          <p className="mt-3 rounded-base border border-border bg-surface-muted/45 px-3 py-2 text-xs font-semibold leading-5 text-muted">
+            {copy.providerRoutingBody}
+          </p>
           <dl className="mt-5 grid gap-0">
             <DetailRow label={copy.statusLabel} value={statusLabel} />
             <DetailRow label={copy.readinessLabel} value={copy.readiness[youtubeIntegration.status]} />
@@ -215,6 +224,8 @@ export function AccountIntegrationsShell({
         <aside className="panel p-4 shadow-none sm:p-5">
           <h2 className="text-base font-black text-foreground">{copy.boundaryTitle}</h2>
           <p className="mt-3 text-sm leading-7 text-muted">{copy.boundaryBody}</p>
+          <h3 className="mt-5 text-sm font-black text-foreground">{copy.providerRoutingTitle}</h3>
+          <p className="mt-2 text-sm leading-7 text-muted">{copy.providerRoutingBody}</p>
         </aside>
       </section>
 

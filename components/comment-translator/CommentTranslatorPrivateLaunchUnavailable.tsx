@@ -10,7 +10,7 @@ const surfaceCopy = {
   tool: {
     eyebrow: "Private launch",
     title: "Kuro Live Comment Translator is not yet available",
-    body: "The translator is in a private launch gate before main promotion. General access is disabled while production smoke and launch hardening continue.",
+    body: "The translator is in a private launch gate before main promotion. General access is disabled while production smoke and launch hardening continue. Provider and billing setup remain approval-gated; public release is not enabled yet.",
     primaryHref: "/tools",
     primaryLabel: "Back to tools"
   },
@@ -24,7 +24,7 @@ const surfaceCopy = {
   billing: {
     eyebrow: "Private launch",
     title: "Comment Translator billing is not yet available",
-    body: "Checkout and portal actions are disabled for accounts outside the private tester allowlist. Free/Paid plan controls remain server-gated.",
+    body: "Checkout and portal actions are disabled for accounts outside the private tester allowlist. Free/Paid plan controls remain server-gated. Provider and billing setup remain approval-gated; public release is not enabled yet.",
     primaryHref: "/account",
     primaryLabel: "Back to account"
   }
@@ -49,7 +49,7 @@ export function CommentTranslatorPrivateLaunchUnavailable({
         </h1>
         <p className="mt-3 break-words text-sm font-semibold leading-6 text-muted">{copy.body}</p>
         <p className="mt-3 break-words text-sm font-semibold leading-6 text-amber-800">
-          準備中です。許可されたテスターのみ既存の preview flow を利用できます。
+          準備中です。許可されたテスターのみ既存の preview flow を利用できます。provider / billing 設定は承認ゲート付きで、公開提供はまだ有効化していません。
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link

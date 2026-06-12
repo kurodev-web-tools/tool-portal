@@ -19,7 +19,7 @@ export type LegalDocument = {
 
 const sharedDates = {
   effectiveDate: "2026年5月30日",
-  updatedDate: "2026年6月11日"
+  updatedDate: "2026年6月12日"
 };
 
 export const legalDocuments = {
@@ -81,7 +81,8 @@ export const legalDocuments = {
       {
         heading: "第7条（有料プラン、解約、返金）",
         paragraphs: [
-          "現在、有料プランは準備中です。提供開始時には、購入画面またはプラン画面で価格、支払方法、更新周期、利用できる機能、解約方法を明示します。",
+          "現在、有料プランは準備中です。有料プランは、Comment Translator の利用上限拡張から開始する予定です。提供開始時には、購入画面またはプラン画面で価格、支払方法、更新周期、利用できる機能、解約方法を明示します。",
+          "Free は引き続き利用できます。Stripe の Product、Price、Checkout、Customer Portal、webhook 登録、billing setting mutation は承認ゲート付きです。",
           "将来の有料プランは、デジタルサービスの性質上、提供開始後または利用開始後の返金に応じられない場合があります。ただし、法令上必要な場合、重複決済、当方の責に帰す重大な不具合などは個別に確認します。",
           "サブスクリプションの解約は、提供開始後に案内するアカウント画面または決済管理画面から行うものとし、解約後の利用可能期間は各プラン条件に従います。"
         ]
@@ -90,6 +91,8 @@ export const legalDocuments = {
         heading: "第8条（Kuro Live Comment Translator）",
         paragraphs: [
           "Kuro Live Comment Translator は、初期公開版では YouTube を優先対象とし、利用者が明示的に翻訳セッションを開始した場合に限り、コメント取得、API利用、AI翻訳処理を行います。YouTube アカウントを接続しただけでは、バックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
+          "Free plan は Azure Translator を主な翻訳 provider として利用します。Paid plan は OpenAI mini model を主な翻訳 provider とし、復帰可能な provider error の場合のみ Azure Translator fallback を使います。",
+          "DeepL、Gemini Flash/Lite、Cloudflare Workers AI は初期公開時点の production translation provider ではありません。品質・費用・地域・データ利用条件の比較対象として扱い、production routing には含めません。",
           "無料利用枠の初期目安は、1日30分、1セッション30分、同時に1セッション、1分あたり30翻訳メッセージです。有料プラン、上限緩和、決済連携は準備中であり、提供開始時に画面上で条件を明示します。",
           "外部プラットフォームやAI翻訳サービスの仕様変更、クォータ、通信状態、配信状態、認証状態、利用上限により、セッションを開始できない、または途中で停止する場合があります。"
         ]
@@ -154,6 +157,8 @@ export const legalDocuments = {
           "Kuro Live Comment Translator では、YouTube 連携状態、翻訳セッション状態、利用時間、翻訳メッセージ数、概算のAPI利用量、停止理由など、公開運用に必要なメタデータをサーバー側で扱う場合があります。",
           "OAuth access token、refresh token、認可コード、owner user id、provider channel id、liveChatId、service_role key、Authorization header、provider target metadata は、利用者の画面、ブラウザ保存領域、handoff payload、公開文書、PR本文に表示または保存しません。利用者画面に返す情報は、接続状態、再接続要否、利用状況、停止理由などのサニタイズ済みメタデータに限定します。",
           "YouTube API の呼び出しとAI翻訳処理は、利用者が明示的に翻訳セッションを開始した場合に限って行います。アカウント接続のみでバックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
+          "Free plan は Azure Translator を主な翻訳 provider として利用します。Paid plan は OpenAI mini model を主な翻訳 provider とし、復帰可能な provider error の場合のみ Azure Translator fallback を使います。DeepL、Gemini Flash/Lite、Cloudflare Workers AI は初期公開時点の production translation provider ではありません。",
+          "provider policy の説明は処理先とfallback方針の開示に限定し、provider target metadata、liveChatId、owner値、OAuth値、Authorization header、Stripe secret、service-role値は表示しません。",
           "コメント本文の恒久的なログ保存は初期公開版では標準で無効です。不具合調査に必要な診断情報を扱う場合も、短期間かつサニタイズ済みの範囲に限定します。"
         ]
       },
@@ -161,15 +166,17 @@ export const legalDocuments = {
         heading: "第5条（AIモデルの学習利用）",
         paragraphs: [
           "利用者が本サービス上で使用、アップロード、編集した画像、素材、予定文、下書きその他のツール内データを、当方がAIモデルの学習目的で使用しないものとします。",
-          "コメント翻訳など、利用者が明示的にAI機能を利用した場合、機能提供に必要な範囲で入力内容や対象データが外部サービスへ送信される場合があります。その場合も、送信は対象機能の実行中に必要な範囲へ限定し、標準ではAIモデル学習目的に利用しません。"
+          "コメント翻訳など、利用者が明示的にAI機能を利用した場合、機能提供に必要な範囲で入力内容や対象データが外部サービスへ送信される場合があります。その場合も、送信は対象機能の実行中に必要な範囲へ限定し、標準ではAIモデル学習目的に利用しません。",
+          "OpenAI API/business data は標準ではモデル学習に使用されない方針に基づいて扱います。Azure Translator も翻訳 customer data を永続保存しない方針に基づいて利用します。provider の規約、地域、価格、学習・保持条件は公開前またはlive/provider実行前に再確認します。"
         ]
       },
       {
         heading: "第6条（外部サービス）",
         paragraphs: [
           "本サービスは、認証基盤として Supabase Auth、ホスティング、配信、セキュリティ保護として Cloudflare を利用します。",
-          "Kuro Live Comment Translator の公開運用では、利用者が明示的に開始した翻訳セッションの提供に必要な範囲で、YouTube API とAI翻訳サービスを利用する場合があります。",
-          "将来、有料プランを提供する場合、決済処理のために Stripe を利用する予定です。カード情報は当方のアプリケーションで直接保持せず、決済事業者が取り扱います。",
+          "Kuro Live Comment Translator の公開運用では、利用者が明示的に開始した翻訳セッションの提供に必要な範囲で、YouTube API、Azure Translator、OpenAI mini model を利用する場合があります。Paid plan の復帰可能な provider error では Azure Translator fallback を使うことがあります。",
+          "DeepL、Gemini Flash/Lite、Cloudflare Workers AI は、初期公開時点では比較・検証対象に限定し、production provider として過剰に表示しません。",
+          "将来、有料プランを提供する場合、決済処理のために Stripe を利用する予定です。カード情報は当方のアプリケーションで直接保持せず、決済事業者が取り扱います。Stripe の live-mode action、Customer Portal redirect、webhook 登録、billing setting mutation は承認後にのみ実行します。",
           "将来、利用状況の把握や改善のために GA4、Cookie、類似技術、外部送信を利用する場合があります。その場合は、送信先、目的、送信される情報を本ポリシーまたは機能画面で明示します。"
         ]
       },
@@ -233,7 +240,8 @@ export const legalDocuments = {
       {
         heading: "現在の提供状況",
         paragraphs: [
-          "現在、有料プランは準備中です。提供開始時に購入画面で価格、支払方法、更新周期、解約方法、返金条件、対象機能を明示します。"
+          "現在、有料プランは準備中です。提供開始時に購入画面で価格、支払方法、更新周期、解約方法、返金条件、対象機能を明示します。",
+          "Comment Translator の有料プランは、Free より広い利用上限と Paid plan 向けの翻訳 provider routing から開始する予定です。Free は引き続き利用できます。"
         ]
       }
     ]

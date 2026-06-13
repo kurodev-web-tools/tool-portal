@@ -12,6 +12,7 @@
 - URL 設計、大規模 i18n framework、保存 schema / IndexedDB / localStorage 既存 key / handoff payload、外部投稿連携は、個別タスクで明示されない限り変更しない。
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
 - Task 28 main promotion 後の production evidence、UI調整、Task 29 public launch gate work は、release owner が別途 preview branch continuation を指定しない限り latest `origin/main` から feature branch を切る。
+- YouTube OAuth integration series は `codex/comment-translator-youtube-oauth-integration` を integration base とし、各 task PR は `main` ではなく integration branch に向ける。
 - secret / service_role key / private credential は要求・表示・保存しない。
 - OAuth access token / refresh token / authorization code value は client component、fixture、docs、PR body、localStorage、IndexedDB、sessionStorage に出さない。
 - owner user id value / provider channel id value / service_role key value は表示・要求・保存しない。必要な場合も reference-only / existence-only / sanitized metadata-only に閉じる。
@@ -25,23 +26,90 @@
 ## Active Priorities
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 are merged, Task 27 completion PR #434 is merged, Task 28 readiness/env/exact-preflight blocker PRs are merged, and Task 28 main promotion / production route smoke / allowed-tester account-plan rendering evidence has been collected with sanitized metadata.
-   - current PR scope: record Task 28 private-gated production evidence and clean active task/docs state after PR #439 main promotion. This PR does not change runtime, UI/CSS/layout, storage, billing, provider execution, remote schema, or public launch gate behavior.
-   - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 are merged, Task 27 completion PR #434 is merged, and Task 28 readiness/env/exact-preflight/main-promotion/production-evidence cleanup PRs through PR #440 are merged to `main`.
+   - current PR scope: create the YouTube OAuth integration task board and handoff rules. This PR is docs/task-only and targets `codex/comment-translator-youtube-oauth-integration`; it does not change runtime, UI/CSS/layout, storage, billing, provider execution, remote schema, deployment, production access, or public launch gate behavior.
+   - integration branch: `codex/comment-translator-youtube-oauth-integration`, created from latest `origin/main` after confirming PR #440 merge commit `ee2e82e8a5462d2c0d7c10fdff773878c6a9c06c` is contained in `origin/main`.
+   - current feature branch: `codex/comment-translator-youtube-oauth-task-planning`, targeting `codex/comment-translator-youtube-oauth-integration`.
+   - final goal: all tasks in `YouTube OAuth Integration Roadmap` are completed as 1 task / 1 PR on the integration branch, then the integration branch is promoted to `main` by a separate approval-gated promotion PR. Until then, do not merge OAuth integration work directly to `main`.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
    - current env readiness doc: `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`.
    - current evidence doc: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE.md`.
    - archived planning docs: `docs/archive/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md` and `docs/archive/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_EXACT_PREFLIGHT.md`.
-   - merge/deploy evidence: PR #439 is merged to `main` with merge commit `e8508f59e3dbfa3fa0b61dd52e8346f1d1ef0bda`; the merge commit is contained in `origin/main`; GitHub check run `Workers Builds: v-streamer-tools` completed with conclusion `success`.
+   - merge/deploy evidence: PR #439 is merged to `main` with merge commit `e8508f59e3dbfa3fa0b61dd52e8346f1d1ef0bda`; PR #440 is merged to `main` with merge commit `ee2e82e8a5462d2c0d7c10fdff773878c6a9c06c`, and that commit is contained in `origin/main`.
    - production route/API evidence: custom domain and workers.dev route checks passed for `/tools/comment-translator/`, account redirects, legal routes, and private-launch negative API checks with sanitized labels only.
    - allowed-tester evidence: authenticated browser read-only checks showed private-launch element absent for tool, integrations, and billing surfaces; account/plan surfaces rendered with console error count `0` and no horizontal overflow.
    - Task 28 completion criteria: partially met. Main promotion, production route smoke, private-launch negative checks, and allowed-tester account/plan rendering evidence are recorded; allowed-tester session start smoke was not run.
-   - completed in this branch: recorded sanitized Task 28 production evidence, updated env readiness from blocker record to active reference inventory, archived superseded Task 28 planning docs, removed superseded planning-only contracts, added focused production evidence contract, and deduplicated stale mock-only notes.
-   - unchanged in this branch: no route behavior, UI/CSS/layout, SQL migration file, RLS policy, remote Supabase migration apply, remote mutation, remote alert/dashboard mutation, Stripe live-mode action, Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, manual Cloudflare upload/deploy command, browser storage expansion, handoff payload expansion, raw comment logging, credential value exposure, private provider target value exposure, quota write, durable persistence, provider target lookup, liveChatId lookup, translation provider API execution, or live/provider execution was added or run.
-   - verification for this branch: `node scripts/comment-translator-private-gated-production-smoke-evidence-contract.mjs`, `node scripts/comment-translator-production-env-readiness-contract.mjs`, `node scripts/comment-translator-private-launch-access-gate-contract.mjs`, changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. Production route/API smoke was rerun with sanitized output only. `npm run build` retained known non-blocking warnings for middleware/proxy convention, server-runtime static export alias skip, and webpack cache serialization.
-   - width checks skipped for this branch: docs/task/contract cleanup only; no UI, rendered text, CSS, route behavior, browser storage, or visible layout change. Previously approved production width evidence is recorded in the current evidence doc.
-   - public-release capable: no. Task 28 session start smoke, Task 29 public launch gate flip, Stripe live-mode actions, remote mutation/schema migration, provider target lookup, liveChatId lookup, translation provider API execution, and live/provider execution remain separately gated.
-   - next safe action: verify this evidence/cleanup PR, push it to `main` via PR, then either request exact approval for allowed-tester session start smoke or begin Task 29 planning with `public-release capable: no`.
+   - current OAuth blockers: `app/account/actions.ts` connect/reconnect/disconnect paths currently redirect to prepared states instead of Google OAuth; `/tools/comment-translator` still uses the fixed preview credential reference and trusted-adapter-not-wired metadata; OAuth credential creation and trusted token-store connection remain incomplete.
+   - unchanged in this branch: no route behavior, UI/CSS/layout, SQL migration file, RLS policy, remote Supabase migration apply, remote mutation, remote alert/dashboard mutation, Stripe live-mode action, Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, manual Cloudflare upload/deploy command, browser storage expansion, handoff payload expansion, raw comment logging, credential value exposure, private provider target value exposure, quota write, durable persistence, provider target lookup, liveChatId lookup, translation provider API execution, Google OAuth execution, YouTube OAuth live connect execution, or live/provider execution is added or run.
+   - verification for this branch: targeted markdown/content inspection, changed-files no-secret scan, and `git diff --check` passed.
+   - width checks skipped for this branch: docs/task-only; no UI, rendered text, CSS, route behavior, browser storage, or visible layout change.
+   - public-release capable: no. YouTube OAuth production connection, allowed-tester session start smoke, Task 29 public launch gate flip, Stripe live-mode actions, remote mutation/schema migration, provider target lookup, liveChatId lookup, translation provider API execution, and live/provider execution remain separately gated.
+   - next safe action: merge this planning PR into `codex/comment-translator-youtube-oauth-integration`, then start Task 2 from that integration branch in a fresh worktree / feature branch.
+
+## YouTube OAuth Integration Roadmap
+
+Use one Codex thread, one feature branch, and one PR per task. Each task branch targets `codex/comment-translator-youtube-oauth-integration`. Do not target `main` until all integration-branch tasks are complete and a separate promotion PR is explicitly approved. Do not run Google OAuth live connect, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, remote mutation/schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, or webhook registration without same-thread ready preflight, sanitized output review, and explicit in-thread approval.
+
+1. OAuth integration planning / task board refresh
+   - Goal: make `task.md` the source of truth for the YouTube OAuth integration branch.
+   - Scope: docs/task-board only. Create/confirm the integration branch from latest `origin/main`, split OAuth integration into 1 task / 1 PR, update handoff rules, and keep public launch gate closed.
+   - Completion criteria: PR #440 merge gate verified, integration branch named, feature branch named, tasks listed with scopes/gates/verification, target branch policy documented, next-session prompt updated, width-check skip reason recorded.
+   - Verification: targeted markdown/content inspection, changed-files no-secret scan, `git diff --check`.
+   - Status: complete in current planning PR. No OAuth execution, provider lookup, session smoke, deploy/upload, remote mutation, remote schema migration, Stripe action, or main promotion was run.
+
+2. YouTube OAuth connect/callback readiness and exact gate contract
+   - Goal: define the exact server-only OAuth connect/callback contract before implementation.
+   - Scope: callback route/action shape, state/CSRF/session ownership rules, redirect allowlist, env reference names, sanitized error states, rollback/disable gate, and exact no-live-connect execution boundary.
+   - Completion criteria: contract captures allowed request/response metadata, forbidden output list, operator preflight requirements, and the fact that this task does not contact Google OAuth.
+   - Verification: focused readiness contract if added, docs/contract inspection, changed-files no-secret scan, `git diff --check`.
+
+3. YouTube OAuth connect/callback implementation, no live connect execution
+   - Goal: replace prepared-only connect/reconnect redirects with real application routes/actions that can start and complete OAuth when separately approved by a user action.
+   - Scope: account connect/reconnect server actions, OAuth URL construction using server-only env references, callback validation, sanitized success/failure redirects, and disabled/fail-closed behavior when env references are absent.
+   - Completion criteria: no token, authorization code, owner user id, provider channel id, liveChatId, Authorization header, or provider target metadata reaches client components, docs, fixtures, browser storage, logs, PR body, or handoff payload; live Google OAuth connect is not executed in this task.
+   - Verification: focused route/action contracts, lint, typecheck, build, changed-files no-secret scan, `git diff --check`; width checks only if visible UI changes.
+
+4. Server-only credential persistence wiring to Supabase token store
+   - Goal: persist OAuth callback token material through the trusted server-only token-store boundary without exposing token values.
+   - Scope: callback-to-token-store adapter, credential reference creation, encryption/key reference handling, owner authorization, idempotent reconnect semantics, sanitized persistence errors, and emergency disable behavior through `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`.
+   - Completion criteria: token values and authorization code values remain server-only; docs and tests use reference labels or synthetic placeholders only; no remote mutation/schema migration is run unless separately approved.
+   - Verification: focused server contracts/tests, lint, typecheck, build, changed-files no-secret scan, `git diff --check`.
+
+5. Account integrations status wiring from trusted credential status
+   - Goal: show real sanitized YouTube connection status in `/account/integrations`.
+   - Scope: server actions/status reads from trusted credential status, connected/reconnect-required/disconnected/error states, safe disconnect/reconnect affordances, and copy alignment.
+   - Completion criteria: UI never displays token values, owner user id values, provider channel id values, liveChatId values, Authorization header values, provider target metadata values, or browser storage payloads; no background monitoring starts from connection alone.
+   - Verification: UI/action contracts, lint, typecheck, build, changed-files no-secret scan, `git diff --check`, width checks at `390 / 820 / 1024 / 1280 / 1366px` if visible output changes.
+
+6. Tool credential source wiring away from fixed preview credential reference
+   - Goal: make `/tools/comment-translator` use the trusted connected credential status/reference instead of the fixed preview credential reference.
+   - Scope: server-only credential resolution for session readiness, start-blocked states, reconnect guidance, fail-closed behavior, and preservation of the trusted adapter boundary.
+   - Completion criteria: fixed preview credential references and trusted-adapter-not-wired metadata are removed from active tool readiness paths; token/provider target/liveChatId values stay server-only; no provider target lookup or liveChatId lookup is run.
+   - Verification: focused tool/session readiness contracts, lint, typecheck, build, changed-files no-secret scan, `git diff --check`, width checks if visible state changes.
+
+7. Allowed-tester connection smoke readiness / sanitized evidence
+   - Goal: prepare and, only with explicit approval, collect sanitized evidence that an allowed tester can complete the account connection flow.
+   - Scope: exact same-thread preflight, sanitized output checklist, evidence template, negative checks, and allowed-tester account connection smoke readiness.
+   - Completion criteria: if not approved, record blocker/readiness only; if approved, evidence records status labels only and excludes OAuth values, authorization code values, token values, private identifiers, provider target metadata, browser storage payloads, and handoff payloads.
+   - Verification: readiness/evidence contract, changed-files no-secret scan, `git diff --check`; Google OAuth live connect only after same-thread ready preflight, sanitized output review, and exact explicit approval.
+
+8. Allowed-tester session start smoke readiness / sanitized evidence
+   - Goal: prepare and, only with explicit approval, verify that a connected allowed tester can start the translator session path with sanitized evidence.
+   - Scope: session start preflight, provider/live execution boundary, stop behavior checklist, sanitized count/status evidence, and explicit blocker handling.
+   - Completion criteria: if not approved, record blocker/readiness only; if approved, evidence records counts/status/stop reasons only and excludes liveChatId, provider target metadata, raw comments, token values, Authorization header values, browser storage payloads, and handoff payloads.
+   - Verification: relevant smoke readiness contracts, changed-files no-secret scan, `git diff --check`; provider target lookup, liveChatId lookup, translation provider API execution, and live/provider execution only after same-thread ready preflight, sanitized output review, and exact explicit approval.
+
+9. Integration branch final QA and promotion readiness to main
+   - Goal: decide whether the integration branch is ready for a separate main promotion PR.
+   - Scope: integration branch diff review, contracts, lint/typecheck/build, route/API negative checks, legal/copy/security boundary review, accepted risks, rollback notes, and public-release capability decision.
+   - Completion criteria: all previous OAuth integration PRs are merged into the integration branch; required checks pass or have documented accepted risk; any approved smoke evidence is sanitized; promotion-to-main remains a separate PR and is not performed in this task unless explicitly requested afterward.
+   - Verification: full integration QA checklist, no-secret scan, relevant contracts, lint, typecheck, build, `git diff --check`; width checks if visible UI changed during the integration series.
+
+10. UI polish for private launch / integration / billing contrast
+   - Goal: make private-launch, YouTube integration, and billing state contrast clearer without mixing UI polish into OAuth runtime tasks.
+   - Scope: account/tool/billing visual and copy polish only after OAuth runtime wiring is stable, unless release owner explicitly pulls a small copy fix into a runtime task.
+   - Completion criteria: UI states are understandable and responsive; no token/provider/private identifiers are exposed; OAuth runtime, live execution, Stripe live-mode actions, and deploy/upload stay out of this polish PR unless separately approved.
+   - Verification: UI/action contracts as applicable, lint, typecheck, build, changed-files no-secret scan, `git diff --check`, width checks at `390 / 820 / 1024 / 1280 / 1366px`.
 
 ## Public Release Roadmap
 
@@ -282,12 +350,14 @@ These decisions are fixed for the current public-release roadmap unless the user
 
 ## Thread And PR Handoff Rules
 
-- Start each roadmap task in a fresh Codex thread and fresh worktree / feature branch from `origin/codex/comment-translator-preview` after confirming the previous task PR is merged.
-- At thread start, run `git fetch origin --prune`, read `AGENTS.md` and `task.md`, and verify the latest merged PR commit is in `origin/codex/comment-translator-preview`.
+- For the YouTube OAuth integration series, start each task in a fresh Codex thread and fresh worktree / feature branch from `origin/codex/comment-translator-youtube-oauth-integration` after confirming the previous task PR is merged into that integration branch.
+- Keep each task PR targeting `codex/comment-translator-youtube-oauth-integration`. Do not target `main` until the integration branch final QA task explicitly supports a separate promotion PR and the release owner approves that promotion.
+- At thread start, run `git fetch origin --prune`, read `AGENTS.md` and `task.md`, and verify the latest required merge commit is in the intended base branch.
 - For each task, first identify whether the task is documentation, implementation, execution, or evidence-only.
 - If the task is live/provider execution, confirm same-thread / operator-local same-command-process ready preflight, sanitized output review, and explicit in-thread approval before running provider-affecting commands.
-- If the task completes and verification passes, update `task.md`, commit, push, and create a draft PR targeting `codex/comment-translator-preview`.
-- If an external wait blocks execution and the user explicitly approves a readiness/blocker PR, record the incomplete completion criteria and blocker evidence in `task.md`, verify, commit, push, and create a draft PR targeting `codex/comment-translator-preview`.
+- If the task is Google OAuth live connect execution, confirm same-thread ready preflight, sanitized output review, and explicit in-thread approval before clicking, redirecting, exchanging an authorization code, or recording evidence.
+- If the task completes and verification passes, update `task.md`, commit, push, and create a draft PR targeting `codex/comment-translator-youtube-oauth-integration`.
+- If an external wait blocks execution and the user explicitly approves a readiness/blocker PR, record the incomplete completion criteria and blocker evidence in `task.md`, verify, commit, push, and create a draft PR targeting `codex/comment-translator-youtube-oauth-integration`.
 - If the task does not complete and no readiness/blocker PR is approved, do not commit, push, or create a PR. Reply with: `blocked reason`, `attempted command or inspected file`, `why completion criteria are not met`, `what approval/evidence/implementation is missing`, and `next safe action`.
 
 ## Verification Baseline
@@ -324,67 +394,66 @@ These decisions are fixed for the current public-release roadmap unless the user
 ```text
 D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を続けます。
 
+目的:
+- YouTube OAuth integration branch の次タスクを 1 task / 1 PR で進めてください。
+- PR target は `codex/comment-translator-youtube-oauth-integration` です。
+- `main` へはまだ結合しないでください。
+
 重要:
 - 最初に必ず `git fetch origin --prune` を実行してください。
 - `AGENTS.md` と `task.md` を読んでください。
 - root checkout / main では作業しないでください。
 - 作業先は fresh worktree / feature branch にしてください。
-- base は latest `origin/main` です。release owner が preview continuation を明示した場合だけ `origin/codex/comment-translator-preview` を使ってください。
+- base は latest `origin/codex/comment-translator-youtube-oauth-integration` です。integration branch promotion task 以外では `main` を target にしないでください。
 - secret / token / OAuth access token / refresh token / authorization code / owner user id value / provider channel id value / liveChatId value / service_role key value / Authorization header value / Stripe secret key / webhook signing secret は表示・要求・保存しないでください。
 - provider target metadata や liveChatId は operator-local env / server-only boundary で消費するだけにし、output / docs / PR body / browser storage / handoff payload に出さないでください。
-- session start smoke、deploy/upload、production/custom deployed smoke、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution、remote mutation、remote schema migration、Stripe live-mode action、billing setting mutation は、same-thread ready preflight、sanitized output review、explicit in-thread approval が揃うまで実行しないでください。
-- This prompt is not approval for session start smoke, deploy/upload, production/custom URL smoke, Cloudflare production mutation, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, webhook registration, provider target lookup, liveChatId lookup, translation provider API execution, or live/provider execution.
+- session start smoke、deploy/upload、production/custom deployed smoke、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution、remote mutation、remote schema migration、Stripe live-mode action、billing setting mutation、Google OAuth live connect execution、YouTube OAuth live connect execution は、same-thread ready preflight、sanitized output review、explicit in-thread approval が揃うまで実行しないでください。
+- This prompt is not approval for session start smoke, deploy/upload, production/custom URL smoke, Cloudflare production mutation, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, webhook registration, provider target lookup, liveChatId lookup, translation provider API execution, live/provider execution, Google OAuth live connect execution, or YouTube OAuth live connect execution.
 
 Merge gate:
-- Task 28 production evidence/cleanup PR が merge 済みであることを確認してください。
+- Previous YouTube OAuth integration task PR がある場合は、merge 済みであることを確認してください。
+- Planning task の場合は、PR #440 `[codex] Record Task 28 production evidence cleanup` が merge 済みで、merge commit `ee2e82e8a5462d2c0d7c10fdff773878c6a9c06c` が `origin/main` に含まれることを確認してください。
 - gh が使える場合はその PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
-- その merge commit が `origin/main` に含まれることを Git で確認してください。認証 token の値は要求・表示しないでください。
+- その merge commit が intended base branch に含まれることを Git で確認してください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
 - Public Release Roadmap Task 1-15 は完了済みです。
 - Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 は merge 済みです。
 - Task 27 completion PR #434 は merge 済みです。
-- Task 27 completion PR #434 で approved Azure Translator live/provider smoke evidence が記録されました。
-- Task 27 sanitized final evidence: returned 3, eligible 3, provider requests 2, provider calls 2, translated 2, skipped 1, language-policy skipped 1, provider-unavailable 0, recoverable errors 0, terminal errors 0, stop reason null。
-- Task 28 readiness/blocker PR #435、production env readiness PR #436、exact preflight PR #437、main promotion PR #439 は merge 済みです。
+- Task 27 completion PR #434 で approved Azure Translator live/provider smoke evidence が sanitized count-only で記録されました。
+- Task 28 readiness/blocker PR #435、production env readiness PR #436、exact preflight PR #437、main promotion PR #439、production evidence cleanup PR #440 は merge 済みです。
 - Task 28 production/custom route smoke、private-launch negative API checks、allowed-tester account/plan rendering evidence は `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE.md` に sanitized metadata only で記録済みです。
 - Task 28 planning-only docs は `docs/archive/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md` と `docs/archive/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_EXACT_PREFLIGHT.md` に移動済みです。
 - Production env inventory は `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md` に reference-name-only で残っています。secret 値や private id 値は記録されていません。
-- Task 19 で provider/cost policy が記録され、Task 20 で server-only Azure/OpenAI mini provider policy runtime、Free/Paid routing、paid recoverable Azure fallback、strict OpenAI JSON parser、sanitized usage/cost estimate handoff が追加されています。
-- Task 21 で Stripe live readiness checklist、server-only readiness runtime、signed-webhook entitlement evidence review、failed/canceled/expired safe-degradation review、rollback notes が追加されています。
-- Task 22 で server-only app-side abuse/rate-limit guard、route/action/API negative checks、private-launch denial throttling、provider/billing fail-closed behavior が追加されています。
-- Task 23 で durable-vs-in-memory decisions、approval-gated schema proposal、migration ordering、rollback plan、in-memory fallback boundaries が追加されています。
-- Task 24 で server-only monitoring/incident readiness runtime、provider cost/quota alerts、YouTube quota stop counts、translation error classes、Stripe webhook failure visibility、session failure/timeout counts、rollback trigger notes、support escalation path が追加されています。
-- Task 25 で provider legal/copy surfaces が final provider policy と整合し、Free Azure / Paid OpenAI mini / Paid recoverable Azure fallback / comparison-only providers / provider data-use・retention・training / support・contact / paid-plan wording が記録されています。
-- Task 26 で server-only security/privacy final review evidence、active review doc、focused route/API negative checks、changed-files no-secret scan、accepted residual-risk documentation が追加されています。
-- Allowed-tester session start smoke、Stripe live-mode action、Customer Portal redirect、webhook registration、remote schema migration、remote mutation、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution は引き続き approval-gated で、この prompt は承認ではありません。
+- YouTube連携はまだ本番導線に接続されていません。`app/account/actions.ts` の connect/reconnect/disconnect は prepared redirect のみで、Google OAuth へ飛びません。
+- `/tools/comment-translator` は固定 preview credential reference と trusted-adapter-not-wired metadata を使う経路が残っています。
+- `app/tools/comment-translator/actions.ts` には credential status / disconnect / start readiness の server action と Supabase trusted adapter 呼び出しがありますが、OAuth接続・credential作成導線は未完成です。
+- `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` が `1` または `true` の場合、credential resolution は無効化されます。
+- Allowed-tester session start smoke、Stripe live-mode action、Customer Portal redirect、webhook registration、remote schema migration、remote mutation、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution、Google OAuth live connect execution、YouTube OAuth live connect execution は引き続き approval-gated で、この prompt は承認ではありません。
 - `public-release capable: no` のままです。
-- 最終ゴールは Task 28 の残り session smoke 方針の確定、Task 29 public launch gate flip、必要な live/provider smoke の sanitized evidence 記録により「公開可能状態」にすることです。
+- 最終ゴールは YouTube OAuth integration tasks を integration branch に積み、final QA の後に separate promotion PR で `main` へ昇格できる状態にすることです。
 
 次にやること:
-- Continue Task 28 session smoke or begin Task 29 only after confirming the desired scope with the release owner.
-- If session smoke is requested, present exact UI action/command boundaries before pressing `Start`; record only sanitized status/count labels and do not record provider target metadata, liveChatId, token values, raw comments, browser storage payloads, or handoff payloads.
-- If Task 29 is requested, start with launch-gate design/readiness only; do not flip public access until explicit same-thread approval is granted.
+- Start the next incomplete task in `YouTube OAuth Integration Roadmap`.
+- If the next task is implementation, keep live Google OAuth connect execution out of scope unless the roadmap task and release owner explicitly approve same-thread execution.
+- If the next task is smoke/evidence readiness, present exact UI action/command boundaries first; record only sanitized status/count labels and do not record provider target metadata, liveChatId, token values, authorization code values, raw comments, browser storage payloads, or handoff payloads.
 - remote schema migration / Supabase migration apply は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。
 - Stripe live-mode actions、Customer Portal redirect、webhook registration、billing setting mutation、deploy/upload、remote mutation、live/provider execution は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。
 - secret / token / provider credential / OAuth token / private identifier の値は要求・表示・保存しないでください。必要な env は reference 名だけを扱ってください。
 
 Verification:
-- `node scripts/comment-translator-private-gated-production-smoke-evidence-contract.mjs`
-- `node scripts/comment-translator-production-env-readiness-contract.mjs`
-- `node scripts/comment-translator-private-launch-access-gate-contract.mjs`
-- relevant deployment/final QA/security route/API negative checks that match any changes
+- task-specific focused contracts for the changed scope
 - no-secret scan over changed files
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
 - `git diff --check`
 - width checks at `390 / 820 / 1024 / 1280 / 1366px` if visible UI changes; docs/contract-onlyなら省略理由を `task.md` に残してください。
-- approved session smoke / deploy / production smoke commands only if same-thread ready preflight + sanitized output review + exact-command explicit approval are complete in this thread.
+- approved Google OAuth connect / provider lookup / session smoke / deploy / production smoke commands only if same-thread ready preflight + sanitized output review + exact-command explicit approval are complete in this thread.
 
 Completion:
-- Task 28/29 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `main` まで進めてください。
+- Current OAuth integration task completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-youtube-oauth-integration` まで進めてください。
 - gate 不足や実行 path 不足で completion criteria 未達なら、commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

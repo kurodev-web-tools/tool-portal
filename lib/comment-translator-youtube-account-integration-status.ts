@@ -21,6 +21,12 @@ import type { AccountSessionState } from "./supabase/session";
 const credentialReferenceSecretEnv = "YOUTUBE_OAUTH_CREDENTIAL_REFERENCE_SECRET";
 const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
 
+export type YouTubeOAuthCredentialReferenceUnavailableReason =
+  | "credential-resolution-disabled"
+  | "credential-reference-env-missing"
+  | "auth-unavailable"
+  | "caller-not-authenticated";
+
 export type YouTubeAccountIntegrationCredentialReferenceResult =
   | {
       status: "ready";
@@ -29,11 +35,7 @@ export type YouTubeAccountIntegrationCredentialReferenceResult =
     }
   | {
       status: "unavailable";
-      reason:
-        | "credential-resolution-disabled"
-        | "credential-reference-env-missing"
-        | "auth-unavailable"
-        | "caller-not-authenticated";
+      reason: YouTubeOAuthCredentialReferenceUnavailableReason;
       callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
     };
 
@@ -93,6 +95,16 @@ export function readYouTubeAccountIntegrationCredentialReference({
     authUnavailable: accountSession.authStatus === "unavailable"
   });
 
+  return readYouTubeOAuthCredentialReferenceForCaller({ callerAuthorization, env });
+}
+
+export function readYouTubeOAuthCredentialReferenceForCaller({
+  callerAuthorization,
+  env = process.env
+}: {
+  callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
+  env?: Record<string, string | undefined>;
+}): YouTubeAccountIntegrationCredentialReferenceResult {
   if (callerAuthorization.status !== "authorized") {
     return {
       status: "unavailable",

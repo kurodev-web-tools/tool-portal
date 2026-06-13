@@ -14,6 +14,7 @@ import {
 
 export type YouTubeOAuthCredentialStatusUnavailableReason =
   | "trusted-adapter-not-wired"
+  | "credential-reference-env-missing"
   | "auth-unavailable"
   | "caller-not-authenticated"
   | "private-launch-gated";

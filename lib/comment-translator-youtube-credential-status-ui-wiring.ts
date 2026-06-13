@@ -41,7 +41,12 @@ type YouTubeOAuthCredentialStatusUiUnavailableInput = {
   status: "unavailable";
   credentialReferenceId: string;
   provider: "youtube";
-  reason: "trusted-adapter-not-wired" | "auth-unavailable" | "caller-not-authenticated" | "private-launch-gated";
+  reason:
+    | "trusted-adapter-not-wired"
+    | "credential-reference-env-missing"
+    | "auth-unavailable"
+    | "caller-not-authenticated"
+    | "private-launch-gated";
   reconnectRequired: true;
 };
 

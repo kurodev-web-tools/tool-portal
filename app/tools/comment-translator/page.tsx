@@ -3,7 +3,7 @@ import { CommentTranslatorPrivateLaunchUnavailable } from "@/components/comment-
 import { CommentTranslatorDock } from "@/components/comment-translator/CommentTranslatorDock";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
-import { createYouTubeOAuthNewClientPayloadCredentialReferenceSource } from "@/lib/comment-translator-youtube-client-safe-credential-reference-source";
+import { readCommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
 import { getAccountSessionState } from "@/lib/supabase/session";
 
 export const metadata: Metadata = {
@@ -13,30 +13,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
-
-const youtubeCredentialReferenceSource = createYouTubeOAuthNewClientPayloadCredentialReferenceSource({
-  credentialReferenceId: "ytcred_comment_translator_preview_001",
-  statusMetadata: {
-    status: "unavailable",
-    provider: "youtube",
-    reconnectRequired: true,
-    providerChannelId: null,
-    scopeLabel: null,
-    expiresAtIso: null,
-    reason: "trusted-adapter-not-wired"
-  },
-  sourceSurfacingApprovalEvidence: {
-    status: "approved",
-    approverRole: "authorized-product-or-security-owner",
-    approvalStatement:
-      "approves-new-client-payload-credentialReferenceId-source-for-comment-translator-source-surfacing-before-implementation",
-    targetSource: "new-client-payload-credentialReferenceId-source",
-    targetSurface: "/tools/comment-translator",
-    targetBoundary: "credentialReferenceId-and-sanitized-status-metadata-only-no-storage-or-handoff-change",
-    approvedFor: "display-ui-wiring-after-pr321-readiness",
-    approvalEvidenceSource: "user-thread-explicit-approval"
-  }
-});
 
 export default async function CommentTranslatorPage() {
   const accountSession = await getAccountSessionState();
@@ -50,9 +26,11 @@ export default async function CommentTranslatorPage() {
     );
   }
 
+  const youtubeCredentialStatusSource = await readCommentTranslatorToolCredentialStatusSource({ accountSession });
+
   return (
     <PortalShell mode="workspace">
-      <CommentTranslatorDock youtubeCredentialReferenceSource={youtubeCredentialReferenceSource} />
+      <CommentTranslatorDock youtubeCredentialStatusSource={youtubeCredentialStatusSource} />
     </PortalShell>
   );
 }

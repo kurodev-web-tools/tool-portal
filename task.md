@@ -19,21 +19,21 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 are merged, Task 27 readiness/blocker through exact-command approval gate PRs are merged, and Task 27 completion evidence is ready in this branch.
-   - current PR scope: Task 27 private-gated live/provider smoke completion evidence after approved Azure translation provider execution.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 are merged, Task 27 completion PR #434 is merged, and Task 28 private-gated main promotion / production smoke is blocked pending explicit approval for externally visible actions.
+   - current PR scope: Task 28 readiness/blocker record after PR #434 merge, without running main promotion, deploy/upload, production/custom URL smoke, remote mutation, Stripe live-mode action, billing mutation, provider target lookup, liveChatId lookup, or live/provider execution.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
-   - current readiness doc: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_LIVE_PROVIDER_SMOKE_READINESS.md`.
-   - inspected surfaces for Task 27 runtime adapter hardening: `task.md`, Task 27 readiness doc, Task 27 execution harness command, focused execution harness contract, live/provider smoke command surfaces, YouTube target lookup and polling command gates, bounded polling runtime, provider execution runtime, provider policy runtime, usage/quota/budget ledger, and monitoring readiness.
-   - completed in this branch: connected the approved exact-command path to operator-local runtime adapters through the server-only harness adapter builder; carried the target lookup liveChatId server-only into same-command polling to avoid stale operator-local target env drift; kept raw Live Chat text server-only for translation provider input; normalized client-readable output to counts/status/stop reasons only; kept exact-command review output `implemented-sanitized-output-only`; and added contract coverage so empty Live Chat polling evidence blocks as `blocked-polling-sanitized` instead of overclaiming provider translation execution.
-   - approved sanitized evidence observed in this thread: target lookup reached `liveChatTarget: present` with HTTP 200 and count-only result metadata; one bounded Live Chat polling command returned zero items; one approved full harness command before the empty-polling blocker returned status `task-27-live-provider-smoke-sanitized-result` but all intake/translation counts were zero. After the blocker fix, the approved full harness command returned `blocked-polling-sanitized`, with target lookup `executed-presence-only`, polling `executed-bounded-readonly-one-step`, translation provider execution `not-run`, and no token/header/raw-comment/browser-storage/handoff expansion. After server-only liveChatId chaining, the approved full harness reached non-empty intake and provider execution: returned item count `3`, eligible comment count `3`, provider request count `2`, provider call count `2`, translated count `0`, skipped count `3`, stop reason `null`, with token/header/raw-comment/browser-storage/handoff still unchanged or never returned. After sanitized skip/error counts were added, the approved full harness repeated the same non-empty intake/provider-call counts and reported language-policy skipped count `1`, provider-unavailable skipped count `2`, recoverable error count `0`, terminal error count `2`, translated count `0`. After operator-local Azure provider configuration was corrected, the approved full harness returned translated count `2`, skipped count `1`, language-policy skipped count `1`, provider-unavailable skipped count `0`, recoverable error count `0`, terminal error count `0`, stop reason `null`, and still returned no token/header/raw-comment/browser-storage/handoff data.
-   - completion criteria: met for Task 27 in this branch. No live/provider command was run before explicit same-thread approval; live target lookup, bounded polling, server-only Azure provider execution, stop-reason-safe output, and sanitized count-only evidence were recorded; liveChatId, provider identifiers, OAuth values, raw comments, Authorization headers, browser storage, and handoff payloads were not stored or displayed. Stop behavior and quota/budget stop behavior are verified through existing focused server-only contracts rather than by forcing live quota/budget exhaustion.
-   - unchanged in this branch: no route behavior, SQL migration file, RLS policy, remote Supabase migration apply, remote mutation, remote alert/dashboard mutation, Stripe live-mode action, Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, deploy/upload, browser storage expansion, handoff payload expansion, raw comment logging, credential value exposure, private provider target value exposure, quota write, durable persistence, or UI/CSS/layout behavior was added.
-   - verification for this branch: RED `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs` failed because empty polling still called the translation adapter, failed again until the command carried the target lookup liveChatId server-only into polling, and failed again until sanitized skip/error reason counts were included in evidence; GREEN passed after the empty-polling blocker, server-only target chaining, and skip/error count implementation. `node scripts/comment-translator-private-gated-live-provider-smoke-readiness-contract.mjs`, `node scripts/comment-translator-youtube-live-chat-target-lookup-command-contract.mjs`, and `node scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs` passed. The focused contracts cover missing env blockers, ready preflight, sanitized exact-command review output, explicit approval gating, ready-preflight-reviewed gating, deterministic sandboxed adapter summary, operator-local adapter result normalization, command gates, no sensitive output, server-only liveChatId handoff from target lookup to polling, empty polling not reaching translation provider execution, skip/error reason counts, bounded polling terminal stop behavior, and quota/budget stop reason support. Route/API negative checks were not rerun because this branch changes only server-only harness code, Node command/contract scripts, docs, and task notes; no route/API authorization behavior changed. The value-shaped changed-files no-secret scan passed. `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. `npm run build` retained existing warnings for deprecated `middleware`, webpack cache serialization, and static-export RSC aliases skipped for server-runtime build.
-   - width checks skipped: Task 27 runtime adapter hardening changes only server-only harness code, Node command/contract scripts, docs, and this task note. There is no UI, rendered text, CSS, route, browser storage, or visible layout change.
-   - public-release capable: no. Task 27 is complete, but private-gated main promotion/production smoke and final public launch gate flip remain incomplete or separately gated.
-   - residual risk: further live/provider execution, provider target lookup, liveChatId lookup, translation provider API execution, Stripe live-mode actions, deploy/upload, remote mutation, billing setting mutation, webhook registration, Customer Portal redirect, and remote schema migration remain approval-gated; provider pricing/data-use/retention/training/dashboard posture must be rechecked before main promotion, production smoke, or paid launch.
-   - next safe action: create this Task 27 completion PR targeting `codex/comment-translator-preview`; after merge, continue to Task 28 private-gated main promotion and production smoke only with explicit approval for deploy/main-promotion actions.
+   - current readiness doc: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md`.
+   - inspected surfaces for Task 28 readiness: `task.md`, public requirements, final QA, security/privacy final review, Task 27 live/provider smoke readiness, public deployment/live-smoke runbook, Task 21-25 active docs, private launch access gate, abuse/rate-limit guard, billing readiness, durable persistence readiness, monitoring readiness, and route/action private-gate surfaces.
+   - merge gate evidence: PR #434 is merged. Merge commit `617985d6b56057d40a9fdcf093f9f32846e7e45b` is contained in `origin/codex/comment-translator-preview`. GitHub metadata checked state `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-live-provider-smoke-ready-preflight-post-pr433`, merged at `2026-06-12T15:27:41Z`. Cloudflare Pages check rollup completed with failure and remains separate from local verification.
+   - Task 28 completion criteria: not met. Readiness/blocker PR approved by release owner, but main promotion, deploy/upload, and production/custom smoke were not run. Production/custom deployed target serving the current app, private launch gate production negative smoke, allowed-tester account/plan/session production smoke, console checks, and production rollback evidence remain missing.
+   - completed in this branch: recorded Task 28 readiness/blocker state, merge gate evidence, approval boundary, missing evidence, next allowed command shape, and sanitized output policy in the active readiness doc and task board.
+   - unchanged in this branch: no route behavior, UI/CSS/layout, SQL migration file, RLS policy, remote Supabase migration apply, remote mutation, remote alert/dashboard mutation, Stripe live-mode action, Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, deploy/upload, browser storage expansion, handoff payload expansion, raw comment logging, credential value exposure, private provider target value exposure, quota write, durable persistence, main promotion, provider target lookup, liveChatId lookup, or live/provider execution was added or run.
+   - verification for this branch: `node scripts/comment-translator-private-gated-main-promotion-readiness-contract.mjs`, `node scripts/comment-translator-private-launch-access-gate-contract.mjs`, the changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. Pre-existing Task 14/16/19/21-27 contract scripts that assert old detailed `task.md` completion-log wording or prior current-PR scope were not used as completion gates because `task.md` is now intentionally an active board and those scripts fail on stale task-board assertions rather than Task 28 behavior.
+   - width checks skipped: Task 28 readiness/blocker changes only docs, a Node contract script, and this task note. There is no UI, rendered text, CSS, route behavior, browser storage, or visible layout change.
+   - public-release capable: no. Task 28 is readiness/blocker only; production/custom deployed smoke and final public launch gate flip remain incomplete or separately gated.
+   - residual risk: main promotion, deploy/upload, production/custom smoke, allowed-tester smoke, non-allowed-user denial smoke, live/provider execution, provider target lookup, liveChatId lookup, translation provider API execution, Stripe live-mode actions, remote mutation, billing setting mutation, webhook registration, Customer Portal redirect, and remote schema migration remain approval-gated; provider pricing/data-use/retention/training/dashboard posture must be rechecked before any paid or public launch action.
+   - next safe action: create this Task 28 readiness/blocker PR targeting `codex/comment-translator-preview`; after merge, continue Task 28 only with explicit same-thread approval for the exact main promotion, deploy/upload, and production/custom smoke plan.
 
 ## Public Release Roadmap
 
@@ -236,6 +236,7 @@ Use one Codex thread, one feature branch, and one PR per task. These tasks are r
    - Scope: main merge gate, production deploy trigger/verification, production/custom route smoke, allowed-tester access, non-allowed-user denial, rollback readiness.
    - Completion criteria: production/custom deployed target serves the current app; private launch gate blocks general users; allowed testers can complete account/plan/session smoke; evidence is sanitized.
    - Verification: production route checks only after explicit approval, width checks, console checks, access-gate negative checks, rollback notes.
+   - Status: readiness/blocker PR approved by release owner in current branch. Task 28 completion criteria are not met because main promotion, deploy/upload, production/custom smoke, allowed-tester smoke, non-allowed-user denial smoke, and rollback action/evidence are still blocked pending explicit same-thread approval. Active readiness doc: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md`.
 
 29. Public launch gate flip
    - Goal: make Comment Translator publicly available only after production smoke and accepted risks support it.
@@ -323,23 +324,23 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - base は latest `origin/codex/comment-translator-preview` です。
 - secret / token / OAuth access token / refresh token / authorization code / owner user id value / provider channel id value / liveChatId value / service_role key value / Authorization header value / Stripe secret key / webhook signing secret は表示・要求・保存しないでください。
 - provider target metadata や liveChatId は operator-local env / server-only boundary で消費するだけにし、output / docs / PR body / browser storage / handoff payload に出さないでください。
-- live/provider execution は、same-thread / operator-local same-command-process ready preflight、sanitized output review、explicit in-thread approval が揃うまで実行しないでください。
-- provider target lookup、liveChatId lookup、YouTube live/provider smoke、translation provider API execution は、ready preflight + sanitized output review + exact-command explicit approval が揃うまで実行しないでください。
-- この prompt は live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution、deploy、remote mutation、remote schema migration、Stripe live-mode action、billing setting mutation の承認ではありません。
+- main promotion、deploy/upload、production/custom deployed smoke、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution、remote mutation、remote schema migration、Stripe live-mode action、billing setting mutation は、same-thread ready preflight、sanitized output review、explicit in-thread approval が揃うまで実行しないでください。
+- This prompt is not approval for main promotion, deploy/upload, production/custom URL smoke, Cloudflare production mutation, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, webhook registration, provider target lookup, liveChatId lookup, or live/provider execution.
 
 Merge gate:
-- Task 27 exact-command approval gate PR が merge 済みであることを確認してください。
-- gh が使える場合は Task 27 exact-command approval gate PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
-- merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認してください。認証 token の値は要求・表示しないでください。
+- Task 28 readiness/blocker PR が merge 済みであることを確認してください。
+- gh が使える場合は Task 28 readiness/blocker PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- Task 28 readiness/blocker PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認してください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
 - Public Release Roadmap Task 1-15 は完了済みです。
 - Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 は merge 済みです。
-- Task 27 readiness/blocker PR #430 は merge 済みです。
-- Task 27 execution harness / operator-local adapter wiring PR #432 で `lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts`、`scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs`、focused contract、Task 27 readiness doc、`task.md` が更新されています。
-- Task 27 exact-command approval gate PR で `--print-exact-command-review` と `--operator-local-ready-preflight-reviewed` gate が追加されています。
-- Task 27 exact-command approval gate PR は completion PR ではありません。`translatorPipelineWiring` は `implemented-sanitized-summary-only` で、operator-local runtime adapter wiring と exact-command review output はありますが、missing operator-local ready preflight、missing sanitized output review、missing exact-command approval、missing approved bounded execution evidence は残っています。
+- Task 27 completion PR #434 は merge 済みです。
+- Task 27 completion PR #434 で approved Azure Translator live/provider smoke evidence が記録されました。
+- Task 27 sanitized final evidence: returned 3, eligible 3, provider requests 2, provider calls 2, translated 2, skipped 1, language-policy skipped 1, provider-unavailable 0, recoverable errors 0, terminal errors 0, stop reason null。
+- Task 28 readiness/blocker PR で `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md`、`scripts/comment-translator-private-gated-main-promotion-readiness-contract.mjs`、`task.md` が追加・更新されています。
+- Task 28 readiness/blocker PR は completion PR ではありません。main promotion、deploy/upload、production/custom URL smoke、allowed-tester production smoke、non-allowed-user denial production smoke、rollback action/evidence は未実行です。
 - Task 19 で provider/cost policy が記録され、Task 20 で server-only Azure/OpenAI mini provider policy runtime、Free/Paid routing、paid recoverable Azure fallback、strict OpenAI JSON parser、sanitized usage/cost estimate handoff が追加されています。
 - Task 21 で Stripe live readiness checklist、server-only readiness runtime、signed-webhook entitlement evidence review、failed/canceled/expired safe-degradation review、rollback notes が追加されています。
 - Task 22 で server-only app-side abuse/rate-limit guard、route/action/API negative checks、private-launch denial throttling、provider/billing fail-closed behavior が追加されています。
@@ -347,33 +348,35 @@ Merge gate:
 - Task 24 で server-only monitoring/incident readiness runtime、provider cost/quota alerts、YouTube quota stop counts、translation error classes、Stripe webhook failure visibility、session failure/timeout counts、rollback trigger notes、support escalation path が追加されています。
 - Task 25 で provider legal/copy surfaces が final provider policy と整合し、Free Azure / Paid OpenAI mini / Paid recoverable Azure fallback / comparison-only providers / provider data-use・retention・training / support・contact / paid-plan wording が記録されています。
 - Task 26 で server-only security/privacy final review evidence、active review doc、focused route/API negative checks、changed-files no-secret scan、accepted residual-risk documentation が追加されています。
-- Actual Stripe live-mode action、Customer Portal redirect、webhook registration、remote schema migration、deploy/upload、deployed URL smoke、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution は引き続き approval-gated で、この prompt は承認ではありません。
+- Actual main promotion、deploy/upload、production/custom URL smoke、allowed-tester production smoke、non-allowed-user denial production smoke、Stripe live-mode action、Customer Portal redirect、webhook registration、remote schema migration、remote mutation、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution は引き続き approval-gated で、この prompt は承認ではありません。
 - `public-release capable: no` のままです。
 - 最終ゴールは Pre-Main Launch Hardening Roadmap の完了、private-gated main promotion、production/custom deployed smoke、必要な live/provider smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
 次にやること:
-- Continue Task 27: Private-gated live/provider smoke.
-- 最初に operator-local target lookup / polling / translation adapter wiring の有無を確認し、operator-local ready preflight と `--print-exact-command-review` output を確認し、出力が sanitized-metadata-only であることを review してください。
-- ready preflight と sanitized output review が揃った後にだけ、exact command への explicit in-thread approval を求めてください。
-- 承認が揃うまでは provider target lookup、liveChatId lookup、bounded polling execution、translation provider API execution を実行しないでください。
-- approved execution に進める場合も、evidence は counts/status/stop reasons/reference names only に閉じ、liveChatId、provider identifiers、OAuth values、raw comments、Authorization headers、provider target metadata は保存・表示しないでください。
+- Continue Task 28: Private-gated main promotion and production smoke.
+- 最初に Task 28 readiness doc、deployment/live-smoke runbook、final QA、security/privacy final review、private launch access gate、route/API negative checks、rollback readiness を確認してください。
+- main promotion / deploy / production smoke に進む前に、exact command plan、target label、expected sanitized evidence、abort conditions、rollback path を提示してください。
+- same-thread ready preflight と sanitized output review が揃った後にだけ、exact action への explicit in-thread approval を求めてください。
+- 承認が揃うまでは main promotion、deploy/upload、production/custom URL smoke、allowed-tester production smoke、non-allowed-user denial production smoke、Cloudflare production mutation、remote mutation を実行しないでください。
+- approved production smoke に進める場合も、evidence は route paths / HTTP status / pass-fail / browser width / console status / sanitized launch-gate status labels / safe deployment reference only に閉じ、secret、private identifier、provider target metadata、liveChatId、browser storage payload、handoff payload は保存・表示しないでください。
 - remote schema migration / Supabase migration apply は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。
 - Stripe live-mode actions、Customer Portal redirect、webhook registration、billing setting mutation、deploy/upload、remote mutation、live/provider execution は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。
 - secret / token / provider credential / OAuth token / private identifier の値は要求・表示・保存しないでください。必要な env は reference 名だけを扱ってください。
 
 Verification:
-- `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs`
-- relevant live/provider smoke readiness contracts/tests and route/API negative checks
+- `node scripts/comment-translator-private-gated-main-promotion-readiness-contract.mjs`
+- `node scripts/comment-translator-private-launch-access-gate-contract.mjs`
+- relevant deployment/final QA/security route/API negative checks that match any changes
 - no-secret scan over changed files
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
 - `git diff --check`
 - width checks at `390 / 820 / 1024 / 1280 / 1366px` if visible UI changes; docs/contract-onlyなら省略理由を `task.md` に残してください。
-- approved live/provider smoke commands only if ready preflight + sanitized output review + exact-command explicit approval are complete in this thread.
+- approved main promotion / deploy / production smoke commands only if same-thread ready preflight + sanitized output review + exact-command explicit approval are complete in this thread.
 
 Completion:
-- Task 27 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- Task 28 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
 - gate 不足や実行 path 不足で completion criteria 未達なら、commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 

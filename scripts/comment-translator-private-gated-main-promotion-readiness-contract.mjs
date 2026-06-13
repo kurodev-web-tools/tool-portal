@@ -32,14 +32,15 @@ assert.match(doc, /sanitized output review/i, "doc requires sanitized output rev
 assert.match(doc, /explicit in-thread approval/i, "doc requires explicit approval");
 assert.match(doc, /Width checks skipped[\s\S]*docs and a Node contract script only/i, "doc records width-check skip reason");
 
-assert.match(task, /current PR scope: Task 28 production env readiness\/blocker/i, "task board points to Task 28 env readiness/blocker scope");
+assert.match(task, /current PR scope: Task 28 exact preflight\/blocker/i, "task board points to Task 28 exact preflight/blocker scope");
 assert.match(task, /current readiness doc: `docs\/active\/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS\.md`/i, "task board points to Task 28 readiness doc");
 assert.match(task, /current env readiness doc: `docs\/active\/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS\.md`/i, "task board points to Task 28 env readiness doc");
+assert.match(task, /current exact preflight doc: `docs\/active\/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_EXACT_PREFLIGHT\.md`/i, "task board points to Task 28 exact preflight doc");
 assert.match(task, /Task 28 completion criteria: not met/i, "task board records Task 28 incomplete state");
 assert.match(task, /readiness\/blocker PR approved by release owner/i, "task board records readiness/blocker PR approval");
 assert.match(task, /main promotion, deploy\/upload, and production\/custom smoke were not run/i, "task board records blocked execution surfaces");
 assert.match(task, /public-release capable: no/i, "task board keeps public-release capable disabled");
-assert.match(task, /Task 28 production env readiness\/blocker PR targeting `codex\/comment-translator-preview`/i, "task board next action points to env readiness/blocker PR");
+assert.match(task, /Task 28 exact preflight\/blocker PR targeting `codex\/comment-translator-preview`/i, "task board next action points to exact preflight/blocker PR");
 assert.match(task, /Continue Task 28: Private-gated main promotion and production smoke/i, "next-session prompt advances Task 28");
 assert.match(task, /This prompt is not approval for main promotion/i, "next-session prompt keeps approval boundary");
 

@@ -30,6 +30,14 @@ Current state:
 | rollback readiness | recorded-runbook-only | Rollback notes exist in active runbooks; no rollback action was run. |
 | sensitive output | sanitized-metadata-only | No forbidden value was requested, printed, stored, or recorded. |
 
+## Production Env Readiness
+
+Production env, secret, and variable references are inventoried in `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`.
+
+The inventory is reference-name-only and classifies references as `required`, `optional`, or `smoke-only`. It records fail-closed behavior and operator setting locations without requesting, printing, storing, or recording secret values, token values, private identifiers, provider target metadata, liveChatId values, browser storage payloads, or handoff payloads.
+
+This env readiness record does not approve main promotion, deploy/upload, production/custom URL smoke, Stripe live-mode action, remote mutation, provider target lookup, liveChatId lookup, or live/provider execution.
+
 ## Completion Blocker
 
 The release owner approved this readiness/blocker PR, but did not approve main promotion, deploy/upload, production/custom URL smoke, Cloudflare production mutation, Stripe live-mode action, billing mutation, remote mutation, remote schema migration, provider target lookup, liveChatId lookup, or live/provider execution.

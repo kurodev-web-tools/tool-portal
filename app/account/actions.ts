@@ -3,6 +3,10 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
+import {
+  startYouTubeOAuthConnectRedirect,
+  startYouTubeOAuthReconnectRedirect
+} from "@/lib/comment-translator-youtube-oauth-connect-callback";
 import { normalizeLocale } from "@/lib/locale";
 import { normalizeThemePreference } from "@/lib/local-preferences";
 import { clearRecoverySessionPending, isRecoverySessionPending } from "@/lib/supabase/recovery-session";
@@ -326,22 +330,46 @@ export async function saveLocaleThemePreferenceAction(formData: FormData) {
 
 export async function startYouTubeIntegrationConnectAction() {
   const accountSession = await getAccountSessionState();
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
-  if (launchAccess.status === "blocked") {
-    accountIntegrationsRedirect("private-launch-gated");
+  if (accountSession.authStatus !== "signed-in" || !accountSession.user) {
+    accountIntegrationsRedirect("youtube-oauth-sign-in-required");
   }
 
-  accountIntegrationsRedirect("youtube-connect-prepared");
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    accountIntegrationsRedirect("youtube-oauth-private-launch-gated");
+  }
+
+  const oauthRedirect = await startYouTubeOAuthConnectRedirect({
+    accountSessionUserId: accountSession.user.id
+  });
+
+  if (oauthRedirect.status === "blocked") {
+    accountIntegrationsRedirect(oauthRedirect.reason);
+  }
+
+  redirect(oauthRedirect.authorizationUrl);
 }
 
 export async function reconnectYouTubeIntegrationAction() {
   const accountSession = await getAccountSessionState();
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
-  if (launchAccess.status === "blocked") {
-    accountIntegrationsRedirect("private-launch-gated");
+  if (accountSession.authStatus !== "signed-in" || !accountSession.user) {
+    accountIntegrationsRedirect("youtube-oauth-sign-in-required");
   }
 
-  accountIntegrationsRedirect("youtube-reconnect-prepared");
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    accountIntegrationsRedirect("youtube-oauth-private-launch-gated");
+  }
+
+  const oauthRedirect = await startYouTubeOAuthReconnectRedirect({
+    accountSessionUserId: accountSession.user.id
+  });
+
+  if (oauthRedirect.status === "blocked") {
+    accountIntegrationsRedirect(oauthRedirect.reason);
+  }
+
+  redirect(oauthRedirect.authorizationUrl);
 }
 
 export async function disconnectYouTubeIntegrationAction() {

@@ -214,7 +214,9 @@ export const commentTranslatorUiCopy = {
       states: {
         available: "利用可能",
         "reconnect-required": "再接続が必要",
+        disconnected: "未接続",
         unavailable: "未利用",
+        error: "確認エラー",
         "credential-resolution-disabled": "解決を停止中"
       }
     },
@@ -479,7 +481,9 @@ export const commentTranslatorUiCopy = {
       states: {
         available: "Available",
         "reconnect-required": "Reconnect required",
+        disconnected: "Disconnected",
         unavailable: "Unavailable",
+        error: "Status check failed",
         "credential-resolution-disabled": "Resolution disabled"
       }
     },

@@ -51,8 +51,8 @@ const accountCopy = {
     },
     openPlan: "現在のアカウント",
     planName: "アカウント状況",
-    planBody: "いまは表示言語とテーマを別ブラウザやスマホでも引き継げるようにする範囲へ限定します。有料プランの契約状況や外部アカウント連携は後続で追加予定です。",
-    planItems: ["表示設定を保存", "有料プラン状況は後続対応", "外部アカウント連携は後続対応"],
+    planBody: "表示言語とテーマを別ブラウザやスマホでも引き継げます。Comment Translator のYouTube連携管理と Free / Pro プラン状況、Kuro Stream Kit Pro の月額/年額表示は専用ページで確認できます。",
+    planItems: ["表示設定を保存", "Free / Pro プラン", "YouTube連携管理"],
     preferencesTitle: "表示設定",
     preferencesBody: "表示言語とテーマはこのブラウザに保存されます。ログイン中は、同じ内容をアカウントにも明示的に保存でき、別ブラウザやスマホでも引き継げます。",
     language: "表示言語",
@@ -60,9 +60,11 @@ const accountCopy = {
     browserSaved: "このブラウザに保存",
     syncFrameTitle: "今後保存できるようにする項目",
     syncFrameBody: "今後はツールごとの軽い設定も保存対象にできます。下書き、予定本文、画像、handoff payload は自動アップロードしません。",
-    providerTitle: "今後追加予定",
-    providerBody: "契約状況の表示、外部アカウント連携、ツール別の軽い設定保存は、公開後の段階で追加します。",
-    boundaryItems: ["有料プラン契約状況の表示", "外部アカウント連携", "ツール別の軽い設定保存", "既存ローカルデータは自動移行しない"],
+    providerTitle: "YouTube連携",
+    providerBody: "Comment Translator のYouTube連携状態は専用ページで確認できます。接続だけではバックグラウンド監視、ポーリング、AI翻訳、クォータ消費は開始しません。",
+    boundaryItems: ["Free は常に利用可能", "YouTube連携管理", "tokenやprovider target値は画面に表示しない", "既存ローカルデータは自動移行しない"],
+    manageBilling: "プランと支払いを開く",
+    manageIntegrations: "連携設定を開く",
     backToTools: "ツール一覧へ戻る"
   },
   en: {
@@ -98,8 +100,8 @@ const accountCopy = {
     },
     openPlan: "Current account",
     planName: "Account status",
-    planBody: "This version is limited to carrying language and theme across browsers and phones. Paid plan status and external account connections are planned for later.",
-    planItems: ["Save display settings", "Paid plan status later", "External account links later"],
+    planBody: "Language and theme can be carried across browsers and phones. Comment Translator YouTube integration management, Free / Pro plan status, and Kuro Stream Kit Pro monthly/yearly display are available on dedicated pages.",
+    planItems: ["Save display settings", "Free / Pro plan", "YouTube integration"],
     preferencesTitle: "Display settings",
     preferencesBody: "Language and theme are saved in this browser. Signed-in users can explicitly save the same values to the account and carry them across browsers and phones.",
     language: "Language",
@@ -107,9 +109,11 @@ const accountCopy = {
     browserSaved: "Saved in this browser",
     syncFrameTitle: "Settings that can be saved later",
     syncFrameBody: "Later phases can add lightweight per-tool settings. Drafts, schedule text, images, and handoff payloads are not uploaded automatically.",
-    providerTitle: "Planned next",
-    providerBody: "Plan status, external account connections, and lightweight tool settings can be added in later phases.",
-    boundaryItems: ["Paid plan status", "External account connections", "Lightweight tool settings", "No automatic migration of local data"],
+    providerTitle: "YouTube integration",
+    providerBody: "YouTube integration state for Comment Translator is available on its own page. Connecting alone will not start background monitoring, polling, AI translation, or quota use.",
+    boundaryItems: ["Free remains available", "YouTube integration management", "No token or provider target values in UI", "No automatic migration of local data"],
+    manageBilling: "Open plans and billing",
+    manageIntegrations: "Open integrations",
     backToTools: "Back to tools"
   }
 } as const;
@@ -324,6 +328,7 @@ export function AccountPreferencesShell({
           </div>
           <div className="panel p-4 shadow-none sm:p-5">
             <h2 className="text-base font-black text-foreground">{copy.providerTitle}</h2>
+            <p className="mt-3 text-sm leading-7 text-muted">{copy.providerBody}</p>
             <ul className="mt-3 space-y-2">
               {copy.boundaryItems.map((item) => (
                 <li key={item} className="flex gap-2 text-sm font-bold leading-6 text-foreground">
@@ -332,6 +337,18 @@ export function AccountPreferencesShell({
                 </li>
               ))}
             </ul>
+            <Link
+              href="/account/integrations"
+              className="mt-4 inline-flex rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
+            >
+              {copy.manageIntegrations}
+            </Link>
+            <Link
+              href="/account/billing"
+              className="ml-0 mt-3 inline-flex rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft sm:ml-2"
+            >
+              {copy.manageBilling}
+            </Link>
           </div>
         </div>
       </section>

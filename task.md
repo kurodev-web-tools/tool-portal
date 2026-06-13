@@ -1,17 +1,20 @@
 # task.md
 
-このファイルは現在の運用タスクだけを置く。完了済みの詳細ログ、比較メモ、長い経緯は PR 本文か `docs/archive` に寄せる。
+このファイルは現在の運用タスクだけを置く。完了済みの詳細ログ、比較メモ、長い経緯は PR body か `docs/archive` に寄せる。
 
 ## Current Premises
 
 - 作業は `main` 直ではなく feature branch / worktree で行う。
-- 意味のある実装後は、このファイルに実装内容、検証、必要な幅別確認を残す。
+- 作業前に `git fetch origin --prune`、`AGENTS.md`、このファイルを確認する。
+- 意味のある実装後は、このファイルに実装内容、検証、未確認範囲、残リスク、必要な幅別確認を残す。
 - UI 変更時の確認幅は `390 / 820 / 1024 / 1280 / 1366px` を基本にする。
 - 通常の表示確認と幅別確認では Codex app の in-app browser を優先する。繰り返し操作や機械的な console / canvas 確認は Playwright、原因調査は Chrome DevTools MCP に切り替える。
 - URL 設計、大規模 i18n framework、保存 schema / IndexedDB / localStorage 既存 key / handoff payload、外部投稿連携は、個別タスクで明示されない限り変更しない。
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
 - secret / service_role key / private credential は要求・表示・保存しない。
-- 完了済みの account / preferences foundation、Supabase Auth first slice、Cloudflare Workers / OpenNext migration、auth recovery hardening、Turnstile CAPTCHA、Thumbnail Editor IRIAM 1:1 / material / font expansion、legal foundation の詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` に寄せる。
+- OAuth access token / refresh token / authorization code value は client component、fixture、docs、PR body、localStorage、IndexedDB、sessionStorage に出さない。
+- owner user id value / provider channel id value / service_role key value は表示・要求・保存しない。必要な場合も reference-only / existence-only / sanitized metadata-only に閉じる。
+- provider target metadata / liveChatId は operator-local env / server-only boundary で消費するだけにし、output / docs / PR body / browser storage / handoff payload に出さない。
 
 ## Mock-only Notes
 
@@ -22,238 +25,381 @@
 
 ## Active Priorities
 
-1. Kuro Live Comment Translator mock foundation
-   - status: next implementation target。
-   - seed:
-     - `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`
-     - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
-     - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/リアルタイムAI音声翻訳オーバーレイ.md`
-   - user decision:
-     - 初回 platform は YouTube。
-     - 初回 PR は `/imagegen` を使った各端末 mock 作成 -> user 確認 -> 承認 mock の再現まで。
-     - 翻訳 API の実接続は初回 PR では扱わない。fixtures / `MockTranslationProvider` 相当で UI shell のみ作る。
-     - Real translation provider は、YouTube OAuth / owner check / quota / billing boundary が固まった後に別 PR で比較する。
-   - first PR scope:
-     - OBS Browser Dock / narrow viewport を主対象に、`390 / 820 / 1024 / 1280 / 1366px` の mock を先に作る。
-     - 承認後、`/tools/comment-translator` など既存 tools routing pattern に沿った UI shell を追加する。
-     - Read-only broadcaster dock 前提で、コメント原文、翻訳文、言語表示、skip / cache / quota preview、接続状態、empty / error-like states を静的 fixture で表現する。
-     - YouTube first と分かる copy / state にするが、実 YouTube OAuth / Live Chat API / polling は入れない。
-     - 翻訳結果は mock provider / fixture だけにし、API key、provider secret、server action、quota DB write は入れない。
-     - 既存 storage key / IndexedDB / localStorage key / handoff payload / Supabase schema / migration / RLS policy は変更しない。
-   - out of scope for first PR:
-     - YouTube OAuth、Google API、Live Chat polling、owner verification の実装。
-     - OpenAI / Google / DeepL / Gemini 等の実翻訳 API 呼び出し。
-     - Stripe checkout / billing、server-authoritative quota、paid plan enforcement。
-     - GA4 実装、cookie consent banner。
-     - コメント返信生成、自動投稿、viewer overlay、OBS plugin、ASR / 音声翻訳。
-   - verification target for first PR:
-     - new/updated comment translator mock foundation contract。
-     - tool portal entry / route contract if a new tool route is added。
-     - `npm run lint`
-     - `npx tsc --noEmit`
-     - `npm run build`
-     - `git diff --check`
-     - `/tools` and new comment translator route width checks at `390 / 820 / 1024 / 1280 / 1366px`。
+1. Kuro Live Comment Translator public release roadmap
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 are merged, Task 27 completion PR #434 is merged, Task 28 readiness/blocker PR #435 and production env readiness PR #436 are merged, and Task 28 private-gated main promotion / production smoke is blocked pending explicit approval for externally visible actions.
+   - current PR scope: Task 28 exact preflight/blocker after PR #436 merge, operator-reported production env presence, command/action plan, abort conditions, rollback boundary, and sanitized evidence destination, without running main promotion, deploy/upload, production/custom URL smoke, remote mutation, Stripe live-mode action, billing mutation, provider target lookup, liveChatId lookup, translation provider API execution, or live/provider execution.
+   - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
+   - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
+   - current readiness doc: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md`.
+   - current env readiness doc: `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`.
+   - current exact preflight doc: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_EXACT_PREFLIGHT.md`.
+   - inspected surfaces for Task 28 exact preflight: `task.md`, Task 28 readiness doc, production env readiness doc, public deployment/live-smoke runbook, final QA, security/privacy final review, Stripe live readiness, private launch access gate, route/API negative checks, rollback readiness, Cloudflare/Wrangler config, and operator-reported production env presence.
+   - merge gate evidence: PR #436 is merged. Merge commit `3b508071b5f188c8006a39d2f83bc284a3bce068` is contained in `origin/codex/comment-translator-preview`. GitHub metadata checked state `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-production-env-readiness-post-pr435`, merged at `2026-06-13T03:31:52Z`. Cloudflare Pages check rollup completed with failure and remains separate from local verification.
+   - Task 28 completion criteria: not met. Readiness/blocker PR approved by release owner, but main promotion, deploy/upload, and production/custom smoke were not run. Production/custom deployed target serving the current app, private launch gate production negative smoke, allowed-tester account/plan/session production smoke, console checks, and production rollback evidence remain missing.
+   - completed in this branch: recorded Task 28 exact preflight/blocker state, operator-reported production env presence, Stripe test-mode limitation, unset OpenAI/DeepL/Gemini/Workers AI posture, exact local/main/deploy/production-smoke command/action plan, abort conditions, rollback boundary, sanitized evidence destination, and approval boundary in the active exact preflight doc, Task 28 readiness doc, focused contract, and task board.
+   - unchanged in this branch: no route behavior, UI/CSS/layout, SQL migration file, RLS policy, remote Supabase migration apply, remote mutation, remote alert/dashboard mutation, Stripe live-mode action, Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, deploy/upload, browser storage expansion, handoff payload expansion, raw comment logging, credential value exposure, private provider target value exposure, quota write, durable persistence, main promotion, provider target lookup, liveChatId lookup, or live/provider execution was added or run.
+   - verification for this branch: `node scripts/comment-translator-private-gated-main-promotion-exact-preflight-contract.mjs`, `node scripts/comment-translator-production-env-readiness-contract.mjs`, `node scripts/comment-translator-private-gated-main-promotion-readiness-contract.mjs`, `node scripts/comment-translator-private-launch-access-gate-contract.mjs`, the changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `npm run build:cloudflare`, and `git diff --check` passed.
+   - width checks skipped: Task 28 exact preflight/blocker changes only docs, Node contract scripts, and this task note. There is no UI, rendered text, CSS, route behavior, browser storage, or visible layout change.
+   - public-release capable: no. Task 28 is readiness/blocker only; production/custom deployed smoke and final public launch gate flip remain incomplete or separately gated.
+   - residual risk: main promotion, deploy/upload, production/custom smoke, allowed-tester smoke, non-allowed-user denial smoke, live/provider execution, provider target lookup, liveChatId lookup, translation provider API execution, Stripe live-mode actions, remote mutation, billing setting mutation, webhook registration, Customer Portal redirect, and remote schema migration remain approval-gated; production env reference presence is operator-reported and not independently read from any dashboard in this branch; Stripe references are test mode only; OpenAI/DeepL/Gemini/Workers AI are unset; provider pricing/data-use/retention/training/dashboard posture must be rechecked before any paid or public launch action.
+   - next safe action: create this Task 28 exact preflight/blocker PR targeting `codex/comment-translator-preview`; after merge, continue Task 28 only with explicit same-thread approval for the exact main promotion, deploy/upload, and production/custom smoke plan.
 
-2. Analytics / consent decision
-   - status: no immediate implementation。
-   - current decision:
-     - 閲覧者数と Core Web Vitals は Cloudflare Web Analytics の dashboard で当面足りる。
-     - GA4 は現時点では追加しない。
-     - GA4 / advertising / broader third-party tracking を入れる場合は、privacy copy と cookie / consent 方針を別 PR で見直す。
+## Public Release Roadmap
 
-3. Account / monetization later scope
-   - Password hardening dashboard settings:
-     - `Confirm email` stays ON。
-     - `Allow anonymous sign-ins` stays OFF。
-     - `Allow manual linking` stays OFF unless a separate provider-linking design exists。
-     - `Minimum password length` should stay aligned to app validation 8+ characters。
-     - `Prevent use of leaked passwords` is recommended if plan availability allows it。
-     - `Require current password when updating` は current-password UI deploy / smoke 後に ON。
-   - Stripe Billing / quota foundation:
-     - Checkout Sessions、Customer Portal、webhooks、server-authoritative quota remain a separate PR sequence。
-     - `usage_quotas` remains owner-read only for browser clients; quota writes stay trusted-server-only。
+Use one Codex thread, one feature branch, and one PR per task. Do not create a PR for a task unless that task's completion criteria are satisfied and verification has been attempted, except when the user explicitly approves a readiness/blocker PR while an external wait blocks execution.
 
-4. Local font loading later scope
-   - status: user account / preferences foundation 後の later scope。
-   - direction:
-     - 端末に入っている font を直接読む Local Font Access 系は、ログイン / user settings 基盤の後に扱う。
-     - DB に保存する場合も、基本は font family / PostScript name / style / fallback / last-seen state などの選択情報に留める。
-     - font file 本体の保存は、ユーザーが明示的に upload した場合だけ別途検討する。
+1. Public readiness roadmap and task-board refresh
+   - Goal: make `task.md` the public-release source of truth after the preview Task 7 endpoint.
+   - Scope: docs/task-board only. No runtime, UI, provider, storage, quota, billing, or deployment changes.
+   - Completion criteria: sources reviewed, old completed preview task list removed from active board, public-release tasks listed as 1 task / 1 PR, retention decision recorded, next-session prompt updated.
+   - Verification: `git diff --check` and targeted markdown/content inspection.
 
-## Recommended Roadmap
+2. Public requirements consolidation
+   - Goal: consolidate the attached API/limits draft with the existing future notes into one canonical public-release requirements document.
+   - Scope: docs only. Prefer `docs/active` for the current public-release requirements and move superseded drafts to `docs/archive` only when their content is fully represented elsewhere.
+   - Completion criteria: canonical requirements cover free/per-session limits, paid-plan release path, start/stop semantics, stop conditions, provider quota policy, AI cost controls, source/target language policy, user usage display, admin metrics, sensitive-data boundaries, and initial-release exclusions.
+   - Verification: `git diff --check` and targeted markdown/content inspection.
+   - Fixed initial decisions: free limits, paid release path, YouTube-first scope, raw-text logging default, account integration route, and JA/EN target support are recorded in `Initial Release Decisions`.
+   - Status: complete in current Task 2 PR via `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
 
-1. Kuro Live Comment Translator first PR: `/imagegen` device mock -> user confirmation -> UI shell reproduction with fixtures / mock provider only。
-2. Comment Translator contract and route hardening: route, tool card, responsive layout, fixture states。
-3. YouTube OAuth / owner verification / Live Chat polling design spike。
-4. Translation provider spike: latest docs / pricing / latency / privacy boundary を確認し、server-side only の provider abstraction を決める。
-5. Billing / quota foundation: Checkout Sessions, Customer Portal, webhook, server-authoritative quota。
-6. Tool-specific persistence / preference sync only after data boundary and quota policy are fixed。
-7. Thumbnail Editor 9:16 preset / crop / text-image schema / preset typography refinement as separate PRs。
-8. Schedule Calendar Google Calendar integration or server sync after account foundation policy is stable。
+3. Public legal, privacy, and product-copy recheck
+   - Goal: confirm existing legal pages and visible product copy are accurate for the public comment translator.
+   - Scope: `/terms`, `/privacy`, `/legal/tokushoho`, footer links, `/tools/comment-translator` copy, and relevant account/integration copy.
+   - Completion criteria: copy states the provider/API/AI translation behavior, usage limits, no background monitoring by connection alone, no token/client-storage exposure, data retention/logging policy, contact/support path, and paid-plan status if shown.
+   - Verification: relevant route render checks, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`; width checks only if visible layout changes.
+   - Status: complete in current Task 3 PR. Footer links required no code change after inspection.
+
+4. Account integrations entry point
+   - Goal: provide the operator-facing path for connecting and reviewing YouTube integration state outside the translator tool.
+   - Scope: `/account/integrations` route or equivalent account settings entry, sanitized YouTube connection status, safe start/connect/reconnect/disconnect affordances.
+   - Completion criteria: UI shows connection readiness without token, owner id, provider channel id, liveChatId, Authorization header, or provider target metadata; no background monitoring starts from connection alone.
+   - Verification: dedicated UI/action contracts, lint, typecheck, build, `git diff --check`, and width checks at `390 / 820 / 1024 / 1280 / 1366px`.
+   - Status: complete in current Task 4 PR. Runtime OAuth start, token renewal, disconnect/revocation, provider execution, quota, billing, storage, and handoff payload changes were intentionally not added.
+
+5. Server-only token refresh and reconnect status
+   - Goal: handle expired YouTube access tokens through server-only refresh/reconnect boundaries.
+   - Scope: token refresh runtime, expired/refresh-failed/reconnect-required sanitized states, focused contract coverage.
+   - Completion criteria: token values remain server-only; refresh failures do not leak provider body or credentials; client receives only sanitized status and reconnect guidance.
+   - Verification: focused server contract/tests, lint, typecheck, build, `git diff --check`.
+   - Status: complete in current Task 5 PR. Live/provider refresh execution, provider target lookup, quota, billing, browser storage, handoff payload, schema migration, and remote Supabase mutation were intentionally not added.
+
+6. Server-only disconnect and revocation runtime
+   - Goal: support user-initiated provider disconnect with safe server cleanup and revocation behavior.
+   - Scope: revocation/disconnect route or action, server cleanup, sanitized status transitions, audit-safe event shape.
+   - Completion criteria: no token values in client/docs/log output; repeated disconnect is idempotent or safely reported; revoked credentials cannot be used by translator start.
+   - Verification: focused server contract/tests, lint, typecheck, build, `git diff --check`.
+   - Status: complete in current Task 6 PR. Live/provider revocation calls, provider target lookup, quota, billing, browser storage, handoff payload, schema migration, and remote Supabase mutation were intentionally not added.
+
+7. Translation session model and start/stop contract
+   - Goal: define and implement the server-owned session lifecycle used when a user presses Start on `/tools/comment-translator`.
+   - Scope: one active session per user, free-plan time caps, heartbeat/timeout semantics, explicit stop reasons, and session state returned to UI.
+   - Completion criteria: API/provider/AI usage begins only after explicit Start; session stops on user stop, stream end, browser close/disconnect, missing heartbeat, auth failure, quota/budget stop, session limit, or terminal provider error.
+   - Verification: focused session contracts/tests, lint, typecheck, build, `git diff --check`; UI width checks if visible controls change.
+   - Status: complete in current Task 7 PR. Live/provider execution, provider target lookup, quota write, billing enforcement, browser storage, handoff payload, remote Supabase mutation, schema migration, and visible UI changes were intentionally not added.
+
+8. Usage, quota, and budget ledger foundation
+   - Goal: record usage needed to enforce public limits and protect shared service resources.
+   - Scope: per-user daily/session minutes, plan entitlement references, provider request estimates, AI messages/chars/cost estimates, quota/budget stop events, admin-safe aggregate metrics.
+   - Completion criteria: records are server-owned and sanitized; Free/Paid limits can be enforced from server-owned entitlement state; no provider identifiers or token values in client-readable payloads; no paid prioritization or provider-usage charging unless separately scoped.
+   - Verification: schema/contract/tests as applicable, lint, typecheck, build, `git diff --check`.
+   - Status: complete in current Task 8 PR. Ledger/admin/client output remains sanitized metadata only, and no durable schema, remote mutation, provider lookup, billing enforcement, paid prioritization, provider-usage charging, browser storage, handoff payload, or visible UI change was added.
+
+9. Filtering and language policy runtime
+   - Goal: reduce provider and AI cost before translation execution.
+   - Scope: source language selection, target language selection, same-language prevention, skip emoji-only, URL-only, symbol-only, duplicate, too-short, target-language, unselected-source-language, and low-confidence comments; classify mixed comments by dominant language.
+   - Completion criteria: initial source candidates are JA / EN / KR / CN; initial target candidates include JA / EN; source and target cannot be the same; Spanish and all-language auto mode remain out of initial release unless approved; cache/dedupe keys exclude token/cursor/provider identifiers.
+   - Verification: focused unit/contracts for filter cases, lint, typecheck, build, `git diff --check`.
+
+10. Bounded polling session runtime
+   - Goal: run YouTube Live Chat polling as a bounded server session rather than a broad uncontrolled loop.
+   - Scope: target lookup once at session start, `liveChatMessages.list`, `pollingIntervalMillis` compliance, minimum interval, empty-chat backoff, retry caps, terminal stop states.
+   - Completion criteria: no polling faster than provider response; liveChatId stays server-only; no browser storage or handoff payload expansion; execution is gated by explicit operator approval when live/provider calls are involved.
+   - Verification: contracts/tests for scheduling and stop behavior, lint, typecheck, build, `git diff --check`; live/provider smoke only after same-thread preflight, sanitized output review, and explicit approval.
+   - Status: complete in current Task 10 PR via server-only deterministic bounded polling session runtime. Actual live/provider execution remains approval-gated and not run.
+
+11. Translation provider execution integration
+   - Goal: connect provider-safe live comments to actual translation execution under server-only controls.
+   - Scope: batching, dedupe/cache, per-minute message caps, retry caps, provider error classes, and usage recording.
+   - Completion criteria: only eligible comments are sent; raw provider credentials and YouTube identifiers are excluded; lower-priority comments are skipped under load instead of queued indefinitely.
+   - Verification: focused provider/session contracts, lint, typecheck, build, `git diff --check`; live/provider execution only with explicit approval.
+   - Status: complete in current Task 11 PR via server-only provider execution runtime. Actual live/provider execution remains approval-gated and not run.
+
+12. Public operator UI start/stop and usage display
+   - Goal: expose the public-session controls and status needed by stream operators.
+   - Scope: Start/Stop, current elapsed time, daily used/remaining time, active/stopped state, stop reason, provider connection state, and reconnect guidance.
+   - Completion criteria: UI never displays token, owner user id, provider channel id, liveChatId, service_role key, Authorization header, or provider target metadata; no client storage expansion; copy matches approved public requirements.
+   - Verification: UI/action contracts, lint, typecheck, build, `git diff --check`, and `/tools/comment-translator` width checks at `390 / 820 / 1024 / 1280 / 1366px`.
+   - Status: complete in current Task 12 PR via public operator session controls and sanitized usage/session display. Actual live/provider execution remains approval-gated and not run.
+
+13. Admin and operational visibility
+   - Goal: give the operator/admin enough sanitized visibility to run the public service safely.
+   - Scope: active sessions, per-user minutes, YouTube/Twitch request estimates, AI messages/chars/cost, provider/translation errors, quota/budget stops, heartbeat timeouts.
+   - Completion criteria: admin-visible data is aggregate or reference-only as appropriate; no credential values or provider target ids are exposed; export/log surfaces follow the same sanitization boundary.
+   - Verification: focused contracts/tests, lint, typecheck, build, `git diff --check`; width checks if an admin UI is added.
+   - Status: complete in current Task 13 PR via server-only sanitized aggregate/reference-only admin operational visibility. No admin UI, live/provider execution, browser storage, handoff payload, remote Supabase mutation, schema migration, billing enforcement, raw comment logging, credential value exposure, or provider target id exposure was added.
+
+14. Public deployment and live-smoke runbook
+   - Goal: define and prove the release execution steps without leaking sensitive values.
+   - Scope: operator-local env checklist, safe command order, sanitized output review checklist, deployed URL smoke checklist, rollback notes.
+   - Completion criteria: live/provider smoke commands are documented as approval-gated; runbook avoids token/id/header values; deployed smoke evidence is sanitized and reproducible.
+   - Verification: docs inspection, relevant smoke scripts/contracts, `git diff --check`; actual live/provider execution only after same-thread preflight, sanitized output review, and explicit approval.
+   - Status: complete in current Task 14 PR via active runbook and contract coverage. Actual deploy/upload, deployed URL smoke, and live/provider execution remain approval-gated and not run.
+
+15. Stripe paid-plan integration
+   - Goal: connect the already-proven public tool to paid-plan purchase/upgrade flow after the core public-release functionality is otherwise ready.
+   - Scope: Stripe checkout/customer/subscription or payment-link flow, plan entitlement sync, upgrade/downgrade/cancel states, paid limit activation, account billing entry points, and safe webhook handling.
+   - Completion criteria: Free plan remains permanently available; paid upgrade path is visible before/at public launch; paid entitlement changes server-owned limits without exposing Stripe secrets or provider credentials; failed/expired/canceled payment states degrade to safe Free or inactive paid status.
+   - Verification: Stripe-focused contract/tests, webhook signature handling tests where applicable, lint, typecheck, build, `git diff --check`, and billing/account UI width checks if visible UI changes.
+   - Status: complete in current Task 15 PR via server-only Stripe Billing/Checkout/Portal/webhook boundaries, account billing and translator paid-plan entry points, signed-webhook entitlement sync, and safe Free/inactive-paid degradation. Actual Stripe live-mode action, webhook registration, remote schema migration, deploy/upload, and live/provider execution remain approval-gated and not run.
+
+16. Public release final QA and launch gate
+   - Goal: determine that all roadmap tasks are complete and the tool can be made public.
+   - Scope: final local/deployed verification, legal/copy review, no-secret scan, width checks, account/integration flow, session limits, start/stop, disconnect/reconnect, quota/budget stops, Stripe Free/Paid entitlement degradation, and rollback readiness.
+   - Completion criteria: every prior roadmap task is merged; required checks pass or have documented accepted risk; deployed smoke is recorded with sanitized evidence if explicitly approved and run; `task.md` says public-release capable only when evidence actually supports it.
+   - Verification: full release checklist, `npm run lint`, `npx tsc --noEmit`, `npm run build`, relevant contracts/tests, `git diff --check`, deployed route checks, and width checks at `390 / 820 / 1024 / 1280 / 1366px`.
+   - Status: local final QA, failed existing deployed URL smoke, successful Cloudflare version upload preview URL, and approved narrow preview URL smoke recorded in current Task 16 branch. public-release capable: no. existing deployed URL smoke: failed with required deployed routes returning 404. preview URL smoke: passed for preview-only narrow scope, including Chrome authenticated account integration and billing rendering after operator browser-side authentication. live/provider smoke: not run. Stripe live-mode action: not run. Final QA record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_FINAL_QA.md`.
+
+## Pre-Main Launch Hardening Roadmap
+
+Use one Codex thread, one feature branch, and one PR per task. These tasks are required before main promotion unless the release owner explicitly accepts the risk in writing. Keep `public-release capable: no` until a private-gated production URL passes the required smoke evidence.
+
+17. Private launch access gate
+   - Goal: allow main/production deployment without opening Comment Translator to general users.
+   - Scope: server-side launch gate for `/tools/comment-translator`, account entry points, and comment-translator API/server actions; allowlist/tester policy; disabled or coming-soon public UI state.
+   - Completion criteria: non-allowed users cannot start sessions or reach provider/billing-affecting actions by direct URL/API call; allowed testers can access the existing preview flow; no secrets or private identifiers are exposed.
+   - Verification: focused access-gate contracts, unauthenticated/unauthorized route checks, lint, typecheck, build, `git diff --check`, width checks if visible UI changes.
+   - Status: complete in current Task 17 PR. Non-allowed users receive disabled/coming-soon UI and 403 sanitized API responses; allowed testers are controlled by server-only SHA-256 owner-user-id hash allowlist. No live/provider execution, Stripe live-mode action, deploy/upload, remote mutation, provider target lookup, browser storage expansion, or handoff payload change was added.
+
+18. Operator UX readiness polish
+   - Goal: make the launch-blocking account and plan states obvious before live testing.
+   - Scope: `/tools/comment-translator` CTA to `/account/integrations` when YouTube is not connected, clearer Free/Paid plan display, disabled/start-blocked states, reconnect guidance, and billing/account entry copy.
+   - Completion criteria: users can understand why Start is unavailable and where to fix it; plan state is visible without exposing billing secrets or provider metadata; UI remains responsive at `390 / 820 / 1024 / 1280 / 1366px`.
+   - Verification: UI/action contracts, route render checks, lint, typecheck, build, `git diff --check`, width checks.
+   - Status: complete in current Task 18 PR. Added approved mock and implemented Free / Kuro Stream Kit Pro monthly/yearly comparison copy, Start blocked guidance, `/account/integrations` CTA, disabled Start on unavailable YouTube credential readiness, and account/billing/integrations entry copy. Actual monthly/yearly Stripe Price/Checkout, live/provider execution, provider target lookup, deploy/upload, remote mutation, browser storage expansion, and handoff payload changes were not added or run.
+
+19. Translation provider and cost policy finalization
+   - Goal: choose the public provider policy before live/provider smoke and paid launch.
+   - Scope: compare DeepL, Azure Translator, OpenAI mini, Gemini Flash/Lite, and Cloudflare Workers AI for cost, quality, privacy/data-use terms, supported JA/EN/KR/CN to JA/EN pairs, latency, fallback behavior, deployment fit, and monthly budget controls.
+   - Completion criteria: provider policy is recorded without secrets; initial recommendation covers Free/Paid provider selection, fallback on cap/error, budget stop thresholds, and provider-specific environment names only.
+   - Verification: docs/contract inspection, provider policy contract, no-secret scan, `git diff --check`. No live provider calls unless separately approved.
+   - Status: complete in current Task 19 PR via `docs/active/COMMENT_TRANSLATOR_PROVIDER_COST_POLICY.md` and `scripts/comment-translator-provider-cost-policy-contract.mjs`. Free plan primary is Azure Translator, Paid plan primary is OpenAI mini, Azure is the paid deterministic fallback, DeepL remains optional quality/comparison after account pricing confirmation, and Gemini Flash/Lite plus Cloudflare Workers AI remain comparison-only for the initial launch. No live provider calls were run.
+
+20. Translation provider implementation alignment
+   - Goal: align runtime provider implementation with the chosen provider policy.
+   - Scope: add or adjust provider adapters, provider selection by entitlement, fallback behavior, strict output parsing for LLM providers if used, and usage/cost accounting.
+   - Completion criteria: Free/Paid provider routing is server-owned; fallback is explicit and auditable; skipped comments are not sent; raw comments and provider identifiers are not logged or exposed.
+   - Verification: focused provider execution contracts/tests, lint, typecheck, build, `git diff --check`; live provider smoke only after explicit approval.
+   - Status: complete in current Task 20 PR via server-only Azure/OpenAI mini provider policy runtime, entitlement-owned routing, paid recoverable fallback audit counts, strict OpenAI JSON output parsing, sanitized usage/cost estimates, and provider execution contracts. Actual live provider calls remain approval-gated and were not run.
+
+21. Stripe live readiness and billing operations
+   - Goal: prepare billing for private-gated production without mutating live settings unexpectedly.
+   - Scope: Stripe Product/Price/Checkout/Portal/webhook readiness checklist, signed webhook entitlement evidence, failed/canceled/expired state review, and safe rollback notes.
+   - Completion criteria: dashboard/live-mode actions are either not run and recorded as blockers, or run only after explicit same-thread approval with sanitized evidence; no Stripe secret or webhook signing secret values are displayed or stored.
+   - Verification: Stripe contracts/tests, webhook signature tests, billing route checks, lint, typecheck, build, `git diff --check`; live-mode actions only after explicit approval.
+   - Status: complete in current Task 21 PR via server-only Stripe live readiness runtime, active readiness checklist, signed-webhook entitlement evidence review, failed/canceled/expired safe-degradation review, and rollback notes. Stripe Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, live-mode action, deploy/upload, remote mutation, and live/provider execution remain approval-gated and were not run.
+
+22. Abuse protection and rate-limit hardening
+   - Goal: prevent public abuse, accidental cost spikes, and repeated session/API attempts before main promotion.
+   - Scope: per-user session/action limits, unauthenticated and unauthorized request throttling, coarse IP/request protection where appropriate, Workers Rate Limiting or equivalent edge/app-side controls, and provider/billing route abuse cases.
+   - Completion criteria: repeated Start/session/API attempts are bounded; non-allowed users cannot bypass private launch gate through repeated direct calls; cost-affecting provider/billing paths fail closed or degrade safely under abuse.
+   - Verification: focused rate-limit/abuse contracts, route/API negative checks, lint, typecheck, build, `git diff --check`.
+   - Status: complete in current Task 22 PR via server-only app-side abuse/rate-limit guard, route/action/API negative checks, private-launch denial throttling, and provider/billing fail-closed behavior. Durable/distributed enforcement remains a later persistence/monitoring/deployment concern.
+
+23. Durable persistence and schema migration readiness
+   - Goal: decide what must be durable before public operation and keep remote schema changes approval-gated.
+   - Scope: usage ledger durability, session history, entitlement persistence, admin aggregates, rollback plan, migration ordering, and in-memory fallback boundaries.
+   - Completion criteria: durable-vs-in-memory decisions are recorded; any Supabase/schema migration is separated behind explicit approval; public launch does not depend on undocumented in-memory-only state for required enforcement.
+   - Verification: docs/contracts, no-secret scan, `git diff --check`; remote schema migration only after explicit approval.
+   - Status: complete in current Task 23 PR via active durable persistence readiness doc, server-only readiness runtime, and deterministic contract coverage. Remote Supabase migration apply readiness is not-applied-readiness-only; no SQL migration, RLS policy, remote mutation, browser storage expansion, handoff payload expansion, or UI change was added.
+
+24. Monitoring, alerting, and incident response readiness
+   - Goal: make cost, quota, billing, and runtime failures observable before public exposure.
+   - Scope: provider cost/quota alerts, YouTube quota stop counts, translation error classes, Stripe webhook failure visibility, session failure/timeout counts, rollback trigger notes, and support escalation path.
+   - Completion criteria: operators can detect provider-cost spikes, quota stops, webhook failures, and session failures without exposing secrets or raw comments; incident response and rollback notes are recorded.
+   - Verification: monitoring contract/docs inspection, sanitized log/output review where available, no-secret scan, `git diff --check`.
+   - Status: complete in current Task 24 PR via server-only monitoring/incident readiness runtime, active readiness doc, and deterministic contract coverage. Remote alert/dashboard mutation, live/provider execution, Stripe live-mode action, webhook registration, deploy/upload, browser storage expansion, handoff payload expansion, raw comment logging, private provider target output, and UI changes were intentionally not added or run.
+
+25. Provider terms, privacy, and legal copy refresh
+   - Goal: align public legal/copy surfaces with the final translation provider policy.
+   - Scope: `/terms`, `/privacy`, `/legal/tokushoho`, `/tools/comment-translator`, `/account/integrations`, `/account/billing`, provider data-use/retention/training disclosures, support/contact copy, and paid-plan wording.
+   - Completion criteria: selected providers and fallback behavior are accurately described; no unselected provider is overclaimed as production; user-visible copy explains AI/provider processing without exposing sensitive metadata.
+   - Verification: route render checks, legal/copy contract, no-secret scan, lint, typecheck, build, `git diff --check`; width checks if visible layout changes.
+   - Status: complete in current Task 25 PR via provider legal/copy refresh across legal, translator, integrations, billing, private-launch copy, active evidence doc, and deterministic contract coverage. Live/provider execution, deploy/upload, remote mutation, Stripe live-mode action, billing setting mutation, remote schema migration, Supabase migration apply, browser storage expansion, handoff payload expansion, provider routing runtime change, and sensitive metadata exposure were intentionally not added or run.
+
+26. Security and privacy final review
+   - Goal: verify public-launch sensitive boundaries after access, UX, provider, and billing changes.
+   - Scope: route/API authorization, token/credential boundaries, browser storage, logs/output, docs/PR body safety, provider target metadata, liveChatId, quota/budget stop paths, and rollback readiness.
+   - Completion criteria: no known high/critical launch blocker remains; accepted risks are documented; no secret/token/provider target values appear in client-readable surfaces or changed files.
+   - Verification: focused security contracts, no-secret scan, route/API negative checks, lint, typecheck, build, `git diff --check`.
+   - Status: complete in current Task 26 PR via server-only security/privacy final review evidence, active review doc, focused route/API negative checks, changed-files no-secret scan, and accepted residual-risk documentation. Public launch remains gated.
+
+27. Private-gated live/provider smoke
+   - Goal: prove the live comment intake and translation path with sanitized evidence before main promotion.
+   - Scope: same-thread/operator-local ready preflight, explicit approval, bounded YouTube live comment polling, provider translation execution, stop behavior, quota/budget stop behavior, and sanitized evidence recording.
+   - Completion criteria: no live/provider command runs before explicit approval; evidence records counts/status/stop reasons only; no liveChatId, provider identifiers, OAuth values, raw comments, or Authorization headers are stored or displayed.
+   - Verification: runbook preflight, approved live/provider smoke commands, sanitized output review, focused contracts, `git diff --check`.
+   - Status: complete in current Task 27 PR via approved private-gated live/provider smoke using Azure Translator, sanitized count-only evidence, server-only liveChatId target chaining, empty-polling blocker handling, provider skip/error reason counts, and focused stop/quota/budget contracts. Public launch remains gated.
+
+28. Private-gated main promotion and production smoke
+   - Goal: merge to main and verify the production/custom URL while general access remains blocked.
+   - Scope: main merge gate, production deploy trigger/verification, production/custom route smoke, allowed-tester access, non-allowed-user denial, rollback readiness.
+   - Completion criteria: production/custom deployed target serves the current app; private launch gate blocks general users; allowed testers can complete account/plan/session smoke; evidence is sanitized.
+   - Verification: production route checks only after explicit approval, width checks, console checks, access-gate negative checks, rollback notes.
+   - Status: readiness/blocker PR approved by release owner in PR #435, production env readiness/blocker merged in PR #436, then exact preflight/blocker advanced in current branch. Task 28 completion criteria are not met because main promotion, deploy/upload, production/custom smoke, allowed-tester smoke, non-allowed-user denial smoke, and rollback action/evidence are still blocked pending explicit same-thread approval. Active readiness docs: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md`, `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`, and `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_EXACT_PREFLIGHT.md`.
+
+29. Public launch gate flip
+   - Goal: make Comment Translator publicly available only after production smoke and accepted risks support it.
+   - Scope: launch-gate setting change, final legal/copy check, final no-secret scan, public route smoke, monitoring/rollback readiness.
+   - Completion criteria: `task.md` may say public-release capable only after all required evidence supports it; general users can access the intended public surface; rollback path is recorded.
+   - Verification: final release checklist, public production smoke, no-secret scan, lint/typecheck/build if code changes, `git diff --check`.
+
+## Explicit Initial-Release Exclusions
+
+- Background provider monitoring after account connection.
+- Automatic session start when a connected user begins streaming.
+- Multiple concurrent streams per user.
+- User-provided Google Cloud project or OAuth client.
+- Manual channel ID entry as the default flow.
+- Unlimited polling or broad polling loops.
+- Provider usage charging and paid-priority scheduling.
+- Translation of all languages by default.
+- Client storage of tokens, provider identifiers, liveChatId, owner user id, provider channel id, service_role key, Authorization header, or provider target metadata.
+- Delayed translation queue for skipped comments.
+- Twitch runtime before YouTube public path is proven, unless separately approved.
+
+## Initial Release Decisions
+
+These decisions are fixed for the current public-release roadmap unless the user explicitly changes them in a later task:
+
+- Free plan limits: initial target is `30 min/day/user`, `30 min/session`, `1 active session/user`, and `30 translated messages/min`.
+- Paid plan: Free and Paid plan concepts, limits, and server-owned entitlement enforcement should be part of the public-release path. Stripe integration remains server-only and approval-gated until live readiness is explicitly approved.
+- Source languages: source means translation input language. Initial selectable source languages are JA / EN / KR / CN.
+- Target languages: target means translation output language. Initial selectable target languages include JA / EN because the tool portal itself supports JA / EN.
+- Language selection rule: source and target cannot be the same. UI and server validation must reject same-language pairs.
+- Provider scope: YouTube ships first; Twitch remains future unless explicitly pulled into public-release scope.
+- Raw text logging: disabled by default; diagnostics are short-lived and sanitized.
+- Account path: `/account/integrations` is the preferred provider settings entry; `/tools/comment-translator` should also show a direct integration CTA when YouTube is not connected.
+- Translation provider policy: Free plan routes to Azure Translator primary; Paid plan routes to OpenAI mini primary with Azure Translator as recoverable-error fallback. DeepL remains optional quality/comparison after account pricing confirmation. Gemini Flash/Lite and Cloudflare Workers AI remain initial-launch comparison-only.
+
+## Thread And PR Handoff Rules
+
+- Start each roadmap task in a fresh Codex thread and fresh worktree / feature branch from `origin/codex/comment-translator-preview` after confirming the previous task PR is merged.
+- At thread start, run `git fetch origin --prune`, read `AGENTS.md` and `task.md`, and verify the latest merged PR commit is in `origin/codex/comment-translator-preview`.
+- For each task, first identify whether the task is documentation, implementation, execution, or evidence-only.
+- If the task is live/provider execution, confirm same-thread / operator-local same-command-process ready preflight, sanitized output review, and explicit in-thread approval before running provider-affecting commands.
+- If the task completes and verification passes, update `task.md`, commit, push, and create a draft PR targeting `codex/comment-translator-preview`.
+- If an external wait blocks execution and the user explicitly approves a readiness/blocker PR, record the incomplete completion criteria and blocker evidence in `task.md`, verify, commit, push, and create a draft PR targeting `codex/comment-translator-preview`.
+- If the task does not complete and no readiness/blocker PR is approved, do not commit, push, or create a PR. Reply with: `blocked reason`, `attempted command or inspected file`, `why completion criteria are not met`, `what approval/evidence/implementation is missing`, and `next safe action`.
+
+## Verification Baseline
+
+- Docs/task-board only:
+  - `git diff --check`
+  - targeted markdown/content inspection
+- Runtime or code changes:
+  - relevant contract script(s)
+  - `npm run lint`
+  - `npx tsc --noEmit`
+  - `npm run build`
+  - `git diff --check`
+- UI changes:
+  - relevant UI/action contract(s)
+  - `/tools/comment-translator` width checks at `390 / 820 / 1024 / 1280 / 1366px`
+- Live/provider execution:
+  - same-thread / operator-local same-command-process ready preflight
+  - sanitized output review
+  - explicit in-thread approval
+  - sanitized evidence only
+
+## Contract Compatibility Anchors
+
+- Keep `import "server-only";` on server-only translator / YouTube runtime boundaries.
+- Keep provider requests input-source independent unless the current task explicitly scopes the bridge.
+- Keep token values out of client components, docs, fixtures, PR bodies, browser storage, and command output.
+- Treat credential status and provider target metadata as sanitized metadata only.
+- Do not overclaim readiness-only or token-resolution-only evidence as live/provider execution.
+- Do not add quota write, billing integration, remote Supabase mutation/migration, browser storage expansion, or handoff payload expansion unless the current roadmap task explicitly scopes it.
 
 ## Next Session Prompt
 
 ```text
-D:/V_streamer_tools で作業してください。
+D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を続けます。
 
-目的:
-Kuro Live Comment Translator の初回 PR として、YouTube 向け read-only broadcaster dock の各端末 mock を `/imagegen` で作成し、確認後に承認 mock を UI shell として再現してください。
+重要:
+- 最初に必ず `git fetch origin --prune` を実行してください。
+- `AGENTS.md` と `task.md` を読んでください。
+- root checkout / main では作業しないでください。
+- 作業先は fresh worktree / feature branch にしてください。
+- base は latest `origin/codex/comment-translator-preview` です。
+- secret / token / OAuth access token / refresh token / authorization code / owner user id value / provider channel id value / liveChatId value / service_role key value / Authorization header value / Stripe secret key / webhook signing secret は表示・要求・保存しないでください。
+- provider target metadata や liveChatId は operator-local env / server-only boundary で消費するだけにし、output / docs / PR body / browser storage / handoff payload に出さないでください。
+- main promotion、deploy/upload、production/custom deployed smoke、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution、remote mutation、remote schema migration、Stripe live-mode action、billing setting mutation は、same-thread ready preflight、sanitized output review、explicit in-thread approval が揃うまで実行しないでください。
+- This prompt is not approval for main promotion, deploy/upload, production/custom URL smoke, Cloudflare production mutation, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, webhook registration, provider target lookup, liveChatId lookup, or live/provider execution.
 
-前提:
-- main 直作業は禁止です。
-- まず `git fetch origin --prune` を実行してください。
-- AGENTS.md と task.md を確認してください。
-- seed document は `C:/Users/taka/Downloads/COMMENT_TRANSLATION_TOOL_PLAN.md`。
-- 関連 idea docs:
-  - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/多言語対応ライブ翻訳オーバーレイ_企画書.md`
-  - `D:/V_streamer_tools/materials/ideas/15_最新技術活用ツール/リアルタイムAI音声翻訳オーバーレイ.md`
-- 初回 platform は YouTube。
-- 初回 PR は mock-first。各端末 mock 作成 -> user 確認 -> UI shell 再現まで。
-- 翻訳 API の実接続は初回 PR では行わない。fixtures / MockTranslationProvider 相当だけを使う。
-- secret / service_role key / private credential は要求・表示・保存しない。
-- 既存 storage key / payload / IndexedDB / localStorage key / Supabase schema / migration / RLS policy / handoff payload は変更しない。
+Merge gate:
+- Task 28 exact preflight/blocker PR が merge 済みであることを確認してください。
+- gh が使える場合は Task 28 exact preflight/blocker PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- Task 28 exact preflight/blocker PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認してください。認証 token の値は要求・表示しないでください。
 
-推奨 branch:
-- `codex/comment-translator-mock-foundation`
+現在地:
+- Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
+- Public Release Roadmap Task 1-15 は完了済みです。
+- Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 は merge 済みです。
+- Task 27 completion PR #434 は merge 済みです。
+- Task 27 completion PR #434 で approved Azure Translator live/provider smoke evidence が記録されました。
+- Task 27 sanitized final evidence: returned 3, eligible 3, provider requests 2, provider calls 2, translated 2, skipped 1, language-policy skipped 1, provider-unavailable 0, recoverable errors 0, terminal errors 0, stop reason null。
+- Task 28 readiness/blocker PR #435 は merge 済みです。Task 28 completion PR ではなく、main promotion、deploy/upload、production/custom URL smoke、allowed-tester production smoke、non-allowed-user denial production smoke、rollback action/evidence は未実行です。
+- Task 28 production env readiness/blocker PR #436 は merge 済みです。`docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`、`scripts/comment-translator-production-env-readiness-contract.mjs`、Task 28 readiness doc、`task.md` が追加・更新されています。
+- Production env inventory は reference-name-only です。各 reference は required / optional / smoke-only に分類され、missing 時の fail-closed behavior と operator setting location が記録されています。secret 値や private id 値は記録されていません。
+- Task 28 exact preflight/blocker PR で `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_EXACT_PREFLIGHT.md`、`scripts/comment-translator-private-gated-main-promotion-exact-preflight-contract.mjs`、Task 28 readiness doc、`task.md` が追加・更新されています。
+- Operator-reported env presence として、Cloudflare production Worker runtime に private launch allowlist、Supabase public auth vars、Supabase service role secret、YouTube credential resolution flag、Stripe test mode references、Azure Translator references、translation budget/Azure cap vars、site URL/Turnstile public keyが設定済み、Cloudflare build env に `CLOUDFLARE_ACCOUNT_ID` が設定済み、と reference-name-only で記録されています。OpenAI / DeepL / Gemini / Workers AI は未設定です。値は記録されていません。
+- Task 19 で provider/cost policy が記録され、Task 20 で server-only Azure/OpenAI mini provider policy runtime、Free/Paid routing、paid recoverable Azure fallback、strict OpenAI JSON parser、sanitized usage/cost estimate handoff が追加されています。
+- Task 21 で Stripe live readiness checklist、server-only readiness runtime、signed-webhook entitlement evidence review、failed/canceled/expired safe-degradation review、rollback notes が追加されています。
+- Task 22 で server-only app-side abuse/rate-limit guard、route/action/API negative checks、private-launch denial throttling、provider/billing fail-closed behavior が追加されています。
+- Task 23 で durable-vs-in-memory decisions、approval-gated schema proposal、migration ordering、rollback plan、in-memory fallback boundaries が追加されています。
+- Task 24 で server-only monitoring/incident readiness runtime、provider cost/quota alerts、YouTube quota stop counts、translation error classes、Stripe webhook failure visibility、session failure/timeout counts、rollback trigger notes、support escalation path が追加されています。
+- Task 25 で provider legal/copy surfaces が final provider policy と整合し、Free Azure / Paid OpenAI mini / Paid recoverable Azure fallback / comparison-only providers / provider data-use・retention・training / support・contact / paid-plan wording が記録されています。
+- Task 26 で server-only security/privacy final review evidence、active review doc、focused route/API negative checks、changed-files no-secret scan、accepted residual-risk documentation が追加されています。
+- Actual main promotion、deploy/upload、production/custom URL smoke、allowed-tester production smoke、non-allowed-user denial production smoke、Stripe live-mode action、Customer Portal redirect、webhook registration、remote schema migration、remote mutation、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution は引き続き approval-gated で、この prompt は承認ではありません。
+- `public-release capable: no` のままです。
+- 最終ゴールは Pre-Main Launch Hardening Roadmap の完了、private-gated main promotion、production/custom deployed smoke、必要な live/provider smoke の sanitized evidence 記録により「公開可能状態」にすることです。
 
-推奨 worktree:
-- `D:/V_streamer_tools/.worktrees/comment-translator-mock-foundation`
+次にやること:
+- Continue Task 28: Private-gated main promotion and production smoke.
+- 最初に Task 28 readiness doc、production env readiness doc、exact preflight doc、deployment/live-smoke runbook、final QA、security/privacy final review、private launch access gate、route/API negative checks、rollback readiness を確認してください。
+- main promotion / deploy / production smoke に進む前に、exact preflight doc の Phase 0-3、target label、expected sanitized evidence、abort conditions、rollback path を再提示してください。
+- same-thread ready preflight と sanitized output review が揃った後にだけ、exact action への explicit in-thread approval を求めてください。
+- 承認が揃うまでは main promotion、deploy/upload、production/custom URL smoke、allowed-tester production smoke、non-allowed-user denial production smoke、Cloudflare production mutation、remote mutation を実行しないでください。
+- approved production smoke に進める場合も、evidence は route paths / HTTP status / pass-fail / browser width / console status / sanitized launch-gate status labels / safe deployment reference only に閉じ、secret、private identifier、provider target metadata、liveChatId、browser storage payload、handoff payload は保存・表示しないでください。
+- remote schema migration / Supabase migration apply は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。
+- Stripe live-mode actions、Customer Portal redirect、webhook registration、billing setting mutation、deploy/upload、remote mutation、live/provider execution は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。
+- secret / token / provider credential / OAuth token / private identifier の値は要求・表示・保存しないでください。必要な env は reference 名だけを扱ってください。
 
-scope:
-- OBS Browser Dock / narrow viewport を主対象に、`390 / 820 / 1024 / 1280 / 1366px` の mock を `/imagegen` で作成する。
-- user 確認後、既存 tools routing / card / layout pattern に沿って comment translator の UI shell を追加する。
-- YouTube first と分かる setup state、接続 mock、live comment list、original / translated text、language label、skip reason、cache / quota preview、empty state を fixture で表現する。
-- UI は landing page ではなく、最初の画面から usable tool surface にする。
-- 翻訳は mock provider / fixture のみ。実 API call、API key、provider secret、server action、quota DB write は入れない。
-- comment translator mock foundation contract を追加または既存 contract に追加する。
-
-Out of scope:
-- YouTube OAuth、Google API、Live Chat polling、owner verification の実装。
-- OpenAI / Google / DeepL / Gemini 等の実翻訳 API 呼び出し。
-- Stripe checkout / billing、server-authoritative quota、paid plan enforcement。
-- GA4 実装、cookie consent banner。
-- Supabase schema / migration / RLS policy 変更。
-- 既存ツールの保存 payload / IndexedDB / localStorage key 変更。
-- コメント返信生成、自動投稿、viewer overlay、OBS plugin、ASR / 音声翻訳。
-
-検証:
-- new/updated comment translator mock foundation contract
-- tool portal entry / route contract if a new route is added
+Verification:
+- `node scripts/comment-translator-private-gated-main-promotion-exact-preflight-contract.mjs`
+- `node scripts/comment-translator-production-env-readiness-contract.mjs`
+- `node scripts/comment-translator-private-gated-main-promotion-readiness-contract.mjs`
+- `node scripts/comment-translator-private-launch-access-gate-contract.mjs`
+- relevant deployment/final QA/security route/API negative checks that match any changes
+- no-secret scan over changed files
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run build`
 - `git diff --check`
-- `/tools` and new comment translator route を `390 / 820 / 1024 / 1280 / 1366px` で確認し、mock / UI が本文と重ならず、左サイドパネルに干渉しないことを task.md に残す。
+- width checks at `390 / 820 / 1024 / 1280 / 1366px` if visible UI changes; docs/contract-onlyなら省略理由を `task.md` に残してください。
+- approved main promotion / deploy / production smoke commands only if same-thread ready preflight + sanitized output review + exact-command explicit approval are complete in this thread.
 
-完了時:
-- `task.md` に実装内容、検証結果、幅別確認結果、未確認範囲、残リスクを記録してください。
-- 問題なければ commit / push / draft PR 作成まで進めてください。
+Completion:
+- Task 28 completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-preview` まで進めてください。
+- gate 不足や実行 path 不足で completion criteria 未達なら、commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
 ```
 
-## Backlog
+## Post-Public Candidates
 
-- Comment Translator:
-  - YouTube OAuth / owner verification / Live Chat polling。
-  - translation provider selection and provider abstraction。
-  - glossary terms, usage limits, short-lived logs, moderation skip rules。
-  - paid plan / quota integration after billing foundation。
-- Thumbnail Editor:
-  - 9:16 preset for YouTube Shorts / vertical streams。
-  - crop 仕様。
-  - text / image layer schema。
-  - local font loading after user account / preferences foundation。
-  - preset typography refinement。
-- Account / monetization:
-  - password hardening dashboard alignment。
-  - preferences sync MVP。
-  - paid plan / quota foundation。
-- Schedule Calendar:
-  - Google Calendar 連携。
-  - ログイン / サーバー同期。
-  - シリーズ一括編集、例外日。
-  - 週間予定画像そのものの生成。
-- SNS Split Image Maker:
-  - ZIP 出力。
-  - X 以外の比率。
-  - 複数形式の大規模 export。
-  - 重い onboarding。
-- EN / locale:
-  - 細かい内部説明、debug 文、保存済みデータ本文、網羅的 aria 全面翻訳。
-  - Next metadata の動的 locale 切替。
-
-## Verification Baseline
-
-docs / contract / material / font 変更時は、必要に応じて次を実行する。
-
-- `node scripts/static-export-rsc-aliases.mjs --check`
-- `node scripts/tool-portal-entry-contract.mjs`
-- `node scripts/tool-handoff-contract.mjs`
-- `node scripts/preference-classification-contract.mjs`
-- `node scripts/local-preference-adapter-contract.mjs`
-- `node scripts/account-preferences-shell-contract.mjs`
-- `node scripts/supabase-auth-first-slice-contract.mjs`
-- `node scripts/auth-security-hardening-contract.mjs`
-- `node scripts/auth-turnstile-captcha-contract.mjs`
-- `node scripts/account-auth-public-readiness-contract.mjs`
-- `node scripts/workers-route-smoke-account-nav-contract.mjs`
-- `node scripts/legal-foundation-contract.mjs`
-- `node scripts/thumbnail-material-assets-contract.mjs`
-- `node scripts/thumbnail-font-policy-contract.mjs`
-- `node scripts/thumbnail-quality-guard-contract.mjs`
-- `node scripts/thumbnail-standee-placement-contract.mjs`
-- `node scripts/thumbnail-preset-text-locale-contract.mjs`
-- `node scripts/thumbnail-preset-apply-safety-contract.mjs`
-- `node scripts/thumbnail-preset-variants-contract.mjs`
-- `node scripts/sns-split-image-maker-contract.mjs`
-- `node scripts/portal-tools-copy-locale-contract.mjs`
-- `npm run build:cloudflare`
-- `npm run build`
-- `npm run lint`
-- `npx tsc --noEmit`
-- `git diff --check`
-
-UI / 表示文言を触った場合のみ、幅別確認結果をこのファイルに残す。
-
-## Completed / Archive Summary
-
-- Account / preferences foundation:
-  - PR #229 - #234 で preference classification、account shell、local preference adapter、auth/provider decision、Supabase Auth boundary、Cloudflare Workers / OpenNext deploy foundation、public auth UI、remote display settings apply、CTA copy、tips modal、security hardening、final readiness を main へ統合した。
-  - PR #234 main merge: 2026-05-29, merge commit `5d7dd09`。
-  - 詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` の P33 を参照する。
-- Auth production hardening:
-  - PR #250 - #253 で production auth recovery flow、recovery pending session、trailing slash redirect、recovery pending navigation を main へ統合した。
-  - PR #257 - #259 で Turnstile CAPTCHA wiring、runtime site key hydration、SPA navigation explicit render を main へ統合した。
-  - 詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` の P34 / P36 を参照する。
-- Legal foundation:
-  - PR #254 で `/terms`、`/privacy`、`/legal/tokushoho` と右側メイン領域 footer 導線を追加した。
-  - 詳細は PR body と `docs/archive/TASK_HISTORY_2026-05.md` の P35 を参照する。
-- Thumbnail Editor IRIAM square preview branch:
-  - PR #200 - #220 で 1:1 IRIAM 5 preset、settings modal、background / title swap、EN title asset、registered material expansion、final confirmation、main integration を完了。
-  - 詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` の P30 / P31 を参照する。
-- Thumbnail Editor font expansion:
-  - PR #221 - #226 で font expansion check branch、IRIAM title parity fonts、Standard Batch B plan、Batch B-JA、Batch B-EN、main integration を完了。
-  - 詳細は PR bodies と `docs/archive/TASK_HISTORY_2026-05.md` の P32 を参照する。
-- Thumbnail Editor usecase presets:
-  - `goods_notice` / `membership_stream` / `asmr_stream` などの usecase preset sequence は完了済み。詳細は PR bodies と archive history を参照する。
-- Portal / public prelaunch:
-  - Portal settings visibility polish、Thumbnail Editor inline text edit、EN support は完了または各 PR body に集約済み。
-- EN support:
-  - PR #154 - #171 で EN support preview から main 向け final integration check まで完了。
-  - main merge: 2026-05-20, merge commit `270b81f`。
-  - completed details are kept in PR bodies and archive docs, not repeated here.
-- 2026-04 の履歴: `docs/archive/TASK_HISTORY_2026-04.md`
-- 2026-05 の履歴: `docs/archive/TASK_HISTORY_2026-05.md`
-- Schedule Calendar future tasks: `docs/future/SCHEDULE_CALENDAR_FUTURE_TASKS.md`
-- Portal settings future direction: `docs/future/PORTAL_SETTINGS_FUTURE.md`
-- Thumbnail Editor next PR scope: `docs/future/THUMBNAIL_EDITOR_NEXT_PR_SCOPE.md`
-- Thumbnail Editor usecase preset candidates: `docs/future/THUMBNAIL_EDITOR_USECASE_PRESET_CANDIDATES.md`
-- Thumbnail Editor font candidates: `docs/future/THUMBNAIL_EDITOR_FONT_CANDIDATES.md`
-- Thumbnail Editor registered material expansion plan: `docs/future/THUMBNAIL_EDITOR_IRIAM_SQUARE_DECORATION_MATERIAL_CONTRACT.md`
-
-## 参照ドキュメント
-
-- `docs/design-thumbnail-editor.md`
-- `docs/design-sns-split-image-maker.md`
-- `docs/design-sheet-sns-split-image-maker.md`
-- `scripts/sns-split-image-maker-contract.mjs`
+- Advanced paid tiers, paid-priority scheduling, and provider-usage charging.
+- Twitch runtime and EventSub/chat integration.
+- `liveChatMessages.streamList` evaluation.
+- Background monitoring and automatic session start.
+- Multiple concurrent streams per user.
+- Additional source languages and advanced mixed-language options.
+- User-provided Google Cloud project / OAuth client support.

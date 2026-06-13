@@ -20,7 +20,9 @@
     "@supabase/supabase-js": "^2.106.2",
     "next": "16.2.6",
     "react": "19.2.5",
-    "react-dom": "19.2.5"
+    "react-dom": "19.2.5",
+    "server-only": "^0.0.1",
+    "stripe": "^22.2.0"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.19.11",

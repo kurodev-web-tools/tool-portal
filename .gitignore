@@ -33,6 +33,7 @@ coverage/
 *.tsbuildinfo
 .wrangler/
 .worktrees/
+supabase/.temp/
 
 # OS / editor
 .DS_Store

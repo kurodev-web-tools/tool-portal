@@ -20,6 +20,11 @@ const toolCopy = {
       name: "Schedule Calendar",
       description: "配信予定と告知文を管理し、サムネ作成やSNS分割画像作成へ一時handoffできます。"
     },
+    "comment-translator": {
+      name: "Kuro Live Comment Translator",
+      description:
+        "YouTubeコメントを明示Start後のセッション内で翻訳表示する公開版プレビューです。接続だけでは監視やAI翻訳を開始しません。"
+    },
     "thumbnail-editor": {
       name: "Thumbnail Editor",
       description: "用途別プリセットを選んで、文字と立ち絵を差し替えるVTuber向けサムネ組み立てツールです。",
@@ -62,6 +67,11 @@ const toolCopy = {
     "schedule-calendar": {
       name: "Schedule Calendar",
       description: "Manage stream plans and announcement copy, then hand off a temporary draft to thumbnail or SNS split-image workflows."
+    },
+    "comment-translator": {
+      name: "Kuro Live Comment Translator",
+      description:
+        "Preview YouTube-first comment translation that runs only inside an explicitly started session. Connecting alone does not monitor or translate."
     },
     "thumbnail-editor": {
       name: "Thumbnail Editor",
@@ -107,8 +117,8 @@ const suiteCopy = {
   ja: {
     "stream-workflow": {
       name: "配信ワークフロー",
-      description: "予定管理からサムネ作成、SNS投稿画像づくりまで、配信準備の流れを支えるツール群",
-      tags: ["Schedule Calendar", "Thumbnail Editor", "SNS分割画像", "+ その他"]
+      description: "予定管理、コメント翻訳確認、サムネ作成、SNS投稿画像づくりまで、配信準備と配信中の確認を支えるツール群",
+      tags: ["Schedule Calendar", "Comment Translator", "Thumbnail Editor", "SNS分割画像"]
     },
     "fan-brand": {
       name: "ファン＆ブランド",
@@ -129,8 +139,8 @@ const suiteCopy = {
   en: {
     "stream-workflow": {
       name: "Stream Workflow",
-      description: "Tools that support the stream-prep flow from scheduling to thumbnails and SNS posting images.",
-      tags: ["Schedule Calendar", "Thumbnail Editor", "SNS Split Image Maker", "+ More"]
+      description: "Tools that support stream prep and live review, from scheduling to comment translation, thumbnails, and SNS posting images.",
+      tags: ["Schedule Calendar", "Comment Translator", "Thumbnail Editor", "SNS Split Image Maker"]
     },
     "fan-brand": {
       name: "Fan & Brand",
@@ -188,7 +198,7 @@ export const portalCopy = {
       hero: {
         title: "配信準備を、いま使えるツールから。",
         paragraphs: [
-          "Schedule Calendar、Thumbnail Editor、SNS分割画像メーカーで、予定整理から投稿用画像づくりまで進められます。",
+          "Schedule Calendar、Kuro Live Comment Translator、Thumbnail Editor、SNS分割画像メーカーで、予定整理から配信中のコメント確認、投稿用画像づくりまで進められます。",
           "準備中の候補は一覧で分けて表示し、まず使える導線を迷わず開けるようにしています。"
         ],
         primaryCta: "ツール一覧を見る",
@@ -196,21 +206,21 @@ export const portalCopy = {
         accountNote: "ログインすると表示言語とテーマを別ブラウザやスマホでも引き継げます。下書き、予定本文、画像、handoff payload は自動アップロードしません。",
         accountCta: "アカウントを確認",
         panelTitle: "公開中の使い方",
-        panelLead: "入口では今すぐ使える3ツールを優先し、追加予定の候補は状態を分けて表示します。",
+        panelLead: "入口では今すぐ使える4ツールを優先し、追加予定の候補は状態を分けて表示します。",
         summary: {
-          availableTools: { label: "使えるツール", helper: "予定・サムネ・分割画像", unit: "個" },
-          publicFlow: { label: "公開導線", value: "3 ステップ", helper: "Schedule -> Thumbnail -> SNS" },
+          availableTools: { label: "使えるツール", helper: "予定・翻訳確認・画像", unit: "個" },
+          publicFlow: { label: "公開導線", value: "4 ツール", helper: "Schedule / Comment / Thumbnail / SNS" },
           suites: { label: "探し方", helper: "公開中と準備中を分けて確認", unit: "スイート" }
         }
       },
       suiteHeading: "スイートから探す",
       suiteLead: "いま使えるスイートと、追加予定の候補を分けて確認できます。",
-      footer: "今すぐ使える個別ツールは Schedule Calendar / Thumbnail Editor / SNS分割画像メーカーです。"
+      footer: "今すぐ使える個別ツールは Schedule Calendar / Kuro Live Comment Translator / Thumbnail Editor / SNS分割画像メーカーです。"
     },
     tools: {
       eyebrow: "Tools",
       title: "ツール一覧",
-      description: "Schedule Calendar / Thumbnail Editor / SNS分割画像メーカーを公開中です。追加予定の候補は準備中として分け、必要なときだけ絞り込んで確認できます。",
+      description: "Schedule Calendar / Kuro Live Comment Translator / Thumbnail Editor / SNS分割画像メーカーを公開中です。追加予定の候補は準備中として分け、必要なときだけ絞り込んで確認できます。",
       currentSuiteSuffix: "を表示中",
       resultCountSuffix: "件を表示中",
       listLabel: "ツール一覧",
@@ -269,6 +279,7 @@ export const portalCopy = {
       recoveryPendingButton: "再設定へ戻る",
       toolTitles: {
         "schedule-calendar": "スケジュールカレンダー",
+        "comment-translator": "Kuro Live Comment Translator",
         "thumbnail-editor": "Thumbnail Editor",
         "sns-split-image-maker": "SNS分割画像メーカー",
         account: "アカウント設定",
@@ -288,7 +299,7 @@ export const portalCopy = {
       hero: {
         title: "Start your stream prep with tools you can use today.",
         paragraphs: [
-          "Use Schedule Calendar, Thumbnail Editor, and SNS Split Image Maker to move from planning to posting images.",
+          "Use Schedule Calendar, Kuro Live Comment Translator, Thumbnail Editor, and SNS Split Image Maker to move from planning to live chat review and posting images.",
           "Planned candidates are clearly separated so the ready-to-use flow stays easy to open first."
         ],
         primaryCta: "View tools",
@@ -296,21 +307,21 @@ export const portalCopy = {
         accountNote: "Carry language and theme across browsers and phones when you log in. Drafts, schedule text, images, and handoff payloads are not uploaded automatically.",
         accountCta: "Check account",
         panelTitle: "Current workflow",
-        panelLead: "The portal prioritizes the three public tools now available and separates planned candidates by status.",
+        panelLead: "The portal prioritizes the four public tools now available and separates planned candidates by status.",
         summary: {
-          availableTools: { label: "Available tools", helper: "Schedule, thumbnails, split images", unit: "tools" },
-          publicFlow: { label: "Public flow", value: "3 steps", helper: "Schedule -> Thumbnail -> SNS" },
+          availableTools: { label: "Available tools", helper: "Schedule, comment review, images", unit: "tools" },
+          publicFlow: { label: "Public flow", value: "4 tools", helper: "Schedule / Comment / Thumbnail / SNS" },
           suites: { label: "Browse by", helper: "Separate available and planned tools", unit: "suites" }
         }
       },
       suiteHeading: "Browse by suite",
       suiteLead: "Check the suite you can use now and the candidates planned for later.",
-      footer: "Tools available now: Schedule Calendar / Thumbnail Editor / SNS Split Image Maker."
+      footer: "Tools available now: Schedule Calendar / Kuro Live Comment Translator / Thumbnail Editor / SNS Split Image Maker."
     },
     tools: {
       eyebrow: "Tools",
       title: "Tools",
-      description: "Schedule Calendar, Thumbnail Editor, and SNS Split Image Maker are available now. Planned candidates stay separated so you can filter only when needed.",
+      description: "Schedule Calendar, Kuro Live Comment Translator, Thumbnail Editor, and SNS Split Image Maker are available now. Planned candidates stay separated so you can filter only when needed.",
       currentSuiteSuffix: "selected",
       resultCountSuffix: "visible",
       listLabel: "Tool list",
@@ -369,6 +380,7 @@ export const portalCopy = {
       recoveryPendingButton: "Back to reset",
       toolTitles: {
         "schedule-calendar": "Schedule Calendar",
+        "comment-translator": "Kuro Live Comment Translator",
         "thumbnail-editor": "Thumbnail Editor",
         "sns-split-image-maker": "SNS Split Image Maker",
         account: "Account",

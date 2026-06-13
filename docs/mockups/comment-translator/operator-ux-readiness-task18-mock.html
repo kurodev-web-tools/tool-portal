@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Task 18 Mock - Operator UX readiness polish</title>
+    <style>
+      :root {
+        --bg: #f7f9fa;
+        --surface: #ffffff;
+        --surface-muted: #f1f5f6;
+        --ink: #101827;
+        --muted: #677487;
+        --line: #dae2e5;
+        --primary: #008a84;
+        --primary-soft: #dff6f3;
+        --primary-strong: #00756f;
+        --ok: #157f52;
+        --ok-soft: #e8f7ef;
+        --warn: #9a5b00;
+        --warn-soft: #fff3d8;
+        --danger: #b42318;
+        --danger-soft: #fff0ed;
+        --shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at top right, rgba(223, 246, 243, 0.42), transparent 30rem),
+          var(--bg);
+        color: var(--ink);
+        font-family:
+          "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Segoe UI", ui-sans-serif, system-ui,
+          sans-serif;
+        line-height: 1.5;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(1180px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 24px 0 40px;
+      }
+
+      .topbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 18px;
+      }
+
+      .mock-label {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 4px 9px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .hero {
+        display: grid;
+        gap: 16px;
+        padding: 24px 0;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        max-width: 820px;
+        font-size: clamp(30px, 4vw, 48px);
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        max-width: 820px;
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .two-col {
+        grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+      }
+
+      .section {
+        display: grid;
+        gap: 14px;
+        padding: 22px 0;
+      }
+
+      .section-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .eyebrow {
+        color: var(--primary-strong);
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .panel,
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .plan-card {
+        display: grid;
+        gap: 14px;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 16px;
+      }
+
+      .plan-card.recommended {
+        border-color: rgba(20, 108, 148, 0.55);
+        background: linear-gradient(180deg, #ffffff 0%, #eef9fc 100%);
+      }
+
+      .plan-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .plan-name {
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .price {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .price strong {
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .price span {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .pill {
+        display: inline-flex;
+        width: fit-content;
+        max-width: 100%;
+        align-items: center;
+        min-height: 26px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-muted);
+        padding: 3px 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .pill.ok {
+        border-color: rgba(21, 127, 82, 0.28);
+        background: var(--ok-soft);
+        color: var(--ok);
+      }
+
+      .pill.warn {
+        border-color: rgba(154, 91, 0, 0.28);
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+
+      .pill.danger {
+        border-color: rgba(180, 35, 24, 0.28);
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      ul {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      li {
+        min-width: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      li::before {
+        content: "";
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin-right: 8px;
+        border-radius: 999px;
+        background: var(--primary);
+        vertical-align: 1px;
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .button {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--primary);
+        border-radius: 8px;
+        background: var(--primary);
+        padding: 10px 14px;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .button.secondary {
+        border-color: var(--line);
+        background: var(--surface);
+        color: var(--ink);
+      }
+
+      .button.disabled {
+        border-color: var(--line);
+        background: var(--surface-muted);
+        color: #83909d;
+        cursor: not-allowed;
+      }
+
+      .notice {
+        border: 1px solid rgba(154, 91, 0, 0.28);
+        border-radius: 8px;
+        background: var(--warn-soft);
+        padding: 12px;
+        color: #5d3b00;
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .safe {
+        border-color: rgba(21, 127, 82, 0.28);
+        background: var(--ok-soft);
+        color: #0d4e33;
+      }
+
+      .translator-frame {
+        display: grid;
+        grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+        gap: 12px;
+      }
+
+      .sidebar {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+
+      .status-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .status-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 12px;
+      }
+
+      .status-row strong,
+      .mini-title {
+        display: block;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .status-row span,
+      .mini-copy {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .tool-panel {
+        display: grid;
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .blocked-start {
+        border: 1px solid rgba(180, 35, 24, 0.28);
+        border-radius: 8px;
+        background: var(--danger-soft);
+        padding: 16px;
+      }
+
+      .fake-feed {
+        display: grid;
+        gap: 10px;
+      }
+
+      .feed-row {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 12px;
+      }
+
+      .feed-row.muted {
+        opacity: 0.68;
+      }
+
+      .account-entry {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .mini-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 14px;
+      }
+
+      .footer-note {
+        margin-top: 22px;
+        border-top: 1px solid var(--line);
+        padding-top: 16px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      @media (max-width: 900px) {
+        .two-col,
+        .translator-frame {
+          grid-template-columns: 1fr;
+        }
+
+        .cards,
+        .account-entry {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .shell {
+          width: min(100vw - 20px, 1180px);
+          padding-top: 14px;
+        }
+
+        .panel,
+        .plan-card {
+          padding: 14px;
+        }
+
+        h1 {
+          font-size: 30px;
+        }
+
+        .button-row,
+        .button {
+          width: 100%;
+        }
+
+        .status-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <div class="topbar">
+        <span class="mock-label">Task 18 HTML mock / review only</span>
+        <span class="mock-label">No production runtime, no Stripe live action, no provider call</span>
+      </div>
+
+      <section class="hero">
+        <p class="eyebrow">Kuro Live Comment Translator</p>
+        <h1>Operator UX readiness polish mock</h1>
+        <p class="lead">
+          ライブテスト前に、Start が押せない理由、YouTube 連携の修正先、現在のプラン状態を迷わず確認できるようにするための静的モックです。
+        </p>
+      </section>
+
+      <section class="section">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">/account/billing direction</p>
+            <h2>シンプルな Free / Pro 月額 / Pro 年額 比較</h2>
+          </div>
+          <span class="pill warn">価格は表示例</span>
+        </div>
+
+        <div class="cards">
+          <article class="plan-card">
+            <div class="plan-head">
+              <div>
+                <p class="plan-name">Free</p>
+                <p class="mini-copy">まず試せる基本枠</p>
+              </div>
+              <span class="pill">Current</span>
+            </div>
+            <div class="price"><strong>¥0</strong><span>/ month</span></div>
+            <ul>
+              <li>Comment Translator の基本利用</li>
+              <li>30 min / day / user</li>
+              <li>30 min / session</li>
+              <li>1 active session / user</li>
+            </ul>
+            <a class="button secondary" href="#translator-mock">現在のプランを確認</a>
+          </article>
+
+          <article class="plan-card">
+            <div class="plan-head">
+              <div>
+                <p class="plan-name">Kuro Stream Kit Pro</p>
+                <p class="mini-copy">Paid monthly</p>
+              </div>
+              <span class="pill ok">Upgrade</span>
+            </div>
+            <div class="price"><strong>¥1,200</strong><span>/ month</span></div>
+            <ul>
+              <li>Comment Translator の上限を Free より拡張</li>
+              <li>Daily limit: 表示値は後続タスクで確定</li>
+              <li>Session limit: 表示値は後続タスクで確定</li>
+              <li>Translated messages/min: 表示値は後続タスクで確定</li>
+            </ul>
+            <a class="button" href="#billing-copy">月額 Pro を選ぶ</a>
+          </article>
+
+          <article class="plan-card recommended">
+            <div class="plan-head">
+              <div>
+                <p class="plan-name">Kuro Stream Kit Pro</p>
+                <p class="mini-copy">Paid yearly</p>
+              </div>
+              <span class="pill ok">年額がお得</span>
+            </div>
+            <div class="price"><strong>¥12,000</strong><span>/ year</span></div>
+            <ul>
+              <li>月額 12 か月分より安い表示例</li>
+              <li>Daily limit: 月額 Pro と同じ上限を想定</li>
+              <li>Session limit: 月額 Pro と同じ上限を想定</li>
+              <li>Translated messages/min: 月額 Pro と同じ上限を想定</li>
+            </ul>
+            <a class="button" href="#billing-copy">年額 Pro を選ぶ</a>
+          </article>
+        </div>
+
+        <p id="billing-copy" class="notice">
+          表示コピー案: Kuro Stream Kit Pro は、まず Comment Translator の利用上限拡張から価値提供を開始します。今後、対象ツールや提供内容が追加・変更される場合があります。価格や対象内容に変更がある場合は、事前にお知らせします。
+        </p>
+      </section>
+
+      <section id="translator-mock" class="section">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">/tools/comment-translator direction</p>
+            <h2>Start blocked と修正先を同じ視界に置く</h2>
+          </div>
+          <span class="pill danger">Start unavailable</span>
+        </div>
+
+        <div class="translator-frame">
+          <aside class="sidebar">
+            <div class="panel">
+              <p class="eyebrow">Readiness</p>
+              <div class="status-list" style="margin-top: 12px">
+                <div class="status-row">
+                  <div>
+                    <strong>YouTube connection</strong>
+                    <span>未接続。Start 前に account integrations で接続してください。</span>
+                  </div>
+                  <span class="pill danger">Required</span>
+                </div>
+                <div class="status-row">
+                  <div>
+                    <strong>Plan</strong>
+                    <span>Free。現在の上限と Pro への導線を表示します。</span>
+                  </div>
+                  <span class="pill">Free</span>
+                </div>
+                <div class="status-row">
+                  <div>
+                    <strong>Private launch</strong>
+                    <span>許可済み tester だけが runtime に進めます。</span>
+                  </div>
+                  <span class="pill ok">Allowed UI mock</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <p class="mini-title">Plan entry</p>
+              <p class="mini-copy">
+                Free は常に利用できます。上限拡張や支払い管理は `/account/billing` に集約します。
+              </p>
+              <div class="button-row" style="margin-top: 12px">
+                <a class="button secondary" href="#billing-copy">プランを見る</a>
+              </div>
+            </div>
+          </aside>
+
+          <section class="tool-panel">
+            <div class="blocked-start">
+              <p class="eyebrow">Start blocked</p>
+              <h3 style="margin-top: 6px">YouTube が未接続のため、翻訳セッションを開始できません</h3>
+              <p class="mini-copy" style="margin-top: 8px">
+                接続だけでは監視、ポーリング、AI 翻訳、クォータ消費は開始しません。Start を押す前に、アカウント連携画面で YouTube の接続状態を準備してください。
+              </p>
+              <div class="button-row" style="margin-top: 14px">
+                <a class="button" href="/account/integrations">YouTube 連携を開く</a>
+                <span class="button disabled" aria-disabled="true">Start</span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="section-title">
+                <div>
+                  <p class="eyebrow">Session preview</p>
+                  <h3>接続後に開始可能</h3>
+                </div>
+                <span class="pill">No live execution</span>
+              </div>
+              <div class="fake-feed" style="margin-top: 12px">
+                <div class="feed-row muted">
+                  <p class="mini-title">Live comment intake</p>
+                  <p class="mini-copy">YouTube 接続と明示的な Start 後に server-only 境界で確認します。</p>
+                </div>
+                <div class="feed-row muted">
+                  <p class="mini-title">Translation output</p>
+                  <p class="mini-copy">このモックは provider 呼び出し、liveChatId 解決、token 解決を行いません。</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">/account entry copy</p>
+            <h2>Account 側の入口文言</h2>
+          </div>
+        </div>
+
+        <div class="account-entry">
+          <article class="mini-card">
+            <p class="mini-title">Integrations</p>
+            <p class="mini-copy">
+              YouTube 接続状態を確認します。接続だけではバックグラウンド監視や翻訳は開始しません。
+            </p>
+            <div class="button-row" style="margin-top: 12px">
+              <a class="button secondary" href="/account/integrations">連携を管理</a>
+            </div>
+          </article>
+
+          <article class="mini-card">
+            <p class="mini-title">Billing</p>
+            <p class="mini-copy">
+              Free / Kuro Stream Kit Pro のプラン状態、月額・年額の表示、支払い管理への入口をまとめます。
+            </p>
+            <div class="button-row" style="margin-top: 12px">
+              <a class="button secondary" href="/account/billing">プランを確認</a>
+            </div>
+          </article>
+
+          <article class="mini-card">
+            <p class="mini-title">Reconnect guidance</p>
+            <p class="mini-copy">
+              再接続が必要な場合は Start 付近と Integrations の両方で、再接続先を明示します。
+            </p>
+            <div class="button-row" style="margin-top: 12px">
+              <span class="button disabled" aria-disabled="true">再接続が必要</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="panel safe">
+          <p class="mini-title">Copy boundary</p>
+          <p class="mini-copy" style="color: inherit">
+            このモックと後続 UI は、secret、token、OAuth access token、refresh token、authorization code、owner user id value、provider channel id value、liveChatId、service_role key value、Authorization header value、Stripe secret key、webhook signing secret、provider target metadata を表示・要求・保存しません。
+          </p>
+        </div>
+      </section>
+
+      <p class="footer-note">
+        Static artifact: docs/mockups/comment-translator/operator-ux-readiness-task18-mock.html. Review checkpoint only; no commit, push, PR, deploy, live/provider execution, Stripe live-mode action, or remote mutation is performed at this stage.
+      </p>
+    </main>
+  </body>
+</html>

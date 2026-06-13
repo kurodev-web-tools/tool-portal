@@ -52,6 +52,18 @@ export const tools: ToolDefinition[] = [
     icon: "SC"
   },
   {
+    id: "comment-translator",
+    name: "Kuro Live Comment Translator",
+    description:
+      "YouTubeコメントを明示Start後のセッション内で翻訳表示する公開版プレビューです。接続だけでは監視やAI翻訳を開始しません。",
+    category: "stream",
+    status: "available",
+    suite: "stream-workflow",
+    href: "/tools/comment-translator",
+    sidebar: true,
+    icon: "CT"
+  },
+  {
     id: "thumbnail-editor",
     name: "Thumbnail Editor",
     description: "用途別プリセットを選んで、文字と立ち絵を差し替えるVTuber向けサムネ組み立てツールです。",

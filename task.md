@@ -19,21 +19,22 @@
 ## Active Priority
 
 1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 are merged, Task 27 completion PR #434 is merged, and Task 28 private-gated main promotion / production smoke is blocked pending explicit approval for externally visible actions.
-   - current PR scope: Task 28 readiness/blocker record after PR #434 merge, without running main promotion, deploy/upload, production/custom URL smoke, remote mutation, Stripe live-mode action, billing mutation, provider target lookup, liveChatId lookup, or live/provider execution.
+   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 are merged, Task 27 completion PR #434 is merged, Task 28 readiness/blocker PR #435 is merged, and Task 28 private-gated main promotion / production smoke is blocked pending explicit approval for externally visible actions.
+   - current PR scope: Task 28 production env readiness/blocker after PR #435 merge, without running main promotion, deploy/upload, production/custom URL smoke, remote mutation, Stripe live-mode action, billing mutation, provider target lookup, liveChatId lookup, translation provider API execution, or live/provider execution.
    - final goal: all tasks in `Public Release Roadmap` are completed, verified, merged, and any required deployed/live smoke evidence is recorded with sanitized output. At that point the comment translator is considered public-release capable.
    - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
    - current readiness doc: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md`.
-   - inspected surfaces for Task 28 readiness: `task.md`, public requirements, final QA, security/privacy final review, Task 27 live/provider smoke readiness, public deployment/live-smoke runbook, Task 21-25 active docs, private launch access gate, abuse/rate-limit guard, billing readiness, durable persistence readiness, monitoring readiness, and route/action private-gate surfaces.
-   - merge gate evidence: PR #434 is merged. Merge commit `617985d6b56057d40a9fdcf093f9f32846e7e45b` is contained in `origin/codex/comment-translator-preview`. GitHub metadata checked state `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-live-provider-smoke-ready-preflight-post-pr433`, merged at `2026-06-12T15:27:41Z`. Cloudflare Pages check rollup completed with failure and remains separate from local verification.
+   - current env readiness doc: `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`.
+   - inspected surfaces for Task 28 env readiness: `task.md`, Task 28 readiness doc, public deployment/live-smoke runbook, final QA, security/privacy final review, Stripe live readiness, provider cost policy, private launch access gate, Supabase auth/server env, YouTube token-store/status/smoke commands, billing runtime/actions, provider runtime, Cloudflare/Wrangler config, and route/action private-gate surfaces.
+   - merge gate evidence: PR #435 is merged. Merge commit `b475c12aac22b126664c74cc581a5d5a185dba99` is contained in `origin/codex/comment-translator-preview`. GitHub metadata checked state `MERGED`, base `codex/comment-translator-preview`, head `codex/comment-translator-private-gated-main-promotion-readiness-post-pr434`, merged at `2026-06-13T02:54:45Z`. Cloudflare Pages check rollup completed with failure and remains separate from local verification.
    - Task 28 completion criteria: not met. Readiness/blocker PR approved by release owner, but main promotion, deploy/upload, and production/custom smoke were not run. Production/custom deployed target serving the current app, private launch gate production negative smoke, allowed-tester account/plan/session production smoke, console checks, and production rollback evidence remain missing.
-   - completed in this branch: recorded Task 28 readiness/blocker state, merge gate evidence, approval boundary, missing evidence, next allowed command shape, and sanitized output policy in the active readiness doc and task board.
+   - completed in this branch: recorded Task 28 production env readiness/blocker state, reference-name-only env inventory, required/optional/smoke-only classifications, missing-reference fail-closed behavior, operator setting locations, approval boundary, and sanitized output policy in the active env readiness doc, Task 28 readiness doc, focused contract, and task board.
    - unchanged in this branch: no route behavior, UI/CSS/layout, SQL migration file, RLS policy, remote Supabase migration apply, remote mutation, remote alert/dashboard mutation, Stripe live-mode action, Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, deploy/upload, browser storage expansion, handoff payload expansion, raw comment logging, credential value exposure, private provider target value exposure, quota write, durable persistence, main promotion, provider target lookup, liveChatId lookup, or live/provider execution was added or run.
-   - verification for this branch: `node scripts/comment-translator-private-gated-main-promotion-readiness-contract.mjs`, `node scripts/comment-translator-private-launch-access-gate-contract.mjs`, the changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. Pre-existing Task 14/16/19/21-27 contract scripts that assert old detailed `task.md` completion-log wording or prior current-PR scope were not used as completion gates because `task.md` is now intentionally an active board and those scripts fail on stale task-board assertions rather than Task 28 behavior.
-   - width checks skipped: Task 28 readiness/blocker changes only docs, a Node contract script, and this task note. There is no UI, rendered text, CSS, route behavior, browser storage, or visible layout change.
+   - verification for this branch: `node scripts/comment-translator-production-env-readiness-contract.mjs`, `node scripts/comment-translator-private-gated-main-promotion-readiness-contract.mjs`, `node scripts/comment-translator-private-launch-access-gate-contract.mjs`, the changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed.
+   - width checks skipped: Task 28 production env readiness/blocker changes only docs, Node contract scripts, and this task note. There is no UI, rendered text, CSS, route behavior, browser storage, or visible layout change.
    - public-release capable: no. Task 28 is readiness/blocker only; production/custom deployed smoke and final public launch gate flip remain incomplete or separately gated.
-   - residual risk: main promotion, deploy/upload, production/custom smoke, allowed-tester smoke, non-allowed-user denial smoke, live/provider execution, provider target lookup, liveChatId lookup, translation provider API execution, Stripe live-mode actions, remote mutation, billing setting mutation, webhook registration, Customer Portal redirect, and remote schema migration remain approval-gated; provider pricing/data-use/retention/training/dashboard posture must be rechecked before any paid or public launch action.
-   - next safe action: create this Task 28 readiness/blocker PR targeting `codex/comment-translator-preview`; after merge, continue Task 28 only with explicit same-thread approval for the exact main promotion, deploy/upload, and production/custom smoke plan.
+   - residual risk: main promotion, deploy/upload, production/custom smoke, allowed-tester smoke, non-allowed-user denial smoke, live/provider execution, provider target lookup, liveChatId lookup, translation provider API execution, Stripe live-mode actions, remote mutation, billing setting mutation, webhook registration, Customer Portal redirect, and remote schema migration remain approval-gated; production env reference presence has not been checked against any remote dashboard in this branch; provider pricing/data-use/retention/training/dashboard posture must be rechecked before any paid or public launch action.
+   - next safe action: create this Task 28 production env readiness/blocker PR targeting `codex/comment-translator-preview`; after merge, the operator can configure or confirm production references by name only, then continue Task 28 only with explicit same-thread approval for the exact main promotion, deploy/upload, and production/custom smoke plan.
 
 ## Public Release Roadmap
 
@@ -236,7 +237,7 @@ Use one Codex thread, one feature branch, and one PR per task. These tasks are r
    - Scope: main merge gate, production deploy trigger/verification, production/custom route smoke, allowed-tester access, non-allowed-user denial, rollback readiness.
    - Completion criteria: production/custom deployed target serves the current app; private launch gate blocks general users; allowed testers can complete account/plan/session smoke; evidence is sanitized.
    - Verification: production route checks only after explicit approval, width checks, console checks, access-gate negative checks, rollback notes.
-   - Status: readiness/blocker PR approved by release owner in current branch. Task 28 completion criteria are not met because main promotion, deploy/upload, production/custom smoke, allowed-tester smoke, non-allowed-user denial smoke, and rollback action/evidence are still blocked pending explicit same-thread approval. Active readiness doc: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md`.
+   - Status: readiness/blocker PR approved by release owner in PR #435, then production env readiness/blocker advanced in current branch. Task 28 completion criteria are not met because main promotion, deploy/upload, production/custom smoke, allowed-tester smoke, non-allowed-user denial smoke, and rollback action/evidence are still blocked pending explicit same-thread approval. Active readiness docs: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md` and `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`.
 
 29. Public launch gate flip
    - Goal: make Comment Translator publicly available only after production smoke and accepted risks support it.
@@ -328,9 +329,9 @@ D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を�
 - This prompt is not approval for main promotion, deploy/upload, production/custom URL smoke, Cloudflare production mutation, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, webhook registration, provider target lookup, liveChatId lookup, or live/provider execution.
 
 Merge gate:
-- Task 28 readiness/blocker PR が merge 済みであることを確認してください。
-- gh が使える場合は Task 28 readiness/blocker PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
-- Task 28 readiness/blocker PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認してください。認証 token の値は要求・表示しないでください。
+- Task 28 production env readiness/blocker PR が merge 済みであることを確認してください。
+- gh が使える場合は Task 28 production env readiness/blocker PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
+- Task 28 production env readiness/blocker PR の merge commit が `origin/codex/comment-translator-preview` に含まれることを Git で確認してください。認証 token の値は要求・表示しないでください。
 
 現在地:
 - Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
@@ -339,8 +340,9 @@ Merge gate:
 - Task 27 completion PR #434 は merge 済みです。
 - Task 27 completion PR #434 で approved Azure Translator live/provider smoke evidence が記録されました。
 - Task 27 sanitized final evidence: returned 3, eligible 3, provider requests 2, provider calls 2, translated 2, skipped 1, language-policy skipped 1, provider-unavailable 0, recoverable errors 0, terminal errors 0, stop reason null。
-- Task 28 readiness/blocker PR で `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md`、`scripts/comment-translator-private-gated-main-promotion-readiness-contract.mjs`、`task.md` が追加・更新されています。
-- Task 28 readiness/blocker PR は completion PR ではありません。main promotion、deploy/upload、production/custom URL smoke、allowed-tester production smoke、non-allowed-user denial production smoke、rollback action/evidence は未実行です。
+- Task 28 readiness/blocker PR #435 は merge 済みです。Task 28 completion PR ではなく、main promotion、deploy/upload、production/custom URL smoke、allowed-tester production smoke、non-allowed-user denial production smoke、rollback action/evidence は未実行です。
+- Task 28 production env readiness/blocker PR で `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`、`scripts/comment-translator-production-env-readiness-contract.mjs`、Task 28 readiness doc、`task.md` が追加・更新されています。
+- Production env inventory は reference-name-only です。各 reference は required / optional / smoke-only に分類され、missing 時の fail-closed behavior と operator setting location が記録されています。secret 値や private id 値は記録されていません。
 - Task 19 で provider/cost policy が記録され、Task 20 で server-only Azure/OpenAI mini provider policy runtime、Free/Paid routing、paid recoverable Azure fallback、strict OpenAI JSON parser、sanitized usage/cost estimate handoff が追加されています。
 - Task 21 で Stripe live readiness checklist、server-only readiness runtime、signed-webhook entitlement evidence review、failed/canceled/expired safe-degradation review、rollback notes が追加されています。
 - Task 22 で server-only app-side abuse/rate-limit guard、route/action/API negative checks、private-launch denial throttling、provider/billing fail-closed behavior が追加されています。
@@ -354,7 +356,8 @@ Merge gate:
 
 次にやること:
 - Continue Task 28: Private-gated main promotion and production smoke.
-- 最初に Task 28 readiness doc、deployment/live-smoke runbook、final QA、security/privacy final review、private launch access gate、route/API negative checks、rollback readiness を確認してください。
+- 最初に Task 28 readiness doc、production env readiness doc、deployment/live-smoke runbook、final QA、security/privacy final review、private launch access gate、route/API negative checks、rollback readiness を確認してください。
+- main promotion / deploy / production smoke に進む前に、operator が production env references を Cloudflare / Wrangler or CI / Supabase / Stripe / provider dashboard / operator-local smoke env に reference-name-only で設定・確認済みかを presence-only で整理してください。値は要求・表示・保存しないでください。
 - main promotion / deploy / production smoke に進む前に、exact command plan、target label、expected sanitized evidence、abort conditions、rollback path を提示してください。
 - same-thread ready preflight と sanitized output review が揃った後にだけ、exact action への explicit in-thread approval を求めてください。
 - 承認が揃うまでは main promotion、deploy/upload、production/custom URL smoke、allowed-tester production smoke、non-allowed-user denial production smoke、Cloudflare production mutation、remote mutation を実行しないでください。
@@ -364,6 +367,7 @@ Merge gate:
 - secret / token / provider credential / OAuth token / private identifier の値は要求・表示・保存しないでください。必要な env は reference 名だけを扱ってください。
 
 Verification:
+- `node scripts/comment-translator-production-env-readiness-contract.mjs`
 - `node scripts/comment-translator-private-gated-main-promotion-readiness-contract.mjs`
 - `node scripts/comment-translator-private-launch-access-gate-contract.mjs`
 - relevant deployment/final QA/security route/API negative checks that match any changes

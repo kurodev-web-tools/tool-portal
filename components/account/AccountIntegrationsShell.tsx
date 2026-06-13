@@ -26,27 +26,40 @@ const integrationsCopy = {
     providerRoutingBody:
       "翻訳providerの切り替えは後続のserver-side Free/Paid policyで決まります。この画面でAzure、OpenAI mini、fallback providerは選択しません。",
     status: {
-      "not-connected": "未接続",
-      ready: "接続済み",
+      connected: "接続済み",
+      disconnected: "未接続",
       "reconnect-required": "再接続が必要",
-      unavailable: "確認できません"
+      unavailable: "確認できません",
+      error: "状態確認エラー"
     },
     readiness: {
-      "not-connected": "YouTube接続を開始できます。",
-      ready: "翻訳セッション開始時にserver-only境界で接続状態を再確認します。",
+      connected: "翻訳セッション開始時にserver-only境界で接続状態を再確認します。",
+      disconnected: "YouTube接続を開始できます。",
       "reconnect-required": "再接続が必要です。",
-      unavailable: "安全な接続状態だけを表示しています。時間をおいて再確認してください。"
+      unavailable: "安全な接続状態だけを表示しています。設定が有効になるまで操作はfail closedします。",
+      error: "接続状態の確認に失敗しました。tokenやprovider情報は表示せず、再確認できる状態だけを返しています。"
     },
     connect: "YouTubeを接続",
     reconnect: "再接続",
     disconnect: "切断",
-    unavailableAction: "後続runtimeで有効化",
     actionNote:
-      "このPRの操作はentry pointとaction boundaryの準備までです。OAuth開始、token更新、provider実行、切断runtimeはまだ実行しません。",
+      "接続状態はtrusted credential statusからsanitized表示します。切断は既存のserver-only credential invalidationだけを使い、provider revokeやlive APIは実行しません。",
     authMessages: {
-      "youtube-connect-prepared": "YouTube接続の開始操作は後続runtimeで有効化します。この操作ではprovider接続や監視は開始していません。",
-      "youtube-reconnect-prepared": "YouTube再接続の操作は後続runtimeで有効化します。この操作ではtoken更新やprovider接続は実行していません。",
-      "youtube-disconnect-prepared": "YouTube切断の操作は後続runtimeで有効化します。この操作ではrevocationやprovider通信は実行していません。"
+      "youtube-oauth-connected": "YouTube接続状態を更新しました。接続だけでは監視、ポーリング、AI翻訳、クォータ消費は開始しません。",
+      "youtube-oauth-disabled": "YouTube credential resolution は現在無効化されています。安全のため接続状態の利用を停止しています。",
+      "youtube-oauth-env-missing": "YouTube連携に必要なserver-only設定が未準備です。secret値はこの画面に表示しません。",
+      "youtube-oauth-sign-in-required": "YouTube連携の操作にはログインが必要です。",
+      "youtube-oauth-private-launch-gated": "YouTube連携はprivate launch gateで制限されています。",
+      "youtube-oauth-start-unavailable": "YouTube接続開始に必要なserver-only設定が未準備です。",
+      "youtube-oauth-state-unavailable": "YouTube接続のstate作成に失敗しました。OAuth値は保存していません。",
+      "youtube-oauth-callback-error": "YouTube OAuth callback を安全に完了できませんでした。",
+      "youtube-oauth-token-exchange-failed": "YouTube OAuth token exchange を安全に完了できませんでした。",
+      "youtube-oauth-persistence-unavailable": "YouTube credential store が未準備です。",
+      "youtube-oauth-persistence-failed": "YouTube credential store の更新に失敗しました。",
+      "youtube-disconnect-disconnected": "YouTube credential reference をserver-only境界で切断しました。provider revokeは実行していません。",
+      "youtube-disconnect-already-disconnected": "YouTube credential reference はすでに切断済みです。",
+      "youtube-disconnect-unavailable": "YouTube切断は現在利用できません。credential値やprovider情報は表示していません。",
+      "youtube-disconnect-failed": "YouTube切断処理に失敗しました。credential値やprovider応答は表示していません。"
     },
     backToAccount: "アカウント設定へ戻る",
     openTranslator: "翻訳ツールを開く"
@@ -69,27 +82,40 @@ const integrationsCopy = {
     providerRoutingBody:
       "Translation provider routing is decided later by server-side Free/Paid policy. This screen does not choose Azure, OpenAI mini, or fallback providers.",
     status: {
-      "not-connected": "Not connected",
-      ready: "Connected",
+      connected: "Connected",
+      disconnected: "Disconnected",
       "reconnect-required": "Reconnect required",
-      unavailable: "Unavailable"
+      unavailable: "Connection status unavailable",
+      error: "Connection status check failed"
     },
     readiness: {
-      "not-connected": "You can start the YouTube connection flow.",
-      ready: "The server-only boundary will recheck the connection when a translation session starts.",
+      connected: "The server-only boundary will recheck the connection when a translation session starts.",
+      disconnected: "You can start the YouTube connection flow.",
       "reconnect-required": "Reconnect is required.",
-      unavailable: "Only safe connection state is shown. Try again later."
+      unavailable: "Only safe connection state is shown. Actions fail closed until the server-only setup is ready.",
+      error: "The trusted status check failed. Token and provider details are not displayed."
     },
     connect: "Connect YouTube",
     reconnect: "Reconnect",
     disconnect: "Disconnect",
-    unavailableAction: "Enabled by later runtime",
     actionNote:
-      "This PR prepares the entry point and action boundary only. It does not run OAuth start, token renewal, provider execution, or disconnect runtime.",
+      "Status is read from trusted credential status and shown as sanitized copy. Disconnect only invalidates the existing server-only credential reference; it does not run provider revoke or live APIs.",
     authMessages: {
-      "youtube-connect-prepared": "The YouTube connect action is prepared for later runtime. This did not connect to a provider or start monitoring.",
-      "youtube-reconnect-prepared": "The YouTube reconnect action is prepared for later runtime. This did not refresh tokens or connect to a provider.",
-      "youtube-disconnect-prepared": "The YouTube disconnect action is prepared for later runtime. This did not revoke credentials or contact a provider."
+      "youtube-oauth-connected": "YouTube connection status was updated. Connecting alone does not start monitoring, polling, AI translation, or quota use.",
+      "youtube-oauth-disabled": "YouTube credential resolution is currently disabled. Connection use fails closed.",
+      "youtube-oauth-env-missing": "Required server-only YouTube integration settings are not ready. Secret values are not displayed here.",
+      "youtube-oauth-sign-in-required": "Sign in is required to manage YouTube integration.",
+      "youtube-oauth-private-launch-gated": "YouTube integration is limited by the private launch gate.",
+      "youtube-oauth-start-unavailable": "Server-only settings required to start YouTube connection are not ready.",
+      "youtube-oauth-state-unavailable": "The YouTube connection state could not be created safely. OAuth values were not stored.",
+      "youtube-oauth-callback-error": "The YouTube OAuth callback could not be completed safely.",
+      "youtube-oauth-token-exchange-failed": "The YouTube OAuth token exchange could not be completed safely.",
+      "youtube-oauth-persistence-unavailable": "The YouTube credential store is not ready.",
+      "youtube-oauth-persistence-failed": "The YouTube credential store update failed.",
+      "youtube-disconnect-disconnected": "The YouTube credential reference was disconnected through the server-only boundary. Provider revoke was not run.",
+      "youtube-disconnect-already-disconnected": "The YouTube credential reference was already disconnected.",
+      "youtube-disconnect-unavailable": "YouTube disconnect is currently unavailable. Credential values and provider details are not displayed.",
+      "youtube-disconnect-failed": "YouTube disconnect failed. Credential values and provider responses are not displayed."
     },
     backToAccount: "Back to account",
     openTranslator: "Open translator"
@@ -209,7 +235,7 @@ export function AccountIntegrationsShell({
           </dl>
           <div className="mt-5 grid gap-2 sm:grid-cols-3">
             <ActionButton action={startYouTubeConnectAction} disabled={!youtubeIntegration.canConnect} variant="primary">
-              {youtubeIntegration.canConnect ? copy.connect : copy.unavailableAction}
+              {copy.connect}
             </ActionButton>
             <ActionButton action={reconnectYouTubeAction} disabled={!youtubeIntegration.canReconnect}>
               {copy.reconnect}

@@ -116,6 +116,7 @@ export type YouTubeOAuthCredentialTranslatorStartReadiness =
         | "revoked"
         | "trusted-adapter-not-wired"
         | "trusted-adapter-query-failed"
+        | "credential-not-found"
         | "auth-unavailable"
         | "caller-not-authenticated"
         | "private-launch-gated"
@@ -256,11 +257,27 @@ export function assessYouTubeOAuthCredentialTranslatorStartReadiness(
     };
   }
 
+  if (status.status === "disconnected") {
+    return {
+      status: "blocked-reconnect-required",
+      provider: "youtube",
+      credentialReferenceId: status.credentialReferenceId,
+      reason: "credential-not-found",
+      translatorStartAllowed: false,
+      reconnectGuidance: "reconnect-youtube"
+    };
+  }
+
   return {
     status: "blocked-unavailable",
     provider: "youtube",
     credentialReferenceId: status.credentialReferenceId,
-    reason: status.status === "credential-resolution-disabled" ? "credential-resolution-disabled" : status.reason,
+    reason:
+      status.status === "credential-resolution-disabled"
+        ? "credential-resolution-disabled"
+        : status.status === "error"
+          ? status.reason
+          : status.reason,
     translatorStartAllowed: false,
     reconnectGuidance: "reconnect-youtube"
   };

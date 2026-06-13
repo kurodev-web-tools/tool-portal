@@ -3,10 +3,13 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
+import { readYouTubeOAuthCredentialDisconnectResult } from "@/lib/comment-translator-youtube-disconnect-runtime";
+import { readYouTubeAccountIntegrationCredentialReference } from "@/lib/comment-translator-youtube-account-integration-status";
 import {
   startYouTubeOAuthConnectRedirect,
   startYouTubeOAuthReconnectRedirect
 } from "@/lib/comment-translator-youtube-oauth-connect-callback";
+import { createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { normalizeLocale } from "@/lib/locale";
 import { normalizeThemePreference } from "@/lib/local-preferences";
 import { clearRecoverySessionPending, isRecoverySessionPending } from "@/lib/supabase/recovery-session";
@@ -374,10 +377,45 @@ export async function reconnectYouTubeIntegrationAction() {
 
 export async function disconnectYouTubeIntegrationAction() {
   const accountSession = await getAccountSessionState();
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
-  if (launchAccess.status === "blocked") {
-    accountIntegrationsRedirect("private-launch-gated");
+  if (accountSession.authStatus !== "signed-in" || !accountSession.user) {
+    accountIntegrationsRedirect("youtube-oauth-sign-in-required");
   }
 
-  accountIntegrationsRedirect("youtube-disconnect-prepared");
+  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    accountIntegrationsRedirect("youtube-oauth-private-launch-gated");
+  }
+
+  const credentialReference = readYouTubeAccountIntegrationCredentialReference({ accountSession });
+  if (credentialReference.status === "unavailable") {
+    accountIntegrationsRedirect(
+      credentialReference.reason === "credential-resolution-disabled"
+        ? "youtube-oauth-disabled"
+        : credentialReference.reason === "credential-reference-env-missing"
+          ? "youtube-oauth-env-missing"
+          : "youtube-oauth-sign-in-required"
+    );
+  }
+
+  const trustedDisconnectRuntime = createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime();
+  const disconnectResult = await readYouTubeOAuthCredentialDisconnectResult({
+    credentialReferenceId: credentialReference.credentialReferenceId,
+    trustedDisconnectAdapter: trustedDisconnectRuntime.trustedDisconnectAdapter,
+    callerAuthorization: credentialReference.callerAuthorization,
+    credentialResolutionDisabled: false
+  });
+
+  if (disconnectResult.status === "disconnected") {
+    accountIntegrationsRedirect("youtube-disconnect-disconnected");
+  }
+
+  if (disconnectResult.status === "already-disconnected") {
+    accountIntegrationsRedirect("youtube-disconnect-already-disconnected");
+  }
+
+  if (disconnectResult.status === "disconnect-failed") {
+    accountIntegrationsRedirect("youtube-disconnect-failed");
+  }
+
+  accountIntegrationsRedirect("youtube-disconnect-unavailable");
 }

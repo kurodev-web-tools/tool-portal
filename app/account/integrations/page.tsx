@@ -9,7 +9,7 @@ import { AccountIntegrationsShell } from "@/components/account/AccountIntegratio
 import { PortalShell } from "@/components/portal/PortalShell";
 import { CommentTranslatorPrivateLaunchUnavailable } from "@/components/comment-translator/CommentTranslatorPrivateLaunchUnavailable";
 import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
-import { createYouTubeAccountIntegrationViewModel } from "@/lib/comment-translator-youtube-account-integration";
+import { readYouTubeAccountIntegrationStatusViewModel } from "@/lib/comment-translator-youtube-account-integration-status";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { getAccountSessionState } from "@/lib/supabase/session";
 
@@ -51,12 +51,14 @@ export default async function AccountIntegrationsPage({ searchParams }: AccountI
     );
   }
 
+  const youtubeIntegration = await readYouTubeAccountIntegrationStatusViewModel({ accountSession });
+
   return (
     <PortalShell>
       <AccountIntegrationsShell
         accountStatus={accountSession}
         integrationMessage={params?.integration ?? null}
-        youtubeIntegration={createYouTubeAccountIntegrationViewModel()}
+        youtubeIntegration={youtubeIntegration}
         startYouTubeConnectAction={startYouTubeIntegrationConnectAction}
         reconnectYouTubeAction={reconnectYouTubeIntegrationAction}
         disconnectYouTubeAction={disconnectYouTubeIntegrationAction}

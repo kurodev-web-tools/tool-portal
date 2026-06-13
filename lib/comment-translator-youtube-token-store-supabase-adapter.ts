@@ -55,7 +55,7 @@ export type YouTubeOAuthCredentialStatusOwnerAuthorizedReadRequest = {
 
 type SupabaseSingleResult = {
   data: YouTubeOAuthCredentialSupabaseRow | null;
-  error: { message?: string } | null;
+  error: { code?: string; message?: string } | null;
 };
 
 type SupabaseSingleQuery = {
@@ -231,6 +231,13 @@ export const youtubeOAuthCredentialTrustedServiceRoleDisconnectRuntimeContract =
   loggingPolicy: "no-token-value-logging",
   rollbackBoundary: "revoke-or-invalidate-unusable-credential-reference"
 } as const;
+
+export class YouTubeOAuthCredentialNotFoundError extends Error {
+  constructor() {
+    super("Trusted YouTube OAuth credential was not found.");
+    this.name = "YouTubeOAuthCredentialNotFoundError";
+  }
+}
 
 export function createYouTubeOAuthCredentialSupabaseInsert(
   draft: YouTubeOAuthCredentialPersistenceDraft
@@ -520,6 +527,10 @@ export function createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime({
 }
 
 function requireSupabaseRow(result: SupabaseSingleResult): YouTubeOAuthCredentialSupabaseRow {
+  if (!result.data && (!result.error || result.error.code === "PGRST116")) {
+    throw new YouTubeOAuthCredentialNotFoundError();
+  }
+
   if (result.error || !result.data) {
     throw new Error("Trusted YouTube OAuth credential Supabase adapter query failed.");
   }

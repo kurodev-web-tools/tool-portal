@@ -1,8 +1,8 @@
 # Kuro Live Comment Translator Production Env Readiness
 
-Status: Task 28 production env readiness/blocker record. Public-release capable: no.
+Status: Task 28 production env readiness/reference inventory. Public-release capable: no.
 
-This record inventories production env, secret, and variable references before private-gated main promotion. It is reference-name-only. It is not approval for main promotion, merge to `main`, deploy/upload, production/custom URL smoke, Cloudflare production mutation, remote mutation, remote schema migration, Supabase migration apply, Stripe live-mode action, billing setting mutation, Customer Portal redirect, webhook registration, provider target lookup, liveChatId lookup, or live/provider execution.
+This record inventories production env, secret, and variable references used by the private-gated production path. It is reference-name-only. It is not approval for deploy/upload, production/custom URL smoke, Cloudflare production mutation, remote mutation, remote schema migration, Supabase migration apply, Stripe live-mode action, billing setting mutation, Customer Portal redirect, webhook registration, provider target lookup, liveChatId lookup, translation provider API execution, or live/provider execution.
 
 Output policy: sanitized-metadata-only. Secret values, token values, OAuth values, authorization code values, owner user id values, provider channel id values, liveChatId values, service-role key values, Authorization header values, Stripe secret values, webhook signing secret values, provider target metadata values, raw comment text, provider response bodies, browser storage payloads, and handoff payload expansion are not requested, displayed, stored, or recorded.
 
@@ -77,9 +77,9 @@ These references are not production app config by default. They are operator-loc
 | `YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER` | smoke-only | Operator-local polling token-material check | Token material availability stays operator-local; value must not be printed or recorded. |
 | `YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO` | smoke-only | Operator-local polling token-material check | Missing blocks token-material availability evidence. |
 
-## Production Preflight Interpretation
+## Production Interpretation
 
-Before any main promotion or production smoke approval, the release owner should confirm reference presence in the correct boundary without pasting values:
+Before any production smoke, session smoke, provider execution, Stripe action, or public launch gate approval, the release owner should confirm reference presence in the correct boundary without pasting values:
 
 1. Cloudflare production app vars/secrets contain the `required` references for site URL, Supabase public auth, and private-launch allowlist.
 2. General users remain blocked by default; missing private-launch allowlist must not open access.
@@ -94,4 +94,4 @@ Width checks skipped for this production env readiness PR. The change is docs, a
 
 ## Next Safe Action
 
-After this readiness/blocker PR is merged, an operator can configure or confirm production references in Cloudflare, Wrangler/CI, Supabase, Stripe, provider dashboards, and operator-local smoke env without sharing values. Task 28 completion still requires separate same-thread ready preflight, sanitized output review, and explicit approval for exact main promotion, deploy/upload, and production/custom smoke actions.
+This inventory remains the active reference-name-only checklist for production Worker runtime, build/deploy, provider, Stripe, and operator-local smoke references. The Task 28 planning-only main-promotion records are archived; current Task 28 production smoke evidence is recorded in `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE.md`.

@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const taskPath = "task.md";
-const mainReadinessDocPath = "docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md";
 const envReadinessDocPath = "docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md";
+const productionEvidenceDocPath = "docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE.md";
 
 function read(path) {
   return fs.readFileSync(path, "utf8");
@@ -12,14 +12,13 @@ function read(path) {
 assert.ok(fs.existsSync(envReadinessDocPath), "production env readiness doc exists");
 
 const task = read(taskPath);
-const mainReadinessDoc = read(mainReadinessDocPath);
 const envDoc = read(envReadinessDocPath);
-const combined = `${task}\n${mainReadinessDoc}\n${envDoc}`;
+const productionEvidenceDoc = read(productionEvidenceDocPath);
+const combined = `${task}\n${envDoc}\n${productionEvidenceDoc}`;
 
-assert.match(envDoc, /Task 28 production env readiness\/blocker record/i, "doc records Task 28 env readiness scope");
+assert.match(envDoc, /Task 28 production env readiness\/reference inventory/i, "doc records Task 28 env readiness scope");
 assert.match(envDoc, /Public-release capable: no/i, "doc keeps public-release capable disabled");
 assert.match(envDoc, /reference-name-only/i, "doc is reference-name-only");
-assert.match(envDoc, /not approval for main promotion/i, "doc does not approve main promotion");
 assert.match(envDoc, /deploy\/upload[\s\S]*production\/custom URL smoke/i, "doc gates deploy and production smoke");
 assert.match(envDoc, /sanitized-metadata-only/i, "doc records sanitized output policy");
 assert.match(envDoc, /`required`[\s\S]*`optional`[\s\S]*`smoke-only`/i, "doc defines required optional smoke-only classes");
@@ -78,13 +77,18 @@ assert.match(envDoc, /route\/session caller auth becomes unavailable/i, "doc rec
 assert.match(envDoc, /Token material availability stays operator-local/i, "doc records operator-local token material boundary");
 assert.match(envDoc, /does not approve Cloudflare mutation/i, "doc does not approve deploy mutation");
 assert.match(envDoc, /Width checks skipped[\s\S]*docs, a Node contract script, and task-board notes only/i, "doc records width-check skip reason");
+assert.match(
+  envDoc,
+  /COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE\.md/i,
+  "env readiness links current production evidence doc"
+);
 
 assert.match(task, /current env readiness doc: `docs\/active\/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS\.md`/i, "task board points to env readiness doc");
-assert.match(task, /production env readiness PR #436 are merged/i, "task board records env readiness merge state");
-assert.match(task, /current env readiness doc: `docs\/active\/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS\.md`/i, "task board still points to env readiness doc");
-assert.match(task, /main promotion, deploy\/upload, and production\/custom smoke were not run/i, "task board keeps external actions blocked");
+assert.match(task, /current evidence doc: `docs\/active\/COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE\.md`/i, "task board points to production evidence doc");
+assert.match(task, /production env readiness PR #436/i, "task board records env readiness merge state");
+assert.match(task, /allowed-tester session start smoke was not run/i, "task board does not overclaim session smoke");
 assert.match(task, /public-release capable: no/i, "task board keeps public-release capable disabled");
-assert.match(mainReadinessDoc, /Production Env Readiness/i, "Task 28 readiness doc links env readiness");
+assert.match(productionEvidenceDoc, /PRODUCTION_ENV_READINESS\.md/i, "production evidence doc links env readiness");
 
 const forbiddenValuePattern =
   /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+/i;

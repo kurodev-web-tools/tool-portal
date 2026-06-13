@@ -34,6 +34,9 @@ export type YouTubeOAuthSanitizedStatus =
   | "youtube-oauth-callback-error"
   | "youtube-oauth-private-launch-gated"
   | "youtube-oauth-sign-in-required"
+  | "youtube-oauth-persistence-unavailable"
+  | "youtube-oauth-token-exchange-failed"
+  | "youtube-oauth-persistence-failed"
   | "youtube-oauth-token-store-blocked";
 
 type YouTubeOAuthStateCookiePayload = {
@@ -267,6 +270,7 @@ export async function validateYouTubeOAuthCallbackRequest({
 }): Promise<{
   status: YouTubeOAuthSanitizedStatus;
   redirectPath: "/account/integrations";
+  intent: YouTubeOAuthIntent | null;
 }> {
   const envReadiness = readYouTubeOAuthEnvReadiness(env);
   const cookieStore = await cookies();
@@ -325,7 +329,7 @@ export async function validateYouTubeOAuthCallbackRequest({
     return createCallbackDecision("youtube-oauth-callback-error");
   }
 
-  return createCallbackDecision("youtube-oauth-token-store-blocked");
+  return createCallbackDecision("youtube-oauth-token-store-blocked", parsedState.intent);
 }
 
 export function buildYouTubeOAuthCallbackRedirect(status: YouTubeOAuthSanitizedStatus, origin: string) {
@@ -418,10 +422,11 @@ function normalizeYouTubeOAuthRedirectPath(
   return path && allowed.has(path as YouTubeOAuthRedirectPath) ? (path as YouTubeOAuthRedirectPath) : "/account/integrations";
 }
 
-function createCallbackDecision(status: YouTubeOAuthSanitizedStatus) {
+function createCallbackDecision(status: YouTubeOAuthSanitizedStatus, intent: YouTubeOAuthIntent | null = null) {
   return {
     status,
-    redirectPath: "/account/integrations" as const
+    redirectPath: "/account/integrations" as const,
+    intent
   };
 }
 

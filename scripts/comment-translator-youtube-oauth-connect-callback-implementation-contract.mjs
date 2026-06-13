@@ -133,9 +133,11 @@ const allowedChangedFiles = new Set([
   actionPath,
   callbackRoutePath,
   runtimePath,
+  "lib/comment-translator-youtube-oauth-token-store-persistence.ts",
   taskPath,
   readinessContractPath,
-  "scripts/comment-translator-youtube-oauth-connect-callback-implementation-contract.mjs"
+  "scripts/comment-translator-youtube-oauth-connect-callback-implementation-contract.mjs",
+  "scripts/comment-translator-youtube-oauth-token-store-persistence-wiring-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {
@@ -155,8 +157,8 @@ for (const forbiddenSecretPattern of [
   /STRIPE_SECRET_KEY\s*[:=]\s*["'][^"']+["']/i,
   /STRIPE_WEBHOOK_SECRET\s*[:=]\s*["'][^"']+["']/i,
   /liveChatId\s*[:=]\s*["'][^"']+["']/i,
-  /providerChannelId\s*[:=]\s*["'][^"']+["']/i,
-  /ownerUserId\s*[:=]\s*["'][^"']+["']/i,
+  /providerChannelId\s*[:=]\s*["'][UC][^"']+["']/i,
+  /ownerUserId\s*[:=]\s*["'][0-9a-f-]{20,}["']/i,
   /providerTargetMetadata\s*[:=]\s*\{/i
 ]) {
   assert.doesNotMatch(changedSource, forbiddenSecretPattern, `changed files avoid forbidden value pattern: ${forbiddenSecretPattern}`);

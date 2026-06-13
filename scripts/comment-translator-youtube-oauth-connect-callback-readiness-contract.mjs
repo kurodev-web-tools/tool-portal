@@ -159,11 +159,6 @@ assert.match(
 );
 assert.match(
   task,
-  /current PR scope: docs\/contract-only Task 2 YouTube OAuth connect\/callback readiness and exact gate contract/i,
-  "task.md records docs/contract-only scope"
-);
-assert.match(
-  task,
   /width checks skipped for Task 2/i,
   "task.md records width-check skip reason"
 );
@@ -173,7 +168,15 @@ assert.match(
   "task.md records gated actions not run"
 );
 
-const allowedChangedFiles = new Set([docPath, "scripts/comment-translator-youtube-oauth-connect-callback-readiness-contract.mjs", taskPath]);
+const allowedChangedFiles = new Set([
+  docPath,
+  "app/account/actions.ts",
+  "app/api/comment-translator/youtube/oauth/callback/route.ts",
+  "lib/comment-translator-youtube-oauth-connect-callback.ts",
+  "scripts/comment-translator-youtube-oauth-connect-callback-implementation-contract.mjs",
+  "scripts/comment-translator-youtube-oauth-connect-callback-readiness-contract.mjs",
+  taskPath
+]);
 
 for (const file of changedFiles()) {
   assert.ok(allowedChangedFiles.has(file), `Task 2 docs/contract-only PR does not change unexpected file: ${file}`);

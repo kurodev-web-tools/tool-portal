@@ -38,6 +38,12 @@ The inventory is reference-name-only and classifies references as `required`, `o
 
 This env readiness record does not approve main promotion, deploy/upload, production/custom URL smoke, Stripe live-mode action, remote mutation, provider target lookup, liveChatId lookup, or live/provider execution.
 
+## Exact Preflight
+
+The exact main-promotion / deploy / production-smoke command plan, operator-reported env presence, blocker summary, abort conditions, rollback boundary, and sanitized evidence destination are recorded in `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_EXACT_PREFLIGHT.md`.
+
+This exact preflight record is still planning/blocker evidence only. It does not approve or run main promotion, deploy/upload, production/custom URL smoke, Stripe live-mode action, provider target lookup, liveChatId lookup, translation provider API execution, live/provider execution, remote mutation, or rollback action.
+
 ## Completion Blocker
 
 The release owner approved this readiness/blocker PR, but did not approve main promotion, deploy/upload, production/custom URL smoke, Cloudflare production mutation, Stripe live-mode action, billing mutation, remote mutation, remote schema migration, provider target lookup, liveChatId lookup, or live/provider execution.

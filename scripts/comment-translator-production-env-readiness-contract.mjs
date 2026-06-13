@@ -80,8 +80,8 @@ assert.match(envDoc, /does not approve Cloudflare mutation/i, "doc does not appr
 assert.match(envDoc, /Width checks skipped[\s\S]*docs, a Node contract script, and task-board notes only/i, "doc records width-check skip reason");
 
 assert.match(task, /current env readiness doc: `docs\/active\/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS\.md`/i, "task board points to env readiness doc");
-assert.match(task, /production env readiness\/blocker/i, "task board records env readiness scope");
-assert.match(task, /reference-name-only env inventory/i, "task board records reference-name-only inventory");
+assert.match(task, /production env readiness PR #436 are merged/i, "task board records env readiness merge state");
+assert.match(task, /current env readiness doc: `docs\/active\/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS\.md`/i, "task board still points to env readiness doc");
 assert.match(task, /main promotion, deploy\/upload, and production\/custom smoke were not run/i, "task board keeps external actions blocked");
 assert.match(task, /public-release capable: no/i, "task board keeps public-release capable disabled");
 assert.match(mainReadinessDoc, /Production Env Readiness/i, "Task 28 readiness doc links env readiness");

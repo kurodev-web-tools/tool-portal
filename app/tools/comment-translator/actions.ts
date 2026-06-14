@@ -36,26 +36,14 @@ import {
   createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime,
   createTrustedYouTubeOAuthCredentialSupabaseStatusReader
 } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
+import { readYouTubeOAuthCredentialReferenceForCaller } from "@/lib/comment-translator-youtube-account-integration-status";
+import { readCommentTranslatorToolCredentialStatus } from "@/lib/comment-translator-youtube-tool-credential-source";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
 
-function readCredentialReferenceId(formData: FormData) {
-  const value = formData.get("credentialReferenceId");
-  return typeof value === "string" && value.trim() ? value.trim() : null;
-}
-
-export async function getYouTubeOAuthCredentialStatusAction(formData: FormData) {
-  const credentialReferenceId = readCredentialReferenceId(formData);
-
-  if (!credentialReferenceId) {
-    return createYouTubeOAuthCredentialStatusUnavailablePayload({
-      credentialReferenceId: "missing-credential-reference",
-      reason: "trusted-adapter-not-wired"
-    });
-  }
-
+export async function getYouTubeOAuthCredentialStatusAction() {
   const callerAuthorization = await readCallerAuthorization();
   const actionAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
     surface: "comment-translator-server-actions",
@@ -64,7 +52,7 @@ export async function getYouTubeOAuthCredentialStatusAction(formData: FormData) 
   });
   if (actionAbuseCheck.status === "blocked") {
     return createYouTubeOAuthCredentialStatusUnavailablePayload({
-      credentialReferenceId,
+      credentialReferenceId: "server-owned-credential-reference-unavailable",
       reason: "private-launch-gated"
     });
   }
@@ -78,43 +66,21 @@ export async function getYouTubeOAuthCredentialStatusAction(formData: FormData) 
     });
     if (abuseCheck.status === "blocked") {
       return createYouTubeOAuthCredentialStatusUnavailablePayload({
-        credentialReferenceId,
+        credentialReferenceId: "server-owned-credential-reference-unavailable",
         reason: "private-launch-gated"
       });
     }
 
     return createYouTubeOAuthCredentialStatusUnavailablePayload({
-      credentialReferenceId,
+      credentialReferenceId: "server-owned-credential-reference-unavailable",
       reason: "private-launch-gated"
     });
   }
 
-  const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled({
-    [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
-  });
-  const trustedStatusReader =
-    credentialResolutionDisabled || callerAuthorization.status !== "authorized"
-      ? null
-      : createTrustedYouTubeOAuthCredentialSupabaseStatusReader();
-
-  return readYouTubeOAuthCredentialStatus({
-    credentialReferenceId,
-    trustedAdapter: trustedStatusReader?.trustedAdapter ?? null,
-    callerAuthorization,
-    credentialResolutionDisabled
-  });
+  return readCommentTranslatorToolCredentialStatus({ callerAuthorization });
 }
 
-export async function disconnectYouTubeOAuthCredentialAction(formData: FormData) {
-  const credentialReferenceId = readCredentialReferenceId(formData);
-
-  if (!credentialReferenceId) {
-    return createYouTubeOAuthCredentialDisconnectUnavailablePayload({
-      credentialReferenceId: "missing-credential-reference",
-      reason: "trusted-disconnect-adapter-not-wired"
-    });
-  }
-
+export async function disconnectYouTubeOAuthCredentialAction() {
   const callerAuthorization = await readCallerAuthorization();
   const actionAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
     surface: "comment-translator-server-actions",
@@ -123,7 +89,7 @@ export async function disconnectYouTubeOAuthCredentialAction(formData: FormData)
   });
   if (actionAbuseCheck.status === "blocked") {
     return createYouTubeOAuthCredentialDisconnectUnavailablePayload({
-      credentialReferenceId,
+      credentialReferenceId: "server-owned-credential-reference-unavailable",
       reason: "private-launch-gated"
     });
   }
@@ -137,14 +103,29 @@ export async function disconnectYouTubeOAuthCredentialAction(formData: FormData)
     });
     if (abuseCheck.status === "blocked") {
       return createYouTubeOAuthCredentialDisconnectUnavailablePayload({
-        credentialReferenceId,
+        credentialReferenceId: "server-owned-credential-reference-unavailable",
         reason: "private-launch-gated"
       });
     }
 
     return createYouTubeOAuthCredentialDisconnectUnavailablePayload({
-      credentialReferenceId,
+      credentialReferenceId: "server-owned-credential-reference-unavailable",
       reason: "private-launch-gated"
+    });
+  }
+
+  const credentialReference = readYouTubeOAuthCredentialReferenceForCaller({ callerAuthorization });
+  if (credentialReference.status === "unavailable") {
+    const reason =
+      credentialReference.reason === "credential-reference-env-missing"
+        ? "credential-reference-env-missing"
+        : credentialReference.reason === "credential-resolution-disabled"
+          ? "credential-resolution-disabled"
+          : credentialReference.reason;
+
+    return createYouTubeOAuthCredentialDisconnectUnavailablePayload({
+      credentialReferenceId: "server-owned-credential-reference-unavailable",
+      reason
     });
   }
 
@@ -157,49 +138,43 @@ export async function disconnectYouTubeOAuthCredentialAction(formData: FormData)
       : createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime();
 
   return readYouTubeOAuthCredentialDisconnectResult({
-    credentialReferenceId,
+    credentialReferenceId: credentialReference.credentialReferenceId,
     trustedDisconnectAdapter: trustedDisconnectRuntime?.trustedDisconnectAdapter ?? null,
     callerAuthorization,
     credentialResolutionDisabled
   });
 }
 
-export async function getCommentTranslatorSessionStatusAction(formData: FormData) {
+export async function getCommentTranslatorSessionStatusAction() {
   return readCommentTranslatorSessionActionResult({
-    intent: "status",
-    formData
+    intent: "status"
   });
 }
 
-export async function startCommentTranslatorSessionAction(formData: FormData) {
+export async function startCommentTranslatorSessionAction() {
   return readCommentTranslatorSessionActionResult({
-    intent: "start",
-    formData
+    intent: "start"
   });
 }
 
-export async function stopCommentTranslatorSessionAction(formData: FormData) {
+export async function stopCommentTranslatorSessionAction() {
   return readCommentTranslatorSessionActionResult({
     intent: "stop",
-    formData,
     stopReason: "user-stop"
   });
 }
 
-export async function heartbeatCommentTranslatorSessionAction(formData: FormData) {
+export async function heartbeatCommentTranslatorSessionAction() {
   return readCommentTranslatorSessionActionResult({
-    intent: "heartbeat",
-    formData
+    intent: "heartbeat"
   });
 }
 
 async function readCommentTranslatorSessionActionResult({
   intent,
-  formData,
   stopReason
 }: {
   intent: CommentTranslatorSessionCommandIntent;
-  formData: FormData;
   stopReason?: CommentTranslatorSessionStopReason;
 }) {
   const callerAuthorization = await readCallerAuthorization();
@@ -251,15 +226,7 @@ async function readCommentTranslatorSessionActionResult({
     activeSession,
     paidEntitlement: billingSnapshot.plan === "paid" ? billingSnapshot.planEntitlement : undefined
   });
-  const credentialReferenceId = readCredentialReferenceId(formData) ?? activeSession?.credentialReferenceId ?? null;
-  const credentialReadiness = credentialReferenceId
-    ? await readCredentialReadiness({ credentialReferenceId, callerAuthorization })
-    : assessYouTubeOAuthCredentialTranslatorStartReadiness(
-        createYouTubeOAuthCredentialStatusUnavailablePayload({
-          credentialReferenceId: "missing-credential-reference",
-          reason: "trusted-adapter-not-wired"
-        })
-      );
+  const credentialReadiness = await readCredentialReadiness({ activeSession, callerAuthorization });
   const state = await readCommentTranslatorSessionCommand({
     intent,
     nowMs,
@@ -302,12 +269,18 @@ function mapSessionIntentToAbuseAction(intent: CommentTranslatorSessionCommandIn
 }
 
 async function readCredentialReadiness({
-  credentialReferenceId,
+  activeSession,
   callerAuthorization
 }: {
-  credentialReferenceId: string;
+  activeSession: ReturnType<typeof readInMemoryCommentTranslatorActiveSession>;
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
 }) {
+  if (!activeSession?.credentialReferenceId) {
+    return assessYouTubeOAuthCredentialTranslatorStartReadiness(
+      await readCommentTranslatorToolCredentialStatus({ callerAuthorization })
+    );
+  }
+
   const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled({
     [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
   });
@@ -316,7 +289,7 @@ async function readCredentialReadiness({
       ? null
       : createTrustedYouTubeOAuthCredentialSupabaseStatusReader();
   const status = await readYouTubeOAuthCredentialStatus({
-    credentialReferenceId,
+    credentialReferenceId: activeSession.credentialReferenceId,
     trustedAdapter: trustedStatusReader?.trustedAdapter ?? null,
     callerAuthorization,
     credentialResolutionDisabled

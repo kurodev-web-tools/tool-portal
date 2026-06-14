@@ -8,6 +8,7 @@ import { type YouTubeOAuthCredentialSupabaseStatus } from "./comment-translator-
 
 export type YouTubeOAuthCredentialDisconnectUnavailableReason =
   | "credential-resolution-disabled"
+  | "credential-reference-env-missing"
   | "trusted-disconnect-adapter-not-wired"
   | "trusted-disconnect-query-failed"
   | "auth-unavailable"
@@ -115,6 +116,7 @@ export type YouTubeOAuthCredentialTranslatorStartReadiness =
         | "refresh-failed"
         | "revoked"
         | "trusted-adapter-not-wired"
+        | "credential-reference-env-missing"
         | "trusted-adapter-query-failed"
         | "credential-not-found"
         | "auth-unavailable"

@@ -30,7 +30,7 @@ import {
   type CommentTranslatorSurfaceMode,
   type CommentTranslatorTargetLanguageId
 } from "@/lib/comment-translator";
-import { type YouTubeOAuthNewClientPayloadCredentialReferenceSource } from "@/lib/comment-translator-youtube-client-safe-credential-reference-source";
+import type { CommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
 import {
   createYouTubeOAuthCredentialStatusUiWiring,
   type YouTubeOAuthCredentialStatusUiStateId,
@@ -348,9 +348,9 @@ function CommentCard({
 }
 
 export function CommentTranslatorDock({
-  youtubeCredentialReferenceSource
+  youtubeCredentialStatusSource
 }: {
-  youtubeCredentialReferenceSource: YouTubeOAuthNewClientPayloadCredentialReferenceSource;
+  youtubeCredentialStatusSource: CommentTranslatorToolCredentialStatusSource;
 }) {
   const { locale } = useLocale();
   const {
@@ -392,7 +392,6 @@ export function CommentTranslatorDock({
   const [isSessionPending, startSessionTransition] = useTransition();
   const singleCommentInputRef = useRef<HTMLInputElement>(null);
   const multilinePasteInputRef = useRef<HTMLTextAreaElement>(null);
-  const credentialReferenceId = youtubeCredentialReferenceSource.credentialReference.credentialReferenceId;
 
   const selectedConnection = findCommentTranslatorOption(connectionStates, connectionId);
   const selectedStream = findCommentTranslatorOption(streams, streamId);
@@ -495,7 +494,7 @@ export function CommentTranslatorDock({
   const quotaPercent = localizedQuotaPreview.limitUnits > 0 ? Math.min(100, Math.round((effectiveUsedUnits / localizedQuotaPreview.limitUnits) * 100)) : 0;
   const shellIsNarrow = surfaceMode === "narrow-viewport";
   const dockStatusLabel = localizedConnection.dockStatus === "blocked" ? localizedConnection.dockStatusLabel : localizedStream.dockStatusLabel;
-  const credentialStatusMetadata = youtubeCredentialReferenceSource.statusMetadata;
+  const credentialStatusMetadata = youtubeCredentialStatusSource.statusMetadata;
   const credentialStatusState = credentialStatusView?.state ?? credentialStatusMetadata.status;
   const credentialStatusLabel = copy.credentialStatus.states[credentialStatusState];
   const credentialStatusScopeLabel = credentialStatusView?.scopeLabel ?? credentialStatusMetadata.scopeLabel;
@@ -544,11 +543,8 @@ export function CommentTranslatorDock({
 
   function refreshCredentialStatus() {
     startCredentialStatusTransition(async () => {
-      const formData = new FormData();
-      formData.append("credentialReferenceId", credentialReferenceId);
-
       try {
-        const status = await getYouTubeOAuthCredentialStatusAction(formData);
+        const status = await getYouTubeOAuthCredentialStatusAction();
         setCredentialStatusView(createYouTubeOAuthCredentialStatusUiWiring(status));
         setCredentialStatusError(null);
       } catch {
@@ -559,18 +555,15 @@ export function CommentTranslatorDock({
 
   function runSessionCommand(intent: "status" | "start" | "stop" | "heartbeat") {
     startSessionTransition(async () => {
-      const formData = new FormData();
-      formData.append("credentialReferenceId", credentialReferenceId);
-
       try {
         const state =
           intent === "start"
-            ? await startCommentTranslatorSessionAction(formData)
+            ? await startCommentTranslatorSessionAction()
             : intent === "stop"
-              ? await stopCommentTranslatorSessionAction(formData)
+              ? await stopCommentTranslatorSessionAction()
               : intent === "heartbeat"
-                ? await heartbeatCommentTranslatorSessionAction(formData)
-                : await getCommentTranslatorSessionStatusAction(formData);
+                ? await heartbeatCommentTranslatorSessionAction()
+                : await getCommentTranslatorSessionStatusAction();
         setSessionState(state);
         setSessionError(null);
       } catch {
@@ -722,7 +715,6 @@ export function CommentTranslatorDock({
                     </span>
                   </div>
                   <dl className="mt-3 grid gap-2 text-sm">
-                    <CredentialStatusRow label={copy.fields.credentialReference} value={credentialReferenceId} />
                     <CredentialStatusRow label={copy.fields.scope} value={credentialStatusScopeLabel} />
                     <CredentialStatusRow label={copy.fields.expires} value={credentialStatusExpiresAtIso} />
                     <CredentialStatusRow label={copy.fields.reason} value={credentialStatusReason} />

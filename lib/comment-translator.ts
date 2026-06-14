@@ -210,7 +210,7 @@ export const commentTranslatorUiCopy = {
       pending: "確認中",
       unchecked: "未確認",
       refreshFailed: "認証ステータスを確認できませんでした",
-      safeBoundary: "画面にはopaqueなcredentialReferenceIdとsanitized metadataだけを表示し、機密の接続値や配信ターゲット値は表示しません。",
+      safeBoundary: "画面にはserver-owned credential metadataだけを表示し、機密の接続値や配信ターゲット値は表示しません。",
       states: {
         available: "利用可能",
         "reconnect-required": "再接続が必要",
@@ -477,7 +477,7 @@ export const commentTranslatorUiCopy = {
       pending: "Checking",
       unchecked: "Unchecked",
       refreshFailed: "Could not check credential status",
-      safeBoundary: "The client displays only an opaque credentialReferenceId and sanitized metadata. Sensitive connection values and stream target values are not shown.",
+      safeBoundary: "The client displays only server-owned credential status metadata. Sensitive connection values and stream target values are not shown.",
       states: {
         available: "Available",
         "reconnect-required": "Reconnect required",

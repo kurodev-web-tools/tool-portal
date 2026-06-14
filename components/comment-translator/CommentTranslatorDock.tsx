@@ -186,49 +186,6 @@ function ControlSelect({
   );
 }
 
-function SegmentedControl({
-  label,
-  value,
-  options,
-  onChange
-}: {
-  label: string;
-  value: string;
-  options: SelectOption[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="grid gap-1.5">
-      <p className="text-xs font-black uppercase tracking-normal text-muted">{label}</p>
-      <div data-layout="stacked-display-mode" role="group" aria-label={label} className="grid gap-2">
-        {options.map((option) => {
-          const selected = option.id === value;
-          return (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => onChange(option.id)}
-              className={[
-                "min-h-14 rounded-base border px-3 py-2 text-left transition",
-                selected
-                  ? "border-primary bg-primary-soft text-primary-strong"
-                  : "border-border bg-surface text-foreground hover:border-primary/60 hover:bg-primary-soft/40"
-              ].join(" ")}
-            >
-              <span className="block text-sm font-black">{option.label}</span>
-              {option.helper ? (
-                <span className={["mt-0.5 block text-xs leading-5", selected ? "text-primary-strong" : "text-muted"].join(" ")}>
-                  {option.helper}
-                </span>
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function StatTile({ label, value, helper }: { label: string; value: string; helper: string }) {
   return (
     <div className="rounded-base border border-border bg-surface p-3">
@@ -382,6 +339,7 @@ export function CommentTranslatorDock({
   const [multilinePasteDraft, setMultilinePasteDraft] = useState("");
   const [manualResultMode, setManualResultMode] = useState<CommentTranslatorManualResultMode>("translated");
   const [manualComments, setManualComments] = useState<CommentTranslatorComment[]>([]);
+  const [viewMode, setViewMode] = useState<"normal" | "comments">("normal");
   const [credentialStatusView, setCredentialStatusView] = useState<YouTubeOAuthCredentialStatusUiWiringViewModel | null>(
     null
   );
@@ -540,6 +498,7 @@ export function CommentTranslatorDock({
     sessionState.stopReason === "token-refresh-failed" ||
     sessionState.stopReason === "reconnect-required";
   const startBlockedByCredentialStatus = credentialStatusState !== "available";
+  const commentOnly = viewMode === "comments";
 
   function refreshCredentialStatus() {
     startCredentialStatusTransition(async () => {
@@ -622,175 +581,111 @@ export function CommentTranslatorDock({
   }
 
   return (
-    <div className="h-full min-h-0 overflow-auto bg-background px-2 py-3 sm:px-4 lg:px-5">
-      <div className={["mx-auto flex min-h-full w-full flex-col gap-3", shellIsNarrow ? "max-w-[42rem]" : "max-w-[1500px]"].join(" ")}>
-        <header className="panel sticky top-0 z-20 flex flex-col gap-3 p-3 shadow-sm sm:p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 flex-wrap items-center gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-base bg-red-600 text-sm font-black text-white">
-              ▶
-            </div>
-            <div className="min-w-0">
-              <h1 className="break-words text-lg font-black tracking-tight text-foreground sm:text-xl">
-                Kuro Live Comment Translator
-              </h1>
-              <p className="mt-1 break-words text-xs font-semibold text-muted">
-                {platform.name} / {localizedSurface.label}
-              </p>
-            </div>
-          </div>
-          <div className="grid min-w-0 gap-2 text-xs font-bold sm:grid-cols-3 lg:min-w-[28rem]">
-            <span className={["rounded-base border px-3 py-2", toneClassName(localizedConnection.dockStatus === "blocked" ? "error" : "normal")].join(" ")}>
-              {localizedConnection.statusLabel}
-            </span>
-            <span className="rounded-base border border-red-200 bg-red-50 px-3 py-2 text-red-700">
-              {copy.header.readOnlyDock}
-            </span>
-            <span className="rounded-base border border-border bg-surface-muted px-3 py-2 text-muted">
-              {localizedTargetLanguage.shortLabel} {localizedTargetLanguage.label}
-            </span>
-          </div>
-        </header>
-
-        <div
-          className={[
-            "grid min-h-0 flex-1 gap-3",
-            shellIsNarrow ? "grid-cols-1" : "lg:grid-cols-[20rem_minmax(0,1fr)] 2xl:grid-cols-[20rem_minmax(0,1fr)_21rem]"
-          ].join(" ")}
-        >
-          <aside className="grid min-w-0 content-start gap-3">
-            <section className="panel p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-black text-foreground">{copy.sections.setup}</h2>
-                <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(localizedConnection.dockStatus === "blocked" ? "error" : "normal")].join(" ")}>
-                  {dockStatusLabel}
-                </span>
+    <div className="h-full min-h-0 overflow-auto bg-background px-3 py-3 sm:px-4 lg:px-5">
+      <div className={["mx-auto grid min-h-full w-full gap-3", shellIsNarrow ? "max-w-[42rem]" : "max-w-none"].join(" ")}>
+        {!commentOnly ? (
+          <section className="panel p-4 shadow-sm sm:p-5">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-widest text-primary-strong">Live translator</p>
+                <h1 className="mt-2 break-words text-2xl font-black tracking-tight text-foreground">
+                  {locale === "ja" ? "配信コメント翻訳" : "Live Comment Translator"}
+                </h1>
+                <p className="mt-1 break-words text-xs font-semibold text-muted">
+                  {platform.name} / {localizedSurface.label}
+                </p>
+                <p className="mt-2 max-w-3xl break-words text-sm font-semibold leading-6 text-muted">
+                  {locale === "ja"
+                    ? "YouTube連携と配信を確認してから、翻訳を始めるときだけ Start してください。接続だけでは監視や翻訳は始まりません。"
+                    : "Check YouTube and stream readiness, then press Start only when you want translation to begin. Connecting alone does not start monitoring or translation."}
+                </p>
               </div>
-              <div className="mt-4 grid gap-3">
-                <ControlSelect
-                  label={copy.controls.connection}
-                  value={connectionId}
-                  options={connectionOptions}
-                  onChange={(value) => setConnectionId(value as CommentTranslatorConnectionStateId)}
-                />
-                <ControlSelect
-                  label={copy.controls.stream}
-                  value={streamId}
-                  options={streamOptions}
-                  onChange={(value) => setStreamId(value as CommentTranslatorStreamId)}
-                />
-                <div className="rounded-base border border-border bg-surface-muted/50 p-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-red-600 text-xs font-black text-white">
-                      ▶
-                    </span>
-                    <div className="min-w-0">
-                      <p className="break-words text-sm font-black text-foreground">{localizedStream.title}</p>
-                      <p className="break-words text-xs font-semibold text-muted">{localizedStream.scheduledLabel}</p>
-                    </div>
-                  </div>
-                  <dl className="mt-4 grid gap-2 text-sm">
-                    <div className="flex justify-between gap-3">
-                      <dt className="text-muted">{copy.fields.mode}</dt>
-                      <dd className="break-words text-right font-black text-primary-strong">{localizedStream.viewerMode}</dd>
-                    </div>
-                    <div className="flex justify-between gap-3">
-                      <dt className="text-muted">{copy.fields.dock}</dt>
-                      <dd className="break-words text-right font-semibold text-foreground">{dockStatusLabel}</dd>
-                    </div>
-                  </dl>
-                </div>
-                <div
-                  data-credential-status-display-wiring="sanitized-metadata-only"
-                  className="min-w-0 overflow-hidden rounded-base border border-border bg-background/65 p-3"
+              <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                <Link
+                  href="/account/integrations"
+                  className="inline-flex min-h-10 items-center justify-center rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h3 className="text-sm font-black text-foreground">{copy.sections.credentialStatus}</h3>
-                    <span
-                      className={[
-                        "rounded-base border px-2 py-1 text-xs font-black",
-                        toneClassName(credentialStatusTone(credentialStatusState))
-                      ].join(" ")}
-                    >
-                      {isCredentialStatusPending ? copy.credentialStatus.pending : credentialStatusLabel}
-                    </span>
+                  {locale === "ja" ? "接続を確認" : "Check connection"}
+                </Link>
+                <Link
+                  href="/account/billing"
+                  className="inline-flex min-h-10 items-center justify-center rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
+                >
+                  {locale === "ja" ? "プラン" : "Plan"}
+                </Link>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="rounded-base border border-border bg-surface px-4 py-3">
+                <p className="text-xs font-black text-primary-strong">YouTube</p>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="break-words text-base font-black text-foreground">{credentialStatusLabel}</p>
+                  <span className={["rounded-base border px-2.5 py-1 text-xs font-black", toneClassName(credentialStatusTone(credentialStatusState))].join(" ")}>
+                    {isCredentialStatusPending ? copy.credentialStatus.pending : localizedConnection.statusLabel}
+                  </span>
+                </div>
+              </div>
+              <div className="rounded-base border border-border bg-surface px-4 py-3">
+                <p className="text-xs font-black text-primary-strong">{locale === "ja" ? "配信" : "Stream"}</p>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="break-words text-base font-black text-foreground">{localizedStream.title}</p>
+                  <span className={["rounded-base border px-2.5 py-1 text-xs font-black", toneClassName(operatorFlowTone(localizedStream.dockStatus))].join(" ")}>
+                    {dockStatusLabel}
+                  </span>
+                </div>
+              </div>
+              <div className="rounded-base border border-border bg-surface px-4 py-3">
+                <p className="text-xs font-black text-primary-strong">{locale === "ja" ? "プラン" : "Plan"}</p>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <p className="break-words text-base font-black text-foreground">{sessionState.plan === "paid" ? "Pro" : "Free"}</p>
+                  <span className="rounded-base border border-primary/30 bg-primary-soft px-2.5 py-1 text-xs font-black text-primary-strong">
+                    {locale === "ja" ? "利用可" : "Available"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        <section className={commentOnly ? "grid gap-3" : shellIsNarrow ? "grid gap-3" : "grid gap-3 xl:grid-cols-[22rem_minmax(34rem,1fr)_20rem]"}>
+          {!commentOnly ? (
+            <aside className="grid min-w-0 content-start gap-3 md:grid-cols-2 xl:grid-cols-1">
+              <section data-public-operator-session-ui="sanitized-session-usage-only" className="panel p-4 md:col-span-2 xl:col-span-1">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-black uppercase tracking-widest text-primary-strong">
+                      {operatorFlowStatus === "ready" ? "Ready" : "Check"}
+                    </p>
+                    <h2 className="mt-2 break-words text-xl font-black text-foreground">
+                      {operatorFlowStatus === "ready"
+                        ? locale === "ja"
+                          ? "翻訳を開始できます"
+                          : "Ready to start"
+                        : copy.operatorSession.startBlockedTitle}
+                    </h2>
                   </div>
-                  <dl className="mt-3 grid gap-2 text-sm">
-                    <CredentialStatusRow label={copy.fields.scope} value={credentialStatusScopeLabel} />
-                    <CredentialStatusRow label={copy.fields.expires} value={credentialStatusExpiresAtIso} />
-                    <CredentialStatusRow label={copy.fields.reason} value={credentialStatusReason} />
-                  </dl>
+                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(operatorSessionTone(sessionState.status))].join(" ")}>
+                    {isSessionPending ? copy.operatorSession.pending : copy.operatorSession.states[sessionState.status]}
+                  </span>
+                </div>
+                <p className="mt-2 break-words text-sm font-semibold leading-6 text-muted">
+                  {copy.operatorSession.helper}
+                </p>
+                <div className="mt-4 grid gap-2">
                   <button
                     type="button"
-                    onClick={refreshCredentialStatus}
-                    disabled={isCredentialStatusPending}
-                    className="mt-3 min-h-10 w-full rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                    onClick={() => runSessionCommand("start")}
+                    disabled={isSessionPending || sessionState.status === "active" || startBlockedByCredentialStatus}
+                    className="min-h-12 rounded-base border border-primary bg-primary px-4 py-3 text-base font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
                   >
-                    {isCredentialStatusPending ? copy.credentialStatus.pending : copy.actions.refreshCredentialStatus}
+                    {isSessionPending ? copy.operatorSession.pending : copy.actions.startSession}
                   </button>
-                  <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
-                    {copy.credentialStatus.safeBoundary}
-                  </p>
-                </div>
-                <div
-                  data-public-operator-session-ui="sanitized-session-usage-only"
-                  className="min-w-0 overflow-hidden rounded-base border border-border bg-background/65 p-3"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h3 className="text-sm font-black text-foreground">{copy.sections.operatorSession}</h3>
-                    <span
-                      className={[
-                        "rounded-base border px-2 py-1 text-xs font-black",
-                        toneClassName(operatorSessionTone(sessionState.status))
-                      ].join(" ")}
-                    >
-                      {isSessionPending ? copy.operatorSession.pending : copy.operatorSession.states[sessionState.status]}
-                    </span>
-                  </div>
-                  <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
-                    {copy.operatorSession.helper}
-                  </p>
-                  {startBlockedByCredentialStatus ? (
-                    <div
-                      data-comment-translator-start-blocked="youtube-connection-required"
-                      className="mt-3 rounded-base border border-amber-200 bg-amber-50/70 p-3"
-                    >
-                      <p className="break-words text-sm font-black text-amber-900">{copy.operatorSession.startBlockedTitle}</p>
-                      <p className="mt-1 break-words text-xs font-semibold leading-5 text-amber-800">
-                        {copy.operatorSession.startBlockedBody}
-                      </p>
-                      <Link
-                        href="/account/integrations"
-                        className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
-                      >
-                        {copy.operatorSession.openIntegrations}
-                      </Link>
-                    </div>
-                  ) : null}
-                  <dl className="mt-3 grid gap-2 text-sm">
-                    <CredentialStatusRow label={copy.fields.providerConnection} value={credentialStatusLabel} />
-                    <CredentialStatusRow label={copy.fields.sessionState} value={copy.operatorSession.states[sessionState.status]} />
-                    <CredentialStatusRow label={copy.fields.elapsed} value={formatDuration(sessionState.elapsedSeconds)} />
-                    <CredentialStatusRow label={copy.fields.dailyUsed} value={formatDuration(sessionDailyUsedSeconds)} />
-                    <CredentialStatusRow label={copy.fields.dailyRemaining} value={formatDuration(sessionState.remainingDailySeconds)} />
-                    <CredentialStatusRow label={copy.fields.sessionRemaining} value={formatDuration(sessionState.remainingSessionSeconds)} />
-                    <CredentialStatusRow label={copy.fields.stopReason} value={sessionError ?? sessionStopReason} />
-                    <CredentialStatusRow label={copy.fields.nextAction} value={sessionNextAction} />
-                    <CredentialStatusRow label={copy.fields.perMinuteCap} value={copy.operatorSession.perMinuteCapHelper} />
-                  </dl>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-                    <button
-                      type="button"
-                      onClick={() => runSessionCommand("start")}
-                      disabled={isSessionPending || sessionState.status === "active" || startBlockedByCredentialStatus}
-                      className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                    >
-                      {isSessionPending ? copy.operatorSession.pending : copy.actions.startSession}
-                    </button>
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
                     <button
                       type="button"
                       onClick={() => runSessionCommand("stop")}
                       disabled={isSessionPending || sessionState.status !== "active"}
-                      className="min-h-10 rounded-base border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                      className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
                     >
                       {copy.actions.stopSession}
                     </button>
@@ -803,129 +698,47 @@ export function CommentTranslatorDock({
                       {copy.actions.refreshSession}
                     </button>
                   </div>
-                  {showReconnectGuidance ? (
-                    <p className="mt-3 break-words rounded-base border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">
-                      {copy.operatorSession.reconnectGuidance}
-                    </p>
-                  ) : null}
-                  <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
-                    {copy.operatorSession.safeBoundary}
-                  </p>
                 </div>
                 <div
-                  data-comment-translator-billing-entry="stripe-paid-plan"
-                  className="min-w-0 overflow-hidden rounded-base border border-primary/30 bg-primary-soft/45 p-3"
+                  data-comment-translator-start-contrast="youtube-vs-session"
+                  className="mt-3 rounded-base border border-border bg-surface/80 p-3 text-xs"
                 >
-                  <div data-comment-translator-billing-entry="free-pro-plan-state" className="flex flex-wrap items-center justify-between gap-3">
-                    <h3 className="text-sm font-black text-foreground">
-                      {locale === "ja" ? "Free / Kuro Stream Kit Pro" : "Free / Kuro Stream Kit Pro"}
-                    </h3>
-                    <span className="rounded-base border border-primary/30 bg-surface px-2 py-1 text-xs font-black text-primary-strong">
-                      {sessionState.plan === "paid" ? "Pro" : "Free"}
-                    </span>
+                  <p className="font-black text-foreground">{copy.operatorSession.readinessTitle}</p>
+                  <div className="mt-2 grid gap-2">
+                    <div className="flex flex-wrap justify-between gap-2">
+                      <span className="font-bold text-muted">{copy.operatorSession.connectionReadiness}</span>
+                      <span className="font-black text-foreground">{credentialStatusLabel}</span>
+                    </div>
+                    <p className="break-words font-semibold leading-5 text-muted">{copy.operatorSession.startReadiness}</p>
                   </div>
-                  <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
-                    {locale === "ja"
-                      ? "Free は常に利用できます。Pro の月額/年額表示、上限比較、支払い管理はアカウントの billing 画面で確認できます。"
-                      : "Free remains available. Pro monthly/yearly display, limit comparison, and billing management are handled from account billing."}
+                </div>
+                {startBlockedByCredentialStatus ? (
+                  <div
+                    data-comment-translator-start-blocked="youtube-connection-required"
+                    className="mt-3 rounded-base border border-amber-200 bg-amber-50/80 p-3"
+                  >
+                    <p className="break-words text-sm font-black text-amber-900">{copy.operatorSession.startBlockedTitle}</p>
+                    <p className="mt-1 break-words text-xs font-semibold leading-5 text-amber-800">
+                      {copy.operatorSession.startBlockedBody}
+                    </p>
+                    <Link
+                      href="/account/integrations"
+                      className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
+                    >
+                      {copy.operatorSession.openIntegrations}
+                    </Link>
+                  </div>
+                ) : null}
+                {showReconnectGuidance ? (
+                  <p className="mt-3 break-words rounded-base border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">
+                    {copy.operatorSession.reconnectGuidance}
                   </p>
-                  <Link
-                    href="/account/billing"
-                    className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
-                  >
-                    {locale === "ja" ? "プランと支払いを開く" : "Open plans and billing"}
-                  </Link>
-                </div>
-              </div>
-            </section>
+                ) : null}
+              </section>
 
-            <section className="panel p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="text-base font-black text-foreground">{copy.sections.manualInput}</h2>
-                  <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
-                    {copy.manualInput.helper}
-                  </p>
-                </div>
-                <span className="rounded-base border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-black text-cyan-700">
-                  {manualComments.length} {copy.stats.manualRows}
-                </span>
-              </div>
-              <form
-                className="mt-4 grid gap-3"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  addManualComments();
-                }}
-              >
-                <label className="grid min-w-0 gap-1.5 text-sm">
-                  <span className="text-xs font-black uppercase tracking-normal text-muted">
-                    {copy.controls.singleComment}
-                  </span>
-                  <input
-                    ref={singleCommentInputRef}
-                    value={singleCommentDraft}
-                    onChange={(event) => setSingleCommentDraft(event.target.value)}
-                    placeholder={copy.manualInput.singlePlaceholder}
-                    className="min-h-10 w-full min-w-0 rounded-base border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
-                  />
-                </label>
-                <label className="grid min-w-0 gap-1.5 text-sm">
-                  <span className="text-xs font-black uppercase tracking-normal text-muted">
-                    {copy.controls.multilinePaste}
-                  </span>
-                  <textarea
-                    ref={multilinePasteInputRef}
-                    rows={5}
-                    value={multilinePasteDraft}
-                    onChange={(event) => setMultilinePasteDraft(event.target.value)}
-                    placeholder={copy.manualInput.pastePlaceholder}
-                    className="w-full min-w-0 resize-y rounded-base border border-border bg-surface px-3 py-2 text-sm font-semibold leading-6 text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
-                  />
-                </label>
-                <ControlSelect
-                  label={copy.controls.manualResult}
-                  value={manualResultMode}
-                  options={manualResultOptions}
-                  onChange={(value) => setManualResultMode(value as CommentTranslatorManualResultMode)}
-                />
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                  <button
-                    type="submit"
-                    className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
-                  >
-                    {copy.actions.addManualComments}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={insertManualSamples}
-                    className="min-h-10 rounded-base border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"
-                  >
-                    {copy.actions.insertSample}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearManualDraft}
-                    className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40"
-                  >
-                    {copy.actions.clearDraft}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={clearManualSession}
-                    disabled={manualComments.length === 0}
-                    className="min-h-10 rounded-base border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                  >
-                    {copy.actions.clearManualSession}
-                  </button>
-                </div>
-              </form>
-            </section>
-
-            <section className="panel p-4">
-              <h2 className="text-base font-black text-foreground">{copy.sections.display}</h2>
-              <div className="mt-4 grid gap-3">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              <section className="panel p-4">
+                <h2 className="text-base font-black text-foreground">{locale === "ja" ? "翻訳設定" : "Translation settings"}</h2>
+                <div className="mt-4 grid gap-3">
                   <ControlSelect
                     label={copy.controls.sourceLanguage}
                     value={sourceLanguage}
@@ -938,78 +751,163 @@ export function CommentTranslatorDock({
                     options={targetLanguageOptions}
                     onChange={(value) => setTargetLanguage(value as CommentTranslatorTargetLanguageId)}
                   />
-                </div>
-                <SegmentedControl
-                  label={copy.controls.commentText}
-                  value={displayMode}
-                  options={displayModeOptions}
-                  onChange={(value) => setDisplayMode(value as CommentTranslatorDisplayMode)}
-                />
-                <ControlSelect
-                  label={copy.controls.surface}
-                  value={surfaceMode}
-                  options={surfaceModeOptions}
-                  onChange={(value) => setSurfaceMode(value as CommentTranslatorSurfaceMode)}
-                />
-                <div className="rounded-base border border-border bg-background/65 px-3 py-2 text-sm">
-                  <div className="flex justify-between gap-3">
-                    <span className="text-muted">{copy.controls.currentPair}</span>
-                    <span className="break-words text-right font-black text-foreground">
-                      {localizedSourceLanguage.shortLabel} → {localizedTargetLanguage.shortLabel}
-                    </span>
+                  <ControlSelect
+                    label={copy.controls.commentText}
+                    value={displayMode}
+                    options={displayModeOptions}
+                    onChange={(value) => setDisplayMode(value as CommentTranslatorDisplayMode)}
+                  />
+                  <ControlSelect
+                    label={copy.controls.surface}
+                    value={surfaceMode}
+                    options={surfaceModeOptions}
+                    onChange={(value) => setSurfaceMode(value as CommentTranslatorSurfaceMode)}
+                  />
+                  <div className="grid gap-1.5">
+                    <p className="text-xs font-black uppercase tracking-normal text-muted">
+                      {locale === "ja" ? "画面モード" : "View mode"}
+                    </p>
+                    <div className="inline-flex w-fit rounded-base border border-border bg-surface-muted p-1">
+                      {[
+                        { id: "normal", label: locale === "ja" ? "通常" : "Normal" },
+                        { id: "comments", label: locale === "ja" ? "コメントのみ" : "Comments only" }
+                      ].map((option) => {
+                        const selected = viewMode === option.id;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => setViewMode(option.id as "normal" | "comments")}
+                            className={[
+                              "rounded-base px-3 py-1.5 text-xs font-black transition",
+                              selected ? "bg-primary text-white" : "text-muted hover:bg-surface hover:text-foreground"
+                            ].join(" ")}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="rounded-base border border-border bg-background/65 px-3 py-2 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted">{copy.controls.currentPair}</span>
+                      <span className="break-words text-right font-black text-foreground">
+                        {localizedSourceLanguage.shortLabel} → {localizedTargetLanguage.shortLabel}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
-          </aside>
+              </section>
 
-          <main className="panel flex min-w-0 min-h-[34rem] flex-col overflow-hidden">
-            <div data-layout="live-header-two-row" className="grid gap-3 border-b border-border p-4">
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-primary-strong">{copy.sections.comments}</p>
-                <h2 className="mt-1 break-words text-xl font-black tracking-tight text-foreground">
-                  {copy.header.feedTitle}
-                </h2>
-              </div>
-              <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_16rem]">
-                <div className="flex min-w-0 flex-wrap gap-2">
-                  {statusFilters.map((filter) => {
-                    const selected = filter.id === statusFilter;
-                    return (
-                      <button
-                        key={filter.id}
-                        type="button"
-                        onClick={() => setStatusFilter(filter.id)}
-                        className={[
-                          "rounded-base border px-3 py-2 text-xs font-black transition",
-                          selected
-                            ? "border-primary bg-primary-soft text-primary-strong"
-                            : "border-border bg-surface text-muted hover:border-primary/60 hover:bg-primary-soft/40"
-                        ].join(" ")}
-                      >
-                        {copy.filters[filter.id]}
-                      </button>
-                    );
-                  })}
+              <section className={shellIsNarrow ? "" : "xl:hidden"}>
+                <div className="panel p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h2 className="text-base font-black text-foreground">{locale === "ja" ? "今日の状態" : "Today"}</h2>
+                    <span className="rounded-base border border-primary/30 bg-primary-soft px-2 py-1 text-xs font-black text-primary-strong">
+                      {sessionState.plan === "paid" ? "Pro" : "Free"}
+                    </span>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                    <StatTile label={copy.fields.sessionRemaining} value={formatDuration(sessionState.remainingSessionSeconds)} helper={copy.fields.dailyRemaining} />
+                    <StatTile label={copy.fields.perMinuteCap} value="30" helper={copy.operatorSession.perMinuteCapHelper} />
+                  </div>
+                  <div data-comment-translator-billing-entry="stripe-paid-plan" className="mt-4 rounded-base border border-primary/25 bg-primary-soft/35 px-3 py-3">
+                    <div data-comment-translator-billing-entry="free-pro-plan-state" className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-black text-foreground">{locale === "ja" ? "もっと長く使う" : "Use more"}</p>
+                      <span className="rounded-base border border-primary/30 bg-surface px-2 py-1 text-xs font-black text-primary-strong">
+                        {sessionState.plan === "paid" ? "Pro" : "Free"}
+                      </span>
+                    </div>
+                    <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
+                      {locale === "ja"
+                        ? "Proでは利用時間と翻訳上限を拡張できます。"
+                        : "Pro expands available time and translation limits."}
+                    </p>
+                    <Link
+                      href="/account/billing"
+                      className="mt-3 inline-flex min-h-9 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
+                    >
+                      {locale === "ja" ? "プランを確認" : "View plan"}
+                    </Link>
+                  </div>
                 </div>
-                <label className="min-w-0">
-                  <span className="sr-only">{copy.controls.searchPlaceholder}</span>
-                  <input
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder={copy.controls.searchPlaceholder}
-                    className="min-h-10 w-full min-w-0 rounded-base border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
-                  />
-                </label>
+              </section>
+            </aside>
+          ) : null}
+
+          <main className="panel flex min-h-[34rem] min-w-0 flex-col overflow-hidden">
+            <div data-layout="live-header-two-row" className="grid gap-3 border-b border-border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-primary-strong">{copy.sections.comments}</p>
+                  <h2 className="mt-1 break-words text-xl font-black tracking-tight text-foreground">
+                    {commentOnly ? (locale === "ja" ? "コメントのみ表示" : "Comments only") : copy.header.feedTitle}
+                  </h2>
+                </div>
+                {commentOnly ? (
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("normal")}
+                    className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
+                  >
+                    {locale === "ja" ? "通常表示へ戻る" : "Back to normal"}
+                  </button>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-base border border-primary/30 bg-primary-soft px-2.5 py-1 text-xs font-black text-primary-strong">
+                      {liveStats.translated} {copy.stats.translated}
+                    </span>
+                    <span className="rounded-base border border-border bg-surface px-2.5 py-1 text-xs font-black text-muted">
+                      {liveStats.skipped} {copy.stats.skipped}
+                    </span>
+                  </div>
+                )}
               </div>
+              {!commentOnly ? (
+                <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <label className="min-w-0">
+                    <span className="sr-only">{copy.controls.searchPlaceholder}</span>
+                    <input
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder={copy.controls.searchPlaceholder}
+                      className="min-h-10 w-full min-w-0 rounded-base border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
+                    />
+                  </label>
+                  <div className="flex min-w-0 flex-wrap gap-2">
+                    {statusFilters.map((filter) => {
+                      const selected = filter.id === statusFilter;
+                      return (
+                        <button
+                          key={filter.id}
+                          type="button"
+                          onClick={() => setStatusFilter(filter.id)}
+                          className={[
+                            "min-h-10 rounded-base border px-3 py-2 text-xs font-black transition",
+                            selected
+                              ? "border-primary bg-primary-soft text-primary-strong"
+                              : "border-border bg-surface text-muted hover:border-primary/60 hover:bg-primary-soft/40"
+                          ].join(" ")}
+                        >
+                          {copy.filters[filter.id]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 border-b border-border bg-surface-muted/30 p-3 text-center text-xs font-bold text-muted sm:grid-cols-4">
-              <span className="rounded-base bg-surface px-2 py-2">{filteredComments.length} {copy.stats.shown}</span>
-              <span className="rounded-base bg-surface px-2 py-2">{allComments.length} {copy.stats.total}</span>
-              <span className="rounded-base bg-emerald-50 px-2 py-2 text-emerald-700">{liveStats.translated} {copy.stats.translated}</span>
-              <span className="rounded-base bg-amber-50 px-2 py-2 text-amber-700">{liveStats.skipped} {copy.stats.skipped}</span>
-            </div>
+            {!commentOnly ? (
+              <div className="grid grid-cols-2 gap-2 border-b border-border bg-surface-muted/30 p-3 text-center text-xs font-bold text-muted sm:grid-cols-4">
+                <span className="rounded-base bg-surface px-2 py-2">{filteredComments.length} {copy.stats.shown}</span>
+                <span className="rounded-base bg-surface px-2 py-2">{allComments.length} {copy.stats.total}</span>
+                <span className="rounded-base bg-emerald-50 px-2 py-2 text-emerald-700">{liveStats.translated} {copy.stats.translated}</span>
+                <span className="rounded-base bg-amber-50 px-2 py-2 text-amber-700">{liveStats.skipped} {copy.stats.skipped}</span>
+              </div>
+            ) : null}
 
             <div className="scrollbar-accent min-h-0 flex-1 space-y-3 overflow-auto p-3 sm:p-4">
               {filteredComments.length > 0 ? (
@@ -1036,92 +934,221 @@ export function CommentTranslatorDock({
             </div>
           </main>
 
-          <aside className={["grid min-w-0 content-start gap-3", shellIsNarrow ? "" : "lg:col-span-2 2xl:col-span-1"].join(" ")}>
-            <section
-              data-operator-ui-flow="local-status-only"
-              className="panel border-emerald-200 bg-emerald-50/30 p-4"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-black text-foreground">{copy.sections.operatorFlow}</h2>
-                <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(operatorFlowTone(operatorFlowStatus))].join(" ")}>
-                  {copy.operatorFlow[operatorFlowStatus]}
-                </span>
-              </div>
-              <p className="mt-3 break-words text-sm font-semibold leading-6 text-foreground">
-                {operatorFlowSummary}
-              </p>
-              <div className="mt-4 grid gap-2">
-                {operatorFlowChecklist.map((step) => (
-                  <div
-                    key={step.id}
-                    className="grid min-w-0 gap-2 rounded-base border border-border bg-surface/85 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start"
-                  >
-                    <div className="min-w-0">
-                      <p className="break-words text-sm font-black text-foreground">{step.copy.label}</p>
-                      <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">{step.copy.helper}</p>
-                    </div>
-                    <span className={["w-fit rounded-base border px-2 py-1 text-xs font-black", toneClassName(step.state === "done" ? "normal" : step.state === "gated" ? "warning" : "empty")].join(" ")}>
-                      {copy.operatorFlow.stepState[step.state]}
+          {!commentOnly && !shellIsNarrow ? (
+            <aside className="hidden min-w-0 content-start gap-3 xl:grid">
+              <section className="panel p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-base font-black text-foreground">{locale === "ja" ? "今日の状態" : "Today"}</h2>
+                  <span className="rounded-base border border-primary/30 bg-primary-soft px-2 py-1 text-xs font-black text-primary-strong">
+                    {sessionState.plan === "paid" ? "Pro" : "Free"}
+                  </span>
+                </div>
+                <div className="mt-4 grid gap-3">
+                  <StatTile label={copy.fields.sessionRemaining} value={formatDuration(sessionState.remainingSessionSeconds)} helper={copy.fields.dailyRemaining} />
+                  <StatTile label={copy.fields.perMinuteCap} value="30" helper={copy.operatorSession.perMinuteCapHelper} />
+                </div>
+                <div data-comment-translator-billing-entry="stripe-paid-plan" className="mt-4 rounded-base border border-primary/25 bg-primary-soft/35 px-3 py-3">
+                  <div data-comment-translator-billing-entry="free-pro-plan-state" className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-black text-foreground">{locale === "ja" ? "もっと長く使う" : "Use more"}</p>
+                    <span className="rounded-base border border-primary/30 bg-surface px-2 py-1 text-xs font-black text-primary-strong">
+                      {sessionState.plan === "paid" ? "Pro" : "Free"}
                     </span>
                   </div>
-                ))}
-              </div>
-              <div className="mt-3 grid gap-2 rounded-base border border-border bg-background/70 p-3 text-xs font-semibold leading-5 text-muted">
-                <p className="break-words">{copy.operatorFlow.noLiveExecution}</p>
-                <p className="break-words">{copy.operatorFlow.commandBoundary}</p>
-              </div>
-            </section>
-
-            <section className="panel p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-base font-black text-foreground">{copy.sections.quota}</h2>
-                <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(localizedQuotaPreview.tone)].join(" ")}>
-                  {localizedQuotaPreview.statusLabel}
-                </span>
-              </div>
-              <div className="mt-4 grid gap-3">
-                <ControlSelect
-                  label={copy.controls.mockState}
-                  value={quotaScenarioId}
-                  options={quotaScenarioOptions}
-                  onChange={(value) => setQuotaScenarioId(value as CommentTranslatorQuotaScenarioId)}
-                />
-                <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
-                  <div className="h-2 rounded-full bg-primary" style={{ width: `${quotaPercent}%` }} />
+                  <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
+                    {locale === "ja"
+                      ? "Proでは利用時間と翻訳上限を拡張できます。"
+                      : "Pro expands available time and translation limits."}
+                  </p>
+                  <Link
+                    href="/account/billing"
+                    className="mt-3 inline-flex min-h-9 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
+                  >
+                    {locale === "ja" ? "プランを確認" : "View plan"}
+                  </Link>
                 </div>
-                <p className="break-words text-xs font-semibold leading-5 text-muted">{localizedQuotaPreview.helper}</p>
-                <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-1">
-                  <StatTile label={copy.stats.quota} value={`${formatNumber(effectiveUsedUnits)} / ${formatNumber(localizedQuotaPreview.limitUnits)}`} helper={`${quotaPercent}% ${copy.stats.used}`} />
-                  <StatTile label={copy.stats.cacheHit} value={`${effectiveCacheHitRate}%`} helper={`${formatNumber(liveStats.cacheHits)} ${copy.stats.hits}`} />
-                  <StatTile label={copy.stats.cacheMiss} value={formatNumber(liveStats.cacheMisses)} helper={copy.stats.fixtureMisses} />
-                  <StatTile label={copy.stats.manualSession} value={formatNumber(liveStats.manualRows)} helper={copy.stats.manualRows} />
-                  <StatTile label={copy.stats.errorRows} value={formatNumber(liveStats.errors)} helper={copy.stats.recoverable} />
-                </div>
-              </div>
-            </section>
+              </section>
+            </aside>
+          ) : null}
+        </section>
 
-            <section className="panel p-4">
-              <h2 className="text-base font-black text-foreground">{copy.sections.skipped}</h2>
-              <div className="mt-4 grid gap-3">
-                {skipReasonCounts.map((reason) => (
-                  <div key={reason.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-sm">
-                    <span className="min-w-0 break-words text-muted">{copy.skipReasonLabels[reason.id as keyof typeof copy.skipReasonLabels] ?? reason.label}</span>
-                    <span className="rounded-base bg-amber-50 px-2 py-1 font-black text-amber-700">{reason.count}</span>
+        {!commentOnly ? (
+          <details className="panel p-4">
+            <summary className="cursor-pointer text-sm font-black text-foreground">
+              {locale === "ja" ? "詳細確認とテスト入力" : "Details and test input"}
+            </summary>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <section data-credential-status-display-wiring="sanitized-metadata-only" className="rounded-base border border-border bg-surface p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-base font-black text-foreground">{copy.sections.credentialStatus}</h2>
+                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(credentialStatusTone(credentialStatusState))].join(" ")}>
+                    {isCredentialStatusPending ? copy.credentialStatus.pending : credentialStatusLabel}
+                  </span>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <ControlSelect
+                    label={copy.controls.connection}
+                    value={connectionId}
+                    options={connectionOptions}
+                    onChange={(value) => setConnectionId(value as CommentTranslatorConnectionStateId)}
+                  />
+                  <ControlSelect
+                    label={copy.controls.stream}
+                    value={streamId}
+                    options={streamOptions}
+                    onChange={(value) => setStreamId(value as CommentTranslatorStreamId)}
+                  />
+                </div>
+                <dl className="mt-3 grid gap-2 text-sm">
+                  <CredentialStatusRow label={copy.fields.scope} value={credentialStatusScopeLabel} />
+                  <CredentialStatusRow label={copy.fields.expires} value={credentialStatusExpiresAtIso} />
+                  <CredentialStatusRow label={copy.fields.reason} value={credentialStatusReason} />
+                  <CredentialStatusRow label={copy.fields.elapsed} value={formatDuration(sessionState.elapsedSeconds)} />
+                  <CredentialStatusRow label={copy.fields.stopReason} value={sessionError ?? sessionStopReason} />
+                  <CredentialStatusRow label={copy.fields.nextAction} value={sessionNextAction} />
+                </dl>
+                <button
+                  type="button"
+                  onClick={refreshCredentialStatus}
+                  disabled={isCredentialStatusPending}
+                  className="mt-3 min-h-10 w-full rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                >
+                  {isCredentialStatusPending ? copy.credentialStatus.pending : copy.actions.refreshCredentialStatus}
+                </button>
+                <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
+                  {copy.credentialStatus.safeBoundary}
+                </p>
+              </section>
+
+              <section data-operator-ui-flow="local-status-only" className="rounded-base border border-border bg-surface p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-base font-black text-foreground">{copy.sections.operatorFlow}</h2>
+                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(operatorFlowTone(operatorFlowStatus))].join(" ")}>
+                    {copy.operatorFlow[operatorFlowStatus]}
+                  </span>
+                </div>
+                <p className="mt-3 break-words text-sm font-semibold leading-6 text-foreground">
+                  {operatorFlowSummary}
+                </p>
+                <div className="mt-4 grid gap-2">
+                  {operatorFlowChecklist.map((step) => (
+                    <div key={step.id} className="grid min-w-0 gap-2 rounded-base border border-border bg-background/70 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                      <div className="min-w-0">
+                        <p className="break-words text-sm font-black text-foreground">{step.copy.label}</p>
+                        <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">{step.copy.helper}</p>
+                      </div>
+                      <span className={["w-fit rounded-base border px-2 py-1 text-xs font-black", toneClassName(step.state === "done" ? "normal" : step.state === "gated" ? "warning" : "empty")].join(" ")}>
+                        {copy.operatorFlow.stepState[step.state]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 rounded-base border border-border bg-background/70 p-3 text-xs font-semibold leading-5 text-muted">
+                  <p className="break-words">{copy.operatorFlow.noLiveExecution}</p>
+                  <p className="break-words">{copy.operatorFlow.commandBoundary}</p>
+                </div>
+              </section>
+
+              <section className="rounded-base border border-border bg-surface p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-base font-black text-foreground">{copy.sections.quota}</h2>
+                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(localizedQuotaPreview.tone)].join(" ")}>
+                    {localizedQuotaPreview.statusLabel}
+                  </span>
+                </div>
+                <div className="mt-4 grid gap-3">
+                  <ControlSelect
+                    label={copy.controls.mockState}
+                    value={quotaScenarioId}
+                    options={quotaScenarioOptions}
+                    onChange={(value) => setQuotaScenarioId(value as CommentTranslatorQuotaScenarioId)}
+                  />
+                  <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
+                    <div className="h-2 rounded-full bg-primary" style={{ width: `${quotaPercent}%` }} />
                   </div>
-                ))}
-              </div>
-            </section>
+                  <p className="break-words text-xs font-semibold leading-5 text-muted">{localizedQuotaPreview.helper}</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <StatTile label={copy.stats.quota} value={`${formatNumber(effectiveUsedUnits)} / ${formatNumber(localizedQuotaPreview.limitUnits)}`} helper={`${quotaPercent}% ${copy.stats.used}`} />
+                    <StatTile label={copy.stats.cacheHit} value={`${effectiveCacheHitRate}%`} helper={`${formatNumber(liveStats.cacheHits)} ${copy.stats.hits}`} />
+                    <StatTile label={copy.stats.cacheMiss} value={formatNumber(liveStats.cacheMisses)} helper={copy.stats.fixtureMisses} />
+                    <StatTile label={copy.stats.errorRows} value={formatNumber(liveStats.errors)} helper={copy.stats.recoverable} />
+                  </div>
+                </div>
+              </section>
 
-            <section className="panel border-blue-200 bg-blue-50/45 p-4">
-              <h2 className="text-base font-black text-blue-800">{copy.sections.safety}</h2>
-              <ul className="mt-3 space-y-2 text-sm leading-6 text-blue-900">
-                {copy.safety.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </section>
-          </aside>
-        </div>
+              <section className="rounded-base border border-border bg-surface p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="text-base font-black text-foreground">{copy.sections.manualInput}</h2>
+                    <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
+                      {copy.manualInput.helper}
+                    </p>
+                  </div>
+                  <span className="rounded-base border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-black text-cyan-700">
+                    {manualComments.length} {copy.stats.manualRows}
+                  </span>
+                </div>
+                <form
+                  className="mt-4 grid gap-3"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    addManualComments();
+                  }}
+                >
+                  <label className="grid min-w-0 gap-1.5 text-sm">
+                    <span className="text-xs font-black uppercase tracking-normal text-muted">
+                      {copy.controls.singleComment}
+                    </span>
+                    <input
+                      ref={singleCommentInputRef}
+                      value={singleCommentDraft}
+                      onChange={(event) => setSingleCommentDraft(event.target.value)}
+                      placeholder={copy.manualInput.singlePlaceholder}
+                      className="min-h-10 w-full min-w-0 rounded-base border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
+                    />
+                  </label>
+                  <label className="grid min-w-0 gap-1.5 text-sm">
+                    <span className="text-xs font-black uppercase tracking-normal text-muted">
+                      {copy.controls.multilinePaste}
+                    </span>
+                    <textarea
+                      ref={multilinePasteInputRef}
+                      rows={4}
+                      value={multilinePasteDraft}
+                      onChange={(event) => setMultilinePasteDraft(event.target.value)}
+                      placeholder={copy.manualInput.pastePlaceholder}
+                      className="w-full min-w-0 resize-y rounded-base border border-border bg-background px-3 py-2 text-sm font-semibold leading-6 text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
+                    />
+                  </label>
+                  <ControlSelect
+                    label={copy.controls.manualResult}
+                    value={manualResultMode}
+                    options={manualResultOptions}
+                    onChange={(value) => setManualResultMode(value as CommentTranslatorManualResultMode)}
+                  />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <button type="submit" className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong">
+                      {copy.actions.addManualComments}
+                    </button>
+                    <button type="button" onClick={insertManualSamples} className="min-h-10 rounded-base border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100">
+                      {copy.actions.insertSample}
+                    </button>
+                    <button type="button" onClick={clearManualDraft} className="min-h-10 rounded-base border border-border bg-background px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40">
+                      {copy.actions.clearDraft}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearManualSession}
+                      disabled={manualComments.length === 0}
+                      className="min-h-10 rounded-base border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                    >
+                      {copy.actions.clearManualSession}
+                    </button>
+                  </div>
+                </form>
+              </section>
+            </div>
+          </details>
+        ) : null}
       </div>
     </div>
   );

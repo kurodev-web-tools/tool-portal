@@ -3,6 +3,12 @@ import { redirect } from "next/navigation";
 import { saveLocaleThemePreferenceAction, signOutAction } from "@/app/account/actions";
 import { AccountPreferencesShell } from "@/components/account/AccountPreferencesShell";
 import { PortalShell } from "@/components/portal/PortalShell";
+import {
+  createCommentTranslatorBillingBrowserSafeViewModel,
+  readCommentTranslatorBillingEntitlementSnapshot
+} from "@/lib/comment-translator-billing-runtime";
+import { readYouTubeAccountIntegrationStatusViewModel } from "@/lib/comment-translator-youtube-account-integration-status";
+import { authorizeYouTubeOAuthCredentialStatusCaller } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import { portalMetadata } from "@/lib/portal-metadata";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { getAccountSessionState } from "@/lib/supabase/session";
@@ -35,11 +41,28 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     redirect("/account/security?auth=recovery-pending");
   }
 
+  const [youtubeIntegration, billing] = await Promise.all([
+    readYouTubeAccountIntegrationStatusViewModel({ accountSession }),
+    Promise.resolve().then(() => {
+      const callerAuthorization = authorizeYouTubeOAuthCredentialStatusCaller({
+        callerUserId: accountSession.authStatus === "signed-in" ? accountSession.user?.id ?? null : null,
+        authUnavailable: accountSession.authStatus === "unavailable"
+      });
+      const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+      return createCommentTranslatorBillingBrowserSafeViewModel({
+        snapshot: billingSnapshot,
+        env: process.env
+      });
+    })
+  ]);
+
   return (
     <PortalShell>
       <AccountPreferencesShell
         authMessage={authMessage}
         authStatus={accountSession}
+        youtubeIntegration={youtubeIntegration}
+        billing={billing}
         saveLocaleThemePreferenceAction={saveLocaleThemePreferenceAction}
         signOutAction={signOutAction}
       />

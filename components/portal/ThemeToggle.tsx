@@ -11,7 +11,7 @@ import {
 } from "@/lib/local-preferences";
 import { portalCopy } from "@/lib/portal-copy";
 
-type ThemeToggleVariant = "default" | "compact";
+type ThemeToggleVariant = "default" | "compact" | "segmented";
 
 export { themePreferenceStorageKey } from "@/lib/local-preferences";
 
@@ -89,6 +89,34 @@ export function ThemeToggle({ variant = "default" }: { variant?: ThemeToggleVari
           ].join(" ")}
         />
       </button>
+    );
+  }
+
+  if (variant === "segmented") {
+    const options = [
+      { value: "light" as const, label: copy.light },
+      { value: "dark" as const, label: copy.dark }
+    ];
+
+    return (
+      <div className="inline-flex items-center gap-1.5 rounded-base border border-border bg-surface-muted p-1" aria-label={copy.groupLabel}>
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={theme === option.value}
+            onClick={() => setTheme(option.value)}
+            className={[
+              "min-w-16 rounded-base px-3 py-1.5 text-xs font-bold transition",
+              theme === option.value
+                ? "bg-primary text-white"
+                : "text-muted hover:bg-surface hover:text-foreground"
+            ].join(" ")}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
     );
   }
 

@@ -221,6 +221,9 @@ export const commentTranslatorUiCopy = {
       }
     },
     operatorSession: {
+      readinessTitle: "Start readiness",
+      connectionReadiness: "接続確認",
+      startReadiness: "Start は server-owned credential check で YouTube が利用可能になるまで無効です。",
       helper: "Start後にだけserver-owned sessionが進みます。このパネルはsanitized session / usage metadataだけを表示します。",
       pending: "処理中",
       actionFailed: "セッション状態を更新できませんでした",
@@ -488,6 +491,9 @@ export const commentTranslatorUiCopy = {
       }
     },
     operatorSession: {
+      readinessTitle: "Start readiness",
+      connectionReadiness: "YouTube connection",
+      startReadiness: "Start stays disabled until YouTube is available through the server-owned credential check.",
       helper: "Only a server-owned session advances after Start. This panel displays sanitized session and usage metadata only.",
       pending: "Working",
       actionFailed: "Could not update session state",

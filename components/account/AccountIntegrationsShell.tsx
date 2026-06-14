@@ -18,6 +18,7 @@ const integrationsCopy = {
       "YouTube接続は、明示的な翻訳セッション開始前の準備です。接続だけではバックグラウンド監視、ポーリング、AI翻訳、クォータ消費は開始しません。",
     statusLabel: "接続状態",
     readinessLabel: "準備状態",
+    nextStepLabel: "次の操作",
     scopeLabel: "権限範囲",
     boundaryTitle: "表示しない情報",
     boundaryBody:
@@ -38,6 +39,13 @@ const integrationsCopy = {
       "reconnect-required": "再接続が必要です。",
       unavailable: "安全な接続状態だけを表示しています。設定が有効になるまで操作はfail closedします。",
       error: "接続状態の確認に失敗しました。tokenやprovider情報は表示せず、再確認できる状態だけを返しています。"
+    },
+    nextStep: {
+      connected: "接続済みです。翻訳ツールを開き、ポーリングと翻訳を始めたい時だけ Start してください。",
+      disconnected: "未接続です。この画面で YouTube を接続できます。接続だけではバックグラウンド監視は開始しません。",
+      "reconnect-required": "安全に利用できない接続状態です。セッション開始前に YouTube を再接続してください。",
+      unavailable: "server-only 設定が有効になるまで操作は fail closed します。",
+      error: "状態確認に失敗しています。機密値を出さず、再確認または再接続だけを案内します。"
     },
     connect: "YouTubeを接続",
     reconnect: "再接続",
@@ -74,6 +82,7 @@ const integrationsCopy = {
       "A YouTube connection prepares the account for an explicit translation session. Connecting alone does not start background monitoring, polling, AI translation, or quota use.",
     statusLabel: "Connection status",
     readinessLabel: "Readiness",
+    nextStepLabel: "Next action",
     scopeLabel: "Scope",
     boundaryTitle: "Not displayed",
     boundaryBody:
@@ -94,6 +103,13 @@ const integrationsCopy = {
       "reconnect-required": "Reconnect is required.",
       unavailable: "Only safe connection state is shown. Actions fail closed until the server-only setup is ready.",
       error: "The trusted status check failed. Token and provider details are not displayed."
+    },
+    nextStep: {
+      connected: "Connection is ready. Open the translator and press Start only when you want polling and translation to begin.",
+      disconnected: "YouTube is disconnected. Connect YouTube here; no background monitoring starts from connection alone.",
+      "reconnect-required": "Connection cannot be used safely yet. Reconnect YouTube before starting a session.",
+      unavailable: "Actions fail closed until the server-only setup is ready.",
+      error: "Status cannot be trusted yet. Recheck or reconnect without exposing credential values."
     },
     connect: "Connect YouTube",
     reconnect: "Reconnect",
@@ -231,6 +247,7 @@ export function AccountIntegrationsShell({
           <dl className="mt-5 grid gap-0">
             <DetailRow label={copy.statusLabel} value={statusLabel} />
             <DetailRow label={copy.readinessLabel} value={copy.readiness[youtubeIntegration.status]} />
+            <DetailRow label={copy.nextStepLabel} value={copy.nextStep[youtubeIntegration.status]} />
             <DetailRow label={copy.scopeLabel} value={youtubeIntegration.scopeLabel} />
           </dl>
           <div className="mt-5 grid gap-2 sm:grid-cols-3">

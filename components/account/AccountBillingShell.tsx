@@ -14,6 +14,7 @@ const billingCopy = {
     lead: "Free は常に利用できます。Kuro Stream Kit Pro は、まず Comment Translator の利用上限拡張から価値提供を開始します。月額/年額は表示整理で、実際の Stripe 月額/年額設定は後続の readiness で扱います。",
     signedInAs: "ログイン中のメールアドレス",
     currentPlan: "現在のプラン",
+    planContrastTitle: "Free / Paid / Stripe readiness",
     freePlan: "Free",
     paidPlan: "Kuro Stream Kit Pro",
     paidInactive: "Pro inactive",
@@ -23,6 +24,20 @@ const billingCopy = {
     freeAvailable: "Free は常に利用可能",
     activeNow: "現在の表示",
     stripeReadinessPending: "月額/年額 Checkout は後続 Stripe readiness で有効化",
+    planContrast: {
+      free: {
+        label: "Free 基本枠",
+        body: "Paid checkout 準備中でも Free は利用できます。"
+      },
+      paid: {
+        label: "Paid との差分",
+        body: "Paid は server-side entitlement sync 後に Comment Translator の上限を拡張します。"
+      },
+      stripe: {
+        label: "Stripe readiness",
+        body: "Checkout、Portal、webhook、billing setting mutation は承認ゲート付きです。"
+      }
+    },
     checkout: "現行 Paid Checkout を開く",
     manage: "支払いを管理",
     checkoutUnavailable: "決済設定の準備中",
@@ -53,6 +68,7 @@ const billingCopy = {
     lead: "Free remains permanently available. Kuro Stream Kit Pro starts with expanded Comment Translator limits. Monthly/yearly is presentation for now; actual Stripe monthly/yearly setup belongs to later readiness work.",
     signedInAs: "Signed-in email",
     currentPlan: "Current plan",
+    planContrastTitle: "Free / Paid / Stripe readiness",
     freePlan: "Free",
     paidPlan: "Kuro Stream Kit Pro",
     paidInactive: "Pro inactive",
@@ -62,6 +78,20 @@ const billingCopy = {
     freeAvailable: "Free is always available",
     activeNow: "Current display",
     stripeReadinessPending: "Monthly/yearly Checkout is enabled by later Stripe readiness",
+    planContrast: {
+      free: {
+        label: "Free baseline",
+        body: "Free remains usable even when Paid checkout is pending."
+      },
+      paid: {
+        label: "Paid contrast",
+        body: "Paid expands Comment Translator limits after server-side entitlement sync."
+      },
+      stripe: {
+        label: "Stripe readiness",
+        body: "Checkout, Portal, webhook, and billing setting mutation remain approval-gated."
+      }
+    },
     checkout: "Open current Paid Checkout",
     manage: "Manage billing",
     checkoutUnavailable: "Billing setup pending",
@@ -261,6 +291,18 @@ export function AccountBillingShell({
               copy={copy}
             />
           ))}
+        </div>
+
+        <div className="panel p-4 shadow-none sm:p-5">
+          <h2 className="text-base font-black text-foreground">{copy.planContrastTitle}</h2>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {Object.values(copy.planContrast).map((item) => (
+              <div key={item.label} className="rounded-base border border-border bg-surface-muted/45 px-3 py-3">
+                <p className="text-xs font-black text-primary-strong">{item.label}</p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-muted">{item.body}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div

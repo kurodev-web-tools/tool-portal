@@ -12,9 +12,14 @@ import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-transl
 import {
   persistInMemoryCommentTranslatorActiveSession,
   readCommentTranslatorSessionCommand,
-  readInMemoryCommentTranslatorActiveSession,
   type CommentTranslatorSessionCommandIntent
 } from "@/lib/comment-translator-session-runtime";
+import {
+  createCommentTranslatorDurableSessionFailClosedState,
+  createTrustedCommentTranslatorSessionSupabaseStore,
+  persistCommentTranslatorDurableSessionStateOrFailClosed,
+  readCommentTranslatorDurableActiveSessionOrFailClosed
+} from "@/lib/comment-translator-durable-session-store";
 import {
   readInMemoryCommentTranslatorUsageSnapshot,
   recordInMemoryCommentTranslatorSessionLedgerState
@@ -88,8 +93,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
   const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+  const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
+  const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
+    callerAuthorization,
+    durableSessionStore
+  });
+  if (durableActiveSessionRead.status === "fail-closed") {
+    return NextResponse.json(
+      createCommentTranslatorDurableSessionFailClosedState({
+        nowMs,
+        plan: billingSnapshot.plan
+      })
+    );
+  }
+
+  const activeSession = durableActiveSessionRead.activeSession;
   const usage = readInMemoryCommentTranslatorUsageSnapshot({
     callerAuthorization,
     nowMs,
@@ -119,6 +138,21 @@ export async function POST(request: NextRequest) {
     stopReason: command.stopReason,
     createSessionReferenceId: () => `cts_${randomUUID()}`
   });
+
+  const durablePersistResult = await persistCommentTranslatorDurableSessionStateOrFailClosed({
+    callerAuthorization,
+    durableSessionStore,
+    state,
+    planEntitlementReferenceId: usage.planEntitlement.planEntitlementReferenceId
+  });
+  if (durablePersistResult.status === "fail-closed") {
+    return NextResponse.json(
+      createCommentTranslatorDurableSessionFailClosedState({
+        nowMs,
+        plan: billingSnapshot.plan
+      })
+    );
+  }
 
   persistInMemoryCommentTranslatorActiveSession({ callerAuthorization, state });
   recordInMemoryCommentTranslatorSessionLedgerState({

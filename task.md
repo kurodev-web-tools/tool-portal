@@ -17,13 +17,14 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-durable-session-schema-adapter`.
+- Current branch: `codex/comment-translator-durable-usage-counter-schema-adapter`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is F3 durable session schema and adapter only unless the release owner explicitly expands scope.
+- This branch is F4 durable usage counter schema and adapter only unless the release owner explicitly expands scope.
 - P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
 - F1 preflight record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
 - F2 evidence record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_TOKEN_PERSISTENCE_SMOKE_EVIDENCE.md`.
 - F3 local migration/adapter: `supabase/migrations/20260615000000_comment_translator_sessions.sql`, `lib/comment-translator-durable-session-store.ts`.
+- F4 local migration/adapter: `supabase/migrations/20260615001000_comment_translator_usage_ledger_events.sql`, `lib/comment-translator-durable-usage-counter-store.ts`.
 - Archived previous long task board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
 ## Branch Strategy
@@ -88,7 +89,7 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 | F1 | OAuth live connect smoke preflight | Exact same-thread approval checklist, env reference checklist, sanitized evidence shape, and rollback path for YouTube OAuth live connect. | complete in PR |
 | F2 | OAuth live connect and token persistence smoke | Approval-gated live connect/token persistence evidence or blocker record; output stays status-label-only. | complete in PR |
 | F3 | Durable session schema and adapter | Durable active-session/session-history storage plan or migration, server-only adapter, and fail-closed fallback. | complete in PR |
-| F4 | Durable usage counter schema and adapter | Monthly/daily/session usage counters, translated character/message estimates, quota stop events, and server-owned writes. | pending |
+| F4 | Durable usage counter schema and adapter | Monthly/daily/session usage counters, translated character/message estimates, quota stop events, and server-owned writes. | complete in PR |
 | F5 | Public entitlement baseline | Free entitlement read path and limit resolver that combines time caps, per-minute cap, active-session cap, and monthly character cap. | pending |
 | F6 | Server-only live chat target lookup | Owned-broadcast lookup at Start only; liveChatId stays server-only and never reaches UI/docs/log/browser storage/handoff. | pending / gated |
 | F7 | Bounded `liveChatMessages.list` polling wiring | Active-session-only polling, `pollingIntervalMillis`, server-only `nextPageToken`, capped retry/backoff, empty-chat behavior, and quota/budget stop. | pending / gated |
@@ -141,7 +142,24 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. F3 status
+1. F4 status
+   - Goal: implement/record durable usage counter storage authority, server-only adapter, monthly/daily/session usage counters, translated character/message estimates, quota stop events, and server-owned writes for Free public beta.
+   - Scope: local migration file, trusted server-only Supabase adapter, session route/action durable usage read/write wiring, durable readiness doc update, and focused contract only. No remote Supabase migration apply or operator remote mutation command was run in this thread.
+   - Status: complete in this PR.
+   - Implemented:
+     - `supabase/migrations/20260615001000_comment_translator_usage_ledger_events.sql` creates `comment_translator_usage_ledger_events` as service-role-only durable usage ledger storage with monthly/day/session indexes, translated message/character estimates, provider request estimates, provider error classes, and quota/budget stop categories.
+     - `lib/comment-translator-durable-usage-counter-store.ts` adds a server-only trusted adapter, env-reference-only readiness, sanitized row draft mapping, durable monthly/daily/session snapshot reads, durable event writes, and fail-closed unavailable reads/writes.
+     - `/api/comment-translator/session` and comment-translator server actions now read usage snapshots from the durable usage authority and write session start/stop/quota stop usage events through the durable adapter before preserving the existing in-memory local ledger cache.
+     - `lib/comment-translator-usage-ledger-runtime.ts` records the F4 durable adapter stage and carries a monthly translated character estimate in server-owned usage snapshots.
+     - `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md` records the local F4 usage table/adapter and keeps remote apply gated.
+   - Output/privacy boundary: browser-safe usage output still excludes token values, owner user id values, provider channel id values, liveChatId values, service_role values, Authorization header values, provider target metadata, raw provider payload, raw comments, and provider error bodies. The adapter may use owner/user references only inside the server-only trusted path.
+   - Remote mutation/schema apply: remote Supabase migration apply is not-run/approval-gated. No `supabase db push`, SQL editor apply, deploy/upload, provider target lookup, liveChatId lookup, session start smoke, live/provider execution, translation provider API execution, Stripe live action, main promotion, or public launch gate flip was run.
+   - F4 verification: `node scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs`, changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
+   - Width checks skipped because F4 has no UI/CSS/rendered route/visible layout change; route/action behavior is server-only and browser-safe output shape reuses existing stopped/session states.
+   - Residual risk / unchecked scope: the local migration file is not applied to any remote Supabase project in this thread, so deployed durable usage persistence remains unverified until a same-thread approved remote apply/preflight. Provider execution runtime still records deterministic local estimates until later gated provider wiring tasks connect real live/provider execution to durable writes. Public release remains blocked until F5/F6-F15 and approved remote schema/application evidence are complete.
+   - Next safe action: after this PR merges, start F5 public entitlement baseline in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration`.
+
+2. F3 status
    - Goal: implement/record durable active-session/session-history storage authority, server-only adapter, and fail-closed fallback for Free public beta.
    - Scope: local migration file, trusted server-only Supabase adapter, session route/action durable read/write wiring, and focused contract only. No remote Supabase migration apply or operator remote mutation command was run in this thread.
    - Status: complete in this PR.
@@ -153,10 +171,10 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
    - Remote mutation/schema apply: remote Supabase migration apply is not-run/approval-gated. No `supabase db push`, SQL editor apply, deploy/upload, provider target lookup, liveChatId lookup, session start smoke, live/provider execution, translation provider API execution, Stripe live action, main promotion, or public launch gate flip was run.
    - F3 verification: `node scripts/comment-translator-durable-session-schema-adapter-contract.mjs`, changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
    - Width checks skipped because F3 has no UI/CSS/rendered route/visible layout change; route/action behavior is server-only and browser-safe output shape reuses existing display states.
-   - Residual risk / unchecked scope: the local migration file is not applied to any remote Supabase project in this thread, so deployed durable persistence remains unverified until a same-thread approved remote apply/preflight. Public release remains blocked until F4/F5/F6-F15 and approved remote schema/application evidence are complete.
-   - Next safe action: after this PR merges, start F4 durable usage counter schema and adapter in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration`.
+   - Residual risk / unchecked scope: the local migration file is not applied to any remote Supabase project in this thread, so deployed durable persistence remains unverified until a same-thread approved remote apply/preflight. Public release remains blocked until F5/F6-F15 and approved remote schema/application evidence are complete.
+   - Next safe action: consumed by F4 in this PR; after this PR merges, start F5 public entitlement baseline in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration`.
 
-2. F2 status
+3. F2 status
    - Goal: collect approval-gated live connect/token persistence evidence or blocker record with status-label-only output.
    - Scope: F2 can execute only after same-thread ready preflight, sanitized output review, and exact explicit approval. Do not execute provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, remote mutation, schema migration, deploy/upload, Stripe action, main promotion, or public launch gate flip.
    - Status: complete in this PR. Exact same-thread approval was provided for the Cloudflare staging private-gated target label. The approved action returned to `/account/integrations` and produced sanitized `connection-status-connected` evidence.
@@ -164,18 +182,18 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
    - Current F2 execution state: YouTube OAuth live connect and live authorization code exchange were run only inside the approved UI flow; token persistence smoke produced `connection-status-connected`; provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, remote mutation, schema migration, Stripe live action, main promotion, and public launch gate flip are all not-run.
    - F2 verification: docs/content inspection for the F2 evidence record, changed-files no-secret scan over `task.md` and the F2 record, and `git diff --check`.
    - Width checks skipped for F2 because there are no UI/CSS/rendered route/visible copy/browser storage/layout/runtime changes.
-   - Next safe action: consumed by F3 in this PR; after this PR merges, start F4 durable usage counter schema and adapter in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration`.
+   - Next safe action: consumed by F3/F4; after this PR merges, start F5 public entitlement baseline in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration`.
 
-3. F1 status
+4. F1 status
    - Goal: produce exact same-thread approval checklist, operator-local env reference checklist, sanitized evidence shape, abort conditions, and rollback path for YouTube OAuth live connect.
    - Scope: docs/contract preflight only. No live OAuth, provider, remote mutation, schema migration, deploy/upload, Stripe, main promotion, or public launch action is approved or run.
    - Status: complete in this PR. Full record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
    - F1 verification: `node scripts/comment-translator-oauth-live-connect-smoke-preflight-contract.mjs`, docs/content inspection for F1 output, changed-files no-secret scan over `task.md`, the F1 doc, and the F1 contract script, and `git diff --check`.
    - Width checks skipped for F1 because there are no UI/CSS/rendered route/visible copy/browser storage/layout/runtime changes.
    - F1 residual risk: live OAuth connect, live authorization code exchange, token persistence smoke, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, remote mutation, schema migration, Stripe live action, main promotion, and public launch gate flip remain not-run and approval-gated.
-   - F1 handoff consumed by F2. F3 is complete in this PR; next safe action after this PR merges is F4 durable usage counter schema and adapter.
+   - F1 handoff consumed by F2/F3/F4; next safe action after this PR merges is F5 public entitlement baseline.
 
-4. Phase 0 public-beta gap audit
+5. Phase 0 public-beta gap audit
    - Goal: compare current repo state against the final MVP brief and produce implementation-sized blockers.
    - Scope: docs/task-board and code inspection only unless separately approved.
    - Output classified:
@@ -189,9 +207,9 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
    - Width checks skipped because there are no UI/CSS/rendered route changes.
    - Do not run Google OAuth live connect, YouTube OAuth live connect, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, or webhook registration.
 
-5. Next recommended roadmap task: F4 durable usage counter schema and adapter
-   - Start F4 durable usage counter schema and adapter in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration` after this F3 PR merges.
-   - F4 should remain server-only/contract-first until a schema or remote mutation approval is explicitly granted.
+6. Next recommended roadmap task: F5 public entitlement baseline
+   - Start F5 public entitlement baseline in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration` after this F4 PR merges.
+   - F5 should remain server-only/contract-first and combine Free time caps, per-minute cap, active-session cap, and monthly character cap without enabling public launch.
    - Target: `codex/comment-translator-free-public-beta-integration`.
 
 ## Approval-Gated Actions

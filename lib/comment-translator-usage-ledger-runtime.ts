@@ -106,6 +106,7 @@ export type CommentTranslatorUsageLedgerSnapshot = {
   dailyUsedMs: number;
   currentSessionElapsedMs: number;
   translatedMessagesInCurrentMinute: number;
+  monthlyTranslatedCharacterEstimate: number;
   providerBudgetAvailable: boolean;
   globalBudgetAvailable: boolean;
   aiBudgetAvailable: boolean;
@@ -140,7 +141,7 @@ export type CommentTranslatorAdminSafeAggregateMetrics = {
 export const commentTranslatorUsageQuotaBudgetLedgerContract = {
   implementationStage: "server-owned-usage-quota-budget-ledger-foundation",
   runtime: "server-only",
-  storageStage: "in-process-contract-foundation",
+  storageStage: "durable-counter-adapter-f4",
   clientReadableOutput: "sanitized-usage-metadata-only",
   recordCategories: [
     "per-user-daily-session-minutes",
@@ -312,6 +313,7 @@ export function readInMemoryCommentTranslatorUsageSnapshot({
     ? usageLedgerRecords.filter((record) => record.userLedgerReferenceId === userLedgerReferenceId)
     : [];
   const currentDay = dayBucket(nowMs);
+  const currentMonth = monthBucket(nowMs);
   const dailyRecords = records.filter((record) => dayBucket(record.occurredAtMs) === currentDay);
   const activeSessionRecords = activeSession
     ? dailyRecords.filter((record) => "sessionReferenceId" in record && record.sessionReferenceId === activeSession.sessionReferenceId)
@@ -329,6 +331,12 @@ export function readInMemoryCommentTranslatorUsageSnapshot({
           record.type === "ai-usage-estimated" && record.occurredAtMs >= currentMinuteStartedAtMs
       )
       .reduce((total, record) => total + Math.max(0, record.translatedMessageEstimate), 0),
+    monthlyTranslatedCharacterEstimate: records
+      .filter(
+        (record): record is Extract<CommentTranslatorUsageLedgerRecord, { type: "ai-usage-estimated" }> =>
+          record.type === "ai-usage-estimated" && monthBucket(record.occurredAtMs) === currentMonth
+      )
+      .reduce((total, record) => total + Math.max(0, record.translatedCharacterEstimate), 0),
     providerBudgetAvailable: !dailyRecords.some(
       (record) => record.type === "quota-budget-stop" && record.stopCategory === "provider-quota"
     ),
@@ -480,4 +488,8 @@ function mapStopReasonToQuotaBudgetCategory(
 
 function dayBucket(nowMs: number) {
   return new Date(nowMs).toISOString().slice(0, 10);
+}
+
+function monthBucket(nowMs: number) {
+  return new Date(nowMs).toISOString().slice(0, 7);
 }

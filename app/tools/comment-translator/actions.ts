@@ -26,9 +26,13 @@ import {
   readCommentTranslatorDurableActiveSessionOrFailClosed
 } from "@/lib/comment-translator-durable-session-store";
 import {
-  readInMemoryCommentTranslatorUsageSnapshot,
   recordInMemoryCommentTranslatorSessionLedgerState
 } from "@/lib/comment-translator-usage-ledger-runtime";
+import {
+  createTrustedCommentTranslatorUsageCounterSupabaseStore,
+  readCommentTranslatorDurableUsageSnapshotOrFailClosed,
+  recordCommentTranslatorDurableSessionLedgerStateOrFailClosed
+} from "@/lib/comment-translator-durable-usage-counter-store";
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
@@ -225,6 +229,7 @@ async function readCommentTranslatorSessionActionResult({
 
   const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
+  const durableUsageCounterStore = createTrustedCommentTranslatorUsageCounterSupabaseStore();
   const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
     callerAuthorization,
     durableSessionStore
@@ -237,13 +242,22 @@ async function readCommentTranslatorSessionActionResult({
   }
 
   const activeSession = durableActiveSessionRead.activeSession;
-  const usage = readInMemoryCommentTranslatorUsageSnapshot({
+  const durableUsageRead = await readCommentTranslatorDurableUsageSnapshotOrFailClosed({
     callerAuthorization,
+    durableUsageCounterStore,
     nowMs,
     plan: billingSnapshot.plan,
     activeSession,
     paidEntitlement: billingSnapshot.plan === "paid" ? billingSnapshot.planEntitlement : undefined
   });
+  if (durableUsageRead.status === "fail-closed") {
+    return createCommentTranslatorDurableSessionFailClosedState({
+      nowMs,
+      plan: billingSnapshot.plan
+    });
+  }
+
+  const usage = durableUsageRead.snapshot;
   const credentialReadiness = await readCredentialReadiness({ activeSession, callerAuthorization });
   const state = await readCommentTranslatorSessionCommand({
     intent,
@@ -265,6 +279,21 @@ async function readCommentTranslatorSessionActionResult({
     planEntitlementReferenceId: usage.planEntitlement.planEntitlementReferenceId
   });
   if (durablePersistResult.status === "fail-closed") {
+    return createCommentTranslatorDurableSessionFailClosedState({
+      nowMs,
+      plan: billingSnapshot.plan
+    });
+  }
+
+  const durableUsagePersistResult = await recordCommentTranslatorDurableSessionLedgerStateOrFailClosed({
+    callerAuthorization,
+    durableUsageCounterStore,
+    intent,
+    state,
+    occurredAtMs: nowMs,
+    planEntitlement: usage.planEntitlement
+  });
+  if (durableUsagePersistResult.status === "fail-closed") {
     return createCommentTranslatorDurableSessionFailClosedState({
       nowMs,
       plan: billingSnapshot.plan

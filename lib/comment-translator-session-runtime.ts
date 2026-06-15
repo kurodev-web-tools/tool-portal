@@ -175,6 +175,7 @@ export const commentTranslatorSessionRuntimeContract = {
   providerTargetLookup: "not-run-in-task-7",
   quotaWrite: "not-run-in-task-7",
   usageQuotaBudgetLedger: "server-owned-usage-quota-budget-ledger-foundation-in-task-8",
+  durableSessionAuthority: "required-before-public-session-start",
   entitlementState: "server-owned-plan-entitlement-reference",
   billingEnforcement: "not-run-in-task-7",
   browserStorage: "forbidden",

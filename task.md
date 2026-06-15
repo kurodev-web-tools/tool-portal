@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-bounded-live-chat-polling-wiring`.
+- Current branch: `codex/comment-translator-live-message-normalization`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is F7 bounded `liveChatMessages.list` polling wiring only unless the release owner explicitly expands scope.
+- This branch is F8 live message normalization only unless the release owner explicitly expands scope.
 - P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
 - F1 preflight record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
 - F2 evidence record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_TOKEN_PERSISTENCE_SMOKE_EVIDENCE.md`.
@@ -142,21 +142,21 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. F7 bounded `liveChatMessages.list` polling wiring
-   - Goal: implement/record active-session-only bounded polling wiring for Free public beta without exposing live target values, provider target metadata, server-only cursor values, raw provider payloads, raw comments, token values, Authorization header values, owner user id values, or provider channel id values to browser-readable output.
-   - Scope: server-only deterministic/local adapter, unavailable/not-run default adapter, F6 live target readiness consumption only after active Start, server-only `nextPageToken` state, `pollingIntervalMillis`, capped retry/backoff, empty-chat waiting, terminal-state stop handoff, quota/budget stop handoff to the existing durable usage/session ledger path, route/action wiring, readiness doc update, gap audit update, and focused contract only. No real YouTube polling, live provider call, live target lookup execution, provider target lookup execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, or public launch gate flip is approved or run in this thread.
+1. F8 Live message normalization
+   - Goal: implement/record a server-only deterministic normalization layer for YouTube Live Chat polling/provider payloads without exposing raw provider payloads, raw comments, author channel id/URL/profile image URL, tokens, owner user id values, provider channel id values, live target values, provider target metadata, service_role values, Authorization header values, or server-only cursors to browser-readable output.
+   - Scope: local normalizer, normalized event shape, message-reference dedupe, deleted-message propagation, banned/ended event handling, browser-safe projection, readiness doc update, gap audit update, and focused contract only. No real YouTube polling, live provider call, live target lookup execution, provider target lookup execution, translation provider API execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, or public launch gate flip is approved or run in this thread.
    - Status: complete in this PR.
    - Implemented:
-     - `lib/comment-translator-bounded-live-chat-polling-wiring.ts` adds the F7 server-only contract, active-session-only polling state seed/tick/clear helpers, deterministic local adapter, unavailable/not-run adapter, sanitized metadata output, bounded retry exhaustion, empty-chat waiting, and terminal state mapping.
-     - `lib/comment-translator-session-runtime.ts` accepts the F7 provider signal so active sessions can stop through existing sanitized `stream-ended`, `stream-unavailable`, or `terminal-provider-error` states.
-     - `/api/comment-translator/session` and comment-translator server actions now seed F7 polling state only after an active Start with F6 ready target, tick only for active session status/heartbeat through the default not-run adapter, and clear server-only polling state on Stop.
-     - `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md` and `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md` record F7 as local server-only wiring and keep public launch blocked.
-   - Output/privacy boundary: browser-safe session output still excludes token values, owner user id values, provider channel id values, live target values, service_role values, Authorization header values, provider target metadata, raw provider payload, raw comments, and server-only cursor values. No live target entry UI, manual provider target entry, browser storage expansion, route-render lookup, background monitoring from connection alone, or handoff payload expansion is added.
-   - Remote/live execution: provider target lookup execution, live target lookup execution, real `liveChatMessages.list`, session start smoke, translation provider API execution, live/provider execution, remote Supabase migration apply, deploy/upload, Stripe live action, main promotion, and public launch gate flip are all not-run/approval-gated.
-   - F7 verification: `node scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs`, changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
-   - Width checks skipped because F7 has no UI/CSS/rendered route/visible layout change; route/action behavior remains server-only and browser-safe output shape reuses existing stopped/session states.
-   - Residual risk / unchecked scope: real YouTube provider target lookup, live target resolution, actual `liveChatMessages.list`, non-empty live comment intake, translation provider execution, deployed durable cursor behavior across restarts, remote schema application, and launch readiness remain unverified until same-thread ready preflight, sanitized output review, and explicit in-thread approval exist. Public release remains blocked until F8-F15 and approved live/remote evidence are complete.
-   - Next safe action: after this PR merges, start F8 live message normalization in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration`.
+     - `lib/comment-translator-live-message-normalization.ts` adds the F8 server-only contract, initial normalization state, provider-payload normalizer, and browser-safe projection.
+     - The normalizer covers text, Super Chat, Super Sticker, member, system, deleted, banned, and ended events; dedupes by message reference; records deleted target references; and maps ended events to `stream-ended`.
+     - BAN-event historical updates are intentionally P1-deferred when they would require author channel identity; this PR does not persist author channel id, author channel URL, or author profile image URL.
+     - `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md` and `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md` record F8 as local server-only normalization and keep public launch blocked.
+   - Output/privacy boundary: browser-safe projection excludes raw provider payload, author channel id/URL/profile image URL, live target values, provider target metadata, server-only cursor values, token values, service_role values, Authorization header values, owner user id values, and provider channel id values. No live target entry UI, manual provider target entry, browser storage expansion, route-render lookup, background monitoring from connection alone, UI feed replacement, or handoff payload expansion is added.
+   - Remote/live execution: provider target lookup execution, live target lookup execution, real `liveChatMessages.list`, real provider payload capture, session start smoke, translation provider API execution, live/provider execution, remote Supabase migration apply, deploy/upload, Stripe live action, main promotion, and public launch gate flip are all not-run/approval-gated.
+   - F8 verification: `node scripts/comment-translator-live-message-normalization-contract.mjs`, changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` (exit 0; Windows line-ending warnings only).
+   - Width checks skipped because F8 has no UI/CSS/rendered route/visible layout change; it adds a server-only local normalizer and updates readiness docs only.
+   - Residual risk / unchecked scope: real YouTube provider target lookup, live target resolution, actual `liveChatMessages.list`, real provider payload shape drift, non-empty live comment intake, browser feed replacement, translation provider execution, deployed durable cursor behavior across restarts, remote schema application, and launch readiness remain unverified until same-thread ready preflight, sanitized output review, and explicit in-thread approval exist. Public release remains blocked until F9-F15 and approved live/remote evidence are complete.
+   - Next safe action: after this PR merges, start F9 real comments UI wiring in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration`.
 
 2. F6 server-only live chat target lookup
    - Goal: implement/record the Start-only owned-broadcast lookup boundary for Free public beta without exposing provider target metadata or live target values to browser-readable output.

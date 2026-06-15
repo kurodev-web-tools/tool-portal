@@ -17,10 +17,11 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-public-beta-gap-audit`.
+- Current branch: `codex/comment-translator-oauth-live-connect-smoke-preflight`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is P0-0 docs/content gap audit only unless the release owner explicitly expands scope.
+- This branch is F1 OAuth live connect smoke preflight docs/contract only unless the release owner explicitly expands scope.
 - P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
+- F1 preflight record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
 - Archived previous long task board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
 ## Branch Strategy
@@ -82,7 +83,7 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 | ID | Task | Outcome | Status |
 | --- | --- | --- | --- |
-| F1 | OAuth live connect smoke preflight | Exact same-thread approval checklist, env reference checklist, sanitized evidence shape, and rollback path for YouTube OAuth live connect. | pending |
+| F1 | OAuth live connect smoke preflight | Exact same-thread approval checklist, env reference checklist, sanitized evidence shape, and rollback path for YouTube OAuth live connect. | complete in PR |
 | F2 | OAuth live connect and token persistence smoke | Approval-gated live connect/token persistence evidence or blocker record; output stays status-label-only. | pending / gated |
 | F3 | Durable session schema and adapter | Durable active-session/session-history storage plan or migration, server-only adapter, and fail-closed fallback. | pending |
 | F4 | Durable usage counter schema and adapter | Monthly/daily/session usage counters, translated character/message estimates, quota stop events, and server-owned writes. | pending |
@@ -138,7 +139,16 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. Phase 0 public-beta gap audit
+1. F1 status
+   - Goal: produce exact same-thread approval checklist, operator-local env reference checklist, sanitized evidence shape, abort conditions, and rollback path for YouTube OAuth live connect.
+   - Scope: docs/contract preflight only. No live OAuth, provider, remote mutation, schema migration, deploy/upload, Stripe, main promotion, or public launch action is approved or run.
+   - Status: complete in this PR. Full record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
+   - F1 verification: `node scripts/comment-translator-oauth-live-connect-smoke-preflight-contract.mjs`, docs/content inspection for F1 output, changed-files no-secret scan over `task.md`, the F1 doc, and the F1 contract script, and `git diff --check`.
+   - Width checks skipped for F1 because there are no UI/CSS/rendered route/visible copy/browser storage/layout/runtime changes.
+   - F1 residual risk: live OAuth connect, live authorization code exchange, token persistence smoke, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, remote mutation, schema migration, Stripe live action, main promotion, and public launch gate flip remain not-run and approval-gated.
+   - Next safe action: after this PR merges, start F2 in a separate approval-gated thread/branch and use the F1 preflight before any live OAuth action.
+
+2. Phase 0 public-beta gap audit
    - Goal: compare current repo state against the final MVP brief and produce implementation-sized blockers.
    - Scope: docs/task-board and code inspection only unless separately approved.
    - Output classified:
@@ -152,9 +162,9 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
    - Width checks skipped because there are no UI/CSS/rendered route changes.
    - Do not run Google OAuth live connect, YouTube OAuth live connect, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, or webhook registration.
 
-2. Next recommended roadmap task: F1 OAuth live connect smoke preflight
-   - Goal: produce exact same-thread approval checklist, env reference checklist, sanitized evidence shape, abort conditions, and rollback path for YouTube OAuth live connect.
-   - Scope: docs/contract preflight only. Do not execute live connect, authorization code exchange, token persistence smoke, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, remote mutation, schema migration, deploy/upload, or Stripe action.
+3. Next recommended roadmap task: F2 OAuth live connect and token persistence smoke
+   - Goal: collect approval-gated live connect/token persistence evidence or blocker record with status-label-only output.
+   - Scope: gated execution only after same-thread ready preflight, sanitized output review, and exact explicit approval. Do not execute provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, remote mutation, schema migration, deploy/upload, Stripe action, main promotion, or public launch gate flip.
    - Target: `codex/comment-translator-free-public-beta-integration`.
 
 ## Approval-Gated Actions

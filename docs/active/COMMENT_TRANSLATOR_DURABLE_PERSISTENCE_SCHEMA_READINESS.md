@@ -18,6 +18,7 @@ Public launch must not depend on undocumented in-memory-only state for required 
 | active session state | Local F3 migration/adapter exists in `comment_translator_sessions`; remote apply not run | Remote migration apply and deployed durable enforcement evidence remain approval-gated | Yes | Sanitized session metadata only |
 | session history | Local F3 session-history rows exist in `comment_translator_sessions`; remote apply not run | Remote migration apply and deployed durable enforcement evidence remain approval-gated | Yes | Sanitized session metadata only |
 | entitlement persistence | Local F5 public entitlement baseline resolver exists for Free; Paid durable entitlement remains future C1 | Free public beta uses safe Free degradation and adds 20,000 characters/month on top of existing time/per-minute/active-session caps; Durable Paid rows are required before Paid limits can be relied on publicly | Yes | Sanitized plan/limit metadata only |
+| F6 server-only live chat target lookup | Start-only server boundary exists with deterministic/local adapter and sanitized unavailable fallback; real provider target lookup is not run | Start requests fail closed to sanitized `stream-unavailable` until approved live lookup execution is separately ready; no connection-only/background/route-render lookup is added | Yes | Sanitized session metadata only |
 | admin aggregates | Derived aggregate/reference-only snapshots | Durable event-derived aggregates are required for public operations | Yes | Sanitized aggregate/reference-only |
 | abuse/rate-limit buckets | In-memory app-side buckets plus edge-control reference name | Durable or approved edge-backed buckets are required for distributed public traffic | Yes | Sanitized rate-limit metadata only |
 | provider target metadata | Operator-local/server-only consumption | Do not persist as app-readable public state in this readiness proposal | No | Forbidden |
@@ -27,6 +28,7 @@ Public launch must not depend on undocumented in-memory-only state for required 
 - Durable usage ledger records for session starts/stops, provider request estimates, AI message/character/cost estimates, and quota/budget stop events. F4 adds the local `comment_translator_usage_ledger_events` migration and trusted server adapter; remote Supabase apply remains not-run/approval-gated.
 - Durable active-session and session-history rows that can enforce one active session per user, heartbeat timeout, daily/session caps, and stop reasons across restarts and distributed runtimes.
 - F5 public entitlement baseline resolver for Free plan limits: 30 min/day/user, 30 min/session, 1 active session/user, 30 translated messages/min, and 20,000 characters/month. Missing or unreadable durable usage state fails closed before public session start; non-durable Paid entitlement state degrades to safe Free limits until C1/C2.
+- F6 Start-only server boundary for owned-broadcast lookup. This PR wires a deterministic/local adapter and a sanitized unavailable fallback only; real provider target lookup, live target resolution, polling, and background monitoring remain approval-gated and not run.
 - Durable entitlement persistence for Paid plan limits, with missing or unreadable Paid entitlement degrading to safe Free limits.
 - Durable admin aggregates derived from sanitized ledger/session events for active sessions, completed minutes, provider request estimates, AI cost estimates, stop counts, and provider/translation error classes.
 - Durable or approved edge-backed abuse/rate-limit buckets before public traffic relies on repeated-attempt protection.
@@ -82,6 +84,7 @@ Approval gate for any actual schema migration:
 
 - Public-release capable: no.
 - F5 public entitlement baseline is implemented locally, but public launch remains blocked. The resolver uses durable F4 monthly usage reads for the 20,000 characters/month cap and degrades any non-durable Paid entitlement to Free until durable Paid entitlement work lands.
+- F6 server-only live chat target lookup is implemented locally as Start-only wiring, but public launch remains blocked. Real provider target lookup and live target resolution are not run in this thread; the default runtime path uses sanitized fail-closed unavailable state.
 - Usage ledger durability has a local F4 migration/adapter, but remote Supabase migration apply and deployed enforcement evidence are not yet approved or run.
 - Active session state and session history have a local F3 migration/adapter, but remote Supabase migration apply and deployed enforcement evidence are not yet approved or run.
 - Paid entitlement persistence is not yet a public durable authority.

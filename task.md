@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-public-entitlement-baseline`.
+- Current branch: `codex/comment-translator-server-only-live-chat-target-lookup`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is F5 public entitlement baseline only unless the release owner explicitly expands scope.
+- This branch is F6 server-only live chat target lookup only unless the release owner explicitly expands scope.
 - P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
 - F1 preflight record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
 - F2 evidence record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_TOKEN_PERSISTENCE_SMOKE_EVIDENCE.md`.
@@ -142,10 +142,26 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. F5 public entitlement baseline
+1. F6 server-only live chat target lookup
+   - Goal: implement/record the Start-only owned-broadcast lookup boundary for Free public beta without exposing provider target metadata or live target values to browser-readable output.
+   - Scope: server-only deterministic/local adapter, sanitized unavailable fallback, Start-only route/action wiring, existing durable/session runtime gate, readiness doc update, and focused contract only. No real YouTube provider target lookup, live target resolution, polling, provider execution, remote mutation, deploy/upload, Stripe live action, main promotion, or public launch gate flip is approved or run in this thread.
+   - Status: complete in this PR.
+   - Implemented:
+     - `lib/comment-translator-server-only-live-chat-target-lookup.ts` adds the F6 server-only contract, Start-only resolver, deterministic local adapter, and sanitized unavailable adapter. The resolver skips non-Start intents and credential-not-ready paths, and maps unavailable/missing owned broadcast or missing live target states to sanitized `stream-unavailable`.
+     - `lib/comment-translator-session-runtime.ts` accepts F6 target readiness for Start and fails closed before creating an active session when target lookup is unavailable.
+     - `/api/comment-translator/session` and comment-translator server actions now invoke the F6 resolver only through the server-only path; the default adapter is unavailable so no real provider lookup is executed in this PR.
+     - `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md` records F6 as local Start-only wiring and keeps public launch blocked.
+   - Output/privacy boundary: browser-safe session output still excludes token values, owner user id values, provider channel id values, live target values, service_role values, Authorization header values, provider target metadata, raw provider payload, and raw comments. No live target entry UI, manual provider target entry, browser storage expansion, or handoff payload expansion is added.
+   - Remote/live execution: provider target lookup, live target resolution, session start smoke, polling, live/provider execution, translation provider API execution, remote Supabase migration apply, deploy/upload, Stripe live action, main promotion, and public launch gate flip are all not-run/approval-gated.
+   - F6 verification: `node scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs`, changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
+   - Width checks skipped because F6 has no UI/CSS/rendered route/visible layout change; route/action behavior remains server-only and browser-safe output shape reuses existing stopped/session states.
+   - Residual risk / unchecked scope: real YouTube provider target lookup and live target resolution remain unverified until same-thread ready preflight, sanitized output review, and explicit in-thread approval exist. Public release remains blocked until F7-F15 and approved live/remote evidence are complete.
+   - Next safe action: after this PR merges, start F7 bounded `liveChatMessages.list` polling wiring in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration`.
+
+2. F5 public entitlement baseline
    - Goal: implement/record the Free entitlement read path and limit resolver for Free public beta.
    - Scope: server-only resolver, session route/action wiring, existing durable usage read consumption, durable readiness doc update, and focused contract only. No remote Supabase migration apply or operator remote mutation command is approved or run in this thread.
-   - Status: complete in this PR.
+   - Status: complete in prior PR.
    - Implemented:
      - `lib/comment-translator-public-entitlement-baseline.ts` adds the F5 server-only public entitlement resolver, contract metadata, Free baseline normalization, monthly character remaining calculation, and fail-closed durable usage handling.
      - `lib/comment-translator-session-runtime.ts` adds the Free `monthlyTranslatedCharacterLimit` and records `monthlyTranslatedCharacters: 20_000` without replacing the existing time/per-minute/active-session caps.
@@ -223,9 +239,9 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
    - Width checks skipped because there are no UI/CSS/rendered route changes.
    - Do not run Google OAuth live connect, YouTube OAuth live connect, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, or webhook registration.
 
-6. Next recommended roadmap task: F5 public entitlement baseline
-   - Start F5 public entitlement baseline in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration` after this F4 PR merges.
-   - F5 should remain server-only/contract-first and combine Free time caps, per-minute cap, active-session cap, and monthly character cap without enabling public launch.
+6. Next recommended roadmap task: F7 bounded `liveChatMessages.list` polling wiring
+   - Start F7 bounded polling wiring in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration` after this F6 PR merges.
+   - F7 should remain server-only/contract-first and keep active-session-only polling, server-only cursor/live target handling, capped retry/backoff, empty-chat behavior, and quota/budget stop accounting without enabling public launch.
    - Target: `codex/comment-translator-free-public-beta-integration`.
 
 ## Approval-Gated Actions

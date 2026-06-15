@@ -2,6 +2,7 @@ import "server-only";
 
 import { type YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 import { type YouTubeOAuthCredentialTranslatorStartReadiness } from "./comment-translator-youtube-disconnect-runtime";
+import { type CommentTranslatorServerOnlyLiveChatTargetLookupResult } from "./comment-translator-server-only-live-chat-target-lookup";
 
 export type CommentTranslatorSessionPlan = "free" | "paid";
 
@@ -128,6 +129,7 @@ export type StartCommentTranslatorSessionRequest = {
   credentialReadiness: YouTubeOAuthCredentialTranslatorStartReadiness;
   activeSession: CommentTranslatorActiveSessionRecord | null;
   usage: CommentTranslatorSessionUsageSnapshot;
+  liveChatTargetReadiness?: CommentTranslatorServerOnlyLiveChatTargetLookupResult;
   createSessionReferenceId: () => string;
 };
 
@@ -173,7 +175,7 @@ export const commentTranslatorSessionRuntimeContract = {
   providerApiUsageBeforeExplicitStart: "not-started-before-explicit-start",
   aiUsageBeforeExplicitStart: "not-started-before-explicit-start",
   liveProviderExecution: "not-run-in-task-7",
-  providerTargetLookup: "not-run-in-task-7",
+  providerTargetLookup: "start-only-server-boundary-f6",
   quotaWrite: "not-run-in-task-7",
   usageQuotaBudgetLedger: "server-owned-usage-quota-budget-ledger-foundation-in-task-8",
   durableSessionAuthority: "required-before-public-session-start",
@@ -305,6 +307,18 @@ export function startCommentTranslatorSession(
       usage: request.usage,
       reason: usageStopReason,
       nextAction: usageStopReason === "daily-time-limit" ? "wait-for-limit-reset" : "session-stopped",
+      credentialReferenceId: request.credentialReadiness.credentialReferenceId
+    });
+  }
+
+  if (request.liveChatTargetReadiness?.status === "unavailable") {
+    return createStoppedState({
+      activeSession: null,
+      nowMs: request.nowMs,
+      plan: request.plan,
+      usage: request.usage,
+      reason: request.liveChatTargetReadiness.stopReason,
+      nextAction: "session-stopped",
       credentialReferenceId: request.credentialReadiness.credentialReferenceId
     });
   }

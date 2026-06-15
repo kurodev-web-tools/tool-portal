@@ -36,6 +36,10 @@ import {
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
 import {
+  createUnavailableCommentTranslatorLiveChatTargetLookupAdapter,
+  resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart
+} from "@/lib/comment-translator-server-only-live-chat-target-lookup";
+import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
   readCommentTranslatorPrivateLaunchAccess
 } from "@/lib/comment-translator-private-launch-access-gate";
@@ -263,6 +267,13 @@ async function readCommentTranslatorSessionActionResult({
 
   const usage = entitlementBaseline.usage;
   const credentialReadiness = await readCredentialReadiness({ activeSession, callerAuthorization });
+  const liveChatTargetReadiness = await resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart({
+    intent,
+    credentialReadiness,
+    adapter: createUnavailableCommentTranslatorLiveChatTargetLookupAdapter({
+      reason: "provider-target-lookup-not-approved"
+    })
+  });
   const state = await readCommentTranslatorSessionCommand({
     intent,
     nowMs,
@@ -271,6 +282,7 @@ async function readCommentTranslatorSessionActionResult({
     credentialReadiness,
     activeSession,
     usage,
+    liveChatTargetReadiness,
     browserConnected: intent !== "stop",
     stopReason,
     createSessionReferenceId: () => `cts_${randomUUID()}`

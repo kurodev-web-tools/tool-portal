@@ -40,6 +40,12 @@ import {
   resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart
 } from "@/lib/comment-translator-server-only-live-chat-target-lookup";
 import {
+  clearCommentTranslatorBoundedLiveChatPollingState,
+  createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter,
+  readCommentTranslatorBoundedLiveChatPollingTick,
+  seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession
+} from "@/lib/comment-translator-bounded-live-chat-polling-wiring";
+import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
   readCommentTranslatorPrivateLaunchAccess
 } from "@/lib/comment-translator-private-launch-access-gate";
@@ -274,6 +280,15 @@ async function readCommentTranslatorSessionActionResult({
       reason: "provider-target-lookup-not-approved"
     })
   });
+  const pollingTick = await readCommentTranslatorBoundedLiveChatPollingTick({
+    intent,
+    activeSession,
+    usage,
+    adapter: createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter({
+      reason: "live-provider-polling-not-approved"
+    }),
+    nowMs
+  });
   const state = await readCommentTranslatorSessionCommand({
     intent,
     nowMs,
@@ -285,6 +300,7 @@ async function readCommentTranslatorSessionActionResult({
     liveChatTargetReadiness,
     browserConnected: intent !== "stop",
     stopReason,
+    providerSignal: pollingTick.providerSignal,
     createSessionReferenceId: () => `cts_${randomUUID()}`
   });
 
@@ -314,6 +330,18 @@ async function readCommentTranslatorSessionActionResult({
       nowMs,
       plan: entitlementBaseline.plan
     });
+  }
+
+  if (state.status === "active" && intent === "start") {
+    seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession({
+      state,
+      liveChatTargetReadiness,
+      nowMs
+    });
+  }
+
+  if (state.status === "stopped") {
+    clearCommentTranslatorBoundedLiveChatPollingState(state.sessionReferenceId);
   }
 
   persistInMemoryCommentTranslatorActiveSession({ callerAuthorization, state });

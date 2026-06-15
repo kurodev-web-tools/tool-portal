@@ -156,6 +156,7 @@ export type ReadCommentTranslatorSessionCommandRequest = StartCommentTranslatorS
   intent: CommentTranslatorSessionCommandIntent;
   browserConnected?: boolean;
   stopReason?: CommentTranslatorSessionStopReason;
+  providerSignal?: EvaluateCommentTranslatorSessionStopRequest["providerSignal"];
 };
 
 const secondsPerMinute = 60;
@@ -174,7 +175,7 @@ export const commentTranslatorSessionRuntimeContract = {
   ],
   providerApiUsageBeforeExplicitStart: "not-started-before-explicit-start",
   aiUsageBeforeExplicitStart: "not-started-before-explicit-start",
-  liveProviderExecution: "not-run-in-task-7",
+  liveProviderExecution: "not-run-in-f7",
   providerTargetLookup: "start-only-server-boundary-f6",
   quotaWrite: "not-run-in-task-7",
   usageQuotaBudgetLedger: "server-owned-usage-quota-budget-ledger-foundation-in-task-8",
@@ -486,7 +487,8 @@ export async function readCommentTranslatorSessionCommand(
       browserConnected: request.browserConnected ?? true,
       callerAuthorization: request.callerAuthorization,
       credentialReadiness: request.credentialReadiness,
-      usage: request.usage
+      usage: request.usage,
+      providerSignal: request.providerSignal
     });
   }
 
@@ -497,7 +499,8 @@ export async function readCommentTranslatorSessionCommand(
     browserConnected: request.browserConnected ?? true,
     callerAuthorization: request.callerAuthorization,
     credentialReadiness: request.credentialReadiness,
-    usage: request.usage
+    usage: request.usage,
+    providerSignal: request.providerSignal
   });
 }
 

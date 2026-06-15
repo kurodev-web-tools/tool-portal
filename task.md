@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-server-only-live-chat-target-lookup`.
+- Current branch: `codex/comment-translator-bounded-live-chat-polling-wiring`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is F6 server-only live chat target lookup only unless the release owner explicitly expands scope.
+- This branch is F7 bounded `liveChatMessages.list` polling wiring only unless the release owner explicitly expands scope.
 - P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
 - F1 preflight record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
 - F2 evidence record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_TOKEN_PERSISTENCE_SMOKE_EVIDENCE.md`.
@@ -91,8 +91,8 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 | F3 | Durable session schema and adapter | Durable active-session/session-history storage plan or migration, server-only adapter, and fail-closed fallback. | complete in PR |
 | F4 | Durable usage counter schema and adapter | Monthly/daily/session usage counters, translated character/message estimates, quota stop events, and server-owned writes. | complete in PR |
 | F5 | Public entitlement baseline | Free entitlement read path and limit resolver that combines time caps, per-minute cap, active-session cap, and monthly character cap. | complete in PR |
-| F6 | Server-only live chat target lookup | Owned-broadcast lookup at Start only; liveChatId stays server-only and never reaches UI/docs/log/browser storage/handoff. | pending / gated |
-| F7 | Bounded `liveChatMessages.list` polling wiring | Active-session-only polling, `pollingIntervalMillis`, server-only `nextPageToken`, capped retry/backoff, empty-chat behavior, and quota/budget stop. | pending / gated |
+| F6 | Server-only live chat target lookup | Owned-broadcast lookup at Start only; liveChatId stays server-only and never reaches UI/docs/log/browser storage/handoff. | complete in PR |
+| F7 | Bounded `liveChatMessages.list` polling wiring | Active-session-only polling, `pollingIntervalMillis`, server-only `nextPageToken`, capped retry/backoff, empty-chat behavior, and quota/budget stop. | complete in PR |
 | F8 | Live message normalization | Normalize text, Super Chat, sticker/member/system/deleted/banned/ended events into a safe internal shape with dedupe and deletion handling. | pending |
 | F9 | Real comments UI wiring | Replace preview-only comment feed with server-owned live/session state while keeping private ids and raw provider payloads out of the browser. | pending |
 | F10 | Azure normal translation execution | Server-only Azure route for eligible comments, skip policy, bounded batch/retry, cache/dedupe, and provider-error degradation. | pending / gated |
@@ -142,7 +142,23 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. F6 server-only live chat target lookup
+1. F7 bounded `liveChatMessages.list` polling wiring
+   - Goal: implement/record active-session-only bounded polling wiring for Free public beta without exposing live target values, provider target metadata, server-only cursor values, raw provider payloads, raw comments, token values, Authorization header values, owner user id values, or provider channel id values to browser-readable output.
+   - Scope: server-only deterministic/local adapter, unavailable/not-run default adapter, F6 live target readiness consumption only after active Start, server-only `nextPageToken` state, `pollingIntervalMillis`, capped retry/backoff, empty-chat waiting, terminal-state stop handoff, quota/budget stop handoff to the existing durable usage/session ledger path, route/action wiring, readiness doc update, gap audit update, and focused contract only. No real YouTube polling, live provider call, live target lookup execution, provider target lookup execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, or public launch gate flip is approved or run in this thread.
+   - Status: complete in this PR.
+   - Implemented:
+     - `lib/comment-translator-bounded-live-chat-polling-wiring.ts` adds the F7 server-only contract, active-session-only polling state seed/tick/clear helpers, deterministic local adapter, unavailable/not-run adapter, sanitized metadata output, bounded retry exhaustion, empty-chat waiting, and terminal state mapping.
+     - `lib/comment-translator-session-runtime.ts` accepts the F7 provider signal so active sessions can stop through existing sanitized `stream-ended`, `stream-unavailable`, or `terminal-provider-error` states.
+     - `/api/comment-translator/session` and comment-translator server actions now seed F7 polling state only after an active Start with F6 ready target, tick only for active session status/heartbeat through the default not-run adapter, and clear server-only polling state on Stop.
+     - `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md` and `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md` record F7 as local server-only wiring and keep public launch blocked.
+   - Output/privacy boundary: browser-safe session output still excludes token values, owner user id values, provider channel id values, live target values, service_role values, Authorization header values, provider target metadata, raw provider payload, raw comments, and server-only cursor values. No live target entry UI, manual provider target entry, browser storage expansion, route-render lookup, background monitoring from connection alone, or handoff payload expansion is added.
+   - Remote/live execution: provider target lookup execution, live target lookup execution, real `liveChatMessages.list`, session start smoke, translation provider API execution, live/provider execution, remote Supabase migration apply, deploy/upload, Stripe live action, main promotion, and public launch gate flip are all not-run/approval-gated.
+   - F7 verification: `node scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs`, changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check`.
+   - Width checks skipped because F7 has no UI/CSS/rendered route/visible layout change; route/action behavior remains server-only and browser-safe output shape reuses existing stopped/session states.
+   - Residual risk / unchecked scope: real YouTube provider target lookup, live target resolution, actual `liveChatMessages.list`, non-empty live comment intake, translation provider execution, deployed durable cursor behavior across restarts, remote schema application, and launch readiness remain unverified until same-thread ready preflight, sanitized output review, and explicit in-thread approval exist. Public release remains blocked until F8-F15 and approved live/remote evidence are complete.
+   - Next safe action: after this PR merges, start F8 live message normalization in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration`.
+
+2. F6 server-only live chat target lookup
    - Goal: implement/record the Start-only owned-broadcast lookup boundary for Free public beta without exposing provider target metadata or live target values to browser-readable output.
    - Scope: server-only deterministic/local adapter, sanitized unavailable fallback, Start-only route/action wiring, existing durable/session runtime gate, readiness doc update, and focused contract only. No real YouTube provider target lookup, live target resolution, polling, provider execution, remote mutation, deploy/upload, Stripe live action, main promotion, or public launch gate flip is approved or run in this thread.
    - Status: complete in this PR.

@@ -1,6 +1,6 @@
 # task.md
 
-このファイルは現在の運用タスクだけを置く。完了済みの詳細ログ、比較メモ、長い経緯は PR body か `docs/archive` に寄せる。
+このファイルは現在の運用タスクだけを置く。完了済みの詳細ログ、比較メモ、長い経緯、古い next-session prompt は `docs/archive` に寄せる。
 
 ## Current Premises
 
@@ -9,336 +9,215 @@
 - 意味のある実装後は、このファイルに実装内容、検証、未確認範囲、残リスク、必要な幅別確認を残す。
 - UI 変更時の確認幅は `390 / 820 / 1024 / 1280 / 1366px` を基本にする。
 - 通常の表示確認と幅別確認では Codex app の in-app browser を優先する。繰り返し操作や機械的な console / canvas 確認は Playwright、原因調査は Chrome DevTools MCP に切り替える。
-- URL 設計、大規模 i18n framework、保存 schema / IndexedDB / localStorage 既存 key / handoff payload、外部投稿連携は、個別タスクで明示されない限り変更しない。
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
-- Task 28 main promotion 後の production evidence、UI調整、Task 29 public launch gate work は、release owner が別途 preview branch continuation を指定しない限り latest `origin/main` から feature branch を切る。
-- YouTube OAuth integration series は `codex/comment-translator-youtube-oauth-integration` を integration base とし、各 task PR は `main` ではなく integration branch に向ける。
 - secret / service_role key / private credential は要求・表示・保存しない。
 - OAuth access token / refresh token / authorization code value は client component、fixture、docs、PR body、localStorage、IndexedDB、sessionStorage に出さない。
 - owner user id value / provider channel id value / service_role key value は表示・要求・保存しない。必要な場合も reference-only / existence-only / sanitized metadata-only に閉じる。
 - provider target metadata / liveChatId は operator-local env / server-only boundary で消費するだけにし、output / docs / PR body / browser storage / handoff payload に出さない。
 
-## Mock-only Notes
+## Current Branch
 
-- Future tool mock catalog PR: `docs/mockups/future-tools/*` に 5候補 x 3 viewport の imagegen mock を追加し、`docs/future/FUTURE_TOOL_MOCK_CATALOG.md` に比較表と推奨次候補を記録する。mock-only / docs-only で、Next route、React/CSS、storage/schema/auth/billing/quota、OAuth/API、OBS連携、動画処理、既存 tool behavior は未着手。
-- lint / build / width check は、実 UI / route / component / CSS / runtime 変更がないため不要。確認は画像 15 files の存在、README / catalog の filename 一致、`git diff --check`、`git status --short` に閉じる。
+- Current cleanup branch: `codex/comment-translator-task-md-roadmap-cleanup`.
+- Base: latest `origin/codex/comment-translator-youtube-oauth-integration`.
+- This branch is docs/task-board cleanup only unless the release owner explicitly expands scope.
+- Archived previous long task board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
+
+## Branch Strategy
+
+- Keep `codex/comment-translator-youtube-oauth-integration` as the completed YouTube OAuth Integration Roadmap collection branch.
+  - Scope already completed there: YouTube OAuth Integration Roadmap Task 1-10.
+  - Do not keep adding Free public beta / Creator closed beta work directly to that branch.
+- Create the next collection branch from latest `origin/codex/comment-translator-youtube-oauth-integration`:
+  - `codex/comment-translator-free-public-beta-integration`
+- Target `P0-0` and `F1` through `F15` task PRs to `codex/comment-translator-free-public-beta-integration`.
+- After Free public beta readiness is accepted, promote `codex/comment-translator-free-public-beta-integration` to `main` through a separate approval-gated promotion PR.
+- Creator closed beta tasks can either continue from the Free public beta integration branch after Free beta promotion, or use a later dedicated collection branch if the release owner wants a clean separation.
+
+## Roadmap Snapshot
+
+### YouTube OAuth Integration Roadmap
+
+- Status: complete through Task 10.
+- PR range: PR #441 through PR #450 are merged into `codex/comment-translator-youtube-oauth-integration`.
+- Latest integration commit confirmed locally: `279962b` / `Polish comment translator OAuth UI contrast (#450)`.
+- Promotion to `main` is still separate and approval-gated.
+- Public-release capable: no.
+
+### Public Release / Pre-Main Launch Roadmap
+
+- Public Release Roadmap Task 1-16: complete or completed as readiness/final-QA records.
+- Pre-Main Launch Hardening Task 17-27: complete.
+- Task 28 Private-gated main promotion and production smoke: partially complete.
+  - Complete: readiness/blocker, production env readiness, exact preflight, main promotion, production/custom route smoke, private-launch negative API checks, allowed-tester account/plan rendering evidence.
+  - Still not run: allowed-tester session start smoke.
+- Task 29 Public launch gate flip: not started.
+- Current public-launch decision: keep `public-release capable: no`.
+
+## Active Product Direction
+
+Adopt the final MVP sequencing:
+
+1. Free public beta
+2. Creator closed beta
+3. Creator public paid launch
+
+Free public beta should prove YouTube OAuth, server-only liveChatId lookup, bounded `liveChatMessages.list` polling, actual comment intake, normal translation, durable session/usage enforcement, stop reasons, deletion/ended events, data deletion/retention, and source attribution.
+
+Creator should be visible during Free public beta as locked cards / waitlist / click tracking, but paid public launch should wait until the Free path is stable. Creator closed beta scope is Stripe live Checkout/Portal/Webhook, durable entitlement, AI natural translation credits, OBS overlay URL, moderator share URL, custom dictionary minimum, Super Chat/member/moderator/owner priority display, and simple 7-day history.
+
+`liveChatMessages.streamList` remains a Public-after-P1 optimization: make it primary later and keep `liveChatMessages.list` as fallback after bounded list behavior is proven.
+
+## Implementation Task Board
+
+Treat each row as 1 task / 1 PR unless the release owner explicitly splits it further. Execution rows that touch OAuth, live provider calls, deploy, remote mutation, or Stripe live mode remain approval-gated.
+
+### Phase 0: Gap Audit
+
+| ID | Task | Outcome | Status |
+| --- | --- | --- | --- |
+| P0-0 | Public beta gap audit | Classify Free public beta P0 blockers, Creator closed beta blockers, schema/token-store/session/usage/entitlement conflicts, YouTube API/OAuth/retention/source-attribution blockers, and first 2-3 day order. | next |
+
+### Free Public Beta / Before MVP Public Access
+
+| ID | Task | Outcome | Status |
+| --- | --- | --- | --- |
+| F1 | OAuth live connect smoke preflight | Exact same-thread approval checklist, env reference checklist, sanitized evidence shape, and rollback path for YouTube OAuth live connect. | pending |
+| F2 | OAuth live connect and token persistence smoke | Approval-gated live connect/token persistence evidence or blocker record; output stays status-label-only. | pending / gated |
+| F3 | Durable session schema and adapter | Durable active-session/session-history storage plan or migration, server-only adapter, and fail-closed fallback. | pending |
+| F4 | Durable usage counter schema and adapter | Monthly/daily/session usage counters, translated character/message estimates, quota stop events, and server-owned writes. | pending |
+| F5 | Public entitlement baseline | Free entitlement read path and limit resolver that combines time caps, per-minute cap, active-session cap, and monthly character cap. | pending |
+| F6 | Server-only live chat target lookup | Owned-broadcast lookup at Start only; liveChatId stays server-only and never reaches UI/docs/log/browser storage/handoff. | pending / gated |
+| F7 | Bounded `liveChatMessages.list` polling wiring | Active-session-only polling, `pollingIntervalMillis`, server-only `nextPageToken`, capped retry/backoff, empty-chat behavior, and quota/budget stop. | pending / gated |
+| F8 | Live message normalization | Normalize text, Super Chat, sticker/member/system/deleted/banned/ended events into a safe internal shape with dedupe and deletion handling. | pending |
+| F9 | Real comments UI wiring | Replace preview-only comment feed with server-owned live/session state while keeping private ids and raw provider payloads out of the browser. | pending |
+| F10 | Azure normal translation execution | Server-only Azure route for eligible comments, skip policy, bounded batch/retry, cache/dedupe, and provider-error degradation. | pending / gated |
+| F11 | Start/Stop reason UX | User-readable Start failure and Stop reason states for disconnected, reconnect-required, no live broadcast, disabled/ended/not found, quota, heartbeat, and provider errors. | pending |
+| F12 | Usage display for Free beta | Session/day/month usage display, remaining limits, monthly character cap, and no-provider-call behavior when over limit. | pending |
+| F13 | Data deletion, retention, and source attribution | Data deletion button/path, OAuth disconnect cleanup, retention job, deleted-message propagation, and `Source: YouTube Live Chat` on relevant surfaces. | pending |
+| F14 | Creator locked cards / waitlist / click tracking | Show Creator price intent and locked feature cards during Free beta, with waitlist and click tracking that do not imply paid access is live. | pending |
+| F15 | Free public beta final QA / launch readiness | Route/API smoke plan, no-secret scan, width checks, legal/copy review, rollback notes, and public-launch readiness decision. | pending |
+
+### Creator Closed Beta / Before Creator Public Paid
+
+| ID | Task | Outcome | Status |
+| --- | --- | --- | --- |
+| C1 | Durable paid entitlement store | Server-owned paid entitlement rows, active/inactive states, safe Free degradation, and closed-beta gating. | pending |
+| C2 | Stripe live Checkout / Portal / webhook closed-beta gate | Approval-gated Product/Price/Checkout/Portal/webhook verification for allowed testers only, with signed webhook and idempotency. | pending / gated |
+| C3 | Paid usage and monthly reset | Creator normal translation cap, AI character/token estimate cap, target-language multiplier, monthly reset, and over-limit fallback/stop. | pending |
+| C4 | AI natural translation provider route | OpenAI mini primary route, Azure recoverable fallback, strict JSON parsing, dictionary-aware prompt hook, and no secret/provider target payload leakage. | pending / gated |
+| C5 | OBS overlay token runtime | Session-scoped overlay token issue/revoke/expiry, token hash storage, read-only access, and no private metadata exposure. | pending |
+| C6 | OBS overlay UI route | Transparent overlay route with latest translated comments, role badges, Super Chat display, original toggle, and source attribution. | pending |
+| C7 | Moderator share token runtime | Session-scoped read-only share token issue/revoke/expiry, token hash storage, and future moderator-login migration path. | pending |
+| C8 | Moderator share UI route | Read-only moderator view with translated comments, role badges, priority comments, deleted state, and source attribution. | pending |
+| C9 | Custom dictionary minimum | Creator-only 30-term dictionary, term/replacement/note/language scope, server-owned storage, and provider integration hook. | pending |
+| C10 | Priority display polish | Super Chat, Super Sticker, member, moderator, and owner priority lane/filter without creating revenue analytics. | pending |
+| C11 | Simple 7-day history | Creator-only 7-day history, retention job, deletion/OAuth-disconnect cleanup, deleted-message propagation, and no CSV export. | pending |
+| C12 | Creator closed beta final QA | Allowed-tester smoke for billing, entitlement, AI cost, overlay/share revoke, dictionary, history retention, and no-secret boundaries. | pending |
+
+### Creator Public Paid Launch
+
+| ID | Task | Outcome | Status |
+| --- | --- | --- | --- |
+| CP1 | Creator paid launch readiness | Confirm closed-beta evidence, accepted risks, legal/copy, support/rollback, and cost envelope before unlocking public paid access. | pending |
+| CP2 | Creator public paid gate flip | Approval-gated release of paid access, public billing copy, production smoke, and rollback evidence. | pending / gated |
+
+### Public-after-P1 / Post-MVP
+
+| ID | Task | Outcome | Status |
+| --- | --- | --- | --- |
+| P1-1 | `streamList` primary migration | Implement `liveChatMessages.streamList` primary path and keep bounded `list` as fallback. | later |
+| P1-2 | 30-day history and search | Extend Creator history from 7 to 30 days with search and retention controls. | later |
+| P1-3 | CSV export | Add export with YouTube data notice, retention limits, and deletion compatibility. | later |
+| P1-4 | Overlay templates | Add additional OBS overlay templates without exposing private metadata. | later |
+| P1-5 | Dictionary import and suggestions | CSV import, dictionary suggestions, game/category dictionaries. | later |
+| P1-6 | AI operations helpers | AI summary, question extraction, Super Chat reply-miss check, and reply suggestions. | later |
+| P1-7 | Provider comparisons | OpenAI/Gemini/Cloudflare/other provider comparison under policy/cost gates. | later |
+| P1-8 | Platform expansion | Twitch/Kick/TikTok or multi-platform runtime only after YouTube path is proven. | later |
+| P1-9 | Voice translation / subtitle work | Treat as separate product or upper-tier work, not part of the initial Creator 980 yen MVP. | later |
 
 ## Active Priorities
 
-1. Kuro Live Comment Translator public release roadmap
-   - status: preview runtime-smoke-to-operator-UI chain is complete through Task 7, Public Release Roadmap Task 1-15 are merged, Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 are merged, Task 27 completion PR #434 is merged, and Task 28 readiness/env/exact-preflight/main-promotion/production-evidence cleanup PRs through PR #440 are merged to `main`.
-   - current PR scope: Task 10 UI polish for private launch / integration / billing contrast. This PR targets `codex/comment-translator-youtube-oauth-integration`; it updates account/tool/billing visible copy and contrast only, without changing OAuth runtime, provider execution, Stripe live-mode actions, deploy/upload, schema, storage, or handoff payload behavior.
-   - integration branch: `codex/comment-translator-youtube-oauth-integration`, created from latest `origin/main` after confirming PR #440 merge commit `ee2e82e8a5462d2c0d7c10fdff773878c6a9c06c` is contained in `origin/main`.
-   - current feature branch: `codex/comment-translator-youtube-oauth-ui-polish`, targeting `codex/comment-translator-youtube-oauth-integration`.
-   - final goal: all tasks in `YouTube OAuth Integration Roadmap` are completed as 1 task / 1 PR on the integration branch, then the integration branch is promoted to `main` by a separate approval-gated promotion PR. Until then, do not merge OAuth integration work directly to `main`.
-   - canonical public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
-   - current env readiness doc: `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`.
-   - current evidence doc: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE.md`.
-   - current OAuth connection smoke readiness doc: `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md`.
-   - current OAuth session start smoke readiness doc: `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_SESSION_START_SMOKE_READINESS.md`.
-   - current OAuth integration final QA / promotion readiness doc: `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_INTEGRATION_FINAL_QA_PROMOTION_READINESS.md`.
-   - archived planning docs: `docs/archive/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md` and `docs/archive/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_EXACT_PREFLIGHT.md`.
-   - merge/deploy evidence: PR #439 is merged to `main` with merge commit `e8508f59e3dbfa3fa0b61dd52e8346f1d1ef0bda`; PR #440 is merged to `main` with merge commit `ee2e82e8a5462d2c0d7c10fdff773878c6a9c06c`, and that commit is contained in `origin/main`.
-   - production route/API evidence: custom domain and workers.dev route checks passed for `/tools/comment-translator/`, account redirects, legal routes, and private-launch negative API checks with sanitized labels only.
-   - allowed-tester evidence: authenticated browser read-only checks showed private-launch element absent for tool, integrations, and billing surfaces; account/plan surfaces rendered with console error count `0` and no horizontal overflow.
-   - Task 28 completion criteria: partially met. Main promotion, production route smoke, private-launch negative checks, and allowed-tester account/plan rendering evidence are recorded; allowed-tester session start smoke was not run.
-   - current OAuth blockers: `app/account/actions.ts` connect/reconnect construct Google OAuth authorization redirects through a server-only boundary when env references and private-launch/auth gates are ready. Callback handling delegates valid callbacks to the Task 4 server-only persistence wiring. `/account/integrations` reads trusted credential status for sanitized account status, and `/tools/comment-translator` now uses server-owned trusted credential status/reference resolution for readiness instead of the fixed preview credential reference.
-   - unchanged in this branch: no SQL migration file, RLS policy, remote Supabase migration apply, remote mutation, remote alert/dashboard mutation, Stripe live-mode action, Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, manual Cloudflare upload/deploy command, client-readable browser storage expansion, handoff payload expansion, raw comment logging, credential value exposure, private provider target value exposure, quota write, provider target lookup, liveChatId lookup, translation provider API execution, Google OAuth live connect execution, YouTube OAuth live connect execution, live authorization code exchange, live token persistence, provider revoke/live API execution, session start smoke, background monitoring from connection alone, or live/provider execution was run.
-   - verification for this branch: Task 10 `node scripts/comment-translator-youtube-oauth-ui-polish-contract.mjs` passed and covers changed-file allowlist, UI/copy contract, gated actions not-run text, public-release capability, and changed-files no-secret patterns. `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed locally; build emitted the existing Next.js `middleware` deprecation warning and static export alias skip for server-runtime build, and `git diff --check` emitted Windows line-ending normalization warnings only.
-   - width checks skipped for Task 2: docs/contract-only; no UI, rendered text, CSS, route behavior, browser storage, or visible layout change.
-   - width checks skipped for Task 3: server-only route/action/runtime change only; no client component, rendered text, CSS, visible layout, or browser-readable storage change.
-   - width checks skipped for Task 4: server-only callback route/runtime and contract update only; no client component, rendered text, CSS, visible layout, or browser-readable storage change.
-   - width checks for Task 5: visible copy/action state changed on `/account/integrations`. Local `next dev` on `127.0.0.1:3210` rendered the route at `390 / 820 / 1024 / 1280 / 1366px`; unauthenticated/env-local state reached the private-launch fallback surface, with no obvious horizontal overflow or text overlap in captured screenshots. Authenticated allowed-tester integrations shell could not be rendered locally because no safe local Supabase/auth/allowed-tester session was available; live OAuth connect and provider execution remained gated and were not used to obtain width evidence.
-   - width checks for Task 6: visible `/tools/comment-translator` credential status copy changed. Local `next dev` on `127.0.0.1:3217` rendered `/tools/comment-translator/` at `390 / 820 / 1024 / 1280 / 1366px`; unauthenticated/env-local state reached the private-launch fallback surface at each width with console error/warn count `0`, framework overlay absent, document horizontal overflow `0`, and no detected overflowing elements. Dock/authenticated allowed-tester shell could not be rendered locally because no safe local Supabase/auth/allowed-tester session was available; live OAuth connect, provider target lookup, liveChatId lookup, session start smoke, and provider execution remained gated and were not used for width evidence.
-   - width checks skipped for Task 7: docs/task-board/contract-only readiness slice; no UI, rendered text, CSS, route behavior, browser storage, or visible layout change.
-   - width checks skipped for Task 8: docs/task-board/contract-only readiness slice; no UI, rendered text, CSS, route behavior, browser storage, or visible layout change.
-   - width checks skipped for Task 9: docs/contract/task-board only; no UI, CSS, rendered text, route behavior, browser storage, or visible layout change.
-   - width checks for Task 10: visible copy/contrast changed on `/tools/comment-translator`, `/account`, `/account/integrations`, and `/account/billing`. Local `next dev` on `127.0.0.1:3224` rendered these routes at `390 / 820 / 1024 / 1280 / 1366px`; local unauthenticated/env-local state reached the private-launch fallback or safe local account surface as applicable, with meaningful content, no visible framework overlay, console error/warn count `0`, document horizontal overflow `0`, and no detected overflowing elements. Because local auth/allowed-tester state was unavailable, the signed-in translator and account settings were reviewed through temporary local preview routes/components during development; those temporary preview files were removed before PR. Authenticated allowed-tester live shells could not be safely rendered locally against real credentials; Google OAuth live connect, YouTube OAuth live connect, provider target lookup, liveChatId lookup, session start smoke, provider execution, Stripe live-mode action, billing setting mutation, Customer Portal redirect, and webhook registration remained gated and were not used for width evidence.
-   - public-release capable: no. YouTube OAuth live connection smoke, allowed-tester session start smoke, Task 29 public launch gate flip, Stripe live-mode actions, remote mutation/schema migration, provider target lookup, liveChatId lookup, translation provider API execution, and live/provider execution remain separately gated.
-   - next safe action: after user visual confirmation and this Task 10 PR merges into `codex/comment-translator-youtube-oauth-integration`, open a separate promotion-to-main PR only with release owner approval. Do not run provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, production/custom deployed smoke, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, webhook registration, Google OAuth live connect, YouTube OAuth live connect, live authorization code exchange, live token persistence, or main promotion without same-thread ready preflight, sanitized output review, and explicit approval.
+1. Task board cleanup
+   - Goal: keep `task.md` short and operational.
+   - Scope: archive the prior long board, remove stale completed-task detail and obsolete next-session prompt, keep only current premises, roadmap snapshot, active direction, blocked gates, and verification baseline.
+   - Verification: markdown inspection and `git diff --check`.
+   - Status: complete on `codex/comment-translator-task-md-roadmap-cleanup`. Previous long board is archived at `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
-## YouTube OAuth Integration Roadmap
+2. Next recommended roadmap task: Phase 0 public-beta gap audit
+   - Goal: compare current repo state against the final MVP brief and produce implementation-sized blockers.
+   - Scope: docs/task-board and code inspection only unless separately approved.
+   - Output should classify:
+     - Free public beta P0 blockers.
+     - Creator closed beta blockers.
+     - schema / token-store / session / usage / entitlement conflicts.
+     - YouTube API / OAuth / retention / source attribution blockers.
+     - first 2-3 day implementation order.
+   - Do not run Google OAuth live connect, YouTube OAuth live connect, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, or webhook registration.
 
-Use one Codex thread, one feature branch, and one PR per task. Each task branch targets `codex/comment-translator-youtube-oauth-integration`. Do not target `main` until all integration-branch tasks are complete and a separate promotion PR is explicitly approved. Do not run Google OAuth live connect, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, remote mutation/schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, or webhook registration without same-thread ready preflight, sanitized output review, and explicit in-thread approval.
+## Approval-Gated Actions
 
-1. OAuth integration planning / task board refresh
-   - Goal: make `task.md` the source of truth for the YouTube OAuth integration branch.
-   - Scope: docs/task-board only. Create/confirm the integration branch from latest `origin/main`, split OAuth integration into 1 task / 1 PR, update handoff rules, and keep public launch gate closed.
-   - Completion criteria: PR #440 merge gate verified, integration branch named, feature branch named, tasks listed with scopes/gates/verification, target branch policy documented, next-session prompt updated, width-check skip reason recorded.
-   - Verification: targeted markdown/content inspection, changed-files no-secret scan, `git diff --check`.
-   - Status: complete in current planning PR. No OAuth execution, provider lookup, session smoke, deploy/upload, remote mutation, remote schema migration, Stripe action, or main promotion was run.
+Do not perform the following without same-thread ready preflight, sanitized output review, and exact explicit approval:
 
-2. YouTube OAuth connect/callback readiness and exact gate contract
-   - Goal: define the exact server-only OAuth connect/callback contract before implementation.
-   - Scope: callback route/action shape, state/CSRF/session ownership rules, redirect allowlist, env reference names, sanitized error states, rollback/disable gate, and exact no-live-connect execution boundary.
-   - Completion criteria: contract captures allowed request/response metadata, forbidden output list, operator preflight requirements, and the fact that this task does not contact Google OAuth.
-   - Verification: focused readiness contract if added, docs/contract inspection, changed-files no-secret scan, `git diff --check`.
-   - Status: complete in current Task 2 PR via `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_CONNECT_CALLBACK_READINESS.md` and `scripts/comment-translator-youtube-oauth-connect-callback-readiness-contract.mjs`. The contract captures allowed connect/callback request and response metadata, state/CSRF/session ownership, redirect allowlist, env reference names, sanitized error states, rollback/disable gate, forbidden output list, operator preflight requirements, and exact no-live-connect execution boundary. Google OAuth live connect execution, YouTube OAuth live connect execution, authorization code exchange, token persistence, provider target lookup, liveChatId lookup, session start smoke, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, Customer Portal redirect, webhook registration, translation provider API execution, and live/provider execution were not run.
+- Google OAuth live connect execution.
+- YouTube OAuth live connect execution.
+- live authorization code exchange.
+- live token persistence smoke.
+- provider target lookup.
+- liveChatId lookup.
+- session start smoke.
+- translation provider API execution.
+- live/provider execution.
+- deploy/upload.
+- production/custom deployed smoke.
+- remote mutation.
+- remote schema migration / Supabase migration apply.
+- Stripe live-mode action.
+- Product/Price creation.
+- Checkout execution.
+- Customer Portal redirect.
+- webhook registration.
+- billing setting mutation.
+- public launch gate flip.
+- promotion to `main`.
 
-3. YouTube OAuth connect/callback implementation, no live connect execution
-   - Goal: replace prepared-only connect/reconnect redirects with real application routes/actions that can start and complete OAuth when separately approved by a user action.
-   - Scope: account connect/reconnect server actions, OAuth URL construction using server-only env references, callback validation, sanitized success/failure redirects, and disabled/fail-closed behavior when env references are absent.
-   - Completion criteria: no token, authorization code, owner user id, provider channel id, liveChatId, Authorization header, or provider target metadata reaches client components, docs, fixtures, browser storage, logs, PR body, or handoff payload; live Google OAuth connect is not executed in this task.
-   - Verification: focused route/action contracts, lint, typecheck, build, changed-files no-secret scan, `git diff --check`; width checks only if visible UI changes.
-   - Status: complete in current Task 3 PR via `lib/comment-translator-youtube-oauth-connect-callback.ts`, `/api/comment-translator/youtube/oauth/callback`, account connect/reconnect action wiring, and `scripts/comment-translator-youtube-oauth-connect-callback-implementation-contract.mjs`. Connect/reconnect now fail closed when disabled/env references are absent, otherwise construct a Google OAuth authorization URL through a server-only helper with HttpOnly state binding. Callback validates sanitized error/state/code-presence metadata and routes valid callbacks to `youtube-oauth-token-store-blocked` until Task 4 implements token exchange/persistence. Google OAuth live connect execution, YouTube OAuth live connect execution, authorization code exchange, token persistence, credential reference creation, provider target lookup, liveChatId lookup, session start smoke, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, Customer Portal redirect, webhook registration, translation provider API execution, and live/provider execution were not run.
+## Current Blockers / Residual Risks
 
-4. Server-only credential persistence wiring to Supabase token store
-   - Goal: persist OAuth callback token material through the trusted server-only token-store boundary without exposing token values.
-   - Scope: callback-to-token-store adapter, credential reference creation, encryption/key reference handling, owner authorization, idempotent reconnect semantics, sanitized persistence errors, and emergency disable behavior through `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`.
-   - Completion criteria: token values and authorization code values remain server-only; docs and tests use reference labels or synthetic placeholders only; no remote mutation/schema migration is run unless separately approved.
-   - Verification: focused server contracts/tests, lint, typecheck, build, changed-files no-secret scan, `git diff --check`.
-   - Status: complete in current Task 4 PR via `lib/comment-translator-youtube-oauth-token-store-persistence.ts`, callback route delegation, and `scripts/comment-translator-youtube-oauth-token-store-persistence-wiring-contract.mjs`. Valid callbacks now fail closed through disabled/auth/env checks before any exchange/store access, create an owner-bound opaque credential reference for idempotent reconnect, convert server-only token material to key-reference/ciphertext-reference labels, and upsert through the trusted Supabase token-store interface with sanitized exchange/persistence errors. Google OAuth live connect execution, YouTube OAuth live connect execution, live authorization code exchange, live token persistence, provider target lookup, liveChatId lookup, session start smoke, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, Customer Portal redirect, webhook registration, translation provider API execution, and live/provider execution were not run.
+- Public release remains blocked until Free public beta P0 evidence is implemented and verified.
+- Allowed-tester session start smoke from Task 28 remains not run.
+- Durable public enforcement is still required for session state, usage counters, entitlements, admin aggregates, and distributed rate-limit/abuse controls.
+- Live YouTube OAuth connect, liveChatId lookup, actual public session start, and live provider execution remain approval-gated.
+- Stripe live billing and paid entitlement activation remain approval-gated.
+- Creator public paid launch should not proceed before Creator closed beta validates Stripe, entitlement, usage limits, overlay/share token revoke, AI cost, and retention/deletion behavior.
 
-5. Account integrations status wiring from trusted credential status
-   - Goal: show real sanitized YouTube connection status in `/account/integrations`.
-   - Scope: server actions/status reads from trusted credential status, connected/reconnect-required/disconnected/error states, safe disconnect/reconnect affordances, and copy alignment.
-   - Completion criteria: UI never displays token values, owner user id values, provider channel id values, liveChatId values, Authorization header values, provider target metadata values, or browser storage payloads; no background monitoring starts from connection alone.
-   - Verification: UI/action contracts, lint, typecheck, build, changed-files no-secret scan, `git diff --check`, width checks at `390 / 820 / 1024 / 1280 / 1366px` if visible output changes.
-   - Status: complete in current Task 5 PR via `lib/comment-translator-youtube-account-integration-status.ts`, `lib/comment-translator-youtube-account-integration.ts`, trusted status boundary disconnected/error states, `/account/integrations` route wiring, account action safe disconnect wiring, and `scripts/comment-translator-youtube-oauth-account-status-wiring-contract.mjs`. The UI receives sanitized connected / reconnect-required / disconnected / unavailable / error view state only; credential reference derivation stays server-only and the shell does not submit credential reference, owner id, provider channel id, liveChatId, Authorization header, token, provider target metadata, browser storage, or handoff payload values. Safe disconnect uses the existing trusted credential invalidation runtime only when a server-derived credential reference is available; provider revoke/live API execution is not run. Google OAuth live connect execution, YouTube OAuth live connect execution, live authorization code exchange, live token persistence, provider target lookup, liveChatId lookup, session start smoke, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, Customer Portal redirect, webhook registration, translation provider API execution, and live/provider execution were not run.
+## Canonical Documents
 
-6. Tool credential source wiring away from fixed preview credential reference
-   - Goal: make `/tools/comment-translator` use the trusted connected credential status/reference instead of the fixed preview credential reference.
-   - Scope: server-only credential resolution for session readiness, start-blocked states, reconnect guidance, fail-closed behavior, and preservation of the trusted adapter boundary.
-   - Completion criteria: fixed preview credential references and trusted-adapter-not-wired metadata are removed from active tool readiness paths; token/provider target/liveChatId values stay server-only; no provider target lookup or liveChatId lookup is run.
-   - Verification: focused tool/session readiness contracts, lint, typecheck, build, changed-files no-secret scan, `git diff --check`, width checks if visible state changes.
-   - Status: complete in current Task 6 PR via `lib/comment-translator-youtube-tool-credential-source.ts`, server-only credential reference reuse in `lib/comment-translator-youtube-account-integration-status.ts`, `/tools/comment-translator` route wiring, tool server action/session readiness wiring, sanitized Dock metadata-only props, and `scripts/comment-translator-youtube-oauth-tool-credential-source-contract.mjs`. Fixed preview credential reference and `trusted-adapter-not-wired` metadata are removed from active tool readiness paths. `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED`, missing credential reference env, disconnected/reconnect-required/unavailable/error states all fail closed with browser-safe status/reconnect guidance. Google OAuth live connect execution, YouTube OAuth live connect execution, live authorization code exchange, live token persistence, provider target lookup, liveChatId lookup, session start smoke, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, Customer Portal redirect, webhook registration, translation provider API execution, and live/provider execution were not run.
+- Public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`
+- Production env readiness: `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`
+- Private-gated production smoke evidence: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE.md`
+- YouTube OAuth connection smoke readiness: `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md`
+- YouTube OAuth session start smoke readiness: `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_SESSION_START_SMOKE_READINESS.md`
+- YouTube OAuth integration final QA / promotion readiness: `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_INTEGRATION_FINAL_QA_PROMOTION_READINESS.md`
+- Durable persistence readiness: `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md`
+- Stripe live readiness: `docs/active/COMMENT_TRANSLATOR_STRIPE_LIVE_READINESS.md`
+- Security/privacy final review: `docs/active/COMMENT_TRANSLATOR_SECURITY_PRIVACY_FINAL_REVIEW.md`
 
-7. Allowed-tester connection smoke readiness / sanitized evidence
-   - Goal: prepare and, only with explicit approval, collect sanitized evidence that an allowed tester can complete the account connection flow.
-   - Scope: exact same-thread preflight, sanitized output checklist, evidence template, negative checks, and allowed-tester account connection smoke readiness.
-   - Completion criteria: if not approved, record blocker/readiness only; if approved, evidence records status labels only and excludes OAuth values, authorization code values, token values, private identifiers, provider target metadata, browser storage payloads, and handoff payloads.
-   - Verification: readiness/evidence contract, changed-files no-secret scan, `git diff --check`; Google OAuth live connect only after same-thread ready preflight, sanitized output review, and exact explicit approval.
-   - Status: complete in current Task 7 readiness/blocker PR via `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md` and `scripts/comment-translator-youtube-oauth-allowed-tester-connection-smoke-readiness-contract.mjs`. The readiness doc records exact same-thread ready preflight, sanitized output checklist, status-label-only evidence template, negative checks, and the no-approval blocker path. Google OAuth live connect execution, YouTube OAuth live connect execution, live authorization code exchange, live token persistence, provider target lookup, liveChatId lookup, session start smoke, background monitoring from connection alone, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, Customer Portal redirect, webhook registration, translation provider API execution, and live/provider execution were not run.
+## Initial Release Decisions
 
-8. Allowed-tester session start smoke readiness / sanitized evidence
-   - Goal: prepare and, only with explicit approval, verify that a connected allowed tester can start the translator session path with sanitized evidence.
-   - Scope: session start preflight, provider/live execution boundary, stop behavior checklist, sanitized count/status evidence, and explicit blocker handling.
-   - Completion criteria: if not approved, record blocker/readiness only; if approved, evidence records counts/status/stop reasons only and excludes liveChatId, provider target metadata, raw comments, token values, Authorization header values, browser storage payloads, and handoff payloads.
-   - Verification: relevant smoke readiness contracts, changed-files no-secret scan, `git diff --check`; provider target lookup, liveChatId lookup, translation provider API execution, and live/provider execution only after same-thread ready preflight, sanitized output review, and exact explicit approval.
-   - Status: complete in current Task 8 readiness/blocker PR via `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_SESSION_START_SMOKE_READINESS.md` and `scripts/comment-translator-youtube-oauth-allowed-tester-session-start-smoke-readiness-contract.mjs`. The readiness doc records exact same-thread ready preflight, sanitized output checklist, provider/live execution boundary, stop behavior checklist, sanitized counts/status/stop-reason evidence template, and explicit blocker handling. Provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, Google OAuth live connect execution, YouTube OAuth live connect execution, live authorization code exchange, live token persistence, background monitoring from connection alone, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, Customer Portal redirect, and webhook registration were not run.
+These decisions are fixed for the current public-release roadmap unless the user explicitly changes them in a later task:
 
-9. Integration branch final QA and promotion readiness to main
-   - Goal: decide whether the integration branch is ready for a separate main promotion PR.
-   - Scope: integration branch diff review, contracts, lint/typecheck/build, route/API negative checks, legal/copy/security boundary review, accepted risks, rollback notes, and public-release capability decision.
-   - Completion criteria: all previous OAuth integration PRs are merged into the integration branch; required checks pass or have documented accepted risk; any approved smoke evidence is sanitized; promotion-to-main remains a separate PR and is not performed in this task unless explicitly requested afterward.
-   - Verification: full integration QA checklist, no-secret scan, relevant contracts, lint, typecheck, build, `git diff --check`; width checks if visible UI changed during the integration series.
-   - Status: complete in current Task 9 final QA / promotion readiness PR via `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_INTEGRATION_FINAL_QA_PROMOTION_READINESS.md` and `scripts/comment-translator-youtube-oauth-integration-final-qa-promotion-readiness-contract.mjs`. PR #441 through PR #448 are merged into `codex/comment-translator-youtube-oauth-integration`, and merge commit `03b5685461668ae1604961272fa52907b7e9710a` is contained in `origin/codex/comment-translator-youtube-oauth-integration`. Integration branch diff review, focused contract set, route/API negative check labels, legal/copy/security boundary review, accepted risks, rollback notes, promotion readiness decision, and public-release capability decision are recorded. Promotion-to-main remains a separate PR and was not performed. Provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, Google OAuth live connect execution, YouTube OAuth live connect execution, live authorization code exchange, live token persistence, production/custom deployed smoke, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, Customer Portal redirect, webhook registration, billing setting mutation, background monitoring from connection alone, and main promotion were not run. Public-release capable: no.
-
-10. UI polish for private launch / integration / billing contrast
-   - Goal: make private-launch, YouTube integration, and billing state contrast clearer without mixing UI polish into OAuth runtime tasks.
-   - Scope: account/tool/billing visual and copy polish only after OAuth runtime wiring is stable, unless release owner explicitly pulls a small copy fix into a runtime task.
-   - Completion criteria: UI states are understandable and responsive; no token/provider/private identifiers are exposed; OAuth runtime, live execution, Stripe live-mode actions, and deploy/upload stay out of this polish PR unless separately approved.
-   - Verification: UI/action contracts as applicable, lint, typecheck, build, changed-files no-secret scan, `git diff --check`, width checks at `390 / 820 / 1024 / 1280 / 1366px`.
-   - Status: complete in current Task 10 branch via `components/comment-translator/CommentTranslatorPrivateLaunchUnavailable.tsx`, `components/comment-translator/CommentTranslatorDock.tsx`, `lib/comment-translator.ts`, `app/account/page.tsx`, `components/account/AccountPreferencesShell.tsx`, `components/portal/ThemeToggle.tsx`, `components/account/AccountIntegrationsShell.tsx`, `components/account/AccountBillingShell.tsx`, and `scripts/comment-translator-youtube-oauth-ui-polish-contract.mjs`. The UI/copy polish adds private-launch fallback contrast, simplified signed-in translator layout with Start/settings/comments/today-state focus, comments-only mode, gated details/test-input disclosure, account status consolidation for email/YouTube/plan, account settings links for tools/sign-out/integrations/billing, integration next-action guidance for connected/disconnected/reconnect-required/unavailable/error states, and billing Free/Paid/Stripe readiness contrast. User visual confirmation was completed against local temporary preview routes; preview-only files were removed before PR. After browser feedback, the private-launch fallback warning tone was adjusted away from amber/orange to primary/neutral styling for the selected label, support copy, panel, and first status row. No OAuth runtime, live/provider execution, Stripe live-mode action, deploy/upload, remote mutation, remote schema migration, browser storage expansion, handoff payload expansion, provider target lookup, liveChatId lookup, session start smoke, Google OAuth live connect execution, YouTube OAuth live connect execution, live authorization code exchange, live token persistence, Customer Portal redirect, webhook registration, or billing setting mutation was run. Public-release capable: no.
-
-## Public Release Roadmap
-
-Use one Codex thread, one feature branch, and one PR per task. Do not create a PR for a task unless that task's completion criteria are satisfied and verification has been attempted, except when the user explicitly approves a readiness/blocker PR while an external wait blocks execution.
-
-1. Public readiness roadmap and task-board refresh
-   - Goal: make `task.md` the public-release source of truth after the preview Task 7 endpoint.
-   - Scope: docs/task-board only. No runtime, UI, provider, storage, quota, billing, or deployment changes.
-   - Completion criteria: sources reviewed, old completed preview task list removed from active board, public-release tasks listed as 1 task / 1 PR, retention decision recorded, next-session prompt updated.
-   - Verification: `git diff --check` and targeted markdown/content inspection.
-
-2. Public requirements consolidation
-   - Goal: consolidate the attached API/limits draft with the existing future notes into one canonical public-release requirements document.
-   - Scope: docs only. Prefer `docs/active` for the current public-release requirements and move superseded drafts to `docs/archive` only when their content is fully represented elsewhere.
-   - Completion criteria: canonical requirements cover free/per-session limits, paid-plan release path, start/stop semantics, stop conditions, provider quota policy, AI cost controls, source/target language policy, user usage display, admin metrics, sensitive-data boundaries, and initial-release exclusions.
-   - Verification: `git diff --check` and targeted markdown/content inspection.
-   - Fixed initial decisions: free limits, paid release path, YouTube-first scope, raw-text logging default, account integration route, and JA/EN target support are recorded in `Initial Release Decisions`.
-   - Status: complete in current Task 2 PR via `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`.
-
-3. Public legal, privacy, and product-copy recheck
-   - Goal: confirm existing legal pages and visible product copy are accurate for the public comment translator.
-   - Scope: `/terms`, `/privacy`, `/legal/tokushoho`, footer links, `/tools/comment-translator` copy, and relevant account/integration copy.
-   - Completion criteria: copy states the provider/API/AI translation behavior, usage limits, no background monitoring by connection alone, no token/client-storage exposure, data retention/logging policy, contact/support path, and paid-plan status if shown.
-   - Verification: relevant route render checks, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`; width checks only if visible layout changes.
-   - Status: complete in current Task 3 PR. Footer links required no code change after inspection.
-
-4. Account integrations entry point
-   - Goal: provide the operator-facing path for connecting and reviewing YouTube integration state outside the translator tool.
-   - Scope: `/account/integrations` route or equivalent account settings entry, sanitized YouTube connection status, safe start/connect/reconnect/disconnect affordances.
-   - Completion criteria: UI shows connection readiness without token, owner id, provider channel id, liveChatId, Authorization header, or provider target metadata; no background monitoring starts from connection alone.
-   - Verification: dedicated UI/action contracts, lint, typecheck, build, `git diff --check`, and width checks at `390 / 820 / 1024 / 1280 / 1366px`.
-   - Status: complete in current Task 4 PR. Runtime OAuth start, token renewal, disconnect/revocation, provider execution, quota, billing, storage, and handoff payload changes were intentionally not added.
-
-5. Server-only token refresh and reconnect status
-   - Goal: handle expired YouTube access tokens through server-only refresh/reconnect boundaries.
-   - Scope: token refresh runtime, expired/refresh-failed/reconnect-required sanitized states, focused contract coverage.
-   - Completion criteria: token values remain server-only; refresh failures do not leak provider body or credentials; client receives only sanitized status and reconnect guidance.
-   - Verification: focused server contract/tests, lint, typecheck, build, `git diff --check`.
-   - Status: complete in current Task 5 PR. Live/provider refresh execution, provider target lookup, quota, billing, browser storage, handoff payload, schema migration, and remote Supabase mutation were intentionally not added.
-
-6. Server-only disconnect and revocation runtime
-   - Goal: support user-initiated provider disconnect with safe server cleanup and revocation behavior.
-   - Scope: revocation/disconnect route or action, server cleanup, sanitized status transitions, audit-safe event shape.
-   - Completion criteria: no token values in client/docs/log output; repeated disconnect is idempotent or safely reported; revoked credentials cannot be used by translator start.
-   - Verification: focused server contract/tests, lint, typecheck, build, `git diff --check`.
-   - Status: complete in current Task 6 PR. Live/provider revocation calls, provider target lookup, quota, billing, browser storage, handoff payload, schema migration, and remote Supabase mutation were intentionally not added.
-
-7. Translation session model and start/stop contract
-   - Goal: define and implement the server-owned session lifecycle used when a user presses Start on `/tools/comment-translator`.
-   - Scope: one active session per user, free-plan time caps, heartbeat/timeout semantics, explicit stop reasons, and session state returned to UI.
-   - Completion criteria: API/provider/AI usage begins only after explicit Start; session stops on user stop, stream end, browser close/disconnect, missing heartbeat, auth failure, quota/budget stop, session limit, or terminal provider error.
-   - Verification: focused session contracts/tests, lint, typecheck, build, `git diff --check`; UI width checks if visible controls change.
-   - Status: complete in current Task 7 PR. Live/provider execution, provider target lookup, quota write, billing enforcement, browser storage, handoff payload, remote Supabase mutation, schema migration, and visible UI changes were intentionally not added.
-
-8. Usage, quota, and budget ledger foundation
-   - Goal: record usage needed to enforce public limits and protect shared service resources.
-   - Scope: per-user daily/session minutes, plan entitlement references, provider request estimates, AI messages/chars/cost estimates, quota/budget stop events, admin-safe aggregate metrics.
-   - Completion criteria: records are server-owned and sanitized; Free/Paid limits can be enforced from server-owned entitlement state; no provider identifiers or token values in client-readable payloads; no paid prioritization or provider-usage charging unless separately scoped.
-   - Verification: schema/contract/tests as applicable, lint, typecheck, build, `git diff --check`.
-   - Status: complete in current Task 8 PR. Ledger/admin/client output remains sanitized metadata only, and no durable schema, remote mutation, provider lookup, billing enforcement, paid prioritization, provider-usage charging, browser storage, handoff payload, or visible UI change was added.
-
-9. Filtering and language policy runtime
-   - Goal: reduce provider and AI cost before translation execution.
-   - Scope: source language selection, target language selection, same-language prevention, skip emoji-only, URL-only, symbol-only, duplicate, too-short, target-language, unselected-source-language, and low-confidence comments; classify mixed comments by dominant language.
-   - Completion criteria: initial source candidates are JA / EN / KR / CN; initial target candidates include JA / EN; source and target cannot be the same; Spanish and all-language auto mode remain out of initial release unless approved; cache/dedupe keys exclude token/cursor/provider identifiers.
-   - Verification: focused unit/contracts for filter cases, lint, typecheck, build, `git diff --check`.
-
-10. Bounded polling session runtime
-   - Goal: run YouTube Live Chat polling as a bounded server session rather than a broad uncontrolled loop.
-   - Scope: target lookup once at session start, `liveChatMessages.list`, `pollingIntervalMillis` compliance, minimum interval, empty-chat backoff, retry caps, terminal stop states.
-   - Completion criteria: no polling faster than provider response; liveChatId stays server-only; no browser storage or handoff payload expansion; execution is gated by explicit operator approval when live/provider calls are involved.
-   - Verification: contracts/tests for scheduling and stop behavior, lint, typecheck, build, `git diff --check`; live/provider smoke only after same-thread preflight, sanitized output review, and explicit approval.
-   - Status: complete in current Task 10 PR via server-only deterministic bounded polling session runtime. Actual live/provider execution remains approval-gated and not run.
-
-11. Translation provider execution integration
-   - Goal: connect provider-safe live comments to actual translation execution under server-only controls.
-   - Scope: batching, dedupe/cache, per-minute message caps, retry caps, provider error classes, and usage recording.
-   - Completion criteria: only eligible comments are sent; raw provider credentials and YouTube identifiers are excluded; lower-priority comments are skipped under load instead of queued indefinitely.
-   - Verification: focused provider/session contracts, lint, typecheck, build, `git diff --check`; live/provider execution only with explicit approval.
-   - Status: complete in current Task 11 PR via server-only provider execution runtime. Actual live/provider execution remains approval-gated and not run.
-
-12. Public operator UI start/stop and usage display
-   - Goal: expose the public-session controls and status needed by stream operators.
-   - Scope: Start/Stop, current elapsed time, daily used/remaining time, active/stopped state, stop reason, provider connection state, and reconnect guidance.
-   - Completion criteria: UI never displays token, owner user id, provider channel id, liveChatId, service_role key, Authorization header, or provider target metadata; no client storage expansion; copy matches approved public requirements.
-   - Verification: UI/action contracts, lint, typecheck, build, `git diff --check`, and `/tools/comment-translator` width checks at `390 / 820 / 1024 / 1280 / 1366px`.
-   - Status: complete in current Task 12 PR via public operator session controls and sanitized usage/session display. Actual live/provider execution remains approval-gated and not run.
-
-13. Admin and operational visibility
-   - Goal: give the operator/admin enough sanitized visibility to run the public service safely.
-   - Scope: active sessions, per-user minutes, YouTube/Twitch request estimates, AI messages/chars/cost, provider/translation errors, quota/budget stops, heartbeat timeouts.
-   - Completion criteria: admin-visible data is aggregate or reference-only as appropriate; no credential values or provider target ids are exposed; export/log surfaces follow the same sanitization boundary.
-   - Verification: focused contracts/tests, lint, typecheck, build, `git diff --check`; width checks if an admin UI is added.
-   - Status: complete in current Task 13 PR via server-only sanitized aggregate/reference-only admin operational visibility. No admin UI, live/provider execution, browser storage, handoff payload, remote Supabase mutation, schema migration, billing enforcement, raw comment logging, credential value exposure, or provider target id exposure was added.
-
-14. Public deployment and live-smoke runbook
-   - Goal: define and prove the release execution steps without leaking sensitive values.
-   - Scope: operator-local env checklist, safe command order, sanitized output review checklist, deployed URL smoke checklist, rollback notes.
-   - Completion criteria: live/provider smoke commands are documented as approval-gated; runbook avoids token/id/header values; deployed smoke evidence is sanitized and reproducible.
-   - Verification: docs inspection, relevant smoke scripts/contracts, `git diff --check`; actual live/provider execution only after same-thread preflight, sanitized output review, and explicit approval.
-   - Status: complete in current Task 14 PR via active runbook and contract coverage. Actual deploy/upload, deployed URL smoke, and live/provider execution remain approval-gated and not run.
-
-15. Stripe paid-plan integration
-   - Goal: connect the already-proven public tool to paid-plan purchase/upgrade flow after the core public-release functionality is otherwise ready.
-   - Scope: Stripe checkout/customer/subscription or payment-link flow, plan entitlement sync, upgrade/downgrade/cancel states, paid limit activation, account billing entry points, and safe webhook handling.
-   - Completion criteria: Free plan remains permanently available; paid upgrade path is visible before/at public launch; paid entitlement changes server-owned limits without exposing Stripe secrets or provider credentials; failed/expired/canceled payment states degrade to safe Free or inactive paid status.
-   - Verification: Stripe-focused contract/tests, webhook signature handling tests where applicable, lint, typecheck, build, `git diff --check`, and billing/account UI width checks if visible UI changes.
-   - Status: complete in current Task 15 PR via server-only Stripe Billing/Checkout/Portal/webhook boundaries, account billing and translator paid-plan entry points, signed-webhook entitlement sync, and safe Free/inactive-paid degradation. Actual Stripe live-mode action, webhook registration, remote schema migration, deploy/upload, and live/provider execution remain approval-gated and not run.
-
-16. Public release final QA and launch gate
-   - Goal: determine that all roadmap tasks are complete and the tool can be made public.
-   - Scope: final local/deployed verification, legal/copy review, no-secret scan, width checks, account/integration flow, session limits, start/stop, disconnect/reconnect, quota/budget stops, Stripe Free/Paid entitlement degradation, and rollback readiness.
-   - Completion criteria: every prior roadmap task is merged; required checks pass or have documented accepted risk; deployed smoke is recorded with sanitized evidence if explicitly approved and run; `task.md` says public-release capable only when evidence actually supports it.
-   - Verification: full release checklist, `npm run lint`, `npx tsc --noEmit`, `npm run build`, relevant contracts/tests, `git diff --check`, deployed route checks, and width checks at `390 / 820 / 1024 / 1280 / 1366px`.
-   - Status: local final QA, failed existing deployed URL smoke, successful Cloudflare version upload preview URL, and approved narrow preview URL smoke recorded in current Task 16 branch. public-release capable: no. existing deployed URL smoke: failed with required deployed routes returning 404. preview URL smoke: passed for preview-only narrow scope, including Chrome authenticated account integration and billing rendering after operator browser-side authentication. live/provider smoke: not run. Stripe live-mode action: not run. Final QA record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_FINAL_QA.md`.
-
-## Pre-Main Launch Hardening Roadmap
-
-Use one Codex thread, one feature branch, and one PR per task. These tasks are required before main promotion unless the release owner explicitly accepts the risk in writing. Keep `public-release capable: no` until a private-gated production URL passes the required smoke evidence.
-
-17. Private launch access gate
-   - Goal: allow main/production deployment without opening Comment Translator to general users.
-   - Scope: server-side launch gate for `/tools/comment-translator`, account entry points, and comment-translator API/server actions; allowlist/tester policy; disabled or coming-soon public UI state.
-   - Completion criteria: non-allowed users cannot start sessions or reach provider/billing-affecting actions by direct URL/API call; allowed testers can access the existing preview flow; no secrets or private identifiers are exposed.
-   - Verification: focused access-gate contracts, unauthenticated/unauthorized route checks, lint, typecheck, build, `git diff --check`, width checks if visible UI changes.
-   - Status: complete in current Task 17 PR. Non-allowed users receive disabled/coming-soon UI and 403 sanitized API responses; allowed testers are controlled by server-only SHA-256 owner-user-id hash allowlist. No live/provider execution, Stripe live-mode action, deploy/upload, remote mutation, provider target lookup, browser storage expansion, or handoff payload change was added.
-
-18. Operator UX readiness polish
-   - Goal: make the launch-blocking account and plan states obvious before live testing.
-   - Scope: `/tools/comment-translator` CTA to `/account/integrations` when YouTube is not connected, clearer Free/Paid plan display, disabled/start-blocked states, reconnect guidance, and billing/account entry copy.
-   - Completion criteria: users can understand why Start is unavailable and where to fix it; plan state is visible without exposing billing secrets or provider metadata; UI remains responsive at `390 / 820 / 1024 / 1280 / 1366px`.
-   - Verification: UI/action contracts, route render checks, lint, typecheck, build, `git diff --check`, width checks.
-   - Status: complete in current Task 18 PR. Added approved mock and implemented Free / Kuro Stream Kit Pro monthly/yearly comparison copy, Start blocked guidance, `/account/integrations` CTA, disabled Start on unavailable YouTube credential readiness, and account/billing/integrations entry copy. Actual monthly/yearly Stripe Price/Checkout, live/provider execution, provider target lookup, deploy/upload, remote mutation, browser storage expansion, and handoff payload changes were not added or run.
-
-19. Translation provider and cost policy finalization
-   - Goal: choose the public provider policy before live/provider smoke and paid launch.
-   - Scope: compare DeepL, Azure Translator, OpenAI mini, Gemini Flash/Lite, and Cloudflare Workers AI for cost, quality, privacy/data-use terms, supported JA/EN/KR/CN to JA/EN pairs, latency, fallback behavior, deployment fit, and monthly budget controls.
-   - Completion criteria: provider policy is recorded without secrets; initial recommendation covers Free/Paid provider selection, fallback on cap/error, budget stop thresholds, and provider-specific environment names only.
-   - Verification: docs/contract inspection, provider policy contract, no-secret scan, `git diff --check`. No live provider calls unless separately approved.
-   - Status: complete in current Task 19 PR via `docs/active/COMMENT_TRANSLATOR_PROVIDER_COST_POLICY.md` and `scripts/comment-translator-provider-cost-policy-contract.mjs`. Free plan primary is Azure Translator, Paid plan primary is OpenAI mini, Azure is the paid deterministic fallback, DeepL remains optional quality/comparison after account pricing confirmation, and Gemini Flash/Lite plus Cloudflare Workers AI remain comparison-only for the initial launch. No live provider calls were run.
-
-20. Translation provider implementation alignment
-   - Goal: align runtime provider implementation with the chosen provider policy.
-   - Scope: add or adjust provider adapters, provider selection by entitlement, fallback behavior, strict output parsing for LLM providers if used, and usage/cost accounting.
-   - Completion criteria: Free/Paid provider routing is server-owned; fallback is explicit and auditable; skipped comments are not sent; raw comments and provider identifiers are not logged or exposed.
-   - Verification: focused provider execution contracts/tests, lint, typecheck, build, `git diff --check`; live provider smoke only after explicit approval.
-   - Status: complete in current Task 20 PR via server-only Azure/OpenAI mini provider policy runtime, entitlement-owned routing, paid recoverable fallback audit counts, strict OpenAI JSON output parsing, sanitized usage/cost estimates, and provider execution contracts. Actual live provider calls remain approval-gated and were not run.
-
-21. Stripe live readiness and billing operations
-   - Goal: prepare billing for private-gated production without mutating live settings unexpectedly.
-   - Scope: Stripe Product/Price/Checkout/Portal/webhook readiness checklist, signed webhook entitlement evidence, failed/canceled/expired state review, and safe rollback notes.
-   - Completion criteria: dashboard/live-mode actions are either not run and recorded as blockers, or run only after explicit same-thread approval with sanitized evidence; no Stripe secret or webhook signing secret values are displayed or stored.
-   - Verification: Stripe contracts/tests, webhook signature tests, billing route checks, lint, typecheck, build, `git diff --check`; live-mode actions only after explicit approval.
-   - Status: complete in current Task 21 PR via server-only Stripe live readiness runtime, active readiness checklist, signed-webhook entitlement evidence review, failed/canceled/expired safe-degradation review, and rollback notes. Stripe Product/Price creation, Checkout execution, Customer Portal redirect, webhook registration, billing setting mutation, live-mode action, deploy/upload, remote mutation, and live/provider execution remain approval-gated and were not run.
-
-22. Abuse protection and rate-limit hardening
-   - Goal: prevent public abuse, accidental cost spikes, and repeated session/API attempts before main promotion.
-   - Scope: per-user session/action limits, unauthenticated and unauthorized request throttling, coarse IP/request protection where appropriate, Workers Rate Limiting or equivalent edge/app-side controls, and provider/billing route abuse cases.
-   - Completion criteria: repeated Start/session/API attempts are bounded; non-allowed users cannot bypass private launch gate through repeated direct calls; cost-affecting provider/billing paths fail closed or degrade safely under abuse.
-   - Verification: focused rate-limit/abuse contracts, route/API negative checks, lint, typecheck, build, `git diff --check`.
-   - Status: complete in current Task 22 PR via server-only app-side abuse/rate-limit guard, route/action/API negative checks, private-launch denial throttling, and provider/billing fail-closed behavior. Durable/distributed enforcement remains a later persistence/monitoring/deployment concern.
-
-23. Durable persistence and schema migration readiness
-   - Goal: decide what must be durable before public operation and keep remote schema changes approval-gated.
-   - Scope: usage ledger durability, session history, entitlement persistence, admin aggregates, rollback plan, migration ordering, and in-memory fallback boundaries.
-   - Completion criteria: durable-vs-in-memory decisions are recorded; any Supabase/schema migration is separated behind explicit approval; public launch does not depend on undocumented in-memory-only state for required enforcement.
-   - Verification: docs/contracts, no-secret scan, `git diff --check`; remote schema migration only after explicit approval.
-   - Status: complete in current Task 23 PR via active durable persistence readiness doc, server-only readiness runtime, and deterministic contract coverage. Remote Supabase migration apply readiness is not-applied-readiness-only; no SQL migration, RLS policy, remote mutation, browser storage expansion, handoff payload expansion, or UI change was added.
-
-24. Monitoring, alerting, and incident response readiness
-   - Goal: make cost, quota, billing, and runtime failures observable before public exposure.
-   - Scope: provider cost/quota alerts, YouTube quota stop counts, translation error classes, Stripe webhook failure visibility, session failure/timeout counts, rollback trigger notes, and support escalation path.
-   - Completion criteria: operators can detect provider-cost spikes, quota stops, webhook failures, and session failures without exposing secrets or raw comments; incident response and rollback notes are recorded.
-   - Verification: monitoring contract/docs inspection, sanitized log/output review where available, no-secret scan, `git diff --check`.
-   - Status: complete in current Task 24 PR via server-only monitoring/incident readiness runtime, active readiness doc, and deterministic contract coverage. Remote alert/dashboard mutation, live/provider execution, Stripe live-mode action, webhook registration, deploy/upload, browser storage expansion, handoff payload expansion, raw comment logging, private provider target output, and UI changes were intentionally not added or run.
-
-25. Provider terms, privacy, and legal copy refresh
-   - Goal: align public legal/copy surfaces with the final translation provider policy.
-   - Scope: `/terms`, `/privacy`, `/legal/tokushoho`, `/tools/comment-translator`, `/account/integrations`, `/account/billing`, provider data-use/retention/training disclosures, support/contact copy, and paid-plan wording.
-   - Completion criteria: selected providers and fallback behavior are accurately described; no unselected provider is overclaimed as production; user-visible copy explains AI/provider processing without exposing sensitive metadata.
-   - Verification: route render checks, legal/copy contract, no-secret scan, lint, typecheck, build, `git diff --check`; width checks if visible layout changes.
-   - Status: complete in current Task 25 PR via provider legal/copy refresh across legal, translator, integrations, billing, private-launch copy, active evidence doc, and deterministic contract coverage. Live/provider execution, deploy/upload, remote mutation, Stripe live-mode action, billing setting mutation, remote schema migration, Supabase migration apply, browser storage expansion, handoff payload expansion, provider routing runtime change, and sensitive metadata exposure were intentionally not added or run.
-
-26. Security and privacy final review
-   - Goal: verify public-launch sensitive boundaries after access, UX, provider, and billing changes.
-   - Scope: route/API authorization, token/credential boundaries, browser storage, logs/output, docs/PR body safety, provider target metadata, liveChatId, quota/budget stop paths, and rollback readiness.
-   - Completion criteria: no known high/critical launch blocker remains; accepted risks are documented; no secret/token/provider target values appear in client-readable surfaces or changed files.
-   - Verification: focused security contracts, no-secret scan, route/API negative checks, lint, typecheck, build, `git diff --check`.
-   - Status: complete in current Task 26 PR via server-only security/privacy final review evidence, active review doc, focused route/API negative checks, changed-files no-secret scan, and accepted residual-risk documentation. Public launch remains gated.
-
-27. Private-gated live/provider smoke
-   - Goal: prove the live comment intake and translation path with sanitized evidence before main promotion.
-   - Scope: same-thread/operator-local ready preflight, explicit approval, bounded YouTube live comment polling, provider translation execution, stop behavior, quota/budget stop behavior, and sanitized evidence recording.
-   - Completion criteria: no live/provider command runs before explicit approval; evidence records counts/status/stop reasons only; no liveChatId, provider identifiers, OAuth values, raw comments, or Authorization headers are stored or displayed.
-   - Verification: runbook preflight, approved live/provider smoke commands, sanitized output review, focused contracts, `git diff --check`.
-   - Status: complete in current Task 27 PR via approved private-gated live/provider smoke using Azure Translator, sanitized count-only evidence, server-only liveChatId target chaining, empty-polling blocker handling, provider skip/error reason counts, and focused stop/quota/budget contracts. Public launch remains gated.
-
-28. Private-gated main promotion and production smoke
-   - Goal: merge to main and verify the production/custom URL while general access remains blocked.
-   - Scope: main merge gate, production deploy trigger/verification, production/custom route smoke, allowed-tester access, non-allowed-user denial, rollback readiness.
-   - Completion criteria: production/custom deployed target serves the current app; private launch gate blocks general users; allowed testers can complete account/plan/session smoke; evidence is sanitized.
-   - Verification: production route checks only after explicit approval, width checks, console checks, access-gate negative checks, rollback notes.
-   - Status: partially complete. Readiness/blocker PR #435, production env readiness PR #436, exact preflight PR #437, and main promotion PR #439 are merged. Production/custom route smoke, private-launch negative API checks, and allowed-tester account/plan rendering evidence are recorded in `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE.md`. Allowed-tester session start smoke remains not run; provider/live execution, Stripe actions, remote mutation/schema migration, and public launch gate flip remain separately gated.
-
-29. Public launch gate flip
-   - Goal: make Comment Translator publicly available only after production smoke and accepted risks support it.
-   - Scope: launch-gate setting change, final legal/copy check, final no-secret scan, public route smoke, monitoring/rollback readiness.
-   - Completion criteria: `task.md` may say public-release capable only after all required evidence supports it; general users can access the intended public surface; rollback path is recorded.
-   - Verification: final release checklist, public production smoke, no-secret scan, lint/typecheck/build if code changes, `git diff --check`.
+- Free public beta ships before Creator public paid launch.
+- Creator price intent can be shown during Free public beta as locked/waitlist UI, but paid access starts with closed beta.
+- Free plan starts conservatively. Treat `20,000 characters/month` as an added monthly character cap on top of existing time/per-minute caps, not a replacement for `30 min/day/user`, `30 min/session`, `1 active session/user`, and `30 translated messages/min`.
+- Source languages: initial selectable source languages are JA / EN / KR / CN.
+- Target languages: initial selectable target languages include JA / EN.
+- Source and target cannot be the same. UI and server validation must reject same-language pairs.
+- Provider scope: YouTube ships first; Twitch remains future unless explicitly pulled into public-release scope.
+- Raw text logging: disabled by default; diagnostics are short-lived and sanitized.
+- Account path: `/account/integrations` is the preferred provider settings entry; `/tools/comment-translator` should also show a direct integration CTA when YouTube is not connected.
+- Translation provider policy: Free routes to Azure Translator primary; Creator/Paid routes to OpenAI mini primary with Azure Translator as recoverable-error fallback unless later provider policy changes.
+- `liveChatMessages.list` is acceptable for Free MVP when bounded by `pollingIntervalMillis`, server-only cursor/liveChatId handling, session limits, and quota/budget stop. `streamList` is Public-after-P1 primary migration work.
+- Public UI must not expose liveChatId entry. Any debug/manual target path must be isolated from public build and gated.
+- MVP should not persist author channel id, author channel URL, or author profile image URL. If BAN-event historical updates require an author key, use a short-lived server-only/session-scoped hash design or defer past-comment bulk updates to P1.
 
 ## Explicit Initial-Release Exclusions
 
@@ -346,54 +225,31 @@ Use one Codex thread, one feature branch, and one PR per task. These tasks are r
 - Automatic session start when a connected user begins streaming.
 - Multiple concurrent streams per user.
 - User-provided Google Cloud project or OAuth client.
-- Manual channel ID entry as the default flow.
+- Manual channel ID or liveChatId entry as the default public flow.
 - Unlimited polling or broad polling loops.
 - Provider usage charging and paid-priority scheduling.
 - Translation of all languages by default.
+- Raw text logging by default.
 - Client storage of tokens, provider identifiers, liveChatId, owner user id, provider channel id, service_role key, Authorization header, or provider target metadata.
 - Delayed translation queue for skipped comments.
 - Twitch runtime before YouTube public path is proven, unless separately approved.
-
-## Initial Release Decisions
-
-These decisions are fixed for the current public-release roadmap unless the user explicitly changes them in a later task:
-
-- Free plan limits: initial target is `30 min/day/user`, `30 min/session`, `1 active session/user`, and `30 translated messages/min`.
-- Paid plan: Free and Paid plan concepts, limits, and server-owned entitlement enforcement should be part of the public-release path. Stripe integration remains server-only and approval-gated until live readiness is explicitly approved.
-- Source languages: source means translation input language. Initial selectable source languages are JA / EN / KR / CN.
-- Target languages: target means translation output language. Initial selectable target languages include JA / EN because the tool portal itself supports JA / EN.
-- Language selection rule: source and target cannot be the same. UI and server validation must reject same-language pairs.
-- Provider scope: YouTube ships first; Twitch remains future unless explicitly pulled into public-release scope.
-- Raw text logging: disabled by default; diagnostics are short-lived and sanitized.
-- Account path: `/account/integrations` is the preferred provider settings entry; `/tools/comment-translator` should also show a direct integration CTA when YouTube is not connected.
-- Translation provider policy: Free plan routes to Azure Translator primary; Paid plan routes to OpenAI mini primary with Azure Translator as recoverable-error fallback. DeepL remains optional quality/comparison after account pricing confirmation. Gemini Flash/Lite and Cloudflare Workers AI remain initial-launch comparison-only.
-
-## Thread And PR Handoff Rules
-
-- For the YouTube OAuth integration series, start each task in a fresh Codex thread and fresh worktree / feature branch from `origin/codex/comment-translator-youtube-oauth-integration` after confirming the previous task PR is merged into that integration branch.
-- Keep each task PR targeting `codex/comment-translator-youtube-oauth-integration`. Do not target `main` until the integration branch final QA task explicitly supports a separate promotion PR and the release owner approves that promotion.
-- At thread start, run `git fetch origin --prune`, read `AGENTS.md` and `task.md`, and verify the latest required merge commit is in the intended base branch.
-- For each task, first identify whether the task is documentation, implementation, execution, or evidence-only.
-- If the task is live/provider execution, confirm same-thread / operator-local same-command-process ready preflight, sanitized output review, and explicit in-thread approval before running provider-affecting commands.
-- If the task is Google OAuth live connect execution, confirm same-thread ready preflight, sanitized output review, and explicit in-thread approval before clicking, redirecting, exchanging an authorization code, or recording evidence.
-- If the task completes and verification passes, update `task.md`, commit, push, and create a draft PR targeting `codex/comment-translator-youtube-oauth-integration`.
-- If an external wait blocks execution and the user explicitly approves a readiness/blocker PR, record the incomplete completion criteria and blocker evidence in `task.md`, verify, commit, push, and create a draft PR targeting `codex/comment-translator-youtube-oauth-integration`.
-- If the task does not complete and no readiness/blocker PR is approved, do not commit, push, or create a PR. Reply with: `blocked reason`, `attempted command or inspected file`, `why completion criteria are not met`, `what approval/evidence/implementation is missing`, and `next safe action`.
+- CSV export, 30-day history, advanced search, AI summaries, reply suggestions, voice translation, and multi-platform runtime in the Free public beta.
 
 ## Verification Baseline
 
 - Docs/task-board only:
-  - `git diff --check`
   - targeted markdown/content inspection
+  - `git diff --check`
 - Runtime or code changes:
   - relevant contract script(s)
+  - changed-files no-secret scan
   - `npm run lint`
   - `npx tsc --noEmit`
   - `npm run build`
   - `git diff --check`
 - UI changes:
   - relevant UI/action contract(s)
-  - `/tools/comment-translator` width checks at `390 / 820 / 1024 / 1280 / 1366px`
+  - width checks at `390 / 820 / 1024 / 1280 / 1366px`
 - Live/provider execution:
   - same-thread / operator-local same-command-process ready preflight
   - sanitized output review
@@ -408,83 +264,3 @@ These decisions are fixed for the current public-release roadmap unless the user
 - Treat credential status and provider target metadata as sanitized metadata only.
 - Do not overclaim readiness-only or token-resolution-only evidence as live/provider execution.
 - Do not add quota write, billing integration, remote Supabase mutation/migration, browser storage expansion, or handoff payload expansion unless the current roadmap task explicitly scopes it.
-
-## Next Session Prompt
-
-```text
-D:/V_streamer_tools の Kuro Live Comment Translator public release roadmap を続けます。
-
-目的:
-- YouTube OAuth integration branch Task 9 final QA / promotion readiness の後続として、separate promotion-to-main PR の準備可否を進めてください。
-- Task 9 PR が未 merge の場合は、まずその merge gate を確認してください。
-- release owner が明示承認するまで `main` へは結合しないでください。
-
-重要:
-- 最初に必ず `git fetch origin --prune` を実行してください。
-- `AGENTS.md` と `task.md` を読んでください。
-- root checkout / main では作業しないでください。
-- 作業先は fresh worktree / feature branch にしてください。
-- base は latest `origin/codex/comment-translator-youtube-oauth-integration` です。promotion PR を作る場合も、release owner approval と merge gate を確認するまで `main` target の PR 作成や promotion execution はしないでください。
-- secret / token / OAuth access token / refresh token / authorization code / owner user id value / provider channel id value / liveChatId value / service_role key value / Authorization header value / Stripe secret key / webhook signing secret は表示・要求・保存しないでください。
-- provider target metadata や liveChatId は operator-local env / server-only boundary で消費するだけにし、output / docs / PR body / browser storage / handoff payload に出さないでください。
-- session start smoke、deploy/upload、production/custom deployed smoke、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution、remote mutation、remote schema migration、Stripe live-mode action、billing setting mutation、Google OAuth live connect execution、YouTube OAuth live connect execution は、same-thread ready preflight、sanitized output review、explicit in-thread approval が揃うまで実行しないでください。
-- This prompt is not approval for session start smoke, deploy/upload, production/custom URL smoke, Cloudflare production mutation, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, webhook registration, provider target lookup, liveChatId lookup, translation provider API execution, live/provider execution, Google OAuth live connect execution, or YouTube OAuth live connect execution.
-
-Merge gate:
-- Previous YouTube OAuth integration task PR がある場合は、merge 済みであることを確認してください。Task 9 final QA PR が merge 済みであることを promotion 前提にしてください。
-- Planning task の場合は、PR #440 `[codex] Record Task 28 production evidence cleanup` が merge 済みで、merge commit `ee2e82e8a5462d2c0d7c10fdff773878c6a9c06c` が `origin/main` に含まれることを確認してください。
-- gh が使える場合はその PR の state / mergedAt / mergeCommit / baseRefName / headRefName / statusCheckRollup を確認してください。
-- その merge commit が intended base branch に含まれることを Git で確認してください。認証 token の値は要求・表示しないでください。
-
-現在地:
-- Preview roadmap Task 1-7 は完了済み。Task 7 Operator UI flow まで merge 済みです。
-- Public Release Roadmap Task 1-15 は完了済みです。
-- Pre-Main Launch Hardening Roadmap Task 17 PR #420 through Task 26 PR #429 は merge 済みです。
-- Task 27 completion PR #434 は merge 済みです。
-- Task 27 completion PR #434 で approved Azure Translator live/provider smoke evidence が sanitized count-only で記録されました。
-- Task 28 readiness/blocker PR #435、production env readiness PR #436、exact preflight PR #437、main promotion PR #439、production evidence cleanup PR #440 は merge 済みです。
-- Task 28 production/custom route smoke、private-launch negative API checks、allowed-tester account/plan rendering evidence は `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE.md` に sanitized metadata only で記録済みです。
-- Task 28 planning-only docs は `docs/archive/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_READINESS.md` と `docs/archive/COMMENT_TRANSLATOR_PRIVATE_GATED_MAIN_PROMOTION_EXACT_PREFLIGHT.md` に移動済みです。
-- Production env inventory は `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md` に reference-name-only で残っています。secret 値や private id 値は記録されていません。
-- YouTube OAuth connect/callback routes and server actions are wired through server-only boundaries, and token persistence wiring is prepared through the trusted token-store boundary. Google OAuth live connect execution is still not run without same-thread approval.
-- `/account/integrations` reads trusted credential status for sanitized account status, and `/tools/comment-translator` uses server-owned trusted credential status/reference resolution for readiness instead of fixed preview credential references.
-- Task 7 allowed-tester connection smoke readiness is recorded in `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md`; no approved live connection smoke has been run in this task.
-- Task 8 allowed-tester session start smoke readiness is recorded in `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_SESSION_START_SMOKE_READINESS.md`; no provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, or live/provider execution was run in that task.
-- Task 9 integration branch final QA / promotion readiness is recorded in `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_INTEGRATION_FINAL_QA_PROMOTION_READINESS.md`; promotion-to-main remains a separate PR and was not performed in Task 9.
-- `YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED` が `1` または `true` の場合、credential resolution は無効化されます。
-- Allowed-tester session start smoke、Stripe live-mode action、Customer Portal redirect、webhook registration、remote schema migration、remote mutation、live/provider execution、provider target lookup、liveChatId lookup、translation provider API execution、Google OAuth live connect execution、YouTube OAuth live connect execution、live authorization code exchange、live token persistence は引き続き approval-gated で、この prompt は承認ではありません。
-- `public-release capable: no` のままです。
-- 最終ゴールは YouTube OAuth integration tasks を integration branch に積み、final QA の後に separate promotion PR で `main` へ昇格できる状態にすることです。
-
-次にやること:
-- After Task 9 PR merges, prepare a separate promotion-to-main PR only if release owner approval is explicit in the same thread.
-- If approval is missing, record blocker/readiness only and do not target `main`.
-- Promotion evidence must remain sanitized-status/count/label only and must not record provider target metadata, liveChatId, token values, authorization code values, raw comments, browser storage payloads, or handoff payloads.
-- remote schema migration / Supabase migration apply は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。
-- Stripe live-mode actions、Customer Portal redirect、webhook registration、billing setting mutation、deploy/upload、remote mutation、live/provider execution は、同一スレッドで明示承認・sanitized evidence review が揃うまで実行しないでください。
-- secret / token / provider credential / OAuth token / private identifier の値は要求・表示・保存しないでください。必要な env は reference 名だけを扱ってください。
-
-Verification:
-- Task 9 final QA / promotion readiness contract or promotion-specific contract for the changed scope
-- no-secret scan over changed files
-- `npm run lint`
-- `npx tsc --noEmit`
-- `npm run build`
-- `git diff --check`
-- width checks at `390 / 820 / 1024 / 1280 / 1366px` if visible UI changes; docs/contract-onlyなら省略理由を `task.md` に残してください。
-- approved Google OAuth connect / provider lookup / session smoke / deploy / production smoke commands only if same-thread ready preflight + sanitized output review + exact-command explicit approval are complete in this thread.
-
-Completion:
-- Current OAuth integration task completion criteria を満たした場合のみ `task.md` 更新、commit、push、draft PR targeting `codex/comment-translator-youtube-oauth-integration` まで進めてください。
-- gate 不足や実行 path 不足で completion criteria 未達なら、commit / push / PR はせず、blocker reason、inspected files/commands、missing evidence/implementation、next safe action を報告してください。
-```
-
-## Post-Public Candidates
-
-- Advanced paid tiers, paid-priority scheduling, and provider-usage charging.
-- Twitch runtime and EventSub/chat integration.
-- `liveChatMessages.streamList` evaluation.
-- Background monitoring and automatic session start.
-- Multiple concurrent streams per user.
-- Additional source languages and advanced mixed-language options.
-- User-provided Google Cloud project / OAuth client support.

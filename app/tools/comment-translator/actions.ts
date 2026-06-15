@@ -34,6 +34,7 @@ import {
   recordCommentTranslatorDurableSessionLedgerStateOrFailClosed
 } from "@/lib/comment-translator-durable-usage-counter-store";
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
+import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
 import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
   readCommentTranslatorPrivateLaunchAccess
@@ -237,7 +238,7 @@ async function readCommentTranslatorSessionActionResult({
   if (durableActiveSessionRead.status === "fail-closed") {
     return createCommentTranslatorDurableSessionFailClosedState({
       nowMs,
-      plan: billingSnapshot.plan
+      plan: "free"
     });
   }
 
@@ -246,23 +247,26 @@ async function readCommentTranslatorSessionActionResult({
     callerAuthorization,
     durableUsageCounterStore,
     nowMs,
-    plan: billingSnapshot.plan,
-    activeSession,
-    paidEntitlement: billingSnapshot.plan === "paid" ? billingSnapshot.planEntitlement : undefined
+    plan: "free",
+    activeSession
   });
-  if (durableUsageRead.status === "fail-closed") {
+  const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
+    billingSnapshot,
+    durableUsageRead
+  });
+  if (entitlementBaseline.status === "fail-closed") {
     return createCommentTranslatorDurableSessionFailClosedState({
       nowMs,
-      plan: billingSnapshot.plan
+      plan: "free"
     });
   }
 
-  const usage = durableUsageRead.snapshot;
+  const usage = entitlementBaseline.usage;
   const credentialReadiness = await readCredentialReadiness({ activeSession, callerAuthorization });
   const state = await readCommentTranslatorSessionCommand({
     intent,
     nowMs,
-    plan: billingSnapshot.plan,
+    plan: entitlementBaseline.plan,
     callerAuthorization,
     credentialReadiness,
     activeSession,
@@ -281,7 +285,7 @@ async function readCommentTranslatorSessionActionResult({
   if (durablePersistResult.status === "fail-closed") {
     return createCommentTranslatorDurableSessionFailClosedState({
       nowMs,
-      plan: billingSnapshot.plan
+      plan: entitlementBaseline.plan
     });
   }
 
@@ -296,7 +300,7 @@ async function readCommentTranslatorSessionActionResult({
   if (durableUsagePersistResult.status === "fail-closed") {
     return createCommentTranslatorDurableSessionFailClosedState({
       nowMs,
-      plan: billingSnapshot.plan
+      plan: entitlementBaseline.plan
     });
   }
 

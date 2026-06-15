@@ -29,6 +29,7 @@ import {
   recordCommentTranslatorDurableSessionLedgerStateOrFailClosed
 } from "@/lib/comment-translator-durable-usage-counter-store";
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
+import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
 import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
   readCommentTranslatorPrivateLaunchAccess
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       createCommentTranslatorDurableSessionFailClosedState({
         nowMs,
-        plan: billingSnapshot.plan
+        plan: "free"
       })
     );
   }
@@ -118,20 +119,23 @@ export async function POST(request: NextRequest) {
     callerAuthorization,
     durableUsageCounterStore,
     nowMs,
-    plan: billingSnapshot.plan,
-    activeSession,
-    paidEntitlement: billingSnapshot.plan === "paid" ? billingSnapshot.planEntitlement : undefined
+    plan: "free",
+    activeSession
   });
-  if (durableUsageRead.status === "fail-closed") {
+  const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
+    billingSnapshot,
+    durableUsageRead
+  });
+  if (entitlementBaseline.status === "fail-closed") {
     return NextResponse.json(
       createCommentTranslatorDurableSessionFailClosedState({
         nowMs,
-        plan: billingSnapshot.plan
+        plan: "free"
       })
     );
   }
 
-  const usage = durableUsageRead.snapshot;
+  const usage = entitlementBaseline.usage;
   const credentialReferenceId = command.credentialReferenceId ?? activeSession?.credentialReferenceId ?? null;
   const credentialReadiness = credentialReferenceId
     ? await readCredentialReadiness({ credentialReferenceId, callerAuthorization })
@@ -145,7 +149,7 @@ export async function POST(request: NextRequest) {
   const state = await readCommentTranslatorSessionCommand({
     intent: command.intent,
     nowMs,
-    plan: billingSnapshot.plan,
+    plan: entitlementBaseline.plan,
     callerAuthorization,
     credentialReadiness,
     activeSession,
@@ -165,7 +169,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       createCommentTranslatorDurableSessionFailClosedState({
         nowMs,
-        plan: billingSnapshot.plan
+        plan: entitlementBaseline.plan
       })
     );
   }
@@ -182,7 +186,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       createCommentTranslatorDurableSessionFailClosedState({
         nowMs,
-        plan: billingSnapshot.plan
+        plan: entitlementBaseline.plan
       })
     );
   }

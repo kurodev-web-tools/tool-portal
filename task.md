@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-durable-usage-counter-schema-adapter`.
+- Current branch: `codex/comment-translator-public-entitlement-baseline`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is F4 durable usage counter schema and adapter only unless the release owner explicitly expands scope.
+- This branch is F5 public entitlement baseline only unless the release owner explicitly expands scope.
 - P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
 - F1 preflight record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
 - F2 evidence record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_TOKEN_PERSISTENCE_SMOKE_EVIDENCE.md`.
@@ -90,7 +90,7 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 | F2 | OAuth live connect and token persistence smoke | Approval-gated live connect/token persistence evidence or blocker record; output stays status-label-only. | complete in PR |
 | F3 | Durable session schema and adapter | Durable active-session/session-history storage plan or migration, server-only adapter, and fail-closed fallback. | complete in PR |
 | F4 | Durable usage counter schema and adapter | Monthly/daily/session usage counters, translated character/message estimates, quota stop events, and server-owned writes. | complete in PR |
-| F5 | Public entitlement baseline | Free entitlement read path and limit resolver that combines time caps, per-minute cap, active-session cap, and monthly character cap. | pending |
+| F5 | Public entitlement baseline | Free entitlement read path and limit resolver that combines time caps, per-minute cap, active-session cap, and monthly character cap. | complete in PR |
 | F6 | Server-only live chat target lookup | Owned-broadcast lookup at Start only; liveChatId stays server-only and never reaches UI/docs/log/browser storage/handoff. | pending / gated |
 | F7 | Bounded `liveChatMessages.list` polling wiring | Active-session-only polling, `pollingIntervalMillis`, server-only `nextPageToken`, capped retry/backoff, empty-chat behavior, and quota/budget stop. | pending / gated |
 | F8 | Live message normalization | Normalize text, Super Chat, sticker/member/system/deleted/banned/ended events into a safe internal shape with dedupe and deletion handling. | pending |
@@ -142,7 +142,23 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. F4 status
+1. F5 public entitlement baseline
+   - Goal: implement/record the Free entitlement read path and limit resolver for Free public beta.
+   - Scope: server-only resolver, session route/action wiring, existing durable usage read consumption, durable readiness doc update, and focused contract only. No remote Supabase migration apply or operator remote mutation command is approved or run in this thread.
+   - Status: complete in this PR.
+   - Implemented:
+     - `lib/comment-translator-public-entitlement-baseline.ts` adds the F5 server-only public entitlement resolver, contract metadata, Free baseline normalization, monthly character remaining calculation, and fail-closed durable usage handling.
+     - `lib/comment-translator-session-runtime.ts` adds the Free `monthlyTranslatedCharacterLimit` and records `monthlyTranslatedCharacters: 20_000` without replacing the existing time/per-minute/active-session caps.
+     - `/api/comment-translator/session` and comment-translator server actions now resolve the F5 public entitlement baseline after durable F4 usage reads, pass the resolver's Free plan/usage to session evaluation, and safely degrade non-durable Paid entitlement state to Free until durable Paid entitlement work lands later.
+     - `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md` records the local F5 baseline and keeps public launch blocked.
+   - Baseline: `20,000 characters/month` is an added cap on top of the existing `30 min/day/user`, `30 min/session`, `1 active session/user`, and `30 translated messages/min` Free limits.
+   - Safety boundary: missing/unreadable durable usage state fails closed before public session start. Non-durable Paid entitlement state degrades to safe Free limits until durable Paid entitlement work lands in later Creator closed beta tasks.
+   - Remote mutation/schema apply: remote Supabase migration apply is not-run/approval-gated. No `supabase db push`, SQL editor apply, deploy/upload, provider target lookup, liveChatId lookup, session start smoke, live/provider execution, translation provider API execution, Stripe live action, main promotion, or public launch gate flip was run.
+   - F5 verification: `node scripts/comment-translator-public-entitlement-baseline-contract.mjs`, changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` (exit 0; Windows line-ending warnings only).
+   - Width checks skipped because F5 has no UI/CSS/rendered route/visible layout change; route/action behavior remains server-only and browser-safe output shape reuses existing stopped/session states.
+   - Residual risk / unchecked scope: deployed durable usage persistence and remote schema application remain unverified until a same-thread approved remote apply/preflight. Public release remains blocked until F6-F15 and approved remote schema/application evidence are complete.
+
+2. F4 status
    - Goal: implement/record durable usage counter storage authority, server-only adapter, monthly/daily/session usage counters, translated character/message estimates, quota stop events, and server-owned writes for Free public beta.
    - Scope: local migration file, trusted server-only Supabase adapter, session route/action durable usage read/write wiring, durable readiness doc update, and focused contract only. No remote Supabase migration apply or operator remote mutation command was run in this thread.
    - Status: complete in this PR.

@@ -13,6 +13,7 @@ export type CommentTranslatorSessionPlanEntitlement = {
   sessionLimitMs: number;
   translatedMessagesPerMinute: number;
   activeSessionsPerUser: number;
+  monthlyTranslatedCharacterLimit?: number;
   paidPrioritization: "not-implemented";
   providerUsageCharging: "not-implemented";
 };
@@ -184,7 +185,8 @@ export const commentTranslatorSessionRuntimeContract = {
     dailyMinutes: 30,
     sessionMinutes: 30,
     translatedMessagesPerMinute: 30,
-    activeSessionsPerUser: 1
+    activeSessionsPerUser: 1,
+    monthlyTranslatedCharacters: 20_000
   },
   heartbeatTimeoutSeconds: 45,
   stopReasons: [
@@ -705,6 +707,7 @@ export function createCommentTranslatorSessionPlanEntitlement({
     sessionLimitMs: freeLimitMs,
     translatedMessagesPerMinute: commentTranslatorSessionRuntimeContract.freePlanLimits.translatedMessagesPerMinute,
     activeSessionsPerUser: commentTranslatorSessionRuntimeContract.freePlanLimits.activeSessionsPerUser,
+    monthlyTranslatedCharacterLimit: commentTranslatorSessionRuntimeContract.freePlanLimits.monthlyTranslatedCharacters,
     paidPrioritization: "not-implemented",
     providerUsageCharging: "not-implemented"
   };

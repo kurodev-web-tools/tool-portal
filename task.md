@@ -17,9 +17,10 @@
 
 ## Current Branch
 
-- Current cleanup branch: `codex/comment-translator-task-md-roadmap-cleanup`.
-- Base: latest `origin/codex/comment-translator-youtube-oauth-integration`.
-- This branch is docs/task-board cleanup only unless the release owner explicitly expands scope.
+- Current branch: `codex/comment-translator-public-beta-gap-audit`.
+- Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
+- This branch is P0-0 docs/content gap audit only unless the release owner explicitly expands scope.
+- P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
 - Archived previous long task board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
 ## Branch Strategy
@@ -75,7 +76,7 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 | ID | Task | Outcome | Status |
 | --- | --- | --- | --- |
-| P0-0 | Public beta gap audit | Classify Free public beta P0 blockers, Creator closed beta blockers, schema/token-store/session/usage/entitlement conflicts, YouTube API/OAuth/retention/source-attribution blockers, and first 2-3 day order. | next |
+| P0-0 | Public beta gap audit | Classify Free public beta P0 blockers, Creator closed beta blockers, schema/token-store/session/usage/entitlement conflicts, YouTube API/OAuth/retention/source-attribution blockers, and first 2-3 day order. Result recorded in `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`. | complete in PR |
 
 ### Free Public Beta / Before MVP Public Access
 
@@ -137,22 +138,24 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. Task board cleanup
-   - Goal: keep `task.md` short and operational.
-   - Scope: archive the prior long board, remove stale completed-task detail and obsolete next-session prompt, keep only current premises, roadmap snapshot, active direction, blocked gates, and verification baseline.
-   - Verification: markdown inspection and `git diff --check`.
-   - Status: complete on `codex/comment-translator-task-md-roadmap-cleanup`. Previous long board is archived at `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
-
-2. Next recommended roadmap task: Phase 0 public-beta gap audit
+1. Phase 0 public-beta gap audit
    - Goal: compare current repo state against the final MVP brief and produce implementation-sized blockers.
    - Scope: docs/task-board and code inspection only unless separately approved.
-   - Output should classify:
+   - Output classified:
      - Free public beta P0 blockers.
      - Creator closed beta blockers.
      - schema / token-store / session / usage / entitlement conflicts.
      - YouTube API / OAuth / retention / source attribution blockers.
      - first 2-3 day implementation order.
+   - Status: complete in this PR. Full record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
+   - Verification passed: targeted docs/content inspection for `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`, changed-files no-secret scan over `task.md` and the audit doc, and `git diff --check` (exit 0; existing `task.md` line-ending warning only).
+   - Width checks skipped because there are no UI/CSS/rendered route changes.
    - Do not run Google OAuth live connect, YouTube OAuth live connect, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, deploy/upload, remote mutation, remote schema migration, Stripe live-mode action, billing setting mutation, Customer Portal redirect, or webhook registration.
+
+2. Next recommended roadmap task: F1 OAuth live connect smoke preflight
+   - Goal: produce exact same-thread approval checklist, env reference checklist, sanitized evidence shape, abort conditions, and rollback path for YouTube OAuth live connect.
+   - Scope: docs/contract preflight only. Do not execute live connect, authorization code exchange, token persistence smoke, provider target lookup, liveChatId lookup, session start smoke, translation provider API execution, live/provider execution, remote mutation, schema migration, deploy/upload, or Stripe action.
+   - Target: `codex/comment-translator-free-public-beta-integration`.
 
 ## Approval-Gated Actions
 
@@ -192,6 +195,7 @@ Do not perform the following without same-thread ready preflight, sanitized outp
 ## Canonical Documents
 
 - Public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`
+- Public beta gap audit: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`
 - Production env readiness: `docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md`
 - Private-gated production smoke evidence: `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_PRODUCTION_SMOKE_EVIDENCE.md`
 - YouTube OAuth connection smoke readiness: `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md`

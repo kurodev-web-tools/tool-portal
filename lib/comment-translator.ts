@@ -9,7 +9,7 @@ export type CommentTranslatorSurfaceMode = "obs-browser-dock" | "narrow-viewport
 export type CommentTranslatorStatusFilter = "all" | "translated" | "skipped" | "error";
 export type CommentTranslatorQuotaScenarioId = "normal" | "warning" | "empty" | "error";
 export type CommentTranslatorStreamId = "saturday-setup" | "karaoke-preview" | "archive-check";
-export type CommentTranslatorCommentSource = "fixture" | "manual";
+export type CommentTranslatorCommentSource = "fixture" | "manual" | "server";
 export type CommentTranslatorManualResultMode = "translated" | "skipped" | "error";
 export type CommentTranslatorOperatorFlowStepId =
   | "credential-status"
@@ -168,7 +168,7 @@ export const commentTranslatorUiCopy = {
       manualSession: "手入力セッション"
     },
     manualInput: {
-      helper: "この画面の手入力はプレビュー用です。実APIやAI翻訳はStart承認前に実行しません。",
+      helper: "この画面の手入力はローカル確認用です。ライブコメントfeedには混ぜず、実APIやAI翻訳はStart承認前に実行しません。",
       singlePlaceholder: "1件だけ追加するコメント",
       pastePlaceholder: "貼り付けたコメントを1行ずつ追加",
       sourceBadge: "手入力",
@@ -375,7 +375,7 @@ export const commentTranslatorUiCopy = {
     },
     empty: {
       title: "一致するコメントはありません",
-      body: "検索語やステータスタブを変えるとプレビュー行を表示できます。"
+      body: "server-owned session state から表示可能なコメントが届くまで、このfeedは空のままです。"
     },
     safety: [
       "YouTube API取得とAI翻訳は、ログインユーザーがStartしたセッション内だけで実行します。",
@@ -438,7 +438,7 @@ export const commentTranslatorUiCopy = {
       manualSession: "manual session"
     },
     manualInput: {
-      helper: "Manual input is preview-only here. Real APIs and AI translation do not run before approved Start execution.",
+      helper: "Manual input is local-only here. It is not mixed into the live comment feed, and real APIs or AI translation do not run before approved Start execution.",
       singlePlaceholder: "Add one comment",
       pastePlaceholder: "Paste one comment per line",
       sourceBadge: "manual",
@@ -645,7 +645,7 @@ export const commentTranslatorUiCopy = {
     },
     empty: {
       title: "No matching comments",
-      body: "Adjust the search or status tab to show preview rows."
+      body: "This feed stays empty until server-owned session state has displayable comments."
     },
     safety: [
       "YouTube API reads and AI translation run only inside a session explicitly started by the signed-in user.",

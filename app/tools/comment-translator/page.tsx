@@ -3,6 +3,7 @@ import { CommentTranslatorPrivateLaunchUnavailable } from "@/components/comment-
 import { CommentTranslatorDock } from "@/components/comment-translator/CommentTranslatorDock";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
+import { createUnavailableCommentTranslatorRealCommentsFeedState } from "@/lib/comment-translator-real-comments-ui-wiring";
 import { readCommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
 import { getAccountSessionState } from "@/lib/supabase/session";
 
@@ -27,10 +28,16 @@ export default async function CommentTranslatorPage() {
   }
 
   const youtubeCredentialStatusSource = await readCommentTranslatorToolCredentialStatusSource({ accountSession });
+  const initialRealCommentsFeed = createUnavailableCommentTranslatorRealCommentsFeedState({
+    reason: "live-provider-polling-not-approved"
+  });
 
   return (
     <PortalShell mode="workspace">
-      <CommentTranslatorDock youtubeCredentialStatusSource={youtubeCredentialStatusSource} />
+      <CommentTranslatorDock
+        youtubeCredentialStatusSource={youtubeCredentialStatusSource}
+        initialRealCommentsFeed={initialRealCommentsFeed}
+      />
     </PortalShell>
   );
 }

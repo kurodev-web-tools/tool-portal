@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-live-message-normalization`.
+- Current branch: `codex/comment-translator-real-comments-ui-wiring`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is F8 live message normalization only unless the release owner explicitly expands scope.
+- This branch is F9 real comments UI wiring only unless the release owner explicitly expands scope.
 - P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
 - F1 preflight record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
 - F2 evidence record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_TOKEN_PERSISTENCE_SMOKE_EVIDENCE.md`.
@@ -93,8 +93,8 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 | F5 | Public entitlement baseline | Free entitlement read path and limit resolver that combines time caps, per-minute cap, active-session cap, and monthly character cap. | complete in PR |
 | F6 | Server-only live chat target lookup | Owned-broadcast lookup at Start only; liveChatId stays server-only and never reaches UI/docs/log/browser storage/handoff. | complete in PR |
 | F7 | Bounded `liveChatMessages.list` polling wiring | Active-session-only polling, `pollingIntervalMillis`, server-only `nextPageToken`, capped retry/backoff, empty-chat behavior, and quota/budget stop. | complete in PR |
-| F8 | Live message normalization | Normalize text, Super Chat, sticker/member/system/deleted/banned/ended events into a safe internal shape with dedupe and deletion handling. | pending |
-| F9 | Real comments UI wiring | Replace preview-only comment feed with server-owned live/session state while keeping private ids and raw provider payloads out of the browser. | pending |
+| F8 | Live message normalization | Normalize text, Super Chat, sticker/member/system/deleted/banned/ended events into a safe internal shape with dedupe and deletion handling. | complete in PR |
+| F9 | Real comments UI wiring | Replace preview-only comment feed with server-owned live/session state while keeping private ids and raw provider payloads out of the browser. | complete in PR |
 | F10 | Azure normal translation execution | Server-only Azure route for eligible comments, skip policy, bounded batch/retry, cache/dedupe, and provider-error degradation. | pending / gated |
 | F11 | Start/Stop reason UX | User-readable Start failure and Stop reason states for disconnected, reconnect-required, no live broadcast, disabled/ended/not found, quota, heartbeat, and provider errors. | pending |
 | F12 | Usage display for Free beta | Session/day/month usage display, remaining limits, monthly character cap, and no-provider-call behavior when over limit. | pending |
@@ -142,7 +142,22 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. F8 Live message normalization
+1. F9 Real comments UI wiring
+   - Goal: replace preview-only / fixture / manual comment feed authority with server-owned live/session state derived browser-safe display rows while keeping private ids and raw provider payloads out of browser-readable output.
+   - Scope: local deterministic server-owned feed adapter, F8 browser-safe row consumption, safe feed state, server action / route seeded UI wiring, focused contract, readiness docs, and width checks at `390 / 820 / 1024 / 1280 / 1366px`. No real YouTube polling, live provider call, live target lookup execution, provider target lookup execution, translation provider API execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, or public launch gate flip is approved or run in this thread.
+   - Status: complete in this PR.
+   - Implemented:
+     - `lib/comment-translator-real-comments-ui-wiring.ts` adds the F9 server-only contract, unavailable fail-closed feed state, and deterministic adapter from F8 browser-safe rows to safe display rows.
+     - `lib/comment-translator-real-comments-feed-shared.ts` defines the browser-safe feed state and maps safe display rows to existing comment cards without author channel ids, profile URLs, raw provider payloads, provider target metadata, live target values, server-only cursors, token values, service_role values, Authorization header values, owner user id values, or provider channel id values.
+     - `/tools/comment-translator` seeds the dock with server-owned unavailable feed state, and the client refresh path calls `getCommentTranslatorRealCommentsFeedAction()` instead of using fixture/manual comments as feed authority.
+   - Output/privacy boundary: browser feed rows are limited to sanitized display data from F8 browser-safe projection. Fixture comments and manual input no longer drive the live feed; manual input remains local-only UI detail and does not affect live feed rows or quota preview. No live target entry UI, manual provider target entry, browser storage expansion, route-render lookup, background monitoring from connection alone, handoff payload expansion, or translation execution is added.
+   - Remote/live execution: provider target lookup execution, live target lookup execution, real `liveChatMessages.list`, real provider payload capture, session start smoke, translation provider API execution, live/provider execution, remote Supabase migration apply, deploy/upload, Stripe live action, main promotion, and public launch gate flip are all not-run/approval-gated.
+   - F9 verification: `node scripts/comment-translator-real-comments-ui-wiring-contract.mjs`, changed-files no-secret scan, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` (exit 0; Windows line-ending warnings only).
+   - F3-F8 implementation confirmation: F3-F8 files and docs were inspected as F9 inputs. Existing F3-F8 focused contracts were also attempted, but their task-specific allowed-files gates fail on this F9 diff because `app/tools/comment-translator/page.tsx` / `app/tools/comment-translator/actions.ts` / F9 files are intentionally changed; this is an allowlist-context mismatch, not used as F9 failure evidence.
+   - Width checks: Codex app in-app browser against local `next dev` on `127.0.0.1:3000` using a temporary deterministic F9 preview route that was removed before PR. Checked `390 / 820 / 1024 / 1280 / 1366px`; feed marker present, safe sample rows rendered, framework overlay absent, console warn/error count 0, document horizontal overflow 0 at all widths. Initial 1280/1366 check exposed an internal horizontal scroll from the 3-column `xl` layout; fixed by moving the right summary column to `2xl` and using `xl:grid-cols-[22rem_minmax(0,1fr)]`, then rechecked all widths successfully. Refresh interaction at 1280px returned sanitized unavailable/empty state with no console warn/error and document horizontal overflow 0.
+   - Residual risk / unchecked scope: the real private-gated `/tools/comment-translator` dock could not be rendered unauthenticated in local browser because private launch gate correctly showed the unavailable surface; authenticated allowed-tester browser state was not available locally. Real YouTube provider target lookup, live target resolution, actual `liveChatMessages.list`, non-empty live comment intake, translation provider execution, deployed durable cursor/feed behavior across restarts, remote schema application, and launch readiness remain unverified until same-thread ready preflight, sanitized output review, and explicit in-thread approval exist. Public release remains blocked until F10-F15 and approved live/remote evidence are complete.
+
+2. F8 Live message normalization
    - Goal: implement/record a server-only deterministic normalization layer for YouTube Live Chat polling/provider payloads without exposing raw provider payloads, raw comments, author channel id/URL/profile image URL, tokens, owner user id values, provider channel id values, live target values, provider target metadata, service_role values, Authorization header values, or server-only cursors to browser-readable output.
    - Scope: local normalizer, normalized event shape, message-reference dedupe, deleted-message propagation, banned/ended event handling, browser-safe projection, readiness doc update, gap audit update, and focused contract only. No real YouTube polling, live provider call, live target lookup execution, provider target lookup execution, translation provider API execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, or public launch gate flip is approved or run in this thread.
    - Status: complete in this PR.

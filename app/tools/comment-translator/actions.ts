@@ -57,6 +57,7 @@ import {
   createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime,
   createTrustedYouTubeOAuthCredentialSupabaseStatusReader
 } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
+import { createUnavailableCommentTranslatorRealCommentsFeedState } from "@/lib/comment-translator-real-comments-ui-wiring";
 import { readYouTubeOAuthCredentialReferenceForCaller } from "@/lib/comment-translator-youtube-account-integration-status";
 import { readCommentTranslatorToolCredentialStatus } from "@/lib/comment-translator-youtube-tool-credential-source";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
@@ -188,6 +189,12 @@ export async function stopCommentTranslatorSessionAction() {
 export async function heartbeatCommentTranslatorSessionAction() {
   return readCommentTranslatorSessionActionResult({
     intent: "heartbeat"
+  });
+}
+
+export async function getCommentTranslatorRealCommentsFeedAction() {
+  return createUnavailableCommentTranslatorRealCommentsFeedState({
+    reason: "live-provider-polling-not-approved"
   });
 }
 

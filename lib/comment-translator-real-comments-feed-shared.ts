@@ -19,6 +19,7 @@ export type CommentTranslatorRealCommentsDisplayRow = {
   timestamp: string;
   publishedAtIso: string;
   source: "youtube-live-chat";
+  sourceAttributionLabel: "Source: YouTube Live Chat";
   role: "owner" | "moderator" | "member" | "viewer" | "unknown";
   authorLabel: "YouTube viewer";
   originalText: string | null;
@@ -26,6 +27,7 @@ export type CommentTranslatorRealCommentsDisplayRow = {
   targetLanguage: CommentTranslatorTargetLanguageId;
   translationStatus: CommentTranslatorRealCommentsTranslationStatus;
   moderationLabel: "visible" | "deleted" | "banned" | "ended" | "system";
+  deletionPropagation: "not-deleted" | "message-reference-tombstone-only" | "author-history-p1-deferred" | "stream-ended";
   badgeLabel: "owner" | "moderator" | "member" | "super-chat" | "super-sticker" | "system" | null;
   purchaseLabel: string | null;
   memberMonthCount: number | null;
@@ -76,7 +78,7 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
       timestamp: row.timestamp,
       authorName: row.authorLabel,
       source: "server",
-      sourceLabel: "YouTube Live Chat",
+      sourceLabel: row.sourceAttributionLabel,
       sourceLanguage,
       targetLanguage,
       originalText: row.originalText ?? moderationFallbackText(row.moderationLabel),

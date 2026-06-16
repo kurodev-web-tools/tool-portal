@@ -106,10 +106,12 @@ export type CommentTranslatorLiveMessageBrowserSafeRow = {
   publishedAtIso: string;
   text: string | null;
   source: "youtube-live-chat";
+  sourceAttributionLabel: "Source: YouTube Live Chat";
   role: CommentTranslatorNormalizedLiveMessage["role"];
   purchase: CommentTranslatorNormalizedLiveMessage["purchase"];
   member: CommentTranslatorNormalizedLiveMessage["member"];
   moderationLabel: "visible" | "deleted" | "banned" | "ended" | "system";
+  deletionPropagation: "not-deleted" | "message-reference-tombstone-only" | "author-history-p1-deferred" | "stream-ended";
   rawProviderPayload: "not-returned-by-design";
   authorChannelMaterial: "not-returned-by-design";
 };
@@ -257,10 +259,12 @@ export function projectCommentTranslatorNormalizedLiveMessagesForBrowser(
     publishedAtIso: message.publishedAtIso,
     text: message.kind === "deleted" || message.kind === "banned" || message.kind === "ended" ? null : message.text,
     source: message.source,
+    sourceAttributionLabel: "Source: YouTube Live Chat",
     role: message.role,
     purchase: message.purchase,
     member: message.member,
     moderationLabel: mapModerationLabel(message),
+    deletionPropagation: mapDeletionPropagation(message),
     rawProviderPayload: "not-returned-by-design",
     authorChannelMaterial: "not-returned-by-design"
   }));
@@ -527,4 +531,22 @@ function mapModerationLabel(message: CommentTranslatorNormalizedLiveMessage): Co
   }
 
   return "visible";
+}
+
+function mapDeletionPropagation(
+  message: CommentTranslatorNormalizedLiveMessage
+): CommentTranslatorLiveMessageBrowserSafeRow["deletionPropagation"] {
+  if (message.kind === "deleted") {
+    return "message-reference-tombstone-only";
+  }
+
+  if (message.kind === "banned") {
+    return "author-history-p1-deferred";
+  }
+
+  if (message.kind === "ended") {
+    return "stream-ended";
+  }
+
+  return "not-deleted";
 }

@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-free-beta-creator-locked-waitlist`.
+- Current branch: `codex/comment-translator-free-beta-final-qa-readiness`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is F14 Creator locked cards / waitlist / click tracking for Free beta only unless the release owner explicitly expands scope.
+- This branch is F15 Free public beta final QA / launch readiness for Free beta only unless the release owner explicitly expands scope.
 - P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
 - F1 preflight record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
 - F2 evidence record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_TOKEN_PERSISTENCE_SMOKE_EVIDENCE.md`.
@@ -99,8 +99,8 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 | F11 | Start/Stop reason UX | User-readable Start failure and Stop reason states for disconnected, reconnect-required, no live broadcast, disabled/ended/not found, quota, heartbeat, and provider errors. | complete in PR |
 | F12 | Usage display for Free beta | Session/day/month usage display, remaining limits, monthly character cap, and no-provider-call behavior when over limit. | complete in PR |
 | F13 | Data deletion, retention, and source attribution | Data deletion button/path, OAuth disconnect cleanup, retention job, deleted-message propagation, and `Source: YouTube Live Chat` on relevant surfaces. | complete in this PR |
-| F14 | Creator locked cards / waitlist / click tracking | Show Creator price intent and locked feature cards during Free beta, with waitlist and click tracking that do not imply paid access is live. | pending |
-| F15 | Free public beta final QA / launch readiness | Route/API smoke plan, no-secret scan, width checks, legal/copy review, rollback notes, and public-launch readiness decision. | pending |
+| F14 | Creator locked cards / waitlist / click tracking | Show Creator price intent and locked feature cards during Free beta, with waitlist and click tracking that do not imply paid access is live. | complete in PR |
+| F15 | Free public beta final QA / launch readiness | Route/API smoke plan, no-secret scan, width checks, legal/copy review, rollback notes, and public-launch readiness decision. | complete in this PR |
 
 ### Creator Closed Beta / Before Creator Public Paid
 
@@ -142,7 +142,23 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. F14 Creator locked cards / waitlist / click tracking
+1. F15 Free public beta final QA / launch readiness
+   - Goal: record Free public beta-specific route/API smoke plan, changed-files no-secret scan plan, width-check decision, legal/copy review, rollback notes, blockers, accepted risks, unchecked scope, and public-launch readiness decision.
+   - Scope: docs/contract readiness only. No UI/runtime/copy redesign, Creator paid unlock, remote Supabase mutation/schema apply, Stripe live action, paid entitlement activation, provider target lookup, live target lookup, real `liveChatMessages.list`, session start smoke, Azure/OpenAI provider API execution, live/provider execution, deploy/upload, main promotion, public launch gate flip, browser storage expansion, or handoff payload expansion is approved or run in this thread.
+   - Status: complete in this PR.
+   - Implemented:
+     - `docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md` records the F15 final QA/readiness decision with `public-release capable: no`.
+     - The route/API smoke plan separates local deterministic checks, sanitized server-owned state checks, and approval-gated exact-command preflight before any live/provider/remote/Stripe execution.
+     - `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md` and `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md` now record F15 as implemented docs/contract readiness while keeping public launch blocked.
+     - `scripts/comment-translator-free-public-beta-final-qa-readiness-contract.mjs` enforces the F15 record, no-secret boundary, not-run gates, and allowed changed-file scope.
+   - Output/privacy boundary: F15 docs and contract output keep raw provider payload, raw comments, author channel id/URL/profile image URL, owner user id, provider channel id, live target value, provider target metadata, liveChatId, service_role, Authorization header, token values, provider error body, server-only cursor, Stripe secret/billing identifiers, browser storage, and handoff payload material out of docs and browser-readable output. Allowed output is limited to sanitized readiness labels, route/action names, reference names, and not-run gates.
+   - Remote/live execution: remote Supabase mutation/schema apply, Stripe live Product/Price/Checkout/Portal/webhook/billing mutation, paid entitlement activation, provider target lookup execution, live target lookup execution, real `liveChatMessages.list`, real provider payload capture, session start smoke, Azure/OpenAI provider API execution, live/provider execution, deploy/upload, main promotion, and public launch gate flip are all not-run/approval-gated.
+   - F15 verification: `node scripts/comment-translator-free-public-beta-final-qa-readiness-contract.mjs`, changed-files no-secret scan, and `git diff --check`.
+   - Width checks skipped because F15 has no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or runtime behavior change.
+   - Residual risk / unchecked scope: remote/deployed durable session and usage enforcement, real OAuth/provider target/live target/polling/session start/provider execution, authenticated allowed-tester route/API smoke with server-owned state, Stripe live action, paid entitlement activation, deploy/upload, production/custom smoke, main promotion, and public launch gate flip remain unverified until same-thread ready preflight, sanitized output review, and explicit in-thread approval exist.
+   - Next safe action: after this PR merges, decide whether to prepare an approval-gated public launch preflight / evidence collection task or keep Free public beta blocked until the release owner accepts the remaining blockers.
+
+2. F14 Creator locked cards / waitlist / click tracking
    - Goal: show Creator price intent and locked feature cards during Free public beta, with waitlist and click tracking that do not imply paid access is live.
    - Scope: server-only local Creator locked/waitlist resolver, sanitized server action state path, local deterministic click draft path, Creator closed-beta copy, compact locked cards in the existing translator dock, focused contract, docs, and `task.md`. No remote Supabase mutation, schema apply, Stripe live Product/Price/Checkout/Portal/webhook action, paid entitlement activation, provider target lookup, live target lookup, `liveChatMessages.list`, session start smoke, Azure/OpenAI provider API execution, live/provider execution, deploy/upload, main promotion, public launch gate flip, browser storage expansion, handoff payload expansion, manual live target entry, or connection-only monitoring is approved or run in this thread.
    - Status: complete in this PR.

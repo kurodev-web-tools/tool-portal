@@ -149,18 +149,21 @@ FB-L3 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_
 
 FB-L4 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md` records Start-to-translation smoke as blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`. It limits the later approved smoke to explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` step, non-empty intake, Free Azure translation, UI feed, usage, stop reason, source attribution, and Stop, while keeping remote mutation/schema apply, deploy/upload, Stripe actions, paid entitlement work, main promotion, and public launch gate flip not-run / approval-gated.
 
+FB-L5 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md` records Production/custom deployed smoke as blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`. It limits the later approved smoke to deployed target freshness, Free beta route reachability, allowed-tester route/UI visibility, status-only session API, usage/deletion/Creator locked gates, and Start-to-translation gate checks, while keeping deploy/upload, remote mutation/schema apply, session Start, provider/live execution, Stripe actions, paid entitlement work, main promotion, and public launch gate flip not-run / approval-gated.
+
 ## Blockers
 
 - Remote Supabase migration/apply and deployed durable session/usage enforcement are not verified.
 - Authenticated allowed-tester route/API smoke execution remains not-run / approval-gated even though FB-L3 now has exact-command ready preflight.
 - Start-to-translation smoke execution remains not-run / approval-gated even though FB-L4 now has exact-command ready preflight.
+- Production/custom deployed smoke execution remains not-run / approval-gated even though FB-L5 now has exact-command ready preflight.
 - Real provider target lookup and live target lookup remain not-run.
 - Real `liveChatMessages.list` polling remains not-run for the Free beta launch path.
 - Non-empty live comment intake remains not public-proven for the Free beta launch path.
 - Real Azure/OpenAI provider API execution remains not-run for the Free beta launch path.
 - Authenticated allowed-tester route/API smoke with server-owned session/feed/usage/deletion/Creator locked states remains unchecked unless separately approved and fixture-backed.
 - Stripe live Product/Price/Checkout/Customer Portal/webhook/billing mutation and paid entitlement activation remain not-run and out of Free beta scope.
-- Main promotion, deploy/upload, production/custom smoke, and public launch gate flip remain not-run and approval-gated.
+- Main promotion, deploy/upload, production/custom deployed smoke, and public launch gate flip remain not-run and approval-gated.
 
 ## Accepted Risks
 

@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-free-beta-fb-l4-approved-start-to-translation-smoke`.
+- Current branch: `codex/comment-translator-free-beta-fb-l5-production-custom-deployed-smoke`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is FB-L4 docs/contract blocker evidence and exact-command ready preflight only. It does not run Start-to-translation smoke execution, live/provider execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, or public launch gate flip without same-thread approval.
+- This branch is FB-L5 docs/contract blocker evidence and exact-command ready preflight only. It does not run production/custom deployed smoke execution, deploy/upload, session Start, live/provider execution, remote mutation/schema apply, Stripe live action, main promotion, or public launch gate flip without same-thread approval.
 - Archived previous long board snapshot: `docs/archive/task-board-pre-2026-06-16-free-beta-public-usability-cleanup.md`.
 - Older archived board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
@@ -67,7 +67,7 @@ Current public-launch decision: `public-release capable: no`.
 | FB-L2 | Remote durable enforcement evidence | Blocker/evidence record plus exact-command ready preflight for deployed `comment_translator_sessions` and `comment_translator_usage_ledger_events` authority. Remote apply/mutation/deployed smoke remain not-run until exact explicit approval. | preflight-ready / gated |
 | FB-L3 | Allowed-tester route/API smoke | Authenticated route/API smoke for server-owned session/feed/usage/deletion/Creator locked states without live/provider execution unless separately approved. | preflight-ready / blocked-no-approval |
 | FB-L4 | Approved Start-to-translation smoke | Same-thread approved Start smoke proving server-only live target lookup, bounded `liveChatMessages.list`, non-empty intake, Azure translation, UI feed, usage, stop reason, and source attribution. | preflight-ready / blocked-no-approval |
-| FB-L5 | Production/custom deployed smoke | Confirm the deployed target serving the Free beta path matches the reviewed integration branch and renders/operates for allowed testers. | pending / gated |
+| FB-L5 | Production/custom deployed smoke | Confirm the deployed target serving the Free beta path matches the reviewed integration branch and renders/operates for allowed testers. | preflight-ready / blocked-no-approval |
 | FB-L6 | Public launch gate decision | Release-owner decision to keep blocked, open limited public beta, or flip the public gate. | pending / gated |
 
 ### Later Work
@@ -129,7 +129,7 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - Actual public session Start smoke remains approval-gated.
 - Approved Start-to-translation smoke now has exact-command ready preflight and blocker/evidence record, but Start, live target lookup, bounded `liveChatMessages.list`, non-empty intake, Free Azure translation, UI feed confirmation, usage, stop reason, and source attribution evidence remain unchecked / not-run / approval-gated.
 - Real provider target lookup, live target lookup, actual `liveChatMessages.list`, non-empty live comment intake, and real Azure provider execution remain approval-gated for the Free beta launch path.
-- Production/custom deployed target freshness and Free beta route behavior must be confirmed before broad access.
+- Production/custom deployed target freshness and Free beta route behavior now have exact-command ready preflight and blocker/evidence record, but deployed target freshness, allowed-tester route/UI reachability, status-only route/API behavior, usage/deletion/Creator locked gates, and Start-to-translation gate evidence remain unchecked / not-run / approval-gated.
 - Stripe live billing and paid entitlement activation remain out of Free beta and approval-gated.
 - Public launch gate flip remains not-run and approval-gated.
 
@@ -191,6 +191,23 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - Unchecked scope remains: Start-to-translation smoke execution, explicit Start, allowed-tester cookie/session validity, deployed route/API target behavior, remote Supabase migration apply, remote Supabase mutation, deployed durable session/usage smoke, authenticated allowed-tester route/API smoke execution, provider target lookup, live target lookup, liveChatMessages.list, non-empty live comment intake, Azure/OpenAI provider API execution, UI feed confirmation on an authenticated deployed target, deploy/upload, Stripe live actions, billing setting mutation, main promotion, and public launch gate flip were not run.
 - Verification: RED `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs` failed on missing FB-L4 evidence doc, then passed after docs/task updates. Changed-files no-secret scan passed for 6 changed files. `git diff --check` passed with CRLF normalization warnings only. App runtime/UI files were not changed; this slice changes docs/task notes and the focused contract script only, so `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run.
 
+## Latest FB-L5 Evidence
+
+- Active evidence/blocker doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md`.
+- Active ready preflight doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`.
+- Focused contract: `node scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs`.
+- Ready preflight state: preflight-ready. Execution decision remains blocked-no-approval until the exact approval label `approved-fb-l5-production-custom-deployed-smoke` is provided in-thread.
+- production/custom deployed smoke execution: not-run/approval-gated. Deployed target freshness, reviewed integration branch match, allowed tester route/UI reachability, status-only session API, usage/deletion/Creator locked gates, and Start-to-translation gate status remain not-run/approval-gated.
+- FB-L2 remote durable enforcement remains not-run/approval-gated, and FB-L5 did not run remote Supabase migration apply or mutation.
+- FB-L3 authenticated allowed-tester route/API smoke remains not-run/approval-gated unless separately approved; FB-L5 did not fold FB-L3 into its evidence.
+- FB-L4 Start-to-translation smoke remains not-run/approval-gated unless separately approved; FB-L5 did not fold FB-L4 into its evidence.
+- Exact approval-gated command sequence is documented for local deterministic baseline, reviewed integration branch head check, safe deployed version label comparison through `COMMENT_TRANSLATOR_DEPLOYED_VERSION_LABEL`, deployed route reachability, authenticated status-only session API, allowed-tester browser route/UI confirmation, and optional approved server-owned action status harness.
+- Free caps remain 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month. Missing/unreadable durable state must fail closed with sanitized stop/status output before Start or provider execution.
+- FB-L5 does not prove actual deployed target freshness, allowed-tester cookie/session validity, deployed route/API target behavior, FB-L2 remote/deployed durable enforcement, FB-L3 route/API execution, FB-L4 Start-to-translation execution, actual Start, live target lookup, liveChatMessages.list, non-empty intake, Azure/OpenAI provider API execution, Paid entitlement C1/C3, Stripe billing, Creator paid limits, main promotion, or public launch readiness.
+- Width checks skipped because FB-L5 changes only docs/contract/task notes; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or runtime behavior change.
+- Unchecked scope remains: production/custom deployed smoke execution, deployed target freshness, reviewed integration branch match on deployed target, allowed-tester cookie/session validity, allowed tester route/UI reachability, deployed status route/API behavior, deployed usage/deletion/Creator locked gate status, deployed Start-to-translation gate status, remote Supabase migration apply, remote Supabase mutation, deployed durable session/usage smoke, authenticated allowed-tester route/API smoke execution, Start-to-translation smoke execution, provider target lookup, live target lookup, liveChatMessages.list, non-empty live comment intake, Azure/OpenAI provider API execution, deploy/upload, Stripe live actions, billing setting mutation, main promotion, and public launch gate flip were not run.
+- Verification: RED `node scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs` failed on missing FB-L5 evidence doc, then passed after docs/task updates. Changed-files no-secret scan passed for 7 changed files. `git diff --check` passed with CRLF normalization warnings only. App runtime/UI files were not changed; this slice changes docs/task notes and the focused contract script only, so `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run.
+
 ## Approval-Gated Actions
 
 Do not perform the following without same-thread ready preflight, sanitized output review, and exact explicit approval:
@@ -223,6 +240,8 @@ Do not perform the following without same-thread ready preflight, sanitized outp
 - Free beta final QA/readiness: `docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md`
 - Free beta public usability preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md`
 - Free beta remote durable enforcement ready preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md`
+- Free beta production/custom deployed smoke evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md`
+- Free beta production/custom deployed smoke ready preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`
 - Public beta gap audit: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`
 - Durable persistence readiness: `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md`
 - OAuth live connect preflight: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`

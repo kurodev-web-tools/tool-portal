@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-real-comments-ui-wiring`.
+- Current branch: `codex/comment-translator-azure-normal-translation-execution`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is F9 real comments UI wiring only unless the release owner explicitly expands scope.
+- This branch is F10 Azure normal translation execution only unless the release owner explicitly expands scope.
 - P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
 - F1 preflight record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
 - F2 evidence record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_TOKEN_PERSISTENCE_SMOKE_EVIDENCE.md`.
@@ -142,7 +142,21 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. F9 Real comments UI wiring
+1. F10 Azure normal translation execution
+   - Goal: pass eligible F8 normalized live comments into the Free public beta Azure Translator primary provider path through server-only deterministic wiring, while preserving F8/F9 browser-safe boundaries.
+   - Scope: local server-only bridge, source/target language policy, sanitized cache/dedupe key material, bounded batch/retry/cache execution via existing provider policy runtime, recoverable/terminal provider-error degradation to safe row status, usage handoff estimates, focused contract, docs, and `task.md`. No real YouTube polling, live provider call, live target lookup execution, provider target lookup execution, Azure/OpenAI provider API execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, public launch gate flip, browser storage expansion, handoff payload expansion, manual live target entry, route-render lookup, or connection-only monitoring is approved or run in this thread.
+   - Status: complete in this PR.
+   - Implemented:
+     - `lib/comment-translator-azure-normal-translation-execution.ts` adds the F10 server-only bridge from eligible F8 normalized messages to `executeCommentTranslatorProviderPolicyBatch(...)`, keeping Free routing on Azure primary and preserving injected server-only provider execution.
+     - `lib/comment-translator-real-comments-feed-shared.ts` accepts F10 translated/skipped/provider-error row statuses and maps translated rows to existing UI comments without changing the current default unavailable feed action.
+     - `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md` and `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md` record F10 as local deterministic provider-path wiring with real provider/API execution still approval-gated.
+   - Output/privacy boundary: F10 output keeps raw provider payload, raw provider comments, author channel id/URL/profile image URL, owner user id, provider channel id, live target value, provider target metadata, liveChatId, service_role, Authorization header, token values, server-only cursor, browser storage, and handoff payload material out of returned result/docs/browser-readable state. Provider input is limited to eligible text plus source/target language policy and sanitized cache/usage material inside the server-only provider boundary.
+   - Remote/live execution: provider target lookup execution, live target lookup execution, real `liveChatMessages.list`, real provider payload capture, session start smoke, Azure/OpenAI provider API execution, live/provider execution, remote Supabase migration apply, deploy/upload, Stripe live action, main promotion, and public launch gate flip are all not-run/approval-gated.
+   - F10 verification: `node scripts/comment-translator-azure-normal-translation-execution-contract.mjs`, changed-files no-secret scan over 6 files, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` all exit 0. `npm run build` emitted existing Next/middleware and webpack cache warnings; `git diff --check` emitted Windows line-ending warnings only.
+   - Width checks skipped because F10 has no visible UI/CSS/layout/rendered-route change; the current default feed action remains sanitized unavailable/not-run, and the shared row mapper only adds server-side support for future F10 translated safe rows.
+   - Residual risk / unchecked scope: real Azure/OpenAI provider API execution, real YouTube provider target lookup/live target resolution, actual `liveChatMessages.list`, non-empty live comment intake, deployed durable usage writes/enforcement, remote schema application, route/API smoke with authenticated allowed tester, and launch readiness remain unverified until same-thread ready preflight, sanitized output review, and explicit in-thread approval exist. Public release remains blocked until F11-F15 and approved live/remote evidence are complete.
+
+2. F9 Real comments UI wiring
    - Goal: replace preview-only / fixture / manual comment feed authority with server-owned live/session state derived browser-safe display rows while keeping private ids and raw provider payloads out of browser-readable output.
    - Scope: local deterministic server-owned feed adapter, F8 browser-safe row consumption, safe feed state, server action / route seeded UI wiring, focused contract, readiness docs, and width checks at `390 / 820 / 1024 / 1280 / 1366px`. No real YouTube polling, live provider call, live target lookup execution, provider target lookup execution, translation provider API execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, or public launch gate flip is approved or run in this thread.
    - Status: complete in this PR.

@@ -16,6 +16,10 @@ import {
   type CommentTranslatorSessionUsageSnapshot
 } from "./comment-translator-session-runtime";
 import { type CommentTranslatorServerOnlyLiveChatTargetLookupResult } from "./comment-translator-server-only-live-chat-target-lookup";
+import {
+  resolveCommentTranslatorPollingTerminalReasonUxCode,
+  type CommentTranslatorStartStopReasonUxCode
+} from "./comment-translator-start-stop-reason-ux";
 
 export type CommentTranslatorBoundedLiveChatPollingAdapter =
   | {
@@ -78,12 +82,14 @@ export type CommentTranslatorBoundedLiveChatPollingTickResult =
         CommentTranslatorSessionStopReason,
         "translated-message-cap" | "provider-quota-stop" | "global-budget-stop" | "ai-budget-stop" | "translation-provider-limit"
       >;
+      reasonUxCode: CommentTranslatorStartStopReasonUxCode;
       publicLaunchAllowed: false;
     }
   | {
       status: "unavailable-missing-server-only-polling-state" | "unavailable-polling-runtime-not-approved";
       providerAccess: "not-run";
       providerSignal: Extract<CommentTranslatorSessionStopReason, "stream-unavailable">;
+      reasonUxCode: CommentTranslatorStartStopReasonUxCode;
       clientReadableDetail: "sanitized-stop-reason-only";
       publicLaunchAllowed: false;
     }
@@ -98,6 +104,7 @@ export type CommentTranslatorBoundedLiveChatPollingTickResult =
       status: "terminal-state-handoff" | "bounded-retry-exhausted";
       providerAccess: "deterministic-local-adapter-only";
       providerSignal: Extract<CommentTranslatorSessionStopReason, "stream-ended" | "stream-unavailable" | "terminal-provider-error">;
+      reasonUxCode: CommentTranslatorStartStopReasonUxCode;
       sanitizedPolling: CommentTranslatorBoundedLiveChatPollingSanitizedMetadata;
       clientReadableDetail: "sanitized-stop-reason-only";
       publicLaunchAllowed: false;
@@ -113,6 +120,7 @@ export const commentTranslatorBoundedLiveChatPollingWiringContract = {
   retry: "bounded-retry-backoff",
   emptyChatBehavior: "empty-chat-waiting",
   terminalStateHandoff: "stream-ended-stream-unavailable-terminal-provider-error",
+  reasonUx: "sanitized-reason-code-only",
   quotaBudgetStopHandoff: "durable-session-ledger-stop-state",
   providerPollingExecution: "not-run-in-this-thread",
   defaultAdapter: "unavailable-not-approved",
@@ -220,6 +228,8 @@ export async function readCommentTranslatorBoundedLiveChatPollingTick({
       providerAccess: "not-run",
       providerSignal: null,
       stopReason: quotaStopReason,
+      reasonUxCode:
+        quotaStopReason === "translation-provider-limit" ? "translation-provider-unavailable" : "quota-or-budget-stop",
       publicLaunchAllowed: false
     };
   }
@@ -275,6 +285,7 @@ export async function readCommentTranslatorBoundedLiveChatPollingTick({
       status: "bounded-retry-exhausted",
       providerAccess: "deterministic-local-adapter-only",
       providerSignal: "terminal-provider-error",
+      reasonUxCode: "translation-provider-error",
       sanitizedPolling,
       clientReadableDetail: "sanitized-stop-reason-only",
       publicLaunchAllowed: false
@@ -378,6 +389,7 @@ function unavailablePolling(
     status,
     providerAccess: "not-run",
     providerSignal: "stream-unavailable",
+    reasonUxCode: status === "unavailable-polling-runtime-not-approved" ? "translation-provider-unavailable" : "live-target-unavailable",
     clientReadableDetail: "sanitized-stop-reason-only",
     publicLaunchAllowed: false
   };
@@ -398,6 +410,9 @@ function terminalPollingResult({
     status,
     providerAccess: "deterministic-local-adapter-only",
     providerSignal,
+    reasonUxCode: resolveCommentTranslatorPollingTerminalReasonUxCode({
+      code: state.terminal?.code ?? "unknown-terminal-provider-error"
+    }),
     sanitizedPolling: createSanitizedPollingMetadata(state, 0, nowMs),
     clientReadableDetail: "sanitized-stop-reason-only",
     publicLaunchAllowed: false

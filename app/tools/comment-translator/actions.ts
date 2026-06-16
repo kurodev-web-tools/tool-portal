@@ -308,6 +308,7 @@ async function readCommentTranslatorSessionActionResult({
     browserConnected: intent !== "stop",
     stopReason,
     providerSignal: pollingTick.providerSignal,
+    providerSignalReasonUxCode: "reasonUxCode" in pollingTick ? pollingTick.reasonUxCode : null,
     createSessionReferenceId: () => `cts_${randomUUID()}`
   });
 

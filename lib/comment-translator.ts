@@ -264,6 +264,43 @@ export const commentTranslatorUiCopy = {
         "translation-provider-limit": "翻訳provider制限",
         "session-limit": "同時セッション上限",
         "terminal-provider-error": "provider終端エラー"
+      },
+      reasonGroups: {
+        manual: "手動停止",
+        connection: "接続状態",
+        "live-target": "配信状態",
+        limit: "上限",
+        browser: "ブラウザ状態",
+        provider: "翻訳provider",
+        session: "セッション"
+      },
+      reasonMessages: {
+        "user-stop": "Stop 操作でセッションを終了しました。",
+        disconnected: "YouTube接続が見つからないため、Startできません。",
+        "reconnect-required": "YouTube接続の更新が必要なため、Startできません。",
+        "auth-unavailable": "サインインまたは認証状態を確認できないため、Startできません。",
+        "no-live-broadcast": "現在開始中の所有配信が見つからないため、Startできません。",
+        "live-chat-disabled": "対象配信のライブチャットが利用できないため、Startできません。",
+        "stream-ended": "配信またはライブチャットが終了したため停止しました。",
+        "live-chat-not-found": "対象のライブチャットを確認できないため停止しました。",
+        "live-target-unavailable": "配信状態を安全に確認できないため停止しました。",
+        "quota-or-budget-stop": "Free枠または共有予算の上限に達したため停止しました。",
+        "heartbeat-or-browser-disconnect": "ブラウザ接続またはheartbeatを確認できないため停止しました。",
+        "translation-provider-unavailable": "翻訳providerが利用できないため停止しました。",
+        "translation-provider-error": "翻訳providerのエラーが続いたため停止しました。",
+        "session-limit": "同時に実行できるセッション数の上限に達しています。"
+      },
+      recommendedActions: {
+        none: "追加操作は不要です。",
+        "connect-youtube": "アカウント連携でYouTubeを接続してください。",
+        "reconnect-youtube": "アカウント連携でYouTubeを再接続してください。",
+        "check-live-broadcast": "YouTube Studioで配信が開始済みか確認してください。",
+        "enable-live-chat": "YouTube側でライブチャットが有効か確認してください。",
+        "wait-or-pick-another-stream": "配信状態を確認し、必要なら別の配信で再Startしてください。",
+        "wait-for-limit-reset": "上限リセット後に再Startしてください。",
+        "keep-browser-open": "この画面を開いたまま、状態更新を再実行してください。",
+        "retry-later": "少し待ってから再Startしてください。",
+        "start-again": "既存セッションを停止してから再Startしてください。"
       }
     },
     operatorFlow: {
@@ -534,6 +571,43 @@ export const commentTranslatorUiCopy = {
         "translation-provider-limit": "Translation provider limit",
         "session-limit": "Session limit",
         "terminal-provider-error": "Terminal provider error"
+      },
+      reasonGroups: {
+        manual: "Manual stop",
+        connection: "Connection",
+        "live-target": "Stream state",
+        limit: "Limit",
+        browser: "Browser state",
+        provider: "Translation provider",
+        session: "Session"
+      },
+      reasonMessages: {
+        "user-stop": "The session stopped after the Stop action.",
+        disconnected: "Start is unavailable because no YouTube connection was found.",
+        "reconnect-required": "Start is unavailable because the YouTube connection needs to be refreshed.",
+        "auth-unavailable": "Start is unavailable because sign-in or auth status could not be confirmed.",
+        "no-live-broadcast": "Start is unavailable because no owned live broadcast is currently live.",
+        "live-chat-disabled": "Start is unavailable because live chat is not available for the stream.",
+        "stream-ended": "The stream or live chat ended, so the session stopped.",
+        "live-chat-not-found": "The live chat could not be confirmed, so the session stopped.",
+        "live-target-unavailable": "The stream state could not be confirmed safely, so the session stopped.",
+        "quota-or-budget-stop": "The session stopped because a Free limit or shared budget was reached.",
+        "heartbeat-or-browser-disconnect": "The session stopped because the browser connection or heartbeat was not confirmed.",
+        "translation-provider-unavailable": "The session stopped because the translation provider is unavailable.",
+        "translation-provider-error": "The session stopped after repeated translation provider errors.",
+        "session-limit": "The active session limit has been reached."
+      },
+      recommendedActions: {
+        none: "No additional action is needed.",
+        "connect-youtube": "Connect YouTube from account integrations.",
+        "reconnect-youtube": "Reconnect YouTube from account integrations.",
+        "check-live-broadcast": "Confirm the stream is live in YouTube Studio.",
+        "enable-live-chat": "Confirm live chat is enabled in YouTube.",
+        "wait-or-pick-another-stream": "Check the stream state, then start again if needed.",
+        "wait-for-limit-reset": "Start again after the limit resets.",
+        "keep-browser-open": "Keep this screen open, then refresh session status.",
+        "retry-later": "Wait briefly, then start again.",
+        "start-again": "Stop the existing session before starting again."
       }
     },
     operatorFlow: {

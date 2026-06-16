@@ -137,6 +137,7 @@ export const youtubeOAuthCredentialDisconnectRuntimeContract = {
   refreshTokenValueOutput: "never-returned-by-design",
   providerErrorBodyOutput: "never-returned-by-design",
   providerTargetMetadataOutput: "forbidden",
+  oauthDisconnectCleanup: "f13-sanitized-cleanup-readiness-only",
   liveProviderExecution: "not-run-by-default-route-or-action",
   browserStorage: "forbidden",
   loggingPolicy: "no-token-value-or-provider-body-logging",

@@ -7,6 +7,7 @@ import {
   getCommentTranslatorRealCommentsFeedAction,
   getYouTubeOAuthCredentialStatusAction,
   heartbeatCommentTranslatorSessionAction,
+  requestCommentTranslatorDataDeletionAction,
   startCommentTranslatorSessionAction,
   stopCommentTranslatorSessionAction
 } from "@/app/tools/comment-translator/actions";
@@ -103,6 +104,33 @@ type OperatorSessionState = {
   usageDisplay: OperatorSessionUsageDisplay;
   nextAction: OperatorSessionNextAction;
 };
+type RetentionAttributionState = {
+  status: "available" | "unavailable";
+  unavailableReason:
+    | "durable-session-unreadable"
+    | "durable-usage-unreadable"
+    | "missing-entitlement"
+    | "missing-provider-readiness"
+    | null;
+  dataDeletion: {
+    requestPath: "server-action:requestCommentTranslatorDataDeletionAction";
+    buttonState: "enabled" | "disabled";
+    clientReadableDetail: "sanitized-request-status-only" | "sanitized-unavailable-only";
+  };
+  retentionJob: {
+    status: "ready" | "unavailable";
+    clientReadableDetail: "sanitized-retention-readiness-only" | "sanitized-unavailable-only";
+  };
+  deletedMessagePropagation: {
+    strategy: "message-reference-tombstone-only";
+    browserReadableText: "tombstone-only";
+  };
+  sourceAttribution: {
+    label: "Source: YouTube Live Chat";
+  };
+  clientReadableDetail: "sanitized-retention-attribution-only";
+  publicLaunchAllowed: false;
+};
 
 const freeDailyLimitSeconds = 30 * 60;
 const initialOperatorSessionUsageDisplay: OperatorSessionUsageDisplay = {
@@ -146,6 +174,28 @@ const initialOperatorSessionState: OperatorSessionState = {
   reasonUx: null,
   usageDisplay: initialOperatorSessionUsageDisplay,
   nextAction: "press-start"
+};
+const initialRetentionAttributionState: RetentionAttributionState = {
+  status: "unavailable",
+  unavailableReason: "missing-provider-readiness",
+  dataDeletion: {
+    requestPath: "server-action:requestCommentTranslatorDataDeletionAction",
+    buttonState: "enabled",
+    clientReadableDetail: "sanitized-request-status-only"
+  },
+  retentionJob: {
+    status: "unavailable",
+    clientReadableDetail: "sanitized-unavailable-only"
+  },
+  deletedMessagePropagation: {
+    strategy: "message-reference-tombstone-only",
+    browserReadableText: "tombstone-only"
+  },
+  sourceAttribution: {
+    label: "Source: YouTube Live Chat"
+  },
+  clientReadableDetail: "sanitized-retention-attribution-only",
+  publicLaunchAllowed: false
 };
 
 function formatNumber(value: number) {
@@ -322,6 +372,11 @@ function CommentCard({
                 {copy.manualInput.sourceBadge}
               </span>
             ) : null}
+            {comment.source === "server" && comment.sourceLabel ? (
+              <span className="rounded-base border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-bold text-indigo-700">
+                {comment.sourceLabel}
+              </span>
+            ) : null}
             {comment.badge && comment.source !== "manual" ? (
               <span className="rounded-base border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
                 {comment.badge}
@@ -426,10 +481,15 @@ export function CommentTranslatorDock({
   const [credentialStatusError, setCredentialStatusError] = useState<string | null>(null);
   const [sessionState, setSessionState] = useState<OperatorSessionState>(initialOperatorSessionState);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [retentionAttributionState, setRetentionAttributionState] = useState<RetentionAttributionState>(
+    initialRetentionAttributionState
+  );
+  const [retentionAttributionError, setRetentionAttributionError] = useState<string | null>(null);
   const [realCommentsFeed, setRealCommentsFeed] = useState<CommentTranslatorRealCommentsFeedState>(initialRealCommentsFeed);
   const [realCommentsFeedError, setRealCommentsFeedError] = useState<string | null>(null);
   const [isCredentialStatusPending, startCredentialStatusTransition] = useTransition();
   const [isSessionPending, startSessionTransition] = useTransition();
+  const [isDataDeletionPending, startDataDeletionTransition] = useTransition();
   const [isRealCommentsFeedPending, startRealCommentsFeedTransition] = useTransition();
   const singleCommentInputRef = useRef<HTMLInputElement>(null);
   const multilinePasteInputRef = useRef<HTMLTextAreaElement>(null);
@@ -586,6 +646,13 @@ export function CommentTranslatorDock({
       : usageDisplay.providerCallPolicy.status === "blocked-over-limit"
         ? copy.operatorSession.usageProviderBlockedOverLimit
         : copy.operatorSession.usageProviderUnavailable;
+  const retentionAttributionReady = retentionAttributionState.status === "available";
+  const retentionAttributionStatusLabel = retentionAttributionReady
+    ? copy.retentionAttribution.statusReady
+    : copy.retentionAttribution.statusUnavailable;
+  const retentionAttributionHelper = retentionAttributionReady
+    ? copy.retentionAttribution.retentionReady
+    : copy.retentionAttribution.retentionUnavailable;
   const sessionReasonGroup = sessionReasonUx ? copy.operatorSession.reasonGroups[sessionReasonUx.group] : null;
   const sessionReasonMessage = sessionReasonUx
     ? copy.operatorSession.reasonMessages[sessionReasonUx.code]
@@ -646,6 +713,20 @@ export function CommentTranslatorDock({
         setRealCommentsFeedError(null);
       } catch {
         setRealCommentsFeedError(locale === "ja" ? "コメント状態を更新できませんでした" : "Could not refresh comments");
+      }
+    });
+  }
+
+  function requestDataDeletion() {
+    startDataDeletionTransition(async () => {
+      try {
+        const state = await requestCommentTranslatorDataDeletionAction();
+        setRetentionAttributionState(state);
+        setRetentionAttributionError(null);
+      } catch {
+        setRetentionAttributionError(
+          locale === "ja" ? "データ削除状態を確認できませんでした" : "Could not check data deletion state"
+        );
       }
     });
   }
@@ -892,6 +973,52 @@ export function CommentTranslatorDock({
                   <p className="mt-3 break-words font-semibold leading-5 text-muted">
                     {usagePolicyLabel}
                     {usagePolicyStopReason ? ` / ${usagePolicyStopReason}` : ""}
+                  </p>
+                </div>
+                <div
+                  data-comment-translator-retention-attribution="sanitized-retention-attribution-only"
+                  className="mt-3 rounded-base border border-border bg-background/70 p-3 text-xs"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-black text-foreground">{copy.retentionAttribution.title}</p>
+                    <span
+                      className={[
+                        "rounded-base border px-2 py-1 font-black",
+                        toneClassName(retentionAttributionReady ? "normal" : "error")
+                      ].join(" ")}
+                    >
+                      {retentionAttributionStatusLabel}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid gap-2 rounded-base border border-border bg-surface/70 p-3">
+                    <p className="break-words font-semibold leading-5 text-muted">
+                      {retentionAttributionHelper}
+                    </p>
+                    <p className="break-words font-semibold leading-5 text-muted">
+                      {copy.retentionAttribution.deletedPropagation}
+                    </p>
+                    <p className="break-words font-black leading-5 text-foreground">
+                      {retentionAttributionState.sourceAttribution.label}
+                    </p>
+                    {retentionAttributionError ? (
+                      <p className="break-words font-semibold leading-5 text-red-700">{retentionAttributionError}</p>
+                    ) : null}
+                    {retentionAttributionState.unavailableReason ? (
+                      <p className="break-words font-semibold leading-5 text-amber-800">
+                        {retentionAttributionState.unavailableReason}
+                      </p>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={requestDataDeletion}
+                    disabled={isDataDeletionPending || retentionAttributionState.dataDeletion.buttonState === "disabled"}
+                    className="mt-3 min-h-10 w-full rounded-base border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                  >
+                    {isDataDeletionPending ? copy.retentionAttribution.deletionPending : copy.retentionAttribution.deletionButton}
+                  </button>
+                  <p className="mt-2 break-words font-semibold leading-5 text-muted">
+                    {copy.retentionAttribution.deletionHelper}
                   </p>
                 </div>
                 {sessionState.status === "stopped" && sessionReasonUx ? (

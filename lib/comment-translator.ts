@@ -315,6 +315,18 @@ export const commentTranslatorUiCopy = {
         "start-again": "既存セッションを停止してから再Startしてください。"
       }
     },
+    retentionAttribution: {
+      title: "データ削除 / 保持 / 出典",
+      statusReady: "確認可能",
+      statusUnavailable: "確認不可",
+      deletionButton: "データ削除をリクエスト",
+      deletionPending: "確認中",
+      deletionHelper: "削除リクエストはserver-owned session / usage / feed派生状態だけを対象にし、raw commentやprovider payloadは返しません。",
+      retentionReady: "保持ジョブはFree月間上限のためのdurable usageとsession-scoped feedだけを対象にします。",
+      retentionUnavailable: "durable state、entitlement、provider readinessを確認できないため、削除/保持判定は利用不可です。",
+      sourceLabel: "Source: YouTube Live Chat",
+      deletedPropagation: "削除済みコメントはmessage reference tombstoneだけを表示します。"
+    },
     operatorFlow: {
       ready: "UI確認OK",
       standby: "確認待ち",
@@ -633,6 +645,18 @@ export const commentTranslatorUiCopy = {
         "retry-later": "Wait briefly, then start again.",
         "start-again": "Stop the existing session before starting again."
       }
+    },
+    retentionAttribution: {
+      title: "Data deletion / Retention / Source",
+      statusReady: "Ready",
+      statusUnavailable: "Unavailable",
+      deletionButton: "Request data deletion",
+      deletionPending: "Checking",
+      deletionHelper: "Deletion requests target only server-owned session, usage, and derived feed state. Raw comments and provider payloads are not returned.",
+      retentionReady: "Retention readiness covers durable usage for the Free monthly cap and session-scoped feed state only.",
+      retentionUnavailable: "Deletion and retention decisions are unavailable until durable state, entitlement, and provider readiness are readable.",
+      sourceLabel: "Source: YouTube Live Chat",
+      deletedPropagation: "Deleted comments render message-reference tombstones only."
     },
     operatorFlow: {
       ready: "UI review ready",

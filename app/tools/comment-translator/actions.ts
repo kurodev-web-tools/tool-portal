@@ -36,6 +36,10 @@ import {
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
 import {
+  createCommentTranslatorFreeBetaRetentionAttributionState,
+  type CommentTranslatorFreeBetaRetentionAttributionState
+} from "@/lib/comment-translator-free-beta-retention-attribution";
+import {
   createUnavailableCommentTranslatorLiveChatTargetLookupAdapter,
   resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart
 } from "@/lib/comment-translator-server-only-live-chat-target-lookup";
@@ -195,6 +199,47 @@ export async function heartbeatCommentTranslatorSessionAction() {
 export async function getCommentTranslatorRealCommentsFeedAction() {
   return createUnavailableCommentTranslatorRealCommentsFeedState({
     reason: "live-provider-polling-not-approved"
+  });
+}
+
+export async function requestCommentTranslatorDataDeletionAction(): Promise<CommentTranslatorFreeBetaRetentionAttributionState> {
+  const callerAuthorization = await readCallerAuthorization();
+  const nowMs = Date.now();
+  const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
+  const durableUsageCounterStore = createTrustedCommentTranslatorUsageCounterSupabaseStore();
+  const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
+    callerAuthorization,
+    durableSessionStore
+  });
+  const durableSessionState = durableActiveSessionRead.status === "ready" ? "ready" : "unreadable";
+  const activeSession = durableActiveSessionRead.status === "ready" ? durableActiveSessionRead.activeSession : null;
+  const durableUsageRead =
+    durableSessionState === "ready"
+      ? await readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+          callerAuthorization,
+          durableUsageCounterStore,
+          nowMs,
+          plan: "free",
+          activeSession
+        })
+      : null;
+  const durableUsageState = durableUsageRead?.status === "ready" ? "ready" : "unreadable";
+  const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+  const entitlementBaseline = durableUsageRead
+    ? resolveCommentTranslatorPublicEntitlementBaseline({
+        billingSnapshot,
+        durableUsageRead
+      })
+    : null;
+  const credentialReadiness =
+    durableSessionState === "ready" ? await readCredentialReadiness({ activeSession, callerAuthorization }) : null;
+
+  return createCommentTranslatorFreeBetaRetentionAttributionState({
+    durableSessionState,
+    durableUsageState,
+    entitlementState: entitlementBaseline?.status === "ready" ? "ready" : "missing",
+    providerReadinessState: credentialReadiness?.status === "ready" ? "ready" : "missing",
+    nowMs
   });
 }
 

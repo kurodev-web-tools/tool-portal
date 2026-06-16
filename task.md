@@ -112,6 +112,13 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 | P1-8 | Platform expansion | Twitch/Kick/TikTok or multi-platform runtime only after YouTube path is proven. | later |
 | P1-9 | Voice translation / subtitle work | Treat as separate product or upper-tier work, not part of the initial Creator 980 yen MVP. | later |
 
+## Account Limits / Entitlement Control
+
+- Per-account judgment is server-owned: authenticated caller authorization binds work to the owner account, and browser-readable output must not expose owner ids, provider channel ids, provider target metadata, liveChatId, OAuth values, tokens, or billing identifiers.
+- Free public beta limit authority is the Free entitlement baseline plus durable usage/session state. Current Free caps: 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month.
+- Enforcement happens before Start, while the session is active, during status/heartbeat/feed usage checks, and before provider translation execution. If durable usage/session state is unavailable or unreadable, the safe behavior is fail closed with sanitized stop/status output.
+- Paid access after C1/C3 should be controlled by signed Stripe webhook evidence, durable paid entitlement rows, paid usage counters, monthly reset state, and server-owned fallback/stop reasons. Until that durable paid authority is implemented and verified, incomplete or unreadable paid state must degrade safely to Free or paid-inactive behavior, not public paid limits.
+
 ## Current Blockers / Residual Risks
 
 - Free beta implementation/readiness foundation is complete through F15, but actual public usability is not accepted yet.

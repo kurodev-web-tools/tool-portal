@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-free-beta-public-launch-execution-board`.
+- Current branch: `codex/comment-translator-free-beta-pl-g1-remote-durable-enforcement-execution`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is a task-board-only update after FB-L6 merge. It records the remaining public-launch execution gates and does not open limited public beta, flip the public launch gate, run production/custom deployed smoke execution, deploy/upload, session Start, live/provider execution, remote mutation/schema apply, Stripe live action, or main promotion without same-thread release-owner exact approval.
+- This branch records PL-G1 execution as remote-apply-and-deployed-smoke-completed. Same-thread exact approval, link metadata restore, migration list, dry-run, remote apply, post-apply migration inspection, and approved deployed status/start/stop smoke completed with sanitized evidence. It does not open limited public beta, flip the public launch gate, run production/custom deployed smoke execution, deploy/upload, provider/live execution, Stripe live action, or main promotion without the required preconditions.
 - Archived previous long board snapshot: `docs/archive/task-board-pre-2026-06-16-free-beta-public-usability-cleanup.md`.
 - Older archived board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
@@ -76,7 +76,7 @@ These are the remaining gates before Free public beta can be opened. Each item r
 
 | ID | Gate | Required outcome | Current state |
 | --- | --- | --- | --- |
-| PL-G1 | Execute FB-L2 remote durable enforcement | Apply/confirm the reviewed durable session and usage authority, then prove deployed fail-closed session/usage behavior for Free caps. | approval-gated / not-run |
+| PL-G1 | Execute FB-L2 remote durable enforcement | Apply/confirm the reviewed durable session and usage authority, then prove deployed fail-closed session/usage behavior for Free caps. | remote-apply-and-deployed-smoke-completed |
 | PL-G2 | Execute FB-L3 allowed-tester route/API smoke | Prove an authenticated allowed tester can reach server-owned session/feed/usage/deletion/Creator locked states with sanitized output. | approval-gated / not-run |
 | PL-G3 | Execute FB-L4 Start-to-translation smoke | Prove explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` step, non-empty intake, Free Azure translation, UI feed, usage, stop reason, source attribution, and Stop. | approval-gated / not-run |
 | PL-G4 | Execute FB-L5 production/custom deployed smoke | Prove deployed target freshness, reviewed integration branch match, allowed-tester route/UI reachability, status-only session API, usage/deletion/Creator locked gates, and Start-to-translation gate status. | approval-gated / not-run |
@@ -137,7 +137,8 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - FB-L1 is complete as preflight/docs/contract only. It proves the exact gated sequence and sanitized evidence boundary, not public usability itself.
 - Free beta implementation/readiness foundation is complete through F15, but actual public usability is not accepted yet.
 - Public release remains blocked until approved live/provider/remote/deployed evidence and release-owner launch approval exist.
-- Remote/deployed durable session and usage enforcement remain unverified; FB-L2 now has exact-command ready preflight and Phase A dry-run evidence for the two reviewed durable migrations, but remote apply/smoke execution remains blocked-no-approval until same-thread sanitized output review and exact explicit approval are provided.
+- PL-G1 remote durable enforcement execution is complete for the approved boundary: remote Supabase migration apply completed after sanitized migration list and dry-run checks, and deployed status/start/stop smoke completed with sanitized status/stop reasons. It does not prove PL-G2 route/API surfaces, provider target lookup, live polling, Azure execution, production/custom deployed freshness beyond the provided target, limited public beta readiness, or public launch readiness.
+- PL-G1 remote durable enforcement is complete for the approved FB-L2 execution boundary, but public usability remains blocked until PL-G2 through PL-G5 evidence and release-owner launch approval exist.
 - Authenticated allowed-tester route/API smoke with server-owned session/feed/usage/deletion/Creator locked states now has exact-command ready preflight and blocker/evidence record, but execution remains unchecked / not-run / approval-gated.
 - Actual public session Start smoke remains approval-gated.
 - Approved Start-to-translation smoke now has exact-command ready preflight and blocker/evidence record, but Start, live target lookup, bounded `liveChatMessages.list`, non-empty intake, Free Azure translation, UI feed confirmation, usage, stop reason, and source attribution evidence remain unchecked / not-run / approval-gated.
@@ -173,6 +174,24 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - Width checks skipped because FB-L2 changes only docs/contract/task notes; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or runtime behavior change.
 - Unchecked scope remains: remote Supabase migration apply, remote Supabase mutation, deployed durable session/usage smoke, authenticated allowed-tester route/API smoke, session start smoke, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider API execution, deploy/upload, Stripe live actions, billing setting mutation, main promotion, and public launch gate flip were not run.
 - Verification: RED `node scripts/comment-translator-free-beta-remote-durable-enforcement-evidence-contract.mjs` failed on missing FB-L2 evidence doc, then later failed on missing ready preflight doc and missing Phase A dry-run evidence after the contract was tightened; it passed after docs/task updates. Changed-files no-secret scan passed for 8 changed files. `git diff --check` passed with CRLF normalization warnings only. App runtime/UI files were not changed; this slice changes docs/task notes and the focused contract script only, so `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run. Phase A dry-run is now reviewed for exactly the two durable migrations; remote apply and deployed smoke remain approval-gated.
+
+## Latest PL-G1 Evidence
+
+- Active evidence/blocker doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md`.
+- Existing FB-L2 ready preflight doc reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md`.
+- Focused contract: `node scripts/comment-translator-free-beta-pl-g1-remote-durable-enforcement-execution-contract.mjs`.
+- Execution decision: remote-apply-and-deployed-smoke-completed. The required approval label `approved-fb-l2-remote-durable-enforcement-apply-and-smoke` was provided in-thread. Initial operator-local migration inspection stopped with sanitized result `PL-G1_SANITIZED_RESULT failed=migration-list-failed`; follow-up diagnostic reported `PL-G1_SANITIZED_DIAGNOSTIC category=blocked-supabase-link cli=present linkedMetadata=missing`.
+- Sanitized local check after link restore: `PL-G1_SANITIZED_LOCAL_CHECK migrationList=passed linkedMetadata=present dryRun=reviewed-two-migrations-only`.
+- Remote Supabase migration apply: completed. Sanitized apply result: `PL-G1_SANITIZED_APPLY result=completed`. Post-apply migration inspection: `PL-G1_SANITIZED_POST_APPLY migrationList=passed`.
+- Deployed durable session/usage smoke completed for the approved `POST /api/comment-translator/session` status/start/stop boundary: `PL-G1_SANITIZED_SMOKE intent=status http=200 status=not-started stopReason=none`; `PL-G1_SANITIZED_SMOKE intent=start http=200 status=stopped stopReason=stream-unavailable`; `PL-G1_SANITIZED_SMOKE intent=stop http=200 status=stopped stopReason=user-stop`.
+- Operator-local env references consumed for deployed smoke: `COMMENT_TRANSLATOR_DEPLOYED_ORIGIN`, `COMMENT_TRANSLATOR_ALLOWED_TESTER_COOKIE`, and `COMMENT_TRANSLATOR_CREDENTIAL_REFERENCE`; values were not recorded.
+- Remote mutation outside the approved migration apply and deployed smoke: not-run / approval-gated. Raw Supabase output, env values, cookies, credential references, and target-private metadata were not pasted into docs, output, PR body, or handoff payload.
+- Required PL-G1 outcome is satisfied for the approved FB-L2 execution boundary: reviewed durable session and usage authority for `comment_translator_sessions` and `comment_translator_usage_ledger_events` was applied, and deployed session status/start/stop behavior returned sanitized stop/status output.
+- Free caps remain 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month. Missing/unreadable durable state must fail closed with sanitized stop/status output before Start or provider execution.
+- Paid entitlement C1/C3, Stripe billing, and Creator paid limits were not mixed into PL-G1.
+- Width checks skipped because PL-G1 changes only docs/contract/task notes; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or runtime behavior change.
+- Unchecked scope remains: authenticated allowed-tester route/API smoke beyond the approved PL-G1 status/start/stop boundary, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, deploy/upload, Stripe live actions, billing setting mutation, production/custom deployed freshness, main promotion, limited public beta open, and public launch gate flip were not run.
+- Residual risk: PL-G1 proves only the approved remote durable apply and deployed status/start/stop session boundary with sanitized stop reasons. It does not prove PL-G2 route/API surfaces, provider target lookup, live polling, Azure execution, production/custom deployed freshness beyond the provided target, limited public beta readiness, or public launch readiness.
 
 ## Latest FB-L3 Evidence
 
@@ -272,6 +291,7 @@ Do not perform the following without same-thread ready preflight, sanitized outp
 
 - Free beta final QA/readiness: `docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md`
 - Free beta public usability preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md`
+- Free beta PL-G1 remote durable enforcement execution evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md`
 - Free beta remote durable enforcement ready preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md`
 - Free beta production/custom deployed smoke evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md`
 - Free beta production/custom deployed smoke ready preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`

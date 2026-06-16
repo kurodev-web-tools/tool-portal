@@ -10,6 +10,10 @@ import {
   type CommentTranslatorStartStopReasonUx,
   type CommentTranslatorStartStopReasonUxCode
 } from "./comment-translator-start-stop-reason-ux";
+import {
+  createCommentTranslatorFreeBetaUsageDisplay,
+  type CommentTranslatorFreeBetaUsageDisplay
+} from "./comment-translator-free-beta-usage-display";
 
 export type CommentTranslatorSessionPlan = "free" | "paid";
 
@@ -49,6 +53,7 @@ export type CommentTranslatorSessionUsageSnapshot = {
   dailyUsedMs: number;
   currentSessionElapsedMs?: number;
   translatedMessagesInCurrentMinute: number;
+  monthlyTranslatedCharacterEstimate?: number;
   providerBudgetAvailable: boolean;
   globalBudgetAvailable: boolean;
   aiBudgetAvailable: boolean;
@@ -84,6 +89,7 @@ export type CommentTranslatorSessionBrowserSafeState =
       heartbeat: CommentTranslatorSessionHeartbeatState;
       stopReason: null;
       reasonUx: null;
+      usageDisplay: CommentTranslatorFreeBetaUsageDisplay;
       nextAction: "press-start";
       providerApiUsage: "not-started-before-explicit-start";
       aiTranslationUsage: "not-started-before-explicit-start";
@@ -104,6 +110,7 @@ export type CommentTranslatorSessionBrowserSafeState =
       heartbeat: CommentTranslatorSessionHeartbeatState;
       stopReason: null;
       reasonUx: null;
+      usageDisplay: CommentTranslatorFreeBetaUsageDisplay;
       nextAction: "send-heartbeat-or-stop";
       providerApiUsage: "allowed-after-explicit-start-not-run-in-task-7";
       aiTranslationUsage: "allowed-after-explicit-start-not-run-in-task-7";
@@ -124,6 +131,7 @@ export type CommentTranslatorSessionBrowserSafeState =
       heartbeat: CommentTranslatorSessionHeartbeatState;
       stopReason: CommentTranslatorSessionStopReason;
       reasonUx: CommentTranslatorStartStopReasonUx;
+      usageDisplay: CommentTranslatorFreeBetaUsageDisplay;
       nextAction: "session-stopped" | "reconnect-or-sign-in" | "wait-for-limit-reset";
       providerApiUsage: "stopped";
       aiTranslationUsage: "stopped";
@@ -246,13 +254,21 @@ const activeSessionsByOwner = new Map<string, CommentTranslatorActiveSessionReco
 export function createCommentTranslatorNotStartedSessionState({
   nowMs,
   plan,
-  dailyUsedMs = 0
+  dailyUsedMs = 0,
+  usage
 }: {
   nowMs: number;
   plan: CommentTranslatorSessionPlan;
   dailyUsedMs?: number;
+  usage?: CommentTranslatorSessionUsageSnapshot;
 }): CommentTranslatorSessionBrowserSafeState {
   void nowMs;
+  const displayUsage =
+    usage ??
+    createDefaultCommentTranslatorUsageSnapshot({
+      plan,
+      dailyUsedMs
+    });
 
   return {
     status: "not-started",
@@ -266,6 +282,10 @@ export function createCommentTranslatorNotStartedSessionState({
     heartbeat: createHeartbeatState(null),
     stopReason: null,
     reasonUx: null,
+    usageDisplay: createCommentTranslatorFreeBetaUsageDisplay({
+      usage: displayUsage,
+      elapsedMs: 0
+    }),
     nextAction: "press-start",
     providerApiUsage: "not-started-before-explicit-start",
     aiTranslationUsage: "not-started-before-explicit-start",
@@ -368,7 +388,8 @@ export function evaluateCommentTranslatorSessionStopCondition(
     return createCommentTranslatorNotStartedSessionState({
       nowMs: request.nowMs,
       plan: request.plan,
-      dailyUsedMs: request.usage.dailyUsedMs
+      dailyUsedMs: request.usage.dailyUsedMs,
+      usage: request.usage
     });
   }
 
@@ -506,7 +527,8 @@ export async function readCommentTranslatorSessionCommand(
       return createCommentTranslatorNotStartedSessionState({
         nowMs: request.nowMs,
         plan: request.plan,
-        dailyUsedMs: request.usage.dailyUsedMs
+        dailyUsedMs: request.usage.dailyUsedMs,
+        usage: request.usage
       });
     }
 
@@ -603,6 +625,10 @@ function createActiveState({
     heartbeat: createHeartbeatState(activeSession.lastHeartbeatAtMs),
     stopReason: null,
     reasonUx: null,
+    usageDisplay: createCommentTranslatorFreeBetaUsageDisplay({
+      usage,
+      elapsedMs: elapsed
+    }),
     nextAction: "send-heartbeat-or-stop",
     providerApiUsage: "allowed-after-explicit-start-not-run-in-task-7",
     aiTranslationUsage: "allowed-after-explicit-start-not-run-in-task-7",
@@ -652,6 +678,10 @@ function createStoppedState({
         reasonUxCode
       })
     ),
+    usageDisplay: createCommentTranslatorFreeBetaUsageDisplay({
+      usage,
+      elapsedMs: elapsed
+    }),
     nextAction,
     providerApiUsage: "stopped",
     aiTranslationUsage: "stopped",
@@ -808,4 +838,24 @@ function resolveUsageEntitlement(
   plan: CommentTranslatorSessionPlan
 ) {
   return usage?.planEntitlement ?? createCommentTranslatorSessionPlanEntitlement({ plan });
+}
+
+function createDefaultCommentTranslatorUsageSnapshot({
+  plan,
+  dailyUsedMs
+}: {
+  plan: CommentTranslatorSessionPlan;
+  dailyUsedMs: number;
+}): CommentTranslatorSessionUsageSnapshot {
+  return {
+    dailyUsedMs,
+    currentSessionElapsedMs: 0,
+    translatedMessagesInCurrentMinute: 0,
+    monthlyTranslatedCharacterEstimate: 0,
+    providerBudgetAvailable: true,
+    globalBudgetAvailable: true,
+    aiBudgetAvailable: true,
+    translationProviderAvailable: true,
+    planEntitlement: createCommentTranslatorSessionPlanEntitlement({ plan })
+  };
 }

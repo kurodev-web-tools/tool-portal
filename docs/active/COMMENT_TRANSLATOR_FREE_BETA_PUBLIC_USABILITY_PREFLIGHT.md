@@ -14,6 +14,8 @@ This is preflight readiness only. Public launch remains blocked and `public-rele
 
 FB-L2 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md` records Remote durable enforcement evidence as `blocked-no-approval` for this thread. Remote Supabase migration apply, remote Supabase mutation, deployed durable write/read smoke, deploy/upload, live/provider execution, Stripe actions, and public launch gate flip remain not-run / approval-gated.
 
+FB-L5 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md` records Production/custom deployed smoke as `blocked-no-approval` for this thread, with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`. Production/custom deployed smoke execution, deploy/upload, session Start, provider/live execution, Stripe actions, main promotion, and public launch gate flip remain not-run / approval-gated.
+
 ## Inspected Inputs
 
 - `task.md`
@@ -51,8 +53,9 @@ FB-L2 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORC
 6. bounded polling: run only one bounded polling step after live target presence-only evidence; no broad loop.
 7. Azure execution: run only after non-empty eligible intake, Free entitlement allowance, usage budget allowance, and provider output review.
 8. UI confirmation: confirm server-owned comments, usage, source attribution, deletion/ended states, and stop reasons with sanitized visible evidence.
-9. rollback readiness: stop new public sessions or keep gate closed before changing provider, deploy, schema, or billing state.
-10. no-secret output closeout: record only sanitized counts/status/stop reasons and unchecked scope.
+9. production/custom deployed smoke: confirm the deployed target serving Free beta matches the reviewed integration branch and is reachable by allowed testers before broad access.
+10. rollback readiness: stop new public sessions or keep gate closed before changing provider, deploy, schema, or billing state.
+11. no-secret output closeout: record only sanitized counts/status/stop reasons and unchecked scope.
 
 ## Lane Separation
 
@@ -74,6 +77,7 @@ FB-L2 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORC
 | bounded polling | Proves one bounded liveChatMessages.list step can execute after target presence and return sanitized counts, polling interval, and stop state. | Does not prove continuous polling, translated output, UI display, durable accounting, or public traffic readiness. |
 | Azure execution | Proves eligible comments from the bounded intake can enter the Free Azure route and produce sanitized translated/skip/error counts. | Does not prove OpenAI paid route, paid entitlement C1/C3, unlimited provider budget, or public launch readiness. |
 | UI confirmation | Proves the browser can display server-owned comments, usage, source attribution, deletion/ended states, and stop reasons without forbidden fields. | Does not prove provider execution correctness, durable enforcement, deploy freshness, or absence of all storage issues beyond the reviewed visible scope. |
+| production/custom deployed smoke | Proves the production/custom target serving the Free beta path matches the reviewed integration branch and lets an allowed tester reach route/UI and status-only route/API surfaces with sanitized output. | Does not prove Start, live target lookup, polling, Azure execution, remote durable enforcement, paid entitlement C1/C3, Stripe billing, main promotion, or public launch readiness unless separately approved and recorded. |
 | rollback | Proves the operator has a bounded stop/disable/revert path and knows which state must stay unchanged. | Does not prove rollback execution succeeded unless separately approved and recorded with sanitized evidence. |
 | no-secret output | Proves recorded evidence avoids forbidden values and stays counts/status/stop reasons only. | Does not prove external systems contain no secrets, and does not permit broader logs, browser storage inspection, or handoff payload expansion. |
 
@@ -95,6 +99,7 @@ Local deterministic baseline:
 - `node scripts/comment-translator-free-beta-usage-display-contract.mjs`
 - `node scripts/comment-translator-free-public-beta-final-qa-readiness-contract.mjs`
 - `node scripts/comment-translator-free-beta-public-usability-preflight-contract.mjs`
+- `node scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs`
 
 Live/provider preflight command surfaces:
 
@@ -121,6 +126,7 @@ Remote/deployed and authenticated route/API smoke preflight must define the exac
 | bounded polling | command name, HTTP status, returned count, eligible count, skipped count, polling interval, stop reason | `blocked-no-approval`, `blocked-empty-polling`, `blocked-provider-error-sanitized` |
 | Azure execution | provider route label, provider request count, provider call count, translated count, skipped count, recoverable/terminal error count | `blocked-provider-unavailable`, `blocked-budget`, `blocked-output-review-incomplete` |
 | UI confirmation | route path, width, visible state label, source label, stop reason label, console error count, overflow state | `blocked-no-auth-fixture`, `blocked-ui-render`, `blocked-output-review-incomplete` |
+| production/custom deployed smoke | safe target label, safe deployment/version label, reviewed integration branch label, route/action name, HTTP status, visible state label, session/feed/usage/deletion/Creator locked status, Start-to-translation gate status, count, stop reason | `blocked-no-approval`, `blocked-missing-env`, `blocked-deployed-version-mismatch`, `blocked-no-allowed-tester-session`, `blocked-output-review-incomplete` |
 
 ## Rollback And Abort Rules
 

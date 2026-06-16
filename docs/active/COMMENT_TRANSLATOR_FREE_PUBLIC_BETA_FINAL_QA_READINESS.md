@@ -147,10 +147,13 @@ FB-L2 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORC
 
 FB-L3 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md` records Allowed-tester route/API smoke as blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_READY_PREFLIGHT.md`. It limits the later approved smoke to server-owned session/feed/usage/deletion/Creator locked states and keeps session Start, provider/live execution, remote mutation/schema apply, deploy/upload, Stripe actions, and public launch gate flip not-run / approval-gated.
 
+FB-L4 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md` records Start-to-translation smoke as blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`. It limits the later approved smoke to explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` step, non-empty intake, Free Azure translation, UI feed, usage, stop reason, source attribution, and Stop, while keeping remote mutation/schema apply, deploy/upload, Stripe actions, paid entitlement work, main promotion, and public launch gate flip not-run / approval-gated.
+
 ## Blockers
 
 - Remote Supabase migration/apply and deployed durable session/usage enforcement are not verified.
 - Authenticated allowed-tester route/API smoke execution remains not-run / approval-gated even though FB-L3 now has exact-command ready preflight.
+- Start-to-translation smoke execution remains not-run / approval-gated even though FB-L4 now has exact-command ready preflight.
 - Real provider target lookup and live target lookup remain not-run.
 - Real `liveChatMessages.list` polling remains not-run for the Free beta launch path.
 - Non-empty live comment intake remains not public-proven for the Free beta launch path.

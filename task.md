@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-start-stop-reason-ux`.
+- Current branch: `codex/comment-translator-free-beta-usage-display`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is F11 Start/Stop reason UX only unless the release owner explicitly expands scope.
+- This branch is F12 Usage display for Free beta only unless the release owner explicitly expands scope.
 - P0-0 audit record: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`.
 - F1 preflight record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`.
 - F2 evidence record: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_TOKEN_PERSISTENCE_SMOKE_EVIDENCE.md`.
@@ -97,7 +97,7 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 | F9 | Real comments UI wiring | Replace preview-only comment feed with server-owned live/session state while keeping private ids and raw provider payloads out of the browser. | complete in PR |
 | F10 | Azure normal translation execution | Server-only Azure route for eligible comments, skip policy, bounded batch/retry, cache/dedupe, and provider-error degradation. | complete in PR |
 | F11 | Start/Stop reason UX | User-readable Start failure and Stop reason states for disconnected, reconnect-required, no live broadcast, disabled/ended/not found, quota, heartbeat, and provider errors. | complete in this PR |
-| F12 | Usage display for Free beta | Session/day/month usage display, remaining limits, monthly character cap, and no-provider-call behavior when over limit. | pending |
+| F12 | Usage display for Free beta | Session/day/month usage display, remaining limits, monthly character cap, and no-provider-call behavior when over limit. | complete in this PR |
 | F13 | Data deletion, retention, and source attribution | Data deletion button/path, OAuth disconnect cleanup, retention job, deleted-message propagation, and `Source: YouTube Live Chat` on relevant surfaces. | pending |
 | F14 | Creator locked cards / waitlist / click tracking | Show Creator price intent and locked feature cards during Free beta, with waitlist and click tracking that do not imply paid access is live. | pending |
 | F15 | Free public beta final QA / launch readiness | Route/API smoke plan, no-secret scan, width checks, legal/copy review, rollback notes, and public-launch readiness decision. | pending |
@@ -142,7 +142,25 @@ Treat each row as 1 task / 1 PR unless the release owner explicitly splits it fu
 
 ## Active Priorities
 
-1. F11 Start/Stop reason UX
+1. F12 Usage display for Free beta
+   - Goal: make Free public beta session/day/month usage, remaining limits, monthly character cap, and over-limit no-provider-call behavior user-readable from existing server-owned durable session state, durable usage counter snapshots, public entitlement baseline, sanitized readiness, and provider gating boundaries while preserving F3-F11 browser-safe boundaries.
+   - Scope: local deterministic usage display resolver, sanitized browser-safe `usageDisplay` metadata on session state, localized usage panel copy in the existing dock, F10 provider-call guard before translation provider execution when usage is over limit/unavailable, focused contract, docs, and `task.md`. No real provider target lookup, live target lookup, `liveChatMessages.list`, session start smoke, Azure/OpenAI provider API execution, live/provider execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, public launch gate flip, browser storage expansion, handoff payload expansion, manual live target entry, route-render lookup, or connection-only monitoring is approved or run in this thread.
+   - Status: complete in this PR.
+   - Implemented:
+     - `lib/comment-translator-free-beta-usage-display.ts` adds a server-only Free beta usage display resolver for session/day/per-minute/monthly character cap usage, remaining values, sanitized unavailable states, and provider-call policy.
+     - `lib/comment-translator-session-runtime.ts` carries browser-safe `usageDisplay` metadata on not-started, active, and stopped session states without exposing raw provider payloads, raw comments, private identifiers, live target values, provider target metadata, tokens, or server-only cursors.
+     - `lib/comment-translator-azure-normal-translation-execution.ts` checks F12 usage provider-call policy before calling the provider policy batch; over-limit or unavailable usage returns safe skipped feed rows and `providerCallCount: 0`.
+     - `lib/comment-translator-real-comments-feed-shared.ts`, `lib/comment-translator.ts`, and `components/comment-translator/CommentTranslatorDock.tsx` add user-readable Free beta usage display copy and a sanitized usage panel limited to the existing operator session surface.
+     - `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md` and `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md` record F12 as local deterministic usage display/no-provider-call wiring with real provider/API execution still approval-gated.
+   - Output/privacy boundary: F12 output keeps raw provider payload, raw comments, author channel id/URL/profile image URL, owner user id, provider channel id, live target value, provider target metadata, liveChatId, service_role, Authorization header, token values, provider error body, server-only cursor, browser storage, and handoff payload material out of returned session/UI/docs/browser-readable state. Browser-readable additions are limited to sanitized usage counts, remaining limits, provider-call policy labels, and localized static copy.
+   - Remote/live execution: provider target lookup execution, live target lookup execution, real `liveChatMessages.list`, real provider payload capture, session start smoke, Azure/OpenAI provider API execution, live/provider execution, remote Supabase migration apply, deploy/upload, Stripe live action, main promotion, and public launch gate flip are all not-run/approval-gated.
+   - F12 verification: `node scripts/comment-translator-free-beta-usage-display-contract.mjs`, changed-files no-secret scan over 12 changed files, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` all exit 0. `npm run build` emitted the existing Next middleware/proxy deprecation warning; `git diff --check` emitted Windows line-ending warnings only. Legacy F5/F10/F11 task-specific contracts were attempted and are not used as F12 gates because their changed-file allowlists reject this F12 branch's UI/runtime files.
+   - Width checks: local dev server on `127.0.0.1:3000` rendered `/tools/comment-translator/` at `390 / 820 / 1024 / 1280 / 1366px`; local unauthenticated/env-local state reached the private-launch fallback surface at each width with meaningful content, console error/warn count `0`, document horizontal overflow `false`, body horizontal overflow `false`, and no detected overflowing elements.
+   - Width-check limitation: the authenticated allowed-tester translator dock and the new F12 `usageDisplay` panel could not be rendered locally because no safe local Supabase/auth/allowed-tester session was available. The F12 focused contract covers the usage display metadata/copy path and over-limit provider-call guard; live/session UI evidence remains unchecked until an approved allowed-tester route check is available.
+   - Residual risk / unchecked scope: real Azure/OpenAI provider API execution, real YouTube provider target lookup/live target resolution, actual `liveChatMessages.list`, non-empty live comment intake, authenticated allowed-tester translator dock rendering with live session state, deployed durable usage/session enforcement, remote schema application, route/API smoke with authenticated allowed tester, and launch readiness remain unverified until same-thread ready preflight, sanitized output review, and explicit in-thread approval exist. Public release remains blocked until F13-F15 and approved live/remote evidence are complete.
+   - Next safe action: after this PR merges, start F13 data deletion, retention, and source attribution in a separate branch/PR from latest `origin/codex/comment-translator-free-public-beta-integration`.
+
+2. F11 Start/Stop reason UX
    - Goal: make Free public beta Start failures and Stop reasons user-readable from existing server-owned session state, `stopReason`, credential readiness, live-target readiness, polling/provider signal, quota/budget state, and heartbeat/browser state while preserving F3-F10 browser-safe boundaries.
    - Scope: local deterministic reason resolver, sanitized browser-safe `reasonUx` metadata on stopped session state, live-target/polling reason-code handoff, localized UI copy, focused contract, docs, and `task.md`. No real provider target lookup, live target lookup, `liveChatMessages.list`, session start smoke, Azure/OpenAI provider API execution, live/provider execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, public launch gate flip, browser storage expansion, handoff payload expansion, manual live target entry, route-render lookup, or connection-only monitoring is approved or run in this thread.
    - Status: complete in this PR.

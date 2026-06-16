@@ -201,6 +201,8 @@ export const commentTranslatorUiCopy = {
       dailyUsed: "本日の使用",
       dailyRemaining: "本日の残り",
       sessionRemaining: "セッション残り",
+      monthlyCharacterCap: "月間文字上限",
+      monthlyRemaining: "文字残り",
       stopReason: "停止理由",
       nextAction: "次の操作",
       providerConnection: "接続",
@@ -234,6 +236,16 @@ export const commentTranslatorUiCopy = {
       reconnectGuidance: "アカウント連携でYouTubeを再接続してから、認証ステータスを再確認してください。",
       safeBoundary: "機密の接続値、アカウント内部値、配信ターゲット値は表示・保存しません。",
       perMinuteCapHelper: "Free枠は30翻訳メッセージ/分です。",
+      usageTitle: "Free beta usage",
+      usageProviderAllowed: "上限内のためprovider callを許可できます。",
+      usageProviderBlockedOverLimit: "上限到達中のためprovider callは実行しません。",
+      usageProviderUnavailable: "利用状況を安全に確認できないためprovider callは実行しません。",
+      perMinuteRemaining: "件/分 残り",
+      usageStates: {
+        available: "利用可能",
+        "over-limit": "上限到達",
+        unavailable: "確認不可"
+      },
       states: {
         "not-started": "未開始",
         active: "実行中",
@@ -508,6 +520,8 @@ export const commentTranslatorUiCopy = {
       dailyUsed: "Daily used",
       dailyRemaining: "Daily remaining",
       sessionRemaining: "Session remaining",
+      monthlyCharacterCap: "Monthly character cap",
+      monthlyRemaining: "characters remaining",
       stopReason: "Stop reason",
       nextAction: "Next action",
       providerConnection: "Connection",
@@ -541,6 +555,16 @@ export const commentTranslatorUiCopy = {
       reconnectGuidance: "Reconnect YouTube from account integrations, then check credential status again.",
       safeBoundary: "Sensitive connection values, internal account values, and stream target values are not displayed or stored.",
       perMinuteCapHelper: "Free plan allows 30 translated messages/min.",
+      usageTitle: "Free beta usage",
+      usageProviderAllowed: "Provider calls can run while usage is within limits.",
+      usageProviderBlockedOverLimit: "Provider calls do not run while usage is over limit.",
+      usageProviderUnavailable: "Provider calls do not run while usage cannot be verified safely.",
+      perMinuteRemaining: "messages/min remaining",
+      usageStates: {
+        available: "Available",
+        "over-limit": "Over limit",
+        unavailable: "Unavailable"
+      },
       states: {
         "not-started": "Not started",
         active: "Active",

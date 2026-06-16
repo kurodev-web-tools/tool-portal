@@ -13,6 +13,9 @@ import {
 import {
   createCommentTranslatorRealCommentsFeedStateFromNormalizedMessages
 } from "./comment-translator-real-comments-ui-wiring";
+import {
+  resolveCommentTranslatorFreeBetaProviderCallPolicy
+} from "./comment-translator-free-beta-usage-display";
 import type {
   CommentTranslatorRealCommentsDisplayRow,
   CommentTranslatorRealCommentsFeedState,
@@ -80,7 +83,7 @@ export type ExecuteCommentTranslatorAzureNormalTranslationForNormalizedMessagesR
 };
 
 export type CommentTranslatorAzureNormalTranslationExecutionResult = {
-  status: "completed" | "provider-unavailable" | "session-not-active";
+  status: "completed" | "provider-unavailable" | "session-not-active" | "over-limit";
   implementationStage: CommentTranslatorAzureNormalTranslationExecutionContract["implementationStage"];
   execution: CommentTranslatorProviderExecutionResult;
   eligibility: CommentTranslatorAzureNormalTranslationEligibilitySummary;
@@ -144,6 +147,26 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
     });
   }
 
+  const providerCallPolicy = resolveCommentTranslatorFreeBetaProviderCallPolicy({
+    usage: request.usage
+  });
+  if (providerCallPolicy.status !== "allowed") {
+    const execution = createSkippedExecutionResult({
+      skippedCount: eligibleMessages.length,
+      providerUnavailableSkippedCount: 0
+    });
+
+    return createExecutionResult({
+      status: "over-limit",
+      execution,
+      eligibility,
+      feed: createCommentTranslatorRealCommentsFeedStateFromUsageLimitRows({
+        feed: baseFeed,
+        eligibleMessages
+      })
+    });
+  }
+
   const providers = request.providers ?? createCommentTranslatorDefaultTranslationProviderSet();
   const comments = eligibleMessages.map(mapNormalizedMessageToProviderSafeComment);
   const execution = await executeCommentTranslatorProviderPolicyBatch({
@@ -175,6 +198,27 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
       eligibleMessages
     })
   });
+}
+
+function createCommentTranslatorRealCommentsFeedStateFromUsageLimitRows({
+  feed,
+  eligibleMessages
+}: {
+  feed: CommentTranslatorRealCommentsFeedState;
+  eligibleMessages: readonly CommentTranslatorNormalizedLiveMessage[];
+}): CommentTranslatorRealCommentsFeedState {
+  const eligibleMessageReferenceIds = new Set(eligibleMessages.map((message) => message.messageReferenceId));
+
+  return {
+    ...feed,
+    rows: feed.rows.map((row) => {
+      if (!eligibleMessageReferenceIds.has(row.messageReferenceId)) {
+        return withTranslation(row, null, "skipped-f10-non-translatable");
+      }
+
+      return withTranslation(row, null, "skipped-f12-usage-limit");
+    })
+  };
 }
 
 export function createCommentTranslatorRealCommentsFeedStateFromTranslatedRows({

@@ -8,7 +8,8 @@ export type CommentTranslatorRealCommentsTranslationStatus =
   | "skipped-f10-non-translatable"
   | "provider-unavailable-f10"
   | "provider-error-f10-recoverable"
-  | "provider-error-f10-terminal";
+  | "provider-error-f10-terminal"
+  | "skipped-f12-usage-limit";
 
 export type CommentTranslatorRealCommentsDisplayRow = {
   id: string;
@@ -177,6 +178,10 @@ function resolveSkipReason(row: CommentTranslatorRealCommentsDisplayRow) {
 
   if (row.translationStatus === "provider-unavailable-f10") {
     return "Translation provider unavailable";
+  }
+
+  if (row.translationStatus === "skipped-f12-usage-limit") {
+    return "Usage limit reached";
   }
 
   return row.moderationLabel === "visible" ? "Translation not run" : moderationSkipReason(row.moderationLabel);

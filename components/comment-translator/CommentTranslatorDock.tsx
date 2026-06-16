@@ -56,6 +56,37 @@ type OperatorSessionNextAction = keyof CommentTranslatorUiCopy["operatorSession"
 type OperatorSessionReasonCode = keyof CommentTranslatorUiCopy["operatorSession"]["reasonMessages"];
 type OperatorSessionReasonGroup = keyof CommentTranslatorUiCopy["operatorSession"]["reasonGroups"];
 type OperatorSessionRecommendedAction = keyof CommentTranslatorUiCopy["operatorSession"]["recommendedActions"];
+type OperatorSessionUsageDisplay = {
+  status: "available" | "over-limit" | "unavailable";
+  session: {
+    usedSeconds: number;
+    limitSeconds: number;
+    remainingSeconds: number;
+  };
+  daily: {
+    usedSeconds: number;
+    limitSeconds: number;
+    remainingSeconds: number;
+  };
+  perMinute: {
+    used: number;
+    limit: number;
+    remaining: number;
+  };
+  monthlyCharacterCap: {
+    used: number;
+    limit: number;
+    remaining: number;
+  };
+  unavailableReason: "durable-usage-unreadable" | "missing-entitlement" | "missing-provider-readiness" | null;
+  providerCallPolicy: {
+    status: "allowed" | "blocked-over-limit" | "blocked-unavailable";
+    stopReason: OperatorSessionStopReason | null;
+    clientReadableDetail: "sanitized-usage-only";
+  };
+  noProviderCallWhenOverLimit: true;
+  clientReadableDetail: "sanitized-usage-only";
+};
 type OperatorSessionState = {
   status: keyof CommentTranslatorUiCopy["operatorSession"]["states"];
   plan: "free" | "paid";
@@ -69,10 +100,42 @@ type OperatorSessionState = {
     recommendedAction: OperatorSessionRecommendedAction;
     clientReadableDetail: "sanitized-reason-only";
   } | null;
+  usageDisplay: OperatorSessionUsageDisplay;
   nextAction: OperatorSessionNextAction;
 };
 
 const freeDailyLimitSeconds = 30 * 60;
+const initialOperatorSessionUsageDisplay: OperatorSessionUsageDisplay = {
+  status: "available",
+  session: {
+    usedSeconds: 0,
+    limitSeconds: freeDailyLimitSeconds,
+    remainingSeconds: freeDailyLimitSeconds
+  },
+  daily: {
+    usedSeconds: 0,
+    limitSeconds: freeDailyLimitSeconds,
+    remainingSeconds: freeDailyLimitSeconds
+  },
+  perMinute: {
+    used: 0,
+    limit: 30,
+    remaining: 30
+  },
+  monthlyCharacterCap: {
+    used: 0,
+    limit: 20_000,
+    remaining: 20_000
+  },
+  unavailableReason: null,
+  providerCallPolicy: {
+    status: "allowed",
+    stopReason: null,
+    clientReadableDetail: "sanitized-usage-only"
+  },
+  noProviderCallWhenOverLimit: true,
+  clientReadableDetail: "sanitized-usage-only"
+};
 const initialOperatorSessionState: OperatorSessionState = {
   status: "not-started",
   plan: "free",
@@ -81,6 +144,7 @@ const initialOperatorSessionState: OperatorSessionState = {
   remainingDailySeconds: freeDailyLimitSeconds,
   stopReason: null,
   reasonUx: null,
+  usageDisplay: initialOperatorSessionUsageDisplay,
   nextAction: "press-start"
 };
 
@@ -512,6 +576,16 @@ export function CommentTranslatorDock({
   const sessionDailyUsedSeconds = Math.max(0, freeDailyLimitSeconds - sessionState.remainingDailySeconds);
   const sessionStopReason = sessionState.stopReason ? copy.operatorSession.stopReasons[sessionState.stopReason] : "-";
   const sessionReasonUx = sessionState.reasonUx;
+  const usageDisplay = sessionState.usageDisplay ?? initialOperatorSessionUsageDisplay;
+  const usagePolicyStopReason = usageDisplay.providerCallPolicy.stopReason
+    ? copy.operatorSession.stopReasons[usageDisplay.providerCallPolicy.stopReason]
+    : null;
+  const usagePolicyLabel =
+    usageDisplay.providerCallPolicy.status === "allowed"
+      ? copy.operatorSession.usageProviderAllowed
+      : usageDisplay.providerCallPolicy.status === "blocked-over-limit"
+        ? copy.operatorSession.usageProviderBlockedOverLimit
+        : copy.operatorSession.usageProviderUnavailable;
   const sessionReasonGroup = sessionReasonUx ? copy.operatorSession.reasonGroups[sessionReasonUx.group] : null;
   const sessionReasonMessage = sessionReasonUx
     ? copy.operatorSession.reasonMessages[sessionReasonUx.code]
@@ -783,6 +857,43 @@ export function CommentTranslatorDock({
                     {copy.operatorSession.reconnectGuidance}
                   </p>
                 ) : null}
+                <div
+                  data-comment-translator-free-beta-usage-display="sanitized-usage-only"
+                  className="mt-3 rounded-base border border-border bg-background/70 p-3 text-xs"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-black text-foreground">{copy.operatorSession.usageTitle}</p>
+                    <span className={["rounded-base border px-2 py-1 font-black", toneClassName(usageDisplay.status === "over-limit" ? "warning" : usageDisplay.status === "unavailable" ? "error" : "normal")].join(" ")}>
+                      {copy.operatorSession.usageStates[usageDisplay.status]}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <StatTile
+                      label={copy.fields.sessionRemaining}
+                      value={formatDuration(usageDisplay.session.remainingSeconds)}
+                      helper={`${formatDuration(usageDisplay.session.usedSeconds)} ${copy.stats.used}`}
+                    />
+                    <StatTile
+                      label={copy.fields.dailyRemaining}
+                      value={formatDuration(usageDisplay.daily.remainingSeconds)}
+                      helper={`${formatDuration(usageDisplay.daily.usedSeconds)} ${copy.stats.used}`}
+                    />
+                    <StatTile
+                      label={copy.fields.monthlyCharacterCap}
+                      value={`${formatNumber(usageDisplay.monthlyCharacterCap.used)} / ${formatNumber(usageDisplay.monthlyCharacterCap.limit)}`}
+                      helper={`${formatNumber(usageDisplay.monthlyCharacterCap.remaining)} ${copy.fields.monthlyRemaining}`}
+                    />
+                    <StatTile
+                      label={copy.fields.perMinuteCap}
+                      value={`${formatNumber(usageDisplay.perMinute.used)} / ${formatNumber(usageDisplay.perMinute.limit)}`}
+                      helper={`${formatNumber(usageDisplay.perMinute.remaining)} ${copy.operatorSession.perMinuteRemaining}`}
+                    />
+                  </div>
+                  <p className="mt-3 break-words font-semibold leading-5 text-muted">
+                    {usagePolicyLabel}
+                    {usagePolicyStopReason ? ` / ${usagePolicyStopReason}` : ""}
+                  </p>
+                </div>
                 {sessionState.status === "stopped" && sessionReasonUx ? (
                   <div
                     data-comment-translator-start-stop-reason-ux="sanitized-reason-only"

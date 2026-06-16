@@ -141,6 +141,8 @@ Public-release capable: no.
 
 Reason: F1-F14 establish a strong local/server-only foundation, but public launch still lacks approved live/provider evidence, remote durable enforcement evidence, and explicit release-owner approval for public launch gate flip.
 
+FB-L1 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md` now defines the Free beta public usability preflight sequence for remote/deployed durable enforcement, authenticated allowed-tester route/API smoke, Start smoke, live target lookup, bounded polling, Azure execution, UI confirmation, rollback, and no-secret output. This follow-up remains preflight-only and does not change the `public-release capable: no` decision.
+
 ## Blockers
 
 - Remote Supabase migration/apply and deployed durable session/usage enforcement are not verified.

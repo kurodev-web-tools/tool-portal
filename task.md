@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-task-md-free-beta-public-usability`.
+- Current branch: `codex/comment-translator-free-beta-fb-l1-public-usability-preflight`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is a docs/task-board cleanup only. It does not run live/provider execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, or public launch gate flip.
+- This branch is FB-L1 docs/contract preflight only. It does not run live/provider execution, remote mutation/schema apply, deploy/upload, Stripe live action, main promotion, or public launch gate flip.
 - Archived previous long board snapshot: `docs/archive/task-board-pre-2026-06-16-free-beta-public-usability-cleanup.md`.
 - Older archived board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
@@ -63,8 +63,8 @@ Current public-launch decision: `public-release capable: no`.
 
 | ID | Task | Outcome | Status |
 | --- | --- | --- | --- |
-| FB-L1 | Free beta public usability preflight | Exact approval-gated plan for remote/deployed durable enforcement, authenticated allowed-tester route/API smoke, Start smoke, live target lookup, bounded polling, Azure execution, UI confirmation, rollback, and no-secret output. | next |
-| FB-L2 | Remote durable enforcement evidence | Approved remote Supabase migration/apply or blocker record for session and usage durability; sanitized output only. | pending / gated |
+| FB-L1 | Free beta public usability preflight | Exact approval-gated plan for remote/deployed durable enforcement, authenticated allowed-tester route/API smoke, Start smoke, live target lookup, bounded polling, Azure execution, UI confirmation, rollback, and no-secret output. | complete in this PR |
+| FB-L2 | Remote durable enforcement evidence | Approved remote Supabase migration/apply or blocker record for session and usage durability; sanitized output only. | next / gated |
 | FB-L3 | Allowed-tester route/API smoke | Authenticated route/API smoke for server-owned session/feed/usage/deletion/Creator locked states without live/provider execution unless separately approved. | pending / gated |
 | FB-L4 | Approved Start-to-translation smoke | Same-thread approved Start smoke proving server-only live target lookup, bounded `liveChatMessages.list`, non-empty intake, Azure translation, UI feed, usage, stop reason, and source attribution. | pending / gated |
 | FB-L5 | Production/custom deployed smoke | Confirm the deployed target serving the Free beta path matches the reviewed integration branch and renders/operates for allowed testers. | pending / gated |
@@ -121,6 +121,7 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 
 ## Current Blockers / Residual Risks
 
+- FB-L1 is complete as preflight/docs/contract only. It proves the exact gated sequence and sanitized evidence boundary, not public usability itself.
 - Free beta implementation/readiness foundation is complete through F15, but actual public usability is not accepted yet.
 - Public release remains blocked until approved live/provider/remote/deployed evidence and release-owner launch approval exist.
 - Remote/deployed durable session and usage enforcement remain unverified.
@@ -130,6 +131,16 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - Production/custom deployed target freshness and Free beta route behavior must be confirmed before broad access.
 - Stripe live billing and paid entitlement activation remain out of Free beta and approval-gated.
 - Public launch gate flip remains not-run and approval-gated.
+
+## Latest FB-L1 Evidence
+
+- Active preflight doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md`.
+- Focused contract: `node scripts/comment-translator-free-beta-public-usability-preflight-contract.mjs`.
+- FB-L1 separates local deterministic checks, sanitized server-owned state checks, approval-gated exact-command preflight, and unchecked live-provider scope.
+- Each smoke records what it proves and what it does not prove: remote/deployed durable enforcement, authenticated allowed-tester route/API smoke, Start smoke, live target lookup, bounded polling, Azure execution, UI confirmation, rollback, and no-secret output.
+- Width checks skipped for FB-L1 because there is no visible UI/CSS/layout/copy change, no rendered route change, no browser storage change, and no runtime behavior change.
+- Unchecked scope remains: remote Supabase migration apply not-run/approval-gated; provider target lookup, live target lookup, liveChatMessages.list, session start smoke, Azure/OpenAI provider API execution, live/provider execution, deploy/upload, Stripe live actions, main promotion, and public launch gate flip were not run.
+- Verification: `node scripts/comment-translator-free-beta-public-usability-preflight-contract.mjs` passed; changed-files no-secret scan passed for 6 changed files; `git diff --check` passed with CRLF normalization warnings only.
 
 ## Approval-Gated Actions
 
@@ -161,6 +172,7 @@ Do not perform the following without same-thread ready preflight, sanitized outp
 ## Canonical Documents
 
 - Free beta final QA/readiness: `docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md`
+- Free beta public usability preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md`
 - Public beta gap audit: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`
 - Durable persistence readiness: `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md`
 - OAuth live connect preflight: `docs/active/COMMENT_TRANSLATOR_OAUTH_LIVE_CONNECT_SMOKE_PREFLIGHT.md`

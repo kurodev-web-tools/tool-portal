@@ -1,6 +1,14 @@
 import type { CommentTranslatorComment, CommentTranslatorTargetLanguageId } from "./comment-translator";
 
 export type CommentTranslatorRealCommentsFeedStatus = "ready" | "inactive" | "unavailable";
+export type CommentTranslatorRealCommentsTranslationStatus =
+  | "not-run-f9"
+  | "translated-f10"
+  | "skipped-f10-language-policy"
+  | "skipped-f10-non-translatable"
+  | "provider-unavailable-f10"
+  | "provider-error-f10-recoverable"
+  | "provider-error-f10-terminal";
 
 export type CommentTranslatorRealCommentsDisplayRow = {
   id: string;
@@ -13,9 +21,9 @@ export type CommentTranslatorRealCommentsDisplayRow = {
   role: "owner" | "moderator" | "member" | "viewer" | "unknown";
   authorLabel: "YouTube viewer";
   originalText: string | null;
-  translatedText: null;
+  translatedText: string | null;
   targetLanguage: CommentTranslatorTargetLanguageId;
-  translationStatus: "not-run-f9";
+  translationStatus: CommentTranslatorRealCommentsTranslationStatus;
   moderationLabel: "visible" | "deleted" | "banned" | "ended" | "system";
   badgeLabel: "owner" | "moderator" | "member" | "super-chat" | "super-sticker" | "system" | null;
   purchaseLabel: string | null;
@@ -72,11 +80,12 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
       targetLanguage,
       originalText: row.originalText ?? moderationFallbackText(row.moderationLabel),
       translatedText: row.translatedText ?? undefined,
-      status: row.moderationLabel === "visible" ? "skipped" : "skipped",
-      cacheStatus: "none",
-      skipReason: row.moderationLabel === "visible" ? "Translation not run" : moderationSkipReason(row.moderationLabel),
+      status: resolveUiStatus(row),
+      cacheStatus: row.translationStatus === "translated-f10" ? "miss" : "none",
+      skipReason: resolveSkipReason(row),
+      errorMessage: resolveErrorMessage(row),
       badge: row.badgeLabel ?? undefined,
-      unitCost: 0
+      unitCost: row.translationStatus === "translated-f10" ? 1 : 0
     };
 
     if (row.moderationLabel === "ended") {
@@ -139,4 +148,48 @@ function moderationSkipReason(label: CommentTranslatorRealCommentsDisplayRow["mo
   }
 
   return "System event";
+}
+
+function resolveUiStatus(row: CommentTranslatorRealCommentsDisplayRow): CommentTranslatorComment["status"] {
+  if (row.translationStatus === "translated-f10") {
+    return "translated";
+  }
+
+  if (row.translationStatus === "provider-error-f10-recoverable" || row.translationStatus === "provider-error-f10-terminal") {
+    return "error";
+  }
+
+  return "skipped";
+}
+
+function resolveSkipReason(row: CommentTranslatorRealCommentsDisplayRow) {
+  if (row.translationStatus === "translated-f10" || row.translationStatus === "provider-error-f10-recoverable" || row.translationStatus === "provider-error-f10-terminal") {
+    return undefined;
+  }
+
+  if (row.translationStatus === "skipped-f10-language-policy") {
+    return "Language policy";
+  }
+
+  if (row.translationStatus === "skipped-f10-non-translatable") {
+    return row.moderationLabel === "visible" ? "Not translatable" : moderationSkipReason(row.moderationLabel);
+  }
+
+  if (row.translationStatus === "provider-unavailable-f10") {
+    return "Translation provider unavailable";
+  }
+
+  return row.moderationLabel === "visible" ? "Translation not run" : moderationSkipReason(row.moderationLabel);
+}
+
+function resolveErrorMessage(row: CommentTranslatorRealCommentsDisplayRow) {
+  if (row.translationStatus === "provider-error-f10-recoverable") {
+    return "Translation provider temporarily unavailable";
+  }
+
+  if (row.translationStatus === "provider-error-f10-terminal") {
+    return "Translation provider rejected this comment";
+  }
+
+  return undefined;
 }

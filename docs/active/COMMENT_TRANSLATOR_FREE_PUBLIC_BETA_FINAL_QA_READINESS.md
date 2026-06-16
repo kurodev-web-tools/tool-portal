@@ -145,9 +145,12 @@ FB-L1 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREF
 
 FB-L2 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md` records Remote durable enforcement evidence as blocked-no-approval. It clarifies that `comment_translator_sessions` and `comment_translator_usage_ledger_events` are the Free durable authority to prove later, but remote Supabase migration apply, remote mutation, deployed durable smoke, deploy/upload, live/provider execution, Stripe actions, and public launch gate flip remain not-run / approval-gated.
 
+FB-L3 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md` records Allowed-tester route/API smoke as blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_READY_PREFLIGHT.md`. It limits the later approved smoke to server-owned session/feed/usage/deletion/Creator locked states and keeps session Start, provider/live execution, remote mutation/schema apply, deploy/upload, Stripe actions, and public launch gate flip not-run / approval-gated.
+
 ## Blockers
 
 - Remote Supabase migration/apply and deployed durable session/usage enforcement are not verified.
+- Authenticated allowed-tester route/API smoke execution remains not-run / approval-gated even though FB-L3 now has exact-command ready preflight.
 - Real provider target lookup and live target lookup remain not-run.
 - Real `liveChatMessages.list` polling remains not-run for the Free beta launch path.
 - Non-empty live comment intake remains not public-proven for the Free beta launch path.

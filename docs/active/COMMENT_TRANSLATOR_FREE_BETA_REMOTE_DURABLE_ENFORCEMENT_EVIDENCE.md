@@ -76,6 +76,7 @@ This record does not prove remote/deployed durability itself because remote appl
 - Azure execution;
 - OpenAI execution;
 - authenticated allowed-tester route/API smoke;
+- FB-L3 Allowed-tester route/API smoke;
 - session start smoke;
 - deployed target freshness;
 - paid entitlement C1/C3;
@@ -150,6 +151,8 @@ Unchecked in FB-L2:
 Residual risk: Free beta public usability remains unaccepted because remote/deployed durable session and usage enforcement are still not proven. Public release remains blocked.
 
 Historical F3/F4/F5/F12 contract drift is recorded as residual risk, not a blocker for Phase A dry-run. Those older task-specific contracts still contain compact-board and earlier-limit assumptions, including fixed `task.md` wording and a pre-monthly-character-cap Free limit expectation.
+
+FB-L3 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md` records Allowed-tester route/API smoke as blocked-no-approval for this thread. Authenticated route/API smoke execution remains not-run / approval-gated, and no session Start, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, deploy/upload, Stripe action, main promotion, or public launch gate flip was run.
 
 ## Completion Verification
 

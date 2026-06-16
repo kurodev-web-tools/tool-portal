@@ -181,6 +181,7 @@ This sequence would not prove:
 - `liveChatMessages.list`;
 - non-empty live comment intake;
 - Azure/OpenAI provider API execution;
+- authenticated route/API smoke;
 - authenticated UI rendering;
 - production/custom deploy freshness beyond the provided safe target label;
 - Paid entitlement C1/C3;

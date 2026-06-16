@@ -40,6 +40,14 @@ import {
   type CommentTranslatorFreeBetaRetentionAttributionState
 } from "@/lib/comment-translator-free-beta-retention-attribution";
 import {
+  createCommentTranslatorFreeBetaCreatorClickDraft,
+  createCommentTranslatorFreeBetaCreatorLockedWaitlistState,
+  type CommentTranslatorFreeBetaCreatorClickDraft,
+  type CommentTranslatorFreeBetaCreatorClickIntent,
+  type CommentTranslatorFreeBetaCreatorFeatureId,
+  type CommentTranslatorFreeBetaCreatorLockedWaitlistState
+} from "@/lib/comment-translator-free-beta-creator-locked-waitlist";
+import {
   createUnavailableCommentTranslatorLiveChatTargetLookupAdapter,
   resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart
 } from "@/lib/comment-translator-server-only-live-chat-target-lookup";
@@ -203,6 +211,51 @@ export async function getCommentTranslatorRealCommentsFeedAction() {
 }
 
 export async function requestCommentTranslatorDataDeletionAction(): Promise<CommentTranslatorFreeBetaRetentionAttributionState> {
+  const readiness = await readCommentTranslatorFreeBetaDerivedReadiness();
+
+  return createCommentTranslatorFreeBetaRetentionAttributionState({
+    ...readiness,
+    nowMs: readiness.nowMs
+  });
+}
+
+export async function getCommentTranslatorCreatorLockedWaitlistAction(): Promise<CommentTranslatorFreeBetaCreatorLockedWaitlistState> {
+  const readiness = await readCommentTranslatorFreeBetaDerivedReadiness();
+
+  return createCommentTranslatorFreeBetaCreatorLockedWaitlistState({
+    ...readiness,
+    nowMs: readiness.nowMs
+  });
+}
+
+export async function recordCommentTranslatorCreatorLockedClickAction({
+  intent,
+  featureId
+}: {
+  intent: CommentTranslatorFreeBetaCreatorClickIntent;
+  featureId: CommentTranslatorFreeBetaCreatorFeatureId;
+}): Promise<CommentTranslatorFreeBetaCreatorClickDraft> {
+  const readiness = await readCommentTranslatorFreeBetaDerivedReadiness();
+  const state = createCommentTranslatorFreeBetaCreatorLockedWaitlistState({
+    ...readiness,
+    nowMs: readiness.nowMs
+  });
+
+  return createCommentTranslatorFreeBetaCreatorClickDraft({
+    state,
+    intent,
+    featureId,
+    nowMs: Date.now()
+  });
+}
+
+async function readCommentTranslatorFreeBetaDerivedReadiness(): Promise<{
+  durableSessionState: "ready" | "unreadable";
+  durableUsageState: "ready" | "unreadable";
+  entitlementState: "ready" | "missing";
+  providerReadinessState: "ready" | "missing";
+  nowMs: number;
+}> {
   const callerAuthorization = await readCallerAuthorization();
   const nowMs = Date.now();
   const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
@@ -234,13 +287,13 @@ export async function requestCommentTranslatorDataDeletionAction(): Promise<Comm
   const credentialReadiness =
     durableSessionState === "ready" ? await readCredentialReadiness({ activeSession, callerAuthorization }) : null;
 
-  return createCommentTranslatorFreeBetaRetentionAttributionState({
+  return {
     durableSessionState,
     durableUsageState,
     entitlementState: entitlementBaseline?.status === "ready" ? "ready" : "missing",
     providerReadinessState: credentialReadiness?.status === "ready" ? "ready" : "missing",
     nowMs
-  });
+  };
 }
 
 async function readCommentTranslatorSessionActionResult({

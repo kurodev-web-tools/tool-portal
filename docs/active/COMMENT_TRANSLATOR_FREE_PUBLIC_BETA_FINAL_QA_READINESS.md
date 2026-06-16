@@ -143,6 +143,8 @@ Reason: F1-F14 establish a strong local/server-only foundation, but public launc
 
 FB-L1 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md` now defines the Free beta public usability preflight sequence for remote/deployed durable enforcement, authenticated allowed-tester route/API smoke, Start smoke, live target lookup, bounded polling, Azure execution, UI confirmation, rollback, and no-secret output. This follow-up remains preflight-only and does not change the `public-release capable: no` decision.
 
+FB-L2 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md` records Remote durable enforcement evidence as blocked-no-approval. It clarifies that `comment_translator_sessions` and `comment_translator_usage_ledger_events` are the Free durable authority to prove later, but remote Supabase migration apply, remote mutation, deployed durable smoke, deploy/upload, live/provider execution, Stripe actions, and public launch gate flip remain not-run / approval-gated.
+
 ## Blockers
 
 - Remote Supabase migration/apply and deployed durable session/usage enforcement are not verified.

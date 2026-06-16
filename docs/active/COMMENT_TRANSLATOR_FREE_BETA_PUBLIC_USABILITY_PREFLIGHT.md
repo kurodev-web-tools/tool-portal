@@ -12,6 +12,8 @@ FB-L1 converts F1-F15 readiness into an exact approval-gated sequence for Free b
 
 This is preflight readiness only. Public launch remains blocked and `public-release capable: no` remains unchanged.
 
+FB-L2 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md` records Remote durable enforcement evidence as `blocked-no-approval` for this thread. Remote Supabase migration apply, remote Supabase mutation, deployed durable write/read smoke, deploy/upload, live/provider execution, Stripe actions, and public launch gate flip remain not-run / approval-gated.
+
 ## Inspected Inputs
 
 - `task.md`

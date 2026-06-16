@@ -327,6 +327,38 @@ export const commentTranslatorUiCopy = {
       sourceLabel: "Source: YouTube Live Chat",
       deletedPropagation: "削除済みコメントはmessage reference tombstoneだけを表示します。"
     },
+    creatorLockedWaitlist: {
+      title: "Creator closed beta",
+      lockedBadge: "Locked",
+      priceIntent: "Creator は月額980円を予定しています。現在はFree public beta中の表示とwaitlistのみで、paid accessはまだ利用できません。",
+      helper: "AI自然翻訳、OBS overlay、モデレーター共有、辞書はCreator closed betaで順に検証します。",
+      unavailable: "durable state、entitlement、provider readinessを安全に確認できないため、waitlistとclick trackingは利用不可です。",
+      joinWaitlist: "waitlistに関心を記録",
+      refresh: "状態を確認",
+      pending: "確認中",
+      clickBoundary: "クリックはsanitized local draftだけを記録します。Stripe、provider、remote mutationは実行しません。",
+      clickRecorded: "関心クリックをsanitized local draftとして記録しました。",
+      clickUnavailable: "安全に確認できないためクリック記録は利用不可です。",
+      actionFailed: "Creator locked stateを確認できませんでした。",
+      features: {
+        "creator-ai-natural-translation": {
+          title: "AI自然翻訳",
+          body: "OpenAI mini優先のCreator翻訳はclosed betaまでLockedです。"
+        },
+        "creator-obs-overlay": {
+          title: "OBS overlay URL",
+          body: "overlay tokenと表示面はCreator closed betaで検証します。"
+        },
+        "creator-moderator-share": {
+          title: "モデレーター共有",
+          body: "read-only共有URLはclosed betaの安全確認後に開きます。"
+        },
+        "creator-custom-dictionary": {
+          title: "カスタム辞書",
+          body: "30語までの辞書はCreator closed betaの範囲です。"
+        }
+      }
+    },
     operatorFlow: {
       ready: "UI確認OK",
       standby: "確認待ち",
@@ -657,6 +689,38 @@ export const commentTranslatorUiCopy = {
       retentionUnavailable: "Deletion and retention decisions are unavailable until durable state, entitlement, and provider readiness are readable.",
       sourceLabel: "Source: YouTube Live Chat",
       deletedPropagation: "Deleted comments render message-reference tombstones only."
+    },
+    creatorLockedWaitlist: {
+      title: "Creator closed beta",
+      lockedBadge: "Locked",
+      priceIntent: "Creator is planned at JPY 980/month. During Free public beta this is waitlist-only; paid access is not live.",
+      helper: "AI natural translation, OBS overlay, moderator sharing, and dictionaries will be validated in Creator closed beta.",
+      unavailable: "Waitlist and click tracking are unavailable until durable state, entitlement, and provider readiness are safely readable.",
+      joinWaitlist: "Record waitlist interest",
+      refresh: "Check state",
+      pending: "Checking",
+      clickBoundary: "Clicks record only a sanitized local draft. Stripe, provider calls, and remote mutation do not run.",
+      clickRecorded: "Interest click was recorded as a sanitized local draft.",
+      clickUnavailable: "Click tracking is unavailable because readiness cannot be verified safely.",
+      actionFailed: "Could not check Creator locked state.",
+      features: {
+        "creator-ai-natural-translation": {
+          title: "AI natural translation",
+          body: "OpenAI mini-first Creator translation stays locked until closed beta."
+        },
+        "creator-obs-overlay": {
+          title: "OBS overlay URL",
+          body: "Overlay tokens and surfaces are validated during Creator closed beta."
+        },
+        "creator-moderator-share": {
+          title: "Moderator sharing",
+          body: "Read-only share URLs open only after closed beta safety checks."
+        },
+        "creator-custom-dictionary": {
+          title: "Custom dictionary",
+          body: "The 30-term dictionary is part of Creator closed beta."
+        }
+      }
     },
     operatorFlow: {
       ready: "UI review ready",

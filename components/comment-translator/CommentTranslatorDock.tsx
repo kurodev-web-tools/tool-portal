@@ -6,7 +6,9 @@ import {
   getCommentTranslatorSessionStatusAction,
   getCommentTranslatorRealCommentsFeedAction,
   getYouTubeOAuthCredentialStatusAction,
+  getCommentTranslatorCreatorLockedWaitlistAction,
   heartbeatCommentTranslatorSessionAction,
+  recordCommentTranslatorCreatorLockedClickAction,
   requestCommentTranslatorDataDeletionAction,
   startCommentTranslatorSessionAction,
   stopCommentTranslatorSessionAction
@@ -131,6 +133,46 @@ type RetentionAttributionState = {
   clientReadableDetail: "sanitized-retention-attribution-only";
   publicLaunchAllowed: false;
 };
+type CreatorLockedFeatureId =
+  | "creator-ai-natural-translation"
+  | "creator-obs-overlay"
+  | "creator-moderator-share"
+  | "creator-custom-dictionary";
+type CreatorLockedWaitlistState = {
+  status: "locked" | "unavailable";
+  unavailableReason:
+    | "durable-session-unreadable"
+    | "durable-usage-unreadable"
+    | "missing-entitlement"
+    | "missing-provider-readiness"
+    | null;
+  creatorPriceIntent: {
+    currency: "JPY";
+    monthlyAmount: 980;
+    availability: "planned-closed-beta-not-live";
+    paidAccessLive: false;
+    checkoutAvailable: false;
+    clientReadableDetail: "sanitized-price-intent-only";
+  };
+  lockedFeatureCards: readonly {
+    id: CreatorLockedFeatureId;
+    state: "locked";
+    availability: "closed-beta-waitlist";
+    clientReadableDetail: "sanitized-feature-label-only";
+  }[];
+  waitlist: {
+    status: "available" | "unavailable";
+    actionState: "enabled" | "disabled";
+    clientReadableDetail: "sanitized-waitlist-intent-only" | "sanitized-unavailable-only";
+  };
+  clickTracking: {
+    status: "local-draft-ready" | "unavailable";
+    recording: "local-deterministic-draft-only" | "not-run";
+    clientReadableDetail: "sanitized-local-draft-only" | "sanitized-unavailable-only";
+  };
+  clientReadableDetail: "sanitized-creator-locked-waitlist-only";
+  publicLaunchAllowed: false;
+};
 
 const freeDailyLimitSeconds = 30 * 60;
 const initialOperatorSessionUsageDisplay: OperatorSessionUsageDisplay = {
@@ -195,6 +237,56 @@ const initialRetentionAttributionState: RetentionAttributionState = {
     label: "Source: YouTube Live Chat"
   },
   clientReadableDetail: "sanitized-retention-attribution-only",
+  publicLaunchAllowed: false
+};
+const initialCreatorLockedWaitlistState: CreatorLockedWaitlistState = {
+  status: "unavailable",
+  unavailableReason: "missing-provider-readiness",
+  creatorPriceIntent: {
+    currency: "JPY",
+    monthlyAmount: 980,
+    availability: "planned-closed-beta-not-live",
+    paidAccessLive: false,
+    checkoutAvailable: false,
+    clientReadableDetail: "sanitized-price-intent-only"
+  },
+  lockedFeatureCards: [
+    {
+      id: "creator-ai-natural-translation",
+      state: "locked",
+      availability: "closed-beta-waitlist",
+      clientReadableDetail: "sanitized-feature-label-only"
+    },
+    {
+      id: "creator-obs-overlay",
+      state: "locked",
+      availability: "closed-beta-waitlist",
+      clientReadableDetail: "sanitized-feature-label-only"
+    },
+    {
+      id: "creator-moderator-share",
+      state: "locked",
+      availability: "closed-beta-waitlist",
+      clientReadableDetail: "sanitized-feature-label-only"
+    },
+    {
+      id: "creator-custom-dictionary",
+      state: "locked",
+      availability: "closed-beta-waitlist",
+      clientReadableDetail: "sanitized-feature-label-only"
+    }
+  ],
+  waitlist: {
+    status: "unavailable",
+    actionState: "disabled",
+    clientReadableDetail: "sanitized-unavailable-only"
+  },
+  clickTracking: {
+    status: "unavailable",
+    recording: "not-run",
+    clientReadableDetail: "sanitized-unavailable-only"
+  },
+  clientReadableDetail: "sanitized-creator-locked-waitlist-only",
   publicLaunchAllowed: false
 };
 
@@ -438,6 +530,87 @@ function CommentCard({
   );
 }
 
+function CreatorLockedWaitlistPanel({
+  copy,
+  state,
+  clickStatus,
+  isPending,
+  onRefresh,
+  onTrackClick
+}: {
+  copy: CommentTranslatorUiCopy;
+  state: CreatorLockedWaitlistState;
+  clickStatus: string | null;
+  isPending: boolean;
+  onRefresh: () => void;
+  onTrackClick: (featureId: CreatorLockedFeatureId, intent: "waitlist-click" | "feature-card-click") => void;
+}) {
+  const ready = state.status === "locked" && state.waitlist.status === "available";
+
+  return (
+    <div
+      data-comment-translator-creator-locked-waitlist="sanitized-creator-locked-waitlist-only"
+      className="rounded-base border border-primary/25 bg-primary-soft/25 px-3 py-3"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="break-words text-sm font-black text-foreground">{copy.creatorLockedWaitlist.title}</p>
+          <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
+            {copy.creatorLockedWaitlist.priceIntent}
+          </p>
+        </div>
+        <span className="rounded-base border border-primary/30 bg-surface px-2 py-1 text-xs font-black text-primary-strong">
+          {copy.creatorLockedWaitlist.lockedBadge}
+        </span>
+      </div>
+      <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
+        {ready ? copy.creatorLockedWaitlist.helper : copy.creatorLockedWaitlist.unavailable}
+      </p>
+      <div className="mt-3 grid gap-2">
+        {state.lockedFeatureCards.map((card) => {
+          const featureCopy = copy.creatorLockedWaitlist.features[card.id];
+
+          return (
+            <button
+              key={card.id}
+              type="button"
+              data-comment-translator-creator-click-tracking="sanitized-local-draft-only"
+              onClick={() => onTrackClick(card.id, "feature-card-click")}
+              disabled={isPending || state.clickTracking.status !== "local-draft-ready"}
+              className="grid min-w-0 gap-1 rounded-base border border-border bg-surface px-3 py-2 text-left transition hover:border-primary/60 hover:bg-background disabled:cursor-not-allowed disabled:bg-surface-muted/70"
+            >
+              <span className="break-words text-xs font-black text-foreground">{featureCopy.title}</span>
+              <span className="break-words text-xs font-semibold leading-5 text-muted">{featureCopy.body}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+        <button
+          type="button"
+          data-comment-translator-creator-click-tracking="sanitized-local-draft-only"
+          onClick={() => onTrackClick("creator-ai-natural-translation", "waitlist-click")}
+          disabled={isPending || state.waitlist.actionState !== "enabled"}
+          className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+        >
+          {isPending ? copy.creatorLockedWaitlist.pending : copy.creatorLockedWaitlist.joinWaitlist}
+        </button>
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={isPending}
+          className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+        >
+          {copy.creatorLockedWaitlist.refresh}
+        </button>
+      </div>
+      <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
+        {clickStatus ?? copy.creatorLockedWaitlist.clickBoundary}
+      </p>
+    </div>
+  );
+}
+
 export function CommentTranslatorDock({
   youtubeCredentialStatusSource,
   initialRealCommentsFeed
@@ -485,11 +658,16 @@ export function CommentTranslatorDock({
     initialRetentionAttributionState
   );
   const [retentionAttributionError, setRetentionAttributionError] = useState<string | null>(null);
+  const [creatorLockedWaitlistState, setCreatorLockedWaitlistState] = useState<CreatorLockedWaitlistState>(
+    initialCreatorLockedWaitlistState
+  );
+  const [creatorLockedClickStatus, setCreatorLockedClickStatus] = useState<string | null>(null);
   const [realCommentsFeed, setRealCommentsFeed] = useState<CommentTranslatorRealCommentsFeedState>(initialRealCommentsFeed);
   const [realCommentsFeedError, setRealCommentsFeedError] = useState<string | null>(null);
   const [isCredentialStatusPending, startCredentialStatusTransition] = useTransition();
   const [isSessionPending, startSessionTransition] = useTransition();
   const [isDataDeletionPending, startDataDeletionTransition] = useTransition();
+  const [isCreatorLockedPending, startCreatorLockedTransition] = useTransition();
   const [isRealCommentsFeedPending, startRealCommentsFeedTransition] = useTransition();
   const singleCommentInputRef = useRef<HTMLInputElement>(null);
   const multilinePasteInputRef = useRef<HTMLTextAreaElement>(null);
@@ -727,6 +905,36 @@ export function CommentTranslatorDock({
         setRetentionAttributionError(
           locale === "ja" ? "データ削除状態を確認できませんでした" : "Could not check data deletion state"
         );
+      }
+    });
+  }
+
+  function refreshCreatorLockedWaitlist() {
+    startCreatorLockedTransition(async () => {
+      try {
+        const state = await getCommentTranslatorCreatorLockedWaitlistAction();
+        setCreatorLockedWaitlistState(state);
+        setCreatorLockedClickStatus(null);
+      } catch {
+        setCreatorLockedClickStatus(copy.creatorLockedWaitlist.actionFailed);
+      }
+    });
+  }
+
+  function trackCreatorLockedClick(featureId: CreatorLockedFeatureId, intent: "waitlist-click" | "feature-card-click") {
+    startCreatorLockedTransition(async () => {
+      try {
+        const draft = await recordCommentTranslatorCreatorLockedClickAction({
+          featureId,
+          intent
+        });
+        setCreatorLockedClickStatus(
+          draft.status === "recorded-local-draft"
+            ? copy.creatorLockedWaitlist.clickRecorded
+            : copy.creatorLockedWaitlist.clickUnavailable
+        );
+      } catch {
+        setCreatorLockedClickStatus(copy.creatorLockedWaitlist.actionFailed);
       }
     });
   }
@@ -1117,24 +1325,15 @@ export function CommentTranslatorDock({
                     <StatTile label={copy.fields.sessionRemaining} value={formatDuration(sessionState.remainingSessionSeconds)} helper={copy.fields.dailyRemaining} />
                     <StatTile label={copy.fields.perMinuteCap} value="30" helper={copy.operatorSession.perMinuteCapHelper} />
                   </div>
-                  <div data-comment-translator-billing-entry="stripe-paid-plan" className="mt-4 rounded-base border border-primary/25 bg-primary-soft/35 px-3 py-3">
-                    <div data-comment-translator-billing-entry="free-pro-plan-state" className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-black text-foreground">{locale === "ja" ? "もっと長く使う" : "Use more"}</p>
-                      <span className="rounded-base border border-primary/30 bg-surface px-2 py-1 text-xs font-black text-primary-strong">
-                        {sessionState.plan === "paid" ? "Pro" : "Free"}
-                      </span>
-                    </div>
-                    <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
-                      {locale === "ja"
-                        ? "Proでは利用時間と翻訳上限を拡張できます。"
-                        : "Pro expands available time and translation limits."}
-                    </p>
-                    <Link
-                      href="/account/billing"
-                      className="mt-3 inline-flex min-h-9 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
-                    >
-                      {locale === "ja" ? "プランを確認" : "View plan"}
-                    </Link>
+                  <div className="mt-4">
+                    <CreatorLockedWaitlistPanel
+                      copy={copy}
+                      state={creatorLockedWaitlistState}
+                      clickStatus={creatorLockedClickStatus}
+                      isPending={isCreatorLockedPending}
+                      onRefresh={refreshCreatorLockedWaitlist}
+                      onTrackClick={trackCreatorLockedClick}
+                    />
                   </div>
                 </div>
               </section>
@@ -1264,24 +1463,15 @@ export function CommentTranslatorDock({
                   <StatTile label={copy.fields.sessionRemaining} value={formatDuration(sessionState.remainingSessionSeconds)} helper={copy.fields.dailyRemaining} />
                   <StatTile label={copy.fields.perMinuteCap} value="30" helper={copy.operatorSession.perMinuteCapHelper} />
                 </div>
-                <div data-comment-translator-billing-entry="stripe-paid-plan" className="mt-4 rounded-base border border-primary/25 bg-primary-soft/35 px-3 py-3">
-                  <div data-comment-translator-billing-entry="free-pro-plan-state" className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-black text-foreground">{locale === "ja" ? "もっと長く使う" : "Use more"}</p>
-                    <span className="rounded-base border border-primary/30 bg-surface px-2 py-1 text-xs font-black text-primary-strong">
-                      {sessionState.plan === "paid" ? "Pro" : "Free"}
-                    </span>
-                  </div>
-                  <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
-                    {locale === "ja"
-                      ? "Proでは利用時間と翻訳上限を拡張できます。"
-                      : "Pro expands available time and translation limits."}
-                  </p>
-                  <Link
-                    href="/account/billing"
-                    className="mt-3 inline-flex min-h-9 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
-                  >
-                    {locale === "ja" ? "プランを確認" : "View plan"}
-                  </Link>
+                <div className="mt-4">
+                  <CreatorLockedWaitlistPanel
+                    copy={copy}
+                    state={creatorLockedWaitlistState}
+                    clickStatus={creatorLockedClickStatus}
+                    isPending={isCreatorLockedPending}
+                    onRefresh={refreshCreatorLockedWaitlist}
+                    onTrackClick={trackCreatorLockedClick}
+                  />
                 </div>
               </section>
             </aside>

@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-free-beta-fb-l6-public-launch-gate-decision`.
+- Current branch: `codex/comment-translator-free-beta-public-launch-execution-board`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch is FB-L6 docs/contract blocker evidence and exact-command ready preflight only. It does not open limited public beta, flip the public launch gate, run production/custom deployed smoke execution, deploy/upload, session Start, live/provider execution, remote mutation/schema apply, Stripe live action, or main promotion without same-thread release-owner exact approval.
+- This branch is a task-board-only update after FB-L6 merge. It records the remaining public-launch execution gates and does not open limited public beta, flip the public launch gate, run production/custom deployed smoke execution, deploy/upload, session Start, live/provider execution, remote mutation/schema apply, Stripe live action, or main promotion without same-thread release-owner exact approval.
 - Archived previous long board snapshot: `docs/archive/task-board-pre-2026-06-16-free-beta-public-usability-cleanup.md`.
 - Older archived board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
@@ -64,11 +64,24 @@ Current public-launch decision: `public-release capable: no`.
 | ID | Task | Outcome | Status |
 | --- | --- | --- | --- |
 | FB-L1 | Free beta public usability preflight | Exact approval-gated plan for remote/deployed durable enforcement, authenticated allowed-tester route/API smoke, Start smoke, live target lookup, bounded polling, Azure execution, UI confirmation, rollback, and no-secret output. | complete |
-| FB-L2 | Remote durable enforcement evidence | Blocker/evidence record plus exact-command ready preflight for deployed `comment_translator_sessions` and `comment_translator_usage_ledger_events` authority. Remote apply/mutation/deployed smoke remain not-run until exact explicit approval. | preflight-ready / gated |
-| FB-L3 | Allowed-tester route/API smoke | Authenticated route/API smoke for server-owned session/feed/usage/deletion/Creator locked states without live/provider execution unless separately approved. | preflight-ready / blocked-no-approval |
-| FB-L4 | Approved Start-to-translation smoke | Same-thread approved Start smoke proving server-only live target lookup, bounded `liveChatMessages.list`, non-empty intake, Azure translation, UI feed, usage, stop reason, and source attribution. | preflight-ready / blocked-no-approval |
-| FB-L5 | Production/custom deployed smoke | Confirm the deployed target serving the Free beta path matches the reviewed integration branch and renders/operates for allowed testers. | preflight-ready / blocked-no-approval |
-| FB-L6 | Public launch gate decision | Release-owner decision to keep blocked, open limited public beta, or flip the public gate. | preflight-ready / blocked-no-approval |
+| FB-L2 | Remote durable enforcement preflight/evidence record | Blocker/evidence record plus exact-command ready preflight for deployed `comment_translator_sessions` and `comment_translator_usage_ledger_events` authority. Remote apply/mutation/deployed smoke remain not-run until exact explicit approval. | preflight complete / execution pending |
+| FB-L3 | Allowed-tester route/API smoke preflight/evidence record | Authenticated route/API smoke for server-owned session/feed/usage/deletion/Creator locked states without live/provider execution unless separately approved. | preflight complete / execution pending |
+| FB-L4 | Start-to-translation smoke preflight/evidence record | Same-thread approved Start smoke proving server-only live target lookup, bounded `liveChatMessages.list`, non-empty intake, Azure translation, UI feed, usage, stop reason, and source attribution. | preflight complete / execution pending |
+| FB-L5 | Production/custom deployed smoke preflight/evidence record | Confirm the deployed target serving the Free beta path matches the reviewed integration branch and renders/operates for allowed testers. | preflight complete / execution pending |
+| FB-L6 | Public launch gate decision preflight/evidence record | Release-owner decision to keep blocked, open limited public beta, or flip the public gate. Current recorded decision is keep blocked / blocked-no-approval. | preflight complete / release-owner approval pending |
+
+### Public Launch Remaining Gates
+
+These are the remaining gates before Free public beta can be opened. Each item requires same-thread ready preflight, sanitized output review, and exact explicit approval before execution.
+
+| ID | Gate | Required outcome | Current state |
+| --- | --- | --- | --- |
+| PL-G1 | Execute FB-L2 remote durable enforcement | Apply/confirm the reviewed durable session and usage authority, then prove deployed fail-closed session/usage behavior for Free caps. | approval-gated / not-run |
+| PL-G2 | Execute FB-L3 allowed-tester route/API smoke | Prove an authenticated allowed tester can reach server-owned session/feed/usage/deletion/Creator locked states with sanitized output. | approval-gated / not-run |
+| PL-G3 | Execute FB-L4 Start-to-translation smoke | Prove explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` step, non-empty intake, Free Azure translation, UI feed, usage, stop reason, source attribution, and Stop. | approval-gated / not-run |
+| PL-G4 | Execute FB-L5 production/custom deployed smoke | Prove deployed target freshness, reviewed integration branch match, allowed-tester route/UI reachability, status-only session API, usage/deletion/Creator locked gates, and Start-to-translation gate status. | approval-gated / not-run |
+| PL-G5 | Release-owner public launch decision | Choose `keep blocked`, `open limited public beta`, or `flip public gate`, with missing evidence explicitly accepted or completed. | approval-gated / current decision keep blocked |
+| PL-G6 | Public access change / promotion operation | If approved, perform a separate reviewed operation for limited public beta open or public gate flip; promote integration to `main` only through a separate approval-gated PR. | approval-gated / not-run |
 
 ### Later Work
 

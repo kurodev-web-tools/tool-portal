@@ -72,11 +72,45 @@ Current public-launch decision: `public-release capable: no`.
 
 ### Later Work
 
-| Area | State |
-| --- | --- |
-| Creator closed beta | Pending until the Free path is stable. Scope includes Stripe live Checkout/Portal/Webhook, durable paid entitlement, AI natural translation credits, OBS overlay URL, moderator share URL, custom dictionary minimum, priority display, and simple 7-day history. |
-| Creator public paid launch | Pending after Creator closed beta evidence. |
-| Public-after-P1 | `streamList` primary migration, 30-day history/search, CSV export, overlay templates, dictionary import/suggestions, AI operations helpers, provider comparisons, platform expansion, voice/subtitle work. |
+Keep these rows visible so future threads do not have to reconstruct the post-Free-beta roadmap from archive.
+
+#### Creator Closed Beta / Before Creator Public Paid
+
+| ID | Task | Outcome | Status |
+| --- | --- | --- | --- |
+| C1 | Durable paid entitlement store | Server-owned paid entitlement rows, active/inactive states, safe Free degradation, and closed-beta gating. | pending |
+| C2 | Stripe live Checkout / Portal / webhook closed-beta gate | Approval-gated Product/Price/Checkout/Portal/webhook verification for allowed testers only, with signed webhook and idempotency. | pending / gated |
+| C3 | Paid usage and monthly reset | Creator normal translation cap, AI character/token estimate cap, target-language multiplier, monthly reset, and over-limit fallback/stop. | pending |
+| C4 | AI natural translation provider route | OpenAI mini primary route, Azure recoverable fallback, strict JSON parsing, dictionary-aware prompt hook, and no secret/provider target payload leakage. | pending / gated |
+| C5 | OBS overlay token runtime | Session-scoped overlay token issue/revoke/expiry, token hash storage, read-only access, and no private metadata exposure. | pending |
+| C6 | OBS overlay UI route | Transparent overlay route with latest translated comments, role badges, Super Chat display, original toggle, and source attribution. | pending |
+| C7 | Moderator share token runtime | Session-scoped read-only share token issue/revoke/expiry, token hash storage, and future moderator-login migration path. | pending |
+| C8 | Moderator share UI route | Read-only moderator view with translated comments, role badges, priority comments, deleted state, and source attribution. | pending |
+| C9 | Custom dictionary minimum | Creator-only 30-term dictionary, term/replacement/note/language scope, server-owned storage, and provider integration hook. | pending |
+| C10 | Priority display polish | Super Chat, Super Sticker, member, moderator, and owner priority lane/filter without creating revenue analytics. | pending |
+| C11 | Simple 7-day history | Creator-only 7-day history, retention job, deletion/OAuth-disconnect cleanup, deleted-message propagation, and no CSV export. | pending |
+| C12 | Creator closed beta final QA | Allowed-tester smoke for billing, entitlement, AI cost, overlay/share revoke, dictionary, history retention, and no-secret boundaries. | pending |
+
+#### Creator Public Paid Launch
+
+| ID | Task | Outcome | Status |
+| --- | --- | --- | --- |
+| CP1 | Creator paid launch readiness | Confirm closed-beta evidence, accepted risks, legal/copy, support/rollback, and cost envelope before unlocking public paid access. | pending |
+| CP2 | Creator public paid gate flip | Approval-gated release of paid access, public billing copy, production smoke, and rollback evidence. | pending / gated |
+
+#### Public-after-P1 / Post-MVP
+
+| ID | Task | Outcome | Status |
+| --- | --- | --- | --- |
+| P1-1 | `streamList` primary migration | Implement `liveChatMessages.streamList` primary path and keep bounded `list` as fallback. | later |
+| P1-2 | 30-day history and search | Extend Creator history from 7 to 30 days with search and retention controls. | later |
+| P1-3 | CSV export | Add export with YouTube data notice, retention limits, and deletion compatibility. | later |
+| P1-4 | Overlay templates | Add additional OBS overlay templates without exposing private metadata. | later |
+| P1-5 | Dictionary import and suggestions | CSV import, dictionary suggestions, game/category dictionaries. | later |
+| P1-6 | AI operations helpers | AI summary, question extraction, Super Chat reply-miss check, and reply suggestions. | later |
+| P1-7 | Provider comparisons | OpenAI/Gemini/Cloudflare/other provider comparison under policy/cost gates. | later |
+| P1-8 | Platform expansion | Twitch/Kick/TikTok or multi-platform runtime only after YouTube path is proven. | later |
+| P1-9 | Voice translation / subtitle work | Treat as separate product or upper-tier work, not part of the initial Creator 980 yen MVP. | later |
 
 ## Current Blockers / Residual Risks
 

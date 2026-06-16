@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { type AccountSessionState } from "./supabase/session";
 import { type CommentTranslatorSessionBrowserSafeState, type CommentTranslatorSessionPlan } from "./comment-translator-session-runtime";
+import { createCommentTranslatorStartStopReasonUx } from "./comment-translator-start-stop-reason-ux";
 import { type YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 
 export type CommentTranslatorPrivateLaunchAccessEnv = Record<string, string | undefined>;
@@ -149,6 +150,7 @@ export function createCommentTranslatorPrivateLaunchBlockedSessionState({
       lastHeartbeatAtIso: null
     },
     stopReason: "auth-failed",
+    reasonUx: createCommentTranslatorStartStopReasonUx("auth-unavailable"),
     nextAction: "reconnect-or-sign-in",
     providerApiUsage: "stopped",
     aiTranslationUsage: "stopped",

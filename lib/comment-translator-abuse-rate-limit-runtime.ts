@@ -2,6 +2,10 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { type CommentTranslatorSessionPlan } from "./comment-translator-session-runtime";
+import {
+  createCommentTranslatorStartStopReasonUx,
+  type CommentTranslatorStartStopReasonUx
+} from "./comment-translator-start-stop-reason-ux";
 import { type YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 
 export type CommentTranslatorAbuseProtectedSurface =
@@ -100,6 +104,7 @@ export type CommentTranslatorAbuseRateLimitedSessionState = {
     lastHeartbeatAtIso: null;
   };
   stopReason: "auth-failed";
+  reasonUx: CommentTranslatorStartStopReasonUx;
   nextAction: "wait-for-limit-reset";
   providerApiUsage: "stopped";
   aiTranslationUsage: "stopped";
@@ -288,6 +293,7 @@ export function createCommentTranslatorAbuseRateLimitedSessionState({
       lastHeartbeatAtIso: null
     },
     stopReason: "auth-failed",
+    reasonUx: createCommentTranslatorStartStopReasonUx("quota-or-budget-stop"),
     nextAction: "wait-for-limit-reset",
     providerApiUsage: "stopped",
     aiTranslationUsage: "stopped",

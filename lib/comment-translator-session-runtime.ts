@@ -3,6 +3,13 @@ import "server-only";
 import { type YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 import { type YouTubeOAuthCredentialTranslatorStartReadiness } from "./comment-translator-youtube-disconnect-runtime";
 import { type CommentTranslatorServerOnlyLiveChatTargetLookupResult } from "./comment-translator-server-only-live-chat-target-lookup";
+import {
+  createCommentTranslatorStartStopReasonUx,
+  resolveCommentTranslatorCredentialReadinessReasonUxCode,
+  resolveCommentTranslatorStopReasonUxCode,
+  type CommentTranslatorStartStopReasonUx,
+  type CommentTranslatorStartStopReasonUxCode
+} from "./comment-translator-start-stop-reason-ux";
 
 export type CommentTranslatorSessionPlan = "free" | "paid";
 
@@ -76,6 +83,7 @@ export type CommentTranslatorSessionBrowserSafeState =
       remainingDailySeconds: number;
       heartbeat: CommentTranslatorSessionHeartbeatState;
       stopReason: null;
+      reasonUx: null;
       nextAction: "press-start";
       providerApiUsage: "not-started-before-explicit-start";
       aiTranslationUsage: "not-started-before-explicit-start";
@@ -95,6 +103,7 @@ export type CommentTranslatorSessionBrowserSafeState =
       remainingDailySeconds: number;
       heartbeat: CommentTranslatorSessionHeartbeatState;
       stopReason: null;
+      reasonUx: null;
       nextAction: "send-heartbeat-or-stop";
       providerApiUsage: "allowed-after-explicit-start-not-run-in-task-7";
       aiTranslationUsage: "allowed-after-explicit-start-not-run-in-task-7";
@@ -114,6 +123,7 @@ export type CommentTranslatorSessionBrowserSafeState =
       remainingDailySeconds: number;
       heartbeat: CommentTranslatorSessionHeartbeatState;
       stopReason: CommentTranslatorSessionStopReason;
+      reasonUx: CommentTranslatorStartStopReasonUx;
       nextAction: "session-stopped" | "reconnect-or-sign-in" | "wait-for-limit-reset";
       providerApiUsage: "stopped";
       aiTranslationUsage: "stopped";
@@ -142,6 +152,7 @@ export type EvaluateCommentTranslatorSessionStopRequest = {
   credentialReadiness: YouTubeOAuthCredentialTranslatorStartReadiness;
   usage: CommentTranslatorSessionUsageSnapshot;
   providerSignal?: "stream-ended" | "stream-unavailable" | "terminal-provider-error" | null;
+  providerSignalReasonUxCode?: CommentTranslatorStartStopReasonUxCode | null;
 };
 
 export type StopCommentTranslatorSessionRequest = {
@@ -150,6 +161,7 @@ export type StopCommentTranslatorSessionRequest = {
   plan: CommentTranslatorSessionPlan;
   usage?: CommentTranslatorSessionUsageSnapshot;
   reason: CommentTranslatorSessionStopReason;
+  reasonUxCode?: CommentTranslatorStartStopReasonUxCode | null;
 };
 
 export type ReadCommentTranslatorSessionCommandRequest = StartCommentTranslatorSessionRequest & {
@@ -157,6 +169,7 @@ export type ReadCommentTranslatorSessionCommandRequest = StartCommentTranslatorS
   browserConnected?: boolean;
   stopReason?: CommentTranslatorSessionStopReason;
   providerSignal?: EvaluateCommentTranslatorSessionStopRequest["providerSignal"];
+  providerSignalReasonUxCode?: CommentTranslatorStartStopReasonUxCode | null;
 };
 
 const secondsPerMinute = 60;
@@ -192,7 +205,7 @@ export const commentTranslatorSessionRuntimeContract = {
     monthlyTranslatedCharacters: 20_000
   },
   heartbeatTimeoutSeconds: 45,
-  stopReasons: [
+    stopReasons: [
     "user-stop",
     "stream-ended",
     "stream-unavailable",
@@ -211,6 +224,7 @@ export const commentTranslatorSessionRuntimeContract = {
     "session-limit",
     "terminal-provider-error"
   ],
+  reasonUx: "sanitized-browser-safe-reason-metadata-only",
   forbiddenBrowserOutput: [
     "oauth-token-value",
     "refresh-token-value",
@@ -251,6 +265,7 @@ export function createCommentTranslatorNotStartedSessionState({
     remainingDailySeconds: remainingDailySeconds({ dailyUsedMs, elapsedMs: 0, plan }),
     heartbeat: createHeartbeatState(null),
     stopReason: null,
+    reasonUx: null,
     nextAction: "press-start",
     providerApiUsage: "not-started-before-explicit-start",
     aiTranslationUsage: "not-started-before-explicit-start",
@@ -269,6 +284,7 @@ export function startCommentTranslatorSession(
       plan: request.plan,
       usage: request.usage,
       reason: "auth-failed",
+      reasonUxCode: "auth-unavailable",
       nextAction: "reconnect-or-sign-in"
     });
   }
@@ -280,6 +296,9 @@ export function startCommentTranslatorSession(
       plan: request.plan,
       usage: request.usage,
       reason: mapCredentialReadinessToStopReason(request.credentialReadiness),
+      reasonUxCode: resolveCommentTranslatorCredentialReadinessReasonUxCode({
+        reason: request.credentialReadiness.reason
+      }),
       nextAction: "reconnect-or-sign-in",
       credentialReferenceId: request.credentialReadiness.credentialReferenceId
     });
@@ -294,6 +313,7 @@ export function startCommentTranslatorSession(
       plan: request.plan,
       usage: request.usage,
       reason: "session-limit",
+      reasonUxCode: "session-limit",
       nextAction: "session-stopped",
       credentialReferenceId: request.credentialReadiness.credentialReferenceId
     });
@@ -307,6 +327,7 @@ export function startCommentTranslatorSession(
       plan: request.plan,
       usage: request.usage,
       reason: usageStopReason,
+      reasonUxCode: resolveCommentTranslatorStopReasonUxCode({ stopReason: usageStopReason }),
       nextAction: usageStopReason === "daily-time-limit" ? "wait-for-limit-reset" : "session-stopped",
       credentialReferenceId: request.credentialReadiness.credentialReferenceId
     });
@@ -319,6 +340,7 @@ export function startCommentTranslatorSession(
       plan: request.plan,
       usage: request.usage,
       reason: request.liveChatTargetReadiness.stopReason,
+      reasonUxCode: request.liveChatTargetReadiness.reasonUxCode,
       nextAction: "session-stopped",
       credentialReferenceId: request.credentialReadiness.credentialReferenceId
     });
@@ -356,7 +378,8 @@ export function evaluateCommentTranslatorSessionStopCondition(
       nowMs: request.nowMs,
       plan: request.plan,
       usage: request.usage,
-      reason: "browser-disconnect"
+      reason: "browser-disconnect",
+      reasonUxCode: "heartbeat-or-browser-disconnect"
     });
   }
 
@@ -366,7 +389,8 @@ export function evaluateCommentTranslatorSessionStopCondition(
       nowMs: request.nowMs,
       plan: request.plan,
       usage: request.usage,
-      reason: "auth-failed"
+      reason: "auth-failed",
+      reasonUxCode: "auth-unavailable"
     });
   }
 
@@ -376,7 +400,10 @@ export function evaluateCommentTranslatorSessionStopCondition(
       nowMs: request.nowMs,
       plan: request.plan,
       usage: request.usage,
-      reason: mapCredentialReadinessToStopReason(request.credentialReadiness)
+      reason: mapCredentialReadinessToStopReason(request.credentialReadiness),
+      reasonUxCode: resolveCommentTranslatorCredentialReadinessReasonUxCode({
+        reason: request.credentialReadiness.reason
+      })
     });
   }
 
@@ -388,7 +415,8 @@ export function evaluateCommentTranslatorSessionStopCondition(
       nowMs: request.nowMs,
       plan: request.plan,
       usage: request.usage,
-      reason: usageStopReason
+      reason: usageStopReason,
+      reasonUxCode: resolveCommentTranslatorStopReasonUxCode({ stopReason: usageStopReason })
     });
   }
 
@@ -398,7 +426,8 @@ export function evaluateCommentTranslatorSessionStopCondition(
       nowMs: request.nowMs,
       plan: request.plan,
       usage: request.usage,
-      reason: "session-time-limit"
+      reason: "session-time-limit",
+      reasonUxCode: "quota-or-budget-stop"
     });
   }
 
@@ -408,7 +437,8 @@ export function evaluateCommentTranslatorSessionStopCondition(
       nowMs: request.nowMs,
       plan: request.plan,
       usage: request.usage,
-      reason: request.providerSignal
+      reason: request.providerSignal,
+      reasonUxCode: request.providerSignalReasonUxCode
     });
   }
 
@@ -418,7 +448,8 @@ export function evaluateCommentTranslatorSessionStopCondition(
       nowMs: request.nowMs,
       plan: request.plan,
       usage: request.usage,
-      reason: "missing-heartbeat"
+      reason: "missing-heartbeat",
+      reasonUxCode: "heartbeat-or-browser-disconnect"
     });
   }
 
@@ -446,6 +477,7 @@ export function stopCommentTranslatorSession(
         aiBudgetAvailable: true
       },
     reason: request.reason,
+    reasonUxCode: request.reasonUxCode,
     nextAction: request.reason === "auth-failed" || request.reason === "reconnect-required" ? "reconnect-or-sign-in" : "session-stopped"
   });
 }
@@ -463,7 +495,8 @@ export async function readCommentTranslatorSessionCommand(
       nowMs: request.nowMs,
       plan: request.plan,
       usage: request.usage,
-      reason: request.stopReason ?? "user-stop"
+      reason: request.stopReason ?? "user-stop",
+      reasonUxCode: request.stopReason ? resolveCommentTranslatorStopReasonUxCode({ stopReason: request.stopReason }) : "user-stop"
     });
   }
 
@@ -488,7 +521,8 @@ export async function readCommentTranslatorSessionCommand(
       callerAuthorization: request.callerAuthorization,
       credentialReadiness: request.credentialReadiness,
       usage: request.usage,
-      providerSignal: request.providerSignal
+      providerSignal: request.providerSignal,
+      providerSignalReasonUxCode: request.providerSignalReasonUxCode
     });
   }
 
@@ -500,7 +534,8 @@ export async function readCommentTranslatorSessionCommand(
     callerAuthorization: request.callerAuthorization,
     credentialReadiness: request.credentialReadiness,
     usage: request.usage,
-    providerSignal: request.providerSignal
+    providerSignal: request.providerSignal,
+    providerSignalReasonUxCode: request.providerSignalReasonUxCode
   });
 }
 
@@ -567,6 +602,7 @@ function createActiveState({
     remainingDailySeconds: remainingDailySeconds({ dailyUsedMs: usage.dailyUsedMs, elapsedMs: elapsed, plan, entitlement }),
     heartbeat: createHeartbeatState(activeSession.lastHeartbeatAtMs),
     stopReason: null,
+    reasonUx: null,
     nextAction: "send-heartbeat-or-stop",
     providerApiUsage: "allowed-after-explicit-start-not-run-in-task-7",
     aiTranslationUsage: "allowed-after-explicit-start-not-run-in-task-7",
@@ -581,6 +617,7 @@ function createStoppedState({
   plan,
   usage,
   reason,
+  reasonUxCode,
   nextAction,
   credentialReferenceId
 }: {
@@ -589,6 +626,7 @@ function createStoppedState({
   plan: CommentTranslatorSessionPlan;
   usage: CommentTranslatorSessionUsageSnapshot;
   reason: CommentTranslatorSessionStopReason;
+  reasonUxCode?: CommentTranslatorStartStopReasonUxCode | null;
   nextAction: "session-stopped" | "reconnect-or-sign-in" | "wait-for-limit-reset";
   credentialReferenceId?: string;
 }): CommentTranslatorSessionBrowserSafeState {
@@ -608,6 +646,12 @@ function createStoppedState({
     remainingDailySeconds: remainingDailySeconds({ dailyUsedMs: usage.dailyUsedMs, elapsedMs: elapsed, plan, entitlement }),
     heartbeat: createHeartbeatState(activeSession?.lastHeartbeatAtMs ?? null),
     stopReason: reason,
+    reasonUx: createCommentTranslatorStartStopReasonUx(
+      resolveCommentTranslatorStopReasonUxCode({
+        stopReason: reason,
+        reasonUxCode
+      })
+    ),
     nextAction,
     providerApiUsage: "stopped",
     aiTranslationUsage: "stopped",

@@ -53,6 +53,9 @@ type CommentTranslatorUiCopy = (typeof commentTranslatorUiCopy)[keyof typeof com
 type OperatorFlowChecklistState = "done" | "waiting" | "gated";
 type OperatorSessionStopReason = keyof CommentTranslatorUiCopy["operatorSession"]["stopReasons"];
 type OperatorSessionNextAction = keyof CommentTranslatorUiCopy["operatorSession"]["nextActions"];
+type OperatorSessionReasonCode = keyof CommentTranslatorUiCopy["operatorSession"]["reasonMessages"];
+type OperatorSessionReasonGroup = keyof CommentTranslatorUiCopy["operatorSession"]["reasonGroups"];
+type OperatorSessionRecommendedAction = keyof CommentTranslatorUiCopy["operatorSession"]["recommendedActions"];
 type OperatorSessionState = {
   status: keyof CommentTranslatorUiCopy["operatorSession"]["states"];
   plan: "free" | "paid";
@@ -60,6 +63,12 @@ type OperatorSessionState = {
   remainingSessionSeconds: number;
   remainingDailySeconds: number;
   stopReason: OperatorSessionStopReason | null;
+  reasonUx: {
+    code: OperatorSessionReasonCode;
+    group: OperatorSessionReasonGroup;
+    recommendedAction: OperatorSessionRecommendedAction;
+    clientReadableDetail: "sanitized-reason-only";
+  } | null;
   nextAction: OperatorSessionNextAction;
 };
 
@@ -71,6 +80,7 @@ const initialOperatorSessionState: OperatorSessionState = {
   remainingSessionSeconds: freeDailyLimitSeconds,
   remainingDailySeconds: freeDailyLimitSeconds,
   stopReason: null,
+  reasonUx: null,
   nextAction: "press-start"
 };
 
@@ -501,6 +511,14 @@ export function CommentTranslatorDock({
   });
   const sessionDailyUsedSeconds = Math.max(0, freeDailyLimitSeconds - sessionState.remainingDailySeconds);
   const sessionStopReason = sessionState.stopReason ? copy.operatorSession.stopReasons[sessionState.stopReason] : "-";
+  const sessionReasonUx = sessionState.reasonUx;
+  const sessionReasonGroup = sessionReasonUx ? copy.operatorSession.reasonGroups[sessionReasonUx.group] : null;
+  const sessionReasonMessage = sessionReasonUx
+    ? copy.operatorSession.reasonMessages[sessionReasonUx.code]
+    : sessionStopReason;
+  const sessionRecommendedAction = sessionReasonUx
+    ? copy.operatorSession.recommendedActions[sessionReasonUx.recommendedAction]
+    : null;
   const sessionNextAction = copy.operatorSession.nextActions[sessionState.nextAction];
   const showReconnectGuidance =
     credentialStatusState !== "available" ||
@@ -764,6 +782,23 @@ export function CommentTranslatorDock({
                   <p className="mt-3 break-words rounded-base border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">
                     {copy.operatorSession.reconnectGuidance}
                   </p>
+                ) : null}
+                {sessionState.status === "stopped" && sessionReasonUx ? (
+                  <div
+                    data-comment-translator-start-stop-reason-ux="sanitized-reason-only"
+                    className="mt-3 rounded-base border border-border bg-background/70 p-3 text-xs"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-black text-foreground">{sessionReasonGroup}</span>
+                      <span className="rounded-base border border-border bg-surface px-2 py-1 font-black text-muted">
+                        {sessionStopReason}
+                      </span>
+                    </div>
+                    <p className="mt-2 break-words font-semibold leading-5 text-muted">{sessionReasonMessage}</p>
+                    {sessionRecommendedAction ? (
+                      <p className="mt-1 break-words font-black leading-5 text-primary-strong">{sessionRecommendedAction}</p>
+                    ) : null}
+                  </div>
                 ) : null}
               </section>
 
@@ -1047,7 +1082,7 @@ export function CommentTranslatorDock({
                   <CredentialStatusRow label={copy.fields.expires} value={credentialStatusExpiresAtIso} />
                   <CredentialStatusRow label={copy.fields.reason} value={credentialStatusReason} />
                   <CredentialStatusRow label={copy.fields.elapsed} value={formatDuration(sessionState.elapsedSeconds)} />
-                  <CredentialStatusRow label={copy.fields.stopReason} value={sessionError ?? sessionStopReason} />
+                  <CredentialStatusRow label={copy.fields.stopReason} value={sessionError ?? sessionReasonMessage} />
                   <CredentialStatusRow label={copy.fields.nextAction} value={sessionNextAction} />
                 </dl>
                 <button

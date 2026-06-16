@@ -184,6 +184,7 @@ export async function POST(request: NextRequest) {
     browserConnected: command.browserConnected,
     stopReason: command.stopReason,
     providerSignal: pollingTick.providerSignal,
+    providerSignalReasonUxCode: "reasonUxCode" in pollingTick ? pollingTick.reasonUxCode : null,
     createSessionReferenceId: () => `cts_${randomUUID()}`
   });
 

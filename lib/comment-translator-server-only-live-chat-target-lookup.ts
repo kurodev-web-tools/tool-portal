@@ -9,6 +9,10 @@ import {
 } from "./comment-translator-youtube-runtime-foundation";
 import { type CommentTranslatorSessionCommandIntent, type CommentTranslatorSessionStopReason } from "./comment-translator-session-runtime";
 import { type YouTubeOAuthCredentialTranslatorStartReadiness } from "./comment-translator-youtube-disconnect-runtime";
+import {
+  resolveCommentTranslatorLiveTargetLookupReasonUxCode,
+  type CommentTranslatorStartStopReasonUxCode
+} from "./comment-translator-start-stop-reason-ux";
 
 export type CommentTranslatorServerOnlyLiveChatTargetLookupAdapter = Pick<
   YouTubeLiveChatRuntimeAdapter,
@@ -41,6 +45,7 @@ export type CommentTranslatorServerOnlyLiveChatTargetLookupResult =
         | "owner-verification-failed"
         | "no-active-owned-broadcast"
         | "missing-live-chat";
+      reasonUxCode: CommentTranslatorStartStopReasonUxCode;
       clientReadableDetail: "sanitized-stop-reason-only";
       providerAccess: "not-run" | "deterministic-local-adapter-only";
       providerTargetLookupExecution: "not-run-in-this-thread";
@@ -66,6 +71,7 @@ export const commentTranslatorServerOnlyLiveChatTargetLookupContract = {
   liveChatIdLookupExecution: "not-run-in-this-thread",
   targetMetadataHandling: "server-only-internal-never-client-readable",
   browserReadableOutput: "sanitized-session-state-only",
+  reasonUx: "sanitized-reason-code-only",
   failClosedFallback: "stream-unavailable-sanitized-stop-reason",
   backgroundMonitoring: "not-started",
   connectionOnlyLookup: "not-run",
@@ -222,6 +228,7 @@ function createUnavailableLiveChatTargetLookup({
     provider: "youtube",
     stopReason: "stream-unavailable",
     reason,
+    reasonUxCode: resolveCommentTranslatorLiveTargetLookupReasonUxCode({ reason }),
     clientReadableDetail: "sanitized-stop-reason-only",
     providerAccess,
     providerTargetLookupExecution: "not-run-in-this-thread",

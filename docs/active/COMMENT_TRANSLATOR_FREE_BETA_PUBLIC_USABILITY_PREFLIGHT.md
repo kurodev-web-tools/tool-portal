@@ -16,6 +16,8 @@ FB-L2 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORC
 
 FB-L5 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md` records Production/custom deployed smoke as `blocked-no-approval` for this thread, with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`. Production/custom deployed smoke execution, deploy/upload, session Start, provider/live execution, Stripe actions, main promotion, and public launch gate flip remain not-run / approval-gated.
 
+FB-L6 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md` records Public launch gate decision as `keep blocked / blocked-no-approval`, with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_READY_PREFLIGHT.md`. The decision options are `keep blocked`, `open limited public beta`, and `flip public gate`; without same-thread release-owner exact approval, the public launch gate remains unchanged and `public-release capable: no` remains in effect.
+
 ## Inspected Inputs
 
 - `task.md`
@@ -100,6 +102,7 @@ Local deterministic baseline:
 - `node scripts/comment-translator-free-public-beta-final-qa-readiness-contract.mjs`
 - `node scripts/comment-translator-free-beta-public-usability-preflight-contract.mjs`
 - `node scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs`
+- `node scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs`
 
 Live/provider preflight command surfaces:
 

@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   getCommentTranslatorSessionStatusAction,
+  getCommentTranslatorRealCommentsFeedAction,
   getYouTubeOAuthCredentialStatusAction,
   heartbeatCommentTranslatorSessionAction,
   startCommentTranslatorSessionAction,
@@ -30,6 +31,10 @@ import {
   type CommentTranslatorSurfaceMode,
   type CommentTranslatorTargetLanguageId
 } from "@/lib/comment-translator";
+import {
+  mapCommentTranslatorRealCommentsFeedRowsToUiComments,
+  type CommentTranslatorRealCommentsFeedState
+} from "@/lib/comment-translator-real-comments-feed-shared";
 import type { CommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
 import {
   createYouTubeOAuthCredentialStatusUiWiring,
@@ -305,9 +310,11 @@ function CommentCard({
 }
 
 export function CommentTranslatorDock({
-  youtubeCredentialStatusSource
+  youtubeCredentialStatusSource,
+  initialRealCommentsFeed
 }: {
   youtubeCredentialStatusSource: CommentTranslatorToolCredentialStatusSource;
+  initialRealCommentsFeed: CommentTranslatorRealCommentsFeedState;
 }) {
   const { locale } = useLocale();
   const {
@@ -322,8 +329,7 @@ export function CommentTranslatorDock({
     surfaceOptions,
     statusFilters,
     quotaScenarios,
-    skipReasons,
-    comments
+    skipReasons
   } = mockTranslationProvider.getSnapshot();
   const copy = commentTranslatorUiCopy[locale];
   const [connectionId, setConnectionId] = useState<CommentTranslatorConnectionStateId>("connected");
@@ -346,8 +352,11 @@ export function CommentTranslatorDock({
   const [credentialStatusError, setCredentialStatusError] = useState<string | null>(null);
   const [sessionState, setSessionState] = useState<OperatorSessionState>(initialOperatorSessionState);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [realCommentsFeed, setRealCommentsFeed] = useState<CommentTranslatorRealCommentsFeedState>(initialRealCommentsFeed);
+  const [realCommentsFeedError, setRealCommentsFeedError] = useState<string | null>(null);
   const [isCredentialStatusPending, startCredentialStatusTransition] = useTransition();
   const [isSessionPending, startSessionTransition] = useTransition();
+  const [isRealCommentsFeedPending, startRealCommentsFeedTransition] = useTransition();
   const singleCommentInputRef = useRef<HTMLInputElement>(null);
   const multilinePasteInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -428,24 +437,26 @@ export function CommentTranslatorDock({
     label: copy.manualResults[mode].label,
     helper: copy.manualResults[mode].helper
   }));
-  const allComments = [...manualComments, ...comments];
-  const filteredComments = filterCommentTranslatorComments(allComments, { statusFilter, searchQuery });
+  const feedComments = mapCommentTranslatorRealCommentsFeedRowsToUiComments({
+    feed: realCommentsFeed,
+    targetLanguageLabel: localizedTargetLanguage.label
+  });
+  const filteredComments = filterCommentTranslatorComments(feedComments, { statusFilter, searchQuery });
   const liveStats = {
-    translated: allComments.filter((comment) => comment.status === "translated").length,
-    skipped: allComments.filter((comment) => comment.status === "skipped").length,
-    errors: allComments.filter((comment) => comment.status === "error").length,
-    cacheHits: allComments.filter((comment) => comment.cacheStatus === "hit").length,
-    cacheMisses: allComments.filter((comment) => comment.cacheStatus === "miss").length,
-    manualRows: manualComments.length,
-    manualUnits: manualComments.reduce((total, comment) => total + comment.unitCost, 0)
+    translated: feedComments.filter((comment) => comment.status === "translated").length,
+    skipped: feedComments.filter((comment) => comment.status === "skipped").length,
+    errors: feedComments.filter((comment) => comment.status === "error").length,
+    cacheHits: feedComments.filter((comment) => comment.cacheStatus === "hit").length,
+    cacheMisses: feedComments.filter((comment) => comment.cacheStatus === "miss").length,
+    manualRows: manualComments.length
   };
   const skipReasonCounts = skipReasons.map((reason) => ({
     ...reason,
-    count: allComments.filter((comment) => comment.skipReason === reason.label).length
+    count: feedComments.filter((comment) => comment.skipReason === reason.label).length
   }));
   const effectiveUsedUnits = Math.min(
     localizedQuotaPreview.limitUnits,
-    localizedQuotaPreview.usedUnits + liveStats.manualUnits
+    localizedQuotaPreview.usedUnits
   );
   const effectiveCacheTotal = liveStats.cacheHits + liveStats.cacheMisses;
   const effectiveCacheHitRate = effectiveCacheTotal > 0 ? Math.round((liveStats.cacheHits / effectiveCacheTotal) * 100) : 0;
@@ -533,6 +544,18 @@ export function CommentTranslatorDock({
 
   function refreshSessionState() {
     runSessionCommand(sessionState.status === "active" ? "heartbeat" : "status");
+  }
+
+  function refreshRealCommentsFeed() {
+    startRealCommentsFeedTransition(async () => {
+      try {
+        const feed = await getCommentTranslatorRealCommentsFeedAction();
+        setRealCommentsFeed(feed);
+        setRealCommentsFeedError(null);
+      } catch {
+        setRealCommentsFeedError(locale === "ja" ? "コメント状態を更新できませんでした" : "Could not refresh comments");
+      }
+    });
   }
 
   function clearManualDraft() {
@@ -647,7 +670,15 @@ export function CommentTranslatorDock({
           </section>
         ) : null}
 
-        <section className={commentOnly ? "grid gap-3" : shellIsNarrow ? "grid gap-3" : "grid gap-3 xl:grid-cols-[22rem_minmax(34rem,1fr)_20rem]"}>
+        <section
+          className={
+            commentOnly
+              ? "grid gap-3"
+              : shellIsNarrow
+                ? "grid gap-3"
+                : "grid gap-3 xl:grid-cols-[22rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(34rem,1fr)_20rem]"
+          }
+        >
           {!commentOnly ? (
             <aside className="grid min-w-0 content-start gap-3 md:grid-cols-2 xl:grid-cols-1">
               <section data-public-operator-session-ui="sanitized-session-usage-only" className="panel p-4 md:col-span-2 xl:col-span-1">
@@ -837,7 +868,10 @@ export function CommentTranslatorDock({
             </aside>
           ) : null}
 
-          <main className="panel flex min-h-[34rem] min-w-0 flex-col overflow-hidden">
+          <main
+            data-comment-translator-real-comments-feed="server-owned-safe-rows"
+            className="panel flex min-h-[34rem] min-w-0 flex-col overflow-hidden"
+          >
             <div data-layout="live-header-two-row" className="grid gap-3 border-b border-border p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -877,6 +911,14 @@ export function CommentTranslatorDock({
                     />
                   </label>
                   <div className="flex min-w-0 flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={refreshRealCommentsFeed}
+                      disabled={isRealCommentsFeedPending}
+                      className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-xs font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                    >
+                      {isRealCommentsFeedPending ? (locale === "ja" ? "更新中" : "Refreshing") : locale === "ja" ? "コメント更新" : "Refresh"}
+                    </button>
                     {statusFilters.map((filter) => {
                       const selected = filter.id === statusFilter;
                       return (
@@ -903,7 +945,7 @@ export function CommentTranslatorDock({
             {!commentOnly ? (
               <div className="grid grid-cols-2 gap-2 border-b border-border bg-surface-muted/30 p-3 text-center text-xs font-bold text-muted sm:grid-cols-4">
                 <span className="rounded-base bg-surface px-2 py-2">{filteredComments.length} {copy.stats.shown}</span>
-                <span className="rounded-base bg-surface px-2 py-2">{allComments.length} {copy.stats.total}</span>
+                <span className="rounded-base bg-surface px-2 py-2">{feedComments.length} {copy.stats.total}</span>
                 <span className="rounded-base bg-emerald-50 px-2 py-2 text-emerald-700">{liveStats.translated} {copy.stats.translated}</span>
                 <span className="rounded-base bg-amber-50 px-2 py-2 text-amber-700">{liveStats.skipped} {copy.stats.skipped}</span>
               </div>
@@ -927,7 +969,9 @@ export function CommentTranslatorDock({
                       ...
                     </div>
                     <p className="mt-3 text-sm font-black text-foreground">{copy.empty.title}</p>
-                    <p className="mt-1 text-xs leading-5 text-muted">{copy.empty.body}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted">
+                      {realCommentsFeedError ?? copy.empty.body}
+                    </p>
                   </div>
                 </div>
               )}
@@ -935,7 +979,7 @@ export function CommentTranslatorDock({
           </main>
 
           {!commentOnly && !shellIsNarrow ? (
-            <aside className="hidden min-w-0 content-start gap-3 xl:grid">
+            <aside className="hidden min-w-0 content-start gap-3 2xl:grid">
               <section className="panel p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h2 className="text-base font-black text-foreground">{locale === "ja" ? "今日の状態" : "Today"}</h2>

@@ -25,6 +25,8 @@ const finalQaDocPath = "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const productionEnvReadinessPath = "docs/active/COMMENT_TRANSLATOR_PRODUCTION_ENV_READINESS.md";
 const plG4DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md";
+const plG4FollowUpDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE_FOLLOW_UP.md";
 const taskPath = "task.md";
 
 const runtimePaths = [
@@ -100,6 +102,7 @@ for (const requiredPath of [
   gapAuditPath,
   productionEnvReadinessPath,
   plG4DocPath,
+  plG4FollowUpDocPath,
   taskPath,
   ...runtimePaths
 ]) {
@@ -119,6 +122,7 @@ const finalQaDoc = read(finalQaDocPath);
 const gapAudit = read(gapAuditPath);
 const productionEnvReadiness = read(productionEnvReadinessPath);
 const plG4Doc = read(plG4DocPath);
+const plG4FollowUpDoc = read(plG4FollowUpDocPath);
 const task = read(taskPath);
 const runtimeSources = runtimePaths.map((runtimePath) => [runtimePath, read(runtimePath)]);
 
@@ -261,10 +265,11 @@ assert.match(productionEnvReadiness, /COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_
 assert.match(productionEnvReadiness, /CLOUDFLARE_ACCOUNT_ID[\s\S]*deploy\/upload/, "production env readiness records deploy reference as approval-gated");
 assert.match(plG4Doc, /approved-fb-l5-production-custom-deployed-smoke/i, "PL-G4 evidence keeps FB-L5 approval label");
 assert.match(plG4Doc, /production\/custom deployed smoke execution[\s\S]*not-run \/ approval-gated/i, "PL-G4 evidence keeps deployed smoke not-run/gated");
+assert.match(plG4FollowUpDoc, /keep blocked \/ blocked-no-approval/i, "PL-G4 follow-up keeps deployed smoke blocked");
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(?:fb-l5|pl-g4)-production-custom-deployed-smoke`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:fb-l5|pl-g4)-production-custom-deployed-smoke(?:-evidence-follow-up)?`/i,
   "task.md records FB-L5 or PL-G4 branch"
 );
 assert.match(task, /FB-L5[\s\S]*Production\/custom deployed smoke[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L5 state");
@@ -319,6 +324,7 @@ for (const [label, source] of [
   [gapAuditPath, gapAudit],
   [productionEnvReadinessPath, productionEnvReadiness],
   [plG4DocPath, plG4Doc],
+  [plG4FollowUpDocPath, plG4FollowUpDoc],
   [taskPath, task],
   ...runtimeSources
 ]) {
@@ -330,11 +336,13 @@ const allowedChangedFiles = new Set([
   readyPreflightDocPath,
   publicUsabilityPreflightDocPath,
   plG4DocPath,
+  plG4FollowUpDocPath,
   finalQaDocPath,
   gapAuditPath,
   taskPath,
   "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

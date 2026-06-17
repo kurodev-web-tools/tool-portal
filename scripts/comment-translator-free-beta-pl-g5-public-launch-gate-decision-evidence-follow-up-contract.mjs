@@ -5,16 +5,19 @@ import path from "node:path";
 
 const root = process.cwd();
 
-const plG5DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md";
-const plG5FollowUpDocPath =
+const followUpDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE_FOLLOW_UP_AFTER_PL_G4.md";
+const plG5DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md";
 const fbL6EvidencePath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md";
 const fbL6ReadyPreflightPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_READY_PREFLIGHT.md";
+const plG4FollowUpPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE_FOLLOW_UP.md";
+const plG3FollowUpPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md";
+const plG2cPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2C_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE.md";
+const plG1Path = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md";
 const publicUsabilityPreflightPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md";
-const plG1DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md";
-const plG2bDocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2B_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE.md";
-const plG3DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md";
-const plG4DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md";
 const finalQaPath = "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const taskPath = "task.md";
@@ -66,31 +69,31 @@ function assertNoSensitiveValues(source, label) {
 }
 
 for (const requiredPath of [
+  followUpDocPath,
   plG5DocPath,
-  plG5FollowUpDocPath,
   fbL6EvidencePath,
   fbL6ReadyPreflightPath,
+  plG4FollowUpPath,
+  plG3FollowUpPath,
+  plG2cPath,
+  plG1Path,
   publicUsabilityPreflightPath,
-  plG1DocPath,
-  plG2bDocPath,
-  plG3DocPath,
-  plG4DocPath,
   finalQaPath,
   gapAuditPath,
   taskPath
 ]) {
-  assert.ok(exists(requiredPath), `PL-G5 required path exists: ${requiredPath}`);
+  assert.ok(exists(requiredPath), `PL-G5 follow-up required path exists: ${requiredPath}`);
 }
 
+const followUpDoc = read(followUpDocPath);
 const plG5Doc = read(plG5DocPath);
-const plG5FollowUpDoc = read(plG5FollowUpDocPath);
 const fbL6Evidence = read(fbL6EvidencePath);
 const fbL6ReadyPreflight = read(fbL6ReadyPreflightPath);
+const plG4FollowUp = read(plG4FollowUpPath);
+const plG3FollowUp = read(plG3FollowUpPath);
+const plG2c = read(plG2cPath);
+const plG1 = read(plG1Path);
 const publicUsabilityPreflight = read(publicUsabilityPreflightPath);
-const plG1Doc = read(plG1DocPath);
-const plG2bDoc = read(plG2bDocPath);
-const plG3Doc = read(plG3DocPath);
-const plG4Doc = read(plG4DocPath);
 const finalQa = read(finalQaPath);
 const gapAudit = read(gapAuditPath);
 const task = read(taskPath);
@@ -99,8 +102,8 @@ for (const requiredSection of [
   "## Purpose",
   "## Execution Decision",
   "## Inspected Inputs",
-  "## Decision Boundary",
   "## Evidence Status Matrix",
+  "## Decision Boundary",
   "## Sanitized Evidence Shape",
   "## Blocker Evidence",
   "## What This Proves",
@@ -109,39 +112,38 @@ for (const requiredSection of [
   "## Next Safe Action",
   "## Completion Verification"
 ]) {
-  assert.match(plG5Doc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G5 doc includes ${requiredSection}`);
+  assert.match(followUpDoc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G5 follow-up doc includes ${requiredSection}`);
 }
 
 for (const requiredFragment of [
-  "Status: PL-G5 release-owner public launch decision preflight/evidence",
+  "Status: PL-G5 public launch gate decision evidence follow-up after PL-G4 follow-up",
   "Public-release capable: no",
   "Execution result: keep blocked / blocked-no-approval",
+  "This prompt is not release-owner exact approval",
   "approved-fb-l6-keep-blocked-launch-gate-decision",
   "approved-fb-l6-open-limited-public-beta",
   "approved-fb-l6-flip-public-gate",
-  "same-thread release-owner ready preflight",
-  "sanitized output review",
-  "exact explicit approval",
-  "public launch gate unchanged",
-  "public gate state label",
-  "public-release capable label",
+  "Public gate state label: unchanged / blocked",
+  "Public-release capable label: no",
   "PL-G1 remote durable enforcement",
   "remote-apply-and-deployed-smoke-completed",
-  "PL-G2B allowed-tester route/API harness smoke",
-  "PL-G3 Start-to-translation smoke",
-  "PL-G4 production/custom deployed smoke",
-  "blocked-no-approval",
-  "not-run / approval-gated",
+  "PL-G2C prior blocker",
+  "PL-G3 follow-up blocker",
+  "PL-G4 follow-up blocker",
+  "Existing PL-G5 keep-blocked decision",
+  "keep blocked / blocked-no-approval",
+  "blocked-no-approval / not-run / approval-gated",
   "limited public beta open",
+  "public access change",
   "public launch gate flip",
-  "separate reviewed operation",
+  "separate reviewed access-change or gate-flip operation",
   "counts/status/stop reasons only",
   "no browser storage expansion",
   "no handoff payload expansion",
   "width checks skipped",
   "no visible UI/CSS/layout/copy change"
 ]) {
-  assert.match(plG5Doc, new RegExp(escaped(requiredFragment), "i"), `PL-G5 doc includes ${requiredFragment}`);
+  assert.match(followUpDoc, new RegExp(escaped(requiredFragment), "i"), `PL-G5 follow-up doc includes ${requiredFragment}`);
 }
 
 for (const forbiddenFragment of [
@@ -149,55 +151,52 @@ for (const forbiddenFragment of [
   "public launch gate flip: completed",
   "public access change: completed",
   "deploy/upload: completed",
+  "remote Supabase mutation: completed",
   "session Start: completed",
   "provider target lookup: completed",
   "liveChatMessages.list: completed",
   "Azure/OpenAI provider execution: completed",
   "Stripe action: completed"
 ]) {
-  assert.doesNotMatch(plG5Doc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G5 doc excludes ${forbiddenFragment}`);
+  assert.doesNotMatch(followUpDoc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G5 follow-up doc excludes ${forbiddenFragment}`);
 }
 
-assert.match(fbL6Evidence, /keep blocked \/ blocked-no-approval/i, "FB-L6 evidence keeps blocked decision");
+assert.match(plG5Doc, /keep blocked \/ blocked-no-approval/i, "existing PL-G5 decision stays blocked");
+assert.match(fbL6Evidence, /keep blocked \/ blocked-no-approval/i, "FB-L6 evidence stays blocked");
 assert.match(fbL6ReadyPreflight, /approved-fb-l6-keep-blocked-launch-gate-decision/i, "FB-L6 ready preflight keeps keep-blocked label");
 assert.match(fbL6ReadyPreflight, /approved-fb-l6-open-limited-public-beta/i, "FB-L6 ready preflight keeps limited-beta label");
 assert.match(fbL6ReadyPreflight, /approved-fb-l6-flip-public-gate/i, "FB-L6 ready preflight keeps gate-flip label");
+assert.match(plG4FollowUp, /keep blocked \/ blocked-no-approval/i, "PL-G4 follow-up stays blocked");
+assert.match(plG3FollowUp, /keep blocked \/ blocked-no-approval/i, "PL-G3 follow-up stays blocked");
+assert.match(plG2c, /keep blocked \/ blocked-no-approval/i, "PL-G2C prior blocker stays blocked");
+assert.match(plG1, /remote-apply-and-deployed-smoke-completed/i, "PL-G1 durable boundary stays completed");
 assert.match(publicUsabilityPreflight, /PL-G5[\s\S]*keep blocked \/ blocked-no-approval/i, "FB-L1 public usability preflight records PL-G5");
-assert.match(plG1Doc, /remote-apply-and-deployed-smoke-completed/i, "PL-G1 evidence records completed durable execution");
-assert.match(plG1Doc, /remote Supabase migration apply: completed/i, "PL-G1 evidence records completed remote apply");
-assert.match(plG1Doc, /deployed durable session\/usage smoke: completed/i, "PL-G1 evidence records completed deployed durable smoke");
-assert.match(plG2bDoc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "PL-G2B remains blocked/gated");
-assert.match(plG3Doc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "PL-G3 remains blocked/gated");
-assert.match(plG4Doc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "PL-G4 remains blocked/gated");
 assert.match(finalQa, /PL-G5[\s\S]*keep blocked \/ blocked-no-approval/i, "F15 readiness records PL-G5");
 assert.match(gapAudit, /PL-G5[\s\S]*Public launch gate decision/i, "gap audit records PL-G5");
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g5-public-launch-gate-decision(?:-follow-up-after-pl-g4)?`/i,
-  "task.md records PL-G5 branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g5-public-launch-gate-decision-follow-up-after-pl-g4`/i,
+  "task.md records PL-G5 follow-up branch"
 );
-assert.match(task, /PL-G5[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G5 blocked result");
-assert.match(task, /approved-fb-l6-keep-blocked-launch-gate-decision/i, "task.md records exact keep-blocked approval label");
-assert.match(task, /remote-apply-and-deployed-smoke-completed/i, "task.md records PL-G1 completed status");
-assert.match(task, /PL-G2B blocked-no-approval \/ deployed execution approval-gated/i, "task.md records PL-G2 blocked status");
-assert.match(task, /PL-G3[\s\S]*blocked-no-approval \/ not-run \/ approval-gated/i, "task.md records PL-G3 blocked status");
-assert.match(task, /PL-G4[\s\S]*blocked-no-approval \/ not-run \/ approval-gated/i, "task.md records PL-G4 blocked status");
-assert.match(task, /unchecked scope[\s\S]*limited public beta open[\s\S]*public launch gate flip/i, "task.md records unchecked public access scope");
-assert.match(task, /residual risk[\s\S]*public-release capable remains no/i, "task.md records PL-G5 residual risk");
-assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records PL-G5 width-check skip reason");
-assert.match(task, /public-release capable: no/i, "task.md keeps public release blocked");
+assert.match(task, /Latest PL-G5 Follow-up Evidence/i, "task.md records Latest PL-G5 Follow-up Evidence");
+assert.match(task, /PL-G5 follow-up[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G5 follow-up blocked result");
+assert.match(task, /PL-G4 follow-up blocker[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G4 follow-up blocker status");
+assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md records unchanged public gate state label");
+assert.match(task, /public-release capable label: no/i, "task.md records public-release capable label");
+assert.match(task, /Next safe action[\s\S]*keep blocked[\s\S]*PL-G2C[\s\S]*PL-G3[\s\S]*PL-G4/i, "task.md records next safe action");
+assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records follow-up width-check skip reason");
 
 for (const [label, source] of [
+  [followUpDocPath, followUpDoc],
   [plG5DocPath, plG5Doc],
-  [plG5FollowUpDocPath, plG5FollowUpDoc],
   [fbL6EvidencePath, fbL6Evidence],
   [fbL6ReadyPreflightPath, fbL6ReadyPreflight],
+  [plG4FollowUpPath, plG4FollowUp],
+  [plG3FollowUpPath, plG3FollowUp],
+  [plG2cPath, plG2c],
+  [plG1Path, plG1],
   [publicUsabilityPreflightPath, publicUsabilityPreflight],
-  [plG1DocPath, plG1Doc],
-  [plG2bDocPath, plG2bDoc],
-  [plG3DocPath, plG3Doc],
-  [plG4DocPath, plG4Doc],
   [finalQaPath, finalQa],
   [gapAuditPath, gapAudit],
   [taskPath, task]
@@ -206,8 +205,8 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
+  followUpDocPath,
   plG5DocPath,
-  plG5FollowUpDocPath,
   fbL6EvidencePath,
   publicUsabilityPreflightPath,
   finalQaPath,
@@ -219,8 +218,8 @@ const allowedChangedFiles = new Set([
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `PL-G5 change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `PL-G5 follow-up change stays in allowed files: ${file}`);
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 
-console.log("comment translator Free beta PL-G5 public launch gate decision contract checks passed");
+console.log("comment translator Free beta PL-G5 public launch gate decision evidence follow-up contract checks passed");

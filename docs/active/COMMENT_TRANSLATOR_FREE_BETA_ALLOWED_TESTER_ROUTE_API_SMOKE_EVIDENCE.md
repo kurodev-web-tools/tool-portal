@@ -8,6 +8,8 @@ Authenticated allowed-tester route/API smoke execution: not-run / approval-gated
 
 This record closes the FB-L3 decision for the current thread by documenting the authenticated allowed-tester route/API smoke boundary, the exact ready preflight, and the blocker. It does not run or approve remote Supabase migration apply, remote Supabase mutation, deployed durable smoke, session start smoke, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, deploy/upload, Stripe billing action, main promotion, or public launch gate flip.
 
+PL-G2A update: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2A_SERVER_ACTION_ROUTE_API_HARNESS.md` and `POST /api/comment-translator/free-beta/route-api-harness` now provide the reviewed server action route/API harness for the feed, deletion, Creator locked waitlist, and Creator locked click draft surfaces. The harness remains inert until the debug env gate, approval header, private launch allowed-tester gate, and later same-thread approval are present; deployed harness execution remains not-run / approval-gated.
+
 Output policy: sanitized-metadata-only. Allowed evidence is command name, route/action name, HTTP status, session/feed/usage/deletion/Creator locked status, count, stop reason, unavailable reason, safe target label, and pass/fail state. Evidence stays counts/status/stop reasons only, with unavailable reasons allowed for blocked route/action states. Secret values, OAuth values, token values, Authorization header values, cookie values, owner user id values, provider channel id values, provider target metadata, liveChatId values, service-role values, server-only cursor values, raw provider payloads, raw comments, Stripe secret/billing identifiers, browser storage payloads, and handoff payload expansion are not requested, displayed, stored, or recorded.
 
 ## Purpose
@@ -50,6 +52,7 @@ This thread did not have same-thread ready preflight, sanitized output review, a
 Allowed FB-L3 smoke surfaces:
 
 - route boundary: `POST /api/comment-translator/session` with `{"intent":"status"}` only unless later approval explicitly expands the payload;
+- server action harness route: `POST /api/comment-translator/free-beta/route-api-harness`, inert unless PL-G2A debug env gate, approval header, and private launch allowed-tester gate pass;
 - session status action: `getCommentTranslatorSessionStatusAction`;
 - feed action: `getCommentTranslatorRealCommentsFeedAction`;
 - deletion/readiness action: `requestCommentTranslatorDataDeletionAction`;

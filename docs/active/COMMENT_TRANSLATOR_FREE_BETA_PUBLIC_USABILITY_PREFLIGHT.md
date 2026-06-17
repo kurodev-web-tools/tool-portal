@@ -20,6 +20,8 @@ PL-G4 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUST
 
 FB-L6 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md` records Public launch gate decision as `keep blocked / blocked-no-approval`, with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_READY_PREFLIGHT.md`. The decision options are `keep blocked`, `open limited public beta`, and `flip public gate`; without same-thread release-owner exact approval, the public launch gate remains unchanged and `public-release capable: no` remains in effect.
 
+PL-G5 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md` records the public-launch remaining gate decision as `keep blocked / blocked-no-approval`. PL-G1 remote durable enforcement is recorded as `remote-apply-and-deployed-smoke-completed`, while PL-G2B, PL-G3, and PL-G4 remain blocked-no-approval / not-run / approval-gated. Without same-thread release-owner exact approval to open limited public beta or flip public gate, public-release capable remains no and public access remains unchanged.
+
 ## Inspected Inputs
 
 - `task.md`
@@ -113,6 +115,7 @@ Local deterministic baseline:
 - `node scripts/comment-translator-free-beta-public-usability-preflight-contract.mjs`
 - `node scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs`
 - `node scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs`
+- `node scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs`
 
 Live/provider preflight command surfaces:
 

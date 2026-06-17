@@ -159,12 +159,15 @@ PL-G4 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUST
 
 FB-L6 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md` records Public launch gate decision as keep blocked / blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_READY_PREFLIGHT.md`. It limits the release-owner decision options to `keep blocked`, `open limited public beta`, and `flip public gate`; because same-thread exact release-owner approval is absent and FB-L2 through FB-L5 execution remains not-run / approval-gated, public launch gate remains unchanged and `public-release capable: no` remains in effect.
 
+PL-G5 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md` records the public-launch remaining gate decision as keep blocked / blocked-no-approval. It refreshes the evidence status after PL-G4: PL-G1 remote durable enforcement is remote-apply-and-deployed-smoke-completed, while PL-G2B route/API harness smoke, PL-G3 Start-to-translation smoke, and PL-G4 production/custom deployed smoke remain blocked-no-approval / not-run / approval-gated. Because release-owner exact approval to open limited public beta or flip public gate is absent, public launch gate remains unchanged and public-release capable remains no.
+
 ## Blockers
 
 - Remote Supabase migration/apply and deployed durable session/usage enforcement are not verified.
 - Authenticated allowed-tester route/API smoke execution remains not-run / approval-gated even though FB-L3 now has exact-command ready preflight and PL-G2B records the blocked-no-approval harness smoke evidence.
 - Start-to-translation smoke execution remains not-run / approval-gated even though FB-L4 now has exact-command ready preflight and PL-G3 records the blocked-no-approval execution gate evidence.
 - Production/custom deployed smoke execution remains not-run / approval-gated even though FB-L5 now has exact-command ready preflight and PL-G4 records the blocked-no-approval execution gate evidence.
+- PL-G5 keeps the public launch gate decision blocked because release-owner exact approval to open limited public beta or flip public gate is absent.
 - Public launch gate decision remains keep blocked / blocked-no-approval because same-thread release-owner approval to open limited public beta or flip public gate is absent.
 - Real provider target lookup and live target lookup remain not-run.
 - Real `liveChatMessages.list` polling remains not-run for the Free beta launch path.

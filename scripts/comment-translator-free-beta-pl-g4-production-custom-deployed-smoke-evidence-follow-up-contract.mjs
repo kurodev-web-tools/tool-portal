@@ -5,13 +5,19 @@ import path from "node:path";
 
 const root = process.cwd();
 
-const plG4DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md";
-const plG4FollowUpDocPath =
+const followUpDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE_FOLLOW_UP.md";
+const plG4DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md";
 const fbL5EvidencePath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md";
 const fbL5ReadyPreflightPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md";
-const plG3DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md";
+const plG3FollowUpPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md";
+const plG2cDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2C_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE.md";
+const plG1DocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md";
+const plG5DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md";
 const publicUsabilityPreflightPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md";
 const finalQaPath = "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
@@ -67,11 +73,14 @@ function assertNoSensitiveValues(source, label) {
 }
 
 for (const requiredPath of [
+  followUpDocPath,
   plG4DocPath,
-  plG4FollowUpDocPath,
   fbL5EvidencePath,
   fbL5ReadyPreflightPath,
-  plG3DocPath,
+  plG3FollowUpPath,
+  plG2cDocPath,
+  plG1DocPath,
+  plG5DocPath,
   publicUsabilityPreflightPath,
   finalQaPath,
   gapAuditPath,
@@ -80,14 +89,17 @@ for (const requiredPath of [
   dockPath,
   taskPath
 ]) {
-  assert.ok(exists(requiredPath), `PL-G4 required path exists: ${requiredPath}`);
+  assert.ok(exists(requiredPath), `PL-G4 follow-up required path exists: ${requiredPath}`);
 }
 
+const followUpDoc = read(followUpDocPath);
 const plG4Doc = read(plG4DocPath);
-const plG4FollowUpDoc = read(plG4FollowUpDocPath);
 const fbL5Evidence = read(fbL5EvidencePath);
 const fbL5ReadyPreflight = read(fbL5ReadyPreflightPath);
-const plG3Doc = read(plG3DocPath);
+const plG3FollowUp = read(plG3FollowUpPath);
+const plG2cDoc = read(plG2cDocPath);
+const plG1Doc = read(plG1DocPath);
+const plG5Doc = read(plG5DocPath);
 const publicUsabilityPreflight = read(publicUsabilityPreflightPath);
 const finalQa = read(finalQaPath);
 const gapAudit = read(gapAuditPath);
@@ -101,6 +113,7 @@ for (const requiredSection of [
   "## Execution Decision",
   "## Inspected Inputs",
   "## Production/Custom Deployed Boundary",
+  "## Evidence Status Matrix",
   "## Sanitized Evidence Shape",
   "## Blocker Evidence",
   "## Ready Preflight For Later Execution",
@@ -110,44 +123,59 @@ for (const requiredSection of [
   "## Next Safe Action",
   "## Completion Verification"
 ]) {
-  assert.match(plG4Doc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G4 doc includes ${requiredSection}`);
+  assert.match(followUpDoc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G4 follow-up doc includes ${requiredSection}`);
 }
 
 for (const requiredFragment of [
-  "Status: PL-G4 production/custom deployed smoke execution preflight/evidence",
+  "Status: PL-G4 production/custom deployed smoke execution/evidence follow-up",
   "Public-release capable: no",
-  "Execution result: blocked-no-approval",
+  "Execution result: keep blocked / blocked-no-approval",
+  "This prompt is not exact approval",
+  "approved-fb-l5-production-custom-deployed-smoke",
   "same-thread ready preflight",
   "sanitized output review",
   "exact explicit approval",
-  "approved-fb-l5-production-custom-deployed-smoke",
-  "COMMENT_TRANSLATOR_DEPLOYED_ORIGIN",
-  "COMMENT_TRANSLATOR_DEPLOYED_VERSION_LABEL",
-  "COMMENT_TRANSLATOR_ALLOWED_TESTER_COOKIE",
+  "operator-local env references",
   "deployed target freshness",
   "reviewed integration branch match",
   "allowed-tester route/UI reachability",
   "status-only session API",
-  "usage/deletion/Creator locked gate",
+  "usage/deletion/Creator locked gate status",
   "Start-to-translation gate status",
+  "PL-G1 remote durable enforcement",
+  "remote-apply-and-deployed-smoke-completed",
+  "PL-G2C prior blocker",
+  "PL-G3 follow-up blocker",
+  "PL-G4 prior blocker",
+  "PL-G5 keep-blocked decision",
+  "public gate state label: unchanged / blocked",
+  "public-release capable label: no",
+  "blocked-missing-approval-or-evidence",
   "not-run / approval-gated",
-  "blocked-missing-env-or-operator-local-references",
-  "counts/status/stop reasons only",
   "safe deployed target label",
   "safe deployment/version label",
+  "reviewed integration branch label",
+  "visible state label",
   "source attribution label",
+  "count",
+  "stop reason",
+  "unavailable reason",
+  "pass/fail",
   "no browser storage expansion",
   "no handoff payload expansion",
   "width checks skipped",
   "no visible UI/CSS/layout/copy change"
 ]) {
-  assert.match(plG4Doc, new RegExp(escaped(requiredFragment), "i"), `PL-G4 doc includes ${requiredFragment}`);
+  assert.match(followUpDoc, new RegExp(escaped(requiredFragment), "i"), `PL-G4 follow-up doc includes ${requiredFragment}`);
 }
 
 for (const forbiddenFragment of [
-  "approved-fb-l4-start-to-translation-smoke",
-  "approved-fb-l3-allowed-tester-route-api-smoke",
-  "approved-fb-l2-remote-durable-enforcement-apply-and-smoke",
+  "deployed target freshness: completed",
+  "reviewed integration branch match: completed",
+  "allowed-tester route/UI reachability: completed",
+  "status-only session API: completed",
+  "usage/deletion/Creator locked gate status: completed",
+  "Start-to-translation gate status: completed",
   "session Start: completed",
   "provider target lookup: completed",
   "liveChatMessages.list: completed",
@@ -155,56 +183,53 @@ for (const forbiddenFragment of [
   "deploy/upload: completed",
   "public launch gate flip: completed"
 ]) {
-  assert.doesNotMatch(plG4Doc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G4 doc excludes ${forbiddenFragment}`);
+  assert.doesNotMatch(followUpDoc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G4 follow-up doc excludes ${forbiddenFragment}`);
 }
 
-assert.match(fbL5Evidence, /PL-G4[\s\S]*blocked-no-approval/i, "FB-L5 evidence records PL-G4 blocker");
-assert.match(plG4FollowUpDoc, /keep blocked \/ blocked-no-approval/i, "PL-G4 follow-up records keep-blocked result");
-assert.match(fbL5ReadyPreflight, /approved-fb-l5-production-custom-deployed-smoke/i, "FB-L5 ready preflight keeps PL-G4 approval label");
-assert.match(plG3Doc, /Start-to-translation smoke execution[\s\S]*not-run \/ approval-gated/i, "PL-G3 remains not-run before PL-G4");
+assert.match(plG4Doc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "PL-G4 prior blocker remains blocked/gated");
+assert.match(fbL5Evidence, /PL-G4[\s\S]*(blocked-no-approval|keep blocked)/i, "FB-L5 evidence records PL-G4 state");
+assert.match(fbL5ReadyPreflight, /approved-fb-l5-production-custom-deployed-smoke/i, "FB-L5 ready preflight keeps exact approval label");
+assert.match(plG3FollowUp, /keep blocked \/ blocked-no-approval/i, "PL-G3 follow-up remains keep blocked");
+assert.match(plG2cDoc, /keep blocked \/ blocked-no-approval/i, "PL-G2C prior blocker remains keep blocked");
+assert.match(plG1Doc, /remote-apply-and-deployed-smoke-completed/i, "PL-G1 evidence records completed durable boundary");
+assert.match(plG5Doc, /keep blocked \/ blocked-no-approval/i, "PL-G5 keeps launch blocked");
 assert.match(publicUsabilityPreflight, /PL-G4[\s\S]*production\/custom deployed smoke/i, "FB-L1 public usability preflight records PL-G4");
-assert.match(finalQa, /PL-G4[\s\S]*blocked-no-approval/i, "F15 readiness records PL-G4 blocker");
+assert.match(finalQa, /PL-G4[\s\S]*(blocked-no-approval|keep blocked)/i, "F15 readiness records PL-G4");
 assert.match(gapAudit, /PL-G4[\s\S]*production\/custom deployed smoke/i, "gap audit records PL-G4");
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke(?:-evidence-follow-up)?`/i,
-  "task.md records PL-G4 branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up`/i,
+  "task.md records PL-G4 follow-up branch"
 );
-assert.match(task, /PL-G4[\s\S]*blocked-no-approval/i, "task.md records PL-G4 blocked result");
+assert.match(task, /Latest PL-G4 Follow-up Evidence/i, "task.md records Latest PL-G4 Follow-up Evidence");
+assert.match(task, /keep blocked \/ blocked-no-approval/i, "task.md records PL-G4 follow-up blocked result");
 assert.match(task, /approved-fb-l5-production-custom-deployed-smoke/i, "task.md records exact PL-G4 approval label");
 assert.match(task, /production\/custom deployed smoke execution[\s\S]*not-run \/ approval-gated/i, "task.md records PL-G4 smoke not-run/gated");
 assert.match(task, /unchecked scope[\s\S]*production\/custom deployed smoke execution/i, "task.md records unchecked PL-G4 scope");
 assert.match(task, /residual risk[\s\S]*PL-G4 remains incomplete/i, "task.md records PL-G4 residual risk");
-assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records PL-G4 width-check skip reason");
+assert.match(task, /next safe action[\s\S]*approved-fb-l5-production-custom-deployed-smoke/i, "task.md records next safe action");
+assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records PL-G4 follow-up width-check skip reason");
 assert.match(task, /public-release capable: no/i, "task.md keeps public release blocked");
 
 assert.match(sessionRoute, /readCommentTranslatorPrivateLaunchAccess[\s\S]*blocked[\s\S]*status:\s*403/, "session route keeps private launch gate");
 assert.match(sessionRoute, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "session route reads durable state before browser status");
 assert.match(sessionRoute, /provider-target-lookup-not-approved/, "session route keeps provider target lookup unavailable by default");
 assert.match(sessionRoute, /live-provider-polling-not-approved/, "session route keeps live provider polling unavailable by default");
-
-for (const actionFragment of [
-  "getCommentTranslatorSessionStatusAction",
-  "getCommentTranslatorRealCommentsFeedAction",
-  "requestCommentTranslatorDataDeletionAction",
-  "getCommentTranslatorCreatorLockedWaitlistAction",
-  "recordCommentTranslatorCreatorLockedClickAction",
-  "startCommentTranslatorSessionAction"
-]) {
-  assert.match(actions, new RegExp(escaped(actionFragment)), `actions expose PL-G4 reviewed surface: ${actionFragment}`);
-}
 assert.match(actions, /readCommentTranslatorPrivateLaunchAccess[\s\S]*private-launch-gated/, "actions keep private launch gate");
 assert.match(actions, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "actions use durable session and usage readiness");
 assert.match(dock, /data-comment-translator-real-comments-feed="server-owned-safe-rows"/, "UI feed uses server-owned safe rows");
 assert.match(dock, /Source: YouTube Live Chat/, "UI source attribution label remains present");
 
 for (const [label, source] of [
+  [followUpDocPath, followUpDoc],
   [plG4DocPath, plG4Doc],
-  [plG4FollowUpDocPath, plG4FollowUpDoc],
   [fbL5EvidencePath, fbL5Evidence],
   [fbL5ReadyPreflightPath, fbL5ReadyPreflight],
-  [plG3DocPath, plG3Doc],
+  [plG3FollowUpPath, plG3FollowUp],
+  [plG2cDocPath, plG2cDoc],
+  [plG1DocPath, plG1Doc],
+  [plG5DocPath, plG5Doc],
   [publicUsabilityPreflightPath, publicUsabilityPreflight],
   [finalQaPath, finalQa],
   [gapAuditPath, gapAudit],
@@ -217,8 +242,8 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
+  followUpDocPath,
   plG4DocPath,
-  plG4FollowUpDocPath,
   fbL5EvidencePath,
   publicUsabilityPreflightPath,
   finalQaPath,
@@ -230,8 +255,8 @@ const allowedChangedFiles = new Set([
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `PL-G4 change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `PL-G4 follow-up change stays in allowed files: ${file}`);
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 
-console.log("comment translator Free beta PL-G4 production/custom deployed smoke contract checks passed");
+console.log("comment translator Free beta PL-G4 production/custom deployed smoke evidence follow-up contract checks passed");

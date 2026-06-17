@@ -206,8 +206,8 @@ assert.match(gapAudit, /PL-G2B[\s\S]*allowed-tester route\/API harness smoke/i, 
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g2(?:b-allowed-tester-route-api-harness-smoke|c-route-api-harness-smoke-evidence|d-route-api-harness-smoke-follow-up-after-pl-g5)`/i,
-  "task.md records PL-G2B, PL-G2C, or PL-G2D branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g2(?:b-allowed-tester-route-api-harness-smoke|c-route-api-harness-smoke-evidence|d-route-api-harness-smoke-follow-up-after-pl-g5|e-route-api-harness-smoke-execution-gate-after-pl-g2d)`/i,
+  "task.md records PL-G2B, PL-G2C, PL-G2D, or PL-G2E branch"
 );
 assert.match(task, /Latest PL-G2B Evidence/i, "task.md records Latest PL-G2B Evidence");
 assert.match(task, /Execution result: blocked-no-approval/i, "task.md records PL-G2B blocked result");
@@ -246,7 +246,9 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g2b-allowed-tester-route-api-harness-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2c-allowed-tester-route-api-harness-smoke-evidence-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2D_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE_FOLLOW_UP_AFTER_PL_G5.md",
-  "scripts/comment-translator-free-beta-pl-g2d-route-api-harness-smoke-evidence-follow-up-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g2d-route-api-harness-smoke-evidence-follow-up-contract.mjs",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2E_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_GATE_AFTER_PL_G2D.md",
+  "scripts/comment-translator-free-beta-pl-g2e-route-api-harness-smoke-execution-gate-after-pl-g2d-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

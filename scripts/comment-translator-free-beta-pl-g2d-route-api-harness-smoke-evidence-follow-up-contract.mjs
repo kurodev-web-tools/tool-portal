@@ -5,6 +5,8 @@ import path from "node:path";
 
 const root = process.cwd();
 
+const followUpDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2D_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE_FOLLOW_UP_AFTER_PL_G5.md";
 const plG2cDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2C_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE.md";
 const plG2bDocPath =
@@ -15,12 +17,17 @@ const allowedTesterEvidencePath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md";
 const allowedTesterPreflightPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_READY_PREFLIGHT.md";
+const plG5FollowUpPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE_FOLLOW_UP_AFTER_PL_G4.md";
+const plG5DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md";
+const plG4FollowUpPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE_FOLLOW_UP.md";
+const plG3FollowUpPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md";
 const plG1EvidencePath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md";
-const plG3DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md";
-const plG4DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md";
-const plG5DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md";
-const publicUsabilityPreflightPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md";
+const publicUsabilityPreflightPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md";
 const finalQaPath = "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const routeHarnessPath = "app/api/comment-translator/free-beta/route-api-harness/route.ts";
@@ -75,15 +82,17 @@ function assertNoSensitiveValues(source, label) {
 }
 
 for (const requiredPath of [
+  followUpDocPath,
   plG2cDocPath,
   plG2bDocPath,
   plG2aDocPath,
   allowedTesterEvidencePath,
   allowedTesterPreflightPath,
-  plG1EvidencePath,
-  plG3DocPath,
-  plG4DocPath,
+  plG5FollowUpPath,
   plG5DocPath,
+  plG4FollowUpPath,
+  plG3FollowUpPath,
+  plG1EvidencePath,
   publicUsabilityPreflightPath,
   finalQaPath,
   gapAuditPath,
@@ -92,18 +101,20 @@ for (const requiredPath of [
   actionsPath,
   taskPath
 ]) {
-  assert.ok(exists(requiredPath), `PL-G2C required path exists: ${requiredPath}`);
+  assert.ok(exists(requiredPath), `PL-G2D required path exists: ${requiredPath}`);
 }
 
+const followUpDoc = read(followUpDocPath);
 const plG2cDoc = read(plG2cDocPath);
 const plG2bDoc = read(plG2bDocPath);
 const plG2aDoc = read(plG2aDocPath);
 const allowedTesterEvidence = read(allowedTesterEvidencePath);
 const allowedTesterPreflight = read(allowedTesterPreflightPath);
-const plG1Evidence = read(plG1EvidencePath);
-const plG3Doc = read(plG3DocPath);
-const plG4Doc = read(plG4DocPath);
+const plG5FollowUp = read(plG5FollowUpPath);
 const plG5Doc = read(plG5DocPath);
+const plG4FollowUp = read(plG4FollowUpPath);
+const plG3FollowUp = read(plG3FollowUpPath);
+const plG1Evidence = read(plG1EvidencePath);
 const publicUsabilityPreflight = read(publicUsabilityPreflightPath);
 const finalQa = read(finalQaPath);
 const gapAudit = read(gapAuditPath);
@@ -127,53 +138,38 @@ for (const requiredSection of [
   "## Next Safe Action",
   "## Completion Verification"
 ]) {
-  assert.match(plG2cDoc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G2C doc includes ${requiredSection}`);
+  assert.match(followUpDoc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G2D doc includes ${requiredSection}`);
 }
 
 for (const requiredFragment of [
-  "Status: PL-G2C allowed-tester route/API harness smoke execution/evidence follow-up",
+  "Status: PL-G2D allowed-tester route/API harness smoke evidence follow-up after PL-G5 follow-up",
   "Public-release capable: no",
   "Execution result: keep blocked / blocked-no-approval",
+  "This prompt is not exact approval",
   "approved-fb-l3-allowed-tester-route-api-smoke",
   "same-thread ready preflight",
   "sanitized output review",
   "exact explicit approval",
   "operator-local env references",
-  "this prompt is not exact approval",
   "POST /api/comment-translator/session",
   "{\"intent\":\"status\"}",
   "POST /api/comment-translator/free-beta/route-api-harness",
-  "real comments feed",
-  "data deletion readiness",
-  "Creator locked waitlist",
-  "Creator locked click draft",
-  "command label",
-  "route/action name",
-  "HTTP status",
-  "session/feed/deletion/Creator locked status label",
-  "count",
-  "stop reason",
-  "unavailable reason",
-  "pass/fail",
-  "public gate state label",
-  "public-release capable label",
   "PL-G1 remote durable enforcement",
   "remote-apply-and-deployed-smoke-completed",
-  "PL-G2B prior blocker",
-  "PL-G3 Start-to-translation smoke",
-  "PL-G4 production/custom deployed smoke",
-  "PL-G5 keep-blocked decision",
+  "PL-G2C prior blocker",
+  "PL-G3 follow-up blocker",
+  "PL-G4 follow-up blocker",
+  "PL-G5 follow-up blocker/decision",
   "public gate state label: unchanged / blocked",
   "public-release capable label: no",
-  "not-run / approval-gated",
-  "blocked-no-approval",
-  "blocked-missing-approval-or-evidence",
+  "blocked-no-approval / not-run / approval-gated",
+  "counts/status/stop reasons",
   "no browser storage expansion",
   "no handoff payload expansion",
   "width checks skipped",
   "no visible UI/CSS/layout/copy change"
 ]) {
-  assert.match(plG2cDoc, new RegExp(escaped(requiredFragment), "i"), `PL-G2C doc includes ${requiredFragment}`);
+  assert.match(followUpDoc, new RegExp(escaped(requiredFragment), "i"), `PL-G2D doc includes ${requiredFragment}`);
 }
 
 for (const forbiddenFragment of [
@@ -187,61 +183,70 @@ for (const forbiddenFragment of [
   "Azure/OpenAI provider execution: completed",
   "production/custom deployed smoke: completed",
   "limited public beta open: completed",
+  "public access change: completed",
   "public launch gate flip: completed",
   "remote Supabase mutation: completed",
   "deploy/upload: completed",
   "Stripe action: completed"
 ]) {
-  assert.doesNotMatch(plG2cDoc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G2C doc excludes ${forbiddenFragment}`);
+  assert.doesNotMatch(followUpDoc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G2D doc excludes ${forbiddenFragment}`);
 }
 
-assert.match(plG2bDoc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "PL-G2B prior blocker remains blocked/gated");
+assert.match(plG2cDoc, /keep blocked \/ blocked-no-approval/i, "PL-G2C prior blocker stays blocked");
+assert.match(plG2bDoc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "PL-G2B prior blocker stays blocked/gated");
 assert.match(plG2aDoc, /POST \/api\/comment-translator\/free-beta\/route-api-harness/i, "PL-G2A harness route remains reviewed");
-assert.match(allowedTesterEvidence, /PL-G2C[\s\S]*keep blocked \/ blocked-no-approval/i, "FB-L3 evidence records PL-G2C follow-up");
+assert.match(allowedTesterEvidence, /PL-G2D[\s\S]*keep blocked \/ blocked-no-approval/i, "FB-L3 evidence records PL-G2D follow-up");
 assert.match(allowedTesterPreflight, /approved-fb-l3-allowed-tester-route-api-smoke/i, "FB-L3 ready preflight keeps approval label");
+assert.match(plG5FollowUp, /PL-G2C prior blocker[\s\S]*keep blocked \/ blocked-no-approval/i, "PL-G5 follow-up keeps PL-G2C blocker");
+assert.match(plG5Doc, /keep blocked \/ blocked-no-approval/i, "PL-G5 decision stays blocked");
+assert.match(plG4FollowUp, /keep blocked \/ blocked-no-approval/i, "PL-G4 follow-up stays blocked");
+assert.match(plG3FollowUp, /keep blocked \/ blocked-no-approval/i, "PL-G3 follow-up stays blocked");
 assert.match(plG1Evidence, /remote-apply-and-deployed-smoke-completed/i, "PL-G1 evidence remains completed");
-assert.match(plG3Doc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "PL-G3 remains blocked/gated");
-assert.match(plG4Doc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "PL-G4 remains blocked/gated");
-assert.match(plG5Doc, /keep blocked \/ blocked-no-approval/i, "PL-G5 keeps launch blocked");
-assert.match(publicUsabilityPreflight, /PL-G2C[\s\S]*allowed-tester route\/API harness smoke/i, "FB-L1 public usability preflight records PL-G2C");
-assert.match(finalQa, /PL-G2C[\s\S]*keep blocked \/ blocked-no-approval/i, "F15 readiness records PL-G2C follow-up");
-assert.match(gapAudit, /PL-G2C[\s\S]*allowed-tester route\/API harness smoke/i, "gap audit records PL-G2C");
+assert.match(publicUsabilityPreflight, /PL-G2D[\s\S]*allowed-tester route\/API harness smoke/i, "FB-L1 public usability preflight records PL-G2D");
+assert.match(finalQa, /PL-G2D[\s\S]*keep blocked \/ blocked-no-approval/i, "F15 readiness records PL-G2D follow-up");
+assert.match(gapAudit, /PL-G2D[\s\S]*allowed-tester route\/API harness smoke/i, "gap audit records PL-G2D");
 
-assert.match(routeHarness, /COMMENT_TRANSLATOR_FREE_BETA_ROUTE_API_HARNESS_ENABLED/, "PL-G2C route harness remains env-gated");
-assert.match(routeHarness, /x-comment-translator-harness-approval/, "PL-G2C route harness remains approval-header gated");
-assert.match(routeHarness, /readCommentTranslatorPrivateLaunchAccess[\s\S]*status:\s*403/, "PL-G2C route harness remains private-launch gated");
-assert.match(routeHarness, /getCommentTranslatorRealCommentsFeedAction/, "PL-G2C route harness includes feed action");
-assert.match(routeHarness, /requestCommentTranslatorDataDeletionAction/, "PL-G2C route harness includes deletion action");
-assert.match(routeHarness, /getCommentTranslatorCreatorLockedWaitlistAction/, "PL-G2C route harness includes Creator locked waitlist action");
-assert.match(routeHarness, /recordCommentTranslatorCreatorLockedClickAction/, "PL-G2C route harness includes Creator locked click action");
-assert.doesNotMatch(routeHarness, /return NextResponse\.json\(\s*(feed|state|draft|deletion)/, "PL-G2C harness does not return raw action payloads");
-assert.match(sessionRoute, /readSessionCommand[\s\S]*normalizeCommandBody[\s\S]*intent[\s\S]*status/, "PL-G2C status route accepts status intent");
-assert.match(sessionRoute, /readCommentTranslatorPrivateLaunchAccess[\s\S]*status:\s*403/, "PL-G2C status route remains private-launch gated");
-assert.match(actions, /getCommentTranslatorRealCommentsFeedAction[\s\S]*live-provider-polling-not-approved/, "PL-G2C feed action remains provider-unavailable");
+assert.match(routeHarness, /COMMENT_TRANSLATOR_FREE_BETA_ROUTE_API_HARNESS_ENABLED/, "PL-G2D route harness remains env-gated");
+assert.match(routeHarness, /x-comment-translator-harness-approval/, "PL-G2D route harness remains approval-header gated");
+assert.match(routeHarness, /readCommentTranslatorPrivateLaunchAccess[\s\S]*status:\s*403/, "PL-G2D route harness remains private-launch gated");
+assert.match(routeHarness, /getCommentTranslatorRealCommentsFeedAction/, "PL-G2D route harness includes feed action");
+assert.match(routeHarness, /requestCommentTranslatorDataDeletionAction/, "PL-G2D route harness includes deletion action");
+assert.match(routeHarness, /getCommentTranslatorCreatorLockedWaitlistAction/, "PL-G2D route harness includes Creator locked waitlist action");
+assert.match(routeHarness, /recordCommentTranslatorCreatorLockedClickAction/, "PL-G2D route harness includes Creator locked click action");
+assert.doesNotMatch(routeHarness, /return NextResponse\.json\(\s*(feed|state|draft|deletion)/, "PL-G2D harness does not return raw action payloads");
+assert.match(sessionRoute, /readSessionCommand[\s\S]*normalizeCommandBody[\s\S]*intent[\s\S]*status/, "PL-G2D status route accepts status intent");
+assert.match(sessionRoute, /readCommentTranslatorPrivateLaunchAccess[\s\S]*status:\s*403/, "PL-G2D status route remains private-launch gated");
+assert.match(actions, /getCommentTranslatorRealCommentsFeedAction[\s\S]*live-provider-polling-not-approved/, "PL-G2D feed action remains provider-unavailable");
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g2(?:c-route-api-harness-smoke-evidence|d-route-api-harness-smoke-follow-up-after-pl-g5)`/i,
-  "task.md records PL-G2C or PL-G2D branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g2d-route-api-harness-smoke-follow-up-after-pl-g5`/i,
+  "task.md records PL-G2D follow-up branch"
 );
-assert.match(task, /Latest PL-G2C Evidence/i, "task.md records Latest PL-G2C Evidence");
-assert.match(task, /keep blocked \/ blocked-no-approval/i, "task.md records PL-G2C blocked result");
-assert.match(task, /approved-fb-l3-allowed-tester-route-api-smoke/i, "task.md records PL-G2C approval label");
-assert.match(task, /unchecked scope[\s\S]*authenticated allowed-tester route\/API smoke execution/i, "task.md records unchecked route/API scope");
-assert.match(task, /residual risk[\s\S]*PL-G2 remains incomplete/i, "task.md records PL-G2C residual risk");
-assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records PL-G2C width-check skip reason");
-assert.match(task, /public-release capable: no/i, "task.md keeps public release blocked");
+assert.match(task, /Latest PL-G2D Follow-up Evidence/i, "task.md records Latest PL-G2D Follow-up Evidence");
+assert.match(task, /PL-G2D follow-up[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G2D blocked result");
+assert.match(task, /PL-G1 remote durable enforcement[\s\S]*remote-apply-and-deployed-smoke-completed/i, "task.md records PL-G1 completed status");
+assert.match(task, /PL-G2C prior blocker[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G2C prior blocker status");
+assert.match(task, /PL-G3 follow-up blocker[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G3 blocker status");
+assert.match(task, /PL-G4 follow-up blocker[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G4 blocker status");
+assert.match(task, /PL-G5 follow-up blocker\/decision[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G5 blocker/decision status");
+assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md records unchanged public gate state label");
+assert.match(task, /public-release capable label: no/i, "task.md records public-release capable label");
+assert.match(task, /Next safe action[\s\S]*keep PL-G2 blocked[\s\S]*approved-fb-l3-allowed-tester-route-api-smoke/i, "task.md records PL-G2D next safe action");
+assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records PL-G2D width-check skip reason");
 
 for (const [label, source] of [
+  [followUpDocPath, followUpDoc],
   [plG2cDocPath, plG2cDoc],
   [plG2bDocPath, plG2bDoc],
   [plG2aDocPath, plG2aDoc],
   [allowedTesterEvidencePath, allowedTesterEvidence],
   [allowedTesterPreflightPath, allowedTesterPreflight],
-  [plG1EvidencePath, plG1Evidence],
-  [plG3DocPath, plG3Doc],
-  [plG4DocPath, plG4Doc],
+  [plG5FollowUpPath, plG5FollowUp],
   [plG5DocPath, plG5Doc],
+  [plG4FollowUpPath, plG4FollowUp],
+  [plG3FollowUpPath, plG3FollowUp],
+  [plG1EvidencePath, plG1Evidence],
   [publicUsabilityPreflightPath, publicUsabilityPreflight],
   [finalQaPath, finalQa],
   [gapAuditPath, gapAudit],
@@ -254,7 +259,7 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
-  plG2cDocPath,
+  followUpDocPath,
   allowedTesterEvidencePath,
   publicUsabilityPreflightPath,
   finalQaPath,
@@ -262,13 +267,12 @@ const allowedChangedFiles = new Set([
   taskPath,
   "scripts/comment-translator-free-beta-pl-g2b-allowed-tester-route-api-harness-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2c-allowed-tester-route-api-harness-smoke-evidence-contract.mjs",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2D_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE_FOLLOW_UP_AFTER_PL_G5.md",
   "scripts/comment-translator-free-beta-pl-g2d-route-api-harness-smoke-evidence-follow-up-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `PL-G2C change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `PL-G2D follow-up change stays in allowed files: ${file}`);
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 
-console.log("comment translator Free beta PL-G2C allowed-tester route/API harness smoke evidence contract checks passed");
+console.log("comment translator Free beta PL-G2D route/API harness smoke evidence follow-up contract checks passed");

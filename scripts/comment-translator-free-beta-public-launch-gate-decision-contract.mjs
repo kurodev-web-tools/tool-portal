@@ -27,6 +27,8 @@ const deployedPreflightDocPath =
 const finalQaDocPath = "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const plG5DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md";
+const plG5FollowUpDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE_FOLLOW_UP_AFTER_PL_G4.md";
 const taskPath = "task.md";
 
 function read(relativePath) {
@@ -90,6 +92,7 @@ for (const requiredPath of [
   finalQaDocPath,
   gapAuditPath,
   plG5DocPath,
+  plG5FollowUpDocPath,
   taskPath
 ]) {
   assert.ok(exists(requiredPath), `FB-L6 required reference exists: ${requiredPath}`);
@@ -109,6 +112,7 @@ const deployedPreflightDoc = read(deployedPreflightDocPath);
 const finalQaDoc = read(finalQaDocPath);
 const gapAudit = read(gapAuditPath);
 const plG5Doc = read(plG5DocPath);
+const plG5FollowUpDoc = read(plG5FollowUpDocPath);
 const task = read(taskPath);
 
 for (const requiredSection of [
@@ -245,7 +249,7 @@ assert.match(deployedPreflightDoc, /Approval label: `approved-fb-l5-production-c
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(?:fb-l6|pl-g5)-public-launch-gate-decision`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:fb-l6|pl-g5)-public-launch-gate-decision(?:-follow-up-after-pl-g4)?`/i,
   "task.md records FB-L6 or PL-G5 branch"
 );
 assert.match(task, /FB-L6[\s\S]*Public launch gate decision[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L6 state");
@@ -271,6 +275,7 @@ for (const [label, source] of [
   [finalQaDocPath, finalQaDoc],
   [gapAuditPath, gapAudit],
   [plG5DocPath, plG5Doc],
+  [plG5FollowUpDocPath, plG5FollowUpDoc],
   [taskPath, task]
 ]) {
   assertNoSensitiveValues(source, label);
@@ -281,11 +286,13 @@ const allowedChangedFiles = new Set([
   readyPreflightDocPath,
   publicUsabilityPreflightDocPath,
   plG5DocPath,
+  plG5FollowUpDocPath,
   finalQaDocPath,
   gapAuditPath,
   taskPath,
   "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

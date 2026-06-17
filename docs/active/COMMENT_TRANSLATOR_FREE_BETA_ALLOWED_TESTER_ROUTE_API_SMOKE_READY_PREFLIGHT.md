@@ -59,6 +59,8 @@ Allowed payload for this preflight: `{"intent":"status"}` only. `start`, `stop`,
 
 Server action route/API harness, approval-gated. PL-G2A adds the reviewed harness route at `POST /api/comment-translator/free-beta/route-api-harness`. The route is inert unless `COMMENT_TRANSLATOR_FREE_BETA_ROUTE_API_HARNESS_ENABLED` matches the approval label, requires approval header `x-comment-translator-harness-approval`, requires the private launch allowed-tester gate, and returns only sanitized action name, status label, count, unavailable reason, and pass/fail.
 
+PL-G2B records the current execution-preflight/evidence result as blocked-no-approval. A later run still requires the exact approval label `approved-fb-l3-allowed-tester-route-api-smoke`, operator-local references for `COMMENT_TRANSLATOR_DEPLOYED_ORIGIN`, `COMMENT_TRANSLATOR_ALLOWED_TESTER_COOKIE`, and `COMMENT_TRANSLATOR_FREE_BETA_ROUTE_API_HARNESS_ENABLED`, plus sanitized output review before either route command is executed.
+
 ```powershell
 curl.exe --fail-with-body --silent --show-error --request POST "$env:COMMENT_TRANSLATOR_DEPLOYED_ORIGIN/api/comment-translator/free-beta/route-api-harness" --header "Cookie: $env:COMMENT_TRANSLATOR_ALLOWED_TESTER_COOKIE" --header "Content-Type: application/json" --header "x-comment-translator-harness-approval: approved-fb-l3-allowed-tester-route-api-smoke" --data "{}"
 ```

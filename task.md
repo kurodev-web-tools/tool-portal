@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-free-beta-pl-g2c-route-api-harness-smoke-evidence`.
+- Current branch: `codex/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch records PL-G2C allowed-tester route/API harness smoke execution/evidence follow-up as keep blocked / blocked-no-approval after the PL-G5 keep-blocked decision. It does not execute deployed status route smoke, harness route smoke, allowed-tester browser smoke, session Start, Stop, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, PL-G3 Start-to-translation smoke, PL-G4 production/custom deployed smoke, deploy/upload, remote Supabase mutation/schema apply, Stripe action, billing setting mutation, limited public beta open, public access change, public launch gate flip, or main promotion.
+- This branch records PL-G3 Start-to-translation smoke execution/evidence follow-up as keep blocked / blocked-no-approval after PL-G2C. It does not execute status precheck, session Start, Stop, server-only live target lookup, `liveChatMessages.list`, Free Azure translation, UI/feed confirmation, PL-G2 route/API harness execution, PL-G4 production/custom deployed smoke, deploy/upload, remote Supabase mutation/schema apply, Stripe action, billing setting mutation, limited public beta open, public access change, public launch gate flip, or main promotion.
 - Archived previous long board snapshot: `docs/archive/task-board-pre-2026-06-16-free-beta-public-usability-cleanup.md`.
 - Older archived board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
@@ -288,6 +288,27 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - Width checks skipped because PL-G3 changes only docs/contract/task notes; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or client layout change.
 - Verification: RED `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs` failed on missing PL-G3 evidence doc, then passed after docs/task updates. `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs` passed after allowing the PL-G3 follow-up branch/files. Changed-files no-secret scan passed for 8 changed files. `git diff --check` passed with CRLF normalization warnings only. Runtime/UI files were not changed, so `npm run lint`, `npx tsc --noEmit`, `npm run build`, and width checks were not run.
 
+## Latest PL-G3 Follow-up Evidence
+
+- Active evidence/blocker doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md`.
+- Existing FB-L4 ready preflight doc reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`.
+- Existing PL-G3 blocker doc reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md`.
+- Focused contract: `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs`.
+- Existing PL-G3 contract also updated/used: `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs`.
+- Execution result: keep blocked / blocked-no-approval. This prompt is not exact approval, and same-thread sanitized output review, exact explicit approval, and operator-local env references are not complete.
+- Required approval label for a later run remains `approved-fb-l4-start-to-translation-smoke`.
+- Later approved boundary remains status precheck, explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` polling step, non-empty intake, Free Azure translation, UI/feed confirmation, usage, stop reason, source attribution, and Stop.
+- Allowed sanitized evidence shape remains command label, route/action name, HTTP status, session status label, target presence label, polling interval label, intake count, translated count, skipped count, error count, usage count or Free cap label, stop reason, source attribution label, unavailable reason, pass/fail, public gate state label, and public-release capable label.
+- Evidence status refreshed after PL-G2C: PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`; PL-G2C prior blocker remains keep blocked / blocked-no-approval; PL-G3 prior blocker remains blocked-no-approval / not-run / approval-gated; PL-G4 production/custom deployed smoke remains blocked-no-approval / not-run / approval-gated; PL-G5 remains keep blocked / blocked-no-approval.
+- Public gate state label: unchanged / blocked. Public-release capable label: no.
+- Start-to-translation smoke execution: not-run / approval-gated. Status precheck, explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` polling step, Free Azure translation, UI/feed confirmation, usage, stop reason, source attribution, and Stop remain unchecked.
+- No PL-G2 route/API harness execution, PL-G4 production/custom deployed smoke, repeated polling, provider target lookup, live target lookup, additional `liveChatMessages.list` loops, Azure/OpenAI provider execution, deploy/upload, remote Supabase mutation/schema apply, Stripe action, billing setting mutation, public access change, main promotion, browser storage expansion, or handoff payload expansion was run or added by this PL-G3 follow-up.
+- Unchecked scope remains: Start-to-translation smoke execution, status precheck, explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` polling step, non-empty live comment intake, Free Azure translation, UI/feed confirmation, usage, stop reason, source attribution, Stop, provider target lookup, deployed target behavior, authenticated allowed-tester route/API smoke execution, PL-G4 production/custom deployed smoke execution, remote Supabase mutation/schema apply, deploy/upload, Stripe live actions, billing setting mutation, main promotion, limited public beta open, public access change, and public launch gate flip were not run.
+- Residual risk: PL-G3 remains incomplete until a later same-thread approved operator-local run executes the exact FB-L4 Start-to-translation boundary and records sanitized output only. Public-release capable remains no.
+- Next safe action: keep PL-G3 blocked unless a later same-thread execution turn confirms the FB-L4 ready preflight, reviews the sanitized output shape, confirms operator-local env references without printing values, and receives the exact approval label `approved-fb-l4-start-to-translation-smoke`.
+- Width checks skipped because PL-G3 follow-up changes only docs/contract/task notes; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or client layout change.
+- Verification: RED `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs` failed on missing PL-G3 follow-up evidence doc, then passed after docs/task updates. Existing PL-G3 contract `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs` passed after allowing the PL-G3 follow-up branch/files. Existing FB-L4 contract `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs` passed after allowing the PL-G3 follow-up branch/files. Changed-files no-secret scan passed for 10 changed files. `git diff --check` passed with CRLF normalization warnings only. Runtime/UI files were not changed, so `npm run lint`, `npx tsc --noEmit`, `npm run build`, and width checks were not run.
+
 ## Latest FB-L5 Evidence
 
 - Active evidence/blocker doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md`.
@@ -392,6 +413,7 @@ Do not perform the following without same-thread ready preflight, sanitized outp
 - Free beta PL-G2B allowed-tester route/API harness smoke evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2B_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE.md`
 - Free beta PL-G2C allowed-tester route/API harness smoke evidence follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2C_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE.md`
 - Free beta PL-G3 Start-to-translation smoke evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md`
+- Free beta PL-G3 Start-to-translation smoke evidence follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md`
 - Free beta PL-G4 production/custom deployed smoke evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md`
 - Free beta PL-G5 public launch gate decision evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`
 - Free beta remote durable enforcement ready preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md`

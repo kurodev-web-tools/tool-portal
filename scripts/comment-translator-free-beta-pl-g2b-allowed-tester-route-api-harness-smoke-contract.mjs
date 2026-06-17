@@ -206,8 +206,8 @@ assert.match(gapAudit, /PL-G2B[\s\S]*allowed-tester route\/API harness smoke/i, 
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g2(?:b-allowed-tester-route-api-harness-smoke|c-route-api-harness-smoke-evidence|d-route-api-harness-smoke-follow-up-after-pl-g5|e-route-api-harness-smoke-execution-gate-after-pl-g2d|f-route-api-harness-smoke-execution-gate-after-pl-g2e|g-route-api-harness-smoke-execution-after-pl-g2f|h-approved-route-api-harness-smoke-execution-after-pl-g2g)`/i,
-  "task.md records PL-G2B, PL-G2C, PL-G2D, PL-G2E, PL-G2F, PL-G2G, or PL-G2H branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g2(?:b-allowed-tester-route-api-harness-smoke|c-route-api-harness-smoke-evidence|d-route-api-harness-smoke-follow-up-after-pl-g5|e-route-api-harness-smoke-execution-gate-after-pl-g2d|f-route-api-harness-smoke-execution-gate-after-pl-g2e|g-route-api-harness-smoke-execution-after-pl-g2f|h-approved-route-api-harness-smoke-execution-after-pl-g2g|i-approved-route-api-harness-smoke-execution-after-pl-g2h)`/i,
+  "task.md records PL-G2B, PL-G2C, PL-G2D, PL-G2E, PL-G2F, PL-G2G, PL-G2H, or PL-G2I branch"
 );
 assert.match(task, /Latest PL-G2B Evidence/i, "task.md records Latest PL-G2B Evidence");
 assert.match(task, /Execution result: blocked-no-approval/i, "task.md records PL-G2B blocked result");
@@ -254,7 +254,9 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2G_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2F.md",
   "scripts/comment-translator-free-beta-pl-g2g-route-api-harness-smoke-execution-after-pl-g2f-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2H_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2G.md",
-  "scripts/comment-translator-free-beta-pl-g2h-approved-route-api-harness-smoke-execution-after-pl-g2g-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g2h-approved-route-api-harness-smoke-execution-after-pl-g2g-contract.mjs",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2I_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2H.md",
+  "scripts/comment-translator-free-beta-pl-g2i-approved-route-api-harness-smoke-execution-after-pl-g2h-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

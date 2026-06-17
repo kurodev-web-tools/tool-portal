@@ -7,6 +7,8 @@ const root = process.cwd();
 
 const plG2bDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2B_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE.md";
+const plG2cDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2C_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE.md";
 const plG2aDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2A_SERVER_ACTION_ROUTE_API_HARNESS.md";
 const allowedTesterEvidencePath =
@@ -204,8 +206,8 @@ assert.match(gapAudit, /PL-G2B[\s\S]*allowed-tester route\/API harness smoke/i, 
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g2b-allowed-tester-route-api-harness-smoke`/i,
-  "task.md records PL-G2B branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g2(?:b-allowed-tester-route-api-harness-smoke|c-route-api-harness-smoke-evidence)`/i,
+  "task.md records PL-G2B or PL-G2C branch"
 );
 assert.match(task, /Latest PL-G2B Evidence/i, "task.md records Latest PL-G2B Evidence");
 assert.match(task, /Execution result: blocked-no-approval/i, "task.md records PL-G2B blocked result");
@@ -234,13 +236,15 @@ for (const [label, source] of [
 
 const allowedChangedFiles = new Set([
   plG2bDocPath,
+  plG2cDocPath,
   allowedTesterEvidencePath,
   allowedTesterPreflightPath,
   publicUsabilityPreflightPath,
   finalQaPath,
   gapAuditPath,
   taskPath,
-  "scripts/comment-translator-free-beta-pl-g2b-allowed-tester-route-api-harness-smoke-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g2b-allowed-tester-route-api-harness-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g2c-allowed-tester-route-api-harness-smoke-evidence-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

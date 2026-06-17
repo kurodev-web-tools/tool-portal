@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-free-beta-pl-g2b-allowed-tester-route-api-harness-smoke`.
+- Current branch: `codex/comment-translator-free-beta-pl-g3-start-to-translation-smoke`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch records PL-G2B allowed-tester route/API harness smoke execution preflight/evidence as blocked-no-approval, using the PL-G2A harness boundary. It does not execute deployed route/API smoke, session Start, Stop, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, deploy/upload, remote Supabase mutation/schema apply, Stripe action, billing setting mutation, limited public beta open, public launch gate flip, or main promotion.
+- This branch records PL-G3 Start-to-translation smoke execution preflight/evidence as blocked-no-approval, using the existing FB-L4 ready preflight boundary. It does not execute deployed route/API smoke, session Start, Stop, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, deploy/upload, remote Supabase mutation/schema apply, Stripe action, billing setting mutation, limited public beta open, public launch gate flip, or main promotion.
 - Archived previous long board snapshot: `docs/archive/task-board-pre-2026-06-16-free-beta-public-usability-cleanup.md`.
 - Older archived board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
@@ -78,7 +78,7 @@ These are the remaining gates before Free public beta can be opened. Each item r
 | --- | --- | --- | --- |
 | PL-G1 | Execute FB-L2 remote durable enforcement | Apply/confirm the reviewed durable session and usage authority, then prove deployed fail-closed session/usage behavior for Free caps. | remote-apply-and-deployed-smoke-completed |
 | PL-G2 | Execute FB-L3 allowed-tester route/API smoke | Prove an authenticated allowed tester can reach server-owned session/feed/usage/deletion/Creator locked states with sanitized output. | PL-G2B blocked-no-approval / deployed execution approval-gated |
-| PL-G3 | Execute FB-L4 Start-to-translation smoke | Prove explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` step, non-empty intake, Free Azure translation, UI feed, usage, stop reason, source attribution, and Stop. | approval-gated / not-run |
+| PL-G3 | Execute FB-L4 Start-to-translation smoke | Prove explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` step, non-empty intake, Free Azure translation, UI feed, usage, stop reason, source attribution, and Stop. | blocked-no-approval / not-run / approval-gated |
 | PL-G4 | Execute FB-L5 production/custom deployed smoke | Prove deployed target freshness, reviewed integration branch match, allowed-tester route/UI reachability, status-only session API, usage/deletion/Creator locked gates, and Start-to-translation gate status. | approval-gated / not-run |
 | PL-G5 | Release-owner public launch decision | Choose `keep blocked`, `open limited public beta`, or `flip public gate`, with missing evidence explicitly accepted or completed. | approval-gated / current decision keep blocked |
 | PL-G6 | Public access change / promotion operation | If approved, perform a separate reviewed operation for limited public beta open or public gate flip; promote integration to `main` only through a separate approval-gated PR. | approval-gated / not-run |
@@ -141,7 +141,7 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - PL-G1 remote durable enforcement is complete for the approved FB-L2 execution boundary, but public usability remains blocked until PL-G2 through PL-G5 evidence and release-owner launch approval exist.
 - Authenticated allowed-tester route/API smoke with server-owned session/feed/usage/deletion/Creator locked states now has exact-command ready preflight, blocker/evidence record, PL-G2A reviewed harness route for feed/deletion/Creator locked server action surfaces, and PL-G2B blocked-no-approval harness smoke evidence. Deployed route/API execution remains unchecked / not-run / approval-gated until exact approval label `approved-fb-l3-allowed-tester-route-api-smoke`, sanitized output review, and operator-local env references are present.
 - Actual public session Start smoke remains approval-gated.
-- Approved Start-to-translation smoke now has exact-command ready preflight and blocker/evidence record, but Start, live target lookup, bounded `liveChatMessages.list`, non-empty intake, Free Azure translation, UI feed confirmation, usage, stop reason, and source attribution evidence remain unchecked / not-run / approval-gated.
+- Approved Start-to-translation smoke now has exact-command ready preflight, FB-L4 blocker/evidence record, and PL-G3 blocked-no-approval execution gate record, but Start, live target lookup, bounded `liveChatMessages.list`, non-empty intake, Free Azure translation, UI feed confirmation, usage, stop reason, and source attribution evidence remain unchecked / not-run / approval-gated.
 - Real provider target lookup, live target lookup, actual `liveChatMessages.list`, non-empty live comment intake, and real Azure provider execution remain approval-gated for the Free beta launch path.
 - Production/custom deployed target freshness and Free beta route behavior now have exact-command ready preflight and blocker/evidence record, but deployed target freshness, allowed-tester route/UI reachability, status-only route/API behavior, usage/deletion/Creator locked gates, and Start-to-translation gate evidence remain unchecked / not-run / approval-gated.
 - Public launch gate decision now has exact-command ready preflight and blocker/evidence record, but release-owner approval to open limited public beta or flip public gate is absent, so public launch gate unchanged and public-release capable remains no.
@@ -252,6 +252,21 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - Unchecked scope remains: Start-to-translation smoke execution, explicit Start, allowed-tester cookie/session validity, deployed route/API target behavior, remote Supabase migration apply, remote Supabase mutation, deployed durable session/usage smoke, authenticated allowed-tester route/API smoke execution, provider target lookup, live target lookup, liveChatMessages.list, non-empty live comment intake, Azure/OpenAI provider API execution, UI feed confirmation on an authenticated deployed target, deploy/upload, Stripe live actions, billing setting mutation, main promotion, and public launch gate flip were not run.
 - Verification: RED `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs` failed on missing FB-L4 evidence doc, then passed after docs/task updates. Changed-files no-secret scan passed for 6 changed files. `git diff --check` passed with CRLF normalization warnings only. App runtime/UI files were not changed; this slice changes docs/task notes and the focused contract script only, so `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run.
 
+## Latest PL-G3 Evidence
+
+- Active evidence/blocker doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md`.
+- Existing FB-L4 ready preflight doc reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`.
+- Focused contract: `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs`.
+- Execution result: blocked-no-approval. Same-thread ready preflight was reviewed through the FB-L4 ready preflight doc, but exact explicit approval, actual-output sanitized review, and operator-local env references were not complete in this thread.
+- Required approval label for a later run: `approved-fb-l4-start-to-translation-smoke`.
+- Later approved boundary remains status route / session state precheck, explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` polling step, non-empty intake, Free Azure translation, UI feed / usage / stop reason / source attribution confirmation, and explicit Stop.
+- Allowed sanitized evidence shape remains command label, route/action name, HTTP status, session state/status label, target presence label only, returned/eligible/translated/skipped/error count, polling interval label, usage count / Free cap label, stop reason, source attribution label, unavailable reason, and pass/fail.
+- Start-to-translation smoke execution: not-run / approval-gated. Status precheck, explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` polling step, Free Azure translation, UI feed confirmation, usage, stop reason, source attribution, and Stop remain unchecked.
+- Unchecked scope remains: Start-to-translation smoke execution, status route / session state precheck, explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` polling step, non-empty live comment intake, Free Azure translation, UI feed / usage / stop reason / source attribution confirmation, explicit Stop, provider target lookup, deployed target behavior, deploy/upload, remote Supabase mutation/schema apply, Stripe live actions, billing setting mutation, main promotion, limited public beta open, and public launch gate flip were not run.
+- Residual risk: PL-G3 remains incomplete until a later same-thread approved operator-local run executes the exact FB-L4 Start-to-translation boundary and records sanitized output only. Public-release capable remains no.
+- Width checks skipped because PL-G3 changes only docs/contract/task notes; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or client layout change.
+- Verification: RED `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs` failed on missing PL-G3 evidence doc, then passed after docs/task updates. `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs` passed after allowing the PL-G3 follow-up branch/files. Changed-files no-secret scan passed for 8 changed files. `git diff --check` passed with CRLF normalization warnings only. Runtime/UI files were not changed, so `npm run lint`, `npx tsc --noEmit`, `npm run build`, and width checks were not run.
+
 ## Latest FB-L5 Evidence
 
 - Active evidence/blocker doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md`.
@@ -321,6 +336,7 @@ Do not perform the following without same-thread ready preflight, sanitized outp
 - Free beta public usability preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md`
 - Free beta PL-G1 remote durable enforcement execution evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md`
 - Free beta PL-G2B allowed-tester route/API harness smoke evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2B_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE.md`
+- Free beta PL-G3 Start-to-translation smoke evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md`
 - Free beta remote durable enforcement ready preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md`
 - Free beta production/custom deployed smoke evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md`
 - Free beta production/custom deployed smoke ready preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`

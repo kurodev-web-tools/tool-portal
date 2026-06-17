@@ -8,6 +8,8 @@ Start-to-translation smoke execution: not-run / approval-gated.
 
 This PL-G3 slice reviews the existing FB-L4 ready preflight and source boundaries, then records the safe blocker because same-thread ready preflight, sanitized output review, exact explicit approval, and operator-local env references were not all present in this thread. It does not run status route smoke, explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` polling step, Free Azure translation, UI feed confirmation, Stop, deploy/upload, remote Supabase mutation/schema apply, Stripe action, billing setting mutation, limited public beta open, public launch gate flip, main promotion, OpenAI provider execution, or any provider/live execution.
 
+PL-G3 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md` rechecks this gate after PL-G2C and keeps the result as keep blocked / blocked-no-approval. The follow-up keeps public-release capable: no and does not run Start-to-translation execution.
+
 ## Purpose
 
 PL-G3 is the execution-preflight/evidence slice for the FB-L4 Start-to-translation public-launch gate. Its job is to either execute the approved Start-to-translation smoke inside the exact FB-L4 boundary, or stop with reviewed blocker evidence and a next safe action when approval/env gates are absent.

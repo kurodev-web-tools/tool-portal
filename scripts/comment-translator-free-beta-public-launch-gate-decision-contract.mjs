@@ -26,6 +26,7 @@ const deployedPreflightDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md";
 const finalQaDocPath = "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
+const plG5DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md";
 const taskPath = "task.md";
 
 function read(relativePath) {
@@ -88,6 +89,7 @@ for (const requiredPath of [
   deployedPreflightDocPath,
   finalQaDocPath,
   gapAuditPath,
+  plG5DocPath,
   taskPath
 ]) {
   assert.ok(exists(requiredPath), `FB-L6 required reference exists: ${requiredPath}`);
@@ -106,6 +108,7 @@ const deployedEvidenceDoc = read(deployedEvidenceDocPath);
 const deployedPreflightDoc = read(deployedPreflightDocPath);
 const finalQaDoc = read(finalQaDocPath);
 const gapAudit = read(gapAuditPath);
+const plG5Doc = read(plG5DocPath);
 const task = read(taskPath);
 
 for (const requiredSection of [
@@ -229,6 +232,7 @@ for (const forbiddenFragment of [
 assert.match(publicUsabilityPreflightDoc, /FB-L6|Public launch gate decision/i, "FB-L1 preflight points to FB-L6 launch gate decision");
 assert.match(finalQaDoc, /FB-L6|Public launch gate decision/i, "F15 readiness doc points to FB-L6 launch gate decision");
 assert.match(gapAudit, /FB-L6|Public launch gate decision/i, "gap audit records FB-L6 follow-up");
+assert.match(plG5Doc, /keep blocked \/ blocked-no-approval/i, "PL-G5 evidence keeps FB-L6 decision blocked");
 
 assert.match(remoteDurableEvidenceDoc, /blocked-no-approval[\s\S]*public launch gate flip[\s\S]*not-run \/ approval-gated/i, "FB-L2 remains blocked before FB-L6 decision");
 assert.match(remoteDurablePreflightDoc, /Approval label: `approved-fb-l2-remote-durable-enforcement-apply-and-smoke`/i, "FB-L2 approval label remains separate");
@@ -241,8 +245,8 @@ assert.match(deployedPreflightDoc, /Approval label: `approved-fb-l5-production-c
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-fb-l6-public-launch-gate-decision`/i,
-  "task.md records FB-L6 branch"
+  /Current branch: `codex\/comment-translator-free-beta-(?:fb-l6|pl-g5)-public-launch-gate-decision`/i,
+  "task.md records FB-L6 or PL-G5 branch"
 );
 assert.match(task, /FB-L6[\s\S]*Public launch gate decision[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L6 state");
 assert.match(task, /Latest FB-L6 Evidence/i, "task.md records Latest FB-L6 Evidence");
@@ -266,6 +270,7 @@ for (const [label, source] of [
   [deployedPreflightDocPath, deployedPreflightDoc],
   [finalQaDocPath, finalQaDoc],
   [gapAuditPath, gapAudit],
+  [plG5DocPath, plG5Doc],
   [taskPath, task]
 ]) {
   assertNoSensitiveValues(source, label);
@@ -275,10 +280,12 @@ const allowedChangedFiles = new Set([
   evidenceDocPath,
   readyPreflightDocPath,
   publicUsabilityPreflightDocPath,
+  plG5DocPath,
   finalQaDocPath,
   gapAuditPath,
   taskPath,
-  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs"
+  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

@@ -155,6 +155,8 @@ PL-G3 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSL
 
 FB-L5 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md` records Production/custom deployed smoke as blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`. It limits the later approved smoke to deployed target freshness, Free beta route reachability, allowed-tester route/UI visibility, status-only session API, usage/deletion/Creator locked gates, and Start-to-translation gate checks, while keeping deploy/upload, remote mutation/schema apply, session Start, provider/live execution, Stripe actions, paid entitlement work, main promotion, and public launch gate flip not-run / approval-gated.
 
+PL-G4 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md` records the public-launch remaining gate for production/custom deployed smoke as blocked-no-approval because exact same-thread approval, actual-output sanitized review, and operator-local env references were not complete in that thread. It keeps the later execution boundary tied to the FB-L5 ready preflight and keeps public-release capable: no.
+
 FB-L6 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md` records Public launch gate decision as keep blocked / blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_READY_PREFLIGHT.md`. It limits the release-owner decision options to `keep blocked`, `open limited public beta`, and `flip public gate`; because same-thread exact release-owner approval is absent and FB-L2 through FB-L5 execution remains not-run / approval-gated, public launch gate remains unchanged and `public-release capable: no` remains in effect.
 
 ## Blockers
@@ -162,7 +164,7 @@ FB-L6 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DE
 - Remote Supabase migration/apply and deployed durable session/usage enforcement are not verified.
 - Authenticated allowed-tester route/API smoke execution remains not-run / approval-gated even though FB-L3 now has exact-command ready preflight and PL-G2B records the blocked-no-approval harness smoke evidence.
 - Start-to-translation smoke execution remains not-run / approval-gated even though FB-L4 now has exact-command ready preflight and PL-G3 records the blocked-no-approval execution gate evidence.
-- Production/custom deployed smoke execution remains not-run / approval-gated even though FB-L5 now has exact-command ready preflight.
+- Production/custom deployed smoke execution remains not-run / approval-gated even though FB-L5 now has exact-command ready preflight and PL-G4 records the blocked-no-approval execution gate evidence.
 - Public launch gate decision remains keep blocked / blocked-no-approval because same-thread release-owner approval to open limited public beta or flip public gate is absent.
 - Real provider target lookup and live target lookup remain not-run.
 - Real `liveChatMessages.list` polling remains not-run for the Free beta launch path.

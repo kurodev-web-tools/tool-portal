@@ -206,8 +206,8 @@ assert.match(gapAudit, /PL-G2B[\s\S]*allowed-tester route\/API harness smoke/i, 
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g2(?:b-allowed-tester-route-api-harness-smoke|c-route-api-harness-smoke-evidence|d-route-api-harness-smoke-follow-up-after-pl-g5|e-route-api-harness-smoke-execution-gate-after-pl-g2d|f-route-api-harness-smoke-execution-gate-after-pl-g2e|g-route-api-harness-smoke-execution-after-pl-g2f|h-approved-route-api-harness-smoke-execution-after-pl-g2g|i-approved-route-api-harness-smoke-execution-after-pl-g2h|j-approved-route-api-harness-smoke-execution-after-pl-g2i)`/i,
-  "task.md records PL-G2B, PL-G2C, PL-G2D, PL-G2E, PL-G2F, PL-G2G, PL-G2H, PL-G2I, or PL-G2J branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g2(?:b-allowed-tester-route-api-harness-smoke|c-route-api-harness-smoke-evidence|d-route-api-harness-smoke-follow-up-after-pl-g5|e-route-api-harness-smoke-execution-gate-after-pl-g2d|f-route-api-harness-smoke-execution-gate-after-pl-g2e|g-route-api-harness-smoke-execution-after-pl-g2f|h-approved-route-api-harness-smoke-execution-after-pl-g2g|i-approved-route-api-harness-smoke-execution-after-pl-g2h|j-approved-route-api-harness-smoke-execution-after-pl-g2i|k-approved-route-api-harness-smoke-execution-after-pl-g2j)`/i,
+  "task.md records PL-G2B, PL-G2C, PL-G2D, PL-G2E, PL-G2F, PL-G2G, PL-G2H, PL-G2I, PL-G2J, or PL-G2K branch"
 );
 assert.match(task, /Latest PL-G2B Evidence/i, "task.md records Latest PL-G2B Evidence");
 assert.match(task, /Execution result: blocked-no-approval/i, "task.md records PL-G2B blocked result");
@@ -235,6 +235,8 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
+  "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2K_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2J.md",
   "scripts/comment-translator-free-beta-pl-g2j-approved-route-api-harness-smoke-execution-after-pl-g2i-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2J_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2I.md",
   plG2bDocPath,

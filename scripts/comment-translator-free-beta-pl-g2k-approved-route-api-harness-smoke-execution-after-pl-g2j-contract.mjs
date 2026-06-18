@@ -121,15 +121,23 @@ for (const requiredSection of [
 for (const requiredFragment of [
   "Status: PL-G2K approved allowed-tester route/API harness smoke execution after PL-G2J",
   "Public-release capable: no",
-  "Execution result: keep blocked / blocked-missing-operator-local-reference-readiness",
-  "Authenticated allowed-tester route/API harness smoke execution: blocked-missing-operator-local-reference-readiness / not-run / approval-gated",
+  "Execution result: keep blocked / blocked-private-launch-gated",
+  "Authenticated allowed-tester route/API harness smoke execution: executed-with-sanitized-blocker / blocked-private-launch-gated",
   "Exact approval label: present",
   "approved-fb-l3-allowed-tester-route-api-smoke",
   "deployed origin reference ready: ready",
   "allowed-tester cookie/session reference ready: ready",
-  "harness env gate reference ready: missing",
+  "harness env gate reference ready: ready",
   "sanitized output shape reviewed: present",
-  "readiness check result: blocked-missing-operator-local-reference-readiness",
+  "readiness check result: ready",
+  "pl-g2k-status-route-smoke",
+  "HTTP 403",
+  "session status label: stopped",
+  "stop reason: auth-failed",
+  "pl-g2k-harness-route-smoke",
+  "harness status label: blocked-private-launch-gated",
+  "count: 0",
+  "pass: false",
   "POST /api/comment-translator/session",
   "{\"intent\":\"status\"}",
   "POST /api/comment-translator/free-beta/route-api-harness",
@@ -175,10 +183,10 @@ for (const forbiddenFragment of [
 
 assert.match(plG2jDoc, /blocked-missing-operator-local-reference-readiness/i, "PL-G2J records readiness blocker");
 assert.match(plG2iDoc, /blocked-missing-operator-local-reference-readiness/i, "PL-G2I records readiness blocker");
-assert.match(allowedTesterEvidence, /PL-G2K[\s\S]*blocked-missing-operator-local-reference-readiness/i, "FB-L3 evidence records PL-G2K");
+assert.match(allowedTesterEvidence, /PL-G2K[\s\S]*blocked-private-launch-gated/i, "FB-L3 evidence records PL-G2K");
 assert.match(allowedTesterPreflight, /approved-fb-l3-allowed-tester-route-api-smoke/i, "FB-L3 ready preflight keeps approval label");
 assert.match(publicUsabilityPreflight, /PL-G2K[\s\S]*allowed-tester route\/API harness smoke/i, "FB-L1 preflight records PL-G2K");
-assert.match(finalQa, /PL-G2K[\s\S]*blocked-missing-operator-local-reference-readiness/i, "F15 readiness records PL-G2K");
+assert.match(finalQa, /PL-G2K[\s\S]*blocked-private-launch-gated/i, "F15 readiness records PL-G2K");
 assert.match(gapAudit, /PL-G2K[\s\S]*allowed-tester route\/API harness smoke/i, "gap audit records PL-G2K");
 
 assert.match(routeHarness, /COMMENT_TRANSLATOR_FREE_BETA_ROUTE_API_HARNESS_ENABLED/, "route harness remains env-gated");
@@ -199,20 +207,20 @@ assert.match(
   "task.md records PL-G2K branch"
 );
 assert.match(task, /Latest PL-G2K Execution Evidence/i, "task.md records Latest PL-G2K Execution Evidence");
-assert.match(task, /PL-G2K execution[\s\S]*blocked-missing-operator-local-reference-readiness/i, "task.md records PL-G2K readiness blocker");
+assert.match(task, /PL-G2K execution[\s\S]*blocked-private-launch-gated/i, "task.md records PL-G2K execution blocker");
 assert.match(task, /Exact approval label[\s\S]*present/i, "task.md records PL-G2K approval label as present");
 assert.match(task, /deployed origin reference ready[\s\S]*ready/i, "task.md records ready deployed origin reference");
 assert.match(task, /allowed-tester cookie\/session reference ready[\s\S]*ready/i, "task.md records ready cookie/session reference");
-assert.match(task, /harness env gate reference ready[\s\S]*missing/i, "task.md records missing harness env gate reference");
+assert.match(task, /harness env gate reference ready[\s\S]*ready/i, "task.md records ready harness env gate reference");
 assert.match(
   task,
-  /status route smoke[\s\S]*blocked-missing-operator-local-reference-readiness \/ not-run \/ approval-gated/i,
-  "task.md records blocked status route smoke"
+  /status route smoke[\s\S]*HTTP 403[\s\S]*stopped[\s\S]*auth-failed/i,
+  "task.md records sanitized status route smoke output"
 );
 assert.match(
   task,
-  /harness route smoke[\s\S]*blocked-missing-operator-local-reference-readiness \/ not-run \/ approval-gated/i,
-  "task.md records blocked harness route smoke"
+  /harness route smoke[\s\S]*HTTP 403[\s\S]*blocked-private-launch-gated[\s\S]*pass false/i,
+  "task.md records sanitized harness route smoke output"
 );
 assert.match(task, /unchecked scope[\s\S]*authenticated allowed-tester route\/API smoke execution/i, "task.md records unchecked route/API scope");
 assert.match(task, /residual risk[\s\S]*PL-G2 remains incomplete/i, "task.md records PL-G2K residual risk");

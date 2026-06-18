@@ -153,10 +153,32 @@ export type YouTubeLiveChatTargetLookupResponseMetadata = {
   activeOwnedBroadcast: "present";
   liveChatTarget: "present";
   returnedItemCount: number;
+  usableTargetCount: number;
   pageInfoTotalResults: number | null;
+  selectedTargetSourceLabel: "first-live-owned-broadcast-with-live-chat-target";
+  selectedTargetRankLabel: `rank-${number}`;
+  selectedTargetPresenceLabel: "present";
+  lifecycleStatusDistribution: Partial<Record<YouTubeLiveChatTargetLookupLifecycleStatusLabel, number>>;
+  privacyStatusDistribution: Partial<Record<YouTubeLiveChatTargetLookupPrivacyStatusLabel, number>>;
   broadcastLifecycleStatus: "present" | "absent";
   privacyStatus: "present" | "absent";
   targetIdValue: "not-returned-by-design";
+};
+
+type YouTubeLiveChatTargetLookupLifecycleStatusLabel =
+  | "live"
+  | "ready"
+  | "testing"
+  | "complete"
+  | "revoked"
+  | "unknown"
+  | "other";
+
+type YouTubeLiveChatTargetLookupPrivacyStatusLabel = "public" | "unlisted" | "private" | "unknown" | "other";
+
+type YouTubeLiveChatTargetLookupUsableCandidate = {
+  item: Record<string, unknown>;
+  index: number;
 };
 
 export type YouTubeLiveChatTargetLookupFailureMetadata = {
@@ -460,11 +482,10 @@ export async function runYouTubeLiveChatTargetLookupFoundation(
     );
   }
 
-  const firstItem = asRecord(activeItems[0]);
-  const snippet = asRecord(firstItem.snippet);
-  const target = typeof snippet.liveChatId === "string" ? snippet.liveChatId.trim() : "";
+  const usableTargets = createUsableTargetCandidates(items);
+  const selectedTarget = usableTargets[0] ?? null;
 
-  if (!target) {
+  if (!selectedTarget) {
     return unresolvedLookup(
       request,
       "blocked-missing-or-disabled-live-chat-target",
@@ -633,14 +654,9 @@ function createSanitizedTargetLookupResponseMetadata(
 ): YouTubeLiveChatTargetLookupResponseMetadata {
   const body = asRecord(providerResponse.body);
   const items = Array.isArray(body.items) ? body.items : [];
-  const firstItem = asRecord(
-    items.find((item) => {
-      const status = asRecord(asRecord(item).status);
-      return status.lifeCycleStatus === "live";
-    }) ?? items[0]
-  );
-  const firstSnippet = asRecord(firstItem.snippet);
-  const firstStatus = asRecord(firstItem.status);
+  const usableTargets = createUsableTargetCandidates(items);
+  const selectedTarget = usableTargets[0] ?? { item: asRecord(items[0]), index: 0 };
+  const selectedStatus = asRecord(selectedTarget.item.status);
   const pageInfo = asRecord(body.pageInfo);
   const pageInfoTotalResults =
     typeof pageInfo.totalResults === "number" && Number.isFinite(pageInfo.totalResults)
@@ -653,11 +669,94 @@ function createSanitizedTargetLookupResponseMetadata(
     activeOwnedBroadcast: "present",
     liveChatTarget: "present",
     returnedItemCount: items.length,
+    usableTargetCount: usableTargets.length,
     pageInfoTotalResults,
-    broadcastLifecycleStatus: typeof firstStatus.lifeCycleStatus === "string" ? "present" : "absent",
-    privacyStatus: typeof firstStatus.privacyStatus === "string" ? "present" : "absent",
+    selectedTargetSourceLabel: "first-live-owned-broadcast-with-live-chat-target",
+    selectedTargetRankLabel: `rank-${selectedTarget.index + 1}`,
+    selectedTargetPresenceLabel: "present",
+    lifecycleStatusDistribution: createLifecycleStatusDistribution(items),
+    privacyStatusDistribution: createPrivacyStatusDistribution(items),
+    broadcastLifecycleStatus: typeof selectedStatus.lifeCycleStatus === "string" ? "present" : "absent",
+    privacyStatus: typeof selectedStatus.privacyStatus === "string" ? "present" : "absent",
     targetIdValue: "not-returned-by-design"
   };
+}
+
+function createUsableTargetCandidates(items: unknown[]): YouTubeLiveChatTargetLookupUsableCandidate[] {
+  const candidates: YouTubeLiveChatTargetLookupUsableCandidate[] = [];
+
+  items.forEach((item, index) => {
+    const record = asRecord(item);
+    const snippet = asRecord(record.snippet);
+    const status = asRecord(record.status);
+    const target = typeof snippet.liveChatId === "string" ? snippet.liveChatId.trim() : "";
+
+    if (status.lifeCycleStatus === "live" && target) {
+      candidates.push({ item: record, index });
+    }
+  });
+
+  return candidates;
+}
+
+function createLifecycleStatusDistribution(
+  items: unknown[]
+): Partial<Record<YouTubeLiveChatTargetLookupLifecycleStatusLabel, number>> {
+  const distribution: Partial<Record<YouTubeLiveChatTargetLookupLifecycleStatusLabel, number>> = {};
+
+  for (const item of items) {
+    const label = sanitizeLifecycleStatusLabel(asRecord(asRecord(item).status).lifeCycleStatus);
+    distribution[label] = (distribution[label] ?? 0) + 1;
+  }
+
+  return distribution;
+}
+
+function createPrivacyStatusDistribution(
+  items: unknown[]
+): Partial<Record<YouTubeLiveChatTargetLookupPrivacyStatusLabel, number>> {
+  const distribution: Partial<Record<YouTubeLiveChatTargetLookupPrivacyStatusLabel, number>> = {};
+
+  for (const item of items) {
+    const label = sanitizePrivacyStatusLabel(asRecord(asRecord(item).status).privacyStatus);
+    distribution[label] = (distribution[label] ?? 0) + 1;
+  }
+
+  return distribution;
+}
+
+function sanitizeLifecycleStatusLabel(value: unknown): YouTubeLiveChatTargetLookupLifecycleStatusLabel {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return "unknown";
+  }
+
+  const normalized = value.trim();
+  switch (normalized) {
+    case "live":
+    case "ready":
+    case "testing":
+    case "complete":
+    case "revoked":
+      return normalized;
+    default:
+      return "other";
+  }
+}
+
+function sanitizePrivacyStatusLabel(value: unknown): YouTubeLiveChatTargetLookupPrivacyStatusLabel {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return "unknown";
+  }
+
+  const normalized = value.trim();
+  switch (normalized) {
+    case "public":
+    case "unlisted":
+    case "private":
+      return normalized;
+    default:
+      return "other";
+  }
 }
 
 function extractProviderReason(body: unknown): string {

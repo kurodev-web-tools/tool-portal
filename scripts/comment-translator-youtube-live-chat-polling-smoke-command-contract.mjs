@@ -96,6 +96,11 @@ assert.match(
   /delete sanitizedPayload\.credentialReferenceId/,
   "command omits credential reference values from diagnostics output"
 );
+assert.match(
+  commandSource,
+  /isProviderOkDiagnosticsPayload/,
+  "command treats HTTP 2xx provider status as required for diagnostics pass"
+);
 assert.match(commandSource, /--check-env-only/, "command supports preflight-only mode");
 assert.match(commandSource, /--check-owner-binding-only/, "command supports provider-fetch-free owner binding check");
 assert.match(commandSource, /--check-token-material-availability/, "command supports provider-fetch-free token material check");
@@ -478,6 +483,7 @@ assert.equal(success.providerAccess, "liveChatMessages-list-one-step-only");
 assert.deepEqual(success.responseMetadata, {
   httpStatus: 200,
   ok: true,
+  providerStatusLabel: "provider-ok",
   liveChatTarget: "present",
   nextPageToken: "present",
   pollingIntervalMillis: 5000,
@@ -489,6 +495,66 @@ assert.deepEqual(success.responseMetadata, {
   textPayload: "not-returned-by-design"
 });
 
+const providerPermissionRejected = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
+  credentialReferenceId: "smoke-livechat-polling-reference",
+  expectedProviderChannelReference: "provider-channel-reference-never-returned",
+  liveChatId: "live-chat-id-never-returned",
+  ownerVerificationSmokeSuccess: true,
+  liveChatTargetLookupReadinessConfirmed: true,
+  liveChatTargetPresenceOnlyEvidence: true,
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-never-returned"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-09T00:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus() {
+      return {
+        credentialReferenceId: "smoke-livechat-polling-reference",
+        provider: "youtube",
+        providerChannelId: "provider-channel-reference-never-returned",
+        scopeLabel: "youtube.readonly",
+        scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+        expiresAtIso: "2026-06-09T00:05:00.000Z",
+        expiryStatus: "active",
+        revoked: false,
+        revokedAtIso: null,
+        tokenValue: "never-returned-by-design",
+        refreshTokenValue: "never-returned-by-design",
+        ciphertext: "never-returned-by-design",
+        decryptCapability: "forbidden"
+      };
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial() {
+      return {
+        status: "available",
+        serverAuthorizationHeader: "server-only-test-authorization",
+        expiresAtIso: "2026-06-09T00:05:00.000Z"
+      };
+    }
+  },
+  async fetchGoogleApi() {
+    return {
+      ok: false,
+      status: 403,
+      body: {
+        error: {
+          message: "must-not-cross"
+        }
+      }
+    };
+  }
+});
+assert.equal(providerPermissionRejected.status, "live-chat-polling-smoke-sanitized-result");
+assert.equal(providerPermissionRejected.responseMetadata.httpStatus, 403);
+assert.equal(providerPermissionRejected.responseMetadata.ok, false);
+assert.equal(providerPermissionRejected.responseMetadata.providerStatusLabel, "provider-permission-rejected");
+assert.equal(providerPermissionRejected.responseMetadata.returnedItemCount, 0);
+
 for (const payload of [
   missingOwnerAuthorization,
   missingOwnerVerificationSuccess,
@@ -496,7 +562,8 @@ for (const payload of [
   missingPresenceOnlyEvidence,
   missingTarget,
   ownerMismatch,
-  success
+  success,
+  providerPermissionRejected
 ]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenValue of [

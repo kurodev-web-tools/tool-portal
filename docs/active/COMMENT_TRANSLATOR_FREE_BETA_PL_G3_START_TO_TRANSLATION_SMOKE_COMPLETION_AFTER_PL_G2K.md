@@ -45,6 +45,8 @@ Because the latest approved bounded polling step returned count 0, the safe outc
 - Runtime follow-up: route/action Start skips unapproved live target lookup instead of blocking Start with `provider-target-lookup-not-approved`; deployed retry passed Start.
 - Server-only live target lookup: executed / target presence label present / provider route label liveBroadcasts-list-target-lookup-only / returned count 5 / unavailable reason label none / pass true.
 - One bounded `liveChatMessages.list` polling step: executed / target presence label present / provider route label liveChatMessages-list-one-step-only / returned count 0 / polling interval label unavailable / unavailable reason label none / pass false.
+- Latest sanitized polling diagnostics follow-up evidence, provided from operator-local execution outside this implementation thread: HTTP 403 / owner binding verified / token material available / target lookup present / `liveChatMessages.list` provider permission rejected / Azure-UI-not-run / public-release capable no.
+- Target lookup diagnostics follow-up requirement: selected target rank label, usable target count, and lifecycle/privacy distribution labels/counts are required for future sanitized target-selection review.
 - Free Azure translation: not-run / approval-gated.
 - UI/feed confirmation: not-run / approval-gated.
 - Explicit Stop: executed / HTTP 200 / session status label stopped / stop reason label user-stop / unavailable reason label none / pass true.
@@ -125,6 +127,7 @@ Out of scope without a later exact same-thread approval:
 | PL-G2K route/API harness smoke | approved sanitized route/API harness smoke passed | Captures allowed-tester status route and harness route surfaces; it does not prove session Start, live target lookup, polling, Azure, UI/feed confirmation, or Stop. |
 | PL-G3 prior blocker | blocked-no-approval / not-run / approval-gated | Superseded by this approved status/start/stop attempt for the Start boundary. |
 | PL-G3 after PL-G2K approved bounded polling retry | blocked-empty-polling-intake-after-one-step | Status route passed, Start became active, server-only live target lookup found target presence, one bounded `liveChatMessages.list` step returned count 0, Stop passed; Azure/UI remain not-run. |
+| PL-G3 polling diagnostics 403 follow-up | blocked-provider-permission-rejected-after-target-present | Latest sanitized operator-local diagnostics moved from the prior authorization mismatch to HTTP 403; owner binding was verified, token material was available, target lookup was present, and `liveChatMessages.list` provider permission was rejected. Azure/UI remain not-run. |
 | PL-G4 production/custom deployed smoke | blocked-no-approval / not-run / approval-gated | Remains separate and incomplete. |
 | PL-G5 public launch decision | keep blocked / blocked-no-approval | Public gate state label remains unchanged / blocked, and public-release capable label remains no. |
 
@@ -189,6 +192,8 @@ Forbidden output/storage:
 | explicit Start | executed / HTTP 200 / session status label active / stop reason label none / unavailable reason label none / pass true |
 | server-only live target lookup | executed / target presence label present / provider route label liveBroadcasts-list-target-lookup-only / returned count 5 / unavailable reason label none / pass true |
 | one bounded `liveChatMessages.list` polling step | executed / target presence label present / provider route label liveChatMessages-list-one-step-only / returned count 0 / polling interval label unavailable / unavailable reason label none / pass false |
+| latest polling diagnostics follow-up | HTTP 403 / target presence label present / provider route label liveChatMessages-list-one-step-only / provider status label provider-permission-rejected / returned count 0 / pageInfo total count unavailable / polling interval label unavailable / nextPageToken presence label absent / item type distribution counts empty / pass false |
+| target selection diagnostics shape | returned count / usable target count / selected target source label / selected target rank label / selected target presence label / lifecycle/privacy distribution labels/counts |
 | Free Azure translation | not-run / approval-gated |
 | UI/feed confirmation | not-run / approval-gated |
 | usage | not-run / approval-gated |
@@ -209,6 +214,8 @@ This PL-G3 completion record proves:
 - the latest approved Start retry returned HTTP 200 with session status label `active`;
 - server-only live target lookup returned target presence label `present`, provider route label `liveBroadcasts-list-target-lookup-only`, returned count 5, and pass true;
 - one bounded `liveChatMessages.list` step returned target presence label `present`, provider route label `liveChatMessages-list-one-step-only`, returned count 0, and pass false;
+- the latest sanitized polling diagnostics follow-up shows HTTP 403 with provider status label `provider-permission-rejected`; owner binding was verified, token material was available, and target lookup was present, so this is not an empty-intake proof, not token expiry, and not target absence;
+- future target lookup diagnostics must include sanitized selection metadata: usable target count, selected target source label, selected target rank label, selected target presence label, and lifecycle/privacy distribution labels/counts;
 - the approved Stop rollback completed with HTTP 200 / stopped / user-stop / pass true;
 - Free Azure translation and UI/feed confirmation were not run because the one approved bounded polling step returned no intake;
 - the route/action runtime now preserves the approved smoke order by not using unapproved target lookup as a Start blocker;
@@ -232,13 +239,14 @@ This record does not prove Start-to-translation behavior. It does not prove:
 
 Unchecked scope:
 
-- Start-to-translation smoke execution: blocked-empty-polling-intake-after-one-step;
+- Start-to-translation smoke execution: blocked-provider-permission-rejected-after-target-present;
 - status route precheck: executed / HTTP 200 / session status label not-started / pass true;
 - credential status check after reconnect: executed / status label available / reconnect required false / pass true;
 - explicit Start: executed / HTTP 200 / session status label active / stop reason label none / pass true;
 - route/action Start skip for unapproved live target lookup: implemented locally / deployed retry passed Start;
 - server-only live target lookup: executed / target presence label present / provider route label liveBroadcasts-list-target-lookup-only / returned count 5 / pass true;
 - one bounded `liveChatMessages.list` polling step: executed / target presence label present / provider route label liveChatMessages-list-one-step-only / returned count 0 / polling interval label unavailable / pass false;
+- polling diagnostics follow-up: HTTP 403 / owner binding verified / token material available / target lookup present / `liveChatMessages.list` provider permission rejected / Azure-UI-not-run / public-release capable no;
 - non-empty live comment intake: not-run / approval-gated;
 - Free Azure translation: not-run / approval-gated;
 - UI/feed confirmation: not-run / approval-gated;

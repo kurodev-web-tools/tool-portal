@@ -166,9 +166,16 @@ type YouTubeLiveChatPollingSmokeItemTypeLabel =
   | "unknown"
   | "other";
 
+type YouTubeLiveChatPollingSmokeProviderStatusLabel =
+  | "provider-ok"
+  | "provider-auth-rejected"
+  | "provider-permission-rejected"
+  | "provider-http-error";
+
 export type YouTubeLiveChatPollingSmokeResponseMetadata = {
   httpStatus: number;
   ok: boolean;
+  providerStatusLabel: YouTubeLiveChatPollingSmokeProviderStatusLabel;
   liveChatTarget: "present";
   nextPageToken: "present" | "absent";
   pollingIntervalMillis: number | null;
@@ -584,6 +591,7 @@ function createSanitizedPollingResponseMetadata(
   return {
     httpStatus: providerResponse.status,
     ok: providerResponse.ok,
+    providerStatusLabel: sanitizeProviderStatusLabel(providerResponse),
     liveChatTarget: "present",
     nextPageToken: typeof body.nextPageToken === "string" && body.nextPageToken.length > 0 ? "present" : "absent",
     pollingIntervalMillis,
@@ -592,6 +600,24 @@ function createSanitizedPollingResponseMetadata(
     itemTypeDistribution: createSanitizedItemTypeDistribution(items),
     textPayload: "not-returned-by-design"
   };
+}
+
+function sanitizeProviderStatusLabel(
+  providerResponse: YouTubeLiveChatPollingSmokeFetchResult
+): YouTubeLiveChatPollingSmokeProviderStatusLabel {
+  if (providerResponse.ok) {
+    return "provider-ok";
+  }
+
+  if (providerResponse.status === 401) {
+    return "provider-auth-rejected";
+  }
+
+  if (providerResponse.status === 403) {
+    return "provider-permission-rejected";
+  }
+
+  return "provider-http-error";
 }
 
 function createSanitizedItemTypeDistribution(

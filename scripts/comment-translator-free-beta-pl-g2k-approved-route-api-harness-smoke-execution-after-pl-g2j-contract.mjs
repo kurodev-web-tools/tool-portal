@@ -211,7 +211,7 @@ assert.match(actions, /getCommentTranslatorRealCommentsFeedAction[\s\S]*live-pro
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j|pl-g3-start-to-translation-smoke-completion-after-pl-g2k|pl-g3-bounded-polling-empty-intake-evidence-after-start-lookup|pl-g3-polling-sanitized-diagnostics)`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j|pl-g3-start-to-translation-smoke-completion-after-pl-g2k|pl-g3-bounded-polling-empty-intake-evidence-after-start-lookup|pl-g3-polling-(?:sanitized-diagnostics|diagnostics-output-sanitization))`/i,
   "task.md records PL-G2K branch"
 );
 assert.match(task, /Latest PL-G2K Execution Evidence/i, "task.md records Latest PL-G2K Execution Evidence");

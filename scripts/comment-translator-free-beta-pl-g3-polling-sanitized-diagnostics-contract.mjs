@@ -88,6 +88,16 @@ assert.match(
   /translationExecution:\s*"not-run-diagnostics-only"/,
   "polling diagnostics command does not proceed to translation execution"
 );
+assert.match(
+  command,
+  /sanitizeDiagnosticsPayload/,
+  "polling diagnostics command sanitizes diagnostics output before writing JSON"
+);
+assert.match(
+  command,
+  /delete sanitizedPayload\.credentialReferenceId/,
+  "polling diagnostics command omits credential reference values from diagnostics output"
+);
 
 assert.match(foundation, /itemTypeDistribution/, "polling foundation returns item type distribution metadata");
 assert.match(foundation, /pageInfoTotalResults/, "polling foundation returns pageInfo total result metadata");
@@ -138,7 +148,7 @@ assert.match(
 );
 assert.match(
   task,
-  /codex\/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics/i,
+  /codex\/comment-translator-free-beta-pl-g3-polling-(?:sanitized-diagnostics|diagnostics-output-sanitization)/i,
   "task.md records diagnostics branch"
 );
 assert.match(

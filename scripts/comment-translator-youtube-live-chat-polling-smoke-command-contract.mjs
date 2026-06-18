@@ -90,6 +90,12 @@ assert.match(
   /live-chat-polling-diagnostics-sanitized-result/,
   "command emits dedicated sanitized diagnostics status"
 );
+assert.match(commandSource, /sanitizeDiagnosticsPayload/, "command sanitizes diagnostics payload before output");
+assert.match(
+  commandSource,
+  /delete sanitizedPayload\.credentialReferenceId/,
+  "command omits credential reference values from diagnostics output"
+);
 assert.match(commandSource, /--check-env-only/, "command supports preflight-only mode");
 assert.match(commandSource, /--check-owner-binding-only/, "command supports provider-fetch-free owner binding check");
 assert.match(commandSource, /--check-token-material-availability/, "command supports provider-fetch-free token material check");

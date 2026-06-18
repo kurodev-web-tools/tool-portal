@@ -19,6 +19,8 @@ const publicUsabilityPreflightPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md";
 const finalQaPath = "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
+const plG3AfterPlG2kDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md";
 const routeHarnessPath = "app/api/comment-translator/free-beta/route-api-harness/route.ts";
 const sessionRoutePath = "app/api/comment-translator/session/route.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
@@ -79,6 +81,7 @@ for (const requiredPath of [
   publicUsabilityPreflightPath,
   finalQaPath,
   gapAuditPath,
+  plG3AfterPlG2kDocPath,
   routeHarnessPath,
   sessionRoutePath,
   actionsPath,
@@ -95,6 +98,7 @@ const allowedTesterPreflight = read(allowedTesterPreflightPath);
 const publicUsabilityPreflight = read(publicUsabilityPreflightPath);
 const finalQa = read(finalQaPath);
 const gapAudit = read(gapAuditPath);
+const plG3AfterPlG2kDoc = read(plG3AfterPlG2kDocPath);
 const routeHarness = read(routeHarnessPath);
 const sessionRoute = read(sessionRoutePath);
 const actions = read(actionsPath);
@@ -191,6 +195,7 @@ assert.match(allowedTesterPreflight, /approved-fb-l3-allowed-tester-route-api-sm
 assert.match(publicUsabilityPreflight, /PL-G2K[\s\S]*allowed-tester route\/API harness smoke/i, "FB-L1 preflight records PL-G2K");
 assert.match(finalQa, /PL-G2K[\s\S]*approved sanitized route\/API harness smoke passed/i, "F15 readiness records PL-G2K passing smoke");
 assert.match(gapAudit, /PL-G2K[\s\S]*allowed-tester route\/API harness smoke/i, "gap audit records PL-G2K");
+assert.match(plG3AfterPlG2kDoc, /PL-G2K route\/API harness evidence is captured as approved sanitized route\/API harness smoke passed/i, "PL-G3 after PL-G2K consumes PL-G2K passing evidence");
 
 assert.match(routeHarness, /COMMENT_TRANSLATOR_FREE_BETA_ROUTE_API_HARNESS_ENABLED/, "route harness remains env-gated");
 assert.match(routeHarness, /x-comment-translator-harness-approval/, "route harness remains approval-header gated");
@@ -206,7 +211,7 @@ assert.match(actions, /getCommentTranslatorRealCommentsFeedAction[\s\S]*live-pro
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j|pl-g3-start-to-translation-smoke-completion-after-pl-g2k)`/i,
   "task.md records PL-G2K branch"
 );
 assert.match(task, /Latest PL-G2K Execution Evidence/i, "task.md records Latest PL-G2K Execution Evidence");
@@ -245,6 +250,7 @@ for (const [label, source] of [
   [publicUsabilityPreflightPath, publicUsabilityPreflight],
   [finalQaPath, finalQa],
   [gapAuditPath, gapAudit],
+  [plG3AfterPlG2kDocPath, plG3AfterPlG2kDoc],
   [routeHarnessPath, routeHarness],
   [sessionRoutePath, sessionRoute],
   [actionsPath, actions],
@@ -255,10 +261,14 @@ for (const [label, source] of [
 
 const allowedChangedFiles = new Set([
   plG2kDocPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md",
   allowedTesterEvidencePath,
   publicUsabilityPreflightPath,
   finalQaPath,
   gapAuditPath,
+  plG3AfterPlG2kDocPath,
   taskPath,
   "scripts/comment-translator-free-beta-pl-g2b-allowed-tester-route-api-harness-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2c-allowed-tester-route-api-harness-smoke-evidence-contract.mjs",
@@ -270,6 +280,10 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g2i-approved-route-api-harness-smoke-execution-after-pl-g2h-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2j-approved-route-api-harness-smoke-execution-after-pl-g2i-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
 ]);
 
 for (const file of changedFiles()) {

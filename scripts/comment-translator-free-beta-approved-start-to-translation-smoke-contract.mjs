@@ -8,6 +8,8 @@ const root = process.cwd();
 const evidenceDocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md";
 const readyPreflightDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md";
+const plG3AfterPlG2kDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md";
 const publicUsabilityPreflightDocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md";
 const remoteDurableEvidenceDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md";
@@ -82,6 +84,7 @@ function assertNoSensitiveValues(source, label) {
 for (const requiredPath of [
   evidenceDocPath,
   readyPreflightDocPath,
+  plG3AfterPlG2kDocPath,
   publicUsabilityPreflightDocPath,
   remoteDurableEvidenceDocPath,
   remoteDurablePreflightDocPath,
@@ -97,6 +100,7 @@ for (const requiredPath of [
 
 const evidenceDoc = read(evidenceDocPath);
 const readyPreflightDoc = read(readyPreflightDocPath);
+const plG3AfterPlG2kDoc = read(plG3AfterPlG2kDocPath);
 const publicUsabilityPreflightDoc = read(publicUsabilityPreflightDocPath);
 const remoteDurableEvidenceDoc = read(remoteDurableEvidenceDocPath);
 const remoteDurablePreflightDoc = read(remoteDurablePreflightDocPath);
@@ -223,6 +227,7 @@ for (const forbiddenFragment of [
 }
 
 assert.match(publicUsabilityPreflightDoc, /Start smoke[\s\S]*live target lookup[\s\S]*bounded polling[\s\S]*Azure execution/i, "FB-L1 preflight keeps FB-L4 sequence");
+assert.match(plG3AfterPlG2kDoc, /blocked-missing-start-to-translation-readiness/i, "PL-G3 after PL-G2K records readiness blocker");
 assert.match(remoteDurableEvidenceDoc, /session start smoke[\s\S]*not-run \/ approval-gated/i, "FB-L2 evidence leaves Start unchecked");
 assert.match(remoteDurablePreflightDoc, /What Approval Would Not Prove[\s\S]*provider target lookup[\s\S]*live target lookup[\s\S]*liveChatMessages\.list/i, "FB-L2 ready preflight excludes provider/live proof");
 assert.match(allowedTesterEvidenceDoc, /session Start[\s\S]*provider target lookup[\s\S]*live target lookup[\s\S]*`liveChatMessages.list`/i, "FB-L3 evidence leaves FB-L4 live path unchecked");
@@ -232,7 +237,7 @@ assert.match(gapAudit, /FB-L4|Start-to-translation smoke/i, "gap audit records F
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(fb-l4-approved-start-to-translation-smoke|pl-g3-start-to-translation-smoke(?:-evidence-follow-up)?)`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(fb-l4-approved-start-to-translation-smoke|pl-g3-start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?)`/i,
   "task.md records FB-L4 or PL-G3 Start-to-translation branch"
 );
 assert.match(task, /FB-L4[\s\S]*Approved Start-to-translation smoke[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L4 state");
@@ -281,6 +286,7 @@ assert.match(azureSource, /durableUsageWrite:\s*"not-run-local-deterministic-han
 for (const [label, source] of [
   [evidenceDocPath, evidenceDoc],
   [readyPreflightDocPath, readyPreflightDoc],
+  [plG3AfterPlG2kDocPath, plG3AfterPlG2kDoc],
   [publicUsabilityPreflightDocPath, publicUsabilityPreflightDoc],
   [remoteDurableEvidenceDocPath, remoteDurableEvidenceDoc],
   [remoteDurablePreflightDocPath, remoteDurablePreflightDoc],
@@ -298,12 +304,15 @@ const allowedChangedFiles = new Set([
   evidenceDocPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md",
+  plG3AfterPlG2kDocPath,
   readyPreflightDocPath,
   publicUsabilityPreflightDocPath,
   finalQaDocPath,
   gapAuditPath,
   taskPath,
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs"
 ]);

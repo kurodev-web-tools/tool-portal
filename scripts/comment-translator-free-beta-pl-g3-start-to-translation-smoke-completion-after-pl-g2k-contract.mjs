@@ -5,20 +5,23 @@ import path from "node:path";
 
 const root = process.cwd();
 
+const completionDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md";
 const plG3DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md";
 const plG3FollowUpDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md";
-const plG3AfterPlG2kDocPath =
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md";
 const fbL4EvidencePath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md";
 const fbL4ReadyPreflightPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md";
-const plG2bDocPath =
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2B_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE.md";
+const plG2kDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2K_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2J.md";
 const allowedTesterEvidencePath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md";
-const publicUsabilityPreflightPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md";
+const plG1DocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md";
+const publicUsabilityPreflightPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md";
 const finalQaPath = "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const sessionRoutePath = "app/api/comment-translator/session/route.ts";
@@ -27,6 +30,9 @@ const targetLookupPath = "lib/comment-translator-server-only-live-chat-target-lo
 const pollingPath = "lib/comment-translator-bounded-live-chat-polling-wiring.ts";
 const azurePath = "lib/comment-translator-azure-normal-translation-execution.ts";
 const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
+const targetLookupCommandPath = "scripts/comment-translator-youtube-live-chat-target-lookup-command.mjs";
+const pollingCommandPath = "scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs";
+const providerHarnessPath = "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs";
 const taskPath = "task.md";
 
 function read(relativePath) {
@@ -76,12 +82,14 @@ function assertNoSensitiveValues(source, label) {
 }
 
 for (const requiredPath of [
+  completionDocPath,
   plG3DocPath,
-  plG3AfterPlG2kDocPath,
+  plG3FollowUpDocPath,
   fbL4EvidencePath,
   fbL4ReadyPreflightPath,
-  plG2bDocPath,
+  plG2kDocPath,
   allowedTesterEvidencePath,
+  plG1DocPath,
   publicUsabilityPreflightPath,
   finalQaPath,
   gapAuditPath,
@@ -91,17 +99,22 @@ for (const requiredPath of [
   pollingPath,
   azurePath,
   dockPath,
+  targetLookupCommandPath,
+  pollingCommandPath,
+  providerHarnessPath,
   taskPath
 ]) {
-  assert.ok(exists(requiredPath), `PL-G3 required path exists: ${requiredPath}`);
+  assert.ok(exists(requiredPath), `PL-G3 after PL-G2K required path exists: ${requiredPath}`);
 }
 
+const completionDoc = read(completionDocPath);
 const plG3Doc = read(plG3DocPath);
-const plG3AfterPlG2kDoc = read(plG3AfterPlG2kDocPath);
+const plG3FollowUpDoc = read(plG3FollowUpDocPath);
 const fbL4Evidence = read(fbL4EvidencePath);
 const fbL4ReadyPreflight = read(fbL4ReadyPreflightPath);
-const plG2bDoc = read(plG2bDocPath);
+const plG2kDoc = read(plG2kDocPath);
 const allowedTesterEvidence = read(allowedTesterEvidencePath);
+const plG1Doc = read(plG1DocPath);
 const publicUsabilityPreflight = read(publicUsabilityPreflightPath);
 const finalQa = read(finalQaPath);
 const gapAudit = read(gapAuditPath);
@@ -111,119 +124,151 @@ const targetLookup = read(targetLookupPath);
 const polling = read(pollingPath);
 const azure = read(azurePath);
 const dock = read(dockPath);
+const targetLookupCommand = read(targetLookupCommandPath);
+const pollingCommand = read(pollingCommandPath);
+const providerHarness = read(providerHarnessPath);
 const task = read(taskPath);
 
 for (const requiredSection of [
   "## Purpose",
   "## Execution Decision",
   "## Inspected Inputs",
+  "## Operator-local Readiness Instructions",
   "## Start-to-translation Boundary",
+  "## Evidence Status Matrix",
   "## Sanitized Evidence Shape",
   "## Blocker Evidence",
-  "## Ready Preflight For Later Execution",
   "## What This Proves",
   "## What This Does Not Prove",
   "## Unchecked Scope And Residual Risk",
   "## Next Safe Action",
   "## Completion Verification"
 ]) {
-  assert.match(plG3Doc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G3 doc includes ${requiredSection}`);
+  assert.match(completionDoc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G3 after PL-G2K doc includes ${requiredSection}`);
 }
 
 for (const requiredFragment of [
-  "Status: PL-G3 Start-to-translation smoke execution preflight/evidence",
+  "Status: PL-G3 Start-to-translation smoke completion after PL-G2K",
   "Public-release capable: no",
-  "Execution result: blocked-no-approval",
-  "same-thread ready preflight",
-  "sanitized output review",
-  "exact explicit approval",
+  "Execution result: keep blocked / blocked-missing-start-to-translation-readiness",
+  "Start-to-translation smoke execution: not-run / approval-gated",
+  "PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`",
+  "PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed",
   "approved-fb-l4-start-to-translation-smoke",
+  "Exact approval label: absent",
+  "deployed origin reference ready: missing",
+  "allowed-tester cookie/session reference ready: missing",
+  "connected YouTube credential reference ready: missing",
+  "safe owned live test target reference ready: missing",
+  "sanitized output shape reviewed",
+  "public gate state label: unchanged / blocked",
+  "public-release capable label: no",
+  "Operator-local Readiness Instructions",
   "COMMENT_TRANSLATOR_DEPLOYED_ORIGIN",
   "COMMENT_TRANSLATOR_ALLOWED_TESTER_COOKIE",
   "COMMENT_TRANSLATOR_CREDENTIAL_REFERENCE",
+  "do not print provider target metadata",
+  "Approval Text",
+  "status route precheck",
   "explicit Start",
   "server-only live target lookup",
   "one bounded `liveChatMessages.list` polling step",
   "Free Azure translation",
-  "UI feed",
-  "usage",
-  "stop reason",
-  "source attribution",
+  "UI/feed confirmation",
+  "explicit Stop",
   "target presence label only",
-  "polling interval label",
+  "provider route label",
+  "returned count",
+  "eligible count",
   "translated count",
   "skipped count",
   "error count",
+  "polling interval label",
+  "usage count / Free cap label",
+  "stop reason label",
+  "unavailable reason label",
+  "source attribution label",
   "not-run / approval-gated",
-  "blocked-missing-env-or-operator-local-references",
-  "counts/status/stop reasons only",
   "no browser storage expansion",
   "no handoff payload expansion",
   "width checks skipped",
   "no visible UI/CSS/layout/copy change"
 ]) {
-  assert.match(plG3Doc, new RegExp(escaped(requiredFragment), "i"), `PL-G3 doc includes ${requiredFragment}`);
+  assert.match(completionDoc, new RegExp(escaped(requiredFragment), "i"), `PL-G3 after PL-G2K doc includes ${requiredFragment}`);
 }
 
 for (const forbiddenFragment of [
-  "approved-fb-l3-allowed-tester-route-api-smoke",
-  "approved-fb-l2-remote-durable-enforcement-apply-and-smoke",
+  "status route precheck: completed",
+  "explicit Start: completed",
+  "server-only live target lookup: completed",
+  "liveChatMessages.list: completed",
+  "Free Azure translation: completed",
+  "UI/feed confirmation: completed",
+  "explicit Stop: completed",
+  "limited public beta open: completed",
+  "public launch gate flip: completed",
   "remote Supabase mutation: completed",
   "deploy/upload: completed",
-  "public launch gate flip: completed",
-  "OpenAI provider execution: completed",
-  "multiple polling loops"
+  "Stripe action: completed"
 ]) {
-  assert.doesNotMatch(plG3Doc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G3 doc excludes ${forbiddenFragment}`);
+  assert.doesNotMatch(completionDoc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G3 after PL-G2K doc excludes ${forbiddenFragment}`);
 }
 
-assert.match(fbL4Evidence, /PL-G3[\s\S]*blocked-no-approval/i, "FB-L4 evidence records PL-G3 blocker");
-assert.match(plG3AfterPlG2kDoc, /blocked-missing-start-to-translation-readiness/i, "PL-G3 after PL-G2K records readiness blocker");
-assert.match(fbL4ReadyPreflight, /approved-fb-l4-start-to-translation-smoke/i, "FB-L4 ready preflight keeps PL-G3 approval label");
-assert.match(plG2bDoc, /session Start[\s\S]*live target lookup[\s\S]*`liveChatMessages\.list`[\s\S]*Azure\/OpenAI provider execution/i, "PL-G2B evidence keeps Start/live/provider execution out of route/API harness scope");
-assert.match(allowedTesterEvidence, /PL-G2B[\s\S]*blocked-no-approval/i, "FB-L3 evidence keeps route/API smoke blocked before PL-G3");
-assert.match(publicUsabilityPreflight, /PL-G3[\s\S]*Start-to-translation smoke/i, "FB-L1 public usability preflight records PL-G3");
-assert.match(finalQa, /PL-G3[\s\S]*blocked-no-approval/i, "F15 readiness records PL-G3 blocker");
-assert.match(gapAudit, /PL-G3[\s\S]*Start-to-translation smoke/i, "gap audit records PL-G3");
-
-assert.match(
-  task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?`/i,
-  "task.md records PL-G3 branch"
-);
-assert.match(task, /PL-G3[\s\S]*blocked-no-approval/i, "task.md records PL-G3 blocked result");
-assert.match(task, /approved-fb-l4-start-to-translation-smoke/i, "task.md records exact PL-G3 approval label");
-assert.match(task, /Start-to-translation smoke execution[\s\S]*not-run \/ approval-gated/i, "task.md records PL-G3 smoke not-run/gated");
-assert.match(task, /unchecked scope[\s\S]*Start-to-translation smoke execution/i, "task.md records unchecked PL-G3 scope");
-assert.match(task, /residual risk[\s\S]*PL-G3 remains incomplete/i, "task.md records PL-G3 residual risk");
-assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records PL-G3 width-check skip reason");
-assert.match(task, /public-release capable: no/i, "task.md keeps public release blocked");
+assert.match(plG1Doc, /remote-apply-and-deployed-smoke-completed/i, "PL-G1 evidence records completed durable boundary");
+assert.match(plG2kDoc, /approved sanitized route\/API harness smoke passed/i, "PL-G2K evidence records passing route/API harness smoke");
+assert.match(allowedTesterEvidence, /PL-G2K[\s\S]*approved sanitized route\/API harness smoke passed/i, "FB-L3 evidence points to PL-G2K passing output");
+assert.match(plG3Doc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "PL-G3 prior blocker remains blocked");
+assert.match(plG3FollowUpDoc, /keep blocked \/ blocked-no-approval/i, "PL-G3 follow-up remains blocked");
+assert.match(fbL4Evidence, /Start-to-translation smoke execution[\s\S]*not-run \/ approval-gated/i, "FB-L4 evidence remains not-run");
+assert.match(fbL4ReadyPreflight, /Approval Text[\s\S]*approved-fb-l4-start-to-translation-smoke/i, "FB-L4 ready preflight carries exact approval text");
+assert.match(publicUsabilityPreflight, /PL-G3 after PL-G2K[\s\S]*blocked-missing-start-to-translation-readiness/i, "FB-L1 preflight records PL-G3 after PL-G2K blocker");
+assert.match(finalQa, /PL-G3 after PL-G2K[\s\S]*blocked-missing-start-to-translation-readiness/i, "F15 readiness records PL-G3 after PL-G2K blocker");
+assert.match(gapAudit, /PL-G3 after PL-G2K[\s\S]*blocked-missing-start-to-translation-readiness/i, "gap audit records PL-G3 after PL-G2K blocker");
 
 assert.match(sessionRoute, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "session route reads durable state before Start");
-assert.match(sessionRoute, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart[\s\S]*provider-target-lookup-not-approved/, "session route keeps live target lookup unavailable by default");
+assert.match(sessionRoute, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart[\s\S]*provider-target-lookup-not-approved/, "session route keeps target lookup unavailable by default");
 assert.match(sessionRoute, /readCommentTranslatorBoundedLiveChatPollingTick[\s\S]*live-provider-polling-not-approved/, "session route keeps polling unavailable by default");
 assert.match(actions, /startCommentTranslatorSessionAction[\s\S]*intent:\s*"start"/, "server action exposes explicit Start");
-assert.match(actions, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart[\s\S]*provider-target-lookup-not-approved/, "actions keep live target lookup unavailable by default");
-assert.match(actions, /readCommentTranslatorBoundedLiveChatPollingTick[\s\S]*live-provider-polling-not-approved/, "actions keep polling unavailable by default");
+assert.match(actions, /stopCommentTranslatorSessionAction[\s\S]*intent:\s*"stop"/, "server action exposes explicit Stop");
 assert.match(targetLookup, /import "server-only"/, "target lookup remains server-only");
-assert.match(targetLookup, /sessionBoundary:\s*"start-intent-only"/, "target lookup remains Start-only");
 assert.match(targetLookup, /targetMetadataHandling:\s*"server-only-internal-never-client-readable"/, "target metadata stays server-only");
 assert.match(polling, /import "server-only"/, "bounded polling remains server-only");
-assert.match(polling, /liveTargetHandling:\s*"server-only-active-session-state"/, "polling target remains server-only active-session state");
 assert.match(polling, /pollingCursor:\s*"nextPageToken-server-only"/, "polling cursor stays server-only");
 assert.match(azure, /import "server-only"/, "Azure translation bridge remains server-only");
-assert.match(azure, /freePlanPrimary:\s*"azure-translator"/, "Free route remains Azure Translator");
 assert.match(azure, /providerApiExecution:\s*"approval-gated-not-run-by-default"/, "Azure provider execution remains approval-gated by default");
 assert.match(dock, /data-comment-translator-real-comments-feed="server-owned-safe-rows"/, "UI feed uses server-owned safe rows");
 assert.match(dock, /Source: YouTube Live Chat/, "UI source attribution label remains present");
+assert.match(targetLookupCommand, /approved-live-chat-target-lookup/, "target lookup command requires approval flag");
+assert.match(pollingCommand, /approved-live-chat-polling-smoke/, "polling command requires approval flag");
+assert.match(providerHarness, /approved-private-gated-live-provider-smoke/, "provider harness requires approval flag");
+
+assert.match(
+  task,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k`/i,
+  "task.md records PL-G3 after PL-G2K branch"
+);
+assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");
+assert.match(task, /keep blocked \/ blocked-missing-start-to-translation-readiness/i, "task.md records readiness blocker");
+assert.match(task, /deployed origin reference ready[\s\S]*missing/i, "task.md records missing deployed origin readiness");
+assert.match(task, /allowed-tester cookie\/session reference ready[\s\S]*missing/i, "task.md records missing cookie/session readiness");
+assert.match(task, /connected YouTube credential reference ready[\s\S]*missing/i, "task.md records missing credential readiness");
+assert.match(task, /safe owned live test target reference ready[\s\S]*missing/i, "task.md records missing owned live target readiness");
+assert.match(task, /approved-fb-l4-start-to-translation-smoke/i, "task.md records exact PL-G3 approval label");
+assert.match(task, /operator-local readiness instructions/i, "task.md records value-free operator-local readiness instructions");
+assert.match(task, /Start-to-translation smoke execution[\s\S]*not-run \/ approval-gated/i, "task.md records PL-G3 not-run state");
+assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md keeps public gate blocked");
+assert.match(task, /public-release capable label: no/i, "task.md keeps public-release capable no");
+assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records width-check skip reason");
 
 for (const [label, source] of [
+  [completionDocPath, completionDoc],
   [plG3DocPath, plG3Doc],
-  [plG3AfterPlG2kDocPath, plG3AfterPlG2kDoc],
+  [plG3FollowUpDocPath, plG3FollowUpDoc],
   [fbL4EvidencePath, fbL4Evidence],
   [fbL4ReadyPreflightPath, fbL4ReadyPreflight],
-  [plG2bDocPath, plG2bDoc],
+  [plG2kDocPath, plG2kDoc],
   [allowedTesterEvidencePath, allowedTesterEvidence],
+  [plG1DocPath, plG1Doc],
   [publicUsabilityPreflightPath, publicUsabilityPreflight],
   [finalQaPath, finalQa],
   [gapAuditPath, gapAudit],
@@ -233,14 +278,17 @@ for (const [label, source] of [
   [pollingPath, polling],
   [azurePath, azure],
   [dockPath, dock],
+  [targetLookupCommandPath, targetLookupCommand],
+  [pollingCommandPath, pollingCommand],
+  [providerHarnessPath, providerHarness],
   [taskPath, task]
 ]) {
   assertNoSensitiveValues(source, label);
 }
 
 const allowedChangedFiles = new Set([
+  completionDocPath,
   plG3DocPath,
-  plG3AfterPlG2kDocPath,
   plG3FollowUpDocPath,
   fbL4EvidencePath,
   publicUsabilityPreflightPath,
@@ -249,14 +297,14 @@ const allowedChangedFiles = new Set([
   taskPath,
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `PL-G3 change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `PL-G3 after PL-G2K change stays in allowed files: ${file}`);
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 
-console.log("comment translator Free beta PL-G3 Start-to-translation smoke contract checks passed");
+console.log("comment translator Free beta PL-G3 Start-to-translation smoke completion after PL-G2K contract checks passed");

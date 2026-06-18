@@ -178,7 +178,8 @@ for (const forbiddenFragment of [
 }
 
 assert.match(fbL4Evidence, /PL-G3[\s\S]*blocked-no-approval/i, "FB-L4 evidence records PL-G3 blocker");
-assert.match(plG3AfterPlG2kDoc, /blocked-missing-start-to-translation-readiness/i, "PL-G3 after PL-G2K records readiness blocker");
+assert.match(plG3AfterPlG2kDoc, /blocked-reconnect-required-after-start/i, "PL-G3 after PL-G2K records approved Start reconnect blocker");
+assert.match(plG3AfterPlG2kDoc, /Status route precheck:\s*executed \/ HTTP 200[\s\S]*Explicit Start:\s*executed \/ HTTP 200[\s\S]*reconnect-required[\s\S]*Explicit Stop:\s*executed \/ HTTP 200[\s\S]*user-stop/i, "PL-G3 after PL-G2K records sanitized status/start/stop evidence");
 assert.match(fbL4ReadyPreflight, /approved-fb-l4-start-to-translation-smoke/i, "FB-L4 ready preflight keeps PL-G3 approval label");
 assert.match(plG2bDoc, /session Start[\s\S]*live target lookup[\s\S]*`liveChatMessages\.list`[\s\S]*Azure\/OpenAI provider execution/i, "PL-G2B evidence keeps Start/live/provider execution out of route/API harness scope");
 assert.match(allowedTesterEvidence, /PL-G2B[\s\S]*blocked-no-approval/i, "FB-L3 evidence keeps route/API smoke blocked before PL-G3");

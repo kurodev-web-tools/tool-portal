@@ -2,46 +2,46 @@
 
 Status: PL-G3 Start-to-translation smoke completion after PL-G2K. Public-release capable: no.
 
-Execution result: keep blocked / blocked-missing-start-to-translation-readiness.
+Execution result: blocked-reconnect-required-after-start.
 
 Start-to-translation smoke execution: not-run / approval-gated.
 
-This PL-G3 completion slice rechecks the next public-launch gate after PL-G2K approved sanitized route/API harness smoke passed. PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`, and PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed. The current thread still does not include the required value-free operator-local Start-to-translation readiness confirmations and exact approval label, so no status precheck, explicit Start, server-only live target lookup, bounded `liveChatMessages.list`, Free Azure translation, UI/feed confirmation, usage check, source attribution confirmation, or Stop was run.
+This PL-G3 completion slice rechecks the next public-launch gate after PL-G2K approved sanitized route/API harness smoke passed. PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`, and PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed. The current thread includes exact approval and value-free operator-local readiness confirmations. The approved status route precheck passed, explicit Start returned HTTP 200 but stopped with stop reason label `reconnect-required`, and explicit Stop completed with stop reason label `user-stop`. Because Start did not become active, server-only live target lookup, bounded `liveChatMessages.list`, Free Azure translation, UI/feed confirmation, usage check, and source attribution confirmation were not run.
 
 Public gate state label: unchanged / blocked. Public-release capable label: no.
 
-This slice does not run limited public beta open, public access change, public launch gate flip, promotion to main, deploy/upload, remote Supabase mutation/schema apply, PL-G4 production/custom deployed smoke execution, session Start, Stop, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, Stripe action, billing setting mutation, Paid entitlement C1/C3, Creator paid limits, browser storage expansion, or handoff payload expansion.
+This slice does not run limited public beta open, public access change, public launch gate flip, promotion to main, deploy/upload, remote Supabase mutation/schema apply, PL-G4 production/custom deployed smoke execution, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, Stripe action, billing setting mutation, Paid entitlement C1/C3, Creator paid limits, browser storage expansion, or handoff payload expansion.
 
 ## Purpose
 
-PL-G3 completion after PL-G2K must either record approved sanitized Start-to-translation smoke evidence for the reviewed FB-L4 boundary, or stop with a reviewed readiness blocker when operator-local references or exact approval are absent.
+PL-G3 completion after PL-G2K must either record approved sanitized Start-to-translation smoke evidence for the reviewed FB-L4 boundary, or stop with a reviewed blocker when Start cannot reach the active live/provider boundary.
 
-Because this initial turn authorizes work start and readiness instruction creation only, not exact Start/live/provider execution approval, the safe outcome is `keep blocked / blocked-missing-start-to-translation-readiness`.
+Because the approved Start attempt returned `stopped` with stop reason label `reconnect-required`, the safe outcome is `blocked-reconnect-required-after-start`.
 
 ## Execution Decision
 
-- Decision: keep blocked / blocked-missing-start-to-translation-readiness.
+- Decision: blocked-reconnect-required-after-start.
 - Existing FB-L4 ready preflight reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`.
 - Existing FB-L4 evidence reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md`.
 - Existing PL-G3 blocker reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md`.
 - Existing PL-G3 follow-up reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md`.
 - Existing PL-G2K passing route/API harness evidence reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2K_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2J.md`.
 - Required approval label: `approved-fb-l4-start-to-translation-smoke`.
-- Exact approval label: absent for this PL-G3 execution turn.
-- Sanitized output shape reviewed: reviewed at field-name level only.
-- deployed origin reference ready: missing in this thread.
-- allowed-tester cookie/session reference ready: missing in this thread.
-- connected YouTube credential reference ready: missing in this thread.
-- safe owned live test target reference ready: missing in this thread.
+- Exact approval label: present.
+- Sanitized output shape reviewed: present.
+- deployed origin reference ready: ready.
+- allowed-tester cookie/session reference ready: ready.
+- connected YouTube credential reference ready: ready.
+- safe owned live test target reference ready: ready.
 - public launch remains blocked / public-release capable no: present.
-- Readiness check result: blocked-missing-start-to-translation-readiness.
-- Status route precheck: not-run / approval-gated.
-- Explicit Start: not-run / approval-gated.
+- Readiness check result: ready.
+- Status route precheck: executed / HTTP 200 / session status label not-started / stop reason label none / unavailable reason label none / pass true.
+- Explicit Start: executed / HTTP 200 / session status label stopped / stop reason label reconnect-required / unavailable reason label none / pass false.
 - Server-only live target lookup: not-run / approval-gated.
 - One bounded `liveChatMessages.list` polling step: not-run / approval-gated.
 - Free Azure translation: not-run / approval-gated.
 - UI/feed confirmation: not-run / approval-gated.
-- Explicit Stop: not-run / approval-gated.
+- Explicit Stop: executed / HTTP 200 / session status label stopped / stop reason label user-stop / unavailable reason label none / pass true.
 
 ## Inspected Inputs
 
@@ -117,8 +117,8 @@ Out of scope without a later exact same-thread approval:
 | --- | --- | --- |
 | PL-G1 remote durable enforcement | remote-apply-and-deployed-smoke-completed | Completed for the approved durable apply and deployed status/start/stop boundary only; it does not prove PL-G3 Start-to-translation smoke. |
 | PL-G2K route/API harness smoke | approved sanitized route/API harness smoke passed | Captures allowed-tester status route and harness route surfaces; it does not prove session Start, live target lookup, polling, Azure, UI/feed confirmation, or Stop. |
-| PL-G3 prior blocker | blocked-no-approval / not-run / approval-gated | Still not execution evidence. |
-| PL-G3 follow-up blocker | keep blocked / blocked-no-approval | Still not execution evidence. |
+| PL-G3 prior blocker | blocked-no-approval / not-run / approval-gated | Superseded by this approved status/start/stop attempt for the Start boundary. |
+| PL-G3 after PL-G2K approved status/start/stop attempt | blocked-reconnect-required-after-start | Status route passed, Start stopped with `reconnect-required`, Stop passed; live/provider execution remains not-run. |
 | PL-G4 production/custom deployed smoke | blocked-no-approval / not-run / approval-gated | Remains separate and incomplete. |
 | PL-G5 public launch decision | keep blocked / blocked-no-approval | Public gate state label remains unchanged / blocked, and public-release capable label remains no. |
 
@@ -168,18 +168,18 @@ Forbidden output/storage:
 
 | Item | State |
 | --- | --- |
-| PL-G3 after PL-G2K decision | keep blocked / blocked-missing-start-to-translation-readiness |
+| PL-G3 after PL-G2K decision | blocked-reconnect-required-after-start |
 | required approval label | `approved-fb-l4-start-to-translation-smoke` |
-| exact approval label | absent |
-| deployed origin reference ready | missing |
-| allowed-tester cookie/session reference ready | missing |
-| connected YouTube credential reference ready | missing |
-| safe owned live test target reference ready | missing |
-| sanitized output shape reviewed | reviewed at field-name level only |
+| exact approval label | present |
+| deployed origin reference ready | ready |
+| allowed-tester cookie/session reference ready | ready |
+| connected YouTube credential reference ready | ready |
+| safe owned live test target reference ready | ready |
+| sanitized output shape reviewed | present |
 | public gate state label | unchanged / blocked |
 | public-release capable label | no |
-| status route precheck | not-run / approval-gated |
-| explicit Start | not-run / approval-gated |
+| status route precheck | executed / HTTP 200 / session status label not-started / stop reason label none / unavailable reason label none / pass true |
+| explicit Start | executed / HTTP 200 / session status label stopped / stop reason label reconnect-required / unavailable reason label none / pass false |
 | server-only live target lookup | not-run / approval-gated |
 | one bounded `liveChatMessages.list` polling step | not-run / approval-gated |
 | Free Azure translation | not-run / approval-gated |
@@ -187,7 +187,7 @@ Forbidden output/storage:
 | usage | not-run / approval-gated |
 | stop reason | not-run / approval-gated |
 | source attribution | not-run / approval-gated |
-| explicit Stop | not-run / approval-gated |
+| explicit Stop | executed / HTTP 200 / session status label stopped / stop reason label user-stop / unavailable reason label none / pass true |
 | browser storage expansion | no browser storage expansion |
 | handoff payload expansion | no handoff payload expansion |
 
@@ -196,27 +196,26 @@ Forbidden output/storage:
 This PL-G3 completion record proves:
 
 - PL-G1 remote durable enforcement and PL-G2K passing route/API harness evidence were reviewed;
-- the current thread does not include exact PL-G3 approval or all required value-free operator-local Start-to-translation readiness confirmations;
-- the only allowed later PL-G3 execution path remains the FB-L4 ready preflight boundary;
-- Start/live/provider/Azure/UI/Stop execution was not run;
+- the current thread includes exact PL-G3 approval and required value-free operator-local Start-to-translation readiness confirmations;
+- the approved status route precheck passed with HTTP 200 / not-started / pass true;
+- the approved Start attempt returned HTTP 200 but stopped with stop reason label `reconnect-required`;
+- the approved Stop rollback completed with HTTP 200 / stopped / user-stop / pass true;
+- live target lookup, `liveChatMessages.list`, Free Azure translation, and UI/feed confirmation were not run because Start did not become active;
 - public gate state remains unchanged / blocked and public-release capable remains no.
 
 ## What This Does Not Prove
 
 This record does not prove Start-to-translation behavior. It does not prove:
 
-- deployed origin readiness;
-- allowed-tester cookie/session validity for PL-G3;
-- connected YouTube credential readiness for PL-G3;
-- safe owned live test target readiness;
-- explicit Start;
+- Start-to-translation behavior beyond status/start/stop;
+- active session Start;
 - server-only live target lookup;
 - one bounded `liveChatMessages.list`;
 - non-empty live comment intake;
 - Free Azure translation;
 - UI/feed confirmation;
 - usage, stop reason, or source attribution after a live run;
-- Stop after a successful Start;
+- Stop after a successful active Start;
 - production/custom deployed smoke;
 - release-owner public launch decision;
 - limited public beta open;
@@ -227,8 +226,8 @@ This record does not prove Start-to-translation behavior. It does not prove:
 Unchecked scope:
 
 - Start-to-translation smoke execution: not-run / approval-gated;
-- status route precheck: not-run / approval-gated;
-- explicit Start: not-run / approval-gated;
+- status route precheck: executed / HTTP 200 / session status label not-started / pass true;
+- explicit Start: executed / HTTP 200 / session status label stopped / stop reason label reconnect-required / pass false;
 - server-only live target lookup: not-run / approval-gated;
 - one bounded `liveChatMessages.list` polling step: not-run / approval-gated;
 - non-empty live comment intake: not-run / approval-gated;
@@ -237,18 +236,18 @@ Unchecked scope:
 - usage: not-run / approval-gated;
 - stop reason: not-run / approval-gated;
 - source attribution: not-run / approval-gated;
-- explicit Stop: not-run / approval-gated;
+- explicit Stop: executed / HTTP 200 / session status label stopped / stop reason label user-stop / pass true;
 - PL-G4 production/custom deployed smoke execution: not-run / approval-gated;
 - deploy/upload: not-run / approval-gated;
 - remote Supabase mutation/schema apply outside completed PL-G1: not-run / approval-gated;
 - Stripe live actions and billing setting mutation: not-run / approval-gated;
 - main promotion, limited public beta open, public access change, and public launch gate flip: not-run / approval-gated.
 
-Residual risk: PL-G3 remains incomplete until a later same-thread approved operator-local run confirms the readiness references without values, uses exact approval label `approved-fb-l4-start-to-translation-smoke`, executes the FB-L4 Start-to-translation boundary, and records sanitized output only. Public-release capable remains no.
+Residual risk: PL-G3 remains incomplete until the allowed tester's YouTube connection or credential state no longer requires reconnect, a later same-thread approved operator-local run reaches active Start, executes the FB-L4 Start-to-translation boundary, and records sanitized output only. Public-release capable remains no.
 
 ## Next Safe Action
 
-Prepare the operator-local references listed above, then request exact same-thread approval using the Approval Text in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`. Do not include values in the request. If any readiness reference or the exact approval label is missing, keep PL-G3 blocked and do not run Start/live/provider/Azure/UI/Stop execution.
+Reconnect or refresh the allowed tester's YouTube credential in operator-local/browser context without printing values. After credential readiness is restored, request a later same-thread exact approval before retrying status/Start. Do not run live target lookup, polling, Azure, UI/feed confirmation, public access changes, deploy/upload, remote mutation, or launch gate changes from this blocked attempt.
 
 ## Completion Verification
 

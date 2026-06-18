@@ -151,6 +151,7 @@ assert.match(lookupSource, /^import "server-only";/m, "F6 live chat target looku
 assert.match(lookupSource, /commentTranslatorServerOnlyLiveChatTargetLookupContract/, "F6 adapter exposes a focused contract");
 assert.match(lookupSource, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart/, "F6 adapter exposes Start-only resolver");
 assert.match(lookupSource, /createUnavailableCommentTranslatorLiveChatTargetLookupAdapter/, "F6 adapter exposes sanitized unavailable adapter");
+assert.match(lookupSource, /createSkippedCommentTranslatorLiveChatTargetLookupNotApproved/, "F6 adapter exposes skip helper for unapproved Start lookup");
 assert.match(lookupSource, /createDeterministicCommentTranslatorLiveChatTargetLookupAdapter/, "F6 adapter exposes deterministic local adapter");
 assert.match(lookupSource, /start-intent-only/, "F6 adapter records Start-only boundary");
 assert.match(lookupSource, /providerTargetLookupExecution:\s*"not-run-in-this-thread"/, "F6 adapter records provider lookup execution as not-run");
@@ -161,10 +162,10 @@ assert.match(sessionRuntimeSource, /liveChatTargetReadiness/, "session runtime a
 assert.match(sessionRuntimeSource, /stream-unavailable/, "session runtime maps unavailable live target to sanitized stream-unavailable stop");
 assert.match(sessionRuntimeSource, /providerTargetLookup:\s*"start-only-server-boundary-f6"/, "session contract records F6 Start-only lookup boundary");
 assert.match(routeSource, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart/, "session route wires F6 Start-only target lookup");
-assert.match(routeSource, /createUnavailableCommentTranslatorLiveChatTargetLookupAdapter/, "session route defaults to unavailable/no-provider adapter");
+assert.match(routeSource, /createSkippedCommentTranslatorLiveChatTargetLookupNotApproved/, "session route skips unapproved Start target lookup");
 assert.match(routeSource, /intent:\s*command\.intent/, "session route passes command intent to F6 lookup");
 assert.match(actionSource, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart/, "server actions wire F6 Start-only target lookup");
-assert.match(actionSource, /createUnavailableCommentTranslatorLiveChatTargetLookupAdapter/, "server actions default to unavailable/no-provider adapter");
+assert.match(actionSource, /createSkippedCommentTranslatorLiveChatTargetLookupNotApproved/, "server actions skip unapproved Start target lookup");
 assert.match(actionSource, /intent,/, "server actions pass intent to F6 lookup");
 
 assert.match(youtubeRuntimeSource, /createDeterministicYouTubeOwnerPollingRuntime/, "F6 continues to reuse deterministic YouTube runtime foundation");
@@ -234,6 +235,11 @@ assert.equal(skippedCredential.status, "skipped");
 assert.equal(skippedCredential.reason, "credential-not-ready");
 assert.equal(skippedCredential.providerAccess, "not-run");
 assert.equal(unavailableVerifyCalls, 0, "credential blocker avoids owner verification");
+
+const skippedNotApproved = lookup.createSkippedCommentTranslatorLiveChatTargetLookupNotApproved();
+assert.equal(skippedNotApproved.status, "skipped");
+assert.equal(skippedNotApproved.reason, "provider-target-lookup-not-approved");
+assert.equal(skippedNotApproved.providerAccess, "not-run");
 
 const unavailableStart = await lookup.resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart({
   intent: "start",

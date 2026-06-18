@@ -31,6 +31,7 @@ import {
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
 import {
+  createSkippedCommentTranslatorLiveChatTargetLookupNotApproved,
   createUnavailableCommentTranslatorLiveChatTargetLookupAdapter,
   resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart
 } from "@/lib/comment-translator-server-only-live-chat-target-lookup";
@@ -155,13 +156,16 @@ export async function POST(request: NextRequest) {
           reason: "trusted-adapter-not-wired"
         })
       );
-  const liveChatTargetReadiness = await resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart({
-    intent: command.intent,
-    credentialReadiness,
-    adapter: createUnavailableCommentTranslatorLiveChatTargetLookupAdapter({
-      reason: "provider-target-lookup-not-approved"
-    })
-  });
+  const liveChatTargetReadiness =
+    command.intent === "start"
+      ? createSkippedCommentTranslatorLiveChatTargetLookupNotApproved()
+      : await resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart({
+          intent: command.intent,
+          credentialReadiness,
+          adapter: createUnavailableCommentTranslatorLiveChatTargetLookupAdapter({
+            reason: "provider-target-lookup-not-approved"
+          })
+        });
   const pollingTick = await readCommentTranslatorBoundedLiveChatPollingTick({
     intent: command.intent,
     activeSession,

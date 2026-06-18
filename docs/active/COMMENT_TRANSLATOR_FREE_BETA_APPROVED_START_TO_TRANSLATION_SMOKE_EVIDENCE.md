@@ -12,6 +12,8 @@ PL-G3 update: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATI
 
 PL-G3 follow-up update: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md` rechecks Start-to-translation after PL-G2C and records keep blocked / blocked-no-approval. This follow-up does not run status precheck, Start, live target lookup, `liveChatMessages.list`, Azure, UI/feed confirmation, usage, Stop, deploy/upload, remote mutation/schema apply, Stripe action, public access change, or public launch gate flip.
 
+PL-G3 after PL-G2K update: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md` rechecks Start-to-translation after PL-G2K approved sanitized route/API harness smoke passed and records blocked-stream-unavailable-after-start. Exact approval and value-free operator-local readiness confirmations were present. The first approved Start attempt stopped with `reconnect-required`; after operator-local reconnect/refresh, credential status returned available / reconnect required false / pass true. The approved retry status route precheck passed with HTTP 200 / not-started / pass true, Start returned HTTP 200 / stopped / stream-unavailable / pass false, and Stop returned HTTP 200 / stopped / user-stop / pass true. Live target lookup, `liveChatMessages.list`, Azure, UI/feed confirmation, usage, deploy/upload, remote mutation/schema apply, Stripe action, public access change, and public launch gate flip remain not-run / approval-gated.
+
 Output policy: sanitized-metadata-only. Allowed evidence is command name, route/action name, HTTP status, session/feed/usage status, target-presence label, returned count, eligible count, translated count, skipped count, stop reason, unavailable reason, source attribution label, safe target label, and pass/fail state. Evidence stays counts/status/stop reasons only. Secret values, OAuth values, token values, Authorization header values, cookie values, owner user id values, provider channel id values, provider target metadata, liveChatId values, service-role values, server-only cursor values, raw provider payloads, raw comments, Stripe secret/billing identifiers, browser storage payloads, and handoff payload expansion are not requested, displayed, stored, or recorded.
 
 ## Purpose
@@ -167,7 +169,7 @@ Unchecked in FB-L4:
 - main promotion: not-run / approval-gated
 - public launch gate flip: not-run / approval-gated
 
-Residual risk: Free beta public usability remains unaccepted because the Start-to-translation path is not executed, FB-L2 remote durable enforcement is not proven, and FB-L3 route/API smoke remains unexecuted. Public release remains blocked.
+Residual risk: Free beta public usability remains unaccepted because the Start-to-translation path is not executed. PL-G1 remote durable enforcement and PL-G2K route/API harness evidence are captured for their approved boundaries only; PL-G3, PL-G4, and release-owner launch decision evidence remain incomplete. Public release remains blocked.
 
 ## Completion Verification
 

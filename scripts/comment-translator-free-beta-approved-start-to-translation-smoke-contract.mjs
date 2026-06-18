@@ -227,8 +227,8 @@ for (const forbiddenFragment of [
 }
 
 assert.match(publicUsabilityPreflightDoc, /Start smoke[\s\S]*live target lookup[\s\S]*bounded polling[\s\S]*Azure execution/i, "FB-L1 preflight keeps FB-L4 sequence");
-assert.match(plG3AfterPlG2kDoc, /blocked-reconnect-required-after-start/i, "PL-G3 after PL-G2K records approved Start reconnect blocker");
-assert.match(plG3AfterPlG2kDoc, /Status route precheck:\s*executed \/ HTTP 200[\s\S]*Explicit Start:\s*executed \/ HTTP 200[\s\S]*reconnect-required[\s\S]*Explicit Stop:\s*executed \/ HTTP 200[\s\S]*user-stop/i, "PL-G3 after PL-G2K records sanitized status/start/stop evidence");
+assert.match(plG3AfterPlG2kDoc, /blocked-stream-unavailable-after-start/i, "PL-G3 after PL-G2K records approved Start stream unavailable blocker");
+assert.match(plG3AfterPlG2kDoc, /credential status check after reconnect:\s*executed[\s\S]*available[\s\S]*Status route precheck:\s*executed \/ HTTP 200[\s\S]*Explicit Start:\s*executed \/ HTTP 200[\s\S]*stream-unavailable[\s\S]*Explicit Stop:\s*executed \/ HTTP 200[\s\S]*user-stop/i, "PL-G3 after PL-G2K records sanitized credential/status/start/stop evidence");
 assert.match(remoteDurableEvidenceDoc, /session start smoke[\s\S]*not-run \/ approval-gated/i, "FB-L2 evidence leaves Start unchecked");
 assert.match(remoteDurablePreflightDoc, /What Approval Would Not Prove[\s\S]*provider target lookup[\s\S]*live target lookup[\s\S]*liveChatMessages\.list/i, "FB-L2 ready preflight excludes provider/live proof");
 assert.match(allowedTesterEvidenceDoc, /session Start[\s\S]*provider target lookup[\s\S]*live target lookup[\s\S]*`liveChatMessages.list`/i, "FB-L3 evidence leaves FB-L4 live path unchecked");

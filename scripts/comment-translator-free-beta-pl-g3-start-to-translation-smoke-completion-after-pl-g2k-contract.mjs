@@ -150,8 +150,8 @@ for (const requiredSection of [
 for (const requiredFragment of [
   "Status: PL-G3 Start-to-translation smoke completion after PL-G2K",
   "Public-release capable: no",
-  "Execution result: blocked-reconnect-required-after-start",
-  "Start-to-translation smoke execution: not-run / approval-gated",
+  "Execution result: blocked-stream-unavailable-after-start",
+  "Start-to-translation smoke execution: blocked-stream-unavailable-after-start",
   "PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`",
   "PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed",
   "approved-fb-l4-start-to-translation-smoke",
@@ -160,9 +160,10 @@ for (const requiredFragment of [
   "allowed-tester cookie/session reference ready: ready",
   "connected YouTube credential reference ready: ready",
   "safe owned live test target reference ready: ready",
+  "credential status check after reconnect: executed / status label available / reconnect required false / reason label none / pass true",
   "sanitized output shape reviewed: present",
   "status route precheck: executed / HTTP 200 / session status label not-started / stop reason label none / unavailable reason label none / pass true",
-  "explicit Start: executed / HTTP 200 / session status label stopped / stop reason label reconnect-required / unavailable reason label none / pass false",
+  "explicit Start: executed / HTTP 200 / session status label stopped / stop reason label stream-unavailable / unavailable reason label none / pass false",
   "explicit Stop: executed / HTTP 200 / session status label stopped / stop reason label user-stop / unavailable reason label none / pass true",
   "public gate state label: unchanged / blocked",
   "public-release capable label: no",
@@ -224,9 +225,9 @@ assert.match(plG3Doc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "P
 assert.match(plG3FollowUpDoc, /keep blocked \/ blocked-no-approval/i, "PL-G3 follow-up remains blocked");
 assert.match(fbL4Evidence, /Start-to-translation smoke execution[\s\S]*not-run \/ approval-gated/i, "FB-L4 evidence remains not-run");
 assert.match(fbL4ReadyPreflight, /Approval Text[\s\S]*approved-fb-l4-start-to-translation-smoke/i, "FB-L4 ready preflight carries exact approval text");
-assert.match(publicUsabilityPreflight, /PL-G3 after PL-G2K[\s\S]*blocked-reconnect-required-after-start/i, "FB-L1 preflight records PL-G3 after PL-G2K reconnect blocker");
-assert.match(finalQa, /PL-G3 after PL-G2K[\s\S]*blocked-reconnect-required-after-start/i, "F15 readiness records PL-G3 after PL-G2K reconnect blocker");
-assert.match(gapAudit, /PL-G3 after PL-G2K[\s\S]*blocked-reconnect-required-after-start/i, "gap audit records PL-G3 after PL-G2K reconnect blocker");
+assert.match(publicUsabilityPreflight, /PL-G3 after PL-G2K[\s\S]*blocked-stream-unavailable-after-start/i, "FB-L1 preflight records PL-G3 after PL-G2K stream unavailable blocker");
+assert.match(finalQa, /PL-G3 after PL-G2K[\s\S]*blocked-stream-unavailable-after-start/i, "F15 readiness records PL-G3 after PL-G2K stream unavailable blocker");
+assert.match(gapAudit, /PL-G3 after PL-G2K[\s\S]*blocked-stream-unavailable-after-start/i, "gap audit records PL-G3 after PL-G2K stream unavailable blocker");
 
 assert.match(sessionRoute, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "session route reads durable state before Start");
 assert.match(sessionRoute, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart[\s\S]*provider-target-lookup-not-approved/, "session route keeps target lookup unavailable by default");
@@ -251,17 +252,18 @@ assert.match(
   "task.md records PL-G3 after PL-G2K branch"
 );
 assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");
-assert.match(task, /blocked-reconnect-required-after-start/i, "task.md records reconnect-required Start blocker");
+assert.match(task, /blocked-stream-unavailable-after-start/i, "task.md records stream-unavailable Start blocker");
 assert.match(task, /deployed origin reference ready[\s\S]*ready/i, "task.md records ready deployed origin readiness");
 assert.match(task, /allowed-tester cookie\/session reference ready[\s\S]*ready/i, "task.md records ready cookie/session readiness");
 assert.match(task, /connected YouTube credential reference ready[\s\S]*ready/i, "task.md records ready credential readiness");
 assert.match(task, /safe owned live test target reference ready[\s\S]*ready/i, "task.md records ready owned live target readiness");
 assert.match(task, /status route[\s\S]*HTTP 200[\s\S]*not-started[\s\S]*pass true/i, "task.md records sanitized status route pass");
-assert.match(task, /Start[\s\S]*HTTP 200[\s\S]*stopped[\s\S]*reconnect-required[\s\S]*pass false/i, "task.md records sanitized Start reconnect-required blocker");
+assert.match(task, /credential status[\s\S]*available[\s\S]*reconnect required false[\s\S]*pass true/i, "task.md records sanitized credential status recovery");
+assert.match(task, /Start[\s\S]*HTTP 200[\s\S]*stopped[\s\S]*stream-unavailable[\s\S]*pass false/i, "task.md records sanitized Start stream-unavailable blocker");
 assert.match(task, /Stop[\s\S]*HTTP 200[\s\S]*stopped[\s\S]*user-stop[\s\S]*pass true/i, "task.md records sanitized Stop rollback pass");
 assert.match(task, /approved-fb-l4-start-to-translation-smoke/i, "task.md records exact PL-G3 approval label");
-assert.match(task, /operator-local readiness instructions/i, "task.md records value-free operator-local readiness instructions");
-assert.match(task, /Start-to-translation smoke execution[\s\S]*not-run \/ approval-gated/i, "task.md records PL-G3 not-run state");
+assert.match(task, /Readiness details:[\s\S]*deployed origin reference ready[\s\S]*safe owned live test target reference ready/i, "task.md records value-free operator-local readiness details");
+assert.match(task, /Start-to-translation smoke execution[\s\S]*blocked-stream-unavailable-after-start/i, "task.md records PL-G3 stream-unavailable blocked state");
 assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md keeps public gate blocked");
 assert.match(task, /public-release capable label: no/i, "task.md keeps public-release capable no");
 assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records width-check skip reason");

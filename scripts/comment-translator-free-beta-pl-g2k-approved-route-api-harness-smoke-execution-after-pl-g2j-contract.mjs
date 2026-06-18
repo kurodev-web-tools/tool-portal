@@ -121,8 +121,8 @@ for (const requiredSection of [
 for (const requiredFragment of [
   "Status: PL-G2K approved allowed-tester route/API harness smoke execution after PL-G2J",
   "Public-release capable: no",
-  "Execution result: keep blocked / blocked-auth-unavailable",
-  "Authenticated allowed-tester route/API harness smoke execution: executed-with-sanitized-blocker / blocked-auth-unavailable",
+  "Execution result: approved sanitized route/API harness smoke passed",
+  "Authenticated allowed-tester route/API harness smoke execution: passed / approved-sanitized-output",
   "Exact approval label: present",
   "approved-fb-l3-allowed-tester-route-api-smoke",
   "deployed origin reference ready: ready",
@@ -131,19 +131,18 @@ for (const requiredFragment of [
   "sanitized output shape reviewed: present",
   "readiness check result: ready",
   "pl-g2k-status-route-smoke",
-  "HTTP 403",
-  "session status label: stopped",
-  "stop reason: auth-failed",
+  "HTTP 200",
+  "session status label: not-started",
   "pl-g2k-harness-route-smoke",
-  "harness status label: blocked-private-launch-gated",
-  "count: 0",
-  "pass: false",
-  "pl-g2k-private-launch-diagnostic",
-  "private launch access label: private-launch-gated",
-  "private launch reason label: auth-unavailable",
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-  "same-origin allowed-tester browser session",
+  "harness status label: passed",
+  "count: 4",
+  "getCommentTranslatorRealCommentsFeedAction",
+  "live-provider-polling-not-approved",
+  "requestCommentTranslatorDataDeletionAction",
+  "getCommentTranslatorCreatorLockedWaitlistAction",
+  "recordCommentTranslatorCreatorLockedClickAction",
+  "recorded-local-draft",
+  "pass: true",
   "POST /api/comment-translator/session",
   "{\"intent\":\"status\"}",
   "POST /api/comment-translator/free-beta/route-api-harness",
@@ -168,8 +167,6 @@ for (const requiredFragment of [
 }
 
 for (const forbiddenFragment of [
-  "status route smoke: completed",
-  "harness route smoke: completed",
   "session Start: completed",
   "Stop mutation: completed",
   "heartbeat mutation: completed",
@@ -189,10 +186,10 @@ for (const forbiddenFragment of [
 
 assert.match(plG2jDoc, /blocked-missing-operator-local-reference-readiness/i, "PL-G2J records readiness blocker");
 assert.match(plG2iDoc, /blocked-missing-operator-local-reference-readiness/i, "PL-G2I records readiness blocker");
-assert.match(allowedTesterEvidence, /PL-G2K[\s\S]*auth-unavailable/i, "FB-L3 evidence records PL-G2K auth-unavailable diagnostic");
+assert.match(allowedTesterEvidence, /PL-G2K[\s\S]*approved sanitized route\/API harness smoke passed/i, "FB-L3 evidence records PL-G2K passing smoke");
 assert.match(allowedTesterPreflight, /approved-fb-l3-allowed-tester-route-api-smoke/i, "FB-L3 ready preflight keeps approval label");
 assert.match(publicUsabilityPreflight, /PL-G2K[\s\S]*allowed-tester route\/API harness smoke/i, "FB-L1 preflight records PL-G2K");
-assert.match(finalQa, /PL-G2K[\s\S]*auth-unavailable/i, "F15 readiness records PL-G2K auth-unavailable diagnostic");
+assert.match(finalQa, /PL-G2K[\s\S]*approved sanitized route\/API harness smoke passed/i, "F15 readiness records PL-G2K passing smoke");
 assert.match(gapAudit, /PL-G2K[\s\S]*allowed-tester route\/API harness smoke/i, "gap audit records PL-G2K");
 
 assert.match(routeHarness, /COMMENT_TRANSLATOR_FREE_BETA_ROUTE_API_HARNESS_ENABLED/, "route harness remains env-gated");
@@ -213,34 +210,29 @@ assert.match(
   "task.md records PL-G2K branch"
 );
 assert.match(task, /Latest PL-G2K Execution Evidence/i, "task.md records Latest PL-G2K Execution Evidence");
-assert.match(task, /PL-G2K execution[\s\S]*blocked-auth-unavailable/i, "task.md records PL-G2K execution blocker");
+assert.match(task, /PL-G2K execution[\s\S]*approved sanitized route\/API harness smoke passed/i, "task.md records PL-G2K passing execution");
 assert.match(task, /Exact approval label[\s\S]*present/i, "task.md records PL-G2K approval label as present");
 assert.match(task, /deployed origin reference ready[\s\S]*ready/i, "task.md records ready deployed origin reference");
 assert.match(task, /allowed-tester cookie\/session reference ready[\s\S]*ready/i, "task.md records ready cookie/session reference");
 assert.match(task, /harness env gate reference ready[\s\S]*ready/i, "task.md records ready harness env gate reference");
 assert.match(
   task,
-  /status route smoke[\s\S]*HTTP 403[\s\S]*stopped[\s\S]*auth-failed/i,
+  /status route smoke[\s\S]*HTTP 200[\s\S]*not-started[\s\S]*pass true/i,
   "task.md records sanitized status route smoke output"
 );
 assert.match(
   task,
-  /harness route smoke[\s\S]*HTTP 403[\s\S]*blocked-private-launch-gated[\s\S]*pass false/i,
+  /harness route smoke[\s\S]*HTTP 200[\s\S]*passed[\s\S]*count 4[\s\S]*pass true/i,
   "task.md records sanitized harness route smoke output"
 );
 assert.match(
   task,
-  /private launch diagnostic[\s\S]*HTTP 403[\s\S]*private-launch-gated[\s\S]*auth-unavailable/i,
-  "task.md records sanitized private launch diagnostic output"
+  /getCommentTranslatorRealCommentsFeedAction[\s\S]*live-provider-polling-not-approved[\s\S]*requestCommentTranslatorDataDeletionAction[\s\S]*getCommentTranslatorCreatorLockedWaitlistAction[\s\S]*recordCommentTranslatorCreatorLockedClickAction/i,
+  "task.md records sanitized harness action output"
 );
-assert.match(
-  task,
-  /NEXT_PUBLIC_SUPABASE_URL[\s\S]*NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY[\s\S]*same-origin allowed-tester browser session/i,
-  "task.md records value-free auth-unavailable next checks"
-);
-assert.match(task, /unchecked scope[\s\S]*authenticated allowed-tester route\/API smoke execution/i, "task.md records unchecked route/API scope");
-assert.match(task, /residual risk[\s\S]*PL-G2 remains incomplete/i, "task.md records PL-G2K residual risk");
-assert.match(task, /Next safe action[\s\S]*keep PL-G2 blocked[\s\S]*NEXT_PUBLIC_SUPABASE_URL[\s\S]*approved-fb-l3-allowed-tester-route-api-smoke/i, "task.md records PL-G2K next safe action");
+assert.match(task, /unchecked scope[\s\S]*session Start/i, "task.md records remaining unchecked scope");
+assert.match(task, /residual risk[\s\S]*PL-G3[\s\S]*PL-G4[\s\S]*PL-G5/i, "task.md records residual risk after PL-G2K pass");
+assert.match(task, /Next safe action[\s\S]*keep public gate blocked[\s\S]*PL-G3[\s\S]*PL-G4[\s\S]*PL-G5/i, "task.md records next safe action after PL-G2K pass");
 assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records PL-G2K width-check skip reason");
 assert.match(task, /public-release capable: no/i, "task.md keeps public release blocked");
 

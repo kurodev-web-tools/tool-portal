@@ -261,7 +261,7 @@ assert.match(providerHarness, /approved-private-gated-live-provider-smoke/, "pro
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:bounded-polling-empty-intake-evidence-after-start-lookup|polling-sanitized-diagnostics)`/i,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization))`/i,
   "task.md records PL-G3 after PL-G2K branch"
 );
 assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");

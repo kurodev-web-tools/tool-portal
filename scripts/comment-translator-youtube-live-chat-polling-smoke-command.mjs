@@ -522,18 +522,24 @@ async function createApprovedDiagnosticsPayload(credentialReferenceId) {
   const result = await foundation.runYouTubeLiveChatPollingSmokeFoundation(createFoundationBaseRequest(credentialReferenceId));
 
   if (result.status !== "live-chat-polling-smoke-sanitized-result") {
-    return {
+    return sanitizeDiagnosticsPayload({
       ...result,
       diagnosticMode: "sanitized-metadata-only",
       translationExecution: "not-run-diagnostics-only"
-    };
+    });
   }
 
-  return {
+  return sanitizeDiagnosticsPayload({
     ...result,
     status: "live-chat-polling-diagnostics-sanitized-result",
     liveChatPollingDiagnostics: "executed-bounded-readonly-one-step",
     diagnosticMode: "sanitized-metadata-only",
     translationExecution: "not-run-diagnostics-only"
-  };
+  });
+}
+
+function sanitizeDiagnosticsPayload(payload) {
+  const sanitizedPayload = { ...payload };
+  delete sanitizedPayload.credentialReferenceId;
+  return sanitizedPayload;
 }

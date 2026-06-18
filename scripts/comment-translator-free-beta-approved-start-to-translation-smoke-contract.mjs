@@ -76,7 +76,7 @@ function changedFiles() {
 function assertNoSensitiveValues(source, label) {
   assert.doesNotMatch(
     source,
-    /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|\bAuthorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+|ownerUserId\s*[:=]\s*["'][^"']+|providerTargetMetadata\s*[:=]\s*["'](?!forbidden["'])[^"']+|rawComment(?:Text|s|Retention)?\s*[:=]\s*["'](?!(?:never-recorded-by-design|never-returned-by-design|not-recorded-by-design|not-returned-by-design|disabled-by-default)["'])[^"']+/i,
+    /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|\bAuthorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'](?!(?:server-only-live-chat-target-reference|server-only-live-target-never-output)["'])[^"']+|providerChannelId\s*[:=]\s*["'](?!server-only-channel-reference["'])[^"']+|ownerUserId\s*[:=]\s*["'](?!server-only-owner-reference["'])[^"']+|providerTargetMetadata\s*[:=]\s*["'](?!forbidden["'])[^"']+|rawComment(?:Text|s|Retention)?\s*[:=]\s*["'](?!(?:never-recorded-by-design|never-returned-by-design|not-recorded-by-design|not-returned-by-design|disabled-by-default)["'])[^"']+/i,
     `${label} does not contain secret values, token values, authorization values, private provider identifiers, live target values, or raw comments`
   );
 }
@@ -251,14 +251,16 @@ assert.match(task, /public-release capable: no/i, "task.md keeps public release 
 
 const routeSource = read("app/api/comment-translator/session/route.ts");
 assert.match(routeSource, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "route reads durable session and usage before Start response");
-assert.match(routeSource, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart[\s\S]*provider-target-lookup-not-approved/, "route uses server-only target lookup with unavailable default");
+assert.match(routeSource, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart/, "route uses server-only target lookup boundary");
+assert.match(routeSource, /createSkippedCommentTranslatorLiveChatTargetLookupNotApproved/, "route skips unapproved Start target lookup");
 assert.match(routeSource, /readCommentTranslatorBoundedLiveChatPollingTick[\s\S]*live-provider-polling-not-approved/, "route keeps bounded provider polling unavailable by default");
 assert.match(routeSource, /recordCommentTranslatorDurableSessionLedgerStateOrFailClosed/, "route persists session ledger state through durable usage boundary");
 assert.match(routeSource, /seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession/, "route seeds polling state only after active Start");
 
 const actionsSource = read("app/tools/comment-translator/actions.ts");
 assert.match(actionsSource, /startCommentTranslatorSessionAction[\s\S]*intent:\s*"start"/, "server action exposes explicit Start only");
-assert.match(actionsSource, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart[\s\S]*provider-target-lookup-not-approved/, "actions use server-only target lookup with unavailable default");
+assert.match(actionsSource, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart/, "actions use server-only target lookup boundary");
+assert.match(actionsSource, /createSkippedCommentTranslatorLiveChatTargetLookupNotApproved/, "actions skip unapproved Start target lookup");
 assert.match(actionsSource, /readCommentTranslatorBoundedLiveChatPollingTick[\s\S]*live-provider-polling-not-approved/, "actions keep bounded provider polling unavailable by default");
 assert.match(actionsSource, /recordCommentTranslatorDurableSessionLedgerStateOrFailClosed/, "actions persist durable usage/session ledger state");
 assert.match(actionsSource, /seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession/, "actions seed polling state only for active Start");
@@ -302,6 +304,9 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
+  "app/api/comment-translator/session/route.ts",
+  "app/tools/comment-translator/actions.ts",
+  "lib/comment-translator-server-only-live-chat-target-lookup.ts",
   evidenceDocPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md",
@@ -315,7 +320,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

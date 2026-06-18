@@ -55,7 +55,7 @@ export type CommentTranslatorServerOnlyLiveChatTargetLookupResult =
   | {
       status: "skipped";
       provider: "youtube";
-      reason: "non-start-intent" | "credential-not-ready";
+      reason: "non-start-intent" | "credential-not-ready" | "provider-target-lookup-not-approved";
       providerAccess: "not-run";
       providerTargetLookupExecution: "not-run-in-this-thread";
       liveChatIdLookupExecution: "not-run-in-this-thread";
@@ -186,6 +186,13 @@ export function createUnavailableCommentTranslatorLiveChatTargetLookupAdapter({
       };
     }
   };
+}
+
+export function createSkippedCommentTranslatorLiveChatTargetLookupNotApproved(): Extract<
+  CommentTranslatorServerOnlyLiveChatTargetLookupResult,
+  { status: "skipped" }
+> {
+  return createSkippedLiveChatTargetLookup("provider-target-lookup-not-approved");
 }
 
 export function createDeterministicCommentTranslatorLiveChatTargetLookupAdapter({

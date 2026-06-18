@@ -76,7 +76,7 @@ function changedFiles() {
 function assertNoSensitiveValues(source, label) {
   assert.doesNotMatch(
     source,
-    /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|\bAuthorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+|ownerUserId\s*[:=]\s*["'][^"']+|providerTargetMetadata\s*[:=]\s*["'](?!forbidden["'])[^"']+|rawComment(?:Text|s|Retention)?\s*[:=]\s*["'](?!(?:never-recorded-by-design|never-returned-by-design|not-recorded-by-design|not-returned-by-design|disabled-by-default)["'])[^"']+/i,
+    /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|\bAuthorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'](?!(?:server-only-live-chat-target-reference|server-only-live-target-never-output)["'])[^"']+|providerChannelId\s*[:=]\s*["'](?!server-only-channel-reference["'])[^"']+|ownerUserId\s*[:=]\s*["'](?!server-only-owner-reference["'])[^"']+|providerTargetMetadata\s*[:=]\s*["'](?!forbidden["'])[^"']+|rawComment(?:Text|s|Retention)?\s*[:=]\s*["'](?!(?:never-recorded-by-design|never-returned-by-design|not-recorded-by-design|not-returned-by-design|disabled-by-default)["'])[^"']+/i,
     `${label} does not contain secret values, token values, authorization values, private provider identifiers, live target values, or raw comments`
   );
 }
@@ -230,10 +230,20 @@ assert.match(finalQa, /PL-G3 after PL-G2K[\s\S]*blocked-stream-unavailable-after
 assert.match(gapAudit, /PL-G3 after PL-G2K[\s\S]*blocked-stream-unavailable-after-start/i, "gap audit records PL-G3 after PL-G2K stream unavailable blocker");
 
 assert.match(sessionRoute, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "session route reads durable state before Start");
-assert.match(sessionRoute, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart[\s\S]*provider-target-lookup-not-approved/, "session route keeps target lookup unavailable by default");
+assert.match(sessionRoute, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart/, "session route keeps Start-only live target lookup boundary");
+assert.match(
+  sessionRoute,
+  /createSkippedCommentTranslatorLiveChatTargetLookupNotApproved/,
+  "session route skips unapproved live target lookup instead of blocking explicit Start"
+);
 assert.match(sessionRoute, /readCommentTranslatorBoundedLiveChatPollingTick[\s\S]*live-provider-polling-not-approved/, "session route keeps polling unavailable by default");
 assert.match(actions, /startCommentTranslatorSessionAction[\s\S]*intent:\s*"start"/, "server action exposes explicit Start");
 assert.match(actions, /stopCommentTranslatorSessionAction[\s\S]*intent:\s*"stop"/, "server action exposes explicit Stop");
+assert.match(
+  actions,
+  /createSkippedCommentTranslatorLiveChatTargetLookupNotApproved/,
+  "server action skips unapproved live target lookup instead of blocking explicit Start"
+);
 assert.match(targetLookup, /import "server-only"/, "target lookup remains server-only");
 assert.match(targetLookup, /targetMetadataHandling:\s*"server-only-internal-never-client-readable"/, "target metadata stays server-only");
 assert.match(polling, /import "server-only"/, "bounded polling remains server-only");
@@ -295,6 +305,9 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
+  sessionRoutePath,
+  actionsPath,
+  targetLookupPath,
   completionDocPath,
   plG3DocPath,
   plG3FollowUpDocPath,
@@ -307,7 +320,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

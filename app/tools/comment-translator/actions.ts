@@ -48,6 +48,7 @@ import {
   type CommentTranslatorFreeBetaCreatorLockedWaitlistState
 } from "@/lib/comment-translator-free-beta-creator-locked-waitlist";
 import {
+  createSkippedCommentTranslatorLiveChatTargetLookupNotApproved,
   createUnavailableCommentTranslatorLiveChatTargetLookupAdapter,
   resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart
 } from "@/lib/comment-translator-server-only-live-chat-target-lookup";
@@ -378,13 +379,16 @@ async function readCommentTranslatorSessionActionResult({
 
   const usage = entitlementBaseline.usage;
   const credentialReadiness = await readCredentialReadiness({ activeSession, callerAuthorization });
-  const liveChatTargetReadiness = await resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart({
-    intent,
-    credentialReadiness,
-    adapter: createUnavailableCommentTranslatorLiveChatTargetLookupAdapter({
-      reason: "provider-target-lookup-not-approved"
-    })
-  });
+  const liveChatTargetReadiness =
+    intent === "start"
+      ? createSkippedCommentTranslatorLiveChatTargetLookupNotApproved()
+      : await resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart({
+          intent,
+          credentialReadiness,
+          adapter: createUnavailableCommentTranslatorLiveChatTargetLookupAdapter({
+            reason: "provider-target-lookup-not-approved"
+          })
+        });
   const pollingTick = await readCommentTranslatorBoundedLiveChatPollingTick({
     intent,
     activeSession,

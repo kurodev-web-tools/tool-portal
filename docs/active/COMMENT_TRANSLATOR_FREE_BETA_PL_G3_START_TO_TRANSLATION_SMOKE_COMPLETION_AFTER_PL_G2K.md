@@ -12,6 +12,8 @@ Public gate state label: unchanged / blocked. Public-release capable label: no.
 
 This slice does not run limited public beta open, public access change, public launch gate flip, promotion to main, deploy/upload, remote Supabase mutation/schema apply, PL-G4 production/custom deployed smoke execution, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, Stripe action, billing setting mutation, Paid entitlement C1/C3, Creator paid limits, browser storage expansion, or handoff payload expansion.
 
+Implementation follow-up: the deployed session route/action Start path previously failed closed when the unapproved live target lookup adapter returned `provider-target-lookup-not-approved`. The local runtime now skips unapproved Start target lookup instead of treating it as a Start blocker, preserving the separate approved sequence: explicit Start first, then server-only live target lookup command, then one bounded polling step. This code change does not execute live target lookup, polling, Azure, UI/feed confirmation, deploy/upload, remote mutation, public access change, or public launch gate flip.
+
 ## Purpose
 
 PL-G3 completion after PL-G2K must either record approved sanitized Start-to-translation smoke evidence for the reviewed FB-L4 boundary, or stop with a reviewed blocker when Start cannot reach the active live/provider boundary.
@@ -38,6 +40,7 @@ Because the latest approved Start retry returned `stopped` with stop reason labe
 - Readiness check result: ready.
 - Status route precheck: executed / HTTP 200 / session status label not-started / stop reason label none / unavailable reason label none / pass true.
 - Explicit Start: executed / HTTP 200 / session status label stopped / stop reason label stream-unavailable / unavailable reason label none / pass false.
+- Runtime follow-up: route/action Start now skips unapproved live target lookup instead of blocking Start with `provider-target-lookup-not-approved`; not rerun against the deployed target in this commit.
 - Server-only live target lookup: not-run / approval-gated.
 - One bounded `liveChatMessages.list` polling step: not-run / approval-gated.
 - Free Azure translation: not-run / approval-gated.
@@ -204,6 +207,7 @@ This PL-G3 completion record proves:
 - the latest approved Start retry returned HTTP 200 but stopped with stop reason label `stream-unavailable`;
 - the approved Stop rollback completed with HTTP 200 / stopped / user-stop / pass true;
 - live target lookup, `liveChatMessages.list`, Free Azure translation, and UI/feed confirmation were not run because Start did not become active;
+- the route/action runtime now preserves the approved smoke order by not using unapproved target lookup as a Start blocker;
 - public gate state remains unchanged / blocked and public-release capable remains no.
 
 ## What This Does Not Prove
@@ -232,6 +236,7 @@ Unchecked scope:
 - status route precheck: executed / HTTP 200 / session status label not-started / pass true;
 - credential status check after reconnect: executed / status label available / reconnect required false / pass true;
 - explicit Start: executed / HTTP 200 / session status label stopped / stop reason label stream-unavailable / pass false;
+- route/action Start skip for unapproved live target lookup: implemented locally / deployed retry not-run;
 - server-only live target lookup: not-run / approval-gated;
 - one bounded `liveChatMessages.list` polling step: not-run / approval-gated;
 - non-empty live comment intake: not-run / approval-gated;
@@ -251,7 +256,7 @@ Residual risk: PL-G3 remains incomplete until a safe owned live test target is a
 
 ## Next Safe Action
 
-Confirm the safe owned live test target is actually live and has live chat enabled in operator-local/provider context without printing target values, provider metadata, channel ids, `liveChatId`, or raw comments. After target readiness is restored, request a later same-thread exact approval before retrying status/Start. Do not run live target lookup, polling, Azure, UI/feed confirmation, public access changes, deploy/upload, remote mutation, or launch gate changes from this blocked attempt.
+After this route/action runtime change is deployed to the approved target, request a later same-thread exact approval before retrying status/Start. If Start reaches active, continue only through the approved server-only live target lookup command, one bounded polling step, Free Azure translation, UI/feed confirmation, and Stop. Do not run live target lookup, polling, Azure, UI/feed confirmation, public access changes, deploy/upload, remote mutation, or launch gate changes from this blocked attempt.
 
 ## Completion Verification
 
@@ -265,6 +270,20 @@ Required PL-G3 after PL-G2K closeout checks:
 - changed-files no-secret scan
 - `git diff --check`
 
-Runtime/UI files are not changed by PL-G3 after PL-G2K; this slice changes docs/task notes and focused contract scripts only. `npm run lint`, `npx tsc --noEmit`, and `npm run build` are not required by the current verification baseline.
+Observed verification for the implementation follow-up:
 
-Width checks skipped because PL-G3 after PL-G2K changes only docs/contract/task notes; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or client layout change.
+- PL-G3 completion contract: passed.
+- Existing PL-G3 contract: passed.
+- Existing PL-G3 evidence follow-up contract: passed.
+- Existing FB-L4 approved Start-to-translation contract: passed.
+- PL-G2K route/API harness contract: passed after allowing the current G3 runtime follow-up files in the cumulative branch.
+- F6 target lookup contract: attempted but blocked before execution because `typescript` was not resolvable in the fresh worktree.
+- Session start/stop contract: attempted but blocked before execution because `typescript` was not resolvable in the fresh worktree.
+- `npm run lint`: attempted but blocked because local `eslint` was unavailable.
+- `npx tsc --noEmit`: attempted but blocked because the project TypeScript compiler was unavailable.
+- `npm run build`: attempted but blocked because local `next` was unavailable.
+- `npm ci --prefer-offline --no-audit --no-fund`: attempted and failed with `ERR_SSL_CIPHER_OPERATION_FAILED`, leaving dependency-backed verification blocked by local dependency installation.
+
+Runtime files are changed by the implementation follow-up, so `npm run lint`, `npx tsc --noEmit`, `npm run build`, F6 target lookup contract, and session start/stop contract still need to pass after dependencies are available. Visible UI/CSS/layout/copy files are not changed.
+
+Width checks skipped because the implementation follow-up changes server route/action/runtime, docs, and contracts only; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or client layout change.

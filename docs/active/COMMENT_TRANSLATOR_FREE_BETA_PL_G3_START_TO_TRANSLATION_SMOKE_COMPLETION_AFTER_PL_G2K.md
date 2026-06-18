@@ -2,15 +2,15 @@
 
 Status: PL-G3 Start-to-translation smoke completion after PL-G2K. Public-release capable: no.
 
-Execution result: blocked-stream-unavailable-after-start.
+Execution result: blocked-empty-polling-intake-after-one-step.
 
-Start-to-translation smoke execution: blocked-stream-unavailable-after-start.
+Start-to-translation smoke execution: blocked-empty-polling-intake-after-one-step.
 
-This PL-G3 completion slice rechecks the next public-launch gate after PL-G2K approved sanitized route/API harness smoke passed. PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`, and PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed. The current thread includes exact approval and value-free operator-local readiness confirmations. The first approved Start attempt stopped with stop reason label `reconnect-required`; after operator-local YouTube credential reconnect/refresh, the credential status check returned status label `available` / reconnect required false / pass true. The approved retry status route precheck passed, explicit Start returned HTTP 200 but stopped with stop reason label `stream-unavailable`, and explicit Stop completed with stop reason label `user-stop`. Because Start did not become active, server-only live target lookup, bounded `liveChatMessages.list`, Free Azure translation, UI/feed confirmation, usage check, and source attribution confirmation were not run.
+This PL-G3 completion slice rechecks the next public-launch gate after PL-G2K approved sanitized route/API harness smoke passed. PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`, and PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed. The current thread includes exact approval and value-free operator-local readiness confirmations. The first approved Start attempt stopped with stop reason label `reconnect-required`; after operator-local YouTube credential reconnect/refresh, the credential status check returned status label `available` / reconnect required false / pass true. The next approved retry status route precheck passed, explicit Start returned HTTP 200 but stopped with stop reason label `stream-unavailable`, and explicit Stop completed with stop reason label `user-stop`. After the runtime follow-up was merged and deployed, the latest approved retry passed status and Start, completed server-only live target lookup with target presence label `present`, executed one bounded `liveChatMessages.list` polling step, and stopped successfully. The bounded polling step returned count 0, so Free Azure translation, UI/feed confirmation, usage check, and source attribution confirmation were not run.
 
 Public gate state label: unchanged / blocked. Public-release capable label: no.
 
-This slice does not run limited public beta open, public access change, public launch gate flip, promotion to main, deploy/upload, remote Supabase mutation/schema apply, PL-G4 production/custom deployed smoke execution, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, Stripe action, billing setting mutation, Paid entitlement C1/C3, Creator paid limits, browser storage expansion, or handoff payload expansion.
+This slice does not run limited public beta open, public access change, public launch gate flip, promotion to main, deploy/upload, remote Supabase mutation/schema apply, PL-G4 production/custom deployed smoke execution, heartbeat mutation, broad provider target lookup, additional live target lookup, additional `liveChatMessages.list` loops, Azure/OpenAI provider execution, Stripe action, billing setting mutation, Paid entitlement C1/C3, Creator paid limits, browser storage expansion, or handoff payload expansion.
 
 Implementation follow-up: the deployed session route/action Start path previously failed closed when the unapproved live target lookup adapter returned `provider-target-lookup-not-approved`. The local runtime now skips unapproved Start target lookup instead of treating it as a Start blocker, preserving the separate approved sequence: explicit Start first, then server-only live target lookup command, then one bounded polling step. This code change does not execute live target lookup, polling, Azure, UI/feed confirmation, deploy/upload, remote mutation, public access change, or public launch gate flip.
 
@@ -18,11 +18,11 @@ Implementation follow-up: the deployed session route/action Start path previousl
 
 PL-G3 completion after PL-G2K must either record approved sanitized Start-to-translation smoke evidence for the reviewed FB-L4 boundary, or stop with a reviewed blocker when Start cannot reach the active live/provider boundary.
 
-Because the latest approved Start retry returned `stopped` with stop reason label `stream-unavailable`, the safe outcome is `blocked-stream-unavailable-after-start`.
+Because the latest approved bounded polling step returned count 0, the safe outcome is `blocked-empty-polling-intake-after-one-step`.
 
 ## Execution Decision
 
-- Decision: blocked-stream-unavailable-after-start.
+- Decision: blocked-empty-polling-intake-after-one-step.
 - Existing FB-L4 ready preflight reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`.
 - Existing FB-L4 evidence reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md`.
 - Existing PL-G3 blocker reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md`.
@@ -39,10 +39,10 @@ Because the latest approved Start retry returned `stopped` with stop reason labe
 - public launch remains blocked / public-release capable no: present.
 - Readiness check result: ready.
 - Status route precheck: executed / HTTP 200 / session status label not-started / stop reason label none / unavailable reason label none / pass true.
-- Explicit Start: executed / HTTP 200 / session status label stopped / stop reason label stream-unavailable / unavailable reason label none / pass false.
-- Runtime follow-up: route/action Start now skips unapproved live target lookup instead of blocking Start with `provider-target-lookup-not-approved`; not rerun against the deployed target in this commit.
-- Server-only live target lookup: not-run / approval-gated.
-- One bounded `liveChatMessages.list` polling step: not-run / approval-gated.
+- Explicit Start: executed / HTTP 200 / session status label active / stop reason label none / unavailable reason label none / pass true.
+- Runtime follow-up: route/action Start skips unapproved live target lookup instead of blocking Start with `provider-target-lookup-not-approved`; deployed retry passed Start.
+- Server-only live target lookup: executed / target presence label present / provider route label liveBroadcasts-list-target-lookup-only / returned count 5 / unavailable reason label none / pass true.
+- One bounded `liveChatMessages.list` polling step: executed / target presence label present / provider route label liveChatMessages-list-one-step-only / returned count 0 / polling interval label unavailable / unavailable reason label none / pass false.
 - Free Azure translation: not-run / approval-gated.
 - UI/feed confirmation: not-run / approval-gated.
 - Explicit Stop: executed / HTTP 200 / session status label stopped / stop reason label user-stop / unavailable reason label none / pass true.
@@ -122,7 +122,7 @@ Out of scope without a later exact same-thread approval:
 | PL-G1 remote durable enforcement | remote-apply-and-deployed-smoke-completed | Completed for the approved durable apply and deployed status/start/stop boundary only; it does not prove PL-G3 Start-to-translation smoke. |
 | PL-G2K route/API harness smoke | approved sanitized route/API harness smoke passed | Captures allowed-tester status route and harness route surfaces; it does not prove session Start, live target lookup, polling, Azure, UI/feed confirmation, or Stop. |
 | PL-G3 prior blocker | blocked-no-approval / not-run / approval-gated | Superseded by this approved status/start/stop attempt for the Start boundary. |
-| PL-G3 after PL-G2K approved status/start/stop retry | blocked-stream-unavailable-after-start | Credential status returned available after reconnect, status route passed, Start stopped with `stream-unavailable`, Stop passed; live/provider execution remains not-run. |
+| PL-G3 after PL-G2K approved bounded polling retry | blocked-empty-polling-intake-after-one-step | Status route passed, Start became active, server-only live target lookup found target presence, one bounded `liveChatMessages.list` step returned count 0, Stop passed; Azure/UI remain not-run. |
 | PL-G4 production/custom deployed smoke | blocked-no-approval / not-run / approval-gated | Remains separate and incomplete. |
 | PL-G5 public launch decision | keep blocked / blocked-no-approval | Public gate state label remains unchanged / blocked, and public-release capable label remains no. |
 
@@ -172,7 +172,7 @@ Forbidden output/storage:
 
 | Item | State |
 | --- | --- |
-| PL-G3 after PL-G2K decision | blocked-stream-unavailable-after-start |
+| PL-G3 after PL-G2K decision | blocked-empty-polling-intake-after-one-step |
 | required approval label | `approved-fb-l4-start-to-translation-smoke` |
 | exact approval label | present |
 | deployed origin reference ready | ready |
@@ -184,9 +184,9 @@ Forbidden output/storage:
 | public gate state label | unchanged / blocked |
 | public-release capable label | no |
 | status route precheck | executed / HTTP 200 / session status label not-started / stop reason label none / unavailable reason label none / pass true |
-| explicit Start | executed / HTTP 200 / session status label stopped / stop reason label stream-unavailable / unavailable reason label none / pass false |
-| server-only live target lookup | not-run / approval-gated |
-| one bounded `liveChatMessages.list` polling step | not-run / approval-gated |
+| explicit Start | executed / HTTP 200 / session status label active / stop reason label none / unavailable reason label none / pass true |
+| server-only live target lookup | executed / target presence label present / provider route label liveBroadcasts-list-target-lookup-only / returned count 5 / unavailable reason label none / pass true |
+| one bounded `liveChatMessages.list` polling step | executed / target presence label present / provider route label liveChatMessages-list-one-step-only / returned count 0 / polling interval label unavailable / unavailable reason label none / pass false |
 | Free Azure translation | not-run / approval-gated |
 | UI/feed confirmation | not-run / approval-gated |
 | usage | not-run / approval-gated |
@@ -204,9 +204,11 @@ This PL-G3 completion record proves:
 - the current thread includes exact PL-G3 approval and required value-free operator-local Start-to-translation readiness confirmations;
 - the prior credential reconnect blocker was cleared in operator-local context with credential status label `available`;
 - the approved status route precheck passed with HTTP 200 / not-started / pass true;
-- the latest approved Start retry returned HTTP 200 but stopped with stop reason label `stream-unavailable`;
+- the latest approved Start retry returned HTTP 200 with session status label `active`;
+- server-only live target lookup returned target presence label `present`, provider route label `liveBroadcasts-list-target-lookup-only`, returned count 5, and pass true;
+- one bounded `liveChatMessages.list` step returned target presence label `present`, provider route label `liveChatMessages-list-one-step-only`, returned count 0, and pass false;
 - the approved Stop rollback completed with HTTP 200 / stopped / user-stop / pass true;
-- live target lookup, `liveChatMessages.list`, Free Azure translation, and UI/feed confirmation were not run because Start did not become active;
+- Free Azure translation and UI/feed confirmation were not run because the one approved bounded polling step returned no intake;
 - the route/action runtime now preserves the approved smoke order by not using unapproved target lookup as a Start blocker;
 - public gate state remains unchanged / blocked and public-release capable remains no.
 
@@ -214,10 +216,6 @@ This PL-G3 completion record proves:
 
 This record does not prove Start-to-translation behavior. It does not prove:
 
-- Start-to-translation behavior beyond status/start/stop;
-- active session Start;
-- server-only live target lookup;
-- one bounded `liveChatMessages.list`;
 - non-empty live comment intake;
 - Free Azure translation;
 - UI/feed confirmation;
@@ -232,13 +230,13 @@ This record does not prove Start-to-translation behavior. It does not prove:
 
 Unchecked scope:
 
-- Start-to-translation smoke execution: blocked-stream-unavailable-after-start;
+- Start-to-translation smoke execution: blocked-empty-polling-intake-after-one-step;
 - status route precheck: executed / HTTP 200 / session status label not-started / pass true;
 - credential status check after reconnect: executed / status label available / reconnect required false / pass true;
-- explicit Start: executed / HTTP 200 / session status label stopped / stop reason label stream-unavailable / pass false;
-- route/action Start skip for unapproved live target lookup: implemented locally / deployed retry not-run;
-- server-only live target lookup: not-run / approval-gated;
-- one bounded `liveChatMessages.list` polling step: not-run / approval-gated;
+- explicit Start: executed / HTTP 200 / session status label active / stop reason label none / pass true;
+- route/action Start skip for unapproved live target lookup: implemented locally / deployed retry passed Start;
+- server-only live target lookup: executed / target presence label present / provider route label liveBroadcasts-list-target-lookup-only / returned count 5 / pass true;
+- one bounded `liveChatMessages.list` polling step: executed / target presence label present / provider route label liveChatMessages-list-one-step-only / returned count 0 / polling interval label unavailable / pass false;
 - non-empty live comment intake: not-run / approval-gated;
 - Free Azure translation: not-run / approval-gated;
 - UI/feed confirmation: not-run / approval-gated;
@@ -252,11 +250,11 @@ Unchecked scope:
 - Stripe live actions and billing setting mutation: not-run / approval-gated;
 - main promotion, limited public beta open, public access change, and public launch gate flip: not-run / approval-gated.
 
-Residual risk: PL-G3 remains incomplete until a safe owned live test target is available to the connected allowed tester, a later same-thread approved operator-local run reaches active Start, executes the FB-L4 Start-to-translation boundary, and records sanitized output only. Public-release capable remains no.
+Residual risk: PL-G3 remains incomplete until a later same-thread approved operator-local run performs one bounded polling step that returns non-empty live comment intake, then executes Free Azure translation and UI/feed confirmation with sanitized output only. Public-release capable remains no.
 
 ## Next Safe Action
 
-After this route/action runtime change is deployed to the approved target, request a later same-thread exact approval before retrying status/Start. If Start reaches active, continue only through the approved server-only live target lookup command, one bounded polling step, Free Azure translation, UI/feed confirmation, and Stop. Do not run live target lookup, polling, Azure, UI/feed confirmation, public access changes, deploy/upload, remote mutation, or launch gate changes from this blocked attempt.
+Request a later same-thread exact approval before retrying status/Start with live chat activity ready. If Start reaches active and the one bounded polling step returns non-empty intake, continue only through Free Azure translation, UI/feed confirmation, and Stop inside the approved boundary. Do not run additional polling loops, Azure, UI/feed confirmation, public access changes, deploy/upload, remote mutation, or launch gate changes from this blocked attempt.
 
 ## Completion Verification
 
@@ -285,5 +283,20 @@ Observed verification for the implementation follow-up:
 - `npm ci --prefer-offline --no-audit --no-fund`: attempted and failed with `ERR_SSL_CIPHER_OPERATION_FAILED`, leaving dependency-backed verification blocked by local dependency installation.
 
 Runtime files are changed by the implementation follow-up, so `npm run lint`, `npx tsc --noEmit`, `npm run build`, F6 target lookup contract, and session start/stop contract still need to pass after dependencies are available. Visible UI/CSS/layout/copy files are not changed.
+
+Observed verification for the bounded polling empty-intake evidence follow-up:
+
+- PL-G3 completion contract: passed.
+- Existing PL-G3 contract: passed.
+- Existing PL-G3 evidence follow-up contract: passed.
+- Existing FB-L4 approved Start-to-translation contract: passed.
+- PL-G2K route/API harness contract: passed.
+- `npm run lint`: passed.
+- `npx tsc --noEmit`: passed.
+- `npm run build`: passed; build emitted the existing Next.js middleware deprecation warning.
+- Changed-files no-secret scan: passed for 10 changed files.
+- `git diff --check`: passed with CRLF normalization warnings only.
+- F6 target lookup contract: attempted and failed on a pre-existing active-work text expectation in `task.md`, not on the bounded polling evidence.
+- Session start/stop contract: attempted and failed on a pre-existing Free limits expectation that omits `monthlyTranslatedCharacters`, not on the bounded polling evidence.
 
 Width checks skipped because the implementation follow-up changes server route/action/runtime, docs, and contracts only; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or client layout change.

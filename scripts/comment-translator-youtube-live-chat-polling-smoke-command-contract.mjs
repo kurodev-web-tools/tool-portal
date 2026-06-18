@@ -79,6 +79,17 @@ const commandSource = read(commandPath);
 assert.match(foundationSource, /^import "server-only";/m, "Live Chat polling smoke foundation is server-only");
 assert.match(commandSource, /comment-translator-youtube-live-chat-polling-smoke-foundation/, "command uses focused Live Chat polling foundation");
 assert.match(commandSource, /--approved-live-chat-polling-smoke/, "command requires explicit in-thread approval flag");
+assert.match(commandSource, /--approved-live-chat-polling-diagnostics/, "command supports explicit diagnostics approval flag");
+assert.match(
+  commandSource,
+  /blocked-conflicting-live-chat-polling-approval-flags/,
+  "command rejects mixed smoke and diagnostics approval flags"
+);
+assert.match(
+  commandSource,
+  /live-chat-polling-diagnostics-sanitized-result/,
+  "command emits dedicated sanitized diagnostics status"
+);
 assert.match(commandSource, /--check-env-only/, "command supports preflight-only mode");
 assert.match(commandSource, /--check-owner-binding-only/, "command supports provider-fetch-free owner binding check");
 assert.match(commandSource, /--check-token-material-availability/, "command supports provider-fetch-free token material check");
@@ -466,6 +477,9 @@ assert.deepEqual(success.responseMetadata, {
   pollingIntervalMillis: 5000,
   returnedItemCount: 2,
   pageInfoTotalResults: 2,
+  itemTypeDistribution: {
+    textMessageEvent: 2
+  },
   textPayload: "not-returned-by-design"
 });
 
@@ -579,14 +593,33 @@ const executeWithoutApproval = spawnSync(process.execPath, [commandPath, "--exec
 assert.equal(executeWithoutApproval.status, 2, "Live Chat polling command blocks execute without explicit approval flag");
 const executeWithoutApprovalPayload = parseJson(executeWithoutApproval.stdout);
 assert.equal(executeWithoutApprovalPayload.status, "blocked-pending-explicit-live-chat-polling-approval");
-assert.equal(executeWithoutApprovalPayload.requiredFlag, "--approved-live-chat-polling-smoke");
+assert.equal(
+  executeWithoutApprovalPayload.requiredFlag,
+  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics"
+);
 assert.equal(executeWithoutApprovalPayload.providerAccess, "not-run");
+
+const executeWithConflictingApproval = spawnSync(
+  process.execPath,
+  [commandPath, "--execute", "--approved-live-chat-polling-smoke", "--approved-live-chat-polling-diagnostics", "--json"],
+  {
+    cwd: root,
+    env: operatorLocalReadyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(executeWithConflictingApproval.status, 2, "Live Chat polling command blocks conflicting approval flags");
+const executeWithConflictingApprovalPayload = parseJson(executeWithConflictingApproval.stdout);
+assert.equal(executeWithConflictingApprovalPayload.status, "blocked-conflicting-live-chat-polling-approval-flags");
+assert.equal(executeWithConflictingApprovalPayload.providerAccess, "not-run");
+assert.equal(executeWithConflictingApprovalPayload.liveChatPollingSmoke, "not-run");
 
 for (const payload of [
   checkEnvPayload,
   tokenMaterialAvailabilityPayload,
   operatorLocalTokenMaterialAvailabilityPayload,
-  executeWithoutApprovalPayload
+  executeWithoutApprovalPayload,
+  executeWithConflictingApprovalPayload
 ]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenField of [

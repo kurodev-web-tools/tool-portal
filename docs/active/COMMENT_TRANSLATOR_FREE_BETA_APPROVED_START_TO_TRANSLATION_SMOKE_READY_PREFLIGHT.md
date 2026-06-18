@@ -76,6 +76,14 @@ node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --ch
 node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --execute --approved-live-chat-polling-smoke --json
 ```
 
+Optional sanitized empty-intake diagnostic follow-up, approval-gated:
+
+```powershell
+node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --execute --approved-live-chat-polling-diagnostics --json
+```
+
+This diagnostic command is not part of the normal FB-L4 Start-to-translation smoke. It is a later empty-intake root-cause helper only: it performs one bounded `liveChatMessages.list` read, returns sanitized metadata with status label `live-chat-polling-diagnostics-sanitized-result`, target presence label, provider route label, HTTP status, returned count, pageInfo total label/count, polling interval label, nextPageToken presence label, item type distribution counts, unavailable reason label, and pass/fail only. It must not output raw provider payloads, raw comments, liveChatId, server-only cursor values, Authorization headers, token values, owner user id values, provider channel id values, credential reference values, provider target metadata, or browser storage payloads. It must not proceed to Free Azure translation, UI/feed confirmation, additional polling loops, deploy/upload, remote mutation, Stripe actions, main promotion, or public launch gate flip.
+
 Free Azure translation and combined live/provider smoke command review, approval-gated:
 
 ```powershell

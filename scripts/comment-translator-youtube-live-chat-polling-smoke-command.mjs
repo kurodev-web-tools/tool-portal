@@ -409,19 +409,44 @@ async function main() {
     return;
   }
 
-  if (!args.has("--approved-live-chat-polling-smoke")) {
+  const hasSmokeApproval = args.has("--approved-live-chat-polling-smoke");
+  const hasDiagnosticsApproval = args.has("--approved-live-chat-polling-diagnostics");
+
+  if (hasSmokeApproval && hasDiagnosticsApproval) {
+    writeJson(
+      {
+        status: "blocked-conflicting-live-chat-polling-approval-flags",
+        ...createBasePayload(),
+        credentialReferenceId: result.payload.credentialReferenceId,
+        requiredFlag: "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics",
+        approvalBoundary: "choose-one-explicit-in-thread-approval-boundary",
+        liveChatPollingSmoke: "not-run",
+        providerAccess: "not-run"
+      },
+      2
+    );
+    return;
+  }
+
+  if (!hasSmokeApproval && !hasDiagnosticsApproval) {
     writeJson(
       {
         status: "blocked-pending-explicit-live-chat-polling-approval",
         ...createBasePayload(),
         credentialReferenceId: result.payload.credentialReferenceId,
-        requiredFlag: "--approved-live-chat-polling-smoke",
+        requiredFlag: "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics",
         approvalBoundary: "same-thread-explicit-in-thread-approval-required",
         liveChatPollingSmoke: "not-run",
         providerAccess: "not-run"
       },
       2
     );
+    return;
+  }
+
+  if (hasDiagnosticsApproval) {
+    const diagnosticsPayload = await createApprovedDiagnosticsPayload(result.payload.credentialReferenceId);
+    writeJson(diagnosticsPayload, diagnosticsPayload.status === "live-chat-polling-diagnostics-sanitized-result" ? 0 : 2);
     return;
   }
 
@@ -490,4 +515,25 @@ async function createApprovedExecutionPayload(credentialReferenceId) {
   const foundation = loadTsModule("lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts");
 
   return foundation.runYouTubeLiveChatPollingSmokeFoundation(createFoundationBaseRequest(credentialReferenceId));
+}
+
+async function createApprovedDiagnosticsPayload(credentialReferenceId) {
+  const foundation = loadTsModule("lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts");
+  const result = await foundation.runYouTubeLiveChatPollingSmokeFoundation(createFoundationBaseRequest(credentialReferenceId));
+
+  if (result.status !== "live-chat-polling-smoke-sanitized-result") {
+    return {
+      ...result,
+      diagnosticMode: "sanitized-metadata-only",
+      translationExecution: "not-run-diagnostics-only"
+    };
+  }
+
+  return {
+    ...result,
+    status: "live-chat-polling-diagnostics-sanitized-result",
+    liveChatPollingDiagnostics: "executed-bounded-readonly-one-step",
+    diagnosticMode: "sanitized-metadata-only",
+    translationExecution: "not-run-diagnostics-only"
+  };
 }

@@ -155,6 +155,17 @@ export type YouTubeLiveChatPollingSmokeTokenMaterialAvailabilityGateResult =
       approvedExecutionReadiness: "blocked-until-live-chat-polling-prerequisites-and-token-material-are-available";
     });
 
+type YouTubeLiveChatPollingSmokeItemTypeLabel =
+  | "textMessageEvent"
+  | "superChatEvent"
+  | "superStickerEvent"
+  | "newSponsorEvent"
+  | "memberMilestoneChatEvent"
+  | "messageDeletedEvent"
+  | "userBannedEvent"
+  | "unknown"
+  | "other";
+
 export type YouTubeLiveChatPollingSmokeResponseMetadata = {
   httpStatus: number;
   ok: boolean;
@@ -163,6 +174,7 @@ export type YouTubeLiveChatPollingSmokeResponseMetadata = {
   pollingIntervalMillis: number | null;
   returnedItemCount: number;
   pageInfoTotalResults: number | null;
+  itemTypeDistribution: Partial<Record<YouTubeLiveChatPollingSmokeItemTypeLabel, number>>;
   textPayload: "not-returned-by-design";
 };
 
@@ -577,8 +589,43 @@ function createSanitizedPollingResponseMetadata(
     pollingIntervalMillis,
     returnedItemCount: items.length,
     pageInfoTotalResults,
+    itemTypeDistribution: createSanitizedItemTypeDistribution(items),
     textPayload: "not-returned-by-design"
   };
+}
+
+function createSanitizedItemTypeDistribution(
+  items: unknown[]
+): Partial<Record<YouTubeLiveChatPollingSmokeItemTypeLabel, number>> {
+  const distribution: Partial<Record<YouTubeLiveChatPollingSmokeItemTypeLabel, number>> = {};
+
+  for (const item of items) {
+    const snippet = asRecord(asRecord(item).snippet);
+    const label = sanitizeItemTypeLabel(snippet.type);
+    distribution[label] = (distribution[label] ?? 0) + 1;
+  }
+
+  return distribution;
+}
+
+function sanitizeItemTypeLabel(value: unknown): YouTubeLiveChatPollingSmokeItemTypeLabel {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return "unknown";
+  }
+
+  const normalized = value.trim();
+  switch (normalized) {
+    case "textMessageEvent":
+    case "superChatEvent":
+    case "superStickerEvent":
+    case "newSponsorEvent":
+    case "memberMilestoneChatEvent":
+    case "messageDeletedEvent":
+    case "userBannedEvent":
+      return normalized;
+    default:
+      return "other";
+  }
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

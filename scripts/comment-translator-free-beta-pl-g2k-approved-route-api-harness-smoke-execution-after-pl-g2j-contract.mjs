@@ -5,12 +5,12 @@ import path from "node:path";
 
 const root = process.cwd();
 
+const plG2kDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2K_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2J.md";
 const plG2jDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2J_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2I.md";
 const plG2iDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2I_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2H.md";
-const plG2hDocPath =
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2H_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2G.md";
 const allowedTesterEvidencePath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md";
 const allowedTesterPreflightPath =
@@ -71,9 +71,9 @@ function assertNoSensitiveValues(source, label) {
 }
 
 for (const requiredPath of [
+  plG2kDocPath,
   plG2jDocPath,
   plG2iDocPath,
-  plG2hDocPath,
   allowedTesterEvidencePath,
   allowedTesterPreflightPath,
   publicUsabilityPreflightPath,
@@ -84,12 +84,12 @@ for (const requiredPath of [
   actionsPath,
   taskPath
 ]) {
-  assert.ok(exists(requiredPath), `PL-G2J required path exists: ${requiredPath}`);
+  assert.ok(exists(requiredPath), `PL-G2K required path exists: ${requiredPath}`);
 }
 
+const plG2kDoc = read(plG2kDocPath);
 const plG2jDoc = read(plG2jDocPath);
 const plG2iDoc = read(plG2iDocPath);
-const plG2hDoc = read(plG2hDocPath);
 const allowedTesterEvidence = read(allowedTesterEvidencePath);
 const allowedTesterPreflight = read(allowedTesterPreflightPath);
 const publicUsabilityPreflight = read(publicUsabilityPreflightPath);
@@ -115,21 +115,34 @@ for (const requiredSection of [
   "## Next Safe Action",
   "## Completion Verification"
 ]) {
-  assert.match(plG2jDoc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G2J doc includes ${requiredSection}`);
+  assert.match(plG2kDoc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G2K doc includes ${requiredSection}`);
 }
 
 for (const requiredFragment of [
-  "Status: PL-G2J approved allowed-tester route/API harness smoke execution after PL-G2I",
+  "Status: PL-G2K approved allowed-tester route/API harness smoke execution after PL-G2J",
   "Public-release capable: no",
-  "Execution result: keep blocked / blocked-missing-operator-local-reference-readiness",
-  "Authenticated allowed-tester route/API harness smoke execution: blocked-missing-operator-local-reference-readiness / not-run / approval-gated",
+  "Execution result: approved sanitized route/API harness smoke passed",
+  "Authenticated allowed-tester route/API harness smoke execution: passed / approved-sanitized-output",
   "Exact approval label: present",
   "approved-fb-l3-allowed-tester-route-api-smoke",
-  "deployed origin reference ready: missing",
-  "allowed-tester cookie/session reference ready: missing",
-  "harness env gate reference ready: missing",
+  "deployed origin reference ready: ready",
+  "allowed-tester cookie/session reference ready: ready",
+  "harness env gate reference ready: ready",
   "sanitized output shape reviewed: present",
-  "readiness check result: blocked-missing-operator-local-reference-readiness",
+  "readiness check result: ready",
+  "pl-g2k-status-route-smoke",
+  "HTTP 200",
+  "session status label: not-started",
+  "pl-g2k-harness-route-smoke",
+  "harness status label: passed",
+  "count: 4",
+  "getCommentTranslatorRealCommentsFeedAction",
+  "live-provider-polling-not-approved",
+  "requestCommentTranslatorDataDeletionAction",
+  "getCommentTranslatorCreatorLockedWaitlistAction",
+  "recordCommentTranslatorCreatorLockedClickAction",
+  "recorded-local-draft",
+  "pass: true",
   "POST /api/comment-translator/session",
   "{\"intent\":\"status\"}",
   "POST /api/comment-translator/free-beta/route-api-harness",
@@ -138,7 +151,7 @@ for (const requiredFragment of [
   "Creator locked waitlist",
   "Creator locked click draft",
   "remote-apply-and-deployed-smoke-completed",
-  "PL-G2I execution",
+  "PL-G2J execution",
   "PL-G3 follow-up blocker",
   "PL-G4 follow-up blocker",
   "PL-G5 follow-up blocker/decision",
@@ -150,12 +163,10 @@ for (const requiredFragment of [
   "width checks skipped",
   "no visible UI/CSS/layout/copy change"
 ]) {
-  assert.match(plG2jDoc, new RegExp(escaped(requiredFragment), "i"), `PL-G2J doc includes ${requiredFragment}`);
+  assert.match(plG2kDoc, new RegExp(escaped(requiredFragment), "i"), `PL-G2K doc includes ${requiredFragment}`);
 }
 
 for (const forbiddenFragment of [
-  "status route smoke: completed",
-  "harness route smoke: completed",
   "session Start: completed",
   "Stop mutation: completed",
   "heartbeat mutation: completed",
@@ -170,16 +181,16 @@ for (const forbiddenFragment of [
   "deploy/upload: completed",
   "Stripe action: completed"
 ]) {
-  assert.doesNotMatch(plG2jDoc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G2J doc excludes ${forbiddenFragment}`);
+  assert.doesNotMatch(plG2kDoc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G2K doc excludes ${forbiddenFragment}`);
 }
 
+assert.match(plG2jDoc, /blocked-missing-operator-local-reference-readiness/i, "PL-G2J records readiness blocker");
 assert.match(plG2iDoc, /blocked-missing-operator-local-reference-readiness/i, "PL-G2I records readiness blocker");
-assert.match(plG2hDoc, /blocked-missing-operator-local-reference-readiness/i, "PL-G2H records readiness blocker");
-assert.match(allowedTesterEvidence, /PL-G2J[\s\S]*blocked-missing-operator-local-reference-readiness/i, "FB-L3 evidence records PL-G2J");
+assert.match(allowedTesterEvidence, /PL-G2K[\s\S]*approved sanitized route\/API harness smoke passed/i, "FB-L3 evidence records PL-G2K passing smoke");
 assert.match(allowedTesterPreflight, /approved-fb-l3-allowed-tester-route-api-smoke/i, "FB-L3 ready preflight keeps approval label");
-assert.match(publicUsabilityPreflight, /PL-G2J[\s\S]*allowed-tester route\/API harness smoke/i, "FB-L1 preflight records PL-G2J");
-assert.match(finalQa, /PL-G2J[\s\S]*blocked-missing-operator-local-reference-readiness/i, "F15 readiness records PL-G2J");
-assert.match(gapAudit, /PL-G2J[\s\S]*allowed-tester route\/API harness smoke/i, "gap audit records PL-G2J");
+assert.match(publicUsabilityPreflight, /PL-G2K[\s\S]*allowed-tester route\/API harness smoke/i, "FB-L1 preflight records PL-G2K");
+assert.match(finalQa, /PL-G2K[\s\S]*approved sanitized route\/API harness smoke passed/i, "F15 readiness records PL-G2K passing smoke");
+assert.match(gapAudit, /PL-G2K[\s\S]*allowed-tester route\/API harness smoke/i, "gap audit records PL-G2K");
 
 assert.match(routeHarness, /COMMENT_TRANSLATOR_FREE_BETA_ROUTE_API_HARNESS_ENABLED/, "route harness remains env-gated");
 assert.match(routeHarness, /x-comment-translator-harness-approval/, "route harness remains approval-header gated");
@@ -195,35 +206,40 @@ assert.match(actions, /getCommentTranslatorRealCommentsFeedAction[\s\S]*live-pro
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g2(?:j-approved-route-api-harness-smoke-execution-after-pl-g2i|k-approved-route-api-harness-smoke-execution-after-pl-g2j)`/i,
-  "task.md records PL-G2J or PL-G2K branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j`/i,
+  "task.md records PL-G2K branch"
 );
-assert.match(task, /Latest PL-G2J Execution Evidence/i, "task.md records Latest PL-G2J Execution Evidence");
-assert.match(task, /PL-G2J execution[\s\S]*blocked-missing-operator-local-reference-readiness/i, "task.md records PL-G2J readiness blocker");
-assert.match(task, /Exact approval label[\s\S]*present/i, "task.md records PL-G2J approval label as present");
-assert.match(task, /deployed origin reference ready[\s\S]*missing/i, "task.md records missing deployed origin reference");
-assert.match(task, /allowed-tester cookie\/session reference ready[\s\S]*missing/i, "task.md records missing cookie/session reference");
-assert.match(task, /harness env gate reference ready[\s\S]*missing/i, "task.md records missing harness env gate reference");
+assert.match(task, /Latest PL-G2K Execution Evidence/i, "task.md records Latest PL-G2K Execution Evidence");
+assert.match(task, /PL-G2K execution[\s\S]*approved sanitized route\/API harness smoke passed/i, "task.md records PL-G2K passing execution");
+assert.match(task, /Exact approval label[\s\S]*present/i, "task.md records PL-G2K approval label as present");
+assert.match(task, /deployed origin reference ready[\s\S]*ready/i, "task.md records ready deployed origin reference");
+assert.match(task, /allowed-tester cookie\/session reference ready[\s\S]*ready/i, "task.md records ready cookie/session reference");
+assert.match(task, /harness env gate reference ready[\s\S]*ready/i, "task.md records ready harness env gate reference");
 assert.match(
   task,
-  /status route smoke[\s\S]*blocked-missing-operator-local-reference-readiness \/ not-run \/ approval-gated/i,
-  "task.md records blocked status route smoke"
+  /status route smoke[\s\S]*HTTP 200[\s\S]*not-started[\s\S]*pass true/i,
+  "task.md records sanitized status route smoke output"
 );
 assert.match(
   task,
-  /harness route smoke[\s\S]*blocked-missing-operator-local-reference-readiness \/ not-run \/ approval-gated/i,
-  "task.md records blocked harness route smoke"
+  /harness route smoke[\s\S]*HTTP 200[\s\S]*passed[\s\S]*count 4[\s\S]*pass true/i,
+  "task.md records sanitized harness route smoke output"
 );
-assert.match(task, /unchecked scope[\s\S]*authenticated allowed-tester route\/API smoke execution/i, "task.md records unchecked route/API scope");
-assert.match(task, /residual risk[\s\S]*PL-G2 remains incomplete/i, "task.md records PL-G2J residual risk");
-assert.match(task, /Next safe action[\s\S]*keep PL-G2 blocked[\s\S]*approved-fb-l3-allowed-tester-route-api-smoke/i, "task.md records PL-G2J next safe action");
-assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records PL-G2J width-check skip reason");
+assert.match(
+  task,
+  /getCommentTranslatorRealCommentsFeedAction[\s\S]*live-provider-polling-not-approved[\s\S]*requestCommentTranslatorDataDeletionAction[\s\S]*getCommentTranslatorCreatorLockedWaitlistAction[\s\S]*recordCommentTranslatorCreatorLockedClickAction/i,
+  "task.md records sanitized harness action output"
+);
+assert.match(task, /unchecked scope[\s\S]*session Start/i, "task.md records remaining unchecked scope");
+assert.match(task, /residual risk[\s\S]*PL-G3[\s\S]*PL-G4[\s\S]*PL-G5/i, "task.md records residual risk after PL-G2K pass");
+assert.match(task, /Next safe action[\s\S]*keep public gate blocked[\s\S]*PL-G3[\s\S]*PL-G4[\s\S]*PL-G5/i, "task.md records next safe action after PL-G2K pass");
+assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records PL-G2K width-check skip reason");
 assert.match(task, /public-release capable: no/i, "task.md keeps public release blocked");
 
 for (const [label, source] of [
+  [plG2kDocPath, plG2kDoc],
   [plG2jDocPath, plG2jDoc],
   [plG2iDocPath, plG2iDoc],
-  [plG2hDocPath, plG2hDoc],
   [allowedTesterEvidencePath, allowedTesterEvidence],
   [allowedTesterPreflightPath, allowedTesterPreflight],
   [publicUsabilityPreflightPath, publicUsabilityPreflight],
@@ -238,9 +254,7 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
-  "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2K_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2J.md",
-  plG2jDocPath,
+  plG2kDocPath,
   allowedTesterEvidencePath,
   publicUsabilityPreflightPath,
   finalQaPath,
@@ -254,12 +268,13 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g2g-route-api-harness-smoke-execution-after-pl-g2f-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2h-approved-route-api-harness-smoke-execution-after-pl-g2g-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2i-approved-route-api-harness-smoke-execution-after-pl-g2h-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g2j-approved-route-api-harness-smoke-execution-after-pl-g2i-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g2j-approved-route-api-harness-smoke-execution-after-pl-g2i-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `PL-G2J execution change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `PL-G2K execution change stays in allowed files: ${file}`);
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 
-console.log("comment translator Free beta PL-G2J approved route/API harness smoke execution contract checks passed");
+console.log("comment translator Free beta PL-G2K approved route/API harness smoke execution contract checks passed");

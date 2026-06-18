@@ -2,17 +2,17 @@
 
 Status: PL-G2K approved allowed-tester route/API harness smoke execution after PL-G2J. Public-release capable: no.
 
-Execution result: keep blocked / blocked-private-launch-gated.
+Execution result: keep blocked / blocked-auth-unavailable.
 
-Authenticated allowed-tester route/API harness smoke execution: executed-with-sanitized-blocker / blocked-private-launch-gated.
+Authenticated allowed-tester route/API harness smoke execution: executed-with-sanitized-blocker / blocked-auth-unavailable.
 
 Exact approval label: present. The approved label is `approved-fb-l3-allowed-tester-route-api-smoke`.
 
-This PL-G2K slice rechecks the first missing public-usability gate after PL-G2J. The exact approval label is present, sanitized output shape is reviewed, and all required value-free operator-local readiness confirmations are present in this thread: deployed origin reference ready: ready; allowed-tester cookie/session reference ready: ready; harness env gate reference ready: ready. Readiness check result: ready. Operator-local sanitized execution ran only the approved status route and harness route surfaces. The status route returned HTTP 403 with session status label `stopped` and stop reason `auth-failed`; the harness route returned HTTP 403 with harness status label `blocked-private-launch-gated`, count `0`, actions `[]`, and pass `false`. Because the private launch gate blocked the harness, PL-G2 remains blocked.
+This PL-G2K slice rechecks the first missing public-usability gate after PL-G2J. The exact approval label is present, sanitized output shape is reviewed, and all required value-free operator-local readiness confirmations are present in this thread: deployed origin reference ready: ready; allowed-tester cookie/session reference ready: ready; harness env gate reference ready: ready. Readiness check result: ready. Operator-local sanitized execution ran only the approved status route and harness route surfaces. The status route returned HTTP 403 with session status label `stopped` and stop reason `auth-failed`; the harness route returned HTTP 403 with harness status label `blocked-private-launch-gated`, count `0`, actions `[]`, and pass `false`. A value-free private launch diagnostic returned HTTP 403 with private launch access label `private-launch-gated` and private launch reason label `auth-unavailable`. Because server auth is unavailable before the private launch allowlist can be proven, PL-G2 remains blocked.
 
 Public gate state label: unchanged / blocked. Public-release capable label: no.
 
-This slice does not run limited public beta open, public access change, public launch gate flip, promotion to main, deploy/upload, remote Supabase mutation/schema apply, PL-G2 route/API harness execution, PL-G3 Start-to-translation smoke execution, PL-G4 production/custom deployed smoke execution, session Start, Stop, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, Stripe action, billing setting mutation, Paid entitlement C1/C3, Creator paid limits, browser storage expansion, or handoff payload expansion.
+This slice does not run limited public beta open, public access change, public launch gate flip, promotion to main, deploy/upload, remote Supabase mutation/schema apply, PL-G3 Start-to-translation smoke execution, PL-G4 production/custom deployed smoke execution, session Start, Stop, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, Stripe action, billing setting mutation, Paid entitlement C1/C3, Creator paid limits, browser storage expansion, or handoff payload expansion.
 
 ## Purpose
 
@@ -21,11 +21,11 @@ PL-G2K is the approved execution follow-up for the first missing public-usabilit
 - record approved sanitized allowed-tester route/API harness smoke evidence for the existing FB-L3 / PL-G2A / PL-G2B / PL-G2C / PL-G2D / PL-G2E / PL-G2F / PL-G2G / PL-G2H / PL-G2I / PL-G2J boundary; or
 - keep PL-G2 blocked with reviewed readiness blocker evidence, unchecked scope, residual risk, and a next safe action when operator-local references are missing.
 
-Because this thread has the exact approval label, sanitized output shape review, deployed origin reference readiness, allowed-tester cookie/session reference readiness, and harness env gate readiness confirmation, the safe outcome is to record the sanitized route/API output and keep PL-G2 blocked as `blocked-private-launch-gated`.
+Because this thread has the exact approval label, sanitized output shape review, deployed origin reference readiness, allowed-tester cookie/session reference readiness, and harness env gate readiness confirmation, the safe outcome is to record the sanitized route/API output and keep PL-G2 blocked as `blocked-auth-unavailable`.
 
 ## Execution Decision
 
-- Decision: keep blocked / blocked-private-launch-gated.
+- Decision: keep blocked / blocked-auth-unavailable.
 - Existing FB-L3 ready preflight: reviewed through `docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_READY_PREFLIGHT.md`.
 - Existing PL-G2A harness route: reviewed through `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2A_SERVER_ACTION_ROUTE_API_HARNESS.md`.
 - Existing PL-G2B blocker: reviewed through `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2B_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE.md`.
@@ -48,6 +48,7 @@ Because this thread has the exact approval label, sanitized output shape review,
 - Operator-local reference readiness: ready.
 - Status route smoke: command label: pl-g2k-status-route-smoke / executed / HTTP 403 / session status label: stopped / stop reason: auth-failed / unavailable reason: null / pass: true.
 - Harness route smoke: command label: pl-g2k-harness-route-smoke / executed / HTTP 403 / harness status label: blocked-private-launch-gated / count: 0 / actions: [] / pass: false.
+- Private launch diagnostic: command label: pl-g2k-private-launch-diagnostic / executed / HTTP 403 / private launch access label: private-launch-gated / private launch reason label: auth-unavailable / pass: false.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
@@ -96,7 +97,7 @@ Out of scope for PL-G2K: session Start, Stop, heartbeat mutation, provider targe
 | Evidence item | Current status | PL-G2K interpretation |
 | --- | --- | --- |
 | PL-G1 remote durable enforcement | remote-apply-and-deployed-smoke-completed | Completed for the approved durable apply and deployed status/start/stop boundary only; it does not prove PL-G2 route/API surfaces. |
-| PL-G2K operator-local route/API smoke | keep blocked / blocked-private-launch-gated | Readiness references are present and sanitized output was captured, but the harness route is blocked by the private launch gate. |
+| PL-G2K operator-local route/API smoke | keep blocked / blocked-auth-unavailable | Readiness references are present and sanitized output was captured, but server auth is unavailable before the private launch allowlist can be proven. |
 | PL-G2J execution | keep blocked / blocked-missing-operator-local-reference-readiness | Earlier exact approval label and sanitized output shape were present, but operator-local reference readiness was missing. |
 | PL-G2I execution | keep blocked / blocked-missing-operator-local-reference-readiness | Exact approval label and sanitized output shape are present, but operator-local reference readiness is missing. |
 | PL-G2H execution | keep blocked / blocked-missing-operator-local-reference-readiness | Exact approval label and sanitized output shape are present, but operator-local reference readiness is missing. |
@@ -145,7 +146,7 @@ Evidence stays counts/status/stop reasons and unavailable reasons only. There is
 
 | Item | State |
 | --- | --- |
-| PL-G2K execution decision | keep blocked / blocked-private-launch-gated |
+| PL-G2K execution decision | keep blocked / blocked-auth-unavailable |
 | required approval label | `approved-fb-l3-allowed-tester-route-api-smoke` |
 | exact approval label | present |
 | deployed origin reference ready | ready |
@@ -155,6 +156,7 @@ Evidence stays counts/status/stop reasons and unavailable reasons only. There is
 | readiness check result | ready |
 | status route smoke | executed / HTTP 403 / session status label stopped / stop reason auth-failed / pass true |
 | harness route smoke | executed / HTTP 403 / harness status label blocked-private-launch-gated / count 0 / actions [] / pass false |
+| private launch diagnostic | executed / HTTP 403 / private launch access label private-launch-gated / private launch reason label auth-unavailable / pass false |
 | PL-G1 remote durable enforcement | remote-apply-and-deployed-smoke-completed |
 | PL-G2J execution | keep blocked / blocked-missing-operator-local-reference-readiness |
 | PL-G2G execution | keep blocked / blocked-no-approval |
@@ -218,14 +220,17 @@ This PL-G2K record proves:
 - harness env gate reference readiness is present as a value-free confirmation in-thread;
 - actual status route execution returned sanitized HTTP 403 / stopped / auth-failed evidence;
 - actual harness route execution returned sanitized HTTP 403 / blocked-private-launch-gated / count 0 / pass false evidence;
+- actual private launch diagnostic returned sanitized HTTP 403 / private-launch-gated / auth-unavailable evidence;
 - PL-G1 is completed only for its approved durable boundary, while PL-G2K, PL-G3, and PL-G4 approved execution evidence remains missing;
 - public gate state label remains unchanged / blocked and public-release capable label remains no.
 
 ## What This Does Not Prove
 
-This record does not prove successful authenticated deployed route/API behavior because the harness route was blocked by the private launch gate. It also does not prove:
+This record does not prove successful authenticated deployed route/API behavior because server auth is unavailable before the private launch allowlist can be proven. It also does not prove:
 
 - successful allowed-tester cookie/session validity;
+- successful server auth availability for the deployed target;
+- deployed `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` public auth config readiness;
 - successful deployed target behavior past the private launch gate;
 - passing status route response;
 - passing harness route response;
@@ -251,8 +256,11 @@ This record does not prove successful authenticated deployed route/API behavior 
 
 Unchecked scope:
 
-- authenticated allowed-tester route/API smoke execution: executed-with-sanitized-blocker / blocked-private-launch-gated;
-- allowed-tester cookie/session validity: blocked-private-launch-gated / auth-failed;
+- authenticated allowed-tester route/API smoke execution: executed-with-sanitized-blocker / blocked-auth-unavailable;
+- allowed-tester cookie/session validity: blocked-auth-unavailable / auth-failed;
+- deployed server auth availability: auth-unavailable;
+- deployed Supabase public auth config readiness: unchecked value-free confirmation for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`;
+- same-origin allowed-tester browser session: unchecked after auth-unavailable diagnostic;
 - deployed route/API target behavior past the private launch gate: blocked-private-launch-gated;
 - status route response: HTTP 403 / stopped / auth-failed;
 - harness route response: HTTP 403 / blocked-private-launch-gated / count 0 / pass false;
@@ -268,13 +276,13 @@ Unchecked scope:
 - Stripe live actions and billing setting mutation: not-run / approval-gated;
 - main promotion, limited public beta open, public access change, and public launch gate flip: not-run / approval-gated.
 
-Residual risk: PL-G2 remains incomplete until a later same-thread approved operator-local run confirms allowed-tester/private-launch access, executes both the status route and the PL-G2A harness route against the deployed allowed-tester boundary, and records sanitized passing output only. Public-release capable remains no.
+Residual risk: PL-G2 remains incomplete until a later same-thread approved operator-local run confirms deployed server auth availability, allowed-tester/private-launch access, executes both the status route and the PL-G2A harness route against the deployed allowed-tester boundary, and records sanitized passing output only. Public-release capable remains no.
 
 ## Next Safe Action
 
-Next safe action: keep PL-G2 blocked and refresh or verify the operator-local allowed-tester browser session and private-launch allowlist access for the deployed origin, without printing or storing values.
+Next safe action: keep PL-G2 blocked and verify, without printing or storing values, that the deployed target has value-free references for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, then refresh or verify the same-origin allowed-tester browser session and private-launch allowlist access for the deployed origin.
 
-Only after allowed-tester/private-launch access is confirmed in-thread as value-free readiness, rerun the reviewed PL-G2 status route / PL-G2A harness boundary with sanitized output. Do not expand into session Start, Stop, heartbeat mutation, provider/live execution, PL-G3, PL-G4, public access changes, deploy/upload, remote mutation/schema apply, Stripe actions, billing setting mutation, or main promotion.
+Only after deployed auth availability and allowed-tester/private-launch access are confirmed in-thread as value-free readiness, rerun the reviewed PL-G2 status route / PL-G2A harness boundary with sanitized output and approval label `approved-fb-l3-allowed-tester-route-api-smoke`. Do not expand into session Start, Stop, heartbeat mutation, provider/live execution, PL-G3, PL-G4, public access changes, deploy/upload, remote mutation/schema apply, Stripe actions, billing setting mutation, or main promotion.
 
 ## Completion Verification
 

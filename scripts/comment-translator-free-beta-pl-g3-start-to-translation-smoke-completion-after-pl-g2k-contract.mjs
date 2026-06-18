@@ -76,7 +76,7 @@ function changedFiles() {
 function assertNoSensitiveValues(source, label) {
   assert.doesNotMatch(
     source,
-    /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|\bAuthorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'](?!(?:server-only-live-chat-target-reference|server-only-live-target-never-output)["'])[^"']+|providerChannelId\s*[:=]\s*["'](?!server-only-channel-reference["'])[^"']+|ownerUserId\s*[:=]\s*["'](?!server-only-owner-reference["'])[^"']+|providerTargetMetadata\s*[:=]\s*["'](?!forbidden["'])[^"']+|rawComment(?:Text|s|Retention)?\s*[:=]\s*["'](?!(?:never-recorded-by-design|never-returned-by-design|not-recorded-by-design|not-returned-by-design|disabled-by-default)["'])[^"']+/i,
+    /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|\bAuthorization\s*[:=]\s*["'](?!server-only-test-authorization["'])[^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["'](?!present["'])[^"']+|SERVICE_ROLE_KEY\s*[:=]\s*["'](?!present["'])[^"']+|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'](?!(?:server-only-live-chat-target-reference|server-only-live-target-never-output|live-chat-id-never-returned)["'])[^"']+|providerChannelId\s*[:=]\s*["'](?!(?:server-only-channel-reference|provider-channel-reference-never-returned|different-provider-channel-reference-never-returned)["'])[^"']+|ownerUserId\s*[:=]\s*["'](?!(?:server-only-owner-reference|owner-reference-never-returned)["'])[^"']+|providerTargetMetadata\s*[:=]\s*["'](?!forbidden["'])[^"']+|rawComment(?:Text|s|Retention)?\s*[:=]\s*["'](?!(?:never-recorded-by-design|never-returned-by-design|not-recorded-by-design|not-returned-by-design|disabled-by-default)["'])[^"']+/i,
     `${label} does not contain secret values, token values, authorization values, private provider identifiers, live target values, or raw comments`
   );
 }
@@ -255,11 +255,13 @@ assert.match(dock, /data-comment-translator-real-comments-feed="server-owned-saf
 assert.match(dock, /Source: YouTube Live Chat/, "UI source attribution label remains present");
 assert.match(targetLookupCommand, /approved-live-chat-target-lookup/, "target lookup command requires approval flag");
 assert.match(pollingCommand, /approved-live-chat-polling-smoke/, "polling command requires approval flag");
+assert.match(pollingCommand, /approved-live-chat-polling-diagnostics/, "polling command supports diagnostics approval flag");
+assert.match(pollingCommand, /live-chat-polling-diagnostics-sanitized-result/, "polling command emits sanitized diagnostics status");
 assert.match(providerHarness, /approved-private-gated-live-provider-smoke/, "provider harness requires approval flag");
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-bounded-polling-empty-intake-evidence-after-start-lookup`/i,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:bounded-polling-empty-intake-evidence-after-start-lookup|polling-sanitized-diagnostics)`/i,
   "task.md records PL-G3 after PL-G2K branch"
 );
 assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");
@@ -279,6 +281,9 @@ assert.match(task, /Readiness details:[\s\S]*deployed origin reference ready[\s\
 assert.match(task, /Start-to-translation smoke execution[\s\S]*blocked-empty-polling-intake-after-one-step/i, "task.md records PL-G3 empty polling blocked state");
 assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md keeps public gate blocked");
 assert.match(task, /public-release capable label: no/i, "task.md keeps public-release capable no");
+assert.match(task, /Latest PL-G3 Polling Sanitized Diagnostics Follow-up/i, "task.md records PL-G3 polling diagnostics follow-up");
+assert.match(task, /sanitized empty-intake diagnostic helper/i, "task.md records sanitized empty-intake diagnostic helper");
+assert.match(task, /live-chat-polling-diagnostics-sanitized-result/i, "task.md records sanitized diagnostics status");
 assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records width-check skip reason");
 
 for (const [label, source] of [
@@ -315,12 +320,17 @@ const allowedChangedFiles = new Set([
   plG3DocPath,
   plG3FollowUpDocPath,
   fbL4EvidencePath,
+  fbL4ReadyPreflightPath,
   publicUsabilityPreflightPath,
   finalQaPath,
   gapAuditPath,
   taskPath,
+  "lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts",
+  "scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs",
+  "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",

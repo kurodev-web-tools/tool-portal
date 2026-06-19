@@ -17,7 +17,9 @@ PL-G4 follow-up is the post-PL-G3 provider-permission triage recheck for the pro
 - record approved sanitized execution evidence for the FB-L5 production/custom deployed smoke boundary; or
 - keep the blocker reviewed when approval, evidence, or operator-local env prerequisites are absent.
 
-Because PL-G3 remains `blocked-provider-permission-rejected-after-target-present` with `Azure-UI-not-run`, and because this thread lacks the required exact approval label and operator-local execution references for PL-G4, the safe outcome is `keep blocked / blocked-no-approval`.
+Because PL-G3 remains `blocked-provider-permission-rejected-after-target-present` with `Azure-UI-not-run` and the after-PR #504 operator-local provider-permission confirmation record is `blocked-missing-operator-local-confirmation-output`, and because this thread lacks the required exact approval label and operator-local execution references for PL-G4, the safe outcome is `keep blocked / blocked-no-approval`.
+
+PL-G3 remains blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run / blocked-missing-operator-local-confirmation-output.
 
 ## Execution Decision
 
@@ -26,6 +28,7 @@ Because PL-G3 remains `blocked-provider-permission-rejected-after-target-present
 - Prior PL-G4 blocker reviewed through `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md`.
 - PL-G3 provider-permission triage preflight reviewed through `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md`.
 - PL-G3 provider-permission state: blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run.
+- PL-G3 operator-local confirmation record: blocked-missing-operator-local-confirmation-output.
 - Start-to-translation evidence remains incomplete.
 - Production/custom deployed smoke readiness proof: cannot prove production/custom deployed smoke readiness without exact same-thread approval and sanitized output review.
 - Sanitized output review for an actual production/custom deployed smoke run: not present in this thread.
@@ -99,7 +102,7 @@ Out of scope for PL-G4 without a later exact same-thread approval that expands s
 | --- | --- | --- |
 | PL-G1 remote durable enforcement | remote-apply-and-deployed-smoke-completed | Completed for the approved durable apply and deployed status/start/stop boundary only; it does not prove production/custom deployed freshness. |
 | PL-G2C prior blocker | keep blocked / blocked-no-approval | Route/API harness smoke remains separate and incomplete. |
-| PL-G3 provider-permission triage | blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run | Start-to-translation evidence remains incomplete; non-empty intake, Free Azure translation, UI feed confirmation, usage, and source attribution remain unchecked / not-run / approval-gated. |
+| PL-G3 provider-permission triage | blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run / blocked-missing-operator-local-confirmation-output | Start-to-translation evidence remains incomplete; non-empty intake, Free Azure translation, UI feed confirmation, usage, and source attribution remain unchecked / not-run / approval-gated. |
 | PL-G4 prior blocker | blocked-no-approval / not-run / approval-gated | Still the active production/custom deployed smoke blocker. |
 | PL-G5 keep-blocked decision | keep blocked / blocked-no-approval | Public gate state label remains unchanged / blocked, and public-release capable label remains no. |
 

@@ -14,7 +14,9 @@ This slice does not run limited public beta open, public access change, public l
 
 PL-G5 follow-up after PL-G4 confirms whether the public launch gate decision can change now that the PL-G4 after-PL-G3-provider-permission-triage follow-up exists. It must either record release-owner-approved decision evidence, or keep the blocker reviewed when exact approval/evidence is still missing.
 
-For this thread, exact release-owner approval is absent. PL-G3 remains `blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run`, PL-G4 remains production/custom deployed smoke not-run / approval-gated, and the safe outcome is to keep public launch blocked and preserve `public-release capable: no`.
+For this thread, exact release-owner approval is absent. PL-G3 remains `blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run` with `blocked-missing-operator-local-confirmation-output`, PL-G4 remains production/custom deployed smoke not-run / approval-gated, and the safe outcome is to keep public launch blocked and preserve `public-release capable: no`.
+
+PL-G3 provider-permission state: blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run / blocked-missing-operator-local-confirmation-output.
 
 ## Execution Decision
 
@@ -23,6 +25,7 @@ For this thread, exact release-owner approval is absent. PL-G3 remains `blocked-
 - FB-L6 ready preflight: reviewed through `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_READY_PREFLIGHT.md`.
 - Required approval labels: `approved-fb-l6-keep-blocked-launch-gate-decision`, `approved-fb-l6-open-limited-public-beta`, and `approved-fb-l6-flip-public-gate`.
 - PL-G3 provider-permission state: blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run.
+- PL-G3 operator-local confirmation record: blocked-missing-operator-local-confirmation-output.
 - PL-G3 unchecked evidence: non-empty intake, Free Azure translation, UI feed confirmation, usage, and source attribution remain unchecked.
 - PL-G4 after-PL-G3-provider-permission-triage follow-up: keep blocked / blocked-no-approval.
 - Production/custom deployed smoke execution remains not-run / approval-gated.
@@ -61,7 +64,7 @@ For this thread, exact release-owner approval is absent. PL-G3 remains `blocked-
 | --- | --- | --- |
 | PL-G1 remote durable enforcement | remote-apply-and-deployed-smoke-completed | Completed for the approved durable apply and deployed status/start/stop boundary only. This does not prove PL-G2 route/API, PL-G3 live/provider translation, PL-G4 production/custom deployed freshness, limited public beta readiness, or public launch readiness. |
 | PL-G2C prior blocker | keep blocked / blocked-no-approval | Authenticated allowed-tester route/API harness smoke execution remains blocked-no-approval / not-run / approval-gated. |
-| PL-G3 provider-permission state | blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run | Non-empty intake, Free Azure translation, UI feed confirmation, usage, and source attribution remain unchecked / not-run / approval-gated. |
+| PL-G3 provider-permission state | blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run / blocked-missing-operator-local-confirmation-output | Non-empty intake, Free Azure translation, UI feed confirmation, usage, and source attribution remain unchecked / not-run / approval-gated. |
 | PL-G3 follow-up blocker | keep blocked / blocked-no-approval | Start-to-translation smoke remains blocked-provider-permission-rejected-after-target-present after target-present diagnostics; it cannot support a public launch gate open/flip. |
 | PL-G4 after-PL-G3-provider-permission-triage follow-up blocker | keep blocked / blocked-no-approval | Production/custom deployed smoke execution remains not-run / approval-gated and cannot prove production/custom deployed smoke readiness without exact same-thread approval and sanitized output review. |
 | Existing PL-G5 keep-blocked decision | keep blocked / blocked-no-approval | Public gate state label remains unchanged / blocked and public-release capable label remains no. |
@@ -127,7 +130,7 @@ Evidence stays counts/status/stop reasons only. There is no browser storage expa
 | PL-G1 remote durable enforcement | remote-apply-and-deployed-smoke-completed |
 | PL-G2C prior blocker | keep blocked / blocked-no-approval |
 | PL-G2 route/API harness execution | blocked-no-approval / not-run / approval-gated |
-| PL-G3 provider-permission state | blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run |
+| PL-G3 provider-permission state | blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run / blocked-missing-operator-local-confirmation-output |
 | PL-G3 follow-up blocker | keep blocked / blocked-no-approval |
 | PL-G3 unchecked evidence after provider-permission blocker | non-empty intake, Free Azure translation, UI feed confirmation, usage, and source attribution remain unchecked |
 | PL-G3 Start-to-translation smoke execution | blocked-no-approval / not-run / approval-gated |

@@ -228,7 +228,7 @@ assert.match(gapAudit, /PL-G3[\s\S]*Start-to-translation smoke/i, "gap audit rec
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels))`/i,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels)|empty-intake-polling-diagnostics-read-after-pr512)`/i,
   "task.md records PL-G3 follow-up branch"
 );
 assert.match(task, /Latest PL-G3 Follow-up Evidence/i, "task.md records Latest PL-G3 Follow-up Evidence");
@@ -305,6 +305,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-empty-intake-diagnostics-after-pr511-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-empty-intake-polling-diagnostics-read-after-pr512-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md",
   "scripts/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-after-pr504-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-output-after-pr505-contract.mjs",

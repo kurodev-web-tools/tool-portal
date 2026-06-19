@@ -150,7 +150,7 @@ for (const requiredSection of [
 for (const requiredFragment of [
   "Status: PL-G3 Start-to-translation smoke completion after PL-G2K",
   "Public-release capable: no",
-  "Execution result: blocked-empty-polling-intake-diagnostics-output-prepared-after-pr511",
+  "Execution result: blocked-empty-polling-intake-next-page-present-after-pr512",
   "Start-to-translation smoke execution: blocked-empty-polling-intake-after-fresh-chat-after-pr510",
   "PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`",
   "PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed",
@@ -171,6 +171,7 @@ for (const requiredFragment of [
   "pageInfo resultsPerPage label/count",
   "intake diagnostic label",
   "blocked-empty-polling-intake-diagnostics-output-prepared-after-pr511",
+  "blocked-empty-polling-intake-next-page-present-after-pr512",
   "provider harness gate blocked-before-provider-harness",
   "Latest same-thread PR #510 fresh-chat rerun evidence",
   "fresh chat message after Start",
@@ -269,7 +270,7 @@ assert.match(providerHarness, /approved-private-gated-live-provider-smoke/, "pro
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511))`/i,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512)`/i,
   "task.md records PL-G3 after PL-G2K branch"
 );
 assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");
@@ -344,6 +345,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs",
   "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-empty-intake-diagnostics-after-pr511-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-empty-intake-polling-diagnostics-read-after-pr512-contract.mjs",
   "scripts/comment-translator-youtube-live-chat-target-lookup-command-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",

@@ -242,7 +242,7 @@ assert.match(gapAudit, /FB-L4|Start-to-translation smoke/i, "gap audit records F
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(fb-l4-approved-start-to-translation-smoke|pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels)|operator-local-provider-permission-confirmation-after-pr504))`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(fb-l4-approved-start-to-translation-smoke|pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels)|empty-intake-polling-diagnostics-read-after-pr512|operator-local-provider-permission-confirmation-after-pr504))`/i,
   "task.md records FB-L4 or PL-G3 Start-to-translation branch"
 );
 assert.match(task, /FB-L4[\s\S]*Approved Start-to-translation smoke[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L4 state");
@@ -331,6 +331,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-empty-intake-diagnostics-after-pr511-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-empty-intake-polling-diagnostics-read-after-pr512-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md",
   "scripts/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-after-pr504-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-output-after-pr505-contract.mjs",

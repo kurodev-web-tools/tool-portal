@@ -15,6 +15,8 @@ const plG4FollowUpPath =
 const fbL5EvidencePath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md";
 const plG3FollowUpPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md";
+const plG3ProviderPermissionTriagePath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md";
 const plG2cPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2C_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE.md";
 const plG1Path = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md";
@@ -78,6 +80,7 @@ for (const requiredPath of [
   fbL6ReadyPreflightPath,
   plG4FollowUpPath,
   plG3FollowUpPath,
+  plG3ProviderPermissionTriagePath,
   plG2cPath,
   plG1Path,
   publicUsabilityPreflightPath,
@@ -94,6 +97,7 @@ const fbL6Evidence = read(fbL6EvidencePath);
 const fbL6ReadyPreflight = read(fbL6ReadyPreflightPath);
 const plG4FollowUp = read(plG4FollowUpPath);
 const plG3FollowUp = read(plG3FollowUpPath);
+const plG3ProviderPermissionTriage = read(plG3ProviderPermissionTriagePath);
 const plG2c = read(plG2cPath);
 const plG1 = read(plG1Path);
 const publicUsabilityPreflight = read(publicUsabilityPreflightPath);
@@ -119,7 +123,7 @@ for (const requiredSection of [
 }
 
 for (const requiredFragment of [
-  "Status: PL-G5 public launch gate decision evidence follow-up after PL-G4 follow-up",
+  "Status: PL-G5 public launch gate decision evidence follow-up after PL-G4 after-PL-G3-provider-permission-triage follow-up",
   "Public-release capable: no",
   "Execution result: keep blocked / blocked-no-approval",
   "This prompt is not release-owner exact approval",
@@ -132,13 +136,20 @@ for (const requiredFragment of [
   "remote-apply-and-deployed-smoke-completed",
   "PL-G2C prior blocker",
   "PL-G3 follow-up blocker",
-  "PL-G4 follow-up blocker",
+  "PL-G3 provider-permission state",
+  "blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run",
+  "non-empty intake, Free Azure translation, UI feed confirmation, usage, and source attribution remain unchecked",
+  "PL-G4 after-PL-G3-provider-permission-triage follow-up",
+  "Production/custom deployed smoke execution remains not-run / approval-gated",
+  "cannot prove production/custom deployed smoke readiness without exact same-thread approval and sanitized output review",
   "Existing PL-G5 keep-blocked decision",
   "keep blocked / blocked-no-approval",
   "blocked-no-approval / not-run / approval-gated",
   "limited public beta open",
   "public access change",
   "public launch gate flip",
+  "release-owner exact approval plus accepted/completed missing evidence",
+  "main promotion",
   "separate reviewed access-change or gate-flip operation",
   "counts/status/stop reasons only",
   "no browser storage expansion",
@@ -170,7 +181,27 @@ assert.match(fbL6ReadyPreflight, /approved-fb-l6-keep-blocked-launch-gate-decisi
 assert.match(fbL6ReadyPreflight, /approved-fb-l6-open-limited-public-beta/i, "FB-L6 ready preflight keeps limited-beta label");
 assert.match(fbL6ReadyPreflight, /approved-fb-l6-flip-public-gate/i, "FB-L6 ready preflight keeps gate-flip label");
 assert.match(plG4FollowUp, /keep blocked \/ blocked-no-approval/i, "PL-G4 follow-up stays blocked");
+assert.match(
+  plG4FollowUp,
+  /blocked-provider-permission-rejected-after-target-present \/ Azure-UI-not-run[\s\S]*cannot prove production\/custom deployed smoke readiness without exact same-thread approval and sanitized output review/i,
+  "PL-G4 follow-up records provider-permission blocker and missing smoke readiness proof"
+);
 assert.match(plG3FollowUp, /keep blocked \/ blocked-no-approval/i, "PL-G3 follow-up stays blocked");
+assert.match(
+  plG3ProviderPermissionTriage,
+  /blocked-provider-permission-rejected-after-target-present/i,
+  "PL-G3 provider-permission triage records the provider-permission blocker"
+);
+assert.match(
+  plG3ProviderPermissionTriage,
+  /Free Azure translation[\s\S]*not-run \/ approval-gated/i,
+  "PL-G3 provider-permission triage records Azure/UI evidence remains gated"
+);
+assert.match(
+  plG3ProviderPermissionTriage,
+  /public-release capable label: no/i,
+  "PL-G3 provider-permission triage keeps public release blocked"
+);
 assert.match(plG2c, /keep blocked \/ blocked-no-approval/i, "PL-G2C prior blocker stays blocked");
 assert.match(plG1, /remote-apply-and-deployed-smoke-completed/i, "PL-G1 durable boundary stays completed");
 assert.match(publicUsabilityPreflight, /PL-G5[\s\S]*keep blocked \/ blocked-no-approval/i, "FB-L1 public usability preflight records PL-G5");
@@ -179,12 +210,32 @@ assert.match(gapAudit, /PL-G5[\s\S]*Public launch gate decision/i, "gap audit re
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-public-launch-gate-decision-follow-up-after-pl-g4|pl-g4-after-pl-g3-provider-permission-triage-follow-up)`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g5-public-launch-gate-decision-follow-up-after-pl-g4|pl-g4-after-pl-g3-provider-permission-triage-follow-up)`/i,
   "task.md records PL-G5 follow-up branch"
+);
+assert.match(
+  task,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g5-after-pl-g4-provider-permission-triage-follow-up`/i,
+  "task.md records current PL-G5 after-PL-G4 provider-permission follow-up branch"
 );
 assert.match(task, /Latest PL-G5 Follow-up Evidence/i, "task.md records Latest PL-G5 Follow-up Evidence");
 assert.match(task, /PL-G5 follow-up[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G5 follow-up blocked result");
+assert.match(
+  task,
+  /PL-G3 remains blocked-provider-permission-rejected-after-target-present \/ Azure-UI-not-run/i,
+  "task.md records PL-G3 provider-permission blocker for this PL-G5 follow-up"
+);
 assert.match(task, /PL-G4 follow-up blocker[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G4 follow-up blocker status");
+assert.match(
+  task,
+  /PL-G4 remains production\/custom deployed smoke not-run \/ approval-gated/i,
+  "task.md records PL-G4 production/custom deployed smoke remains not-run and gated"
+);
+assert.match(
+  task,
+  /public launch cannot open or flip without release-owner exact approval plus accepted\/completed missing evidence/i,
+  "task.md records public launch cannot open or flip without approval and evidence acceptance/completion"
+);
 assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md records unchanged public gate state label");
 assert.match(task, /public-release capable label: no/i, "task.md records public-release capable label");
 assert.match(task, /Next safe action[\s\S]*keep blocked[\s\S]*PL-G2C[\s\S]*PL-G3[\s\S]*PL-G4/i, "task.md records next safe action");
@@ -197,6 +248,7 @@ for (const [label, source] of [
   [fbL6ReadyPreflightPath, fbL6ReadyPreflight],
   [plG4FollowUpPath, plG4FollowUp],
   [plG3FollowUpPath, plG3FollowUp],
+  [plG3ProviderPermissionTriagePath, plG3ProviderPermissionTriage],
   [plG2cPath, plG2c],
   [plG1Path, plG1],
   [publicUsabilityPreflightPath, publicUsabilityPreflight],

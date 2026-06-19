@@ -249,7 +249,7 @@ assert.match(deployedPreflightDoc, /Approval label: `approved-fb-l5-production-c
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(?:fb-l6|pl-g5)-public-launch-gate-decision(?:-follow-up-after-pl-g4)?`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|(?:fb-l6|pl-g5)-public-launch-gate-decision(?:-follow-up-after-pl-g4)?)`/i,
   "task.md records FB-L6 or PL-G5 branch"
 );
 assert.match(task, /FB-L6[\s\S]*Public launch gate decision[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L6 state");
@@ -291,6 +291,9 @@ const allowedChangedFiles = new Set([
   gapAuditPath,
   taskPath,
   "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
 ]);

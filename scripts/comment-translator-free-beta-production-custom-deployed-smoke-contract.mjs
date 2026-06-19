@@ -269,7 +269,7 @@ assert.match(plG4FollowUpDoc, /keep blocked \/ blocked-no-approval/i, "PL-G4 fol
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(?:(?:fb-l5|pl-g4)-production-custom-deployed-smoke(?:-evidence-follow-up)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up)`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|(?:(?:fb-l5|pl-g4)-production-custom-deployed-smoke(?:-evidence-follow-up)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up))`/i,
   "task.md records FB-L5 or PL-G4 branch"
 );
 assert.match(task, /FB-L5[\s\S]*Production\/custom deployed smoke[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L5 state");
@@ -337,12 +337,14 @@ const allowedChangedFiles = new Set([
   publicUsabilityPreflightDocPath,
   plG4DocPath,
   plG4FollowUpDocPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE_FOLLOW_UP_AFTER_PL_G4.md",
   finalQaDocPath,
   gapAuditPath,
   taskPath,
   "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
 ]);

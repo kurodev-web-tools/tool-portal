@@ -179,7 +179,7 @@ assert.match(gapAudit, /PL-G5[\s\S]*Public launch gate decision/i, "gap audit re
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-public-launch-gate-decision(?:-follow-up-after-pl-g4)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up)`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g5-public-launch-gate-decision(?:-follow-up-after-pl-g4)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up)`/i,
   "task.md records PL-G5 branch"
 );
 assert.match(task, /PL-G5[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G5 blocked result");

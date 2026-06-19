@@ -2,7 +2,7 @@
 
 Status: PL-G3 Start-to-translation smoke completion after PL-G2K. Public-release capable: no.
 
-Execution result: blocked-next-page-target-selection-follow-up-prepared-after-pr513.
+Execution result: blocked-target-selection-diagnostics-reviewed-after-pr514.
 
 Start-to-translation smoke execution: blocked-empty-polling-intake-after-fresh-chat-after-pr510.
 
@@ -310,6 +310,47 @@ Execution boundary:
 - public-release capable label: no.
 
 Next safe action: request exact same-thread approval for target-selection diagnostics only. Do not run a next-page polling read, Azure/provider harness, UI/feed confirmation, PL-G4 production/custom deployed smoke, or public launch gate decision until sanitized target-selection output is reviewed.
+
+## Operator-local Target-selection Diagnostics After PR #514
+
+Decision: blocked-target-selection-diagnostics-reviewed-after-pr514.
+
+Exact approval label consumed: `approved-pl-g3-target-selection-diagnostics-after-pr513`.
+
+Sanitized execution summary:
+
+- status label: live-chat-target-lookup-sanitized-result.
+- provider route label: liveBroadcasts-list-target-lookup-only.
+- Start: not-run.
+- target lookup execution: executed-bounded-readonly-one-step.
+- `liveChatMessages.list`: not-run.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- Stop: not-run.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Sanitized target-selection output:
+
+| Category | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| selected target rank | rank-1 | pass | none |
+| usable target count | usable-target-count-1 | pass | none |
+| selected target presence | present | pass | none |
+| selected target source | first-live-owned-broadcast-with-live-chat-target | pass | none |
+| lifecycle/privacy distribution | returned-count-5 lifecycle[complete=4;live=1] privacy[unlisted=5] | pass | none |
+| chat-surface mismatch hypothesis | mismatch-not-indicated-by-target-selection-diagnostics | pass | none |
+
+Interpretation:
+
+- The selected target was first-ranked among usable live-chat targets.
+- There was one usable target and the selected target was present.
+- Target-selection diagnostics do not indicate a selected-chat-surface mismatch.
+- PL-G3 remains blocked because non-empty intake and Start-to-translation completion are still unproven.
+
+This follow-up does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw comments, Authorization headers, provider URLs, quota values, browser storage payloads, or handoff payloads.
+
+Next safe action: keep PL-G3 blocked. A later same-thread approval can choose the next bounded diagnostic or Start-to-translation retry, but this target-selection review alone does not prove non-empty intake, Free Azure translation, UI/feed confirmation, PL-G4 production/custom deployed smoke readiness, or public launch readiness.
 
 ## Inspected Inputs
 

@@ -228,7 +228,7 @@ assert.match(gapAudit, /PL-G3[\s\S]*Start-to-translation smoke/i, "gap audit rec
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels))`/i,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|start-to-translation-retry-after-pr507|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels))`/i,
   "task.md records PL-G3 follow-up branch"
 );
 assert.match(task, /Latest PL-G3 Follow-up Evidence/i, "task.md records Latest PL-G3 Follow-up Evidence");
@@ -309,6 +309,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-output-after-pr505-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-provider-permission-readiness-follow-up-after-pl-g5-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr507-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",

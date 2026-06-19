@@ -2,7 +2,7 @@
 
 Status: PL-G3 Start-to-translation smoke completion after PL-G2K. Public-release capable: no.
 
-Execution result: blocked-empty-polling-intake-diagnostics-output-prepared-after-pr511.
+Execution result: blocked-empty-polling-intake-next-page-present-after-pr512.
 
 Start-to-translation smoke execution: blocked-empty-polling-intake-after-fresh-chat-after-pr510.
 
@@ -28,13 +28,17 @@ Operator-local Start-to-translation rerun with fresh chat after PR #510: exact a
 
 Operator-local polling empty-intake diagnostics metadata after PR #511: no Start, Stop, target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, or public launch gate flip was run in this follow-up. The polling command foundation now prepares value-free diagnostics metadata for the next exact approved operator-local diagnostics boundary: pageInfo resultsPerPage label/count and intake diagnostic label. Allowed intake diagnostic labels are `non-empty-returned-intake`, `empty-provider-ok-no-items`, `empty-provider-ok-next-page-present`, `empty-provider-ok-page-info-nonzero`, and `unavailable-provider-not-ok`. The next safe action remains an exact same-thread approval for one bounded diagnostics read only, followed by sanitized output review before any Azure/provider harness or UI/feed step.
 
+Operator-local empty-intake polling diagnostics read after PR #512: exact approval label `approved-pl-g3-empty-intake-polling-diagnostics-read-after-pr512` was present. The operator refreshed the OAuth access token locally, kept stream/chat active, and posted a fresh visible chat message immediately before the approved read. The one bounded `liveChatMessages.list` diagnostics read returned status label live-chat-polling-diagnostics-sanitized-result, provider status label provider-ok, returned count 0, nextPageToken presence label present, pageInfo total count 0, pageInfo resultsPerPage count 0, and intake diagnostic label empty-provider-ok-next-page-present. Start-to-translation remains blocked-empty-polling-intake-next-page-present-after-pr512; Start, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, Stop, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, and public launch gate flip were not run.
+
 ## Purpose
 
 PL-G3 completion after PL-G2K must either record approved sanitized Start-to-translation smoke evidence for the reviewed FB-L4 boundary, or stop with a reviewed blocker when Start cannot reach the active live/provider boundary.
 
 Because the latest same-thread approved PR #510 fresh-chat rerun reached the provider with owner binding verified, token material available, target lookup present, and provider status label `provider-ok`, but the one bounded `liveChatMessages.list` step returned count 0 after a fresh chat message was posted after Start, the safe outcome is `blocked-empty-polling-intake-after-fresh-chat-after-pr510`.
 
-After PR #511, the safe implementation outcome is `blocked-empty-polling-intake-diagnostics-output-prepared-after-pr511`: PL-G3 remains blocked, public release remains incapable, and the next diagnostics output can distinguish a provider-ok empty response with no items, nextPageToken present, pageInfo nonzero, or provider-not-ok without exposing raw response, cursor, target, credential, token, cookie, Authorization, ID, quota, or comment values.
+After PR #511, the safe implementation outcome was `blocked-empty-polling-intake-diagnostics-output-prepared-after-pr511`: PL-G3 remained blocked, public release remained incapable, and the next diagnostics output could distinguish a provider-ok empty response with no items, nextPageToken present, pageInfo nonzero, or provider-not-ok without exposing raw response, cursor, target, credential, token, cookie, Authorization, ID, quota, or comment values.
+
+After PR #512, the safe execution outcome is `blocked-empty-polling-intake-next-page-present-after-pr512`: the provider accepted the bounded read and returned a nextPageToken while returning zero items. This is not non-empty intake, not a Free Azure translation pass, not UI/feed confirmation, and not public launch readiness.
 
 ## Execution Decision
 
@@ -63,6 +67,7 @@ After PR #511, the safe implementation outcome is `blocked-empty-polling-intake-
 - Latest same-thread PR #509 retry evidence: session status not-started / Start active / target lookup target presence present / target lookup returned count 5 / one bounded `liveChatMessages.list` provider status provider-ok / polling returned count 0 / provider harness gate blocked-before-provider-harness / Stop stopped with stop reason user-stop / pass false for Start-to-translation completion.
 - Latest same-thread PR #510 fresh-chat rerun evidence: dependency recovery completed after missing local package error / session status not-started / Start active / fresh chat message after Start / target lookup target presence present / target lookup returned count 5 / one bounded `liveChatMessages.list` provider status provider-ok / provider error reason label provider-error-reason-not-returned / polling returned count 0 / provider harness gate blocked-before-provider-harness / Stop stopped with stop reason user-stop / pass false for Start-to-translation completion.
 - After PR #511 diagnostics output preparation: pageInfo resultsPerPage label/count and intake diagnostic label are prepared for the next exact approved polling diagnostics run; no live/provider/deploy/remote/public action was run.
+- After PR #512 diagnostics read evidence: exact approval present / OAuth access token refreshed locally / fresh visible chat message posted before the approved read / diagnostics status live-chat-polling-diagnostics-sanitized-result / provider status provider-ok / returned count 0 / nextPageToken presence present / pageInfo total count 0 / pageInfo resultsPerPage count 0 / intake diagnostic label empty-provider-ok-next-page-present / pass true for diagnostics read only / Azure-UI-not-run / public-release capable no.
 - Target lookup diagnostics follow-up requirement: selected target rank label, usable target count, and lifecycle/privacy distribution labels/counts are required for future sanitized target-selection review.
 - Free Azure translation: not-run / approval-gated.
 - UI/feed confirmation: not-run / approval-gated.
@@ -218,6 +223,39 @@ Execution boundary:
 This follow-up does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw provider error bodies, raw provider error reason values, raw comments, browser storage payloads, quota values, or handoff payloads.
 
 Next safe action: request exact same-thread approval before running one bounded polling diagnostics read. If the next diagnostics read returns provider-ok with returned count 0, review only pageInfo total, pageInfo resultsPerPage, nextPageToken presence, item type distribution counts, and intake diagnostic label before deciding whether another Start-to-translation smoke retry is justified.
+
+## Operator-local Empty-intake Polling Diagnostics Read After PR #512
+
+Decision: blocked-empty-polling-intake-next-page-present-after-pr512.
+
+Exact approval label: `approved-pl-g3-empty-intake-polling-diagnostics-read-after-pr512`.
+
+Sanitized diagnostics output:
+
+| Check | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| diagnostics status | live-chat-polling-diagnostics-sanitized-result | pass | none |
+| provider status | provider-ok | pass | none |
+| returned count | 0 | fail-for-start-to-translation / pass-for-diagnostics-read | none |
+| nextPageToken presence | present | fail-for-start-to-translation / pass-for-diagnostics-read | none |
+| pageInfo total count | 0 | fail-for-start-to-translation / pass-for-diagnostics-read | none |
+| pageInfo resultsPerPage count | 0 | fail-for-start-to-translation / pass-for-diagnostics-read | none |
+| intake diagnostic label | empty-provider-ok-next-page-present | fail-for-start-to-translation / pass-for-diagnostics-read | none |
+
+Execution boundary:
+
+- Start: not-run.
+- target lookup execution: not-run.
+- `liveChatMessages.list`: executed-bounded-readonly-one-step.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- Stop: not-run.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+This follow-up does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw provider error bodies, raw provider error reason values, raw comments, browser storage payloads, quota values, provider URLs, or handoff payloads.
+
+Next safe action: keep PL-G3 blocked. The provider returned a next page token with zero returned items, so the next follow-up should be a contract-first sanitized paging/target-selection decision before any Start-to-translation retry, Azure/provider harness, UI/feed confirmation, PL-G4 production/custom deployed smoke, or public gate decision.
 
 ## Inspected Inputs
 

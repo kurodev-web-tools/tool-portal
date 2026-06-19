@@ -242,7 +242,7 @@ assert.match(gapAudit, /FB-L4|Start-to-translation smoke/i, "gap audit records F
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(fb-l4-approved-start-to-translation-smoke|pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels)))`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(fb-l4-approved-start-to-translation-smoke|pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels)|operator-local-provider-permission-confirmation-after-pr504))`/i,
   "task.md records FB-L4 or PL-G3 Start-to-translation branch"
 );
 assert.match(task, /FB-L4[\s\S]*Approved Start-to-translation smoke[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L4 state");
@@ -320,6 +320,8 @@ const allowedChangedFiles = new Set([
   finalQaDocPath,
   gapAuditPath,
   taskPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE_FOLLOW_UP.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE_FOLLOW_UP_AFTER_PL_G4.md",
   "lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts",
   "lib/comment-translator-youtube-live-chat-target-lookup-foundation.ts",
   "scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs",
@@ -329,6 +331,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md",
+  "scripts/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-after-pr504-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-provider-permission-readiness-follow-up-after-pl-g5-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",

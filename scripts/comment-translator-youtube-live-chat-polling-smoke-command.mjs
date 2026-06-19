@@ -446,7 +446,7 @@ async function main() {
 
   if (hasDiagnosticsApproval) {
     const diagnosticsPayload = await createApprovedDiagnosticsPayload(result.payload.credentialReferenceId);
-    writeJson(diagnosticsPayload, diagnosticsPayload.status === "live-chat-polling-diagnostics-sanitized-result" ? 0 : 2);
+    writeJson(diagnosticsPayload, isProviderOkDiagnosticsPayload(diagnosticsPayload) ? 0 : 2);
     return;
   }
 
@@ -542,4 +542,11 @@ function sanitizeDiagnosticsPayload(payload) {
   const sanitizedPayload = { ...payload };
   delete sanitizedPayload.credentialReferenceId;
   return sanitizedPayload;
+}
+
+function isProviderOkDiagnosticsPayload(payload) {
+  return (
+    payload.status === "live-chat-polling-diagnostics-sanitized-result" &&
+    payload.responseMetadata?.providerStatusLabel === "provider-ok"
+  );
 }

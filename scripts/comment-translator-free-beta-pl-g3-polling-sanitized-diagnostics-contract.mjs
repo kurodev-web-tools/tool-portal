@@ -101,6 +101,8 @@ assert.match(
 
 assert.match(foundation, /itemTypeDistribution/, "polling foundation returns item type distribution metadata");
 assert.match(foundation, /pageInfoTotalResults/, "polling foundation returns pageInfo total result metadata");
+assert.match(foundation, /providerStatusLabel/, "polling foundation returns sanitized provider status label metadata");
+assert.match(foundation, /provider-permission-rejected/, "polling foundation maps HTTP 403 to provider-permission-rejected");
 assert.match(foundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");
 assert.match(foundation, /textPayload:\s*"not-returned-by-design"/, "polling foundation keeps text payload suppressed");
 assert.doesNotMatch(
@@ -119,7 +121,22 @@ assert.match(
   /live-chat-polling-diagnostics-sanitized-result/,
   "polling command contract covers diagnostics sanitized result"
 );
+assert.match(commandContract, /provider-permission-rejected/, "polling command contract covers HTTP 403 permission rejection label");
+assert.match(command, /isProviderOkDiagnosticsPayload/, "polling diagnostics command exits nonzero unless provider status is ok");
 assert.match(commandContract, /itemTypeDistribution/, "polling command contract covers item type distribution");
+
+const targetLookupFoundationPath = "lib/comment-translator-youtube-live-chat-target-lookup-foundation.ts";
+const targetLookupCommandContractPath = "scripts/comment-translator-youtube-live-chat-target-lookup-command-contract.mjs";
+assert.ok(exists(targetLookupFoundationPath), "target lookup foundation exists for selection metadata checks");
+assert.ok(exists(targetLookupCommandContractPath), "target lookup command contract exists for selection metadata checks");
+const targetLookupFoundation = read(targetLookupFoundationPath);
+const targetLookupCommandContract = read(targetLookupCommandContractPath);
+assert.match(targetLookupFoundation, /usableTargetCount/, "target lookup foundation returns usable target count");
+assert.match(targetLookupFoundation, /selectedTargetSourceLabel/, "target lookup foundation returns sanitized selected target source label");
+assert.match(targetLookupFoundation, /selectedTargetRankLabel/, "target lookup foundation returns sanitized selected target rank label");
+assert.match(targetLookupFoundation, /lifecycleStatusDistribution/, "target lookup foundation returns lifecycle distribution metadata");
+assert.match(targetLookupFoundation, /privacyStatusDistribution/, "target lookup foundation returns privacy distribution metadata");
+assert.match(targetLookupCommandContract, /rank-2/, "target lookup contract covers selected target rank without raw target ids");
 
 assert.match(
   readyPreflight,
@@ -147,14 +164,29 @@ assert.match(
   "PL-G3 completion doc records diagnostics sanitized status"
 );
 assert.match(
+  completionDoc,
+  /HTTP 403[\s\S]*provider permission rejected[\s\S]*owner binding verified[\s\S]*token material available[\s\S]*target lookup present[\s\S]*Azure-UI-not-run[\s\S]*public-release capable no/i,
+  "PL-G3 completion doc records current 403 provider permission blocker"
+);
+assert.match(
+  completionDoc,
+  /selected target rank label[\s\S]*usable target count[\s\S]*lifecycle\/privacy distribution/i,
+  "PL-G3 completion doc records sanitized target selection metadata follow-up"
+);
+assert.match(
   task,
-  /codex\/comment-translator-free-beta-pl-g3-polling-(?:sanitized-diagnostics|diagnostics-output-sanitization)/i,
+  /codex\/comment-translator-free-beta-pl-g3-polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-target-selection-diagnostics)/i,
   "task.md records diagnostics branch"
 );
 assert.match(
   task,
   /sanitized empty-intake diagnostic helper/i,
   "task.md records sanitized diagnostics helper"
+);
+assert.match(
+  task,
+  /HTTP 403[\s\S]*owner binding verified[\s\S]*token material available[\s\S]*target lookup present[\s\S]*liveChatMessages\.list provider permission rejected[\s\S]*Azure-UI-not-run[\s\S]*public-release capable no/i,
+  "task.md records current PL-G3 403 provider permission blocker"
 );
 
 for (const [label, source] of [
@@ -163,6 +195,8 @@ for (const [label, source] of [
   [commandContractPath, commandContract],
   [completionDocPath, completionDoc],
   [readyPreflightPath, readyPreflight],
+  [targetLookupFoundationPath, targetLookupFoundation],
+  [targetLookupCommandContractPath, targetLookupCommandContract],
   [taskPath, task]
 ]) {
   assertNoSensitiveValues(source, label);
@@ -172,6 +206,8 @@ const allowedChangedFiles = new Set([
   foundationPath,
   commandPath,
   commandContractPath,
+  targetLookupFoundationPath,
+  targetLookupCommandContractPath,
   completionDocPath,
   readyPreflightPath,
   taskPath,

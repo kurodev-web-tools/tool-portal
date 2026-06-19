@@ -735,10 +735,18 @@ const success = await foundation.runYouTubeLiveChatTargetLookupFoundation({
       status: 200,
       body: {
         pageInfo: {
-          totalResults: 1,
-          resultsPerPage: 1
+          totalResults: 3,
+          resultsPerPage: 3
         },
         items: [
+          {
+            id: "broadcast-id-without-target-never-returned",
+            snippet: {},
+            status: {
+              lifeCycleStatus: "live",
+              privacyStatus: "public"
+            }
+          },
           {
             id: "broadcast-id-never-returned",
             snippet: {
@@ -746,7 +754,17 @@ const success = await foundation.runYouTubeLiveChatTargetLookupFoundation({
             },
             status: {
               lifeCycleStatus: "live",
-              privacyStatus: "public"
+              privacyStatus: "unlisted"
+            }
+          },
+          {
+            id: "ready-broadcast-id-never-returned",
+            snippet: {
+              liveChatId: "live-chat-id-never-returned"
+            },
+            status: {
+              lifeCycleStatus: "ready",
+              privacyStatus: "private"
             }
           }
         ]
@@ -764,8 +782,21 @@ assert.deepEqual(success.responseMetadata, {
   ok: true,
   activeOwnedBroadcast: "present",
   liveChatTarget: "present",
-  returnedItemCount: 1,
-  pageInfoTotalResults: 1,
+  returnedItemCount: 3,
+  usableTargetCount: 1,
+  pageInfoTotalResults: 3,
+  selectedTargetSourceLabel: "first-live-owned-broadcast-with-live-chat-target",
+  selectedTargetRankLabel: "rank-2",
+  selectedTargetPresenceLabel: "present",
+  lifecycleStatusDistribution: {
+    live: 2,
+    ready: 1
+  },
+  privacyStatusDistribution: {
+    public: 1,
+    unlisted: 1,
+    private: 1
+  },
   broadcastLifecycleStatus: "present",
   privacyStatus: "present",
   targetIdValue: "not-returned-by-design"

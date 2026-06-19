@@ -18,6 +18,8 @@ Sanitized polling diagnostic helper follow-up: the bounded polling command has a
 
 Provider-permission triage preflight, provider-permission readiness follow-up after PL-G5, and provider-permission readiness confirmation follow-up after PR #503: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md` records the no-live operator-local checklist for the HTTP 403 provider permission blocker. It keeps checklist output value-free and ties the next review to the PR #499 allowlisted provider error reason/class labels without requesting raw provider body, raw provider message, raw provider reason, IDs, tokens, cookies, or `liveChatId`. The after-PL-G5 / after-PR #503 follow-up is not an actual provider retry or Start-to-translation smoke completion; it prepares the prerequisite record for a later exact approval PL-G3 retry.
 
+Operator-local retry after PR #507: exact approval label `approved-fb-l4-start-to-translation-smoke` was present and operator-local confirmations for active stream/chat, YouTube connection/account binding, provider permission, and quota/rate-limit state were value-free and problem-free. The retry stopped before Start because token material availability returned sanitized status `unavailable`. Start, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, and Stop were not run.
+
 ## Purpose
 
 PL-G3 completion after PL-G2K must either record approved sanitized Start-to-translation smoke evidence for the reviewed FB-L4 boundary, or stop with a reviewed blocker when Start cannot reach the active live/provider boundary.
@@ -52,6 +54,35 @@ Because the latest sanitized polling diagnostics follow-up reached the provider 
 - Free Azure translation: not-run / approval-gated.
 - UI/feed confirmation: not-run / approval-gated.
 - Explicit Stop: executed / HTTP 200 / session status label stopped / stop reason label user-stop / unavailable reason label none / pass true.
+
+## Operator-local Retry Attempt After PR #507
+
+Decision: blocked-token-material-unavailable-before-start-after-pr507.
+
+Exact approval label: `approved-fb-l4-start-to-translation-smoke`.
+
+Readiness evidence:
+
+| Check | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| target lookup env readiness | ready-for-bounded-live-chat-target-lookup-command-foundation | pass | none |
+| polling env readiness | ready-for-bounded-live-chat-polling-smoke-command-foundation | pass | none |
+| live provider harness env readiness | ready-for-task-27-approved-live-provider-smoke-execution-harness | pass | none |
+| token material availability | unavailable / not-run-token-material-availability-only | fail | server-only live token material resolver is wired but token material retrieval is not implemented in this command runtime |
+
+Execution boundary:
+
+- Start: not-run.
+- `liveChatMessages.list`: not-run.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- Stop: not-run.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+The retry does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw provider error bodies, raw comments, browser storage payloads, or handoff payloads.
+
+Next safe action: resolve the token material availability blocker in operator-local command runtime, then request a later same-thread exact approval retry before running Start or live/provider commands again.
 
 ## Inspected Inputs
 

@@ -76,6 +76,7 @@ function assertNoSensitiveValues(source, label) {
 
 for (const requiredPath of [
   followUpDocPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE_FOLLOW_UP_AFTER_PL_G4.md",
   plG4DocPath,
   fbL5EvidencePath,
   fbL5ReadyPreflightPath,
@@ -225,7 +226,7 @@ assert.match(gapAudit, /PL-G4[\s\S]*production\/custom deployed smoke/i, "gap au
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g4-after-pl-g3-provider-permission-triage-follow-up`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g4-after-pl-g3-provider-permission-triage-follow-up)`/i,
   "task.md records PL-G4 after PL-G3 provider-permission triage follow-up branch"
 );
 assert.match(
@@ -284,6 +285,7 @@ for (const [label, source] of [
 
 const allowedChangedFiles = new Set([
   followUpDocPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE_FOLLOW_UP_AFTER_PL_G4.md",
   plG4DocPath,
   fbL5EvidencePath,
   publicUsabilityPreflightPath,
@@ -293,6 +295,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
 ]);

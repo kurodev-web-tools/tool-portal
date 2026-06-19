@@ -8,6 +8,9 @@ const root = process.cwd();
 const plG5DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md";
 const plG5FollowUpDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE_FOLLOW_UP_AFTER_PL_G4.md";
+const plG4FollowUpDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE_FOLLOW_UP.md";
+const fbL5EvidencePath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md";
 const fbL6EvidencePath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md";
 const fbL6ReadyPreflightPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_READY_PREFLIGHT.md";
 const publicUsabilityPreflightPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md";
@@ -67,6 +70,8 @@ function assertNoSensitiveValues(source, label) {
 
 for (const requiredPath of [
   plG5DocPath,
+  plG4FollowUpDocPath,
+  fbL5EvidencePath,
   plG5FollowUpDocPath,
   fbL6EvidencePath,
   fbL6ReadyPreflightPath,
@@ -174,7 +179,7 @@ assert.match(gapAudit, /PL-G5[\s\S]*Public launch gate decision/i, "gap audit re
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g5-public-launch-gate-decision(?:-follow-up-after-pl-g4)?`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-public-launch-gate-decision(?:-follow-up-after-pl-g4)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up)`/i,
   "task.md records PL-G5 branch"
 );
 assert.match(task, /PL-G5[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G5 blocked result");
@@ -207,6 +212,8 @@ for (const [label, source] of [
 
 const allowedChangedFiles = new Set([
   plG5DocPath,
+  plG4FollowUpDocPath,
+  fbL5EvidencePath,
   plG5FollowUpDocPath,
   fbL6EvidencePath,
   publicUsabilityPreflightPath,
@@ -214,6 +221,9 @@ const allowedChangedFiles = new Set([
   gapAuditPath,
   taskPath,
   "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
 ]);

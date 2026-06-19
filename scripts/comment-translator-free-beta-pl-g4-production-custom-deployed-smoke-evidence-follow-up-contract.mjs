@@ -13,6 +13,8 @@ const fbL5ReadyPreflightPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md";
 const plG3FollowUpPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md";
+const plG3ProviderPermissionTriagePath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md";
 const plG2cDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2C_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE.md";
 const plG1DocPath =
@@ -78,6 +80,7 @@ for (const requiredPath of [
   fbL5EvidencePath,
   fbL5ReadyPreflightPath,
   plG3FollowUpPath,
+  plG3ProviderPermissionTriagePath,
   plG2cDocPath,
   plG1DocPath,
   plG5DocPath,
@@ -97,6 +100,7 @@ const plG4Doc = read(plG4DocPath);
 const fbL5Evidence = read(fbL5EvidencePath);
 const fbL5ReadyPreflight = read(fbL5ReadyPreflightPath);
 const plG3FollowUp = read(plG3FollowUpPath);
+const plG3ProviderPermissionTriage = read(plG3ProviderPermissionTriagePath);
 const plG2cDoc = read(plG2cDocPath);
 const plG1Doc = read(plG1DocPath);
 const plG5Doc = read(plG5DocPath);
@@ -130,6 +134,12 @@ for (const requiredFragment of [
   "Status: PL-G4 production/custom deployed smoke execution/evidence follow-up",
   "Public-release capable: no",
   "Execution result: keep blocked / blocked-no-approval",
+  "after PL-G3 provider-permission triage",
+  "PL-G3 provider-permission triage preflight",
+  "blocked-provider-permission-rejected-after-target-present",
+  "Azure-UI-not-run",
+  "Start-to-translation evidence incomplete",
+  "cannot prove production/custom deployed smoke readiness without exact same-thread approval and sanitized output review",
   "This prompt is not exact approval",
   "approved-fb-l5-production-custom-deployed-smoke",
   "same-thread ready preflight",
@@ -142,10 +152,11 @@ for (const requiredFragment of [
   "status-only session API",
   "usage/deletion/Creator locked gate status",
   "Start-to-translation gate status",
+  "Start-to-translation evidence remains incomplete",
   "PL-G1 remote durable enforcement",
   "remote-apply-and-deployed-smoke-completed",
   "PL-G2C prior blocker",
-  "PL-G3 follow-up blocker",
+  "PL-G3 provider-permission triage",
   "PL-G4 prior blocker",
   "PL-G5 keep-blocked decision",
   "public gate state label: unchanged / blocked",
@@ -190,6 +201,21 @@ assert.match(plG4Doc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "P
 assert.match(fbL5Evidence, /PL-G4[\s\S]*(blocked-no-approval|keep blocked)/i, "FB-L5 evidence records PL-G4 state");
 assert.match(fbL5ReadyPreflight, /approved-fb-l5-production-custom-deployed-smoke/i, "FB-L5 ready preflight keeps exact approval label");
 assert.match(plG3FollowUp, /keep blocked \/ blocked-no-approval/i, "PL-G3 follow-up remains keep blocked");
+assert.match(
+  plG3ProviderPermissionTriage,
+  /blocked-provider-permission-rejected-after-target-present/i,
+  "PL-G3 provider-permission triage records provider-permission blocker"
+);
+assert.match(
+  plG3ProviderPermissionTriage,
+  /Free Azure translation[\s\S]*UI\/feed confirmation[\s\S]*not-run \/ approval-gated/i,
+  "PL-G3 provider-permission triage records Azure/UI not-run state"
+);
+assert.match(
+  plG3ProviderPermissionTriage,
+  /Public-release capable label: no/i,
+  "PL-G3 provider-permission triage records public-release capable no"
+);
 assert.match(plG2cDoc, /keep blocked \/ blocked-no-approval/i, "PL-G2C prior blocker remains keep blocked");
 assert.match(plG1Doc, /remote-apply-and-deployed-smoke-completed/i, "PL-G1 evidence records completed durable boundary");
 assert.match(plG5Doc, /keep blocked \/ blocked-no-approval/i, "PL-G5 keeps launch blocked");
@@ -199,11 +225,25 @@ assert.match(gapAudit, /PL-G4[\s\S]*production\/custom deployed smoke/i, "gap au
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up`/i,
-  "task.md records PL-G4 follow-up branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g4-after-pl-g3-provider-permission-triage-follow-up`/i,
+  "task.md records PL-G4 after PL-G3 provider-permission triage follow-up branch"
 );
-assert.match(task, /Latest PL-G4 Follow-up Evidence/i, "task.md records Latest PL-G4 Follow-up Evidence");
+assert.match(
+  task,
+  /Latest PL-G4 After PL-G3 Provider-Permission Triage Follow-up Evidence/i,
+  "task.md records Latest PL-G4 after PL-G3 provider-permission triage follow-up evidence"
+);
 assert.match(task, /keep blocked \/ blocked-no-approval/i, "task.md records PL-G4 follow-up blocked result");
+assert.match(
+  task,
+  /blocked-provider-permission-rejected-after-target-present[\s\S]*Azure-UI-not-run[\s\S]*Start-to-translation evidence incomplete/i,
+  "task.md records PL-G3 provider-permission blocker before PL-G4"
+);
+assert.match(
+  task,
+  /cannot prove production\/custom deployed smoke readiness without exact same-thread approval and sanitized output review/i,
+  "task.md records PL-G4 cannot prove readiness without approval and sanitized output review"
+);
 assert.match(task, /approved-fb-l5-production-custom-deployed-smoke/i, "task.md records exact PL-G4 approval label");
 assert.match(task, /production\/custom deployed smoke execution[\s\S]*not-run \/ approval-gated/i, "task.md records PL-G4 smoke not-run/gated");
 assert.match(task, /unchecked scope[\s\S]*production\/custom deployed smoke execution/i, "task.md records unchecked PL-G4 scope");
@@ -227,6 +267,7 @@ for (const [label, source] of [
   [fbL5EvidencePath, fbL5Evidence],
   [fbL5ReadyPreflightPath, fbL5ReadyPreflight],
   [plG3FollowUpPath, plG3FollowUp],
+  [plG3ProviderPermissionTriagePath, plG3ProviderPermissionTriage],
   [plG2cDocPath, plG2cDoc],
   [plG1DocPath, plG1Doc],
   [plG5DocPath, plG5Doc],
@@ -251,7 +292,9 @@ const allowedChangedFiles = new Set([
   taskPath,
   "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

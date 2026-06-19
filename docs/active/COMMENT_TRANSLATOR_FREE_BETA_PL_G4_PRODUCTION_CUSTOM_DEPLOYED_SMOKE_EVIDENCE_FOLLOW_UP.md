@@ -6,24 +6,28 @@ Execution result: keep blocked / blocked-no-approval.
 
 Production/custom deployed smoke execution: not-run / approval-gated.
 
-This PL-G4 follow-up rechecks the next incomplete public-usability gate after the PL-G3 Start-to-translation follow-up: production/custom deployed smoke. This prompt is not exact approval. Same-thread ready preflight was reviewed through the existing FB-L5 ready preflight and PL-G4 blocker, but sanitized output review, exact explicit approval, and operator-local env references are not all present in this thread. Therefore PL-G4 stays blocked and no deployed target freshness check, reviewed integration branch match check, allowed-tester route/UI reachability, status-only session API, usage/deletion/Creator locked gate status, Start-to-translation gate status, or production/custom deployed smoke execution was run.
+This PL-G4 follow-up rechecks the next incomplete public-usability gate after PL-G3 provider-permission triage: production/custom deployed smoke. PL-G3 now has a provider-permission triage preflight for `blocked-provider-permission-rejected-after-target-present`; Start-to-translation evidence remains incomplete with `Azure-UI-not-run`. This prompt is not exact approval. Same-thread ready preflight was reviewed through the existing FB-L5 ready preflight and PL-G4 blocker, but sanitized output review, exact explicit approval, and operator-local env references are not all present in this thread. Therefore PL-G4 stays blocked and cannot prove production/custom deployed smoke readiness without exact same-thread approval and sanitized output review. No deployed target freshness check, reviewed integration branch match check, allowed-tester route/UI reachability, status-only session API, usage/deletion/Creator locked gate status, Start-to-translation gate status, or production/custom deployed smoke execution was run.
 
 This slice does not run PL-G2 route/API harness execution, PL-G3 Start-to-translation smoke execution, session Start, Stop, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, limited public beta open, public access change, public launch gate flip, deploy/upload, remote Supabase mutation/schema apply, Stripe action, billing setting mutation, Paid entitlement C1/C3, Creator paid limits, main promotion, browser storage expansion, or handoff payload expansion.
 
 ## Purpose
 
-PL-G4 follow-up is the post-PL-G3 recheck for the production/custom deployed smoke public-usability gate. Its job is to either:
+PL-G4 follow-up is the post-PL-G3 provider-permission triage recheck for the production/custom deployed smoke public-usability gate. Its job is to either:
 
 - record approved sanitized execution evidence for the FB-L5 production/custom deployed smoke boundary; or
 - keep the blocker reviewed when approval, evidence, or operator-local env prerequisites are absent.
 
-Because this thread lacks the required exact approval label and operator-local execution references, the safe outcome is `keep blocked / blocked-no-approval`.
+Because PL-G3 remains `blocked-provider-permission-rejected-after-target-present` with `Azure-UI-not-run`, and because this thread lacks the required exact approval label and operator-local execution references for PL-G4, the safe outcome is `keep blocked / blocked-no-approval`.
 
 ## Execution Decision
 
 - Decision: keep blocked / blocked-no-approval.
 - Same-thread ready preflight: reviewed through `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`.
 - Prior PL-G4 blocker reviewed through `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md`.
+- PL-G3 provider-permission triage preflight reviewed through `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md`.
+- PL-G3 provider-permission state: blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run.
+- Start-to-translation evidence remains incomplete.
+- Production/custom deployed smoke readiness proof: cannot prove production/custom deployed smoke readiness without exact same-thread approval and sanitized output review.
 - Sanitized output review for an actual production/custom deployed smoke run: not present in this thread.
 - Exact explicit approval: not present in this thread.
 - Required approval label: `approved-fb-l5-production-custom-deployed-smoke`.
@@ -43,6 +47,7 @@ Because this thread lacks the required exact approval label and operator-local e
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md`
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md`
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`
+- `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md`
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md`
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2C_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE.md`
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md`
@@ -94,7 +99,7 @@ Out of scope for PL-G4 without a later exact same-thread approval that expands s
 | --- | --- | --- |
 | PL-G1 remote durable enforcement | remote-apply-and-deployed-smoke-completed | Completed for the approved durable apply and deployed status/start/stop boundary only; it does not prove production/custom deployed freshness. |
 | PL-G2C prior blocker | keep blocked / blocked-no-approval | Route/API harness smoke remains separate and incomplete. |
-| PL-G3 follow-up blocker | keep blocked / blocked-no-approval | Start-to-translation smoke remains separate and incomplete. |
+| PL-G3 provider-permission triage | blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run | Start-to-translation evidence remains incomplete; non-empty intake, Free Azure translation, UI feed confirmation, usage, and source attribution remain unchecked / not-run / approval-gated. |
 | PL-G4 prior blocker | blocked-no-approval / not-run / approval-gated | Still the active production/custom deployed smoke blocker. |
 | PL-G5 keep-blocked decision | keep blocked / blocked-no-approval | Public gate state label remains unchanged / blocked, and public-release capable label remains no. |
 
@@ -178,8 +183,10 @@ Deployed target freshness, reviewed integration branch match, allowed-tester rou
 This PL-G4 follow-up record proves:
 
 - PL-G3 follow-up was reviewed and does not unlock PL-G4 execution;
+- PL-G3 provider-permission triage was reviewed and keeps Start-to-translation evidence incomplete;
 - the existing FB-L5 ready preflight and exact approval label remain the correct production/custom deployed smoke gate;
 - this thread lacks the approval/env/output-review prerequisites for actual production/custom deployed smoke execution;
+- PL-G4 cannot prove production/custom deployed smoke readiness without exact same-thread approval and sanitized output review;
 - PL-G1 is completed only for its approved durable boundary, while PL-G2C, PL-G3, and PL-G4 execution evidence remains missing;
 - public gate state label remains unchanged / blocked and public-release capable label remains no.
 
@@ -194,6 +201,7 @@ This record does not prove production/custom deployed behavior because the smoke
 - deployed status route/API behavior;
 - deployed usage/deletion/Creator locked gate status;
 - deployed Start-to-translation gate status;
+- completed Start-to-translation evidence after PL-G3 provider-permission triage;
 - authenticated allowed-tester route/API smoke execution;
 - Start-to-translation smoke execution;
 - explicit Start;
@@ -237,7 +245,7 @@ Unchecked scope:
 - Paid entitlement C1/C3 and Creator paid limits: not-run / approval-gated;
 - main promotion, limited public beta open, public access change, and public launch gate flip: not-run / approval-gated.
 
-Residual risk: PL-G4 remains incomplete until a later same-thread approved operator-local run executes the exact FB-L5 production/custom deployed smoke boundary and records sanitized output only. Public-release capable remains no.
+Residual risk: PL-G4 remains incomplete until a later same-thread approved operator-local run executes the exact FB-L5 production/custom deployed smoke boundary and records sanitized output only. PL-G3 remains blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run, so Start-to-translation evidence remains incomplete. Public-release capable remains no.
 
 ## Next Safe Action
 

@@ -181,6 +181,13 @@ type YouTubeLiveChatPollingSmokeProviderErrorReasonLabel =
   | "provider-forbidden"
   | "provider-error-reason-other";
 
+type YouTubeLiveChatPollingSmokeIntakeDiagnosticLabel =
+  | "non-empty-returned-intake"
+  | "empty-provider-ok-no-items"
+  | "empty-provider-ok-next-page-present"
+  | "empty-provider-ok-page-info-nonzero"
+  | "unavailable-provider-not-ok";
+
 export type YouTubeLiveChatPollingSmokeResponseMetadata = {
   httpStatus: number;
   ok: boolean;
@@ -191,6 +198,8 @@ export type YouTubeLiveChatPollingSmokeResponseMetadata = {
   pollingIntervalMillis: number | null;
   returnedItemCount: number;
   pageInfoTotalResults: number | null;
+  pageInfoResultsPerPage: number | null;
+  intakeDiagnosticLabel: YouTubeLiveChatPollingSmokeIntakeDiagnosticLabel;
   itemTypeDistribution: Partial<Record<YouTubeLiveChatPollingSmokeItemTypeLabel, number>>;
   textPayload: "not-returned-by-design";
 };
@@ -593,10 +602,16 @@ function createSanitizedPollingResponseMetadata(
     typeof pageInfo.totalResults === "number" && Number.isFinite(pageInfo.totalResults)
       ? pageInfo.totalResults
       : null;
+  const pageInfoResultsPerPage =
+    typeof pageInfo.resultsPerPage === "number" && Number.isFinite(pageInfo.resultsPerPage)
+      ? pageInfo.resultsPerPage
+      : null;
   const pollingIntervalMillis =
     typeof body.pollingIntervalMillis === "number" && Number.isFinite(body.pollingIntervalMillis)
       ? body.pollingIntervalMillis
       : null;
+  const nextPageToken = typeof body.nextPageToken === "string" && body.nextPageToken.length > 0 ? "present" : "absent";
+  const returnedItemCount = items.length;
 
   return {
     httpStatus: providerResponse.status,
@@ -604,13 +619,50 @@ function createSanitizedPollingResponseMetadata(
     providerStatusLabel: sanitizeProviderStatusLabel(providerResponse),
     providerErrorReasonLabel: sanitizeProviderErrorReasonLabel(providerResponse),
     liveChatTarget: "present",
-    nextPageToken: typeof body.nextPageToken === "string" && body.nextPageToken.length > 0 ? "present" : "absent",
+    nextPageToken,
     pollingIntervalMillis,
-    returnedItemCount: items.length,
+    returnedItemCount,
     pageInfoTotalResults,
+    pageInfoResultsPerPage,
+    intakeDiagnosticLabel: createIntakeDiagnosticLabel({
+      ok: providerResponse.ok,
+      nextPageToken,
+      pageInfoTotalResults,
+      returnedItemCount
+    }),
     itemTypeDistribution: createSanitizedItemTypeDistribution(items),
     textPayload: "not-returned-by-design"
   };
+}
+
+function createIntakeDiagnosticLabel({
+  ok,
+  nextPageToken,
+  pageInfoTotalResults,
+  returnedItemCount
+}: {
+  ok: boolean;
+  nextPageToken: "present" | "absent";
+  pageInfoTotalResults: number | null;
+  returnedItemCount: number;
+}): YouTubeLiveChatPollingSmokeIntakeDiagnosticLabel {
+  if (!ok) {
+    return "unavailable-provider-not-ok";
+  }
+
+  if (returnedItemCount > 0) {
+    return "non-empty-returned-intake";
+  }
+
+  if (nextPageToken === "present") {
+    return "empty-provider-ok-next-page-present";
+  }
+
+  if (typeof pageInfoTotalResults === "number" && pageInfoTotalResults > 0) {
+    return "empty-provider-ok-page-info-nonzero";
+  }
+
+  return "empty-provider-ok-no-items";
 }
 
 function sanitizeProviderStatusLabel(

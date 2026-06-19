@@ -172,7 +172,7 @@ assert.match(
 );
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight`/i,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-provider-permission-(?:triage-preflight|readiness-follow-up-after-pl-g5)`/i,
   "task.md records provider-permission triage branch"
 );
 assert.match(task, /Latest PL-G3 Provider-permission Triage Preflight/i, "task.md records latest triage section");
@@ -224,6 +224,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-provider-permission-readiness-follow-up-after-pl-g5-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",

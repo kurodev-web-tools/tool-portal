@@ -1,10 +1,12 @@
 # Kuro Live Comment Translator Free Beta PL-G3 Provider-permission Triage Preflight
 
-Status: PL-G3 provider-permission triage preflight. Public-release capable: no.
+Status: PL-G3 provider-permission triage preflight and PL-G3 provider-permission readiness follow-up after PL-G5. Public-release capable: no.
 
 Execution result: blocked-provider-permission-rejected-after-target-present.
 
-This is a no-live-execution docs/contracts/task only follow-up for the current PL-G3 HTTP 403 blocker. It records value-free operator-local triage steps for the next review before any later same-thread approved live/provider retry.
+This is a no-live-execution docs/contracts/task only follow-up for the current PL-G3 HTTP 403 blocker. It records value-free operator-local triage steps and value-free operator-local readiness confirmations for the next review before any later same-thread approved live/provider retry.
+
+This PL-G3 provider-permission readiness follow-up after PL-G5 is the next no-live follow-up after PR #502. It keeps PL-G3 blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run, public gate state label unchanged / blocked, and public-release capable label no.
 
 Public gate state label: unchanged / blocked. Public-release capable label: no.
 
@@ -14,9 +16,12 @@ The latest sanitized PL-G3 polling diagnostics reached `liveChatMessages.list` a
 
 This preflight makes the next safe triage explicit without asking for raw provider values. It ties the checklist to the PR #499 allowlisted `providerErrorReasonLabel` labels so a later approved operator-local run can classify the blocker as OAuth scope category, target live chat availability, owner/channel binding, provider permission state, quota/rate-limit state, generic forbidden, or reason-not-returned.
 
+The after-PL-G5 readiness follow-up is not an actual provider retry and not Start-to-translation smoke completion. It prepares the prerequisite record for a later exact approval PL-G3 retry.
+
 ## Current Sanitized Blocker
 
 - PL-G3 state: blocked-provider-permission-rejected-after-target-present.
+- PL-G3 gate remains Azure-UI-not-run.
 - Sanitized diagnostics status label: `live-chat-polling-diagnostics-sanitized-result`.
 - HTTP status: HTTP 403.
 - Provider status label `provider-permission-rejected`.
@@ -33,9 +38,9 @@ This preflight makes the next safe triage explicit without asking for raw provid
 
 ## No-live Execution Boundary
 
-This implementation thread is limited to docs/contracts/task updates.
+This implementation thread is limited to no-live-execution docs/contracts/task only follow-up updates.
 
-Do not run Start, Stop, target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, additional polling loops, deploy/upload, remote mutation, Stripe actions, main promotion, public access change, or public launch gate flip from this preflight.
+Do not run Start, Stop, target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, additional polling loops, production/custom deployed smoke execution, deploy/upload, remote mutation, Stripe actions, public access change, limited public beta open, public launch gate flip, main promotion, or any separate reviewed operation from this preflight.
 
 Explicit exclusions:
 
@@ -50,7 +55,7 @@ If an operator needs values to evaluate the checklist, set or confirm them only 
 
 ## Operator-local Value-free Checklist
 
-Confirm each item with categories, labels, or pass/fail state only:
+Confirm each item with category / label / pass-fail / unavailableReason only:
 
 All checklist work stays in operator-local context only.
 
@@ -61,6 +66,8 @@ All checklist work stays in operator-local context only.
 5. Confirm quota/rate-limit state as category or label only; do not print provider quota dashboard values, raw response body, or error text.
 6. If the provider response only supports a generic forbidden classification, record `provider-forbidden`.
 7. If no provider reason is returned to the allowlist, record `provider-error-reason-not-returned`.
+
+The checklist output is limited to category / label / pass-fail / unavailableReason. It must not request or document actual values.
 
 The checklist requests categories, labels, and pass/fail states only; it must not request or document actual values.
 
@@ -112,13 +119,14 @@ If a value is needed, the operator should set or inspect it in the local shell/b
 
 Keep PL-G3 blocked and complete the operator-local value-free checklist before requesting any later same-thread exact approval. If the checklist identifies a correctable category, resolve it outside docs without leaking values, then request a later approved PL-G3 retry using the existing FB-L4 approval boundary.
 
-Do not treat this triage preflight as live/provider evidence and do not flip the public launch gate. Public gate state label remains unchanged / blocked and public-release capable label remains no.
+Do not treat this triage preflight or after-PL-G5 readiness follow-up as live/provider evidence and do not flip the public launch gate. Public access change, limited public beta open, public launch gate flip, and main promotion remain a separate reviewed operation. Public gate state label remains unchanged / blocked and public-release capable label remains no.
 
 ## Completion Verification
 
 Required checks for this no-live triage preflight:
 
 - `node scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs`
+- `node scripts/comment-translator-free-beta-pl-g3-provider-permission-readiness-follow-up-after-pl-g5-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs`
 - existing PL-G3 / FB-L4 / PL-G2K contracts touched by wording
 - changed-files no-secret scan

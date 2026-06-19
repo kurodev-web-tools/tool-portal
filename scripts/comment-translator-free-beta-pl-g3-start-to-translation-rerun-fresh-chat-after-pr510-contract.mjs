@@ -55,7 +55,7 @@ function assertNoSensitiveValues(source, label) {
 }
 
 for (const requiredPath of [plG3DocPath, taskPath]) {
-  assert.ok(exists(requiredPath), `PL-G3 after-PR #507 retry required path exists: ${requiredPath}`);
+  assert.ok(exists(requiredPath), `PL-G3 fresh-chat after-PR #510 required path exists: ${requiredPath}`);
 }
 
 const plG3Doc = read(plG3DocPath);
@@ -63,25 +63,38 @@ const task = read(taskPath);
 
 assert.match(
   plG3Doc,
-  /^## Operator-local Retry Attempt After PR #507$/m,
-  "PL-G3 doc records operator-local retry attempt after PR #507"
+  /^## Operator-local Start-to-translation Rerun With Fresh Chat After PR #510$/m,
+  "PL-G3 doc records operator-local fresh-chat rerun after PR #510"
 );
 
 for (const requiredFragment of [
-  "approved-fb-l4-start-to-translation-smoke",
-  "blocked-token-material-unavailable-before-start-after-pr507",
-  "target lookup env readiness",
-  "ready-for-bounded-live-chat-target-lookup-command-foundation",
-  "polling env readiness",
-  "ready-for-bounded-live-chat-polling-smoke-command-foundation",
-  "token material availability",
-  "unavailable",
-  "not-run-token-material-availability-only",
-  "server-only live token material resolver is wired but token material retrieval is not implemented in this command runtime",
-  "Start: not-run",
-  "`liveChatMessages.list`: not-run",
+  "blocked-empty-polling-intake-after-fresh-chat-after-pr510",
+  "approved-fb-l4-start-to-translation-smoke-rerun-with-fresh-chat-message",
+  "dependency recovery",
+  "npm install --prefer-offline",
+  "session status",
+  "not-started",
+  "explicit Start",
+  "active",
+  "fresh chat message after Start",
+  "server-only live target lookup",
+  "live-chat-target-lookup-sanitized-result",
+  "target presence present",
+  "liveBroadcasts-list-target-lookup-only",
+  "returned count 5",
+  "one bounded `liveChatMessages.list` polling step",
+  "live-chat-polling-smoke-sanitized-result",
+  "liveChatMessages-list-one-step-only",
+  "provider status provider-ok",
+  "provider error reason label provider-error-reason-not-returned",
+  "returned count 0",
+  "empty-returned-intake",
+  "provider harness gate",
+  "blocked-before-provider-harness",
+  "polling-intake-not-confirmed-non-empty",
   "Azure/OpenAI provider execution: not-run",
   "UI/feed confirmation: not-run",
+  "Stop: executed / stopped / user-stop",
   "public gate state label: unchanged / blocked",
   "public-release capable label: no"
 ]) {
@@ -89,17 +102,23 @@ for (const requiredFragment of [
 }
 
 for (const requiredTaskFragment of [
-  "Current branch: `codex/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr507`",
-  "Latest PL-G3 Retry After PR #507",
-  "blocked-token-material-unavailable-before-start-after-pr507",
-  "target lookup env readiness",
-  "polling env readiness",
-  "token material availability",
-  "not-run-token-material-availability-only",
-  "Start: not-run",
-  "`liveChatMessages.list`: not-run",
+  "Current branch: `codex/comment-translator-free-beta-pl-g3-start-to-translation-rerun-fresh-chat-after-pr510`",
+  "Latest PL-G3 Start-to-translation Rerun With Fresh Chat After PR #510",
+  "blocked-empty-polling-intake-after-fresh-chat-after-pr510",
+  "approved-fb-l4-start-to-translation-smoke-rerun-with-fresh-chat-message",
+  "dependency recovery",
+  "target lookup execute",
+  "target presence label present",
+  "returned count 5",
+  "polling execute",
+  "provider status provider-ok",
+  "provider error reason label provider-error-reason-not-returned",
+  "returned count 0",
+  "provider harness gate: blocked-before-provider-harness",
+  "polling-intake-not-confirmed-non-empty",
   "Azure/OpenAI provider execution: not-run",
   "UI/feed confirmation: not-run",
+  "Stop: HTTP 200 / stopped / user-stop / pass true",
   "public gate state label: unchanged / blocked",
   "public-release capable label: no",
   "width checks skipped"
@@ -108,14 +127,14 @@ for (const requiredTaskFragment of [
 }
 
 for (const forbiddenFragment of [
-  "Start: completed",
-  "`liveChatMessages.list`: completed",
   "Azure/OpenAI provider execution: completed",
   "UI/feed confirmation: completed",
+  "provider harness execute: pass",
   "public launch gate flip: completed",
-  "main promotion: completed"
+  "main promotion: completed",
+  "public-release capable label: yes"
 ]) {
-  assert.doesNotMatch(plG3Doc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G3 after-PR #507 doc excludes ${forbiddenFragment}`);
+  assert.doesNotMatch(plG3Doc, new RegExp(escaped(forbiddenFragment), "i"), `PL-G3 fresh-chat after-PR #510 doc excludes ${forbiddenFragment}`);
   assert.doesNotMatch(task, new RegExp(escaped(forbiddenFragment), "i"), `task.md excludes ${forbiddenFragment}`);
 }
 
@@ -135,13 +154,13 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-provider-permission-readiness-follow-up-after-pl-g5-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-rerun-fresh-chat-after-pr510-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr507-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr509-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-rerun-fresh-chat-after-pr510-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-token-material-availability-after-pr508-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-token-material-availability-after-pr508-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
@@ -149,8 +168,8 @@ const allowedChangedFiles = new Set([
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `PL-G3 after-PR #507 retry change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `PL-G3 fresh-chat after-PR #510 change stays in allowed files: ${file}`);
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 
-console.log("comment translator Free beta PL-G3 Start-to-translation retry after PR #507 contract checks passed");
+console.log("comment translator Free beta PL-G3 Start-to-translation rerun with fresh chat after PR #510 contract checks passed");

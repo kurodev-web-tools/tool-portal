@@ -1,12 +1,14 @@
 # Kuro Live Comment Translator Free Beta PL-G3 Provider-permission Triage Preflight
 
-Status: PL-G3 provider-permission triage preflight and PL-G3 provider-permission readiness follow-up after PL-G5. Public-release capable: no.
+Status: PL-G3 provider-permission triage preflight, PL-G3 provider-permission readiness follow-up after PL-G5, and PL-G3 provider-permission readiness confirmation follow-up after PR #503. Public-release capable: no.
 
 Execution result: blocked-provider-permission-rejected-after-target-present.
 
 This is a no-live-execution docs/contracts/task only follow-up for the current PL-G3 HTTP 403 blocker. It records value-free operator-local triage steps and value-free operator-local readiness confirmations for the next review before any later same-thread approved live/provider retry.
 
 This PL-G3 provider-permission readiness follow-up after PL-G5 is the next no-live follow-up after PR #502. It keeps PL-G3 blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run, public gate state label unchanged / blocked, and public-release capable label no.
+
+This PL-G3 provider-permission readiness confirmation follow-up after PR #503 keeps the same no-live-execution docs/contracts/task only follow-up boundary and makes the operator-local confirmation checklist reviewable before any later exact approval PL-G3 retry.
 
 Public gate state label: unchanged / blocked. Public-release capable label: no.
 
@@ -70,6 +72,26 @@ All checklist work stays in operator-local context only.
 The checklist output is limited to category / label / pass-fail / unavailableReason. It must not request or document actual values.
 
 The checklist requests categories, labels, and pass/fail states only; it must not request or document actual values.
+
+## Operator-local Confirmation Checklist Expectations
+
+The operator-local confirmation checklist is reviewable only when every row is recorded with the same sanitized output shape and no private values:
+
+| Confirmation | Required sanitized output shape | Review expectation |
+| --- | --- | --- |
+| OAuth scope category | category / label / pass-fail / unavailableReason | Confirms the granted OAuth scope category is compatible with the approved YouTube read path, without printing OAuth values or scope values. |
+| target live chat availability | category / label / pass-fail / unavailableReason | Confirms whether the owned target's live chat is available for the reviewed PL-G3 boundary, without printing provider target metadata, title, channel id, broadcast id, or `liveChatId`. |
+| owner/channel binding | category / label / pass-fail / unavailableReason | Confirms the authenticated owner and channel binding category matches the target context, without printing owner user id values or provider channel id values. |
+| provider permission state | category / label / pass-fail / unavailableReason | Confirms whether the current owner, target, app/project, and API surface have sufficient provider permission, without printing raw provider response data. |
+| quota/rate-limit state | category / label / pass-fail / unavailableReason | Confirms quota/rate-limit state as a category or label only, without printing provider quota dashboard values, raw response body, or error text. |
+
+The checklist is incomplete if any row requires raw provider output, provider target values, OAuth values, token values, cookie values, account ids, channel ids, `liveChatId`, or Authorization header values.
+
+## Exact Approval Retry Preconditions
+
+Exact approval retry preconditions: all five operator-local confirmations are recorded, reviewed sanitized checklist output is present, the same-thread exact approval label for PL-G3 is present, no raw provider response is included, and no provider target value is printed or stored.
+
+These preconditions prepare the next exact approval PL-G3 retry only. They do not authorize Start, Stop, target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, production/custom deployed smoke execution, public access change, limited public beta open, public launch gate flip, or main promotion.
 
 ## Provider Error Reason Label Mapping
 

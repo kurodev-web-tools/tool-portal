@@ -76,6 +76,8 @@ for (const requiredSection of [
   "## Current Sanitized Blocker",
   "## No-live Execution Boundary",
   "## Operator-local Value-free Checklist",
+  "## Operator-local Confirmation Checklist Expectations",
+  "## Exact Approval Retry Preconditions",
   "## Provider Error Reason Label Mapping",
   "## Pass Semantics",
   "## Forbidden Output And Documentation",
@@ -86,9 +88,11 @@ for (const requiredSection of [
 }
 
 for (const requiredFragment of [
-  "PL-G3 provider-permission readiness follow-up after PL-G5",
+  "PL-G3 provider-permission readiness confirmation follow-up after PR #503",
+  "PR #503",
   "PR #502",
   "no-live-execution docs/contracts/task only follow-up",
+  "operator-local confirmation checklist",
   "value-free operator-local readiness confirmations",
   "OAuth scope category",
   "target live chat availability",
@@ -103,6 +107,7 @@ for (const requiredFragment of [
   "actual provider retry",
   "Start-to-translation smoke completion",
   "exact approval PL-G3 retry",
+  "exact approval retry preconditions",
   "Public access change",
   "limited public beta open",
   "public launch gate flip",
@@ -124,6 +129,16 @@ assert.match(
 );
 assert.match(
   triageDoc,
+  /OAuth scope category[\s\S]*category \/ label \/ pass-fail \/ unavailableReason[\s\S]*target live chat availability[\s\S]*category \/ label \/ pass-fail \/ unavailableReason[\s\S]*owner\/channel binding[\s\S]*category \/ label \/ pass-fail \/ unavailableReason[\s\S]*provider permission state[\s\S]*category \/ label \/ pass-fail \/ unavailableReason[\s\S]*quota\/rate-limit state[\s\S]*category \/ label \/ pass-fail \/ unavailableReason/i,
+  "readiness follow-up doc makes each operator-local confirmation reviewable with the same sanitized output shape"
+);
+assert.match(
+  triageDoc,
+  /Exact approval retry preconditions[\s\S]*all five operator-local confirmations[\s\S]*reviewed sanitized checklist output[\s\S]*same-thread exact approval[\s\S]*no raw provider response[\s\S]*no provider target value/i,
+  "readiness follow-up doc records exact approval retry preconditions without private values"
+);
+assert.match(
+  triageDoc,
   /Do not run Start[\s\S]*Do not run Stop[\s\S]*Do not run target lookup[\s\S]*Do not run `liveChatMessages\.list`[\s\S]*Do not run Azure\/OpenAI provider execution[\s\S]*Do not run UI\/feed confirmation/i,
   "readiness follow-up doc preserves no-live execution boundary"
 );
@@ -134,8 +149,9 @@ assert.match(
 );
 
 for (const requiredTaskFragment of [
-  "Current branch: `codex/comment-translator-free-beta-pl-g3-provider-permission-readiness-follow-up-after-pl-g5`",
-  "Latest PL-G3 Provider-permission Readiness Follow-up After PL-G5",
+  "Current branch: `codex/comment-translator-free-beta-pl-g3-provider-permission-readiness-confirmation-after-pr503`",
+  "Latest PL-G3 Provider-permission Readiness Confirmation Follow-up After PR #503",
+  "PR #503",
   "PR #502",
   "PL-G3 remains blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run",
   "PL-G4 remains production/custom deployed smoke not-run / approval-gated",
@@ -148,6 +164,8 @@ for (const requiredTaskFragment of [
   "provider permission state",
   "quota/rate-limit state",
   "category / label / pass-fail / unavailableReason",
+  "operator-local confirmation checklist",
+  "exact approval retry preconditions",
   "no-live docs/contracts/task follow-up",
   "width checks skipped"
 ]) {
@@ -209,7 +227,9 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
 ]);
 

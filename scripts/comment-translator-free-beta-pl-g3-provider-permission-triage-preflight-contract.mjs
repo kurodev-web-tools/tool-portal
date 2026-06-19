@@ -172,7 +172,7 @@ assert.match(
 );
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-provider-permission-(?:triage-preflight|readiness-follow-up-after-pl-g5)`/i,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-provider-permission-(?:triage-preflight|readiness-follow-up-after-pl-g5|readiness-confirmation-after-pr503)`/i,
   "task.md records provider-permission triage branch"
 );
 assert.match(task, /Latest PL-G3 Provider-permission Triage Preflight/i, "task.md records latest triage section");
@@ -228,7 +228,11 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

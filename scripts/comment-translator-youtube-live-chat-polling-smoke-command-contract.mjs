@@ -82,6 +82,16 @@ assert.match(commandSource, /--approved-live-chat-polling-smoke/, "command requi
 assert.match(commandSource, /--approved-live-chat-polling-diagnostics/, "command supports explicit diagnostics approval flag");
 assert.match(
   commandSource,
+  /--approved-live-chat-polling-next-page-diagnostics/,
+  "command supports explicit next-page diagnostics approval flag"
+);
+assert.match(
+  commandSource,
+  /YOUTUBE_LIVE_CHAT_POLLING_SMOKE_NEXT_PAGE_TOKEN/,
+  "command consumes the server-only next-page cursor from an operator-local reference"
+);
+assert.match(
+  commandSource,
   /blocked-conflicting-live-chat-polling-approval-flags/,
   "command rejects mixed smoke and diagnostics approval flags"
 );
@@ -162,6 +172,7 @@ assert.deepEqual(
       part: "id,snippet",
       fields: "nextPageToken,pollingIntervalMillis,pageInfo(totalResults,resultsPerPage),items(id,snippet(publishedAt,type))"
     },
+    pageTokenHandling: "optional-server-only-next-page-token-consumed-never-returned",
     outputPolicy: "sanitized-metadata-only",
     ownerBindingCheck: "trusted-status-provider-channel-match-before-live-chat-polling",
     targetLookupPrerequisite: "live-chat-target-lookup-readiness-and-presence-only-evidence-before-live-chat-polling",
@@ -406,10 +417,12 @@ assert.equal(providerFetchCount, 0, "owner mismatch aborts before provider fetch
 
 const consumedAuthorizationHeaders = [];
 const consumedLiveChatIds = [];
+const consumedProviderUrls = [];
 const success = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
   credentialReferenceId: "smoke-livechat-polling-reference",
   expectedProviderChannelReference: "provider-channel-reference-never-returned",
   liveChatId: "live-chat-id-never-returned",
+  pageToken: "next-page-token-never-returned",
   ownerVerificationSmokeSuccess: true,
   liveChatTargetLookupReadinessConfirmed: true,
   liveChatTargetPresenceOnlyEvidence: true,
@@ -451,6 +464,7 @@ const success = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
   async fetchGoogleApi(requestToFetch) {
     consumedAuthorizationHeaders.push(requestToFetch.headers.Authorization);
     consumedLiveChatIds.push(requestToFetch.liveChatId);
+    consumedProviderUrls.push(requestToFetch.url);
     return {
       ok: true,
       status: 200,
@@ -485,11 +499,14 @@ const success = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
 });
 assert.deepEqual(consumedAuthorizationHeaders, ["server-only-test-authorization"], "provider fetch consumes server-only authorization exactly once");
 assert.deepEqual(consumedLiveChatIds, ["live-chat-id-never-returned"], "provider fetch consumes live chat id exactly once");
+assert.equal(consumedProviderUrls.length, 1, "provider fetch runs exactly once for next-page diagnostics");
+assert.match(consumedProviderUrls[0], /[?&]pageToken=next-page-token-never-returned(?:&|$)/, "provider fetch consumes the server-only next-page cursor");
 assert.equal(success.status, "live-chat-polling-smoke-sanitized-result");
 assert.equal(success.ownerBinding, "verified-before-live-chat-polling");
 assert.equal(success.liveChatPollingSmoke, "executed-bounded-readonly-one-step");
 assert.equal(success.providerAccess, "liveChatMessages-list-one-step-only");
 assert.deepEqual(success.responseMetadata, {
+  pageRoleLabel: "next-page",
   httpStatus: 200,
   ok: true,
   providerStatusLabel: "provider-ok",
@@ -857,6 +874,43 @@ assert.equal(
 );
 assert.equal(checkEnvPayload.liveChatPollingSmoke, "not-run-preflight-only");
 assert.equal(checkEnvPayload.liveChatTarget, "present-by-reference-only");
+assert.equal(checkEnvPayload.nextPageCursor, "not-required-for-this-boundary");
+
+const checkEnvWithUnusedCursorPlaceholder = spawnSync(process.execPath, [commandPath, "--check-env-only", "--json"], {
+  cwd: root,
+  env: {
+    ...readyEnv,
+    YOUTUBE_LIVE_CHAT_POLLING_SMOKE_NEXT_PAGE_TOKEN: "<set locally>"
+  },
+  encoding: "utf8"
+});
+assert.equal(
+  checkEnvWithUnusedCursorPlaceholder.status,
+  0,
+  "unused next-page cursor placeholder does not block non-next-page preflight"
+);
+
+const nextPageReadyEnv = {
+  ...readyEnv,
+  YOUTUBE_LIVE_CHAT_POLLING_SMOKE_NEXT_PAGE_TOKEN: "next-page-token-never-returned"
+};
+const checkNextPageEnv = spawnSync(
+  process.execPath,
+  [commandPath, "--check-env-only", "--approved-live-chat-polling-next-page-diagnostics", "--json"],
+  {
+    cwd: root,
+    env: nextPageReadyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(checkNextPageEnv.status, 0, "next-page diagnostics preflight passes with server-only cursor reference");
+const checkNextPageEnvPayload = parseJson(checkNextPageEnv.stdout);
+assert.equal(checkNextPageEnvPayload.nextPageCursor, "present-by-reference-only");
+assert.doesNotMatch(
+  JSON.stringify(checkNextPageEnvPayload),
+  /next-page-token-never-returned/,
+  "next-page diagnostics preflight does not output the cursor value"
+);
 
 const tokenMaterialAvailability = spawnSync(
   process.execPath,
@@ -902,7 +956,7 @@ const executeWithoutApprovalPayload = parseJson(executeWithoutApproval.stdout);
 assert.equal(executeWithoutApprovalPayload.status, "blocked-pending-explicit-live-chat-polling-approval");
 assert.equal(
   executeWithoutApprovalPayload.requiredFlag,
-  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics"
+  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics"
 );
 assert.equal(executeWithoutApprovalPayload.providerAccess, "not-run");
 
@@ -921,12 +975,32 @@ assert.equal(executeWithConflictingApprovalPayload.status, "blocked-conflicting-
 assert.equal(executeWithConflictingApprovalPayload.providerAccess, "not-run");
 assert.equal(executeWithConflictingApprovalPayload.liveChatPollingSmoke, "not-run");
 
+const executeNextPageWithoutCursor = spawnSync(
+  process.execPath,
+  [commandPath, "--execute", "--approved-live-chat-polling-next-page-diagnostics", "--json"],
+  {
+    cwd: root,
+    env: operatorLocalReadyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(
+  executeNextPageWithoutCursor.status,
+  2,
+  "next-page diagnostics blocks before provider access without server-only cursor reference"
+);
+const executeNextPageWithoutCursorPayload = parseJson(executeNextPageWithoutCursor.stdout);
+assert.equal(executeNextPageWithoutCursorPayload.status, "blocked-missing-live-chat-next-page-cursor-reference");
+assert.equal(executeNextPageWithoutCursorPayload.providerAccess, "not-run");
+
 for (const payload of [
   checkEnvPayload,
   tokenMaterialAvailabilityPayload,
   operatorLocalTokenMaterialAvailabilityPayload,
   executeWithoutApprovalPayload,
-  executeWithConflictingApprovalPayload
+  executeWithConflictingApprovalPayload,
+  checkNextPageEnvPayload,
+  executeNextPageWithoutCursorPayload
 ]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenField of [

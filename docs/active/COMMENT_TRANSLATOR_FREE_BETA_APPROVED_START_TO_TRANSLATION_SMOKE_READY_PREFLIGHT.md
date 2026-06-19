@@ -104,6 +104,14 @@ approved-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516
 
 Use this approval only if the release owner wants one bounded next-page read only after a first-page diagnostics result has already returned provider-ok / returned count 0 / nextPageToken presence present. The diagnostic must use the same live target reference with server-only cursor consumed and never output. Output must be category / label / pass-fail / unavailableReason only. Allowed categories are page role label, provider route label, provider status label, HTTP status label, returned count, pageInfo total count, pageInfo resultsPerPage count, nextPageToken presence label, polling interval presence label, intake diagnostic label, item type distribution counts, public gate state label, and public-release capable label. This approval must not run Start, Stop, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, or a polling loop beyond the one bounded next-page read. Output/docs must include no raw cursor, no liveChatId, no provider target metadata, no raw provider payload, no raw comments, no provider title, no broadcast id, no owner id, no channel id, no OAuth/token/cookie/credential values, no Authorization header, no quota values, and no provider URL query values.
 
+After PR #517, the reviewed command shape for that approval is:
+
+```powershell
+node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --execute --approved-live-chat-polling-next-page-diagnostics --json
+```
+
+The same command process must already contain the operator-local server-only live target reference, token material reference, owner-binding readiness references, and server-only next-page cursor reference. The command consumes the cursor only as a provider request parameter and returns cursor presence labels only; it must not output the cursor value.
+
 Free Azure translation and combined live/provider smoke command review, approval-gated:
 
 ```powershell

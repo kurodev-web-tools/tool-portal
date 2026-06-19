@@ -220,6 +220,7 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   "lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts",
+  "scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs",
   "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
   publicUsabilityPreflightPath,
   finalQaPath,

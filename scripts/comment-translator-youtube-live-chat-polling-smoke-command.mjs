@@ -29,6 +29,7 @@ const liveChatTargetReference = "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_LIVE_CHAT_ID";
 const operatorLocalServerAuthorizationHeaderReference =
   "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER";
 const operatorLocalTokenExpiresAtIsoReference = "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO";
+const liveChatNextPageCursorReference = "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_NEXT_PAGE_TOKEN";
 const youtubeReadonlyOAuthScope = "https://www.googleapis.com/auth/youtube.readonly";
 
 function loadTsModule(relativePath) {
@@ -163,6 +164,7 @@ function createBasePayload() {
     ownerBindingCheck: contract.ownerBindingCheck,
     targetLookupPrerequisite: contract.targetLookupPrerequisite,
     targetMetadataHandling: contract.targetMetadataHandling,
+    pageTokenHandling: contract.pageTokenHandling,
     authorizationHandling: contract.authorizationHandling,
     requiredApproval: contract.requiredApproval,
     tokenValue: contract.tokenValue,
@@ -193,7 +195,7 @@ function assertSmokeCredentialReference(credentialReferenceId) {
   return false;
 }
 
-function preflight() {
+function preflight({ requireNextPageCursor = false } = {}) {
   const report = createReferenceReport();
 
   if (
@@ -245,6 +247,36 @@ function preflight() {
         status: "blocked-credential-resolution-disabled",
         ...createBasePayload(),
         credentialResolutionDisabledEnv: "present-enabled",
+        liveChatPollingSmoke: "not-run",
+        providerAccess: "not-run"
+      }
+    };
+  }
+
+  if (requireNextPageCursor && !hasReference(liveChatNextPageCursorReference)) {
+    return {
+      ok: false,
+      exitCode: 2,
+      payload: {
+        status: "blocked-missing-live-chat-next-page-cursor-reference",
+        ...createBasePayload(),
+        liveChatNextPageCursorReference,
+        nextPageCursor: "absent",
+        liveChatPollingSmoke: "not-run",
+        providerAccess: "not-run"
+      }
+    };
+  }
+
+  if (requireNextPageCursor && isPlaceholderReferenceValue(liveChatNextPageCursorReference)) {
+    return {
+      ok: false,
+      exitCode: 2,
+      payload: {
+        status: "blocked-placeholder-live-chat-next-page-cursor-reference",
+        ...createBasePayload(),
+        liveChatNextPageCursorReference,
+        nextPageCursor: "placeholder",
         liveChatPollingSmoke: "not-run",
         providerAccess: "not-run"
       }
@@ -359,6 +391,7 @@ function preflight() {
       liveChatTargetLookupReadiness: "confirmed-by-reference-only",
       liveChatTargetLookupPresenceOnlyEvidence: "confirmed-presence-only",
       liveChatTarget: "present-by-reference-only",
+      nextPageCursor: requireNextPageCursor ? "present-by-reference-only" : "not-required-for-this-boundary",
       ownerBinding: "requires-check-owner-binding-only-before-approved-execution",
       approvedExecutionReadiness: "requires-owner-binding-token-material-and-explicit-approval-before-approved-execution",
       liveChatPollingSmoke: "not-run-preflight-only",
@@ -368,7 +401,8 @@ function preflight() {
 }
 
 async function main() {
-  const result = preflight();
+  const hasNextPageDiagnosticsApproval = args.has("--approved-live-chat-polling-next-page-diagnostics");
+  const result = preflight({ requireNextPageCursor: hasNextPageDiagnosticsApproval });
 
   if (!result.ok) {
     if (result.payload) {
@@ -411,14 +445,16 @@ async function main() {
 
   const hasSmokeApproval = args.has("--approved-live-chat-polling-smoke");
   const hasDiagnosticsApproval = args.has("--approved-live-chat-polling-diagnostics");
+  const approvalFlagCount = [hasSmokeApproval, hasDiagnosticsApproval, hasNextPageDiagnosticsApproval].filter(Boolean).length;
 
-  if (hasSmokeApproval && hasDiagnosticsApproval) {
+  if (approvalFlagCount > 1) {
     writeJson(
       {
         status: "blocked-conflicting-live-chat-polling-approval-flags",
         ...createBasePayload(),
         credentialReferenceId: result.payload.credentialReferenceId,
-        requiredFlag: "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics",
+        requiredFlag:
+          "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics",
         approvalBoundary: "choose-one-explicit-in-thread-approval-boundary",
         liveChatPollingSmoke: "not-run",
         providerAccess: "not-run"
@@ -428,13 +464,14 @@ async function main() {
     return;
   }
 
-  if (!hasSmokeApproval && !hasDiagnosticsApproval) {
+  if (approvalFlagCount === 0) {
     writeJson(
       {
         status: "blocked-pending-explicit-live-chat-polling-approval",
         ...createBasePayload(),
         credentialReferenceId: result.payload.credentialReferenceId,
-        requiredFlag: "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics",
+        requiredFlag:
+          "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics",
         approvalBoundary: "same-thread-explicit-in-thread-approval-required",
         liveChatPollingSmoke: "not-run",
         providerAccess: "not-run"
@@ -444,8 +481,11 @@ async function main() {
     return;
   }
 
-  if (hasDiagnosticsApproval) {
-    const diagnosticsPayload = await createApprovedDiagnosticsPayload(result.payload.credentialReferenceId);
+  if (hasDiagnosticsApproval || hasNextPageDiagnosticsApproval) {
+    const diagnosticsPayload = await createApprovedDiagnosticsPayload(
+      result.payload.credentialReferenceId,
+      hasNextPageDiagnosticsApproval
+    );
     writeJson(diagnosticsPayload, isProviderOkDiagnosticsPayload(diagnosticsPayload) ? 0 : 2);
     return;
   }
@@ -468,7 +508,7 @@ function createRuntimeWiring(credentialReferenceId) {
   });
 }
 
-function createFoundationBaseRequest(credentialReferenceId) {
+function createFoundationBaseRequest(credentialReferenceId, { useNextPageCursor = false } = {}) {
   const ownerUserId = readReference("YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID");
   const providerChannelId = readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID");
   const nowIso = new Date().toISOString();
@@ -478,6 +518,7 @@ function createFoundationBaseRequest(credentialReferenceId) {
     credentialReferenceId,
     expectedProviderChannelReference: providerChannelId,
     liveChatId: readReference(liveChatTargetReference),
+    pageToken: useNextPageCursor ? readReference(liveChatNextPageCursorReference) : null,
     ownerVerificationSmokeSuccess: true,
     liveChatTargetLookupReadinessConfirmed: true,
     liveChatTargetPresenceOnlyEvidence: true,
@@ -517,9 +558,11 @@ async function createApprovedExecutionPayload(credentialReferenceId) {
   return foundation.runYouTubeLiveChatPollingSmokeFoundation(createFoundationBaseRequest(credentialReferenceId));
 }
 
-async function createApprovedDiagnosticsPayload(credentialReferenceId) {
+async function createApprovedDiagnosticsPayload(credentialReferenceId, useNextPageCursor = false) {
   const foundation = loadTsModule("lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts");
-  const result = await foundation.runYouTubeLiveChatPollingSmokeFoundation(createFoundationBaseRequest(credentialReferenceId));
+  const result = await foundation.runYouTubeLiveChatPollingSmokeFoundation(
+    createFoundationBaseRequest(credentialReferenceId, { useNextPageCursor })
+  );
 
   if (result.status !== "live-chat-polling-smoke-sanitized-result") {
     return sanitizeDiagnosticsPayload({

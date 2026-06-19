@@ -7,6 +7,8 @@ const root = process.cwd();
 
 const plG3DocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md";
+const readyPreflightPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md";
 const taskPath = "task.md";
 const pollingCommandContractPath = "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs";
 const pollingDiagnosticsContractPath =
@@ -144,8 +146,10 @@ for (const [label, source] of [
 
 const allowedChangedFiles = new Set([
   plG3DocPath,
+  readyPreflightPath,
   taskPath,
   "scripts/comment-translator-free-beta-pl-g3-empty-intake-polling-diagnostics-read-after-pr512-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-next-page-target-selection-follow-up-after-pr513-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-empty-intake-diagnostics-after-pr511-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",

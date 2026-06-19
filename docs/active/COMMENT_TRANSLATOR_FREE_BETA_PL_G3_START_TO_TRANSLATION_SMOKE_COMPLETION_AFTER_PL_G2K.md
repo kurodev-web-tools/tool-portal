@@ -2,7 +2,7 @@
 
 Status: PL-G3 Start-to-translation smoke completion after PL-G2K. Public-release capable: no.
 
-Execution result: blocked-empty-polling-intake-next-page-present-after-pr512.
+Execution result: blocked-next-page-target-selection-follow-up-prepared-after-pr513.
 
 Start-to-translation smoke execution: blocked-empty-polling-intake-after-fresh-chat-after-pr510.
 
@@ -30,6 +30,8 @@ Operator-local polling empty-intake diagnostics metadata after PR #511: no Start
 
 Operator-local empty-intake polling diagnostics read after PR #512: exact approval label `approved-pl-g3-empty-intake-polling-diagnostics-read-after-pr512` was present. The operator refreshed the OAuth access token locally, kept stream/chat active, and posted a fresh visible chat message immediately before the approved read. The one bounded `liveChatMessages.list` diagnostics read returned status label live-chat-polling-diagnostics-sanitized-result, provider status label provider-ok, returned count 0, nextPageToken presence label present, pageInfo total count 0, pageInfo resultsPerPage count 0, and intake diagnostic label empty-provider-ok-next-page-present. Start-to-translation remains blocked-empty-polling-intake-next-page-present-after-pr512; Start, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, Stop, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, and public launch gate flip were not run.
 
+Operator-local next-page target-selection follow-up after PR #513: no Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, or public launch gate flip was run in this follow-up. The PR #512 diagnostics label `empty-provider-ok-next-page-present` is not non-empty intake and must not advance to Free Azure translation or UI/feed confirmation. The next safe action is a value-free target-selection review before any additional polling/page read: selected target rank label, usable target count, selected target presence label, selected target source label, lifecycle/privacy distribution labels/counts, and mismatch hypothesis label only; no provider title, no broadcast id, no liveChatId, no owner id, no channel id, no raw cursor, no provider target metadata, and no raw comments.
+
 ## Purpose
 
 PL-G3 completion after PL-G2K must either record approved sanitized Start-to-translation smoke evidence for the reviewed FB-L4 boundary, or stop with a reviewed blocker when Start cannot reach the active live/provider boundary.
@@ -38,7 +40,9 @@ Because the latest same-thread approved PR #510 fresh-chat rerun reached the pro
 
 After PR #511, the safe implementation outcome was `blocked-empty-polling-intake-diagnostics-output-prepared-after-pr511`: PL-G3 remained blocked, public release remained incapable, and the next diagnostics output could distinguish a provider-ok empty response with no items, nextPageToken present, pageInfo nonzero, or provider-not-ok without exposing raw response, cursor, target, credential, token, cookie, Authorization, ID, quota, or comment values.
 
-After PR #512, the safe execution outcome is `blocked-empty-polling-intake-next-page-present-after-pr512`: the provider accepted the bounded read and returned a nextPageToken while returning zero items. This is not non-empty intake, not a Free Azure translation pass, not UI/feed confirmation, and not public launch readiness.
+After PR #512, the safe execution outcome was `blocked-empty-polling-intake-next-page-present-after-pr512`: the provider accepted the bounded read and returned a nextPageToken while returning zero items. This is not non-empty intake, not a Free Azure translation pass, not UI/feed confirmation, and not public launch readiness.
+
+After PR #513, the safe implementation outcome is `blocked-next-page-target-selection-follow-up-prepared-after-pr513`: the next approval boundary is target-selection diagnostics first, not another Start-to-translation retry.
 
 ## Execution Decision
 
@@ -68,6 +72,7 @@ After PR #512, the safe execution outcome is `blocked-empty-polling-intake-next-
 - Latest same-thread PR #510 fresh-chat rerun evidence: dependency recovery completed after missing local package error / session status not-started / Start active / fresh chat message after Start / target lookup target presence present / target lookup returned count 5 / one bounded `liveChatMessages.list` provider status provider-ok / provider error reason label provider-error-reason-not-returned / polling returned count 0 / provider harness gate blocked-before-provider-harness / Stop stopped with stop reason user-stop / pass false for Start-to-translation completion.
 - After PR #511 diagnostics output preparation: pageInfo resultsPerPage label/count and intake diagnostic label are prepared for the next exact approved polling diagnostics run; no live/provider/deploy/remote/public action was run.
 - After PR #512 diagnostics read evidence: exact approval present / OAuth access token refreshed locally / fresh visible chat message posted before the approved read / diagnostics status live-chat-polling-diagnostics-sanitized-result / provider status provider-ok / returned count 0 / nextPageToken presence present / pageInfo total count 0 / pageInfo resultsPerPage count 0 / intake diagnostic label empty-provider-ok-next-page-present / pass true for diagnostics read only / Azure-UI-not-run / public-release capable no.
+- After PR #513 next-page target-selection follow-up: decision blocked-next-page-target-selection-follow-up-prepared-after-pr513 / no live/provider/deploy/remote/public action run / next exact approval should be target-selection diagnostics only / public-release capable no.
 - Target lookup diagnostics follow-up requirement: selected target rank label, usable target count, and lifecycle/privacy distribution labels/counts are required for future sanitized target-selection review.
 - Free Azure translation: not-run / approval-gated.
 - UI/feed confirmation: not-run / approval-gated.
@@ -256,6 +261,55 @@ Execution boundary:
 This follow-up does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw provider error bodies, raw provider error reason values, raw comments, browser storage payloads, quota values, provider URLs, or handoff payloads.
 
 Next safe action: keep PL-G3 blocked. The provider returned a next page token with zero returned items, so the next follow-up should be a contract-first sanitized paging/target-selection decision before any Start-to-translation retry, Azure/provider harness, UI/feed confirmation, PL-G4 production/custom deployed smoke, or public gate decision.
+
+## Operator-local Next-page Target-selection Follow-up After PR #513
+
+Decision: blocked-next-page-target-selection-follow-up-prepared-after-pr513.
+
+Reasoning:
+
+- `empty-provider-ok-next-page-present` is not non-empty intake.
+- A next page token with returned count 0 suggests paging or selected-chat-surface ambiguity, not a completed Start-to-translation smoke.
+- The next reviewed action should be target-selection review before another Start-to-translation retry or additional polling/page read.
+
+Recommended next approval label: `approved-pl-g3-target-selection-diagnostics-after-pr513`.
+
+Allowed target-selection output shape:
+
+| Category | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| selected target rank | selected target rank label | pass/fail | value-free reason label only |
+| usable target count | usable target count | pass/fail | value-free reason label only |
+| selected target presence | selected target presence label | pass/fail | value-free reason label only |
+| selected target source | selected target source label | pass/fail | value-free reason label only |
+| lifecycle/privacy distribution | lifecycle/privacy distribution labels/counts | pass/fail | value-free reason label only |
+| chat-surface mismatch hypothesis | mismatch hypothesis label | pass/fail | value-free reason label only |
+
+Forbidden output/docs:
+
+- no provider title.
+- no broadcast id.
+- no liveChatId.
+- no owner id.
+- no channel id.
+- no raw cursor.
+- no provider target metadata.
+- no raw provider payload.
+- no raw comments.
+- no token, cookie, credential, OAuth, Authorization, or quota values.
+
+Execution boundary:
+
+- Start: not-run.
+- target lookup execution: not-run.
+- `liveChatMessages.list`: not-run.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- Stop: not-run.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Next safe action: request exact same-thread approval for target-selection diagnostics only. Do not run a next-page polling read, Azure/provider harness, UI/feed confirmation, PL-G4 production/custom deployed smoke, or public launch gate decision until sanitized target-selection output is reviewed.
 
 ## Inspected Inputs
 

@@ -1,6 +1,6 @@
 # Kuro Live Comment Translator Free Beta PL-G3 Provider-permission Triage Preflight
 
-Status: PL-G3 provider-permission triage preflight, PL-G3 provider-permission readiness follow-up after PL-G5, PL-G3 provider-permission readiness confirmation follow-up after PR #503, and PL-G3 operator-local provider-permission confirmation evidence record after PR #504. Public-release capable: no.
+Status: PL-G3 provider-permission triage preflight, PL-G3 provider-permission readiness follow-up after PL-G5, PL-G3 provider-permission readiness confirmation follow-up after PR #503, PL-G3 operator-local provider-permission confirmation evidence record after PR #504, and PL-G3 operator-local sanitized confirmation output collection ready after PR #505. Public-release capable: no.
 
 Execution result: blocked-provider-permission-rejected-after-target-present.
 
@@ -11,6 +11,8 @@ This PL-G3 provider-permission readiness follow-up after PL-G5 is the next no-li
 This PL-G3 provider-permission readiness confirmation follow-up after PR #503 keeps the same no-live-execution docs/contracts/task only follow-up boundary and makes the operator-local confirmation checklist reviewable before any later exact approval PL-G3 retry.
 
 This PL-G3 operator-local provider-permission confirmation evidence record after PR #504 keeps the same no-live-execution docs/contracts/task only follow-up boundary. Because no operator-local sanitized confirmation output exists in this thread, it records value-free blocker evidence only and does not complete the confirmation checklist.
+
+This next follow-up after PR #505 keeps the same no-live-execution docs/contracts/task only follow-up boundary and turns the missing confirmation output into an operator-local collection-ready checklist. It does not supply actual provider confirmation output and does not run a provider retry.
 
 Public gate state label: unchanged / blocked. Public-release capable label: no.
 
@@ -109,6 +111,52 @@ Operator-local sanitized confirmation output is not present in this thread. Unti
 
 The next operator-local confirmation output must keep the exact shape category / label / pass-fail / unavailableReason. It must not include secret/token/cookie/OAuth/provider/live target/credential values, raw response, Authorization header, provider target metadata, `liveChatId`, owner user id values, provider channel id values, or provider quota dashboard values.
 
+## Operator-local Sanitized Confirmation Output Collection Ready After PR #505
+
+This record is the next follow-up after PR #505. It prepares the operator-local sanitized confirmation output collection step that must happen before any later exact approval PL-G3 retry.
+
+PL-G3 remains blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run. PL-G4 remains production/custom deployed smoke not-run / approval-gated. PL-G5 remains keep blocked / blocked-no-approval. Public gate state label: unchanged / blocked. Public-release capable label: no.
+
+Actual provider retry, Start-to-translation smoke completion, production/custom deployed smoke execution, Public access change, limited public beta open, public launch gate flip, main promotion, and any separate reviewed operation were not run.
+
+The after-PR #504 rows remain blocked-missing-operator-local-confirmation-output because this thread still does not contain allowed operator-local sanitized confirmation output. The after-PR #505 collection state below is intentionally pending so the operator can fill it with values-free output only after local checks are done.
+
+| Confirmation category | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| OAuth scope category | pending-operator-local-confirmation-output | fail | operator-local sanitized confirmation output not supplied after PR #505 |
+| target live chat availability | pending-operator-local-confirmation-output | fail | operator-local sanitized confirmation output not supplied after PR #505 |
+| owner/channel binding | pending-operator-local-confirmation-output | fail | operator-local sanitized confirmation output not supplied after PR #505 |
+| provider permission state | pending-operator-local-confirmation-output | fail | operator-local sanitized confirmation output not supplied after PR #505 |
+| quota/rate-limit state | pending-operator-local-confirmation-output | fail | operator-local sanitized confirmation output not supplied after PR #505 |
+
+Values stay local. Do not paste values into chat. If env setup, YouTube-side confirmation, stream start, OAuth reconnect, browser session refresh, or provider console review is required, set or confirm it only in operator-local context and record only the allowed category / label / pass-fail / unavailableReason output.
+
+## Operator-local Sanitized Output Template After PR #505
+
+Use this exact shape when operator-local confirmation output is available. Replace only labels, pass-fail, and unavailableReason values with sanitized categories or labels. Do not add extra columns.
+
+| Confirmation category | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| OAuth scope category | pending-operator-local-confirmation-output | fail | operator-local sanitized confirmation output not supplied after PR #505 |
+| target live chat availability | pending-operator-local-confirmation-output | fail | operator-local sanitized confirmation output not supplied after PR #505 |
+| owner/channel binding | pending-operator-local-confirmation-output | fail | operator-local sanitized confirmation output not supplied after PR #505 |
+| provider permission state | pending-operator-local-confirmation-output | fail | operator-local sanitized confirmation output not supplied after PR #505 |
+| quota/rate-limit state | pending-operator-local-confirmation-output | fail | operator-local sanitized confirmation output not supplied after PR #505 |
+
+Allowed label examples are sanitized classes only, such as `provider-ok`, `provider-insufficient-permission`, `provider-live-chat-disabled`, `provider-live-chat-ended`, `provider-quota-or-rate-limited`, `provider-forbidden`, `provider-error-reason-not-returned`, or another reviewable category label that does not contain private values.
+
+## Operator-local Local Action Instructions After PR #505
+
+Run these checks only in operator-local context and only when the user/operator chooses to perform the local work. Do not paste values into chat, docs, PR body, browser storage, or command output.
+
+1. For OAuth scope category, confirm the granted scope category covers the reviewed YouTube read path. Record only the category label, pass-fail, and unavailableReason.
+2. For target live chat availability, confirm the owned target's live chat category without outputting provider target metadata, title, channel id, broadcast id, or `liveChatId`.
+3. For owner/channel binding, confirm the authenticated owner and target channel binding category without outputting owner user id values or provider channel id values.
+4. For provider permission state, confirm whether the current owner, target, app/project, and API surface have sufficient provider permission without outputting raw provider response data.
+5. For quota/rate-limit state, confirm the quota/rate-limit category without outputting provider quota dashboard values, raw response body, or error text.
+
+If any local prerequisite is missing, such as env setup, YouTube-side confirmation, stream start, OAuth reconnect, browser session refresh, or provider console review, record the missing prerequisite as unavailableReason in the same sanitized shape. Values stay local and are not requested here.
+
 ## Exact Approval Retry Preconditions
 
 Exact approval retry preconditions: all five operator-local confirmations are recorded with pass true, reviewed sanitized checklist output is present, the same-thread exact approval label for PL-G3 is present, no raw provider response is included, and no provider target value is printed or stored.
@@ -172,6 +220,7 @@ Required checks for this no-live triage preflight:
 - `node scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-provider-permission-readiness-follow-up-after-pl-g5-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-after-pr504-contract.mjs`
+- `node scripts/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-output-after-pr505-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs`
 - existing PL-G3 / FB-L4 / PL-G2K contracts touched by wording
 - changed-files no-secret scan

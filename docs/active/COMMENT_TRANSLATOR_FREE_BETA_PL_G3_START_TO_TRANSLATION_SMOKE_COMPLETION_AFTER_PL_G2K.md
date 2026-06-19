@@ -20,6 +20,8 @@ Provider-permission triage preflight, provider-permission readiness follow-up af
 
 Operator-local retry after PR #507: exact approval label `approved-fb-l4-start-to-translation-smoke` was present and operator-local confirmations for active stream/chat, YouTube connection/account binding, provider permission, and quota/rate-limit state were value-free and problem-free. The retry stopped before Start because token material availability returned sanitized status `unavailable`. Start, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, and Stop were not run.
 
+Operator-local token material availability recheck after PR #508: the operator-local server-only authorization references and expiry references were present and future-valid in the command runtime. Target lookup and polling token material availability checks now return available with server fetch binding resolved, without running target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, Stop, deploy/upload, remote mutation, or public gate changes.
+
 ## Purpose
 
 PL-G3 completion after PL-G2K must either record approved sanitized Start-to-translation smoke evidence for the reviewed FB-L4 boundary, or stop with a reviewed blocker when Start cannot reach the active live/provider boundary.
@@ -83,6 +85,33 @@ Execution boundary:
 The retry does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw provider error bodies, raw comments, browser storage payloads, or handoff payloads.
 
 Next safe action: resolve the token material availability blocker in operator-local command runtime, then request a later same-thread exact approval retry before running Start or live/provider commands again.
+
+## Operator-local Token Material Availability Recheck After PR #508
+
+Decision: token-material-availability-resolved-after-pr508.
+
+Readiness evidence:
+
+| Check | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| target lookup token material availability | live-chat-target-lookup-token-material-available / tokenMaterialAvailability: available / serverFetchBinding: resolved-for-server-fetch | pass | none |
+| polling token material availability | live-chat-polling-token-material-available / tokenMaterialAvailability: available / serverFetchBinding: resolved-for-server-fetch | pass | none |
+
+Execution boundary:
+
+- providerAccess: not-run-token-material-availability-only.
+- Start: not-run.
+- target lookup execution: not-run.
+- `liveChatMessages.list`: not-run.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- Stop: not-run.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+This recheck does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw provider error bodies, raw comments, browser storage payloads, or handoff payloads.
+
+Next safe action: keep PL-G3 blocked until a later same-thread exact approval retry is requested with the stream/chat readiness re-established, then run only the reviewed PL-G3 boundary with sanitized output.
 
 ## Inspected Inputs
 

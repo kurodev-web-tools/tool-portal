@@ -88,6 +88,14 @@ For the current HTTP 403 provider-permission blocker, use `docs/active/COMMENT_T
 
 Target lookup diagnostic output should also stay sanitized while exposing enough candidate/selection shape to detect a wrong target selection: returned count, usable target count, selected target source label, selected target rank label, selected target presence label, and lifecycle/privacy distribution labels/counts. It must not output provider title, channel id, broadcast id, liveChatId, owner id, raw payload, or raw metadata.
 
+After PR #513 next-page target-selection follow-up:
+
+```text
+approved-pl-g3-target-selection-diagnostics-after-pr513
+```
+
+Use this approval only for target-selection diagnostics after `empty-provider-ok-next-page-present`. Output must be category / label / pass-fail / unavailableReason only. Allowed categories are selected target rank, usable target count, selected target presence, selected target source, lifecycle/privacy distribution, and chat-surface mismatch hypothesis. This approval must not run Start, Stop, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, or public launch gate flip. Output/docs must include no provider title, no broadcast id, no liveChatId, no raw cursor, no raw comments, no provider target metadata, no owner id, no channel id, no OAuth/token/cookie/credential values, no Authorization header, and no quota values.
+
 Free Azure translation and combined live/provider smoke command review, approval-gated:
 
 ```powershell

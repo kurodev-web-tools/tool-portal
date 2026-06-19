@@ -113,7 +113,7 @@ assert.match(
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514)`/,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515)`/,
   "task.md records current after-PR #513 branch"
 );
 assert.match(
@@ -168,6 +168,7 @@ const allowedChangedFiles = new Set([
   taskPath,
   "scripts/comment-translator-free-beta-pl-g3-next-page-target-selection-follow-up-after-pr513-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-target-selection-diagnostics-after-pr514-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr515-contract.mjs",
   pr512ContractPath,
   "scripts/comment-translator-free-beta-pl-g3-polling-empty-intake-diagnostics-after-pr511-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",

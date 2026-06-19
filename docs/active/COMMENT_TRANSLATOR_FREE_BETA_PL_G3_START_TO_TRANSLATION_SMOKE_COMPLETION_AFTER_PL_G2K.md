@@ -2,7 +2,7 @@
 
 Status: PL-G3 Start-to-translation smoke completion after PL-G2K. Public-release capable: no.
 
-Execution result: blocked-target-selection-diagnostics-reviewed-after-pr514.
+Execution result: blocked-empty-polling-intake-after-pr515.
 
 Start-to-translation smoke execution: blocked-empty-polling-intake-after-fresh-chat-after-pr510.
 
@@ -351,6 +351,45 @@ Interpretation:
 This follow-up does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw comments, Authorization headers, provider URLs, quota values, browser storage payloads, or handoff payloads.
 
 Next safe action: keep PL-G3 blocked. A later same-thread approval can choose the next bounded diagnostic or Start-to-translation retry, but this target-selection review alone does not prove non-empty intake, Free Azure translation, UI/feed confirmation, PL-G4 production/custom deployed smoke readiness, or public launch readiness.
+
+## Operator-local Start-to-translation Retry After PR #515
+
+Decision: blocked-empty-polling-intake-after-pr515.
+
+Exact approval label consumed: `approved-fb-l4-start-to-translation-smoke`.
+
+Sanitized retry output:
+
+| Category | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| status route precheck | not-started | pass | none |
+| explicit Start | active | pass | none |
+| target lookup | target presence present / provider route liveBroadcasts-list-target-lookup-only / returned count 5 / selected target rank rank-1 / usable target count 1 | pass | none |
+| fresh chat message after Start | posted-by-operator-local | pass | none |
+| one bounded `liveChatMessages.list` polling step | provider-ok / returned count 0 / polling interval present / intake label empty-provider-ok-next-page-present | fail-for-start-to-translation | none |
+| explicit Stop | stopped / user-stop | pass | none |
+
+Execution boundary:
+
+- Free Azure provider harness: not-run.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- deploy/upload: not-run.
+- remote mutation: not-run.
+- public launch gate flip: not-run.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Interpretation:
+
+- The latest retry confirms status, Start, target lookup, provider-ok polling, and Stop work in the approved operator-local path.
+- Target-selection diagnostics do not indicate selected-chat-surface mismatch.
+- Non-empty intake remains unproven because the one bounded polling step returned count 0 again.
+- Free Azure translation, UI/feed confirmation, PL-G4 production/custom deployed smoke readiness, and public launch readiness remain unproven.
+
+This follow-up does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw comments, Authorization headers, provider URLs, quota values, browser storage payloads, or handoff payloads.
+
+Next safe action: keep PL-G3 blocked. The remaining blocker is still empty provider-ok intake after a fresh post-Start chat message. A later follow-up should decide whether to instrument or diagnose polling/page cursor behavior further before another Start-to-translation retry.
 
 ## Inspected Inputs
 

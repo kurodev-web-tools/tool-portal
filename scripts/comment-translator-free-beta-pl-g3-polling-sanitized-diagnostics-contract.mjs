@@ -103,6 +103,19 @@ assert.match(foundation, /itemTypeDistribution/, "polling foundation returns ite
 assert.match(foundation, /pageInfoTotalResults/, "polling foundation returns pageInfo total result metadata");
 assert.match(foundation, /providerStatusLabel/, "polling foundation returns sanitized provider status label metadata");
 assert.match(foundation, /provider-permission-rejected/, "polling foundation maps HTTP 403 to provider-permission-rejected");
+assert.match(foundation, /providerErrorReasonLabel/, "polling foundation returns sanitized provider error reason label metadata");
+for (const allowedProviderReasonLabel of [
+  "provider-error-reason-not-returned",
+  "provider-insufficient-permission",
+  "provider-live-chat-disabled",
+  "provider-live-chat-ended",
+  "provider-quota-or-rate-limited",
+  "provider-forbidden",
+  "provider-error-reason-other"
+]) {
+  assert.match(foundation, new RegExp(allowedProviderReasonLabel), `polling foundation allowlists ${allowedProviderReasonLabel}`);
+  assert.match(commandContract, new RegExp(allowedProviderReasonLabel), `polling command contract covers ${allowedProviderReasonLabel}`);
+}
 assert.match(foundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");
 assert.match(foundation, /textPayload:\s*"not-returned-by-design"/, "polling foundation keeps text payload suppressed");
 assert.doesNotMatch(
@@ -155,7 +168,7 @@ assert.match(
 );
 assert.match(
   completionDoc,
-  /sanitized empty-intake diagnostic helper/i,
+  /sanitized polling diagnostic helper/i,
   "PL-G3 completion doc records diagnostics helper follow-up"
 );
 assert.match(
@@ -165,8 +178,13 @@ assert.match(
 );
 assert.match(
   completionDoc,
-  /HTTP 403[\s\S]*provider permission rejected[\s\S]*owner binding verified[\s\S]*token material available[\s\S]*target lookup present[\s\S]*Azure-UI-not-run[\s\S]*public-release capable no/i,
+  /HTTP 403[\s\S]*provider permission rejected[\s\S]*provider error reason\/class label[\s\S]*owner binding verified[\s\S]*token material available[\s\S]*target lookup present[\s\S]*Azure-UI-not-run[\s\S]*public-release capable no/i,
   "PL-G3 completion doc records current 403 provider permission blocker"
+);
+assert.match(
+  completionDoc,
+  /confirm granted OAuth scope category[\s\S]*target live chat availability[\s\S]*owner\/channel binding[\s\S]*provider permission state/i,
+  "PL-G3 completion doc records value-free operator checks for the 403 blocker"
 );
 assert.match(
   completionDoc,
@@ -175,18 +193,23 @@ assert.match(
 );
 assert.match(
   task,
-  /codex\/comment-translator-free-beta-pl-g3-polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-target-selection-diagnostics)/i,
+  /codex\/comment-translator-free-beta-pl-g3-polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-target-selection-diagnostics|403-reason-labels)/i,
   "task.md records diagnostics branch"
 );
 assert.match(
   task,
-  /sanitized empty-intake diagnostic helper/i,
+  /sanitized polling diagnostic helper|sanitized provider error reason\/class labels/i,
   "task.md records sanitized diagnostics helper"
 );
 assert.match(
   task,
-  /HTTP 403[\s\S]*owner binding verified[\s\S]*token material available[\s\S]*target lookup present[\s\S]*liveChatMessages\.list provider permission rejected[\s\S]*Azure-UI-not-run[\s\S]*public-release capable no/i,
+  /HTTP 403[\s\S]*owner binding verified[\s\S]*token material available[\s\S]*target lookup present[\s\S]*`?liveChatMessages\.list`? provider permission rejected[\s\S]*provider error reason\/class label[\s\S]*Azure-UI-not-run[\s\S]*public-release capable no/i,
   "task.md records current PL-G3 403 provider permission blocker"
+);
+assert.match(
+  task,
+  /confirm granted OAuth scope category[\s\S]*target live chat availability[\s\S]*owner\/channel binding[\s\S]*provider permission state/i,
+  "task.md records value-free operator checks for the 403 blocker"
 );
 
 for (const [label, source] of [

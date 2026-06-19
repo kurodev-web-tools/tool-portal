@@ -227,7 +227,11 @@ for (const forbiddenFragment of [
 }
 
 assert.match(publicUsabilityPreflightDoc, /Start smoke[\s\S]*live target lookup[\s\S]*bounded polling[\s\S]*Azure execution/i, "FB-L1 preflight keeps FB-L4 sequence");
-assert.match(plG3AfterPlG2kDoc, /blocked-empty-polling-intake-after-one-step/i, "PL-G3 after PL-G2K records approved empty polling blocker");
+assert.match(
+  plG3AfterPlG2kDoc,
+  /blocked-(?:empty-polling-intake-after-one-step|provider-permission-rejected-after-target-present)/i,
+  "PL-G3 after PL-G2K records approved blocker"
+);
 assert.match(plG3AfterPlG2kDoc, /Status route precheck:\s*executed \/ HTTP 200[\s\S]*Explicit Start:\s*executed \/ HTTP 200[\s\S]*active[\s\S]*Server-only live target lookup:\s*executed[\s\S]*returned count 5[\s\S]*One bounded `liveChatMessages\.list` polling step:\s*executed[\s\S]*returned count 0[\s\S]*Explicit Stop:\s*executed \/ HTTP 200[\s\S]*user-stop/i, "PL-G3 after PL-G2K records sanitized status/start/target-lookup/polling/stop evidence");
 assert.match(remoteDurableEvidenceDoc, /session start smoke[\s\S]*not-run \/ approval-gated/i, "FB-L2 evidence leaves Start unchecked");
 assert.match(remoteDurablePreflightDoc, /What Approval Would Not Prove[\s\S]*provider target lookup[\s\S]*live target lookup[\s\S]*liveChatMessages\.list/i, "FB-L2 ready preflight excludes provider/live proof");
@@ -238,7 +242,7 @@ assert.match(gapAudit, /FB-L4|Start-to-translation smoke/i, "gap audit records F
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(fb-l4-approved-start-to-translation-smoke|pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization)))`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(fb-l4-approved-start-to-translation-smoke|pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels)))`/i,
   "task.md records FB-L4 or PL-G3 Start-to-translation branch"
 );
 assert.match(task, /FB-L4[\s\S]*Approved Start-to-translation smoke[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L4 state");

@@ -178,7 +178,11 @@ for (const forbiddenFragment of [
 }
 
 assert.match(fbL4Evidence, /PL-G3[\s\S]*blocked-no-approval/i, "FB-L4 evidence records PL-G3 blocker");
-assert.match(plG3AfterPlG2kDoc, /blocked-empty-polling-intake-after-one-step/i, "PL-G3 after PL-G2K records approved empty polling blocker");
+assert.match(
+  plG3AfterPlG2kDoc,
+  /blocked-(?:empty-polling-intake-after-one-step|provider-permission-rejected-after-target-present)/i,
+  "PL-G3 after PL-G2K records approved blocker"
+);
 assert.match(plG3AfterPlG2kDoc, /Status route precheck:\s*executed \/ HTTP 200[\s\S]*Explicit Start:\s*executed \/ HTTP 200[\s\S]*active[\s\S]*Server-only live target lookup:\s*executed[\s\S]*returned count 5[\s\S]*One bounded `liveChatMessages\.list` polling step:\s*executed[\s\S]*returned count 0[\s\S]*Explicit Stop:\s*executed \/ HTTP 200[\s\S]*user-stop/i, "PL-G3 after PL-G2K records sanitized status/start/target-lookup/polling/stop evidence");
 assert.match(fbL4ReadyPreflight, /approved-fb-l4-start-to-translation-smoke/i, "FB-L4 ready preflight keeps PL-G3 approval label");
 assert.match(plG2bDoc, /session Start[\s\S]*live target lookup[\s\S]*`liveChatMessages\.list`[\s\S]*Azure\/OpenAI provider execution/i, "PL-G2B evidence keeps Start/live/provider execution out of route/API harness scope");
@@ -189,7 +193,7 @@ assert.match(gapAudit, /PL-G3[\s\S]*Start-to-translation smoke/i, "gap audit rec
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization))`/i,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels))`/i,
   "task.md records PL-G3 branch"
 );
 assert.match(task, /PL-G3[\s\S]*blocked-no-approval/i, "task.md records PL-G3 blocked result");

@@ -103,7 +103,7 @@ assert.match(
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515)`/,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516)`/,
   "task.md records current after-PR #514 branch"
 );
 assert.match(
@@ -152,7 +152,9 @@ for (const [label, source] of [
 
 const allowedChangedFiles = new Set([
   plG3DocPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md",
   taskPath,
+  "scripts/comment-translator-free-beta-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-empty-intake-polling-diagnostics-read-after-pr512-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-next-page-target-selection-follow-up-after-pr513-contract.mjs",

@@ -391,6 +391,48 @@ This follow-up does not print or store credential values, token values, cookies,
 
 Next safe action: keep PL-G3 blocked. The remaining blocker is still empty provider-ok intake after a fresh post-Start chat message. A later follow-up should decide whether to instrument or diagnose polling/page cursor behavior further before another Start-to-translation retry.
 
+## Operator-local Empty-provider-ok Next-page Cursor Diagnostics Preparation After PR #516
+
+Decision: blocked-empty-provider-ok-next-page-cursor-diagnostics-prepared-after-pr516.
+
+Input blocker carried forward: provider-ok / returned count 0 / nextPageToken presence present / pageInfo total 0 / pageInfo resultsPerPage 0 after a fresh post-Start chat message and selected target rank-1.
+
+This is a docs/contracts/runtime-diagnostic preparation slice only. It does not execute Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, production/custom deployed smoke, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, or public launch gate flip.
+
+Diagnostic contract for the next exact-approved live diagnostic:
+
+| Category | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| first-page cursor source label | initial-page-no-page-token | pass | none |
+| next-page cursor presence label | present-withheld | pass | none |
+| provider-ok empty pageInfo shape | returned-count-0 / pageInfo-total-0 / pageInfo-resultsPerPage-0 | pass | none |
+| polling command page plan | first-page read then optional one bounded next-page read | pass | none |
+| fresh comment timing relation | fresh-post-start-comment-before-first-page-read | pass | none |
+| selected live chat surface relation | rank-1-target-selection-mismatch-not-indicated | pass | none |
+| retry handling | empty-provider-ok-next-page-present: treat as blocked pending cursor diagnostics, not as non-empty intake | pass | none |
+| next-page read proposal | approval-required-not-run | pass | none |
+
+If a later same-thread approval chooses the cursor diagnostic, it should run at most one bounded next-page read against the same server-only live target reference and the server-only cursor from the preceding first-page result. The cursor value is consumed only inside the operator-local/server-only boundary and must never be printed, stored, documented, placed in PR text, or added to handoff payloads.
+
+Safe diagnostic output categories for that later run are page role label, provider route label, provider status label, HTTP status label, returned count, pageInfo total count, pageInfo resultsPerPage count, nextPageToken presence label, polling interval presence label, intake diagnostic label, item type distribution counts, pass-fail, unavailableReason, public gate state label, and public-release capable label.
+
+Forbidden output/storage remains secret values, OAuth/token/cookie values, Authorization header values, owner id, provider channel id, credential reference values, provider target metadata, `liveChatId`, raw provider payloads, raw comments, raw cursor values, provider URLs with query values, browser storage payloads, and handoff payload expansion.
+
+Execution boundary:
+
+- Start: not-run.
+- Stop: not-run.
+- target lookup execution: not-run.
+- `liveChatMessages.list`: not-run.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Next safe action: keep PL-G3 blocked. The next exact approval, if any, should choose one bounded cursor diagnostic read only after sanitized output review. Do not repeat Start-to-translation, run Azure/provider harness, perform UI/feed confirmation, execute PL-G4, or advance public launch gates until non-empty intake evidence exists.
+
 ## Inspected Inputs
 
 - `task.md`

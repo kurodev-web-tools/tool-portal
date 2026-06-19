@@ -96,6 +96,14 @@ approved-pl-g3-target-selection-diagnostics-after-pr513
 
 Use this approval only for target-selection diagnostics after `empty-provider-ok-next-page-present`. Output must be category / label / pass-fail / unavailableReason only. Allowed categories are selected target rank, usable target count, selected target presence, selected target source, lifecycle/privacy distribution, and chat-surface mismatch hypothesis. This approval must not run Start, Stop, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, or public launch gate flip. Output/docs must include no provider title, no broadcast id, no liveChatId, no raw cursor, no raw comments, no provider target metadata, no owner id, no channel id, no OAuth/token/cookie/credential values, no Authorization header, and no quota values.
 
+After PR #516 empty-provider-ok next-page cursor diagnostics preparation:
+
+```text
+approved-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516
+```
+
+Use this approval only if the release owner wants one bounded next-page read only after a first-page diagnostics result has already returned provider-ok / returned count 0 / nextPageToken presence present. The diagnostic must use the same live target reference with server-only cursor consumed and never output. Output must be category / label / pass-fail / unavailableReason only. Allowed categories are page role label, provider route label, provider status label, HTTP status label, returned count, pageInfo total count, pageInfo resultsPerPage count, nextPageToken presence label, polling interval presence label, intake diagnostic label, item type distribution counts, public gate state label, and public-release capable label. This approval must not run Start, Stop, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, or a polling loop beyond the one bounded next-page read. Output/docs must include no raw cursor, no liveChatId, no provider target metadata, no raw provider payload, no raw comments, no provider title, no broadcast id, no owner id, no channel id, no OAuth/token/cookie/credential values, no Authorization header, no quota values, and no provider URL query values.
+
 Free Azure translation and combined live/provider smoke command review, approval-gated:
 
 ```powershell

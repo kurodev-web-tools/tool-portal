@@ -211,7 +211,7 @@ assert.match(actions, /getCommentTranslatorRealCommentsFeedAction[\s\S]*live-pro
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j|pl-g3-start-to-translation-smoke-completion-after-pl-g2k|pl-g3-bounded-polling-empty-intake-evidence-after-start-lookup|pl-g3-polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels))`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j|pl-g3-start-to-translation-smoke-completion-after-pl-g2k|pl-g3-bounded-polling-empty-intake-evidence-after-start-lookup|pl-g3-polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels)|pl-g3-provider-permission-triage-preflight)`/i,
   "task.md records PL-G2K branch"
 );
 assert.match(task, /Latest PL-G2K Execution Evidence/i, "task.md records Latest PL-G2K Execution Evidence");
@@ -290,6 +290,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g2j-approved-route-api-harness-smoke-execution-after-pl-g2i-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md",
+  "scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",

@@ -16,6 +16,8 @@ Implementation follow-up: the deployed session route/action Start path previousl
 
 Sanitized polling diagnostic helper follow-up: the bounded polling command has a separate approval-gated diagnostics mode for a later operator-local retry after an empty one-step polling result or non-2xx provider response. The helper uses `--approved-live-chat-polling-diagnostics`, emits status label `live-chat-polling-diagnostics-sanitized-result` when the one bounded read returns sanitized metadata, and records only target presence label, provider route label, HTTP status, provider status label, provider error reason/class label, returned count, pageInfo total label/count, polling interval label, nextPageToken presence label, item type distribution counts, unavailable reason label, and pass/fail. The diagnostic helper is not a normal FB-L4 Start-to-translation smoke pass, does not proceed to Free Azure translation or UI/feed confirmation, does not add polling loops, and does not output raw comments, raw provider payloads, raw provider error messages, raw provider error reason values, liveChatId, server-only cursor values, Authorization headers, token values, owner user id values, provider channel id values, credential reference values, provider target metadata, browser storage payloads, or handoff payload expansion.
 
+Provider-permission triage preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md` records the no-live operator-local checklist for the HTTP 403 provider permission blocker. It keeps checklist output value-free and ties the next review to the PR #499 allowlisted provider error reason/class labels without requesting raw provider body, raw provider message, raw provider reason, IDs, tokens, cookies, or `liveChatId`.
+
 ## Purpose
 
 PL-G3 completion after PL-G2K must either record approved sanitized Start-to-translation smoke evidence for the reviewed FB-L4 boundary, or stop with a reviewed blocker when Start cannot reach the active live/provider boundary.
@@ -264,6 +266,8 @@ Unchecked scope:
 Residual risk: PL-G3 remains incomplete until the HTTP 403 provider permission rejection is resolved in operator-local context and a later same-thread approved run performs one bounded polling step that returns non-empty live comment intake, then executes Free Azure translation and UI/feed confirmation with sanitized output only. Public-release capable remains no.
 
 ## Next Safe Action
+
+Use `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md` for the next no-live provider-permission triage step. The checklist must stay value-free and operator-local.
 
 Before requesting a later same-thread exact approval, confirm granted OAuth scope category, target live chat availability, owner/channel binding, and provider permission state in operator-local context without printing IDs, tokens, cookies, liveChatId, or raw provider error data. If Start reaches active and the one bounded polling step returns non-empty intake, continue only through Free Azure translation, UI/feed confirmation, and Stop inside the approved boundary. Do not run additional polling loops, Azure, UI/feed confirmation, public access changes, deploy/upload, remote mutation, or launch gate changes from this blocked attempt.
 

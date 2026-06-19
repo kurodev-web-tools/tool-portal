@@ -210,12 +210,12 @@ assert.match(gapAudit, /PL-G5[\s\S]*Public launch gate decision/i, "gap audit re
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g5-public-launch-gate-decision-follow-up-after-pl-g4|pl-g4-after-pl-g3-provider-permission-triage-follow-up)`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g5-public-launch-gate-decision-follow-up-after-pl-g4|pl-g4-after-pl-g3-provider-permission-triage-follow-up|pl-g3-provider-permission-readiness-confirmation-after-pr503)`/i,
   "task.md records PL-G5 follow-up branch"
 );
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g5-after-pl-g4-provider-permission-triage-follow-up`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g3-provider-permission-readiness-confirmation-after-pr503)`/i,
   "task.md records current PL-G5 after-PL-G4 provider-permission follow-up branch"
 );
 assert.match(task, /Latest PL-G5 Follow-up Evidence/i, "task.md records Latest PL-G5 Follow-up Evidence");
@@ -265,10 +265,19 @@ const allowedChangedFiles = new Set([
   fbL5EvidencePath,
   plG5DocPath,
   fbL6EvidencePath,
+  plG3ProviderPermissionTriagePath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   publicUsabilityPreflightPath,
   finalQaPath,
   gapAuditPath,
   taskPath,
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-provider-permission-readiness-follow-up-after-pl-g5-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",

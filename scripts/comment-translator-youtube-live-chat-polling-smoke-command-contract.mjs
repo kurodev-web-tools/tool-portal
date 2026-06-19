@@ -101,6 +101,15 @@ assert.match(
   /isProviderOkDiagnosticsPayload/,
   "command treats HTTP 2xx provider status as required for diagnostics pass"
 );
+for (const intakeDiagnosticLabel of [
+  "non-empty-returned-intake",
+  "empty-provider-ok-no-items",
+  "empty-provider-ok-next-page-present",
+  "empty-provider-ok-page-info-nonzero",
+  "unavailable-provider-not-ok"
+]) {
+  assert.match(foundationSource, new RegExp(intakeDiagnosticLabel), `foundation supports ${intakeDiagnosticLabel}`);
+}
 assert.match(commandSource, /--check-env-only/, "command supports preflight-only mode");
 assert.match(commandSource, /--check-owner-binding-only/, "command supports provider-fetch-free owner binding check");
 assert.match(commandSource, /--check-token-material-availability/, "command supports provider-fetch-free token material check");
@@ -490,11 +499,136 @@ assert.deepEqual(success.responseMetadata, {
   pollingIntervalMillis: 5000,
   returnedItemCount: 2,
   pageInfoTotalResults: 2,
+  pageInfoResultsPerPage: 2,
+  intakeDiagnosticLabel: "non-empty-returned-intake",
   itemTypeDistribution: {
     textMessageEvent: 2
   },
   textPayload: "not-returned-by-design"
 });
+
+const providerOkEmptyNoItems = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
+  credentialReferenceId: "smoke-livechat-polling-reference",
+  expectedProviderChannelReference: "provider-channel-reference-never-returned",
+  liveChatId: "live-chat-id-never-returned",
+  ownerVerificationSmokeSuccess: true,
+  liveChatTargetLookupReadinessConfirmed: true,
+  liveChatTargetPresenceOnlyEvidence: true,
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-never-returned"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-09T00:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus() {
+      return {
+        credentialReferenceId: "smoke-livechat-polling-reference",
+        provider: "youtube",
+        providerChannelId: "provider-channel-reference-never-returned",
+        scopeLabel: "youtube.readonly",
+        scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+        expiresAtIso: "2026-06-09T00:05:00.000Z",
+        expiryStatus: "active",
+        revoked: false,
+        revokedAtIso: null,
+        tokenValue: "never-returned-by-design",
+        refreshTokenValue: "never-returned-by-design",
+        ciphertext: "never-returned-by-design",
+        decryptCapability: "forbidden"
+      };
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial() {
+      return {
+        status: "available",
+        serverAuthorizationHeader: "server-only-test-authorization",
+        expiresAtIso: "2026-06-09T00:05:00.000Z"
+      };
+    }
+  },
+  async fetchGoogleApi() {
+    return {
+      ok: true,
+      status: 200,
+      body: {
+        pageInfo: {
+          totalResults: 0,
+          resultsPerPage: 0
+        },
+        items: []
+      }
+    };
+  }
+});
+assert.equal(providerOkEmptyNoItems.status, "live-chat-polling-smoke-sanitized-result");
+assert.equal(providerOkEmptyNoItems.responseMetadata.providerStatusLabel, "provider-ok");
+assert.equal(providerOkEmptyNoItems.responseMetadata.returnedItemCount, 0);
+assert.equal(providerOkEmptyNoItems.responseMetadata.pageInfoTotalResults, 0);
+assert.equal(providerOkEmptyNoItems.responseMetadata.pageInfoResultsPerPage, 0);
+assert.equal(providerOkEmptyNoItems.responseMetadata.intakeDiagnosticLabel, "empty-provider-ok-no-items");
+
+const providerOkEmptyWithNextPage = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
+  credentialReferenceId: "smoke-livechat-polling-reference",
+  expectedProviderChannelReference: "provider-channel-reference-never-returned",
+  liveChatId: "live-chat-id-never-returned",
+  ownerVerificationSmokeSuccess: true,
+  liveChatTargetLookupReadinessConfirmed: true,
+  liveChatTargetPresenceOnlyEvidence: true,
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-never-returned"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-09T00:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus() {
+      return {
+        credentialReferenceId: "smoke-livechat-polling-reference",
+        provider: "youtube",
+        providerChannelId: "provider-channel-reference-never-returned",
+        scopeLabel: "youtube.readonly",
+        scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+        expiresAtIso: "2026-06-09T00:05:00.000Z",
+        expiryStatus: "active",
+        revoked: false,
+        revokedAtIso: null,
+        tokenValue: "never-returned-by-design",
+        refreshTokenValue: "never-returned-by-design",
+        ciphertext: "never-returned-by-design",
+        decryptCapability: "forbidden"
+      };
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial() {
+      return {
+        status: "available",
+        serverAuthorizationHeader: "server-only-test-authorization",
+        expiresAtIso: "2026-06-09T00:05:00.000Z"
+      };
+    }
+  },
+  async fetchGoogleApi() {
+    return {
+      ok: true,
+      status: 200,
+      body: {
+        nextPageToken: "next-page-token-never-returned",
+        pageInfo: {
+          totalResults: 0,
+          resultsPerPage: 0
+        },
+        items: []
+      }
+    };
+  }
+});
+assert.equal(providerOkEmptyWithNextPage.responseMetadata.nextPageToken, "present");
+assert.equal(providerOkEmptyWithNextPage.responseMetadata.intakeDiagnosticLabel, "empty-provider-ok-next-page-present");
 
 const providerPermissionRejected = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
   credentialReferenceId: "smoke-livechat-polling-reference",
@@ -562,6 +696,8 @@ assert.equal(providerPermissionRejected.responseMetadata.ok, false);
 assert.equal(providerPermissionRejected.responseMetadata.providerStatusLabel, "provider-permission-rejected");
 assert.equal(providerPermissionRejected.responseMetadata.providerErrorReasonLabel, "provider-insufficient-permission");
 assert.equal(providerPermissionRejected.responseMetadata.returnedItemCount, 0);
+assert.equal(providerPermissionRejected.responseMetadata.pageInfoResultsPerPage, null);
+assert.equal(providerPermissionRejected.responseMetadata.intakeDiagnosticLabel, "unavailable-provider-not-ok");
 assert.doesNotMatch(
   JSON.stringify(providerPermissionRejected),
   /insufficientPermissions|"message"\s*:|must-not-cross/,

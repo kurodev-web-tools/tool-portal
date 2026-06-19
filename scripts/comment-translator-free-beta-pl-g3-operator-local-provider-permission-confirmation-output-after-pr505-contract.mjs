@@ -61,7 +61,8 @@ const task = read(taskPath);
 for (const requiredSection of [
   "## Operator-local Sanitized Confirmation Output Collection Ready After PR #505",
   "## Operator-local Sanitized Output Template After PR #505",
-  "## Operator-local Local Action Instructions After PR #505"
+  "## Operator-local Local Action Instructions After PR #505",
+  "## Operator-local Sanitized Confirmation Output Recorded After PR #505"
 ]) {
   assert.match(triageDoc, new RegExp(`^${escaped(requiredSection)}$`, "m"), `PL-G3 after-PR #505 doc includes ${requiredSection}`);
 }
@@ -79,6 +80,7 @@ for (const requiredFragment of [
   "quota/rate-limit state",
   "values stay local",
   "do not paste values into chat",
+  "all five operator-local confirmation categories supplied as value-free pass output",
   "PL-G3 remains blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run",
   "PL-G4 remains production/custom deployed smoke not-run / approval-gated",
   "PL-G5 remains keep blocked / blocked-no-approval",
@@ -98,6 +100,16 @@ for (const requiredRow of [
   assert.match(triageDoc, new RegExp(escaped(requiredRow), "i"), `PL-G3 after-PR #505 doc includes sanitized pending row: ${requiredRow}`);
 }
 
+for (const requiredRecordedRow of [
+  "| OAuth scope category | youtube-connection-present | pass | none |",
+  "| target live chat availability | live-chat-available | pass | none |",
+  "| owner/channel binding | owner-channel-binding-matches | pass | none |",
+  "| provider permission state | provider-permission-ok | pass | none |",
+  "| quota/rate-limit state | quota-rate-limit-ok | pass | none |"
+]) {
+  assert.match(triageDoc, new RegExp(escaped(requiredRecordedRow), "i"), `PL-G3 after-PR #505 doc records sanitized pass row: ${requiredRecordedRow}`);
+}
+
 assert.match(
   triageDoc,
   /If env setup, YouTube-side confirmation, stream start, OAuth reconnect, browser session refresh, or provider console review is required[\s\S]*set or confirm it only in operator-local context[\s\S]*record only the allowed category \/ label \/ pass-fail \/ unavailableReason output/i,
@@ -113,9 +125,14 @@ assert.match(
 for (const requiredTaskFragment of [
   "Current branch: `codex/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-output-after-pr505`",
   "Latest PL-G3 Operator-local Provider-permission Confirmation Output Preparation After PR #505",
+  "Latest PL-G3 Operator-local Provider-permission Confirmation Output Recorded After User Confirmation",
   "next follow-up after PR #505",
-  "pending-operator-local-confirmation-output",
-  "operator-local sanitized confirmation output not supplied after PR #505",
+  "all five operator-local confirmation categories supplied as value-free pass output",
+  "youtube-connection-present",
+  "live-chat-available",
+  "owner-channel-binding-matches",
+  "provider-permission-ok",
+  "quota-rate-limit-ok",
   "values stay local",
   "do not paste values into chat",
   "PL-G3 remains blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run",

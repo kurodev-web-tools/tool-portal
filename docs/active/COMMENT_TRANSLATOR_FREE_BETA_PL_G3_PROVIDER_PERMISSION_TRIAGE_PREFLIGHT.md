@@ -1,6 +1,6 @@
 # Kuro Live Comment Translator Free Beta PL-G3 Provider-permission Triage Preflight
 
-Status: PL-G3 provider-permission triage preflight, PL-G3 provider-permission readiness follow-up after PL-G5, PL-G3 provider-permission readiness confirmation follow-up after PR #503, PL-G3 operator-local provider-permission confirmation evidence record after PR #504, and PL-G3 operator-local sanitized confirmation output collection ready after PR #505. Public-release capable: no.
+Status: PL-G3 provider-permission triage preflight, PL-G3 provider-permission readiness follow-up after PL-G5, PL-G3 provider-permission readiness confirmation follow-up after PR #503, PL-G3 operator-local provider-permission confirmation evidence record after PR #504, PL-G3 operator-local sanitized confirmation output collection ready after PR #505, and PL-G3 operator-local sanitized confirmation output recorded after PR #505. Public-release capable: no.
 
 Execution result: blocked-provider-permission-rejected-after-target-present.
 
@@ -13,6 +13,8 @@ This PL-G3 provider-permission readiness confirmation follow-up after PR #503 ke
 This PL-G3 operator-local provider-permission confirmation evidence record after PR #504 keeps the same no-live-execution docs/contracts/task only follow-up boundary. Because no operator-local sanitized confirmation output exists in this thread, it records value-free blocker evidence only and does not complete the confirmation checklist.
 
 This next follow-up after PR #505 keeps the same no-live-execution docs/contracts/task only follow-up boundary and turns the missing confirmation output into an operator-local collection-ready checklist. It does not supply actual provider confirmation output and does not run a provider retry.
+
+The user later confirmed all five categories as problem-free in value-free form. This record converts that statement into sanitized pass output only; it does not record values, IDs, provider target metadata, raw response data, or quota values.
 
 Public gate state label: unchanged / blocked. Public-release capable label: no.
 
@@ -156,6 +158,24 @@ Run these checks only in operator-local context and only when the user/operator 
 5. For quota/rate-limit state, confirm the quota/rate-limit category without outputting provider quota dashboard values, raw response body, or error text.
 
 If any local prerequisite is missing, such as env setup, YouTube-side confirmation, stream start, OAuth reconnect, browser session refresh, or provider console review, record the missing prerequisite as unavailableReason in the same sanitized shape. Values stay local and are not requested here.
+
+## Operator-local Sanitized Confirmation Output Recorded After PR #505
+
+The operator-local confirmation output is now recorded from the user's value-free confirmation that all five categories are problem-free. Values stay local. Do not paste values into chat.
+
+All five operator-local confirmation categories supplied as value-free pass output:
+
+| Confirmation category | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| OAuth scope category | youtube-connection-present | pass | none |
+| target live chat availability | live-chat-available | pass | none |
+| owner/channel binding | owner-channel-binding-matches | pass | none |
+| provider permission state | provider-permission-ok | pass | none |
+| quota/rate-limit state | quota-rate-limit-ok | pass | none |
+
+This confirms the exact-approval retry prerequisite output shape only. It does not authorize or execute Start, Stop, target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, production/custom deployed smoke execution, public access change, limited public beta open, public launch gate flip, or main promotion.
+
+PL-G3 remains blocked-provider-permission-rejected-after-target-present / Azure-UI-not-run until a later same-thread exact approval retry is explicitly authorized and returns sanitized provider-ok, non-empty intake, Free Azure translation, UI/feed confirmation, usage, source attribution, and Stop evidence.
 
 ## Exact Approval Retry Preconditions
 

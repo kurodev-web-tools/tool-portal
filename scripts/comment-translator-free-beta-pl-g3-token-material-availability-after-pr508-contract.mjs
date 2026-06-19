@@ -122,13 +122,18 @@ const allowedChangedFiles = new Set([
   plG3DocPath,
   taskPath,
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr507-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-token-material-availability-after-pr508-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr509-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

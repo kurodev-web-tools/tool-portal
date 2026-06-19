@@ -2,11 +2,11 @@
 
 Status: PL-G3 Start-to-translation smoke completion after PL-G2K. Public-release capable: no.
 
-Execution result: blocked-provider-permission-rejected-after-target-present.
+Execution result: blocked-empty-polling-intake-after-pr509.
 
-Start-to-translation smoke execution: blocked-provider-permission-rejected-after-target-present.
+Start-to-translation smoke execution: blocked-empty-polling-intake-after-pr509.
 
-This PL-G3 completion slice rechecks the next public-launch gate after PL-G2K approved sanitized route/API harness smoke passed. PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`, and PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed. The current thread includes exact approval and value-free operator-local readiness confirmations. The first approved Start attempt stopped with stop reason label `reconnect-required`; after operator-local YouTube credential reconnect/refresh, the credential status check returned status label `available` / reconnect required false / pass true. The next approved retry status route precheck passed, explicit Start returned HTTP 200 but stopped with stop reason label `stream-unavailable`, and explicit Stop completed with stop reason label `user-stop`. After the runtime follow-up was merged and deployed, the latest approved retry passed status and Start, completed server-only live target lookup with target presence label `present`, executed one bounded `liveChatMessages.list` polling step, and stopped successfully. The bounded polling step returned count 0, so Free Azure translation, UI/feed confirmation, usage check, and source attribution confirmation were not run.
+This PL-G3 completion slice rechecks the next public-launch gate after PL-G2K approved sanitized route/API harness smoke passed. PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`, and PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed. The current thread includes exact approval and value-free operator-local readiness confirmations. The first approved Start attempt stopped with stop reason label `reconnect-required`; after operator-local YouTube credential reconnect/refresh, the credential status check returned status label `available` / reconnect required false / pass true. The next approved retry status route precheck passed, explicit Start returned HTTP 200 but stopped with stop reason label `stream-unavailable`, and explicit Stop completed with stop reason label `user-stop`. After the runtime follow-up was merged and deployed, the approved retry passed status and Start, completed server-only live target lookup with target presence label `present`, executed one bounded `liveChatMessages.list` polling step, and stopped successfully. The bounded polling step returned count 0, so Free Azure translation, UI/feed confirmation, usage check, and source attribution confirmation were not run. After PR #509 merged, the same-thread approved rerun again passed status, Start, target lookup, and one bounded `liveChatMessages.list` step with provider status label `provider-ok`, but the polling step returned count 0. The provider harness gate stayed blocked before Azure/provider execution, and Stop completed with stop reason label `user-stop`.
 
 Public gate state label: unchanged / blocked. Public-release capable label: no.
 
@@ -22,15 +22,17 @@ Operator-local retry after PR #507: exact approval label `approved-fb-l4-start-t
 
 Operator-local token material availability recheck after PR #508: the operator-local server-only authorization references and expiry references were present and future-valid in the command runtime. Target lookup and polling token material availability checks now return available with server fetch binding resolved, without running target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, Stop, deploy/upload, remote mutation, or public gate changes.
 
+Operator-local Start-to-translation retry after PR #509: exact approval label `approved-fb-l4-start-to-translation-smoke-rerun-after-wrapper-output-fix` was present after the prior same-thread partial reruns were explicitly stopped. The corrected sanitized projection rerun returned session status label `not-started`, explicit Start status label `active`, target lookup target presence label `present` with returned count 5, one bounded `liveChatMessages.list` provider status label `provider-ok` with returned count 0, provider harness gate label `blocked-before-provider-harness`, and explicit Stop status label `stopped` with stop reason label `user-stop`. The retry is blocked-empty-polling-intake-after-pr509; Free Azure translation, UI/feed confirmation, usage check, and source attribution confirmation were not run.
+
 ## Purpose
 
 PL-G3 completion after PL-G2K must either record approved sanitized Start-to-translation smoke evidence for the reviewed FB-L4 boundary, or stop with a reviewed blocker when Start cannot reach the active live/provider boundary.
 
-Because the latest sanitized polling diagnostics follow-up reached the provider with owner binding verified, token material available, and target lookup present but returned HTTP 403 / provider permission rejected, the safe outcome is `blocked-provider-permission-rejected-after-target-present`.
+Because the latest same-thread approved PR #509 retry reached the provider with owner binding verified, token material available, target lookup present, and provider status label `provider-ok`, but the one bounded `liveChatMessages.list` step returned count 0, the safe outcome is `blocked-empty-polling-intake-after-pr509`.
 
 ## Execution Decision
 
-- Decision: blocked-provider-permission-rejected-after-target-present.
+- Decision: blocked-empty-polling-intake-after-pr509.
 - Existing FB-L4 ready preflight reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`.
 - Existing FB-L4 evidence reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md`.
 - Existing PL-G3 blocker reviewed: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md`.
@@ -52,6 +54,7 @@ Because the latest sanitized polling diagnostics follow-up reached the provider 
 - Server-only live target lookup: executed / target presence label present / provider route label liveBroadcasts-list-target-lookup-only / returned count 5 / unavailable reason label none / pass true.
 - One bounded `liveChatMessages.list` polling step: executed / target presence label present / provider route label liveChatMessages-list-one-step-only / returned count 0 / polling interval label unavailable / unavailable reason label none / pass false.
 - Latest sanitized polling diagnostics follow-up evidence, provided from operator-local execution outside this implementation thread: HTTP 403 / `liveChatMessages.list` provider permission rejected / provider error reason/class label allowed when returned by the allowlist / owner binding verified / token material available / target lookup present / Azure-UI-not-run / public-release capable no.
+- Latest same-thread PR #509 retry evidence: session status not-started / Start active / target lookup target presence present / target lookup returned count 5 / one bounded `liveChatMessages.list` provider status provider-ok / polling returned count 0 / provider harness gate blocked-before-provider-harness / Stop stopped with stop reason user-stop / pass false for Start-to-translation completion.
 - Target lookup diagnostics follow-up requirement: selected target rank label, usable target count, and lifecycle/privacy distribution labels/counts are required for future sanitized target-selection review.
 - Free Azure translation: not-run / approval-gated.
 - UI/feed confirmation: not-run / approval-gated.
@@ -112,6 +115,38 @@ Execution boundary:
 This recheck does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw provider error bodies, raw comments, browser storage payloads, or handoff payloads.
 
 Next safe action: keep PL-G3 blocked until a later same-thread exact approval retry is requested with the stream/chat readiness re-established, then run only the reviewed PL-G3 boundary with sanitized output.
+
+## Operator-local Start-to-translation Retry After PR #509
+
+Decision: blocked-empty-polling-intake-after-pr509.
+
+Exact approval label: `approved-fb-l4-start-to-translation-smoke-rerun-after-wrapper-output-fix`.
+
+Sanitized execution evidence:
+
+| Check | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| session status | not-started | pass | none |
+| explicit Start | active | pass | none |
+| server-only live target lookup | live-chat-target-lookup-sanitized-result / target presence present / provider route liveBroadcasts-list-target-lookup-only / returned count 5 | pass | none |
+| one bounded `liveChatMessages.list` polling step | live-chat-polling-smoke-sanitized-result / target presence present / provider route liveChatMessages-list-one-step-only / provider status provider-ok / returned count 0 | fail | empty-returned-intake |
+| provider harness gate | blocked-before-provider-harness | fail | polling-intake-not-confirmed-non-empty |
+| explicit Stop | stopped / user-stop | pass | none |
+
+Execution boundary:
+
+- Start: executed / active.
+- target lookup execution: executed / target presence present.
+- `liveChatMessages.list`: executed one bounded step / provider-ok / returned count 0.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- Stop: executed / stopped / user-stop.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+This retry does not print or store credential values, token values, cookies, owner ids, provider channel ids, provider target metadata, `liveChatId`, raw provider payloads, raw provider error bodies, raw comments, browser storage payloads, quota values, or handoff payloads.
+
+Next safe action: keep PL-G3 blocked. If another live retry is needed, ensure a fresh visible chat message is present after Start, then request a new same-thread exact approval before running any further Start, target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, or Stop boundary.
 
 ## Inspected Inputs
 

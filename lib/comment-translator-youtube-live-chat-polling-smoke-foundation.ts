@@ -172,10 +172,20 @@ type YouTubeLiveChatPollingSmokeProviderStatusLabel =
   | "provider-permission-rejected"
   | "provider-http-error";
 
+type YouTubeLiveChatPollingSmokeProviderErrorReasonLabel =
+  | "provider-error-reason-not-returned"
+  | "provider-insufficient-permission"
+  | "provider-live-chat-disabled"
+  | "provider-live-chat-ended"
+  | "provider-quota-or-rate-limited"
+  | "provider-forbidden"
+  | "provider-error-reason-other";
+
 export type YouTubeLiveChatPollingSmokeResponseMetadata = {
   httpStatus: number;
   ok: boolean;
   providerStatusLabel: YouTubeLiveChatPollingSmokeProviderStatusLabel;
+  providerErrorReasonLabel: YouTubeLiveChatPollingSmokeProviderErrorReasonLabel;
   liveChatTarget: "present";
   nextPageToken: "present" | "absent";
   pollingIntervalMillis: number | null;
@@ -592,6 +602,7 @@ function createSanitizedPollingResponseMetadata(
     httpStatus: providerResponse.status,
     ok: providerResponse.ok,
     providerStatusLabel: sanitizeProviderStatusLabel(providerResponse),
+    providerErrorReasonLabel: sanitizeProviderErrorReasonLabel(providerResponse),
     liveChatTarget: "present",
     nextPageToken: typeof body.nextPageToken === "string" && body.nextPageToken.length > 0 ? "present" : "absent",
     pollingIntervalMillis,
@@ -618,6 +629,76 @@ function sanitizeProviderStatusLabel(
   }
 
   return "provider-http-error";
+}
+
+function sanitizeProviderErrorReasonLabel(
+  providerResponse: YouTubeLiveChatPollingSmokeFetchResult
+): YouTubeLiveChatPollingSmokeProviderErrorReasonLabel {
+  const reasons = extractProviderErrorReasonCandidates(providerResponse.body);
+  if (providerResponse.ok || reasons.length === 0) {
+    return "provider-error-reason-not-returned";
+  }
+
+  for (const reason of reasons) {
+    const label = mapProviderErrorReasonToLabel(reason);
+    if (label !== null) {
+      return label;
+    }
+  }
+
+  return "provider-error-reason-other";
+}
+
+function extractProviderErrorReasonCandidates(body: unknown): string[] {
+  const candidates: string[] = [];
+  const error = asRecord(asRecord(body).error);
+
+  appendProviderReasonCandidate(candidates, error.reason);
+
+  for (const entry of Array.isArray(error.errors) ? error.errors : []) {
+    appendProviderReasonCandidate(candidates, asRecord(entry).reason);
+  }
+
+  for (const entry of Array.isArray(error.details) ? error.details : []) {
+    appendProviderReasonCandidate(candidates, asRecord(entry).reason);
+  }
+
+  return candidates;
+}
+
+function appendProviderReasonCandidate(candidates: string[], value: unknown): void {
+  if (typeof value === "string" && value.trim().length > 0) {
+    candidates.push(value.trim());
+  }
+}
+
+function mapProviderErrorReasonToLabel(
+  reason: string
+): Exclude<
+  YouTubeLiveChatPollingSmokeProviderErrorReasonLabel,
+  "provider-error-reason-not-returned" | "provider-error-reason-other"
+> | null {
+  switch (reason) {
+    case "insufficientPermissions":
+    case "insufficientPermission":
+    case "insufficient_scope":
+      return "provider-insufficient-permission";
+    case "liveChatDisabled":
+    case "liveChatDisabledForChannel":
+      return "provider-live-chat-disabled";
+    case "liveChatEnded":
+    case "chatEnded":
+      return "provider-live-chat-ended";
+    case "quotaExceeded":
+    case "rateLimitExceeded":
+    case "userRateLimitExceeded":
+    case "dailyLimitExceeded":
+      return "provider-quota-or-rate-limited";
+    case "forbidden":
+      return "provider-forbidden";
+    default:
+      return null;
+  }
 }
 
 function createSanitizedItemTypeDistribution(

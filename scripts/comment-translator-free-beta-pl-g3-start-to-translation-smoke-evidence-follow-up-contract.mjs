@@ -210,7 +210,11 @@ for (const forbiddenFragment of [
 }
 
 assert.match(plG3Doc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "PL-G3 prior blocker remains blocked/gated");
-assert.match(plG3AfterPlG2kDoc, /blocked-empty-polling-intake-after-one-step/i, "PL-G3 after PL-G2K records approved empty polling blocker");
+assert.match(
+  plG3AfterPlG2kDoc,
+  /blocked-(?:empty-polling-intake-after-one-step|provider-permission-rejected-after-target-present)/i,
+  "PL-G3 after PL-G2K records approved blocker"
+);
 assert.match(plG3AfterPlG2kDoc, /Status route precheck:\s*executed \/ HTTP 200[\s\S]*Explicit Start:\s*executed \/ HTTP 200[\s\S]*active[\s\S]*Server-only live target lookup:\s*executed[\s\S]*returned count 5[\s\S]*One bounded `liveChatMessages\.list` polling step:\s*executed[\s\S]*returned count 0[\s\S]*Explicit Stop:\s*executed \/ HTTP 200[\s\S]*user-stop/i, "PL-G3 after PL-G2K records sanitized status/start/target-lookup/polling/stop evidence");
 assert.match(fbL4Evidence, /PL-G3[\s\S]*blocked-no-approval/i, "FB-L4 evidence records PL-G3 blocker");
 assert.match(fbL4ReadyPreflight, /approved-fb-l4-start-to-translation-smoke/i, "FB-L4 ready preflight keeps exact approval label");
@@ -224,7 +228,7 @@ assert.match(gapAudit, /PL-G3[\s\S]*Start-to-translation smoke/i, "gap audit rec
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization))`/i,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels))`/i,
   "task.md records PL-G3 follow-up branch"
 );
 assert.match(task, /Latest PL-G3 Follow-up Evidence/i, "task.md records Latest PL-G3 Follow-up Evidence");

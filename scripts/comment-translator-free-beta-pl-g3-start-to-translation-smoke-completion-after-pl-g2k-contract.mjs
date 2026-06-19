@@ -150,8 +150,8 @@ for (const requiredSection of [
 for (const requiredFragment of [
   "Status: PL-G3 Start-to-translation smoke completion after PL-G2K",
   "Public-release capable: no",
-  "Execution result: blocked-empty-polling-intake-after-one-step",
-  "Start-to-translation smoke execution: blocked-empty-polling-intake-after-one-step",
+  "Execution result: blocked-provider-permission-rejected-after-target-present",
+  "Start-to-translation smoke execution: blocked-provider-permission-rejected-after-target-present",
   "PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`",
   "PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed",
   "approved-fb-l4-start-to-translation-smoke",
@@ -226,9 +226,9 @@ assert.match(plG3Doc, /blocked-no-approval[\s\S]*not-run \/ approval-gated/i, "P
 assert.match(plG3FollowUpDoc, /keep blocked \/ blocked-no-approval/i, "PL-G3 follow-up remains blocked");
 assert.match(fbL4Evidence, /Start-to-translation smoke execution[\s\S]*not-run \/ approval-gated/i, "FB-L4 evidence remains not-run");
 assert.match(fbL4ReadyPreflight, /Approval Text[\s\S]*approved-fb-l4-start-to-translation-smoke/i, "FB-L4 ready preflight carries exact approval text");
-assert.match(publicUsabilityPreflight, /PL-G3 after PL-G2K[\s\S]*blocked-empty-polling-intake-after-one-step/i, "FB-L1 preflight records PL-G3 after PL-G2K empty polling blocker");
-assert.match(finalQa, /PL-G3 after PL-G2K[\s\S]*blocked-empty-polling-intake-after-one-step/i, "F15 readiness records PL-G3 after PL-G2K empty polling blocker");
-assert.match(gapAudit, /PL-G3 after PL-G2K[\s\S]*blocked-empty-polling-intake-after-one-step/i, "gap audit records PL-G3 after PL-G2K empty polling blocker");
+assert.match(publicUsabilityPreflight, /PL-G3 after PL-G2K[\s\S]*(?:blocked-empty-polling-intake-after-one-step|blocked-provider-permission-rejected-after-target-present)/i, "FB-L1 preflight records PL-G3 after PL-G2K blocker");
+assert.match(finalQa, /PL-G3 after PL-G2K[\s\S]*(?:blocked-empty-polling-intake-after-one-step|blocked-provider-permission-rejected-after-target-present)/i, "F15 readiness records PL-G3 after PL-G2K blocker");
+assert.match(gapAudit, /PL-G3 after PL-G2K[\s\S]*(?:blocked-empty-polling-intake-after-one-step|blocked-provider-permission-rejected-after-target-present)/i, "gap audit records PL-G3 after PL-G2K blocker");
 
 assert.match(sessionRoute, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "session route reads durable state before Start");
 assert.match(sessionRoute, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart/, "session route keeps Start-only live target lookup boundary");
@@ -261,11 +261,11 @@ assert.match(providerHarness, /approved-private-gated-live-provider-smoke/, "pro
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization))`/i,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels))`/i,
   "task.md records PL-G3 after PL-G2K branch"
 );
 assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");
-assert.match(task, /blocked-empty-polling-intake-after-one-step/i, "task.md records empty polling blocker");
+assert.match(task, /blocked-provider-permission-rejected-after-target-present/i, "task.md records provider permission blocker");
 assert.match(task, /deployed origin reference ready[\s\S]*ready/i, "task.md records ready deployed origin readiness");
 assert.match(task, /allowed-tester cookie\/session reference ready[\s\S]*ready/i, "task.md records ready cookie/session readiness");
 assert.match(task, /connected YouTube credential reference ready[\s\S]*ready/i, "task.md records ready credential readiness");
@@ -278,11 +278,15 @@ assert.match(task, /polling execute[\s\S]*returned count 0[\s\S]*pass false/i, "
 assert.match(task, /Stop[\s\S]*HTTP 200[\s\S]*stopped[\s\S]*user-stop[\s\S]*pass true/i, "task.md records sanitized Stop rollback pass");
 assert.match(task, /approved-fb-l4-start-to-translation-smoke/i, "task.md records exact PL-G3 approval label");
 assert.match(task, /Readiness details:[\s\S]*deployed origin reference ready[\s\S]*safe owned live test target reference ready/i, "task.md records value-free operator-local readiness details");
-assert.match(task, /Start-to-translation smoke execution[\s\S]*blocked-empty-polling-intake-after-one-step/i, "task.md records PL-G3 empty polling blocked state");
+assert.match(task, /Start-to-translation smoke execution[\s\S]*blocked-provider-permission-rejected-after-target-present/i, "task.md records PL-G3 provider permission blocked state");
 assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md keeps public gate blocked");
 assert.match(task, /public-release capable label: no/i, "task.md keeps public-release capable no");
-assert.match(task, /Latest PL-G3 Polling Sanitized Diagnostics Follow-up/i, "task.md records PL-G3 polling diagnostics follow-up");
-assert.match(task, /sanitized empty-intake diagnostic helper/i, "task.md records sanitized empty-intake diagnostic helper");
+assert.match(
+  task,
+  /Latest PL-G3 Polling (?:Sanitized Diagnostics|403 \/ Target Selection Diagnostics|403 Reason Labels) Follow-up/i,
+  "task.md records PL-G3 polling diagnostics follow-up"
+);
+assert.match(task, /sanitized provider error reason\/class labels|sanitized polling diagnostic helper/i, "task.md records sanitized polling diagnostic helper");
 assert.match(task, /live-chat-polling-diagnostics-sanitized-result/i, "task.md records sanitized diagnostics status");
 assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records width-check skip reason");
 

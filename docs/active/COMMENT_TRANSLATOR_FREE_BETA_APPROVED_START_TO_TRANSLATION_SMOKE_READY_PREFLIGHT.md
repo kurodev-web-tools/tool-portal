@@ -151,6 +151,16 @@ Approval state in this thread: not present.
 
 This reviewed command boundary performs one first-page `liveChatMessages.list` diagnostic read, emits only a sanitized operator instruction on stderr, waits for the operator to send one fresh visible chat comment and press Enter, then performs one bounded next-page read using the first-page cursor in process memory only. Stdout remains final JSON only. The cursor must never be printed, stored, documented, placed into env, included in PR text, exposed in provider URL query output, or handed off. Output remains limited to page role labels, provider route/status labels, HTTP status labels, returned counts, pageInfo total/resultsPerPage counts, nextPageToken presence labels, polling interval presence labels, intake diagnostic labels, item type distribution counts, operator fresh-comment window label, public gate state label, public-release capable label, pass/fail, and unavailableReason only. This approval must not run Start, Stop, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, cursor regeneration, or any polling loop beyond the reviewed two-read diagnostic boundary.
 
+After PR #525 fresh-comment bounded short polling diagnostics preparation:
+
+```text
+approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525
+```
+
+Approval state in this thread: not present.
+
+Use this future approval label only after a reviewed command boundary exists for a fresh-comment-after-send diagnostic. The operator sends one fresh visible chat comment at the instructed point, then a very small bounded polling diagnostic may perform at most 2-3 pages/attempts and respect provider polling interval. It must stop on first non-empty sanitized intake, bounded-max-attempts-reached, provider-not-ok, or a missing readiness reference. Output remains limited to attempt/page role label, provider route/status labels, HTTP status label, returned count, pageInfo total/resultsPerPage counts, nextPageToken presence label, polling interval presence/count label, intake diagnostic label, item type distribution counts, bounded attempt count, stop reason label, operator fresh-comment window label, public gate state label, public-release capable label, pass/fail, and unavailableReason only. It must not output, store, document, or hand off cursor values, live target values, provider URL query values, raw comments, raw provider payloads, token/cookie/OAuth/Authorization values, owner ids, provider channel ids, quota values, provider target metadata, or browser storage payloads. This approval must not run Start, Stop, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, cursor regeneration, OAuth flows, token refresh, or any polling loop beyond the reviewed bounded short diagnostic.
+
 Free Azure translation and combined live/provider smoke command review, approval-gated:
 
 ```powershell

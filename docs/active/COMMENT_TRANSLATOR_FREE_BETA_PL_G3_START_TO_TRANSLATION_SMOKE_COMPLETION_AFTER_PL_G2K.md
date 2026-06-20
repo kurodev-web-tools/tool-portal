@@ -48,6 +48,8 @@ After PR #523, the safe execution outcome is `blocked-between-pages-fresh-commen
 
 After PR #524, the safe retry outcome is `blocked-between-pages-fresh-comment-empty-provider-ok-next-page-present-after-pr524`: after the operator refreshed authorization and repaired the expiry reference, both first-page and next-page diagnostic reads returned provider-ok / HTTP 200, but both pages still returned count 0 with nextPageToken presence present. This resolves the after-PR #523 auth-rejected blocker for this retry, but it is still not non-empty intake, not a Free Azure translation pass, not UI/feed confirmation, and not public launch readiness.
 
+After PR #525, the safe preparation outcome is `blocked-fresh-comment-bounded-short-polling-diagnostics-prepared-after-pr525`: because single first-page-to-next-page reads still returned zero items even when the operator sent a fresh visible comment between pages, the next reviewed boundary is a fresh-comment-after-send, very small bounded short polling diagnostic. This is docs/contracts/command-preparation only. It does not implement or run the bounded short polling command, does not perform live/provider reads, and does not advance Azure/UI/public launch readiness.
+
 ## Execution Decision
 
 - Decision: blocked-empty-polling-intake-after-fresh-chat-after-pr510.
@@ -787,6 +789,84 @@ Execution boundary:
 - public-release capable label: no.
 
 Next safe action: keep PL-G3 blocked. The auth-rejected blocker is resolved for this retry, but the fresh between-pages comment still did not appear in either bounded diagnostics page. Do not run additional provider reads, Free Azure translation, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, or launch gate changes without a new same-thread exact approval and sanitized output review.
+
+## Fresh-comment Bounded Short Polling Diagnostics Preparation After PR #525
+
+Decision: blocked-fresh-comment-bounded-short-polling-diagnostics-prepared-after-pr525.
+
+Exact approval label defined for future use: `approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525`.
+
+Exact approval label present in this thread: not-present.
+
+Reason: the after-PR #524 retry resolved the next-page auth-rejected blocker, but both first-page and next-page reads still returned provider-ok / HTTP 200 / returned count 0 / nextPageToken presence present after the operator sent a fresh visible comment between pages. A single first-page-to-next-page diagnostic is no longer sufficient to distinguish provider paging delay from a deeper intake issue.
+
+Desired future boundary: after same-thread exact approval and operator readiness, operator sends one fresh visible chat comment at the instructed point, then a bounded short polling diagnostic performs at most 2-3 pages/attempts while respecting provider polling interval. The diagnostic stops on first non-empty sanitized intake or after the bounded max attempts.
+
+Stop condition:
+
+- first non-empty sanitized intake;
+- bounded max attempts reached;
+- provider not ok;
+- missing or unsafe readiness reference;
+- output would exceed the reviewed sanitized categories.
+
+Allowed sanitized output categories:
+
+- attempt/page role label;
+- provider route label;
+- provider status label;
+- HTTP status label;
+- returned count;
+- pageInfo total count;
+- pageInfo resultsPerPage count;
+- nextPageToken presence label;
+- polling interval presence/count label;
+- intake diagnostic label;
+- item type distribution counts;
+- bounded attempt count;
+- stop reason label;
+- operator fresh-comment window label;
+- public gate state label;
+- public-release capable label;
+- pass/fail;
+- unavailableReason.
+
+Forbidden output/storage:
+
+- cursor values;
+- live target values;
+- provider URL query values;
+- raw comments;
+- raw provider payloads;
+- token/cookie/OAuth/Authorization values;
+- owner ids;
+- provider channel ids;
+- quota values;
+- provider target metadata.
+
+Prepared scope:
+
+- docs/contracts/command-preparation only;
+- bounded short polling command is not implemented or run in this slice;
+- Start-to-translation completion remains blocked;
+- public gate state label remains unchanged / blocked;
+- public-release capable label remains no.
+
+Execution boundary:
+
+- Start: not-run.
+- Stop: not-run.
+- target lookup execution: not-run.
+- bounded short polling: not-run / approval-gated.
+- `liveChatMessages.list`: not-run in this after-PR #525 preparation slice.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Next safe action: keep PL-G3 blocked. Implement a separate reviewed command boundary only if needed, then request same-thread exact approval with label `approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525` before any bounded short polling provider access. Do not run Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/provider harness, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, or launch gate changes from this preparation slice.
 
 ## Inspected Inputs
 

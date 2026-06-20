@@ -225,7 +225,7 @@ assert.match(
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522)`/,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523)`/,
   "task.md records current after-PR #516, after-PR #517, after-PR #518, after-PR #519, or after-PR #520 branch"
 );
 assert.match(
@@ -478,6 +478,61 @@ assert.match(
   task,
   /Prepared command: `node scripts\/comment-translator-youtube-live-chat-polling-smoke-command\.mjs --execute --approved-live-chat-polling-between-pages-fresh-comment-diagnostics --json`/,
   "task.md records the after-PR #522 prepared command"
+);
+assert.match(
+  plG3Doc,
+  /^## Between-pages Fresh-comment Diagnostics Execution After PR #523$/m,
+  "PL-G3 doc records after-PR #523 between-pages fresh-comment execution"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-between-pages-fresh-comment-next-page-auth-rejected-after-pr523/,
+  "PL-G3 doc records after-PR #523 auth-rejected decision"
+);
+assert.match(
+  plG3Doc,
+  /Exact approval label consumed: `approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521`/,
+  "PL-G3 doc records consumed approval label"
+);
+assert.match(
+  plG3Doc,
+  /Operator fresh-comment window: completed-before-next-page-read[\s\S]*fresh visible comment was sent after the first-page diagnostic read and before the bounded next-page read/i,
+  "PL-G3 doc records the between-pages fresh-comment timing"
+);
+assert.match(
+  plG3Doc,
+  /first-page provider status \| provider-ok[\s\S]*first-page HTTP status \| 200[\s\S]*first-page returned count \| 0[\s\S]*first-page nextPageToken presence \| present/i,
+  "PL-G3 doc records sanitized first-page after-PR #523 result"
+);
+assert.match(
+  plG3Doc,
+  /next-page provider status \| provider-auth-rejected[\s\S]*next-page HTTP status \| 401[\s\S]*next-page returned count \| 0[\s\S]*next-page nextPageToken presence \| absent/i,
+  "PL-G3 doc records sanitized next-page auth-rejected result"
+);
+assert.match(
+  plG3Doc,
+  /nextPageRead \| executed-with-first-page-cursor-in-memory-only[\s\S]*operatorFreshCommentWindow \| completed-before-next-page-read[\s\S]*translationExecution \| not-run-diagnostics-only/i,
+  "PL-G3 doc records cursor memory-only handling and no translation execution after PR #523"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 Between-pages Fresh-comment Diagnostics Execution After PR #523$/m,
+  "task.md records after-PR #523 latest execution"
+);
+assert.match(
+  task,
+  /Decision: blocked-between-pages-fresh-comment-next-page-auth-rejected-after-pr523/,
+  "task.md records after-PR #523 decision"
+);
+assert.match(
+  task,
+  /first-page `liveChatMessages\.list`: provider-ok \/ HTTP 200 \/ returned count 0 \/ nextPageToken presence present[\s\S]*next-page `liveChatMessages\.list`: provider-auth-rejected \/ HTTP 401 \/ returned count 0 \/ nextPageToken presence absent/i,
+  "task.md records sanitized first-page and next-page after-PR #523 provider results"
+);
+assert.match(
+  task,
+  /Operator fresh-comment window: completed-before-next-page-read[\s\S]*fresh visible comment was sent after the first-page diagnostic read and before the bounded next-page read/i,
+  "task.md records the fresh-comment window execution"
 );
 
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");

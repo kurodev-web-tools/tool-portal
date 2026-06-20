@@ -87,6 +87,11 @@ assert.match(
 );
 assert.match(
   commandSource,
+  /--approved-live-chat-polling-first-page-to-next-page-diagnostics/,
+  "command supports explicit same-process first-page-to-next-page diagnostics approval flag"
+);
+assert.match(
+  commandSource,
   /YOUTUBE_LIVE_CHAT_POLLING_SMOKE_NEXT_PAGE_TOKEN/,
   "command consumes the server-only next-page cursor from an operator-local reference"
 );
@@ -148,7 +153,8 @@ for (const exportedName of [
   "createYouTubeLiveChatPollingSmokeCommandRuntimeWiring",
   "assessYouTubeLiveChatPollingSmokeReadinessGate",
   "assessYouTubeLiveChatPollingSmokeTokenMaterialAvailabilityGate",
-  "runYouTubeLiveChatPollingSmokeFoundation"
+  "runYouTubeLiveChatPollingSmokeFoundation",
+  "runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundation"
 ]) {
   assert.equal(
     typeof foundation[exportedName],
@@ -523,6 +529,123 @@ assert.deepEqual(success.responseMetadata, {
   },
   textPayload: "not-returned-by-design"
 });
+
+const firstPageToNextPageProviderUrls = [];
+const firstPageToNextPageDiagnostic =
+  await foundation.runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundation({
+    credentialReferenceId: "smoke-livechat-polling-reference",
+    expectedProviderChannelReference: "provider-channel-reference-never-returned",
+    liveChatId: "live-chat-id-never-returned",
+    ownerVerificationSmokeSuccess: true,
+    liveChatTargetLookupReadinessConfirmed: true,
+    liveChatTargetPresenceOnlyEvidence: true,
+    ownerAuthorization: {
+      status: "authorized",
+      ownerUserId: "owner-reference-never-returned"
+    },
+    credentialResolutionDisabled: false,
+    requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+    nowIso: "2026-06-09T00:00:00.000Z",
+    trustedStatusReader: {
+      async getCredentialStatus() {
+        return {
+          credentialReferenceId: "smoke-livechat-polling-reference",
+          provider: "youtube",
+          providerChannelId: "provider-channel-reference-never-returned",
+          scopeLabel: "youtube.readonly",
+          scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+          expiresAtIso: "2026-06-09T00:05:00.000Z",
+          expiryStatus: "active",
+          revoked: false,
+          revokedAtIso: null,
+          tokenValue: "never-returned-by-design",
+          refreshTokenValue: "never-returned-by-design",
+          ciphertext: "never-returned-by-design",
+          decryptCapability: "forbidden"
+        };
+      }
+    },
+    tokenMaterialResolver: {
+      async resolveServerOnlyTokenMaterial() {
+        return {
+          status: "available",
+          serverAuthorizationHeader: "server-only-test-authorization",
+          expiresAtIso: "2026-06-09T00:05:00.000Z"
+        };
+      }
+    },
+    async fetchGoogleApi(requestToFetch) {
+      firstPageToNextPageProviderUrls.push(requestToFetch.url);
+
+      if (requestToFetch.pageToken === null) {
+        return {
+          ok: true,
+          status: 200,
+          body: {
+            nextPageToken: "next-page-token-never-returned",
+            pollingIntervalMillis: 5000,
+            pageInfo: {
+              totalResults: 0,
+              resultsPerPage: 0
+            },
+            items: []
+          }
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        body: {
+          nextPageToken: "second-next-page-token-never-returned",
+          pollingIntervalMillis: 5000,
+          pageInfo: {
+            totalResults: 1,
+            resultsPerPage: 1
+          },
+          items: [
+            {
+              id: "comment-id-never-returned",
+              snippet: {
+                publishedAt: "2026-06-09T00:00:01.000Z",
+                displayMessage: "must-not-cross",
+                type: "textMessageEvent"
+              }
+            }
+          ]
+        }
+      };
+    }
+  });
+assert.equal(firstPageToNextPageProviderUrls.length, 2, "first-page-to-next-page diagnostics runs exactly two provider reads");
+assert.doesNotMatch(firstPageToNextPageProviderUrls[0], /[?&]pageToken=/, "first-page diagnostic read omits pageToken");
+assert.match(
+  firstPageToNextPageProviderUrls[1],
+  /[?&]pageToken=next-page-token-never-returned(?:&|$)/,
+  "next-page diagnostic read consumes the first-page cursor in memory only"
+);
+assert.equal(
+  firstPageToNextPageDiagnostic.status,
+  "live-chat-polling-first-page-to-next-page-diagnostics-sanitized-result"
+);
+assert.equal(firstPageToNextPageDiagnostic.providerAccess, "liveChatMessages-list-first-page-to-next-page-only");
+assert.equal(firstPageToNextPageDiagnostic.firstPageResponseMetadata.pageRoleLabel, "initial-page");
+assert.equal(firstPageToNextPageDiagnostic.firstPageResponseMetadata.nextPageToken, "present");
+assert.equal(
+  firstPageToNextPageDiagnostic.firstPageResponseMetadata.intakeDiagnosticLabel,
+  "empty-provider-ok-next-page-present"
+);
+assert.equal(firstPageToNextPageDiagnostic.nextPageResponseMetadata.pageRoleLabel, "next-page");
+assert.equal(firstPageToNextPageDiagnostic.nextPageResponseMetadata.returnedItemCount, 1);
+assert.equal(
+  firstPageToNextPageDiagnostic.nextPageResponseMetadata.intakeDiagnosticLabel,
+  "non-empty-returned-intake"
+);
+assert.doesNotMatch(
+  JSON.stringify(firstPageToNextPageDiagnostic),
+  /next-page-token-never-returned|second-next-page-token-never-returned|must-not-cross|comment-id-never-returned/,
+  "first-page-to-next-page diagnostics output never includes cursor, raw comment, or provider values"
+);
 
 const providerOkEmptyNoItems = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
   credentialReferenceId: "smoke-livechat-polling-reference",
@@ -956,7 +1079,7 @@ const executeWithoutApprovalPayload = parseJson(executeWithoutApproval.stdout);
 assert.equal(executeWithoutApprovalPayload.status, "blocked-pending-explicit-live-chat-polling-approval");
 assert.equal(
   executeWithoutApprovalPayload.requiredFlag,
-  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics"
+  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics"
 );
 assert.equal(executeWithoutApprovalPayload.providerAccess, "not-run");
 
@@ -993,6 +1116,35 @@ const executeNextPageWithoutCursorPayload = parseJson(executeNextPageWithoutCurs
 assert.equal(executeNextPageWithoutCursorPayload.status, "blocked-missing-live-chat-next-page-cursor-reference");
 assert.equal(executeNextPageWithoutCursorPayload.providerAccess, "not-run");
 
+const executeFirstPageToNextPageWithoutSameThreadApproval = spawnSync(
+  process.execPath,
+  [commandPath, "--execute", "--approved-live-chat-polling-first-page-to-next-page-diagnostics", "--json"],
+  {
+    cwd: root,
+    env: operatorLocalReadyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(
+  executeFirstPageToNextPageWithoutSameThreadApproval.status,
+  2,
+  "first-page-to-next-page diagnostics blocks without the after-PR519 exact approval label"
+);
+const executeFirstPageToNextPageWithoutSameThreadApprovalPayload = parseJson(
+  executeFirstPageToNextPageWithoutSameThreadApproval.stdout
+);
+assert.equal(
+  executeFirstPageToNextPageWithoutSameThreadApprovalPayload.status,
+  "blocked-missing-first-page-to-next-page-diagnostics-approval-label"
+);
+assert.equal(executeFirstPageToNextPageWithoutSameThreadApprovalPayload.providerAccess, "not-run");
+
+const operatorLocalFirstPageToNextPageApprovedEnv = {
+  ...operatorLocalReadyEnv,
+  PL_G3_FIRST_PAGE_TO_NEXT_PAGE_CURSOR_DIAGNOSTICS_APPROVAL_LABEL:
+    "approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519"
+};
+
 for (const payload of [
   checkEnvPayload,
   tokenMaterialAvailabilityPayload,
@@ -1000,7 +1152,8 @@ for (const payload of [
   executeWithoutApprovalPayload,
   executeWithConflictingApprovalPayload,
   checkNextPageEnvPayload,
-  executeNextPageWithoutCursorPayload
+  executeNextPageWithoutCursorPayload,
+  executeFirstPageToNextPageWithoutSameThreadApprovalPayload
 ]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenField of [
@@ -1017,6 +1170,17 @@ for (const payload of [
   assert.equal(payload.tokenValue, "never-returned-by-design", "command output never prints token values");
   assert.equal(payload.refreshTokenValue, "never-returned-by-design", "command output never prints refresh token values");
 }
+
+assert.match(
+  commandSource,
+  /publicGateStateLabel: "unchanged \/ blocked"[\s\S]*publicReleaseCapableLabel: "no"/,
+  "first-page-to-next-page diagnostics output includes public gate and release capability labels"
+);
+assert.doesNotMatch(
+  JSON.stringify(operatorLocalFirstPageToNextPageApprovedEnv),
+  /next-page-token-never-returned/,
+  "first-page-to-next-page approved env does not require an operator-provided cursor value"
+);
 
 console.log("comment translator YouTube Live Chat polling smoke command contract checks passed");
 

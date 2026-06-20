@@ -225,7 +225,7 @@ assert.match(
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524)`/,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524|bounded-short-polling-prep-after-pr525)`/,
   "task.md records current after-PR #516, after-PR #517, after-PR #518, after-PR #519, or after-PR #520 branch"
 );
 assert.match(
@@ -578,6 +578,102 @@ assert.match(
   task,
   /first-page `liveChatMessages\.list`: provider-ok \/ HTTP 200 \/ returned count 0 \/ nextPageToken presence present[\s\S]*next-page `liveChatMessages\.list`: provider-ok \/ HTTP 200 \/ returned count 0 \/ nextPageToken presence present/i,
   "task.md records sanitized first-page and next-page after-PR #524 provider results"
+);
+
+assert.match(
+  plG3Doc,
+  /^## Fresh-comment Bounded Short Polling Diagnostics Preparation After PR #525$/m,
+  "PL-G3 doc records after-PR #525 bounded short polling preparation"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-fresh-comment-bounded-short-polling-diagnostics-prepared-after-pr525/,
+  "PL-G3 doc records after-PR #525 preparation decision"
+);
+assert.match(
+  plG3Doc,
+  /Exact approval label defined for future use: `approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525`[\s\S]*Exact approval label present in this thread: not-present/i,
+  "PL-G3 doc records after-PR #525 exact approval label is absent"
+);
+assert.match(
+  plG3Doc,
+  /Desired future boundary:[\s\S]*operator sends one fresh visible chat comment[\s\S]*bounded short polling diagnostic[\s\S]*at most 2-3 pages\/attempts[\s\S]*respecting provider polling interval/i,
+  "PL-G3 doc records the after-PR #525 future bounded short polling boundary"
+);
+assert.match(
+  plG3Doc,
+  /Stop condition:[\s\S]*first non-empty sanitized intake[\s\S]*bounded max attempts/i,
+  "PL-G3 doc records bounded stop conditions"
+);
+assert.match(
+  plG3Doc,
+  /Allowed sanitized output categories[\s\S]*attempt\/page role label[\s\S]*provider route label[\s\S]*returned count[\s\S]*polling interval presence\/count label[\s\S]*bounded attempt count[\s\S]*stop reason label/i,
+  "PL-G3 doc records allowed sanitized output categories for bounded short polling"
+);
+assert.match(
+  plG3Doc,
+  /Forbidden output\/storage[\s\S]*cursor values[\s\S]*provider URL query values[\s\S]*raw comments[\s\S]*raw provider payloads[\s\S]*quota values[\s\S]*provider target metadata/i,
+  "PL-G3 doc forbids private values for after-PR #525 boundary"
+);
+assert.match(
+  plG3Doc,
+  /Start: not-run[\s\S]*Stop: not-run[\s\S]*target lookup execution: not-run[\s\S]*bounded short polling: not-run \/ approval-gated[\s\S]*Azure\/OpenAI provider execution: not-run[\s\S]*UI\/feed confirmation: not-run/i,
+  "PL-G3 doc keeps after-PR #525 as preparation-only"
+);
+assert.match(
+  readyPreflight,
+  /After PR #525 fresh-comment bounded short polling diagnostics preparation/i,
+  "ready preflight records after-PR #525 diagnostics boundary"
+);
+assert.match(
+  readyPreflight,
+  /approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525[\s\S]*Approval state in this thread: not present/i,
+  "ready preflight records after-PR #525 approval label is not present"
+);
+assert.match(
+  readyPreflight,
+  /operator sends one fresh visible chat comment at the instructed point[\s\S]*very small bounded polling diagnostic[\s\S]*at most 2-3 pages\/attempts[\s\S]*respect provider polling interval/i,
+  "ready preflight records the future bounded short polling shape"
+);
+assert.match(
+  readyPreflight,
+  /stop on first non-empty sanitized intake[\s\S]*bounded-max-attempts-reached/i,
+  "ready preflight records bounded short polling stop reasons"
+);
+assert.match(
+  readyPreflight,
+  /must not output, store, document, or hand off[\s\S]*cursor values[\s\S]*provider URL query values[\s\S]*raw comments[\s\S]*quota values/i,
+  "ready preflight forbids private values for after-PR #525 boundary"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 Fresh-comment Bounded Short Polling Diagnostics Preparation After PR #525$/m,
+  "task.md records after-PR #525 latest preparation"
+);
+assert.match(
+  task,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-bounded-short-polling-prep-after-pr525`/,
+  "task.md records current after-PR #525 branch"
+);
+assert.match(
+  task,
+  /Decision: blocked-fresh-comment-bounded-short-polling-diagnostics-prepared-after-pr525/,
+  "task.md records after-PR #525 decision"
+);
+assert.match(
+  task,
+  /Exact approval label defined for future use: `approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525`[\s\S]*Exact approval label present in this thread: not-present/i,
+  "task.md records after-PR #525 approval label absence"
+);
+assert.match(
+  task,
+  /Prepared boundary: docs\/contracts\/command-preparation only[\s\S]*bounded short polling command is not implemented or run in this slice/i,
+  "task.md records docs/contracts/command-preparation-only scope"
+);
+assert.match(
+  task,
+  /Start: not-run[\s\S]*Stop: not-run[\s\S]*target lookup execution: not-run[\s\S]*bounded short polling: not-run \/ approval-gated[\s\S]*Azure\/OpenAI provider execution: not-run[\s\S]*UI\/feed confirmation: not-run/i,
+  "task.md records no live/provider/UI execution after PR #525"
 );
 
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");

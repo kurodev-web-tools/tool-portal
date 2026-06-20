@@ -556,6 +556,61 @@ Execution boundary:
 
 Next safe action: keep PL-G3 blocked. Request same-thread exact approval with label `approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519` before running the reviewed first-page-to-next-page diagnostic command. Do not run Start, Stop, target lookup execution, Azure/provider harness, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, or any command that outputs cursor/live target/credential/token/cookie/OAuth/Authorization/provider target/raw provider/raw comment/provider URL query/owner/channel/quota values.
 
+## Approved Same-process First-page-to-next-page Cursor Diagnostics After PR #520
+
+Decision: blocked-empty-provider-ok-first-page-next-page-present-after-pr520.
+
+Exact approval label consumed in this thread: `approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519`.
+
+Operator-local setup was confirmed value-free before execution: live stream started, access token refreshed locally, and a fresh visible chat comment was sent. The command dot-sourced the operator-local env file without printing values, set the value-free approval label reference, and executed only the reviewed same-process first-page-to-next-page diagnostic boundary.
+
+Sanitized result:
+
+| Check | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| diagnostic status | live-chat-polling-first-page-to-next-page-diagnostics-sanitized-result | pass-for-diagnostics / fail-for-start-to-translation | none |
+| owner binding | verified-before-live-chat-polling | pass | none |
+| live chat target | present | pass | none |
+| first-page provider status | provider-ok | pass | none |
+| first-page HTTP status | 200 | pass | none |
+| first-page returned count | 0 | fail-for-start-to-translation | none |
+| first-page pageInfo total count | 0 | fail-for-start-to-translation | none |
+| first-page pageInfo resultsPerPage count | 0 | fail-for-start-to-translation | none |
+| first-page nextPageToken presence | present | pass-for-diagnostics | none |
+| first-page polling interval presence | present | pass-for-diagnostics | none |
+| first-page intake diagnostic | empty-provider-ok-next-page-present | fail-for-start-to-translation | none |
+| first-page item type distribution | empty | fail-for-start-to-translation | none |
+| next-page provider status | provider-ok | pass | none |
+| next-page HTTP status | 200 | pass | none |
+| next-page returned count | 0 | fail-for-start-to-translation | none |
+| next-page pageInfo total count | 0 | fail-for-start-to-translation | none |
+| next-page pageInfo resultsPerPage count | 0 | fail-for-start-to-translation | none |
+| next-page nextPageToken presence | present | pass-for-diagnostics | none |
+| next-page polling interval presence | present | pass-for-diagnostics | none |
+| next-page intake diagnostic | empty-provider-ok-next-page-present | fail-for-start-to-translation | none |
+| next-page item type distribution | empty | fail-for-start-to-translation | none |
+| nextPageRead | executed-with-first-page-cursor-in-memory-only | pass | none |
+| translationExecution | not-run-diagnostics-only | pass | none |
+| public gate state label | unchanged / blocked | pass | none |
+| public-release capable label | no | pass | none |
+
+Execution boundary:
+
+- Start: not-run.
+- Stop: not-run.
+- target lookup execution: not-run.
+- first-page `liveChatMessages.list`: executed / diagnostics-only / provider-ok / returned count 0.
+- next-page `liveChatMessages.list`: executed / diagnostics-only / provider-ok / returned count 0.
+- cursor handling: consumed in process memory only / not output / not stored / not documented.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Next safe action: keep PL-G3 blocked. The provider accepted both the first-page and next-page diagnostics reads, but both pages returned zero items while nextPageToken presence stayed present. Do not proceed to Free Azure translation, UI/feed confirmation, PL-G4, PL-G5, public access changes, deploy/upload, remote mutation, or additional provider reads without a new same-thread exact approval and sanitized output review.
+
 ## Inspected Inputs
 
 - `task.md`

@@ -195,8 +195,8 @@ assert.match(
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519)`/,
-  "task.md records current after-PR #516, after-PR #517, after-PR #518, or after-PR #519 branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520)`/,
+  "task.md records current after-PR #516, after-PR #517, after-PR #518, after-PR #519, or after-PR #520 branch"
 );
 assert.match(
   task,
@@ -337,6 +337,47 @@ assert.match(
   task,
   /one future approved first-page diagnostics read[\s\S]*consume that cursor in memory only[\s\S]*one bounded next-page read/i,
   "task.md records future same-process first-page-to-next-page diagnostic boundary"
+);
+
+assert.match(
+  plG3Doc,
+  /^## Approved Same-process First-page-to-next-page Cursor Diagnostics After PR #520$/m,
+  "PL-G3 doc records after-PR #520 approved same-process cursor diagnostics"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-empty-provider-ok-first-page-next-page-present-after-pr520/,
+  "PL-G3 doc records after-PR #520 decision"
+);
+assert.match(
+  plG3Doc,
+  /first-page[\s\S]*provider-ok[\s\S]*first-page returned count \| 0[\s\S]*first-page nextPageToken presence \| present/i,
+  "PL-G3 doc records sanitized first-page result"
+);
+assert.match(
+  plG3Doc,
+  /next-page[\s\S]*provider-ok[\s\S]*next-page returned count \| 0[\s\S]*next-page nextPageToken presence \| present/i,
+  "PL-G3 doc records sanitized next-page result"
+);
+assert.match(
+  plG3Doc,
+  /nextPageRead[\s\S]*executed-with-first-page-cursor-in-memory-only[\s\S]*translationExecution[\s\S]*not-run-diagnostics-only/i,
+  "PL-G3 doc records cursor stayed in memory and translation did not run"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 Approved First-page-to-next-page Cursor Diagnostics After PR #520$/m,
+  "task.md records after-PR #520 latest approved follow-up"
+);
+assert.match(
+  task,
+  /Decision: blocked-empty-provider-ok-first-page-next-page-present-after-pr520/,
+  "task.md records after-PR #520 decision"
+);
+assert.match(
+  task,
+  /first-page `liveChatMessages\.list`: provider-ok \/ returned count 0 \/ nextPageToken presence present[\s\S]*next-page `liveChatMessages\.list`: provider-ok \/ returned count 0 \/ nextPageToken presence present/i,
+  "task.md records sanitized first-page and next-page provider results"
 );
 
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");

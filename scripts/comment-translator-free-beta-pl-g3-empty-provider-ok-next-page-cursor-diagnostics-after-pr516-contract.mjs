@@ -157,11 +157,21 @@ assert.match(
   /no raw cursor[\s\S]*no liveChatId[\s\S]*no provider target metadata[\s\S]*no raw provider payload[\s\S]*no raw comments/i,
   "ready preflight forbids private cursor, target, provider, and comment values"
 );
+assert.match(
+  readyPreflight,
+  /--approved-live-chat-polling-next-page-diagnostics/,
+  "ready preflight records the after-PR #517 next-page diagnostics command flag"
+);
+assert.match(
+  readyPreflight,
+  /same command process must already contain[\s\S]*server-only next-page cursor reference/i,
+  "ready preflight records same-process cursor reference requirement"
+);
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516`/,
-  "task.md records current after-PR #516 branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517)`/,
+  "task.md records current after-PR #516 or after-PR #517 branch"
 );
 assert.match(
   task,
@@ -186,9 +196,55 @@ assert.match(
 assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md keeps public gate blocked");
 assert.match(task, /public-release capable label: no/i, "task.md keeps public-release capable no");
 
+assert.match(
+  plG3Doc,
+  /^## Operator-local Empty-provider-ok Next-page Cursor Diagnostics Follow-up After PR #517$/m,
+  "PL-G3 doc records after-PR #517 approved follow-up"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-missing-operator-local-same-process-references-before-next-page-provider-access-after-pr517/,
+  "PL-G3 doc records after-PR #517 blocker before provider access"
+);
+assert.match(
+  plG3Doc,
+  /page role label \| next-page-diagnostics-approved[\s\S]*provider status label \| not-run-before-provider-access[\s\S]*HTTP status label \| not-run/i,
+  "PL-G3 doc records sanitized next-page blocker categories"
+);
+assert.match(
+  plG3Doc,
+  /`liveChatMessages\.list`: not-run \/ blocked-before-provider-access/i,
+  "PL-G3 doc records no provider read occurred after PR #517"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 Approved Next-page Cursor Diagnostics Follow-up After PR #517$/m,
+  "task.md records after-PR #517 latest follow-up"
+);
+assert.match(
+  task,
+  /Decision: blocked-missing-operator-local-same-process-references-before-next-page-provider-access-after-pr517/,
+  "task.md records after-PR #517 blocker"
+);
+assert.match(
+  task,
+  /Contract gap fixed without live\/provider access[\s\S]*next-page diagnostics-only approval flag/i,
+  "task.md records next-page command gap fix"
+);
+
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");
 assert.match(pollingFoundation, /empty-provider-ok-next-page-present/, "polling foundation labels empty provider-ok next page");
 assert.match(pollingCommand, /--approved-live-chat-polling-diagnostics/, "polling command keeps diagnostics approval boundary");
+assert.match(
+  pollingCommand,
+  /--approved-live-chat-polling-next-page-diagnostics/,
+  "polling command exposes a next-page diagnostics-only approval boundary"
+);
+assert.match(
+  pollingCommand,
+  /YOUTUBE_LIVE_CHAT_POLLING_SMOKE_NEXT_PAGE_TOKEN/,
+  "polling command consumes the server-only next-page cursor from an operator-local reference"
+);
 assert.match(pollingCommandContract, /empty-provider-ok-next-page-present/, "polling command contract covers next-page-present empty intake");
 assert.match(afterPr515Contract, /blocked-empty-polling-intake-after-pr515/, "after-PR #515 contract remains the input blocker");
 
@@ -224,6 +280,8 @@ const allowedChangedFiles = new Set([
   readyPreflightPath,
   taskPath,
   "scripts/comment-translator-free-beta-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516-contract.mjs",
+  pollingFoundationPath,
+  pollingCommandPath,
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr515-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-target-selection-diagnostics-after-pr514-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-next-page-target-selection-follow-up-after-pr513-contract.mjs",

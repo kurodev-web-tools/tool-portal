@@ -433,6 +433,47 @@ Execution boundary:
 
 Next safe action: keep PL-G3 blocked. The next exact approval, if any, should choose one bounded cursor diagnostic read only after sanitized output review. Do not repeat Start-to-translation, run Azure/provider harness, perform UI/feed confirmation, execute PL-G4, or advance public launch gates until non-empty intake evidence exists.
 
+## Operator-local Empty-provider-ok Next-page Cursor Diagnostics Follow-up After PR #517
+
+Decision: blocked-missing-operator-local-same-process-references-before-next-page-provider-access-after-pr517.
+
+Exact approval label present in this thread: `approved-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516`.
+
+The reviewed after-PR #516 diagnostic boundary required one bounded next-page read only, the same server-only live target reference, and a server-only cursor consumed without output. The existing polling diagnostic command did not expose a next-page-only execution flag or cursor reference, so this follow-up first fixed that contract gap without live/provider access. The command now has a next-page diagnostics-only approval flag and consumes the next-page cursor from an operator-local server-only reference without adding it to command output.
+
+Approved command attempt outcome:
+
+| Category | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| page role label | next-page-diagnostics-approved | fail | missing-operator-local-same-process-references |
+| provider route label | liveChatMessages-list-next-page-only | fail | missing-operator-local-same-process-references |
+| provider status label | not-run-before-provider-access | fail | missing-operator-local-same-process-references |
+| HTTP status label | not-run | fail | missing-operator-local-same-process-references |
+| returned count | unavailable | fail | missing-operator-local-same-process-references |
+| pageInfo total count | unavailable | fail | missing-operator-local-same-process-references |
+| pageInfo resultsPerPage count | unavailable | fail | missing-operator-local-same-process-references |
+| nextPageToken presence label | unavailable | fail | missing-operator-local-same-process-references |
+| polling interval presence label | unavailable | fail | missing-operator-local-same-process-references |
+| intake diagnostic label | unavailable-provider-not-run | fail | missing-operator-local-same-process-references |
+| item type distribution counts | unavailable | fail | missing-operator-local-same-process-references |
+| public gate state label | unchanged / blocked | pass | none |
+| public-release capable label | no | pass | none |
+
+Execution boundary:
+
+- Start: not-run.
+- Stop: not-run.
+- target lookup execution: not-run.
+- `liveChatMessages.list`: not-run / blocked-before-provider-access.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Next safe action: keep PL-G3 blocked. After this branch is reviewed and merged, rerun only the next-page diagnostic command in an operator-local same-command process that already contains the required references and server-only cursor. Do not print, store, document, or hand off actual cursor, live target, credential, token, cookie, OAuth, Authorization, provider target metadata, raw provider payload, raw comment, provider URL query, owner id, channel id, or quota values.
+
 ## Inspected Inputs
 
 - `task.md`

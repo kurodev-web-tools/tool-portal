@@ -24,6 +24,7 @@ export type YouTubeLiveChatPollingSmokeCommandFoundationContract = {
     part: "id,snippet";
     fields: "nextPageToken,pollingIntervalMillis,pageInfo(totalResults,resultsPerPage),items(id,snippet(publishedAt,type))";
   };
+  pageTokenHandling: "optional-server-only-next-page-token-consumed-never-returned";
   outputPolicy: "sanitized-metadata-only";
   ownerBindingCheck: "trusted-status-provider-channel-match-before-live-chat-polling";
   targetLookupPrerequisite: "live-chat-target-lookup-readiness-and-presence-only-evidence-before-live-chat-polling";
@@ -44,6 +45,7 @@ export type YouTubeLiveChatPollingSmokeFetchRequest = {
   providerUrl: "https://www.googleapis.com/youtube/v3/liveChat/messages";
   url: string;
   liveChatId: string;
+  pageToken: string | null;
   query: YouTubeLiveChatPollingSmokeCommandFoundationContract["query"];
   headers: {
     Authorization: string;
@@ -64,6 +66,7 @@ export type YouTubeLiveChatPollingSmokeFoundationRequest = {
   credentialReferenceId: string;
   expectedProviderChannelReference: string;
   liveChatId: string;
+  pageToken?: string | null;
   ownerVerificationSmokeSuccess: boolean;
   liveChatTargetLookupReadinessConfirmed: boolean;
   liveChatTargetPresenceOnlyEvidence: boolean;
@@ -193,6 +196,7 @@ export type YouTubeLiveChatPollingSmokeResponseMetadata = {
   ok: boolean;
   providerStatusLabel: YouTubeLiveChatPollingSmokeProviderStatusLabel;
   providerErrorReasonLabel: YouTubeLiveChatPollingSmokeProviderErrorReasonLabel;
+  pageRoleLabel: "initial-page" | "next-page";
   liveChatTarget: "present";
   nextPageToken: "present" | "absent";
   pollingIntervalMillis: number | null;
@@ -251,6 +255,7 @@ export const youtubeLiveChatPollingSmokeCommandFoundationContract = {
   providerUrl,
   httpMethod: "GET",
   query,
+  pageTokenHandling: "optional-server-only-next-page-token-consumed-never-returned",
   outputPolicy: "sanitized-metadata-only",
   ownerBindingCheck: "trusted-status-provider-channel-match-before-live-chat-polling",
   targetLookupPrerequisite: "live-chat-target-lookup-readiness-and-presence-only-evidence-before-live-chat-polling",
@@ -267,14 +272,18 @@ export const youtubeLiveChatPollingSmokeCommandFoundationContract = {
 
 export function createYouTubeLiveChatMessagesListSmokeRequest({
   serverAuthorizationHeader,
-  liveChatId
+  liveChatId,
+  pageToken
 }: {
   serverAuthorizationHeader: string;
   liveChatId: string;
+  pageToken?: string | null;
 }): YouTubeLiveChatPollingSmokeFetchRequest {
+  const normalizedPageToken = typeof pageToken === "string" && pageToken.trim().length > 0 ? pageToken.trim() : null;
   const params = new URLSearchParams({
     liveChatId,
-    ...query
+    ...query,
+    ...(normalizedPageToken ? { pageToken: normalizedPageToken } : {})
   });
 
   return {
@@ -283,6 +292,7 @@ export function createYouTubeLiveChatMessagesListSmokeRequest({
     providerUrl,
     url: `${providerUrl}?${params.toString()}`,
     liveChatId,
+    pageToken: normalizedPageToken,
     query,
     headers: {
       Authorization: serverAuthorizationHeader
@@ -437,7 +447,8 @@ export async function runYouTubeLiveChatPollingSmokeFoundation(
     const providerResponse = await request.fetchGoogleApi(
       createYouTubeLiveChatMessagesListSmokeRequest({
         serverAuthorizationHeader: tokenMaterial.serverAuthorizationHeader,
-        liveChatId: request.liveChatId.trim()
+        liveChatId: request.liveChatId.trim(),
+        pageToken: request.pageToken ?? null
       })
     );
 
@@ -450,7 +461,7 @@ export async function runYouTubeLiveChatPollingSmokeFoundation(
       providerAccess: "liveChatMessages-list-one-step-only",
       authorizationHandling: "server-only-header-consumed-never-returned",
       serverFetchBinding: "resolved-for-server-fetch",
-      responseMetadata: createSanitizedPollingResponseMetadata(providerResponse)
+      responseMetadata: createSanitizedPollingResponseMetadata(providerResponse, request.pageToken ?? null)
     };
   } catch {
     return unresolvedPolling(
@@ -593,7 +604,8 @@ function unresolvedPolling(
 }
 
 function createSanitizedPollingResponseMetadata(
-  providerResponse: YouTubeLiveChatPollingSmokeFetchResult
+  providerResponse: YouTubeLiveChatPollingSmokeFetchResult,
+  pageToken?: string | null
 ): YouTubeLiveChatPollingSmokeResponseMetadata {
   const body = asRecord(providerResponse.body);
   const pageInfo = asRecord(body.pageInfo);
@@ -618,6 +630,7 @@ function createSanitizedPollingResponseMetadata(
     ok: providerResponse.ok,
     providerStatusLabel: sanitizeProviderStatusLabel(providerResponse),
     providerErrorReasonLabel: sanitizeProviderErrorReasonLabel(providerResponse),
+    pageRoleLabel: typeof pageToken === "string" && pageToken.trim().length > 0 ? "next-page" : "initial-page",
     liveChatTarget: "present",
     nextPageToken,
     pollingIntervalMillis,

@@ -167,11 +167,36 @@ assert.match(
   /same command process must already contain[\s\S]*server-only next-page cursor reference/i,
   "ready preflight records same-process cursor reference requirement"
 );
+assert.match(
+  readyPreflight,
+  /After PR #519 first-page-to-next-page cursor diagnostics preparation/i,
+  "ready preflight records after-PR #519 same-process diagnostics boundary"
+);
+assert.match(
+  readyPreflight,
+  /approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519[\s\S]*Approval state in this thread: not present/i,
+  "ready preflight records after-PR #519 approval label is not present"
+);
+assert.match(
+  readyPreflight,
+  /one first-page `liveChatMessages\.list` diagnostics read[\s\S]*consumes that cursor in memory only[\s\S]*one bounded next-page read/i,
+  "ready preflight records first-page-to-next-page in-memory cursor handling"
+);
+assert.match(
+  readyPreflight,
+  /--approved-live-chat-polling-first-page-to-next-page-diagnostics/,
+  "ready preflight records the after-PR #519 first-page-to-next-page diagnostics command flag"
+);
+assert.match(
+  readyPreflight,
+  /PL_G3_FIRST_PAGE_TO_NEXT_PAGE_CURSOR_DIAGNOSTICS_APPROVAL_LABEL=approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519/,
+  "ready preflight records value-free approval label reference"
+);
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518)`/,
-  "task.md records current after-PR #516, after-PR #517, or after-PR #518 branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519)`/,
+  "task.md records current after-PR #516, after-PR #517, after-PR #518, or after-PR #519 branch"
 );
 assert.match(
   task,
@@ -268,8 +293,64 @@ assert.match(
   "task.md records after-PR #518 command stopped before provider access"
 );
 
+assert.match(
+  plG3Doc,
+  /^## Same-process First-page-to-next-page Cursor Diagnostics Preparation After PR #519$/m,
+  "PL-G3 doc records after-PR #519 same-process cursor diagnostics preparation"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-first-page-to-next-page-cursor-diagnostics-prepared-after-pr519/,
+  "PL-G3 doc records after-PR #519 decision"
+);
+assert.match(
+  plG3Doc,
+  /blocked-missing-live-chat-next-page-cursor-reference[\s\S]*`liveChatMessages\.list` was not run[\s\S]*provider access was not run/i,
+  "PL-G3 doc carries forward the after-PR #519 missing cursor blocker"
+);
+assert.match(
+  plG3Doc,
+  /Exact approval label defined for a future same-process diagnostic: `approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519`[\s\S]*Exact approval label present in this thread: not-present/i,
+  "PL-G3 doc records after-PR #519 approval label absence"
+);
+assert.match(
+  plG3Doc,
+  /first-page-result-memory-only[\s\S]*optional-one-bounded-read-if-first-page-token-present[\s\S]*cursor-value-never-output-stored-documented-or-handed-off/i,
+  "PL-G3 doc records first-page-to-next-page memory-only cursor handling"
+);
+assert.match(
+  plG3Doc,
+  /first-page `liveChatMessages\.list`: not-run \/ approval-gated[\s\S]*next-page `liveChatMessages\.list`: not-run \/ approval-gated/i,
+  "PL-G3 doc records no first-page or next-page provider read after PR #519"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 First-page-to-next-page Cursor Diagnostics Preparation After PR #519$/m,
+  "task.md records after-PR #519 latest follow-up"
+);
+assert.match(
+  task,
+  /Exact approval label present in this thread: not-present[\s\S]*Decision: blocked-first-page-to-next-page-cursor-diagnostics-prepared-after-pr519/i,
+  "task.md records after-PR #519 blocker and missing approval"
+);
+assert.match(
+  task,
+  /one future approved first-page diagnostics read[\s\S]*consume that cursor in memory only[\s\S]*one bounded next-page read/i,
+  "task.md records future same-process first-page-to-next-page diagnostic boundary"
+);
+
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");
 assert.match(pollingFoundation, /empty-provider-ok-next-page-present/, "polling foundation labels empty provider-ok next page");
+assert.match(
+  pollingFoundation,
+  /runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundation/,
+  "polling foundation exposes same-process first-page-to-next-page diagnostics"
+);
+assert.match(
+  pollingFoundation,
+  /readNextPageTokenValue[\s\S]*firstPageNextPageToken[\s\S]*pageToken: firstPageNextPageToken/,
+  "polling foundation consumes the first-page cursor in memory only for the next-page read"
+);
 assert.match(pollingCommand, /--approved-live-chat-polling-diagnostics/, "polling command keeps diagnostics approval boundary");
 assert.match(
   pollingCommand,
@@ -281,7 +362,27 @@ assert.match(
   /YOUTUBE_LIVE_CHAT_POLLING_SMOKE_NEXT_PAGE_TOKEN/,
   "polling command consumes the server-only next-page cursor from an operator-local reference"
 );
+assert.match(
+  pollingCommand,
+  /--approved-live-chat-polling-first-page-to-next-page-diagnostics/,
+  "polling command exposes a first-page-to-next-page diagnostics-only approval boundary"
+);
+assert.match(
+  pollingCommand,
+  /blocked-missing-first-page-to-next-page-diagnostics-approval-label/,
+  "polling command blocks first-page-to-next-page diagnostics before provider access without the exact approval label"
+);
+assert.match(
+  pollingCommand,
+  /publicGateStateLabel: "unchanged \/ blocked"[\s\S]*publicReleaseCapableLabel: "no"/,
+  "polling command returns public gate and public-release labels for first-page-to-next-page diagnostics"
+);
 assert.match(pollingCommandContract, /empty-provider-ok-next-page-present/, "polling command contract covers next-page-present empty intake");
+assert.match(
+  pollingCommandContract,
+  /runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundation[\s\S]*first-page-to-next-page diagnostics runs exactly two provider reads/i,
+  "polling command contract covers first-page-to-next-page diagnostics"
+);
 assert.match(afterPr515Contract, /blocked-empty-polling-intake-after-pr515/, "after-PR #515 contract remains the input blocker");
 
 for (const forbiddenFragment of [

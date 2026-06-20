@@ -30,6 +30,10 @@ const operatorLocalServerAuthorizationHeaderReference =
   "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER";
 const operatorLocalTokenExpiresAtIsoReference = "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO";
 const liveChatNextPageCursorReference = "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_NEXT_PAGE_TOKEN";
+const firstPageToNextPageDiagnosticsApprovalLabelReference =
+  "PL_G3_FIRST_PAGE_TO_NEXT_PAGE_CURSOR_DIAGNOSTICS_APPROVAL_LABEL";
+const firstPageToNextPageDiagnosticsApprovalLabel =
+  "approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519";
 const youtubeReadonlyOAuthScope = "https://www.googleapis.com/auth/youtube.readonly";
 
 function loadTsModule(relativePath) {
@@ -402,6 +406,9 @@ function preflight({ requireNextPageCursor = false } = {}) {
 
 async function main() {
   const hasNextPageDiagnosticsApproval = args.has("--approved-live-chat-polling-next-page-diagnostics");
+  const hasFirstPageToNextPageDiagnosticsApproval = args.has(
+    "--approved-live-chat-polling-first-page-to-next-page-diagnostics"
+  );
   const result = preflight({ requireNextPageCursor: hasNextPageDiagnosticsApproval });
 
   if (!result.ok) {
@@ -445,7 +452,12 @@ async function main() {
 
   const hasSmokeApproval = args.has("--approved-live-chat-polling-smoke");
   const hasDiagnosticsApproval = args.has("--approved-live-chat-polling-diagnostics");
-  const approvalFlagCount = [hasSmokeApproval, hasDiagnosticsApproval, hasNextPageDiagnosticsApproval].filter(Boolean).length;
+  const approvalFlagCount = [
+    hasSmokeApproval,
+    hasDiagnosticsApproval,
+    hasNextPageDiagnosticsApproval,
+    hasFirstPageToNextPageDiagnosticsApproval
+  ].filter(Boolean).length;
 
   if (approvalFlagCount > 1) {
     writeJson(
@@ -454,7 +466,7 @@ async function main() {
         ...createBasePayload(),
         credentialReferenceId: result.payload.credentialReferenceId,
         requiredFlag:
-          "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics",
+          "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics",
         approvalBoundary: "choose-one-explicit-in-thread-approval-boundary",
         liveChatPollingSmoke: "not-run",
         providerAccess: "not-run"
@@ -471,12 +483,39 @@ async function main() {
         ...createBasePayload(),
         credentialReferenceId: result.payload.credentialReferenceId,
         requiredFlag:
-          "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics",
+          "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics",
         approvalBoundary: "same-thread-explicit-in-thread-approval-required",
         liveChatPollingSmoke: "not-run",
         providerAccess: "not-run"
       },
       2
+    );
+    return;
+  }
+
+  if (hasFirstPageToNextPageDiagnosticsApproval) {
+    if (readReference(firstPageToNextPageDiagnosticsApprovalLabelReference) !== firstPageToNextPageDiagnosticsApprovalLabel) {
+      writeJson(
+        {
+          status: "blocked-missing-first-page-to-next-page-diagnostics-approval-label",
+          ...createBasePayload(),
+          requiredApprovalLabel: firstPageToNextPageDiagnosticsApprovalLabel,
+          approvalLabelReference: firstPageToNextPageDiagnosticsApprovalLabelReference,
+          approvalBoundary: "same-thread-explicit-in-thread-approval-required-before-provider-access",
+          liveChatPollingDiagnostics: "not-run",
+          providerAccess: "not-run"
+        },
+        2
+      );
+      return;
+    }
+
+    const diagnosticsPayload = await createApprovedFirstPageToNextPageDiagnosticsPayload(
+      result.payload.credentialReferenceId
+    );
+    writeJson(
+      diagnosticsPayload,
+      isFirstPageToNextPageProviderOkDiagnosticsPayload(diagnosticsPayload) ? 0 : 2
     );
     return;
   }
@@ -581,6 +620,21 @@ async function createApprovedDiagnosticsPayload(credentialReferenceId, useNextPa
   });
 }
 
+async function createApprovedFirstPageToNextPageDiagnosticsPayload(credentialReferenceId) {
+  const foundation = loadTsModule("lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts");
+  const result = await foundation.runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundation(
+    createFoundationBaseRequest(credentialReferenceId)
+  );
+
+  return sanitizeDiagnosticsPayload({
+    ...result,
+    diagnosticMode: "sanitized-metadata-only",
+    publicGateStateLabel: "unchanged / blocked",
+    publicReleaseCapableLabel: "no",
+    translationExecution: "not-run-diagnostics-only"
+  });
+}
+
 function sanitizeDiagnosticsPayload(payload) {
   const sanitizedPayload = { ...payload };
   delete sanitizedPayload.credentialReferenceId;
@@ -591,5 +645,14 @@ function isProviderOkDiagnosticsPayload(payload) {
   return (
     payload.status === "live-chat-polling-diagnostics-sanitized-result" &&
     payload.responseMetadata?.providerStatusLabel === "provider-ok"
+  );
+}
+
+function isFirstPageToNextPageProviderOkDiagnosticsPayload(payload) {
+  return (
+    payload.status === "live-chat-polling-first-page-to-next-page-diagnostics-sanitized-result" &&
+    payload.firstPageResponseMetadata?.providerStatusLabel === "provider-ok" &&
+    payload.firstPageResponseMetadata?.nextPageToken === "present" &&
+    payload.nextPageResponseMetadata?.providerStatusLabel === "provider-ok"
   );
 }

@@ -112,6 +112,24 @@ node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --ex
 
 The same command process must already contain the operator-local server-only live target reference, token material reference, owner-binding readiness references, and server-only next-page cursor reference. The command consumes the cursor only as a provider request parameter and returns cursor presence labels only; it must not output the cursor value.
 
+After PR #519 first-page-to-next-page cursor diagnostics preparation:
+
+```text
+approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519
+```
+
+Approval state in this thread: not present.
+
+Use this approval only if the release owner wants a reviewed same-process diagnostic boundary because no operator-local next-page cursor reference is available. The command may perform one first-page `liveChatMessages.list` diagnostics read. If that first-page result has nextPageToken presence present, the command consumes that cursor in memory only and performs one bounded next-page read in the same process. The cursor value must never be printed, stored, documented, placed in PR text, exposed in a provider URL query in output, or added to handoff payloads. If the first page has nextPageToken presence absent, the next-page read is not run and the diagnostic remains blocked for Start-to-translation completion.
+
+Reviewed command shape for that future approval:
+
+```powershell
+node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --execute --approved-live-chat-polling-first-page-to-next-page-diagnostics --json
+```
+
+The same command process must already contain the operator-local server-only live target reference, token material reference, owner-binding readiness references, and the value-free approval label reference `PL_G3_FIRST_PAGE_TO_NEXT_PAGE_CURSOR_DIAGNOSTICS_APPROVAL_LABEL=approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519`. Output must be sanitized to first-page and next-page page role labels, provider route/status labels, HTTP status labels, returned counts, pageInfo total counts, pageInfo resultsPerPage counts, nextPageToken presence labels, polling interval presence labels, intake diagnostic labels, item type distribution counts, public gate state label, public-release capable label, pass/fail, and unavailableReason only. This approval must not run Start, Stop, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, cursor regeneration, or a polling loop beyond the one first-page read plus optional one next-page read.
+
 Free Azure translation and combined live/provider smoke command review, approval-gated:
 
 ```powershell

@@ -513,6 +513,49 @@ Execution boundary:
 
 Next safe action: run the same reviewed one bounded next-page diagnostic only from an operator-local same-command process that already contains the required refs and server-only cursor. Do not print, store, document, or hand off actual cursor, live target, credential, token, cookie, OAuth, Authorization, provider target metadata, raw provider payload, raw comment, provider URL query, owner id, channel id, or quota values.
 
+## Same-process First-page-to-next-page Cursor Diagnostics Preparation After PR #519
+
+Decision: blocked-first-page-to-next-page-cursor-diagnostics-prepared-after-pr519.
+
+Input blocker carried forward: the after-PR #519 next-page-only diagnostic route stopped with `blocked-missing-live-chat-next-page-cursor-reference`; `liveChatMessages.list` was not run and provider access was not run because the operator-local next-page cursor env reference was unavailable.
+
+Exact approval label defined for a future same-process diagnostic: `approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519`.
+
+Exact approval label present in this thread: not-present.
+
+Prepared boundary:
+
+| Check | Label | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| diagnostic scope | first-page-to-next-page-cursor-diagnostics | pass | none |
+| first-page read proposal | approval-required-not-run | pass | none |
+| next-page cursor source | first-page-result-memory-only | pass | none |
+| next-page read proposal | optional-one-bounded-read-if-first-page-token-present | pass | none |
+| cursor output policy | cursor-value-never-output-stored-documented-or-handed-off | pass | none |
+| provider URL query output policy | provider-url-query-values-forbidden-in-output | pass | none |
+| polling loop policy | no-loop-first-page-plus-optional-one-next-page-only | pass | none |
+| approval state | same-thread-exact-approval-not-present | fail | missing-approval-label |
+
+If a later same-thread approval chooses this diagnostic, the reviewed command should perform one first-page `liveChatMessages.list` diagnostics read. If the first-page nextPageToken presence label is present, the command consumes that cursor in process memory only, performs one bounded next-page read against the same server-only live target reference, and emits only sanitized first-page and next-page metadata. If the first-page nextPageToken presence label is absent, the next-page read is not run and PL-G3 remains blocked.
+
+Safe diagnostic output categories for that later run are first-page and next-page page role labels, provider route labels, provider status labels, HTTP status labels, returned counts, pageInfo total counts, pageInfo resultsPerPage counts, nextPageToken presence labels, polling interval presence labels, intake diagnostic labels, item type distribution counts, public gate state label, public-release capable label, pass/fail, and unavailableReason.
+
+Execution boundary:
+
+- Start: not-run.
+- Stop: not-run.
+- target lookup execution: not-run.
+- first-page `liveChatMessages.list`: not-run / approval-gated.
+- next-page `liveChatMessages.list`: not-run / approval-gated.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Next safe action: keep PL-G3 blocked. Request same-thread exact approval with label `approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519` before running the reviewed first-page-to-next-page diagnostic command. Do not run Start, Stop, target lookup execution, Azure/provider harness, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, or any command that outputs cursor/live target/credential/token/cookie/OAuth/Authorization/provider target/raw provider/raw comment/provider URL query/owner/channel/quota values.
+
 ## Inspected Inputs
 
 - `task.md`

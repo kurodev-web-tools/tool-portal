@@ -78,6 +78,7 @@ export type YouTubeLiveChatPollingSmokeFoundationRequest = {
   tokenMaterialResolver: YouTubeServerOnlyLiveTokenMaterialResolver;
   fetchGoogleApi: YouTubeLiveChatPollingSmokeFetch;
   beforeNextPageRead?: (firstPageResponseMetadata: YouTubeLiveChatPollingSmokeResponseMetadata) => Promise<void>;
+  waitForProviderPollingInterval?: (responseMetadata: YouTubeLiveChatPollingSmokeResponseMetadata) => Promise<void>;
 };
 
 export type YouTubeLiveChatPollingSmokeReadinessGateRequest = Omit<
@@ -256,6 +257,46 @@ export type YouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundationResult
       liveChatTarget: "present" | "absent";
       liveChatPollingDiagnostics: "not-run" | "aborted-before-provider-access" | "failed-bounded-readonly-first-page";
       providerAccess: "not-run" | "liveChatMessages-list-first-page-only";
+      reason: string;
+    });
+
+export type YouTubeLiveChatPollingFreshCommentBoundedShortPollingAttemptMetadata = Omit<
+  YouTubeLiveChatPollingSmokeResponseMetadata,
+  "pollingIntervalMillis"
+> & {
+  attemptRoleLabel: `attempt-${number}`;
+  pollingIntervalPresenceLabel: "present" | "absent";
+};
+
+type YouTubeLiveChatPollingFreshCommentBoundedShortPollingStopReason =
+  | "non-empty-intake-found"
+  | "bounded-max-attempts-reached"
+  | "provider-not-ok";
+
+export type YouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundationResult =
+  | (YouTubeLiveChatPollingSmokeBase & {
+      status: "live-chat-polling-fresh-comment-bounded-short-polling-diagnostics-sanitized-result";
+      ownerBinding: "verified-before-live-chat-polling";
+      liveChatTarget: "present";
+      liveChatPollingDiagnostics: "executed-bounded-readonly-fresh-comment-short-polling";
+      providerAccess: "liveChatMessages-list-bounded-short-polling-only";
+      authorizationHandling: "server-only-header-consumed-never-returned";
+      serverFetchBinding: "resolved-for-server-fetch";
+      attemptResponseMetadata: YouTubeLiveChatPollingFreshCommentBoundedShortPollingAttemptMetadata[];
+      boundedAttemptCount: number;
+      boundedMaxAttempts: 2 | 3;
+      stopReason: YouTubeLiveChatPollingFreshCommentBoundedShortPollingStopReason;
+      unavailableReason: "none" | "next-page-token-absent" | "provider-not-ok";
+    })
+  | (YouTubeLiveChatPollingSmokeBase & {
+      status: YouTubeLiveChatPollingSmokeBlockingStatus | "live-chat-polling-smoke-failed-sanitized";
+      ownerBinding: "not-checked" | "mismatch" | "verified-before-live-chat-polling";
+      liveChatTarget: "present" | "absent";
+      liveChatPollingDiagnostics:
+        | "not-run"
+        | "aborted-before-provider-access"
+        | "failed-bounded-readonly-fresh-comment-short-polling";
+      providerAccess: "not-run" | "liveChatMessages-list-bounded-short-polling-only";
       reason: string;
     });
 
@@ -606,6 +647,119 @@ export async function runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFou
   }
 }
 
+export async function runYouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundation(
+  request: YouTubeLiveChatPollingSmokeFoundationRequest,
+  options: { boundedMaxAttempts?: 2 | 3 } = {}
+): Promise<YouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundationResult> {
+  const readiness = await assessYouTubeLiveChatPollingSmokeReadinessGate(request);
+  if (readiness.status !== "owner-binding-verified-before-live-chat-polling") {
+    return {
+      ...readiness,
+      liveChatPollingDiagnostics:
+        readiness.liveChatPollingSmoke === "aborted-before-provider-access" ? "aborted-before-provider-access" : "not-run"
+    };
+  }
+
+  if (request.ownerAuthorization.status !== "authorized") {
+    return unresolvedFreshCommentBoundedShortPollingDiagnostics(
+      request,
+      "blocked-owner-authorization",
+      "not-checked",
+      "not-run",
+      "not-run",
+      "owner authorization is not confirmed"
+    );
+  }
+
+  const tokenMaterial = await request.tokenMaterialResolver.resolveServerOnlyTokenMaterial({
+    credentialReferenceId: request.credentialReferenceId,
+    ownerUserId: request.ownerAuthorization.ownerUserId,
+    requiredScope: request.requiredScope
+  });
+
+  if (tokenMaterial.status !== "available") {
+    return unresolvedFreshCommentBoundedShortPollingDiagnostics(
+      request,
+      tokenMaterial.status,
+      "verified-before-live-chat-polling",
+      "not-run",
+      "not-run",
+      tokenMaterial.reason
+    );
+  }
+
+  const boundedMaxAttempts = options.boundedMaxAttempts ?? 3;
+  const attemptResponseMetadata: YouTubeLiveChatPollingFreshCommentBoundedShortPollingAttemptMetadata[] = [];
+  let pageToken: string | null = null;
+  let stopReason: YouTubeLiveChatPollingFreshCommentBoundedShortPollingStopReason = "bounded-max-attempts-reached";
+  let unavailableReason: "none" | "next-page-token-absent" | "provider-not-ok" = "none";
+
+  try {
+    for (let attemptIndex = 1; attemptIndex <= boundedMaxAttempts; attemptIndex += 1) {
+      const providerResponse = await request.fetchGoogleApi(
+        createYouTubeLiveChatMessagesListSmokeRequest({
+          serverAuthorizationHeader: tokenMaterial.serverAuthorizationHeader,
+          liveChatId: request.liveChatId.trim(),
+          pageToken
+        })
+      );
+      const responseMetadata = createSanitizedPollingResponseMetadata(providerResponse, pageToken);
+      attemptResponseMetadata.push(createBoundedShortPollingAttemptMetadata(responseMetadata, attemptIndex));
+
+      if (!providerResponse.ok) {
+        stopReason = "provider-not-ok";
+        unavailableReason = "provider-not-ok";
+        break;
+      }
+
+      if (responseMetadata.returnedItemCount > 0) {
+        stopReason = "non-empty-intake-found";
+        break;
+      }
+
+      if (attemptIndex === boundedMaxAttempts) {
+        stopReason = "bounded-max-attempts-reached";
+        break;
+      }
+
+      const nextPageToken = readNextPageTokenValue(providerResponse.body);
+      if (!nextPageToken) {
+        stopReason = "bounded-max-attempts-reached";
+        unavailableReason = "next-page-token-absent";
+        break;
+      }
+
+      await request.waitForProviderPollingInterval?.(responseMetadata);
+      pageToken = nextPageToken;
+    }
+
+    return {
+      ...createBaseResult(request.credentialReferenceId),
+      status: "live-chat-polling-fresh-comment-bounded-short-polling-diagnostics-sanitized-result",
+      ownerBinding: "verified-before-live-chat-polling",
+      liveChatTarget: "present",
+      liveChatPollingDiagnostics: "executed-bounded-readonly-fresh-comment-short-polling",
+      providerAccess: "liveChatMessages-list-bounded-short-polling-only",
+      authorizationHandling: "server-only-header-consumed-never-returned",
+      serverFetchBinding: "resolved-for-server-fetch",
+      attemptResponseMetadata,
+      boundedAttemptCount: attemptResponseMetadata.length,
+      boundedMaxAttempts,
+      stopReason,
+      unavailableReason
+    };
+  } catch {
+    return unresolvedFreshCommentBoundedShortPollingDiagnostics(
+      request,
+      "live-chat-polling-smoke-failed-sanitized",
+      "verified-before-live-chat-polling",
+      "failed-bounded-readonly-fresh-comment-short-polling",
+      "liveChatMessages-list-bounded-short-polling-only",
+      "provider-fetch-failed"
+    );
+  }
+}
+
 function assessPrerequisites(
   request: YouTubeLiveChatPollingSmokeReadinessGateRequest
 ): YouTubeLiveChatPollingSmokeReadinessGateResult | null {
@@ -753,6 +907,28 @@ function unresolvedFirstPageToNextPageDiagnostics(
   };
 }
 
+function unresolvedFreshCommentBoundedShortPollingDiagnostics(
+  request: YouTubeLiveChatPollingSmokeFoundationRequest,
+  status: YouTubeLiveChatPollingSmokeBlockingStatus | "live-chat-polling-smoke-failed-sanitized",
+  ownerBinding: "not-checked" | "mismatch" | "verified-before-live-chat-polling",
+  liveChatPollingDiagnostics:
+    | "not-run"
+    | "aborted-before-provider-access"
+    | "failed-bounded-readonly-fresh-comment-short-polling",
+  providerAccess: "not-run" | "liveChatMessages-list-bounded-short-polling-only",
+  reason: string
+): YouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundationResult {
+  return {
+    ...createBaseResult(request.credentialReferenceId),
+    status,
+    ownerBinding,
+    liveChatTarget: request.liveChatId.trim() ? "present" : "absent",
+    liveChatPollingDiagnostics,
+    providerAccess,
+    reason
+  };
+}
+
 function createSanitizedPollingResponseMetadata(
   providerResponse: YouTubeLiveChatPollingSmokeFetchResult,
   pageToken?: string | null
@@ -795,6 +971,18 @@ function createSanitizedPollingResponseMetadata(
     }),
     itemTypeDistribution: createSanitizedItemTypeDistribution(items),
     textPayload: "not-returned-by-design"
+  };
+}
+
+function createBoundedShortPollingAttemptMetadata(
+  responseMetadata: YouTubeLiveChatPollingSmokeResponseMetadata,
+  attemptIndex: number
+): YouTubeLiveChatPollingFreshCommentBoundedShortPollingAttemptMetadata {
+  const { pollingIntervalMillis, ...metadata } = responseMetadata;
+  return {
+    ...metadata,
+    attemptRoleLabel: `attempt-${attemptIndex}`,
+    pollingIntervalPresenceLabel: pollingIntervalMillis === null ? "absent" : "present"
   };
 }
 

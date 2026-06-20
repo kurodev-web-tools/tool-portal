@@ -161,6 +161,19 @@ Approval state in this thread: not present.
 
 Use this future approval label only after a reviewed command boundary exists for a fresh-comment-after-send diagnostic. The operator sends one fresh visible chat comment at the instructed point, then a very small bounded polling diagnostic may perform at most 2-3 pages/attempts and respect provider polling interval. It must stop on first non-empty sanitized intake, bounded-max-attempts-reached, provider-not-ok, or a missing readiness reference. Output remains limited to attempt/page role label, provider route/status labels, HTTP status label, returned count, pageInfo total/resultsPerPage counts, nextPageToken presence label, polling interval presence/count label, intake diagnostic label, item type distribution counts, bounded attempt count, stop reason label, operator fresh-comment window label, public gate state label, public-release capable label, pass/fail, and unavailableReason only. It must not output, store, document, or hand off cursor values, live target values, provider URL query values, raw comments, raw provider payloads, token/cookie/OAuth/Authorization values, owner ids, provider channel ids, quota values, provider target metadata, or browser storage payloads. This approval must not run Start, Stop, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, cursor regeneration, OAuth flows, token refresh, or any polling loop beyond the reviewed bounded short diagnostic.
 
+After PR #526 fresh-comment bounded short polling command preparation:
+
+```powershell
+$env:PL_G3_FRESH_COMMENT_BOUNDED_SHORT_POLLING_DIAGNOSTICS_APPROVAL_LABEL='approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525'
+node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --execute --approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics --json
+```
+
+Approval state in this thread: not present.
+
+Value-free approval label reference: `PL_G3_FRESH_COMMENT_BOUNDED_SHORT_POLLING_DIAGNOSTICS_APPROVAL_LABEL=approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525`.
+
+The reviewed command boundary blocks before provider access unless the value-free approval label reference matches `approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525`. When approved later, it emits only a sanitized operator instruction on stderr, waits for the operator to send one fresh visible chat comment and press Enter, then performs at most 3 bounded read attempts. It consumes next-page cursors in process memory only, waits for the provider polling interval between empty provider-ok attempts when a next-page cursor is present, and stops on first non-empty sanitized intake, bounded-max-attempts-reached, or provider-not-ok. Output remains limited to attempt/page role label, provider route/status labels, HTTP status label, returned count, pageInfo total/resultsPerPage counts, nextPageToken presence label, polling interval presence label, intake diagnostic label, item type distribution counts, bounded attempt count, stop reason label, operator fresh-comment window label, public gate state label, public-release capable label, pass/fail, and unavailableReason only. This approval must not run Start, Stop, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, cursor regeneration, OAuth flows, token refresh, or any polling loop beyond the reviewed bounded short diagnostic.
+
 Free Azure translation and combined live/provider smoke command review, approval-gated:
 
 ```powershell

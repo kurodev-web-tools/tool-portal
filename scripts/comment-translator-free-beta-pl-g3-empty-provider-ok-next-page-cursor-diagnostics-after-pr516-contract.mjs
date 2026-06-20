@@ -207,10 +207,25 @@ assert.match(
   /same-process first-page-to-next-page command currently has no reviewed operator pause boundary[\s\S]*do not run live\/provider execution until that command gap is implemented and reviewed/i,
   "ready preflight records the after-PR #521 command-preparation blocker"
 );
+assert.match(
+  readyPreflight,
+  /After PR #522 between-pages fresh-comment command preparation/i,
+  "ready preflight records after-PR #522 between-pages command preparation"
+);
+assert.match(
+  readyPreflight,
+  /--approved-live-chat-polling-between-pages-fresh-comment-diagnostics/,
+  "ready preflight records the after-PR #522 between-pages command flag"
+);
+assert.match(
+  readyPreflight,
+  /stderr[\s\S]*waits for the operator to send one fresh visible chat comment and press Enter[\s\S]*stdout remains final JSON only/i,
+  "ready preflight records sanitized stderr operator window and stdout JSON-only boundary"
+);
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521)`/,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522)`/,
   "task.md records current after-PR #516, after-PR #517, after-PR #518, after-PR #519, or after-PR #520 branch"
 );
 assert.match(
@@ -434,6 +449,36 @@ assert.match(
   /Existing command gap: the reviewed first-page-to-next-page command runs both reads back-to-back and has no reviewed operator fresh-comment window/i,
   "task.md records the after-PR #521 command gap"
 );
+assert.match(
+  plG3Doc,
+  /^## Between-pages Fresh-comment Command Preparation After PR #522$/m,
+  "PL-G3 doc records after-PR #522 between-pages command preparation"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-between-pages-fresh-comment-diagnostics-approval-not-present-after-pr522/,
+  "PL-G3 doc records after-PR #522 approval-not-present decision"
+);
+assert.match(
+  plG3Doc,
+  /Prepared command boundary:[\s\S]*--approved-live-chat-polling-between-pages-fresh-comment-diagnostics/,
+  "PL-G3 doc records the prepared between-pages command"
+);
+assert.match(
+  plG3Doc,
+  /sanitized operator instruction on stderr[\s\S]*presses Enter[\s\S]*one bounded next-page read consumes the first-page cursor in process memory only/i,
+  "PL-G3 doc records the same-process operator window"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 Between-pages Fresh-comment Command Preparation After PR #522$/m,
+  "task.md records after-PR #522 latest command preparation"
+);
+assert.match(
+  task,
+  /Prepared command: `node scripts\/comment-translator-youtube-live-chat-polling-smoke-command\.mjs --execute --approved-live-chat-polling-between-pages-fresh-comment-diagnostics --json`/,
+  "task.md records the after-PR #522 prepared command"
+);
 
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");
 assert.match(pollingFoundation, /empty-provider-ok-next-page-present/, "polling foundation labels empty provider-ok next page");
@@ -462,6 +507,21 @@ assert.match(
   pollingCommand,
   /--approved-live-chat-polling-first-page-to-next-page-diagnostics/,
   "polling command exposes a first-page-to-next-page diagnostics-only approval boundary"
+);
+assert.match(
+  pollingCommand,
+  /--approved-live-chat-polling-between-pages-fresh-comment-diagnostics/,
+  "polling command exposes a between-pages fresh-comment diagnostics-only approval boundary"
+);
+assert.match(
+  pollingCommand,
+  /PL_G3_BETWEEN_PAGES_FRESH_COMMENT_DIAGNOSTICS_APPROVAL_LABEL/,
+  "polling command requires the between-pages value-free approval label reference"
+);
+assert.match(
+  pollingCommand,
+  /waitForOperatorFreshCommentWindow/,
+  "polling command includes an operator fresh-comment window before next-page read"
 );
 assert.match(
   pollingCommand,

@@ -34,6 +34,12 @@ const firstPageToNextPageDiagnosticsApprovalLabelReference =
   "PL_G3_FIRST_PAGE_TO_NEXT_PAGE_CURSOR_DIAGNOSTICS_APPROVAL_LABEL";
 const firstPageToNextPageDiagnosticsApprovalLabel =
   "approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519";
+const betweenPagesFreshCommentDiagnosticsApprovalLabelReference =
+  "PL_G3_BETWEEN_PAGES_FRESH_COMMENT_DIAGNOSTICS_APPROVAL_LABEL";
+const betweenPagesFreshCommentDiagnosticsApprovalLabel =
+  "approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521";
+const liveChatPollingApprovalFlags =
+  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics or --approved-live-chat-polling-between-pages-fresh-comment-diagnostics";
 const youtubeReadonlyOAuthScope = "https://www.googleapis.com/auth/youtube.readonly";
 
 function loadTsModule(relativePath) {
@@ -409,6 +415,9 @@ async function main() {
   const hasFirstPageToNextPageDiagnosticsApproval = args.has(
     "--approved-live-chat-polling-first-page-to-next-page-diagnostics"
   );
+  const hasBetweenPagesFreshCommentDiagnosticsApproval = args.has(
+    "--approved-live-chat-polling-between-pages-fresh-comment-diagnostics"
+  );
   const result = preflight({ requireNextPageCursor: hasNextPageDiagnosticsApproval });
 
   if (!result.ok) {
@@ -456,7 +465,8 @@ async function main() {
     hasSmokeApproval,
     hasDiagnosticsApproval,
     hasNextPageDiagnosticsApproval,
-    hasFirstPageToNextPageDiagnosticsApproval
+    hasFirstPageToNextPageDiagnosticsApproval,
+    hasBetweenPagesFreshCommentDiagnosticsApproval
   ].filter(Boolean).length;
 
   if (approvalFlagCount > 1) {
@@ -465,8 +475,7 @@ async function main() {
         status: "blocked-conflicting-live-chat-polling-approval-flags",
         ...createBasePayload(),
         credentialReferenceId: result.payload.credentialReferenceId,
-        requiredFlag:
-          "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics",
+        requiredFlag: liveChatPollingApprovalFlags,
         approvalBoundary: "choose-one-explicit-in-thread-approval-boundary",
         liveChatPollingSmoke: "not-run",
         providerAccess: "not-run"
@@ -482,8 +491,7 @@ async function main() {
         status: "blocked-pending-explicit-live-chat-polling-approval",
         ...createBasePayload(),
         credentialReferenceId: result.payload.credentialReferenceId,
-        requiredFlag:
-          "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics",
+        requiredFlag: liveChatPollingApprovalFlags,
         approvalBoundary: "same-thread-explicit-in-thread-approval-required",
         liveChatPollingSmoke: "not-run",
         providerAccess: "not-run"
@@ -511,6 +519,37 @@ async function main() {
     }
 
     const diagnosticsPayload = await createApprovedFirstPageToNextPageDiagnosticsPayload(
+      result.payload.credentialReferenceId
+    );
+    writeJson(
+      diagnosticsPayload,
+      isFirstPageToNextPageProviderOkDiagnosticsPayload(diagnosticsPayload) ? 0 : 2
+    );
+    return;
+  }
+
+  if (hasBetweenPagesFreshCommentDiagnosticsApproval) {
+    if (
+      readReference(betweenPagesFreshCommentDiagnosticsApprovalLabelReference) !==
+      betweenPagesFreshCommentDiagnosticsApprovalLabel
+    ) {
+      writeJson(
+        {
+          status: "blocked-missing-between-pages-fresh-comment-diagnostics-approval-label",
+          ...createBasePayload(),
+          requiredApprovalLabel: betweenPagesFreshCommentDiagnosticsApprovalLabel,
+          approvalLabelReference: betweenPagesFreshCommentDiagnosticsApprovalLabelReference,
+          approvalBoundary: "same-thread-explicit-in-thread-approval-required-before-provider-access",
+          operatorFreshCommentWindow: "not-run",
+          liveChatPollingDiagnostics: "not-run",
+          providerAccess: "not-run"
+        },
+        2
+      );
+      return;
+    }
+
+    const diagnosticsPayload = await createApprovedBetweenPagesFreshCommentDiagnosticsPayload(
       result.payload.credentialReferenceId
     );
     writeJson(
@@ -632,6 +671,37 @@ async function createApprovedFirstPageToNextPageDiagnosticsPayload(credentialRef
     publicGateStateLabel: "unchanged / blocked",
     publicReleaseCapableLabel: "no",
     translationExecution: "not-run-diagnostics-only"
+  });
+}
+
+async function createApprovedBetweenPagesFreshCommentDiagnosticsPayload(credentialReferenceId) {
+  const foundation = loadTsModule("lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts");
+  const result = await foundation.runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundation({
+    ...createFoundationBaseRequest(credentialReferenceId),
+    beforeNextPageRead: waitForOperatorFreshCommentWindow
+  });
+
+  return sanitizeDiagnosticsPayload({
+    ...result,
+    diagnosticMode: "sanitized-metadata-only",
+    operatorFreshCommentWindow: "completed-before-next-page-read",
+    publicGateStateLabel: "unchanged / blocked",
+    publicReleaseCapableLabel: "no",
+    translationExecution: "not-run-diagnostics-only"
+  });
+}
+
+async function waitForOperatorFreshCommentWindow() {
+  process.stderr.write(
+    "PL-G3 between-pages diagnostic: first-page read completed. Send one fresh visible chat comment, then press Enter to run the bounded next-page read.\n"
+  );
+
+  await new Promise((resolve) => {
+    process.stdin.resume();
+    process.stdin.once("data", () => {
+      process.stdin.pause();
+      resolve();
+    });
   });
 }
 

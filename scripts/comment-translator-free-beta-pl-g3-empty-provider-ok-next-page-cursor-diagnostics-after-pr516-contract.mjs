@@ -170,8 +170,8 @@ assert.match(
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517)`/,
-  "task.md records current after-PR #516 or after-PR #517 branch"
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518)`/,
+  "task.md records current after-PR #516, after-PR #517, or after-PR #518 branch"
 );
 assert.match(
   task,
@@ -230,6 +230,42 @@ assert.match(
   task,
   /Contract gap fixed without live\/provider access[\s\S]*next-page diagnostics-only approval flag/i,
   "task.md records next-page command gap fix"
+);
+
+assert.match(
+  plG3Doc,
+  /^## Operator-local Empty-provider-ok Next-page Cursor Diagnostics Follow-up After PR #518$/m,
+  "PL-G3 doc records after-PR #518 approved follow-up"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-missing-env-fixture-owner-verification-live-chat-readiness-or-target-references-after-pr518/,
+  "PL-G3 doc records after-PR #518 blocker before provider access"
+);
+assert.match(
+  plG3Doc,
+  /page role label \| next-page-diagnostics-approved[\s\S]*provider status label \| not-run-before-provider-access[\s\S]*HTTP status label \| not-run/i,
+  "PL-G3 doc records after-PR #518 sanitized next-page blocker categories"
+);
+assert.match(
+  plG3Doc,
+  /`liveChatMessages\.list`: not-run \/ blocked-before-provider-access/i,
+  "PL-G3 doc records no provider read occurred after PR #518"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 Approved Next-page Cursor Diagnostics Follow-up After PR #518$/m,
+  "task.md records after-PR #518 latest follow-up"
+);
+assert.match(
+  task,
+  /Decision: blocked-missing-env-fixture-owner-verification-live-chat-readiness-or-target-references-after-pr518/,
+  "task.md records after-PR #518 blocker"
+);
+assert.match(
+  task,
+  /Approved command attempt:[\s\S]*stopped before provider access[\s\S]*required operator-local same-process refs\/cursor were unavailable/i,
+  "task.md records after-PR #518 command stopped before provider access"
 );
 
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");

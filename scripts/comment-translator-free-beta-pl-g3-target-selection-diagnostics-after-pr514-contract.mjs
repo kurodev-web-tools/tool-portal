@@ -103,7 +103,7 @@ assert.match(
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520)`/,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521)`/,
   "task.md records current after-PR #514 branch"
 );
 assert.match(

@@ -77,6 +77,7 @@ export type YouTubeLiveChatPollingSmokeFoundationRequest = {
   trustedStatusReader: YouTubeLiveTokenResolutionTrustedStatusReader | null;
   tokenMaterialResolver: YouTubeServerOnlyLiveTokenMaterialResolver;
   fetchGoogleApi: YouTubeLiveChatPollingSmokeFetch;
+  beforeNextPageRead?: (firstPageResponseMetadata: YouTubeLiveChatPollingSmokeResponseMetadata) => Promise<void>;
 };
 
 export type YouTubeLiveChatPollingSmokeReadinessGateRequest = Omit<
@@ -568,6 +569,8 @@ export async function runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFou
         unavailableReason: "first-page-next-page-token-absent"
       };
     }
+
+    await request.beforeNextPageRead?.(firstPageResponseMetadata);
 
     const nextPageResponse = await request.fetchGoogleApi(
       createYouTubeLiveChatMessagesListSmokeRequest({

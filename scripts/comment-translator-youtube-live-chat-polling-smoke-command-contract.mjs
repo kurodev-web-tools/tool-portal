@@ -92,6 +92,26 @@ assert.match(
 );
 assert.match(
   commandSource,
+  /--approved-live-chat-polling-between-pages-fresh-comment-diagnostics/,
+  "command supports explicit same-process between-pages fresh-comment diagnostics approval flag"
+);
+assert.match(
+  commandSource,
+  /PL_G3_BETWEEN_PAGES_FRESH_COMMENT_DIAGNOSTICS_APPROVAL_LABEL/,
+  "command requires value-free after-PR522 approval label for between-pages diagnostics"
+);
+assert.match(
+  commandSource,
+  /waitForOperatorFreshCommentWindow/,
+  "command has a reviewed operator fresh-comment window before next-page read"
+);
+assert.match(
+  commandSource,
+  /process\.stderr\.write/,
+  "operator fresh-comment window prompt uses stderr so stdout remains JSON-only"
+);
+assert.match(
+  commandSource,
   /YOUTUBE_LIVE_CHAT_POLLING_SMOKE_NEXT_PAGE_TOKEN/,
   "command consumes the server-only next-page cursor from an operator-local reference"
 );
@@ -647,6 +667,116 @@ assert.doesNotMatch(
   "first-page-to-next-page diagnostics output never includes cursor, raw comment, or provider values"
 );
 
+const betweenPagesEvents = [];
+const betweenPagesProviderUrls = [];
+const betweenPagesFreshCommentDiagnostic =
+  await foundation.runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundation({
+    credentialReferenceId: "smoke-livechat-polling-reference",
+    expectedProviderChannelReference: "provider-channel-reference-never-returned",
+    liveChatId: "live-chat-id-never-returned",
+    ownerVerificationSmokeSuccess: true,
+    liveChatTargetLookupReadinessConfirmed: true,
+    liveChatTargetPresenceOnlyEvidence: true,
+    ownerAuthorization: {
+      status: "authorized",
+      ownerUserId: "owner-reference-never-returned"
+    },
+    credentialResolutionDisabled: false,
+    requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+    nowIso: "2026-06-09T00:00:00.000Z",
+    trustedStatusReader: {
+      async getCredentialStatus() {
+        return {
+          credentialReferenceId: "smoke-livechat-polling-reference",
+          provider: "youtube",
+          providerChannelId: "provider-channel-reference-never-returned",
+          scopeLabel: "youtube.readonly",
+          scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+          expiresAtIso: "2026-06-09T00:05:00.000Z",
+          expiryStatus: "active",
+          revoked: false,
+          revokedAtIso: null,
+          tokenValue: "never-returned-by-design",
+          refreshTokenValue: "never-returned-by-design",
+          ciphertext: "never-returned-by-design",
+          decryptCapability: "forbidden"
+        };
+      }
+    },
+    tokenMaterialResolver: {
+      async resolveServerOnlyTokenMaterial() {
+        return {
+          status: "available",
+          serverAuthorizationHeader: "server-only-test-authorization",
+          expiresAtIso: "2026-06-09T00:05:00.000Z"
+        };
+      }
+    },
+    async fetchGoogleApi(requestToFetch) {
+      betweenPagesProviderUrls.push(requestToFetch.url);
+
+      if (requestToFetch.pageToken === null) {
+        betweenPagesEvents.push("first-page-read");
+        return {
+          ok: true,
+          status: 200,
+          body: {
+            nextPageToken: "next-page-token-never-returned",
+            pollingIntervalMillis: 5000,
+            pageInfo: {
+              totalResults: 0,
+              resultsPerPage: 0
+            },
+            items: []
+          }
+        };
+      }
+
+      betweenPagesEvents.push("next-page-read");
+      return {
+        ok: true,
+        status: 200,
+        body: {
+          nextPageToken: "second-next-page-token-never-returned",
+          pollingIntervalMillis: 5000,
+          pageInfo: {
+            totalResults: 1,
+            resultsPerPage: 1
+          },
+          items: [
+            {
+              id: "comment-id-never-returned",
+              snippet: {
+                publishedAt: "2026-06-09T00:00:02.000Z",
+                displayMessage: "must-not-cross",
+                type: "textMessageEvent"
+              }
+            }
+          ]
+        }
+      };
+    },
+    async beforeNextPageRead(firstPageMetadata) {
+      betweenPagesEvents.push(`operator-window-${firstPageMetadata.nextPageToken}`);
+    }
+  });
+assert.deepEqual(
+  betweenPagesEvents,
+  ["first-page-read", "operator-window-present", "next-page-read"],
+  "between-pages fresh-comment callback runs after first page and before next-page read without cursor values"
+);
+assert.equal(betweenPagesFreshCommentDiagnostic.nextPageResponseMetadata.returnedItemCount, 1);
+assert.match(
+  betweenPagesProviderUrls[1],
+  /[?&]pageToken=next-page-token-never-returned(?:&|$)/,
+  "between-pages next-page read consumes the first-page cursor in memory only"
+);
+assert.doesNotMatch(
+  JSON.stringify(betweenPagesFreshCommentDiagnostic),
+  /next-page-token-never-returned|second-next-page-token-never-returned|must-not-cross|comment-id-never-returned/,
+  "between-pages diagnostics output never includes cursor, raw comment, or provider values"
+);
+
 const providerOkEmptyNoItems = await foundation.runYouTubeLiveChatPollingSmokeFoundation({
   credentialReferenceId: "smoke-livechat-polling-reference",
   expectedProviderChannelReference: "provider-channel-reference-never-returned",
@@ -1079,7 +1209,7 @@ const executeWithoutApprovalPayload = parseJson(executeWithoutApproval.stdout);
 assert.equal(executeWithoutApprovalPayload.status, "blocked-pending-explicit-live-chat-polling-approval");
 assert.equal(
   executeWithoutApprovalPayload.requiredFlag,
-  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics"
+  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics or --approved-live-chat-polling-between-pages-fresh-comment-diagnostics"
 );
 assert.equal(executeWithoutApprovalPayload.providerAccess, "not-run");
 
@@ -1139,6 +1269,29 @@ assert.equal(
 );
 assert.equal(executeFirstPageToNextPageWithoutSameThreadApprovalPayload.providerAccess, "not-run");
 
+const executeBetweenPagesWithoutSameThreadApproval = spawnSync(
+  process.execPath,
+  [commandPath, "--execute", "--approved-live-chat-polling-between-pages-fresh-comment-diagnostics", "--json"],
+  {
+    cwd: root,
+    env: operatorLocalReadyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(
+  executeBetweenPagesWithoutSameThreadApproval.status,
+  2,
+  "between-pages fresh-comment diagnostics blocks without the after-PR521 exact approval label"
+);
+const executeBetweenPagesWithoutSameThreadApprovalPayload = parseJson(
+  executeBetweenPagesWithoutSameThreadApproval.stdout
+);
+assert.equal(
+  executeBetweenPagesWithoutSameThreadApprovalPayload.status,
+  "blocked-missing-between-pages-fresh-comment-diagnostics-approval-label"
+);
+assert.equal(executeBetweenPagesWithoutSameThreadApprovalPayload.providerAccess, "not-run");
+
 const operatorLocalFirstPageToNextPageApprovedEnv = {
   ...operatorLocalReadyEnv,
   PL_G3_FIRST_PAGE_TO_NEXT_PAGE_CURSOR_DIAGNOSTICS_APPROVAL_LABEL:
@@ -1153,7 +1306,8 @@ for (const payload of [
   executeWithConflictingApprovalPayload,
   checkNextPageEnvPayload,
   executeNextPageWithoutCursorPayload,
-  executeFirstPageToNextPageWithoutSameThreadApprovalPayload
+  executeFirstPageToNextPageWithoutSameThreadApprovalPayload,
+  executeBetweenPagesWithoutSameThreadApprovalPayload
 ]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenField of [
@@ -1180,6 +1334,16 @@ assert.doesNotMatch(
   JSON.stringify(operatorLocalFirstPageToNextPageApprovedEnv),
   /next-page-token-never-returned/,
   "first-page-to-next-page approved env does not require an operator-provided cursor value"
+);
+const operatorLocalBetweenPagesApprovedEnv = {
+  ...operatorLocalReadyEnv,
+  PL_G3_BETWEEN_PAGES_FRESH_COMMENT_DIAGNOSTICS_APPROVAL_LABEL:
+    "approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521"
+};
+assert.doesNotMatch(
+  JSON.stringify(operatorLocalBetweenPagesApprovedEnv),
+  /next-page-token-never-returned/,
+  "between-pages fresh-comment approved env does not require an operator-provided cursor value"
 );
 
 console.log("comment translator YouTube Live Chat polling smoke command contract checks passed");

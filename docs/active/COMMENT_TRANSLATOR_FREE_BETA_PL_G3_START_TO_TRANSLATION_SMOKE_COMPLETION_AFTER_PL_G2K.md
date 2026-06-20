@@ -643,6 +643,38 @@ Execution boundary:
 
 Next safe action: implement and review a minimal same-process operator-window command boundary before any live/provider run with `approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521`. Do not run Start, Stop, target lookup execution, any `liveChatMessages.list`, Azure/provider harness, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, or any command that outputs cursor/live target/credential/token/cookie/OAuth/Authorization/provider target/raw provider/raw comment/provider URL query/owner/channel/quota values.
 
+## Between-pages Fresh-comment Command Preparation After PR #522
+
+Decision: blocked-between-pages-fresh-comment-diagnostics-approval-not-present-after-pr522.
+
+Exact approval label implemented for future use: `approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521`.
+
+Exact approval label present in this thread: not-present.
+
+Prepared command boundary: `node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --execute --approved-live-chat-polling-between-pages-fresh-comment-diagnostics --json`.
+
+Prepared same-process behavior: one first-page `liveChatMessages.list` diagnostic read, sanitized operator instruction on stderr, operator sends one fresh visible chat comment and presses Enter, then one bounded next-page read consumes the first-page cursor in process memory only.
+
+Cursor handling: process-memory-only / not output / not stored / not documented / not placed in env / not placed in PR text / not handed off.
+
+Output boundary: stdout final JSON only; stderr sanitized operator instruction only; no cursor, live target, credential, token, cookie, OAuth, Authorization, provider target, raw provider, raw comment, provider URL query, owner, channel, or quota values.
+
+Execution boundary in this slice:
+
+- Start: not-run.
+- Stop: not-run.
+- target lookup execution: not-run.
+- first-page `liveChatMessages.list`: not-run / approval-gated.
+- next-page `liveChatMessages.list`: not-run / approval-gated.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Next safe action: request same-thread exact approval with label `approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521` only when the operator is ready to run this interactive same-process diagnostic from an operator-local environment. Do not run Start, Stop, target lookup execution, Azure/provider harness, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, or any command that outputs cursor/live target/credential/token/cookie/OAuth/Authorization/provider target/raw provider/raw comment/provider URL query/owner/channel/quota values.
+
 ## Inspected Inputs
 
 - `task.md`

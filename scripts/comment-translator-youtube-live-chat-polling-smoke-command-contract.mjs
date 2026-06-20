@@ -102,6 +102,11 @@ assert.match(
 );
 assert.match(
   commandSource,
+  /--approved-live-chat-polling-same-process-target-refresh-bounded-short-polling-diagnostics/,
+  "command supports explicit same-process target-refresh bounded short polling diagnostics approval flag"
+);
+assert.match(
+  commandSource,
   /PL_G3_BETWEEN_PAGES_FRESH_COMMENT_DIAGNOSTICS_APPROVAL_LABEL/,
   "command requires value-free after-PR522 approval label for between-pages diagnostics"
 );
@@ -109,6 +114,11 @@ assert.match(
   commandSource,
   /PL_G3_FRESH_COMMENT_BOUNDED_SHORT_POLLING_DIAGNOSTICS_APPROVAL_LABEL/,
   "command requires value-free after-PR526 approval label for bounded short polling diagnostics"
+);
+assert.match(
+  commandSource,
+  /PL_G3_SAME_PROCESS_TARGET_REFRESH_BOUNDED_POLLING_DIAGNOSTICS_APPROVAL_LABEL/,
+  "command requires value-free after-PR529 approval label for same-process target-refresh diagnostics"
 );
 assert.match(
   commandSource,
@@ -1351,7 +1361,7 @@ const executeWithoutApprovalPayload = parseJson(executeWithoutApproval.stdout);
 assert.equal(executeWithoutApprovalPayload.status, "blocked-pending-explicit-live-chat-polling-approval");
 assert.equal(
   executeWithoutApprovalPayload.requiredFlag,
-  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics or --approved-live-chat-polling-between-pages-fresh-comment-diagnostics or --approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics"
+  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics or --approved-live-chat-polling-between-pages-fresh-comment-diagnostics or --approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics or --approved-live-chat-polling-same-process-target-refresh-bounded-short-polling-diagnostics"
 );
 assert.equal(executeWithoutApprovalPayload.providerAccess, "not-run");
 
@@ -1463,6 +1473,69 @@ assert.equal(
 assert.equal(executeBoundedShortPollingWithoutSameThreadApprovalPayload.operatorFreshCommentWindow, "not-run");
 assert.equal(executeBoundedShortPollingWithoutSameThreadApprovalPayload.providerAccess, "not-run");
 
+const sameProcessReadyEnv = {
+  ...operatorLocalReadyEnv,
+  YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER: "server-only-test-authorization",
+  YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO: "2099-06-10T00:05:00.000Z"
+};
+delete sameProcessReadyEnv.YOUTUBE_LIVE_CHAT_POLLING_SMOKE_LIVE_CHAT_ID;
+delete sameProcessReadyEnv.YOUTUBE_LIVE_CHAT_POLLING_SMOKE_TARGET_METADATA_PRESENT;
+delete sameProcessReadyEnv.YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_PRESENCE_ONLY_EVIDENCE_CONFIRMED;
+
+const sameProcessCheckEnv = spawnSync(
+  process.execPath,
+  [
+    commandPath,
+    "--check-env-only",
+    "--approved-live-chat-polling-same-process-target-refresh-bounded-short-polling-diagnostics",
+    "--json"
+  ],
+  {
+    cwd: root,
+    env: sameProcessReadyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(
+  sameProcessCheckEnv.status,
+  0,
+  "same-process target-refresh diagnostics preflight does not require an operator-provided live target reference"
+);
+const sameProcessCheckEnvPayload = parseJson(sameProcessCheckEnv.stdout);
+assert.equal(sameProcessCheckEnvPayload.liveChatTarget, "refreshed-in-same-process-before-polling");
+assert.equal(sameProcessCheckEnvPayload.providerAccess, "not-run");
+
+const executeSameProcessWithoutSameThreadApproval = spawnSync(
+  process.execPath,
+  [
+    commandPath,
+    "--execute",
+    "--approved-live-chat-polling-same-process-target-refresh-bounded-short-polling-diagnostics",
+    "--json"
+  ],
+  {
+    cwd: root,
+    env: sameProcessReadyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(
+  executeSameProcessWithoutSameThreadApproval.status,
+  2,
+  "same-process target-refresh diagnostics blocks without the after-PR529 exact approval label"
+);
+const executeSameProcessWithoutSameThreadApprovalPayload = parseJson(
+  executeSameProcessWithoutSameThreadApproval.stdout
+);
+assert.equal(
+  executeSameProcessWithoutSameThreadApprovalPayload.status,
+  "blocked-missing-same-process-target-refresh-bounded-polling-diagnostics-approval-label"
+);
+assert.equal(executeSameProcessWithoutSameThreadApprovalPayload.liveChatTargetLookup, "not-run");
+assert.equal(executeSameProcessWithoutSameThreadApprovalPayload.liveChatPollingDiagnostics, "not-run");
+assert.equal(executeSameProcessWithoutSameThreadApprovalPayload.operatorFreshCommentWindow, "not-run");
+assert.equal(executeSameProcessWithoutSameThreadApprovalPayload.providerAccess, "not-run");
+
 const operatorLocalFirstPageToNextPageApprovedEnv = {
   ...operatorLocalReadyEnv,
   PL_G3_FIRST_PAGE_TO_NEXT_PAGE_CURSOR_DIAGNOSTICS_APPROVAL_LABEL:
@@ -1479,7 +1552,9 @@ for (const payload of [
   executeNextPageWithoutCursorPayload,
   executeFirstPageToNextPageWithoutSameThreadApprovalPayload,
   executeBetweenPagesWithoutSameThreadApprovalPayload,
-  executeBoundedShortPollingWithoutSameThreadApprovalPayload
+  executeBoundedShortPollingWithoutSameThreadApprovalPayload,
+  sameProcessCheckEnvPayload,
+  executeSameProcessWithoutSameThreadApprovalPayload
 ]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenField of [
@@ -1526,6 +1601,21 @@ assert.doesNotMatch(
   JSON.stringify(operatorLocalBoundedShortPollingApprovedEnv),
   /next-page-token-never-returned/,
   "fresh-comment bounded short polling approved env does not require an operator-provided cursor value"
+);
+const operatorLocalSameProcessApprovedEnv = {
+  ...sameProcessReadyEnv,
+  PL_G3_SAME_PROCESS_TARGET_REFRESH_BOUNDED_POLLING_DIAGNOSTICS_APPROVAL_LABEL:
+    "approved-pl-g3-same-process-target-refresh-to-bounded-polling-diagnostics-after-pr529"
+};
+assert.doesNotMatch(
+  JSON.stringify(operatorLocalSameProcessApprovedEnv),
+  /next-page-token-never-returned/,
+  "same-process target-refresh bounded polling approved env does not require an operator-provided cursor value"
+);
+assert.doesNotMatch(
+  JSON.stringify(operatorLocalSameProcessApprovedEnv),
+  /YOUTUBE_LIVE_CHAT_POLLING_SMOKE_LIVE_CHAT_ID/,
+  "same-process target-refresh bounded polling approved env does not require an operator-provided live target value"
 );
 
 console.log("comment translator YouTube Live Chat polling smoke command contract checks passed");

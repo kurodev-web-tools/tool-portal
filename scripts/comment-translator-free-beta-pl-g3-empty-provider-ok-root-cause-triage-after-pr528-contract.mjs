@@ -142,13 +142,13 @@ assert.match(
 );
 assert.match(
   plG3Doc,
-  /Next smallest proof: implement a separate same-process target-refresh-to-bounded-polling diagnostic boundary before any new provider read/i,
-  "PL-G3 doc identifies the next smallest proof"
+  /Next smallest proof: use the separate same-process target-refresh-to-bounded-polling diagnostic boundary only in a later approval thread/i,
+  "PL-G3 doc identifies the next smallest proof after command preparation"
 );
 assert.match(
   plG3Doc,
-  /Current command-boundary gap: no reviewed command currently refreshes the selected owned live target and then consumes that live target in the same process for the fresh-comment bounded polling read without outputting target or cursor values/i,
-  "PL-G3 doc records the command-boundary gap"
+  /reviewed command now refreshes the selected owned live target and then consumes that live target in the same process for the fresh-comment bounded polling read without outputting target or cursor values/i,
+  "PL-G3 doc records the command boundary is now prepared"
 );
 assert.match(
   plG3Doc,
@@ -157,38 +157,38 @@ assert.match(
 );
 assert.match(
   readyPreflight,
-  /After PR #528 root-cause triage/,
-  "ready preflight records after-PR #528 root-cause triage boundary gap"
+  /After PR #529 same-process target-refresh command preparation/,
+  "ready preflight records after-PR #529 command preparation"
 );
 assert.match(
   readyPreflight,
-  /same-process target-refresh-to-bounded-polling diagnostic boundary is not implemented yet/i,
-  "ready preflight records future command boundary is not safe to run yet"
+  /same-process target-refresh-to-bounded-polling diagnostic boundary is implemented for a future reviewed approval thread/i,
+  "ready preflight records future command boundary is implemented"
 );
 assert.match(
   readyPreflight,
-  /do not request approval for that diagnostic until a reviewed command exists/i,
-  "ready preflight blocks approval request before command implementation"
+  /PL_G3_SAME_PROCESS_TARGET_REFRESH_BOUNDED_POLLING_DIAGNOSTICS_APPROVAL_LABEL/,
+  "ready preflight records value-free same-process approval label reference"
 );
 assert.match(
   task,
-  /Current branch: `codex\/pl-g3-empty-provider-ok-root-cause-triage-after-pr528`/,
-  "task.md records current after-PR #528 branch"
+  /Current branch: `codex\/pl-g3-same-process-target-refresh-boundary`/,
+  "task.md records current after-PR #529 branch"
 );
 assert.match(
   task,
-  /^## Latest PL-G3 Empty-provider-ok Root-cause Triage After PR #528$/m,
-  "task.md records after-PR #528 latest follow-up"
+  /^## Latest PL-G3 Same-process Target-refresh To Bounded Polling Command Boundary After PR #529$/m,
+  "task.md records after-PR #529 latest follow-up"
 );
 assert.match(
   task,
-  /Decision: blocked-empty-provider-ok-root-cause-triage-prepared-after-pr528/,
-  "task.md records after-PR #528 decision"
+  /Decision: blocked-same-process-target-refresh-to-bounded-polling-command-prepared-after-pr529/,
+  "task.md records after-PR #529 decision"
 );
 assert.match(
   task,
-  /Next safe action: implement a separate reviewed same-process target-refresh-to-bounded-polling diagnostic command boundary; do not run provider reads or request approval for it until that boundary exists/i,
-  "task.md records next safe action and command gap"
+  /Next safe action: keep PL-G3 blocked\. Run the same-process target-refresh-to-bounded-polling diagnostic only in a later reviewed approval thread/i,
+  "task.md records next safe action and approval-gated command boundary"
 );
 assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md keeps public gate blocked");
 assert.match(task, /public-release capable label: no/i, "task.md keeps public-release capable no");
@@ -202,8 +202,7 @@ for (const forbiddenFragment of [
   "main promotion: completed",
   "public-release capable label: yes",
   "raw cursor field",
-  "nextPageToken value:",
-  "same-process target-refresh-to-bounded-polling diagnostic boundary is implemented"
+  "nextPageToken value:"
 ]) {
   assert.doesNotMatch(plG3Doc, new RegExp(forbiddenFragment, "i"), `PL-G3 after-PR #528 doc excludes ${forbiddenFragment}`);
   assert.doesNotMatch(task, new RegExp(forbiddenFragment, "i"), `task.md excludes ${forbiddenFragment}`);
@@ -230,8 +229,14 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-target-selection-diagnostics-after-pr514-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-same-process-target-refresh-to-bounded-polling-diagnostics-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
+  "scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs",
+  "lib/comment-translator-youtube-live-chat-target-lookup-foundation.ts"
 ]);
 
 for (const file of changedFiles()) {

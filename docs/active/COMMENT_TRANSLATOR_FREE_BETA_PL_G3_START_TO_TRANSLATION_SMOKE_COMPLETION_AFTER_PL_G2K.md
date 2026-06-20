@@ -56,6 +56,8 @@ After PR #527, the safe execution outcome is `blocked-fresh-comment-bounded-shor
 
 After PR #528, the safe triage outcome is `blocked-empty-provider-ok-root-cause-triage-prepared-after-pr528`: no live/provider execution was run. The existing contracts and evidence mostly refute a malformed polling request shape and the PR #527 auth/owner-binding failure path, weaken cursor-only skipping as the sole explanation, and leave stale or wrong live target reference / operator-visible chat surface mismatch as the smallest remaining proof gap.
 
+After PR #529, the safe implementation outcome is `blocked-same-process-target-refresh-to-bounded-polling-command-prepared-after-pr529`: no live/provider execution was run. The polling command now has a reviewed future diagnostic boundary that refreshes the selected owned live target and passes that selected target to bounded short polling in the same command process, while keeping target and cursor values process-memory-only and out of stdout/docs/PR text/handoff payloads.
+
 ## Execution Decision
 
 - Decision: blocked-empty-polling-intake-after-fresh-chat-after-pr510.
@@ -1054,7 +1056,7 @@ Root-cause hypothesis matrix:
 
 `nextPageToken` presence with returned count 0 refutes target absence, missing required query shape, and immediate provider rejection for those approved reads. It does not refute a stale or wrong live target reference, operator-visible chat surface mismatch, fresh-comment visibility delay, or an API-level empty page for the selected chat.
 
-Next smallest proof: implement a separate same-process target-refresh-to-bounded-polling diagnostic boundary before any new provider read. Current command-boundary gap: no reviewed command currently refreshes the selected owned live target and then consumes that live target in the same process for the fresh-comment bounded polling read without outputting target or cursor values.
+Next smallest proof: use the separate same-process target-refresh-to-bounded-polling diagnostic boundary only in a later approval thread. The reviewed command now refreshes the selected owned live target and then consumes that live target in the same process for the fresh-comment bounded polling read without outputting target or cursor values.
 
 Allowed future sanitized categories:
 
@@ -1083,7 +1085,26 @@ Allowed future sanitized categories:
 
 Forbidden output/storage remains unchanged: no cursor values, live target values, provider URL query values, raw comments, raw provider payloads, token/cookie/OAuth/Authorization values, owner ids, provider channel ids, quota values, provider target metadata, browser storage payloads, PR body expansion, or handoff payload expansion.
 
-Next safe action: keep PL-G3 blocked. Implement the same-process command boundary in a separate contract-first slice, then request a new same-thread exact approval only after the reviewed boundary exists. Do not rerun bounded polling, target lookup, Start, Stop, Azure/OpenAI provider execution, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, or launch gate changes from this triage slice.
+Next safe action: keep PL-G3 blocked. Use the same-process command boundary only in a later reviewed approval thread after the exact approval label is supplied. Do not rerun bounded polling, target lookup, Start, Stop, Azure/OpenAI provider execution, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, or launch gate changes from this implementation slice.
+
+## Same-process Target-refresh To Bounded Polling Command Boundary After PR #529
+
+Decision: blocked-same-process-target-refresh-to-bounded-polling-command-prepared-after-pr529.
+
+No Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, production/custom deployed smoke, deploy/upload, remote mutation, public access change, limited public beta open, public launch gate flip, cursor regeneration, OAuth flow, or token refresh was run in this implementation follow-up.
+
+Reviewed future command shape:
+
+```powershell
+$env:PL_G3_SAME_PROCESS_TARGET_REFRESH_BOUNDED_POLLING_DIAGNOSTICS_APPROVAL_LABEL='approved-pl-g3-same-process-target-refresh-to-bounded-polling-diagnostics-after-pr529'
+node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --execute --approved-live-chat-polling-same-process-target-refresh-bounded-short-polling-diagnostics --json
+```
+
+The command blocks before provider access unless the value-free approval label reference matches `approved-pl-g3-same-process-target-refresh-to-bounded-polling-diagnostics-after-pr529`. The future approved path first runs the owned live target lookup in the same command process, keeps the selected live target value in process memory only, emits a sanitized operator fresh-comment instruction on stderr, waits for the operator to press Enter, and then passes the selected in-memory target to the fresh-comment bounded short polling diagnostic.
+
+Allowed output remains limited to request shape labels, target-source labels, target-count labels, selected-target position/role labels, owner-binding status label, provider route/status labels, HTTP status label, returned count, pageInfo total/resultsPerPage counts, nextPageToken presence label, polling interval presence/count label, intake diagnostic label, item type distribution counts, bounded attempt count, stop reason label, operator window label, public gate state label, public-release capable label, pass/fail, and unavailableReason only.
+
+This boundary does not run Start, Stop, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, cursor regeneration, OAuth flows, token refresh, or any polling loop beyond the reviewed diagnostic.
 
 ## Inspected Inputs
 

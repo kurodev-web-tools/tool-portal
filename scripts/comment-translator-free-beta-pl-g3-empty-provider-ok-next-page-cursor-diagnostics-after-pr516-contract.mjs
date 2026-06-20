@@ -742,6 +742,62 @@ assert.match(
   "task.md records no live/provider/UI execution after PR #526"
 );
 
+assert.match(
+  plG3Doc,
+  /^## Approved Fresh-comment Bounded Short Polling Diagnostics After PR #527$/m,
+  "PL-G3 doc records after-PR #527 approved bounded short polling execution"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-fresh-comment-bounded-short-polling-empty-provider-ok-after-pr527/,
+  "PL-G3 doc records after-PR #527 bounded max attempts decision"
+);
+assert.match(
+  plG3Doc,
+  /Exact approval label consumed: `approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525`/,
+  "PL-G3 doc records consumed bounded short polling approval label"
+);
+assert.match(
+  plG3Doc,
+  /attempt-1 provider status[\s\S]*provider-ok[\s\S]*attempt-1 HTTP status[\s\S]*200[\s\S]*attempt-1 returned count[\s\S]*0[\s\S]*attempt-1 nextPageToken presence[\s\S]*present/i,
+  "PL-G3 doc records sanitized attempt-1 provider result"
+);
+assert.match(
+  plG3Doc,
+  /attempt-2 provider status[\s\S]*provider-ok[\s\S]*attempt-2 HTTP status[\s\S]*200[\s\S]*attempt-2 returned count[\s\S]*0[\s\S]*attempt-2 nextPageToken presence[\s\S]*present/i,
+  "PL-G3 doc records sanitized attempt-2 provider result"
+);
+assert.match(
+  plG3Doc,
+  /attempt-3 provider status[\s\S]*provider-ok[\s\S]*attempt-3 HTTP status[\s\S]*200[\s\S]*attempt-3 returned count[\s\S]*0[\s\S]*attempt-3 nextPageToken presence[\s\S]*present/i,
+  "PL-G3 doc records sanitized attempt-3 provider result"
+);
+assert.match(
+  plG3Doc,
+  /boundedAttemptCount \| 3[\s\S]*stopReason \| bounded-max-attempts-reached[\s\S]*translationExecution \| not-run-diagnostics-only/i,
+  "PL-G3 doc records bounded max attempts and no translation execution"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 Approved Fresh-comment Bounded Short Polling Diagnostics After PR #527$/m,
+  "task.md records after-PR #527 latest approved bounded short polling execution"
+);
+assert.match(
+  task,
+  /Decision: blocked-fresh-comment-bounded-short-polling-empty-provider-ok-after-pr527/,
+  "task.md records after-PR #527 decision"
+);
+assert.match(
+  task,
+  /attempt-1: provider-ok \/ HTTP 200 \/ returned count 0 \/ nextPageToken presence present[\s\S]*attempt-2: provider-ok \/ HTTP 200 \/ returned count 0 \/ nextPageToken presence present[\s\S]*attempt-3: provider-ok \/ HTTP 200 \/ returned count 0 \/ nextPageToken presence present/i,
+  "task.md records sanitized bounded short polling attempt results"
+);
+assert.match(
+  task,
+  /stop reason label: bounded-max-attempts-reached[\s\S]*Azure\/OpenAI provider execution: not-run[\s\S]*UI\/feed confirmation: not-run/i,
+  "task.md records bounded stop reason and no Azure/UI execution"
+);
+
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");
 assert.match(pollingFoundation, /empty-provider-ok-next-page-present/, "polling foundation labels empty provider-ok next page");
 assert.match(

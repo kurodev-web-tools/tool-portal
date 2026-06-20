@@ -179,7 +179,7 @@ assert.match(gapAudit, /PL-G5[\s\S]*Public launch gate decision/i, "gap audit re
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g5-public-launch-gate-decision(?:-follow-up-after-pl-g4)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up|pl-g3-provider-permission-readiness-confirmation-after-pr503|pl-g3-operator-local-provider-permission-confirmation-after-pr504|pl-g3-start-to-translation-retry-after-pr507|pl-g3-token-material-availability-runtime-after-pr508|pl-g3-first-page-next-page-diagnostics-after-pr519|pl-g3-first-page-next-page-diagnostics-after-pr520|pl-g3-between-pages-fresh-comment-diagnostics-after-pr521|pl-g3-between-pages-fresh-comment-command-after-pr522|pl-g3-between-pages-fresh-comment-execution-after-pr523)`/i,
+  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g5-public-launch-gate-decision(?:-follow-up-after-pl-g4)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up|pl-g3-provider-permission-readiness-confirmation-after-pr503|pl-g3-operator-local-provider-permission-confirmation-after-pr504|pl-g3-start-to-translation-retry-after-pr507|pl-g3-token-material-availability-runtime-after-pr508|pl-g3-first-page-next-page-diagnostics-after-pr519|pl-g3-first-page-next-page-diagnostics-after-pr520|pl-g3-between-pages-fresh-comment-diagnostics-after-pr521|pl-g3-between-pages-fresh-comment-command-after-pr522|pl-g3-between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524)`/i,
   "task.md records PL-G5 branch"
 );
 assert.match(task, /PL-G5[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G5 blocked result");

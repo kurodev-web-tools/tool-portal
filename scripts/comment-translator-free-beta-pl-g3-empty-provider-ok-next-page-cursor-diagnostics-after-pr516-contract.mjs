@@ -192,10 +192,25 @@ assert.match(
   /PL_G3_FIRST_PAGE_TO_NEXT_PAGE_CURSOR_DIAGNOSTICS_APPROVAL_LABEL=approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519/,
   "ready preflight records value-free approval label reference"
 );
+assert.match(
+  readyPreflight,
+  /After PR #521 between-pages fresh-comment diagnostics preparation/i,
+  "ready preflight records after-PR #521 between-pages fresh-comment diagnostics boundary"
+);
+assert.match(
+  readyPreflight,
+  /approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521[\s\S]*Approval state in this thread: not present/i,
+  "ready preflight records after-PR #521 approval label is not present"
+);
+assert.match(
+  readyPreflight,
+  /same-process first-page-to-next-page command currently has no reviewed operator pause boundary[\s\S]*do not run live\/provider execution until that command gap is implemented and reviewed/i,
+  "ready preflight records the after-PR #521 command-preparation blocker"
+);
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520)`/,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521)`/,
   "task.md records current after-PR #516, after-PR #517, after-PR #518, after-PR #519, or after-PR #520 branch"
 );
 assert.match(
@@ -378,6 +393,46 @@ assert.match(
   task,
   /first-page `liveChatMessages\.list`: provider-ok \/ returned count 0 \/ nextPageToken presence present[\s\S]*next-page `liveChatMessages\.list`: provider-ok \/ returned count 0 \/ nextPageToken presence present/i,
   "task.md records sanitized first-page and next-page provider results"
+);
+assert.match(
+  plG3Doc,
+  /^## Between-pages Fresh-comment Diagnostics Preparation After PR #521$/m,
+  "PL-G3 doc records after-PR #521 between-pages fresh-comment preparation"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-between-pages-fresh-comment-diagnostics-command-gap-after-pr521/,
+  "PL-G3 doc records after-PR #521 command gap decision"
+);
+assert.match(
+  plG3Doc,
+  /Exact approval label defined for future use: `approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521`[\s\S]*Exact approval label present in this thread: not-present/i,
+  "PL-G3 doc records after-PR #521 approval label absence"
+);
+assert.match(
+  plG3Doc,
+  /desired future boundary[\s\S]*first-page read[\s\S]*operator fresh-comment window[\s\S]*next-page read[\s\S]*cursor remains process-memory-only/i,
+  "PL-G3 doc records the desired future between-pages boundary"
+);
+assert.match(
+  plG3Doc,
+  /Existing command status[\s\S]*not suitable for this approval boundary[\s\S]*no reviewed pause or operator synchronization point/i,
+  "PL-G3 doc records existing command is not suitable for between-pages fresh-comment diagnostics"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 Between-pages Fresh-comment Diagnostics Preparation After PR #521$/m,
+  "task.md records after-PR #521 latest preparation"
+);
+assert.match(
+  task,
+  /Decision: blocked-between-pages-fresh-comment-diagnostics-command-gap-after-pr521/,
+  "task.md records after-PR #521 command gap decision"
+);
+assert.match(
+  task,
+  /Existing command gap: the reviewed first-page-to-next-page command runs both reads back-to-back and has no reviewed operator fresh-comment window/i,
+  "task.md records the after-PR #521 command gap"
 );
 
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");

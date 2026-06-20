@@ -611,6 +611,38 @@ Execution boundary:
 
 Next safe action: keep PL-G3 blocked. The provider accepted both the first-page and next-page diagnostics reads, but both pages returned zero items while nextPageToken presence stayed present. Do not proceed to Free Azure translation, UI/feed confirmation, PL-G4, PL-G5, public access changes, deploy/upload, remote mutation, or additional provider reads without a new same-thread exact approval and sanitized output review.
 
+## Between-pages Fresh-comment Diagnostics Preparation After PR #521
+
+Decision: blocked-between-pages-fresh-comment-diagnostics-command-gap-after-pr521.
+
+Input blocker: after PR #520, the approved same-process first-page-to-next-page diagnostics returned provider-ok on both reads, returned count 0 on both pages, pageInfo total/resultsPerPage count 0 on both pages, nextPageToken presence present on both pages, and polling interval presence present on both pages. A fresh visible chat comment had been sent before command execution, but this did not prove whether a comment sent after first-page cursor acquisition appears on the next-page read.
+
+Exact approval label defined for future use: `approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521`.
+
+Exact approval label present in this thread: not-present.
+
+Desired future boundary: one same-process first-page read, then an operator fresh-comment window, then one bounded next-page read using only the in-memory first-page cursor. The cursor remains process-memory-only and must never be output, stored, documented, placed in env, placed in PR text, exposed in provider URL query output, or handed off.
+
+Existing command status: not suitable for this approval boundary because the reviewed first-page-to-next-page command performs both reads back-to-back with no reviewed pause or operator synchronization point. This slice does not add a live/provider command execution and does not run `liveChatMessages.list`.
+
+Safe future evidence categories remain: page role label, provider route label, provider status label, HTTP status label, returned count, pageInfo total count, pageInfo resultsPerPage count, nextPageToken presence label, polling interval presence label, intake diagnostic label, item type distribution counts, public gate state label, public-release capable label, pass/fail, and unavailableReason.
+
+Execution boundary:
+
+- Start: not-run.
+- Stop: not-run.
+- target lookup execution: not-run.
+- first-page `liveChatMessages.list`: not-run / approval-gated.
+- next-page `liveChatMessages.list`: not-run / approval-gated.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Next safe action: implement and review a minimal same-process operator-window command boundary before any live/provider run with `approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521`. Do not run Start, Stop, target lookup execution, any `liveChatMessages.list`, Azure/provider harness, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, or any command that outputs cursor/live target/credential/token/cookie/OAuth/Authorization/provider target/raw provider/raw comment/provider URL query/owner/channel/quota values.
+
 ## Inspected Inputs
 
 - `task.md`

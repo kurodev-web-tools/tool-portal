@@ -130,6 +130,16 @@ node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --ex
 
 The same command process must already contain the operator-local server-only live target reference, token material reference, owner-binding readiness references, and the value-free approval label reference `PL_G3_FIRST_PAGE_TO_NEXT_PAGE_CURSOR_DIAGNOSTICS_APPROVAL_LABEL=approved-pl-g3-first-page-to-next-page-cursor-diagnostics-after-pr519`. Output must be sanitized to first-page and next-page page role labels, provider route/status labels, HTTP status labels, returned counts, pageInfo total counts, pageInfo resultsPerPage counts, nextPageToken presence labels, polling interval presence labels, intake diagnostic labels, item type distribution counts, public gate state label, public-release capable label, pass/fail, and unavailableReason only. This approval must not run Start, Stop, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, cursor regeneration, or a polling loop beyond the one first-page read plus optional one next-page read.
 
+After PR #521 between-pages fresh-comment diagnostics preparation:
+
+```text
+approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521
+```
+
+Approval state in this thread: not present.
+
+Use this future approval label only after a reviewed command boundary exists for a same-process first-page read, an operator fresh-comment window, and one bounded next-page read. The cursor must remain process-memory-only and must never be printed, stored, documented, placed into env, included in PR text, exposed in provider URL query output, or handed off. The same-process first-page-to-next-page command currently has no reviewed operator pause boundary, so do not run live/provider execution until that command gap is implemented and reviewed. The future reviewed command must keep output to page role labels, provider route/status labels, HTTP status labels, returned counts, pageInfo total/resultsPerPage counts, nextPageToken presence labels, polling interval presence labels, intake diagnostic labels, item type distribution counts, public gate state label, public-release capable label, pass/fail, and unavailableReason only. It must not run Start, Stop, target lookup execution, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, cursor regeneration, or any polling loop beyond the reviewed two-read diagnostic boundary.
+
 Free Azure translation and combined live/provider smoke command review, approval-gated:
 
 ```powershell

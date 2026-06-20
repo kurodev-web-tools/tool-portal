@@ -46,6 +46,8 @@ After PR #513, the safe implementation outcome is `blocked-next-page-target-sele
 
 After PR #523, the safe execution outcome is `blocked-between-pages-fresh-comment-next-page-auth-rejected-after-pr523`: the reviewed between-pages diagnostic consumed the exact approval label, completed the operator fresh-comment window between the first-page read and bounded next-page read, kept the cursor in process memory only, and stopped with next-page provider status label `provider-auth-rejected`. This is not non-empty intake, not a Free Azure translation pass, not UI/feed confirmation, and not public launch readiness.
 
+After PR #524, the safe retry outcome is `blocked-between-pages-fresh-comment-empty-provider-ok-next-page-present-after-pr524`: after the operator refreshed authorization and repaired the expiry reference, both first-page and next-page diagnostic reads returned provider-ok / HTTP 200, but both pages still returned count 0 with nextPageToken presence present. This resolves the after-PR #523 auth-rejected blocker for this retry, but it is still not non-empty intake, not a Free Azure translation pass, not UI/feed confirmation, and not public launch readiness.
+
 ## Execution Decision
 
 - Decision: blocked-empty-polling-intake-after-fresh-chat-after-pr510.
@@ -728,6 +730,63 @@ Execution boundary:
 - public-release capable label: no.
 
 Next safe action: keep PL-G3 blocked. Do not run additional provider reads, Free Azure translation, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, or launch gate changes without a new same-thread exact approval and sanitized output review. A future retry should refresh operator-local authorization immediately before the approved boundary and record only value-free readiness labels plus sanitized diagnostic output.
+
+## Between-pages Fresh-comment Diagnostics Retry After PR #524
+
+Decision: blocked-between-pages-fresh-comment-empty-provider-ok-next-page-present-after-pr524.
+
+Exact approval label consumed: `approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521`.
+
+Operator-local setup: live stream active / access token refreshed locally / expiry reference repaired locally / env dot-sourced without printing values.
+
+Prior same-thread retry attempt after PR #524: provider access not-run / blocked before `liveChatMessages.list` because the operator-local token material expiry reference was missing.
+
+Operator fresh-comment window: completed-before-next-page-read. The fresh visible comment was sent after the first-page diagnostic read and before the bounded next-page read.
+
+Sanitized execution evidence:
+
+| Check | Label / count | Pass-fail | unavailableReason |
+| --- | --- | --- | --- |
+| first-page provider status | provider-ok | pass | none |
+| first-page HTTP status | 200 | pass | none |
+| first-page returned count | 0 | fail-for-start-to-translation | none |
+| first-page pageInfo total count | 0 | fail-for-start-to-translation | none |
+| first-page pageInfo resultsPerPage count | 0 | fail-for-start-to-translation | none |
+| first-page nextPageToken presence | present | pass-for-diagnostics | none |
+| first-page polling interval presence | present | pass-for-diagnostics | none |
+| first-page intake diagnostic | empty-provider-ok-next-page-present | fail-for-start-to-translation | none |
+| first-page item type distribution | empty | fail-for-start-to-translation | none |
+| next-page provider status | provider-ok | pass | none |
+| next-page HTTP status | 200 | pass | none |
+| next-page returned count | 0 | fail-for-start-to-translation | none |
+| next-page pageInfo total count | 0 | fail-for-start-to-translation | none |
+| next-page pageInfo resultsPerPage count | 0 | fail-for-start-to-translation | none |
+| next-page nextPageToken presence | present | pass-for-diagnostics | none |
+| next-page polling interval presence | present | pass-for-diagnostics | none |
+| next-page intake diagnostic | empty-provider-ok-next-page-present | fail-for-start-to-translation | none |
+| next-page item type distribution | empty | fail-for-start-to-translation | none |
+| nextPageRead | executed-with-first-page-cursor-in-memory-only | pass | none |
+| operatorFreshCommentWindow | completed-before-next-page-read | pass | none |
+| translationExecution | not-run-diagnostics-only | pass | none |
+| public gate state label | unchanged / blocked | pass | none |
+| public-release capable label | no | pass | none |
+
+Execution boundary:
+
+- Start: not-run.
+- Stop: not-run.
+- target lookup execution: not-run.
+- first-page `liveChatMessages.list`: executed / diagnostics-only / provider-ok / returned count 0.
+- next-page `liveChatMessages.list`: executed / diagnostics-only / provider-ok / returned count 0.
+- cursor handling: consumed in process memory only / not output / not stored / not documented.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Next safe action: keep PL-G3 blocked. The auth-rejected blocker is resolved for this retry, but the fresh between-pages comment still did not appear in either bounded diagnostics page. Do not run additional provider reads, Free Azure translation, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, or launch gate changes without a new same-thread exact approval and sanitized output review.
 
 ## Inspected Inputs
 

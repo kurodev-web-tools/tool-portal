@@ -225,7 +225,7 @@ assert.match(
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523)`/,
+  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524)`/,
   "task.md records current after-PR #516, after-PR #517, after-PR #518, after-PR #519, or after-PR #520 branch"
 );
 assert.match(
@@ -533,6 +533,51 @@ assert.match(
   task,
   /Operator fresh-comment window: completed-before-next-page-read[\s\S]*fresh visible comment was sent after the first-page diagnostic read and before the bounded next-page read/i,
   "task.md records the fresh-comment window execution"
+);
+assert.match(
+  plG3Doc,
+  /^## Between-pages Fresh-comment Diagnostics Retry After PR #524$/m,
+  "PL-G3 doc records after-PR #524 between-pages fresh-comment retry"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-between-pages-fresh-comment-empty-provider-ok-next-page-present-after-pr524/,
+  "PL-G3 doc records after-PR #524 empty-provider-ok decision"
+);
+assert.match(
+  plG3Doc,
+  /Prior same-thread retry attempt after PR #524: provider access not-run[\s\S]*expiry reference was missing/i,
+  "PL-G3 doc records the pre-provider expiry-reference blocker"
+);
+assert.match(
+  plG3Doc,
+  /Operator fresh-comment window: completed-before-next-page-read[\s\S]*fresh visible comment was sent after the first-page diagnostic read and before the bounded next-page read/i,
+  "PL-G3 doc records the after-PR #524 between-pages fresh-comment timing"
+);
+assert.match(
+  plG3Doc,
+  /first-page provider status \| provider-ok[\s\S]*first-page HTTP status \| 200[\s\S]*first-page returned count \| 0[\s\S]*first-page nextPageToken presence \| present/i,
+  "PL-G3 doc records sanitized first-page after-PR #524 result"
+);
+assert.match(
+  plG3Doc,
+  /next-page provider status \| provider-ok[\s\S]*next-page HTTP status \| 200[\s\S]*next-page returned count \| 0[\s\S]*next-page nextPageToken presence \| present/i,
+  "PL-G3 doc records sanitized next-page after-PR #524 result"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 Between-pages Fresh-comment Diagnostics Retry After PR #524$/m,
+  "task.md records after-PR #524 latest retry"
+);
+assert.match(
+  task,
+  /Decision: blocked-between-pages-fresh-comment-empty-provider-ok-next-page-present-after-pr524/,
+  "task.md records after-PR #524 decision"
+);
+assert.match(
+  task,
+  /first-page `liveChatMessages\.list`: provider-ok \/ HTTP 200 \/ returned count 0 \/ nextPageToken presence present[\s\S]*next-page `liveChatMessages\.list`: provider-ok \/ HTTP 200 \/ returned count 0 \/ nextPageToken presence present/i,
+  "task.md records sanitized first-page and next-page after-PR #524 provider results"
 );
 
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");

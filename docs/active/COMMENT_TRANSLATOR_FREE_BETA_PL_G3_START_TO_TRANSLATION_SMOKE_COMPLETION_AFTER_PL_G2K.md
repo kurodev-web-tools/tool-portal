@@ -54,6 +54,8 @@ After PR #526, the safe implementation outcome is `blocked-fresh-comment-bounded
 
 After PR #527, the safe execution outcome is `blocked-fresh-comment-bounded-short-polling-empty-provider-ok-after-pr527`: the reviewed command boundary consumed the exact approval label and ran bounded short polling diagnostics only. Both approved diagnostic runs returned provider-ok / HTTP 200 with returned count 0 on all three attempts, nextPageToken presence present on every attempt, and stop reason `bounded-max-attempts-reached`. This is still not non-empty intake, not Free Azure translation, not UI/feed confirmation, and not public launch readiness.
 
+After PR #528, the safe triage outcome is `blocked-empty-provider-ok-root-cause-triage-prepared-after-pr528`: no live/provider execution was run. The existing contracts and evidence mostly refute a malformed polling request shape and the PR #527 auth/owner-binding failure path, weaken cursor-only skipping as the sole explanation, and leave stale or wrong live target reference / operator-visible chat surface mismatch as the smallest remaining proof gap.
+
 ## Execution Decision
 
 - Decision: blocked-empty-polling-intake-after-fresh-chat-after-pr510.
@@ -1024,6 +1026,64 @@ Execution boundary:
 - public-release capable label: no.
 
 Next safe action: keep PL-G3 blocked. The approved bounded short polling diagnostic shows provider-ok pages and advancing cursor presence, but still no returned items after fresh comments. Do not advance to Free Azure translation, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, or launch gate changes without a new reviewed hypothesis and exact same-thread approval.
+
+## Empty-provider-ok Root-cause Triage After PR #528
+
+Decision: blocked-empty-provider-ok-root-cause-triage-prepared-after-pr528.
+
+No live/provider, Start, Stop, target lookup execution, cursor regeneration, OAuth flow, token refresh, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, public access change, or launch gate flip was run in this follow-up.
+
+Inputs inspected:
+
+- existing PL-G3 completion evidence through PR #527;
+- FB-L4 ready preflight command boundaries;
+- `liveChatMessages.list` polling command/foundation/contracts;
+- `liveBroadcasts.list` target lookup command/foundation/contracts;
+- prior target-selection diagnostics and task-board records.
+
+Root-cause hypothesis matrix:
+
+| Hypothesis | Current interpretation | Evidence | Next smallest proof |
+| --- | --- | --- | --- |
+| polling request shape | mostly-refuted-as-primary-cause | provider-ok HTTP 200 and nextPageToken present prove the reviewed request was accepted; fields omission cannot explain zero item count | no provider read without new approval |
+| owner binding and credential identity | mostly-refuted-for-PR527-provider-ok-runs | owner binding and token material were verified before polling; PR527 returned provider-ok rather than auth/permission rejection | keep owner-binding label in any future proof |
+| selected target ordering | partially-refuted-but-not-closed | prior target-selection diagnostics showed rank-1, usable-target-count-1, and mismatch-not-indicated; PR527 did not rerun target lookup in the same provider-read boundary | needs same-process target-refresh-to-polling proof |
+| target source or stale live target | remains-plausible | bounded polling consumed an operator-local live target reference while target lookup execution was not run in PR527; empty provider-ok can still happen if the reference points at a different or stale chat surface | needs value-free refreshed-target-source labels |
+| cursor handling | weakened-as-sole-cause | initial-page attempts after a fresh-comment window also returned zero, so next-page-only skipping is not enough to explain the symptom | keep page-role and nextPageToken presence labels |
+| provider delay or hidden item type | possible-but-unsupported | three bounded attempts across two approved runs returned zero items and empty type distribution; no returned item exists to classify | only a future bounded proof can close it |
+
+`nextPageToken` presence with returned count 0 refutes target absence, missing required query shape, and immediate provider rejection for those approved reads. It does not refute a stale or wrong live target reference, operator-visible chat surface mismatch, fresh-comment visibility delay, or an API-level empty page for the selected chat.
+
+Next smallest proof: implement a separate same-process target-refresh-to-bounded-polling diagnostic boundary before any new provider read. Current command-boundary gap: no reviewed command currently refreshes the selected owned live target and then consumes that live target in the same process for the fresh-comment bounded polling read without outputting target or cursor values.
+
+Allowed future sanitized categories:
+
+- request shape labels;
+- target-source labels;
+- target-count labels;
+- selected-target position/role labels;
+- owner-binding status label;
+- provider route label;
+- provider status label;
+- HTTP status label;
+- returned count;
+- pageInfo total count;
+- pageInfo resultsPerPage count;
+- nextPageToken presence label;
+- polling interval presence/count label;
+- intake diagnostic label;
+- item type distribution counts;
+- bounded attempt count;
+- stop reason label;
+- operator window label;
+- public gate state label;
+- public-release capable label;
+- pass/fail;
+- unavailableReason.
+
+Forbidden output/storage remains unchanged: no cursor values, live target values, provider URL query values, raw comments, raw provider payloads, token/cookie/OAuth/Authorization values, owner ids, provider channel ids, quota values, provider target metadata, browser storage payloads, PR body expansion, or handoff payload expansion.
+
+Next safe action: keep PL-G3 blocked. Implement the same-process command boundary in a separate contract-first slice, then request a new same-thread exact approval only after the reviewed boundary exists. Do not rerun bounded polling, target lookup, Start, Stop, Azure/OpenAI provider execution, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, or launch gate changes from this triage slice.
 
 ## Inspected Inputs
 

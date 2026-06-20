@@ -476,25 +476,25 @@ Next safe action: keep PL-G3 blocked. After this branch is reviewed and merged, 
 
 ## Operator-local Empty-provider-ok Next-page Cursor Diagnostics Follow-up After PR #518
 
-Decision: blocked-missing-env-fixture-owner-verification-live-chat-readiness-or-target-references-after-pr518.
+Decision: blocked-missing-live-chat-next-page-cursor-reference-after-pr518.
 
 Exact approval label present in this thread: `approved-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516`.
 
-Approved command attempt outcome:
+Approved command attempt outcome after dot-sourcing the operator-local env file without printing values:
 
 | Category | Label | Pass-fail | unavailableReason |
 | --- | --- | --- | --- |
-| page role label | next-page-diagnostics-approved | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
-| provider route label | liveChatMessages-list-next-page-only | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
-| provider status label | not-run-before-provider-access | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
-| HTTP status label | not-run | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
-| returned count | unavailable | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
-| pageInfo total count | unavailable | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
-| pageInfo resultsPerPage count | unavailable | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
-| nextPageToken presence label | unavailable | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
-| polling interval presence label | unavailable | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
-| intake diagnostic label | unavailable-provider-not-run | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
-| item type distribution counts | unavailable | fail | missing-env-fixture-owner-verification-live-chat-readiness-or-target-references |
+| page role label | next-page-diagnostics-approved | fail | missing-live-chat-next-page-cursor-reference |
+| provider route label | liveChatMessages-list-next-page-only | fail | missing-live-chat-next-page-cursor-reference |
+| provider status label | not-run-before-provider-access | fail | missing-live-chat-next-page-cursor-reference |
+| HTTP status label | not-run | fail | missing-live-chat-next-page-cursor-reference |
+| returned count | unavailable | fail | missing-live-chat-next-page-cursor-reference |
+| pageInfo total count | unavailable | fail | missing-live-chat-next-page-cursor-reference |
+| pageInfo resultsPerPage count | unavailable | fail | missing-live-chat-next-page-cursor-reference |
+| nextPageToken presence label | absent | fail | missing-live-chat-next-page-cursor-reference |
+| polling interval presence label | unavailable | fail | missing-live-chat-next-page-cursor-reference |
+| intake diagnostic label | unavailable-provider-not-run | fail | missing-live-chat-next-page-cursor-reference |
+| item type distribution counts | unavailable | fail | missing-live-chat-next-page-cursor-reference |
 | public gate state label | unchanged / blocked | pass | none |
 | public-release capable label | no | pass | none |
 
@@ -511,7 +511,7 @@ Execution boundary:
 - public gate state label: unchanged / blocked.
 - public-release capable label: no.
 
-Next safe action: run the same reviewed one bounded next-page diagnostic only from an operator-local same-command process that already contains the required refs and server-only cursor. Do not print, store, document, or hand off actual cursor, live target, credential, token, cookie, OAuth, Authorization, provider target metadata, raw provider payload, raw comment, provider URL query, owner id, channel id, or quota values.
+Next safe action: keep PL-G3 blocked until a server-only next-page cursor reference is present in the same operator-local command process. The current approval does not authorize Start, target lookup, first-page read, cursor regeneration, Azure/UI execution, or any public gate action. Do not print, store, document, or hand off actual cursor, live target, credential, token, cookie, OAuth, Authorization, provider target metadata, raw provider payload, raw comment, provider URL query, owner id, channel id, or quota values.
 
 ## Inspected Inputs
 

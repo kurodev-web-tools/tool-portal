@@ -239,7 +239,7 @@ assert.match(
 );
 assert.match(
   plG3Doc,
-  /Decision: blocked-missing-env-fixture-owner-verification-live-chat-readiness-or-target-references-after-pr518/,
+  /Decision: blocked-missing-live-chat-next-page-cursor-reference-after-pr518/,
   "PL-G3 doc records after-PR #518 blocker before provider access"
 );
 assert.match(
@@ -259,13 +259,18 @@ assert.match(
 );
 assert.match(
   task,
-  /Decision: blocked-missing-env-fixture-owner-verification-live-chat-readiness-or-target-references-after-pr518/,
+  /Decision: blocked-missing-live-chat-next-page-cursor-reference-after-pr518/,
   "task.md records after-PR #518 blocker"
 );
 assert.match(
   task,
-  /Approved command attempt:[\s\S]*stopped before provider access[\s\S]*required operator-local same-process refs\/cursor were unavailable/i,
+  /Approved command attempt:[\s\S]*stopped before provider access[\s\S]*server-only next-page cursor reference absent/i,
   "task.md records after-PR #518 command stopped before provider access"
+);
+assert.match(
+  task,
+  /blocked-missing-live-chat-next-page-cursor-reference[\s\S]*No `liveChatMessages\.list` provider read occurred/i,
+  "task.md records after-PR #518 cursor-reference blocker without provider read"
 );
 
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");

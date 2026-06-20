@@ -50,6 +50,8 @@ After PR #524, the safe retry outcome is `blocked-between-pages-fresh-comment-em
 
 After PR #525, the safe preparation outcome is `blocked-fresh-comment-bounded-short-polling-diagnostics-prepared-after-pr525`: because single first-page-to-next-page reads still returned zero items even when the operator sent a fresh visible comment between pages, the next reviewed boundary is a fresh-comment-after-send, very small bounded short polling diagnostic. This is docs/contracts/command-preparation only. It does not implement or run the bounded short polling command, does not perform live/provider reads, and does not advance Azure/UI/public launch readiness.
 
+After PR #526, the safe implementation outcome is `blocked-fresh-comment-bounded-short-polling-command-prepared-after-pr526`: the reviewed command boundary now exists for a future fresh-comment-after-send bounded short polling diagnostic, but the exact approval label is not present in this thread and no live/provider access was run.
+
 ## Execution Decision
 
 - Decision: blocked-empty-polling-intake-after-fresh-chat-after-pr510.
@@ -868,6 +870,51 @@ Execution boundary:
 
 Next safe action: keep PL-G3 blocked. Implement a separate reviewed command boundary only if needed, then request same-thread exact approval with label `approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525` before any bounded short polling provider access. Do not run Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/provider harness, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, or launch gate changes from this preparation slice.
 
+## Fresh-comment Bounded Short Polling Command Preparation After PR #526
+
+Decision: blocked-fresh-comment-bounded-short-polling-command-prepared-after-pr526.
+
+Exact approval label required for future use: `approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525`.
+
+Exact approval label present in this thread: not-present.
+
+Prepared command boundary:
+
+```powershell
+$env:PL_G3_FRESH_COMMENT_BOUNDED_SHORT_POLLING_DIAGNOSTICS_APPROVAL_LABEL='approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525'
+node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --execute --approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics --json
+```
+
+This command boundary blocks before provider access unless the value-free approval label reference is present. When approved in a later same-thread execution, the command emits only a sanitized operator instruction on stderr, waits for the operator to send one fresh visible chat comment and press Enter, then starts the bounded short polling diagnostic. Stdout remains final JSON only.
+
+The diagnostic performs at most 3 attempts. It consumes provider next-page cursors in process memory only, never prints or stores cursor values, and waits for the provider polling interval between empty provider-ok attempts when a next-page cursor is present. The command stops on first non-empty sanitized intake, bounded max attempts reached, provider-not-ok, or missing readiness/reference gates.
+
+Stop reasons:
+
+- non-empty-intake-found;
+- bounded-max-attempts-reached;
+- provider-not-ok.
+
+Allowed output stays limited to attempt/page role label, provider route/status labels, HTTP status label, returned count, pageInfo total/resultsPerPage counts, nextPageToken presence label, polling interval presence label, intake diagnostic label, item type distribution counts, bounded attempt count, stop reason label, operator fresh-comment window label, public gate state label, public-release capable label, pass/fail, and unavailableReason only.
+
+Forbidden output/storage remains cursor values, live target values, provider URL query values, raw comments, raw provider payloads, token/cookie/OAuth/Authorization values, owner ids, provider channel ids, quota values, provider target metadata, browser storage payloads, and handoff payload expansion.
+
+Execution boundary:
+
+- Start: not-run.
+- Stop: not-run.
+- target lookup execution: not-run.
+- bounded short polling: not-run / approval-gated.
+- `liveChatMessages.list`: not-run in this after-PR #526 command-preparation slice.
+- Azure/OpenAI provider execution: not-run.
+- UI/feed confirmation: not-run.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+
+Next safe action: keep PL-G3 blocked. Request same-thread exact approval with label `approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525` only after operator readiness is confirmed, then run only the reviewed command boundary above. Do not run Start, Stop, target lookup execution, Azure/provider harness, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, or launch gate changes from this command-preparation slice.
+
 ## Inspected Inputs
 
 - `task.md`
@@ -886,9 +933,11 @@ Next safe action: keep PL-G3 blocked. Implement a separate reviewed command boun
 - `lib/comment-translator-server-only-live-chat-target-lookup.ts`
 - `lib/comment-translator-bounded-live-chat-polling-wiring.ts`
 - `lib/comment-translator-azure-normal-translation-execution.ts`
+- `lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts`
 - `components/comment-translator/CommentTranslatorDock.tsx`
 - `scripts/comment-translator-youtube-live-chat-target-lookup-command.mjs`
 - `scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs`
+- `scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs`
 - `scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs`
 
 ## Operator-local Readiness Instructions

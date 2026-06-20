@@ -97,8 +97,18 @@ assert.match(
 );
 assert.match(
   commandSource,
+  /--approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics/,
+  "command supports explicit fresh-comment-after-send bounded short polling diagnostics approval flag"
+);
+assert.match(
+  commandSource,
   /PL_G3_BETWEEN_PAGES_FRESH_COMMENT_DIAGNOSTICS_APPROVAL_LABEL/,
   "command requires value-free after-PR522 approval label for between-pages diagnostics"
+);
+assert.match(
+  commandSource,
+  /PL_G3_FRESH_COMMENT_BOUNDED_SHORT_POLLING_DIAGNOSTICS_APPROVAL_LABEL/,
+  "command requires value-free after-PR526 approval label for bounded short polling diagnostics"
 );
 assert.match(
   commandSource,
@@ -174,7 +184,8 @@ for (const exportedName of [
   "assessYouTubeLiveChatPollingSmokeReadinessGate",
   "assessYouTubeLiveChatPollingSmokeTokenMaterialAvailabilityGate",
   "runYouTubeLiveChatPollingSmokeFoundation",
-  "runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundation"
+  "runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundation",
+  "runYouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundation"
 ]) {
   assert.equal(
     typeof foundation[exportedName],
@@ -440,6 +451,137 @@ assert.equal(ownerMismatch.status, "owner-verification-mismatch-aborted");
 assert.equal(ownerMismatch.providerAccess, "not-run");
 assert.equal(tokenMaterialResolutionCount, 0, "owner mismatch aborts before token material");
 assert.equal(providerFetchCount, 0, "owner mismatch aborts before provider fetch");
+
+const boundedShortPollingProviderRequests = [];
+const boundedShortPolling = await foundation.runYouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundation({
+  credentialReferenceId: "smoke-livechat-polling-reference",
+  expectedProviderChannelReference: "provider-channel-reference-never-returned",
+  liveChatId: "live-chat-id-never-returned",
+  ownerVerificationSmokeSuccess: true,
+  liveChatTargetLookupReadinessConfirmed: true,
+  liveChatTargetPresenceOnlyEvidence: true,
+  ownerAuthorization: {
+    status: "authorized",
+    ownerUserId: "owner-reference-never-returned"
+  },
+  credentialResolutionDisabled: false,
+  requiredScope: "https://www.googleapis.com/auth/youtube.readonly",
+  nowIso: "2026-06-09T00:00:00.000Z",
+  trustedStatusReader: {
+    async getCredentialStatus() {
+      return {
+        credentialReferenceId: "smoke-livechat-polling-reference",
+        provider: "youtube",
+        providerChannelId: "provider-channel-reference-never-returned",
+        scopeLabel: "youtube.readonly",
+        scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
+        expiresAtIso: "2026-06-09T00:05:00.000Z",
+        expiryStatus: "active",
+        revoked: false,
+        revokedAtIso: null,
+        tokenValue: "never-returned-by-design",
+        refreshTokenValue: "never-returned-by-design",
+        ciphertext: "never-returned-by-design",
+        decryptCapability: "forbidden"
+      };
+    }
+  },
+  tokenMaterialResolver: {
+    async resolveServerOnlyTokenMaterial() {
+      return {
+        status: "available",
+        serverAuthorizationHeader: "server-only-test-authorization",
+        expiresAtIso: "2026-06-09T00:05:00.000Z"
+      };
+    }
+  },
+  async waitForProviderPollingInterval(metadata) {
+    boundedShortPollingProviderRequests.push({
+      waitAfterAttempt: boundedShortPollingProviderRequests.length,
+      pollingIntervalPresenceLabel: metadata.pollingIntervalMillis === null ? "absent" : "present"
+    });
+  },
+  async fetchGoogleApi(request) {
+    boundedShortPollingProviderRequests.push({
+      pageToken: request.pageToken,
+      liveChatId: request.liveChatId,
+      authorization: request.headers.Authorization,
+      url: request.url
+    });
+
+    if (boundedShortPollingProviderRequests.filter((entry) => "pageToken" in entry).length === 1) {
+      return {
+        ok: true,
+        status: 200,
+        body: {
+          nextPageToken: "first-bounded-next-page-token-never-returned",
+          pollingIntervalMillis: 5000,
+          pageInfo: { totalResults: 0, resultsPerPage: 0 },
+          items: []
+        }
+      };
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      body: {
+        nextPageToken: "second-bounded-next-page-token-never-returned",
+        pollingIntervalMillis: 5000,
+        pageInfo: { totalResults: 1, resultsPerPage: 1 },
+        items: [
+          {
+            id: "bounded-comment-id-never-returned",
+            snippet: {
+              type: "textMessageEvent",
+              displayMessage: "must-not-cross"
+            }
+          }
+        ]
+      }
+    };
+  }
+});
+assert.equal(
+  boundedShortPolling.status,
+  "live-chat-polling-fresh-comment-bounded-short-polling-diagnostics-sanitized-result"
+);
+assert.equal(boundedShortPolling.liveChatPollingDiagnostics, "executed-bounded-readonly-fresh-comment-short-polling");
+assert.equal(boundedShortPolling.providerAccess, "liveChatMessages-list-bounded-short-polling-only");
+assert.equal(boundedShortPolling.boundedAttemptCount, 2);
+assert.equal(boundedShortPolling.boundedMaxAttempts, 3);
+assert.equal(boundedShortPolling.stopReason, "non-empty-intake-found");
+assert.equal(boundedShortPolling.unavailableReason, "none");
+assert.equal(boundedShortPolling.attemptResponseMetadata.length, 2);
+assert.equal(boundedShortPolling.attemptResponseMetadata[0].attemptRoleLabel, "attempt-1");
+assert.equal(boundedShortPolling.attemptResponseMetadata[0].nextPageToken, "present");
+assert.equal(boundedShortPolling.attemptResponseMetadata[0].pollingIntervalPresenceLabel, "present");
+assert.equal(boundedShortPolling.attemptResponseMetadata[0].returnedItemCount, 0);
+assert.equal(boundedShortPolling.attemptResponseMetadata[1].attemptRoleLabel, "attempt-2");
+assert.equal(boundedShortPolling.attemptResponseMetadata[1].returnedItemCount, 1);
+assert.equal(boundedShortPolling.attemptResponseMetadata[1].itemTypeDistribution.textMessageEvent, 1);
+assert.equal(
+  boundedShortPollingProviderRequests.filter((entry) => "pageToken" in entry).length,
+  2,
+  "fresh-comment bounded short polling stops on first non-empty sanitized intake"
+);
+assert.equal(
+  boundedShortPollingProviderRequests.filter((entry) => "waitAfterAttempt" in entry).length,
+  1,
+  "fresh-comment bounded short polling respects provider polling interval between empty attempts"
+);
+assert.deepEqual(
+  boundedShortPollingProviderRequests
+    .filter((entry) => "pageToken" in entry)
+    .map((entry) => entry.pageToken === null ? "initial" : "present-withheld"),
+  ["initial", "present-withheld"],
+  "fresh-comment bounded short polling consumes cursors in memory only"
+);
+assert.doesNotMatch(
+  JSON.stringify(boundedShortPolling),
+  /first-bounded-next-page-token-never-returned|second-bounded-next-page-token-never-returned|bounded-comment-id-never-returned|must-not-cross|server-only-test-authorization|live-chat-id-never-returned/,
+  "fresh-comment bounded short polling output omits cursor, raw comment, auth, and live target values"
+);
 
 const consumedAuthorizationHeaders = [];
 const consumedLiveChatIds = [];
@@ -1209,7 +1351,7 @@ const executeWithoutApprovalPayload = parseJson(executeWithoutApproval.stdout);
 assert.equal(executeWithoutApprovalPayload.status, "blocked-pending-explicit-live-chat-polling-approval");
 assert.equal(
   executeWithoutApprovalPayload.requiredFlag,
-  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics or --approved-live-chat-polling-between-pages-fresh-comment-diagnostics"
+  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics or --approved-live-chat-polling-between-pages-fresh-comment-diagnostics or --approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics"
 );
 assert.equal(executeWithoutApprovalPayload.providerAccess, "not-run");
 
@@ -1292,6 +1434,35 @@ assert.equal(
 );
 assert.equal(executeBetweenPagesWithoutSameThreadApprovalPayload.providerAccess, "not-run");
 
+const executeBoundedShortPollingWithoutSameThreadApproval = spawnSync(
+  process.execPath,
+  [
+    commandPath,
+    "--execute",
+    "--approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics",
+    "--json"
+  ],
+  {
+    cwd: root,
+    env: operatorLocalReadyEnv,
+    encoding: "utf8"
+  }
+);
+assert.equal(
+  executeBoundedShortPollingWithoutSameThreadApproval.status,
+  2,
+  "fresh-comment bounded short polling diagnostics blocks without the after-PR525 exact approval label"
+);
+const executeBoundedShortPollingWithoutSameThreadApprovalPayload = parseJson(
+  executeBoundedShortPollingWithoutSameThreadApproval.stdout
+);
+assert.equal(
+  executeBoundedShortPollingWithoutSameThreadApprovalPayload.status,
+  "blocked-missing-fresh-comment-bounded-short-polling-diagnostics-approval-label"
+);
+assert.equal(executeBoundedShortPollingWithoutSameThreadApprovalPayload.operatorFreshCommentWindow, "not-run");
+assert.equal(executeBoundedShortPollingWithoutSameThreadApprovalPayload.providerAccess, "not-run");
+
 const operatorLocalFirstPageToNextPageApprovedEnv = {
   ...operatorLocalReadyEnv,
   PL_G3_FIRST_PAGE_TO_NEXT_PAGE_CURSOR_DIAGNOSTICS_APPROVAL_LABEL:
@@ -1307,7 +1478,8 @@ for (const payload of [
   checkNextPageEnvPayload,
   executeNextPageWithoutCursorPayload,
   executeFirstPageToNextPageWithoutSameThreadApprovalPayload,
-  executeBetweenPagesWithoutSameThreadApprovalPayload
+  executeBetweenPagesWithoutSameThreadApprovalPayload,
+  executeBoundedShortPollingWithoutSameThreadApprovalPayload
 ]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenField of [
@@ -1344,6 +1516,16 @@ assert.doesNotMatch(
   JSON.stringify(operatorLocalBetweenPagesApprovedEnv),
   /next-page-token-never-returned/,
   "between-pages fresh-comment approved env does not require an operator-provided cursor value"
+);
+const operatorLocalBoundedShortPollingApprovedEnv = {
+  ...operatorLocalReadyEnv,
+  PL_G3_FRESH_COMMENT_BOUNDED_SHORT_POLLING_DIAGNOSTICS_APPROVAL_LABEL:
+    "approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525"
+};
+assert.doesNotMatch(
+  JSON.stringify(operatorLocalBoundedShortPollingApprovedEnv),
+  /next-page-token-never-returned/,
+  "fresh-comment bounded short polling approved env does not require an operator-provided cursor value"
 );
 
 console.log("comment translator YouTube Live Chat polling smoke command contract checks passed");

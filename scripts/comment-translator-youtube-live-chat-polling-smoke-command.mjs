@@ -3,6 +3,7 @@ import fs from "node:fs";
 import Module from "node:module";
 import path from "node:path";
 import process from "node:process";
+import { scheduler } from "node:timers/promises";
 import ts from "typescript";
 
 const root = process.cwd();
@@ -38,8 +39,12 @@ const betweenPagesFreshCommentDiagnosticsApprovalLabelReference =
   "PL_G3_BETWEEN_PAGES_FRESH_COMMENT_DIAGNOSTICS_APPROVAL_LABEL";
 const betweenPagesFreshCommentDiagnosticsApprovalLabel =
   "approved-pl-g3-between-pages-fresh-comment-diagnostics-after-pr521";
+const freshCommentBoundedShortPollingDiagnosticsApprovalLabelReference =
+  "PL_G3_FRESH_COMMENT_BOUNDED_SHORT_POLLING_DIAGNOSTICS_APPROVAL_LABEL";
+const freshCommentBoundedShortPollingDiagnosticsApprovalLabel =
+  "approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525";
 const liveChatPollingApprovalFlags =
-  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics or --approved-live-chat-polling-between-pages-fresh-comment-diagnostics";
+  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics or --approved-live-chat-polling-between-pages-fresh-comment-diagnostics or --approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics";
 const youtubeReadonlyOAuthScope = "https://www.googleapis.com/auth/youtube.readonly";
 
 function loadTsModule(relativePath) {
@@ -418,6 +423,9 @@ async function main() {
   const hasBetweenPagesFreshCommentDiagnosticsApproval = args.has(
     "--approved-live-chat-polling-between-pages-fresh-comment-diagnostics"
   );
+  const hasFreshCommentBoundedShortPollingDiagnosticsApproval = args.has(
+    "--approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics"
+  );
   const result = preflight({ requireNextPageCursor: hasNextPageDiagnosticsApproval });
 
   if (!result.ok) {
@@ -466,7 +474,8 @@ async function main() {
     hasDiagnosticsApproval,
     hasNextPageDiagnosticsApproval,
     hasFirstPageToNextPageDiagnosticsApproval,
-    hasBetweenPagesFreshCommentDiagnosticsApproval
+    hasBetweenPagesFreshCommentDiagnosticsApproval,
+    hasFreshCommentBoundedShortPollingDiagnosticsApproval
   ].filter(Boolean).length;
 
   if (approvalFlagCount > 1) {
@@ -555,6 +564,37 @@ async function main() {
     writeJson(
       diagnosticsPayload,
       isFirstPageToNextPageProviderOkDiagnosticsPayload(diagnosticsPayload) ? 0 : 2
+    );
+    return;
+  }
+
+  if (hasFreshCommentBoundedShortPollingDiagnosticsApproval) {
+    if (
+      readReference(freshCommentBoundedShortPollingDiagnosticsApprovalLabelReference) !==
+      freshCommentBoundedShortPollingDiagnosticsApprovalLabel
+    ) {
+      writeJson(
+        {
+          status: "blocked-missing-fresh-comment-bounded-short-polling-diagnostics-approval-label",
+          ...createBasePayload(),
+          requiredApprovalLabel: freshCommentBoundedShortPollingDiagnosticsApprovalLabel,
+          approvalLabelReference: freshCommentBoundedShortPollingDiagnosticsApprovalLabelReference,
+          approvalBoundary: "same-thread-explicit-in-thread-approval-required-before-provider-access",
+          operatorFreshCommentWindow: "not-run",
+          liveChatPollingDiagnostics: "not-run",
+          providerAccess: "not-run"
+        },
+        2
+      );
+      return;
+    }
+
+    const diagnosticsPayload = await createApprovedFreshCommentBoundedShortPollingDiagnosticsPayload(
+      result.payload.credentialReferenceId
+    );
+    writeJson(
+      diagnosticsPayload,
+      isFreshCommentBoundedShortPollingDiagnosticsPayload(diagnosticsPayload) ? 0 : 2
     );
     return;
   }
@@ -691,6 +731,24 @@ async function createApprovedBetweenPagesFreshCommentDiagnosticsPayload(credenti
   });
 }
 
+async function createApprovedFreshCommentBoundedShortPollingDiagnosticsPayload(credentialReferenceId) {
+  const foundation = loadTsModule("lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts");
+  await waitForOperatorFreshCommentBeforeBoundedShortPolling();
+  const result = await foundation.runYouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundation({
+    ...createFoundationBaseRequest(credentialReferenceId),
+    waitForProviderPollingInterval
+  });
+
+  return sanitizeDiagnosticsPayload({
+    ...result,
+    diagnosticMode: "sanitized-metadata-only",
+    operatorFreshCommentWindow: "completed-before-bounded-short-polling",
+    publicGateStateLabel: "unchanged / blocked",
+    publicReleaseCapableLabel: "no",
+    translationExecution: "not-run-diagnostics-only"
+  });
+}
+
 async function waitForOperatorFreshCommentWindow() {
   process.stderr.write(
     "PL-G3 between-pages diagnostic: first-page read completed. Send one fresh visible chat comment, then press Enter to run the bounded next-page read.\n"
@@ -703,6 +761,32 @@ async function waitForOperatorFreshCommentWindow() {
       resolve();
     });
   });
+}
+
+async function waitForOperatorFreshCommentBeforeBoundedShortPolling() {
+  process.stderr.write(
+    "PL-G3 bounded short polling diagnostic: send one fresh visible chat comment now, then press Enter to run the bounded short polling diagnostic.\n"
+  );
+
+  await new Promise((resolve) => {
+    process.stdin.resume();
+    process.stdin.once("data", () => {
+      process.stdin.pause();
+      resolve();
+    });
+  });
+}
+
+async function waitForProviderPollingInterval(responseMetadata) {
+  if (
+    typeof responseMetadata.pollingIntervalMillis !== "number" ||
+    !Number.isFinite(responseMetadata.pollingIntervalMillis) ||
+    responseMetadata.pollingIntervalMillis <= 0
+  ) {
+    return;
+  }
+
+  await scheduler.wait(responseMetadata.pollingIntervalMillis);
 }
 
 function sanitizeDiagnosticsPayload(payload) {
@@ -724,5 +808,12 @@ function isFirstPageToNextPageProviderOkDiagnosticsPayload(payload) {
     payload.firstPageResponseMetadata?.providerStatusLabel === "provider-ok" &&
     payload.firstPageResponseMetadata?.nextPageToken === "present" &&
     payload.nextPageResponseMetadata?.providerStatusLabel === "provider-ok"
+  );
+}
+
+function isFreshCommentBoundedShortPollingDiagnosticsPayload(payload) {
+  return (
+    payload.status === "live-chat-polling-fresh-comment-bounded-short-polling-diagnostics-sanitized-result" &&
+    payload.stopReason === "non-empty-intake-found"
   );
 }

@@ -225,7 +225,7 @@ assert.match(
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524|bounded-short-polling-prep-after-pr525)`/,
+  /Current branch: `codex\/(?:comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524|bounded-short-polling-prep-after-pr525)|pl-g3-fresh-comment-bounded-short-polling-command-after-pr526)`/,
   "task.md records current after-PR #516, after-PR #517, after-PR #518, after-PR #519, or after-PR #520 branch"
 );
 assert.match(
@@ -676,6 +676,72 @@ assert.match(
   "task.md records no live/provider/UI execution after PR #525"
 );
 
+assert.match(
+  plG3Doc,
+  /^## Fresh-comment Bounded Short Polling Command Preparation After PR #526$/m,
+  "PL-G3 doc records after-PR #526 bounded short polling command preparation"
+);
+assert.match(
+  plG3Doc,
+  /Decision: blocked-fresh-comment-bounded-short-polling-command-prepared-after-pr526/,
+  "PL-G3 doc records after-PR #526 command preparation decision"
+);
+assert.match(
+  plG3Doc,
+  /Prepared command boundary:[\s\S]*--approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics/,
+  "PL-G3 doc records the after-PR #526 prepared bounded short polling command flag"
+);
+assert.match(
+  plG3Doc,
+  /operator sends one fresh visible chat comment[\s\S]*stderr[\s\S]*bounded short polling diagnostic[\s\S]*at most 3 attempts/i,
+  "PL-G3 doc records the fresh-comment prompt and bounded short polling diagnostic bounds"
+);
+assert.match(
+  plG3Doc,
+  /Stop reasons:[\s\S]*non-empty-intake-found[\s\S]*bounded-max-attempts-reached[\s\S]*provider-not-ok/i,
+  "PL-G3 doc records bounded stop reasons"
+);
+assert.match(
+  plG3Doc,
+  /Start: not-run[\s\S]*Stop: not-run[\s\S]*target lookup execution: not-run[\s\S]*bounded short polling: not-run \/ approval-gated[\s\S]*`liveChatMessages\.list`: not-run in this after-PR #526 command-preparation slice/i,
+  "PL-G3 doc records after-PR #526 command preparation did not run provider access"
+);
+assert.match(
+  readyPreflight,
+  /After PR #526 fresh-comment bounded short polling command preparation/i,
+  "ready preflight records after-PR #526 command boundary"
+);
+assert.match(
+  readyPreflight,
+  /--approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics/,
+  "ready preflight records the after-PR #526 bounded short polling command flag"
+);
+assert.match(
+  readyPreflight,
+  /PL_G3_FRESH_COMMENT_BOUNDED_SHORT_POLLING_DIAGNOSTICS_APPROVAL_LABEL=approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525/,
+  "ready preflight records the after-PR #526 value-free approval label reference"
+);
+assert.match(
+  task,
+  /^## Latest PL-G3 Fresh-comment Bounded Short Polling Command Preparation After PR #526$/m,
+  "task.md records after-PR #526 latest command preparation"
+);
+assert.match(
+  task,
+  /Decision: blocked-fresh-comment-bounded-short-polling-command-prepared-after-pr526/,
+  "task.md records after-PR #526 command preparation decision"
+);
+assert.match(
+  task,
+  /Prepared command: `node scripts\/comment-translator-youtube-live-chat-polling-smoke-command\.mjs --execute --approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics --json`/,
+  "task.md records the after-PR #526 prepared command"
+);
+assert.match(
+  task,
+  /Start: not-run[\s\S]*Stop: not-run[\s\S]*target lookup execution: not-run[\s\S]*bounded short polling: not-run \/ approval-gated[\s\S]*`liveChatMessages\.list`: not-run in this after-PR #526 command-preparation slice/i,
+  "task.md records no live/provider/UI execution after PR #526"
+);
+
 assert.match(pollingFoundation, /nextPageToken:\s*"present"\s*\|\s*"absent"/, "polling foundation returns token presence only");
 assert.match(pollingFoundation, /empty-provider-ok-next-page-present/, "polling foundation labels empty provider-ok next page");
 assert.match(
@@ -711,13 +777,38 @@ assert.match(
 );
 assert.match(
   pollingCommand,
+  /--approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics/,
+  "polling command exposes a fresh-comment bounded short polling diagnostics-only approval boundary"
+);
+assert.match(
+  pollingCommand,
   /PL_G3_BETWEEN_PAGES_FRESH_COMMENT_DIAGNOSTICS_APPROVAL_LABEL/,
   "polling command requires the between-pages value-free approval label reference"
 );
 assert.match(
   pollingCommand,
+  /PL_G3_FRESH_COMMENT_BOUNDED_SHORT_POLLING_DIAGNOSTICS_APPROVAL_LABEL/,
+  "polling command requires the bounded short polling value-free approval label reference"
+);
+assert.match(
+  pollingCommand,
   /waitForOperatorFreshCommentWindow/,
   "polling command includes an operator fresh-comment window before next-page read"
+);
+assert.match(
+  pollingCommand,
+  /waitForOperatorFreshCommentBeforeBoundedShortPolling/,
+  "polling command includes an operator fresh-comment window before bounded short polling"
+);
+assert.match(
+  pollingFoundation,
+  /runYouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundation/,
+  "polling foundation exposes fresh-comment bounded short polling diagnostics"
+);
+assert.match(
+  pollingFoundation,
+  /boundedMaxAttempts[\s\S]*3[\s\S]*stopReason[\s\S]*non-empty-intake-found[\s\S]*bounded-max-attempts-reached[\s\S]*provider-not-ok/i,
+  "polling foundation bounds short polling attempts and emits sanitized stop reasons"
 );
 assert.match(
   pollingCommand,

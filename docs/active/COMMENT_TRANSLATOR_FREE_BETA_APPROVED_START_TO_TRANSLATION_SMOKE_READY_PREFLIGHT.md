@@ -1,8 +1,8 @@
 # Kuro Live Comment Translator Free Beta Approved Start-to-translation Smoke Ready Preflight
 
-Status: FB-L4 approved Start-to-translation smoke ready preflight. Public-release capable: no.
+Status: FB-L4 approved Start-to-translation smoke ready preflight plus partial continuation execution evidence. Public-release capable: no.
 
-Execution state: preflight-ready; not-run in this thread.
+Execution state: partial execution recorded after same-thread exact approval; counts/source/UI evidence still blocked.
 
 This preflight prepares the exact command sequence for later approved Start-to-translation smoke. It does not run remote Supabase migration apply, remote Supabase mutation, deployed durable smoke, session Start, provider target lookup, live target lookup, liveChatMessages.list, Azure/OpenAI provider execution, deploy/upload, Stripe action, main promotion, or public launch gate flip.
 
@@ -198,6 +198,20 @@ I approve running PL-G3 Start-to-translation continuation with approval label ap
 ```
 
 This approval must not reuse the PR #531 diagnostic approval. It must be given in the current execution thread after reviewing this preflight and the sanitized #531 evidence. It must not output raw provider payloads, raw comments, target values, cursor values, provider target metadata, provider URL query values, liveChatId, owner user id, provider channel id, token/cookie/OAuth values, Authorization header values, quota values, or browser storage payloads.
+
+Observed execution after this approval:
+
+- status route precheck: executed / HTTP 200 / session status label `not-started`;
+- explicit Start: executed / HTTP 200 / session status label `active`;
+- combined server-only live/provider harness: executed / process exit 0;
+- harness parse caveat: wrapper merged stdout/stderr and did not extract returned/eligible/translated/skipped counts or source-attribution labels;
+- explicit Stop: executed / HTTP 200 / session status label `stopped`;
+- post-Stop status: executed / HTTP 200 / session status label `not-started`;
+- UI feed confirmation: not-run / blocked-counts-source-ui-evidence;
+- public gate state label: unchanged / blocked;
+- public-release capable label: no.
+
+Raw stdout/stderr were not printed in the thread. Target values, cursor values, provider target metadata, provider URL query values, Authorization, secrets, raw provider payloads, raw comments, liveChatId, owner user id, provider channel id, quota values, and comment text were not recorded.
 
 Free Azure translation and combined live/provider smoke command review, approval-gated:
 

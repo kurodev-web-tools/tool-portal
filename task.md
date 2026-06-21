@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/pl-g3-diagnostic-boundary-after-pr535`.
+- Current branch: `codex/pl-g3-provider-error-skip-readiness-after-pr536`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch follows up merged PR #535 with contract-first triage only. It does not rerun Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, or UI/feed confirmation. It adds a narrow sanitized diagnostic projection for allowed skip reason counts and source-attribution availability labels, then records why the PR #535 translated count 0 / skipped count 3 / source attribution unavailable result remains blocked. Public gate state label remains unchanged / blocked, and public-release capable label remains no.
+- This branch follows up merged PR #536 with after-PR #536 readiness review only. It does not rerun Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, or UI/feed confirmation. It confirms the reviewed wrapper boundary is sufficient for a later same-thread approved rerun to expose only allowed provider error/skip reason counts and source-attribution availability labels. Public gate state label remains unchanged / blocked, and public-release capable label remains no.
 - Archived previous long board snapshot: `docs/archive/task-board-pre-2026-06-16-free-beta-public-usability-cleanup.md`.
 - Older archived board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
@@ -1338,6 +1338,24 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - Verification: RED `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs` first failed on missing provider-unavailable skip-reason projection and missing after-PR #535 docs/task record. Passing checks after implementation/docs updates: `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs`, changed-files no-secret scan for 6 files, and `git diff --check` with CRLF normalization warnings only.
 - Dependency note: `npm ci --prefer-offline --no-audit --no-fund` failed with `ERR_SSL_CIPHER_OPERATION_FAILED`; `typescript@5.8.3` was restored from the local npm cache into ignored `node_modules` only. No tracked dependency file changed.
 - Unchecked scope: `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run because `eslint`, `tsc`, and `next` bins were unavailable after dependency installation failed. Width checks skipped because no visible UI/CSS/layout/client copy changed.
+
+## PL-G3 Provider Error / Skip Reason Readiness After PR #536
+
+- Active doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`.
+- Ready preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`.
+- Focused contract: `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr536-contract.mjs`.
+- Current branch: `codex/pl-g3-provider-error-skip-readiness-after-pr536`.
+- PR #536 merge commit: `6f515a337381bbbba82ffb3fdbf4bd64abdda703`.
+- Decision: after-pr536-provider-error-skip-reason-boundary-reviewed.
+- Execution boundary: Start, Stop, target lookup execution, liveChatMessages.list, Azure/OpenAI provider execution, and UI/feed confirmation were not run in this follow-up.
+- Readiness conclusion: the reviewed wrapper boundary is sufficient for a later same-thread approved rerun to confirm provider error/skip reason counts without leaking forbidden values. The allowed projection is limited to `languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, returned/eligible/translated/skipped counts, provider request/call counts, stop reason label, unavailableReason, public gate state label, public-release capable label, and pass/fail.
+- Source attribution boundary: `sourceAttributionAvailabilityLabel` value `not-produced-by-provider-harness` means the provider harness does not produce browser/feed source-attribution rows; it is not a UI/feed confirmation.
+- Output handling: raw comments, raw provider payloads, provider target metadata, IDs, cookies, tokens, OAuth values, Authorization headers, quota values, URL query values, raw provider error bodies, and browser storage payloads remain forbidden and were not printed or recorded.
+- Public gate state label: unchanged / blocked.
+- public-release capable label: no.
+- Next safe action: keep public launch blocked. Do not run the wrapper, provider harness, Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip unless this new thread first records same-thread ready preflight, sanitized output review, and exact explicit approval.
+- Verification: RED `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr536-contract.mjs` first failed on the missing after-PR #536 docs/task record. Passing focused checks: `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr536-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs`, and `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`. Attempted provider harness contract `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs` was blocked before execution because local `typescript` was not resolvable; `npm ci --prefer-offline --no-audit --no-fund` was attempted and failed with `ERR_SSL_CIPHER_OPERATION_FAILED`. Changed-files no-secret scan passed for 5 files, including the new contract. `git diff --check` passed with CRLF normalization warnings only.
+- Unchecked scope: `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run because this slice changes docs, deterministic contract metadata, and approved preflight text only; no app runtime, UI, CSS, provider-policy, deployed route, or Next module changed. Width checks skipped because no visible UI/CSS/layout/client copy changed.
 
 ## Previous PL-G3 Empty-provider-ok Root-cause Triage After PR #528
 

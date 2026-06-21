@@ -221,7 +221,7 @@ node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mj
 node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --execute --approved-pl-g3-sanitized-wrapper-after-pr533 --reviewed-provider-harness-child
 ```
 
-Wrapper boundary: captures node child stdout and stderr separately, parses only stdout final JSON, never prints raw stdout/stderr, and emits only command label, route/action/status labels, HTTP status labels when present, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, stop reason label, unavailableReason, usage/source-attribution labels/counts, public gate state label, public-release capable label, and pass/fail. Counts-source-UI evidence remains blocked until a later same-thread exact approved run records parsed counts, source-attribution labels, and browser-visible UI/feed confirmation.
+Wrapper boundary: captures node child stdout and stderr separately, parses only stdout final JSON, never prints raw stdout/stderr, and emits only command label, route/action/status labels, HTTP status labels when present, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, skip reason labels/counts (`languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`), stop reason label, unavailableReason, usage/source-attribution labels/counts, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail. Counts-source-UI evidence remains blocked until a later same-thread exact approved run records parsed counts, source-attribution labels, and browser-visible UI/feed confirmation.
 
 UI feed confirmation is browser/manual and must record only:
 
@@ -258,14 +258,23 @@ Allowed output after a later approved run:
 - session status label;
 - target-presence label;
 - provider route label;
+- provider status label;
 - returned count;
 - eligible count;
 - translated count;
 - skipped count;
+- skip reason labels/counts;
+- `languagePolicySkippedCount`;
+- `perMinuteSkippedCount`;
+- `providerUnavailableSkippedCount`;
+- `recoverableErrorCount`;
+- `terminalErrorCount`;
 - usage count or Free cap label;
 - stop reason label;
 - unavailable reason;
 - source attribution label;
+- `sourceAttributionLabel`;
+- `sourceAttributionAvailabilityLabel`;
 - pass/fail state.
 
 Forbidden output:
@@ -282,7 +291,10 @@ Forbidden output:
 - provider target metadata;
 - liveChatId values;
 - raw provider payloads;
+- raw provider error bodies;
 - raw comments;
+- provider target values;
+- URL query values;
 - server-only cursor values;
 - browser storage payloads;
 - handoff payload expansion;

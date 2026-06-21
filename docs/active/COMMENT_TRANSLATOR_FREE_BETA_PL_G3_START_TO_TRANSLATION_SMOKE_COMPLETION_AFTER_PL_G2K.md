@@ -1385,6 +1385,36 @@ Verification for this follow-up:
 - `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run because `eslint`, `tsc`, and `next` bins were unavailable after dependency installation failed. The changed scope is docs plus deterministic script/contract projection only; no app runtime, UI, CSS, provider-policy, deployed route, or Next module changed.
 - Width checks skipped because no visible UI/CSS/layout/client copy changed.
 
+## PL-G3 Provider Error / Skip Reason Readiness After PR #536
+
+Decision: after-pr536-provider-error-skip-reason-boundary-reviewed.
+
+PR #536 merge commit: `6f515a337381bbbba82ffb3fdbf4bd64abdda703`.
+
+This follow-up does not rerun live/provider execution. Start, Stop, target lookup execution, liveChatMessages.list, Azure/OpenAI provider execution, and UI/feed confirmation were not run in this follow-up.
+
+After reviewing `task.md`, this PL-G3 active doc, the approved Start-to-translation preflight, the PR #536 wrapper/contract changes, and the provider harness/provider execution contracts, the reviewed wrapper boundary is sufficient for a later same-thread approved rerun to confirm provider error/skip reason counts without leaking forbidden values.
+
+Allowed wrapper projection for that later approved rerun remains limited to command labels, route/action/status labels, HTTP status labels when present, target-presence labels, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, `languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`, stop reason label, unavailableReason, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail.
+
+The reviewed boundary must not expose raw comments, raw provider payloads, provider target metadata, IDs, cookies, tokens, OAuth values, Authorization headers, quota values, URL query values, raw provider error bodies, browser storage payloads, raw stdout/stderr, or provider target values.
+
+Source attribution boundary: `sourceAttributionAvailabilityLabel` value `not-produced-by-provider-harness` means the provider harness does not produce browser/feed source-attribution rows; it is not a UI/feed confirmation. Browser-visible UI/feed source attribution remains not-run / approval-gated.
+
+Public gate state label: unchanged / blocked. Public-release capable label: no.
+
+Next safe action: keep public launch blocked. Do not run the wrapper, provider harness, Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip unless this new thread first records same-thread ready preflight, sanitized output review, and exact explicit approval.
+
+Verification for this follow-up:
+
+- RED `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr536-contract.mjs` first failed because the after-PR #536 readiness record was missing from this active doc and `task.md`.
+- Passing focused checks: `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr536-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs`, and `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`.
+- Attempted provider harness contract: `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs` was blocked before execution because local `typescript` was not resolvable. `npm ci --prefer-offline --no-audit --no-fund` was attempted and failed with `ERR_SSL_CIPHER_OPERATION_FAILED`; no tracked dependency file changed.
+- Changed-files no-secret scan: passed for 5 files, including the new contract.
+- `git diff --check`: passed with CRLF normalization warnings only.
+- `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run because this slice changes docs, deterministic contract metadata, and approved preflight text only; no app runtime, UI, CSS, provider-policy, deployed route, or Next module changed.
+- Width checks skipped because no visible UI/CSS/layout/client copy changed.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:

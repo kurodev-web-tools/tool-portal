@@ -13,7 +13,7 @@ const taskPath = "task.md";
 const pollingCommandPath = "scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs";
 const providerHarnessPath = "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs";
 
-const continuationDecision = "blocked-start-to-translation-continuation-approval-required-after-pr531";
+const continuationDecision = "partial-start-to-translation-continuation-evidence-recorded-after-pr532";
 const continuationApprovalLabel = "approved-pl-g3-start-to-translation-continuation-after-pr531";
 
 function read(relativePath) {
@@ -69,15 +69,19 @@ const pollingCommand = read(pollingCommandPath);
 const providerHarness = read(providerHarnessPath);
 
 for (const requiredFragment of [
-  "## Start-to-translation Continuation Boundary After PR #531",
+  "## Start-to-translation Continuation Execution After PR #532",
   continuationDecision,
   "PR #531 merge commit `bebd725ffc36c5040d0f518f882be03873976a38`",
+  "PR #532 merge commit `9862bec9528ba89ba648c78e8f674a53086af75c`",
   "same-process target-refresh non-empty intake evidence",
-  "natural child process exit cleanliness is not proven",
-  "Free Azure translation: not-run / approval-gated",
-  "UI/feed confirmation: not-run / approval-gated",
-  "usage/source-attribution evidence: not-run / approval-gated",
-  "Stop after successful intake: not-run / approval-gated",
+  "status route precheck: executed / HTTP 200 / session status label `not-started`",
+  "explicit Start: executed / HTTP 200 / session status label `active`",
+  "server-only live/provider harness: executed / process exit 0",
+  "harness JSON parse caveat",
+  "explicit Stop: executed / HTTP 200 / session status label `stopped`",
+  "post-Stop status: executed / HTTP 200 / session status label `not-started`",
+  "UI/feed confirmation: not-run / blocked-counts-source-ui-evidence",
+  "usage/source-attribution evidence: not-recorded / blocked-wrapper-json-parse",
   "public gate state label: unchanged / blocked",
   "public-release capable label: no",
   continuationApprovalLabel
@@ -90,23 +94,29 @@ for (const requiredFragment of [
   continuationApprovalLabel,
   "limited to the exact status, Start, server-only live target lookup, bounded liveChatMessages.list polling needed to preserve the non-empty intake path, Free Azure translation, UI feed confirmation, usage/source-attribution evidence, and Stop boundary",
   "Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip.",
-  "If polling returns empty intake, provider-not-ok, or a missing readiness reference, stop before Azure/UI and record sanitized blocker labels only."
+  "If polling returns empty intake, provider-not-ok, or a missing readiness reference, stop before Azure/UI and record sanitized blocker labels only.",
+  "Observed execution after this approval",
+  "combined server-only live/provider harness: executed / process exit 0",
+  "harness parse caveat",
+  "UI feed confirmation: not-run / blocked-counts-source-ui-evidence"
 ]) {
   assert.match(readyPreflight, new RegExp(escaped(requiredFragment), "i"), `ready preflight includes ${requiredFragment}`);
 }
 
 for (const requiredFragment of [
-  "Current branch: `codex/pl-g3-start-to-translation-continuation-after-pr531`",
+  "Current branch: `codex/pl-g3-start-to-translation-continuation-execution-after-pr532`",
   "Latest PL-G3 Start-to-translation Continuation Boundary After PR #531",
   continuationDecision,
   continuationApprovalLabel,
   "PR #531 merge commit: `bebd725ffc36c5040d0f518f882be03873976a38`",
   "same-process target-refresh non-empty intake evidence",
-  "natural child process exit cleanliness is not proven",
-  "Free Azure translation: not-run / approval-gated",
-  "UI/feed confirmation: not-run / approval-gated",
-  "usage/source-attribution evidence: not-run / approval-gated",
-  "Stop after successful intake: not-run / approval-gated",
+  "Status returned HTTP 200 / session status label `not-started`",
+  "Start returned HTTP 200 / session status label `active`",
+  "provider execution harness process exited 0",
+  "Stop returned HTTP 200 / session status label `stopped`",
+  "post-Stop status returned HTTP 200 / session status label `not-started`",
+  "UI/feed confirmation remains not-run",
+  "PL-G3 remains partial / blocked for counts, source-attribution, and browser-visible UI/feed evidence",
   "public gate state label: unchanged / blocked",
   "public-release capable label: no"
 ]) {

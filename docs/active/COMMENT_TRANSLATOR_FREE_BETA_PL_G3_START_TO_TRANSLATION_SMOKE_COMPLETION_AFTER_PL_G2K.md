@@ -1291,37 +1291,38 @@ Output handling: raw stdout/stderr were not printed in the thread. The wrapper r
 
 Wrapper caveat: the wrapper parsed sanitized final JSON, but its hard timer killed the child process after final JSON was emitted. No diagnostic child process remained afterward. Natural child process exit cleanliness is not proven by this run.
 
-## Start-to-translation Continuation Boundary After PR #531
+## Start-to-translation Continuation Execution After PR #532
 
-Decision: blocked-start-to-translation-continuation-approval-required-after-pr531.
+Decision: partial-start-to-translation-continuation-evidence-recorded-after-pr532 / blocked-counts-source-ui-evidence.
 
 PR #531 merge commit `bebd725ffc36c5040d0f518f882be03873976a38` records same-process target-refresh non-empty intake evidence only. That evidence closes the stale/wrong target-reference hypothesis enough to justify a later Start-to-translation continuation request, but it remains diagnostic-only: Start was not run in that command, Free Azure translation was not run, UI/feed confirmation was not run, usage/source-attribution evidence was not run, and Stop after successful intake was not run.
 
-Continuation approval label for a later same-thread execution request: `approved-pl-g3-start-to-translation-continuation-after-pr531`.
+PR #532 merge commit `9862bec9528ba89ba648c78e8f674a53086af75c` recorded the reviewed continuation boundary. In this execution branch, same-thread exact approval used label `approved-pl-g3-start-to-translation-continuation-after-pr531`.
 
-Continuation boundary if the release owner approves later:
+Observed sanitized execution evidence:
 
-- status route precheck: approval-gated;
-- explicit Start: approval-gated;
-- server-only live target lookup: approval-gated;
-- bounded `liveChatMessages.list` polling needed to preserve the non-empty intake path: approval-gated;
-- Free Azure translation: not-run / approval-gated;
-- UI/feed confirmation: not-run / approval-gated;
-- usage/source-attribution evidence: not-run / approval-gated;
-- Stop after successful intake: not-run / approval-gated;
+- status route precheck: executed / HTTP 200 / session status label `not-started`;
+- explicit Start: executed / HTTP 200 / session status label `active`;
+- server-only live/provider harness: executed / process exit 0;
+- harness JSON parse caveat: wrapper merged stdout/stderr and did not extract returned/eligible/translated/skipped counts or source-attribution labels;
+- explicit Stop: executed / HTTP 200 / session status label `stopped`;
+- post-Stop status: executed / HTTP 200 / session status label `not-started`;
+- UI/feed confirmation: not-run / blocked-counts-source-ui-evidence;
+- usage/source-attribution evidence: not-recorded / blocked-wrapper-json-parse;
 - public gate state label: unchanged / blocked;
 - public-release capable label: no.
 
-Abort before Azure/UI if the later approved continuation returns empty intake, provider-not-ok, a missing readiness reference, forbidden output, or any unreviewed command expansion. The caveat from PR #531 remains: natural child process exit cleanliness is not proven, because the wrapper hard timer killed the child after sanitized final JSON emission.
+Output handling: raw stdout/stderr were not printed in the thread. Target values, cursor values, provider target metadata, provider URL query values, Authorization, secrets, raw provider payloads, raw comments, liveChatId, owner user id, provider channel id, quota values, and comment text were not recorded.
+
+Caveat: the provider harness process exit code was 0, but this evidence record does not include its sanitized final JSON counts because the wrapper parsed the mixed stdout/stderr stream incorrectly. Do not treat PL-G3 as complete until returned/eligible/translated/skipped counts, source-attribution labels, and browser-visible UI/feed confirmation are recorded from a reviewed sanitized wrapper.
 
 ## What This Does Not Prove
 
-This record does not prove Start-to-translation behavior. It does not prove:
+This record does not complete Start-to-translation behavior. It does not prove:
 
-- Free Azure translation;
-- UI/feed confirmation;
-- usage, stop reason, or source attribution after a live run;
-- Stop after a successful active Start;
+- returned/eligible/translated/skipped count evidence from the provider harness;
+- source attribution after a live run;
+- browser-visible UI/feed confirmation;
 - production/custom deployed smoke;
 - release-owner public launch decision;
 - limited public beta open;
@@ -1340,12 +1341,13 @@ Unchecked scope:
 - one bounded `liveChatMessages.list` polling step: executed / target presence label present / provider route label liveChatMessages-list-one-step-only / returned count 0 / polling interval label unavailable / pass false;
 - polling diagnostics follow-up: HTTP 403 / owner binding verified / token material available / target lookup present / `liveChatMessages.list` provider permission rejected / provider error reason/class label allowlisted / Azure-UI-not-run / public-release capable no;
 - same-process target-refresh diagnostic: executed after same-thread exact approval / target lookup sanitized result / target lookup provider access liveBroadcasts-list-target-lookup-only / live target present / bounded polling provider access liveChatMessages-list-bounded-short-polling-only / bounded attempt count 1 / stop reason label non-empty-intake-found / unavailableReason none / Azure-UI-not-run / public-release capable no;
-- Free Azure translation: not-run / approval-gated;
-- UI/feed confirmation: not-run / approval-gated;
-- usage/source-attribution evidence: not-run / approval-gated;
+- Free Azure translation/provider harness: process exit 0 / counts not-recorded due wrapper JSON parse caveat;
+- UI/feed confirmation: not-run / blocked-counts-source-ui-evidence;
+- usage/source-attribution evidence: not-recorded / blocked-wrapper-json-parse;
 - stop reason: not-run / approval-gated;
 - source attribution: not-run / approval-gated;
-- Stop after successful intake: not-run / approval-gated;
+- Stop after Start: executed / HTTP 200 / session status label stopped / pass true;
+- post-Stop status: executed / HTTP 200 / session status label not-started / pass true;
 - explicit Stop: executed / HTTP 200 / session status label stopped / stop reason label user-stop / pass true;
 - PL-G4 production/custom deployed smoke execution: not-run / approval-gated;
 - deploy/upload: not-run / approval-gated;
@@ -1353,13 +1355,11 @@ Unchecked scope:
 - Stripe live actions and billing setting mutation: not-run / approval-gated;
 - main promotion, limited public beta open, public access change, and public launch gate flip: not-run / approval-gated.
 
-Residual risk: PL-G3 remains incomplete until a later same-thread approved Start-to-translation continuation executes Free Azure translation, UI/feed confirmation, usage/source-attribution evidence, and Stop with sanitized output only. The same-process target-refresh diagnostic produced non-empty intake, but it was diagnostics-only and did not run Azure, UI/feed confirmation, or Stop. Public-release capable remains no.
+Residual risk: PL-G3 remains incomplete. The approved continuation reached Start, server-only live/provider harness execution exit 0, Stop, and post-Stop status, but this record lacks parsed returned/eligible/translated/skipped counts, source-attribution labels, and browser-visible UI/feed confirmation. Public-release capable remains no.
 
 ## Next Safe Action
 
-Use `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md` for the next no-live provider-permission triage and provider-permission readiness follow-up after PL-G5 step. The checklist must stay value-free and operator-local.
-
-Before requesting a later same-thread exact approval, scope the next PL-G3 continuation to the minimum Start-to-translation boundary needed after non-empty intake. Continue only through reviewed Free Azure translation, UI/feed confirmation, usage/source-attribution evidence, and Stop inside that later approved boundary. Do not run additional polling loops, Azure, UI/feed confirmation, public access changes, deploy/upload, remote mutation, or launch gate changes from this diagnostic approval.
+Prepare a reviewed sanitized wrapper that captures node stdout and stderr separately, parses only the final JSON from stdout, and emits only allowed counts/status/stop/source-attribution/public gate labels. Do not rerun provider/live/Azure/UI work without a separate same-thread exact approval. Keep public launch blocked.
 
 ## Completion Verification
 

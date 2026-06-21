@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/pl-g3-continuation-after-pr534-blocked`.
+- Current branch: `codex/pl-g3-diagnostic-boundary-after-pr535`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch follows up merged PR #534 and records the next same-thread approved PL-G3 Start-to-translation continuation through the reviewed sanitized wrapper. It loaded operator-local references from an env-assignment-only script without printing values, restored `typescript` from local npm cache into ignored `node_modules` only, executed status / Start / reviewed wrapper / Stop / post-Stop status, and recorded only sanitized labels/counts. The run parsed stdout final JSON and recorded returned count 3, eligible count 3, provider request count 3, provider call count 3, translated count 0, skipped count 3, source attribution label unavailable, Stop user-stop, and post-Stop not-started. PL-G3 remains partial / blocked because translated output, source-attribution, and browser-visible UI/feed evidence are still incomplete. Public gate state label remains unchanged / blocked, and public-release capable label remains no.
+- This branch follows up merged PR #535 with contract-first triage only. It does not rerun Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, or UI/feed confirmation. It adds a narrow sanitized diagnostic projection for allowed skip reason counts and source-attribution availability labels, then records why the PR #535 translated count 0 / skipped count 3 / source attribution unavailable result remains blocked. Public gate state label remains unchanged / blocked, and public-release capable label remains no.
 - Archived previous long board snapshot: `docs/archive/task-board-pre-2026-06-16-free-beta-public-usability-cleanup.md`.
 - Older archived board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
@@ -1316,6 +1316,28 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - public gate state label: unchanged / blocked.
 - public-release capable label: no.
 - Next safe action: keep public launch blocked. Review the translated count 0 / skipped count 3 / source attribution unavailable result before deciding whether a narrow browser-visible UI/feed confirmation or another provider retry is justified. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip.
+
+## PL-G3 Diagnostic Boundary After PR #535
+
+- Active doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`.
+- Focused contract: `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs`.
+- Current branch: `codex/pl-g3-diagnostic-boundary-after-pr535`.
+- PR #535 merge commit: `e4e9ebf0f9d4276b56d31a182e185835bfef11c3`.
+- Decision: contract-first-triage-after-pr535 / diagnostic-boundary-prepared.
+- Execution boundary: Start, Stop, target lookup execution, liveChatMessages.list, Azure/OpenAI provider execution, and UI/feed confirmation were not run in this follow-up.
+- PR #535 triage input: returned count 3 / eligible count 3 / provider request count 3 / provider call count 3 / translated count 0 / skipped count 3 / source attribution label `unavailable`.
+- Triage conclusion: empty polling intake, language-policy rejection before provider execution, and per-minute cap trimming before provider execution are not the primary explanation because returned, eligible, provider request, and provider call counts were all 3. The narrow remaining sanitized explanation is provider execution completed without translated output.
+- Diagnostic projection added: provider-unavailable skipped count 3 / terminal error count 3 / recoverable error count 0 / language-policy skipped count 0 / per-minute skipped count 0 can be exposed from the existing harness evidence as allowed labels/counts.
+- Source attribution boundary: source attribution availability label `not-produced-by-provider-harness` / source attribution label `unavailable`. This means the provider harness does not produce browser/feed source-attribution rows; UI/feed confirmation remains not-run / requires-browser-visible-evidence-after-wrapper-counts-review.
+- Output handling: raw comments, raw provider payloads, provider error bodies, provider target metadata, IDs, cookies, tokens, OAuth values, Authorization headers, quota values, URL query values, and browser storage payloads remain forbidden and were not printed or recorded.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+- Next safe action: keep public launch blocked. If a later thread gets same-thread ready preflight, sanitized output review, and exact explicit approval, rerun only the reviewed boundary that can confirm provider error class/skip reason counts and then decide whether UI/feed confirmation is meaningful. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip.
+- Verification: RED `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs` first failed on missing provider-unavailable skip-reason projection and missing after-PR #535 docs/task record. Passing checks after implementation/docs updates: `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs`, changed-files no-secret scan for 6 files, and `git diff --check` with CRLF normalization warnings only.
+- Dependency note: `npm ci --prefer-offline --no-audit --no-fund` failed with `ERR_SSL_CIPHER_OPERATION_FAILED`; `typescript@5.8.3` was restored from the local npm cache into ignored `node_modules` only. No tracked dependency file changed.
+- Unchecked scope: `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run because `eslint`, `tsc`, and `next` bins were unavailable after dependency installation failed. Width checks skipped because no visible UI/CSS/layout/client copy changed.
 
 ## Previous PL-G3 Empty-provider-ok Root-cause Triage After PR #528
 

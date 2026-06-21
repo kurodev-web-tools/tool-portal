@@ -130,10 +130,13 @@ for (const [label, source] of [
 const allowedChangedFiles = new Set([
   completionDocPath,
   taskPath,
+  wrapperPath,
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

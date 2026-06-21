@@ -1279,9 +1279,9 @@ This PL-G3 completion record proves:
 - the route/action runtime now preserves the approved smoke order by not using unapproved target lookup as a Start blocker;
 - public gate state remains unchanged / blocked and public-release capable remains no.
 
-## Same-process Target-refresh Diagnostic After PR #530
+## Same-process Target-refresh Diagnostic After PR #530 / PR #531
 
-After PR #530, a non-provider `--check-env-only` preflight passed for the same-process target-refresh-to-bounded-polling diagnostic boundary. It returned status label `ready-for-bounded-live-chat-polling-smoke-command-foundation`, live target label `refreshed-in-same-process-before-polling`, next-page cursor label `not-required-for-this-boundary`, live chat polling label `not-run-preflight-only`, provider access label `not-run`, stderr absent, and sensitive value shape hit count 0.
+After PR #530, a non-provider `--check-env-only` preflight passed for the same-process target-refresh-to-bounded-polling diagnostic boundary. After PR #531 merge commit `bebd725ffc36c5040d0f518f882be03873976a38`, this evidence is recorded on the integration base. The preflight returned status label `ready-for-bounded-live-chat-polling-smoke-command-foundation`, live target label `refreshed-in-same-process-before-polling`, next-page cursor label `not-required-for-this-boundary`, live chat polling label `not-run-preflight-only`, provider access label `not-run`, stderr absent, and sensitive value shape hit count 0.
 
 After same-thread exact approval for the single diagnostic command only, the approved diagnostic returned sanitized final JSON with target refresh label `executed-in-same-process-before-bounded-polling`, target lookup status label `live-chat-target-lookup-sanitized-result`, target lookup provider access label `liveBroadcasts-list-target-lookup-only`, live target label `present`, polling provider access label `liveChatMessages-list-bounded-short-polling-only`, bounded attempt count 1, bounded max attempts 3, stop reason label `non-empty-intake-found`, operator window label `completed-after-target-refresh-before-bounded-polling`, unavailableReason `none`, public gate state label `unchanged / blocked`, and public-release capable label `no`.
 
@@ -1290,6 +1290,29 @@ This evidence shows that the same-process target-refresh boundary can resolve an
 Output handling: raw stdout/stderr were not printed in the thread. The wrapper recorded raw sensitive shape hit count 0 and value sensitive shape hit count 0. Target values, cursor values, provider target metadata, URL query values, Authorization, secrets, raw provider payload, raw comments, liveChatId, owner user id, provider channel id, quota values, and comment text were not recorded.
 
 Wrapper caveat: the wrapper parsed sanitized final JSON, but its hard timer killed the child process after final JSON was emitted. No diagnostic child process remained afterward. Natural child process exit cleanliness is not proven by this run.
+
+## Start-to-translation Continuation Boundary After PR #531
+
+Decision: blocked-start-to-translation-continuation-approval-required-after-pr531.
+
+PR #531 merge commit `bebd725ffc36c5040d0f518f882be03873976a38` records same-process target-refresh non-empty intake evidence only. That evidence closes the stale/wrong target-reference hypothesis enough to justify a later Start-to-translation continuation request, but it remains diagnostic-only: Start was not run in that command, Free Azure translation was not run, UI/feed confirmation was not run, usage/source-attribution evidence was not run, and Stop after successful intake was not run.
+
+Continuation approval label for a later same-thread execution request: `approved-pl-g3-start-to-translation-continuation-after-pr531`.
+
+Continuation boundary if the release owner approves later:
+
+- status route precheck: approval-gated;
+- explicit Start: approval-gated;
+- server-only live target lookup: approval-gated;
+- bounded `liveChatMessages.list` polling needed to preserve the non-empty intake path: approval-gated;
+- Free Azure translation: not-run / approval-gated;
+- UI/feed confirmation: not-run / approval-gated;
+- usage/source-attribution evidence: not-run / approval-gated;
+- Stop after successful intake: not-run / approval-gated;
+- public gate state label: unchanged / blocked;
+- public-release capable label: no.
+
+Abort before Azure/UI if the later approved continuation returns empty intake, provider-not-ok, a missing readiness reference, forbidden output, or any unreviewed command expansion. The caveat from PR #531 remains: natural child process exit cleanliness is not proven, because the wrapper hard timer killed the child after sanitized final JSON emission.
 
 ## What This Does Not Prove
 
@@ -1319,9 +1342,10 @@ Unchecked scope:
 - same-process target-refresh diagnostic: executed after same-thread exact approval / target lookup sanitized result / target lookup provider access liveBroadcasts-list-target-lookup-only / live target present / bounded polling provider access liveChatMessages-list-bounded-short-polling-only / bounded attempt count 1 / stop reason label non-empty-intake-found / unavailableReason none / Azure-UI-not-run / public-release capable no;
 - Free Azure translation: not-run / approval-gated;
 - UI/feed confirmation: not-run / approval-gated;
-- usage: not-run / approval-gated;
+- usage/source-attribution evidence: not-run / approval-gated;
 - stop reason: not-run / approval-gated;
 - source attribution: not-run / approval-gated;
+- Stop after successful intake: not-run / approval-gated;
 - explicit Stop: executed / HTTP 200 / session status label stopped / stop reason label user-stop / pass true;
 - PL-G4 production/custom deployed smoke execution: not-run / approval-gated;
 - deploy/upload: not-run / approval-gated;
@@ -1341,6 +1365,7 @@ Before requesting a later same-thread exact approval, scope the next PL-G3 conti
 
 Required PL-G3 after PL-G2K closeout checks:
 
+- `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs`
@@ -1381,3 +1406,13 @@ Observed verification for the bounded polling empty-intake evidence follow-up:
 - Session start/stop contract: attempted and failed on a pre-existing Free limits expectation that omits `monthlyTranslatedCharacters`, not on the bounded polling evidence.
 
 Width checks skipped because the implementation follow-up changes server route/action/runtime, docs, and contracts only; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or client layout change.
+
+Observed verification for the after-PR #531 Start-to-translation continuation boundary:
+
+- RED `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs` first failed on the missing after-PR #531 continuation section.
+- Passing contracts after docs/task/contract updates: `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`, `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-empty-provider-ok-root-cause-triage-after-pr528-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516-contract.mjs`, `node scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-same-process-target-refresh-to-bounded-polling-diagnostics-contract.mjs`, and `node scripts/comment-translator-youtube-live-chat-target-lookup-command-contract.mjs`.
+- Dependency recovery note: `npm ci --prefer-offline --no-audit --no-fund` failed with `ERR_SSL_CIPHER_OPERATION_FAILED`, and full `npm install --package-lock=false --prefer-online --no-audit --no-fund` timed out. For command-contract verification only, `typescript@5.8.3` was restored from a package tarball without tracked file changes.
+- Changed-files no-secret scan: passed for 10 changed files.
+- `git diff --check`: passed with CRLF normalization warnings only.
+- `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run for this after-PR #531 slice because it changes docs and deterministic contract metadata only; no runtime/UI/Next module logic changed.
+- Width checks skipped because no visible UI/CSS/layout/client copy changed.

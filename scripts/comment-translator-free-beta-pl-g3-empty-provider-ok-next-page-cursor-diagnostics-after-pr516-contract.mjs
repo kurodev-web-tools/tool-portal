@@ -225,7 +225,7 @@ assert.match(
 
 assert.match(
   task,
-  /Current branch: `codex\/(?:comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524|bounded-short-polling-prep-after-pr525)|pl-g3-fresh-comment-bounded-short-polling-command-after-pr526)`/,
+  /Current branch: `codex\/(?:pl-g3-start-to-translation-continuation-after-pr531|comment-translator-free-beta-pl-g3-(?:empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524|bounded-short-polling-prep-after-pr525)|pl-g3-fresh-comment-bounded-short-polling-command-after-pr526)`/,
   "task.md records current after-PR #516, after-PR #517, after-PR #518, after-PR #519, or after-PR #520 branch"
 );
 assert.match(
@@ -929,6 +929,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
   "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",

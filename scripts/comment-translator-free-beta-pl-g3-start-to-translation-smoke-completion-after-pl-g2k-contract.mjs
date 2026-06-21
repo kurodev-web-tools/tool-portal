@@ -271,7 +271,7 @@ assert.match(providerHarness, /approved-private-gated-live-provider-smoke/, "pro
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524)`/i,
+  /Current branch: `codex\/(?:pl-g3-start-to-translation-continuation-after-pr531|comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
   "task.md records PL-G3 after PL-G2K branch"
 );
 assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");
@@ -353,6 +353,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-empty-provider-ok-root-cause-triage-after-pr528-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-same-process-target-refresh-to-bounded-polling-diagnostics-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs",
   "scripts/comment-translator-youtube-live-chat-target-lookup-command-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",

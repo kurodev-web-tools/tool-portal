@@ -187,6 +187,18 @@ node scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs --ex
 
 The future boundary keeps output limited to request shape labels, target-source labels, target-count labels, selected-target position/role labels, owner-binding status label, provider route/status labels, HTTP status label, returned count, pageInfo total/resultsPerPage counts, nextPageToken presence label, polling interval presence/count label, intake diagnostic label, item type distribution counts, bounded attempt count, stop reason label, operator window label, public gate state label, public-release capable label, pass/fail, and unavailableReason. It must not run Start, Stop, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, Stripe action, main promotion, public access change, limited public beta open, public launch gate flip, cursor regeneration, OAuth flows, token refresh, or any polling loop beyond the reviewed diagnostic.
 
+After PR #531 Start-to-translation continuation approval boundary:
+
+Use this approval only if the release owner wants to continue PL-G3 from the recorded same-process target-refresh non-empty intake evidence into the remaining Start-to-translation proof. The exact approval label is `approved-pl-g3-start-to-translation-continuation-after-pr531`.
+
+Exact approval required before execution:
+
+```text
+I approve running PL-G3 Start-to-translation continuation with approval label approved-pl-g3-start-to-translation-continuation-after-pr531, limited to the exact status, Start, server-only live target lookup, bounded liveChatMessages.list polling needed to preserve the non-empty intake path, Free Azure translation, UI feed confirmation, usage/source-attribution evidence, and Stop boundary in docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md. Keep output sanitized to counts/status/stop reasons only, with target-presence, provider-route, unavailable-reason, usage/source-attribution, and public gate labels allowed. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip. If polling returns empty intake, provider-not-ok, or a missing readiness reference, stop before Azure/UI and record sanitized blocker labels only.
+```
+
+This approval must not reuse the PR #531 diagnostic approval. It must be given in the current execution thread after reviewing this preflight and the sanitized #531 evidence. It must not output raw provider payloads, raw comments, target values, cursor values, provider target metadata, provider URL query values, liveChatId, owner user id, provider channel id, token/cookie/OAuth values, Authorization header values, quota values, or browser storage payloads.
+
 Free Azure translation and combined live/provider smoke command review, approval-gated:
 
 ```powershell

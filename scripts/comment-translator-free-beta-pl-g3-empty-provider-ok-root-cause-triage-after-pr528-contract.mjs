@@ -172,7 +172,7 @@ assert.match(
 );
 assert.match(
   task,
-  /Current branch: `codex\/pl-g3-same-process-target-refresh-boundary`/,
+  /Current branch: `codex\/(?:pl-g3-start-to-translation-continuation-after-pr531|pl-g3-same-process-target-refresh-boundary)`/,
   "task.md records current after-PR #529 branch"
 );
 assert.match(
@@ -229,6 +229,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-target-selection-diagnostics-after-pr514-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-same-process-target-refresh-to-bounded-polling-diagnostics-contract.mjs",

@@ -1316,6 +1316,23 @@ Output handling: raw stdout/stderr were not printed in the thread. Target values
 
 Caveat: the provider harness process exit code was 0, but this evidence record does not include its sanitized final JSON counts because the wrapper parsed the mixed stdout/stderr stream incorrectly. Do not treat PL-G3 as complete until returned/eligible/translated/skipped counts, source-attribution labels, and browser-visible UI/feed confirmation are recorded from a reviewed sanitized wrapper.
 
+## Sanitized Wrapper Boundary After PR #533
+
+Decision: reviewed-sanitized-wrapper-boundary-prepared-after-pr533 / no-live-provider-ui-execution.
+
+PR #533 merge commit `e5dc660b192e9edec589980ca41b18d39035bced` recorded the partial PL-G3 continuation evidence and the wrapper parse caveat. This follow-up prepares a deterministic wrapper boundary only. It does not rerun Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, OAuth flows, token refresh, public access changes, PL-G4, PL-G5, or public launch gate flip.
+
+Reviewed wrapper behavior:
+
+- captures node child stdout and stderr separately;
+- parses only the final JSON object from stdout;
+- treats stderr as captured-separate-not-parsed, so operator instructions or warnings on stderr cannot corrupt stdout final JSON parsing;
+- emits only allowed sanitized summary fields: command label, status labels, provider route/execution labels, returned/eligible/translated/skipped counts, provider request/call counts, stop reason label, source-attribution label, public gate state label, public-release capable label, pass/fail, and unavailableReason;
+- fails closed with `stdout-final-json-parse-failed` when stdout does not contain a final JSON object;
+- never prints raw stdout/stderr.
+
+Deterministic fixture coverage proves the wrapper can parse stdout final JSON while stderr contains operator instruction text or JSON-shaped noise. This is not PL-G3 completion evidence: counts-source-UI evidence remains blocked until a later same-thread exact approval runs the reviewed live/provider/UI sequence and records returned/eligible/translated/skipped counts, source-attribution labels, and browser-visible UI/feed evidence. Public gate state remains unchanged / blocked. Public-release capable remains no.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:
@@ -1342,6 +1359,7 @@ Unchecked scope:
 - polling diagnostics follow-up: HTTP 403 / owner binding verified / token material available / target lookup present / `liveChatMessages.list` provider permission rejected / provider error reason/class label allowlisted / Azure-UI-not-run / public-release capable no;
 - same-process target-refresh diagnostic: executed after same-thread exact approval / target lookup sanitized result / target lookup provider access liveBroadcasts-list-target-lookup-only / live target present / bounded polling provider access liveChatMessages-list-bounded-short-polling-only / bounded attempt count 1 / stop reason label non-empty-intake-found / unavailableReason none / Azure-UI-not-run / public-release capable no;
 - Free Azure translation/provider harness: process exit 0 / counts not-recorded due wrapper JSON parse caveat;
+- sanitized wrapper after PR #533: prepared / stdout and stderr separated capture / stdout final JSON parse contract passed with deterministic fixtures / no live-provider-ui execution;
 - UI/feed confirmation: not-run / blocked-counts-source-ui-evidence;
 - usage/source-attribution evidence: not-recorded / blocked-wrapper-json-parse;
 - stop reason: not-run / approval-gated;
@@ -1355,17 +1373,18 @@ Unchecked scope:
 - Stripe live actions and billing setting mutation: not-run / approval-gated;
 - main promotion, limited public beta open, public access change, and public launch gate flip: not-run / approval-gated.
 
-Residual risk: PL-G3 remains incomplete. The approved continuation reached Start, server-only live/provider harness execution exit 0, Stop, and post-Stop status, but this record lacks parsed returned/eligible/translated/skipped counts, source-attribution labels, and browser-visible UI/feed confirmation. Public-release capable remains no.
+Residual risk: PL-G3 remains incomplete. The approved continuation reached Start, server-only live/provider harness execution exit 0, Stop, and post-Stop status, and this follow-up prepares the separated stdout/stderr wrapper boundary, but this record still lacks approved live/provider parsed returned/eligible/translated/skipped counts, source-attribution labels, and browser-visible UI/feed confirmation. Public-release capable remains no.
 
 ## Next Safe Action
 
-Prepare a reviewed sanitized wrapper that captures node stdout and stderr separately, parses only the final JSON from stdout, and emits only allowed counts/status/stop/source-attribution/public gate labels. Do not rerun provider/live/Azure/UI work without a separate same-thread exact approval. Keep public launch blocked.
+Use the reviewed sanitized wrapper only in a later same-thread exact approved execution thread. Do not rerun provider/live/Azure/UI work without that separate approval. Keep public launch blocked.
 
 ## Completion Verification
 
 Required PL-G3 after PL-G2K closeout checks:
 
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs`
+- `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs`

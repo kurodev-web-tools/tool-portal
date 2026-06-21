@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/pl-g3-sanitized-wrapper-boundary-after-pr533`.
+- Current branch: `codex/pl-g3-continuation-after-pr534-blocked`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch follows up merged PR #533 and prepares the reviewed sanitized wrapper boundary for the next PL-G3 Start-to-translation continuation execution. It does not rerun Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, deploy/upload, remote mutation, OAuth flows, token refresh, public access changes, PL-G4, PL-G5, or public launch gate flip. The wrapper captures node child stdout and stderr separately, parses only stdout final JSON, and emits only allowed sanitized summary labels/counts. Deterministic fixtures prove stderr operator instructions or JSON-shaped warnings do not corrupt stdout final JSON parsing. PL-G3 remains partial / blocked for counts, source-attribution, and browser-visible UI/feed evidence until a later same-thread exact approved execution records those values. Public gate state label remains unchanged / blocked, and public-release capable label remains no.
+- This branch follows up merged PR #534 and records the next same-thread approved PL-G3 Start-to-translation continuation through the reviewed sanitized wrapper. It loaded operator-local references from an env-assignment-only script without printing values, restored `typescript` from local npm cache into ignored `node_modules` only, executed status / Start / reviewed wrapper / Stop / post-Stop status, and recorded only sanitized labels/counts. The run parsed stdout final JSON and recorded returned count 3, eligible count 3, provider request count 3, provider call count 3, translated count 0, skipped count 3, source attribution label unavailable, Stop user-stop, and post-Stop not-started. PL-G3 remains partial / blocked because translated output, source-attribution, and browser-visible UI/feed evidence are still incomplete. Public gate state label remains unchanged / blocked, and public-release capable label remains no.
 - Archived previous long board snapshot: `docs/archive/task-board-pre-2026-06-16-free-beta-public-usability-cleanup.md`.
 - Older archived board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
@@ -1289,6 +1289,33 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - public-release capable label: no.
 - Next safe action: use the reviewed sanitized wrapper only in a later same-thread exact approved execution thread. Do not rerun provider/live/Azure/UI work without separate same-thread exact approval. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip.
 - Verification: RED `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs` first failed because the wrapper did not exist. Passing checks after wrapper/docs/task/contract updates: `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`, `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs`, changed-files high-confidence no-secret scan, and `git diff --check` with CRLF normalization warnings only. `node_modules` is absent; `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run because this slice is a deterministic command-wrapper/docs/contract boundary and no app runtime/UI/Next module was changed. Width checks skipped because no visible UI/CSS/layout/client copy changed.
+
+## Approved PL-G3 Sanitized Wrapper Execution After PR #534
+
+- Active doc: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`.
+- Ready preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`.
+- Focused contract: `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs`.
+- Current branch: `codex/pl-g3-continuation-after-pr534-blocked`.
+- PR #534 merge commit: `829480ee1be79dac0f7e00532dceb334a652d125`.
+- Decision: partial-start-to-translation-continuation-counts-recorded-after-pr534 / blocked-translated-source-ui-evidence.
+- Same-thread exact approval label: `approved-pl-g3-start-to-translation-continuation-after-pr531`.
+- Dependency recovery: `npm ci --prefer-offline --no-audit --no-fund` failed with `ERR_SSL_CIPHER_OPERATION_FAILED`, targeted install timed out, offline install failed on uncached transitive package, then `typescript@5.8.3` was restored from local npm cache into ignored `node_modules` only. No tracked dependency file changed.
+- Operator-local references: loaded from `C:/Users/taka/.codex/worktrees/test.ps1` after confirming the file exists, contains the required env names, and has no non-comment non-env-assignment lines. Values were not printed.
+- Status route precheck: executed / HTTP 200 / session status label `not-started` / unavailableReason `none` / pass true.
+- Explicit Start: executed / HTTP 200 / session status label `active` / unavailableReason `none` / pass true.
+- Reviewed sanitized wrapper: executed / child exit status label `exit-0` / stdout final JSON parsed true / stderr capture label `absent` / provider harness status label `task-27-live-provider-smoke-sanitized-result` / live provider execution label `approved-bounded-execution` / provider target lookup label `executed-presence-only` / live chat polling label `executed-bounded-readonly-one-step` / translation provider execution label `executed-server-only-provider` / unavailableReason `none` / pass true.
+- Counts: returned count 3 / eligible count 3 / provider request count 3 / provider call count 3 / translated count 0 / skipped count 3.
+- Stop/source labels: stop reason label `none` / source attribution label `unavailable`.
+- Explicit Stop: executed / HTTP 200 / session status label `stopped` / stop reason label `user-stop` / unavailableReason `none` / pass true.
+- Post-Stop status: executed / HTTP 200 / session status label `not-started` / unavailableReason `none` / pass true.
+- UI/feed confirmation remains not-run / requires-browser-visible-evidence-after-wrapper-counts-review.
+- Output handling: raw stdout/stderr, raw provider payloads, raw comments, provider target metadata, provider URL query values, target/cursor values, `liveChatId`, owner user id, provider channel id, cookie/token/OAuth/Authorization values, quota values, and comment text were not printed or recorded.
+- PL-G3 remains incomplete because translated count is 0, skipped count is 3, source attribution is unavailable, and browser-visible UI/feed evidence is still not recorded.
+- PL-G4 production/custom deployed smoke: not-run / approval-gated.
+- PL-G5 public launch decision: keep blocked / blocked-no-approval.
+- public gate state label: unchanged / blocked.
+- public-release capable label: no.
+- Next safe action: keep public launch blocked. Review the translated count 0 / skipped count 3 / source attribution unavailable result before deciding whether a narrow browser-visible UI/feed confirmation or another provider retry is justified. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip.
 
 ## Previous PL-G3 Empty-provider-ok Root-cause Triage After PR #528
 

@@ -131,7 +131,7 @@ for (const requiredFragment of [
   "Wrapper prepared after #533",
   "captures stdout and stderr separately",
   "UI/feed confirmation remains not-run",
-  "PL-G3 remains partial / blocked for counts, source-attribution, and browser-visible UI/feed evidence",
+  "PL-G3 remains partial / blocked because translated output, source-attribution, and browser-visible UI/feed evidence are still incomplete",
   "public gate state label: unchanged / blocked",
   "public-release capable label: no"
 ]) {
@@ -189,6 +189,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs",
   sanitizedWrapperPath,
   sanitizedWrapperContractPath
 ]);

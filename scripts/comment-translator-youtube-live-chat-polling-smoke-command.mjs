@@ -43,8 +43,16 @@ const freshCommentBoundedShortPollingDiagnosticsApprovalLabelReference =
   "PL_G3_FRESH_COMMENT_BOUNDED_SHORT_POLLING_DIAGNOSTICS_APPROVAL_LABEL";
 const freshCommentBoundedShortPollingDiagnosticsApprovalLabel =
   "approved-pl-g3-fresh-comment-bounded-short-polling-diagnostics-after-pr525";
+const sameProcessTargetRefreshBoundedPollingDiagnosticsApprovalLabelReference =
+  "PL_G3_SAME_PROCESS_TARGET_REFRESH_BOUNDED_POLLING_DIAGNOSTICS_APPROVAL_LABEL";
+const sameProcessTargetRefreshBoundedPollingDiagnosticsApprovalLabel =
+  "approved-pl-g3-same-process-target-refresh-to-bounded-polling-diagnostics-after-pr529";
+const targetLookupOperatorLocalServerAuthorizationHeaderReference =
+  "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER";
+const targetLookupOperatorLocalTokenExpiresAtIsoReference =
+  "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO";
 const liveChatPollingApprovalFlags =
-  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics or --approved-live-chat-polling-between-pages-fresh-comment-diagnostics or --approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics";
+  "--approved-live-chat-polling-smoke or --approved-live-chat-polling-diagnostics or --approved-live-chat-polling-next-page-diagnostics or --approved-live-chat-polling-first-page-to-next-page-diagnostics or --approved-live-chat-polling-between-pages-fresh-comment-diagnostics or --approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics or --approved-live-chat-polling-same-process-target-refresh-bounded-short-polling-diagnostics";
 const youtubeReadonlyOAuthScope = "https://www.googleapis.com/auth/youtube.readonly";
 
 function loadTsModule(relativePath) {
@@ -123,34 +131,37 @@ function writeJson(payload, exitCode) {
   process.exitCode = exitCode;
 }
 
-function createReferenceReport() {
+function createReferenceReport({ requireLiveChatTargetReference = true } = {}) {
   const missingEnvReferences = requiredEnvReferences.filter((name) => !hasReference(name));
   const missingFixtureReferences = requiredFixtureReferences.filter((name) => !hasReference(name));
   const missingLiveChatReadinessReferences = [liveChatPollingReadyPreflightReference].filter(
     (name) => !hasReference(name)
   );
-  const missingLiveChatTargetReferences = [liveChatTargetMetadataPresentReference, liveChatTargetReference].filter(
-    (name) => !hasReference(name)
-  );
+  const requiredLiveChatTargetReferences = requireLiveChatTargetReference
+    ? [liveChatTargetMetadataPresentReference, liveChatTargetReference]
+    : [];
+  const missingLiveChatTargetReferences = requiredLiveChatTargetReferences.filter((name) => !hasReference(name));
   const missingOwnerVerificationSuccessReferences = [ownerVerificationSuccessReference].filter(
     (name) => !hasReference(name)
   );
-  const missingTargetLookupPrerequisiteReferences = [
-    liveChatTargetLookupReadyPreflightReference,
-    liveChatTargetLookupPresenceOnlyEvidenceReference
-  ].filter((name) => !hasReference(name));
+  const requiredTargetLookupPrerequisiteReferences = requireLiveChatTargetReference
+    ? [liveChatTargetLookupReadyPreflightReference, liveChatTargetLookupPresenceOnlyEvidenceReference]
+    : [liveChatTargetLookupReadyPreflightReference];
+  const missingTargetLookupPrerequisiteReferences = requiredTargetLookupPrerequisiteReferences.filter(
+    (name) => !hasReference(name)
+  );
   const placeholderReferences = [
     ...requiredEnvReferences,
     ...requiredFixtureReferences,
     ownerAuthorizationPreflightReference,
     ownerVerificationSuccessReference,
-    liveChatTargetLookupReadyPreflightReference,
-    liveChatTargetLookupPresenceOnlyEvidenceReference,
+    ...requiredTargetLookupPrerequisiteReferences,
     liveChatPollingReadyPreflightReference,
-    liveChatTargetMetadataPresentReference,
-    liveChatTargetReference,
+    ...requiredLiveChatTargetReferences,
     operatorLocalServerAuthorizationHeaderReference,
-    operatorLocalTokenExpiresAtIsoReference
+    operatorLocalTokenExpiresAtIsoReference,
+    targetLookupOperatorLocalServerAuthorizationHeaderReference,
+    targetLookupOperatorLocalTokenExpiresAtIsoReference
   ].filter((name) => isPlaceholderReferenceValue(name));
 
   return {
@@ -210,8 +221,8 @@ function assertSmokeCredentialReference(credentialReferenceId) {
   return false;
 }
 
-function preflight({ requireNextPageCursor = false } = {}) {
-  const report = createReferenceReport();
+function preflight({ requireNextPageCursor = false, requireLiveChatTargetReference = true } = {}) {
+  const report = createReferenceReport({ requireLiveChatTargetReference });
 
   if (
     report.missingEnvReferences.length > 0 ||
@@ -341,7 +352,7 @@ function preflight({ requireNextPageCursor = false } = {}) {
     };
   }
 
-  if (!isTruthyReference(liveChatTargetLookupPresenceOnlyEvidenceReference)) {
+  if (requireLiveChatTargetReference && !isTruthyReference(liveChatTargetLookupPresenceOnlyEvidenceReference)) {
     return {
       ok: false,
       exitCode: 2,
@@ -370,7 +381,7 @@ function preflight({ requireNextPageCursor = false } = {}) {
     };
   }
 
-  if (!isTruthyReference(liveChatTargetMetadataPresentReference)) {
+  if (requireLiveChatTargetReference && !isTruthyReference(liveChatTargetMetadataPresentReference)) {
     return {
       ok: false,
       exitCode: 2,
@@ -405,7 +416,9 @@ function preflight({ requireNextPageCursor = false } = {}) {
       ownerVerificationSmoke: "completed-prerequisite-reference-only",
       liveChatTargetLookupReadiness: "confirmed-by-reference-only",
       liveChatTargetLookupPresenceOnlyEvidence: "confirmed-presence-only",
-      liveChatTarget: "present-by-reference-only",
+      liveChatTarget: requireLiveChatTargetReference
+        ? "present-by-reference-only"
+        : "refreshed-in-same-process-before-polling",
       nextPageCursor: requireNextPageCursor ? "present-by-reference-only" : "not-required-for-this-boundary",
       ownerBinding: "requires-check-owner-binding-only-before-approved-execution",
       approvedExecutionReadiness: "requires-owner-binding-token-material-and-explicit-approval-before-approved-execution",
@@ -426,7 +439,13 @@ async function main() {
   const hasFreshCommentBoundedShortPollingDiagnosticsApproval = args.has(
     "--approved-live-chat-polling-fresh-comment-bounded-short-polling-diagnostics"
   );
-  const result = preflight({ requireNextPageCursor: hasNextPageDiagnosticsApproval });
+  const hasSameProcessTargetRefreshBoundedPollingDiagnosticsApproval = args.has(
+    "--approved-live-chat-polling-same-process-target-refresh-bounded-short-polling-diagnostics"
+  );
+  const result = preflight({
+    requireNextPageCursor: hasNextPageDiagnosticsApproval,
+    requireLiveChatTargetReference: !hasSameProcessTargetRefreshBoundedPollingDiagnosticsApproval
+  });
 
   if (!result.ok) {
     if (result.payload) {
@@ -475,7 +494,8 @@ async function main() {
     hasNextPageDiagnosticsApproval,
     hasFirstPageToNextPageDiagnosticsApproval,
     hasBetweenPagesFreshCommentDiagnosticsApproval,
-    hasFreshCommentBoundedShortPollingDiagnosticsApproval
+    hasFreshCommentBoundedShortPollingDiagnosticsApproval,
+    hasSameProcessTargetRefreshBoundedPollingDiagnosticsApproval
   ].filter(Boolean).length;
 
   if (approvalFlagCount > 1) {
@@ -599,6 +619,38 @@ async function main() {
     return;
   }
 
+  if (hasSameProcessTargetRefreshBoundedPollingDiagnosticsApproval) {
+    if (
+      readReference(sameProcessTargetRefreshBoundedPollingDiagnosticsApprovalLabelReference) !==
+      sameProcessTargetRefreshBoundedPollingDiagnosticsApprovalLabel
+    ) {
+      writeJson(
+        {
+          status: "blocked-missing-same-process-target-refresh-bounded-polling-diagnostics-approval-label",
+          ...createBasePayload(),
+          requiredApprovalLabel: sameProcessTargetRefreshBoundedPollingDiagnosticsApprovalLabel,
+          approvalLabelReference: sameProcessTargetRefreshBoundedPollingDiagnosticsApprovalLabelReference,
+          approvalBoundary: "same-thread-explicit-in-thread-approval-required-before-provider-access",
+          liveChatTargetLookup: "not-run",
+          operatorFreshCommentWindow: "not-run",
+          liveChatPollingDiagnostics: "not-run",
+          providerAccess: "not-run"
+        },
+        2
+      );
+      return;
+    }
+
+    const diagnosticsPayload = await createApprovedSameProcessTargetRefreshBoundedPollingDiagnosticsPayload(
+      result.payload.credentialReferenceId
+    );
+    writeJson(
+      diagnosticsPayload,
+      diagnosticsPayload.stopReason === "non-empty-intake-found" ? 0 : 2
+    );
+    return;
+  }
+
   if (hasDiagnosticsApproval || hasNextPageDiagnosticsApproval) {
     const diagnosticsPayload = await createApprovedDiagnosticsPayload(
       result.payload.credentialReferenceId,
@@ -626,7 +678,22 @@ function createRuntimeWiring(credentialReferenceId) {
   });
 }
 
-function createFoundationBaseRequest(credentialReferenceId, { useNextPageCursor = false } = {}) {
+function createTargetLookupRuntimeWiring(credentialReferenceId) {
+  const foundation = loadTsModule("lib/comment-translator-youtube-live-chat-target-lookup-foundation.ts");
+  return foundation.createYouTubeLiveChatTargetLookupCommandRuntimeWiring({
+    credentialReferenceId,
+    providerChannelId: readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID"),
+    requiredScope: youtubeReadonlyOAuthScope,
+    nowIso: new Date().toISOString(),
+    operatorLocalServerAuthorizationHeader: readReference(targetLookupOperatorLocalServerAuthorizationHeaderReference),
+    operatorLocalTokenExpiresAtIso: readReference(targetLookupOperatorLocalTokenExpiresAtIsoReference)
+  });
+}
+
+function createFoundationBaseRequest(
+  credentialReferenceId,
+  { useNextPageCursor = false, serverOnlyLiveTargetForPolling = null } = {}
+) {
   const ownerUserId = readReference("YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID");
   const providerChannelId = readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID");
   const nowIso = new Date().toISOString();
@@ -635,11 +702,34 @@ function createFoundationBaseRequest(credentialReferenceId, { useNextPageCursor 
   return {
     credentialReferenceId,
     expectedProviderChannelReference: providerChannelId,
-    liveChatId: readReference(liveChatTargetReference),
+    liveChatId: serverOnlyLiveTargetForPolling ?? readReference(liveChatTargetReference),
     pageToken: useNextPageCursor ? readReference(liveChatNextPageCursorReference) : null,
     ownerVerificationSmokeSuccess: true,
     liveChatTargetLookupReadinessConfirmed: true,
     liveChatTargetPresenceOnlyEvidence: true,
+    ownerAuthorization: {
+      status: "authorized",
+      ownerUserId
+    },
+    credentialResolutionDisabled: false,
+    requiredScope: youtubeReadonlyOAuthScope,
+    nowIso,
+    trustedStatusReader: runtimeWiring.trustedStatusReader,
+    tokenMaterialResolver: runtimeWiring.tokenMaterialResolver,
+    fetchGoogleApi: runtimeWiring.fetchGoogleApi
+  };
+}
+
+function createTargetLookupFoundationBaseRequest(credentialReferenceId) {
+  const ownerUserId = readReference("YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID");
+  const providerChannelId = readReference("YOUTUBE_OAUTH_SMOKE_PROVIDER_CHANNEL_ID");
+  const nowIso = new Date().toISOString();
+  const runtimeWiring = createTargetLookupRuntimeWiring(credentialReferenceId);
+
+  return {
+    credentialReferenceId,
+    expectedProviderChannelReference: providerChannelId,
+    ownerVerificationSmokeSuccess: true,
     ownerAuthorization: {
       status: "authorized",
       ownerUserId
@@ -749,6 +839,64 @@ async function createApprovedFreshCommentBoundedShortPollingDiagnosticsPayload(c
   });
 }
 
+async function createApprovedSameProcessTargetRefreshBoundedPollingDiagnosticsPayload(credentialReferenceId) {
+  const targetLookupFoundation = loadTsModule("lib/comment-translator-youtube-live-chat-target-lookup-foundation.ts");
+  const pollingFoundation = loadTsModule("lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts");
+  const targetLookupResult =
+    await targetLookupFoundation.runYouTubeLiveChatTargetLookupSameProcessPollingDiagnosticFoundation(
+      createTargetLookupFoundationBaseRequest(credentialReferenceId)
+    );
+  const sanitizedTargetLookupResult = sanitizeDiagnosticsPayload(targetLookupResult.sanitizedTargetLookupResult);
+  const targetLookupResponseMetadata = sanitizedTargetLookupResult.responseMetadata ?? null;
+
+  if (
+    sanitizedTargetLookupResult.status !== "live-chat-target-lookup-sanitized-result" ||
+    !targetLookupResult.serverOnlyLiveTargetForPolling
+  ) {
+    return sanitizeDiagnosticsPayload({
+      status: "live-chat-polling-same-process-target-refresh-bounded-short-polling-diagnostics-sanitized-result",
+      diagnosticMode: "sanitized-metadata-only",
+      targetRefresh: "blocked-before-bounded-polling",
+      targetLookupStatus: sanitizedTargetLookupResult.status,
+      targetLookupProviderAccess: sanitizedTargetLookupResult.providerAccess,
+      targetLookupResponseMetadata,
+      liveChatTarget: "absent",
+      operatorFreshCommentWindow: "not-run",
+      liveChatPollingDiagnostics: "not-run",
+      providerAccess: sanitizedTargetLookupResult.providerAccess,
+      boundedAttemptCount: 0,
+      boundedMaxAttempts: 3,
+      stopReason: "target-refresh-not-usable",
+      unavailableReason: "target-refresh-not-usable",
+      publicGateStateLabel: "unchanged / blocked",
+      publicReleaseCapableLabel: "no",
+      translationExecution: "not-run-diagnostics-only"
+    });
+  }
+
+  await waitForOperatorFreshCommentBeforeSameProcessBoundedPolling();
+  const pollingResult = await pollingFoundation.runYouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundation({
+    ...createFoundationBaseRequest(credentialReferenceId, {
+      serverOnlyLiveTargetForPolling: targetLookupResult.serverOnlyLiveTargetForPolling
+    }),
+    waitForProviderPollingInterval
+  });
+
+  return sanitizeDiagnosticsPayload({
+    ...pollingResult,
+    status: "live-chat-polling-same-process-target-refresh-bounded-short-polling-diagnostics-sanitized-result",
+    diagnosticMode: "sanitized-metadata-only",
+    targetRefresh: "executed-in-same-process-before-bounded-polling",
+    targetLookupStatus: sanitizedTargetLookupResult.status,
+    targetLookupProviderAccess: sanitizedTargetLookupResult.providerAccess,
+    targetLookupResponseMetadata,
+    operatorFreshCommentWindow: "completed-after-target-refresh-before-bounded-polling",
+    publicGateStateLabel: "unchanged / blocked",
+    publicReleaseCapableLabel: "no",
+    translationExecution: "not-run-diagnostics-only"
+  });
+}
+
 async function waitForOperatorFreshCommentWindow() {
   process.stderr.write(
     "PL-G3 between-pages diagnostic: first-page read completed. Send one fresh visible chat comment, then press Enter to run the bounded next-page read.\n"
@@ -766,6 +914,20 @@ async function waitForOperatorFreshCommentWindow() {
 async function waitForOperatorFreshCommentBeforeBoundedShortPolling() {
   process.stderr.write(
     "PL-G3 bounded short polling diagnostic: send one fresh visible chat comment now, then press Enter to run the bounded short polling diagnostic.\n"
+  );
+
+  await new Promise((resolve) => {
+    process.stdin.resume();
+    process.stdin.once("data", () => {
+      process.stdin.pause();
+      resolve();
+    });
+  });
+}
+
+async function waitForOperatorFreshCommentBeforeSameProcessBoundedPolling() {
+  process.stderr.write(
+    "PL-G3 same-process target-refresh diagnostic: target lookup refresh completed. Send one fresh visible chat comment now, then press Enter to run bounded short polling with the refreshed target in memory.\n"
   );
 
   await new Promise((resolve) => {

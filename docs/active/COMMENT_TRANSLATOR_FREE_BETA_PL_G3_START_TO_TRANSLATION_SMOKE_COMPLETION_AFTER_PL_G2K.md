@@ -1279,11 +1279,22 @@ This PL-G3 completion record proves:
 - the route/action runtime now preserves the approved smoke order by not using unapproved target lookup as a Start blocker;
 - public gate state remains unchanged / blocked and public-release capable remains no.
 
+## Same-process Target-refresh Diagnostic After PR #530
+
+After PR #530, a non-provider `--check-env-only` preflight passed for the same-process target-refresh-to-bounded-polling diagnostic boundary. It returned status label `ready-for-bounded-live-chat-polling-smoke-command-foundation`, live target label `refreshed-in-same-process-before-polling`, next-page cursor label `not-required-for-this-boundary`, live chat polling label `not-run-preflight-only`, provider access label `not-run`, stderr absent, and sensitive value shape hit count 0.
+
+After same-thread exact approval for the single diagnostic command only, the approved diagnostic returned sanitized final JSON with target refresh label `executed-in-same-process-before-bounded-polling`, target lookup status label `live-chat-target-lookup-sanitized-result`, target lookup provider access label `liveBroadcasts-list-target-lookup-only`, live target label `present`, polling provider access label `liveChatMessages-list-bounded-short-polling-only`, bounded attempt count 1, bounded max attempts 3, stop reason label `non-empty-intake-found`, operator window label `completed-after-target-refresh-before-bounded-polling`, unavailableReason `none`, public gate state label `unchanged / blocked`, and public-release capable label `no`.
+
+This evidence shows that the same-process target-refresh boundary can resolve an owned live target and reach non-empty intake in bounded polling without operator-provided liveChatId or cursor env values. It does not prove Free Azure translation, UI/feed confirmation, usage/source-attribution behavior, Stop after successful intake, PL-G4 production/custom deployed smoke, PL-G5 release-owner launch approval, or public launch readiness.
+
+Output handling: raw stdout/stderr were not printed in the thread. The wrapper recorded raw sensitive shape hit count 0 and value sensitive shape hit count 0. Target values, cursor values, provider target metadata, URL query values, Authorization, secrets, raw provider payload, raw comments, liveChatId, owner user id, provider channel id, quota values, and comment text were not recorded.
+
+Wrapper caveat: the wrapper parsed sanitized final JSON, but its hard timer killed the child process after final JSON was emitted. No diagnostic child process remained afterward. Natural child process exit cleanliness is not proven by this run.
+
 ## What This Does Not Prove
 
 This record does not prove Start-to-translation behavior. It does not prove:
 
-- non-empty live comment intake;
 - Free Azure translation;
 - UI/feed confirmation;
 - usage, stop reason, or source attribution after a live run;
@@ -1305,7 +1316,7 @@ Unchecked scope:
 - server-only live target lookup: executed / target presence label present / provider route label liveBroadcasts-list-target-lookup-only / returned count 5 / pass true;
 - one bounded `liveChatMessages.list` polling step: executed / target presence label present / provider route label liveChatMessages-list-one-step-only / returned count 0 / polling interval label unavailable / pass false;
 - polling diagnostics follow-up: HTTP 403 / owner binding verified / token material available / target lookup present / `liveChatMessages.list` provider permission rejected / provider error reason/class label allowlisted / Azure-UI-not-run / public-release capable no;
-- non-empty live comment intake: not-run / approval-gated;
+- same-process target-refresh diagnostic: executed after same-thread exact approval / target lookup sanitized result / target lookup provider access liveBroadcasts-list-target-lookup-only / live target present / bounded polling provider access liveChatMessages-list-bounded-short-polling-only / bounded attempt count 1 / stop reason label non-empty-intake-found / unavailableReason none / Azure-UI-not-run / public-release capable no;
 - Free Azure translation: not-run / approval-gated;
 - UI/feed confirmation: not-run / approval-gated;
 - usage: not-run / approval-gated;
@@ -1318,13 +1329,13 @@ Unchecked scope:
 - Stripe live actions and billing setting mutation: not-run / approval-gated;
 - main promotion, limited public beta open, public access change, and public launch gate flip: not-run / approval-gated.
 
-Residual risk: PL-G3 remains incomplete until the HTTP 403 provider permission rejection is resolved in operator-local context and a later same-thread approved run performs one bounded polling step that returns non-empty live comment intake, then executes Free Azure translation and UI/feed confirmation with sanitized output only. Public-release capable remains no.
+Residual risk: PL-G3 remains incomplete until a later same-thread approved Start-to-translation continuation executes Free Azure translation, UI/feed confirmation, usage/source-attribution evidence, and Stop with sanitized output only. The same-process target-refresh diagnostic produced non-empty intake, but it was diagnostics-only and did not run Azure, UI/feed confirmation, or Stop. Public-release capable remains no.
 
 ## Next Safe Action
 
 Use `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_PROVIDER_PERMISSION_TRIAGE_PREFLIGHT.md` for the next no-live provider-permission triage and provider-permission readiness follow-up after PL-G5 step. The checklist must stay value-free and operator-local.
 
-Before requesting a later same-thread exact approval, confirm granted OAuth scope category, target live chat availability, owner/channel binding, provider permission state, and quota/rate-limit state in operator-local context with category / label / pass-fail / unavailableReason only and without printing IDs, tokens, cookies, liveChatId, or raw provider error data. If Start reaches active and the one bounded polling step returns non-empty intake, continue only through Free Azure translation, UI/feed confirmation, and Stop inside the approved boundary. Do not run additional polling loops, Azure, UI/feed confirmation, public access changes, deploy/upload, remote mutation, or launch gate changes from this blocked attempt.
+Before requesting a later same-thread exact approval, scope the next PL-G3 continuation to the minimum Start-to-translation boundary needed after non-empty intake. Continue only through reviewed Free Azure translation, UI/feed confirmation, usage/source-attribution evidence, and Stop inside that later approved boundary. Do not run additional polling loops, Azure, UI/feed confirmation, public access changes, deploy/upload, remote mutation, or launch gate changes from this diagnostic approval.
 
 ## Completion Verification
 

@@ -1356,6 +1356,35 @@ Output handling: raw stdout/stderr were not printed. Target values, cursor value
 
 This evidence closes the PR #533 wrapper JSON parse caveat for counts. It does not complete PL-G3 because translated count is 0, skipped count is 3, source attribution remains unavailable, and browser-visible UI/feed confirmation is still not recorded. Public launch remains blocked.
 
+## PL-G3 Diagnostic Boundary After PR #535
+
+Decision: contract-first-triage-after-pr535 / diagnostic-boundary-prepared.
+
+This follow-up does not rerun live/provider execution. Start, Stop, target lookup execution, liveChatMessages.list, Azure/OpenAI provider execution, and UI/feed confirmation were not run in this follow-up.
+
+Triage from the PR #535 sanitized counts:
+
+- returned count 3 / eligible count 3;
+- provider request count 3 / provider call count 3;
+- translated count 0 / skipped count 3;
+- source attribution label `unavailable`.
+
+Because returned count, eligible count, provider request count, and provider call count are all 3, the PR #535 result is not explained by empty polling intake, language-policy rejection before provider execution, or per-minute cap trimming before provider execution. The remaining narrow explanation is provider execution completed without translated output. The reviewed diagnostic projection now exposes allowed skip reason counts from the existing provider harness evidence: provider-unavailable skipped count 3, terminal error count 3, language-policy skipped count 0 / per-minute skipped count 0, recoverable error count 0. It still does not expose raw comments, raw provider payloads, provider error bodies, provider target metadata, IDs, cookies, tokens, OAuth values, Authorization headers, quota values, or URL query values.
+
+Source attribution remains unavailable because this provider harness does not produce browser/feed source attribution rows. The new source attribution availability label `not-produced-by-provider-harness` distinguishes that boundary from a successful UI/feed source attribution confirmation. UI/feed confirmation remains not-run / requires-browser-visible-evidence-after-wrapper-counts-review.
+
+Public gate state label: unchanged / blocked. Public-release capable label: no.
+
+Verification for this follow-up:
+
+- RED `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs` first failed because the provider-unavailable skip-reason fixture and after-PR #535 docs/task record were missing.
+- Passing focused checks: `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs`, and `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs`.
+- Dependency recovery: `npm ci --prefer-offline --no-audit --no-fund` was attempted and failed with `ERR_SSL_CIPHER_OPERATION_FAILED`; `typescript@5.8.3` was restored from the local npm cache into ignored `node_modules` only so deterministic TypeScript-backed contracts could run. No tracked dependency file changed.
+- Changed-files no-secret scan: passed for 6 files.
+- `git diff --check`: passed with CRLF normalization warnings only.
+- `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run because `eslint`, `tsc`, and `next` bins were unavailable after dependency installation failed. The changed scope is docs plus deterministic script/contract projection only; no app runtime, UI, CSS, provider-policy, deployed route, or Next module changed.
+- Width checks skipped because no visible UI/CSS/layout/client copy changed.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:

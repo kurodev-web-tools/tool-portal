@@ -35,8 +35,14 @@ function createBaseSummary(overrides = {}) {
     providerCallCount: 0,
     translatedCount: 0,
     skippedCount: 0,
+    languagePolicySkippedCount: 0,
+    perMinuteSkippedCount: 0,
+    providerUnavailableSkippedCount: 0,
+    recoverableErrorCount: 0,
+    terminalErrorCount: 0,
     stopReasonLabel: "unavailable",
     sourceAttributionLabel: "unavailable",
+    sourceAttributionAvailabilityLabel: "unavailable",
     publicGateStateLabel: "unchanged / blocked",
     publicReleaseCapableLabel: "no",
     pass: false,
@@ -92,6 +98,7 @@ function projectAllowedSanitizedSummary({ childResult, parsedPayload, commandLab
   const childExitLabel = childExitStatusLabel(childResult);
   const childExitedCleanly = childResult.exitCode === 0;
   const providerHarnessStatusLabel = safeLabel(payload.status);
+  const sourceAttributionLabel = safeLabel(evidence.sourceAttributionLabel ?? payload.sourceAttributionLabel);
   const pass =
     childExitedCleanly &&
     providerHarnessStatusLabel === "task-27-live-provider-smoke-sanitized-result" &&
@@ -114,8 +121,17 @@ function projectAllowedSanitizedSummary({ childResult, parsedPayload, commandLab
     providerCallCount: readCount(evidence.providerCallCount ?? payload.providerCallCount),
     translatedCount: readCount(evidence.translatedCount ?? payload.translatedCount),
     skippedCount: readCount(evidence.skippedCount ?? payload.skippedCount),
+    languagePolicySkippedCount: readCount(evidence.languagePolicySkippedCount ?? payload.languagePolicySkippedCount),
+    perMinuteSkippedCount: readCount(evidence.perMinuteSkippedCount ?? payload.perMinuteSkippedCount),
+    providerUnavailableSkippedCount: readCount(evidence.providerUnavailableSkippedCount ?? payload.providerUnavailableSkippedCount),
+    recoverableErrorCount: readCount(evidence.recoverableErrorCount ?? payload.recoverableErrorCount),
+    terminalErrorCount: readCount(evidence.terminalErrorCount ?? payload.terminalErrorCount),
     stopReasonLabel: safeLabel(evidence.stopReason ?? payload.stopReason, "none"),
-    sourceAttributionLabel: safeLabel(evidence.sourceAttributionLabel ?? payload.sourceAttributionLabel),
+    sourceAttributionLabel,
+    sourceAttributionAvailabilityLabel: resolveSourceAttributionAvailabilityLabel({
+      sourceAttributionLabel,
+      explicitLabel: evidence.sourceAttributionAvailabilityLabel ?? payload.sourceAttributionAvailabilityLabel
+    }),
     pass,
     unavailableReason: pass ? "none" : childExitedCleanly ? "provider-harness-summary-not-passing" : "child-exit-nonzero"
   });
@@ -189,6 +205,11 @@ function createFixtureChild(fixtureName) {
           providerCallCount: 1,
           translatedCount: 1,
           skippedCount: 1,
+          languagePolicySkippedCount: 0,
+          perMinuteSkippedCount: 0,
+          providerUnavailableSkippedCount: 1,
+          recoverableErrorCount: 1,
+          terminalErrorCount: 0,
           stopReason: null,
           sourceAttributionLabel: "youtube-live-chat"
         }
@@ -213,8 +234,37 @@ function createFixtureChild(fixtureName) {
           providerCallCount: 1,
           translatedCount: 4,
           skippedCount: 0,
+          languagePolicySkippedCount: 0,
+          perMinuteSkippedCount: 0,
+          providerUnavailableSkippedCount: 0,
+          recoverableErrorCount: 0,
+          terminalErrorCount: 0,
           stopReason: null,
           sourceAttributionLabel: "youtube-live-chat"
+        }
+      }, null, 2) + "\\n");
+    `,
+    "provider-unavailable-skip-reasons": `
+      process.stdout.write(JSON.stringify({
+        status: "task-27-live-provider-smoke-sanitized-result",
+        outputPolicy: "sanitized-metadata-only",
+        liveProviderExecution: "approved-bounded-execution",
+        evidence: {
+          providerTargetLookup: "executed-presence-only",
+          liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+          translationProviderExecution: "executed-server-only-provider",
+          returnedItemCount: 3,
+          eligibleCommentCount: 3,
+          providerRequestCount: 3,
+          providerCallCount: 3,
+          translatedCount: 0,
+          skippedCount: 3,
+          languagePolicySkippedCount: 0,
+          perMinuteSkippedCount: 0,
+          providerUnavailableSkippedCount: 3,
+          recoverableErrorCount: 0,
+          terminalErrorCount: 3,
+          stopReason: null
         }
       }, null, 2) + "\\n");
     `,
@@ -313,4 +363,16 @@ function safeLabel(value, fallback = "unavailable") {
     return fallback;
   }
   return value;
+}
+
+function resolveSourceAttributionAvailabilityLabel({ sourceAttributionLabel, explicitLabel }) {
+  const allowedExplicitLabel = safeLabel(explicitLabel);
+  if (
+    allowedExplicitLabel === "available" ||
+    allowedExplicitLabel === "not-produced-by-provider-harness" ||
+    allowedExplicitLabel === "requires-ui-feed-confirmation"
+  ) {
+    return allowedExplicitLabel;
+  }
+  return sourceAttributionLabel === "unavailable" ? "not-produced-by-provider-harness" : "available";
 }

@@ -12,6 +12,9 @@ const readyPreflightPath =
 const taskPath = "task.md";
 const pollingCommandPath = "scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs";
 const providerHarnessPath = "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs";
+const sanitizedWrapperPath = "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs";
+const sanitizedWrapperContractPath =
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs";
 
 const continuationDecision = "partial-start-to-translation-continuation-evidence-recorded-after-pr532";
 const continuationApprovalLabel = "approved-pl-g3-start-to-translation-continuation-after-pr531";
@@ -58,7 +61,15 @@ function assertNoSensitiveValues(source, label) {
   );
 }
 
-for (const requiredPath of [completionDocPath, readyPreflightPath, taskPath, pollingCommandPath, providerHarnessPath]) {
+for (const requiredPath of [
+  completionDocPath,
+  readyPreflightPath,
+  taskPath,
+  pollingCommandPath,
+  providerHarnessPath,
+  sanitizedWrapperPath,
+  sanitizedWrapperContractPath
+]) {
   assert.ok(fs.existsSync(path.join(root, requiredPath)), `required path exists: ${requiredPath}`);
 }
 
@@ -67,6 +78,7 @@ const readyPreflight = read(readyPreflightPath);
 const task = read(taskPath);
 const pollingCommand = read(pollingCommandPath);
 const providerHarness = read(providerHarnessPath);
+const sanitizedWrapper = read(sanitizedWrapperPath);
 
 for (const requiredFragment of [
   "## Start-to-translation Continuation Execution After PR #532",
@@ -104,10 +116,11 @@ for (const requiredFragment of [
 }
 
 for (const requiredFragment of [
-  "Current branch: `codex/pl-g3-start-to-translation-continuation-execution-after-pr532`",
-  "Latest PL-G3 Start-to-translation Continuation Boundary After PR #531",
-  continuationDecision,
+  "Current branch: `codex/pl-g3-sanitized-wrapper-boundary-after-pr533`",
+  "Latest PL-G3 Sanitized Wrapper Boundary After PR #533",
+  "reviewed-sanitized-wrapper-boundary-prepared-after-pr533",
   continuationApprovalLabel,
+  "PR #533 merge commit: `e5dc660b192e9edec589980ca41b18d39035bced`",
   "PR #531 merge commit: `bebd725ffc36c5040d0f518f882be03873976a38`",
   "same-process target-refresh non-empty intake evidence",
   "Status returned HTTP 200 / session status label `not-started`",
@@ -115,6 +128,8 @@ for (const requiredFragment of [
   "provider execution harness process exited 0",
   "Stop returned HTTP 200 / session status label `stopped`",
   "post-Stop status returned HTTP 200 / session status label `not-started`",
+  "Wrapper prepared after #533",
+  "captures stdout and stderr separately",
   "UI/feed confirmation remains not-run",
   "PL-G3 remains partial / blocked for counts, source-attribution, and browser-visible UI/feed evidence",
   "public gate state label: unchanged / blocked",
@@ -133,6 +148,9 @@ assert.match(
   /approved-private-gated-live-provider-smoke/,
   "provider harness remains explicit-approval gated before Azure provider execution"
 );
+assert.match(sanitizedWrapper, /parseFinalJsonFromStdout/, "sanitized wrapper parses stdout final JSON");
+assert.match(sanitizedWrapper, /child\.stdout/, "sanitized wrapper captures child stdout");
+assert.match(sanitizedWrapper, /child\.stderr/, "sanitized wrapper captures child stderr");
 
 for (const forbiddenFragment of [
   "public-release capable label: yes",
@@ -170,7 +188,9 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs",
+  sanitizedWrapperPath,
+  sanitizedWrapperContractPath
 ]);
 
 for (const file of changedFiles()) {

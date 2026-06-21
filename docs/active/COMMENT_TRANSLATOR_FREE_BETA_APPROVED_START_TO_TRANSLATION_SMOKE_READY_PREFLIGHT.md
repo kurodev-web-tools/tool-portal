@@ -213,13 +213,15 @@ Observed execution after this approval:
 
 Raw stdout/stderr were not printed in the thread. Target values, cursor values, provider target metadata, provider URL query values, Authorization, secrets, raw provider payloads, raw comments, liveChatId, owner user id, provider channel id, quota values, and comment text were not recorded.
 
-Free Azure translation and combined live/provider smoke command review, approval-gated:
+Free Azure translation and combined live/provider smoke command review, approval-gated. After PR #533, use the separated stdout/stderr wrapper for the provider harness step so stderr operator instructions or warnings cannot corrupt stdout final JSON parsing:
 
 ```powershell
-node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --check-env-only
-node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --print-exact-command-review
-node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed
+node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --check-env-only
+node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --print-exact-command-review
+node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --execute --approved-pl-g3-sanitized-wrapper-after-pr533 --reviewed-provider-harness-child
 ```
+
+Wrapper boundary: captures node child stdout and stderr separately, parses only stdout final JSON, never prints raw stdout/stderr, and emits only command label, route/action/status labels, HTTP status labels when present, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, stop reason label, unavailableReason, usage/source-attribution labels/counts, public gate state label, public-release capable label, and pass/fail. Counts-source-UI evidence remains blocked until a later same-thread exact approved run records parsed counts, source-attribution labels, and browser-visible UI/feed confirmation.
 
 UI feed confirmation is browser/manual and must record only:
 

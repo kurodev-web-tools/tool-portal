@@ -1333,11 +1333,34 @@ Reviewed wrapper behavior:
 
 Deterministic fixture coverage proves the wrapper can parse stdout final JSON while stderr contains operator instruction text or JSON-shaped noise. This is not PL-G3 completion evidence: counts-source-UI evidence remains blocked until a later same-thread exact approval runs the reviewed live/provider/UI sequence and records returned/eligible/translated/skipped counts, source-attribution labels, and browser-visible UI/feed evidence. Public gate state remains unchanged / blocked. Public-release capable remains no.
 
+## Approved Sanitized Wrapper Execution After PR #534
+
+Decision: partial-start-to-translation-continuation-counts-recorded-after-pr534 / blocked-translated-source-ui-evidence.
+
+PR #534 merge commit `829480ee1be79dac0f7e00532dceb334a652d125` prepared the reviewed separated stdout/stderr wrapper boundary. In this follow-up, same-thread exact approval used label `approved-pl-g3-start-to-translation-continuation-after-pr531`. Operator-local references were loaded from an env-assignment-only script without printing values. `typescript` was restored from the local npm cache into ignored `node_modules` only after `npm ci` and targeted install attempts failed; no tracked dependency file was changed.
+
+Observed sanitized execution evidence:
+
+- status route precheck: executed / HTTP 200 / session status label `not-started` / unavailableReason `none` / pass true;
+- explicit Start: executed / HTTP 200 / session status label `active` / unavailableReason `none` / pass true;
+- reviewed sanitized wrapper: executed / child exit status label `exit-0` / stdout final JSON parsed true / stderr capture label `absent` / provider harness status label `task-27-live-provider-smoke-sanitized-result` / live provider execution label `approved-bounded-execution` / provider target lookup label `executed-presence-only` / live chat polling label `executed-bounded-readonly-one-step` / translation provider execution label `executed-server-only-provider` / unavailableReason `none` / pass true;
+- counts: returned count 3 / eligible count 3 / provider request count 3 / provider call count 3 / translated count 0 / skipped count 3;
+- stop/source labels from wrapper: stop reason label `none` / source attribution label `unavailable`;
+- explicit Stop: executed / HTTP 200 / session status label `stopped` / stop reason label `user-stop` / unavailableReason `none` / pass true;
+- post-Stop status: executed / HTTP 200 / session status label `not-started` / unavailableReason `none` / pass true;
+- UI/feed confirmation: not-run / requires-browser-visible-evidence-after-wrapper-counts-review;
+- public gate state label: unchanged / blocked;
+- public-release capable label: no.
+
+Output handling: raw stdout/stderr were not printed. Target values, cursor values, provider target metadata, provider URL query values, Authorization, secrets, raw provider payloads, raw comments, liveChatId, owner user id, provider channel id, quota values, cookie values, OAuth values, and comment text were not recorded.
+
+This evidence closes the PR #533 wrapper JSON parse caveat for counts. It does not complete PL-G3 because translated count is 0, skipped count is 3, source attribution remains unavailable, and browser-visible UI/feed confirmation is still not recorded. Public launch remains blocked.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:
 
-- returned/eligible/translated/skipped count evidence from the provider harness;
+- successful translated output after a live run;
 - source attribution after a live run;
 - browser-visible UI/feed confirmation;
 - production/custom deployed smoke;
@@ -1358,10 +1381,10 @@ Unchecked scope:
 - one bounded `liveChatMessages.list` polling step: executed / target presence label present / provider route label liveChatMessages-list-one-step-only / returned count 0 / polling interval label unavailable / pass false;
 - polling diagnostics follow-up: HTTP 403 / owner binding verified / token material available / target lookup present / `liveChatMessages.list` provider permission rejected / provider error reason/class label allowlisted / Azure-UI-not-run / public-release capable no;
 - same-process target-refresh diagnostic: executed after same-thread exact approval / target lookup sanitized result / target lookup provider access liveBroadcasts-list-target-lookup-only / live target present / bounded polling provider access liveChatMessages-list-bounded-short-polling-only / bounded attempt count 1 / stop reason label non-empty-intake-found / unavailableReason none / Azure-UI-not-run / public-release capable no;
-- Free Azure translation/provider harness: process exit 0 / counts not-recorded due wrapper JSON parse caveat;
+- Free Azure translation/provider harness after PR #534: executed through reviewed sanitized wrapper / process exit 0 / stdout final JSON parsed true / returned count 3 / eligible count 3 / provider request count 3 / provider call count 3 / translated count 0 / skipped count 3 / source attribution unavailable / pass true for wrapper execution only;
 - sanitized wrapper after PR #533: prepared / stdout and stderr separated capture / stdout final JSON parse contract passed with deterministic fixtures / no live-provider-ui execution;
-- UI/feed confirmation: not-run / blocked-counts-source-ui-evidence;
-- usage/source-attribution evidence: not-recorded / blocked-wrapper-json-parse;
+- UI/feed confirmation: not-run / requires-browser-visible-evidence-after-wrapper-counts-review;
+- usage/source-attribution evidence: source attribution unavailable / blocked-translated-source-ui-evidence;
 - stop reason: not-run / approval-gated;
 - source attribution: not-run / approval-gated;
 - Stop after Start: executed / HTTP 200 / session status label stopped / pass true;
@@ -1373,11 +1396,11 @@ Unchecked scope:
 - Stripe live actions and billing setting mutation: not-run / approval-gated;
 - main promotion, limited public beta open, public access change, and public launch gate flip: not-run / approval-gated.
 
-Residual risk: PL-G3 remains incomplete. The approved continuation reached Start, server-only live/provider harness execution exit 0, Stop, and post-Stop status, and this follow-up prepares the separated stdout/stderr wrapper boundary, but this record still lacks approved live/provider parsed returned/eligible/translated/skipped counts, source-attribution labels, and browser-visible UI/feed confirmation. Public-release capable remains no.
+Residual risk: PL-G3 remains incomplete. The approved continuation reached Start, parsed the reviewed wrapper final JSON, recorded returned/eligible/translated/skipped counts, stopped the session, and confirmed post-Stop status. The record still lacks successful translated output, source-attribution labels, and browser-visible UI/feed confirmation. Public-release capable remains no.
 
 ## Next Safe Action
 
-Use the reviewed sanitized wrapper only in a later same-thread exact approved execution thread. Do not rerun provider/live/Azure/UI work without that separate approval. Keep public launch blocked.
+Keep public launch blocked. Review why the provider harness returned translated count 0 / skipped count 3 with source attribution unavailable, then decide in a separate same-thread exact approval whether to run a narrow browser-visible UI/feed confirmation or another provider retry. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip.
 
 ## Completion Verification
 
@@ -1385,6 +1408,7 @@ Required PL-G3 after PL-G2K closeout checks:
 
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`
+- `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs`

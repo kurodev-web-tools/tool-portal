@@ -333,6 +333,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr536-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr537-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-provider-terminal-error-boundary-after-pr538-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs",
   "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
@@ -360,7 +361,12 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs",
-  "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs"
+  "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs",
+  "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-provider-execution-runtime.ts",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

@@ -221,7 +221,7 @@ node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mj
 node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --execute --approved-pl-g3-sanitized-wrapper-after-pr533 --reviewed-provider-harness-child
 ```
 
-Wrapper boundary: captures node child stdout and stderr separately, parses only stdout final JSON, never prints raw stdout/stderr, and emits only command label, route/action/status labels, HTTP status labels when present, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, skip reason labels/counts (`languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`), stop reason label, unavailableReason, usage/source-attribution labels/counts, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail. Counts-source-UI evidence remains blocked until a later same-thread exact approved run records parsed counts, source-attribution labels, and browser-visible UI/feed confirmation.
+Wrapper boundary: captures node child stdout and stderr separately, parses only stdout final JSON, never prints raw stdout/stderr, and emits only command label, route/action/status labels, HTTP status labels when present, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, skip reason labels/counts (`languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`, `terminalErrorCodeCounts`), provider root-cause labels (`dominantTerminalErrorCodeLabel`, `providerConfigPresenceLabel`, `providerRouteAvailabilityLabel`), stop reason label, unavailableReason, usage/source-attribution labels/counts, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail. Counts-source-UI evidence remains blocked until a later same-thread exact approved run records parsed counts, source-attribution labels, and browser-visible UI/feed confirmation.
 
 After PR #537, the narrow provider error/skip reason wrapper rerun remains approval-gated. Suggested exact approval label for the operator: `approved-pl-g3-provider-error-skip-wrapper-rerun-after-pr537`.
 
@@ -233,7 +233,7 @@ node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mj
 node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --execute --approved-pl-g3-sanitized-wrapper-after-pr533 --reviewed-provider-harness-child
 ```
 
-This after-PR #537 wrapper rerun may confirm provider error/skip reason counts only. Allowed output remains limited to command labels, route/action/status labels, HTTP status labels when present, target-presence labels, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, `languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`, stop reason label, unavailableReason, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail. `sourceAttributionAvailabilityLabel` value `not-produced-by-provider-harness` is not a UI/feed confirmation. Exact explicit in-thread approval is absent until the operator provides the label in this thread; no approval is carried over from PR #537 or any handoff.
+This after-PR #537 wrapper rerun may confirm provider error/skip reason counts only. After PR #538, the allowed root-cause output also includes `terminalErrorCodeCounts`, `dominantTerminalErrorCodeLabel`, `providerConfigPresenceLabel`, and `providerRouteAvailabilityLabel`. Allowed output remains limited to command labels, route/action/status labels, HTTP status labels when present, target-presence labels, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, `languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`, `terminalErrorCodeCounts`, provider root-cause labels, stop reason label, unavailableReason, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail. `sourceAttributionAvailabilityLabel` value `not-produced-by-provider-harness` is not a UI/feed confirmation. Exact explicit in-thread approval is absent until the operator provides the label in this thread; no approval is carried over from PR #537, PR #538, or any handoff.
 
 UI feed confirmation is browser/manual and must record only:
 
@@ -281,6 +281,10 @@ Allowed output after a later approved run:
 - `providerUnavailableSkippedCount`;
 - `recoverableErrorCount`;
 - `terminalErrorCount`;
+- `terminalErrorCodeCounts`;
+- `dominantTerminalErrorCodeLabel`;
+- `providerConfigPresenceLabel`;
+- `providerRouteAvailabilityLabel`;
 - usage count or Free cap label;
 - stop reason label;
 - unavailable reason;

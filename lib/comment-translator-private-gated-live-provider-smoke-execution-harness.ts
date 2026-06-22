@@ -41,7 +41,16 @@ export type Task27TranslationProviderResult = {
   providerUnavailableSkippedCount: number;
   recoverableErrorCount: number;
   terminalErrorCount: number;
+  terminalErrorCodeCounts: Task27TerminalErrorCodeCounts;
   stopReason: Task27LiveProviderSmokeStopReason | null;
+};
+
+export type Task27TerminalErrorCodeCounts = {
+  invalidRequest: number;
+  unsupportedLanguage: number;
+  providerNotConfigured: number;
+  credentialMissing: number;
+  policyBlocked: number;
 };
 
 export type Task27LiveProviderSmokeStopReason =
@@ -110,6 +119,7 @@ export type CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessResult
         providerUnavailableSkippedCount: number;
         recoverableErrorCount: number;
         terminalErrorCount: number;
+        terminalErrorCodeCounts: Task27TerminalErrorCodeCounts;
         stopReason: Task27LiveProviderSmokeStopReason | null;
       };
       tokenValue: "never-returned-by-design";
@@ -265,6 +275,7 @@ export async function runCommentTranslatorPrivateGatedLiveProviderSmokeExecution
       providerUnavailableSkippedCount: nonNegativeInteger(translation.providerUnavailableSkippedCount),
       recoverableErrorCount: nonNegativeInteger(translation.recoverableErrorCount),
       terminalErrorCount: nonNegativeInteger(translation.terminalErrorCount),
+      terminalErrorCodeCounts: sanitizeTerminalErrorCodeCounts(translation.terminalErrorCodeCounts),
       stopReason: translation.stopReason ?? polling.stopReason
     },
     tokenValue: "never-returned-by-design",
@@ -428,6 +439,7 @@ function mapOperatorLocalTranslationResult(result: Record<string, unknown>): Tas
       providerUnavailableSkippedCount: readCount(asRecord(result.skipsByReason).providerUnavailable),
       recoverableErrorCount: readCount(asRecord(result.errorCounts).recoverable),
       terminalErrorCount: readCount(asRecord(result.errorCounts).terminal),
+      terminalErrorCodeCounts: readTerminalErrorCodeCounts(result.terminalErrorCodeCounts),
       stopReason: mapStopReason(result.stopReason)
     };
   }
@@ -444,6 +456,7 @@ function mapOperatorLocalTranslationResult(result: Record<string, unknown>): Tas
       providerUnavailableSkippedCount: readCount(asRecord(result.skipsByReason).providerUnavailable),
       recoverableErrorCount: readCount(asRecord(result.errorCounts).recoverable),
       terminalErrorCount: readCount(asRecord(result.errorCounts).terminal),
+      terminalErrorCodeCounts: readTerminalErrorCodeCounts(result.terminalErrorCodeCounts),
       stopReason: "translated-message-cap"
     };
   }
@@ -459,7 +472,22 @@ function mapOperatorLocalTranslationResult(result: Record<string, unknown>): Tas
     providerUnavailableSkippedCount: readCount(asRecord(result.skipsByReason).providerUnavailable),
     recoverableErrorCount: readCount(asRecord(result.errorCounts).recoverable),
     terminalErrorCount: readCount(asRecord(result.errorCounts).terminal),
+    terminalErrorCodeCounts: readTerminalErrorCodeCounts(result.terminalErrorCodeCounts),
     stopReason: mapStopReason(result.stopReason) ?? "terminal-provider-error"
+  };
+}
+
+function readTerminalErrorCodeCounts(value: unknown): Task27TerminalErrorCodeCounts {
+  return sanitizeTerminalErrorCodeCounts(asRecord(value));
+}
+
+function sanitizeTerminalErrorCodeCounts(value: Partial<Task27TerminalErrorCodeCounts> | Record<string, unknown>): Task27TerminalErrorCodeCounts {
+  return {
+    invalidRequest: readCount(value.invalidRequest),
+    unsupportedLanguage: readCount(value.unsupportedLanguage),
+    providerNotConfigured: readCount(value.providerNotConfigured),
+    credentialMissing: readCount(value.credentialMissing),
+    policyBlocked: readCount(value.policyBlocked)
   };
 }
 

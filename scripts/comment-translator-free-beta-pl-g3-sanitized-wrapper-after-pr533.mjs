@@ -40,6 +40,10 @@ function createBaseSummary(overrides = {}) {
     providerUnavailableSkippedCount: 0,
     recoverableErrorCount: 0,
     terminalErrorCount: 0,
+    terminalErrorCodeCounts: createEmptyTerminalErrorCodeCounts(),
+    dominantTerminalErrorCodeLabel: "none",
+    providerConfigPresenceLabel: "unavailable",
+    providerRouteAvailabilityLabel: "unavailable",
     stopReasonLabel: "unavailable",
     sourceAttributionLabel: "unavailable",
     sourceAttributionAvailabilityLabel: "unavailable",
@@ -99,6 +103,11 @@ function projectAllowedSanitizedSummary({ childResult, parsedPayload, commandLab
   const childExitedCleanly = childResult.exitCode === 0;
   const providerHarnessStatusLabel = safeLabel(payload.status);
   const sourceAttributionLabel = safeLabel(evidence.sourceAttributionLabel ?? payload.sourceAttributionLabel);
+  const terminalErrorCodeCounts = readTerminalErrorCodeCounts(evidence.terminalErrorCodeCounts ?? payload.terminalErrorCodeCounts);
+  const terminalErrorCount = readCount(evidence.terminalErrorCount ?? payload.terminalErrorCount);
+  const providerRequestCount = readCount(evidence.providerRequestCount ?? payload.providerRequestCount);
+  const providerCallCount = readCount(evidence.providerCallCount ?? payload.providerCallCount);
+  const translationProviderExecutionLabel = safeLabel(evidence.translationProviderExecution ?? payload.translationProviderExecution);
   const pass =
     childExitedCleanly &&
     providerHarnessStatusLabel === "task-27-live-provider-smoke-sanitized-result" &&
@@ -114,18 +123,26 @@ function projectAllowedSanitizedSummary({ childResult, parsedPayload, commandLab
     liveProviderExecutionLabel: safeLabel(payload.liveProviderExecution),
     providerTargetLookupLabel: safeLabel(evidence.providerTargetLookup ?? payload.providerTargetLookup),
     liveChatPollingLabel: safeLabel(evidence.liveChatPollingSmoke ?? payload.liveChatPollingSmoke),
-    translationProviderExecutionLabel: safeLabel(evidence.translationProviderExecution ?? payload.translationProviderExecution),
+    translationProviderExecutionLabel,
     returnedCount: readCount(evidence.returnedItemCount ?? payload.returnedCount),
     eligibleCount: readCount(evidence.eligibleCommentCount ?? payload.eligibleCount),
-    providerRequestCount: readCount(evidence.providerRequestCount ?? payload.providerRequestCount),
-    providerCallCount: readCount(evidence.providerCallCount ?? payload.providerCallCount),
+    providerRequestCount,
+    providerCallCount,
     translatedCount: readCount(evidence.translatedCount ?? payload.translatedCount),
     skippedCount: readCount(evidence.skippedCount ?? payload.skippedCount),
     languagePolicySkippedCount: readCount(evidence.languagePolicySkippedCount ?? payload.languagePolicySkippedCount),
     perMinuteSkippedCount: readCount(evidence.perMinuteSkippedCount ?? payload.perMinuteSkippedCount),
     providerUnavailableSkippedCount: readCount(evidence.providerUnavailableSkippedCount ?? payload.providerUnavailableSkippedCount),
     recoverableErrorCount: readCount(evidence.recoverableErrorCount ?? payload.recoverableErrorCount),
-    terminalErrorCount: readCount(evidence.terminalErrorCount ?? payload.terminalErrorCount),
+    terminalErrorCount,
+    terminalErrorCodeCounts,
+    dominantTerminalErrorCodeLabel: dominantTerminalErrorCodeLabel(terminalErrorCodeCounts),
+    providerConfigPresenceLabel: providerConfigPresenceLabel({ terminalErrorCodeCounts, terminalErrorCount }),
+    providerRouteAvailabilityLabel: providerRouteAvailabilityLabel({
+      translationProviderExecutionLabel,
+      providerRequestCount,
+      providerCallCount
+    }),
     stopReasonLabel: safeLabel(evidence.stopReason ?? payload.stopReason, "none"),
     sourceAttributionLabel,
     sourceAttributionAvailabilityLabel: resolveSourceAttributionAvailabilityLabel({
@@ -264,6 +281,13 @@ function createFixtureChild(fixtureName) {
           providerUnavailableSkippedCount: 3,
           recoverableErrorCount: 0,
           terminalErrorCount: 3,
+          terminalErrorCodeCounts: {
+            invalidRequest: 0,
+            unsupportedLanguage: 0,
+            providerNotConfigured: 0,
+            credentialMissing: 3,
+            policyBlocked: 0
+          },
           stopReason: null
         }
       }, null, 2) + "\\n");
@@ -350,6 +374,53 @@ function asRecord(value) {
 
 function readCount(value) {
   return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : 0;
+}
+
+function readTerminalErrorCodeCounts(value) {
+  const record = asRecord(value);
+  return {
+    invalidRequest: readCount(record.invalidRequest),
+    unsupportedLanguage: readCount(record.unsupportedLanguage),
+    providerNotConfigured: readCount(record.providerNotConfigured),
+    credentialMissing: readCount(record.credentialMissing),
+    policyBlocked: readCount(record.policyBlocked)
+  };
+}
+
+function createEmptyTerminalErrorCodeCounts() {
+  return readTerminalErrorCodeCounts(null);
+}
+
+function dominantTerminalErrorCodeLabel(counts) {
+  const labels = [
+    ["credential-missing", counts.credentialMissing],
+    ["provider-not-configured", counts.providerNotConfigured],
+    ["unsupported-language", counts.unsupportedLanguage],
+    ["invalid-request", counts.invalidRequest],
+    ["policy-blocked", counts.policyBlocked]
+  ];
+  const [label, count] = labels.reduce((current, candidate) => (candidate[1] > current[1] ? candidate : current), ["none", 0]);
+  return count > 0 ? label : "none";
+}
+
+function providerConfigPresenceLabel({ terminalErrorCodeCounts, terminalErrorCount }) {
+  if (terminalErrorCodeCounts.credentialMissing > 0) {
+    return "missing-credential";
+  }
+  if (terminalErrorCodeCounts.providerNotConfigured > 0) {
+    return "provider-config-rejected";
+  }
+  return terminalErrorCount > 0 ? "not-implicated-by-terminal-label" : "unavailable";
+}
+
+function providerRouteAvailabilityLabel({ translationProviderExecutionLabel, providerRequestCount, providerCallCount }) {
+  if (translationProviderExecutionLabel === "executed-server-only-provider" && providerRequestCount > 0 && providerCallCount > 0) {
+    return "route-available-provider-reached";
+  }
+  if (translationProviderExecutionLabel === "executed-server-only-provider" && providerRequestCount > 0) {
+    return "route-available-provider-not-called";
+  }
+  return "unavailable";
 }
 
 function safeLabel(value, fallback = "unavailable") {

@@ -6,7 +6,8 @@ import type {
   CommentTranslationProviderRecoverableError,
   CommentTranslationProviderRequest,
   CommentTranslationProviderResponse,
-  CommentTranslationProviderResult
+  CommentTranslationProviderResult,
+  CommentTranslationProviderTerminalError
 } from "./comment-translator-provider-boundary";
 import type { CommentTranslatorTranslationProviderSet } from "./comment-translator-provider-policy-runtime";
 import { resolveCommentTranslatorTranslationProviderRoute } from "./comment-translator-provider-policy-runtime";
@@ -124,6 +125,7 @@ export type CommentTranslatorProviderExecutionResultBase = {
     recoverable: number;
     terminal: number;
   };
+  terminalErrorCodeCounts?: CommentTranslatorProviderTerminalErrorCodeCounts;
   usageRecorded: {
     providerRequestEstimate: boolean;
     aiUsageEstimate: boolean;
@@ -144,6 +146,14 @@ export type CommentTranslatorProviderExecutionResultBase = {
   rawCommentText: "never-returned-by-design";
 };
 
+export type CommentTranslatorProviderTerminalErrorCodeCounts = {
+  invalidRequest: number;
+  unsupportedLanguage: number;
+  providerNotConfigured: number;
+  credentialMissing: number;
+  policyBlocked: number;
+};
+
 export type CommentTranslatorProviderExecutionTranslation = {
   commentReferenceId: string;
   translatedText: string;
@@ -155,12 +165,15 @@ export type CommentTranslatorProviderExecutionTranslation = {
   recoverablePrimaryFallbackCount: number;
 };
 
-type CommentTranslatorProviderExecutionResultBaseOverrides = Partial<CommentTranslatorProviderExecutionResultBase> & {
+type CommentTranslatorProviderExecutionResultBaseOverrides = Partial<
+  Omit<CommentTranslatorProviderExecutionResultBase, "terminalErrorCodeCounts">
+> & {
   languagePolicySkippedCount?: number;
   perMinuteSkippedCount?: number;
   providerUnavailableSkippedCount?: number;
   recoverableErrorCount?: number;
   terminalErrorCount?: number;
+  terminalErrorCodeCounts?: Partial<CommentTranslatorProviderTerminalErrorCodeCounts>;
   providerUsageRecorded?: boolean;
   aiUsageRecorded?: boolean;
   recoverablePrimaryFallbackCount?: number;
@@ -287,6 +300,7 @@ export async function executeCommentTranslatorProviderBatch(
   let retryCount = 0;
   let recoverableErrorCount = 0;
   let terminalErrorCount = 0;
+  const terminalErrorCodeCounts = createEmptyTerminalErrorCodeCounts();
   const translations: CommentTranslatorProviderExecutionTranslation[] = [];
 
   for (const batch of batches) {
@@ -332,6 +346,7 @@ export async function executeCommentTranslatorProviderBatch(
         recoverableErrorCount += 1;
       } else {
         terminalErrorCount += 1;
+        incrementTerminalErrorCodeCount(terminalErrorCodeCounts, execution.result.code);
       }
     }
   }
@@ -360,6 +375,7 @@ export async function executeCommentTranslatorProviderBatch(
       retryCount,
       recoverableErrorCount,
       terminalErrorCount,
+      terminalErrorCodeCounts,
       providerUsageRecorded: providerCallCount > 0,
       aiUsageRecorded: translations.length > 0,
       recoverablePrimaryFallbackCount: translations.reduce(
@@ -645,6 +661,7 @@ function createResultBase(
     recoverablePrimaryFallbackCount,
     skipsByReason,
     errorCounts,
+    terminalErrorCodeCounts: terminalErrorCodeCountOverrides,
     usageRecorded,
     fallbackReasonCounts,
     ...directOverrides
@@ -674,6 +691,10 @@ function createResultBase(
       recoverable: errorCounts?.recoverable ?? recoverableErrorCount ?? 0,
       terminal: errorCounts?.terminal ?? terminalErrorCount ?? 0
     },
+    terminalErrorCodeCounts: {
+      ...createEmptyTerminalErrorCodeCounts(),
+      ...terminalErrorCodeCountOverrides
+    },
     usageRecorded: {
       providerRequestEstimate: usageRecorded?.providerRequestEstimate ?? providerUsageRecorded ?? false,
       aiUsageEstimate: usageRecorded?.aiUsageEstimate ?? aiUsageRecorded ?? false
@@ -689,6 +710,40 @@ function createResultBase(
         fallbackReasonCounts?.recoverablePrimaryError ?? recoverablePrimaryFallbackCount ?? 0
     }
   };
+}
+
+function createEmptyTerminalErrorCodeCounts(): CommentTranslatorProviderTerminalErrorCodeCounts {
+  return {
+    invalidRequest: 0,
+    unsupportedLanguage: 0,
+    providerNotConfigured: 0,
+    credentialMissing: 0,
+    policyBlocked: 0
+  };
+}
+
+function incrementTerminalErrorCodeCount(
+  counts: CommentTranslatorProviderTerminalErrorCodeCounts,
+  code: CommentTranslationProviderTerminalError["code"]
+) {
+  counts[terminalErrorCodeCountKey(code)] += 1;
+}
+
+function terminalErrorCodeCountKey(
+  code: CommentTranslationProviderTerminalError["code"]
+): keyof CommentTranslatorProviderTerminalErrorCodeCounts {
+  switch (code) {
+    case "invalid-request":
+      return "invalidRequest";
+    case "unsupported-language":
+      return "unsupportedLanguage";
+    case "provider-not-configured":
+      return "providerNotConfigured";
+    case "credential-missing":
+      return "credentialMissing";
+    case "policy-blocked":
+      return "policyBlocked";
+  }
 }
 
 function isServerOnlyTranslatorProvider(provider: CommentTranslationProvider): boolean {

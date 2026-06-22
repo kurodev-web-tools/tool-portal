@@ -75,6 +75,10 @@ import { readYouTubeOAuthCredentialReferenceForCaller } from "@/lib/comment-tran
 import { readCommentTranslatorToolCredentialStatus } from "@/lib/comment-translator-youtube-tool-credential-source";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  clearCommentTranslatorRealCommentsFeedForSession,
+  readCommentTranslatorRealCommentsFeedForActiveSession
+} from "@/lib/comment-translator-real-comments-feed-session-bridge";
 
 const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
 
@@ -206,8 +210,21 @@ export async function heartbeatCommentTranslatorSessionAction() {
 }
 
 export async function getCommentTranslatorRealCommentsFeedAction() {
-  return createUnavailableCommentTranslatorRealCommentsFeedState({
-    reason: "live-provider-polling-not-approved"
+  const callerAuthorization = await readCallerAuthorization();
+  const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
+    callerAuthorization,
+    durableSessionStore: createTrustedCommentTranslatorSessionSupabaseStore()
+  });
+
+  if (durableActiveSessionRead.status !== "ready") {
+    return createUnavailableCommentTranslatorRealCommentsFeedState({
+      reason: "polling-runtime-not-wired"
+    });
+  }
+
+  return readCommentTranslatorRealCommentsFeedForActiveSession({
+    callerAuthorization,
+    activeSession: durableActiveSessionRead.activeSession
   });
 }
 
@@ -452,6 +469,10 @@ async function readCommentTranslatorSessionActionResult({
 
   if (state.status === "stopped") {
     clearCommentTranslatorBoundedLiveChatPollingState(state.sessionReferenceId);
+    clearCommentTranslatorRealCommentsFeedForSession({
+      callerAuthorization,
+      sessionReferenceId: state.sessionReferenceId
+    });
   }
 
   persistInMemoryCommentTranslatorActiveSession({ callerAuthorization, state });

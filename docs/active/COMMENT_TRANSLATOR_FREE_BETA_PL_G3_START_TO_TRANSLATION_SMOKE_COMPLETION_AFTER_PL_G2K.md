@@ -1747,6 +1747,24 @@ Next safe action: keep public launch blocked. Implement a reviewed feed bridge/s
 
 Post-execution verification: `node scripts/comment-translator-free-beta-pl-g3-full-start-to-translation-continuation-after-pr540-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`, and `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs` passed after recording the partial execution evidence. Browser-visible UI/feed verification remains not-run because the browser runtime was unavailable.
 
+## PL-G3 Feed Bridge/Session Persistence Boundary After PR #541
+
+Decision: local-feed-bridge-session-persistence-prepared.
+
+The local runtime now has a reviewed server-only feed bridge/session persistence boundary for PL-G3. `executeCommentTranslatorAzureNormalTranslationForNormalizedMessages` persists the F10 `CommentTranslatorRealCommentsFeedState` safe rows into an owner/session-scoped bridge after translation execution. `getCommentTranslatorRealCommentsFeedAction` reads that bridge for the active durable session instead of remaining a fixed unavailable response, and the session Stop path clears the bridged feed rows.
+
+The bridge stores only browser-safe feed rows already shaped by the F9/F10 boundary. It does not store or return raw provider payloads, raw comments, provider target metadata, `liveChatId`, server-only cursor values, owner user id values, provider channel id values, OAuth/token/cookie/Authorization values, provider URL query values, browser storage payloads, or handoff payload expansion.
+
+Execution state: local deterministic implementation only. No Start, Stop, live target lookup, `liveChatMessages.list`, Azure/OpenAI live/provider execution, browser-visible UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flow, token refresh, Stripe action, public access change, main promotion, or public launch gate flip was run in this slice.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Next safe action: review the local bridge boundary and only then prepare a same-thread ready preflight plus exact approval for any live/provider/UI evidence rerun. Do not request more live comments to close PL-G3 until the bridge is accepted locally.
+
+Verification: RED `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs` first failed on missing `lib/comment-translator-real-comments-feed-session-bridge.ts`. After implementation/docs updates, the focused contract passed. `npm ci --prefer-offline --no-audit --no-fund` first failed with `ERR_SSL_CIPHER_OPERATION_FAILED`; scoped dependency recovery with `npm install --package-lock=false --prefer-offline --ignore-scripts --no-audit --no-fund typescript@5.8.3 server-only@0.0.1` completed without tracked dependency metadata changes. Passing checks: `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, changed-files no-secret scan for 6 files, and `git diff --check` with CRLF normalization warnings only. Width checks skipped because this slice changes server action/runtime/docs/contracts only and no visible UI/CSS/layout/client copy changed.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:

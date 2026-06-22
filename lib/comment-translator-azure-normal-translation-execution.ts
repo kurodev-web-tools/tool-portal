@@ -14,6 +14,9 @@ import {
   createCommentTranslatorRealCommentsFeedStateFromNormalizedMessages
 } from "./comment-translator-real-comments-ui-wiring";
 import {
+  persistCommentTranslatorRealCommentsFeedForActiveSession
+} from "./comment-translator-real-comments-feed-session-bridge";
+import {
   resolveCommentTranslatorFreeBetaProviderCallPolicy
 } from "./comment-translator-free-beta-usage-display";
 import type {
@@ -139,11 +142,14 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
       providerUnavailableSkippedCount: 0
     });
 
-    return createExecutionResult({
-      status: "session-not-active",
-      execution,
-      eligibility,
-      feed: baseFeed
+    return persistFeedBridgeResult({
+      request,
+      result: createExecutionResult({
+        status: "session-not-active",
+        execution,
+        eligibility,
+        feed: baseFeed
+      })
     });
   }
 
@@ -156,13 +162,16 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
       providerUnavailableSkippedCount: 0
     });
 
-    return createExecutionResult({
-      status: "over-limit",
-      execution,
-      eligibility,
-      feed: createCommentTranslatorRealCommentsFeedStateFromUsageLimitRows({
-        feed: baseFeed,
-        eligibleMessages
+    return persistFeedBridgeResult({
+      request,
+      result: createExecutionResult({
+        status: "over-limit",
+        execution,
+        eligibility,
+        feed: createCommentTranslatorRealCommentsFeedStateFromUsageLimitRows({
+          feed: baseFeed,
+          eligibleMessages
+        })
       })
     });
   }
@@ -188,16 +197,36 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
     eligibleMessages.length > 0 &&
     execution.skipsByReason.providerUnavailable >= eligibleMessages.length;
 
-  return createExecutionResult({
-    status: providerUnavailable ? "provider-unavailable" : "completed",
-    execution,
-    eligibility,
-    feed: createCommentTranslatorRealCommentsFeedStateFromTranslatedRows({
-      feed: baseFeed,
+  return persistFeedBridgeResult({
+    request,
+    result: createExecutionResult({
+      status: providerUnavailable ? "provider-unavailable" : "completed",
       execution,
-      eligibleMessages
+      eligibility,
+      feed: createCommentTranslatorRealCommentsFeedStateFromTranslatedRows({
+        feed: baseFeed,
+        execution,
+        eligibleMessages
+      })
     })
   });
+}
+
+function persistFeedBridgeResult({
+  request,
+  result
+}: {
+  request: ExecuteCommentTranslatorAzureNormalTranslationForNormalizedMessagesRequest;
+  result: CommentTranslatorAzureNormalTranslationExecutionResult;
+}) {
+  persistCommentTranslatorRealCommentsFeedForActiveSession({
+    callerAuthorization: request.callerAuthorization,
+    sessionReferenceId: request.sessionReferenceId,
+    feed: result.feed,
+    recordedAtMs: request.occurredAtMs
+  });
+
+  return result;
 }
 
 function createCommentTranslatorRealCommentsFeedStateFromUsageLimitRows({

@@ -1415,6 +1415,89 @@ Verification for this follow-up:
 - `npm run lint`, `npx tsc --noEmit`, and `npm run build` were not run because this slice changes docs, deterministic contract metadata, and approved preflight text only; no app runtime, UI, CSS, provider-policy, deployed route, or Next module changed.
 - Width checks skipped because no visible UI/CSS/layout/client copy changed.
 
+## PL-G3 Provider Error / Skip Reason Readiness After PR #537
+
+Decision: after-pr537-provider-error-skip-wrapper-rerun-preflight-reviewed.
+
+PR #537 merge commit: `55061e90acb2608d0683aadd55c630c83ad96b8c`.
+
+This follow-up does not rerun live/provider execution. Start, Stop, target lookup execution, liveChatMessages.list, Azure/OpenAI provider execution, and UI/feed confirmation were not run in this follow-up.
+
+After reviewing `task.md`, this PL-G3 active doc, the approved Start-to-translation preflight, the PR #537 wrapper/contract readiness changes, and the provider harness/provider execution contracts, the reviewed wrapper boundary remains sufficient for a later same-thread approved rerun to confirm provider error/skip reason counts without leaking forbidden values.
+
+Exact approval label proposed for that later same-thread execution: `approved-pl-g3-provider-error-skip-wrapper-rerun-after-pr537`.
+
+Exact command sequence reviewed for the narrow wrapper/provider rerun:
+
+```powershell
+node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --check-env-only
+node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --print-exact-command-review
+node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --execute --approved-pl-g3-sanitized-wrapper-after-pr533 --reviewed-provider-harness-child
+```
+
+The execute command runs the reviewed provider harness child boundary only after approval; the child boundary is `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed`.
+
+Allowed wrapper projection for that later approved rerun remains limited to command labels, route/action/status labels, HTTP status labels when present, target-presence labels, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, `languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`, stop reason label, unavailableReason, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail.
+
+The reviewed boundary must not expose raw comments, raw provider payloads, provider target metadata, IDs, cookies, tokens, OAuth values, Authorization headers, quota values, URL query values, raw provider error bodies, browser storage payloads, raw stdout/stderr, provider target values, or comment text.
+
+Source attribution boundary: `sourceAttributionAvailabilityLabel` value `not-produced-by-provider-harness` means the provider harness does not produce browser/feed source-attribution rows; it is not a UI/feed confirmation. Browser-visible UI/feed source attribution remains not-run / approval-gated.
+
+Operator-local env note: `C:/Users/taka/.codex/worktrees/test.ps1` exists and contains the expected env-name shape for this boundary; values were not read or printed.
+
+Public gate state label: unchanged / blocked. Public-release capable label: no.
+
+Current blocker: exact explicit in-thread approval is absent. No approval is carried over from PR #537 or this handoff.
+
+Next safe action: keep public launch blocked. Do not run the wrapper, provider harness, Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip unless this thread first records exact explicit approval with `approved-pl-g3-provider-error-skip-wrapper-rerun-after-pr537`.
+
+Verification for this follow-up:
+
+- RED `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr537-contract.mjs` first failed because the after-PR #537 readiness record was missing from this active doc and `task.md`.
+- Passing focused checks: `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr537-contract.mjs`, `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr536-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, and `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs`.
+- Attempted provider harness contract: `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs` was blocked before execution because local `typescript` was not resolvable.
+- Changed-files no-secret scan: passed for 5 files.
+- `git diff --check`: passed with CRLF normalization warnings only.
+- Unchecked scope: the narrow wrapper/provider rerun and all live/provider/Start/Stop/UI execution remain not-run / approval-gated.
+
+## PL-G3 Provider Error / Skip Reason Wrapper Rerun After PR #537 Approval
+
+Approval label consumed in this thread: `approved-pl-g3-provider-error-skip-wrapper-rerun-after-pr537`.
+
+Execution boundary: the reviewed wrapper/provider rerun was executed only through the after-PR #537 command boundary. Start, Stop, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, and public launch gate flip were not run.
+
+Dependency recovery before the successful rerun: initial wrapper execution failed closed before provider evidence with child exit status label `exit-1` / stdout final JSON parsed false / unavailableReason `stdout-final-json-parse-failed`. `typescript` was not resolvable locally. `npm ci --prefer-offline --no-audit --no-fund` and `npm install --no-save --prefer-offline --no-audit --no-fund typescript@5.8.3` both failed with `ERR_SSL_CIPHER_OPERATION_FAILED`. `typescript@5.8.3` was restored from the local npm cache into ignored `node_modules` only; no tracked dependency file changed.
+
+Observed sanitized execution evidence:
+
+- wrapper status: `pl-g3-sanitized-wrapper-summary`;
+- child exit status label `exit-0`;
+- stdout final JSON parsed true;
+- stderr capture label `absent`;
+- provider harness status label `task-27-live-provider-smoke-sanitized-result`;
+- live provider execution label `approved-bounded-execution`;
+- provider target lookup label `executed-presence-only`;
+- live chat polling label `executed-bounded-readonly-one-step`;
+- translation provider execution label `executed-server-only-provider`;
+- returned count 3 / eligible count 3;
+- provider request count 3 / provider call count 3;
+- translated count 0 / skipped count 3;
+- languagePolicySkippedCount 0;
+- perMinuteSkippedCount 0;
+- providerUnavailableSkippedCount 3;
+- recoverableErrorCount 0;
+- terminalErrorCount 3;
+- stop reason label `none`;
+- source attribution label `unavailable`;
+- sourceAttributionAvailabilityLabel `not-produced-by-provider-harness`;
+- pass true / unavailableReason none;
+- Public gate state label: unchanged / blocked;
+- Public-release capable label: no.
+
+Output handling: raw stdout/stderr were not printed. Raw comments, raw provider payloads, provider target metadata, IDs, cookies, tokens, OAuth values, Authorization headers, quota values, URL query values, raw provider error bodies, provider target values, browser storage payloads, and comment text were not recorded.
+
+This confirms the provider error/skip reason counts for the reviewed wrapper boundary. It does not complete PL-G3 because translated count remains 0, skipped count is 3, `sourceAttributionAvailabilityLabel` is `not-produced-by-provider-harness`, and browser-visible UI/feed confirmation remains not-run / approval-gated. Public release remains blocked.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:

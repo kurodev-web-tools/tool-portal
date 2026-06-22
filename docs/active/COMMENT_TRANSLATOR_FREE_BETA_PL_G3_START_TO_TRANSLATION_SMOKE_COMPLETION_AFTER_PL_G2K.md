@@ -1662,6 +1662,91 @@ Outcome: the new after-PR #539 provider terminal labels were observed on a provi
 
 Next safe action: keep public launch blocked. Decide in a separate same-thread approved slice whether to run browser-visible UI/feed confirmation or full PL-G3 continuation evidence. Do not run Start, Stop, target lookup execution outside the reviewed wrapper boundary, `liveChatMessages.list` outside the reviewed wrapper boundary, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip without the appropriate exact approval.
 
+## PL-G3 Full Start-to-translation Continuation After PR #540
+
+Base state: PR #540 is merged at `50c5bbeeef11ae3fffe2c958a3b83126c650f70b`, and `origin/codex/comment-translator-free-public-beta-integration` contains that merge commit.
+
+Decision: blocked-full-start-to-translation-continuation-after-pr540-pending-exact-approval.
+
+Exact approval label required before execution: `approved-pl-g3-full-start-to-translation-continuation-after-pr540`.
+
+Same-thread exact approval: absent.
+
+PR #540 provider boundary baseline: passed. The reviewed sanitized wrapper/provider boundary already recorded status `pl-g3-sanitized-wrapper-summary`, child exit `exit-0`, stdout final JSON parsed true, stderr capture absent, provider harness status `task-27-live-provider-smoke-sanitized-result`, live provider execution `approved-bounded-execution`, provider target lookup `executed-presence-only`, live chat polling `executed-bounded-readonly-one-step`, translation provider execution `executed-server-only-provider`, returned count 1, eligible count 1, provider request count 1, provider call count 1, translated count 1, skipped count 0, terminalErrorCount 0, dominantTerminalErrorCodeLabel `none`, providerConfigPresenceLabel `unavailable`, providerRouteAvailabilityLabel `route-available-provider-reached`, sourceAttributionAvailabilityLabel `not-produced-by-provider-harness`, public gate state label `unchanged / blocked`, public-release capable label `no`, pass true, and unavailableReason `none`.
+
+The full PL-G3 continuation was not run in this branch. Required proof target remains:
+
+- status precheck: pending exact approval;
+- explicit Start: pending exact approval;
+- server-only target lookup: pending exact approval;
+- bounded liveChatMessages.list with fresh visible chat comment: pending exact approval;
+- Free provider translation: pending exact approval;
+- browser-visible UI/feed confirmation: pending exact approval;
+- usage/source attribution/stop reason: pending exact approval;
+- Stop and post-Stop status: pending exact approval.
+
+Allowed output for a later approved run remains sanitized labels/counts only: command/action names, HTTP status labels, session status labels, target-presence labels, provider route/status labels, returned/eligible/translated/skipped counts, skip reason counts, usage/source-attribution/stop-reason labels, console error count, public gate state label, public-release capable label, pass/fail, and unavailableReason.
+
+Forbidden output remains secret values, token values, OAuth values, Authorization header values, cookie values, provider target metadata, provider target values, `liveChatId` values, owner user id values, provider channel id values, quota values, raw provider payloads, raw provider error bodies, raw provider error messages, raw comments, comment text, raw stdout/stderr, browser storage payloads, and handoff payload expansion.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Next safe action: keep public launch blocked. If same-thread exact approval is provided, run only the full PL-G3 continuation boundary recorded in the ready preflight. If exact approval is absent, do not run Start, Stop, target lookup execution, `liveChatMessages.list`, Free provider execution, browser-visible UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip.
+
+Verification: RED `node scripts/comment-translator-free-beta-pl-g3-full-start-to-translation-continuation-after-pr540-contract.mjs` first failed on the missing after-PR #540 full continuation record. Passing checks after docs/task/contract updates: `node scripts/comment-translator-free-beta-pl-g3-full-start-to-translation-continuation-after-pr540-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`, and `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`. Changed-files high-confidence no-secret scan passed for 6 files. `git diff --check` passed with CRLF normalization warnings only.
+
+Dependency-backed UI contract note: `node scripts/comment-translator-public-operator-session-ui-contract.mjs` was attempted but blocked before execution because local `typescript` was unavailable. `npm ci --prefer-offline --no-audit --no-fund` was attempted once with a 120-second timeout and once with a longer timeout; the second attempt failed with `ERR_SSL_CIPHER_OPERATION_FAILED`. Generated `node_modules` / `.npm-cache` verification byproducts were removed after confirming their resolved paths were inside the worktree. Runtime/UI files were not changed, and browser-visible UI/feed execution remains not-run / approval-gated.
+
+## PL-G3 Full Start-to-translation Continuation Approved Attempt After PR #540
+
+Decision: partial-full-start-to-translation-continuation-after-pr540-browser-ui-blocked.
+
+Same-thread exact approval: present. Approval label: `approved-pl-g3-full-start-to-translation-continuation-after-pr540`.
+
+First approved attempt in this thread stopped before Start because the shell process did not yet have required operator-local readiness. After the operator retried dependency installation and confirmed `node_modules/typescript` was still false, this thread resolved local TypeScript execution by pointing the ignored local `node_modules/typescript` entry at an existing local `typescript@5.8.3` package in another worktree. This did not change tracked files. After dot-sourcing the operator-local reference script in the same process, route and provider harness readiness passed.
+
+- route reference precheck: executed / deployed origin reference present / allowed-tester cookie reference present / credential reference present / pass true;
+- provider harness readiness: executed / ready-for-task-27-approved-live-provider-smoke-execution-harness;
+- status precheck: executed / HTTP 200 / session status label `not-started` / stop reason label `none` / pass true;
+- explicit Start: executed / HTTP 200 / session status label `active` / stop reason label `none` / pass true;
+- reviewed sanitized wrapper/provider boundary: executed / child exit status label `exit-0` / stdout final JSON parsed true / stderr capture label `absent` / pass true;
+- server-only target lookup: executed-presence-only;
+- bounded liveChatMessages.list with fresh visible chat comment: executed-bounded-readonly-one-step;
+- Free provider translation: executed-server-only-provider;
+- returned count 3 / eligible count 3 / provider request count 3 / provider call count 3 / translated count 3 / skipped count 0;
+- languagePolicySkippedCount 0 / perMinuteSkippedCount 0 / providerUnavailableSkippedCount 0 / recoverableErrorCount 0 / terminalErrorCount 0;
+- dominantTerminalErrorCodeLabel `none` / providerConfigPresenceLabel `unavailable` / providerRouteAvailabilityLabel `route-available-provider-reached`;
+- sourceAttributionAvailabilityLabel `not-produced-by-provider-harness`;
+- browser-visible UI/feed confirmation: attempted by operator screenshot / feed visible but empty / translated count 0 / skipped count 0;
+- usage/source attribution/stop reason: blocked-empty-visible-feed-after-provider-translation;
+- Stop and post-Stop status: executed / Stop HTTP 200 / stopped / user-stop / post-Stop HTTP 200 / not-started.
+
+browser-visible UI/feed confirmation: attempted by operator screenshot / feed visible but empty / translated count 0 / skipped count 0. usage/session display: visible / session remaining and daily remaining counters active. source attribution: not-confirmed-on-visible-feed. stop reason label: not-confirmed-on-visible-feed. console error count: not-confirmed.
+
+usage/source attribution/stop reason: blocked-empty-visible-feed-after-provider-translation.
+
+No passing browser-visible UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flow, token refresh, Stripe action, public access change, main promotion, or public launch gate flip was run. Browser runtime setup failed with transport closed, and the operator-provided screenshot shows the UI feed did not receive the provider-translated rows. The required visible feed/source-attribution evidence remains blocked-empty-visible-feed-after-provider-translation.
+
+## PL-G3 Browser-visible Feed Empty Root Cause After PR #540
+
+Root-cause label: blocked-ui-feed-action-fixed-unavailable-after-provider-translation.
+
+The browser-visible feed action boundary remains fixed unavailable with unavailableReason `live-provider-polling-not-approved`. The reviewed provider harness translated count 3 in its child process, but that result is not persisted into the server-owned UI feed state.
+
+The operator-provided screenshot confirmed the session/usage surface was active while the visible feed stayed empty. That means the Start/session/usage path progressed, and the remaining gap is the feed bridge/session persistence path between reviewed provider execution and `getCommentTranslatorRealCommentsFeedAction`.
+
+Next safe action: keep public launch blocked and implement a separate reviewed feed bridge/session persistence boundary before requesting more live comments. Do not use another live comment to close PL-G3 until the browser-visible server-owned feed can read sanitized translated rows through a reviewed local contract.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Next safe action: keep public launch blocked. Implement a reviewed feed bridge/session persistence boundary before requesting more live comments. Any follow-up should keep output sanitized to labels/counts only.
+
+Post-execution verification: `node scripts/comment-translator-free-beta-pl-g3-full-start-to-translation-continuation-after-pr540-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`, and `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs` passed after recording the partial execution evidence. Browser-visible UI/feed verification remains not-run because the browser runtime was unavailable.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:
@@ -1689,7 +1774,7 @@ Unchecked scope:
 - same-process target-refresh diagnostic: executed after same-thread exact approval / target lookup sanitized result / target lookup provider access liveBroadcasts-list-target-lookup-only / live target present / bounded polling provider access liveChatMessages-list-bounded-short-polling-only / bounded attempt count 1 / stop reason label non-empty-intake-found / unavailableReason none / Azure-UI-not-run / public-release capable no;
 - Free Azure translation/provider harness after PR #534: executed through reviewed sanitized wrapper / process exit 0 / stdout final JSON parsed true / returned count 3 / eligible count 3 / provider request count 3 / provider call count 3 / translated count 0 / skipped count 3 / source attribution unavailable / pass true for wrapper execution only;
 - sanitized wrapper after PR #533: prepared / stdout and stderr separated capture / stdout final JSON parse contract passed with deterministic fixtures / no live-provider-ui execution;
-- UI/feed confirmation: not-run / requires-browser-visible-evidence-after-wrapper-counts-review;
+- UI/feed confirmation: attempted / feed visible but empty / blocked-ui-feed-action-fixed-unavailable-after-provider-translation;
 - usage/source-attribution evidence: source attribution unavailable / blocked-translated-source-ui-evidence;
 - stop reason: not-run / approval-gated;
 - source attribution: not-run / approval-gated;
@@ -1702,11 +1787,11 @@ Unchecked scope:
 - Stripe live actions and billing setting mutation: not-run / approval-gated;
 - main promotion, limited public beta open, public access change, and public launch gate flip: not-run / approval-gated.
 
-Residual risk: PL-G3 remains incomplete. The approved continuation reached Start, parsed the reviewed wrapper final JSON, recorded returned/eligible/translated/skipped counts, stopped the session, and confirmed post-Stop status. The record still lacks successful translated output, source-attribution labels, and browser-visible UI/feed confirmation. Public-release capable remains no.
+Residual risk: PL-G3 remains incomplete. The approved continuation reached Start, parsed the reviewed wrapper final JSON, recorded returned/eligible/translated/skipped counts, stopped the session, and confirmed post-Stop status. The provider harness translated count 3, but the browser-visible feed remained empty because the server-owned feed action still returns the fixed unavailable state instead of persisted translated rows. The record still lacks successful browser-visible translated output, source-attribution labels, and feed confirmation. Public-release capable remains no.
 
 ## Next Safe Action
 
-Keep public launch blocked. Review why the provider harness returned translated count 0 / skipped count 3 with source attribution unavailable, then decide in a separate same-thread exact approval whether to run a narrow browser-visible UI/feed confirmation or another provider retry. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip.
+Keep public launch blocked. Implement a reviewed feed bridge/session persistence boundary before requesting another live comment or provider retry. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip.
 
 ## Completion Verification
 

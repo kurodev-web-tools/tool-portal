@@ -235,6 +235,33 @@ node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mj
 
 This after-PR #537 wrapper rerun may confirm provider error/skip reason counts only. After PR #538, the allowed root-cause output also includes `terminalErrorCodeCounts`, `dominantTerminalErrorCodeLabel`, `providerConfigPresenceLabel`, and `providerRouteAvailabilityLabel`. Allowed output remains limited to command labels, route/action/status labels, HTTP status labels when present, target-presence labels, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, `languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`, `terminalErrorCodeCounts`, provider root-cause labels, stop reason label, unavailableReason, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail. `sourceAttributionAvailabilityLabel` value `not-produced-by-provider-harness` is not a UI/feed confirmation. Exact explicit in-thread approval is absent until the operator provides the label in this thread; no approval is carried over from PR #537, PR #538, or any handoff.
 
+After PR #540 full PL-G3 Start-to-translation continuation approval boundary:
+
+Use this boundary only after reviewing the PR #540 provider baseline and confirming operator-local reference readiness without printing any private value. Exact approval label: `approved-pl-g3-full-start-to-translation-continuation-after-pr540`.
+
+Exact approval required before execution:
+
+```text
+I approve running PL-G3 full Start-to-translation continuation with approval label approved-pl-g3-full-start-to-translation-continuation-after-pr540, limited to the exact status precheck, explicit Start, server-only target lookup, bounded liveChatMessages.list with one fresh visible chat comment, Free provider translation, browser-visible UI/feed confirmation, usage/source-attribution/stop-reason evidence, Stop, and post-Stop status in docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md. Keep output sanitized to labels/counts only. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, OAuth flows, token refresh, Stripe actions, main promotion, or public launch gate flip. If exact approval is absent, stop with blocked-full-start-to-translation-continuation-after-pr540-pending-exact-approval.
+```
+
+Execution checklist after that approval, with sanitized output review between steps:
+
+- status precheck;
+- explicit Start;
+- server-only target lookup;
+- bounded `liveChatMessages.list` with one fresh visible chat comment;
+- Free provider translation through the reviewed wrapper/provider boundary;
+- browser-visible UI/feed confirmation;
+- usage/source-attribution/stop-reason evidence;
+- Stop and post-Stop status.
+
+Allowed output remains labels/counts only: command/action names, HTTP status labels, session status labels, target-presence labels, provider route/status labels, returned/eligible/translated/skipped counts, skip reason counts, usage/source-attribution/stop-reason labels, console error count, public gate state label, public-release capable label, pass/fail, and unavailableReason. If polling returns empty intake, provider-not-ok, source attribution cannot be confirmed, UI/feed confirmation cannot be observed, or a readiness reference is missing, stop before overclaiming completion and record sanitized blocker labels only.
+
+If browser-visible feed is empty after provider translation, treat the continuation as blocked-ui-feed-action-fixed-unavailable-after-provider-translation. Do not request more live comments to close PL-G3 until the server-owned feed bridge/session persistence path is reviewed locally and can return sanitized translated rows without exposing forbidden private values.
+
+This after-PR #540 continuation must not output raw stdout/stderr, raw provider payloads, raw provider error bodies, raw provider error messages, raw comments, comment text, target values, provider target metadata, provider URL query values, `liveChatId` values, owner user id values, provider channel id values, token/OAuth/cookie values, Authorization header values, quota values, browser storage payloads, or handoff payload expansion. It must not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, OAuth flows, token refresh, Stripe actions, main promotion, or public launch gate flip.
+
 UI feed confirmation is browser/manual and must record only:
 
 - route path;

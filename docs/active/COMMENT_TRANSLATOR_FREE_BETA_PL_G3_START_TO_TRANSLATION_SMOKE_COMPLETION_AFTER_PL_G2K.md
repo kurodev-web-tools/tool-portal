@@ -1765,6 +1765,45 @@ Next safe action: review the local bridge boundary and only then prepare a same-
 
 Verification: RED `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs` first failed on missing `lib/comment-translator-real-comments-feed-session-bridge.ts`. After implementation/docs updates, the focused contract passed. `npm ci --prefer-offline --no-audit --no-fund` first failed with `ERR_SSL_CIPHER_OPERATION_FAILED`; scoped dependency recovery with `npm install --package-lock=false --prefer-offline --ignore-scripts --no-audit --no-fund typescript@5.8.3 server-only@0.0.1` completed without tracked dependency metadata changes. Passing checks: `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, changed-files no-secret scan for 6 files, and `git diff --check` with CRLF normalization warnings only. Width checks skipped because this slice changes server action/runtime/docs/contracts only and no visible UI/CSS/layout/client copy changed.
 
+## PL-G3 Post-bridge Full Start-to-translation Continuation Ready Preflight After PR #542
+
+Decision: post-bridge-full-continuation-ready-preflight-prepared-after-pr542.
+
+Base state: PR #542 is merged at `d1b2215d9cd1abe1ca8d93319d1e64c26115fa70` and contained in `origin/codex/comment-translator-free-public-beta-integration`.
+
+Exact approval label required before execution: `approved-pl-g3-post-bridge-full-continuation-after-pr542`.
+
+Bridge baseline: local-feed-bridge-session-persistence-prepared. The reviewed local boundary persists F10 `CommentTranslatorRealCommentsFeedState` safe rows into the server-owned owner/session-scoped bridge, lets `getCommentTranslatorRealCommentsFeedAction` read the bridge for the active durable session, and clears bridged rows on Stop.
+
+This preflight prepares the next full PL-G3 continuation only. It does not run Start, Stop, live target lookup, `liveChatMessages.list`, Free provider execution, browser-visible UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flow, token refresh, Stripe action, public access change, main promotion, or public launch gate flip.
+
+Required later evidence after exact approval:
+
+- status precheck: required;
+- explicit Start: required;
+- server-only live target lookup: required;
+- bounded `liveChatMessages.list` with fresh visible chat comment: required;
+- Free provider translation through the reviewed wrapper/provider boundary: required;
+- browser-visible server-owned feed should read bridged sanitized translated rows for the active durable session;
+- source attribution label: required;
+- stop reason label: required;
+- usage/session counters: required;
+- translated count: required;
+- skipped count: required;
+- Stop and post-Stop status: required.
+
+Allowed output remains labels/counts only: command/action names, HTTP status labels, session status labels, target-presence labels, provider route/status labels, returned/eligible/translated/skipped counts, skip reason counts, usage/session counter labels, source attribution label, stop reason label, console error count, public gate state label, public-release capable label, pass/fail, and unavailableReason.
+
+Forbidden output remains secret/token/cookie/OAuth/Authorization values, owner user id values, provider channel id values, credential values, provider target metadata, target values, `liveChatId`, server-only cursor values, provider URL query values, raw provider payloads, raw provider errors, raw comments, comment text, browser storage payloads, handoff payload expansion, quota values, and Stripe/billing identifiers.
+
+Start/Stop/live/provider/UI execution: not-run in this preflight slice.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Next safe action: only after same-thread ready preflight review, sanitized output review, operator-local reference readiness, and exact approval with `approved-pl-g3-post-bridge-full-continuation-after-pr542`, run the post-bridge continuation boundary. If approval is absent or any readiness reference is missing, stop with `blocked-post-bridge-continuation-after-pr542-pending-exact-approval` or the relevant sanitized blocker label. Do not request more live comments or run provider/UI evidence from this docs/contract slice.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:

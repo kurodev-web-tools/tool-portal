@@ -12,6 +12,10 @@ const providerBoundaryPath = "lib/comment-translator-provider-boundary.ts";
 const usageLedgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
 const boundedPollingPath = "lib/comment-translator-youtube-bounded-polling-session-runtime.ts";
 const requirementsPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md";
+const plG3CompletionPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md";
+const readyPreflightPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md";
 const taskPath = "task.md";
 const sharedTsModuleCache = new Map();
 
@@ -24,7 +28,7 @@ function exists(relativePath) {
 }
 
 function changedFiles() {
-  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"]
@@ -328,6 +332,17 @@ assert.equal(firstRun.retryCount, 1);
 assert.equal(firstRun.errorCounts.recoverable, 0);
 assert.equal(firstRun.errorCounts.terminal, 0);
 assert.deepEqual(
+  firstRun.terminalErrorCodeCounts,
+  {
+    invalidRequest: 0,
+    unsupportedLanguage: 0,
+    providerNotConfigured: 0,
+    credentialMissing: 0,
+    policyBlocked: 0
+  },
+  "successful run exposes zeroed sanitized terminal error code counts"
+);
+assert.deepEqual(
   firstRun.batches.map((batch) => batch.providerRequestCount),
   [2],
   "runtime groups provider work into bounded batches"
@@ -433,7 +448,57 @@ const blockedProviderRun = await runtime.executeCommentTranslatorProviderBatch({
 assert.equal(blockedProviderRun.status, "blocked-non-server-translator-provider");
 assert.equal(blockedProviderRun.providerCallCount, 0, "non-server provider is blocked before execution");
 
-for (const payload of [firstRun, secondRun, blockedProviderRun, ...ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests()]) {
+const terminalCodeRun = await runtime.executeCommentTranslatorProviderBatch({
+  provider: {
+    ...provider,
+    async translate() {
+      return {
+        type: "terminal-error",
+        code: "credential-missing",
+        message: "raw provider diagnostic must not be returned",
+        retry: {
+          retryable: false
+        }
+      };
+    }
+  },
+  callerAuthorization,
+  sessionReferenceId: "cts_provider_execution_contract_003",
+  occurredAtMs: 50_000,
+  usage,
+  targetLanguage: "ja",
+  comments: [
+    {
+      commentId: "comment-terminal-code-1",
+      publishedAt: "2026-06-11T04:00:06.000Z",
+      text: "Terminal code one",
+      platformLanguageHint: "en"
+    },
+    {
+      commentId: "comment-terminal-code-2",
+      publishedAt: "2026-06-11T04:00:07.000Z",
+      text: "Terminal code two",
+      platformLanguageHint: "en"
+    }
+  ]
+});
+assert.equal(terminalCodeRun.status, "completed");
+assert.equal(terminalCodeRun.translatedCount, 0);
+assert.equal(terminalCodeRun.skipsByReason.providerUnavailable, 2);
+assert.equal(terminalCodeRun.errorCounts.terminal, 2);
+assert.deepEqual(
+  terminalCodeRun.terminalErrorCodeCounts,
+  {
+    invalidRequest: 0,
+    unsupportedLanguage: 0,
+    providerNotConfigured: 0,
+    credentialMissing: 2,
+    policyBlocked: 0
+  },
+  "terminal provider results expose sanitized code counts without raw provider diagnostics"
+);
+
+for (const payload of [firstRun, secondRun, blockedProviderRun, terminalCodeRun, ...ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests()]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenValue of [
     "test-caller-reference",
@@ -455,17 +520,26 @@ for (const payload of [firstRun, secondRun, blockedProviderRun, ...ledger.readIn
 
 const allowedChangedFiles = new Set([
   "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
   "lib/comment-translator-provider-boundary.ts",
   providerExecutionPath,
   "lib/comment-translator-provider-policy-runtime.ts",
   intakePath,
   usageLedgerPath,
   "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr537-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-provider-terminal-error-boundary-after-pr538-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
   "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
+  plG3CompletionPath,
+  readyPreflightPath,
   taskPath
 ]);
 for (const file of changedFiles()) {

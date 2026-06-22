@@ -1498,6 +1498,28 @@ Output handling: raw stdout/stderr were not printed. Raw comments, raw provider 
 
 This confirms the provider error/skip reason counts for the reviewed wrapper boundary. It does not complete PL-G3 because translated count remains 0, skipped count is 3, `sourceAttributionAvailabilityLabel` is `not-produced-by-provider-harness`, and browser-visible UI/feed confirmation remains not-run / approval-gated. Public release remains blocked.
 
+## PL-G3 Provider Terminal-error Root-cause Boundary After PR #538
+
+Base state: PR #538 is merged at `ce9de24a65f79fe69c252b5cfef3f4d0c6c5a96d`, and `origin/codex/comment-translator-free-public-beta-integration` contains that merge commit.
+
+Decision: after-pr538-provider-terminal-error-boundary-prepared. The current deterministic/server-only contracts before this slice could confirm translated count 0 / skipped count 3 / providerUnavailableSkippedCount 3 / terminalErrorCount 3, but could not distinguish whether terminal errors came from credential/config rejection, unsupported language, invalid request, or policy-blocked provider response without raw provider body/message values.
+
+Implemented sanitized boundary: provider execution now carries `terminalErrorCodeCounts` with allowlisted code-count keys only: `invalidRequest`, `unsupportedLanguage`, `providerNotConfigured`, `credentialMissing`, and `policyBlocked`. The private-gated provider harness passes those counts through evidence, and the PL-G3 sanitized wrapper emits `terminalErrorCodeCounts`, `dominantTerminalErrorCodeLabel`, `providerConfigPresenceLabel`, and `providerRouteAvailabilityLabel`.
+
+Deterministic fixture expectation: the provider-unavailable terminal-error fixture now projects `terminalErrorCodeCounts.credentialMissing` 3, `dominantTerminalErrorCodeLabel` `credential-missing`, `providerConfigPresenceLabel` `missing-credential`, and `providerRouteAvailabilityLabel` `route-available-provider-reached`.
+
+Safety boundary: this slice did not run Start, Stop, target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, production/custom deployed smoke, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, PL-G4, PL-G5, public access changes, main promotion, or public launch gate flip.
+
+Output boundary: no raw stdout/stderr, raw comments, raw provider payloads, provider target metadata, IDs, cookies, tokens, OAuth values, Authorization headers, quota values, URL query values, raw provider error bodies, provider target values, browser storage payloads, or comment text are requested or recorded by the new boundary.
+
+Public gate state label: unchanged / blocked. Public-release capable label: no.
+
+Next safe action: review this sanitized boundary and, only after exact same-thread approval in a later thread, run the wrapper/provider boundary again to observe the new labels. Do not request or run another live/provider wrapper rerun from this thread without that approval.
+
+Verification in this branch: `npm ci --prefer-offline --no-audit --no-fund` succeeded. RED `node scripts/comment-translator-provider-execution-runtime-contract.mjs` first failed because `terminalErrorCodeCounts` was missing. RED `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs` first failed because harness evidence did not include `terminalErrorCodeCounts`. RED `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr537-contract.mjs` first failed because wrapper output did not include terminal code labels/counts. Passing focused checks after implementation/docs updates: `node scripts/comment-translator-provider-execution-runtime-contract.mjs`, `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-provider-terminal-error-boundary-after-pr538-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr537-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr536-contract.mjs`, and `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`. `npm run lint`, `npx tsc --noEmit`, and `npm run build` passed. Changed-files no-secret scan passed for 11 files. `git diff --check` passed with CRLF normalization warnings only.
+
+Unchecked scope: live/provider/Start/Stop/UI execution remains not-run / approval-gated, including target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, production/custom deployed smoke, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, PL-G4, PL-G5, public access changes, main promotion, and public launch gate flip.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:

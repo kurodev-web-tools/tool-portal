@@ -334,6 +334,13 @@ const adapterHarnessResult =
         errorCounts: {
           recoverable: 0,
           terminal: 0
+        },
+        terminalErrorCodeCounts: {
+          invalidRequest: 0,
+          unsupportedLanguage: 0,
+          providerNotConfigured: 0,
+          credentialMissing: 0,
+          policyBlocked: 0
         }
       })
     })
@@ -418,9 +425,16 @@ const harnessResult = await foundation.runCommentTranslatorPrivateGatedLiveProvi
     perMinuteSkippedCount: 0,
     providerUnavailableSkippedCount: 0,
     recoverableErrorCount: 0,
-    terminalErrorCount: 0,
-    stopReason: null
-  })
+      terminalErrorCount: 0,
+      terminalErrorCodeCounts: {
+        invalidRequest: 0,
+        unsupportedLanguage: 0,
+        providerNotConfigured: 0,
+        credentialMissing: 0,
+        policyBlocked: 0
+      },
+      stopReason: null
+    })
 });
 
 assert.equal(harnessResult.status, "task-27-live-provider-smoke-sanitized-result");
@@ -439,6 +453,13 @@ assert.deepEqual(harnessResult.evidence, {
   providerUnavailableSkippedCount: 0,
   recoverableErrorCount: 0,
   terminalErrorCount: 0,
+  terminalErrorCodeCounts: {
+    invalidRequest: 0,
+    unsupportedLanguage: 0,
+    providerNotConfigured: 0,
+    credentialMissing: 0,
+    policyBlocked: 0
+  },
   stopReason: null
 });
 

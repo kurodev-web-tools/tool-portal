@@ -274,6 +274,34 @@ UI feed confirmation is browser/manual and must record only:
 - translated count and skipped count;
 - console error count.
 
+After PR #542 post-bridge full PL-G3 Start-to-translation continuation approval boundary:
+
+Use this boundary only after reviewing PR #542 server-owned feed bridge/session persistence and confirming operator-local reference readiness without printing private values. Exact approval label: `approved-pl-g3-post-bridge-full-continuation-after-pr542`.
+
+Exact approval required before execution:
+
+```text
+I approve running PL-G3 post-bridge full Start-to-translation continuation with approval label approved-pl-g3-post-bridge-full-continuation-after-pr542, limited to the exact status precheck, explicit Start, server-only target lookup, bounded liveChatMessages.list with one fresh visible chat comment, Free provider translation, browser-visible server-owned feed confirmation through the PR #542 bridge, usage/session counter evidence, source attribution evidence, stop-reason evidence, Stop, and post-Stop status in docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md. Keep output sanitized to labels/counts only. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip. If exact approval is absent, stop with blocked-post-bridge-continuation-after-pr542-pending-exact-approval.
+```
+
+Execution checklist after that approval, with sanitized output review between steps:
+
+- status precheck;
+- explicit Start;
+- server-only target lookup;
+- bounded `liveChatMessages.list` with one fresh visible chat comment;
+- Free provider translation through the reviewed wrapper/provider boundary;
+- browser-visible server-owned feed reads sanitized translated rows;
+- source attribution;
+- stop reason;
+- usage/session counters;
+- translated/skipped counts;
+- Stop and post-Stop status.
+
+Allowed output remains labels/counts only: command/action names, HTTP status labels, session status labels, target-presence labels, provider route/status labels, returned/eligible/translated/skipped counts, skip reason counts, usage/session counter labels, source attribution label, stop reason label, console error count, public gate state label, public-release capable label, pass/fail, and unavailableReason.
+
+Forbidden output remains raw stdout/stderr, raw provider payloads, raw provider error bodies, raw provider error messages, raw comments, comment text, target values, provider target metadata, provider URL query values, `liveChatId` values, owner user id values, provider channel id values, token/OAuth/cookie values, Authorization header values, quota values, browser storage payloads, and handoff payload expansion.
+
 Explicit Stop command, approval-gated and required before closeout if Start succeeds:
 
 ```powershell

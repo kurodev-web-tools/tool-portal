@@ -1520,6 +1520,148 @@ Verification in this branch: `npm ci --prefer-offline --no-audit --no-fund` succ
 
 Unchecked scope: live/provider/Start/Stop/UI execution remains not-run / approval-gated, including target lookup execution, `liveChatMessages.list`, Azure/OpenAI provider execution, UI/feed confirmation, production/custom deployed smoke, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, PL-G4, PL-G5, public access changes, main promotion, and public launch gate flip.
 
+## PL-G3 Provider Terminal-label Wrapper Rerun After PR #539
+
+Base state: PR #539 is merged at `579b804688390bcdc2e38d040a02467db8640e99`, and `origin/codex/comment-translator-free-public-beta-integration` currently resolves to that commit.
+
+Decision: after-pr539-wrapper-provider-rerun-passed / translated-count-1 / public-release capable no.
+
+Same-thread exact approval label: `approved-pl-g3-provider-terminal-label-wrapper-rerun-after-pr539`.
+
+Execution boundary: only the reviewed sanitized wrapper was run:
+
+`node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --execute --approved-pl-g3-sanitized-wrapper-after-pr533 --reviewed-provider-harness-child`
+
+This run did not execute Start, Stop, target lookup execution, `liveChatMessages.list` outside the reviewed wrapper boundary, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip.
+
+First sanitized wrapper result:
+
+- status `blocked-pl-g3-sanitized-wrapper-summary`;
+- command label `pl-g3-provider-harness-reviewed-command`;
+- child exit status label `exit-2`;
+- stdout final JSON parsed true;
+- stderr capture label `absent`;
+- provider harness status label `blocked-missing-execution-harness-references`;
+- live provider execution label `not-run`;
+- provider target lookup label `not-run`;
+- live chat polling label `not-run`;
+- translation provider execution label `not-run`;
+- returned count 0 / eligible count 0;
+- provider request count 0 / provider call count 0;
+- translated count 0 / skipped count 0;
+- languagePolicySkippedCount 0;
+- perMinuteSkippedCount 0;
+- providerUnavailableSkippedCount 0;
+- recoverableErrorCount 0;
+- terminalErrorCount 0;
+- `terminalErrorCodeCounts` all 0;
+- dominantTerminalErrorCodeLabel `none`;
+- providerConfigPresenceLabel `unavailable`;
+- providerRouteAvailabilityLabel `unavailable`;
+- stop reason label `none`;
+- sourceAttributionAvailabilityLabel `not-produced-by-provider-harness`;
+- Public gate state label: unchanged / blocked;
+- Public-release capable label: no;
+- pass false / unavailableReason `child-exit-nonzero`.
+
+Operator-local reference follow-up: after loading the operator-local reference file in the same process, `--check-env-only` returned status `ready-for-task-27-approved-live-provider-smoke-execution-harness` with provider target lookup, live chat polling, translation provider execution, and live provider execution all `not-run-preflight-only`.
+
+Second sanitized wrapper result:
+
+- status `blocked-pl-g3-sanitized-wrapper-summary`;
+- command label `pl-g3-provider-harness-reviewed-command`;
+- child exit status label `exit-2`;
+- stdout final JSON parsed true;
+- stderr capture label `absent`;
+- provider harness status label `blocked-target-lookup-sanitized`;
+- live provider execution label `not-run`;
+- provider target lookup label `not-run`;
+- live chat polling label `not-run`;
+- translation provider execution label `not-run`;
+- returned count 0 / eligible count 0;
+- provider request count 0 / provider call count 0;
+- translated count 0 / skipped count 0;
+- languagePolicySkippedCount 0;
+- perMinuteSkippedCount 0;
+- providerUnavailableSkippedCount 0;
+- recoverableErrorCount 0;
+- terminalErrorCount 0;
+- `terminalErrorCodeCounts` all 0;
+- dominantTerminalErrorCodeLabel `none`;
+- providerConfigPresenceLabel `unavailable`;
+- providerRouteAvailabilityLabel `unavailable`;
+- stop reason label `stream-unavailable`;
+- sourceAttributionAvailabilityLabel `not-produced-by-provider-harness`;
+- Public gate state label: unchanged / blocked;
+- Public-release capable label: no;
+- pass false / unavailableReason `child-exit-nonzero`.
+
+Third sanitized wrapper result after the operator reported the stream/live chat commentable:
+
+- status `blocked-pl-g3-sanitized-wrapper-summary`;
+- command label `pl-g3-provider-harness-reviewed-command`;
+- child exit status label `exit-2`;
+- stdout final JSON parsed true;
+- stderr capture label `absent`;
+- provider harness status label `blocked-polling-sanitized`;
+- live provider execution label `aborted-after-approved-target-lookup`;
+- provider target lookup label `executed-presence-only`;
+- live chat polling label `executed-bounded-readonly-one-step`;
+- translation provider execution label `not-run`;
+- returned count 0 / eligible count 0;
+- provider request count 0 / provider call count 0;
+- translated count 0 / skipped count 0;
+- languagePolicySkippedCount 0;
+- perMinuteSkippedCount 0;
+- providerUnavailableSkippedCount 0;
+- recoverableErrorCount 0;
+- terminalErrorCount 0;
+- `terminalErrorCodeCounts` all 0;
+- dominantTerminalErrorCodeLabel `none`;
+- providerConfigPresenceLabel `unavailable`;
+- providerRouteAvailabilityLabel `unavailable`;
+- stop reason label `none`;
+- sourceAttributionAvailabilityLabel `not-produced-by-provider-harness`;
+- Public gate state label: unchanged / blocked;
+- Public-release capable label: no;
+- pass false / unavailableReason `child-exit-nonzero`.
+
+Fourth sanitized wrapper result after the operator added a fresh visible live chat comment:
+
+- status `pl-g3-sanitized-wrapper-summary`;
+- command label `pl-g3-provider-harness-reviewed-command`;
+- child exit status label `exit-0`;
+- stdout final JSON parsed true;
+- stderr capture label `absent`;
+- provider harness status label `task-27-live-provider-smoke-sanitized-result`;
+- live provider execution label `approved-bounded-execution`;
+- provider target lookup label `executed-presence-only`;
+- live chat polling label `executed-bounded-readonly-one-step`;
+- translation provider execution label `executed-server-only-provider`;
+- returned count 1 / eligible count 1;
+- provider request count 1 / provider call count 1;
+- translated count 1 / skipped count 0;
+- languagePolicySkippedCount 0;
+- perMinuteSkippedCount 0;
+- providerUnavailableSkippedCount 0;
+- recoverableErrorCount 0;
+- terminalErrorCount 0;
+- `terminalErrorCodeCounts` all 0;
+- dominantTerminalErrorCodeLabel `none`;
+- providerConfigPresenceLabel `unavailable`;
+- providerRouteAvailabilityLabel `route-available-provider-reached`;
+- stop reason label `none`;
+- sourceAttributionAvailabilityLabel `not-produced-by-provider-harness`;
+- Public gate state label: unchanged / blocked;
+- Public-release capable label: no;
+- pass true / unavailableReason `none`.
+
+Output handling: raw stdout/stderr were not printed. Raw comments, raw provider payloads, provider target metadata, IDs, cookies, tokens, OAuth values, Authorization headers, quota values, URL query values, raw provider error bodies, provider target values, browser storage payloads, and comment text were not recorded.
+
+Outcome: the new after-PR #539 provider terminal labels were observed on a provider-executed child run. No terminal error class was present because the server-only provider execution translated the eligible returned comment. The after-PR #539 wrapper/provider rerun objective is met for the reviewed boundary. PL-G3 remains incomplete because browser-visible UI/feed confirmation and full source-attribution evidence remain not-run / approval-gated, and public-release capable remains no.
+
+Next safe action: keep public launch blocked. Decide in a separate same-thread approved slice whether to run browser-visible UI/feed confirmation or full PL-G3 continuation evidence. Do not run Start, Stop, target lookup execution outside the reviewed wrapper boundary, `liveChatMessages.list` outside the reviewed wrapper boundary, UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip without the appropriate exact approval.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:

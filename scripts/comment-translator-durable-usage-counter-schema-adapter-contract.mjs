@@ -419,7 +419,7 @@ assert.equal(snapshotRead.snapshot.providerRequestEstimate.requestEstimateCount,
 assert.equal(snapshotRead.snapshot.aiUsageEstimate.translatedMessageEstimate, 7);
 assert.equal(snapshotRead.snapshot.aiUsageEstimate.translatedCharacterEstimate, 280);
 assert.equal(snapshotRead.snapshot.monthlyTranslatedCharacterEstimate, 280);
-assert.equal(snapshotRead.snapshot.currentSessionElapsedMs, 1_860_000);
+assert.equal(snapshotRead.snapshot.currentSessionElapsedMs, 55_000);
 assert.doesNotMatch(
   JSON.stringify(snapshotRead),
   /server-only-owner-reference|ytcred_usage_reference_001|providerChannelId|liveChatId|access_token|refresh_token|authorization_code|Authorization|service_role|raw comment/i,
@@ -505,6 +505,99 @@ assert.equal(
   "cross-day stopped session charges only the elapsed overlap after the UTC day boundary to the current day"
 );
 
+const staleStopRows = [];
+const staleStopStore = durableUsage.createCommentTranslatorDurableUsageCounterSupabaseStore({
+  nowIso: () => "2026-06-16T12:00:00.000Z",
+  supabase: {
+    from(tableName) {
+      assert.equal(tableName, "comment_translator_usage_ledger_events");
+      return {
+        insert(row) {
+          staleStopRows.push(row);
+          return this;
+        },
+        select() {
+          return this;
+        },
+        eq() {
+          return this;
+        },
+        gte() {
+          return this;
+        },
+        order() {
+          return this;
+        },
+        single() {
+          return Promise.resolve({ data: staleStopRows.at(-1) ?? null, error: null });
+        },
+        then(resolve) {
+          resolve({ data: staleStopRows, error: null });
+        }
+      };
+    }
+  }
+});
+const staleStopDurableStore = {
+  status: "ready",
+  store: staleStopStore,
+  missingEnvReferences: [],
+  failClosed: false
+};
+await durableUsage.recordCommentTranslatorDurableSessionLedgerStateOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore: staleStopDurableStore,
+  intent: "heartbeat",
+  state: {
+    status: "stopped",
+    provider: "youtube",
+    plan: "free",
+    sessionReferenceId: "cts_usage_stale_cross_day",
+    credentialReferenceId: "ytcred_usage_reference_001",
+    startedAtIso: "2026-06-15T23:55:00.000Z",
+    stoppedAtIso: "2026-06-16T12:00:00.000Z",
+    elapsedSeconds: 75,
+    remainingSessionSeconds: 1_725,
+    remainingDailySeconds: 1_725,
+    heartbeat: {
+      required: true,
+      timeoutSeconds: 45,
+      lastHeartbeatAtIso: "2026-06-15T23:55:30.000Z"
+    },
+    stopReason: "missing-heartbeat",
+    nextAction: "session-stopped",
+    providerApiUsage: "stopped",
+    aiTranslationUsage: "stopped",
+    tokenValue: "never-returned-by-design",
+    providerTargetMetadata: "forbidden",
+    providerErrorBody: "never-returned-by-design"
+  },
+  occurredAtMs: Date.parse("2026-06-16T12:00:00.000Z"),
+  planEntitlement: freeEntitlement
+});
+assert.equal(staleStopRows.length, 1, "stale stop persists one bounded session-stopped row");
+assert.equal(staleStopRows[0].usage_day, "2026-06-15", "stale stop usage day follows chargeable heartbeat end, not late cleanup time");
+assert.equal(staleStopRows[0].occurred_at, "2026-06-15T23:56:15.000Z", "stale stop occurred_at is chargeable end metadata");
+assert.equal(staleStopRows[0].session_elapsed_ms, 75_000, "stale stop row stores bounded chargeable elapsed");
+const stalePreviousDaySnapshot = await durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore: staleStopDurableStore,
+  nowMs: Date.parse("2026-06-15T23:59:00.000Z"),
+  plan: "free",
+  activeSession: null
+});
+const staleCurrentDaySnapshot = await durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore: staleStopDurableStore,
+  nowMs: Date.parse("2026-06-16T12:01:00.000Z"),
+  plan: "free",
+  activeSession: null
+});
+assert.equal(stalePreviousDaySnapshot.status, "ready");
+assert.equal(staleCurrentDaySnapshot.status, "ready");
+assert.equal(stalePreviousDaySnapshot.snapshot.dailyUsedMs, 75_000, "stale stop charges the active heartbeat window to the previous UTC day");
+assert.equal(staleCurrentDaySnapshot.snapshot.dailyUsedMs, 0, "stale stop does not consume the next UTC day after heartbeat stopped");
+
 assert.match(taskSource, /PL-G3/i, "task.md keeps the active PL-G3 state visible");
 assert.match(taskSource, /public-release capable label: no/i, "task.md keeps public release blocked");
 
@@ -523,6 +616,8 @@ const allowedChangedFiles = new Set([
   actionPath,
   "components/comment-translator/CommentTranslatorDock.tsx",
   "lib/comment-translator.ts",
+  "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-session-runtime.ts",
   readinessDocPath,
   migrationPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
@@ -534,6 +629,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-public-operator-session-ui-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

@@ -159,7 +159,7 @@ export type EvaluateCommentTranslatorSessionStopRequest = {
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   credentialReadiness: YouTubeOAuthCredentialTranslatorStartReadiness;
   usage: CommentTranslatorSessionUsageSnapshot;
-  providerSignal?: "stream-ended" | "stream-unavailable" | "terminal-provider-error" | null;
+  providerSignal?: CommentTranslatorSessionStopReason | null;
   providerSignalReasonUxCode?: CommentTranslatorStartStopReasonUxCode | null;
 };
 
@@ -428,7 +428,29 @@ export function evaluateCommentTranslatorSessionStopCondition(
     });
   }
 
-  const activeElapsedMs = elapsedMs(activeSession, request.nowMs);
+  if (isMissingHeartbeat(activeSession, request.nowMs)) {
+    return stopCommentTranslatorSession({
+      activeSession,
+      nowMs: request.nowMs,
+      plan: request.plan,
+      usage: request.usage,
+      reason: "missing-heartbeat",
+      reasonUxCode: "heartbeat-or-browser-disconnect"
+    });
+  }
+
+  const activeElapsedMs = chargeableElapsedMs(activeSession, request.nowMs, request.plan, request.usage);
+  if (activeElapsedMs >= sessionLimitMs(request.plan, request.usage)) {
+    return stopCommentTranslatorSession({
+      activeSession,
+      nowMs: request.nowMs,
+      plan: request.plan,
+      usage: request.usage,
+      reason: "session-time-limit",
+      reasonUxCode: "quota-or-budget-stop"
+    });
+  }
+
   const usageStopReason = assessUsageStopReason(request.usage, request.plan, activeElapsedMs);
   if (usageStopReason) {
     return stopCommentTranslatorSession({
@@ -441,17 +463,6 @@ export function evaluateCommentTranslatorSessionStopCondition(
     });
   }
 
-  if (activeElapsedMs >= sessionLimitMs(request.plan, request.usage)) {
-    return stopCommentTranslatorSession({
-      activeSession,
-      nowMs: request.nowMs,
-      plan: request.plan,
-      usage: request.usage,
-      reason: "session-time-limit",
-      reasonUxCode: "quota-or-budget-stop"
-    });
-  }
-
   if (request.providerSignal) {
     return stopCommentTranslatorSession({
       activeSession,
@@ -460,17 +471,6 @@ export function evaluateCommentTranslatorSessionStopCondition(
       usage: request.usage,
       reason: request.providerSignal,
       reasonUxCode: request.providerSignalReasonUxCode
-    });
-  }
-
-  if (request.nowMs - activeSession.lastHeartbeatAtMs > heartbeatTimeoutMs) {
-    return stopCommentTranslatorSession({
-      activeSession,
-      nowMs: request.nowMs,
-      plan: request.plan,
-      usage: request.usage,
-      reason: "missing-heartbeat",
-      reasonUxCode: "heartbeat-or-browser-disconnect"
     });
   }
 
@@ -656,7 +656,7 @@ function createStoppedState({
   nextAction: "session-stopped" | "reconnect-or-sign-in" | "wait-for-limit-reset";
   credentialReferenceId?: string;
 }): CommentTranslatorSessionBrowserSafeState {
-  const elapsed = activeSession ? Math.max(0, elapsedMs(activeSession, nowMs)) : 0;
+  const elapsed = activeSession ? Math.max(0, chargeableElapsedMs(activeSession, nowMs, plan, usage)) : 0;
   const entitlement = resolveUsageEntitlement(usage, plan);
 
   return {
@@ -830,7 +830,21 @@ function remainingDailySeconds({
 }
 
 function elapsedMs(activeSession: CommentTranslatorActiveSessionRecord, nowMs: number) {
-  return nowMs - activeSession.startedAtMs;
+  return Math.max(0, nowMs - activeSession.startedAtMs);
+}
+
+function chargeableElapsedMs(
+  activeSession: CommentTranslatorActiveSessionRecord,
+  nowMs: number,
+  plan: CommentTranslatorSessionPlan,
+  usage?: CommentTranslatorSessionUsageSnapshot
+) {
+  const heartbeatBoundedNowMs = Math.min(nowMs, Math.max(activeSession.startedAtMs, activeSession.lastHeartbeatAtMs) + heartbeatTimeoutMs);
+  return Math.min(elapsedMs(activeSession, heartbeatBoundedNowMs), sessionLimitMs(plan, usage));
+}
+
+function isMissingHeartbeat(activeSession: CommentTranslatorActiveSessionRecord, nowMs: number) {
+  return nowMs - activeSession.lastHeartbeatAtMs > heartbeatTimeoutMs;
 }
 
 function resolveUsageEntitlement(

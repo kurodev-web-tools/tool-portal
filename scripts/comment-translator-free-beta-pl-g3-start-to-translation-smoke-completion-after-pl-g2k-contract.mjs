@@ -150,8 +150,8 @@ for (const requiredSection of [
 for (const requiredFragment of [
   "Status: PL-G3 Start-to-translation smoke completion after PL-G2K",
   "Public-release capable: no",
-  "Execution result: blocked-start-reconnect-required-after-pr551",
-  "Start-to-translation smoke execution: blocked-start-reconnect-required-after-pr551",
+  "Execution result: post-552-provider-translation-passed-browser-feed-not-run",
+  "Start-to-translation smoke execution: post-552-provider-translation-passed-browser-feed-not-run",
   "PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`",
   "PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed",
   "approved-fb-l4-start-to-translation-smoke",
@@ -293,6 +293,8 @@ assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md ke
 assert.match(task, /public-release capable label: no/i, "task.md keeps public-release capable no");
 assert.match(task, /blocked-start-reconnect-required-after-pr551/i, "task.md records post-#551 reconnect-required blocker");
 assert.match(task, /approved-pl-g3-post-551-full-start-to-translation-continuation/i, "task.md records post-#551 approval label");
+assert.match(task, /post-552-provider-translation-passed-browser-feed-not-run/i, "task.md records post-#552 provider translation evidence decision");
+assert.match(task, /approved-pl-g3-post-552-full-start-to-translation-retry-after-reconnect/i, "task.md records post-#552 retry approval label");
 assert.match(
   task,
   /Explicit Start[\s\S]*sessionStatusLabel stopped[\s\S]*stopReasonLabel reconnect-required[\s\S]*proceedToProviderLabel no/i,
@@ -307,6 +309,11 @@ assert.match(
   completionDoc,
   /Approved post-#551 full Start-to-translation continuation attempt:[\s\S]*blocked-start-reconnect-required-after-pr551[\s\S]*stopReasonLabel reconnect-required[\s\S]*Provider continuation was not run because Start did not become active/i,
   "completion doc records post-#551 reconnect-required blocker"
+);
+assert.match(
+  completionDoc,
+  /Post-#552 full Start-to-translation retry after reconnect readiness passed:[\s\S]*translatedCount 1[\s\S]*Browser-visible server-owned feed\/source-attribution confirmation was not run/i,
+  "completion doc records post-#552 provider translation pass and UI/feed not-run"
 );
 assert.match(
   task,

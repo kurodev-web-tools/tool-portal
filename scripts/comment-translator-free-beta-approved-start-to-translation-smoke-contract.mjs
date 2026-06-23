@@ -253,6 +253,7 @@ assert.match(task, /unchecked scope[\s\S]*Start-to-translation smoke execution/i
 assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records width-check skip reason");
 assert.match(task, /public-release capable: no/i, "task.md keeps public release blocked");
 assert.match(readyPreflightDoc, /Approved post-#551 full Start-to-translation continuation attempt:[\s\S]*blocked-start-reconnect-required-after-pr551/i, "ready preflight records post-#551 reconnect-required blocker");
+assert.match(readyPreflightDoc, /Post-#552 full Start-to-translation retry after reconnect readiness passed:[\s\S]*post-552-provider-translation-passed-browser-feed-not-run/i, "ready preflight records post-#552 provider translation evidence");
 assert.match(
   plG3AfterPlG2kDoc,
   /Explicit Start:[\s\S]*sessionStatusLabel stopped[\s\S]*stopReasonLabel reconnect-required[\s\S]*proceedToProviderLabel no/i,
@@ -262,6 +263,16 @@ assert.match(
   plG3AfterPlG2kDoc,
   /Provider continuation(?: was)?[\s\S]*not[- ]run because Start did not become active[\s\S]*Free provider translation[\s\S]*not run/i,
   "PL-G3 after PL-G2K records post-#551 provider continuation not-run"
+);
+assert.match(
+  plG3AfterPlG2kDoc,
+  /Post-#552 full Start-to-translation retry after reconnect readiness passed:[\s\S]*providerTargetLookupLabel executed-presence-only[\s\S]*liveChatPollingLabel executed-bounded-readonly-one-step[\s\S]*translationProviderExecutionLabel executed-server-only-provider[\s\S]*translatedCount 1/i,
+  "PL-G3 after PL-G2K records post-#552 provider translation evidence"
+);
+assert.match(
+  plG3AfterPlG2kDoc,
+  /Browser-visible server-owned feed\/source-attribution confirmation was not run in this approval scope/i,
+  "PL-G3 after PL-G2K records post-#552 UI/feed not-run scope"
 );
 
 const routeSource = read("app/api/comment-translator/session/route.ts");

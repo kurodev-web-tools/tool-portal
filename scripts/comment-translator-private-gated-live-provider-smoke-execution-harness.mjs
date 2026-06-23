@@ -133,6 +133,7 @@ function createBasePayload() {
     providerTargetLookup: "not-run",
     liveChatPollingSmoke: "not-run",
     translationProviderExecution: "not-run",
+    feedPersistencePathLabel: "not-run-direct-provider-execution-harness",
     liveProviderExecution: "not-run",
     translatorPipelineWiring: contract.translatorPipelineWiring,
     evidence: contract.evidence,
@@ -238,6 +239,7 @@ function preflight() {
       providerTargetLookup: "not-run-preflight-only",
       liveChatPollingSmoke: "not-run-preflight-only",
       translationProviderExecution: "not-run-preflight-only",
+      feedPersistencePathLabel: "not-run-direct-provider-execution-harness",
       liveProviderExecution: "not-run-preflight-only",
       requiredFlag: "--execute --approved-private-gated-live-provider-smoke"
     }
@@ -291,7 +293,13 @@ async function main() {
 
   if (args.has("--use-sandboxed-adapters-for-contract")) {
     const executionPayload = await createSandboxedAdapterExecutionPayload(result.payload.credentialReferenceId);
-    writeJson(executionPayload, executionPayload.status === "task-27-live-provider-smoke-sanitized-result" ? 0 : 2);
+    writeJson(
+      {
+        ...executionPayload,
+        feedPersistencePathLabel: "not-run-direct-provider-execution-harness"
+      },
+      executionPayload.status === "task-27-live-provider-smoke-sanitized-result" ? 0 : 2
+    );
     return;
   }
 
@@ -306,6 +314,7 @@ async function main() {
         providerTargetLookup: "not-run",
         liveChatPollingSmoke: "not-run",
         translationProviderExecution: "not-run",
+        feedPersistencePathLabel: "not-run-direct-provider-execution-harness",
         reason:
           "approved Task 27 execution requires an exact command that selects operator-local runtime adapters after sanitized output review"
       },
@@ -325,6 +334,7 @@ async function main() {
         providerTargetLookup: "not-run",
         liveChatPollingSmoke: "not-run",
         translationProviderExecution: "not-run",
+        feedPersistencePathLabel: "not-run-direct-provider-execution-harness",
         reason:
           "operator-local ready preflight and sanitized output review must be confirmed in the exact command before provider-affecting adapters can be selected"
       },
@@ -410,6 +420,7 @@ async function createOperatorLocalRuntimeAdapterExecutionPayload(credentialRefer
   writeJson(
     {
       ...executionPayload,
+      feedPersistencePathLabel: "not-run-direct-provider-execution-harness",
       operatorLocalAdapterWiring: "executed-through-server-only-harness-adapter-builder"
     },
     executionPayload.status === "task-27-live-provider-smoke-sanitized-result" ? 0 : 2

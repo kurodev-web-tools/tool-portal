@@ -450,6 +450,16 @@ Post-#553 browser-visible feed/source-attribution confirmation after durable bou
 - Public-release capable label: no.
 - Next safe action: keep PL-G3 blocked until a separate reviewed, value-free deployed/runtime parity and durable feed persistence diagnostic proves deployed #553 action availability, durable safe-feed snapshot authority, and provider-wrapper persist result using labels/counts only.
 
+Post-#554 feed persistence path diagnosis:
+
+- Decision: diagnosed-provider-harness-bypasses-f10-feed-persistence.
+- The approved provider wrapper/harness translation adapter calls direct provider policy execution for sanitized count evidence and does not call the F10 `executeCommentTranslatorAzureNormalTranslationForNormalizedMessages` safe-row/feed persistence boundary.
+- Feed persistence path wrapper label: `feedPersistencePathLabel not-run-direct-provider-execution-harness`.
+- Implication: provider `translatedCount` evidence remains valid for provider execution, but it is not evidence that a browser-visible durable safe-feed snapshot was written.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+- Next safe action: use a reviewed PL-G3 execution path that invokes the real F10 feed persistence boundary before any further live/browser confirmation.
+
 ## Sanitized Output Review
 
 Allowed output after a later approved run:

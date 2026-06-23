@@ -391,6 +391,50 @@ Post-#550 target lookup adapter mismatch diagnosis:
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
+Approved post-#551 full Start-to-translation continuation attempt:
+
+- Decision: blocked-start-reconnect-required-after-pr551.
+- Exact approval label present: `approved-pl-g3-post-551-full-start-to-translation-continuation`.
+- Status precheck: HTTP status label 2xx; sessionStatusLabel stopped; stopReasonLabel present; unavailableReasonLabel absent.
+- Explicit Start: HTTP status label 2xx; sessionStatusLabel stopped; stopReasonLabel reconnect-required; unavailableReasonLabel absent; proceedToProviderLabel no.
+- Provider continuation: not-run because Start did not become active. One fresh visible chat comment was not requested. Reviewed provider wrapper/harness command, provider target lookup, bounded `liveChatMessages.list`, Free provider translation, sanitized provider evidence review, and browser-visible server-owned feed confirmation were not run.
+- Cleanup Stop: HTTP status label 2xx; sessionStatusLabel stopped; stopReasonLabel user-stop.
+- Post-Stop status: HTTP status label 2xx; sessionStatusLabel not-started; activeLabel no; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent.
+- Output handling: raw response bodies, raw stdout/stderr, cookies, tokens, OAuth values, Authorization headers, provider target metadata, liveChatId, owner user id, provider channel id, provider URL query values, raw provider payloads, raw comments, comment text, quota values, browser storage payloads, and provider error body/message/reason values were not recorded.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+- Next safe action: refresh the operator-local credential/session reconnect state before any later retry. A later retry still requires separate exact same-thread approval and sanitized output review.
+
+Post-#552 reconnect/cookie refresh status and credential readiness precheck:
+
+- Decision: status-credential-readiness-passed-after-reconnect-post-552.
+- Exact approval label present for status and credential readiness precheck only.
+- Credential status: HTTP status label 2xx; credentialStatusLabel available; reconnectRequiredLabel no; credentialPassLabel yes.
+- Session status: HTTP status label 2xx; sessionStatusLabel not-started; activeLabel no; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent; sessionPassLabel yes.
+- Start label: no.
+- Stop label: no.
+- Provider target lookup label: not-run.
+- liveChatPollingLabel: not-run.
+- translationLabel: not-run.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+- Next safe action: a full Start-to-translation retry requires separate exact same-thread approval before Start, fresh chat comment, provider target lookup, polling, or translation.
+
+Post-#552 full Start-to-translation retry after reconnect readiness passed:
+
+- Decision: post-552-provider-translation-passed-browser-feed-not-run.
+- Exact approval label present: `approved-pl-g3-post-552-full-start-to-translation-retry-after-reconnect`.
+- Status precheck: HTTP status label 2xx; sessionStatusLabel not-started; activeLabel no; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent; passLabel yes.
+- Explicit Start: HTTP status label 2xx; sessionStatusLabel active; activeLabel yes; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent; proceedToProviderLabel yes.
+- Fresh visible chat comment: sent before provider wrapper/harness execution.
+- Reviewed sanitized wrapper/provider harness: statusLabel pl-g3-sanitized-wrapper-summary; childExitStatusLabel exit-0; stdoutFinalJsonParsedLabel yes; stderrCaptureLabel absent; providerHarnessStatusLabel task-27-live-provider-smoke-sanitized-result; liveProviderExecutionLabel approved-bounded-execution; providerTargetLookupLabel executed-presence-only; liveChatPollingLabel executed-bounded-readonly-one-step; translationProviderExecutionLabel executed-server-only-provider; returnedCount 1; eligibleCount 1; providerRequestCount 1; providerCallCount 1; translatedCount 1; skippedCount 0; terminalErrorCount 0; dominantTerminalErrorCodeLabel none; providerRouteAvailabilityLabel route-available-provider-reached; sourceAttributionAvailabilityLabel not-produced-by-provider-harness; passLabel yes; unavailableReasonLabel none.
+- Cleanup Stop: HTTP status label 2xx; sessionStatusLabel stopped; stopReasonLabel user-stop; unavailableReasonLabel absent.
+- Post-Stop status: HTTP status label 2xx; sessionStatusLabel not-started; activeLabel no; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent.
+- Browser-visible server-owned feed/source-attribution confirmation: not-run in this approval scope.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+- Next safe action: a separate exact same-thread approval is required before browser-visible server-owned feed/source-attribution confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip.
+
 ## Sanitized Output Review
 
 Allowed output after a later approved run:

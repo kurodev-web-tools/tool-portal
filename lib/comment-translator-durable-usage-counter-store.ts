@@ -572,9 +572,9 @@ function createUsageSnapshotFromRows({
   const currentMinuteStartedAtMs = nowMs - 60_000;
 
   return {
-    dailyUsedMs: dailyRows
+    dailyUsedMs: rows
       .filter((row) => row.event_type === "session-stopped")
-      .reduce((total, row) => total + Math.max(0, row.session_elapsed_ms), 0),
+      .reduce((total, row) => total + sessionElapsedMsForUsageDay(row, currentDay), 0),
     currentSessionElapsedMs: activeSession ? Math.max(0, nowMs - activeSession.startedAtMs) : 0,
     translatedMessagesInCurrentMinute: activeSessionRows
       .filter((row) => row.event_type === "ai-usage-estimated" && Date.parse(row.occurred_at) >= currentMinuteStartedAtMs)
@@ -603,6 +603,23 @@ function createUsageSnapshotFromRows({
       .filter((row) => row.usage_month === currentMonth && row.event_type === "ai-usage-estimated")
       .reduce((total, row) => total + Math.max(0, row.translated_character_estimate), 0)
   };
+}
+
+function sessionElapsedMsForUsageDay(row: CommentTranslatorDurableUsageCounterRow, usageDay: string) {
+  const elapsedMs = Math.max(0, row.session_elapsed_ms);
+  if (elapsedMs === 0) {
+    return 0;
+  }
+
+  const stoppedAtMs = Date.parse(row.occurred_at);
+  const dayStartedAtMs = Date.parse(`${usageDay}T00:00:00.000Z`);
+  if (!Number.isFinite(stoppedAtMs) || !Number.isFinite(dayStartedAtMs)) {
+    return row.usage_day === usageDay ? elapsedMs : 0;
+  }
+
+  const startedAtMs = Math.max(0, stoppedAtMs - elapsedMs);
+  const dayEndedAtMs = dayStartedAtMs + 24 * 60 * 60 * 1_000;
+  return Math.max(0, Math.min(stoppedAtMs, dayEndedAtMs) - Math.max(startedAtMs, dayStartedAtMs));
 }
 
 function omitBrowserSafetyMarkers(

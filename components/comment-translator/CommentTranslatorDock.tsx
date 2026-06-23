@@ -846,6 +846,7 @@ export function CommentTranslatorDock({
     sessionState.stopReason === "token-refresh-failed" ||
     sessionState.stopReason === "reconnect-required";
   const startBlockedByCredentialStatus = credentialStatusState !== "available";
+  const startBlockedByUsagePolicy = usageDisplay.providerCallPolicy.status !== "allowed";
   const commentOnly = viewMode === "comments";
 
   function refreshCredentialStatus() {
@@ -1087,7 +1088,7 @@ export function CommentTranslatorDock({
                   <button
                     type="button"
                     onClick={() => runSessionCommand("start")}
-                    disabled={isSessionPending || sessionState.status === "active" || startBlockedByCredentialStatus}
+                    disabled={isSessionPending || sessionState.status === "active" || startBlockedByCredentialStatus || startBlockedByUsagePolicy}
                     className="min-h-12 rounded-base border border-primary bg-primary px-4 py-3 text-base font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
                   >
                     {isSessionPending ? copy.operatorSession.pending : copy.actions.startSession}
@@ -1122,6 +1123,18 @@ export function CommentTranslatorDock({
                       <span className="font-black text-foreground">{credentialStatusLabel}</span>
                     </div>
                     <p className="break-words font-semibold leading-5 text-muted">{copy.operatorSession.startReadiness}</p>
+                    {startBlockedByUsagePolicy ? (
+                      <div
+                        data-comment-translator-start-blocked="usage-policy"
+                        className="rounded-base border border-amber-200 bg-amber-50/80 px-3 py-2"
+                      >
+                        <p className="break-words font-black text-amber-900">{copy.operatorSession.usageStartBlockedTitle}</p>
+                        <p className="mt-1 break-words font-semibold leading-5 text-amber-800">
+                          {copy.operatorSession.usageStartBlockedBody}
+                          {usagePolicyStopReason ? ` ${usagePolicyStopReason}` : ""}
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
                 {startBlockedByCredentialStatus ? (

@@ -162,7 +162,7 @@ assert.match(dockSource, /sessionReasonUx/, "UI consumes deterministic reason UX
 assert.match(copySource, /reasonGroups/, "localized copy includes reason groups");
 assert.match(readinessDoc, /F11 Start\/Stop reason UX/i, "durable readiness doc records F11");
 assert.match(gapAudit, /F11[\s\S]*Start\/Stop reason UX/i, "gap audit records F11");
-assert.match(taskSource, /F11 Start\/Stop reason UX/i, "task.md records F11 status");
+assert.match(taskSource, /usage-policy Start blocker/i, "task.md records current usage-policy Start blocker work");
 
 const ux = loadTsModule(uxPath);
 const session = loadTsModule(sessionPath);
@@ -500,6 +500,7 @@ for (const payload of [
 }
 
 const allowedChangedFiles = new Set([
+  "components/comment-translator/CommentTranslatorDock.tsx",
   uxPath,
   sessionPath,
   targetLookupPath,
@@ -510,8 +511,17 @@ const allowedChangedFiles = new Set([
   privateLaunchPath,
   dockPath,
   copyPath,
+  "lib/comment-translator-durable-usage-counter-store.ts",
   readinessDocPath,
   gapAuditPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
   taskPath
 ]);

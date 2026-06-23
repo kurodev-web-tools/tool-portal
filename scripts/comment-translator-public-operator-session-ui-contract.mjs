@@ -46,7 +46,7 @@ assert.match(actionSource, /getCommentTranslatorSessionStatusAction/, "server ac
 assert.match(actionSource, /startCommentTranslatorSessionAction/, "server action exposes session start");
 assert.match(actionSource, /stopCommentTranslatorSessionAction/, "server action exposes session stop");
 assert.match(actionSource, /heartbeatCommentTranslatorSessionAction/, "server action exposes session heartbeat");
-assert.match(routeSource, /readInMemoryCommentTranslatorUsageSnapshot/, "route keeps usage read server-owned");
+assert.match(routeSource, /readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "route keeps usage read server-owned");
 
 assert.equal(
   lib.commentTranslatorUiCopy.en.sections.operatorSession,
@@ -77,6 +77,18 @@ assert.match(componentSource, /sessionState\.elapsedSeconds/, "dock displays cur
 assert.match(componentSource, /sessionDailyUsedSeconds/, "dock derives daily used time from sanitized session state");
 assert.match(componentSource, /sessionState\.remainingDailySeconds/, "dock displays daily remaining time from sanitized session state");
 assert.match(componentSource, /sessionState\.stopReason/, "dock displays sanitized stop reason");
+assert.match(componentSource, /startBlockedByUsagePolicy/, "dock derives disabled Start state from sanitized usage provider policy");
+assert.match(
+  componentSource,
+  /disabled=\{isSessionPending \|\| sessionState\.status === "active" \|\| startBlockedByCredentialStatus \|\| startBlockedByUsagePolicy\}/,
+  "Start button is disabled when sanitized usage policy is blocked"
+);
+assert.match(
+  componentSource,
+  /data-comment-translator-start-blocked="usage-policy"/,
+  "dock renders a sanitized Start blocker panel for usage policy"
+);
+assert.match(componentSource, /copy\.operatorSession\.usageStartBlockedTitle/, "dock renders localized usage Start blocker copy");
 assert.match(componentSource, /credentialStatusState/, "dock displays provider connection state from sanitized credential status");
 assert.match(componentSource, /copy\.operatorSession\.reconnectGuidance/, "dock renders reconnect guidance without provider target metadata");
 
@@ -86,6 +98,6 @@ assert.doesNotMatch(
   "Task 12 UI/action source avoids browser storage, provider calls, target metadata values, auth header values, and service-role key values"
 );
 
-assert.match(taskSource, /12\. Public operator UI start\/stop and usage display/i, "task board records Task 12 completion state");
+assert.match(taskSource, /PL-G3/i, "task board keeps the active comment translator PL-G3 state visible");
 
 console.log("comment translator public operator session UI contract checks passed");

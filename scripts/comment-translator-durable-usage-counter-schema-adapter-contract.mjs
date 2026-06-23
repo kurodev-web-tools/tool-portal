@@ -426,9 +426,87 @@ assert.doesNotMatch(
   "durable usage snapshot excludes owner id values, credential refs, provider targets, credentials, and raw comments"
 );
 
-assert.match(taskSource, /F4 status[\s\S]*Status: complete in this PR/i, "task.md records F4 completion");
-assert.match(taskSource, /remote Supabase migration apply[\s\S]*not-run\/approval-gated/i, "task.md records remote migration apply as not-run/gated");
-assert.match(taskSource, /width checks skipped[\s\S]*no UI\/CSS\/rendered route\/visible layout change/i, "task.md records width-check skip reason");
+const crossDayRows = [];
+const crossDayStore = durableUsage.createCommentTranslatorDurableUsageCounterSupabaseStore({
+  nowIso: () => "2026-06-16T00:01:00.000Z",
+  supabase: {
+    from(tableName) {
+      assert.equal(tableName, "comment_translator_usage_ledger_events");
+      return {
+        insert(row) {
+          crossDayRows.push(row);
+          return this;
+        },
+        select() {
+          return this;
+        },
+        eq() {
+          return this;
+        },
+        gte() {
+          return this;
+        },
+        order() {
+          return this;
+        },
+        single() {
+          return Promise.resolve({ data: crossDayRows.at(-1) ?? null, error: null });
+        },
+        then(resolve) {
+          resolve({ data: crossDayRows, error: null });
+        }
+      };
+    }
+  }
+});
+const crossDayDurableStore = {
+  status: "ready",
+  store: crossDayStore,
+  missingEnvReferences: [],
+  failClosed: false
+};
+await durableUsage.recordCommentTranslatorDurableUsageLedgerEventOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore: crossDayDurableStore,
+  event: {
+    type: "session-stopped",
+    provider: "youtube",
+    planEntitlement: freeEntitlement,
+    sessionReferenceId: "cts_usage_cross_day",
+    occurredAtMs: Date.parse("2026-06-16T00:00:30.000Z"),
+    elapsedMs: 60_000,
+    stopReason: "user-stop"
+  }
+});
+const previousDayCrossSnapshot = await durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore: crossDayDurableStore,
+  nowMs: Date.parse("2026-06-15T23:59:45.000Z"),
+  plan: "free",
+  activeSession: null
+});
+const currentDayCrossSnapshot = await durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore: crossDayDurableStore,
+  nowMs: Date.parse("2026-06-16T00:01:00.000Z"),
+  plan: "free",
+  activeSession: null
+});
+assert.equal(previousDayCrossSnapshot.status, "ready");
+assert.equal(currentDayCrossSnapshot.status, "ready");
+assert.equal(
+  previousDayCrossSnapshot.snapshot.dailyUsedMs,
+  30_000,
+  "cross-day stopped session charges only the elapsed overlap before the UTC day boundary to the previous day"
+);
+assert.equal(
+  currentDayCrossSnapshot.snapshot.dailyUsedMs,
+  30_000,
+  "cross-day stopped session charges only the elapsed overlap after the UTC day boundary to the current day"
+);
+
+assert.match(taskSource, /PL-G3/i, "task.md keeps the active PL-G3 state visible");
+assert.match(taskSource, /public-release capable label: no/i, "task.md keeps public release blocked");
 
 for (const source of [durableUsageSource, usageLedgerSource, routeSource, actionSource, migration, taskSource]) {
   assert.doesNotMatch(
@@ -443,9 +521,19 @@ const allowedChangedFiles = new Set([
   usageLedgerPath,
   routePath,
   actionPath,
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "lib/comment-translator.ts",
   readinessDocPath,
   migrationPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

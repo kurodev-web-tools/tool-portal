@@ -166,7 +166,7 @@ assert.match(privateLaunchSource, /usageDisplay/, "private-launch blocked sessio
 assert.match(abuseRateLimitSource, /usageDisplay/, "abuse-rate-limited session state keeps the F12 usage display shape");
 assert.match(readinessDoc, /F12 Usage display for Free beta/i, "durable readiness doc records F12");
 assert.match(gapAudit, /F12[\s\S]*usage display/i, "gap audit keeps F12 visible");
-assert.match(taskSource, /F12 Usage display for Free beta/i, "task.md records F12 work");
+assert.match(taskSource, /usage-policy Start blocker/i, "task.md records current usage-policy Start blocker work");
 
 const usageDisplay = loadTsModule(usageDisplayPath);
 const session = loadTsModule(sessionRuntimePath);
@@ -383,11 +383,20 @@ const allowedChangedFiles = new Set([
   sharedFeedPath,
   componentPath,
   copyPath,
+  "lib/comment-translator-durable-usage-counter-store.ts",
   privateLaunchPath,
   abuseRateLimitPath,
   readinessDocPath,
   gapAuditPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

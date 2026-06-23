@@ -1804,6 +1804,152 @@ Public-release capable label: no.
 
 Next safe action: only after same-thread ready preflight review, sanitized output review, operator-local reference readiness, and exact approval with `approved-pl-g3-post-bridge-full-continuation-after-pr542`, run the post-bridge continuation boundary. If approval is absent or any readiness reference is missing, stop with `blocked-post-bridge-continuation-after-pr542-pending-exact-approval` or the relevant sanitized blocker label. Do not request more live comments or run provider/UI evidence from this docs/contract slice.
 
+## PL-G3 Post-bridge Full Start-to-translation Continuation Intake After PR #543
+
+Decision: blocked-start-auth-failed-after-pr543.
+
+Base state: PR #543 is merged at `cf4fc261ef961e52a3f68e366e3a27723cad3a6a` and contained in `origin/codex/comment-translator-free-public-beta-integration`.
+
+Same-thread ready preflight reviewed: present.
+
+Sanitized output review: present.
+
+Exact approval label present in this thread: present / `approved-pl-g3-post-bridge-full-continuation-after-pr542`.
+
+Operator-local reference readiness in this thread: pass by operator report.
+
+Active stream/chat ready label: pass by operator report.
+
+Initial status precheck: executed / session status label `not-started` / usage-session counter label present / pass true.
+
+Initial explicit Start: executed with corrected JSON / session status label `active` / usage-session counter label present / pass true.
+
+Operator fresh visible chat comment window: completed by operator report.
+
+First target/polling command attempts after the fresh comment: blocked before provider access with dependency-module-missing / typescript-runtime-unavailable labels. Raw stdout/stderr were not printed.
+
+Stop rollback after command-startup blocker: executed / session status label `stopped` / stop reason label `auth-failed`.
+
+Post-Stop status after command-startup blocker: executed / session status label `stopped` / stop reason label `auth-failed`.
+
+Dependency recovery: `npm ci --prefer-offline --no-audit --no-fund` attempted and blocked by `ERR_SSL_CIPHER_OPERATION_FAILED`; scoped `npm install --package-lock=false --prefer-offline --ignore-scripts --no-audit --no-fund typescript@5.8.3 server-only@0.0.1` attempted and timed out. Command startup recovered enough for target lookup.
+
+Restart status before retry: executed / session status label `stopped` / stop reason label `auth-failed`.
+
+Restart explicit Start: executed / session status label `stopped` / stop reason label `auth-failed` / pass false.
+
+Server-only target lookup after dependency recovery: executed / status label `live-chat-target-lookup-sanitized-result` / target presence label present / returned count 5 / unavailableReason none / pass true.
+
+Required exact approval text before execution:
+
+```text
+I approve running PL-G3 post-bridge full Start-to-translation continuation with approval label approved-pl-g3-post-bridge-full-continuation-after-pr542, limited to the exact status precheck, explicit Start, server-only target lookup, bounded liveChatMessages.list with one fresh visible chat comment, Free provider translation, browser-visible server-owned feed confirmation through the PR #542 bridge, usage/session counter evidence, source attribution evidence, stop-reason evidence, Stop, and post-Stop status in docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md. Keep output sanitized to labels/counts only. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip. If exact approval is absent, stop with blocked-post-bridge-continuation-after-pr542-pending-exact-approval.
+```
+
+Bounded `liveChatMessages.list`, Free provider translation, browser-visible server-owned feed confirmation, source attribution, translated/skipped feed counts, and final UI evidence: not-run because Start was not active after the retry.
+
+Required later evidence remains browser-visible server-owned feed reads sanitized translated rows, source attribution label, stop reason label, usage/session counter labels, translated count, and skipped count.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Next safe action: keep public launch blocked. Resolve the deployed Start auth-failed state in operator-local context, then request a new same-thread approved retry before running another Start/live/provider/UI sequence. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip.
+
+### PL-G3 Post-auth-failed Recovery Retry After PR #543
+
+Decision: blocked-start-daily-time-limit-after-auth-failed-recovery.
+
+Same-thread retry approval label present: `approved-pl-g3-post-bridge-full-continuation-after-pr542`.
+
+Operator-local post-auth-failed readiness: allowed-tester browser/session refreshed pass / connected credential status ready pass / reconnect required false pass / owner-session-credential binding same-account pass / active stream-chat ready pass / sanitized output boundary accepted pass.
+
+Retry status precheck: executed / HTTP 2xx / session status label `stopped` / stop reason label `session-time-limit` / usage-session counter label present / pass true.
+
+Retry explicit Start: executed / HTTP 2xx / session status label `stopped` / stop reason label `daily-time-limit` / usage-session counter label present / pass false / unavailableReason none.
+
+Fresh comment, target lookup, bounded `liveChatMessages.list`, Free provider translation, browser-visible server-owned feed confirmation, source attribution, translated/skipped feed counts, and final UI evidence: not-run because retry Start did not become active.
+
+### PL-G3 Status-only Limit-state Recheck After PR #543
+
+Decision: status-only-check-sanitized-result.
+
+Request intent label: `status` only.
+
+Status-only recheck: executed / HTTP 2xx / session status label `not-started` / stop reason label `none` / usage-session counter label present / pass true / unavailableReason none.
+
+Start command executed label: no.
+
+Stop command executed label: no.
+
+Live/provider execution label: not-run.
+
+Start-to-translation, browser-visible server-owned feed confirmation, source attribution, translated/skipped feed counts, and public-release readiness: not proved by this status-only recheck.
+
+### PL-G3 Approved Retry After Status-only Not-started/none Recheck
+
+Decision: blocked-start-daily-time-limit-after-status-only-recheck.
+
+Same-thread retry approval label present: `approved-pl-g3-post-bridge-full-continuation-after-pr542`.
+
+Status precheck: executed / HTTP 2xx / session status label `not-started` / stop reason label `none` / usage-session counter label present / pass true.
+
+Explicit Start: executed / HTTP 2xx / session status label `stopped` / stop reason label `daily-time-limit` / usage-session counter label present / pass false / unavailableReason start-not-active.
+
+Stop command executed label: no.
+
+Live/provider execution label: not-run.
+
+Fresh comment, target lookup, bounded `liveChatMessages.list`, Free provider translation, browser-visible server-owned feed confirmation, source attribution, translated/skipped feed counts, and final UI evidence: not-run because Start did not become active.
+
+### PL-G3 Durable Usage Ledger Sanitized Diagnostic After Daily-time-limit
+
+Decision: diagnosed-utc-day-boundary-elapsed-carryover.
+
+Query mode label: read-only-sanitized-aggregate.
+
+Current UTC day ledger read label: passed.
+
+Current UTC day sanitized aggregate: session-started event count 0 / session-stopped event count 1 / quota-budget-stop event count 3 / daily elapsed bucket label at-or-over-limit / limitReachedLabel true.
+
+Active session carryover label: absent.
+
+Latest stop reason label: daily-time-limit.
+
+Previous UTC day sanitized aggregate: session-started event count 3 / session-stopped event count 2 / quota-budget-stop event count 0 / daily elapsed bucket label under-5m / limitReachedLabel false.
+
+Day-boundary mismatch candidate label: present.
+
+Raw rows printed label: no.
+
+Raw IDs printed label: no.
+
+Interpretation: the daily-time-limit blocker is consistent with a session started in the previous UTC day bucket and stopped in the current UTC day bucket, where the implementation records the whole stopped session elapsed against the stop event usage_day. This can conflict with the operator's local-JST expectation that the session was the first run of the local day.
+
+Start/Stop/live/provider/UI commands during diagnostic: not-run.
+
+### PL-G3 Durable Usage Day-boundary Fix And Minimal Start Blocker Display
+
+Decision: implemented-utc-day-overlap-usage-aggregation-and-usage-policy-start-blocker.
+
+Durable usage aggregation: implemented. Daily used time now sums only the session-stopped elapsed overlap for the requested UTC usage day instead of charging full session elapsed to the stop event usage_day.
+
+Regression evidence: cross-day stopped session contributes only the before-boundary overlap to the previous UTC day and only the after-boundary overlap to the current UTC day.
+
+Minimal UI/status display: implemented. The public operator session UI derives `startBlockedByUsagePolicy` from sanitized `usageDisplay.providerCallPolicy`, disables Start when the usage policy is blocked, and renders a sanitized usage-policy Start blocker with localized copy and stop reason label only.
+
+Remote data mutation: not-run.
+
+Live/provider/Start/Stop execution after the fix: not-run.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Next safe action: keep public launch blocked. Do not run another Start/live/provider/UI retry until the daily/session time-limit state is resolved or explicitly accepted as the expected blocker for a separate evidence slice. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip.
+
+Verification: `node scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs`, `node scripts/comment-translator-public-operator-session-ui-contract.mjs`, `node scripts/comment-translator-free-beta-usage-display-contract.mjs`, `node scripts/comment-translator-session-start-stop-contract.mjs`, `node scripts/comment-translator-start-stop-reason-ux-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs`, `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`, and `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs` passed. `npm run lint`, `npx tsc --noEmit`, and `npm run build` passed; build used WASM SWC fallback and emitted existing Next warnings only. Changed-files no-secret scan passed. `git diff --check` passed with CRLF normalization warnings only. Width checks through local dev route at `390 / 820 / 1024 / 1280 / 1366px` reached the private-launch gate with horizontal overflow false; the new usage-policy blocker remained not browser-visible in the isolated context because public access is still gated. Live/provider/Start/Stop execution after the fix remained not-run.
+
 ## What This Does Not Prove
 
 This record does not complete Start-to-translation behavior. It does not prove:
@@ -1848,7 +1994,7 @@ Residual risk: PL-G3 remains incomplete. The approved continuation reached Start
 
 ## Next Safe Action
 
-Keep public launch blocked. Implement a reviewed feed bridge/session persistence boundary before requesting another live comment or provider retry. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, public access changes, cursor regeneration, OAuth flows, token refresh, Stripe actions, Paid entitlement C1/C3, Creator paid limits, main promotion, or public launch gate flip.
+Keep public launch blocked. Run no Start, Stop, target lookup execution, `liveChatMessages.list`, Free provider execution, browser-visible UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip until same-thread operator-local reference readiness and exact approval with `approved-pl-g3-post-bridge-full-continuation-after-pr542` are present.
 
 ## Completion Verification
 

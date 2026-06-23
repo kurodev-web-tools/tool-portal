@@ -24,7 +24,7 @@ function exists(relativePath) {
 }
 
 function changedFiles() {
-  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"]
@@ -157,7 +157,8 @@ assert.deepEqual(
     dailyMinutes: 30,
     sessionMinutes: 30,
     translatedMessagesPerMinute: 30,
-    activeSessionsPerUser: 1
+    activeSessionsPerUser: 1,
+    monthlyTranslatedCharacters: 20_000
   },
   "free plan public release limits are encoded"
 );
@@ -207,6 +208,45 @@ assert.deepEqual(
       lastHeartbeatAtIso: null
     },
     stopReason: null,
+    reasonUx: null,
+    usageDisplay: {
+      status: "available",
+      session: {
+        usedSeconds: 0,
+        limitSeconds: 1_800,
+        remainingSeconds: 1_800
+      },
+      daily: {
+        usedSeconds: 0,
+        limitSeconds: 1_800,
+        remainingSeconds: 1_800
+      },
+      perMinute: {
+        used: 0,
+        limit: 30,
+        remaining: 30
+      },
+      monthlyCharacterCap: {
+        used: 0,
+        limit: 20_000,
+        remaining: 20_000
+      },
+      unavailableReason: null,
+      providerCallPolicy: {
+        status: "allowed",
+        stopReason: null,
+        clientReadableDetail: "sanitized-usage-only"
+      },
+      noProviderCallWhenOverLimit: true,
+      clientReadableDetail: "sanitized-usage-only",
+      rawProviderPayload: "not-returned-by-design",
+      rawComments: "not-returned-by-design",
+      providerTargetMetadata: "forbidden",
+      serverOnlyCursor: "not-returned-by-design",
+      browserStorage: "unchanged",
+      handoffPayload: "unchanged",
+      publicLaunchAllowed: false
+    },
     nextAction: "press-start",
     providerApiUsage: "not-started-before-explicit-start",
     aiTranslationUsage: "not-started-before-explicit-start",
@@ -433,14 +473,25 @@ assert.equal(commandResult.heartbeat.lastHeartbeatAtIso, "1970-01-01T00:00:02.00
 for (const file of changedFiles()) {
   const allowedChangedFiles = new Set([
     "lib/comment-translator-admin-operational-visibility.ts",
+    "components/comment-translator/CommentTranslatorDock.tsx",
     sessionPath,
     ledgerPath,
+    "lib/comment-translator.ts",
+    "lib/comment-translator-durable-usage-counter-store.ts",
     "lib/comment-translator-provider-execution-runtime.ts",
     routePath,
     actionPath,
+    "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
     "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+    "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+    "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+    "scripts/comment-translator-free-beta-usage-display-contract.mjs",
     "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+    "scripts/comment-translator-public-operator-session-ui-contract.mjs",
     "scripts/comment-translator-session-start-stop-contract.mjs",
+    "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
     "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
     taskPath
   ]);

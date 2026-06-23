@@ -363,6 +363,24 @@ Approved same-process target-refresh bounded polling diagnostic after PR #548:
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
+Approved post-#549 full Start-to-translation continuation attempt:
+
+- Decision: blocked-provider-wrapper-target-lookup-after-pr549.
+- Exact approval label present: `approved-pl-g3-post-549-full-start-to-translation-continuation`.
+- Status precheck: HTTP status label 2xx; sessionStatusLabel not-started; stopReasonLabel none-or-unavailable.
+- Explicit Start: HTTP status label 2xx; sessionStatusLabel active; stopReasonLabel none-or-unavailable; proceedToProviderLabel yes.
+- After the operator sent one fresh visible chat comment, reviewed sanitized wrapper/provider harness: wrapperExitLabel exit-2; statusLabel blocked-pl-g3-sanitized-wrapper-summary; childExitStatusLabel exit-2; stdoutFinalJsonParsedLabel yes; stderrCaptureLabel absent; providerHarnessStatusLabel blocked-target-lookup-sanitized; liveProviderExecutionLabel not-run; providerTargetLookupLabel not-run; liveChatPollingLabel not-run; translationProviderExecutionLabel not-run; returnedCount 0; eligibleCount 0; providerRequestCount 0; providerCallCount 0; translatedCount 0; skippedCount 0; terminalErrorCount 0; stopReasonLabel terminal-provider-error; sourceAttributionAvailabilityLabel not-produced-by-provider-harness; passLabel no; unavailableReasonLabel child-exit-nonzero.
+- Raw stdout printed: no.
+- Raw stderr printed: no.
+- Raw provider payload printed: no.
+- Raw comments printed: no.
+- Free provider translation: not-run because the provider harness blocked before target lookup completion.
+- Browser-visible server-owned feed confirmation: not-run because provider translation did not run.
+- Stop: HTTP status label 2xx; sessionStatusLabel stopped; stopReasonLabel user-stop.
+- Post-Stop status: HTTP status label 2xx; sessionStatusLabel not-started; stopReasonLabel none-or-unavailable.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+
 ## Sanitized Output Review
 
 Allowed output after a later approved run:

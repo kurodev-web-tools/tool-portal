@@ -273,7 +273,7 @@ assert.match(providerHarness, /approved-private-gated-live-provider-smoke/, "pro
 
 assert.match(
   task,
-  /Current branch: `codex\/(?:pl-g3-browser-visible-feed-confirmation-evidence|pl-g3-post-551-full-continuation-test|pl-g3-sanitized-wrapper-boundary-after-pr533|pl-g3-start-to-translation-continuation-after-pr531|pl-g3-continuation-after-pr534-blocked|comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
+  /Current branch: `codex\/(?:pl-g3-durable-feed-persistence-diagnostic|pl-g3-browser-visible-feed-confirmation-evidence|pl-g3-post-551-full-continuation-test|pl-g3-sanitized-wrapper-boundary-after-pr533|pl-g3-start-to-translation-continuation-after-pr531|pl-g3-continuation-after-pr534-blocked|comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
   "task.md records PL-G3 after PL-G2K branch"
 );
 assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");
@@ -336,6 +336,21 @@ assert.match(
   task,
   /deployed\/runtime parity and durable feed persistence diagnostic/i,
   "task.md records next safe diagnostic boundary"
+);
+assert.match(
+  completionDoc,
+  /PL-G3 Feed Persistence Diagnostic Boundary After PR #554[\s\S]*diagnosed-provider-harness-bypasses-f10-feed-persistence[\s\S]*feedPersistencePathLabel not-run-direct-provider-execution-harness/i,
+  "completion doc records post-#554 feed persistence path diagnosis"
+);
+assert.match(
+  fbL4ReadyPreflight,
+  /Post-#554 feed persistence path diagnosis[\s\S]*feedPersistencePathLabel not-run-direct-provider-execution-harness/i,
+  "FB-L4 ready preflight records post-#554 feed persistence path diagnosis"
+);
+assert.match(
+  task,
+  /Active PL-G3 Feed Persistence Diagnostic Boundary After PR #554[\s\S]*diagnosed-provider-harness-bypasses-f10-feed-persistence[\s\S]*feedPersistencePathLabel not-run-direct-provider-execution-harness/i,
+  "task.md records post-#554 feed persistence path diagnosis"
 );
 assert.match(
   task,
@@ -433,6 +448,9 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
   "app/api/comment-translator/session/route.ts",
   "app/tools/comment-translator/actions.ts",
   "lib/comment-translator-azure-normal-translation-execution.ts",

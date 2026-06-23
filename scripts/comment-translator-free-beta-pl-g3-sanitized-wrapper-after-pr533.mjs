@@ -44,6 +44,7 @@ function createBaseSummary(overrides = {}) {
     dominantTerminalErrorCodeLabel: "none",
     providerConfigPresenceLabel: "unavailable",
     providerRouteAvailabilityLabel: "unavailable",
+    feedPersistencePathLabel: "unavailable",
     stopReasonLabel: "unavailable",
     sourceAttributionLabel: "unavailable",
     sourceAttributionAvailabilityLabel: "unavailable",
@@ -143,6 +144,10 @@ function projectAllowedSanitizedSummary({ childResult, parsedPayload, commandLab
       providerRequestCount,
       providerCallCount
     }),
+    feedPersistencePathLabel: safeLabel(
+      evidence.feedPersistencePathLabel ?? payload.feedPersistencePathLabel,
+      "not-run-direct-provider-execution-harness"
+    ),
     stopReasonLabel: safeLabel(evidence.stopReason ?? payload.stopReason, "none"),
     sourceAttributionLabel,
     sourceAttributionAvailabilityLabel: resolveSourceAttributionAvailabilityLabel({

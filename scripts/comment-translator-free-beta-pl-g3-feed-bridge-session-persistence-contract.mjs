@@ -376,6 +376,9 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   taskPath

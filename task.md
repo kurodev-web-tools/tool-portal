@@ -17,9 +17,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/pl-g3-browser-visible-feed-confirmation-evidence`.
+- Current branch: `codex/pl-g3-durable-feed-persistence-diagnostic`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- This branch follows merged PR #553 and records the approved PL-G3 browser-visible feed/source-attribution confirmation evidence from latest `origin/codex/comment-translator-free-public-beta-integration`. The approved run reached Start active, reviewed provider wrapper/harness, provider target lookup, bounded `liveChatMessages.list`, and Free provider translation with translatedCount 1. Browser-visible server-owned feed action was reachable while active but returned unavailable / displayRowCount 0, so source attribution was not confirmed on the visible feed. Public gate state label remains unchanged / blocked, and public-release capable label remains no.
+- This branch follows merged PR #554 and records the deterministic PL-G3 feed persistence path diagnosis from latest `origin/codex/comment-translator-free-public-beta-integration`. The approved run reached Start active, reviewed provider wrapper/harness, provider target lookup, bounded `liveChatMessages.list`, and Free provider translation with translatedCount 1, but the wrapper/harness uses the direct provider execution runtime and does not call the F10 feed persistence boundary. Browser-visible server-owned feed action therefore remained unavailable / displayRowCount 0. Public gate state label remains unchanged / blocked, and public-release capable label remains no.
 - Archived previous long board snapshot: `docs/archive/task-board-pre-2026-06-16-free-beta-public-usability-cleanup.md`.
 - Older archived board snapshot: `docs/archive/task-board-pre-2026-06-15-roadmap-cleanup.md`.
 
@@ -170,6 +170,18 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - Public-release capable label: no.
 - Width checks skipped: this evidence/doc update changes no visible UI/CSS/layout/client copy.
 - Next safe action: keep PL-G3 blocked and do not request another live comment until a reviewed, value-free deployed/runtime parity and durable feed persistence diagnostic can prove whether the deployed target has the #553 feed action code, the durable feed snapshot table is available, and the provider wrapper persist path writes a ready safe-feed snapshot for the active owner/session. Any such diagnostic needs separate exact approval and must keep output to labels/counts only.
+
+### Active PL-G3 Feed Persistence Diagnostic Boundary After PR #554
+
+- Decision: diagnosed-provider-harness-bypasses-f10-feed-persistence.
+- Root cause update: the approved PL-G3 provider wrapper/harness evidence used `scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs`, whose operator-local translation adapter calls `executeCommentTranslatorProviderPolicyBatch` directly. That proves provider translation counts, but it does not call `executeCommentTranslatorAzureNormalTranslationForNormalizedMessages`, so it does not execute `persistCommentTranslatorRealCommentsFeedForActiveSession` and cannot create the #553 durable safe-feed snapshot for the browser-visible feed action.
+- Feed persistence path diagnostic label: `feedPersistencePathLabel not-run-direct-provider-execution-harness`. The wrapper summary now projects this label so future approved runs do not conflate `translatedCount` with feed persistence.
+- Current implication: browser-visible `displayRowCount 0` after provider translation is consistent with the approved harness bypassing the F10 feed persistence path. Remote runtime parity and durable table authority may still need later confirmation, but they are no longer the first hypothesis.
+- Data boundary: diagnostic output is labels/counts only and does not expose provider target metadata, liveChatId, owner/session identifiers, token/cookie/OAuth/Authorization values, raw comments, raw provider payloads, browser storage payloads, or handoff payload expansion.
+- Execution state: deterministic local diagnosis only. No Start, Stop, target lookup, `liveChatMessages.list`, Free provider execution, browser-visible feed confirmation, deploy/upload, remote mutation/apply, OAuth flow, token refresh, Stripe action, public access change, main promotion, PL-G4, PL-G5, or launch gate flip was run.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+- Next safe action: implement or prepare a reviewed PL-G3 execution path that uses the real F10 translation/feed persistence boundary, then request separate exact approval for any live/provider/browser confirmation.
 
 ### Active PL-G3 Post-#552 Full Retry Provider Translation Evidence
 

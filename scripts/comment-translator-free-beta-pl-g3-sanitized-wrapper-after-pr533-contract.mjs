@@ -77,6 +77,7 @@ assert.equal(mixedStreamPayload.providerHarnessStatusLabel, "task-27-live-provid
 assert.equal(mixedStreamPayload.providerTargetLookupLabel, "executed-presence-only");
 assert.equal(mixedStreamPayload.liveChatPollingLabel, "executed-bounded-readonly-one-step");
 assert.equal(mixedStreamPayload.translationProviderExecutionLabel, "executed-server-only-provider");
+assert.equal(mixedStreamPayload.feedPersistencePathLabel, "not-run-direct-provider-execution-harness");
 assert.equal(mixedStreamPayload.returnedCount, 3);
 assert.equal(mixedStreamPayload.eligibleCount, 2);
 assert.equal(mixedStreamPayload.providerRequestCount, 1);
@@ -104,6 +105,7 @@ assert.equal(stderrJsonNoisePayload.stderrCaptureLabel, "captured-separate-not-p
 assert.equal(stderrJsonNoisePayload.returnedCount, 4);
 assert.equal(stderrJsonNoisePayload.eligibleCount, 4);
 assert.equal(stderrJsonNoisePayload.translatedCount, 4);
+assert.equal(stderrJsonNoisePayload.feedPersistencePathLabel, "not-run-direct-provider-execution-harness");
 assert.equal(stderrJsonNoisePayload.skippedCount, 0);
 assert.equal(stderrJsonNoisePayload.languagePolicySkippedCount, 0);
 assert.equal(stderrJsonNoisePayload.perMinuteSkippedCount, 0);
@@ -142,6 +144,11 @@ for (const [label, source] of [
     `${label} keeps PL-G3 counts/source/UI evidence blocked until approved execution`
   );
   assert.match(source, /public-release capable(?: label)?: no/i, `${label} keeps public release blocked`);
+  assert.match(
+    source,
+    /feed persistence path[\s\S]*not-run-direct-provider-execution-harness/i,
+    `${label} records the direct provider harness feed persistence diagnostic label`
+  );
 }
 
 console.log("comment translator Free beta PL-G3 sanitized wrapper after PR #533 contract checks passed");

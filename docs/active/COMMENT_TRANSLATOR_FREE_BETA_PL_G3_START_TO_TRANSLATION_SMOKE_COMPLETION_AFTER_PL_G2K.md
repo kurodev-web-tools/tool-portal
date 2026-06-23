@@ -1817,6 +1817,24 @@ Public-release capable label: no.
 
 Next safe action: keep PL-G3 blocked. Do not request another live comment until a separate reviewed, value-free deployed/runtime parity and durable feed persistence diagnostic is prepared and explicitly approved. That diagnostic should prove only labels/counts for deployed #553 action availability, durable safe-feed snapshot authority, and provider-wrapper persist result, with no private provider metadata, owner/session identifiers, token/cookie/OAuth values, raw comments, raw provider payloads, browser storage payloads, or handoff payload expansion.
 
+## PL-G3 Feed Persistence Diagnostic Boundary After PR #554
+
+Decision: diagnosed-provider-harness-bypasses-f10-feed-persistence.
+
+Root cause update: the approved PL-G3 provider wrapper/harness evidence used the private gated live provider smoke execution harness. Its operator-local translation adapter calls the direct provider policy execution runtime for count evidence. That proves provider translation labels and counts, but it does not call `executeCommentTranslatorAzureNormalTranslationForNormalizedMessages`, so it does not run the F10 safe-row projection and `persistCommentTranslatorRealCommentsFeedForActiveSession` handoff that #553 made durable.
+
+Feed persistence path diagnostic label added: `feedPersistencePathLabel not-run-direct-provider-execution-harness`. Future wrapper summaries should show this label beside `translatedCount`, making it clear that direct provider count evidence is not browser feed persistence evidence.
+
+Implication: the post-#553 browser-visible `displayRowCount 0` is consistent with the approved provider harness bypassing the F10 feed persistence path. Deployed runtime parity and durable feed table authority remain possible later checks, but the first missing link is now the execution path: the approved count harness did not produce a durable safe-feed snapshot for the browser-visible feed action to read.
+
+Data boundary: diagnostic output remains labels/counts only. It does not expose provider target metadata, liveChatId, owner/session identifiers, token/cookie/OAuth/Authorization values, raw comments, raw provider payloads, browser storage payloads, or handoff payload expansion.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Next safe action: keep PL-G3 blocked and prepare a reviewed execution path that uses the real F10 translation/feed persistence boundary before requesting another live/provider/browser confirmation.
+
 ## PL-G3 Post-bridge Full Start-to-translation Continuation Ready Preflight After PR #542
 
 Decision: post-bridge-full-continuation-ready-preflight-prepared-after-pr542.

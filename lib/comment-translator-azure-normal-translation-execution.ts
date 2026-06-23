@@ -16,6 +16,9 @@ import {
 import {
   persistCommentTranslatorRealCommentsFeedForActiveSession
 } from "./comment-translator-real-comments-feed-session-bridge";
+import type {
+  CommentTranslatorRealCommentsFeedDurableStoreFactoryResult
+} from "./comment-translator-real-comments-feed-durable-store";
 import {
   resolveCommentTranslatorFreeBetaProviderCallPolicy
 } from "./comment-translator-free-beta-usage-display";
@@ -81,6 +84,7 @@ export type ExecuteCommentTranslatorAzureNormalTranslationForNormalizedMessagesR
   usage: CommentTranslatorUsageLedgerSnapshot;
   providers?: CommentTranslatorTranslationProviderSet;
   cache?: CommentTranslatorProviderExecutionCache;
+  feedPersistenceStore?: CommentTranslatorRealCommentsFeedDurableStoreFactoryResult;
   maxBatchSize?: number;
   maxProviderAttemptsPerComment?: number;
 };
@@ -142,7 +146,7 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
       providerUnavailableSkippedCount: 0
     });
 
-    return persistFeedBridgeResult({
+    return await persistFeedBridgeResult({
       request,
       result: createExecutionResult({
         status: "session-not-active",
@@ -162,7 +166,7 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
       providerUnavailableSkippedCount: 0
     });
 
-    return persistFeedBridgeResult({
+    return await persistFeedBridgeResult({
       request,
       result: createExecutionResult({
         status: "over-limit",
@@ -197,7 +201,7 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
     eligibleMessages.length > 0 &&
     execution.skipsByReason.providerUnavailable >= eligibleMessages.length;
 
-  return persistFeedBridgeResult({
+  return await persistFeedBridgeResult({
     request,
     result: createExecutionResult({
       status: providerUnavailable ? "provider-unavailable" : "completed",
@@ -212,18 +216,19 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
   });
 }
 
-function persistFeedBridgeResult({
+async function persistFeedBridgeResult({
   request,
   result
 }: {
   request: ExecuteCommentTranslatorAzureNormalTranslationForNormalizedMessagesRequest;
   result: CommentTranslatorAzureNormalTranslationExecutionResult;
 }) {
-  persistCommentTranslatorRealCommentsFeedForActiveSession({
+  await persistCommentTranslatorRealCommentsFeedForActiveSession({
     callerAuthorization: request.callerAuthorization,
     sessionReferenceId: request.sessionReferenceId,
     feed: result.feed,
-    recordedAtMs: request.occurredAtMs
+    recordedAtMs: request.occurredAtMs,
+    durableFeedStore: request.feedPersistenceStore
   });
 
   return result;

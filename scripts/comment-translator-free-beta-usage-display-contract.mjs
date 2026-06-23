@@ -345,6 +345,13 @@ const f10Result = await f10.executeCommentTranslatorAzureNormalTranslationForNor
   providers: {
     azure: provider
   },
+  feedPersistenceStore: {
+    status: "unavailable",
+    store: null,
+    missingEnvReferences: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+    failClosed: true,
+    reason: "trusted-service-role-env-missing"
+  },
   maxBatchSize: 1,
   maxProviderAttemptsPerComment: 1
 });
@@ -383,15 +390,23 @@ const allowedChangedFiles = new Set([
   sharedFeedPath,
   componentPath,
   copyPath,
+  "app/api/comment-translator/session/route.ts",
+  "app/tools/comment-translator/actions.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-real-comments-feed-durable-store.ts",
+  "lib/comment-translator-real-comments-feed-session-bridge.ts",
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
   "lib/comment-translator-durable-usage-counter-store.ts",
   privateLaunchPath,
   abuseRateLimitPath,
+  "supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql",
   readinessDocPath,
   gapAuditPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",

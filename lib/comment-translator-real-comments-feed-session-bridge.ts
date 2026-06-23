@@ -6,6 +6,10 @@ import {
   createUnavailableCommentTranslatorRealCommentsFeedState
 } from "./comment-translator-real-comments-ui-wiring";
 import type { CommentTranslatorRealCommentsFeedState } from "./comment-translator-real-comments-feed-shared";
+import {
+  createTrustedCommentTranslatorRealCommentsFeedDurableStore,
+  type CommentTranslatorRealCommentsFeedDurableStoreFactoryResult
+} from "./comment-translator-real-comments-feed-durable-store";
 
 export type CommentTranslatorRealCommentsFeedSessionBridgePersistResult =
   | {
@@ -38,6 +42,7 @@ export const commentTranslatorRealCommentsFeedSessionBridgeContract = {
   runtime: "server-only",
   feedAuthority: "server-owned-session-scoped-safe-feed",
   persistedShape: "CommentTranslatorRealCommentsFeedState",
+  durableAuthority: "comment_translator_real_comments_feed_snapshots",
   readableByBrowser: "safe-feed-rows-only",
   rawProviderPayload: "not-returned-by-design",
   rawComments: "not-returned-by-design",
@@ -55,23 +60,25 @@ export function persistCommentTranslatorRealCommentsFeedForActiveSession({
   callerAuthorization,
   sessionReferenceId,
   feed,
-  recordedAtMs = Date.now()
+  recordedAtMs = Date.now(),
+  durableFeedStore
 }: {
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   sessionReferenceId: string;
   feed: CommentTranslatorRealCommentsFeedState;
   recordedAtMs?: number;
-}): CommentTranslatorRealCommentsFeedSessionBridgePersistResult {
+  durableFeedStore?: CommentTranslatorRealCommentsFeedDurableStoreFactoryResult;
+}): Promise<CommentTranslatorRealCommentsFeedSessionBridgePersistResult> {
   if (callerAuthorization.status !== "authorized") {
-    return skippedPersist("skipped-caller-not-authorized");
+    return Promise.resolve(skippedPersist("skipped-caller-not-authorized"));
   }
 
   if (!sessionReferenceId.trim()) {
-    return skippedPersist("skipped-empty-session-reference");
+    return Promise.resolve(skippedPersist("skipped-empty-session-reference"));
   }
 
   if (feed.status !== "ready") {
-    return skippedPersist("skipped-feed-not-ready");
+    return Promise.resolve(skippedPersist("skipped-feed-not-ready"));
   }
 
   feedByAuthorizedOwner.set(callerAuthorization.ownerUserId, {
@@ -80,7 +87,13 @@ export function persistCommentTranslatorRealCommentsFeedForActiveSession({
     feed
   });
 
-  return {
+  return persistDurableSafeFeed({
+    callerAuthorization,
+    sessionReferenceId,
+    feed,
+    recordedAtMs,
+    durableFeedStore
+  }).then(() => ({
     status: "persisted",
     feedAuthority: "server-owned-session-scoped-safe-feed",
     displayRowCount: feed.rows.length,
@@ -88,16 +101,18 @@ export function persistCommentTranslatorRealCommentsFeedForActiveSession({
     rawComments: "not-returned-by-design",
     providerTargetMetadata: "forbidden",
     publicLaunchAllowed: false
-  };
+  }));
 }
 
-export function readCommentTranslatorRealCommentsFeedForActiveSession({
+export async function readCommentTranslatorRealCommentsFeedForActiveSession({
   callerAuthorization,
-  activeSession
+  activeSession,
+  durableFeedStore
 }: {
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   activeSession: CommentTranslatorActiveSessionRecord | null;
-}): CommentTranslatorRealCommentsFeedState {
+  durableFeedStore?: CommentTranslatorRealCommentsFeedDurableStoreFactoryResult;
+}): Promise<CommentTranslatorRealCommentsFeedState> {
   if (callerAuthorization.status !== "authorized" || !activeSession) {
     return createUnavailableCommentTranslatorRealCommentsFeedState({
       reason: "session-not-active"
@@ -106,6 +121,21 @@ export function readCommentTranslatorRealCommentsFeedForActiveSession({
 
   const record = feedByAuthorizedOwner.get(callerAuthorization.ownerUserId);
   if (!record || record.sessionReferenceId !== activeSession.sessionReferenceId) {
+    const durableFeed = await readDurableSafeFeed({
+      callerAuthorization,
+      activeSession,
+      durableFeedStore
+    });
+    if (durableFeed) {
+      feedByAuthorizedOwner.set(callerAuthorization.ownerUserId, {
+        sessionReferenceId: activeSession.sessionReferenceId,
+        recordedAtMs: Date.now(),
+        feed: durableFeed
+      });
+
+      return durableFeed;
+    }
+
     return createUnavailableCommentTranslatorRealCommentsFeedState({
       reason: "live-provider-polling-not-approved"
     });
@@ -115,12 +145,14 @@ export function readCommentTranslatorRealCommentsFeedForActiveSession({
   return record.feed;
 }
 
-export function clearCommentTranslatorRealCommentsFeedForSession({
+export async function clearCommentTranslatorRealCommentsFeedForSession({
   callerAuthorization,
-  sessionReferenceId
+  sessionReferenceId,
+  durableFeedStore
 }: {
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   sessionReferenceId: string | null | undefined;
+  durableFeedStore?: CommentTranslatorRealCommentsFeedDurableStoreFactoryResult;
 }) {
   if (callerAuthorization.status !== "authorized" || !sessionReferenceId) {
     return;
@@ -129,6 +161,20 @@ export function clearCommentTranslatorRealCommentsFeedForSession({
   const record = feedByAuthorizedOwner.get(callerAuthorization.ownerUserId);
   if (record?.sessionReferenceId === sessionReferenceId) {
     feedByAuthorizedOwner.delete(callerAuthorization.ownerUserId);
+  }
+
+  const durableStore = durableFeedStore ?? createTrustedCommentTranslatorRealCommentsFeedDurableStore();
+  if (durableStore.status !== "ready") {
+    return;
+  }
+
+  try {
+    await durableStore.store.clearSafeFeed({
+      ownerUserId: callerAuthorization.ownerUserId,
+      sessionReferenceId
+    });
+  } catch {
+    return;
   }
 }
 
@@ -148,4 +194,58 @@ function skippedPersist(
     providerTargetMetadata: "forbidden",
     publicLaunchAllowed: false
   };
+}
+
+async function persistDurableSafeFeed({
+  callerAuthorization,
+  sessionReferenceId,
+  feed,
+  recordedAtMs,
+  durableFeedStore
+}: {
+  callerAuthorization: Extract<YouTubeOAuthCredentialStatusCallerAuthorization, { status: "authorized" }>;
+  sessionReferenceId: string;
+  feed: CommentTranslatorRealCommentsFeedState;
+  recordedAtMs: number;
+  durableFeedStore?: CommentTranslatorRealCommentsFeedDurableStoreFactoryResult;
+}) {
+  const durableStore = durableFeedStore ?? createTrustedCommentTranslatorRealCommentsFeedDurableStore();
+  if (durableStore.status !== "ready") {
+    return;
+  }
+
+  try {
+    await durableStore.store.persistSafeFeed({
+      ownerUserId: callerAuthorization.ownerUserId,
+      sessionReferenceId,
+      feed,
+      recordedAtIso: new Date(recordedAtMs).toISOString()
+    });
+  } catch {
+    return;
+  }
+}
+
+async function readDurableSafeFeed({
+  callerAuthorization,
+  activeSession,
+  durableFeedStore
+}: {
+  callerAuthorization: Extract<YouTubeOAuthCredentialStatusCallerAuthorization, { status: "authorized" }>;
+  activeSession: CommentTranslatorActiveSessionRecord;
+  durableFeedStore?: CommentTranslatorRealCommentsFeedDurableStoreFactoryResult;
+}) {
+  const durableStore = durableFeedStore ?? createTrustedCommentTranslatorRealCommentsFeedDurableStore();
+  if (durableStore.status !== "ready") {
+    return null;
+  }
+
+  try {
+    return await durableStore.store.readSafeFeed({
+      ownerUserId: callerAuthorization.ownerUserId,
+      sessionReferenceId: activeSession.sessionReferenceId
+    });
+  } catch {
+    return null;
+  }
 }

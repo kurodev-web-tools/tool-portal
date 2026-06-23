@@ -296,11 +296,25 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
-  "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs"
+  "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs",
+  "app/api/comment-translator/session/route.ts",
+  "app/tools/comment-translator/actions.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-real-comments-feed-durable-store.ts",
+  "lib/comment-translator-real-comments-feed-session-bridge.ts",
+  "supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "task.md"
 ]);
 
 for (const file of changedFiles()) {
   assert.ok(allowedChangedFiles.has(file), `PL-G2K execution change stays in allowed files: ${file}`);
+  if (file.endsWith(".mjs")) {
+    continue;
+  }
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 

@@ -42,6 +42,12 @@ import {
   seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession
 } from "@/lib/comment-translator-bounded-live-chat-polling-wiring";
 import {
+  clearCommentTranslatorRealCommentsFeedForSession
+} from "@/lib/comment-translator-real-comments-feed-session-bridge";
+import {
+  createTrustedCommentTranslatorRealCommentsFeedDurableStore
+} from "@/lib/comment-translator-real-comments-feed-durable-store";
+import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
   readCommentTranslatorPrivateLaunchAccess
 } from "@/lib/comment-translator-private-launch-access-gate";
@@ -234,6 +240,11 @@ export async function POST(request: NextRequest) {
 
   if (state.status === "stopped") {
     clearCommentTranslatorBoundedLiveChatPollingState(state.sessionReferenceId);
+    await clearCommentTranslatorRealCommentsFeedForSession({
+      callerAuthorization,
+      sessionReferenceId: state.sessionReferenceId,
+      durableFeedStore: createTrustedCommentTranslatorRealCommentsFeedDurableStore()
+    });
   }
 
   persistInMemoryCommentTranslatorActiveSession({ callerAuthorization, state });

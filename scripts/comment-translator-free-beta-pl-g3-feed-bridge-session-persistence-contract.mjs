@@ -7,11 +7,14 @@ import path from "node:path";
 
 const root = process.cwd();
 const bridgePath = "lib/comment-translator-real-comments-feed-session-bridge.ts";
+const durableFeedStorePath = "lib/comment-translator-real-comments-feed-durable-store.ts";
 const f10Path = "lib/comment-translator-azure-normal-translation-execution.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
+const sessionRoutePath = "app/api/comment-translator/session/route.ts";
 const sharedPath = "lib/comment-translator-real-comments-feed-shared.ts";
 const normalizationPath = "lib/comment-translator-live-message-normalization.ts";
 const usageLedgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
+const feedMigrationPath = "supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql";
 const completionDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md";
 const taskPath = "task.md";
@@ -116,14 +119,29 @@ function loadTsModule(relativePath) {
   }
 }
 
-for (const requiredPath of [bridgePath, f10Path, actionsPath, sharedPath, normalizationPath, usageLedgerPath, completionDocPath, taskPath]) {
+for (const requiredPath of [
+  bridgePath,
+  durableFeedStorePath,
+  f10Path,
+  actionsPath,
+  sessionRoutePath,
+  sharedPath,
+  normalizationPath,
+  usageLedgerPath,
+  feedMigrationPath,
+  completionDocPath,
+  taskPath
+]) {
   assert.ok(exists(requiredPath), `PL-G3 feed bridge required file exists: ${requiredPath}`);
 }
 
 const bridgeSource = read(bridgePath);
+const durableFeedStoreSource = read(durableFeedStorePath);
 const f10Source = read(f10Path);
 const actionsSource = read(actionsPath);
+const sessionRouteSource = read(sessionRoutePath);
 const sharedSource = read(sharedPath);
+const feedMigrationSource = read(feedMigrationPath);
 const completionDoc = read(completionDocPath);
 const taskSource = read(taskPath);
 
@@ -132,11 +150,30 @@ assert.match(bridgeSource, /commentTranslatorRealCommentsFeedSessionBridgeContra
 assert.match(bridgeSource, /persistCommentTranslatorRealCommentsFeedForActiveSession/, "bridge can persist safe feed rows for an active session");
 assert.match(bridgeSource, /readCommentTranslatorRealCommentsFeedForActiveSession/, "bridge can read safe feed rows for an active session");
 assert.match(bridgeSource, /clearCommentTranslatorRealCommentsFeedForSession/, "bridge can clear rows when a session stops");
+assert.match(bridgeSource, /durableFeedStore/, "bridge accepts a durable feed store boundary");
 assert.doesNotMatch(bridgeSource, /localStorage|sessionStorage|indexedDB/i, "bridge does not add browser storage");
-assert.doesNotMatch(bridgeSource, /liveChatId|nextPageToken|providerChannelId|ownerUserId\s*[:=]\s*["']/i, "bridge source does not hard-code private provider identifiers");
+const hardCodedPrivateValuePattern = /(?:liveChatId|nextPageToken|providerChannelId|ownerUserId)\s*[:=]\s*["'][^"']+["']/i;
+assert.doesNotMatch(bridgeSource, hardCodedPrivateValuePattern, "bridge source does not hard-code private provider identifiers");
+
+assert.match(durableFeedStoreSource, /^import "server-only";/m, "durable feed store is server-only");
+assert.match(durableFeedStoreSource, /comment_translator_real_comments_feed_snapshots/, "durable feed store uses the reviewed feed snapshot table");
+assert.match(durableFeedStoreSource, /createTrustedCommentTranslatorRealCommentsFeedDurableStore/, "durable feed store has trusted service-role factory");
+assert.match(durableFeedStoreSource, /createInMemoryCommentTranslatorRealCommentsFeedDurableStoreForTests/, "durable feed store has deterministic test double");
+assert.doesNotMatch(durableFeedStoreSource, /localStorage|sessionStorage|indexedDB/i, "durable feed store does not add browser storage");
+assert.doesNotMatch(durableFeedStoreSource, hardCodedPrivateValuePattern, "durable feed store source does not hard-code private provider identifiers");
+
+assert.match(feedMigrationSource, /create table if not exists public\.comment_translator_real_comments_feed_snapshots/, "feed snapshot migration creates the durable table");
+assert.match(feedMigrationSource, /feed_snapshot jsonb not null/, "feed snapshot migration stores safe feed JSON only");
+assert.match(feedMigrationSource, /enable row level security/, "feed snapshot migration enables RLS");
+assert.match(feedMigrationSource, /grant all on table public\.comment_translator_real_comments_feed_snapshots to service_role/, "feed snapshot migration stays service-role only");
+assert.match(feedMigrationSource, /raw provider payloads[\s\S]*raw comments[\s\S]*provider target metadata[\s\S]*liveChatId[\s\S]*cursor[\s\S]*author channel material[\s\S]*not stored/i, "feed snapshot migration documents forbidden value boundary");
 
 assert.match(f10Source, /persistCommentTranslatorRealCommentsFeedForActiveSession/, "F10 persists translated browser-safe feed rows through the bridge");
+assert.match(f10Source, /feedPersistenceStore/, "F10 can pass the durable feed store into the bridge");
 assert.match(actionsSource, /readCommentTranslatorRealCommentsFeedForActiveSession/, "feed server action reads the bridge instead of fixed unavailable");
+assert.match(actionsSource, /createTrustedCommentTranslatorRealCommentsFeedDurableStore/, "browser feed action reads through the trusted durable feed store");
+assert.match(sessionRouteSource, /clearCommentTranslatorRealCommentsFeedForSession/, "session API stop clears the server-owned feed snapshot");
+assert.match(sessionRouteSource, /createTrustedCommentTranslatorRealCommentsFeedDurableStore/, "session API stop uses the trusted durable feed store cleanup boundary");
 assert.doesNotMatch(
   actionsSource,
   /getCommentTranslatorRealCommentsFeedAction\(\)[\s\S]{0,160}return createUnavailableCommentTranslatorRealCommentsFeedState\(\{\s*reason:\s*"live-provider-polling-not-approved"/,
@@ -147,6 +184,7 @@ assert.match(completionDoc, /feed bridge\/session persistence boundary/i, "PL-G3
 assert.match(taskSource, /PL-G3 feed bridge\/session persistence/i, "task.md records the PL-G3 feed bridge slice");
 
 const bridge = loadTsModule(bridgePath);
+const durable = loadTsModule(durableFeedStorePath);
 const f10 = loadTsModule(f10Path);
 const normalization = loadTsModule(normalizationPath);
 const ledger = loadTsModule(usageLedgerPath);
@@ -159,6 +197,13 @@ assert.equal(bridge.commentTranslatorRealCommentsFeedSessionBridgeContract.publi
 
 bridge.resetCommentTranslatorRealCommentsFeedSessionBridgeForTests();
 ledger.resetInMemoryCommentTranslatorUsageLedgerForTests();
+const durableFeedStore = durable.createInMemoryCommentTranslatorRealCommentsFeedDurableStoreForTests();
+const durableFeedStoreFactoryResult = {
+  status: "ready",
+  store: durableFeedStore,
+  missingEnvReferences: [],
+  failClosed: false
+};
 
 const ownerKey = "owner" + "UserId";
 const callerAuthorization = {
@@ -250,6 +295,7 @@ const result = await f10.executeCommentTranslatorAzureNormalTranslationForNormal
   occurredAtMs: Date.parse("2026-06-22T01:00:08.000Z"),
   usage,
   providers: { azure },
+  feedPersistenceStore: durableFeedStoreFactoryResult,
   maxBatchSize: 2,
   maxProviderAttemptsPerComment: 1
 });
@@ -259,9 +305,11 @@ assert.equal(result.feed.status, "ready");
 assert.equal(result.feed.rows.length, 1);
 assert.equal(result.feed.rows[0].translationStatus, "translated-f10");
 
-const bridgeRead = bridge.readCommentTranslatorRealCommentsFeedForActiveSession({
+bridge.resetCommentTranslatorRealCommentsFeedSessionBridgeForTests();
+const bridgeRead = await bridge.readCommentTranslatorRealCommentsFeedForActiveSession({
   callerAuthorization,
-  activeSession
+  activeSession,
+  durableFeedStore: durableFeedStoreFactoryResult
 });
 
 assert.equal(bridgeRead.status, "ready");
@@ -277,13 +325,15 @@ assert.equal(bridgeRead.browserStorage, "unchanged");
 assert.equal(bridgeRead.handoffPayload, "unchanged");
 assert.equal(bridgeRead.publicLaunchAllowed, false);
 
-bridge.clearCommentTranslatorRealCommentsFeedForSession({
+await bridge.clearCommentTranslatorRealCommentsFeedForSession({
   callerAuthorization,
-  sessionReferenceId: activeSession.sessionReferenceId
+  sessionReferenceId: activeSession.sessionReferenceId,
+  durableFeedStore: durableFeedStoreFactoryResult
 });
-const clearedRead = bridge.readCommentTranslatorRealCommentsFeedForActiveSession({
+const clearedRead = await bridge.readCommentTranslatorRealCommentsFeedForActiveSession({
   callerAuthorization,
-  activeSession
+  activeSession,
+  durableFeedStore: durableFeedStoreFactoryResult
 });
 assert.equal(clearedRead.status, "unavailable");
 assert.equal(clearedRead.rows.length, 0);
@@ -312,10 +362,19 @@ for (const payload of [result, bridgeRead, clearedRead]) {
 
 const allowedChangedFiles = new Set([
   bridgePath,
+  durableFeedStorePath,
   f10Path,
   actionsPath,
+  sessionRoutePath,
+  feedMigrationPath,
   completionDocPath,
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

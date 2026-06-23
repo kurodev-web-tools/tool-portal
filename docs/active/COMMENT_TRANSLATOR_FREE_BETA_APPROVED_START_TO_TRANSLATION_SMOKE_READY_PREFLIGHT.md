@@ -330,6 +330,21 @@ Allowed payload labels for review: `{"intent":"start"}` and `{"intent":"stop"}`.
 
 The Start/Stop commands can create or update `comment_translator_sessions` and `comment_translator_usage_ledger_events`. They must not run without exact approval. The provider commands can run live target lookup, liveChatMessages.list, and Free Azure provider execution. They must not run without exact approval and sanitized output review.
 
+Approved post-#546 execution result after reset/status review:
+
+- Decision: blocked-fresh-comment-bounded-polling-no-intake-after-pr546-reset.
+- Reset/status prerequisite: resetStatusLabel passed; status-only verification returned status label status-only-2xx / sessionStatusLabel not-started / usage policy label allowed / public gate unchanged / blocked / public-release capable no.
+- Status precheck: HTTP status label 2xx; sessionStatusLabel not-started; stopReasonLabel none-or-unavailable; Start label no; Stop label no.
+- Explicit Start: HTTP status label 2xx; sessionStatusLabel active; stopReasonLabel none-or-unavailable; proceedToProviderLabel yes.
+- Server-only target lookup: status label live-chat-target-lookup-sanitized-result; liveChatTargetLabel present; liveChatTargetLookupLabel executed-bounded-readonly-one-step; raw provider payload printed no; target values printed no.
+- Fresh-comment bounded `liveChatMessages.list`: status label live-chat-polling-fresh-comment-bounded-short-polling-diagnostics-sanitized-result; liveChatPollingDiagnosticsLabel executed-bounded-readonly-fresh-comment-short-polling; boundedAttemptCount 3; returnedCount 0; stopReasonLabel bounded-max-attempts-reached; operatorFreshCommentWindowLabel completed-before-bounded-short-polling; raw provider payload printed no; raw comments printed no; cursor printed no.
+- Free provider translation: not-run because non-empty intake was not confirmed.
+- Browser-visible server-owned feed confirmation: not-run because provider translation was not run.
+- Stop: HTTP status label 2xx; sessionStatusLabel stopped; stopReasonLabel user-stop.
+- Post-Stop status: HTTP status label 2xx; sessionStatusLabel not-started; stopReasonLabel none-or-unavailable.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+
 ## Sanitized Output Review
 
 Allowed output after a later approved run:

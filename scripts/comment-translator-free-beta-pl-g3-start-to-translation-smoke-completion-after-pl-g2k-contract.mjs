@@ -150,8 +150,8 @@ for (const requiredSection of [
 for (const requiredFragment of [
   "Status: PL-G3 Start-to-translation smoke completion after PL-G2K",
   "Public-release capable: no",
-  "Execution result: blocked-empty-polling-intake-after-pr515",
-  "Start-to-translation smoke execution: blocked-empty-polling-intake-after-fresh-chat-after-pr510",
+  "Execution result: blocked-start-reconnect-required-after-pr551",
+  "Start-to-translation smoke execution: blocked-start-reconnect-required-after-pr551",
   "PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`",
   "PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed",
   "approved-fb-l4-start-to-translation-smoke",
@@ -271,7 +271,7 @@ assert.match(providerHarness, /approved-private-gated-live-provider-smoke/, "pro
 
 assert.match(
   task,
-  /Current branch: `codex\/(?:pl-g3-sanitized-wrapper-boundary-after-pr533|pl-g3-start-to-translation-continuation-after-pr531|pl-g3-continuation-after-pr534-blocked|comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
+  /Current branch: `codex\/(?:pl-g3-post-551-full-continuation-test|pl-g3-sanitized-wrapper-boundary-after-pr533|pl-g3-start-to-translation-continuation-after-pr531|pl-g3-continuation-after-pr534-blocked|comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
   "task.md records PL-G3 after PL-G2K branch"
 );
 assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");
@@ -291,6 +291,23 @@ assert.match(task, /Readiness details:[\s\S]*deployed origin reference ready[\s\
 assert.match(task, /Start-to-translation smoke[\s\S]*blocked-empty-polling-intake-after-fresh-chat-after-pr510/i, "task.md records PL-G3 fresh-chat empty intake blocked state");
 assert.match(task, /public gate state label: unchanged \/ blocked/i, "task.md keeps public gate blocked");
 assert.match(task, /public-release capable label: no/i, "task.md keeps public-release capable no");
+assert.match(task, /blocked-start-reconnect-required-after-pr551/i, "task.md records post-#551 reconnect-required blocker");
+assert.match(task, /approved-pl-g3-post-551-full-start-to-translation-continuation/i, "task.md records post-#551 approval label");
+assert.match(
+  task,
+  /Explicit Start[\s\S]*sessionStatusLabel stopped[\s\S]*stopReasonLabel reconnect-required[\s\S]*proceedToProviderLabel no/i,
+  "task.md records post-#551 Start reconnect-required evidence"
+);
+assert.match(
+  task,
+  /Provider continuation[\s\S]*not-run because Start did not become active[\s\S]*Reviewed provider wrapper\/harness command[\s\S]*not run/i,
+  "task.md records post-#551 provider continuation not-run"
+);
+assert.match(
+  completionDoc,
+  /Approved post-#551 full Start-to-translation continuation attempt:[\s\S]*blocked-start-reconnect-required-after-pr551[\s\S]*stopReasonLabel reconnect-required[\s\S]*Provider continuation was not run because Start did not become active/i,
+  "completion doc records post-#551 reconnect-required blocker"
+);
 assert.match(
   task,
   /Latest PL-G3 Polling (?:(?:Sanitized Diagnostics|403 \/ Target Selection Diagnostics|403 Reason Labels) Follow-up|Empty-intake Diagnostics Metadata After PR #511)/i,

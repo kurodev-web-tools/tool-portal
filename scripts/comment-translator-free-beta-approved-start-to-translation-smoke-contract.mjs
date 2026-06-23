@@ -242,7 +242,7 @@ assert.match(gapAudit, /FB-L4|Start-to-translation smoke/i, "gap audit records F
 
 assert.match(
   task,
-  /Current branch: `codex\/(?:pl-g3-sanitized-wrapper-boundary-after-pr533|pl-g3-start-to-translation-continuation-after-pr531|pl-g3-continuation-after-pr534-blocked|comment-translator-free-beta-(fb-l4-approved-start-to-translation-smoke|pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524|operator-local-provider-permission-confirmation-after-pr504)))`/i,
+  /Current branch: `codex\/(?:pl-g3-post-551-full-continuation-test|pl-g3-sanitized-wrapper-boundary-after-pr533|pl-g3-start-to-translation-continuation-after-pr531|pl-g3-continuation-after-pr534-blocked|comment-translator-free-beta-(fb-l4-approved-start-to-translation-smoke|pl-g3-(?:start-to-translation-smoke(?:-evidence-follow-up|-completion-after-pl-g2k)?|start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524|operator-local-provider-permission-confirmation-after-pr504)))`/i,
   "task.md records FB-L4 or PL-G3 Start-to-translation branch"
 );
 assert.match(task, /FB-L4[\s\S]*Approved Start-to-translation smoke[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L4 state");
@@ -252,6 +252,17 @@ assert.match(task, /Start-to-translation smoke execution[\s\S]*not-run\/approval
 assert.match(task, /unchecked scope[\s\S]*Start-to-translation smoke execution/i, "task.md records unchecked Start-to-translation execution scope");
 assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records width-check skip reason");
 assert.match(task, /public-release capable: no/i, "task.md keeps public release blocked");
+assert.match(readyPreflightDoc, /Approved post-#551 full Start-to-translation continuation attempt:[\s\S]*blocked-start-reconnect-required-after-pr551/i, "ready preflight records post-#551 reconnect-required blocker");
+assert.match(
+  plG3AfterPlG2kDoc,
+  /Explicit Start:[\s\S]*sessionStatusLabel stopped[\s\S]*stopReasonLabel reconnect-required[\s\S]*proceedToProviderLabel no/i,
+  "PL-G3 after PL-G2K records post-#551 Start reconnect-required evidence"
+);
+assert.match(
+  plG3AfterPlG2kDoc,
+  /Provider continuation(?: was)?[\s\S]*not[- ]run because Start did not become active[\s\S]*Free provider translation[\s\S]*not run/i,
+  "PL-G3 after PL-G2K records post-#551 provider continuation not-run"
+);
 
 const routeSource = read("app/api/comment-translator/session/route.ts");
 assert.match(routeSource, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "route reads durable session and usage before Start response");

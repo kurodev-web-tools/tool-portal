@@ -391,6 +391,20 @@ Post-#550 target lookup adapter mismatch diagnosis:
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
+Approved post-#551 full Start-to-translation continuation attempt:
+
+- Decision: blocked-start-reconnect-required-after-pr551.
+- Exact approval label present: `approved-pl-g3-post-551-full-start-to-translation-continuation`.
+- Status precheck: HTTP status label 2xx; sessionStatusLabel stopped; stopReasonLabel present; unavailableReasonLabel absent.
+- Explicit Start: HTTP status label 2xx; sessionStatusLabel stopped; stopReasonLabel reconnect-required; unavailableReasonLabel absent; proceedToProviderLabel no.
+- Provider continuation: not-run because Start did not become active. One fresh visible chat comment was not requested. Reviewed provider wrapper/harness command, provider target lookup, bounded `liveChatMessages.list`, Free provider translation, sanitized provider evidence review, and browser-visible server-owned feed confirmation were not run.
+- Cleanup Stop: HTTP status label 2xx; sessionStatusLabel stopped; stopReasonLabel user-stop.
+- Post-Stop status: HTTP status label 2xx; sessionStatusLabel not-started; activeLabel no; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent.
+- Output handling: raw response bodies, raw stdout/stderr, cookies, tokens, OAuth values, Authorization headers, provider target metadata, liveChatId, owner user id, provider channel id, provider URL query values, raw provider payloads, raw comments, comment text, quota values, browser storage payloads, and provider error body/message/reason values were not recorded.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+- Next safe action: refresh the operator-local credential/session reconnect state before any later retry. A later retry still requires separate exact same-thread approval and sanitized output review.
+
 ## Sanitized Output Review
 
 Allowed output after a later approved run:

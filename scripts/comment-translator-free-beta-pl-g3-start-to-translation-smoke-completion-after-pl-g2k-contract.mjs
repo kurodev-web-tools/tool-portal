@@ -273,7 +273,7 @@ assert.match(providerHarness, /approved-private-gated-live-provider-smoke/, "pro
 
 assert.match(
   task,
-  /Current branch: `codex\/(?:pl-g3-post-551-full-continuation-test|pl-g3-sanitized-wrapper-boundary-after-pr533|pl-g3-start-to-translation-continuation-after-pr531|pl-g3-continuation-after-pr534-blocked|comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
+  /Current branch: `codex\/(?:pl-g3-browser-visible-feed-confirmation-evidence|pl-g3-post-551-full-continuation-test|pl-g3-sanitized-wrapper-boundary-after-pr533|pl-g3-start-to-translation-continuation-after-pr531|pl-g3-continuation-after-pr534-blocked|comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
   "task.md records PL-G3 after PL-G2K branch"
 );
 assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");
@@ -316,6 +316,26 @@ assert.match(
   completionDoc,
   /Post-#552 full Start-to-translation retry after reconnect readiness passed:[\s\S]*translatedCount 1[\s\S]*Browser-visible server-owned feed\/source-attribution confirmation was not run/i,
   "completion doc records post-#552 provider translation pass and UI/feed not-run"
+);
+assert.match(
+  completionDoc,
+  /PL-G3 Browser-visible Feed\/Source-attribution Confirmation After PR #553[\s\S]*blocked-empty-browser-visible-feed-after-provider-translation-post-553[\s\S]*translatedCount 1[\s\S]*feedStatusLabel unavailable[\s\S]*displayRowCount 0[\s\S]*sourceAttributionShapeLabel not-confirmed/i,
+  "completion doc records post-#553 browser-visible feed blocked evidence"
+);
+assert.match(
+  fbL4ReadyPreflight,
+  /Post-#553 browser-visible feed\/source-attribution confirmation[\s\S]*blocked-empty-browser-visible-feed-after-provider-translation-post-553[\s\S]*displayRowCount 0[\s\S]*public-release capable label: no/i,
+  "FB-L4 ready preflight records post-#553 browser-visible feed blocked evidence"
+);
+assert.match(
+  task,
+  /Active PL-G3 Browser-visible Feed Confirmation After PR #553[\s\S]*blocked-empty-browser-visible-feed-after-provider-translation-post-553[\s\S]*translatedCount 1[\s\S]*feedStatusLabel unavailable[\s\S]*displayRowCount 0[\s\S]*public-release capable label: no/i,
+  "task.md records post-#553 browser-visible feed blocked evidence"
+);
+assert.match(
+  task,
+  /deployed\/runtime parity and durable feed persistence diagnostic/i,
+  "task.md records next safe diagnostic boundary"
 );
 assert.match(
   task,

@@ -274,6 +274,22 @@ UI feed confirmation is browser/manual and must record only:
 - translated count and skipped count;
 - console error count.
 
+After PR #546 reset-confirm-and-start-to-translation retry continuation:
+
+Exact reset approval label: `approved-pl-g3-test-account-usage-session-reset-after-pr546`.
+
+Reviewed reset command shape:
+
+```powershell
+node scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546.mjs --check-env-only
+node scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546.mjs --print-exact-command-review
+node scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546.mjs --execute --approved-pl-g3-reset-confirm-boundary-after-pr546 --json
+```
+
+Confirm reset/status-only unblocked state before starting or keeping the stream/chat active. The reset command may touch only test-account Free beta session/usage limiter state and must return sanitized labels/counts only. After an approved reset, run status-only verification and review sessionStatusLabel, stopReasonLabel, usage/session counter presence label, usage policy label, usage policy stop reason label, status label, Start label no, Stop label no, public gate state label unchanged / blocked, and public-release capable label no. If status-only remains blocked, do not proceed to a PL-G3 retry.
+
+Exact PL-G3 retry approval remains separate: `approved-pl-g3-post-bridge-full-continuation-after-pr542`. Do not conflate reset approval with Start-to-translation retry approval. Do not run Start, Stop, target lookup, bounded polling, Free provider translation, browser-visible feed confirmation, PL-G4, PL-G5, deploy/upload, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip from the reset approval alone.
+
 After PR #542 post-bridge full PL-G3 Start-to-translation continuation approval boundary:
 
 Use this boundary only after reviewing PR #542 server-owned feed bridge/session persistence and confirming operator-local reference readiness without printing private values. Exact approval label: `approved-pl-g3-post-bridge-full-continuation-after-pr542`.

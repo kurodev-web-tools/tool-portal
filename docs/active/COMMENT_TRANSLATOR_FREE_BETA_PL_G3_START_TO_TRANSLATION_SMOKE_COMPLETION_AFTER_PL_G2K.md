@@ -2136,6 +2136,44 @@ Public gate state label: unchanged / blocked.
 
 Public-release capable label: no.
 
+## PL-G3 Post-#546 Test-account Usage/session Reset Confirmation Boundary
+
+Decision: reset-confirm-boundary-prepared-after-pr546.
+
+Base state: PR #546 is merged at `9e714e72e5143e1dd7ac5a60d5fb95a4137f3393` and contained in latest `origin/codex/comment-translator-free-public-beta-integration`.
+
+Exact reset approval label required before mutation: `approved-pl-g3-test-account-usage-session-reset-after-pr546`.
+
+Reviewed reset command shape:
+
+```powershell
+node scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546.mjs --check-env-only
+node scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546.mjs --print-exact-command-review
+node scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546.mjs --execute --approved-pl-g3-reset-confirm-boundary-after-pr546 --json
+```
+
+Reset scope: test-account Free beta session/usage limiter state only. The command may touch only `comment_translator_usage_ledger_events` and `comment_translator_sessions` rows for the operator-local test-account owner reference consumed in process. It must not touch OAuth credentials, provider target data, billing, paid entitlement, deployment state, public access gates, or non-test-account rows.
+
+Remote mutation status before exact approval: not-run / blocked-pending-exact-approval.
+
+Approved reset attempt after exact approval: initially blocked-missing-env-references because the same process was missing COMMENT_TRANSLATOR_RESET_TEST_ACCOUNT_OWNER_USER_ID. The operator-local `test.ps1` references were then loaded with values suppressed, and the reset owner reference was mapped from the existing smoke owner reference without printing values. Dependency recovery was required because `@supabase/supabase-js` was missing before `npm ci --prefer-offline --no-audit --no-fund`; after dependency restore, module import label passed.
+
+Approved reset execution after dependency recovery: resetStatusLabel passed; usageLedgerResetStatusLabel passed; sessionResetStatusLabel passed; sessionRowsTouchedCount 19; usageLedgerRowsTouchedCount 41; remoteMutationLabel completed-reset-only; Start label no; Stop label no; live/provider execution label not-run; rawRowsPrintedLabel no; rawIdsPrintedLabel no; rawTimesPrintedLabel no; rawUrlsPrintedLabel no; quotaValuesPrintedLabel no.
+
+Status-only verification after reset: status label status-only-2xx; httpStatusLabel 2xx; sessionStatusLabel not-started; stopReasonLabel none-or-unavailable; usage/session counter presence label present; usage policy label allowed; usage policy stop reason label none-or-unavailable; Start label no; Stop label no; live/provider execution label not-run; rawBodyPrintedLabel no; public gate state label unchanged / blocked; public-release capable label no.
+
+Allowed reset output after a later approved execution: resetStatusLabel, sessionRowsTouchedCount, usageLedgerRowsTouchedCount, rawRowsPrintedLabel no, rawIdsPrintedLabel no, rawTimesPrintedLabel no, rawUrlsPrintedLabel no, quotaValuesPrintedLabel no, Start label no, Stop label no, live/provider execution label not-run, public gate state label unchanged / blocked, public-release capable label no, pass/fail, and unavailableReason only.
+
+After reset, run status-only verification before asking the operator to start or keep the live stream/chat active. Required sanitized status-only labels after an approved reset: sessionStatusLabel, stopReasonLabel, usage/session counter presence label, usage policy label, usage policy stop reason label, status label, Start label no, Stop label no, public gate state label unchanged / blocked, public-release capable label no. If status-only does not confirm unblocked/allowed, do not proceed to any PL-G3 retry.
+
+PL-G3 retry approval remains separate: `approved-pl-g3-post-bridge-full-continuation-after-pr542`. Do not conflate reset approval with Start-to-translation retry approval. Do not run Start/Stop/live/provider/UI commands from this reset boundary, and do not ask for stream/chat activity until reset/status-only evidence has been reviewed.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Verification for this boundary: RED `node scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546-contract.mjs` first failed on the missing reset command boundary. Passing checks after command/docs/task updates: `node scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`, `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`, and `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`. Changed-files no-secret scan passed for 8 files. `git diff --check` passed with CRLF normalization warnings only. Reset execution, status-only route execution, Start/Stop/live/provider/UI commands, PL-G4, PL-G5, deploy/upload, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, and public launch gate flip were not run.
+
 This record does not complete Start-to-translation behavior. It does not prove:
 
 - successful translated output after a live run;
@@ -2178,7 +2216,7 @@ Residual risk: PL-G3 remains incomplete. The approved continuation reached Start
 
 ## Next Safe Action
 
-Keep public launch blocked. Run no Start, Stop, target lookup execution, `liveChatMessages.list`, Free provider execution, browser-visible UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip until same-thread operator-local reference readiness and exact approval with `approved-pl-g3-post-bridge-full-continuation-after-pr542` are present.
+Keep public launch blocked. First run the test-account reset only after exact same-thread approval with `approved-pl-g3-test-account-usage-session-reset-after-pr546`, then run status-only verification and review sanitized labels. Only if status-only confirms unblocked/allowed should the operator start or keep the stream/chat active. The later PL-G3 Start-to-translation retry still requires separate exact same-thread approval with `approved-pl-g3-post-bridge-full-continuation-after-pr542`. Run no Start, Stop, target lookup execution, `liveChatMessages.list`, Free provider execution, browser-visible UI/feed confirmation, PL-G4, PL-G5, deploy/upload, remote mutation outside the approved reset boundary, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip until those gates are satisfied.
 
 ## Completion Verification
 
@@ -2187,6 +2225,7 @@ Required PL-G3 after PL-G2K closeout checks:
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs`
+- `node scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs`
 - `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs`

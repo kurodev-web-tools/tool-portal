@@ -15,6 +15,7 @@ export type CommentTranslatorRealCommentsFeedSessionBridgePersistResult =
   | {
       status: "persisted";
       feedAuthority: "server-owned-session-scoped-safe-feed";
+      durableFeedPersistResultLabel: "durable-feed-persisted" | "durable-feed-store-unavailable" | "durable-feed-persist-failed";
       displayRowCount: number;
       rawProviderPayload: "not-returned-by-design";
       rawComments: "not-returned-by-design";
@@ -24,6 +25,7 @@ export type CommentTranslatorRealCommentsFeedSessionBridgePersistResult =
   | {
       status: "skipped-caller-not-authorized" | "skipped-empty-session-reference" | "skipped-feed-not-ready";
       feedAuthority: "not-persisted";
+      durableFeedPersistResultLabel: "not-run";
       displayRowCount: 0;
       rawProviderPayload: "not-returned-by-design";
       rawComments: "not-returned-by-design";
@@ -93,9 +95,10 @@ export function persistCommentTranslatorRealCommentsFeedForActiveSession({
     feed,
     recordedAtMs,
     durableFeedStore
-  }).then(() => ({
+  }).then((durableFeedPersistResultLabel) => ({
     status: "persisted",
     feedAuthority: "server-owned-session-scoped-safe-feed",
+    durableFeedPersistResultLabel,
     displayRowCount: feed.rows.length,
     rawProviderPayload: "not-returned-by-design",
     rawComments: "not-returned-by-design",
@@ -188,6 +191,7 @@ function skippedPersist(
   return {
     status,
     feedAuthority: "not-persisted",
+    durableFeedPersistResultLabel: "not-run",
     displayRowCount: 0,
     rawProviderPayload: "not-returned-by-design",
     rawComments: "not-returned-by-design",
@@ -211,7 +215,7 @@ async function persistDurableSafeFeed({
 }) {
   const durableStore = durableFeedStore ?? createTrustedCommentTranslatorRealCommentsFeedDurableStore();
   if (durableStore.status !== "ready") {
-    return;
+    return "durable-feed-store-unavailable";
   }
 
   try {
@@ -221,8 +225,9 @@ async function persistDurableSafeFeed({
       feed,
       recordedAtIso: new Date(recordedAtMs).toISOString()
     });
+    return "durable-feed-persisted";
   } catch {
-    return;
+    return "durable-feed-persist-failed";
   }
 }
 

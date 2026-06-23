@@ -221,7 +221,15 @@ node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mj
 node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --execute --approved-pl-g3-sanitized-wrapper-after-pr533 --reviewed-provider-harness-child
 ```
 
-Wrapper boundary: captures node child stdout and stderr separately, parses only stdout final JSON, never prints raw stdout/stderr, and emits only command label, route/action/status labels, HTTP status labels when present, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, skip reason labels/counts (`languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`, `terminalErrorCodeCounts`), provider root-cause labels (`dominantTerminalErrorCodeLabel`, `providerConfigPresenceLabel`, `providerRouteAvailabilityLabel`), stop reason label, unavailableReason, usage/source-attribution labels/counts, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail. Counts-source-UI evidence remains blocked until a later same-thread exact approved run records parsed counts, source-attribution labels, and browser-visible UI/feed confirmation.
+After the F10 feed persistence path implementation, the reviewed wrapper child boundary selects:
+
+```powershell
+node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed --use-f10-feed-persistence-path
+```
+
+This remains approval-gated. It must run only after Start is active and sanitized output review is complete, and it may output only labels/counts such as `feedPersistencePathLabel`, `durableFeedPersistResultLabel`, `feedDisplayRowCount`, translated/skipped counts, source attribution availability label, unavailable reason, and pass/fail.
+
+Wrapper boundary: captures node child stdout and stderr separately, parses only stdout final JSON, never prints raw stdout/stderr, and emits only command label, route/action/status labels, HTTP status labels when present, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, skip reason labels/counts (`languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`, `terminalErrorCodeCounts`), provider root-cause labels (`dominantTerminalErrorCodeLabel`, `providerConfigPresenceLabel`, `providerRouteAvailabilityLabel`), feed persistence labels/counts (`feedPersistencePathLabel`, `durableFeedPersistResultLabel`, `feedDisplayRowCount`), stop reason label, unavailableReason, usage/source-attribution labels/counts, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail. Counts-source-UI evidence remains blocked until a later same-thread exact approved run records parsed counts, source-attribution labels, and browser-visible UI/feed confirmation.
 
 After PR #537, the narrow provider error/skip reason wrapper rerun remains approval-gated. Suggested exact approval label for the operator: `approved-pl-g3-provider-error-skip-wrapper-rerun-after-pr537`.
 
@@ -459,6 +467,16 @@ Post-#554 feed persistence path diagnosis:
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 - Next safe action: use a reviewed PL-G3 execution path that invokes the real F10 feed persistence boundary before any further live/browser confirmation.
+
+Post-#555 F10 feed persistence execution path implementation:
+
+- Decision: implemented-f10-feed-persistence-execution-path-browser-confirmation-not-run.
+- The reviewed PL-G3 wrapper now spawns the provider harness child with `--use-f10-feed-persistence-path`, so a later approved run can use `executeCommentTranslatorAzureNormalTranslationForNormalizedMessages` and the F10 `persistCommentTranslatorRealCommentsFeedForActiveSession` handoff instead of the direct provider count-only path.
+- Sanitized summary labels now distinguish direct provider evidence from F10 feed persistence evidence: `feedPersistencePathLabel not-run-direct-provider-execution-harness` versus `feedPersistencePathLabel executed-f10-feed-persistence-path`.
+- Allowed F10 path output remains labels/counts only: durable feed persist result label, feed display row count, source attribution availability label, translated/skipped counts, provider route labels, unavailable reason, and pass/fail. It must not expose provider target metadata, liveChatId, owner/session identifiers, token/cookie/OAuth/Authorization values, raw comments, raw provider payloads, browser storage payloads, or handoff payload expansion.
+- Start, Stop, target lookup, `liveChatMessages.list`, Free provider execution against live provider, browser-visible feed confirmation, deploy/upload, remote mutation/apply, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, PL-G4, PL-G5, and public launch gate flip were not run.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
 
 ## Sanitized Output Review
 

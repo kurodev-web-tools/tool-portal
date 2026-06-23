@@ -1435,7 +1435,7 @@ node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mj
 node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --execute --approved-pl-g3-sanitized-wrapper-after-pr533 --reviewed-provider-harness-child
 ```
 
-The execute command runs the reviewed provider harness child boundary only after approval; the child boundary is `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed`.
+The execute command runs the reviewed provider harness child boundary only after approval; after the F10 feed persistence path implementation, the child boundary is `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed --use-f10-feed-persistence-path`.
 
 Allowed wrapper projection for that later approved rerun remains limited to command labels, route/action/status labels, HTTP status labels when present, target-presence labels, provider route/status labels, returned/eligible/translated/skipped counts, provider request/call counts, `languagePolicySkippedCount`, `perMinuteSkippedCount`, `providerUnavailableSkippedCount`, `recoverableErrorCount`, `terminalErrorCount`, stop reason label, unavailableReason, `sourceAttributionAvailabilityLabel`, `sourceAttributionLabel`, public gate state label, public-release capable label, and pass/fail.
 
@@ -1834,6 +1834,22 @@ Public gate state label: unchanged / blocked.
 Public-release capable label: no.
 
 Next safe action: keep PL-G3 blocked and prepare a reviewed execution path that uses the real F10 translation/feed persistence boundary before requesting another live/provider/browser confirmation.
+
+## PL-G3 F10 Feed Persistence Execution Path After PR #555
+
+Decision: implemented-f10-feed-persistence-execution-path-browser-confirmation-not-run.
+
+Implementation: the reviewed PL-G3 sanitized wrapper now runs the private gated provider harness child with `--use-f10-feed-persistence-path`. The provider harness keeps target lookup, liveChatId, and live comments server-only, converts the bounded polling intake into normalized live messages, reads the active durable session context server-side, and calls `executeCommentTranslatorAzureNormalTranslationForNormalizedMessages`. That routes the later approved provider translation evidence through the F10 safe-row projection and `persistCommentTranslatorRealCommentsFeedForActiveSession` feed snapshot handoff instead of the direct provider count-only path.
+
+Sanitized labels: wrapper summaries now distinguish `feedPersistencePathLabel not-run-direct-provider-execution-harness` from `feedPersistencePathLabel executed-f10-feed-persistence-path`. The F10 path can also report `durableFeedPersistResultLabel`, `feedDisplayRowCount`, `sourceAttributionAvailabilityLabel`, translated/skipped counts, provider route labels, unavailable reason, and pass/fail. It must not output provider target metadata, liveChatId, owner/session identifiers, token/cookie/OAuth/Authorization values, raw comments, raw provider payloads, browser storage payloads, or handoff payload expansion.
+
+Execution state: deterministic local implementation/contracts/docs only. Start, Stop, target lookup, `liveChatMessages.list`, Free provider execution against live provider, browser-visible feed/source-attribution confirmation, deploy/upload, remote mutation/apply, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, PL-G4, PL-G5, and public launch gate flip were not run.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Next safe action: finish focused verification and open a draft PR if checks pass. A later browser-visible feed/source-attribution confirmation still requires separate exact same-thread approval and sanitized output review.
 
 ## PL-G3 Post-bridge Full Start-to-translation Continuation Ready Preflight After PR #542
 

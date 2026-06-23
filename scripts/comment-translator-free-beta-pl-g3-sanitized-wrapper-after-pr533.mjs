@@ -45,6 +45,8 @@ function createBaseSummary(overrides = {}) {
     providerConfigPresenceLabel: "unavailable",
     providerRouteAvailabilityLabel: "unavailable",
     feedPersistencePathLabel: "unavailable",
+    durableFeedPersistResultLabel: "unavailable",
+    feedDisplayRowCount: 0,
     stopReasonLabel: "unavailable",
     sourceAttributionLabel: "unavailable",
     sourceAttributionAvailabilityLabel: "unavailable",
@@ -148,6 +150,8 @@ function projectAllowedSanitizedSummary({ childResult, parsedPayload, commandLab
       evidence.feedPersistencePathLabel ?? payload.feedPersistencePathLabel,
       "not-run-direct-provider-execution-harness"
     ),
+    durableFeedPersistResultLabel: safeLabel(evidence.durableFeedPersistResultLabel ?? payload.durableFeedPersistResultLabel),
+    feedDisplayRowCount: readCount(evidence.feedDisplayRowCount ?? payload.feedDisplayRowCount),
     stopReasonLabel: safeLabel(evidence.stopReason ?? payload.stopReason, "none"),
     sourceAttributionLabel,
     sourceAttributionAvailabilityLabel: resolveSourceAttributionAvailabilityLabel({
@@ -297,6 +301,35 @@ function createFixtureChild(fixtureName) {
         }
       }, null, 2) + "\\n");
     `,
+    "f10-feed-persistence-path": `
+      process.stdout.write(JSON.stringify({
+        status: "task-27-live-provider-smoke-sanitized-result",
+        outputPolicy: "sanitized-metadata-only",
+        liveProviderExecution: "approved-bounded-execution",
+        evidence: {
+          providerTargetLookup: "executed-presence-only",
+          liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+          translationProviderExecution: "executed-server-only-provider",
+          returnedItemCount: 2,
+          eligibleCommentCount: 2,
+          providerRequestCount: 2,
+          providerCallCount: 2,
+          translatedCount: 2,
+          skippedCount: 0,
+          languagePolicySkippedCount: 0,
+          perMinuteSkippedCount: 0,
+          providerUnavailableSkippedCount: 0,
+          recoverableErrorCount: 0,
+          terminalErrorCount: 0,
+          stopReason: null,
+          sourceAttributionLabel: "youtube-live-chat",
+          sourceAttributionAvailabilityLabel: "available",
+          feedPersistencePathLabel: "executed-f10-feed-persistence-path",
+          durableFeedPersistResultLabel: "durable-feed-persisted",
+          feedDisplayRowCount: 2
+        }
+      }, null, 2) + "\\n");
+    `,
     "stdout-no-final-json": `
       process.stderr.write("operator stderr warning: stdout has no JSON\\n");
       process.stdout.write("stdout raw progress without a final JSON object\\n");
@@ -318,7 +351,8 @@ function createReviewedProviderHarnessChild() {
       "--execute",
       "--approved-private-gated-live-provider-smoke",
       "--use-operator-local-runtime-adapters",
-      "--operator-local-ready-preflight-reviewed"
+      "--operator-local-ready-preflight-reviewed",
+      "--use-f10-feed-persistence-path"
     ],
     commandLabel: "pl-g3-provider-harness-reviewed-command"
   };

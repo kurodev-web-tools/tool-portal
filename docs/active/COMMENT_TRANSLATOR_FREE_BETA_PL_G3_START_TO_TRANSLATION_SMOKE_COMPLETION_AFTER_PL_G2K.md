@@ -2,9 +2,9 @@
 
 Status: PL-G3 Start-to-translation smoke completion after PL-G2K. Public-release capable: no.
 
-Execution result: post-552-provider-translation-passed-browser-feed-not-run.
+Execution result: post-552-provider-translation-passed-browser-feed-durable-boundary-implemented-browser-confirmation-not-run.
 
-Start-to-translation smoke execution: post-552-provider-translation-passed-browser-feed-not-run.
+Start-to-translation smoke execution: post-552-provider-translation-passed-browser-feed-durable-boundary-implemented-browser-confirmation-not-run.
 
 This PL-G3 completion slice rechecks the next public-launch gate after PL-G2K approved sanitized route/API harness smoke passed. PL-G1 remote durable enforcement is `remote-apply-and-deployed-smoke-completed`, and PL-G2K route/API harness evidence is captured as approved sanitized route/API harness smoke passed. The current thread includes exact approval and value-free operator-local readiness confirmations. The first approved Start attempt stopped with stop reason label `reconnect-required`; after operator-local YouTube credential reconnect/refresh, the credential status check returned status label `available` / reconnect required false / pass true. The next approved retry status route precheck passed, explicit Start returned HTTP 200 but stopped with stop reason label `stream-unavailable`, and explicit Stop completed with stop reason label `user-stop`. After the runtime follow-up was merged and deployed, the approved retry passed status and Start, completed server-only live target lookup with target presence label `present`, executed one bounded `liveChatMessages.list` polling step, and stopped successfully. The bounded polling step returned count 0, so Free Azure translation, UI/feed confirmation, usage check, and source attribution confirmation were not run. After PR #509 merged, the same-thread approved rerun again passed status, Start, target lookup, and one bounded `liveChatMessages.list` step with provider status label `provider-ok`, but the polling step returned count 0. After PR #510 merged, a fresh worktree rerun recovered an incomplete dependency install, passed status and Start, paused for a fresh visible chat message after Start, then target lookup returned target presence present with returned count 5 and the one bounded `liveChatMessages.list` step returned provider status label `provider-ok` with returned count 0. The provider harness gate stayed blocked before Azure/provider execution, and Stop completed with stop reason label `user-stop`.
 
@@ -1765,6 +1765,30 @@ Next safe action: review the local bridge boundary and only then prepare a same-
 
 Verification: RED `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs` first failed on missing `lib/comment-translator-real-comments-feed-session-bridge.ts`. After implementation/docs updates, the focused contract passed. `npm ci --prefer-offline --no-audit --no-fund` first failed with `ERR_SSL_CIPHER_OPERATION_FAILED`; scoped dependency recovery with `npm install --package-lock=false --prefer-offline --ignore-scripts --no-audit --no-fund typescript@5.8.3 server-only@0.0.1` completed without tracked dependency metadata changes. Passing checks: `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, changed-files no-secret scan for 6 files, and `git diff --check` with CRLF normalization warnings only. Width checks skipped because this slice changes server action/runtime/docs/contracts only and no visible UI/CSS/layout/client copy changed.
 
+## PL-G3 Browser-visible Feed Durable Snapshot Boundary After #552
+
+Decision: implemented-browser-visible-feed-durable-boundary-browser-confirmation-not-run.
+
+Root-cause diagnosis: the post-#552 approved wrapper/provider harness proved a translated safe row in the local Node provider process, but the browser-visible feed action reads a durable active session from a Next server action process/runtime. The existing bridge kept translated safe rows in a process-local `Map` keyed by authorized owner/session, so the browser action could not reliably see rows produced by the harness process. Stop also removes active session visibility, so browser-visible feed confirmation must read while the durable session is still active.
+
+Fix: add a server-only durable safe-feed snapshot boundary for `comment_translator_real_comments_feed_snapshots`. The F10 translation path persists only the existing `CommentTranslatorRealCommentsFeedState` safe row shape through the bridge. If the in-memory bridge has no matching owner/session record, `getCommentTranslatorRealCommentsFeedAction` reads the active durable session and then the durable safe-feed snapshot. Server action Stop and `/api/comment-translator/session` Stop both clear the session-scoped snapshot.
+
+Data boundary: the snapshot stores safe F9/F10 feed JSON and safety markers only. It does not store or return raw provider payloads, raw provider error bodies, raw comments outside the browser-safe feed projection, provider target metadata, `liveChatId`, server-only cursor values, owner user id values, provider channel id values, OAuth/token/cookie/Authorization values, provider URL query values, browser storage payloads, or handoff payload expansion.
+
+Execution state: deterministic local implementation only. No Start, Stop, live target lookup, `liveChatMessages.list`, Free provider translation execution, browser-visible UI/feed confirmation, deployed smoke, remote Supabase migration apply/mutation, OAuth flow, token refresh, Stripe action, public access change, main promotion, PL-G4, PL-G5, or public launch gate flip was run in this slice.
+
+Verification: RED `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs` first failed on missing `lib/comment-translator-real-comments-feed-durable-store.ts`. After implementation, the focused contract passed and confirmed durable read after in-memory bridge reset, source attribution label preservation, forbidden value exclusion in serialized outputs, and Stop cleanup through a deterministic injected store. `npm ci --prefer-offline --no-audit --no-fund` restored the fresh worktree dependencies.
+
+Passing checks: `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs`; `node scripts/comment-translator-azure-normal-translation-execution-contract.mjs`; `node scripts/comment-translator-free-beta-usage-display-contract.mjs`; `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`; `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`; `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`; `node scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs`; `node scripts/comment-translator-session-start-stop-contract.mjs`; `npm run lint`; `npx tsc --noEmit`; `npm run build`; changed-files no-secret/value-shape scan for 15 files; and `git diff --check` with CRLF normalization warnings only.
+
+Width checks skipped: this slice changes server action/runtime, Supabase migration, docs, and deterministic contracts only; no visible UI/CSS/layout/client copy changed.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Next safe action: finish focused verification and review this local boundary. A later browser-visible server-owned feed/source-attribution confirmation still requires separate exact same-thread approval and sanitized output review. Do not run PL-G4, PL-G5, deploy/upload, remote mutation/apply, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip from this implementation slice.
+
 ## PL-G3 Post-bridge Full Start-to-translation Continuation Ready Preflight After PR #542
 
 Decision: post-bridge-full-continuation-ready-preflight-prepared-after-pr542.
@@ -2218,6 +2242,7 @@ Unchecked scope:
 - Free Azure translation/provider harness after PR #534: executed through reviewed sanitized wrapper / process exit 0 / stdout final JSON parsed true / returned count 3 / eligible count 3 / provider request count 3 / provider call count 3 / translated count 0 / skipped count 3 / source attribution unavailable / pass true for wrapper execution only;
 - sanitized wrapper after PR #533: prepared / stdout and stderr separated capture / stdout final JSON parse contract passed with deterministic fixtures / no live-provider-ui execution;
 - UI/feed confirmation: attempted / feed visible but empty / blocked-ui-feed-action-fixed-unavailable-after-provider-translation;
+- browser-visible feed durable snapshot boundary: implemented locally / deterministic contract passed / deployed migration apply and browser confirmation not-run;
 - usage/source-attribution evidence: source attribution unavailable / blocked-translated-source-ui-evidence;
 - stop reason: not-run / approval-gated;
 - source attribution: not-run / approval-gated;
@@ -2230,11 +2255,11 @@ Unchecked scope:
 - Stripe live actions and billing setting mutation: not-run / approval-gated;
 - main promotion, limited public beta open, public access change, and public launch gate flip: not-run / approval-gated.
 
-Residual risk: PL-G3 remains incomplete. The post-#552 full retry reached Start active, the reviewed wrapper/provider harness passed, and Free provider translation returned translatedCount 1. The record still lacks browser-visible server-owned feed/source-attribution confirmation because that step was not included in the approval scope. Public-release capable remains no.
+Residual risk: PL-G3 remains incomplete. The post-#552 full retry reached Start active, the reviewed wrapper/provider harness passed, and Free provider translation returned translatedCount 1. The browser-visible feed durable snapshot boundary is implemented locally, but the record still lacks approved browser-visible server-owned feed/source-attribution confirmation. Public-release capable remains no.
 
 ## Next Safe Action
 
-Keep public launch blocked. The post-#552 retry proves Start active, one fresh-comment provider wrapper/harness pass, provider target lookup presence-only execution, one bounded polling read, and Free provider translation with translatedCount 1. It does not prove browser-visible server-owned feed/source-attribution confirmation because that step was not included in the approval scope. Any further UI/feed/live/provider command still requires separate exact same-thread approval and sanitized output review. PL-G4, PL-G5, deploy/upload, remote mutation outside the approved reset boundary, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, and public launch gate flip remain blocked until separately approved.
+Keep public launch blocked. The post-#552 retry proves Start active, one fresh-comment provider wrapper/harness pass, provider target lookup presence-only execution, one bounded polling read, and Free provider translation with translatedCount 1. This implementation adds the local durable safe-feed boundary needed for browser visibility, but it does not prove browser-visible server-owned feed/source-attribution confirmation because that step was not included in the approval scope and was not run here. Any further UI/feed/live/provider command still requires separate exact same-thread approval and sanitized output review. PL-G4, PL-G5, deploy/upload, remote mutation outside the approved reset boundary, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, and public launch gate flip remain blocked until separately approved.
 
 ## Completion Verification
 

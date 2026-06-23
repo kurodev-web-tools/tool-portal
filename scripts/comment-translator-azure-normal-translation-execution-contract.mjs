@@ -311,6 +311,13 @@ const openAiMini = {
     throw new Error("OpenAI mini should not be called for Free F10 execution.");
   }
 };
+const feedPersistenceStore = {
+  status: "unavailable",
+  store: null,
+  missingEnvReferences: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+  failClosed: true,
+  reason: "trusted-service-role-env-missing"
+};
 
 const result = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
   messages: normalized.normalizedMessages,
@@ -325,6 +332,7 @@ const result = await f10.executeCommentTranslatorAzureNormalTranslationForNormal
     azure,
     openAiMini
   },
+  feedPersistenceStore,
   maxBatchSize: 2,
   maxProviderAttemptsPerComment: 1
 });
@@ -375,6 +383,7 @@ const unavailable = await f10.executeCommentTranslatorAzureNormalTranslationForN
   occurredAtMs: Date.parse("2026-06-16T01:00:06.000Z"),
   usage,
   providers: {},
+  feedPersistenceStore,
   maxBatchSize: 2,
   maxProviderAttemptsPerComment: 1
 });
@@ -402,11 +411,23 @@ for (const payload of [result, unavailable, ...ledger.readInMemoryCommentTransla
 }
 
 const allowedChangedFiles = new Set([
+  "app/api/comment-translator/session/route.ts",
+  "app/tools/comment-translator/actions.ts",
   f10Path,
+  "lib/comment-translator-real-comments-feed-durable-store.ts",
+  "lib/comment-translator-real-comments-feed-session-bridge.ts",
   sharedPath,
+  "supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql",
   readinessDocPath,
   gapAuditPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

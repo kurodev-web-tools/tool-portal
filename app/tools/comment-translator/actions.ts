@@ -79,6 +79,9 @@ import {
   clearCommentTranslatorRealCommentsFeedForSession,
   readCommentTranslatorRealCommentsFeedForActiveSession
 } from "@/lib/comment-translator-real-comments-feed-session-bridge";
+import {
+  createTrustedCommentTranslatorRealCommentsFeedDurableStore
+} from "@/lib/comment-translator-real-comments-feed-durable-store";
 
 const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
 
@@ -211,6 +214,7 @@ export async function heartbeatCommentTranslatorSessionAction() {
 
 export async function getCommentTranslatorRealCommentsFeedAction() {
   const callerAuthorization = await readCallerAuthorization();
+  const durableFeedStore = createTrustedCommentTranslatorRealCommentsFeedDurableStore();
   const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
     callerAuthorization,
     durableSessionStore: createTrustedCommentTranslatorSessionSupabaseStore()
@@ -224,7 +228,8 @@ export async function getCommentTranslatorRealCommentsFeedAction() {
 
   return readCommentTranslatorRealCommentsFeedForActiveSession({
     callerAuthorization,
-    activeSession: durableActiveSessionRead.activeSession
+    activeSession: durableActiveSessionRead.activeSession,
+    durableFeedStore
   });
 }
 
@@ -469,9 +474,10 @@ async function readCommentTranslatorSessionActionResult({
 
   if (state.status === "stopped") {
     clearCommentTranslatorBoundedLiveChatPollingState(state.sessionReferenceId);
-    clearCommentTranslatorRealCommentsFeedForSession({
+    await clearCommentTranslatorRealCommentsFeedForSession({
       callerAuthorization,
-      sessionReferenceId: state.sessionReferenceId
+      sessionReferenceId: state.sessionReferenceId,
+      durableFeedStore: createTrustedCommentTranslatorRealCommentsFeedDurableStore()
     });
   }
 

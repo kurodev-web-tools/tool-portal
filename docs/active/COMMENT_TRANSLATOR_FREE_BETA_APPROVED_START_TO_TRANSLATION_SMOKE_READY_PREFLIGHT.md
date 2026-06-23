@@ -435,6 +435,21 @@ Post-#552 full Start-to-translation retry after reconnect readiness passed:
 - Public-release capable label: no.
 - Next safe action: a separate exact same-thread approval is required before browser-visible server-owned feed/source-attribution confirmation, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip.
 
+Post-#553 browser-visible feed/source-attribution confirmation after durable boundary merge:
+
+- Decision: blocked-empty-browser-visible-feed-after-provider-translation-post-553.
+- Status precheck and explicit Start: executed / HTTP status label 2xx / active session reached.
+- Server-only target lookup: executed-presence-only / target presence label present / returnedCount 5.
+- Fresh visible chat comment: sent before provider wrapper confirmation.
+- Bounded `liveChatMessages.list` one-step command: executed-bounded-readonly-one-step / returnedCount 0 / passLabel no.
+- Reviewed sanitized wrapper/provider boundary: executed / childExitStatusLabel exit-0 / providerHarnessStatusLabel task-27-live-provider-smoke-sanitized-result / providerTargetLookupLabel executed-presence-only / liveChatPollingLabel executed-bounded-readonly-one-step / translationProviderExecutionLabel executed-server-only-provider / returnedCount 1 / eligibleCount 1 / providerRequestCount 1 / providerCallCount 1 / translatedCount 1 / skippedCount 0 / terminalErrorCount 0 / unavailableReasonLabel none.
+- Browser-visible server-owned feed action while active: executed / httpStatusLabel 2xx / harnessStatusLabel passed / actionLabel getCommentTranslatorRealCommentsFeedAction / feedStatusLabel unavailable / displayRowCount 0 / unavailableReasonLabel live-provider-polling-not-approved / sourceAttributionShapeLabel not-confirmed / passLabel no.
+- Usage/session counters: present during Start/Stop/status evidence.
+- Cleanup Stop and post-Stop status: executed / Stop stopped user-stop / post-Stop not-started.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+- Next safe action: keep PL-G3 blocked until a separate reviewed, value-free deployed/runtime parity and durable feed persistence diagnostic proves deployed #553 action availability, durable safe-feed snapshot authority, and provider-wrapper persist result using labels/counts only.
+
 ## Sanitized Output Review
 
 Allowed output after a later approved run:

@@ -1789,6 +1789,34 @@ Public-release capable label: no.
 
 Next safe action: finish focused verification and review this local boundary. A later browser-visible server-owned feed/source-attribution confirmation still requires separate exact same-thread approval and sanitized output review. Do not run PL-G4, PL-G5, deploy/upload, remote mutation/apply, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip from this implementation slice.
 
+## PL-G3 Browser-visible Feed/Source-attribution Confirmation After PR #553
+
+Decision: blocked-empty-browser-visible-feed-after-provider-translation-post-553.
+
+Base state: PR #553 is merged at `3bd6eb55a1389cf10e42d757ee48d109a3b1cbf5`, and latest `origin/codex/comment-translator-free-public-beta-integration` contains that merge commit.
+
+Exact approval scope was present for status precheck, explicit Start, server-only target lookup, bounded `liveChatMessages.list` with one fresh visible chat comment, Free provider translation, browser-visible server-owned feed confirmation while active, source attribution evidence, usage/session counter evidence, Stop, and post-Stop status. No PL-G4, PL-G5, deploy/upload, remote mutation/apply, OAuth flow, token refresh, Stripe action, public access change, main promotion, or public launch gate flip was run.
+
+Sanitized execution evidence:
+
+- status precheck: httpStatusLabel 2xx; sessionStatusLabel not-started; activeLabel no; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent; usageSessionCounterLabel present; passLabel yes;
+- explicit Start: httpStatusLabel 2xx; sessionStatusLabel active; activeLabel yes; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent; proceedToProviderLabel yes; usageSessionCounterLabel present; passLabel yes;
+- server-only target lookup: executed-presence-only; statusLabel live-chat-target-lookup-sanitized-result; liveChatTargetLabel present; providerAccessLabel liveBroadcasts-list-target-lookup-only; httpStatusLabel 2xx; returnedCount 5; usableTargetCount 1; selectedTargetPresenceLabel present;
+- fresh visible chat comment: sent before bounded polling/provider wrapper confirmation;
+- bounded `liveChatMessages.list` one-step command: statusLabel live-chat-polling-smoke-sanitized-result; liveChatPollingLabel executed-bounded-readonly-one-step; providerAccessLabel liveChatMessages-list-one-step-only; httpStatusLabel 2xx; returnedCount 0; unavailableReasonLabel none; passLabel no;
+- reviewed sanitized wrapper/provider boundary: childExitStatusLabel exit-0; providerHarnessStatusLabel task-27-live-provider-smoke-sanitized-result; liveProviderExecutionLabel approved-bounded-execution; providerTargetLookupLabel executed-presence-only; liveChatPollingLabel executed-bounded-readonly-one-step; translationProviderExecutionLabel executed-server-only-provider; returnedCount 1; eligibleCount 1; providerRequestCount 1; providerCallCount 1; translatedCount 1; skippedCount 0; terminalErrorCount 0; providerRouteAvailabilityLabel route-available-provider-reached; sourceAttributionAvailabilityLabel not-produced-by-provider-harness; unavailableReasonLabel none;
+- browser-visible server-owned feed action while active: httpStatusLabel 2xx; harnessStatusLabel passed; actionLabel getCommentTranslatorRealCommentsFeedAction; feedStatusLabel unavailable; displayRowCount 0; unavailableReasonLabel live-provider-polling-not-approved; sourceAttributionShapeLabel not-confirmed; browserStorageLabel not-inspected-unchanged-by-contract; passLabel no;
+- Cleanup Stop: httpStatusLabel 2xx; sessionStatusLabel stopped; activeLabel no; stopReasonLabel user-stop; unavailableReasonLabel absent; usageSessionCounterLabel present; passLabel yes;
+- post-Stop status: httpStatusLabel 2xx; sessionStatusLabel not-started; activeLabel no; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent; usageSessionCounterLabel present; passLabel yes.
+
+Diagnosis: the #553 local code has the durable safe-feed snapshot read path, but the browser-visible deployed feed action did not find a matching ready safe-feed snapshot for the active session after provider translation. The sanitized evidence does not distinguish deployed runtime parity, remote durable feed table availability, or provider-wrapper durable persist completion because the durable feed boundary intentionally returns safe unavailable labels instead of exposing private store errors or identifiers.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
+Next safe action: keep PL-G3 blocked. Do not request another live comment until a separate reviewed, value-free deployed/runtime parity and durable feed persistence diagnostic is prepared and explicitly approved. That diagnostic should prove only labels/counts for deployed #553 action availability, durable safe-feed snapshot authority, and provider-wrapper persist result, with no private provider metadata, owner/session identifiers, token/cookie/OAuth values, raw comments, raw provider payloads, browser storage payloads, or handoff payload expansion.
+
 ## PL-G3 Post-bridge Full Start-to-translation Continuation Ready Preflight After PR #542
 
 Decision: post-bridge-full-continuation-ready-preflight-prepared-after-pr542.

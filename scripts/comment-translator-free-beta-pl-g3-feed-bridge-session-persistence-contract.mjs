@@ -17,6 +17,8 @@ const usageLedgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
 const feedMigrationPath = "supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql";
 const completionDocPath =
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md";
+const readyPreflightDocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md";
 const taskPath = "task.md";
 const moduleCache = new Map();
 const require = createRequire(import.meta.url);
@@ -368,6 +370,7 @@ const allowedChangedFiles = new Set([
   sessionRoutePath,
   feedMigrationPath,
   completionDocPath,
+  readyPreflightDocPath,
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",

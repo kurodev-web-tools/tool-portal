@@ -319,6 +319,12 @@ const approvedSandboxedF10Payload = parseJson(approvedWithSandboxedF10Adapters.s
 assert.equal(approvedSandboxedF10Payload.status, "task-27-live-provider-smoke-sanitized-result");
 assert.equal(approvedSandboxedF10Payload.evidence.feedPersistencePathLabel, "executed-f10-feed-persistence-path");
 assert.equal(approvedSandboxedF10Payload.evidence.durableFeedPersistResultLabel, "durable-feed-persisted");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedStoreReadyLabel, "ready");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedTableShapeLabel, "available");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedPersistOperationLabel, "upsert-select-single");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedPersistFailureBucketLabel, "none");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedRowsTouchedCount, 1);
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedReadbackLabel, "readback-ready");
 assert.equal(approvedSandboxedF10Payload.evidence.feedDisplayRowCount, 2);
 assert.equal(approvedSandboxedF10Payload.evidence.sourceAttributionAvailabilityLabel, "available");
 

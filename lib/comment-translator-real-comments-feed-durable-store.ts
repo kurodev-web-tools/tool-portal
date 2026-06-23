@@ -20,7 +20,7 @@ export type CommentTranslatorRealCommentsFeedDurableStore = {
     sessionReferenceId: string;
     feed: CommentTranslatorRealCommentsFeedState;
     recordedAtIso: string;
-  }) => Promise<void>;
+  }) => Promise<CommentTranslatorRealCommentsFeedDurablePersistResult>;
   readSafeFeed: (request: {
     ownerUserId: string;
     sessionReferenceId: string;
@@ -29,6 +29,38 @@ export type CommentTranslatorRealCommentsFeedDurableStore = {
     ownerUserId: string;
     sessionReferenceId: string;
   }) => Promise<void>;
+};
+
+export type CommentTranslatorRealCommentsFeedDurablePersistFailureBucketLabel =
+  | "none"
+  | "store-unavailable"
+  | "table-shape-missing-or-unavailable"
+  | "column-shape-mismatch"
+  | "conflict-shape-mismatch"
+  | "policy-or-permission-denied"
+  | "owner-session-key-rejected"
+  | "safe-feed-shape-rejected"
+  | "row-write-not-confirmed"
+  | "durable-store-operation-failed";
+
+export type CommentTranslatorRealCommentsFeedDurablePersistDiagnostics = {
+  storeReadyLabel: "ready" | "unavailable";
+  tableShapeLabel: "available" | "missing-or-unavailable" | "column-shape-mismatch" | "conflict-shape-mismatch" | "unknown";
+  persistOperationLabel: "upsert-select-single" | "not-run";
+  persistFailureBucketLabel: CommentTranslatorRealCommentsFeedDurablePersistFailureBucketLabel;
+  rowsTouchedCount: number;
+  readbackLabel:
+    | "readback-ready"
+    | "readback-missing"
+    | "readback-shape-mismatch"
+    | "readback-failed"
+    | "not-run-persist-failed"
+    | "not-run-store-unavailable";
+};
+
+export type CommentTranslatorRealCommentsFeedDurablePersistResult = {
+  durableFeedPersistResultLabel: "durable-feed-persisted" | "durable-feed-persist-failed";
+  durableFeedPersistDiagnostics: CommentTranslatorRealCommentsFeedDurablePersistDiagnostics;
 };
 
 export type CommentTranslatorRealCommentsFeedDurableStoreFactoryEnvName =
@@ -176,7 +208,33 @@ export function createCommentTranslatorRealCommentsFeedSupabaseDurableStore({
         .select(commentTranslatorRealCommentsFeedDurableStoreContract.trustedSelectColumns)
         .single();
 
-      assertSuccessfulWrite(result);
+      const writeFailure = createPersistFailureDiagnosticsFromSupabaseResult(result);
+      if (writeFailure) {
+        return {
+          durableFeedPersistResultLabel: "durable-feed-persist-failed",
+          durableFeedPersistDiagnostics: writeFailure
+        };
+      }
+
+      const readback = await supabase
+        .from(commentTranslatorRealCommentsFeedDurableStoreContract.tableName)
+        .select(commentTranslatorRealCommentsFeedDurableStoreContract.trustedSelectColumns)
+        .eq("owner_user_id", request.ownerUserId)
+        .eq("session_reference_id", request.sessionReferenceId)
+        .single();
+
+      const readbackLabel = resolvePersistReadbackLabel(readback);
+      return {
+        durableFeedPersistResultLabel: readbackLabel === "readback-ready" ? "durable-feed-persisted" : "durable-feed-persist-failed",
+        durableFeedPersistDiagnostics: {
+          storeReadyLabel: "ready",
+          tableShapeLabel: "available",
+          persistOperationLabel: "upsert-select-single",
+          persistFailureBucketLabel: readbackLabel === "readback-ready" ? "none" : "row-write-not-confirmed",
+          rowsTouchedCount: readbackLabel === "readback-ready" ? 1 : 0,
+          readbackLabel
+        }
+      };
     },
     async readSafeFeed(request) {
       const result = await supabase
@@ -218,6 +276,17 @@ export function createInMemoryCommentTranslatorRealCommentsFeedDurableStoreForTe
   return {
     async persistSafeFeed(request) {
       rowsByOwnerAndSession.set(toStoreKey(request), request.feed);
+      return {
+        durableFeedPersistResultLabel: "durable-feed-persisted",
+        durableFeedPersistDiagnostics: {
+          storeReadyLabel: "ready",
+          tableShapeLabel: "available",
+          persistOperationLabel: "upsert-select-single",
+          persistFailureBucketLabel: "none",
+          rowsTouchedCount: 1,
+          readbackLabel: "readback-ready"
+        }
+      };
     },
     async readSafeFeed(request) {
       return rowsByOwnerAndSession.get(toStoreKey(request)) ?? null;
@@ -258,10 +327,113 @@ function toStoreKey({
   return `${ownerUserId}:${sessionReferenceId}`;
 }
 
-function assertSuccessfulWrite(result: SupabaseSingleResult) {
-  if (result.error || !result.data) {
-    throw new Error("Trusted comment translator feed snapshot write failed.");
+export function createUnavailableCommentTranslatorRealCommentsFeedDurablePersistDiagnostics(): CommentTranslatorRealCommentsFeedDurablePersistDiagnostics {
+  return {
+    storeReadyLabel: "unavailable",
+    tableShapeLabel: "unknown",
+    persistOperationLabel: "not-run",
+    persistFailureBucketLabel: "store-unavailable",
+    rowsTouchedCount: 0,
+    readbackLabel: "not-run-store-unavailable"
+  };
+}
+
+export function createFailedCommentTranslatorRealCommentsFeedDurablePersistDiagnostics(
+  error: unknown
+): CommentTranslatorRealCommentsFeedDurablePersistDiagnostics {
+  const bucket = resolvePersistFailureBucket(readSupabaseErrorCode(error));
+  return {
+    storeReadyLabel: "ready",
+    tableShapeLabel: resolveTableShapeLabel(bucket),
+    persistOperationLabel: "upsert-select-single",
+    persistFailureBucketLabel: bucket,
+    rowsTouchedCount: 0,
+    readbackLabel: "not-run-persist-failed"
+  };
+}
+
+function createPersistFailureDiagnosticsFromSupabaseResult(
+  result: SupabaseSingleResult
+): CommentTranslatorRealCommentsFeedDurablePersistDiagnostics | null {
+  if (!result.error && result.data) {
+    return null;
   }
+
+  const bucket = resolvePersistFailureBucket(result.error?.code);
+  return {
+    storeReadyLabel: "ready",
+    tableShapeLabel: resolveTableShapeLabel(bucket),
+    persistOperationLabel: "upsert-select-single",
+    persistFailureBucketLabel: result.error ? bucket : "row-write-not-confirmed",
+    rowsTouchedCount: 0,
+    readbackLabel: "not-run-persist-failed"
+  };
+}
+
+function resolvePersistReadbackLabel(result: SupabaseSingleResult): CommentTranslatorRealCommentsFeedDurablePersistDiagnostics["readbackLabel"] {
+  if (!result.data && (!result.error || result.error.code === "PGRST116")) {
+    return "readback-missing";
+  }
+
+  if (result.error || !result.data) {
+    return "readback-failed";
+  }
+
+  return isDurableSafeFeedState(result.data.feed_snapshot) ? "readback-ready" : "readback-shape-mismatch";
+}
+
+function resolvePersistFailureBucket(code: string | undefined): CommentTranslatorRealCommentsFeedDurablePersistFailureBucketLabel {
+  if (code === "42P01" || code === "PGRST205") {
+    return "table-shape-missing-or-unavailable";
+  }
+
+  if (code === "42703" || code === "PGRST204") {
+    return "column-shape-mismatch";
+  }
+
+  if (code === "42P10") {
+    return "conflict-shape-mismatch";
+  }
+
+  if (code === "42501" || code === "401" || code === "403") {
+    return "policy-or-permission-denied";
+  }
+
+  if (code === "22P02" || code === "23503") {
+    return "owner-session-key-rejected";
+  }
+
+  if (code === "23514") {
+    return "safe-feed-shape-rejected";
+  }
+
+  return "durable-store-operation-failed";
+}
+
+function resolveTableShapeLabel(
+  bucket: CommentTranslatorRealCommentsFeedDurablePersistFailureBucketLabel
+): CommentTranslatorRealCommentsFeedDurablePersistDiagnostics["tableShapeLabel"] {
+  if (bucket === "table-shape-missing-or-unavailable") {
+    return "missing-or-unavailable";
+  }
+
+  if (bucket === "column-shape-mismatch") {
+    return "column-shape-mismatch";
+  }
+
+  if (bucket === "conflict-shape-mismatch") {
+    return "conflict-shape-mismatch";
+  }
+
+  if (bucket === "none") {
+    return "available";
+  }
+
+  return "unknown";
+}
+
+function readSupabaseErrorCode(error: unknown) {
+  return error && typeof error === "object" && "code" in error && typeof error.code === "string" ? error.code : undefined;
 }
 
 function readTrustedEnv(

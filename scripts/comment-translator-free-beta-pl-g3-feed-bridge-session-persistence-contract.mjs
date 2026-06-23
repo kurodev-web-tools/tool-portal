@@ -206,6 +206,22 @@ const durableFeedStoreFactoryResult = {
   missingEnvReferences: [],
   failClosed: false
 };
+const failingDurableFeedStoreFactoryResult = {
+  status: "ready",
+  store: {
+    async persistSafeFeed() {
+      throw Object.assign(new Error("durable write failed with private details"), {
+        code: "42P01"
+      });
+    },
+    async readSafeFeed() {
+      throw new Error("durable read failed with private details");
+    },
+    async clearSafeFeed() {}
+  },
+  missingEnvReferences: [],
+  failClosed: false
+};
 
 const ownerKey = "owner" + "UserId";
 const callerAuthorization = {
@@ -306,6 +322,38 @@ assert.equal(result.status, "completed");
 assert.equal(result.feed.status, "ready");
 assert.equal(result.feed.rows.length, 1);
 assert.equal(result.feed.rows[0].translationStatus, "translated-f10");
+assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.storeReadyLabel, "ready");
+assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.tableShapeLabel, "available");
+assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.persistOperationLabel, "upsert-select-single");
+assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.persistFailureBucketLabel, "none");
+assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.rowsTouchedCount, 1);
+assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.readbackLabel, "readback-ready");
+
+const failedPersistResult = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: normalized.normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN"],
+  callerAuthorization,
+  sessionReferenceId: activeSession.sessionReferenceId,
+  occurredAtMs: Date.parse("2026-06-22T01:00:09.000Z"),
+  usage,
+  providers: { azure },
+  feedPersistenceStore: failingDurableFeedStoreFactoryResult,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+
+assert.equal(failedPersistResult.status, "completed");
+assert.equal(failedPersistResult.feedPersistence.status, "persisted");
+assert.equal(failedPersistResult.feedPersistence.durableFeedPersistResultLabel, "durable-feed-persist-failed");
+assert.equal(failedPersistResult.feedPersistence.displayRowCount, 1);
+assert.equal(failedPersistResult.feedPersistence.durableFeedPersistDiagnostics.storeReadyLabel, "ready");
+assert.equal(failedPersistResult.feedPersistence.durableFeedPersistDiagnostics.tableShapeLabel, "missing-or-unavailable");
+assert.equal(failedPersistResult.feedPersistence.durableFeedPersistDiagnostics.persistOperationLabel, "upsert-select-single");
+assert.equal(failedPersistResult.feedPersistence.durableFeedPersistDiagnostics.persistFailureBucketLabel, "table-shape-missing-or-unavailable");
+assert.equal(failedPersistResult.feedPersistence.durableFeedPersistDiagnostics.rowsTouchedCount, 0);
+assert.equal(failedPersistResult.feedPersistence.durableFeedPersistDiagnostics.readbackLabel, "not-run-persist-failed");
 
 bridge.resetCommentTranslatorRealCommentsFeedSessionBridgeForTests();
 const bridgeRead = await bridge.readCommentTranslatorRealCommentsFeedForActiveSession({
@@ -376,6 +424,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs",
   "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",

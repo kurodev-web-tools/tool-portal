@@ -2319,6 +2319,51 @@ Unchecked scope:
 
 Residual risk: PL-G3 remains incomplete. The post-#552 full retry reached Start active, the reviewed wrapper/provider harness passed, and Free provider translation returned translatedCount 1. The browser-visible feed durable snapshot boundary is implemented locally, but the record still lacks approved browser-visible server-owned feed/source-attribution confirmation. Public-release capable remains no.
 
+## Durable Feed Persist Failure Diagnostics After PR #556
+
+Decision: implemented-durable-feed-persist-failure-diagnostics-browser-confirmation-not-run.
+
+The approved PL-G3 F10 continuation after reset produced one eligible comment, translated one row, and executed the F10 feed persistence path, but the wrapper reported `durableFeedPersistResultLabel durable-feed-persist-failed`. That label proved the browser-empty route was not explained by browser-side Start alone: heartbeat/auto-refresh can matter and later produced `missing-heartbeat`, but the route harness returned `live-provider-polling-not-approved` while the F10 path produced safe rows and failed at durable persistence.
+
+This follow-up keeps the public gate blocked and adds deterministic local diagnostics only. The durable safe-feed store now maps write/readback outcomes to value-free fields:
+
+- `durableFeedStoreReadyLabel`
+- `durableFeedTableShapeLabel`
+- `durableFeedPersistOperationLabel`
+- `durableFeedPersistFailureBucketLabel`
+- `durableFeedRowsTouchedCount`
+- `durableFeedReadbackLabel`
+
+Allowed failure buckets are `store-unavailable`, `table-shape-missing-or-unavailable`, `column-shape-mismatch`, `conflict-shape-mismatch`, `policy-or-permission-denied`, `owner-session-key-rejected`, `safe-feed-shape-rejected`, `row-write-not-confirmed`, and `durable-store-operation-failed`. The success path reports `none`, `rowsTouchedCount 1`, and `readback-ready`.
+
+The bridge, F10 result, private-gated provider harness, and PL-G3 sanitized wrapper propagate only these labels/counts. They do not return raw database errors, raw rows, raw ids, owner/session identifiers, provider target metadata, liveChatId, token/cookie/OAuth/Authorization values, raw comments, raw provider payloads, browser storage payloads, handoff payloads, quota values, or provider error bodies/messages/reasons.
+
+No Start, Stop, reset, target lookup, `liveChatMessages.list`, live/provider execution, browser-visible feed confirmation, deploy/upload, remote mutation/schema apply, OAuth flow, token refresh, Stripe action, public access change, main promotion, PL-G4, PL-G5, or public launch gate flip was run.
+
+Verification observed in this implementation slice:
+
+- `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`: passed.
+- `node --check scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs`: passed.
+- `node --check scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs`: passed.
+- `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs`: passed.
+- `node scripts/comment-translator-azure-normal-translation-execution-contract.mjs`: passed.
+- `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs`: passed.
+- `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`: passed.
+- `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`: passed.
+- `node scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs`: passed after updating the scoped changed-files allowlist for the durable store boundary.
+- `node scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs`: passed.
+- Changed-files value-shape scan for 12 files: passed.
+- `git diff --check`: passed with CRLF normalization warnings only.
+- `npm run lint`: passed.
+- `npx tsc --noEmit`: passed.
+- `npm run build`: passed with the existing middleware deprecation warning and webpack cache serialization warnings.
+
+Dependency note: the fresh worktree dependency install was attempted with `npm ci --prefer-offline --no-audit --no-fund` and `npm install --no-save --prefer-online --no-audit --no-fund typescript@5.8.3`; both failed with `ERR_SSL_CIPHER_OPERATION_FAILED`. Verification completed after replacing the failed ignored local `node_modules` artifact with an ignored junction to an existing same-project dependency tree. This did not change tracked files.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
 ## Next Safe Action
 
 Keep public launch blocked. The post-#552 retry proves Start active, one fresh-comment provider wrapper/harness pass, provider target lookup presence-only execution, one bounded polling read, and Free provider translation with translatedCount 1. This implementation adds the local durable safe-feed boundary needed for browser visibility, but it does not prove browser-visible server-owned feed/source-attribution confirmation because that step was not included in the approval scope and was not run here. Any further UI/feed/live/provider command still requires separate exact same-thread approval and sanitized output review. PL-G4, PL-G5, deploy/upload, remote mutation outside the approved reset boundary, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, and public launch gate flip remain blocked until separately approved.

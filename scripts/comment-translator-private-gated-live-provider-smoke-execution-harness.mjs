@@ -385,6 +385,12 @@ async function createSandboxedAdapterExecutionPayload({ credentialReferenceId, u
         ? {
             feedPersistencePathLabel: "executed-f10-feed-persistence-path",
             durableFeedPersistResultLabel: "durable-feed-persisted",
+            durableFeedStoreReadyLabel: "ready",
+            durableFeedTableShapeLabel: "available",
+            durableFeedPersistOperationLabel: "upsert-select-single",
+            durableFeedPersistFailureBucketLabel: "none",
+            durableFeedRowsTouchedCount: 1,
+            durableFeedReadbackLabel: "readback-ready",
             feedDisplayRowCount: 2,
             sourceAttributionAvailabilityLabel: "available"
           }
@@ -622,6 +628,12 @@ async function runTask27OperatorLocalF10FeedPersistenceExecution(serverOnlyNorma
       skippedCount: serverOnlyNormalizedMessages.length,
       feedPersistencePathLabel: "executed-f10-feed-persistence-path",
       durableFeedPersistResultLabel: "active-session-context-unavailable",
+      durableFeedStoreReadyLabel: "unavailable",
+      durableFeedTableShapeLabel: "unknown",
+      durableFeedPersistOperationLabel: "not-run",
+      durableFeedPersistFailureBucketLabel: "store-unavailable",
+      durableFeedRowsTouchedCount: 0,
+      durableFeedReadbackLabel: "not-run-store-unavailable",
       feedDisplayRowCount: 0,
       sourceAttributionAvailabilityLabel: "unavailable"
     };
@@ -651,6 +663,12 @@ async function runTask27OperatorLocalF10FeedPersistenceExecution(serverOnlyNorma
     terminalErrorCodeCounts: result.execution.terminalErrorCodeCounts,
     feedPersistencePathLabel: "executed-f10-feed-persistence-path",
     durableFeedPersistResultLabel: result.feedPersistence.durableFeedPersistResultLabel,
+    durableFeedStoreReadyLabel: result.feedPersistence.durableFeedPersistDiagnostics.storeReadyLabel,
+    durableFeedTableShapeLabel: result.feedPersistence.durableFeedPersistDiagnostics.tableShapeLabel,
+    durableFeedPersistOperationLabel: result.feedPersistence.durableFeedPersistDiagnostics.persistOperationLabel,
+    durableFeedPersistFailureBucketLabel: result.feedPersistence.durableFeedPersistDiagnostics.persistFailureBucketLabel,
+    durableFeedRowsTouchedCount: result.feedPersistence.durableFeedPersistDiagnostics.rowsTouchedCount,
+    durableFeedReadbackLabel: result.feedPersistence.durableFeedPersistDiagnostics.readbackLabel,
     feedDisplayRowCount: result.feedPersistence.displayRowCount,
     sourceAttributionAvailabilityLabel: result.feed.status === "ready" && result.feed.rows.length > 0 ? "available" : "unavailable",
     stopReason: result.status === "over-limit" ? "translated-message-cap" : null

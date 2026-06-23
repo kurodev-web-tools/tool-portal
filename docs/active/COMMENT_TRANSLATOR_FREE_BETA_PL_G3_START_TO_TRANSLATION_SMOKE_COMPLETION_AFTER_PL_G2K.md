@@ -1948,6 +1948,152 @@ Public-release capable label: no.
 
 Next safe action: keep public launch blocked. Do not run another Start/live/provider/UI retry until the daily/session time-limit state is resolved or explicitly accepted as the expected blocker for a separate evidence slice. Do not run PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or public launch gate flip.
 
+### PL-G3 Post-#544 Status-only Recheck / Continuation Preflight
+
+Decision: blocked-status-only-daily-time-limit-after-pr544.
+
+Base state: PR #544 is merged at `4a15f925e16f3e7c6a770dee9adda76237687875` and contained in latest `origin/codex/comment-translator-free-public-beta-integration`.
+
+Same-thread ready preflight reviewed: present.
+
+Sanitized output review: present.
+
+Exact Start-to-translation approval in this thread: absent.
+
+Operator-local status-only references in this process: deployed origin reference pass / allowed-tester browser-session reference pass.
+
+Status-only route execution: executed / HTTP status label `2xx`.
+
+Required sanitized status-only evidence:
+
+- sessionStatusLabel: not-started;
+- stopReasonLabel: none;
+- usage/session counter presence label: present;
+- usage policy label: blocked-over-limit;
+- usage policy stop reason label: daily-time-limit;
+- status label: status-only-2xx;
+- Start label: no;
+- Stop label: no;
+- public gate state label: unchanged / blocked;
+- public-release capable label: no.
+
+Operator readiness for later approval:
+
+- allowed-tester browser/session ready: pass;
+- connected credential status ready: fail;
+- reconnect required false: fail;
+- owner/session/credential binding same-account: fail;
+- active stream/chat ready: fail;
+- sanitized output boundary still accepted: pass.
+
+PR #544 daily-time-limit status/preflight resolution: not-resolved at status-only level. The session status label is `not-started` and stop reason label is `none`, but sanitized usage policy remains `blocked-over-limit` with usage policy stop reason label `daily-time-limit`.
+
+Start/Stop/live/provider/UI commands during this recheck: not-run.
+
+PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, and public launch gate flip: not-run.
+
+Verification for this blocker record: `node scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`, `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`, and `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs` passed. Changed-files no-secret scan passed. `git diff --check` passed with CRLF normalization warnings only. Dependency-backed contracts requiring local `typescript` were attempted and blocked because `npm ci --prefer-offline --no-audit --no-fund` timed out and scoped `npm install --package-lock=false --prefer-offline --ignore-scripts --no-audit --no-fund typescript@5.8.3 server-only@0.0.1` also timed out.
+
+Next safe action: keep Start-to-translation blocked. Investigate the remaining sanitized usage policy `blocked-over-limit` / `daily-time-limit` state without running Start, Stop, live/provider commands, UI commands, deploy/upload, remote mutation, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, or launch gate flip.
+
+### PL-G3 Post-#544 Read-only Daily-limit Aggregate
+
+Decision: confirmed-current-utc-day-daily-limit-still-at-or-over-limit-after-pr544.
+
+Query mode label: read-only-sanitized-aggregate.
+
+Current UTC day rows count: 4.
+
+Current UTC day session-started event count: 0.
+
+Current UTC day session-stopped event count: 1.
+
+Current UTC day quota-budget-stop event count: 3.
+
+Current UTC day daily-time-limit stop event count: 2.
+
+Daily elapsed bucket label after PR #544 overlap calculation: at-or-over-limit.
+
+Latest stop reason label: daily-time-limit.
+
+Raw rows printed label: no.
+
+Raw IDs printed label: no.
+
+Start/Stop/live/provider/UI commands during this aggregate: not-run.
+
+Remote mutation during this aggregate: not-run.
+
+Interpretation: the status-only blocker continues because the current UTC day still has enough session-stopped overlap to remain at or over the daily time limit after the PR #544 overlap fix. PR #544 changed attribution for cross-day stopped sessions, but it does not clear existing same-day elapsed usage or quota-budget-stop records. Because sanitized usage policy remains `blocked-over-limit` / `daily-time-limit`, Start-to-translation must stay blocked.
+
+### PL-G3 Post-#544 Read-only Session-overlap Bucket Diagnostic
+
+Decision: confirmed-cross-day-overlap-over-limit-after-pr544.
+
+Query mode label: read-only-sanitized-session-overlap-buckets.
+
+Current UTC day stopped session overlap count: 1.
+
+Overlap bucket counts: zero 0 / under-5m 0 / 5m-to-under-15m 0 / 15m-to-under-30m 0 / 30m-to-under-60m 0 / over-60m 1.
+
+Recorded elapsed bucket counts: zero 0 / under-5m 0 / 5m-to-under-15m 0 / 15m-to-under-30m 0 / 30m-to-under-60m 0 / over-60m 1.
+
+Stopped event occurred bucket counts: early-utc-day 1 / mid-utc-day 0 / late-utc-day 0.
+
+Inferred start day relation counts: previous-utc-day 1 / current-utc-day 0 / future-utc-day 0.
+
+Elapsed cause bucket counts: same-day-over-limit 0 / cross-day-overlap-over-limit 1 / under-limit-overlap 0 / parse-fallback 0.
+
+Parse fallback count: 0.
+
+Raw rows printed label: no.
+
+Raw IDs printed label: no.
+
+Raw times printed label: no.
+
+Start/Stop/live/provider/UI commands during this diagnostic: not-run.
+
+Remote mutation during this diagnostic: not-run.
+
+Interpretation: the remaining daily limit is not caused by a new current-UTC-day Start attempt in this thread. The current blocker is caused by a previously started session that crossed into the current UTC day and has over-60m of current-day overlap before it stopped early in the UTC day. If the intended product rule is operator-local/JST daily reset rather than UTC daily reset, this is a policy mismatch to address separately; if the rule remains UTC day, Start must stay blocked until the UTC daily window resets or the ledger state is separately handled through an explicitly approved operation.
+
+### PL-G3 Post-#544 Read-only Session-history Bucket Diagnostic
+
+Decision: confirmed-one-long-cross-day-stopped-session-in-history-after-pr544.
+
+Query mode label: read-only-sanitized-session-history-buckets.
+
+Session history row count: 19.
+
+Session status counts: active 0 / stopped 19.
+
+Session duration bucket counts: under-5m 15 / 5m-to-under-30m 3 / 30m-to-under-60m 0 / 1h-to-under-6h 0 / 6h-to-under-12h 0 / over-12h 1.
+
+Session start day relation counts: previous-utc-day 19 / current-utc-day 0 / future-utc-day 0.
+
+Session stop day relation counts: previous-utc-day 18 / current-utc-day 1 / future-utc-day 0.
+
+Session stop occurred bucket counts: early-utc-day 5 / mid-utc-day 14 / late-utc-day 0.
+
+Last-heartbeat-to-stop gap bucket counts: under-5m 15 / 5m-to-under-30m 3 / 30m-to-under-60m 0 / 1h-to-under-6h 0 / 6h-to-under-12h 0 / over-12h 1 / invalid-negative 0.
+
+Long stopped cross-day session count: 1.
+
+Parse fallback count: 0.
+
+Raw rows printed label: no.
+
+Raw IDs printed label: no.
+
+Raw times printed label: no.
+
+Raw credential printed label: no.
+
+Remote mutation during this diagnostic: not-run.
+
+Interpretation: the session history confirms one over-12h stopped session that started in the previous UTC day and stopped in the current UTC day, with an over-12h last-heartbeat-to-stop gap bucket. This supports the hypothesis that the operator did not actively use the session during that period, but the durable session remained open until a later stop/cleanup path recorded the long elapsed duration.
+
 Verification: `node scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs`, `node scripts/comment-translator-public-operator-session-ui-contract.mjs`, `node scripts/comment-translator-free-beta-usage-display-contract.mjs`, `node scripts/comment-translator-session-start-stop-contract.mjs`, `node scripts/comment-translator-start-stop-reason-ux-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs`, `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`, and `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs` passed. `npm run lint`, `npx tsc --noEmit`, and `npm run build` passed; build used WASM SWC fallback and emitted existing Next warnings only. Changed-files no-secret scan passed. `git diff --check` passed with CRLF normalization warnings only. Width checks through local dev route at `390 / 820 / 1024 / 1280 / 1366px` reached the private-launch gate with horizontal overflow false; the new usage-policy blocker remained not browser-visible in the isolated context because public access is still gated. Live/provider/Start/Stop execution after the fix remained not-run.
 
 ## What This Does Not Prove

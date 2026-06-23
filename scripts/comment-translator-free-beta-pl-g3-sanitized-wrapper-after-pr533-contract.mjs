@@ -124,6 +124,12 @@ assert.equal(f10PersistenceFixture.status, 0, "F10 feed persistence fixture pass
 const f10PersistencePayload = parseJson(f10PersistenceFixture.stdout);
 assert.equal(f10PersistencePayload.feedPersistencePathLabel, "executed-f10-feed-persistence-path");
 assert.equal(f10PersistencePayload.durableFeedPersistResultLabel, "durable-feed-persisted");
+assert.equal(f10PersistencePayload.durableFeedStoreReadyLabel, "ready");
+assert.equal(f10PersistencePayload.durableFeedTableShapeLabel, "available");
+assert.equal(f10PersistencePayload.durableFeedPersistOperationLabel, "upsert-select-single");
+assert.equal(f10PersistencePayload.durableFeedPersistFailureBucketLabel, "none");
+assert.equal(f10PersistencePayload.durableFeedRowsTouchedCount, 1);
+assert.equal(f10PersistencePayload.durableFeedReadbackLabel, "readback-ready");
 assert.equal(f10PersistencePayload.feedDisplayRowCount, 2);
 assert.equal(f10PersistencePayload.sourceAttributionAvailabilityLabel, "available");
 assert.equal(f10PersistencePayload.pass, true);

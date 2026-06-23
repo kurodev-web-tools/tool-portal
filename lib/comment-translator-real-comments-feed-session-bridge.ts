@@ -8,6 +8,9 @@ import {
 import type { CommentTranslatorRealCommentsFeedState } from "./comment-translator-real-comments-feed-shared";
 import {
   createTrustedCommentTranslatorRealCommentsFeedDurableStore,
+  createFailedCommentTranslatorRealCommentsFeedDurablePersistDiagnostics,
+  createUnavailableCommentTranslatorRealCommentsFeedDurablePersistDiagnostics,
+  type CommentTranslatorRealCommentsFeedDurablePersistDiagnostics,
   type CommentTranslatorRealCommentsFeedDurableStoreFactoryResult
 } from "./comment-translator-real-comments-feed-durable-store";
 
@@ -16,6 +19,7 @@ export type CommentTranslatorRealCommentsFeedSessionBridgePersistResult =
       status: "persisted";
       feedAuthority: "server-owned-session-scoped-safe-feed";
       durableFeedPersistResultLabel: "durable-feed-persisted" | "durable-feed-store-unavailable" | "durable-feed-persist-failed";
+      durableFeedPersistDiagnostics: CommentTranslatorRealCommentsFeedDurablePersistDiagnostics;
       displayRowCount: number;
       rawProviderPayload: "not-returned-by-design";
       rawComments: "not-returned-by-design";
@@ -26,6 +30,7 @@ export type CommentTranslatorRealCommentsFeedSessionBridgePersistResult =
       status: "skipped-caller-not-authorized" | "skipped-empty-session-reference" | "skipped-feed-not-ready";
       feedAuthority: "not-persisted";
       durableFeedPersistResultLabel: "not-run";
+      durableFeedPersistDiagnostics: CommentTranslatorRealCommentsFeedDurablePersistDiagnostics;
       displayRowCount: 0;
       rawProviderPayload: "not-returned-by-design";
       rawComments: "not-returned-by-design";
@@ -95,10 +100,11 @@ export function persistCommentTranslatorRealCommentsFeedForActiveSession({
     feed,
     recordedAtMs,
     durableFeedStore
-  }).then((durableFeedPersistResultLabel) => ({
+  }).then((durableFeedPersistResult) => ({
     status: "persisted",
     feedAuthority: "server-owned-session-scoped-safe-feed",
-    durableFeedPersistResultLabel,
+    durableFeedPersistResultLabel: durableFeedPersistResult.durableFeedPersistResultLabel,
+    durableFeedPersistDiagnostics: durableFeedPersistResult.durableFeedPersistDiagnostics,
     displayRowCount: feed.rows.length,
     rawProviderPayload: "not-returned-by-design",
     rawComments: "not-returned-by-design",
@@ -192,6 +198,14 @@ function skippedPersist(
     status,
     feedAuthority: "not-persisted",
     durableFeedPersistResultLabel: "not-run",
+    durableFeedPersistDiagnostics: {
+      storeReadyLabel: "unavailable",
+      tableShapeLabel: "unknown",
+      persistOperationLabel: "not-run",
+      persistFailureBucketLabel: "store-unavailable",
+      rowsTouchedCount: 0,
+      readbackLabel: "not-run-store-unavailable"
+    },
     displayRowCount: 0,
     rawProviderPayload: "not-returned-by-design",
     rawComments: "not-returned-by-design",
@@ -215,19 +229,25 @@ async function persistDurableSafeFeed({
 }) {
   const durableStore = durableFeedStore ?? createTrustedCommentTranslatorRealCommentsFeedDurableStore();
   if (durableStore.status !== "ready") {
-    return "durable-feed-store-unavailable";
+    return {
+      durableFeedPersistResultLabel: "durable-feed-store-unavailable" as const,
+      durableFeedPersistDiagnostics: createUnavailableCommentTranslatorRealCommentsFeedDurablePersistDiagnostics()
+    };
   }
 
   try {
-    await durableStore.store.persistSafeFeed({
+    const result = await durableStore.store.persistSafeFeed({
       ownerUserId: callerAuthorization.ownerUserId,
       sessionReferenceId,
       feed,
       recordedAtIso: new Date(recordedAtMs).toISOString()
     });
-    return "durable-feed-persisted";
-  } catch {
-    return "durable-feed-persist-failed";
+    return result;
+  } catch (error) {
+    return {
+      durableFeedPersistResultLabel: "durable-feed-persist-failed" as const,
+      durableFeedPersistDiagnostics: createFailedCommentTranslatorRealCommentsFeedDurablePersistDiagnostics(error)
+    };
   }
 }
 

@@ -363,6 +363,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-durable-usage-counter-store.ts",
   "lib/comment-translator-azure-normal-translation-execution.ts",
   "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
+  "lib/comment-translator-real-comments-feed-durable-store.ts",
   "lib/comment-translator-real-comments-feed-session-bridge.ts",
   "lib/comment-translator-session-runtime.ts",
   readyPreflightPath,

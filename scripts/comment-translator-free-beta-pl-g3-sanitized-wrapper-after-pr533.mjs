@@ -46,6 +46,12 @@ function createBaseSummary(overrides = {}) {
     providerRouteAvailabilityLabel: "unavailable",
     feedPersistencePathLabel: "unavailable",
     durableFeedPersistResultLabel: "unavailable",
+    durableFeedStoreReadyLabel: "unavailable",
+    durableFeedTableShapeLabel: "unavailable",
+    durableFeedPersistOperationLabel: "unavailable",
+    durableFeedPersistFailureBucketLabel: "unavailable",
+    durableFeedRowsTouchedCount: 0,
+    durableFeedReadbackLabel: "unavailable",
     feedDisplayRowCount: 0,
     stopReasonLabel: "unavailable",
     sourceAttributionLabel: "unavailable",
@@ -151,6 +157,14 @@ function projectAllowedSanitizedSummary({ childResult, parsedPayload, commandLab
       "not-run-direct-provider-execution-harness"
     ),
     durableFeedPersistResultLabel: safeLabel(evidence.durableFeedPersistResultLabel ?? payload.durableFeedPersistResultLabel),
+    durableFeedStoreReadyLabel: safeLabel(evidence.durableFeedStoreReadyLabel ?? payload.durableFeedStoreReadyLabel),
+    durableFeedTableShapeLabel: safeLabel(evidence.durableFeedTableShapeLabel ?? payload.durableFeedTableShapeLabel),
+    durableFeedPersistOperationLabel: safeLabel(evidence.durableFeedPersistOperationLabel ?? payload.durableFeedPersistOperationLabel),
+    durableFeedPersistFailureBucketLabel: safeLabel(
+      evidence.durableFeedPersistFailureBucketLabel ?? payload.durableFeedPersistFailureBucketLabel
+    ),
+    durableFeedRowsTouchedCount: readCount(evidence.durableFeedRowsTouchedCount ?? payload.durableFeedRowsTouchedCount),
+    durableFeedReadbackLabel: safeLabel(evidence.durableFeedReadbackLabel ?? payload.durableFeedReadbackLabel),
     feedDisplayRowCount: readCount(evidence.feedDisplayRowCount ?? payload.feedDisplayRowCount),
     stopReasonLabel: safeLabel(evidence.stopReason ?? payload.stopReason, "none"),
     sourceAttributionLabel,
@@ -326,6 +340,12 @@ function createFixtureChild(fixtureName) {
           sourceAttributionAvailabilityLabel: "available",
           feedPersistencePathLabel: "executed-f10-feed-persistence-path",
           durableFeedPersistResultLabel: "durable-feed-persisted",
+          durableFeedStoreReadyLabel: "ready",
+          durableFeedTableShapeLabel: "available",
+          durableFeedPersistOperationLabel: "upsert-select-single",
+          durableFeedPersistFailureBucketLabel: "none",
+          durableFeedRowsTouchedCount: 1,
+          durableFeedReadbackLabel: "readback-ready",
           feedDisplayRowCount: 2
         }
       }, null, 2) + "\\n");

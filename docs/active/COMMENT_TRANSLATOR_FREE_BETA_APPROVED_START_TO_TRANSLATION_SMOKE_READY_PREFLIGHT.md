@@ -345,6 +345,24 @@ Approved post-#546 execution result after reset/status review:
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
+Approved same-process target-refresh bounded polling diagnostic after PR #548:
+
+- Decision: same-process-target-refresh-non-empty-intake-confirmed-after-pr548.
+- Exact diagnostic approval label present: `approved-pl-g3-same-process-target-refresh-to-bounded-polling-diagnostics-after-pr529`.
+- Preflight: checkEnvExitLabel exit-0; checkEnvStatusLabel ready-for-bounded-live-chat-polling-smoke-command-foundation; tokenMaterialExitLabel exit-0; tokenMaterialAvailabilityLabel available; serverFetchBindingLabel resolved-for-server-fetch.
+- Same-process target refresh and bounded polling: executeExitLabel exit-0; statusLabel live-chat-polling-same-process-target-refresh-bounded-short-polling-diagnostics-sanitized-result; targetRefreshLabel executed-in-same-process-before-bounded-polling; targetLookupStatusLabel live-chat-target-lookup-sanitized-result; targetLookupProviderAccessLabel liveBroadcasts-list-target-lookup-only; liveChatTargetLabel present; operatorFreshCommentWindowLabel completed-after-target-refresh-before-bounded-polling; liveChatPollingDiagnosticsLabel executed-bounded-readonly-fresh-comment-short-polling; providerAccessLabel liveChatMessages-list-bounded-short-polling-only; boundedAttemptCount 1; boundedMaxAttempts 3; stopReasonLabel non-empty-intake-found; unavailableReasonLabel none.
+- The chat-summary projection did not preserve the nested attempt-level returnedItemCount, so the exact sanitized returned count is not recorded here. The reviewed command contract maps stopReasonLabel non-empty-intake-found only after an attempt returned at least one item.
+- Raw provider payload printed: no.
+- Raw comments printed: no.
+- Target values printed: no.
+- Cursor printed: no.
+- Start: no.
+- Stop: no.
+- Free provider translation: not-run-diagnostics-only.
+- Browser-visible server-owned feed confirmation: not-run.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+
 ## Sanitized Output Review
 
 Allowed output after a later approved run:

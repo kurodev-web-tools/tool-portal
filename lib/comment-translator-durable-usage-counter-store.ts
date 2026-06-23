@@ -409,6 +409,10 @@ export async function recordCommentTranslatorDurableSessionLedgerStateOrFailClos
     });
   }
 
+  const chargeableOccurredAtMs = chargeableSessionStoppedOccurredAtMs({
+    state,
+    fallbackOccurredAtMs: occurredAtMs
+  });
   const stoppedResult = await recordCommentTranslatorDurableUsageLedgerEventOrFailClosed({
     callerAuthorization,
     durableUsageCounterStore,
@@ -417,7 +421,7 @@ export async function recordCommentTranslatorDurableSessionLedgerStateOrFailClos
       provider: "youtube",
       planEntitlement,
       sessionReferenceId: state.sessionReferenceId,
-      occurredAtMs,
+      occurredAtMs: chargeableOccurredAtMs,
       elapsedMs: state.elapsedSeconds * 1_000,
       stopReason: state.stopReason
     }
@@ -438,7 +442,7 @@ export async function recordCommentTranslatorDurableSessionLedgerStateOrFailClos
       type: "quota-budget-stop",
       provider: "youtube",
       sessionReferenceId: state.sessionReferenceId,
-      occurredAtMs,
+      occurredAtMs: chargeableOccurredAtMs,
       stopReason: state.stopReason,
       stopCategory,
       clientReadableDetail: "sanitized-stop-reason-only"
@@ -575,7 +579,13 @@ function createUsageSnapshotFromRows({
     dailyUsedMs: rows
       .filter((row) => row.event_type === "session-stopped")
       .reduce((total, row) => total + sessionElapsedMsForUsageDay(row, currentDay), 0),
-    currentSessionElapsedMs: activeSession ? Math.max(0, nowMs - activeSession.startedAtMs) : 0,
+    currentSessionElapsedMs: activeSession
+      ? chargeableActiveSessionElapsedMs({
+          activeSession,
+          nowMs,
+          sessionLimitMs: planEntitlement.sessionLimitMs
+        })
+      : 0,
     translatedMessagesInCurrentMinute: activeSessionRows
       .filter((row) => row.event_type === "ai-usage-estimated" && Date.parse(row.occurred_at) >= currentMinuteStartedAtMs)
       .reduce((total, row) => total + Math.max(0, row.translated_message_estimate), 0),
@@ -620,6 +630,40 @@ function sessionElapsedMsForUsageDay(row: CommentTranslatorDurableUsageCounterRo
   const startedAtMs = Math.max(0, stoppedAtMs - elapsedMs);
   const dayEndedAtMs = dayStartedAtMs + 24 * 60 * 60 * 1_000;
   return Math.max(0, Math.min(stoppedAtMs, dayEndedAtMs) - Math.max(startedAtMs, dayStartedAtMs));
+}
+
+function chargeableSessionStoppedOccurredAtMs({
+  state,
+  fallbackOccurredAtMs
+}: {
+  state: CommentTranslatorSessionBrowserSafeState;
+  fallbackOccurredAtMs: number;
+}) {
+  if (!state.startedAtIso) {
+    return fallbackOccurredAtMs;
+  }
+
+  const startedAtMs = Date.parse(state.startedAtIso);
+  const elapsedMs = Math.max(0, state.elapsedSeconds * 1_000);
+  const chargeableStoppedAtMs = startedAtMs + elapsedMs;
+  if (!Number.isFinite(chargeableStoppedAtMs)) {
+    return fallbackOccurredAtMs;
+  }
+
+  return Math.min(fallbackOccurredAtMs, chargeableStoppedAtMs);
+}
+
+function chargeableActiveSessionElapsedMs({
+  activeSession,
+  nowMs,
+  sessionLimitMs
+}: {
+  activeSession: CommentTranslatorActiveSessionRecord;
+  nowMs: number;
+  sessionLimitMs: number;
+}) {
+  const heartbeatBoundedNowMs = Math.min(nowMs, Math.max(activeSession.startedAtMs, activeSession.lastHeartbeatAtMs) + 45_000);
+  return Math.min(Math.max(0, heartbeatBoundedNowMs - activeSession.startedAtMs), Math.max(0, sessionLimitMs));
 }
 
 function omitBrowserSafetyMarkers(

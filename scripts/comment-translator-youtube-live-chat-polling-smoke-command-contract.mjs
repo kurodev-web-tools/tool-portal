@@ -7,6 +7,7 @@ import ts from "typescript";
 
 const root = process.cwd();
 const foundationPath = "lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts";
+const pollingWiringPath = "lib/comment-translator-bounded-live-chat-polling-wiring.ts";
 const commandPath = "scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs";
 
 function read(relativePath) {
@@ -71,12 +72,15 @@ function parseJson(stdout) {
 }
 
 assert.ok(exists(foundationPath), "server-only Live Chat polling smoke foundation exists");
+assert.ok(exists(pollingWiringPath), "server-only bounded Live Chat polling wiring exists");
 assert.ok(exists(commandPath), "dedicated Live Chat polling smoke command exists");
 
 const foundationSource = read(foundationPath);
+const pollingWiringSource = read(pollingWiringPath);
 const commandSource = read(commandPath);
 
 assert.match(foundationSource, /^import "server-only";/m, "Live Chat polling smoke foundation is server-only");
+assert.match(pollingWiringSource, /^import "server-only";/m, "bounded Live Chat polling wiring is server-only");
 assert.match(commandSource, /comment-translator-youtube-live-chat-polling-smoke-foundation/, "command uses focused Live Chat polling foundation");
 assert.match(commandSource, /--approved-live-chat-polling-smoke/, "command requires explicit in-thread approval flag");
 assert.match(commandSource, /--approved-live-chat-polling-diagnostics/, "command supports explicit diagnostics approval flag");
@@ -187,6 +191,7 @@ assert.doesNotMatch(foundationSource, /from\s+["']googleapis["']|require\(["']go
 assert.doesNotMatch(commandSource, /from\s+["']googleapis["']|require\(["']googleapis["']\)/, "command does not import googleapis");
 
 const foundation = loadTsModule(foundationPath);
+const pollingWiring = loadTsModule(pollingWiringPath);
 
 for (const exportedName of [
   "youtubeLiveChatPollingSmokeCommandFoundationContract",
@@ -205,6 +210,47 @@ for (const exportedName of [
     `foundation exports ${exportedName}`
   );
 }
+
+let providerCallCountBeforeUsageStop = 0;
+const overDailyLimitPolling = await pollingWiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: {
+    sessionReferenceId: "cts_polling_usage_guard",
+    startedAtMs: 1_000,
+    lastHeartbeatAtMs: 20_000
+  },
+  usage: {
+    dailyUsedMs: 1_790_000,
+    currentSessionElapsedMs: 20_000,
+    translatedMessagesInCurrentMinute: 0,
+    providerBudgetAvailable: true,
+    globalBudgetAvailable: true,
+    aiBudgetAvailable: true,
+    planEntitlement: {
+      planEntitlementReferenceId: "comment-translator-free-public-v1",
+      dailyLimitMs: 1_800_000,
+      sessionLimitMs: 1_800_000,
+      translatedMessagesPerMinute: 30,
+      activeSessionsPerUser: 1
+    }
+  },
+  adapter: {
+    status: "ready",
+    providerAccess: "deterministic-local-adapter-only",
+    runtime: {
+      async pollLiveChatOnce() {
+        providerCallCountBeforeUsageStop += 1;
+        throw new Error("provider polling must not run after usage policy blocks");
+      }
+    }
+  },
+  nowMs: 30_000
+});
+assert.equal(overDailyLimitPolling.status, "skipped-quota-budget-stop-handoff");
+assert.equal(overDailyLimitPolling.providerAccess, "not-run");
+assert.equal(overDailyLimitPolling.providerSignal, "daily-time-limit");
+assert.equal(overDailyLimitPolling.stopReason, "daily-time-limit");
+assert.equal(providerCallCountBeforeUsageStop, 0, "provider polling is skipped before calls when daily usage policy is blocked");
 
 assert.deepEqual(
   foundation.youtubeLiveChatPollingSmokeCommandFoundationContract,

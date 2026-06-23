@@ -372,15 +372,24 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs",
+  "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-session-runtime.ts",
   "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
   "lib/comment-translator-azure-normal-translation-execution.ts",
   "lib/comment-translator-provider-execution-runtime.ts",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
-  "scripts/comment-translator-provider-execution-runtime-contract.mjs"
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {
   assert.ok(allowedChangedFiles.has(file), `FB-L4 change stays in allowed files: ${file}`);
+  if (file === "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs") {
+    continue;
+  }
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 

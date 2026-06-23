@@ -2098,6 +2098,44 @@ Verification: `node scripts/comment-translator-durable-usage-counter-schema-adap
 
 ## What This Does Not Prove
 
+## PL-G3 Stale-session / Cap Auto-stop Hardening After PR #545
+
+Decision: implemented-stale-session-and-cap-auto-stop-hardening-before-next-pl-g3-retry.
+
+Base state: PR #545 is merged at `9c50b8094e7139246385e73bdf6350530167a085` and contained in latest `origin/codex/comment-translator-free-public-beta-integration`.
+
+Scope: local deterministic runtime/contracts/docs only. No Start, Stop, live/provider execution, UI command, PL-G4, PL-G5, deploy/upload, remote mutation, OAuth flow, token refresh, Stripe action, public access change, main promotion, public launch gate flip, or test-account usage reset was run.
+
+Implemented behavior:
+
+- Stale active sessions stop as `missing-heartbeat` before quota exhaustion when heartbeat has exceeded the timeout.
+- Chargeable active elapsed is bounded to the active heartbeat window and the Free session cap, not raw `now - startedAt`.
+- Durable stopped-session ledger events with a session reference use the chargeable session end for `occurred_at` and UTC `usage_day`, so late Stop/cleanup does not shift stale elapsed into a later UTC day.
+- Bounded live-chat polling checks missing heartbeat, daily/session caps, per-minute cap, provider/global/AI budget, and translation-provider availability before provider access; blocked states keep provider access `not-run` and hand sanitized stop reason labels back to session runtime.
+- Free provider translation continues to check sanitized `providerCallPolicy` before provider calls; the daily/session elapsed feeding that policy is now heartbeat/session-window bounded.
+
+Policy note: Free beta enforcement and durable accounting use a fixed UTC quota day. UI/docs may explain local-day perception separately, but runtime accounting stays UTC-based unless a later approved policy change says otherwise.
+
+Focused verification:
+
+- `node scripts/comment-translator-session-start-stop-contract.mjs`: passed.
+- `node scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs`: passed.
+- `node scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs`: passed.
+- `node scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs`: passed.
+- `node scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs`: passed.
+- `node scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs`: passed.
+- `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs`: passed.
+- `node scripts/comment-translator-free-beta-usage-display-contract.mjs`: passed.
+- `node scripts/comment-translator-public-operator-session-ui-contract.mjs`: passed.
+- Changed-files high-confidence no-secret scan: passed for 12 files.
+- `git diff --check`: passed with CRLF normalization warnings only.
+
+Dependency note: `npm ci --prefer-offline --no-audit --no-fund` failed with `ERR_SSL_CIPHER_OPERATION_FAILED`, and scoped package restore for `typescript@5.8.3 server-only@0.0.1` timed out. `npm run lint` was attempted and blocked because local `eslint` was unavailable. `npx tsc --noEmit` was attempted and resolved to the wrong `tsc` package because local TypeScript CLI was unavailable; direct `node node_modules/typescript/bin/tsc --noEmit` was attempted through an ignored local `node_modules/typescript` junction and failed because project dependencies/types such as `next`, `react`, `@types/node`, `@supabase/*`, and `stripe` were unavailable. `npm run build` was attempted and blocked because local `next` was unavailable.
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
 This record does not complete Start-to-translation behavior. It does not prove:
 
 - successful translated output after a live run;

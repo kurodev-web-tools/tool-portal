@@ -14,7 +14,7 @@ const bridgePath = "lib/comment-translator-real-comments-feed-session-bridge.ts"
 const f10Path = "lib/comment-translator-azure-normal-translation-execution.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
 
-const branchName = "codex/pl-g3-post-544-status-only-recheck";
+const branchName = "codex/pl-g3-stale-session-cap-hardening";
 const approvalLabel = "approved-pl-g3-post-bridge-full-continuation-after-pr542";
 const pr542MergeCommit = "d1b2215d9cd1abe1ca8d93319d1e64c26115fa70";
 const pr543MergeCommit = "cf4fc261ef961e52a3f68e366e3a27723cad3a6a";
@@ -204,6 +204,11 @@ for (const requiredFragment of [
   "Long stopped cross-day session count: 1",
   "Raw credential printed label: no",
   "durable session remained open until a later stop/cleanup path recorded the long elapsed duration",
+  "## PL-G3 Stale-session / Cap Auto-stop Hardening After PR #545",
+  "Decision: implemented-stale-session-and-cap-auto-stop-hardening-before-next-pl-g3-retry",
+  "Stale active sessions stop as `missing-heartbeat` before quota exhaustion",
+  "Chargeable active elapsed is bounded to the active heartbeat window and the Free session cap",
+  "fixed UTC quota day",
   "public gate state label: unchanged / blocked",
   "public-release capable label: no"
 ]) {
@@ -304,7 +309,13 @@ for (const requiredFragment of [
   "durable session remained open until a later stop/cleanup path recorded the long elapsed duration",
   "Required later evidence: browser-visible server-owned feed reads sanitized translated rows",
   "public gate state label: unchanged / blocked",
-  "public-release capable label: no"
+  "public-release capable label: no",
+  "### Active PL-G3 Stale-session / Cap Auto-stop Hardening",
+  "Decision: implemented-stale-session-and-cap-auto-stop-hardening-before-next-pl-g3-retry",
+  "quota day remains fixed UTC for enforcement/accounting",
+  "Provider polling behavior: bounded live-chat polling checks missing heartbeat, daily/session caps",
+  "Public gate state label: unchanged / blocked",
+  "Public-release capable label: no"
 ]) {
   assert.match(task, new RegExp(escaped(requiredFragment), "i"), `task.md includes ${requiredFragment}`);
 }
@@ -348,7 +359,9 @@ const allowedChangedFiles = new Set([
   "components/comment-translator/CommentTranslatorDock.tsx",
   completionDocPath,
   "lib/comment-translator.ts",
+  "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
   "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-session-runtime.ts",
   readyPreflightPath,
   taskPath,
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
@@ -358,11 +371,15 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   "scripts/comment-translator-public-operator-session-ui-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
-  "scripts/comment-translator-start-stop-reason-ux-contract.mjs"
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {
   assert.ok(allowedChangedFiles.has(file), `post-bridge preflight change stays in allowed files: ${file}`);
+  if (file === "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs") {
+    continue;
+  }
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 

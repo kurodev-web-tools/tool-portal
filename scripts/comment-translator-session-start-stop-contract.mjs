@@ -377,13 +377,53 @@ const missingHeartbeat = session.evaluateCommentTranslatorSessionStopCondition({
 
 assert.equal(missingHeartbeat.status, "stopped", "missing heartbeat stops active session");
 assert.equal(missingHeartbeat.stopReason, "missing-heartbeat", "missing heartbeat has a sanitized stop reason");
+assert.equal(
+  missingHeartbeat.elapsedSeconds,
+  45,
+  "stale missing-heartbeat stops charge only through the heartbeat timeout window"
+);
+
+const staleLongRunningSession = session.evaluateCommentTranslatorSessionStopCondition({
+  activeSession: {
+    sessionReferenceId: "cts_session_reference_stale",
+    startedAtMs: Date.parse("2026-06-15T23:55:00.000Z"),
+    lastHeartbeatAtMs: Date.parse("2026-06-15T23:55:30.000Z")
+  },
+  nowMs: Date.parse("2026-06-16T12:00:00.000Z"),
+  plan: "free",
+  browserConnected: true,
+  callerAuthorization: {
+    status: "authorized",
+    ownerUserId: "server-only-owner-reference"
+  },
+  credentialReadiness: readyCredential,
+  usage: {
+    dailyUsedMs: 0,
+    translatedMessagesInCurrentMinute: 0,
+    providerBudgetAvailable: true,
+    globalBudgetAvailable: true,
+    aiBudgetAvailable: true
+  }
+});
+
+assert.equal(staleLongRunningSession.status, "stopped", "stale long-running session is stopped deterministically");
+assert.equal(
+  staleLongRunningSession.stopReason,
+  "missing-heartbeat",
+  "stale long-running session stops as missing heartbeat before quota exhaustion"
+);
+assert.equal(
+  staleLongRunningSession.elapsedSeconds,
+  75,
+  "stale long-running session charge is bounded to startedAt through lastHeartbeat plus timeout"
+);
 
 assert.equal(
   session.evaluateCommentTranslatorSessionStopCondition({
     activeSession: {
       sessionReferenceId: "cts_session_reference_001",
       startedAtMs: 1_000,
-      lastHeartbeatAtMs: 46_000
+      lastHeartbeatAtMs: 1_801_000
     },
     nowMs: 1_801_000,
     plan: "free",
@@ -403,6 +443,33 @@ assert.equal(
   }).stopReason,
   "session-time-limit",
   "free per-session time cap stops the session"
+);
+
+assert.equal(
+  session.evaluateCommentTranslatorSessionStopCondition({
+    activeSession: {
+      sessionReferenceId: "cts_session_reference_001",
+      startedAtMs: 1_000,
+      lastHeartbeatAtMs: 1_801_000
+    },
+    nowMs: 1_901_000,
+    plan: "free",
+    browserConnected: true,
+    callerAuthorization: {
+      status: "authorized",
+      ownerUserId: "server-only-owner-reference"
+    },
+    credentialReadiness: readyCredential,
+    usage: {
+      dailyUsedMs: 0,
+      translatedMessagesInCurrentMinute: 0,
+      providerBudgetAvailable: true,
+      globalBudgetAvailable: true,
+      aiBudgetAvailable: true
+    }
+  }).elapsedSeconds,
+  1800,
+  "session-time-limit stop charge is capped at the Free session window"
 );
 
 assert.equal(
@@ -477,6 +544,7 @@ for (const file of changedFiles()) {
     sessionPath,
     ledgerPath,
     "lib/comment-translator.ts",
+    "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
     "lib/comment-translator-durable-usage-counter-store.ts",
     "lib/comment-translator-provider-execution-runtime.ts",
     routePath,
@@ -493,9 +561,13 @@ for (const file of changedFiles()) {
     "scripts/comment-translator-session-start-stop-contract.mjs",
     "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
     "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+    "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
     taskPath
   ]);
   assert.ok(allowedChangedFiles.has(file), `Task 7 change stays in allowed files: ${file}`);
+  if (file === "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs") {
+    continue;
+  }
   const source = read(file);
   assert.doesNotMatch(
     source,

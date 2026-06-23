@@ -383,6 +383,7 @@ const allowedChangedFiles = new Set([
   sharedFeedPath,
   componentPath,
   copyPath,
+  "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
   "lib/comment-translator-durable-usage-counter-store.ts",
   privateLaunchPath,
   abuseRateLimitPath,
@@ -397,6 +398,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-public-operator-session-ui-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

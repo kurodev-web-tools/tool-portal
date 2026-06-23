@@ -77,10 +77,27 @@ export type CommentTranslatorBoundedLiveChatPollingTickResult =
   | {
       status: "skipped-quota-budget-stop-handoff";
       providerAccess: "not-run";
-      providerSignal: null;
+      providerSignal: Extract<
+        CommentTranslatorSessionStopReason,
+        | "missing-heartbeat"
+        | "daily-time-limit"
+        | "session-time-limit"
+        | "translated-message-cap"
+        | "provider-quota-stop"
+        | "global-budget-stop"
+        | "ai-budget-stop"
+        | "translation-provider-limit"
+      >;
       stopReason: Extract<
         CommentTranslatorSessionStopReason,
-        "translated-message-cap" | "provider-quota-stop" | "global-budget-stop" | "ai-budget-stop" | "translation-provider-limit"
+        | "missing-heartbeat"
+        | "daily-time-limit"
+        | "session-time-limit"
+        | "translated-message-cap"
+        | "provider-quota-stop"
+        | "global-budget-stop"
+        | "ai-budget-stop"
+        | "translation-provider-limit"
       >;
       reasonUxCode: CommentTranslatorStartStopReasonUxCode;
       publicLaunchAllowed: false;
@@ -221,15 +238,14 @@ export async function readCommentTranslatorBoundedLiveChatPollingTick({
     return skippedPolling("skipped-stop-intent");
   }
 
-  const quotaStopReason = assessPollingQuotaBudgetStopReason(usage);
+  const quotaStopReason = assessPollingQuotaBudgetStopReason({ activeSession, usage, nowMs });
   if (quotaStopReason) {
     return {
       status: "skipped-quota-budget-stop-handoff",
       providerAccess: "not-run",
-      providerSignal: null,
+      providerSignal: quotaStopReason,
       stopReason: quotaStopReason,
-      reasonUxCode:
-        quotaStopReason === "translation-provider-limit" ? "translation-provider-unavailable" : "quota-or-budget-stop",
+      reasonUxCode: resolvePollingQuotaStopReasonUxCode(quotaStopReason),
       publicLaunchAllowed: false
     };
   }
@@ -436,13 +452,41 @@ function createSanitizedPollingMetadata(
   };
 }
 
-function assessPollingQuotaBudgetStopReason(
-  usage: CommentTranslatorSessionUsageSnapshot
-): Extract<
+function assessPollingQuotaBudgetStopReason({
+  activeSession,
+  usage,
+  nowMs
+}: {
+  activeSession: CommentTranslatorActiveSessionRecord;
+  usage: CommentTranslatorSessionUsageSnapshot;
+  nowMs: number;
+}): Extract<
   CommentTranslatorSessionStopReason,
-  "translated-message-cap" | "provider-quota-stop" | "global-budget-stop" | "ai-budget-stop" | "translation-provider-limit"
+  | "missing-heartbeat"
+  | "daily-time-limit"
+  | "session-time-limit"
+  | "translated-message-cap"
+  | "provider-quota-stop"
+  | "global-budget-stop"
+  | "ai-budget-stop"
+  | "translation-provider-limit"
 > | null {
   const translatedMessagesPerMinute = usage.planEntitlement?.translatedMessagesPerMinute ?? 30;
+  const sessionLimitMs = usage.planEntitlement?.sessionLimitMs ?? 30 * 60 * 1_000;
+  const dailyLimitMs = usage.planEntitlement?.dailyLimitMs ?? 30 * 60 * 1_000;
+  const activeElapsedMs = usage.currentSessionElapsedMs ?? Math.max(0, nowMs - activeSession.startedAtMs);
+
+  if (nowMs - activeSession.lastHeartbeatAtMs > 45_000) {
+    return "missing-heartbeat";
+  }
+
+  if (activeElapsedMs >= sessionLimitMs) {
+    return "session-time-limit";
+  }
+
+  if (usage.dailyUsedMs > 0 && usage.dailyUsedMs + Math.max(0, activeElapsedMs) >= dailyLimitMs) {
+    return "daily-time-limit";
+  }
 
   if (usage.translatedMessagesInCurrentMinute >= translatedMessagesPerMinute) {
     return "translated-message-cap";
@@ -465,6 +509,28 @@ function assessPollingQuotaBudgetStopReason(
   }
 
   return null;
+}
+
+function resolvePollingQuotaStopReasonUxCode(
+  stopReason: Extract<
+    CommentTranslatorSessionStopReason,
+    | "missing-heartbeat"
+    | "daily-time-limit"
+    | "session-time-limit"
+    | "translated-message-cap"
+    | "provider-quota-stop"
+    | "global-budget-stop"
+    | "ai-budget-stop"
+    | "translation-provider-limit"
+  >
+): CommentTranslatorStartStopReasonUxCode {
+  if (stopReason === "translation-provider-limit") {
+    return "translation-provider-unavailable";
+  }
+  if (stopReason === "missing-heartbeat") {
+    return "heartbeat-or-browser-disconnect";
+  }
+  return "quota-or-budget-stop";
 }
 
 function mapTerminalCodeToStopReason(

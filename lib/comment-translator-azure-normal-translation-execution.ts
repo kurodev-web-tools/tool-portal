@@ -14,7 +14,8 @@ import {
   createCommentTranslatorRealCommentsFeedStateFromNormalizedMessages
 } from "./comment-translator-real-comments-ui-wiring";
 import {
-  persistCommentTranslatorRealCommentsFeedForActiveSession
+  persistCommentTranslatorRealCommentsFeedForActiveSession,
+  type CommentTranslatorRealCommentsFeedSessionBridgePersistResult
 } from "./comment-translator-real-comments-feed-session-bridge";
 import type {
   CommentTranslatorRealCommentsFeedDurableStoreFactoryResult
@@ -95,6 +96,7 @@ export type CommentTranslatorAzureNormalTranslationExecutionResult = {
   execution: CommentTranslatorProviderExecutionResult;
   eligibility: CommentTranslatorAzureNormalTranslationEligibilitySummary;
   usageHandoffEstimate: CommentTranslatorAzureNormalTranslationUsageHandoffEstimate;
+  feedPersistence: CommentTranslatorRealCommentsFeedSessionBridgePersistResult;
   feed: CommentTranslatorRealCommentsFeedState;
   browserStorage: "unchanged";
   handoffPayload: "unchanged";
@@ -221,9 +223,9 @@ async function persistFeedBridgeResult({
   result
 }: {
   request: ExecuteCommentTranslatorAzureNormalTranslationForNormalizedMessagesRequest;
-  result: CommentTranslatorAzureNormalTranslationExecutionResult;
+  result: Omit<CommentTranslatorAzureNormalTranslationExecutionResult, "feedPersistence">;
 }) {
-  await persistCommentTranslatorRealCommentsFeedForActiveSession({
+  const feedPersistence = await persistCommentTranslatorRealCommentsFeedForActiveSession({
     callerAuthorization: request.callerAuthorization,
     sessionReferenceId: request.sessionReferenceId,
     feed: result.feed,
@@ -231,7 +233,10 @@ async function persistFeedBridgeResult({
     durableFeedStore: request.feedPersistenceStore
   });
 
-  return result;
+  return {
+    ...result,
+    feedPersistence
+  };
 }
 
 function createCommentTranslatorRealCommentsFeedStateFromUsageLimitRows({
@@ -327,7 +332,7 @@ function createExecutionResult({
   execution: CommentTranslatorProviderExecutionResult;
   eligibility: CommentTranslatorAzureNormalTranslationEligibilitySummary;
   feed: CommentTranslatorRealCommentsFeedState;
-}): CommentTranslatorAzureNormalTranslationExecutionResult {
+}): Omit<CommentTranslatorAzureNormalTranslationExecutionResult, "feedPersistence"> {
   return {
     status,
     implementationStage: commentTranslatorAzureNormalTranslationExecutionContract.implementationStage,

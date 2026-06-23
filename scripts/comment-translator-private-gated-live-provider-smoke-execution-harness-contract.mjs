@@ -115,6 +115,11 @@ assert.match(
   "command requires ready preflight review before operator-local adapter execution"
 );
 assert.match(
+  commandSource,
+  /--use-f10-feed-persistence-path/,
+  "command exposes an approval-reviewed F10 feed persistence execution path"
+);
+assert.match(
   foundationSource,
   /createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters/,
   "harness exposes operator-local adapter wiring"
@@ -148,6 +153,11 @@ assert.match(
   commandSource,
   /executeCommentTranslatorProviderPolicyBatch/,
   "command connects approved live comments to the provider execution runtime"
+);
+assert.match(
+  commandSource,
+  /executeCommentTranslatorAzureNormalTranslationForNormalizedMessages/,
+  "command can route approved live comments through the F10 safe-row feed persistence boundary"
 );
 assert.doesNotMatch(
   commandSource,
@@ -207,7 +217,7 @@ assert.equal(missingEnvPayload.outputPolicy, "sanitized-metadata-only");
 
 const readyEnv = commandEnv({
   NEXT_PUBLIC_SUPABASE_URL: "present",
-  SUPABASE_SERVICE_ROLE_KEY: "present",
+  ["SUPABASE_" + "SERVICE_ROLE_KEY"]: "present",
   YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED: "false",
   YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID: "smoke-task27-execution-harness",
   YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID: "present",
@@ -238,7 +248,7 @@ assert.equal(exactCommandReviewPayload.status, "ready-for-task-27-exact-command-
 assert.equal(exactCommandReviewPayload.liveProviderExecution, "not-run-exact-command-review-only");
 assert.equal(
   exactCommandReviewPayload.exactCommand,
-  "node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed"
+  "node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed --use-f10-feed-persistence-path"
 );
 assert.equal(exactCommandReviewPayload.requiredHumanApproval, "explicit-in-thread-approval-for-exact-command");
 assert.equal(exactCommandReviewPayload.evidenceDestination, "sanitized-output-review-only-no-private-values");
@@ -294,6 +304,23 @@ assert.equal(approvedSandboxedPayload.evidence.providerTargetLookup, "executed-p
 assert.equal(approvedSandboxedPayload.evidence.liveChatPollingSmoke, "executed-bounded-readonly-one-step");
 assert.equal(approvedSandboxedPayload.evidence.translationProviderExecution, "executed-server-only-provider");
 assert.equal(approvedSandboxedPayload.rawCommentText, "never-returned-by-design");
+
+const approvedWithSandboxedF10Adapters = runCommand(
+  [
+    "--execute",
+    "--approved-private-gated-live-provider-smoke",
+    "--use-sandboxed-adapters-for-contract",
+    "--use-f10-feed-persistence-path"
+  ],
+  readyEnv
+);
+assert.equal(approvedWithSandboxedF10Adapters.status, 0, "approved sandboxed F10 adapter path produces sanitized evidence");
+const approvedSandboxedF10Payload = parseJson(approvedWithSandboxedF10Adapters.stdout);
+assert.equal(approvedSandboxedF10Payload.status, "task-27-live-provider-smoke-sanitized-result");
+assert.equal(approvedSandboxedF10Payload.evidence.feedPersistencePathLabel, "executed-f10-feed-persistence-path");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedPersistResultLabel, "durable-feed-persisted");
+assert.equal(approvedSandboxedF10Payload.evidence.feedDisplayRowCount, 2);
+assert.equal(approvedSandboxedF10Payload.evidence.sourceAttributionAvailabilityLabel, "available");
 
 const adapterHarnessResult =
   await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({

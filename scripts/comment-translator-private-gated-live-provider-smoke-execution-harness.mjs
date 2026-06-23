@@ -38,7 +38,7 @@ const truthyReferenceNames = [
 ];
 
 const exactOperatorLocalCommand =
-  "node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed";
+  "node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed --use-f10-feed-persistence-path";
 const youtubeReadonlyOAuthScope = "https://www.googleapis.com/auth/youtube.readonly";
 const targetLookupOperatorLocalServerAuthorizationHeaderReference =
   "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER";
@@ -292,11 +292,16 @@ async function main() {
   }
 
   if (args.has("--use-sandboxed-adapters-for-contract")) {
-    const executionPayload = await createSandboxedAdapterExecutionPayload(result.payload.credentialReferenceId);
+    const executionPayload = await createSandboxedAdapterExecutionPayload({
+      credentialReferenceId: result.payload.credentialReferenceId,
+      useF10FeedPersistencePath: args.has("--use-f10-feed-persistence-path")
+    });
     writeJson(
       {
         ...executionPayload,
-        feedPersistencePathLabel: "not-run-direct-provider-execution-harness"
+        feedPersistencePathLabel: args.has("--use-f10-feed-persistence-path")
+          ? "executed-f10-feed-persistence-path"
+          : "not-run-direct-provider-execution-harness"
       },
       executionPayload.status === "task-27-live-provider-smoke-sanitized-result" ? 0 : 2
     );
@@ -343,13 +348,16 @@ async function main() {
     return;
   }
 
-  await createOperatorLocalRuntimeAdapterExecutionPayload(result.payload.credentialReferenceId);
+  await createOperatorLocalRuntimeAdapterExecutionPayload({
+    credentialReferenceId: result.payload.credentialReferenceId,
+    useF10FeedPersistencePath: args.has("--use-f10-feed-persistence-path")
+  });
   return;
 }
 
 await main();
 
-async function createSandboxedAdapterExecutionPayload(credentialReferenceId) {
+async function createSandboxedAdapterExecutionPayload({ credentialReferenceId, useF10FeedPersistencePath }) {
   const foundation = loadTsModule("lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts");
   const adapters = foundation.createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters({
     targetLookup: async () => ({
@@ -372,7 +380,18 @@ async function createSandboxedAdapterExecutionPayload(credentialReferenceId) {
       providerRequestCount: 1,
       providerCallCount: 1,
       translatedCount: 1,
-      skippedCount: 0
+      skippedCount: 0,
+      ...(useF10FeedPersistencePath
+        ? {
+            feedPersistencePathLabel: "executed-f10-feed-persistence-path",
+            durableFeedPersistResultLabel: "durable-feed-persisted",
+            feedDisplayRowCount: 2,
+            sourceAttributionAvailabilityLabel: "available"
+          }
+        : {
+            feedPersistencePathLabel: "not-run-direct-provider-execution-harness",
+            sourceAttributionAvailabilityLabel: "not-produced-by-provider-harness"
+          })
     })
   });
 
@@ -388,9 +407,10 @@ async function createSandboxedAdapterExecutionPayload(credentialReferenceId) {
   });
 }
 
-async function createOperatorLocalRuntimeAdapterExecutionPayload(credentialReferenceId) {
+async function createOperatorLocalRuntimeAdapterExecutionPayload({ credentialReferenceId, useF10FeedPersistencePath }) {
   const foundation = loadTsModule("lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts");
   let serverOnlyLiveComments = [];
+  let serverOnlyNormalizedMessages = [];
   let serverOnlyLiveChatId = "";
   const adapters = foundation.createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters({
     targetLookup: async () => {
@@ -401,9 +421,13 @@ async function createOperatorLocalRuntimeAdapterExecutionPayload(credentialRefer
     pollLiveChatOnce: async () => {
       const polling = await runTask27OperatorLocalLiveChatPollingForTranslation(credentialReferenceId, serverOnlyLiveChatId);
       serverOnlyLiveComments = polling.serverOnlyLiveComments;
+      serverOnlyNormalizedMessages = polling.serverOnlyNormalizedMessages;
       return polling.sanitizedResult;
     },
-    translateEligibleComments: async () => runTask27OperatorLocalTranslationProviderExecution(serverOnlyLiveComments)
+    translateEligibleComments: async () =>
+      useF10FeedPersistencePath
+        ? runTask27OperatorLocalF10FeedPersistenceExecution(serverOnlyNormalizedMessages)
+        : runTask27OperatorLocalTranslationProviderExecution(serverOnlyLiveComments)
   });
 
   const executionPayload = await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({
@@ -420,7 +444,9 @@ async function createOperatorLocalRuntimeAdapterExecutionPayload(credentialRefer
   writeJson(
     {
       ...executionPayload,
-      feedPersistencePathLabel: "not-run-direct-provider-execution-harness",
+      feedPersistencePathLabel: useF10FeedPersistencePath
+        ? "executed-f10-feed-persistence-path"
+        : "not-run-direct-provider-execution-harness",
       operatorLocalAdapterWiring: "executed-through-server-only-harness-adapter-builder"
     },
     executionPayload.status === "task-27-live-provider-smoke-sanitized-result" ? 0 : 2
@@ -481,7 +507,8 @@ async function runTask27OperatorLocalLiveChatPollingForTranslation(credentialRef
   if (readiness.status !== "owner-binding-verified-before-live-chat-polling") {
     return {
       sanitizedResult: readiness,
-      serverOnlyLiveComments: []
+      serverOnlyLiveComments: [],
+      serverOnlyNormalizedMessages: []
     };
   }
 
@@ -497,7 +524,8 @@ async function runTask27OperatorLocalLiveChatPollingForTranslation(credentialRef
         reason: tokenMaterial.reason,
         stopReason: tokenMaterial.status === "expired" || tokenMaterial.status === "scope-missing" ? "auth-failed" : "terminal-provider-error"
       }),
-      serverOnlyLiveComments: []
+      serverOnlyLiveComments: [],
+      serverOnlyNormalizedMessages: []
     };
   }
 
@@ -507,6 +535,7 @@ async function runTask27OperatorLocalLiveChatPollingForTranslation(credentialRef
       liveChatId: request.liveChatId
     });
     const serverOnlyLiveComments = createTask27ProviderSafeComments(providerResponse.body);
+    const serverOnlyNormalizedMessages = createTask27NormalizedMessages(providerResponse.body);
     const returnedItemCount = readCount(asRecord(providerResponse.body).items?.length);
     const eligibleCommentCount = serverOnlyLiveComments.length;
 
@@ -518,7 +547,8 @@ async function runTask27OperatorLocalLiveChatPollingForTranslation(credentialRef
           httpStatus: providerResponse.status,
           stopReason: "terminal-provider-error"
         }),
-        serverOnlyLiveComments: []
+        serverOnlyLiveComments: [],
+        serverOnlyNormalizedMessages: []
       };
     }
 
@@ -542,7 +572,8 @@ async function runTask27OperatorLocalLiveChatPollingForTranslation(credentialRef
         skippedCommentCount: Math.max(0, returnedItemCount - eligibleCommentCount),
         stopReason: null
       },
-      serverOnlyLiveComments
+      serverOnlyLiveComments,
+      serverOnlyNormalizedMessages
     };
   } catch {
     return {
@@ -551,7 +582,8 @@ async function runTask27OperatorLocalLiveChatPollingForTranslation(credentialRef
         reason: "provider-fetch-failed",
         stopReason: "terminal-provider-error"
       }),
-      serverOnlyLiveComments: []
+      serverOnlyLiveComments: [],
+      serverOnlyNormalizedMessages: []
     };
   }
 }
@@ -574,6 +606,70 @@ async function runTask27OperatorLocalTranslationProviderExecution(serverOnlyLive
     sourceLanguages: readTask27SourceLanguages(),
     comments: serverOnlyLiveComments
   });
+}
+
+async function runTask27OperatorLocalF10FeedPersistenceExecution(serverOnlyNormalizedMessages) {
+  const f10 = loadTsModule("lib/comment-translator-azure-normal-translation-execution.ts");
+  const providerPolicy = loadTsModule("lib/comment-translator-provider-policy-runtime.ts");
+  const durableFeed = loadTsModule("lib/comment-translator-real-comments-feed-durable-store.ts");
+  const activeSessionContext = await readTask27ActiveSessionContext();
+  if (!activeSessionContext) {
+    return {
+      status: "failed",
+      providerRequestCount: 0,
+      providerCallCount: 0,
+      translatedCount: 0,
+      skippedCount: serverOnlyNormalizedMessages.length,
+      feedPersistencePathLabel: "executed-f10-feed-persistence-path",
+      durableFeedPersistResultLabel: "active-session-context-unavailable",
+      feedDisplayRowCount: 0,
+      sourceAttributionAvailabilityLabel: "unavailable"
+    };
+  }
+
+  const result = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+    messages: serverOnlyNormalizedMessages,
+    sessionStatus: "active",
+    targetLanguage: readReference("COMMENT_TRANSLATOR_TASK27_TARGET_LANGUAGE") || "ja",
+    sourceLanguages: readTask27SourceLanguages(),
+    callerAuthorization: createTask27CallerAuthorization(),
+    sessionReferenceId: activeSessionContext.sessionReferenceId,
+    occurredAtMs: Date.now(),
+    usage: createTask27UsageSnapshot(),
+    providers: providerPolicy.createCommentTranslatorDefaultTranslationProviderSet(process.env),
+    feedPersistenceStore: durableFeed.createTrustedCommentTranslatorRealCommentsFeedDurableStore()
+  });
+
+  return {
+    status: result.status === "session-not-active" || result.status === "over-limit" ? "failed" : "completed",
+    providerRequestCount: result.execution.providerRequestCount,
+    providerCallCount: result.execution.providerCallCount,
+    translatedCount: result.execution.translatedCount,
+    skippedCount: result.execution.skippedCount,
+    skipsByReason: result.execution.skipsByReason,
+    errorCounts: result.execution.errorCounts,
+    terminalErrorCodeCounts: result.execution.terminalErrorCodeCounts,
+    feedPersistencePathLabel: "executed-f10-feed-persistence-path",
+    durableFeedPersistResultLabel: result.feedPersistence.durableFeedPersistResultLabel,
+    feedDisplayRowCount: result.feedPersistence.displayRowCount,
+    sourceAttributionAvailabilityLabel: result.feed.status === "ready" && result.feed.rows.length > 0 ? "available" : "unavailable",
+    stopReason: result.status === "over-limit" ? "translated-message-cap" : null
+  };
+}
+
+async function readTask27ActiveSessionContext() {
+  const durableSession = loadTsModule("lib/comment-translator-durable-session-store.ts");
+  const activeSessionRead = await durableSession.readCommentTranslatorDurableActiveSessionOrFailClosed({
+    callerAuthorization: createTask27CallerAuthorization(),
+    durableSessionStore: durableSession.createTrustedCommentTranslatorSessionSupabaseStore()
+  });
+  if (activeSessionRead.status !== "ready" || !activeSessionRead.activeSession) {
+    return null;
+  }
+
+  return {
+    sessionReferenceId: activeSessionRead.activeSession.sessionReferenceId
+  };
 }
 
 function createTargetLookupFoundationBaseRequest(credentialReferenceId) {
@@ -673,6 +769,14 @@ function createTask27ProviderSafeComments(body) {
     .filter((comment) => comment.text.trim().length > 0);
 }
 
+function createTask27NormalizedMessages(body) {
+  const normalization = loadTsModule("lib/comment-translator-live-message-normalization.ts");
+  const normalized = normalization.normalizeCommentTranslatorLiveMessages({
+    providerPayloads: Array.isArray(asRecord(body).items) ? asRecord(body).items : []
+  });
+  return normalized.normalizedMessages;
+}
+
 function readServerOnlyLiveChatIdFromTargetLookupBody(body) {
   const items = Array.isArray(asRecord(body).items) ? asRecord(body).items : [];
   const activeItem = items.find((item) => {
@@ -727,6 +831,13 @@ function createTask27UsageSnapshot() {
       estimatedCostMicros: 0,
       rawCommentText: "never-recorded-by-design"
     }
+  };
+}
+
+function createTask27CallerAuthorization() {
+  return {
+    status: "authorized",
+    ownerUserId: readReference("YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID")
   };
 }
 

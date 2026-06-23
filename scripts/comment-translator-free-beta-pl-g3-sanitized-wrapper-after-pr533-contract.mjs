@@ -62,6 +62,7 @@ assert.match(wrapperSource, /child\.stdout/, "wrapper captures child stdout sepa
 assert.match(wrapperSource, /child\.stderr/, "wrapper captures child stderr separately");
 assert.match(wrapperSource, /parseFinalJsonFromStdout/, "wrapper parses final JSON from stdout only");
 assert.match(wrapperSource, /projectAllowedSanitizedSummary/, "wrapper projects an allowed sanitized summary");
+assert.match(wrapperSource, /--use-f10-feed-persistence-path/, "wrapper selects the reviewed F10 feed persistence provider child path");
 assert.doesNotMatch(wrapperSource, /stdio:\s*["']inherit["']/, "wrapper does not inherit raw child streams");
 
 const mixedStream = runWrapper(["--run-contract-fixture", "mixed-stderr-final-json"]);
@@ -78,6 +79,8 @@ assert.equal(mixedStreamPayload.providerTargetLookupLabel, "executed-presence-on
 assert.equal(mixedStreamPayload.liveChatPollingLabel, "executed-bounded-readonly-one-step");
 assert.equal(mixedStreamPayload.translationProviderExecutionLabel, "executed-server-only-provider");
 assert.equal(mixedStreamPayload.feedPersistencePathLabel, "not-run-direct-provider-execution-harness");
+assert.equal(mixedStreamPayload.durableFeedPersistResultLabel, "unavailable");
+assert.equal(mixedStreamPayload.feedDisplayRowCount, 0);
 assert.equal(mixedStreamPayload.returnedCount, 3);
 assert.equal(mixedStreamPayload.eligibleCount, 2);
 assert.equal(mixedStreamPayload.providerRequestCount, 1);
@@ -106,6 +109,8 @@ assert.equal(stderrJsonNoisePayload.returnedCount, 4);
 assert.equal(stderrJsonNoisePayload.eligibleCount, 4);
 assert.equal(stderrJsonNoisePayload.translatedCount, 4);
 assert.equal(stderrJsonNoisePayload.feedPersistencePathLabel, "not-run-direct-provider-execution-harness");
+assert.equal(stderrJsonNoisePayload.durableFeedPersistResultLabel, "unavailable");
+assert.equal(stderrJsonNoisePayload.feedDisplayRowCount, 0);
 assert.equal(stderrJsonNoisePayload.skippedCount, 0);
 assert.equal(stderrJsonNoisePayload.languagePolicySkippedCount, 0);
 assert.equal(stderrJsonNoisePayload.perMinuteSkippedCount, 0);
@@ -113,6 +118,16 @@ assert.equal(stderrJsonNoisePayload.providerUnavailableSkippedCount, 0);
 assert.equal(stderrJsonNoisePayload.recoverableErrorCount, 0);
 assert.equal(stderrJsonNoisePayload.terminalErrorCount, 0);
 assertNoRawStreamLeak(stderrJsonNoisePayload, "stderr JSON noise payload");
+
+const f10PersistenceFixture = runWrapper(["--run-contract-fixture", "f10-feed-persistence-path"]);
+assert.equal(f10PersistenceFixture.status, 0, "F10 feed persistence fixture passes");
+const f10PersistencePayload = parseJson(f10PersistenceFixture.stdout);
+assert.equal(f10PersistencePayload.feedPersistencePathLabel, "executed-f10-feed-persistence-path");
+assert.equal(f10PersistencePayload.durableFeedPersistResultLabel, "durable-feed-persisted");
+assert.equal(f10PersistencePayload.feedDisplayRowCount, 2);
+assert.equal(f10PersistencePayload.sourceAttributionAvailabilityLabel, "available");
+assert.equal(f10PersistencePayload.pass, true);
+assertNoRawStreamLeak(f10PersistencePayload, "F10 persistence payload");
 
 const missingFinalJson = runWrapper(["--run-contract-fixture", "stdout-no-final-json"]);
 assert.equal(missingFinalJson.status, 2, "stdout without final JSON fails closed");

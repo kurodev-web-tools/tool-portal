@@ -349,6 +349,9 @@ assert.equal(result.eligibility.eligibleCommentCount, 3);
 assert.equal(result.eligibility.nonTranslatableEventCount, 2);
 assert.equal(result.feed.status, "ready");
 assert.equal(result.feed.rows.length, 5);
+assert.equal(result.feedPersistence.status, "persisted");
+assert.equal(result.feedPersistence.durableFeedPersistResultLabel, "durable-feed-store-unavailable");
+assert.equal(result.feedPersistence.displayRowCount, 5);
 assert.equal(result.feed.rows.find((row) => row.id === "yt-f10-text-1").translatedText, "ja:yt-f10-text-1");
 assert.equal(result.feed.rows.find((row) => row.id === "yt-f10-text-1").translationStatus, "translated-f10");
 assert.equal(result.feed.rows.find((row) => row.id === "yt-f10-super-1").translatedText, "ja:yt-f10-super-1");
@@ -416,17 +419,25 @@ const allowedChangedFiles = new Set([
   f10Path,
   "lib/comment-translator-real-comments-feed-durable-store.ts",
   "lib/comment-translator-real-comments-feed-session-bridge.ts",
+  "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
   sharedPath,
   "supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql",
   readinessDocPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md",
   gapAuditPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   taskPath
 ]);

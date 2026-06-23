@@ -359,6 +359,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-full-start-to-translation-continuation-after-pr540-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546-contract.mjs",
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs",

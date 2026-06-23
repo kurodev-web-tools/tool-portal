@@ -14,7 +14,7 @@ const bridgePath = "lib/comment-translator-real-comments-feed-session-bridge.ts"
 const f10Path = "lib/comment-translator-azure-normal-translation-execution.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
 
-const branchName = "codex/pl-g3-stale-session-cap-hardening";
+const branchName = "codex/pl-g3-reset-confirm-boundary-after-546";
 const approvalLabel = "approved-pl-g3-post-bridge-full-continuation-after-pr542";
 const pr542MergeCommit = "d1b2215d9cd1abe1ca8d93319d1e64c26115fa70";
 const pr543MergeCommit = "cf4fc261ef961e52a3f68e366e3a27723cad3a6a";
@@ -366,6 +366,8 @@ const allowedChangedFiles = new Set([
   taskPath,
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",

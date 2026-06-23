@@ -405,6 +405,21 @@ Approved post-#551 full Start-to-translation continuation attempt:
 - Public-release capable label: no.
 - Next safe action: refresh the operator-local credential/session reconnect state before any later retry. A later retry still requires separate exact same-thread approval and sanitized output review.
 
+Post-#552 reconnect/cookie refresh status and credential readiness precheck:
+
+- Decision: status-credential-readiness-passed-after-reconnect-post-552.
+- Exact approval label present for status and credential readiness precheck only.
+- Credential status: HTTP status label 2xx; credentialStatusLabel available; reconnectRequiredLabel no; credentialPassLabel yes.
+- Session status: HTTP status label 2xx; sessionStatusLabel not-started; activeLabel no; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent; sessionPassLabel yes.
+- Start label: no.
+- Stop label: no.
+- Provider target lookup label: not-run.
+- liveChatPollingLabel: not-run.
+- translationLabel: not-run.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+- Next safe action: a full Start-to-translation retry requires separate exact same-thread approval before Start, fresh chat comment, provider target lookup, polling, or translation.
+
 ## Sanitized Output Review
 
 Allowed output after a later approved run:

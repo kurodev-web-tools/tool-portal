@@ -147,9 +147,10 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - Cleanup Stop: HTTP status label 2xx; sessionStatusLabel stopped; stopReasonLabel user-stop.
 - Post-Stop status: HTTP status label 2xx; sessionStatusLabel not-started; activeLabel no; stopReasonLabel none-or-unavailable; unavailableReasonLabel absent.
 - Output handling: labels/counts only. Raw response bodies, raw stdout/stderr, cookies, tokens, OAuth values, Authorization headers, provider target metadata, liveChatId, owner user id, provider channel id, provider URL query values, raw provider payloads, raw comments, comment text, quota values, browser storage payloads, and provider error body/message/reason values were not recorded.
+- Post-#552 reconnect/cookie refresh precheck: exact approval label present for status and credential readiness precheck only. Credential status returned HTTP status label 2xx / credentialStatusLabel available / reconnectRequiredLabel no / credentialPassLabel yes. Session status returned HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / sessionPassLabel yes. Start label no; Stop label no; provider target lookup label not-run; liveChatPollingLabel not-run; translationLabel not-run.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
-- Next safe action: keep PL-G3 blocked until the operator-local credential/session reconnect state is refreshed and a separate exact same-thread approval exists for another Start-to-translation retry. Do not ask for a fresh chat comment or run provider target lookup/polling/translation while Start returns reconnect-required.
+- Next safe action: reconnect-required is cleared at the status/credential readiness precheck level. A full Start-to-translation retry still requires separate exact same-thread approval before Start, fresh chat comment, provider target lookup, polling, or translation.
 
 ### Active PL-G3 Stale-session / Cap Auto-stop Hardening
 
@@ -1548,9 +1549,10 @@ Keep these rows visible so future threads do not have to reconstruct the post-Fr
 - Cleanup Stop returned HTTP status label 2xx / sessionStatusLabel stopped / stopReasonLabel user-stop.
 - Post-Stop status returned HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent.
 - Output handling: raw response bodies, raw stdout/stderr, cookies, tokens, OAuth values, Authorization headers, provider target metadata, liveChatId, owner user id, provider channel id, provider URL query values, raw provider payloads, raw comments, comment text, quota values, browser storage payloads, and provider error body/message/reason values were not recorded.
+- Post-#552 reconnect/cookie refresh precheck: exact approval label present for status and credential readiness precheck only. Credential status returned HTTP status label 2xx / credentialStatusLabel available / reconnectRequiredLabel no / credentialPassLabel yes. Session status returned HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / sessionPassLabel yes. Start label no; Stop label no; provider target lookup label not-run; liveChatPollingLabel not-run; translationLabel not-run.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
-- Next safe action: keep PL-G3 blocked until operator-local credential/session reconnect state is refreshed and a separate exact same-thread approval exists for another retry. Do not ask for a fresh chat comment or run provider target lookup/polling/translation while Start returns reconnect-required.
+- Next safe action: reconnect-required is cleared at the status/credential readiness precheck level. A full Start-to-translation retry still requires separate exact same-thread approval before Start, fresh chat comment, provider target lookup, polling, or translation.
 
 ## Previous PL-G3 Empty-provider-ok Root-cause Triage After PR #528
 

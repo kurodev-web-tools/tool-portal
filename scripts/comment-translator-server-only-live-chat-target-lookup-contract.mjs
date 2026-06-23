@@ -426,6 +426,12 @@ const allowedChangedFiles = new Set([
   routePath,
   actionPath,
   readinessDocPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
   "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs",
   taskPath
 ]);

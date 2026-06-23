@@ -381,6 +381,16 @@ Approved post-#549 full Start-to-translation continuation attempt:
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
+Post-#550 target lookup adapter mismatch diagnosis:
+
+- Decision: implemented-target-lookup-label-projection-adapter-fix-after-pr550.
+- Deterministic finding: the same-process target-refresh diagnostic recorded reviewed label-projected target presence fields (`targetLookupStatusLabel`, `targetLookupProviderAccessLabel`, `liveChatTargetLabel`), while the full provider harness target lookup adapter accepted only raw foundation fields (`status`, `liveChatTarget`, `liveChatTargetLookup`). A focused RED fixture reproduced rejection as `blocked-target-lookup-sanitized`.
+- Fix: the provider harness operator-local target lookup adapter now accepts both sanitized field shapes as presence-only target evidence and still returns no target values or provider metadata.
+- Verification so far: `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs` failed before the fix on the label-projected target presence fixture, then passed after the mapper update.
+- Start, Stop, live/provider/UI commands, Free provider translation, deploy/upload, remote mutation, OAuth flow, token refresh, Stripe action, public access change, main promotion, and public launch gate flip were not run.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+
 ## Sanitized Output Review
 
 Allowed output after a later approved run:

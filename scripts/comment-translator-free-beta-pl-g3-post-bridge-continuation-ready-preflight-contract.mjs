@@ -14,7 +14,7 @@ const bridgePath = "lib/comment-translator-real-comments-feed-session-bridge.ts"
 const f10Path = "lib/comment-translator-azure-normal-translation-execution.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
 
-const branchName = "codex/pl-g3-reset-confirm-boundary-after-546";
+const branchName = "codex/pl-g3-target-lookup-adapter-mismatch-diagnostics";
 const approvalLabel = "approved-pl-g3-post-bridge-full-continuation-after-pr542";
 const pr542MergeCommit = "d1b2215d9cd1abe1ca8d93319d1e64c26115fa70";
 const pr543MergeCommit = "cf4fc261ef961e52a3f68e366e3a27723cad3a6a";
@@ -361,6 +361,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator.ts",
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
   "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
   "lib/comment-translator-session-runtime.ts",
   readyPreflightPath,
   taskPath,
@@ -370,6 +371,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
+  "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   "scripts/comment-translator-public-operator-session-ui-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",

@@ -357,6 +357,63 @@ assert.equal(adapterHarnessResult.evidence.providerUnavailableSkippedCount, 0);
 assert.equal(adapterHarnessResult.evidence.recoverableErrorCount, 0);
 assert.equal(adapterHarnessResult.evidence.terminalErrorCount, 0);
 
+const labelProjectedTargetLookupHarnessResult =
+  await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({
+    credentialReferenceId: "smoke-task27-execution-harness",
+    providerTargetLookupReady: true,
+    liveChatTargetPresent: true,
+    liveChatPollingReady: true,
+    translationProviderReady: true,
+    sanitizedOutputReviewConfirmed: true,
+    explicitApprovalConfirmed: true,
+    adapters: foundation.createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters({
+      targetLookup: async () => ({
+        statusLabel: "live-chat-target-lookup-sanitized-result",
+        liveChatTargetLabel: "present",
+        liveChatTargetLookupLabel: "executed-bounded-readonly-one-step",
+        targetLookupProviderAccessLabel: "liveBroadcasts-list-target-lookup-only"
+      }),
+      pollLiveChatOnce: async () => ({
+        status: "live-chat-polling-smoke-sanitized-result",
+        liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+        responseMetadata: {
+          returnedItemCount: 1,
+          eligibleCommentCount: 1
+        }
+      }),
+      translateEligibleComments: async () => ({
+        status: "completed",
+        providerRequestCount: 1,
+        providerCallCount: 1,
+        translatedCount: 1,
+        skippedCount: 0,
+        skipsByReason: {
+          languagePolicy: 0,
+          perMinuteCap: 0,
+          providerUnavailable: 0
+        },
+        errorCounts: {
+          recoverable: 0,
+          terminal: 0
+        },
+        terminalErrorCodeCounts: {
+          invalidRequest: 0,
+          unsupportedLanguage: 0,
+          providerNotConfigured: 0,
+          credentialMissing: 0,
+          policyBlocked: 0
+        }
+      })
+    })
+  });
+
+assert.equal(
+  labelProjectedTargetLookupHarnessResult.status,
+  "task-27-live-provider-smoke-sanitized-result",
+  "operator-local target lookup adapter accepts reviewed label-projected target presence evidence"
+);
+assert.equal(labelProjectedTargetLookupHarnessResult.evidence.providerTargetLookup, "executed-presence-only");
+
 const emptyPollingHarnessResult =
   await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({
     credentialReferenceId: "smoke-task27-execution-harness",

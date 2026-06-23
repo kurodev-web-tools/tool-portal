@@ -363,7 +363,21 @@ function nonNegativeInteger(value: number) {
 }
 
 function mapOperatorLocalTargetLookupResult(result: Record<string, unknown>): Task27ProviderTargetLookupResult {
-  if (result.status === "live-chat-target-lookup-sanitized-result" && result.liveChatTarget === "present") {
+  const status = readLabel(result.status ?? result.statusLabel ?? result.targetLookupStatus ?? result.targetLookupStatusLabel);
+  const liveChatTarget = readLabel(
+    result.liveChatTarget ?? result.liveChatTargetLabel ?? result.targetLookupLiveChatTarget ?? result.targetLookupLiveChatTargetLabel
+  );
+  const liveChatTargetLookup = readLabel(
+    result.liveChatTargetLookup ??
+      result.liveChatTargetLookupLabel ??
+      result.targetLookupLiveChatTargetLookup ??
+      result.targetLookupLiveChatTargetLookupLabel
+  );
+  const providerAccess = readLabel(
+    result.providerAccess ?? result.providerAccessLabel ?? result.targetLookupProviderAccess ?? result.targetLookupProviderAccessLabel
+  );
+
+  if (status === "live-chat-target-lookup-sanitized-result" && liveChatTarget === "present") {
     return {
       status: "target-present",
       providerTargetLookup: "executed-presence-only",
@@ -371,7 +385,7 @@ function mapOperatorLocalTargetLookupResult(result: Record<string, unknown>): Ta
     };
   }
 
-  if (typeof result.status === "string" && result.status.includes("failed")) {
+  if (status.includes("failed")) {
     return {
       status: "target-lookup-failed",
       providerTargetLookup: "failed-sanitized",
@@ -382,7 +396,11 @@ function mapOperatorLocalTargetLookupResult(result: Record<string, unknown>): Ta
 
   return {
     status: "target-absent",
-    providerTargetLookup: result.liveChatTargetLookup === "executed-bounded-readonly-one-step" ? "executed-presence-only" : "not-run",
+    providerTargetLookup:
+      liveChatTargetLookup === "executed-bounded-readonly-one-step" ||
+      providerAccess === "liveBroadcasts-list-target-lookup-only"
+        ? "executed-presence-only"
+        : "not-run",
     liveChatTarget: "absent",
     stopReason: "stream-unavailable"
   };
@@ -493,6 +511,10 @@ function sanitizeTerminalErrorCodeCounts(value: Partial<Task27TerminalErrorCodeC
 
 function readCount(value: unknown) {
   return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : 0;
+}
+
+function readLabel(value: unknown) {
+  return typeof value === "string" ? value : "";
 }
 
 function mapStopReason(value: unknown): Task27LiveProviderSmokeStopReason | null {

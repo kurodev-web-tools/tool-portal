@@ -48,6 +48,9 @@ import {
   createTrustedCommentTranslatorRealCommentsFeedDurableStore
 } from "@/lib/comment-translator-real-comments-feed-durable-store";
 import {
+  clearCommentTranslatorAzureNormalTranslationSessionDedupeState
+} from "@/lib/comment-translator-azure-normal-translation-execution";
+import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
   readCommentTranslatorPrivateLaunchAccess
 } from "@/lib/comment-translator-private-launch-access-gate";
@@ -240,6 +243,7 @@ export async function POST(request: NextRequest) {
 
   if (state.status === "stopped") {
     clearCommentTranslatorBoundedLiveChatPollingState(state.sessionReferenceId);
+    clearCommentTranslatorAzureNormalTranslationSessionDedupeState(state.sessionReferenceId);
     await clearCommentTranslatorRealCommentsFeedForSession({
       callerAuthorization,
       sessionReferenceId: state.sessionReferenceId,

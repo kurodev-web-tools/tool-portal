@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/apply-account-display-timezone-migration`.
+- Current branch: `codex/comment-translator-session-commentid-dedupe`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: approved remote schema apply for the shared account display timezone preference.
+- Scope: session-scoped server-side `commentId` dedupe before Free Azure provider execution.
 - Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
@@ -129,15 +129,18 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 - `node scripts/supabase-auth-first-slice-contract.mjs`: passed. Confirms account preference persistence includes `time_zone` in the auth-backed display settings slice.
 - `node scripts/supabase-auth-boundary-design-contract.mjs`: passed. Confirms the auth boundary contract remains intact.
 - `node scripts/account-auth-public-readiness-contract.mjs`: passed. Confirms public account readiness contracts include the timezone preference UI and hidden form value.
+- `node scripts/comment-translator-azure-normal-translation-execution-contract.mjs`: passed. Confirms session-scoped duplicate `commentId` suppression before provider execution, usage handoff estimates for new comments only, and unique safe feed rows across repeated polling cycles.
+- `node scripts/comment-translator-session-start-stop-contract.mjs`: passed. Confirms the session start/stop contract remains intact after adding dedupe-state cleanup on Stop.
 - `npm run lint`: passed.
 - `npx tsc --noEmit`: passed.
 - `npm run build`: passed. Existing warnings observed: Next.js `middleware` convention deprecation and static export RSC alias skip for server-runtime build.
 - `git diff --check`: passed with Windows LF-to-CRLF normalization warnings only.
-- Changed-files high-confidence no-secret scan: passed for 16 changed files including untracked files.
+- Changed-files high-confidence no-secret scan: passed for 5 changed files.
 - Migration-pending fallback follow-up verification: `node scripts/comment-translator-shared-timezone-preference-contract.mjs`, account-related contracts, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence no-secret scan passed after adding the fallback.
 - Width checks via local dev server `http://127.0.0.1:3218/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for the approved browser-visible retest.
 - Shared display timezone preference width checks via local dev server `http://127.0.0.1:3027/account/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, timezone select visible, and console error/warn count `0`.
 - Shared display timezone preference width checks via local dev server `http://127.0.0.1:3027/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for an approved browser-visible retest.
+- Session `commentId` dedupe slice width checks: not run because this slice changed only server-side execution/session cleanup contracts and no visible UI, CSS, rendered route, or layout.
 - Remote schema apply for `supabase/migrations/20260624000000_account_display_timezone_preference.sql`: approved and applied through Supabase MCP. Precheck showed `time_zone` column/constraint/comment missing; postcheck showed column/constraint/comment ready and migration history present.
 
 Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`. The pre-cleanup task-board snapshot is archived at `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
@@ -147,6 +150,7 @@ Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_
 - Public-release capable remains no until PPF-1/PPF-2 are implemented and verified, PL-G4 production/custom deployed smoke passes or is explicitly accepted as missing, PL-G5 release-owner approval is recorded, and PL-G6 public access change is separately approved and executed.
 - The browser-visible PL-G3 feed confirmation is valid only after manual comment refresh in the current UI. It does not prove automatic realtime or periodic feed refresh.
 - Shared display timezone preference remote schema is applied. Runtime quota enforcement remains UTC-based; timezone is display convenience only.
+- Session-scoped `commentId` dedupe is implemented locally in the Free Azure execution bridge: repeated YouTube-safe `commentId` values are skipped before provider execution, usage handoff estimates count only newly accepted comments, and server-owned safe feed rows are merged uniquely by `commentId` for the active session. Stop/session cleanup clears the dedupe state. `nextPageToken` remains server-only and unchanged.
 - No deploy/upload, OAuth flow, token refresh, Stripe action, public access change, main promotion, PL-G4, PL-G5, PL-G6, or launch gate flip was run in this cleanup slice.
 
 ## Later Work

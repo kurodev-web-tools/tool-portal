@@ -152,8 +152,8 @@ assert.match(providerPolicySource, /freePlanPrimary: "azure-translator"/, "Free 
 assert.match(providerBoundarySource, /server-env-only/, "provider secrets remain server env only");
 assert.match(readinessDoc, /F10 Azure normal translation execution/i, "durable readiness doc records F10");
 assert.match(gapAudit, /F10[\s\S]*Azure/i, "gap audit records F10");
-assert.match(taskSource, /F10 Azure normal translation execution/i, "task.md records F10 status");
-assert.match(taskSource, /Width checks skipped/i, "task.md records width-check skip reason for UI-neutral F10 work");
+assert.match(taskSource, /Free Azure translation/i, "task.md records Free Azure translation status");
+assert.match(taskSource, /Width checks/i, "task.md records width-check handling");
 
 for (const forbidden of [
   "localStorage",
@@ -381,6 +381,71 @@ for (const request of providerRequests) {
   assert.equal(request.cache.keyMaterial.excludes.includes("providerChannelId"), true);
   assert.equal(request.cache.keyMaterial.excludes.includes("rawProviderTargetMetadata"), true);
 }
+
+const duplicateCycle = normalization.normalizeCommentTranslatorLiveMessages({
+  providerPayloads: [
+    {
+      id: "yt-f10-text-1",
+      snippet: {
+        type: "textMessageEvent",
+        publishedAt: "2026-06-16T01:00:00.000Z",
+        textMessageDetails: { messageText: "Hello Azure path" }
+      }
+    },
+    {
+      id: "yt-f10-super-1",
+      snippet: {
+        type: "superChatEvent",
+        publishedAt: "2026-06-16T01:00:01.000Z",
+        superChatDetails: {
+          userComment: "Support this stream",
+          amountDisplayString: "JPY 500",
+          tier: 2
+        }
+      }
+    },
+    {
+      id: "yt-f10-text-2",
+      snippet: {
+        type: "textMessageEvent",
+        publishedAt: "2026-06-16T01:00:06.000Z",
+        textMessageDetails: { messageText: "Second cycle new comment" }
+      }
+    }
+  ]
+});
+const secondCycle = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: duplicateCycle.normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN", "KR", "CN"],
+  callerAuthorization,
+  sessionReferenceId: "cts_f10_contract_001",
+  occurredAtMs: Date.parse("2026-06-16T01:00:07.000Z"),
+  usage,
+  providers: {
+    azure,
+    openAiMini
+  },
+  feedPersistenceStore,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+const secondCycleIds = secondCycle.feed.rows.map((row) => row.messageReferenceId);
+assert.equal(secondCycle.status, "completed");
+assert.equal(secondCycle.eligibility.eligibleCommentCount, 1);
+assert.equal(secondCycle.eligibility.sessionDuplicateSkippedCount, 2);
+assert.equal(secondCycle.execution.providerRequestCount, 1);
+assert.equal(secondCycle.execution.providerCallCount, 1);
+assert.equal(secondCycle.execution.translatedCount, 1);
+assert.equal(secondCycle.usageHandoffEstimate.providerRequestEstimateCount, 1);
+assert.equal(secondCycle.usageHandoffEstimate.translatedMessageEstimate, 1);
+assert.equal(azureCallCount, 3);
+assert.equal(secondCycle.feed.rows.length, 6);
+assert.equal(new Set(secondCycleIds).size, secondCycleIds.length, "safe feed rows remain unique by commentId across polling cycles");
+assert.equal(secondCycle.feed.rows.find((row) => row.id === "yt-f10-text-1").translatedText, "ja:yt-f10-text-1");
+assert.equal(secondCycle.feed.rows.find((row) => row.id === "yt-f10-super-1").translatedText, "ja:yt-f10-super-1");
+assert.equal(secondCycle.feed.rows.find((row) => row.id === "yt-f10-text-2").translatedText, "ja:yt-f10-text-2");
 
 const unavailable = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
   messages: normalized.normalizedMessages,

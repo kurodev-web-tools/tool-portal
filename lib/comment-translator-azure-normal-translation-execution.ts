@@ -59,6 +59,7 @@ export type CommentTranslatorAzureNormalTranslationExecutionContract = {
 export type CommentTranslatorAzureNormalTranslationEligibilitySummary = {
   eligibleCommentCount: number;
   nonTranslatableEventCount: number;
+  sessionDuplicateSkippedCount: number;
   rawProviderPayload: "not-returned-by-design";
   rawComments: "not-returned-by-design";
   authorChannelMaterial: "not-returned-by-design";
@@ -127,19 +128,37 @@ export const commentTranslatorAzureNormalTranslationExecutionContract = {
   publicLaunchAllowed: false
 } as const satisfies CommentTranslatorAzureNormalTranslationExecutionContract;
 
+type CommentTranslatorAzureNormalTranslationSessionDedupeState = {
+  processedCommentIds: Set<string>;
+  feedRowsByCommentId: Map<string, CommentTranslatorRealCommentsDisplayRow>;
+};
+
+const sessionDedupeStateBySessionReference = new Map<string, CommentTranslatorAzureNormalTranslationSessionDedupeState>();
+
 export async function executeCommentTranslatorAzureNormalTranslationForNormalizedMessages(
   request: ExecuteCommentTranslatorAzureNormalTranslationForNormalizedMessagesRequest
 ): Promise<CommentTranslatorAzureNormalTranslationExecutionResult> {
+  const sessionDedupe =
+    request.sessionStatus === "active"
+      ? selectNewCommentTranslatorAzureNormalTranslationMessagesForSession({
+          sessionReferenceId: request.sessionReferenceId,
+          messages: request.messages
+        })
+      : {
+          messages: request.messages,
+          duplicateSkippedCount: 0
+        };
   const baseFeed = createCommentTranslatorRealCommentsFeedStateFromNormalizedMessages({
-    messages: request.messages,
+    messages: sessionDedupe.messages,
     sessionStatus: request.sessionStatus,
     targetLanguage: request.targetLanguage
   });
-  const eligibleMessages = request.messages.filter(isTranslationEligibleMessage);
-  const nonTranslatableEventCount = Math.max(0, request.messages.length - eligibleMessages.length);
+  const eligibleMessages = sessionDedupe.messages.filter(isTranslationEligibleMessage);
+  const nonTranslatableEventCount = Math.max(0, sessionDedupe.messages.length - eligibleMessages.length);
   const eligibility = createEligibilitySummary({
     eligibleCommentCount: eligibleMessages.length,
-    nonTranslatableEventCount
+    nonTranslatableEventCount,
+    sessionDuplicateSkippedCount: sessionDedupe.duplicateSkippedCount
   });
 
   if (request.sessionStatus !== "active") {
@@ -225,16 +244,24 @@ async function persistFeedBridgeResult({
   request: ExecuteCommentTranslatorAzureNormalTranslationForNormalizedMessagesRequest;
   result: Omit<CommentTranslatorAzureNormalTranslationExecutionResult, "feedPersistence">;
 }) {
+  const feed =
+    request.sessionStatus === "active"
+      ? mergeCommentTranslatorAzureNormalTranslationFeedRowsForSession({
+          sessionReferenceId: request.sessionReferenceId,
+          feed: result.feed
+        })
+      : result.feed;
   const feedPersistence = await persistCommentTranslatorRealCommentsFeedForActiveSession({
     callerAuthorization: request.callerAuthorization,
     sessionReferenceId: request.sessionReferenceId,
-    feed: result.feed,
+    feed,
     recordedAtMs: request.occurredAtMs,
     durableFeedStore: request.feedPersistenceStore
   });
 
   return {
     ...result,
+    feed,
     feedPersistence
   };
 }
@@ -351,18 +378,122 @@ function createExecutionResult({
 
 function createEligibilitySummary({
   eligibleCommentCount,
-  nonTranslatableEventCount
+  nonTranslatableEventCount,
+  sessionDuplicateSkippedCount
 }: {
   eligibleCommentCount: number;
   nonTranslatableEventCount: number;
+  sessionDuplicateSkippedCount: number;
 }): CommentTranslatorAzureNormalTranslationEligibilitySummary {
   return {
     eligibleCommentCount,
     nonTranslatableEventCount,
+    sessionDuplicateSkippedCount,
     rawProviderPayload: "not-returned-by-design",
     rawComments: "not-returned-by-design",
     authorChannelMaterial: "not-returned-by-design"
   };
+}
+
+export function clearCommentTranslatorAzureNormalTranslationSessionDedupeState(
+  sessionReferenceId: string | null | undefined
+) {
+  if (!sessionReferenceId) {
+    return;
+  }
+
+  sessionDedupeStateBySessionReference.delete(sessionReferenceId);
+}
+
+export function resetCommentTranslatorAzureNormalTranslationSessionDedupeStateForTests() {
+  sessionDedupeStateBySessionReference.clear();
+}
+
+function selectNewCommentTranslatorAzureNormalTranslationMessagesForSession({
+  sessionReferenceId,
+  messages
+}: {
+  sessionReferenceId: string;
+  messages: readonly CommentTranslatorNormalizedLiveMessage[];
+}) {
+  const state = getCommentTranslatorAzureNormalTranslationSessionDedupeState(sessionReferenceId);
+  const messagesForProviderAndFeed: CommentTranslatorNormalizedLiveMessage[] = [];
+  let duplicateSkippedCount = 0;
+
+  for (const message of messages) {
+    const commentId = message.messageReferenceId.trim();
+    if (!commentId) {
+      continue;
+    }
+
+    if (state.processedCommentIds.has(commentId)) {
+      duplicateSkippedCount += 1;
+      continue;
+    }
+
+    state.processedCommentIds.add(commentId);
+    messagesForProviderAndFeed.push(message);
+  }
+
+  return {
+    messages: messagesForProviderAndFeed,
+    duplicateSkippedCount
+  };
+}
+
+function mergeCommentTranslatorAzureNormalTranslationFeedRowsForSession({
+  sessionReferenceId,
+  feed
+}: {
+  sessionReferenceId: string;
+  feed: CommentTranslatorRealCommentsFeedState;
+}): CommentTranslatorRealCommentsFeedState {
+  if (feed.status !== "ready") {
+    return feed;
+  }
+
+  const state = getCommentTranslatorAzureNormalTranslationSessionDedupeState(sessionReferenceId);
+  for (const row of feed.rows) {
+    state.feedRowsByCommentId.set(row.messageReferenceId, row);
+  }
+
+  return replaceCommentTranslatorRealCommentsFeedRows({
+    feed,
+    rows: Array.from(state.feedRowsByCommentId.values())
+  });
+}
+
+function replaceCommentTranslatorRealCommentsFeedRows({
+  feed,
+  rows
+}: {
+  feed: CommentTranslatorRealCommentsFeedState;
+  rows: readonly CommentTranslatorRealCommentsDisplayRow[];
+}): CommentTranslatorRealCommentsFeedState {
+  return {
+    ...feed,
+    rows,
+    sanitizedSummary: {
+      ...feed.sanitizedSummary,
+      displayRowCount: rows.length
+    }
+  };
+}
+
+function getCommentTranslatorAzureNormalTranslationSessionDedupeState(
+  sessionReferenceId: string
+): CommentTranslatorAzureNormalTranslationSessionDedupeState {
+  const existing = sessionDedupeStateBySessionReference.get(sessionReferenceId);
+  if (existing) {
+    return existing;
+  }
+
+  const state: CommentTranslatorAzureNormalTranslationSessionDedupeState = {
+    processedCommentIds: new Set(),
+    feedRowsByCommentId: new Map()
+  };
+  sessionDedupeStateBySessionReference.set(sessionReferenceId, state);
+  return state;
 }
 
 function createUsageHandoffEstimate(

@@ -55,6 +55,20 @@ function accountRedirect(status: string): never {
   redirectWithAuth("/account", status);
 }
 
+function isUserPreferencesTimeZoneSchemaMissingError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const maybeError = error as { code?: unknown; message?: unknown; details?: unknown; hint?: unknown };
+  const code = typeof maybeError.code === "string" ? maybeError.code : "";
+  const text = [maybeError.message, maybeError.details, maybeError.hint]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ");
+
+  return /time_zone/i.test(text) && (code === "PGRST204" || code === "42703" || /schema cache|column/i.test(text));
+}
+
 function accountIntegrationsRedirect(status: string): never {
   redirect(`/account/integrations?integration=${encodeURIComponent(status)}`);
 }
@@ -314,6 +328,7 @@ export async function saveLocaleThemePreferenceAction(formData: FormData) {
     accountRedirect("sign-in-required");
   }
 
+  const savedAt = new Date().toISOString();
   const { error } = await supabase.from("user_preferences").upsert(
     {
       user_id: user.id,
@@ -321,12 +336,29 @@ export async function saveLocaleThemePreferenceAction(formData: FormData) {
       locale,
       theme,
       time_zone: timeZone,
-      updated_at: new Date().toISOString()
+      updated_at: savedAt
     },
     { onConflict: "user_id" }
   );
 
   if (error) {
+    if (isUserPreferencesTimeZoneSchemaMissingError(error)) {
+      const { error: fallbackError } = await supabase.from("user_preferences").upsert(
+        {
+          user_id: user.id,
+          schema_version: 1,
+          locale,
+          theme,
+          updated_at: savedAt
+        },
+        { onConflict: "user_id" }
+      );
+
+      if (!fallbackError) {
+        accountRedirect("preferences-saved-timezone-pending");
+      }
+    }
+
     accountRedirect("preference-save-error");
   }
 

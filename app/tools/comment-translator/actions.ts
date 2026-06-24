@@ -82,6 +82,9 @@ import {
 import {
   createTrustedCommentTranslatorRealCommentsFeedDurableStore
 } from "@/lib/comment-translator-real-comments-feed-durable-store";
+import {
+  clearCommentTranslatorAzureNormalTranslationSessionDedupeState
+} from "@/lib/comment-translator-azure-normal-translation-execution";
 
 const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
 
@@ -474,6 +477,7 @@ async function readCommentTranslatorSessionActionResult({
 
   if (state.status === "stopped") {
     clearCommentTranslatorBoundedLiveChatPollingState(state.sessionReferenceId);
+    clearCommentTranslatorAzureNormalTranslationSessionDedupeState(state.sessionReferenceId);
     await clearCommentTranslatorRealCommentsFeedForSession({
       callerAuthorization,
       sessionReferenceId: state.sessionReferenceId,

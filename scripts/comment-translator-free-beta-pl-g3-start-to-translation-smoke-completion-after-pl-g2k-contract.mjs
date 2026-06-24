@@ -34,6 +34,7 @@ const targetLookupCommandPath = "scripts/comment-translator-youtube-live-chat-ta
 const pollingCommandPath = "scripts/comment-translator-youtube-live-chat-polling-smoke-command.mjs";
 const providerHarnessPath = "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs";
 const taskPath = "task.md";
+const taskArchivePath = "docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -102,7 +103,8 @@ for (const requiredPath of [
   targetLookupCommandPath,
   pollingCommandPath,
   providerHarnessPath,
-  taskPath
+  taskPath,
+  taskArchivePath
 ]) {
   assert.ok(exists(requiredPath), `PL-G3 after PL-G2K required path exists: ${requiredPath}`);
 }
@@ -127,7 +129,7 @@ const dock = read(dockPath);
 const targetLookupCommand = read(targetLookupCommandPath);
 const pollingCommand = read(pollingCommandPath);
 const providerHarness = read(providerHarnessPath);
-const task = read(taskPath);
+const task = `${read(taskPath)}\n${read(taskArchivePath)}`;
 
 for (const requiredSection of [
   "## Purpose",
@@ -273,7 +275,7 @@ assert.match(providerHarness, /approved-private-gated-live-provider-smoke/, "pro
 
 assert.match(
   task,
-  /Current branch: `codex\/(?:pl-g3-durable-feed-persistence-diagnostic|pl-g3-browser-visible-feed-confirmation-evidence|pl-g3-post-551-full-continuation-test|pl-g3-sanitized-wrapper-boundary-after-pr533|pl-g3-start-to-translation-continuation-after-pr531|pl-g3-continuation-after-pr534-blocked|comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
+  /Current branch: `codex\/(?:pl-g3-post-557-durable-feed-persist-retest|pl-g3-durable-feed-persistence-diagnostic|pl-g3-browser-visible-feed-confirmation-evidence|pl-g3-post-551-full-continuation-test|pl-g3-sanitized-wrapper-boundary-after-pr533|pl-g3-start-to-translation-continuation-after-pr531|pl-g3-continuation-after-pr534-blocked|comment-translator-free-beta-pl-g3-(?:start-to-translation-retry-after-pr507|start-to-translation-retry-after-pr509|start-to-translation-rerun-fresh-chat-after-pr510|token-material-availability-runtime-after-pr508|bounded-polling-empty-intake-evidence-after-start-lookup|polling-(?:sanitized-diagnostics|diagnostics-output-sanitization|403-reason-labels|empty-intake-diagnostics-after-pr511)|empty-intake-polling-diagnostics-read-after-pr512|next-page-target-selection-follow-up-after-pr513|target-selection-diagnostics-after-pr514|start-to-translation-retry-after-pr515|empty-provider-ok-next-page-cursor-diagnostics-after-pr516|next-page-cursor-diagnostics-after-pr517|next-page-cursor-diagnostics-after-pr518|first-page-next-page-diagnostics-after-pr519|first-page-next-page-diagnostics-after-pr520|between-pages-fresh-comment-diagnostics-after-pr521|between-pages-fresh-comment-command-after-pr522|between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
   "task.md records PL-G3 after PL-G2K branch"
 );
 assert.match(task, /Latest PL-G3 After PL-G2K Evidence/i, "task.md records latest PL-G3 after PL-G2K evidence");
@@ -473,7 +475,8 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-durable-usage-counter-store.ts",
   "lib/comment-translator-session-runtime.ts",
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
-  "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs"
+  "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
+  taskArchivePath
 ]);
 
 for (const file of changedFiles()) {

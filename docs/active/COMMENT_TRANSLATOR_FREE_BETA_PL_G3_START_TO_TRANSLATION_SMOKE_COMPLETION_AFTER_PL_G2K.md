@@ -2364,6 +2364,152 @@ Public gate state label: unchanged / blocked.
 
 Public-release capable label: no.
 
+## PL-G3 Post-#557 Durable Feed Persist Diagnostics Retest Preparation
+
+Decision: pl-g3-browser-visible-feed-source-attribution-confirmed-manual-refresh-current-ui.
+
+PR #557 is merged into `origin/codex/comment-translator-free-public-beta-integration` at `dbc07cfae3124b32b06ac09ed14c381cb8dcf508`, and that merge commit was rechecked as contained in the base. This preparation branch is `codex/pl-g3-post-557-durable-feed-persist-retest`.
+
+Non-live readiness review performed:
+
+- `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --check-env-only`: ready-for wrapper status, Start/provider/browser not-run, public gate unchanged / blocked, public-release capable no.
+- `node scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs --print-exact-command-review`: ready-for exact-command review, child not-run, output labels/counts only.
+- Direct child harness preflight initially failed before readiness evaluation because the fresh worktree lacked `typescript`. `npm ci --prefer-offline --no-audit --no-fund` failed with `ERR_SSL_CIPHER_OPERATION_FAILED`, and targeted `npm install --no-save` timed out. A local ignored `node_modules/typescript` junction to an existing same-project dependency package allowed the child harness to load.
+- After loading the operator-local environment in the same PowerShell process, `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --check-env-only` returned `ready-for-task-27-approved-live-provider-smoke-execution-harness`, and `--print-exact-command-review` returned `ready-for-task-27-exact-command-review`. Missing reference count was 0. Provider target lookup, bounded polling, Free provider execution, F10 durable feed persistence execution, and browser confirmation remained not-run.
+
+Approved execution result:
+
+- Exact same-thread approval text was present.
+- Status precheck: HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / passLabel yes.
+- Explicit Start: HTTP status label 2xx / sessionStatusLabel active / activeLabel yes / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / proceedToProviderLabel yes.
+- After one fresh visible chat comment, the reviewed F10 wrapper/provider harness returned wrapperExitLabel exit-2 / statusLabel blocked-pl-g3-sanitized-wrapper-summary / childExitStatusLabel exit-1 / stdoutFinalJsonParsedLabel no / stderrCaptureLabel captured-separate-not-parsed / passLabel no / unavailableReasonLabel stdout-final-json-parse-failed.
+- Durable feed diagnostic labels were unavailable; durableFeedRowsTouchedCount 0; feedDisplayRowCount 0.
+- Cleanup Stop: HTTP status label 2xx / sessionStatusLabel stopped / stopReasonLabel user-stop / unavailableReasonLabel absent / passLabel yes.
+- Post-Stop status: HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / passLabel yes.
+
+Raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments/comment text, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error body/message/reason values, and provider target values were not printed or recorded.
+
+Post-run local dependency check: `node_modules/typescript` was present through the local junction, while `node_modules/@supabase/supabase-js`, `node_modules/@supabase/ssr`, `node_modules/server-only`, and `node_modules/next` were missing in this worktree. This was the likely local child-process blocker before sanitized final JSON, but the approved run did not produce a child payload that proves the exact failing import.
+
+Local dependency recovery after the blocked approved run: the partial ignored `node_modules` directory was moved aside inside this worktree, replaced with an ignored junction to an existing same-project dependency tree, and the generated partial backup was removed after the junction was verified. After recovery, `node_modules/@supabase/supabase-js`, `node_modules/@supabase/ssr`, `node_modules/server-only`, `node_modules/next`, and `node_modules/typescript` were present.
+
+Non-live recovery verification:
+
+- `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --check-env-only`: ready-for-task-27-approved-live-provider-smoke-execution-harness.
+- `node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --print-exact-command-review`: ready-for-task-27-exact-command-review.
+- sandboxed child F10 path: status `task-27-live-provider-smoke-sanitized-result` / `feedPersistencePathLabel executed-f10-feed-persistence-path` / `durableFeedPersistResultLabel durable-feed-persisted` / `durableFeedReadbackLabel readback-ready`.
+
+Provider target lookup, bounded polling, Free provider execution, browser confirmation, Start, and Stop were not run during this dependency recovery verification.
+
+Approved rerun after dependency recovery:
+
+- Exact same-thread approval text was present again.
+- Status precheck: HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / passLabel yes.
+- Explicit Start: HTTP status label 2xx / sessionStatusLabel active / activeLabel yes / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / proceedToProviderLabel yes.
+- After one fresh visible chat comment, the reviewed F10 wrapper/provider harness returned wrapperExitLabel exit-0 / statusLabel pl-g3-sanitized-wrapper-summary / childExitStatusLabel exit-0 / stdoutFinalJsonParsedLabel yes / stderrCaptureLabel absent / providerHarnessStatusLabel task-27-live-provider-smoke-sanitized-result / liveProviderExecutionLabel approved-bounded-execution / providerTargetLookupLabel executed-presence-only / liveChatPollingLabel executed-bounded-readonly-one-step / translationProviderExecutionLabel executed-server-only-provider / feedPersistencePathLabel executed-f10-feed-persistence-path / returnedCount 2 / eligibleCount 2 / providerRequestCount 2 / providerCallCount 2 / translatedCount 2 / skippedCount 0 / terminalErrorCount 0 / providerRouteAvailabilityLabel route-available-provider-reached / durableFeedPersistResultLabel durable-feed-persist-failed / durableFeedStoreReadyLabel ready / durableFeedTableShapeLabel missing-or-unavailable / durableFeedPersistOperationLabel upsert-select-single / durableFeedPersistFailureBucketLabel table-shape-missing-or-unavailable / durableFeedRowsTouchedCount 0 / durableFeedReadbackLabel not-run-persist-failed / feedDisplayRowCount 2 / sourceAttributionAvailabilityLabel available / passLabel yes / unavailableReasonLabel none.
+- Cleanup Stop: HTTP status label 2xx / sessionStatusLabel stopped / stopReasonLabel user-stop / unavailableReasonLabel absent / passLabel yes.
+- Post-Stop status: HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / passLabel yes.
+
+Interpretation: PL-G3 now distinguishes the prior durable persist failure as remote durable feed snapshot table shape missing or unavailable, not provider intake or Free provider translation failure. The relevant reviewed local migration is `supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql`.
+
+No remote schema check, remote mutation, migration apply, deploy/upload, browser-visible feed confirmation, PL-G4, PL-G5, public access change, main promotion, or launch gate flip was run.
+
+Approved remote table-shape confirmation/apply:
+
+- Exact same-thread approval was present for remote durable feed snapshot table-shape confirmation and, only if missing, reviewed migration apply.
+- Pre-apply sanitized catalog check: table_presence_label missing / column_shape_label missing-or-unavailable / column_present_count 0 / column_expected_count 8 / session_key_index_label missing / owner_session_index_label missing / service_role_policy_label missing / service_role_grant_label missing-or-partial / rls_label missing-or-disabled / table_shape_status_label apply-reviewed-migration-needed.
+- Reviewed migration apply: `supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql` applied through Supabase MCP with success label true.
+- Post-apply sanitized catalog check: table_presence_label present / column_shape_label all-present / column_present_count 8 / column_expected_count 8 / session_key_index_label present / owner_session_index_label present / service_role_policy_label present / service_role_grant_label present / rls_label enabled / table_shape_status_label shape-ready.
+
+Raw database rows, raw SQL error bodies/messages, secrets, tokens, cookies, OAuth values, Authorization headers, owner/session identifiers, provider target metadata, liveChatId, raw comments, raw provider payloads, browser storage payloads, quota values, and provider target values were not printed or recorded.
+
+Start, Stop, live target lookup, `liveChatMessages.list`, Free provider execution, browser-visible feed/source-attribution confirmation, deploy/upload, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, PL-G4, PL-G5, and public launch gate flip were not run during this remote schema step.
+
+Approved post-feed-snapshot-migration F10 retest:
+
+- Exact same-thread approval text was present.
+- Status precheck: HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / passLabel yes.
+- Explicit Start: HTTP status label 2xx / sessionStatusLabel active / activeLabel yes / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / proceedToProviderLabel yes.
+- After one fresh visible chat comment, the reviewed F10 wrapper/provider harness returned wrapperExitLabel exit-2 / statusLabel blocked-pl-g3-sanitized-wrapper-summary / childExitStatusLabel exit-2 / stdoutFinalJsonParsedLabel yes / stderrCaptureLabel absent / providerHarnessStatusLabel blocked-target-lookup-sanitized / liveProviderExecutionLabel not-run / providerTargetLookupLabel not-run / liveChatPollingLabel not-run / translationProviderExecutionLabel not-run / feedPersistencePathLabel executed-f10-feed-persistence-path / returnedCount 0 / eligibleCount 0 / providerRequestCount 0 / providerCallCount 0 / translatedCount 0 / skippedCount 0 / terminalErrorCount 0 / providerRouteAvailabilityLabel unavailable / durableFeedPersistResultLabel unavailable / durableFeedStoreReadyLabel unavailable / durableFeedTableShapeLabel unavailable / durableFeedPersistOperationLabel unavailable / durableFeedPersistFailureBucketLabel unavailable / durableFeedRowsTouchedCount 0 / durableFeedReadbackLabel unavailable / feedDisplayRowCount 0 / sourceAttributionAvailabilityLabel not-produced-by-provider-harness / passLabel no / unavailableReasonLabel child-exit-nonzero.
+- Cleanup Stop: HTTP status label 2xx / sessionStatusLabel stopped / stopReasonLabel user-stop / unavailableReasonLabel absent / passLabel yes.
+- Post-Stop status: HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / passLabel yes.
+
+Because the child blocked at target lookup, bounded polling, Free provider execution, durable persist/readback, and browser-visible confirmation were not run in this retest.
+
+Raw stdout/stderr, raw response bodies, raw provider payloads, raw comments, provider target values, and browser storage payloads were not printed or recorded.
+
+Approved target lookup readiness refresh after the post-feed-snapshot-migration blocked retest:
+
+- Exact same-thread approval text was present.
+- Target lookup preflight: exit-0 / stdoutFinalJsonParsedLabel yes / stderrCaptureLabel absent / statusLabel ready-for-bounded-live-chat-target-lookup-command-foundation / liveChatTargetLookupLabel not-run-preflight-only / providerAccessLabel not-run.
+- Owner binding readiness: exit-0 / statusLabel owner-binding-verified-before-live-chat-target-lookup / ownerBindingLabel verified-before-live-chat-target-lookup / providerAccessLabel not-run-readiness-only / liveChatTargetLookupLabel not-run-readiness-only.
+- Token material readiness: exit-0 / statusLabel live-chat-target-lookup-token-material-available / tokenMaterialAvailabilityLabel available / serverFetchBindingLabel resolved-for-server-fetch / approvedExecutionReadinessLabel ready-for-approved-live-chat-target-lookup / providerAccessLabel not-run-token-material-availability-only / liveChatTargetLookupLabel not-run-token-material-availability-only.
+- Approved server-only target lookup confirmation: exit-2 / statusLabel live-chat-target-lookup-failed-sanitized / ownerBindingLabel verified-before-live-chat-target-lookup / providerAccessLabel liveBroadcasts-list-target-lookup-only / liveChatTargetLookupLabel failed-bounded-readonly-one-step / liveChatTargetLabel absent / httpStatusLabel non-2xx / failureClassLabel http-error / providerErrorReasonLabel not-returned-by-design / returnedItemCount 0 / usableTargetCount 0 / pageInfoTotalResultsCount 0.
+
+Raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments/comment text, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error body/message/reason values, and provider target values were not printed or recorded.
+
+Start, Stop, `liveChatMessages.list`, Free provider execution, F10 wrapper/provider harness, browser-visible feed/source-attribution confirmation, deploy/upload, remote mutation/schema apply, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, PL-G4, PL-G5, and public launch gate flip were not run during this readiness refresh.
+
+Target lookup readiness refresh after operator OAuth Playground access-token update:
+
+- Target lookup preflight: exit-0 / statusLabel ready-for-bounded-live-chat-target-lookup-command-foundation / liveChatTargetLookupLabel not-run-preflight-only / providerAccessLabel not-run.
+- Owner binding readiness: exit-0 / statusLabel owner-binding-verified-before-live-chat-target-lookup / ownerBindingLabel verified-before-live-chat-target-lookup.
+- Token material readiness: exit-0 / statusLabel live-chat-target-lookup-token-material-available / tokenMaterialAvailabilityLabel available / serverFetchBindingLabel resolved-for-server-fetch / approvedExecutionReadinessLabel ready-for-approved-live-chat-target-lookup.
+- Server-only target lookup: exit-0 / statusLabel live-chat-target-lookup-sanitized-result / ownerBindingLabel verified-before-live-chat-target-lookup / providerAccessLabel liveBroadcasts-list-target-lookup-only / liveChatTargetLookupLabel executed-bounded-readonly-one-step / liveChatTargetLabel present / httpStatusLabel 2xx / returnedItemCount 5 / usableTargetCount 1 / pageInfoTotalResultsCount 20 / selectedTargetPresenceLabel present / selectedTargetRankLabel rank-1 / selectedTargetSourceLabel first-live-owned-broadcast-with-live-chat-target / lifecycleStatusDistributionLabels live:1,complete:4 / privacyStatusDistributionLabels unlisted:5.
+
+Raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments/comment text, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error body/message/reason values, and provider target values were not printed or recorded.
+
+Start, Stop, `liveChatMessages.list`, Free provider execution, F10 wrapper/provider harness, browser-visible feed/source-attribution confirmation, deploy/upload, remote mutation/schema apply, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, PL-G4, PL-G5, and public launch gate flip were not run during this rerun.
+
+Approved post-feed-snapshot-migration F10 retest after token refresh:
+
+- Exact same-thread approval text was present.
+- Status precheck: HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / passLabel yes.
+- Explicit Start: HTTP status label 2xx / sessionStatusLabel active / activeLabel yes / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / proceedToProviderLabel yes.
+- After one fresh visible chat comment, the reviewed F10 wrapper/provider harness returned wrapperExitLabel exit-0 / statusLabel pl-g3-sanitized-wrapper-summary / childExitStatusLabel exit-0 / stdoutFinalJsonParsedLabel yes / stderrCaptureLabel absent / providerHarnessStatusLabel task-27-live-provider-smoke-sanitized-result / liveProviderExecutionLabel approved-bounded-execution / providerTargetLookupLabel executed-presence-only / liveChatPollingLabel executed-bounded-readonly-one-step / translationProviderExecutionLabel executed-server-only-provider / feedPersistencePathLabel executed-f10-feed-persistence-path / returnedCount 4 / eligibleCount 4 / providerRequestCount 4 / providerCallCount 4 / translatedCount 4 / skippedCount 0 / terminalErrorCount 0 / providerRouteAvailabilityLabel route-available-provider-reached / durableFeedPersistResultLabel durable-feed-persisted / durableFeedStoreReadyLabel ready / durableFeedTableShapeLabel available / durableFeedPersistOperationLabel upsert-select-single / durableFeedPersistFailureBucketLabel none / durableFeedRowsTouchedCount 1 / durableFeedReadbackLabel readback-ready / feedDisplayRowCount 4 / sourceAttributionAvailabilityLabel available / passLabel yes / unavailableReasonLabel none.
+- Cleanup Stop: HTTP status label 2xx / sessionStatusLabel stopped / stopReasonLabel user-stop / unavailableReasonLabel absent / passLabel yes.
+- Post-Stop status: HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / stopReasonLabel none-or-unavailable / unavailableReasonLabel absent / passLabel yes.
+
+Raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments/comment text, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error body/message/reason values, and provider target values were not printed or recorded.
+
+Browser-visible feed/source-attribution confirmation, deploy/upload, remote mutation/schema apply, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, PL-G4, PL-G5, and public launch gate flip were not run.
+
+Approved browser-visible feed/source-attribution confirmation retest:
+
+- Exact same-thread approval text was present.
+- Status precheck: HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / passLabel yes.
+- Explicit Start: HTTP status label 2xx / sessionStatusLabel active / activeLabel yes / proceedToProviderLabel yes.
+- After one fresh visible chat comment, the reviewed F10 wrapper/provider harness returned wrapperExitLabel exit-0 / statusLabel pl-g3-sanitized-wrapper-summary / childExitStatusLabel exit-0 / providerHarnessStatusLabel task-27-live-provider-smoke-sanitized-result / liveProviderExecutionLabel approved-bounded-execution / providerTargetLookupLabel executed-presence-only / liveChatPollingLabel executed-bounded-readonly-one-step / translationProviderExecutionLabel executed-server-only-provider / feedPersistencePathLabel executed-f10-feed-persistence-path / returnedCount 5 / eligibleCount 5 / providerRequestCount 5 / providerCallCount 5 / translatedCount 5 / skippedCount 0 / terminalErrorCount 0 / durableFeedPersistResultLabel durable-feed-persisted / durableFeedStoreReadyLabel ready / durableFeedTableShapeLabel available / durableFeedPersistOperationLabel upsert-select-single / durableFeedPersistFailureBucketLabel none / durableFeedRowsTouchedCount 1 / durableFeedReadbackLabel readback-ready / feedDisplayRowCount 5 / sourceAttributionAvailabilityLabel available / passLabel yes / unavailableReasonLabel none.
+- Browser-visible confirmation in the operator's real browser after pressing the comment refresh control: browserFeedVisibleLabel yes / browserFeedRowCount 5 / browserSourceAttributionVisibleLabel yes.
+- Cleanup Stop: HTTP status label 2xx / sessionStatusLabel stopped / stopReasonLabel user-stop / passLabel yes.
+- Post-Stop status: HTTP status label 2xx / sessionStatusLabel not-started / activeLabel no / passLabel yes.
+
+Screenshot raw comment text was not recorded in docs. Raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments/comment text, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error body/message/reason values, and provider target values were not printed or recorded.
+
+UI refresh behavior observed: the current browser feed becomes visible after the operator presses the comment refresh control. Code review confirms `components/comment-translator/CommentTranslatorDock.tsx` uses `refreshRealCommentsFeed()` to call `getCommentTranslatorRealCommentsFeedAction()` on the refresh button, and the component imports `useRef`, `useState`, and `useTransition` only; there is no current `useEffect`/interval/subscription that automatically refreshes the browser feed. Public launch by itself will not make this realtime unless a separate auto-refresh/streaming UI slice is implemented and verified.
+
+Expected output for the later approved retest remains sanitized labels/counts only: `feedPersistencePathLabel`, `durableFeedPersistResultLabel`, `durableFeedStoreReadyLabel`, `durableFeedTableShapeLabel`, `durableFeedPersistOperationLabel`, `durableFeedPersistFailureBucketLabel`, `durableFeedRowsTouchedCount`, `durableFeedReadbackLabel`, `feedDisplayRowCount`, provider route/status labels, returned/eligible/translated/skipped counts, stop reason label, unavailable reason label, public gate state label, public-release capable label, and pass/fail.
+
+Forbidden output remains unchanged: raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments/comment text, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error body/message/reason values, and provider target values.
+
+Exact approval text for the next retest:
+
+```text
+I approve running the PL-G3 post-#557 durable-feed-persist diagnostics retest, limited to status precheck, explicit Start, server-only live target lookup, one bounded liveChatMessages.list step after one fresh visible chat comment, the reviewed F10 feed persistence wrapper/provider harness command, cleanup Stop, and post-Stop status. Use only sanitized labels/counts, including durableFeedStoreReadyLabel, durableFeedTableShapeLabel, durableFeedPersistOperationLabel, durableFeedPersistFailureBucketLabel, durableFeedRowsTouchedCount, durableFeedReadbackLabel, durableFeedPersistResultLabel, and feedDisplayRowCount. Do not print raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments/comment text, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error body/message/reason values, or provider target values. Do not run deploy/upload, remote mutation/schema apply, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, PL-G4, PL-G5, or public launch gate flip. If durable persist returns durable-feed-persisted plus readback-ready, stop before browser-visible feed/source-attribution confirmation unless separately approved.
+```
+
+Next safe action: decide whether PL-G3 public usability can accept manual comment refresh for beta, or implement a separate auto-refresh / realtime-ish feed refresh slice before public launch. Public gate state label remains unchanged / blocked; public-release capable label remains no until release-owner criteria explicitly accept the remaining gaps.
+
+Exact approval text for the next PL-G3 F10 retest:
+
+```text
+I approve running the PL-G3 post-feed-snapshot-migration F10 durable-feed-persist diagnostics retest, limited to status precheck, explicit Start, server-only live target lookup, one bounded liveChatMessages.list step after one fresh visible chat comment, the reviewed F10 feed persistence wrapper/provider harness command, cleanup Stop, and post-Stop status. Use only sanitized labels/counts, including durableFeedStoreReadyLabel, durableFeedTableShapeLabel, durableFeedPersistOperationLabel, durableFeedPersistFailureBucketLabel, durableFeedRowsTouchedCount, durableFeedReadbackLabel, durableFeedPersistResultLabel, and feedDisplayRowCount. Do not print raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments/comment text, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error body/message/reason values, or provider target values. Do not run deploy/upload, remote mutation/schema apply, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, PL-G4, PL-G5, public launch gate flip, or browser-visible feed/source-attribution confirmation.
+```
+
+Public gate state label: unchanged / blocked.
+
+Public-release capable label: no.
+
 ## Next Safe Action
 
 Keep public launch blocked. The post-#552 retry proves Start active, one fresh-comment provider wrapper/harness pass, provider target lookup presence-only execution, one bounded polling read, and Free provider translation with translatedCount 1. This implementation adds the local durable safe-feed boundary needed for browser visibility, but it does not prove browser-visible server-owned feed/source-attribution confirmation because that step was not included in the approval scope and was not run here. Any further UI/feed/live/provider command still requires separate exact same-thread approval and sanitized output review. PL-G4, PL-G5, deploy/upload, remote mutation outside the approved reset boundary, OAuth flows, token refresh, Stripe actions, public access changes, main promotion, and public launch gate flip remain blocked until separately approved.

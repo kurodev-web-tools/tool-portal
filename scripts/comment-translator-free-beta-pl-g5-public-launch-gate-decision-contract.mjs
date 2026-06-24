@@ -21,6 +21,7 @@ const plG4DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_C
 const finalQaPath = "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const taskPath = "task.md";
+const taskArchivePath = "docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -82,7 +83,8 @@ for (const requiredPath of [
   plG4DocPath,
   finalQaPath,
   gapAuditPath,
-  taskPath
+  taskPath,
+  taskArchivePath
 ]) {
   assert.ok(exists(requiredPath), `PL-G5 required path exists: ${requiredPath}`);
 }
@@ -98,7 +100,7 @@ const plG3Doc = read(plG3DocPath);
 const plG4Doc = read(plG4DocPath);
 const finalQa = read(finalQaPath);
 const gapAudit = read(gapAuditPath);
-const task = read(taskPath);
+const task = `${read(taskPath)}\n${read(taskArchivePath)}`;
 
 for (const requiredSection of [
   "## Purpose",
@@ -179,7 +181,7 @@ assert.match(gapAudit, /PL-G5[\s\S]*Public launch gate decision/i, "gap audit re
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g5-public-launch-gate-decision(?:-follow-up-after-pl-g4)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up|pl-g3-provider-permission-readiness-confirmation-after-pr503|pl-g3-operator-local-provider-permission-confirmation-after-pr504|pl-g3-start-to-translation-retry-after-pr507|pl-g3-token-material-availability-runtime-after-pr508|pl-g3-first-page-next-page-diagnostics-after-pr519|pl-g3-first-page-next-page-diagnostics-after-pr520|pl-g3-between-pages-fresh-comment-diagnostics-after-pr521|pl-g3-between-pages-fresh-comment-command-after-pr522|pl-g3-between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524)`/i,
+  /Current branch: `codex\/(?:pl-g3-post-557-durable-feed-persist-retest|comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g5-public-launch-gate-decision(?:-follow-up-after-pl-g4)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up|pl-g3-provider-permission-readiness-confirmation-after-pr503|pl-g3-operator-local-provider-permission-confirmation-after-pr504|pl-g3-start-to-translation-retry-after-pr507|pl-g3-token-material-availability-runtime-after-pr508|pl-g3-first-page-next-page-diagnostics-after-pr519|pl-g3-first-page-next-page-diagnostics-after-pr520|pl-g3-between-pages-fresh-comment-diagnostics-after-pr521|pl-g3-between-pages-fresh-comment-command-after-pr522|pl-g3-between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
   "task.md records PL-G5 branch"
 );
 assert.match(task, /PL-G5[\s\S]*keep blocked \/ blocked-no-approval/i, "task.md records PL-G5 blocked result");
@@ -257,7 +259,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs",
+  taskArchivePath
 ]);
 
 for (const file of changedFiles()) {

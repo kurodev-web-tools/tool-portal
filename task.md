@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/timezone-pending-migration-fallback`.
+- Current branch: `codex/apply-account-display-timezone-migration`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: follow-up fallback so account language/theme saves keep working while the shared timezone preference schema migration is still pending.
+- Scope: approved remote schema apply for the shared account display timezone preference.
 - Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
@@ -115,6 +115,7 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 - F9 Real comments UI wiring remains the server-owned safe feed boundary. This PPF slice keeps that boundary and changes only preview refresh cadence, display ordering, and timestamp presentation.
 - Shared display timezone preference slice adds a reusable `v-streamer-tools-time-zone` local preference, account `user_preferences.time_zone` read/write wiring, account display settings UI, login-time remote preference apply, and Comment Translator timestamp preference consumption. This is display-only; quota/rate-limit reset authority remains UTC.
 - Migration-pending fallback follow-up keeps existing language/theme account saves working when deployed before the `time_zone` column is applied. In that case, the UI returns a sanitized timezone-pending status and cross-device timezone persistence remains unavailable until the approved schema apply.
+- Approved remote schema apply for `account_display_timezone_preference` completed through Supabase MCP after read-only precheck showed `time_zone` column/constraint/comment missing. Postcheck returned `time_zone` column ready, format constraint ready, comment ready, and migration history present. Output was sanitized to table/column/constraint/comment readiness labels only.
 - Raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error bodies/messages/reasons, provider target values, and screenshots containing raw comments were not recorded in docs.
 
 ## Current Local Verification
@@ -137,7 +138,7 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 - Width checks via local dev server `http://127.0.0.1:3218/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for the approved browser-visible retest.
 - Shared display timezone preference width checks via local dev server `http://127.0.0.1:3027/account/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, timezone select visible, and console error/warn count `0`.
 - Shared display timezone preference width checks via local dev server `http://127.0.0.1:3027/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for an approved browser-visible retest.
-- Remote schema apply for `supabase/migrations/20260624000000_account_display_timezone_preference.sql`: not-run / approval-gated. The migration file is reviewable only in this slice.
+- Remote schema apply for `supabase/migrations/20260624000000_account_display_timezone_preference.sql`: approved and applied through Supabase MCP. Precheck showed `time_zone` column/constraint/comment missing; postcheck showed column/constraint/comment ready and migration history present.
 
 Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`. The pre-cleanup task-board snapshot is archived at `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 
@@ -145,7 +146,7 @@ Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_
 
 - Public-release capable remains no until PPF-1/PPF-2 are implemented and verified, PL-G4 production/custom deployed smoke passes or is explicitly accepted as missing, PL-G5 release-owner approval is recorded, and PL-G6 public access change is separately approved and executed.
 - The browser-visible PL-G3 feed confirmation is valid only after manual comment refresh in the current UI. It does not prove automatic realtime or periodic feed refresh.
-- Shared display timezone preference still needs review/merge and a separately approved remote schema apply before account cross-device persistence is available in deployed environments. Runtime quota enforcement remains UTC-based.
+- Shared display timezone preference remote schema is applied. Runtime quota enforcement remains UTC-based; timezone is display convenience only.
 - No deploy/upload, OAuth flow, token refresh, Stripe action, public access change, main promotion, PL-G4, PL-G5, PL-G6, or launch gate flip was run in this cleanup slice.
 
 ## Later Work

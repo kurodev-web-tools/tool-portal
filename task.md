@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/pl-g3-post-557-durable-feed-persist-retest`.
+- Current branch: `codex/public-launch-next-flow-task-note`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: post-#557 PL-G3 durable feed persistence retest evidence, pre-public preview follow-up recording, and task-board cleanup.
+- Scope: public-launch remaining task flow note after merged PR #558.
 - Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
@@ -87,7 +87,22 @@ These are the remaining gates before Free public beta can be opened. Each execut
 | --- | --- | --- |
 | PPF-1 | Preview feed should update comments automatically on a safe periodic cadence during an active session, without requiring manual comment refresh. Keep manual refresh as a fallback/control, and stop polling when the session is inactive or stopped. | pending |
 | PPF-2 | Preview feed ordering should show newest comments at the top. Current observed ordering is oldest-first, so reverse the display/read ordering before public launch. | pending |
-| PPF-3 | Comment timestamps should support a user-facing timezone display setting in a future UI/account preference slice. Keep rate-limit and quota reset authority on UTC unless explicitly changed; this item is about comment timestamp display convenience. | pending |
+| PPF-3 | Comment timestamps should support a user-facing timezone display setting in a future shared settings/account preference slice, so future tools can reuse the same display preference instead of adding tool-specific timezone controls. Keep rate-limit and quota reset authority on UTC unless explicitly changed; this item is about comment timestamp display convenience. | pending |
+
+### Public Launch Next Flow
+
+Use this order for the remaining Free public beta work unless the release owner explicitly changes priorities.
+
+| Step | Work | Purpose | Approval / verification boundary |
+| --- | --- | --- | --- |
+| 1 | Implement PPF-1 and PPF-2 together | Make the preview usable without manual refresh and show newest comments first. Keep manual refresh as fallback and stop auto-refresh when the session is inactive or stopped. | Local UI/action contracts plus width checks. Do not run Start, live provider polling, translation provider execution, deploy/upload, or public access changes in this implementation slice. |
+| 2 | Decide timestamp display scope | Prefer browser-local comment timestamp display with an explicit timezone label for the public beta minimum. If a persistent timezone choice is pulled forward, implement it as a shared settings/account preference that future tools can read, not as a Comment Translator-only setting. | Local formatting/unit contract and width checks only. Runtime quota and rate-limit reset authority stays UTC. |
+| 3 | Run an approved browser-visible preview retest | After PPF-1/PPF-2 are merged, prove in the operator's real browser that Start/Stop works, comments can be fetched and translated, newest comments appear first, and the feed updates without pressing manual refresh. | Requires exact same-thread approval because it includes Start, live target lookup, `liveChatMessages.list`, Free provider execution, browser-visible confirmation, Stop, and sanitized labels/counts only. |
+| 4 | Run PL-G4 production/custom deployed smoke | Confirm the production/custom deployed target matches the reviewed integration branch and allowed testers can reach the gated UI/API states before public access changes. | Requires exact same-thread approval. If live Start-to-translation is included, the approval must explicitly include Start, provider polling, translation, browser-visible confirmation, and Stop. |
+| 5 | Record PL-G5 release-owner decision | Choose `keep blocked`, `open limited public beta`, or `flip public gate` after reviewing remaining risks and evidence. | Requires release-owner approval. Missing evidence must be explicitly accepted or completed. |
+| 6 | Execute PL-G6 public access change / promotion | Only after PL-G5 approval, perform the reviewed public access change and any required promotion operation. | Separate approval-gated operation. Do not combine with feature work, PL-G4 smoke, Stripe work, or unrelated cleanup. |
+
+Current recommended next PR: implement PPF-1 and PPF-2 together, and include browser-local timestamp display with timezone label only if the implementation remains tightly scoped to the preview feed UI.
 
 ## Latest Sanitized Evidence Summary
 

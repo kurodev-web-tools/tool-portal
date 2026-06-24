@@ -19,6 +19,7 @@ const sessionRoutePath = "app/api/comment-translator/session/route.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
 const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
 const taskPath = "task.md";
+const taskArchivePath = "docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -79,7 +80,8 @@ for (const requiredPath of [
   sessionRoutePath,
   actionsPath,
   dockPath,
-  taskPath
+  taskPath,
+  taskArchivePath
 ]) {
   assert.ok(exists(requiredPath), `PL-G4 required path exists: ${requiredPath}`);
 }
@@ -95,7 +97,7 @@ const gapAudit = read(gapAuditPath);
 const sessionRoute = read(sessionRoutePath);
 const actions = read(actionsPath);
 const dock = read(dockPath);
-const task = read(taskPath);
+const task = `${read(taskPath)}\n${read(taskArchivePath)}`;
 
 for (const requiredSection of [
   "## Purpose",
@@ -169,7 +171,7 @@ assert.match(gapAudit, /PL-G4[\s\S]*production\/custom deployed smoke/i, "gap au
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g4-production-custom-deployed-smoke(?:-evidence-follow-up)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up|pl-g3-provider-permission-readiness-confirmation-after-pr503|pl-g3-operator-local-provider-permission-confirmation-after-pr504|pl-g3-start-to-translation-retry-after-pr507|pl-g3-token-material-availability-runtime-after-pr508|pl-g3-first-page-next-page-diagnostics-after-pr519|pl-g3-first-page-next-page-diagnostics-after-pr520|pl-g3-between-pages-fresh-comment-diagnostics-after-pr521|pl-g3-between-pages-fresh-comment-command-after-pr522|pl-g3-between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524)`/i,
+  /Current branch: `codex\/(?:pl-g3-post-557-durable-feed-persist-retest|comment-translator-free-beta-(?:pl-g5-after-pl-g4-provider-permission-triage-follow-up|pl-g4-production-custom-deployed-smoke(?:-evidence-follow-up)?|pl-g4-after-pl-g3-provider-permission-triage-follow-up|pl-g3-provider-permission-readiness-confirmation-after-pr503|pl-g3-operator-local-provider-permission-confirmation-after-pr504|pl-g3-start-to-translation-retry-after-pr507|pl-g3-token-material-availability-runtime-after-pr508|pl-g3-first-page-next-page-diagnostics-after-pr519|pl-g3-first-page-next-page-diagnostics-after-pr520|pl-g3-between-pages-fresh-comment-diagnostics-after-pr521|pl-g3-between-pages-fresh-comment-command-after-pr522|pl-g3-between-pages-fresh-comment-execution-after-pr523|between-pages-fresh-comment-retry-after-pr524))`/i,
   "task.md records PL-G4 branch"
 );
 assert.match(task, /PL-G4[\s\S]*blocked-no-approval/i, "task.md records PL-G4 blocked result");
@@ -263,7 +265,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs"
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs",
+  taskArchivePath
 ]);
 
 for (const file of changedFiles()) {

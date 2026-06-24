@@ -11,7 +11,7 @@ import {
 } from "@/lib/comment-translator-youtube-oauth-connect-callback";
 import { createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { normalizeLocale } from "@/lib/locale";
-import { normalizeThemePreference } from "@/lib/local-preferences";
+import { normalizeThemePreference, normalizeTimeZonePreference } from "@/lib/local-preferences";
 import { clearRecoverySessionPending, isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getAccountSessionState } from "@/lib/supabase/session";
@@ -294,8 +294,9 @@ export async function signOutAction() {
 export async function saveLocaleThemePreferenceAction(formData: FormData) {
   const locale = normalizeLocale(readRequiredString(formData, "locale"));
   const theme = normalizeThemePreference(readRequiredString(formData, "theme"));
+  const timeZone = normalizeTimeZonePreference(readRequiredString(formData, "timeZone"));
 
-  if (!locale || !theme) {
+  if (!locale || !theme || !timeZone) {
     accountRedirect("local-preference-required");
   }
 
@@ -319,6 +320,7 @@ export async function saveLocaleThemePreferenceAction(formData: FormData) {
       schema_version: 1,
       locale,
       theme,
+      time_zone: timeZone,
       updated_at: new Date().toISOString()
     },
     { onConflict: "user_id" }

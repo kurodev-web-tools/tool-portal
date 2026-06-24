@@ -76,7 +76,7 @@ const accountPage = read("app/account/page.tsx");
 assertIncludes(accountPage, ["redirect", "/login?next=/account", "AccountPreferencesShell"], "account signed-out redirect");
 
 const accountShell = read("components/account/AccountPreferencesShell.tsx");
-assertIncludes(accountShell, ["signOutAction", "saveLocaleThemePreferenceAction", "remotePreferences"], "account settings shell");
+assertIncludes(accountShell, ["signOutAction", "saveLocaleThemePreferenceAction", "TimeZoneSelect", "hiddenTimeZone"], "account settings shell");
 assertExcludes(
   accountShell,
   [

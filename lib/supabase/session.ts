@@ -24,9 +24,23 @@ export type AccountSessionState = {
 type UserPreferenceRow = {
   locale: string | null;
   theme: string | null;
-  time_zone: string | null;
+  time_zone?: string | null;
   updated_at: string | null;
 };
+
+function isUserPreferencesTimeZoneSchemaMissingError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const maybeError = error as { code?: unknown; message?: unknown; details?: unknown; hint?: unknown };
+  const code = typeof maybeError.code === "string" ? maybeError.code : "";
+  const text = [maybeError.message, maybeError.details, maybeError.hint]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ");
+
+  return /time_zone/i.test(text) && (code === "PGRST204" || code === "42703" || /schema cache|column/i.test(text));
+}
 
 export async function getAccountSessionState(): Promise<AccountSessionState> {
   const config = getSupabasePublicConfig();
@@ -82,12 +96,16 @@ export async function getAccountSessionState(): Promise<AccountSessionState> {
     };
   }
 
-  const { data, error } = await supabase
+  const preferenceResult = await supabase
     .from("user_preferences")
     .select("locale,theme,time_zone,updated_at")
     .eq("user_id", user.id)
     .maybeSingle();
-  const row = data as UserPreferenceRow | null;
+  const fallbackPreferenceResult = preferenceResult.error && isUserPreferencesTimeZoneSchemaMissingError(preferenceResult.error)
+    ? await supabase.from("user_preferences").select("locale,theme,updated_at").eq("user_id", user.id).maybeSingle()
+    : null;
+  const preferenceError = fallbackPreferenceResult?.error ?? preferenceResult.error;
+  const row = (fallbackPreferenceResult?.data ?? preferenceResult.data) as UserPreferenceRow | null;
 
   return {
     configStatus: "ready",
@@ -98,14 +116,14 @@ export async function getAccountSessionState(): Promise<AccountSessionState> {
       email: user.email ?? null
     },
     remotePreferences:
-      row && !error
+      row && !preferenceError
         ? {
             locale: normalizeLocale(row.locale),
             theme: normalizeThemePreference(row.theme),
-            timeZone: normalizeTimeZonePreference(row.time_zone),
+            timeZone: normalizeTimeZonePreference(row.time_zone ?? null),
             updatedAt: row.updated_at
           }
         : null,
-    remotePreferenceStatus: error ? "unavailable" : "loaded"
+    remotePreferenceStatus: preferenceError ? "unavailable" : "loaded"
   };
 }

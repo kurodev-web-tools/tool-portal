@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/shared-display-timezone-preference`.
+- Current branch: `codex/timezone-pending-migration-fallback`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: shared display timezone preference persistence so Comment Translator timestamps follow account-saved display settings across login/devices.
+- Scope: follow-up fallback so account language/theme saves keep working while the shared timezone preference schema migration is still pending.
 - Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
@@ -114,13 +114,14 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 - Before this PPF branch, UI review found that the preview feed was refreshed only by the manual comment refresh control. This branch adds active-session periodic refresh while keeping the manual refresh control as fallback.
 - F9 Real comments UI wiring remains the server-owned safe feed boundary. This PPF slice keeps that boundary and changes only preview refresh cadence, display ordering, and timestamp presentation.
 - Shared display timezone preference slice adds a reusable `v-streamer-tools-time-zone` local preference, account `user_preferences.time_zone` read/write wiring, account display settings UI, login-time remote preference apply, and Comment Translator timestamp preference consumption. This is display-only; quota/rate-limit reset authority remains UTC.
+- Migration-pending fallback follow-up keeps existing language/theme account saves working when deployed before the `time_zone` column is applied. In that case, the UI returns a sanitized timezone-pending status and cross-device timezone persistence remains unavailable until the approved schema apply.
 - Raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error bodies/messages/reasons, provider target values, and screenshots containing raw comments were not recorded in docs.
 
 ## Current Local Verification
 
 - `node scripts/comment-translator-public-preview-feed-ux-contract.mjs`: passed. Covers PPF-1 active-session 15s safe auto-refresh, manual refresh fallback, PPF-2 newest-first ordering, PPF-3 timestamp timezone labeling, shared timezone preference compatibility, and public gate unchanged.
 - `node scripts/comment-translator-real-comments-ui-wiring-contract.mjs`: passed. Confirms F9 server-owned safe feed boundary remains intact.
-- `node scripts/comment-translator-shared-timezone-preference-contract.mjs`: passed. Confirms shared timezone preference local storage/event helpers, account read/write wiring, Supabase migration shape, remote preference apply, and Comment Translator timestamp consumption.
+- `node scripts/comment-translator-shared-timezone-preference-contract.mjs`: passed. Confirms shared timezone preference local storage/event helpers, account read/write wiring, migration-pending fallback for `time_zone`, Supabase migration shape, remote preference apply, and Comment Translator timestamp consumption.
 - `node scripts/account-remote-display-settings-contract.mjs`: passed. Confirms remote account display settings include locale/theme/timezone and reuse shared local preference keys.
 - `node scripts/account-preferences-shell-contract.mjs`: passed. Confirms account display settings UI includes timezone alongside language/theme and posts the shared timezone value.
 - `node scripts/local-preference-adapter-contract.mjs`: passed. Confirms local preference snapshot includes locale/theme/timezone and shared timezone read/write helpers.
@@ -132,6 +133,7 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 - `npm run build`: passed. Existing warnings observed: Next.js `middleware` convention deprecation and static export RSC alias skip for server-runtime build.
 - `git diff --check`: passed with Windows LF-to-CRLF normalization warnings only.
 - Changed-files high-confidence no-secret scan: passed for 16 changed files including untracked files.
+- Migration-pending fallback follow-up verification: `node scripts/comment-translator-shared-timezone-preference-contract.mjs`, account-related contracts, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence no-secret scan passed after adding the fallback.
 - Width checks via local dev server `http://127.0.0.1:3218/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for the approved browser-visible retest.
 - Shared display timezone preference width checks via local dev server `http://127.0.0.1:3027/account/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, timezone select visible, and console error/warn count `0`.
 - Shared display timezone preference width checks via local dev server `http://127.0.0.1:3027/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for an approved browser-visible retest.

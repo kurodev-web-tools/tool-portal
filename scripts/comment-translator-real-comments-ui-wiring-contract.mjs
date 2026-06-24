@@ -285,6 +285,7 @@ const allowedChangedFiles = new Set([
   readinessDocPath,
   gapAuditPath,
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

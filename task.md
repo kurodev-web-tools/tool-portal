@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/public-launch-next-flow-task-note`.
+- Current branch: `codex/public-launch-preview-feed-ux`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: public-launch remaining task flow note after merged PR #558.
+- Scope: PPF-1/PPF-2 preview feed auto-refresh/newest-first, plus PPF-3 minimum browser-local timestamp display with explicit timezone label.
 - Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
@@ -85,9 +85,9 @@ These are the remaining gates before Free public beta can be opened. Each execut
 
 | ID | Follow-up | Current state |
 | --- | --- | --- |
-| PPF-1 | Preview feed should update comments automatically on a safe periodic cadence during an active session, without requiring manual comment refresh. Keep manual refresh as a fallback/control, and stop polling when the session is inactive or stopped. | pending |
-| PPF-2 | Preview feed ordering should show newest comments at the top. Current observed ordering is oldest-first, so reverse the display/read ordering before public launch. | pending |
-| PPF-3 | Comment timestamps should support a user-facing timezone display setting in a future shared settings/account preference slice, so future tools can reuse the same display preference instead of adding tool-specific timezone controls. Keep rate-limit and quota reset authority on UTC unless explicitly changed; this item is about comment timestamp display convenience. | pending |
+| PPF-1 | Preview feed should update comments automatically on a safe periodic cadence during an active session, without requiring manual comment refresh. Keep manual refresh as a fallback/control, and stop polling when the session is inactive or stopped. | implemented locally in `codex/public-launch-preview-feed-ux`; local deterministic verification passed |
+| PPF-2 | Preview feed ordering should show newest comments at the top. Current observed ordering is oldest-first, so reverse the display/read ordering before public launch. | implemented locally in `codex/public-launch-preview-feed-ux`; local deterministic verification passed |
+| PPF-3 | Comment timestamps should support a user-facing timezone display setting in a future shared settings/account preference slice, so future tools can reuse the same display preference instead of adding tool-specific timezone controls. Keep rate-limit and quota reset authority on UTC unless explicitly changed; this item is about comment timestamp display convenience. | minimum scope implemented locally: browser-local timestamp display with explicit timezone label; no persistent timezone preference added |
 
 ### Public Launch Next Flow
 
@@ -111,8 +111,21 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 - Approved remote table-shape confirmation applied the reviewed `supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql` migration only after the table was confirmed missing. Post-apply table shape returned present/all-present/shape-ready labels.
 - Post-migration F10 retest after operator token refresh passed with provider/polling/translation labels, `durableFeedPersistResultLabel durable-feed-persisted`, `durableFeedReadbackLabel readback-ready`, and `feedDisplayRowCount 4`.
 - Browser-visible confirmation retest passed after manual comment refresh in the operator's real browser: `browserFeedVisibleLabel yes`, `browserFeedRowCount 5`, and `browserSourceAttributionVisibleLabel yes`.
-- Current UI review found that the preview feed is refreshed by the manual comment refresh control; no interval/subscription auto-refresh path is currently present.
+- Before this PPF branch, UI review found that the preview feed was refreshed only by the manual comment refresh control. This branch adds active-session periodic refresh while keeping the manual refresh control as fallback.
+- F9 Real comments UI wiring remains the server-owned safe feed boundary. This PPF slice keeps that boundary and changes only preview refresh cadence, display ordering, and timestamp presentation.
 - Raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error bodies/messages/reasons, provider target values, and screenshots containing raw comments were not recorded in docs.
+
+## Current Local Verification
+
+- `node scripts/comment-translator-public-preview-feed-ux-contract.mjs`: passed. Covers PPF-1 active-session 15s safe auto-refresh, manual refresh fallback, PPF-2 newest-first ordering, PPF-3 browser-local timestamp with timezone label, no persistent timezone preference, and public gate unchanged.
+- `node scripts/comment-translator-real-comments-ui-wiring-contract.mjs`: passed. Confirms F9 server-owned safe feed boundary remains intact.
+- `node scripts/local-preference-adapter-contract.mjs`: passed. Confirms no local preference storage expansion for timezone in this minimum slice.
+- `npm run lint`: passed.
+- `npx tsc --noEmit`: passed.
+- `npm run build`: passed. Existing warnings observed: Next.js `middleware` convention deprecation, static export RSC alias skip for server-runtime build, and webpack cache big-string serialization warnings.
+- `git diff --check`: passed with Windows LF-to-CRLF normalization warnings only.
+- Changed-files no-secret scan: passed for 5 changed files.
+- Width checks via local dev server `http://127.0.0.1:3218/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for the approved browser-visible retest.
 
 Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`. The pre-cleanup task-board snapshot is archived at `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 

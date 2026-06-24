@@ -109,8 +109,12 @@ assert.match(dockSource, /readLocalTimeZonePreference/, "Comment Translator read
 assert.match(dockSource, /timeZonePreferenceChangeEvent/, "Comment Translator observes shared timezone changes");
 assert.match(sharedFeedSource, /formatCommentTranslatorBrowserLocalTimestamp/, "Comment Translator timestamp formatter remains shared");
 assert.match(sessionSource, /\.select\("locale,theme,time_zone,updated_at"\)/, "account session reads timezone from user_preferences");
+assert.match(sessionSource, /isUserPreferencesTimeZoneSchemaMissingError/, "account session detects migration-pending timezone schema errors");
+assert.match(sessionSource, /\.select\("locale,theme,updated_at"\)/, "account session falls back to locale/theme read before timezone migration is applied");
 assert.match(accountActionsSource, /normalizeTimeZonePreference\(readRequiredString\(formData, "timeZone"\)\)/, "account save action normalizes timezone");
 assert.match(accountActionsSource, /time_zone: timeZone/, "account save action persists timezone");
+assert.match(accountActionsSource, /isUserPreferencesTimeZoneSchemaMissingError/, "account save action detects migration-pending timezone schema errors");
+assert.match(accountActionsSource, /upsert\([\s\S]*schema_version: 1,[\s\S]*locale,[\s\S]*theme,[\s\S]*updated_at: savedAt[\s\S]*\}/, "account save action can fall back to existing locale/theme columns before timezone migration is applied");
 assert.match(migrationSource, /alter table public\.user_preferences[\s\S]*add column if not exists time_zone text/, "migration adds user_preferences time_zone");
 assert.match(migrationSource, /time_zone_format/, "migration documents format validation constraint");
 assert.match(taskSource, /shared display timezone preference/i, "task board records shared timezone preference slice");

@@ -1,4 +1,5 @@
 import type { CommentTranslatorComment, CommentTranslatorTargetLanguageId } from "./comment-translator";
+import type { Locale } from "./locale";
 
 export type CommentTranslatorRealCommentsFeedStatus = "ready" | "inactive" | "unavailable";
 export type CommentTranslatorRealCommentsTranslationStatus =
@@ -65,17 +66,25 @@ export type CommentTranslatorRealCommentsFeedState = {
 
 export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
   feed,
-  targetLanguageLabel
+  targetLanguageLabel,
+  locale = "en",
+  timeZone = resolveCommentTranslatorBrowserTimeZone()
 }: {
   feed: CommentTranslatorRealCommentsFeedState;
   targetLanguageLabel: string;
+  locale?: Locale;
+  timeZone?: string;
 }): CommentTranslatorComment[] {
-  return feed.rows.map((row) => {
+  return sortCommentTranslatorRealCommentsFeedRowsNewestFirst(feed.rows).map((row) => {
     const sourceLanguage = "YT";
     const targetLanguage = row.targetLanguage.toLocaleUpperCase();
     const baseComment: CommentTranslatorComment = {
       id: row.id,
-      timestamp: row.timestamp,
+      timestamp: formatCommentTranslatorBrowserLocalTimestamp({
+        publishedAtIso: row.publishedAtIso,
+        locale,
+        timeZone
+      }),
       authorName: row.authorLabel,
       source: "server",
       sourceLabel: row.sourceAttributionLabel,
@@ -115,6 +124,61 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
 
     return baseComment;
   });
+}
+
+export function sortCommentTranslatorRealCommentsFeedRowsNewestFirst(
+  rows: readonly CommentTranslatorRealCommentsDisplayRow[]
+): CommentTranslatorRealCommentsDisplayRow[] {
+  return [...rows].sort((left, right) => {
+    const rightTime = parseCommentTranslatorPublishedAt(right.publishedAtIso);
+    const leftTime = parseCommentTranslatorPublishedAt(left.publishedAtIso);
+
+    if (rightTime !== leftTime) {
+      return rightTime - leftTime;
+    }
+
+    return right.id.localeCompare(left.id);
+  });
+}
+
+export function resolveCommentTranslatorBrowserTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
+export function formatCommentTranslatorBrowserLocalTimestamp({
+  publishedAtIso,
+  locale,
+  timeZone
+}: {
+  publishedAtIso: string;
+  locale: Locale;
+  timeZone: string;
+}): string {
+  const parsed = Date.parse(publishedAtIso);
+  if (!Number.isFinite(parsed)) {
+    return `--:-- ${timeZone}`;
+  }
+
+  return new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : "en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    hourCycle: "h23",
+    timeZone,
+    timeZoneName: "short"
+  })
+    .format(new Date(parsed))
+    .replace(/\s+/g, " ");
+}
+
+function parseCommentTranslatorPublishedAt(publishedAtIso: string) {
+  const parsed = Date.parse(publishedAtIso);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function moderationFallbackText(label: CommentTranslatorRealCommentsDisplayRow["moderationLabel"]) {

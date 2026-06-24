@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   getCommentTranslatorSessionStatusAction,
@@ -36,6 +36,7 @@ import {
 } from "@/lib/comment-translator";
 import {
   mapCommentTranslatorRealCommentsFeedRowsToUiComments,
+  resolveCommentTranslatorBrowserTimeZone,
   type CommentTranslatorRealCommentsFeedState
 } from "@/lib/comment-translator-real-comments-feed-shared";
 import type { CommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
@@ -175,6 +176,7 @@ type CreatorLockedWaitlistState = {
 };
 
 const freeDailyLimitSeconds = 30 * 60;
+const commentTranslatorPreviewFeedAutoRefreshIntervalMs = 15000;
 const initialOperatorSessionUsageDisplay: OperatorSessionUsageDisplay = {
   status: "available",
   session: {
@@ -664,6 +666,7 @@ export function CommentTranslatorDock({
   const [creatorLockedClickStatus, setCreatorLockedClickStatus] = useState<string | null>(null);
   const [realCommentsFeed, setRealCommentsFeed] = useState<CommentTranslatorRealCommentsFeedState>(initialRealCommentsFeed);
   const [realCommentsFeedError, setRealCommentsFeedError] = useState<string | null>(null);
+  const [browserTimeZone, setBrowserTimeZone] = useState("UTC");
   const [isCredentialStatusPending, startCredentialStatusTransition] = useTransition();
   const [isSessionPending, startSessionTransition] = useTransition();
   const [isDataDeletionPending, startDataDeletionTransition] = useTransition();
@@ -671,6 +674,7 @@ export function CommentTranslatorDock({
   const [isRealCommentsFeedPending, startRealCommentsFeedTransition] = useTransition();
   const singleCommentInputRef = useRef<HTMLInputElement>(null);
   const multilinePasteInputRef = useRef<HTMLTextAreaElement>(null);
+  const realCommentsFeedRefreshInFlightRef = useRef(false);
 
   const selectedConnection = findCommentTranslatorOption(connectionStates, connectionId);
   const selectedStream = findCommentTranslatorOption(streams, streamId);
@@ -751,7 +755,9 @@ export function CommentTranslatorDock({
   }));
   const feedComments = mapCommentTranslatorRealCommentsFeedRowsToUiComments({
     feed: realCommentsFeed,
-    targetLanguageLabel: localizedTargetLanguage.label
+    targetLanguageLabel: localizedTargetLanguage.label,
+    locale,
+    timeZone: browserTimeZone
   });
   const filteredComments = filterCommentTranslatorComments(feedComments, { statusFilter, searchQuery });
   const liveStats = {
@@ -884,7 +890,12 @@ export function CommentTranslatorDock({
     runSessionCommand(sessionState.status === "active" ? "heartbeat" : "status");
   }
 
-  function refreshRealCommentsFeed() {
+  const refreshRealCommentsFeed = useCallback(() => {
+    if (realCommentsFeedRefreshInFlightRef.current) {
+      return;
+    }
+
+    realCommentsFeedRefreshInFlightRef.current = true;
     startRealCommentsFeedTransition(async () => {
       try {
         const feed = await getCommentTranslatorRealCommentsFeedAction();
@@ -892,9 +903,29 @@ export function CommentTranslatorDock({
         setRealCommentsFeedError(null);
       } catch {
         setRealCommentsFeedError(locale === "ja" ? "コメント状態を更新できませんでした" : "Could not refresh comments");
+      } finally {
+        realCommentsFeedRefreshInFlightRef.current = false;
       }
     });
-  }
+  }, [locale]);
+
+  useEffect(() => {
+    setBrowserTimeZone(resolveCommentTranslatorBrowserTimeZone());
+  }, []);
+
+  useEffect(() => {
+    if (sessionState.status !== "active") {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      refreshRealCommentsFeed();
+    }, commentTranslatorPreviewFeedAutoRefreshIntervalMs);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [refreshRealCommentsFeed, sessionState.status]);
 
   function requestDataDeletion() {
     startDataDeletionTransition(async () => {
@@ -1396,6 +1427,12 @@ export function CommentTranslatorDock({
                     />
                   </label>
                   <div className="flex min-w-0 flex-wrap gap-2">
+                    <span
+                      data-comment-translator-preview-feed-auto-refresh="active-session-safe-periodic"
+                      className="inline-flex min-h-10 items-center rounded-base border border-border bg-surface px-3 py-2 text-xs font-black text-muted"
+                    >
+                      {sessionState.status === "active" ? (locale === "ja" ? "自動更新中" : "Auto refresh on") : locale === "ja" ? "自動更新停止中" : "Auto refresh off"}
+                    </span>
                     <button
                       type="button"
                       onClick={refreshRealCommentsFeed}

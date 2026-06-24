@@ -1,5 +1,5 @@
 import { normalizeLocale, type Locale } from "@/lib/locale";
-import { normalizeThemePreference, type ThemePreference } from "@/lib/local-preferences";
+import { normalizeThemePreference, normalizeTimeZonePreference, type ThemePreference, type TimeZonePreference } from "@/lib/local-preferences";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -15,6 +15,7 @@ export type AccountSessionState = {
   remotePreferences: {
     locale: Locale | null;
     theme: ThemePreference | null;
+    timeZone: TimeZonePreference | null;
     updatedAt: string | null;
   } | null;
   remotePreferenceStatus: "not-signed-in" | "loaded" | "unavailable";
@@ -23,6 +24,7 @@ export type AccountSessionState = {
 type UserPreferenceRow = {
   locale: string | null;
   theme: string | null;
+  time_zone: string | null;
   updated_at: string | null;
 };
 
@@ -82,7 +84,7 @@ export async function getAccountSessionState(): Promise<AccountSessionState> {
 
   const { data, error } = await supabase
     .from("user_preferences")
-    .select("locale,theme,updated_at")
+    .select("locale,theme,time_zone,updated_at")
     .eq("user_id", user.id)
     .maybeSingle();
   const row = data as UserPreferenceRow | null;
@@ -100,6 +102,7 @@ export async function getAccountSessionState(): Promise<AccountSessionState> {
         ? {
             locale: normalizeLocale(row.locale),
             theme: normalizeThemePreference(row.theme),
+            timeZone: normalizeTimeZonePreference(row.time_zone),
             updatedAt: row.updated_at
           }
         : null,

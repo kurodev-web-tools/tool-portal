@@ -94,10 +94,10 @@ assert.match(sharedSource, /formatCommentTranslatorBrowserLocalTimestamp/, "PPF-
 assert.match(sharedSource, /timeZoneName:\s*"short"/, "PPF-3 timestamp formatter includes an explicit timezone label");
 assert.match(sharedSource, /sortCommentTranslatorRealCommentsFeedRowsNewestFirst/, "PPF-2 exposes newest-first feed row ordering");
 
-assert.doesNotMatch(
+assert.match(
   localPreferencesSource,
-  /timeZonePreferenceStorageKey|timezonePreferenceStorageKey|writeLocalTimeZonePreference|readLocalTimeZonePreference|v-streamer-tools-time-?zone/i,
-  "PPF-3 minimum scope does not add a persistent timezone preference"
+  /timeZonePreferenceStorageKey = "v-streamer-tools-time-zone"/,
+  "PPF-3 may use the shared display timezone preference when persistence is enabled"
 );
 
 assert.match(taskSource, /public-release capable: no/i, "public gate remains blocked");

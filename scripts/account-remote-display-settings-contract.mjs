@@ -44,10 +44,12 @@ assertIncludes(
     "readLocalPreferenceSnapshot",
     "writeLocalLocalePreference",
     "writeLocalThemePreference",
+    "writeLocalTimeZonePreference",
     "themePreferenceChangeEvent",
     "setLocale",
     'auth") === "signed-in"',
-    "document.documentElement.classList.toggle"
+    "document.documentElement.classList.toggle",
+    "timeZone"
   ],
   "remote display settings applier"
 );
@@ -84,27 +86,29 @@ assertIncludes(
 );
 assertIncludes(
   sessionSource,
-  [".from(\"user_preferences\")", ".select(\"locale,theme,updated_at\")", "normalizeLocale", "normalizeThemePreference"],
-  "server session already limits remote preference read to locale/theme"
+  [".from(\"user_preferences\")", ".select(\"locale,theme,time_zone,updated_at\")", "normalizeLocale", "normalizeThemePreference", "normalizeTimeZonePreference"],
+  "server session limits remote preference read to shared display settings"
 );
 assertIncludes(
   localPreferenceAdapter,
   [
     'locale: localePreferenceStorageKey',
     'theme: themePreferenceStorageKey',
-    'themePreferenceStorageKey = "v-streamer-tools-theme"'
+    'timeZone: timeZonePreferenceStorageKey',
+    'themePreferenceStorageKey = "v-streamer-tools-theme"',
+    'timeZonePreferenceStorageKey = "v-streamer-tools-time-zone"'
   ],
-  "existing local preference keys stay unchanged"
+  "shared local preference keys are explicit"
 );
 
 assertIncludes(
   task,
   [
-    "account remote display settings apply",
+    "Shared display timezone preference slice",
     "node scripts/account-remote-display-settings-contract.mjs",
-    "次の CTA 強化 PR"
+    "node scripts/comment-translator-shared-timezone-preference-contract.mjs"
   ],
-  "task handoff documents implementation, verification, and next CTA follow-up"
+  "task handoff documents implementation and verification"
 );
 
 console.log("account remote display settings contract checks passed");

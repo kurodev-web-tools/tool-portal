@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LanguageSwitch } from "@/components/portal/LanguageSwitch";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
+import { TimeZoneSelect } from "@/components/portal/TimeZoneSelect";
 import type { CommentTranslatorBillingBrowserSafeViewModel } from "@/lib/comment-translator-billing-runtime";
 import type { YouTubeAccountIntegrationViewModel } from "@/lib/comment-translator-youtube-account-integration";
 import {
@@ -12,6 +13,8 @@ import {
   readLocalPreferenceSnapshot,
   themePreferenceChangeEvent,
   themePreferenceStorageKey,
+  timeZonePreferenceChangeEvent,
+  timeZonePreferenceStorageKey,
   type ThemePreference
 } from "@/lib/local-preferences";
 import type { Locale } from "@/lib/locale";
@@ -23,7 +26,7 @@ const accountCopy = {
   ja: {
     eyebrow: "アカウント設定",
     title: "アカウントと表示設定",
-    lead: "表示言語とテーマは未ログインでもこのブラウザで使えます。ログインすると、同じ設定を別ブラウザやスマホでも引き継げます。",
+    lead: "表示言語、テーマ、タイムゾーンは未ログインでもこのブラウザで使えます。ログインすると、同じ設定を別ブラウザやスマホでも引き継げます。",
     accountStatusEyebrow: "Current account",
     accountStatusTitle: "現在のアカウント状況",
     accountStatusBody: "ログイン、YouTube連携、プラン状態をまとめて確認します。",
@@ -54,7 +57,7 @@ const accountCopy = {
     signOut: "ログアウト",
     signedInAs: "ログイン中のメールアドレス",
     remotePreferenceTitle: "アカウントに保存済みの設定",
-    remotePreferenceEmpty: "アカウントにはまだ表示言語とテーマが保存されていません。",
+    remotePreferenceEmpty: "アカウントにはまだ表示言語、テーマ、タイムゾーンが保存されていません。",
     remotePreferenceUnavailable: "アカウント側の保存状態を読み込めませんでした。",
     saveLocalPreferences: "このブラウザの表示設定をアカウントに保存",
     securityTitle: "セキュリティ",
@@ -75,12 +78,13 @@ const accountCopy = {
     },
     openPlan: "現在のアカウント",
     planName: "アカウント状況",
-    planBody: "表示言語とテーマを別ブラウザやスマホでも引き継げます。Comment Translator のYouTube連携管理と Free / Pro プラン状況、Kuro Stream Kit Pro の月額/年額表示は専用ページで確認できます。",
+    planBody: "表示言語、テーマ、タイムゾーンを別ブラウザやスマホでも引き継げます。Comment Translator のYouTube連携管理と Free / Pro プラン状況、Kuro Stream Kit Pro の月額/年額表示は専用ページで確認できます。",
     planItems: ["表示設定を保存", "Free / Pro プラン", "YouTube連携管理"],
     preferencesTitle: "表示設定",
-    preferencesBody: "表示言語とテーマはこのブラウザに保存されます。ログイン中は、同じ内容をアカウントにも明示的に保存でき、別ブラウザやスマホでも引き継げます。",
+    preferencesBody: "表示言語、テーマ、タイムゾーンはこのブラウザに保存されます。ログイン中は、同じ内容をアカウントにも明示的に保存でき、別ブラウザやスマホでも引き継げます。",
     language: "表示言語",
     theme: "テーマ",
+    timeZone: "タイムゾーン",
     browserSaved: "このブラウザに保存",
     syncFrameTitle: "今後保存できるようにする項目",
     syncFrameBody: "今後はツールごとの軽い設定も保存対象にできます。下書き、予定本文、画像、handoff payload は自動アップロードしません。",
@@ -95,7 +99,7 @@ const accountCopy = {
   en: {
     eyebrow: "Account settings",
     title: "Account and display settings",
-    lead: "Language and theme work from this browser even when you are signed out. Sign in to carry the same settings across browsers and phones.",
+    lead: "Language, theme, and time zone work from this browser even when you are signed out. Sign in to carry the same settings across browsers and phones.",
     accountStatusEyebrow: "Current account",
     accountStatusTitle: "Current account status",
     accountStatusBody: "Review sign-in, YouTube integration, and plan status together.",
@@ -126,7 +130,7 @@ const accountCopy = {
     signOut: "Sign out",
     signedInAs: "Signed-in email",
     remotePreferenceTitle: "Settings saved to your account",
-    remotePreferenceEmpty: "No language or theme setting has been saved to the account yet.",
+    remotePreferenceEmpty: "No language, theme, or time zone setting has been saved to the account yet.",
     remotePreferenceUnavailable: "Could not load the saved account settings.",
     saveLocalPreferences: "Save this browser's display settings to account",
     securityTitle: "Security",
@@ -147,12 +151,13 @@ const accountCopy = {
     },
     openPlan: "Current account",
     planName: "Account status",
-    planBody: "Language and theme can be carried across browsers and phones. Comment Translator YouTube integration management, Free / Pro plan status, and Kuro Stream Kit Pro monthly/yearly display are available on dedicated pages.",
+    planBody: "Language, theme, and time zone can be carried across browsers and phones. Comment Translator YouTube integration management, Free / Pro plan status, and Kuro Stream Kit Pro monthly/yearly display are available on dedicated pages.",
     planItems: ["Save display settings", "Free / Pro plan", "YouTube integration"],
     preferencesTitle: "Display settings",
-    preferencesBody: "Language and theme are saved in this browser. Signed-in users can explicitly save the same values to the account and carry them across browsers and phones.",
+    preferencesBody: "Language, theme, and time zone are saved in this browser. Signed-in users can explicitly save the same values to the account and carry them across browsers and phones.",
     language: "Language",
     theme: "Theme",
+    timeZone: "Time zone",
     browserSaved: "Saved in this browser",
     syncFrameTitle: "Settings that can be saved later",
     syncFrameBody: "Later phases can add lightweight per-tool settings. Drafts, schedule text, images, and handoff payloads are not uploaded automatically.",
@@ -270,10 +275,12 @@ export function AccountPreferencesShell({
   const [localSnapshot, setLocalSnapshot] = useState<{
     locale: Locale | null;
     theme: ThemePreference | null;
+    timeZone: string | null;
   } | null>(null);
   const isSignedIn = authStatus.authStatus === "signed-in";
   const hiddenLocale = locale;
   const hiddenTheme = localSnapshot?.theme ?? "";
+  const hiddenTimeZone = localSnapshot?.timeZone ?? "";
   const signedInEmail = authStatus.user?.email ?? "";
   const youtubeStatusLabel = copy.status[youtubeIntegration.status];
   const billingStatusLabel = copy.status[billing.billingState];
@@ -339,22 +346,29 @@ export function AccountPreferencesShell({
       const snapshot = readLocalPreferenceSnapshot();
       setLocalSnapshot({
         locale,
-        theme: snapshot.theme
+        theme: snapshot.theme,
+        timeZone: snapshot.timeZone
       });
     }
 
     function handleStorage(event: StorageEvent) {
-      if (event.key === themePreferenceStorageKey || event.key === localPreferenceStorageKeys.locale) {
+      if (
+        event.key === themePreferenceStorageKey ||
+        event.key === timeZonePreferenceStorageKey ||
+        event.key === localPreferenceStorageKeys.locale
+      ) {
         refreshLocalSnapshot();
       }
     }
 
     refreshLocalSnapshot();
     window.addEventListener(themePreferenceChangeEvent, refreshLocalSnapshot);
+    window.addEventListener(timeZonePreferenceChangeEvent, refreshLocalSnapshot);
     window.addEventListener("storage", handleStorage);
 
     return () => {
       window.removeEventListener(themePreferenceChangeEvent, refreshLocalSnapshot);
+      window.removeEventListener(timeZonePreferenceChangeEvent, refreshLocalSnapshot);
       window.removeEventListener("storage", handleStorage);
     };
   }, [locale]);
@@ -417,16 +431,20 @@ export function AccountPreferencesShell({
             <form action={saveLocaleThemePreferenceAction} className="py-4 first:pt-0">
               <input name="locale" type="hidden" value={hiddenLocale} />
               <input name="theme" type="hidden" value={hiddenTheme} />
-              <div className="grid min-w-0 gap-4 rounded-base border border-border bg-surface px-4 py-3 sm:grid-cols-2">
+              <input name="timeZone" type="hidden" value={hiddenTimeZone} />
+              <div className="grid min-w-0 gap-4 rounded-base border border-border bg-surface px-4 py-3 sm:grid-cols-3">
                 <SettingControlRow label={copy.language} helper={copy.browserSaved}>
                   <LanguageSwitch />
                 </SettingControlRow>
                 <SettingControlRow label={copy.theme} helper={copy.browserSaved}>
                   <ThemeToggle variant="segmented" />
                 </SettingControlRow>
-                <div className="border-t border-border pt-3 sm:col-span-2">
+                <SettingControlRow label={copy.timeZone} helper={copy.browserSaved}>
+                  <TimeZoneSelect />
+                </SettingControlRow>
+                <div className="border-t border-border pt-3 sm:col-span-3">
                   <button
-                    disabled={!isSignedIn || !hiddenLocale || !hiddenTheme}
+                    disabled={!isSignedIn || !hiddenLocale || !hiddenTheme || !hiddenTimeZone}
                     className="rounded-base bg-primary px-4 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-muted"
                   >
                     {localSnapshot ? copy.saveLocalPreferences : copy.localSnapshotPending}

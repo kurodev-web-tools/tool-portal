@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/public-launch-preview-feed-ux`.
+- Current branch: `codex/shared-display-timezone-preference`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: PPF-1/PPF-2 preview feed auto-refresh/newest-first, plus PPF-3 minimum browser-local timestamp display with explicit timezone label.
+- Scope: shared display timezone preference persistence so Comment Translator timestamps follow account-saved display settings across login/devices.
 - Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
@@ -87,7 +87,7 @@ These are the remaining gates before Free public beta can be opened. Each execut
 | --- | --- | --- |
 | PPF-1 | Preview feed should update comments automatically on a safe periodic cadence during an active session, without requiring manual comment refresh. Keep manual refresh as a fallback/control, and stop polling when the session is inactive or stopped. | implemented locally in `codex/public-launch-preview-feed-ux`; local deterministic verification passed |
 | PPF-2 | Preview feed ordering should show newest comments at the top. Current observed ordering is oldest-first, so reverse the display/read ordering before public launch. | implemented locally in `codex/public-launch-preview-feed-ux`; local deterministic verification passed |
-| PPF-3 | Comment timestamps should support a user-facing timezone display setting in a future shared settings/account preference slice, so future tools can reuse the same display preference instead of adding tool-specific timezone controls. Keep rate-limit and quota reset authority on UTC unless explicitly changed; this item is about comment timestamp display convenience. | minimum scope implemented locally: browser-local timestamp display with explicit timezone label; no persistent timezone preference added |
+| PPF-3 | Comment timestamps should support a user-facing timezone display setting in a future shared settings/account preference slice, so future tools can reuse the same display preference instead of adding tool-specific timezone controls. Keep rate-limit and quota reset authority on UTC unless explicitly changed; this item is about comment timestamp display convenience. | shared display timezone preference implemented locally on `codex/shared-display-timezone-preference`; display-only, quota authority remains UTC |
 
 ### Public Launch Next Flow
 
@@ -113,19 +113,29 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 - Browser-visible confirmation retest passed after manual comment refresh in the operator's real browser: `browserFeedVisibleLabel yes`, `browserFeedRowCount 5`, and `browserSourceAttributionVisibleLabel yes`.
 - Before this PPF branch, UI review found that the preview feed was refreshed only by the manual comment refresh control. This branch adds active-session periodic refresh while keeping the manual refresh control as fallback.
 - F9 Real comments UI wiring remains the server-owned safe feed boundary. This PPF slice keeps that boundary and changes only preview refresh cadence, display ordering, and timestamp presentation.
+- Shared display timezone preference slice adds a reusable `v-streamer-tools-time-zone` local preference, account `user_preferences.time_zone` read/write wiring, account display settings UI, login-time remote preference apply, and Comment Translator timestamp preference consumption. This is display-only; quota/rate-limit reset authority remains UTC.
 - Raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error bodies/messages/reasons, provider target values, and screenshots containing raw comments were not recorded in docs.
 
 ## Current Local Verification
 
-- `node scripts/comment-translator-public-preview-feed-ux-contract.mjs`: passed. Covers PPF-1 active-session 15s safe auto-refresh, manual refresh fallback, PPF-2 newest-first ordering, PPF-3 browser-local timestamp with timezone label, no persistent timezone preference, and public gate unchanged.
+- `node scripts/comment-translator-public-preview-feed-ux-contract.mjs`: passed. Covers PPF-1 active-session 15s safe auto-refresh, manual refresh fallback, PPF-2 newest-first ordering, PPF-3 timestamp timezone labeling, shared timezone preference compatibility, and public gate unchanged.
 - `node scripts/comment-translator-real-comments-ui-wiring-contract.mjs`: passed. Confirms F9 server-owned safe feed boundary remains intact.
-- `node scripts/local-preference-adapter-contract.mjs`: passed. Confirms no local preference storage expansion for timezone in this minimum slice.
+- `node scripts/comment-translator-shared-timezone-preference-contract.mjs`: passed. Confirms shared timezone preference local storage/event helpers, account read/write wiring, Supabase migration shape, remote preference apply, and Comment Translator timestamp consumption.
+- `node scripts/account-remote-display-settings-contract.mjs`: passed. Confirms remote account display settings include locale/theme/timezone and reuse shared local preference keys.
+- `node scripts/account-preferences-shell-contract.mjs`: passed. Confirms account display settings UI includes timezone alongside language/theme and posts the shared timezone value.
+- `node scripts/local-preference-adapter-contract.mjs`: passed. Confirms local preference snapshot includes locale/theme/timezone and shared timezone read/write helpers.
+- `node scripts/supabase-auth-first-slice-contract.mjs`: passed. Confirms account preference persistence includes `time_zone` in the auth-backed display settings slice.
+- `node scripts/supabase-auth-boundary-design-contract.mjs`: passed. Confirms the auth boundary contract remains intact.
+- `node scripts/account-auth-public-readiness-contract.mjs`: passed. Confirms public account readiness contracts include the timezone preference UI and hidden form value.
 - `npm run lint`: passed.
 - `npx tsc --noEmit`: passed.
-- `npm run build`: passed. Existing warnings observed: Next.js `middleware` convention deprecation, static export RSC alias skip for server-runtime build, and webpack cache big-string serialization warnings.
+- `npm run build`: passed. Existing warnings observed: Next.js `middleware` convention deprecation and static export RSC alias skip for server-runtime build.
 - `git diff --check`: passed with Windows LF-to-CRLF normalization warnings only.
-- Changed-files no-secret scan: passed for 5 changed files.
+- Changed-files high-confidence no-secret scan: passed for 16 changed files including untracked files.
 - Width checks via local dev server `http://127.0.0.1:3218/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for the approved browser-visible retest.
+- Shared display timezone preference width checks via local dev server `http://127.0.0.1:3027/account/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, timezone select visible, and console error/warn count `0`.
+- Shared display timezone preference width checks via local dev server `http://127.0.0.1:3027/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for an approved browser-visible retest.
+- Remote schema apply for `supabase/migrations/20260624000000_account_display_timezone_preference.sql`: not-run / approval-gated. The migration file is reviewable only in this slice.
 
 Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`. The pre-cleanup task-board snapshot is archived at `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 
@@ -133,7 +143,7 @@ Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_
 
 - Public-release capable remains no until PPF-1/PPF-2 are implemented and verified, PL-G4 production/custom deployed smoke passes or is explicitly accepted as missing, PL-G5 release-owner approval is recorded, and PL-G6 public access change is separately approved and executed.
 - The browser-visible PL-G3 feed confirmation is valid only after manual comment refresh in the current UI. It does not prove automatic realtime or periodic feed refresh.
-- Timestamp display currently needs a future user-facing timezone decision; runtime quota enforcement remains UTC-based.
+- Shared display timezone preference still needs review/merge and a separately approved remote schema apply before account cross-device persistence is available in deployed environments. Runtime quota enforcement remains UTC-based.
 - No deploy/upload, OAuth flow, token refresh, Stripe action, public access change, main promotion, PL-G4, PL-G5, PL-G6, or launch gate flip was run in this cleanup slice.
 
 ## Later Work

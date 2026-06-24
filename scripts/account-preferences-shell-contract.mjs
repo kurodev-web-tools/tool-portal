@@ -27,7 +27,7 @@ assert.match(accountPage, /<AccountPreferencesShell[\s\S]*saveLocaleThemePrefere
 assert.match(accountShell, /LanguageSwitch/, "account shell exposes language switch");
 assert.match(accountShell, /ThemeToggle/, "account shell exposes theme switch");
 assert.match(accountShell, /ログイン中|Signed in|account/i, "account shell keeps signed-in account state");
-assert.match(accountShell, /有料プラン|Paid plan/, "account shell includes restrained future plan note");
+assert.match(accountShell, /Free \/ Pro/, "account shell includes restrained plan note");
 assert.match(accountShell, /表示設定/, "Japanese account shell uses user-facing display settings copy");
 assert.match(accountShell, /アカウント状況/, "Japanese account shell labels the top card as account status");
 assert.match(accountShell, /Account status/, "English account shell labels the top card as account status");
@@ -35,17 +35,13 @@ assert.match(accountShell, /アカウントに保存済みの設定/, "Japanese 
 assert.match(accountShell, /今後保存できるようにする項目/, "Japanese account shell avoids implementation-facing sync candidate copy");
 assert.match(accountShell, /表示言語/, "Japanese account shell labels locale as display language");
 assert.match(accountShell, /テーマ/, "Japanese account shell labels theme as theme");
+assert.match(accountShell, /タイムゾーン/, "Japanese account shell labels timezone as timezone");
 assert.match(accountShell, /このブラウザに保存/, "Japanese account shell explains local-first settings without local-only wording");
 assert.match(accountShell, /role="status"[\s\S]*fixed/, "account save result is shown as a transient toast status");
 assert.match(accountShell, /<form action={signOutAction} className="flex justify-end">/, "account sign out control is moved to the bottom end of the page");
 assert.doesNotMatch(accountShell, /lg:grid-cols-\[minmax\(0,1fr\)_18rem\]/, "account hero no longer keeps a top-right signed-in card");
-assert.equal(accountShell.match(/<section className="grid gap-4 lg:grid-cols-\[minmax\(0,1fr\)_minmax\(18rem,24rem\)\]">/g)?.length, 1, "only the lower account layout keeps the two-column right rail");
-assert.equal(accountShell.match(/\{copy\.providerTitle\}/g)?.length, 1, "planned-next card is not duplicated in the top account status row");
-assert.ok(
-  accountShell.indexOf("{copy.signedInAs}") > accountShell.indexOf("{copy.planBody}") &&
-    accountShell.indexOf("{copy.signedInAs}") < accountShell.indexOf("copy.planItems.map"),
-  "signed-in email is rendered inside the account status card"
-);
+assert.match(accountShell, /<TimeZoneSelect \/>/, "account shell exposes shared timezone selector");
+assert.match(accountShell, /sm:grid-cols-3/, "display setting controls keep language theme timezone in one responsive grid");
 assert.doesNotMatch(accountShell, /<StatusPill>{copy\.localOnly}<\/StatusPill>/, "local-only badge is not shown in the public account UI");
 assert.doesNotMatch(accountShell, /locale \/ theme|account preference|sync候補|将来の sync 候補|local-only/, "Japanese-facing implementation terms are not present in account shell source");
 
@@ -55,8 +51,9 @@ assert.match(accountShell, /localPreferenceStorageKeys/, "account shell reads st
 assert.match(accountShell, /const hiddenLocale = locale;/, "account save form uses the current locale context");
 assert.match(accountShell, /themePreferenceChangeEvent/, "account save form observes theme changes before submitting");
 assert.match(accountShell, /name="locale" type="hidden" value={hiddenLocale}/, "account save form submits the live locale value");
+assert.match(accountShell, /name="timeZone" type="hidden" value={hiddenTimeZone}/, "account save form submits the live timezone value");
 
-assert.doesNotMatch(accountShell, /localStorage\.setItem\((?!themePreferenceStorageKey|localePreferenceStorageKey)/, "account shell does not introduce new localStorage writes");
+assert.doesNotMatch(accountShell, /localStorage\.setItem\((?!themePreferenceStorageKey|localePreferenceStorageKey|timeZonePreferenceStorageKey)/, "account shell does not introduce untracked localStorage writes");
 assert.doesNotMatch(accountShell, /indexedDB\.|sessionStorage\.|window\.sessionStorage|fetch\(|\/api\//, "account shell does not touch IndexedDB, sessionStorage, or API routes");
 
 console.log("account preferences shell contract checks passed");

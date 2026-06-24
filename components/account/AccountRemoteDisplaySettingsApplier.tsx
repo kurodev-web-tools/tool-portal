@@ -5,8 +5,10 @@ import { useLocale } from "@/components/portal/LocaleProvider";
 import {
   readLocalPreferenceSnapshot,
   themePreferenceChangeEvent,
+  timeZonePreferenceChangeEvent,
   writeLocalLocalePreference,
-  writeLocalThemePreference
+  writeLocalThemePreference,
+  writeLocalTimeZonePreference
 } from "@/lib/local-preferences";
 import type { AccountSessionState } from "@/lib/supabase/session";
 
@@ -19,12 +21,12 @@ export function AccountRemoteDisplaySettingsApplier({ accountStatus }: { account
       return;
     }
 
-    const { locale, theme, updatedAt } = accountStatus.remotePreferences;
-    if (!locale && !theme) {
+    const { locale, theme, timeZone, updatedAt } = accountStatus.remotePreferences;
+    if (!locale && !theme && !timeZone) {
       return;
     }
 
-    const applyKey = `${accountStatus.user?.id ?? "unknown"}:${locale ?? "-"}:${theme ?? "-"}:${updatedAt ?? "-"}`;
+    const applyKey = `${accountStatus.user?.id ?? "unknown"}:${locale ?? "-"}:${theme ?? "-"}:${timeZone ?? "-"}:${updatedAt ?? "-"}`;
     if (appliedKeyRef.current === applyKey) {
       return;
     }
@@ -34,8 +36,9 @@ export function AccountRemoteDisplaySettingsApplier({ accountStatus }: { account
     const localSnapshot = readLocalPreferenceSnapshot();
     const shouldApplyLocale = Boolean(locale && (forceAfterSignIn || !localSnapshot.locale));
     const shouldApplyTheme = Boolean(theme && (forceAfterSignIn || !localSnapshot.theme));
+    const shouldApplyTimeZone = Boolean(timeZone && (forceAfterSignIn || !localSnapshot.timeZone));
 
-    if (!shouldApplyLocale && !shouldApplyTheme) {
+    if (!shouldApplyLocale && !shouldApplyTheme && !shouldApplyTimeZone) {
       appliedKeyRef.current = applyKey;
       return;
     }
@@ -49,6 +52,11 @@ export function AccountRemoteDisplaySettingsApplier({ accountStatus }: { account
       writeLocalThemePreference(theme);
       document.documentElement.classList.toggle("dark", theme === "dark");
       window.dispatchEvent(new CustomEvent(themePreferenceChangeEvent, { detail: theme }));
+    }
+
+    if (timeZone && shouldApplyTimeZone) {
+      writeLocalTimeZonePreference(timeZone);
+      window.dispatchEvent(new CustomEvent(timeZonePreferenceChangeEvent, { detail: timeZone }));
     }
 
     appliedKeyRef.current = applyKey;

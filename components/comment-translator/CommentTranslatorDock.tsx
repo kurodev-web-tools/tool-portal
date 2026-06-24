@@ -39,6 +39,7 @@ import {
   resolveCommentTranslatorBrowserTimeZone,
   type CommentTranslatorRealCommentsFeedState
 } from "@/lib/comment-translator-real-comments-feed-shared";
+import { readLocalTimeZonePreference, timeZonePreferenceChangeEvent, timeZonePreferenceStorageKey } from "@/lib/local-preferences";
 import type { CommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
 import {
   createYouTubeOAuthCredentialStatusUiWiring,
@@ -910,7 +911,24 @@ export function CommentTranslatorDock({
   }, [locale]);
 
   useEffect(() => {
-    setBrowserTimeZone(resolveCommentTranslatorBrowserTimeZone());
+    function refreshTimeZonePreference() {
+      setBrowserTimeZone(readLocalTimeZonePreference() ?? resolveCommentTranslatorBrowserTimeZone());
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key === timeZonePreferenceStorageKey) {
+        refreshTimeZonePreference();
+      }
+    }
+
+    refreshTimeZonePreference();
+    window.addEventListener(timeZonePreferenceChangeEvent, refreshTimeZonePreference);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener(timeZonePreferenceChangeEvent, refreshTimeZonePreference);
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   useEffect(() => {

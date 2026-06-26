@@ -30,9 +30,9 @@ export type CommentTranslatorServerOnlyLiveChatTargetLookupResult =
         clientReadable: "forbidden";
       };
       clientReadableTargetMetadata: "forbidden";
-      providerAccess: "deterministic-local-adapter-only";
-      providerTargetLookupExecution: "not-run-in-this-thread";
-      liveChatIdLookupExecution: "not-run-in-this-thread";
+      providerAccess: "deterministic-local-adapter-only" | "server-only-google-api";
+      providerTargetLookupExecution: "not-run-in-this-thread" | "executed-bounded-readonly-one-step";
+      liveChatIdLookupExecution: "not-run-in-this-thread" | "executed-bounded-readonly-one-step";
       publicLaunchAllowed: false;
     }
   | {
@@ -47,7 +47,7 @@ export type CommentTranslatorServerOnlyLiveChatTargetLookupResult =
         | "missing-live-chat";
       reasonUxCode: CommentTranslatorStartStopReasonUxCode;
       clientReadableDetail: "sanitized-stop-reason-only";
-      providerAccess: "not-run" | "deterministic-local-adapter-only";
+      providerAccess: "not-run" | "deterministic-local-adapter-only" | "server-only-google-api";
       providerTargetLookupExecution: "not-run-in-this-thread";
       liveChatIdLookupExecution: "not-run-in-this-thread";
       publicLaunchAllowed: false;

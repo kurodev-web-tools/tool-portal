@@ -48,16 +48,15 @@ import {
   type CommentTranslatorFreeBetaCreatorLockedWaitlistState
 } from "@/lib/comment-translator-free-beta-creator-locked-waitlist";
 import {
-  createSkippedCommentTranslatorLiveChatTargetLookupNotApproved,
-  createUnavailableCommentTranslatorLiveChatTargetLookupAdapter,
   resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart
 } from "@/lib/comment-translator-server-only-live-chat-target-lookup";
 import {
   clearCommentTranslatorBoundedLiveChatPollingState,
-  createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter,
   readCommentTranslatorBoundedLiveChatPollingTick,
   seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession
 } from "@/lib/comment-translator-bounded-live-chat-polling-wiring";
+import { createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter } from "@/lib/comment-translator-youtube-live-provider-runtime-adapter";
+import { runCommentTranslatorLiveProviderSessionStep } from "@/lib/comment-translator-live-provider-session-step";
 import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
   readCommentTranslatorPrivateLaunchAccess
@@ -85,6 +84,7 @@ import {
 import {
   clearCommentTranslatorAzureNormalTranslationSessionDedupeState
 } from "@/lib/comment-translator-azure-normal-translation-execution";
+import type { CommentTranslatorTargetLanguageId } from "@/lib/comment-translator";
 
 const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
 
@@ -190,15 +190,17 @@ export async function disconnectYouTubeOAuthCredentialAction() {
   });
 }
 
-export async function getCommentTranslatorSessionStatusAction() {
+export async function getCommentTranslatorSessionStatusAction(options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}) {
   return readCommentTranslatorSessionActionResult({
-    intent: "status"
+    intent: "status",
+    targetLanguage: options.targetLanguage
   });
 }
 
-export async function startCommentTranslatorSessionAction() {
+export async function startCommentTranslatorSessionAction(options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}) {
   return readCommentTranslatorSessionActionResult({
-    intent: "start"
+    intent: "start",
+    targetLanguage: options.targetLanguage
   });
 }
 
@@ -209,18 +211,20 @@ export async function stopCommentTranslatorSessionAction() {
   });
 }
 
-export async function heartbeatCommentTranslatorSessionAction() {
+export async function heartbeatCommentTranslatorSessionAction(options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}) {
   return readCommentTranslatorSessionActionResult({
-    intent: "heartbeat"
+    intent: "heartbeat",
+    targetLanguage: options.targetLanguage
   });
 }
 
-export async function getCommentTranslatorRealCommentsFeedAction() {
+export async function getCommentTranslatorRealCommentsFeedAction(options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}) {
   const callerAuthorization = await readCallerAuthorization();
   const durableFeedStore = createTrustedCommentTranslatorRealCommentsFeedDurableStore();
+  const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
   const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
     callerAuthorization,
-    durableSessionStore: createTrustedCommentTranslatorSessionSupabaseStore()
+    durableSessionStore
   });
 
   if (durableActiveSessionRead.status !== "ready") {
@@ -229,9 +233,43 @@ export async function getCommentTranslatorRealCommentsFeedAction() {
     });
   }
 
+  const activeSession = durableActiveSessionRead.activeSession;
+  if (activeSession) {
+    const nowMs = Date.now();
+    const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+    const durableUsageRead = await readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+      callerAuthorization,
+      durableUsageCounterStore: createTrustedCommentTranslatorUsageCounterSupabaseStore(),
+      nowMs,
+      plan: "free",
+      activeSession
+    });
+    const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
+      billingSnapshot,
+      durableUsageRead
+    });
+    if (entitlementBaseline.status === "ready") {
+      const credentialReadiness = await readCredentialReadiness({ activeSession, callerAuthorization });
+      const liveProviderRuntime = createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter({
+        credentialReferenceId: activeSession.credentialReferenceId,
+        callerAuthorization
+      });
+      await runCommentTranslatorLiveProviderSessionStep({
+        activeSession,
+        usage: entitlementBaseline.usage,
+        callerAuthorization,
+        credentialReadiness,
+        targetLookupAdapter: liveProviderRuntime.targetLookupAdapter,
+        pollingAdapter: liveProviderRuntime.pollingAdapter,
+        nowMs,
+        targetLanguage: options.targetLanguage ?? "ja"
+      });
+    }
+  }
+
   return readCommentTranslatorRealCommentsFeedForActiveSession({
     callerAuthorization,
-    activeSession: durableActiveSessionRead.activeSession,
+    activeSession,
     durableFeedStore
   });
 }
@@ -324,10 +362,12 @@ async function readCommentTranslatorFreeBetaDerivedReadiness(): Promise<{
 
 async function readCommentTranslatorSessionActionResult({
   intent,
-  stopReason
+  stopReason,
+  targetLanguage = "ja"
 }: {
   intent: CommentTranslatorSessionCommandIntent;
   stopReason?: CommentTranslatorSessionStopReason;
+  targetLanguage?: CommentTranslatorTargetLanguageId;
 }) {
   const callerAuthorization = await readCallerAuthorization();
   const nowMs = Date.now();
@@ -404,25 +444,41 @@ async function readCommentTranslatorSessionActionResult({
 
   const usage = entitlementBaseline.usage;
   const credentialReadiness = await readCredentialReadiness({ activeSession, callerAuthorization });
-  const liveChatTargetReadiness =
-    intent === "start"
-      ? createSkippedCommentTranslatorLiveChatTargetLookupNotApproved()
-      : await resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart({
-          intent,
-          credentialReadiness,
-          adapter: createUnavailableCommentTranslatorLiveChatTargetLookupAdapter({
-            reason: "provider-target-lookup-not-approved"
-          })
-        });
-  const pollingTick = await readCommentTranslatorBoundedLiveChatPollingTick({
-    intent,
-    activeSession,
-    usage,
-    adapter: createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter({
-      reason: "live-provider-polling-not-approved"
-    }),
-    nowMs
+  const credentialReferenceId =
+    credentialReadiness.status === "ready"
+      ? credentialReadiness.credentialReferenceId
+      : activeSession?.credentialReferenceId;
+  const liveProviderRuntime = createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter({
+    credentialReferenceId,
+    callerAuthorization
   });
+  const liveChatTargetReadiness = await resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart({
+    intent,
+    credentialReadiness,
+    adapter: liveProviderRuntime.targetLookupAdapter
+  });
+  const pollingStep =
+    intent === "heartbeat" || intent === "status"
+      ? await runCommentTranslatorLiveProviderSessionStep({
+          activeSession,
+          usage,
+          callerAuthorization,
+          credentialReadiness,
+          targetLookupAdapter: liveProviderRuntime.targetLookupAdapter,
+          pollingAdapter: liveProviderRuntime.pollingAdapter,
+          nowMs,
+          targetLanguage
+        })
+      : null;
+  const pollingTick =
+    pollingStep?.pollingTick ??
+    (await readCommentTranslatorBoundedLiveChatPollingTick({
+      intent,
+      activeSession,
+      usage,
+      adapter: liveProviderRuntime.pollingAdapter,
+      nowMs
+    }));
   const state = await readCommentTranslatorSessionCommand({
     intent,
     nowMs,

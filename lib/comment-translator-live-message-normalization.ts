@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { YouTubeProviderSafeCommentPayload } from "./comment-translator-youtube-input-boundary";
+
 export type CommentTranslatorNormalizedLiveMessageKind =
   | "text"
   | "super-chat"
@@ -268,6 +270,30 @@ export function projectCommentTranslatorNormalizedLiveMessagesForBrowser(
     rawProviderPayload: "not-returned-by-design",
     authorChannelMaterial: "not-returned-by-design"
   }));
+}
+
+export function mapYouTubeProviderSafeCommentsToNormalizedLiveMessages(
+  comments: readonly YouTubeProviderSafeCommentPayload[]
+): readonly CommentTranslatorNormalizedLiveMessage[] {
+  return comments
+    .map((comment) => ({
+      provider: "youtube" as const,
+      messageReferenceId: normalizeString(comment.commentId) ?? "",
+      kind: "text" as const,
+      publishedAtIso: normalizePublishedAtIso(comment.publishedAt),
+      text: normalizeText(comment.text),
+      source: "youtube-live-chat" as const,
+      role: "unknown" as const,
+      purchase: null,
+      member: null,
+      system: null,
+      targetMessageReferenceId: null,
+      terminalSignal: null,
+      moderation: visibleModeration(),
+      rawProviderPayload: "not-returned-by-design" as const,
+      authorChannelMaterial: "not-returned-by-design" as const
+    }))
+    .filter((message) => message.messageReferenceId);
 }
 
 function normalizeProviderPayload({

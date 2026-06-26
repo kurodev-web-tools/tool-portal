@@ -430,8 +430,16 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
   "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
+  "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
+  "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-live-message-normalization.ts",
+  "lib/comment-translator-server-only-live-chat-target-lookup.ts",
+  "components/comment-translator/CommentTranslatorDock.tsx",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

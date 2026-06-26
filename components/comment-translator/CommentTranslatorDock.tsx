@@ -873,12 +873,12 @@ export function CommentTranslatorDock({
       try {
         const state =
           intent === "start"
-            ? await startCommentTranslatorSessionAction()
+            ? await startCommentTranslatorSessionAction({ targetLanguage })
             : intent === "stop"
               ? await stopCommentTranslatorSessionAction()
               : intent === "heartbeat"
-                ? await heartbeatCommentTranslatorSessionAction()
-                : await getCommentTranslatorSessionStatusAction();
+                ? await heartbeatCommentTranslatorSessionAction({ targetLanguage })
+                : await getCommentTranslatorSessionStatusAction({ targetLanguage });
         setSessionState(state);
         setSessionError(null);
       } catch {
@@ -899,7 +899,7 @@ export function CommentTranslatorDock({
     realCommentsFeedRefreshInFlightRef.current = true;
     startRealCommentsFeedTransition(async () => {
       try {
-        const feed = await getCommentTranslatorRealCommentsFeedAction();
+        const feed = await getCommentTranslatorRealCommentsFeedAction({ targetLanguage });
         setRealCommentsFeed(feed);
         setRealCommentsFeedError(null);
       } catch {
@@ -908,7 +908,7 @@ export function CommentTranslatorDock({
         realCommentsFeedRefreshInFlightRef.current = false;
       }
     });
-  }, [locale]);
+  }, [locale, targetLanguage]);
 
   useEffect(() => {
     function refreshTimeZonePreference() {

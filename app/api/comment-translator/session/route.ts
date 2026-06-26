@@ -31,16 +31,15 @@ import {
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
 import {
-  createSkippedCommentTranslatorLiveChatTargetLookupNotApproved,
-  createUnavailableCommentTranslatorLiveChatTargetLookupAdapter,
   resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart
 } from "@/lib/comment-translator-server-only-live-chat-target-lookup";
 import {
   clearCommentTranslatorBoundedLiveChatPollingState,
-  createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter,
   readCommentTranslatorBoundedLiveChatPollingTick,
   seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession
 } from "@/lib/comment-translator-bounded-live-chat-polling-wiring";
+import { createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter } from "@/lib/comment-translator-youtube-live-provider-runtime-adapter";
+import { runCommentTranslatorLiveProviderSessionStep } from "@/lib/comment-translator-live-provider-session-step";
 import {
   clearCommentTranslatorRealCommentsFeedForSession
 } from "@/lib/comment-translator-real-comments-feed-session-bridge";
@@ -60,6 +59,7 @@ import {
   readCommentTranslatorRequestIp
 } from "@/lib/comment-translator-abuse-rate-limit-runtime";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { CommentTranslatorTargetLanguageId } from "@/lib/comment-translator";
 
 export const dynamic = "force-dynamic";
 
@@ -165,25 +165,37 @@ export async function POST(request: NextRequest) {
           reason: "trusted-adapter-not-wired"
         })
       );
-  const liveChatTargetReadiness =
-    command.intent === "start"
-      ? createSkippedCommentTranslatorLiveChatTargetLookupNotApproved()
-      : await resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart({
-          intent: command.intent,
-          credentialReadiness,
-          adapter: createUnavailableCommentTranslatorLiveChatTargetLookupAdapter({
-            reason: "provider-target-lookup-not-approved"
-          })
-        });
-  const pollingTick = await readCommentTranslatorBoundedLiveChatPollingTick({
-    intent: command.intent,
-    activeSession,
-    usage,
-    adapter: createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter({
-      reason: "live-provider-polling-not-approved"
-    }),
-    nowMs
+  const liveProviderRuntime = createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter({
+    credentialReferenceId,
+    callerAuthorization
   });
+  const liveChatTargetReadiness = await resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart({
+    intent: command.intent,
+    credentialReadiness,
+    adapter: liveProviderRuntime.targetLookupAdapter
+  });
+  const pollingStep =
+    command.intent === "heartbeat" || command.intent === "status"
+      ? await runCommentTranslatorLiveProviderSessionStep({
+          activeSession,
+          usage,
+          callerAuthorization,
+          credentialReadiness,
+          targetLookupAdapter: liveProviderRuntime.targetLookupAdapter,
+          pollingAdapter: liveProviderRuntime.pollingAdapter,
+          nowMs,
+          targetLanguage: command.targetLanguage
+        })
+      : null;
+  const pollingTick =
+    pollingStep?.pollingTick ??
+    (await readCommentTranslatorBoundedLiveChatPollingTick({
+      intent: command.intent,
+      activeSession,
+      usage,
+      adapter: liveProviderRuntime.pollingAdapter,
+      nowMs
+    }));
 
   const state = await readCommentTranslatorSessionCommand({
     intent: command.intent,
@@ -284,6 +296,7 @@ async function readSessionCommand(request: NextRequest): Promise<{
   credentialReferenceId: string | null;
   browserConnected: boolean;
   stopReason: "user-stop" | "browser-disconnect" | undefined;
+  targetLanguage: CommentTranslatorTargetLanguageId;
 }> {
   const contentType = request.headers.get("content-type") ?? "";
 
@@ -294,6 +307,7 @@ async function readSessionCommand(request: NextRequest): Promise<{
         credentialReferenceId?: unknown;
         browserConnected?: unknown;
         stopReason?: unknown;
+        targetLanguage?: unknown;
       };
 
       return normalizeCommandBody(body);
@@ -308,7 +322,8 @@ async function readSessionCommand(request: NextRequest): Promise<{
       intent: formData.get("intent"),
       credentialReferenceId: formData.get("credentialReferenceId"),
       browserConnected: formData.get("browserConnected"),
-      stopReason: formData.get("stopReason")
+      stopReason: formData.get("stopReason"),
+      targetLanguage: formData.get("targetLanguage")
     });
   } catch {
     return normalizeCommandBody({});
@@ -320,11 +335,13 @@ function normalizeCommandBody(body: {
   credentialReferenceId?: unknown;
   browserConnected?: unknown;
   stopReason?: unknown;
+  targetLanguage?: unknown;
 }): {
   intent: CommentTranslatorSessionCommandIntent;
   credentialReferenceId: string | null;
   browserConnected: boolean;
   stopReason: "user-stop" | "browser-disconnect" | undefined;
+  targetLanguage: CommentTranslatorTargetLanguageId;
 } {
   let intent: CommentTranslatorSessionCommandIntent = "status";
   if (body.intent === "start" || body.intent === "stop" || body.intent === "heartbeat" || body.intent === "status") {
@@ -338,12 +355,14 @@ function normalizeCommandBody(body: {
     body.browserConnected === false || body.browserConnected === "false" || body.intent === "stop" ? false : true;
   const stopReason: "user-stop" | "browser-disconnect" | undefined =
     body.stopReason === "browser-disconnect" ? "browser-disconnect" : body.intent === "stop" ? "user-stop" : undefined;
+  const targetLanguage: CommentTranslatorTargetLanguageId = body.targetLanguage === "en" ? "en" : "ja";
 
   return {
     intent,
     credentialReferenceId,
     browserConnected,
-    stopReason
+    stopReason,
+    targetLanguage
   };
 }
 

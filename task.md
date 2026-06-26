@@ -106,6 +106,11 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 
 ## Latest Sanitized Evidence Summary
 
+- PL-G3 feed bridge/session persistence follow-up: normal UI route/action wiring now uses a server-only YouTube live provider runtime adapter instead of fixed unavailable target lookup / polling adapters.
+- F7 bounded `liveChatMessages.list` polling wiring is now connected to the normal UI heartbeat/status/manual refresh path through the trusted server-only live provider adapter.
+- Current implementation slice: Start resolves the owned live target through server-only `liveBroadcasts.list`; heartbeat/status/manual feed refresh run bounded `liveChatMessages.list`, map provider-safe comments to normalized messages, execute the Free Azure/provider policy path, and persist browser-safe feed rows.
+- Sanitized boundary preserved: token values, refresh tokens, authorization headers, liveChatId, provider target metadata, raw provider payloads, raw comment logs, author channel material, browser storage, and handoff payloads remain forbidden/not returned by design.
+- Width checks skipped for this slice: no UI/CSS/rendered route/visible layout change; the only component change passes the selected target language to existing server actions.
 - PR #557 durable safe-feed persistence diagnostics are merged into `origin/codex/comment-translator-free-public-beta-integration`.
 - Initial post-#557 F10 retest isolated the durable feed persist failure to remote durable feed snapshot table shape missing or unavailable, not provider intake/translation failure.
 - Approved remote table-shape confirmation applied the reviewed `supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql` migration only after the table was confirmed missing. Post-apply table shape returned present/all-present/shape-ready labels.

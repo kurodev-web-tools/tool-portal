@@ -8,6 +8,7 @@ import {
   type YouTubeLiveChatRuntimeAdapter,
   type YouTubeLiveChatTerminalStateCode
 } from "./comment-translator-youtube-runtime-foundation";
+import { type YouTubeProviderSafeCommentPayload } from "./comment-translator-youtube-input-boundary";
 import {
   type CommentTranslatorActiveSessionRecord,
   type CommentTranslatorSessionBrowserSafeState,
@@ -115,6 +116,7 @@ export type CommentTranslatorBoundedLiveChatPollingTickResult =
       providerAccess: "deterministic-local-adapter-only";
       providerSignal: null;
       sanitizedPolling: CommentTranslatorBoundedLiveChatPollingSanitizedMetadata;
+      serverOnlyCommentsForTranslation: readonly YouTubeProviderSafeCommentPayload[];
       publicLaunchAllowed: false;
     }
   | {
@@ -126,6 +128,11 @@ export type CommentTranslatorBoundedLiveChatPollingTickResult =
       clientReadableDetail: "sanitized-stop-reason-only";
       publicLaunchAllowed: false;
     };
+
+type CommentTranslatorBoundedLiveChatPollingTickWithServerOnlyComments = Extract<
+  CommentTranslatorBoundedLiveChatPollingTickResult,
+  { status: "empty-chat-waiting" | "polled-comments-available" | "recoverable-backoff-scheduled" }
+>;
 
 export const commentTranslatorBoundedLiveChatPollingWiringContract = {
   implementationStage: "free-public-beta-f7-bounded-live-chat-polling-wiring",
@@ -309,22 +316,35 @@ export async function readCommentTranslatorBoundedLiveChatPollingTick({
   }
 
   if (pollingResult.state.retryCount > previousRetryCount) {
-    return {
+    return withServerOnlyComments({
       status: "recoverable-backoff-scheduled",
       providerAccess: "deterministic-local-adapter-only",
       providerSignal: null,
       sanitizedPolling,
       publicLaunchAllowed: false
-    };
+    }, []);
   }
 
-  return {
+  return withServerOnlyComments({
     status: pollingResult.comments.length > 0 ? "polled-comments-available" : "empty-chat-waiting",
     providerAccess: "deterministic-local-adapter-only",
     providerSignal: null,
     sanitizedPolling,
     publicLaunchAllowed: false
-  };
+  }, pollingResult.comments);
+}
+
+function withServerOnlyComments(
+  result: Omit<CommentTranslatorBoundedLiveChatPollingTickWithServerOnlyComments, "serverOnlyCommentsForTranslation">,
+  comments: readonly YouTubeProviderSafeCommentPayload[]
+): CommentTranslatorBoundedLiveChatPollingTickWithServerOnlyComments {
+  Object.defineProperty(result, "serverOnlyCommentsForTranslation", {
+    value: comments,
+    enumerable: false,
+    configurable: false,
+    writable: false
+  });
+  return result as CommentTranslatorBoundedLiveChatPollingTickWithServerOnlyComments;
 }
 
 export function clearCommentTranslatorBoundedLiveChatPollingState(sessionReferenceId: string | null | undefined) {

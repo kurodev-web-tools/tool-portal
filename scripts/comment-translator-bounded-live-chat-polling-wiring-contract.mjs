@@ -183,10 +183,10 @@ assert.match(sessionRuntimeSource, /providerSignal/, "session runtime accepts F7
 assert.match(sessionRuntimeSource, /liveProviderExecution:\s*"not-run-in-f7"/, "session contract records F7 live provider execution not-run");
 assert.match(routeSource, /readCommentTranslatorBoundedLiveChatPollingTick/, "session route wires F7 polling tick");
 assert.match(routeSource, /seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession/, "session route seeds F7 polling state after active start");
-assert.match(routeSource, /createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter/, "session route defaults to not-run polling adapter");
+assert.match(routeSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "session route uses trusted live provider polling adapter");
 assert.match(actionSource, /readCommentTranslatorBoundedLiveChatPollingTick/, "server actions wire F7 polling tick");
 assert.match(actionSource, /seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession/, "server actions seed F7 polling state after active start");
-assert.match(actionSource, /createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter/, "server actions default to not-run polling adapter");
+assert.match(actionSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "server actions use trusted live provider polling adapter");
 
 assert.match(youtubeRuntimeSource, /createInitialYouTubeLiveChatPollingState/, "F7 reuses YouTube polling runtime foundation");
 assert.match(youtubeRuntimeSource, /advanceYouTubeLiveChatPollingState/, "F7 reuses deterministic polling stepper");
@@ -590,12 +590,19 @@ for (const source of [
 
 const allowedChangedFiles = new Set([
   wiringPath,
+  "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
+  "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-live-message-normalization.ts",
+  "lib/comment-translator-server-only-live-chat-target-lookup.ts",
   sessionRuntimePath,
   routePath,
   actionPath,
+  "components/comment-translator/CommentTranslatorDock.tsx",
   readinessDocPath,
   gapAuditPath,
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

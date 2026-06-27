@@ -23,6 +23,9 @@ import type {
 import {
   resolveCommentTranslatorFreeBetaProviderCallPolicy
 } from "./comment-translator-free-beta-usage-display";
+import {
+  createYouTubeLiveCommentTranslatorPipelineRequestsForComments
+} from "./comment-translator-youtube-live-comment-intake-pipeline";
 import type {
   CommentTranslatorRealCommentsDisplayRow,
   CommentTranslatorRealCommentsFeedState,
@@ -161,6 +164,11 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
           messages: sessionDedupe.messages,
           duplicateTextSkippedCount: 0
         };
+  const languagePolicySkippedMessageReferenceIds = createLanguagePolicySkippedMessageReferenceIds({
+    eligibleMessages: batchTextDedupe.messages.filter(isTranslationEligibleMessage),
+    targetLanguage: request.targetLanguage,
+    sourceLanguages: request.sourceLanguages
+  });
   const baseFeed = createCommentTranslatorRealCommentsFeedStateFromNormalizedMessages({
     messages: batchTextDedupe.messages,
     sessionStatus: request.sessionStatus,
@@ -209,7 +217,8 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
         eligibility,
         feed: createCommentTranslatorRealCommentsFeedStateFromUsageLimitRows({
           feed: baseFeed,
-          eligibleMessages
+          eligibleMessages,
+          languagePolicySkippedMessageReferenceIds
         })
       })
     });
@@ -249,7 +258,8 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
       feed: createCommentTranslatorRealCommentsFeedStateFromTranslatedRows({
         feed: baseFeed,
         execution,
-        eligibleMessages
+        eligibleMessages,
+        languagePolicySkippedMessageReferenceIds
       })
     })
   });
@@ -286,33 +296,37 @@ async function persistFeedBridgeResult({
 
 function createCommentTranslatorRealCommentsFeedStateFromUsageLimitRows({
   feed,
-  eligibleMessages
+  eligibleMessages,
+  languagePolicySkippedMessageReferenceIds
 }: {
   feed: CommentTranslatorRealCommentsFeedState;
   eligibleMessages: readonly CommentTranslatorNormalizedLiveMessage[];
+  languagePolicySkippedMessageReferenceIds: ReadonlySet<string>;
 }): CommentTranslatorRealCommentsFeedState {
   const eligibleMessageReferenceIds = new Set(eligibleMessages.map((message) => message.messageReferenceId));
-
-  return {
-    ...feed,
-    rows: feed.rows.map((row) => {
+  const rows = feed.rows
+    .filter((row) => !languagePolicySkippedMessageReferenceIds.has(row.messageReferenceId))
+    .map((row) => {
       if (!eligibleMessageReferenceIds.has(row.messageReferenceId)) {
         return withTranslation(row, null, "skipped-f10-non-translatable");
       }
 
       return withTranslation(row, null, "skipped-f12-usage-limit");
-    })
-  };
+    });
+
+  return replaceCommentTranslatorRealCommentsFeedRows({ feed, rows });
 }
 
 export function createCommentTranslatorRealCommentsFeedStateFromTranslatedRows({
   feed,
   execution,
-  eligibleMessages
+  eligibleMessages,
+  languagePolicySkippedMessageReferenceIds = new Set()
 }: {
   feed: CommentTranslatorRealCommentsFeedState;
   execution: CommentTranslatorProviderExecutionResult;
   eligibleMessages: readonly CommentTranslatorNormalizedLiveMessage[];
+  languagePolicySkippedMessageReferenceIds?: ReadonlySet<string>;
 }): CommentTranslatorRealCommentsFeedState {
   const translationByMessageReferenceId = new Map(
     execution.translations.map((translation) => [readMessageReferenceIdFromProviderRequestId(translation.commentReferenceId), translation])
@@ -325,9 +339,9 @@ export function createCommentTranslatorRealCommentsFeedStateFromTranslatedRows({
     execution.skipsByReason.providerUnavailable >= eligibleMessageReferenceIds.size;
   const providerErrorStatus = resolveProviderErrorStatus(execution);
 
-  return {
-    ...feed,
-    rows: feed.rows.map((row) => {
+  const rows = feed.rows
+    .filter((row) => !languagePolicySkippedMessageReferenceIds.has(row.messageReferenceId))
+    .map((row) => {
       if (!eligibleMessageReferenceIds.has(row.messageReferenceId)) {
         return withTranslation(row, null, "skipped-f10-non-translatable");
       }
@@ -346,8 +360,42 @@ export function createCommentTranslatorRealCommentsFeedStateFromTranslatedRows({
       }
 
       return withTranslation(row, null, "skipped-f10-language-policy");
-    })
-  };
+    });
+
+  return replaceCommentTranslatorRealCommentsFeedRows({ feed, rows });
+}
+
+function createLanguagePolicySkippedMessageReferenceIds({
+  eligibleMessages,
+  targetLanguage,
+  sourceLanguages
+}: {
+  eligibleMessages: readonly CommentTranslatorNormalizedLiveMessage[];
+  targetLanguage: CommentTranslatorTargetLanguageId;
+  sourceLanguages?: readonly string[];
+}): ReadonlySet<string> {
+  if (eligibleMessages.length === 0) {
+    return new Set();
+  }
+
+  const comments = eligibleMessages.map(mapNormalizedMessageToProviderSafeComment);
+  const bridge = createYouTubeLiveCommentTranslatorPipelineRequestsForComments({
+    comments,
+    targetLanguage,
+    sourceLanguages
+  });
+  if (bridge.status !== "ready-for-translator-pipeline") {
+    return new Set(eligibleMessages.map((message) => message.messageReferenceId));
+  }
+
+  const acceptedMessageReferenceIds = new Set(
+    bridge.providerRequests.map((providerRequest) => readMessageReferenceIdFromProviderRequestId(providerRequest.requestId))
+  );
+  return new Set(
+    eligibleMessages
+      .map((message) => message.messageReferenceId)
+      .filter((messageReferenceId) => !acceptedMessageReferenceIds.has(messageReferenceId))
+  );
 }
 
 function isTranslationEligibleMessage(message: CommentTranslatorNormalizedLiveMessage) {

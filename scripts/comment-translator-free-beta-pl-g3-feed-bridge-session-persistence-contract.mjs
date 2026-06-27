@@ -439,6 +439,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-server-only-live-chat-target-lookup.ts",
   "components/comment-translator/CommentTranslatorDock.tsx",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",

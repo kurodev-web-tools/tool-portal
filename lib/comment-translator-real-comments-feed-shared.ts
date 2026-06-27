@@ -2,6 +2,25 @@ import type { CommentTranslatorComment, CommentTranslatorTargetLanguageId } from
 import type { Locale } from "./locale";
 
 export type CommentTranslatorRealCommentsFeedStatus = "ready" | "inactive" | "unavailable";
+export type CommentTranslatorLiveProviderDiagnostics = {
+  pollTickStatus: "polled" | "empty" | "not-due" | "recoverable" | "terminal" | "missing-state";
+  returnedCount: number;
+  acceptedCount: number;
+  skippedCount: number;
+  preStartSkippedCount: number;
+  skipReasonCounts: readonly {
+    reason: "duplicate" | "language-policy" | "usage-limit" | "provider-unavailable";
+    count: number;
+  }[];
+  translatedCount: number;
+  persistedFeedRowCount: number;
+  nextPollDue: "due" | "waiting";
+  stopReason: string | null;
+  rawProviderPayload: "not-returned-by-design";
+  rawComments: "not-returned-by-design";
+  providerTargetMetadata: "forbidden";
+  serverOnlyCursor: "not-returned-by-design";
+};
 export type CommentTranslatorRealCommentsTranslationStatus =
   | "not-run-f9"
   | "translated-f10"
@@ -54,6 +73,7 @@ export type CommentTranslatorRealCommentsFeedState = {
     authorChannelMaterial: "not-returned-by-design";
     providerTargetMetadata: "forbidden";
     serverOnlyCursor: "not-returned-by-design";
+    liveProviderDiagnostics: CommentTranslatorLiveProviderDiagnostics | null;
   };
   rawProviderPayload: "not-returned-by-design";
   rawComments: "not-returned-by-design";
@@ -65,9 +85,11 @@ export type CommentTranslatorRealCommentsFeedState = {
 };
 
 export function createUnavailableCommentTranslatorRealCommentsFeedState({
-  reason
+  reason,
+  liveProviderDiagnostics = null
 }: {
   reason: CommentTranslatorRealCommentsFeedState["unavailableReason"];
+  liveProviderDiagnostics?: CommentTranslatorLiveProviderDiagnostics | null;
 }): CommentTranslatorRealCommentsFeedState {
   return {
     status: reason === "session-not-active" ? "inactive" : "unavailable",
@@ -83,7 +105,8 @@ export function createUnavailableCommentTranslatorRealCommentsFeedState({
       rawComments: "not-returned-by-design",
       authorChannelMaterial: "not-returned-by-design",
       providerTargetMetadata: "forbidden",
-      serverOnlyCursor: "not-returned-by-design"
+      serverOnlyCursor: "not-returned-by-design",
+      liveProviderDiagnostics
     },
     rawProviderPayload: "not-returned-by-design",
     rawComments: "not-returned-by-design",
@@ -92,6 +115,26 @@ export function createUnavailableCommentTranslatorRealCommentsFeedState({
     browserStorage: "unchanged",
     handoffPayload: "unchanged",
     publicLaunchAllowed: false
+  };
+}
+
+export function attachCommentTranslatorLiveProviderDiagnosticsToFeed({
+  feed,
+  diagnostics
+}: {
+  feed: CommentTranslatorRealCommentsFeedState;
+  diagnostics: CommentTranslatorLiveProviderDiagnostics | null;
+}): CommentTranslatorRealCommentsFeedState {
+  if (!diagnostics) {
+    return feed;
+  }
+
+  return {
+    ...feed,
+    sanitizedSummary: {
+      ...feed.sanitizedSummary,
+      liveProviderDiagnostics: diagnostics
+    }
   };
 }
 

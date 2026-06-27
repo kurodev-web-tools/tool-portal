@@ -35,9 +35,20 @@ export type CommentTranslatorBoundedLiveChatPollingAdapter =
     };
 
 export type CommentTranslatorBoundedLiveChatPollingSanitizedMetadata = {
+  pollTickStatus: "polled" | "empty" | "not-due" | "recoverable" | "terminal" | "missing-state";
   nextPageToken: "present" | "absent";
   pollingIntervalMillis: number | null;
   returnedCommentCount: number;
+  returnedCount: number;
+  acceptedCount: number;
+  skippedCount: number;
+  preStartSkippedCount: number;
+  skipReasonCounts: readonly {
+    reason: "duplicate";
+    count: number;
+  }[];
+  nextPollDue: "due" | "waiting";
+  stopReason: CommentTranslatorSessionStopReason | null;
   retryCount: number;
   rawComments: "not-returned-by-design";
   serverOnlyCursor: "not-returned-by-design";
@@ -112,7 +123,11 @@ export type CommentTranslatorBoundedLiveChatPollingTickResult =
       publicLaunchAllowed: false;
     }
   | {
-      status: "empty-chat-waiting" | "polled-comments-available" | "recoverable-backoff-scheduled";
+      status:
+        | "empty-chat-waiting"
+        | "polled-comments-available"
+        | "cursor-primed-existing-comments-skipped"
+        | "recoverable-backoff-scheduled";
       providerAccess: "deterministic-local-adapter-only";
       providerSignal: null;
       sanitizedPolling: CommentTranslatorBoundedLiveChatPollingSanitizedMetadata;
@@ -131,7 +146,13 @@ export type CommentTranslatorBoundedLiveChatPollingTickResult =
 
 type CommentTranslatorBoundedLiveChatPollingTickWithServerOnlyComments = Extract<
   CommentTranslatorBoundedLiveChatPollingTickResult,
-  { status: "empty-chat-waiting" | "polled-comments-available" | "recoverable-backoff-scheduled" }
+  {
+    status:
+      | "empty-chat-waiting"
+      | "polled-comments-available"
+      | "cursor-primed-existing-comments-skipped"
+      | "recoverable-backoff-scheduled";
+  }
 >;
 
 export const commentTranslatorBoundedLiveChatPollingWiringContract = {
@@ -172,6 +193,8 @@ export const commentTranslatorBoundedLiveChatPollingWiringContract = {
 } as const;
 
 const pollingStateBySessionReference = new Map<string, YouTubeLiveChatPollingRuntimeState>();
+const cursorPrimedSessionReferences = new Set<string>();
+const seenCommentIdsBySessionReference = new Map<string, Set<string>>();
 
 export function seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession({
   state,
@@ -207,6 +230,8 @@ export function seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession
       nowMs
     })
   );
+  cursorPrimedSessionReferences.delete(state.sessionReferenceId);
+  seenCommentIdsBySessionReference.set(state.sessionReferenceId, new Set());
 
   return {
     status: "seeded",
@@ -277,7 +302,9 @@ export async function readCommentTranslatorBoundedLiveChatPollingTick({
       status: "skipped-not-due",
       providerAccess: "not-run",
       providerSignal: null,
-      sanitizedPolling: createSanitizedPollingMetadata(pollingState, 0, nowMs),
+      sanitizedPolling: createSanitizedPollingMetadata(pollingState, 0, nowMs, {
+        pollTickStatus: "not-due"
+      }),
       publicLaunchAllowed: false
     };
   }
@@ -300,8 +327,6 @@ export async function readCommentTranslatorBoundedLiveChatPollingTick({
     });
   }
 
-  const sanitizedPolling = createSanitizedPollingMetadata(pollingResult.state, pollingResult.comments.length, nowMs);
-
   if (pollingResult.state.retryCount > maxRecoverableRetries) {
     clearCommentTranslatorBoundedLiveChatPollingState(activeSession.sessionReferenceId);
     return {
@@ -309,7 +334,10 @@ export async function readCommentTranslatorBoundedLiveChatPollingTick({
       providerAccess: "deterministic-local-adapter-only",
       providerSignal: "terminal-provider-error",
       reasonUxCode: "translation-provider-error",
-      sanitizedPolling,
+      sanitizedPolling: createSanitizedPollingMetadata(pollingResult.state, pollingResult.comments.length, nowMs, {
+        pollTickStatus: "terminal",
+        stopReason: "terminal-provider-error"
+      }),
       clientReadableDetail: "sanitized-stop-reason-only",
       publicLaunchAllowed: false
     };
@@ -320,18 +348,35 @@ export async function readCommentTranslatorBoundedLiveChatPollingTick({
       status: "recoverable-backoff-scheduled",
       providerAccess: "deterministic-local-adapter-only",
       providerSignal: null,
-      sanitizedPolling,
+      sanitizedPolling: createSanitizedPollingMetadata(pollingResult.state, pollingResult.comments.length, nowMs, {
+        pollTickStatus: "recoverable"
+      }),
       publicLaunchAllowed: false
     }, []);
   }
 
+  const cursorSelection = selectCommentsForTranslationAfterCursorPrime({
+    sessionReferenceId: activeSession.sessionReferenceId,
+    comments: pollingResult.comments
+  });
+  const sanitizedPolling = createSanitizedPollingMetadata(pollingResult.state, pollingResult.comments.length, nowMs, {
+    acceptedCount: cursorSelection.acceptedComments.length,
+    duplicateSkippedCount: cursorSelection.duplicateSkippedCount,
+    preStartSkippedCount: cursorSelection.preStartSkippedCount,
+    pollTickStatus: pollingResult.comments.length > 0 ? "polled" : "empty"
+  });
+
   return withServerOnlyComments({
-    status: pollingResult.comments.length > 0 ? "polled-comments-available" : "empty-chat-waiting",
+    status: resolvePollingSuccessStatus({
+      returnedCommentCount: pollingResult.comments.length,
+      acceptedCount: cursorSelection.acceptedComments.length,
+      preStartSkippedCount: cursorSelection.preStartSkippedCount
+    }),
     providerAccess: "deterministic-local-adapter-only",
     providerSignal: null,
     sanitizedPolling,
     publicLaunchAllowed: false
-  }, pollingResult.comments);
+  }, cursorSelection.acceptedComments);
 }
 
 function withServerOnlyComments(
@@ -353,6 +398,8 @@ export function clearCommentTranslatorBoundedLiveChatPollingState(sessionReferen
   }
 
   pollingStateBySessionReference.delete(sessionReferenceId);
+  cursorPrimedSessionReferences.delete(sessionReferenceId);
+  seenCommentIdsBySessionReference.delete(sessionReferenceId);
 }
 
 export function createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter({
@@ -393,6 +440,8 @@ export function createDeterministicCommentTranslatorBoundedLiveChatPollingAdapte
 
 export function resetCommentTranslatorBoundedLiveChatPollingStateForTests() {
   pollingStateBySessionReference.clear();
+  cursorPrimedSessionReferences.clear();
+  seenCommentIdsBySessionReference.clear();
 }
 
 function skippedPolling(
@@ -449,7 +498,10 @@ function terminalPollingResult({
     reasonUxCode: resolveCommentTranslatorPollingTerminalReasonUxCode({
       code: state.terminal?.code ?? "unknown-terminal-provider-error"
     }),
-    sanitizedPolling: createSanitizedPollingMetadata(state, 0, nowMs),
+    sanitizedPolling: createSanitizedPollingMetadata(state, 0, nowMs, {
+      pollTickStatus: "terminal",
+      stopReason: providerSignal
+    }),
     clientReadableDetail: "sanitized-stop-reason-only",
     publicLaunchAllowed: false
   };
@@ -458,18 +510,122 @@ function terminalPollingResult({
 function createSanitizedPollingMetadata(
   state: YouTubeLiveChatPollingRuntimeState,
   returnedCommentCount: number,
-  nowMs: number
+  nowMs: number,
+  overrides: {
+    acceptedCount?: number;
+    duplicateSkippedCount?: number;
+    preStartSkippedCount?: number;
+    pollTickStatus?: CommentTranslatorBoundedLiveChatPollingSanitizedMetadata["pollTickStatus"];
+    stopReason?: CommentTranslatorSessionStopReason | null;
+  } = {}
 ): CommentTranslatorBoundedLiveChatPollingSanitizedMetadata {
+  const acceptedCount = overrides.acceptedCount ?? returnedCommentCount;
+  const duplicateSkippedCount = overrides.duplicateSkippedCount ?? 0;
+  const preStartSkippedCount = overrides.preStartSkippedCount ?? 0;
+  const skipReasonCounts =
+    duplicateSkippedCount > 0
+      ? ([{ reason: "duplicate", count: duplicateSkippedCount }] as const)
+      : [];
+  const pollingIntervalMillis = state.terminal ? null : Math.max(0, state.nextPollAfterMs - nowMs);
+
   return {
+    pollTickStatus: overrides.pollTickStatus ?? (returnedCommentCount > 0 ? "polled" : "empty"),
     nextPageToken: state.nextPageToken ? "present" : "absent",
-    pollingIntervalMillis: state.terminal ? null : Math.max(0, state.nextPollAfterMs - nowMs),
+    pollingIntervalMillis,
     returnedCommentCount,
+    returnedCount: returnedCommentCount,
+    acceptedCount,
+    skippedCount: Math.max(0, returnedCommentCount - acceptedCount),
+    preStartSkippedCount,
+    skipReasonCounts,
+    nextPollDue: pollingIntervalMillis === 0 ? "due" : "waiting",
+    stopReason: overrides.stopReason ?? null,
     retryCount: state.retryCount,
     rawComments: "not-returned-by-design",
     serverOnlyCursor: "not-returned-by-design",
     liveTarget: "not-returned-by-design",
     providerTargetMetadata: "forbidden"
   };
+}
+
+function selectCommentsForTranslationAfterCursorPrime({
+  sessionReferenceId,
+  comments
+}: {
+  sessionReferenceId: string;
+  comments: readonly YouTubeProviderSafeCommentPayload[];
+}) {
+  const seenCommentIds = getSeenCommentIdsForSession(sessionReferenceId);
+  if (!cursorPrimedSessionReferences.has(sessionReferenceId)) {
+    for (const comment of comments) {
+      seenCommentIds.add(comment.commentId);
+    }
+    cursorPrimedSessionReferences.add(sessionReferenceId);
+    return {
+      acceptedComments: [],
+      duplicateSkippedCount: 0,
+      preStartSkippedCount: comments.length
+    };
+  }
+
+  const acceptedComments: YouTubeProviderSafeCommentPayload[] = [];
+  let duplicateSkippedCount = 0;
+  for (const comment of comments) {
+    if (seenCommentIds.has(comment.commentId)) {
+      duplicateSkippedCount += 1;
+      continue;
+    }
+
+    seenCommentIds.add(comment.commentId);
+    acceptedComments.push(comment);
+  }
+
+  return {
+    acceptedComments,
+    duplicateSkippedCount,
+    preStartSkippedCount: 0
+  };
+}
+
+function getSeenCommentIdsForSession(sessionReferenceId: string) {
+  const existing = seenCommentIdsBySessionReference.get(sessionReferenceId);
+  if (existing) {
+    return existing;
+  }
+
+  const seenCommentIds = new Set<string>();
+  seenCommentIdsBySessionReference.set(sessionReferenceId, seenCommentIds);
+  return seenCommentIds;
+}
+
+function resolvePollingSuccessStatus({
+  returnedCommentCount,
+  acceptedCount,
+  preStartSkippedCount
+}: {
+  returnedCommentCount: number;
+  acceptedCount: number;
+  preStartSkippedCount: number;
+}): Extract<
+  CommentTranslatorBoundedLiveChatPollingTickResult,
+  {
+    status:
+      | "empty-chat-waiting"
+      | "polled-comments-available"
+      | "cursor-primed-existing-comments-skipped"
+      | "recoverable-backoff-scheduled";
+  }
+>["status"] {
+  if (preStartSkippedCount > 0) {
+    return "cursor-primed-existing-comments-skipped";
+  }
+
+  if (acceptedCount > 0) {
+    return "polled-comments-available";
+  }
+
+  void returnedCommentCount;
+  return "empty-chat-waiting";
 }
 
 function assessPollingQuotaBudgetStopReason({

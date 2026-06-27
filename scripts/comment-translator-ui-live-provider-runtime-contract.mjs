@@ -125,7 +125,11 @@ assert.doesNotMatch(
 assert.doesNotMatch(adapterSource, /console\.(log|info|warn|error)/, "adapter does not log provider/token/comment material");
 assert.match(pollingSource, /serverOnlyCommentsForTranslation/, "polling tick carries comments only for server-side translation");
 assert.match(orchestrationSource, /executeCommentTranslatorAzureNormalTranslationForNormalizedMessages/, "polling orchestration runs Azure/provider translation execution");
+assert.match(orchestrationSource, /diagnostics:\s*CommentTranslatorLiveProviderDiagnostics/, "polling orchestration exposes sanitized live provider diagnostics");
+assert.match(orchestrationSource, /preStartSkippedCount/, "polling orchestration carries cursor-prime skipped counts");
+assert.match(orchestrationSource, /persistedFeedRowCount/, "polling orchestration carries feed persistence counts");
 assert.match(actionsSource, /liveProviderUnavailableReason/, "feed action preserves sanitized live provider unavailable reason");
+assert.match(actionsSource, /attachCommentTranslatorLiveProviderDiagnosticsToFeed/, "feed action returns sanitized live provider diagnostics in feed state");
 assert.match(actionsSource, /polling-runtime-not-wired/, "feed action returns sanitized polling runtime unavailable reason");
 
 const polling = loadTsModule(pollingPath);
@@ -230,14 +234,46 @@ const tick = await polling.readCommentTranslatorBoundedLiveChatPollingTick({
   }),
   nowMs: activeState.startedAtMs
 });
-assert.equal(tick.status, "polled-comments-available");
+assert.equal(tick.status, "cursor-primed-existing-comments-skipped");
 assert.equal(tick.sanitizedPolling.returnedCommentCount, 1);
+assert.equal(tick.sanitizedPolling.acceptedCount, 0);
+assert.equal(tick.sanitizedPolling.preStartSkippedCount, 1);
 assert.equal(tick.sanitizedPolling.rawComments, "not-returned-by-design");
-assert.equal(tick.serverOnlyCommentsForTranslation.length, 1);
+assert.equal(tick.serverOnlyCommentsForTranslation.length, 0);
 
-const normalized = normalizer.mapYouTubeProviderSafeCommentsToNormalizedLiveMessages(tick.serverOnlyCommentsForTranslation);
-assert.equal(normalized[0].messageReferenceId, "yt-comment-1");
-assert.equal(normalized[0].text, "hello");
+const postPrimeTick = await polling.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: activeState,
+  usage,
+  adapter: polling.createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter({
+    pollSteps: [
+      {
+        type: "messages",
+        receivedAtMs: activeState.startedAtMs + 1000,
+        nextPageToken: "server-only-next-page-token-2",
+        pollingIntervalMillis: 1000,
+        comments: [
+          {
+            id: "yt-comment-2",
+            publishedAt: "2026-06-26T00:00:01.000Z",
+            text: "hello after start",
+            platformLanguageHint: "en"
+          }
+        ]
+      }
+    ]
+  }),
+  nowMs: activeState.startedAtMs + 1000
+});
+assert.equal(postPrimeTick.status, "polled-comments-available");
+assert.equal(postPrimeTick.sanitizedPolling.returnedCommentCount, 1);
+assert.equal(postPrimeTick.sanitizedPolling.acceptedCount, 1);
+assert.equal(postPrimeTick.sanitizedPolling.preStartSkippedCount, 0);
+assert.equal(postPrimeTick.serverOnlyCommentsForTranslation.length, 1);
+
+const normalized = normalizer.mapYouTubeProviderSafeCommentsToNormalizedLiveMessages(postPrimeTick.serverOnlyCommentsForTranslation);
+assert.equal(normalized[0].messageReferenceId, "yt-comment-2");
+assert.equal(normalized[0].text, "hello after start");
 assert.equal(normalized[0].rawProviderPayload, "not-returned-by-design");
 assert.equal(normalized[0].authorChannelMaterial, "not-returned-by-design");
 

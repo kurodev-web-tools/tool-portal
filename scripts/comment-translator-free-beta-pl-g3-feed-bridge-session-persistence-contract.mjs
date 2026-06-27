@@ -434,6 +434,8 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-live-provider-session-step.ts",
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
   "lib/comment-translator-live-message-normalization.ts",
+  "lib/comment-translator-real-comments-feed-shared.ts",
+  "lib/comment-translator-real-comments-ui-wiring.ts",
   "lib/comment-translator-server-only-live-chat-target-lookup.ts",
   "components/comment-translator/CommentTranslatorDock.tsx",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",

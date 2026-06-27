@@ -924,6 +924,18 @@ export function CommentTranslatorDock({
     realCommentsFeedRefreshInFlightRef.current = true;
     startRealCommentsFeedTransition(async () => {
       try {
+        const refreshedSession = await heartbeatCommentTranslatorSessionAction({ targetLanguage });
+        setSessionState(refreshedSession);
+        if (refreshedSession.status !== "active") {
+          setRealCommentsFeed(
+            createUnavailableCommentTranslatorRealCommentsFeedState({
+              reason: "session-not-active"
+            })
+          );
+          setRealCommentsFeedError(null);
+          return;
+        }
+
         const feed = await getCommentTranslatorRealCommentsFeedAction({ targetLanguage });
         setRealCommentsFeed(feed);
         setRealCommentsFeedError(null);

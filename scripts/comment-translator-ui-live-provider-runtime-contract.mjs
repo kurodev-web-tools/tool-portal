@@ -14,6 +14,7 @@ const adapterPath = "lib/comment-translator-youtube-live-provider-runtime-adapte
 const pollingPath = "lib/comment-translator-bounded-live-chat-polling-wiring.ts";
 const normalizerPath = "lib/comment-translator-live-message-normalization.ts";
 const orchestrationPath = "lib/comment-translator-live-provider-session-step.ts";
+const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -94,7 +95,7 @@ function loadTsModule(relativePath) {
   }
 }
 
-for (const requiredPath of [routePath, actionsPath, adapterPath, pollingPath, normalizerPath, orchestrationPath]) {
+for (const requiredPath of [routePath, actionsPath, adapterPath, pollingPath, normalizerPath, orchestrationPath, dockPath]) {
   assert.ok(exists(requiredPath), `required UI live provider file exists: ${requiredPath}`);
 }
 
@@ -103,6 +104,7 @@ const actionsSource = read(actionsPath);
 const adapterSource = read(adapterPath);
 const pollingSource = read(pollingPath);
 const orchestrationSource = read(orchestrationPath);
+const dockSource = read(dockPath);
 
 assert.match(routeSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "session route uses trusted live provider adapter");
 assert.match(actionsSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "server actions use trusted live provider adapter");
@@ -131,6 +133,9 @@ assert.match(orchestrationSource, /persistedFeedRowCount/, "polling orchestratio
 assert.match(actionsSource, /liveProviderUnavailableReason/, "feed action preserves sanitized live provider unavailable reason");
 assert.match(actionsSource, /attachCommentTranslatorLiveProviderDiagnosticsToFeed/, "feed action returns sanitized live provider diagnostics in feed state");
 assert.match(actionsSource, /polling-runtime-not-wired/, "feed action returns sanitized polling runtime unavailable reason");
+assert.match(dockSource, /const refreshedSession = await heartbeatCommentTranslatorSessionAction\(\{ targetLanguage \}\)/, "manual and auto feed refresh renew the active heartbeat before reading feed");
+assert.match(dockSource, /setSessionState\(refreshedSession\)/, "feed refresh keeps the visible session state aligned with heartbeat results");
+assert.match(dockSource, /if \(refreshedSession\.status !== "active"\)/, "feed refresh stops reading live feed when heartbeat returns an inactive session");
 
 const polling = loadTsModule(pollingPath);
 const normalizer = loadTsModule(normalizerPath);

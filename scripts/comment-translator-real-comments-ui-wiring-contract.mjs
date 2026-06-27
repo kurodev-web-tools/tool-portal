@@ -149,6 +149,8 @@ assert.match(sharedSource, /mapCommentTranslatorRealCommentsFeedRowsToUiComments
 assert.match(actionsSource, /getCommentTranslatorRealCommentsFeedAction/, "F9 server action exposes only safe feed state");
 assert.match(pageSource, /initialRealCommentsFeed/, "F9 page seeds the dock with server-owned feed state");
 assert.match(dockSource, /data-comment-translator-real-comments-feed="server-owned-safe-rows"/, "F9 UI marks server-owned safe feed surface");
+assert.match(dockSource, /realCommentsFeedUnavailableMessage/, "F9 UI surfaces sanitized feed unavailable reason");
+assert.match(dockSource, /unavailableReason:/, "F9 UI labels unavailable reason without raw provider detail");
 assert.doesNotMatch(dockSource, /const allComments = \[\.\.\.manualComments,\s*\.\.\.comments\]/, "F9 UI no longer combines manual and fixture feed authority");
 assert.doesNotMatch(dockSource, /comments\s*\}\s*=\s*mockTranslationProvider\.getSnapshot\(\)/, "F9 UI does not destructure fixture comments as feed authority");
 assert.match(readinessDoc, /F9 real comments UI wiring/i, "durable readiness doc records F9");
@@ -282,8 +284,11 @@ const allowedChangedFiles = new Set([
   actionsPath,
   pagePath,
   dockPath,
+  "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
   readinessDocPath,
   gapAuditPath,
+  "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   taskPath

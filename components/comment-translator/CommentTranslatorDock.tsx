@@ -846,6 +846,9 @@ export function CommentTranslatorDock({
     ? copy.operatorSession.recommendedActions[sessionReasonUx.recommendedAction]
     : null;
   const sessionNextAction = copy.operatorSession.nextActions[sessionState.nextAction];
+  const realCommentsFeedUnavailableMessage = realCommentsFeed.unavailableReason
+    ? `unavailableReason: ${realCommentsFeed.unavailableReason}`
+    : null;
   const showReconnectGuidance =
     credentialStatusState !== "available" ||
     sessionState.nextAction === "reconnect-or-sign-in" ||
@@ -1510,7 +1513,7 @@ export function CommentTranslatorDock({
                     </div>
                     <p className="mt-3 text-sm font-black text-foreground">{copy.empty.title}</p>
                     <p className="mt-1 text-xs leading-5 text-muted">
-                      {realCommentsFeedError ?? copy.empty.body}
+                      {realCommentsFeedError ?? realCommentsFeedUnavailableMessage ?? copy.empty.body}
                     </p>
                   </div>
                 </div>

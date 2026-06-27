@@ -692,6 +692,7 @@ for (const source of [
 
 const allowedChangedFiles = new Set([
   wiringPath,
+  "lib/comment-translator-azure-normal-translation-execution.ts",
   "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
   "lib/comment-translator-live-provider-session-step.ts",
   "lib/comment-translator-live-message-normalization.ts",

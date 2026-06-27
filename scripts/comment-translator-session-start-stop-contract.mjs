@@ -418,6 +418,40 @@ assert.equal(
   "stale long-running session charge is bounded to startedAt through lastHeartbeat plus timeout"
 );
 
+const staleActiveSessionStartAttempt = session.startCommentTranslatorSession({
+  activeSession: {
+    sessionReferenceId: "cts_stale_start_reference",
+    startedAtMs: Date.parse("2026-06-16T11:58:00.000Z"),
+    lastHeartbeatAtMs: Date.parse("2026-06-16T11:58:30.000Z")
+  },
+  nowMs: Date.parse("2026-06-16T12:05:00.000Z"),
+  plan: "free",
+  callerAuthorization: {
+    status: "authorized",
+    ownerUserId: "server-only-owner-reference"
+  },
+  credentialReadiness: readyCredential,
+  usage: {
+    dailyUsedMs: 0,
+    translatedMessagesInCurrentMinute: 0,
+    providerBudgetAvailable: true,
+    globalBudgetAvailable: true,
+    aiBudgetAvailable: true
+  },
+  createSessionReferenceId: () => "cts_new_start_reference"
+});
+
+assert.equal(
+  staleActiveSessionStartAttempt.stopReason,
+  "missing-heartbeat",
+  "Start against a stale durable active session stops the stale session before applying active-session limits"
+);
+assert.equal(
+  staleActiveSessionStartAttempt.nextAction,
+  "session-stopped",
+  "stale active session cleanup stops the stale session instead of showing an over-limit state"
+);
+
 assert.equal(
   session.evaluateCommentTranslatorSessionStopCondition({
     activeSession: {

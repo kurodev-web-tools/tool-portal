@@ -326,6 +326,17 @@ export function startCommentTranslatorSession(
 
   const entitlement = resolveUsageEntitlement(request.usage, request.plan);
 
+  if (request.activeSession && isMissingHeartbeat(request.activeSession, request.nowMs)) {
+    return stopCommentTranslatorSession({
+      activeSession: request.activeSession,
+      nowMs: request.nowMs,
+      plan: request.plan,
+      usage: request.usage,
+      reason: "missing-heartbeat",
+      reasonUxCode: "heartbeat-or-browser-disconnect"
+    });
+  }
+
   if (request.activeSession && entitlement.activeSessionsPerUser <= 1) {
     return createStoppedState({
       activeSession: request.activeSession,

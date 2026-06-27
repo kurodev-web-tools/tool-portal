@@ -487,6 +487,7 @@ for (const payload of [result, unavailable, ...ledger.readInMemoryCommentTransla
 const allowedChangedFiles = new Set([
   "app/api/comment-translator/session/route.ts",
   "app/tools/comment-translator/actions.ts",
+  "components/comment-translator/CommentTranslatorDock.tsx",
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
   f10Path,
   "lib/comment-translator-live-provider-session-step.ts",

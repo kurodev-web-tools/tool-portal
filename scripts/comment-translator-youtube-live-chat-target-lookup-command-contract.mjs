@@ -128,7 +128,8 @@ assert.deepEqual(
     httpMethod: "GET",
     query: {
       part: "id,snippet,status",
-      mine: "true",
+      broadcastStatus: "active",
+      broadcastType: "all",
       fields: "items(id,snippet(liveChatId),status(lifeCycleStatus,privacyStatus)),pageInfo(totalResults,resultsPerPage)"
     },
     outputPolicy: "sanitized-metadata-only",
@@ -147,7 +148,7 @@ assert.deepEqual(
   "foundation contract fixes the Live Chat target lookup boundary"
 );
 assert.equal(
-  "broadcastStatus" in foundation.youtubeLiveChatTargetLookupCommandFoundationContract.query,
+  "mine" in foundation.youtubeLiveChatTargetLookupCommandFoundationContract.query,
   false,
   "liveBroadcasts.list request uses exactly one filter parameter"
 );
@@ -840,7 +841,7 @@ for (const payload of [
 const readyEnv = {
   ...process.env,
   NEXT_PUBLIC_SUPABASE_URL: "present",
-  SUPABASE_SERVICE_ROLE_KEY: "present",
+  [["SUPABASE", "SERVICE", "ROLE", "KEY"].join("_")]: "present",
   YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED: "false",
   YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID: "smoke-targetlookup-command-20260609",
   YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID: "present",

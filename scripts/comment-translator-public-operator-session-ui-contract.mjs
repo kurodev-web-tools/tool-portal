@@ -68,6 +68,16 @@ assert.equal(
   "アカウント連携でYouTubeを再接続してから、認証ステータスを再確認してください。",
   "Japanese reconnect guidance stays sanitized and actionable"
 );
+assert.equal(
+  lib.commentTranslatorUiCopy.ja.operatorSession.rateLimitStartBlockedTitle,
+  "Start操作が短時間に集中しています",
+  "Japanese rate-limit copy is separate from usage-limit copy"
+);
+assert.equal(
+  lib.commentTranslatorUiCopy.en.operatorSession.rateLimitStartBlockedTitle,
+  "Too many Start attempts",
+  "English rate-limit copy is separate from usage-limit copy"
+);
 
 assert.match(componentSource, /data-public-operator-session-ui="sanitized-session-usage-only"/, "dock renders the Task 12 public operator session panel");
 assert.match(componentSource, /startCommentTranslatorSessionAction/, "dock wires the Start control to the server action");
@@ -78,10 +88,12 @@ assert.match(componentSource, /sessionDailyUsedSeconds/, "dock derives daily use
 assert.match(componentSource, /sessionState\.remainingDailySeconds/, "dock displays daily remaining time from sanitized session state");
 assert.match(componentSource, /sessionState\.stopReason/, "dock displays sanitized stop reason");
 assert.match(componentSource, /startBlockedByUsagePolicy/, "dock derives disabled Start state from sanitized usage provider policy");
+assert.match(componentSource, /startBlockedByRateLimit/, "dock derives disabled Start state from sanitized rate-limit metadata");
+assert.match(componentSource, /sessionState\.rateLimit === "exceeded"/, "dock detects rate-limit state separately from usage policy");
 assert.match(
   componentSource,
-  /disabled=\{isSessionPending \|\| sessionState\.status === "active" \|\| startBlockedByCredentialStatus \|\| startBlockedByUsagePolicy\}/,
-  "Start button is disabled when sanitized usage policy is blocked"
+  /startBlockedByCredentialStatus[\s\S]*startBlockedByUsagePolicy[\s\S]*startBlockedByRateLimit/,
+  "Start button is disabled when sanitized usage policy or rate-limit metadata is blocked"
 );
 assert.match(
   componentSource,
@@ -89,6 +101,11 @@ assert.match(
   "dock renders a sanitized Start blocker panel for usage policy"
 );
 assert.match(componentSource, /copy\.operatorSession\.usageStartBlockedTitle/, "dock renders localized usage Start blocker copy");
+assert.match(
+  componentSource,
+  /data-comment-translator-start-blocked="rate-limit"[\s\S]*copy\.operatorSession\.rateLimitStartBlockedTitle/,
+  "dock renders a separate sanitized rate-limit Start blocker panel"
+);
 assert.match(componentSource, /credentialStatusState/, "dock displays provider connection state from sanitized credential status");
 assert.match(componentSource, /copy\.operatorSession\.reconnectGuidance/, "dock renders reconnect guidance without provider target metadata");
 

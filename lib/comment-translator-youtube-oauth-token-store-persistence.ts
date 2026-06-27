@@ -9,6 +9,9 @@ import {
 } from "./comment-translator-youtube-token-store-runtime";
 import { type YouTubeReadOnlyOAuthScope } from "./comment-translator-youtube-api-adapter";
 import { type YouTubeOAuthIntent } from "./comment-translator-youtube-oauth-connect-callback";
+import {
+  createYouTubeOAuthTokenMaterialCiphertextReferences as createSealedYouTubeOAuthTokenMaterialCiphertextReferences
+} from "./comment-translator-youtube-token-material-runtime";
 
 const googleOAuthTokenEndpoint = "https://oauth2.googleapis.com/token";
 
@@ -239,26 +242,14 @@ export function createYouTubeOAuthTokenMaterialCiphertextReferences({
   encryptionKeyVersion: string;
   credentialReferenceSecret: string;
 }) {
-  return {
-    accessTokenCiphertextReference: createCiphertextReference({
-      credentialReferenceId,
-      tokenKind: "access",
-      tokenMaterial: accessTokenMaterial,
-      encryptionKeyReference,
-      encryptionKeyVersion,
-      credentialReferenceSecret
-    }),
-    refreshTokenCiphertextReference: createCiphertextReference({
-      credentialReferenceId,
-      tokenKind: "refresh",
-      tokenMaterial: refreshTokenMaterial,
-      encryptionKeyReference,
-      encryptionKeyVersion,
-      credentialReferenceSecret
-    }),
+  return createSealedYouTubeOAuthTokenMaterialCiphertextReferences({
+    credentialReferenceId,
+    accessTokenMaterial,
+    refreshTokenMaterial,
     encryptionKeyReference,
-    encryptionKeyVersion
-  };
+    encryptionKeyVersion,
+    credentialReferenceSecret
+  });
 }
 
 export function createGoogleOAuthAuthorizationCodeExchangeAdapter({
@@ -385,28 +376,6 @@ function readYouTubeOAuthTokenStorePersistenceEnvReadiness(env: Record<string, s
     tokenStoreKeyReference,
     tokenStoreKeyVersion
   };
-}
-
-function createCiphertextReference({
-  credentialReferenceId,
-  tokenKind,
-  tokenMaterial,
-  encryptionKeyReference,
-  encryptionKeyVersion,
-  credentialReferenceSecret
-}: {
-  credentialReferenceId: string;
-  tokenKind: "access" | "refresh";
-  tokenMaterial: string;
-  encryptionKeyReference: string;
-  encryptionKeyVersion: string;
-  credentialReferenceSecret: string;
-}) {
-  const digest = createHmac("sha256", credentialReferenceSecret)
-    .update(`${credentialReferenceId}:${tokenKind}:${encryptionKeyReference}:${encryptionKeyVersion}:${tokenMaterial}`)
-    .digest("base64url");
-
-  return `kms://youtube-token-store/${tokenKind}/${credentialReferenceId}/${encryptionKeyVersion}/${digest}`;
 }
 
 function normalizeScopeSet(scopeSet: readonly string[] | null | undefined): readonly YouTubeReadOnlyOAuthScope[] {

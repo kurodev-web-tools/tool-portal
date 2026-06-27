@@ -35,11 +35,11 @@ import {
   type CommentTranslatorTargetLanguageId
 } from "@/lib/comment-translator";
 import {
+  createUnavailableCommentTranslatorRealCommentsFeedState,
   mapCommentTranslatorRealCommentsFeedRowsToUiComments,
   resolveCommentTranslatorBrowserTimeZone,
   type CommentTranslatorRealCommentsFeedState
 } from "@/lib/comment-translator-real-comments-feed-shared";
-import { createUnavailableCommentTranslatorRealCommentsFeedState } from "@/lib/comment-translator-real-comments-ui-wiring";
 import { readLocalTimeZonePreference, timeZonePreferenceChangeEvent, timeZonePreferenceStorageKey } from "@/lib/local-preferences";
 import type { CommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
 import {

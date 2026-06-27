@@ -5,7 +5,11 @@ import {
   type YouTubeOAuthCredentialStatusCallerAuthorization,
   readYouTubeOAuthCredentialStatus
 } from "@/lib/comment-translator-youtube-credential-status-boundary";
-import { createTrustedYouTubeOAuthCredentialSupabaseStatusReader } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
+import {
+  createTrustedYouTubeOAuthCredentialSupabaseStatusReader,
+  createTrustedYouTubeOAuthCredentialSupabaseTokenMaterialRuntime
+} from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
+import { createTrustedYouTubeOAuthStoredCredentialRefreshRuntime } from "@/lib/comment-translator-youtube-token-material-runtime";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
 import { readCommentTranslatorPrivateLaunchAccess } from "@/lib/comment-translator-private-launch-access-gate";
 import {
@@ -94,10 +98,20 @@ export async function GET(request: NextRequest) {
     credentialResolutionDisabled || callerAuthorization.status !== "authorized"
       ? null
       : createTrustedYouTubeOAuthCredentialSupabaseStatusReader();
+  const trustedTokenMaterialRuntime =
+    credentialResolutionDisabled || callerAuthorization.status !== "authorized"
+      ? null
+      : createTrustedYouTubeOAuthCredentialSupabaseTokenMaterialRuntime();
 
   const status = await readYouTubeOAuthCredentialStatus({
     credentialReferenceId,
     trustedAdapter: trustedStatusReader?.trustedAdapter ?? null,
+    trustedRefreshRuntime:
+      trustedTokenMaterialRuntime?.status === "ready"
+        ? createTrustedYouTubeOAuthStoredCredentialRefreshRuntime({
+            tokenMaterialAdapter: trustedTokenMaterialRuntime.trustedTokenMaterialAdapter
+          })
+        : null,
     callerAuthorization,
     credentialResolutionDisabled
   });

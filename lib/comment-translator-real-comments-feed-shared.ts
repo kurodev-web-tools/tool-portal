@@ -64,6 +64,37 @@ export type CommentTranslatorRealCommentsFeedState = {
   publicLaunchAllowed: false;
 };
 
+export function createUnavailableCommentTranslatorRealCommentsFeedState({
+  reason
+}: {
+  reason: CommentTranslatorRealCommentsFeedState["unavailableReason"];
+}): CommentTranslatorRealCommentsFeedState {
+  return {
+    status: reason === "session-not-active" ? "inactive" : "unavailable",
+    source: "server-owned-live-session-state",
+    rows: [],
+    unavailableReason: reason,
+    sanitizedSummary: {
+      displayRowCount: 0,
+      safeRowSource: "f8-browser-safe-projection",
+      fixtureFeedAuthority: "disabled",
+      manualFeedAuthority: "disabled",
+      rawProviderPayload: "not-returned-by-design",
+      rawComments: "not-returned-by-design",
+      authorChannelMaterial: "not-returned-by-design",
+      providerTargetMetadata: "forbidden",
+      serverOnlyCursor: "not-returned-by-design"
+    },
+    rawProviderPayload: "not-returned-by-design",
+    rawComments: "not-returned-by-design",
+    providerTargetMetadata: "forbidden",
+    serverOnlyCursor: "not-returned-by-design",
+    browserStorage: "unchanged",
+    handoffPayload: "unchanged",
+    publicLaunchAllowed: false
+  };
+}
+
 export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
   feed,
   targetLanguageLabel,

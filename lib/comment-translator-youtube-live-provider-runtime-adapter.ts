@@ -47,6 +47,7 @@ type TokenMaterialResolver = {
       }
     | {
         status: "unavailable";
+        reason: "missing" | "expired";
       }
   >;
 };
@@ -318,9 +319,17 @@ function createEnvServerAuthorizationHeaderResolver({
         readEnv(env, "COMMENT_TRANSLATOR_YOUTUBE_SERVER_AUTHORIZATION_HEADER") ??
         readEnv(env, "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER") ??
         readEnv(env, "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER");
+      const expiresAtIso =
+        readEnv(env, "COMMENT_TRANSLATOR_YOUTUBE_SERVER_AUTHORIZATION_EXPIRES_AT_ISO") ??
+        readEnv(env, "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO") ??
+        readEnv(env, "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO");
 
       if (!header) {
-        return { status: "unavailable" };
+        return { status: "unavailable", reason: "missing" };
+      }
+
+      if (expiresAtIso && isExpiredIso(expiresAtIso)) {
+        return { status: "unavailable", reason: "expired" };
       }
 
       return {
@@ -466,6 +475,11 @@ function normalizePrivacyStatus(value: unknown): YouTubeOwnedBroadcast["privacyS
 function readEnv(env: Record<string, string | undefined>, name: string) {
   const value = env[name]?.trim();
   return value ? value : null;
+}
+
+function isExpiredIso(value: string) {
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) && parsed <= Date.now();
 }
 
 function readString(value: unknown) {

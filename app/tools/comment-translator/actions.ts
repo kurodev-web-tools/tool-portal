@@ -234,6 +234,7 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: { targ
   }
 
   const activeSession = durableActiveSessionRead.activeSession;
+  let liveProviderUnavailableReason: "polling-runtime-not-wired" | null = null;
   if (activeSession) {
     const nowMs = Date.now();
     const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
@@ -254,7 +255,7 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: { targ
         credentialReferenceId: activeSession.credentialReferenceId,
         callerAuthorization
       });
-      await runCommentTranslatorLiveProviderSessionStep({
+      const liveProviderStep = await runCommentTranslatorLiveProviderSessionStep({
         activeSession,
         usage: entitlementBaseline.usage,
         callerAuthorization,
@@ -264,14 +265,28 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: { targ
         nowMs,
         targetLanguage: options.targetLanguage ?? "ja"
       });
+      if (
+        liveProviderStep.pollingTick.status === "unavailable-missing-server-only-polling-state" ||
+        liveProviderStep.pollingTick.status === "unavailable-polling-runtime-not-approved"
+      ) {
+        liveProviderUnavailableReason = "polling-runtime-not-wired";
+      }
     }
   }
 
-  return readCommentTranslatorRealCommentsFeedForActiveSession({
+  const feed = await readCommentTranslatorRealCommentsFeedForActiveSession({
     callerAuthorization,
     activeSession,
     durableFeedStore
   });
+
+  if (feed.status === "unavailable" && feed.unavailableReason === "live-provider-polling-not-approved" && liveProviderUnavailableReason) {
+    return createUnavailableCommentTranslatorRealCommentsFeedState({
+      reason: liveProviderUnavailableReason
+    });
+  }
+
+  return feed;
 }
 
 export async function requestCommentTranslatorDataDeletionAction(): Promise<CommentTranslatorFreeBetaRetentionAttributionState> {

@@ -87,9 +87,24 @@ assert.match(componentSource, /sessionState\.elapsedSeconds/, "dock displays cur
 assert.match(componentSource, /sessionDailyUsedSeconds/, "dock derives daily used time from sanitized session state");
 assert.match(componentSource, /sessionState\.remainingDailySeconds/, "dock displays daily remaining time from sanitized session state");
 assert.match(componentSource, /sessionState\.stopReason/, "dock displays sanitized stop reason");
+assert.match(
+  componentSource,
+  /copy\.operatorSession\.helper[\s\S]*data-comment-translator-start-stop-reason-ux="sanitized-reason-only"[\s\S]*copy\.operatorSession\.readinessTitle/,
+  "dock surfaces sanitized stopped-session reason in the first operator panel"
+);
 assert.match(componentSource, /startBlockedByUsagePolicy/, "dock derives disabled Start state from sanitized usage provider policy");
 assert.match(componentSource, /startBlockedByRateLimit/, "dock derives disabled Start state from sanitized rate-limit metadata");
 assert.match(componentSource, /sessionState\.rateLimit === "exceeded"/, "dock detects rate-limit state separately from usage policy");
+assert.match(
+  componentSource,
+  /state\.status !== "active"[\s\S]*createUnavailableCommentTranslatorRealCommentsFeedState\(\{\s*reason:\s*"session-not-active"/,
+  "dock clears browser-visible feed to session-not-active when Start returns stopped"
+);
+assert.match(
+  componentSource,
+  /sessionState\.status !== "active"[\s\S]*setRealCommentsFeed[\s\S]*reason:\s*"session-not-active"[\s\S]*return;/,
+  "manual feed refresh does not call provider polling while session is stopped"
+);
 assert.match(
   componentSource,
   /startBlockedByCredentialStatus[\s\S]*startBlockedByUsagePolicy[\s\S]*startBlockedByRateLimit/,

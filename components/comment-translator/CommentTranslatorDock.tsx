@@ -39,6 +39,7 @@ import {
   resolveCommentTranslatorBrowserTimeZone,
   type CommentTranslatorRealCommentsFeedState
 } from "@/lib/comment-translator-real-comments-feed-shared";
+import { createUnavailableCommentTranslatorRealCommentsFeedState } from "@/lib/comment-translator-real-comments-ui-wiring";
 import { readLocalTimeZonePreference, timeZonePreferenceChangeEvent, timeZonePreferenceStorageKey } from "@/lib/local-preferences";
 import type { CommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
 import {
@@ -887,6 +888,13 @@ export function CommentTranslatorDock({
                 ? await heartbeatCommentTranslatorSessionAction({ targetLanguage })
                 : await getCommentTranslatorSessionStatusAction({ targetLanguage });
         setSessionState(state);
+        if (state.status !== "active") {
+          setRealCommentsFeed(
+            createUnavailableCommentTranslatorRealCommentsFeedState({
+              reason: "session-not-active"
+            })
+          );
+        }
         setSessionError(null);
       } catch {
         setSessionError(copy.operatorSession.actionFailed);
@@ -903,6 +911,16 @@ export function CommentTranslatorDock({
       return;
     }
 
+    if (sessionState.status !== "active") {
+      setRealCommentsFeed(
+        createUnavailableCommentTranslatorRealCommentsFeedState({
+          reason: "session-not-active"
+        })
+      );
+      setRealCommentsFeedError(null);
+      return;
+    }
+
     realCommentsFeedRefreshInFlightRef.current = true;
     startRealCommentsFeedTransition(async () => {
       try {
@@ -915,7 +933,7 @@ export function CommentTranslatorDock({
         realCommentsFeedRefreshInFlightRef.current = false;
       }
     });
-  }, [locale, targetLanguage]);
+  }, [locale, sessionState.status, targetLanguage]);
 
   useEffect(() => {
     function refreshTimeZonePreference() {
@@ -1140,6 +1158,23 @@ export function CommentTranslatorDock({
                 <p className="mt-2 break-words text-sm font-semibold leading-6 text-muted">
                   {copy.operatorSession.helper}
                 </p>
+                {sessionState.status === "stopped" && sessionReasonUx ? (
+                  <div
+                    data-comment-translator-start-stop-reason-ux="sanitized-reason-only"
+                    className="mt-3 rounded-base border border-border bg-background/70 p-3 text-xs"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-black text-foreground">{sessionReasonGroup}</span>
+                      <span className="rounded-base border border-border bg-surface px-2 py-1 font-black text-muted">
+                        {sessionStopReason}
+                      </span>
+                    </div>
+                    <p className="mt-2 break-words font-semibold leading-5 text-muted">{sessionReasonMessage}</p>
+                    {sessionRecommendedAction ? (
+                      <p className="mt-1 break-words font-black leading-5 text-primary-strong">{sessionRecommendedAction}</p>
+                    ) : null}
+                  </div>
+                ) : null}
                 <div className="mt-4 grid gap-2">
                   <button
                     type="button"
@@ -1316,23 +1351,6 @@ export function CommentTranslatorDock({
                     {copy.retentionAttribution.deletionHelper}
                   </p>
                 </div>
-                {sessionState.status === "stopped" && sessionReasonUx ? (
-                  <div
-                    data-comment-translator-start-stop-reason-ux="sanitized-reason-only"
-                    className="mt-3 rounded-base border border-border bg-background/70 p-3 text-xs"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-black text-foreground">{sessionReasonGroup}</span>
-                      <span className="rounded-base border border-border bg-surface px-2 py-1 font-black text-muted">
-                        {sessionStopReason}
-                      </span>
-                    </div>
-                    <p className="mt-2 break-words font-semibold leading-5 text-muted">{sessionReasonMessage}</p>
-                    {sessionRecommendedAction ? (
-                      <p className="mt-1 break-words font-black leading-5 text-primary-strong">{sessionRecommendedAction}</p>
-                    ) : null}
-                  </div>
-                ) : null}
               </section>
 
               <section className="panel p-4">

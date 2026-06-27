@@ -13,6 +13,12 @@ export type CommentTranslatorLiveProviderDiagnostics = {
     reason: "duplicate" | "language-policy" | "usage-limit" | "provider-unavailable";
     count: number;
   }[];
+  providerCallCount: number;
+  cacheHitCount: number;
+  cacheMissCount: number;
+  duplicateTextCacheHitCount: number;
+  duplicateTextSkippedCount: number;
+  languagePolicySkippedCount: number;
   translatedCount: number;
   persistedFeedRowCount: number;
   nextPollDue: "due" | "waiting";

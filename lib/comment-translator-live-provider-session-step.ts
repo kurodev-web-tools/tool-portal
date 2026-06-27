@@ -10,7 +10,10 @@ import {
   resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart,
   type CommentTranslatorServerOnlyLiveChatTargetLookupAdapter
 } from "./comment-translator-server-only-live-chat-target-lookup";
-import { executeCommentTranslatorAzureNormalTranslationForNormalizedMessages } from "./comment-translator-azure-normal-translation-execution";
+import {
+  executeCommentTranslatorAzureNormalTranslationForNormalizedMessages,
+  type CommentTranslatorAzureNormalTranslationExecutionResult
+} from "./comment-translator-azure-normal-translation-execution";
 import { mapYouTubeProviderSafeCommentsToNormalizedLiveMessages } from "./comment-translator-live-message-normalization";
 import { createCommentTranslatorFreeBetaUsageDisplay } from "./comment-translator-free-beta-usage-display";
 import type {
@@ -37,6 +40,16 @@ export type CommentTranslatorLiveProviderSessionStepResult = {
   rawComments: "not-returned-by-design";
   providerTargetMetadata: "forbidden";
 };
+
+type CommentTranslatorLiveProviderTranslationDiagnostics = Pick<
+  CommentTranslatorLiveProviderDiagnostics,
+  | "providerCallCount"
+  | "cacheHitCount"
+  | "cacheMissCount"
+  | "duplicateTextCacheHitCount"
+  | "duplicateTextSkippedCount"
+  | "languagePolicySkippedCount"
+>;
 
 export async function runCommentTranslatorLiveProviderSessionStep({
   activeSession,
@@ -121,7 +134,8 @@ export async function runCommentTranslatorLiveProviderSessionStep({
     translationStatus: translation.status,
     translatedCount: translation.execution.translatedCount,
     persistedFeedRowCount: translation.feedPersistence.displayRowCount,
-    feed: translation.feed
+    feed: translation.feed,
+    translationDiagnostics: createTranslationDiagnostics(translation)
   });
 }
 
@@ -168,13 +182,15 @@ function createResult({
   translationStatus,
   translatedCount,
   persistedFeedRowCount,
-  feed
+  feed,
+  translationDiagnostics
 }: {
   pollingTick: CommentTranslatorBoundedLiveChatPollingTickResult;
   translationStatus: CommentTranslatorLiveProviderSessionStepResult["translationStatus"];
   translatedCount: number;
   persistedFeedRowCount: number;
   feed?: CommentTranslatorRealCommentsFeedState;
+  translationDiagnostics?: CommentTranslatorLiveProviderTranslationDiagnostics;
 }): CommentTranslatorLiveProviderSessionStepResult {
   return {
     pollingTick,
@@ -186,7 +202,8 @@ function createResult({
       translatedCount,
       persistedFeedRowCount,
       feed,
-      translationStatus
+      translationStatus,
+      translationDiagnostics: translationDiagnostics ?? createEmptyTranslationDiagnostics()
     }),
     rawProviderPayload: "not-returned-by-design",
     rawComments: "not-returned-by-design",
@@ -199,13 +216,15 @@ function createLiveProviderDiagnostics({
   translatedCount,
   persistedFeedRowCount,
   feed,
-  translationStatus
+  translationStatus,
+  translationDiagnostics
 }: {
   pollingTick: CommentTranslatorBoundedLiveChatPollingTickResult;
   translatedCount: number;
   persistedFeedRowCount: number;
   feed?: CommentTranslatorRealCommentsFeedState;
   translationStatus: CommentTranslatorLiveProviderSessionStepResult["translationStatus"];
+  translationDiagnostics: CommentTranslatorLiveProviderTranslationDiagnostics;
 }): CommentTranslatorLiveProviderDiagnostics {
   const polling = "sanitizedPolling" in pollingTick ? pollingTick.sanitizedPolling : null;
   const skipReasonCounts = [
@@ -217,9 +236,19 @@ function createLiveProviderDiagnostics({
     pollTickStatus: polling?.pollTickStatus ?? resolveFallbackPollTickStatus(pollingTick),
     returnedCount: polling?.returnedCount ?? 0,
     acceptedCount: polling?.acceptedCount ?? 0,
-    skippedCount: (polling?.skippedCount ?? 0) + skipReasonCounts.reduce((total, item) => total + item.count, 0) - (polling?.skipReasonCounts ?? []).reduce((total, item) => total + item.count, 0),
+    skippedCount:
+      (polling?.skippedCount ?? 0) +
+      skipReasonCounts.reduce((total, item) => total + item.count, 0) -
+      (polling?.skipReasonCounts ?? []).reduce((total, item) => total + item.count, 0) +
+      translationDiagnostics.duplicateTextSkippedCount,
     preStartSkippedCount: polling?.preStartSkippedCount ?? 0,
     skipReasonCounts,
+    providerCallCount: translationDiagnostics.providerCallCount,
+    cacheHitCount: translationDiagnostics.cacheHitCount,
+    cacheMissCount: translationDiagnostics.cacheMissCount,
+    duplicateTextCacheHitCount: translationDiagnostics.duplicateTextCacheHitCount,
+    duplicateTextSkippedCount: translationDiagnostics.duplicateTextSkippedCount,
+    languagePolicySkippedCount: translationDiagnostics.languagePolicySkippedCount,
     translatedCount,
     persistedFeedRowCount,
     nextPollDue: polling?.nextPollDue ?? "waiting",
@@ -228,6 +257,30 @@ function createLiveProviderDiagnostics({
     rawComments: "not-returned-by-design",
     providerTargetMetadata: "forbidden",
     serverOnlyCursor: "not-returned-by-design"
+  };
+}
+
+function createTranslationDiagnostics(
+  translation: CommentTranslatorAzureNormalTranslationExecutionResult
+): CommentTranslatorLiveProviderTranslationDiagnostics {
+  return {
+    providerCallCount: translation.execution.providerCallCount,
+    cacheHitCount: translation.execution.cacheHitCount,
+    cacheMissCount: translation.execution.cacheMissCount,
+    duplicateTextCacheHitCount: translation.execution.cacheHitCount,
+    duplicateTextSkippedCount: translation.eligibility.duplicateTextSkippedCount,
+    languagePolicySkippedCount: translation.execution.skipsByReason.languagePolicy
+  };
+}
+
+function createEmptyTranslationDiagnostics(): CommentTranslatorLiveProviderTranslationDiagnostics {
+  return {
+    providerCallCount: 0,
+    cacheHitCount: 0,
+    cacheMissCount: 0,
+    duplicateTextCacheHitCount: 0,
+    duplicateTextSkippedCount: 0,
+    languagePolicySkippedCount: 0
   };
 }
 

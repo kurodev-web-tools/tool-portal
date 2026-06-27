@@ -14,6 +14,7 @@ const adapterPath = "lib/comment-translator-youtube-live-provider-runtime-adapte
 const pollingPath = "lib/comment-translator-bounded-live-chat-polling-wiring.ts";
 const normalizerPath = "lib/comment-translator-live-message-normalization.ts";
 const orchestrationPath = "lib/comment-translator-live-provider-session-step.ts";
+const sharedPath = "lib/comment-translator-real-comments-feed-shared.ts";
 const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
 
 function read(relativePath) {
@@ -95,7 +96,7 @@ function loadTsModule(relativePath) {
   }
 }
 
-for (const requiredPath of [routePath, actionsPath, adapterPath, pollingPath, normalizerPath, orchestrationPath, dockPath]) {
+for (const requiredPath of [routePath, actionsPath, adapterPath, pollingPath, normalizerPath, orchestrationPath, sharedPath, dockPath]) {
   assert.ok(exists(requiredPath), `required UI live provider file exists: ${requiredPath}`);
 }
 
@@ -104,6 +105,7 @@ const actionsSource = read(actionsPath);
 const adapterSource = read(adapterPath);
 const pollingSource = read(pollingPath);
 const orchestrationSource = read(orchestrationPath);
+const sharedSource = read(sharedPath);
 const dockSource = read(dockPath);
 
 assert.match(routeSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "session route uses trusted live provider adapter");
@@ -130,6 +132,17 @@ assert.match(orchestrationSource, /executeCommentTranslatorAzureNormalTranslatio
 assert.match(orchestrationSource, /diagnostics:\s*CommentTranslatorLiveProviderDiagnostics/, "polling orchestration exposes sanitized live provider diagnostics");
 assert.match(orchestrationSource, /preStartSkippedCount/, "polling orchestration carries cursor-prime skipped counts");
 assert.match(orchestrationSource, /persistedFeedRowCount/, "polling orchestration carries feed persistence counts");
+for (const diagnosticCountField of [
+  "providerCallCount",
+  "cacheHitCount",
+  "cacheMissCount",
+  "duplicateTextCacheHitCount",
+  "duplicateTextSkippedCount",
+  "languagePolicySkippedCount"
+]) {
+  assert.match(sharedSource, new RegExp(`${diagnosticCountField}: number`), `live provider diagnostics exposes ${diagnosticCountField} as a count only`);
+  assert.match(orchestrationSource, new RegExp(diagnosticCountField), `polling orchestration maps ${diagnosticCountField} into browser-readable diagnostics`);
+}
 assert.match(actionsSource, /liveProviderUnavailableReason/, "feed action preserves sanitized live provider unavailable reason");
 assert.match(actionsSource, /attachCommentTranslatorLiveProviderDiagnosticsToFeed/, "feed action returns sanitized live provider diagnostics in feed state");
 assert.match(actionsSource, /polling-runtime-not-wired/, "feed action returns sanitized polling runtime unavailable reason");

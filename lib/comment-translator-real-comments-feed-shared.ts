@@ -1,4 +1,5 @@
 import type { CommentTranslatorComment, CommentTranslatorTargetLanguageId } from "./comment-translator";
+import type { CommentTranslationCacheOutcome } from "./comment-translator-provider-boundary";
 import type { Locale } from "./locale";
 
 export type CommentTranslatorRealCommentsFeedStatus = "ready" | "inactive" | "unavailable";
@@ -46,6 +47,7 @@ export type CommentTranslatorRealCommentsDisplayRow = {
   translatedText: string | null;
   targetLanguage: CommentTranslatorTargetLanguageId;
   translationStatus: CommentTranslatorRealCommentsTranslationStatus;
+  translationCacheStatus: CommentTranslationCacheOutcome | null;
   moderationLabel: "visible" | "deleted" | "banned" | "ended" | "system";
   deletionPropagation: "not-deleted" | "message-reference-tombstone-only" | "author-history-p1-deferred" | "stream-ended";
   badgeLabel: "owner" | "moderator" | "member" | "super-chat" | "super-sticker" | "system" | null;
@@ -167,7 +169,7 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
       originalText: row.originalText ?? moderationFallbackText(row.moderationLabel),
       translatedText: row.translatedText ?? undefined,
       status: resolveUiStatus(row),
-      cacheStatus: row.translationStatus === "translated-f10" ? "miss" : "none",
+      cacheStatus: resolveUiCacheStatus(row),
       skipReason: resolveSkipReason(row),
       errorMessage: resolveErrorMessage(row),
       badge: row.badgeLabel ?? undefined,
@@ -301,6 +303,14 @@ function resolveUiStatus(row: CommentTranslatorRealCommentsDisplayRow): CommentT
   }
 
   return "skipped";
+}
+
+function resolveUiCacheStatus(row: CommentTranslatorRealCommentsDisplayRow): CommentTranslatorComment["cacheStatus"] {
+  if (row.translationStatus !== "translated-f10") {
+    return "none";
+  }
+
+  return row.translationCacheStatus === "hit" ? "hit" : "miss";
 }
 
 function resolveSkipReason(row: CommentTranslatorRealCommentsDisplayRow) {

@@ -169,6 +169,7 @@ for (const forbidden of [
 }
 
 const f10 = loadTsModule(f10Path);
+const shared = loadTsModule(sharedPath);
 const normalization = loadTsModule(normalizationPath);
 const ledger = loadTsModule(usageLedgerPath);
 
@@ -446,6 +447,62 @@ assert.equal(new Set(secondCycleIds).size, secondCycleIds.length, "safe feed row
 assert.equal(secondCycle.feed.rows.find((row) => row.id === "yt-f10-text-1").translatedText, "ja:yt-f10-text-1");
 assert.equal(secondCycle.feed.rows.find((row) => row.id === "yt-f10-super-1").translatedText, "ja:yt-f10-super-1");
 assert.equal(secondCycle.feed.rows.find((row) => row.id === "yt-f10-text-2").translatedText, "ja:yt-f10-text-2");
+
+const duplicateTextCycle = normalization.normalizeCommentTranslatorLiveMessages({
+  providerPayloads: [
+    {
+      id: "yt-f10-text-3",
+      snippet: {
+        type: "textMessageEvent",
+        publishedAt: "2026-06-16T01:00:08.000Z",
+        textMessageDetails: { messageText: "Hello Azure path" }
+      }
+    }
+  ]
+});
+const thirdCycle = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: duplicateTextCycle.normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN", "KR", "CN"],
+  callerAuthorization,
+  sessionReferenceId: "cts_f10_contract_001",
+  occurredAtMs: Date.parse("2026-06-16T01:00:09.000Z"),
+  usage,
+  providers: {
+    azure,
+    openAiMini
+  },
+  feedPersistenceStore,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+const duplicateTextRow = thirdCycle.feed.rows.find((row) => row.id === "yt-f10-text-3");
+assert.equal(thirdCycle.status, "completed");
+assert.equal(thirdCycle.eligibility.eligibleCommentCount, 1);
+assert.equal(thirdCycle.eligibility.sessionDuplicateSkippedCount, 0);
+assert.equal(thirdCycle.execution.providerRequestCount, 1);
+assert.equal(thirdCycle.execution.providerCallCount, 0);
+assert.equal(thirdCycle.execution.translatedCount, 1);
+assert.equal(thirdCycle.execution.cacheHitCount, 1);
+assert.equal(thirdCycle.execution.cacheMissCount, 0);
+assert.equal(thirdCycle.usageHandoffEstimate.providerRequestEstimateCount, 0);
+assert.equal(thirdCycle.usageHandoffEstimate.translatedMessageEstimate, 1);
+assert.equal(azureCallCount, 3);
+assert.equal(duplicateTextRow.translatedText, "ja:yt-f10-text-1");
+assert.equal(duplicateTextRow.translationStatus, "translated-f10");
+assert.equal(duplicateTextRow.translationCacheStatus, "hit");
+const duplicateTextUiComment = shared
+  .mapCommentTranslatorRealCommentsFeedRowsToUiComments({
+    feed: thirdCycle.feed,
+    targetLanguageLabel: "Japanese",
+    locale: "en",
+    timeZone: "UTC"
+  })
+  .find((comment) => comment.id === "yt-f10-text-3");
+assert.equal(duplicateTextUiComment.cacheStatus, "hit");
+assert.equal(duplicateTextUiComment.status, "translated");
+assert.equal(thirdCycle.feed.rows.length, 7);
 
 const unavailable = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
   messages: normalized.normalizedMessages,

@@ -131,6 +131,7 @@ export const commentTranslatorAzureNormalTranslationExecutionContract = {
 type CommentTranslatorAzureNormalTranslationSessionDedupeState = {
   processedCommentIds: Set<string>;
   feedRowsByCommentId: Map<string, CommentTranslatorRealCommentsDisplayRow>;
+  providerExecutionCache: CommentTranslatorProviderExecutionCache;
 };
 
 const sessionDedupeStateBySessionReference = new Map<string, CommentTranslatorAzureNormalTranslationSessionDedupeState>();
@@ -205,7 +206,11 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
   const comments = eligibleMessages.map(mapNormalizedMessageToProviderSafeComment);
   const execution = await executeCommentTranslatorProviderPolicyBatch({
     providers,
-    cache: request.cache ?? createInMemoryCommentTranslatorProviderExecutionCache(),
+    cache:
+      request.cache ??
+      (request.sessionStatus === "active"
+        ? getCommentTranslatorAzureNormalTranslationSessionDedupeState(request.sessionReferenceId).providerExecutionCache
+        : createInMemoryCommentTranslatorProviderExecutionCache()),
     callerAuthorization: request.callerAuthorization,
     sessionReferenceId: request.sessionReferenceId,
     occurredAtMs: request.occurredAtMs,
@@ -316,7 +321,7 @@ export function createCommentTranslatorRealCommentsFeedStateFromTranslatedRows({
 
       const translation = translationByMessageReferenceId.get(row.messageReferenceId);
       if (translation) {
-        return withTranslation(row, translation.translatedText, "translated-f10");
+        return withTranslation(row, translation.translatedText, "translated-f10", translation.cacheOutcome);
       }
 
       if (providerUnavailable) {
@@ -490,7 +495,8 @@ function getCommentTranslatorAzureNormalTranslationSessionDedupeState(
 
   const state: CommentTranslatorAzureNormalTranslationSessionDedupeState = {
     processedCommentIds: new Set(),
-    feedRowsByCommentId: new Map()
+    feedRowsByCommentId: new Map(),
+    providerExecutionCache: createInMemoryCommentTranslatorProviderExecutionCache()
   };
   sessionDedupeStateBySessionReference.set(sessionReferenceId, state);
   return state;
@@ -516,12 +522,14 @@ function createUsageHandoffEstimate(
 function withTranslation(
   row: CommentTranslatorRealCommentsDisplayRow,
   translatedText: string | null,
-  translationStatus: CommentTranslatorRealCommentsTranslationStatus
+  translationStatus: CommentTranslatorRealCommentsTranslationStatus,
+  translationCacheStatus: CommentTranslatorRealCommentsDisplayRow["translationCacheStatus"] = null
 ): CommentTranslatorRealCommentsDisplayRow {
   return {
     ...row,
     translatedText,
-    translationStatus
+    translationStatus,
+    translationCacheStatus
   };
 }
 

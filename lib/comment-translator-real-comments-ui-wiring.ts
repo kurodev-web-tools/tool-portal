@@ -165,6 +165,7 @@ function mapBrowserSafeRowToDisplayRow({
     translatedText: null,
     targetLanguage,
     translationStatus: "not-run-f9",
+    translationCacheStatus: null,
     moderationLabel: row.moderationLabel,
     deletionPropagation: row.deletionPropagation,
     badgeLabel: resolveBadgeLabel(row),

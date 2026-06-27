@@ -21,7 +21,8 @@ export type YouTubeLiveChatTargetLookupCommandFoundationContract = {
   httpMethod: "GET";
   query: {
     part: "id,snippet,status";
-    mine: "true";
+    broadcastStatus: "active";
+    broadcastType: "all";
     fields: "items(id,snippet(liveChatId),status(lifeCycleStatus,privacyStatus)),pageInfo(totalResults,resultsPerPage)";
   };
   outputPolicy: "sanitized-metadata-only";
@@ -240,7 +241,8 @@ export type YouTubeLiveChatTargetLookupCommandRuntimeWiring = {
 const providerUrl = "https://www.googleapis.com/youtube/v3/liveBroadcasts" as const;
 const query = {
   part: "id,snippet,status",
-  mine: "true",
+  broadcastStatus: "active",
+  broadcastType: "all",
   fields: "items(id,snippet(liveChatId),status(lifeCycleStatus,privacyStatus)),pageInfo(totalResults,resultsPerPage)"
 } as const;
 

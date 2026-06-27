@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-stored-token-live-provider`.
+- Current branch: `codex/comment-translator-live-target-owner-diagnostics`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: normal UI live provider stored credential token material resolution for Start target lookup and polling, with server-side refresh/persist and sanitized boundaries.
+- Scope: normal UI YouTube active broadcast target lookup query fix for deployed Start failures, with sanitized diagnostics boundaries unchanged.
 - Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
@@ -125,6 +125,10 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 
 ## Current Local Verification
 
+- `node scripts/comment-translator-youtube-active-broadcast-type-contract.mjs`: passed. Covers normal UI Start target lookup and target-lookup foundation using `broadcastStatus=active` as the single YouTube `liveBroadcasts.list` filter while adding `broadcastType=all` so event and persistent active broadcasts are included.
+- `node scripts/comment-translator-youtube-live-chat-target-lookup-command-contract.mjs`: passed after updating the command foundation contract to the same active/all-broadcast-types query shape.
+- `node scripts/comment-translator-youtube-stored-token-live-provider-contract.mjs`: passed after the target lookup query fix.
+- `node scripts/comment-translator-ui-live-provider-runtime-contract.mjs`: passed after the target lookup query fix.
 - `node scripts/comment-translator-youtube-stored-token-live-provider-contract.mjs`: passed. Covers sealed token material persistence, expired-token refresh/persist, legacy irreversible reference fail-closed behavior, and normal UI live provider use of the stored-token resolver for target lookup and polling.
 - `node scripts/comment-translator-ui-live-provider-runtime-contract.mjs`: passed. Confirms normal UI route/action still use the trusted live provider adapter, and the adapter now depends on stored-token server-fetch resolution rather than operator-local Authorization header envs.
 - `npm run lint`: passed.
@@ -163,6 +167,7 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 - Stored-token live provider follow-up: normal UI live provider runtime now resolves Google API server-fetch authorization from the owner-bound `credentialReferenceId` through the trusted Supabase token-store row and server-only sealed token material resolver instead of operator-local Authorization header envs. Expired access material is refreshed server-side and the refreshed sealed material is persisted back to the trusted token-store row before target lookup/polling continues.
 - OAuth callback persistence follow-up: future reconnects persist decryptable server-only sealed token material in the existing trusted token-store fields. Existing legacy rows that contain irreversible reference-only material cannot be recovered by code and must fail closed with sanitized reconnect-required/unavailable behavior until the user reconnects.
 - Build hygiene follow-up: the client comment translator dock no longer imports the server-only real-comments UI wiring module for inactive/unavailable feed placeholders; the browser-safe placeholder builder is available from the shared feed module.
+- Active broadcast lookup follow-up: deployed Start failure screenshot showed the browser-safe `no-live-broadcast` path after reconnect. Code review found the normal UI `liveBroadcasts.list` Start lookup combined multiple filter parameters and did not include all broadcast types. Runtime and command foundation now use the sanitized active-status query shape that keeps authorization server-only and includes event plus persistent broadcasts.
 
 Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`. The pre-cleanup task-board snapshot is archived at `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 
@@ -174,6 +179,7 @@ Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_
 - Session-scoped `commentId` dedupe is implemented locally in the Free Azure execution bridge: repeated YouTube-safe `commentId` values are skipped before provider execution, usage handoff estimates count only newly accepted comments, and server-owned safe feed rows are merged uniquely by `commentId` for the active session. Stop/session cleanup clears the dedupe state. `nextPageToken` remains server-only and unchanged.
 - No deploy/upload, OAuth live flow, live provider execution, live token refresh against Google, Stripe action, public access change, main promotion, PL-G4, PL-G5, PL-G6, or launch gate flip was run in this stored-token live provider slice.
 - Existing connected YouTube credentials created before sealed token material persistence may contain irreversible reference-only material. Those rows must fail closed with sanitized unavailable/reconnect-required behavior; reconnect is required before the stored-token live provider path can fetch using decryptable server-only material.
+- No deploy/upload, OAuth live flow, live provider execution, Google target lookup, `liveChatMessages.list`, Azure translation provider execution, public access change, main promotion, PL-G4, PL-G5, PL-G6, or launch gate flip was run in this active broadcast lookup query fix slice.
 
 ## Later Work
 

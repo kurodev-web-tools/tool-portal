@@ -270,8 +270,8 @@ function createRuntimeAdapters({
 
       const url = new URL(liveBroadcastsUrl);
       url.searchParams.set("part", "id,snippet,status");
-      url.searchParams.set("mine", "true");
       url.searchParams.set("broadcastStatus", request.includeNonLive ? "all" : "active");
+      url.searchParams.set("broadcastType", "all");
       url.searchParams.set(
         "fields",
         "items(id,snippet(title,liveChatId),status(lifeCycleStatus,privacyStatus)),pageInfo(totalResults,resultsPerPage)"

@@ -107,6 +107,9 @@ type OperatorSessionState = {
   } | null;
   usageDisplay: OperatorSessionUsageDisplay;
   nextAction: OperatorSessionNextAction;
+  rateLimit?: "exceeded";
+  rateLimitReason?: "rate-limit-exceeded";
+  retryAfterSeconds?: number;
 };
 type RetentionAttributionState = {
   status: "available" | "unavailable";
@@ -849,6 +852,7 @@ export function CommentTranslatorDock({
   const realCommentsFeedUnavailableMessage = realCommentsFeed.unavailableReason
     ? `unavailableReason: ${realCommentsFeed.unavailableReason}`
     : null;
+  const startBlockedByRateLimit = sessionState.rateLimit === "exceeded";
   const showReconnectGuidance =
     credentialStatusState !== "available" ||
     sessionState.nextAction === "reconnect-or-sign-in" ||
@@ -856,7 +860,7 @@ export function CommentTranslatorDock({
     sessionState.stopReason === "token-refresh-failed" ||
     sessionState.stopReason === "reconnect-required";
   const startBlockedByCredentialStatus = credentialStatusState !== "available";
-  const startBlockedByUsagePolicy = usageDisplay.providerCallPolicy.status !== "allowed";
+  const startBlockedByUsagePolicy = !startBlockedByRateLimit && usageDisplay.providerCallPolicy.status !== "allowed";
   const commentOnly = viewMode === "comments";
 
   function refreshCredentialStatus() {
@@ -1140,7 +1144,13 @@ export function CommentTranslatorDock({
                   <button
                     type="button"
                     onClick={() => runSessionCommand("start")}
-                    disabled={isSessionPending || sessionState.status === "active" || startBlockedByCredentialStatus || startBlockedByUsagePolicy}
+                    disabled={
+                      isSessionPending ||
+                      sessionState.status === "active" ||
+                      startBlockedByCredentialStatus ||
+                      startBlockedByUsagePolicy ||
+                      startBlockedByRateLimit
+                    }
                     className="min-h-12 rounded-base border border-primary bg-primary px-4 py-3 text-base font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
                   >
                     {isSessionPending ? copy.operatorSession.pending : copy.actions.startSession}
@@ -1184,6 +1194,18 @@ export function CommentTranslatorDock({
                         <p className="mt-1 break-words font-semibold leading-5 text-amber-800">
                           {copy.operatorSession.usageStartBlockedBody}
                           {usagePolicyStopReason ? ` ${usagePolicyStopReason}` : ""}
+                        </p>
+                      </div>
+                    ) : null}
+                    {startBlockedByRateLimit ? (
+                      <div
+                        data-comment-translator-start-blocked="rate-limit"
+                        className="rounded-base border border-amber-200 bg-amber-50/80 px-3 py-2"
+                      >
+                        <p className="break-words font-black text-amber-900">{copy.operatorSession.rateLimitStartBlockedTitle}</p>
+                        <p className="mt-1 break-words font-semibold leading-5 text-amber-800">
+                          {copy.operatorSession.rateLimitStartBlockedBody}
+                          {typeof sessionState.retryAfterSeconds === "number" ? ` ${sessionState.retryAfterSeconds}s` : ""}
                         </p>
                       </div>
                     ) : null}

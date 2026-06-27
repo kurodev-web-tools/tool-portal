@@ -242,6 +242,8 @@ export const commentTranslatorUiCopy = {
       usageProviderUnavailable: "利用状況を安全に確認できないためprovider callは実行しません。",
       usageStartBlockedTitle: "利用上限によりStartできません",
       usageStartBlockedBody: "Start前のserver-owned usage checkで上限または利用状況ブロックを検出しました。",
+      rateLimitStartBlockedTitle: "Start操作が短時間に集中しています",
+      rateLimitStartBlockedBody: "少し待ってから再Startしてください。再試行目安:",
       perMinuteRemaining: "件/分 残り",
       usageStates: {
         available: "利用可能",
@@ -607,6 +609,8 @@ export const commentTranslatorUiCopy = {
       usageProviderUnavailable: "Provider calls do not run while usage cannot be verified safely.",
       usageStartBlockedTitle: "Start is unavailable because usage is blocked",
       usageStartBlockedBody: "The server-owned usage check found a limit or usage blocker before Start.",
+      rateLimitStartBlockedTitle: "Too many Start attempts",
+      rateLimitStartBlockedBody: "Wait briefly before starting again. Retry after:",
       perMinuteRemaining: "messages/min remaining",
       usageStates: {
         available: "Available",

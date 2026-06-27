@@ -114,9 +114,14 @@ assert.match(adapterSource, /^import "server-only";/m, "live provider adapter is
 assert.match(adapterSource, /liveBroadcasts\.list/, "adapter performs server-side liveBroadcasts lookup");
 assert.match(adapterSource, /liveChatMessages\.list/, "adapter performs bounded liveChatMessages polling");
 assert.match(adapterSource, /serverAuthorizationHeader/, "adapter consumes server-only authorization internally");
-assert.match(adapterSource, /COMMENT_TRANSLATOR_YOUTUBE_SERVER_AUTHORIZATION_EXPIRES_AT_ISO/, "adapter supports server-only token material expiry guard");
-assert.match(adapterSource, /YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO/, "adapter preserves polling smoke expiry guard");
-assert.match(adapterSource, /YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO/, "adapter preserves target lookup smoke expiry guard");
+assert.match(adapterSource, /resolveYouTubeLiveTokenForServerFetch/, "adapter resolves server fetch authorization through the stored-token foundation");
+assert.match(adapterSource, /createTrustedYouTubeOAuthStoredTokenMaterialResolver/, "adapter uses the stored credential token material resolver");
+assert.match(adapterSource, /createTrustedYouTubeOAuthCredentialSupabaseTokenMaterialRuntime/, "adapter reads token material through trusted Supabase runtime");
+assert.doesNotMatch(
+  adapterSource,
+  /COMMENT_TRANSLATOR_YOUTUBE_SERVER_AUTHORIZATION_HEADER|YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER|YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER/,
+  "adapter no longer depends on operator-local Authorization header envs"
+);
 assert.doesNotMatch(adapterSource, /console\.(log|info|warn|error)/, "adapter does not log provider/token/comment material");
 assert.match(pollingSource, /serverOnlyCommentsForTranslation/, "polling tick carries comments only for server-side translation");
 assert.match(orchestrationSource, /executeCommentTranslatorAzureNormalTranslationForNormalizedMessages/, "polling orchestration runs Azure/provider translation execution");

@@ -13,9 +13,11 @@ import {
   type YouTubeOAuthCredentialReferenceUnavailableReason
 } from "./comment-translator-youtube-account-integration-status";
 import {
+  createTrustedYouTubeOAuthCredentialSupabaseTokenMaterialRuntime,
   createTrustedYouTubeOAuthCredentialSupabaseStatusReader,
   type TrustedYouTubeOAuthCredentialSupabaseAdapter
 } from "./comment-translator-youtube-token-store-supabase-adapter";
+import { createTrustedYouTubeOAuthStoredCredentialRefreshRuntime } from "./comment-translator-youtube-token-material-runtime";
 import type { AccountSessionState } from "./supabase/session";
 
 const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
@@ -95,10 +97,18 @@ export async function readCommentTranslatorToolCredentialStatus({
 
   const trustedStatusReader =
     trustedAdapter === undefined ? createTrustedYouTubeOAuthCredentialSupabaseStatusReader().trustedAdapter : trustedAdapter;
+  const trustedTokenMaterialRuntime =
+    trustedAdapter === undefined ? createTrustedYouTubeOAuthCredentialSupabaseTokenMaterialRuntime() : null;
 
   return readYouTubeOAuthCredentialStatus({
     credentialReferenceId: reference.credentialReferenceId,
     trustedAdapter: trustedStatusReader ?? null,
+    trustedRefreshRuntime:
+      trustedTokenMaterialRuntime?.status === "ready"
+        ? createTrustedYouTubeOAuthStoredCredentialRefreshRuntime({
+            tokenMaterialAdapter: trustedTokenMaterialRuntime.trustedTokenMaterialAdapter
+          })
+        : null,
     callerAuthorization: reference.callerAuthorization,
     credentialResolutionDisabled: false
   });

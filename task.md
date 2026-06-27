@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-session-commentid-dedupe`.
+- Current branch: `codex/comment-translator-stored-token-live-provider`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: session-scoped server-side `commentId` dedupe before Free Azure provider execution.
+- Scope: normal UI live provider stored credential token material resolution for Start target lookup and polling, with server-side refresh/persist and sanitized boundaries.
 - Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
@@ -125,6 +125,13 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 
 ## Current Local Verification
 
+- `node scripts/comment-translator-youtube-stored-token-live-provider-contract.mjs`: passed. Covers sealed token material persistence, expired-token refresh/persist, legacy irreversible reference fail-closed behavior, and normal UI live provider use of the stored-token resolver for target lookup and polling.
+- `node scripts/comment-translator-ui-live-provider-runtime-contract.mjs`: passed. Confirms normal UI route/action still use the trusted live provider adapter, and the adapter now depends on stored-token server-fetch resolution rather than operator-local Authorization header envs.
+- `npm run lint`: passed.
+- `npx tsc --noEmit`: passed after `npm run build` generated `.next/types`; an earlier parallel `tsc` run raced with build and failed only on missing generated `.next/types` files.
+- `npm run build`: passed. Existing warnings observed: Next.js `middleware` convention deprecation, static export RSC alias skip for server-runtime build, and webpack cache big-string serialization warnings.
+- `git diff --check`: passed with Windows LF-to-CRLF normalization warnings only.
+- Changed-files high-confidence no-secret scan: value leaks not found. The scan reported false positives on forbidden field names and server-only fake fixture labels in contract files, not real token, Authorization, or live provider material values.
 - `node scripts/comment-translator-public-preview-feed-ux-contract.mjs`: passed. Covers PPF-1 active-session 15s safe auto-refresh, manual refresh fallback, PPF-2 newest-first ordering, PPF-3 timestamp timezone labeling, shared timezone preference compatibility, and public gate unchanged.
 - `node scripts/comment-translator-real-comments-ui-wiring-contract.mjs`: passed. Confirms F9 server-owned safe feed boundary remains intact.
 - `node scripts/comment-translator-shared-timezone-preference-contract.mjs`: passed. Confirms shared timezone preference local storage/event helpers, account read/write wiring, migration-pending fallback for `time_zone`, Supabase migration shape, remote preference apply, and Comment Translator timestamp consumption.
@@ -153,6 +160,9 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 - Same-day first-Start over-limit follow-up: reproduced that pressing Start while a stale durable active session still exists returned `session-limit` before heartbeat-stale cleanup. Fixed session start to stop the stale active session with sanitized `missing-heartbeat` before applying active-session limits, so a follow-up Start can create a fresh session instead of showing an over-limit state.
 - Start retry copy follow-up: repeated Start attempts can hit the abuse/rate-limit guard after the session fails to start. The UI now separates sanitized rate-limit metadata from Free usage-limit copy so this state no longer appears as a daily/session usage cap.
 - Start stopped-state visibility follow-up: if Start returns a sanitized stopped session, the operator panel now surfaces the stop reason in the first viewport and clears browser-visible comments to `session-not-active` instead of leaving the initial provider-polling fallback visible.
+- Stored-token live provider follow-up: normal UI live provider runtime now resolves Google API server-fetch authorization from the owner-bound `credentialReferenceId` through the trusted Supabase token-store row and server-only sealed token material resolver instead of operator-local Authorization header envs. Expired access material is refreshed server-side and the refreshed sealed material is persisted back to the trusted token-store row before target lookup/polling continues.
+- OAuth callback persistence follow-up: future reconnects persist decryptable server-only sealed token material in the existing trusted token-store fields. Existing legacy rows that contain irreversible reference-only material cannot be recovered by code and must fail closed with sanitized reconnect-required/unavailable behavior until the user reconnects.
+- Build hygiene follow-up: the client comment translator dock no longer imports the server-only real-comments UI wiring module for inactive/unavailable feed placeholders; the browser-safe placeholder builder is available from the shared feed module.
 
 Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`. The pre-cleanup task-board snapshot is archived at `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 
@@ -162,7 +172,8 @@ Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_
 - The browser-visible PL-G3 feed confirmation is valid only after manual comment refresh in the current UI. It does not prove automatic realtime or periodic feed refresh.
 - Shared display timezone preference remote schema is applied. Runtime quota enforcement remains UTC-based; timezone is display convenience only.
 - Session-scoped `commentId` dedupe is implemented locally in the Free Azure execution bridge: repeated YouTube-safe `commentId` values are skipped before provider execution, usage handoff estimates count only newly accepted comments, and server-owned safe feed rows are merged uniquely by `commentId` for the active session. Stop/session cleanup clears the dedupe state. `nextPageToken` remains server-only and unchanged.
-- No deploy/upload, OAuth flow, token refresh, Stripe action, public access change, main promotion, PL-G4, PL-G5, PL-G6, or launch gate flip was run in this cleanup slice.
+- No deploy/upload, OAuth live flow, live provider execution, live token refresh against Google, Stripe action, public access change, main promotion, PL-G4, PL-G5, PL-G6, or launch gate flip was run in this stored-token live provider slice.
+- Existing connected YouTube credentials created before sealed token material persistence may contain irreversible reference-only material. Those rows must fail closed with sanitized unavailable/reconnect-required behavior; reconnect is required before the stored-token live provider path can fetch using decryptable server-only material.
 
 ## Later Work
 

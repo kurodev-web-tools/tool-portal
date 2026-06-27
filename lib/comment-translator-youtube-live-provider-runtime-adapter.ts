@@ -7,13 +7,19 @@ import {
   type YouTubeLiveChatRuntimeAdapter,
   type YouTubeOwnedBroadcast,
   type YouTubeOwnerVerificationRuntimeResult,
-  type YouTubeRuntimeReadOnlyOAuthScope
+  type YouTubeRuntimeReadOnlyOAuthScope,
+  resolveYouTubeLiveTokenForServerFetch,
+  type YouTubeServerOnlyLiveTokenMaterialResolver
 } from "./comment-translator-youtube-runtime-foundation";
 import type { YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 import {
+  createTrustedYouTubeOAuthCredentialSupabaseTokenMaterialRuntime,
   createTrustedYouTubeOAuthCredentialSupabaseStatusReader,
   type YouTubeOAuthCredentialSupabaseStatus
 } from "./comment-translator-youtube-token-store-supabase-adapter";
+import {
+  createTrustedYouTubeOAuthStoredTokenMaterialResolver
+} from "./comment-translator-youtube-token-material-runtime";
 import {
   createUnavailableCommentTranslatorLiveChatTargetLookupAdapter,
   type CommentTranslatorServerOnlyLiveChatTargetLookupAdapter
@@ -39,22 +45,10 @@ type GoogleApiFetchResult = {
 
 type GoogleApiFetch = (request: GoogleApiFetchRequest) => Promise<GoogleApiFetchResult>;
 
-type TokenMaterialResolver = {
-  resolveServerAuthorizationHeader(): Promise<
-    | {
-        status: "available";
-        serverAuthorizationHeader: string;
-      }
-    | {
-        status: "unavailable";
-        reason: "missing" | "expired";
-      }
-  >;
-};
-
 type RuntimeAdapterDependencies = {
   credentialReferenceId: string;
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
+  credentialResolutionDisabled: boolean;
   trustedStatusReader:
     | {
         getCredentialStatus(request: {
@@ -63,7 +57,7 @@ type RuntimeAdapterDependencies = {
         }): Promise<YouTubeOAuthCredentialSupabaseStatus>;
       }
     | null;
-  tokenMaterialResolver: TokenMaterialResolver;
+  tokenMaterialResolver: YouTubeServerOnlyLiveTokenMaterialResolver;
   fetchGoogleApi: GoogleApiFetch;
   nowMs: () => number;
 };
@@ -92,16 +86,28 @@ export function createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter(
     YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED: env.YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED
   });
   const statusReader = disabled ? null : createTrustedYouTubeOAuthCredentialSupabaseStatusReader({ env });
+  const tokenMaterialRuntime = disabled
+    ? null
+    : createTrustedYouTubeOAuthCredentialSupabaseTokenMaterialRuntime({ env });
 
-  if (!credentialReferenceId || callerAuthorization.status !== "authorized" || statusReader?.status !== "ready") {
+  if (
+    !credentialReferenceId ||
+    callerAuthorization.status !== "authorized" ||
+    statusReader?.status !== "ready" ||
+    tokenMaterialRuntime?.status !== "ready"
+  ) {
     return unavailableAdapters();
   }
 
   return createRuntimeAdapters({
     credentialReferenceId,
     callerAuthorization,
+    credentialResolutionDisabled: disabled,
     trustedStatusReader: statusReader.trustedAdapter,
-    tokenMaterialResolver: createEnvServerAuthorizationHeaderResolver({ env }),
+    tokenMaterialResolver: createTrustedYouTubeOAuthStoredTokenMaterialResolver({
+      tokenMaterialAdapter: tokenMaterialRuntime.trustedTokenMaterialAdapter,
+      env
+    }),
     fetchGoogleApi: fetchGoogleApiWithServerAuthorization,
     nowMs
   });
@@ -109,9 +115,11 @@ export function createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter(
 
 export function createCommentTranslatorYouTubeLiveProviderRuntimeAdapterForTests({
   fetchGoogleApi,
+  tokenMaterialResolver,
   nowMs = () => 0
 }: {
   fetchGoogleApi: GoogleApiFetch;
+  tokenMaterialResolver?: YouTubeServerOnlyLiveTokenMaterialResolver;
   nowMs?: () => number;
 }): CommentTranslatorYouTubeLiveProviderRuntimeAdapter {
   return createRuntimeAdapters({
@@ -120,6 +128,7 @@ export function createCommentTranslatorYouTubeLiveProviderRuntimeAdapterForTests
       status: "authorized",
       ownerUserId: "owner-user-reference-for-tests"
     },
+    credentialResolutionDisabled: false,
     trustedStatusReader: {
       async getCredentialStatus() {
         return {
@@ -139,14 +148,16 @@ export function createCommentTranslatorYouTubeLiveProviderRuntimeAdapterForTests
         };
       }
     },
-    tokenMaterialResolver: {
-      async resolveServerAuthorizationHeader() {
-        return {
-          status: "available",
-          serverAuthorizationHeader: "server-only-test-authorization"
-        };
-      }
-    },
+    tokenMaterialResolver:
+      tokenMaterialResolver ?? {
+        async resolveServerOnlyTokenMaterial() {
+          return {
+            status: "available",
+            serverAuthorizationHeader: "server-only-test-authorization",
+            expiresAtIso: "2099-01-01T00:00:00.000Z"
+          };
+        }
+      },
     fetchGoogleApi,
     nowMs
   });
@@ -155,6 +166,7 @@ export function createCommentTranslatorYouTubeLiveProviderRuntimeAdapterForTests
 function createRuntimeAdapters({
   credentialReferenceId,
   callerAuthorization,
+  credentialResolutionDisabled,
   trustedStatusReader,
   tokenMaterialResolver,
   fetchGoogleApi,
@@ -172,7 +184,7 @@ function createRuntimeAdapters({
         credentialReferenceId,
         ownerUserId: callerAuthorization.ownerUserId
       });
-      if (status.revoked || status.expiryStatus !== "active" || !status.scopeSet.includes(readOnlyScope)) {
+      if (status.revoked || status.expiryStatus === "revoked" || !status.scopeSet.includes(readOnlyScope)) {
         return null;
       }
       return status;
@@ -182,7 +194,41 @@ function createRuntimeAdapters({
   }
 
   async function resolveAuthorizationHeader() {
-    return tokenMaterialResolver.resolveServerAuthorizationHeader();
+    if (callerAuthorization.status !== "authorized") {
+      return { status: "unavailable" as const, reason: "missing" as const };
+    }
+
+    let serverAuthorizationHeader: string | null = null;
+    const resolution = await resolveYouTubeLiveTokenForServerFetch({
+      credentialReferenceId,
+      ownerAuthorization: {
+        status: "authorized",
+        ownerUserId: callerAuthorization.ownerUserId
+      },
+      credentialResolutionDisabled,
+      requiredScope: readOnlyScope,
+      nowIso: new Date(nowMs()).toISOString(),
+      trustedStatusReader,
+      tokenMaterialResolver,
+      async consumeServerFetchAuthorization(binding) {
+        serverAuthorizationHeader = binding.serverAuthorizationHeader;
+        return {
+          serverFetchBinding: "resolved-for-server-fetch"
+        };
+      }
+    });
+
+    if (resolution.status !== "resolved-for-server-fetch" || !serverAuthorizationHeader) {
+      return {
+        status: "unavailable" as const,
+        reason: resolution.status === "expired" ? ("expired" as const) : ("missing" as const)
+      };
+    }
+
+    return {
+      status: "available" as const,
+      serverAuthorizationHeader
+    };
   }
 
   const runtime: YouTubeLiveChatRuntimeAdapter = {
@@ -304,38 +350,6 @@ function createRuntimeAdapters({
       runtime: {
         pollLiveChatOnce: runtime.pollLiveChatOnce
       }
-    }
-  };
-}
-
-function createEnvServerAuthorizationHeaderResolver({
-  env
-}: {
-  env: Record<string, string | undefined>;
-}): TokenMaterialResolver {
-  return {
-    async resolveServerAuthorizationHeader() {
-      const header =
-        readEnv(env, "COMMENT_TRANSLATOR_YOUTUBE_SERVER_AUTHORIZATION_HEADER") ??
-        readEnv(env, "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER") ??
-        readEnv(env, "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_SERVER_AUTHORIZATION_HEADER");
-      const expiresAtIso =
-        readEnv(env, "COMMENT_TRANSLATOR_YOUTUBE_SERVER_AUTHORIZATION_EXPIRES_AT_ISO") ??
-        readEnv(env, "YOUTUBE_LIVE_CHAT_POLLING_SMOKE_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO") ??
-        readEnv(env, "YOUTUBE_LIVE_CHAT_TARGET_LOOKUP_OPERATOR_LOCAL_TOKEN_EXPIRES_AT_ISO");
-
-      if (!header) {
-        return { status: "unavailable", reason: "missing" };
-      }
-
-      if (expiresAtIso && isExpiredIso(expiresAtIso)) {
-        return { status: "unavailable", reason: "expired" };
-      }
-
-      return {
-        status: "available",
-        serverAuthorizationHeader: header
-      };
     }
   };
 }
@@ -470,16 +484,6 @@ function normalizeLifecycleStatus(value: unknown): YouTubeOwnedBroadcast["lifecy
 
 function normalizePrivacyStatus(value: unknown): YouTubeOwnedBroadcast["privacyStatus"] {
   return value === "public" || value === "unlisted" || value === "private" ? value : "private";
-}
-
-function readEnv(env: Record<string, string | undefined>, name: string) {
-  const value = env[name]?.trim();
-  return value ? value : null;
-}
-
-function isExpiredIso(value: string) {
-  const parsed = Date.parse(value);
-  return Number.isFinite(parsed) && parsed <= Date.now();
 }
 
 function readString(value: unknown) {

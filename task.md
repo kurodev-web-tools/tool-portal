@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-live-target-owner-diagnostics`.
+- Current branch: `codex/comment-translator-cursor-prime-diagnostics`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: normal UI YouTube active broadcast target lookup query fix for deployed Start failures, with sanitized diagnostics boundaries unchanged.
+- Scope: Free beta normal UI Start-after comment intake cursor prime plus sanitized diagnostics.
 - Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
@@ -106,6 +106,14 @@ Current recommended next PR: implement PPF-1 and PPF-2 together, and include bro
 
 ## Latest Sanitized Evidence Summary
 
+- Current cursor-prime slice: first successful session poll is treated as cursor prime; existing returned comments are skipped from translation, `nextPageToken` state advances server-only, and only sanitized count metadata such as `preStartSkippedCount` is browser-readable.
+- Duplicate/subsequent tick behavior: session-scoped seen comment ids prevent primed/duplicate comments from being translated on later ticks while still advancing cursor state, so a duplicate-only tick does not block later new B/C/D-style comments.
+- Sanitized diagnostics added to feed/action state: `pollTickStatus`, `returnedCount`, `acceptedCount`, `skippedCount`, `preStartSkippedCount`, reason-count labels for duplicate/language-policy/usage-limit/provider-unavailable, `translatedCount`, `persistedFeedRowCount`, `nextPollDue`, and sanitized `stopReason`. Raw provider payload, raw comments, provider target metadata, and server-only cursor remain not returned/forbidden.
+- Cursor-prime RED/GREEN evidence: `node scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs` first failed before implementation with `polled-comments-available` where cursor-prime skip was expected, then passed after implementation.
+- Verification for this cursor-prime slice passed: `node scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs`, `node scripts/comment-translator-ui-live-provider-runtime-contract.mjs`, `node scripts/comment-translator-azure-normal-translation-execution-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence no-secret scan.
+- Build notes: `npm run build` passed with existing non-blocking warnings for middleware/proxy convention, static export RSC alias skip because `out` is absent for server-runtime build, and webpack cache serialization.
+- Width checks skipped for this cursor-prime slice: no visible UI text, CSS, route layout, rendered copy, or browser storage surface changed; diagnostics are returned as action/feed metadata only.
+- Not run in this cursor-prime slice: live/provider execution, Google target lookup, live `liveChatMessages.list`, OAuth live flow, Azure live provider execution, deploy, migration, remote mutation, and public access change. Any deployed/browser live retry still requires same-thread ready preflight, sanitized output review, and exact explicit approval.
 - PL-G3 feed bridge/session persistence follow-up: normal UI route/action wiring now uses a server-only YouTube live provider runtime adapter instead of fixed unavailable target lookup / polling adapters.
 - F7 bounded `liveChatMessages.list` polling wiring is now connected to the normal UI heartbeat/status/manual refresh path through the trusted server-only live provider adapter.
 - Current implementation slice: Start resolves the owned live target through server-only `liveBroadcasts.list`; heartbeat/status/manual feed refresh run bounded `liveChatMessages.list`, map provider-safe comments to normalized messages, execute the Free Azure/provider policy path, and persist browser-safe feed rows.

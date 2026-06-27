@@ -72,6 +72,10 @@ import {
 } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { createTrustedYouTubeOAuthStoredCredentialRefreshRuntime } from "@/lib/comment-translator-youtube-token-material-runtime";
 import { createUnavailableCommentTranslatorRealCommentsFeedState } from "@/lib/comment-translator-real-comments-ui-wiring";
+import {
+  attachCommentTranslatorLiveProviderDiagnosticsToFeed,
+  type CommentTranslatorLiveProviderDiagnostics
+} from "@/lib/comment-translator-real-comments-feed-shared";
 import { readYouTubeOAuthCredentialReferenceForCaller } from "@/lib/comment-translator-youtube-account-integration-status";
 import { readCommentTranslatorToolCredentialStatus } from "@/lib/comment-translator-youtube-tool-credential-source";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
@@ -237,6 +241,7 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: { targ
 
   const activeSession = durableActiveSessionRead.activeSession;
   let liveProviderUnavailableReason: "polling-runtime-not-wired" | null = null;
+  let liveProviderDiagnostics: CommentTranslatorLiveProviderDiagnostics | null = null;
   if (activeSession) {
     const nowMs = Date.now();
     const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
@@ -267,6 +272,7 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: { targ
         nowMs,
         targetLanguage: options.targetLanguage ?? "ja"
       });
+      liveProviderDiagnostics = liveProviderStep.diagnostics;
       if (
         liveProviderStep.pollingTick.status === "unavailable-missing-server-only-polling-state" ||
         liveProviderStep.pollingTick.status === "unavailable-polling-runtime-not-approved"
@@ -284,11 +290,15 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: { targ
 
   if (feed.status === "unavailable" && feed.unavailableReason === "live-provider-polling-not-approved" && liveProviderUnavailableReason) {
     return createUnavailableCommentTranslatorRealCommentsFeedState({
-      reason: liveProviderUnavailableReason
+      reason: liveProviderUnavailableReason,
+      liveProviderDiagnostics
     });
   }
 
-  return feed;
+  return attachCommentTranslatorLiveProviderDiagnosticsToFeed({
+    feed,
+    diagnostics: liveProviderDiagnostics
+  });
 }
 
 export async function requestCommentTranslatorDataDeletionAction(): Promise<CommentTranslatorFreeBetaRetentionAttributionState> {

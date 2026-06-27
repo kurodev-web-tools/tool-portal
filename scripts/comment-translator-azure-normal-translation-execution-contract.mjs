@@ -487,9 +487,12 @@ for (const payload of [result, unavailable, ...ledger.readInMemoryCommentTransla
 const allowedChangedFiles = new Set([
   "app/api/comment-translator/session/route.ts",
   "app/tools/comment-translator/actions.ts",
+  "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
   f10Path,
+  "lib/comment-translator-live-provider-session-step.ts",
   "lib/comment-translator-real-comments-feed-durable-store.ts",
   "lib/comment-translator-real-comments-feed-session-bridge.ts",
+  "lib/comment-translator-real-comments-ui-wiring.ts",
   "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
   sharedPath,
   "supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql",
@@ -498,6 +501,7 @@ const allowedChangedFiles = new Set([
   gapAuditPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
@@ -510,6 +514,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

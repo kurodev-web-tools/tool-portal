@@ -393,6 +393,12 @@ assert.equal(emptyResult.sanitizedPolling.pollingIntervalMillis, 2500);
 assert.equal(emptyResult.sanitizedPolling.returnedCommentCount, 0);
 assert.doesNotMatch(JSON.stringify(emptyResult), /server-only-next-page-token-never-output|server-only-live-target-never-output|liveChatId/i);
 
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+wiring.seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession({
+  state: activeBrowserState,
+  liveChatTargetReadiness: readyTarget,
+  nowMs: activeSession.startedAtMs
+});
 const messagesResult = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
   intent: "heartbeat",
   activeSession,
@@ -424,10 +430,104 @@ const messagesResult = await wiring.readCommentTranslatorBoundedLiveChatPollingT
   }),
   nowMs: activeSession.startedAtMs + 2500
 });
-assert.equal(messagesResult.status, "polled-comments-available");
+assert.equal(messagesResult.status, "cursor-primed-existing-comments-skipped");
 assert.equal(messagesResult.sanitizedPolling.returnedCommentCount, 1);
+assert.equal(messagesResult.sanitizedPolling.acceptedCount, 0);
+assert.equal(messagesResult.sanitizedPolling.preStartSkippedCount, 1);
+assert.equal(messagesResult.sanitizedPolling.skippedCount, 1);
+assert.equal(messagesResult.sanitizedPolling.pollTickStatus, "polled");
+assert.equal(messagesResult.sanitizedPolling.nextPollDue, "waiting");
 assert.equal(messagesResult.sanitizedPolling.rawComments, "not-returned-by-design");
 assert.doesNotMatch(JSON.stringify(messagesResult), /comment-never-output|raw text never output|server-only-live-target-never-output|liveChatId/i);
+
+const duplicateOnlyResult = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession,
+  usage: {
+    dailyUsedMs: 0,
+    translatedMessagesInCurrentMinute: 0,
+    providerBudgetAvailable: true,
+    globalBudgetAvailable: true,
+    aiBudgetAvailable: true,
+    translationProviderAvailable: true
+  },
+  adapter: wiring.createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter({
+    pollSteps: [
+      {
+        type: "messages",
+        receivedAtMs: activeSession.startedAtMs + 7500,
+        nextPageToken: "server-only-next-page-token-after-duplicate",
+        pollingIntervalMillis: 1000,
+        comments: [
+          {
+            id: "comment-never-output",
+            publishedAt: "2026-06-15T00:00:02.000Z",
+            text: "raw text never output",
+            platformLanguageHint: "ja"
+          }
+        ]
+      }
+    ]
+  }),
+  nowMs: activeSession.startedAtMs + 7500
+});
+assert.equal(duplicateOnlyResult.status, "empty-chat-waiting");
+assert.equal(duplicateOnlyResult.sanitizedPolling.returnedCommentCount, 1);
+assert.equal(duplicateOnlyResult.sanitizedPolling.acceptedCount, 0);
+assert.equal(duplicateOnlyResult.sanitizedPolling.skippedCount, 1);
+assert.deepEqual(duplicateOnlyResult.sanitizedPolling.skipReasonCounts, [{ reason: "duplicate", count: 1 }]);
+assert.equal(duplicateOnlyResult.serverOnlyCommentsForTranslation.length, 0);
+assert.doesNotMatch(JSON.stringify(duplicateOnlyResult), /comment-never-output|raw text never output|server-only-next-page-token-after-duplicate/i);
+
+const afterDuplicateResult = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession,
+  usage: {
+    dailyUsedMs: 0,
+    translatedMessagesInCurrentMinute: 0,
+    providerBudgetAvailable: true,
+    globalBudgetAvailable: true,
+    aiBudgetAvailable: true,
+    translationProviderAvailable: true
+  },
+  adapter: wiring.createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter({
+    pollSteps: [
+      {
+        type: "messages",
+        receivedAtMs: activeSession.startedAtMs + 8500,
+        nextPageToken: "server-only-next-page-token-after-new-comments",
+        pollingIntervalMillis: 1000,
+        comments: [
+          {
+            id: "comment-new-b-never-output",
+            publishedAt: "2026-06-15T00:00:08.000Z",
+            text: "new B raw text never output",
+            platformLanguageHint: "en"
+          },
+          {
+            id: "comment-new-c-never-output",
+            publishedAt: "2026-06-15T00:00:09.000Z",
+            text: "new C raw text never output",
+            platformLanguageHint: "en"
+          },
+          {
+            id: "comment-new-d-never-output",
+            publishedAt: "2026-06-15T00:00:10.000Z",
+            text: "new D raw text never output",
+            platformLanguageHint: "en"
+          }
+        ]
+      }
+    ]
+  }),
+  nowMs: activeSession.startedAtMs + 8500
+});
+assert.equal(afterDuplicateResult.status, "polled-comments-available");
+assert.equal(afterDuplicateResult.sanitizedPolling.returnedCommentCount, 3);
+assert.equal(afterDuplicateResult.sanitizedPolling.acceptedCount, 3);
+assert.equal(afterDuplicateResult.sanitizedPolling.skippedCount, 0);
+assert.equal(afterDuplicateResult.serverOnlyCommentsForTranslation.length, 3);
+assert.doesNotMatch(JSON.stringify(afterDuplicateResult), /comment-new-b-never-output|new B raw text never output|server-only-next-page-token-after-new-comments/i);
 
 wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
 wiring.seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession({
@@ -558,6 +658,8 @@ for (const payload of [
   notDue,
   emptyResult,
   messagesResult,
+  duplicateOnlyResult,
+  afterDuplicateResult,
   firstRetry,
   cappedRetry,
   terminalEnded,
@@ -593,6 +695,8 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
   "lib/comment-translator-live-provider-session-step.ts",
   "lib/comment-translator-live-message-normalization.ts",
+  "lib/comment-translator-real-comments-feed-shared.ts",
+  "lib/comment-translator-real-comments-ui-wiring.ts",
   "lib/comment-translator-server-only-live-chat-target-lookup.ts",
   sessionRuntimePath,
   routePath,
@@ -601,6 +705,7 @@ const allowedChangedFiles = new Set([
   readinessDocPath,
   gapAuditPath,
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",

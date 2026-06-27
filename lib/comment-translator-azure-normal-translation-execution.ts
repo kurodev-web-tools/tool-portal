@@ -60,6 +60,7 @@ export type CommentTranslatorAzureNormalTranslationEligibilitySummary = {
   eligibleCommentCount: number;
   nonTranslatableEventCount: number;
   sessionDuplicateSkippedCount: number;
+  duplicateTextSkippedCount: number;
   rawProviderPayload: "not-returned-by-design";
   rawComments: "not-returned-by-design";
   authorChannelMaterial: "not-returned-by-design";
@@ -149,17 +150,29 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
           messages: request.messages,
           duplicateSkippedCount: 0
         };
+  const batchTextDedupe =
+    request.sessionStatus === "active"
+      ? selectFirstCommentTranslatorAzureNormalTranslationMessagePerNormalizedText({
+          messages: sessionDedupe.messages,
+          targetLanguage: request.targetLanguage,
+          sourceLanguages: request.sourceLanguages
+        })
+      : {
+          messages: sessionDedupe.messages,
+          duplicateTextSkippedCount: 0
+        };
   const baseFeed = createCommentTranslatorRealCommentsFeedStateFromNormalizedMessages({
-    messages: sessionDedupe.messages,
+    messages: batchTextDedupe.messages,
     sessionStatus: request.sessionStatus,
     targetLanguage: request.targetLanguage
   });
-  const eligibleMessages = sessionDedupe.messages.filter(isTranslationEligibleMessage);
-  const nonTranslatableEventCount = Math.max(0, sessionDedupe.messages.length - eligibleMessages.length);
+  const eligibleMessages = batchTextDedupe.messages.filter(isTranslationEligibleMessage);
+  const nonTranslatableEventCount = Math.max(0, batchTextDedupe.messages.length - eligibleMessages.length);
   const eligibility = createEligibilitySummary({
     eligibleCommentCount: eligibleMessages.length,
     nonTranslatableEventCount,
-    sessionDuplicateSkippedCount: sessionDedupe.duplicateSkippedCount
+    sessionDuplicateSkippedCount: sessionDedupe.duplicateSkippedCount,
+    duplicateTextSkippedCount: batchTextDedupe.duplicateTextSkippedCount
   });
 
   if (request.sessionStatus !== "active") {
@@ -384,16 +397,19 @@ function createExecutionResult({
 function createEligibilitySummary({
   eligibleCommentCount,
   nonTranslatableEventCount,
-  sessionDuplicateSkippedCount
+  sessionDuplicateSkippedCount,
+  duplicateTextSkippedCount
 }: {
   eligibleCommentCount: number;
   nonTranslatableEventCount: number;
   sessionDuplicateSkippedCount: number;
+  duplicateTextSkippedCount: number;
 }): CommentTranslatorAzureNormalTranslationEligibilitySummary {
   return {
     eligibleCommentCount,
     nonTranslatableEventCount,
     sessionDuplicateSkippedCount,
+    duplicateTextSkippedCount,
     rawProviderPayload: "not-returned-by-design",
     rawComments: "not-returned-by-design",
     authorChannelMaterial: "not-returned-by-design"
@@ -412,6 +428,59 @@ export function clearCommentTranslatorAzureNormalTranslationSessionDedupeState(
 
 export function resetCommentTranslatorAzureNormalTranslationSessionDedupeStateForTests() {
   sessionDedupeStateBySessionReference.clear();
+}
+
+function selectFirstCommentTranslatorAzureNormalTranslationMessagePerNormalizedText({
+  messages,
+  targetLanguage,
+  sourceLanguages
+}: {
+  messages: readonly CommentTranslatorNormalizedLiveMessage[];
+  targetLanguage: CommentTranslatorTargetLanguageId;
+  sourceLanguages?: readonly string[];
+}) {
+  const seenNormalizedTextKeys = new Set<string>();
+  const selectedMessages: CommentTranslatorNormalizedLiveMessage[] = [];
+  let duplicateTextSkippedCount = 0;
+
+  for (const message of messages) {
+    if (!isTranslationEligibleMessage(message)) {
+      selectedMessages.push(message);
+      continue;
+    }
+
+    const normalizedTextKey = createServerOnlyNormalizedTextBatchDedupeKey({
+      text: message.text ?? "",
+      targetLanguage,
+      sourceLanguages
+    });
+    if (seenNormalizedTextKeys.has(normalizedTextKey)) {
+      duplicateTextSkippedCount += 1;
+      continue;
+    }
+
+    seenNormalizedTextKeys.add(normalizedTextKey);
+    selectedMessages.push(message);
+  }
+
+  return {
+    messages: selectedMessages,
+    duplicateTextSkippedCount
+  };
+}
+
+function createServerOnlyNormalizedTextBatchDedupeKey({
+  text,
+  targetLanguage,
+  sourceLanguages
+}: {
+  text: string;
+  targetLanguage: CommentTranslatorTargetLanguageId;
+  sourceLanguages?: readonly string[];
+}) {
+  const normalizedText = text.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+  const normalizedSources = (sourceLanguages ?? []).map((language) => language.trim().toLocaleLowerCase()).sort().join(",");
+  return [normalizedText, targetLanguage.trim().toLocaleLowerCase(), normalizedSources].join("\u0000");
 }
 
 function selectNewCommentTranslatorAzureNormalTranslationMessagesForSession({

@@ -348,6 +348,7 @@ assert.equal(result.execution.translatedCount, 2);
 assert.equal(result.execution.skipsByReason.languagePolicy, 1);
 assert.equal(result.eligibility.eligibleCommentCount, 3);
 assert.equal(result.eligibility.nonTranslatableEventCount, 2);
+assert.equal(result.eligibility.duplicateTextSkippedCount, 0);
 assert.equal(result.feed.status, "ready");
 assert.equal(result.feed.rows.length, 5);
 assert.equal(result.feedPersistence.status, "persisted");
@@ -486,6 +487,7 @@ assert.equal(thirdCycle.execution.providerCallCount, 0);
 assert.equal(thirdCycle.execution.translatedCount, 1);
 assert.equal(thirdCycle.execution.cacheHitCount, 1);
 assert.equal(thirdCycle.execution.cacheMissCount, 0);
+assert.equal(thirdCycle.eligibility.duplicateTextSkippedCount, 0);
 assert.equal(thirdCycle.usageHandoffEstimate.providerRequestEstimateCount, 0);
 assert.equal(thirdCycle.usageHandoffEstimate.translatedMessageEstimate, 1);
 assert.equal(azureCallCount, 3);
@@ -503,6 +505,113 @@ const duplicateTextUiComment = shared
 assert.equal(duplicateTextUiComment.cacheStatus, "hit");
 assert.equal(duplicateTextUiComment.status, "translated");
 assert.equal(thirdCycle.feed.rows.length, 7);
+
+const cachedBatchDuplicateCycle = normalization.normalizeCommentTranslatorLiveMessages({
+  providerPayloads: [
+    {
+      id: "yt-f10-text-4",
+      snippet: {
+        type: "textMessageEvent",
+        publishedAt: "2026-06-16T01:00:10.000Z",
+        textMessageDetails: { messageText: "Hello Azure path" }
+      }
+    },
+    {
+      id: "yt-f10-text-5",
+      snippet: {
+        type: "textMessageEvent",
+        publishedAt: "2026-06-16T01:00:11.000Z",
+        textMessageDetails: { messageText: "Hello Azure path" }
+      }
+    }
+  ]
+});
+const cachedBatchDuplicate = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: cachedBatchDuplicateCycle.normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN", "KR", "CN"],
+  callerAuthorization,
+  sessionReferenceId: "cts_f10_contract_001",
+  occurredAtMs: Date.parse("2026-06-16T01:00:12.000Z"),
+  usage,
+  providers: {
+    azure,
+    openAiMini
+  },
+  feedPersistenceStore,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+assert.equal(cachedBatchDuplicate.status, "completed");
+assert.equal(cachedBatchDuplicate.eligibility.eligibleCommentCount, 1);
+assert.equal(cachedBatchDuplicate.eligibility.duplicateTextSkippedCount, 1);
+assert.equal(cachedBatchDuplicate.execution.providerRequestCount, 1);
+assert.equal(cachedBatchDuplicate.execution.providerCallCount, 0);
+assert.equal(cachedBatchDuplicate.execution.translatedCount, 1);
+assert.equal(cachedBatchDuplicate.execution.cacheHitCount, 1);
+assert.equal(cachedBatchDuplicate.execution.cacheMissCount, 0);
+assert.equal(cachedBatchDuplicate.feed.rows.find((row) => row.id === "yt-f10-text-4").translationCacheStatus, "hit");
+assert.equal(cachedBatchDuplicate.feed.rows.some((row) => row.id === "yt-f10-text-5"), false);
+
+const sameBatchDuplicateAndSkipCycle = normalization.normalizeCommentTranslatorLiveMessages({
+  providerPayloads: [
+    {
+      id: "yt-f10-text-6",
+      snippet: {
+        type: "textMessageEvent",
+        publishedAt: "2026-06-16T01:00:13.000Z",
+        textMessageDetails: { messageText: "Same batch English duplicate" }
+      }
+    },
+    {
+      id: "yt-f10-text-7",
+      snippet: {
+        type: "textMessageEvent",
+        publishedAt: "2026-06-16T01:00:14.000Z",
+        textMessageDetails: { messageText: "Same batch English duplicate" }
+      }
+    },
+    {
+      id: "yt-f10-text-8",
+      snippet: {
+        type: "textMessageEvent",
+        publishedAt: "2026-06-16T01:00:15.000Z",
+        textMessageDetails: { messageText: "日本語コメントその二" }
+      }
+    }
+  ]
+});
+const sameBatchDuplicateAndSkip = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: sameBatchDuplicateAndSkipCycle.normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN", "KR", "CN"],
+  callerAuthorization,
+  sessionReferenceId: "cts_f10_contract_004",
+  occurredAtMs: Date.parse("2026-06-16T01:00:16.000Z"),
+  usage,
+  providers: {
+    azure,
+    openAiMini
+  },
+  feedPersistenceStore,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+assert.equal(sameBatchDuplicateAndSkip.status, "completed");
+assert.equal(sameBatchDuplicateAndSkip.eligibility.eligibleCommentCount, 2);
+assert.equal(sameBatchDuplicateAndSkip.eligibility.duplicateTextSkippedCount, 1);
+assert.equal(sameBatchDuplicateAndSkip.execution.providerRequestCount, 1);
+assert.equal(sameBatchDuplicateAndSkip.execution.providerCallCount, 1);
+assert.equal(sameBatchDuplicateAndSkip.execution.cacheHitCount, 0);
+assert.equal(sameBatchDuplicateAndSkip.execution.cacheMissCount, 1);
+assert.equal(sameBatchDuplicateAndSkip.execution.skipsByReason.languagePolicy, 1);
+assert.equal(sameBatchDuplicateAndSkip.feed.rows.length, 2);
+assert.equal(sameBatchDuplicateAndSkip.feed.rows.find((row) => row.id === "yt-f10-text-6").translationCacheStatus, "miss");
+assert.equal(sameBatchDuplicateAndSkip.feed.rows.some((row) => row.id === "yt-f10-text-7"), false);
+assert.equal(sameBatchDuplicateAndSkip.feed.rows.find((row) => row.id === "yt-f10-text-8").translationCacheStatus, null);
+assert.equal(sameBatchDuplicateAndSkip.feed.rows.find((row) => row.id === "yt-f10-text-8").translationStatus, "skipped-f10-language-policy");
 
 const unavailable = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
   messages: normalized.normalizedMessages,

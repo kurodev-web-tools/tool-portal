@@ -26,10 +26,12 @@ import {
 import {
   createYouTubeLiveCommentTranslatorPipelineRequestsForComments
 } from "./comment-translator-youtube-live-comment-intake-pipeline";
-import type {
-  CommentTranslatorRealCommentsDisplayRow,
-  CommentTranslatorRealCommentsFeedState,
-  CommentTranslatorRealCommentsTranslationStatus
+import {
+  attachCommentTranslatorLiveProviderDiagnosticsToFeed,
+  type CommentTranslatorLiveProviderDiagnostics,
+  type CommentTranslatorRealCommentsDisplayRow,
+  type CommentTranslatorRealCommentsFeedState,
+  type CommentTranslatorRealCommentsTranslationStatus
 } from "./comment-translator-real-comments-feed-shared";
 import type { CommentTranslatorNormalizedLiveMessage } from "./comment-translator-live-message-normalization";
 import type { CommentTranslatorSessionBrowserSafeState } from "./comment-translator-session-runtime";
@@ -279,18 +281,77 @@ async function persistFeedBridgeResult({
           feed: result.feed
         })
       : result.feed;
+  const feedWithDiagnostics = attachCommentTranslatorLiveProviderDiagnosticsToFeed({
+    feed,
+    diagnostics: createLiveProviderDiagnosticsForFeed({
+      result,
+      persistedFeedRowCount: feed.rows.length
+    })
+  });
   const feedPersistence = await persistCommentTranslatorRealCommentsFeedForActiveSession({
     callerAuthorization: request.callerAuthorization,
     sessionReferenceId: request.sessionReferenceId,
-    feed,
+    feed: feedWithDiagnostics,
     recordedAtMs: request.occurredAtMs,
     durableFeedStore: request.feedPersistenceStore
   });
 
   return {
     ...result,
-    feed,
+    feed: feedWithDiagnostics,
     feedPersistence
+  };
+}
+
+function createLiveProviderDiagnosticsForFeed({
+  result,
+  persistedFeedRowCount
+}: {
+  result: Omit<CommentTranslatorAzureNormalTranslationExecutionResult, "feedPersistence">;
+  persistedFeedRowCount: number;
+}): CommentTranslatorLiveProviderDiagnostics {
+  const languagePolicySkippedCount = result.execution.skipsByReason.languagePolicy;
+  const usageLimitSkippedCount = result.status === "over-limit" ? result.execution.skippedCount : 0;
+  const providerUnavailableSkippedCount = result.status === "provider-unavailable"
+    ? result.execution.skipsByReason.providerUnavailable
+    : 0;
+  const skipReasonCounts: CommentTranslatorLiveProviderDiagnostics["skipReasonCounts"] = [
+    ...(languagePolicySkippedCount > 0 ? [{ reason: "language-policy" as const, count: languagePolicySkippedCount }] : []),
+    ...(usageLimitSkippedCount > 0 ? [{ reason: "usage-limit" as const, count: usageLimitSkippedCount }] : []),
+    ...(providerUnavailableSkippedCount > 0
+      ? [{ reason: "provider-unavailable" as const, count: providerUnavailableSkippedCount }]
+      : [])
+  ];
+
+  return {
+    pollTickStatus: "polled",
+    returnedCount:
+      result.eligibility.eligibleCommentCount +
+      result.eligibility.nonTranslatableEventCount +
+      result.eligibility.sessionDuplicateSkippedCount +
+      result.eligibility.duplicateTextSkippedCount,
+    acceptedCount: result.eligibility.eligibleCommentCount,
+    skippedCount:
+      result.execution.skippedCount +
+      result.eligibility.nonTranslatableEventCount +
+      result.eligibility.sessionDuplicateSkippedCount +
+      result.eligibility.duplicateTextSkippedCount,
+    preStartSkippedCount: 0,
+    skipReasonCounts,
+    providerCallCount: result.execution.providerCallCount,
+    cacheHitCount: result.execution.cacheHitCount,
+    cacheMissCount: result.execution.cacheMissCount,
+    duplicateTextCacheHitCount: result.execution.cacheHitCount,
+    duplicateTextSkippedCount: result.eligibility.duplicateTextSkippedCount,
+    languagePolicySkippedCount,
+    translatedCount: result.execution.translatedCount,
+    persistedFeedRowCount,
+    nextPollDue: "waiting",
+    stopReason: null,
+    rawProviderPayload: "not-returned-by-design",
+    rawComments: "not-returned-by-design",
+    providerTargetMetadata: "forbidden",
+    serverOnlyCursor: "not-returned-by-design"
   };
 }
 

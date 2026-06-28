@@ -105,6 +105,8 @@ assert.match(taskSource, /public-release capable: no/i, "public gate remains blo
 const shared = loadTsModule(sharedPath);
 assert.equal(typeof shared.formatCommentTranslatorBrowserLocalTimestamp, "function");
 assert.equal(typeof shared.sortCommentTranslatorRealCommentsFeedRowsNewestFirst, "function");
+assert.equal(typeof shared.attachCommentTranslatorLiveProviderDiagnosticsToFeed, "function");
+assert.equal(typeof shared.hasNonZeroCommentTranslatorLiveProviderDiagnosticsCount, "function");
 
 const baseRow = {
   provider: "youtube",
@@ -149,7 +151,8 @@ const feed = {
     rawComments: "not-returned-by-design",
     authorChannelMaterial: "not-returned-by-design",
     providerTargetMetadata: "forbidden",
-    serverOnlyCursor: "not-returned-by-design"
+    serverOnlyCursor: "not-returned-by-design",
+    liveProviderDiagnostics: null
   },
   rawProviderPayload: "not-returned-by-design",
   rawComments: "not-returned-by-design",
@@ -170,5 +173,63 @@ const uiComments = shared.mapCommentTranslatorRealCommentsFeedRowsToUiComments({
 assert.deepEqual(uiComments.map((comment) => comment.id), ["newest", "middle", "oldest"], "PPF-2 displays newest comments first");
 assert.match(uiComments[0].timestamp, /09:00:03\s+(GMT\+9|JST)/, "PPF-3 displays browser-local time with timezone label");
 assert.doesNotMatch(JSON.stringify(uiComments), /liveChatId|providerChannelId|ownerUserId|nextPageToken|access_token|refresh_token|authorization_code/i);
+
+const nonEmptyDiagnostics = {
+  pollTickStatus: "polled",
+  returnedCount: 3,
+  acceptedCount: 3,
+  skippedCount: 1,
+  preStartSkippedCount: 0,
+  skipReasonCounts: [{ reason: "language-policy", count: 1 }],
+  providerCallCount: 1,
+  cacheHitCount: 1,
+  cacheMissCount: 1,
+  duplicateTextCacheHitCount: 1,
+  duplicateTextSkippedCount: 1,
+  languagePolicySkippedCount: 1,
+  translatedCount: 2,
+  persistedFeedRowCount: 2,
+  nextPollDue: "waiting",
+  stopReason: null,
+  rawProviderPayload: "not-returned-by-design",
+  rawComments: "not-returned-by-design",
+  providerTargetMetadata: "forbidden",
+  serverOnlyCursor: "not-returned-by-design"
+};
+const emptyDiagnostics = {
+  ...nonEmptyDiagnostics,
+  returnedCount: 0,
+  acceptedCount: 0,
+  skippedCount: 0,
+  skipReasonCounts: [],
+  providerCallCount: 0,
+  cacheHitCount: 0,
+  cacheMissCount: 0,
+  duplicateTextCacheHitCount: 0,
+  duplicateTextSkippedCount: 0,
+  languagePolicySkippedCount: 0,
+  translatedCount: 0,
+  persistedFeedRowCount: 0
+};
+const feedWithTranslationDiagnostics = shared.attachCommentTranslatorLiveProviderDiagnosticsToFeed({
+  feed,
+  diagnostics: nonEmptyDiagnostics
+});
+const feedAfterEmptyRead = shared.attachCommentTranslatorLiveProviderDiagnosticsToFeed({
+  feed: feedWithTranslationDiagnostics,
+  diagnostics: emptyDiagnostics
+});
+assert.equal(shared.hasNonZeroCommentTranslatorLiveProviderDiagnosticsCount(nonEmptyDiagnostics), true);
+assert.equal(shared.hasNonZeroCommentTranslatorLiveProviderDiagnosticsCount(emptyDiagnostics), false);
+assert.equal(
+  feedAfterEmptyRead.sanitizedSummary.liveProviderDiagnostics.providerCallCount,
+  1,
+  "active-session diagnostics keeps the last non-empty provider count after an empty feed read"
+);
+assert.equal(
+  feedAfterEmptyRead.sanitizedSummary.liveProviderDiagnostics.languagePolicySkippedCount,
+  1,
+  "active-session diagnostics keeps the last non-empty language-policy count after an empty feed read"
+);
 
 console.log("comment translator public preview feed UX contract checks passed");

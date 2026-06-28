@@ -351,6 +351,11 @@ assert.equal(result.eligibility.nonTranslatableEventCount, 2);
 assert.equal(result.eligibility.duplicateTextSkippedCount, 0);
 assert.equal(result.feed.status, "ready");
 assert.equal(result.feed.rows.length, 4);
+assert.equal(result.feed.sanitizedSummary.liveProviderDiagnostics.providerCallCount, 2);
+assert.equal(result.feed.sanitizedSummary.liveProviderDiagnostics.cacheMissCount, 2);
+assert.equal(result.feed.sanitizedSummary.liveProviderDiagnostics.languagePolicySkippedCount, 1);
+assert.equal(result.feed.sanitizedSummary.liveProviderDiagnostics.translatedCount, 2);
+assert.equal(result.feed.sanitizedSummary.liveProviderDiagnostics.persistedFeedRowCount, 4);
 assert.equal(result.feedPersistence.status, "persisted");
 assert.equal(result.feedPersistence.durableFeedPersistResultLabel, "durable-feed-store-unavailable");
 assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.storeReadyLabel, "unavailable");
@@ -492,6 +497,8 @@ assert.equal(thirdCycle.execution.translatedCount, 1);
 assert.equal(thirdCycle.execution.cacheHitCount, 1);
 assert.equal(thirdCycle.execution.cacheMissCount, 0);
 assert.equal(thirdCycle.eligibility.duplicateTextSkippedCount, 0);
+assert.equal(thirdCycle.feed.sanitizedSummary.liveProviderDiagnostics.cacheHitCount, 1);
+assert.equal(thirdCycle.feed.sanitizedSummary.liveProviderDiagnostics.duplicateTextCacheHitCount, 1);
 assert.equal(thirdCycle.usageHandoffEstimate.providerRequestEstimateCount, 0);
 assert.equal(thirdCycle.usageHandoffEstimate.translatedMessageEstimate, 1);
 assert.equal(azureCallCount, 3);
@@ -555,6 +562,7 @@ assert.equal(cachedBatchDuplicate.execution.providerCallCount, 0);
 assert.equal(cachedBatchDuplicate.execution.translatedCount, 1);
 assert.equal(cachedBatchDuplicate.execution.cacheHitCount, 1);
 assert.equal(cachedBatchDuplicate.execution.cacheMissCount, 0);
+assert.equal(cachedBatchDuplicate.feed.sanitizedSummary.liveProviderDiagnostics.duplicateTextSkippedCount, 1);
 assert.equal(cachedBatchDuplicate.feed.rows.find((row) => row.id === "yt-f10-text-4").translationCacheStatus, "hit");
 assert.equal(cachedBatchDuplicate.feed.rows.some((row) => row.id === "yt-f10-text-5"), false);
 
@@ -611,6 +619,10 @@ assert.equal(sameBatchDuplicateAndSkip.execution.providerCallCount, 1);
 assert.equal(sameBatchDuplicateAndSkip.execution.cacheHitCount, 0);
 assert.equal(sameBatchDuplicateAndSkip.execution.cacheMissCount, 1);
 assert.equal(sameBatchDuplicateAndSkip.execution.skipsByReason.languagePolicy, 1);
+assert.equal(sameBatchDuplicateAndSkip.feed.sanitizedSummary.liveProviderDiagnostics.providerCallCount, 1);
+assert.equal(sameBatchDuplicateAndSkip.feed.sanitizedSummary.liveProviderDiagnostics.cacheMissCount, 1);
+assert.equal(sameBatchDuplicateAndSkip.feed.sanitizedSummary.liveProviderDiagnostics.duplicateTextSkippedCount, 1);
+assert.equal(sameBatchDuplicateAndSkip.feed.sanitizedSummary.liveProviderDiagnostics.languagePolicySkippedCount, 1);
 assert.equal(sameBatchDuplicateAndSkip.feed.rows.length, 1);
 assert.equal(sameBatchDuplicateAndSkip.feed.rows.find((row) => row.id === "yt-f10-text-6").translationCacheStatus, "miss");
 assert.equal(sameBatchDuplicateAndSkip.feed.rows.some((row) => row.id === "yt-f10-text-7"), false);
@@ -690,6 +702,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

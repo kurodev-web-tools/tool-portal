@@ -443,6 +443,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

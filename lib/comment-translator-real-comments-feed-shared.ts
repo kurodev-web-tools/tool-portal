@@ -137,6 +137,14 @@ export function attachCommentTranslatorLiveProviderDiagnosticsToFeed({
     return feed;
   }
 
+  const existingDiagnostics = feed.sanitizedSummary.liveProviderDiagnostics;
+  if (
+    !hasNonZeroCommentTranslatorLiveProviderDiagnosticsCount(diagnostics) &&
+    hasNonZeroCommentTranslatorLiveProviderDiagnosticsCount(existingDiagnostics)
+  ) {
+    return feed;
+  }
+
   return {
     ...feed,
     sanitizedSummary: {
@@ -144,6 +152,25 @@ export function attachCommentTranslatorLiveProviderDiagnosticsToFeed({
       liveProviderDiagnostics: diagnostics
     }
   };
+}
+
+export function hasNonZeroCommentTranslatorLiveProviderDiagnosticsCount(
+  diagnostics: CommentTranslatorLiveProviderDiagnostics | null
+) {
+  if (!diagnostics) {
+    return false;
+  }
+
+  return [
+    diagnostics.providerCallCount,
+    diagnostics.cacheHitCount,
+    diagnostics.cacheMissCount,
+    diagnostics.duplicateTextCacheHitCount,
+    diagnostics.duplicateTextSkippedCount,
+    diagnostics.languagePolicySkippedCount,
+    diagnostics.translatedCount,
+    diagnostics.persistedFeedRowCount
+  ].some((value) => value > 0);
 }
 
 export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({

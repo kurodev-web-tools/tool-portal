@@ -149,6 +149,25 @@ assert.match(actionsSource, /polling-runtime-not-wired/, "feed action returns sa
 assert.match(dockSource, /const refreshedSession = await heartbeatCommentTranslatorSessionAction\(\{ targetLanguage \}\)/, "manual and auto feed refresh renew the active heartbeat before reading feed");
 assert.match(dockSource, /setSessionState\(refreshedSession\)/, "feed refresh keeps the visible session state aligned with heartbeat results");
 assert.match(dockSource, /if \(refreshedSession\.status !== "active"\)/, "feed refresh stops reading live feed when heartbeat returns an inactive session");
+assert.match(dockSource, /const liveProviderDiagnostics = realCommentsFeed\.sanitizedSummary\.liveProviderDiagnostics/, "dock reads sanitized live provider diagnostics from feed metadata");
+assert.match(dockSource, /data-comment-translator-pre-public-diagnostics="count-only"/, "dock exposes pre-public diagnostics inside the details area as a count-only surface");
+for (const diagnosticCountField of [
+  "providerCallCount",
+  "cacheHitCount",
+  "cacheMissCount",
+  "duplicateTextCacheHitCount",
+  "duplicateTextSkippedCount",
+  "languagePolicySkippedCount",
+  "translatedCount",
+  "persistedFeedRowCount"
+]) {
+  assert.match(dockSource, new RegExp(`liveProviderDiagnostics\\?\\.${diagnosticCountField}`), `dock renders ${diagnosticCountField} only as a sanitized count`);
+}
+assert.doesNotMatch(
+  dockSource,
+  /liveProviderDiagnostics\?\.(rawProviderPayload|rawComments|providerTargetMetadata|serverOnlyCursor|stopReason)/,
+  "dock diagnostics surface excludes raw payload/comment/target/cursor fields"
+);
 
 const polling = loadTsModule(pollingPath);
 const normalizer = loadTsModule(normalizerPath);

@@ -764,6 +764,7 @@ export function CommentTranslatorDock({
     locale,
     timeZone: browserTimeZone
   });
+  const liveProviderDiagnostics = realCommentsFeed.sanitizedSummary.liveProviderDiagnostics;
   const filteredComments = filterCommentTranslatorComments(feedComments, { statusFilter, searchQuery });
   const liveStats = {
     translated: feedComments.filter((comment) => comment.status === "translated").length,
@@ -773,6 +774,40 @@ export function CommentTranslatorDock({
     cacheMisses: feedComments.filter((comment) => comment.cacheStatus === "miss").length,
     manualRows: manualComments.length
   };
+  const prePublicDiagnosticCounts = [
+    {
+      label: "providerCallCount",
+      value: liveProviderDiagnostics?.providerCallCount ?? 0
+    },
+    {
+      label: "cacheHitCount",
+      value: liveProviderDiagnostics?.cacheHitCount ?? 0
+    },
+    {
+      label: "cacheMissCount",
+      value: liveProviderDiagnostics?.cacheMissCount ?? 0
+    },
+    {
+      label: "duplicateTextCacheHitCount",
+      value: liveProviderDiagnostics?.duplicateTextCacheHitCount ?? 0
+    },
+    {
+      label: "duplicateTextSkippedCount",
+      value: liveProviderDiagnostics?.duplicateTextSkippedCount ?? 0
+    },
+    {
+      label: "languagePolicySkippedCount",
+      value: liveProviderDiagnostics?.languagePolicySkippedCount ?? 0
+    },
+    {
+      label: "translatedCount",
+      value: liveProviderDiagnostics?.translatedCount ?? 0
+    },
+    {
+      label: "persistedFeedRowCount",
+      value: liveProviderDiagnostics?.persistedFeedRowCount ?? 0
+    }
+  ];
   const skipReasonCounts = skipReasons.map((reason) => ({
     ...reason,
     count: feedComments.filter((comment) => comment.skipReason === reason.label).length
@@ -1676,6 +1711,25 @@ export function CommentTranslatorDock({
                   <p className="break-words">{copy.operatorFlow.noLiveExecution}</p>
                   <p className="break-words">{copy.operatorFlow.commandBoundary}</p>
                 </div>
+              </section>
+
+              <section data-comment-translator-pre-public-diagnostics="count-only" className="rounded-base border border-border bg-surface p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 className="text-base font-black text-foreground">
+                    {locale === "ja" ? "Pre-public diagnostics" : "Pre-public diagnostics"}
+                  </h2>
+                  <span className="rounded-base border border-border bg-background px-2 py-1 text-xs font-black text-muted">
+                    count-only
+                  </span>
+                </div>
+                <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                  {prePublicDiagnosticCounts.map((item) => (
+                    <div key={item.label} className="grid min-w-0 gap-1 rounded-base border border-border bg-background/70 p-2">
+                      <dt className="min-w-0 break-words text-xs font-bold text-muted">{item.label}</dt>
+                      <dd className="min-w-0 break-words text-base font-black text-foreground">{formatNumber(item.value)}</dd>
+                    </div>
+                  ))}
+                </dl>
               </section>
 
               <section className="rounded-base border border-border bg-surface p-4">

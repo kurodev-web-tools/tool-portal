@@ -350,7 +350,7 @@ assert.equal(result.eligibility.eligibleCommentCount, 3);
 assert.equal(result.eligibility.nonTranslatableEventCount, 2);
 assert.equal(result.eligibility.duplicateTextSkippedCount, 0);
 assert.equal(result.feed.status, "ready");
-assert.equal(result.feed.rows.length, 5);
+assert.equal(result.feed.rows.length, 4);
 assert.equal(result.feedPersistence.status, "persisted");
 assert.equal(result.feedPersistence.durableFeedPersistResultLabel, "durable-feed-store-unavailable");
 assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.storeReadyLabel, "unavailable");
@@ -359,11 +359,15 @@ assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.persistOperati
 assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.persistFailureBucketLabel, "store-unavailable");
 assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.rowsTouchedCount, 0);
 assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.readbackLabel, "not-run-store-unavailable");
-assert.equal(result.feedPersistence.displayRowCount, 5);
+assert.equal(result.feedPersistence.displayRowCount, 4);
 assert.equal(result.feed.rows.find((row) => row.id === "yt-f10-text-1").translatedText, "ja:yt-f10-text-1");
 assert.equal(result.feed.rows.find((row) => row.id === "yt-f10-text-1").translationStatus, "translated-f10");
 assert.equal(result.feed.rows.find((row) => row.id === "yt-f10-super-1").translatedText, "ja:yt-f10-super-1");
-assert.equal(result.feed.rows.find((row) => row.id === "yt-f10-same-language-1").translationStatus, "skipped-f10-language-policy");
+assert.equal(
+  result.feed.rows.some((row) => row.id === "yt-f10-same-language-1"),
+  false,
+  "target-language language-policy skip is counted but hidden from the normal feed"
+);
 assert.equal(result.feed.rows.find((row) => row.id === "yt-f10-deleted-1").translationStatus, "skipped-f10-non-translatable");
 assert.equal(result.feed.rows.find((row) => row.id === "yt-f10-ended-1").translationStatus, "skipped-f10-non-translatable");
 assert.equal(result.usageHandoffEstimate.providerRequestEstimateCount, 2);
@@ -443,7 +447,7 @@ assert.equal(secondCycle.execution.translatedCount, 1);
 assert.equal(secondCycle.usageHandoffEstimate.providerRequestEstimateCount, 1);
 assert.equal(secondCycle.usageHandoffEstimate.translatedMessageEstimate, 1);
 assert.equal(azureCallCount, 3);
-assert.equal(secondCycle.feed.rows.length, 6);
+assert.equal(secondCycle.feed.rows.length, 5);
 assert.equal(new Set(secondCycleIds).size, secondCycleIds.length, "safe feed rows remain unique by commentId across polling cycles");
 assert.equal(secondCycle.feed.rows.find((row) => row.id === "yt-f10-text-1").translatedText, "ja:yt-f10-text-1");
 assert.equal(secondCycle.feed.rows.find((row) => row.id === "yt-f10-super-1").translatedText, "ja:yt-f10-super-1");
@@ -504,7 +508,7 @@ const duplicateTextUiComment = shared
   .find((comment) => comment.id === "yt-f10-text-3");
 assert.equal(duplicateTextUiComment.cacheStatus, "hit");
 assert.equal(duplicateTextUiComment.status, "translated");
-assert.equal(thirdCycle.feed.rows.length, 7);
+assert.equal(thirdCycle.feed.rows.length, 6);
 
 const cachedBatchDuplicateCycle = normalization.normalizeCommentTranslatorLiveMessages({
   providerPayloads: [
@@ -607,11 +611,14 @@ assert.equal(sameBatchDuplicateAndSkip.execution.providerCallCount, 1);
 assert.equal(sameBatchDuplicateAndSkip.execution.cacheHitCount, 0);
 assert.equal(sameBatchDuplicateAndSkip.execution.cacheMissCount, 1);
 assert.equal(sameBatchDuplicateAndSkip.execution.skipsByReason.languagePolicy, 1);
-assert.equal(sameBatchDuplicateAndSkip.feed.rows.length, 2);
+assert.equal(sameBatchDuplicateAndSkip.feed.rows.length, 1);
 assert.equal(sameBatchDuplicateAndSkip.feed.rows.find((row) => row.id === "yt-f10-text-6").translationCacheStatus, "miss");
 assert.equal(sameBatchDuplicateAndSkip.feed.rows.some((row) => row.id === "yt-f10-text-7"), false);
-assert.equal(sameBatchDuplicateAndSkip.feed.rows.find((row) => row.id === "yt-f10-text-8").translationCacheStatus, null);
-assert.equal(sameBatchDuplicateAndSkip.feed.rows.find((row) => row.id === "yt-f10-text-8").translationStatus, "skipped-f10-language-policy");
+assert.equal(
+  sameBatchDuplicateAndSkip.feed.rows.some((row) => row.id === "yt-f10-text-8"),
+  false,
+  "same-batch target-language skip does not create a feed row"
+);
 
 const unavailable = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
   messages: normalized.normalizedMessages,
@@ -680,6 +687,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   taskPath

@@ -22,7 +22,7 @@ function exists(relativePath) {
 }
 
 function changedFiles() {
-  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"]
@@ -127,8 +127,16 @@ const requirementsSource = read(requirementsPath);
 assert.match(ledgerSource, /^import "server-only";/m, "usage ledger runtime is server-only");
 assert.match(ledgerSource, /UsageQuotaBudgetLedger/, "ledger source names usage quota budget boundary");
 assert.match(sessionSource, /planEntitlement/, "session runtime consumes server-owned plan entitlement state");
-assert.match(routeSource, /readInMemoryCommentTranslatorUsageSnapshot/, "session route reads server-owned usage ledger snapshot");
-assert.match(actionSource, /readInMemoryCommentTranslatorUsageSnapshot/, "session actions read server-owned usage ledger snapshot");
+assert.match(
+  routeSource,
+  /readInMemoryCommentTranslatorUsageSnapshot|readCommentTranslatorDurableUsageSnapshotOrFailClosed/,
+  "session route reads server-owned usage ledger snapshot"
+);
+assert.match(
+  actionSource,
+  /readInMemoryCommentTranslatorUsageSnapshot|readCommentTranslatorDurableUsageSnapshotOrFailClosed/,
+  "session actions read server-owned usage ledger snapshot"
+);
 assert.match(requirementsSource, /estimated YouTube request count/, "requirements retain admin provider estimate metric");
 assert.match(requirementsSource, /estimated AI cost/, "requirements retain admin AI cost metric");
 
@@ -193,6 +201,7 @@ assert.deepEqual(
     sessionLimitMs: 1_800_000,
     translatedMessagesPerMinute: 30,
     activeSessionsPerUser: 1,
+    monthlyTranslatedCharacterLimit: 20_000,
     paidPrioritization: "not-implemented",
     providerUsageCharging: "not-implemented"
   },
@@ -303,8 +312,8 @@ assert.doesNotMatch(
 const overDailyLimit = session.evaluateCommentTranslatorSessionStopCondition({
   activeSession: {
     sessionReferenceId: "cts_usage_session_002",
-    startedAtMs: 0,
-    lastHeartbeatAtMs: 1_750_000
+    startedAtMs: 1_790_000,
+    lastHeartbeatAtMs: 1_801_000
   },
   nowMs: 1_801_000,
   plan: "free",
@@ -322,8 +331,8 @@ const overDailyLimit = session.evaluateCommentTranslatorSessionStopCondition({
   },
   usage: {
     ...snapshot,
-    dailyUsedMs: 1_000,
-    currentSessionElapsedMs: 1_800_000
+    dailyUsedMs: 1_790_000,
+    currentSessionElapsedMs: 11_000
   }
 });
 assert.equal(overDailyLimit.stopReason, "daily-time-limit", "daily limit enforcement uses server-owned entitlement plus active elapsed time");
@@ -385,9 +394,18 @@ for (const file of changedFiles()) {
     sessionPath,
     routePath,
     actionPath,
+    "components/comment-translator/CommentTranslatorDock.tsx",
+    "lib/comment-translator-azure-normal-translation-execution.ts",
     "lib/comment-translator-provider-execution-runtime.ts",
+    "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
     "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+    "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
+    "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+    "scripts/comment-translator-free-beta-usage-display-contract.mjs",
     "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+    "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+    "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
     "scripts/comment-translator-session-start-stop-contract.mjs",
     "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
     taskPath

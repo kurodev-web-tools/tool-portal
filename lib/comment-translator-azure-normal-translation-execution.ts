@@ -226,6 +226,33 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
     });
   }
 
+  const preProviderQuotaPolicy = resolvePreProviderQuotaPolicy({
+    usage: request.usage,
+    eligibleMessages,
+    languagePolicySkippedMessageReferenceIds
+  });
+  if (preProviderQuotaPolicy.status !== "allowed") {
+    const execution = createSkippedExecutionResult({
+      skippedCount: eligibleMessages.length,
+      providerUnavailableSkippedCount: 0,
+      perMinuteCapSkippedCount: preProviderQuotaPolicy.stopReason === "translated-message-cap" ? eligibleMessages.length : 0
+    });
+
+    return await persistFeedBridgeResult({
+      request,
+      result: createExecutionResult({
+        status: "over-limit",
+        execution,
+        eligibility,
+        feed: createCommentTranslatorRealCommentsFeedStateFromUsageLimitRows({
+          feed: baseFeed,
+          eligibleMessages,
+          languagePolicySkippedMessageReferenceIds
+        })
+      })
+    });
+  }
+
   const providers = request.providers ?? createCommentTranslatorDefaultTranslationProviderSet();
   const comments = eligibleMessages.map(mapNormalizedMessageToProviderSafeComment);
   const execution = await executeCommentTranslatorProviderPolicyBatch({
@@ -697,6 +724,62 @@ function createUsageHandoffEstimate(
   };
 }
 
+function resolvePreProviderQuotaPolicy({
+  usage,
+  eligibleMessages,
+  languagePolicySkippedMessageReferenceIds
+}: {
+  usage: CommentTranslatorUsageLedgerSnapshot;
+  eligibleMessages: readonly CommentTranslatorNormalizedLiveMessage[];
+  languagePolicySkippedMessageReferenceIds: ReadonlySet<string>;
+}):
+  | {
+      status: "allowed";
+      stopReason: null;
+    }
+  | {
+      status: "blocked";
+      stopReason: "translated-message-cap" | "ai-budget-stop";
+    } {
+  const entitlement = usage.planEntitlement;
+  const providerCandidateMessages = eligibleMessages.filter(
+    (message) => !languagePolicySkippedMessageReferenceIds.has(message.messageReferenceId)
+  );
+  if (!entitlement || providerCandidateMessages.length === 0) {
+    return {
+      status: "allowed",
+      stopReason: null
+    };
+  }
+
+  const translatedMessagesInCurrentMinute = Math.max(0, usage.translatedMessagesInCurrentMinute);
+  const translatedMessagesPerMinute = Math.max(0, entitlement.translatedMessagesPerMinute);
+  if (translatedMessagesInCurrentMinute + providerCandidateMessages.length > translatedMessagesPerMinute) {
+    return {
+      status: "blocked",
+      stopReason: "translated-message-cap"
+    };
+  }
+
+  const monthlyTranslatedCharacterEstimate = Math.max(0, usage.monthlyTranslatedCharacterEstimate ?? 0);
+  const monthlyTranslatedCharacterLimit = Math.max(0, entitlement.monthlyTranslatedCharacterLimit ?? 20_000);
+  const pendingCharacterEstimate = providerCandidateMessages.reduce(
+    (total, message) => total + Array.from(message.text?.trim() ?? "").length,
+    0
+  );
+  if (monthlyTranslatedCharacterEstimate + pendingCharacterEstimate > monthlyTranslatedCharacterLimit) {
+    return {
+      status: "blocked",
+      stopReason: "ai-budget-stop"
+    };
+  }
+
+  return {
+    status: "allowed",
+    stopReason: null
+  };
+}
+
 function withTranslation(
   row: CommentTranslatorRealCommentsDisplayRow,
   translatedText: string | null,
@@ -731,10 +814,12 @@ function readMessageReferenceIdFromProviderRequestId(requestId: string) {
 
 function createSkippedExecutionResult({
   skippedCount,
-  providerUnavailableSkippedCount
+  providerUnavailableSkippedCount,
+  perMinuteCapSkippedCount = 0
 }: {
   skippedCount: number;
   providerUnavailableSkippedCount: number;
+  perMinuteCapSkippedCount?: number;
 }): CommentTranslatorProviderExecutionResult {
   return {
     implementationStage: "server-owned-translation-provider-execution-integration",
@@ -747,7 +832,7 @@ function createSkippedExecutionResult({
     retryCount: 0,
     skipsByReason: {
       languagePolicy: 0,
-      perMinuteCap: 0,
+      perMinuteCap: perMinuteCapSkippedCount,
       providerUnavailable: providerUnavailableSkippedCount
     },
     errorCounts: {

@@ -167,7 +167,7 @@ assert.match(privateLaunchSource, /usageDisplay/, "private-launch blocked sessio
 assert.match(abuseRateLimitSource, /usageDisplay/, "abuse-rate-limited session state keeps the F12 usage display shape");
 assert.match(readinessDoc, /F12 Usage display for Free beta/i, "durable readiness doc records F12");
 assert.match(gapAudit, /F12[\s\S]*usage display/i, "gap audit keeps F12 visible");
-assert.match(taskSource, /usage-policy Start blocker/i, "task.md records current usage-policy Start blocker work");
+assert.match(taskSource, /usage-policy Start blocker|Quota\/session hardening/i, "task.md records current usage-policy Start blocker work");
 
 const usageDisplay = loadTsModule(usageDisplayPath);
 const session = loadTsModule(sessionRuntimePath);
@@ -407,6 +407,7 @@ const allowedChangedFiles = new Set([
   gapAuditPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
@@ -418,8 +419,10 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
   "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
   taskPath
 ]);

@@ -83,6 +83,16 @@ assert.match(componentSource, /data-public-operator-session-ui="sanitized-sessio
 assert.match(componentSource, /startCommentTranslatorSessionAction/, "dock wires the Start control to the server action");
 assert.match(componentSource, /stopCommentTranslatorSessionAction/, "dock wires the Stop control to the server action");
 assert.match(componentSource, /heartbeatCommentTranslatorSessionAction/, "dock wires a heartbeat/status refresh control");
+assert.match(
+  componentSource,
+  /data-comment-translator-session-refresh-on-mount="server-status-restore"/,
+  "dock restores active session usage display from server status after page refresh"
+);
+assert.match(
+  componentSource,
+  /getCommentTranslatorSessionStatusAction\(\{ targetLanguage \}\)[\s\S]*setSessionState\(state\)/,
+  "mount refresh replaces the initial 30 minute fallback with server-owned session usage"
+);
 assert.match(componentSource, /sessionState\.elapsedSeconds/, "dock displays current elapsed session time");
 assert.match(componentSource, /sessionDailyUsedSeconds/, "dock derives daily used time from sanitized session state");
 assert.match(componentSource, /sessionState\.remainingDailySeconds/, "dock displays daily remaining time from sanitized session state");
@@ -123,6 +133,16 @@ assert.match(
 );
 assert.match(componentSource, /credentialStatusState/, "dock displays provider connection state from sanitized credential status");
 assert.match(componentSource, /copy\.operatorSession\.reconnectGuidance/, "dock renders reconnect guidance without provider target metadata");
+assert.doesNotMatch(
+  actionSource,
+  /intent === "heartbeat" \|\| intent === "status"[\s\S]*runCommentTranslatorLiveProviderSessionStep/,
+  "server action status restore does not run live provider polling or translation"
+);
+assert.doesNotMatch(
+  routeSource,
+  /command\.intent === "heartbeat" \|\| command\.intent === "status"[\s\S]*runCommentTranslatorLiveProviderSessionStep/,
+  "route status restore does not run live provider polling or translation"
+);
 
 assert.doesNotMatch(
   `${libSource}\n${componentSource}\n${actionSource}\n${routeSource}`,

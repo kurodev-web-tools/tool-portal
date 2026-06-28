@@ -152,7 +152,7 @@ assert.match(providerPolicySource, /freePlanPrimary: "azure-translator"/, "Free 
 assert.match(providerBoundarySource, /server-env-only/, "provider secrets remain server env only");
 assert.match(readinessDoc, /F10 Azure normal translation execution/i, "durable readiness doc records F10");
 assert.match(gapAudit, /F10[\s\S]*Azure/i, "gap audit records F10");
-assert.match(taskSource, /Free Azure translation/i, "task.md records Free Azure translation status");
+assert.match(taskSource, /Free Azure (translation|route)/i, "task.md records Free Azure translation status");
 assert.match(taskSource, /Width checks/i, "task.md records width-check handling");
 
 for (const forbidden of [
@@ -650,7 +650,95 @@ assert.equal(unavailable.status, "provider-unavailable");
 assert.equal(unavailable.execution.providerCallCount, 0);
 assert.equal(unavailable.feed.rows.every((row) => row.translationStatus === "provider-unavailable-f10" || row.translationStatus === "skipped-f10-non-translatable"), true);
 
-for (const payload of [result, unavailable, ...ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests()]) {
+let perMinuteCapProviderCallCount = 0;
+const perMinuteCapProvider = {
+  ...azure,
+  async translate() {
+    perMinuteCapProviderCallCount += 1;
+    throw new Error("Per-minute cap must block provider execution before provider call.");
+  }
+};
+const perMinuteCap = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: normalization.normalizeCommentTranslatorLiveMessages({
+    providerPayloads: [
+      {
+        id: "yt-f10-per-minute-cap-1",
+        snippet: {
+          type: "textMessageEvent",
+          publishedAt: "2026-06-16T01:00:17.000Z",
+          textMessageDetails: { messageText: "Per minute cap should stop provider execution" }
+        }
+      }
+    ]
+  }).normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN"],
+  callerAuthorization,
+  sessionReferenceId: "cts_f10_per_minute_cap_contract",
+  occurredAtMs: Date.parse("2026-06-16T01:00:18.000Z"),
+  usage: {
+    ...usage,
+    translatedMessagesInCurrentMinute: 30
+  },
+  providers: {
+    azure: perMinuteCapProvider
+  },
+  feedPersistenceStore,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+assert.equal(perMinuteCap.status, "over-limit");
+assert.equal(perMinuteCap.execution.providerCallCount, 0);
+assert.equal(perMinuteCap.execution.translatedCount, 0);
+assert.equal(perMinuteCapProviderCallCount, 0, "per-minute cap is enforced before provider execution");
+assert.equal(perMinuteCap.feed.rows[0].translationStatus, "skipped-f12-usage-limit");
+
+let monthlyCapProviderCallCount = 0;
+const monthlyCapProvider = {
+  ...azure,
+  async translate() {
+    monthlyCapProviderCallCount += 1;
+    throw new Error("Monthly character cap must block provider execution before provider call.");
+  }
+};
+const monthlyCap = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: normalization.normalizeCommentTranslatorLiveMessages({
+    providerPayloads: [
+      {
+        id: "yt-f10-monthly-cap-1",
+        snippet: {
+          type: "textMessageEvent",
+          publishedAt: "2026-06-16T01:00:19.000Z",
+          textMessageDetails: { messageText: "Monthly character cap should stop this long comment before provider execution" }
+        }
+      }
+    ]
+  }).normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN"],
+  callerAuthorization,
+  sessionReferenceId: "cts_f10_monthly_cap_contract",
+  occurredAtMs: Date.parse("2026-06-16T01:00:20.000Z"),
+  usage: {
+    ...usage,
+    monthlyTranslatedCharacterEstimate: 19_990
+  },
+  providers: {
+    azure: monthlyCapProvider
+  },
+  feedPersistenceStore,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+assert.equal(monthlyCap.status, "over-limit");
+assert.equal(monthlyCap.execution.providerCallCount, 0);
+assert.equal(monthlyCap.execution.translatedCount, 0);
+assert.equal(monthlyCapProviderCallCount, 0, "monthly character cap is enforced before provider execution");
+assert.equal(monthlyCap.feed.rows[0].translationStatus, "skipped-f12-usage-limit");
+
+for (const payload of [result, unavailable, perMinuteCap, monthlyCap, ...ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests()]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenValue of [
     "f10-owner-reference-never-output",
@@ -688,7 +776,10 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
@@ -699,9 +790,11 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   taskPath
 ]);

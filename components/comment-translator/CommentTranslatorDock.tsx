@@ -941,6 +941,37 @@ export function CommentTranslatorDock({
     runSessionCommand(sessionState.status === "active" ? "heartbeat" : "status");
   }
 
+  useEffect(() => {
+    let cancelled = false;
+
+    startSessionTransition(async () => {
+      try {
+        const state = await getCommentTranslatorSessionStatusAction({ targetLanguage });
+        if (cancelled) {
+          return;
+        }
+
+        setSessionState(state);
+        if (state.status !== "active") {
+          setRealCommentsFeed(
+            createUnavailableCommentTranslatorRealCommentsFeedState({
+              reason: "session-not-active"
+            })
+          );
+        }
+        setSessionError(null);
+      } catch {
+        if (!cancelled) {
+          setSessionError(copy.operatorSession.actionFailed);
+        }
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [copy.operatorSession.actionFailed, startSessionTransition, targetLanguage]);
+
   const refreshRealCommentsFeed = useCallback(() => {
     if (realCommentsFeedRefreshInFlightRef.current) {
       return;
@@ -1184,7 +1215,11 @@ export function CommentTranslatorDock({
         >
           {!commentOnly ? (
             <aside className="grid min-w-0 content-start gap-3 md:grid-cols-2 xl:grid-cols-1">
-              <section data-public-operator-session-ui="sanitized-session-usage-only" className="panel p-4 md:col-span-2 xl:col-span-1">
+              <section
+                data-public-operator-session-ui="sanitized-session-usage-only"
+                data-comment-translator-session-refresh-on-mount="server-status-restore"
+                className="panel p-4 md:col-span-2 xl:col-span-1"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-xs font-black uppercase tracking-widest text-primary-strong">

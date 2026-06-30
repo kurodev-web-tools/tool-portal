@@ -14,10 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/pre-step5-public-polish-board`.
+- Current branch: `codex/pre-step5-p0-quota-session-hardening`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: Step 5 前の task board cleanup、公開前 UI / quota hardening backlog 整理、古い task board snapshot の archive 退避。
-- Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-28-step5-polish-cleanup.md`.
+- Scope: Step 5 前 P0 quota/session hardening。active-session usage restore、provider 前 per-minute/monthly cap enforcement、pre-public diagnostics policy clarification。
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
@@ -79,10 +78,10 @@ Do these before recording `public-release capable: yes` unless the release owner
 
 | Priority | Item | Current decision / expected handling |
 | --- | --- | --- |
-| P0 | Free beta usage display resets to 30 minutes after page refresh while an active session exists | Fix or prove server/durable state restores correctly on initial render/status refresh. This affects user trust and quota visibility. |
-| P0 | Per-minute translated message cap enforcement | Verify contract/runtime enforcement for `30 translated messages/min`. If missing, implement before Step 5. |
-| P0 | Monthly translated character cap enforcement | Verify contract/runtime enforcement for `20,000 translated characters/month`. If missing, implement before Step 5. |
-| P0 | Public UI diagnostics surface | Keep pre-public diagnostics until final launch check, then remove or gate so normal public UI does not expose operator diagnostics by default. |
+| P0 | Free beta usage display resets to 30 minutes after page refresh while an active session exists | Complete in `codex/pre-step5-p0-quota-session-hardening`: dock now restores session state from server status on mount/target-language change, and status restore is provider non-executing. Active-session behavior is contract-covered; local browser was private-gate fallback only. |
+| P0 | Per-minute translated message cap enforcement | Complete in `codex/pre-step5-p0-quota-session-hardening`: F10 provider execution blocks before provider calls when `translatedMessagesInCurrentMinute` is at/over the Free cap, and pending batches that would exceed the cap are usage-limit rows. |
+| P0 | Monthly translated character cap enforcement | Complete in `codex/pre-step5-p0-quota-session-hardening`: F10 estimates pending provider-candidate source characters before provider execution and blocks batches that would exceed `20,000 translated characters/month`. |
+| P0 | Public UI diagnostics surface | Policy clarified in this slice: keep `data-comment-translator-pre-public-diagnostics="count-only"` as a pre-public temporary debug surface for Step 5 evidence; remove or gate before PL-G6/public promotion. No public gate flip was run. |
 | P1 | Preview feed `skipped` UI | Hide normal-user `skipped` rows where server policy already suppresses target-language/same-batch duplicate rows, or rename internal cache evidence to user-safe wording. Avoid `API free` copy in public UI. |
 | P1 | Duplicate text cache display | Keep `cache hit` / `cached` evidence internally or in compact public copy; ensure duplicate text can display from cache without additional provider API execution. |
 | P1 | Free beta usage panel vs right-side Today panel | Remove or merge duplicate "Today" state if Free beta usage already covers the same state. Prefer one authoritative usage/status area. |
@@ -98,6 +97,9 @@ Recommended next PR order:
 ## Latest Sanitized Evidence Summary
 
 - PR #577 `[codex] Retain pre-public diagnostics counts` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `f60e197`.
+- PR #578 `[codex] Document pre-step5 public launch board` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `ccd6cf6`; containment was confirmed before this slice.
+- Pre-Step 5 P0 quota/session hardening local verification passed: active-session mount restore/status-provider non-execution contract, per-minute provider preflight cap, monthly character provider preflight cap, durable usage/session/feed contracts, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence secret scan.
+- Width verification for local private-gate fallback passed at `390 / 820 / 1024 / 1280 / 1366px`: page identity OK, no horizontal overflow, no framework overlay, no relevant console errors/warnings. Authenticated allowed-tester state was unavailable locally, so active-session visual restore is contract-covered only.
 - Browser-visible preview retest after PR #577 merge confirmed Start-before exclusion, Start-after feed display, newest-first ordering, JST timestamp display, cache miss for new text, cache hit/cached for repeated text, non-zero diagnostics retention, and Stop.
 - Preview custom deployed smoke was performed at `https://preview.streamer-tools.kuro-lab.com/tools/comment-translator/` with a Cloud Console allowed YouTube account and passed for connection, comment retrieval, translation, cache behavior, diagnostics, timezone display, and Stop.
 - Final main production domain is `https://streamer-tools.kuro-lab.com`; no main promotion, public access change, production domain cutover, deploy/upload, remote mutation, migration, Stripe action, or public gate flip was run in this cleanup slice.
@@ -106,9 +108,8 @@ Recommended next PR order:
 ## Current Blockers / Residual Risks
 
 - Public-release capable remains `no` until pre-Step 5 hardening is resolved or explicitly accepted, PL-G5 release-owner approval is recorded, and PL-G6 public access change is separately approved and executed.
-- Free beta usage display may not restore active-session remaining time correctly after page refresh.
-- Per-minute and monthly character cap enforcement need verification; if missing, this is a release blocker.
-- Pre-public diagnostics are intentionally temporary and must be removed or gated before public launch.
+- Pre-public diagnostics are intentionally temporary and must be removed or gated before PL-G6/public promotion; this slice leaves them count-only and pre-public.
+- Authenticated allowed-tester browser-visible active-session reload was not run locally; contract coverage proves server/action/UI restore semantics without live/provider execution.
 - Existing connected YouTube credentials created before sealed token material persistence may contain irreversible reference-only material. Those rows must fail closed with sanitized unavailable/reconnect-required behavior until reconnect.
 - Production/main domain launch remains unexecuted and approval-gated.
 

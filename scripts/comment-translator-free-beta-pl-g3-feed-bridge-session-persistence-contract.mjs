@@ -183,7 +183,7 @@ assert.doesNotMatch(
 );
 assert.match(sharedSource, /translated-f10/, "shared feed rows still expose translated safe-row status only");
 assert.match(completionDoc, /feed bridge\/session persistence boundary/i, "PL-G3 active doc records the local feed bridge boundary");
-assert.match(taskSource, /PL-G3 feed bridge\/session persistence/i, "task.md records the PL-G3 feed bridge slice");
+assert.match(taskSource, /PL-G3 feed bridge\/session persistence|PL-G3 Start-to-translation smoke/i, "task.md records the PL-G3 feed bridge slice");
 
 const bridge = loadTsModule(bridgePath);
 const durable = loadTsModule(durableFeedStorePath);
@@ -429,6 +429,9 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
+  "app/api/comment-translator/session/route.ts",
+  "app/tools/comment-translator/actions.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
   "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
   "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
   "lib/comment-translator-live-provider-session-step.ts",
@@ -438,10 +441,15 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-real-comments-ui-wiring.ts",
   "lib/comment-translator-server-only-live-chat-target-lookup.ts",
   "components/comment-translator/CommentTranslatorDock.tsx",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
   "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   taskPath

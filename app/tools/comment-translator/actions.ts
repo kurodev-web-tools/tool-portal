@@ -485,7 +485,7 @@ async function readCommentTranslatorSessionActionResult({
     adapter: liveProviderRuntime.targetLookupAdapter
   });
   const pollingStep =
-    intent === "heartbeat" || intent === "status"
+    intent === "heartbeat"
       ? await runCommentTranslatorLiveProviderSessionStep({
           activeSession,
           usage,
@@ -498,14 +498,16 @@ async function readCommentTranslatorSessionActionResult({
         })
       : null;
   const pollingTick =
-    pollingStep?.pollingTick ??
-    (await readCommentTranslatorBoundedLiveChatPollingTick({
-      intent,
-      activeSession,
-      usage,
-      adapter: liveProviderRuntime.pollingAdapter,
-      nowMs
-    }));
+    intent === "status"
+      ? createCommentTranslatorStatusRestorePollingTick()
+      : (pollingStep?.pollingTick ??
+        (await readCommentTranslatorBoundedLiveChatPollingTick({
+          intent,
+          activeSession,
+          usage,
+          adapter: liveProviderRuntime.pollingAdapter,
+          nowMs
+        })));
   const state = await readCommentTranslatorSessionCommand({
     intent,
     nowMs,
@@ -578,6 +580,15 @@ async function readCommentTranslatorSessionActionResult({
   });
 
   return state;
+}
+
+function createCommentTranslatorStatusRestorePollingTick() {
+  return {
+    status: "skipped-status-intent-session-restore",
+    providerAccess: "not-run",
+    providerSignal: null,
+    publicLaunchAllowed: false
+  } as const;
 }
 
 function mapSessionIntentToAbuseAction(intent: CommentTranslatorSessionCommandIntent) {

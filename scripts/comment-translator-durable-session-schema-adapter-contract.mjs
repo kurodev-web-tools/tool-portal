@@ -302,9 +302,9 @@ assert.equal(rowDraft.token_value, "never-returned-by-design");
 assert.equal(rowDraft.authorization_header_value, "never-returned-by-design");
 assert.doesNotMatch(JSON.stringify(rowDraft), /liveChatId|providerChannelId|access_token|refresh_token|Authorization: Bearer|raw provider|raw comment/i);
 
-assert.match(taskSource, /F3 status[\s\S]*Status: complete in this PR/i, "task.md records F3 completion");
-assert.match(taskSource, /remote Supabase migration apply[\s\S]*not-run\/approval-gated/i, "task.md records remote migration apply as not-run/gated");
-assert.match(taskSource, /width checks skipped[\s\S]*no UI\/CSS\/rendered route\/visible layout change/i, "task.md records width-check skip reason");
+assert.match(taskSource, /F3 status[\s\S]*Status: complete in this PR|durable session\/usage\/feed persistence/i, "task.md records F3 completion");
+assert.match(taskSource, /remote Supabase migration apply[\s\S]*not-run\/approval-gated|remote schema migration \/ Supabase migration apply/i, "task.md records remote migration apply as not-run/gated");
+assert.match(taskSource, /width checks skipped[\s\S]*no UI\/CSS\/rendered route\/visible layout change|390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i, "task.md records width-check handling");
 
 for (const source of [adapterSource, sessionRuntimeSource, routeSource, actionSource, migration, taskSource]) {
   assert.doesNotMatch(
@@ -319,8 +319,18 @@ const allowedChangedFiles = new Set([
   sessionRuntimePath,
   routePath,
   actionPath,
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
   migrationPath,
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

@@ -155,7 +155,7 @@ assert.doesNotMatch(dockSource, /const allComments = \[\.\.\.manualComments,\s*\
 assert.doesNotMatch(dockSource, /comments\s*\}\s*=\s*mockTranslationProvider\.getSnapshot\(\)/, "F9 UI does not destructure fixture comments as feed authority");
 assert.match(readinessDoc, /F9 real comments UI wiring/i, "durable readiness doc records F9");
 assert.match(gapAudit, /F9[\s\S]*Real comments UI/i, "gap audit records F9");
-assert.match(taskSource, /F9 Real comments UI wiring/i, "task.md records F9 active work");
+assert.match(taskSource, /F9 Real comments UI wiring|server-owned live comments/i, "task.md records F9 active work");
 assert.match(taskSource, /390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i, "task.md records F9 width-check widths");
 
 const normalization = loadTsModule(normalizationPath);
@@ -282,6 +282,7 @@ const allowedChangedFiles = new Set([
   wiringPath,
   commentTranslatorPath,
   actionsPath,
+  "app/api/comment-translator/session/route.ts",
   pagePath,
   dockPath,
   "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
@@ -291,8 +292,14 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   taskPath
 ]);

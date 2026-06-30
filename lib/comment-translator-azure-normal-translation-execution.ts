@@ -215,10 +215,27 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
     });
   }
 
+  const providerExecutionCache =
+    request.cache ??
+    (request.sessionStatus === "active"
+      ? getCommentTranslatorAzureNormalTranslationSessionDedupeState(request.sessionReferenceId).providerExecutionCache
+      : createInMemoryCommentTranslatorProviderExecutionCache());
+  const providerCandidateCacheState = createProviderCandidateCacheState({
+    eligibleMessages,
+    targetLanguage: request.targetLanguage,
+    sourceLanguages: request.sourceLanguages,
+    cache: providerExecutionCache
+  });
   const providerCallPolicy = resolveCommentTranslatorFreeBetaProviderCallPolicy({
     usage: request.usage
   });
-  if (providerCallPolicy.status !== "allowed") {
+  if (
+    providerCallPolicy.status !== "allowed" &&
+    !canServeCacheOnlyTranslationsWhenProviderCallPolicyBlocks({
+      providerCallPolicy,
+      providerCandidateCacheState
+    })
+  ) {
     const execution = createSkippedExecutionResult({
       skippedCount: eligibleMessages.length,
       providerUnavailableSkippedCount: 0
@@ -241,8 +258,7 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
 
   const preProviderQuotaPolicy = resolvePreProviderQuotaPolicy({
     usage: request.usage,
-    eligibleMessages,
-    languagePolicySkippedMessageReferenceIds
+    cacheMissCandidateMessages: providerCandidateCacheState.cacheMissCandidateMessages
   });
   if (preProviderQuotaPolicy.status !== "allowed") {
     const execution = createSkippedExecutionResult({
@@ -270,11 +286,7 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
   const comments = eligibleMessages.map(mapNormalizedMessageToProviderSafeComment);
   const execution = await executeCommentTranslatorProviderPolicyBatch({
     providers,
-    cache:
-      request.cache ??
-      (request.sessionStatus === "active"
-        ? getCommentTranslatorAzureNormalTranslationSessionDedupeState(request.sessionReferenceId).providerExecutionCache
-        : createInMemoryCommentTranslatorProviderExecutionCache()),
+    cache: providerExecutionCache,
     callerAuthorization: request.callerAuthorization,
     sessionReferenceId: request.sessionReferenceId,
     occurredAtMs: request.occurredAtMs,
@@ -745,14 +757,15 @@ function createUsageHandoffEstimate(
   execution: CommentTranslatorProviderExecutionResult,
   durableUsageWrite: CommentTranslatorAzureNormalTranslationUsageHandoffEstimate["durableUsageWrite"]
 ): CommentTranslatorAzureNormalTranslationUsageHandoffEstimate {
+  const providerExecutedTranslations = filterProviderExecutedTranslations(execution.translations);
   return {
     providerRequestEstimateCount: execution.providerCallCount,
-    translatedMessageEstimate: execution.translatedCount,
-    translatedCharacterEstimate: execution.translations.reduce(
+    translatedMessageEstimate: providerExecutedTranslations.length,
+    translatedCharacterEstimate: providerExecutedTranslations.reduce(
       (total, translation) => total + Array.from(translation.translatedText).length,
       0
     ),
-    estimatedCostMicros: execution.estimatedCostMicros,
+    estimatedCostMicros: providerExecutedTranslations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
     durableUsageWrite,
     rawCommentText: "never-recorded-by-design",
     providerTargetMetadata: "forbidden"
@@ -801,6 +814,7 @@ function createDurableUsageHandoffEvents({
   execution: CommentTranslatorProviderExecutionResult;
 }): CommentTranslatorUsageLedgerEvent[] {
   const events: CommentTranslatorUsageLedgerEvent[] = [];
+  const providerExecutedTranslations = filterProviderExecutedTranslations(execution.translations);
 
   if (execution.providerCallCount > 0) {
     events.push({
@@ -814,18 +828,18 @@ function createDurableUsageHandoffEvents({
     });
   }
 
-  if (execution.translatedCount > 0) {
+  if (providerExecutedTranslations.length > 0) {
     events.push({
       type: "ai-usage-estimated",
       provider: "youtube",
       sessionReferenceId: request.sessionReferenceId,
       occurredAtMs: request.occurredAtMs,
-      translatedMessageEstimate: execution.translatedCount,
-      translatedCharacterEstimate: execution.translations.reduce(
+      translatedMessageEstimate: providerExecutedTranslations.length,
+      translatedCharacterEstimate: providerExecutedTranslations.reduce(
         (total, translation) => total + Array.from(translation.translatedText).length,
         0
       ),
-      estimatedCostMicros: execution.estimatedCostMicros,
+      estimatedCostMicros: providerExecutedTranslations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
       rawCommentText: "never-recorded-by-design"
     });
   }
@@ -833,14 +847,87 @@ function createDurableUsageHandoffEvents({
   return events;
 }
 
+function filterProviderExecutedTranslations(
+  translations: CommentTranslatorProviderExecutionResult["translations"]
+): CommentTranslatorProviderExecutionResult["translations"] {
+  return translations.filter((translation) => translation.cacheOutcome !== "hit");
+}
+
+function createProviderCandidateCacheState({
+  eligibleMessages,
+  targetLanguage,
+  sourceLanguages,
+  cache
+}: {
+  eligibleMessages: readonly CommentTranslatorNormalizedLiveMessage[];
+  targetLanguage: CommentTranslatorTargetLanguageId;
+  sourceLanguages?: readonly string[];
+  cache: CommentTranslatorProviderExecutionCache;
+}) {
+  const comments = eligibleMessages.map(mapNormalizedMessageToProviderSafeComment);
+  const bridge = createYouTubeLiveCommentTranslatorPipelineRequestsForComments({
+    comments,
+    targetLanguage,
+    sourceLanguages
+  });
+  if (bridge.status !== "ready-for-translator-pipeline") {
+    return {
+      providerCandidateCount: 0,
+      cacheHitCandidateCount: 0,
+      cacheMissCandidateMessages: []
+    };
+  }
+
+  const messageByReferenceId = new Map(eligibleMessages.map((message) => [message.messageReferenceId, message]));
+  const cacheMissCandidateMessages: CommentTranslatorNormalizedLiveMessage[] = [];
+  let cacheHitCandidateCount = 0;
+
+  for (const providerRequest of bridge.providerRequests) {
+    const messageReferenceId = readMessageReferenceIdFromProviderRequestId(providerRequest.requestId);
+    const message = messageByReferenceId.get(messageReferenceId);
+    if (!message) {
+      continue;
+    }
+
+    const lookupKey = providerRequest.cache.lookupKey;
+    const cachedTranslation = lookupKey ? cache.read(lookupKey) : null;
+    if (cachedTranslation) {
+      cacheHitCandidateCount += 1;
+      continue;
+    }
+
+    cacheMissCandidateMessages.push(message);
+  }
+
+  return {
+    providerCandidateCount: bridge.providerRequests.length,
+    cacheHitCandidateCount,
+    cacheMissCandidateMessages
+  };
+}
+
+function canServeCacheOnlyTranslationsWhenProviderCallPolicyBlocks({
+  providerCallPolicy,
+  providerCandidateCacheState
+}: {
+  providerCallPolicy: ReturnType<typeof resolveCommentTranslatorFreeBetaProviderCallPolicy>;
+  providerCandidateCacheState: ReturnType<typeof createProviderCandidateCacheState>;
+}) {
+  return (
+    providerCallPolicy.status === "blocked-over-limit" &&
+    (providerCallPolicy.stopReason === "translated-message-cap" || providerCallPolicy.stopReason === "ai-budget-stop") &&
+    providerCandidateCacheState.providerCandidateCount > 0 &&
+    providerCandidateCacheState.cacheHitCandidateCount > 0 &&
+    providerCandidateCacheState.cacheMissCandidateMessages.length === 0
+  );
+}
+
 function resolvePreProviderQuotaPolicy({
   usage,
-  eligibleMessages,
-  languagePolicySkippedMessageReferenceIds
+  cacheMissCandidateMessages
 }: {
   usage: CommentTranslatorUsageLedgerSnapshot;
-  eligibleMessages: readonly CommentTranslatorNormalizedLiveMessage[];
-  languagePolicySkippedMessageReferenceIds: ReadonlySet<string>;
+  cacheMissCandidateMessages: readonly CommentTranslatorNormalizedLiveMessage[];
 }):
   | {
       status: "allowed";
@@ -851,9 +938,7 @@ function resolvePreProviderQuotaPolicy({
       stopReason: "translated-message-cap" | "ai-budget-stop";
     } {
   const entitlement = usage.planEntitlement;
-  const providerCandidateMessages = eligibleMessages.filter(
-    (message) => !languagePolicySkippedMessageReferenceIds.has(message.messageReferenceId)
-  );
+  const providerCandidateMessages = cacheMissCandidateMessages;
   if (!entitlement || providerCandidateMessages.length === 0) {
     return {
       status: "allowed",

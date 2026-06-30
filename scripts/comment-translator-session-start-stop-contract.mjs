@@ -594,6 +594,7 @@ for (const file of changedFiles()) {
     "lib/comment-translator-live-provider-session-step.ts",
     "scripts/comment-translator-admin-operational-visibility-contract.mjs",
     "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+    "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
     "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
     "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
     "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",

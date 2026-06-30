@@ -144,7 +144,7 @@ assert.match(
 assert.match(componentSource, /credentialStatusState/, "dock displays provider connection state from sanitized credential status");
 assert.match(componentSource, /copy\.operatorSession\.reconnectGuidance/, "dock renders reconnect guidance without provider target metadata");
 const restoreActionMatch = actionSource.match(
-  /export async function restoreCommentTranslatorPersistedRealCommentsFeedAction[\s\S]*?\n}\n\nexport async function getCommentTranslatorRealCommentsFeedAction/
+  /export async function restoreCommentTranslatorPersistedRealCommentsFeedAction[\s\S]*?\r?\n}\r?\n\r?\nexport async function getCommentTranslatorRealCommentsFeedAction/
 );
 assert.ok(restoreActionMatch, "server action exposes a narrowly named persisted-feed restore action");
 assert.match(

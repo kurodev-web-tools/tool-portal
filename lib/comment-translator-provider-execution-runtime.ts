@@ -276,94 +276,107 @@ export async function executeCommentTranslatorProviderBatch(
     };
   }
 
-  const remainingMinuteCapacity = Math.max(
+  let remainingMinuteCapacity = Math.max(
     0,
     request.usage.planEntitlement.translatedMessagesPerMinute - request.usage.translatedMessagesInCurrentMinute
   );
-  const providerRequests = bridge.providerRequests.slice(0, remainingMinuteCapacity);
-  const perMinuteSkippedCount = Math.max(0, bridge.providerRequests.length - providerRequests.length);
   const maxBatchSize = normalizePositiveInteger(request.maxBatchSize, defaultMaxBatchSize);
   const maxProviderAttemptsPerComment = normalizePositiveInteger(
     request.maxProviderAttemptsPerComment,
     defaultMaxProviderAttemptsPerComment
   );
   const cache = request.cache ?? createInMemoryCommentTranslatorProviderExecutionCache();
-  const batches = chunk(providerRequests, maxBatchSize);
-  const batchSummaries = batches.map((batch, batchIndex) => ({
-    batchIndex,
-    providerRequestCount: batch.length
-  }));
 
+  let providerRequestCount = 0;
   let providerCallCount = 0;
   let cacheHitCount = 0;
   let cacheMissCount = 0;
+  let perMinuteSkippedCount = 0;
   let retryCount = 0;
   let recoverableErrorCount = 0;
   let terminalErrorCount = 0;
   const terminalErrorCodeCounts = createEmptyTerminalErrorCodeCounts();
+  const batchSummaries: CommentTranslatorProviderExecutionBatchSummary[] = [];
   const translations: CommentTranslatorProviderExecutionTranslation[] = [];
 
-  for (const batch of batches) {
-    for (const providerRequest of batch) {
-      const lookupKey = providerRequest.cache.lookupKey;
-      const cachedTranslation = lookupKey ? cache.read(lookupKey) : null;
-      if (cachedTranslation) {
-        cacheHitCount += 1;
-        translations.push(createTranslationFromCache(providerRequest, cachedTranslation));
-        continue;
-      }
-
-      cacheMissCount += 1;
-      const execution = await translateWithRetry({
-        provider: request.provider,
-        fallbackProvider: request.fallbackProvider,
-        fallbackOnRecoverableProviderError: request.fallbackOnRecoverableProviderError ?? false,
-        providerRequest,
-        maxProviderAttemptsPerComment
+  for (const providerRequest of bridge.providerRequests) {
+    const lookupKey = providerRequest.cache.lookupKey;
+    const cachedTranslation = lookupKey ? cache.read(lookupKey) : null;
+    if (cachedTranslation) {
+      providerRequestCount += 1;
+      recordProviderRequestBatchSummary({
+        batchSummaries,
+        maxBatchSize,
+        providerRequestCount
       });
-      providerCallCount += execution.providerCallCount;
-      retryCount += execution.retryCount;
+      cacheHitCount += 1;
+      translations.push(createTranslationFromCache(providerRequest, cachedTranslation));
+      continue;
+    }
 
-      if (execution.result.type === "translated") {
-        const translation = createTranslationFromProviderResult(
-          providerRequest,
-          execution.result,
-          execution.recoverablePrimaryFallbackCount
-        );
-        translations.push(translation);
+    if (remainingMinuteCapacity <= 0) {
+      perMinuteSkippedCount += 1;
+      continue;
+    }
 
-        if (lookupKey) {
-          cache.write(lookupKey, {
-            translatedText: translation.translatedText,
-            detectedSourceLanguage: translation.detectedSourceLanguage,
-            confidence: translation.confidence
-          });
-        }
-        continue;
+    remainingMinuteCapacity -= 1;
+    providerRequestCount += 1;
+    recordProviderRequestBatchSummary({
+      batchSummaries,
+      maxBatchSize,
+      providerRequestCount
+    });
+    cacheMissCount += 1;
+    const execution = await translateWithRetry({
+      provider: request.provider,
+      fallbackProvider: request.fallbackProvider,
+      fallbackOnRecoverableProviderError: request.fallbackOnRecoverableProviderError ?? false,
+      providerRequest,
+      maxProviderAttemptsPerComment
+    });
+    providerCallCount += execution.providerCallCount;
+    retryCount += execution.retryCount;
+
+    if (execution.result.type === "translated") {
+      const translation = createTranslationFromProviderResult(
+        providerRequest,
+        execution.result,
+        execution.recoverablePrimaryFallbackCount
+      );
+      translations.push(translation);
+
+      if (lookupKey) {
+        cache.write(lookupKey, {
+          translatedText: translation.translatedText,
+          detectedSourceLanguage: translation.detectedSourceLanguage,
+          confidence: translation.confidence
+        });
       }
+      continue;
+    }
 
-      if (execution.result.type === "recoverable-error") {
-        recoverableErrorCount += 1;
-      } else {
-        terminalErrorCount += 1;
-        incrementTerminalErrorCodeCount(terminalErrorCodeCounts, execution.result.code);
-      }
+    if (execution.result.type === "recoverable-error") {
+      recoverableErrorCount += 1;
+    } else {
+      terminalErrorCount += 1;
+      incrementTerminalErrorCodeCount(terminalErrorCodeCounts, execution.result.code);
     }
   }
+  const providerExecutedTranslations = filterProviderExecutedTranslations(translations);
 
   recordUsageEstimates({
     callerAuthorization: request.callerAuthorization,
     sessionReferenceId: request.sessionReferenceId,
     occurredAtMs: request.occurredAtMs,
     providerCallCount,
-    translatedMessages: translations,
+    translatedMessages: providerExecutedTranslations,
     recoverableErrorCount,
     terminalErrorCount
   });
 
   return {
     ...createResultBase({
-      providerRequestCount: providerRequests.length,
+      providerRequestCount,
       providerCallCount,
       translatedCount: translations.length,
       skippedCount: bridge.skippedCommentCount + perMinuteSkippedCount + recoverableErrorCount + terminalErrorCount,
@@ -377,12 +390,12 @@ export async function executeCommentTranslatorProviderBatch(
       terminalErrorCount,
       terminalErrorCodeCounts,
       providerUsageRecorded: providerCallCount > 0,
-      aiUsageRecorded: translations.length > 0,
+      aiUsageRecorded: providerExecutedTranslations.length > 0,
       recoverablePrimaryFallbackCount: translations.reduce(
         (total, translation) => total + translation.recoverablePrimaryFallbackCount,
         0
       ),
-      estimatedCostMicros: translations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
+      estimatedCostMicros: providerExecutedTranslations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
       providerRouting: {
         plan: "unresolved",
         primaryProvider: "direct-injected-provider",
@@ -647,6 +660,34 @@ function createTranslationFromCache(
   };
 }
 
+function filterProviderExecutedTranslations(
+  translations: readonly CommentTranslatorProviderExecutionTranslation[]
+): CommentTranslatorProviderExecutionTranslation[] {
+  return translations.filter((translation) => translation.cacheOutcome !== "hit");
+}
+
+function recordProviderRequestBatchSummary({
+  batchSummaries,
+  maxBatchSize,
+  providerRequestCount
+}: {
+  batchSummaries: CommentTranslatorProviderExecutionBatchSummary[];
+  maxBatchSize: number;
+  providerRequestCount: number;
+}) {
+  const batchIndex = Math.floor((providerRequestCount - 1) / maxBatchSize);
+  const existing = batchSummaries[batchIndex];
+  if (existing) {
+    existing.providerRequestCount += 1;
+    return;
+  }
+
+  batchSummaries.push({
+    batchIndex,
+    providerRequestCount: 1
+  });
+}
+
 function createResultBase(
   overrides: CommentTranslatorProviderExecutionResultBaseOverrides = {}
 ): CommentTranslatorProviderExecutionResultBase {
@@ -762,12 +803,4 @@ function isRetryableRecoverableError(result: CommentTranslationProviderRecoverab
 
 function normalizePositiveInteger(value: number | null | undefined, fallback: number): number {
   return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : fallback;
-}
-
-function chunk<T>(items: readonly T[], size: number): T[][] {
-  const batches: T[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    batches.push(items.slice(index, index + size));
-  }
-  return batches;
 }

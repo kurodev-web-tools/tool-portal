@@ -693,6 +693,7 @@ for (const source of [
 const allowedChangedFiles = new Set([
   wiringPath,
   "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-provider-execution-runtime.ts",
   "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
   "lib/comment-translator-live-provider-session-step.ts",
   "lib/comment-translator-live-message-normalization.ts",
@@ -707,8 +708,14 @@ const allowedChangedFiles = new Set([
   gapAuditPath,
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
   taskPath
 ]);

@@ -489,6 +489,7 @@ const secondCycle = await f10.executeCommentTranslatorAzureNormalTranslationForN
     openAiMini
   },
   feedPersistenceStore,
+  durableUsageCounterStore,
   maxBatchSize: 2,
   maxProviderAttemptsPerComment: 1
 });
@@ -501,6 +502,28 @@ assert.equal(secondCycle.execution.providerCallCount, 1);
 assert.equal(secondCycle.execution.translatedCount, 1);
 assert.equal(secondCycle.usageHandoffEstimate.providerRequestEstimateCount, 1);
 assert.equal(secondCycle.usageHandoffEstimate.translatedMessageEstimate, 1);
+assert.equal(secondCycle.usageHandoffEstimate.durableUsageWrite, "durable-counter-persisted");
+assert.equal(durableUsageRows.length, 4, "second provider cache miss writes provider-request and AI usage events durably");
+const durableSnapshotAfterSecondProviderSuccess = await durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore,
+  nowMs: Date.parse("2026-06-16T01:00:08.000Z"),
+  plan: "free",
+  activeSession: {
+    sessionReferenceId: "cts_f10_contract_001",
+    startedAtMs: Date.parse("2026-06-16T01:00:00.000Z"),
+    lastHeartbeatAtMs: Date.parse("2026-06-16T01:00:07.000Z"),
+    credentialReferenceId: "credential-reference-never-output"
+  }
+});
+assert.equal(durableSnapshotAfterSecondProviderSuccess.status, "ready");
+assert.equal(durableSnapshotAfterSecondProviderSuccess.snapshot.providerRequestEstimate.requestEstimateCount, 3);
+assert.equal(durableSnapshotAfterSecondProviderSuccess.snapshot.providerRequestEstimate.quotaUnitEstimate, 3);
+assert.equal(durableSnapshotAfterSecondProviderSuccess.snapshot.translatedMessagesInCurrentMinute, 3);
+assert.equal(
+  durableSnapshotAfterSecondProviderSuccess.snapshot.monthlyTranslatedCharacterEstimate,
+  result.usageHandoffEstimate.translatedCharacterEstimate + secondCycle.usageHandoffEstimate.translatedCharacterEstimate
+);
 assert.equal(azureCallCount, 3);
 assert.equal(secondCycle.feed.rows.length, 5);
 assert.equal(new Set(secondCycleIds).size, secondCycleIds.length, "safe feed rows remain unique by commentId across polling cycles");
@@ -534,6 +557,7 @@ const thirdCycle = await f10.executeCommentTranslatorAzureNormalTranslationForNo
     openAiMini
   },
   feedPersistenceStore,
+  durableUsageCounterStore,
   maxBatchSize: 2,
   maxProviderAttemptsPerComment: 1
 });
@@ -550,7 +574,39 @@ assert.equal(thirdCycle.eligibility.duplicateTextSkippedCount, 0);
 assert.equal(thirdCycle.feed.sanitizedSummary.liveProviderDiagnostics.cacheHitCount, 1);
 assert.equal(thirdCycle.feed.sanitizedSummary.liveProviderDiagnostics.duplicateTextCacheHitCount, 1);
 assert.equal(thirdCycle.usageHandoffEstimate.providerRequestEstimateCount, 0);
-assert.equal(thirdCycle.usageHandoffEstimate.translatedMessageEstimate, 1);
+assert.equal(thirdCycle.usageHandoffEstimate.translatedMessageEstimate, 0);
+assert.equal(thirdCycle.usageHandoffEstimate.translatedCharacterEstimate, 0);
+assert.equal(thirdCycle.usageHandoffEstimate.estimatedCostMicros, 0);
+assert.equal(thirdCycle.usageHandoffEstimate.durableUsageWrite, "not-run-no-usage-estimate");
+assert.equal(durableUsageRows.length, 4, "cache-hit translation rows do not write durable provider or AI usage events");
+const durableSnapshotAfterCacheHit = await durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore,
+  nowMs: Date.parse("2026-06-16T01:00:10.000Z"),
+  plan: "free",
+  activeSession: {
+    sessionReferenceId: "cts_f10_contract_001",
+    startedAtMs: Date.parse("2026-06-16T01:00:00.000Z"),
+    lastHeartbeatAtMs: Date.parse("2026-06-16T01:00:09.000Z"),
+    credentialReferenceId: "credential-reference-never-output"
+  }
+});
+assert.equal(durableSnapshotAfterCacheHit.status, "ready");
+assert.equal(
+  durableSnapshotAfterCacheHit.snapshot.translatedMessagesInCurrentMinute,
+  durableSnapshotAfterSecondProviderSuccess.snapshot.translatedMessagesInCurrentMinute,
+  "cache-hit feed rows do not increment the per-minute translated-message cap"
+);
+assert.equal(
+  durableSnapshotAfterCacheHit.snapshot.monthlyTranslatedCharacterEstimate,
+  durableSnapshotAfterSecondProviderSuccess.snapshot.monthlyTranslatedCharacterEstimate,
+  "cache-hit feed rows do not increment monthly translated-character usage"
+);
+assert.equal(
+  durableSnapshotAfterCacheHit.snapshot.providerRequestEstimate.requestEstimateCount,
+  durableSnapshotAfterSecondProviderSuccess.snapshot.providerRequestEstimate.requestEstimateCount,
+  "cache-hit feed rows do not increment provider request quota accounting"
+);
 assert.equal(azureCallCount, 3);
 assert.equal(duplicateTextRow.translatedText, "ja:yt-f10-text-1");
 assert.equal(duplicateTextRow.translationStatus, "translated-f10");
@@ -566,6 +622,82 @@ const duplicateTextUiComment = shared
 assert.equal(duplicateTextUiComment.cacheStatus, "hit");
 assert.equal(duplicateTextUiComment.status, "translated");
 assert.equal(thirdCycle.feed.rows.length, 6);
+
+let cacheHitAtCapProviderCallCount = 0;
+const cacheHitAtCapProvider = {
+  ...azure,
+  async translate() {
+    cacheHitAtCapProviderCallCount += 1;
+    throw new Error("Cache-hit rows at quota cap must not trigger provider execution.");
+  }
+};
+const cacheHitAtCapCycle = normalization.normalizeCommentTranslatorLiveMessages({
+  providerPayloads: [
+    {
+      id: "yt-f10-cache-hit-at-cap-1",
+      snippet: {
+        type: "textMessageEvent",
+        publishedAt: "2026-06-16T01:00:09.500Z",
+        textMessageDetails: { messageText: "Hello Azure path" }
+      }
+    }
+  ]
+});
+const cacheHitAtCap = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: cacheHitAtCapCycle.normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN", "KR", "CN"],
+  callerAuthorization,
+  sessionReferenceId: "cts_f10_contract_001",
+  occurredAtMs: Date.parse("2026-06-16T01:00:09.500Z"),
+  usage: {
+    ...usage,
+    translatedMessagesInCurrentMinute: usage.planEntitlement.translatedMessagesPerMinute,
+    monthlyTranslatedCharacterEstimate: usage.planEntitlement.monthlyTranslatedCharacterLimit
+  },
+  providers: {
+    azure: cacheHitAtCapProvider,
+    openAiMini
+  },
+  feedPersistenceStore,
+  durableUsageCounterStore,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+assert.equal(cacheHitAtCap.status, "completed");
+assert.equal(cacheHitAtCap.execution.providerCallCount, 0);
+assert.equal(cacheHitAtCap.execution.cacheHitCount, 1);
+assert.equal(cacheHitAtCap.execution.translatedCount, 1);
+assert.equal(cacheHitAtCap.execution.skipsByReason.perMinuteCap, 0);
+assert.equal(cacheHitAtCap.usageHandoffEstimate.providerRequestEstimateCount, 0);
+assert.equal(cacheHitAtCap.usageHandoffEstimate.translatedMessageEstimate, 0);
+assert.equal(cacheHitAtCap.usageHandoffEstimate.durableUsageWrite, "not-run-no-usage-estimate");
+assert.equal(cacheHitAtCapProviderCallCount, 0, "cache-hit rows at quota cap do not trigger provider execution");
+assert.equal(durableUsageRows.length, 4, "cache-hit rows at quota cap do not write durable usage events");
+const durableSnapshotAfterCacheHitAtCap = await durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore,
+  nowMs: Date.parse("2026-06-16T01:00:10.000Z"),
+  plan: "free",
+  activeSession: {
+    sessionReferenceId: "cts_f10_contract_001",
+    startedAtMs: Date.parse("2026-06-16T01:00:00.000Z"),
+    lastHeartbeatAtMs: Date.parse("2026-06-16T01:00:09.500Z"),
+    credentialReferenceId: "credential-reference-never-output"
+  }
+});
+assert.equal(durableSnapshotAfterCacheHitAtCap.status, "ready");
+assert.equal(
+  durableSnapshotAfterCacheHitAtCap.snapshot.translatedMessagesInCurrentMinute,
+  durableSnapshotAfterCacheHit.snapshot.translatedMessagesInCurrentMinute,
+  "cache-hit rows at quota cap do not change the per-minute translated-message cap snapshot"
+);
+assert.equal(
+  durableSnapshotAfterCacheHitAtCap.snapshot.monthlyTranslatedCharacterEstimate,
+  durableSnapshotAfterCacheHit.snapshot.monthlyTranslatedCharacterEstimate,
+  "cache-hit rows at quota cap do not change monthly translated-character usage"
+);
 
 const cachedBatchDuplicateCycle = normalization.normalizeCommentTranslatorLiveMessages({
   providerPayloads: [
@@ -814,6 +946,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
   f10Path,
   "lib/comment-translator-live-provider-session-step.ts",
+  providerExecutionPath,
   "lib/comment-translator-real-comments-feed-durable-store.ts",
   "lib/comment-translator-real-comments-feed-session-bridge.ts",
   "lib/comment-translator-real-comments-ui-wiring.ts",

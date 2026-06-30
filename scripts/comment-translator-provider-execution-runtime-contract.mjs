@@ -398,6 +398,8 @@ assert.equal(
   "never-recorded-by-design",
   "AI usage estimate does not record raw comments"
 );
+assert.equal(firstRun.usageRecorded.providerRequestEstimate, true);
+assert.equal(firstRun.usageRecorded.aiUsageEstimate, true);
 
 const secondRun = await runtime.executeCommentTranslatorProviderBatch({
   provider,
@@ -425,6 +427,53 @@ assert.equal(secondRun.status, "completed");
 assert.equal(secondRun.providerCallCount, 0, "cache hit does not call provider again");
 assert.equal(secondRun.cacheHitCount, 1, "sanitized cache key serves repeated translation");
 assert.equal(secondRun.translatedCount, 1, "cache hit still yields a translated result");
+assert.equal(secondRun.usageRecorded.providerRequestEstimate, false, "cache hits do not record provider usage");
+assert.equal(secondRun.usageRecorded.aiUsageEstimate, false, "cache hits do not record AI usage");
+const ledgerRecordsAfterCacheHit = ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests();
+assert.equal(
+  ledgerRecordsAfterCacheHit.length,
+  ledgerRecordsAfterFirstRun.length,
+  "cache-hit translations do not append usage ledger records"
+);
+assert.equal(
+  ledgerRecordsAfterCacheHit.filter((record) => record.type === "ai-usage-estimated").length,
+  1,
+  "cache-hit translations do not append per-minute or monthly AI usage estimates"
+);
+
+const cacheHitAtCapRun = await runtime.executeCommentTranslatorProviderBatch({
+  provider,
+  cache,
+  callerAuthorization,
+  sessionReferenceId: "cts_provider_execution_contract_001",
+  occurredAtMs: 35_000,
+  usage: {
+    ...usage,
+    translatedMessagesInCurrentMinute: usage.planEntitlement.translatedMessagesPerMinute
+  },
+  targetLanguage: "ja",
+  sourceLanguages: ["EN", "KR", "CN"],
+  maxBatchSize: 1,
+  comments: [
+    {
+      commentId: "comment-cache-hit-at-cap",
+      publishedAt: "2026-06-11T04:00:04.500Z",
+      text: "Hello live chat",
+      platformLanguageHint: "en"
+    }
+  ]
+});
+assert.equal(cacheHitAtCapRun.status, "completed");
+assert.equal(cacheHitAtCapRun.providerCallCount, 0, "cache hit at the translated-message cap does not call provider");
+assert.equal(cacheHitAtCapRun.cacheHitCount, 1, "cache hit at the translated-message cap is still served");
+assert.equal(cacheHitAtCapRun.translatedCount, 1, "cache hit at the translated-message cap still yields a translated row");
+assert.equal(cacheHitAtCapRun.skipsByReason.perMinuteCap, 0, "cache hit at the translated-message cap is not quota-skipped");
+assert.equal(cacheHitAtCapRun.usageRecorded.aiUsageEstimate, false);
+assert.equal(
+  ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests().length,
+  ledgerRecordsAfterFirstRun.length,
+  "cache-hit translations at cap do not append usage ledger records"
+);
 
 const blockedProviderRun = await runtime.executeCommentTranslatorProviderBatch({
   provider: {
@@ -498,7 +547,14 @@ assert.deepEqual(
   "terminal provider results expose sanitized code counts without raw provider diagnostics"
 );
 
-for (const payload of [firstRun, secondRun, blockedProviderRun, terminalCodeRun, ...ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests()]) {
+for (const payload of [
+  firstRun,
+  secondRun,
+  cacheHitAtCapRun,
+  blockedProviderRun,
+  terminalCodeRun,
+  ...ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests()
+]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenValue of [
     "test-caller-reference",
@@ -530,6 +586,8 @@ const allowedChangedFiles = new Set([
   usageLedgerPath,
   "scripts/comment-translator-admin-operational-visibility-contract.mjs",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
@@ -543,6 +601,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
   "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",

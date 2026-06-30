@@ -425,6 +425,26 @@ assert.equal(secondRun.status, "completed");
 assert.equal(secondRun.providerCallCount, 0, "cache hit does not call provider again");
 assert.equal(secondRun.cacheHitCount, 1, "sanitized cache key serves repeated translation");
 assert.equal(secondRun.translatedCount, 1, "cache hit still yields a translated result");
+assert.equal(secondRun.usageRecorded.providerRequestEstimate, false, "cache hit does not record provider request usage");
+assert.equal(secondRun.usageRecorded.aiUsageEstimate, false, "cache hit does not record AI usage");
+const ledgerRecordsAfterSecondRun = ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests();
+assert.equal(
+  ledgerRecordsAfterSecondRun.filter((record) => record.type === "provider-request-estimated").length,
+  1,
+  "cache hit does not append a provider request estimate"
+);
+assert.equal(
+  ledgerRecordsAfterSecondRun.filter((record) => record.type === "ai-usage-estimated").length,
+  1,
+  "cache hit does not append an AI usage estimate"
+);
+assert.equal(
+  ledgerRecordsAfterSecondRun
+    .filter((record) => record.type === "ai-usage-estimated")
+    .reduce((total, record) => total + record.translatedMessageEstimate, 0),
+  2,
+  "AI usage message estimate remains tied to provider-executed translations"
+);
 
 const blockedProviderRun = await runtime.executeCommentTranslatorProviderBatch({
   provider: {
@@ -530,6 +550,7 @@ const allowedChangedFiles = new Set([
   usageLedgerPath,
   "scripts/comment-translator-admin-operational-visibility-contract.mjs",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
@@ -543,6 +564,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
   "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",

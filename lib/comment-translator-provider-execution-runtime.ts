@@ -360,6 +360,7 @@ export async function executeCommentTranslatorProviderBatch(
     recoverableErrorCount,
     terminalErrorCount
   });
+  const providerExecutedTranslations = selectProviderExecutedTranslations(translations);
 
   return {
     ...createResultBase({
@@ -377,12 +378,12 @@ export async function executeCommentTranslatorProviderBatch(
       terminalErrorCount,
       terminalErrorCodeCounts,
       providerUsageRecorded: providerCallCount > 0,
-      aiUsageRecorded: translations.length > 0,
+      aiUsageRecorded: providerExecutedTranslations.length > 0,
       recoverablePrimaryFallbackCount: translations.reduce(
         (total, translation) => total + translation.recoverablePrimaryFallbackCount,
         0
       ),
-      estimatedCostMicros: translations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
+      estimatedCostMicros: providerExecutedTranslations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
       providerRouting: {
         plan: "unresolved",
         primaryProvider: "direct-injected-provider",
@@ -537,6 +538,8 @@ function recordUsageEstimates({
   recoverableErrorCount: number;
   terminalErrorCount: number;
 }) {
+  const providerExecutedTranslations = selectProviderExecutedTranslations(translatedMessages);
+
   if (providerCallCount > 0) {
     recordUsage({
       callerAuthorization,
@@ -552,7 +555,7 @@ function recordUsageEstimates({
     });
   }
 
-  if (translatedMessages.length > 0) {
+  if (providerExecutedTranslations.length > 0) {
     recordUsage({
       callerAuthorization,
       event: {
@@ -560,9 +563,12 @@ function recordUsageEstimates({
         provider: "youtube",
         sessionReferenceId,
         occurredAtMs,
-        translatedMessageEstimate: translatedMessages.length,
-        translatedCharacterEstimate: translatedMessages.reduce((total, message) => total + Array.from(message.translatedText).length, 0),
-        estimatedCostMicros: translatedMessages.reduce((total, message) => total + message.estimatedCostMicros, 0),
+        translatedMessageEstimate: providerExecutedTranslations.length,
+        translatedCharacterEstimate: providerExecutedTranslations.reduce(
+          (total, message) => total + Array.from(message.translatedText).length,
+          0
+        ),
+        estimatedCostMicros: providerExecutedTranslations.reduce((total, message) => total + message.estimatedCostMicros, 0),
         rawCommentText: "never-recorded-by-design"
       }
     });
@@ -599,6 +605,12 @@ function recordUsageEstimates({
       }
     });
   }
+}
+
+function selectProviderExecutedTranslations(
+  translations: readonly CommentTranslatorProviderExecutionTranslation[]
+): CommentTranslatorProviderExecutionTranslation[] {
+  return translations.filter((translation) => translation.cacheOutcome !== "hit");
 }
 
 function recordUsage({

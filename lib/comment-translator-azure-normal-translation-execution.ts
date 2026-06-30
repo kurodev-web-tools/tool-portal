@@ -745,14 +745,13 @@ function createUsageHandoffEstimate(
   execution: CommentTranslatorProviderExecutionResult,
   durableUsageWrite: CommentTranslatorAzureNormalTranslationUsageHandoffEstimate["durableUsageWrite"]
 ): CommentTranslatorAzureNormalTranslationUsageHandoffEstimate {
+  const providerExecutedUsageEstimate = createProviderExecutedUsageEstimate(execution);
+
   return {
     providerRequestEstimateCount: execution.providerCallCount,
-    translatedMessageEstimate: execution.translatedCount,
-    translatedCharacterEstimate: execution.translations.reduce(
-      (total, translation) => total + Array.from(translation.translatedText).length,
-      0
-    ),
-    estimatedCostMicros: execution.estimatedCostMicros,
+    translatedMessageEstimate: providerExecutedUsageEstimate.translatedMessageEstimate,
+    translatedCharacterEstimate: providerExecutedUsageEstimate.translatedCharacterEstimate,
+    estimatedCostMicros: providerExecutedUsageEstimate.estimatedCostMicros,
     durableUsageWrite,
     rawCommentText: "never-recorded-by-design",
     providerTargetMetadata: "forbidden"
@@ -801,6 +800,7 @@ function createDurableUsageHandoffEvents({
   execution: CommentTranslatorProviderExecutionResult;
 }): CommentTranslatorUsageLedgerEvent[] {
   const events: CommentTranslatorUsageLedgerEvent[] = [];
+  const providerExecutedUsageEstimate = createProviderExecutedUsageEstimate(execution);
 
   if (execution.providerCallCount > 0) {
     events.push({
@@ -814,23 +814,33 @@ function createDurableUsageHandoffEvents({
     });
   }
 
-  if (execution.translatedCount > 0) {
+  if (providerExecutedUsageEstimate.translatedMessageEstimate > 0) {
     events.push({
       type: "ai-usage-estimated",
       provider: "youtube",
       sessionReferenceId: request.sessionReferenceId,
       occurredAtMs: request.occurredAtMs,
-      translatedMessageEstimate: execution.translatedCount,
-      translatedCharacterEstimate: execution.translations.reduce(
-        (total, translation) => total + Array.from(translation.translatedText).length,
-        0
-      ),
-      estimatedCostMicros: execution.estimatedCostMicros,
+      translatedMessageEstimate: providerExecutedUsageEstimate.translatedMessageEstimate,
+      translatedCharacterEstimate: providerExecutedUsageEstimate.translatedCharacterEstimate,
+      estimatedCostMicros: providerExecutedUsageEstimate.estimatedCostMicros,
       rawCommentText: "never-recorded-by-design"
     });
   }
 
   return events;
+}
+
+function createProviderExecutedUsageEstimate(execution: CommentTranslatorProviderExecutionResult) {
+  const providerExecutedTranslations = execution.translations.filter((translation) => translation.cacheOutcome !== "hit");
+
+  return {
+    translatedMessageEstimate: providerExecutedTranslations.length,
+    translatedCharacterEstimate: providerExecutedTranslations.reduce(
+      (total, translation) => total + Array.from(translation.translatedText).length,
+      0
+    ),
+    estimatedCostMicros: providerExecutedTranslations.reduce((total, translation) => total + translation.estimatedCostMicros, 0)
+  };
 }
 
 function resolvePreProviderQuotaPolicy({

@@ -489,6 +489,7 @@ const secondCycle = await f10.executeCommentTranslatorAzureNormalTranslationForN
     openAiMini
   },
   feedPersistenceStore,
+  durableUsageCounterStore,
   maxBatchSize: 2,
   maxProviderAttemptsPerComment: 1
 });
@@ -501,7 +502,9 @@ assert.equal(secondCycle.execution.providerCallCount, 1);
 assert.equal(secondCycle.execution.translatedCount, 1);
 assert.equal(secondCycle.usageHandoffEstimate.providerRequestEstimateCount, 1);
 assert.equal(secondCycle.usageHandoffEstimate.translatedMessageEstimate, 1);
+assert.equal(secondCycle.usageHandoffEstimate.durableUsageWrite, "durable-counter-persisted");
 assert.equal(azureCallCount, 3);
+assert.equal(durableUsageRows.length, 4, "second provider execution appends provider-request and AI usage rows");
 assert.equal(secondCycle.feed.rows.length, 5);
 assert.equal(new Set(secondCycleIds).size, secondCycleIds.length, "safe feed rows remain unique by commentId across polling cycles");
 assert.equal(secondCycle.feed.rows.find((row) => row.id === "yt-f10-text-1").translatedText, "ja:yt-f10-text-1");
@@ -534,6 +537,7 @@ const thirdCycle = await f10.executeCommentTranslatorAzureNormalTranslationForNo
     openAiMini
   },
   feedPersistenceStore,
+  durableUsageCounterStore,
   maxBatchSize: 2,
   maxProviderAttemptsPerComment: 1
 });
@@ -550,8 +554,11 @@ assert.equal(thirdCycle.eligibility.duplicateTextSkippedCount, 0);
 assert.equal(thirdCycle.feed.sanitizedSummary.liveProviderDiagnostics.cacheHitCount, 1);
 assert.equal(thirdCycle.feed.sanitizedSummary.liveProviderDiagnostics.duplicateTextCacheHitCount, 1);
 assert.equal(thirdCycle.usageHandoffEstimate.providerRequestEstimateCount, 0);
-assert.equal(thirdCycle.usageHandoffEstimate.translatedMessageEstimate, 1);
+assert.equal(thirdCycle.usageHandoffEstimate.translatedMessageEstimate, 0);
+assert.equal(thirdCycle.usageHandoffEstimate.translatedCharacterEstimate, 0);
+assert.equal(thirdCycle.usageHandoffEstimate.durableUsageWrite, "not-run-no-usage-estimate");
 assert.equal(azureCallCount, 3);
+assert.equal(durableUsageRows.length, 4, "cache-only display rows do not append durable usage rows");
 assert.equal(duplicateTextRow.translatedText, "ja:yt-f10-text-1");
 assert.equal(duplicateTextRow.translationStatus, "translated-f10");
 assert.equal(duplicateTextRow.translationCacheStatus, "hit");
@@ -566,6 +573,27 @@ const duplicateTextUiComment = shared
 assert.equal(duplicateTextUiComment.cacheStatus, "hit");
 assert.equal(duplicateTextUiComment.status, "translated");
 assert.equal(thirdCycle.feed.rows.length, 6);
+const durableSnapshotAfterCacheHit = await durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore,
+  nowMs: Date.parse("2026-06-16T01:00:11.000Z"),
+  plan: "free",
+  activeSession: {
+    sessionReferenceId: "cts_f10_contract_001",
+    startedAtMs: Date.parse("2026-06-16T01:00:00.000Z"),
+    lastHeartbeatAtMs: Date.parse("2026-06-16T01:00:09.000Z"),
+    credentialReferenceId: "credential-reference-never-output"
+  }
+});
+assert.equal(durableSnapshotAfterCacheHit.status, "ready");
+assert.equal(durableSnapshotAfterCacheHit.snapshot.providerRequestEstimate.requestEstimateCount, 3);
+assert.equal(durableSnapshotAfterCacheHit.snapshot.providerRequestEstimate.quotaUnitEstimate, 3);
+assert.equal(durableSnapshotAfterCacheHit.snapshot.translatedMessagesInCurrentMinute, 3);
+assert.equal(
+  durableSnapshotAfterCacheHit.snapshot.monthlyTranslatedCharacterEstimate,
+  result.usageHandoffEstimate.translatedCharacterEstimate + secondCycle.usageHandoffEstimate.translatedCharacterEstimate,
+  "monthly character estimate excludes translated characters served from cache"
+);
 
 const cachedBatchDuplicateCycle = normalization.normalizeCommentTranslatorLiveMessages({
   providerPayloads: [
@@ -612,6 +640,8 @@ assert.equal(cachedBatchDuplicate.execution.providerCallCount, 0);
 assert.equal(cachedBatchDuplicate.execution.translatedCount, 1);
 assert.equal(cachedBatchDuplicate.execution.cacheHitCount, 1);
 assert.equal(cachedBatchDuplicate.execution.cacheMissCount, 0);
+assert.equal(cachedBatchDuplicate.usageHandoffEstimate.translatedMessageEstimate, 0);
+assert.equal(cachedBatchDuplicate.usageHandoffEstimate.translatedCharacterEstimate, 0);
 assert.equal(cachedBatchDuplicate.feed.sanitizedSummary.liveProviderDiagnostics.duplicateTextSkippedCount, 1);
 assert.equal(cachedBatchDuplicate.feed.rows.find((row) => row.id === "yt-f10-text-4").translationCacheStatus, "hit");
 assert.equal(cachedBatchDuplicate.feed.rows.some((row) => row.id === "yt-f10-text-5"), false);
@@ -814,6 +844,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
   f10Path,
   "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-provider-execution-runtime.ts",
   "lib/comment-translator-real-comments-feed-durable-store.ts",
   "lib/comment-translator-real-comments-feed-session-bridge.ts",
   "lib/comment-translator-real-comments-ui-wiring.ts",

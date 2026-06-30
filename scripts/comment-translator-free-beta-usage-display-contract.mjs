@@ -406,6 +406,8 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md",
   gapAuditPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "lib/comment-translator-real-comments-feed-shared.ts",
+  "lib/comment-translator-live-provider-session-step.ts",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
   "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",

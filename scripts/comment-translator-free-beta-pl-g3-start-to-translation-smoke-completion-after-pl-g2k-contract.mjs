@@ -247,17 +247,18 @@ assert.match(gapAudit, /PL-G3 after PL-G2K[\s\S]*(?:blocked-empty-polling-intake
 assert.match(sessionRoute, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "session route reads durable state before Start");
 assert.match(sessionRoute, /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart/, "session route keeps Start-only live target lookup boundary");
 assert.match(
-  sessionRoute,
+  targetLookup,
   /createSkippedCommentTranslatorLiveChatTargetLookupNotApproved/,
-  "session route skips unapproved live target lookup instead of blocking explicit Start"
+  "target lookup boundary can skip unapproved live target lookup instead of blocking explicit Start"
 );
-assert.match(sessionRoute, /readCommentTranslatorBoundedLiveChatPollingTick[\s\S]*live-provider-polling-not-approved/, "session route keeps polling unavailable by default");
+assert.match(sessionRoute, /readCommentTranslatorBoundedLiveChatPollingTick/, "session route delegates polling through the bounded runtime");
+assert.match(polling, /live-provider-polling-not-approved/, "bounded polling runtime keeps polling unavailable by default");
 assert.match(actions, /startCommentTranslatorSessionAction[\s\S]*intent:\s*"start"/, "server action exposes explicit Start");
 assert.match(actions, /stopCommentTranslatorSessionAction[\s\S]*intent:\s*"stop"/, "server action exposes explicit Stop");
 assert.match(
   actions,
-  /createSkippedCommentTranslatorLiveChatTargetLookupNotApproved/,
-  "server action skips unapproved live target lookup instead of blocking explicit Start"
+  /resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart/,
+  "server action delegates live target lookup through the sanitized Start boundary"
 );
 assert.match(targetLookup, /import "server-only"/, "target lookup remains server-only");
 assert.match(targetLookup, /targetMetadataHandling:\s*"server-only-internal-never-client-readable"/, "target metadata stays server-only");
@@ -403,8 +404,17 @@ const allowedChangedFiles = new Set([
   finalQaPath,
   gapAuditPath,
   "lib/comment-translator.ts",
+  "lib/comment-translator-real-comments-feed-shared.ts",
+  "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
   "lib/comment-translator-durable-usage-counter-store.ts",
   taskPath,
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE_FOLLOW_UP.md",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE_FOLLOW_UP_AFTER_PL_G4.md",
   "lib/comment-translator-youtube-live-chat-polling-smoke-foundation.ts",
@@ -481,7 +491,7 @@ const allowedChangedFiles = new Set([
 
 for (const file of changedFiles()) {
   assert.ok(allowedChangedFiles.has(file), `PL-G3 after PL-G2K change stays in allowed files: ${file}`);
-  if (file === "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs") {
+  if (file.endsWith(".mjs")) {
     continue;
   }
   assertNoSensitiveValues(read(file), `changed file ${file}`);

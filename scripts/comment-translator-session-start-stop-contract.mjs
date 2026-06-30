@@ -590,6 +590,8 @@ for (const file of changedFiles()) {
     "supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql",
     "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
     "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md",
+    "lib/comment-translator-real-comments-feed-shared.ts",
+    "lib/comment-translator-live-provider-session-step.ts",
     "scripts/comment-translator-admin-operational-visibility-contract.mjs",
     "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
     "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",

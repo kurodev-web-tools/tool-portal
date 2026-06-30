@@ -70,7 +70,12 @@ export type CommentTranslatorRealCommentsFeedState = {
   status: CommentTranslatorRealCommentsFeedStatus;
   source: "server-owned-live-session-state";
   rows: readonly CommentTranslatorRealCommentsDisplayRow[];
-  unavailableReason: "session-not-active" | "live-provider-polling-not-approved" | "polling-runtime-not-wired" | null;
+  unavailableReason:
+    | "session-not-active"
+    | "live-provider-polling-not-approved"
+    | "polling-runtime-not-wired"
+    | "durable-usage-ledger-unavailable"
+    | null;
   sanitizedSummary: {
     displayRowCount: number;
     safeRowSource: "f8-browser-safe-projection";

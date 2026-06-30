@@ -13,6 +13,7 @@ const providerExecutionPath = "lib/comment-translator-provider-execution-runtime
 const providerPolicyPath = "lib/comment-translator-provider-policy-runtime.ts";
 const providerBoundaryPath = "lib/comment-translator-provider-boundary.ts";
 const usageLedgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
+const durableUsagePath = "lib/comment-translator-durable-usage-counter-store.ts";
 const readinessDocPath = "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const taskPath = "task.md";
@@ -123,6 +124,7 @@ for (const requiredPath of [
   providerPolicyPath,
   providerBoundaryPath,
   usageLedgerPath,
+  durableUsagePath,
   readinessDocPath,
   gapAuditPath,
   taskPath
@@ -136,6 +138,7 @@ const normalizationSource = read(normalizationPath);
 const providerExecutionSource = read(providerExecutionPath);
 const providerPolicySource = read(providerPolicyPath);
 const providerBoundarySource = read(providerBoundaryPath);
+const durableUsageSource = read(durableUsagePath);
 const readinessDoc = read(readinessDocPath);
 const gapAudit = read(gapAuditPath);
 const taskSource = read(taskPath);
@@ -145,6 +148,9 @@ assert.match(f10Source, /commentTranslatorAzureNormalTranslationExecutionContrac
 assert.match(f10Source, /executeCommentTranslatorProviderPolicyBatch/, "F10 uses the existing provider policy execution path");
 assert.match(f10Source, /createCommentTranslatorDefaultTranslationProviderSet/, "F10 default provider set stays server-runtime env owned");
 assert.match(f10Source, /createCommentTranslatorRealCommentsFeedStateFromTranslatedRows/, "F10 projects translated results back to the safe F9 row shape");
+assert.match(f10Source, /recordCommentTranslatorDurableUsageLedgerEventOrFailClosed/, "F10 can persist successful provider usage estimates to the durable usage ledger");
+assert.match(f10Source, /durableUsageCounterStore/, "F10 accepts a durable usage counter store boundary for the live success path");
+assert.match(durableUsageSource, /recordCommentTranslatorDurableUsageLedgerEventOrFailClosed/, "durable usage store exposes sanitized event writes");
 assert.match(sharedSource, /translated-f10/, "F9 shared row shape accepts F10 translated rows");
 assert.match(normalizationSource, /rawProviderPayload: "not-returned-by-design"/, "F8 still suppresses raw provider payloads");
 assert.match(providerExecutionSource, /bounded-batches-no-delayed-queue/, "provider execution still uses bounded batches");
@@ -172,6 +178,7 @@ const f10 = loadTsModule(f10Path);
 const shared = loadTsModule(sharedPath);
 const normalization = loadTsModule(normalizationPath);
 const ledger = loadTsModule(usageLedgerPath);
+const durableUsage = loadTsModule(durableUsagePath);
 
 assert.equal(f10.commentTranslatorAzureNormalTranslationExecutionContract.implementationStage, "free-public-beta-f10-azure-normal-translation-execution");
 assert.equal(f10.commentTranslatorAzureNormalTranslationExecutionContract.runtime, "server-only");
@@ -319,6 +326,30 @@ const feedPersistenceStore = {
   failClosed: true,
   reason: "trusted-service-role-env-missing"
 };
+const durableUsageRows = [];
+const durableUsageCounterStore = {
+  status: "ready",
+  store: {
+    async readUsageEvents({ ownerUserId }) {
+      return durableUsageRows.filter((row) => row.owner_user_id === ownerUserId);
+    },
+    async persistUsageEvent({ ownerUserId, userLedgerReferenceId, event }) {
+      const row = durableUsage.createCommentTranslatorDurableUsageCounterRowDraft({
+        ownerUserId,
+        userLedgerReferenceId,
+        event,
+        nowIso: "2026-06-16T01:00:05.000Z"
+      });
+      durableUsageRows.push({
+        ...row,
+        id: `usage-row-${durableUsageRows.length + 1}`,
+        created_at: "2026-06-16T01:00:05.000Z"
+      });
+    }
+  },
+  missingEnvReferences: [],
+  failClosed: false
+};
 
 const result = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
   messages: normalized.normalizedMessages,
@@ -334,6 +365,7 @@ const result = await f10.executeCommentTranslatorAzureNormalTranslationForNormal
     openAiMini
   },
   feedPersistenceStore,
+  durableUsageCounterStore,
   maxBatchSize: 2,
   maxProviderAttemptsPerComment: 1
 });
@@ -378,7 +410,25 @@ assert.equal(result.feed.rows.find((row) => row.id === "yt-f10-ended-1").transla
 assert.equal(result.usageHandoffEstimate.providerRequestEstimateCount, 2);
 assert.equal(result.usageHandoffEstimate.translatedMessageEstimate, 2);
 assert.ok(result.usageHandoffEstimate.translatedCharacterEstimate > 0);
-assert.equal(result.usageHandoffEstimate.durableUsageWrite, "not-run-local-deterministic-handoff-only");
+assert.equal(result.usageHandoffEstimate.durableUsageWrite, "durable-counter-persisted");
+assert.equal(durableUsageRows.length, 2, "successful provider execution writes provider-request and AI usage events durably");
+const durableSnapshotAfterProviderSuccess = await durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore,
+  nowMs: Date.parse("2026-06-16T01:00:10.000Z"),
+  plan: "free",
+  activeSession: {
+    sessionReferenceId: "cts_f10_contract_001",
+    startedAtMs: Date.parse("2026-06-16T01:00:00.000Z"),
+    lastHeartbeatAtMs: Date.parse("2026-06-16T01:00:05.000Z"),
+    credentialReferenceId: "credential-reference-never-output"
+  }
+});
+assert.equal(durableSnapshotAfterProviderSuccess.status, "ready");
+assert.equal(durableSnapshotAfterProviderSuccess.snapshot.providerRequestEstimate.requestEstimateCount, 2);
+assert.equal(durableSnapshotAfterProviderSuccess.snapshot.providerRequestEstimate.quotaUnitEstimate, 2);
+assert.equal(durableSnapshotAfterProviderSuccess.snapshot.translatedMessagesInCurrentMinute, 2);
+assert.equal(durableSnapshotAfterProviderSuccess.snapshot.monthlyTranslatedCharacterEstimate, result.usageHandoffEstimate.translatedCharacterEstimate);
 assert.equal(result.publicLaunchAllowed, false);
 assert.equal(azureCallCount, 2);
 

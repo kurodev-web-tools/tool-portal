@@ -10,6 +10,7 @@ import {
   heartbeatCommentTranslatorSessionAction,
   recordCommentTranslatorCreatorLockedClickAction,
   requestCommentTranslatorDataDeletionAction,
+  restoreCommentTranslatorPersistedRealCommentsFeedAction,
   startCommentTranslatorSessionAction,
   stopCommentTranslatorSessionAction
 } from "@/app/tools/comment-translator/actions";
@@ -952,12 +953,20 @@ export function CommentTranslatorDock({
         }
 
         setSessionState(state);
-        if (state.status !== "active") {
+        if (state.status === "active") {
+          const feed = await restoreCommentTranslatorPersistedRealCommentsFeedAction({ targetLanguage });
+          if (cancelled) {
+            return;
+          }
+          setRealCommentsFeed(feed);
+          setRealCommentsFeedError(null);
+        } else {
           setRealCommentsFeed(
             createUnavailableCommentTranslatorRealCommentsFeedState({
               reason: "session-not-active"
             })
           );
+          setRealCommentsFeedError(null);
         }
         setSessionError(null);
       } catch {

@@ -224,6 +224,31 @@ export async function heartbeatCommentTranslatorSessionAction(options: { targetL
   });
 }
 
+export async function restoreCommentTranslatorPersistedRealCommentsFeedAction(
+  options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}
+) {
+  void options;
+  const callerAuthorization = await readCallerAuthorization();
+  const durableFeedStore = createTrustedCommentTranslatorRealCommentsFeedDurableStore();
+  const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
+  const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
+    callerAuthorization,
+    durableSessionStore
+  });
+
+  if (durableActiveSessionRead.status !== "ready") {
+    return createUnavailableCommentTranslatorRealCommentsFeedState({
+      reason: "polling-runtime-not-wired"
+    });
+  }
+
+  return readCommentTranslatorRealCommentsFeedForActiveSession({
+    callerAuthorization,
+    activeSession: durableActiveSessionRead.activeSession,
+    durableFeedStore
+  });
+}
+
 export async function getCommentTranslatorRealCommentsFeedAction(options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}) {
   const callerAuthorization = await readCallerAuthorization();
   const durableFeedStore = createTrustedCommentTranslatorRealCommentsFeedDurableStore();
@@ -245,9 +270,10 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: { targ
   if (activeSession) {
     const nowMs = Date.now();
     const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+    const durableUsageCounterStore = createTrustedCommentTranslatorUsageCounterSupabaseStore();
     const durableUsageRead = await readCommentTranslatorDurableUsageSnapshotOrFailClosed({
       callerAuthorization,
-      durableUsageCounterStore: createTrustedCommentTranslatorUsageCounterSupabaseStore(),
+      durableUsageCounterStore,
       nowMs,
       plan: "free",
       activeSession
@@ -269,6 +295,7 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: { targ
         credentialReadiness,
         targetLookupAdapter: liveProviderRuntime.targetLookupAdapter,
         pollingAdapter: liveProviderRuntime.pollingAdapter,
+        durableUsageCounterStore,
         nowMs,
         targetLanguage: options.targetLanguage ?? "ja"
       });
@@ -493,6 +520,7 @@ async function readCommentTranslatorSessionActionResult({
           credentialReadiness,
           targetLookupAdapter: liveProviderRuntime.targetLookupAdapter,
           pollingAdapter: liveProviderRuntime.pollingAdapter,
+          durableUsageCounterStore,
           nowMs,
           targetLanguage
         })

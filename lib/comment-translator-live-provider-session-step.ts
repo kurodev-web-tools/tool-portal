@@ -14,6 +14,9 @@ import {
   executeCommentTranslatorAzureNormalTranslationForNormalizedMessages,
   type CommentTranslatorAzureNormalTranslationExecutionResult
 } from "./comment-translator-azure-normal-translation-execution";
+import type {
+  CommentTranslatorDurableUsageCounterStoreFactoryResult
+} from "./comment-translator-durable-usage-counter-store";
 import { mapYouTubeProviderSafeCommentsToNormalizedLiveMessages } from "./comment-translator-live-message-normalization";
 import { createCommentTranslatorFreeBetaUsageDisplay } from "./comment-translator-free-beta-usage-display";
 import type {
@@ -32,7 +35,13 @@ import type { CommentTranslatorTargetLanguageId } from "./comment-translator";
 
 export type CommentTranslatorLiveProviderSessionStepResult = {
   pollingTick: CommentTranslatorBoundedLiveChatPollingTickResult;
-  translationStatus: "not-run" | "completed" | "provider-unavailable" | "session-not-active" | "over-limit";
+  translationStatus:
+    | "not-run"
+    | "completed"
+    | "provider-unavailable"
+    | "session-not-active"
+    | "over-limit"
+    | "usage-ledger-unavailable";
   translatedCount: number;
   persistedFeedRowCount: number;
   diagnostics: CommentTranslatorLiveProviderDiagnostics;
@@ -58,6 +67,7 @@ export async function runCommentTranslatorLiveProviderSessionStep({
   credentialReadiness,
   targetLookupAdapter,
   pollingAdapter,
+  durableUsageCounterStore,
   nowMs,
   targetLanguage
 }: {
@@ -67,6 +77,7 @@ export async function runCommentTranslatorLiveProviderSessionStep({
   credentialReadiness: YouTubeOAuthCredentialTranslatorStartReadiness;
   targetLookupAdapter: CommentTranslatorServerOnlyLiveChatTargetLookupAdapter;
   pollingAdapter: CommentTranslatorBoundedLiveChatPollingAdapter;
+  durableUsageCounterStore?: CommentTranslatorDurableUsageCounterStoreFactoryResult;
   nowMs: number;
   targetLanguage: CommentTranslatorTargetLanguageId;
 }): Promise<CommentTranslatorLiveProviderSessionStepResult> {
@@ -126,7 +137,8 @@ export async function runCommentTranslatorLiveProviderSessionStep({
     callerAuthorization,
     sessionReferenceId: activeSession.sessionReferenceId,
     occurredAtMs: nowMs,
-    usage
+    usage,
+    durableUsageCounterStore
   });
 
   return createResult({

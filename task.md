@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/pre-step5-p0-quota-session-hardening`.
+- Current branch: `codex/post-579-feed-quota-ledger-p0`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: Step 5 前 P0 quota/session hardening。active-session usage restore、provider 前 per-minute/monthly cap enforcement、pre-public diagnostics policy clarification。
+- Scope: PR #579 follow-up P0. Active-session reload now hydrates persisted server-owned safe feed rows through a read-only restore action, and successful live translation usage estimates are written to the durable usage ledger before later cap snapshots rely on them.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
@@ -79,8 +79,10 @@ Do these before recording `public-release capable: yes` unless the release owner
 | Priority | Item | Current decision / expected handling |
 | --- | --- | --- |
 | P0 | Free beta usage display resets to 30 minutes after page refresh while an active session exists | Complete in `codex/pre-step5-p0-quota-session-hardening`: dock now restores session state from server status on mount/target-language change, and status restore is provider non-executing. Active-session behavior is contract-covered; local browser was private-gate fallback only. |
+| P0 | Active-session page refresh leaves feed blank until periodic/manual refresh | Complete in `codex/post-579-feed-quota-ledger-p0`: mount/status restore hydrates persisted server-owned safe feed rows immediately through `restoreCommentTranslatorPersistedRealCommentsFeedAction`, which only reads durable/session-scoped feed state and does not run provider polling or target lookup. |
 | P0 | Per-minute translated message cap enforcement | Complete in `codex/pre-step5-p0-quota-session-hardening`: F10 provider execution blocks before provider calls when `translatedMessagesInCurrentMinute` is at/over the Free cap, and pending batches that would exceed the cap are usage-limit rows. |
 | P0 | Monthly translated character cap enforcement | Complete in `codex/pre-step5-p0-quota-session-hardening`: F10 estimates pending provider-candidate source characters before provider execution and blocks batches that would exceed `20,000 translated characters/month`. |
+| P0 | Live translation success path does not durably increment usage counters | Complete in `codex/post-579-feed-quota-ledger-p0`: F10 writes sanitized provider request and AI usage estimate events to the durable usage ledger after provider success; deterministic contract proves a later durable snapshot sees provider request, current-minute translated message, and monthly translated character increments. Durable write failure surfaces a sanitized feed-unavailable state instead of displaying translated rows without durable accounting. |
 | P0 | Public UI diagnostics surface | Policy clarified in this slice: keep `data-comment-translator-pre-public-diagnostics="count-only"` as a pre-public temporary debug surface for Step 5 evidence; remove or gate before PL-G6/public promotion. No public gate flip was run. |
 | P1 | Preview feed `skipped` UI | Hide normal-user `skipped` rows where server policy already suppresses target-language/same-batch duplicate rows, or rename internal cache evidence to user-safe wording. Avoid `API free` copy in public UI. |
 | P1 | Duplicate text cache display | Keep `cache hit` / `cached` evidence internally or in compact public copy; ensure duplicate text can display from cache without additional provider API execution. |
@@ -98,6 +100,8 @@ Recommended next PR order:
 
 - PR #577 `[codex] Retain pre-public diagnostics counts` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `f60e197`.
 - PR #578 `[codex] Document pre-step5 public launch board` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `ccd6cf6`; containment was confirmed before this slice.
+- PR #579 `[codex] Harden pre-step5 quota session P0` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `af28255`; containment was confirmed before this follow-up branch.
+- PR #579 follow-up local verification passed for the implementation slice: active-session persisted-feed hydrate contract, Azure F10 durable usage write/snapshot contract, PL-G3 feed bridge/session persistence, real comments UI wiring, usage quota/budget ledger, durable usage counter schema adapter, Free beta usage display, session start/stop, UI live provider runtime, PL-G3 completion contract, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence secret scan.
 - Pre-Step 5 P0 quota/session hardening local verification passed: active-session mount restore/status-provider non-execution contract, per-minute provider preflight cap, monthly character provider preflight cap, durable usage/session/feed contracts, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence secret scan.
 - Width verification for local private-gate fallback passed at `390 / 820 / 1024 / 1280 / 1366px`: page identity OK, no horizontal overflow, no framework overlay, no relevant console errors/warnings. Authenticated allowed-tester state was unavailable locally, so active-session visual restore is contract-covered only.
 - Browser-visible preview retest after PR #577 merge confirmed Start-before exclusion, Start-after feed display, newest-first ordering, JST timestamp display, cache miss for new text, cache hit/cached for repeated text, non-zero diagnostics retention, and Stop.
@@ -110,6 +114,8 @@ Recommended next PR order:
 - Public-release capable remains `no` until pre-Step 5 hardening is resolved or explicitly accepted, PL-G5 release-owner approval is recorded, and PL-G6 public access change is separately approved and executed.
 - Pre-public diagnostics are intentionally temporary and must be removed or gated before PL-G6/public promotion; this slice leaves them count-only and pre-public.
 - Authenticated allowed-tester browser-visible active-session reload was not run locally; contract coverage proves server/action/UI restore semantics without live/provider execution.
+- Live provider execution and deployed/browser confirmation were not run in this follow-up. Durable usage write behavior is deterministic-contract covered only until an approved same-thread live retry confirms it against deployed state.
+- `comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs` and PL-G4 deployed-smoke contract still contain older evidence-shape assertions and were not used as final verifiers for this PR #579 follow-up slice.
 - Existing connected YouTube credentials created before sealed token material persistence may contain irreversible reference-only material. Those rows must fail closed with sanitized unavailable/reconnect-required behavior until reconnect.
 - Production/main domain launch remains unexecuted and approval-gated.
 

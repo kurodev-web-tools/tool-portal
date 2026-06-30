@@ -187,6 +187,7 @@ export async function POST(request: NextRequest) {
           credentialReadiness,
           targetLookupAdapter: liveProviderRuntime.targetLookupAdapter,
           pollingAdapter: liveProviderRuntime.pollingAdapter,
+          durableUsageCounterStore,
           nowMs,
           targetLanguage: command.targetLanguage
         })

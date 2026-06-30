@@ -11,7 +11,8 @@ import {
   type CommentTranslatorProviderExecutionResult
 } from "./comment-translator-provider-execution-runtime";
 import {
-  createCommentTranslatorRealCommentsFeedStateFromNormalizedMessages
+  createCommentTranslatorRealCommentsFeedStateFromNormalizedMessages,
+  createUnavailableCommentTranslatorRealCommentsFeedState
 } from "./comment-translator-real-comments-ui-wiring";
 import {
   persistCommentTranslatorRealCommentsFeedForActiveSession,
@@ -20,6 +21,10 @@ import {
 import type {
   CommentTranslatorRealCommentsFeedDurableStoreFactoryResult
 } from "./comment-translator-real-comments-feed-durable-store";
+import {
+  recordCommentTranslatorDurableUsageLedgerEventOrFailClosed,
+  type CommentTranslatorDurableUsageCounterStoreFactoryResult
+} from "./comment-translator-durable-usage-counter-store";
 import {
   resolveCommentTranslatorFreeBetaProviderCallPolicy
 } from "./comment-translator-free-beta-usage-display";
@@ -35,7 +40,10 @@ import {
 } from "./comment-translator-real-comments-feed-shared";
 import type { CommentTranslatorNormalizedLiveMessage } from "./comment-translator-live-message-normalization";
 import type { CommentTranslatorSessionBrowserSafeState } from "./comment-translator-session-runtime";
-import type { CommentTranslatorUsageLedgerSnapshot } from "./comment-translator-usage-ledger-runtime";
+import type {
+  CommentTranslatorUsageLedgerEvent,
+  CommentTranslatorUsageLedgerSnapshot
+} from "./comment-translator-usage-ledger-runtime";
 import type { YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 import type { YouTubeProviderSafeCommentPayload } from "./comment-translator-youtube-input-boundary";
 import type { CommentTranslatorTargetLanguageId } from "./comment-translator";
@@ -76,7 +84,11 @@ export type CommentTranslatorAzureNormalTranslationUsageHandoffEstimate = {
   translatedMessageEstimate: number;
   translatedCharacterEstimate: number;
   estimatedCostMicros: number;
-  durableUsageWrite: "not-run-local-deterministic-handoff-only";
+  durableUsageWrite:
+    | "not-run-local-deterministic-handoff-only"
+    | "not-run-no-usage-estimate"
+    | "durable-counter-persisted"
+    | "durable-counter-fail-closed";
   rawCommentText: "never-recorded-by-design";
   providerTargetMetadata: "forbidden";
 };
@@ -93,12 +105,13 @@ export type ExecuteCommentTranslatorAzureNormalTranslationForNormalizedMessagesR
   providers?: CommentTranslatorTranslationProviderSet;
   cache?: CommentTranslatorProviderExecutionCache;
   feedPersistenceStore?: CommentTranslatorRealCommentsFeedDurableStoreFactoryResult;
+  durableUsageCounterStore?: CommentTranslatorDurableUsageCounterStoreFactoryResult;
   maxBatchSize?: number;
   maxProviderAttemptsPerComment?: number;
 };
 
 export type CommentTranslatorAzureNormalTranslationExecutionResult = {
-  status: "completed" | "provider-unavailable" | "session-not-active" | "over-limit";
+  status: "completed" | "provider-unavailable" | "session-not-active" | "over-limit" | "usage-ledger-unavailable";
   implementationStage: CommentTranslatorAzureNormalTranslationExecutionContract["implementationStage"];
   execution: CommentTranslatorProviderExecutionResult;
   eligibility: CommentTranslatorAzureNormalTranslationEligibilitySummary;
@@ -277,6 +290,24 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
     execution.translatedCount === 0 &&
     eligibleMessages.length > 0 &&
     execution.skipsByReason.providerUnavailable >= eligibleMessages.length;
+  const durableUsageWrite = await recordDurableUsageHandoffEstimate({
+    request,
+    execution
+  });
+  if (durableUsageWrite === "durable-counter-fail-closed") {
+    return await persistFeedBridgeResult({
+      request,
+      result: createExecutionResult({
+        status: "usage-ledger-unavailable",
+        execution,
+        eligibility,
+        durableUsageWrite,
+        feed: createUnavailableCommentTranslatorRealCommentsFeedState({
+          reason: "durable-usage-ledger-unavailable"
+        })
+      })
+    });
+  }
 
   return await persistFeedBridgeResult({
     request,
@@ -284,6 +315,7 @@ export async function executeCommentTranslatorAzureNormalTranslationForNormalize
       status: providerUnavailable ? "provider-unavailable" : "completed",
       execution,
       eligibility,
+      durableUsageWrite,
       feed: createCommentTranslatorRealCommentsFeedStateFromTranslatedRows({
         feed: baseFeed,
         execution,
@@ -507,11 +539,13 @@ function createExecutionResult({
   status,
   execution,
   eligibility,
+  durableUsageWrite = "not-run-local-deterministic-handoff-only",
   feed
 }: {
   status: CommentTranslatorAzureNormalTranslationExecutionResult["status"];
   execution: CommentTranslatorProviderExecutionResult;
   eligibility: CommentTranslatorAzureNormalTranslationEligibilitySummary;
+  durableUsageWrite?: CommentTranslatorAzureNormalTranslationUsageHandoffEstimate["durableUsageWrite"];
   feed: CommentTranslatorRealCommentsFeedState;
 }): Omit<CommentTranslatorAzureNormalTranslationExecutionResult, "feedPersistence"> {
   return {
@@ -519,7 +553,7 @@ function createExecutionResult({
     implementationStage: commentTranslatorAzureNormalTranslationExecutionContract.implementationStage,
     execution,
     eligibility,
-    usageHandoffEstimate: createUsageHandoffEstimate(execution),
+    usageHandoffEstimate: createUsageHandoffEstimate(execution, durableUsageWrite),
     feed,
     browserStorage: "unchanged",
     handoffPayload: "unchanged",
@@ -708,7 +742,8 @@ function getCommentTranslatorAzureNormalTranslationSessionDedupeState(
 }
 
 function createUsageHandoffEstimate(
-  execution: CommentTranslatorProviderExecutionResult
+  execution: CommentTranslatorProviderExecutionResult,
+  durableUsageWrite: CommentTranslatorAzureNormalTranslationUsageHandoffEstimate["durableUsageWrite"]
 ): CommentTranslatorAzureNormalTranslationUsageHandoffEstimate {
   return {
     providerRequestEstimateCount: execution.providerCallCount,
@@ -718,10 +753,84 @@ function createUsageHandoffEstimate(
       0
     ),
     estimatedCostMicros: execution.estimatedCostMicros,
-    durableUsageWrite: "not-run-local-deterministic-handoff-only",
+    durableUsageWrite,
     rawCommentText: "never-recorded-by-design",
     providerTargetMetadata: "forbidden"
   };
+}
+
+async function recordDurableUsageHandoffEstimate({
+  request,
+  execution
+}: {
+  request: ExecuteCommentTranslatorAzureNormalTranslationForNormalizedMessagesRequest;
+  execution: CommentTranslatorProviderExecutionResult;
+}): Promise<CommentTranslatorAzureNormalTranslationUsageHandoffEstimate["durableUsageWrite"]> {
+  const durableUsageCounterStore = request.durableUsageCounterStore;
+  if (!durableUsageCounterStore) {
+    return "not-run-local-deterministic-handoff-only";
+  }
+
+  const events = createDurableUsageHandoffEvents({
+    request,
+    execution
+  });
+  if (events.length === 0) {
+    return "not-run-no-usage-estimate";
+  }
+
+  for (const event of events) {
+    const write = await recordCommentTranslatorDurableUsageLedgerEventOrFailClosed({
+      callerAuthorization: request.callerAuthorization,
+      durableUsageCounterStore,
+      event
+    });
+    if (write.status === "fail-closed") {
+      return "durable-counter-fail-closed";
+    }
+  }
+
+  return "durable-counter-persisted";
+}
+
+function createDurableUsageHandoffEvents({
+  request,
+  execution
+}: {
+  request: ExecuteCommentTranslatorAzureNormalTranslationForNormalizedMessagesRequest;
+  execution: CommentTranslatorProviderExecutionResult;
+}): CommentTranslatorUsageLedgerEvent[] {
+  const events: CommentTranslatorUsageLedgerEvent[] = [];
+
+  if (execution.providerCallCount > 0) {
+    events.push({
+      type: "provider-request-estimated",
+      provider: "youtube",
+      sessionReferenceId: request.sessionReferenceId,
+      occurredAtMs: request.occurredAtMs,
+      requestEstimateCount: execution.providerCallCount,
+      quotaUnitEstimate: execution.providerCallCount,
+      providerTargetMetadata: "forbidden"
+    });
+  }
+
+  if (execution.translatedCount > 0) {
+    events.push({
+      type: "ai-usage-estimated",
+      provider: "youtube",
+      sessionReferenceId: request.sessionReferenceId,
+      occurredAtMs: request.occurredAtMs,
+      translatedMessageEstimate: execution.translatedCount,
+      translatedCharacterEstimate: execution.translations.reduce(
+        (total, translation) => total + Array.from(translation.translatedText).length,
+        0
+      ),
+      estimatedCostMicros: execution.estimatedCostMicros,
+      rawCommentText: "never-recorded-by-design"
+    });
+  }
+
+  return events;
 }
 
 function resolvePreProviderQuotaPolicy({

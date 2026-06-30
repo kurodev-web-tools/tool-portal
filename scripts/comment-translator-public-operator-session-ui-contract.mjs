@@ -93,6 +93,16 @@ assert.match(
   /getCommentTranslatorSessionStatusAction\(\{ targetLanguage \}\)[\s\S]*setSessionState\(state\)/,
   "mount refresh replaces the initial 30 minute fallback with server-owned session usage"
 );
+assert.match(
+  componentSource,
+  /restoreCommentTranslatorPersistedRealCommentsFeedAction/,
+  "mount refresh can hydrate persisted server-owned safe feed rows after active-session restore"
+);
+assert.match(
+  componentSource,
+  /state\.status === "active"[\s\S]*restoreCommentTranslatorPersistedRealCommentsFeedAction\(\{ targetLanguage \}\)[\s\S]*setRealCommentsFeed\(feed\)/,
+  "active-session mount restore hydrates persisted feed rows immediately from a read-only action"
+);
 assert.match(componentSource, /sessionState\.elapsedSeconds/, "dock displays current elapsed session time");
 assert.match(componentSource, /sessionDailyUsedSeconds/, "dock derives daily used time from sanitized session state");
 assert.match(componentSource, /sessionState\.remainingDailySeconds/, "dock displays daily remaining time from sanitized session state");
@@ -133,6 +143,20 @@ assert.match(
 );
 assert.match(componentSource, /credentialStatusState/, "dock displays provider connection state from sanitized credential status");
 assert.match(componentSource, /copy\.operatorSession\.reconnectGuidance/, "dock renders reconnect guidance without provider target metadata");
+const restoreActionMatch = actionSource.match(
+  /export async function restoreCommentTranslatorPersistedRealCommentsFeedAction[\s\S]*?\n}\n\nexport async function getCommentTranslatorRealCommentsFeedAction/
+);
+assert.ok(restoreActionMatch, "server action exposes a narrowly named persisted-feed restore action");
+assert.match(
+  restoreActionMatch[0],
+  /readCommentTranslatorRealCommentsFeedForActiveSession/,
+  "persisted-feed restore action reads existing server-owned feed state"
+);
+assert.doesNotMatch(
+  restoreActionMatch[0],
+  /runCommentTranslatorLiveProviderSessionStep|readCommentTranslatorBoundedLiveChatPollingTick|resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart|createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/,
+  "persisted-feed restore action is read-only and does not run provider polling or target lookup"
+);
 assert.doesNotMatch(
   actionSource,
   /intent === "heartbeat" \|\| intent === "status"[\s\S]*runCommentTranslatorLiveProviderSessionStep/,

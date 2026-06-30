@@ -623,6 +623,8 @@ const allowedChangedFiles = new Set([
   "app/api/comment-translator/session/route.ts",
   "app/tools/comment-translator/actions.ts",
   "components/comment-translator/CommentTranslatorDock.tsx",
+  "lib/comment-translator-real-comments-feed-shared.ts",
+  "lib/comment-translator-live-provider-session-step.ts",
   "lib/comment-translator-azure-normal-translation-execution.ts",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",

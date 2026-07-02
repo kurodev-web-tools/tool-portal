@@ -90,9 +90,14 @@ import {
 import {
   clearCommentTranslatorAzureNormalTranslationSessionDedupeState
 } from "@/lib/comment-translator-azure-normal-translation-execution";
-import type { CommentTranslatorTargetLanguageId } from "@/lib/comment-translator";
+import type { CommentTranslatorSourceLanguageId, CommentTranslatorTargetLanguageId } from "@/lib/comment-translator";
 
 const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
+
+type CommentTranslatorSessionLanguageActionOptions = {
+  sourceLanguage?: CommentTranslatorSourceLanguageId;
+  targetLanguage?: CommentTranslatorTargetLanguageId;
+};
 
 export async function getYouTubeOAuthCredentialStatusAction() {
   const callerAuthorization = await readCallerAuthorization();
@@ -196,16 +201,18 @@ export async function disconnectYouTubeOAuthCredentialAction() {
   });
 }
 
-export async function getCommentTranslatorSessionStatusAction(options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}) {
+export async function getCommentTranslatorSessionStatusAction(options: CommentTranslatorSessionLanguageActionOptions = {}) {
   return readCommentTranslatorSessionActionResult({
     intent: "status",
+    sourceLanguage: options.sourceLanguage,
     targetLanguage: options.targetLanguage
   });
 }
 
-export async function startCommentTranslatorSessionAction(options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}) {
+export async function startCommentTranslatorSessionAction(options: CommentTranslatorSessionLanguageActionOptions = {}) {
   return readCommentTranslatorSessionActionResult({
     intent: "start",
+    sourceLanguage: options.sourceLanguage,
     targetLanguage: options.targetLanguage
   });
 }
@@ -217,15 +224,16 @@ export async function stopCommentTranslatorSessionAction() {
   });
 }
 
-export async function heartbeatCommentTranslatorSessionAction(options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}) {
+export async function heartbeatCommentTranslatorSessionAction(options: CommentTranslatorSessionLanguageActionOptions = {}) {
   return readCommentTranslatorSessionActionResult({
     intent: "heartbeat",
+    sourceLanguage: options.sourceLanguage,
     targetLanguage: options.targetLanguage
   });
 }
 
 export async function restoreCommentTranslatorPersistedRealCommentsFeedAction(
-  options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}
+  options: CommentTranslatorSessionLanguageActionOptions = {}
 ) {
   void options;
   const callerAuthorization = await readCallerAuthorization();
@@ -249,7 +257,7 @@ export async function restoreCommentTranslatorPersistedRealCommentsFeedAction(
   });
 }
 
-export async function getCommentTranslatorRealCommentsFeedAction(options: { targetLanguage?: CommentTranslatorTargetLanguageId } = {}) {
+export async function getCommentTranslatorRealCommentsFeedAction(options: CommentTranslatorSessionLanguageActionOptions = {}) {
   const callerAuthorization = await readCallerAuthorization();
   const durableFeedStore = createTrustedCommentTranslatorRealCommentsFeedDurableStore();
   const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
@@ -297,7 +305,8 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: { targ
         pollingAdapter: liveProviderRuntime.pollingAdapter,
         durableUsageCounterStore,
         nowMs,
-        targetLanguage: options.targetLanguage ?? "ja"
+        targetLanguage: options.targetLanguage ?? "ja",
+        sourceLanguages: createCommentTranslatorActionSourceLanguages(options.sourceLanguage)
       });
       liveProviderDiagnostics = liveProviderStep.diagnostics;
       if (
@@ -417,10 +426,12 @@ async function readCommentTranslatorFreeBetaDerivedReadiness(): Promise<{
 async function readCommentTranslatorSessionActionResult({
   intent,
   stopReason,
+  sourceLanguage,
   targetLanguage = "ja"
 }: {
   intent: CommentTranslatorSessionCommandIntent;
   stopReason?: CommentTranslatorSessionStopReason;
+  sourceLanguage?: CommentTranslatorSourceLanguageId;
   targetLanguage?: CommentTranslatorTargetLanguageId;
 }) {
   const callerAuthorization = await readCallerAuthorization();
@@ -522,7 +533,8 @@ async function readCommentTranslatorSessionActionResult({
           pollingAdapter: liveProviderRuntime.pollingAdapter,
           durableUsageCounterStore,
           nowMs,
-          targetLanguage
+          targetLanguage,
+          sourceLanguages: createCommentTranslatorActionSourceLanguages(sourceLanguage)
         })
       : null;
   const pollingTick =
@@ -608,6 +620,12 @@ async function readCommentTranslatorSessionActionResult({
   });
 
   return state;
+}
+
+function createCommentTranslatorActionSourceLanguages(
+  sourceLanguage?: CommentTranslatorSourceLanguageId
+): readonly string[] | undefined {
+  return sourceLanguage ? [sourceLanguage] : undefined;
 }
 
 function createCommentTranslatorStatusRestorePollingTick() {

@@ -63,7 +63,7 @@ import {
   readCommentTranslatorRequestIp
 } from "@/lib/comment-translator-abuse-rate-limit-runtime";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { CommentTranslatorTargetLanguageId } from "@/lib/comment-translator";
+import type { CommentTranslatorSourceLanguageId, CommentTranslatorTargetLanguageId } from "@/lib/comment-translator";
 
 export const dynamic = "force-dynamic";
 
@@ -189,7 +189,8 @@ export async function POST(request: NextRequest) {
           pollingAdapter: liveProviderRuntime.pollingAdapter,
           durableUsageCounterStore,
           nowMs,
-          targetLanguage: command.targetLanguage
+          targetLanguage: command.targetLanguage,
+          sourceLanguages: command.sourceLanguage ? [command.sourceLanguage] : undefined
         })
       : null;
   const pollingTick =
@@ -312,6 +313,7 @@ async function readSessionCommand(request: NextRequest): Promise<{
   credentialReferenceId: string | null;
   browserConnected: boolean;
   stopReason: "user-stop" | "browser-disconnect" | undefined;
+  sourceLanguage: CommentTranslatorSourceLanguageId | undefined;
   targetLanguage: CommentTranslatorTargetLanguageId;
 }> {
   const contentType = request.headers.get("content-type") ?? "";
@@ -323,6 +325,7 @@ async function readSessionCommand(request: NextRequest): Promise<{
         credentialReferenceId?: unknown;
         browserConnected?: unknown;
         stopReason?: unknown;
+        sourceLanguage?: unknown;
         targetLanguage?: unknown;
       };
 
@@ -339,6 +342,7 @@ async function readSessionCommand(request: NextRequest): Promise<{
       credentialReferenceId: formData.get("credentialReferenceId"),
       browserConnected: formData.get("browserConnected"),
       stopReason: formData.get("stopReason"),
+      sourceLanguage: formData.get("sourceLanguage"),
       targetLanguage: formData.get("targetLanguage")
     });
   } catch {
@@ -351,12 +355,14 @@ function normalizeCommandBody(body: {
   credentialReferenceId?: unknown;
   browserConnected?: unknown;
   stopReason?: unknown;
+  sourceLanguage?: unknown;
   targetLanguage?: unknown;
 }): {
   intent: CommentTranslatorSessionCommandIntent;
   credentialReferenceId: string | null;
   browserConnected: boolean;
   stopReason: "user-stop" | "browser-disconnect" | undefined;
+  sourceLanguage: CommentTranslatorSourceLanguageId | undefined;
   targetLanguage: CommentTranslatorTargetLanguageId;
 } {
   let intent: CommentTranslatorSessionCommandIntent = "status";
@@ -371,6 +377,7 @@ function normalizeCommandBody(body: {
     body.browserConnected === false || body.browserConnected === "false" || body.intent === "stop" ? false : true;
   const stopReason: "user-stop" | "browser-disconnect" | undefined =
     body.stopReason === "browser-disconnect" ? "browser-disconnect" : body.intent === "stop" ? "user-stop" : undefined;
+  const sourceLanguage = normalizeSessionCommandSourceLanguage(body.sourceLanguage);
   const targetLanguage: CommentTranslatorTargetLanguageId = body.targetLanguage === "en" ? "en" : "ja";
 
   return {
@@ -378,8 +385,13 @@ function normalizeCommandBody(body: {
     credentialReferenceId,
     browserConnected,
     stopReason,
+    sourceLanguage,
     targetLanguage
   };
+}
+
+function normalizeSessionCommandSourceLanguage(value: unknown): CommentTranslatorSourceLanguageId | undefined {
+  return value === "ja" || value === "en" || value === "ko" || value === "zh" ? value : undefined;
 }
 
 async function readCredentialReadiness({

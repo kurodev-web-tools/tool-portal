@@ -69,7 +69,8 @@ export async function runCommentTranslatorLiveProviderSessionStep({
   pollingAdapter,
   durableUsageCounterStore,
   nowMs,
-  targetLanguage
+  targetLanguage,
+  sourceLanguages
 }: {
   activeSession: CommentTranslatorActiveSessionRecord | null;
   usage: CommentTranslatorUsageLedgerSnapshot;
@@ -80,6 +81,7 @@ export async function runCommentTranslatorLiveProviderSessionStep({
   durableUsageCounterStore?: CommentTranslatorDurableUsageCounterStoreFactoryResult;
   nowMs: number;
   targetLanguage: CommentTranslatorTargetLanguageId;
+  sourceLanguages?: readonly string[];
 }): Promise<CommentTranslatorLiveProviderSessionStepResult> {
   let pollingTick = await readCommentTranslatorBoundedLiveChatPollingTick({
     intent: "heartbeat",
@@ -134,6 +136,7 @@ export async function runCommentTranslatorLiveProviderSessionStep({
     messages: normalizedMessages,
     sessionStatus: "active",
     targetLanguage,
+    sourceLanguages,
     callerAuthorization,
     sessionReferenceId: activeSession.sessionReferenceId,
     occurredAtMs: nowMs,

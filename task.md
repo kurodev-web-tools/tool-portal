@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/post-580-cache-hit-quota-accounting-f033`.
+- Current branch: `codex/comment-translator-ja-en-source-wiring`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: PR #580 follow-up P0. Cache-hit translations remain feed-visible but no longer consume provider/AI quota accounting; durable usage writes stay limited to provider-executed/cache-miss translation work.
+- Scope: approved-tester live-test follow-up. Source-language selection now propagates from the dock through server actions / session route / live-provider step into the existing translation language policy so `JA -> EN` does not fall back to default `EN/KR/CN -> EN` and reject the batch.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
@@ -84,6 +84,7 @@ Do these before recording `public-release capable: yes` unless the release owner
 | P0 | Monthly translated character cap enforcement | Complete in `codex/pre-step5-p0-quota-session-hardening`: F10 estimates pending provider-candidate source characters before provider execution and blocks batches that would exceed `20,000 translated characters/month`. |
 | P0 | Live translation success path does not durably increment usage counters | Complete in `codex/post-579-feed-quota-ledger-p0`: F10 writes sanitized provider request and AI usage estimate events to the durable usage ledger after provider success; deterministic contract proves a later durable snapshot sees provider request, current-minute translated message, and monthly translated character increments. Durable write failure surfaces a sanitized feed-unavailable state instead of displaying translated rows without durable accounting. |
 | P0 | Cache-hit translations count toward provider/AI quota accounting | Complete in `codex/post-580-cache-hit-quota-accounting-f033`: provider runtime and F10 durable handoff now count provider/AI usage only for provider-executed/cache-miss translations. Cache-hit rows can still hydrate/translate from server-owned cache, including at per-minute/monthly cap boundaries, without provider execution or durable usage writes. |
+| P0 | Source-language selection stops comments/translations when target is EN | Complete in `codex/comment-translator-ja-en-source-wiring`: dock source selection is passed with target language to server actions and route heartbeat, then forwarded as `sourceLanguages` into live-provider translation execution. Deterministic contract proves `JA -> EN` and `KR/CN -> EN` are policy-ready, source comments become EN provider requests, and EN target-language comments are skipped without rejecting the batch. |
 | P0 | Public UI diagnostics surface | Policy clarified in this slice: keep `data-comment-translator-pre-public-diagnostics="count-only"` as a pre-public temporary debug surface for Step 5 evidence; remove or gate before PL-G6/public promotion. No public gate flip was run. |
 | P1 | Preview feed `skipped` UI | Hide normal-user `skipped` rows where server policy already suppresses target-language/same-batch duplicate rows, or rename internal cache evidence to user-safe wording. Avoid `API free` copy in public UI. |
 | P1 | Duplicate text cache display | Keep `cache hit` / `cached` evidence internally or in compact public copy; ensure duplicate text can display from cache without additional provider API execution. |
@@ -99,6 +100,9 @@ Recommended next PR order:
 
 ## Latest Sanitized Evidence Summary
 
+- PR #582 `[codex] Exclude cache hits from quota accounting` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `fd032b2`; containment was confirmed before this JA->EN follow-up branch.
+- Source-language wiring local verification passed for this implementation slice: new `comment-translator-ja-en-source-wiring-contract` covers `JA -> EN` and `KR/CN -> EN`; public operator session UI contract, UI live provider runtime contract, `npm run lint`, `npx tsc --noEmit`, and `npm run build` also passed. `real-comments-ui-wiring`, `session-start-stop`, and F10 translation execution legacy contracts were attempted but their old changed-file allowlists rejected unrelated/current-branch files (`.codegraph/.gitignore` or the new source-wiring contract), so they were not used as final verifiers for this slice.
+- Width verification: UI layout/CSS/rendered text did not change; only action wiring and backend source-language propagation changed, so `390 / 820 / 1024 / 1280 / 1366px` visual checks were skipped.
 - PR #577 `[codex] Retain pre-public diagnostics counts` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `f60e197`.
 - PR #578 `[codex] Document pre-step5 public launch board` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `ccd6cf6`; containment was confirmed before this slice.
 - PR #579 `[codex] Harden pre-step5 quota session P0` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `af28255`; containment was confirmed before this follow-up branch.

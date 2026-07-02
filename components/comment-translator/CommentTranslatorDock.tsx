@@ -917,12 +917,12 @@ export function CommentTranslatorDock({
       try {
         const state =
           intent === "start"
-            ? await startCommentTranslatorSessionAction({ targetLanguage })
+            ? await startCommentTranslatorSessionAction({ sourceLanguage, targetLanguage })
             : intent === "stop"
               ? await stopCommentTranslatorSessionAction()
               : intent === "heartbeat"
-                ? await heartbeatCommentTranslatorSessionAction({ targetLanguage })
-                : await getCommentTranslatorSessionStatusAction({ targetLanguage });
+                ? await heartbeatCommentTranslatorSessionAction({ sourceLanguage, targetLanguage })
+                : await getCommentTranslatorSessionStatusAction({ sourceLanguage, targetLanguage });
         setSessionState(state);
         if (state.status !== "active") {
           setRealCommentsFeed(
@@ -947,14 +947,14 @@ export function CommentTranslatorDock({
 
     startSessionTransition(async () => {
       try {
-        const state = await getCommentTranslatorSessionStatusAction({ targetLanguage });
+        const state = await getCommentTranslatorSessionStatusAction({ sourceLanguage, targetLanguage });
         if (cancelled) {
           return;
         }
 
         setSessionState(state);
         if (state.status === "active") {
-          const feed = await restoreCommentTranslatorPersistedRealCommentsFeedAction({ targetLanguage });
+          const feed = await restoreCommentTranslatorPersistedRealCommentsFeedAction({ sourceLanguage, targetLanguage });
           if (cancelled) {
             return;
           }
@@ -979,7 +979,7 @@ export function CommentTranslatorDock({
     return () => {
       cancelled = true;
     };
-  }, [copy.operatorSession.actionFailed, startSessionTransition, targetLanguage]);
+  }, [copy.operatorSession.actionFailed, sourceLanguage, startSessionTransition, targetLanguage]);
 
   const refreshRealCommentsFeed = useCallback(() => {
     if (realCommentsFeedRefreshInFlightRef.current) {
@@ -999,7 +999,7 @@ export function CommentTranslatorDock({
     realCommentsFeedRefreshInFlightRef.current = true;
     startRealCommentsFeedTransition(async () => {
       try {
-        const refreshedSession = await heartbeatCommentTranslatorSessionAction({ targetLanguage });
+        const refreshedSession = await heartbeatCommentTranslatorSessionAction({ sourceLanguage, targetLanguage });
         setSessionState(refreshedSession);
         if (refreshedSession.status !== "active") {
           setRealCommentsFeed(
@@ -1011,7 +1011,7 @@ export function CommentTranslatorDock({
           return;
         }
 
-        const feed = await getCommentTranslatorRealCommentsFeedAction({ targetLanguage });
+        const feed = await getCommentTranslatorRealCommentsFeedAction({ sourceLanguage, targetLanguage });
         setRealCommentsFeed(feed);
         setRealCommentsFeedError(null);
       } catch {
@@ -1020,7 +1020,7 @@ export function CommentTranslatorDock({
         realCommentsFeedRefreshInFlightRef.current = false;
       }
     });
-  }, [locale, sessionState.status, targetLanguage]);
+  }, [locale, sessionState.status, sourceLanguage, targetLanguage]);
 
   useEffect(() => {
     function refreshTimeZonePreference() {

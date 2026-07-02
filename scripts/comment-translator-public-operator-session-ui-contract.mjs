@@ -90,8 +90,8 @@ assert.match(
 );
 assert.match(
   componentSource,
-  /getCommentTranslatorSessionStatusAction\(\{ targetLanguage \}\)[\s\S]*setSessionState\(state\)/,
-  "mount refresh replaces the initial 30 minute fallback with server-owned session usage"
+  /getCommentTranslatorSessionStatusAction\(\{ sourceLanguage, targetLanguage \}\)[\s\S]*setSessionState\(state\)/,
+  "mount refresh replaces the initial 30 minute fallback with server-owned session usage for the selected language pair"
 );
 assert.match(
   componentSource,
@@ -100,8 +100,8 @@ assert.match(
 );
 assert.match(
   componentSource,
-  /state\.status === "active"[\s\S]*restoreCommentTranslatorPersistedRealCommentsFeedAction\(\{ targetLanguage \}\)[\s\S]*setRealCommentsFeed\(feed\)/,
-  "active-session mount restore hydrates persisted feed rows immediately from a read-only action"
+  /state\.status === "active"[\s\S]*restoreCommentTranslatorPersistedRealCommentsFeedAction\(\{ sourceLanguage, targetLanguage \}\)[\s\S]*setRealCommentsFeed\(feed\)/,
+  "active-session mount restore hydrates persisted feed rows immediately from a read-only action for the selected language pair"
 );
 assert.match(componentSource, /sessionState\.elapsedSeconds/, "dock displays current elapsed session time");
 assert.match(componentSource, /sessionDailyUsedSeconds/, "dock derives daily used time from sanitized session state");

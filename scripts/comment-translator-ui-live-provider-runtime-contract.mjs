@@ -146,7 +146,7 @@ for (const diagnosticCountField of [
 assert.match(actionsSource, /liveProviderUnavailableReason/, "feed action preserves sanitized live provider unavailable reason");
 assert.match(actionsSource, /attachCommentTranslatorLiveProviderDiagnosticsToFeed/, "feed action returns sanitized live provider diagnostics in feed state");
 assert.match(actionsSource, /polling-runtime-not-wired/, "feed action returns sanitized polling runtime unavailable reason");
-assert.match(dockSource, /const refreshedSession = await heartbeatCommentTranslatorSessionAction\(\{ targetLanguage \}\)/, "manual and auto feed refresh renew the active heartbeat before reading feed");
+assert.match(dockSource, /const refreshedSession = await heartbeatCommentTranslatorSessionAction\(\{ sourceLanguage, targetLanguage \}\)/, "manual and auto feed refresh renew the active heartbeat with the selected source/target pair before reading feed");
 assert.match(dockSource, /setSessionState\(refreshedSession\)/, "feed refresh keeps the visible session state aligned with heartbeat results");
 assert.match(dockSource, /if \(refreshedSession\.status !== "active"\)/, "feed refresh stops reading live feed when heartbeat returns an inactive session");
 assert.match(dockSource, /const liveProviderDiagnostics = realCommentsFeed\.sanitizedSummary\.liveProviderDiagnostics/, "dock reads sanitized live provider diagnostics from feed metadata");

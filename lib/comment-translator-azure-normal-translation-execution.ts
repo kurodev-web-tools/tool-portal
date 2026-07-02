@@ -32,6 +32,9 @@ import {
   createYouTubeLiveCommentTranslatorPipelineRequestsForComments
 } from "./comment-translator-youtube-live-comment-intake-pipeline";
 import {
+  normalizeCommentTranslatorTextForPolicyDedupe
+} from "./comment-translator-language-policy-runtime";
+import {
   attachCommentTranslatorLiveProviderDiagnosticsToFeed,
   type CommentTranslatorLiveProviderDiagnostics,
   type CommentTranslatorRealCommentsDisplayRow,
@@ -660,7 +663,7 @@ function createServerOnlyNormalizedTextBatchDedupeKey({
   targetLanguage: CommentTranslatorTargetLanguageId;
   sourceLanguages?: readonly string[];
 }) {
-  const normalizedText = text.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+  const normalizedText = normalizeCommentTranslatorTextForPolicyDedupe(text);
   const normalizedSources = (sourceLanguages ?? []).map((language) => language.trim().toLocaleLowerCase()).sort().join(",");
   return [normalizedText, targetLanguage.trim().toLocaleLowerCase(), normalizedSources].join("\u0000");
 }

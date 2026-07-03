@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-short-reaction-filter`.
+- Current branch: `codex/comment-translator-public-ui-follow-up-board`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: approved-tester live-test follow-up. Low-value short reactions should not spend provider/quota, short meaningful questions/requests/warnings should remain eligible, and punctuation-only text variants should share policy/cache/dedupe keys without changing raw display text or provider input.
+- Scope: docs/task-board follow-up. Record the agreed public UI cleanup split before opening implementation threads: Stop should retain preview until next Start or manual clear, preview should show YouTube display name for moderation context, and OBS display-name behavior is deferred to the future OBS Dock slice.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
@@ -91,16 +91,20 @@ Do these before recording `public-release capable: yes` unless the release owner
 | P1 | Duplicate text cache display | Keep `cache hit` / `cached` evidence internally or in compact public copy; ensure duplicate text can display from cache without additional provider API execution. |
 | P1 | Free beta usage panel vs right-side Today panel | Remove or merge duplicate "Today" state if Free beta usage already covers the same state. Prefer one authoritative usage/status area. |
 | P1 | Data deletion / retention / source attribution panel | Decide whether to keep as trust/legal information, fold into details/legal/account surfaces, or hide until action paths are meaningful. |
-| P1 | Stop behavior and preview retention | Consider keeping the last safe feed visible in a stopped state instead of clearing preview immediately. Next Start can replace it. |
+| P1 | Stop behavior and preview retention | Planned as next implementation PR: Stop should stop polling/translation/quota use but keep the last safe feed visible as stopped / previous results. Add a manual preview clear action, and let the next Start replace the retained preview. |
+| P1 | Preview author display name for moderation context | Planned as the following implementation PR: show YouTube display name in the normal operator preview so the streamer/moderator can identify who wrote the comment and take manual action in YouTube. Do not expose channel id, author URL/profile image, liveChatId, provider target metadata, owner id, or moderation action controls. |
 | P1 | Step 5 evidence docs | Update PL-G4 / PL-G5 evidence docs with sanitized preview URL labels, pass/fail labels, and counts only. Do not include raw comments or screenshots containing raw comments. |
 
 Recommended next PR order:
 
-1. `Quota/session hardening`: usage refresh, per-minute cap, monthly character cap, server/action contracts.
-2. `Public UI cleanup`: skipped/cache wording, Today panel consolidation, retention/source panel decision, stopped preview behavior, diagnostics gate/remove plan.
+1. `Stop preview retention`: keep the last safe preview after Stop, add manual clear, prove Stop does not poll/translate/account quota, and verify UI widths.
+2. `Preview author display name`: show display name in the operator preview only, keep author identifiers/server metadata out of browser output, and verify retention/delete boundaries.
+3. `Public UI cleanup`: skipped/cache wording, Today panel consolidation, retention/source panel decision, diagnostics gate/remove plan, and final PL-G5 evidence updates.
+4. `OBS Dock display-name policy`: defer until the OBS Dock implementation slice; decide display-name on/off setting, compact layout, and stream-safe visibility there.
 
 ## Latest Sanitized Evidence Summary
 
+- PR #584 `[codex] Skip low-value short reactions before quota` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `4384fb3`; containment was confirmed before this docs/task-board follow-up branch.
 - PR #582 `[codex] Exclude cache hits from quota accounting` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `fd032b2`; containment was confirmed before this JA->EN follow-up branch.
 - Short-reaction / punctuation-only normalization local verification passed for this implementation slice: new `comment-translator-short-reaction-filter-contract` covers low-value short reaction skip before provider handoff, short meaningful question/request/warning eligibility, punctuation-only policy dedupe, same-batch provider-request dedupe, and cross-batch provider cache lookup reuse. `comment-translator-ja-en-source-wiring-contract`, `comment-translator-ui-live-provider-runtime-contract`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence secret scan also passed. Legacy Task/F contract scripts with old changed-file allowlists were attempted but rejected the current touched files rather than product behavior.
 - Source-language wiring local verification passed for this implementation slice: new `comment-translator-ja-en-source-wiring-contract` covers `JA -> EN` and `KR/CN -> EN`; public operator session UI contract, UI live provider runtime contract, `npm run lint`, `npx tsc --noEmit`, and `npm run build` also passed. `real-comments-ui-wiring`, `session-start-stop`, and F10 translation execution legacy contracts were attempted but their old changed-file allowlists rejected unrelated/current-branch files (`.codegraph/.gitignore` or the new source-wiring contract), so they were not used as final verifiers for this slice.

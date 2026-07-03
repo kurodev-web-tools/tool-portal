@@ -9,6 +9,7 @@ import type {
 } from "./comment-translator-provider-boundary";
 import {
   evaluateCommentTranslatorLanguagePolicy,
+  normalizeCommentTranslatorTextForPolicyDedupe,
   type CommentTranslatorLanguagePolicyAcceptedComment
 } from "./comment-translator-language-policy-runtime";
 import type { YouTubeProviderSafeCommentPayload } from "./comment-translator-youtube-input-boundary";
@@ -498,7 +499,7 @@ function isServerOnlyTranslatorProvider(provider: CommentTranslationProvider): b
 }
 
 function createStableTextHash(text: string): string {
-  const normalizedText = text.trim().toLocaleLowerCase();
+  const normalizedText = normalizeCommentTranslatorTextForPolicyDedupe(text);
   let hash = 0x811c9dc5;
   for (let index = 0; index < normalizedText.length; index += 1) {
     hash ^= normalizedText.charCodeAt(index);

@@ -14,9 +14,9 @@
 
 ## Current Branch
 
-- Current branch: `codex/comment-translator-public-ui-follow-up-board`.
+- Current branch: `codex/comment-translator-stop-preview-retention`.
 - Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
-- Scope: docs/task-board follow-up. Record the agreed public UI cleanup split before opening implementation threads: Stop should retain preview until next Start or manual clear, preview should show YouTube display name for moderation context, and OBS display-name behavior is deferred to the future OBS Dock slice.
+- Scope: Stop preview retention + manual Clear preview. Stop stops session/polling/dedupe work but retains the last server-owned safe feed rows in the operator preview, marks them as stopped previous results, and lets either the next Start or manual Clear replace them.
 - Public gate state label: unchanged / blocked.
 - Public-release capable label: no.
 
@@ -91,19 +91,20 @@ Do these before recording `public-release capable: yes` unless the release owner
 | P1 | Duplicate text cache display | Keep `cache hit` / `cached` evidence internally or in compact public copy; ensure duplicate text can display from cache without additional provider API execution. |
 | P1 | Free beta usage panel vs right-side Today panel | Remove or merge duplicate "Today" state if Free beta usage already covers the same state. Prefer one authoritative usage/status area. |
 | P1 | Data deletion / retention / source attribution panel | Decide whether to keep as trust/legal information, fold into details/legal/account surfaces, or hide until action paths are meaningful. |
-| P1 | Stop behavior and preview retention | Planned as next implementation PR: Stop should stop polling/translation/quota use but keep the last safe feed visible as stopped / previous results. Add a manual preview clear action, and let the next Start replace the retained preview. |
+| P1 | Stop behavior and preview retention | Complete in `codex/comment-translator-stop-preview-retention`: Stop no longer clears the server-owned safe feed boundary, stopped retained rows show a previous-results state, manual Clear preview clears via the safe feed boundary and locally replaces the preview, and the next active Start clears retained rows before new session/feed results. Stop/Clear remain provider/polling/target-lookup/translation/quota-accounting non-executing by deterministic contract. |
 | P1 | Preview author display name for moderation context | Planned as the following implementation PR: show YouTube display name in the normal operator preview so the streamer/moderator can identify who wrote the comment and take manual action in YouTube. Do not expose channel id, author URL/profile image, liveChatId, provider target metadata, owner id, or moderation action controls. |
 | P1 | Step 5 evidence docs | Update PL-G4 / PL-G5 evidence docs with sanitized preview URL labels, pass/fail labels, and counts only. Do not include raw comments or screenshots containing raw comments. |
 
 Recommended next PR order:
 
-1. `Stop preview retention`: keep the last safe preview after Stop, add manual clear, prove Stop does not poll/translate/account quota, and verify UI widths.
-2. `Preview author display name`: show display name in the operator preview only, keep author identifiers/server metadata out of browser output, and verify retention/delete boundaries.
-3. `Public UI cleanup`: skipped/cache wording, Today panel consolidation, retention/source panel decision, diagnostics gate/remove plan, and final PL-G5 evidence updates.
-4. `OBS Dock display-name policy`: defer until the OBS Dock implementation slice; decide display-name on/off setting, compact layout, and stream-safe visibility there.
+1. `Preview author display name`: show display name in the operator preview only, keep author identifiers/server metadata out of browser output, and verify retention/delete boundaries.
+2. `Public UI cleanup`: skipped/cache wording, Today panel consolidation, retention/source panel decision, diagnostics gate/remove plan, and final PL-G5 evidence updates.
+3. `OBS Dock display-name policy`: defer until the OBS Dock implementation slice; decide display-name on/off setting, compact layout, and stream-safe visibility there.
 
 ## Latest Sanitized Evidence Summary
 
+- Stop preview retention local verification passed in `codex/comment-translator-stop-preview-retention`: new `comment-translator-stop-preview-retention-contract` covered Stop retaining server-owned safe feed rows, manual Clear preview clearing through the safe feed boundary without provider/polling/target-lookup/translation/quota-accounting work, stopped previous-results UI, and active Start clearing retained rows before new session/feed results. Existing session start/stop, public operator session UI, UI live provider runtime, real comments UI wiring, PL-G3 feed bridge/session persistence, and public preview feed UX contracts passed. `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, TypeScript no-excuse scan, runtime changed-files high-confidence secret scan, and all added-lines high-confidence secret scan passed.
+- Width verification for local private-gate fallback passed at `390 / 820 / 1024 / 1280 / 1366px`: page identity OK, private-gate fallback visible, no horizontal overflow, no framework overlay, and console error/warning counts were 0. Authenticated allowed-tester state was unavailable locally, so Stop-retention/Clear browser-visible behavior is deterministic-contract covered only.
 - PR #584 `[codex] Skip low-value short reactions before quota` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `4384fb3`; containment was confirmed before this docs/task-board follow-up branch.
 - PR #582 `[codex] Exclude cache hits from quota accounting` is merged into `origin/codex/comment-translator-free-public-beta-integration` as `fd032b2`; containment was confirmed before this JA->EN follow-up branch.
 - Short-reaction / punctuation-only normalization local verification passed for this implementation slice: new `comment-translator-short-reaction-filter-contract` covers low-value short reaction skip before provider handoff, short meaningful question/request/warning eligibility, punctuation-only policy dedupe, same-batch provider-request dedupe, and cross-batch provider cache lookup reuse. `comment-translator-ja-en-source-wiring-contract`, `comment-translator-ui-live-provider-runtime-contract`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence secret scan also passed. Legacy Task/F contract scripts with old changed-file allowlists were attempted but rejected the current touched files rather than product behavior.
@@ -127,6 +128,7 @@ Recommended next PR order:
 - Public-release capable remains `no` until pre-Step 5 hardening is resolved or explicitly accepted, PL-G5 release-owner approval is recorded, and PL-G6 public access change is separately approved and executed.
 - Pre-public diagnostics are intentionally temporary and must be removed or gated before PL-G6/public promotion; this slice leaves them count-only and pre-public.
 - Authenticated allowed-tester browser-visible active-session reload was not run locally; contract coverage proves server/action/UI restore semantics without live/provider execution.
+- Authenticated allowed-tester browser-visible Stop-retention/Clear flow was not run locally; contract coverage proves Stop/Clear semantics without live/provider execution, and only private-gate fallback layout was browser-verified.
 - Live provider execution and deployed/browser confirmation were not run for the short-reaction / punctuation-only normalization slice. Browser testing should use selected source-language pairs and include low-value short reactions, short meaningful comments, and punctuation-only repeats with sanitized observation only.
 - Live provider execution and deployed/browser confirmation were not run in this cache-hit quota follow-up. Cache-hit quota accounting is deterministic-contract covered only until an approved same-thread live retry confirms it against deployed state.
 - `comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs` and PL-G4 deployed-smoke contract still contain older evidence-shape assertions and were not used as final verifiers for this cache-hit quota slice.

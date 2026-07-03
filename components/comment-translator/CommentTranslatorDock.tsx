@@ -11,6 +11,7 @@ import {
   recordCommentTranslatorCreatorLockedClickAction,
   requestCommentTranslatorDataDeletionAction,
   restoreCommentTranslatorPersistedRealCommentsFeedAction,
+  clearCommentTranslatorPreviewFeedAction,
   startCommentTranslatorSessionAction,
   stopCommentTranslatorSessionAction
 } from "@/app/tools/comment-translator/actions";
@@ -97,6 +98,7 @@ type OperatorSessionUsageDisplay = {
 type OperatorSessionState = {
   status: keyof CommentTranslatorUiCopy["operatorSession"]["states"];
   plan: "free" | "paid";
+  sessionReferenceId?: string | null;
   elapsedSeconds: number;
   remainingSessionSeconds: number;
   remainingDailySeconds: number;
@@ -217,6 +219,7 @@ const initialOperatorSessionUsageDisplay: OperatorSessionUsageDisplay = {
 const initialOperatorSessionState: OperatorSessionState = {
   status: "not-started",
   plan: "free",
+  sessionReferenceId: null,
   elapsedSeconds: 0,
   remainingSessionSeconds: freeDailyLimitSeconds,
   remainingDailySeconds: freeDailyLimitSeconds,
@@ -889,6 +892,7 @@ export function CommentTranslatorDock({
   const realCommentsFeedUnavailableMessage = realCommentsFeed.unavailableReason
     ? `unavailableReason: ${realCommentsFeed.unavailableReason}`
     : null;
+  const hasRetainedStoppedPreviewRows = sessionState.status === "stopped" && feedComments.length > 0;
   const startBlockedByRateLimit = sessionState.rateLimit === "exceeded";
   const showReconnectGuidance =
     credentialStatusState !== "available" ||
@@ -924,12 +928,13 @@ export function CommentTranslatorDock({
                 ? await heartbeatCommentTranslatorSessionAction({ sourceLanguage, targetLanguage })
                 : await getCommentTranslatorSessionStatusAction({ sourceLanguage, targetLanguage });
         setSessionState(state);
-        if (state.status !== "active") {
+        if (intent === "start" && state.status === "active") {
           setRealCommentsFeed(
             createUnavailableCommentTranslatorRealCommentsFeedState({
               reason: "session-not-active"
             })
           );
+          setRealCommentsFeedError(null);
         }
         setSessionError(null);
       } catch {
@@ -961,10 +966,12 @@ export function CommentTranslatorDock({
           setRealCommentsFeed(feed);
           setRealCommentsFeedError(null);
         } else {
-          setRealCommentsFeed(
-            createUnavailableCommentTranslatorRealCommentsFeedState({
-              reason: "session-not-active"
-            })
+          setRealCommentsFeed((currentFeed) =>
+            currentFeed.rows.length > 0
+              ? currentFeed
+              : createUnavailableCommentTranslatorRealCommentsFeedState({
+                  reason: "session-not-active"
+                })
           );
           setRealCommentsFeedError(null);
         }
@@ -987,10 +994,12 @@ export function CommentTranslatorDock({
     }
 
     if (sessionState.status !== "active") {
-      setRealCommentsFeed(
-        createUnavailableCommentTranslatorRealCommentsFeedState({
-          reason: "session-not-active"
-        })
+      setRealCommentsFeed((currentFeed) =>
+        currentFeed.rows.length > 0
+          ? currentFeed
+          : createUnavailableCommentTranslatorRealCommentsFeedState({
+              reason: "session-not-active"
+            })
       );
       setRealCommentsFeedError(null);
       return;
@@ -1002,10 +1011,12 @@ export function CommentTranslatorDock({
         const refreshedSession = await heartbeatCommentTranslatorSessionAction({ sourceLanguage, targetLanguage });
         setSessionState(refreshedSession);
         if (refreshedSession.status !== "active") {
-          setRealCommentsFeed(
-            createUnavailableCommentTranslatorRealCommentsFeedState({
-              reason: "session-not-active"
-            })
+          setRealCommentsFeed((currentFeed) =>
+            currentFeed.rows.length > 0
+              ? currentFeed
+              : createUnavailableCommentTranslatorRealCommentsFeedState({
+                  reason: "session-not-active"
+                })
           );
           setRealCommentsFeedError(null);
           return;
@@ -1021,6 +1032,20 @@ export function CommentTranslatorDock({
       }
     });
   }, [locale, sessionState.status, sourceLanguage, targetLanguage]);
+
+  function clearRetainedPreviewFeed() {
+    startRealCommentsFeedTransition(async () => {
+      try {
+        const clearedFeed = await clearCommentTranslatorPreviewFeedAction({
+          sessionReferenceId: sessionState.sessionReferenceId
+        });
+        setRealCommentsFeed(clearedFeed);
+        setRealCommentsFeedError(null);
+      } catch {
+        setRealCommentsFeedError(locale === "ja" ? "プレビューをクリアできませんでした" : "Could not clear preview");
+      }
+    });
+  }
 
   useEffect(() => {
     function refreshTimeZonePreference() {
@@ -1611,6 +1636,30 @@ export function CommentTranslatorDock({
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+              ) : null}
+              {hasRetainedStoppedPreviewRows ? (
+                <div
+                  data-comment-translator-preview-retention="stopped-previous-results"
+                  className="rounded-base border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900"
+                >
+                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div className="min-w-0">
+                      <p className="break-words font-black">{copy.operatorSession.previousResultsTitle}</p>
+                      <p className="mt-1 break-words font-semibold leading-5 text-amber-800">
+                        {copy.operatorSession.previousResultsBody}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      data-comment-translator-preview-clear="manual-safe-feed-clear"
+                      onClick={clearRetainedPreviewFeed}
+                      disabled={isRealCommentsFeedPending}
+                      className="min-h-10 rounded-base border border-amber-300 bg-white px-3 py-2 text-xs font-black text-amber-900 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                    >
+                      {isRealCommentsFeedPending ? (locale === "ja" ? "クリア中" : "Clearing") : copy.actions.clearPreview}
+                    </button>
                   </div>
                 </div>
               ) : null}

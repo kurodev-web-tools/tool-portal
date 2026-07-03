@@ -83,6 +83,7 @@ assert.match(componentSource, /data-public-operator-session-ui="sanitized-sessio
 assert.match(componentSource, /startCommentTranslatorSessionAction/, "dock wires the Start control to the server action");
 assert.match(componentSource, /stopCommentTranslatorSessionAction/, "dock wires the Stop control to the server action");
 assert.match(componentSource, /heartbeatCommentTranslatorSessionAction/, "dock wires a heartbeat/status refresh control");
+assert.match(componentSource, /clearCommentTranslatorPreviewFeedAction/, "dock wires manual Clear preview to a server action");
 assert.match(
   componentSource,
   /data-comment-translator-session-refresh-on-mount="server-status-restore"/,
@@ -117,13 +118,23 @@ assert.match(componentSource, /startBlockedByRateLimit/, "dock derives disabled 
 assert.match(componentSource, /sessionState\.rateLimit === "exceeded"/, "dock detects rate-limit state separately from usage policy");
 assert.match(
   componentSource,
-  /state\.status !== "active"[\s\S]*createUnavailableCommentTranslatorRealCommentsFeedState\(\{\s*reason:\s*"session-not-active"/,
-  "dock clears browser-visible feed to session-not-active when Start returns stopped"
+  /if \(intent === "start" && state\.status === "active"\)[\s\S]*createUnavailableCommentTranslatorRealCommentsFeedState\(\{\s*reason:\s*"session-not-active"/,
+  "dock clears retained previous results when the next Start becomes active"
 );
 assert.match(
   componentSource,
-  /sessionState\.status !== "active"[\s\S]*setRealCommentsFeed[\s\S]*reason:\s*"session-not-active"[\s\S]*return;/,
-  "manual feed refresh does not call provider polling while session is stopped"
+  /sessionState\.status !== "active"[\s\S]*currentFeed\.rows\.length > 0[\s\S]*return;/,
+  "manual feed refresh preserves retained rows and does not call provider polling while session is stopped"
+);
+assert.match(
+  componentSource,
+  /data-comment-translator-preview-retention="stopped-previous-results"/,
+  "dock marks stopped previous-results rows in the preview"
+);
+assert.match(
+  componentSource,
+  /data-comment-translator-preview-clear="manual-safe-feed-clear"/,
+  "dock exposes manual Clear preview only through the safe feed boundary"
 );
 assert.match(
   componentSource,
@@ -156,6 +167,20 @@ assert.doesNotMatch(
   restoreActionMatch[0],
   /runCommentTranslatorLiveProviderSessionStep|readCommentTranslatorBoundedLiveChatPollingTick|resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart|createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/,
   "persisted-feed restore action is read-only and does not run provider polling or target lookup"
+);
+const clearPreviewActionMatch = actionSource.match(
+  /export async function clearCommentTranslatorPreviewFeedAction[\s\S]*?\r?\n}\r?\n\r?\nexport async function heartbeatCommentTranslatorSessionAction/
+);
+assert.ok(clearPreviewActionMatch, "server action exposes a narrowly named manual preview clear action");
+assert.match(
+  clearPreviewActionMatch[0],
+  /clearCommentTranslatorRealCommentsFeedForSession/,
+  "manual preview clear uses the server-owned safe feed boundary"
+);
+assert.doesNotMatch(
+  clearPreviewActionMatch[0],
+  /readCommentTranslatorSessionActionResult|runCommentTranslatorLiveProviderSessionStep|readCommentTranslatorBoundedLiveChatPollingTick|resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart|recordCommentTranslatorDurableSessionLedgerStateOrFailClosed|recordInMemoryCommentTranslatorSessionLedgerState/,
+  "manual preview clear does not start/stop a session, poll, target-lookup, translate, or write usage accounting"
 );
 assert.doesNotMatch(
   actionSource,

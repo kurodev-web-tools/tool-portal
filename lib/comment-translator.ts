@@ -182,7 +182,8 @@ export const commentTranslatorUiCopy = {
       refreshCredentialStatus: "認証ステータスを確認",
       startSession: "Start",
       stopSession: "Stop",
-      refreshSession: "状態更新"
+      refreshSession: "状態更新",
+      clearPreview: "プレビューをクリア"
     },
     manualResults: {
       translated: { label: "翻訳済みプレビュー", helper: "決定的なプレビュー翻訳を付ける" },
@@ -244,6 +245,8 @@ export const commentTranslatorUiCopy = {
       usageStartBlockedBody: "Start前のserver-owned usage checkで上限または利用状況ブロックを検出しました。",
       rateLimitStartBlockedTitle: "Start操作が短時間に集中しています",
       rateLimitStartBlockedBody: "少し待ってから再Startしてください。再試行目安:",
+      previousResultsTitle: "停止済みの前回結果を表示中",
+      previousResultsBody: "Stop後は新しい取得・翻訳・使用量消費を止めたまま、最後の安全なプレビューだけを残します。次のStartまたは手動クリアで置き換わります。",
       perMinuteRemaining: "件/分 残り",
       usageStates: {
         available: "利用可能",
@@ -549,7 +552,8 @@ export const commentTranslatorUiCopy = {
       refreshCredentialStatus: "Check credential status",
       startSession: "Start",
       stopSession: "Stop",
-      refreshSession: "Refresh status"
+      refreshSession: "Refresh status",
+      clearPreview: "Clear preview"
     },
     manualResults: {
       translated: { label: "Translated preview", helper: "Attach deterministic preview translation" },
@@ -611,6 +615,8 @@ export const commentTranslatorUiCopy = {
       usageStartBlockedBody: "The server-owned usage check found a limit or usage blocker before Start.",
       rateLimitStartBlockedTitle: "Too many Start attempts",
       rateLimitStartBlockedBody: "Wait briefly before starting again. Retry after:",
+      previousResultsTitle: "Showing stopped previous results",
+      previousResultsBody: "After Stop, new polling, translation, and usage consumption stay off while the last safe preview remains visible. The next Start or manual clear replaces it.",
       perMinuteRemaining: "messages/min remaining",
       usageStates: {
         available: "Available",

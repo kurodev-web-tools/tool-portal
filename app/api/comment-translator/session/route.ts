@@ -45,12 +45,6 @@ import {
 import { createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter } from "@/lib/comment-translator-youtube-live-provider-runtime-adapter";
 import { runCommentTranslatorLiveProviderSessionStep } from "@/lib/comment-translator-live-provider-session-step";
 import {
-  clearCommentTranslatorRealCommentsFeedForSession
-} from "@/lib/comment-translator-real-comments-feed-session-bridge";
-import {
-  createTrustedCommentTranslatorRealCommentsFeedDurableStore
-} from "@/lib/comment-translator-real-comments-feed-durable-store";
-import {
   clearCommentTranslatorAzureNormalTranslationSessionDedupeState
 } from "@/lib/comment-translator-azure-normal-translation-execution";
 import {
@@ -264,11 +258,6 @@ export async function POST(request: NextRequest) {
   if (state.status === "stopped") {
     clearCommentTranslatorBoundedLiveChatPollingState(state.sessionReferenceId);
     clearCommentTranslatorAzureNormalTranslationSessionDedupeState(state.sessionReferenceId);
-    await clearCommentTranslatorRealCommentsFeedForSession({
-      callerAuthorization,
-      sessionReferenceId: state.sessionReferenceId,
-      durableFeedStore: createTrustedCommentTranslatorRealCommentsFeedDurableStore()
-    });
   }
 
   persistInMemoryCommentTranslatorActiveSession({ callerAuthorization, state });

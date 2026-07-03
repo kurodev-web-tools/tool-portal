@@ -305,6 +305,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
+  "scripts/comment-translator-stop-preview-retention-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

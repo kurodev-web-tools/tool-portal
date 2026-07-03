@@ -611,6 +611,7 @@ for (const file of changedFiles()) {
     "scripts/comment-translator-public-operator-session-ui-contract.mjs",
     "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
     "scripts/comment-translator-session-start-stop-contract.mjs",
+    "scripts/comment-translator-stop-preview-retention-contract.mjs",
     "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
     "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
     "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",

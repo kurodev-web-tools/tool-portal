@@ -224,6 +224,23 @@ export async function stopCommentTranslatorSessionAction() {
   });
 }
 
+export async function clearCommentTranslatorPreviewFeedAction({
+  sessionReferenceId
+}: {
+  sessionReferenceId?: string | null;
+} = {}) {
+  const callerAuthorization = await readCallerAuthorization();
+  await clearCommentTranslatorRealCommentsFeedForSession({
+    callerAuthorization,
+    sessionReferenceId,
+    durableFeedStore: createTrustedCommentTranslatorRealCommentsFeedDurableStore()
+  });
+
+  return createUnavailableCommentTranslatorRealCommentsFeedState({
+    reason: "session-not-active"
+  });
+}
+
 export async function heartbeatCommentTranslatorSessionAction(options: CommentTranslatorSessionLanguageActionOptions = {}) {
   return readCommentTranslatorSessionActionResult({
     intent: "heartbeat",
@@ -603,11 +620,6 @@ async function readCommentTranslatorSessionActionResult({
   if (state.status === "stopped") {
     clearCommentTranslatorBoundedLiveChatPollingState(state.sessionReferenceId);
     clearCommentTranslatorAzureNormalTranslationSessionDedupeState(state.sessionReferenceId);
-    await clearCommentTranslatorRealCommentsFeedForSession({
-      callerAuthorization,
-      sessionReferenceId: state.sessionReferenceId,
-      durableFeedStore: createTrustedCommentTranslatorRealCommentsFeedDurableStore()
-    });
   }
 
   persistInMemoryCommentTranslatorActiveSession({ callerAuthorization, state });

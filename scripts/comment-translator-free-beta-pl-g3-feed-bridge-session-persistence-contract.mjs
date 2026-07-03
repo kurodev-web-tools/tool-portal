@@ -151,7 +151,7 @@ assert.match(bridgeSource, /^import "server-only";/m, "feed bridge is server-onl
 assert.match(bridgeSource, /commentTranslatorRealCommentsFeedSessionBridgeContract/, "bridge exposes a focused contract");
 assert.match(bridgeSource, /persistCommentTranslatorRealCommentsFeedForActiveSession/, "bridge can persist safe feed rows for an active session");
 assert.match(bridgeSource, /readCommentTranslatorRealCommentsFeedForActiveSession/, "bridge can read safe feed rows for an active session");
-assert.match(bridgeSource, /clearCommentTranslatorRealCommentsFeedForSession/, "bridge can clear rows when a session stops");
+assert.match(bridgeSource, /clearCommentTranslatorRealCommentsFeedForSession/, "bridge can clear rows for the manual preview clear action");
 assert.match(bridgeSource, /durableFeedStore/, "bridge accepts a durable feed store boundary");
 assert.doesNotMatch(bridgeSource, /localStorage|sessionStorage|indexedDB/i, "bridge does not add browser storage");
 const hardCodedPrivateValuePattern = /(?:liveChatId|nextPageToken|providerChannelId|ownerUserId)\s*[:=]\s*["'][^"']+["']/i;
@@ -174,8 +174,10 @@ assert.match(f10Source, /persistCommentTranslatorRealCommentsFeedForActiveSessio
 assert.match(f10Source, /feedPersistenceStore/, "F10 can pass the durable feed store into the bridge");
 assert.match(actionsSource, /readCommentTranslatorRealCommentsFeedForActiveSession/, "feed server action reads the bridge instead of fixed unavailable");
 assert.match(actionsSource, /createTrustedCommentTranslatorRealCommentsFeedDurableStore/, "browser feed action reads through the trusted durable feed store");
-assert.match(sessionRouteSource, /clearCommentTranslatorRealCommentsFeedForSession/, "session API stop clears the server-owned feed snapshot");
-assert.match(sessionRouteSource, /createTrustedCommentTranslatorRealCommentsFeedDurableStore/, "session API stop uses the trusted durable feed store cleanup boundary");
+assert.match(actionsSource, /clearCommentTranslatorPreviewFeedAction/, "manual clear action exposes the preview feed clear boundary");
+assert.match(actionsSource, /clearCommentTranslatorRealCommentsFeedForSession/, "manual clear action can clear the server-owned feed snapshot");
+assert.doesNotMatch(sessionRouteSource, /clearCommentTranslatorRealCommentsFeedForSession/, "session API Stop retains the server-owned feed snapshot");
+assert.doesNotMatch(sessionRouteSource, /createTrustedCommentTranslatorRealCommentsFeedDurableStore/, "session API Stop does not run durable feed cleanup");
 assert.doesNotMatch(
   actionsSource,
   /getCommentTranslatorRealCommentsFeedAction\(\)[\s\S]{0,160}return createUnavailableCommentTranslatorRealCommentsFeedState\(\{\s*reason:\s*"live-provider-polling-not-approved"/,
@@ -440,6 +442,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-live-message-normalization.ts",
   "lib/comment-translator-real-comments-feed-shared.ts",
   "lib/comment-translator-real-comments-ui-wiring.ts",
+  "lib/comment-translator.ts",
   "lib/comment-translator-server-only-live-chat-target-lookup.ts",
   "components/comment-translator/CommentTranslatorDock.tsx",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
@@ -454,6 +457,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
   "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
+  "scripts/comment-translator-stop-preview-retention-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

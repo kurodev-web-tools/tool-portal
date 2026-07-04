@@ -146,8 +146,8 @@ assert.match(intakePipelineSource, /createYouTubeLiveCommentTranslatorPipelineRe
 assert.match(pollingWiringSource, /rawComments:\s*"not-returned-by-design"/, "F7 still keeps raw polling comments out of browser-safe metadata");
 assert.match(readinessDoc, /F8 live message normalization/i, "durable readiness doc records F8");
 assert.match(gapAudit, /F8[\s\S]*Live message normalization/i, "gap audit records F8 normalization");
-assert.match(taskSource, /F8 Live message normalization/i, "task.md records F8 active work");
-assert.match(taskSource, /Width checks skipped[\s\S]*no UI\/CSS\/rendered route\/visible layout change/i, "task.md records F8 width-check skip reason");
+assert.match(taskSource, /Preview author display name/i, "task.md records the current author display-name slice");
+assert.match(taskSource, /390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i, "task.md records the required UI width-check widths");
 
 const normalization = loadTsModule(normalizationPath);
 
@@ -185,6 +185,7 @@ const normalized = normalization.normalizeCommentTranslatorLiveMessages({
         textMessageDetails: { messageText: "こんにちは" }
       },
       authorDetails: {
+        displayName: "  F8 Viewer  ",
         channelId: "author-channel-id-never-output",
         channelUrl: "https://youtube.example/author-never-output",
         profileImageUrl: "https://images.example/profile-never-output.png",
@@ -206,6 +207,7 @@ const normalized = normalization.normalizeCommentTranslatorLiveMessages({
         }
       },
       authorDetails: {
+        displayName: "F8 Supporter",
         channelId: "super-chat-author-never-output",
         profileImageUrl: "https://images.example/super-chat-never-output.png",
         isChatSponsor: true
@@ -303,7 +305,9 @@ assert.equal(normalized.nextState.deletedMessageReferenceIds.includes("yt-text-1
 
 const byKind = new Map(normalized.normalizedMessages.map((message) => [message.kind, message]));
 assert.equal(byKind.get("text").text, "こんにちは");
+assert.equal(byKind.get("text").authorDisplayName, "F8 Viewer");
 assert.equal(byKind.get("super-chat").purchase.kind, "super-chat");
+assert.equal(byKind.get("super-chat").authorDisplayName, "F8 Supporter");
 assert.equal(byKind.get("super-chat").purchase.amountDisplayString, "JPY 500");
 assert.equal(byKind.get("super-sticker").purchase.kind, "super-sticker");
 assert.equal(byKind.get("super-sticker").text, "Nice sticker");
@@ -316,6 +320,8 @@ assert.equal(byKind.get("ended").terminalSignal, "stream-ended");
 const browserRows = normalization.projectCommentTranslatorNormalizedLiveMessagesForBrowser(normalized.normalizedMessages);
 assert.equal(browserRows.length, 8);
 assert.equal(browserRows.every((row) => row.provider === "youtube"), true);
+assert.equal(browserRows.find((row) => row.kind === "text").authorDisplayName, "F8 Viewer");
+assert.equal(browserRows.find((row) => row.kind === "super-chat").authorDisplayName, "F8 Supporter");
 assert.equal(browserRows.every((row) => row.rawProviderPayload === "not-returned-by-design"), true);
 assert.equal(browserRows.every((row) => row.authorChannelMaterial === "not-returned-by-design"), true);
 assert.equal(browserRows.find((row) => row.kind === "deleted").text, null);
@@ -345,9 +351,25 @@ for (const source of [
 
 const allowedChangedFiles = new Set([
   normalizationPath,
+  "lib/comment-translator-real-comments-feed-shared.ts",
+  "lib/comment-translator-real-comments-ui-wiring.ts",
+  "lib/comment-translator-youtube-input-boundary.ts",
+  "lib/comment-translator-youtube-runtime-foundation.ts",
+  "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
+  "lib/comment-translator-youtube-live-comment-intake-pipeline.ts",
+  "components/comment-translator/CommentTranslatorDock.tsx",
   readinessDocPath,
   gapAuditPath,
   "scripts/comment-translator-live-message-normalization-contract.mjs",
+  "scripts/comment-translator-preview-author-display-name-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-youtube-input-boundary-contract.mjs",
+  "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
+  "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
+  "scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

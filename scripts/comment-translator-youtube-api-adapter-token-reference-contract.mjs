@@ -17,7 +17,7 @@ function exists(relativePath) {
 
 function changedFiles() {
   try {
-    const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+    const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"]
@@ -391,7 +391,8 @@ assert.deepEqual(
       commentId: "comment-contract-1",
       publishedAt: "2026-05-31T05:00:00.000Z",
       text: "Adapter contract comment",
-      platformLanguageHint: "en"
+      platformLanguageHint: "en",
+      authorDisplayName: null
     }
   ],
   "adapter emits sanitized provider-safe comment payload only"
@@ -450,17 +451,18 @@ assert.ok(
 );
 assert.match(
   taskSource,
-  /YouTube Google API adapter \+ token reference resolver design/i,
-  "task.md records the adapter and token reference resolver slice"
+  /Preview author display name/i,
+  "task.md records the current preview author display-name slice"
 );
 assert.match(
   taskSource,
-  /safe live Google API smoke.*not run|safe live YouTube login \/ OAuth \/ owner verification \/ Live Chat polling smoke は未実施/i,
-  "task.md records the live smoke unchecked scope"
+  /390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i,
+  "task.md records the required UI width-check widths"
 );
 
 const separateImplementationFiles = new Set([
   "lib/comment-translator-youtube-token-store-runtime.ts",
+  "components/comment-translator/CommentTranslatorDock.tsx",
   "app/api/comment-translator/youtube/credential-status/route.ts",
   "app/tools/comment-translator/actions.ts",
   "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",

@@ -49,6 +49,7 @@ export type CommentTranslatorRealCommentsDisplayRow = {
   sourceAttributionLabel: "Source: YouTube Live Chat";
   role: "owner" | "moderator" | "member" | "viewer" | "unknown";
   authorLabel: "YouTube viewer";
+  authorDisplayName: string | null;
   originalText: string | null;
   translatedText: string | null;
   targetLanguage: CommentTranslatorTargetLanguageId;
@@ -199,7 +200,7 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
         locale,
         timeZone
       }),
-      authorName: row.authorLabel,
+      authorName: row.authorDisplayName ?? row.authorLabel,
       source: "server",
       sourceLabel: row.sourceAttributionLabel,
       sourceLanguage,

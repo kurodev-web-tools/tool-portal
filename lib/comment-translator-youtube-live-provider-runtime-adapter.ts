@@ -417,6 +417,7 @@ function mapLiveChatMessage(item: unknown) {
   const record = asRecord(item);
   const snippet = asRecord(record.snippet);
   const details = asRecord(snippet.textMessageDetails);
+  const authorDetails = asRecord(record.authorDetails);
   const id = readString(record.id);
   const publishedAt = readString(snippet.publishedAt);
   const text = readString(details.messageText) ?? readString(snippet.displayMessage);
@@ -429,8 +430,14 @@ function mapLiveChatMessage(item: unknown) {
     id,
     publishedAt,
     text,
-    platformLanguageHint: null
+    platformLanguageHint: null,
+    authorDisplayName: normalizeAuthorDisplayName(readString(authorDetails.displayName))
   };
+}
+
+function normalizeAuthorDisplayName(value: string | null) {
+  const normalized = value?.trim().replace(/\s+/g, " ");
+  return normalized ? normalized : null;
 }
 
 function mapFailedPollingResponse({

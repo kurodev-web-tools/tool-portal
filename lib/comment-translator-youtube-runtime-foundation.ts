@@ -16,7 +16,7 @@ export type YouTubeOwnerPollingRuntimeContract = {
   rateLimit: "recoverable-backoff";
   retry: "bounded-retry-without-network-runtime";
   terminalState: "explicit-stop-reason";
-  sanitizedCommentBridgeAllowedFields: readonly ["commentId", "publishedAt", "text", "platformLanguageHint"];
+  sanitizedCommentBridgeAllowedFields: readonly ["commentId", "publishedAt", "text", "platformLanguageHint", "authorDisplayName"];
   forbiddenRuntimeStorage: readonly [
     "localStorage",
     "IndexedDB",
@@ -125,6 +125,7 @@ export type YouTubeLiveChatSanitizableMessage = {
   publishedAt: string;
   text: string;
   platformLanguageHint: string | null;
+  authorDisplayName?: string | null;
   readonly [key: string]: unknown;
 };
 
@@ -2441,7 +2442,7 @@ export const youtubeOwnerPollingRuntimeContract = {
   rateLimit: "recoverable-backoff",
   retry: "bounded-retry-without-network-runtime",
   terminalState: "explicit-stop-reason",
-  sanitizedCommentBridgeAllowedFields: ["commentId", "publishedAt", "text", "platformLanguageHint"],
+  sanitizedCommentBridgeAllowedFields: ["commentId", "publishedAt", "text", "platformLanguageHint", "authorDisplayName"],
   forbiddenRuntimeStorage: ["localStorage", "IndexedDB", "Supabase schema", "migration", "RLS policy", "handoff payload"],
   providerCoupling: "forbidden-direct-import-or-call",
   quotaWrite: "not-implemented"
@@ -6926,8 +6927,14 @@ export function sanitizeYouTubeLiveChatMessage(
     commentId,
     publishedAt: message.publishedAt,
     text: message.text,
-    platformLanguageHint: message.platformLanguageHint
+    platformLanguageHint: message.platformLanguageHint,
+    authorDisplayName: normalizeYouTubeAuthorDisplayName(message.authorDisplayName)
   };
+}
+
+function normalizeYouTubeAuthorDisplayName(value: string | null | undefined): string | null {
+  const normalized = value?.trim().replace(/\s+/g, " ");
+  return normalized ? normalized : null;
 }
 
 export function advanceYouTubeLiveChatPollingState(

@@ -269,6 +269,7 @@ const normalized = normalization.normalizeCommentTranslatorLiveMessages({
         textMessageDetails: { messageText: "safe bridge text" }
       },
       authorDetails: {
+        displayName: "PLG3 Viewer",
         channelId: "plg3-author-channel-never-output",
         channelUrl: "https://youtube.example/plg3-author-never-output",
         profileImageUrl: "https://images.example/plg3-profile-never-output.png"
@@ -323,6 +324,7 @@ const result = await f10.executeCommentTranslatorAzureNormalTranslationForNormal
 assert.equal(result.status, "completed");
 assert.equal(result.feed.status, "ready");
 assert.equal(result.feed.rows.length, 1);
+assert.equal(result.feed.rows[0].authorDisplayName, "PLG3 Viewer");
 assert.equal(result.feed.rows[0].translationStatus, "translated-f10");
 assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.storeReadyLabel, "ready");
 assert.equal(result.feedPersistence.durableFeedPersistDiagnostics.tableShapeLabel, "available");
@@ -367,6 +369,7 @@ const bridgeRead = await bridge.readCommentTranslatorRealCommentsFeedForActiveSe
 assert.equal(bridgeRead.status, "ready");
 assert.equal(bridgeRead.rows.length, 1);
 assert.equal(bridgeRead.rows[0].messageReferenceId, "yt-plg3-feed-1");
+assert.equal(bridgeRead.rows[0].authorDisplayName, "PLG3 Viewer");
 assert.equal(bridgeRead.rows[0].translatedText, "ja:yt-plg3-feed-1");
 assert.equal(bridgeRead.rows[0].sourceAttributionLabel, "Source: YouTube Live Chat");
 assert.equal(bridgeRead.rawProviderPayload, "not-returned-by-design");
@@ -437,6 +440,9 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-provider-execution-runtime.ts",
   "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
   "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
+  "lib/comment-translator-youtube-input-boundary.ts",
+  "lib/comment-translator-youtube-runtime-foundation.ts",
+  "lib/comment-translator-youtube-live-comment-intake-pipeline.ts",
   "lib/comment-translator-live-provider-session-step.ts",
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
   "lib/comment-translator-live-message-normalization.ts",
@@ -454,6 +460,12 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-live-message-normalization-contract.mjs",
+  "scripts/comment-translator-preview-author-display-name-contract.mjs",
+  "scripts/comment-translator-youtube-input-boundary-contract.mjs",
+  "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
+  "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
+  "scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs",
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
   "scripts/comment-translator-public-preview-feed-ux-contract.mjs",

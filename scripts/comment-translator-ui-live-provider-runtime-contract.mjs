@@ -294,7 +294,8 @@ const postPrimeTick = await polling.readCommentTranslatorBoundedLiveChatPollingT
             id: "yt-comment-2",
             publishedAt: "2026-06-26T00:00:01.000Z",
             text: "hello after start",
-            platformLanguageHint: "en"
+            platformLanguageHint: "en",
+            authorDisplayName: "  Runtime  Viewer  "
           }
         ]
       }
@@ -311,6 +312,7 @@ assert.equal(postPrimeTick.serverOnlyCommentsForTranslation.length, 1);
 const normalized = normalizer.mapYouTubeProviderSafeCommentsToNormalizedLiveMessages(postPrimeTick.serverOnlyCommentsForTranslation);
 assert.equal(normalized[0].messageReferenceId, "yt-comment-2");
 assert.equal(normalized[0].text, "hello after start");
+assert.equal(normalized[0].authorDisplayName, "Runtime Viewer");
 assert.equal(normalized[0].rawProviderPayload, "not-returned-by-design");
 assert.equal(normalized[0].authorChannelMaterial, "not-returned-by-design");
 
@@ -345,6 +347,12 @@ const runtime = adapter.createCommentTranslatorYouTubeLiveProviderRuntimeAdapter
               publishedAt: "2026-06-26T00:00:01.000Z",
               displayMessage: "bonjour",
               textMessageDetails: { messageText: "bonjour" }
+            },
+            authorDetails: {
+              displayName: "  Adapter  Viewer  ",
+              channelId: "adapter-channel-never-output",
+              channelUrl: "https://youtube.example/adapter-never-output",
+              profileImageUrl: "https://images.example/adapter-never-output.png"
             }
           }
         ]
@@ -369,6 +377,8 @@ const pollResult = await runtime.pollingAdapter.runtime.pollLiveChatOnce({
 });
 assert.equal(pollResult.comments[0].commentId, "yt-comment-2");
 assert.equal(pollResult.comments[0].text, "bonjour");
+assert.equal(pollResult.comments[0].authorDisplayName, "Adapter Viewer");
+assert.doesNotMatch(JSON.stringify(pollResult), /adapter-channel-never-output|adapter-never-output/i);
 assert.doesNotMatch(JSON.stringify(pollResult), /Authorization|Bearer|refresh_token|access_token/i);
 
 console.log("comment translator UI live provider runtime contract checks passed");

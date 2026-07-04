@@ -17,7 +17,7 @@ function exists(relativePath) {
 
 function changedFiles() {
   try {
-    const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+    const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"]
@@ -72,6 +72,7 @@ const inputBoundaryPath = "lib/comment-translator-youtube-input-boundary.ts";
 const designDocPath = "docs/future/COMMENT_TRANSLATOR_YOUTUBE_INPUT_BOUNDARY_DESIGN.md";
 const pr356MergeCommit = "83f1d5c4d90183b6f7bf97df8150650bc011cded";
 const pr357MergeCommit = "98a702ff9741d586d75671cb0fd4536c934b8f82";
+const pr586MergeCommit = "8023d28eaf644f1352da13062bd5e301a2d29f42";
 
 assert.ok(exists(runtimePath), "server-only YouTube owner polling runtime foundation module exists");
 assert.ok(exists(inputBoundaryPath), "YouTube input boundary remains available");
@@ -169,22 +170,13 @@ for (const pattern of [
 const runtime = loadTsModule(runtimePath);
 
 assert.equal(
-  execSync(`git merge-base --is-ancestor ${pr356MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
+  execSync(`git merge-base --is-ancestor ${pr586MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
     cwd: root,
     encoding: "utf8",
     shell: "powershell.exe"
   }).trim(),
   "yes",
-  "PR #356 merge commit is included in the current preview-derived branch"
-);
-assert.equal(
-  execSync(`git merge-base --is-ancestor ${pr357MergeCommit} HEAD; if ($LASTEXITCODE -eq 0) { "yes" } else { "no" }`, {
-    cwd: root,
-    encoding: "utf8",
-    shell: "powershell.exe"
-  }).trim(),
-  "yes",
-  "PR #357 merge commit is included in the current preview-derived branch"
+  "PR #586 merge commit is included in the current free-public-beta branch"
 );
 
 assert.equal(
@@ -204,7 +196,7 @@ assert.equal(
 );
 assert.deepEqual(
   runtime.youtubeOwnerPollingRuntimeContract.sanitizedCommentBridgeAllowedFields,
-  ["commentId", "publishedAt", "text", "platformLanguageHint"],
+  ["commentId", "publishedAt", "text", "platformLanguageHint", "authorDisplayName"],
   "sanitized bridge only exposes the provider-safe comment fields"
 );
 assert.deepEqual(
@@ -283,6 +275,7 @@ const sanitized = runtime.sanitizeYouTubeLiveChatMessage({
   publishedAt: "2026-05-31T02:00:00.000Z",
   text: "Hello live chat",
   platformLanguageHint: "en",
+  authorDisplayName: "  Contract  Viewer  ",
   authorName: "must-not-cross",
   channelId: "must-not-cross",
   oauthAccessToken: "must-not-cross",
@@ -291,7 +284,7 @@ const sanitized = runtime.sanitizeYouTubeLiveChatMessage({
 });
 assert.deepEqual(
   Object.keys(sanitized),
-  ["commentId", "publishedAt", "text", "platformLanguageHint"],
+  ["commentId", "publishedAt", "text", "platformLanguageHint", "authorDisplayName"],
   "sanitized comment bridge strips non-provider-safe material"
 );
 assert.deepEqual(
@@ -300,9 +293,10 @@ assert.deepEqual(
     commentId: "comment-contract-1",
     publishedAt: "2026-05-31T02:00:00.000Z",
     text: "Hello live chat",
-    platformLanguageHint: "en"
+    platformLanguageHint: "en",
+    authorDisplayName: "Contract Viewer"
   },
-  "sanitized comment bridge maps only comment id, time, text, and language hint"
+  "sanitized comment bridge maps only comment id, time, text, language hint, and safe author display name"
 );
 
 const messageStep = runtime.advanceYouTubeLiveChatPollingState(initialState, {
@@ -377,7 +371,8 @@ assert.deepEqual(
       commentId: "fake-comment-1",
       publishedAt: "2026-05-31T02:01:00.000Z",
       text: "Fake runtime comment",
-      platformLanguageHint: null
+      platformLanguageHint: null,
+      authorDisplayName: null
     }
   ],
   "fake runtime emits sanitized comments"
@@ -563,37 +558,18 @@ assert.match(
 assert.match(inputBoundarySource, /YouTubeProviderSafeCommentPayload/, "input boundary still owns the provider-safe payload");
 assert.match(
   taskSource,
-  /YouTube owner verification \+ Live Chat polling runtime foundation contract/i,
-  "task.md records the new runtime foundation contract"
+  /Preview author display name/i,
+  "task.md records the current preview author display-name slice"
 );
 assert.match(
   taskSource,
-  /post-PR #356 YouTube runtime safe-live smoke readiness.*blocked-pending-final-operator-confirmation-target-metadata-env-and-no-secret-boundary/i,
-  "task.md records the post-PR356 runtime smoke readiness blocker"
-);
-assert.match(
-  taskSource,
-  /post-PR #357 YouTube runtime safe-live smoke execution gate.*blocked-pending-target-metadata-env-fixture-and-live-runtime-command-boundary/i,
-  "task.md records the post-PR357 runtime smoke execution gate blocker"
-);
-assert.match(
-  taskSource,
-  /PR #357 `MERGED`[\s\S]*2026-06-07T04:03:24Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
-  "task.md records the fresh PR #357 metadata and check disposition"
-);
-assert.match(
-  taskSource,
-  /PR #356 `MERGED`[\s\S]*2026-06-07T03:10:53Z[\s\S]*Cloudflare Pages FAILURE[\s\S]*Workers Builds SUCCESS/i,
-  "task.md records the fresh PR #356 metadata and check disposition"
-);
-assert.match(
-  taskSource,
-  /width verification: UI \/ rendered text \/ CSS は変更していない/i,
-  "task.md records the width-check skip reason for this non-UI slice"
+  /390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i,
+  "task.md records the required UI width-check widths"
 );
 
 const separateImplementationFiles = new Set([
   "lib/comment-translator-youtube-token-store-runtime.ts",
+  "components/comment-translator/CommentTranslatorDock.tsx",
   "app/api/comment-translator/youtube/credential-status/route.ts",
   "app/tools/comment-translator/actions.ts",
   "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",

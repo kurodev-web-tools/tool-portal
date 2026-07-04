@@ -117,6 +117,7 @@ const baseRow = {
   sourceAttributionLabel: "Source: YouTube Live Chat",
   role: "viewer",
   authorLabel: "YouTube viewer",
+  authorDisplayName: null,
   originalText: "safe comment",
   translatedText: "safe translation",
   targetLanguage: "ja",

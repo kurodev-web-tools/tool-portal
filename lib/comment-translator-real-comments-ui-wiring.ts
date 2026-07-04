@@ -161,6 +161,7 @@ function mapBrowserSafeRowToDisplayRow({
     sourceAttributionLabel: row.sourceAttributionLabel,
     role: row.role,
     authorLabel: "YouTube viewer",
+    authorDisplayName: row.authorDisplayName,
     originalText: row.text,
     translatedText: null,
     targetLanguage,

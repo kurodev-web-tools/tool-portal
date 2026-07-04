@@ -81,6 +81,7 @@ export type YouTubeProviderSafeCommentPayload = {
   publishedAt: string;
   text: string;
   platformLanguageHint: string | null;
+  authorDisplayName?: string | null;
 };
 
 export type YouTubeInputDiagnosticLogPolicy = {
@@ -133,7 +134,7 @@ export type YouTubeInputBoundaryContract = {
   pollingPolicy: YouTubeLiveChatPollingPolicy;
   retrySemantics: YouTubeLiveChatRetrySemantics;
   providerSafeCommentPayload: {
-    allowedFields: readonly ["commentId", "publishedAt", "text", "platformLanguageHint"];
+    allowedFields: readonly ["commentId", "publishedAt", "text", "platformLanguageHint", "authorDisplayName"];
     forbiddenFields: readonly [
       "oauthAccessToken",
       "oauthRefreshToken",
@@ -219,7 +220,7 @@ export const youtubeLiveChatRetrySemantics = {
 } as const satisfies YouTubeLiveChatRetrySemantics;
 
 export const youtubeProviderSafeCommentPayloadContract = {
-  allowedFields: ["commentId", "publishedAt", "text", "platformLanguageHint"],
+  allowedFields: ["commentId", "publishedAt", "text", "platformLanguageHint", "authorDisplayName"],
   forbiddenFields: [
     "oauthAccessToken",
     "oauthRefreshToken",

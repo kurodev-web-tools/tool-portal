@@ -59,7 +59,7 @@ type YouTubeLiveCommentIntakeSanitizedSummary = {
   acceptedCommentCount: number;
   skippedCommentCount: number;
   textPayload: "server-only-translator-provider-input";
-  allowedCommentFields: readonly ["commentId", "publishedAt", "text", "platformLanguageHint"];
+  allowedCommentFields: readonly ["commentId", "publishedAt", "text", "platformLanguageHint", "authorDisplayName"];
   forbiddenMetadata: "not-returned-by-design";
 };
 
@@ -126,7 +126,7 @@ export type YouTubeLiveCommentIntakePipelineRunResult =
       sanitizedIntake: YouTubeLiveCommentIntakeSanitizedSummary;
     });
 
-const allowedCommentFields = ["commentId", "publishedAt", "text", "platformLanguageHint"] as const;
+const allowedCommentFields = ["commentId", "publishedAt", "text", "platformLanguageHint", "authorDisplayName"] as const;
 
 export const youtubeLiveCommentIntakePipelineContract = {
   implementationStage: "live-comment-intake-to-translator-pipeline",

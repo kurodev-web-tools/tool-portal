@@ -179,6 +179,7 @@ const normalized = normalization.normalizeCommentTranslatorLiveMessages({
         textMessageDetails: { messageText: "Safe hello" }
       },
       authorDetails: {
+        displayName: "F9 Moderator",
         channelId: "f9-author-channel-never-output",
         channelUrl: "https://youtube.example/f9-author-never-output",
         profileImageUrl: "https://images.example/f9-profile-never-output.png",
@@ -197,6 +198,7 @@ const normalized = normalization.normalizeCommentTranslatorLiveMessages({
         }
       },
       authorDetails: {
+        displayName: "F9 Supporter",
         channelId: "f9-super-channel-never-output",
         profileImageUrl: "https://images.example/f9-super-never-output.png",
         isChatSponsor: true
@@ -238,6 +240,9 @@ assert.equal(feed.browserStorage, "unchanged");
 assert.equal(feed.handoffPayload, "unchanged");
 assert.equal(feed.publicLaunchAllowed, false);
 assert.equal(feed.rows.every((row) => row.authorLabel === "YouTube viewer"), true);
+assert.equal(feed.rows.find((row) => row.id === "yt-f9-text-1").authorDisplayName, "F9 Moderator");
+assert.equal(feed.rows.find((row) => row.id === "yt-f9-super-1").authorDisplayName, "F9 Supporter");
+assert.equal(feed.rows.find((row) => row.id === "yt-f9-deleted-1").authorDisplayName, null);
 assert.equal(feed.rows.find((row) => row.kind === "super-chat").badgeLabel, "super-chat");
 assert.equal(feed.rows.find((row) => row.kind === "deleted").originalText, null);
 assert.equal(feed.rows.find((row) => row.kind === "ended").moderationLabel, "ended");
@@ -248,7 +253,12 @@ const uiComments = shared.mapCommentTranslatorRealCommentsFeedRowsToUiComments({
 });
 assert.equal(uiComments.length, 4);
 assert.equal(uiComments.every((comment) => comment.source === "server"), true);
-assert.equal(uiComments.every((comment) => comment.authorName === "YouTube viewer"), true);
+assert.deepEqual(uiComments.map((comment) => comment.authorName), [
+  "YouTube viewer",
+  "YouTube viewer",
+  "F9 Supporter",
+  "F9 Moderator"
+]);
 assert.equal(uiComments.find((comment) => comment.id === "yt-f9-text-1").originalText, "Safe hello");
 assert.equal(uiComments.find((comment) => comment.id === "yt-f9-text-1").status, "skipped");
 assert.equal(uiComments.find((comment) => comment.id === "yt-f9-text-1").skipReason, "Translation not run");
@@ -285,7 +295,11 @@ const allowedChangedFiles = new Set([
   "app/api/comment-translator/session/route.ts",
   pagePath,
   dockPath,
+  normalizationPath,
   "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
+  "lib/comment-translator-youtube-input-boundary.ts",
+  "lib/comment-translator-youtube-runtime-foundation.ts",
+  "lib/comment-translator-youtube-live-comment-intake-pipeline.ts",
   "lib/comment-translator-live-provider-session-step.ts",
   "lib/comment-translator-azure-normal-translation-execution.ts",
   "lib/comment-translator-provider-execution-runtime.ts",
@@ -301,6 +315,12 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-public-operator-session-ui-contract.mjs",
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-live-message-normalization-contract.mjs",
+  "scripts/comment-translator-preview-author-display-name-contract.mjs",
+  "scripts/comment-translator-youtube-input-boundary-contract.mjs",
+  "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
+  "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
+  "scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",

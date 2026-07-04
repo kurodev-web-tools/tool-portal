@@ -72,6 +72,7 @@ export type CommentTranslatorNormalizedLiveMessage = {
   messageReferenceId: string;
   kind: CommentTranslatorNormalizedLiveMessageKind;
   publishedAtIso: string;
+  authorDisplayName: string | null;
   text: string | null;
   source: "youtube-live-chat";
   role: "owner" | "moderator" | "member" | "viewer" | "unknown";
@@ -106,6 +107,7 @@ export type CommentTranslatorLiveMessageBrowserSafeRow = {
   messageReferenceId: string;
   kind: CommentTranslatorNormalizedLiveMessageKind;
   publishedAtIso: string;
+  authorDisplayName: string | null;
   text: string | null;
   source: "youtube-live-chat";
   sourceAttributionLabel: "Source: YouTube Live Chat";
@@ -259,6 +261,7 @@ export function projectCommentTranslatorNormalizedLiveMessagesForBrowser(
     messageReferenceId: message.messageReferenceId,
     kind: message.kind,
     publishedAtIso: message.publishedAtIso,
+    authorDisplayName: message.authorDisplayName,
     text: message.kind === "deleted" || message.kind === "banned" || message.kind === "ended" ? null : message.text,
     source: message.source,
     sourceAttributionLabel: "Source: YouTube Live Chat",
@@ -281,6 +284,7 @@ export function mapYouTubeProviderSafeCommentsToNormalizedLiveMessages(
       messageReferenceId: normalizeString(comment.commentId) ?? "",
       kind: "text" as const,
       publishedAtIso: normalizePublishedAtIso(comment.publishedAt),
+      authorDisplayName: normalizeAuthorDisplayName(comment.authorDisplayName),
       text: normalizeText(comment.text),
       source: "youtube-live-chat" as const,
       role: "unknown" as const,
@@ -306,10 +310,12 @@ function normalizeProviderPayload({
   const type = normalizeProviderType(payload.snippet?.type);
   const publishedAtIso = normalizePublishedAtIso(payload.snippet?.publishedAt);
   const role = normalizeAuthorRole(payload.authorDetails);
+  const authorDisplayName = normalizeAuthorDisplayName(payload.authorDetails?.displayName);
   const base = {
     provider: "youtube" as const,
     messageReferenceId,
     publishedAtIso,
+    authorDisplayName,
     source: "youtube-live-chat" as const,
     role,
     targetMessageReferenceId: null,
@@ -490,6 +496,11 @@ function normalizePublishedAtIso(publishedAt: string | null | undefined): string
 
 function normalizeText(text: string | null | undefined): string | null {
   const normalized = normalizeString(text);
+  return normalized ? normalized : null;
+}
+
+function normalizeAuthorDisplayName(value: string | null | undefined): string | null {
+  const normalized = normalizeString(value)?.replace(/\s+/g, " ");
   return normalized ? normalized : null;
 }
 

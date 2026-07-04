@@ -466,7 +466,12 @@ function CommentCard({
         </div>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="break-words text-sm font-black text-foreground">{comment.authorName}</h3>
+            <h3
+              data-comment-translator-preview-author-display-name="safe-display-name"
+              className="min-w-0 max-w-full break-words text-sm font-black text-foreground"
+            >
+              {comment.authorName}
+            </h3>
             <span className="rounded-base bg-surface-muted px-2 py-1 text-[11px] font-bold text-muted">
               {comment.timestamp}
             </span>

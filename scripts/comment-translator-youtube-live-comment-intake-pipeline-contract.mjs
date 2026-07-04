@@ -18,7 +18,7 @@ function exists(relativePath) {
 
 function changedFiles() {
   try {
-    const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+    const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"]
@@ -276,7 +276,7 @@ assert.deepEqual(
     acceptedCommentCount: 2,
     skippedCommentCount: 1,
     textPayload: "server-only-translator-provider-input",
-    allowedCommentFields: ["commentId", "publishedAt", "text", "platformLanguageHint"],
+    allowedCommentFields: ["commentId", "publishedAt", "text", "platformLanguageHint", "authorDisplayName"],
     forbiddenMetadata: "not-returned-by-design"
   },
   "bridge reports sanitized intake counts without target metadata values"
@@ -406,13 +406,13 @@ for (const payload of [terminalBridge, emptyBridge, readyBridge, translated, blo
 
 assert.match(
   taskSource,
-  /Public Release Roadmap/i,
-  "task.md records the public release roadmap"
+  /Preview author display name/i,
+  "task.md records the current preview author display-name slice"
 );
 assert.match(
   taskSource,
-  /UI \/ rendered text \/ CSS は変更していない|UI を変更した場合は/i,
-  "task.md records or prompts width-check handling for non-UI slices"
+  /390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i,
+  "task.md records the required UI width-check widths"
 );
 
 const allowedChangedFiles = new Set([
@@ -420,10 +420,25 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-provider-execution-runtime.ts",
   "lib/comment-translator-provider-boundary.ts",
   bridgePath,
+  "lib/comment-translator-live-message-normalization.ts",
+  "lib/comment-translator-real-comments-feed-shared.ts",
+  "lib/comment-translator-real-comments-ui-wiring.ts",
+  "lib/comment-translator-youtube-input-boundary.ts",
+  "lib/comment-translator-youtube-runtime-foundation.ts",
+  "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
+  "components/comment-translator/CommentTranslatorDock.tsx",
   "scripts/comment-translator-filter-language-policy-runtime-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
   "scripts/comment-translator-provider-boundary-contract.mjs",
   "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
+  "scripts/comment-translator-preview-author-display-name-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-youtube-input-boundary-contract.mjs",
+  "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
+  "scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   "task.md"
 ]);
 for (const file of changedFiles()) {

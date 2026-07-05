@@ -141,9 +141,14 @@ assert.match(creatorSource, /clickTracking/, "F14 carries click tracking state")
 assert.match(creatorSource, /publicLaunchAllowed:\s*false/, "F14 does not open public launch gate");
 assert.match(actionsSource, /getCommentTranslatorCreatorLockedWaitlistAction/, "server action exposes sanitized Creator locked/waitlist state");
 assert.match(actionsSource, /recordCommentTranslatorCreatorLockedClickAction/, "server action exposes sanitized click tracking path");
-assert.match(componentSource, /data-comment-translator-creator-locked-waitlist="sanitized-creator-locked-waitlist-only"/, "UI renders sanitized Creator locked/waitlist panel");
+assert.match(
+  componentSource,
+  /data-comment-translator-creator-locked-waitlist="compact-creator-closed-beta"/,
+  "UI renders a compact sanitized Creator closed beta panel"
+);
 assert.match(componentSource, /data-comment-translator-creator-click-tracking="sanitized-local-draft-only"/, "UI marks click tracking as sanitized local draft only");
 assert.match(copySource, /creatorLockedWaitlist/, "localized copy includes F14 Creator locked/waitlist copy");
+assert.match(copySource, /featureSummary/, "localized copy includes compact Creator closed beta feature summary");
 assert.match(readinessDoc, /F14 Creator locked cards \/ waitlist \/ click tracking/i, "durable readiness doc records F14");
 assert.match(gapAudit, /F14[\s\S]*Creator locked cards/i, "gap audit keeps F14 visible");
 assert.match(taskSource, /F14 Creator locked cards \/ waitlist \/ click tracking/i, "task.md records F14 work");
@@ -254,6 +259,13 @@ const allowedChangedFiles = new Set([
   readinessDocPath,
   gapAuditPath,
   "scripts/comment-translator-free-beta-creator-locked-waitlist-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-preview-author-display-name-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-public-ui-cleanup-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

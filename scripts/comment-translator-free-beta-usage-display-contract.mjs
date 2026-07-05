@@ -161,7 +161,11 @@ assert.match(usageDisplaySource, /publicLaunchAllowed:\s*false/, "F12 does not o
 assert.match(sessionRuntimeSource, /usageDisplay/, "browser-safe session state carries usage display metadata");
 assert.match(f10Source, /resolveCommentTranslatorFreeBetaProviderCallPolicy/, "F10 checks F12 usage policy before provider execution");
 assert.match(sharedFeedSource, /skipped-f12-usage-limit/, "browser-safe feed rows can explain usage-limit provider skips");
-assert.match(componentSource, /data-comment-translator-free-beta-usage-display="sanitized-usage-only"/, "UI renders sanitized F12 usage display");
+assert.match(
+  componentSource,
+  /data-comment-translator-free-beta-usage-display="right-authoritative-sanitized-usage-only"/,
+  "UI renders a single authoritative sanitized F12 usage display in the right panel"
+);
 assert.match(copySource, /monthlyCharacterCap/, "localized copy includes monthly character cap labels");
 assert.match(privateLaunchSource, /usageDisplay/, "private-launch blocked session state keeps the F12 usage display shape");
 assert.match(abuseRateLimitSource, /usageDisplay/, "abuse-rate-limited session state keeps the F12 usage display shape");
@@ -415,16 +419,19 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-creator-locked-waitlist-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs",
   "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
+  "scripts/comment-translator-public-ui-cleanup-contract.mjs",
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
   "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
   "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-preview-author-display-name-contract.mjs",
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-start-stop-reason-ux-contract.mjs",

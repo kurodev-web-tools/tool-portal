@@ -316,8 +316,15 @@ assert.equal(normalized[0].authorDisplayName, "Runtime Viewer");
 assert.equal(normalized[0].rawProviderPayload, "not-returned-by-design");
 assert.equal(normalized[0].authorChannelMaterial, "not-returned-by-design");
 
+const googleApiRequests = [];
 const runtime = adapter.createCommentTranslatorYouTubeLiveProviderRuntimeAdapterForTests({
   fetchGoogleApi: async (request) => {
+    googleApiRequests.push({
+      endpoint: request.endpoint,
+      url: request.url,
+      method: request.method
+    });
+
     if (request.endpoint === "liveBroadcasts.list") {
       return {
         ok: true,
@@ -375,6 +382,24 @@ const pollResult = await runtime.pollingAdapter.runtime.pollLiveChatOnce({
   nextPollAfterMs: 0,
   terminal: null
 });
+const liveChatMessagesRequest = googleApiRequests.find((request) => request.endpoint === "liveChatMessages.list");
+assert.ok(liveChatMessagesRequest, "runtime adapter performs the liveChatMessages.list request");
+const liveChatMessagesUrl = new URL(liveChatMessagesRequest.url);
+assert.equal(
+  liveChatMessagesUrl.searchParams.get("part"),
+  "id,snippet,authorDetails",
+  "runtime adapter requests only id, snippet, and authorDetails parts needed for safe preview rows"
+);
+assert.match(
+  liveChatMessagesUrl.searchParams.get("fields") ?? "",
+  /authorDetails\(displayName\)/,
+  "runtime adapter asks Google API for authorDetails.displayName"
+);
+assert.doesNotMatch(
+  liveChatMessagesUrl.searchParams.get("fields") ?? "",
+  /channelId|channelUrl|profileImageUrl/i,
+  "runtime adapter does not request author channel ids, URLs, or profile images for preview rows"
+);
 assert.equal(pollResult.comments[0].commentId, "yt-comment-2");
 assert.equal(pollResult.comments[0].text, "bonjour");
 assert.equal(pollResult.comments[0].authorDisplayName, "Adapter Viewer");

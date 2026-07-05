@@ -408,6 +408,7 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   "lib/comment-translator-real-comments-feed-shared.ts",
   "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
   "lib/comment-translator-provider-execution-runtime.ts",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
@@ -427,10 +428,13 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
   taskPath
 ]);
+const highConfidenceSecretPattern = /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+/i;
+const serverOnlyAdapterSecretPattern = /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i;
 for (const file of changedFiles()) {
   assert.ok(allowedChangedFiles.has(file), `F12 change stays in allowed files: ${file}`);
 
@@ -439,9 +443,13 @@ for (const file of changedFiles()) {
   }
 
   const source = read(file);
+  const secretPattern =
+    file === "lib/comment-translator-youtube-live-provider-runtime-adapter.ts"
+      ? serverOnlyAdapterSecretPattern
+      : highConfidenceSecretPattern;
   assert.doesNotMatch(
     source,
-    /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+/i,
+    secretPattern,
     `${file} does not contain secret values, token values, authorization values, or private provider identifiers`
   );
 }

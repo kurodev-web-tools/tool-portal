@@ -9,9 +9,8 @@ import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import type { CommentTranslatorAdminShortcutState } from "@/lib/comment-translator-admin-shortcut-shared";
-import { getToolCopy, portalCopy } from "@/lib/portal-copy";
+import { portalCopy } from "@/lib/portal-copy";
 import type { AccountSessionState } from "@/lib/supabase/session";
-import { sidebarTools } from "@/lib/tools";
 
 type NavigationCopy = (typeof portalCopy)["ja"]["navigation"] | (typeof portalCopy)["en"]["navigation"];
 
@@ -78,8 +77,12 @@ export function PortalHeader({
       return copy.toolTitles.account;
     }
 
+    if (pathname.startsWith("/admin")) {
+      return copy.adminDashboard;
+    }
+
     return "Kuro Stream Kit";
-  }, [copy.toolTitles, pathname]);
+  }, [copy.adminDashboard, copy.toolTitles, pathname]);
 
   useEffect(() => {
     if (!drawerOpen) {
@@ -96,11 +99,7 @@ export function PortalHeader({
 
   const navItems = [
     { href: "/", label: copy.home },
-    { href: "/tools", label: copy.tools },
-    ...sidebarTools.map((tool) => ({
-      href: tool.href,
-      label: getToolCopy(tool.id, locale).name
-    }))
+    { href: "/tools", label: copy.tools }
   ];
 
   return (
@@ -162,9 +161,9 @@ export function PortalHeader({
             <nav className="mt-6 min-h-0 flex-1 space-y-2 overflow-y-auto pb-4">
               {navItems.map((item) => {
                 const active =
-                  item.href === "/" || item.href === "/tools"
+                  item.href === "/"
                     ? pathname === item.href
-                    : pathname.startsWith(item.href);
+                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link
                     key={item.href}
@@ -191,7 +190,7 @@ export function PortalHeader({
                       : "border-border bg-surface-muted text-foreground hover:bg-surface"
                   ].join(" ")}
                 >
-                  {adminShortcut.label}
+                  {copy.adminDashboard}
                 </Link>
               ) : null}
             </nav>

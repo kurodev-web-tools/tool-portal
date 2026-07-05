@@ -224,7 +224,7 @@ assert.match(gapAudit, /FB-L3|Allowed-tester route\/API smoke/i, "gap audit reco
 
 assert.match(
   task,
-  /Current branch: `codex\/(?:comment-translator-free-beta-fb-l3-allowed-tester-route-api-smoke|comment-translator-creator-waitlist-admin-ui|comment-translator-admin-dashboard-shortcut)`/i,
+  /Current branch: `codex\/(?:comment-translator-free-beta-fb-l3-allowed-tester-route-api-smoke|comment-translator-creator-waitlist-admin-ui|comment-translator-admin-dashboard-shortcut|portal-sidebar-navigation-resilience)`/i,
   "task.md records a route/API-smoke-compatible branch"
 );
 assert.match(
@@ -286,6 +286,7 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
+  "app/admin/page.tsx",
   "app/admin/comment-translator/page.tsx",
   "app/admin/comment-translator/creator-waitlist/page.tsx",
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
@@ -303,6 +304,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-creator-waitlist-shared.ts",
   "lib/comment-translator-free-beta-creator-locked-waitlist.ts",
   "lib/comment-translator.ts",
+  "lib/portal-copy.ts",
   readyPreflightDocPath,
   publicUsabilityPreflightDocPath,
   remoteDurableEvidenceDocPath,
@@ -310,6 +312,7 @@ const allowedChangedFiles = new Set([
   finalQaDocPath,
   gapAuditPath,
   "scripts/comment-translator-creator-waitlist-admin-contract.mjs",
+  "scripts/comment-translator-portal-admin-navigation-contract.mjs",
   taskPath,
   "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
   "scripts/comment-translator-free-beta-creator-locked-waitlist-contract.mjs",

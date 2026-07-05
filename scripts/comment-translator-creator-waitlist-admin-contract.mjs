@@ -20,6 +20,7 @@ const portalShellPath = "components/portal/PortalShell.tsx";
 const portalHeaderPath = "components/portal/PortalHeader.tsx";
 const portalSidebarPath = "components/portal/PortalSidebar.tsx";
 const copyPath = "lib/comment-translator.ts";
+const globalAdminDashboardPath = "app/admin/page.tsx";
 const adminDashboardPath = "app/admin/comment-translator/page.tsx";
 const adminPagePath = "app/admin/comment-translator/creator-waitlist/page.tsx";
 const migrationPath = "supabase/migrations/20260705000000_comment_translator_creator_waitlist_registrations.sql";
@@ -146,6 +147,7 @@ for (const requiredPath of [
   portalHeaderPath,
   portalSidebarPath,
   copyPath,
+  globalAdminDashboardPath,
   adminDashboardPath,
   adminPagePath,
   migrationPath,
@@ -165,6 +167,7 @@ const componentSource = read(componentPath);
 const copySource = read(copyPath);
 const adminShortcutSharedSource = read(adminShortcutSharedPath);
 const portalShellSource = read(portalShellPath);
+const globalAdminDashboardSource = read(globalAdminDashboardPath);
 const adminPageSource = read(adminPagePath);
 const adminDashboardSource = read(adminDashboardPath);
 const portalHeaderSource = read(portalHeaderPath);
@@ -192,10 +195,11 @@ assert.match(adminGateSource, /^import "server-only";/m, "admin allowlist gate i
 assert.match(adminGateSource, /COMMENT_TRANSLATOR_ADMIN_ALLOWED_USER_HASHES/, "admin gate uses a hash allowlist env");
 assert.match(adminGateSource, /createHash\("sha256"\)/, "admin gate hashes account ids before allowlist comparison");
 assert.match(adminGateSource, /readCommentTranslatorAdminShortcutStateForAccountSession/, "admin shortcut state is resolved by a server-only allowlist helper");
-assert.match(adminGateSource, /\/admin\/comment-translator(?!\/creator-waitlist)/, "admin gate covers the dashboard shell route");
+assert.match(adminGateSource, /gatedSurfaces: \["\/admin", "\/admin\/comment-translator", "\/admin\/comment-translator\/creator-waitlist"\]/, "admin gate covers the full admin hierarchy");
 assert.match(adminPageStateSource, /readCommentTranslatorCreatorWaitlistAdminPageState/, "admin state reader is centralized");
 assert.match(adminPageStateSource, /listRegistrations/, "admin state reads registrations through the durable store");
-assert.match(adminShortcutSharedSource, /commentTranslatorAdminDashboardPath = "\/admin\/comment-translator"/, "admin shortcut shared contract points to the dashboard shell");
+assert.match(adminShortcutSharedSource, /globalAdminDashboardPath = "\/admin"/, "admin shortcut shared contract points to the global admin dashboard");
+assert.match(adminShortcutSharedSource, /commentTranslatorAdminDashboardPath = "\/admin\/comment-translator"/, "admin shortcut shared contract keeps the tool dashboard path");
 assert.match(adminShortcutSharedSource, /server-allowlisted-admin-only/, "admin shortcut shared contract records server allowlist visibility");
 assert.match(portalShellSource, /readCommentTranslatorAdminShortcutStateForAccountSession/, "PortalShell resolves admin shortcut state on the server");
 assert.match(portalShellSource, /adminShortcut=.+adminShortcut/s, "PortalShell passes only sanitized admin shortcut state to client navigation");
@@ -212,6 +216,14 @@ for (const clientNavSource of [portalHeaderSource, portalSidebarSource]) {
     "client navigation does not implement email/id/env-based admin checks"
   );
 }
+assert.match(globalAdminDashboardSource, /readCommentTranslatorAdminAccessForAccountSession/, "global admin dashboard uses the existing server-only admin gate");
+assert.match(globalAdminDashboardSource, /href=\{commentTranslatorAdminDashboardPath\}/, "global admin dashboard links to the Comment Translator admin dashboard");
+assert.match(globalAdminDashboardSource, /data-admin-dashboard="server-allowlisted-admin-only"/, "global admin dashboard records the server-gated shell marker");
+assert.doesNotMatch(
+  globalAdminDashboardSource,
+  /form action|unblockCommentTranslator|resetCommentTranslator|rateLimitResetAction|rateLimitUnblockAction|fetch\(/,
+  "global admin dashboard does not expose or implement future mutation actions"
+);
 assert.match(adminDashboardSource, /readCommentTranslatorAdminAccess/, "admin dashboard uses the existing server-only admin gate");
 assert.match(adminDashboardSource, /\/admin\/comment-translator\/creator-waitlist/, "admin dashboard links to the Creator waitlist admin page");
 assert.match(adminDashboardSource, /data-comment-translator-admin-dashboard="server-allowlisted-admin-only"/, "admin dashboard records the server-gated shell marker");
@@ -387,8 +399,8 @@ assert.deepEqual(
   }),
   {
     status: "available",
-    href: "/admin/comment-translator",
-    label: "Comment Translator admin",
+    href: "/admin",
+    label: "Admin dashboard",
     visibility: "server-allowlisted-admin-only",
     clientReadableDetail: "sanitized-admin-shortcut-only"
   },
@@ -452,8 +464,8 @@ for (const payload of [
   }
 }
 
-assert.match(taskSource, /Comment Translator admin shortcut \+ dashboard shell/i, "task.md records this PR slice");
-assert.match(taskSource, /rate-limit tools: planned-only/i, "task.md records rate-limit operations were not implemented");
+assert.match(taskSource, /Portal sidebar navigation resilience \+ global admin dashboard/i, "task.md records this PR slice");
+assert.match(taskSource, /rate-limit mutation actions: not implemented/i, "task.md records rate-limit operations were not implemented");
 assert.match(taskSource, /remote migration apply: not-run/i, "task.md records migration apply was not run");
 
 const allowedChangedFiles = new Set([
@@ -466,15 +478,18 @@ const allowedChangedFiles = new Set([
   routeHarnessPath,
   componentPath,
   privateLaunchFallbackPath,
+  globalAdminDashboardPath,
   adminShortcutSharedPath,
   portalShellPath,
   portalHeaderPath,
   portalSidebarPath,
+  "lib/portal-copy.ts",
   copyPath,
   adminDashboardPath,
   adminPagePath,
   migrationPath,
   "scripts/comment-translator-creator-waitlist-admin-contract.mjs",
+  "scripts/comment-translator-portal-admin-navigation-contract.mjs",
   "scripts/comment-translator-free-beta-creator-locked-waitlist-contract.mjs",
   "scripts/comment-translator-public-ui-cleanup-contract.mjs",
   "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",

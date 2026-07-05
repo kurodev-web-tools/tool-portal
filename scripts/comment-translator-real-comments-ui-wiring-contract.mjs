@@ -292,6 +292,7 @@ const allowedChangedFiles = new Set([
   wiringPath,
   commentTranslatorPath,
   actionsPath,
+  "app/admin/page.tsx",
   "app/admin/comment-translator/page.tsx",
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
   "app/api/comment-translator/session/route.ts",
@@ -302,6 +303,7 @@ const allowedChangedFiles = new Set([
   "components/portal/PortalHeader.tsx",
   "components/portal/PortalShell.tsx",
   "components/portal/PortalSidebar.tsx",
+  "lib/portal-copy.ts",
   normalizationPath,
   "lib/comment-translator-admin-access-gate.ts",
   "lib/comment-translator-admin-shortcut-shared.ts",
@@ -343,6 +345,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-public-ui-cleanup-contract.mjs",
   "scripts/comment-translator-creator-waitlist-admin-contract.mjs",
   "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
+  "scripts/comment-translator-portal-admin-navigation-contract.mjs",
   "supabase/migrations/20260705000000_comment_translator_creator_waitlist_registrations.sql",
   taskPath
 ]);

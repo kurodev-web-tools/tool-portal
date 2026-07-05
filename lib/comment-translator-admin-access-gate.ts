@@ -40,7 +40,7 @@ export const commentTranslatorAdminAccessGateContract = {
   allowlistEnv: "COMMENT_TRANSLATOR_ADMIN_ALLOWED_USER_HASHES",
   allowlistPolicy: "sha256-owner-user-id-allowlist",
   defaultAccess: "blocked",
-  gatedSurfaces: ["/admin/comment-translator", "/admin/comment-translator/creator-waitlist"],
+  gatedSurfaces: ["/admin", "/admin/comment-translator", "/admin/comment-translator/creator-waitlist"],
   browserReadableOutput: "sanitized-admin-access-metadata-only",
   forbiddenReadableOutput: [
     "owner-user-id-value",
@@ -99,6 +99,19 @@ export function readCommentTranslatorAdminShortcutStateForAccountSession({
   });
 
   return access.status === "allowed" ? commentTranslatorAdminShortcutAvailableState : commentTranslatorAdminShortcutHiddenState;
+}
+
+export function readCommentTranslatorAdminAccessForAccountSession({
+  accountSession,
+  env = process.env
+}: {
+  readonly accountSession: AccountSessionState;
+  readonly env?: CommentTranslatorAdminAccessEnv;
+}): CommentTranslatorAdminAccess {
+  return readCommentTranslatorAdminAccess({
+    account: createCommentTranslatorAdminAccountFromSession(accountSession),
+    env
+  });
 }
 
 function createCommentTranslatorAdminAccountFromSession(accountSession: AccountSessionState): CommentTranslatorAdminAccount {

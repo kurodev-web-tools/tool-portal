@@ -110,18 +110,23 @@ assert.doesNotMatch(
 
 assert.match(
   componentSource,
-  /data-comment-translator-creator-locked-waitlist="compact-creator-closed-beta"/,
-  "Creator closed beta renders as one compact public panel"
+  /data-comment-translator-creator-waitlist="creator-closed-beta-preregistration"/,
+  "Creator closed beta renders as one public pre-registration panel"
 );
 assert.match(
   componentSource,
-  /copy\.creatorLockedWaitlist\.featureSummary/,
-  "Creator closed beta summarizes planned features in localized copy"
+  /copy\.creatorWaitlist\.featureSummary/,
+  "Creator closed beta summarizes pre-registration in localized copy"
 );
 assert.doesNotMatch(
   componentSource,
-  /state\.lockedFeatureCards\.map/,
-  "Creator closed beta no longer renders multiple locked feature cards"
+  /state\.lockedFeatureCards\.map|data-comment-translator-creator-click-tracking|sanitized-local-draft-only/,
+  "Creator closed beta no longer renders locked-card click draft UI"
+);
+assert.doesNotMatch(
+  componentSource,
+  /copy\.sections\.manualInput|singleCommentDraft|multilinePasteDraft|manualComments|createManualCommentRows|splitManualCommentInput|Manual \/ Paste Input|Details and test input|詳細確認とテスト入力/,
+  "normal public manual input and bottom details/test-input surfaces are removed"
 );
 
 assert.doesNotMatch(

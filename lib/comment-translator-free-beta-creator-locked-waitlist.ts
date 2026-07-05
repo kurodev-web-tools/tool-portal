@@ -1,278 +1,239 @@
 import "server-only";
 
-export type CommentTranslatorFreeBetaCreatorLockedWaitlistUnavailableReason =
-  | "durable-session-unreadable"
-  | "durable-usage-unreadable"
-  | "missing-entitlement"
-  | "missing-provider-readiness";
+import {
+  commentTranslatorCreatorWaitlistCampaign,
+  commentTranslatorCreatorWaitlistDiscountIntent,
+  commentTranslatorCreatorWaitlistLoginHref,
+  type CommentTranslatorCreatorWaitlistAccount,
+  type CommentTranslatorCreatorWaitlistAdminRegistration,
+  type CommentTranslatorCreatorWaitlistBrowserRegistration,
+  type CommentTranslatorCreatorWaitlistRegistrationResult,
+  type CommentTranslatorCreatorWaitlistState,
+  type CommentTranslatorCreatorWaitlistStore,
+  type CommentTranslatorCreatorWaitlistStoreRegistration
+} from "./comment-translator-creator-waitlist-shared";
 
-export type CommentTranslatorFreeBetaCreatorLockedWaitlistInput = {
-  durableSessionState: "ready" | "unreadable";
-  durableUsageState: "ready" | "unreadable";
-  entitlementState: "ready" | "missing";
-  providerReadinessState: "ready" | "missing";
-  nowMs: number;
-};
+export {
+  commentTranslatorCreatorWaitlistCampaign,
+  commentTranslatorCreatorWaitlistDiscountIntent,
+  commentTranslatorCreatorWaitlistLoginHref
+} from "./comment-translator-creator-waitlist-shared";
+export type {
+  CommentTranslatorCreatorWaitlistAccount,
+  CommentTranslatorCreatorWaitlistAdminRegistration,
+  CommentTranslatorCreatorWaitlistBrowserRegistration,
+  CommentTranslatorCreatorWaitlistRegistrationResult,
+  CommentTranslatorCreatorWaitlistState,
+  CommentTranslatorCreatorWaitlistStatus,
+  CommentTranslatorCreatorWaitlistStore,
+  CommentTranslatorCreatorWaitlistStoreRegistration
+} from "./comment-translator-creator-waitlist-shared";
 
-export type CommentTranslatorFreeBetaCreatorFeatureId =
-  | "creator-ai-natural-translation"
-  | "creator-obs-overlay"
-  | "creator-moderator-share"
-  | "creator-custom-dictionary";
-
-export type CommentTranslatorFreeBetaCreatorClickIntent = "waitlist-click" | "feature-card-click";
-
-export type CommentTranslatorFreeBetaCreatorLockedWaitlistState = {
-  status: "locked" | "unavailable";
-  unavailableReason: CommentTranslatorFreeBetaCreatorLockedWaitlistUnavailableReason | null;
-  creatorPriceIntent: {
-    currency: "JPY";
-    monthlyAmount: 980;
-    availability: "planned-closed-beta-not-live";
-    paidAccessLive: false;
-    checkoutAvailable: false;
-    clientReadableDetail: "sanitized-price-intent-only";
-  };
-  lockedFeatureCards: readonly {
-    id: CommentTranslatorFreeBetaCreatorFeatureId;
-    state: "locked";
-    availability: "closed-beta-waitlist";
-    clientReadableDetail: "sanitized-feature-label-only";
-  }[];
-  waitlist: {
-    status: "available" | "unavailable";
-    actionState: "enabled" | "disabled";
-    destination: "server-action:recordCommentTranslatorCreatorLockedClickAction";
-    copyState: "closed-beta-waitlist-only";
-    clientReadableDetail: "sanitized-waitlist-intent-only" | "sanitized-unavailable-only";
-  };
-  clickTracking: {
-    status: "local-draft-ready" | "unavailable";
-    recording: "local-deterministic-draft-only" | "not-run";
-    persistence: "not-run-remote-mutation-requires-explicit-approval" | "not-run";
-    rawProviderPayload: "not-recorded-by-design";
-    rawComments: "not-recorded-by-design";
-    privateIdentifiers: "not-recorded-by-design";
-    browserStorage: "unchanged";
-    handoffPayload: "unchanged";
-    clientReadableDetail: "sanitized-local-draft-only" | "sanitized-unavailable-only";
-  };
-  generatedAtIso: string;
-  clientReadableDetail: "sanitized-creator-locked-waitlist-only";
-  providerTargetMetadata: "forbidden";
-  serverOnlyCursor: "not-returned-by-design";
-  browserStorage: "unchanged";
-  handoffPayload: "unchanged";
-  publicLaunchAllowed: false;
-};
-
-export type CommentTranslatorFreeBetaCreatorClickDraft =
-  | {
-      status: "recorded-local-draft";
-      intent: CommentTranslatorFreeBetaCreatorClickIntent;
-      featureId: CommentTranslatorFreeBetaCreatorFeatureId;
-      occurredAtIso: string;
-      persistence: "not-run-remote-mutation-requires-explicit-approval";
-      clientReadableDetail: "sanitized-local-draft-only";
-      rawProviderPayload: "not-recorded-by-design";
-      rawComments: "not-recorded-by-design";
-      privateIdentifiers: "not-recorded-by-design";
-      browserStorage: "unchanged";
-      handoffPayload: "unchanged";
-      publicLaunchAllowed: false;
-    }
-  | {
-      status: "unavailable";
-      unavailableReason: CommentTranslatorFreeBetaCreatorLockedWaitlistUnavailableReason;
-      intent: CommentTranslatorFreeBetaCreatorClickIntent;
-      featureId: CommentTranslatorFreeBetaCreatorFeatureId;
-      occurredAtIso: string;
-      persistence: "not-run";
-      clientReadableDetail: "sanitized-unavailable-only";
-      rawProviderPayload: "not-recorded-by-design";
-      rawComments: "not-recorded-by-design";
-      privateIdentifiers: "not-recorded-by-design";
-      browserStorage: "unchanged";
-      handoffPayload: "unchanged";
-      publicLaunchAllowed: false;
-    };
-
-export const commentTranslatorFreeBetaCreatorLockedWaitlistContract = {
-  implementationStage: "free-public-beta-f14-creator-locked-waitlist",
+export const commentTranslatorCreatorWaitlistContract = {
+  implementationStage: "creator-closed-beta-waitlist-registration",
   runtime: "server-only",
-  sourceAuthority: "server-owned-durable-session-usage-entitlement-and-provider-readiness",
-  paidAccessState: "not-live-closed-beta-waitlist-only",
-  creatorPriceIntent: {
-    currency: "JPY",
-    monthlyAmount: 980,
-    availability: "planned-closed-beta-not-live"
-  },
-  lockedFeatureCards: "closed-beta-waitlist-only",
-  waitlist: "server-action-sanitized-intent-only",
-  clickTracking: "local-deterministic-draft-only",
-  browserStorage: "unchanged",
-  handoffPayload: "unchanged",
-  remoteSupabaseMutation: "not-run-by-codex-in-this-thread",
-  stripeLiveAction: "not-run-in-this-thread",
+  campaign: commentTranslatorCreatorWaitlistCampaign,
+  discountIntent: commentTranslatorCreatorWaitlistDiscountIntent,
+  durableAuthority: "comment_translator_creator_waitlist_registrations",
+  duplicatePolicy: "one-registration-per-owner-user-and-campaign",
+  publicUiReadableOutput: "sanitized-registration-state-only",
+  adminReadableOutput: "email-display-name-campaign-status-registered-at-only",
+  stripeLiveAction: "not-run-in-this-slice",
+  checkoutAvailable: false,
   publicLaunchAllowed: false,
-  forbiddenReadableOutput: [
-    "oauth-token-value",
-    "refresh-token-value",
-    "authorization-code-value",
+  forbiddenPublicOutput: [
     "owner-user-id-value",
     "provider-channel-id-value",
-    "live-target-value",
     "liveChatId-value",
-    "service-role-key-value",
-    "authorization-header-value",
     "provider-target-metadata",
     "raw-provider-payload",
     "raw-comment-text",
-    "server-only-cursor",
-    "author-channel-id",
-    "author-channel-url",
-    "author-profile-image-url",
-    "stripe-secret",
-    "billing-identifier"
+    "token-value",
+    "authorization-header-value",
+    "browser-storage-payload"
   ]
 } as const;
 
-const lockedFeatureCards: CommentTranslatorFreeBetaCreatorLockedWaitlistState["lockedFeatureCards"] = [
-  {
-    id: "creator-ai-natural-translation",
-    state: "locked",
-    availability: "closed-beta-waitlist",
-    clientReadableDetail: "sanitized-feature-label-only"
-  },
-  {
-    id: "creator-obs-overlay",
-    state: "locked",
-    availability: "closed-beta-waitlist",
-    clientReadableDetail: "sanitized-feature-label-only"
-  },
-  {
-    id: "creator-moderator-share",
-    state: "locked",
-    availability: "closed-beta-waitlist",
-    clientReadableDetail: "sanitized-feature-label-only"
-  },
-  {
-    id: "creator-custom-dictionary",
-    state: "locked",
-    availability: "closed-beta-waitlist",
-    clientReadableDetail: "sanitized-feature-label-only"
-  }
-];
-
-export function createCommentTranslatorFreeBetaCreatorLockedWaitlistState(
-  input: CommentTranslatorFreeBetaCreatorLockedWaitlistInput
-): CommentTranslatorFreeBetaCreatorLockedWaitlistState {
-  const unavailableReason = resolveUnavailableReason(input);
-  const available = unavailableReason === null;
-
-  return {
-    status: available ? "locked" : "unavailable",
-    unavailableReason,
-    creatorPriceIntent: {
-      currency: "JPY",
-      monthlyAmount: 980,
-      availability: "planned-closed-beta-not-live",
-      paidAccessLive: false,
-      checkoutAvailable: false,
-      clientReadableDetail: "sanitized-price-intent-only"
-    },
-    lockedFeatureCards,
-    waitlist: {
-      status: available ? "available" : "unavailable",
-      actionState: available ? "enabled" : "disabled",
-      destination: "server-action:recordCommentTranslatorCreatorLockedClickAction",
-      copyState: "closed-beta-waitlist-only",
-      clientReadableDetail: available ? "sanitized-waitlist-intent-only" : "sanitized-unavailable-only"
-    },
-    clickTracking: {
-      status: available ? "local-draft-ready" : "unavailable",
-      recording: available ? "local-deterministic-draft-only" : "not-run",
-      persistence: available ? "not-run-remote-mutation-requires-explicit-approval" : "not-run",
-      rawProviderPayload: "not-recorded-by-design",
-      rawComments: "not-recorded-by-design",
-      privateIdentifiers: "not-recorded-by-design",
-      browserStorage: "unchanged",
-      handoffPayload: "unchanged",
-      clientReadableDetail: available ? "sanitized-local-draft-only" : "sanitized-unavailable-only"
-    },
-    generatedAtIso: new Date(input.nowMs).toISOString(),
-    clientReadableDetail: "sanitized-creator-locked-waitlist-only",
-    providerTargetMetadata: "forbidden",
-    serverOnlyCursor: "not-returned-by-design",
-    browserStorage: "unchanged",
-    handoffPayload: "unchanged",
-    publicLaunchAllowed: false
-  };
-}
-
-export function createCommentTranslatorFreeBetaCreatorClickDraft({
-  state,
-  intent,
-  featureId,
-  nowMs
+export async function readCommentTranslatorCreatorWaitlistStateWithStore({
+  account,
+  store
 }: {
-  state: CommentTranslatorFreeBetaCreatorLockedWaitlistState;
-  intent: CommentTranslatorFreeBetaCreatorClickIntent;
-  featureId: CommentTranslatorFreeBetaCreatorFeatureId;
-  nowMs: number;
-}): CommentTranslatorFreeBetaCreatorClickDraft {
-  if (state.status !== "locked" || state.clickTracking.status !== "local-draft-ready") {
+  readonly account: CommentTranslatorCreatorWaitlistAccount;
+  readonly store: Pick<CommentTranslatorCreatorWaitlistStore, "readRegistration"> | null;
+}): Promise<CommentTranslatorCreatorWaitlistState> {
+  if (account.status !== "authenticated") {
+    return createUnauthenticatedState(account.reason);
+  }
+
+  if (!store) {
+    return createUnavailableState("durable-waitlist-unavailable");
+  }
+
+  try {
+    const registration = await store.readRegistration({
+      ownerUserId: account.ownerUserId,
+      campaign: commentTranslatorCreatorWaitlistCampaign
+    });
+    if (!registration) {
+      return {
+        status: "unregistered",
+        actionState: "enabled",
+        loginHref: null,
+        registration: null,
+        unavailableReason: null,
+        clientReadableDetail: "sanitized-waitlist-state-only",
+        publicLaunchAllowed: false
+      };
+    }
+
     return {
-      status: "unavailable",
-      unavailableReason: state.unavailableReason ?? "missing-provider-readiness",
-      intent,
-      featureId,
-      occurredAtIso: new Date(nowMs).toISOString(),
-      persistence: "not-run",
-      clientReadableDetail: "sanitized-unavailable-only",
-      rawProviderPayload: "not-recorded-by-design",
-      rawComments: "not-recorded-by-design",
-      privateIdentifiers: "not-recorded-by-design",
-      browserStorage: "unchanged",
-      handoffPayload: "unchanged",
+      status: "registered",
+      actionState: "disabled",
+      loginHref: null,
+      registration: createBrowserRegistration(registration),
+      unavailableReason: null,
+      clientReadableDetail: "sanitized-waitlist-state-only",
       publicLaunchAllowed: false
     };
+  } catch {
+    return createUnavailableState("durable-waitlist-unreadable");
+  }
+}
+
+export async function registerCommentTranslatorCreatorWaitlistWithStore({
+  account,
+  store,
+  nowMs
+}: {
+  readonly account: CommentTranslatorCreatorWaitlistAccount;
+  readonly store: Pick<CommentTranslatorCreatorWaitlistStore, "readRegistration" | "insertRegistration"> | null;
+  readonly nowMs: number;
+}): Promise<CommentTranslatorCreatorWaitlistRegistrationResult> {
+  if (account.status !== "authenticated") {
+    return createUnauthenticatedState(account.reason);
   }
 
+  if (!store) {
+    return createUnavailableState("durable-waitlist-unavailable");
+  }
+
+  try {
+    const existing = await store.readRegistration({
+      ownerUserId: account.ownerUserId,
+      campaign: commentTranslatorCreatorWaitlistCampaign
+    });
+    if (existing) {
+      return {
+        status: "already-registered",
+        duplicatePrevented: true,
+        registration: createBrowserRegistration(existing),
+        clientReadableDetail: "sanitized-waitlist-registration-only",
+        publicLaunchAllowed: false
+      };
+    }
+
+    const draft = createRegistrationDraft({ account, nowMs });
+    const inserted = await store.insertRegistration(draft);
+    if (inserted.duplicatePrevented) {
+      return {
+        status: "already-registered",
+        duplicatePrevented: true,
+        registration: createBrowserRegistration(inserted),
+        clientReadableDetail: "sanitized-waitlist-registration-only",
+        publicLaunchAllowed: false
+      };
+    }
+
+    return {
+      status: "registered",
+      duplicatePrevented: false,
+      registration: createBrowserRegistration(inserted),
+      clientReadableDetail: "sanitized-waitlist-registration-only",
+      publicLaunchAllowed: false
+    };
+  } catch {
+    return createUnavailableState("durable-waitlist-unreadable");
+  }
+}
+
+export function createCommentTranslatorCreatorWaitlistAdminRegistration(
+  registration: CommentTranslatorCreatorWaitlistStoreRegistration
+): CommentTranslatorCreatorWaitlistAdminRegistration {
   return {
-    status: "recorded-local-draft",
-    intent,
-    featureId,
-    occurredAtIso: new Date(nowMs).toISOString(),
-    persistence: "not-run-remote-mutation-requires-explicit-approval",
-    clientReadableDetail: "sanitized-local-draft-only",
-    rawProviderPayload: "not-recorded-by-design",
-    rawComments: "not-recorded-by-design",
-    privateIdentifiers: "not-recorded-by-design",
-    browserStorage: "unchanged",
-    handoffPayload: "unchanged",
+    ...createBrowserRegistration(registration),
+    accountEmail: registration.accountEmail,
+    accountDisplayName: registration.accountDisplayName,
+    clientReadableDetail: "sanitized-admin-waitlist-registration-only"
+  };
+}
+
+function createRegistrationDraft({
+  account,
+  nowMs
+}: {
+  readonly account: Extract<CommentTranslatorCreatorWaitlistAccount, { readonly status: "authenticated" }>;
+  readonly nowMs: number;
+}): CommentTranslatorCreatorWaitlistStoreRegistration {
+  const nowIso = new Date(nowMs).toISOString();
+
+  return {
+    ownerUserId: account.ownerUserId,
+    accountEmail: normalizeNullableEmail(account.email ?? null),
+    accountDisplayName: normalizeNullableText(account.displayName ?? null),
+    campaign: commentTranslatorCreatorWaitlistCampaign,
+    status: "registered",
+    discountIntent: commentTranslatorCreatorWaitlistDiscountIntent,
+    registeredAtIso: nowIso,
+    updatedAtIso: nowIso
+  };
+}
+
+function createBrowserRegistration(
+  registration: CommentTranslatorCreatorWaitlistStoreRegistration
+): CommentTranslatorCreatorWaitlistBrowserRegistration {
+  return {
+    registeredAtIso: registration.registeredAtIso,
+    campaign: registration.campaign,
+    status: registration.status,
+    discountIntent: registration.discountIntent,
+    clientReadableDetail: "sanitized-waitlist-registration-only"
+  };
+}
+
+function createUnauthenticatedState(
+  reason: Extract<CommentTranslatorCreatorWaitlistAccount, { readonly status: "unauthenticated" }>["reason"]
+): Extract<CommentTranslatorCreatorWaitlistState, { readonly status: "unauthenticated" }> {
+  return {
+    status: "unauthenticated",
+    actionState: "login-required",
+    loginHref: commentTranslatorCreatorWaitlistLoginHref,
+    registration: null,
+    unavailableReason: reason,
+    clientReadableDetail: "sanitized-login-required-only",
     publicLaunchAllowed: false
   };
 }
 
-function resolveUnavailableReason(
-  input: CommentTranslatorFreeBetaCreatorLockedWaitlistInput
-): CommentTranslatorFreeBetaCreatorLockedWaitlistUnavailableReason | null {
-  if (input.durableSessionState !== "ready") {
-    return "durable-session-unreadable";
-  }
+function createUnavailableState(
+  reason: Extract<CommentTranslatorCreatorWaitlistState, { readonly status: "unavailable" }>["unavailableReason"]
+): Extract<CommentTranslatorCreatorWaitlistState, { readonly status: "unavailable" }> {
+  return {
+    status: "unavailable",
+    actionState: "disabled",
+    loginHref: null,
+    registration: null,
+    unavailableReason: reason,
+    clientReadableDetail: "sanitized-unavailable-only",
+    publicLaunchAllowed: false
+  };
+}
 
-  if (input.durableUsageState !== "ready") {
-    return "durable-usage-unreadable";
-  }
+function normalizeNullableText(value: string | null): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized.slice(0, 160) : null;
+}
 
-  if (input.entitlementState !== "ready") {
-    return "missing-entitlement";
-  }
-
-  if (input.providerReadinessState !== "ready") {
-    return "missing-provider-readiness";
-  }
-
-  return null;
+function normalizeNullableEmail(value: string | null): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized.slice(0, 320) : null;
 }

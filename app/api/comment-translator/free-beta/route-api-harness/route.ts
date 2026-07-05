@@ -6,9 +6,8 @@ import {
 import { readCommentTranslatorPrivateLaunchAccess } from "@/lib/comment-translator-private-launch-access-gate";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
-  getCommentTranslatorCreatorLockedWaitlistAction,
+  getCommentTranslatorCreatorWaitlistAction,
   getCommentTranslatorRealCommentsFeedAction,
-  recordCommentTranslatorCreatorLockedClickAction,
   requestCommentTranslatorDataDeletionAction
 } from "@/app/tools/comment-translator/actions";
 
@@ -21,8 +20,7 @@ const harnessEnabledEnv = "COMMENT_TRANSLATOR_FREE_BETA_ROUTE_API_HARNESS_ENABLE
 type HarnessActionName =
   | "getCommentTranslatorRealCommentsFeedAction"
   | "requestCommentTranslatorDataDeletionAction"
-  | "getCommentTranslatorCreatorLockedWaitlistAction"
-  | "recordCommentTranslatorCreatorLockedClickAction";
+  | "getCommentTranslatorCreatorWaitlistAction";
 
 type HarnessActionResult = {
   action: HarnessActionName;
@@ -35,8 +33,7 @@ type HarnessActionResult = {
 const defaultHarnessActions: readonly HarnessActionName[] = [
   "getCommentTranslatorRealCommentsFeedAction",
   "requestCommentTranslatorDataDeletionAction",
-  "getCommentTranslatorCreatorLockedWaitlistAction",
-  "recordCommentTranslatorCreatorLockedClickAction"
+  "getCommentTranslatorCreatorWaitlistAction"
 ];
 
 export async function POST(request: NextRequest) {
@@ -92,11 +89,7 @@ async function runHarnessAction(action: HarnessActionName): Promise<HarnessActio
       return await runDataDeletionAction();
     }
 
-    if (action === "getCommentTranslatorCreatorLockedWaitlistAction") {
-      return await runCreatorLockedWaitlistAction();
-    }
-
-    return await runCreatorLockedClickAction();
+    return await runCreatorWaitlistAction();
   } catch {
     return {
       action,
@@ -132,30 +125,15 @@ async function runDataDeletionAction(): Promise<HarnessActionResult> {
   };
 }
 
-async function runCreatorLockedWaitlistAction(): Promise<HarnessActionResult> {
-  const waitlist = await getCommentTranslatorCreatorLockedWaitlistAction();
+async function runCreatorWaitlistAction(): Promise<HarnessActionResult> {
+  const waitlist = await getCommentTranslatorCreatorWaitlistAction();
 
   return {
-    action: "getCommentTranslatorCreatorLockedWaitlistAction",
+    action: "getCommentTranslatorCreatorWaitlistAction",
     pass: true,
     status: waitlist.status,
-    count: waitlist.lockedFeatureCards.length,
+    count: waitlist.registration ? 1 : 0,
     unavailableReason: waitlist.unavailableReason
-  };
-}
-
-async function runCreatorLockedClickAction(): Promise<HarnessActionResult> {
-  const draft = await recordCommentTranslatorCreatorLockedClickAction({
-    intent: "waitlist-click",
-    featureId: "creator-ai-natural-translation"
-  });
-
-  return {
-    action: "recordCommentTranslatorCreatorLockedClickAction",
-    pass: true,
-    status: draft.status,
-    count: draft.status === "recorded-local-draft" ? 1 : 0,
-    unavailableReason: "unavailableReason" in draft ? draft.unavailableReason : null
   };
 }
 

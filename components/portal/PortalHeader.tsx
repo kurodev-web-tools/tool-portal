@@ -102,7 +102,7 @@ export function PortalHeader({
   return (
     <>
       <header className="sticky top-0 z-[70] flex h-16 items-center justify-between gap-3 border-b border-border bg-background/92 px-4 backdrop-blur sm:px-8">
-        <div className="flex min-w-0 items-center gap-3 lg:hidden">
+        <div className="flex min-w-0 flex-1 items-center gap-3 lg:hidden">
           <Link href="/" className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-primary text-sm font-black text-white">
             K
           </Link>

@@ -5,11 +5,9 @@ import Link from "next/link";
 import {
   getCommentTranslatorSessionStatusAction,
   getCommentTranslatorRealCommentsFeedAction,
-  getYouTubeOAuthCredentialStatusAction,
-  getCommentTranslatorCreatorLockedWaitlistAction,
+  getCommentTranslatorCreatorWaitlistAction,
   heartbeatCommentTranslatorSessionAction,
-  recordCommentTranslatorCreatorLockedClickAction,
-  requestCommentTranslatorDataDeletionAction,
+  registerCommentTranslatorCreatorWaitlistAction,
   restoreCommentTranslatorPersistedRealCommentsFeedAction,
   clearCommentTranslatorPreviewFeedAction,
   startCommentTranslatorSessionAction,
@@ -17,18 +15,13 @@ import {
 } from "@/app/tools/comment-translator/actions";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import {
-  commentTranslatorManualSamples,
-  commentTranslatorOperatorFlowSteps,
   commentTranslatorUiCopy,
-  createManualCommentRows,
   filterCommentTranslatorComments,
   findCommentTranslatorOption,
   mockTranslationProvider,
-  splitManualCommentInput,
   type CommentTranslatorComment,
   type CommentTranslatorConnectionStateId,
   type CommentTranslatorDisplayMode,
-  type CommentTranslatorManualResultMode,
   type CommentTranslatorSourceLanguageId,
   type CommentTranslatorStatusFilter,
   type CommentTranslatorStreamId,
@@ -43,11 +36,7 @@ import {
 } from "@/lib/comment-translator-real-comments-feed-shared";
 import { readLocalTimeZonePreference, timeZonePreferenceChangeEvent, timeZonePreferenceStorageKey } from "@/lib/local-preferences";
 import type { CommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
-import {
-  createYouTubeOAuthCredentialStatusUiWiring,
-  type YouTubeOAuthCredentialStatusUiStateId,
-  type YouTubeOAuthCredentialStatusUiWiringViewModel
-} from "@/lib/comment-translator-youtube-credential-status-ui-wiring";
+import type { YouTubeOAuthCredentialStatusUiStateId } from "@/lib/comment-translator-youtube-credential-status-ui-wiring";
 
 type SelectOption = {
   id: string;
@@ -57,7 +46,6 @@ type SelectOption = {
 };
 
 type CommentTranslatorUiCopy = (typeof commentTranslatorUiCopy)[keyof typeof commentTranslatorUiCopy];
-type OperatorFlowChecklistState = "done" | "waiting" | "gated";
 type OperatorSessionStopReason = keyof CommentTranslatorUiCopy["operatorSession"]["stopReasons"];
 type OperatorSessionNextAction = keyof CommentTranslatorUiCopy["operatorSession"]["nextActions"];
 type OperatorSessionReasonCode = keyof CommentTranslatorUiCopy["operatorSession"]["reasonMessages"];
@@ -114,71 +102,28 @@ type OperatorSessionState = {
   rateLimitReason?: "rate-limit-exceeded";
   retryAfterSeconds?: number;
 };
-type RetentionAttributionState = {
-  status: "available" | "unavailable";
-  unavailableReason:
-    | "durable-session-unreadable"
-    | "durable-usage-unreadable"
-    | "missing-entitlement"
-    | "missing-provider-readiness"
-    | null;
-  dataDeletion: {
-    requestPath: "server-action:requestCommentTranslatorDataDeletionAction";
-    buttonState: "enabled" | "disabled";
-    clientReadableDetail: "sanitized-request-status-only" | "sanitized-unavailable-only";
-  };
-  retentionJob: {
-    status: "ready" | "unavailable";
-    clientReadableDetail: "sanitized-retention-readiness-only" | "sanitized-unavailable-only";
-  };
-  deletedMessagePropagation: {
-    strategy: "message-reference-tombstone-only";
-    browserReadableText: "tombstone-only";
-  };
-  sourceAttribution: {
-    label: "Source: YouTube Live Chat";
-  };
-  clientReadableDetail: "sanitized-retention-attribution-only";
-  publicLaunchAllowed: false;
+type CreatorWaitlistRegistration = {
+  registeredAtIso: string;
+  campaign: "creator_closed_beta_2026";
+  status: "registered" | "invited" | "discount_eligible" | "discount_used" | "cancelled";
+  discountIntent: "first_month_discount";
+  clientReadableDetail: "sanitized-waitlist-registration-only";
 };
-type CreatorLockedFeatureId =
-  | "creator-ai-natural-translation"
-  | "creator-obs-overlay"
-  | "creator-moderator-share"
-  | "creator-custom-dictionary";
-type CreatorLockedWaitlistState = {
-  status: "locked" | "unavailable";
+type CreatorWaitlistState = {
+  status: "unauthenticated" | "unavailable" | "unregistered" | "registered";
+  actionState: "login-required" | "disabled" | "enabled";
+  loginHref: string | null;
+  registration: CreatorWaitlistRegistration | null;
   unavailableReason:
-    | "durable-session-unreadable"
-    | "durable-usage-unreadable"
-    | "missing-entitlement"
-    | "missing-provider-readiness"
+    | "caller-not-authenticated"
+    | "auth-unavailable"
+    | "durable-waitlist-unavailable"
+    | "durable-waitlist-unreadable"
     | null;
-  creatorPriceIntent: {
-    currency: "JPY";
-    monthlyAmount: 980;
-    availability: "planned-closed-beta-not-live";
-    paidAccessLive: false;
-    checkoutAvailable: false;
-    clientReadableDetail: "sanitized-price-intent-only";
-  };
-  lockedFeatureCards: readonly {
-    id: CreatorLockedFeatureId;
-    state: "locked";
-    availability: "closed-beta-waitlist";
-    clientReadableDetail: "sanitized-feature-label-only";
-  }[];
-  waitlist: {
-    status: "available" | "unavailable";
-    actionState: "enabled" | "disabled";
-    clientReadableDetail: "sanitized-waitlist-intent-only" | "sanitized-unavailable-only";
-  };
-  clickTracking: {
-    status: "local-draft-ready" | "unavailable";
-    recording: "local-deterministic-draft-only" | "not-run";
-    clientReadableDetail: "sanitized-local-draft-only" | "sanitized-unavailable-only";
-  };
-  clientReadableDetail: "sanitized-creator-locked-waitlist-only";
+  clientReadableDetail:
+    | "sanitized-login-required-only"
+    | "sanitized-unavailable-only"
+    | "sanitized-waitlist-state-only";
   publicLaunchAllowed: false;
 };
 
@@ -227,76 +172,13 @@ const initialOperatorSessionState: OperatorSessionState = {
   usageDisplay: initialOperatorSessionUsageDisplay,
   nextAction: "press-start"
 };
-const initialRetentionAttributionState: RetentionAttributionState = {
+const initialCreatorWaitlistState: CreatorWaitlistState = {
   status: "unavailable",
-  unavailableReason: "missing-provider-readiness",
-  dataDeletion: {
-    requestPath: "server-action:requestCommentTranslatorDataDeletionAction",
-    buttonState: "enabled",
-    clientReadableDetail: "sanitized-request-status-only"
-  },
-  retentionJob: {
-    status: "unavailable",
-    clientReadableDetail: "sanitized-unavailable-only"
-  },
-  deletedMessagePropagation: {
-    strategy: "message-reference-tombstone-only",
-    browserReadableText: "tombstone-only"
-  },
-  sourceAttribution: {
-    label: "Source: YouTube Live Chat"
-  },
-  clientReadableDetail: "sanitized-retention-attribution-only",
-  publicLaunchAllowed: false
-};
-const initialCreatorLockedWaitlistState: CreatorLockedWaitlistState = {
-  status: "unavailable",
-  unavailableReason: "missing-provider-readiness",
-  creatorPriceIntent: {
-    currency: "JPY",
-    monthlyAmount: 980,
-    availability: "planned-closed-beta-not-live",
-    paidAccessLive: false,
-    checkoutAvailable: false,
-    clientReadableDetail: "sanitized-price-intent-only"
-  },
-  lockedFeatureCards: [
-    {
-      id: "creator-ai-natural-translation",
-      state: "locked",
-      availability: "closed-beta-waitlist",
-      clientReadableDetail: "sanitized-feature-label-only"
-    },
-    {
-      id: "creator-obs-overlay",
-      state: "locked",
-      availability: "closed-beta-waitlist",
-      clientReadableDetail: "sanitized-feature-label-only"
-    },
-    {
-      id: "creator-moderator-share",
-      state: "locked",
-      availability: "closed-beta-waitlist",
-      clientReadableDetail: "sanitized-feature-label-only"
-    },
-    {
-      id: "creator-custom-dictionary",
-      state: "locked",
-      availability: "closed-beta-waitlist",
-      clientReadableDetail: "sanitized-feature-label-only"
-    }
-  ],
-  waitlist: {
-    status: "unavailable",
-    actionState: "disabled",
-    clientReadableDetail: "sanitized-unavailable-only"
-  },
-  clickTracking: {
-    status: "unavailable",
-    recording: "not-run",
-    clientReadableDetail: "sanitized-unavailable-only"
-  },
-  clientReadableDetail: "sanitized-creator-locked-waitlist-only",
+  actionState: "disabled",
+  loginHref: null,
+  registration: null,
+  unavailableReason: "durable-waitlist-unavailable",
+  clientReadableDetail: "sanitized-unavailable-only",
   publicLaunchAllowed: false
 };
 
@@ -427,15 +309,6 @@ function StatTile({ label, value, helper }: { label: string; value: string; help
   );
 }
 
-function CredentialStatusRow({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div className="grid min-w-0 gap-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-3">
-      <dt className="min-w-0 break-words text-muted">{label}</dt>
-      <dd className="min-w-0 break-all font-semibold text-foreground sm:text-right">{value ?? "-"}</dd>
-    </div>
-  );
-}
-
 function CommentCard({
   comment,
   displayMode,
@@ -542,68 +415,96 @@ function CommentCard({
   );
 }
 
-function CreatorLockedWaitlistPanel({
+function CreatorWaitlistPanel({
   copy,
   state,
-  clickStatus,
   isPending,
   onRefresh,
-  onTrackClick
+  onRegister
 }: {
   copy: CommentTranslatorUiCopy;
-  state: CreatorLockedWaitlistState;
-  clickStatus: string | null;
+  state: CreatorWaitlistState;
   isPending: boolean;
   onRefresh: () => void;
-  onTrackClick: (featureId: CreatorLockedFeatureId, intent: "waitlist-click" | "feature-card-click") => void;
+  onRegister: () => void;
 }) {
-  const ready = state.status === "locked" && state.waitlist.status === "available";
+  const registeredAt = state.registration?.registeredAtIso ?? null;
+  const statusLabel = copy.creatorWaitlist.states[state.status];
+  const primaryLabel =
+    state.status === "registered"
+      ? copy.creatorWaitlist.registeredButton
+      : state.status === "unauthenticated"
+        ? copy.creatorWaitlist.loginButton
+        : isPending
+          ? copy.creatorWaitlist.pending
+          : copy.creatorWaitlist.joinWaitlist;
+  const helper =
+    state.status === "registered"
+      ? copy.creatorWaitlist.registeredHelper
+      : state.status === "unauthenticated"
+        ? copy.creatorWaitlist.loginHelper
+        : state.status === "unavailable"
+          ? copy.creatorWaitlist.unavailable
+          : copy.creatorWaitlist.helper;
 
   return (
     <div
-      data-comment-translator-creator-locked-waitlist="compact-creator-closed-beta"
+      data-comment-translator-creator-waitlist="creator-closed-beta-preregistration"
       className="rounded-base border border-primary/25 bg-primary-soft/25 px-3 py-3"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="break-words text-sm font-black text-foreground">{copy.creatorLockedWaitlist.title}</p>
+          <p className="break-words text-sm font-black text-foreground">{copy.creatorWaitlist.title}</p>
           <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
-            {copy.creatorLockedWaitlist.priceIntent}
+            {copy.creatorWaitlist.priceIntent}
           </p>
         </div>
         <span className="rounded-base border border-primary/30 bg-surface px-2 py-1 text-xs font-black text-primary-strong">
-          {copy.creatorLockedWaitlist.lockedBadge}
+          {statusLabel}
         </span>
       </div>
       <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
-        {ready ? copy.creatorLockedWaitlist.helper : copy.creatorLockedWaitlist.unavailable}
+        {helper}
       </p>
       <div className="mt-3 rounded-base border border-primary/20 bg-surface/80 px-3 py-2">
         <p className="break-words text-xs font-semibold leading-5 text-muted">
-          {copy.creatorLockedWaitlist.featureSummary}
+          {copy.creatorWaitlist.featureSummary}
         </p>
+        {registeredAt ? (
+          <p className="mt-2 break-words text-xs font-black leading-5 text-foreground">
+            {copy.creatorWaitlist.registeredAt}: {registeredAt}
+          </p>
+        ) : null}
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-        <button
-          type="button"
-          data-comment-translator-creator-click-tracking="sanitized-local-draft-only"
-          onClick={() => onTrackClick("creator-ai-natural-translation", "waitlist-click")}
-          disabled={isPending || state.waitlist.actionState !== "enabled"}
-          className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-        >
-          {isPending ? copy.creatorLockedWaitlist.pending : copy.creatorLockedWaitlist.joinWaitlist}
-        </button>
+        {state.actionState === "login-required" && state.loginHref ? (
+          <Link
+            href={state.loginHref}
+            className="inline-flex min-h-10 items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
+          >
+            {primaryLabel}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={onRegister}
+            disabled={isPending || state.actionState !== "enabled"}
+            className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+          >
+            {primaryLabel}
+          </button>
+        )}
         <button
           type="button"
           onClick={onRefresh}
           disabled={isPending}
           className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
         >
-          {copy.creatorLockedWaitlist.refresh}
+          {copy.creatorWaitlist.refresh}
         </button>
       </div>
       <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
-        {clickStatus ?? copy.creatorLockedWaitlist.clickBoundary}
+        {copy.creatorWaitlist.boundary}
       </p>
     </div>
   );
@@ -629,43 +530,26 @@ export function CommentTranslatorDock({
     statusFilters
   } = mockTranslationProvider.getSnapshot();
   const copy = commentTranslatorUiCopy[locale];
-  const [connectionId, setConnectionId] = useState<CommentTranslatorConnectionStateId>("connected");
-  const [streamId, setStreamId] = useState(streams[0].id);
+  const connectionId: CommentTranslatorConnectionStateId = "connected";
+  const streamId: CommentTranslatorStreamId = streams[0].id;
   const [sourceLanguage, setSourceLanguage] = useState<CommentTranslatorSourceLanguageId>(settings.sourceLanguage);
   const [targetLanguage, setTargetLanguage] = useState<CommentTranslatorTargetLanguageId>(settings.targetLanguage);
   const [displayMode, setDisplayMode] = useState<CommentTranslatorDisplayMode>(settings.displayMode);
   const [surfaceMode, setSurfaceMode] = useState<CommentTranslatorSurfaceMode>(settings.surfaceMode);
   const [statusFilter, setStatusFilter] = useState<CommentTranslatorStatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [singleCommentDraft, setSingleCommentDraft] = useState("");
-  const [multilinePasteDraft, setMultilinePasteDraft] = useState("");
-  const [manualResultMode, setManualResultMode] = useState<CommentTranslatorManualResultMode>("translated");
-  const [manualComments, setManualComments] = useState<CommentTranslatorComment[]>([]);
   const [viewMode, setViewMode] = useState<"normal" | "comments">("normal");
-  const [credentialStatusView, setCredentialStatusView] = useState<YouTubeOAuthCredentialStatusUiWiringViewModel | null>(
-    null
-  );
-  const [credentialStatusError, setCredentialStatusError] = useState<string | null>(null);
   const [sessionState, setSessionState] = useState<OperatorSessionState>(initialOperatorSessionState);
   const [sessionError, setSessionError] = useState<string | null>(null);
-  const [retentionAttributionState, setRetentionAttributionState] = useState<RetentionAttributionState>(
-    initialRetentionAttributionState
+  const [creatorWaitlistState, setCreatorWaitlistState] = useState<CreatorWaitlistState>(
+    initialCreatorWaitlistState
   );
-  const [retentionAttributionError, setRetentionAttributionError] = useState<string | null>(null);
-  const [creatorLockedWaitlistState, setCreatorLockedWaitlistState] = useState<CreatorLockedWaitlistState>(
-    initialCreatorLockedWaitlistState
-  );
-  const [creatorLockedClickStatus, setCreatorLockedClickStatus] = useState<string | null>(null);
   const [realCommentsFeed, setRealCommentsFeed] = useState<CommentTranslatorRealCommentsFeedState>(initialRealCommentsFeed);
   const [realCommentsFeedError, setRealCommentsFeedError] = useState<string | null>(null);
   const [browserTimeZone, setBrowserTimeZone] = useState("UTC");
-  const [isCredentialStatusPending, startCredentialStatusTransition] = useTransition();
   const [isSessionPending, startSessionTransition] = useTransition();
-  const [isDataDeletionPending, startDataDeletionTransition] = useTransition();
-  const [isCreatorLockedPending, startCreatorLockedTransition] = useTransition();
+  const [isCreatorWaitlistPending, startCreatorWaitlistTransition] = useTransition();
   const [isRealCommentsFeedPending, startRealCommentsFeedTransition] = useTransition();
-  const singleCommentInputRef = useRef<HTMLInputElement>(null);
-  const multilinePasteInputRef = useRef<HTMLTextAreaElement>(null);
   const realCommentsFeedRefreshInFlightRef = useRef(false);
 
   const selectedConnection = findCommentTranslatorOption(connectionStates, connectionId);
@@ -698,16 +582,6 @@ export function CommentTranslatorDock({
     label: copy.surfaces[selectedSurface.id].label,
     helper: copy.surfaces[selectedSurface.id].helper
   };
-  const connectionOptions = connectionStates.map((state) => ({
-    id: state.id,
-    label: copy.connections[state.id],
-    helper: copy.connectionDockStatus[state.id]
-  }));
-  const streamOptions = streams.map((stream) => ({
-    id: stream.id,
-    label: copy.streams[stream.id].label,
-    helper: copy.streams[stream.id].helper
-  }));
   const sourceLanguageOptions = sourceLanguages.map((language) => ({
     id: language.id,
     label: copy.languages[language.id],
@@ -728,11 +602,6 @@ export function CommentTranslatorDock({
     label: copy.surfaces[surface.id].label,
     helper: copy.surfaces[surface.id].helper
   }));
-  const manualResultOptions = (["translated", "skipped", "error"] as const).map((mode) => ({
-    id: mode,
-    label: copy.manualResults[mode].label,
-    helper: copy.manualResults[mode].helper
-  }));
   const feedComments = mapCommentTranslatorRealCommentsFeedRowsToUiComments({
     feed: realCommentsFeed,
     targetLanguageLabel: localizedTargetLanguage.label,
@@ -743,47 +612,16 @@ export function CommentTranslatorDock({
   const filteredComments = filterCommentTranslatorComments(publicFeedComments, { statusFilter, searchQuery });
   const liveStats = {
     translated: publicFeedComments.filter((comment) => comment.status === "translated").length,
-    errors: publicFeedComments.filter((comment) => comment.status === "error").length,
-    manualRows: manualComments.length
+    errors: publicFeedComments.filter((comment) => comment.status === "error").length
   };
   const shellIsNarrow = surfaceMode === "narrow-viewport";
   const dockStatusLabel = localizedConnection.dockStatus === "blocked" ? localizedConnection.dockStatusLabel : localizedStream.dockStatusLabel;
   const credentialStatusMetadata = youtubeCredentialStatusSource.statusMetadata;
-  const credentialStatusState = credentialStatusView?.state ?? credentialStatusMetadata.status;
+  const credentialStatusState = credentialStatusMetadata.status;
   const credentialStatusLabel = copy.credentialStatus.states[credentialStatusState];
-  const credentialStatusScopeLabel = credentialStatusView?.scopeLabel ?? credentialStatusMetadata.scopeLabel;
-  const credentialStatusExpiresAtIso = credentialStatusView?.expiresAtIso ?? credentialStatusMetadata.expiresAtIso;
-  const credentialStatusReason =
-    credentialStatusError ?? credentialStatusView?.reason ?? credentialStatusMetadata.reason ?? null;
   const operatorFlowCredentialReady = credentialStatusState === "available";
   const operatorFlowTargetReady = selectedStream.dockStatus === "ready" && localizedConnection.dockStatus !== "blocked";
   const operatorFlowStatus = operatorFlowCredentialReady ? (operatorFlowTargetReady ? "ready" : "standby") : "blocked";
-  const operatorFlowSummary =
-    operatorFlowStatus === "ready"
-      ? copy.operatorFlow.summaryReady
-      : operatorFlowStatus === "standby"
-        ? copy.operatorFlow.summaryStandby
-        : copy.operatorFlow.summaryBlocked;
-  const operatorFlowChecklist = commentTranslatorOperatorFlowSteps.map((step) => {
-    const state: OperatorFlowChecklistState =
-      step.id === "credential-status"
-        ? operatorFlowCredentialReady
-          ? "done"
-          : "waiting"
-        : step.id === "target-readiness"
-          ? operatorFlowTargetReady
-            ? "done"
-            : "waiting"
-          : step.id === "intake-bridge"
-            ? "done"
-            : "gated";
-
-    return {
-      ...step,
-      state,
-      copy: copy.operatorFlow.steps[step.id]
-    };
-  });
   const sessionStopReason = sessionState.stopReason ? copy.operatorSession.stopReasons[sessionState.stopReason] : "-";
   const sessionReasonUx = sessionState.reasonUx;
   const usageDisplay = sessionState.usageDisplay ?? initialOperatorSessionUsageDisplay;
@@ -796,13 +634,6 @@ export function CommentTranslatorDock({
       : usageDisplay.providerCallPolicy.status === "blocked-over-limit"
         ? copy.operatorSession.usageProviderBlockedOverLimit
         : copy.operatorSession.usageProviderUnavailable;
-  const retentionAttributionReady = retentionAttributionState.status === "available";
-  const retentionAttributionStatusLabel = retentionAttributionReady
-    ? copy.retentionAttribution.statusReady
-    : copy.retentionAttribution.statusUnavailable;
-  const retentionAttributionHelper = retentionAttributionReady
-    ? copy.retentionAttribution.retentionReady
-    : copy.retentionAttribution.retentionUnavailable;
   const sessionReasonGroup = sessionReasonUx ? copy.operatorSession.reasonGroups[sessionReasonUx.group] : null;
   const sessionReasonMessage = sessionReasonUx
     ? copy.operatorSession.reasonMessages[sessionReasonUx.code]
@@ -825,18 +656,6 @@ export function CommentTranslatorDock({
   const startBlockedByCredentialStatus = credentialStatusState !== "available";
   const startBlockedByUsagePolicy = !startBlockedByRateLimit && usageDisplay.providerCallPolicy.status !== "allowed";
   const commentOnly = viewMode === "comments";
-
-  function refreshCredentialStatus() {
-    startCredentialStatusTransition(async () => {
-      try {
-        const status = await getYouTubeOAuthCredentialStatusAction();
-        setCredentialStatusView(createYouTubeOAuthCredentialStatusUiWiring(status));
-        setCredentialStatusError(null);
-      } catch {
-        setCredentialStatusError(copy.credentialStatus.refreshFailed);
-      }
-    });
-  }
 
   function runSessionCommand(intent: "status" | "start" | "stop" | "heartbeat") {
     startSessionTransition(async () => {
@@ -1004,93 +823,39 @@ export function CommentTranslatorDock({
     };
   }, [refreshRealCommentsFeed, sessionState.status]);
 
-  function requestDataDeletion() {
-    startDataDeletionTransition(async () => {
+  function refreshCreatorWaitlist() {
+    startCreatorWaitlistTransition(async () => {
       try {
-        const state = await requestCommentTranslatorDataDeletionAction();
-        setRetentionAttributionState(state);
-        setRetentionAttributionError(null);
+        const state = await getCommentTranslatorCreatorWaitlistAction();
+        setCreatorWaitlistState(state);
       } catch {
-        setRetentionAttributionError(
-          locale === "ja" ? "データ削除状態を確認できませんでした" : "Could not check data deletion state"
-        );
+        setCreatorWaitlistState(initialCreatorWaitlistState);
       }
     });
   }
 
-  function refreshCreatorLockedWaitlist() {
-    startCreatorLockedTransition(async () => {
+  function registerCreatorWaitlist() {
+    startCreatorWaitlistTransition(async () => {
       try {
-        const state = await getCommentTranslatorCreatorLockedWaitlistAction();
-        setCreatorLockedWaitlistState(state);
-        setCreatorLockedClickStatus(null);
+        const result = await registerCommentTranslatorCreatorWaitlistAction();
+        if (result.status === "registered" || result.status === "already-registered") {
+          setCreatorWaitlistState({
+            status: "registered",
+            actionState: "disabled",
+            loginHref: null,
+            registration: result.registration,
+            unavailableReason: null,
+            clientReadableDetail: "sanitized-waitlist-state-only",
+            publicLaunchAllowed: false
+          });
+          return;
+        }
+
+        setCreatorWaitlistState(result);
       } catch {
-        setCreatorLockedClickStatus(copy.creatorLockedWaitlist.actionFailed);
+        setCreatorWaitlistState(initialCreatorWaitlistState);
       }
     });
-  }
-
-  function trackCreatorLockedClick(featureId: CreatorLockedFeatureId, intent: "waitlist-click" | "feature-card-click") {
-    startCreatorLockedTransition(async () => {
-      try {
-        const draft = await recordCommentTranslatorCreatorLockedClickAction({
-          featureId,
-          intent
-        });
-        setCreatorLockedClickStatus(
-          draft.status === "recorded-local-draft"
-            ? copy.creatorLockedWaitlist.clickRecorded
-            : copy.creatorLockedWaitlist.clickUnavailable
-        );
-      } catch {
-        setCreatorLockedClickStatus(copy.creatorLockedWaitlist.actionFailed);
-      }
-    });
-  }
-
-  function clearManualDraft() {
-    setSingleCommentDraft("");
-    setMultilinePasteDraft("");
-    if (singleCommentInputRef.current) {
-      singleCommentInputRef.current.value = "";
-    }
-    if (multilinePasteInputRef.current) {
-      multilinePasteInputRef.current.value = "";
-    }
-  }
-
-  function clearManualSession() {
-    setManualComments([]);
-  }
-
-  function insertManualSamples() {
-    const sampleText = commentTranslatorManualSamples.map((sample) => sample.text).join("\n");
-    setMultilinePasteDraft(sampleText);
-    if (multilinePasteInputRef.current) {
-      multilinePasteInputRef.current.value = sampleText;
-    }
-  }
-
-  function addManualComments() {
-    const texts = splitManualCommentInput({
-      singleComment: singleCommentDraft || singleCommentInputRef.current?.value || "",
-      multilinePaste: multilinePasteDraft || multilinePasteInputRef.current?.value || ""
-    });
-
-    if (texts.length === 0) {
-      return;
-    }
-
-    const rows = createManualCommentRows({
-      texts,
-      resultMode: manualResultMode,
-      targetLanguage,
-      targetLanguageLabel: localizedTargetLanguage.label,
-      startIndex: manualComments.length + 1
-    });
-
-    setManualComments((currentComments) => [...rows, ...currentComments]);
-    clearManualDraft();
   }
 
   return (
@@ -1134,7 +899,7 @@ export function CommentTranslatorDock({
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                   <p className="break-words text-base font-black text-foreground">{credentialStatusLabel}</p>
                   <span className={["rounded-base border px-2.5 py-1 text-xs font-black", toneClassName(credentialStatusTone(credentialStatusState))].join(" ")}>
-                    {isCredentialStatusPending ? copy.credentialStatus.pending : localizedConnection.statusLabel}
+                    {localizedConnection.statusLabel}
                   </span>
                 </div>
               </div>
@@ -1551,211 +1316,17 @@ export function CommentTranslatorDock({
                   {usagePolicyStopReason ? ` / ${usagePolicyStopReason}` : ""}
                 </p>
               </section>
-              <CreatorLockedWaitlistPanel
+              <CreatorWaitlistPanel
                 copy={copy}
-                state={creatorLockedWaitlistState}
-                clickStatus={creatorLockedClickStatus}
-                isPending={isCreatorLockedPending}
-                onRefresh={refreshCreatorLockedWaitlist}
-                onTrackClick={trackCreatorLockedClick}
+                state={creatorWaitlistState}
+                isPending={isCreatorWaitlistPending}
+                onRefresh={refreshCreatorWaitlist}
+                onRegister={registerCreatorWaitlist}
               />
             </aside>
           ) : null}
         </section>
 
-        {!commentOnly ? (
-          <details className="panel p-4">
-            <summary className="cursor-pointer text-sm font-black text-foreground">
-              {locale === "ja" ? "詳細確認とテスト入力" : "Details and test input"}
-            </summary>
-            <div className="mt-4 grid gap-4 lg:grid-cols-2">
-              <section data-credential-status-display-wiring="sanitized-metadata-only" className="rounded-base border border-border bg-surface p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-base font-black text-foreground">{copy.sections.credentialStatus}</h2>
-                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(credentialStatusTone(credentialStatusState))].join(" ")}>
-                    {isCredentialStatusPending ? copy.credentialStatus.pending : credentialStatusLabel}
-                  </span>
-                </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <ControlSelect
-                    label={copy.controls.connection}
-                    value={connectionId}
-                    options={connectionOptions}
-                    onChange={(value) => setConnectionId(value as CommentTranslatorConnectionStateId)}
-                  />
-                  <ControlSelect
-                    label={copy.controls.stream}
-                    value={streamId}
-                    options={streamOptions}
-                    onChange={(value) => setStreamId(value as CommentTranslatorStreamId)}
-                  />
-                </div>
-                <dl className="mt-3 grid gap-2 text-sm">
-                  <CredentialStatusRow label={copy.fields.scope} value={credentialStatusScopeLabel} />
-                  <CredentialStatusRow label={copy.fields.expires} value={credentialStatusExpiresAtIso} />
-                  <CredentialStatusRow label={copy.fields.reason} value={credentialStatusReason} />
-                  <CredentialStatusRow label={copy.fields.elapsed} value={formatDuration(sessionState.elapsedSeconds)} />
-                  <CredentialStatusRow label={copy.fields.stopReason} value={sessionError ?? sessionReasonMessage} />
-                  <CredentialStatusRow label={copy.fields.nextAction} value={sessionNextAction} />
-                </dl>
-                <button
-                  type="button"
-                  onClick={refreshCredentialStatus}
-                  disabled={isCredentialStatusPending}
-                  className="mt-3 min-h-10 w-full rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                >
-                  {isCredentialStatusPending ? copy.credentialStatus.pending : copy.actions.refreshCredentialStatus}
-                </button>
-                <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
-                  {copy.credentialStatus.safeBoundary}
-                </p>
-              </section>
-
-              <section data-operator-ui-flow="local-status-only" className="rounded-base border border-border bg-surface p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-base font-black text-foreground">{copy.sections.operatorFlow}</h2>
-                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(operatorFlowTone(operatorFlowStatus))].join(" ")}>
-                    {copy.operatorFlow[operatorFlowStatus]}
-                  </span>
-                </div>
-                <p className="mt-3 break-words text-sm font-semibold leading-6 text-foreground">
-                  {operatorFlowSummary}
-                </p>
-                <div className="mt-4 grid gap-2">
-                  {operatorFlowChecklist.map((step) => (
-                    <div key={step.id} className="grid min-w-0 gap-2 rounded-base border border-border bg-background/70 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-                      <div className="min-w-0">
-                        <p className="break-words text-sm font-black text-foreground">{step.copy.label}</p>
-                        <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">{step.copy.helper}</p>
-                      </div>
-                      <span className={["w-fit rounded-base border px-2 py-1 text-xs font-black", toneClassName(step.state === "done" ? "normal" : step.state === "gated" ? "warning" : "empty")].join(" ")}>
-                        {copy.operatorFlow.stepState[step.state]}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 grid gap-2 rounded-base border border-border bg-background/70 p-3 text-xs font-semibold leading-5 text-muted">
-                  <p className="break-words">{copy.operatorFlow.noLiveExecution}</p>
-                  <p className="break-words">{copy.operatorFlow.commandBoundary}</p>
-                </div>
-              </section>
-
-              <section
-                data-comment-translator-retention-attribution="sanitized-retention-attribution-only"
-                className="rounded-base border border-border bg-surface p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-base font-black text-foreground">{copy.retentionAttribution.title}</h2>
-                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(retentionAttributionReady ? "normal" : "error")].join(" ")}>
-                    {retentionAttributionStatusLabel}
-                  </span>
-                </div>
-                <div className="mt-4 grid gap-2 rounded-base border border-border bg-background/70 p-3 text-xs">
-                  <p className="break-words font-semibold leading-5 text-muted">
-                    {retentionAttributionHelper}
-                  </p>
-                  <p className="break-words font-semibold leading-5 text-muted">
-                    {copy.retentionAttribution.deletedPropagation}
-                  </p>
-                  <p className="break-words font-black leading-5 text-foreground">
-                    {retentionAttributionState.sourceAttribution.label}
-                  </p>
-                  {retentionAttributionError ? (
-                    <p className="break-words font-semibold leading-5 text-red-700">{retentionAttributionError}</p>
-                  ) : null}
-                  {retentionAttributionState.unavailableReason ? (
-                    <p className="break-words font-semibold leading-5 text-amber-800">
-                      {retentionAttributionState.unavailableReason}
-                    </p>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  onClick={requestDataDeletion}
-                  disabled={isDataDeletionPending || retentionAttributionState.dataDeletion.buttonState === "disabled"}
-                  className="mt-3 min-h-10 w-full rounded-base border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                >
-                  {isDataDeletionPending ? copy.retentionAttribution.deletionPending : copy.retentionAttribution.deletionButton}
-                </button>
-                <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
-                  {copy.retentionAttribution.deletionHelper}
-                </p>
-              </section>
-
-              <section className="rounded-base border border-border bg-surface p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="text-base font-black text-foreground">{copy.sections.manualInput}</h2>
-                    <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
-                      {copy.manualInput.helper}
-                    </p>
-                  </div>
-                  <span className="rounded-base border border-cyan-200 bg-cyan-50 px-2 py-1 text-xs font-black text-cyan-700">
-                    {manualComments.length} {copy.stats.manualRows}
-                  </span>
-                </div>
-                <form
-                  className="mt-4 grid gap-3"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    addManualComments();
-                  }}
-                >
-                  <label className="grid min-w-0 gap-1.5 text-sm">
-                    <span className="text-xs font-black uppercase tracking-normal text-muted">
-                      {copy.controls.singleComment}
-                    </span>
-                    <input
-                      ref={singleCommentInputRef}
-                      value={singleCommentDraft}
-                      onChange={(event) => setSingleCommentDraft(event.target.value)}
-                      placeholder={copy.manualInput.singlePlaceholder}
-                      className="min-h-10 w-full min-w-0 rounded-base border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
-                    />
-                  </label>
-                  <label className="grid min-w-0 gap-1.5 text-sm">
-                    <span className="text-xs font-black uppercase tracking-normal text-muted">
-                      {copy.controls.multilinePaste}
-                    </span>
-                    <textarea
-                      ref={multilinePasteInputRef}
-                      rows={4}
-                      value={multilinePasteDraft}
-                      onChange={(event) => setMultilinePasteDraft(event.target.value)}
-                      placeholder={copy.manualInput.pastePlaceholder}
-                      className="w-full min-w-0 resize-y rounded-base border border-border bg-background px-3 py-2 text-sm font-semibold leading-6 text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
-                    />
-                  </label>
-                  <ControlSelect
-                    label={copy.controls.manualResult}
-                    value={manualResultMode}
-                    options={manualResultOptions}
-                    onChange={(value) => setManualResultMode(value as CommentTranslatorManualResultMode)}
-                  />
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <button type="submit" className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong">
-                      {copy.actions.addManualComments}
-                    </button>
-                    <button type="button" onClick={insertManualSamples} className="min-h-10 rounded-base border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-black text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100">
-                      {copy.actions.insertSample}
-                    </button>
-                    <button type="button" onClick={clearManualDraft} className="min-h-10 rounded-base border border-border bg-background px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40">
-                      {copy.actions.clearDraft}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={clearManualSession}
-                      disabled={manualComments.length === 0}
-                      className="min-h-10 rounded-base border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                    >
-                      {copy.actions.clearManualSession}
-                    </button>
-                  </div>
-                </form>
-              </section>
-            </div>
-          </details>
-        ) : null}
       </div>
     </div>
   );

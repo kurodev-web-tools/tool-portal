@@ -298,9 +298,12 @@ function createRuntimeAdapters({
       }
 
       const url = new URL(liveChatMessagesUrl);
-      url.searchParams.set("part", "id,snippet");
+      url.searchParams.set("part", "id,snippet,authorDetails");
       url.searchParams.set("liveChatId", state.liveChatId);
-      url.searchParams.set("fields", "nextPageToken,pollingIntervalMillis,items(id,snippet(publishedAt,displayMessage,textMessageDetails(messageText)))");
+      url.searchParams.set(
+        "fields",
+        "nextPageToken,pollingIntervalMillis,items(id,snippet(publishedAt,displayMessage,textMessageDetails(messageText)),authorDetails(displayName))"
+      );
       if (state.nextPageToken) {
         url.searchParams.set("pageToken", state.nextPageToken);
       }

@@ -590,6 +590,7 @@ for (const file of changedFiles()) {
     "supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql",
     "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
     "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md",
+    "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
     "lib/comment-translator-real-comments-feed-shared.ts",
     "lib/comment-translator-live-provider-session-step.ts",
     "scripts/comment-translator-admin-operational-visibility-contract.mjs",
@@ -613,6 +614,7 @@ for (const file of changedFiles()) {
     "scripts/comment-translator-session-start-stop-contract.mjs",
     "scripts/comment-translator-stop-preview-retention-contract.mjs",
     "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+    "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
     "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
     "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
     taskPath

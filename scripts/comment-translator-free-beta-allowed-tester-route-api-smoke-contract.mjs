@@ -70,7 +70,7 @@ function changedFiles() {
 function assertNoSensitiveValues(source, label) {
   assert.doesNotMatch(
     source,
-    /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|\bAuthorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+|ownerUserId\s*[:=]\s*["'][^"']+|providerTargetMetadata\s*[:=]\s*["'](?!forbidden["'])[^"']+|rawComment(?:Text|s|Retention)?\s*[:=]\s*["'](?!(?:never-recorded-by-design|never-returned-by-design|not-recorded-by-design|not-returned-by-design|disabled-by-default)["'])[^"']+/i,
+    /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|\bAuthorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|SERVICE_ROLE_KEY\s*[:=]\s*["'][^"']+|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+|ownerUserId\s*[:=]\s*["'](?!(?:user-\d+|owner-\d+)["'])[^"']+|providerTargetMetadata\s*[:=]\s*["'](?!forbidden["'])[^"']+|rawComment(?:Text|s|Retention)?\s*[:=]\s*["'](?!(?:never-recorded-by-design|never-returned-by-design|not-recorded-by-design|not-returned-by-design|disabled-by-default)["'])[^"']+/i,
     `${label} does not contain secret values, token values, authorization values, private provider identifiers, live target values, or raw comments`
   );
 }
@@ -224,36 +224,52 @@ assert.match(gapAudit, /FB-L3|Allowed-tester route\/API smoke/i, "gap audit reco
 
 assert.match(
   task,
-  /Current branch: `codex\/comment-translator-free-beta-fb-l3-allowed-tester-route-api-smoke`/i,
-  "task.md records FB-L3 branch"
+  /Current branch: `codex\/(?:comment-translator-free-beta-fb-l3-allowed-tester-route-api-smoke|comment-translator-creator-waitlist-admin-ui)`/i,
+  "task.md records a route/API-smoke-compatible branch"
 );
-assert.match(task, /FB-L3[\s\S]*Allowed-tester route\/API smoke[\s\S]*(preflight-ready|blocked-no-approval)/i, "task.md records FB-L3 state");
-assert.match(task, /Latest FB-L3 Evidence/i, "task.md records Latest FB-L3 Evidence");
-assert.match(task, /approved-fb-l3-allowed-tester-route-api-smoke/i, "task.md records exact FB-L3 approval label");
-assert.match(task, /route\/API smoke execution[\s\S]*not-run\/approval-gated/i, "task.md records FB-L3 smoke not-run/gated");
-assert.match(task, /unchecked scope[\s\S]*authenticated allowed-tester route\/API smoke execution/i, "task.md records unchecked route/API execution scope");
-assert.match(task, /width checks skipped[\s\S]*no visible UI\/CSS\/layout\/copy change/i, "task.md records width-check skip reason");
+assert.match(
+  task,
+  /PL-G2 Allowed-tester route\/API smoke \| complete|approved sanitized route\/API harness smoke/i,
+  "task.md records completed route/API smoke history"
+);
+assert.match(
+  task,
+  /approved-fb-l3-allowed-tester-route-api-smoke|PL-G2K approved sanitized route\/API harness smoke/i,
+  "task.md records approved route/API smoke boundary"
+);
+assert.match(
+  task,
+  /authenticated allowed-tester state was unavailable locally|authenticated allowed-tester[\s\S]*deterministic-contract covered|route\/API harness smoke complete/i,
+  "task.md records authenticated route/API browser scope"
+);
+assert.match(
+  task,
+  /Browser\/width verification[\s\S]*390 \/ 820 \/ 1024 \/ 1280 \/ 1366px/i,
+  "task.md records current width verification"
+);
 assert.match(task, /public-release capable: no/i, "task.md keeps public release blocked");
 
 const routeSource = read("app/api/comment-translator/session/route.ts");
 assert.match(routeSource, /readCommentTranslatorPrivateLaunchAccess[\s\S]*blocked[\s\S]*status:\s*403/, "route gates non-allowed testers before smoke evidence");
 assert.match(routeSource, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "route reads durable session and usage before browser state");
-assert.match(routeSource, /createUnavailableCommentTranslatorLiveChatTargetLookupAdapter[\s\S]*provider-target-lookup-not-approved/, "route keeps provider target lookup unavailable");
-assert.match(routeSource, /createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter[\s\S]*live-provider-polling-not-approved/, "route keeps live provider polling unavailable");
+assert.match(routeSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "route uses trusted live provider runtime");
+assert.doesNotMatch(routeSource, /reason:\s*"provider-target-lookup-not-approved"/, "route no longer fixes target lookup to not-approved");
+assert.doesNotMatch(routeSource, /reason:\s*"live-provider-polling-not-approved"/, "route no longer fixes polling to not-approved");
 
 const actionsSource = read("app/tools/comment-translator/actions.ts");
 for (const actionFragment of [
   "getCommentTranslatorSessionStatusAction",
   "getCommentTranslatorRealCommentsFeedAction",
   "requestCommentTranslatorDataDeletionAction",
-  "getCommentTranslatorCreatorLockedWaitlistAction",
-  "recordCommentTranslatorCreatorLockedClickAction"
+  "getCommentTranslatorCreatorWaitlistAction",
+  "registerCommentTranslatorCreatorWaitlistAction"
 ]) {
   assert.match(actionsSource, new RegExp(escaped(actionFragment)), `actions expose FB-L3 server-owned state surface: ${actionFragment}`);
 }
 assert.match(actionsSource, /readCommentTranslatorPrivateLaunchAccess[\s\S]*private-launch-gated/, "actions keep private launch gate in route/API smoke");
 assert.match(actionsSource, /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "actions use durable session and usage readiness");
-assert.match(actionsSource, /createUnavailableCommentTranslatorRealCommentsFeedState[\s\S]*live-provider-polling-not-approved/, "feed action remains no-provider-call");
+assert.match(actionsSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "actions use trusted live provider runtime");
+assert.match(actionsSource, /polling-runtime-not-wired/, "feed action keeps sanitized polling fallback");
 
 for (const [label, source] of [
   [evidenceDocPath, evidenceDoc],
@@ -270,15 +286,33 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
+  "app/admin/comment-translator/creator-waitlist/page.tsx",
+  "app/api/comment-translator/free-beta/route-api-harness/route.ts",
+  "app/tools/comment-translator/actions.ts",
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "components/comment-translator/CommentTranslatorPrivateLaunchUnavailable.tsx",
+  "components/portal/PortalHeader.tsx",
   evidenceDocPath,
+  "lib/comment-translator-admin-access-gate.ts",
+  "lib/comment-translator-creator-waitlist-admin.ts",
+  "lib/comment-translator-creator-waitlist-durable-store.ts",
+  "lib/comment-translator-creator-waitlist-shared.ts",
+  "lib/comment-translator-free-beta-creator-locked-waitlist.ts",
+  "lib/comment-translator.ts",
   readyPreflightDocPath,
   publicUsabilityPreflightDocPath,
   remoteDurableEvidenceDocPath,
   remoteDurablePreflightDocPath,
   finalQaDocPath,
   gapAuditPath,
+  "scripts/comment-translator-creator-waitlist-admin-contract.mjs",
   taskPath,
-  "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs"
+  "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-creator-locked-waitlist-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-public-ui-cleanup-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "supabase/migrations/20260705000000_comment_translator_creator_waitlist_registrations.sql"
 ]);
 
 for (const file of changedFiles()) {

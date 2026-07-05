@@ -40,13 +40,13 @@ import {
   type CommentTranslatorFreeBetaRetentionAttributionState
 } from "@/lib/comment-translator-free-beta-retention-attribution";
 import {
-  createCommentTranslatorFreeBetaCreatorClickDraft,
-  createCommentTranslatorFreeBetaCreatorLockedWaitlistState,
-  type CommentTranslatorFreeBetaCreatorClickDraft,
-  type CommentTranslatorFreeBetaCreatorClickIntent,
-  type CommentTranslatorFreeBetaCreatorFeatureId,
-  type CommentTranslatorFreeBetaCreatorLockedWaitlistState
+  readCommentTranslatorCreatorWaitlistStateWithStore,
+  registerCommentTranslatorCreatorWaitlistWithStore,
+  type CommentTranslatorCreatorWaitlistAccount,
+  type CommentTranslatorCreatorWaitlistRegistrationResult,
+  type CommentTranslatorCreatorWaitlistState
 } from "@/lib/comment-translator-free-beta-creator-locked-waitlist";
+import { createTrustedCommentTranslatorCreatorWaitlistSupabaseStore } from "@/lib/comment-translator-creator-waitlist-durable-store";
 import {
   resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart
 } from "@/lib/comment-translator-server-only-live-chat-target-lookup";
@@ -363,32 +363,23 @@ export async function requestCommentTranslatorDataDeletionAction(): Promise<Comm
   });
 }
 
-export async function getCommentTranslatorCreatorLockedWaitlistAction(): Promise<CommentTranslatorFreeBetaCreatorLockedWaitlistState> {
-  const readiness = await readCommentTranslatorFreeBetaDerivedReadiness();
+export async function getCommentTranslatorCreatorWaitlistAction(): Promise<CommentTranslatorCreatorWaitlistState> {
+  const account = await readCreatorWaitlistAccount();
+  const storeFactory = createTrustedCommentTranslatorCreatorWaitlistSupabaseStore();
 
-  return createCommentTranslatorFreeBetaCreatorLockedWaitlistState({
-    ...readiness,
-    nowMs: readiness.nowMs
+  return readCommentTranslatorCreatorWaitlistStateWithStore({
+    account,
+    store: storeFactory.status === "ready" ? storeFactory.store : null
   });
 }
 
-export async function recordCommentTranslatorCreatorLockedClickAction({
-  intent,
-  featureId
-}: {
-  intent: CommentTranslatorFreeBetaCreatorClickIntent;
-  featureId: CommentTranslatorFreeBetaCreatorFeatureId;
-}): Promise<CommentTranslatorFreeBetaCreatorClickDraft> {
-  const readiness = await readCommentTranslatorFreeBetaDerivedReadiness();
-  const state = createCommentTranslatorFreeBetaCreatorLockedWaitlistState({
-    ...readiness,
-    nowMs: readiness.nowMs
-  });
+export async function registerCommentTranslatorCreatorWaitlistAction(): Promise<CommentTranslatorCreatorWaitlistRegistrationResult> {
+  const account = await readCreatorWaitlistAccount();
+  const storeFactory = createTrustedCommentTranslatorCreatorWaitlistSupabaseStore();
 
-  return createCommentTranslatorFreeBetaCreatorClickDraft({
-    state,
-    intent,
-    featureId,
+  return registerCommentTranslatorCreatorWaitlistWithStore({
+    account,
+    store: storeFactory.status === "ready" ? storeFactory.store : null,
     nowMs: Date.now()
   });
 }
@@ -703,6 +694,53 @@ async function readCredentialReadiness({
   });
 
   return assessYouTubeOAuthCredentialTranslatorStartReadiness(status);
+}
+
+async function readCreatorWaitlistAccount(): Promise<CommentTranslatorCreatorWaitlistAccount> {
+  const supabase = await createServerSupabaseClient();
+
+  if (!supabase) {
+    return {
+      status: "unauthenticated",
+      reason: "auth-unavailable"
+    };
+  }
+
+  try {
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      return {
+        status: "unauthenticated",
+        reason: error ? "auth-unavailable" : "caller-not-authenticated"
+      };
+    }
+
+    return {
+      status: "authenticated",
+      ownerUserId: user.id,
+      email: user.email ?? null,
+      displayName: readCreatorWaitlistDisplayName(user.user_metadata)
+    };
+  } catch {
+    return {
+      status: "unauthenticated",
+      reason: "auth-unavailable"
+    };
+  }
+}
+
+function readCreatorWaitlistDisplayName(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") {
+    return null;
+  }
+
+  const record = metadata as Record<string, unknown>;
+  const value = record.display_name ?? record.full_name ?? record.name;
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 async function readCallerAuthorization(): Promise<YouTubeOAuthCredentialStatusCallerAuthorization> {

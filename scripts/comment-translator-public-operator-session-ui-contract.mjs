@@ -104,7 +104,7 @@ assert.match(
   /state\.status === "active"[\s\S]*restoreCommentTranslatorPersistedRealCommentsFeedAction\(\{ sourceLanguage, targetLanguage \}\)[\s\S]*setRealCommentsFeed\(feed\)/,
   "active-session mount restore hydrates persisted feed rows immediately from a read-only action for the selected language pair"
 );
-assert.match(componentSource, /sessionState\.elapsedSeconds/, "dock displays current elapsed session time");
+assert.match(componentSource, /usageDisplay\.session\.usedSeconds/, "dock displays current used session time from sanitized session usage display");
 assert.match(componentSource, /usageDisplay\.daily\.usedSeconds/, "dock derives daily used time from sanitized session usage display");
 assert.match(componentSource, /usageDisplay\.daily\.remainingSeconds/, "dock displays daily remaining time from sanitized session usage display");
 assert.match(componentSource, /sessionState\.stopReason/, "dock displays sanitized stop reason");

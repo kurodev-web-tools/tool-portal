@@ -334,37 +334,26 @@ export const commentTranslatorUiCopy = {
       sourceLabel: "Source: YouTube Live Chat",
       deletedPropagation: "削除済みコメントはmessage reference tombstoneだけを表示します。"
     },
-    creatorLockedWaitlist: {
+    creatorWaitlist: {
       title: "Creator closed beta",
-      lockedBadge: "Locked",
-      priceIntent: "Creator は月額980円を予定しています。現在はFree public beta中の表示とwaitlistのみで、paid accessはまだ利用できません。",
-      helper: "AI自然翻訳、OBS overlay、モデレーター共有、辞書はCreator closed betaで順に検証します。",
-      featureSummary: "Creator closed betaでは、AI自然翻訳、OBS表示、モデレーター共有、カスタム辞書を段階的に検証予定です。",
-      unavailable: "durable state、entitlement、provider readinessを安全に確認できないため、waitlistとclick trackingは利用不可です。",
-      joinWaitlist: "waitlistに関心を記録",
+      priceIntent: "Creator は月額980円を予定しています。今はclosed betaの事前登録だけを受け付けます。",
+      helper: "Creator closed betaに事前登録すると、初月割引の対象候補としてserver-owned stateに記録します。",
+      registeredHelper: "事前登録済みです。招待や割引対象の判断はclosed beta開始時に管理側で確認します。",
+      loginHelper: "事前登録にはアカウント登録またはログインが必要です。",
+      featureSummary: "AI自然翻訳、OBS表示、モデレーター共有、カスタム辞書をclosed betaで段階的に検証予定です。",
+      unavailable: "waitlistのdurable stateを安全に確認できないため、現在は事前登録できません。",
+      joinWaitlist: "事前登録する",
+      registeredButton: "登録済み",
+      loginButton: "ログインして登録",
       refresh: "状態を確認",
       pending: "確認中",
-      clickBoundary: "クリックはsanitized local draftだけを記録します。Stripe、provider、remote mutationは実行しません。",
-      clickRecorded: "関心クリックをsanitized local draftとして記録しました。",
-      clickUnavailable: "安全に確認できないためクリック記録は利用不可です。",
-      actionFailed: "Creator locked stateを確認できませんでした。",
-      features: {
-        "creator-ai-natural-translation": {
-          title: "AI自然翻訳",
-          body: "OpenAI mini優先のCreator翻訳はclosed betaまでLockedです。"
-        },
-        "creator-obs-overlay": {
-          title: "OBS overlay URL",
-          body: "overlay tokenと表示面はCreator closed betaで検証します。"
-        },
-        "creator-moderator-share": {
-          title: "モデレーター共有",
-          body: "read-only共有URLはclosed betaの安全確認後に開きます。"
-        },
-        "creator-custom-dictionary": {
-          title: "カスタム辞書",
-          body: "30語までの辞書はCreator closed betaの範囲です。"
-        }
+      registeredAt: "登録日時",
+      boundary: "Stripe、Checkout、Customer Portal、provider実行、public gate flipはこの登録では実行しません。",
+      states: {
+        unauthenticated: "ログインが必要",
+        unavailable: "利用不可",
+        unregistered: "未登録",
+        registered: "登録済み"
       }
     },
     operatorFlow: {
@@ -706,37 +695,26 @@ export const commentTranslatorUiCopy = {
       sourceLabel: "Source: YouTube Live Chat",
       deletedPropagation: "Deleted comments render message-reference tombstones only."
     },
-    creatorLockedWaitlist: {
+    creatorWaitlist: {
       title: "Creator closed beta",
-      lockedBadge: "Locked",
-      priceIntent: "Creator is planned at JPY 980/month. During Free public beta this is waitlist-only; paid access is not live.",
-      helper: "AI natural translation, OBS overlay, moderator sharing, and dictionaries will be validated in Creator closed beta.",
-      featureSummary: "Creator closed beta will validate AI natural translation, OBS display, moderator sharing, and custom dictionaries in stages.",
-      unavailable: "Waitlist and click tracking are unavailable until durable state, entitlement, and provider readiness are safely readable.",
-      joinWaitlist: "Record waitlist interest",
+      priceIntent: "Creator is planned at JPY 980/month. For now, only closed beta pre-registration is available.",
+      helper: "Pre-register for Creator closed beta and store first-month discount intent in server-owned state.",
+      registeredHelper: "You are pre-registered. Invitations and discount eligibility are reviewed by the owner before closed beta access.",
+      loginHelper: "Log in or create an account before joining the Creator closed beta waitlist.",
+      featureSummary: "AI natural translation, OBS display, moderator sharing, and custom dictionaries will be validated in stages.",
+      unavailable: "Creator waitlist durable state is unavailable, so pre-registration is disabled.",
+      joinWaitlist: "Pre-register",
+      registeredButton: "Registered",
+      loginButton: "Log in to register",
       refresh: "Check state",
       pending: "Checking",
-      clickBoundary: "Clicks record only a sanitized local draft. Stripe, provider calls, and remote mutation do not run.",
-      clickRecorded: "Interest click was recorded as a sanitized local draft.",
-      clickUnavailable: "Click tracking is unavailable because readiness cannot be verified safely.",
-      actionFailed: "Could not check Creator locked state.",
-      features: {
-        "creator-ai-natural-translation": {
-          title: "AI natural translation",
-          body: "OpenAI mini-first Creator translation stays locked until closed beta."
-        },
-        "creator-obs-overlay": {
-          title: "OBS overlay URL",
-          body: "Overlay tokens and surfaces are validated during Creator closed beta."
-        },
-        "creator-moderator-share": {
-          title: "Moderator sharing",
-          body: "Read-only share URLs open only after closed beta safety checks."
-        },
-        "creator-custom-dictionary": {
-          title: "Custom dictionary",
-          body: "The 30-term dictionary is part of Creator closed beta."
-        }
+      registeredAt: "Registered",
+      boundary: "This does not run Stripe, Checkout, Customer Portal, provider execution, or a public gate flip.",
+      states: {
+        unauthenticated: "Login required",
+        unavailable: "Unavailable",
+        unregistered: "Not registered",
+        registered: "Registered"
       }
     },
     operatorFlow: {

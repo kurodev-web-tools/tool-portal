@@ -105,8 +105,8 @@ assert.match(
   "active-session mount restore hydrates persisted feed rows immediately from a read-only action for the selected language pair"
 );
 assert.match(componentSource, /sessionState\.elapsedSeconds/, "dock displays current elapsed session time");
-assert.match(componentSource, /sessionDailyUsedSeconds/, "dock derives daily used time from sanitized session state");
-assert.match(componentSource, /sessionState\.remainingDailySeconds/, "dock displays daily remaining time from sanitized session state");
+assert.match(componentSource, /usageDisplay\.daily\.usedSeconds/, "dock derives daily used time from sanitized session usage display");
+assert.match(componentSource, /usageDisplay\.daily\.remainingSeconds/, "dock displays daily remaining time from sanitized session usage display");
 assert.match(componentSource, /sessionState\.stopReason/, "dock displays sanitized stop reason");
 assert.match(
   componentSource,

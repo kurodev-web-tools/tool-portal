@@ -308,6 +308,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-creator-locked-waitlist-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
   "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
@@ -326,6 +327,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   "scripts/comment-translator-stop-preview-retention-contract.mjs",
+  "scripts/comment-translator-public-ui-cleanup-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

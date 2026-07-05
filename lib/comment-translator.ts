@@ -130,7 +130,7 @@ export const commentTranslatorUiCopy = {
       manualInput: "手入力 / 貼り付け",
       display: "表示設定",
       comments: "ライブコメント",
-      quota: "キャッシュ / クォータ確認",
+      quota: "利用状況",
       skipped: "スキップ理由",
       credentialStatus: "YouTube認証ステータス",
       operatorSession: "セッション操作",
@@ -157,12 +157,12 @@ export const commentTranslatorUiCopy = {
       translated: "翻訳済み",
       skipped: "スキップ",
       quota: "クォータ",
-      cacheHit: "キャッシュhit",
-      cacheMiss: "キャッシュmiss",
+      cacheHit: "再利用した翻訳",
+      cacheMiss: "新しく翻訳",
       errorRows: "エラー行",
       used: "使用中",
-      hits: "hits",
-      fixtureMisses: "preview miss",
+      hits: "再利用",
+      fixtureMisses: "新規翻訳",
       recoverable: "復帰可能な状態",
       manualRows: "手入力行",
       manualSession: "手入力セッション"
@@ -339,6 +339,7 @@ export const commentTranslatorUiCopy = {
       lockedBadge: "Locked",
       priceIntent: "Creator は月額980円を予定しています。現在はFree public beta中の表示とwaitlistのみで、paid accessはまだ利用できません。",
       helper: "AI自然翻訳、OBS overlay、モデレーター共有、辞書はCreator closed betaで順に検証します。",
+      featureSummary: "Creator closed betaでは、AI自然翻訳、OBS表示、モデレーター共有、カスタム辞書を段階的に検証予定です。",
       unavailable: "durable state、entitlement、provider readinessを安全に確認できないため、waitlistとclick trackingは利用不可です。",
       joinWaitlist: "waitlistに関心を記録",
       refresh: "状態を確認",
@@ -459,10 +460,11 @@ export const commentTranslatorUiCopy = {
       normal: { label: "Free枠プレビュー", status: "正常", helper: "30分/日、30分/セッション、30翻訳/分の初期Free枠に合わせた表示です" },
       warning: { label: "上限接近", status: "警告", helper: "Free枠またはサービス共通予算に近づくと停止理由を表示します" },
       empty: { label: "開始前", status: "行なし", helper: "Start前はYouTube取得、AI翻訳、クォータ消費を開始しません" },
-      error: { label: "診断制限", status: "cache警告", helper: "raw text loggingは標準で無効、診断は短期間かつsanitizedに限定します" }
+      error: { label: "診断制限", status: "利用状況の警告", helper: "raw text loggingは標準で無効、診断は短期間かつsanitizedに限定します" }
     },
     statusBadges: {
-      cached: "cached",
+      reused: "再利用した翻訳",
+      fresh: "新しく翻訳",
       translated: "翻訳済み",
       skipped: "スキップ",
       error: "エラー"
@@ -500,7 +502,7 @@ export const commentTranslatorUiCopy = {
       manualInput: "Manual / Paste Input",
       display: "Display Settings",
       comments: "Live Comments",
-      quota: "Cache / Quota Preview",
+      quota: "Usage review",
       skipped: "Skipped Reasons",
       credentialStatus: "YouTube Credential Status",
       operatorSession: "Session Controls",
@@ -527,12 +529,12 @@ export const commentTranslatorUiCopy = {
       translated: "translated",
       skipped: "skipped",
       quota: "Quota",
-      cacheHit: "Cache hit",
-      cacheMiss: "Cache miss",
+      cacheHit: "Reused translations",
+      cacheMiss: "New translations",
       errorRows: "Error rows",
       used: "used",
-      hits: "hits",
-      fixtureMisses: "Preview misses",
+      hits: "reused",
+      fixtureMisses: "new translations",
       recoverable: "Recoverable state",
       manualRows: "manual rows",
       manualSession: "manual session"
@@ -709,6 +711,7 @@ export const commentTranslatorUiCopy = {
       lockedBadge: "Locked",
       priceIntent: "Creator is planned at JPY 980/month. During Free public beta this is waitlist-only; paid access is not live.",
       helper: "AI natural translation, OBS overlay, moderator sharing, and dictionaries will be validated in Creator closed beta.",
+      featureSummary: "Creator closed beta will validate AI natural translation, OBS display, moderator sharing, and custom dictionaries in stages.",
       unavailable: "Waitlist and click tracking are unavailable until durable state, entitlement, and provider readiness are safely readable.",
       joinWaitlist: "Record waitlist interest",
       refresh: "Check state",
@@ -829,10 +832,11 @@ export const commentTranslatorUiCopy = {
       normal: { label: "Free limit preview", status: "Healthy", helper: "Shows the initial Free limits: 30 min/day, 30 min/session, and 30 translated messages/min" },
       warning: { label: "Near limit", status: "Warning", helper: "The session shows a stop reason before crossing Free limits or shared service budget" },
       empty: { label: "Before start", status: "No rows", helper: "Before Start, YouTube reads, AI translation, and quota use do not begin" },
-      error: { label: "Diagnostic limited", status: "Cache warning", helper: "Raw text logging is off by default; diagnostics stay short-lived and sanitized" }
+      error: { label: "Diagnostic limited", status: "Usage warning", helper: "Raw text logging is off by default; diagnostics stay short-lived and sanitized" }
     },
     statusBadges: {
-      cached: "cached",
+      reused: "Reused translation",
+      fresh: "New translation",
       translated: "translated",
       skipped: "skipped",
       error: "error"
@@ -949,7 +953,6 @@ export const commentTranslatorSurfaceOptions: CommentTranslatorControlOption<Com
 export const commentTranslatorStatusFilters: CommentTranslatorControlOption<CommentTranslatorStatusFilter>[] = [
   { id: "all", label: "All", helper: "Every preview row" },
   { id: "translated", label: "Translated", helper: "Completed rows" },
-  { id: "skipped", label: "Skipped", helper: "Skipped states" },
   { id: "error", label: "Error", helper: "Recoverable failures" }
 ];
 

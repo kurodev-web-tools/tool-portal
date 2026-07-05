@@ -29,7 +29,6 @@ import {
   type CommentTranslatorConnectionStateId,
   type CommentTranslatorDisplayMode,
   type CommentTranslatorManualResultMode,
-  type CommentTranslatorQuotaScenarioId,
   type CommentTranslatorSourceLanguageId,
   type CommentTranslatorStatusFilter,
   type CommentTranslatorStreamId,
@@ -379,7 +378,7 @@ function operatorSessionTone(status: OperatorSessionState["status"]) {
 
 function statusLabel(comment: CommentTranslatorComment, copy: CommentTranslatorUiCopy) {
   if (comment.status === "translated") {
-    return comment.cacheStatus === "hit" ? copy.statusBadges.cached : copy.statusBadges.translated;
+    return comment.cacheStatus === "hit" ? copy.statusBadges.reused : copy.statusBadges.fresh;
   }
 
   return copy.statusBadges[comment.status];
@@ -490,9 +489,6 @@ function CommentCard({
                 {comment.badge}
               </span>
             ) : null}
-            <span className="rounded-base border border-border bg-background px-2 py-1 text-[11px] font-bold text-muted">
-              {copy.commentMeta.cache} {comment.cacheStatus}
-            </span>
           </div>
 
           <div className="mt-3 grid gap-2">
@@ -565,7 +561,7 @@ function CreatorLockedWaitlistPanel({
 
   return (
     <div
-      data-comment-translator-creator-locked-waitlist="sanitized-creator-locked-waitlist-only"
+      data-comment-translator-creator-locked-waitlist="compact-creator-closed-beta"
       className="rounded-base border border-primary/25 bg-primary-soft/25 px-3 py-3"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -582,24 +578,10 @@ function CreatorLockedWaitlistPanel({
       <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
         {ready ? copy.creatorLockedWaitlist.helper : copy.creatorLockedWaitlist.unavailable}
       </p>
-      <div className="mt-3 grid gap-2">
-        {state.lockedFeatureCards.map((card) => {
-          const featureCopy = copy.creatorLockedWaitlist.features[card.id];
-
-          return (
-            <button
-              key={card.id}
-              type="button"
-              data-comment-translator-creator-click-tracking="sanitized-local-draft-only"
-              onClick={() => onTrackClick(card.id, "feature-card-click")}
-              disabled={isPending || state.clickTracking.status !== "local-draft-ready"}
-              className="grid min-w-0 gap-1 rounded-base border border-border bg-surface px-3 py-2 text-left transition hover:border-primary/60 hover:bg-background disabled:cursor-not-allowed disabled:bg-surface-muted/70"
-            >
-              <span className="break-words text-xs font-black text-foreground">{featureCopy.title}</span>
-              <span className="break-words text-xs font-semibold leading-5 text-muted">{featureCopy.body}</span>
-            </button>
-          );
-        })}
+      <div className="mt-3 rounded-base border border-primary/20 bg-surface/80 px-3 py-2">
+        <p className="break-words text-xs font-semibold leading-5 text-muted">
+          {copy.creatorLockedWaitlist.featureSummary}
+        </p>
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
         <button
@@ -638,16 +620,13 @@ export function CommentTranslatorDock({
   const {
     platform,
     settings,
-    quota,
     connectionStates,
     streams,
     sourceLanguages,
     targetLanguages,
     displayModes,
     surfaceOptions,
-    statusFilters,
-    quotaScenarios,
-    skipReasons
+    statusFilters
   } = mockTranslationProvider.getSnapshot();
   const copy = commentTranslatorUiCopy[locale];
   const [connectionId, setConnectionId] = useState<CommentTranslatorConnectionStateId>("connected");
@@ -658,7 +637,6 @@ export function CommentTranslatorDock({
   const [surfaceMode, setSurfaceMode] = useState<CommentTranslatorSurfaceMode>(settings.surfaceMode);
   const [statusFilter, setStatusFilter] = useState<CommentTranslatorStatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [quotaScenarioId, setQuotaScenarioId] = useState<CommentTranslatorQuotaScenarioId>(quota.id);
   const [singleCommentDraft, setSingleCommentDraft] = useState("");
   const [multilinePasteDraft, setMultilinePasteDraft] = useState("");
   const [manualResultMode, setManualResultMode] = useState<CommentTranslatorManualResultMode>("translated");
@@ -695,7 +673,6 @@ export function CommentTranslatorDock({
   const selectedSourceLanguage = findCommentTranslatorOption(sourceLanguages, sourceLanguage);
   const selectedTargetLanguage = findCommentTranslatorOption(targetLanguages, targetLanguage);
   const selectedSurface = findCommentTranslatorOption(surfaceOptions, surfaceMode);
-  const quotaPreview = findCommentTranslatorOption(quotaScenarios, quotaScenarioId, quota);
   const localizedConnection = {
     ...selectedConnection,
     label: copy.connections[selectedConnection.id],
@@ -720,12 +697,6 @@ export function CommentTranslatorDock({
     ...selectedSurface,
     label: copy.surfaces[selectedSurface.id].label,
     helper: copy.surfaces[selectedSurface.id].helper
-  };
-  const localizedQuotaPreview = {
-    ...quotaPreview,
-    label: copy.quotaScenarios[quotaPreview.id].label,
-    statusLabel: copy.quotaScenarios[quotaPreview.id].status,
-    helper: copy.quotaScenarios[quotaPreview.id].helper
   };
   const connectionOptions = connectionStates.map((state) => ({
     id: state.id,
@@ -757,11 +728,6 @@ export function CommentTranslatorDock({
     label: copy.surfaces[surface.id].label,
     helper: copy.surfaces[surface.id].helper
   }));
-  const quotaScenarioOptions = quotaScenarios.map((scenario) => ({
-    id: scenario.id,
-    label: copy.quotaScenarios[scenario.id].label,
-    helper: copy.quotaScenarios[scenario.id].helper
-  }));
   const manualResultOptions = (["translated", "skipped", "error"] as const).map((mode) => ({
     id: mode,
     label: copy.manualResults[mode].label,
@@ -773,61 +739,13 @@ export function CommentTranslatorDock({
     locale,
     timeZone: browserTimeZone
   });
-  const liveProviderDiagnostics = realCommentsFeed.sanitizedSummary.liveProviderDiagnostics;
-  const filteredComments = filterCommentTranslatorComments(feedComments, { statusFilter, searchQuery });
+  const publicFeedComments = feedComments.filter((comment) => comment.status !== "skipped");
+  const filteredComments = filterCommentTranslatorComments(publicFeedComments, { statusFilter, searchQuery });
   const liveStats = {
-    translated: feedComments.filter((comment) => comment.status === "translated").length,
-    skipped: feedComments.filter((comment) => comment.status === "skipped").length,
-    errors: feedComments.filter((comment) => comment.status === "error").length,
-    cacheHits: feedComments.filter((comment) => comment.cacheStatus === "hit").length,
-    cacheMisses: feedComments.filter((comment) => comment.cacheStatus === "miss").length,
+    translated: publicFeedComments.filter((comment) => comment.status === "translated").length,
+    errors: publicFeedComments.filter((comment) => comment.status === "error").length,
     manualRows: manualComments.length
   };
-  const prePublicDiagnosticCounts = [
-    {
-      label: "providerCallCount",
-      value: liveProviderDiagnostics?.providerCallCount ?? 0
-    },
-    {
-      label: "cacheHitCount",
-      value: liveProviderDiagnostics?.cacheHitCount ?? 0
-    },
-    {
-      label: "cacheMissCount",
-      value: liveProviderDiagnostics?.cacheMissCount ?? 0
-    },
-    {
-      label: "duplicateTextCacheHitCount",
-      value: liveProviderDiagnostics?.duplicateTextCacheHitCount ?? 0
-    },
-    {
-      label: "duplicateTextSkippedCount",
-      value: liveProviderDiagnostics?.duplicateTextSkippedCount ?? 0
-    },
-    {
-      label: "languagePolicySkippedCount",
-      value: liveProviderDiagnostics?.languagePolicySkippedCount ?? 0
-    },
-    {
-      label: "translatedCount",
-      value: liveProviderDiagnostics?.translatedCount ?? 0
-    },
-    {
-      label: "persistedFeedRowCount",
-      value: liveProviderDiagnostics?.persistedFeedRowCount ?? 0
-    }
-  ];
-  const skipReasonCounts = skipReasons.map((reason) => ({
-    ...reason,
-    count: feedComments.filter((comment) => comment.skipReason === reason.label).length
-  }));
-  const effectiveUsedUnits = Math.min(
-    localizedQuotaPreview.limitUnits,
-    localizedQuotaPreview.usedUnits
-  );
-  const effectiveCacheTotal = liveStats.cacheHits + liveStats.cacheMisses;
-  const effectiveCacheHitRate = effectiveCacheTotal > 0 ? Math.round((liveStats.cacheHits / effectiveCacheTotal) * 100) : 0;
-  const quotaPercent = localizedQuotaPreview.limitUnits > 0 ? Math.min(100, Math.round((effectiveUsedUnits / localizedQuotaPreview.limitUnits) * 100)) : 0;
   const shellIsNarrow = surfaceMode === "narrow-viewport";
   const dockStatusLabel = localizedConnection.dockStatus === "blocked" ? localizedConnection.dockStatusLabel : localizedStream.dockStatusLabel;
   const credentialStatusMetadata = youtubeCredentialStatusSource.statusMetadata;
@@ -866,7 +784,6 @@ export function CommentTranslatorDock({
       copy: copy.operatorFlow.steps[step.id]
     };
   });
-  const sessionDailyUsedSeconds = Math.max(0, freeDailyLimitSeconds - sessionState.remainingDailySeconds);
   const sessionStopReason = sessionState.stopReason ? copy.operatorSession.stopReasons[sessionState.stopReason] : "-";
   const sessionReasonUx = sessionState.reasonUx;
   const usageDisplay = sessionState.usageDisplay ?? initialOperatorSessionUsageDisplay;
@@ -1249,7 +1166,7 @@ export function CommentTranslatorDock({
               ? "grid gap-3"
               : shellIsNarrow
                 ? "grid gap-3"
-                : "grid gap-3 xl:grid-cols-[22rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(34rem,1fr)_20rem]"
+                : "grid gap-3 xl:grid-cols-[22rem_minmax(0,1fr)_20rem]"
           }
         >
           {!commentOnly ? (
@@ -1389,89 +1306,6 @@ export function CommentTranslatorDock({
                     {copy.operatorSession.reconnectGuidance}
                   </p>
                 ) : null}
-                <div
-                  data-comment-translator-free-beta-usage-display="sanitized-usage-only"
-                  className="mt-3 rounded-base border border-border bg-background/70 p-3 text-xs"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-black text-foreground">{copy.operatorSession.usageTitle}</p>
-                    <span className={["rounded-base border px-2 py-1 font-black", toneClassName(usageDisplay.status === "over-limit" ? "warning" : usageDisplay.status === "unavailable" ? "error" : "normal")].join(" ")}>
-                      {copy.operatorSession.usageStates[usageDisplay.status]}
-                    </span>
-                  </div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    <StatTile
-                      label={copy.fields.sessionRemaining}
-                      value={formatDuration(usageDisplay.session.remainingSeconds)}
-                      helper={`${formatDuration(usageDisplay.session.usedSeconds)} ${copy.stats.used}`}
-                    />
-                    <StatTile
-                      label={copy.fields.dailyRemaining}
-                      value={formatDuration(usageDisplay.daily.remainingSeconds)}
-                      helper={`${formatDuration(usageDisplay.daily.usedSeconds)} ${copy.stats.used}`}
-                    />
-                    <StatTile
-                      label={copy.fields.monthlyCharacterCap}
-                      value={`${formatNumber(usageDisplay.monthlyCharacterCap.used)} / ${formatNumber(usageDisplay.monthlyCharacterCap.limit)}`}
-                      helper={`${formatNumber(usageDisplay.monthlyCharacterCap.remaining)} ${copy.fields.monthlyRemaining}`}
-                    />
-                    <StatTile
-                      label={copy.fields.perMinuteCap}
-                      value={`${formatNumber(usageDisplay.perMinute.used)} / ${formatNumber(usageDisplay.perMinute.limit)}`}
-                      helper={`${formatNumber(usageDisplay.perMinute.remaining)} ${copy.operatorSession.perMinuteRemaining}`}
-                    />
-                  </div>
-                  <p className="mt-3 break-words font-semibold leading-5 text-muted">
-                    {usagePolicyLabel}
-                    {usagePolicyStopReason ? ` / ${usagePolicyStopReason}` : ""}
-                  </p>
-                </div>
-                <div
-                  data-comment-translator-retention-attribution="sanitized-retention-attribution-only"
-                  className="mt-3 rounded-base border border-border bg-background/70 p-3 text-xs"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-black text-foreground">{copy.retentionAttribution.title}</p>
-                    <span
-                      className={[
-                        "rounded-base border px-2 py-1 font-black",
-                        toneClassName(retentionAttributionReady ? "normal" : "error")
-                      ].join(" ")}
-                    >
-                      {retentionAttributionStatusLabel}
-                    </span>
-                  </div>
-                  <div className="mt-3 grid gap-2 rounded-base border border-border bg-surface/70 p-3">
-                    <p className="break-words font-semibold leading-5 text-muted">
-                      {retentionAttributionHelper}
-                    </p>
-                    <p className="break-words font-semibold leading-5 text-muted">
-                      {copy.retentionAttribution.deletedPropagation}
-                    </p>
-                    <p className="break-words font-black leading-5 text-foreground">
-                      {retentionAttributionState.sourceAttribution.label}
-                    </p>
-                    {retentionAttributionError ? (
-                      <p className="break-words font-semibold leading-5 text-red-700">{retentionAttributionError}</p>
-                    ) : null}
-                    {retentionAttributionState.unavailableReason ? (
-                      <p className="break-words font-semibold leading-5 text-amber-800">
-                        {retentionAttributionState.unavailableReason}
-                      </p>
-                    ) : null}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={requestDataDeletion}
-                    disabled={isDataDeletionPending || retentionAttributionState.dataDeletion.buttonState === "disabled"}
-                    className="mt-3 min-h-10 w-full rounded-base border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                  >
-                    {isDataDeletionPending ? copy.retentionAttribution.deletionPending : copy.retentionAttribution.deletionButton}
-                  </button>
-                  <p className="mt-2 break-words font-semibold leading-5 text-muted">
-                    {copy.retentionAttribution.deletionHelper}
-                  </p>
-                </div>
               </section>
 
               <section className="panel p-4">
@@ -1539,30 +1373,6 @@ export function CommentTranslatorDock({
                 </div>
               </section>
 
-              <section className={shellIsNarrow ? "" : "xl:hidden"}>
-                <div className="panel p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="text-base font-black text-foreground">{locale === "ja" ? "今日の状態" : "Today"}</h2>
-                    <span className="rounded-base border border-primary/30 bg-primary-soft px-2 py-1 text-xs font-black text-primary-strong">
-                      {sessionState.plan === "paid" ? "Pro" : "Free"}
-                    </span>
-                  </div>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                    <StatTile label={copy.fields.sessionRemaining} value={formatDuration(sessionState.remainingSessionSeconds)} helper={copy.fields.dailyRemaining} />
-                    <StatTile label={copy.fields.perMinuteCap} value="30" helper={copy.operatorSession.perMinuteCapHelper} />
-                  </div>
-                  <div className="mt-4">
-                    <CreatorLockedWaitlistPanel
-                      copy={copy}
-                      state={creatorLockedWaitlistState}
-                      clickStatus={creatorLockedClickStatus}
-                      isPending={isCreatorLockedPending}
-                      onRefresh={refreshCreatorLockedWaitlist}
-                      onTrackClick={trackCreatorLockedClick}
-                    />
-                  </div>
-                </div>
-              </section>
             </aside>
           ) : null}
 
@@ -1590,9 +1400,6 @@ export function CommentTranslatorDock({
                   <div className="flex flex-wrap gap-2">
                     <span className="rounded-base border border-primary/30 bg-primary-soft px-2.5 py-1 text-xs font-black text-primary-strong">
                       {liveStats.translated} {copy.stats.translated}
-                    </span>
-                    <span className="rounded-base border border-border bg-surface px-2.5 py-1 text-xs font-black text-muted">
-                      {liveStats.skipped} {copy.stats.skipped}
                     </span>
                   </div>
                 )}
@@ -1671,11 +1478,10 @@ export function CommentTranslatorDock({
             </div>
 
             {!commentOnly ? (
-              <div className="grid grid-cols-2 gap-2 border-b border-border bg-surface-muted/30 p-3 text-center text-xs font-bold text-muted sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 border-b border-border bg-surface-muted/30 p-3 text-center text-xs font-bold text-muted sm:grid-cols-3">
                 <span className="rounded-base bg-surface px-2 py-2">{filteredComments.length} {copy.stats.shown}</span>
-                <span className="rounded-base bg-surface px-2 py-2">{feedComments.length} {copy.stats.total}</span>
+                <span className="rounded-base bg-surface px-2 py-2">{publicFeedComments.length} {copy.stats.total}</span>
                 <span className="rounded-base bg-emerald-50 px-2 py-2 text-emerald-700">{liveStats.translated} {copy.stats.translated}</span>
-                <span className="rounded-base bg-amber-50 px-2 py-2 text-amber-700">{liveStats.skipped} {copy.stats.skipped}</span>
               </div>
             ) : null}
 
@@ -1706,30 +1512,53 @@ export function CommentTranslatorDock({
             </div>
           </main>
 
-          {!commentOnly && !shellIsNarrow ? (
-            <aside className="hidden min-w-0 content-start gap-3 2xl:grid">
-              <section className="panel p-4">
+          {!commentOnly ? (
+            <aside className="grid min-w-0 content-start gap-3">
+              <section
+                data-comment-translator-free-beta-usage-display="right-authoritative-sanitized-usage-only"
+                className="panel p-4"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-base font-black text-foreground">{locale === "ja" ? "今日の状態" : "Today"}</h2>
-                  <span className="rounded-base border border-primary/30 bg-primary-soft px-2 py-1 text-xs font-black text-primary-strong">
-                    {sessionState.plan === "paid" ? "Pro" : "Free"}
+                  <h2 className="text-base font-black text-foreground">{copy.operatorSession.usageTitle}</h2>
+                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(usageDisplay.status === "over-limit" ? "warning" : usageDisplay.status === "unavailable" ? "error" : "normal")].join(" ")}>
+                    {copy.operatorSession.usageStates[usageDisplay.status]}
                   </span>
                 </div>
                 <div className="mt-4 grid gap-3">
-                  <StatTile label={copy.fields.sessionRemaining} value={formatDuration(sessionState.remainingSessionSeconds)} helper={copy.fields.dailyRemaining} />
-                  <StatTile label={copy.fields.perMinuteCap} value="30" helper={copy.operatorSession.perMinuteCapHelper} />
-                </div>
-                <div className="mt-4">
-                  <CreatorLockedWaitlistPanel
-                    copy={copy}
-                    state={creatorLockedWaitlistState}
-                    clickStatus={creatorLockedClickStatus}
-                    isPending={isCreatorLockedPending}
-                    onRefresh={refreshCreatorLockedWaitlist}
-                    onTrackClick={trackCreatorLockedClick}
+                  <StatTile
+                    label={copy.fields.sessionRemaining}
+                    value={formatDuration(usageDisplay.session.remainingSeconds)}
+                    helper={`${formatDuration(usageDisplay.session.usedSeconds)} ${copy.stats.used}`}
+                  />
+                  <StatTile
+                    label={copy.fields.dailyRemaining}
+                    value={formatDuration(usageDisplay.daily.remainingSeconds)}
+                    helper={`${formatDuration(usageDisplay.daily.usedSeconds)} ${copy.stats.used}`}
+                  />
+                  <StatTile
+                    label={copy.fields.monthlyCharacterCap}
+                    value={`${formatNumber(usageDisplay.monthlyCharacterCap.used)} / ${formatNumber(usageDisplay.monthlyCharacterCap.limit)}`}
+                    helper={`${formatNumber(usageDisplay.monthlyCharacterCap.remaining)} ${copy.fields.monthlyRemaining}`}
+                  />
+                  <StatTile
+                    label={copy.fields.perMinuteCap}
+                    value={`${formatNumber(usageDisplay.perMinute.used)} / ${formatNumber(usageDisplay.perMinute.limit)}`}
+                    helper={`${formatNumber(usageDisplay.perMinute.remaining)} ${copy.operatorSession.perMinuteRemaining}`}
                   />
                 </div>
+                <p className="mt-3 break-words text-xs font-semibold leading-5 text-muted">
+                  {usagePolicyLabel}
+                  {usagePolicyStopReason ? ` / ${usagePolicyStopReason}` : ""}
+                </p>
               </section>
+              <CreatorLockedWaitlistPanel
+                copy={copy}
+                state={creatorLockedWaitlistState}
+                clickStatus={creatorLockedClickStatus}
+                isPending={isCreatorLockedPending}
+                onRefresh={refreshCreatorLockedWaitlist}
+                onTrackClick={trackCreatorLockedClick}
+              />
             </aside>
           ) : null}
         </section>
@@ -1811,50 +1640,46 @@ export function CommentTranslatorDock({
                 </div>
               </section>
 
-              <section data-comment-translator-pre-public-diagnostics="count-only" className="rounded-base border border-border bg-surface p-4">
+              <section
+                data-comment-translator-retention-attribution="sanitized-retention-attribution-only"
+                className="rounded-base border border-border bg-surface p-4"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-base font-black text-foreground">
-                    {locale === "ja" ? "Pre-public diagnostics" : "Pre-public diagnostics"}
-                  </h2>
-                  <span className="rounded-base border border-border bg-background px-2 py-1 text-xs font-black text-muted">
-                    count-only
+                  <h2 className="text-base font-black text-foreground">{copy.retentionAttribution.title}</h2>
+                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(retentionAttributionReady ? "normal" : "error")].join(" ")}>
+                    {retentionAttributionStatusLabel}
                   </span>
                 </div>
-                <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-                  {prePublicDiagnosticCounts.map((item) => (
-                    <div key={item.label} className="grid min-w-0 gap-1 rounded-base border border-border bg-background/70 p-2">
-                      <dt className="min-w-0 break-words text-xs font-bold text-muted">{item.label}</dt>
-                      <dd className="min-w-0 break-words text-base font-black text-foreground">{formatNumber(item.value)}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-
-              <section className="rounded-base border border-border bg-surface p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-base font-black text-foreground">{copy.sections.quota}</h2>
-                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(localizedQuotaPreview.tone)].join(" ")}>
-                    {localizedQuotaPreview.statusLabel}
-                  </span>
+                <div className="mt-4 grid gap-2 rounded-base border border-border bg-background/70 p-3 text-xs">
+                  <p className="break-words font-semibold leading-5 text-muted">
+                    {retentionAttributionHelper}
+                  </p>
+                  <p className="break-words font-semibold leading-5 text-muted">
+                    {copy.retentionAttribution.deletedPropagation}
+                  </p>
+                  <p className="break-words font-black leading-5 text-foreground">
+                    {retentionAttributionState.sourceAttribution.label}
+                  </p>
+                  {retentionAttributionError ? (
+                    <p className="break-words font-semibold leading-5 text-red-700">{retentionAttributionError}</p>
+                  ) : null}
+                  {retentionAttributionState.unavailableReason ? (
+                    <p className="break-words font-semibold leading-5 text-amber-800">
+                      {retentionAttributionState.unavailableReason}
+                    </p>
+                  ) : null}
                 </div>
-                <div className="mt-4 grid gap-3">
-                  <ControlSelect
-                    label={copy.controls.mockState}
-                    value={quotaScenarioId}
-                    options={quotaScenarioOptions}
-                    onChange={(value) => setQuotaScenarioId(value as CommentTranslatorQuotaScenarioId)}
-                  />
-                  <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
-                    <div className="h-2 rounded-full bg-primary" style={{ width: `${quotaPercent}%` }} />
-                  </div>
-                  <p className="break-words text-xs font-semibold leading-5 text-muted">{localizedQuotaPreview.helper}</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <StatTile label={copy.stats.quota} value={`${formatNumber(effectiveUsedUnits)} / ${formatNumber(localizedQuotaPreview.limitUnits)}`} helper={`${quotaPercent}% ${copy.stats.used}`} />
-                    <StatTile label={copy.stats.cacheHit} value={`${effectiveCacheHitRate}%`} helper={`${formatNumber(liveStats.cacheHits)} ${copy.stats.hits}`} />
-                    <StatTile label={copy.stats.cacheMiss} value={formatNumber(liveStats.cacheMisses)} helper={copy.stats.fixtureMisses} />
-                    <StatTile label={copy.stats.errorRows} value={formatNumber(liveStats.errors)} helper={copy.stats.recoverable} />
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={requestDataDeletion}
+                  disabled={isDataDeletionPending || retentionAttributionState.dataDeletion.buttonState === "disabled"}
+                  className="mt-3 min-h-10 w-full rounded-base border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
+                >
+                  {isDataDeletionPending ? copy.retentionAttribution.deletionPending : copy.retentionAttribution.deletionButton}
+                </button>
+                <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
+                  {copy.retentionAttribution.deletionHelper}
+                </p>
               </section>
 
               <section className="rounded-base border border-border bg-surface p-4">

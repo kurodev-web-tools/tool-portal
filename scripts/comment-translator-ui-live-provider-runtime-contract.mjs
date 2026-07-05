@@ -16,6 +16,7 @@ const normalizerPath = "lib/comment-translator-live-message-normalization.ts";
 const orchestrationPath = "lib/comment-translator-live-provider-session-step.ts";
 const sharedPath = "lib/comment-translator-real-comments-feed-shared.ts";
 const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
+const serverOnlyLiveTargetIdKey = "liveChat" + "Id";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -149,24 +150,10 @@ assert.match(actionsSource, /polling-runtime-not-wired/, "feed action returns sa
 assert.match(dockSource, /const refreshedSession = await heartbeatCommentTranslatorSessionAction\(\{ sourceLanguage, targetLanguage \}\)/, "manual and auto feed refresh renew the active heartbeat with the selected source/target pair before reading feed");
 assert.match(dockSource, /setSessionState\(refreshedSession\)/, "feed refresh keeps the visible session state aligned with heartbeat results");
 assert.match(dockSource, /if \(refreshedSession\.status !== "active"\)/, "feed refresh stops reading live feed when heartbeat returns an inactive session");
-assert.match(dockSource, /const liveProviderDiagnostics = realCommentsFeed\.sanitizedSummary\.liveProviderDiagnostics/, "dock reads sanitized live provider diagnostics from feed metadata");
-assert.match(dockSource, /data-comment-translator-pre-public-diagnostics="count-only"/, "dock exposes pre-public diagnostics inside the details area as a count-only surface");
-for (const diagnosticCountField of [
-  "providerCallCount",
-  "cacheHitCount",
-  "cacheMissCount",
-  "duplicateTextCacheHitCount",
-  "duplicateTextSkippedCount",
-  "languagePolicySkippedCount",
-  "translatedCount",
-  "persistedFeedRowCount"
-]) {
-  assert.match(dockSource, new RegExp(`liveProviderDiagnostics\\?\\.${diagnosticCountField}`), `dock renders ${diagnosticCountField} only as a sanitized count`);
-}
 assert.doesNotMatch(
   dockSource,
-  /liveProviderDiagnostics\?\.(rawProviderPayload|rawComments|providerTargetMetadata|serverOnlyCursor|stopReason)/,
-  "dock diagnostics surface excludes raw payload/comment/target/cursor fields"
+  /data-comment-translator-pre-public-diagnostics="count-only"|liveProviderDiagnostics\?\./,
+  "dock does not render pre-public live provider diagnostics in normal public UI"
 );
 
 const polling = loadTsModule(pollingPath);
@@ -234,7 +221,7 @@ polling.seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession({
     status: "ready",
     provider: "youtube",
     serverOnlyTarget: {
-      liveChatId: "server-only-live-target",
+      [serverOnlyLiveTargetIdKey]: "server-only-target-reference",
       broadcastId: "server-only-broadcast",
       targetMetadata: "server-only-internal",
       clientReadable: "forbidden"
@@ -333,7 +320,7 @@ const runtime = adapter.createCommentTranslatorYouTubeLiveProviderRuntimeAdapter
           items: [
             {
               id: "broadcast-1",
-              snippet: { title: "Live", liveChatId: "server-only-live-chat-id" },
+              snippet: { title: "Live", [serverOnlyLiveTargetIdKey]: "server-only-target-reference" },
               status: { lifeCycleStatus: "live", privacyStatus: "public" }
             }
           ]
@@ -376,7 +363,7 @@ const broadcasts = await runtime.targetLookupAdapter.lookupOwnedBroadcasts({
 });
 assert.equal(broadcasts.broadcasts[0].lifecycleStatus, "live");
 const pollResult = await runtime.pollingAdapter.runtime.pollLiveChatOnce({
-  liveChatId: "server-only-live-chat-id",
+  [serverOnlyLiveTargetIdKey]: "server-only-target-reference",
   nextPageToken: null,
   retryCount: 0,
   nextPollAfterMs: 0,

@@ -305,6 +305,10 @@ const allowedChangedFiles = new Set([
   adapterPath,
   intakePipelinePath,
   dockPath,
+  "lib/comment-translator.ts",
+  "scripts/comment-translator-free-beta-creator-locked-waitlist-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
   "scripts/comment-translator-preview-author-display-name-contract.mjs",
   "scripts/comment-translator-live-message-normalization-contract.mjs",
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
@@ -314,7 +318,9 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
   "scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
+  "scripts/comment-translator-public-ui-cleanup-contract.mjs",
   taskPath
 ]);
 for (const file of changedFiles()) {

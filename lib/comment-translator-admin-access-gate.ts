@@ -1,6 +1,12 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import {
+  commentTranslatorAdminShortcutAvailableState,
+  commentTranslatorAdminShortcutHiddenState,
+  type CommentTranslatorAdminShortcutState
+} from "./comment-translator-admin-shortcut-shared";
+import type { AccountSessionState } from "./supabase/session";
 
 export type CommentTranslatorAdminAccount =
   | {
@@ -34,7 +40,7 @@ export const commentTranslatorAdminAccessGateContract = {
   allowlistEnv: "COMMENT_TRANSLATOR_ADMIN_ALLOWED_USER_HASHES",
   allowlistPolicy: "sha256-owner-user-id-allowlist",
   defaultAccess: "blocked",
-  gatedSurfaces: ["/admin/comment-translator/creator-waitlist"],
+  gatedSurfaces: ["/admin/comment-translator", "/admin/comment-translator/creator-waitlist"],
   browserReadableOutput: "sanitized-admin-access-metadata-only",
   forbiddenReadableOutput: [
     "owner-user-id-value",
@@ -78,6 +84,35 @@ export function readCommentTranslatorAdminAccess({
   }
 
   return createBlockedAdminAccess("admin-allowlist");
+}
+
+export function readCommentTranslatorAdminShortcutStateForAccountSession({
+  accountSession,
+  env = process.env
+}: {
+  readonly accountSession: AccountSessionState;
+  readonly env?: CommentTranslatorAdminAccessEnv;
+}): CommentTranslatorAdminShortcutState {
+  const access = readCommentTranslatorAdminAccess({
+    account: createCommentTranslatorAdminAccountFromSession(accountSession),
+    env
+  });
+
+  return access.status === "allowed" ? commentTranslatorAdminShortcutAvailableState : commentTranslatorAdminShortcutHiddenState;
+}
+
+function createCommentTranslatorAdminAccountFromSession(accountSession: AccountSessionState): CommentTranslatorAdminAccount {
+  if (accountSession.authStatus === "signed-in" && accountSession.user?.id) {
+    return {
+      status: "authenticated",
+      ownerUserId: accountSession.user.id
+    };
+  }
+
+  return {
+    status: "unauthenticated",
+    reason: accountSession.authStatus === "unavailable" ? "auth-unavailable" : "caller-not-authenticated"
+  };
 }
 
 function createBlockedAdminAccess(reason: Extract<CommentTranslatorAdminAccess, { readonly status: "blocked" }>["reason"]) {

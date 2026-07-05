@@ -15,8 +15,12 @@ const actionsPath = "app/tools/comment-translator/actions.ts";
 const routeHarnessPath = "app/api/comment-translator/free-beta/route-api-harness/route.ts";
 const componentPath = "components/comment-translator/CommentTranslatorDock.tsx";
 const privateLaunchFallbackPath = "components/comment-translator/CommentTranslatorPrivateLaunchUnavailable.tsx";
+const adminShortcutSharedPath = "lib/comment-translator-admin-shortcut-shared.ts";
+const portalShellPath = "components/portal/PortalShell.tsx";
 const portalHeaderPath = "components/portal/PortalHeader.tsx";
+const portalSidebarPath = "components/portal/PortalSidebar.tsx";
 const copyPath = "lib/comment-translator.ts";
+const adminDashboardPath = "app/admin/comment-translator/page.tsx";
 const adminPagePath = "app/admin/comment-translator/creator-waitlist/page.tsx";
 const migrationPath = "supabase/migrations/20260705000000_comment_translator_creator_waitlist_registrations.sql";
 const taskPath = "task.md";
@@ -137,8 +141,12 @@ for (const requiredPath of [
   routeHarnessPath,
   componentPath,
   privateLaunchFallbackPath,
+  adminShortcutSharedPath,
+  portalShellPath,
   portalHeaderPath,
+  portalSidebarPath,
   copyPath,
+  adminDashboardPath,
   adminPagePath,
   migrationPath,
   taskPath
@@ -155,7 +163,12 @@ const actionsSource = read(actionsPath);
 const routeHarnessSource = read(routeHarnessPath);
 const componentSource = read(componentPath);
 const copySource = read(copyPath);
+const adminShortcutSharedSource = read(adminShortcutSharedPath);
+const portalShellSource = read(portalShellPath);
 const adminPageSource = read(adminPagePath);
+const adminDashboardSource = read(adminDashboardPath);
+const portalHeaderSource = read(portalHeaderPath);
+const portalSidebarSource = read(portalSidebarPath);
 const migrationSource = read(migrationPath);
 const taskSource = read(taskPath);
 
@@ -178,10 +191,40 @@ assert.match(storeSource, /on delete cascade/, "migration keeps owner cleanup ti
 assert.match(adminGateSource, /^import "server-only";/m, "admin allowlist gate is server-only");
 assert.match(adminGateSource, /COMMENT_TRANSLATOR_ADMIN_ALLOWED_USER_HASHES/, "admin gate uses a hash allowlist env");
 assert.match(adminGateSource, /createHash\("sha256"\)/, "admin gate hashes account ids before allowlist comparison");
+assert.match(adminGateSource, /readCommentTranslatorAdminShortcutStateForAccountSession/, "admin shortcut state is resolved by a server-only allowlist helper");
+assert.match(adminGateSource, /\/admin\/comment-translator(?!\/creator-waitlist)/, "admin gate covers the dashboard shell route");
 assert.match(adminPageStateSource, /readCommentTranslatorCreatorWaitlistAdminPageState/, "admin state reader is centralized");
 assert.match(adminPageStateSource, /listRegistrations/, "admin state reads registrations through the durable store");
+assert.match(adminShortcutSharedSource, /commentTranslatorAdminDashboardPath = "\/admin\/comment-translator"/, "admin shortcut shared contract points to the dashboard shell");
+assert.match(adminShortcutSharedSource, /server-allowlisted-admin-only/, "admin shortcut shared contract records server allowlist visibility");
+assert.match(portalShellSource, /readCommentTranslatorAdminShortcutStateForAccountSession/, "PortalShell resolves admin shortcut state on the server");
+assert.match(portalShellSource, /adminShortcut=.+adminShortcut/s, "PortalShell passes only sanitized admin shortcut state to client navigation");
+for (const clientNavSource of [portalHeaderSource, portalSidebarSource]) {
+  assert.match(
+    clientNavSource,
+    /data-comment-translator-admin-shortcut="server-allowlisted-admin-only"/,
+    "client navigation renders the admin shortcut only from server-provided shortcut state"
+  );
+  assert.match(clientNavSource, /adminShortcut\.status === "available"/, "client navigation checks the server-provided shortcut state");
+  assert.doesNotMatch(
+    clientNavSource,
+    /COMMENT_TRANSLATOR_ADMIN_ALLOWED_USER_HASHES|createCommentTranslatorAdminUserHash|ownerUserId|owner_user_id|user\.email/,
+    "client navigation does not implement email/id/env-based admin checks"
+  );
+}
+assert.match(adminDashboardSource, /readCommentTranslatorAdminAccess/, "admin dashboard uses the existing server-only admin gate");
+assert.match(adminDashboardSource, /\/admin\/comment-translator\/creator-waitlist/, "admin dashboard links to the Creator waitlist admin page");
+assert.match(adminDashboardSource, /data-comment-translator-admin-dashboard="server-allowlisted-admin-only"/, "admin dashboard records the server-gated shell marker");
+assert.match(adminDashboardSource, /data-comment-translator-admin-planned-tool="disabled-rate-limit-tools"/, "future rate-limit tools are clearly disabled/planned");
+assert.doesNotMatch(
+  adminDashboardSource,
+  /form action|unblockCommentTranslator|resetCommentTranslator|rateLimitResetAction|rateLimitUnblockAction|fetch\(/,
+  "dashboard shell does not expose or implement future mutation actions"
+);
 assert.match(adminPageSource, /const waitlistAdminPath = "\/admin\/comment-translator\/creator-waitlist"/, "admin page defines a safe next path");
 assert.match(adminPageSource, /redirect\(`\/login\?next=\$\{waitlistAdminPath\}`\)/, "admin page login gate uses the safe next path");
+assert.match(adminPageSource, /const adminDashboardPath = "\/admin\/comment-translator"/, "waitlist admin page defines the dashboard shell path");
+assert.match(adminPageSource, /href=\{adminDashboardPath\}/, "waitlist admin page links back to the dashboard shell");
 assert.match(adminPageSource, /COMMENT_TRANSLATOR_ADMIN_ALLOWED_USER_HASHES/, "admin page documents the allowlist env without values");
 assert.doesNotMatch(adminPageSource, /owner_user_id|providerChannelId|liveChatId/, "admin page does not render owner or provider identifiers");
 
@@ -216,6 +259,11 @@ assert.match(copySource, /creatorWaitlist/, "localized copy has real waitlist ca
 assert.match(copySource, /registered|登録済み/, "localized copy covers registered state");
 assert.match(copySource, /login|ログイン/, "localized copy covers unauthenticated state");
 assert.doesNotMatch(copySource, /sanitized local draft|local draft|click tracking|クリックはsanitized local draft/i, "localized copy removes click tracking draft language");
+assert.doesNotMatch(
+  `${componentSource}\n${read(privateLaunchFallbackPath)}\n${portalHeaderSource}\n${portalSidebarSource}`,
+  /ownerUserId|owner_user_id|internal user id|providerChannelId|liveChatId\s*[:=]|providerTargetMetadata|normalized text hash|cache key/i,
+  "normal public/account/tool UI does not expose owner ids, internal ids, provider identifier values, hashes, or cache keys"
+);
 
 assert.match(migrationSource, /create table if not exists public\.comment_translator_creator_waitlist_registrations/, "migration creates waitlist table");
 assert.match(migrationSource, /status in \('registered', 'invited', 'discount_eligible', 'discount_used', 'cancelled'\)/, "migration constrains waitlist status");
@@ -325,6 +373,57 @@ assert.equal(
   }).status,
   "blocked"
 );
+assert.deepEqual(
+  adminGate.readCommentTranslatorAdminShortcutStateForAccountSession({
+    accountSession: {
+      configStatus: "ready",
+      missingEnv: [],
+      authStatus: "signed-in",
+      user: { id: "owner-1", email: "admin@example.test" },
+      remotePreferences: null,
+      remotePreferenceStatus: "loaded"
+    },
+    env: { COMMENT_TRANSLATOR_ADMIN_ALLOWED_USER_HASHES: adminGate.createCommentTranslatorAdminUserHash("owner-1") }
+  }),
+  {
+    status: "available",
+    href: "/admin/comment-translator",
+    label: "Comment Translator admin",
+    visibility: "server-allowlisted-admin-only",
+    clientReadableDetail: "sanitized-admin-shortcut-only"
+  },
+  "allowlisted admins receive a sanitized admin dashboard shortcut"
+);
+assert.equal(
+  adminGate.readCommentTranslatorAdminShortcutStateForAccountSession({
+    accountSession: {
+      configStatus: "ready",
+      missingEnv: [],
+      authStatus: "signed-in",
+      user: { id: "owner-2", email: "user@example.test" },
+      remotePreferences: null,
+      remotePreferenceStatus: "loaded"
+    },
+    env: { COMMENT_TRANSLATOR_ADMIN_ALLOWED_USER_HASHES: adminGate.createCommentTranslatorAdminUserHash("owner-1") }
+  }).status,
+  "hidden",
+  "normal signed-in users do not receive admin shortcut state"
+);
+assert.equal(
+  adminGate.readCommentTranslatorAdminShortcutStateForAccountSession({
+    accountSession: {
+      configStatus: "ready",
+      missingEnv: [],
+      authStatus: "signed-out",
+      user: null,
+      remotePreferences: null,
+      remotePreferenceStatus: "not-signed-in"
+    },
+    env: { COMMENT_TRANSLATOR_ADMIN_ALLOWED_USER_HASHES: adminGate.createCommentTranslatorAdminUserHash("owner-1") }
+  }).status,
+  "hidden",
+  "unauthenticated users do not receive admin shortcut state"
+);
 
 for (const payload of [
   unregisteredState,
@@ -353,7 +452,8 @@ for (const payload of [
   }
 }
 
-assert.match(taskSource, /Creator waitlist admin \+ public UI trim/i, "task.md records this PR slice");
+assert.match(taskSource, /Comment Translator admin shortcut \+ dashboard shell/i, "task.md records this PR slice");
+assert.match(taskSource, /rate-limit tools: planned-only/i, "task.md records rate-limit operations were not implemented");
 assert.match(taskSource, /remote migration apply: not-run/i, "task.md records migration apply was not run");
 
 const allowedChangedFiles = new Set([
@@ -366,8 +466,12 @@ const allowedChangedFiles = new Set([
   routeHarnessPath,
   componentPath,
   privateLaunchFallbackPath,
+  adminShortcutSharedPath,
+  portalShellPath,
   portalHeaderPath,
+  portalSidebarPath,
   copyPath,
+  adminDashboardPath,
   adminPagePath,
   migrationPath,
   "scripts/comment-translator-creator-waitlist-admin-contract.mjs",

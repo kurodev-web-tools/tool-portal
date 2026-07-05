@@ -8,6 +8,7 @@ import { useLocale } from "@/components/portal/LocaleProvider";
 import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
+import type { CommentTranslatorAdminShortcutState } from "@/lib/comment-translator-admin-shortcut-shared";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
 import type { AccountSessionState } from "@/lib/supabase/session";
 import { sidebarTools } from "@/lib/tools";
@@ -31,10 +32,12 @@ function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState)
 
 export function PortalHeader({
   mode = "default",
-  accountStatus
+  accountStatus,
+  adminShortcut
 }: {
   mode?: "default" | "workspace";
   accountStatus: AccountSessionState;
+  adminShortcut: CommentTranslatorAdminShortcutState;
 }) {
   const { locale } = useLocale();
   const pathname = usePathname();
@@ -45,6 +48,7 @@ export function PortalHeader({
   const isAccountRoute = pathname.startsWith("/account") || pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/reset-password");
   const showTipsButton = !isAccountRoute;
   const showSettingsControls = mode !== "workspace" && !isAccountRoute;
+  const adminShortcutAvailable = adminShortcut.status === "available";
   const title = useMemo(() => {
     if (pathname === "/") {
       return "Kuro Stream Kit";
@@ -175,6 +179,21 @@ export function PortalHeader({
                   </Link>
                 );
               })}
+              {adminShortcutAvailable ? (
+                <Link
+                  href={adminShortcut.href}
+                  onClick={() => setDrawerOpen(false)}
+                  data-comment-translator-admin-shortcut="server-allowlisted-admin-only"
+                  className={[
+                    "block rounded-base border px-3 py-3 text-sm font-bold transition",
+                    pathname.startsWith(adminShortcut.href)
+                      ? "border-primary bg-primary-soft text-primary-strong"
+                      : "border-border bg-surface-muted text-foreground hover:bg-surface"
+                  ].join(" ")}
+                >
+                  {adminShortcut.label}
+                </Link>
+              ) : null}
             </nav>
             <div className="mb-4 rounded-base border border-border bg-surface-muted/55 p-3">
               <p className="text-sm font-black text-foreground">{accountCta.title}</p>

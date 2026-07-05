@@ -224,7 +224,7 @@ assert.match(gapAudit, /FB-L3|Allowed-tester route\/API smoke/i, "gap audit reco
 
 assert.match(
   task,
-  /Current branch: `codex\/(?:comment-translator-free-beta-fb-l3-allowed-tester-route-api-smoke|comment-translator-creator-waitlist-admin-ui)`/i,
+  /Current branch: `codex\/(?:comment-translator-free-beta-fb-l3-allowed-tester-route-api-smoke|comment-translator-creator-waitlist-admin-ui|comment-translator-admin-dashboard-shortcut)`/i,
   "task.md records a route/API-smoke-compatible branch"
 );
 assert.match(
@@ -286,14 +286,18 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
+  "app/admin/comment-translator/page.tsx",
   "app/admin/comment-translator/creator-waitlist/page.tsx",
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
   "app/tools/comment-translator/actions.ts",
   "components/comment-translator/CommentTranslatorDock.tsx",
   "components/comment-translator/CommentTranslatorPrivateLaunchUnavailable.tsx",
   "components/portal/PortalHeader.tsx",
+  "components/portal/PortalShell.tsx",
+  "components/portal/PortalSidebar.tsx",
   evidenceDocPath,
   "lib/comment-translator-admin-access-gate.ts",
+  "lib/comment-translator-admin-shortcut-shared.ts",
   "lib/comment-translator-creator-waitlist-admin.ts",
   "lib/comment-translator-creator-waitlist-durable-store.ts",
   "lib/comment-translator-creator-waitlist-shared.ts",

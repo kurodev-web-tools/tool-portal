@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
+import type { CommentTranslatorAdminShortcutState } from "@/lib/comment-translator-admin-shortcut-shared";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
 import type { AccountSessionState } from "@/lib/supabase/session";
 import { sidebarTools } from "@/lib/tools";
@@ -62,10 +63,12 @@ function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState)
 
 export function PortalSidebar({
   mode = "default",
-  accountStatus
+  accountStatus,
+  adminShortcut
 }: {
   mode?: "default" | "workspace";
   accountStatus: AccountSessionState;
+  adminShortcut: CommentTranslatorAdminShortcutState;
 }) {
   const { locale } = useLocale();
   const pathname = usePathname();
@@ -73,6 +76,7 @@ export function PortalSidebar({
   const copy = portalCopy[locale].navigation;
   const { signedIn, accountHref, accountCta } = getAccountCta(copy, accountStatus);
   const accountRailLabel = signedIn ? copy.accountSettingsButton : copy.loginButton;
+  const adminShortcutAvailable = adminShortcut.status === "available";
   const fixedItems = [
     { label: copy.home, href: "/", icon: "H" },
     { label: copy.tools, href: "/tools", icon: "T" }
@@ -105,6 +109,28 @@ export function PortalSidebar({
             ))}
           </div>
         </section>
+
+        {adminShortcutAvailable ? (
+          <section className="border-t border-border pt-6">
+            <p className="mb-3 hidden px-2 text-xs font-semibold text-muted xl:block">Admin</p>
+            <Link
+              href={adminShortcut.href}
+              data-comment-translator-admin-shortcut="server-allowlisted-admin-only"
+              className={[
+                "group relative flex items-center justify-center gap-3 rounded-base px-2 py-2.5 text-sm font-semibold transition xl:justify-start xl:px-3",
+                pathname === adminShortcut.href || pathname.startsWith(`${adminShortcut.href}/`)
+                  ? "bg-primary-soft text-primary-strong"
+                  : "text-muted hover:bg-surface-muted hover:text-foreground"
+              ].join(" ")}
+              title={adminShortcut.label}
+            >
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-surface text-xs font-bold text-primary-strong xl:h-7 xl:w-7">
+                A
+              </span>
+              <span className="hidden xl:inline">{adminShortcut.label}</span>
+            </Link>
+          </section>
+        ) : null}
 
         <section className={["border-t border-dashed border-border pt-6", showWorkspaceSettings ? "hidden" : "hidden xl:block"].join(" ")}>
           <p className="mb-3 px-2 text-xs font-semibold text-muted">{copy.future}</p>

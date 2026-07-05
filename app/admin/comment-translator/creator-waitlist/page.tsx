@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { readCommentTranslatorCreatorWaitlistAdminPageState } from "@/lib/comment-translator-creator-waitlist-admin";
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const waitlistAdminPath = "/admin/comment-translator/creator-waitlist";
+const adminDashboardPath = "/admin/comment-translator";
 
 export default async function CommentTranslatorCreatorWaitlistAdminPage() {
   const accountSession = await getAccountSessionState();
@@ -38,7 +40,7 @@ export default async function CommentTranslatorCreatorWaitlistAdminPage() {
   });
 
   return (
-    <PortalShell mode="workspace">
+    <PortalShell mode="workspace" accountStatus={accountSession}>
       <main className="mx-auto grid w-full max-w-6xl min-w-0 gap-6 px-4 py-8 sm:px-6 lg:px-8">
         <header className="grid min-w-0 gap-2">
           <p className="text-sm font-black uppercase tracking-normal text-primary-strong">Kuro Live Comment Translator</p>
@@ -47,6 +49,12 @@ export default async function CommentTranslatorCreatorWaitlistAdminPage() {
             Admin-only view for Creator closed beta pre-registrations. The table shows account email or display name
             when available, campaign, status, and registered date only.
           </p>
+          <Link
+            href={adminDashboardPath}
+            className="mt-2 inline-flex min-h-10 w-fit items-center justify-center rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
+          >
+            Back to admin dashboard
+          </Link>
         </header>
 
         <section className="panel min-w-0 p-4" data-comment-translator-admin-waitlist="sanitized-admin-waitlist-list-only">

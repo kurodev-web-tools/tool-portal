@@ -3,6 +3,7 @@ import { AccountRemoteDisplaySettingsApplier } from "@/components/account/Accoun
 import { PortalHeader } from "@/components/portal/PortalHeader";
 import { PortalLegalFooter } from "@/components/portal/PortalLegalFooter";
 import { PortalSidebar } from "@/components/portal/PortalSidebar";
+import { readCommentTranslatorAdminShortcutStateForAccountSession } from "@/lib/comment-translator-admin-access-gate";
 import { getAccountSessionState } from "@/lib/supabase/session";
 
 export async function PortalShell({
@@ -15,6 +16,7 @@ export async function PortalShell({
   accountStatus?: Awaited<ReturnType<typeof getAccountSessionState>>;
 }) {
   const accountStatus = providedAccountStatus ?? await getAccountSessionState();
+  const adminShortcut = readCommentTranslatorAdminShortcutStateForAccountSession({ accountSession: accountStatus });
   const mainClassName =
     mode === "workspace"
       ? "h-[calc(100vh-4rem)] w-full overflow-hidden lg:h-screen"
@@ -25,10 +27,10 @@ export async function PortalShell({
   return (
     <div className={shellClassName}>
       <AccountRemoteDisplaySettingsApplier accountStatus={accountStatus} />
-      <PortalSidebar mode={mode} accountStatus={accountStatus} />
+      <PortalSidebar mode={mode} accountStatus={accountStatus} adminShortcut={adminShortcut} />
       <div className={contentClassName}>
         <div className={mode === "workspace" ? "lg:hidden" : undefined}>
-          <PortalHeader mode={mode} accountStatus={accountStatus} />
+          <PortalHeader mode={mode} accountStatus={accountStatus} adminShortcut={adminShortcut} />
         </div>
         <main className={mainClassName}>{children}</main>
         {mode !== "workspace" ? <PortalLegalFooter /> : null}

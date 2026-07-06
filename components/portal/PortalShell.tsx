@@ -4,7 +4,7 @@ import { PortalHeader } from "@/components/portal/PortalHeader";
 import { PortalLegalFooter } from "@/components/portal/PortalLegalFooter";
 import { PortalSidebar } from "@/components/portal/PortalSidebar";
 import { readCommentTranslatorAdminShortcutStateForAccountSession } from "@/lib/comment-translator-admin-access-gate";
-import { getAccountSessionState } from "@/lib/supabase/session";
+import { createBrowserSafeAccountSessionViewModel, getAccountSessionState, type AccountSessionState } from "@/lib/supabase/session";
 
 export async function PortalShell({
   children,
@@ -13,10 +13,11 @@ export async function PortalShell({
 }: {
   children: ReactNode;
   mode?: "default" | "workspace";
-  accountStatus?: Awaited<ReturnType<typeof getAccountSessionState>>;
+  accountStatus?: AccountSessionState;
 }) {
   const accountStatus = providedAccountStatus ?? await getAccountSessionState();
   const adminShortcut = readCommentTranslatorAdminShortcutStateForAccountSession({ accountSession: accountStatus });
+  const browserSafeAccountStatus = createBrowserSafeAccountSessionViewModel(accountStatus);
   const mainClassName =
     mode === "workspace"
       ? "h-[calc(100vh-4rem)] w-full overflow-hidden lg:h-screen"
@@ -26,11 +27,11 @@ export async function PortalShell({
 
   return (
     <div className={shellClassName}>
-      <AccountRemoteDisplaySettingsApplier accountStatus={accountStatus} />
-      <PortalSidebar mode={mode} accountStatus={accountStatus} adminShortcut={adminShortcut} />
+      <AccountRemoteDisplaySettingsApplier accountStatus={browserSafeAccountStatus} />
+      <PortalSidebar mode={mode} accountStatus={browserSafeAccountStatus} adminShortcut={adminShortcut} />
       <div className={contentClassName}>
         <div className={mode === "workspace" ? "lg:hidden" : undefined}>
-          <PortalHeader mode={mode} accountStatus={accountStatus} adminShortcut={adminShortcut} />
+          <PortalHeader mode={mode} accountStatus={browserSafeAccountStatus} adminShortcut={adminShortcut} />
         </div>
         <main className={mainClassName}>{children}</main>
         {mode !== "workspace" ? <PortalLegalFooter /> : null}

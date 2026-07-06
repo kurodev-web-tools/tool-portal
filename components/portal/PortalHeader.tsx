@@ -10,11 +10,11 @@ import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import type { CommentTranslatorAdminShortcutState } from "@/lib/comment-translator-admin-shortcut-shared";
 import { portalCopy } from "@/lib/portal-copy";
-import type { AccountSessionState } from "@/lib/supabase/session";
+import type { AccountSessionBrowserSafeViewModel } from "@/lib/supabase/session";
 
 type NavigationCopy = (typeof portalCopy)["ja"]["navigation"] | (typeof portalCopy)["en"]["navigation"];
 
-function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState) {
+function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionBrowserSafeViewModel) {
   const signedIn = accountStatus.authStatus === "signed-in";
   const recoveryPending = accountStatus.authStatus === "recovery-pending";
   const email = accountStatus.user?.email ?? null;
@@ -35,7 +35,7 @@ export function PortalHeader({
   adminShortcut
 }: {
   mode?: "default" | "workspace";
-  accountStatus: AccountSessionState;
+  accountStatus: AccountSessionBrowserSafeViewModel;
   adminShortcut: CommentTranslatorAdminShortcutState;
 }) {
   const { locale } = useLocale();

@@ -7,9 +7,9 @@ import {
   suiteCount
 } from "@/lib/suites";
 import { portalCopy } from "@/lib/portal-copy";
-import type { AccountSessionState } from "@/lib/supabase/session";
+import type { AccountSessionBrowserSafeViewModel } from "@/lib/supabase/session";
 
-export function PortalHeroSummary({ accountStatus }: { accountStatus: AccountSessionState }) {
+export function PortalHeroSummary({ accountStatus }: { accountStatus: AccountSessionBrowserSafeViewModel }) {
   const { locale } = useLocale();
   const copy = portalCopy[locale].home.hero;
   const accountHref = accountStatus.authStatus === "signed-in" ? "/account" : "/login";

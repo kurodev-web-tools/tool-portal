@@ -14,7 +14,7 @@ import {
 import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { authorizeYouTubeOAuthCredentialStatusCaller } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
-import { getAccountSessionState } from "@/lib/supabase/session";
+import { createBrowserSafeAccountSessionViewModel, getAccountSessionState } from "@/lib/supabase/session";
 
 export const metadata: Metadata = {
   title: "Comment Translator billing",
@@ -63,11 +63,12 @@ export default async function AccountBillingPage({ searchParams }: AccountBillin
     snapshot: billingSnapshot,
     env: process.env
   });
+  const browserSafeAccountSession = createBrowserSafeAccountSessionViewModel(accountSession);
 
   return (
     <PortalShell>
       <AccountBillingShell
-        accountStatus={accountSession}
+        accountStatus={browserSafeAccountSession}
         billingMessage={params?.billing ?? null}
         billing={billingView}
         createCheckoutAction={createCommentTranslatorBillingCheckoutAction}

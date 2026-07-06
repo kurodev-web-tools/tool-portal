@@ -21,6 +21,17 @@ export type AccountSessionState = {
   remotePreferenceStatus: "not-signed-in" | "loaded" | "unavailable";
 };
 
+export type AccountSessionBrowserSafeViewModel = {
+  readonly configStatus: AccountSessionState["configStatus"];
+  readonly missingEnv: readonly string[];
+  readonly authStatus: AccountSessionState["authStatus"];
+  readonly user: {
+    readonly email: string | null;
+  } | null;
+  readonly remotePreferences: AccountSessionState["remotePreferences"];
+  readonly remotePreferenceStatus: AccountSessionState["remotePreferenceStatus"];
+};
+
 type UserPreferenceRow = {
   locale: string | null;
   theme: string | null;
@@ -40,6 +51,21 @@ function isUserPreferencesTimeZoneSchemaMissingError(error: unknown) {
     .join(" ");
 
   return /time_zone/i.test(text) && (code === "PGRST204" || code === "42703" || /schema cache|column/i.test(text));
+}
+
+export function createBrowserSafeAccountSessionViewModel(accountSession: AccountSessionState): AccountSessionBrowserSafeViewModel {
+  return {
+    configStatus: accountSession.configStatus,
+    missingEnv: [...accountSession.missingEnv],
+    authStatus: accountSession.authStatus,
+    user: accountSession.user
+      ? {
+          email: accountSession.user.email
+        }
+      : null,
+    remotePreferences: accountSession.remotePreferences,
+    remotePreferenceStatus: accountSession.remotePreferenceStatus
+  };
 }
 
 export async function getAccountSessionState(): Promise<AccountSessionState> {

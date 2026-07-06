@@ -11,7 +11,7 @@ import { readYouTubeAccountIntegrationStatusViewModel } from "@/lib/comment-tran
 import { authorizeYouTubeOAuthCredentialStatusCaller } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import { portalMetadata } from "@/lib/portal-metadata";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
-import { getAccountSessionState } from "@/lib/supabase/session";
+import { createBrowserSafeAccountSessionViewModel, getAccountSessionState } from "@/lib/supabase/session";
 
 const accountMetadata = portalMetadata.en.account;
 
@@ -55,12 +55,13 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       });
     })
   ]);
+  const browserSafeAccountSession = createBrowserSafeAccountSessionViewModel(accountSession);
 
   return (
     <PortalShell>
       <AccountPreferencesShell
         authMessage={authMessage}
-        authStatus={accountSession}
+        authStatus={browserSafeAccountSession}
         youtubeIntegration={youtubeIntegration}
         billing={billing}
         saveLocaleThemePreferenceAction={saveLocaleThemePreferenceAction}

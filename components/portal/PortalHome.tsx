@@ -5,10 +5,10 @@ import { FeedbackNotice } from "@/components/portal/FeedbackNotice";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { SuiteCard } from "@/components/portal/SuiteCard";
 import { portalCopy } from "@/lib/portal-copy";
-import type { AccountSessionState } from "@/lib/supabase/session";
+import type { AccountSessionBrowserSafeViewModel } from "@/lib/supabase/session";
 import { suites } from "@/lib/suites";
 
-export function PortalHome({ accountStatus }: { accountStatus: AccountSessionState }) {
+export function PortalHome({ accountStatus }: { accountStatus: AccountSessionBrowserSafeViewModel }) {
   const { locale } = useLocale();
   const copy = portalCopy[locale].home;
 

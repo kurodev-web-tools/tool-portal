@@ -10,9 +10,9 @@ import {
   writeLocalThemePreference,
   writeLocalTimeZonePreference
 } from "@/lib/local-preferences";
-import type { AccountSessionState } from "@/lib/supabase/session";
+import type { AccountSessionBrowserSafeViewModel } from "@/lib/supabase/session";
 
-export function AccountRemoteDisplaySettingsApplier({ accountStatus }: { accountStatus: AccountSessionState }) {
+export function AccountRemoteDisplaySettingsApplier({ accountStatus }: { accountStatus: AccountSessionBrowserSafeViewModel }) {
   const { setLocale } = useLocale();
   const appliedKeyRef = useRef<string | null>(null);
 
@@ -26,13 +26,21 @@ export function AccountRemoteDisplaySettingsApplier({ accountStatus }: { account
       return;
     }
 
-    const applyKey = `${accountStatus.user?.id ?? "unknown"}:${locale ?? "-"}:${theme ?? "-"}:${timeZone ?? "-"}:${updatedAt ?? "-"}`;
+    const searchParams = new URLSearchParams(window.location.search);
+    const forceAfterSignIn = searchParams.get("auth") === "signed-in";
+    const applyKey = [
+      accountStatus.authStatus,
+      accountStatus.remotePreferenceStatus,
+      forceAfterSignIn ? "force-after-sign-in" : "normal",
+      locale ?? "-",
+      theme ?? "-",
+      timeZone ?? "-",
+      updatedAt ?? "-"
+    ].join(":");
     if (appliedKeyRef.current === applyKey) {
       return;
     }
 
-    const searchParams = new URLSearchParams(window.location.search);
-    const forceAfterSignIn = searchParams.get("auth") === "signed-in";
     const localSnapshot = readLocalPreferenceSnapshot();
     const shouldApplyLocale = Boolean(locale && (forceAfterSignIn || !localSnapshot.locale));
     const shouldApplyTheme = Boolean(theme && (forceAfterSignIn || !localSnapshot.theme));

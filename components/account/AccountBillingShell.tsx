@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import type { CommentTranslatorBillingBrowserSafeViewModel } from "@/lib/comment-translator-billing-runtime";
-import type { AccountSessionState } from "@/lib/supabase/session";
+import type { AccountSessionBrowserSafeViewModel } from "@/lib/supabase/session";
 
 type AccountFormAction = (formData: FormData) => void | Promise<void>;
 
@@ -229,7 +229,7 @@ export function AccountBillingShell({
   createCheckoutAction,
   createPortalAction
 }: {
-  accountStatus: AccountSessionState;
+  accountStatus: AccountSessionBrowserSafeViewModel;
   billingMessage: string | null;
   billing: CommentTranslatorBillingBrowserSafeViewModel;
   createCheckoutAction: AccountFormAction;

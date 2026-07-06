@@ -18,7 +18,7 @@ import {
   type ThemePreference
 } from "@/lib/local-preferences";
 import type { Locale } from "@/lib/locale";
-import type { AccountSessionState } from "@/lib/supabase/session";
+import type { AccountSessionBrowserSafeViewModel } from "@/lib/supabase/session";
 
 type AccountFormAction = (formData: FormData) => void | Promise<void>;
 
@@ -264,7 +264,7 @@ export function AccountPreferencesShell({
   signOutAction
 }: {
   authMessage: string | null;
-  authStatus: AccountSessionState;
+  authStatus: AccountSessionBrowserSafeViewModel;
   youtubeIntegration: YouTubeAccountIntegrationViewModel;
   billing: CommentTranslatorBillingBrowserSafeViewModel;
   saveLocaleThemePreferenceAction: AccountFormAction;

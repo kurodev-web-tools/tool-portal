@@ -40,6 +40,7 @@ assertIncludes(
   applier,
   [
     '"use client"',
+    "AccountSessionBrowserSafeViewModel",
     "remotePreferences",
     "readLocalPreferenceSnapshot",
     "writeLocalLocalePreference",
@@ -56,6 +57,9 @@ assertIncludes(
 assertExcludes(
   applier,
   [
+    "AccountSessionState",
+    "user?.id",
+    "user.id",
     "@supabase/ssr",
     "@supabase/supabase-js",
     "SUPABASE_SECRET_KEY",
@@ -70,18 +74,23 @@ assertExcludes(
 
 assertIncludes(
   portalShell,
-  ["AccountRemoteDisplaySettingsApplier", "accountStatus={accountStatus}"],
-  "PortalShell applies remote display settings from the shared account session"
+  [
+    "createBrowserSafeAccountSessionViewModel",
+    "const browserSafeAccountStatus = createBrowserSafeAccountSessionViewModel(accountStatus);",
+    "AccountRemoteDisplaySettingsApplier",
+    "accountStatus={browserSafeAccountStatus}"
+  ],
+  "PortalShell applies remote display settings from the browser-safe account session view model"
 );
 assert.match(
   portalShell,
-  /<AccountRemoteDisplaySettingsApplier accountStatus=\{accountStatus\} \/>[\s\S]*<PortalSidebar/,
-  "PortalShell applies remote display settings before shared navigation controls render"
+  /<AccountRemoteDisplaySettingsApplier accountStatus=\{browserSafeAccountStatus\} \/>[\s\S]*<PortalSidebar/,
+  "PortalShell applies browser-safe remote display settings before shared navigation controls render"
 );
 
 assertIncludes(
   accountPage,
-  ["<PortalShell>", "authMessage={authMessage}", "authStatus={accountSession}"],
+  ["<PortalShell>", "authMessage={authMessage}", "authStatus={browserSafeAccountSession}"],
   "/account still uses the shared PortalShell and account shell"
 );
 assertIncludes(
@@ -104,9 +113,10 @@ assertIncludes(
 assertIncludes(
   task,
   [
-    "Shared display timezone preference slice",
+    "Browser-safe account session view model",
+    "node scripts/account-browser-safe-session-view-model-contract.mjs",
     "node scripts/account-remote-display-settings-contract.mjs",
-    "node scripts/comment-translator-shared-timezone-preference-contract.mjs"
+    "npx tsc --noEmit --pretty false"
   ],
   "task handoff documents implementation and verification"
 );

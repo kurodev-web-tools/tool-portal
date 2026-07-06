@@ -91,9 +91,11 @@ Recommended next PR: introduce a browser-safe account session view model that om
 
 ### P1 Medium: Future Public-Table Default Privilege Guard
 
-Current tables have explicit grants/revokes, but the migration set has no default privilege baseline for future tables. Add a separate reviewed migration or contract requirement before the next public-schema table expansion.
+Guard status: local migration proposal added in `supabase/migrations/20260706073204_supabase_default_privileges_guard.sql` and covered by `node scripts/comment-translator-supabase-default-privileges-guard-contract.mjs`.
 
-Recommended next PR: add an approval-gated default privilege guard proposal and deterministic local check. Remote apply remains explicitly approval-gated.
+Current tables have explicit grants/revokes and remain unchanged. The guard revokes future default table, sequence, and function privileges in `public` for the documented Supabase `postgres` owner role so newly created public tables are not implicitly reachable by `anon` or `authenticated`. It also revokes future default `service_role` privileges so trusted-server access for new tables must remain explicit in the table migration.
+
+Boundary: this is a reviewable local migration proposal only. Remote apply remains explicitly approval-gated. Existing public tables keep their current explicit grants and RLS policies. If a remote project creates migration objects with a different owner role, the approved remote apply plan must add the equivalent `ALTER DEFAULT PRIVILEGES FOR ROLE <owner>` block before relying on the guard.
 
 ### P1 Medium: Remote Read-Only Posture Unchecked
 
@@ -124,16 +126,34 @@ It checks:
 - trusted durable Supabase stores are server-only and disable Supabase session persistence;
 - the audit document and `task.md` record the internal-account-id and remote-read-only residual risks.
 
+Added deterministic local guard contract:
+
+`node scripts/comment-translator-supabase-default-privileges-guard-contract.mjs`
+
+It checks:
+
+- the default privileges guard migration exists;
+- future public table, sequence, and function default privileges are revoked for `anon`, `authenticated`, and `service_role`;
+- future function execute default privileges are revoked from `PUBLIC`;
+- the guard migration does not create tables, alter existing table RLS, create policies, grant browser roles, or bulk expose public tables;
+- the local public table inventory remains the existing 9 tables;
+- the audit document and `task.md` record the local-proposal, remote-owner, remote-apply, and non-action boundaries.
+
 ## Verification Results
 
 Passed:
 
+- `node scripts/comment-translator-supabase-default-privileges-guard-contract.mjs`
 - `node scripts/comment-translator-supabase-db-auth-rls-security-audit-contract.mjs`
 - `npm run lint`
 - `npx tsc --noEmit --pretty false`
-- `npm run build`
 - `git diff --check`
-- changed-files high-confidence secret scan: `changed_files=3`, `secret_scan_matches=0`
+- changed-files high-confidence secret scan: `changed_files=4`, `secret_scan_matches=0`
+
+Skipped:
+
+- `npm run build`: runtime TS/TSX was unchanged; this guard slice changes SQL, docs, and a deterministic contract only.
+- UI/browser width QA: no rendered UI, CSS, route, layout, or client behavior changed.
 
 Remote read-only preflight labels:
 

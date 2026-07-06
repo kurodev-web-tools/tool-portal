@@ -7,7 +7,7 @@ import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
 import type { CommentTranslatorAdminShortcutState } from "@/lib/comment-translator-admin-shortcut-shared";
 import { getToolCopy, portalCopy } from "@/lib/portal-copy";
-import type { AccountSessionState } from "@/lib/supabase/session";
+import type { AccountSessionBrowserSafeViewModel } from "@/lib/supabase/session";
 import { sidebarTools } from "@/lib/tools";
 
 function SidebarLink({
@@ -55,7 +55,7 @@ function SidebarSectionLabel({ label }: { readonly label: string }) {
 
 type NavigationCopy = (typeof portalCopy)["ja"]["navigation"] | (typeof portalCopy)["en"]["navigation"];
 
-function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState) {
+function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionBrowserSafeViewModel) {
   const signedIn = accountStatus.authStatus === "signed-in";
   const recoveryPending = accountStatus.authStatus === "recovery-pending";
   const email = accountStatus.user?.email ?? null;
@@ -77,7 +77,7 @@ export function PortalSidebar({
   adminShortcut
 }: {
   mode?: "default" | "workspace";
-  accountStatus: AccountSessionState;
+  accountStatus: AccountSessionBrowserSafeViewModel;
   adminShortcut: CommentTranslatorAdminShortcutState;
 }) {
   const { locale } = useLocale();

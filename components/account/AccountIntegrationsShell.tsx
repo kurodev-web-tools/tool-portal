@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import type { YouTubeAccountIntegrationViewModel } from "@/lib/comment-translator-youtube-account-integration";
-import type { AccountSessionState } from "@/lib/supabase/session";
+import type { AccountSessionBrowserSafeViewModel } from "@/lib/supabase/session";
 
 type AccountFormAction = (formData: FormData) => void | Promise<void>;
 
@@ -196,7 +196,7 @@ export function AccountIntegrationsShell({
   reconnectYouTubeAction,
   disconnectYouTubeAction
 }: {
-  accountStatus: AccountSessionState;
+  accountStatus: AccountSessionBrowserSafeViewModel;
   integrationMessage: string | null;
   youtubeIntegration: YouTubeAccountIntegrationViewModel;
   startYouTubeConnectAction: AccountFormAction;

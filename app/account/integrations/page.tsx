@@ -11,7 +11,7 @@ import { CommentTranslatorPrivateLaunchUnavailable } from "@/components/comment-
 import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { readYouTubeAccountIntegrationStatusViewModel } from "@/lib/comment-translator-youtube-account-integration-status";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
-import { getAccountSessionState } from "@/lib/supabase/session";
+import { createBrowserSafeAccountSessionViewModel, getAccountSessionState } from "@/lib/supabase/session";
 
 export const metadata: Metadata = {
   title: "Account integrations",
@@ -52,11 +52,12 @@ export default async function AccountIntegrationsPage({ searchParams }: AccountI
   }
 
   const youtubeIntegration = await readYouTubeAccountIntegrationStatusViewModel({ accountSession });
+  const browserSafeAccountSession = createBrowserSafeAccountSessionViewModel(accountSession);
 
   return (
     <PortalShell>
       <AccountIntegrationsShell
-        accountStatus={accountSession}
+        accountStatus={browserSafeAccountSession}
         integrationMessage={params?.integration ?? null}
         youtubeIntegration={youtubeIntegration}
         startYouTubeConnectAction={startYouTubeIntegrationConnectAction}

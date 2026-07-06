@@ -45,8 +45,9 @@ function SidebarLink({
 
 function SidebarSectionLabel({ label }: { readonly label: string }) {
   return (
-    <div className="mb-2 hidden items-center gap-2 px-2 xl:flex">
-      <span className="text-[11px] font-bold uppercase tracking-normal text-muted/80">{label}</span>
+    <div className="mb-3 hidden items-center gap-2 px-2 xl:flex">
+      <span className="h-px flex-1 bg-border" />
+      <span className="shrink-0 text-[11px] font-bold uppercase tracking-normal text-muted/80">{label}</span>
       <span className="h-px flex-1 bg-border" />
     </div>
   );
@@ -110,7 +111,7 @@ export function PortalSidebar({
             </div>
           </section>
 
-          <section className="hidden xl:block border-t border-border pt-5">
+          <section className="hidden xl:block">
             <SidebarSectionLabel label={copy.availableTools} />
             <div className="space-y-1">
               {sidebarTools.map((tool) => (
@@ -120,7 +121,7 @@ export function PortalSidebar({
           </section>
 
           {adminShortcutAvailable ? (
-            <section className="border-t border-border pt-4 xl:pt-5">
+            <section>
               <SidebarSectionLabel label="Admin" />
               <Link
                 href={adminShortcut.href}

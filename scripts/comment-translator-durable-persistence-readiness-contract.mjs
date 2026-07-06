@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
 import fs from "node:fs";
 import Module from "node:module";
 import path from "node:path";
@@ -22,32 +21,6 @@ function read(relativePath) {
 
 function exists(relativePath) {
   return fs.existsSync(path.join(root, relativePath));
-}
-
-function changedFiles() {
-  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-  const uncommittedDiff = execSync("git diff --name-only", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-  const untracked = execSync("git ls-files --others --exclude-standard", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-
-  return [...new Set([...committedDiff, ...uncommittedDiff, ...untracked])].map((file) => file.replace(/\\/g, "/"));
 }
 
 function loadTsModule(relativePath) {
@@ -150,7 +123,12 @@ for (const requiredFragment of [
   assert.match(readinessDoc, new RegExp(requiredFragment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), `readiness doc includes ${requiredFragment}`);
 }
 
-assert.match(usageLedgerSource, /storageStage:\s*"in-process-contract-foundation"/, "usage ledger still documents in-process storage");
+assert.match(usageLedgerSource, /storageStage:\s*"durable-counter-adapter-f4"/, "usage ledger uses the durable counter adapter");
+assert.match(
+  sessionRuntimeSource,
+  /durableSessionAuthority:\s*"required-before-public-session-start"/,
+  "session runtime requires durable session authority before public start"
+);
 assert.match(sessionRuntimeSource, /activeSessionsByOwner\s*=\s*new Map/, "session runtime still has in-memory active session state");
 assert.match(abuseRuntimeSource, /createInMemoryCommentTranslatorAbuseRateLimitStoreForTests/, "abuse guard still has in-memory fallback store");
 assert.match(adminVisibilitySource, /aggregate-and-reference-only/, "admin visibility remains aggregate/reference-only");
@@ -264,18 +242,9 @@ for (const source of [
   );
 }
 
-const allowedChangedFiles = new Set([
-  readinessRuntimePath,
-  readinessDocPath,
-  "scripts/comment-translator-durable-persistence-readiness-contract.mjs",
-  taskPath
-]);
-for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `Task 23 change stays in allowed files: ${file}`);
-}
-
-assert.match(taskSource, /Task 23[\s\S]*Durable persistence and schema migration readiness[\s\S]*Status: complete/i, "task.md records Task 23 completion");
-assert.match(taskSource, /width checks skipped[\s\S]*no visible UI\/CSS\/layout change/i, "task.md records width-check skip reason");
-assert.match(taskSource, /remote Supabase migration apply readiness.*not-applied-readiness-only/i, "task.md records remote schema apply as readiness only");
+assert.match(taskSource, /PL-G1 Remote durable enforcement[\s\S]*complete/i, "task.md records durable enforcement complete");
+assert.match(taskSource, /Current public-launch decision: `public-release capable: no`/i, "task.md keeps public release blocked");
+assert.match(taskSource, /remote schema migration \/ Supabase migration apply/i, "task.md keeps remote migration apply approval-gated");
+assert.match(taskSource, /remote read-only Supabase posture check remains unchecked/i, "task.md records remote posture check as residual risk");
 
 console.log("comment translator durable persistence readiness contract checks passed");

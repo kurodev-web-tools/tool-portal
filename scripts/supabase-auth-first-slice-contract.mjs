@@ -163,11 +163,13 @@ const task = read("task.md");
 assertIncludes(
   task,
   [
-    "Shared display timezone preference slice",
-    "node scripts/supabase-auth-first-slice-contract.mjs",
-    "Remote schema apply for `supabase/migrations/20260624000000_account_display_timezone_preference.sql`: not-run / approval-gated"
+    "## Current Premises",
+    "## Approval-Gated Actions",
+    "secret / service_role key / private credential / OAuth token / authorization code / owner id / provider target metadata / liveChatId",
+    "remote schema migration / Supabase migration apply"
   ],
-  "task handoff"
+  "current task guardrails"
 );
+assert.match(task, /public-release capable(?: label)?: no/i, "task.md keeps public release blocked");
 
 console.log("supabase auth first slice contract checks passed");

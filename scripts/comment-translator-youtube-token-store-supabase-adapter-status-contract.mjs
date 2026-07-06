@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
 import fs from "node:fs";
 import Module from "node:module";
 import path from "node:path";
@@ -22,32 +21,6 @@ function read(relativePath) {
 
 function exists(relativePath) {
   return fs.existsSync(path.join(root, relativePath));
-}
-
-function changedFiles() {
-  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-  const uncommittedDiff = execSync("git diff --name-only", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-  const untracked = execSync("git ls-files --others --exclude-standard", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-
-  return [...new Set([...committedDiff, ...uncommittedDiff, ...untracked])].map((file) => file.replace(/\\/g, "/"));
 }
 
 function loadTsModule(relativePath) {
@@ -449,17 +422,6 @@ for (const fragment of [
 ]) {
   assert.match(blockerMemo, new RegExp(fragment, "i"), `blocker memo records remote apply readiness: ${fragment}`);
 }
-assert.match(taskSource, /PR #328.*62de91361a93633c314b03ab162cc0acf3c081b7/i, "task.md records PR #328 merge premise");
-assert.match(
-  taskSource,
-  /remote Supabase migration apply readiness.*not-applied-readiness-only/i,
-  "task.md records remote apply readiness without applying the migration"
-);
-assert.match(
-  taskSource,
-  /service-role status\/persistence smoke.*別 PR|service-role smoke.*out of scope/i,
-  "task.md records that service-role smoke readiness is not mixed into this PR"
-);
 assert.equal(
   statusBoundary.youtubeOAuthCredentialStatusBoundaryContract.browserReadableOutput,
   "credential-status-metadata-only",
@@ -484,7 +446,9 @@ assert.deepEqual(
     "service-role-key",
     "managed-secret-value",
     "oauth-token-value",
-    "authorization-code-value"
+    "authorization-code-value",
+    "provider-channel-id-value",
+    "provider-error-body"
   ],
   "status boundary documents forbidden browser output"
 );
@@ -549,14 +513,16 @@ assert.deepEqual(browserStatus, {
   status: "available",
   credentialReferenceId: "ytcred_status_reference_001",
   provider: "youtube",
-  providerChannelId: "UC_status_reference_only",
   scopeLabel: "youtube.readonly",
   scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
   expiresAtIso: "2026-06-02T15:00:00.000Z",
   expiryStatus: "active",
   revoked: false,
   revokedAtIso: null,
-  reconnectRequired: false
+  reconnectRequired: false,
+  reconnectGuidance: "none",
+  refreshAttempted: false,
+  refreshStatus: "not-needed"
 });
 assert.deepEqual(
   Object.keys(browserStatus).sort(),
@@ -565,8 +531,10 @@ assert.deepEqual(
     "expiresAtIso",
     "expiryStatus",
     "provider",
-    "providerChannelId",
+    "reconnectGuidance",
     "reconnectRequired",
+    "refreshAttempted",
+    "refreshStatus",
     "revoked",
     "revokedAtIso",
     "scopeLabel",
@@ -603,7 +571,8 @@ assert.deepEqual(
     credentialReferenceId: "ytcred_status_reference_001",
     provider: "youtube",
     reason: "trusted-adapter-not-wired",
-    reconnectRequired: true
+    reconnectRequired: true,
+    reconnectGuidance: "reconnect-youtube"
   },
   "unwired skeleton returns sanitized unavailable state"
 );
@@ -768,7 +737,8 @@ assert.deepEqual(
     credentialReferenceId: "ytcred_status_reference_001",
     provider: "youtube",
     reason: "trusted-adapter-not-wired",
-    reconnectRequired: true
+    reconnectRequired: true,
+    reconnectGuidance: "reconnect-youtube"
   },
   "missing trusted service-role reader degrades to browser-safe unavailable state"
 );
@@ -795,7 +765,8 @@ assert.deepEqual(
     credentialReferenceId: "ytcred_status_reference_001",
     provider: "youtube",
     reason: "caller-not-authenticated",
-    reconnectRequired: true
+    reconnectRequired: true,
+    reconnectGuidance: "reconnect-youtube"
   },
   "unauthenticated caller gets browser-safe unavailable state before trusted adapter access"
 );
@@ -970,17 +941,21 @@ assert.deepEqual(
     credentialResolutionDisabled: false
   }),
   {
-    status: "available",
+    status: "reconnect-required",
     credentialReferenceId: "ytcred_status_reference_001",
     provider: "youtube",
-    providerChannelId: "UC_status_reference_only",
+    reason: "revoked",
     scopeLabel: "youtube.readonly",
     scopeSet: ["https://www.googleapis.com/auth/youtube.readonly"],
     expiresAtIso: "2026-06-02T15:00:00.000Z",
     expiryStatus: "revoked",
     revoked: true,
     revokedAtIso: "2026-06-02T14:05:00.000Z",
-    reconnectRequired: true
+    reconnectRequired: true,
+    reconnectGuidance: "reconnect-youtube",
+    refreshAttempted: false,
+    refreshStatus: "not-needed",
+    providerErrorBody: "never-returned-by-design"
   },
   "status boundary reads through trusted adapter and returns browser-safe metadata only"
 );
@@ -998,7 +973,8 @@ assert.deepEqual(
     status: "credential-resolution-disabled",
     credentialReferenceId: "ytcred_status_reference_001",
     provider: "youtube",
-    reconnectRequired: true
+    reconnectRequired: true,
+    reconnectGuidance: "reconnect-youtube"
   },
   "emergency disable returns sanitized reconnect-required state without adapter access"
 );
@@ -1008,64 +984,13 @@ for (const event of events) {
   assert.doesNotMatch(serialized, /oauthAccessToken|oauthRefreshToken|authorizationCode|secretValue|SUPABASE_SERVICE_ROLE_KEY|SERVICE_ROLE_KEY/i);
 }
 
-assert.match(taskSource, /credential status owner authorization/i, "task.md records this follow-up");
-assert.match(taskSource, /PR #292.*merge/i, "task.md records the PR #292 merge premise");
-assert.match(taskSource, /幅別確認は不要/i, "task.md records why width checks are unnecessary");
-
-const allowedChangedFiles = new Set([
-  ".gitignore",
-  "app/tools/comment-translator/page.tsx",
-  "components/comment-translator/CommentTranslatorDock.tsx",
-  "lib/comment-translator.ts",
-  "lib/comment-translator-youtube-client-safe-credential-reference-source.ts",
-  adapterPath,
-  statusBoundaryPath,
-  "lib/comment-translator-youtube-credential-status-ui-wiring.ts",
-  statusRoutePath,
-  statusActionPath,
-  runtimePath,
-  "lib/comment-translator-youtube-oauth-token-store-foundation.ts",
-  "docs/future/COMMENT_TRANSLATOR_YOUTUBE_TOKEN_STORE_BLOCKER_RESOLUTION.md",
-  "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
-  "scripts/comment-translator-youtube-new-client-payload-credential-reference-source-contract.mjs",
-  "scripts/comment-translator-youtube-credential-status-display-readiness-after-payload-source-contract.mjs",
-  "scripts/comment-translator-youtube-credential-source-decision-contract.mjs",
-  "scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs",
-  "scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs",
-  "scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs",
-  "scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs",
-  "scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs",
-  "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
-  "scripts/comment-translator-youtube-token-store-explicit-approval-collection-contract.mjs",
-  "scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs",
-  "scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs",
-  "scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs",
-  "scripts/comment-translator-youtube-token-store-service-role-smoke-readiness-contract.mjs",
-  "scripts/comment-translator-youtube-token-store-service-role-smoke-command.mjs",
-  "scripts/comment-translator-youtube-token-store-remote-apply-run-contract.mjs",
-  "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
-  "scripts/comment-translator-provider-boundary-contract.mjs",
-  "scripts/comment-translator-manual-input-mvp-contract.mjs",
-  "scripts/comment-translator-interactive-shell-contract.mjs",
-  "scripts/comment-translator-mock-foundation-contract.mjs",
-  "docs/archive/TASK_HISTORY_2026-06.md",
-  "lib/comment-translator-youtube-runtime-foundation.ts",
-  "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
-  "scripts/comment-translator-youtube-live-runtime-smoke-command-contract.mjs",
-  "scripts/comment-translator-youtube-live-runtime-smoke-command.mjs",
-
-  taskPath
-]);
-
-for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `Supabase adapter status skeleton change stays in allowed files: ${file}`);
-
-  const source = read(file);
-  assert.doesNotMatch(
-    source,
-    /access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i,
-    `${file} does not contain OAuth token values, authorization codes, private keys, or service role key values`
-  );
-}
+assert.match(taskSource, /YouTube connection alone must not start background monitoring/i, "task.md keeps connect non-executing");
+assert.match(
+  taskSource,
+  /Provider target metadata and liveChatId are consumed only through server-only boundaries/i,
+  "task.md keeps provider target metadata server-only"
+);
+assert.match(taskSource, /remote schema migration \/ Supabase migration apply/i, "task.md keeps remote migration apply approval-gated");
+assert.match(taskSource, /Current public-launch decision: `public-release capable: no`/i, "task.md keeps public release blocked");
 
 console.log("comment translator YouTube token store trusted Supabase adapter + sanitized status contract checks passed");

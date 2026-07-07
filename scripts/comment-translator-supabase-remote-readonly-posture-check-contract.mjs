@@ -15,39 +15,6 @@ function exists(relativePath) {
   return fs.existsSync(path.join(root, relativePath));
 }
 
-function pathExecutableExists(filePath) {
-  try {
-    fs.accessSync(filePath, fs.constants.X_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function findExecutableOnPath(commandName) {
-  const pathValue = process.env.PATH ?? "";
-  const extensions = process.platform === "win32" ? (process.env.PATHEXT ?? ".EXE;.CMD;.BAT;.COM").split(";") : [""];
-
-  for (const directory of pathValue.split(path.delimiter)) {
-    if (!directory) {
-      continue;
-    }
-
-    for (const extension of extensions) {
-      const candidate = path.join(directory, `${commandName}${extension}`);
-      if (pathExecutableExists(candidate)) {
-        return true;
-      }
-    }
-
-    if (process.platform !== "win32" && pathExecutableExists(path.join(directory, commandName))) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 assert.ok(exists(evidenceDocPath), `remote read-only posture evidence doc exists: ${evidenceDocPath}`);
 assert.ok(exists(auditDocPath), `Supabase audit doc exists: ${auditDocPath}`);
 assert.ok(exists(defaultPrivilegesContractPath), "default privileges guard contract remains present");
@@ -63,12 +30,20 @@ for (const marker of [
   "local_rls_status`: `pass`",
   "local_grant_status`: `pass`",
   "default_privileges_guard_status`: `local-proposal-present`",
-  "remote_readonly_check_status` | `blocked`",
+  "cli_status` | `local-cli-present`",
+  "link_status` | `supabase-link-metadata-present`",
+  "remote_readonly_check_status` | `partial`",
   "remote_table_count` | `not-read`",
   "remote_rls_status` | `not-read`",
   "remote_grant_status` | `not-read`",
-  "remote_advisor_status` | `not-read`",
-  "Supabase default privileges guard migration or contract behavior: unchanged."
+  "remote_advisor_status` | `pass`",
+  "remote_advisor_issue_count` | `3`",
+  "remote_advisor_warn_count` | `3`",
+  "remote_advisor_error_count` | `0`",
+  "linked_query_probe_status`: `pass`",
+  "remote_schema_dump_status`: `fail`",
+  "Supabase default privileges guard migration or contract behavior: unchanged.",
+  "Supabase CLI dev dependency pin: added as a local development dependency only."
 ]) {
   assert.ok(evidenceDoc.includes(marker), `evidence doc records marker: ${marker}`);
 }
@@ -95,26 +70,19 @@ for (const tableName of [
   assert.ok(evidenceDoc.includes(tableName), `safe public schema table name is recorded: ${tableName}`);
 }
 
-const globalCliStatus = findExecutableOnPath("supabase") ? "present" : "missing";
-const localCliStatus =
-  pathExecutableExists(path.join(root, "node_modules", ".bin", process.platform === "win32" ? "supabase.cmd" : "supabase")) ||
-  pathExecutableExists(path.join(root, "node_modules", ".bin", "supabase"))
-    ? "present"
-    : "missing";
-const linkStatus = exists("supabase/.temp/project-ref") ? "present" : "missing";
-
-assert.equal(globalCliStatus, "missing", "current sanitized global CLI status matches recorded blocker");
-assert.equal(localCliStatus, "missing", "current sanitized local CLI status matches recorded blocker");
-assert.equal(linkStatus, "missing", "current sanitized link status matches recorded blocker");
+const packageJson = JSON.parse(read("package.json"));
+assert.equal(packageJson.devDependencies?.supabase, "^2.109.0", "Supabase CLI is pinned as a dev dependency");
 
 for (const requiredTaskMarker of [
   "codex/supabase-remote-readonly-posture-check",
   "remote read-only Supabase posture check",
-  "remote_readonly_check_status=blocked",
-  "global-supabase-missing",
-  "local-npx-supabase-missing",
-  "supabase-link-metadata-missing",
-  "mcp_status=project-id-not-provided",
+  "remote_readonly_check_status=partial",
+  "local-cli-present",
+  "supabase-link-metadata-present",
+  "remote_advisor_status=pass",
+  "remote_advisor_issue_count=3",
+  "remote_advisor_warn_count=3",
+  "remote_advisor_error_count=0",
   "Supabase default privileges guard migration/contract behavior: unchanged"
 ]) {
   assert.ok(taskLower.includes(requiredTaskMarker.toLowerCase()), `task.md records ${requiredTaskMarker}`);
@@ -149,12 +117,12 @@ for (const blockedRemoteMarker of [
   "| `remote_table_count` | `not-read` |",
   "| `remote_rls_status` | `not-read` |",
   "| `remote_grant_status` | `not-read` |",
-  "| `remote_advisor_status` | `not-read` |",
-  "| `remote_drift_status` | `unchecked` |"
+  "| `remote_default_privileges_status` | `not-read` |",
+  "| `remote_drift_status` | `partial-unchecked` |"
 ]) {
   assert.ok(evidenceDoc.includes(blockedRemoteMarker), `remote posture remains blocked: ${blockedRemoteMarker}`);
 }
 
 console.log(
-  "comment translator Supabase remote read-only posture check contract passed (remote_readonly_check_status=blocked, table_count=9, secret_scan=pass)"
+  "comment translator Supabase remote read-only posture check contract passed (remote_readonly_check_status=partial, advisor_status=pass, secret_scan=pass)"
 );

@@ -37,11 +37,11 @@ Current sanitized readiness labels from this worktree:
 
 | Check | Status | Decision |
 | --- | --- | --- |
-| `cli_status` | `global-supabase-missing` | Supabase CLI is not available on PATH in this process. |
-| `local_cli_status` | `local-npx-supabase-missing` | A local `node_modules/.bin/supabase` executable is not available in this worktree. |
-| `link_status` | `supabase-link-metadata-missing` | Linked project metadata file is not present. The check did not read or print any project identifier. |
-| `mcp_status` | `project-id-not-provided` | Supabase MCP requires a project id for SQL execution, so it was not invoked. |
-| `remote_readonly_check_status` | `blocked` | No safe read-only remote target was available without exposing or requesting identifiers. |
+| `cli_status` | `local-cli-present` | Supabase CLI is available through the pinned dev dependency. |
+| `cli_version_status` | `present` | Version was checked without recording the raw version string. |
+| `link_status` | `supabase-link-metadata-present` | Link metadata exists; the project identifier was not printed or persisted in this evidence. |
+| `mcp_status` | `not-used` | MCP was not invoked because the CLI linked path was available. |
+| `remote_readonly_check_status` | `partial` | Linked read-only advisor checks ran; table/RLS/grant catalog values were not safely extractable through the CLI query/dump path in this process. |
 
 Remote posture evidence:
 
@@ -51,8 +51,20 @@ Remote posture evidence:
 | `remote_rls_status` | `not-read` |
 | `remote_grant_status` | `not-read` |
 | `remote_default_privileges_status` | `not-read` |
-| `remote_advisor_status` | `not-read` |
-| `remote_drift_status` | `unchecked` |
+| `remote_advisor_status` | `pass` |
+| `remote_advisor_issue_count` | `3` |
+| `remote_advisor_warn_count` | `3` |
+| `remote_advisor_error_count` | `0` |
+| `remote_drift_status` | `partial-unchecked` |
+
+Additional sanitized CLI observations:
+
+- `linked_query_probe_status`: `pass`
+- `linked_query_result_shape`: `array-row`
+- `remote_schema_dump_status`: `fail`
+- `remote_catalog_status`: `not-read-cli-output-unavailable`
+
+The linked query probe proved the remote linked read path can execute a SELECT. However, the CLI query output did not expose usable row values for catalog aggregation in this process, and `db dump --linked --schema public` did not complete without emitting raw diagnostic output. To preserve the no-raw-output boundary, table/RLS/grant/default-privilege posture remains unchecked.
 
 ## Safe Retry Criteria
 
@@ -63,7 +75,7 @@ A later remote read-only retry can run only when all of these are true in the sa
 - The command path emits only sanitized pass/fail/status/count/table labels.
 - The operation is limited to metadata/advisor reads.
 
-If these criteria are not all true, keep this slice blocked and do not force remote inspection.
+If these criteria are not all true, keep the unresolved catalog portion blocked and do not force remote inspection.
 
 ## Non-Actions
 
@@ -73,6 +85,7 @@ If these criteria are not all true, keep this slice blocked and do not force rem
 - Public gate flip: not run.
 - Live/provider execution, OAuth live flow, Google target lookup, Stripe/billing mutation, Product/Price creation, Checkout/Portal redirect, webhook registration: not run.
 - Supabase default privileges guard migration or contract behavior: unchanged.
+- Supabase CLI dev dependency pin: added as a local development dependency only.
 
 ## Verification
 

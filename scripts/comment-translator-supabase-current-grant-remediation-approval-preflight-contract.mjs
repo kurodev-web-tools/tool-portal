@@ -64,26 +64,25 @@ for (const approvalText of [
 
 for (const sourceMarker of [
   "`remote_current_grant_drift_query_status` | `pass`",
-  "`remote_current_grant_drift_count` | `1`",
-  "`grant_drift_table_label` | `public.usage_quotas`",
-  "`grant_drift_role_label` | `authenticated`",
-  "`grant_drift_privilege_type_label` | `TRUNCATE`",
+  "`remote_current_grant_drift_count` | `0`",
+  "`grant_drift_table_label` | `none`",
+  "`grant_drift_role_label` | `none`",
+  "`grant_drift_privilege_type_label` | `none`",
   "`remote_grant_remediation_status` | `not-run`",
   "`remote_mutation_status` | `not-run`"
 ]) {
-  assert.ok(triageDoc.includes(sourceMarker), `triage evidence remains anchored: ${sourceMarker}`);
+  assert.ok(triageDoc.includes(sourceMarker), `triage evidence reflects current posture: ${sourceMarker}`);
 }
 
 for (const taskMarker of [
-  "codex/supabase-current-grant-remediation-approval-preflight",
-  "Remote Supabase current grant remediation approval preflight",
-  "current_grant_remediation_decision_status=pending",
-  "current_grant_risk_acceptance_status=not-recorded",
-  "remote_current_grant_remediation_approval_status=absent",
-  "remote_current_grant_apply_preflight_status=not-run",
-  "remote_current_grant_remediation_status=not-run",
-  "remote_mutation_status=not-run",
-  "remote current grant remediation remains approval-gated"
+  "codex/supabase-current-grant-remediation-apply",
+  "Remote Supabase current grant remediation apply",
+  "same_thread_exact_approval_status=present",
+  "remote_current_grant_remediation_approval_status=present",
+  "remote_current_grant_apply_preflight_status=pass",
+  "remote_current_grant_remediation_status=pass",
+  "remote_mutation_status=applied",
+  "remote_mutation_scope_status=current-grant-truncate-only"
 ]) {
   assert.ok(task.includes(taskMarker), `task.md records ${taskMarker}`);
 }
@@ -101,11 +100,10 @@ for (const runnerMarker of [
 }
 
 for (const forbiddenTaskMarker of [
-  "remote_current_grant_remediation_status=pass",
-  "remote_current_grant_apply_preflight_status=pass",
-  "remote_mutation_scope_status=current-grant-truncate-only"
+  "Current branch: `codex/supabase-current-grant-remediation-apply-preflight`",
+  "current branch; re-run read-only current grant drift preflight, record exact approval absence"
 ]) {
-  assert.ok(!task.includes(forbiddenTaskMarker), `task.md does not claim ${forbiddenTaskMarker}`);
+  assert.ok(!task.includes(forbiddenTaskMarker), `task.md no longer claims ${forbiddenTaskMarker}`);
 }
 
 const sensitivePatterns = [
@@ -124,5 +122,5 @@ for (const pattern of sensitivePatterns) {
 }
 
 console.log(
-  "comment translator Supabase current grant remediation approval preflight contract passed (decision=pending, remote_current_grant_apply=not_run, secret_scan=pass)"
+  "comment translator Supabase current grant remediation approval preflight contract passed (decision=approved_applied, remote_current_grant_apply=applied, secret_scan=pass)"
 );

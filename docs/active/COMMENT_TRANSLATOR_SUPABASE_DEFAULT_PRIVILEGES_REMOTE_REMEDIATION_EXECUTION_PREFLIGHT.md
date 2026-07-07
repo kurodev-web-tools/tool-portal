@@ -10,6 +10,8 @@ This slice does not apply migrations, execute remote SQL mutations, change curre
 
 Sanitization boundary: this document records only pass/fail/status/count/table labels, role labels that are already part of the public Supabase/Postgres posture model, exact approval labels, and unchecked scope. It does not include raw stdout/stderr, raw response bodies, project identifiers, account identity values, tokens, secrets, credential values, connection strings, headers, browser storage, owner ids, internal user ids, provider private identifiers, raw comments, or raw account metadata.
 
+This follow-up attempted only the safe read-only pre-apply availability check for the current worktree. Because a local Supabase CLI/link path and a safe MCP project selector were not both available without exposing private target values, no remote catalog query or owner-specific SQL review was run in this thread.
+
 ## Current Sanitized Evidence
 
 The latest merged remote read-only posture and remediation approval evidence remains the authority for this preflight:
@@ -29,6 +31,30 @@ The latest merged remote read-only posture and remediation approval evidence rem
 
 The current remote posture is safe for the existing expected table/RLS/grant set, but future `public` object defaults still grant browser/service roles. Owner role names beyond the documented `postgres` role were not printed or persisted, so a blind `postgres`-only apply is not sufficient.
 
+## Current Thread Apply-Preflight Attempt
+
+Sanitized availability and preflight labels from this worktree:
+
+| Evidence | Status |
+| --- | --- |
+| `cli_status` | `local-cli-unavailable` |
+| `cli_version_status` | `unavailable` |
+| `link_status` | `supabase-link-metadata-missing` |
+| `mcp_status` | `available-but-blocked-without-safe-project-selector` |
+| `remote_catalog_query_status` | `blocked` |
+| `remote_table_count` | `unchecked` |
+| `remote_expected_missing_count` | `unchecked` |
+| `remote_rls_status` | `unchecked` |
+| `remote_grant_status` | `unchecked` |
+| `remote_default_privileges_status` | `fail-from-merged-evidence` |
+| `remote_unexpected_default_grant_count` | `48-from-merged-evidence` |
+| `remote_default_acl_owner_status` | `mixed-or-non-postgres-from-merged-evidence` |
+| `owner_specific_block_required_status` | `yes` |
+| `owner_specific_block_review_status` | `blocked-private-owner-value-not-reviewed` |
+| `remote_apply_preflight_status` | `blocked-safe-readonly-preflight-unavailable` |
+
+No project identifier, private owner role value, raw SQL output, raw stdout/stderr, raw response body, credential value, connection string, account identity value, token, header, browser storage payload, owner/internal id, provider-private identifier, raw comment, or raw account metadata was printed or persisted. The safe target selection requirement was not met, so the remote read-only pre-apply catalog/default-privileges check stayed blocked.
+
 ## Decision Gate
 
 | Decision | Status |
@@ -36,7 +62,7 @@ The current remote posture is safe for the existing expected table/RLS/grant set
 | `remediation_decision_status` | `pending` |
 | `risk_acceptance_status` | `not-recorded` |
 | `remote_apply_approval_status` | `absent` |
-| `remote_apply_preflight_status` | `not-run` |
+| `remote_apply_preflight_status` | `blocked-safe-readonly-preflight-unavailable` |
 | `remote_remediation_apply_status` | `not-run` |
 | `remote_mutation_status` | `not-run` |
 | `public_release_capable_status` | `no` |

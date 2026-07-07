@@ -81,6 +81,20 @@ The linked read-only preflight found the expected table set, RLS status, and cur
 
 This follow-up does not approve or run default-privileges remediation. It preserves the existing decision gate below.
 
+## Approved Apply Attempt Follow-Up
+
+`docs/active/COMMENT_TRANSLATOR_SUPABASE_DEFAULT_PRIVILEGES_REMOTE_REMEDIATION_APPLY.md` records the later exact-approved apply attempt:
+
+| Evidence | Status |
+| --- | --- |
+| `same_thread_exact_approval_status` | `present` |
+| `remote_default_privileges_apply_preflight_status` | `pass` |
+| `remote_default_privileges_apply_failure_reason` | `permission-unavailable` |
+| `remote_default_privileges_apply_status` | `blocked-permission-unavailable` |
+| `remote_mutation_status` | `not-applied` |
+
+That follow-up keeps this execution preflight as the approval-gate source while recording that the linked execution path could not complete the owner-specific default-privileges apply.
+
 ## Decision Gate
 
 | Decision | Status |

@@ -32,16 +32,31 @@ for (const marker of [
   "default_privileges_guard_status`: `local-proposal-present`",
   "cli_status` | `local-cli-present`",
   "link_status` | `supabase-link-metadata-present`",
-  "remote_readonly_check_status` | `partial`",
-  "remote_table_count` | `not-read`",
-  "remote_rls_status` | `not-read`",
-  "remote_grant_status` | `not-read`",
+  "remote_readonly_check_status` | `fail`",
+  "remote_catalog_query_status` | `pass`",
+  "remote_table_count` | `9`",
+  "remote_expected_table_count` | `9`",
+  "remote_expected_missing_count` | `0`",
+  "remote_rls_disabled_count` | `0`",
+  "remote_rls_status` | `pass`",
+  "remote_anon_grant_count` | `0`",
+  "remote_server_only_authenticated_grant_count` | `0`",
+  "remote_readonly_authenticated_write_grant_count` | `0`",
+  "remote_browser_owned_expected_grant_count` | `9`",
+  "remote_grant_status` | `pass`",
+  "remote_default_acl_query_status` | `pass`",
+  "remote_default_acl_entry_count` | `6`",
+  "remote_unexpected_default_grant_count` | `48`",
+  "remote_public_default_grant_count` | `0`",
+  "remote_browser_or_service_default_grant_count` | `48`",
+  "remote_default_privileges_status` | `fail`",
   "remote_advisor_status` | `pass`",
   "remote_advisor_issue_count` | `3`",
   "remote_advisor_warn_count` | `3`",
   "remote_advisor_error_count` | `0`",
   "linked_query_probe_status`: `pass`",
-  "remote_schema_dump_status`: `fail`",
+  "remote_catalog_read_method`: `linked-db-query-file`",
+  "remote_drift_status` | `fail-default-privileges`",
   "Supabase default privileges guard migration or contract behavior: unchanged.",
   "Supabase CLI dev dependency pin: added as a local development dependency only."
 ]) {
@@ -76,9 +91,16 @@ assert.equal(packageJson.devDependencies?.supabase, "^2.109.0", "Supabase CLI is
 for (const requiredTaskMarker of [
   "codex/supabase-remote-readonly-posture-check",
   "remote read-only Supabase posture check",
-  "remote_readonly_check_status=partial",
+  "codex/supabase-remote-catalog-posture-read",
+  "remote_readonly_check_status=fail",
   "local-cli-present",
   "supabase-link-metadata-present",
+  "remote_catalog_query_status=pass",
+  "remote_table_count=9",
+  "remote_rls_status=pass",
+  "remote_grant_status=pass",
+  "remote_default_privileges_status=fail",
+  "remote_unexpected_default_grant_count=48",
   "remote_advisor_status=pass",
   "remote_advisor_issue_count=3",
   "remote_advisor_warn_count=3",
@@ -113,16 +135,20 @@ assert.doesNotMatch(
   "remote read-only posture evidence contains no high-confidence secret, credential, connection string, or provider-private value"
 );
 
-for (const blockedRemoteMarker of [
-  "| `remote_table_count` | `not-read` |",
-  "| `remote_rls_status` | `not-read` |",
-  "| `remote_grant_status` | `not-read` |",
-  "| `remote_default_privileges_status` | `not-read` |",
-  "| `remote_drift_status` | `partial-unchecked` |"
+for (const defaultAclMarker of [
+  "| `default_acl_tables_anon_count` | `12` |",
+  "| `default_acl_tables_authenticated_count` | `12` |",
+  "| `default_acl_tables_service_role_count` | `12` |",
+  "| `default_acl_sequences_anon_count` | `3` |",
+  "| `default_acl_sequences_authenticated_count` | `3` |",
+  "| `default_acl_sequences_service_role_count` | `3` |",
+  "| `default_acl_functions_anon_count` | `1` |",
+  "| `default_acl_functions_authenticated_count` | `1` |",
+  "| `default_acl_functions_service_role_count` | `1` |"
 ]) {
-  assert.ok(evidenceDoc.includes(blockedRemoteMarker), `remote posture remains blocked: ${blockedRemoteMarker}`);
+  assert.ok(evidenceDoc.includes(defaultAclMarker), `default ACL evidence is recorded: ${defaultAclMarker}`);
 }
 
 console.log(
-  "comment translator Supabase remote read-only posture check contract passed (remote_readonly_check_status=partial, advisor_status=pass, secret_scan=pass)"
+  "comment translator Supabase remote read-only posture check contract passed (remote_readonly_check_status=fail, catalog_status=read, secret_scan=pass)"
 );

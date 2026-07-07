@@ -41,30 +41,58 @@ Current sanitized readiness labels from this worktree:
 | `cli_version_status` | `present` | Version was checked without recording the raw version string. |
 | `link_status` | `supabase-link-metadata-present` | Link metadata exists; the project identifier was not printed or persisted in this evidence. |
 | `mcp_status` | `not-used` | MCP was not invoked because the CLI linked path was available. |
-| `remote_readonly_check_status` | `partial` | Linked read-only advisor checks ran; table/RLS/grant catalog values were not safely extractable through the CLI query/dump path in this process. |
+| `remote_readonly_check_status` | `fail` | Linked read-only catalog/advisor checks ran. Current remote tables/RLS/grants pass; future default privileges fail and require a separate approval-gated remediation decision. |
 
 Remote posture evidence:
 
 | Evidence | Status |
 | --- | --- |
-| `remote_table_count` | `not-read` |
-| `remote_rls_status` | `not-read` |
-| `remote_grant_status` | `not-read` |
-| `remote_default_privileges_status` | `not-read` |
+| `remote_catalog_query_status` | `pass` |
+| `remote_table_count` | `9` |
+| `remote_expected_table_count` | `9` |
+| `remote_expected_missing_count` | `0` |
+| `remote_rls_disabled_count` | `0` |
+| `remote_rls_status` | `pass` |
+| `remote_anon_grant_count` | `0` |
+| `remote_server_only_authenticated_grant_count` | `0` |
+| `remote_readonly_authenticated_write_grant_count` | `0` |
+| `remote_browser_owned_expected_grant_count` | `9` |
+| `remote_grant_status` | `pass` |
+| `remote_default_acl_query_status` | `pass` |
+| `remote_default_acl_entry_count` | `6` |
+| `remote_unexpected_default_grant_count` | `48` |
+| `remote_public_default_grant_count` | `0` |
+| `remote_browser_or_service_default_grant_count` | `48` |
+| `remote_default_privileges_status` | `fail` |
 | `remote_advisor_status` | `pass` |
 | `remote_advisor_issue_count` | `3` |
 | `remote_advisor_warn_count` | `3` |
 | `remote_advisor_error_count` | `0` |
-| `remote_drift_status` | `partial-unchecked` |
+| `remote_drift_status` | `fail-default-privileges` |
+
+Default privilege breakdown:
+
+| Evidence | Count |
+| --- | --- |
+| `default_acl_tables_anon_count` | `12` |
+| `default_acl_tables_authenticated_count` | `12` |
+| `default_acl_tables_service_role_count` | `12` |
+| `default_acl_sequences_anon_count` | `3` |
+| `default_acl_sequences_authenticated_count` | `3` |
+| `default_acl_sequences_service_role_count` | `3` |
+| `default_acl_functions_anon_count` | `1` |
+| `default_acl_functions_authenticated_count` | `1` |
+| `default_acl_functions_service_role_count` | `1` |
 
 Additional sanitized CLI observations:
 
 - `linked_query_probe_status`: `pass`
 - `linked_query_result_shape`: `array-row`
-- `remote_schema_dump_status`: `fail`
-- `remote_catalog_status`: `not-read-cli-output-unavailable`
+- `remote_catalog_read_method`: `linked-db-query-file`
+- `remote_schema_dump_status`: `not-needed`
+- `remote_catalog_status`: `read`
 
-The linked query probe proved the remote linked read path can execute a SELECT. However, the CLI query output did not expose usable row values for catalog aggregation in this process, and `db dump --linked --schema public` did not complete without emitting raw diagnostic output. To preserve the no-raw-output boundary, table/RLS/grant/default-privilege posture remains unchecked.
+The linked query probe proved the remote linked read path can execute a SELECT. Catalog aggregation succeeded only through `db query --linked --file` so SQL did not have to be passed through shell quoting. The remote expected table set is present, all expected tables have RLS enabled, and unexpected browser-role grants on server-only/read-only tables were not found. The remote default privileges posture fails because future table, sequence, and function defaults still grant browser/service roles in `public`.
 
 ## Safe Retry Criteria
 
@@ -75,7 +103,7 @@ A later remote read-only retry can run only when all of these are true in the sa
 - The command path emits only sanitized pass/fail/status/count/table labels.
 - The operation is limited to metadata/advisor reads.
 
-If these criteria are not all true, keep the unresolved catalog portion blocked and do not force remote inspection.
+If these criteria are not all true, keep the unresolved or failing catalog portion blocked and do not force mutation.
 
 ## Non-Actions
 

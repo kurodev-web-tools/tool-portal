@@ -10,7 +10,7 @@ This slice does not apply migrations, execute remote SQL mutations, change curre
 
 Sanitization boundary: this document records only pass/fail/status/count/table labels, role labels that are already part of the public Supabase/Postgres posture model, exact approval labels, and unchecked scope. It does not include raw stdout/stderr, raw response bodies, project identifiers, account identity values, tokens, secrets, credential values, connection strings, headers, browser storage, owner ids, internal user ids, provider private identifiers, raw comments, or raw account metadata.
 
-This follow-up attempted only the safe read-only pre-apply availability check for the current worktree. Because a local Supabase CLI/link path and a safe MCP project selector were not both available without exposing private target values, no remote catalog query or owner-specific SQL review was run in this thread.
+This follow-up attempted only the safe read-only pre-apply availability check and linked remote catalog/default-privileges query for the current worktree. The query ran through the pinned Supabase CLI with linked metadata and recorded only sanitized labels/counts. No remote mutation or apply was run.
 
 ## Current Sanitized Evidence
 
@@ -37,23 +37,37 @@ Sanitized availability and preflight labels from this worktree:
 
 | Evidence | Status |
 | --- | --- |
-| `cli_status` | `local-cli-unavailable` |
-| `cli_version_status` | `unavailable` |
-| `link_status` | `supabase-link-metadata-missing` |
-| `mcp_status` | `available-but-blocked-without-safe-project-selector` |
-| `remote_catalog_query_status` | `blocked` |
-| `remote_table_count` | `unchecked` |
-| `remote_expected_missing_count` | `unchecked` |
-| `remote_rls_status` | `unchecked` |
-| `remote_grant_status` | `unchecked` |
-| `remote_default_privileges_status` | `fail-from-merged-evidence` |
-| `remote_unexpected_default_grant_count` | `48-from-merged-evidence` |
-| `remote_default_acl_owner_status` | `mixed-or-non-postgres-from-merged-evidence` |
+| `cli_status` | `local-cli-present` |
+| `cli_version_status` | `present` |
+| `link_status` | `supabase-link-metadata-present` |
+| `mcp_status` | `not-used` |
+| `linked_query_probe_status` | `pass` |
+| `remote_catalog_query_status` | `pass` |
+| `remote_table_count` | `9` |
+| `remote_expected_table_count` | `9` |
+| `remote_expected_missing_count` | `0` |
+| `remote_rls_disabled_count` | `0` |
+| `remote_rls_status` | `pass` |
+| `remote_anon_grant_count` | `0` |
+| `remote_server_only_authenticated_grant_count` | `0` |
+| `remote_readonly_authenticated_write_grant_count` | `1` |
+| `remote_browser_owned_expected_grant_count` | `9` |
+| `remote_browser_readonly_expected_grant_count` | `1` |
+| `remote_grant_status` | `fail` |
+| `remote_default_acl_query_status` | `pass` |
+| `remote_default_acl_entry_count` | `6` |
+| `remote_default_acl_postgres_owner_entry_count` | `3` |
+| `remote_default_acl_other_owner_entry_count` | `3` |
+| `remote_default_acl_owner_status` | `mixed-or-non-postgres` |
+| `remote_browser_or_service_default_grant_count` | `48` |
+| `remote_public_default_grant_count` | `0` |
+| `remote_unexpected_default_grant_count` | `48` |
+| `remote_default_privileges_status` | `fail` |
 | `owner_specific_block_required_status` | `yes` |
 | `owner_specific_block_review_status` | `blocked-private-owner-value-not-reviewed` |
-| `remote_apply_preflight_status` | `blocked-safe-readonly-preflight-unavailable` |
+| `remote_apply_preflight_status` | `blocked-remote-posture-drift` |
 
-No project identifier, private owner role value, raw SQL output, raw stdout/stderr, raw response body, credential value, connection string, account identity value, token, header, browser storage payload, owner/internal id, provider-private identifier, raw comment, or raw account metadata was printed or persisted. The safe target selection requirement was not met, so the remote read-only pre-apply catalog/default-privileges check stayed blocked.
+The linked read-only preflight found the expected table set and RLS status intact, but current remote grant posture no longer matches the previous pass evidence because `remote_readonly_authenticated_write_grant_count=1`. Remote future default privileges also remain failed with `remote_unexpected_default_grant_count=48`, and owner status remains `mixed-or-non-postgres`. No project identifier, private owner role value, raw SQL output, raw stdout/stderr, raw response body, credential value, connection string, account identity value, token, header, browser storage payload, owner/internal id, provider-private identifier, raw comment, or raw account metadata was printed or persisted.
 
 ## Decision Gate
 
@@ -62,7 +76,7 @@ No project identifier, private owner role value, raw SQL output, raw stdout/stde
 | `remediation_decision_status` | `pending` |
 | `risk_acceptance_status` | `not-recorded` |
 | `remote_apply_approval_status` | `absent` |
-| `remote_apply_preflight_status` | `blocked-safe-readonly-preflight-unavailable` |
+| `remote_apply_preflight_status` | `blocked-remote-posture-drift` |
 | `remote_remediation_apply_status` | `not-run` |
 | `remote_mutation_status` | `not-run` |
 | `public_release_capable_status` | `no` |

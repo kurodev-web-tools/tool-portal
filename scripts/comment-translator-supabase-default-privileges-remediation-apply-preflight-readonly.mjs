@@ -160,7 +160,7 @@ for (const key of orderedKeys) {
   console.log(`${key}=${data[key]}`);
 }
 
-const preflightPass =
+const basePreflightPass =
   data.remote_catalog_query_status === "pass" &&
   data.remote_expected_missing_count === 0 &&
   data.remote_rls_status === "pass" &&
@@ -168,7 +168,13 @@ const preflightPass =
   data.remote_default_privileges_status === "fail" &&
   data.remote_unexpected_default_grant_count > 0;
 
-console.log(`remote_apply_preflight_status=${preflightPass ? "pass-awaiting-approval" : "blocked-remote-posture-drift"}`);
+const preflightStatus = !basePreflightPass
+  ? "blocked-remote-posture-drift"
+  : data.owner_specific_block_required_status === "yes"
+    ? "blocked-owner-specific-review-required"
+    : "pass-awaiting-approval";
+
+console.log(`remote_apply_preflight_status=${preflightStatus}`);
 console.log("remote_apply_approval_status=absent");
 console.log("remote_remediation_apply_status=not-run");
 console.log("remote_mutation_status=not-run");

@@ -17,24 +17,24 @@ const combined = [doc, runner, task].join("\n");
 
 for (const marker of [
   "`base_branch` | `codex/comment-translator-free-public-beta-integration`",
-  "`pr604_merge_status` | `merged`",
+  "`pr607_merge_status` | `merged`",
   "`cli_status` | `local-cli-present`",
   "`link_status` | `supabase-link-metadata-present`",
   "`remote_query_mode` | `read-only`",
   "`remote_current_grant_drift_query_status` | `pass`",
-  "`remote_current_grant_drift_count` | `1`",
-  "`remote_current_grant_drift_breakdown_count` | `1`",
-  "`remote_usage_quotas_authenticated_write_drift_count` | `1`",
+  "`remote_current_grant_drift_count` | `0`",
+  "`remote_current_grant_drift_breakdown_count` | `0`",
+  "`remote_usage_quotas_authenticated_write_drift_count` | `0`",
   "`remote_anon_grant_drift_breakdown_count` | `0`",
   "`remote_server_only_authenticated_grant_drift_breakdown_count` | `0`",
-  "`grant_drift_table_label` | `public.usage_quotas`",
-  "`grant_drift_role_label` | `authenticated`",
-  "`grant_drift_privilege_type_label` | `TRUNCATE`",
-  "`grant_drift_count` | `1`",
-  "`remote_current_grant_drift_status` | `fail`",
+  "`grant_drift_table_label` | `none`",
+  "`grant_drift_role_label` | `none`",
+  "`grant_drift_privilege_type_label` | `none`",
+  "`grant_drift_count` | `0`",
+  "`remote_current_grant_drift_status` | `pass`",
   "`remote_grant_remediation_status` | `not-run`",
   "`remote_mutation_status` | `not-run`",
-  "Remote current grant remediation: not run.",
+  "Remote current grant remediation in this read-only triage command: not run.",
   "Remote default privileges remediation/apply: not run.",
   "Remote Supabase migration apply, `db push`, repair, or reset: not run."
 ]) {
@@ -42,16 +42,17 @@ for (const marker of [
 }
 
 for (const taskMarker of [
-  "codex/supabase-current-grant-drift-readonly-triage",
+  "codex/supabase-current-grant-remediation-apply",
   "Remote Supabase current grant drift read-only triage",
   "remote_current_grant_drift_query_status=pass",
-  "remote_current_grant_drift_count=1",
-  "grant_drift_table_label=public.usage_quotas",
-  "grant_drift_role_label=authenticated",
-  "grant_drift_privilege_type_label=TRUNCATE",
-  "remote_current_grant_drift_status=fail",
-  "remote_grant_remediation_status=not-run",
-  "remote_mutation_status=not-run"
+  "remote_current_grant_drift_count=0",
+  "grant_drift_table_label=none",
+  "grant_drift_role_label=none",
+  "grant_drift_privilege_type_label=none",
+  "remote_current_grant_drift_status=pass",
+  "remote_current_grant_remediation_status=pass",
+  "remote_mutation_scope_status=current-grant-truncate-only",
+  "remote_mutation_status=applied"
 ]) {
   assert.ok(task.includes(taskMarker), `task.md records ${taskMarker}`);
 }
@@ -102,5 +103,5 @@ for (const pattern of sensitivePatterns) {
 }
 
 console.log(
-  "comment translator Supabase current grant drift read-only triage contract passed (drift=usage_quotas_authenticated_truncate, remote_mutation=not_run, secret_scan=pass)"
+  "comment translator Supabase current grant drift read-only triage contract passed (drift=none, remote_mutation=current_grant_truncate_only, secret_scan=pass)"
 );

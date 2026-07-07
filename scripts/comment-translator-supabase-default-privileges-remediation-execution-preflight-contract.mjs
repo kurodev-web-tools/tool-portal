@@ -9,6 +9,8 @@ const approvalDocPath =
   "docs/active/COMMENT_TRANSLATOR_SUPABASE_DEFAULT_PRIVILEGES_REMOTE_REMEDIATION_APPROVAL.md";
 const remotePostureDocPath = "docs/active/COMMENT_TRANSLATOR_SUPABASE_REMOTE_READONLY_POSTURE_CHECK.md";
 const guardMigrationPath = "supabase/migrations/20260706073204_supabase_default_privileges_guard.sql";
+const applyPreflightRunnerPath =
+  "scripts/comment-translator-supabase-default-privileges-remediation-apply-preflight-readonly.mjs";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -26,6 +28,7 @@ const preflightDoc = read(preflightDocPath);
 const approvalDoc = read(approvalDocPath);
 const remotePostureDoc = read(remotePostureDocPath);
 const guardSql = compactSql(read(guardMigrationPath));
+const applyPreflightRunner = read(applyPreflightRunnerPath);
 const task = read("task.md");
 const combined = [preflightDoc, approvalDoc, remotePostureDoc, task].join("\n");
 
@@ -38,12 +41,40 @@ for (const marker of [
   "`remediation_decision_status` | `pending`",
   "`risk_acceptance_status` | `not-recorded`",
   "`remote_apply_approval_status` | `absent`",
-  "`remote_apply_preflight_status` | `not-run`",
+  "`remote_apply_preflight_status` | `blocked-remote-posture-drift`",
   "`remote_remediation_apply_status` | `not-run`",
   "`remote_mutation_status` | `not-run`",
   "`public_release_capable_status` | `no`",
+  "`cli_status` | `local-cli-present`",
+  "`cli_version_status` | `present`",
+  "`link_status` | `supabase-link-metadata-present`",
+  "`mcp_status` | `not-used`",
+  "`linked_query_probe_status` | `pass`",
+  "`remote_catalog_query_status` | `pass`",
+  "`remote_table_count` | `9`",
+  "`remote_expected_table_count` | `9`",
+  "`remote_expected_missing_count` | `0`",
+  "`remote_rls_disabled_count` | `0`",
+  "`remote_rls_status` | `pass`",
+  "`remote_anon_grant_count` | `0`",
+  "`remote_server_only_authenticated_grant_count` | `0`",
+  "`remote_readonly_authenticated_write_grant_count` | `1`",
+  "`remote_browser_owned_expected_grant_count` | `9`",
+  "`remote_browser_readonly_expected_grant_count` | `1`",
+  "`remote_grant_status` | `fail`",
+  "`remote_default_acl_query_status` | `pass`",
+  "`remote_default_acl_postgres_owner_entry_count` | `3`",
+  "`remote_default_acl_other_owner_entry_count` | `3`",
+  "`remote_browser_or_service_default_grant_count` | `48`",
+  "`remote_public_default_grant_count` | `0`",
+  "`remote_default_privileges_status` | `fail`",
+  "`remote_unexpected_default_grant_count` | `48`",
+  "`remote_default_acl_owner_status` | `mixed-or-non-postgres`",
+  "`owner_specific_block_review_status` | `blocked-private-owner-value-not-reviewed`",
   "Owner role names beyond the documented `postgres` role were not printed or persisted",
   "Do not store the private owner role value in repo docs",
+  "The linked read-only preflight found the expected table set and RLS status intact",
+  "`remote_readonly_authenticated_write_grant_count=1`",
   "If any check cannot run safely, emits raw output, requires printing credentials or project identity",
   "Any shorter approval, ambiguous \"go ahead\"",
   "`risk_acceptance_status=accepted`",
@@ -105,16 +136,49 @@ for (const sourceMarker of [
 
 for (const taskMarker of [
   "codex/supabase-default-privileges-remediation-preflight",
+  "codex/supabase-default-privileges-remediation-apply-preflight",
   "Remote Supabase default privileges remediation execution preflight",
   "remediation_decision_status=pending",
   "risk_acceptance_status=not-recorded",
   "remote_apply_approval_status=absent",
-  "remote_apply_preflight_status=not-run",
+  "remote_apply_preflight_status=blocked-remote-posture-drift",
+  "remote_catalog_query_status=pass",
+  "remote_grant_status=fail",
+  "remote_readonly_authenticated_write_grant_count=1",
+  "owner_specific_block_review_status=blocked-private-owner-value-not-reviewed",
   "remote_remediation_apply_status=not-run",
   "remote_mutation_status=not-run",
   "remote default privileges remediation/apply and risk acceptance remain approval-gated"
 ]) {
   assert.ok(task.includes(taskMarker), `task.md records ${taskMarker}`);
+}
+
+for (const runnerMarker of [
+  "db",
+  "query",
+  "--linked",
+  "remote_readonly_authenticated_write_grant_count",
+  "remote_default_acl_owner_status",
+  "remote_apply_preflight_status",
+  "remote_remediation_apply_status=not-run",
+  "remote_mutation_status=not-run"
+]) {
+  assert.ok(applyPreflightRunner.includes(runnerMarker), `apply preflight runner records ${runnerMarker}`);
+}
+
+for (const forbiddenMutation of [
+  /\balter\s+/i,
+  /\bgrant\s+/i,
+  /\brevoke\s+/i,
+  /\bcreate\s+/i,
+  /\bdrop\s+/i,
+  /\binsert\s+into\b/i,
+  /\bupdate\s+[a-z0-9_."]+\s+set\b/i,
+  /\bdelete\s+from\b/i,
+  /db\s+push/i,
+  /migration\s+apply/i
+]) {
+  assert.doesNotMatch(applyPreflightRunner, forbiddenMutation, `apply preflight runner avoids ${forbiddenMutation}`);
 }
 
 const sensitivePatterns = [

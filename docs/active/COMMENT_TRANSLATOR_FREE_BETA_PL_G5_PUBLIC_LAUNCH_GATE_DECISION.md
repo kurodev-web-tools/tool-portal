@@ -21,6 +21,8 @@ This slice does not run or approve limited public beta open, public access chang
 | `main_production_domain_status` | `not-promoted` |
 | `remote_default_privileges_status` | `fail` |
 | `remote_default_privileges_remediation_status` | `approval-gated-not-run` |
+| `remote_default_privileges_execution_preflight_status` | `recorded-no-apply` |
+| `risk_acceptance_status` | `not-recorded` |
 | `release_owner_decision_status` | `pending` |
 | `public_gate_state_label` | `unchanged-blocked` |
 | `public_release_capable_label` | `no` |
@@ -28,7 +30,7 @@ This slice does not run or approve limited public beta open, public access chang
 | `raw_comment_capture_status` | `not-recorded` |
 | `screenshot_with_raw_comments_status` | `not-recorded` |
 
-Current PL-G5 decision: keep blocked until either the remote default-privileges risk is remediated or explicitly accepted, the release owner records an exact PL-G5 decision, and PL-G6 is handled as a separate approval-gated operation.
+Current PL-G5 decision: keep blocked until either the remote default-privileges risk is remediated or explicitly accepted using the exact labels in `docs/active/COMMENT_TRANSLATOR_SUPABASE_DEFAULT_PRIVILEGES_REMOTE_REMEDIATION_EXECUTION_PREFLIGHT.md`, the release owner records an exact PL-G5 decision, and PL-G6 is handled as a separate approval-gated operation.
 
 ## Purpose
 
@@ -61,6 +63,7 @@ This thread does not contain the release-owner exact approval label for open lim
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md`
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_READY_PREFLIGHT.md`
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md`
+- `docs/active/COMMENT_TRANSLATOR_SUPABASE_DEFAULT_PRIVILEGES_REMOTE_REMEDIATION_EXECUTION_PREFLIGHT.md`
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md`
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2B_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE.md`
 - `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md`
@@ -140,6 +143,8 @@ Evidence stays counts/status/stop reasons only. There is no browser storage expa
 | sanitized output review for a launch-gate change | absent |
 | public gate state label | unchanged / blocked |
 | public-release capable label | no |
+| remote default privileges execution preflight | recorded-no-apply |
+| risk acceptance | not-recorded |
 | PL-G1 remote durable enforcement | remote-apply-and-deployed-smoke-completed |
 | PL-G2B allowed-tester route/API harness smoke | blocked-no-approval / not-run / approval-gated |
 | PL-G3 Start-to-translation smoke | blocked-no-approval / not-run / approval-gated |

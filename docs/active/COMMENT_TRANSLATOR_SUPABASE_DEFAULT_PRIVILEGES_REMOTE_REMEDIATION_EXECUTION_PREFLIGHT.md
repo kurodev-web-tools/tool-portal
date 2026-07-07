@@ -69,6 +69,18 @@ Sanitized availability and preflight labels from this worktree:
 
 The linked read-only preflight found the expected table set, RLS status, and current grant posture intact after the current-grant-only remediation. Remote future default privileges still fail with `remote_unexpected_default_grant_count=48`, and owner status remains `mixed-or-non-postgres`, so apply remains blocked until owner-specific private role handling is reviewed without exposing private values or risk is explicitly accepted. No project identifier, private owner role value, raw SQL output, raw stdout/stderr, raw response body, credential value, connection string, account identity value, token, header, browser storage payload, owner/internal id, provider-private identifier, raw comment, or raw account metadata was printed or persisted.
 
+## Owner-Specific Follow-Up
+
+`docs/active/COMMENT_TRANSLATOR_SUPABASE_DEFAULT_PRIVILEGES_OWNER_SPECIFIC_REMEDIATION_PREFLIGHT.md` records the latest sanitized owner-specific preflight after current-grant remediation completed:
+
+| Evidence | Status |
+| --- | --- |
+| `owner_specific_private_value_exposure_status` | `not-exposed` |
+| `owner_specific_block_review_status` | `blocked-private-owner-value-not-reviewed` |
+| `remote_default_privileges_owner_specific_preflight_status` | `blocked-private-owner-value-not-reviewed` |
+
+This follow-up does not approve or run default-privileges remediation. It preserves the existing decision gate below.
+
 ## Decision Gate
 
 | Decision | Status |

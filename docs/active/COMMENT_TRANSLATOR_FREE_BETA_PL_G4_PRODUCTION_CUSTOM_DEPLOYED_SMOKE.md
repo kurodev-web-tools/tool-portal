@@ -1,12 +1,35 @@
 # Kuro Live Comment Translator Free Beta PL-G4 Production/Custom Deployed Smoke
 
-Status: PL-G4 production/custom deployed smoke execution preflight/evidence. Public-release capable: no.
+Status: PL-G4 production/custom deployed smoke evidence rollup. Public-release capable: no.
 
-Execution result: blocked-no-approval.
+Current execution result: complete for `preview-custom-url`.
 
-production/custom deployed smoke execution: not-run / approval-gated.
+Production/custom deployed smoke execution: completed for `preview-custom-url` with sanitized pass/count/status labels only.
 
-This PL-G4 slice reviews the existing FB-L5 ready preflight and source boundaries, then records the safe blocker because same-thread ready preflight, sanitized output review, exact explicit approval, and operator-local env references were not all present in this thread. It does not run deployed route/API smoke, allowed-tester browser smoke, session Start, Stop, heartbeat mutation, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, deploy/upload, remote Supabase mutation/schema apply, Stripe action, billing setting mutation, limited public beta open, public launch gate flip, or main promotion.
+This PL-G4 evidence rollup records the current sanitized state after the approved preview-custom deployed smoke. It records only labels/counts/statuses and does not include raw comments, screenshots containing raw comments, raw stdout/stderr, raw response bodies, browser storage payloads, provider target metadata, liveChatId, owner/internal ids, OAuth/token/cookie/header values, or credential values.
+
+Historical blocker sections remain below for audit trail. The current Step 5 rollup supersedes the earlier `blocked-no-approval` PL-G4 status for the preview-custom URL only. The final main production domain remains unpromoted.
+
+## Current Step 5 Evidence Rollup
+
+| Evidence | Status |
+| --- | --- |
+| `pl_g4_preview_custom_smoke_status` | `pass` |
+| `preview_target_label` | `preview-custom-url` |
+| `allowed_tester_connection_status` | `pass` |
+| `comment_retrieval_status` | `pass` |
+| `translation_status` | `pass` |
+| `cache_behavior_status` | `pass` |
+| `diagnostics_status` | `pass` |
+| `timezone_display_status` | `pass` |
+| `stop_status` | `pass` |
+| `main_production_domain_status` | `not-promoted` |
+| `deploy_upload_status` | `not-run` |
+| `public_gate_flip_status` | `not-run` |
+| `raw_comment_capture_status` | `not-recorded` |
+| `screenshot_with_raw_comments_status` | `not-recorded` |
+
+Current PL-G4 decision: complete for preview custom URL only. This does not promote the main production domain, flip any public gate, apply a migration, mutate remote state, run Stripe/billing actions, or authorize public access.
 
 ## Purpose
 

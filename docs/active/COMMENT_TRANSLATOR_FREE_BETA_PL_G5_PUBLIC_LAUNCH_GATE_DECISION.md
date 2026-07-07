@@ -1,12 +1,34 @@
 # Kuro Live Comment Translator Free Beta PL-G5 Public Launch Gate Decision
 
-Status: PL-G5 release-owner public launch decision preflight/evidence. Public-release capable: no.
+Status: PL-G5 release-owner public launch decision evidence rollup. Public-release capable: no.
 
-Execution result: keep blocked / blocked-no-approval.
+Current execution result: keep blocked / pending release-owner decision.
 
 Public launch gate unchanged. Limited public beta open: not-run / approval-gated. Public launch gate flip: not-run / approval-gated.
 
-This PL-G5 slice reviews the existing FB-L6 ready preflight, current FB-L2/PL-G1 through FB-L5/PL-G4 evidence state, and release-owner decision labels. Because this thread does not include release-owner exact approval to open limited public beta or flip the public gate, the safe decision is to keep blocked. This slice does not run or approve limited public beta open, public access change, public launch gate flip, deploy/upload, remote Supabase migration apply, remote mutation, production/custom deployed smoke execution, session Start, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, Stripe action, billing setting mutation, main promotion, or handoff payload expansion.
+This PL-G5 rollup reviews the current Step 5 evidence state after the approved preview-custom deployed smoke and the remote Supabase read-only posture checks. PL-G1 through PL-G4 are complete for the current preview-custom public-usability evidence scope, but public-release capable remains `no` because remote Supabase future default privileges still require approval-gated remediation or explicit risk acceptance, release-owner PL-G5 approval is not recorded, and PL-G6 public access change / promotion is not-run.
+
+This slice does not run or approve limited public beta open, public access change, public launch gate flip, deploy/upload, remote Supabase migration apply, remote mutation, production/custom deployed smoke execution, session Start, provider target lookup, live target lookup, `liveChatMessages.list`, Azure/OpenAI provider execution, Stripe action, billing setting mutation, main promotion, browser storage expansion, raw comment capture, screenshot evidence containing raw comments, or handoff payload expansion.
+
+## Current Step 5 Evidence Rollup
+
+| Evidence | Status |
+| --- | --- |
+| `pl_g1_remote_durable_enforcement_status` | `complete` |
+| `pl_g2_allowed_tester_route_api_smoke_status` | `complete` |
+| `pl_g3_start_to_translation_smoke_status` | `complete` |
+| `pl_g4_preview_custom_deployed_smoke_status` | `complete-for-preview-custom-url` |
+| `main_production_domain_status` | `not-promoted` |
+| `remote_default_privileges_status` | `fail` |
+| `remote_default_privileges_remediation_status` | `approval-gated-not-run` |
+| `release_owner_decision_status` | `pending` |
+| `public_gate_state_label` | `unchanged-blocked` |
+| `public_release_capable_label` | `no` |
+| `pl_g6_public_access_change_status` | `not-run` |
+| `raw_comment_capture_status` | `not-recorded` |
+| `screenshot_with_raw_comments_status` | `not-recorded` |
+
+Current PL-G5 decision: keep blocked until either the remote default-privileges risk is remediated or explicitly accepted, the release owner records an exact PL-G5 decision, and PL-G6 is handled as a separate approval-gated operation.
 
 ## Purpose
 
@@ -16,11 +38,11 @@ PL-G5 is the public-launch remaining gate that turns current evidence into a rel
 - open limited public beta;
 - flip public gate.
 
-This thread does not contain the release-owner exact approval label for open limited public beta or public gate flip. It also lacks accepted PL-G2 through PL-G4 execution evidence. Therefore the only safe record is `keep blocked / blocked-no-approval`, with public-release capable kept as no.
+This thread does not contain the release-owner exact approval label for open limited public beta or public gate flip. It also has an unresolved remote Supabase future default-privileges failure that requires approval-gated remediation or explicit risk acceptance. Therefore the only safe record remains keep blocked / pending release-owner decision, with public-release capable kept as no.
 
 ## Execution Decision
 
-- Decision: keep blocked / blocked-no-approval.
+- Decision: keep blocked / pending release-owner decision.
 - Same-thread release-owner ready preflight: reviewed through `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_READY_PREFLIGHT.md`.
 - Release-owner exact explicit approval for open limited public beta: absent.
 - Release-owner exact explicit approval for public gate flip: absent.
@@ -64,10 +86,10 @@ Even if a later release owner selects open or flip, this docs/contract slice mus
 | Gate | Current evidence status | PL-G5 interpretation |
 | --- | --- | --- |
 | FB-L2 / PL-G1 remote durable enforcement | remote-apply-and-deployed-smoke-completed | Durable apply and deployed status/start/stop boundary are accepted as completed for PL-G1 only; this does not prove PL-G2 route/API, live/provider, production/custom deployed freshness, limited beta, or public launch readiness. |
-| FB-L3 / PL-G2B allowed-tester route/API harness smoke | blocked-no-approval / not-run / approval-gated | Authenticated deployed route/API behavior remains unchecked. |
-| FB-L4 / PL-G3 Start-to-translation smoke | blocked-no-approval / not-run / approval-gated | Explicit Start, live target lookup, one bounded `liveChatMessages.list` step, non-empty intake, Free Azure translation, UI feed, usage, stop reason, source attribution, and Stop remain unchecked. |
-| FB-L5 / PL-G4 production/custom deployed smoke | blocked-no-approval / not-run / approval-gated | Deployed target freshness, reviewed integration branch match, allowed-tester route/UI reachability, status-only session API, usage/deletion/Creator locked gates, and Start-to-translation gate status remain unchecked. |
-| FB-L6 / PL-G5 release-owner decision | keep blocked / blocked-no-approval | Public launch gate remains unchanged and public-release capable remains no. |
+| FB-L3 / PL-G2 allowed-tester route/API harness smoke | complete | PL-G2K approved sanitized route/API harness smoke is accepted for the current preview-custom public-usability evidence scope. |
+| FB-L4 / PL-G3 Start-to-translation smoke | complete | Core path, browser-visible feed, auto refresh, newest-first, JST display, cache hit/miss, diagnostics, and Stop were verified with sanitized labels/counts only. |
+| FB-L5 / PL-G4 production/custom deployed smoke | complete for preview custom URL | Preview-custom deployed URL passed with allowed tester evidence. Final main production domain remains unpromoted. |
+| FB-L6 / PL-G5 release-owner decision | pending / keep blocked | Public launch gate remains unchanged and public-release capable remains no. |
 
 Free caps remain 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month. Missing or unreadable durable state must fail closed before Start or provider execution with sanitized status/stop output.
 

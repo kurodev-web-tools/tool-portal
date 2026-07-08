@@ -4,7 +4,7 @@ Date: 2026-07-08
 
 ## Scope
 
-This document records the remaining task order for taking Kuro Live Comment Translator from the current allowed-tester/free-public-beta integration state to public launch, plus the current status of the public Free limit copy, OBS Dock display-name policy, public beta access gate decision, public traffic rate-limit backing decision, and Supabase default-privileges risk acceptance.
+This document records the remaining task order for taking Kuro Live Comment Translator from the current allowed-tester/free-public-beta integration state to public launch, plus the current status of the public Free limit copy, OBS Dock display-name policy, public beta access gate decision, public traffic rate-limit backing decision, Supabase default-privileges risk acceptance, and public launch operator QA checklist.
 
 The Step 8 update is a policy/UI/contract slice only. It defaults stream-safe / compact comments-only display to the generic `YouTube viewer` label, keeps normal operator preview context on safe `authorDisplayName`, and requires an explicit toggle before compact stream-safe display shows the existing sanitized safe name. It does not add an OBS overlay token runtime, OBS overlay route, moderation actions, schema changes, remote Supabase work, provider/live execution, deploy/upload, public gate flip, or public access change.
 
@@ -13,6 +13,8 @@ The Step 9 update is a policy/contract/documentation slice only. It selects `log
 The Step 10 update is a policy/contract/documentation slice only. It selects `cloudflare-edge` as the public traffic rate-limit backing, rejects a new Supabase durable rate-limit table for this launch step, and keeps the current in-app guard as defense-in-depth. Cloudflare edge activation remains not-run / approval-gated.
 
 The Step 11 update is a policy/contract/documentation slice only. Supabase Support response remains pending, and the release owner accepts the known future `public` object default-privileges risk for PL-G5 evaluation. Existing current-table/RLS/current-grant posture remains the reviewed pass surface. Remote remediation/apply, remote mutation, deploy/upload, public gate flip, and main promotion remain not-run.
+
+The operator QA checklist update is a documentation/contract slice only. It separates operator-owned external checks from Codex-owned deterministic checks before PL-G5 / PL-G6. Cloudflare edge activation, Cloudflare environment changes, browser smoke, live/provider execution, deploy/upload, public gate flip, and main promotion remain not-run / approval-gated.
 
 Sanitization boundary: this document records only task labels, status labels, and public file/path references. It does not include project identifiers, support ticket ids, raw support text, private owner role values, raw SQL output, raw stdout/stderr, raw response bodies, account identity values, tokens, secrets, credential values, connection strings, headers, browser storage, owner ids, internal user ids, provider private identifiers, raw comments, or raw account metadata.
 
@@ -34,6 +36,9 @@ Sanitization boundary: this document records only task labels, status labels, an
 | `public_traffic_rate_limit_backing_status` | `complete` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
 | `edge_activation_status` | `not-run-approval-gated` |
+| `public_launch_operator_qa_checklist_status` | `complete` |
+| `operator_external_verification_status` | `action-required` |
+| `codex_local_verification_status` | `pass` |
 | `public_release_capable_status` | `no` |
 | `public_gate_flip_status` | `not-run` |
 | `main_promotion_status` | `not-run` |
@@ -47,9 +52,10 @@ Sanitization boundary: this document records only task labels, status labels, an
 5. `Public beta access gate decision`: complete. Free public beta access is selected as `login-only`; waitlist approval remains for Creator/paid beta access. Current runtime gate unchanged: the existing private launch SHA-256 owner allowlist remains active until a separate approval-gated public access-change operation.
 6. `Public traffic rate-limit backing`: complete. Public traffic backing is selected as `cloudflare-edge`; no Supabase durable rate-limit table is created, and risk acceptance is not selected. Current in-app rate-limit guard remains defense-in-depth until a separate approval-gated Cloudflare edge activation operation.
 7. `Supabase default privileges support response or risk acceptance`: complete. Supabase Support response remains pending, and the known future `public` object default-privileges risk is accepted for PL-G5 evaluation. Current-table/RLS/current-grant pass posture is not part of the accepted risk.
-8. `PL-G5 release-owner decision`: record the release-owner public launch decision with all accepted residual risks.
-9. `PL-G6 public access change / promotion`: approval-gated public gate flip, production domain cutover, deploy/upload, or integration-to-main promotion.
-10. `Final production smoke`: approval-gated final production/main-domain smoke with sanitized pass/fail/count/status evidence only.
+8. `Public launch operator QA checklist`: complete. User-owned external checks and Codex-owned deterministic checks are separated in `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md`; external Cloudflare/browser/live checks remain action-required / approval-gated.
+9. `PL-G5 release-owner decision`: record the release-owner public launch decision with all accepted residual risks.
+10. `PL-G6 public access change / promotion`: approval-gated public gate flip, production domain cutover, deploy/upload, or integration-to-main promotion.
+11. `Final production smoke`: approval-gated final production/main-domain smoke with sanitized pass/fail/count/status evidence only.
 
 ## Public-Before-Paid Boundary
 
@@ -71,9 +77,23 @@ Paid/Creator entitlement work remains later work unless explicitly pulled into p
 - Private launch gate behavior: not changed in this task-board slice.
 - Edge/durable rate-limit control: Cloudflare edge backing selected only; activation not run.
 - Supabase default privileges remediation/apply: not run.
+- Public launch operator QA checklist: complete for docs/contract separation only. Cloudflare edge activation, Cloudflare environment changes, browser smoke, optional burst comment smoke, optional 30-minute session smoke, optional monthly cap fixture/live smoke, deploy/upload, public gate flip, live/provider execution, remote mutation, and main promotion remain not-run / approval-gated.
 - Remote Supabase migration apply, `db push`, repair, reset, deploy/upload, public gate flip, live/provider/OAuth/Stripe actions, row mutation, current-table grant/policy rewrite, raw response capture, browser storage capture, credential exposure, public access change, and promotion to `main`: not run.
 
 ## Verification
+
+Local checks for the public launch operator QA checklist slice:
+
+- `node scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs`
+- `node scripts/comment-translator-public-launch-remaining-task-board-contract.mjs`
+- `npm run lint`
+- `npx tsc --noEmit --pretty false`
+- `npm run build`
+- `git diff --check`
+- changed-files high-confidence secret scan: `changed_files=5`, `high_confidence_secret_matches=0`
+- changed TS/TSX type-suppression scan: `checked_ts_tsx_files=0`, `type_suppression_matches=0`
+
+Width checks skipped because this checklist changes only docs, deterministic scripts, and `task.md`; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or client behavior change.
 
 Local checks for the Step 11 slice:
 

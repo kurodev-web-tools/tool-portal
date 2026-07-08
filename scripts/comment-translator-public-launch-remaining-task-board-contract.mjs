@@ -21,6 +21,7 @@ for (const marker of [
   "`public_release_capable_status` | `no`",
   "`public_gate_flip_status` | `not-run`",
   "`main_promotion_status` | `not-run`",
+  "`obs_dock_display_name_policy_status` | `complete`",
   "`Monthly input character accounting`",
   "`Free limits public copy`",
   "`OBS Dock display-name policy`",
@@ -29,8 +30,9 @@ for (const marker of [
   "`Supabase default privileges support response or risk acceptance`",
   "`PL-G5 release-owner decision`",
   "`PL-G6 public access change / promotion`",
-  "Runtime accounting changes: implemented only for monthly provider-input character accounting in the earlier implementation slice; no provider/live execution was run in Step 7.",
+  "The Step 8 update is a policy/UI/contract slice only.",
   "Public copy changes: complete for Free limits public copy; no quota enforcement logic changed.",
+  "OBS Dock behavior: display-name policy only.",
   "Supabase default privileges remediation/apply: not run."
 ]) {
   assert.ok(doc.includes(marker), `launch remaining task board doc records ${marker}`);
@@ -41,6 +43,7 @@ for (const marker of [
   "Public launch remaining task board",
   "monthly_input_character_accounting_status=complete",
   "free_limits_public_copy_status=complete",
+  "obs_dock_display_name_policy_status=complete",
   "public_beta_access_gate_decision_status=pending",
   "public_traffic_rate_limit_backing_status=pending",
   "support_response_status=pending",
@@ -62,9 +65,10 @@ const taskOrder = [
   "PL-G6 public access change / promotion"
 ];
 
+const taskOrderSection = doc.slice(doc.indexOf("## Remaining Public Launch Task Order"));
 let previousIndex = -1;
 for (const taskLabel of taskOrder) {
-  const index = doc.indexOf(taskLabel);
+  const index = taskOrderSection.indexOf(taskLabel);
   assert.ok(index > previousIndex, `${taskLabel} appears in launch order`);
   previousIndex = index;
 }

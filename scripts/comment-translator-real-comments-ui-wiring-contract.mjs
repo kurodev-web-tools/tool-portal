@@ -333,6 +333,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-live-message-normalization-contract.mjs",
   "scripts/comment-translator-preview-author-display-name-contract.mjs",
+  "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-youtube-input-boundary-contract.mjs",
   "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
   "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
@@ -343,10 +344,12 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
   "scripts/comment-translator-stop-preview-retention-contract.mjs",
   "scripts/comment-translator-public-ui-cleanup-contract.mjs",
+  "scripts/comment-translator-obs-dock-display-name-policy-contract.mjs",
   "scripts/comment-translator-creator-waitlist-admin-contract.mjs",
   "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
   "scripts/comment-translator-portal-admin-navigation-contract.mjs",
   "supabase/migrations/20260705000000_comment_translator_creator_waitlist_registrations.sql",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
   taskPath
 ]);
 for (const file of changedFiles()) {

@@ -1,4 +1,8 @@
-import type { CommentTranslatorComment, CommentTranslatorTargetLanguageId } from "./comment-translator";
+import type {
+  CommentTranslatorComment,
+  CommentTranslatorSurfaceMode,
+  CommentTranslatorTargetLanguageId
+} from "./comment-translator";
 import type { CommentTranslationCacheOutcome } from "./comment-translator-provider-boundary";
 import type { Locale } from "./locale";
 
@@ -98,6 +102,29 @@ export type CommentTranslatorRealCommentsFeedState = {
   publicLaunchAllowed: false;
 };
 
+export type CommentTranslatorPreviewViewMode = "normal" | "comments";
+export type CommentTranslatorAuthorDisplayNamePolicyMarker =
+  | "operator-safe-display-name"
+  | "stream-safe-generic-default"
+  | "stream-safe-safe-display-name-enabled";
+export type CommentTranslatorAuthorDisplayNamePolicy = {
+  readonly marker: CommentTranslatorAuthorDisplayNamePolicyMarker;
+  readonly streamSafe: boolean;
+  readonly showSafeAuthorDisplayName: boolean;
+  readonly genericViewerLabel: "YouTube viewer";
+  readonly maxDisplayNameCharacters: number;
+};
+
+const commentTranslatorStreamSafeMaxDisplayNameCharacters = 32;
+
+const normalOperatorAuthorDisplayNamePolicy: CommentTranslatorAuthorDisplayNamePolicy = {
+  marker: "operator-safe-display-name",
+  streamSafe: false,
+  showSafeAuthorDisplayName: true,
+  genericViewerLabel: "YouTube viewer",
+  maxDisplayNameCharacters: commentTranslatorStreamSafeMaxDisplayNameCharacters
+};
+
 export function createUnavailableCommentTranslatorRealCommentsFeedState({
   reason,
   liveProviderDiagnostics = null
@@ -183,12 +210,14 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
   feed,
   targetLanguageLabel,
   locale = "en",
-  timeZone = resolveCommentTranslatorBrowserTimeZone()
+  timeZone = resolveCommentTranslatorBrowserTimeZone(),
+  authorDisplayNamePolicy = normalOperatorAuthorDisplayNamePolicy
 }: {
   feed: CommentTranslatorRealCommentsFeedState;
   targetLanguageLabel: string;
   locale?: Locale;
   timeZone?: string;
+  authorDisplayNamePolicy?: CommentTranslatorAuthorDisplayNamePolicy;
 }): CommentTranslatorComment[] {
   return sortCommentTranslatorRealCommentsFeedRowsNewestFirst(feed.rows).map((row) => {
     const sourceLanguage = "YT";
@@ -200,7 +229,7 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
         locale,
         timeZone
       }),
-      authorName: row.authorDisplayName ?? row.authorLabel,
+      authorName: resolveCommentTranslatorAuthorDisplayName({ row, policy: authorDisplayNamePolicy }),
       source: "server",
       sourceLabel: row.sourceAttributionLabel,
       sourceLanguage,
@@ -239,6 +268,78 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
 
     return baseComment;
   });
+}
+
+export function resolveCommentTranslatorAuthorDisplayNamePolicy({
+  surfaceMode,
+  viewMode,
+  showSafeAuthorDisplayNamesInStreamSafeMode
+}: {
+  readonly surfaceMode: CommentTranslatorSurfaceMode;
+  readonly viewMode: CommentTranslatorPreviewViewMode;
+  readonly showSafeAuthorDisplayNamesInStreamSafeMode: boolean;
+}): CommentTranslatorAuthorDisplayNamePolicy {
+  const compactSurface = surfaceMode === "obs-browser-dock" || surfaceMode === "narrow-viewport";
+  const streamSafe = compactSurface && viewMode === "comments";
+
+  if (!streamSafe) {
+    return normalOperatorAuthorDisplayNamePolicy;
+  }
+
+  if (showSafeAuthorDisplayNamesInStreamSafeMode) {
+    return {
+      marker: "stream-safe-safe-display-name-enabled",
+      streamSafe: true,
+      showSafeAuthorDisplayName: true,
+      genericViewerLabel: "YouTube viewer",
+      maxDisplayNameCharacters: commentTranslatorStreamSafeMaxDisplayNameCharacters
+    };
+  }
+
+  return {
+    marker: "stream-safe-generic-default",
+    streamSafe: true,
+    showSafeAuthorDisplayName: false,
+    genericViewerLabel: "YouTube viewer",
+    maxDisplayNameCharacters: commentTranslatorStreamSafeMaxDisplayNameCharacters
+  };
+}
+
+export function resolveCommentTranslatorAuthorDisplayName({
+  row,
+  policy
+}: {
+  readonly row: Pick<CommentTranslatorRealCommentsDisplayRow, "authorDisplayName" | "authorLabel">;
+  readonly policy: CommentTranslatorAuthorDisplayNamePolicy;
+}): string {
+  if (!policy.showSafeAuthorDisplayName) {
+    return policy.genericViewerLabel;
+  }
+
+  const safeAuthorDisplayName = row.authorDisplayName ?? row.authorLabel;
+  if (!policy.streamSafe) {
+    return safeAuthorDisplayName;
+  }
+
+  return compactCommentTranslatorAuthorDisplayName({
+    displayName: safeAuthorDisplayName,
+    maxCharacters: policy.maxDisplayNameCharacters
+  });
+}
+
+function compactCommentTranslatorAuthorDisplayName({
+  displayName,
+  maxCharacters
+}: {
+  readonly displayName: string;
+  readonly maxCharacters: number;
+}): string {
+  const characters = Array.from(displayName);
+  if (characters.length <= maxCharacters) {
+    return displayName;
+  }
+
+  return `${characters.slice(0, Math.max(0, maxCharacters - 3)).join("")}...`;
 }
 
 export function sortCommentTranslatorRealCommentsFeedRowsNewestFirst(

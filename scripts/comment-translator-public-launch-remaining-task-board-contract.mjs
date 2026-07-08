@@ -17,7 +17,10 @@ for (const marker of [
   "`support_contact_status` | `submitted`",
   "`support_response_status` | `pending`",
   "`current_table_rls_grant_status` | `pass`",
-  "`remote_default_privileges_status` | `fail-support-pending-or-risk-acceptance-required`",
+  "`remote_default_privileges_status` | `fail-accepted-risk`",
+  "`remote_default_privileges_posture_status` | `fail`",
+  "`risk_acceptance_status` | `accepted`",
+  "`risk_acceptance_scope` | `future-public-object-default-privileges-only`",
   "`public_release_capable_status` | `no`",
   "`public_gate_flip_status` | `not-run`",
   "`main_promotion_status` | `not-run`",
@@ -39,10 +42,12 @@ for (const marker of [
   "The Step 8 update is a policy/UI/contract slice only.",
   "The Step 9 update is a policy/contract/documentation slice only.",
   "The Step 10 update is a policy/contract/documentation slice only.",
+  "The Step 11 update is a policy/contract/documentation slice only.",
   "Public copy changes: complete for Free limits public copy; no quota enforcement logic changed.",
   "OBS Dock behavior: display-name policy only.",
   "Public beta access gate behavior: decision only.",
   "Public traffic rate-limit backing behavior: decision only.",
+  "Supabase default privileges risk acceptance: decision only.",
   "Supabase default privileges remediation/apply: not run."
 ]) {
   assert.ok(doc.includes(marker), `launch remaining task board doc records ${marker}`);
@@ -59,7 +64,9 @@ for (const marker of [
   "public_traffic_rate_limit_backing_status=complete",
   "public_traffic_rate_limit_backing_selected=cloudflare-edge",
   "support_response_status=pending",
-  "risk_acceptance_status=not-recorded",
+  "remote_default_privileges_status=fail-accepted-risk",
+  "risk_acceptance_status=accepted",
+  "risk_acceptance_scope=future-public-object-default-privileges-only",
   "public_release_capable=no",
   "COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md"
 ]) {
@@ -102,5 +109,5 @@ for (const pattern of sensitivePatterns) {
 }
 
 console.log(
-  "comment translator public launch remaining task board contract passed (public_release_capable=no, support=pending, secret_scan=pass)"
+  "comment translator public launch remaining task board contract passed (public_release_capable=no, support=pending, risk_acceptance=accepted, secret_scan=pass)"
 );

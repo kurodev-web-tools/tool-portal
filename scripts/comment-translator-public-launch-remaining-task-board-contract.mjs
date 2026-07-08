@@ -4,6 +4,7 @@ import path from "node:path";
 
 const root = process.cwd();
 const docPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md";
+const operatorChecklistPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -11,7 +12,8 @@ function read(relativePath) {
 
 const doc = read(docPath);
 const task = read("task.md");
-const combined = [doc, task].join("\n");
+const operatorChecklist = read(operatorChecklistPath);
+const combined = [doc, task, operatorChecklist].join("\n");
 
 for (const marker of [
   "`support_contact_status` | `submitted`",
@@ -31,23 +33,29 @@ for (const marker of [
   "`public_traffic_rate_limit_backing_status` | `complete`",
   "`public_traffic_rate_limit_backing_selected` | `cloudflare-edge`",
   "`edge_activation_status` | `not-run-approval-gated`",
+  "`public_launch_operator_qa_checklist_status` | `complete`",
+  "`operator_external_verification_status` | `action-required`",
+  "`codex_local_verification_status` | `pass`",
   "`Monthly input character accounting`",
   "`Free limits public copy`",
   "`OBS Dock display-name policy`",
   "`Public beta access gate decision`",
   "`Public traffic rate-limit backing`",
   "`Supabase default privileges support response or risk acceptance`",
+  "`Public launch operator QA checklist`",
   "`PL-G5 release-owner decision`",
   "`PL-G6 public access change / promotion`",
   "The Step 8 update is a policy/UI/contract slice only.",
   "The Step 9 update is a policy/contract/documentation slice only.",
   "The Step 10 update is a policy/contract/documentation slice only.",
   "The Step 11 update is a policy/contract/documentation slice only.",
+  "The operator QA checklist update is a documentation/contract slice only.",
   "Public copy changes: complete for Free limits public copy; no quota enforcement logic changed.",
   "OBS Dock behavior: display-name policy only.",
   "Public beta access gate behavior: decision only.",
   "Public traffic rate-limit backing behavior: decision only.",
   "Supabase default privileges risk acceptance: decision only.",
+  "Public launch operator QA checklist: complete for docs/contract separation only.",
   "Supabase default privileges remediation/apply: not run."
 ]) {
   assert.ok(doc.includes(marker), `launch remaining task board doc records ${marker}`);
@@ -63,6 +71,9 @@ for (const marker of [
   "public_beta_access_gate_selected=login-only",
   "public_traffic_rate_limit_backing_status=complete",
   "public_traffic_rate_limit_backing_selected=cloudflare-edge",
+  "public_launch_operator_qa_checklist_status=complete",
+  "operator_external_verification_status=action-required",
+  "codex_local_verification_status=pass",
   "support_response_status=pending",
   "remote_default_privileges_status=fail-accepted-risk",
   "risk_acceptance_status=accepted",
@@ -80,6 +91,7 @@ const taskOrder = [
   "Public beta access gate decision",
   "Public traffic rate-limit backing",
   "Supabase default privileges support response or risk acceptance",
+  "Public launch operator QA checklist",
   "PL-G5 release-owner decision",
   "PL-G6 public access change / promotion"
 ];

@@ -25,6 +25,9 @@ for (const marker of [
   "`public_beta_access_gate_decision_status` | `complete`",
   "`public_beta_access_gate_selected` | `login-only`",
   "`public_beta_waitlist_boundary` | `creator-paid-beta-only`",
+  "`public_traffic_rate_limit_backing_status` | `complete`",
+  "`public_traffic_rate_limit_backing_selected` | `cloudflare-edge`",
+  "`edge_activation_status` | `not-run-approval-gated`",
   "`Monthly input character accounting`",
   "`Free limits public copy`",
   "`OBS Dock display-name policy`",
@@ -35,9 +38,11 @@ for (const marker of [
   "`PL-G6 public access change / promotion`",
   "The Step 8 update is a policy/UI/contract slice only.",
   "The Step 9 update is a policy/contract/documentation slice only.",
+  "The Step 10 update is a policy/contract/documentation slice only.",
   "Public copy changes: complete for Free limits public copy; no quota enforcement logic changed.",
   "OBS Dock behavior: display-name policy only.",
   "Public beta access gate behavior: decision only.",
+  "Public traffic rate-limit backing behavior: decision only.",
   "Supabase default privileges remediation/apply: not run."
 ]) {
   assert.ok(doc.includes(marker), `launch remaining task board doc records ${marker}`);
@@ -51,7 +56,8 @@ for (const marker of [
   "obs_dock_display_name_policy_status=complete",
   "public_beta_access_gate_decision_status=complete",
   "public_beta_access_gate_selected=login-only",
-  "public_traffic_rate_limit_backing_status=pending",
+  "public_traffic_rate_limit_backing_status=complete",
+  "public_traffic_rate_limit_backing_selected=cloudflare-edge",
   "support_response_status=pending",
   "risk_acceptance_status=not-recorded",
   "public_release_capable=no",

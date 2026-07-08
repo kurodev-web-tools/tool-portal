@@ -18,9 +18,9 @@ export type CommentTranslatorPublicEntitlementBaselineResult =
       plan: CommentTranslatorSessionPlan;
       usage: CommentTranslatorDurableUsageSnapshot;
       planEntitlement: CommentTranslatorSessionPlanEntitlement;
-      monthlyTranslatedCharacterLimit: number;
-      monthlyTranslatedCharacterEstimate: number;
-      monthlyTranslatedCharacterRemaining: number;
+      monthlyProviderInputCharacterLimit: number;
+      monthlyProviderInputCharacterEstimate: number;
+      monthlyProviderInputCharacterRemaining: number;
       entitlementSource: "free-public-beta-baseline";
       degradedFrom: "non-durable-paid-entitlement" | null;
       publicLaunchAllowed: false;
@@ -46,7 +46,7 @@ export const commentTranslatorPublicEntitlementBaselineContract = {
     sessionMinutes: 30,
     translatedMessagesPerMinute: 30,
     activeSessionsPerUser: 1,
-    monthlyTranslatedCharacters: 20_000
+    monthlyProviderInputCharacters: 20_000
   },
   safeDegradation: "paid-or-unreadable-entitlement-degrades-to-free-public-beta-baseline",
   failClosedFallback: "stop-session-when-durable-usage-store-unavailable",
@@ -87,12 +87,15 @@ export function resolveCommentTranslatorPublicEntitlementBaseline({
   }
 
   const planEntitlement = createCommentTranslatorSessionPlanEntitlement({ plan: "free" });
-  const monthlyTranslatedCharacterLimit =
-    planEntitlement.monthlyTranslatedCharacterLimit ??
-    commentTranslatorPublicEntitlementBaselineContract.freePlanLimits.monthlyTranslatedCharacters;
-  const monthlyTranslatedCharacterEstimate = Math.max(0, durableUsageRead.snapshot.monthlyTranslatedCharacterEstimate);
-  const monthlyTranslatedCharacterRemaining = Math.max(0, monthlyTranslatedCharacterLimit - monthlyTranslatedCharacterEstimate);
-  const monthlyCharacterBudgetAvailable = monthlyTranslatedCharacterEstimate < monthlyTranslatedCharacterLimit;
+  const monthlyProviderInputCharacterLimit =
+    planEntitlement.monthlyProviderInputCharacterLimit ??
+    commentTranslatorPublicEntitlementBaselineContract.freePlanLimits.monthlyProviderInputCharacters;
+  const monthlyProviderInputCharacterEstimate = Math.max(0, durableUsageRead.snapshot.monthlyProviderInputCharacterEstimate);
+  const monthlyProviderInputCharacterRemaining = Math.max(
+    0,
+    monthlyProviderInputCharacterLimit - monthlyProviderInputCharacterEstimate
+  );
+  const monthlyCharacterBudgetAvailable = monthlyProviderInputCharacterEstimate < monthlyProviderInputCharacterLimit;
 
   return {
     status: "ready",
@@ -103,9 +106,9 @@ export function resolveCommentTranslatorPublicEntitlementBaseline({
       aiBudgetAvailable: durableUsageRead.snapshot.aiBudgetAvailable && monthlyCharacterBudgetAvailable
     },
     planEntitlement,
-    monthlyTranslatedCharacterLimit,
-    monthlyTranslatedCharacterEstimate,
-    monthlyTranslatedCharacterRemaining,
+    monthlyProviderInputCharacterLimit,
+    monthlyProviderInputCharacterEstimate,
+    monthlyProviderInputCharacterRemaining,
     entitlementSource: "free-public-beta-baseline",
     degradedFrom: billingSnapshot.plan === "paid" || billingSnapshot.billingState === "paid-active" ? "non-durable-paid-entitlement" : null,
     publicLaunchAllowed: false

@@ -83,7 +83,7 @@ Allowed sanitized state labels:
 
 - session state: `not-started`, `stopped`, `durable-store-unavailable`, `private-launch-gated`, or abuse-limited status labels;
 - feed state: `live-provider-polling-not-approved` and safe counts only;
-- usage state: Free caps represented by 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month;
+- usage state: Free caps represented by 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 provider-input characters per month;
 - deletion state: durable session/usage readiness labels and source attribution labels only;
 - Creator locked state: locked/unavailable, waitlist status, local draft status, and unavailable reasons only.
 
@@ -114,7 +114,7 @@ This FB-L3 record proves:
 - the allowed-tester route/API smoke has an exact ready preflight and approval label;
 - the reviewed route/action surfaces are identified and limited to server-owned session/feed/usage/deletion/Creator locked states;
 - current route/action source keeps private launch gating, durable session/usage fail-closed wiring, and unavailable provider/live adapters;
-- Free caps remain the Free public beta limits: 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month;
+- Free caps remain the Free public beta limits: 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 provider-input characters per month;
 - the current thread did not run remote migration, remote mutation, provider/live execution, deploy/upload, Stripe action, main promotion, or public launch gate flip.
 
 ## What This Evidence Does Not Prove

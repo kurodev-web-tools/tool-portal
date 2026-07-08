@@ -180,6 +180,7 @@ const baseUsage = {
   },
   aiUsageEstimate: {
     translatedMessageEstimate: 0,
+    providerInputCharacterEstimate: 0,
     translatedCharacterEstimate: 0,
     estimatedCostMicros: 0,
     rawCommentText: "never-recorded-by-design"

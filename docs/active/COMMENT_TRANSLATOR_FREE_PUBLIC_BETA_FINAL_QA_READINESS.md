@@ -49,7 +49,7 @@ The decision remains evidence-gated: public launch is not allowed while approved
 | F2 | Approved OAuth connect/token persistence evidence recorded sanitized connected status only. | Useful connection evidence exists; provider lookup, session start, and provider execution remain separate. |
 | F3 | Local durable session migration/adapter and fail-closed route/action wiring exist. | Local foundation exists; remote Supabase apply and deployed durable enforcement remain unverified. |
 | F4 | Local durable usage ledger migration/adapter and server-owned writes exist. | Local foundation exists; remote Supabase apply and deployed durable usage enforcement remain unverified. |
-| F5 | Free entitlement baseline combines daily/session/per-minute/active-session/monthly character caps. | Free limit resolver exists; public reliance still depends on durable deployed reads. |
+| F5 | Free entitlement baseline combines daily/session/per-minute/active-session/monthly provider-input character caps. | Free limit resolver exists; public reliance still depends on durable deployed reads. |
 | F6 | Server-only live chat target lookup boundary is wired to Start with sanitized unavailable fallback. | Browser-safe boundary exists; real provider target lookup and live target lookup are not-run. |
 | F7 | Bounded polling wiring keeps active-session-only state, server-only cursor handling, retry/backoff, empty-chat behavior, and quota/budget stop handoff. | Local deterministic wiring exists; real `liveChatMessages.list` is not-run. |
 | F8 | Normalization handles text, Super Chat, stickers, member/system/deleted/banned/ended events with dedupe and deletion handling. | Safe internal event shape exists; real provider payload capture is not-run. |

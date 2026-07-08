@@ -2568,7 +2568,7 @@ Observed verification for the bounded polling empty-intake evidence follow-up:
 - Changed-files no-secret scan: passed for 10 changed files.
 - `git diff --check`: passed with CRLF normalization warnings only.
 - F6 target lookup contract: attempted and failed on a pre-existing active-work text expectation in `task.md`, not on the bounded polling evidence.
-- Session start/stop contract: attempted and failed on a pre-existing Free limits expectation that omits `monthlyTranslatedCharacters`, not on the bounded polling evidence.
+- Session start/stop contract: attempted and failed on a pre-existing Free limits expectation that omits `monthlyProviderInputCharacters`, not on the bounded polling evidence.
 
 Width checks skipped because the implementation follow-up changes server route/action/runtime, docs, and contracts only; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or client layout change.
 

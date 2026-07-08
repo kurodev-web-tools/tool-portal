@@ -94,7 +94,7 @@ Even if a later release owner selects open or flip, this docs/contract slice mus
 | FB-L5 / PL-G4 production/custom deployed smoke | complete for preview custom URL | Preview-custom deployed URL passed with allowed tester evidence. Final main production domain remains unpromoted. |
 | FB-L6 / PL-G5 release-owner decision | pending / keep blocked | Public launch gate remains unchanged and public-release capable remains no. |
 
-Free caps remain 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month. Missing or unreadable durable state must fail closed before Start or provider execution with sanitized status/stop output.
+Free caps remain 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 provider-input characters per month. Missing or unreadable durable state must fail closed before Start or provider execution with sanitized status/stop output.
 
 Paid entitlement C1/C3, Stripe billing, and Creator paid limits are not part of the Free beta launch decision and were not mixed into PL-G5.
 

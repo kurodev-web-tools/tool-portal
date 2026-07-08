@@ -172,7 +172,7 @@ Rollback is not automatic in FB-L1. Later approved rollback may keep the public 
 
 ## Account Limits And Entitlement Boundary
 
-Free beta usability must rely on Free durable session/usage authority: 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month. Missing or unreadable durable state fails closed before Start or provider execution.
+Free beta usability must rely on Free durable session/usage authority: 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 provider-input characters per month. Missing or unreadable durable state fails closed before Start or provider execution.
 
 FB-L1 does not implement or verify paid entitlement authority. Paid access after C1/C3 remains separate: signed Stripe webhook evidence, durable paid entitlement rows, paid usage counters, monthly reset state, and paid fallback/stop reasons must not be mixed into Free beta preflight evidence.
 

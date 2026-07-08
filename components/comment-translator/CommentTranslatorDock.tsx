@@ -68,7 +68,7 @@ type OperatorSessionUsageDisplay = {
     limit: number;
     remaining: number;
   };
-  monthlyCharacterCap: {
+  monthlyInputCharacterCap: {
     used: number;
     limit: number;
     remaining: number;
@@ -146,7 +146,7 @@ const initialOperatorSessionUsageDisplay: OperatorSessionUsageDisplay = {
     limit: 30,
     remaining: 30
   },
-  monthlyCharacterCap: {
+  monthlyInputCharacterCap: {
     used: 0,
     limit: 20_000,
     remaining: 20_000
@@ -1301,9 +1301,9 @@ export function CommentTranslatorDock({
                     helper={`${formatDuration(usageDisplay.daily.usedSeconds)} ${copy.stats.used}`}
                   />
                   <StatTile
-                    label={copy.fields.monthlyCharacterCap}
-                    value={`${formatNumber(usageDisplay.monthlyCharacterCap.used)} / ${formatNumber(usageDisplay.monthlyCharacterCap.limit)}`}
-                    helper={`${formatNumber(usageDisplay.monthlyCharacterCap.remaining)} ${copy.fields.monthlyRemaining}`}
+                    label={copy.fields.monthlyInputCharacterCap}
+                    value={`${formatNumber(usageDisplay.monthlyInputCharacterCap.used)} / ${formatNumber(usageDisplay.monthlyInputCharacterCap.limit)}`}
+                    helper={`${formatNumber(usageDisplay.monthlyInputCharacterCap.remaining)} ${copy.fields.monthlyRemaining}`}
                   />
                   <StatTile
                     label={copy.fields.perMinuteCap}

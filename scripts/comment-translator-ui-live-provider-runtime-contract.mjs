@@ -181,8 +181,8 @@ const activeState = {
     translatedMessagesPerMinute: 30,
     translatedMessagesInCurrentMinute: 0,
     activeSessionsPerUser: 1,
-    monthlyTranslatedCharacterLimit: 20000,
-    monthlyTranslatedCharacterEstimate: 0,
+    monthlyProviderInputCharacterLimit: 20000,
+    monthlyProviderInputCharacterEstimate: 0,
     providerBudgetAvailable: true,
     globalBudgetAvailable: true,
     aiBudgetAvailable: true,
@@ -196,7 +196,7 @@ const usage = {
   dailyUsedMs: 0,
   currentSessionElapsedMs: 0,
   translatedMessagesInCurrentMinute: 0,
-  monthlyTranslatedCharacterEstimate: 0,
+  monthlyProviderInputCharacterEstimate: 0,
   providerBudgetAvailable: true,
   globalBudgetAvailable: true,
   aiBudgetAvailable: true,
@@ -209,7 +209,7 @@ const usage = {
     sessionLimitMs: 1800000,
     translatedMessagesPerMinute: 30,
     activeSessionsPerUser: 1,
-    monthlyTranslatedCharacterLimit: 20000,
+    monthlyProviderInputCharacterLimit: 20000,
     paidPrioritization: "not-implemented",
     providerUsageCharging: "not-implemented"
   }

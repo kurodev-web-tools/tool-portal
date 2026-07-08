@@ -51,9 +51,7 @@ export type CommentTranslatorDurableUsageCounterRowDraft = Omit<CommentTranslato
   raw_comment_text: "never-recorded-by-design";
 };
 
-export type CommentTranslatorDurableUsageSnapshot = CommentTranslatorUsageLedgerSnapshot & {
-  monthlyTranslatedCharacterEstimate: number;
-};
+export type CommentTranslatorDurableUsageSnapshot = CommentTranslatorUsageLedgerSnapshot;
 
 export type CommentTranslatorDurableUsageRead =
   | {
@@ -525,7 +523,7 @@ export function createCommentTranslatorDurableUsageCounterRowDraft({
     return {
       ...base,
       translated_message_estimate: Math.max(0, event.translatedMessageEstimate),
-      translated_character_estimate: Math.max(0, event.translatedCharacterEstimate),
+      translated_character_estimate: Math.max(0, event.providerInputCharacterEstimate),
       estimated_cost_micros: Math.max(0, event.estimatedCostMicros)
     };
   }
@@ -605,11 +603,15 @@ function createUsageSnapshotFromRows({
     },
     aiUsageEstimate: {
       translatedMessageEstimate: activeSessionRows.reduce((total, row) => total + Math.max(0, row.translated_message_estimate), 0),
-      translatedCharacterEstimate: activeSessionRows.reduce((total, row) => total + Math.max(0, row.translated_character_estimate), 0),
+      providerInputCharacterEstimate: activeSessionRows.reduce(
+        (total, row) => total + Math.max(0, row.translated_character_estimate),
+        0
+      ),
+      translatedCharacterEstimate: 0,
       estimatedCostMicros: activeSessionRows.reduce((total, row) => total + Math.max(0, row.estimated_cost_micros), 0),
       rawCommentText: "never-recorded-by-design"
     },
-    monthlyTranslatedCharacterEstimate: rows
+    monthlyProviderInputCharacterEstimate: rows
       .filter((row) => row.usage_month === currentMonth && row.event_type === "ai-usage-estimated")
       .reduce((total, row) => total + Math.max(0, row.translated_character_estimate), 0)
   };

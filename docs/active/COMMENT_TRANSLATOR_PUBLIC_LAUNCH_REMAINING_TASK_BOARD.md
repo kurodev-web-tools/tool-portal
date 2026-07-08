@@ -25,8 +25,8 @@ Sanitization boundary: this document records only task labels, status labels, an
 ## Remaining Public Launch Task Order
 
 1. `Public launch remaining task board`: record this updated task order and verification boundary.
-2. `Monthly input character accounting`: make the Free monthly 20,000 character cap canonically mean provider-input/source characters, not translated-output characters; keep translated-output characters only as analytics/display metadata if retained.
-3. `Free limits public copy`: state the Free beta limits as `1日最大30分`, `1セッション最大30分`, `30翻訳メッセージ/分`, and `月20,000入力文字`.
+2. `Monthly input character accounting`: complete in the current implementation line. The Free monthly 20,000 character cap canonically means provider-input/source characters, not translated-output characters; translated-output characters are analytics metadata only if retained.
+3. `Free limits public copy`: next. State the Free beta limits as `1日最大30分`, `1セッション最大30分`, `30翻訳メッセージ/分`, and `月20,000入力文字`.
 4. `OBS Dock display-name policy`: decide display-name visibility, compact layout, and stream-safe behavior for OBS Dock without exposing provider-private identifiers.
 5. `Public beta access gate decision`: decide whether public beta opens as login-only or waitlist-approved instead of SHA-256 owner allowlist only.
 6. `Public traffic rate-limit backing`: select and verify an approved edge/durable rate-limit control for public exposure, or explicitly accept the remaining distributed-abuse-control risk.
@@ -46,7 +46,7 @@ Paid/Creator entitlement work remains later work unless explicitly pulled into p
 
 ## Non-Actions
 
-- Runtime accounting changes: not implemented in this task-board slice.
+- Runtime accounting changes: implemented only for monthly provider-input character accounting in the follow-up implementation slice; no provider/live execution was run.
 - Public copy changes: not implemented in this task-board slice.
 - OBS Dock behavior: not implemented in this task-board slice.
 - Private launch gate behavior: not changed in this task-board slice.

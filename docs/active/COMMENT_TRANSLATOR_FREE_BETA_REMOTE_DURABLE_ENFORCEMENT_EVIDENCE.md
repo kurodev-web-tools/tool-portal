@@ -26,7 +26,7 @@ This thread did not have same-thread ready preflight, sanitized output review, a
 - Remote/deployed execution: not-run.
 - Public launch decision: unchanged, `public-release capable: no`.
 - Ready preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md` is preflight-ready for later approval review, but no remote mutation/apply/deploy/provider/Stripe was executed.
-- Phase A baseline adjustment: local dependencies were restored with `npm ci`. Historical F3/F4/F5/F12 contracts are recorded as drift/residual risk because they are not aligned with the compact current `task.md` and current monthly character cap runtime. The active Phase A local baseline is now the FB-L2 current-proof contract, which checks durable session store source, durable usage store source, public entitlement baseline source, route/action durable fail-closed wiring, and this evidence/preflight boundary.
+- Phase A baseline adjustment: local dependencies were restored with `npm ci`. Historical F3/F4/F5/F12 contracts are recorded as drift/residual risk because they are not aligned with the compact current `task.md` and current monthly provider-input character cap runtime. The active Phase A local baseline is now the FB-L2 current-proof contract, which checks durable session store source, durable usage store source, public entitlement baseline source, route/action durable fail-closed wiring, and this evidence/preflight boundary.
 - Phase A remote inspection: current-proof local baseline passed. The exact worktree copied local Supabase link metadata from the same project root without printing values: `supabase link metadata copied locally`. `npx supabase migration list --linked` showed local/remote matched for `20260527000000` and `20260601000000`, with only the two reviewed durable migrations pending locally: `20260615000000` and `20260615001000`. `npx supabase db push --linked --dry-run` was dry-run only and reported it would push exactly `20260615000000_comment_translator_sessions.sql` and `20260615001000_comment_translator_usage_ledger_events.sql`. Phase A label: `phase-a-dry-run-reviewed-two-migrations-only`.
 
 ## Inspected Inputs
@@ -49,7 +49,7 @@ This thread did not have same-thread ready preflight, sanitized output review, a
 Free beta durable authority is limited to server-owned session and usage enforcement:
 
 - `comment_translator_sessions` is the durable active-session/session-history authority for one active session per user, heartbeat, session state, and sanitized stop reasons.
-- `comment_translator_usage_ledger_events` is the durable usage authority for daily/session time, translated messages per minute, monthly translated characters, provider request estimates, AI usage estimates, and quota/budget stop events.
+- `comment_translator_usage_ledger_events` is the durable usage authority for daily/session time, translated messages per minute, monthly provider-input characters, provider request estimates, AI usage estimates, and quota/budget stop events.
 - Missing or unreadable durable session state must fail closed as `durable-store-unavailable` with sanitized stop/status output.
 - Missing or unreadable durable usage state must fail closed as `durable-store-unavailable` with sanitized stop/status output before Start or provider translation execution.
 - Browser-readable output remains sanitized session/usage metadata only.
@@ -93,7 +93,7 @@ This record does not prove remote/deployed durability itself because remote appl
 | 30 minutes per session | `comment_translator_sessions` active session timestamps plus usage/session stop rows | Stop at session cap or fail closed when active session state is unreadable. |
 | 1 active session per user | `comment_translator_sessions` active row authority | Reject new Start with sanitized session-limit when an active row exists or when active-session reads fail. |
 | 30 translated messages per minute | `comment_translator_usage_ledger_events` per-session current-minute AI usage estimates | Block provider execution before call when the counter is over cap or unreadable. |
-| 20,000 translated characters per month | `comment_translator_usage_ledger_events` monthly AI usage estimates | Block provider execution before call when the monthly counter is over cap or unreadable. |
+| 20,000 provider-input characters per month | `comment_translator_usage_ledger_events` monthly AI usage estimates | Block provider execution before call when the monthly counter is over cap or unreadable. |
 
 Paid entitlement C1/C3, Stripe billing, and Creator paid limits are intentionally out of this Free cap matrix.
 

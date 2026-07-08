@@ -225,6 +225,7 @@ const usage = {
   },
   aiUsageEstimate: {
     translatedMessageEstimate: 0,
+    providerInputCharacterEstimate: 0,
     translatedCharacterEstimate: 0,
     estimatedCostMicros: 0,
     rawCommentText: "never-recorded-by-design"
@@ -576,6 +577,7 @@ for (const payload of [
 
 const allowedChangedFiles = new Set([
   "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
   "lib/comment-translator-azure-normal-translation-execution.ts",
   "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
   "lib/comment-translator-real-comments-feed-session-bridge.ts",
@@ -612,8 +614,59 @@ const allowedChangedFiles = new Set([
   readyPreflightPath,
   taskPath
 ]);
+const monthlyInputAccountingChangedFiles = new Set([
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
+  "lib/comment-translator.ts",
+  "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-free-beta-usage-display.ts",
+  "lib/comment-translator-provider-execution-runtime.ts",
+  "lib/comment-translator-public-entitlement-baseline.ts",
+  "lib/comment-translator-session-runtime.ts",
+  "lib/comment-translator-usage-ledger-runtime.ts",
+  "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
+  "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g1-remote-durable-enforcement-execution-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-remote-durable-enforcement-evidence-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-monitoring-incident-readiness-contract.mjs",
+  "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
+  "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+  "task.md"
+]);
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `Task 11 change stays in allowed files: ${file}`);
+  assert.ok(
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file),
+    `Task 11 change stays in allowed files: ${file}`
+  );
 
   if (file.endsWith(".mjs")) {
     continue;

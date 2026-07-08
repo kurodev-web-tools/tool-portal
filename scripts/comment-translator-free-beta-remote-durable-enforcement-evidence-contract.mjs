@@ -119,7 +119,7 @@ for (const requiredFragment of [
   "30 minutes per session",
   "1 active session per user",
   "30 translated messages per minute",
-  "20,000 translated characters per month",
+  "20,000 provider-input characters per month",
   "Paid entitlement C1/C3",
   "Stripe billing",
   "Creator paid limits",
@@ -226,7 +226,7 @@ const runtimeExpectations = [
   ["lib/comment-translator-durable-session-store.ts", /failClosedFallback:\s*"stop-session-when-durable-store-unavailable"/],
   ["lib/comment-translator-durable-usage-counter-store.ts", /tableName:\s*"comment_translator_usage_ledger_events"/],
   ["lib/comment-translator-durable-usage-counter-store.ts", /failClosedFallback:\s*"stop-session-when-durable-usage-store-unavailable"/],
-  ["lib/comment-translator-public-entitlement-baseline.ts", /monthlyTranslatedCharacters:\s*20_000/],
+  ["lib/comment-translator-public-entitlement-baseline.ts", /monthlyProviderInputCharacters:\s*20_000/],
   ["lib/comment-translator-session-runtime.ts", /dailyMinutes:\s*30[\s\S]*sessionMinutes:\s*30[\s\S]*translatedMessagesPerMinute:\s*30[\s\S]*activeSessionsPerUser:\s*1/],
   ["app/api/comment-translator/session/route.ts", /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/],
   ["app/tools/comment-translator/actions.ts", /readCommentTranslatorDurableActiveSessionOrFailClosed[\s\S]*readCommentTranslatorDurableUsageSnapshotOrFailClosed/]

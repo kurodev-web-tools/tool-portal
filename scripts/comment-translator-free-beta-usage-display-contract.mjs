@@ -155,7 +155,7 @@ const taskSource = read(taskPath);
 
 assert.match(usageDisplaySource, /^import "server-only";/m, "F12 usage display resolver is server-only");
 assert.match(usageDisplaySource, /commentTranslatorFreeBetaUsageDisplayContract/, "F12 exposes a focused usage display contract");
-assert.match(usageDisplaySource, /monthlyCharacterCap/, "F12 resolver carries monthly character cap display");
+assert.match(usageDisplaySource, /monthlyInputCharacterCap/, "F12 resolver carries monthly character cap display");
 assert.match(usageDisplaySource, /noProviderCallWhenOverLimit:\s*true/, "F12 contract fixes no-provider-call behavior");
 assert.match(usageDisplaySource, /publicLaunchAllowed:\s*false/, "F12 does not open public launch gate");
 assert.match(sessionRuntimeSource, /usageDisplay/, "browser-safe session state carries usage display metadata");
@@ -166,7 +166,11 @@ assert.match(
   /data-comment-translator-free-beta-usage-display="right-authoritative-sanitized-usage-only"/,
   "UI renders a single authoritative sanitized F12 usage display in the right panel"
 );
-assert.match(copySource, /monthlyCharacterCap/, "localized copy includes monthly character cap labels");
+assert.match(
+  copySource,
+  /Monthly input character cap|月間入力文字上限/,
+  "localized copy includes monthly input character cap labels"
+);
 assert.match(privateLaunchSource, /usageDisplay/, "private-launch blocked session state keeps the F12 usage display shape");
 assert.match(abuseRateLimitSource, /usageDisplay/, "abuse-rate-limited session state keeps the F12 usage display shape");
 assert.match(readinessDoc, /F12 Usage display for Free beta/i, "durable readiness doc records F12");
@@ -187,7 +191,7 @@ const baseUsage = {
   dailyUsedMs: 600_000,
   currentSessionElapsedMs: 120_000,
   translatedMessagesInCurrentMinute: 7,
-  monthlyTranslatedCharacterEstimate: 12_500,
+  monthlyProviderInputCharacterEstimate: 12_500,
   providerBudgetAvailable: true,
   globalBudgetAvailable: true,
   aiBudgetAvailable: true,
@@ -200,6 +204,7 @@ const baseUsage = {
   },
   aiUsageEstimate: {
     translatedMessageEstimate: 0,
+    providerInputCharacterEstimate: 0,
     translatedCharacterEstimate: 0,
     estimatedCostMicros: 0,
     rawCommentText: "never-recorded-by-design"
@@ -217,9 +222,9 @@ assert.equal(display.daily.usedSeconds, 720);
 assert.equal(display.daily.remainingSeconds, 1_080);
 assert.equal(display.perMinute.used, 7);
 assert.equal(display.perMinute.remaining, 23);
-assert.equal(display.monthlyCharacterCap.limit, 20_000);
-assert.equal(display.monthlyCharacterCap.used, 12_500);
-assert.equal(display.monthlyCharacterCap.remaining, 7_500);
+assert.equal(display.monthlyInputCharacterCap.limit, 20_000);
+assert.equal(display.monthlyInputCharacterCap.used, 12_500);
+assert.equal(display.monthlyInputCharacterCap.remaining, 7_500);
 assert.equal(display.providerCallPolicy.status, "allowed");
 assert.equal(display.noProviderCallWhenOverLimit, true);
 assert.equal(display.providerTargetMetadata, "forbidden");
@@ -227,7 +232,7 @@ assert.equal(display.rawComments, "not-returned-by-design");
 
 const overLimitUsage = {
   ...baseUsage,
-  monthlyTranslatedCharacterEstimate: 20_000,
+  monthlyProviderInputCharacterEstimate: 20_000,
   aiBudgetAvailable: false
 };
 const overLimitDisplay = usageDisplay.createCommentTranslatorFreeBetaUsageDisplay({
@@ -237,7 +242,7 @@ const overLimitDisplay = usageDisplay.createCommentTranslatorFreeBetaUsageDispla
 assert.equal(overLimitDisplay.status, "over-limit");
 assert.equal(overLimitDisplay.providerCallPolicy.status, "blocked-over-limit");
 assert.equal(overLimitDisplay.providerCallPolicy.stopReason, "ai-budget-stop");
-assert.equal(overLimitDisplay.monthlyCharacterCap.remaining, 0);
+assert.equal(overLimitDisplay.monthlyInputCharacterCap.remaining, 0);
 
 const unavailableDisplay = usageDisplay.createUnavailableCommentTranslatorFreeBetaUsageDisplay({
   reason: "durable-usage-unreadable"
@@ -263,7 +268,7 @@ const activeState = session.startCommentTranslatorSession({
 });
 assert.equal(activeState.status, "active");
 assert.equal(activeState.usageDisplay.status, "available");
-assert.equal(activeState.usageDisplay.monthlyCharacterCap.remaining, 7_500);
+assert.equal(activeState.usageDisplay.monthlyInputCharacterCap.remaining, 7_500);
 
 const cappedStart = session.startCommentTranslatorSession({
   nowMs: Date.parse("2026-06-16T00:00:00.000Z"),
@@ -440,10 +445,61 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
   taskPath
 ]);
+const monthlyInputAccountingChangedFiles = new Set([
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
+  "lib/comment-translator.ts",
+  "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-free-beta-usage-display.ts",
+  "lib/comment-translator-provider-execution-runtime.ts",
+  "lib/comment-translator-public-entitlement-baseline.ts",
+  "lib/comment-translator-session-runtime.ts",
+  "lib/comment-translator-usage-ledger-runtime.ts",
+  "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
+  "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g1-remote-durable-enforcement-execution-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-remote-durable-enforcement-evidence-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-monitoring-incident-readiness-contract.mjs",
+  "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
+  "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+  "task.md"
+]);
 const highConfidenceSecretPattern = /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+/i;
 const serverOnlyAdapterSecretPattern = /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i;
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `F12 change stays in allowed files: ${file}`);
+  assert.ok(
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file),
+    `F12 change stays in allowed files: ${file}`
+  );
 
   if (file.endsWith(".mjs")) {
     continue;

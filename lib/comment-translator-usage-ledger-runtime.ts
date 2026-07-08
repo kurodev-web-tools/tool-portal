@@ -29,6 +29,7 @@ export type CommentTranslatorUsageLedgerProviderRequestEstimate = {
 
 export type CommentTranslatorUsageLedgerAiUsageEstimate = {
   translatedMessageEstimate: number;
+  providerInputCharacterEstimate: number;
   translatedCharacterEstimate: number;
   estimatedCostMicros: number;
   rawCommentText: "never-recorded-by-design";
@@ -106,7 +107,7 @@ export type CommentTranslatorUsageLedgerSnapshot = {
   dailyUsedMs: number;
   currentSessionElapsedMs: number;
   translatedMessagesInCurrentMinute: number;
-  monthlyTranslatedCharacterEstimate: number;
+  monthlyProviderInputCharacterEstimate: number;
   providerBudgetAvailable: boolean;
   globalBudgetAvailable: boolean;
   aiBudgetAvailable: boolean;
@@ -123,6 +124,7 @@ export type CommentTranslatorAdminSafeAggregateMetrics = {
   totalProviderRequestEstimate: number;
   totalProviderQuotaUnitEstimate: number;
   totalAiTranslatedMessageEstimate: number;
+  totalAiProviderInputCharacterEstimate: number;
   totalAiTranslatedCharacterEstimate: number;
   totalAiCostEstimateMicros: number;
   quotaBudgetStopCounts: {
@@ -331,12 +333,12 @@ export function readInMemoryCommentTranslatorUsageSnapshot({
           record.type === "ai-usage-estimated" && record.occurredAtMs >= currentMinuteStartedAtMs
       )
       .reduce((total, record) => total + Math.max(0, record.translatedMessageEstimate), 0),
-    monthlyTranslatedCharacterEstimate: records
+    monthlyProviderInputCharacterEstimate: records
       .filter(
         (record): record is Extract<CommentTranslatorUsageLedgerRecord, { type: "ai-usage-estimated" }> =>
           record.type === "ai-usage-estimated" && monthBucket(record.occurredAtMs) === currentMonth
       )
-      .reduce((total, record) => total + Math.max(0, record.translatedCharacterEstimate), 0),
+      .reduce((total, record) => total + Math.max(0, record.providerInputCharacterEstimate), 0),
     providerBudgetAvailable: !dailyRecords.some(
       (record) => record.type === "quota-budget-stop" && record.stopCategory === "provider-quota"
     ),
@@ -384,6 +386,7 @@ export function createCommentTranslatorAdminSafeAggregateMetrics({
     totalProviderRequestEstimate: providerEstimate.requestEstimateCount,
     totalProviderQuotaUnitEstimate: providerEstimate.quotaUnitEstimate,
     totalAiTranslatedMessageEstimate: aiEstimate.translatedMessageEstimate,
+    totalAiProviderInputCharacterEstimate: aiEstimate.providerInputCharacterEstimate,
     totalAiTranslatedCharacterEstimate: aiEstimate.translatedCharacterEstimate,
     totalAiCostEstimateMicros: aiEstimate.estimatedCostMicros,
     quotaBudgetStopCounts: {
@@ -439,12 +442,15 @@ function aggregateAiUsageEstimate(records: readonly CommentTranslatorUsageLedger
     .reduce(
       (total, record) => ({
         translatedMessageEstimate: total.translatedMessageEstimate + Math.max(0, record.translatedMessageEstimate),
+        providerInputCharacterEstimate:
+          total.providerInputCharacterEstimate + Math.max(0, record.providerInputCharacterEstimate),
         translatedCharacterEstimate: total.translatedCharacterEstimate + Math.max(0, record.translatedCharacterEstimate),
         estimatedCostMicros: total.estimatedCostMicros + Math.max(0, record.estimatedCostMicros),
         rawCommentText: "never-recorded-by-design"
       }),
       {
         translatedMessageEstimate: 0,
+        providerInputCharacterEstimate: 0,
         translatedCharacterEstimate: 0,
         estimatedCostMicros: 0,
         rawCommentText: "never-recorded-by-design"

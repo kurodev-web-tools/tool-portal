@@ -150,15 +150,15 @@ const taskSource = read(taskPath);
 assert.match(entitlementSource, /^import "server-only";/m, "public entitlement resolver is server-only");
 assert.match(entitlementSource, /commentTranslatorPublicEntitlementBaselineContract/, "resolver exposes F5 contract");
 assert.match(entitlementSource, /resolveCommentTranslatorPublicEntitlementBaseline/, "resolver exports Free public beta baseline resolver");
-assert.match(entitlementSource, /monthlyTranslatedCharacterLimit/, "resolver carries monthly translated character limit");
-assert.match(entitlementSource, /20_000/, "resolver encodes the 20,000 characters/month Free cap");
+assert.match(entitlementSource, /monthlyProviderInputCharacterLimit/, "resolver carries monthly provider-input character limit");
+assert.match(entitlementSource, /20_000/, "resolver encodes the 20,000 provider-input characters/month Free cap");
 assert.match(entitlementSource, /degradedFrom/, "resolver records safe Free degradation source");
 assert.match(entitlementSource, /publicLaunchAllowed:\s*false/, "resolver does not open public launch gate");
 
-assert.match(sessionRuntimeSource, /monthlyTranslatedCharacterLimit/, "session entitlement type carries monthly character cap");
-assert.match(sessionRuntimeSource, /monthlyTranslatedCharacters:\s*20_000/, "session contract records the Free monthly character cap");
-assert.match(usageLedgerSource, /monthlyTranslatedCharacterEstimate/, "usage ledger exposes monthly translated character estimate");
-assert.match(durableUsageSource, /monthlyTranslatedCharacterEstimate/, "durable usage adapter exposes monthly translated character estimate");
+assert.match(sessionRuntimeSource, /monthlyProviderInputCharacterLimit/, "session entitlement type carries monthly provider-input character cap");
+assert.match(sessionRuntimeSource, /monthlyProviderInputCharacters:\s*20_000/, "session contract records the Free monthly provider-input character cap");
+assert.match(usageLedgerSource, /monthlyProviderInputCharacterEstimate/, "usage ledger exposes monthly provider-input character estimate");
+assert.match(durableUsageSource, /monthlyProviderInputCharacterEstimate/, "durable usage adapter exposes monthly provider-input character estimate");
 
 assert.match(routeSource, /resolveCommentTranslatorPublicEntitlementBaseline/, "session route resolves F5 public entitlement baseline");
 assert.match(routeSource, /entitlementBaseline\.plan/, "session route uses resolver plan");
@@ -168,8 +168,8 @@ assert.match(actionSource, /entitlementBaseline\.plan/, "server actions use reso
 assert.match(actionSource, /entitlementBaseline\.usage/, "server actions use resolver usage");
 
 assert.match(readinessDoc, /F5 public entitlement baseline/i, "durable readiness doc records F5 baseline");
-assert.match(readinessDoc, /20,000 characters\/month/i, "durable readiness doc records monthly character cap");
-assert.match(gapAudit, /F5[\s\S]*monthly character cap/i, "gap audit F5 requirement remains visible");
+assert.match(readinessDoc, /20,000 provider-input characters\/month/i, "durable readiness doc records monthly provider-input character cap");
+assert.match(gapAudit, /F5[\s\S]*monthly provider-input character cap/i, "gap audit F5 requirement remains visible");
 
 const entitlement = loadTsModule(entitlementPath);
 const session = loadTsModule(sessionRuntimePath);
@@ -184,20 +184,20 @@ assert.equal(entitlement.commentTranslatorPublicEntitlementBaselineContract.free
 assert.equal(entitlement.commentTranslatorPublicEntitlementBaselineContract.freePlanLimits.sessionMinutes, 30);
 assert.equal(entitlement.commentTranslatorPublicEntitlementBaselineContract.freePlanLimits.translatedMessagesPerMinute, 30);
 assert.equal(entitlement.commentTranslatorPublicEntitlementBaselineContract.freePlanLimits.activeSessionsPerUser, 1);
-assert.equal(entitlement.commentTranslatorPublicEntitlementBaselineContract.freePlanLimits.monthlyTranslatedCharacters, 20_000);
+assert.equal(entitlement.commentTranslatorPublicEntitlementBaselineContract.freePlanLimits.monthlyProviderInputCharacters, 20_000);
 
 const freeEntitlement = session.createCommentTranslatorSessionPlanEntitlement({ plan: "free" });
 assert.equal(freeEntitlement.dailyLimitMs, 1_800_000);
 assert.equal(freeEntitlement.sessionLimitMs, 1_800_000);
 assert.equal(freeEntitlement.translatedMessagesPerMinute, 30);
 assert.equal(freeEntitlement.activeSessionsPerUser, 1);
-assert.equal(freeEntitlement.monthlyTranslatedCharacterLimit, 20_000);
+assert.equal(freeEntitlement.monthlyProviderInputCharacterLimit, 20_000);
 
 const baseUsage = {
   dailyUsedMs: 0,
   currentSessionElapsedMs: 0,
   translatedMessagesInCurrentMinute: 0,
-  monthlyTranslatedCharacterEstimate: 19_999,
+  monthlyProviderInputCharacterEstimate: 19_999,
   providerBudgetAvailable: true,
   globalBudgetAvailable: true,
   aiBudgetAvailable: true,
@@ -210,6 +210,7 @@ const baseUsage = {
   },
   aiUsageEstimate: {
     translatedMessageEstimate: 0,
+    providerInputCharacterEstimate: 0,
     translatedCharacterEstimate: 0,
     estimatedCostMicros: 0,
     rawCommentText: "never-recorded-by-design"
@@ -230,10 +231,10 @@ const freeBaseline = entitlement.resolveCommentTranslatorPublicEntitlementBaseli
 });
 assert.equal(freeBaseline.status, "ready");
 assert.equal(freeBaseline.plan, "free");
-assert.equal(freeBaseline.monthlyTranslatedCharacterLimit, 20_000);
-assert.equal(freeBaseline.monthlyTranslatedCharacterRemaining, 1);
+assert.equal(freeBaseline.monthlyProviderInputCharacterLimit, 20_000);
+assert.equal(freeBaseline.monthlyProviderInputCharacterRemaining, 1);
 assert.equal(freeBaseline.usage.aiBudgetAvailable, true);
-assert.equal(freeBaseline.usage.planEntitlement.monthlyTranslatedCharacterLimit, 20_000);
+assert.equal(freeBaseline.usage.planEntitlement.monthlyProviderInputCharacterLimit, 20_000);
 assert.equal(freeBaseline.degradedFrom, null);
 
 const paidDegraded = entitlement.resolveCommentTranslatorPublicEntitlementBaseline({
@@ -281,14 +282,14 @@ const cappedBaseline = entitlement.resolveCommentTranslatorPublicEntitlementBase
     status: "ready",
     snapshot: {
       ...baseUsage,
-      monthlyTranslatedCharacterEstimate: 20_000
+      monthlyProviderInputCharacterEstimate: 20_000
     },
     authority: "durable-store"
   }
 });
 assert.equal(cappedBaseline.status, "ready");
-assert.equal(cappedBaseline.monthlyTranslatedCharacterRemaining, 0);
-assert.equal(cappedBaseline.usage.aiBudgetAvailable, false, "monthly character cap disables AI budget availability");
+assert.equal(cappedBaseline.monthlyProviderInputCharacterRemaining, 0);
+assert.equal(cappedBaseline.usage.aiBudgetAvailable, false, "monthly provider-input character cap disables AI budget availability");
 
 const failClosed = entitlement.resolveCommentTranslatorPublicEntitlementBaseline({
   billingSnapshot: {
@@ -330,9 +331,9 @@ assert.equal(overCapStart.stopReason, "ai-budget-stop");
 assert.equal(overCapStart.providerTargetMetadata, "forbidden");
 assert.equal(overCapStart.tokenValue, "never-returned-by-design");
 
-assert.match(taskSource, /F5 public entitlement baseline/i, "task.md records F5 work");
-assert.match(taskSource, /20,000 characters\/month/i, "task.md records the monthly cap as additive");
-assert.match(taskSource, /Width checks skipped[\s\S]*no UI\/CSS\/rendered route\/visible layout change/i, "task.md records width-check skip reason");
+assert.match(taskSource, /monthly_input_character_accounting_status=complete/i, "task.md records current monthly input accounting work");
+assert.match(taskSource, /20,000 provider-input\/source characters per month/i, "task.md records the monthly provider-input cap as additive");
+assert.match(taskSource, /monthly_input_character_accounting_status=complete/i, "task.md records current monthly input accounting completion");
 
 for (const source of [entitlementSource, sessionRuntimeSource, usageLedgerSource, durableUsageSource, routeSource, actionSource, readinessDoc, gapAudit, taskSource]) {
   assert.doesNotMatch(
@@ -351,8 +352,59 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
   taskPath
 ]);
+const monthlyInputAccountingChangedFiles = new Set([
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
+  "lib/comment-translator.ts",
+  "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-free-beta-usage-display.ts",
+  "lib/comment-translator-provider-execution-runtime.ts",
+  "lib/comment-translator-public-entitlement-baseline.ts",
+  "lib/comment-translator-session-runtime.ts",
+  "lib/comment-translator-usage-ledger-runtime.ts",
+  "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
+  "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g1-remote-durable-enforcement-execution-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-remote-durable-enforcement-evidence-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-monitoring-incident-readiness-contract.mjs",
+  "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
+  "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+  "task.md"
+]);
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `F5 change stays in allowed files: ${file}`);
+  assert.ok(
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file),
+    `F5 change stays in allowed files: ${file}`
+  );
 }
 
 console.log("comment translator public entitlement baseline contract checks passed");

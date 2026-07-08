@@ -85,6 +85,7 @@ export type CommentTranslatorAzureNormalTranslationEligibilitySummary = {
 export type CommentTranslatorAzureNormalTranslationUsageHandoffEstimate = {
   providerRequestEstimateCount: number;
   translatedMessageEstimate: number;
+  providerInputCharacterEstimate: number;
   translatedCharacterEstimate: number;
   estimatedCostMicros: number;
   durableUsageWrite:
@@ -764,8 +765,12 @@ function createUsageHandoffEstimate(
   return {
     providerRequestEstimateCount: execution.providerCallCount,
     translatedMessageEstimate: providerExecutedTranslations.length,
+    providerInputCharacterEstimate: providerExecutedTranslations.reduce(
+      (total, translation) => total + translation.providerInputCharacterEstimate,
+      0
+    ),
     translatedCharacterEstimate: providerExecutedTranslations.reduce(
-      (total, translation) => total + Array.from(translation.translatedText).length,
+      (total, translation) => total + translation.translatedCharacterEstimate,
       0
     ),
     estimatedCostMicros: providerExecutedTranslations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
@@ -838,8 +843,12 @@ function createDurableUsageHandoffEvents({
       sessionReferenceId: request.sessionReferenceId,
       occurredAtMs: request.occurredAtMs,
       translatedMessageEstimate: providerExecutedTranslations.length,
+      providerInputCharacterEstimate: providerExecutedTranslations.reduce(
+        (total, translation) => total + translation.providerInputCharacterEstimate,
+        0
+      ),
       translatedCharacterEstimate: providerExecutedTranslations.reduce(
-        (total, translation) => total + Array.from(translation.translatedText).length,
+        (total, translation) => total + translation.translatedCharacterEstimate,
         0
       ),
       estimatedCostMicros: providerExecutedTranslations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
@@ -958,13 +967,13 @@ function resolvePreProviderQuotaPolicy({
     };
   }
 
-  const monthlyTranslatedCharacterEstimate = Math.max(0, usage.monthlyTranslatedCharacterEstimate ?? 0);
-  const monthlyTranslatedCharacterLimit = Math.max(0, entitlement.monthlyTranslatedCharacterLimit ?? 20_000);
-  const pendingCharacterEstimate = providerCandidateMessages.reduce(
+  const monthlyProviderInputCharacterEstimate = Math.max(0, usage.monthlyProviderInputCharacterEstimate ?? 0);
+  const monthlyProviderInputCharacterLimit = Math.max(0, entitlement.monthlyProviderInputCharacterLimit ?? 20_000);
+  const pendingProviderInputCharacterEstimate = providerCandidateMessages.reduce(
     (total, message) => total + Array.from(message.text?.trim() ?? "").length,
     0
   );
-  if (monthlyTranslatedCharacterEstimate + pendingCharacterEstimate > monthlyTranslatedCharacterLimit) {
+  if (monthlyProviderInputCharacterEstimate + pendingProviderInputCharacterEstimate > monthlyProviderInputCharacterLimit) {
     return {
       status: "blocked",
       stopReason: "ai-budget-stop"

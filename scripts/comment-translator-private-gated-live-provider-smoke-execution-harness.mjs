@@ -845,6 +845,7 @@ function createTask27UsageSnapshot() {
     },
     aiUsageEstimate: {
       translatedMessageEstimate: 0,
+      providerInputCharacterEstimate: 0,
       translatedCharacterEstimate: 0,
       estimatedCostMicros: 0,
       rawCommentText: "never-recorded-by-design"

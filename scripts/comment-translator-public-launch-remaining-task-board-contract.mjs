@@ -22,6 +22,9 @@ for (const marker of [
   "`public_gate_flip_status` | `not-run`",
   "`main_promotion_status` | `not-run`",
   "`obs_dock_display_name_policy_status` | `complete`",
+  "`public_beta_access_gate_decision_status` | `complete`",
+  "`public_beta_access_gate_selected` | `login-only`",
+  "`public_beta_waitlist_boundary` | `creator-paid-beta-only`",
   "`Monthly input character accounting`",
   "`Free limits public copy`",
   "`OBS Dock display-name policy`",
@@ -31,8 +34,10 @@ for (const marker of [
   "`PL-G5 release-owner decision`",
   "`PL-G6 public access change / promotion`",
   "The Step 8 update is a policy/UI/contract slice only.",
+  "The Step 9 update is a policy/contract/documentation slice only.",
   "Public copy changes: complete for Free limits public copy; no quota enforcement logic changed.",
   "OBS Dock behavior: display-name policy only.",
+  "Public beta access gate behavior: decision only.",
   "Supabase default privileges remediation/apply: not run."
 ]) {
   assert.ok(doc.includes(marker), `launch remaining task board doc records ${marker}`);
@@ -44,7 +49,8 @@ for (const marker of [
   "monthly_input_character_accounting_status=complete",
   "free_limits_public_copy_status=complete",
   "obs_dock_display_name_policy_status=complete",
-  "public_beta_access_gate_decision_status=pending",
+  "public_beta_access_gate_decision_status=complete",
+  "public_beta_access_gate_selected=login-only",
   "public_traffic_rate_limit_backing_status=pending",
   "support_response_status=pending",
   "risk_acceptance_status=not-recorded",

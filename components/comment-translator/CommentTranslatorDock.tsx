@@ -31,7 +31,9 @@ import {
 import {
   createUnavailableCommentTranslatorRealCommentsFeedState,
   mapCommentTranslatorRealCommentsFeedRowsToUiComments,
+  resolveCommentTranslatorAuthorDisplayNamePolicy,
   resolveCommentTranslatorBrowserTimeZone,
+  type CommentTranslatorAuthorDisplayNamePolicy,
   type CommentTranslatorRealCommentsFeedState
 } from "@/lib/comment-translator-real-comments-feed-shared";
 import { readLocalTimeZonePreference, timeZonePreferenceChangeEvent, timeZonePreferenceStorageKey } from "@/lib/local-preferences";
@@ -312,11 +314,13 @@ function StatTile({ label, value, helper }: { label: string; value: string; help
 function CommentCard({
   comment,
   displayMode,
+  authorDisplayNamePolicy,
   targetLanguageLabel,
   copy
 }: {
   comment: CommentTranslatorComment;
   displayMode: CommentTranslatorDisplayMode;
+  authorDisplayNamePolicy: CommentTranslatorAuthorDisplayNamePolicy;
   targetLanguageLabel: string;
   copy: CommentTranslatorUiCopy;
 }) {
@@ -340,7 +344,11 @@ function CommentCard({
           <div className="flex flex-wrap items-center gap-2">
             <h3
               data-comment-translator-preview-author-display-name="safe-display-name"
-              className="min-w-0 max-w-full break-words text-sm font-black text-foreground"
+              data-comment-translator-obs-dock-author-display-name={authorDisplayNamePolicy.marker}
+              className={[
+                "min-w-0 max-w-full text-sm font-black text-foreground",
+                authorDisplayNamePolicy.streamSafe ? "max-w-[11rem] truncate" : "break-words"
+              ].join(" ")}
             >
               {comment.authorName}
             </h3>
@@ -536,6 +544,7 @@ export function CommentTranslatorDock({
   const [targetLanguage, setTargetLanguage] = useState<CommentTranslatorTargetLanguageId>(settings.targetLanguage);
   const [displayMode, setDisplayMode] = useState<CommentTranslatorDisplayMode>(settings.displayMode);
   const [surfaceMode, setSurfaceMode] = useState<CommentTranslatorSurfaceMode>(settings.surfaceMode);
+  const [showStreamSafeAuthorDisplayNames, setShowStreamSafeAuthorDisplayNames] = useState(false);
   const [statusFilter, setStatusFilter] = useState<CommentTranslatorStatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"normal" | "comments">("normal");
@@ -602,11 +611,18 @@ export function CommentTranslatorDock({
     label: copy.surfaces[surface.id].label,
     helper: copy.surfaces[surface.id].helper
   }));
+  const commentOnly = viewMode === "comments";
+  const authorDisplayNamePolicy = resolveCommentTranslatorAuthorDisplayNamePolicy({
+    surfaceMode,
+    viewMode,
+    showSafeAuthorDisplayNamesInStreamSafeMode: showStreamSafeAuthorDisplayNames
+  });
   const feedComments = mapCommentTranslatorRealCommentsFeedRowsToUiComments({
     feed: realCommentsFeed,
     targetLanguageLabel: localizedTargetLanguage.label,
     locale,
-    timeZone: browserTimeZone
+    timeZone: browserTimeZone,
+    authorDisplayNamePolicy
   });
   const publicFeedComments = feedComments.filter((comment) => comment.status !== "skipped");
   const filteredComments = filterCommentTranslatorComments(publicFeedComments, { statusFilter, searchQuery });
@@ -655,7 +671,6 @@ export function CommentTranslatorDock({
     sessionState.stopReason === "reconnect-required";
   const startBlockedByCredentialStatus = credentialStatusState !== "available";
   const startBlockedByUsagePolicy = !startBlockedByRateLimit && usageDisplay.providerCallPolicy.status !== "allowed";
-  const commentOnly = viewMode === "comments";
 
   function runSessionCommand(intent: "status" | "start" | "stop" | "heartbeat") {
     startSessionTransition(async () => {
@@ -1127,6 +1142,23 @@ export function CommentTranslatorDock({
                       })}
                     </div>
                   </div>
+                  <label
+                    data-comment-translator-obs-dock-display-name-setting="explicit-toggle"
+                    className="flex min-w-0 items-start gap-2 rounded-base border border-border bg-background/65 px-3 py-2 text-xs font-semibold leading-5 text-muted"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={showStreamSafeAuthorDisplayNames}
+                      onChange={(event) => setShowStreamSafeAuthorDisplayNames(event.target.checked)}
+                      className="mt-1 h-4 w-4 shrink-0 rounded border-border text-primary"
+                    />
+                    <span className="min-w-0">
+                      <span className="block break-words font-black text-foreground">
+                        {copy.displayNamePolicy.streamSafeToggleLabel}
+                      </span>
+                      <span className="mt-1 block break-words">{copy.displayNamePolicy.streamSafeToggleHelper}</span>
+                    </span>
+                  </label>
                   <div className="rounded-base border border-border bg-background/65 px-3 py-2 text-sm">
                     <div className="flex justify-between gap-3">
                       <span className="text-muted">{copy.controls.currentPair}</span>
@@ -1143,6 +1175,7 @@ export function CommentTranslatorDock({
 
           <main
             data-comment-translator-real-comments-feed="server-owned-safe-rows"
+            data-comment-translator-obs-dock-display-name-policy={authorDisplayNamePolicy.marker}
             className="panel flex min-h-[34rem] min-w-0 flex-col overflow-hidden"
           >
             <div data-layout="live-header-two-row" className="grid gap-3 border-b border-border p-4">
@@ -1165,6 +1198,11 @@ export function CommentTranslatorDock({
                   <div className="flex flex-wrap gap-2">
                     <span className="rounded-base border border-primary/30 bg-primary-soft px-2.5 py-1 text-xs font-black text-primary-strong">
                       {liveStats.translated} {copy.stats.translated}
+                    </span>
+                    <span className="rounded-base border border-border bg-surface px-2.5 py-1 text-xs font-black text-muted">
+                      {authorDisplayNamePolicy.showSafeAuthorDisplayName
+                        ? copy.displayNamePolicy.streamSafeShownBadge
+                        : copy.displayNamePolicy.streamSafeDefaultBadge}
                     </span>
                   </div>
                 )}
@@ -1257,6 +1295,7 @@ export function CommentTranslatorDock({
                     key={comment.id}
                     comment={comment}
                     displayMode={displayMode}
+                    authorDisplayNamePolicy={authorDisplayNamePolicy}
                     targetLanguageLabel={localizedTargetLanguage.label}
                     copy={copy}
                   />

@@ -430,6 +430,12 @@ export const commentTranslatorUiCopy = {
       "obs-browser-dock": { label: "OBS Browser Dock", helper: "配信者向けの密な表示" },
       "narrow-viewport": { label: "狭い画面", helper: "1カラム確認用" }
     },
+    displayNamePolicy: {
+      streamSafeToggleLabel: "コメントのみ表示で安全な表示名を出す",
+      streamSafeToggleHelper: "オフの場合、配信に映るcompact表示では YouTube viewer と表示します。",
+      streamSafeDefaultBadge: "表示名: 非表示",
+      streamSafeShownBadge: "表示名: 安全名"
+    },
     filters: {
       all: "すべて",
       translated: "翻訳済み",
@@ -801,6 +807,12 @@ export const commentTranslatorUiCopy = {
     surfaces: {
       "obs-browser-dock": { label: "OBS Browser Dock", helper: "Dense broadcaster view" },
       "narrow-viewport": { label: "Narrow Viewport", helper: "Single-column review" }
+    },
+    displayNamePolicy: {
+      streamSafeToggleLabel: "Show safe names in comments-only view",
+      streamSafeToggleHelper: "When off, compact stream-safe display uses YouTube viewer.",
+      streamSafeDefaultBadge: "Names hidden",
+      streamSafeShownBadge: "Safe names on"
     },
     filters: {
       all: "All",

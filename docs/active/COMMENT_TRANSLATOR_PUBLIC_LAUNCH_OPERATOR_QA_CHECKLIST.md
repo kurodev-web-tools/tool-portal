@@ -24,6 +24,9 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser` |
 | `operator_production_api_managed_challenge_status` | `not-selected` |
 | `operator_production_harness_block_status` | `action-required-before-production` |
+| `cloudflare_custom_rule_operations_doc_status` | `complete` |
+| `cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md` |
+| `api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only` |
 | `supabase_future_default_privileges_risk` | `accepted-for-pl-g5-evaluation` |
 | `public_gate_flip_status` | `not-run` |
 | `deploy_upload_status` | `not-run` |
@@ -47,6 +50,8 @@ The release operator reported the following external checks with sanitized evide
 `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` is treated as a safe control reference label for the Cloudflare-backed policy. The current app/runtime contracts do not parse its value as a behavior flag, so the operator-provided `enabled` presence label is sufficient for this checklist.
 
 The preview Managed Challenge rule may include `/api/comment-translator/` only as a preview-specific verification measure because the operator confirmed the current browser flow still works. Production should not use API Managed Challenge as the default API protection; prefer a production harness block plus API rate limiting / app-side limits for API traffic, and keep Managed Challenge as an emergency or HTML-route-only control.
+
+Operational guidance for Free public launch, Creator/Paid transition, traffic-growth response, and API-vs-HTML boundaries is centralized in `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`.
 
 ## User-Owned External Checks
 
@@ -72,9 +77,13 @@ Minimum operator check:
 2. Confirm edge rate limiting protects the translator public route/action classes before broad public traffic reaches the app.
 3. Confirm `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` is present as a safe control reference in the intended Cloudflare environment if the deployment path uses it.
 4. Run only a small synthetic burst against an approved preview or production target after approval.
-5. Record only status labels, route class labels, blocked/allowed counts, and pass/fail.
+5. Confirm production API Managed Challenge remains `not-selected` unless a temporary emergency exception is explicitly recorded.
+6. Confirm production route/API harness exposure is blocked or removed before production traffic.
+7. Record only status labels, route class labels, blocked/allowed counts, and pass/fail.
 
 Do not record Cloudflare API tokens, account ids, zone ids, rule ids unless they are intentionally safe public references, raw request IPs, headers, cookies, or request bodies.
+
+Preferred API protection order is app-side durable quotas/session caps/rate guards, Cloudflare Rate Limiting Rules for load shedding when available, targeted blocks for known abusive route classes, and Managed Challenge only for HTML routes or temporary emergency response.
 
 ### Browser Smoke Check
 
@@ -127,6 +136,7 @@ This checklist is complete when local docs/contract verification passes. It does
 Required closeout labels:
 
 - `public_launch_operator_qa_checklist_status=complete`
+- `cloudflare_custom_rule_operations_doc_status=complete`
 - `codex_local_verification_status=pass`
 - `operator_external_verification_status=partial-pass-preview-browser`
 - `operator_remaining_external_verification_status=action-required`

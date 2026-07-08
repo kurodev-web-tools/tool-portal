@@ -16,6 +16,8 @@ The Step 11 update is a policy/contract/documentation slice only. Supabase Suppo
 
 The operator QA checklist update is a documentation/contract slice only. It separates operator-owned external checks from Codex-owned deterministic checks before PL-G5 / PL-G6. The 2026-07-09 operator update records preview Managed Challenge setup, safe `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` presence, login-only Free beta browser smoke, Creator/paid waitlist boundary smoke, and YouTube-connect no-autostart smoke. Production edge activation, production API Managed Challenge, production harness blocking, live/provider execution, deploy/upload, public gate flip, and main promotion remain not-run / approval-gated unless separately stated.
 
+The Cloudflare custom-rule operations update is a documentation/contract slice only. `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md` records Free public launch, Creator/Paid transition, API-vs-HTML Managed Challenge boundaries, Turnstile / Pre-clearance treatment, Rate Limiting preference, traffic-growth response ladder, release-operator checks, and non-actions. It does not run Cloudflare mutation, deploy/upload, public gate flip, live/provider execution, paid entitlement runtime, or main promotion.
+
 Sanitization boundary: this document records only task labels, status labels, and public file/path references. It does not include project identifiers, support ticket ids, raw support text, private owner role values, raw SQL output, raw stdout/stderr, raw response bodies, account identity values, tokens, secrets, credential values, connection strings, headers, browser storage, owner ids, internal user ids, provider private identifiers, raw comments, or raw account metadata.
 
 ## Current Launch State
@@ -46,6 +48,11 @@ Sanitization boundary: this document records only task labels, status labels, an
 | `operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser` |
 | `operator_production_api_managed_challenge_status` | `not-selected` |
 | `operator_production_harness_block_status` | `action-required-before-production` |
+| `cloudflare_custom_rule_operations_doc_status` | `complete` |
+| `cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md` |
+| `free_public_launch_default` | `login-turnstile-app-quotas-no-constant-ordinary-route-challenge` |
+| `api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only` |
+| `traffic_growth_response_ladder_status` | `documented` |
 | `codex_local_verification_status` | `pass` |
 | `public_release_capable_status` | `no` |
 | `public_gate_flip_status` | `not-run` |
@@ -61,9 +68,10 @@ Sanitization boundary: this document records only task labels, status labels, an
 6. `Public traffic rate-limit backing`: complete. Public traffic backing is selected as `cloudflare-edge`; no Supabase durable rate-limit table is created, and risk acceptance is not selected. Current in-app rate-limit guard remains defense-in-depth until a separate approval-gated Cloudflare edge activation operation.
 7. `Supabase default privileges support response or risk acceptance`: complete. Supabase Support response remains pending, and the known future `public` object default-privileges risk is accepted for PL-G5 evaluation. Current-table/RLS/current-grant pass posture is not part of the accepted risk.
 8. `Public launch operator QA checklist`: complete. User-owned external checks and Codex-owned deterministic checks are separated in `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md`; preview Cloudflare/browser checks are partially passed by operator report, while production edge activation, production harness blocking, live/provider checks, deploy/upload, public gate flip, and main promotion remain action-required / approval-gated.
-9. `PL-G5 release-owner decision`: record the release-owner public launch decision with all accepted residual risks.
-10. `PL-G6 public access change / promotion`: approval-gated public gate flip, production domain cutover, deploy/upload, or integration-to-main promotion.
-11. `Final production smoke`: approval-gated final production/main-domain smoke with sanitized pass/fail/count/status evidence only.
+9. `Cloudflare custom-rule operations doc`: complete. The operational guide is `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`; it records Free public launch defaults, Creator/Paid transition handling, API-vs-HTML Managed Challenge boundary, Rate Limiting preference, Turnstile Pre-clearance as later improvement, traffic-growth response ladder, release-operator checks, and non-actions.
+10. `PL-G5 release-owner decision`: record the release-owner public launch decision with all accepted residual risks.
+11. `PL-G6 public access change / promotion`: approval-gated public gate flip, production domain cutover, deploy/upload, or integration-to-main promotion.
+12. `Final production smoke`: approval-gated final production/main-domain smoke with sanitized pass/fail/count/status evidence only.
 
 ## Public-Before-Paid Boundary
 
@@ -86,6 +94,7 @@ Paid/Creator entitlement work remains later work unless explicitly pulled into p
 - Edge/durable rate-limit control: Cloudflare edge backing selected only; activation not run.
 - Supabase default privileges remediation/apply: not run.
 - Public launch operator QA checklist: complete for docs/contract separation and 2026-07-09 sanitized operator update. Preview Managed Challenge setup, safe edge-control reference presence, login-only Free beta browser smoke, Creator/paid waitlist boundary smoke, and YouTube-connect no-autostart smoke are recorded as partial external pass. Production edge activation, production API Managed Challenge, production harness blocking, optional burst comment smoke, optional 30-minute session smoke, optional monthly cap fixture/live smoke, Start-to-translation live smoke, deploy/upload, public gate flip, remote mutation, and main promotion remain not-run / approval-gated.
+- Cloudflare custom-rule operations: complete for docs/contract guidance only. Free public launch defaults to login Turnstile plus app-side quotas/session limits without constant ordinary-route challenge; production API Managed Challenge remains not-selected; Cloudflare Rate Limiting Rules are preferred for API load shedding where available; Managed Challenge remains HTML-route or emergency/temporary control; paid/Creator entitlement stays app-side; traffic-growth response ladder is documented. No Cloudflare mutation, deploy/upload, public gate flip, live/provider execution, paid entitlement runtime, or main promotion was run.
 - Remote Supabase migration apply, `db push`, repair, reset, deploy/upload, public gate flip, live/provider/OAuth/Stripe actions, row mutation, current-table grant/policy rewrite, raw response capture, browser storage capture, credential exposure, public access change, and promotion to `main`: not run.
 
 ## Verification

@@ -9,6 +9,7 @@ const taskBoardPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TA
 const taskPath = "task.md";
 const rateLimitDecisionPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_TRAFFIC_RATE_LIMIT_BACKING_DECISION.md";
 const requirementsPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md";
+const operationsDocPath = "docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md";
 const sessionRuntimePath = "lib/comment-translator-session-runtime.ts";
 const usageDisplayPath = "lib/comment-translator-free-beta-usage-display.ts";
 const abuseRuntimePath = "lib/comment-translator-abuse-rate-limit-runtime.ts";
@@ -93,6 +94,7 @@ for (const requiredPath of [
   taskPath,
   rateLimitDecisionPath,
   requirementsPath,
+  operationsDocPath,
   sessionRuntimePath,
   usageDisplayPath,
   abuseRuntimePath,
@@ -109,6 +111,7 @@ const taskBoard = read(taskBoardPath);
 const task = read(taskPath);
 const rateLimitDecision = read(rateLimitDecisionPath);
 const requirements = read(requirementsPath);
+const operationsDoc = read(operationsDocPath);
 const sessionRuntime = read(sessionRuntimePath);
 const usageDisplay = read(usageDisplayPath);
 const abuseRuntime = read(abuseRuntimePath);
@@ -116,7 +119,7 @@ const publicAccessPolicy = read(publicAccessPolicyPath);
 const azureRuntimeContract = read(azureRuntimeContractPath);
 const monthlyContract = read(monthlyContractPath);
 const publicAccessContract = read(publicAccessContractPath);
-const combinedDocs = [checklist, taskBoard, task, rateLimitDecision, requirements].join("\n");
+const combinedDocs = [checklist, taskBoard, task, rateLimitDecision, requirements, operationsDoc].join("\n");
 
 for (const section of [
   "## Current Decision Labels",
@@ -147,6 +150,9 @@ for (const fragment of [
   "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
   "`operator_production_harness_block_status` | `action-required-before-production`",
+  "`cloudflare_custom_rule_operations_doc_status` | `complete`",
+  "`cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`",
+  "`api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only`",
   "`operator_start_to_translation_smoke_status`",
   "`operator_burst_comment_smoke_status`",
   "`operator_session_30_min_smoke_status`",
@@ -160,7 +166,10 @@ for (const fragment of [
   "do not start with one person manually typing 30 comments into production",
   "fake-clock or server-fixture coverage is the primary proof",
   "do not consume real monthly quota just to prove the cap",
+  "Operational guidance for Free public launch, Creator/Paid transition, traffic-growth response, and API-vs-HTML boundaries is centralized in `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`.",
+  "Preferred API protection order is app-side durable quotas/session caps/rate guards",
   "public_launch_operator_qa_checklist_status=complete",
+  "cloudflare_custom_rule_operations_doc_status=complete",
   "operator_external_verification_status=partial-pass-preview-browser",
   "operator_remaining_external_verification_status=action-required",
   "public_release_capable_status=no"
@@ -179,8 +188,14 @@ for (const fragment of [
   "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
   "`operator_production_harness_block_status` | `action-required-before-production`",
+  "`cloudflare_custom_rule_operations_doc_status` | `complete`",
+  "`cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`",
+  "`free_public_launch_default` | `login-turnstile-app-quotas-no-constant-ordinary-route-challenge`",
+  "`api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only`",
+  "`traffic_growth_response_ladder_status` | `documented`",
   "`codex_local_verification_status` | `pass`",
   "`Public launch operator QA checklist`",
+  "`Cloudflare custom-rule operations doc`",
   "preview Cloudflare/browser checks are partially passed by operator report",
   "not-run / approval-gated"
 ]) {
@@ -188,7 +203,7 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "Current branch: `codex/comment-translator-public-launch-qa-runbook`",
+  "Current branch: `codex/comment-translator-cloudflare-custom-rule-ops-doc`",
   "public_launch_operator_qa_checklist_status=complete",
   "operator_external_verification_status=partial-pass-preview-browser",
   "operator_remaining_external_verification_status=action-required",
@@ -199,6 +214,12 @@ for (const fragment of [
   "operator_youtube_connect_no_autostart_smoke_status=pass-preview-browser",
   "operator_production_api_managed_challenge_status=not-selected",
   "operator_production_harness_block_status=action-required-before-production",
+  "cloudflare_custom_rule_operations_doc_status=complete",
+  "cloudflare_custom_rule_operations_doc=docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md",
+  "free_public_launch_default=login-turnstile-app-quotas-no-constant-ordinary-route-challenge",
+  "api_protection_preference_order=app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only",
+  "turnstile_pre_clearance_status=later-improvement-not-free-launch-requirement",
+  "traffic_growth_response_ladder_status=documented",
   "codex_local_verification_status=pass",
   "Public launch operator QA checklist",
   "preview Managed Challenge setup",
@@ -206,6 +227,7 @@ for (const fragment of [
   "optional 30 translated messages/min smoke",
   "optional 30-minute session smoke",
   "monthly 20,000 provider-input-character fixture/live proof",
+  "COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md",
   "Remaining public launch operator external checks remain action-required",
   "COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md"
 ]) {
@@ -260,7 +282,8 @@ for (const [label, source] of [
   [taskBoardPath, taskBoard],
   [taskPath, task],
   [rateLimitDecisionPath, rateLimitDecision],
-  [requirementsPath, requirements]
+  [requirementsPath, requirements],
+  [operationsDocPath, operationsDoc]
 ]) {
   assertNoSensitiveValues(source, label);
 }
@@ -269,8 +292,12 @@ const allowedChangedFiles = new Set([
   checklistPath,
   taskBoardPath,
   taskPath,
+  rateLimitDecisionPath,
+  operationsDocPath,
+  "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
-  "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs"
+  "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
+  "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

@@ -56,6 +56,8 @@ This slice does not create or modify Cloudflare rules, Cloudflare WAF/rate-limit
 
 The current app-level in-memory guard remains only a local defense-in-depth mechanism until a separate reviewed operation activates the selected Cloudflare edge control.
 
+Operational handling for Cloudflare Custom Rules, Turnstile, API-vs-HTML Managed Challenge boundaries, Creator/Paid transition, and traffic-growth response is recorded in `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`. That operational guide does not change the Step 10 decision: Cloudflare edge backing remains selected, Cloudflare edge activation remains not-run / approval-gated, and API Managed Challenge is not the production default.
+
 ## Sanitized Evidence Shape
 
 Allowed evidence fields:

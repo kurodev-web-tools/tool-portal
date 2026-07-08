@@ -4,9 +4,11 @@ Date: 2026-07-08
 
 ## Scope
 
-This document records the remaining task order for taking Kuro Live Comment Translator from the current allowed-tester/free-public-beta integration state to public launch, plus the current status of the public Free limit copy and OBS Dock display-name policy.
+This document records the remaining task order for taking Kuro Live Comment Translator from the current allowed-tester/free-public-beta integration state to public launch, plus the current status of the public Free limit copy, OBS Dock display-name policy, and public beta access gate decision.
 
 The Step 8 update is a policy/UI/contract slice only. It defaults stream-safe / compact comments-only display to the generic `YouTube viewer` label, keeps normal operator preview context on safe `authorDisplayName`, and requires an explicit toggle before compact stream-safe display shows the existing sanitized safe name. It does not add an OBS overlay token runtime, OBS overlay route, moderation actions, schema changes, remote Supabase work, provider/live execution, deploy/upload, public gate flip, or public access change.
+
+The Step 9 update is a policy/contract/documentation slice only. It selects `login-only` for Free public beta access and keeps waitlist approval for Creator/paid beta access. The current runtime gate remains unchanged behind the existing private launch SHA-256 owner allowlist until a later approval-gated access-change operation.
 
 Sanitization boundary: this document records only task labels, status labels, and public file/path references. It does not include project identifiers, support ticket ids, raw support text, private owner role values, raw SQL output, raw stdout/stderr, raw response bodies, account identity values, tokens, secrets, credential values, connection strings, headers, browser storage, owner ids, internal user ids, provider private identifiers, raw comments, or raw account metadata.
 
@@ -19,6 +21,9 @@ Sanitization boundary: this document records only task labels, status labels, an
 | `current_table_rls_grant_status` | `pass` |
 | `remote_default_privileges_status` | `fail-support-pending-or-risk-acceptance-required` |
 | `obs_dock_display_name_policy_status` | `complete` |
+| `public_beta_access_gate_decision_status` | `complete` |
+| `public_beta_access_gate_selected` | `login-only` |
+| `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
 | `public_release_capable_status` | `no` |
 | `public_gate_flip_status` | `not-run` |
 | `main_promotion_status` | `not-run` |
@@ -29,7 +34,7 @@ Sanitization boundary: this document records only task labels, status labels, an
 2. `Monthly input character accounting`: complete in the current implementation line. The Free monthly 20,000 character cap canonically means provider-input/source characters, not translated-output characters; translated-output characters are analytics metadata only if retained.
 3. `Free limits public copy`: complete. Public UI, legal copy, and task-board copy state the Free beta limits as `1日最大30分`, `1セッション最大30分`, `30翻訳メッセージ/分`, and `月20,000入力文字`; English UI copy states up to 30 minutes per day, up to 30 minutes per session, 30 translated messages per minute, and 20,000 provider-input/source characters per month.
 4. `OBS Dock display-name policy`: complete. Normal operator preview can show safe `authorDisplayName`; compact stream-safe comments-only display defaults to `YouTube viewer` and only shows the existing sanitized safe name when the explicit display-name toggle is enabled. Long compact names are truncated.
-5. `Public beta access gate decision`: decide whether public beta opens as login-only or waitlist-approved instead of SHA-256 owner allowlist only.
+5. `Public beta access gate decision`: complete. Free public beta access is selected as `login-only`; waitlist approval remains for Creator/paid beta access. Current runtime gate unchanged: the existing private launch SHA-256 owner allowlist remains active until a separate approval-gated public access-change operation.
 6. `Public traffic rate-limit backing`: select and verify an approved edge/durable rate-limit control for public exposure, or explicitly accept the remaining distributed-abuse-control risk.
 7. `Supabase default privileges support response or risk acceptance`: consume Supabase Support response if available; otherwise record explicit PL-G5 risk acceptance before public release can be marked capable.
 8. `PL-G5 release-owner decision`: record the release-owner public launch decision with all accepted residual risks.
@@ -50,6 +55,7 @@ Paid/Creator entitlement work remains later work unless explicitly pulled into p
 - Runtime accounting changes: implemented only for monthly provider-input character accounting in the earlier implementation slice; no provider/live execution was run in Step 7.
 - Public copy changes: complete for Free limits public copy; no quota enforcement logic changed.
 - OBS Dock behavior: display-name policy only. No overlay token runtime, overlay route, moderation action control, provider/live execution, OAuth live flow, deploy/upload, public gate flip, or public access change was run or implemented.
+- Public beta access gate behavior: decision only. The selected Free public beta policy is `login-only`, waitlist approval remains Creator/paid-only, and current runtime gate unchanged. No Free public beta login gate runtime change, public beta waitlist approval store, admin approval workflow, invite email flow, deploy/upload, public gate flip, or public access change was run or implemented.
 - Private launch gate behavior: not changed in this task-board slice.
 - Edge/durable rate-limit control: not implemented in this task-board slice.
 - Supabase default privileges remediation/apply: not run.
@@ -57,7 +63,16 @@ Paid/Creator entitlement work remains later work unless explicitly pulled into p
 
 ## Verification
 
-Local checks for the Step 8 slice:
+Local checks for the Step 9 slice:
+
+- `node scripts/comment-translator-public-beta-access-gate-decision-contract.mjs`
+- `node scripts/comment-translator-private-launch-access-gate-contract.mjs`
+- `node scripts/comment-translator-public-launch-remaining-task-board-contract.mjs`
+- `git diff --check`
+
+Width checks skipped because Step 9 changes only server-only policy labels, docs, deterministic scripts, and `task.md`; there is no visible UI/CSS/layout/copy change, rendered route change, browser storage change, or client behavior change.
+
+Recent local checks for the Step 8 slice:
 
 - `node scripts/comment-translator-obs-dock-display-name-policy-contract.mjs`
 - `node scripts/comment-translator-preview-author-display-name-contract.mjs`

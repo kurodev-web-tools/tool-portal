@@ -11,6 +11,8 @@ const abuseRuntimePath = "lib/comment-translator-abuse-rate-limit-runtime.ts";
 const taskPath = "task.md";
 const taskBoardPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md";
 const decisionDocPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_TRAFFIC_RATE_LIMIT_BACKING_DECISION.md";
+const checklistPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md";
+const operationsDocPath = "docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -104,7 +106,7 @@ function assertNoSensitiveValues(source, label) {
   );
 }
 
-for (const requiredPath of [policyPath, abuseRuntimePath, taskPath, taskBoardPath, decisionDocPath]) {
+for (const requiredPath of [policyPath, abuseRuntimePath, taskPath, taskBoardPath, decisionDocPath, operationsDocPath]) {
   assert.ok(exists(requiredPath), `required Step 10 path exists: ${requiredPath}`);
 }
 
@@ -113,7 +115,8 @@ const abuseRuntimeSource = read(abuseRuntimePath);
 const task = read(taskPath);
 const taskBoard = read(taskBoardPath);
 const decisionDoc = read(decisionDocPath);
-const combinedDocs = [task, taskBoard, decisionDoc].join("\n");
+const operationsDoc = read(operationsDocPath);
+const combinedDocs = [task, taskBoard, decisionDoc, operationsDoc].join("\n");
 const policy = loadTsModule(policyPath);
 const abuseRuntime = loadTsModule(abuseRuntimePath);
 
@@ -141,7 +144,10 @@ for (const marker of [
   "public_gate_flip_status=not-run",
   "deploy/upload: not-run",
   "remote mutation: not-run",
-  "width checks skipped"
+  "width checks skipped",
+  "COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md",
+  "api_protection_preference_order=app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only",
+  "operator_production_api_managed_challenge_status=not-selected"
 ]) {
   assert.match(combinedDocs, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), `Step 10 docs record ${marker}`);
 }
@@ -156,7 +162,8 @@ for (const [label, source] of [
   [abuseRuntimePath, abuseRuntimeSource],
   [taskPath, task],
   [taskBoardPath, taskBoard],
-  [decisionDocPath, decisionDoc]
+  [decisionDocPath, decisionDoc],
+  [operationsDocPath, operationsDoc]
 ]) {
   assertNoSensitiveValues(source, label);
 }
@@ -166,9 +173,13 @@ const allowedChangedFiles = new Set([
   taskPath,
   taskBoardPath,
   decisionDocPath,
+  operationsDocPath,
+  checklistPath,
+  "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
   "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
-  "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs"
+  "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
+  "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {

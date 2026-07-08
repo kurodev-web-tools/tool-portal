@@ -5,6 +5,7 @@ import path from "node:path";
 const root = process.cwd();
 const docPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md";
 const operatorChecklistPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md";
+const operationsDocPath = "docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -13,7 +14,8 @@ function read(relativePath) {
 const doc = read(docPath);
 const task = read("task.md");
 const operatorChecklist = read(operatorChecklistPath);
-const combined = [doc, task, operatorChecklist].join("\n");
+const operationsDoc = read(operationsDocPath);
+const combined = [doc, task, operatorChecklist, operationsDoc].join("\n");
 
 for (const marker of [
   "`support_contact_status` | `submitted`",
@@ -43,6 +45,11 @@ for (const marker of [
   "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
   "`operator_production_harness_block_status` | `action-required-before-production`",
+  "`cloudflare_custom_rule_operations_doc_status` | `complete`",
+  "`cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`",
+  "`free_public_launch_default` | `login-turnstile-app-quotas-no-constant-ordinary-route-challenge`",
+  "`api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only`",
+  "`traffic_growth_response_ladder_status` | `documented`",
   "`codex_local_verification_status` | `pass`",
   "`Monthly input character accounting`",
   "`Free limits public copy`",
@@ -58,12 +65,14 @@ for (const marker of [
   "The Step 10 update is a policy/contract/documentation slice only.",
   "The Step 11 update is a policy/contract/documentation slice only.",
   "The operator QA checklist update is a documentation/contract slice only.",
+  "The Cloudflare custom-rule operations update is a documentation/contract slice only.",
   "Public copy changes: complete for Free limits public copy; no quota enforcement logic changed.",
   "OBS Dock behavior: display-name policy only.",
   "Public beta access gate behavior: decision only.",
   "Public traffic rate-limit backing behavior: decision only.",
   "Supabase default privileges risk acceptance: decision only.",
   "Public launch operator QA checklist: complete for docs/contract separation and 2026-07-09 sanitized operator update.",
+  "Cloudflare custom-rule operations: complete for docs/contract guidance only.",
   "Supabase default privileges remediation/apply: not run."
 ]) {
   assert.ok(doc.includes(marker), `launch remaining task board doc records ${marker}`);
@@ -89,13 +98,20 @@ for (const marker of [
   "operator_youtube_connect_no_autostart_smoke_status=pass-preview-browser",
   "operator_production_api_managed_challenge_status=not-selected",
   "operator_production_harness_block_status=action-required-before-production",
+  "cloudflare_custom_rule_operations_doc_status=complete",
+  "cloudflare_custom_rule_operations_doc=docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md",
+  "free_public_launch_default=login-turnstile-app-quotas-no-constant-ordinary-route-challenge",
+  "api_protection_preference_order=app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only",
+  "turnstile_pre_clearance_status=later-improvement-not-free-launch-requirement",
+  "traffic_growth_response_ladder_status=documented",
   "codex_local_verification_status=pass",
   "support_response_status=pending",
   "remote_default_privileges_status=fail-accepted-risk",
   "risk_acceptance_status=accepted",
   "risk_acceptance_scope=future-public-object-default-privileges-only",
   "public_release_capable=no",
-  "COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md"
+  "COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
+  "COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md"
 ]) {
   assert.ok(task.includes(marker), `task.md records ${marker}`);
 }
@@ -108,6 +124,7 @@ const taskOrder = [
   "Public traffic rate-limit backing",
   "Supabase default privileges support response or risk acceptance",
   "Public launch operator QA checklist",
+  "Cloudflare custom-rule operations doc",
   "PL-G5 release-owner decision",
   "PL-G6 public access change / promotion"
 ];

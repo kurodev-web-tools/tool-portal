@@ -25,7 +25,7 @@ export type CommentTranslatorSessionPlanEntitlement = {
   sessionLimitMs: number;
   translatedMessagesPerMinute: number;
   activeSessionsPerUser: number;
-  monthlyTranslatedCharacterLimit?: number;
+  monthlyProviderInputCharacterLimit?: number;
   paidPrioritization: "not-implemented";
   providerUsageCharging: "not-implemented";
 };
@@ -53,7 +53,7 @@ export type CommentTranslatorSessionUsageSnapshot = {
   dailyUsedMs: number;
   currentSessionElapsedMs?: number;
   translatedMessagesInCurrentMinute: number;
-  monthlyTranslatedCharacterEstimate?: number;
+  monthlyProviderInputCharacterEstimate?: number;
   providerBudgetAvailable: boolean;
   globalBudgetAvailable: boolean;
   aiBudgetAvailable: boolean;
@@ -210,7 +210,7 @@ export const commentTranslatorSessionRuntimeContract = {
     sessionMinutes: 30,
     translatedMessagesPerMinute: 30,
     activeSessionsPerUser: 1,
-    monthlyTranslatedCharacters: 20_000
+    monthlyProviderInputCharacters: 20_000
   },
   heartbeatTimeoutSeconds: 45,
     stopReasons: [
@@ -809,7 +809,7 @@ export function createCommentTranslatorSessionPlanEntitlement({
     sessionLimitMs: freeLimitMs,
     translatedMessagesPerMinute: commentTranslatorSessionRuntimeContract.freePlanLimits.translatedMessagesPerMinute,
     activeSessionsPerUser: commentTranslatorSessionRuntimeContract.freePlanLimits.activeSessionsPerUser,
-    monthlyTranslatedCharacterLimit: commentTranslatorSessionRuntimeContract.freePlanLimits.monthlyTranslatedCharacters,
+    monthlyProviderInputCharacterLimit: commentTranslatorSessionRuntimeContract.freePlanLimits.monthlyProviderInputCharacters,
     paidPrioritization: "not-implemented",
     providerUsageCharging: "not-implemented"
   };
@@ -876,7 +876,7 @@ function createDefaultCommentTranslatorUsageSnapshot({
     dailyUsedMs,
     currentSessionElapsedMs: 0,
     translatedMessagesInCurrentMinute: 0,
-    monthlyTranslatedCharacterEstimate: 0,
+    monthlyProviderInputCharacterEstimate: 0,
     providerBudgetAvailable: true,
     globalBudgetAvailable: true,
     aiBudgetAvailable: true,

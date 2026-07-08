@@ -232,6 +232,7 @@ usageLedger.recordInMemoryCommentTranslatorUsageLedgerEvent({
     sessionReferenceId: "cts_monitoring_001",
     occurredAtMs: 3_000,
     translatedMessageEstimate: 18,
+    providerInputCharacterEstimate: 1800,
     translatedCharacterEstimate: 1800,
     estimatedCostMicros: 2500,
     rawCommentText: "never-recorded-by-design"

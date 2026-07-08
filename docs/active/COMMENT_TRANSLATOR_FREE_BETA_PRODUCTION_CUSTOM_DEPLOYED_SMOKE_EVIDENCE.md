@@ -87,7 +87,7 @@ Not allowed in FB-L5 without a separate approval:
 - public launch gate flip;
 - raw provider payload, raw comment, live target value, provider target metadata, server-only cursor, browser storage payload, or handoff payload output.
 
-Free caps remain 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month. Any missing/unreadable durable state must fail closed before Start or provider execution with sanitized status/stop output.
+Free caps remain 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 provider-input characters per month. Any missing/unreadable durable state must fail closed before Start or provider execution with sanitized status/stop output.
 
 ## Local Contract Boundary
 

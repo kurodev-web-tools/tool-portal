@@ -53,7 +53,7 @@ export type CommentTranslatorFreeBetaUsageDisplay = {
   session: CommentTranslatorFreeBetaUsageTimeDisplay;
   daily: CommentTranslatorFreeBetaUsageTimeDisplay;
   perMinute: CommentTranslatorFreeBetaUsageLimitDisplay;
-  monthlyCharacterCap: CommentTranslatorFreeBetaUsageLimitDisplay;
+  monthlyInputCharacterCap: CommentTranslatorFreeBetaUsageLimitDisplay;
   unavailableReason: CommentTranslatorFreeBetaUsageDisplayUnavailableReason | null;
   providerCallPolicy: CommentTranslatorFreeBetaUsageProviderCallPolicy;
   noProviderCallWhenOverLimit: true;
@@ -71,7 +71,7 @@ export type CommentTranslatorFreeBetaUsageDisplayInput = {
   dailyUsedMs: number;
   currentSessionElapsedMs?: number;
   translatedMessagesInCurrentMinute: number;
-  monthlyTranslatedCharacterEstimate?: number;
+  monthlyProviderInputCharacterEstimate?: number;
   providerBudgetAvailable: boolean;
   globalBudgetAvailable: boolean;
   aiBudgetAvailable: boolean;
@@ -84,7 +84,7 @@ export const commentTranslatorFreeBetaUsageDisplayContract = {
   runtime: "server-only",
   sourceAuthority: "server-owned-durable-session-usage-entitlement-baseline",
   displayBoundary: "sanitized-browser-safe-usage-metadata-only",
-  monthlyCharacterCap: "free-public-beta-20000-characters-month",
+  monthlyInputCharacterCap: "free-public-beta-20000-provider-input-characters-month",
   noProviderCallWhenOverLimit: true,
   unreadableUsageFallback: "sanitized-unavailable-fail-closed",
   missingEntitlementFallback: "sanitized-unavailable-fail-closed",
@@ -109,7 +109,7 @@ export const commentTranslatorFreeBetaUsageDisplayContract = {
   ]
 } as const;
 
-const fallbackFreeMonthlyCharacterLimit = 20_000;
+const fallbackFreeMonthlyInputCharacterLimit = 20_000;
 
 export function createCommentTranslatorFreeBetaUsageDisplay({
   usage,
@@ -126,8 +126,8 @@ export function createCommentTranslatorFreeBetaUsageDisplay({
 
   const providerCallPolicy = resolveCommentTranslatorFreeBetaProviderCallPolicy({ usage, elapsedMs });
   const dailyUsedMs = Math.max(0, usage.dailyUsedMs) + Math.max(0, elapsedMs);
-  const monthlyLimit = readMonthlyCharacterLimit(usage.planEntitlement);
-  const monthlyUsed = Math.max(0, usage.monthlyTranslatedCharacterEstimate ?? 0);
+  const monthlyLimit = readMonthlyInputCharacterLimit(usage.planEntitlement);
+  const monthlyUsed = Math.max(0, usage.monthlyProviderInputCharacterEstimate ?? 0);
 
   return createDisplay({
     status: providerCallPolicy.status === "blocked-over-limit" ? "over-limit" : "available",
@@ -146,7 +146,7 @@ export function createCommentTranslatorFreeBetaUsageDisplay({
       limit: Math.max(0, usage.planEntitlement.translatedMessagesPerMinute),
       remaining: Math.max(0, usage.planEntitlement.translatedMessagesPerMinute - usage.translatedMessagesInCurrentMinute)
     },
-    monthlyCharacterCap: {
+    monthlyInputCharacterCap: {
       used: monthlyUsed,
       limit: monthlyLimit,
       remaining: Math.max(0, monthlyLimit - monthlyUsed)
@@ -166,7 +166,7 @@ export function createUnavailableCommentTranslatorFreeBetaUsageDisplay({
     session: unavailableTimeDisplay(),
     daily: unavailableTimeDisplay(),
     perMinute: unavailableLimitDisplay(),
-    monthlyCharacterCap: unavailableLimitDisplay(fallbackFreeMonthlyCharacterLimit),
+    monthlyInputCharacterCap: unavailableLimitDisplay(fallbackFreeMonthlyInputCharacterLimit),
     unavailableReason: reason,
     providerCallPolicy: {
       status: "blocked-unavailable",
@@ -191,8 +191,8 @@ export function resolveCommentTranslatorFreeBetaProviderCallPolicy({
     };
   }
 
-  const monthlyLimit = readMonthlyCharacterLimit(usage.planEntitlement);
-  const monthlyUsed = Math.max(0, usage.monthlyTranslatedCharacterEstimate ?? 0);
+  const monthlyLimit = readMonthlyInputCharacterLimit(usage.planEntitlement);
+  const monthlyUsed = Math.max(0, usage.monthlyProviderInputCharacterEstimate ?? 0);
   const dailyUsedMs = Math.max(0, usage.dailyUsedMs) + Math.max(0, elapsedMs);
 
   if (dailyUsedMs >= usage.planEntitlement.dailyLimitMs) {
@@ -245,19 +245,19 @@ function createDisplay({
   session,
   daily,
   perMinute,
-  monthlyCharacterCap,
+  monthlyInputCharacterCap,
   unavailableReason,
   providerCallPolicy
 }: Pick<
   CommentTranslatorFreeBetaUsageDisplay,
-  "status" | "session" | "daily" | "perMinute" | "monthlyCharacterCap" | "unavailableReason" | "providerCallPolicy"
+  "status" | "session" | "daily" | "perMinute" | "monthlyInputCharacterCap" | "unavailableReason" | "providerCallPolicy"
 >): CommentTranslatorFreeBetaUsageDisplay {
   return {
     status,
     session,
     daily,
     perMinute,
-    monthlyCharacterCap,
+    monthlyInputCharacterCap,
     unavailableReason,
     providerCallPolicy,
     noProviderCallWhenOverLimit: true,
@@ -272,8 +272,8 @@ function createDisplay({
   };
 }
 
-function readMonthlyCharacterLimit(entitlement: CommentTranslatorSessionPlanEntitlement) {
-  return Math.max(0, entitlement.monthlyTranslatedCharacterLimit ?? fallbackFreeMonthlyCharacterLimit);
+function readMonthlyInputCharacterLimit(entitlement: CommentTranslatorSessionPlanEntitlement) {
+  return Math.max(0, entitlement.monthlyProviderInputCharacterLimit ?? fallbackFreeMonthlyInputCharacterLimit);
 }
 
 function unavailableTimeDisplay(): CommentTranslatorFreeBetaUsageTimeDisplay {

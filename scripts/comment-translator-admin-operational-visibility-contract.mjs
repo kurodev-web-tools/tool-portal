@@ -196,6 +196,7 @@ ledger.recordInMemoryCommentTranslatorUsageLedgerEvent({
     sessionReferenceId: "cts_admin_visibility_001",
     occurredAtMs: 3_000,
     translatedMessageEstimate: 8,
+    providerInputCharacterEstimate: 640,
     translatedCharacterEstimate: 640,
     estimatedCostMicros: 1600,
     rawCommentText: "never-recorded-by-design"

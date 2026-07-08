@@ -205,6 +205,7 @@ const aiUsageRowDraft = durableUsage.createCommentTranslatorDurableUsageCounterR
     sessionReferenceId: activeSession.sessionReferenceId,
     occurredAtMs: Date.parse("2026-06-15T00:00:30.000Z"),
     translatedMessageEstimate: 7,
+    providerInputCharacterEstimate: 280,
     translatedCharacterEstimate: 280,
     estimatedCostMicros: 1400,
     rawCommentText: "never-recorded-by-design"
@@ -367,6 +368,7 @@ await durableUsage.recordCommentTranslatorDurableUsageLedgerEventOrFailClosed({
     sessionReferenceId: activeSession.sessionReferenceId,
     occurredAtMs: Date.parse("2026-06-15T00:30:30.000Z"),
     translatedMessageEstimate: 7,
+    providerInputCharacterEstimate: 280,
     translatedCharacterEstimate: 280,
     estimatedCostMicros: 1400,
     rawCommentText: "never-recorded-by-design"
@@ -389,8 +391,9 @@ assert.equal(snapshotRead.status, "ready");
 assert.equal(snapshotRead.snapshot.dailyUsedMs, 1_800_000);
 assert.equal(snapshotRead.snapshot.providerRequestEstimate.requestEstimateCount, 3);
 assert.equal(snapshotRead.snapshot.aiUsageEstimate.translatedMessageEstimate, 7);
-assert.equal(snapshotRead.snapshot.aiUsageEstimate.translatedCharacterEstimate, 280);
-assert.equal(snapshotRead.snapshot.monthlyTranslatedCharacterEstimate, 280);
+assert.equal(snapshotRead.snapshot.aiUsageEstimate.providerInputCharacterEstimate, 280);
+assert.equal(snapshotRead.snapshot.aiUsageEstimate.translatedCharacterEstimate, 0);
+assert.equal(snapshotRead.snapshot.monthlyProviderInputCharacterEstimate, 280);
 assert.equal(snapshotRead.snapshot.currentSessionElapsedMs, 55_000);
 assert.doesNotMatch(
   JSON.stringify(snapshotRead),

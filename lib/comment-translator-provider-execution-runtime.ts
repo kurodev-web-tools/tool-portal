@@ -161,6 +161,8 @@ export type CommentTranslatorProviderExecutionTranslation = {
   confidence: number | null;
   cacheOutcome: CommentTranslationCacheOutcome;
   providerErrorClass: "translated";
+  providerInputCharacterEstimate: number;
+  translatedCharacterEstimate: number;
   estimatedCostMicros: number;
   recoverablePrimaryFallbackCount: number;
 };
@@ -574,7 +576,14 @@ function recordUsageEstimates({
         sessionReferenceId,
         occurredAtMs,
         translatedMessageEstimate: translatedMessages.length,
-        translatedCharacterEstimate: translatedMessages.reduce((total, message) => total + Array.from(message.translatedText).length, 0),
+        providerInputCharacterEstimate: translatedMessages.reduce(
+          (total, message) => total + message.providerInputCharacterEstimate,
+          0
+        ),
+        translatedCharacterEstimate: translatedMessages.reduce(
+          (total, message) => total + message.translatedCharacterEstimate,
+          0
+        ),
         estimatedCostMicros: translatedMessages.reduce((total, message) => total + message.estimatedCostMicros, 0),
         rawCommentText: "never-recorded-by-design"
       }
@@ -639,6 +648,8 @@ function createTranslationFromProviderResult(
     confidence: result.confidence,
     cacheOutcome: result.cacheOutcome,
     providerErrorClass: "translated",
+    providerInputCharacterEstimate: countUnicodeCharacters(providerRequest.input.text),
+    translatedCharacterEstimate: countUnicodeCharacters(result.translatedText),
     estimatedCostMicros: Math.max(0, result.usageHandoff.estimatedCostMicros ?? 0),
     recoverablePrimaryFallbackCount
   };
@@ -655,9 +666,15 @@ function createTranslationFromCache(
     confidence: cachedTranslation.confidence,
     cacheOutcome: "hit",
     providerErrorClass: "translated",
+    providerInputCharacterEstimate: countUnicodeCharacters(providerRequest.input.text),
+    translatedCharacterEstimate: countUnicodeCharacters(cachedTranslation.translatedText),
     estimatedCostMicros: 0,
     recoverablePrimaryFallbackCount: 0
   };
+}
+
+function countUnicodeCharacters(value: string) {
+  return Array.from(value.trim()).length;
 }
 
 function filterProviderExecutedTranslations(

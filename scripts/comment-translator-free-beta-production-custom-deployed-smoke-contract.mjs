@@ -186,7 +186,7 @@ for (const requiredFragment of [
   "30 minutes per session",
   "1 active session per user",
   "30 translated messages per minute",
-  "20,000 translated characters per month",
+  "20,000 provider-input characters per month",
   "missing/unreadable durable state",
   "fail closed",
   "Paid entitlement C1/C3",

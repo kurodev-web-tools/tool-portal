@@ -170,7 +170,7 @@ If approved and successful, this sequence can prove:
 - the deployed app can read/write `comment_translator_usage_ledger_events`;
 - Free session state and usage state use remote durable authority;
 - missing/unreadable durable state fails closed with sanitized output;
-- Free caps remain represented by durable session/usage authority: 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month.
+- Free caps remain represented by durable session/usage authority: 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 provider-input characters per month.
 
 ## What Approval Would Not Prove
 

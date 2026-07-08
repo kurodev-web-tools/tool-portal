@@ -66,7 +66,7 @@ Before `open limited public beta` or `flip public gate`, the release owner must 
 - FB-L4 Start-to-translation smoke for explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` step, non-empty intake, Free Azure translation, UI feed, usage, stop reason, source attribution, and Stop.
 - FB-L5 production/custom deployed smoke for deployed target freshness, reviewed integration branch match, allowed tester route/UI reachability, status-only session API, usage/deletion/Creator locked gates, and Start-to-translation gate status.
 
-Free caps remain 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month. Missing/unreadable durable state must fail closed before Start or provider execution with sanitized status/stop output.
+Free caps remain 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 provider-input characters per month. Missing/unreadable durable state must fail closed before Start or provider execution with sanitized status/stop output.
 
 Paid entitlement C1/C3, Stripe billing, and Creator paid limits are not part of the Free beta launch decision and must not be mixed into this evidence record.
 

@@ -77,7 +77,7 @@ The Free caps still require deployed durable authority before public usability c
 - 30 minutes per session
 - 1 active session per user
 - 30 translated messages per minute
-- 20,000 translated characters per month
+- 20,000 provider-input characters per month
 
 Missing or unreadable durable session or usage state must fail closed with sanitized stop/status output before Start or provider execution.
 

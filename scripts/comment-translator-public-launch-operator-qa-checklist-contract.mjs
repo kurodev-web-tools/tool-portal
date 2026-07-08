@@ -120,6 +120,7 @@ const combinedDocs = [checklist, taskBoard, task, rateLimitDecision, requirement
 
 for (const section of [
   "## Current Decision Labels",
+  "## Operator Update 2026-07-09",
   "## User-Owned External Checks",
   "### Cloudflare Edge Rate-Limit Check",
   "### Browser Smoke Check",
@@ -133,9 +134,19 @@ for (const section of [
 for (const fragment of [
   "`operator_cloudflare_edge_rate_limit_activation_status`",
   "`operator_cloudflare_env_reference_status`",
+  "`operator_external_verification_status` | `partial-pass-preview-browser`",
+  "`operator_remaining_external_verification_status` | `action-required`",
+  "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
+  "`operator_cloudflare_preview_rule_scope` | `preview-host-translator-integrations-comment-translator-api-route-classes`",
+  "`operator_cloudflare_env_reference_status` | `present-enabled-label`",
   "`operator_free_beta_login_browser_smoke_status`",
+  "`operator_free_beta_login_browser_smoke_status` | `pass-preview-browser`",
   "`operator_waitlist_boundary_browser_smoke_status`",
+  "`operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser`",
   "`operator_youtube_connect_no_autostart_smoke_status`",
+  "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser`",
+  "`operator_production_api_managed_challenge_status` | `not-selected`",
+  "`operator_production_harness_block_status` | `action-required-before-production`",
   "`operator_start_to_translation_smoke_status`",
   "`operator_burst_comment_smoke_status`",
   "`operator_session_30_min_smoke_status`",
@@ -150,7 +161,8 @@ for (const fragment of [
   "fake-clock or server-fixture coverage is the primary proof",
   "do not consume real monthly quota just to prove the cap",
   "public_launch_operator_qa_checklist_status=complete",
-  "operator_external_verification_status=action-required",
+  "operator_external_verification_status=partial-pass-preview-browser",
+  "operator_remaining_external_verification_status=action-required",
   "public_release_capable_status=no"
 ]) {
   assertIncludes(checklist, fragment, `checklist records ${fragment}`);
@@ -158,10 +170,18 @@ for (const fragment of [
 
 for (const fragment of [
   "`public_launch_operator_qa_checklist_status` | `complete`",
-  "`operator_external_verification_status` | `action-required`",
+  "`operator_external_verification_status` | `partial-pass-preview-browser`",
+  "`operator_remaining_external_verification_status` | `action-required`",
+  "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
+  "`operator_cloudflare_env_reference_status` | `present-enabled-label`",
+  "`operator_free_beta_login_browser_smoke_status` | `pass-preview-browser`",
+  "`operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser`",
+  "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser`",
+  "`operator_production_api_managed_challenge_status` | `not-selected`",
+  "`operator_production_harness_block_status` | `action-required-before-production`",
   "`codex_local_verification_status` | `pass`",
   "`Public launch operator QA checklist`",
-  "Cloudflare edge activation, Cloudflare environment changes, browser smoke",
+  "preview Cloudflare/browser checks are partially passed by operator report",
   "not-run / approval-gated"
 ]) {
   assertIncludes(taskBoard, fragment, `task board records ${fragment}`);
@@ -170,14 +190,23 @@ for (const fragment of [
 for (const fragment of [
   "Current branch: `codex/comment-translator-public-launch-qa-runbook`",
   "public_launch_operator_qa_checklist_status=complete",
-  "operator_external_verification_status=action-required",
+  "operator_external_verification_status=partial-pass-preview-browser",
+  "operator_remaining_external_verification_status=action-required",
+  "operator_cloudflare_preview_custom_rule_status=configured-preview-only-managed-challenge",
+  "operator_cloudflare_env_reference_status=present-enabled-label",
+  "operator_free_beta_login_browser_smoke_status=pass-preview-browser",
+  "operator_waitlist_boundary_browser_smoke_status=pass-preview-browser",
+  "operator_youtube_connect_no_autostart_smoke_status=pass-preview-browser",
+  "operator_production_api_managed_challenge_status=not-selected",
+  "operator_production_harness_block_status=action-required-before-production",
   "codex_local_verification_status=pass",
   "Public launch operator QA checklist",
-  "Cloudflare edge activation/env reference",
+  "preview Managed Challenge setup",
+  "safe `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` presence",
   "optional 30 translated messages/min smoke",
   "optional 30-minute session smoke",
   "monthly 20,000 provider-input-character fixture/live proof",
-  "Public launch operator external checks remain action-required",
+  "Remaining public launch operator external checks remain action-required",
   "COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md"
 ]) {
   assertIncludes(task, fragment, `task.md records ${fragment}`);
@@ -250,5 +279,5 @@ for (const file of changedFiles()) {
 }
 
 console.log(
-  "comment translator public launch operator QA checklist contract passed (operator_external_verification=action-required, public_release_capable=no, secret_scan=pass)"
+  "comment translator public launch operator QA checklist contract passed (operator_external_verification=partial-pass-preview-browser, public_release_capable=no, secret_scan=pass)"
 );

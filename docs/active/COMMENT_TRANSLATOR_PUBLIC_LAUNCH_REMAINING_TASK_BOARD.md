@@ -14,7 +14,7 @@ The Step 10 update is a policy/contract/documentation slice only. It selects `cl
 
 The Step 11 update is a policy/contract/documentation slice only. Supabase Support response remains pending, and the release owner accepts the known future `public` object default-privileges risk for PL-G5 evaluation. Existing current-table/RLS/current-grant posture remains the reviewed pass surface. Remote remediation/apply, remote mutation, deploy/upload, public gate flip, and main promotion remain not-run.
 
-The operator QA checklist update is a documentation/contract slice only. It separates operator-owned external checks from Codex-owned deterministic checks before PL-G5 / PL-G6. Cloudflare edge activation, Cloudflare environment changes, browser smoke, live/provider execution, deploy/upload, public gate flip, and main promotion remain not-run / approval-gated.
+The operator QA checklist update is a documentation/contract slice only. It separates operator-owned external checks from Codex-owned deterministic checks before PL-G5 / PL-G6. The 2026-07-09 operator update records preview Managed Challenge setup, safe `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` presence, login-only Free beta browser smoke, Creator/paid waitlist boundary smoke, and YouTube-connect no-autostart smoke. Production edge activation, production API Managed Challenge, production harness blocking, live/provider execution, deploy/upload, public gate flip, and main promotion remain not-run / approval-gated unless separately stated.
 
 Sanitization boundary: this document records only task labels, status labels, and public file/path references. It does not include project identifiers, support ticket ids, raw support text, private owner role values, raw SQL output, raw stdout/stderr, raw response bodies, account identity values, tokens, secrets, credential values, connection strings, headers, browser storage, owner ids, internal user ids, provider private identifiers, raw comments, or raw account metadata.
 
@@ -37,7 +37,15 @@ Sanitization boundary: this document records only task labels, status labels, an
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
 | `edge_activation_status` | `not-run-approval-gated` |
 | `public_launch_operator_qa_checklist_status` | `complete` |
-| `operator_external_verification_status` | `action-required` |
+| `operator_external_verification_status` | `partial-pass-preview-browser` |
+| `operator_remaining_external_verification_status` | `action-required` |
+| `operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge` |
+| `operator_cloudflare_env_reference_status` | `present-enabled-label` |
+| `operator_free_beta_login_browser_smoke_status` | `pass-preview-browser` |
+| `operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser` |
+| `operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser` |
+| `operator_production_api_managed_challenge_status` | `not-selected` |
+| `operator_production_harness_block_status` | `action-required-before-production` |
 | `codex_local_verification_status` | `pass` |
 | `public_release_capable_status` | `no` |
 | `public_gate_flip_status` | `not-run` |
@@ -52,7 +60,7 @@ Sanitization boundary: this document records only task labels, status labels, an
 5. `Public beta access gate decision`: complete. Free public beta access is selected as `login-only`; waitlist approval remains for Creator/paid beta access. Current runtime gate unchanged: the existing private launch SHA-256 owner allowlist remains active until a separate approval-gated public access-change operation.
 6. `Public traffic rate-limit backing`: complete. Public traffic backing is selected as `cloudflare-edge`; no Supabase durable rate-limit table is created, and risk acceptance is not selected. Current in-app rate-limit guard remains defense-in-depth until a separate approval-gated Cloudflare edge activation operation.
 7. `Supabase default privileges support response or risk acceptance`: complete. Supabase Support response remains pending, and the known future `public` object default-privileges risk is accepted for PL-G5 evaluation. Current-table/RLS/current-grant pass posture is not part of the accepted risk.
-8. `Public launch operator QA checklist`: complete. User-owned external checks and Codex-owned deterministic checks are separated in `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md`; external Cloudflare/browser/live checks remain action-required / approval-gated.
+8. `Public launch operator QA checklist`: complete. User-owned external checks and Codex-owned deterministic checks are separated in `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md`; preview Cloudflare/browser checks are partially passed by operator report, while production edge activation, production harness blocking, live/provider checks, deploy/upload, public gate flip, and main promotion remain action-required / approval-gated.
 9. `PL-G5 release-owner decision`: record the release-owner public launch decision with all accepted residual risks.
 10. `PL-G6 public access change / promotion`: approval-gated public gate flip, production domain cutover, deploy/upload, or integration-to-main promotion.
 11. `Final production smoke`: approval-gated final production/main-domain smoke with sanitized pass/fail/count/status evidence only.
@@ -77,7 +85,7 @@ Paid/Creator entitlement work remains later work unless explicitly pulled into p
 - Private launch gate behavior: not changed in this task-board slice.
 - Edge/durable rate-limit control: Cloudflare edge backing selected only; activation not run.
 - Supabase default privileges remediation/apply: not run.
-- Public launch operator QA checklist: complete for docs/contract separation only. Cloudflare edge activation, Cloudflare environment changes, browser smoke, optional burst comment smoke, optional 30-minute session smoke, optional monthly cap fixture/live smoke, deploy/upload, public gate flip, live/provider execution, remote mutation, and main promotion remain not-run / approval-gated.
+- Public launch operator QA checklist: complete for docs/contract separation and 2026-07-09 sanitized operator update. Preview Managed Challenge setup, safe edge-control reference presence, login-only Free beta browser smoke, Creator/paid waitlist boundary smoke, and YouTube-connect no-autostart smoke are recorded as partial external pass. Production edge activation, production API Managed Challenge, production harness blocking, optional burst comment smoke, optional 30-minute session smoke, optional monthly cap fixture/live smoke, Start-to-translation live smoke, deploy/upload, public gate flip, remote mutation, and main promotion remain not-run / approval-gated.
 - Remote Supabase migration apply, `db push`, repair, reset, deploy/upload, public gate flip, live/provider/OAuth/Stripe actions, row mutation, current-table grant/policy rewrite, raw response capture, browser storage capture, credential exposure, public access change, and promotion to `main`: not run.
 
 ## Verification

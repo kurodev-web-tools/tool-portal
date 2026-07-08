@@ -15,10 +15,38 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
 | `edge_activation_status` | `not-run-approval-gated` |
+| `operator_external_verification_status` | `partial-pass-preview-browser` |
+| `operator_remaining_external_verification_status` | `action-required` |
+| `operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge` |
+| `operator_cloudflare_env_reference_status` | `present-enabled-label` |
+| `operator_free_beta_login_browser_smoke_status` | `pass-preview-browser` |
+| `operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser` |
+| `operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser` |
+| `operator_production_api_managed_challenge_status` | `not-selected` |
+| `operator_production_harness_block_status` | `action-required-before-production` |
 | `supabase_future_default_privileges_risk` | `accepted-for-pl-g5-evaluation` |
 | `public_gate_flip_status` | `not-run` |
 | `deploy_upload_status` | `not-run` |
 | `live_provider_execution_status` | `not-run-approval-gated` |
+
+## Operator Update 2026-07-09
+
+The release operator reported the following external checks with sanitized evidence only. This update records preview/browser confidence, not production edge activation or public release capability.
+
+| Check | Sanitized status |
+| --- | --- |
+| `operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge` |
+| `operator_cloudflare_preview_rule_scope` | `preview-host-translator-integrations-comment-translator-api-route-classes` |
+| `operator_cloudflare_env_reference_status` | `present-enabled-label` |
+| `operator_free_beta_login_browser_smoke_status` | `pass-preview-browser` |
+| `operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser` |
+| `operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser` |
+| `operator_production_api_managed_challenge_status` | `not-selected` |
+| `operator_production_harness_block_status` | `action-required-before-production` |
+
+`COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` is treated as a safe control reference label for the Cloudflare-backed policy. The current app/runtime contracts do not parse its value as a behavior flag, so the operator-provided `enabled` presence label is sufficient for this checklist.
+
+The preview Managed Challenge rule may include `/api/comment-translator/` only as a preview-specific verification measure because the operator confirmed the current browser flow still works. Production should not use API Managed Challenge as the default API protection; prefer a production harness block plus API rate limiting / app-side limits for API traffic, and keep Managed Challenge as an emergency or HTML-route-only control.
 
 ## User-Owned External Checks
 
@@ -100,7 +128,8 @@ Required closeout labels:
 
 - `public_launch_operator_qa_checklist_status=complete`
 - `codex_local_verification_status=pass`
-- `operator_external_verification_status=action-required`
+- `operator_external_verification_status=partial-pass-preview-browser`
+- `operator_remaining_external_verification_status=action-required`
 - `edge_activation_status=not-run-approval-gated`
 - `public_gate_flip_status=not-run`
 - `deploy_upload_status=not-run`

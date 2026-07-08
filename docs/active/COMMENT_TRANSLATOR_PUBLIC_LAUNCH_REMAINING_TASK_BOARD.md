@@ -4,9 +4,9 @@ Date: 2026-07-08
 
 ## Scope
 
-This document records the remaining task order for taking Kuro Live Comment Translator from the current allowed-tester/free-public-beta integration state to public launch.
+This document records the remaining task order for taking Kuro Live Comment Translator from the current allowed-tester/free-public-beta integration state to public launch, plus the current status of the public Free limit copy.
 
-This is a planning and task-board slice only. It does not change runtime behavior, run provider/OAuth/Stripe flows, apply migrations, run remote Supabase queries or mutations, deploy/upload, flip a public gate, promote to `main`, capture raw comments, capture raw responses, expose credentials, or change public access.
+The Step 7 update is a copy/terminology slice only. It does not change quota enforcement logic, run provider/OAuth/Stripe flows, apply migrations, run remote Supabase queries or mutations, deploy/upload, flip a public gate, promote to `main`, capture raw comments, capture raw responses, expose credentials, or change public access.
 
 Sanitization boundary: this document records only task labels, status labels, and public file/path references. It does not include project identifiers, support ticket ids, raw support text, private owner role values, raw SQL output, raw stdout/stderr, raw response bodies, account identity values, tokens, secrets, credential values, connection strings, headers, browser storage, owner ids, internal user ids, provider private identifiers, raw comments, or raw account metadata.
 
@@ -26,7 +26,7 @@ Sanitization boundary: this document records only task labels, status labels, an
 
 1. `Public launch remaining task board`: record this updated task order and verification boundary.
 2. `Monthly input character accounting`: complete in the current implementation line. The Free monthly 20,000 character cap canonically means provider-input/source characters, not translated-output characters; translated-output characters are analytics metadata only if retained.
-3. `Free limits public copy`: next. State the Free beta limits as `1日最大30分`, `1セッション最大30分`, `30翻訳メッセージ/分`, and `月20,000入力文字`.
+3. `Free limits public copy`: complete. Public UI, legal copy, and task-board copy state the Free beta limits as `1日最大30分`, `1セッション最大30分`, `30翻訳メッセージ/分`, and `月20,000入力文字`; English UI copy states up to 30 minutes per day, up to 30 minutes per session, 30 translated messages per minute, and 20,000 provider-input/source characters per month.
 4. `OBS Dock display-name policy`: decide display-name visibility, compact layout, and stream-safe behavior for OBS Dock without exposing provider-private identifiers.
 5. `Public beta access gate decision`: decide whether public beta opens as login-only or waitlist-approved instead of SHA-256 owner allowlist only.
 6. `Public traffic rate-limit backing`: select and verify an approved edge/durable rate-limit control for public exposure, or explicitly accept the remaining distributed-abuse-control risk.
@@ -46,8 +46,8 @@ Paid/Creator entitlement work remains later work unless explicitly pulled into p
 
 ## Non-Actions
 
-- Runtime accounting changes: implemented only for monthly provider-input character accounting in the follow-up implementation slice; no provider/live execution was run.
-- Public copy changes: not implemented in this task-board slice.
+- Runtime accounting changes: implemented only for monthly provider-input character accounting in the earlier implementation slice; no provider/live execution was run in Step 7.
+- Public copy changes: complete for Free limits public copy; no quota enforcement logic changed.
 - OBS Dock behavior: not implemented in this task-board slice.
 - Private launch gate behavior: not changed in this task-board slice.
 - Edge/durable rate-limit control: not implemented in this task-board slice.

@@ -29,17 +29,18 @@ for (const marker of [
   "`Supabase default privileges support response or risk acceptance`",
   "`PL-G5 release-owner decision`",
   "`PL-G6 public access change / promotion`",
-  "Runtime accounting changes: not implemented in this task-board slice.",
+  "Runtime accounting changes: implemented only for monthly provider-input character accounting in the earlier implementation slice; no provider/live execution was run in Step 7.",
+  "Public copy changes: complete for Free limits public copy; no quota enforcement logic changed.",
   "Supabase default privileges remediation/apply: not run."
 ]) {
   assert.ok(doc.includes(marker), `launch remaining task board doc records ${marker}`);
 }
 
 for (const marker of [
-  "codex/comment-translator-public-launch-remaining-task-board",
+  "codex/comment-translator-free-limits-public-copy",
   "Public launch remaining task board",
-  "monthly_input_character_accounting_status=pending",
-  "free_limits_public_copy_status=pending",
+  "monthly_input_character_accounting_status=complete",
+  "free_limits_public_copy_status=complete",
   "public_beta_access_gate_decision_status=pending",
   "public_traffic_rate_limit_backing_status=pending",
   "support_response_status=pending",

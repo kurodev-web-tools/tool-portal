@@ -73,6 +73,11 @@ assertIncludes(
     "Free plan は Azure Translator を主な翻訳 provider として利用します。",
     "Paid plan は OpenAI mini model を主な翻訳 provider とし、復帰可能な provider error の場合のみ Azure Translator fallback を使います。",
     "DeepL、Gemini Flash/Lite、Cloudflare Workers AI は初期公開時点の production translation provider ではありません。",
+    "1日最大30分",
+    "1セッション最大30分",
+    "30翻訳メッセージ/分",
+    "月20,000入力文字",
+    "月間上限は翻訳 provider に送る入力/ソース文字を基準に扱います。",
     "provider policy の説明は処理先とfallback方針の開示に限定し、provider target metadata、liveChatId、owner値、OAuth値、Authorization header、Stripe secret、service-role値は表示しません。",
     "API/business data は標準ではモデル学習に使用されない"
   ],
@@ -148,8 +153,12 @@ assertIncludes(
   "Task 25 active doc"
 );
 
-assert.match(task, /Task 25 provider terms, privacy, and legal copy refresh/i, "task.md records Task 25 work");
-assert.match(task, /width checks skipped/i, "task.md records width-check decision");
+assert.match(
+  task,
+  /Task 25 provider terms, privacy, and legal copy refresh|Free limits public copy/i,
+  "task.md records current legal/public copy work"
+);
+assert.match(task, /width checks skipped|browser\/width verification/i, "task.md records width-check decision");
 
 const combinedChangedSurface = [
   legalContent,

@@ -236,7 +236,8 @@ export const commentTranslatorUiCopy = {
       openIntegrations: "YouTube連携を開く",
       reconnectGuidance: "アカウント連携でYouTubeを再接続してから、認証ステータスを再確認してください。",
       safeBoundary: "機密の接続値、アカウント内部値、配信ターゲット値は表示・保存しません。",
-      perMinuteCapHelper: "Free枠は30翻訳メッセージ/分です。",
+      publicLimitSummary: ["1日最大30分", "1セッション最大30分", "30翻訳メッセージ/分", "月20,000入力文字"],
+      perMinuteCapHelper: "Free枠は1日最大30分、1セッション最大30分、30翻訳メッセージ/分、月20,000入力文字です。",
       usageTitle: "Free beta usage",
       usageProviderAllowed: "上限内のためprovider callを許可できます。",
       usageProviderBlockedOverLimit: "上限到達中のためprovider callは実行しません。",
@@ -446,7 +447,11 @@ export const commentTranslatorUiCopy = {
       "Spam filter": "スパム判定"
     },
     quotaScenarios: {
-      normal: { label: "Free枠プレビュー", status: "正常", helper: "30分/日、30分/セッション、30翻訳/分の初期Free枠に合わせた表示です" },
+      normal: {
+        label: "Free枠プレビュー",
+        status: "正常",
+        helper: "1日最大30分、1セッション最大30分、30翻訳メッセージ/分、月20,000入力文字の初期Free枠に合わせた表示です"
+      },
       warning: { label: "上限接近", status: "警告", helper: "Free枠またはサービス共通予算に近づくと停止理由を表示します" },
       empty: { label: "開始前", status: "行なし", helper: "Start前はYouTube取得、AI翻訳、クォータ消費を開始しません" },
       error: { label: "診断制限", status: "利用状況の警告", helper: "raw text loggingは標準で無効、診断は短期間かつsanitizedに限定します" }
@@ -473,7 +478,7 @@ export const commentTranslatorUiCopy = {
       "YouTube接続だけでは、バックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
       "FreeはAzure Translator、ProはOpenAI miniを優先し、復帰可能なprovider errorだけAzure fallbackを使います。",
       "DeepL、Gemini、Workers AIは初期公開では比較用です。",
-      "初期Free枠は30分/日、30分/セッション、1 active session、30翻訳メッセージ/分です。",
+      "初期Free枠は1日最大30分、1セッション最大30分、1 active session、30翻訳メッセージ/分、月20,000入力文字です。",
       "機密の接続値、配信ターゲット値、認可関連の内部値は画面やブラウザ保存領域に出しません。",
       "raw text loggingは標準で無効です。診断は短期間かつsanitizedに限定します。",
       "有料プランは準備中で、Stripe連携と上限緩和は後続タスクで扱います。"
@@ -597,7 +602,14 @@ export const commentTranslatorUiCopy = {
       openIntegrations: "Open YouTube integrations",
       reconnectGuidance: "Reconnect YouTube from account integrations, then check credential status again.",
       safeBoundary: "Sensitive connection values, internal account values, and stream target values are not displayed or stored.",
-      perMinuteCapHelper: "Free plan allows 30 translated messages/min.",
+      publicLimitSummary: [
+        "Up to 30 minutes per day",
+        "Up to 30 minutes per session",
+        "30 translated messages per minute",
+        "20,000 provider-input/source characters per month"
+      ],
+      perMinuteCapHelper:
+        "Free plan allows up to 30 minutes per day, up to 30 minutes per session, 30 translated messages per minute, and 20,000 provider-input/source characters per month.",
       usageTitle: "Free beta usage",
       usageProviderAllowed: "Provider calls can run while usage is within limits.",
       usageProviderBlockedOverLimit: "Provider calls do not run while usage is over limit.",
@@ -807,7 +819,12 @@ export const commentTranslatorUiCopy = {
       "Spam filter": "Spam filter"
     },
     quotaScenarios: {
-      normal: { label: "Free limit preview", status: "Healthy", helper: "Shows the initial Free limits: 30 min/day, 30 min/session, and 30 translated messages/min" },
+      normal: {
+        label: "Free limit preview",
+        status: "Healthy",
+        helper:
+          "Shows the initial Free limits: Up to 30 minutes per day, Up to 30 minutes per session, 30 translated messages per minute, and 20,000 provider-input/source characters per month"
+      },
       warning: { label: "Near limit", status: "Warning", helper: "The session shows a stop reason before crossing Free limits or shared service budget" },
       empty: { label: "Before start", status: "No rows", helper: "Before Start, YouTube reads, AI translation, and quota use do not begin" },
       error: { label: "Diagnostic limited", status: "Usage warning", helper: "Raw text logging is off by default; diagnostics stay short-lived and sanitized" }
@@ -834,7 +851,7 @@ export const commentTranslatorUiCopy = {
       "Connecting YouTube alone does not start background monitoring, polling, translation, or quota use.",
       "Free uses Azure Translator. Pro uses an OpenAI mini model first, with Azure fallback only for recoverable provider errors.",
       "DeepL, Gemini, and Workers AI are comparison-only for the initial launch.",
-      "Initial Free limits are 30 min/day, 30 min/session, 1 active session, and 30 translated messages/min.",
+      "Initial Free limits are up to 30 minutes per day, up to 30 minutes per session, 1 active session, 30 translated messages per minute, and 20,000 provider-input/source characters per month.",
       "Sensitive connection values, stream target values, and internal authorization details are not shown or stored in the browser.",
       "Raw text logging is off by default. Diagnostics stay short-lived and sanitized.",
       "Paid plans are planned; Stripe integration and higher limits are handled in later tasks."

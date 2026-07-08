@@ -1289,6 +1289,16 @@ export function CommentTranslatorDock({
                     {copy.operatorSession.usageStates[usageDisplay.status]}
                   </span>
                 </div>
+                <ul
+                  data-comment-translator-free-limits-public-copy="enforced-free-limits"
+                  className="mt-3 grid gap-2 text-xs font-semibold leading-5 text-muted sm:grid-cols-2"
+                >
+                  {copy.operatorSession.publicLimitSummary.map((limit) => (
+                    <li key={limit} className="break-words rounded-base border border-border bg-background/70 px-2 py-1.5">
+                      {limit}
+                    </li>
+                  ))}
+                </ul>
                 <div className="mt-4 grid gap-3">
                   <StatTile
                     label={copy.fields.sessionRemaining}

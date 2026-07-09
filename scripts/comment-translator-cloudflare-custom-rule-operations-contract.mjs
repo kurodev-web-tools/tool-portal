@@ -9,6 +9,8 @@ const taskPath = "task.md";
 const taskBoardPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md";
 const checklistPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md";
 const rateLimitDecisionPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_TRAFFIC_RATE_LIMIT_BACKING_DECISION.md";
+const plG6PreflightPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -85,7 +87,8 @@ for (const requiredPath of [
   taskPath,
   taskBoardPath,
   checklistPath,
-  rateLimitDecisionPath
+  rateLimitDecisionPath,
+  plG6PreflightPath
 ]) {
   assert.ok(exists(requiredPath), `required Cloudflare custom-rule operations path exists: ${requiredPath}`);
 }
@@ -95,7 +98,15 @@ const task = read(taskPath);
 const taskBoard = read(taskBoardPath);
 const checklist = read(checklistPath);
 const rateLimitDecision = read(rateLimitDecisionPath);
-const combinedDocs = [operationsDoc, task, taskBoard, checklist, rateLimitDecision].join("\n");
+const plG6Preflight = read(plG6PreflightPath);
+const combinedDocs = [
+  operationsDoc,
+  task,
+  taskBoard,
+  checklist,
+  rateLimitDecision,
+  plG6Preflight
+].join("\n");
 
 for (const section of [
   "## Current Labels",
@@ -166,7 +177,8 @@ for (const [label, source] of [
   [taskPath, task],
   [taskBoardPath, taskBoard],
   [checklistPath, checklist],
-  [rateLimitDecisionPath, rateLimitDecision]
+  [rateLimitDecisionPath, rateLimitDecision],
+  [plG6PreflightPath, plG6Preflight]
 ]) {
   assertIncludes(
     source,
@@ -219,7 +231,8 @@ for (const [label, source] of [
   [taskPath, task],
   [taskBoardPath, taskBoard],
   [checklistPath, checklist],
-  [rateLimitDecisionPath, rateLimitDecision]
+  [rateLimitDecisionPath, rateLimitDecision],
+  [plG6PreflightPath, plG6Preflight]
 ]) {
   assertNoSensitiveValues(source, label);
 }
@@ -231,8 +244,10 @@ const allowedChangedFiles = new Set([
   checklistPath,
   rateLimitDecisionPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
+  plG6PreflightPath,
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs"

@@ -220,7 +220,7 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "Current branch: `codex/comment-translator-pl-g6-production-smoke-readiness`",
+  "Current branch: `codex/comment-translator-pl-g6-production-smoke-evidence`",
   "public_launch_operator_qa_checklist_status=complete",
   "operator_external_verification_status=partial-pass-preview-and-production-private-launch-browser",
   "operator_remaining_external_verification_status=action-required",

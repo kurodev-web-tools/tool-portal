@@ -126,8 +126,8 @@ for (const section of [
 }
 
 for (const fragment of [
-  "Status: PL-G6 public access change / promotion execution preflight prepared. Preview auto deploy evidence recorded from operator-provided status. Public-release capable: no.",
-  "PL-G6C production/main-domain env readiness and smoke approval gate is prepared; production env apply and production/main-domain smoke remain not-run / approval-gated.",
+  "Status: PL-G6 public access change / promotion execution preflight prepared. Preview auto deploy evidence and production/main-domain private-launch smoke evidence recorded from sanitized operator-provided status. Public-release capable: no.",
+  "PL-G6C production/main-domain env readiness is confirmed by operator-provided labels, and production/main-domain private-launch-only smoke is pass by operator-provided browser evidence.",
   "`pl_g6_public_access_change_preflight_status` | `complete`",
   "`pl_g6_public_access_change_preflight_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`",
   "`pl_g6_public_access_change_status` | `not-run-approval-gated`",
@@ -136,17 +136,20 @@ for (const fragment of [
   "`deploy_upload_evidence_source` | `operator-provided`",
   "`preview_deployment_target` | `cloudflare-preview-domain`",
   "`preview_deployment_status` | `deployed-operator-provided`",
-  "`production_env_apply_status` | `not-run-approval-gated`",
+  "`production_env_apply_status` | `confirmed-ready-operator-provided`",
+  "`production_main_domain_smoke_status` | `pass-operator-provided-private-launch-browser`",
   "`pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated`",
   "`pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only`",
   "`pl_g6c_production_env_apply_readiness_confirmation_approval_status` | `present`",
   "`pl_g6c_production_env_apply_readiness_confirmation_status` | `recorded-no-mutation`",
-  "`pl_g6c_production_smoke_approval_status` | `absent`",
+  "`pl_g6c_production_smoke_approval_status` | `present`",
+  "`operator_start_to_translation_smoke_status` | `pass-production-main-domain-private-launch`",
+  "`live_provider_execution_status` | `pass-operator-provided-private-launch-smoke`",
   "`release_owner_decision_status` | `blocked-no-approval`",
   "`release_owner_exact_approval_status` | `absent`",
   "`release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks`",
   "`operator_remaining_external_verification_status` | `action-required`",
-  "`operator_production_harness_block_status` | `action-required-before-production`",
+  "`operator_production_harness_block_status` | `pass-production-404`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
   "`public_beta_access_gate_selected` | `login-only`",
   "`public_beta_waitlist_boundary` | `creator-paid-beta-only`",
@@ -207,12 +210,19 @@ for (const fragment of [
   "deploy_upload_evidence_source=operator-provided",
   "preview_deployment_target=cloudflare-preview-domain",
   "preview_deployment_status=deployed-operator-provided",
-  "production_env_apply_status=not-run-approval-gated",
+  "production_env_apply_status=confirmed-ready-operator-provided",
+  "production_main_domain_smoke_status=pass-operator-provided-private-launch-browser",
   "pl_g6c_production_main_domain_env_readiness_status=prepared-approval-gated",
   "pl_g6c_production_env_operator_action_status=action-required-sanitized-instructions-only",
   "pl_g6c_production_env_apply_readiness_confirmation_approval_status=present",
   "pl_g6c_production_env_apply_readiness_confirmation_status=recorded-no-mutation",
-  "pl_g6c_production_smoke_approval_status=absent",
+  "pl_g6c_production_smoke_approval_status=present",
+  "operator_start_to_translation_smoke_status=pass-production-main-domain-private-launch",
+  "live_provider_execution_status=pass-operator-provided-private-launch-smoke",
+  "target_language_selection_status=pass-operator-provided-private-launch-browser",
+  "short_reaction_filter_status=pass-operator-provided-private-launch-browser",
+  "unauthorized_admin_visibility_status=pass-hidden-for-non-admin-account",
+  "unauthorized_translator_access_status=pass-blocked-for-non-allowed-account",
   "public_release_capable=no"
 ]) {
   assertIncludes(task, fragment, `task.md records ${fragment}`);
@@ -253,7 +263,7 @@ for (const fragment of [
 
 for (const fragment of [
   "operator_remaining_external_verification_status` | `action-required`",
-  "operator_production_harness_block_status` | `action-required-before-production`"
+  "operator_production_harness_block_status` | `pass-production-404`"
 ]) {
   assertIncludes(operatorChecklist, fragment, `operator checklist keeps ${fragment}`);
 }
@@ -267,8 +277,6 @@ assertIncludes(
 assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?yes`?/i);
 assert.doesNotMatch(combinedDocs, /pl_g6_public_access_change_status[=|]\s*`?(?:configured|complete|completed|done|run)`?/i);
 assert.doesNotMatch(combinedDocs, /public_gate_flip_status[=|]\s*`?(?:configured|complete|completed|done|run)`?/i);
-assert.doesNotMatch(combinedDocs, /production_env_apply_status[=|]\s*`?(?:configured|complete|completed|done|run)`?/i);
-assert.doesNotMatch(combinedDocs, /production_main_domain_smoke_status[=|]\s*`?(?:configured|complete|completed|done|run|pass)`?/i);
 assert.doesNotMatch(combinedDocs, /main_promotion_status[=|]\s*`?(?:configured|complete|completed|done|run)`?/i);
 
 for (const [label, source] of [

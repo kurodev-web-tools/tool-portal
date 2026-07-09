@@ -150,7 +150,7 @@ for (const section of [
 for (const fragment of [
   "`operator_cloudflare_edge_rate_limit_activation_status`",
   "`operator_cloudflare_env_reference_status`",
-  "`operator_external_verification_status` | `partial-pass-preview-browser`",
+  "`operator_external_verification_status` | `partial-pass-preview-and-production-private-launch-browser`",
   "`operator_remaining_external_verification_status` | `action-required`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_cloudflare_preview_rule_scope` | `preview-host-translator-integrations-comment-translator-api-route-classes`",
@@ -160,9 +160,9 @@ for (const fragment of [
   "`operator_waitlist_boundary_browser_smoke_status`",
   "`operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser`",
   "`operator_youtube_connect_no_autostart_smoke_status`",
-  "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser`",
+  "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-and-production-browser`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
-  "`operator_production_harness_block_status` | `action-required-before-production`",
+  "`operator_production_harness_block_status` | `pass-production-404`",
   "`cloudflare_custom_rule_operations_doc_status` | `complete`",
   "`cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`",
   "`api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only`",
@@ -186,7 +186,7 @@ for (const fragment of [
   "Preferred API protection order is app-side durable quotas/session caps/rate guards",
   "public_launch_operator_qa_checklist_status=complete",
   "cloudflare_custom_rule_operations_doc_status=complete",
-  "operator_external_verification_status=partial-pass-preview-browser",
+  "operator_external_verification_status=partial-pass-preview-and-production-private-launch-browser",
   "operator_remaining_external_verification_status=action-required",
   "public_release_capable_status=no"
 ]) {
@@ -195,15 +195,15 @@ for (const fragment of [
 
 for (const fragment of [
   "`public_launch_operator_qa_checklist_status` | `complete`",
-  "`operator_external_verification_status` | `partial-pass-preview-browser`",
+  "`operator_external_verification_status` | `partial-pass-preview-and-production-private-launch-browser`",
   "`operator_remaining_external_verification_status` | `action-required`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_cloudflare_env_reference_status` | `present-enabled-label`",
   "`operator_free_beta_login_browser_smoke_status` | `pass-preview-browser`",
   "`operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser`",
-  "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser`",
+  "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-and-production-browser`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
-  "`operator_production_harness_block_status` | `action-required-before-production`",
+  "`operator_production_harness_block_status` | `pass-production-404`",
   "`cloudflare_custom_rule_operations_doc_status` | `complete`",
   "`cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`",
   "`free_public_launch_default` | `login-turnstile-app-quotas-no-constant-ordinary-route-challenge`",
@@ -213,6 +213,7 @@ for (const fragment of [
   "`Public launch operator QA checklist`",
   "`Cloudflare custom-rule operations doc`",
   "preview Cloudflare/browser checks are partially passed by operator report",
+  "production/main-domain private-launch Start-to-translation smoke are recorded as partial external pass",
   "not-run / approval-gated"
 ]) {
   assertIncludes(taskBoard, fragment, `task board records ${fragment}`);
@@ -221,15 +222,15 @@ for (const fragment of [
 for (const fragment of [
   "Current branch: `codex/comment-translator-pl-g6-production-smoke-readiness`",
   "public_launch_operator_qa_checklist_status=complete",
-  "operator_external_verification_status=partial-pass-preview-browser",
+  "operator_external_verification_status=partial-pass-preview-and-production-private-launch-browser",
   "operator_remaining_external_verification_status=action-required",
   "operator_cloudflare_preview_custom_rule_status=configured-preview-only-managed-challenge",
   "operator_cloudflare_env_reference_status=present-enabled-label",
   "operator_free_beta_login_browser_smoke_status=pass-preview-browser",
   "operator_waitlist_boundary_browser_smoke_status=pass-preview-browser",
-  "operator_youtube_connect_no_autostart_smoke_status=pass-preview-browser",
+  "operator_youtube_connect_no_autostart_smoke_status=pass-preview-and-production-browser",
   "operator_production_api_managed_challenge_status=not-selected",
-  "operator_production_harness_block_status=action-required-before-production",
+  "operator_production_harness_block_status=pass-production-404",
   "cloudflare_custom_rule_operations_doc_status=complete",
   "cloudflare_custom_rule_operations_doc=docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md",
   "free_public_launch_default=login-turnstile-app-quotas-no-constant-ordinary-route-challenge",
@@ -240,11 +241,17 @@ for (const fragment of [
   "deploy_upload_evidence_source=operator-provided",
   "preview_deployment_target=cloudflare-preview-domain",
   "preview_deployment_status=deployed-operator-provided",
-  "production_env_apply_status=not-run-approval-gated",
-  "production_main_domain_smoke_status=not-run-approval-gated",
+  "production_env_apply_status=confirmed-ready-operator-provided",
+  "production_main_domain_smoke_status=pass-operator-provided-private-launch-browser",
   "pl_g6c_production_main_domain_env_readiness_status=prepared-approval-gated",
   "pl_g6c_production_env_operator_action_status=action-required-sanitized-instructions-only",
-  "pl_g6c_production_smoke_approval_status=absent",
+  "pl_g6c_production_smoke_approval_status=present",
+  "operator_start_to_translation_smoke_status=pass-production-main-domain-private-launch",
+  "live_provider_execution_status=pass-operator-provided-private-launch-smoke",
+  "target_language_selection_status=pass-operator-provided-private-launch-browser",
+  "short_reaction_filter_status=pass-operator-provided-private-launch-browser",
+  "unauthorized_admin_visibility_status=pass-hidden-for-non-admin-account",
+  "unauthorized_translator_access_status=pass-blocked-for-non-allowed-account",
   "codex_local_verification_status=pass",
   "Public launch operator QA checklist",
   "preview Managed Challenge setup",
@@ -299,7 +306,6 @@ assert.match(requirements, /30 min\/session/, "requirements keep public session 
 
 assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?yes`?/i);
 assert.doesNotMatch(combinedDocs, /edge_activation_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
-assert.doesNotMatch(combinedDocs, /live_provider_execution_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
 assert.doesNotMatch(combinedDocs, /public_gate_flip_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
 
 for (const [label, source] of [
@@ -337,5 +343,5 @@ for (const file of changedFiles()) {
 }
 
 console.log(
-  "comment translator public launch operator QA checklist contract passed (operator_external_verification=partial-pass-preview-browser, public_release_capable=no, secret_scan=pass)"
+  "comment translator public launch operator QA checklist contract passed (operator_external_verification=partial-pass-preview-and-production-private-launch-browser, public_release_capable=no, secret_scan=pass)"
 );

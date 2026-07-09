@@ -1,8 +1,8 @@
 # Kuro Live Comment Translator Free Beta PL-G6 Public Access Change Preflight
 
-Status: PL-G6 public access change / promotion execution preflight prepared. Preview auto deploy evidence recorded from operator-provided status. Public-release capable: no.
+Status: PL-G6 public access change / promotion execution preflight prepared. Preview auto deploy evidence and production/main-domain private-launch smoke evidence recorded from sanitized operator-provided status. Public-release capable: no.
 
-PL-G6C production/main-domain env readiness and smoke approval gate is prepared; production env apply and production/main-domain smoke remain not-run / approval-gated.
+PL-G6C production/main-domain env readiness is confirmed by operator-provided labels, and production/main-domain private-launch-only smoke is pass by operator-provided browser evidence.
 
 Public access change, public gate flip, production/main deploy/upload, production/main-domain smoke, production env apply, and integration-to-main promotion remain not-run / approval-gated.
 
@@ -21,19 +21,21 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | `deploy_upload_evidence_source` | `operator-provided` |
 | `preview_deployment_target` | `cloudflare-preview-domain` |
 | `preview_deployment_status` | `deployed-operator-provided` |
-| `production_env_apply_status` | `not-run-approval-gated` |
-| `production_main_domain_smoke_status` | `not-run-approval-gated` |
+| `production_env_apply_status` | `confirmed-ready-operator-provided` |
+| `production_main_domain_smoke_status` | `pass-operator-provided-private-launch-browser` |
 | `pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated` |
 | `pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only` |
 | `pl_g6c_production_env_apply_readiness_confirmation_approval_status` | `present` |
 | `pl_g6c_production_env_apply_readiness_confirmation_status` | `recorded-no-mutation` |
-| `pl_g6c_production_smoke_approval_status` | `absent` |
+| `pl_g6c_production_smoke_approval_status` | `present` |
+| `operator_start_to_translation_smoke_status` | `pass-production-main-domain-private-launch` |
+| `live_provider_execution_status` | `pass-operator-provided-private-launch-smoke` |
 | `main_promotion_status` | `not-run` |
 | `release_owner_decision_status` | `blocked-no-approval` |
 | `release_owner_exact_approval_status` | `absent` |
 | `release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks` |
 | `operator_remaining_external_verification_status` | `action-required` |
-| `operator_production_harness_block_status` | `action-required-before-production` |
+| `operator_production_harness_block_status` | `pass-production-404` |
 | `operator_production_api_managed_challenge_status` | `not-selected` |
 | `public_beta_access_gate_selected` | `login-only` |
 | `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
@@ -118,6 +120,38 @@ For production/main-domain smoke after production env readiness is confirmed:
 
 > I approve PL-G6C production/main-domain smoke for the Free public beta integration line only after production env apply readiness is confirmed. Keep evidence sanitized to route labels, width labels, pass/fail/count/status, stop reasons, and unavailable reasons only. Do not expose secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, provider target metadata, liveChatId, Cloudflare token/zone/account/rule ids, support ticket ids, raw SQL output, or raw provider payloads. Do not run live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, public gate flip, public access change, deploy/upload, or main promotion.
 
+PL-G6C production/main-domain private-launch smoke approval is present in-thread for the deployed Free public beta integration line. The approval allows the allowed-tester browser flow, YouTube OAuth live flow if needed, Google target lookup, bounded live/provider execution, Azure translation execution, and sanitized usage/status verification only. It does not approve Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, public gate flip, public access change, or main promotion.
+
+### Production/Main-Domain Private-Launch Smoke Evidence
+
+Sanitized evidence source: operator-provided browser screenshots and Codex route-status checks. Evidence is recorded as labels/counts/pass-fail/status only; raw comments, raw responses, provider target metadata, live target values, browser storage, tokens, cookies, and private ids are not recorded.
+
+| Check | Sanitized result |
+| --- | --- |
+| `production_main_domain_page_status` | `pass-200-after-redirect` for tool, account integrations, admin, Comment Translator admin, and Creator waitlist admin routes |
+| `production_route_api_harness_status` | `pass-blocked-404` |
+| `private_launch_boundary_status` | `pass-allowed-tester-only-assumption` |
+| `youtube_connection_status` | `pass-available` |
+| `target_broadcast_status` | `pass-ready` |
+| `free_plan_status` | `pass-available` |
+| `pre_start_session_status` | `pass-not-active-no-usage` |
+| `start_session_status` | `pass-running` |
+| `usage_timer_status` | `pass-session-and-day-timers-decrement` |
+| `live_comment_fetch_status` | `pass-count-1` |
+| `azure_translation_status` | `pass-translated-count-1` |
+| `per_minute_usage_status` | `pass-count-1-of-30` |
+| `monthly_input_usage_status` | `pass-increment-observed` |
+| `stop_status` | `pass-user-stop` |
+| `stopped_preview_retention_status` | `pass-count-1` |
+| `preview_clear_status` | `pass` |
+| `restart_status` | `pass-session-and-day-timers-decrement` |
+| `target_language_selection_status` | `pass-operator-provided-private-launch-browser` |
+| `short_reaction_filter_status` | `pass-operator-provided-private-launch-browser` |
+| `unauthorized_admin_visibility_status` | `pass-hidden-for-non-admin-account` |
+| `unauthorized_translator_access_status` | `pass-blocked-for-non-allowed-account` |
+| `transient_unavailable_reason_observed` | `live-provider-polling-not-approved` before translated comment evidence; final Start-to-translation evidence is pass |
+| `codex_computer_use_browser_smoke_status` | `inconclusive-stale-browser-state` |
+
 ## Execution Boundary
 
 Cloudflare route-class and traffic-growth operation guidance remains centralized in `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`.
@@ -150,15 +184,15 @@ Do not run Cloudflare mutation, production/main deploy/upload, production env ap
 Public capability can remain `no` through this preflight. The preflight result is:
 
 - PL-G6 approval surface prepared;
-- exact approval absent;
+- exact PL-G6 public access change approval absent;
 - remaining operator checks still action-required unless separately closed or accepted;
 - public access change not run;
 - public gate flip not run;
 - preview deploy/upload complete via operator-provided automatic merge deployment status;
 - production/main deploy/upload not run;
-- production env apply not run;
-- PL-G6C production/main-domain env readiness prepared but approval-gated;
-- production/main-domain smoke not run;
+- production env readiness confirmed by operator-provided labels;
+- PL-G6C production/main-domain env readiness confirmed for private-launch-only smoke;
+- production/main-domain private-launch smoke passed by operator-provided browser evidence;
 - main promotion not run.
 
 ## Operator Checks Still Required
@@ -168,7 +202,7 @@ Before or during any approved PL-G6 operation, the release owner must close or e
 - production Cloudflare edge activation / route-class protection evidence;
 - production route/API harness block or removal before production traffic;
 - production API Managed Challenge remains `not-selected` unless an emergency exception is named;
-- Start-to-translation live smoke or explicit acceptance that existing evidence is enough without another live/provider run;
+- Start-to-translation live smoke: complete for production/main-domain private-launch-only evidence;
 - optional burst comment, 30-minute session, and monthly 20,000 provider-input-character checks or explicit acceptance that fixture/local evidence is enough;
 - final production/main-domain smoke after any approved public access or promotion change.
 - PL-G6C production env apply readiness confirmation before production/main-domain smoke.

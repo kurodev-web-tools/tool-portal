@@ -15,15 +15,15 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
 | `edge_activation_status` | `not-run-approval-gated` |
-| `operator_external_verification_status` | `partial-pass-preview-browser` |
+| `operator_external_verification_status` | `partial-pass-preview-and-production-private-launch-browser` |
 | `operator_remaining_external_verification_status` | `action-required` |
 | `operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge` |
 | `operator_cloudflare_env_reference_status` | `present-enabled-label` |
 | `operator_free_beta_login_browser_smoke_status` | `pass-preview-browser` |
 | `operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser` |
-| `operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-browser` |
+| `operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-and-production-browser` |
 | `operator_production_api_managed_challenge_status` | `not-selected` |
-| `operator_production_harness_block_status` | `action-required-before-production` |
+| `operator_production_harness_block_status` | `pass-production-404` |
 | `cloudflare_custom_rule_operations_doc_status` | `complete` |
 | `cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md` |
 | `api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only` |
@@ -33,14 +33,14 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `deploy_upload_evidence_source` | `operator-provided` |
 | `preview_deployment_target` | `cloudflare-preview-domain` |
 | `preview_deployment_status` | `deployed-operator-provided` |
-| `production_env_apply_status` | `not-run-approval-gated` |
-| `production_main_domain_smoke_status` | `not-run-approval-gated` |
+| `production_env_apply_status` | `confirmed-ready-operator-provided` |
+| `production_main_domain_smoke_status` | `pass-operator-provided-private-launch-browser` |
 | `pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated` |
 | `pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only` |
 | `pl_g6c_production_env_apply_readiness_confirmation_approval_status` | `present` |
 | `pl_g6c_production_env_apply_readiness_confirmation_status` | `recorded-no-mutation` |
-| `pl_g6c_production_smoke_approval_status` | `absent` |
-| `live_provider_execution_status` | `not-run-approval-gated` |
+| `pl_g6c_production_smoke_approval_status` | `present` |
+| `live_provider_execution_status` | `pass-operator-provided-private-launch-smoke` |
 | `pl_g6_public_access_change_preflight_status` | `complete` |
 | `pl_g6_public_access_change_status` | `not-run-approval-gated` |
 
@@ -64,6 +64,38 @@ The release operator reported the following external checks with sanitized evide
 The preview Managed Challenge rule may include `/api/comment-translator/` only as a preview-specific verification measure because the operator confirmed the current browser flow still works. Production should not use API Managed Challenge as the default API protection; prefer a production harness block plus API rate limiting / app-side limits for API traffic, and keep Managed Challenge as an emergency or HTML-route-only control.
 
 Operational guidance for Free public launch, Creator/Paid transition, traffic-growth response, and API-vs-HTML boundaries is centralized in `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`.
+
+## Operator Update 2026-07-10
+
+The release operator reported production/main-domain private-launch-only browser smoke with sanitized evidence only. This records private-launch confidence on the main domain, not public access approval, public gate flip, broad release capability, Supabase work, Stripe work, OBS runtime, or main promotion.
+
+| Check | Sanitized status |
+| --- | --- |
+| `production_env_apply_status` | `confirmed-ready-operator-provided` |
+| `production_main_domain_smoke_status` | `pass-operator-provided-private-launch-browser` |
+| `pl_g6c_production_smoke_approval_status` | `present` |
+| `operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-and-production-browser` |
+| `operator_start_to_translation_smoke_status` | `pass-production-main-domain-private-launch` |
+| `live_provider_execution_status` | `pass-operator-provided-private-launch-smoke` |
+| `operator_production_harness_block_status` | `pass-production-404` |
+| `pre_start_session_status` | `pass-not-active-no-usage` |
+| `start_session_status` | `pass-running` |
+| `usage_timer_status` | `pass-session-and-day-timers-decrement` |
+| `live_comment_fetch_status` | `pass-count-1` |
+| `azure_translation_status` | `pass-translated-count-1` |
+| `per_minute_usage_status` | `pass-count-1-of-30` |
+| `monthly_input_usage_status` | `pass-increment-observed` |
+| `stop_status` | `pass-user-stop` |
+| `stopped_preview_retention_status` | `pass-count-1` |
+| `preview_clear_status` | `pass` |
+| `restart_status` | `pass-session-and-day-timers-decrement` |
+| `target_language_selection_status` | `pass-operator-provided-private-launch-browser` |
+| `short_reaction_filter_status` | `pass-operator-provided-private-launch-browser` |
+| `unauthorized_admin_visibility_status` | `pass-hidden-for-non-admin-account` |
+| `unauthorized_translator_access_status` | `pass-blocked-for-non-allowed-account` |
+| `transient_unavailable_reason_observed` | `live-provider-polling-not-approved` before translated comment evidence; final Start-to-translation evidence is pass |
+
+Public release remains blocked because `public_release_capable_status=no`, `pl_g6_public_access_change_status=not-run-approval-gated`, `public_gate_flip_status=not-run`, `edge_activation_status=not-run-approval-gated`, and `main_promotion_status=not-run`.
 
 ## User-Owned External Checks
 
@@ -167,7 +199,7 @@ Required closeout labels:
 - `public_launch_operator_qa_checklist_status=complete`
 - `cloudflare_custom_rule_operations_doc_status=complete`
 - `codex_local_verification_status=pass`
-- `operator_external_verification_status=partial-pass-preview-browser`
+- `operator_external_verification_status=partial-pass-preview-and-production-private-launch-browser`
 - `operator_remaining_external_verification_status=action-required`
 - `edge_activation_status=not-run-approval-gated`
 - `public_gate_flip_status=not-run`
@@ -175,12 +207,12 @@ Required closeout labels:
 - `deploy_upload_evidence_source=operator-provided`
 - `preview_deployment_target=cloudflare-preview-domain`
 - `preview_deployment_status=deployed-operator-provided`
-- `production_env_apply_status=not-run-approval-gated`
-- `production_main_domain_smoke_status=not-run-approval-gated`
+- `production_env_apply_status=confirmed-ready-operator-provided`
+- `production_main_domain_smoke_status=pass-operator-provided-private-launch-browser`
 - `pl_g6c_production_main_domain_env_readiness_status=prepared-approval-gated`
 - `pl_g6c_production_env_operator_action_status=action-required-sanitized-instructions-only`
 - `pl_g6c_production_env_apply_readiness_confirmation_approval_status=present`
 - `pl_g6c_production_env_apply_readiness_confirmation_status=recorded-no-mutation`
-- `pl_g6c_production_smoke_approval_status=absent`
-- `live_provider_execution_status=not-run-approval-gated`
+- `pl_g6c_production_smoke_approval_status=present`
+- `live_provider_execution_status=pass-operator-provided-private-launch-smoke`
 - `public_release_capable_status=no`

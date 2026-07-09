@@ -16,6 +16,7 @@ export const dynamic = "force-dynamic";
 const approvalLabel = "approved-fb-l3-allowed-tester-route-api-smoke";
 const approvalHeader = "x-comment-translator-harness-approval";
 const harnessEnabledEnv = "COMMENT_TRANSLATOR_FREE_BETA_ROUTE_API_HARNESS_ENABLED";
+const productionDeploymentEnv = "production";
 
 type HarnessActionName =
   | "getCommentTranslatorRealCommentsFeedAction"
@@ -37,6 +38,16 @@ const defaultHarnessActions: readonly HarnessActionName[] = [
 ];
 
 export async function POST(request: NextRequest) {
+  if (isProductionDeploymentEnvironment()) {
+    return NextResponse.json(
+      {
+        status: "blocked-production-route-api-harness",
+        results: []
+      },
+      { status: 404 }
+    );
+  }
+
   if (process.env[harnessEnabledEnv] !== approvalLabel) {
     return NextResponse.json(
       {
@@ -77,6 +88,10 @@ export async function POST(request: NextRequest) {
     count: results.length,
     results
   });
+}
+
+function isProductionDeploymentEnvironment() {
+  return process.env.VERCEL_ENV === productionDeploymentEnv;
 }
 
 async function runHarnessAction(action: HarnessActionName): Promise<HarnessActionResult> {

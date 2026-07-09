@@ -89,6 +89,7 @@ function assertNoSensitiveValues(source, label) {
 for (const requiredPath of [
   plG5DocPath,
   plG6DocPath,
+  "app/api/comment-translator/free-beta/route-api-harness/route.ts",
   operatorChecklistPath,
   taskBoardPath,
   operatorChecklistPath,
@@ -260,6 +261,7 @@ for (const [label, source] of [
 const allowedChangedFiles = new Set([
   plG5DocPath,
   plG6DocPath,
+  "app/api/comment-translator/free-beta/route-api-harness/route.ts",
   operatorChecklistPath,
   taskBoardPath,
   taskPath,

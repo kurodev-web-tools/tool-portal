@@ -313,6 +313,7 @@ const allowedChangedFiles = new Set([
   operationsDocPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
   plG6PreflightPath,
+  "app/api/comment-translator/free-beta/route-api-harness/route.ts",
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",

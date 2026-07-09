@@ -15,6 +15,7 @@ const operatorChecklistPath =
 const cloudflareOperationsPath =
   "docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md";
 const taskPath = "task.md";
+const routeHarnessPath = "app/api/comment-translator/free-beta/route-api-harness/route.ts";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -88,7 +89,8 @@ for (const requiredPath of [
   taskBoardPath,
   operatorChecklistPath,
   cloudflareOperationsPath,
-  taskPath
+  taskPath,
+  routeHarnessPath
 ]) {
   assert.ok(exists(requiredPath), `PL-G6 preflight required path exists: ${requiredPath}`);
 }
@@ -99,13 +101,15 @@ const taskBoard = read(taskBoardPath);
 const operatorChecklist = read(operatorChecklistPath);
 const cloudflareOperations = read(cloudflareOperationsPath);
 const task = read(taskPath);
+const routeHarness = read(routeHarnessPath);
 const combinedDocs = [
   plG6Doc,
   plG5Doc,
   taskBoard,
   operatorChecklist,
   cloudflareOperations,
-  task
+  task,
+  routeHarness
 ].join("\n");
 
 for (const section of [
@@ -137,8 +141,10 @@ for (const fragment of [
   "`public_beta_waitlist_boundary` | `creator-paid-beta-only`",
   "`public_traffic_rate_limit_backing_selected` | `cloudflare-edge`",
   "`pl_g6_first_operational_target` | `production-route-api-harness-block-removal`",
-  "`pl_g6_first_operational_target_status` | `not-run-approval-gated`",
-  "`pl_g6_first_operational_target_approval_status` | `absent`",
+  "`pl_g6_first_operational_target_status` | `complete-repository-side-not-deployed`",
+  "`pl_g6_first_operational_target_approval_status` | `approved-in-thread`",
+  "`pl_g6a_repository_route_api_harness_block_status` | `complete`",
+  "`pl_g6a_repository_route_api_harness_block_evidence` | `production-deployment-env-guard`",
   "`support_response_status` | `pending`",
   "`risk_acceptance_scope` | `future-public-object-default-privileges-only`",
   "`new_public_db_object_review_status` | `required-before-work`",
@@ -147,8 +153,9 @@ for (const fragment of [
   "The smallest safe first PL-G6 operational target is `production-route-api-harness-block-removal`.",
   "local source inspection confirms the route/API harness file still exists at `app/api/comment-translator/free-beta/route-api-harness/route.ts`",
   "production route/API harness exposure is already labeled `action-required-before-production`",
-  "I approve PL-G6A production route/API harness block/removal readiness for the Free public beta integration line only.",
-  "This approval would not approve deploy/upload or a production/main-domain smoke.",
+  "PL-G6A repository-side block status: complete.",
+  "The route now returns `blocked-production-route-api-harness` with HTTP 404 when the production deployment label is present.",
+  "This does not prove deployed production behavior until a later approved deploy/upload and production confirmation.",
   "Keep public_release_capable=no unless this same-thread approval explicitly changes it after the listed checks are closed or accepted.",
   "Do not run Cloudflare mutation, deploy/upload, public gate flip, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, or main promotion from this preflight slice.",
   "PL-G6 execution remains blocked until exact same-thread approval names the operation, target boundary, allowed evidence shape, and non-actions.",
@@ -162,12 +169,30 @@ for (const fragment of [
   "pl_g6_public_access_change_preflight_status=complete",
   "pl_g6_public_access_change_status=not-run-approval-gated",
   "pl_g6_first_operational_target=production-route-api-harness-block-removal",
-  "pl_g6_first_operational_target_status=not-run-approval-gated",
-  "pl_g6_first_operational_target_approval_status=absent",
+  "pl_g6_first_operational_target_status=complete-repository-side-not-deployed",
+  "pl_g6_first_operational_target_approval_status=approved-in-thread",
+  "pl_g6a_repository_route_api_harness_block_status=complete",
+  "pl_g6a_repository_route_api_harness_block_evidence=production-deployment-env-guard",
   "public_release_capable=no"
 ]) {
   assertIncludes(task, fragment, `task.md records ${fragment}`);
 }
+
+for (const fragment of [
+  'const productionDeploymentEnv = "production"',
+  "function isProductionDeploymentEnvironment()",
+  "process.env.VERCEL_ENV === productionDeploymentEnv",
+  "blocked-production-route-api-harness",
+  "status: 404"
+]) {
+  assertIncludes(routeHarness, fragment, `route harness records production block ${fragment}`);
+}
+
+assert.match(
+  routeHarness,
+  /export async function POST\(request: NextRequest\) \{\s*if \(isProductionDeploymentEnvironment\(\)\)/,
+  "route harness checks production deployment before harness env/header/private gate"
+);
 
 for (const fragment of [
   "`pl_g6_public_access_change_preflight_status` | `complete`",
@@ -209,7 +234,8 @@ for (const [label, source] of [
   [taskBoardPath, taskBoard],
   [operatorChecklistPath, operatorChecklist],
   [cloudflareOperationsPath, cloudflareOperations],
-  [taskPath, task]
+  [taskPath, task],
+  [routeHarnessPath, routeHarness]
 ]) {
   assertNoSensitiveValues(source, label);
 }
@@ -220,6 +246,7 @@ const allowedChangedFiles = new Set([
   taskBoardPath,
   operatorChecklistPath,
   taskPath,
+  routeHarnessPath,
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",

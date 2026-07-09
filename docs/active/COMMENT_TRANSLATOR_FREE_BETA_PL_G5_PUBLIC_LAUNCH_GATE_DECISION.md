@@ -132,6 +132,8 @@ Production route/API harness blocking/removal remains `action-required-before-pr
 
 PL-G6 public access change / promotion remains approval-gated and not-run.
 
+The PL-G6 execution preflight and approval surface is recorded in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`.
+
 ## Operator Checks Still Required
 
 The following checks remain release-operator owned or approval-gated:

@@ -11,6 +11,8 @@ const taskPath = "task.md";
 const rateLimitDecisionPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_TRAFFIC_RATE_LIMIT_BACKING_DECISION.md";
 const requirementsPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md";
 const operationsDocPath = "docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md";
+const plG6PreflightPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md";
 const sessionRuntimePath = "lib/comment-translator-session-runtime.ts";
 const usageDisplayPath = "lib/comment-translator-free-beta-usage-display.ts";
 const abuseRuntimePath = "lib/comment-translator-abuse-rate-limit-runtime.ts";
@@ -96,6 +98,7 @@ for (const requiredPath of [
   rateLimitDecisionPath,
   requirementsPath,
   operationsDocPath,
+  plG6PreflightPath,
   sessionRuntimePath,
   usageDisplayPath,
   abuseRuntimePath,
@@ -113,6 +116,7 @@ const task = read(taskPath);
 const rateLimitDecision = read(rateLimitDecisionPath);
 const requirements = read(requirementsPath);
 const operationsDoc = read(operationsDocPath);
+const plG6Preflight = read(plG6PreflightPath);
 const sessionRuntime = read(sessionRuntimePath);
 const usageDisplay = read(usageDisplayPath);
 const abuseRuntime = read(abuseRuntimePath);
@@ -120,7 +124,15 @@ const publicAccessPolicy = read(publicAccessPolicyPath);
 const azureRuntimeContract = read(azureRuntimeContractPath);
 const monthlyContract = read(monthlyContractPath);
 const publicAccessContract = read(publicAccessContractPath);
-const combinedDocs = [checklist, taskBoard, task, rateLimitDecision, requirements, operationsDoc].join("\n");
+const combinedDocs = [
+  checklist,
+  taskBoard,
+  task,
+  rateLimitDecision,
+  requirements,
+  operationsDoc,
+  plG6Preflight
+].join("\n");
 
 for (const section of [
   "## Current Decision Labels",
@@ -154,6 +166,9 @@ for (const fragment of [
   "`cloudflare_custom_rule_operations_doc_status` | `complete`",
   "`cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`",
   "`api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only`",
+  "`pl_g6_public_access_change_preflight_status` | `complete`",
+  "`pl_g6_public_access_change_status` | `not-run-approval-gated`",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
   "`operator_start_to_translation_smoke_status`",
   "`operator_burst_comment_smoke_status`",
   "`operator_session_30_min_smoke_status`",
@@ -204,7 +219,7 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "Current branch: `codex/comment-translator-pl-g5-release-owner-decision`",
+  "Current branch: `codex/comment-translator-pl-g6-public-access-change-preflight`",
   "public_launch_operator_qa_checklist_status=complete",
   "operator_external_verification_status=partial-pass-preview-browser",
   "operator_remaining_external_verification_status=action-required",
@@ -284,7 +299,8 @@ for (const [label, source] of [
   [taskPath, task],
   [rateLimitDecisionPath, rateLimitDecision],
   [requirementsPath, requirements],
-  [operationsDocPath, operationsDoc]
+  [operationsDocPath, operationsDoc],
+  [plG6PreflightPath, plG6Preflight]
 ]) {
   assertNoSensitiveValues(source, label);
 }
@@ -296,8 +312,10 @@ const allowedChangedFiles = new Set([
   rateLimitDecisionPath,
   operationsDocPath,
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
+  plG6PreflightPath,
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs"

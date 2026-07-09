@@ -31,6 +31,8 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `public_gate_flip_status` | `not-run` |
 | `deploy_upload_status` | `not-run` |
 | `live_provider_execution_status` | `not-run-approval-gated` |
+| `pl_g6_public_access_change_preflight_status` | `complete` |
+| `pl_g6_public_access_change_status` | `not-run-approval-gated` |
 
 ## Operator Update 2026-07-09
 
@@ -56,6 +58,8 @@ Operational guidance for Free public launch, Creator/Paid transition, traffic-gr
 ## User-Owned External Checks
 
 These checks require browser access, Cloudflare dashboard/account access, or approved live/provider operation. They should not be run by Codex without same-thread approval and a ready preflight.
+
+The current PL-G6 execution preflight is `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`. It prepares the approval surface only; it does not approve or run the checks below.
 
 | Check | Owner | When | Evidence to record |
 | --- | --- | --- | --- |

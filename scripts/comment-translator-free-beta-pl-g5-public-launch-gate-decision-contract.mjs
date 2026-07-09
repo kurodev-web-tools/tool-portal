@@ -6,6 +6,8 @@ import path from "node:path";
 const root = process.cwd();
 
 const plG5DocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md";
+const plG6DocPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md";
 const taskBoardPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md";
 const operatorChecklistPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md";
 const trafficBackingPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_TRAFFIC_RATE_LIMIT_BACKING_DECISION.md";
@@ -86,6 +88,8 @@ function assertNoSensitiveValues(source, label) {
 
 for (const requiredPath of [
   plG5DocPath,
+  plG6DocPath,
+  operatorChecklistPath,
   taskBoardPath,
   operatorChecklistPath,
   trafficBackingPath,
@@ -97,6 +101,7 @@ for (const requiredPath of [
 }
 
 const plG5Doc = read(plG5DocPath);
+const plG6Doc = read(plG6DocPath);
 const taskBoard = read(taskBoardPath);
 const operatorChecklist = read(operatorChecklistPath);
 const trafficBacking = read(trafficBackingPath);
@@ -105,6 +110,7 @@ const supabaseRiskAcceptance = read(supabaseRiskAcceptancePath);
 const task = read(taskPath);
 const combinedDocs = [
   plG5Doc,
+  plG6Doc,
   taskBoard,
   operatorChecklist,
   trafficBacking,
@@ -165,6 +171,7 @@ for (const fragment of [
   "Production API Managed Challenge remains `not-selected`.",
   "Production route/API harness blocking/removal remains `action-required-before-production`.",
   "PL-G6 public access change / promotion remains approval-gated and not-run.",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
   "counts/status/pass-fail labels only",
   "UI/browser width QA skipped because this slice changes only docs, deterministic contracts, and `task.md`."
 ]) {
@@ -201,6 +208,8 @@ for (const fragment of [
   "operator_production_api_managed_challenge_status=not-selected",
   "operator_production_harness_block_status=action-required-before-production",
   "pl_g6_public_access_change_status=not-run-approval-gated",
+  "pl_g6_public_access_change_preflight_status=complete",
+  "pl_g6_public_access_change_preflight_doc=docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
   "COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
   "UI/browser width QA skipped"
 ]) {
@@ -237,6 +246,7 @@ assert.doesNotMatch(combinedDocs, /operator_production_harness_block_status[=|]\
 
 for (const [label, source] of [
   [plG5DocPath, plG5Doc],
+  [plG6DocPath, plG6Doc],
   [taskBoardPath, taskBoard],
   [operatorChecklistPath, operatorChecklist],
   [trafficBackingPath, trafficBacking],
@@ -249,10 +259,13 @@ for (const [label, source] of [
 
 const allowedChangedFiles = new Set([
   plG5DocPath,
+  plG6DocPath,
+  operatorChecklistPath,
   taskBoardPath,
   taskPath,
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs"

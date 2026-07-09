@@ -1,12 +1,12 @@
 # Kuro Live Comment Translator Free Beta PL-G5 Public Launch Gate Decision
 
-Status: PL-G5 release-owner public launch decision preflight/evidence. Public-release capable: no.
+Status: PL-G5 release-owner public launch decision recorded. Public-release capable: no.
 
-Current execution result: release-owner-decision=pending / public_release_capable=no.
+Current execution result: release-owner-decision=blocked-no-approval / public_release_capable=no.
 
 Public launch gate unchanged. Limited public beta open: not-run / approval-gated. Public launch gate flip: not-run / approval-gated. PL-G6 public access change / promotion: not-run / approval-gated.
 
-This document is the discoverable PL-G5 release-owner decision preflight for the current Free public beta integration line. It records the decision inputs, accepted residual risks, blocking labels, and the gates still required before public capability can be recorded. It is not a public gate flip, not a deploy/upload, and not final release approval.
+This document is the discoverable PL-G5 release-owner decision record for the current Free public beta integration line. It records the decision inputs, accepted residual risks, blocking labels, missing approval scope, and the gates still required before public capability can be recorded. It is not a public gate flip, not a deploy/upload, and not final release approval.
 
 This slice does not run Supabase Support follow-up, remote Supabase query, remote mutation, migration, Cloudflare mutation, deploy/upload, public access change, public gate flip, live/provider execution, OAuth live flow, Google target lookup, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, main promotion, browser storage capture, raw comment capture, or screenshot evidence containing raw comments.
 
@@ -15,8 +15,10 @@ This slice does not run Supabase Support follow-up, remote Supabase query, remot
 | Item | Status |
 | --- | --- |
 | `pl_g5_release_owner_decision_preflight_doc_status` | `complete` |
+| `pl_g5_release_owner_decision_record_status` | `complete` |
 | `pl_g5_release_owner_decision_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md` |
-| `release_owner_decision_status` | `pending` |
+| `release_owner_decision_status` | `blocked-no-approval` |
+| `release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks` |
 | `release_owner_exact_approval_status` | `absent` |
 | `public_release_capable` | `no` |
 | `public_gate_flip_status` | `not-run` |
@@ -68,9 +70,9 @@ It covers Free public launch defaults, API-vs-HTML Managed Challenge boundaries,
 
 PL-G5 can record the current release-owner decision surface.
 
-Current PL-G5 preflight decision is:
+Current PL-G5 release-owner decision is:
 
-- release-owner-decision=pending;
+- release-owner-decision=blocked-no-approval;
 - public_release_capable=no;
 - public gate state unchanged / blocked;
 - PL-G6 public access change / promotion not-run / approval-gated.
@@ -93,12 +95,27 @@ Existing current-table/RLS/current-grant pass posture is not accepted as drift. 
 
 No new `public` database object work may proceed without explicit object-level grant/RLS/default-privileges review.
 
+## Missing Approval For Public Capability
+
+The current source-thread approval is approval to start this PL-G5 decision slice only. It is not approval to mark public release capable, flip public access, run production operations, or accept unfinished operator checks as complete.
+
+To change `public_release_capable` to `yes`, a later same-thread release-owner approval must explicitly accept or close all of these surfaces:
+
+- `support_response_status=pending` with the accepted future `public` object default-privileges risk scope unchanged;
+- `operator_external_verification_status=partial-pass-preview-browser` and `operator_remaining_external_verification_status=action-required`;
+- production Cloudflare edge activation / route-class protection evidence or explicit acceptance of the missing production check;
+- production route/API harness blocking or removal before production traffic;
+- Start-to-translation live smoke, or explicit acceptance that existing evidence is enough without another live/provider run;
+- optional burst, 30-minute, and monthly 20,000 provider-input-character checks, or explicit acceptance that fixture/local evidence is enough;
+- PL-G6 public access change / promotion as a separate exact operation with sanitized output expectations.
+
 ## Blocking Labels Before Public Capability
 
 | Blocking surface | Current label |
 | --- | --- |
 | Release-owner exact approval | `absent` |
-| Release-owner decision | `pending` |
+| Release-owner decision | `blocked-no-approval` |
+| Missing approval scope | `public-capability-risk-acceptance-and-remaining-operator-checks` |
 | Public release capable | `no` |
 | Operator remaining external verification | `action-required` |
 | Production Cloudflare edge activation | `not-run-approval-gated` |
@@ -133,7 +150,7 @@ Codex should not run these checks from this docs/contract slice.
 
 PL-G6 is a separate approval-gated operation. It may include public access change, deploy/upload, production domain cutover, public gate flip, integration-to-main promotion, or final production smoke only after a release owner explicitly approves the exact operation with sanitized output expectations.
 
-This PL-G5 document must remain valid even if the release owner later approves PL-G6. PL-G6 should update its own evidence and should not retroactively convert this preflight into an executed gate flip.
+This PL-G5 document must remain valid even if the release owner later approves PL-G6. PL-G6 should update its own evidence and should not retroactively convert this decision record into an executed gate flip.
 
 ## Sanitized Evidence Shape
 

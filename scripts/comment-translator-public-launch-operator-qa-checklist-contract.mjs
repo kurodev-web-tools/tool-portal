@@ -219,7 +219,7 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "Current branch: `codex/comment-translator-pl-g6-preview-deploy-evidence`",
+  "Current branch: `codex/comment-translator-pl-g6-production-smoke-readiness`",
   "public_launch_operator_qa_checklist_status=complete",
   "operator_external_verification_status=partial-pass-preview-browser",
   "operator_remaining_external_verification_status=action-required",
@@ -242,6 +242,9 @@ for (const fragment of [
   "preview_deployment_status=deployed-operator-provided",
   "production_env_apply_status=not-run-approval-gated",
   "production_main_domain_smoke_status=not-run-approval-gated",
+  "pl_g6c_production_main_domain_env_readiness_status=prepared-approval-gated",
+  "pl_g6c_production_env_operator_action_status=action-required-sanitized-instructions-only",
+  "pl_g6c_production_smoke_approval_status=absent",
   "codex_local_verification_status=pass",
   "Public launch operator QA checklist",
   "preview Managed Challenge setup",

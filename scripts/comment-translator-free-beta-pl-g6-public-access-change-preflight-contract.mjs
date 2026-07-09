@@ -127,6 +127,7 @@ for (const section of [
 
 for (const fragment of [
   "Status: PL-G6 public access change / promotion execution preflight prepared. Preview auto deploy evidence recorded from operator-provided status. Public-release capable: no.",
+  "PL-G6C production/main-domain env readiness and smoke approval gate is prepared; production env apply and production/main-domain smoke remain not-run / approval-gated.",
   "`pl_g6_public_access_change_preflight_status` | `complete`",
   "`pl_g6_public_access_change_preflight_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`",
   "`pl_g6_public_access_change_status` | `not-run-approval-gated`",
@@ -136,6 +137,11 @@ for (const fragment of [
   "`preview_deployment_target` | `cloudflare-preview-domain`",
   "`preview_deployment_status` | `deployed-operator-provided`",
   "`production_env_apply_status` | `not-run-approval-gated`",
+  "`pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated`",
+  "`pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only`",
+  "`pl_g6c_production_env_apply_readiness_confirmation_approval_status` | `present`",
+  "`pl_g6c_production_env_apply_readiness_confirmation_status` | `recorded-no-mutation`",
+  "`pl_g6c_production_smoke_approval_status` | `absent`",
   "`release_owner_decision_status` | `blocked-no-approval`",
   "`release_owner_exact_approval_status` | `absent`",
   "`release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks`",
@@ -164,6 +170,22 @@ for (const fragment of [
   "PL-G6B preview deploy evidence status: recorded.",
   "Operator-provided sanitized evidence states that PR #628 is merged and Cloudflare preview domain deployment is complete.",
   "This records preview deploy/upload as `complete-auto-preview-after-merge` only; it is not production/main-domain smoke, production env apply, public gate flip, public access change, or main promotion evidence.",
+  "## PL-G6C Production/Main-Domain Env Readiness And Smoke Approval Gate",
+  "| `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` | Cloudflare production Worker runtime | required-for-public-traffic-control-reference | Cloudflare dashboard production variables/secrets for the Worker service |",
+  "| `NEXT_PUBLIC_SITE_URL` | Cloudflare production Worker runtime | required-main-domain-url-reference | Cloudflare dashboard production variables/secrets for the Worker service |",
+  "| Supabase public auth variables | Cloudflare production Worker runtime | required-auth-runtime-reference | Cloudflare dashboard production variables/secrets for the Worker service |",
+  "| Supabase service role secret | Cloudflare production Worker runtime | required-server-only-status-session-reference | Cloudflare dashboard production secrets for the Worker service |",
+  "| YouTube credential resolution controls | Cloudflare production Worker runtime | required-reconnect-and-token-resolution-reference | Cloudflare dashboard production variables/secrets for the Worker service |",
+  "| Azure Translator provider references | Cloudflare production Worker runtime | required-free-translation-provider-reference | Cloudflare dashboard production variables/secrets for the Worker service |",
+  "| Turnstile public/secret references | Cloudflare production Worker runtime | required-login-abuse-control-reference | Cloudflare dashboard production variables/secrets for the Worker service |",
+  "| Stripe and paid entitlement references | Cloudflare production Worker runtime | optional-not-required-for-free-public-beta-smoke | Cloudflare dashboard production variables/secrets for the Worker service |",
+  "| live/provider smoke fixture references | operator-local smoke environment only | smoke-only-explicit-approval-required | operator-local shell or approved smoke runner environment |",
+  "Do not ask the user to paste values in chat. The operator should add or confirm the labels in the Cloudflare dashboard for the production Worker environment and report only presence labels.",
+  "Smallest safe next action: request exact approval for production env apply readiness confirmation only, or ask the operator to add/confirm the listed labels in Cloudflare without exposing values.",
+  "I approve PL-G6C production/main-domain env apply readiness confirmation for the Free public beta integration line only.",
+  "PL-G6C env apply readiness confirmation approval is present for readiness confirmation only.",
+  "This confirmation records operator-action instructions and approval status only; it does not apply production env vars or confirm values.",
+  "I approve PL-G6C production/main-domain smoke for the Free public beta integration line only after production env apply readiness is confirmed.",
   "Keep public_release_capable=no unless this same-thread approval explicitly changes it after the listed checks are closed or accepted.",
   "Do not run Cloudflare mutation, production/main deploy/upload, production env apply, public gate flip, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, or main promotion from this preflight slice.",
   "PL-G6 execution remains blocked until exact same-thread approval names the operation, target boundary, allowed evidence shape, and non-actions.",
@@ -186,6 +208,11 @@ for (const fragment of [
   "preview_deployment_target=cloudflare-preview-domain",
   "preview_deployment_status=deployed-operator-provided",
   "production_env_apply_status=not-run-approval-gated",
+  "pl_g6c_production_main_domain_env_readiness_status=prepared-approval-gated",
+  "pl_g6c_production_env_operator_action_status=action-required-sanitized-instructions-only",
+  "pl_g6c_production_env_apply_readiness_confirmation_approval_status=present",
+  "pl_g6c_production_env_apply_readiness_confirmation_status=recorded-no-mutation",
+  "pl_g6c_production_smoke_approval_status=absent",
   "public_release_capable=no"
 ]) {
   assertIncludes(task, fragment, `task.md records ${fragment}`);
@@ -211,6 +238,7 @@ for (const fragment of [
   "`pl_g6_public_access_change_preflight_status` | `complete`",
   "`pl_g6_public_access_change_preflight_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`",
   "`pl_g6_public_access_change_status` | `not-run-approval-gated`",
+  "`pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated`",
   "`public_release_capable_status` | `no`"
 ]) {
   assertIncludes(taskBoard, fragment, `task board records ${fragment}`);

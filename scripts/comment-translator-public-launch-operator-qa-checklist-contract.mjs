@@ -219,7 +219,7 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "Current branch: `codex/comment-translator-pl-g6-public-access-change-preflight`",
+  "Current branch: `codex/comment-translator-pl-g6-execution-readiness`",
   "public_launch_operator_qa_checklist_status=complete",
   "operator_external_verification_status=partial-pass-preview-browser",
   "operator_remaining_external_verification_status=action-required",

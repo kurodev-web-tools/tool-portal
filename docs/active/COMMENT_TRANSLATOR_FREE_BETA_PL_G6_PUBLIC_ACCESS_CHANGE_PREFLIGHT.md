@@ -25,6 +25,8 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | `production_main_domain_smoke_status` | `not-run-approval-gated` |
 | `pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated` |
 | `pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only` |
+| `pl_g6c_production_env_apply_readiness_confirmation_approval_status` | `present` |
+| `pl_g6c_production_env_apply_readiness_confirmation_status` | `recorded-no-mutation` |
 | `pl_g6c_production_smoke_approval_status` | `absent` |
 | `main_promotion_status` | `not-run` |
 | `release_owner_decision_status` | `blocked-no-approval` |
@@ -107,6 +109,10 @@ Do not ask the user to paste values in chat. The operator should add or confirm 
 For production env apply readiness confirmation only:
 
 > I approve PL-G6C production/main-domain env apply readiness confirmation for the Free public beta integration line only. Keep evidence sanitized to labels/counts/pass-fail/status only. Do not expose secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, provider target metadata, liveChatId, Cloudflare token/zone/account/rule ids, support ticket ids, raw SQL output, or raw provider payloads. Do not run production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, public gate flip, public access change, deploy/upload, or main promotion.
+
+PL-G6C env apply readiness confirmation approval is present for readiness confirmation only.
+
+This confirmation records operator-action instructions and approval status only; it does not apply production env vars or confirm values.
 
 For production/main-domain smoke after production env readiness is confirmed:
 

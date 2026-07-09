@@ -68,6 +68,8 @@ Sanitization boundary: this document records only task labels, status labels, an
 | `pl_g6_public_access_change_status` | `not-run-approval-gated` |
 | `pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated` |
 | `pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only` |
+| `pl_g6c_production_env_apply_readiness_confirmation_approval_status` | `present` |
+| `pl_g6c_production_env_apply_readiness_confirmation_status` | `recorded-no-mutation` |
 | `pl_g6c_production_smoke_approval_status` | `absent` |
 | `codex_local_verification_status` | `pass` |
 | `public_release_capable_status` | `no` |
@@ -87,7 +89,7 @@ Sanitization boundary: this document records only task labels, status labels, an
 9. `Cloudflare custom-rule operations doc`: complete. The operational guide is `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`; it records Free public launch defaults, Creator/Paid transition handling, API-vs-HTML Managed Challenge boundary, Rate Limiting preference, Turnstile Pre-clearance as later improvement, traffic-growth response ladder, release-operator checks, and non-actions.
 10. `PL-G5 release-owner decision`: decision recorded in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`; release-owner decision is `blocked-no-approval`, public release capable remains no, and all accepted residual risks / remaining action-required checks are carried forward.
 11. `PL-G6 public access change preflight`: complete in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`; exact same-thread approval remains absent, public release capable remains no, and public access change / promotion remains not-run / approval-gated.
-12. `PL-G6C production/main-domain env readiness and smoke approval gate`: prepared in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`; production env apply remains `not-run-approval-gated`, production/main-domain smoke remains `not-run-approval-gated`, and exact approval remains absent.
+12. `PL-G6C production/main-domain env readiness and smoke approval gate`: prepared in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`; env apply readiness confirmation approval is present and recorded with no mutation, production env apply remains `not-run-approval-gated`, production/main-domain smoke remains `not-run-approval-gated`, and smoke approval remains absent.
 13. `PL-G6 public access change / promotion`: approval-gated public gate flip, production domain cutover, deploy/upload, or integration-to-main promotion.
 14. `Final production smoke`: approval-gated final production/main-domain smoke with sanitized pass/fail/count/status evidence only.
 

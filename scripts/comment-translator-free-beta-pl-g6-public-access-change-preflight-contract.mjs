@@ -139,6 +139,8 @@ for (const fragment of [
   "`production_env_apply_status` | `not-run-approval-gated`",
   "`pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated`",
   "`pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only`",
+  "`pl_g6c_production_env_apply_readiness_confirmation_approval_status` | `present`",
+  "`pl_g6c_production_env_apply_readiness_confirmation_status` | `recorded-no-mutation`",
   "`pl_g6c_production_smoke_approval_status` | `absent`",
   "`release_owner_decision_status` | `blocked-no-approval`",
   "`release_owner_exact_approval_status` | `absent`",
@@ -181,6 +183,8 @@ for (const fragment of [
   "Do not ask the user to paste values in chat. The operator should add or confirm the labels in the Cloudflare dashboard for the production Worker environment and report only presence labels.",
   "Smallest safe next action: request exact approval for production env apply readiness confirmation only, or ask the operator to add/confirm the listed labels in Cloudflare without exposing values.",
   "I approve PL-G6C production/main-domain env apply readiness confirmation for the Free public beta integration line only.",
+  "PL-G6C env apply readiness confirmation approval is present for readiness confirmation only.",
+  "This confirmation records operator-action instructions and approval status only; it does not apply production env vars or confirm values.",
   "I approve PL-G6C production/main-domain smoke for the Free public beta integration line only after production env apply readiness is confirmed.",
   "Keep public_release_capable=no unless this same-thread approval explicitly changes it after the listed checks are closed or accepted.",
   "Do not run Cloudflare mutation, production/main deploy/upload, production env apply, public gate flip, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, or main promotion from this preflight slice.",
@@ -206,6 +210,8 @@ for (const fragment of [
   "production_env_apply_status=not-run-approval-gated",
   "pl_g6c_production_main_domain_env_readiness_status=prepared-approval-gated",
   "pl_g6c_production_env_operator_action_status=action-required-sanitized-instructions-only",
+  "pl_g6c_production_env_apply_readiness_confirmation_approval_status=present",
+  "pl_g6c_production_env_apply_readiness_confirmation_status=recorded-no-mutation",
   "pl_g6c_production_smoke_approval_status=absent",
   "public_release_capable=no"
 ]) {

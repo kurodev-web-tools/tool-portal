@@ -37,6 +37,8 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `production_main_domain_smoke_status` | `not-run-approval-gated` |
 | `pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated` |
 | `pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only` |
+| `pl_g6c_production_env_apply_readiness_confirmation_approval_status` | `present` |
+| `pl_g6c_production_env_apply_readiness_confirmation_status` | `recorded-no-mutation` |
 | `pl_g6c_production_smoke_approval_status` | `absent` |
 | `live_provider_execution_status` | `not-run-approval-gated` |
 | `pl_g6_public_access_change_preflight_status` | `complete` |
@@ -177,6 +179,8 @@ Required closeout labels:
 - `production_main_domain_smoke_status=not-run-approval-gated`
 - `pl_g6c_production_main_domain_env_readiness_status=prepared-approval-gated`
 - `pl_g6c_production_env_operator_action_status=action-required-sanitized-instructions-only`
+- `pl_g6c_production_env_apply_readiness_confirmation_approval_status=present`
+- `pl_g6c_production_env_apply_readiness_confirmation_status=recorded-no-mutation`
 - `pl_g6c_production_smoke_approval_status=absent`
 - `live_provider_execution_status=not-run-approval-gated`
 - `public_release_capable_status=no`

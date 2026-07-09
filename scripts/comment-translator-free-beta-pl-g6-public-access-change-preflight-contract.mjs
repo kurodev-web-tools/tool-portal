@@ -126,11 +126,16 @@ for (const section of [
 }
 
 for (const fragment of [
-  "Status: PL-G6 public access change / promotion execution preflight prepared. Public-release capable: no.",
+  "Status: PL-G6 public access change / promotion execution preflight prepared. Preview auto deploy evidence recorded from operator-provided status. Public-release capable: no.",
   "`pl_g6_public_access_change_preflight_status` | `complete`",
   "`pl_g6_public_access_change_preflight_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`",
   "`pl_g6_public_access_change_status` | `not-run-approval-gated`",
   "`public_release_capable` | `no`",
+  "`deploy_upload_status` | `complete-auto-preview-after-merge`",
+  "`deploy_upload_evidence_source` | `operator-provided`",
+  "`preview_deployment_target` | `cloudflare-preview-domain`",
+  "`preview_deployment_status` | `deployed-operator-provided`",
+  "`production_env_apply_status` | `not-run-approval-gated`",
   "`release_owner_decision_status` | `blocked-no-approval`",
   "`release_owner_exact_approval_status` | `absent`",
   "`release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks`",
@@ -156,8 +161,11 @@ for (const fragment of [
   "PL-G6A repository-side block status: complete.",
   "The route now returns `blocked-production-route-api-harness` with HTTP 404 when the production deployment label is present.",
   "This does not prove deployed production behavior until a later approved deploy/upload and production confirmation.",
+  "PL-G6B preview deploy evidence status: recorded.",
+  "Operator-provided sanitized evidence states that PR #628 is merged and Cloudflare preview domain deployment is complete.",
+  "This records preview deploy/upload as `complete-auto-preview-after-merge` only; it is not production/main-domain smoke, production env apply, public gate flip, public access change, or main promotion evidence.",
   "Keep public_release_capable=no unless this same-thread approval explicitly changes it after the listed checks are closed or accepted.",
-  "Do not run Cloudflare mutation, deploy/upload, public gate flip, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, or main promotion from this preflight slice.",
+  "Do not run Cloudflare mutation, production/main deploy/upload, production env apply, public gate flip, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, or main promotion from this preflight slice.",
   "PL-G6 execution remains blocked until exact same-thread approval names the operation, target boundary, allowed evidence shape, and non-actions.",
   "Evidence stays labels/counts/pass-fail/status only."
 ]) {
@@ -173,6 +181,11 @@ for (const fragment of [
   "pl_g6_first_operational_target_approval_status=approved-in-thread",
   "pl_g6a_repository_route_api_harness_block_status=complete",
   "pl_g6a_repository_route_api_harness_block_evidence=production-deployment-env-guard",
+  "deploy_upload_status=complete-auto-preview-after-merge",
+  "deploy_upload_evidence_source=operator-provided",
+  "preview_deployment_target=cloudflare-preview-domain",
+  "preview_deployment_status=deployed-operator-provided",
+  "production_env_apply_status=not-run-approval-gated",
   "public_release_capable=no"
 ]) {
   assertIncludes(task, fragment, `task.md records ${fragment}`);
@@ -226,6 +239,8 @@ assertIncludes(
 assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?yes`?/i);
 assert.doesNotMatch(combinedDocs, /pl_g6_public_access_change_status[=|]\s*`?(?:configured|complete|completed|done|run)`?/i);
 assert.doesNotMatch(combinedDocs, /public_gate_flip_status[=|]\s*`?(?:configured|complete|completed|done|run)`?/i);
+assert.doesNotMatch(combinedDocs, /production_env_apply_status[=|]\s*`?(?:configured|complete|completed|done|run)`?/i);
+assert.doesNotMatch(combinedDocs, /production_main_domain_smoke_status[=|]\s*`?(?:configured|complete|completed|done|run|pass)`?/i);
 assert.doesNotMatch(combinedDocs, /main_promotion_status[=|]\s*`?(?:configured|complete|completed|done|run)`?/i);
 
 for (const [label, source] of [

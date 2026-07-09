@@ -35,6 +35,9 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `preview_deployment_status` | `deployed-operator-provided` |
 | `production_env_apply_status` | `not-run-approval-gated` |
 | `production_main_domain_smoke_status` | `not-run-approval-gated` |
+| `pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated` |
+| `pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only` |
+| `pl_g6c_production_smoke_approval_status` | `absent` |
 | `live_provider_execution_status` | `not-run-approval-gated` |
 | `pl_g6_public_access_change_preflight_status` | `complete` |
 | `pl_g6_public_access_change_status` | `not-run-approval-gated` |
@@ -70,6 +73,9 @@ The current PL-G6 execution preflight is `docs/active/COMMENT_TRANSLATOR_FREE_BE
 | --- | --- | --- | --- |
 | `operator_cloudflare_edge_rate_limit_activation_status` | Release operator | Before PL-G6 public exposure | `not-run`, `configured`, or `blocked`; protected route classes; pass/fail/count only |
 | `operator_cloudflare_env_reference_status` | Release operator | With edge activation | whether `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` is present for the intended environment; no value |
+| `pl_g6c_production_main_domain_env_readiness_status` | Release operator | Before production/main-domain smoke | required/optional/smoke-only production labels are present or blocked; no values |
+| `production_env_apply_status` | Release operator | Only after exact approval | `not-run-approval-gated`, `confirmed-ready`, `applied`, or `blocked`; no values |
+| `production_main_domain_smoke_status` | Release operator | Only after production env readiness and exact smoke approval | `not-run-approval-gated`, `pass`, `fail`, or `blocked`; route labels/counts/status only |
 | `operator_free_beta_login_browser_smoke_status` | Release operator | After approved access gate change or preview smoke | signed-in Free user can reach `/tools/comment-translator`; unauthenticated user is not granted tool use |
 | `operator_waitlist_boundary_browser_smoke_status` | Release operator | With login smoke | Free public beta is login-only; waitlist remains Creator/paid-only |
 | `operator_youtube_connect_no_autostart_smoke_status` | Release operator | When live OAuth browser smoke is approved | connecting YouTube does not start monitoring, polling, translation, or quota use |
@@ -93,6 +99,18 @@ Minimum operator check:
 Do not record Cloudflare API tokens, account ids, zone ids, rule ids unless they are intentionally safe public references, raw request IPs, headers, cookies, or request bodies.
 
 Preferred API protection order is app-side durable quotas/session caps/rate guards, Cloudflare Rate Limiting Rules for load shedding when available, targeted blocks for known abusive route classes, and Managed Challenge only for HTML routes or temporary emergency response.
+
+### Production/Main-Domain Env Readiness Check
+
+Minimum operator check:
+
+1. Add or confirm required Free public beta production labels in the Cloudflare production Worker environment.
+2. Treat `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING`, `NEXT_PUBLIC_SITE_URL`, Supabase auth/service-role labels, YouTube credential resolution controls, Azure Translator provider references, and Turnstile labels as required production readiness surfaces.
+3. Treat Stripe and paid entitlement labels as optional for Free public beta smoke unless the smoke explicitly includes paid flows.
+4. Treat live/provider smoke fixture labels as smoke-only and approval-gated; do not add them to public docs or chat.
+5. Record only required/optional/smoke-only labels and presence/blocker status. Do not record values.
+
+Do not run production env apply, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, public gate flip, public access change, deploy/upload, or main promotion without exact same-thread approval for that named operation.
 
 ### Browser Smoke Check
 
@@ -157,5 +175,8 @@ Required closeout labels:
 - `preview_deployment_status=deployed-operator-provided`
 - `production_env_apply_status=not-run-approval-gated`
 - `production_main_domain_smoke_status=not-run-approval-gated`
+- `pl_g6c_production_main_domain_env_readiness_status=prepared-approval-gated`
+- `pl_g6c_production_env_operator_action_status=action-required-sanitized-instructions-only`
+- `pl_g6c_production_smoke_approval_status=absent`
 - `live_provider_execution_status=not-run-approval-gated`
 - `public_release_capable_status=no`

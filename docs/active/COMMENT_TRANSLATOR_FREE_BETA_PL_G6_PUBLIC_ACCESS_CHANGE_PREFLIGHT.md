@@ -2,6 +2,8 @@
 
 Status: PL-G6 public access change / promotion execution preflight prepared. Preview auto deploy evidence recorded from operator-provided status. Public-release capable: no.
 
+PL-G6C production/main-domain env readiness and smoke approval gate is prepared; production env apply and production/main-domain smoke remain not-run / approval-gated.
+
 Public access change, public gate flip, production/main deploy/upload, production/main-domain smoke, production env apply, and integration-to-main promotion remain not-run / approval-gated.
 
 This document is the execution preflight and approval surface for PL-G6 after PL-G5 recorded `release_owner_decision_status=blocked-no-approval`. It identifies the exact approval and command boundaries still needed before any public access change or promotion operation can run. It is not approval to execute PL-G6, not a Cloudflare mutation, not a deploy/upload, not a production smoke, and not a public capability decision.
@@ -21,6 +23,9 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | `preview_deployment_status` | `deployed-operator-provided` |
 | `production_env_apply_status` | `not-run-approval-gated` |
 | `production_main_domain_smoke_status` | `not-run-approval-gated` |
+| `pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated` |
+| `pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only` |
+| `pl_g6c_production_smoke_approval_status` | `absent` |
 | `main_promotion_status` | `not-run` |
 | `release_owner_decision_status` | `blocked-no-approval` |
 | `release_owner_exact_approval_status` | `absent` |
@@ -75,6 +80,38 @@ PL-G6B preview deploy evidence status: recorded.
 
 Operator-provided sanitized evidence states that PR #628 is merged and Cloudflare preview domain deployment is complete. This records preview deploy/upload as `complete-auto-preview-after-merge` only; it is not production/main-domain smoke, production env apply, public gate flip, public access change, or main promotion evidence.
 
+## PL-G6C Production/Main-Domain Env Readiness And Smoke Approval Gate
+
+PL-G6C prepares the next approval gate only. It does not apply production environment variables, mutate Cloudflare, deploy/upload, smoke the production/main domain, run live/provider flows, or change public access.
+
+Smallest safe next action: request exact approval for production env apply readiness confirmation only, or ask the operator to add/confirm the listed labels in Cloudflare without exposing values. If operator-side values must be added, do not paste them in chat, docs, PR bodies, shell output, or screenshots.
+
+### Sanitized Operator Instructions
+
+| Variable name or label | Target environment label | Required / optional / smoke-only | Where the operator should add or confirm it |
+| --- | --- | --- | --- |
+| `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` | Cloudflare production Worker runtime | required-for-public-traffic-control-reference | Cloudflare dashboard production variables/secrets for the Worker service |
+| `NEXT_PUBLIC_SITE_URL` | Cloudflare production Worker runtime | required-main-domain-url-reference | Cloudflare dashboard production variables/secrets for the Worker service |
+| Supabase public auth variables | Cloudflare production Worker runtime | required-auth-runtime-reference | Cloudflare dashboard production variables/secrets for the Worker service |
+| Supabase service role secret | Cloudflare production Worker runtime | required-server-only-status-session-reference | Cloudflare dashboard production secrets for the Worker service |
+| YouTube credential resolution controls | Cloudflare production Worker runtime | required-reconnect-and-token-resolution-reference | Cloudflare dashboard production variables/secrets for the Worker service |
+| Azure Translator provider references | Cloudflare production Worker runtime | required-free-translation-provider-reference | Cloudflare dashboard production variables/secrets for the Worker service |
+| Turnstile public/secret references | Cloudflare production Worker runtime | required-login-abuse-control-reference | Cloudflare dashboard production variables/secrets for the Worker service |
+| Stripe and paid entitlement references | Cloudflare production Worker runtime | optional-not-required-for-free-public-beta-smoke | Cloudflare dashboard production variables/secrets for the Worker service |
+| live/provider smoke fixture references | operator-local smoke environment only | smoke-only-explicit-approval-required | operator-local shell or approved smoke runner environment |
+
+Do not ask the user to paste values in chat. The operator should add or confirm the labels in the Cloudflare dashboard for the production Worker environment and report only presence labels.
+
+### Exact Approval Text Needed
+
+For production env apply readiness confirmation only:
+
+> I approve PL-G6C production/main-domain env apply readiness confirmation for the Free public beta integration line only. Keep evidence sanitized to labels/counts/pass-fail/status only. Do not expose secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, provider target metadata, liveChatId, Cloudflare token/zone/account/rule ids, support ticket ids, raw SQL output, or raw provider payloads. Do not run production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, public gate flip, public access change, deploy/upload, or main promotion.
+
+For production/main-domain smoke after production env readiness is confirmed:
+
+> I approve PL-G6C production/main-domain smoke for the Free public beta integration line only after production env apply readiness is confirmed. Keep evidence sanitized to route labels, width labels, pass/fail/count/status, stop reasons, and unavailable reasons only. Do not expose secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, provider target metadata, liveChatId, Cloudflare token/zone/account/rule ids, support ticket ids, raw SQL output, or raw provider payloads. Do not run live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, public gate flip, public access change, deploy/upload, or main promotion.
+
 ## Execution Boundary
 
 Cloudflare route-class and traffic-growth operation guidance remains centralized in `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`.
@@ -114,6 +151,8 @@ Public capability can remain `no` through this preflight. The preflight result i
 - preview deploy/upload complete via operator-provided automatic merge deployment status;
 - production/main deploy/upload not run;
 - production env apply not run;
+- PL-G6C production/main-domain env readiness prepared but approval-gated;
+- production/main-domain smoke not run;
 - main promotion not run.
 
 ## Operator Checks Still Required
@@ -126,6 +165,7 @@ Before or during any approved PL-G6 operation, the release owner must close or e
 - Start-to-translation live smoke or explicit acceptance that existing evidence is enough without another live/provider run;
 - optional burst comment, 30-minute session, and monthly 20,000 provider-input-character checks or explicit acceptance that fixture/local evidence is enough;
 - final production/main-domain smoke after any approved public access or promotion change.
+- PL-G6C production env apply readiness confirmation before production/main-domain smoke.
 
 No new `public` database object work may proceed without explicit object-level grant/RLS/default-privileges review.
 

@@ -27,6 +27,11 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | `public_beta_access_gate_selected` | `login-only` |
 | `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
+| `pl_g6_first_operational_target` | `production-route-api-harness-block-removal` |
+| `pl_g6_first_operational_target_status` | `complete-repository-side-not-deployed` |
+| `pl_g6_first_operational_target_approval_status` | `approved-in-thread` |
+| `pl_g6a_repository_route_api_harness_block_status` | `complete` |
+| `pl_g6a_repository_route_api_harness_block_evidence` | `production-deployment-env-guard` |
 | `support_response_status` | `pending` |
 | `risk_acceptance_scope` | `future-public-object-default-privileges-only` |
 | `new_public_db_object_review_status` | `required-before-work` |
@@ -42,6 +47,25 @@ The approval text must explicitly cover the intended operation. Paste-ready mini
 If the requested PL-G6 action includes public gate flip, deploy/upload, Cloudflare mutation, production/main-domain smoke, or main promotion, the approval must name that exact operation. Approval for one PL-G6 operation does not approve adjacent operations.
 
 Keep public_release_capable=no unless this same-thread approval explicitly changes it after the listed checks are closed or accepted.
+
+## Smallest Safe First Operational Target
+
+The smallest safe first PL-G6 operational target is `production-route-api-harness-block-removal`.
+
+Reason:
+
+- local source inspection confirms the route/API harness file still exists at `app/api/comment-translator/free-beta/route-api-harness/route.ts`;
+- production route/API harness exposure is already labeled `action-required-before-production`;
+- blocking or removing that harness exposure is narrower than public gate flip, deploy/upload, Cloudflare edge activation, production smoke, or main promotion;
+- this target does not approve public access, provider execution, OAuth, Google target lookup, Supabase work, Stripe live action, paid entitlement runtime, OBS overlay runtime, or support follow-up.
+
+Do not start with public gate flip, deploy/upload, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, or Supabase support/database work. Those are separate approval-required operations and remain not-run.
+
+PL-G6A repository-side block status: complete.
+
+The route now returns `blocked-production-route-api-harness` with HTTP 404 when the production deployment label is present.
+
+This does not prove deployed production behavior until a later approved deploy/upload and production confirmation.
 
 ## Execution Boundary
 

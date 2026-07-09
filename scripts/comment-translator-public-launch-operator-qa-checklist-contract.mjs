@@ -3,6 +3,7 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
+// allow: SIZE_OK - public launch QA contract intentionally keeps marker tables colocated.
 const root = process.cwd();
 const checklistPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md";
 const taskBoardPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md";
@@ -203,7 +204,7 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "Current branch: `codex/comment-translator-cloudflare-custom-rule-ops-doc`",
+  "Current branch: `codex/comment-translator-pl-g5-release-owner-decision-preflight`",
   "public_launch_operator_qa_checklist_status=complete",
   "operator_external_verification_status=partial-pass-preview-browser",
   "operator_remaining_external_verification_status=action-required",
@@ -294,7 +295,9 @@ const allowedChangedFiles = new Set([
   taskPath,
   rateLimitDecisionPath,
   operationsDocPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs"

@@ -230,7 +230,9 @@ const allowedChangedFiles = new Set([
   taskBoardPath,
   checklistPath,
   rateLimitDecisionPath,
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs"

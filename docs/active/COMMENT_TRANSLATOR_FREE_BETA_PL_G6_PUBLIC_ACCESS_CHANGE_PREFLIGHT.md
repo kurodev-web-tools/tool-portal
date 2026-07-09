@@ -1,8 +1,8 @@
 # Kuro Live Comment Translator Free Beta PL-G6 Public Access Change Preflight
 
-Status: PL-G6 public access change / promotion execution preflight prepared. Public-release capable: no.
+Status: PL-G6 public access change / promotion execution preflight prepared. Preview auto deploy evidence recorded from operator-provided status. Public-release capable: no.
 
-Public access change, public gate flip, deploy/upload, production/main-domain smoke, and integration-to-main promotion remain not-run / approval-gated.
+Public access change, public gate flip, production/main deploy/upload, production/main-domain smoke, production env apply, and integration-to-main promotion remain not-run / approval-gated.
 
 This document is the execution preflight and approval surface for PL-G6 after PL-G5 recorded `release_owner_decision_status=blocked-no-approval`. It identifies the exact approval and command boundaries still needed before any public access change or promotion operation can run. It is not approval to execute PL-G6, not a Cloudflare mutation, not a deploy/upload, not a production smoke, and not a public capability decision.
 
@@ -15,7 +15,11 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | `pl_g6_public_access_change_status` | `not-run-approval-gated` |
 | `public_release_capable` | `no` |
 | `public_gate_flip_status` | `not-run` |
-| `deploy_upload_status` | `not-run` |
+| `deploy_upload_status` | `complete-auto-preview-after-merge` |
+| `deploy_upload_evidence_source` | `operator-provided` |
+| `preview_deployment_target` | `cloudflare-preview-domain` |
+| `preview_deployment_status` | `deployed-operator-provided` |
+| `production_env_apply_status` | `not-run-approval-gated` |
 | `production_main_domain_smoke_status` | `not-run-approval-gated` |
 | `main_promotion_status` | `not-run` |
 | `release_owner_decision_status` | `blocked-no-approval` |
@@ -44,7 +48,7 @@ The approval text must explicitly cover the intended operation. Paste-ready mini
 
 > I approve PL-G6 public access change / promotion preflight execution for the Free public beta integration line only. Keep evidence sanitized to labels/counts/pass-fail/status only. Do not expose secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, provider target metadata, liveChatId, Cloudflare token/zone/account/rule ids, support ticket ids, raw SQL output, or raw provider payloads. Do not run any operation outside the named PL-G6 target boundary.
 
-If the requested PL-G6 action includes public gate flip, deploy/upload, Cloudflare mutation, production/main-domain smoke, or main promotion, the approval must name that exact operation. Approval for one PL-G6 operation does not approve adjacent operations.
+If the requested PL-G6 action includes public gate flip, production/main deploy/upload, Cloudflare mutation, production env apply, production/main-domain smoke, or main promotion, the approval must name that exact operation. Approval for one PL-G6 operation does not approve adjacent operations.
 
 Keep public_release_capable=no unless this same-thread approval explicitly changes it after the listed checks are closed or accepted.
 
@@ -59,13 +63,17 @@ Reason:
 - blocking or removing that harness exposure is narrower than public gate flip, deploy/upload, Cloudflare edge activation, production smoke, or main promotion;
 - this target does not approve public access, provider execution, OAuth, Google target lookup, Supabase work, Stripe live action, paid entitlement runtime, OBS overlay runtime, or support follow-up.
 
-Do not start with public gate flip, deploy/upload, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, or Supabase support/database work. Those are separate approval-required operations and remain not-run.
+Do not start with public gate flip, production/main deploy/upload, production env apply, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, or Supabase support/database work. Those are separate approval-required operations and remain not-run.
 
 PL-G6A repository-side block status: complete.
 
 The route now returns `blocked-production-route-api-harness` with HTTP 404 when the production deployment label is present.
 
 This does not prove deployed production behavior until a later approved deploy/upload and production confirmation.
+
+PL-G6B preview deploy evidence status: recorded.
+
+Operator-provided sanitized evidence states that PR #628 is merged and Cloudflare preview domain deployment is complete. This records preview deploy/upload as `complete-auto-preview-after-merge` only; it is not production/main-domain smoke, production env apply, public gate flip, public access change, or main promotion evidence.
 
 ## Execution Boundary
 
@@ -75,7 +83,8 @@ Allowed after future exact approval only:
 
 - public access policy change for the selected `login-only` Free public beta boundary;
 - Cloudflare edge rate-limit activation or route-class protection change for the approved target;
-- deploy/upload for the approved target;
+- production/main deploy/upload for the approved target;
+- production env apply for the approved target;
 - public gate flip for the approved target;
 - integration-to-main promotion;
 - final production/main-domain smoke with sanitized labels/counts/pass-fail/status only.
@@ -91,7 +100,7 @@ Still separate unless explicitly named in the same approval:
 - OBS overlay route/token runtime;
 - support follow-up.
 
-Do not run Cloudflare mutation, deploy/upload, public gate flip, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, or main promotion from this preflight slice.
+Do not run Cloudflare mutation, production/main deploy/upload, production env apply, public gate flip, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, or main promotion from this preflight slice.
 
 ## Public Capability Result
 
@@ -102,7 +111,9 @@ Public capability can remain `no` through this preflight. The preflight result i
 - remaining operator checks still action-required unless separately closed or accepted;
 - public access change not run;
 - public gate flip not run;
-- deploy/upload not run;
+- preview deploy/upload complete via operator-provided automatic merge deployment status;
+- production/main deploy/upload not run;
+- production env apply not run;
 - main promotion not run.
 
 ## Operator Checks Still Required
@@ -165,7 +176,9 @@ Forbidden output/storage:
 This preflight slice did not run or implement:
 
 - Cloudflare mutation;
-- deploy/upload;
+- manual deploy/upload by Codex;
+- production/main deploy/upload;
+- production env apply;
 - public gate flip;
 - public access change;
 - production/main-domain smoke;

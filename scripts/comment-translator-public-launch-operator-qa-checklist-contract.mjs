@@ -219,7 +219,7 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "Current branch: `codex/comment-translator-pl-g6-execution-readiness`",
+  "Current branch: `codex/comment-translator-pl-g6-preview-deploy-evidence`",
   "public_launch_operator_qa_checklist_status=complete",
   "operator_external_verification_status=partial-pass-preview-browser",
   "operator_remaining_external_verification_status=action-required",
@@ -236,6 +236,12 @@ for (const fragment of [
   "api_protection_preference_order=app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only",
   "turnstile_pre_clearance_status=later-improvement-not-free-launch-requirement",
   "traffic_growth_response_ladder_status=documented",
+  "deploy_upload_status=complete-auto-preview-after-merge",
+  "deploy_upload_evidence_source=operator-provided",
+  "preview_deployment_target=cloudflare-preview-domain",
+  "preview_deployment_status=deployed-operator-provided",
+  "production_env_apply_status=not-run-approval-gated",
+  "production_main_domain_smoke_status=not-run-approval-gated",
   "codex_local_verification_status=pass",
   "Public launch operator QA checklist",
   "preview Managed Challenge setup",

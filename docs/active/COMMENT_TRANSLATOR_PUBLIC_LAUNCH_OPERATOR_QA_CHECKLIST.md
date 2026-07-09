@@ -29,7 +29,12 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only` |
 | `supabase_future_default_privileges_risk` | `accepted-for-pl-g5-evaluation` |
 | `public_gate_flip_status` | `not-run` |
-| `deploy_upload_status` | `not-run` |
+| `deploy_upload_status` | `complete-auto-preview-after-merge` |
+| `deploy_upload_evidence_source` | `operator-provided` |
+| `preview_deployment_target` | `cloudflare-preview-domain` |
+| `preview_deployment_status` | `deployed-operator-provided` |
+| `production_env_apply_status` | `not-run-approval-gated` |
+| `production_main_domain_smoke_status` | `not-run-approval-gated` |
 | `live_provider_execution_status` | `not-run-approval-gated` |
 | `pl_g6_public_access_change_preflight_status` | `complete` |
 | `pl_g6_public_access_change_status` | `not-run-approval-gated` |
@@ -146,6 +151,11 @@ Required closeout labels:
 - `operator_remaining_external_verification_status=action-required`
 - `edge_activation_status=not-run-approval-gated`
 - `public_gate_flip_status=not-run`
-- `deploy_upload_status=not-run`
+- `deploy_upload_status=complete-auto-preview-after-merge`
+- `deploy_upload_evidence_source=operator-provided`
+- `preview_deployment_target=cloudflare-preview-domain`
+- `preview_deployment_status=deployed-operator-provided`
+- `production_env_apply_status=not-run-approval-gated`
+- `production_main_domain_smoke_status=not-run-approval-gated`
 - `live_provider_execution_status=not-run-approval-gated`
 - `public_release_capable_status=no`

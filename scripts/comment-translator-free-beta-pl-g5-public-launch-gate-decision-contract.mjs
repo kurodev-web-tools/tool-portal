@@ -119,6 +119,7 @@ for (const section of [
   "## What PL-G5 Can Decide",
   "## What PL-G5 Cannot Decide",
   "## Accepted Residual Risks",
+  "## Missing Approval For Public Capability",
   "## Blocking Labels Before Public Capability",
   "## Operator Checks Still Required",
   "## PL-G6 Boundary",
@@ -129,11 +130,13 @@ for (const section of [
 }
 
 for (const fragment of [
-  "Status: PL-G5 release-owner public launch decision preflight/evidence. Public-release capable: no.",
-  "Current execution result: release-owner-decision=pending / public_release_capable=no.",
+  "Status: PL-G5 release-owner public launch decision recorded. Public-release capable: no.",
+  "Current execution result: release-owner-decision=blocked-no-approval / public_release_capable=no.",
   "`pl_g5_release_owner_decision_preflight_doc_status` | `complete`",
+  "`pl_g5_release_owner_decision_record_status` | `complete`",
   "`pl_g5_release_owner_decision_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`",
-  "`release_owner_decision_status` | `pending`",
+  "`release_owner_decision_status` | `blocked-no-approval`",
+  "`release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks`",
   "`release_owner_exact_approval_status` | `absent`",
   "`public_release_capable` | `no`",
   "`support_response_status` | `pending`",
@@ -154,6 +157,8 @@ for (const fragment of [
   "Future `public` object default-privileges risk is accepted for PL-G5 evaluation only.",
   "Existing current-table/RLS/current-grant pass posture is not accepted as drift.",
   "No new `public` database object work may proceed without explicit object-level grant/RLS/default-privileges review.",
+  "The current source-thread approval is approval to start this PL-G5 decision slice only.",
+  "To change `public_release_capable` to `yes`, a later same-thread release-owner approval must explicitly accept or close all of these surfaces:",
   "PL-G5 can record the current release-owner decision surface.",
   "PL-G5 cannot flip the public gate, change public access, deploy/upload, promote to `main`, mutate Cloudflare, mutate Supabase, run live/provider flows, run OAuth live flows, run Google target lookup, run Stripe live actions, implement paid entitlement runtime, or add OBS overlay route/token runtime.",
   "Cloudflare custom-rule operations doc from PR #624 is the operational reference.",
@@ -168,8 +173,10 @@ for (const fragment of [
 
 for (const fragment of [
   "`pl_g5_release_owner_decision_preflight_doc_status` | `complete`",
+  "`pl_g5_release_owner_decision_record_status` | `complete`",
   "`pl_g5_release_owner_decision_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`",
-  "`release_owner_decision_status` | `pending`",
+  "`release_owner_decision_status` | `blocked-no-approval`",
+  "`release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks`",
   "`release_owner_exact_approval_status` | `absent`",
   "`public_release_capable_status` | `no`"
 ]) {
@@ -177,11 +184,13 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "codex/comment-translator-pl-g5-release-owner-decision-preflight",
+  "codex/comment-translator-pl-g5-release-owner-decision",
   "pl_g5_release_owner_decision_preflight_doc_status=complete",
+  "pl_g5_release_owner_decision_record_status=complete",
   "pl_g5_release_owner_decision_doc=docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
-  "release_owner_decision_status=pending",
-  "release-owner-decision=pending",
+  "release_owner_decision_status=blocked-no-approval",
+  "release-owner-decision=blocked-no-approval",
+  "release_owner_missing_approval_scope=public-capability-risk-acceptance-and-remaining-operator-checks",
   "release_owner_exact_approval_status=absent",
   "public_release_capable=no",
   "support_response_status=pending",
@@ -245,14 +254,15 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
+  "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs"
 ]);
 
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `PL-G5 release-owner decision preflight change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file), `PL-G5 release-owner decision record change stays in allowed files: ${file}`);
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 
 console.log(
-  "comment translator Free beta PL-G5 release-owner decision preflight contract checks passed"
+  "comment translator Free beta PL-G5 release-owner decision record contract checks passed"
 );

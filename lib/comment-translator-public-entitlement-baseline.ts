@@ -11,6 +11,7 @@ import {
   type CommentTranslatorDurableUsageRead,
   type CommentTranslatorDurableUsageSnapshot
 } from "./comment-translator-durable-usage-counter-store";
+import { type CommentTranslatorFreeBetaPreviewRateLimitSmokeOverride } from "./comment-translator-free-beta-preview-rate-limit-smoke-override";
 
 export type CommentTranslatorPublicEntitlementBaselineResult =
   | {
@@ -70,10 +71,12 @@ export const commentTranslatorPublicEntitlementBaselineContract = {
 
 export function resolveCommentTranslatorPublicEntitlementBaseline({
   billingSnapshot,
-  durableUsageRead
+  durableUsageRead,
+  previewRateLimitSmokeOverride
 }: {
   billingSnapshot: Pick<CommentTranslatorBillingEntitlementSnapshot, "plan" | "billingState" | "planEntitlement">;
   durableUsageRead: CommentTranslatorDurableUsageRead;
+  previewRateLimitSmokeOverride?: CommentTranslatorFreeBetaPreviewRateLimitSmokeOverride;
 }): CommentTranslatorPublicEntitlementBaselineResult {
   if (durableUsageRead.status === "fail-closed") {
     return {
@@ -86,7 +89,12 @@ export function resolveCommentTranslatorPublicEntitlementBaseline({
     };
   }
 
-  const planEntitlement = createCommentTranslatorSessionPlanEntitlement({ plan: "free" });
+  const defaultPlanEntitlement = createCommentTranslatorSessionPlanEntitlement({ plan: "free" });
+  const planEntitlement = {
+    ...defaultPlanEntitlement,
+    translatedMessagesPerMinute:
+      previewRateLimitSmokeOverride?.translatedMessagesPerMinute ?? defaultPlanEntitlement.translatedMessagesPerMinute
+  };
   const monthlyProviderInputCharacterLimit =
     planEntitlement.monthlyProviderInputCharacterLimit ??
     commentTranslatorPublicEntitlementBaselineContract.freePlanLimits.monthlyProviderInputCharacters;

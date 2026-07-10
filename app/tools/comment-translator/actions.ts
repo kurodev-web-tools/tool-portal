@@ -35,6 +35,7 @@ import {
 } from "@/lib/comment-translator-durable-usage-counter-store";
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
+import { resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride } from "@/lib/comment-translator-free-beta-preview-rate-limit-smoke-override";
 import {
   createCommentTranslatorFreeBetaRetentionAttributionState,
   type CommentTranslatorFreeBetaRetentionAttributionState
@@ -305,7 +306,10 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: Commen
     });
     const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
       billingSnapshot,
-      durableUsageRead
+      durableUsageRead,
+      previewRateLimitSmokeOverride: resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
+        privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
+      })
     });
     if (entitlementBaseline.status === "ready") {
       const credentialReadiness = await readCredentialReadiness({ activeSession, callerAuthorization });
@@ -416,7 +420,10 @@ async function readCommentTranslatorFreeBetaDerivedReadiness(): Promise<{
   const entitlementBaseline = durableUsageRead
     ? resolveCommentTranslatorPublicEntitlementBaseline({
         billingSnapshot,
-        durableUsageRead
+        durableUsageRead,
+        previewRateLimitSmokeOverride: resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
+          privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
+        })
       })
     : null;
   const credentialReadiness =
@@ -506,7 +513,10 @@ async function readCommentTranslatorSessionActionResult({
   });
   const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
     billingSnapshot,
-    durableUsageRead
+    durableUsageRead,
+    previewRateLimitSmokeOverride: resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
+      privateLaunchAccess: launchAccess
+    })
   });
   if (entitlementBaseline.status === "fail-closed") {
     return createCommentTranslatorDurableSessionFailClosedState({

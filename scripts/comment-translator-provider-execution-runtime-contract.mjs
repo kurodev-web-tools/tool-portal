@@ -662,9 +662,17 @@ const monthlyInputAccountingChangedFiles = new Set([
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "task.md"
 ]);
+const plG6dChangedFiles = new Set([
+  "app/api/comment-translator/session/route.ts",
+  "app/tools/comment-translator/actions.ts",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6D_PREVIEW_RATE_LIMIT_SMOKE_OVERRIDE.md",
+  "lib/comment-translator-free-beta-preview-rate-limit-smoke-override.ts",
+  "lib/comment-translator-public-entitlement-baseline.ts",
+  "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs"
+]);
 for (const file of changedFiles()) {
   assert.ok(
-    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file),
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file),
     `Task 11 change stays in allowed files: ${file}`
   );
 

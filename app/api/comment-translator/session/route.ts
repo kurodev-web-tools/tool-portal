@@ -34,6 +34,7 @@ import {
 } from "@/lib/comment-translator-durable-usage-counter-store";
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
+import { resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride } from "@/lib/comment-translator-free-beta-preview-rate-limit-smoke-override";
 import {
   resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart
 } from "@/lib/comment-translator-server-only-live-chat-target-lookup";
@@ -142,7 +143,10 @@ export async function POST(request: NextRequest) {
   });
   const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
     billingSnapshot,
-    durableUsageRead
+    durableUsageRead,
+    previewRateLimitSmokeOverride: resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
+      privateLaunchAccess: launchAccess
+    })
   });
   if (entitlementBaseline.status === "fail-closed") {
     return NextResponse.json(

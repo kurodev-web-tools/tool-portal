@@ -719,8 +719,18 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
   taskPath
 ]);
+const plG6dChangedFiles = new Set([
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6D_PREVIEW_RATE_LIMIT_SMOKE_OVERRIDE.md",
+  "lib/comment-translator-free-beta-preview-rate-limit-smoke-override.ts",
+  "lib/comment-translator-public-entitlement-baseline.ts",
+  "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs"
+]);
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `F7 change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file) || plG6dChangedFiles.has(file), `F7 change stays in allowed files: ${file}`);
 }
 
 console.log("comment translator bounded live chat polling wiring contract checks passed");

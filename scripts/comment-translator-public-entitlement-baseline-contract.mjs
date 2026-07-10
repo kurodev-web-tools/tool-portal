@@ -352,6 +352,17 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
   taskPath
 ]);
+const plG6dChangedFiles = new Set([
+  "app/api/comment-translator/session/route.ts",
+  "app/tools/comment-translator/actions.ts",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6D_PREVIEW_RATE_LIMIT_SMOKE_OVERRIDE.md",
+  "lib/comment-translator-free-beta-preview-rate-limit-smoke-override.ts",
+  "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs"
+]);
 const monthlyInputAccountingChangedFiles = new Set([
   "components/comment-translator/CommentTranslatorDock.tsx",
   "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md",
@@ -402,7 +413,7 @@ const monthlyInputAccountingChangedFiles = new Set([
 ]);
 for (const file of changedFiles()) {
   assert.ok(
-    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file),
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file),
     `F5 change stays in allowed files: ${file}`
   );
 }

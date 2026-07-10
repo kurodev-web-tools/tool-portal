@@ -366,12 +366,37 @@ git commit -m "[codex] Wire per-minute pause session state"
 
 **Files:**
 
-- Modify: `components/comment-translator/CommentTranslatorDock.tsx`
-- Modify: `lib/comment-translator.ts`
 - Create: `app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx`
+- Modify: `components/comment-translator/CommentTranslatorDock.tsx`
+- Create: `components/comment-translator/CommentTranslatorActivePhaseNotice.tsx`
+- Create: `components/comment-translator/CommentTranslatorCommentCard.tsx`
+- Create: `components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx`
+- Create: `components/comment-translator/CommentTranslatorDockAtoms.tsx`
+- Create: `components/comment-translator/CommentTranslatorDockHeader.tsx`
+- Create: `components/comment-translator/CommentTranslatorFeedPanel.tsx`
+- Create: `components/comment-translator/CommentTranslatorSessionPanel.tsx`
+- Create: `components/comment-translator/CommentTranslatorSettingsPanel.tsx`
+- Create: `components/comment-translator/CommentTranslatorUsageSidebar.tsx`
+- Create: `components/comment-translator/comment-translator-dock-format.ts`
+- Create: `components/comment-translator/comment-translator-dock-model.ts`
+- Create: `components/comment-translator/useCommentTranslatorBrowserTimeZone.ts`
+- Create: `components/comment-translator/useCommentTranslatorCreatorWaitlist.ts`
+- Create: `components/comment-translator/useCommentTranslatorDockControls.ts`
+- Create: `components/comment-translator/useCommentTranslatorSessionFeedController.ts`
+- Modify: `components/portal/PortalShell.tsx`
+- Modify: `lib/comment-translator.ts`
+- Create: `lib/comment-translator-copy-en.json`
+- Create: `lib/comment-translator-copy-ja.json`
+- Create: `lib/comment-translator-fixture-comments.ts`
+- Create: `lib/comment-translator-runtime.ts`
+- Create: `lib/comment-translator-snapshot-data.ts`
+- Create: `lib/comment-translator-types.ts`
+- Modify: `docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md`
+- Modify: `scripts/account-remote-display-settings-contract.mjs`
 - Modify: `scripts/comment-translator-per-minute-auto-resume-contract.mjs`
 - Modify: `scripts/comment-translator-public-operator-session-ui-contract.mjs`
 - Modify: `scripts/comment-translator-free-beta-usage-display-contract.mjs`
+- Modify: `task.md`
 
 - [ ] **Step 1: Write failing copy/render contracts**
 
@@ -417,7 +442,7 @@ Render one warning panel near the session state, not a modal or browser notifica
 
 Keep the existing Stop button enabled for `status === "active"`. Do not add a restart button. Existing Start remains unavailable because a session is active.
 
-Add a dev-only visual route that passes a fixed sanitized `initialSessionState` into the Dock for `running`, `rate-paused`, and `resyncing`. The route must call `notFound()` when `process.env.NODE_ENV === "production"`; it must not call actions, provider runtime, target lookup, Supabase, or browser storage. Add a contract proving the production guard and fixed state allowlist.
+Add a dev-only visual route that passes a fixed sanitized `initialSessionState` into the Dock for `running`, `rate-paused`, and `resyncing`. The route must call `notFound()` when `process.env.NODE_ENV === "production"`; it must not call actions, provider runtime, target lookup, Supabase, or browser storage. Pass an explicit fixed signed-out account status with no account identifier into `PortalShell`, and mount the remote display-settings applier only for signed-in accounts, so the fixture cannot trigger the transitive account-session/Supabase lookup or signed-in browser preference storage. Add a contract proving the production guard, fixed state allowlist, actual phase-notice timer/storage/action isolation, and transitive `PortalShell` account boundary.
 
 - [ ] **Step 4: Run UI contracts to GREEN**
 
@@ -428,7 +453,12 @@ Expected: PASS with sanitized pause and resync markers.
 - [ ] **Step 5: Commit the UI slice after commit approval**
 
 ```bash
-git add components/comment-translator/CommentTranslatorDock.tsx lib/comment-translator.ts app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx scripts/comment-translator-per-minute-auto-resume-contract.mjs scripts/comment-translator-public-operator-session-ui-contract.mjs scripts/comment-translator-free-beta-usage-display-contract.mjs
+git add app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx
+git add components/comment-translator/CommentTranslatorDock.tsx components/comment-translator/CommentTranslatorActivePhaseNotice.tsx components/comment-translator/CommentTranslatorCommentCard.tsx components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx components/comment-translator/CommentTranslatorDockAtoms.tsx components/comment-translator/CommentTranslatorDockHeader.tsx components/comment-translator/CommentTranslatorFeedPanel.tsx components/comment-translator/CommentTranslatorSessionPanel.tsx components/comment-translator/CommentTranslatorSettingsPanel.tsx components/comment-translator/CommentTranslatorUsageSidebar.tsx components/comment-translator/comment-translator-dock-format.ts components/comment-translator/comment-translator-dock-model.ts components/comment-translator/useCommentTranslatorBrowserTimeZone.ts components/comment-translator/useCommentTranslatorCreatorWaitlist.ts components/comment-translator/useCommentTranslatorDockControls.ts components/comment-translator/useCommentTranslatorSessionFeedController.ts
+git add components/portal/PortalShell.tsx
+git add lib/comment-translator.ts lib/comment-translator-copy-en.json lib/comment-translator-copy-ja.json lib/comment-translator-fixture-comments.ts lib/comment-translator-runtime.ts lib/comment-translator-snapshot-data.ts lib/comment-translator-types.ts
+git add scripts/account-remote-display-settings-contract.mjs scripts/comment-translator-per-minute-auto-resume-contract.mjs scripts/comment-translator-public-operator-session-ui-contract.mjs scripts/comment-translator-free-beta-usage-display-contract.mjs
+git add docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md task.md
 git commit -m "[codex] Show automatic per-minute pause recovery"
 ```
 

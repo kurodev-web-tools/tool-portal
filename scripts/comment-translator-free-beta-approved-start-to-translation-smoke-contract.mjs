@@ -31,6 +31,13 @@ const runtimePaths = [
   "lib/comment-translator-public-entitlement-baseline.ts",
   "lib/comment-translator-server-only-live-chat-target-lookup.ts",
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
   "lib/comment-translator-live-message-normalization.ts",
   "lib/comment-translator-azure-normal-translation-execution.ts"
 ];
@@ -299,11 +306,13 @@ assert.match(targetLookupSource, /providerTargetLookupExecution:\s*"not-run-in-t
 assert.match(targetLookupSource, /liveChatIdLookupExecution:\s*"not-run-in-this-thread"/, "live target lookup execution remains not-run by default");
 
 const pollingSource = read("lib/comment-translator-bounded-live-chat-polling-wiring.ts");
+const pollingStaticSource = read("lib/comment-translator-bounded-live-chat-polling-static-wiring.ts");
+const pollingTransitionSource = read("lib/comment-translator-bounded-live-chat-polling-transition.ts");
 assert.match(pollingSource, /import "server-only"/, "bounded polling is server-only");
 assert.match(pollingSource, /liveTargetHandling:\s*"server-only-active-session-state"/, "polling target handling is server-only active-session state");
-assert.match(pollingSource, /pollingCursor:\s*"nextPageToken-server-only"/, "polling cursor stays server-only");
-assert.match(pollingSource, /quotaBudgetStopHandoff:\s*"durable-session-ledger-stop-state"/, "polling hands quota stops to durable ledger state");
-assert.match(pollingSource, /translatedMessagesPerMinute[^=]*=\s*usage\.planEntitlement\?\.translatedMessagesPerMinute \?\? 30/, "polling enforces Free per-minute default");
+assert.match(pollingStaticSource, /pollingCursor:\s*"nextPageToken-server-only"/, "polling cursor stays server-only");
+assert.match(pollingStaticSource, /quotaBudgetStopHandoff:\s*"durable-session-ledger-stop-state"/, "polling hands quota stops to durable ledger state");
+assert.match(pollingTransitionSource, /translatedMessagesPerMinute[^=]*=\s*usage\.planEntitlement\?\.translatedMessagesPerMinute \?\? 30/, "polling enforces Free per-minute default");
 
 const azureSource = read("lib/comment-translator-azure-normal-translation-execution.ts");
 assert.match(azureSource, /import "server-only"/, "Azure translation bridge is server-only");
@@ -398,6 +407,14 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs",
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
+  "lib/comment-translator-live-provider-session-step-result.ts",
   "lib/comment-translator-durable-usage-counter-store.ts",
   "lib/comment-translator-session-runtime.ts",
   "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",

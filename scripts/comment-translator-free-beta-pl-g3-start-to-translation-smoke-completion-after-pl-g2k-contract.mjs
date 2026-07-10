@@ -28,6 +28,8 @@ const sessionRoutePath = "app/api/comment-translator/session/route.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
 const targetLookupPath = "lib/comment-translator-server-only-live-chat-target-lookup.ts";
 const pollingPath = "lib/comment-translator-bounded-live-chat-polling-wiring.ts";
+const pollingStaticPath = "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts";
+const pollingTypesPath = "lib/comment-translator-bounded-live-chat-polling-types.ts";
 const azurePath = "lib/comment-translator-azure-normal-translation-execution.ts";
 const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
 const targetLookupCommandPath = "scripts/comment-translator-youtube-live-chat-target-lookup-command.mjs";
@@ -98,6 +100,8 @@ for (const requiredPath of [
   actionsPath,
   targetLookupPath,
   pollingPath,
+  pollingStaticPath,
+  pollingTypesPath,
   azurePath,
   dockPath,
   targetLookupCommandPath,
@@ -124,6 +128,8 @@ const sessionRoute = read(sessionRoutePath);
 const actions = read(actionsPath);
 const targetLookup = read(targetLookupPath);
 const polling = read(pollingPath);
+const pollingStatic = read(pollingStaticPath);
+const pollingTypes = read(pollingTypesPath);
 const azure = read(azurePath);
 const dock = read(dockPath);
 const targetLookupCommand = read(targetLookupCommandPath);
@@ -252,7 +258,7 @@ assert.match(
   "target lookup boundary can skip unapproved live target lookup instead of blocking explicit Start"
 );
 assert.match(sessionRoute, /readCommentTranslatorBoundedLiveChatPollingTick/, "session route delegates polling through the bounded runtime");
-assert.match(polling, /live-provider-polling-not-approved/, "bounded polling runtime keeps polling unavailable by default");
+assert.match(pollingTypes, /live-provider-polling-not-approved/, "bounded polling runtime keeps polling unavailable by default");
 assert.match(actions, /startCommentTranslatorSessionAction[\s\S]*intent:\s*"start"/, "server action exposes explicit Start");
 assert.match(actions, /stopCommentTranslatorSessionAction[\s\S]*intent:\s*"stop"/, "server action exposes explicit Stop");
 assert.match(
@@ -263,7 +269,7 @@ assert.match(
 assert.match(targetLookup, /import "server-only"/, "target lookup remains server-only");
 assert.match(targetLookup, /targetMetadataHandling:\s*"server-only-internal-never-client-readable"/, "target metadata stays server-only");
 assert.match(polling, /import "server-only"/, "bounded polling remains server-only");
-assert.match(polling, /pollingCursor:\s*"nextPageToken-server-only"/, "polling cursor stays server-only");
+assert.match(pollingStatic, /pollingCursor:\s*"nextPageToken-server-only"/, "polling cursor stays server-only");
 assert.match(azure, /import "server-only"/, "Azure translation bridge remains server-only");
 assert.match(azure, /providerApiExecution:\s*"approval-gated-not-run-by-default"/, "Azure provider execution remains approval-gated by default");
 assert.match(dock, /data-comment-translator-real-comments-feed="server-owned-safe-rows"/, "UI feed uses server-owned safe rows");
@@ -380,6 +386,8 @@ for (const [label, source] of [
   [actionsPath, actions],
   [targetLookupPath, targetLookup],
   [pollingPath, polling],
+  [pollingStaticPath, pollingStatic],
+  [pollingTypesPath, pollingTypes],
   [azurePath, azure],
   [dockPath, dock],
   [targetLookupCommandPath, targetLookupCommand],
@@ -406,6 +414,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator.ts",
   "lib/comment-translator-real-comments-feed-shared.ts",
   "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-live-provider-session-step-result.ts",
   "lib/comment-translator-azure-normal-translation-execution.ts",
   "lib/comment-translator-durable-usage-counter-store.ts",
   taskPath,
@@ -482,6 +491,13 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs",
   "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs",
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
   "lib/comment-translator-durable-usage-counter-store.ts",
   "lib/comment-translator-session-runtime.ts",
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",

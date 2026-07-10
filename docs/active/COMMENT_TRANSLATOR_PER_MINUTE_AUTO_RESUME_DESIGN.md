@@ -1,6 +1,6 @@
 # Kuro Live Comment Translator Per-Minute Auto-Resume Design
 
-Status: design approved on 2026-07-10. Design and planning readiness only; implementation, Cloudflare mutation, deploy/upload, preview or production browser smoke, live/provider execution, public access change, and main promotion are not included.
+Status: local implementation, non-browser verification, and fixture width QA completed on 2026-07-10. Cloudflare mutation, deploy/upload, preview or production browser smoke, live/provider execution, public access change, and main promotion are not included.
 
 ## Purpose
 
@@ -188,3 +188,14 @@ Because rendered state and copy change, perform local fixture-based browser QA a
 Implementation belongs in a separate reviewable follow-up slice after the existing PL-G6D preview smoke override slice is integrated or otherwise selected as its explicit base. Do not add this behavioral change to the existing override PR implicitly.
 
 Stop before Cloudflare environment apply, preview/production deploy or upload, live/provider execution, OAuth live flow, Google target lookup, Supabase work, Stripe action, public gate/access change, paid runtime, OBS runtime, or main promotion. Each such operation requires its own exact sanitized approval.
+
+## Local Implementation And Verification Status (2026-07-10)
+
+- Tasks 1-6 implemented rolling recovery authority, the sanitized active-phase model, session-keyed single-flight polling, route/action parity, the localized operator surface, the production-404 fixture, and accounting/entitlement regressions in the shared uncommitted worktree.
+- Task 7 fixed two integration-only build blockers with RED-first contracts: the `use server` facade now exports local async actions, and the new bounded-polling private state remains non-enumerable while compiling under the repository `es5` target.
+- Final review fixed cold-start restoration: durable usage reconstructs a missing process-local phase as `resyncing` or `rate-paused`, malformed capped authority remains fail-closed, capped heartbeat performs no provider/target/translation execution, and terminal provider state keeps precedence.
+- The exact 13-contract bundle, `npm run lint`, `npx tsc --noEmit --pretty false`, `npm run build`, and `git diff --check` are the required final non-browser gates. Exact fresh results are recorded in `task.md` and `.superpowers/sdd/task-7-report.md`.
+- The final production build retains only the existing non-blocking middleware-convention deprecation warning and the server-runtime postbuild note that static export aliases are skipped because `out` is absent.
+- Fixture-only width QA passed for `running`, `rate-paused`, and `resyncing` at `390 / 820 / 1024 / 1280 / 1366px`. The final evidence contains 15 core viewport captures plus two 390px notice captures; overflow, phase-marker, Start/Stop, console-error, and forbidden-network checks passed, and two independent visual reviews reported no blocking issue.
+- Earlier sanitized production attempt evidence remains unchanged: `total=31`, `peak_rolling=14-of-30`, `boundary_status=inconclusive-window-not-saturated`, `post_stop=pass`, `post_stop_window=0-of-30`. It is not treated as proof that the rolling boundary was saturated.
+- No staging, commit, push, PR, deploy/upload, preview/production browser smoke, live/provider execution, OAuth flow, target lookup, Cloudflare mutation, Supabase operation, migration, Stripe action, public gate/access change, or main promotion was performed.

@@ -107,6 +107,7 @@ export type CommentTranslatorUsageLedgerSnapshot = {
   dailyUsedMs: number;
   currentSessionElapsedMs: number;
   translatedMessagesInCurrentMinute: number;
+  translatedMessageCapacityAvailableAtMs: number | null;
   monthlyProviderInputCharacterEstimate: number;
   providerBudgetAvailable: boolean;
   globalBudgetAvailable: boolean;
@@ -116,6 +117,15 @@ export type CommentTranslatorUsageLedgerSnapshot = {
   providerRequestEstimate: CommentTranslatorUsageLedgerProviderRequestEstimate;
   aiUsageEstimate: CommentTranslatorUsageLedgerAiUsageEstimate;
 };
+
+export class CommentTranslatorUsageRecoveryAuthorityError extends Error {
+  readonly reason = "untrustworthy-provider-execution-time";
+
+  constructor() {
+    super("Comment translator usage recovery authority is unavailable.");
+    this.name = "CommentTranslatorUsageRecoveryAuthorityError";
+  }
+}
 
 export type CommentTranslatorAdminSafeAggregateMetrics = {
   generatedAtIso: string;
@@ -314,25 +324,40 @@ export function readInMemoryCommentTranslatorUsageSnapshot({
   const records = userLedgerReferenceId
     ? usageLedgerRecords.filter((record) => record.userLedgerReferenceId === userLedgerReferenceId)
     : [];
+  const currentMinuteStartedAtMs = nowMs - 60_000;
+  const currentWindowProviderExecutionRecords = activeSession
+    ? records.filter(
+        (record): record is Extract<CommentTranslatorUsageLedgerRecord, { type: "ai-usage-estimated" }> =>
+          record.type === "ai-usage-estimated" &&
+          record.sessionReferenceId === activeSession.sessionReferenceId &&
+          Math.max(0, record.translatedMessageEstimate) > 0 &&
+          (!Number.isFinite(record.occurredAtMs) || record.occurredAtMs > currentMinuteStartedAtMs)
+      )
+    : [];
+  const translatedMessagesInCurrentMinute = currentWindowProviderExecutionRecords.reduce(
+    (total, record) => total + Math.max(0, record.translatedMessageEstimate),
+    0
+  );
+  const translatedMessageCapacityAvailableAtMs =
+    translatedMessagesInCurrentMinute >= planEntitlement.translatedMessagesPerMinute
+      ? earliestInMemoryProviderExecutionExpiryOrThrow(currentWindowProviderExecutionRecords)
+      : null;
   const currentDay = dayBucket(nowMs);
   const currentMonth = monthBucket(nowMs);
-  const dailyRecords = records.filter((record) => dayBucket(record.occurredAtMs) === currentDay);
+  const dailyRecords = records.filter(
+    (record) => Number.isFinite(record.occurredAtMs) && dayBucket(record.occurredAtMs) === currentDay
+  );
   const activeSessionRecords = activeSession
     ? dailyRecords.filter((record) => "sessionReferenceId" in record && record.sessionReferenceId === activeSession.sessionReferenceId)
     : [];
-  const currentMinuteStartedAtMs = nowMs - 60_000;
 
   return {
     dailyUsedMs: dailyRecords
       .filter((record): record is Extract<CommentTranslatorUsageLedgerRecord, { type: "session-stopped" }> => record.type === "session-stopped")
       .reduce((total, record) => total + Math.max(0, record.elapsedMs), 0),
     currentSessionElapsedMs: activeSession ? Math.max(0, nowMs - activeSession.startedAtMs) : 0,
-    translatedMessagesInCurrentMinute: activeSessionRecords
-      .filter(
-        (record): record is Extract<CommentTranslatorUsageLedgerRecord, { type: "ai-usage-estimated" }> =>
-          record.type === "ai-usage-estimated" && record.occurredAtMs >= currentMinuteStartedAtMs
-      )
-      .reduce((total, record) => total + Math.max(0, record.translatedMessageEstimate), 0),
+    translatedMessagesInCurrentMinute,
+    translatedMessageCapacityAvailableAtMs,
     monthlyProviderInputCharacterEstimate: records
       .filter(
         (record): record is Extract<CommentTranslatorUsageLedgerRecord, { type: "ai-usage-estimated" }> =>
@@ -351,6 +376,17 @@ export function readInMemoryCommentTranslatorUsageSnapshot({
     providerRequestEstimate: aggregateProviderRequestEstimate(activeSessionRecords),
     aiUsageEstimate: aggregateAiUsageEstimate(activeSessionRecords)
   };
+}
+
+function earliestInMemoryProviderExecutionExpiryOrThrow(
+  records: readonly Extract<CommentTranslatorUsageLedgerRecord, { type: "ai-usage-estimated" }>[]
+) {
+  const expiries = records.map((record) => record.occurredAtMs + 60_000);
+  if (expiries.length === 0 || expiries.some((expiry) => !Number.isFinite(expiry))) {
+    throw new CommentTranslatorUsageRecoveryAuthorityError();
+  }
+
+  return Math.min(...expiries);
 }
 
 export function createCommentTranslatorAdminSafeAggregateMetrics({

@@ -11,8 +11,10 @@ const wiringPath = "lib/comment-translator-real-comments-ui-wiring.ts";
 const commentTranslatorPath = "lib/comment-translator.ts";
 const normalizationPath = "lib/comment-translator-live-message-normalization.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
+const feedActionsPath = "app/tools/comment-translator/feed-actions.ts";
 const pagePath = "app/tools/comment-translator/page.tsx";
 const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
+const feedPanelPath = "components/comment-translator/CommentTranslatorFeedPanel.tsx";
 const readinessDocPath = "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const taskPath = "task.md";
@@ -120,8 +122,10 @@ for (const requiredPath of [
   wiringPath,
   normalizationPath,
   actionsPath,
+  feedActionsPath,
   pagePath,
   dockPath,
+  feedPanelPath,
   readinessDocPath,
   gapAuditPath,
   taskPath
@@ -132,9 +136,9 @@ for (const requiredPath of [
 const sharedSource = read(sharedPath);
 const wiringSource = read(wiringPath);
 const normalizationSource = read(normalizationPath);
-const actionsSource = read(actionsPath);
+const actionsSource = [actionsPath, feedActionsPath].map(read).join("\n");
 const pageSource = read(pagePath);
-const dockSource = read(dockPath);
+const dockSource = [dockPath, feedPanelPath].map(read).join("\n");
 const readinessDoc = read(readinessDocPath);
 const gapAudit = read(gapAuditPath);
 const taskSource = read(taskPath);
@@ -292,6 +296,7 @@ const allowedChangedFiles = new Set([
   wiringPath,
   commentTranslatorPath,
   actionsPath,
+  feedActionsPath,
   "app/admin/page.tsx",
   "app/admin/comment-translator/page.tsx",
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
@@ -299,6 +304,7 @@ const allowedChangedFiles = new Set([
   "app/admin/comment-translator/creator-waitlist/page.tsx",
   pagePath,
   dockPath,
+  feedPanelPath,
   "components/comment-translator/CommentTranslatorPrivateLaunchUnavailable.tsx",
   "components/portal/PortalHeader.tsx",
   "components/portal/PortalShell.tsx",
@@ -316,6 +322,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-youtube-runtime-foundation.ts",
   "lib/comment-translator-youtube-live-comment-intake-pipeline.ts",
   "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-live-provider-session-step-result.ts",
   "lib/comment-translator-azure-normal-translation-execution.ts",
   "lib/comment-translator-provider-execution-runtime.ts",
   readinessDocPath,
@@ -352,8 +359,69 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
   taskPath
 ]);
+const perMinuteAutoResumeChangedFiles = new Set([
+  "app/api/comment-translator/session/route-context.ts",
+  "app/tools/comment-translator/account-actions.ts",
+  "app/tools/comment-translator/action-context.ts",
+  "app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx",
+  "app/tools/comment-translator/feed-actions.ts",
+  "app/tools/comment-translator/retention-waitlist-actions.ts",
+  "app/tools/comment-translator/session-actions.ts",
+  "components/comment-translator/comment-translator-dock-format.ts",
+  "components/comment-translator/comment-translator-dock-model.ts",
+  "components/comment-translator/CommentTranslatorActivePhaseNotice.tsx",
+  "components/comment-translator/CommentTranslatorCommentCard.tsx",
+  "components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx",
+  "components/comment-translator/CommentTranslatorDockAtoms.tsx",
+  "components/comment-translator/CommentTranslatorDockHeader.tsx",
+  "components/comment-translator/CommentTranslatorFeedPanel.tsx",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "components/comment-translator/CommentTranslatorSettingsPanel.tsx",
+  "components/comment-translator/CommentTranslatorUsageSidebar.tsx",
+  "components/comment-translator/useCommentTranslatorBrowserTimeZone.ts",
+  "components/comment-translator/useCommentTranslatorCreatorWaitlist.ts",
+  "components/comment-translator/useCommentTranslatorDockControls.ts",
+  "components/comment-translator/useCommentTranslatorSessionFeedController.ts",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-copy-en.json",
+  "lib/comment-translator-copy-ja.json",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-fixture-comments.ts",
+  "lib/comment-translator-live-provider-session-step-result.ts",
+  "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-per-minute-rate-pause.ts",
+  "lib/comment-translator-runtime.ts",
+  "lib/comment-translator-session-command-execution.ts",
+  "lib/comment-translator-session-command.ts",
+  "lib/comment-translator-session-memory-store.ts",
+  "lib/comment-translator-session-policy.ts",
+  "lib/comment-translator-session-runtime.ts",
+  "lib/comment-translator-session-start.ts",
+  "lib/comment-translator-session-state.ts",
+  "lib/comment-translator-session-types.ts",
+  "lib/comment-translator-snapshot-data.ts",
+  "lib/comment-translator-types.ts",
+  "lib/comment-translator-usage-ledger-runtime.ts",
+  "lib/comment-translator.ts",
+  "scripts/account-remote-display-settings-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs"
+]);
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `F9 change stays in allowed files: ${file}`);
+  assert.ok(allowedChangedFiles.has(file) || perMinuteAutoResumeChangedFiles.has(file), `F9 change stays in allowed files: ${file}`);
 }
 
 console.log("comment translator real comments UI wiring contract checks passed");

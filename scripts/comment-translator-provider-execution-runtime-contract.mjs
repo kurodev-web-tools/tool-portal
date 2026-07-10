@@ -476,6 +476,64 @@ assert.equal(
   "cache-hit translations at cap do not append usage ledger records"
 );
 
+let filteredProviderCallCount = 0;
+const ledgerRecordCountBeforeFilteredRun = ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests().length;
+const filteredRun = await runtime.executeCommentTranslatorProviderBatch({
+  provider: {
+    ...provider,
+    async translate() {
+      filteredProviderCallCount += 1;
+      throw new Error("A filtered non-provider message must not reach provider execution.");
+    }
+  },
+  callerAuthorization,
+  sessionReferenceId: "cts_provider_execution_filtered_contract",
+  occurredAtMs: 37_000,
+  usage: {
+    ...usage,
+    translatedMessagesInCurrentMinute: 0
+  },
+  targetLanguage: "ja",
+  sourceLanguages: ["EN", "KR", "CN"],
+  comments: [
+    {
+      commentId: "comment-filtered-emoji-only",
+      publishedAt: "2026-06-11T04:00:04.750Z",
+      text: "😀😀😀",
+      platformLanguageHint: null
+    }
+  ]
+});
+assert.equal(filteredRun.status, "completed");
+assert.equal(filteredRun.providerRequestCount, 0);
+assert.equal(filteredRun.providerCallCount, 0);
+assert.equal(filteredRun.translatedCount, 0);
+assert.equal(filteredRun.skipsByReason.languagePolicy, 1);
+assert.equal(filteredRun.usageRecorded.providerRequestEstimate, false);
+assert.equal(filteredRun.usageRecorded.aiUsageEstimate, false);
+assert.equal(filteredProviderCallCount, 0);
+assert.equal(
+  ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests().length,
+  ledgerRecordCountBeforeFilteredRun,
+  "filtered non-provider messages append no usage ledger records"
+);
+const filteredUsageSnapshot = ledger.readInMemoryCommentTranslatorUsageSnapshot({
+  callerAuthorization,
+  nowMs: 40_000,
+  plan: "free",
+  activeSession: {
+    sessionReferenceId: "cts_provider_execution_filtered_contract",
+    startedAtMs: 35_000,
+    lastHeartbeatAtMs: 37_000,
+    credentialReferenceId: "filtered-contract-credential-reference"
+  }
+});
+assert.equal(
+  filteredUsageSnapshot.translatedMessagesInCurrentMinute,
+  0,
+  "filtered non-provider messages never increment the rolling translated-message count"
+);
+
 const blockedProviderRun = await runtime.executeCommentTranslatorProviderBatch({
   provider: {
     ...provider,
@@ -552,6 +610,7 @@ for (const payload of [
   firstRun,
   secondRun,
   cacheHitAtCapRun,
+  filteredRun,
   blockedProviderRun,
   terminalCodeRun,
   ...ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests()
@@ -574,6 +633,64 @@ for (const payload of [
     assert.doesNotMatch(serialized, new RegExp(forbiddenValue, "i"), `sanitized output does not include ${forbiddenValue}`);
   }
 }
+
+const perMinuteAutoResumeTaskChangedFiles = new Set([
+  "app/api/comment-translator/session/route-context.ts",
+  "app/tools/comment-translator/account-actions.ts",
+  "app/tools/comment-translator/action-context.ts",
+  "app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx",
+  "app/tools/comment-translator/feed-actions.ts",
+  "app/tools/comment-translator/retention-waitlist-actions.ts",
+  "app/tools/comment-translator/session-actions.ts",
+  "components/comment-translator/comment-translator-dock-format.ts",
+  "components/comment-translator/comment-translator-dock-model.ts",
+  "components/comment-translator/CommentTranslatorActivePhaseNotice.tsx",
+  "components/comment-translator/CommentTranslatorCommentCard.tsx",
+  "components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx",
+  "components/comment-translator/CommentTranslatorDockAtoms.tsx",
+  "components/comment-translator/CommentTranslatorDockHeader.tsx",
+  "components/comment-translator/CommentTranslatorFeedPanel.tsx",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "components/comment-translator/CommentTranslatorSettingsPanel.tsx",
+  "components/comment-translator/CommentTranslatorUsageSidebar.tsx",
+  "components/comment-translator/useCommentTranslatorBrowserTimeZone.ts",
+  "components/comment-translator/useCommentTranslatorCreatorWaitlist.ts",
+  "components/comment-translator/useCommentTranslatorDockControls.ts",
+  "components/comment-translator/useCommentTranslatorSessionFeedController.ts",
+  "components/portal/PortalShell.tsx",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-copy-en.json",
+  "lib/comment-translator-copy-ja.json",
+  "lib/comment-translator-fixture-comments.ts",
+  "lib/comment-translator-live-provider-session-step-result.ts",
+  "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-per-minute-rate-pause.ts",
+  "lib/comment-translator-runtime.ts",
+  "lib/comment-translator-session-command-execution.ts",
+  "lib/comment-translator-session-command.ts",
+  "lib/comment-translator-session-memory-store.ts",
+  "lib/comment-translator-session-policy.ts",
+  "lib/comment-translator-session-start.ts",
+  "lib/comment-translator-session-state.ts",
+  "lib/comment-translator-session-types.ts",
+  "lib/comment-translator-snapshot-data.ts",
+  "lib/comment-translator-types.ts",
+  "scripts/account-remote-display-settings-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-live-message-normalization-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs"
+]);
 
 const allowedChangedFiles = new Set([
   "lib/comment-translator-admin-operational-visibility.ts",
@@ -672,7 +789,10 @@ const plG6dChangedFiles = new Set([
 ]);
 for (const file of changedFiles()) {
   assert.ok(
-    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file),
+    allowedChangedFiles.has(file) ||
+      monthlyInputAccountingChangedFiles.has(file) ||
+      plG6dChangedFiles.has(file) ||
+      perMinuteAutoResumeTaskChangedFiles.has(file),
     `Task 11 change stays in allowed files: ${file}`
   );
 

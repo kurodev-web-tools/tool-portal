@@ -87,6 +87,11 @@ assert.match(
   /<AccountRemoteDisplaySettingsApplier accountStatus=\{browserSafeAccountStatus\} \/>[\s\S]*<PortalSidebar/,
   "PortalShell applies browser-safe remote display settings before shared navigation controls render"
 );
+assert.match(
+  portalShell,
+  /browserSafeAccountStatus\.authStatus === "signed-in"[\s\S]*<AccountRemoteDisplaySettingsApplier accountStatus=\{browserSafeAccountStatus\} \/>[\s\S]*: null/,
+  "PortalShell mounts the remote display settings applier only for signed-in accounts"
+);
 
 assertIncludes(
   accountPage,

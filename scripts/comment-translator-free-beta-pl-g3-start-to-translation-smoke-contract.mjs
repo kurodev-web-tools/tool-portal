@@ -25,6 +25,7 @@ const sessionRoutePath = "app/api/comment-translator/session/route.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
 const targetLookupPath = "lib/comment-translator-server-only-live-chat-target-lookup.ts";
 const pollingPath = "lib/comment-translator-bounded-live-chat-polling-wiring.ts";
+const pollingStaticPath = "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts";
 const azurePath = "lib/comment-translator-azure-normal-translation-execution.ts";
 const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
 const taskPath = "task.md";
@@ -89,6 +90,7 @@ for (const requiredPath of [
   actionsPath,
   targetLookupPath,
   pollingPath,
+  pollingStaticPath,
   azurePath,
   dockPath,
   taskPath
@@ -109,6 +111,7 @@ const sessionRoute = read(sessionRoutePath);
 const actions = read(actionsPath);
 const targetLookup = read(targetLookupPath);
 const polling = read(pollingPath);
+const pollingStatic = read(pollingStaticPath);
 const azure = read(azurePath);
 const dock = read(dockPath);
 const task = read(taskPath);
@@ -217,7 +220,7 @@ assert.match(targetLookup, /sessionBoundary:\s*"start-intent-only"/, "target loo
 assert.match(targetLookup, /targetMetadataHandling:\s*"server-only-internal-never-client-readable"/, "target metadata stays server-only");
 assert.match(polling, /import "server-only"/, "bounded polling remains server-only");
 assert.match(polling, /liveTargetHandling:\s*"server-only-active-session-state"/, "polling target remains server-only active-session state");
-assert.match(polling, /pollingCursor:\s*"nextPageToken-server-only"/, "polling cursor stays server-only");
+assert.match(pollingStatic, /pollingCursor:\s*"nextPageToken-server-only"/, "polling cursor stays server-only");
 assert.match(azure, /import "server-only"/, "Azure translation bridge remains server-only");
 assert.match(azure, /freePlanPrimary:\s*"azure-translator"/, "Free route remains Azure Translator");
 assert.match(azure, /providerApiExecution:\s*"approval-gated-not-run-by-default"/, "Azure provider execution remains approval-gated by default");
@@ -238,6 +241,7 @@ for (const [label, source] of [
   [actionsPath, actions],
   [targetLookupPath, targetLookup],
   [pollingPath, polling],
+  [pollingStaticPath, pollingStatic],
   [azurePath, azure],
   [dockPath, dock],
   [taskPath, task]
@@ -249,6 +253,7 @@ const allowedChangedFiles = new Set([
   sessionRoutePath,
   actionsPath,
   targetLookupPath,
+  pollingStaticPath,
   plG3DocPath,
   plG3AfterPlG2kDocPath,
   plG3FollowUpDocPath,

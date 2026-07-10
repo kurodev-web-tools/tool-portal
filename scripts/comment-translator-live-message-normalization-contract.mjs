@@ -11,6 +11,7 @@ const youtubeRuntimePath = "lib/comment-translator-youtube-runtime-foundation.ts
 const inputBoundaryPath = "lib/comment-translator-youtube-input-boundary.ts";
 const intakePipelinePath = "lib/comment-translator-youtube-live-comment-intake-pipeline.ts";
 const pollingWiringPath = "lib/comment-translator-bounded-live-chat-polling-wiring.ts";
+const pollingOutcomeProjectionPath = "lib/comment-translator-bounded-live-chat-polling-result-projection.ts";
 const readinessDocPath = "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const taskPath = "task.md";
@@ -111,6 +112,13 @@ for (const requiredPath of [
   inputBoundaryPath,
   intakePipelinePath,
   pollingWiringPath,
+  pollingOutcomeProjectionPath,
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
   readinessDocPath,
   gapAuditPath,
   taskPath
@@ -123,6 +131,7 @@ const youtubeRuntimeSource = read(youtubeRuntimePath);
 const inputBoundarySource = read(inputBoundaryPath);
 const intakePipelineSource = read(intakePipelinePath);
 const pollingWiringSource = read(pollingWiringPath);
+const pollingOutcomeProjectionSource = read(pollingOutcomeProjectionPath);
 const readinessDoc = read(readinessDocPath);
 const gapAudit = read(gapAuditPath);
 const taskSource = read(taskPath);
@@ -143,7 +152,7 @@ assert.match(normalizationSource, /publicLaunchAllowed:\s*false/, "F8 does not o
 assert.match(youtubeRuntimeSource, /YouTubeLiveChatPollingStepResult/, "F8 remains compatible with F7 polling step results");
 assert.match(inputBoundarySource, /YouTubeProviderSafeCommentPayload/, "F8 keeps the provider-safe text payload boundary available");
 assert.match(intakePipelineSource, /createYouTubeLiveCommentTranslatorPipelineRequestsForComments/, "F8 can feed the existing intake pipeline without provider execution");
-assert.match(pollingWiringSource, /rawComments:\s*"not-returned-by-design"/, "F7 still keeps raw polling comments out of browser-safe metadata");
+assert.match(pollingOutcomeProjectionSource, /rawComments:\s*"not-returned-by-design"/, "F7 still keeps raw polling comments out of browser-safe metadata");
 assert.match(readinessDoc, /F8 live message normalization/i, "durable readiness doc records F8");
 assert.match(gapAudit, /F8[\s\S]*Live message normalization/i, "gap audit records F8 normalization");
 assert.match(taskSource, /Preview author display name/i, "task.md records the current author display-name slice");
@@ -338,6 +347,8 @@ for (const payload of [normalized, browserRows]) {
 
 for (const source of [
   normalizationSource,
+  pollingWiringSource,
+  pollingOutcomeProjectionSource,
   readinessDoc,
   gapAudit,
   taskSource
@@ -351,6 +362,14 @@ for (const source of [
 
 const allowedChangedFiles = new Set([
   normalizationPath,
+  pollingWiringPath,
+  pollingOutcomeProjectionPath,
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
   "lib/comment-translator-real-comments-feed-shared.ts",
   "lib/comment-translator-real-comments-ui-wiring.ts",
   "lib/comment-translator-youtube-input-boundary.ts",

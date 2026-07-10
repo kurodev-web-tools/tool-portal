@@ -12,6 +12,8 @@ const statusBoundaryPath = "lib/comment-translator-youtube-credential-status-bou
 const disconnectPath = "lib/comment-translator-youtube-disconnect-runtime.ts";
 const routePath = "app/api/comment-translator/session/route.ts";
 const actionPath = "app/tools/comment-translator/actions.ts";
+const commandExecutionPath = "lib/comment-translator-session-command-execution.ts";
+const sessionActionsPath = "app/tools/comment-translator/session-actions.ts";
 const requirementsPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md";
 const taskPath = "task.md";
 
@@ -108,19 +110,30 @@ assert.ok(exists(requirementsPath), "canonical public release requirements remai
 const sessionSource = read(sessionPath);
 const routeSource = read(routePath);
 const actionSource = read(actionPath);
+const commandExecutionSource = read(commandExecutionPath);
+const sessionActionsSource = read(sessionActionsPath);
 const requirementsSource = read(requirementsPath);
 
 assert.match(sessionSource, /^import "server-only";/m, "session runtime is server-only");
 assert.match(routeSource, /POST/, "session route exposes a POST handler for start stop heartbeat intents");
-assert.match(routeSource, /readCommentTranslatorSessionCommand/, "route uses the sanitized session boundary");
+assert.match(routeSource, /executeCommentTranslatorSessionCommand/, "route uses the sanitized session boundary");
+assert.match(routeSource, /executeCommentTranslatorSessionCommand/, "route uses shared session command execution");
 assert.match(actionSource, /startCommentTranslatorSessionAction/, "server action exposes session start");
 assert.match(actionSource, /stopCommentTranslatorSessionAction/, "server action exposes session stop");
 assert.match(actionSource, /heartbeatCommentTranslatorSessionAction/, "server action exposes session heartbeat");
+assert.match(sessionActionsSource, /executeCommentTranslatorSessionCommand/, "server actions use shared session command execution");
+assert.match(
+  commandExecutionSource,
+  /readCommentTranslatorBoundedLiveChatPollingPhaseResolution/,
+  "shared route/action execution reads the polling-coordinator phase resolution"
+);
+assert.match(commandExecutionSource, /ratePauseResolution/, "shared route/action execution passes coordinator phase to session command");
+assert.match(sessionSource, /activePhase/, "active session state exposes the sanitized coordinator phase");
 assert.match(requirementsSource, /30 min\/day\/user/, "canonical requirements retain free daily limit");
 assert.match(requirementsSource, /30 min\/session/, "canonical requirements retain free per-session limit");
 assert.match(requirementsSource, /1 active session\/user/, "canonical requirements retain one-active-session limit");
 
-for (const source of [sessionSource, routeSource, actionSource]) {
+for (const source of [sessionSource, routeSource, actionSource, sessionActionsSource, commandExecutionSource]) {
   assert.doesNotMatch(
     source,
     /access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|providerErrorBody:\s*error/i,
@@ -565,6 +578,15 @@ const commandResult = await session.readCommentTranslatorSessionCommand({
     globalBudgetAvailable: true,
     aiBudgetAvailable: true
   },
+  ratePauseResolution: {
+    status: "ready",
+    projection: {
+      activePhase: "running",
+      ratePauseReason: null,
+      retryAfterSeconds: null,
+      automaticResumeExpected: false
+    }
+  },
   createSessionReferenceId: () => "cts_session_reference_002"
 });
 
@@ -619,9 +641,51 @@ const monthlyInputAccountingChangedFiles = new Set([
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "task.md"
 ]);
-
 for (const file of changedFiles()) {
   const allowedChangedFiles = new Set([
+    "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+    "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
+    "app/api/comment-translator/session/route-context.ts",
+    "app/tools/comment-translator/account-actions.ts",
+    "app/tools/comment-translator/action-context.ts",
+    "app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx",
+    "app/tools/comment-translator/feed-actions.ts",
+    "app/tools/comment-translator/retention-waitlist-actions.ts",
+    "app/tools/comment-translator/session-actions.ts",
+    "components/comment-translator/comment-translator-dock-format.ts",
+    "components/comment-translator/comment-translator-dock-model.ts",
+    "components/comment-translator/CommentTranslatorActivePhaseNotice.tsx",
+    "components/comment-translator/CommentTranslatorCommentCard.tsx",
+    "components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx",
+    "components/comment-translator/CommentTranslatorDockAtoms.tsx",
+    "components/comment-translator/CommentTranslatorDockHeader.tsx",
+    "components/comment-translator/CommentTranslatorFeedPanel.tsx",
+    "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+    "components/comment-translator/CommentTranslatorSettingsPanel.tsx",
+    "components/comment-translator/CommentTranslatorUsageSidebar.tsx",
+    "components/comment-translator/useCommentTranslatorBrowserTimeZone.ts",
+    "components/comment-translator/useCommentTranslatorCreatorWaitlist.ts",
+    "components/comment-translator/useCommentTranslatorDockControls.ts",
+    "components/comment-translator/useCommentTranslatorSessionFeedController.ts",
+    "components/portal/PortalShell.tsx",
+    "lib/comment-translator-copy-en.json",
+    "lib/comment-translator-copy-ja.json",
+    "lib/comment-translator-fixture-comments.ts",
+    "lib/comment-translator-per-minute-rate-pause.ts",
+    "lib/comment-translator-runtime.ts",
+    "lib/comment-translator-session-command-execution.ts",
+    "lib/comment-translator-session-command.ts",
+    "lib/comment-translator-session-memory-store.ts",
+    "lib/comment-translator-session-policy.ts",
+    "lib/comment-translator-session-start.ts",
+    "lib/comment-translator-session-state.ts",
+    "lib/comment-translator-session-types.ts",
+    "lib/comment-translator-snapshot-data.ts",
+    "lib/comment-translator-types.ts",
+    "scripts/account-remote-display-settings-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+    "scripts/comment-translator-live-message-normalization-contract.mjs",
+    "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
     "lib/comment-translator-admin-operational-visibility.ts",
   "lib/comment-translator-durable-usage-counter-store.ts",
     "components/comment-translator/CommentTranslatorDock.tsx",
@@ -629,6 +693,13 @@ for (const file of changedFiles()) {
     ledgerPath,
     "lib/comment-translator.ts",
     "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+    "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+    "lib/comment-translator-bounded-live-chat-polling-types.ts",
+    "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+    "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+    "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+    "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+    "lib/comment-translator-bounded-live-chat-polling-transition.ts",
     "lib/comment-translator-durable-usage-counter-store.ts",
     "lib/comment-translator-azure-normal-translation-execution.ts",
     "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
@@ -643,6 +714,7 @@ for (const file of changedFiles()) {
     "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
     "lib/comment-translator-real-comments-feed-shared.ts",
     "lib/comment-translator-live-provider-session-step.ts",
+    "lib/comment-translator-live-provider-session-step-result.ts",
     "scripts/comment-translator-admin-operational-visibility-contract.mjs",
     "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
     "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",

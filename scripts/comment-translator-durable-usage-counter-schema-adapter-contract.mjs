@@ -7,9 +7,14 @@ import ts from "typescript";
 const root = process.cwd();
 const durableUsagePath = "lib/comment-translator-durable-usage-counter-store.ts";
 const usageLedgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
+const autoResumeContractPath = "scripts/comment-translator-per-minute-auto-resume-contract.mjs";
 const durableSessionPath = "lib/comment-translator-durable-session-store.ts";
 const routePath = "app/api/comment-translator/session/route.ts";
 const actionPath = "app/tools/comment-translator/actions.ts";
+const feedActionPath = "app/tools/comment-translator/feed-actions.ts";
+const retentionActionPath = "app/tools/comment-translator/retention-waitlist-actions.ts";
+const sessionActionPath = "app/tools/comment-translator/session-actions.ts";
+const commandExecutionPath = "lib/comment-translator-session-command-execution.ts";
 const readinessDocPath = "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const migrationPath = "supabase/migrations/20260615001000_comment_translator_usage_ledger_events.sql";
@@ -83,9 +88,14 @@ function loadTsModule(relativePath) {
 for (const requiredPath of [
   durableUsagePath,
   usageLedgerPath,
+  autoResumeContractPath,
   durableSessionPath,
   routePath,
   actionPath,
+  feedActionPath,
+  retentionActionPath,
+  sessionActionPath,
+  commandExecutionPath,
   readinessDocPath,
   gapAuditPath,
   migrationPath
@@ -95,8 +105,9 @@ for (const requiredPath of [
 
 const durableUsageSource = read(durableUsagePath);
 const usageLedgerSource = read(usageLedgerPath);
-const routeSource = read(routePath);
-const actionSource = read(actionPath);
+const autoResumeContractSource = read(autoResumeContractPath);
+const routeSource = [routePath, commandExecutionPath].map(read).join("\n");
+const actionSource = [actionPath, feedActionPath, retentionActionPath, sessionActionPath, commandExecutionPath].map(read).join("\n");
 const readinessDoc = read(readinessDocPath);
 const gapAudit = read(gapAuditPath);
 const migration = read(migrationPath);
@@ -395,11 +406,42 @@ assert.equal(snapshotRead.snapshot.aiUsageEstimate.providerInputCharacterEstimat
 assert.equal(snapshotRead.snapshot.aiUsageEstimate.translatedCharacterEstimate, 0);
 assert.equal(snapshotRead.snapshot.monthlyProviderInputCharacterEstimate, 280);
 assert.equal(snapshotRead.snapshot.currentSessionElapsedMs, 55_000);
+assert.equal(
+  snapshotRead.snapshot.translatedMessageCapacityAvailableAtMs,
+  null,
+  "below-cap durable usage does not authorize a recovery timestamp"
+);
 assert.doesNotMatch(
   JSON.stringify(snapshotRead),
   /server-only-owner-reference|ytcred_usage_reference_001|providerChannelId|liveChatId|access_token|refresh_token|authorization_code|Authorization|service_role|raw comment/i,
   "durable usage snapshot excludes owner id values, credential refs, provider targets, credentials, and raw comments"
 );
+
+const malformedCappedRead = await durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+  callerAuthorization,
+  durableUsageCounterStore: {
+    status: "ready",
+    store: {
+      async readUsageEvents() {
+        return [
+          {
+            ...aiUsageRowDraft,
+            occurred_at: "untrustworthy-event-time",
+            translated_message_estimate: 30
+          }
+        ];
+      },
+      async persistUsageEvent() {}
+    },
+    missingEnvReferences: [],
+    failClosed: false
+  },
+  nowMs: Date.parse("2026-06-15T00:31:00.000Z"),
+  plan: "free",
+  activeSession
+});
+assert.equal(malformedCappedRead.status, "fail-closed", "malformed capped durable authority fails closed");
+assert.equal(malformedCappedRead.stopReason, "global-budget-stop");
 
 const crossDayRows = [];
 const crossDayStore = durableUsage.createCommentTranslatorDurableUsageCounterSupabaseStore({
@@ -576,7 +618,7 @@ assert.equal(staleCurrentDaySnapshot.snapshot.dailyUsedMs, 0, "stale stop does n
 assert.match(taskSource, /PL-G3/i, "task.md keeps the active PL-G3 state visible");
 assert.match(taskSource, /public-release capable label: no/i, "task.md keeps public release blocked");
 
-for (const source of [durableUsageSource, usageLedgerSource, routeSource, actionSource, migration, taskSource]) {
+for (const source of [durableUsageSource, usageLedgerSource, autoResumeContractSource, routeSource, actionSource, migration, taskSource]) {
   assert.doesNotMatch(
     source,
     /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+/i,

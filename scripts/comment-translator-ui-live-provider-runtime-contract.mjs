@@ -10,12 +10,17 @@ const moduleCache = new Map();
 
 const routePath = "app/api/comment-translator/session/route.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
+const feedActionsPath = "app/tools/comment-translator/feed-actions.ts";
+const commandExecutionPath = "lib/comment-translator-session-command-execution.ts";
 const adapterPath = "lib/comment-translator-youtube-live-provider-runtime-adapter.ts";
 const pollingPath = "lib/comment-translator-bounded-live-chat-polling-wiring.ts";
+const pollingTypesPath = "lib/comment-translator-bounded-live-chat-polling-types.ts";
 const normalizerPath = "lib/comment-translator-live-message-normalization.ts";
 const orchestrationPath = "lib/comment-translator-live-provider-session-step.ts";
+const orchestrationResultPath = "lib/comment-translator-live-provider-session-step-result.ts";
 const sharedPath = "lib/comment-translator-real-comments-feed-shared.ts";
 const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
+const sessionFeedControllerPath = "components/comment-translator/useCommentTranslatorSessionFeedController.ts";
 const serverOnlyLiveTargetIdKey = "liveChat" + "Id";
 
 function read(relativePath) {
@@ -97,24 +102,28 @@ function loadTsModule(relativePath) {
   }
 }
 
-for (const requiredPath of [routePath, actionsPath, adapterPath, pollingPath, normalizerPath, orchestrationPath, sharedPath, dockPath]) {
+for (const requiredPath of [routePath, actionsPath, feedActionsPath, commandExecutionPath, adapterPath, pollingPath, pollingTypesPath, normalizerPath, orchestrationPath, orchestrationResultPath, sharedPath, dockPath, sessionFeedControllerPath]) {
   assert.ok(exists(requiredPath), `required UI live provider file exists: ${requiredPath}`);
 }
 
 const routeSource = read(routePath);
 const actionsSource = read(actionsPath);
+const feedActionsSource = read(feedActionsPath);
+const commandExecutionSource = read(commandExecutionPath);
 const adapterSource = read(adapterPath);
 const pollingSource = read(pollingPath);
+const pollingTypesSource = read(pollingTypesPath);
 const orchestrationSource = read(orchestrationPath);
+const orchestrationResultSource = read(orchestrationResultPath);
 const sharedSource = read(sharedPath);
-const dockSource = read(dockPath);
+const dockSource = [dockPath, sessionFeedControllerPath].map(read).join("\n");
 
-assert.match(routeSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "session route uses trusted live provider adapter");
-assert.match(actionsSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "server actions use trusted live provider adapter");
-assert.doesNotMatch(routeSource, /reason:\s*"provider-target-lookup-not-approved"/, "session route no longer fixes target lookup to not-approved");
-assert.doesNotMatch(actionsSource, /reason:\s*"provider-target-lookup-not-approved"/, "server actions no longer fix target lookup to not-approved");
-assert.doesNotMatch(routeSource, /reason:\s*"live-provider-polling-not-approved"/, "session route no longer fixes polling to not-approved");
-assert.doesNotMatch(actionsSource, /reason:\s*"live-provider-polling-not-approved"/, "server actions no longer fix polling to not-approved");
+assert.match(commandExecutionSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "session route uses trusted live provider adapter through shared execution");
+assert.match(feedActionsSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "server actions use trusted live provider adapter");
+assert.doesNotMatch(`${routeSource}\n${commandExecutionSource}`, /reason:\s*"provider-target-lookup-not-approved"/, "session route no longer fixes target lookup to not-approved");
+assert.doesNotMatch(`${actionsSource}\n${feedActionsSource}\n${commandExecutionSource}`, /reason:\s*"provider-target-lookup-not-approved"/, "server actions no longer fix target lookup to not-approved");
+assert.doesNotMatch(`${routeSource}\n${commandExecutionSource}`, /reason:\s*"live-provider-polling-not-approved"/, "session route no longer fixes polling to not-approved");
+assert.doesNotMatch(`${actionsSource}\n${feedActionsSource}\n${commandExecutionSource}`, /reason:\s*"live-provider-polling-not-approved"/, "server actions no longer fix polling to not-approved");
 assert.match(adapterSource, /^import "server-only";/m, "live provider adapter is server-only");
 assert.match(adapterSource, /liveBroadcasts\.list/, "adapter performs server-side liveBroadcasts lookup");
 assert.match(adapterSource, /liveChatMessages\.list/, "adapter performs bounded liveChatMessages polling");
@@ -128,11 +137,11 @@ assert.doesNotMatch(
   "adapter no longer depends on operator-local Authorization header envs"
 );
 assert.doesNotMatch(adapterSource, /console\.(log|info|warn|error)/, "adapter does not log provider/token/comment material");
-assert.match(pollingSource, /serverOnlyCommentsForTranslation/, "polling tick carries comments only for server-side translation");
+assert.match(pollingTypesSource, /serverOnlyCommentsForTranslation/, "polling tick carries comments only for server-side translation");
 assert.match(orchestrationSource, /executeCommentTranslatorAzureNormalTranslationForNormalizedMessages/, "polling orchestration runs Azure/provider translation execution");
-assert.match(orchestrationSource, /diagnostics:\s*CommentTranslatorLiveProviderDiagnostics/, "polling orchestration exposes sanitized live provider diagnostics");
-assert.match(orchestrationSource, /preStartSkippedCount/, "polling orchestration carries cursor-prime skipped counts");
-assert.match(orchestrationSource, /persistedFeedRowCount/, "polling orchestration carries feed persistence counts");
+assert.match(orchestrationResultSource, /diagnostics:\s*CommentTranslatorLiveProviderDiagnostics/, "polling orchestration exposes sanitized live provider diagnostics");
+assert.match(orchestrationResultSource, /preStartSkippedCount/, "polling orchestration carries cursor-prime skipped counts");
+assert.match(orchestrationResultSource, /persistedFeedRowCount/, "polling orchestration carries feed persistence counts");
 for (const diagnosticCountField of [
   "providerCallCount",
   "cacheHitCount",
@@ -142,11 +151,11 @@ for (const diagnosticCountField of [
   "languagePolicySkippedCount"
 ]) {
   assert.match(sharedSource, new RegExp(`${diagnosticCountField}: number`), `live provider diagnostics exposes ${diagnosticCountField} as a count only`);
-  assert.match(orchestrationSource, new RegExp(diagnosticCountField), `polling orchestration maps ${diagnosticCountField} into browser-readable diagnostics`);
+  assert.match(orchestrationResultSource, new RegExp(diagnosticCountField), `polling orchestration maps ${diagnosticCountField} into browser-readable diagnostics`);
 }
-assert.match(actionsSource, /liveProviderUnavailableReason/, "feed action preserves sanitized live provider unavailable reason");
-assert.match(actionsSource, /attachCommentTranslatorLiveProviderDiagnosticsToFeed/, "feed action returns sanitized live provider diagnostics in feed state");
-assert.match(actionsSource, /polling-runtime-not-wired/, "feed action returns sanitized polling runtime unavailable reason");
+assert.match(feedActionsSource, /liveProviderUnavailableReason/, "feed action preserves sanitized live provider unavailable reason");
+assert.match(feedActionsSource, /attachCommentTranslatorLiveProviderDiagnosticsToFeed/, "feed action returns sanitized live provider diagnostics in feed state");
+assert.match(feedActionsSource, /polling-runtime-not-wired/, "feed action returns sanitized polling runtime unavailable reason");
 assert.match(dockSource, /const refreshedSession = await heartbeatCommentTranslatorSessionAction\(\{ sourceLanguage, targetLanguage \}\)/, "manual and auto feed refresh renew the active heartbeat with the selected source/target pair before reading feed");
 assert.match(dockSource, /setSessionState\(refreshedSession\)/, "feed refresh keeps the visible session state aligned with heartbeat results");
 assert.match(dockSource, /if \(refreshedSession\.status !== "active"\)/, "feed refresh stops reading live feed when heartbeat returns an inactive session");

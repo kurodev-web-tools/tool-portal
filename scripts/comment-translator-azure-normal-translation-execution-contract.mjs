@@ -703,6 +703,187 @@ assert.equal(
   "cache-hit rows at quota cap do not change monthly provider-input-character usage"
 );
 
+let fittingBatchProviderCallCount = 0;
+const fittingBatchProvider = {
+  ...azure,
+  async translate(request) {
+    fittingBatchProviderCallCount += 1;
+    return {
+      type: "translated",
+      translatedText: `ja:${request.requestId.split(":").at(-1)}`,
+      detectedSourceLanguage: request.input.sourceLanguage === "auto" ? null : request.input.sourceLanguage,
+      confidence: null,
+      cacheOutcome: "miss",
+      usageHandoff: {
+        ...request.usageHandoff,
+        providerId: "azure-translator",
+        estimatedUnits: Array.from(request.input.text).length,
+        estimatedCostMicros: Array.from(request.input.text).length,
+        cacheOutcome: "miss"
+      }
+    };
+  }
+};
+const durableRowsBeforeFittingBatch = durableUsageRows.length;
+const fittingBatch = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: normalization.normalizeCommentTranslatorLiveMessages({
+    providerPayloads: [
+      {
+        id: "yt-f10-fitting-batch-1",
+        snippet: {
+          type: "textMessageEvent",
+          publishedAt: "2026-06-16T01:00:10.000Z",
+          textMessageDetails: { messageText: "Capacity fitting batch one" }
+        }
+      },
+      {
+        id: "yt-f10-fitting-batch-2",
+        snippet: {
+          type: "textMessageEvent",
+          publishedAt: "2026-06-16T01:00:11.000Z",
+          textMessageDetails: { messageText: "Capacity fitting batch two" }
+        }
+      }
+    ]
+  }).normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN"],
+  callerAuthorization,
+  sessionReferenceId: "cts_f10_fitting_atomic_batch",
+  occurredAtMs: Date.parse("2026-06-16T01:00:12.000Z"),
+  usage: {
+    ...usage,
+    translatedMessagesInCurrentMinute: 28
+  },
+  providers: { azure: fittingBatchProvider },
+  feedPersistenceStore,
+  durableUsageCounterStore,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+assert.equal(fittingBatch.status, "completed");
+assert.equal(fittingBatch.execution.providerCallCount, 2);
+assert.equal(fittingBatch.execution.translatedCount, 2);
+assert.equal(fittingBatch.execution.skipsByReason.perMinuteCap, 0);
+assert.equal(fittingBatchProviderCallCount, 2, "a capacity-fitting cache-miss batch executes through the exact limit");
+assert.equal(fittingBatch.usageHandoffEstimate.translatedMessageEstimate, 2);
+assert.equal(fittingBatch.usageHandoffEstimate.durableUsageWrite, "durable-counter-persisted");
+assert.equal(durableUsageRows.length, durableRowsBeforeFittingBatch + 2);
+
+let overCapacityBatchProviderCallCount = 0;
+const durableRowsBeforeOverCapacityBatch = durableUsageRows.length;
+const overCapacityBatch = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: normalization.normalizeCommentTranslatorLiveMessages({
+    providerPayloads: [
+      {
+        id: "yt-f10-over-capacity-batch-1",
+        snippet: {
+          type: "textMessageEvent",
+          publishedAt: "2026-06-16T01:00:13.000Z",
+          textMessageDetails: { messageText: "Atomic over capacity batch one" }
+        }
+      },
+      {
+        id: "yt-f10-over-capacity-batch-2",
+        snippet: {
+          type: "textMessageEvent",
+          publishedAt: "2026-06-16T01:00:14.000Z",
+          textMessageDetails: { messageText: "Atomic over capacity batch two" }
+        }
+      }
+    ]
+  }).normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN"],
+  callerAuthorization,
+  sessionReferenceId: "cts_f10_over_capacity_atomic_batch",
+  occurredAtMs: Date.parse("2026-06-16T01:00:15.000Z"),
+  usage: {
+    ...usage,
+    translatedMessagesInCurrentMinute: 29
+  },
+  providers: {
+    azure: {
+      ...azure,
+      async translate() {
+        overCapacityBatchProviderCallCount += 1;
+        throw new Error("An over-capacity cache-miss batch must be blocked atomically before provider execution.");
+      }
+    }
+  },
+  feedPersistenceStore,
+  durableUsageCounterStore,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+assert.equal(overCapacityBatch.status, "over-limit");
+assert.equal(overCapacityBatch.execution.providerCallCount, 0);
+assert.equal(overCapacityBatch.execution.translatedCount, 0);
+assert.equal(overCapacityBatch.execution.skipsByReason.perMinuteCap, 2);
+assert.equal(overCapacityBatchProviderCallCount, 0, "an over-capacity cache-miss batch is atomically blocked");
+assert.equal(overCapacityBatch.usageHandoffEstimate.translatedMessageEstimate, 0);
+assert.equal(overCapacityBatch.usageHandoffEstimate.durableUsageWrite, "not-run-local-deterministic-handoff-only");
+assert.equal(durableUsageRows.length, durableRowsBeforeOverCapacityBatch, "an atomically blocked batch writes no durable usage");
+
+let mixedOverCapacityProviderCallCount = 0;
+const durableRowsBeforeMixedOverCapacity = durableUsageRows.length;
+const mixedOverCapacity = await f10.executeCommentTranslatorAzureNormalTranslationForNormalizedMessages({
+  messages: normalization.normalizeCommentTranslatorLiveMessages({
+    providerPayloads: [
+      {
+        id: "yt-f10-mixed-over-capacity-hit",
+        snippet: {
+          type: "textMessageEvent",
+          publishedAt: "2026-06-16T01:00:16.000Z",
+          textMessageDetails: { messageText: "Hello Azure path" }
+        }
+      },
+      {
+        id: "yt-f10-mixed-over-capacity-miss",
+        snippet: {
+          type: "textMessageEvent",
+          publishedAt: "2026-06-16T01:00:17.000Z",
+          textMessageDetails: { messageText: "Mixed atomic cache miss" }
+        }
+      }
+    ]
+  }).normalizedMessages,
+  sessionStatus: "active",
+  targetLanguage: "ja",
+  sourceLanguages: ["EN", "KR", "CN"],
+  callerAuthorization,
+  sessionReferenceId: "cts_f10_contract_001",
+  occurredAtMs: Date.parse("2026-06-16T01:00:18.000Z"),
+  usage: {
+    ...usage,
+    translatedMessagesInCurrentMinute: usage.planEntitlement.translatedMessagesPerMinute
+  },
+  providers: {
+    azure: {
+      ...azure,
+      async translate() {
+        mixedOverCapacityProviderCallCount += 1;
+        throw new Error("A mixed over-capacity batch must be blocked atomically before provider execution.");
+      }
+    },
+    openAiMini
+  },
+  feedPersistenceStore,
+  durableUsageCounterStore,
+  maxBatchSize: 2,
+  maxProviderAttemptsPerComment: 1
+});
+assert.equal(mixedOverCapacity.status, "over-limit");
+assert.equal(mixedOverCapacity.execution.providerCallCount, 0);
+assert.equal(mixedOverCapacity.execution.translatedCount, 0);
+assert.equal(mixedOverCapacity.execution.cacheHitCount, 0, "a mixed blocked batch does not partially serve its cache hit");
+assert.equal(mixedOverCapacityProviderCallCount, 0);
+assert.equal(mixedOverCapacity.usageHandoffEstimate.translatedMessageEstimate, 0);
+assert.equal(mixedOverCapacity.usageHandoffEstimate.durableUsageWrite, "not-run-local-deterministic-handoff-only");
+assert.equal(durableUsageRows.length, durableRowsBeforeMixedOverCapacity, "a mixed atomically blocked batch writes no durable usage");
+
 const cachedBatchDuplicateCycle = normalization.normalizeCommentTranslatorLiveMessages({
   providerPayloads: [
     {
@@ -943,13 +1124,69 @@ for (const payload of [result, unavailable, perMinuteCap, monthlyCap, ...ledger.
   }
 }
 
+const perMinuteAutoResumeTaskChangedFiles = new Set([
+  "app/api/comment-translator/session/route-context.ts",
+  "app/tools/comment-translator/account-actions.ts",
+  "app/tools/comment-translator/action-context.ts",
+  "app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx",
+  "app/tools/comment-translator/feed-actions.ts",
+  "app/tools/comment-translator/retention-waitlist-actions.ts",
+  "app/tools/comment-translator/session-actions.ts",
+  "components/comment-translator/comment-translator-dock-format.ts",
+  "components/comment-translator/comment-translator-dock-model.ts",
+  "components/comment-translator/CommentTranslatorActivePhaseNotice.tsx",
+  "components/comment-translator/CommentTranslatorCommentCard.tsx",
+  "components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx",
+  "components/comment-translator/CommentTranslatorDockAtoms.tsx",
+  "components/comment-translator/CommentTranslatorDockHeader.tsx",
+  "components/comment-translator/CommentTranslatorFeedPanel.tsx",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "components/comment-translator/CommentTranslatorSettingsPanel.tsx",
+  "components/comment-translator/CommentTranslatorUsageSidebar.tsx",
+  "components/comment-translator/useCommentTranslatorBrowserTimeZone.ts",
+  "components/comment-translator/useCommentTranslatorCreatorWaitlist.ts",
+  "components/comment-translator/useCommentTranslatorDockControls.ts",
+  "components/comment-translator/useCommentTranslatorSessionFeedController.ts",
+  "components/portal/PortalShell.tsx",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
+  "lib/comment-translator-copy-en.json",
+  "lib/comment-translator-copy-ja.json",
+  "lib/comment-translator-fixture-comments.ts",
+  "lib/comment-translator-per-minute-rate-pause.ts",
+  "lib/comment-translator-runtime.ts",
+  "lib/comment-translator-session-command-execution.ts",
+  "lib/comment-translator-session-command.ts",
+  "lib/comment-translator-session-memory-store.ts",
+  "lib/comment-translator-session-policy.ts",
+  "lib/comment-translator-session-start.ts",
+  "lib/comment-translator-session-state.ts",
+  "lib/comment-translator-session-types.ts",
+  "lib/comment-translator-snapshot-data.ts",
+  "lib/comment-translator-types.ts",
+  "scripts/account-remote-display-settings-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-live-message-normalization-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs"
+]);
+
 const allowedChangedFiles = new Set([
   "app/api/comment-translator/session/route.ts",
   "app/tools/comment-translator/actions.ts",
   "components/comment-translator/CommentTranslatorDock.tsx",
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
   f10Path,
   "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-live-provider-session-step-result.ts",
   providerExecutionPath,
   "lib/comment-translator-real-comments-feed-durable-store.ts",
   "lib/comment-translator-real-comments-feed-session-bridge.ts",
@@ -1038,7 +1275,9 @@ const highConfidenceSecretPattern = /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|w
 const serverOnlyAdapterSecretPattern = /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i;
 for (const file of changedFiles()) {
   assert.ok(
-    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file),
+    allowedChangedFiles.has(file) ||
+      monthlyInputAccountingChangedFiles.has(file) ||
+      perMinuteAutoResumeTaskChangedFiles.has(file),
     `F10 change stays in allowed files: ${file}`
   );
 

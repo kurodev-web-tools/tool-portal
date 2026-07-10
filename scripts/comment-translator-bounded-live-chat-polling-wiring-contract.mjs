@@ -7,9 +7,21 @@ import ts from "typescript";
 
 const root = process.cwd();
 const wiringPath = "lib/comment-translator-bounded-live-chat-polling-wiring.ts";
+const outcomeProjectionPath = "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts";
+const pollingTypesPath = "lib/comment-translator-bounded-live-chat-polling-types.ts";
+const resultProjectionPath = "lib/comment-translator-bounded-live-chat-polling-result-projection.ts";
+const terminalPolicyPath = "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts";
+const staticWiringPath = "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts";
+const pollingRegistryPath = "lib/comment-translator-bounded-live-chat-polling-registry.ts";
+const pollingTransitionPath = "lib/comment-translator-bounded-live-chat-polling-transition.ts";
+const liveProviderResultPath = "lib/comment-translator-live-provider-session-step-result.ts";
+const liveProviderStepPath = "lib/comment-translator-live-provider-session-step.ts";
+const ratePausePath = "lib/comment-translator-per-minute-rate-pause.ts";
 const sessionRuntimePath = "lib/comment-translator-session-runtime.ts";
+const commandExecutionPath = "lib/comment-translator-session-command-execution.ts";
 const routePath = "app/api/comment-translator/session/route.ts";
 const actionPath = "app/tools/comment-translator/actions.ts";
+const sessionActionsPath = "app/tools/comment-translator/session-actions.ts";
 const youtubeRuntimePath = "lib/comment-translator-youtube-runtime-foundation.ts";
 const targetLookupPath = "lib/comment-translator-server-only-live-chat-target-lookup.ts";
 const durableUsagePath = "lib/comment-translator-durable-usage-counter-store.ts";
@@ -24,6 +36,10 @@ function read(relativePath) {
 
 function exists(relativePath) {
   return fs.existsSync(path.join(root, relativePath));
+}
+
+function countPureLoc(source) {
+  return source.split(/\r?\n/).filter((line) => line.trim() && !line.trim().startsWith("//")).length;
 }
 
 function changedFiles() {
@@ -64,7 +80,11 @@ function loadTsModule(relativePath) {
     }
 
     const source = fs.readFileSync(normalizedModulePath, "utf8");
-    const compiled = ts.transpileModule(source, {
+    const sourceForCompilation =
+      normalizedModulePath === path.normalize(path.join(root, wiringPath))
+        ? `${source}\nexport function readCoordinatorEntryCountsForContract() { return pollingCoordinatorRegistry.readEntryCountsForTests(); }`
+        : source;
+    const compiled = ts.transpileModule(sourceForCompilation, {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
         target: ts.ScriptTarget.ES2022
@@ -138,6 +158,16 @@ function loadTsModule(relativePath) {
 
 for (const requiredPath of [
   wiringPath,
+  outcomeProjectionPath,
+  pollingTypesPath,
+  resultProjectionPath,
+  terminalPolicyPath,
+  staticWiringPath,
+  pollingRegistryPath,
+  pollingTransitionPath,
+  liveProviderResultPath,
+  liveProviderStepPath,
+  ratePausePath,
   sessionRuntimePath,
   routePath,
   actionPath,
@@ -153,9 +183,21 @@ for (const requiredPath of [
 }
 
 const wiringSource = read(wiringPath);
+const outcomeProjectionSource = read(outcomeProjectionPath);
+const pollingTypesSource = read(pollingTypesPath);
+const resultProjectionSource = read(resultProjectionPath);
+const terminalPolicySource = read(terminalPolicyPath);
+const staticWiringSource = read(staticWiringPath);
+const pollingRegistrySource = read(pollingRegistryPath);
+const pollingTransitionSource = read(pollingTransitionPath);
+const liveProviderResultSource = read(liveProviderResultPath);
+const liveProviderStepSource = read(liveProviderStepPath);
+const ratePauseSource = read(ratePausePath);
 const sessionRuntimeSource = read(sessionRuntimePath);
+const commandExecutionSource = read(commandExecutionPath);
 const routeSource = read(routePath);
 const actionSource = read(actionPath);
+const sessionActionsSource = read(sessionActionsPath);
 const youtubeRuntimeSource = read(youtubeRuntimePath);
 const targetLookupSource = read(targetLookupPath);
 const durableUsageSource = read(durableUsagePath);
@@ -165,28 +207,63 @@ const sessionStartReadiness = read(sessionStartReadinessPath);
 const taskSource = read(taskPath);
 
 assert.match(wiringSource, /^import "server-only";/m, "F7 bounded polling wiring is server-only");
+assert.match(outcomeProjectionSource, /^import "server-only";/m, "F7 outcome projection is server-only");
+assert.match(wiringSource, /comment-translator-bounded-live-chat-polling-types/, "F7 facade re-exports public polling types");
+assert.match(wiringSource, /comment-translator-bounded-live-chat-polling-transition/, "F7 facade delegates serialized transitions");
+for (const projectionSymbol of [
+  "createSanitizedPollingMetadata",
+  "resolvePollingSuccessStatus",
+  "createQuotaBudgetStopHandoff"
+]) {
+  assert.match(resultProjectionSource, new RegExp(`export function ${projectionSymbol}`), `F7 result projection owns ${projectionSymbol}`);
+}
+for (const policySymbol of ["assessPollingTerminalStopReason", "mapTerminalCodeToStopReason"]) {
+  assert.match(terminalPolicySource, new RegExp(`export function ${policySymbol}`), `F7 terminal policy owns ${policySymbol}`);
+}
+for (const source of [wiringSource, pollingTypesSource, resultProjectionSource, terminalPolicySource, staticWiringSource, pollingRegistrySource, pollingTransitionSource]) {
+  assert.doesNotMatch(source, /allow:\s*SIZE_OK/, "F7 Task 3 TypeScript units carry no oversized-file exception");
+}
 assert.match(wiringSource, /commentTranslatorBoundedLiveChatPollingWiringContract/, "F7 wiring exposes a focused contract");
 assert.match(wiringSource, /seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession/, "F7 wiring seeds server-only polling state only after active start");
 assert.match(wiringSource, /readCommentTranslatorBoundedLiveChatPollingTick/, "F7 wiring exposes active-session polling tick");
 assert.match(wiringSource, /createUnavailableCommentTranslatorBoundedLiveChatPollingAdapter/, "F7 wiring exposes not-run unavailable adapter");
 assert.match(wiringSource, /createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter/, "F7 wiring exposes deterministic local adapter");
 assert.match(wiringSource, /clearCommentTranslatorBoundedLiveChatPollingState/, "F7 wiring clears server-only cursor state");
-assert.match(wiringSource, /active-session-only/, "F7 records active-session-only polling");
-assert.match(wiringSource, /nextPageToken-server-only/, "F7 records server-only cursor handling");
-assert.match(wiringSource, /pollingIntervalMillis/, "F7 records provider polling interval handling");
-assert.match(wiringSource, /bounded-retry-backoff/, "F7 records capped retry/backoff");
-assert.match(wiringSource, /empty-chat-waiting/, "F7 records empty-chat behavior");
-assert.match(wiringSource, /providerPollingExecution:\s*"not-run-in-this-thread"/, "F7 records live provider polling as not-run");
+assert.match(staticWiringSource, /active-session-only/, "F7 records active-session-only polling");
+assert.match(staticWiringSource, /nextPageToken-server-only/, "F7 records server-only cursor handling");
+assert.match(staticWiringSource, /pollingIntervalMillis/, "F7 records provider polling interval handling");
+assert.match(staticWiringSource, /bounded-retry-backoff/, "F7 records capped retry/backoff");
+assert.match(staticWiringSource, /empty-chat-waiting/, "F7 records empty-chat behavior");
+assert.match(staticWiringSource, /providerPollingExecution:\s*"not-run-in-this-thread"/, "F7 records live provider polling as not-run");
 assert.match(wiringSource, /liveTargetHandling:\s*"server-only-active-session-state"/, "F7 keeps live target in server-only active-session state");
+assert.match(pollingRegistrySource, /class CommentTranslatorBoundedLiveChatPollingRegistry/, "F7 registry is the single mutable state owner");
+assert.match(pollingTransitionSource, /readSerializedCommentTranslatorBoundedLiveChatPollingTick/, "F7 transition module is the serialized state-machine owner");
+assert.match(liveProviderResultSource, /createCommentTranslatorLiveProviderSessionStepResult/, "Task 3 live-provider result projection is isolated from orchestration");
+for (const [file, source] of [
+  [wiringPath, wiringSource],
+  [outcomeProjectionPath, outcomeProjectionSource],
+  [pollingTypesPath, pollingTypesSource],
+  [resultProjectionPath, resultProjectionSource],
+  [terminalPolicyPath, terminalPolicySource],
+  [staticWiringPath, staticWiringSource],
+  [pollingRegistryPath, pollingRegistrySource],
+  [pollingTransitionPath, pollingTransitionSource],
+  [liveProviderStepPath, liveProviderStepSource],
+  [liveProviderResultPath, liveProviderResultSource],
+  [ratePausePath, ratePauseSource]
+]) {
+  assert.doesNotMatch(source, /(?:readonly\s+)?#[A-Za-z_$]/, `Task 7 TypeScript unit remains compatible with the repository ES5 target: ${file}`);
+  assert.ok(countPureLoc(source) <= 250, `Task 3 TypeScript unit stays at or below 250 pure LOC: ${file}`);
+}
 
 assert.match(sessionRuntimeSource, /providerSignal/, "session runtime accepts F7 provider signal");
 assert.match(sessionRuntimeSource, /liveProviderExecution:\s*"not-run-in-f7"/, "session contract records F7 live provider execution not-run");
-assert.match(routeSource, /readCommentTranslatorBoundedLiveChatPollingTick/, "session route wires F7 polling tick");
-assert.match(routeSource, /seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession/, "session route seeds F7 polling state after active start");
-assert.match(routeSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "session route uses trusted live provider polling adapter");
-assert.match(actionSource, /readCommentTranslatorBoundedLiveChatPollingTick/, "server actions wire F7 polling tick");
-assert.match(actionSource, /seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession/, "server actions seed F7 polling state after active start");
-assert.match(actionSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "server actions use trusted live provider polling adapter");
+assert.match(routeSource, /executeCommentTranslatorSessionCommand/, "session route delegates F7 polling to shared command execution");
+assert.match(actionSource, /session-actions/, "server action facade delegates session commands to the focused action owner");
+assert.match(sessionActionsSource, /executeCommentTranslatorSessionCommand/, "server actions delegate F7 polling to shared command execution");
+assert.match(commandExecutionSource, /readCommentTranslatorBoundedLiveChatPollingTick/, "shared command execution wires F7 polling tick");
+assert.match(commandExecutionSource, /seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession/, "shared command execution seeds F7 polling state after active start");
+assert.match(commandExecutionSource, /createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/, "shared command execution uses trusted live provider polling adapter");
 
 assert.match(youtubeRuntimeSource, /createInitialYouTubeLiveChatPollingState/, "F7 reuses YouTube polling runtime foundation");
 assert.match(youtubeRuntimeSource, /advanceYouTubeLiveChatPollingState/, "F7 reuses deterministic polling stepper");
@@ -200,6 +277,7 @@ assert.match(taskSource, /Width checks skipped[\s\S]*no UI\/CSS\/rendered route\
 
 const wiring = loadTsModule(wiringPath);
 const session = loadTsModule(sessionRuntimePath);
+const youtubeRuntime = loadTsModule(youtubeRuntimePath);
 
 assert.equal(
   wiring.commentTranslatorBoundedLiveChatPollingWiringContract.implementationStage,
@@ -313,34 +391,41 @@ assert.equal(seedResult.liveTargetHandling, "server-only-active-session-state");
 assert.equal(seedResult.nextPageToken, "absent");
 assert.doesNotMatch(JSON.stringify(seedResult), /server-only-live-target-never-output|server-only-broadcast-never-output|liveChatId/i);
 
+let pausedAdapterCallCount = 0;
 const quotaBlocked = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
   intent: "heartbeat",
   activeSession,
   usage: {
     dailyUsedMs: 0,
     translatedMessagesInCurrentMinute: 30,
+    translatedMessageCapacityAvailableAtMs: activeSession.startedAtMs + 30_000,
     providerBudgetAvailable: true,
     globalBudgetAvailable: true,
     aiBudgetAvailable: true,
     translationProviderAvailable: true,
     planEntitlement: session.createCommentTranslatorSessionPlanEntitlement({ plan: "free" })
   },
-  adapter: wiring.createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter({
-    pollSteps: [
-      {
-        type: "messages",
-        receivedAtMs: activeSession.startedAtMs,
-        nextPageToken: "must-not-be-used",
-        pollingIntervalMillis: 1000,
-        comments: []
+  adapter: {
+    status: "ready",
+    providerAccess: "deterministic-local-adapter-only",
+    runtime: {
+      async pollLiveChatOnce(state) {
+        pausedAdapterCallCount += 1;
+        return {
+          state,
+          comments: []
+        };
       }
-    ]
-  }),
+    }
+  },
   nowMs: activeSession.startedAtMs
 });
-assert.equal(quotaBlocked.status, "skipped-quota-budget-stop-handoff");
+assert.equal(quotaBlocked.status, "rate-limit-paused");
 assert.equal(quotaBlocked.providerAccess, "not-run");
-assert.equal(quotaBlocked.stopReason, "translated-message-cap");
+assert.equal(quotaBlocked.providerSignal, null);
+assert.equal(pausedAdapterCallCount, 0);
+assert.equal("serverOnlyCommentsForTranslation" in quotaBlocked, false);
+assert.equal(quotaBlocked.sanitizedPolling.nextPageToken, "absent");
 
 const notDue = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
   intent: "heartbeat",
@@ -650,6 +735,769 @@ assert.equal(stoppedByProviderSignal.status, "stopped");
 assert.equal(stoppedByProviderSignal.stopReason, "stream-ended");
 assert.doesNotMatch(JSON.stringify(stoppedByProviderSignal), /server-only-live-target-never-output|ownerUserId|providerChannelId|liveChatId/i);
 
+function createCoordinatorSession(sessionReferenceId, nowMs) {
+  return {
+    sessionReferenceId,
+    startedAtMs: nowMs - 10_000,
+    lastHeartbeatAtMs: nowMs,
+    credentialReferenceId: `credential-${sessionReferenceId}`
+  };
+}
+
+function createCoordinatorUsage({
+  translatedMessagesInCurrentMinute,
+  translatedMessageCapacityAvailableAtMs = null,
+  planEntitlement = session.createCommentTranslatorSessionPlanEntitlement({ plan: "free" }),
+  overrides = {}
+}) {
+  return {
+    dailyUsedMs: 0,
+    currentSessionElapsedMs: 10_000,
+    translatedMessagesInCurrentMinute,
+    translatedMessageCapacityAvailableAtMs,
+    monthlyProviderInputCharacterEstimate: 0,
+    providerBudgetAvailable: true,
+    globalBudgetAvailable: true,
+    aiBudgetAvailable: true,
+    translationProviderAvailable: true,
+    planEntitlement,
+    ...overrides
+  };
+}
+
+function seedCoordinatorSession(activeCoordinatorSession, nowMs) {
+  return wiring.seedCommentTranslatorBoundedLiveChatPollingStateForActiveSession({
+    state: {
+      status: "active",
+      sessionReferenceId: activeCoordinatorSession.sessionReferenceId
+    },
+    liveChatTargetReadiness: readyTarget,
+    nowMs
+  });
+}
+
+function createDeferred() {
+  let resolvePromise;
+  const promise = new Promise((resolve) => {
+    resolvePromise = resolve;
+  });
+  return {
+    promise,
+    resolve(value) {
+      resolvePromise(value);
+    }
+  };
+}
+
+const coordinatorNowMs = Date.parse("2026-06-15T01:00:00.000Z");
+const coordinatorSession = createCoordinatorSession("cts_rate_pause_coordinator", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(coordinatorSession, coordinatorNowMs);
+
+const oldCursorPrime = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: coordinatorSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: wiring.createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter({
+    pollSteps: [
+      {
+        type: "messages",
+        receivedAtMs: coordinatorNowMs,
+        nextPageToken: "server-only-old-cursor",
+        pollingIntervalMillis: 1_000,
+        comments: [
+          {
+            id: "pre-pause-comment",
+            publishedAt: "2026-06-15T01:00:00.000Z",
+            text: "pre pause comment",
+            platformLanguageHint: "en"
+          }
+        ]
+      }
+    ]
+  }),
+  nowMs: coordinatorNowMs
+});
+assert.equal(oldCursorPrime.status, "cursor-primed-existing-comments-skipped");
+
+let ratePauseAdapterCallCount = 0;
+const capacityAvailableAtMs = coordinatorNowMs + 20_000;
+const ratePauseAdapter = {
+  status: "ready",
+  providerAccess: "deterministic-local-adapter-only",
+  runtime: {
+    async pollLiveChatOnce(state) {
+      ratePauseAdapterCallCount += 1;
+      return { state, comments: [] };
+    }
+  }
+};
+const firstRatePause = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: coordinatorSession,
+  usage: createCoordinatorUsage({
+    translatedMessagesInCurrentMinute: 30,
+    translatedMessageCapacityAvailableAtMs: capacityAvailableAtMs
+  }),
+  adapter: ratePauseAdapter,
+  nowMs: coordinatorNowMs + 1_000
+});
+assert.equal(firstRatePause.status, "rate-limit-paused");
+assert.equal(firstRatePause.providerSignal, null);
+assert.equal(ratePauseAdapterCallCount, 0);
+assert.equal("serverOnlyCommentsForTranslation" in firstRatePause, false);
+assert.equal(firstRatePause.sanitizedPolling.nextPageToken, "absent");
+assert.deepEqual(firstRatePause.phaseProjection, {
+  activePhase: "rate-paused",
+  ratePauseReason: "translated-message-cap",
+  retryAfterSeconds: 19,
+  automaticResumeExpected: true
+});
+
+const repeatedRatePause = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: coordinatorSession,
+  usage: createCoordinatorUsage({
+    translatedMessagesInCurrentMinute: 30,
+    translatedMessageCapacityAvailableAtMs: capacityAvailableAtMs
+  }),
+  adapter: ratePauseAdapter,
+  nowMs: coordinatorNowMs + 5_000
+});
+assert.equal(repeatedRatePause.status, "rate-limit-paused");
+assert.equal(repeatedRatePause.phaseProjection.activePhase, "rate-paused");
+assert.equal(repeatedRatePause.phaseProjection.retryAfterSeconds, 15);
+assert.equal(ratePauseAdapterCallCount, 0);
+assert.deepEqual(
+  wiring.readCommentTranslatorBoundedLiveChatPollingPhaseProjection(coordinatorSession.sessionReferenceId),
+  repeatedRatePause.phaseProjection,
+  "Given a paused session, when reading the projection, then the read-only sanitized phase is returned without provider work"
+);
+
+let recoveryPrimeCallCount = 0;
+const recoveryPrimeInputs = [];
+const recoveryPrimeAdapter = {
+  status: "ready",
+  providerAccess: "deterministic-local-adapter-only",
+  runtime: {
+    async pollLiveChatOnce(state) {
+      recoveryPrimeCallCount += 1;
+      recoveryPrimeInputs.push({
+        nextPageToken: state.nextPageToken,
+        nextPollAfterMs: state.nextPollAfterMs
+      });
+      return youtubeRuntime.advanceYouTubeLiveChatPollingState(state, {
+        type: "messages",
+        receivedAtMs: capacityAvailableAtMs,
+        nextPageToken: "server-only-recovery-cursor",
+        pollingIntervalMillis: 1_000,
+        comments: [
+          {
+            id: "pause-window-comment",
+            publishedAt: "2026-06-15T01:00:10.000Z",
+            text: "pause window comment",
+            platformLanguageHint: "en"
+          }
+        ]
+      });
+    }
+  }
+};
+const recoveryUsage = createCoordinatorUsage({ translatedMessagesInCurrentMinute: 29 });
+const [firstRecoveryPrime, joinedRecoveryPrime] = await Promise.all([
+  wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+    intent: "heartbeat",
+    activeSession: coordinatorSession,
+    usage: recoveryUsage,
+    adapter: recoveryPrimeAdapter,
+    nowMs: capacityAvailableAtMs
+  }),
+  wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+    intent: "heartbeat",
+    activeSession: coordinatorSession,
+    usage: recoveryUsage,
+    adapter: recoveryPrimeAdapter,
+    nowMs: capacityAvailableAtMs
+  })
+]);
+assert.equal(recoveryPrimeCallCount, 1, "Concurrent recovery calls share one in-flight prime");
+assert.deepEqual(recoveryPrimeInputs, [{ nextPageToken: null, nextPollAfterMs: coordinatorNowMs + 1_000 }]);
+assert.equal(firstRecoveryPrime.status, "cursor-primed-existing-comments-skipped");
+assert.equal(joinedRecoveryPrime.status, "cursor-primed-existing-comments-skipped");
+assert.equal(firstRecoveryPrime.serverOnlyCommentsForTranslation.length, 0);
+assert.equal(firstRecoveryPrime.sanitizedPolling.preStartSkippedCount, 1);
+assert.equal(
+  wiring.readCommentTranslatorBoundedLiveChatPollingPhaseProjection(coordinatorSession.sessionReferenceId).activePhase,
+  "running"
+);
+
+const postPrimePoll = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: coordinatorSession,
+  usage: recoveryUsage,
+  adapter: wiring.createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter({
+    pollSteps: [
+      {
+        type: "messages",
+        receivedAtMs: capacityAvailableAtMs + 1_000,
+        nextPageToken: "server-only-post-prime-cursor",
+        pollingIntervalMillis: 1_000,
+        comments: [
+          {
+            id: "post-prime-comment",
+            publishedAt: "2026-06-15T01:00:21.000Z",
+            text: "post prime comment",
+            platformLanguageHint: "en"
+          }
+        ]
+      }
+    ]
+  }),
+  nowMs: capacityAvailableAtMs + 1_000
+});
+assert.equal(postPrimePoll.status, "polled-comments-available");
+assert.equal(postPrimePoll.serverOnlyCommentsForTranslation.length, 1);
+
+const serializedSession = createCoordinatorSession("cts_serialized_pause", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(serializedSession, coordinatorNowMs);
+await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: serializedSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: wiring.createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter({
+    pollSteps: [
+      {
+        type: "messages",
+        receivedAtMs: coordinatorNowMs,
+        nextPageToken: "server-only-held-old-cursor",
+        pollingIntervalMillis: 1_000,
+        comments: []
+      }
+    ]
+  }),
+  nowMs: coordinatorNowMs
+});
+const heldOldCursorPoll = createDeferred();
+const oldCursorAdapterInputs = [];
+const oldCursorInFlight = wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: serializedSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: {
+    status: "ready",
+    providerAccess: "deterministic-local-adapter-only",
+    runtime: {
+      async pollLiveChatOnce(state) {
+        oldCursorAdapterInputs.push(state.nextPageToken);
+        return heldOldCursorPoll.promise;
+      }
+    }
+  },
+  nowMs: coordinatorNowMs + 1_000
+});
+let joinedCapAdapterCallCount = 0;
+const cappedJoin = wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: serializedSession,
+  usage: createCoordinatorUsage({
+    translatedMessagesInCurrentMinute: 30,
+    translatedMessageCapacityAvailableAtMs: coordinatorNowMs + 10_000
+  }),
+  adapter: {
+    status: "ready",
+    providerAccess: "deterministic-local-adapter-only",
+    runtime: {
+      async pollLiveChatOnce(state) {
+        joinedCapAdapterCallCount += 1;
+        return { state, comments: [] };
+      }
+    }
+  },
+  nowMs: coordinatorNowMs + 1_000
+});
+assert.deepEqual(oldCursorAdapterInputs, ["server-only-held-old-cursor"]);
+assert.equal(joinedCapAdapterCallCount, 0);
+heldOldCursorPoll.resolve(
+  youtubeRuntime.advanceYouTubeLiveChatPollingState(
+    {
+      liveChatId: "server-only-live-target-never-output",
+      nextPageToken: "server-only-held-old-cursor",
+      retryCount: 0,
+      nextPollAfterMs: coordinatorNowMs + 1_000,
+      terminal: null
+    },
+    {
+      type: "messages",
+      receivedAtMs: coordinatorNowMs + 1_000,
+      nextPageToken: "server-only-completed-old-cursor",
+      pollingIntervalMillis: 1_000,
+      comments: []
+    }
+  )
+);
+const [completedOldCursorTick, joinedOldCursorTick] = await Promise.all([oldCursorInFlight, cappedJoin]);
+assert.equal(completedOldCursorTick.status, "empty-chat-waiting");
+assert.equal(joinedOldCursorTick.status, "empty-chat-waiting");
+
+const serializedPause = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: serializedSession,
+  usage: createCoordinatorUsage({
+    translatedMessagesInCurrentMinute: 30,
+    translatedMessageCapacityAvailableAtMs: coordinatorNowMs + 10_000
+  }),
+  adapter: ratePauseAdapter,
+  nowMs: coordinatorNowMs + 2_000
+});
+assert.equal(serializedPause.status, "rate-limit-paused");
+const serializedRecoveryInputs = [];
+await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: serializedSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 29 }),
+  adapter: {
+    status: "ready",
+    providerAccess: "deterministic-local-adapter-only",
+    runtime: {
+      async pollLiveChatOnce(state) {
+        serializedRecoveryInputs.push(state.nextPageToken);
+        return youtubeRuntime.advanceYouTubeLiveChatPollingState(state, {
+          type: "messages",
+          receivedAtMs: coordinatorNowMs + 10_000,
+          nextPageToken: "server-only-fresh-cursor",
+          pollingIntervalMillis: 1_000,
+          comments: []
+        });
+      }
+    }
+  },
+  nowMs: coordinatorNowMs + 10_000
+});
+assert.deepEqual(serializedRecoveryInputs, [null], "Every adapter input after pause entry uses a fresh null cursor");
+
+const staleSession = createCoordinatorSession("cts_stale_generation", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(staleSession, coordinatorNowMs);
+const staleCompletion = createDeferred();
+const staleTick = wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: staleSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: {
+    status: "ready",
+    providerAccess: "deterministic-local-adapter-only",
+    runtime: {
+      async pollLiveChatOnce() {
+        return staleCompletion.promise;
+      }
+    }
+  },
+  nowMs: coordinatorNowMs
+});
+wiring.clearCommentTranslatorBoundedLiveChatPollingState(staleSession.sessionReferenceId);
+staleCompletion.resolve({
+  state: {
+    liveChatId: "server-only-stale-target",
+    nextPageToken: "server-only-stale-cursor",
+    retryCount: 0,
+    nextPollAfterMs: coordinatorNowMs + 1_000,
+    terminal: null
+  },
+  comments: [
+    {
+      commentId: "stale-comment",
+      publishedAt: "2026-06-15T01:00:00.000Z",
+      text: "stale comment",
+      platformLanguageHint: "en",
+      authorDisplayName: null
+    }
+  ]
+});
+const staleResult = await staleTick;
+assert.equal(staleResult.status, "stale-completion-discarded");
+assert.equal(staleResult.providerSignal, null);
+assert.equal("serverOnlyCommentsForTranslation" in staleResult, false);
+const afterStaleRead = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: staleSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: ratePauseAdapter,
+  nowMs: coordinatorNowMs + 1_000
+});
+assert.equal(afterStaleRead.status, "unavailable-missing-server-only-polling-state");
+
+const resetStaleSession = createCoordinatorSession("cts_reset_stale_generation", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(resetStaleSession, coordinatorNowMs);
+const resetStaleCompletion = createDeferred();
+const resetStaleTick = wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: resetStaleSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: {
+    status: "ready",
+    providerAccess: "deterministic-local-adapter-only",
+    runtime: {
+      async pollLiveChatOnce() {
+        return resetStaleCompletion.promise;
+      }
+    }
+  },
+  nowMs: coordinatorNowMs
+});
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+resetStaleCompletion.resolve({
+  state: {
+    liveChatId: "server-only-reset-stale-target",
+    nextPageToken: "server-only-reset-stale-cursor",
+    retryCount: 0,
+    nextPollAfterMs: coordinatorNowMs + 1_000,
+    terminal: null
+  },
+  comments: []
+});
+assert.equal((await resetStaleTick).status, "stale-completion-discarded");
+assert.equal(
+  wiring.readCommentTranslatorBoundedLiveChatPollingPhaseProjection(resetStaleSession.sessionReferenceId).activePhase,
+  "running"
+);
+
+const clearedGenerationSession = createCoordinatorSession("cts_cleared_generation", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(clearedGenerationSession, coordinatorNowMs);
+assert.equal(wiring.readCoordinatorEntryCountsForContract().generation, 1);
+wiring.clearCommentTranslatorBoundedLiveChatPollingState(clearedGenerationSession.sessionReferenceId);
+assert.deepEqual(wiring.readCoordinatorEntryCountsForContract(), {
+  generation: 0,
+  pollingState: 0,
+  phase: 0,
+  inFlight: 0
+});
+
+const endedGenerationSession = createCoordinatorSession("cts_ended_generation", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(endedGenerationSession, coordinatorNowMs);
+const endedGenerationResult = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: endedGenerationSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: wiring.createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter({
+    pollSteps: [
+      {
+        type: "terminal",
+        code: "liveChatEnded",
+        receivedAtMs: coordinatorNowMs
+      }
+    ]
+  }),
+  nowMs: coordinatorNowMs
+});
+assert.equal(endedGenerationResult.status, "terminal-state-handoff");
+assert.deepEqual(wiring.readCoordinatorEntryCountsForContract(), {
+  generation: 0,
+  pollingState: 0,
+  phase: 0,
+  inFlight: 0
+});
+
+const stopRaceSession = createCoordinatorSession("cts_stop_generation_race", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(stopRaceSession, coordinatorNowMs);
+const stoppedCompletion = createDeferred();
+const stoppedInFlightTick = wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: stopRaceSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: {
+    status: "ready",
+    providerAccess: "deterministic-local-adapter-only",
+    runtime: {
+      async pollLiveChatOnce() {
+        return stoppedCompletion.promise;
+      }
+    }
+  },
+  nowMs: coordinatorNowMs
+});
+const stoppedWhileInFlight = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "stop",
+  activeSession: stopRaceSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: ratePauseAdapter,
+  nowMs: coordinatorNowMs
+});
+assert.equal(stoppedWhileInFlight.status, "skipped-stop-intent");
+assert.deepEqual(wiring.readCoordinatorEntryCountsForContract(), {
+  generation: 1,
+  pollingState: 0,
+  phase: 0,
+  inFlight: 1
+});
+seedCoordinatorSession(stopRaceSession, coordinatorNowMs + 1);
+stoppedCompletion.resolve({
+  state: {
+    liveChatId: "server-only-stopped-old-target",
+    nextPageToken: "server-only-stopped-old-cursor",
+    retryCount: 0,
+    nextPollAfterMs: coordinatorNowMs + 1_000,
+    terminal: null
+  },
+  comments: []
+});
+assert.equal((await stoppedInFlightTick).status, "stale-completion-discarded");
+assert.deepEqual(wiring.readCoordinatorEntryCountsForContract(), {
+  generation: 1,
+  pollingState: 1,
+  phase: 1,
+  inFlight: 0
+});
+wiring.clearCommentTranslatorBoundedLiveChatPollingState(stopRaceSession.sessionReferenceId);
+assert.deepEqual(wiring.readCoordinatorEntryCountsForContract(), {
+  generation: 0,
+  pollingState: 0,
+  phase: 0,
+  inFlight: 0
+});
+
+const independentSessionA = createCoordinatorSession("cts_independent_a", coordinatorNowMs);
+const independentSessionB = createCoordinatorSession("cts_independent_b", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(independentSessionA, coordinatorNowMs);
+seedCoordinatorSession(independentSessionB, coordinatorNowMs);
+const independentDeferredA = createDeferred();
+const independentDeferredB = createDeferred();
+let independentCallCountA = 0;
+let independentCallCountB = 0;
+const independentTickA = wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: independentSessionA,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: {
+    status: "ready",
+    providerAccess: "deterministic-local-adapter-only",
+    runtime: {
+      async pollLiveChatOnce(state) {
+        independentCallCountA += 1;
+        await independentDeferredA.promise;
+        return { state, comments: [] };
+      }
+    }
+  },
+  nowMs: coordinatorNowMs
+});
+const independentTickB = wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: independentSessionB,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 0 }),
+  adapter: {
+    status: "ready",
+    providerAccess: "deterministic-local-adapter-only",
+    runtime: {
+      async pollLiveChatOnce(state) {
+        independentCallCountB += 1;
+        await independentDeferredB.promise;
+        return { state, comments: [] };
+      }
+    }
+  },
+  nowMs: coordinatorNowMs
+});
+assert.equal(independentCallCountA, 1);
+assert.equal(independentCallCountB, 1, "Different sessions do not block each other's polling tick");
+independentDeferredA.resolve();
+independentDeferredB.resolve();
+await Promise.all([independentTickA, independentTickB]);
+
+const failClosedPauseSession = createCoordinatorSession("cts_pause_fail_closed", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(failClosedPauseSession, coordinatorNowMs);
+const missingRecoveryAuthority = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: failClosedPauseSession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 30 }),
+  adapter: ratePauseAdapter,
+  nowMs: coordinatorNowMs
+});
+assert.equal(missingRecoveryAuthority.status, "skipped-quota-budget-stop-handoff");
+assert.equal(missingRecoveryAuthority.providerSignal, "global-budget-stop");
+
+const terminalBoundarySession = createCoordinatorSession("cts_terminal_before_pause", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(terminalBoundarySession, coordinatorNowMs);
+const monthlyBoundaryBeforePause = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: terminalBoundarySession,
+  usage: createCoordinatorUsage({
+    translatedMessagesInCurrentMinute: 30,
+    translatedMessageCapacityAvailableAtMs: coordinatorNowMs + 1_000,
+    overrides: {
+      monthlyProviderInputCharacterEstimate: 20_000
+    }
+  }),
+  adapter: ratePauseAdapter,
+  nowMs: coordinatorNowMs
+});
+assert.equal(monthlyBoundaryBeforePause.status, "skipped-quota-budget-stop-handoff");
+assert.equal(monthlyBoundaryBeforePause.providerSignal, "ai-budget-stop");
+
+const resyncRetrySession = createCoordinatorSession("cts_resync_retry", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(resyncRetrySession, coordinatorNowMs);
+await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: resyncRetrySession,
+  usage: createCoordinatorUsage({
+    translatedMessagesInCurrentMinute: 30,
+    translatedMessageCapacityAvailableAtMs: coordinatorNowMs + 1_000
+  }),
+  adapter: ratePauseAdapter,
+  nowMs: coordinatorNowMs
+});
+const resyncRetryAdapter = wiring.createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter({
+  pollSteps: [
+    {
+      type: "recoverable-error",
+      code: "temporaryUnavailable",
+      receivedAtMs: coordinatorNowMs + 1_000,
+      pollingIntervalMillis: 1_000,
+      retryAfterMs: null
+    },
+    {
+      type: "recoverable-error",
+      code: "networkTimeout",
+      receivedAtMs: coordinatorNowMs + 2_000,
+      pollingIntervalMillis: 1_000,
+      retryAfterMs: null
+    }
+  ]
+});
+const resyncRetry = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: resyncRetrySession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 29 }),
+  adapter: resyncRetryAdapter,
+  nowMs: coordinatorNowMs + 1_000,
+  maxRecoverableRetries: 1
+});
+assert.equal(resyncRetry.status, "recoverable-backoff-scheduled");
+assert.equal(
+  wiring.readCommentTranslatorBoundedLiveChatPollingPhaseProjection(resyncRetrySession.sessionReferenceId).activePhase,
+  "resyncing"
+);
+const resyncExhausted = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: resyncRetrySession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 29 }),
+  adapter: resyncRetryAdapter,
+  nowMs: coordinatorNowMs + 2_000,
+  maxRecoverableRetries: 1
+});
+assert.equal(resyncExhausted.status, "bounded-retry-exhausted");
+assert.equal(resyncExhausted.providerSignal, "terminal-provider-error");
+
+const rejectingRecoverySession = createCoordinatorSession("cts_rejecting_recovery", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(rejectingRecoverySession, coordinatorNowMs);
+await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: rejectingRecoverySession,
+  usage: createCoordinatorUsage({
+    translatedMessagesInCurrentMinute: 30,
+    translatedMessageCapacityAvailableAtMs: coordinatorNowMs + 1_000
+  }),
+  adapter: ratePauseAdapter,
+  nowMs: coordinatorNowMs
+});
+let rejectingRecoveryAdapterCallCount = 0;
+const rejectingRecoveryAdapter = {
+  status: "ready",
+  providerAccess: "deterministic-local-adapter-only",
+  runtime: {
+    async pollLiveChatOnce() {
+      rejectingRecoveryAdapterCallCount += 1;
+      throw new Error("private adapter rejection detail");
+    }
+  }
+};
+const rejectingRecoveryFirstRetry = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: rejectingRecoverySession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 29 }),
+  adapter: rejectingRecoveryAdapter,
+  nowMs: coordinatorNowMs + 1_000,
+  maxRecoverableRetries: 1
+});
+assert.equal(rejectingRecoveryFirstRetry.status, "recoverable-backoff-scheduled");
+assert.equal(rejectingRecoveryFirstRetry.sanitizedPolling.retryCount, 1);
+assert.equal(
+  wiring.readCommentTranslatorBoundedLiveChatPollingPhaseProjection(rejectingRecoverySession.sessionReferenceId).activePhase,
+  "resyncing"
+);
+const rejectingRecoveryBackoff = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: rejectingRecoverySession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 29 }),
+  adapter: rejectingRecoveryAdapter,
+  nowMs: coordinatorNowMs + 1_000,
+  maxRecoverableRetries: 1
+});
+assert.equal(rejectingRecoveryBackoff.status, "skipped-not-due");
+assert.equal(rejectingRecoveryAdapterCallCount, 1, "Rejected recovery polls honor bounded backoff");
+const rejectingRecoveryExhausted = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: rejectingRecoverySession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 29 }),
+  adapter: rejectingRecoveryAdapter,
+  nowMs: coordinatorNowMs + 2_000,
+  maxRecoverableRetries: 1
+});
+assert.equal(rejectingRecoveryExhausted.status, "bounded-retry-exhausted");
+assert.equal(rejectingRecoveryExhausted.providerSignal, "terminal-provider-error");
+assert.equal(rejectingRecoveryAdapterCallCount, 2);
+assert.doesNotMatch(
+  JSON.stringify([rejectingRecoveryFirstRetry, rejectingRecoveryBackoff, rejectingRecoveryExhausted]),
+  /private adapter rejection detail/i
+);
+
+const terminalRecoverySession = createCoordinatorSession("cts_terminal_recovery", coordinatorNowMs);
+wiring.resetCommentTranslatorBoundedLiveChatPollingStateForTests();
+seedCoordinatorSession(terminalRecoverySession, coordinatorNowMs);
+await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: terminalRecoverySession,
+  usage: createCoordinatorUsage({
+    translatedMessagesInCurrentMinute: 30,
+    translatedMessageCapacityAvailableAtMs: coordinatorNowMs + 1_000
+  }),
+  adapter: ratePauseAdapter,
+  nowMs: coordinatorNowMs
+});
+const terminalRecovery = await wiring.readCommentTranslatorBoundedLiveChatPollingTick({
+  intent: "heartbeat",
+  activeSession: terminalRecoverySession,
+  usage: createCoordinatorUsage({ translatedMessagesInCurrentMinute: 29 }),
+  adapter: wiring.createDeterministicCommentTranslatorBoundedLiveChatPollingAdapter({
+    pollSteps: [
+      {
+        type: "terminal",
+        code: "liveChatEnded",
+        receivedAtMs: coordinatorNowMs + 1_000
+      }
+    ]
+  }),
+  nowMs: coordinatorNowMs + 1_000
+});
+assert.equal(terminalRecovery.status, "terminal-state-handoff");
+assert.equal(terminalRecovery.providerSignal, "stream-ended");
+
+for (const phasePayload of [firstRatePause, repeatedRatePause, firstRecoveryPrime, joinedRecoveryPrime, staleResult]) {
+  const serialized = JSON.stringify(phasePayload);
+  assert.doesNotMatch(serialized, /server-only-old-cursor|server-only-recovery-cursor|server-only-stale-cursor/);
+  assert.doesNotMatch(serialized, /pre pause comment|pause window comment|stale comment/);
+  assert.doesNotMatch(serialized, /liveChatId|ownerUserId|providerChannelId/i);
+}
+
 for (const payload of [
   skippedNoActive,
   missingState,
@@ -673,6 +1521,16 @@ for (const payload of [
 
 for (const source of [
   wiringSource,
+  outcomeProjectionSource,
+  pollingTypesSource,
+  resultProjectionSource,
+  terminalPolicySource,
+  staticWiringSource,
+  pollingRegistrySource,
+  pollingTransitionSource,
+  liveProviderResultSource,
+  liveProviderStepSource,
+  ratePauseSource,
   sessionRuntimeSource,
   routeSource,
   actionSource,
@@ -691,22 +1549,73 @@ for (const source of [
 }
 
 const allowedChangedFiles = new Set([
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
   wiringPath,
+  outcomeProjectionPath,
+  pollingTypesPath,
+  resultProjectionPath,
+  terminalPolicyPath,
+  staticWiringPath,
+  pollingRegistryPath,
+  pollingTransitionPath,
+  liveProviderResultPath,
   "lib/comment-translator-azure-normal-translation-execution.ts",
   "lib/comment-translator-provider-execution-runtime.ts",
   "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
   "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-per-minute-rate-pause.ts",
+  "lib/comment-translator-usage-ledger-runtime.ts",
+  durableUsagePath,
   "lib/comment-translator-live-message-normalization.ts",
   "lib/comment-translator-real-comments-feed-shared.ts",
   "lib/comment-translator-real-comments-ui-wiring.ts",
   "lib/comment-translator-server-only-live-chat-target-lookup.ts",
   sessionRuntimePath,
+  commandExecutionPath,
+  "lib/comment-translator-session-command.ts",
+  "lib/comment-translator-session-memory-store.ts",
+  "lib/comment-translator-session-policy.ts",
+  "lib/comment-translator-session-start.ts",
+  "lib/comment-translator-session-state.ts",
+  "lib/comment-translator-session-types.ts",
   routePath,
+  "app/api/comment-translator/session/route-context.ts",
   actionPath,
+  "app/tools/comment-translator/account-actions.ts",
+  "app/tools/comment-translator/action-context.ts",
+  "app/tools/comment-translator/feed-actions.ts",
+  "app/tools/comment-translator/retention-waitlist-actions.ts",
+  sessionActionsPath,
+  "app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx",
   "components/comment-translator/CommentTranslatorDock.tsx",
+  "components/comment-translator/comment-translator-dock-format.ts",
+  "components/comment-translator/comment-translator-dock-model.ts",
+  "components/comment-translator/CommentTranslatorActivePhaseNotice.tsx",
+  "components/comment-translator/CommentTranslatorCommentCard.tsx",
+  "components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx",
+  "components/comment-translator/CommentTranslatorDockAtoms.tsx",
+  "components/comment-translator/CommentTranslatorDockHeader.tsx",
+  "components/comment-translator/CommentTranslatorFeedPanel.tsx",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "components/comment-translator/CommentTranslatorSettingsPanel.tsx",
+  "components/comment-translator/CommentTranslatorUsageSidebar.tsx",
+  "components/comment-translator/useCommentTranslatorBrowserTimeZone.ts",
+  "components/comment-translator/useCommentTranslatorCreatorWaitlist.ts",
+  "components/comment-translator/useCommentTranslatorDockControls.ts",
+  "components/comment-translator/useCommentTranslatorSessionFeedController.ts",
+  "components/portal/PortalShell.tsx",
+  "lib/comment-translator-copy-en.json",
+  "lib/comment-translator-copy-ja.json",
+  "lib/comment-translator-fixture-comments.ts",
+  "lib/comment-translator-runtime.ts",
+  "lib/comment-translator-snapshot-data.ts",
+  "lib/comment-translator-types.ts",
+  "lib/comment-translator.ts",
   readinessDocPath,
   gapAuditPath,
   "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
   "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
   "scripts/comment-translator-free-beta-usage-display-contract.mjs",
@@ -717,6 +1626,13 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-live-message-normalization-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/account-remote-display-settings-contract.mjs",
   taskPath
 ]);
 const plG6dChangedFiles = new Set([

@@ -7,7 +7,14 @@ import ts from "typescript";
 const root = process.cwd();
 const libPath = "lib/comment-translator.ts";
 const componentPath = "components/comment-translator/CommentTranslatorDock.tsx";
+const sessionPanelPath = "components/comment-translator/CommentTranslatorSessionPanel.tsx";
+const feedPanelPath = "components/comment-translator/CommentTranslatorFeedPanel.tsx";
+const usageSidebarPath = "components/comment-translator/CommentTranslatorUsageSidebar.tsx";
+const sessionFeedControllerPath = "components/comment-translator/useCommentTranslatorSessionFeedController.ts";
 const actionPath = "app/tools/comment-translator/actions.ts";
+const feedActionsPath = "app/tools/comment-translator/feed-actions.ts";
+const sessionActionsPath = "app/tools/comment-translator/session-actions.ts";
+const commandExecutionPath = "lib/comment-translator-session-command-execution.ts";
 const routePath = "app/api/comment-translator/session/route.ts";
 const requirementsPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md";
 const taskPath = "task.md";
@@ -18,24 +25,39 @@ function read(relativePath) {
 
 function loadTsModule(relativePath) {
   const sourcePath = path.join(root, relativePath);
-  const compiled = ts.transpileModule(read(relativePath), {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022
+  const moduleCache = new Map();
+  const originalLoad = Module._load;
+  function compileTsModule(modulePath) {
+    const normalizedPath = path.normalize(modulePath);
+    if (moduleCache.has(normalizedPath)) return moduleCache.get(normalizedPath).exports;
+    const compiled = ts.transpileModule(fs.readFileSync(normalizedPath, "utf8"), {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true }
+    }).outputText;
+    const testModule = new Module(normalizedPath);
+    moduleCache.set(normalizedPath, testModule);
+    testModule.filename = normalizedPath;
+    testModule.paths = Module._nodeModulePaths(path.dirname(normalizedPath));
+    testModule._compile(compiled, normalizedPath);
+    return testModule.exports;
+  }
+  Module._load = function patchedLoad(request, parent, isMain) {
+    if (request.startsWith(".") && parent?.filename) {
+      const candidate = path.resolve(path.dirname(parent.filename), `${request}.ts`);
+      if (fs.existsSync(candidate)) return compileTsModule(candidate);
     }
-  }).outputText;
-
-  const testModule = new Module(sourcePath);
-  testModule.filename = sourcePath;
-  testModule.paths = Module._nodeModulePaths(path.dirname(sourcePath));
-  testModule._compile(compiled, sourcePath);
-  return testModule.exports;
+    return originalLoad.call(this, request, parent, isMain);
+  };
+  try { return compileTsModule(sourcePath); }
+  finally { Module._load = originalLoad; }
 }
 
 const lib = loadTsModule(libPath);
 const libSource = read(libPath);
-const componentSource = read(componentPath);
+const componentSource = [componentPath, sessionPanelPath, feedPanelPath, usageSidebarPath, sessionFeedControllerPath].map(read).join("\n");
 const actionSource = read(actionPath);
+const feedActionsSource = read(feedActionsPath);
+const sessionActionsSource = read(sessionActionsPath);
+const commandExecutionSource = read(commandExecutionPath);
 const routeSource = read(routePath);
 const requirementsSource = read(requirementsPath);
 const taskSource = read(taskPath);
@@ -77,6 +99,46 @@ assert.equal(
   lib.commentTranslatorUiCopy.en.operatorSession.rateLimitStartBlockedTitle,
   "Too many Start attempts",
   "English rate-limit copy is separate from usage-limit copy"
+);
+assert.equal(
+  lib.commentTranslatorUiCopy.ja.operatorSession.ratePausedTitle,
+  "分速上限のため一時休止中",
+  "Japanese active rate-pause title is stable"
+);
+assert.equal(
+  lib.commentTranslatorUiCopy.en.operatorSession.ratePausedTitle,
+  "Paused at the per-minute limit",
+  "English active rate-pause title is stable"
+);
+assert.equal(
+  lib.commentTranslatorUiCopy.ja.operatorSession.ratePausedBody,
+  "約{seconds}秒後に、新着コメントから自動再開します",
+  "Japanese rate-pause countdown copy is stable"
+);
+assert.equal(
+  lib.commentTranslatorUiCopy.en.operatorSession.ratePausedBody,
+  "Translation will resume automatically from new comments in about {seconds} seconds.",
+  "English rate-pause countdown copy is stable"
+);
+assert.equal(
+  lib.commentTranslatorUiCopy.ja.operatorSession.ratePausedSkipped,
+  "休止中に投稿されたコメントは翻訳されません",
+  "Japanese no-backlog warning is stable"
+);
+assert.equal(
+  lib.commentTranslatorUiCopy.en.operatorSession.ratePausedSkipped,
+  "Comments posted during the pause will not be translated.",
+  "English no-backlog warning is stable"
+);
+assert.equal(
+  lib.commentTranslatorUiCopy.ja.operatorSession.resyncingTitle,
+  "コメント取得の再開を準備中",
+  "Japanese resync title is stable"
+);
+assert.equal(
+  lib.commentTranslatorUiCopy.en.operatorSession.resyncingTitle,
+  "Preparing to resume comment retrieval",
+  "English resync title is stable"
 );
 
 assert.match(componentSource, /data-public-operator-session-ui="sanitized-session-usage-only"/, "dock renders the Task 12 public operator session panel");
@@ -123,7 +185,7 @@ assert.match(
 );
 assert.match(
   componentSource,
-  /sessionState\.status !== "active"[\s\S]*currentFeed\.rows\.length > 0[\s\S]*return;/,
+  /sessionState\.status !== "active"[\s\S]*current(?:Feed)?\.rows\.length > 0[\s\S]*return;/,
   "manual feed refresh preserves retained rows and does not call provider polling while session is stopped"
 );
 assert.match(
@@ -154,7 +216,33 @@ assert.match(
 );
 assert.match(componentSource, /credentialStatusState/, "dock displays provider connection state from sanitized credential status");
 assert.match(componentSource, /copy\.operatorSession\.reconnectGuidance/, "dock renders reconnect guidance without provider target metadata");
-const restoreActionMatch = actionSource.match(
+assert.match(
+  componentSource,
+  /data-comment-translator-active-phase=\{sessionState\.activePhase\}/,
+  "dock exposes the exact active-phase projection marker"
+);
+assert.match(
+  componentSource,
+  /data-comment-translator-rate-pause="auto-resume-current-cursor"/,
+  "dock marks automatic current-cursor recovery"
+);
+assert.match(
+  componentSource,
+  /copy\.operatorSession\.ratePausedTitle[\s\S]*copy\.operatorSession\.ratePausedBody[\s\S]*copy\.operatorSession\.ratePausedSkipped/,
+  "dock renders the localized pause title, bounded countdown, and no-backlog warning"
+);
+assert.match(componentSource, /copy\.operatorSession\.resyncingTitle/, "dock renders localized resync guidance");
+assert.match(
+  componentSource,
+  /sessionState\.status === "active"[\s\S]*sessionState\.status !== "active"/,
+  "active phases keep Start unavailable and Stop available through the existing top-level session controls"
+);
+assert.match(
+  componentSource,
+  /if \(sessionState\.status !== "active"\)[\s\S]*setInterval\([\s\S]*refreshRealCommentsFeed/,
+  "active pause and resync phases keep heartbeat/feed refresh enabled"
+);
+const restoreActionMatch = feedActionsSource.match(
   /export async function restoreCommentTranslatorPersistedRealCommentsFeedAction[\s\S]*?\r?\n}\r?\n\r?\nexport async function getCommentTranslatorRealCommentsFeedAction/
 );
 assert.ok(restoreActionMatch, "server action exposes a narrowly named persisted-feed restore action");
@@ -168,8 +256,8 @@ assert.doesNotMatch(
   /runCommentTranslatorLiveProviderSessionStep|readCommentTranslatorBoundedLiveChatPollingTick|resolveCommentTranslatorServerOnlyLiveChatTargetLookupForStart|createTrustedCommentTranslatorYouTubeLiveProviderRuntimeAdapter/,
   "persisted-feed restore action is read-only and does not run provider polling or target lookup"
 );
-const clearPreviewActionMatch = actionSource.match(
-  /export async function clearCommentTranslatorPreviewFeedAction[\s\S]*?\r?\n}\r?\n\r?\nexport async function heartbeatCommentTranslatorSessionAction/
+const clearPreviewActionMatch = feedActionsSource.match(
+  /export async function clearCommentTranslatorPreviewFeedAction[\s\S]*?\r?\n}\r?\n\r?\nexport async function restoreCommentTranslatorPersistedRealCommentsFeedAction/
 );
 assert.ok(clearPreviewActionMatch, "server action exposes a narrowly named manual preview clear action");
 assert.match(
@@ -183,18 +271,28 @@ assert.doesNotMatch(
   "manual preview clear does not start/stop a session, poll, target-lookup, translate, or write usage accounting"
 );
 assert.doesNotMatch(
-  actionSource,
+  sessionActionsSource,
   /intent === "heartbeat" \|\| intent === "status"[\s\S]*runCommentTranslatorLiveProviderSessionStep/,
   "server action status restore does not run live provider polling or translation"
 );
 assert.doesNotMatch(
-  routeSource,
+  commandExecutionSource,
   /command\.intent === "heartbeat" \|\| command\.intent === "status"[\s\S]*runCommentTranslatorLiveProviderSessionStep/,
   "route status restore does not run live provider polling or translation"
 );
+assert.ok(
+  commandExecutionSource.indexOf('if (input.intent !== "status")') <
+    commandExecutionSource.indexOf("runtime.createLiveProviderRuntime"),
+  "shared route/action execution branches status before live provider runtime creation"
+);
+assert.ok(
+  commandExecutionSource.indexOf('if (input.intent === "status") return state') <
+    commandExecutionSource.indexOf("const durablePersistResult = await persistCommentTranslatorDurableSessionStateOrFailClosed"),
+  "status restore returns before session or usage persistence"
+);
 
 assert.doesNotMatch(
-  `${libSource}\n${componentSource}\n${actionSource}\n${routeSource}`,
+  `${libSource}\n${componentSource}\n${actionSource}\n${feedActionsSource}\n${sessionActionsSource}\n${commandExecutionSource}\n${routeSource}`,
   /localStorage\.|indexedDB\.|sessionStorage\.|window\.localStorage|window\.sessionStorage|youtube\.googleapis|OAuth2Client|GoogleAuth|from\s+["']googleapis["']|require\(["']googleapis["']\)|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+|providerTargetMetadata\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i,
   "Task 12 UI/action source avoids browser storage, provider calls, target metadata values, auth header values, and service-role key values"
 );

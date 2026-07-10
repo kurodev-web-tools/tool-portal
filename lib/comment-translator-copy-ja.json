@@ -1,0 +1,425 @@
+{
+  "header": {
+    "subtitle": "YouTube優先 / 明示開始セッション",
+    "readOnlyDock": "読み取り専用Dock",
+    "target": "表示先",
+    "feedTitle": "YouTubeチャット公開版プレビュー"
+  },
+  "sections": {
+    "setup": "セットアップ / 接続",
+    "manualInput": "手入力 / 貼り付け",
+    "display": "表示設定",
+    "comments": "ライブコメント",
+    "quota": "利用状況",
+    "skipped": "スキップ理由",
+    "credentialStatus": "YouTube認証ステータス",
+    "operatorSession": "セッション操作",
+    "operatorFlow": "オペレーター確認フロー",
+    "safety": "公開版の利用条件"
+  },
+  "controls": {
+    "connection": "YouTube接続状態",
+    "stream": "配信選択",
+    "sourceLanguage": "翻訳元言語",
+    "targetLanguage": "翻訳先言語",
+    "singleComment": "単一コメント",
+    "multilinePaste": "複数行貼り付け",
+    "manualResult": "手入力プレビュー結果",
+    "commentText": "コメント本文",
+    "surface": "表示面",
+    "currentPair": "現在の組み合わせ",
+    "mockState": "利用状態",
+    "searchPlaceholder": "コメントを検索"
+  },
+  "stats": {
+    "shown": "表示中",
+    "total": "合計",
+    "translated": "翻訳済み",
+    "skipped": "スキップ",
+    "quota": "クォータ",
+    "cacheHit": "再利用した翻訳",
+    "cacheMiss": "新しく翻訳",
+    "errorRows": "エラー行",
+    "used": "使用中",
+    "hits": "再利用",
+    "fixtureMisses": "新規翻訳",
+    "recoverable": "復帰可能な状態",
+    "manualRows": "手入力行",
+    "manualSession": "手入力セッション"
+  },
+  "manualInput": {
+    "helper": "この画面の手入力はローカル確認用です。ライブコメントfeedには混ぜず、実APIやAI翻訳はStart承認前に実行しません。",
+    "singlePlaceholder": "1件だけ追加するコメント",
+    "pastePlaceholder": "貼り付けたコメントを1行ずつ追加",
+    "sourceBadge": "手入力",
+    "sampleLabel": "sample"
+  },
+  "actions": {
+    "addManualComments": "コメントを追加",
+    "insertSample": "サンプル挿入",
+    "clearDraft": "下書きをクリア",
+    "clearManualSession": "手入力セッションをクリア",
+    "refreshCredentialStatus": "認証ステータスを確認",
+    "startSession": "Start",
+    "stopSession": "Stop",
+    "refreshSession": "状態更新",
+    "clearPreview": "プレビューをクリア"
+  },
+  "manualResults": {
+    "translated": {
+      "label": "翻訳済みプレビュー",
+      "helper": "決定的なプレビュー翻訳を付ける"
+    },
+    "skipped": {
+      "label": "スキッププレビュー",
+      "helper": "スキップ理由つきで追加"
+    },
+    "error": {
+      "label": "エラープレビュー",
+      "helper": "復帰可能なエラー行として追加"
+    }
+  },
+  "fields": {
+    "mode": "モード",
+    "dock": "Dock",
+    "credentialReference": "Credential reference",
+    "scope": "Scope",
+    "expires": "Expires",
+    "reason": "Reason",
+    "sessionState": "状態",
+    "elapsed": "経過",
+    "dailyUsed": "本日の使用",
+    "dailyRemaining": "本日の残り",
+    "sessionRemaining": "セッション残り",
+    "monthlyInputCharacterCap": "月間入力文字上限",
+    "monthlyRemaining": "入力文字残り",
+    "stopReason": "停止理由",
+    "nextAction": "次の操作",
+    "providerConnection": "接続",
+    "perMinuteCap": "分あたり上限"
+  },
+  "credentialStatus": {
+    "pending": "確認中",
+    "unchecked": "未確認",
+    "refreshFailed": "認証ステータスを確認できませんでした",
+    "safeBoundary": "画面にはserver-owned credential metadataだけを表示し、機密の接続値や配信ターゲット値は表示しません。",
+    "states": {
+      "available": "利用可能",
+      "reconnect-required": "再接続が必要",
+      "disconnected": "未接続",
+      "unavailable": "未利用",
+      "error": "確認エラー",
+      "credential-resolution-disabled": "解決を停止中"
+    }
+  },
+  "operatorSession": {
+    "readinessTitle": "Start readiness",
+    "connectionReadiness": "接続確認",
+    "startReadiness": "Start は server-owned credential check で YouTube が利用可能になるまで無効です。",
+    "helper": "Start後にだけserver-owned sessionが進みます。このパネルはsanitized session / usage metadataだけを表示します。",
+    "pending": "処理中",
+    "actionFailed": "セッション状態を更新できませんでした",
+    "startBlockedTitle": "YouTube接続が未準備のためStartできません",
+    "startBlockedBody": "Start が使えない場合は、アカウント連携でYouTubeの接続または再接続を完了してから、認証ステータスを再確認してください。",
+    "openIntegrations": "YouTube連携を開く",
+    "reconnectGuidance": "アカウント連携でYouTubeを再接続してから、認証ステータスを再確認してください。",
+    "safeBoundary": "機密の接続値、アカウント内部値、配信ターゲット値は表示・保存しません。",
+    "publicLimitSummary": [
+      "1日最大30分",
+      "1セッション最大30分",
+      "30翻訳メッセージ/分",
+      "月20,000入力文字"
+    ],
+    "perMinuteCapHelper": "Free枠は1日最大30分、1セッション最大30分、30翻訳メッセージ/分、月20,000入力文字です。",
+    "usageTitle": "Free beta usage",
+    "usageProviderAllowed": "上限内のためprovider callを許可できます。",
+    "usageProviderBlockedOverLimit": "上限到達中のためprovider callは実行しません。",
+    "usageProviderUnavailable": "利用状況を安全に確認できないためprovider callは実行しません。",
+    "usageStartBlockedTitle": "利用上限によりStartできません",
+    "usageStartBlockedBody": "Start前のserver-owned usage checkで上限または利用状況ブロックを検出しました。",
+    "rateLimitStartBlockedTitle": "Start操作が短時間に集中しています",
+    "rateLimitStartBlockedBody": "少し待ってから再Startしてください。再試行目安:",
+    "ratePausedTitle": "分速上限のため一時休止中",
+    "ratePausedBody": "約{seconds}秒後に、新着コメントから自動再開します",
+    "ratePausedSkipped": "休止中に投稿されたコメントは翻訳されません",
+    "resyncingTitle": "コメント取得の再開を準備中",
+    "previousResultsTitle": "停止済みの前回結果を表示中",
+    "previousResultsBody": "Stop後は新しい取得・翻訳・使用量消費を止めたまま、最後の安全なプレビューだけを残します。次のStartまたは手動クリアで置き換わります。",
+    "perMinuteRemaining": "件/分 残り",
+    "usageStates": {
+      "available": "利用可能",
+      "over-limit": "上限到達",
+      "unavailable": "確認不可"
+    },
+    "states": {
+      "not-started": "未開始",
+      "active": "実行中",
+      "stopped": "停止中"
+    },
+    "nextActions": {
+      "press-start": "Startできます",
+      "send-heartbeat-or-stop": "状態更新またはStop",
+      "session-stopped": "必要なら再Start",
+      "reconnect-or-sign-in": "再接続またはサインイン",
+      "wait-for-limit-reset": "上限リセット待ち"
+    },
+    "stopReasons": {
+      "user-stop": "ユーザー停止",
+      "stream-ended": "配信終了",
+      "stream-unavailable": "配信を利用できません",
+      "browser-disconnect": "ブラウザ切断",
+      "missing-heartbeat": "heartbeat未到達",
+      "auth-failed": "認証失敗",
+      "token-refresh-failed": "接続更新失敗",
+      "reconnect-required": "再接続が必要",
+      "daily-time-limit": "日次上限",
+      "session-time-limit": "セッション上限",
+      "translated-message-cap": "分あたり翻訳上限",
+      "provider-quota-stop": "provider quota停止",
+      "global-budget-stop": "共通予算停止",
+      "ai-budget-stop": "AI予算停止",
+      "translation-provider-limit": "翻訳provider制限",
+      "session-limit": "同時セッション上限",
+      "terminal-provider-error": "provider終端エラー"
+    },
+    "reasonGroups": {
+      "manual": "手動停止",
+      "connection": "接続状態",
+      "live-target": "配信状態",
+      "limit": "上限",
+      "browser": "ブラウザ状態",
+      "provider": "翻訳provider",
+      "session": "セッション"
+    },
+    "reasonMessages": {
+      "user-stop": "Stop 操作でセッションを終了しました。",
+      "disconnected": "YouTube接続が見つからないため、Startできません。",
+      "reconnect-required": "YouTube接続の更新が必要なため、Startできません。",
+      "auth-unavailable": "サインインまたは認証状態を確認できないため、Startできません。",
+      "no-live-broadcast": "現在開始中の所有配信が見つからないため、Startできません。",
+      "live-chat-disabled": "対象配信のライブチャットが利用できないため、Startできません。",
+      "stream-ended": "配信またはライブチャットが終了したため停止しました。",
+      "live-chat-not-found": "対象のライブチャットを確認できないため停止しました。",
+      "live-target-unavailable": "配信状態を安全に確認できないため停止しました。",
+      "quota-or-budget-stop": "Free枠または共有予算の上限に達したため停止しました。",
+      "heartbeat-or-browser-disconnect": "ブラウザ接続またはheartbeatを確認できないため停止しました。",
+      "translation-provider-unavailable": "翻訳providerが利用できないため停止しました。",
+      "translation-provider-error": "翻訳providerのエラーが続いたため停止しました。",
+      "session-limit": "同時に実行できるセッション数の上限に達しています。"
+    },
+    "recommendedActions": {
+      "none": "追加操作は不要です。",
+      "connect-youtube": "アカウント連携でYouTubeを接続してください。",
+      "reconnect-youtube": "アカウント連携でYouTubeを再接続してください。",
+      "check-live-broadcast": "YouTube Studioで配信が開始済みか確認してください。",
+      "enable-live-chat": "YouTube側でライブチャットが有効か確認してください。",
+      "wait-or-pick-another-stream": "配信状態を確認し、必要なら別の配信で再Startしてください。",
+      "wait-for-limit-reset": "上限リセット後に再Startしてください。",
+      "keep-browser-open": "この画面を開いたまま、状態更新を再実行してください。",
+      "retry-later": "少し待ってから再Startしてください。",
+      "start-again": "既存セッションを停止してから再Startしてください。"
+    }
+  },
+  "retentionAttribution": {
+    "title": "データ削除 / 保持 / 出典",
+    "statusReady": "確認可能",
+    "statusUnavailable": "確認不可",
+    "deletionButton": "データ削除をリクエスト",
+    "deletionPending": "確認中",
+    "deletionHelper": "削除リクエストはserver-owned session / usage / feed派生状態だけを対象にし、raw commentやprovider payloadは返しません。",
+    "retentionReady": "保持ジョブはFree月間上限のためのdurable usageとsession-scoped feedだけを対象にします。",
+    "retentionUnavailable": "durable state、entitlement、provider readinessを確認できないため、削除/保持判定は利用不可です。",
+    "sourceLabel": "Source: YouTube Live Chat",
+    "deletedPropagation": "削除済みコメントはmessage reference tombstoneだけを表示します。"
+  },
+  "creatorWaitlist": {
+    "title": "Creator closed beta",
+    "priceIntent": "Creator は月額980円を予定しています。今はclosed betaの事前登録だけを受け付けます。",
+    "helper": "Creator closed betaに事前登録すると、初月割引の対象候補としてserver-owned stateに記録します。",
+    "registeredHelper": "事前登録済みです。招待や割引対象の判断はclosed beta開始時に管理側で確認します。",
+    "loginHelper": "事前登録にはアカウント登録またはログインが必要です。",
+    "featureSummary": "AI自然翻訳、OBS表示、モデレーター共有、カスタム辞書をclosed betaで段階的に検証予定です。",
+    "unavailable": "waitlistのdurable stateを安全に確認できないため、現在は事前登録できません。",
+    "joinWaitlist": "事前登録する",
+    "registeredButton": "登録済み",
+    "loginButton": "ログインして登録",
+    "refresh": "状態を確認",
+    "pending": "確認中",
+    "registeredAt": "登録日時",
+    "boundary": "Stripe、Checkout、Customer Portal、provider実行、public gate flipはこの登録では実行しません。",
+    "states": {
+      "unauthenticated": "ログインが必要",
+      "unavailable": "利用不可",
+      "unregistered": "未登録",
+      "registered": "登録済み"
+    }
+  },
+  "operatorFlow": {
+    "ready": "UI確認OK",
+    "standby": "確認待ち",
+    "blocked": "認証確認待ち",
+    "noLiveExecution": "この画面からlive/provider commandは実行しません。",
+    "summaryReady": "runtime smoke済み境界の状態を、UI上の安全な確認手順として表示しています。",
+    "summaryStandby": "配信選択または接続状態を確認してから、operator-local commandの準備に進みます。",
+    "summaryBlocked": "まず認証ステータスを確認し、利用可能なsanitized metadataだけを画面で確認します。",
+    "commandBoundary": "実行が必要な場合は、同じスレッドでpreflight、sanitized output review、明示承認を揃えてからCLIで実行します。",
+    "stepState": {
+      "done": "確認済み",
+      "waiting": "待機",
+      "gated": "承認待ち"
+    },
+    "steps": {
+      "credential-status": {
+        "label": "認証ステータス",
+        "helper": "opaque referenceとsanitized metadataのみを確認"
+      },
+      "target-readiness": {
+        "label": "配信ターゲット",
+        "helper": "UIではready/standbyだけを表示し、target値は出さない"
+      },
+      "intake-bridge": {
+        "label": "intake bridge",
+        "helper": "Task 6のserver-only bridgeはUIから直接呼ばない"
+      },
+      "explicit-approval": {
+        "label": "実行承認",
+        "helper": "live/provider実行は別CLIと同スレッド承認が必要"
+      }
+    }
+  },
+  "connections": {
+    "connected": "接続確認済み",
+    "syncing": "接続確認中",
+    "offline": "未接続"
+  },
+  "connectionStatus": {
+    "connected": "開始前",
+    "syncing": "同期中",
+    "offline": "オフライン"
+  },
+  "connectionDockStatus": {
+    "connected": "Start後に取得開始",
+    "syncing": "接続だけでは監視しません",
+    "offline": "Dock停止中"
+  },
+  "streams": {
+    "saturday-setup": {
+      "label": "Start対象の配信",
+      "helper": "ready状態のみ表示"
+    },
+    "karaoke-preview": {
+      "label": "開始前の配信",
+      "helper": "standby状態のみ表示"
+    },
+    "archive-check": {
+      "label": "終了済みの配信",
+      "helper": "target値は表示しません"
+    }
+  },
+  "dockStatus": {
+    "ready": "準備完了",
+    "standby": "待機中",
+    "blocked": "確認のみ"
+  },
+  "languages": {
+    "en": "英語",
+    "ko": "韓国語",
+    "zh": "中国語",
+    "ja": "日本語"
+  },
+  "displayModes": {
+    "both": {
+      "label": "両方",
+      "helper": "原文と翻訳文"
+    },
+    "original": {
+      "label": "原文",
+      "helper": "翻訳元コメントのみ"
+    },
+    "translated": {
+      "label": "翻訳文",
+      "helper": "翻訳文を優先表示"
+    }
+  },
+  "surfaces": {
+    "obs-browser-dock": {
+      "label": "OBS Browser Dock",
+      "helper": "配信者向けの密な表示"
+    },
+    "narrow-viewport": {
+      "label": "狭い画面",
+      "helper": "1カラム確認用"
+    }
+  },
+  "displayNamePolicy": {
+    "streamSafeToggleLabel": "コメントのみ表示で安全な表示名を出す",
+    "streamSafeToggleHelper": "オフの場合、配信に映るcompact表示では YouTube viewer と表示します。",
+    "streamSafeDefaultBadge": "表示名: 非表示",
+    "streamSafeShownBadge": "表示名: 安全名"
+  },
+  "filters": {
+    "all": "すべて",
+    "translated": "翻訳済み",
+    "skipped": "スキップ",
+    "error": "エラー"
+  },
+  "skipReasonLabels": {
+    "same-language": "同一言語",
+    "too-short": "短すぎる",
+    "spam-filter": "スパム判定"
+  },
+  "skipReasonText": {
+    "Same language": "同一言語",
+    "Too short": "短すぎる",
+    "Spam filter": "スパム判定"
+  },
+  "quotaScenarios": {
+    "normal": {
+      "label": "Free枠プレビュー",
+      "status": "正常",
+      "helper": "1日最大30分、1セッション最大30分、30翻訳メッセージ/分、月20,000入力文字の初期Free枠に合わせた表示です"
+    },
+    "warning": {
+      "label": "上限接近",
+      "status": "警告",
+      "helper": "Free枠またはサービス共通予算に近づくと停止理由を表示します"
+    },
+    "empty": {
+      "label": "開始前",
+      "status": "行なし",
+      "helper": "Start前はYouTube取得、AI翻訳、クォータ消費を開始しません"
+    },
+    "error": {
+      "label": "診断制限",
+      "status": "利用状況の警告",
+      "helper": "raw text loggingは標準で無効、診断は短期間かつsanitizedに限定します"
+    }
+  },
+  "statusBadges": {
+    "reused": "再利用した翻訳",
+    "fresh": "新しく翻訳",
+    "translated": "翻訳済み",
+    "skipped": "スキップ",
+    "error": "エラー"
+  },
+  "commentMeta": {
+    "cache": "cache",
+    "skipped": "スキップ",
+    "error": "エラー",
+    "noTranslatedText": "翻訳文はありません"
+  },
+  "empty": {
+    "title": "一致するコメントはありません",
+    "body": "server-owned session state から表示可能なコメントが届くまで、このfeedは空のままです。"
+  },
+  "safety": [
+    "YouTube API取得とAI翻訳は、ログインユーザーがStartしたセッション内だけで実行します。",
+    "YouTube接続だけでは、バックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
+    "FreeはAzure Translator、ProはOpenAI miniを優先し、復帰可能なprovider errorだけAzure fallbackを使います。",
+    "DeepL、Gemini、Workers AIは初期公開では比較用です。",
+    "初期Free枠は1日最大30分、1セッション最大30分、1 active session、30翻訳メッセージ/分、月20,000入力文字です。",
+    "機密の接続値、配信ターゲット値、認可関連の内部値は画面やブラウザ保存領域に出しません。",
+    "raw text loggingは標準で無効です。診断は短期間かつsanitizedに限定します。",
+    "有料プランは準備中で、Stripe連携と上限緩和は後続タスクで扱います。"
+  ]
+}

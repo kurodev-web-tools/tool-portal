@@ -1,622 +1,91 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import Link from "next/link";
-import {
-  getCommentTranslatorSessionStatusAction,
-  getCommentTranslatorRealCommentsFeedAction,
-  getCommentTranslatorCreatorWaitlistAction,
-  heartbeatCommentTranslatorSessionAction,
-  registerCommentTranslatorCreatorWaitlistAction,
-  restoreCommentTranslatorPersistedRealCommentsFeedAction,
-  clearCommentTranslatorPreviewFeedAction,
-  startCommentTranslatorSessionAction,
-  stopCommentTranslatorSessionAction
-} from "@/app/tools/comment-translator/actions";
+import { CommentTranslatorDockHeader } from "./CommentTranslatorDockHeader";
+import { CommentTranslatorFeedPanel } from "./CommentTranslatorFeedPanel";
+import { CommentTranslatorSessionPanel } from "./CommentTranslatorSessionPanel";
+import { CommentTranslatorSettingsPanel } from "./CommentTranslatorSettingsPanel";
+import { CommentTranslatorUsageSidebar } from "./CommentTranslatorUsageSidebar";
 import { useLocale } from "@/components/portal/LocaleProvider";
+import { filterCommentTranslatorComments } from "@/lib/comment-translator";
 import {
-  commentTranslatorUiCopy,
-  filterCommentTranslatorComments,
-  findCommentTranslatorOption,
-  mockTranslationProvider,
-  type CommentTranslatorComment,
-  type CommentTranslatorConnectionStateId,
-  type CommentTranslatorDisplayMode,
-  type CommentTranslatorSourceLanguageId,
-  type CommentTranslatorStatusFilter,
-  type CommentTranslatorStreamId,
-  type CommentTranslatorSurfaceMode,
-  type CommentTranslatorTargetLanguageId
-} from "@/lib/comment-translator";
-import {
-  createUnavailableCommentTranslatorRealCommentsFeedState,
   mapCommentTranslatorRealCommentsFeedRowsToUiComments,
-  resolveCommentTranslatorAuthorDisplayNamePolicy,
-  resolveCommentTranslatorBrowserTimeZone,
-  type CommentTranslatorAuthorDisplayNamePolicy,
   type CommentTranslatorRealCommentsFeedState
 } from "@/lib/comment-translator-real-comments-feed-shared";
-import { readLocalTimeZonePreference, timeZonePreferenceChangeEvent, timeZonePreferenceStorageKey } from "@/lib/local-preferences";
 import type { CommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
-import type { YouTubeOAuthCredentialStatusUiStateId } from "@/lib/comment-translator-youtube-credential-status-ui-wiring";
+import { initialOperatorSessionState, initialOperatorSessionUsageDisplay, type CommentTranslatorDockInitialSessionState } from "./comment-translator-dock-model";
+import { useCommentTranslatorBrowserTimeZone } from "./useCommentTranslatorBrowserTimeZone";
+import { useCommentTranslatorCreatorWaitlist } from "./useCommentTranslatorCreatorWaitlist";
+import { useCommentTranslatorDockControls } from "./useCommentTranslatorDockControls";
+import { useCommentTranslatorSessionFeedController } from "./useCommentTranslatorSessionFeedController";
 
-type SelectOption = {
-  id: string;
-  label: string;
-  helper?: string;
-  shortLabel?: string;
-};
-
-type CommentTranslatorUiCopy = (typeof commentTranslatorUiCopy)[keyof typeof commentTranslatorUiCopy];
-type OperatorSessionStopReason = keyof CommentTranslatorUiCopy["operatorSession"]["stopReasons"];
-type OperatorSessionNextAction = keyof CommentTranslatorUiCopy["operatorSession"]["nextActions"];
-type OperatorSessionReasonCode = keyof CommentTranslatorUiCopy["operatorSession"]["reasonMessages"];
-type OperatorSessionReasonGroup = keyof CommentTranslatorUiCopy["operatorSession"]["reasonGroups"];
-type OperatorSessionRecommendedAction = keyof CommentTranslatorUiCopy["operatorSession"]["recommendedActions"];
-type OperatorSessionUsageDisplay = {
-  status: "available" | "over-limit" | "unavailable";
-  session: {
-    usedSeconds: number;
-    limitSeconds: number;
-    remainingSeconds: number;
-  };
-  daily: {
-    usedSeconds: number;
-    limitSeconds: number;
-    remainingSeconds: number;
-  };
-  perMinute: {
-    used: number;
-    limit: number;
-    remaining: number;
-  };
-  monthlyInputCharacterCap: {
-    used: number;
-    limit: number;
-    remaining: number;
-  };
-  unavailableReason: "durable-usage-unreadable" | "missing-entitlement" | "missing-provider-readiness" | null;
-  providerCallPolicy: {
-    status: "allowed" | "blocked-over-limit" | "blocked-unavailable";
-    stopReason: OperatorSessionStopReason | null;
-    clientReadableDetail: "sanitized-usage-only";
-  };
-  noProviderCallWhenOverLimit: true;
-  clientReadableDetail: "sanitized-usage-only";
-};
-type OperatorSessionState = {
-  status: keyof CommentTranslatorUiCopy["operatorSession"]["states"];
-  plan: "free" | "paid";
-  sessionReferenceId?: string | null;
-  elapsedSeconds: number;
-  remainingSessionSeconds: number;
-  remainingDailySeconds: number;
-  stopReason: OperatorSessionStopReason | null;
-  reasonUx: {
-    code: OperatorSessionReasonCode;
-    group: OperatorSessionReasonGroup;
-    recommendedAction: OperatorSessionRecommendedAction;
-    clientReadableDetail: "sanitized-reason-only";
-  } | null;
-  usageDisplay: OperatorSessionUsageDisplay;
-  nextAction: OperatorSessionNextAction;
-  rateLimit?: "exceeded";
-  rateLimitReason?: "rate-limit-exceeded";
-  retryAfterSeconds?: number;
-};
-type CreatorWaitlistRegistration = {
-  registeredAtIso: string;
-  campaign: "creator_closed_beta_2026";
-  status: "registered" | "invited" | "discount_eligible" | "discount_used" | "cancelled";
-  discountIntent: "first_month_discount";
-  clientReadableDetail: "sanitized-waitlist-registration-only";
-};
-type CreatorWaitlistState = {
-  status: "unauthenticated" | "unavailable" | "unregistered" | "registered";
-  actionState: "login-required" | "disabled" | "enabled";
-  loginHref: string | null;
-  registration: CreatorWaitlistRegistration | null;
-  unavailableReason:
-    | "caller-not-authenticated"
-    | "auth-unavailable"
-    | "durable-waitlist-unavailable"
-    | "durable-waitlist-unreadable"
-    | null;
-  clientReadableDetail:
-    | "sanitized-login-required-only"
-    | "sanitized-unavailable-only"
-    | "sanitized-waitlist-state-only";
-  publicLaunchAllowed: false;
-};
-
-const freeDailyLimitSeconds = 30 * 60;
-const commentTranslatorPreviewFeedAutoRefreshIntervalMs = 15000;
-const initialOperatorSessionUsageDisplay: OperatorSessionUsageDisplay = {
-  status: "available",
-  session: {
-    usedSeconds: 0,
-    limitSeconds: freeDailyLimitSeconds,
-    remainingSeconds: freeDailyLimitSeconds
-  },
-  daily: {
-    usedSeconds: 0,
-    limitSeconds: freeDailyLimitSeconds,
-    remainingSeconds: freeDailyLimitSeconds
-  },
-  perMinute: {
-    used: 0,
-    limit: 30,
-    remaining: 30
-  },
-  monthlyInputCharacterCap: {
-    used: 0,
-    limit: 20_000,
-    remaining: 20_000
-  },
-  unavailableReason: null,
-  providerCallPolicy: {
-    status: "allowed",
-    stopReason: null,
-    clientReadableDetail: "sanitized-usage-only"
-  },
-  noProviderCallWhenOverLimit: true,
-  clientReadableDetail: "sanitized-usage-only"
-};
-const initialOperatorSessionState: OperatorSessionState = {
-  status: "not-started",
-  plan: "free",
-  sessionReferenceId: null,
-  elapsedSeconds: 0,
-  remainingSessionSeconds: freeDailyLimitSeconds,
-  remainingDailySeconds: freeDailyLimitSeconds,
-  stopReason: null,
-  reasonUx: null,
-  usageDisplay: initialOperatorSessionUsageDisplay,
-  nextAction: "press-start"
-};
-const initialCreatorWaitlistState: CreatorWaitlistState = {
-  status: "unavailable",
-  actionState: "disabled",
-  loginHref: null,
-  registration: null,
-  unavailableReason: "durable-waitlist-unavailable",
-  clientReadableDetail: "sanitized-unavailable-only",
-  publicLaunchAllowed: false
-};
-
-function formatNumber(value: number) {
-  return new Intl.NumberFormat("en-US").format(value);
-}
-
-function formatDuration(seconds: number) {
-  const safeSeconds = Math.max(0, Math.floor(seconds));
-  const minutes = Math.floor(safeSeconds / 60);
-  const remainingSeconds = safeSeconds % 60;
-
-  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
-}
-
-function statusClassName(status: CommentTranslatorComment["status"]) {
-  if (status === "translated") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  }
-
-  if (status === "skipped") {
-    return "border-amber-200 bg-amber-50 text-amber-700";
-  }
-
-  return "border-red-200 bg-red-50 text-red-700";
-}
-
-function toneClassName(tone: "normal" | "warning" | "empty" | "error") {
-  if (tone === "warning") {
-    return "border-amber-200 bg-amber-50/45 text-amber-800";
-  }
-
-  if (tone === "empty") {
-    return "border-border bg-surface-muted/50 text-muted";
-  }
-
-  if (tone === "error") {
-    return "border-red-200 bg-red-50/45 text-red-700";
-  }
-
-  return "border-emerald-200 bg-emerald-50/45 text-emerald-700";
-}
-
-function credentialStatusTone(state: YouTubeOAuthCredentialStatusUiStateId) {
-  if (state === "available") {
-    return "normal";
-  }
-
-  if (state === "unavailable") {
-    return "error";
-  }
-
-  return "warning";
-}
-
-function operatorFlowTone(status: "ready" | "standby" | "blocked") {
-  if (status === "ready") {
-    return "normal";
-  }
-
-  if (status === "blocked") {
-    return "error";
-  }
-
-  return "warning";
-}
-
-function operatorSessionTone(status: OperatorSessionState["status"]) {
-  if (status === "active") {
-    return "normal";
-  }
-
-  if (status === "stopped") {
-    return "warning";
-  }
-
-  return "empty";
-}
-
-function statusLabel(comment: CommentTranslatorComment, copy: CommentTranslatorUiCopy) {
-  if (comment.status === "translated") {
-    return comment.cacheStatus === "hit" ? copy.statusBadges.reused : copy.statusBadges.fresh;
-  }
-
-  return copy.statusBadges[comment.status];
-}
-
-function skipReasonLabel(reason: string, copy: CommentTranslatorUiCopy) {
-  return copy.skipReasonText[reason as keyof typeof copy.skipReasonText] ?? reason;
-}
-
-function ControlSelect({
-  label,
-  value,
-  options,
-  onChange
-}: {
-  label: string;
-  value: string;
-  options: SelectOption[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="grid min-w-0 gap-1.5 text-sm">
-      <span className="text-xs font-black uppercase tracking-normal text-muted">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-10 w-full min-w-0 rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground shadow-sm transition hover:border-primary/60 focus:border-primary"
-      >
-        {options.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function StatTile({ label, value, helper }: { label: string; value: string; helper: string }) {
-  return (
-    <div className="rounded-base border border-border bg-surface p-3">
-      <p className="text-xs font-bold text-muted">{label}</p>
-      <p className="mt-2 break-words text-2xl font-black tracking-normal text-foreground">{value}</p>
-      <p className="mt-1 break-words text-xs font-semibold text-primary-strong">{helper}</p>
-    </div>
-  );
-}
-
-function CommentCard({
-  comment,
-  displayMode,
-  authorDisplayNamePolicy,
-  targetLanguageLabel,
-  copy
-}: {
-  comment: CommentTranslatorComment;
-  displayMode: CommentTranslatorDisplayMode;
-  authorDisplayNamePolicy: CommentTranslatorAuthorDisplayNamePolicy;
-  targetLanguageLabel: string;
-  copy: CommentTranslatorUiCopy;
-}) {
-  const showOriginal = displayMode === "both" || displayMode === "original";
-  const showTranslated = (displayMode === "both" || displayMode === "translated") && Boolean(comment.translatedText);
-  const showTranslatedFallback = displayMode === "translated" && !comment.translatedText;
-
-  return (
-    <article
-      className={[
-        "rounded-base border bg-surface p-3 shadow-sm sm:p-4",
-        comment.badge === "support" ? "border-amber-200 bg-amber-50/35" : "border-border",
-        comment.status === "error" ? "border-red-200 bg-red-50/35" : ""
-      ].join(" ")}
-    >
-      <div className="grid gap-3 sm:grid-cols-[2.25rem_minmax(0,1fr)_auto] sm:items-start">
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-base bg-primary-soft text-sm font-black text-primary-strong">
-          {comment.authorName.slice(0, 1)}
-        </div>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3
-              data-comment-translator-preview-author-display-name="safe-display-name"
-              data-comment-translator-obs-dock-author-display-name={authorDisplayNamePolicy.marker}
-              className={[
-                "min-w-0 max-w-full text-sm font-black text-foreground",
-                authorDisplayNamePolicy.streamSafe ? "max-w-[11rem] truncate" : "break-words"
-              ].join(" ")}
-            >
-              {comment.authorName}
-            </h3>
-            <span className="rounded-base bg-surface-muted px-2 py-1 text-[11px] font-bold text-muted">
-              {comment.timestamp}
-            </span>
-            {comment.source === "manual" ? (
-              <span className="rounded-base border border-cyan-200 bg-cyan-50 px-2 py-1 text-[11px] font-bold text-cyan-700">
-                {copy.manualInput.sourceBadge}
-              </span>
-            ) : null}
-            {comment.source === "server" && comment.sourceLabel ? (
-              <span className="rounded-base border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-bold text-indigo-700">
-                {comment.sourceLabel}
-              </span>
-            ) : null}
-            {comment.badge && comment.source !== "manual" ? (
-              <span className="rounded-base border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
-                {comment.badge}
-              </span>
-            ) : null}
-          </div>
-
-          <div className="mt-3 grid gap-2">
-            {showOriginal ? (
-              <div className="grid min-w-0 gap-2 rounded-base border border-border/70 bg-background/60 p-2.5 sm:grid-cols-[3.5rem_minmax(0,1fr)]">
-                <span className="w-fit rounded-base bg-blue-50 px-2 py-1 text-[11px] font-black text-blue-700">
-                  {comment.sourceLanguage}
-                </span>
-                <p className="min-w-0 break-words text-sm leading-6 text-foreground">{comment.originalText}</p>
-              </div>
-            ) : null}
-            {showTranslated ? (
-              <div className="grid min-w-0 gap-2 rounded-base border border-emerald-200 bg-emerald-50/60 p-2.5 sm:grid-cols-[3.5rem_minmax(0,1fr)]">
-                <span className="w-fit rounded-base bg-emerald-100 px-2 py-1 text-[11px] font-black text-emerald-800">
-                  {comment.targetLanguage}
-                </span>
-                <p className="min-w-0 break-words text-sm font-semibold leading-6 text-foreground">
-                  {comment.translatedText}
-                </p>
-              </div>
-            ) : null}
-            {showTranslatedFallback ? (
-              <div className="rounded-base border border-dashed border-border bg-surface-muted/50 p-2.5">
-                <p className="text-sm font-bold leading-6 text-muted">
-                  {copy.commentMeta.noTranslatedText} {targetLanguageLabel}
-                </p>
-              </div>
-            ) : null}
-          </div>
-
-          {comment.skipReason || comment.errorMessage ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {comment.skipReason ? (
-                <span className="rounded-base border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
-                  {copy.commentMeta.skipped}: {skipReasonLabel(comment.skipReason, copy)}
-                </span>
-              ) : null}
-              {comment.errorMessage ? (
-                <span className="rounded-base border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700">
-                  {copy.commentMeta.error}: {comment.errorMessage}
-                </span>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-        <span className={["w-fit rounded-base border px-2.5 py-1 text-xs font-black", statusClassName(comment.status)].join(" ")}>
-          {statusLabel(comment, copy)}
-        </span>
-      </div>
-    </article>
-  );
-}
-
-function CreatorWaitlistPanel({
-  copy,
-  state,
-  isPending,
-  onRefresh,
-  onRegister
-}: {
-  copy: CommentTranslatorUiCopy;
-  state: CreatorWaitlistState;
-  isPending: boolean;
-  onRefresh: () => void;
-  onRegister: () => void;
-}) {
-  const registeredAt = state.registration?.registeredAtIso ?? null;
-  const statusLabel = copy.creatorWaitlist.states[state.status];
-  const primaryLabel =
-    state.status === "registered"
-      ? copy.creatorWaitlist.registeredButton
-      : state.status === "unauthenticated"
-        ? copy.creatorWaitlist.loginButton
-        : isPending
-          ? copy.creatorWaitlist.pending
-          : copy.creatorWaitlist.joinWaitlist;
-  const helper =
-    state.status === "registered"
-      ? copy.creatorWaitlist.registeredHelper
-      : state.status === "unauthenticated"
-        ? copy.creatorWaitlist.loginHelper
-        : state.status === "unavailable"
-          ? copy.creatorWaitlist.unavailable
-          : copy.creatorWaitlist.helper;
-
-  return (
-    <div
-      data-comment-translator-creator-waitlist="creator-closed-beta-preregistration"
-      className="rounded-base border border-primary/25 bg-primary-soft/25 px-3 py-3"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="break-words text-sm font-black text-foreground">{copy.creatorWaitlist.title}</p>
-          <p className="mt-1 break-words text-xs font-semibold leading-5 text-muted">
-            {copy.creatorWaitlist.priceIntent}
-          </p>
-        </div>
-        <span className="rounded-base border border-primary/30 bg-surface px-2 py-1 text-xs font-black text-primary-strong">
-          {statusLabel}
-        </span>
-      </div>
-      <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
-        {helper}
-      </p>
-      <div className="mt-3 rounded-base border border-primary/20 bg-surface/80 px-3 py-2">
-        <p className="break-words text-xs font-semibold leading-5 text-muted">
-          {copy.creatorWaitlist.featureSummary}
-        </p>
-        {registeredAt ? (
-          <p className="mt-2 break-words text-xs font-black leading-5 text-foreground">
-            {copy.creatorWaitlist.registeredAt}: {registeredAt}
-          </p>
-        ) : null}
-      </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-        {state.actionState === "login-required" && state.loginHref ? (
-          <Link
-            href={state.loginHref}
-            className="inline-flex min-h-10 items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
-          >
-            {primaryLabel}
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={onRegister}
-            disabled={isPending || state.actionState !== "enabled"}
-            className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-          >
-            {primaryLabel}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={isPending}
-          className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-        >
-          {copy.creatorWaitlist.refresh}
-        </button>
-      </div>
-      <p className="mt-2 break-words text-xs font-semibold leading-5 text-muted">
-        {copy.creatorWaitlist.boundary}
-      </p>
-    </div>
-  );
-}
+export type { CommentTranslatorDockInitialSessionState } from "./comment-translator-dock-model";
 
 export function CommentTranslatorDock({
   youtubeCredentialStatusSource,
-  initialRealCommentsFeed
+  initialRealCommentsFeed,
+  initialSessionState,
+  runtimeMode = "live"
 }: {
   youtubeCredentialStatusSource: CommentTranslatorToolCredentialStatusSource;
   initialRealCommentsFeed: CommentTranslatorRealCommentsFeedState;
+  initialSessionState?: CommentTranslatorDockInitialSessionState;
+  runtimeMode?: "live" | "dev-fixture";
 }) {
   const { locale } = useLocale();
   const {
     platform,
-    settings,
-    connectionStates,
-    streams,
     sourceLanguages,
     targetLanguages,
     displayModes,
     surfaceOptions,
-    statusFilters
-  } = mockTranslationProvider.getSnapshot();
-  const copy = commentTranslatorUiCopy[locale];
-  const connectionId: CommentTranslatorConnectionStateId = "connected";
-  const streamId: CommentTranslatorStreamId = streams[0].id;
-  const [sourceLanguage, setSourceLanguage] = useState<CommentTranslatorSourceLanguageId>(settings.sourceLanguage);
-  const [targetLanguage, setTargetLanguage] = useState<CommentTranslatorTargetLanguageId>(settings.targetLanguage);
-  const [displayMode, setDisplayMode] = useState<CommentTranslatorDisplayMode>(settings.displayMode);
-  const [surfaceMode, setSurfaceMode] = useState<CommentTranslatorSurfaceMode>(settings.surfaceMode);
-  const [showStreamSafeAuthorDisplayNames, setShowStreamSafeAuthorDisplayNames] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<CommentTranslatorStatusFilter>("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"normal" | "comments">("normal");
-  const [sessionState, setSessionState] = useState<OperatorSessionState>(initialOperatorSessionState);
-  const [sessionError, setSessionError] = useState<string | null>(null);
-  const [creatorWaitlistState, setCreatorWaitlistState] = useState<CreatorWaitlistState>(
-    initialCreatorWaitlistState
-  );
-  const [realCommentsFeed, setRealCommentsFeed] = useState<CommentTranslatorRealCommentsFeedState>(initialRealCommentsFeed);
-  const [realCommentsFeedError, setRealCommentsFeedError] = useState<string | null>(null);
-  const [browserTimeZone, setBrowserTimeZone] = useState("UTC");
-  const [isSessionPending, startSessionTransition] = useTransition();
-  const [isCreatorWaitlistPending, startCreatorWaitlistTransition] = useTransition();
-  const [isRealCommentsFeedPending, startRealCommentsFeedTransition] = useTransition();
-  const realCommentsFeedRefreshInFlightRef = useRef(false);
-
-  const selectedConnection = findCommentTranslatorOption(connectionStates, connectionId);
-  const selectedStream = findCommentTranslatorOption(streams, streamId);
-  const selectedSourceLanguage = findCommentTranslatorOption(sourceLanguages, sourceLanguage);
-  const selectedTargetLanguage = findCommentTranslatorOption(targetLanguages, targetLanguage);
-  const selectedSurface = findCommentTranslatorOption(surfaceOptions, surfaceMode);
-  const localizedConnection = {
-    ...selectedConnection,
-    label: copy.connections[selectedConnection.id],
-    statusLabel: copy.connectionStatus[selectedConnection.id],
-    dockStatusLabel: copy.connectionDockStatus[selectedConnection.id]
-  };
-  const localizedStream = {
-    ...selectedStream,
-    title: copy.streams[selectedStream.id].label,
-    scheduledLabel: copy.streams[selectedStream.id].helper,
-    dockStatusLabel: copy.dockStatus[selectedStream.dockStatus]
-  };
-  const localizedSourceLanguage = {
-    ...selectedSourceLanguage,
-    label: copy.languages[selectedSourceLanguage.id]
-  };
-  const localizedTargetLanguage = {
-    ...selectedTargetLanguage,
-    label: copy.languages[selectedTargetLanguage.id]
-  };
-  const localizedSurface = {
-    ...selectedSurface,
-    label: copy.surfaces[selectedSurface.id].label,
-    helper: copy.surfaces[selectedSurface.id].helper
-  };
-  const sourceLanguageOptions = sourceLanguages.map((language) => ({
-    id: language.id,
-    label: copy.languages[language.id],
-    shortLabel: language.shortLabel
-  }));
-  const targetLanguageOptions = targetLanguages.map((language) => ({
-    id: language.id,
-    label: copy.languages[language.id],
-    shortLabel: language.shortLabel
-  }));
-  const displayModeOptions = displayModes.map((mode) => ({
-    id: mode.id,
-    label: copy.displayModes[mode.id].label,
-    helper: copy.displayModes[mode.id].helper
-  }));
-  const surfaceModeOptions = surfaceOptions.map((surface) => ({
-    id: surface.id,
-    label: copy.surfaces[surface.id].label,
-    helper: copy.surfaces[surface.id].helper
-  }));
-  const commentOnly = viewMode === "comments";
-  const authorDisplayNamePolicy = resolveCommentTranslatorAuthorDisplayNamePolicy({
-    surfaceMode,
-    viewMode,
-    showSafeAuthorDisplayNamesInStreamSafeMode: showStreamSafeAuthorDisplayNames
+    statusFilters,
+    copy,
+    sourceLanguage, setSourceLanguage,
+    targetLanguage, setTargetLanguage,
+    displayMode, setDisplayMode,
+    surfaceMode, setSurfaceMode,
+    showStreamSafeAuthorDisplayNames, setShowStreamSafeAuthorDisplayNames,
+    statusFilter, setStatusFilter,
+    searchQuery, setSearchQuery,
+    viewMode, setViewMode,
+    localizedConnection,
+    localizedStream,
+    localizedSourceLanguage,
+    localizedTargetLanguage,
+    localizedSurface,
+    sourceLanguageOptions,
+    targetLanguageOptions,
+    displayModeOptions,
+    surfaceModeOptions,
+    authorDisplayNamePolicy
+  } = useCommentTranslatorDockControls(locale);
+  const {
+    sessionState,
+    realCommentsFeed,
+    realCommentsFeedError,
+    isSessionPending,
+    isRealCommentsFeedPending,
+    runSessionCommand,
+    refreshSessionState,
+    refreshRealCommentsFeed,
+    clearRetainedPreviewFeed
+  } = useCommentTranslatorSessionFeedController({
+    sourceLanguage,
+    targetLanguage,
+    locale,
+    actionFailedCopy: copy.operatorSession.actionFailed,
+    initialSessionState: initialSessionState ?? initialOperatorSessionState,
+    initialRealCommentsFeed,
+    runtimeMode
   });
+  const browserTimeZone = useCommentTranslatorBrowserTimeZone(runtimeMode);
+  const {
+    state: creatorWaitlistState,
+    isPending: isCreatorWaitlistPending,
+    refresh: refreshCreatorWaitlist,
+    register: registerCreatorWaitlist
+  } = useCommentTranslatorCreatorWaitlist(runtimeMode);
+
   const feedComments = mapCommentTranslatorRealCommentsFeedRowsToUiComments({
     feed: realCommentsFeed,
     targetLanguageLabel: localizedTargetLanguage.label,
@@ -624,6 +93,7 @@ export function CommentTranslatorDock({
     timeZone: browserTimeZone,
     authorDisplayNamePolicy
   });
+  const commentOnly = viewMode === "comments";
   const publicFeedComments = feedComments.filter((comment) => comment.status !== "skipped");
   const filteredComments = filterCommentTranslatorComments(publicFeedComments, { statusFilter, searchQuery });
   const liveStats = {
@@ -636,7 +106,7 @@ export function CommentTranslatorDock({
   const credentialStatusState = credentialStatusMetadata.status;
   const credentialStatusLabel = copy.credentialStatus.states[credentialStatusState];
   const operatorFlowCredentialReady = credentialStatusState === "available";
-  const operatorFlowTargetReady = selectedStream.dockStatus === "ready" && localizedConnection.dockStatus !== "blocked";
+  const operatorFlowTargetReady = localizedStream.dockStatus === "ready" && localizedConnection.dockStatus !== "blocked";
   const operatorFlowStatus = operatorFlowCredentialReady ? (operatorFlowTargetReady ? "ready" : "standby") : "blocked";
   const sessionStopReason = sessionState.stopReason ? copy.operatorSession.stopReasons[sessionState.stopReason] : "-";
   const sessionReasonUx = sessionState.reasonUx;
@@ -672,710 +142,109 @@ export function CommentTranslatorDock({
   const startBlockedByCredentialStatus = credentialStatusState !== "available";
   const startBlockedByUsagePolicy = !startBlockedByRateLimit && usageDisplay.providerCallPolicy.status !== "allowed";
 
-  function runSessionCommand(intent: "status" | "start" | "stop" | "heartbeat") {
-    startSessionTransition(async () => {
-      try {
-        const state =
-          intent === "start"
-            ? await startCommentTranslatorSessionAction({ sourceLanguage, targetLanguage })
-            : intent === "stop"
-              ? await stopCommentTranslatorSessionAction()
-              : intent === "heartbeat"
-                ? await heartbeatCommentTranslatorSessionAction({ sourceLanguage, targetLanguage })
-                : await getCommentTranslatorSessionStatusAction({ sourceLanguage, targetLanguage });
-        setSessionState(state);
-        if (intent === "start" && state.status === "active") {
-          setRealCommentsFeed(
-            createUnavailableCommentTranslatorRealCommentsFeedState({
-              reason: "session-not-active"
-            })
-          );
-          setRealCommentsFeedError(null);
-        }
-        setSessionError(null);
-      } catch {
-        setSessionError(copy.operatorSession.actionFailed);
-      }
-    });
-  }
-
-  function refreshSessionState() {
-    runSessionCommand(sessionState.status === "active" ? "heartbeat" : "status");
-  }
-
-  useEffect(() => {
-    let cancelled = false;
-
-    startSessionTransition(async () => {
-      try {
-        const state = await getCommentTranslatorSessionStatusAction({ sourceLanguage, targetLanguage });
-        if (cancelled) {
-          return;
-        }
-
-        setSessionState(state);
-        if (state.status === "active") {
-          const feed = await restoreCommentTranslatorPersistedRealCommentsFeedAction({ sourceLanguage, targetLanguage });
-          if (cancelled) {
-            return;
-          }
-          setRealCommentsFeed(feed);
-          setRealCommentsFeedError(null);
-        } else {
-          setRealCommentsFeed((currentFeed) =>
-            currentFeed.rows.length > 0
-              ? currentFeed
-              : createUnavailableCommentTranslatorRealCommentsFeedState({
-                  reason: "session-not-active"
-                })
-          );
-          setRealCommentsFeedError(null);
-        }
-        setSessionError(null);
-      } catch {
-        if (!cancelled) {
-          setSessionError(copy.operatorSession.actionFailed);
-        }
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [copy.operatorSession.actionFailed, sourceLanguage, startSessionTransition, targetLanguage]);
-
-  const refreshRealCommentsFeed = useCallback(() => {
-    if (realCommentsFeedRefreshInFlightRef.current) {
-      return;
-    }
-
-    if (sessionState.status !== "active") {
-      setRealCommentsFeed((currentFeed) =>
-        currentFeed.rows.length > 0
-          ? currentFeed
-          : createUnavailableCommentTranslatorRealCommentsFeedState({
-              reason: "session-not-active"
-            })
-      );
-      setRealCommentsFeedError(null);
-      return;
-    }
-
-    realCommentsFeedRefreshInFlightRef.current = true;
-    startRealCommentsFeedTransition(async () => {
-      try {
-        const refreshedSession = await heartbeatCommentTranslatorSessionAction({ sourceLanguage, targetLanguage });
-        setSessionState(refreshedSession);
-        if (refreshedSession.status !== "active") {
-          setRealCommentsFeed((currentFeed) =>
-            currentFeed.rows.length > 0
-              ? currentFeed
-              : createUnavailableCommentTranslatorRealCommentsFeedState({
-                  reason: "session-not-active"
-                })
-          );
-          setRealCommentsFeedError(null);
-          return;
-        }
-
-        const feed = await getCommentTranslatorRealCommentsFeedAction({ sourceLanguage, targetLanguage });
-        setRealCommentsFeed(feed);
-        setRealCommentsFeedError(null);
-      } catch {
-        setRealCommentsFeedError(locale === "ja" ? "コメント状態を更新できませんでした" : "Could not refresh comments");
-      } finally {
-        realCommentsFeedRefreshInFlightRef.current = false;
-      }
-    });
-  }, [locale, sessionState.status, sourceLanguage, targetLanguage]);
-
-  function clearRetainedPreviewFeed() {
-    startRealCommentsFeedTransition(async () => {
-      try {
-        const clearedFeed = await clearCommentTranslatorPreviewFeedAction({
-          sessionReferenceId: sessionState.sessionReferenceId
-        });
-        setRealCommentsFeed(clearedFeed);
-        setRealCommentsFeedError(null);
-      } catch {
-        setRealCommentsFeedError(locale === "ja" ? "プレビューをクリアできませんでした" : "Could not clear preview");
-      }
-    });
-  }
-
-  useEffect(() => {
-    function refreshTimeZonePreference() {
-      setBrowserTimeZone(readLocalTimeZonePreference() ?? resolveCommentTranslatorBrowserTimeZone());
-    }
-
-    function handleStorage(event: StorageEvent) {
-      if (event.key === timeZonePreferenceStorageKey) {
-        refreshTimeZonePreference();
-      }
-    }
-
-    refreshTimeZonePreference();
-    window.addEventListener(timeZonePreferenceChangeEvent, refreshTimeZonePreference);
-    window.addEventListener("storage", handleStorage);
-
-    return () => {
-      window.removeEventListener(timeZonePreferenceChangeEvent, refreshTimeZonePreference);
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (sessionState.status !== "active") {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      refreshRealCommentsFeed();
-    }, commentTranslatorPreviewFeedAutoRefreshIntervalMs);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [refreshRealCommentsFeed, sessionState.status]);
-
-  function refreshCreatorWaitlist() {
-    startCreatorWaitlistTransition(async () => {
-      try {
-        const state = await getCommentTranslatorCreatorWaitlistAction();
-        setCreatorWaitlistState(state);
-      } catch {
-        setCreatorWaitlistState(initialCreatorWaitlistState);
-      }
-    });
-  }
-
-  function registerCreatorWaitlist() {
-    startCreatorWaitlistTransition(async () => {
-      try {
-        const result = await registerCommentTranslatorCreatorWaitlistAction();
-        if (result.status === "registered" || result.status === "already-registered") {
-          setCreatorWaitlistState({
-            status: "registered",
-            actionState: "disabled",
-            loginHref: null,
-            registration: result.registration,
-            unavailableReason: null,
-            clientReadableDetail: "sanitized-waitlist-state-only",
-            publicLaunchAllowed: false
-          });
-          return;
-        }
-
-        setCreatorWaitlistState(result);
-      } catch {
-        setCreatorWaitlistState(initialCreatorWaitlistState);
-      }
-    });
-  }
 
   return (
     <div className="h-full min-h-0 overflow-auto bg-background px-3 py-3 sm:px-4 lg:px-5">
       <div className={["mx-auto grid min-h-full w-full gap-3", shellIsNarrow ? "max-w-[42rem]" : "max-w-none"].join(" ")}>
         {!commentOnly ? (
-          <section className="panel p-4 shadow-sm sm:p-5">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-              <div className="min-w-0">
-                <p className="text-xs font-black uppercase tracking-widest text-primary-strong">Live translator</p>
-                <h1 className="mt-2 break-words text-2xl font-black tracking-tight text-foreground">
-                  {locale === "ja" ? "配信コメント翻訳" : "Live Comment Translator"}
-                </h1>
-                <p className="mt-1 break-words text-xs font-semibold text-muted">
-                  {platform.name} / {localizedSurface.label}
-                </p>
-                <p className="mt-2 max-w-3xl break-words text-sm font-semibold leading-6 text-muted">
-                  {locale === "ja"
-                    ? "YouTube連携と配信を確認してから、翻訳を始めるときだけ Start してください。接続だけでは監視や翻訳は始まりません。"
-                    : "Check YouTube and stream readiness, then press Start only when you want translation to begin. Connecting alone does not start monitoring or translation."}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                <Link
-                  href="/account/integrations"
-                  className="inline-flex min-h-10 items-center justify-center rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
-                >
-                  {locale === "ja" ? "接続を確認" : "Check connection"}
-                </Link>
-                <Link
-                  href="/account/billing"
-                  className="inline-flex min-h-10 items-center justify-center rounded-base border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
-                >
-                  {locale === "ja" ? "プラン" : "Plan"}
-                </Link>
-              </div>
-            </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <div className="rounded-base border border-border bg-surface px-4 py-3">
-                <p className="text-xs font-black text-primary-strong">YouTube</p>
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="break-words text-base font-black text-foreground">{credentialStatusLabel}</p>
-                  <span className={["rounded-base border px-2.5 py-1 text-xs font-black", toneClassName(credentialStatusTone(credentialStatusState))].join(" ")}>
-                    {localizedConnection.statusLabel}
-                  </span>
-                </div>
-              </div>
-              <div className="rounded-base border border-border bg-surface px-4 py-3">
-                <p className="text-xs font-black text-primary-strong">{locale === "ja" ? "配信" : "Stream"}</p>
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="break-words text-base font-black text-foreground">{localizedStream.title}</p>
-                  <span className={["rounded-base border px-2.5 py-1 text-xs font-black", toneClassName(operatorFlowTone(localizedStream.dockStatus))].join(" ")}>
-                    {dockStatusLabel}
-                  </span>
-                </div>
-              </div>
-              <div className="rounded-base border border-border bg-surface px-4 py-3">
-                <p className="text-xs font-black text-primary-strong">{locale === "ja" ? "プラン" : "Plan"}</p>
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="break-words text-base font-black text-foreground">{sessionState.plan === "paid" ? "Pro" : "Free"}</p>
-                  <span className="rounded-base border border-primary/30 bg-primary-soft px-2.5 py-1 text-xs font-black text-primary-strong">
-                    {locale === "ja" ? "利用可" : "Available"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </section>
+          <CommentTranslatorDockHeader
+            locale={locale}
+            platformName={platform.name}
+            surfaceLabel={localizedSurface.label}
+            credentialStatusLabel={credentialStatusLabel}
+            credentialStatusState={credentialStatusState}
+            connectionStatusLabel={localizedConnection.statusLabel}
+            streamTitle={localizedStream.title}
+            streamDockStatus={localizedStream.dockStatus}
+            dockStatusLabel={dockStatusLabel}
+            plan={sessionState.plan}
+          />
         ) : null}
-
-        <section
-          className={
-            commentOnly
-              ? "grid gap-3"
-              : shellIsNarrow
-                ? "grid gap-3"
-                : "grid gap-3 xl:grid-cols-[22rem_minmax(0,1fr)_20rem]"
-          }
-        >
+        <section className={commentOnly || shellIsNarrow ? "grid gap-3" : "grid gap-3 xl:grid-cols-[22rem_minmax(0,1fr)_20rem]"}>
           {!commentOnly ? (
             <aside className="grid min-w-0 content-start gap-3 md:grid-cols-2 xl:grid-cols-1">
-              <section
-                data-public-operator-session-ui="sanitized-session-usage-only"
-                data-comment-translator-session-refresh-on-mount="server-status-restore"
-                className="panel p-4 md:col-span-2 xl:col-span-1"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-black uppercase tracking-widest text-primary-strong">
-                      {operatorFlowStatus === "ready" ? "Ready" : "Check"}
-                    </p>
-                    <h2 className="mt-2 break-words text-xl font-black text-foreground">
-                      {operatorFlowStatus === "ready"
-                        ? locale === "ja"
-                          ? "翻訳を開始できます"
-                          : "Ready to start"
-                        : copy.operatorSession.startBlockedTitle}
-                    </h2>
-                  </div>
-                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(operatorSessionTone(sessionState.status))].join(" ")}>
-                    {isSessionPending ? copy.operatorSession.pending : copy.operatorSession.states[sessionState.status]}
-                  </span>
-                </div>
-                <p className="mt-2 break-words text-sm font-semibold leading-6 text-muted">
-                  {copy.operatorSession.helper}
-                </p>
-                {sessionState.status === "stopped" && sessionReasonUx ? (
-                  <div
-                    data-comment-translator-start-stop-reason-ux="sanitized-reason-only"
-                    className="mt-3 rounded-base border border-border bg-background/70 p-3 text-xs"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-black text-foreground">{sessionReasonGroup}</span>
-                      <span className="rounded-base border border-border bg-surface px-2 py-1 font-black text-muted">
-                        {sessionStopReason}
-                      </span>
-                    </div>
-                    <p className="mt-2 break-words font-semibold leading-5 text-muted">{sessionReasonMessage}</p>
-                    {sessionRecommendedAction ? (
-                      <p className="mt-1 break-words font-black leading-5 text-primary-strong">{sessionRecommendedAction}</p>
-                    ) : null}
-                  </div>
-                ) : null}
-                <div className="mt-4 grid gap-2">
-                  <button
-                    type="button"
-                    onClick={() => runSessionCommand("start")}
-                    disabled={
-                      isSessionPending ||
-                      sessionState.status === "active" ||
-                      startBlockedByCredentialStatus ||
-                      startBlockedByUsagePolicy ||
-                      startBlockedByRateLimit
-                    }
-                    className="min-h-12 rounded-base border border-primary bg-primary px-4 py-3 text-base font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                  >
-                    {isSessionPending ? copy.operatorSession.pending : copy.actions.startSession}
-                  </button>
-                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-                    <button
-                      type="button"
-                      onClick={() => runSessionCommand("stop")}
-                      disabled={isSessionPending || sessionState.status !== "active"}
-                      className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                    >
-                      {copy.actions.stopSession}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={refreshSessionState}
-                      disabled={isSessionPending}
-                      className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                    >
-                      {copy.actions.refreshSession}
-                    </button>
-                  </div>
-                </div>
-                <div
-                  data-comment-translator-start-contrast="youtube-vs-session"
-                  className="mt-3 rounded-base border border-border bg-surface/80 p-3 text-xs"
-                >
-                  <p className="font-black text-foreground">{copy.operatorSession.readinessTitle}</p>
-                  <div className="mt-2 grid gap-2">
-                    <div className="flex flex-wrap justify-between gap-2">
-                      <span className="font-bold text-muted">{copy.operatorSession.connectionReadiness}</span>
-                      <span className="font-black text-foreground">{credentialStatusLabel}</span>
-                    </div>
-                    <p className="break-words font-semibold leading-5 text-muted">{copy.operatorSession.startReadiness}</p>
-                    {startBlockedByUsagePolicy ? (
-                      <div
-                        data-comment-translator-start-blocked="usage-policy"
-                        className="rounded-base border border-amber-200 bg-amber-50/80 px-3 py-2"
-                      >
-                        <p className="break-words font-black text-amber-900">{copy.operatorSession.usageStartBlockedTitle}</p>
-                        <p className="mt-1 break-words font-semibold leading-5 text-amber-800">
-                          {copy.operatorSession.usageStartBlockedBody}
-                          {usagePolicyStopReason ? ` ${usagePolicyStopReason}` : ""}
-                        </p>
-                      </div>
-                    ) : null}
-                    {startBlockedByRateLimit ? (
-                      <div
-                        data-comment-translator-start-blocked="rate-limit"
-                        className="rounded-base border border-amber-200 bg-amber-50/80 px-3 py-2"
-                      >
-                        <p className="break-words font-black text-amber-900">{copy.operatorSession.rateLimitStartBlockedTitle}</p>
-                        <p className="mt-1 break-words font-semibold leading-5 text-amber-800">
-                          {copy.operatorSession.rateLimitStartBlockedBody}
-                          {typeof sessionState.retryAfterSeconds === "number" ? ` ${sessionState.retryAfterSeconds}s` : ""}
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-                {startBlockedByCredentialStatus ? (
-                  <div
-                    data-comment-translator-start-blocked="youtube-connection-required"
-                    className="mt-3 rounded-base border border-amber-200 bg-amber-50/80 p-3"
-                  >
-                    <p className="break-words text-sm font-black text-amber-900">{copy.operatorSession.startBlockedTitle}</p>
-                    <p className="mt-1 break-words text-xs font-semibold leading-5 text-amber-800">
-                      {copy.operatorSession.startBlockedBody}
-                    </p>
-                    <Link
-                      href="/account/integrations"
-                      className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong"
-                    >
-                      {copy.operatorSession.openIntegrations}
-                    </Link>
-                  </div>
-                ) : null}
-                {showReconnectGuidance ? (
-                  <p className="mt-3 break-words rounded-base border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">
-                    {copy.operatorSession.reconnectGuidance}
-                  </p>
-                ) : null}
-              </section>
-
-              <section className="panel p-4">
-                <h2 className="text-base font-black text-foreground">{locale === "ja" ? "翻訳設定" : "Translation settings"}</h2>
-                <div className="mt-4 grid gap-3">
-                  <ControlSelect
-                    label={copy.controls.sourceLanguage}
-                    value={sourceLanguage}
-                    options={sourceLanguageOptions}
-                    onChange={(value) => setSourceLanguage(value as CommentTranslatorSourceLanguageId)}
-                  />
-                  <ControlSelect
-                    label={copy.controls.targetLanguage}
-                    value={targetLanguage}
-                    options={targetLanguageOptions}
-                    onChange={(value) => setTargetLanguage(value as CommentTranslatorTargetLanguageId)}
-                  />
-                  <ControlSelect
-                    label={copy.controls.commentText}
-                    value={displayMode}
-                    options={displayModeOptions}
-                    onChange={(value) => setDisplayMode(value as CommentTranslatorDisplayMode)}
-                  />
-                  <ControlSelect
-                    label={copy.controls.surface}
-                    value={surfaceMode}
-                    options={surfaceModeOptions}
-                    onChange={(value) => setSurfaceMode(value as CommentTranslatorSurfaceMode)}
-                  />
-                  <div className="grid gap-1.5">
-                    <p className="text-xs font-black uppercase tracking-normal text-muted">
-                      {locale === "ja" ? "画面モード" : "View mode"}
-                    </p>
-                    <div className="inline-flex w-fit rounded-base border border-border bg-surface-muted p-1">
-                      {[
-                        { id: "normal", label: locale === "ja" ? "通常" : "Normal" },
-                        { id: "comments", label: locale === "ja" ? "コメントのみ" : "Comments only" }
-                      ].map((option) => {
-                        const selected = viewMode === option.id;
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            aria-pressed={selected}
-                            onClick={() => setViewMode(option.id as "normal" | "comments")}
-                            className={[
-                              "rounded-base px-3 py-1.5 text-xs font-black transition",
-                              selected ? "bg-primary text-white" : "text-muted hover:bg-surface hover:text-foreground"
-                            ].join(" ")}
-                          >
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <label
-                    data-comment-translator-obs-dock-display-name-setting="explicit-toggle"
-                    className="flex min-w-0 items-start gap-2 rounded-base border border-border bg-background/65 px-3 py-2 text-xs font-semibold leading-5 text-muted"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={showStreamSafeAuthorDisplayNames}
-                      onChange={(event) => setShowStreamSafeAuthorDisplayNames(event.target.checked)}
-                      className="mt-1 h-4 w-4 shrink-0 rounded border-border text-primary"
-                    />
-                    <span className="min-w-0">
-                      <span className="block break-words font-black text-foreground">
-                        {copy.displayNamePolicy.streamSafeToggleLabel}
-                      </span>
-                      <span className="mt-1 block break-words">{copy.displayNamePolicy.streamSafeToggleHelper}</span>
-                    </span>
-                  </label>
-                  <div className="rounded-base border border-border bg-background/65 px-3 py-2 text-sm">
-                    <div className="flex justify-between gap-3">
-                      <span className="text-muted">{copy.controls.currentPair}</span>
-                      <span className="break-words text-right font-black text-foreground">
-                        {localizedSourceLanguage.shortLabel} → {localizedTargetLanguage.shortLabel}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-            </aside>
-          ) : null}
-
-          <main
-            data-comment-translator-real-comments-feed="server-owned-safe-rows"
-            data-comment-translator-obs-dock-display-name-policy={authorDisplayNamePolicy.marker}
-            className="panel flex min-h-[34rem] min-w-0 flex-col overflow-hidden"
-          >
-            <div data-layout="live-header-two-row" className="grid gap-3 border-b border-border p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-primary-strong">{copy.sections.comments}</p>
-                  <h2 className="mt-1 break-words text-xl font-black tracking-tight text-foreground">
-                    {commentOnly ? (locale === "ja" ? "コメントのみ表示" : "Comments only") : copy.header.feedTitle}
-                  </h2>
-                </div>
-                {commentOnly ? (
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("normal")}
-                    className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-bold text-foreground transition hover:border-primary hover:bg-primary-soft"
-                  >
-                    {locale === "ja" ? "通常表示へ戻る" : "Back to normal"}
-                  </button>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-base border border-primary/30 bg-primary-soft px-2.5 py-1 text-xs font-black text-primary-strong">
-                      {liveStats.translated} {copy.stats.translated}
-                    </span>
-                    <span className="rounded-base border border-border bg-surface px-2.5 py-1 text-xs font-black text-muted">
-                      {authorDisplayNamePolicy.showSafeAuthorDisplayName
-                        ? copy.displayNamePolicy.streamSafeShownBadge
-                        : copy.displayNamePolicy.streamSafeDefaultBadge}
-                    </span>
-                  </div>
-                )}
-              </div>
-              {!commentOnly ? (
-                <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                  <label className="min-w-0">
-                    <span className="sr-only">{copy.controls.searchPlaceholder}</span>
-                    <input
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder={copy.controls.searchPlaceholder}
-                      className="min-h-10 w-full min-w-0 rounded-base border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground shadow-sm placeholder:text-muted hover:border-primary/60 focus:border-primary"
-                    />
-                  </label>
-                  <div className="flex min-w-0 flex-wrap gap-2">
-                    <span
-                      data-comment-translator-preview-feed-auto-refresh="active-session-safe-periodic"
-                      className="inline-flex min-h-10 items-center rounded-base border border-border bg-surface px-3 py-2 text-xs font-black text-muted"
-                    >
-                      {sessionState.status === "active" ? (locale === "ja" ? "自動更新中" : "Auto refresh on") : locale === "ja" ? "自動更新停止中" : "Auto refresh off"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={refreshRealCommentsFeed}
-                      disabled={isRealCommentsFeedPending}
-                      className="min-h-10 rounded-base border border-primary bg-primary px-3 py-2 text-xs font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                    >
-                      {isRealCommentsFeedPending ? (locale === "ja" ? "更新中" : "Refreshing") : locale === "ja" ? "コメント更新" : "Refresh"}
-                    </button>
-                    {statusFilters.map((filter) => {
-                      const selected = filter.id === statusFilter;
-                      return (
-                        <button
-                          key={filter.id}
-                          type="button"
-                          onClick={() => setStatusFilter(filter.id)}
-                          className={[
-                            "min-h-10 rounded-base border px-3 py-2 text-xs font-black transition",
-                            selected
-                              ? "border-primary bg-primary-soft text-primary-strong"
-                              : "border-border bg-surface text-muted hover:border-primary/60 hover:bg-primary-soft/40"
-                          ].join(" ")}
-                        >
-                          {copy.filters[filter.id]}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-              {hasRetainedStoppedPreviewRows ? (
-                <div
-                  data-comment-translator-preview-retention="stopped-previous-results"
-                  className="rounded-base border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900"
-                >
-                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                    <div className="min-w-0">
-                      <p className="break-words font-black">{copy.operatorSession.previousResultsTitle}</p>
-                      <p className="mt-1 break-words font-semibold leading-5 text-amber-800">
-                        {copy.operatorSession.previousResultsBody}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      data-comment-translator-preview-clear="manual-safe-feed-clear"
-                      onClick={clearRetainedPreviewFeed}
-                      disabled={isRealCommentsFeedPending}
-                      className="min-h-10 rounded-base border border-amber-300 bg-white px-3 py-2 text-xs font-black text-amber-900 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70"
-                    >
-                      {isRealCommentsFeedPending ? (locale === "ja" ? "クリア中" : "Clearing") : copy.actions.clearPreview}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {!commentOnly ? (
-              <div className="grid grid-cols-2 gap-2 border-b border-border bg-surface-muted/30 p-3 text-center text-xs font-bold text-muted sm:grid-cols-3">
-                <span className="rounded-base bg-surface px-2 py-2">{filteredComments.length} {copy.stats.shown}</span>
-                <span className="rounded-base bg-surface px-2 py-2">{publicFeedComments.length} {copy.stats.total}</span>
-                <span className="rounded-base bg-emerald-50 px-2 py-2 text-emerald-700">{liveStats.translated} {copy.stats.translated}</span>
-              </div>
-            ) : null}
-
-            <div className="scrollbar-accent min-h-0 flex-1 space-y-3 overflow-auto p-3 sm:p-4">
-              {filteredComments.length > 0 ? (
-                filteredComments.map((comment) => (
-                  <CommentCard
-                    key={comment.id}
-                    comment={comment}
-                    displayMode={displayMode}
-                    authorDisplayNamePolicy={authorDisplayNamePolicy}
-                    targetLanguageLabel={localizedTargetLanguage.label}
-                    copy={copy}
-                  />
-                ))
-              ) : (
-                <div className="grid min-h-72 place-items-center rounded-base border border-dashed border-border bg-background/70 p-4 text-center">
-                  <div>
-                    <div className="mx-auto grid h-12 w-12 place-items-center rounded-base bg-surface-muted text-2xl text-muted">
-                      ...
-                    </div>
-                    <p className="mt-3 text-sm font-black text-foreground">{copy.empty.title}</p>
-                    <p className="mt-1 text-xs leading-5 text-muted">
-                      {realCommentsFeedError ?? realCommentsFeedUnavailableMessage ?? copy.empty.body}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </main>
-
-          {!commentOnly ? (
-            <aside className="grid min-w-0 content-start gap-3">
-              <section
-                data-comment-translator-free-beta-usage-display="right-authoritative-sanitized-usage-only"
-                className="panel p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-base font-black text-foreground">{copy.operatorSession.usageTitle}</h2>
-                  <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(usageDisplay.status === "over-limit" ? "warning" : usageDisplay.status === "unavailable" ? "error" : "normal")].join(" ")}>
-                    {copy.operatorSession.usageStates[usageDisplay.status]}
-                  </span>
-                </div>
-                <ul
-                  data-comment-translator-free-limits-public-copy="enforced-free-limits"
-                  className="mt-3 grid gap-2 text-xs font-semibold leading-5 text-muted sm:grid-cols-2"
-                >
-                  {copy.operatorSession.publicLimitSummary.map((limit) => (
-                    <li key={limit} className="break-words rounded-base border border-border bg-background/70 px-2 py-1.5">
-                      {limit}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-4 grid gap-3">
-                  <StatTile
-                    label={copy.fields.sessionRemaining}
-                    value={formatDuration(usageDisplay.session.remainingSeconds)}
-                    helper={`${formatDuration(usageDisplay.session.usedSeconds)} ${copy.stats.used}`}
-                  />
-                  <StatTile
-                    label={copy.fields.dailyRemaining}
-                    value={formatDuration(usageDisplay.daily.remainingSeconds)}
-                    helper={`${formatDuration(usageDisplay.daily.usedSeconds)} ${copy.stats.used}`}
-                  />
-                  <StatTile
-                    label={copy.fields.monthlyInputCharacterCap}
-                    value={`${formatNumber(usageDisplay.monthlyInputCharacterCap.used)} / ${formatNumber(usageDisplay.monthlyInputCharacterCap.limit)}`}
-                    helper={`${formatNumber(usageDisplay.monthlyInputCharacterCap.remaining)} ${copy.fields.monthlyRemaining}`}
-                  />
-                  <StatTile
-                    label={copy.fields.perMinuteCap}
-                    value={`${formatNumber(usageDisplay.perMinute.used)} / ${formatNumber(usageDisplay.perMinute.limit)}`}
-                    helper={`${formatNumber(usageDisplay.perMinute.remaining)} ${copy.operatorSession.perMinuteRemaining}`}
-                  />
-                </div>
-                <p className="mt-3 break-words text-xs font-semibold leading-5 text-muted">
-                  {usagePolicyLabel}
-                  {usagePolicyStopReason ? ` / ${usagePolicyStopReason}` : ""}
-                </p>
-              </section>
-              <CreatorWaitlistPanel
+              <CommentTranslatorSessionPanel
+                locale={locale}
                 copy={copy}
-                state={creatorWaitlistState}
-                isPending={isCreatorWaitlistPending}
-                onRefresh={refreshCreatorWaitlist}
-                onRegister={registerCreatorWaitlist}
+                operatorFlowStatus={operatorFlowStatus}
+                sessionState={sessionState}
+                usageDisplay={usageDisplay}
+                credentialStatusLabel={credentialStatusLabel}
+                sessionReasonGroup={sessionReasonGroup}
+                sessionStopReason={sessionStopReason}
+                sessionReasonMessage={sessionReasonMessage}
+                sessionRecommendedAction={sessionRecommendedAction}
+                usagePolicyStopReason={usagePolicyStopReason}
+                isSessionPending={isSessionPending}
+                startBlockedByCredentialStatus={startBlockedByCredentialStatus}
+                startBlockedByUsagePolicy={startBlockedByUsagePolicy}
+                startBlockedByRateLimit={startBlockedByRateLimit}
+                showReconnectGuidance={showReconnectGuidance}
+                onStart={() => runSessionCommand("start")}
+                onStop={() => runSessionCommand("stop")}
+                onRefresh={refreshSessionState}
+              />
+              <CommentTranslatorSettingsPanel
+                locale={locale}
+                copy={copy}
+                sourceLanguage={sourceLanguage}
+                targetLanguage={targetLanguage}
+                displayMode={displayMode}
+                surfaceMode={surfaceMode}
+                sourceLanguageOptions={sourceLanguageOptions}
+                targetLanguageOptions={targetLanguageOptions}
+                displayModeOptions={displayModeOptions}
+                surfaceModeOptions={surfaceModeOptions}
+                viewMode={viewMode}
+                showStreamSafeAuthorDisplayNames={showStreamSafeAuthorDisplayNames}
+                sourceShortLabel={localizedSourceLanguage.shortLabel}
+                targetShortLabel={localizedTargetLanguage.shortLabel}
+                onSourceLanguageChange={(value) => setSourceLanguage(sourceLanguages.find((item) => item.id === value)?.id ?? sourceLanguage)}
+                onTargetLanguageChange={(value) => setTargetLanguage(targetLanguages.find((item) => item.id === value)?.id ?? targetLanguage)}
+                onDisplayModeChange={(value) => setDisplayMode(displayModes.find((item) => item.id === value)?.id ?? displayMode)}
+                onSurfaceModeChange={(value) => setSurfaceMode(surfaceOptions.find((item) => item.id === value)?.id ?? surfaceMode)}
+                onViewModeChange={setViewMode}
+                onSafeDisplayNamesChange={setShowStreamSafeAuthorDisplayNames}
               />
             </aside>
           ) : null}
+          <CommentTranslatorFeedPanel
+            locale={locale}
+            copy={copy}
+            commentOnly={commentOnly}
+            sessionStatus={sessionState.status}
+            authorDisplayNamePolicy={authorDisplayNamePolicy}
+            searchQuery={searchQuery}
+            statusFilter={statusFilter}
+            statusFilters={statusFilters}
+            filteredComments={filteredComments}
+            publicCommentCount={publicFeedComments.length}
+            translatedCount={liveStats.translated}
+            displayMode={displayMode}
+            targetLanguageLabel={localizedTargetLanguage.label}
+            isPending={isRealCommentsFeedPending}
+            hasRetainedRows={hasRetainedStoppedPreviewRows}
+            errorMessage={realCommentsFeedError}
+            unavailableMessage={realCommentsFeedUnavailableMessage}
+            onNormalView={() => setViewMode("normal")}
+            onSearchQueryChange={setSearchQuery}
+            onStatusFilterChange={setStatusFilter}
+            onRefresh={refreshRealCommentsFeed}
+            onClear={clearRetainedPreviewFeed}
+          />
+          {!commentOnly ? (
+            <CommentTranslatorUsageSidebar
+              copy={copy}
+              usageDisplay={usageDisplay}
+              usagePolicyLabel={usagePolicyLabel}
+              usagePolicyStopReason={usagePolicyStopReason}
+              waitlistState={creatorWaitlistState}
+              isWaitlistPending={isCreatorWaitlistPending}
+              onRefreshWaitlist={refreshCreatorWaitlist}
+              onRegisterWaitlist={registerCreatorWaitlist}
+            />
+          ) : null}
         </section>
-
       </div>
     </div>
   );

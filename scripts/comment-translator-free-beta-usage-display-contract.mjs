@@ -11,6 +11,8 @@ const sessionRuntimePath = "lib/comment-translator-session-runtime.ts";
 const f10Path = "lib/comment-translator-azure-normal-translation-execution.ts";
 const sharedFeedPath = "lib/comment-translator-real-comments-feed-shared.ts";
 const componentPath = "components/comment-translator/CommentTranslatorDock.tsx";
+const sessionPanelPath = "components/comment-translator/CommentTranslatorSessionPanel.tsx";
+const usageSidebarPath = "components/comment-translator/CommentTranslatorUsageSidebar.tsx";
 const copyPath = "lib/comment-translator.ts";
 const privateLaunchPath = "lib/comment-translator-private-launch-access-gate.ts";
 const abuseRateLimitPath = "lib/comment-translator-abuse-rate-limit-runtime.ts";
@@ -68,7 +70,8 @@ function loadTsModule(relativePath) {
     const compiled = ts.transpileModule(source, {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
-        target: ts.ScriptTarget.ES2022
+        target: ts.ScriptTarget.ES2022,
+        esModuleInterop: true
       }
     }).outputText;
     const testModule = new Module(normalizedModulePath);
@@ -145,8 +148,8 @@ const usageDisplaySource = read(usageDisplayPath);
 const sessionRuntimeSource = read(sessionRuntimePath);
 const f10Source = read(f10Path);
 const sharedFeedSource = read(sharedFeedPath);
-const componentSource = read(componentPath);
-const copySource = read(copyPath);
+const componentSource = [componentPath, sessionPanelPath, usageSidebarPath].map(read).join("\n");
+const copySource = [copyPath, "lib/comment-translator-copy-ja.json", "lib/comment-translator-copy-en.json"].map(read).join("\n");
 const privateLaunchSource = read(privateLaunchPath);
 const abuseRateLimitSource = read(abuseRateLimitPath);
 const readinessDoc = read(readinessDocPath);
@@ -165,6 +168,11 @@ assert.match(
   componentSource,
   /data-comment-translator-free-beta-usage-display="right-authoritative-sanitized-usage-only"/,
   "UI renders a single authoritative sanitized F12 usage display in the right panel"
+);
+assert.match(
+  componentSource,
+  /data-comment-translator-active-phase=\{sessionState\.activePhase\}[\s\S]*usageDisplay\.perMinute\.used[\s\S]*usageDisplay\.perMinute\.limit/,
+  "active pause and resync UI retain the authoritative per-minute count and limit"
 );
 assert.match(
   copySource,
@@ -407,6 +415,13 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-real-comments-feed-session-bridge.ts",
   "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
   "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
   "lib/comment-translator-durable-usage-counter-store.ts",
   privateLaunchPath,
   abuseRateLimitPath,
@@ -417,6 +432,7 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
   "lib/comment-translator-real-comments-feed-shared.ts",
   "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-live-provider-session-step-result.ts",
   "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
   "lib/comment-translator-provider-execution-runtime.ts",
   "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
@@ -506,9 +522,66 @@ const plG6dChangedFiles = new Set([
   "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs"
 ]);
 const serverOnlyAdapterSecretPattern = /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i;
+const perMinuteAutoResumeChangedFiles = new Set([
+  "app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx",
+  "app/api/comment-translator/session/route-context.ts",
+  "app/tools/comment-translator/account-actions.ts",
+  "app/tools/comment-translator/action-context.ts",
+  "app/tools/comment-translator/feed-actions.ts",
+  "app/tools/comment-translator/retention-waitlist-actions.ts",
+  "app/tools/comment-translator/session-actions.ts",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
+  "lib/comment-translator-per-minute-rate-pause.ts",
+  "lib/comment-translator-copy-en.json",
+  "lib/comment-translator-copy-ja.json",
+  "lib/comment-translator-fixture-comments.ts",
+  "lib/comment-translator-runtime.ts",
+  "lib/comment-translator-snapshot-data.ts",
+  "lib/comment-translator-types.ts",
+  "lib/comment-translator-session-command-execution.ts",
+  "lib/comment-translator-session-command.ts",
+  "lib/comment-translator-session-memory-store.ts",
+  "lib/comment-translator-session-policy.ts",
+  "lib/comment-translator-session-start.ts",
+  "lib/comment-translator-session-state.ts",
+  "lib/comment-translator-session-types.ts",
+  "components/comment-translator/CommentTranslatorActivePhaseNotice.tsx",
+  "components/comment-translator/CommentTranslatorCommentCard.tsx",
+  "components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx",
+  "components/comment-translator/CommentTranslatorDockAtoms.tsx",
+  "components/comment-translator/CommentTranslatorDockHeader.tsx",
+  "components/comment-translator/CommentTranslatorFeedPanel.tsx",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "components/comment-translator/CommentTranslatorSettingsPanel.tsx",
+  "components/comment-translator/CommentTranslatorUsageSidebar.tsx",
+  "components/comment-translator/comment-translator-dock-format.ts",
+  "components/comment-translator/comment-translator-dock-model.ts",
+  "components/comment-translator/useCommentTranslatorBrowserTimeZone.ts",
+  "components/comment-translator/useCommentTranslatorCreatorWaitlist.ts",
+  "components/comment-translator/useCommentTranslatorDockControls.ts",
+  "components/comment-translator/useCommentTranslatorSessionFeedController.ts",
+  "components/portal/PortalShell.tsx",
+  "scripts/account-remote-display-settings-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-live-message-normalization-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs"
+]);
 for (const file of changedFiles()) {
   assert.ok(
-    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file),
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file) || perMinuteAutoResumeChangedFiles.has(file),
     `F12 change stays in allowed files: ${file}`
   );
 

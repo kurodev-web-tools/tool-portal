@@ -27,7 +27,9 @@ export async function PortalShell({
 
   return (
     <div className={shellClassName}>
-      <AccountRemoteDisplaySettingsApplier accountStatus={browserSafeAccountStatus} />
+      {browserSafeAccountStatus.authStatus === "signed-in" ? (
+        <AccountRemoteDisplaySettingsApplier accountStatus={browserSafeAccountStatus} />
+      ) : null}
       <PortalSidebar mode={mode} accountStatus={browserSafeAccountStatus} adminShortcut={adminShortcut} />
       <div className={contentClassName}>
         <div className={mode === "workspace" ? "lg:hidden" : undefined}>

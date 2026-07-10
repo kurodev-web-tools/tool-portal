@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 import {
+  CommentTranslatorUsageRecoveryAuthorityError,
   createCommentTranslatorUsageLedgerUserReference,
   resolveCommentTranslatorUsagePlanEntitlement,
   type CommentTranslatorUsageLedgerEvent,
@@ -572,6 +573,26 @@ function createUsageSnapshotFromRows({
     ? dailyRows.filter((row) => row.session_reference_id === activeSession.sessionReferenceId)
     : [];
   const currentMinuteStartedAtMs = nowMs - 60_000;
+  const currentWindowProviderExecutionRows = rows.filter((row) => {
+    if (!activeSession || row.session_reference_id !== activeSession.sessionReferenceId) {
+      return false;
+    }
+
+    if (row.event_type !== "ai-usage-estimated" || Math.max(0, row.translated_message_estimate) === 0) {
+      return false;
+    }
+
+    const occurredAtMs = Date.parse(row.occurred_at);
+    return !Number.isFinite(occurredAtMs) || occurredAtMs > currentMinuteStartedAtMs;
+  });
+  const translatedMessagesInCurrentMinute = currentWindowProviderExecutionRows.reduce(
+    (total, row) => total + Math.max(0, row.translated_message_estimate),
+    0
+  );
+  const translatedMessageCapacityAvailableAtMs =
+    translatedMessagesInCurrentMinute >= planEntitlement.translatedMessagesPerMinute
+      ? earliestDurableProviderExecutionExpiryOrThrow(currentWindowProviderExecutionRows)
+      : null;
 
   return {
     dailyUsedMs: rows
@@ -584,9 +605,8 @@ function createUsageSnapshotFromRows({
           sessionLimitMs: planEntitlement.sessionLimitMs
         })
       : 0,
-    translatedMessagesInCurrentMinute: activeSessionRows
-      .filter((row) => row.event_type === "ai-usage-estimated" && Date.parse(row.occurred_at) >= currentMinuteStartedAtMs)
-      .reduce((total, row) => total + Math.max(0, row.translated_message_estimate), 0),
+    translatedMessagesInCurrentMinute,
+    translatedMessageCapacityAvailableAtMs,
     providerBudgetAvailable: !dailyRows.some(
       (row) => row.event_type === "quota-budget-stop" && row.quota_stop_category === "provider-quota"
     ),
@@ -615,6 +635,15 @@ function createUsageSnapshotFromRows({
       .filter((row) => row.usage_month === currentMonth && row.event_type === "ai-usage-estimated")
       .reduce((total, row) => total + Math.max(0, row.translated_character_estimate), 0)
   };
+}
+
+function earliestDurableProviderExecutionExpiryOrThrow(rows: readonly CommentTranslatorDurableUsageCounterRow[]) {
+  const expiries = rows.map((row) => Date.parse(row.occurred_at) + 60_000);
+  if (expiries.length === 0 || expiries.some((expiry) => !Number.isFinite(expiry))) {
+    throw new CommentTranslatorUsageRecoveryAuthorityError();
+  }
+
+  return Math.min(...expiries);
 }
 
 function sessionElapsedMsForUsageDay(row: CommentTranslatorDurableUsageCounterRow, usageDay: string) {

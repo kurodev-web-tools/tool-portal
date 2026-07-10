@@ -10,12 +10,16 @@ const uxPath = "lib/comment-translator-start-stop-reason-ux.ts";
 const sessionPath = "lib/comment-translator-session-runtime.ts";
 const targetLookupPath = "lib/comment-translator-server-only-live-chat-target-lookup.ts";
 const pollingPath = "lib/comment-translator-bounded-live-chat-polling-wiring.ts";
+const pollingOutcomeProjectionPath = "lib/comment-translator-bounded-live-chat-polling-result-projection.ts";
 const actionsPath = "app/tools/comment-translator/actions.ts";
+const sessionActionsPath = "app/tools/comment-translator/session-actions.ts";
 const sessionRoutePath = "app/api/comment-translator/session/route.ts";
+const sessionCommandExecutionPath = "lib/comment-translator-session-command-execution.ts";
 const abuseRateLimitPath = "lib/comment-translator-abuse-rate-limit-runtime.ts";
 const privateLaunchPath = "lib/comment-translator-private-launch-access-gate.ts";
 const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
 const copyPath = "lib/comment-translator.ts";
+const copyDataPaths = ["lib/comment-translator-copy-ja.json", "lib/comment-translator-copy-en.json"];
 const readinessDocPath = "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const taskPath = "task.md";
@@ -122,12 +126,22 @@ for (const requiredPath of [
   sessionPath,
   targetLookupPath,
   pollingPath,
+  pollingOutcomeProjectionPath,
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
   actionsPath,
+  sessionActionsPath,
   sessionRoutePath,
+  sessionCommandExecutionPath,
   abuseRateLimitPath,
   privateLaunchPath,
   dockPath,
   copyPath,
+  ...copyDataPaths,
   readinessDocPath,
   gapAuditPath,
   taskPath
@@ -139,12 +153,15 @@ const uxSource = read(uxPath);
 const sessionSource = read(sessionPath);
 const targetLookupSource = read(targetLookupPath);
 const pollingSource = read(pollingPath);
+const pollingOutcomeProjectionSource = read(pollingOutcomeProjectionPath);
 const actionsSource = read(actionsPath);
+const sessionActionsSource = read(sessionActionsPath);
 const sessionRouteSource = read(sessionRoutePath);
+const sessionCommandExecutionSource = read(sessionCommandExecutionPath);
 const abuseRateLimitSource = read(abuseRateLimitPath);
 const privateLaunchSource = read(privateLaunchPath);
 const dockSource = read(dockPath);
-const copySource = read(copyPath);
+const copySource = [copyPath, ...copyDataPaths].map(read).join("\n");
 const readinessDoc = read(readinessDocPath);
 const gapAudit = read(gapAuditPath);
 const taskSource = read(taskPath);
@@ -153,16 +170,18 @@ assert.match(uxSource, /commentTranslatorStartStopReasonUxContract/, "F11 expose
 assert.match(uxSource, /publicLaunchAllowed: false/, "F11 does not open the public launch gate");
 assert.match(sessionSource, /reasonUx/, "session state carries sanitized reason UX metadata");
 assert.match(targetLookupSource, /resolveCommentTranslatorLiveTargetLookupReasonUxCode/, "live target readiness keeps sanitized reason code");
-assert.match(pollingSource, /reasonUxCode/, "polling/provider signal keeps sanitized reason code");
-assert.match(actionsSource, /providerSignalReasonUxCode/, "server action forwards sanitized provider reason code");
-assert.match(sessionRouteSource, /providerSignalReasonUxCode/, "session route forwards sanitized provider reason code");
+assert.match(pollingOutcomeProjectionSource, /reasonUxCode/, "polling/provider signal keeps sanitized reason code");
+assert.match(actionsSource, /getCommentTranslatorSessionStatusAction/, "server action facade retains the session action surface");
+assert.match(sessionActionsSource, /executeCommentTranslatorSessionCommand/, "split server actions delegate to shared session command execution");
+assert.match(sessionRouteSource, /executeCommentTranslatorSessionCommand/, "session route delegates to shared session command execution");
+assert.match(sessionCommandExecutionSource, /providerSignalReasonUxCode/, "shared route/action execution forwards sanitized provider reason code");
 assert.match(abuseRateLimitSource, /reasonUx/, "rate-limited stopped sessions include sanitized reason UX");
 assert.match(privateLaunchSource, /reasonUx/, "private-launch stopped sessions include sanitized reason UX");
 assert.match(dockSource, /sessionReasonUx/, "UI consumes deterministic reason UX metadata");
 assert.match(copySource, /reasonGroups/, "localized copy includes reason groups");
 assert.match(readinessDoc, /F11 Start\/Stop reason UX/i, "durable readiness doc records F11");
 assert.match(gapAudit, /F11[\s\S]*Start\/Stop reason UX/i, "gap audit records F11");
-assert.match(taskSource, /usage-policy Start blocker/i, "task.md records current usage-policy Start blocker work");
+assert.match(taskSource, /Per-minute auto-resume Task 6 regression status/i, "task.md records the current regression-contract slice");
 
 const ux = loadTsModule(uxPath);
 const session = loadTsModule(sessionPath);
@@ -432,6 +451,56 @@ const quotaStop = session.evaluateCommentTranslatorSessionStopCondition({
 assert.equal(quotaStop.stopReason, "provider-quota-stop");
 assert.equal(quotaStop.reasonUx.code, "quota-or-budget-stop");
 
+const activeTranslatedMessageCap = session.evaluateCommentTranslatorSessionStopCondition({
+  activeSession,
+  nowMs: Date.parse("2026-06-16T01:00:30.000Z"),
+  plan: "free",
+  browserConnected: true,
+  callerAuthorization: authorizedCaller,
+  credentialReadiness: {
+    status: "ready",
+    provider: "youtube",
+    credentialReferenceId: "f11-credential-reference",
+    translatorStartAllowed: true,
+    reconnectGuidance: "none"
+  },
+  usage: {
+    ...baseUsage,
+    translatedMessagesInCurrentMinute: 30
+  },
+  ratePauseResolution: {
+    status: "ready",
+    projection: {
+      activePhase: "rate-paused",
+      ratePauseReason: "translated-message-cap",
+      retryAfterSeconds: 10,
+      automaticResumeExpected: true
+    }
+  }
+});
+assert.equal(activeTranslatedMessageCap.status, "active", "an active translated-message cap is a pause, not a terminal stop");
+assert.equal(activeTranslatedMessageCap.stopReason, null);
+assert.equal(activeTranslatedMessageCap.activePhase, "rate-paused");
+assert.equal(activeTranslatedMessageCap.ratePauseReason, "translated-message-cap");
+assert.equal(activeTranslatedMessageCap.nextAction, "send-heartbeat-or-stop");
+
+const legacyTranslatedMessageCapStop = session.stopCommentTranslatorSession({
+  activeSession,
+  nowMs: Date.parse("2026-06-16T01:00:30.000Z"),
+  plan: "free",
+  usage: {
+    ...baseUsage,
+    translatedMessagesInCurrentMinute: 30
+  },
+  reason: "translated-message-cap"
+});
+assert.equal(legacyTranslatedMessageCapStop.status, "stopped", "legacy translated-message-cap stopped records remain renderable");
+assert.equal(legacyTranslatedMessageCapStop.stopReason, "translated-message-cap");
+assert.equal(legacyTranslatedMessageCapStop.reasonUx.code, "quota-or-budget-stop");
+assert.equal(legacyTranslatedMessageCapStop.reasonUx.clientReadableDetail, "sanitized-reason-only");
+assert.equal(legacyTranslatedMessageCapStop.providerApiUsage, "stopped");
+assert.equal(legacyTranslatedMessageCapStop.aiTranslationUsage, "stopped");
+
 const heartbeatStop = session.evaluateCommentTranslatorSessionStopCondition({
   activeSession,
   nowMs: Date.parse("2026-06-16T01:02:00.000Z"),
@@ -479,6 +548,8 @@ for (const payload of [
   endedTick,
   endedStop,
   quotaStop,
+  activeTranslatedMessageCap,
+  legacyTranslatedMessageCapStop,
   heartbeatStop,
   providerStop
 ]) {
@@ -499,18 +570,81 @@ for (const payload of [
   }
 }
 
+const perMinuteAutoResumeTaskChangedFiles = new Set([
+  "app/api/comment-translator/session/route-context.ts",
+  "app/tools/comment-translator/account-actions.ts",
+  "app/tools/comment-translator/action-context.ts",
+  "app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx",
+  "app/tools/comment-translator/feed-actions.ts",
+  "app/tools/comment-translator/retention-waitlist-actions.ts",
+  "components/comment-translator/comment-translator-dock-format.ts",
+  "components/comment-translator/comment-translator-dock-model.ts",
+  "components/comment-translator/CommentTranslatorActivePhaseNotice.tsx",
+  "components/comment-translator/CommentTranslatorCommentCard.tsx",
+  "components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx",
+  "components/comment-translator/CommentTranslatorDockAtoms.tsx",
+  "components/comment-translator/CommentTranslatorDockHeader.tsx",
+  "components/comment-translator/CommentTranslatorFeedPanel.tsx",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "components/comment-translator/CommentTranslatorSettingsPanel.tsx",
+  "components/comment-translator/CommentTranslatorUsageSidebar.tsx",
+  "components/comment-translator/useCommentTranslatorBrowserTimeZone.ts",
+  "components/comment-translator/useCommentTranslatorCreatorWaitlist.ts",
+  "components/comment-translator/useCommentTranslatorDockControls.ts",
+  "components/comment-translator/useCommentTranslatorSessionFeedController.ts",
+  "components/portal/PortalShell.tsx",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
+  "lib/comment-translator-fixture-comments.ts",
+  "lib/comment-translator-live-provider-session-step-result.ts",
+  "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-per-minute-rate-pause.ts",
+  "lib/comment-translator-runtime.ts",
+  "lib/comment-translator-session-command.ts",
+  "lib/comment-translator-session-memory-store.ts",
+  "lib/comment-translator-session-policy.ts",
+  "lib/comment-translator-session-start.ts",
+  "lib/comment-translator-session-state.ts",
+  "lib/comment-translator-session-types.ts",
+  "lib/comment-translator-snapshot-data.ts",
+  "lib/comment-translator-types.ts",
+  "lib/comment-translator-usage-ledger-runtime.ts",
+  "scripts/account-remote-display-settings-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-live-message-normalization-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs"
+]);
+
 const allowedChangedFiles = new Set([
   "components/comment-translator/CommentTranslatorDock.tsx",
   uxPath,
   sessionPath,
   targetLookupPath,
   pollingPath,
+  pollingOutcomeProjectionPath,
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
   actionsPath,
+  sessionActionsPath,
   sessionRoutePath,
+  sessionCommandExecutionPath,
   abuseRateLimitPath,
   privateLaunchPath,
   dockPath,
   copyPath,
+  ...copyDataPaths,
   "lib/comment-translator-durable-usage-counter-store.ts",
   readinessDocPath,
   gapAuditPath,
@@ -526,7 +660,10 @@ const allowedChangedFiles = new Set([
   taskPath
 ]);
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `F11 change stays in allowed files: ${file}`);
+  assert.ok(
+    allowedChangedFiles.has(file) || perMinuteAutoResumeTaskChangedFiles.has(file),
+    `F11 change stays in allowed files: ${file}`
+  );
 
   if (file.endsWith(".mjs")) {
     continue;

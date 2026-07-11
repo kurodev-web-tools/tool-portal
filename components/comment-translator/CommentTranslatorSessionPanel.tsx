@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CommentTranslatorActivePhaseNotice } from "./CommentTranslatorActivePhaseNotice";
 import { operatorSessionTone, toneClassName } from "./comment-translator-dock-format";
 import type { CommentTranslatorUiCopy, OperatorSessionState, OperatorSessionUsageDisplay } from "./comment-translator-dock-model";
+import { shouldShowCommentTranslatorStartReadiness } from "./comment-translator-session-panel-visibility";
 
 export function CommentTranslatorSessionPanel({ locale, copy, operatorFlowStatus, sessionState, usageDisplay, credentialStatusLabel, sessionReasonGroup, sessionStopReason, sessionReasonMessage, sessionRecommendedAction, usagePolicyStopReason, isSessionPending, startBlockedByCredentialStatus, startBlockedByUsagePolicy, startBlockedByRateLimit, showReconnectGuidance, onStart, onStop, onRefresh }: {
   readonly locale: "ja" | "en";
@@ -24,6 +25,8 @@ export function CommentTranslatorSessionPanel({ locale, copy, operatorFlowStatus
   readonly onStop: () => void;
   readonly onRefresh: () => void;
 }) {
+  const showStartReadiness = shouldShowCommentTranslatorStartReadiness(sessionState.status);
+
   return (
     <section data-public-operator-session-ui="sanitized-session-usage-only" data-comment-translator-session-refresh-on-mount="server-status-restore" data-comment-translator-active-phase={sessionState.activePhase} className="panel p-4 md:col-span-2 xl:col-span-1">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -37,6 +40,7 @@ export function CommentTranslatorSessionPanel({ locale, copy, operatorFlowStatus
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><button type="button" onClick={onStop} disabled={isSessionPending || sessionState.status !== "active"} className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70">{copy.actions.stopSession}</button><button type="button" onClick={onRefresh} disabled={isSessionPending} className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70">{copy.actions.refreshSession}</button></div>
       </div>
       {sessionState.status === "active" && (sessionState.activePhase === "rate-paused" || sessionState.activePhase === "resyncing") ? <div data-comment-translator-rate-pause="auto-resume-current-cursor"><CommentTranslatorActivePhaseNotice activePhase={sessionState.activePhase} retryAfterSeconds={sessionState.retryAfterSeconds ?? null} ratePausedTitle={copy.operatorSession.ratePausedTitle} resyncingTitle={copy.operatorSession.resyncingTitle} ratePausedBody={copy.operatorSession.ratePausedBody} ratePausedSkipped={copy.operatorSession.ratePausedSkipped} perMinuteLabel={copy.fields.perMinuteCap} perMinuteUsed={usageDisplay.perMinute.used} perMinuteLimit={usageDisplay.perMinute.limit} /></div> : null}
+      {showStartReadiness ? <>
       <div data-comment-translator-start-contrast="youtube-vs-session" className="mt-3 rounded-base border border-border bg-surface/80 p-3 text-xs">
         <p className="font-black text-foreground">{copy.operatorSession.readinessTitle}</p><div className="mt-2 grid gap-2"><div className="flex flex-wrap justify-between gap-2"><span className="font-bold text-muted">{copy.operatorSession.connectionReadiness}</span><span className="font-black text-foreground">{credentialStatusLabel}</span></div><p className="break-words font-semibold leading-5 text-muted">{copy.operatorSession.startReadiness}</p>
         {startBlockedByUsagePolicy ? <div data-comment-translator-start-blocked="usage-policy" className="rounded-base border border-amber-200 bg-amber-50/80 px-3 py-2"><p className="break-words font-black text-amber-900">{copy.operatorSession.usageStartBlockedTitle}</p><p className="mt-1 break-words font-semibold leading-5 text-amber-800">{copy.operatorSession.usageStartBlockedBody}{usagePolicyStopReason ? ` ${usagePolicyStopReason}` : ""}</p></div> : null}
@@ -44,6 +48,7 @@ export function CommentTranslatorSessionPanel({ locale, copy, operatorFlowStatus
       </div>
       {startBlockedByCredentialStatus ? <div data-comment-translator-start-blocked="youtube-connection-required" className="mt-3 rounded-base border border-amber-200 bg-amber-50/80 p-3"><p className="break-words text-sm font-black text-amber-900">{copy.operatorSession.startBlockedTitle}</p><p className="mt-1 break-words text-xs font-semibold leading-5 text-amber-800">{copy.operatorSession.startBlockedBody}</p><Link href="/account/integrations" className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-base border border-primary bg-primary px-3 py-2 text-sm font-black text-white transition hover:bg-primary-strong">{copy.operatorSession.openIntegrations}</Link></div> : null}
       {showReconnectGuidance ? <p className="mt-3 break-words rounded-base border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-800">{copy.operatorSession.reconnectGuidance}</p> : null}
+      </> : null}
     </section>
   );
 }

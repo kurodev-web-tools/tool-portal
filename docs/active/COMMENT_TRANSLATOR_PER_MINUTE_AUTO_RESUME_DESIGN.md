@@ -1,6 +1,6 @@
 # Kuro Live Comment Translator Per-Minute Auto-Resume Design
 
-Status: local implementation, non-browser verification, and fixture width QA completed on 2026-07-10. Cloudflare mutation, deploy/upload, preview or production browser smoke, live/provider execution, public access change, and main promotion are not included.
+Status: local implementation, non-browser verification, and fixture width QA completed on 2026-07-10. The active-session Start readiness visibility follow-up approved on 2026-07-11 is implemented and verified locally, with the fresh final production build environment-limited as recorded below. Cloudflare mutation, deploy/upload, preview or production browser smoke, live/provider execution, public access change, and main promotion are not included.
 
 ## Purpose
 
@@ -153,6 +153,8 @@ While rate-paused, show:
 
 While re-priming or retrying, show `コメント取得の再開を準備中`. After successful priming, return to the normal running display without requiring Start.
 
+Start readiness is a pre-start and terminal-recovery concern. While the browser-safe session status is `active`, hide the entire Start readiness panel for all three active phases (`running`, `rate-paused`, and `resyncing`). Keep the existing Start control rendered and disabled because the same session is still active, keep the existing Stop control rendered and enabled, and do not replace the hidden panel with another active-session notice. The existing active-phase notice remains the sole recovery guidance during `rate-paused` and `resyncing`; `running` receives no replacement notice. Restore the Start readiness panel when no session has started or after a terminal stop, including real credential, usage-policy, and Start-rate-limit blockers.
+
 The countdown is advisory display metadata. Provider authorization always comes from a fresh server-owned usage read. Browser storage remains unchanged.
 
 ## Testing Contracts
@@ -178,6 +180,9 @@ Use deterministic fixtures and fake time to prove:
 17. preview smoke activation remains exact-marker, Cloudflare-preview, and allowed-tester only;
 18. cache hits and filtered/non-provider-executed messages do not consume the per-minute provider limit;
 19. browser-safe output contains only sanitized state, counts, and rounded recovery timing.
+20. for each active phase (`running`, `rate-paused`, and `resyncing`), the entire Start readiness panel remains absent even when stale credential, usage-policy, or Start-rate-limit blocker inputs are present, while the existing Start control remains rendered and disabled and Stop remains rendered and enabled;
+21. active `running` renders no replacement readiness notice, while `rate-paused` and `resyncing` retain only their existing active-phase notice;
+22. pre-start and terminal-stopped states render Start readiness and their real blocker guidance, and an `active` to terminal-stopped transition restores that panel without requiring a page reload.
 
 Affected shared-runtime sibling contracts must run with the focused contracts. Implementation verification must also include lint, TypeScript checking, production build, `git diff --check`, changed-files high-confidence no-secret scan with count-only reporting, and changed TS/TSX type-suppression scan.
 
@@ -199,3 +204,14 @@ Stop before Cloudflare environment apply, preview/production deploy or upload, l
 - Fixture-only width QA passed for `running`, `rate-paused`, and `resyncing` at `390 / 820 / 1024 / 1280 / 1366px`. The final evidence contains 15 core viewport captures plus two 390px notice captures; overflow, phase-marker, Start/Stop, console-error, and forbidden-network checks passed, and two independent visual reviews reported no blocking issue.
 - Earlier sanitized production attempt evidence remains unchanged: `total=31`, `peak_rolling=14-of-30`, `boundary_status=inconclusive-window-not-saturated`, `post_stop=pass`, `post_stop_window=0-of-30`. It is not treated as proof that the rolling boundary was saturated.
 - No staging, commit, push, PR, deploy/upload, preview/production browser smoke, live/provider execution, OAuth flow, target lookup, Cloudflare mutation, Supabase operation, migration, Stripe action, public gate/access change, or main promotion was performed.
+
+## Active Start Readiness Visibility Follow-Up (2026-07-11)
+
+- The Dock now treats Start readiness as a pre-start and stopped-session surface. `running`, `rate-paused`, and `resyncing` hide the complete readiness, credential, reconnect, usage-policy, and Start-rate-limit blocker UI even when stale blocker props remain mounted. Start remains rendered and disabled, while Stop remains rendered and enabled.
+- Active `running` adds no replacement notice. `rate-paused` and `resyncing` retain exactly one existing active-phase notice. Pre-start, stopped, and a same-mounted active-to-stopped rerender restore the real readiness guidance.
+- RED contract evidence reproduced the previously visible readiness panel for active stale-blocker fixtures. GREEN focused contracts passed after the shared active-session visibility predicate and mounted-rerender coverage were added; the affected sibling contract allowlists were updated without changing runtime behavior outside this surface.
+- Fresh local-only fixture QA passed all 15 phase/width combinations: `running`, `rate-paused`, and `resyncing` at `390 / 820 / 1024 / 1280 / 1366px`. Readiness-related counts were zero, Start/Stop states were correct, and horizontal overflow, console errors, and forbidden network requests were zero. Independent functional/design and CJK/changed-surface reviews both passed.
+- The development indicator was suppressed only in refreshed 390px paused/resyncing evidence captures; no source edit was made for that capture adjustment. The pre-existing awkward CJK wrapping in the hero header is outside this no-copy/no-style diff and remains deferred.
+- The Playwright wrapper failed before browser launch while fetching its runtime dependency, so fixture QA used the existing local Chrome/CDP path. Turbopack development mode panicked on the external dependency junction, so the official webpack development fallback was used. The production-404 fixture contract passed.
+- Fresh final verification passed the exact auto-resume contract bundle `13/13`, `npm run lint`, `npx tsc --noEmit --pretty false`, branch and working-tree `git diff --check`, the high-confidence changed-file secret scan (`14` files, `0` matches), and the changed TypeScript suppression scan (`2` files, `0` matches). The fresh `npm run build` rerun could not complete because the external `node_modules` junction target no longer contained the Next package required before product compilation; the earlier Task 2 build on the identical production/test HEAD passed with only the existing warnings, and the only changes after that production/test HEAD were documentation records. No dependency junction, production code, or test code was changed to work around that environment state.
+- No push, PR, deploy/upload, preview or production browser smoke, live/provider execution, OAuth flow, target lookup, Cloudflare mutation, Supabase operation, migration, Stripe action, public gate/access change, paid runtime, OBS runtime, browser-storage operation, or main promotion was performed.

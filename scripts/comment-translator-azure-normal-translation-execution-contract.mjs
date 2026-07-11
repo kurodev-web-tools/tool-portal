@@ -1271,13 +1271,24 @@ const monthlyInputAccountingChangedFiles = new Set([
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "task.md"
 ]);
+const activeSessionStartReadinessChangedFiles = new Set([
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_ACTIVE_SESSION_START_READINESS_VISIBILITY_IMPLEMENTATION_PLAN.md",
+  "components/comment-translator/comment-translator-session-panel-visibility.ts",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs"
+]);
 const highConfidenceSecretPattern = /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+/i;
 const serverOnlyAdapterSecretPattern = /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY/i;
 for (const file of changedFiles()) {
   assert.ok(
     allowedChangedFiles.has(file) ||
       monthlyInputAccountingChangedFiles.has(file) ||
-      perMinuteAutoResumeTaskChangedFiles.has(file),
+      perMinuteAutoResumeTaskChangedFiles.has(file) ||
+      activeSessionStartReadinessChangedFiles.has(file),
     `F10 change stays in allowed files: ${file}`
   );
 

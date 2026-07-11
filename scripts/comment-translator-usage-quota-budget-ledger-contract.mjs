@@ -557,6 +557,16 @@ const perMinuteAutoResumeChangedFiles = new Set([
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "task.md"
 ]);
+const activeSessionStartReadinessChangedFiles = new Set([
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_ACTIVE_SESSION_START_READINESS_VISIBILITY_IMPLEMENTATION_PLAN.md",
+  "components/comment-translator/comment-translator-session-panel-visibility.ts",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs"
+]);
 
 for (const file of changedFiles()) {
   const allowedChangedFiles = new Set([
@@ -596,7 +606,7 @@ for (const file of changedFiles()) {
     taskPath
   ]);
   assert.ok(
-    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || perMinuteAutoResumeChangedFiles.has(file),
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || perMinuteAutoResumeChangedFiles.has(file) || activeSessionStartReadinessChangedFiles.has(file),
     `Task 8 change stays in allowed files: ${file}`
   );
   const source = read(file);

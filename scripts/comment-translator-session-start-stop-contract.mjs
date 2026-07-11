@@ -759,8 +759,31 @@ for (const file of changedFiles()) {
     "lib/comment-translator-public-entitlement-baseline.ts",
     "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs"
   ]);
+  const loginOnlyRuntimeChangedFiles = new Set([
+    "app/account/actions.ts",
+    "app/account/integrations/page.tsx",
+    "app/api/comment-translator/session/route.ts",
+    "app/api/comment-translator/youtube/credential-status/route.ts",
+    "app/api/comment-translator/youtube/disconnect/route.ts",
+    "app/api/comment-translator/youtube/oauth/callback/route.ts",
+    "app/tools/comment-translator/account-actions.ts",
+    "app/tools/comment-translator/page.tsx",
+    "app/tools/comment-translator/session-actions.ts",
+    "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
+    "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md",
+    "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
+    "lib/comment-translator-private-launch-access-gate.ts",
+    "lib/comment-translator-public-beta-access-gate-policy.ts",
+    "scripts/comment-translator-login-only-runtime-access-contract.mjs",
+    "scripts/comment-translator-private-launch-access-gate-contract.mjs",
+    "scripts/comment-translator-public-beta-access-gate-decision-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
+    "scripts/comment-translator-session-start-stop-contract.mjs",
+    "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+    "task.md"
+  ]);
   assert.ok(
-    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file) || activeSessionStartReadinessChangedFiles.has(file),
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file) || activeSessionStartReadinessChangedFiles.has(file) || loginOnlyRuntimeChangedFiles.has(file),
     `Task 7 change stays in allowed files: ${file}`
   );
   if (file === "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs") {

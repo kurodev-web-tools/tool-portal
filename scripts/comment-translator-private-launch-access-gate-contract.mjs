@@ -111,7 +111,11 @@ assert.ok(exists(accountBillingActionsPath), "account billing actions exist");
 
 const accessGateSource = read(accessGatePath);
 const toolPageSource = read(toolPagePath);
-const toolActionsSource = read(toolActionsPath);
+const toolActionsSource = [
+  read(toolActionsPath),
+  read("app/tools/comment-translator/account-actions.ts"),
+  read("app/tools/comment-translator/session-actions.ts")
+].join("\n");
 const sessionRouteSource = read(sessionRoutePath);
 const credentialStatusRouteSource = read(credentialStatusRoutePath);
 const disconnectRouteSource = read(disconnectRoutePath);
@@ -125,12 +129,12 @@ const taskSource = read(taskPath);
 assert.match(accessGateSource, /^import "server-only";/m, "private launch helper is server-only");
 assert.match(accessGateSource, /COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES/, "allowlist is server-only env based");
 assert.doesNotMatch(accessGateSource, /ALLOWED_USER_IDS|OWNER_USER_IDS|USER_IDS/, "allowlist does not use raw user id env naming");
-assert.match(toolPageSource, /readCommentTranslatorPrivateLaunchAccessForAccountSession/, "tool page gates existing preview flow");
-assert.match(toolActionsSource, /readCommentTranslatorPrivateLaunchAccess/, "server actions gate session and credential actions");
-assert.match(sessionRouteSource, /readCommentTranslatorPrivateLaunchAccess/, "session API gates direct calls");
-assert.match(credentialStatusRouteSource, /readCommentTranslatorPrivateLaunchAccess/, "credential status API gates direct calls");
-assert.match(disconnectRouteSource, /readCommentTranslatorPrivateLaunchAccess/, "disconnect API gates direct calls");
-assert.match(accountIntegrationsPageSource, /readCommentTranslatorPrivateLaunchAccessForAccountSession/, "account integrations page has private launch gate");
+assert.match(toolPageSource, /readCommentTranslatorFreeBetaRuntimeAccessForAccountSession/, "tool page uses the activation-aware Free runtime gate");
+assert.match(toolActionsSource, /readCommentTranslatorFreeBetaRuntimeAccess/, "server actions use the activation-aware Free runtime gate");
+assert.match(sessionRouteSource, /readCommentTranslatorFreeBetaRuntimeAccess/, "session API uses the activation-aware Free runtime gate");
+assert.match(credentialStatusRouteSource, /readCommentTranslatorFreeBetaRuntimeAccess/, "credential status API uses the activation-aware Free runtime gate");
+assert.match(disconnectRouteSource, /readCommentTranslatorFreeBetaRuntimeAccess/, "disconnect API uses the activation-aware Free runtime gate");
+assert.match(accountIntegrationsPageSource, /readCommentTranslatorFreeBetaRuntimeAccessForAccountSession/, "account integrations page uses the activation-aware Free runtime gate");
 assert.match(accountBillingPageSource, /readCommentTranslatorPrivateLaunchAccessForAccountSession/, "account billing page has private launch gate");
 assert.match(accountBillingActionsSource, /readCommentTranslatorPrivateLaunchAccessForAccountSession/, "billing actions block checkout and portal before Stripe calls");
 assert.match(privateLaunchUnavailableSource, /coming-soon|private-launch|準備中|not yet available/i, "public UI state is disabled or coming soon");

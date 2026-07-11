@@ -9,7 +9,7 @@ import {
   createYouTubeOAuthCredentialDisconnectUnavailablePayload,
   readYouTubeOAuthCredentialDisconnectResult
 } from "@/lib/comment-translator-youtube-disconnect-runtime";
-import { readCommentTranslatorPrivateLaunchAccess } from "@/lib/comment-translator-private-launch-access-gate";
+import { readCommentTranslatorFreeBetaRuntimeAccess } from "@/lib/comment-translator-private-launch-access-gate";
 import {
   createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime
 } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
@@ -27,7 +27,7 @@ export async function getYouTubeOAuthCredentialStatusAction() {
     callerAuthorization
   });
   if (actionAbuseCheck.status === "blocked") return unavailableCredentialStatus();
-  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
     assertCommentTranslatorAbuseRequestAllowed({
       surface: "private-launch-gate-direct-call-denials",
@@ -47,7 +47,7 @@ export async function disconnectYouTubeOAuthCredentialAction() {
     callerAuthorization
   });
   if (actionAbuseCheck.status === "blocked") return unavailableDisconnect("private-launch-gated");
-  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
     assertCommentTranslatorAbuseRequestAllowed({
       surface: "private-launch-gate-direct-call-denials",

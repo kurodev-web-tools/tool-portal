@@ -12,7 +12,11 @@ import {
   readCommentTranslatorDurableUsageSnapshotOrFailClosed
 } from "@/lib/comment-translator-durable-usage-counter-store";
 import { resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride } from "@/lib/comment-translator-free-beta-preview-rate-limit-smoke-override";
-import { createCommentTranslatorPrivateLaunchBlockedSessionState, readCommentTranslatorPrivateLaunchAccess } from "@/lib/comment-translator-private-launch-access-gate";
+import {
+  createCommentTranslatorPrivateLaunchBlockedSessionState,
+  readCommentTranslatorFreeBetaRuntimeAccess,
+  readCommentTranslatorPrivateLaunchAccess
+} from "@/lib/comment-translator-private-launch-access-gate";
 import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
 import { executeCommentTranslatorSessionCommand } from "@/lib/comment-translator-session-command-execution";
 import type { CommentTranslatorSessionCommandIntent, CommentTranslatorSessionStopReason } from "@/lib/comment-translator-session-runtime";
@@ -63,7 +67,7 @@ async function readCommentTranslatorSessionActionResult({
   if (abuseCheck.status === "blocked") {
     return createCommentTranslatorAbuseRateLimitedSessionState({ nowMs, plan: "free", check: abuseCheck });
   }
-  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
     const privateLaunchAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
       surface: "private-launch-gate-direct-call-denials",
@@ -78,7 +82,7 @@ async function readCommentTranslatorSessionActionResult({
   }
   const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const previewRateLimitSmokeOverride = resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
-    privateLaunchAccess: launchAccess
+    privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
   });
   const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
   const durableUsageCounterStore = createTrustedCommentTranslatorUsageCounterSupabaseStore();

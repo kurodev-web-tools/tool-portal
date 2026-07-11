@@ -30,6 +30,14 @@ export type CommentTranslatorPrivateLaunchAccess =
       providerTargetMetadata: "forbidden";
     };
 
+export type CommentTranslatorFreeBetaRuntimeAccess =
+  | CommentTranslatorPrivateLaunchAccess
+  | {
+      status: "allowed";
+      access: "authenticated-free-user";
+      browserReadableOutput: "sanitized-private-launch-access-metadata-only";
+    };
+
 export const commentTranslatorPrivateLaunchAccessGateContract = {
   implementationStage: "pre-main-task-17-private-launch-access-gate",
   runtime: "server-only",
@@ -52,6 +60,9 @@ export const commentTranslatorPrivateLaunchAccessGateContract = {
   handoffPayload: "unchanged",
   liveProviderExecution: "not-run-by-private-launch-gate",
   billingMutation: "blocked-for-non-allowed-users",
+  freeBetaRuntimeAccess: "login-only-after-exact-server-owned-activation",
+  freeBetaRuntimeDefault: "private-launch-sha256-owner-allowlist",
+  previewSmokeTesterEligibility: "private-launch-sha256-owner-allowlist-only",
   forbiddenReadableOutput: [
     "oauth-token-value",
     "refresh-token-value",
@@ -68,6 +79,8 @@ export const commentTranslatorPrivateLaunchAccessGateContract = {
 } as const;
 
 const allowedTesterHashesEnv = "COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES";
+const freeBetaRuntimeAccessEnv = "COMMENT_TRANSLATOR_FREE_BETA_RUNTIME_ACCESS";
+const loginOnlyRuntimeAccessMarker = "login-only-reviewed";
 const sha256HexPattern = /^[a-f0-9]{64}$/;
 
 export function createCommentTranslatorPrivateLaunchTesterHash(ownerUserId: string) {
@@ -99,6 +112,27 @@ export function readCommentTranslatorPrivateLaunchAccess({
   return createBlockedPrivateLaunchAccess("private-launch-gate");
 }
 
+export function readCommentTranslatorFreeBetaRuntimeAccess({
+  callerAuthorization,
+  env = process.env
+}: {
+  callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
+  env?: CommentTranslatorPrivateLaunchAccessEnv;
+}): CommentTranslatorFreeBetaRuntimeAccess {
+  const privateLaunchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization, env });
+  if (privateLaunchAccess.status === "allowed" || env[freeBetaRuntimeAccessEnv] !== loginOnlyRuntimeAccessMarker) {
+    return privateLaunchAccess;
+  }
+  if (callerAuthorization.status !== "authorized") {
+    return privateLaunchAccess;
+  }
+  return {
+    status: "allowed",
+    access: "authenticated-free-user",
+    browserReadableOutput: "sanitized-private-launch-access-metadata-only"
+  };
+}
+
 export function readCommentTranslatorPrivateLaunchAccessForAccountSession({
   accountSession,
   env = process.env
@@ -108,14 +142,37 @@ export function readCommentTranslatorPrivateLaunchAccessForAccountSession({
 }) {
   return readCommentTranslatorPrivateLaunchAccess({
     callerAuthorization:
-      accountSession.authStatus === "signed-in"
+      accountSession.authStatus === "signed-in" && accountSession.user
         ? {
             status: "authorized",
-            ownerUserId: accountSession.user?.id ?? ""
+            ownerUserId: accountSession.user.id
           }
         : {
             status: "unavailable",
-            reason: accountSession.authStatus === "unavailable" ? "auth-unavailable" : "caller-not-authenticated",
+            reason: accountSession.authStatus === "signed-out" ? "caller-not-authenticated" : "auth-unavailable",
+            reconnectRequired: true
+          },
+    env
+  });
+}
+
+export function readCommentTranslatorFreeBetaRuntimeAccessForAccountSession({
+  accountSession,
+  env = process.env
+}: {
+  accountSession: Pick<AccountSessionState, "authStatus" | "user">;
+  env?: CommentTranslatorPrivateLaunchAccessEnv;
+}) {
+  return readCommentTranslatorFreeBetaRuntimeAccess({
+    callerAuthorization:
+      accountSession.authStatus === "signed-in" && accountSession.user
+        ? {
+            status: "authorized",
+            ownerUserId: accountSession.user.id
+          }
+        : {
+            status: "unavailable",
+            reason: accountSession.authStatus === "signed-out" ? "caller-not-authenticated" : "auth-unavailable",
             reconnectRequired: true
           },
     env
@@ -129,7 +186,7 @@ export function createCommentTranslatorPrivateLaunchBlockedSessionState({
 }: {
   nowMs: number;
   plan: CommentTranslatorSessionPlan;
-  access: Extract<CommentTranslatorPrivateLaunchAccess, { status: "blocked" }>;
+  access: Extract<CommentTranslatorFreeBetaRuntimeAccess, { status: "blocked" }>;
 }): CommentTranslatorSessionBrowserSafeState & {
   launchAccess: "private-launch-gated";
   privateLaunchReason: CommentTranslatorPrivateLaunchBlockedReason;

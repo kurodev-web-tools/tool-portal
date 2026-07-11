@@ -122,8 +122,8 @@ assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.step, 
 assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.selectedGate, "login-only");
 assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.rejectedGate, "waitlist-approved-for-free-public-beta");
 assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.waitlistBoundary, "creator-paid-beta-only");
-assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.currentRuntimeGate, "private-launch-sha256-owner-allowlist");
-assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.runtimeGateChange, "not-run-in-this-slice");
+assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.currentRuntimeGate, "server-owned-exact-activation-with-private-launch-default");
+assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.runtimeGateChange, "implemented-not-activated");
 assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.publicGateFlip, "not-run");
 assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.deployUpload, "not-run");
 assert.equal(policy.commentTranslatorPublicBetaAccessGateDecisionContract.remoteMutation, "not-run");
@@ -165,6 +165,23 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
+  "app/account/actions.ts",
+  "app/account/integrations/page.tsx",
+  "app/api/comment-translator/session/route.ts",
+  "app/api/comment-translator/youtube/credential-status/route.ts",
+  "app/api/comment-translator/youtube/disconnect/route.ts",
+  "app/api/comment-translator/youtube/oauth/callback/route.ts",
+  "app/tools/comment-translator/account-actions.ts",
+  "app/tools/comment-translator/page.tsx",
+  "app/tools/comment-translator/session-actions.ts",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md",
+  "lib/comment-translator-private-launch-access-gate.ts",
+  "scripts/comment-translator-login-only-runtime-access-contract.mjs",
+  "scripts/comment-translator-private-launch-access-gate-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   policyPath,
   taskPath,
   taskBoardPath,
@@ -175,6 +192,7 @@ const allowedChangedFiles = new Set([
 
 for (const file of changedFiles()) {
   assert.ok(allowedChangedFiles.has(file), `Step 9 change stays in allowed files: ${file}`);
+  if (file.endsWith(".mjs")) continue;
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 

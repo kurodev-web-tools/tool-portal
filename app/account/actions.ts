@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
+import { readCommentTranslatorFreeBetaRuntimeAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { readYouTubeOAuthCredentialDisconnectResult } from "@/lib/comment-translator-youtube-disconnect-runtime";
 import { readYouTubeAccountIntegrationCredentialReference } from "@/lib/comment-translator-youtube-account-integration-status";
 import {
@@ -371,7 +371,7 @@ export async function startYouTubeIntegrationConnectAction() {
     accountIntegrationsRedirect("youtube-oauth-sign-in-required");
   }
 
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccessForAccountSession({ accountSession });
   if (launchAccess.status === "blocked") {
     accountIntegrationsRedirect("youtube-oauth-private-launch-gated");
   }
@@ -393,7 +393,7 @@ export async function reconnectYouTubeIntegrationAction() {
     accountIntegrationsRedirect("youtube-oauth-sign-in-required");
   }
 
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccessForAccountSession({ accountSession });
   if (launchAccess.status === "blocked") {
     accountIntegrationsRedirect("youtube-oauth-private-launch-gated");
   }
@@ -415,7 +415,7 @@ export async function disconnectYouTubeIntegrationAction() {
     accountIntegrationsRedirect("youtube-oauth-sign-in-required");
   }
 
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccessForAccountSession({ accountSession });
   if (launchAccess.status === "blocked") {
     accountIntegrationsRedirect("youtube-oauth-private-launch-gated");
   }

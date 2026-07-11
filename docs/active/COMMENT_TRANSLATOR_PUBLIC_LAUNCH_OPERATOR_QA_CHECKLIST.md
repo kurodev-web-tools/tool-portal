@@ -13,6 +13,9 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `public_release_capable_status` | `no` |
 | `public_beta_access_gate_selected` | `login-only` |
 | `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
+| `login_only_runtime_implementation_status` | `implemented-not-activated` |
+| `login_only_runtime_activation_status` | `not-run-approval-gated` |
+| `preview_rate_limit_smoke_tester_boundary` | `private-launch-allowlisted-tester-only` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
 | `edge_activation_status` | `not-run-approval-gated` |
 | `operator_external_verification_status` | `partial-pass-preview-and-production-private-launch-browser` |

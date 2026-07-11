@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import Module from "node:module";
 import path from "node:path";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 
 const root = process.cwd();
@@ -32,7 +34,12 @@ function loadTsModule(relativePath) {
     const normalizedPath = path.normalize(modulePath);
     if (moduleCache.has(normalizedPath)) return moduleCache.get(normalizedPath).exports;
     const compiled = ts.transpileModule(fs.readFileSync(normalizedPath, "utf8"), {
-      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true }
+      compilerOptions: {
+        esModuleInterop: true,
+        jsx: ts.JsxEmit.ReactJSX,
+        module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2022
+      }
     }).outputText;
     const testModule = new Module(normalizedPath);
     moduleCache.set(normalizedPath, testModule);
@@ -42,9 +49,16 @@ function loadTsModule(relativePath) {
     return testModule.exports;
   }
   Module._load = function patchedLoad(request, parent, isMain) {
+    if (request === "next/link") {
+      return function TestLink({ href, children, ...props }) {
+        return React.createElement("a", { href, ...props }, children);
+      };
+    }
     if (request.startsWith(".") && parent?.filename) {
-      const candidate = path.resolve(path.dirname(parent.filename), `${request}.ts`);
-      if (fs.existsSync(candidate)) return compileTsModule(candidate);
+      for (const extension of [".ts", ".tsx"]) {
+        const candidate = path.resolve(path.dirname(parent.filename), `${request}${extension}`);
+        if (fs.existsSync(candidate)) return compileTsModule(candidate);
+      }
     }
     return originalLoad.call(this, request, parent, isMain);
   };
@@ -54,6 +68,7 @@ function loadTsModule(relativePath) {
 
 const lib = loadTsModule(libPath);
 const sessionPanelVisibility = loadTsModule(sessionPanelVisibilityPath);
+const sessionPanel = loadTsModule(sessionPanelPath);
 const libSource = read(libPath);
 const componentSource = [componentPath, sessionPanelPath, feedPanelPath, usageSidebarPath, sessionFeedControllerPath].map(read).join("\n");
 const actionSource = read(actionPath);
@@ -86,6 +101,119 @@ assert.equal(
   sessionPanelVisibility.shouldShowCommentTranslatorStartReadiness("stopped"),
   true,
   "stopped sessions show Start readiness"
+);
+
+const blockedUsageDisplay = {
+  status: "over-limit",
+  session: { usedSeconds: 1_800, limitSeconds: 1_800, remainingSeconds: 0 },
+  daily: { usedSeconds: 1_800, limitSeconds: 1_800, remainingSeconds: 0 },
+  perMinute: { used: 30, limit: 30, remaining: 0 },
+  monthlyInputCharacterCap: { used: 20_000, limit: 20_000, remaining: 0 },
+  unavailableReason: null,
+  providerCallPolicy: {
+    status: "blocked-over-limit",
+    stopReason: "translated-message-cap",
+    clientReadableDetail: "sanitized-usage-only"
+  },
+  noProviderCallWhenOverLimit: true,
+  clientReadableDetail: "sanitized-usage-only"
+};
+const copy = lib.commentTranslatorUiCopy.en;
+const renderSessionPanel = (sessionState) => renderToStaticMarkup(
+  React.createElement(sessionPanel.CommentTranslatorSessionPanel, {
+    locale: "en",
+    copy,
+    operatorFlowStatus: "blocked",
+    sessionState,
+    usageDisplay: blockedUsageDisplay,
+    credentialStatusLabel: "Reconnect required",
+    sessionReasonGroup: "Usage limit",
+    sessionStopReason: "Per-minute limit reached",
+    sessionReasonMessage: "The session stopped at a usage boundary.",
+    sessionRecommendedAction: "Review usage, then try Start again.",
+    usagePolicyStopReason: "translated-message-cap",
+    isSessionPending: false,
+    startBlockedByCredentialStatus: true,
+    startBlockedByUsagePolicy: true,
+    startBlockedByRateLimit: true,
+    showReconnectGuidance: true,
+    onStart() {},
+    onStop() {},
+    onRefresh() {}
+  })
+);
+const countRendered = (markup, pattern) => markup.match(pattern)?.length ?? 0;
+const assertActionState = (markup, actionLabel, disabled) => {
+  const button = markup.match(new RegExp(`<button[^>]*>${actionLabel}</button>`));
+  assert.ok(button, `${actionLabel} remains rendered`);
+  assert.equal(/\sdisabled=""/.test(button[0]), disabled, `${actionLabel} disabled state is stable`);
+};
+const assertStartReadinessHidden = (markup, phase) => {
+  assert.equal(countRendered(markup, /data-comment-translator-start-contrast=/g), 0, `${phase} hides the Start contrast panel`);
+  assert.equal(countRendered(markup, /data-comment-translator-start-blocked=/g), 0, `${phase} hides every stale Start blocker`);
+  assert.doesNotMatch(markup, new RegExp(copy.operatorSession.reconnectGuidance), `${phase} hides stale reconnect guidance`);
+  assertActionState(markup, copy.actions.startSession, true);
+  assertActionState(markup, copy.actions.stopSession, false);
+};
+const activeSessionState = (activePhase) => ({
+  status: "active",
+  plan: "free",
+  elapsedSeconds: 120,
+  remainingSessionSeconds: 1_680,
+  remainingDailySeconds: 1_680,
+  stopReason: null,
+  reasonUx: null,
+  usageDisplay: blockedUsageDisplay,
+  nextAction: "wait-for-auto-resume",
+  activePhase,
+  ratePauseReason: activePhase === "running" ? null : "translated-message-cap",
+  automaticResumeExpected: activePhase !== "running",
+  rateLimit: "exceeded",
+  rateLimitReason: "rate-limit-exceeded",
+  retryAfterSeconds: 18
+});
+
+for (const activePhase of ["running", "rate-paused", "resyncing"]) {
+  const markup = renderSessionPanel(activeSessionState(activePhase));
+  assertStartReadinessHidden(markup, activePhase);
+  assert.equal(
+    countRendered(markup, /data-comment-translator-rate-pause="auto-resume-current-cursor"/g),
+    activePhase === "running" ? 0 : 1,
+    `${activePhase} retains exactly its existing active-phase notice count`
+  );
+}
+
+const preStartState = {
+  ...activeSessionState("running"),
+  status: "not-started",
+  activePhase: undefined,
+  stopReason: null,
+  nextAction: "press-start"
+};
+const stoppedState = {
+  ...preStartState,
+  status: "stopped",
+  stopReason: "translated-message-cap",
+  reasonUx: {
+    code: "translated-message-cap",
+    group: "usage-limit",
+    recommendedAction: "wait-and-retry",
+    clientReadableDetail: "sanitized-reason-only"
+  }
+};
+for (const [stateName, state] of [["pre-start", preStartState], ["terminal stopped", stoppedState]]) {
+  const markup = renderSessionPanel(state);
+  assert.equal(countRendered(markup, /data-comment-translator-start-contrast=/g), 1, `${stateName} shows Start readiness`);
+  assert.equal(countRendered(markup, /data-comment-translator-start-blocked=/g), 3, `${stateName} shows credential, usage, and rate-limit blockers`);
+  assert.match(markup, new RegExp(copy.operatorSession.reconnectGuidance), `${stateName} shows reconnect guidance`);
+}
+
+renderSessionPanel(activeSessionState("running"));
+const stoppedAfterActiveMarkup = renderSessionPanel(stoppedState);
+assert.equal(
+  countRendered(stoppedAfterActiveMarkup, /data-comment-translator-start-contrast=/g),
+  1,
+  "sequential active to stopped rendering restores Start readiness through the same loaded component"
 );
 
 assert.equal(

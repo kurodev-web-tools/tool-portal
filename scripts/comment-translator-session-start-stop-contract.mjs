@@ -741,6 +741,16 @@ for (const file of changedFiles()) {
     "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
     taskPath
   ]);
+  const activeSessionStartReadinessChangedFiles = new Set([
+    "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+    "docs/active/COMMENT_TRANSLATOR_ACTIVE_SESSION_START_READINESS_VISIBILITY_IMPLEMENTATION_PLAN.md",
+    "components/comment-translator/comment-translator-session-panel-visibility.ts",
+    "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+    "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+    "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+    "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+    "scripts/comment-translator-session-start-stop-contract.mjs"
+  ]);
   const plG6dChangedFiles = new Set([
     "app/api/comment-translator/session/route.ts",
     "app/tools/comment-translator/actions.ts",
@@ -750,7 +760,7 @@ for (const file of changedFiles()) {
     "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs"
   ]);
   assert.ok(
-    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file),
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file) || activeSessionStartReadinessChangedFiles.has(file),
     `Task 7 change stays in allowed files: ${file}`
   );
   if (file === "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs") {

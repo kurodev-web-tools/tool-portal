@@ -254,7 +254,8 @@ export async function readCommentTranslatorDurableUsageSnapshotOrFailClosed({
   nowMs,
   plan,
   activeSession,
-  paidEntitlement
+  paidEntitlement,
+  planEntitlementOverride
 }: {
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   durableUsageCounterStore: CommentTranslatorDurableUsageCounterStoreFactoryResult;
@@ -265,6 +266,7 @@ export async function readCommentTranslatorDurableUsageSnapshotOrFailClosed({
     CommentTranslatorSessionPlanEntitlement,
     "planEntitlementReferenceId" | "dailyLimitMs" | "sessionLimitMs" | "translatedMessagesPerMinute" | "activeSessionsPerUser"
   >;
+  planEntitlementOverride?: Pick<CommentTranslatorSessionPlanEntitlement, "translatedMessagesPerMinute">;
 }): Promise<CommentTranslatorDurableUsageRead> {
   if (callerAuthorization.status !== "authorized") {
     return createUnavailableCommentTranslatorDurableUsageRead({
@@ -291,7 +293,8 @@ export async function readCommentTranslatorDurableUsageSnapshotOrFailClosed({
         nowMs,
         plan,
         activeSession,
-        paidEntitlement
+        paidEntitlement,
+        planEntitlementOverride
       }),
       authority: "durable-store"
     };
@@ -557,15 +560,20 @@ function createUsageSnapshotFromRows({
   nowMs,
   plan,
   activeSession,
-  paidEntitlement
+  paidEntitlement,
+  planEntitlementOverride
 }: {
   rows: readonly CommentTranslatorDurableUsageCounterRow[];
   nowMs: number;
   plan: CommentTranslatorSessionPlan;
   activeSession: CommentTranslatorActiveSessionRecord | null;
   paidEntitlement?: Parameters<typeof resolveCommentTranslatorUsagePlanEntitlement>[0]["paidEntitlement"];
+  planEntitlementOverride?: Pick<CommentTranslatorSessionPlanEntitlement, "translatedMessagesPerMinute">;
 }): CommentTranslatorDurableUsageSnapshot {
-  const planEntitlement = resolveCommentTranslatorUsagePlanEntitlement({ plan, paidEntitlement });
+  const basePlanEntitlement = resolveCommentTranslatorUsagePlanEntitlement({ plan, paidEntitlement });
+  const planEntitlement = planEntitlementOverride
+    ? { ...basePlanEntitlement, ...planEntitlementOverride }
+    : basePlanEntitlement;
   const currentDay = dayBucket(nowMs);
   const currentMonth = monthBucket(nowMs);
   const dailyRows = rows.filter((row) => row.usage_day === currentDay);

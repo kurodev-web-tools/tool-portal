@@ -112,7 +112,8 @@ export async function POST(request: NextRequest) {
     durableUsageCounterStore,
     nowMs,
     plan: "free",
-    activeSession
+    activeSession,
+    planEntitlementOverride: previewRateLimitSmokeOverride
   });
   const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
     billingSnapshot,

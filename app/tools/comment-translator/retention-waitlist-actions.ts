@@ -65,9 +65,17 @@ async function readCommentTranslatorFreeBetaDerivedReadiness(): Promise<{
   });
   const durableSessionState = durableActiveSessionRead.status === "ready" ? "ready" : "unreadable";
   const activeSession = durableActiveSessionRead.status === "ready" ? durableActiveSessionRead.activeSession : null;
+  const previewRateLimitSmokeOverride = resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
+    privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
+  });
   const durableUsageRead = durableSessionState === "ready"
     ? await readCommentTranslatorDurableUsageSnapshotOrFailClosed({
-        callerAuthorization, durableUsageCounterStore, nowMs, plan: "free", activeSession
+        callerAuthorization,
+        durableUsageCounterStore,
+        nowMs,
+        plan: "free",
+        activeSession,
+        planEntitlementOverride: previewRateLimitSmokeOverride
       })
     : null;
   const durableUsageState = durableUsageRead?.status === "ready" ? "ready" : "unreadable";
@@ -75,9 +83,7 @@ async function readCommentTranslatorFreeBetaDerivedReadiness(): Promise<{
     ? resolveCommentTranslatorPublicEntitlementBaseline({
         billingSnapshot: readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization }),
         durableUsageRead,
-        previewRateLimitSmokeOverride: resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
-          privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
-        })
+        previewRateLimitSmokeOverride
       })
     : null;
   const credentialReadiness = durableSessionState === "ready"

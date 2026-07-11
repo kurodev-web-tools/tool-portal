@@ -946,13 +946,14 @@ function createReadyDurableStore(rows) {
   };
 }
 
-async function readDurableSnapshot(rows, snapshotNowMs = nowMs) {
+async function readDurableSnapshot(rows, snapshotNowMs = nowMs, planEntitlementOverride) {
   return durableUsage.readCommentTranslatorDurableUsageSnapshotOrFailClosed({
     callerAuthorization,
     durableUsageCounterStore: createReadyDurableStore(rows),
     nowMs: snapshotNowMs,
     plan: "free",
-    activeSession
+    activeSession,
+    planEntitlementOverride
   });
 }
 
@@ -969,6 +970,26 @@ assert.equal(
   belowCapRead.snapshot.translatedMessageCapacityAvailableAtMs,
   null,
   "Given usage below the cap, when reading durable usage, then no recovery time is authorized"
+);
+
+const previewOverrideCappedRead = await readDurableSnapshot(
+  [
+    createDurableRow({
+      id: "preview-override-cap",
+      occurredAt: "2026-07-10T00:00:20.000Z",
+      translatedMessageEstimate: 5
+    })
+  ],
+  nowMs,
+  { translatedMessagesPerMinute: 5 }
+);
+assert.equal(previewOverrideCappedRead.status, "ready");
+assert.equal(previewOverrideCappedRead.snapshot.planEntitlement.translatedMessagesPerMinute, 5);
+assert.equal(previewOverrideCappedRead.snapshot.translatedMessagesInCurrentMinute, 5);
+assert.equal(
+  previewOverrideCappedRead.snapshot.translatedMessageCapacityAvailableAtMs,
+  Date.parse("2026-07-10T00:01:20.000Z"),
+  "Given the reviewed preview limit, when five translated messages fill its rolling window, then durable recovery authority uses the same five-message entitlement"
 );
 
 const nonProviderOnlyDurableRead = await readDurableSnapshot([

@@ -11,6 +11,11 @@ const usageDisplayPath = "lib/comment-translator-free-beta-usage-display.ts";
 const usageLedgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
 const providerRuntimePath = "lib/comment-translator-provider-execution-runtime.ts";
 const ratePausePath = "lib/comment-translator-per-minute-rate-pause.ts";
+const durableUsagePath = "lib/comment-translator-durable-usage-counter-store.ts";
+const routePath = "app/api/comment-translator/session/route.ts";
+const sessionActionsPath = "app/tools/comment-translator/session-actions.ts";
+const feedActionsPath = "app/tools/comment-translator/feed-actions.ts";
+const retentionActionsPath = "app/tools/comment-translator/retention-waitlist-actions.ts";
 const operatorDocPath = "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6D_PREVIEW_RATE_LIMIT_SMOKE_OVERRIDE.md";
 const taskPath = "task.md";
 
@@ -103,6 +108,11 @@ for (const requiredPath of [
   usageLedgerPath,
   providerRuntimePath,
   ratePausePath,
+  durableUsagePath,
+  routePath,
+  sessionActionsPath,
+  feedActionsPath,
+  retentionActionsPath,
   operatorDocPath,
   taskPath
 ]) {
@@ -116,6 +126,10 @@ const entitlementSource = fs.readFileSync(path.join(root, entitlementPath), "utf
 const usageDisplaySource = fs.readFileSync(path.join(root, usageDisplayPath), "utf8");
 const usageLedgerSource = fs.readFileSync(path.join(root, usageLedgerPath), "utf8");
 const providerRuntimeSource = fs.readFileSync(path.join(root, providerRuntimePath), "utf8");
+const durableUsageSource = fs.readFileSync(path.join(root, durableUsagePath), "utf8");
+const previewUsageConsumerSource = [routePath, sessionActionsPath, feedActionsPath, retentionActionsPath]
+  .map((relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8"))
+  .join("\n");
 const operatorDocSource = fs.readFileSync(path.join(root, operatorDocPath), "utf8");
 const taskSource = fs.readFileSync(path.join(root, taskPath), "utf8");
 const allowedAccess = {
@@ -279,6 +293,12 @@ assert.match(providerRuntimeSource, /cacheHitCount \+= 1/, "cache hits remain di
 assert.match(usageLedgerSource, /record\.type === "ai-usage-estimated"/, "rolling usage counts provider-executed translation estimates only");
 assert.match(usageLedgerSource, /Math\.max\(0, record\.translatedMessageEstimate\) > 0/, "rolling-window recovery counts positive provider-executed usage only");
 assert.match(usageLedgerSource, /record\.occurredAtMs > currentMinuteStartedAtMs/, "rolling-window recovery releases capacity at the exact sixty-second boundary");
+assert.match(durableUsageSource, /planEntitlementOverride/, "durable rolling recovery accepts the effective server-owned entitlement");
+assert.equal(
+  (previewUsageConsumerSource.match(/planEntitlementOverride:\s*previewRateLimitSmokeOverride/g) ?? []).length,
+  4,
+  "route, session action, feed heartbeat, and derived readiness use the same preview entitlement for rolling recovery authority"
+);
 assert.match(operatorDocSource, /COMMENT_TRANSLATOR_CLOUDFLARE_RUNTIME_CHANNEL/, "operator docs name the preview runtime channel binding");
 assert.match(operatorDocSource, /COMMENT_TRANSLATOR_FREE_BETA_PREVIEW_RATE_LIMIT_SMOKE/, "operator docs name the exact marker binding");
 assert.match(operatorDocSource, /Cloudflare preview only/, "operator docs limit bindings to Cloudflare preview");

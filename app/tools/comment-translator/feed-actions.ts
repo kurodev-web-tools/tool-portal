@@ -71,16 +71,22 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: Commen
   if (activeSession) {
     const nowMs = Date.now();
     const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+    const previewRateLimitSmokeOverride = resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
+      privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
+    });
     const durableUsageCounterStore = createTrustedCommentTranslatorUsageCounterSupabaseStore();
     const durableUsageRead = await readCommentTranslatorDurableUsageSnapshotOrFailClosed({
-      callerAuthorization, durableUsageCounterStore, nowMs, plan: "free", activeSession
+      callerAuthorization,
+      durableUsageCounterStore,
+      nowMs,
+      plan: "free",
+      activeSession,
+      planEntitlementOverride: previewRateLimitSmokeOverride
     });
     const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
       billingSnapshot,
       durableUsageRead,
-      previewRateLimitSmokeOverride: resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
-        privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
-      })
+      previewRateLimitSmokeOverride
     });
     if (entitlementBaseline.status === "ready") {
       const credentialReadiness = await readCommentTranslatorActionCredentialReadiness({

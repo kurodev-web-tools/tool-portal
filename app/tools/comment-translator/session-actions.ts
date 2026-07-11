@@ -95,7 +95,8 @@ async function readCommentTranslatorSessionActionResult({
     durableUsageCounterStore,
     nowMs,
     plan: "free",
-    activeSession
+    activeSession,
+    planEntitlementOverride: previewRateLimitSmokeOverride
   });
   const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
     billingSnapshot,

@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import Module from "node:module";
 import path from "node:path";
-import React from "react";
+import React, { act } from "react";
+import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 
@@ -119,8 +120,9 @@ const blockedUsageDisplay = {
   clientReadableDetail: "sanitized-usage-only"
 };
 const copy = lib.commentTranslatorUiCopy.en;
-const renderSessionPanel = (sessionState) => renderToStaticMarkup(
-  React.createElement(sessionPanel.CommentTranslatorSessionPanel, {
+const createSessionPanelElement = (sessionState) => React.createElement(
+  sessionPanel.CommentTranslatorSessionPanel,
+  {
     locale: "en",
     copy,
     operatorFlowStatus: "blocked",
@@ -140,8 +142,9 @@ const renderSessionPanel = (sessionState) => renderToStaticMarkup(
     onStart() {},
     onStop() {},
     onRefresh() {}
-  })
+  }
 );
+const renderSessionPanel = (sessionState) => renderToStaticMarkup(createSessionPanelElement(sessionState));
 const countRendered = (markup, pattern) => markup.match(pattern)?.length ?? 0;
 const assertActionState = (markup, actionLabel, disabled) => {
   const button = markup.match(new RegExp(`<button[^>]*>${actionLabel}</button>`));
@@ -208,13 +211,176 @@ for (const [stateName, state] of [["pre-start", preStartState], ["terminal stopp
   assert.match(markup, new RegExp(copy.operatorSession.reconnectGuidance), `${stateName} shows reconnect guidance`);
 }
 
-renderSessionPanel(activeSessionState("running"));
-const stoppedAfterActiveMarkup = renderSessionPanel(stoppedState);
+class ContractNode {
+  constructor(nodeType, nodeName, ownerDocument) {
+    this.nodeType = nodeType;
+    this.nodeName = nodeName;
+    this.ownerDocument = ownerDocument;
+    this.parentNode = null;
+    this.childNodes = [];
+  }
+
+  appendChild(child) {
+    child.parentNode?.removeChild(child);
+    child.parentNode = this;
+    this.childNodes.push(child);
+    return child;
+  }
+
+  insertBefore(child, before) {
+    child.parentNode?.removeChild(child);
+    const index = this.childNodes.indexOf(before);
+    assert.notEqual(index, -1, "React inserts before an existing mounted child");
+    child.parentNode = this;
+    this.childNodes.splice(index, 0, child);
+    return child;
+  }
+
+  removeChild(child) {
+    const index = this.childNodes.indexOf(child);
+    assert.notEqual(index, -1, "React removes an existing mounted child");
+    this.childNodes.splice(index, 1);
+    child.parentNode = null;
+    return child;
+  }
+
+  addEventListener() {}
+  removeEventListener() {}
+
+  get firstChild() {
+    return this.childNodes[0] ?? null;
+  }
+
+  get textContent() {
+    return this.childNodes.map((child) => child.textContent).join("");
+  }
+
+  set textContent(value) {
+    for (const child of this.childNodes) child.parentNode = null;
+    this.childNodes = [];
+    if (value !== "") this.appendChild(this.ownerDocument.createTextNode(value));
+  }
+}
+
+class ContractTextNode extends ContractNode {
+  constructor(value, ownerDocument) {
+    super(3, "#text", ownerDocument);
+    this.nodeValue = value;
+  }
+
+  get textContent() {
+    return this.nodeValue;
+  }
+
+  set textContent(value) {
+    this.nodeValue = value;
+  }
+}
+
+class ContractElement extends ContractNode {
+  constructor(tagName, ownerDocument) {
+    super(1, tagName.toUpperCase(), ownerDocument);
+    this.tagName = tagName.toUpperCase();
+    this.namespaceURI = "http://www.w3.org/1999/xhtml";
+    this.attributes = new Map();
+    this.style = {};
+  }
+
+  setAttribute(name, value) {
+    this.attributes.set(name, String(value));
+  }
+
+  getAttribute(name) {
+    return this.attributes.get(name) ?? null;
+  }
+
+  hasAttribute(name) {
+    return this.attributes.has(name);
+  }
+
+  removeAttribute(name) {
+    this.attributes.delete(name);
+  }
+
+  focus() {
+    this.ownerDocument.activeElement = this;
+  }
+
+  blur() {
+    this.ownerDocument.activeElement = this.ownerDocument.body;
+  }
+}
+
+class ContractDocument extends ContractNode {
+  constructor() {
+    super(9, "#document", null);
+    this.ownerDocument = this;
+    this.documentElement = new ContractElement("html", this);
+    this.body = new ContractElement("body", this);
+    this.documentElement.appendChild(this.body);
+    this.activeElement = this.body;
+  }
+
+  createElement(tagName) {
+    return new ContractElement(tagName, this);
+  }
+
+  createElementNS(_namespace, tagName) {
+    return this.createElement(tagName);
+  }
+
+  createTextNode(value) {
+    return new ContractTextNode(String(value), this);
+  }
+
+  createComment(value) {
+    const comment = new ContractTextNode(String(value), this);
+    comment.nodeType = 8;
+    comment.nodeName = "#comment";
+    return comment;
+  }
+}
+
+function findMountedElements(node, predicate) {
+  const matches = node.nodeType === 1 && predicate(node) ? [node] : [];
+  for (const child of node.childNodes) matches.push(...findMountedElements(child, predicate));
+  return matches;
+}
+
+const contractDocument = new ContractDocument();
+const mountedContainer = contractDocument.createElement("div");
+contractDocument.body.appendChild(mountedContainer);
+const previousWindow = globalThis.window;
+const previousDocument = globalThis.document;
+const previousActEnvironment = globalThis.IS_REACT_ACT_ENVIRONMENT;
+const contractWindow = {
+  document: contractDocument,
+  HTMLIFrameElement: class HTMLIFrameElement {},
+  HTMLElement: ContractElement,
+  event: undefined
+};
+globalThis.window = contractWindow;
+globalThis.document = contractDocument;
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+const mountedRoot = createRoot(mountedContainer);
+await act(async () => mountedRoot.render(createSessionPanelElement(activeSessionState("running"))));
 assert.equal(
-  countRendered(stoppedAfterActiveMarkup, /data-comment-translator-start-contrast=/g),
-  1,
-  "sequential active to stopped rendering restores Start readiness through the same loaded component"
+  findMountedElements(mountedContainer, (element) => element.hasAttribute("data-comment-translator-start-contrast")).length,
+  0,
+  "mounted active session hides Start readiness"
 );
+const sameMountedContainer = mountedContainer;
+await act(async () => mountedRoot.render(createSessionPanelElement(stoppedState)));
+assert.equal(mountedContainer, sameMountedContainer, "active to stopped transition reuses the same mounted page container");
+assert.equal(
+  findMountedElements(mountedContainer, (element) => element.hasAttribute("data-comment-translator-start-contrast")).length,
+  1,
+  "same-mounted-tree active to stopped props update restores Start readiness without reload"
+);
+await act(async () => mountedRoot.unmount());
+globalThis.window = previousWindow;
+globalThis.document = previousDocument;
+globalThis.IS_REACT_ACT_ENVIRONMENT = previousActEnvironment;
 
 assert.equal(
   lib.commentTranslatorUiCopy.en.sections.operatorSession,

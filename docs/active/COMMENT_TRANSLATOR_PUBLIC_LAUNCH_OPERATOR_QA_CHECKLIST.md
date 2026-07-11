@@ -15,6 +15,8 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
 | `login_only_runtime_implementation_status` | `implemented-not-activated` |
 | `login_only_runtime_activation_status` | `not-run-approval-gated` |
+| `login_only_runtime_activation_preflight_status` | `prepared-local-only` |
+| `login_only_runtime_activation_target` | `cloudflare-production-worker-runtime` |
 | `preview_rate_limit_smoke_tester_boundary` | `private-launch-allowlisted-tester-only` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
 | `edge_activation_status` | `not-run-approval-gated` |
@@ -116,6 +118,9 @@ The current PL-G6 execution preflight is `docs/active/COMMENT_TRANSLATOR_FREE_BE
 | `operator_free_beta_login_browser_smoke_status` | Release operator | After approved access gate change or preview smoke | signed-in Free user can reach `/tools/comment-translator`; unauthenticated user is not granted tool use |
 | `operator_waitlist_boundary_browser_smoke_status` | Release operator | With login smoke | Free public beta is login-only; waitlist remains Creator/paid-only |
 | `operator_youtube_connect_no_autostart_smoke_status` | Release operator | When live OAuth browser smoke is approved | connecting YouTube does not start monitoring, polling, translation, or quota use |
+| `operator_existing_allowed_tester_parity_status` | Release operator | After approved login-only activation | existing private-launch tester remains allowed |
+| `operator_preview_override_tester_boundary_status` | Release operator | After approved login-only activation | preview 5/min override remains allowlisted-tester-only |
+| `operator_privileged_surface_unchanged_status` | Release operator | After approved login-only activation | Creator/paid waitlist, billing, admin, and privileged surfaces remain unchanged |
 | `operator_start_to_translation_smoke_status` | Release operator | Only after approved live/provider smoke | Start, bounded polling, translation, feed display, usage, and Stop pass with sanitized counts only |
 | `operator_burst_comment_smoke_status` | Release operator | Optional late smoke after contracts pass | 30 translated messages/min behavior observed with pass/fail/count only |
 | `operator_session_30_min_smoke_status` | Release operator | Optional late smoke after fake-clock contract | session stops or refuses continuation with sanitized `session-time-limit` state |

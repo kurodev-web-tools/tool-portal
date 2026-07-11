@@ -6,6 +6,7 @@ import ts from "typescript";
 
 const root = process.cwd();
 const libPath = "lib/comment-translator.ts";
+const sessionPanelVisibilityPath = "components/comment-translator/comment-translator-session-panel-visibility.ts";
 const componentPath = "components/comment-translator/CommentTranslatorDock.tsx";
 const sessionPanelPath = "components/comment-translator/CommentTranslatorSessionPanel.tsx";
 const feedPanelPath = "components/comment-translator/CommentTranslatorFeedPanel.tsx";
@@ -52,6 +53,7 @@ function loadTsModule(relativePath) {
 }
 
 const lib = loadTsModule(libPath);
+const sessionPanelVisibility = loadTsModule(sessionPanelVisibilityPath);
 const libSource = read(libPath);
 const componentSource = [componentPath, sessionPanelPath, feedPanelPath, usageSidebarPath, sessionFeedControllerPath].map(read).join("\n");
 const actionSource = read(actionPath);
@@ -69,6 +71,22 @@ assert.match(actionSource, /startCommentTranslatorSessionAction/, "server action
 assert.match(actionSource, /stopCommentTranslatorSessionAction/, "server action exposes session stop");
 assert.match(actionSource, /heartbeatCommentTranslatorSessionAction/, "server action exposes session heartbeat");
 assert.match(routeSource, /readCommentTranslatorDurableUsageSnapshotOrFailClosed/, "route keeps usage read server-owned");
+
+assert.equal(
+  sessionPanelVisibility.shouldShowCommentTranslatorStartReadiness("not-started"),
+  true,
+  "not-started sessions show Start readiness"
+);
+assert.equal(
+  sessionPanelVisibility.shouldShowCommentTranslatorStartReadiness("active"),
+  false,
+  "active sessions hide Start readiness"
+);
+assert.equal(
+  sessionPanelVisibility.shouldShowCommentTranslatorStartReadiness("stopped"),
+  true,
+  "stopped sessions show Start readiness"
+);
 
 assert.equal(
   lib.commentTranslatorUiCopy.en.sections.operatorSession,

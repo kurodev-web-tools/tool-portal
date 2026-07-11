@@ -44,6 +44,10 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | `login_only_runtime_implementation_status` | `implemented-not-activated` |
 | `login_only_runtime_default` | `private-launch-sha256-owner-allowlist` |
 | `login_only_runtime_activation_status` | `not-run-approval-gated` |
+| `login_only_runtime_activation_target` | `cloudflare-production-worker-runtime` |
+| `login_only_runtime_activation_preflight_status` | `prepared-local-only` |
+| `login_only_runtime_activation_approval_status` | `present-insufficient-for-required-deploy` |
+| `login_only_runtime_activation_apply_status` | `blocked-deploy-upload-not-approved` |
 | `preview_rate_limit_smoke_tester_boundary` | `private-launch-allowlisted-tester-only` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
 | `pl_g6_first_operational_target` | `production-route-api-harness-block-removal` |
@@ -66,6 +70,34 @@ The approval text must explicitly cover the intended operation. Paste-ready mini
 If the requested PL-G6 action includes public gate flip, production/main deploy/upload, Cloudflare mutation, production env apply, production/main-domain smoke, or main promotion, the approval must name that exact operation. Approval for one PL-G6 operation does not approve adjacent operations.
 
 Keep public_release_capable=no unless this same-thread approval explicitly changes it after the listed checks are closed or accepted.
+
+## Login-Only Runtime Activation And Later Public Gate Flip
+
+The smallest safe next activation operation after the merged runtime is a production-only environment apply for the exact server-owned login-only runtime control. It is narrower than a public gate flip: it changes Free runtime eligibility for authenticated users in the named production Worker environment, but does not by itself approve Cloudflare edge-rule mutation, deploy/upload, production browser smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase work, Stripe work, paid/Creator runtime, OBS runtime, main promotion, or a declaration that public release is capable.
+
+Before the operation and in the same command process that would apply it, the operator must confirm only these sanitized preflight labels:
+
+- target environment is exactly `cloudflare-production-worker-runtime`;
+- fetched integration revision contains the reviewed login-only runtime merge;
+- worktree and branch match the reviewed activation slice;
+- current runtime state is `private-launch-default` before apply;
+- production route/API harness is blocked;
+- required production auth, session, provider, Turnstile, site URL, and edge-control references are present by label only;
+- public traffic edge protection is configured or the operation stops blocked;
+- activation input is exact and server-owned without printing or persisting its value;
+- evidence output is restricted to labels/counts/pass-fail/status only.
+
+Paste-ready approval for login-only runtime activation only:
+
+> I approve the login-only runtime activation environment apply for the Kuro Stream Kit / Comment Translator Free public beta integration line in the Cloudflare production Worker environment only. Run the apply only after same-process sanitized preflight passes. Keep evidence to labels/counts/pass-fail/status only. Do not expose or persist activation values, secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, hashes, provider metadata, liveChatId, Cloudflare ids, support ids, raw SQL, or raw provider payloads. Do not run deploy/upload, Cloudflare edge-rule mutation, public gate flip, production browser smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe action, paid/Creator runtime, OBS runtime, Google Auth publishing, main promotion, or any operation outside this named target.
+
+After an approved activation, verification remains a separate operation unless the same-thread approval names the production browser smoke and any required live/OAuth/provider boundaries. Required sanitized checks are: unauthenticated and auth-unavailable blocked; authenticated Free user allowed; existing allowed tester allowed; preview 5/min override tester-only; Creator/paid waitlist, billing, admin, and privileged surfaces unchanged; YouTube connection alone produces no polling, translation, or quota use; browser output sanitized.
+
+The later public gate flip is a separate remote operation and must not be inferred from login-only activation approval. Paste-ready approval for that later operation:
+
+> I approve the PL-G6 public gate flip for the Kuro Stream Kit / Comment Translator Free public beta integration line in the Cloudflare production environment only, after login-only activation and the named sanitized operator checks pass or are explicitly accepted. Run the flip only after same-process sanitized preflight passes. Keep evidence to labels/counts/pass-fail/status only. Do not expose or persist secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, hashes, activation values, provider metadata, liveChatId, Cloudflare ids, support ids, raw SQL, or raw provider payloads. Do not run deploy/upload, unrelated Cloudflare mutation, production browser smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe action, paid/Creator runtime, OBS runtime, Google Auth publishing, or main promotion unless separately named in this same-thread approval.
+
+Latest activation attempt status: same-process local preflight passed for reviewed revision, reviewed branch, private-launch default, exact server-owned control, and production harness block. Activation apply stopped before remote mutation because Cloudflare requires a new Worker version/deployment to make the binding active while the approval explicitly prohibited deploy/upload. Cloudflare auth references and the local Wrangler runtime were also unavailable in the same process. Sanitized result: `activation_apply_status=blocked-deploy-upload-not-approved`, `remote_mutation_count=0`, `deploy_upload_count=0`, `public_gate_flip_count=0`.
 
 ## Smallest Safe First Operational Target
 

@@ -4,7 +4,7 @@ import {
   validateYouTubeOAuthCallbackRequest
 } from "@/lib/comment-translator-youtube-oauth-connect-callback";
 import { persistYouTubeOAuthCallbackCredential } from "@/lib/comment-translator-youtube-oauth-token-store-persistence";
-import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
+import { readCommentTranslatorFreeBetaRuntimeAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { createTrustedYouTubeOAuthCredentialSupabasePersistenceRuntime } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { getAccountSessionState } from "@/lib/supabase/session";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const accountSession = await getAccountSessionState();
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccessForAccountSession({ accountSession });
   const decision = await validateYouTubeOAuthCallbackRequest({
     requestUrl: request.nextUrl,
     accountSessionUserId: accountSession.user?.id ?? null,

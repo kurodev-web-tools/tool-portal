@@ -18,6 +18,7 @@ import { resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride } from "@
 import { executeCommentTranslatorSessionCommand } from "@/lib/comment-translator-session-command-execution";
 import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
+  readCommentTranslatorFreeBetaRuntimeAccess,
   readCommentTranslatorPrivateLaunchAccess
 } from "@/lib/comment-translator-private-launch-access-gate";
 import {
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
     const privateLaunchAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
       surface: "private-launch-gate-direct-call-denials",
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
 
   const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const previewRateLimitSmokeOverride = resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
-    privateLaunchAccess: launchAccess
+    privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
   });
   const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
   const durableUsageCounterStore = createTrustedCommentTranslatorUsageCounterSupabaseStore();

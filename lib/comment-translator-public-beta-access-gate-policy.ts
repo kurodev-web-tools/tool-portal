@@ -7,9 +7,9 @@ export const commentTranslatorPublicBetaAccessGateDecisionContract = {
   decisionReason:
     "Free public beta should be reachable by signed-in users so registration friction still exists while creators can evaluate Free usage before paid or Creator plans.",
   waitlistBoundary: "creator-paid-beta-only",
-  currentRuntimeGate: "private-launch-sha256-owner-allowlist",
-  runtimeGateChange: "not-run-in-this-slice",
-  activationRequires: "separate-reviewed-public-access-change-after-pl-g5",
+  currentRuntimeGate: "server-owned-exact-activation-with-private-launch-default",
+  runtimeGateChange: "implemented-not-activated",
+  activationRequires: "separate-reviewed-environment-apply",
   publicGateFlip: "not-run",
   deployUpload: "not-run",
   remoteMutation: "not-run",

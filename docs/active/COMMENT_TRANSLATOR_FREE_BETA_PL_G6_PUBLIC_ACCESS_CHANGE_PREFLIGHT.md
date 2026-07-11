@@ -6,6 +6,8 @@ PL-G6C production/main-domain env readiness is confirmed by operator-provided la
 
 Public access change, public gate flip, production/main deploy/upload, production/main-domain smoke, production env apply, and integration-to-main promotion remain not-run / approval-gated.
 
+Repository runtime support for the approved login-only policy is implemented behind an exact server-owned activation control. Unset, malformed, or non-exact state retains the private-launch SHA-256 owner allowlist. Merging the implementation does not activate login-only access in preview or production; environment apply and the public gate flip remain separate exact approval-gated operations.
+
 This document is the execution preflight and approval surface for PL-G6 after PL-G5 recorded `release_owner_decision_status=blocked-no-approval`. It identifies the exact approval and command boundaries still needed before any public access change or promotion operation can run. It is not approval to execute PL-G6, not a Cloudflare mutation, not a deploy/upload, not a production smoke, and not a public capability decision.
 
 ## Preflight Labels
@@ -39,6 +41,10 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | `operator_production_api_managed_challenge_status` | `not-selected` |
 | `public_beta_access_gate_selected` | `login-only` |
 | `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
+| `login_only_runtime_implementation_status` | `implemented-not-activated` |
+| `login_only_runtime_default` | `private-launch-sha256-owner-allowlist` |
+| `login_only_runtime_activation_status` | `not-run-approval-gated` |
+| `preview_rate_limit_smoke_tester_boundary` | `private-launch-allowlisted-tester-only` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
 | `pl_g6_first_operational_target` | `production-route-api-harness-block-removal` |
 | `pl_g6_first_operational_target_status` | `complete-repository-side-not-deployed` |
@@ -153,6 +159,10 @@ Sanitized evidence source: operator-provided browser screenshots and Codex route
 | `codex_computer_use_browser_smoke_status` | `inconclusive-stale-browser-state` |
 
 ## Execution Boundary
+
+The repository implementation separates Free runtime authority from preview-smoke tester eligibility. Exact login-only activation allows authenticated Free users through the normal tool, integrations/OAuth, credential, disconnect, session, feed, and retention path. Billing mutations, Creator/paid waitlist, admin authorization, and the route/API harness retain their existing privileged gates. The fixed preview 5 translated-messages/min override still requires its exact marker, the Cloudflare preview channel, and private-launch allowlisted tester eligibility.
+
+YouTube connection remains readiness-only. It does not start monitoring, polling, translation, persistence usage, or quota consumption; Start remains the first provider-affecting action.
 
 Cloudflare route-class and traffic-growth operation guidance remains centralized in `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`.
 

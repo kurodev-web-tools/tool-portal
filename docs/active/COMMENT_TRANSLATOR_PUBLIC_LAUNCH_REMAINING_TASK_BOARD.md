@@ -8,7 +8,7 @@ This document records the remaining task order for taking Kuro Live Comment Tran
 
 The Step 8 update is a policy/UI/contract slice only. It defaults stream-safe / compact comments-only display to the generic `YouTube viewer` label, keeps normal operator preview context on safe `authorDisplayName`, and requires an explicit toggle before compact stream-safe display shows the existing sanitized safe name. It does not add an OBS overlay token runtime, OBS overlay route, moderation actions, schema changes, remote Supabase work, provider/live execution, deploy/upload, public gate flip, or public access change.
 
-The Step 9 update is a policy/contract/documentation slice only. It selects `login-only` for Free public beta access and keeps waitlist approval for Creator/paid beta access. The current runtime gate remains unchanged behind the existing private launch SHA-256 owner allowlist until a later approval-gated access-change operation.
+The Step 9 policy selected `login-only` for Free public beta access and keeps waitlist approval for Creator/paid beta access. Runtime support is now implemented behind an exact server-owned activation control; unset, malformed, or non-exact state retains the existing private launch SHA-256 owner allowlist. No preview or production activation was applied.
 
 The Step 10 update is a policy/contract/documentation slice only. It selects `cloudflare-edge` as the public traffic rate-limit backing, rejects a new Supabase durable rate-limit table for this launch step, and keeps the current in-app guard as defense-in-depth. Cloudflare edge activation remains not-run / approval-gated.
 

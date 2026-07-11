@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CommentTranslatorPrivateLaunchUnavailable } from "@/components/comment-translator/CommentTranslatorPrivateLaunchUnavailable";
 import { CommentTranslatorDock } from "@/components/comment-translator/CommentTranslatorDock";
 import { PortalShell } from "@/components/portal/PortalShell";
-import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
+import { readCommentTranslatorFreeBetaRuntimeAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { createUnavailableCommentTranslatorRealCommentsFeedState } from "@/lib/comment-translator-real-comments-ui-wiring";
 import { readCommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
 import { getAccountSessionState } from "@/lib/supabase/session";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CommentTranslatorPage() {
   const accountSession = await getAccountSessionState();
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccessForAccountSession({ accountSession });
 
   if (launchAccess.status === "blocked") {
     return (

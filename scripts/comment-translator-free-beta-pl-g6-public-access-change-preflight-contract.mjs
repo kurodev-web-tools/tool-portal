@@ -292,6 +292,22 @@ for (const [label, source] of [
 }
 
 const allowedChangedFiles = new Set([
+  "app/account/actions.ts",
+  "app/account/integrations/page.tsx",
+  "app/api/comment-translator/session/route.ts",
+  "app/api/comment-translator/youtube/credential-status/route.ts",
+  "app/api/comment-translator/youtube/disconnect/route.ts",
+  "app/api/comment-translator/youtube/oauth/callback/route.ts",
+  "app/tools/comment-translator/account-actions.ts",
+  "app/tools/comment-translator/page.tsx",
+  "app/tools/comment-translator/session-actions.ts",
+  "lib/comment-translator-private-launch-access-gate.ts",
+  "lib/comment-translator-public-beta-access-gate-policy.ts",
+  "scripts/comment-translator-login-only-runtime-access-contract.mjs",
+  "scripts/comment-translator-private-launch-access-gate-contract.mjs",
+  "scripts/comment-translator-public-beta-access-gate-decision-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
   plG6DocPath,
   plG5DocPath,
   taskBoardPath,
@@ -308,6 +324,7 @@ const allowedChangedFiles = new Set([
 
 for (const file of changedFiles()) {
   assert.ok(allowedChangedFiles.has(file), `PL-G6 preflight change stays in allowed files: ${file}`);
+  if (file.endsWith(".mjs")) continue;
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 

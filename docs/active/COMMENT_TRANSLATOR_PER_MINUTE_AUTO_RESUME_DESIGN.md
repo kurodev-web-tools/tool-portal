@@ -1,6 +1,6 @@
 # Kuro Live Comment Translator Per-Minute Auto-Resume Design
 
-Status: local implementation, non-browser verification, and fixture width QA completed on 2026-07-10. Cloudflare mutation, deploy/upload, preview or production browser smoke, live/provider execution, public access change, and main promotion are not included.
+Status: local implementation, non-browser verification, and fixture width QA completed on 2026-07-10. The active-session Start readiness visibility follow-up approved on 2026-07-11 is not yet implemented or verified. Cloudflare mutation, deploy/upload, preview or production browser smoke, live/provider execution, public access change, and main promotion are not included.
 
 ## Purpose
 
@@ -153,6 +153,8 @@ While rate-paused, show:
 
 While re-priming or retrying, show `コメント取得の再開を準備中`. After successful priming, return to the normal running display without requiring Start.
 
+Start readiness is a pre-start and terminal-recovery concern. While the browser-safe session status is `active`, hide the entire Start readiness panel for all three active phases (`running`, `rate-paused`, and `resyncing`). Keep the existing Start control rendered and disabled because the same session is still active, keep the existing Stop control rendered and enabled, and do not replace the hidden panel with another active-session notice. The existing active-phase notice remains the sole recovery guidance during `rate-paused` and `resyncing`; `running` receives no replacement notice. Restore the Start readiness panel when no session has started or after a terminal stop, including real credential, usage-policy, and Start-rate-limit blockers.
+
 The countdown is advisory display metadata. Provider authorization always comes from a fresh server-owned usage read. Browser storage remains unchanged.
 
 ## Testing Contracts
@@ -178,6 +180,9 @@ Use deterministic fixtures and fake time to prove:
 17. preview smoke activation remains exact-marker, Cloudflare-preview, and allowed-tester only;
 18. cache hits and filtered/non-provider-executed messages do not consume the per-minute provider limit;
 19. browser-safe output contains only sanitized state, counts, and rounded recovery timing.
+20. for each active phase (`running`, `rate-paused`, and `resyncing`), the entire Start readiness panel remains absent even when stale credential, usage-policy, or Start-rate-limit blocker inputs are present, while the existing Start control remains rendered and disabled and Stop remains rendered and enabled;
+21. active `running` renders no replacement readiness notice, while `rate-paused` and `resyncing` retain only their existing active-phase notice;
+22. pre-start and terminal-stopped states render Start readiness and their real blocker guidance, and an `active` to terminal-stopped transition restores that panel without requiring a page reload.
 
 Affected shared-runtime sibling contracts must run with the focused contracts. Implementation verification must also include lint, TypeScript checking, production build, `git diff --check`, changed-files high-confidence no-secret scan with count-only reporting, and changed TS/TSX type-suppression scan.
 

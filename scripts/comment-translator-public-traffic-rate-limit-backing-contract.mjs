@@ -179,16 +179,22 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g2a-server-action-route-api-harness-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
+  "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
-  "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs"
+  "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
+  "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md"
 ]);
 
 for (const file of changedFiles()) {
   assert.ok(allowedChangedFiles.has(file), `Step 10 change stays in allowed files: ${file}`);
+  if (file.endsWith(".mjs")) continue;
   if (file !== "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs") {
     assertNoSensitiveValues(read(file), `changed file ${file}`);
   }

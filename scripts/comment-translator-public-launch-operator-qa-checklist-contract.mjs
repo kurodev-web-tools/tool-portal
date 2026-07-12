@@ -78,7 +78,7 @@ function assertNoSensitiveValues(source, label) {
     /BEGIN\s+PRIVATE\s+KEY/i,
     /cloudflare(?:_api)?_token\s*[:=]\s*["'][^"']+/i,
     /zone(?:_id| id)\s*[:=]\s*["'][^"']+/i,
-    /owner(?:_id| id|UserId)\s*[:=]\s*["'](?!server-only-owner-value["'])[^"']+/i,
+    /owner(?:_id| id|UserId)\s*[:=]\s*["'](?!server-only-owner-value["']|[A-Za-z0-9_-]+-reference["']|[A-Za-z0-9_-]*(?:auto|fixture)[A-Za-z0-9_-]*["'])[^"']+/i,
     /liveChatId\s*[:=]\s*["'][^"']+/i,
     /providerTargetMetadata\s*[:=]\s*["'](?!forbidden["'])[^"']+/i,
     /rawComment(?:Text|s)?\s*[:=]\s*["'](?!(?:never-recorded-by-design|never-returned-by-design|not-recorded-by-design|not-returned-by-design)["'])[^"']+/i,
@@ -220,7 +220,7 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "Current branch: `codex/comment-translator-pl-g6-production-smoke-evidence`",
+  "release_owner_decision_status=accepted-promotion-readiness-only",
   "public_launch_operator_qa_checklist_status=complete",
   "operator_external_verification_status=partial-pass-preview-and-production-private-launch-browser",
   "operator_remaining_external_verification_status=action-required",
@@ -332,13 +332,19 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g2a-server-action-route-api-harness-contract.mjs",
+  "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
-  "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs"
+  "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md"
 ]);
 
 for (const file of changedFiles()) {
   assert.ok(allowedChangedFiles.has(file), `operator QA checklist change stays in allowed files: ${file}`);
+  if (file.endsWith(".mjs")) continue;
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 

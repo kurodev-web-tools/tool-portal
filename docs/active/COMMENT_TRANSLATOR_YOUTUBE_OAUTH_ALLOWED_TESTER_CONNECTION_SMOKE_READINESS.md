@@ -194,4 +194,3 @@ Closeout checks:
 - `git diff --check`
 
 Width checks are skipped because this branch changes docs, `task.md`, and a Node contract only. It does not change UI, CSS, rendered text, route behavior, browser storage, or visible layout.
-

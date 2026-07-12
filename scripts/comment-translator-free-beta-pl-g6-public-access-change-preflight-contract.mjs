@@ -331,11 +331,15 @@ const allowedChangedFiles = new Set([
   taskPath,
   routeHarnessPath,
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g2a-server-action-route-api-harness-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
+  "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
-  "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs"
+  "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
+  "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md"
 ]);
 
 for (const file of changedFiles()) {

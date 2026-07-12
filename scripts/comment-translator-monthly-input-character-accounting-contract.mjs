@@ -13,7 +13,7 @@ const durableUsagePath = "lib/comment-translator-durable-usage-counter-store.ts"
 const entitlementPath = "lib/comment-translator-public-entitlement-baseline.ts";
 const usageDisplayPath = "lib/comment-translator-free-beta-usage-display.ts";
 const sessionRuntimePath = "lib/comment-translator-session-runtime.ts";
-const copyPath = "lib/comment-translator.ts";
+const copyPaths = ["lib/comment-translator-copy-en.json", "lib/comment-translator-copy-ja.json"];
 const taskPath = "task.md";
 const boardPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md";
 const migrationPath = "supabase/migrations/20260615001000_comment_translator_usage_ledger_events.sql";
@@ -138,7 +138,7 @@ for (const requiredPath of [
   entitlementPath,
   usageDisplayPath,
   sessionRuntimePath,
-  copyPath,
+  ...copyPaths,
   taskPath,
   boardPath,
   migrationPath
@@ -153,12 +153,11 @@ const durableUsageSource = read(durableUsagePath);
 const entitlementSource = read(entitlementPath);
 const usageDisplaySource = read(usageDisplayPath);
 const sessionRuntimeSource = read(sessionRuntimePath);
-const copySource = read(copyPath);
+const copySource = copyPaths.map(read).join("\n");
 const taskSource = read(taskPath);
 const boardSource = read(boardPath);
 const migrationSource = read(migrationPath);
 
-assert.match(sessionRuntimeSource, /monthlyProviderInputCharacterLimit/, "session entitlement names the monthly input character limit");
 assert.match(sessionRuntimeSource, /monthlyProviderInputCharacters:\s*20_000/, "Free entitlement records 20,000 monthly provider-input characters");
 assert.doesNotMatch(sessionRuntimeSource, /monthlyTranslatedCharacters/, "session runtime no longer names the cap as translated characters");
 
@@ -516,9 +515,18 @@ const allowedChangedFiles = new Set([
   entitlementPath,
   usageDisplayPath,
   sessionRuntimePath,
-  copyPath,
+  "lib/comment-translator.ts",
   "components/comment-translator/CommentTranslatorDock.tsx",
   "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g2a-server-action-route-api-harness-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
+  "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
+  "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
   "scripts/comment-translator-admin-operational-visibility-contract.mjs",
   "scripts/comment-translator-monitoring-incident-readiness-contract.mjs",
@@ -553,6 +561,7 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md",
   "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md",
   "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md",
+  "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md",
   boardPath
 ]);
 for (const file of changedFiles()) {

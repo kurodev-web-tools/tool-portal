@@ -629,7 +629,8 @@ function createStatusBoundaryFixture({
     },
     "@/lib/comment-translator-private-launch-access-gate": {
       createCommentTranslatorPrivateLaunchBlockedSessionState: () => ({ status: "stopped" }),
-      readCommentTranslatorPrivateLaunchAccess: () => ({ status: "allowed", access: "allowed-tester" })
+      readCommentTranslatorPrivateLaunchAccess: () => ({ status: "allowed", access: "allowed-tester" }),
+      readCommentTranslatorFreeBetaRuntimeAccess: () => ({ status: "allowed", access: "allowed-tester" })
     },
     "@/lib/comment-translator-abuse-rate-limit-runtime": {
       assertCommentTranslatorAbuseRequestAllowed: () => ({ status: "allowed" }),

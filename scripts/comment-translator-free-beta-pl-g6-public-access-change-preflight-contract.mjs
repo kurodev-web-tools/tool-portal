@@ -116,6 +116,7 @@ for (const section of [
   "## Preflight Labels",
   "## Required Same-Thread Approval Surface",
   "## Login-Only Runtime Activation And Later Public Gate Flip",
+  "## Integration-To-Main Promotion Sequence",
   "## Execution Boundary",
   "## Public Capability Result",
   "## Operator Checks Still Required",
@@ -146,9 +147,9 @@ for (const fragment of [
   "`pl_g6c_production_smoke_approval_status` | `present`",
   "`operator_start_to_translation_smoke_status` | `pass-production-main-domain-private-launch`",
   "`live_provider_execution_status` | `pass-operator-provided-private-launch-smoke`",
-  "`release_owner_decision_status` | `blocked-no-approval`",
-  "`release_owner_exact_approval_status` | `absent`",
-  "`release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks`",
+  "`release_owner_decision_status` | `accepted-promotion-readiness-only`",
+  "`release_owner_exact_approval_status` | `present-promotion-readiness-only`",
+  "`release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification`",
   "`operator_remaining_external_verification_status` | `action-required`",
   "`operator_production_harness_block_status` | `pass-production-404`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
@@ -203,6 +204,10 @@ for (const fragment of [
   "remote_mutation_count=0",
   "Do not run Cloudflare mutation, production/main deploy/upload, production env apply, public gate flip, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, or main promotion from this preflight slice.",
   "PL-G6 execution remains blocked until exact same-thread approval names the operation, target boundary, allowed evidence shape, and non-actions.",
+  "`main_connected_deployment_activation_state` | `unset-required`",
+  "I approve creating and merging the integration-to-main promotion PR",
+  "I approve post-deploy private-default production verification for the main-connected deployment only.",
+  "Approval for the promotion does not approve the post-deploy verification.",
   "Evidence stays labels/counts/pass-fail/status only."
 ]) {
   assertIncludes(plG6Doc, fragment, `PL-G6 doc records ${fragment}`);

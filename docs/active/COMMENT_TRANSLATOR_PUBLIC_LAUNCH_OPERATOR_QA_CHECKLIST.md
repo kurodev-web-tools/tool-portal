@@ -48,6 +48,12 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `live_provider_execution_status` | `pass-operator-provided-private-launch-smoke` |
 | `pl_g6_public_access_change_preflight_status` | `complete` |
 | `pl_g6_public_access_change_status` | `not-run-approval-gated` |
+| `post_pr_637_runtime_status` | `implemented-not-activated` |
+| `integration_to_main_promotion_readiness_status` | `ready-after-exact-approvals` |
+| `post_deploy_private_default_verification_status` | `not-run-approval-gated` |
+| `release_owner_decision_status` | `accepted-promotion-readiness-only` |
+| `release_owner_exact_approval_status` | `present-promotion-readiness-only` |
+| `release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification` |
 
 ## Operator Update 2026-07-09
 
@@ -107,6 +113,8 @@ Public release remains blocked because `public_release_capable_status=no`, `pl_g
 These checks require browser access, Cloudflare dashboard/account access, or approved live/provider operation. They should not be run by Codex without same-thread approval and a ready preflight.
 
 The current PL-G6 execution preflight is `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`. It prepares the approval surface only; it does not approve or run the checks below.
+
+Before login-only activation, the release operator must preserve this order: promotion to `main`, main-connected automatic production deployment with activation unset, separately approved private-default production verification, then a separately approved login-only activation deployment. The public gate flip remains later and separate.
 
 | Check | Owner | When | Evidence to record |
 | --- | --- | --- | --- |

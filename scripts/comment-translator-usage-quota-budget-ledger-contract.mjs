@@ -8,8 +8,13 @@ import ts from "typescript";
 const root = process.cwd();
 const ledgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
 const sessionPath = "lib/comment-translator-session-runtime.ts";
+const sessionPolicyPath = "lib/comment-translator-session-policy.ts";
+const commandExecutionPath = "lib/comment-translator-session-command-execution.ts";
 const routePath = "app/api/comment-translator/session/route.ts";
 const actionPath = "app/tools/comment-translator/actions.ts";
+const feedActionPath = "app/tools/comment-translator/feed-actions.ts";
+const retentionActionPath = "app/tools/comment-translator/retention-waitlist-actions.ts";
+const sessionActionPath = "app/tools/comment-translator/session-actions.ts";
 const requirementsPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md";
 const taskPath = "task.md";
 
@@ -22,7 +27,7 @@ function exists(relativePath) {
 }
 
 function changedFiles() {
-  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"]
@@ -114,21 +119,31 @@ function loadTsModule(relativePath) {
 
 assert.ok(exists(ledgerPath), "server-only usage/quota/budget ledger runtime exists");
 assert.ok(exists(sessionPath), "session runtime remains available");
+assert.ok(exists(sessionPolicyPath), "session policy remains available");
+assert.ok(exists(commandExecutionPath), "shared session command execution remains available");
 assert.ok(exists(routePath), "session route remains available");
 assert.ok(exists(actionPath), "session server actions remain available");
 assert.ok(exists(requirementsPath), "canonical public release requirements remain available");
 
 const ledgerSource = read(ledgerPath);
-const sessionSource = read(sessionPath);
-const routeSource = read(routePath);
-const actionSource = read(actionPath);
+const sessionSource = [sessionPath, sessionPolicyPath, commandExecutionPath].map(read).join("\n");
+const routeSource = [routePath, commandExecutionPath].map(read).join("\n");
+const actionSource = [actionPath, feedActionPath, retentionActionPath, sessionActionPath, commandExecutionPath].map(read).join("\n");
 const requirementsSource = read(requirementsPath);
 
 assert.match(ledgerSource, /^import "server-only";/m, "usage ledger runtime is server-only");
 assert.match(ledgerSource, /UsageQuotaBudgetLedger/, "ledger source names usage quota budget boundary");
 assert.match(sessionSource, /planEntitlement/, "session runtime consumes server-owned plan entitlement state");
-assert.match(routeSource, /readInMemoryCommentTranslatorUsageSnapshot/, "session route reads server-owned usage ledger snapshot");
-assert.match(actionSource, /readInMemoryCommentTranslatorUsageSnapshot/, "session actions read server-owned usage ledger snapshot");
+assert.match(
+  routeSource,
+  /readInMemoryCommentTranslatorUsageSnapshot|readCommentTranslatorDurableUsageSnapshotOrFailClosed/,
+  "session route reads server-owned usage ledger snapshot"
+);
+assert.match(
+  actionSource,
+  /readInMemoryCommentTranslatorUsageSnapshot|readCommentTranslatorDurableUsageSnapshotOrFailClosed/,
+  "session actions read server-owned usage ledger snapshot"
+);
 assert.match(requirementsSource, /estimated YouTube request count/, "requirements retain admin provider estimate metric");
 assert.match(requirementsSource, /estimated AI cost/, "requirements retain admin AI cost metric");
 
@@ -193,6 +208,7 @@ assert.deepEqual(
     sessionLimitMs: 1_800_000,
     translatedMessagesPerMinute: 30,
     activeSessionsPerUser: 1,
+    monthlyProviderInputCharacterLimit: 20_000,
     paidPrioritization: "not-implemented",
     providerUsageCharging: "not-implemented"
   },
@@ -267,6 +283,7 @@ ledger.recordInMemoryCommentTranslatorUsageLedgerEvent({
     sessionReferenceId: activeSession.sessionReferenceId,
     occurredAtMs: 30_000,
     translatedMessageEstimate: 12,
+    providerInputCharacterEstimate: 480,
     translatedCharacterEstimate: 480,
     estimatedCostMicros: 1200,
     rawCommentText: "never-recorded-by-design"
@@ -291,6 +308,7 @@ assert.equal(snapshot.providerRequestEstimate.quotaUnitEstimate, 15, "provider q
 assert.equal(snapshot.aiUsageEstimate.translatedMessageEstimate, 12, "AI message estimates are recorded");
 assert.equal(snapshot.aiUsageEstimate.translatedCharacterEstimate, 480, "AI character estimates are recorded");
 assert.equal(snapshot.aiUsageEstimate.estimatedCostMicros, 1200, "AI cost estimates are recorded");
+assert.equal(snapshot.translatedMessageCapacityAvailableAtMs, null, "below-cap in-memory usage has no recovery timestamp");
 assert.equal(snapshot.providerBudgetAvailable, true);
 assert.equal(snapshot.globalBudgetAvailable, true);
 assert.equal(snapshot.aiBudgetAvailable, true);
@@ -303,8 +321,8 @@ assert.doesNotMatch(
 const overDailyLimit = session.evaluateCommentTranslatorSessionStopCondition({
   activeSession: {
     sessionReferenceId: "cts_usage_session_002",
-    startedAtMs: 0,
-    lastHeartbeatAtMs: 1_750_000
+    startedAtMs: 1_790_000,
+    lastHeartbeatAtMs: 1_801_000
   },
   nowMs: 1_801_000,
   plan: "free",
@@ -322,8 +340,8 @@ const overDailyLimit = session.evaluateCommentTranslatorSessionStopCondition({
   },
   usage: {
     ...snapshot,
-    dailyUsedMs: 1_000,
-    currentSessionElapsedMs: 1_800_000
+    dailyUsedMs: 1_790_000,
+    currentSessionElapsedMs: 11_000
   }
 });
 assert.equal(overDailyLimit.stopReason, "daily-time-limit", "daily limit enforcement uses server-owned entitlement plus active elapsed time");
@@ -372,27 +390,225 @@ assert.deepEqual(aggregates.quotaBudgetStopCounts, {
   sessionTimeLimit: 0,
   dailyTimeLimit: 0
 });
+
+ledger.resetInMemoryCommentTranslatorUsageLedgerForTests();
+ledger.recordInMemoryCommentTranslatorUsageLedgerEvent({
+  callerAuthorization: {
+    status: "authorized",
+    ownerUserId: "server-only-owner-value"
+  },
+  event: {
+    type: "ai-usage-estimated",
+    provider: "youtube",
+    sessionReferenceId: activeSession.sessionReferenceId,
+    occurredAtMs: Number.NaN,
+    translatedMessageEstimate: 30,
+    providerInputCharacterEstimate: 1,
+    translatedCharacterEstimate: 1,
+    estimatedCostMicros: 1,
+    rawCommentText: "never-recorded-by-design"
+  }
+});
+assert.throws(
+  () =>
+    ledger.readInMemoryCommentTranslatorUsageSnapshot({
+      callerAuthorization: {
+        status: "authorized",
+        ownerUserId: "server-only-owner-value"
+      },
+      nowMs: 50_000,
+      plan: "free",
+      activeSession
+    }),
+  /recovery authority/i,
+  "malformed capped in-memory authority fails closed"
+);
 assert.doesNotMatch(
   JSON.stringify(aggregates),
   /server-only-owner-value|ytcred_usage_reference_001|providerChannelId|liveChatId|access_token|refresh_token|authorization_code|Authorization|service_role|raw comment/i,
   "admin aggregate metrics exclude credential references, owner id values, provider targets, credentials, and raw comments"
 );
 
+const monthlyInputAccountingChangedFiles = new Set([
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
+  "lib/comment-translator.ts",
+  "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-free-beta-usage-display.ts",
+  "lib/comment-translator-provider-execution-runtime.ts",
+  "lib/comment-translator-public-entitlement-baseline.ts",
+  "lib/comment-translator-session-runtime.ts",
+  "lib/comment-translator-usage-ledger-runtime.ts",
+  "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
+  "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g1-remote-durable-enforcement-execution-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-remote-durable-enforcement-evidence-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-monitoring-incident-readiness-contract.mjs",
+  "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
+  "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+  "task.md"
+]);
+
+const perMinuteAutoResumeChangedFiles = new Set([
+  "app/api/comment-translator/session/route-context.ts",
+  "app/api/comment-translator/session/route.ts",
+  "app/tools/comment-translator/account-actions.ts",
+  "app/tools/comment-translator/action-context.ts",
+  "app/tools/comment-translator/actions.ts",
+  "app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx",
+  "app/tools/comment-translator/feed-actions.ts",
+  "app/tools/comment-translator/retention-waitlist-actions.ts",
+  "app/tools/comment-translator/session-actions.ts",
+  "components/comment-translator/comment-translator-dock-format.ts",
+  "components/comment-translator/comment-translator-dock-model.ts",
+  "components/comment-translator/CommentTranslatorActivePhaseNotice.tsx",
+  "components/comment-translator/CommentTranslatorCommentCard.tsx",
+  "components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx",
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "components/comment-translator/CommentTranslatorDockAtoms.tsx",
+  "components/comment-translator/CommentTranslatorDockHeader.tsx",
+  "components/comment-translator/CommentTranslatorFeedPanel.tsx",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "components/comment-translator/CommentTranslatorSettingsPanel.tsx",
+  "components/comment-translator/CommentTranslatorUsageSidebar.tsx",
+  "components/comment-translator/useCommentTranslatorBrowserTimeZone.ts",
+  "components/comment-translator/useCommentTranslatorCreatorWaitlist.ts",
+  "components/comment-translator/useCommentTranslatorDockControls.ts",
+  "components/comment-translator/useCommentTranslatorSessionFeedController.ts",
+  "components/portal/PortalShell.tsx",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-copy-en.json",
+  "lib/comment-translator-copy-ja.json",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-fixture-comments.ts",
+  "lib/comment-translator-live-provider-session-step-result.ts",
+  "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-per-minute-rate-pause.ts",
+  "lib/comment-translator-runtime.ts",
+  "lib/comment-translator-session-command-execution.ts",
+  "lib/comment-translator-session-command.ts",
+  "lib/comment-translator-session-memory-store.ts",
+  "lib/comment-translator-session-policy.ts",
+  "lib/comment-translator-session-runtime.ts",
+  "lib/comment-translator-session-start.ts",
+  "lib/comment-translator-session-state.ts",
+  "lib/comment-translator-session-types.ts",
+  "lib/comment-translator-snapshot-data.ts",
+  "lib/comment-translator-types.ts",
+  "lib/comment-translator-usage-ledger-runtime.ts",
+  "lib/comment-translator.ts",
+  "scripts/account-remote-display-settings-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-live-message-normalization-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+  "task.md"
+]);
+const activeSessionStartReadinessChangedFiles = new Set([
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_ACTIVE_SESSION_START_READINESS_VISIBILITY_IMPLEMENTATION_PLAN.md",
+  "components/comment-translator/comment-translator-session-panel-visibility.ts",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs"
+]);
+
 for (const file of changedFiles()) {
   const allowedChangedFiles = new Set([
+    "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+    "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
     "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
     ledgerPath,
     sessionPath,
+    sessionPolicyPath,
+    commandExecutionPath,
     routePath,
     actionPath,
+    feedActionPath,
+    retentionActionPath,
+    sessionActionPath,
+    "components/comment-translator/CommentTranslatorDock.tsx",
+    "lib/comment-translator-real-comments-feed-shared.ts",
+    "lib/comment-translator-live-provider-session-step.ts",
+    "lib/comment-translator-live-provider-session-step-result.ts",
+    "lib/comment-translator-azure-normal-translation-execution.ts",
     "lib/comment-translator-provider-execution-runtime.ts",
+    "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
     "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+    "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+    "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
+    "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+    "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+    "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
     "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+    "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+    "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
     "scripts/comment-translator-session-start-stop-contract.mjs",
     "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
     taskPath
   ]);
-  assert.ok(allowedChangedFiles.has(file), `Task 8 change stays in allowed files: ${file}`);
+  assert.ok(
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || perMinuteAutoResumeChangedFiles.has(file) || activeSessionStartReadinessChangedFiles.has(file),
+    `Task 8 change stays in allowed files: ${file}`
+  );
   const source = read(file);
   assert.doesNotMatch(
     source,

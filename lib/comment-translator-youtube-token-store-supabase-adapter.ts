@@ -48,6 +48,23 @@ export type YouTubeOAuthCredentialSupabaseStatus = {
   decryptCapability: "forbidden";
 };
 
+export type YouTubeOAuthCredentialSupabaseTokenMaterial = {
+  credentialReferenceId: string;
+  ownerUserId: string;
+  provider: "youtube";
+  providerChannelId: string;
+  scopeLabel: "youtube.readonly";
+  scopeSet: readonly YouTubeReadOnlyOAuthScope[];
+  expiresAtIso: string;
+  expiryStatus: "active" | "expired" | "revoked";
+  revoked: boolean;
+  revokedAtIso: string | null;
+  accessTokenCiphertextReference: string;
+  refreshTokenCiphertextReference: string;
+  encryptionKeyReference: string;
+  encryptionKeyVersion: string;
+};
+
 export type YouTubeOAuthCredentialStatusOwnerAuthorizedReadRequest = {
   credentialReferenceId: string;
   ownerUserId: string;
@@ -55,7 +72,7 @@ export type YouTubeOAuthCredentialStatusOwnerAuthorizedReadRequest = {
 
 type SupabaseSingleResult = {
   data: YouTubeOAuthCredentialSupabaseRow | null;
-  error: { message?: string } | null;
+  error: { code?: string; message?: string } | null;
 };
 
 type SupabaseSingleQuery = {
@@ -84,7 +101,18 @@ type SupabaseTableQuery = {
     options: { onConflict: "credential_reference_id" }
   ) => SupabaseSelectQuery;
   update: (
-    row: Pick<YouTubeOAuthCredentialSupabaseInsert, "revoked_at" | "revocation_reason" | "updated_at">
+    row: Partial<
+      Pick<
+        YouTubeOAuthCredentialSupabaseInsert,
+        | "revoked_at"
+        | "revocation_reason"
+        | "updated_at"
+        | "access_token_ciphertext_ref"
+        | "refresh_token_ciphertext_ref"
+        | "expires_at"
+        | "scope_set"
+      >
+    >
   ) => SupabaseUpdateFilter;
 };
 
@@ -96,6 +124,17 @@ export type TrustedYouTubeOAuthCredentialSupabaseAdapter = {
   getCredentialStatus: (
     request: YouTubeOAuthCredentialStatusOwnerAuthorizedReadRequest
   ) => Promise<YouTubeOAuthCredentialSupabaseStatus>;
+  getCredentialTokenMaterial: (
+    request: YouTubeOAuthCredentialStatusOwnerAuthorizedReadRequest
+  ) => Promise<YouTubeOAuthCredentialSupabaseTokenMaterial>;
+  updateCredentialTokenMaterial: (request: {
+    credentialReferenceId: string;
+    ownerUserId: string;
+    accessTokenCiphertextReference: string;
+    refreshTokenCiphertextReference: string;
+    expiresAtIso: string;
+    scopeSet: readonly YouTubeReadOnlyOAuthScope[];
+  }) => Promise<YouTubeOAuthCredentialSupabaseStatus>;
   upsertCredentialStatus: (
     draft: YouTubeOAuthCredentialPersistenceDraft
   ) => Promise<YouTubeOAuthCredentialSupabaseStatus>;
@@ -109,6 +148,11 @@ export type TrustedYouTubeOAuthCredentialSupabaseAdapter = {
     reason: "user-disconnect";
   }) => Promise<YouTubeOAuthCredentialSupabaseStatus>;
 };
+
+export type TrustedYouTubeOAuthCredentialSupabaseTokenMaterialAdapter = Pick<
+  TrustedYouTubeOAuthCredentialSupabaseAdapter,
+  "getCredentialTokenMaterial" | "updateCredentialTokenMaterial"
+>;
 
 export type TrustedYouTubeOAuthCredentialStatusReaderFactoryEnvName =
   | "NEXT_PUBLIC_SUPABASE_URL"
@@ -137,6 +181,23 @@ export type TrustedYouTubeOAuthCredentialPersistenceRuntimeFactoryResult =
   | {
       status: "unavailable";
       trustedStore: null;
+      missingEnvReferences: readonly TrustedYouTubeOAuthCredentialStatusReaderFactoryEnvName[];
+      reconnectRequired: true;
+      reason: "trusted-service-role-env-missing";
+    };
+
+export type TrustedYouTubeOAuthCredentialTokenMaterialRuntimeFactoryResult =
+  | {
+      status: "ready";
+      trustedTokenMaterialAdapter: Pick<
+        TrustedYouTubeOAuthCredentialSupabaseAdapter,
+        "getCredentialTokenMaterial" | "updateCredentialTokenMaterial"
+      >;
+      missingEnvReferences: readonly [];
+    }
+  | {
+      status: "unavailable";
+      trustedTokenMaterialAdapter: null;
       missingEnvReferences: readonly TrustedYouTubeOAuthCredentialStatusReaderFactoryEnvName[];
       reconnectRequired: true;
       reason: "trusted-service-role-env-missing";
@@ -214,6 +275,20 @@ export const youtubeOAuthCredentialTrustedServiceRolePersistenceRuntimeContract 
   rollbackBoundary: "revoke-or-invalidate-unusable-credential-reference"
 } as const;
 
+export const youtubeOAuthCredentialTrustedServiceRoleTokenMaterialRuntimeContract = {
+  implementationStage: "trusted-service-role-stored-token-material-runtime",
+  runtime: "server-only",
+  dependency: "@supabase/supabase-js",
+  requiredEnvReferences: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+  rowAccess: "trusted-server-service-role-only",
+  readMode: "owner-authorized-sealed-token-material-read",
+  writeMode: "owner-authorized-refreshed-token-material-update",
+  browserReadableOutput: "forbidden",
+  tokenValueOutput: "never-returned-by-design",
+  refreshTokenValueOutput: "never-returned-by-design",
+  loggingPolicy: "no-token-value-logging"
+} as const;
+
 export const youtubeOAuthCredentialTrustedServiceRoleDisconnectRuntimeContract = {
   implementationStage: "trusted-service-role-disconnect-runtime",
   runtime: "server-only",
@@ -231,6 +306,13 @@ export const youtubeOAuthCredentialTrustedServiceRoleDisconnectRuntimeContract =
   loggingPolicy: "no-token-value-logging",
   rollbackBoundary: "revoke-or-invalidate-unusable-credential-reference"
 } as const;
+
+export class YouTubeOAuthCredentialNotFoundError extends Error {
+  constructor() {
+    super("Trusted YouTube OAuth credential was not found.");
+    this.name = "YouTubeOAuthCredentialNotFoundError";
+  }
+}
 
 export function createYouTubeOAuthCredentialSupabaseInsert(
   draft: YouTubeOAuthCredentialPersistenceDraft
@@ -276,6 +358,29 @@ export function createYouTubeOAuthCredentialSupabaseStatus(
   };
 }
 
+export function createYouTubeOAuthCredentialSupabaseTokenMaterial(
+  row: YouTubeOAuthCredentialSupabaseRow
+): YouTubeOAuthCredentialSupabaseTokenMaterial {
+  const status = createYouTubeOAuthCredentialSupabaseStatus(row);
+
+  return {
+    credentialReferenceId: row.credential_reference_id,
+    ownerUserId: row.owner_user_id,
+    provider: row.provider,
+    providerChannelId: row.provider_channel_id,
+    scopeLabel: status.scopeLabel,
+    scopeSet: row.scope_set,
+    expiresAtIso: row.expires_at,
+    expiryStatus: status.expiryStatus,
+    revoked: status.revoked,
+    revokedAtIso: status.revokedAtIso,
+    accessTokenCiphertextReference: row.access_token_ciphertext_ref,
+    refreshTokenCiphertextReference: row.refresh_token_ciphertext_ref,
+    encryptionKeyReference: row.encryption_key_ref,
+    encryptionKeyVersion: row.encryption_key_version
+  };
+}
+
 export function createTrustedYouTubeOAuthCredentialSupabaseAdapter({
   supabase,
   nowIso
@@ -290,6 +395,35 @@ export function createTrustedYouTubeOAuthCredentialSupabaseAdapter({
         .select(youtubeOAuthCredentialSupabaseAdapterContract.trustedSelectColumns)
         .eq("owner_user_id", request.ownerUserId)
         .eq("credential_reference_id", request.credentialReferenceId)
+        .single();
+
+      return createYouTubeOAuthCredentialSupabaseStatus(requireSupabaseRow(result));
+    },
+    async getCredentialTokenMaterial(request) {
+      const query = supabase
+        .from(youtubeOAuthCredentialSupabaseAdapterContract.tableName)
+        .select(youtubeOAuthCredentialSupabaseAdapterContract.trustedSelectColumns)
+        .eq("credential_reference_id", request.credentialReferenceId);
+      const result = request.ownerUserId
+        ? await query.eq("owner_user_id", request.ownerUserId).single()
+        : await query.single();
+
+      return createYouTubeOAuthCredentialSupabaseTokenMaterial(requireSupabaseRow(result));
+    },
+    async updateCredentialTokenMaterial(request) {
+      const updatedAtIso = nowIso();
+      const result = await supabase
+        .from(youtubeOAuthCredentialSupabaseAdapterContract.tableName)
+        .update({
+          access_token_ciphertext_ref: request.accessTokenCiphertextReference,
+          refresh_token_ciphertext_ref: request.refreshTokenCiphertextReference,
+          expires_at: request.expiresAtIso,
+          scope_set: request.scopeSet,
+          updated_at: updatedAtIso
+        })
+        .eq("owner_user_id", request.ownerUserId)
+        .eq("credential_reference_id", request.credentialReferenceId)
+        .select(youtubeOAuthCredentialSupabaseAdapterContract.trustedSelectColumns)
         .single();
 
       return createYouTubeOAuthCredentialSupabaseStatus(requireSupabaseRow(result));
@@ -468,6 +602,57 @@ export function createTrustedYouTubeOAuthCredentialSupabasePersistenceRuntime({
   };
 }
 
+export function createTrustedYouTubeOAuthCredentialSupabaseTokenMaterialRuntime({
+  env,
+  createSupabaseClient = createTrustedSupabaseServiceRoleClient,
+  nowIso = () => new Date().toISOString()
+}: {
+  env?: Partial<Record<TrustedYouTubeOAuthCredentialStatusReaderFactoryEnvName, string | undefined>>;
+  createSupabaseClient?: (
+    url: string,
+    serviceRoleKey: string
+  ) => TrustedYouTubeOAuthCredentialSupabaseClient;
+  nowIso?: () => string;
+} = {}): TrustedYouTubeOAuthCredentialTokenMaterialRuntimeFactoryResult {
+  const trustedEnv =
+    env ?? (process.env as Partial<Record<TrustedYouTubeOAuthCredentialStatusReaderFactoryEnvName, string | undefined>>);
+  const url = readTrustedEnv(trustedEnv, "NEXT_PUBLIC_SUPABASE_URL");
+  const serviceRoleKey = readTrustedEnv(trustedEnv, "SUPABASE_SERVICE_ROLE_KEY");
+  const missingEnvReferences: TrustedYouTubeOAuthCredentialStatusReaderFactoryEnvName[] = [];
+
+  if (!url) {
+    missingEnvReferences.push("NEXT_PUBLIC_SUPABASE_URL");
+  }
+
+  if (!serviceRoleKey) {
+    missingEnvReferences.push("SUPABASE_SERVICE_ROLE_KEY");
+  }
+
+  if (missingEnvReferences.length > 0 || !url || !serviceRoleKey) {
+    return {
+      status: "unavailable",
+      trustedTokenMaterialAdapter: null,
+      missingEnvReferences,
+      reconnectRequired: true,
+      reason: "trusted-service-role-env-missing"
+    };
+  }
+
+  const adapter = createTrustedYouTubeOAuthCredentialSupabaseAdapter({
+    supabase: createSupabaseClient(url, serviceRoleKey),
+    nowIso
+  });
+
+  return {
+    status: "ready",
+    trustedTokenMaterialAdapter: {
+      getCredentialTokenMaterial: adapter.getCredentialTokenMaterial,
+      updateCredentialTokenMaterial: adapter.updateCredentialTokenMaterial
+    },
+    missingEnvReferences: []
+  };
+}
+
 export function createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime({
   env,
   createSupabaseClient = createTrustedSupabaseServiceRoleClient,
@@ -520,6 +705,10 @@ export function createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime({
 }
 
 function requireSupabaseRow(result: SupabaseSingleResult): YouTubeOAuthCredentialSupabaseRow {
+  if (!result.data && (!result.error || result.error.code === "PGRST116")) {
+    throw new YouTubeOAuthCredentialNotFoundError();
+  }
+
   if (result.error || !result.data) {
     throw new Error("Trusted YouTube OAuth credential Supabase adapter query failed.");
   }

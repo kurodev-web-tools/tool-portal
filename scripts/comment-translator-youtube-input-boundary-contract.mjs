@@ -17,7 +17,7 @@ function exists(relativePath) {
 
 function changedFiles() {
   try {
-    const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+    const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"]
@@ -173,8 +173,8 @@ assert.equal(
 
 assert.deepEqual(
   boundary.youtubeProviderSafeCommentPayloadContract.allowedFields,
-  ["commentId", "publishedAt", "text", "platformLanguageHint"],
-  "provider-safe comment payload is minimal"
+  ["commentId", "publishedAt", "text", "platformLanguageHint", "authorDisplayName"],
+  "provider-safe comment payload is minimal and may include the safe author display name"
 );
 assert.deepEqual(
   boundary.youtubeProviderSafeCommentPayloadContract.forbiddenFields,
@@ -272,6 +272,7 @@ for (const pattern of [
 
 const separateImplementationFiles = new Set([
   "lib/comment-translator-youtube-token-store-runtime.ts",
+  "components/comment-translator/CommentTranslatorDock.tsx",
   "app/api/comment-translator/youtube/credential-status/route.ts",
   "app/tools/comment-translator/actions.ts",
   "supabase/migrations/20260601000000_youtube_oauth_credentials.sql",
@@ -306,8 +307,8 @@ for (const file of changedFiles()) {
 
 assert.match(
   taskSource,
-  /comment translator YouTube input boundary contract/i,
-  "task.md records the new YouTube input boundary check"
+  /Preview author display name/i,
+  "task.md records the current preview author display-name slice"
 );
 
 console.log("comment translator YouTube input boundary contract checks passed");

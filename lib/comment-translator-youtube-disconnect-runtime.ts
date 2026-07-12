@@ -8,6 +8,7 @@ import { type YouTubeOAuthCredentialSupabaseStatus } from "./comment-translator-
 
 export type YouTubeOAuthCredentialDisconnectUnavailableReason =
   | "credential-resolution-disabled"
+  | "credential-reference-env-missing"
   | "trusted-disconnect-adapter-not-wired"
   | "trusted-disconnect-query-failed"
   | "auth-unavailable"
@@ -115,7 +116,9 @@ export type YouTubeOAuthCredentialTranslatorStartReadiness =
         | "refresh-failed"
         | "revoked"
         | "trusted-adapter-not-wired"
+        | "credential-reference-env-missing"
         | "trusted-adapter-query-failed"
+        | "credential-not-found"
         | "auth-unavailable"
         | "caller-not-authenticated"
         | "private-launch-gated"
@@ -134,6 +137,7 @@ export const youtubeOAuthCredentialDisconnectRuntimeContract = {
   refreshTokenValueOutput: "never-returned-by-design",
   providerErrorBodyOutput: "never-returned-by-design",
   providerTargetMetadataOutput: "forbidden",
+  oauthDisconnectCleanup: "f13-sanitized-cleanup-readiness-only",
   liveProviderExecution: "not-run-by-default-route-or-action",
   browserStorage: "forbidden",
   loggingPolicy: "no-token-value-or-provider-body-logging",
@@ -256,11 +260,27 @@ export function assessYouTubeOAuthCredentialTranslatorStartReadiness(
     };
   }
 
+  if (status.status === "disconnected") {
+    return {
+      status: "blocked-reconnect-required",
+      provider: "youtube",
+      credentialReferenceId: status.credentialReferenceId,
+      reason: "credential-not-found",
+      translatorStartAllowed: false,
+      reconnectGuidance: "reconnect-youtube"
+    };
+  }
+
   return {
     status: "blocked-unavailable",
     provider: "youtube",
     credentialReferenceId: status.credentialReferenceId,
-    reason: status.status === "credential-resolution-disabled" ? "credential-resolution-disabled" : status.reason,
+    reason:
+      status.status === "credential-resolution-disabled"
+        ? "credential-resolution-disabled"
+        : status.status === "error"
+          ? status.reason
+          : status.reason,
     translatorStartAllowed: false,
     reconnectGuidance: "reconnect-youtube"
   };

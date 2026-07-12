@@ -78,8 +78,8 @@ assertExcludes(serverSource, ["SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY"
 const sessionSource = read("lib/supabase/session.ts");
 assertIncludes(
   sessionSource,
-  ["auth.getUser", "user_preferences", "locale", "theme", "configStatus"],
-  "account session and locale/theme preference read boundary"
+  ["auth.getUser", "user_preferences", "locale", "theme", "time_zone", "configStatus"],
+  "account session and shared display preference read boundary"
 );
 assertExcludes(sessionSource, ["tool_preferences", "usage_quotas", "localStorage", "indexedDB"], "session first slice scope");
 
@@ -124,7 +124,7 @@ assertIncludes(
 const accountShell = read("components/account/AccountPreferencesShell.tsx");
 assertIncludes(
   accountShell,
-  ["signOutAction", "saveLocaleThemePreferenceAction", "authStatus", "remotePreferences"],
+  ["signOutAction", "saveLocaleThemePreferenceAction", "authStatus", "TimeZoneSelect", "hiddenTimeZone"],
   "account shell auth UI"
 );
 assertExcludes(
@@ -163,11 +163,13 @@ const task = read("task.md");
 assertIncludes(
   task,
   [
-    "Supabase Auth first slice",
-    "node scripts/supabase-auth-first-slice-contract.mjs",
-    "secret / service_role key は要求・表示・保存していない"
+    "## Current Premises",
+    "## Approval-Gated Actions",
+    "secret / service_role key / private credential / OAuth token / authorization code / owner id / provider target metadata / liveChatId",
+    "remote schema migration / Supabase migration apply"
   ],
-  "task handoff"
+  "current task guardrails"
 );
+assert.match(task, /public-release capable(?: label)?: no/i, "task.md keeps public release blocked");
 
 console.log("supabase auth first slice contract checks passed");

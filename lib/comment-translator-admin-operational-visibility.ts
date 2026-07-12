@@ -238,12 +238,15 @@ function aggregateAiUsageEstimate(records: readonly CommentTranslatorUsageLedger
     .reduce(
       (total, record) => ({
         translatedMessageEstimate: total.translatedMessageEstimate + Math.max(0, record.translatedMessageEstimate),
+        providerInputCharacterEstimate:
+          total.providerInputCharacterEstimate + Math.max(0, record.providerInputCharacterEstimate),
         translatedCharacterEstimate: total.translatedCharacterEstimate + Math.max(0, record.translatedCharacterEstimate),
         estimatedCostMicros: total.estimatedCostMicros + Math.max(0, record.estimatedCostMicros),
         rawCommentText: "never-recorded-by-design"
       }),
       {
         translatedMessageEstimate: 0,
+        providerInputCharacterEstimate: 0,
         translatedCharacterEstimate: 0,
         estimatedCostMicros: 0,
         rawCommentText: "never-recorded-by-design"

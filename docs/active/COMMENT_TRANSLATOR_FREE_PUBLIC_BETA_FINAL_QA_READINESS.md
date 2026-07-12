@@ -1,0 +1,226 @@
+# Kuro Live Comment Translator Free Public Beta Final QA Readiness
+
+Status: F15 Free public beta final QA / launch readiness. Public-release capable: no.
+
+This record is Free public beta readiness evidence only. It does not approve or run real OAuth connect, live authorization code exchange, live token persistence smoke, provider target lookup, live target lookup, `liveChatMessages.list`, session start smoke, translation provider API execution, live/provider execution, Azure/OpenAI provider API execution, deploy/upload, remote mutation, schema migration, remote Supabase mutation/schema apply, Stripe live action, main promotion, or public launch gate flip.
+
+Output policy: sanitized status labels, route/action names, task ids, reference names, counts-only plans, and not-run gates only. Secret values, OAuth values, token values, Authorization header values, owner user id values, provider channel id values, live target values, provider target metadata, Live Chat target identifiers, service-role values, Stripe secret values, server-only cursor values, raw provider payloads, raw comments, author channel material, browser storage payloads, and handoff payloads are not requested, displayed, stored, or recorded.
+
+## Purpose
+
+F15 closes the Free public beta implementation sequence by recording final QA/readiness posture, not by flipping launch gates.
+
+The decision remains evidence-gated: public launch is not allowed while approved live/provider/remote/Stripe evidence is missing. Public-release capable: no.
+
+## Inspected Inputs
+
+- `task.md`
+- `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`
+- `docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md`
+- `docs/active/COMMENT_TRANSLATOR_PROVIDER_LEGAL_COPY_REFRESH.md`
+- `docs/active/COMMENT_TRANSLATOR_SECURITY_PRIVACY_FINAL_REVIEW.md`
+- `docs/active/COMMENT_TRANSLATOR_PRIVATE_GATED_LIVE_PROVIDER_SMOKE_READINESS.md`
+- `docs/active/COMMENT_TRANSLATOR_STRIPE_LIVE_READINESS.md`
+- `lib/comment-translator-durable-session-store.ts`
+- `lib/comment-translator-durable-usage-counter-store.ts`
+- `lib/comment-translator-public-entitlement-baseline.ts`
+- `lib/comment-translator-session-runtime.ts`
+- `lib/comment-translator-usage-ledger-runtime.ts`
+- `lib/comment-translator-server-only-live-chat-target-lookup.ts`
+- `lib/comment-translator-bounded-live-chat-polling-wiring.ts`
+- `lib/comment-translator-live-message-normalization.ts`
+- `lib/comment-translator-real-comments-ui-wiring.ts`
+- `lib/comment-translator-real-comments-feed-shared.ts`
+- `lib/comment-translator-azure-normal-translation-execution.ts`
+- `lib/comment-translator-start-stop-reason-ux.ts`
+- `lib/comment-translator-free-beta-usage-display.ts`
+- `lib/comment-translator-free-beta-retention-attribution.ts`
+- `lib/comment-translator-free-beta-creator-locked-waitlist.ts`
+- `app/api/comment-translator/session/route.ts`
+- `app/tools/comment-translator/actions.ts`
+- `components/comment-translator/CommentTranslatorDock.tsx`
+- `lib/comment-translator.ts`
+
+## F1-F14 Evidence Review
+
+| Task | Evidence reviewed | F15 interpretation |
+| --- | --- | --- |
+| F1 | OAuth live connect smoke preflight defines same-thread approval, reference-name-only env checks, sanitized evidence shape, abort conditions, and rollback. | Preflight plan exists; it is not live OAuth execution evidence. |
+| F2 | Approved OAuth connect/token persistence evidence recorded sanitized connected status only. | Useful connection evidence exists; provider lookup, session start, and provider execution remain separate. |
+| F3 | Local durable session migration/adapter and fail-closed route/action wiring exist. | Local foundation exists; remote Supabase apply and deployed durable enforcement remain unverified. |
+| F4 | Local durable usage ledger migration/adapter and server-owned writes exist. | Local foundation exists; remote Supabase apply and deployed durable usage enforcement remain unverified. |
+| F5 | Free entitlement baseline combines daily/session/per-minute/active-session/monthly provider-input character caps. | Free limit resolver exists; public reliance still depends on durable deployed reads. |
+| F6 | Server-only live chat target lookup boundary is wired to Start with sanitized unavailable fallback. | Browser-safe boundary exists; real provider target lookup and live target lookup are not-run. |
+| F7 | Bounded polling wiring keeps active-session-only state, server-only cursor handling, retry/backoff, empty-chat behavior, and quota/budget stop handoff. | Local deterministic wiring exists; real `liveChatMessages.list` is not-run. |
+| F8 | Normalization handles text, Super Chat, stickers, member/system/deleted/banned/ended events with dedupe and deletion handling. | Safe internal event shape exists; real provider payload capture is not-run. |
+| F9 | Real comments feed UI consumes only server-owned safe display rows and defaults to sanitized unavailable state. | Browser-safe feed wiring exists; non-empty live intake evidence for Free beta remains unchecked. |
+| F10 | Azure normal translation bridge maps eligible normalized comments into Free Azure policy with bounded retry/cache/degradation. | Local deterministic provider bridge exists; real Azure/OpenAI provider API execution is not-run. |
+| F11 | Start/Stop reason UX maps disconnected, reconnect, no broadcast, disabled/ended/not found, quota, heartbeat, and provider errors to sanitized copy. | User-readable states exist; live/provider-derived states remain not public-proven. |
+| F12 | Free beta usage display exposes session/day/month/per-minute usage and no-provider-call over-limit behavior. | Usage display exists; deployed durable enforcement remains unchecked. |
+| F13 | Data deletion, retention, deleted-message propagation, OAuth disconnect cleanup readiness, and source attribution are represented locally. | Browser-safe retention/source foundation exists; actual cleanup mutation and live disconnect are not-run. |
+| F14 | Creator locked cards, waitlist, and local click draft state are represented without paid access. | Free beta Creator visibility exists; remote waitlist/click persistence, Stripe live action, and paid entitlement activation are not-run. |
+
+## Route And API Smoke Plan
+
+The route/API smoke plan is split into three lanes so that deterministic checks do not drift into provider-affecting execution.
+
+| Lane | Allowed action | Evidence shape | Not allowed |
+| --- | --- | --- | --- |
+| local deterministic | Run focused contracts for F3-F15, inspect route/action source, and verify browser-safe return shapes using local deterministic adapters. | Contract exit status, route/action names, sanitized state labels, and no-secret scan result. | No network provider calls, no auth payload inspection, no remote mutation. |
+| sanitized server-owned state | With safe local auth fixtures only, exercise `/api/comment-translator/session`, `getCommentTranslatorSessionAction`, `refreshCommentTranslatorRealCommentsFeedAction`, `getCommentTranslatorFreeBetaUsageDisplayAction`, `getCommentTranslatorFreeBetaRetentionAttributionAction`, and `getCommentTranslatorCreatorLockedWaitlistAction` against unavailable/stopped/over-limit/local-draft states. | Status labels, stop reasons, usage counts, unavailable reasons, source labels, and local draft status only. | No raw provider payload, raw comments, private identifiers, browser storage expansion, or handoff payload expansion. |
+| approval-gated exact-command preflight | Before any live/provider/remote/Stripe smoke, print or document the exact command/action, operator-local env reference checklist, sanitized output review, abort conditions, rollback, and requested approval text. | `preflight-ready` or `blocked-*`, reference-name-only env labels, exact command text without private values, and not-run gates. | No execution until same-thread ready preflight, sanitized output review, and explicit in-thread approval are all present. |
+
+Current F15 execution state:
+
+- route/API smoke plan: documented.
+- local deterministic contract: implemented by `scripts/comment-translator-free-public-beta-final-qa-readiness-contract.mjs`.
+- provider target lookup: not-run / approval-gated.
+- live target lookup: not-run / approval-gated.
+- liveChatMessages.list: not-run / approval-gated.
+- session start smoke: not-run / approval-gated.
+- translation provider API execution: not-run / approval-gated.
+- live/provider execution: not-run / approval-gated.
+- real OAuth connect: not-run in F15 / approval-gated.
+- live authorization code exchange: not-run in F15 / approval-gated.
+- live token persistence smoke: not-run in F15 / approval-gated.
+- Azure/OpenAI provider API execution: not-run / approval-gated.
+- remote mutation: not-run / approval-gated.
+- schema migration: not-run / approval-gated.
+- remote Supabase mutation/schema apply: not-run / approval-gated.
+- Stripe live action: not-run / approval-gated.
+- deploy/upload: not-run / approval-gated.
+- main promotion: not-run / approval-gated.
+- public launch gate flip: not-run / approval-gated.
+
+## No-Secret Scan Plan
+
+F15 requires a changed-files no-secret scan before PR publication. The scan covers this readiness doc, `task.md`, the F15 contract script, and any touched active readiness docs.
+
+Forbidden values include secret keys, OAuth values, token values, Authorization header values, service-role values, Stripe secret values, webhook signing secrets, private owner/provider identifiers, live target values, provider target metadata values, server-only cursor values, raw provider payloads, raw comments, browser storage payloads, and handoff payload values.
+
+Allowed references are names of routes, actions, docs, env references, and not-run gates.
+
+## Width Checks
+
+Width checks skipped for F15 because this task has no visible UI/CSS/layout/copy change, no rendered route change, no browser storage change, and no runtime behavior change.
+
+If a later F15 follow-up changes visible UI/copy, run `390 / 820 / 1024 / 1280 / 1366px` checks and record any unavailable authenticated/fixture scope in `task.md`.
+
+## Legal And Copy Review
+
+legal/copy review result: no new public copy change was made in F15.
+
+Existing reviewed copy keeps these claims:
+
+- Free plan translation policy routes to Azure Translator.
+- Creator/Paid remains locked/waitlist/closed-beta and does not imply public paid access.
+- YouTube connection alone does not start background monitoring, polling, translation, or quota use.
+- Provider processing is limited to explicit session scope.
+- Raw comment logging remains disabled by default and diagnostics are sanitized.
+- Provider comparison candidates are not represented as active production routing.
+- Stripe live Product/Price/Checkout/Customer Portal/webhook/billing setting mutations remain approval-gated.
+
+## Rollback Notes
+
+F15 docs/contract changes have no runtime rollback path. If the readiness record is wrong, revert this docs/contract PR or amend the readiness decision before publication.
+
+For future approval-gated execution blockers:
+
+1. Stop at the first blocker label.
+2. Record only sanitized status, route/action name, command name, count, and stop reason.
+3. Keep public launch disabled.
+4. Do not run cleanup SQL, remote mutation, schema migration, provider lookup, live polling, provider API execution, deploy/upload, Stripe action, main promotion, or public launch gate flip as rollback unless separately approved in-thread.
+
+## Public Launch Readiness Decision
+
+Decision: Free public beta is not public-release capable.
+
+Completion decision for F15: readiness decision clarified; launch gate remains closed.
+
+Public-release capable: no.
+
+Reason: F1-F14 establish a strong local/server-only foundation, but public launch still lacks approved live/provider evidence, remote durable enforcement evidence, and explicit release-owner approval for public launch gate flip.
+
+FB-L1 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md` now defines the Free beta public usability preflight sequence for remote/deployed durable enforcement, authenticated allowed-tester route/API smoke, Start smoke, live target lookup, bounded polling, Azure execution, UI confirmation, rollback, and no-secret output. This follow-up remains preflight-only and does not change the `public-release capable: no` decision.
+
+FB-L2 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md` records Remote durable enforcement evidence as blocked-no-approval. It clarifies that `comment_translator_sessions` and `comment_translator_usage_ledger_events` are the Free durable authority to prove later, but remote Supabase migration apply, remote mutation, deployed durable smoke, deploy/upload, live/provider execution, Stripe actions, and public launch gate flip remain not-run / approval-gated.
+
+FB-L3 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md` records Allowed-tester route/API smoke as blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_READY_PREFLIGHT.md`. It limits the later approved smoke to server-owned session/feed/usage/deletion/Creator locked states and keeps session Start, provider/live execution, remote mutation/schema apply, deploy/upload, Stripe actions, and public launch gate flip not-run / approval-gated.
+
+PL-G2B follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2B_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE.md` records the allowed-tester route/API harness smoke as blocked-no-approval because exact same-thread approval, actual-output sanitized review, and operator-local env references were not complete in that thread. It keeps the approved execution boundary limited to the status route and PL-G2A harness route, and keeps public-release capable: no.
+
+PL-G2C follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2C_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE.md` records the post-PL-G5 allowed-tester route/API harness smoke evidence follow-up as keep blocked / blocked-no-approval. It confirms PL-G1 remote durable enforcement is complete only for its approved boundary, while PL-G2B prior blocker, PL-G3, and PL-G4 remain not-run / approval-gated; the public gate state stays unchanged / blocked and public-release capable remains no.
+
+PL-G2D follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2D_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EVIDENCE_FOLLOW_UP_AFTER_PL_G5.md` records the post-PL-G5-follow-up allowed-tester route/API harness smoke evidence follow-up as keep blocked / blocked-no-approval. It confirms PL-G1 remote durable enforcement is remote-apply-and-deployed-smoke-completed, while PL-G2C prior blocker, PL-G3 follow-up, PL-G4 follow-up, and PL-G5 follow-up remain blocked; the public gate state stays unchanged / blocked and public-release capable remains no.
+
+PL-G2E execution gate: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2E_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_GATE_AFTER_PL_G2D.md` records the post-PL-G2D allowed-tester route/API harness smoke execution gate as keep blocked / blocked-no-approval. It confirms the exact approval label, sanitized output review, and operator-local env references are still incomplete in-thread; status route smoke and harness route smoke remain blocked-no-approval / not-run / approval-gated, public gate state stays unchanged / blocked, and public-release capable remains no.
+
+PL-G2F execution gate: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2F_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_GATE_AFTER_PL_G2E.md` records the post-PL-G2E allowed-tester route/API harness smoke execution gate as keep blocked / blocked-no-approval. It confirms the exact approval label, sanitized output review, and operator-local env references are still incomplete in-thread; status route smoke and harness route smoke remain blocked-no-approval / not-run / approval-gated, public gate state stays unchanged / blocked, and public-release capable remains no.
+
+PL-G2G execution: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2G_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2F.md` records the post-PL-G2F allowed-tester route/API harness smoke execution as keep blocked / blocked-no-approval. It confirms the exact approval label, sanitized output review, and operator-local reference readiness are still incomplete in-thread; status route smoke and harness route smoke remain blocked-no-approval / not-run / approval-gated, public gate state stays unchanged / blocked, and public-release capable remains no.
+
+PL-G2I execution: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2I_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2H.md` records the post-PL-G2H approved allowed-tester route/API harness smoke execution as keep blocked / blocked-missing-operator-local-reference-readiness. It confirms the exact approval label and sanitized output shape are present, but deployed origin reference ready, allowed-tester cookie/session reference ready, and harness env gate reference ready are missing in-thread; status route smoke and harness route smoke remain blocked-missing-operator-local-reference-readiness / not-run / approval-gated, public gate state stays unchanged / blocked, and public-release capable remains no.
+
+PL-G2J execution: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2J_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2I.md` records the post-PL-G2I approved allowed-tester route/API harness smoke execution as keep blocked / blocked-missing-operator-local-reference-readiness. It confirms the exact approval label and sanitized output shape are present, but deployed origin reference ready, allowed-tester cookie/session reference ready, and harness env gate reference ready are missing in-thread; status route smoke and harness route smoke remain blocked-missing-operator-local-reference-readiness / not-run / approval-gated, public gate state stays unchanged / blocked, and public-release capable remains no.
+
+PL-G2K execution: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2K_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2J.md` records the post-PL-G2J approved allowed-tester route/API harness smoke execution as approved sanitized route/API harness smoke passed. It confirms the exact approval label, sanitized output shape, deployed origin reference readiness, allowed-tester cookie/session reference readiness, and harness env gate reference readiness are present as value-free confirmations; the operator-local sanitized run returned HTTP 200 / not-started / pass true for the status route and HTTP 200 / passed / count 4 / pass true for the harness route across the reviewed action surfaces. Public gate state stays unchanged / blocked, and public-release capable remains no.
+
+FB-L4 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md` records Start-to-translation smoke as blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md`. It limits the later approved smoke to explicit Start, server-only live target lookup, one bounded `liveChatMessages.list` step, non-empty intake, Free Azure translation, UI feed, usage, stop reason, source attribution, and Stop, while keeping remote mutation/schema apply, deploy/upload, Stripe actions, paid entitlement work, main promotion, and public launch gate flip not-run / approval-gated.
+
+PL-G3 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE.md` records the public-launch remaining gate for Start-to-translation smoke as blocked-no-approval because exact same-thread approval, actual-output sanitized review, and operator-local env references were not complete in that thread. `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_EVIDENCE_FOLLOW_UP.md` rechecks the gate after PL-G2C and keeps the result as keep blocked / blocked-no-approval. `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md` rechecks the gate after PL-G2K and records blocked-empty-polling-intake-after-one-step after approved retry execution: status passed, Start became active, server-only live target lookup returned target presence label present with returned count 5, one bounded `liveChatMessages.list` polling step returned count 0, and Stop passed. It keeps the live/provider execution boundary tied to the FB-L4 ready preflight and keeps public-release capable: no.
+
+FB-L5 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md` records Production/custom deployed smoke as blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_READY_PREFLIGHT.md`. It limits the later approved smoke to deployed target freshness, Free beta route reachability, allowed-tester route/UI visibility, status-only session API, usage/deletion/Creator locked gates, and Start-to-translation gate checks, while keeping deploy/upload, remote mutation/schema apply, session Start, provider/live execution, Stripe actions, paid entitlement work, main promotion, and public launch gate flip not-run / approval-gated.
+
+PL-G4 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md` records the public-launch remaining gate for production/custom deployed smoke as blocked-no-approval because exact same-thread approval, actual-output sanitized review, and operator-local env references were not complete in that thread. It keeps the later execution boundary tied to the FB-L5 ready preflight and keeps public-release capable: no.
+
+PL-G4 evidence follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE_FOLLOW_UP.md` rechecks the production/custom deployed smoke gate after PL-G3 follow-up and keeps it as `keep blocked / blocked-no-approval`. PL-G1 remains completed only for its approved durable boundary, while PL-G2C, PL-G3, and PL-G4 execution evidence remains missing; public gate state stays unchanged / blocked and public-release capable remains no.
+
+FB-L6 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md` records Public launch gate decision as keep blocked / blocked-no-approval with exact-command ready preflight in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_READY_PREFLIGHT.md`. It limits the release-owner decision options to `keep blocked`, `open limited public beta`, and `flip public gate`; because same-thread exact release-owner approval is absent and FB-L2 through FB-L5 execution remains not-run / approval-gated, public launch gate remains unchanged and `public-release capable: no` remains in effect.
+
+PL-G5 follow-up: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md` records the public-launch remaining gate decision as keep blocked / blocked-no-approval. It refreshes the evidence status after PL-G4: PL-G1 remote durable enforcement is remote-apply-and-deployed-smoke-completed, while PL-G2B route/API harness smoke, PL-G3 Start-to-translation smoke, and PL-G4 production/custom deployed smoke remain blocked-no-approval / not-run / approval-gated. Because release-owner exact approval to open limited public beta or flip public gate is absent, public launch gate remains unchanged and public-release capable remains no.
+
+## Blockers
+
+- Remote Supabase migration/apply and deployed durable session/usage enforcement are not verified.
+- Authenticated allowed-tester route/API smoke execution has sanitized PL-G2K operator-local passing evidence for the status route and PL-G2A harness route. Start-to-translation, production/custom deployed smoke, and release-owner launch decision evidence remain missing.
+- Start-to-translation smoke execution remains incomplete even though FB-L4 now has exact-command ready preflight, PL-G3 records the blocked-no-approval execution gate evidence, PL-G3 follow-up records the post-PL-G2C keep blocked / blocked-no-approval recheck, and PL-G3 after PL-G2K records blocked-empty-polling-intake-after-one-step after status/start/target-lookup/polling/stop retry. Free Azure translation and UI/feed confirmation remain not-run / approval-gated because the one bounded polling step returned count 0.
+- Production/custom deployed smoke execution remains not-run / approval-gated even though FB-L5 now has exact-command ready preflight and PL-G4 records the blocked-no-approval execution gate evidence.
+- PL-G5 keeps the public launch gate decision blocked because release-owner exact approval to open limited public beta or flip public gate is absent.
+- Public launch gate decision remains keep blocked / blocked-no-approval because same-thread release-owner approval to open limited public beta or flip public gate is absent.
+- Real provider target lookup and live target lookup remain not-run.
+- Real `liveChatMessages.list` polling remains not-run for the Free beta launch path.
+- Non-empty live comment intake remains not public-proven for the Free beta launch path.
+- Real Azure/OpenAI provider API execution remains not-run for the Free beta launch path.
+- Authenticated allowed-tester route/API smoke with server-owned session/feed/usage/deletion/Creator locked states remains unchecked unless separately approved and fixture-backed.
+- Stripe live Product/Price/Checkout/Customer Portal/webhook/billing mutation and paid entitlement activation remain not-run and out of Free beta scope.
+- Main promotion, deploy/upload, production/custom deployed smoke, and public launch gate flip remain not-run and approval-gated.
+
+## Accepted Risks
+
+- F15 accepts docs/contract-only final QA as the correct scope for this PR because launch flip is explicitly out of scope.
+- F15 accepts local deterministic evidence for implementation shape while marking every live/provider/remote/Stripe path as unchecked.
+- F15 accepts skipping width checks because no visible UI/CSS/layout/copy change was made.
+- F15 accepts that Creator paid unlock remains future closed-beta work, not Free beta launch readiness.
+
+## Unchecked Scope
+
+- Real OAuth connect, live authorization code exchange, and live token persistence smoke were not run in F15.
+- Provider target lookup and live target lookup were not run.
+- `liveChatMessages.list` was not run.
+- Session start smoke was not run.
+- Translation provider API execution and Azure/OpenAI provider API execution were not run.
+- Live/provider execution was not run.
+- Remote mutation, schema migration, and remote Supabase mutation/schema apply were not run.
+- Stripe live action was not run.
+- Deploy/upload, main promotion, production/custom smoke, and public launch gate flip were not run.
+- Browser storage expansion and handoff payload expansion were not added or inspected as evidence.
+
+## Completion Verification
+
+Required F15 closeout checks:
+
+- `node scripts/comment-translator-free-public-beta-final-qa-readiness-contract.mjs`
+- changed-files no-secret scan
+- `git diff --check`
+
+Runtime/code files were not changed, so `npm run lint`, `npx tsc --noEmit`, and `npm run build` are not required by the current `task.md` verification baseline for this docs/contract-only slice.

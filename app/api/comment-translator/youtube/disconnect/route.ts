@@ -9,7 +9,7 @@ import {
 } from "@/lib/comment-translator-youtube-disconnect-runtime";
 import { createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
-import { readCommentTranslatorPrivateLaunchAccess } from "@/lib/comment-translator-private-launch-access-gate";
+import { readCommentTranslatorFreeBetaRuntimeAccess } from "@/lib/comment-translator-private-launch-access-gate";
 import {
   assertCommentTranslatorAbuseRequestAllowed,
   readCommentTranslatorRequestIp
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
     const privateLaunchAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
       surface: "private-launch-gate-direct-call-denials",

@@ -2,9 +2,16 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
+import { readCommentTranslatorFreeBetaRuntimeAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
+import { readYouTubeOAuthCredentialDisconnectResult } from "@/lib/comment-translator-youtube-disconnect-runtime";
+import { readYouTubeAccountIntegrationCredentialReference } from "@/lib/comment-translator-youtube-account-integration-status";
+import {
+  startYouTubeOAuthConnectRedirect,
+  startYouTubeOAuthReconnectRedirect
+} from "@/lib/comment-translator-youtube-oauth-connect-callback";
+import { createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
 import { normalizeLocale } from "@/lib/locale";
-import { normalizeThemePreference } from "@/lib/local-preferences";
+import { normalizeThemePreference, normalizeTimeZonePreference } from "@/lib/local-preferences";
 import { clearRecoverySessionPending, isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getAccountSessionState } from "@/lib/supabase/session";
@@ -46,6 +53,20 @@ function redirectWithAuth(path: string, status: string): never {
 
 function accountRedirect(status: string): never {
   redirectWithAuth("/account", status);
+}
+
+function isUserPreferencesTimeZoneSchemaMissingError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const maybeError = error as { code?: unknown; message?: unknown; details?: unknown; hint?: unknown };
+  const code = typeof maybeError.code === "string" ? maybeError.code : "";
+  const text = [maybeError.message, maybeError.details, maybeError.hint]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ");
+
+  return /time_zone/i.test(text) && (code === "PGRST204" || code === "42703" || /schema cache|column/i.test(text));
 }
 
 function accountIntegrationsRedirect(status: string): never {
@@ -287,8 +308,9 @@ export async function signOutAction() {
 export async function saveLocaleThemePreferenceAction(formData: FormData) {
   const locale = normalizeLocale(readRequiredString(formData, "locale"));
   const theme = normalizeThemePreference(readRequiredString(formData, "theme"));
+  const timeZone = normalizeTimeZonePreference(readRequiredString(formData, "timeZone"));
 
-  if (!locale || !theme) {
+  if (!locale || !theme || !timeZone) {
     accountRedirect("local-preference-required");
   }
 
@@ -306,18 +328,37 @@ export async function saveLocaleThemePreferenceAction(formData: FormData) {
     accountRedirect("sign-in-required");
   }
 
+  const savedAt = new Date().toISOString();
   const { error } = await supabase.from("user_preferences").upsert(
     {
       user_id: user.id,
       schema_version: 1,
       locale,
       theme,
-      updated_at: new Date().toISOString()
+      time_zone: timeZone,
+      updated_at: savedAt
     },
     { onConflict: "user_id" }
   );
 
   if (error) {
+    if (isUserPreferencesTimeZoneSchemaMissingError(error)) {
+      const { error: fallbackError } = await supabase.from("user_preferences").upsert(
+        {
+          user_id: user.id,
+          schema_version: 1,
+          locale,
+          theme,
+          updated_at: savedAt
+        },
+        { onConflict: "user_id" }
+      );
+
+      if (!fallbackError) {
+        accountRedirect("preferences-saved-timezone-pending");
+      }
+    }
+
     accountRedirect("preference-save-error");
   }
 
@@ -326,30 +367,89 @@ export async function saveLocaleThemePreferenceAction(formData: FormData) {
 
 export async function startYouTubeIntegrationConnectAction() {
   const accountSession = await getAccountSessionState();
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
-  if (launchAccess.status === "blocked") {
-    accountIntegrationsRedirect("private-launch-gated");
+  if (accountSession.authStatus !== "signed-in" || !accountSession.user) {
+    accountIntegrationsRedirect("youtube-oauth-sign-in-required");
   }
 
-  accountIntegrationsRedirect("youtube-connect-prepared");
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    accountIntegrationsRedirect("youtube-oauth-private-launch-gated");
+  }
+
+  const oauthRedirect = await startYouTubeOAuthConnectRedirect({
+    accountSessionUserId: accountSession.user.id
+  });
+
+  if (oauthRedirect.status === "blocked") {
+    accountIntegrationsRedirect(oauthRedirect.reason);
+  }
+
+  redirect(oauthRedirect.authorizationUrl);
 }
 
 export async function reconnectYouTubeIntegrationAction() {
   const accountSession = await getAccountSessionState();
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
-  if (launchAccess.status === "blocked") {
-    accountIntegrationsRedirect("private-launch-gated");
+  if (accountSession.authStatus !== "signed-in" || !accountSession.user) {
+    accountIntegrationsRedirect("youtube-oauth-sign-in-required");
   }
 
-  accountIntegrationsRedirect("youtube-reconnect-prepared");
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    accountIntegrationsRedirect("youtube-oauth-private-launch-gated");
+  }
+
+  const oauthRedirect = await startYouTubeOAuthReconnectRedirect({
+    accountSessionUserId: accountSession.user.id
+  });
+
+  if (oauthRedirect.status === "blocked") {
+    accountIntegrationsRedirect(oauthRedirect.reason);
+  }
+
+  redirect(oauthRedirect.authorizationUrl);
 }
 
 export async function disconnectYouTubeIntegrationAction() {
   const accountSession = await getAccountSessionState();
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
-  if (launchAccess.status === "blocked") {
-    accountIntegrationsRedirect("private-launch-gated");
+  if (accountSession.authStatus !== "signed-in" || !accountSession.user) {
+    accountIntegrationsRedirect("youtube-oauth-sign-in-required");
   }
 
-  accountIntegrationsRedirect("youtube-disconnect-prepared");
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccessForAccountSession({ accountSession });
+  if (launchAccess.status === "blocked") {
+    accountIntegrationsRedirect("youtube-oauth-private-launch-gated");
+  }
+
+  const credentialReference = readYouTubeAccountIntegrationCredentialReference({ accountSession });
+  if (credentialReference.status === "unavailable") {
+    accountIntegrationsRedirect(
+      credentialReference.reason === "credential-resolution-disabled"
+        ? "youtube-oauth-disabled"
+        : credentialReference.reason === "credential-reference-env-missing"
+          ? "youtube-oauth-env-missing"
+          : "youtube-oauth-sign-in-required"
+    );
+  }
+
+  const trustedDisconnectRuntime = createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime();
+  const disconnectResult = await readYouTubeOAuthCredentialDisconnectResult({
+    credentialReferenceId: credentialReference.credentialReferenceId,
+    trustedDisconnectAdapter: trustedDisconnectRuntime.trustedDisconnectAdapter,
+    callerAuthorization: credentialReference.callerAuthorization,
+    credentialResolutionDisabled: false
+  });
+
+  if (disconnectResult.status === "disconnected") {
+    accountIntegrationsRedirect("youtube-disconnect-disconnected");
+  }
+
+  if (disconnectResult.status === "already-disconnected") {
+    accountIntegrationsRedirect("youtube-disconnect-already-disconnected");
+  }
+
+  if (disconnectResult.status === "disconnect-failed") {
+    accountIntegrationsRedirect("youtube-disconnect-failed");
+  }
+
+  accountIntegrationsRedirect("youtube-disconnect-unavailable");
 }

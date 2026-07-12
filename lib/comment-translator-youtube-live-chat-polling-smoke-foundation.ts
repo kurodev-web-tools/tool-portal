@@ -24,6 +24,7 @@ export type YouTubeLiveChatPollingSmokeCommandFoundationContract = {
     part: "id,snippet";
     fields: "nextPageToken,pollingIntervalMillis,pageInfo(totalResults,resultsPerPage),items(id,snippet(publishedAt,type))";
   };
+  pageTokenHandling: "optional-server-only-next-page-token-consumed-never-returned";
   outputPolicy: "sanitized-metadata-only";
   ownerBindingCheck: "trusted-status-provider-channel-match-before-live-chat-polling";
   targetLookupPrerequisite: "live-chat-target-lookup-readiness-and-presence-only-evidence-before-live-chat-polling";
@@ -44,6 +45,7 @@ export type YouTubeLiveChatPollingSmokeFetchRequest = {
   providerUrl: "https://www.googleapis.com/youtube/v3/liveChat/messages";
   url: string;
   liveChatId: string;
+  pageToken: string | null;
   query: YouTubeLiveChatPollingSmokeCommandFoundationContract["query"];
   headers: {
     Authorization: string;
@@ -64,6 +66,7 @@ export type YouTubeLiveChatPollingSmokeFoundationRequest = {
   credentialReferenceId: string;
   expectedProviderChannelReference: string;
   liveChatId: string;
+  pageToken?: string | null;
   ownerVerificationSmokeSuccess: boolean;
   liveChatTargetLookupReadinessConfirmed: boolean;
   liveChatTargetPresenceOnlyEvidence: boolean;
@@ -74,6 +77,8 @@ export type YouTubeLiveChatPollingSmokeFoundationRequest = {
   trustedStatusReader: YouTubeLiveTokenResolutionTrustedStatusReader | null;
   tokenMaterialResolver: YouTubeServerOnlyLiveTokenMaterialResolver;
   fetchGoogleApi: YouTubeLiveChatPollingSmokeFetch;
+  beforeNextPageRead?: (firstPageResponseMetadata: YouTubeLiveChatPollingSmokeResponseMetadata) => Promise<void>;
+  waitForProviderPollingInterval?: (responseMetadata: YouTubeLiveChatPollingSmokeResponseMetadata) => Promise<void>;
 };
 
 export type YouTubeLiveChatPollingSmokeReadinessGateRequest = Omit<
@@ -155,14 +160,53 @@ export type YouTubeLiveChatPollingSmokeTokenMaterialAvailabilityGateResult =
       approvedExecutionReadiness: "blocked-until-live-chat-polling-prerequisites-and-token-material-are-available";
     });
 
+type YouTubeLiveChatPollingSmokeItemTypeLabel =
+  | "textMessageEvent"
+  | "superChatEvent"
+  | "superStickerEvent"
+  | "newSponsorEvent"
+  | "memberMilestoneChatEvent"
+  | "messageDeletedEvent"
+  | "userBannedEvent"
+  | "unknown"
+  | "other";
+
+type YouTubeLiveChatPollingSmokeProviderStatusLabel =
+  | "provider-ok"
+  | "provider-auth-rejected"
+  | "provider-permission-rejected"
+  | "provider-http-error";
+
+type YouTubeLiveChatPollingSmokeProviderErrorReasonLabel =
+  | "provider-error-reason-not-returned"
+  | "provider-insufficient-permission"
+  | "provider-live-chat-disabled"
+  | "provider-live-chat-ended"
+  | "provider-quota-or-rate-limited"
+  | "provider-forbidden"
+  | "provider-error-reason-other";
+
+type YouTubeLiveChatPollingSmokeIntakeDiagnosticLabel =
+  | "non-empty-returned-intake"
+  | "empty-provider-ok-no-items"
+  | "empty-provider-ok-next-page-present"
+  | "empty-provider-ok-page-info-nonzero"
+  | "unavailable-provider-not-ok";
+
 export type YouTubeLiveChatPollingSmokeResponseMetadata = {
   httpStatus: number;
   ok: boolean;
+  providerStatusLabel: YouTubeLiveChatPollingSmokeProviderStatusLabel;
+  providerErrorReasonLabel: YouTubeLiveChatPollingSmokeProviderErrorReasonLabel;
+  pageRoleLabel: "initial-page" | "next-page";
   liveChatTarget: "present";
   nextPageToken: "present" | "absent";
   pollingIntervalMillis: number | null;
   returnedItemCount: number;
   pageInfoTotalResults: number | null;
+  pageInfoResultsPerPage: number | null;
+  intakeDiagnosticLabel: YouTubeLiveChatPollingSmokeIntakeDiagnosticLabel;
+  itemTypeDistribution: Partial<Record<YouTubeLiveChatPollingSmokeItemTypeLabel, number>>;
   textPayload: "not-returned-by-design";
 };
 
@@ -186,6 +230,73 @@ export type YouTubeLiveChatPollingSmokeFoundationResult =
         | "aborted-before-provider-access"
         | "failed-bounded-readonly-one-step";
       providerAccess: "not-run" | "liveChatMessages-list-one-step-only";
+      reason: string;
+    });
+
+export type YouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundationResult =
+  | (YouTubeLiveChatPollingSmokeBase & {
+      status: "live-chat-polling-first-page-to-next-page-diagnostics-sanitized-result";
+      ownerBinding: "verified-before-live-chat-polling";
+      liveChatTarget: "present";
+      liveChatPollingDiagnostics:
+        | "executed-bounded-readonly-first-page-to-next-page"
+        | "executed-bounded-readonly-first-page-only";
+      providerAccess:
+        | "liveChatMessages-list-first-page-to-next-page-only"
+        | "liveChatMessages-list-first-page-only";
+      authorizationHandling: "server-only-header-consumed-never-returned";
+      serverFetchBinding: "resolved-for-server-fetch";
+      firstPageResponseMetadata: YouTubeLiveChatPollingSmokeResponseMetadata;
+      nextPageResponseMetadata?: YouTubeLiveChatPollingSmokeResponseMetadata;
+      nextPageRead: "executed-with-first-page-cursor-in-memory-only" | "not-run-first-page-next-page-token-absent";
+      unavailableReason: "none" | "first-page-next-page-token-absent";
+    })
+  | (YouTubeLiveChatPollingSmokeBase & {
+      status: YouTubeLiveChatPollingSmokeBlockingStatus | "live-chat-polling-smoke-failed-sanitized";
+      ownerBinding: "not-checked" | "mismatch" | "verified-before-live-chat-polling";
+      liveChatTarget: "present" | "absent";
+      liveChatPollingDiagnostics: "not-run" | "aborted-before-provider-access" | "failed-bounded-readonly-first-page";
+      providerAccess: "not-run" | "liveChatMessages-list-first-page-only";
+      reason: string;
+    });
+
+export type YouTubeLiveChatPollingFreshCommentBoundedShortPollingAttemptMetadata = Omit<
+  YouTubeLiveChatPollingSmokeResponseMetadata,
+  "pollingIntervalMillis"
+> & {
+  attemptRoleLabel: `attempt-${number}`;
+  pollingIntervalPresenceLabel: "present" | "absent";
+};
+
+type YouTubeLiveChatPollingFreshCommentBoundedShortPollingStopReason =
+  | "non-empty-intake-found"
+  | "bounded-max-attempts-reached"
+  | "provider-not-ok";
+
+export type YouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundationResult =
+  | (YouTubeLiveChatPollingSmokeBase & {
+      status: "live-chat-polling-fresh-comment-bounded-short-polling-diagnostics-sanitized-result";
+      ownerBinding: "verified-before-live-chat-polling";
+      liveChatTarget: "present";
+      liveChatPollingDiagnostics: "executed-bounded-readonly-fresh-comment-short-polling";
+      providerAccess: "liveChatMessages-list-bounded-short-polling-only";
+      authorizationHandling: "server-only-header-consumed-never-returned";
+      serverFetchBinding: "resolved-for-server-fetch";
+      attemptResponseMetadata: YouTubeLiveChatPollingFreshCommentBoundedShortPollingAttemptMetadata[];
+      boundedAttemptCount: number;
+      boundedMaxAttempts: 2 | 3;
+      stopReason: YouTubeLiveChatPollingFreshCommentBoundedShortPollingStopReason;
+      unavailableReason: "none" | "next-page-token-absent" | "provider-not-ok";
+    })
+  | (YouTubeLiveChatPollingSmokeBase & {
+      status: YouTubeLiveChatPollingSmokeBlockingStatus | "live-chat-polling-smoke-failed-sanitized";
+      ownerBinding: "not-checked" | "mismatch" | "verified-before-live-chat-polling";
+      liveChatTarget: "present" | "absent";
+      liveChatPollingDiagnostics:
+        | "not-run"
+        | "aborted-before-provider-access"
+        | "failed-bounded-readonly-fresh-comment-short-polling";
+      providerAccess: "not-run" | "liveChatMessages-list-bounded-short-polling-only";
       reason: string;
     });
 
@@ -213,6 +324,7 @@ export const youtubeLiveChatPollingSmokeCommandFoundationContract = {
   providerUrl,
   httpMethod: "GET",
   query,
+  pageTokenHandling: "optional-server-only-next-page-token-consumed-never-returned",
   outputPolicy: "sanitized-metadata-only",
   ownerBindingCheck: "trusted-status-provider-channel-match-before-live-chat-polling",
   targetLookupPrerequisite: "live-chat-target-lookup-readiness-and-presence-only-evidence-before-live-chat-polling",
@@ -229,14 +341,18 @@ export const youtubeLiveChatPollingSmokeCommandFoundationContract = {
 
 export function createYouTubeLiveChatMessagesListSmokeRequest({
   serverAuthorizationHeader,
-  liveChatId
+  liveChatId,
+  pageToken
 }: {
   serverAuthorizationHeader: string;
   liveChatId: string;
+  pageToken?: string | null;
 }): YouTubeLiveChatPollingSmokeFetchRequest {
+  const normalizedPageToken = typeof pageToken === "string" && pageToken.trim().length > 0 ? pageToken.trim() : null;
   const params = new URLSearchParams({
     liveChatId,
-    ...query
+    ...query,
+    ...(normalizedPageToken ? { pageToken: normalizedPageToken } : {})
   });
 
   return {
@@ -245,6 +361,7 @@ export function createYouTubeLiveChatMessagesListSmokeRequest({
     providerUrl,
     url: `${providerUrl}?${params.toString()}`,
     liveChatId,
+    pageToken: normalizedPageToken,
     query,
     headers: {
       Authorization: serverAuthorizationHeader
@@ -399,7 +516,8 @@ export async function runYouTubeLiveChatPollingSmokeFoundation(
     const providerResponse = await request.fetchGoogleApi(
       createYouTubeLiveChatMessagesListSmokeRequest({
         serverAuthorizationHeader: tokenMaterial.serverAuthorizationHeader,
-        liveChatId: request.liveChatId.trim()
+        liveChatId: request.liveChatId.trim(),
+        pageToken: request.pageToken ?? null
       })
     );
 
@@ -412,7 +530,7 @@ export async function runYouTubeLiveChatPollingSmokeFoundation(
       providerAccess: "liveChatMessages-list-one-step-only",
       authorizationHandling: "server-only-header-consumed-never-returned",
       serverFetchBinding: "resolved-for-server-fetch",
-      responseMetadata: createSanitizedPollingResponseMetadata(providerResponse)
+      responseMetadata: createSanitizedPollingResponseMetadata(providerResponse, request.pageToken ?? null)
     };
   } catch {
     return unresolvedPolling(
@@ -421,6 +539,222 @@ export async function runYouTubeLiveChatPollingSmokeFoundation(
       "verified-before-live-chat-polling",
       "failed-bounded-readonly-one-step",
       "liveChatMessages-list-one-step-only",
+      "provider-fetch-failed"
+    );
+  }
+}
+
+export async function runYouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundation(
+  request: YouTubeLiveChatPollingSmokeFoundationRequest
+): Promise<YouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundationResult> {
+  const readiness = await assessYouTubeLiveChatPollingSmokeReadinessGate(request);
+  if (readiness.status !== "owner-binding-verified-before-live-chat-polling") {
+    return {
+      ...readiness,
+      liveChatPollingDiagnostics:
+        readiness.liveChatPollingSmoke === "aborted-before-provider-access" ? "aborted-before-provider-access" : "not-run"
+    };
+  }
+
+  if (request.ownerAuthorization.status !== "authorized") {
+    return unresolvedFirstPageToNextPageDiagnostics(
+      request,
+      "blocked-owner-authorization",
+      "not-checked",
+      "not-run",
+      "not-run",
+      "owner authorization is not confirmed"
+    );
+  }
+
+  const tokenMaterial = await request.tokenMaterialResolver.resolveServerOnlyTokenMaterial({
+    credentialReferenceId: request.credentialReferenceId,
+    ownerUserId: request.ownerAuthorization.ownerUserId,
+    requiredScope: request.requiredScope
+  });
+
+  if (tokenMaterial.status !== "available") {
+    return unresolvedFirstPageToNextPageDiagnostics(
+      request,
+      tokenMaterial.status,
+      "verified-before-live-chat-polling",
+      "not-run",
+      "not-run",
+      tokenMaterial.reason
+    );
+  }
+
+  try {
+    const firstPageResponse = await request.fetchGoogleApi(
+      createYouTubeLiveChatMessagesListSmokeRequest({
+        serverAuthorizationHeader: tokenMaterial.serverAuthorizationHeader,
+        liveChatId: request.liveChatId.trim(),
+        pageToken: null
+      })
+    );
+    const firstPageResponseMetadata = createSanitizedPollingResponseMetadata(firstPageResponse, null);
+    const firstPageNextPageToken = firstPageResponse.ok ? readNextPageTokenValue(firstPageResponse.body) : null;
+
+    if (!firstPageNextPageToken) {
+      return {
+        ...createBaseResult(request.credentialReferenceId),
+        status: "live-chat-polling-first-page-to-next-page-diagnostics-sanitized-result",
+        ownerBinding: "verified-before-live-chat-polling",
+        liveChatTarget: "present",
+        liveChatPollingDiagnostics: "executed-bounded-readonly-first-page-only",
+        providerAccess: "liveChatMessages-list-first-page-only",
+        authorizationHandling: "server-only-header-consumed-never-returned",
+        serverFetchBinding: "resolved-for-server-fetch",
+        firstPageResponseMetadata,
+        nextPageRead: "not-run-first-page-next-page-token-absent",
+        unavailableReason: "first-page-next-page-token-absent"
+      };
+    }
+
+    await request.beforeNextPageRead?.(firstPageResponseMetadata);
+
+    const nextPageResponse = await request.fetchGoogleApi(
+      createYouTubeLiveChatMessagesListSmokeRequest({
+        serverAuthorizationHeader: tokenMaterial.serverAuthorizationHeader,
+        liveChatId: request.liveChatId.trim(),
+        pageToken: firstPageNextPageToken
+      })
+    );
+
+    return {
+      ...createBaseResult(request.credentialReferenceId),
+      status: "live-chat-polling-first-page-to-next-page-diagnostics-sanitized-result",
+      ownerBinding: "verified-before-live-chat-polling",
+      liveChatTarget: "present",
+      liveChatPollingDiagnostics: "executed-bounded-readonly-first-page-to-next-page",
+      providerAccess: "liveChatMessages-list-first-page-to-next-page-only",
+      authorizationHandling: "server-only-header-consumed-never-returned",
+      serverFetchBinding: "resolved-for-server-fetch",
+      firstPageResponseMetadata,
+      nextPageResponseMetadata: createSanitizedPollingResponseMetadata(nextPageResponse, firstPageNextPageToken),
+      nextPageRead: "executed-with-first-page-cursor-in-memory-only",
+      unavailableReason: "none"
+    };
+  } catch {
+    return unresolvedFirstPageToNextPageDiagnostics(
+      request,
+      "live-chat-polling-smoke-failed-sanitized",
+      "verified-before-live-chat-polling",
+      "failed-bounded-readonly-first-page",
+      "liveChatMessages-list-first-page-only",
+      "provider-fetch-failed"
+    );
+  }
+}
+
+export async function runYouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundation(
+  request: YouTubeLiveChatPollingSmokeFoundationRequest,
+  options: { boundedMaxAttempts?: 2 | 3 } = {}
+): Promise<YouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundationResult> {
+  const readiness = await assessYouTubeLiveChatPollingSmokeReadinessGate(request);
+  if (readiness.status !== "owner-binding-verified-before-live-chat-polling") {
+    return {
+      ...readiness,
+      liveChatPollingDiagnostics:
+        readiness.liveChatPollingSmoke === "aborted-before-provider-access" ? "aborted-before-provider-access" : "not-run"
+    };
+  }
+
+  if (request.ownerAuthorization.status !== "authorized") {
+    return unresolvedFreshCommentBoundedShortPollingDiagnostics(
+      request,
+      "blocked-owner-authorization",
+      "not-checked",
+      "not-run",
+      "not-run",
+      "owner authorization is not confirmed"
+    );
+  }
+
+  const tokenMaterial = await request.tokenMaterialResolver.resolveServerOnlyTokenMaterial({
+    credentialReferenceId: request.credentialReferenceId,
+    ownerUserId: request.ownerAuthorization.ownerUserId,
+    requiredScope: request.requiredScope
+  });
+
+  if (tokenMaterial.status !== "available") {
+    return unresolvedFreshCommentBoundedShortPollingDiagnostics(
+      request,
+      tokenMaterial.status,
+      "verified-before-live-chat-polling",
+      "not-run",
+      "not-run",
+      tokenMaterial.reason
+    );
+  }
+
+  const boundedMaxAttempts = options.boundedMaxAttempts ?? 3;
+  const attemptResponseMetadata: YouTubeLiveChatPollingFreshCommentBoundedShortPollingAttemptMetadata[] = [];
+  let pageToken: string | null = null;
+  let stopReason: YouTubeLiveChatPollingFreshCommentBoundedShortPollingStopReason = "bounded-max-attempts-reached";
+  let unavailableReason: "none" | "next-page-token-absent" | "provider-not-ok" = "none";
+
+  try {
+    for (let attemptIndex = 1; attemptIndex <= boundedMaxAttempts; attemptIndex += 1) {
+      const providerResponse = await request.fetchGoogleApi(
+        createYouTubeLiveChatMessagesListSmokeRequest({
+          serverAuthorizationHeader: tokenMaterial.serverAuthorizationHeader,
+          liveChatId: request.liveChatId.trim(),
+          pageToken
+        })
+      );
+      const responseMetadata = createSanitizedPollingResponseMetadata(providerResponse, pageToken);
+      attemptResponseMetadata.push(createBoundedShortPollingAttemptMetadata(responseMetadata, attemptIndex));
+
+      if (!providerResponse.ok) {
+        stopReason = "provider-not-ok";
+        unavailableReason = "provider-not-ok";
+        break;
+      }
+
+      if (responseMetadata.returnedItemCount > 0) {
+        stopReason = "non-empty-intake-found";
+        break;
+      }
+
+      if (attemptIndex === boundedMaxAttempts) {
+        stopReason = "bounded-max-attempts-reached";
+        break;
+      }
+
+      const nextPageToken = readNextPageTokenValue(providerResponse.body);
+      if (!nextPageToken) {
+        stopReason = "bounded-max-attempts-reached";
+        unavailableReason = "next-page-token-absent";
+        break;
+      }
+
+      await request.waitForProviderPollingInterval?.(responseMetadata);
+      pageToken = nextPageToken;
+    }
+
+    return {
+      ...createBaseResult(request.credentialReferenceId),
+      status: "live-chat-polling-fresh-comment-bounded-short-polling-diagnostics-sanitized-result",
+      ownerBinding: "verified-before-live-chat-polling",
+      liveChatTarget: "present",
+      liveChatPollingDiagnostics: "executed-bounded-readonly-fresh-comment-short-polling",
+      providerAccess: "liveChatMessages-list-bounded-short-polling-only",
+      authorizationHandling: "server-only-header-consumed-never-returned",
+      serverFetchBinding: "resolved-for-server-fetch",
+      attemptResponseMetadata,
+      boundedAttemptCount: attemptResponseMetadata.length,
+      boundedMaxAttempts,
+      stopReason,
+      unavailableReason
+    };
+  } catch {
+    return unresolvedFreshCommentBoundedShortPollingDiagnostics(
+      request,
+      "live-chat-polling-smoke-failed-sanitized",
+      "verified-before-live-chat-polling",
+      "failed-bounded-readonly-fresh-comment-short-polling",
+      "liveChatMessages-list-bounded-short-polling-only",
       "provider-fetch-failed"
     );
   }
@@ -554,8 +888,50 @@ function unresolvedPolling(
   };
 }
 
+function unresolvedFirstPageToNextPageDiagnostics(
+  request: YouTubeLiveChatPollingSmokeFoundationRequest,
+  status: YouTubeLiveChatPollingSmokeBlockingStatus | "live-chat-polling-smoke-failed-sanitized",
+  ownerBinding: "not-checked" | "mismatch" | "verified-before-live-chat-polling",
+  liveChatPollingDiagnostics: "not-run" | "aborted-before-provider-access" | "failed-bounded-readonly-first-page",
+  providerAccess: "not-run" | "liveChatMessages-list-first-page-only",
+  reason: string
+): YouTubeLiveChatPollingFirstPageToNextPageDiagnosticsFoundationResult {
+  return {
+    ...createBaseResult(request.credentialReferenceId),
+    status,
+    ownerBinding,
+    liveChatTarget: request.liveChatId.trim() ? "present" : "absent",
+    liveChatPollingDiagnostics,
+    providerAccess,
+    reason
+  };
+}
+
+function unresolvedFreshCommentBoundedShortPollingDiagnostics(
+  request: YouTubeLiveChatPollingSmokeFoundationRequest,
+  status: YouTubeLiveChatPollingSmokeBlockingStatus | "live-chat-polling-smoke-failed-sanitized",
+  ownerBinding: "not-checked" | "mismatch" | "verified-before-live-chat-polling",
+  liveChatPollingDiagnostics:
+    | "not-run"
+    | "aborted-before-provider-access"
+    | "failed-bounded-readonly-fresh-comment-short-polling",
+  providerAccess: "not-run" | "liveChatMessages-list-bounded-short-polling-only",
+  reason: string
+): YouTubeLiveChatPollingFreshCommentBoundedShortPollingDiagnosticsFoundationResult {
+  return {
+    ...createBaseResult(request.credentialReferenceId),
+    status,
+    ownerBinding,
+    liveChatTarget: request.liveChatId.trim() ? "present" : "absent",
+    liveChatPollingDiagnostics,
+    providerAccess,
+    reason
+  };
+}
+
 function createSanitizedPollingResponseMetadata(
-  providerResponse: YouTubeLiveChatPollingSmokeFetchResult
+  providerResponse: YouTubeLiveChatPollingSmokeFetchResult,
+  pageToken?: string | null
 ): YouTubeLiveChatPollingSmokeResponseMetadata {
   const body = asRecord(providerResponse.body);
   const pageInfo = asRecord(body.pageInfo);
@@ -564,21 +940,207 @@ function createSanitizedPollingResponseMetadata(
     typeof pageInfo.totalResults === "number" && Number.isFinite(pageInfo.totalResults)
       ? pageInfo.totalResults
       : null;
+  const pageInfoResultsPerPage =
+    typeof pageInfo.resultsPerPage === "number" && Number.isFinite(pageInfo.resultsPerPage)
+      ? pageInfo.resultsPerPage
+      : null;
   const pollingIntervalMillis =
     typeof body.pollingIntervalMillis === "number" && Number.isFinite(body.pollingIntervalMillis)
       ? body.pollingIntervalMillis
       : null;
+  const nextPageToken = typeof body.nextPageToken === "string" && body.nextPageToken.length > 0 ? "present" : "absent";
+  const returnedItemCount = items.length;
 
   return {
     httpStatus: providerResponse.status,
     ok: providerResponse.ok,
+    providerStatusLabel: sanitizeProviderStatusLabel(providerResponse),
+    providerErrorReasonLabel: sanitizeProviderErrorReasonLabel(providerResponse),
+    pageRoleLabel: typeof pageToken === "string" && pageToken.trim().length > 0 ? "next-page" : "initial-page",
     liveChatTarget: "present",
-    nextPageToken: typeof body.nextPageToken === "string" && body.nextPageToken.length > 0 ? "present" : "absent",
+    nextPageToken,
     pollingIntervalMillis,
-    returnedItemCount: items.length,
+    returnedItemCount,
     pageInfoTotalResults,
+    pageInfoResultsPerPage,
+    intakeDiagnosticLabel: createIntakeDiagnosticLabel({
+      ok: providerResponse.ok,
+      nextPageToken,
+      pageInfoTotalResults,
+      returnedItemCount
+    }),
+    itemTypeDistribution: createSanitizedItemTypeDistribution(items),
     textPayload: "not-returned-by-design"
   };
+}
+
+function createBoundedShortPollingAttemptMetadata(
+  responseMetadata: YouTubeLiveChatPollingSmokeResponseMetadata,
+  attemptIndex: number
+): YouTubeLiveChatPollingFreshCommentBoundedShortPollingAttemptMetadata {
+  const { pollingIntervalMillis, ...metadata } = responseMetadata;
+  return {
+    ...metadata,
+    attemptRoleLabel: `attempt-${attemptIndex}`,
+    pollingIntervalPresenceLabel: pollingIntervalMillis === null ? "absent" : "present"
+  };
+}
+
+function createIntakeDiagnosticLabel({
+  ok,
+  nextPageToken,
+  pageInfoTotalResults,
+  returnedItemCount
+}: {
+  ok: boolean;
+  nextPageToken: "present" | "absent";
+  pageInfoTotalResults: number | null;
+  returnedItemCount: number;
+}): YouTubeLiveChatPollingSmokeIntakeDiagnosticLabel {
+  if (!ok) {
+    return "unavailable-provider-not-ok";
+  }
+
+  if (returnedItemCount > 0) {
+    return "non-empty-returned-intake";
+  }
+
+  if (nextPageToken === "present") {
+    return "empty-provider-ok-next-page-present";
+  }
+
+  if (typeof pageInfoTotalResults === "number" && pageInfoTotalResults > 0) {
+    return "empty-provider-ok-page-info-nonzero";
+  }
+
+  return "empty-provider-ok-no-items";
+}
+
+function readNextPageTokenValue(body: unknown): string | null {
+  const value = asRecord(body).nextPageToken;
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function sanitizeProviderStatusLabel(
+  providerResponse: YouTubeLiveChatPollingSmokeFetchResult
+): YouTubeLiveChatPollingSmokeProviderStatusLabel {
+  if (providerResponse.ok) {
+    return "provider-ok";
+  }
+
+  if (providerResponse.status === 401) {
+    return "provider-auth-rejected";
+  }
+
+  if (providerResponse.status === 403) {
+    return "provider-permission-rejected";
+  }
+
+  return "provider-http-error";
+}
+
+function sanitizeProviderErrorReasonLabel(
+  providerResponse: YouTubeLiveChatPollingSmokeFetchResult
+): YouTubeLiveChatPollingSmokeProviderErrorReasonLabel {
+  const reasons = extractProviderErrorReasonCandidates(providerResponse.body);
+  if (providerResponse.ok || reasons.length === 0) {
+    return "provider-error-reason-not-returned";
+  }
+
+  for (const reason of reasons) {
+    const label = mapProviderErrorReasonToLabel(reason);
+    if (label !== null) {
+      return label;
+    }
+  }
+
+  return "provider-error-reason-other";
+}
+
+function extractProviderErrorReasonCandidates(body: unknown): string[] {
+  const candidates: string[] = [];
+  const error = asRecord(asRecord(body).error);
+
+  appendProviderReasonCandidate(candidates, error.reason);
+
+  for (const entry of Array.isArray(error.errors) ? error.errors : []) {
+    appendProviderReasonCandidate(candidates, asRecord(entry).reason);
+  }
+
+  for (const entry of Array.isArray(error.details) ? error.details : []) {
+    appendProviderReasonCandidate(candidates, asRecord(entry).reason);
+  }
+
+  return candidates;
+}
+
+function appendProviderReasonCandidate(candidates: string[], value: unknown): void {
+  if (typeof value === "string" && value.trim().length > 0) {
+    candidates.push(value.trim());
+  }
+}
+
+function mapProviderErrorReasonToLabel(
+  reason: string
+): Exclude<
+  YouTubeLiveChatPollingSmokeProviderErrorReasonLabel,
+  "provider-error-reason-not-returned" | "provider-error-reason-other"
+> | null {
+  switch (reason) {
+    case "insufficientPermissions":
+    case "insufficientPermission":
+    case "insufficient_scope":
+      return "provider-insufficient-permission";
+    case "liveChatDisabled":
+    case "liveChatDisabledForChannel":
+      return "provider-live-chat-disabled";
+    case "liveChatEnded":
+    case "chatEnded":
+      return "provider-live-chat-ended";
+    case "quotaExceeded":
+    case "rateLimitExceeded":
+    case "userRateLimitExceeded":
+    case "dailyLimitExceeded":
+      return "provider-quota-or-rate-limited";
+    case "forbidden":
+      return "provider-forbidden";
+    default:
+      return null;
+  }
+}
+
+function createSanitizedItemTypeDistribution(
+  items: unknown[]
+): Partial<Record<YouTubeLiveChatPollingSmokeItemTypeLabel, number>> {
+  const distribution: Partial<Record<YouTubeLiveChatPollingSmokeItemTypeLabel, number>> = {};
+
+  for (const item of items) {
+    const snippet = asRecord(asRecord(item).snippet);
+    const label = sanitizeItemTypeLabel(snippet.type);
+    distribution[label] = (distribution[label] ?? 0) + 1;
+  }
+
+  return distribution;
+}
+
+function sanitizeItemTypeLabel(value: unknown): YouTubeLiveChatPollingSmokeItemTypeLabel {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return "unknown";
+  }
+
+  const normalized = value.trim();
+  switch (normalized) {
+    case "textMessageEvent":
+    case "superChatEvent":
+    case "superStickerEvent":
+    case "newSponsorEvent":
+    case "memberMilestoneChatEvent":
+    case "messageDeletedEvent":
+    case "userBannedEvent":
+      return normalized;
+    default:
+      return "other";
+  }
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

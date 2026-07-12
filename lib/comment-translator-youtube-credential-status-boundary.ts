@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   type TrustedYouTubeOAuthCredentialSupabaseAdapter,
+  YouTubeOAuthCredentialNotFoundError,
   type YouTubeOAuthCredentialSupabaseStatus
 } from "./comment-translator-youtube-token-store-supabase-adapter";
 import {
@@ -13,13 +14,22 @@ import {
 
 export type YouTubeOAuthCredentialStatusUnavailableReason =
   | "trusted-adapter-not-wired"
-  | "trusted-adapter-query-failed"
+  | "credential-reference-env-missing"
   | "auth-unavailable"
   | "caller-not-authenticated"
   | "private-launch-gated";
 
+export type YouTubeOAuthCredentialStatusErrorReason = "trusted-adapter-query-failed";
+
 export type YouTubeOAuthCredentialBrowserReadableStatus =
   | YouTubeOAuthCredentialRefreshBrowserReadableStatus
+  | {
+      status: "disconnected";
+      credentialReferenceId: string;
+      provider: "youtube";
+      reconnectRequired: false;
+      reconnectGuidance: "connect-youtube";
+    }
   | {
       status: "credential-resolution-disabled";
       credentialReferenceId: string;
@@ -32,6 +42,14 @@ export type YouTubeOAuthCredentialBrowserReadableStatus =
       credentialReferenceId: string;
       provider: "youtube";
       reason: YouTubeOAuthCredentialStatusUnavailableReason;
+      reconnectRequired: true;
+      reconnectGuidance: "reconnect-youtube";
+    }
+  | {
+      status: "error";
+      credentialReferenceId: string;
+      provider: "youtube";
+      reason: YouTubeOAuthCredentialStatusErrorReason;
       reconnectRequired: true;
       reconnectGuidance: "reconnect-youtube";
     };
@@ -76,6 +94,8 @@ export const youtubeOAuthCredentialStatusBoundaryContract = {
     "provider-error-body"
   ],
   tokenRefreshRuntime: "server-only-expired-token-refresh-and-reconnect-status",
+  disconnectedState: "credential-reference-not-found",
+  errorState: "trusted-adapter-query-failed",
   rollbackBoundary: "revoke-or-invalidate-unusable-credential-reference",
   loggingPolicy: "no-token-value-logging"
 } as const;
@@ -135,6 +155,37 @@ export function createYouTubeOAuthCredentialStatusUnavailablePayload({
   };
 }
 
+export function createYouTubeOAuthCredentialDisconnectedPayload({
+  credentialReferenceId
+}: {
+  credentialReferenceId: string;
+}): YouTubeOAuthCredentialBrowserReadableStatus {
+  return {
+    status: "disconnected",
+    credentialReferenceId,
+    provider: "youtube",
+    reconnectRequired: false,
+    reconnectGuidance: "connect-youtube"
+  };
+}
+
+export function createYouTubeOAuthCredentialStatusErrorPayload({
+  credentialReferenceId,
+  reason
+}: {
+  credentialReferenceId: string;
+  reason: YouTubeOAuthCredentialStatusErrorReason;
+}): YouTubeOAuthCredentialBrowserReadableStatus {
+  return {
+    status: "error",
+    credentialReferenceId,
+    provider: "youtube",
+    reason,
+    reconnectRequired: true,
+    reconnectGuidance: "reconnect-youtube"
+  };
+}
+
 export async function readYouTubeOAuthCredentialStatus(
   request: ReadYouTubeOAuthCredentialStatusRequest
 ): Promise<YouTubeOAuthCredentialBrowserReadableStatus> {
@@ -170,8 +221,14 @@ export async function readYouTubeOAuthCredentialStatus(
       }),
       trustedRefreshRuntime: request.trustedRefreshRuntime ?? null
     });
-  } catch {
-    return createYouTubeOAuthCredentialStatusUnavailablePayload({
+  } catch (error) {
+    if (error instanceof YouTubeOAuthCredentialNotFoundError) {
+      return createYouTubeOAuthCredentialDisconnectedPayload({
+        credentialReferenceId: request.credentialReferenceId
+      });
+    }
+
+    return createYouTubeOAuthCredentialStatusErrorPayload({
       credentialReferenceId: request.credentialReferenceId,
       reason: "trusted-adapter-query-failed"
     });

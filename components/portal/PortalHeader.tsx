@@ -8,13 +8,13 @@ import { useLocale } from "@/components/portal/LocaleProvider";
 import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
-import { getToolCopy, portalCopy } from "@/lib/portal-copy";
-import type { AccountSessionState } from "@/lib/supabase/session";
-import { sidebarTools } from "@/lib/tools";
+import type { CommentTranslatorAdminShortcutState } from "@/lib/comment-translator-admin-shortcut-shared";
+import { portalCopy } from "@/lib/portal-copy";
+import type { AccountSessionBrowserSafeViewModel } from "@/lib/supabase/session";
 
 type NavigationCopy = (typeof portalCopy)["ja"]["navigation"] | (typeof portalCopy)["en"]["navigation"];
 
-function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState) {
+function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionBrowserSafeViewModel) {
   const signedIn = accountStatus.authStatus === "signed-in";
   const recoveryPending = accountStatus.authStatus === "recovery-pending";
   const email = accountStatus.user?.email ?? null;
@@ -31,10 +31,12 @@ function getAccountCta(copy: NavigationCopy, accountStatus: AccountSessionState)
 
 export function PortalHeader({
   mode = "default",
-  accountStatus
+  accountStatus,
+  adminShortcut
 }: {
   mode?: "default" | "workspace";
-  accountStatus: AccountSessionState;
+  accountStatus: AccountSessionBrowserSafeViewModel;
+  adminShortcut: CommentTranslatorAdminShortcutState;
 }) {
   const { locale } = useLocale();
   const pathname = usePathname();
@@ -45,6 +47,7 @@ export function PortalHeader({
   const isAccountRoute = pathname.startsWith("/account") || pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/reset-password");
   const showTipsButton = !isAccountRoute;
   const showSettingsControls = mode !== "workspace" && !isAccountRoute;
+  const adminShortcutAvailable = adminShortcut.status === "available";
   const title = useMemo(() => {
     if (pathname === "/") {
       return "Kuro Stream Kit";
@@ -74,8 +77,12 @@ export function PortalHeader({
       return copy.toolTitles.account;
     }
 
+    if (pathname.startsWith("/admin")) {
+      return copy.adminDashboard;
+    }
+
     return "Kuro Stream Kit";
-  }, [copy.toolTitles, pathname]);
+  }, [copy.adminDashboard, copy.toolTitles, pathname]);
 
   useEffect(() => {
     if (!drawerOpen) {
@@ -92,17 +99,13 @@ export function PortalHeader({
 
   const navItems = [
     { href: "/", label: copy.home },
-    { href: "/tools", label: copy.tools },
-    ...sidebarTools.map((tool) => ({
-      href: tool.href,
-      label: getToolCopy(tool.id, locale).name
-    }))
+    { href: "/tools", label: copy.tools }
   ];
 
   return (
     <>
       <header className="sticky top-0 z-[70] flex h-16 items-center justify-between gap-3 border-b border-border bg-background/92 px-4 backdrop-blur sm:px-8">
-        <div className="flex min-w-0 items-center gap-3 lg:hidden">
+        <div className="flex min-w-0 flex-1 items-center gap-3 lg:hidden">
           <Link href="/" className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-primary text-sm font-black text-white">
             K
           </Link>
@@ -158,9 +161,9 @@ export function PortalHeader({
             <nav className="mt-6 min-h-0 flex-1 space-y-2 overflow-y-auto pb-4">
               {navItems.map((item) => {
                 const active =
-                  item.href === "/" || item.href === "/tools"
+                  item.href === "/"
                     ? pathname === item.href
-                    : pathname.startsWith(item.href);
+                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link
                     key={item.href}
@@ -175,6 +178,21 @@ export function PortalHeader({
                   </Link>
                 );
               })}
+              {adminShortcutAvailable ? (
+                <Link
+                  href={adminShortcut.href}
+                  onClick={() => setDrawerOpen(false)}
+                  data-comment-translator-admin-shortcut="server-allowlisted-admin-only"
+                  className={[
+                    "block rounded-base border px-3 py-3 text-sm font-bold transition",
+                    pathname.startsWith(adminShortcut.href)
+                      ? "border-primary bg-primary-soft text-primary-strong"
+                      : "border-border bg-surface-muted text-foreground hover:bg-surface"
+                  ].join(" ")}
+                >
+                  {copy.adminDashboard}
+                </Link>
+              ) : null}
             </nav>
             <div className="mb-4 rounded-base border border-border bg-surface-muted/55 p-3">
               <p className="text-sm font-black text-foreground">{accountCta.title}</p>

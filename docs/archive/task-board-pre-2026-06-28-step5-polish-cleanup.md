@@ -1,0 +1,360 @@
+# task.md
+
+このファイルは現在の運用タスクだけを置く。完了済みの詳細ログ、比較メモ、長い経緯、古い next-session prompt は `docs/archive` に寄せる。
+
+## Current Premises
+
+- 作業は `main` 直ではなく feature branch / worktree で行う。
+- 作業前に `git fetch origin --prune`、`AGENTS.md`、このファイルを確認する。
+- 意味のある実装後は、このファイルに実装内容、検証、未確認範囲、残リスク、必要な幅別確認を残す。
+- UI 変更時の確認幅は `390 / 820 / 1024 / 1280 / 1366px` を基本にする。
+- 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
+- secret / service_role key / private credential / OAuth token / authorization code / owner id / provider target metadata / liveChatId は表示・要求・保存しない。
+- Provider target metadata and liveChatId are consumed only through operator-local env / server-only boundaries and must not appear in output, docs, PR bodies, browser storage, or handoff payloads.
+
+## Current Branch
+
+- Current branch: `codex/pre-public-diagnostics-active-session-counts`.
+- Base: latest `origin/codex/comment-translator-free-public-beta-integration`.
+- Scope: Free beta pre-public diagnostics count retention for active-session browser/feed refresh after PR #576.
+- Archive snapshot before this cleanup: `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
+- Public gate state label: unchanged / blocked.
+- Public-release capable label: no.
+
+## Primary Goal
+
+Make Free beta actually usable by approved testers, then decide whether it is ready for broader public access.
+
+Practical meaning:
+
+1. A user can connect YouTube safely.
+2. Connection alone does not start monitoring, polling, translation, or quota use.
+3. The user explicitly presses Start.
+4. The server resolves the owned live target without exposing liveChatId or provider target metadata.
+5. Bounded `liveChatMessages.list` polling receives non-empty comments.
+6. Eligible comments are translated through the Free Azure route.
+7. The UI shows server-owned live comments, usage, source attribution, deletion/ended states, and stop reasons without leaking private provider data.
+8. Durable session/usage/feed persistence works in the deployed target.
+9. Public launch remains blocked until the release owner approves the final gate flip.
+
+Current public-launch decision: `public-release capable: no`.
+
+## Branch Strategy
+
+- Keep `codex/comment-translator-youtube-oauth-integration` as the completed YouTube OAuth Integration Roadmap collection branch.
+- Keep `codex/comment-translator-free-public-beta-integration` as the Free beta collection branch.
+- `P0-0` and `F1` through `F15` are complete on the Free beta collection branch as implementation/readiness work.
+- Next PRs should target `codex/comment-translator-free-public-beta-integration` until Free beta public usability evidence is accepted.
+- After Free beta public usability is accepted, promote `codex/comment-translator-free-public-beta-integration` to `main` through a separate approval-gated promotion PR.
+- Creator closed beta can start after the Free path is proven, or use a later dedicated collection branch if the release owner wants separation.
+
+## Current Free Public Beta State
+
+### Completed Collection Work
+
+| Area | State | Reference |
+| --- | --- | --- |
+| YouTube OAuth Integration Roadmap Task 1-10 | Complete on `codex/comment-translator-youtube-oauth-integration` | `docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_INTEGRATION_FINAL_QA_PROMOTION_READINESS.md` |
+| Free Public Beta P0-0 and F1-F15 | Complete as local/server-only implementation and readiness foundation | `docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md` |
+
+### Current Focus
+
+| ID | Task | Current state |
+| --- | --- | --- |
+| FB-L1 | Free beta public usability preflight | complete |
+| FB-L2 / PL-G1 | Remote durable enforcement | completed with approved remote durable enforcement and deployed fail-closed evidence |
+| FB-L3 / PL-G2 | Allowed-tester route/API smoke | completed through PL-G2K approved sanitized route/API harness smoke |
+| FB-L4 / PL-G3 | Start-to-translation smoke | core path passed: explicit Start, target lookup, bounded polling, Free Azure translation, durable feed persist/readback, browser-visible feed/source attribution after manual refresh |
+| FB-L5 / PL-G4 | Production/custom deployed smoke | preflight complete / execution pending / approval-gated |
+| FB-L6 / PL-G5 | Public launch gate decision | preflight complete / release-owner approval pending / keep blocked |
+
+### Public Launch Remaining Gates
+
+These are the remaining gates before Free public beta can be opened. Each execution item requires same-thread ready preflight, sanitized output review, and exact explicit approval before execution.
+
+| ID | Gate | Current state |
+| --- | --- | --- |
+| PL-G1 | Remote durable enforcement | complete |
+| PL-G2 | Allowed-tester route/API smoke | complete |
+| PL-G3 | Start-to-translation smoke | core evidence passed; pre-public preview follow-ups pending; public-release capable no |
+| PL-G4 | Production/custom deployed smoke | not-run / approval-gated |
+| PL-G5 | Release-owner public launch decision | keep blocked / blocked-no-approval |
+| PL-G6 | Public access change / promotion operation | not-run / approval-gated |
+
+### Pre-Public Preview Follow-Ups
+
+| ID | Follow-up | Current state |
+| --- | --- | --- |
+| PPF-1 | Preview feed should update comments automatically on a safe periodic cadence during an active session, without requiring manual comment refresh. Keep manual refresh as a fallback/control, and stop polling when the session is inactive or stopped. | implemented locally in `codex/public-launch-preview-feed-ux`; local deterministic verification passed |
+| PPF-2 | Preview feed ordering should show newest comments at the top. Current observed ordering is oldest-first, so reverse the display/read ordering before public launch. | implemented locally in `codex/public-launch-preview-feed-ux`; local deterministic verification passed |
+| PPF-3 | Comment timestamps should support a user-facing timezone display setting in a future shared settings/account preference slice, so future tools can reuse the same display preference instead of adding tool-specific timezone controls. Keep rate-limit and quota reset authority on UTC unless explicitly changed; this item is about comment timestamp display convenience. | shared display timezone preference implemented locally on `codex/shared-display-timezone-preference`; display-only, quota authority remains UTC |
+
+### Public Launch Next Flow
+
+Use this order for the remaining Free public beta work unless the release owner explicitly changes priorities.
+
+| Step | Work | Purpose | Approval / verification boundary |
+| --- | --- | --- | --- |
+| 1 | Implement PPF-1 and PPF-2 together | Make the preview usable without manual refresh and show newest comments first. Keep manual refresh as fallback and stop auto-refresh when the session is inactive or stopped. | Local UI/action contracts plus width checks. Do not run Start, live provider polling, translation provider execution, deploy/upload, or public access changes in this implementation slice. |
+| 2 | Decide timestamp display scope | Prefer browser-local comment timestamp display with an explicit timezone label for the public beta minimum. If a persistent timezone choice is pulled forward, implement it as a shared settings/account preference that future tools can read, not as a Comment Translator-only setting. | Local formatting/unit contract and width checks only. Runtime quota and rate-limit reset authority stays UTC. |
+| 3 | Run an approved browser-visible preview retest | After PPF-1/PPF-2 are merged, prove in the operator's real browser that Start/Stop works, comments can be fetched and translated, newest comments appear first, and the feed updates without pressing manual refresh. | Requires exact same-thread approval because it includes Start, live target lookup, `liveChatMessages.list`, Free provider execution, browser-visible confirmation, Stop, and sanitized labels/counts only. |
+| 4 | Run PL-G4 production/custom deployed smoke | Confirm the production/custom deployed target matches the reviewed integration branch and allowed testers can reach the gated UI/API states before public access changes. | Requires exact same-thread approval. If live Start-to-translation is included, the approval must explicitly include Start, provider polling, translation, browser-visible confirmation, and Stop. |
+| 5 | Record PL-G5 release-owner decision | Choose `keep blocked`, `open limited public beta`, or `flip public gate` after reviewing remaining risks and evidence. | Requires release-owner approval. Missing evidence must be explicitly accepted or completed. |
+| 6 | Execute PL-G6 public access change / promotion | Only after PL-G5 approval, perform the reviewed public access change and any required promotion operation. | Separate approval-gated operation. Do not combine with feature work, PL-G4 smoke, Stripe work, or unrelated cleanup. |
+
+Current recommended next PR: implement PPF-1 and PPF-2 together, and include browser-local timestamp display with timezone label only if the implementation remains tightly scoped to the preview feed UI.
+
+## Latest Sanitized Evidence Summary
+
+- Current cursor-prime slice: first successful session poll is treated as cursor prime; existing returned comments are skipped from translation, `nextPageToken` state advances server-only, and only sanitized count metadata such as `preStartSkippedCount` is browser-readable.
+- Duplicate/subsequent tick behavior: session-scoped seen comment ids prevent primed/duplicate comments from being translated on later ticks while still advancing cursor state, so a duplicate-only tick does not block later new B/C/D-style comments.
+- Sanitized diagnostics added to feed/action state: `pollTickStatus`, `returnedCount`, `acceptedCount`, `skippedCount`, `preStartSkippedCount`, reason-count labels for duplicate/language-policy/usage-limit/provider-unavailable, `translatedCount`, `persistedFeedRowCount`, `nextPollDue`, and sanitized `stopReason`. Raw provider payload, raw comments, provider target metadata, and server-only cursor remain not returned/forbidden.
+- Cursor-prime RED/GREEN evidence: `node scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs` first failed before implementation with `polled-comments-available` where cursor-prime skip was expected, then passed after implementation.
+- Follow-up browser finding: after a live retry, the first Start-after comment translated but later comments did not appear and no UI error was shown. Root cause candidate was confirmed at the UI/action boundary: active-session auto/manual comment refresh was reading feed without renewing heartbeat, so the server polling guard could hit `missing-heartbeat` after 45 seconds and keep returning the last safe feed.
+- Follow-up implementation: active-session manual and auto comment refresh now runs `heartbeatCommentTranslatorSessionAction` before `getCommentTranslatorRealCommentsFeedAction`, updates the visible session state from the heartbeat result, and stops feed reads if heartbeat returns an inactive session. No visible UI copy/layout change was added.
+- Verification for this cursor-prime slice passed: `node scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs`, `node scripts/comment-translator-ui-live-provider-runtime-contract.mjs`, `node scripts/comment-translator-azure-normal-translation-execution-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence no-secret scan.
+- Build notes: `npm run build` passed with existing non-blocking warnings for middleware/proxy convention, static export RSC alias skip because `out` is absent for server-runtime build, and webpack cache serialization.
+- Width checks skipped for this cursor-prime slice: no visible UI text, CSS, route layout, rendered copy, or browser storage surface changed; diagnostics are returned as action/feed metadata only.
+- Not run in this cursor-prime slice: live/provider execution, Google target lookup, live `liveChatMessages.list`, OAuth live flow, Azure live provider execution, deploy, migration, remote mutation, and public access change. Any deployed/browser live retry still requires same-thread ready preflight, sanitized output review, and exact explicit approval.
+- PL-G3 feed bridge/session persistence follow-up: normal UI route/action wiring now uses a server-only YouTube live provider runtime adapter instead of fixed unavailable target lookup / polling adapters.
+- F7 bounded `liveChatMessages.list` polling wiring is now connected to the normal UI heartbeat/status/manual refresh path through the trusted server-only live provider adapter.
+- Current implementation slice: Start resolves the owned live target through server-only `liveBroadcasts.list`; heartbeat/status/manual feed refresh run bounded `liveChatMessages.list`, map provider-safe comments to normalized messages, execute the Free Azure/provider policy path, and persist browser-safe feed rows.
+- Sanitized boundary preserved: token values, refresh tokens, authorization headers, liveChatId, provider target metadata, raw provider payloads, raw comment logs, author channel material, browser storage, and handoff payloads remain forbidden/not returned by design.
+- Width checks skipped for this slice: no UI/CSS/rendered route/visible layout change; the only component change passes the selected target language to existing server actions.
+- PR #557 durable safe-feed persistence diagnostics are merged into `origin/codex/comment-translator-free-public-beta-integration`.
+- Initial post-#557 F10 retest isolated the durable feed persist failure to remote durable feed snapshot table shape missing or unavailable, not provider intake/translation failure.
+- Approved remote table-shape confirmation applied the reviewed `supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql` migration only after the table was confirmed missing. Post-apply table shape returned present/all-present/shape-ready labels.
+- Post-migration F10 retest after operator token refresh passed with provider/polling/translation labels, `durableFeedPersistResultLabel durable-feed-persisted`, `durableFeedReadbackLabel readback-ready`, and `feedDisplayRowCount 4`.
+- Browser-visible confirmation retest passed after manual comment refresh in the operator's real browser: `browserFeedVisibleLabel yes`, `browserFeedRowCount 5`, and `browserSourceAttributionVisibleLabel yes`.
+- Before this PPF branch, UI review found that the preview feed was refreshed only by the manual comment refresh control. This branch adds active-session periodic refresh while keeping the manual refresh control as fallback.
+- F9 Real comments UI wiring remains the server-owned safe feed boundary. This PPF slice keeps that boundary and changes only preview refresh cadence, display ordering, and timestamp presentation.
+- Shared display timezone preference slice adds a reusable `v-streamer-tools-time-zone` local preference, account `user_preferences.time_zone` read/write wiring, account display settings UI, login-time remote preference apply, and Comment Translator timestamp preference consumption. This is display-only; quota/rate-limit reset authority remains UTC.
+- Migration-pending fallback follow-up keeps existing language/theme account saves working when deployed before the `time_zone` column is applied. In that case, the UI returns a sanitized timezone-pending status and cross-device timezone persistence remains unavailable until the approved schema apply.
+- Approved remote schema apply for `account_display_timezone_preference` completed through Supabase MCP after read-only precheck showed `time_zone` column/constraint/comment missing. Postcheck returned `time_zone` column ready, format constraint ready, comment ready, and migration history present. Output was sanitized to table/column/constraint/comment readiness labels only.
+- Raw stdout/stderr, raw response bodies, secrets, tokens, cookies, OAuth values, Authorization headers, provider target metadata, liveChatId, owner/session identifiers, raw comments, raw provider payloads, browser storage payloads, URL query values, handoff payloads, quota values, raw provider error bodies/messages/reasons, provider target values, and screenshots containing raw comments were not recorded in docs.
+
+## Current Local Verification
+
+- `node scripts/comment-translator-youtube-active-broadcast-type-contract.mjs`: passed. Covers normal UI Start target lookup and target-lookup foundation using `broadcastStatus=active` as the single YouTube `liveBroadcasts.list` filter while adding `broadcastType=all` so event and persistent active broadcasts are included.
+- `node scripts/comment-translator-youtube-live-chat-target-lookup-command-contract.mjs`: passed after updating the command foundation contract to the same active/all-broadcast-types query shape.
+- `node scripts/comment-translator-youtube-stored-token-live-provider-contract.mjs`: passed after the target lookup query fix.
+- `node scripts/comment-translator-ui-live-provider-runtime-contract.mjs`: passed after the target lookup query fix.
+- `node scripts/comment-translator-youtube-stored-token-live-provider-contract.mjs`: passed. Covers sealed token material persistence, expired-token refresh/persist, legacy irreversible reference fail-closed behavior, and normal UI live provider use of the stored-token resolver for target lookup and polling.
+- `node scripts/comment-translator-ui-live-provider-runtime-contract.mjs`: passed. Confirms normal UI route/action still use the trusted live provider adapter, and the adapter now depends on stored-token server-fetch resolution rather than operator-local Authorization header envs.
+- `npm run lint`: passed.
+- `npx tsc --noEmit`: passed after `npm run build` generated `.next/types`; an earlier parallel `tsc` run raced with build and failed only on missing generated `.next/types` files.
+- `npm run build`: passed. Existing warnings observed: Next.js `middleware` convention deprecation, static export RSC alias skip for server-runtime build, and webpack cache big-string serialization warnings.
+- `git diff --check`: passed with Windows LF-to-CRLF normalization warnings only.
+- Changed-files high-confidence no-secret scan: value leaks not found. The scan reported false positives on forbidden field names and server-only fake fixture labels in contract files, not real token, Authorization, or live provider material values.
+- `node scripts/comment-translator-public-preview-feed-ux-contract.mjs`: passed. Covers PPF-1 active-session 15s safe auto-refresh, manual refresh fallback, PPF-2 newest-first ordering, PPF-3 timestamp timezone labeling, shared timezone preference compatibility, and public gate unchanged.
+- `node scripts/comment-translator-real-comments-ui-wiring-contract.mjs`: passed. Confirms F9 server-owned safe feed boundary remains intact.
+- `node scripts/comment-translator-shared-timezone-preference-contract.mjs`: passed. Confirms shared timezone preference local storage/event helpers, account read/write wiring, migration-pending fallback for `time_zone`, Supabase migration shape, remote preference apply, and Comment Translator timestamp consumption.
+- `node scripts/account-remote-display-settings-contract.mjs`: passed. Confirms remote account display settings include locale/theme/timezone and reuse shared local preference keys.
+- `node scripts/account-preferences-shell-contract.mjs`: passed. Confirms account display settings UI includes timezone alongside language/theme and posts the shared timezone value.
+- `node scripts/local-preference-adapter-contract.mjs`: passed. Confirms local preference snapshot includes locale/theme/timezone and shared timezone read/write helpers.
+- `node scripts/supabase-auth-first-slice-contract.mjs`: passed. Confirms account preference persistence includes `time_zone` in the auth-backed display settings slice.
+- `node scripts/supabase-auth-boundary-design-contract.mjs`: passed. Confirms the auth boundary contract remains intact.
+- `node scripts/account-auth-public-readiness-contract.mjs`: passed. Confirms public account readiness contracts include the timezone preference UI and hidden form value.
+- `node scripts/comment-translator-azure-normal-translation-execution-contract.mjs`: passed. Confirms session-scoped duplicate `commentId` suppression before provider execution, usage handoff estimates for new comments only, and unique safe feed rows across repeated polling cycles.
+- Session-scoped text dedupe/cache follow-up: same normalized text in the same active session now reuses the server-owned provider execution cache across polling ticks even when YouTube comment ids differ. The duplicate text row remains a distinct browser-safe feed row, provider call estimate stays 0 for the reused row, translated count remains 1 for the displayed reused translation, and UI cache status maps to `hit`.
+- Session text cache runtime diagnostics follow-up: normal UI/feed diagnostics now expose sanitized count-only translation cache/provider execution metadata through `liveProviderDiagnostics`: `providerCallCount`, `cacheHitCount`, `cacheMissCount`, `duplicateTextCacheHitCount`, `duplicateTextSkippedCount`, and `languagePolicySkippedCount`. Same-batch duplicate normalized text now keeps only the first same-text item for provider/cache/feed handling and counts later same-batch duplicates as duplicate-text skipped without exposing raw text, normalized hashes, or cache lookup key material.
+- `node scripts/comment-translator-session-start-stop-contract.mjs`: passed. Confirms the session start/stop contract remains intact after adding dedupe-state cleanup on Stop.
+- `npm run lint`: passed.
+- `npx tsc --noEmit`: passed.
+- `npm run build`: passed. Existing warnings observed: Next.js `middleware` convention deprecation and static export RSC alias skip for server-runtime build.
+- `git diff --check`: passed with Windows LF-to-CRLF normalization warnings only.
+- Changed-files high-confidence no-secret scan: passed for 5 changed files.
+- Session text cache runtime diagnostics verification: `node scripts/comment-translator-azure-normal-translation-execution-contract.mjs`, `node scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs`, `node scripts/comment-translator-ui-live-provider-runtime-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `git diff --check` passed. `git diff --check` reported Windows LF-to-CRLF normalization warnings only. Changed-files high-confidence no-secret scan reported no token/Authorization/service-role/private-key values; live-target-value matches were classified as 3 server-only fixture labels and 0 non-fixture findings.
+- Pre-public diagnostics / target-language skip verification: `node scripts/comment-translator-azure-normal-translation-execution-contract.mjs`, `node scripts/comment-translator-ui-live-provider-runtime-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs`, `node scripts/comment-translator-real-comments-ui-wiring-contract.mjs`, `node scripts/comment-translator-public-preview-feed-ux-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, and `npm run build` passed. Build kept existing non-blocking warnings for static export alias skip, middleware/proxy convention, webpack cache serialization, and Supabase Edge Runtime API use.
+- Active-session diagnostics count follow-up verification on 2026-06-28: `node scripts/comment-translator-ui-live-provider-runtime-contract.mjs`, `node scripts/comment-translator-real-comments-ui-wiring-contract.mjs`, `node scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs`, `node scripts/comment-translator-public-preview-feed-ux-contract.mjs`, `node scripts/comment-translator-azure-normal-translation-execution-contract.mjs`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence no-secret scan passed. `npm run build` kept existing non-blocking warnings for the middleware/proxy convention, static export RSC alias skip because `out` is absent for server-runtime build, and webpack cache serialization.
+- Migration-pending fallback follow-up verification: `node scripts/comment-translator-shared-timezone-preference-contract.mjs`, account-related contracts, `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, and changed-files high-confidence no-secret scan passed after adding the fallback.
+- Width checks via local dev server `http://127.0.0.1:3218/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for the approved browser-visible retest.
+- Shared display timezone preference width checks via local dev server `http://127.0.0.1:3027/account/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, timezone select visible, and console error/warn count `0`.
+- Shared display timezone preference width checks via local dev server `http://127.0.0.1:3027/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Local route rendered the private-launch fallback because no safe authenticated allowed-tester session was available; preview dock active-session visual confirmation remains gated for an approved browser-visible retest.
+- Session `commentId` dedupe slice width checks: not run because this slice changed only server-side execution/session cleanup contracts and no visible UI, CSS, rendered route, or layout.
+- Session text dedupe/cache slice width checks: not run because this slice changed only server-owned translation execution cache state and existing action/feed metadata mapping. No visible UI copy, CSS, route layout, rendered structure, or browser storage surface changed.
+- Session text cache runtime diagnostics slice width checks: not run because this slice changed only server-owned duplicate selection and browser-readable action/feed metadata counts under the existing diagnostics object. No visible UI copy, CSS, route layout, rendered structure, or browser storage surface changed.
+- Pre-public diagnostics / target-language skip width checks via local dev server `http://127.0.0.1:3218/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` rendered the private-launch fallback because no safe authenticated allowed-tester session was available; each width had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. Active-session diagnostics display is covered by UI/action contract because local authenticated allowed-tester state was unavailable.
+- Active-session diagnostics count follow-up width checks via local dev server `http://127.0.0.1:3218/tools/comment-translator/`: `390 / 820 / 1024 / 1280 / 1366px` rendered the private-launch fallback because no local authenticated allowed-tester state was available; each width had horizontal overflow `0`, framework overlay absent, and console error/warn count `0`. The active-session diagnostics card itself is covered by deterministic UI/action/feed contracts for this slice.
+- Remote schema apply for `supabase/migrations/20260624000000_account_display_timezone_preference.sql`: approved and applied through Supabase MCP. Precheck showed `time_zone` column/constraint/comment missing; postcheck showed column/constraint/comment ready and migration history present.
+- Post-deploy normal UI retest reported by operator on 2026-06-27: Start enters the active/auto-refresh UI state, but automatic refresh and manual comment refresh did not show fetched or translated comments.
+- Follow-up root-cause slice: normal UI live provider wiring is present on the integration branch, but the current runtime still uses server-only operator-local token material references for Google API fetch authorization. The durable OAuth credential store exposes sanitized status/ciphertext references only and does not yet implement production token decrypt/refresh material resolution. This means deployed normal UI can fail closed before or during target lookup/polling even when connection status is available.
+- Follow-up diagnostic fix: feed refresh now preserves sanitized live provider unavailable state instead of collapsing it into an empty feed, and the live provider runtime checks server-only token material expiry references before attempting provider fetches. Browser-readable output remains limited to status/unavailable reason/count metadata.
+- Same-day first-Start over-limit follow-up: reproduced that pressing Start while a stale durable active session still exists returned `session-limit` before heartbeat-stale cleanup. Fixed session start to stop the stale active session with sanitized `missing-heartbeat` before applying active-session limits, so a follow-up Start can create a fresh session instead of showing an over-limit state.
+- Start retry copy follow-up: repeated Start attempts can hit the abuse/rate-limit guard after the session fails to start. The UI now separates sanitized rate-limit metadata from Free usage-limit copy so this state no longer appears as a daily/session usage cap.
+- Start stopped-state visibility follow-up: if Start returns a sanitized stopped session, the operator panel now surfaces the stop reason in the first viewport and clears browser-visible comments to `session-not-active` instead of leaving the initial provider-polling fallback visible.
+- Stored-token live provider follow-up: normal UI live provider runtime now resolves Google API server-fetch authorization from the owner-bound `credentialReferenceId` through the trusted Supabase token-store row and server-only sealed token material resolver instead of operator-local Authorization header envs. Expired access material is refreshed server-side and the refreshed sealed material is persisted back to the trusted token-store row before target lookup/polling continues.
+- OAuth callback persistence follow-up: future reconnects persist decryptable server-only sealed token material in the existing trusted token-store fields. Existing legacy rows that contain irreversible reference-only material cannot be recovered by code and must fail closed with sanitized reconnect-required/unavailable behavior until the user reconnects.
+- Build hygiene follow-up: the client comment translator dock no longer imports the server-only real-comments UI wiring module for inactive/unavailable feed placeholders; the browser-safe placeholder builder is available from the shared feed module.
+- Active broadcast lookup follow-up: deployed Start failure screenshot showed the browser-safe `no-live-broadcast` path after reconnect. Code review found the normal UI `liveBroadcasts.list` Start lookup combined multiple filter parameters and did not include all broadcast types. Runtime and command foundation now use the sanitized active-status query shape that keeps authorization server-only and includes event plus persistent broadcasts.
+- Pre-public diagnostics / target-language skip slice: target-language language-policy skipped comments are counted in sanitized diagnostics but are not persisted or displayed as normal feed rows. Same-batch duplicate rows remain hidden and counted through duplicate text diagnostics. The dock now has a count-only pre-public diagnostics surface inside `Details and test input` for provider/cache/duplicate/language-policy/translated/persisted row counts only.
+- Active-session diagnostics count follow-up after PR #576: Azure/provider translation execution now attaches count-only `liveProviderDiagnostics` to the safe feed state before feed persistence, and the feed attach helper preserves the last non-empty provider/cache/duplicate/language-policy/translated/persisted counts when a later active-session feed read has an empty diagnostics step. This keeps the real-browser diagnostics card from being cleared by a post-heartbeat empty feed read while keeping raw comments, provider payloads, provider target metadata, cursor/key material, owner ids, tokens, cookies, browser storage, and Authorization values out of browser-readable output.
+- Diagnostics count UI policy: this is a pre-public temporary debug surface. Before public launch it must be removed or gated so normal public UI does not expose operator diagnostics by default.
+
+Detailed PL-G3 evidence remains in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`. The pre-cleanup task-board snapshot is archived at `docs/archive/task-board-pre-2026-06-24-pl-g3-post-557-cleanup.md`.
+
+## Current Blockers / Residual Risks
+
+- Public-release capable remains no until PPF-1/PPF-2 are implemented and verified, PL-G4 production/custom deployed smoke passes or is explicitly accepted as missing, PL-G5 release-owner approval is recorded, and PL-G6 public access change is separately approved and executed.
+- The browser-visible PL-G3 feed confirmation is valid only after manual comment refresh in the current UI. It does not prove automatic realtime or periodic feed refresh.
+- Shared display timezone preference remote schema is applied. Runtime quota enforcement remains UTC-based; timezone is display convenience only.
+- Session-scoped `commentId` dedupe is implemented locally in the Free Azure execution bridge: repeated YouTube-safe `commentId` values are skipped before provider execution, usage handoff estimates count only newly accepted comments, and server-owned safe feed rows are merged uniquely by `commentId` for the active session. Stop/session cleanup clears the dedupe state. `nextPageToken` remains server-only and unchanged.
+- Session-scoped text dedupe/cache is implemented locally in the Free Azure execution bridge: same normalized text and target/language-policy cache key material in the same active session reuses the server-owned provider execution cache before provider execution, while preserving separate safe feed rows for distinct YouTube comment ids. Raw text/key material remains server-only and is not browser-readable.
+- No deploy/upload, OAuth live flow, live provider execution, live token refresh against Google, Stripe action, public access change, main promotion, PL-G4, PL-G5, PL-G6, or launch gate flip was run in this stored-token live provider slice.
+- Existing connected YouTube credentials created before sealed token material persistence may contain irreversible reference-only material. Those rows must fail closed with sanitized unavailable/reconnect-required behavior; reconnect is required before the stored-token live provider path can fetch using decryptable server-only material.
+- No deploy/upload, OAuth live flow, live provider execution, Google target lookup, `liveChatMessages.list`, Azure translation provider execution, public access change, main promotion, PL-G4, PL-G5, PL-G6, or launch gate flip was run in this active broadcast lookup query fix slice.
+
+## Later Work
+
+### Creator Closed Beta / Before Creator Public Paid
+
+| ID | Task | Status |
+| --- | --- | --- |
+| C1 | Durable paid entitlement store | pending |
+| C2 | Stripe live Checkout / Portal / webhook closed-beta gate | pending / gated |
+| C3 | Paid usage and monthly reset | pending |
+| C4 | AI natural translation provider route | pending / gated |
+| C5 | OBS overlay token runtime | pending |
+| C6 | OBS overlay UI route | pending |
+| C7 | Moderator share token runtime | pending |
+| C8 | Moderator share UI route | pending |
+| C9 | Custom dictionary minimum | pending |
+| C10 | Priority display polish | pending |
+| C11 | Simple 7-day history | pending |
+| C12 | Creator closed beta final QA | pending |
+
+### Creator Public Paid Launch
+
+| ID | Task | Status |
+| --- | --- | --- |
+| CP1 | Creator paid launch readiness | pending |
+| CP2 | Creator public paid gate flip | pending / gated |
+
+### Public-after-P1 / Post-MVP
+
+| ID | Task | Status |
+| --- | --- | --- |
+| P1-1 | `streamList` primary migration | later |
+| P1-2 | 30-day history and search | later |
+| P1-3 | CSV export | later |
+| P1-4 | Overlay templates | later |
+| P1-5 | Dictionary import and suggestions | later |
+| P1-6 | AI operations helpers | later |
+| P1-7 | Provider comparisons | later |
+| P1-8 | Platform expansion | later |
+| P1-9 | Voice translation / subtitle work | later |
+
+## Account Limits / Entitlement Control
+
+- Per-account judgment is server-owned: authenticated caller authorization binds work to the owner account, and browser-readable output must not expose owner ids, provider channel ids, provider target metadata, liveChatId, OAuth values, tokens, or billing identifiers.
+- Free public beta limit authority is the Free entitlement baseline plus durable usage/session state. Current Free caps: 30 minutes per user per day, 30 minutes per session, 1 active session per user, 30 translated messages per minute, and 20,000 translated characters per month.
+- Enforcement happens before Start, while the session is active, during status/heartbeat/feed usage checks, and before provider translation execution. If durable usage/session state is unavailable or unreadable, the safe behavior is fail closed with sanitized stop/status output.
+- Free beta usage accounting uses a fixed UTC quota day for enforcement and ledger accounting. UI/docs may separately explain local-day perception, but runtime caps and durable aggregation stay UTC-based until an explicitly approved policy change.
+- Chargeable session elapsed is bounded by the active heartbeat window and Free session cap. If heartbeat stops and Stop/cleanup happens later, the ledger records the chargeable end of use rather than the late cleanup time, preventing an abandoned session from consuming the next UTC day.
+- Paid access after C1/C3 should be controlled by signed Stripe webhook evidence, durable paid entitlement rows, paid usage counters, monthly reset state, and server-owned fallback/stop reasons. Until that durable paid authority is implemented and verified, incomplete or unreadable paid state must degrade safely to Free or paid-inactive behavior, not public paid limits.
+
+## Approval-Gated Actions
+
+Do not perform the following without same-thread ready preflight, sanitized output review, and exact explicit approval:
+
+- Google OAuth live connect execution.
+- YouTube OAuth live connect execution.
+- live authorization code exchange.
+- live token persistence smoke.
+- provider target lookup.
+- liveChatId lookup / live target lookup.
+- session start smoke.
+- real `liveChatMessages.list`.
+- translation provider API execution.
+- live/provider execution.
+- deploy/upload.
+- production/custom deployed smoke.
+- remote mutation.
+- remote schema migration / Supabase migration apply.
+- Stripe live-mode action.
+- Product/Price creation.
+- Checkout execution.
+- Customer Portal redirect.
+- webhook registration.
+- billing setting mutation.
+- public launch gate flip.
+- promotion to `main`.
+
+## Canonical Documents
+
+- Free beta final QA/readiness: `docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md`
+- Free beta public usability preflight: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md`
+- Free beta PL-G1 remote durable enforcement execution evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md`
+- Free beta PL-G2K approved allowed-tester route/API harness smoke execution: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G2K_APPROVED_ALLOWED_TESTER_ROUTE_API_HARNESS_SMOKE_EXECUTION_AFTER_PL_G2J.md`
+- Free beta PL-G3 Start-to-translation smoke completion after PL-G2K: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md`
+- Free beta PL-G4 production/custom deployed smoke evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G4_PRODUCTION_CUSTOM_DEPLOYED_SMOKE.md`
+- Free beta PL-G5 public launch gate decision evidence: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`
+- Public beta gap audit: `docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md`
+- Public requirements: `docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md`
+- Future design/decision log: `docs/future/COMMENT_TRANSLATOR_API_INTEGRATION_LIMITS.md`
+
+## Initial Release Decisions
+
+These decisions are fixed for the current public-release roadmap unless the user explicitly changes them:
+
+- Free public beta ships before Creator public paid launch.
+- Creator price intent can be shown during Free public beta as locked/waitlist UI, but paid access starts with closed beta.
+- Free plan starts conservatively. Treat `20,000 characters/month` as an added monthly character cap on top of existing time/per-minute caps, not a replacement for `30 min/day/user`, `30 min/session`, `1 active session/user`, and `30 translated messages/min`.
+- Source languages: initial selectable source languages are JA / EN / KR / CN.
+- Target languages: initial selectable target languages include JA / EN.
+- Source and target cannot be the same. UI and server validation must reject same-language pairs.
+- Provider scope: YouTube ships first; Twitch remains future unless explicitly pulled into public-release scope.
+- YouTube connection alone must not start background monitoring, polling, translation, or quota use.
+- Raw text logging: disabled by default; diagnostics are short-lived and sanitized.
+- Account path: `/account/integrations` is the preferred provider settings entry; `/tools/comment-translator` should also show a direct integration CTA when YouTube is not connected.
+- Translation provider policy: Free routes to Azure Translator primary; Creator/Paid routes to OpenAI mini primary with Azure Translator as recoverable-error fallback unless later provider policy changes.
+- `liveChatMessages.list` is acceptable for Free MVP when bounded by `pollingIntervalMillis`, server-only cursor/liveChatId handling, session limits, and quota/budget stop. `streamList` is Public-after-P1 primary migration work.
+- Public UI must not expose liveChatId entry. Any debug/manual target path must be isolated from public build and gated.
+- MVP should not persist author channel id, author channel URL, or author profile image URL. If BAN-event historical updates require an author key, use a short-lived server-only/session-scoped hash design or defer past-comment bulk updates to P1.
+
+## Explicit Initial-Release Exclusions
+
+- Background provider monitoring after account connection.
+- Automatic session start when a connected user begins streaming.
+- Multiple concurrent streams per user.
+- User-provided Google Cloud project or OAuth client.
+- Manual channel ID or liveChatId entry as the default public flow.
+- Unlimited polling or broad polling loops.
+- Provider usage charging and paid-priority scheduling.
+- Translation of all languages by default.
+- Raw text logging by default.
+- Client storage of tokens, provider identifiers, liveChatId, owner user id, provider channel id, service_role key, Authorization header, or provider target metadata.
+- Delayed translation queue for skipped comments.
+- Twitch runtime before YouTube public path is proven, unless separately approved.
+- CSV export, 30-day history, advanced search, AI summaries, reply suggestions, voice translation, and multi-platform runtime in the Free public beta.
+
+## Verification Baseline
+
+- Docs/task-board only:
+  - targeted markdown/content inspection
+  - changed-files no-secret scan
+  - `git diff --check`
+- Runtime or code changes:
+  - relevant contract script(s)
+  - changed-files no-secret scan
+  - `npm run lint`
+  - `npx tsc --noEmit`
+  - `npm run build`
+  - `git diff --check`
+- UI changes:
+  - relevant UI/action contract(s)
+  - width checks at `390 / 820 / 1024 / 1280 / 1366px`
+- Live/provider execution:
+  - same-thread / operator-local same-command-process ready preflight
+  - sanitized output review
+  - explicit in-thread approval
+  - sanitized evidence only
+
+## Contract Compatibility Anchors
+
+- Keep `import "server-only";` on server-only translator / YouTube runtime boundaries.
+- Keep provider requests input-source independent unless the current task explicitly scopes the bridge.
+- Keep token values out of client components, docs, fixtures, PR bodies, browser storage, and command output.
+- Treat credential status and provider target metadata as sanitized metadata only.
+- Do not overclaim readiness-only or token-resolution-only evidence as live/provider execution.
+- Do not add quota write, billing integration, remote Supabase mutation/migration, browser storage expansion, or handoff payload expansion unless the current roadmap task explicitly scopes it.

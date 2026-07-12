@@ -1,5 +1,5 @@
 import { normalizeLocale, type Locale } from "@/lib/locale";
-import { normalizeThemePreference, type ThemePreference } from "@/lib/local-preferences";
+import { normalizeThemePreference, normalizeTimeZonePreference, type ThemePreference, type TimeZonePreference } from "@/lib/local-preferences";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -15,16 +15,58 @@ export type AccountSessionState = {
   remotePreferences: {
     locale: Locale | null;
     theme: ThemePreference | null;
+    timeZone: TimeZonePreference | null;
     updatedAt: string | null;
   } | null;
   remotePreferenceStatus: "not-signed-in" | "loaded" | "unavailable";
 };
 
+export type AccountSessionBrowserSafeViewModel = {
+  readonly configStatus: AccountSessionState["configStatus"];
+  readonly missingEnv: readonly string[];
+  readonly authStatus: AccountSessionState["authStatus"];
+  readonly user: {
+    readonly email: string | null;
+  } | null;
+  readonly remotePreferences: AccountSessionState["remotePreferences"];
+  readonly remotePreferenceStatus: AccountSessionState["remotePreferenceStatus"];
+};
+
 type UserPreferenceRow = {
   locale: string | null;
   theme: string | null;
+  time_zone?: string | null;
   updated_at: string | null;
 };
+
+function isUserPreferencesTimeZoneSchemaMissingError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const maybeError = error as { code?: unknown; message?: unknown; details?: unknown; hint?: unknown };
+  const code = typeof maybeError.code === "string" ? maybeError.code : "";
+  const text = [maybeError.message, maybeError.details, maybeError.hint]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ");
+
+  return /time_zone/i.test(text) && (code === "PGRST204" || code === "42703" || /schema cache|column/i.test(text));
+}
+
+export function createBrowserSafeAccountSessionViewModel(accountSession: AccountSessionState): AccountSessionBrowserSafeViewModel {
+  return {
+    configStatus: accountSession.configStatus,
+    missingEnv: [...accountSession.missingEnv],
+    authStatus: accountSession.authStatus,
+    user: accountSession.user
+      ? {
+          email: accountSession.user.email
+        }
+      : null,
+    remotePreferences: accountSession.remotePreferences,
+    remotePreferenceStatus: accountSession.remotePreferenceStatus
+  };
+}
 
 export async function getAccountSessionState(): Promise<AccountSessionState> {
   const config = getSupabasePublicConfig();
@@ -80,12 +122,16 @@ export async function getAccountSessionState(): Promise<AccountSessionState> {
     };
   }
 
-  const { data, error } = await supabase
+  const preferenceResult = await supabase
     .from("user_preferences")
-    .select("locale,theme,updated_at")
+    .select("locale,theme,time_zone,updated_at")
     .eq("user_id", user.id)
     .maybeSingle();
-  const row = data as UserPreferenceRow | null;
+  const fallbackPreferenceResult = preferenceResult.error && isUserPreferencesTimeZoneSchemaMissingError(preferenceResult.error)
+    ? await supabase.from("user_preferences").select("locale,theme,updated_at").eq("user_id", user.id).maybeSingle()
+    : null;
+  const preferenceError = fallbackPreferenceResult?.error ?? preferenceResult.error;
+  const row = (fallbackPreferenceResult?.data ?? preferenceResult.data) as UserPreferenceRow | null;
 
   return {
     configStatus: "ready",
@@ -96,13 +142,14 @@ export async function getAccountSessionState(): Promise<AccountSessionState> {
       email: user.email ?? null
     },
     remotePreferences:
-      row && !error
+      row && !preferenceError
         ? {
             locale: normalizeLocale(row.locale),
             theme: normalizeThemePreference(row.theme),
+            timeZone: normalizeTimeZonePreference(row.time_zone ?? null),
             updatedAt: row.updated_at
           }
         : null,
-    remotePreferenceStatus: error ? "unavailable" : "loaded"
+    remotePreferenceStatus: preferenceError ? "unavailable" : "loaded"
   };
 }

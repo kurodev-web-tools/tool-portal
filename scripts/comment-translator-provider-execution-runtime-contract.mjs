@@ -12,6 +12,10 @@ const providerBoundaryPath = "lib/comment-translator-provider-boundary.ts";
 const usageLedgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
 const boundedPollingPath = "lib/comment-translator-youtube-bounded-polling-session-runtime.ts";
 const requirementsPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md";
+const plG3CompletionPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md";
+const readyPreflightPath =
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md";
 const taskPath = "task.md";
 const sharedTsModuleCache = new Map();
 
@@ -24,7 +28,7 @@ function exists(relativePath) {
 }
 
 function changedFiles() {
-  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"]
@@ -221,6 +225,7 @@ const usage = {
   },
   aiUsageEstimate: {
     translatedMessageEstimate: 0,
+    providerInputCharacterEstimate: 0,
     translatedCharacterEstimate: 0,
     estimatedCostMicros: 0,
     rawCommentText: "never-recorded-by-design"
@@ -328,6 +333,17 @@ assert.equal(firstRun.retryCount, 1);
 assert.equal(firstRun.errorCounts.recoverable, 0);
 assert.equal(firstRun.errorCounts.terminal, 0);
 assert.deepEqual(
+  firstRun.terminalErrorCodeCounts,
+  {
+    invalidRequest: 0,
+    unsupportedLanguage: 0,
+    providerNotConfigured: 0,
+    credentialMissing: 0,
+    policyBlocked: 0
+  },
+  "successful run exposes zeroed sanitized terminal error code counts"
+);
+assert.deepEqual(
   firstRun.batches.map((batch) => batch.providerRequestCount),
   [2],
   "runtime groups provider work into bounded batches"
@@ -383,6 +399,8 @@ assert.equal(
   "never-recorded-by-design",
   "AI usage estimate does not record raw comments"
 );
+assert.equal(firstRun.usageRecorded.providerRequestEstimate, true);
+assert.equal(firstRun.usageRecorded.aiUsageEstimate, true);
 
 const secondRun = await runtime.executeCommentTranslatorProviderBatch({
   provider,
@@ -410,6 +428,111 @@ assert.equal(secondRun.status, "completed");
 assert.equal(secondRun.providerCallCount, 0, "cache hit does not call provider again");
 assert.equal(secondRun.cacheHitCount, 1, "sanitized cache key serves repeated translation");
 assert.equal(secondRun.translatedCount, 1, "cache hit still yields a translated result");
+assert.equal(secondRun.usageRecorded.providerRequestEstimate, false, "cache hits do not record provider usage");
+assert.equal(secondRun.usageRecorded.aiUsageEstimate, false, "cache hits do not record AI usage");
+const ledgerRecordsAfterCacheHit = ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests();
+assert.equal(
+  ledgerRecordsAfterCacheHit.length,
+  ledgerRecordsAfterFirstRun.length,
+  "cache-hit translations do not append usage ledger records"
+);
+assert.equal(
+  ledgerRecordsAfterCacheHit.filter((record) => record.type === "ai-usage-estimated").length,
+  1,
+  "cache-hit translations do not append per-minute or monthly AI usage estimates"
+);
+
+const cacheHitAtCapRun = await runtime.executeCommentTranslatorProviderBatch({
+  provider,
+  cache,
+  callerAuthorization,
+  sessionReferenceId: "cts_provider_execution_contract_001",
+  occurredAtMs: 35_000,
+  usage: {
+    ...usage,
+    translatedMessagesInCurrentMinute: usage.planEntitlement.translatedMessagesPerMinute
+  },
+  targetLanguage: "ja",
+  sourceLanguages: ["EN", "KR", "CN"],
+  maxBatchSize: 1,
+  comments: [
+    {
+      commentId: "comment-cache-hit-at-cap",
+      publishedAt: "2026-06-11T04:00:04.500Z",
+      text: "Hello live chat",
+      platformLanguageHint: "en"
+    }
+  ]
+});
+assert.equal(cacheHitAtCapRun.status, "completed");
+assert.equal(cacheHitAtCapRun.providerCallCount, 0, "cache hit at the translated-message cap does not call provider");
+assert.equal(cacheHitAtCapRun.cacheHitCount, 1, "cache hit at the translated-message cap is still served");
+assert.equal(cacheHitAtCapRun.translatedCount, 1, "cache hit at the translated-message cap still yields a translated row");
+assert.equal(cacheHitAtCapRun.skipsByReason.perMinuteCap, 0, "cache hit at the translated-message cap is not quota-skipped");
+assert.equal(cacheHitAtCapRun.usageRecorded.aiUsageEstimate, false);
+assert.equal(
+  ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests().length,
+  ledgerRecordsAfterFirstRun.length,
+  "cache-hit translations at cap do not append usage ledger records"
+);
+
+let filteredProviderCallCount = 0;
+const ledgerRecordCountBeforeFilteredRun = ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests().length;
+const filteredRun = await runtime.executeCommentTranslatorProviderBatch({
+  provider: {
+    ...provider,
+    async translate() {
+      filteredProviderCallCount += 1;
+      throw new Error("A filtered non-provider message must not reach provider execution.");
+    }
+  },
+  callerAuthorization,
+  sessionReferenceId: "cts_provider_execution_filtered_contract",
+  occurredAtMs: 37_000,
+  usage: {
+    ...usage,
+    translatedMessagesInCurrentMinute: 0
+  },
+  targetLanguage: "ja",
+  sourceLanguages: ["EN", "KR", "CN"],
+  comments: [
+    {
+      commentId: "comment-filtered-emoji-only",
+      publishedAt: "2026-06-11T04:00:04.750Z",
+      text: "😀😀😀",
+      platformLanguageHint: null
+    }
+  ]
+});
+assert.equal(filteredRun.status, "completed");
+assert.equal(filteredRun.providerRequestCount, 0);
+assert.equal(filteredRun.providerCallCount, 0);
+assert.equal(filteredRun.translatedCount, 0);
+assert.equal(filteredRun.skipsByReason.languagePolicy, 1);
+assert.equal(filteredRun.usageRecorded.providerRequestEstimate, false);
+assert.equal(filteredRun.usageRecorded.aiUsageEstimate, false);
+assert.equal(filteredProviderCallCount, 0);
+assert.equal(
+  ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests().length,
+  ledgerRecordCountBeforeFilteredRun,
+  "filtered non-provider messages append no usage ledger records"
+);
+const filteredUsageSnapshot = ledger.readInMemoryCommentTranslatorUsageSnapshot({
+  callerAuthorization,
+  nowMs: 40_000,
+  plan: "free",
+  activeSession: {
+    sessionReferenceId: "cts_provider_execution_filtered_contract",
+    startedAtMs: 35_000,
+    lastHeartbeatAtMs: 37_000,
+    credentialReferenceId: "filtered-contract-credential-reference"
+  }
+});
+assert.equal(
+  filteredUsageSnapshot.translatedMessagesInCurrentMinute,
+  0,
+  "filtered non-provider messages never increment the rolling translated-message count"
+);
 
 const blockedProviderRun = await runtime.executeCommentTranslatorProviderBatch({
   provider: {
@@ -433,7 +556,65 @@ const blockedProviderRun = await runtime.executeCommentTranslatorProviderBatch({
 assert.equal(blockedProviderRun.status, "blocked-non-server-translator-provider");
 assert.equal(blockedProviderRun.providerCallCount, 0, "non-server provider is blocked before execution");
 
-for (const payload of [firstRun, secondRun, blockedProviderRun, ...ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests()]) {
+const terminalCodeRun = await runtime.executeCommentTranslatorProviderBatch({
+  provider: {
+    ...provider,
+    async translate() {
+      return {
+        type: "terminal-error",
+        code: "credential-missing",
+        message: "raw provider diagnostic must not be returned",
+        retry: {
+          retryable: false
+        }
+      };
+    }
+  },
+  callerAuthorization,
+  sessionReferenceId: "cts_provider_execution_contract_003",
+  occurredAtMs: 50_000,
+  usage,
+  targetLanguage: "ja",
+  comments: [
+    {
+      commentId: "comment-terminal-code-1",
+      publishedAt: "2026-06-11T04:00:06.000Z",
+      text: "Terminal code one",
+      platformLanguageHint: "en"
+    },
+    {
+      commentId: "comment-terminal-code-2",
+      publishedAt: "2026-06-11T04:00:07.000Z",
+      text: "Terminal code two",
+      platformLanguageHint: "en"
+    }
+  ]
+});
+assert.equal(terminalCodeRun.status, "completed");
+assert.equal(terminalCodeRun.translatedCount, 0);
+assert.equal(terminalCodeRun.skipsByReason.providerUnavailable, 2);
+assert.equal(terminalCodeRun.errorCounts.terminal, 2);
+assert.deepEqual(
+  terminalCodeRun.terminalErrorCodeCounts,
+  {
+    invalidRequest: 0,
+    unsupportedLanguage: 0,
+    providerNotConfigured: 0,
+    credentialMissing: 2,
+    policyBlocked: 0
+  },
+  "terminal provider results expose sanitized code counts without raw provider diagnostics"
+);
+
+for (const payload of [
+  firstRun,
+  secondRun,
+  cacheHitAtCapRun,
+  filteredRun,
+  blockedProviderRun,
+  terminalCodeRun,
+  ...ledger.readInMemoryCommentTranslatorUsageLedgerRecordsForTests()
+]) {
   const serialized = JSON.stringify(payload);
   for (const forbiddenValue of [
     "test-caller-reference",
@@ -453,23 +634,178 @@ for (const payload of [firstRun, secondRun, blockedProviderRun, ...ledger.readIn
   }
 }
 
+const perMinuteAutoResumeTaskChangedFiles = new Set([
+  "app/api/comment-translator/session/route-context.ts",
+  "app/tools/comment-translator/account-actions.ts",
+  "app/tools/comment-translator/action-context.ts",
+  "app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx",
+  "app/tools/comment-translator/feed-actions.ts",
+  "app/tools/comment-translator/retention-waitlist-actions.ts",
+  "app/tools/comment-translator/session-actions.ts",
+  "components/comment-translator/comment-translator-dock-format.ts",
+  "components/comment-translator/comment-translator-dock-model.ts",
+  "components/comment-translator/CommentTranslatorActivePhaseNotice.tsx",
+  "components/comment-translator/CommentTranslatorCommentCard.tsx",
+  "components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx",
+  "components/comment-translator/CommentTranslatorDockAtoms.tsx",
+  "components/comment-translator/CommentTranslatorDockHeader.tsx",
+  "components/comment-translator/CommentTranslatorFeedPanel.tsx",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "components/comment-translator/CommentTranslatorSettingsPanel.tsx",
+  "components/comment-translator/CommentTranslatorUsageSidebar.tsx",
+  "components/comment-translator/useCommentTranslatorBrowserTimeZone.ts",
+  "components/comment-translator/useCommentTranslatorCreatorWaitlist.ts",
+  "components/comment-translator/useCommentTranslatorDockControls.ts",
+  "components/comment-translator/useCommentTranslatorSessionFeedController.ts",
+  "components/portal/PortalShell.tsx",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
+  "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+  "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+  "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+  "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+  "lib/comment-translator-bounded-live-chat-polling-transition.ts",
+  "lib/comment-translator-bounded-live-chat-polling-types.ts",
+  "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+  "lib/comment-translator-copy-en.json",
+  "lib/comment-translator-copy-ja.json",
+  "lib/comment-translator-fixture-comments.ts",
+  "lib/comment-translator-live-provider-session-step-result.ts",
+  "lib/comment-translator-live-provider-session-step.ts",
+  "lib/comment-translator-per-minute-rate-pause.ts",
+  "lib/comment-translator-runtime.ts",
+  "lib/comment-translator-session-command-execution.ts",
+  "lib/comment-translator-session-command.ts",
+  "lib/comment-translator-session-memory-store.ts",
+  "lib/comment-translator-session-policy.ts",
+  "lib/comment-translator-session-start.ts",
+  "lib/comment-translator-session-state.ts",
+  "lib/comment-translator-session-types.ts",
+  "lib/comment-translator-snapshot-data.ts",
+  "lib/comment-translator-types.ts",
+  "scripts/account-remote-display-settings-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-live-message-normalization-contract.mjs",
+  "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs"
+]);
+
 const allowedChangedFiles = new Set([
   "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
+  "lib/comment-translator-real-comments-feed-session-bridge.ts",
   "lib/comment-translator-provider-boundary.ts",
   providerExecutionPath,
   "lib/comment-translator-provider-policy-runtime.ts",
+  "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
   intakePath,
   usageLedgerPath,
   "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr537-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-provider-terminal-error-boundary-after-pr538-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
   "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
   "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
   "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
   "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
+  plG3CompletionPath,
+  readyPreflightPath,
   taskPath
 ]);
+const monthlyInputAccountingChangedFiles = new Set([
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
+  "lib/comment-translator.ts",
+  "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-free-beta-usage-display.ts",
+  "lib/comment-translator-provider-execution-runtime.ts",
+  "lib/comment-translator-public-entitlement-baseline.ts",
+  "lib/comment-translator-session-runtime.ts",
+  "lib/comment-translator-usage-ledger-runtime.ts",
+  "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
+  "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g1-remote-durable-enforcement-execution-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-remote-durable-enforcement-evidence-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-monitoring-incident-readiness-contract.mjs",
+  "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
+  "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+  "task.md"
+]);
+const plG6dChangedFiles = new Set([
+  "app/api/comment-translator/session/route.ts",
+  "app/tools/comment-translator/actions.ts",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6D_PREVIEW_RATE_LIMIT_SMOKE_OVERRIDE.md",
+  "lib/comment-translator-free-beta-preview-rate-limit-smoke-override.ts",
+  "lib/comment-translator-public-entitlement-baseline.ts",
+  "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs"
+]);
+const activeSessionStartReadinessChangedFiles = new Set([
+  "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+  "docs/active/COMMENT_TRANSLATOR_ACTIVE_SESSION_START_READINESS_VISIBILITY_IMPLEMENTATION_PLAN.md",
+  "components/comment-translator/comment-translator-session-panel-visibility.ts",
+  "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+  "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs"
+]);
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `Task 11 change stays in allowed files: ${file}`);
+  assert.ok(
+    allowedChangedFiles.has(file) ||
+      monthlyInputAccountingChangedFiles.has(file) ||
+      plG6dChangedFiles.has(file) ||
+      perMinuteAutoResumeTaskChangedFiles.has(file) ||
+      activeSessionStartReadinessChangedFiles.has(file),
+    `Task 11 change stays in allowed files: ${file}`
+  );
 
   if (file.endsWith(".mjs")) {
     continue;

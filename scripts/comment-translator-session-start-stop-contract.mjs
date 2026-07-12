@@ -12,6 +12,8 @@ const statusBoundaryPath = "lib/comment-translator-youtube-credential-status-bou
 const disconnectPath = "lib/comment-translator-youtube-disconnect-runtime.ts";
 const routePath = "app/api/comment-translator/session/route.ts";
 const actionPath = "app/tools/comment-translator/actions.ts";
+const commandExecutionPath = "lib/comment-translator-session-command-execution.ts";
+const sessionActionsPath = "app/tools/comment-translator/session-actions.ts";
 const requirementsPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md";
 const taskPath = "task.md";
 
@@ -24,7 +26,7 @@ function exists(relativePath) {
 }
 
 function changedFiles() {
-  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"]
@@ -108,19 +110,30 @@ assert.ok(exists(requirementsPath), "canonical public release requirements remai
 const sessionSource = read(sessionPath);
 const routeSource = read(routePath);
 const actionSource = read(actionPath);
+const commandExecutionSource = read(commandExecutionPath);
+const sessionActionsSource = read(sessionActionsPath);
 const requirementsSource = read(requirementsPath);
 
 assert.match(sessionSource, /^import "server-only";/m, "session runtime is server-only");
 assert.match(routeSource, /POST/, "session route exposes a POST handler for start stop heartbeat intents");
-assert.match(routeSource, /readCommentTranslatorSessionCommand/, "route uses the sanitized session boundary");
+assert.match(routeSource, /executeCommentTranslatorSessionCommand/, "route uses the sanitized session boundary");
+assert.match(routeSource, /executeCommentTranslatorSessionCommand/, "route uses shared session command execution");
 assert.match(actionSource, /startCommentTranslatorSessionAction/, "server action exposes session start");
 assert.match(actionSource, /stopCommentTranslatorSessionAction/, "server action exposes session stop");
 assert.match(actionSource, /heartbeatCommentTranslatorSessionAction/, "server action exposes session heartbeat");
+assert.match(sessionActionsSource, /executeCommentTranslatorSessionCommand/, "server actions use shared session command execution");
+assert.match(
+  commandExecutionSource,
+  /readCommentTranslatorBoundedLiveChatPollingPhaseResolution/,
+  "shared route/action execution reads the polling-coordinator phase resolution"
+);
+assert.match(commandExecutionSource, /ratePauseResolution/, "shared route/action execution passes coordinator phase to session command");
+assert.match(sessionSource, /activePhase/, "active session state exposes the sanitized coordinator phase");
 assert.match(requirementsSource, /30 min\/day\/user/, "canonical requirements retain free daily limit");
 assert.match(requirementsSource, /30 min\/session/, "canonical requirements retain free per-session limit");
 assert.match(requirementsSource, /1 active session\/user/, "canonical requirements retain one-active-session limit");
 
-for (const source of [sessionSource, routeSource, actionSource]) {
+for (const source of [sessionSource, routeSource, actionSource, sessionActionsSource, commandExecutionSource]) {
   assert.doesNotMatch(
     source,
     /access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|providerErrorBody:\s*error/i,
@@ -157,7 +170,8 @@ assert.deepEqual(
     dailyMinutes: 30,
     sessionMinutes: 30,
     translatedMessagesPerMinute: 30,
-    activeSessionsPerUser: 1
+    activeSessionsPerUser: 1,
+    monthlyProviderInputCharacters: 20_000
   },
   "free plan public release limits are encoded"
 );
@@ -207,6 +221,45 @@ assert.deepEqual(
       lastHeartbeatAtIso: null
     },
     stopReason: null,
+    reasonUx: null,
+    usageDisplay: {
+      status: "available",
+      session: {
+        usedSeconds: 0,
+        limitSeconds: 1_800,
+        remainingSeconds: 1_800
+      },
+      daily: {
+        usedSeconds: 0,
+        limitSeconds: 1_800,
+        remainingSeconds: 1_800
+      },
+      perMinute: {
+        used: 0,
+        limit: 30,
+        remaining: 30
+      },
+      monthlyInputCharacterCap: {
+        used: 0,
+        limit: 20_000,
+        remaining: 20_000
+      },
+      unavailableReason: null,
+      providerCallPolicy: {
+        status: "allowed",
+        stopReason: null,
+        clientReadableDetail: "sanitized-usage-only"
+      },
+      noProviderCallWhenOverLimit: true,
+      clientReadableDetail: "sanitized-usage-only",
+      rawProviderPayload: "not-returned-by-design",
+      rawComments: "not-returned-by-design",
+      providerTargetMetadata: "forbidden",
+      serverOnlyCursor: "not-returned-by-design",
+      browserStorage: "unchanged",
+      handoffPayload: "unchanged",
+      publicLaunchAllowed: false
+    },
     nextAction: "press-start",
     providerApiUsage: "not-started-before-explicit-start",
     aiTranslationUsage: "not-started-before-explicit-start",
@@ -337,13 +390,87 @@ const missingHeartbeat = session.evaluateCommentTranslatorSessionStopCondition({
 
 assert.equal(missingHeartbeat.status, "stopped", "missing heartbeat stops active session");
 assert.equal(missingHeartbeat.stopReason, "missing-heartbeat", "missing heartbeat has a sanitized stop reason");
+assert.equal(
+  missingHeartbeat.elapsedSeconds,
+  45,
+  "stale missing-heartbeat stops charge only through the heartbeat timeout window"
+);
+
+const staleLongRunningSession = session.evaluateCommentTranslatorSessionStopCondition({
+  activeSession: {
+    sessionReferenceId: "cts_session_reference_stale",
+    startedAtMs: Date.parse("2026-06-15T23:55:00.000Z"),
+    lastHeartbeatAtMs: Date.parse("2026-06-15T23:55:30.000Z")
+  },
+  nowMs: Date.parse("2026-06-16T12:00:00.000Z"),
+  plan: "free",
+  browserConnected: true,
+  callerAuthorization: {
+    status: "authorized",
+    ownerUserId: "server-only-owner-reference"
+  },
+  credentialReadiness: readyCredential,
+  usage: {
+    dailyUsedMs: 0,
+    translatedMessagesInCurrentMinute: 0,
+    providerBudgetAvailable: true,
+    globalBudgetAvailable: true,
+    aiBudgetAvailable: true
+  }
+});
+
+assert.equal(staleLongRunningSession.status, "stopped", "stale long-running session is stopped deterministically");
+assert.equal(
+  staleLongRunningSession.stopReason,
+  "missing-heartbeat",
+  "stale long-running session stops as missing heartbeat before quota exhaustion"
+);
+assert.equal(
+  staleLongRunningSession.elapsedSeconds,
+  75,
+  "stale long-running session charge is bounded to startedAt through lastHeartbeat plus timeout"
+);
+
+const staleActiveSessionStartAttempt = session.startCommentTranslatorSession({
+  activeSession: {
+    sessionReferenceId: "cts_stale_start_reference",
+    startedAtMs: Date.parse("2026-06-16T11:58:00.000Z"),
+    lastHeartbeatAtMs: Date.parse("2026-06-16T11:58:30.000Z")
+  },
+  nowMs: Date.parse("2026-06-16T12:05:00.000Z"),
+  plan: "free",
+  callerAuthorization: {
+    status: "authorized",
+    ownerUserId: "server-only-owner-reference"
+  },
+  credentialReadiness: readyCredential,
+  usage: {
+    dailyUsedMs: 0,
+    translatedMessagesInCurrentMinute: 0,
+    providerBudgetAvailable: true,
+    globalBudgetAvailable: true,
+    aiBudgetAvailable: true
+  },
+  createSessionReferenceId: () => "cts_new_start_reference"
+});
+
+assert.equal(
+  staleActiveSessionStartAttempt.stopReason,
+  "missing-heartbeat",
+  "Start against a stale durable active session stops the stale session before applying active-session limits"
+);
+assert.equal(
+  staleActiveSessionStartAttempt.nextAction,
+  "session-stopped",
+  "stale active session cleanup stops the stale session instead of showing an over-limit state"
+);
 
 assert.equal(
   session.evaluateCommentTranslatorSessionStopCondition({
     activeSession: {
       sessionReferenceId: "cts_session_reference_001",
       startedAtMs: 1_000,
-      lastHeartbeatAtMs: 46_000
+      lastHeartbeatAtMs: 1_801_000
     },
     nowMs: 1_801_000,
     plan: "free",
@@ -363,6 +490,33 @@ assert.equal(
   }).stopReason,
   "session-time-limit",
   "free per-session time cap stops the session"
+);
+
+assert.equal(
+  session.evaluateCommentTranslatorSessionStopCondition({
+    activeSession: {
+      sessionReferenceId: "cts_session_reference_001",
+      startedAtMs: 1_000,
+      lastHeartbeatAtMs: 1_801_000
+    },
+    nowMs: 1_901_000,
+    plan: "free",
+    browserConnected: true,
+    callerAuthorization: {
+      status: "authorized",
+      ownerUserId: "server-only-owner-reference"
+    },
+    credentialReadiness: readyCredential,
+    usage: {
+      dailyUsedMs: 0,
+      translatedMessagesInCurrentMinute: 0,
+      providerBudgetAvailable: true,
+      globalBudgetAvailable: true,
+      aiBudgetAvailable: true
+    }
+  }).elapsedSeconds,
+  1800,
+  "session-time-limit stop charge is capped at the Free session window"
 );
 
 assert.equal(
@@ -424,27 +578,226 @@ const commandResult = await session.readCommentTranslatorSessionCommand({
     globalBudgetAvailable: true,
     aiBudgetAvailable: true
   },
+  ratePauseResolution: {
+    status: "ready",
+    projection: {
+      activePhase: "running",
+      ratePauseReason: null,
+      retryAfterSeconds: null,
+      automaticResumeExpected: false
+    }
+  },
   createSessionReferenceId: () => "cts_session_reference_002"
 });
 
 assert.equal(commandResult.status, "active", "heartbeat command keeps an active session alive");
 assert.equal(commandResult.heartbeat.lastHeartbeatAtIso, "1970-01-01T00:00:02.000Z", "heartbeat timestamp is sanitized ISO metadata");
 
+const monthlyInputAccountingChangedFiles = new Set([
+  "components/comment-translator/CommentTranslatorDock.tsx",
+  "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md",
+  "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
+  "lib/comment-translator.ts",
+  "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-azure-normal-translation-execution.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+  "lib/comment-translator-free-beta-usage-display.ts",
+  "lib/comment-translator-provider-execution-runtime.ts",
+  "lib/comment-translator-public-entitlement-baseline.ts",
+  "lib/comment-translator-session-runtime.ts",
+  "lib/comment-translator-usage-ledger-runtime.ts",
+  "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
+  "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+  "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g1-remote-durable-enforcement-execution-contract.mjs",
+  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+  "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
+  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
+  "scripts/comment-translator-free-beta-remote-durable-enforcement-evidence-contract.mjs",
+  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+  "scripts/comment-translator-monitoring-incident-readiness-contract.mjs",
+  "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
+  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+  "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
+  "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
+  "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
+  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+  "task.md"
+]);
 for (const file of changedFiles()) {
   const allowedChangedFiles = new Set([
+    "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+    "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_IMPLEMENTATION_PLAN.md",
+    "app/api/comment-translator/session/route-context.ts",
+    "app/tools/comment-translator/account-actions.ts",
+    "app/tools/comment-translator/action-context.ts",
+    "app/tools/comment-translator/dev/per-minute-auto-resume/page.tsx",
+    "app/tools/comment-translator/feed-actions.ts",
+    "app/tools/comment-translator/retention-waitlist-actions.ts",
+    "app/tools/comment-translator/session-actions.ts",
+    "components/comment-translator/comment-translator-dock-format.ts",
+    "components/comment-translator/comment-translator-dock-model.ts",
+    "components/comment-translator/CommentTranslatorActivePhaseNotice.tsx",
+    "components/comment-translator/CommentTranslatorCommentCard.tsx",
+    "components/comment-translator/CommentTranslatorCreatorWaitlistPanel.tsx",
+    "components/comment-translator/CommentTranslatorDockAtoms.tsx",
+    "components/comment-translator/CommentTranslatorDockHeader.tsx",
+    "components/comment-translator/CommentTranslatorFeedPanel.tsx",
+    "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+    "components/comment-translator/CommentTranslatorSettingsPanel.tsx",
+    "components/comment-translator/CommentTranslatorUsageSidebar.tsx",
+    "components/comment-translator/useCommentTranslatorBrowserTimeZone.ts",
+    "components/comment-translator/useCommentTranslatorCreatorWaitlist.ts",
+    "components/comment-translator/useCommentTranslatorDockControls.ts",
+    "components/comment-translator/useCommentTranslatorSessionFeedController.ts",
+    "components/portal/PortalShell.tsx",
+    "lib/comment-translator-copy-en.json",
+    "lib/comment-translator-copy-ja.json",
+    "lib/comment-translator-fixture-comments.ts",
+    "lib/comment-translator-per-minute-rate-pause.ts",
+    "lib/comment-translator-runtime.ts",
+    "lib/comment-translator-session-command-execution.ts",
+    "lib/comment-translator-session-command.ts",
+    "lib/comment-translator-session-memory-store.ts",
+    "lib/comment-translator-session-policy.ts",
+    "lib/comment-translator-session-start.ts",
+    "lib/comment-translator-session-state.ts",
+    "lib/comment-translator-session-types.ts",
+    "lib/comment-translator-snapshot-data.ts",
+    "lib/comment-translator-types.ts",
+    "scripts/account-remote-display-settings-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+    "scripts/comment-translator-live-message-normalization-contract.mjs",
+    "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+    "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g2a-server-action-route-api-harness-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
+    "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+    "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
+    "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
+    "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
+    "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md",
     "lib/comment-translator-admin-operational-visibility.ts",
+  "lib/comment-translator-durable-usage-counter-store.ts",
+    "components/comment-translator/CommentTranslatorDock.tsx",
     sessionPath,
     ledgerPath,
+    "lib/comment-translator.ts",
+    "lib/comment-translator-bounded-live-chat-polling-wiring.ts",
+    "lib/comment-translator-bounded-live-chat-polling-outcome-projection.ts",
+    "lib/comment-translator-bounded-live-chat-polling-types.ts",
+    "lib/comment-translator-bounded-live-chat-polling-result-projection.ts",
+    "lib/comment-translator-bounded-live-chat-polling-terminal-policy.ts",
+    "lib/comment-translator-bounded-live-chat-polling-static-wiring.ts",
+    "lib/comment-translator-bounded-live-chat-polling-registry.ts",
+    "lib/comment-translator-bounded-live-chat-polling-transition.ts",
+    "lib/comment-translator-durable-usage-counter-store.ts",
+    "lib/comment-translator-azure-normal-translation-execution.ts",
+    "lib/comment-translator-private-gated-live-provider-smoke-execution-harness.ts",
+    "lib/comment-translator-real-comments-feed-durable-store.ts",
+    "lib/comment-translator-real-comments-feed-session-bridge.ts",
     "lib/comment-translator-provider-execution-runtime.ts",
     routePath,
     actionPath,
+    "supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql",
+    "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
+    "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_READY_PREFLIGHT.md",
+    "lib/comment-translator-youtube-live-provider-runtime-adapter.ts",
+    "lib/comment-translator-real-comments-feed-shared.ts",
+    "lib/comment-translator-live-provider-session-step.ts",
+    "lib/comment-translator-live-provider-session-step-result.ts",
     "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+    "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+    "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+    "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
+    "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+    "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533.mjs",
+    "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
+    "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+    "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
+    "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
     "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+    "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+    "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
     "scripts/comment-translator-session-start-stop-contract.mjs",
+    "scripts/comment-translator-stop-preview-retention-contract.mjs",
+    "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+    "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
     "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+    "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs",
     taskPath
   ]);
-  assert.ok(allowedChangedFiles.has(file), `Task 7 change stays in allowed files: ${file}`);
+  const activeSessionStartReadinessChangedFiles = new Set([
+    "docs/active/COMMENT_TRANSLATOR_PER_MINUTE_AUTO_RESUME_DESIGN.md",
+    "docs/active/COMMENT_TRANSLATOR_ACTIVE_SESSION_START_READINESS_VISIBILITY_IMPLEMENTATION_PLAN.md",
+    "components/comment-translator/comment-translator-session-panel-visibility.ts",
+    "components/comment-translator/CommentTranslatorSessionPanel.tsx",
+    "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+    "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+    "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+    "scripts/comment-translator-session-start-stop-contract.mjs"
+  ]);
+  const plG6dChangedFiles = new Set([
+    "app/api/comment-translator/session/route.ts",
+    "app/tools/comment-translator/actions.ts",
+    "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6D_PREVIEW_RATE_LIMIT_SMOKE_OVERRIDE.md",
+    "lib/comment-translator-free-beta-preview-rate-limit-smoke-override.ts",
+    "lib/comment-translator-public-entitlement-baseline.ts",
+    "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs"
+  ]);
+  const loginOnlyRuntimeChangedFiles = new Set([
+    "app/account/actions.ts",
+    "app/account/integrations/page.tsx",
+    "app/api/comment-translator/session/route.ts",
+    "app/api/comment-translator/youtube/credential-status/route.ts",
+    "app/api/comment-translator/youtube/disconnect/route.ts",
+    "app/api/comment-translator/youtube/oauth/callback/route.ts",
+    "app/tools/comment-translator/account-actions.ts",
+    "app/tools/comment-translator/page.tsx",
+    "app/tools/comment-translator/session-actions.ts",
+    "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
+    "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md",
+    "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
+    "lib/comment-translator-private-launch-access-gate.ts",
+    "lib/comment-translator-public-beta-access-gate-policy.ts",
+    "scripts/comment-translator-login-only-runtime-access-contract.mjs",
+    "scripts/comment-translator-private-launch-access-gate-contract.mjs",
+    "scripts/comment-translator-public-beta-access-gate-decision-contract.mjs",
+    "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
+    "scripts/comment-translator-session-start-stop-contract.mjs",
+    "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+    "task.md"
+  ]);
+  assert.ok(
+    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file) || activeSessionStartReadinessChangedFiles.has(file) || loginOnlyRuntimeChangedFiles.has(file),
+    `Task 7 change stays in allowed files: ${file}`
+  );
+  if (file === "scripts/comment-translator-youtube-live-chat-polling-smoke-command-contract.mjs") {
+    continue;
+  }
   const source = read(file);
   assert.doesNotMatch(
     source,

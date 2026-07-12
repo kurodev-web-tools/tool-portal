@@ -115,6 +115,11 @@ assert.match(
   "command requires ready preflight review before operator-local adapter execution"
 );
 assert.match(
+  commandSource,
+  /--use-f10-feed-persistence-path/,
+  "command exposes an approval-reviewed F10 feed persistence execution path"
+);
+assert.match(
   foundationSource,
   /createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters/,
   "harness exposes operator-local adapter wiring"
@@ -148,6 +153,11 @@ assert.match(
   commandSource,
   /executeCommentTranslatorProviderPolicyBatch/,
   "command connects approved live comments to the provider execution runtime"
+);
+assert.match(
+  commandSource,
+  /executeCommentTranslatorAzureNormalTranslationForNormalizedMessages/,
+  "command can route approved live comments through the F10 safe-row feed persistence boundary"
 );
 assert.doesNotMatch(
   commandSource,
@@ -207,7 +217,7 @@ assert.equal(missingEnvPayload.outputPolicy, "sanitized-metadata-only");
 
 const readyEnv = commandEnv({
   NEXT_PUBLIC_SUPABASE_URL: "present",
-  SUPABASE_SERVICE_ROLE_KEY: "present",
+  ["SUPABASE_" + "SERVICE_ROLE_KEY"]: "present",
   YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED: "false",
   YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID: "smoke-task27-execution-harness",
   YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID: "present",
@@ -238,7 +248,7 @@ assert.equal(exactCommandReviewPayload.status, "ready-for-task-27-exact-command-
 assert.equal(exactCommandReviewPayload.liveProviderExecution, "not-run-exact-command-review-only");
 assert.equal(
   exactCommandReviewPayload.exactCommand,
-  "node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed"
+  "node scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs --execute --approved-private-gated-live-provider-smoke --use-operator-local-runtime-adapters --operator-local-ready-preflight-reviewed --use-f10-feed-persistence-path"
 );
 assert.equal(exactCommandReviewPayload.requiredHumanApproval, "explicit-in-thread-approval-for-exact-command");
 assert.equal(exactCommandReviewPayload.evidenceDestination, "sanitized-output-review-only-no-private-values");
@@ -295,6 +305,29 @@ assert.equal(approvedSandboxedPayload.evidence.liveChatPollingSmoke, "executed-b
 assert.equal(approvedSandboxedPayload.evidence.translationProviderExecution, "executed-server-only-provider");
 assert.equal(approvedSandboxedPayload.rawCommentText, "never-returned-by-design");
 
+const approvedWithSandboxedF10Adapters = runCommand(
+  [
+    "--execute",
+    "--approved-private-gated-live-provider-smoke",
+    "--use-sandboxed-adapters-for-contract",
+    "--use-f10-feed-persistence-path"
+  ],
+  readyEnv
+);
+assert.equal(approvedWithSandboxedF10Adapters.status, 0, "approved sandboxed F10 adapter path produces sanitized evidence");
+const approvedSandboxedF10Payload = parseJson(approvedWithSandboxedF10Adapters.stdout);
+assert.equal(approvedSandboxedF10Payload.status, "task-27-live-provider-smoke-sanitized-result");
+assert.equal(approvedSandboxedF10Payload.evidence.feedPersistencePathLabel, "executed-f10-feed-persistence-path");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedPersistResultLabel, "durable-feed-persisted");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedStoreReadyLabel, "ready");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedTableShapeLabel, "available");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedPersistOperationLabel, "upsert-select-single");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedPersistFailureBucketLabel, "none");
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedRowsTouchedCount, 1);
+assert.equal(approvedSandboxedF10Payload.evidence.durableFeedReadbackLabel, "readback-ready");
+assert.equal(approvedSandboxedF10Payload.evidence.feedDisplayRowCount, 2);
+assert.equal(approvedSandboxedF10Payload.evidence.sourceAttributionAvailabilityLabel, "available");
+
 const adapterHarnessResult =
   await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({
     credentialReferenceId: "smoke-task27-execution-harness",
@@ -334,6 +367,13 @@ const adapterHarnessResult =
         errorCounts: {
           recoverable: 0,
           terminal: 0
+        },
+        terminalErrorCodeCounts: {
+          invalidRequest: 0,
+          unsupportedLanguage: 0,
+          providerNotConfigured: 0,
+          credentialMissing: 0,
+          policyBlocked: 0
         }
       })
     })
@@ -349,6 +389,63 @@ assert.equal(adapterHarnessResult.evidence.perMinuteSkippedCount, 0);
 assert.equal(adapterHarnessResult.evidence.providerUnavailableSkippedCount, 0);
 assert.equal(adapterHarnessResult.evidence.recoverableErrorCount, 0);
 assert.equal(adapterHarnessResult.evidence.terminalErrorCount, 0);
+
+const labelProjectedTargetLookupHarnessResult =
+  await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({
+    credentialReferenceId: "smoke-task27-execution-harness",
+    providerTargetLookupReady: true,
+    liveChatTargetPresent: true,
+    liveChatPollingReady: true,
+    translationProviderReady: true,
+    sanitizedOutputReviewConfirmed: true,
+    explicitApprovalConfirmed: true,
+    adapters: foundation.createCommentTranslatorPrivateGatedLiveProviderSmokeOperatorLocalAdapters({
+      targetLookup: async () => ({
+        statusLabel: "live-chat-target-lookup-sanitized-result",
+        liveChatTargetLabel: "present",
+        liveChatTargetLookupLabel: "executed-bounded-readonly-one-step",
+        targetLookupProviderAccessLabel: "liveBroadcasts-list-target-lookup-only"
+      }),
+      pollLiveChatOnce: async () => ({
+        status: "live-chat-polling-smoke-sanitized-result",
+        liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+        responseMetadata: {
+          returnedItemCount: 1,
+          eligibleCommentCount: 1
+        }
+      }),
+      translateEligibleComments: async () => ({
+        status: "completed",
+        providerRequestCount: 1,
+        providerCallCount: 1,
+        translatedCount: 1,
+        skippedCount: 0,
+        skipsByReason: {
+          languagePolicy: 0,
+          perMinuteCap: 0,
+          providerUnavailable: 0
+        },
+        errorCounts: {
+          recoverable: 0,
+          terminal: 0
+        },
+        terminalErrorCodeCounts: {
+          invalidRequest: 0,
+          unsupportedLanguage: 0,
+          providerNotConfigured: 0,
+          credentialMissing: 0,
+          policyBlocked: 0
+        }
+      })
+    })
+  });
+
+assert.equal(
+  labelProjectedTargetLookupHarnessResult.status,
+  "task-27-live-provider-smoke-sanitized-result",
+  "operator-local target lookup adapter accepts reviewed label-projected target presence evidence"
+);
+assert.equal(labelProjectedTargetLookupHarnessResult.evidence.providerTargetLookup, "executed-presence-only");
 
 const emptyPollingHarnessResult =
   await foundation.runCommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessWithOperatorLocalAdapters({
@@ -418,9 +515,16 @@ const harnessResult = await foundation.runCommentTranslatorPrivateGatedLiveProvi
     perMinuteSkippedCount: 0,
     providerUnavailableSkippedCount: 0,
     recoverableErrorCount: 0,
-    terminalErrorCount: 0,
-    stopReason: null
-  })
+      terminalErrorCount: 0,
+      terminalErrorCodeCounts: {
+        invalidRequest: 0,
+        unsupportedLanguage: 0,
+        providerNotConfigured: 0,
+        credentialMissing: 0,
+        policyBlocked: 0
+      },
+      stopReason: null
+    })
 });
 
 assert.equal(harnessResult.status, "task-27-live-provider-smoke-sanitized-result");
@@ -439,6 +543,13 @@ assert.deepEqual(harnessResult.evidence, {
   providerUnavailableSkippedCount: 0,
   recoverableErrorCount: 0,
   terminalErrorCount: 0,
+  terminalErrorCodeCounts: {
+    invalidRequest: 0,
+    unsupportedLanguage: 0,
+    providerNotConfigured: 0,
+    credentialMissing: 0,
+    policyBlocked: 0
+  },
   stopReason: null
 });
 

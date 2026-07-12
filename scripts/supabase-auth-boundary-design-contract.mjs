@@ -134,10 +134,16 @@ assertExcludes(
   "docs-only boundary"
 );
 
-assert.match(
+assertContainsAll(
   task,
-  /node scripts\/supabase-auth-boundary-design-contract\.mjs/,
-  "task.md records the Supabase auth boundary design contract check"
+  [
+    "## Current Premises",
+    "## Approval-Gated Actions",
+    "Provider target metadata and liveChatId are consumed only through server-only boundaries",
+    "remote schema migration / Supabase migration apply"
+  ],
+  "current task Supabase auth guardrails"
 );
+assert.match(task, /public-release capable(?: label)?: no/i, "task.md keeps public release blocked");
 
 console.log("supabase auth boundary design contract checks passed");

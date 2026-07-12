@@ -1,27 +1,24 @@
-import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  authorizeYouTubeOAuthCredentialStatusCaller,
   createYouTubeOAuthCredentialStatusUnavailablePayload,
-  type YouTubeOAuthCredentialStatusCallerAuthorization,
-  readYouTubeOAuthCredentialStatus
 } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import { assessYouTubeOAuthCredentialTranslatorStartReadiness } from "@/lib/comment-translator-youtube-disconnect-runtime";
-import { createTrustedYouTubeOAuthCredentialSupabaseStatusReader } from "@/lib/comment-translator-youtube-token-store-supabase-adapter";
-import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
 import {
-  persistInMemoryCommentTranslatorActiveSession,
-  readCommentTranslatorSessionCommand,
-  readInMemoryCommentTranslatorActiveSession,
-  type CommentTranslatorSessionCommandIntent
-} from "@/lib/comment-translator-session-runtime";
+  createCommentTranslatorDurableSessionFailClosedState,
+  createTrustedCommentTranslatorSessionSupabaseStore,
+  readCommentTranslatorDurableActiveSessionOrFailClosed
+} from "@/lib/comment-translator-durable-session-store";
 import {
-  readInMemoryCommentTranslatorUsageSnapshot,
-  recordInMemoryCommentTranslatorSessionLedgerState
-} from "@/lib/comment-translator-usage-ledger-runtime";
+  createTrustedCommentTranslatorUsageCounterSupabaseStore,
+  readCommentTranslatorDurableUsageSnapshotOrFailClosed
+} from "@/lib/comment-translator-durable-usage-counter-store";
 import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
+import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
+import { resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride } from "@/lib/comment-translator-free-beta-preview-rate-limit-smoke-override";
+import { executeCommentTranslatorSessionCommand } from "@/lib/comment-translator-session-command-execution";
 import {
   createCommentTranslatorPrivateLaunchBlockedSessionState,
+  readCommentTranslatorFreeBetaRuntimeAccess,
   readCommentTranslatorPrivateLaunchAccess
 } from "@/lib/comment-translator-private-launch-access-gate";
 import {
@@ -29,20 +26,23 @@ import {
   createCommentTranslatorAbuseRateLimitedSessionState,
   readCommentTranslatorRequestIp
 } from "@/lib/comment-translator-abuse-rate-limit-runtime";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  mapCommentTranslatorSessionIntentToAbuseAction,
+  readCommentTranslatorRouteCallerAuthorization,
+  readCommentTranslatorRouteCredentialReadiness,
+  readCommentTranslatorSessionRouteCommand
+} from "./route-context";
 
 export const dynamic = "force-dynamic";
 
-const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
-
 export async function POST(request: NextRequest) {
-  const command = await readSessionCommand(request);
-  const callerAuthorization = await readSessionCallerAuthorization();
+  const command = await readCommentTranslatorSessionRouteCommand(request);
+  const callerAuthorization = await readCommentTranslatorRouteCallerAuthorization();
   const nowMs = Date.now();
   const requestIp = readCommentTranslatorRequestIp(request.headers);
   const abuseCheck = assertCommentTranslatorAbuseRequestAllowed({
     surface: "/api/comment-translator/session",
-    action: mapSessionIntentToAbuseAction(command.intent),
+    action: mapCommentTranslatorSessionIntentToAbuseAction(command.intent),
     callerAuthorization,
     requestIp,
     nowMs
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const launchAccess = readCommentTranslatorPrivateLaunchAccess({ callerAuthorization });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
     const privateLaunchAbuseCheck = assertCommentTranslatorAbuseRequestAllowed({
       surface: "private-launch-gate-direct-call-denials",
@@ -88,182 +88,92 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const activeSession = readInMemoryCommentTranslatorActiveSession(callerAuthorization);
   const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
-  const usage = readInMemoryCommentTranslatorUsageSnapshot({
-    callerAuthorization,
-    nowMs,
-    plan: billingSnapshot.plan,
-    activeSession,
-    paidEntitlement: billingSnapshot.plan === "paid" ? billingSnapshot.planEntitlement : undefined
+  const previewRateLimitSmokeOverride = resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
+    privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
   });
+  const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
+  const durableUsageCounterStore = createTrustedCommentTranslatorUsageCounterSupabaseStore();
+  const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
+    callerAuthorization,
+    durableSessionStore
+  });
+  if (durableActiveSessionRead.status === "fail-closed") {
+    return NextResponse.json(
+      createCommentTranslatorDurableSessionFailClosedState({
+        nowMs,
+        plan: "free"
+      })
+    );
+  }
+
+  const activeSession = durableActiveSessionRead.activeSession;
+  const durableUsageRead = await readCommentTranslatorDurableUsageSnapshotOrFailClosed({
+    callerAuthorization,
+    durableUsageCounterStore,
+    nowMs,
+    plan: "free",
+    activeSession,
+    planEntitlementOverride: previewRateLimitSmokeOverride
+  });
+  const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
+    billingSnapshot,
+    durableUsageRead,
+    previewRateLimitSmokeOverride
+  });
+  if (entitlementBaseline.status === "fail-closed") {
+    return NextResponse.json(
+      createCommentTranslatorDurableSessionFailClosedState({
+        nowMs,
+        plan: "free"
+      })
+    );
+  }
+
+  const usage = entitlementBaseline.usage;
   const credentialReferenceId = command.credentialReferenceId ?? activeSession?.credentialReferenceId ?? null;
+  if (command.intent === "status") {
+    const state = await executeCommentTranslatorSessionCommand({
+      intent: "status",
+      nowMs,
+      plan: entitlementBaseline.plan,
+      callerAuthorization,
+      credentialReadiness: null,
+      credentialReferenceId,
+      activeSession,
+      usage,
+      durableSessionStore,
+      durableUsageCounterStore,
+      browserConnected: command.browserConnected,
+      stopReason: command.stopReason,
+      targetLanguage: command.targetLanguage,
+      sourceLanguages: command.sourceLanguage ? [command.sourceLanguage] : undefined
+    });
+    return NextResponse.json(state);
+  }
   const credentialReadiness = credentialReferenceId
-    ? await readCredentialReadiness({ credentialReferenceId, callerAuthorization })
+    ? await readCommentTranslatorRouteCredentialReadiness({ credentialReferenceId, callerAuthorization })
     : assessYouTubeOAuthCredentialTranslatorStartReadiness(
         createYouTubeOAuthCredentialStatusUnavailablePayload({
           credentialReferenceId: "missing-credential-reference",
           reason: "trusted-adapter-not-wired"
         })
       );
-
-  const state = await readCommentTranslatorSessionCommand({
+  const state = await executeCommentTranslatorSessionCommand({
     intent: command.intent,
     nowMs,
-    plan: billingSnapshot.plan,
+    plan: entitlementBaseline.plan,
     callerAuthorization,
     credentialReadiness,
+    credentialReferenceId,
     activeSession,
     usage,
+    durableSessionStore,
+    durableUsageCounterStore,
     browserConnected: command.browserConnected,
     stopReason: command.stopReason,
-    createSessionReferenceId: () => `cts_${randomUUID()}`
+    targetLanguage: command.targetLanguage,
+    sourceLanguages: command.sourceLanguage ? [command.sourceLanguage] : undefined
   });
-
-  persistInMemoryCommentTranslatorActiveSession({ callerAuthorization, state });
-  recordInMemoryCommentTranslatorSessionLedgerState({
-    callerAuthorization,
-    intent: command.intent,
-    state,
-    occurredAtMs: nowMs,
-    planEntitlement: usage.planEntitlement
-  });
-
   return NextResponse.json(state);
-}
-
-function mapSessionIntentToAbuseAction(intent: CommentTranslatorSessionCommandIntent) {
-  if (intent === "start") {
-    return "session-start";
-  }
-
-  if (intent === "stop") {
-    return "session-stop";
-  }
-
-  if (intent === "heartbeat") {
-    return "session-heartbeat";
-  }
-
-  return "session-status";
-}
-
-async function readSessionCommand(request: NextRequest): Promise<{
-  intent: CommentTranslatorSessionCommandIntent;
-  credentialReferenceId: string | null;
-  browserConnected: boolean;
-  stopReason: "user-stop" | "browser-disconnect" | undefined;
-}> {
-  const contentType = request.headers.get("content-type") ?? "";
-
-  if (contentType.includes("application/json")) {
-    try {
-      const body = (await request.json()) as {
-        intent?: unknown;
-        credentialReferenceId?: unknown;
-        browserConnected?: unknown;
-        stopReason?: unknown;
-      };
-
-      return normalizeCommandBody(body);
-    } catch {
-      return normalizeCommandBody({});
-    }
-  }
-
-  try {
-    const formData = await request.formData();
-    return normalizeCommandBody({
-      intent: formData.get("intent"),
-      credentialReferenceId: formData.get("credentialReferenceId"),
-      browserConnected: formData.get("browserConnected"),
-      stopReason: formData.get("stopReason")
-    });
-  } catch {
-    return normalizeCommandBody({});
-  }
-}
-
-function normalizeCommandBody(body: {
-  intent?: unknown;
-  credentialReferenceId?: unknown;
-  browserConnected?: unknown;
-  stopReason?: unknown;
-}): {
-  intent: CommentTranslatorSessionCommandIntent;
-  credentialReferenceId: string | null;
-  browserConnected: boolean;
-  stopReason: "user-stop" | "browser-disconnect" | undefined;
-} {
-  let intent: CommentTranslatorSessionCommandIntent = "status";
-  if (body.intent === "start" || body.intent === "stop" || body.intent === "heartbeat" || body.intent === "status") {
-    intent = body.intent;
-  }
-  const credentialReferenceId =
-    typeof body.credentialReferenceId === "string" && body.credentialReferenceId.trim()
-      ? body.credentialReferenceId.trim()
-      : null;
-  const browserConnected =
-    body.browserConnected === false || body.browserConnected === "false" || body.intent === "stop" ? false : true;
-  const stopReason: "user-stop" | "browser-disconnect" | undefined =
-    body.stopReason === "browser-disconnect" ? "browser-disconnect" : body.intent === "stop" ? "user-stop" : undefined;
-
-  return {
-    intent,
-    credentialReferenceId,
-    browserConnected,
-    stopReason
-  };
-}
-
-async function readCredentialReadiness({
-  credentialReferenceId,
-  callerAuthorization
-}: {
-  credentialReferenceId: string;
-  callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
-}) {
-  const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled({
-    [credentialResolutionDisabledEnv]: process.env[credentialResolutionDisabledEnv]
-  });
-  const trustedStatusReader =
-    credentialResolutionDisabled || callerAuthorization.status !== "authorized"
-      ? null
-      : createTrustedYouTubeOAuthCredentialSupabaseStatusReader();
-  const status = await readYouTubeOAuthCredentialStatus({
-    credentialReferenceId,
-    trustedAdapter: trustedStatusReader?.trustedAdapter ?? null,
-    callerAuthorization,
-    credentialResolutionDisabled
-  });
-
-  return assessYouTubeOAuthCredentialTranslatorStartReadiness(status);
-}
-
-async function readSessionCallerAuthorization(): Promise<YouTubeOAuthCredentialStatusCallerAuthorization> {
-  const supabase = await createServerSupabaseClient();
-
-  if (!supabase) {
-    return authorizeYouTubeOAuthCredentialStatusCaller({
-      callerUserId: null,
-      authUnavailable: true
-    });
-  }
-
-  try {
-    const {
-      data: { user },
-      error
-    } = await supabase.auth.getUser();
-
-    return authorizeYouTubeOAuthCredentialStatusCaller({
-      callerUserId: error ? null : user?.id ?? null,
-      authUnavailable: Boolean(error)
-    });
-  } catch {
-    return authorizeYouTubeOAuthCredentialStatusCaller({
-      callerUserId: null,
-      authUnavailable: true
-    });
-  }
 }

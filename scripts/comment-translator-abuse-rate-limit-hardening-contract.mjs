@@ -28,7 +28,7 @@ function exists(relativePath) {
 }
 
 function changedFiles() {
-  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"]
@@ -329,6 +329,7 @@ const providerRun = await providerRuntime.executeCommentTranslatorProviderBatch(
     },
     aiUsageEstimate: {
       translatedMessageEstimate: 0,
+      providerInputCharacterEstimate: 0,
       translatedCharacterEstimate: 0,
       estimatedCostMicros: 0,
       rawCommentText: "never-recorded-by-design"
@@ -404,6 +405,11 @@ const allowedChangedFiles = new Set([
   disconnectRoutePath,
   billingActionsPath,
   webhookRoutePath,
+  "lib/comment-translator-public-traffic-rate-limit-backing-policy.ts",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_TRAFFIC_RATE_LIMIT_BACKING_DECISION.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
+  "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
+  "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
   taskPath
 ]);
@@ -411,7 +417,15 @@ for (const file of changed) {
   assert.ok(allowedChangedFiles.has(file), `Task 22 change stays in allowed files: ${file}`);
 }
 
-assert.match(taskSource, /Task 22[\s\S]*Abuse protection and rate-limit hardening[\s\S]*Status: complete/i, "task.md records Task 22 completion");
-assert.match(taskSource, /width checks skipped[\s\S]*no visible UI\/CSS\/layout change/i, "task.md records width-check skip reason");
+assert.match(
+  taskSource,
+  /Public traffic rate-limit backing[\s\S]*cloudflare-edge[\s\S]*defense-in-depth/i,
+  "task.md records current public traffic rate-limit backing decision"
+);
+assert.match(
+  taskSource,
+  /width checks skipped[\s\S]*no visible UI\/CSS\/layout(?:\/copy)? change/i,
+  "task.md records width-check skip reason"
+);
 
 console.log("comment translator abuse/rate-limit hardening contract checks passed");

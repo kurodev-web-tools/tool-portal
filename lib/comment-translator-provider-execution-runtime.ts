@@ -6,7 +6,8 @@ import type {
   CommentTranslationProviderRecoverableError,
   CommentTranslationProviderRequest,
   CommentTranslationProviderResponse,
-  CommentTranslationProviderResult
+  CommentTranslationProviderResult,
+  CommentTranslationProviderTerminalError
 } from "./comment-translator-provider-boundary";
 import type { CommentTranslatorTranslationProviderSet } from "./comment-translator-provider-policy-runtime";
 import { resolveCommentTranslatorTranslationProviderRoute } from "./comment-translator-provider-policy-runtime";
@@ -124,6 +125,7 @@ export type CommentTranslatorProviderExecutionResultBase = {
     recoverable: number;
     terminal: number;
   };
+  terminalErrorCodeCounts?: CommentTranslatorProviderTerminalErrorCodeCounts;
   usageRecorded: {
     providerRequestEstimate: boolean;
     aiUsageEstimate: boolean;
@@ -144,6 +146,14 @@ export type CommentTranslatorProviderExecutionResultBase = {
   rawCommentText: "never-returned-by-design";
 };
 
+export type CommentTranslatorProviderTerminalErrorCodeCounts = {
+  invalidRequest: number;
+  unsupportedLanguage: number;
+  providerNotConfigured: number;
+  credentialMissing: number;
+  policyBlocked: number;
+};
+
 export type CommentTranslatorProviderExecutionTranslation = {
   commentReferenceId: string;
   translatedText: string;
@@ -151,16 +161,21 @@ export type CommentTranslatorProviderExecutionTranslation = {
   confidence: number | null;
   cacheOutcome: CommentTranslationCacheOutcome;
   providerErrorClass: "translated";
+  providerInputCharacterEstimate: number;
+  translatedCharacterEstimate: number;
   estimatedCostMicros: number;
   recoverablePrimaryFallbackCount: number;
 };
 
-type CommentTranslatorProviderExecutionResultBaseOverrides = Partial<CommentTranslatorProviderExecutionResultBase> & {
+type CommentTranslatorProviderExecutionResultBaseOverrides = Partial<
+  Omit<CommentTranslatorProviderExecutionResultBase, "terminalErrorCodeCounts">
+> & {
   languagePolicySkippedCount?: number;
   perMinuteSkippedCount?: number;
   providerUnavailableSkippedCount?: number;
   recoverableErrorCount?: number;
   terminalErrorCount?: number;
+  terminalErrorCodeCounts?: Partial<CommentTranslatorProviderTerminalErrorCodeCounts>;
   providerUsageRecorded?: boolean;
   aiUsageRecorded?: boolean;
   recoverablePrimaryFallbackCount?: number;
@@ -263,92 +278,107 @@ export async function executeCommentTranslatorProviderBatch(
     };
   }
 
-  const remainingMinuteCapacity = Math.max(
+  let remainingMinuteCapacity = Math.max(
     0,
     request.usage.planEntitlement.translatedMessagesPerMinute - request.usage.translatedMessagesInCurrentMinute
   );
-  const providerRequests = bridge.providerRequests.slice(0, remainingMinuteCapacity);
-  const perMinuteSkippedCount = Math.max(0, bridge.providerRequests.length - providerRequests.length);
   const maxBatchSize = normalizePositiveInteger(request.maxBatchSize, defaultMaxBatchSize);
   const maxProviderAttemptsPerComment = normalizePositiveInteger(
     request.maxProviderAttemptsPerComment,
     defaultMaxProviderAttemptsPerComment
   );
   const cache = request.cache ?? createInMemoryCommentTranslatorProviderExecutionCache();
-  const batches = chunk(providerRequests, maxBatchSize);
-  const batchSummaries = batches.map((batch, batchIndex) => ({
-    batchIndex,
-    providerRequestCount: batch.length
-  }));
 
+  let providerRequestCount = 0;
   let providerCallCount = 0;
   let cacheHitCount = 0;
   let cacheMissCount = 0;
+  let perMinuteSkippedCount = 0;
   let retryCount = 0;
   let recoverableErrorCount = 0;
   let terminalErrorCount = 0;
+  const terminalErrorCodeCounts = createEmptyTerminalErrorCodeCounts();
+  const batchSummaries: CommentTranslatorProviderExecutionBatchSummary[] = [];
   const translations: CommentTranslatorProviderExecutionTranslation[] = [];
 
-  for (const batch of batches) {
-    for (const providerRequest of batch) {
-      const lookupKey = providerRequest.cache.lookupKey;
-      const cachedTranslation = lookupKey ? cache.read(lookupKey) : null;
-      if (cachedTranslation) {
-        cacheHitCount += 1;
-        translations.push(createTranslationFromCache(providerRequest, cachedTranslation));
-        continue;
-      }
-
-      cacheMissCount += 1;
-      const execution = await translateWithRetry({
-        provider: request.provider,
-        fallbackProvider: request.fallbackProvider,
-        fallbackOnRecoverableProviderError: request.fallbackOnRecoverableProviderError ?? false,
-        providerRequest,
-        maxProviderAttemptsPerComment
+  for (const providerRequest of bridge.providerRequests) {
+    const lookupKey = providerRequest.cache.lookupKey;
+    const cachedTranslation = lookupKey ? cache.read(lookupKey) : null;
+    if (cachedTranslation) {
+      providerRequestCount += 1;
+      recordProviderRequestBatchSummary({
+        batchSummaries,
+        maxBatchSize,
+        providerRequestCount
       });
-      providerCallCount += execution.providerCallCount;
-      retryCount += execution.retryCount;
+      cacheHitCount += 1;
+      translations.push(createTranslationFromCache(providerRequest, cachedTranslation));
+      continue;
+    }
 
-      if (execution.result.type === "translated") {
-        const translation = createTranslationFromProviderResult(
-          providerRequest,
-          execution.result,
-          execution.recoverablePrimaryFallbackCount
-        );
-        translations.push(translation);
+    if (remainingMinuteCapacity <= 0) {
+      perMinuteSkippedCount += 1;
+      continue;
+    }
 
-        if (lookupKey) {
-          cache.write(lookupKey, {
-            translatedText: translation.translatedText,
-            detectedSourceLanguage: translation.detectedSourceLanguage,
-            confidence: translation.confidence
-          });
-        }
-        continue;
+    remainingMinuteCapacity -= 1;
+    providerRequestCount += 1;
+    recordProviderRequestBatchSummary({
+      batchSummaries,
+      maxBatchSize,
+      providerRequestCount
+    });
+    cacheMissCount += 1;
+    const execution = await translateWithRetry({
+      provider: request.provider,
+      fallbackProvider: request.fallbackProvider,
+      fallbackOnRecoverableProviderError: request.fallbackOnRecoverableProviderError ?? false,
+      providerRequest,
+      maxProviderAttemptsPerComment
+    });
+    providerCallCount += execution.providerCallCount;
+    retryCount += execution.retryCount;
+
+    if (execution.result.type === "translated") {
+      const translation = createTranslationFromProviderResult(
+        providerRequest,
+        execution.result,
+        execution.recoverablePrimaryFallbackCount
+      );
+      translations.push(translation);
+
+      if (lookupKey) {
+        cache.write(lookupKey, {
+          translatedText: translation.translatedText,
+          detectedSourceLanguage: translation.detectedSourceLanguage,
+          confidence: translation.confidence
+        });
       }
+      continue;
+    }
 
-      if (execution.result.type === "recoverable-error") {
-        recoverableErrorCount += 1;
-      } else {
-        terminalErrorCount += 1;
-      }
+    if (execution.result.type === "recoverable-error") {
+      recoverableErrorCount += 1;
+    } else {
+      terminalErrorCount += 1;
+      incrementTerminalErrorCodeCount(terminalErrorCodeCounts, execution.result.code);
     }
   }
+  const providerExecutedTranslations = filterProviderExecutedTranslations(translations);
 
   recordUsageEstimates({
     callerAuthorization: request.callerAuthorization,
     sessionReferenceId: request.sessionReferenceId,
     occurredAtMs: request.occurredAtMs,
     providerCallCount,
-    translatedMessages: translations,
+    translatedMessages: providerExecutedTranslations,
     recoverableErrorCount,
     terminalErrorCount
   });
 
   return {
     ...createResultBase({
-      providerRequestCount: providerRequests.length,
+      providerRequestCount,
       providerCallCount,
       translatedCount: translations.length,
       skippedCount: bridge.skippedCommentCount + perMinuteSkippedCount + recoverableErrorCount + terminalErrorCount,
@@ -360,13 +390,14 @@ export async function executeCommentTranslatorProviderBatch(
       retryCount,
       recoverableErrorCount,
       terminalErrorCount,
+      terminalErrorCodeCounts,
       providerUsageRecorded: providerCallCount > 0,
-      aiUsageRecorded: translations.length > 0,
+      aiUsageRecorded: providerExecutedTranslations.length > 0,
       recoverablePrimaryFallbackCount: translations.reduce(
         (total, translation) => total + translation.recoverablePrimaryFallbackCount,
         0
       ),
-      estimatedCostMicros: translations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
+      estimatedCostMicros: providerExecutedTranslations.reduce((total, translation) => total + translation.estimatedCostMicros, 0),
       providerRouting: {
         plan: "unresolved",
         primaryProvider: "direct-injected-provider",
@@ -545,7 +576,14 @@ function recordUsageEstimates({
         sessionReferenceId,
         occurredAtMs,
         translatedMessageEstimate: translatedMessages.length,
-        translatedCharacterEstimate: translatedMessages.reduce((total, message) => total + Array.from(message.translatedText).length, 0),
+        providerInputCharacterEstimate: translatedMessages.reduce(
+          (total, message) => total + message.providerInputCharacterEstimate,
+          0
+        ),
+        translatedCharacterEstimate: translatedMessages.reduce(
+          (total, message) => total + message.translatedCharacterEstimate,
+          0
+        ),
         estimatedCostMicros: translatedMessages.reduce((total, message) => total + message.estimatedCostMicros, 0),
         rawCommentText: "never-recorded-by-design"
       }
@@ -610,6 +648,8 @@ function createTranslationFromProviderResult(
     confidence: result.confidence,
     cacheOutcome: result.cacheOutcome,
     providerErrorClass: "translated",
+    providerInputCharacterEstimate: countUnicodeCharacters(providerRequest.input.text),
+    translatedCharacterEstimate: countUnicodeCharacters(result.translatedText),
     estimatedCostMicros: Math.max(0, result.usageHandoff.estimatedCostMicros ?? 0),
     recoverablePrimaryFallbackCount
   };
@@ -626,9 +666,43 @@ function createTranslationFromCache(
     confidence: cachedTranslation.confidence,
     cacheOutcome: "hit",
     providerErrorClass: "translated",
+    providerInputCharacterEstimate: countUnicodeCharacters(providerRequest.input.text),
+    translatedCharacterEstimate: countUnicodeCharacters(cachedTranslation.translatedText),
     estimatedCostMicros: 0,
     recoverablePrimaryFallbackCount: 0
   };
+}
+
+function countUnicodeCharacters(value: string) {
+  return Array.from(value.trim()).length;
+}
+
+function filterProviderExecutedTranslations(
+  translations: readonly CommentTranslatorProviderExecutionTranslation[]
+): CommentTranslatorProviderExecutionTranslation[] {
+  return translations.filter((translation) => translation.cacheOutcome !== "hit");
+}
+
+function recordProviderRequestBatchSummary({
+  batchSummaries,
+  maxBatchSize,
+  providerRequestCount
+}: {
+  batchSummaries: CommentTranslatorProviderExecutionBatchSummary[];
+  maxBatchSize: number;
+  providerRequestCount: number;
+}) {
+  const batchIndex = Math.floor((providerRequestCount - 1) / maxBatchSize);
+  const existing = batchSummaries[batchIndex];
+  if (existing) {
+    existing.providerRequestCount += 1;
+    return;
+  }
+
+  batchSummaries.push({
+    batchIndex,
+    providerRequestCount: 1
+  });
 }
 
 function createResultBase(
@@ -645,6 +719,7 @@ function createResultBase(
     recoverablePrimaryFallbackCount,
     skipsByReason,
     errorCounts,
+    terminalErrorCodeCounts: terminalErrorCodeCountOverrides,
     usageRecorded,
     fallbackReasonCounts,
     ...directOverrides
@@ -674,6 +749,10 @@ function createResultBase(
       recoverable: errorCounts?.recoverable ?? recoverableErrorCount ?? 0,
       terminal: errorCounts?.terminal ?? terminalErrorCount ?? 0
     },
+    terminalErrorCodeCounts: {
+      ...createEmptyTerminalErrorCodeCounts(),
+      ...terminalErrorCodeCountOverrides
+    },
     usageRecorded: {
       providerRequestEstimate: usageRecorded?.providerRequestEstimate ?? providerUsageRecorded ?? false,
       aiUsageEstimate: usageRecorded?.aiUsageEstimate ?? aiUsageRecorded ?? false
@@ -689,6 +768,40 @@ function createResultBase(
         fallbackReasonCounts?.recoverablePrimaryError ?? recoverablePrimaryFallbackCount ?? 0
     }
   };
+}
+
+function createEmptyTerminalErrorCodeCounts(): CommentTranslatorProviderTerminalErrorCodeCounts {
+  return {
+    invalidRequest: 0,
+    unsupportedLanguage: 0,
+    providerNotConfigured: 0,
+    credentialMissing: 0,
+    policyBlocked: 0
+  };
+}
+
+function incrementTerminalErrorCodeCount(
+  counts: CommentTranslatorProviderTerminalErrorCodeCounts,
+  code: CommentTranslationProviderTerminalError["code"]
+) {
+  counts[terminalErrorCodeCountKey(code)] += 1;
+}
+
+function terminalErrorCodeCountKey(
+  code: CommentTranslationProviderTerminalError["code"]
+): keyof CommentTranslatorProviderTerminalErrorCodeCounts {
+  switch (code) {
+    case "invalid-request":
+      return "invalidRequest";
+    case "unsupported-language":
+      return "unsupportedLanguage";
+    case "provider-not-configured":
+      return "providerNotConfigured";
+    case "credential-missing":
+      return "credentialMissing";
+    case "policy-blocked":
+      return "policyBlocked";
+  }
 }
 
 function isServerOnlyTranslatorProvider(provider: CommentTranslationProvider): boolean {
@@ -707,12 +820,4 @@ function isRetryableRecoverableError(result: CommentTranslationProviderRecoverab
 
 function normalizePositiveInteger(value: number | null | undefined, fallback: number): number {
   return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : fallback;
-}
-
-function chunk<T>(items: readonly T[], size: number): T[][] {
-  const batches: T[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    batches.push(items.slice(index, index + size));
-  }
-  return batches;
 }

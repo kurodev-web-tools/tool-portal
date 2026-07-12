@@ -8,10 +8,10 @@ import {
 import { AccountIntegrationsShell } from "@/components/account/AccountIntegrationsShell";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { CommentTranslatorPrivateLaunchUnavailable } from "@/components/comment-translator/CommentTranslatorPrivateLaunchUnavailable";
-import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
-import { createYouTubeAccountIntegrationViewModel } from "@/lib/comment-translator-youtube-account-integration";
+import { readCommentTranslatorFreeBetaRuntimeAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
+import { readYouTubeAccountIntegrationStatusViewModel } from "@/lib/comment-translator-youtube-account-integration-status";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
-import { getAccountSessionState } from "@/lib/supabase/session";
+import { createBrowserSafeAccountSessionViewModel, getAccountSessionState } from "@/lib/supabase/session";
 
 export const metadata: Metadata = {
   title: "Account integrations",
@@ -41,7 +41,7 @@ export default async function AccountIntegrationsPage({ searchParams }: AccountI
     redirect("/account/security?auth=recovery-pending");
   }
 
-  const launchAccess = readCommentTranslatorPrivateLaunchAccessForAccountSession({ accountSession });
+  const launchAccess = readCommentTranslatorFreeBetaRuntimeAccessForAccountSession({ accountSession });
 
   if (launchAccess.status === "blocked") {
     return (
@@ -51,12 +51,15 @@ export default async function AccountIntegrationsPage({ searchParams }: AccountI
     );
   }
 
+  const youtubeIntegration = await readYouTubeAccountIntegrationStatusViewModel({ accountSession });
+  const browserSafeAccountSession = createBrowserSafeAccountSessionViewModel(accountSession);
+
   return (
     <PortalShell>
       <AccountIntegrationsShell
-        accountStatus={accountSession}
+        accountStatus={browserSafeAccountSession}
         integrationMessage={params?.integration ?? null}
-        youtubeIntegration={createYouTubeAccountIntegrationViewModel()}
+        youtubeIntegration={youtubeIntegration}
         startYouTubeConnectAction={startYouTubeIntegrationConnectAction}
         reconnectYouTubeAction={reconnectYouTubeIntegrationAction}
         disconnectYouTubeAction={disconnectYouTubeIntegrationAction}

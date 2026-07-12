@@ -1,0 +1,425 @@
+{
+  "header": {
+    "subtitle": "YouTube first / explicit sessions",
+    "readOnlyDock": "Read-only Dock",
+    "target": "Target",
+    "feedTitle": "YouTube chat public preview"
+  },
+  "sections": {
+    "setup": "Setup / Connection",
+    "manualInput": "Manual / Paste Input",
+    "display": "Display Settings",
+    "comments": "Live Comments",
+    "quota": "Usage review",
+    "skipped": "Skipped Reasons",
+    "credentialStatus": "YouTube Credential Status",
+    "operatorSession": "Session Controls",
+    "operatorFlow": "Operator Flow",
+    "safety": "Public Release Terms"
+  },
+  "controls": {
+    "connection": "YouTube connection state",
+    "stream": "Stream selection",
+    "sourceLanguage": "Source language",
+    "targetLanguage": "Target language",
+    "singleComment": "Single comment",
+    "multilinePaste": "Multiline paste",
+    "manualResult": "Manual preview result",
+    "commentText": "Comment text",
+    "surface": "Surface",
+    "currentPair": "Current pair",
+    "mockState": "Usage state",
+    "searchPlaceholder": "Search comments"
+  },
+  "stats": {
+    "shown": "shown",
+    "total": "total",
+    "translated": "translated",
+    "skipped": "skipped",
+    "quota": "Quota",
+    "cacheHit": "Reused translations",
+    "cacheMiss": "New translations",
+    "errorRows": "Error rows",
+    "used": "used",
+    "hits": "reused",
+    "fixtureMisses": "new translations",
+    "recoverable": "Recoverable state",
+    "manualRows": "manual rows",
+    "manualSession": "manual session"
+  },
+  "manualInput": {
+    "helper": "Manual input is local-only here. It is not mixed into the live comment feed, and real APIs or AI translation do not run before approved Start execution.",
+    "singlePlaceholder": "Add one comment",
+    "pastePlaceholder": "Paste one comment per line",
+    "sourceBadge": "manual",
+    "sampleLabel": "sample"
+  },
+  "actions": {
+    "addManualComments": "Add comments",
+    "insertSample": "Insert samples",
+    "clearDraft": "Clear draft",
+    "clearManualSession": "Clear manual session",
+    "refreshCredentialStatus": "Check credential status",
+    "startSession": "Start",
+    "stopSession": "Stop",
+    "refreshSession": "Refresh status",
+    "clearPreview": "Clear preview"
+  },
+  "manualResults": {
+    "translated": {
+      "label": "Translated preview",
+      "helper": "Attach deterministic preview translation"
+    },
+    "skipped": {
+      "label": "Skipped preview",
+      "helper": "Add with a skip reason"
+    },
+    "error": {
+      "label": "Error preview",
+      "helper": "Add as a recoverable error row"
+    }
+  },
+  "fields": {
+    "mode": "Mode",
+    "dock": "Dock",
+    "credentialReference": "Credential reference",
+    "scope": "Scope",
+    "expires": "Expires",
+    "reason": "Reason",
+    "sessionState": "State",
+    "elapsed": "Elapsed",
+    "dailyUsed": "Daily used",
+    "dailyRemaining": "Daily remaining",
+    "sessionRemaining": "Session remaining",
+    "monthlyInputCharacterCap": "Monthly input character cap",
+    "monthlyRemaining": "input characters remaining",
+    "stopReason": "Stop reason",
+    "nextAction": "Next action",
+    "providerConnection": "Connection",
+    "perMinuteCap": "Per-minute cap"
+  },
+  "credentialStatus": {
+    "pending": "Checking",
+    "unchecked": "Unchecked",
+    "refreshFailed": "Could not check credential status",
+    "safeBoundary": "The client displays only server-owned credential status metadata. Sensitive connection values and stream target values are not shown.",
+    "states": {
+      "available": "Available",
+      "reconnect-required": "Reconnect required",
+      "disconnected": "Disconnected",
+      "unavailable": "Unavailable",
+      "error": "Status check failed",
+      "credential-resolution-disabled": "Resolution disabled"
+    }
+  },
+  "operatorSession": {
+    "readinessTitle": "Start readiness",
+    "connectionReadiness": "YouTube connection",
+    "startReadiness": "Start stays disabled until YouTube is available through the server-owned credential check.",
+    "helper": "Only a server-owned session advances after Start. This panel displays sanitized session and usage metadata only.",
+    "pending": "Working",
+    "actionFailed": "Could not update session state",
+    "startBlockedTitle": "Start is unavailable because YouTube is not ready",
+    "startBlockedBody": "If Start is unavailable, connect or reconnect YouTube from account integrations, then check credential status again.",
+    "openIntegrations": "Open YouTube integrations",
+    "reconnectGuidance": "Reconnect YouTube from account integrations, then check credential status again.",
+    "safeBoundary": "Sensitive connection values, internal account values, and stream target values are not displayed or stored.",
+    "publicLimitSummary": [
+      "Up to 30 minutes per day",
+      "Up to 30 minutes per session",
+      "30 translated messages per minute",
+      "20,000 provider-input/source characters per month"
+    ],
+    "perMinuteCapHelper": "Free plan allows up to 30 minutes per day, up to 30 minutes per session, 30 translated messages per minute, and 20,000 provider-input/source characters per month.",
+    "usageTitle": "Free beta usage",
+    "usageProviderAllowed": "Provider calls can run while usage is within limits.",
+    "usageProviderBlockedOverLimit": "Provider calls do not run while usage is over limit.",
+    "usageProviderUnavailable": "Provider calls do not run while usage cannot be verified safely.",
+    "usageStartBlockedTitle": "Start is unavailable because usage is blocked",
+    "usageStartBlockedBody": "The server-owned usage check found a limit or usage blocker before Start.",
+    "rateLimitStartBlockedTitle": "Too many Start attempts",
+    "rateLimitStartBlockedBody": "Wait briefly before starting again. Retry after:",
+    "ratePausedTitle": "Paused at the per-minute limit",
+    "ratePausedBody": "Translation will resume automatically from new comments in about {seconds} seconds.",
+    "ratePausedSkipped": "Comments posted during the pause will not be translated.",
+    "resyncingTitle": "Preparing to resume comment retrieval",
+    "previousResultsTitle": "Showing stopped previous results",
+    "previousResultsBody": "After Stop, new polling, translation, and usage consumption stay off while the last safe preview remains visible. The next Start or manual clear replaces it.",
+    "perMinuteRemaining": "messages/min remaining",
+    "usageStates": {
+      "available": "Available",
+      "over-limit": "Over limit",
+      "unavailable": "Unavailable"
+    },
+    "states": {
+      "not-started": "Not started",
+      "active": "Active",
+      "stopped": "Stopped"
+    },
+    "nextActions": {
+      "press-start": "Ready to Start",
+      "send-heartbeat-or-stop": "Refresh status or Stop",
+      "session-stopped": "Start again if needed",
+      "reconnect-or-sign-in": "Reconnect or sign in",
+      "wait-for-limit-reset": "Wait for limit reset"
+    },
+    "stopReasons": {
+      "user-stop": "User stop",
+      "stream-ended": "Stream ended",
+      "stream-unavailable": "Stream unavailable",
+      "browser-disconnect": "Browser disconnected",
+      "missing-heartbeat": "Missing heartbeat",
+      "auth-failed": "Auth failed",
+      "token-refresh-failed": "Connection refresh failed",
+      "reconnect-required": "Reconnect required",
+      "daily-time-limit": "Daily time limit",
+      "session-time-limit": "Session time limit",
+      "translated-message-cap": "Translated-message cap",
+      "provider-quota-stop": "Provider quota stop",
+      "global-budget-stop": "Global budget stop",
+      "ai-budget-stop": "AI budget stop",
+      "translation-provider-limit": "Translation provider limit",
+      "session-limit": "Session limit",
+      "terminal-provider-error": "Terminal provider error"
+    },
+    "reasonGroups": {
+      "manual": "Manual stop",
+      "connection": "Connection",
+      "live-target": "Stream state",
+      "limit": "Limit",
+      "browser": "Browser state",
+      "provider": "Translation provider",
+      "session": "Session"
+    },
+    "reasonMessages": {
+      "user-stop": "The session stopped after the Stop action.",
+      "disconnected": "Start is unavailable because no YouTube connection was found.",
+      "reconnect-required": "Start is unavailable because the YouTube connection needs to be refreshed.",
+      "auth-unavailable": "Start is unavailable because sign-in or auth status could not be confirmed.",
+      "no-live-broadcast": "Start is unavailable because no owned live broadcast is currently live.",
+      "live-chat-disabled": "Start is unavailable because live chat is not available for the stream.",
+      "stream-ended": "The stream or live chat ended, so the session stopped.",
+      "live-chat-not-found": "The live chat could not be confirmed, so the session stopped.",
+      "live-target-unavailable": "The stream state could not be confirmed safely, so the session stopped.",
+      "quota-or-budget-stop": "The session stopped because a Free limit or shared budget was reached.",
+      "heartbeat-or-browser-disconnect": "The session stopped because the browser connection or heartbeat was not confirmed.",
+      "translation-provider-unavailable": "The session stopped because the translation provider is unavailable.",
+      "translation-provider-error": "The session stopped after repeated translation provider errors.",
+      "session-limit": "The active session limit has been reached."
+    },
+    "recommendedActions": {
+      "none": "No additional action is needed.",
+      "connect-youtube": "Connect YouTube from account integrations.",
+      "reconnect-youtube": "Reconnect YouTube from account integrations.",
+      "check-live-broadcast": "Confirm the stream is live in YouTube Studio.",
+      "enable-live-chat": "Confirm live chat is enabled in YouTube.",
+      "wait-or-pick-another-stream": "Check the stream state, then start again if needed.",
+      "wait-for-limit-reset": "Start again after the limit resets.",
+      "keep-browser-open": "Keep this screen open, then refresh session status.",
+      "retry-later": "Wait briefly, then start again.",
+      "start-again": "Stop the existing session before starting again."
+    }
+  },
+  "retentionAttribution": {
+    "title": "Data deletion / Retention / Source",
+    "statusReady": "Ready",
+    "statusUnavailable": "Unavailable",
+    "deletionButton": "Request data deletion",
+    "deletionPending": "Checking",
+    "deletionHelper": "Deletion requests target only server-owned session, usage, and derived feed state. Raw comments and provider payloads are not returned.",
+    "retentionReady": "Retention readiness covers durable usage for the Free monthly cap and session-scoped feed state only.",
+    "retentionUnavailable": "Deletion and retention decisions are unavailable until durable state, entitlement, and provider readiness are readable.",
+    "sourceLabel": "Source: YouTube Live Chat",
+    "deletedPropagation": "Deleted comments render message-reference tombstones only."
+  },
+  "creatorWaitlist": {
+    "title": "Creator closed beta",
+    "priceIntent": "Creator is planned at JPY 980/month. For now, only closed beta pre-registration is available.",
+    "helper": "Pre-register for Creator closed beta and store first-month discount intent in server-owned state.",
+    "registeredHelper": "You are pre-registered. Invitations and discount eligibility are reviewed by the owner before closed beta access.",
+    "loginHelper": "Log in or create an account before joining the Creator closed beta waitlist.",
+    "featureSummary": "AI natural translation, OBS display, moderator sharing, and custom dictionaries will be validated in stages.",
+    "unavailable": "Creator waitlist durable state is unavailable, so pre-registration is disabled.",
+    "joinWaitlist": "Pre-register",
+    "registeredButton": "Registered",
+    "loginButton": "Log in to register",
+    "refresh": "Check state",
+    "pending": "Checking",
+    "registeredAt": "Registered",
+    "boundary": "This does not run Stripe, Checkout, Customer Portal, provider execution, or a public gate flip.",
+    "states": {
+      "unauthenticated": "Login required",
+      "unavailable": "Unavailable",
+      "unregistered": "Not registered",
+      "registered": "Registered"
+    }
+  },
+  "operatorFlow": {
+    "ready": "UI review ready",
+    "standby": "Waiting for review",
+    "blocked": "Credential review needed",
+    "noLiveExecution": "This screen does not run live provider commands.",
+    "summaryReady": "Runtime smoke boundaries are shown as a safe operator checklist in this UI.",
+    "summaryStandby": "Check the selected stream or connection state before preparing operator-local commands.",
+    "summaryBlocked": "Check credential status first and review only sanitized metadata on screen.",
+    "commandBoundary": "If execution is needed, run CLI commands only after same-thread preflight, sanitized output review, and explicit approval.",
+    "stepState": {
+      "done": "Checked",
+      "waiting": "Waiting",
+      "gated": "Approval gated"
+    },
+    "steps": {
+      "credential-status": {
+        "label": "Credential status",
+        "helper": "Review only opaque reference and sanitized metadata"
+      },
+      "target-readiness": {
+        "label": "Stream target",
+        "helper": "The UI shows ready/standby only and never target values"
+      },
+      "intake-bridge": {
+        "label": "Intake bridge",
+        "helper": "Task 6 server-only bridge is not called from the UI"
+      },
+      "explicit-approval": {
+        "label": "Execution approval",
+        "helper": "Live/provider execution needs separate CLI approval in this thread"
+      }
+    }
+  },
+  "connections": {
+    "connected": "Connection checked",
+    "syncing": "Checking connection",
+    "offline": "Disconnected"
+  },
+  "connectionStatus": {
+    "connected": "Before start",
+    "syncing": "Syncing",
+    "offline": "Offline"
+  },
+  "connectionDockStatus": {
+    "connected": "Reads only after Start",
+    "syncing": "Connection alone does not monitor",
+    "offline": "Dock paused"
+  },
+  "streams": {
+    "saturday-setup": {
+      "label": "Start target stream",
+      "helper": "Ready state only"
+    },
+    "karaoke-preview": {
+      "label": "Pre-start stream",
+      "helper": "Standby state only"
+    },
+    "archive-check": {
+      "label": "Ended stream",
+      "helper": "Target values are not shown"
+    }
+  },
+  "dockStatus": {
+    "ready": "Ready",
+    "standby": "Standby",
+    "blocked": "Read review only"
+  },
+  "languages": {
+    "en": "English",
+    "ko": "Korean",
+    "zh": "Chinese",
+    "ja": "Japanese"
+  },
+  "displayModes": {
+    "both": {
+      "label": "Both",
+      "helper": "Original and translated"
+    },
+    "original": {
+      "label": "Original",
+      "helper": "Source comments only"
+    },
+    "translated": {
+      "label": "Translated",
+      "helper": "Translated rows first"
+    }
+  },
+  "surfaces": {
+    "obs-browser-dock": {
+      "label": "OBS Browser Dock",
+      "helper": "Dense broadcaster view"
+    },
+    "narrow-viewport": {
+      "label": "Narrow Viewport",
+      "helper": "Single-column review"
+    }
+  },
+  "displayNamePolicy": {
+    "streamSafeToggleLabel": "Show safe names in comments-only view",
+    "streamSafeToggleHelper": "When off, compact stream-safe display uses YouTube viewer.",
+    "streamSafeDefaultBadge": "Names hidden",
+    "streamSafeShownBadge": "Safe names on"
+  },
+  "filters": {
+    "all": "All",
+    "translated": "Translated",
+    "skipped": "Skipped",
+    "error": "Error"
+  },
+  "skipReasonLabels": {
+    "same-language": "Same language",
+    "too-short": "Too short",
+    "spam-filter": "Spam filter"
+  },
+  "skipReasonText": {
+    "Same language": "Same language",
+    "Too short": "Too short",
+    "Spam filter": "Spam filter"
+  },
+  "quotaScenarios": {
+    "normal": {
+      "label": "Free limit preview",
+      "status": "Healthy",
+      "helper": "Shows the initial Free limits: Up to 30 minutes per day, Up to 30 minutes per session, 30 translated messages per minute, and 20,000 provider-input/source characters per month"
+    },
+    "warning": {
+      "label": "Near limit",
+      "status": "Warning",
+      "helper": "The session shows a stop reason before crossing Free limits or shared service budget"
+    },
+    "empty": {
+      "label": "Before start",
+      "status": "No rows",
+      "helper": "Before Start, YouTube reads, AI translation, and quota use do not begin"
+    },
+    "error": {
+      "label": "Diagnostic limited",
+      "status": "Usage warning",
+      "helper": "Raw text logging is off by default; diagnostics stay short-lived and sanitized"
+    }
+  },
+  "statusBadges": {
+    "reused": "Reused translation",
+    "fresh": "New translation",
+    "translated": "translated",
+    "skipped": "skipped",
+    "error": "error"
+  },
+  "commentMeta": {
+    "cache": "cache",
+    "skipped": "skipped",
+    "error": "error",
+    "noTranslatedText": "No translated text for"
+  },
+  "empty": {
+    "title": "No matching comments",
+    "body": "This feed stays empty until server-owned session state has displayable comments."
+  },
+  "safety": [
+    "YouTube API reads and AI translation run only inside a session explicitly started by the signed-in user.",
+    "Connecting YouTube alone does not start background monitoring, polling, translation, or quota use.",
+    "Free uses Azure Translator. Pro uses an OpenAI mini model first, with Azure fallback only for recoverable provider errors.",
+    "DeepL, Gemini, and Workers AI are comparison-only for the initial launch.",
+    "Initial Free limits are up to 30 minutes per day, up to 30 minutes per session, 1 active session, 30 translated messages per minute, and 20,000 provider-input/source characters per month.",
+    "Sensitive connection values, stream target values, and internal authorization details are not shown or stored in the browser.",
+    "Raw text logging is off by default. Diagnostics stay short-lived and sanitized.",
+    "Paid plans are planned; Stripe integration and higher limits are handled in later tasks."
+  ]
+}

@@ -29,6 +29,7 @@ export type CommentTranslatorUsageLedgerProviderRequestEstimate = {
 
 export type CommentTranslatorUsageLedgerAiUsageEstimate = {
   translatedMessageEstimate: number;
+  providerInputCharacterEstimate: number;
   translatedCharacterEstimate: number;
   estimatedCostMicros: number;
   rawCommentText: "never-recorded-by-design";
@@ -106,6 +107,8 @@ export type CommentTranslatorUsageLedgerSnapshot = {
   dailyUsedMs: number;
   currentSessionElapsedMs: number;
   translatedMessagesInCurrentMinute: number;
+  translatedMessageCapacityAvailableAtMs: number | null;
+  monthlyProviderInputCharacterEstimate: number;
   providerBudgetAvailable: boolean;
   globalBudgetAvailable: boolean;
   aiBudgetAvailable: boolean;
@@ -115,6 +118,15 @@ export type CommentTranslatorUsageLedgerSnapshot = {
   aiUsageEstimate: CommentTranslatorUsageLedgerAiUsageEstimate;
 };
 
+export class CommentTranslatorUsageRecoveryAuthorityError extends Error {
+  readonly reason = "untrustworthy-provider-execution-time";
+
+  constructor() {
+    super("Comment translator usage recovery authority is unavailable.");
+    this.name = "CommentTranslatorUsageRecoveryAuthorityError";
+  }
+}
+
 export type CommentTranslatorAdminSafeAggregateMetrics = {
   generatedAtIso: string;
   activeSessionCountEstimate: number;
@@ -122,6 +134,7 @@ export type CommentTranslatorAdminSafeAggregateMetrics = {
   totalProviderRequestEstimate: number;
   totalProviderQuotaUnitEstimate: number;
   totalAiTranslatedMessageEstimate: number;
+  totalAiProviderInputCharacterEstimate: number;
   totalAiTranslatedCharacterEstimate: number;
   totalAiCostEstimateMicros: number;
   quotaBudgetStopCounts: {
@@ -140,7 +153,7 @@ export type CommentTranslatorAdminSafeAggregateMetrics = {
 export const commentTranslatorUsageQuotaBudgetLedgerContract = {
   implementationStage: "server-owned-usage-quota-budget-ledger-foundation",
   runtime: "server-only",
-  storageStage: "in-process-contract-foundation",
+  storageStage: "durable-counter-adapter-f4",
   clientReadableOutput: "sanitized-usage-metadata-only",
   recordCategories: [
     "per-user-daily-session-minutes",
@@ -311,24 +324,46 @@ export function readInMemoryCommentTranslatorUsageSnapshot({
   const records = userLedgerReferenceId
     ? usageLedgerRecords.filter((record) => record.userLedgerReferenceId === userLedgerReferenceId)
     : [];
+  const currentMinuteStartedAtMs = nowMs - 60_000;
+  const currentWindowProviderExecutionRecords = activeSession
+    ? records.filter(
+        (record): record is Extract<CommentTranslatorUsageLedgerRecord, { type: "ai-usage-estimated" }> =>
+          record.type === "ai-usage-estimated" &&
+          record.sessionReferenceId === activeSession.sessionReferenceId &&
+          Math.max(0, record.translatedMessageEstimate) > 0 &&
+          (!Number.isFinite(record.occurredAtMs) || record.occurredAtMs > currentMinuteStartedAtMs)
+      )
+    : [];
+  const translatedMessagesInCurrentMinute = currentWindowProviderExecutionRecords.reduce(
+    (total, record) => total + Math.max(0, record.translatedMessageEstimate),
+    0
+  );
+  const translatedMessageCapacityAvailableAtMs =
+    translatedMessagesInCurrentMinute >= planEntitlement.translatedMessagesPerMinute
+      ? earliestInMemoryProviderExecutionExpiryOrThrow(currentWindowProviderExecutionRecords)
+      : null;
   const currentDay = dayBucket(nowMs);
-  const dailyRecords = records.filter((record) => dayBucket(record.occurredAtMs) === currentDay);
+  const currentMonth = monthBucket(nowMs);
+  const dailyRecords = records.filter(
+    (record) => Number.isFinite(record.occurredAtMs) && dayBucket(record.occurredAtMs) === currentDay
+  );
   const activeSessionRecords = activeSession
     ? dailyRecords.filter((record) => "sessionReferenceId" in record && record.sessionReferenceId === activeSession.sessionReferenceId)
     : [];
-  const currentMinuteStartedAtMs = nowMs - 60_000;
 
   return {
     dailyUsedMs: dailyRecords
       .filter((record): record is Extract<CommentTranslatorUsageLedgerRecord, { type: "session-stopped" }> => record.type === "session-stopped")
       .reduce((total, record) => total + Math.max(0, record.elapsedMs), 0),
     currentSessionElapsedMs: activeSession ? Math.max(0, nowMs - activeSession.startedAtMs) : 0,
-    translatedMessagesInCurrentMinute: activeSessionRecords
+    translatedMessagesInCurrentMinute,
+    translatedMessageCapacityAvailableAtMs,
+    monthlyProviderInputCharacterEstimate: records
       .filter(
         (record): record is Extract<CommentTranslatorUsageLedgerRecord, { type: "ai-usage-estimated" }> =>
-          record.type === "ai-usage-estimated" && record.occurredAtMs >= currentMinuteStartedAtMs
+          record.type === "ai-usage-estimated" && monthBucket(record.occurredAtMs) === currentMonth
       )
-      .reduce((total, record) => total + Math.max(0, record.translatedMessageEstimate), 0),
+      .reduce((total, record) => total + Math.max(0, record.providerInputCharacterEstimate), 0),
     providerBudgetAvailable: !dailyRecords.some(
       (record) => record.type === "quota-budget-stop" && record.stopCategory === "provider-quota"
     ),
@@ -341,6 +376,17 @@ export function readInMemoryCommentTranslatorUsageSnapshot({
     providerRequestEstimate: aggregateProviderRequestEstimate(activeSessionRecords),
     aiUsageEstimate: aggregateAiUsageEstimate(activeSessionRecords)
   };
+}
+
+function earliestInMemoryProviderExecutionExpiryOrThrow(
+  records: readonly Extract<CommentTranslatorUsageLedgerRecord, { type: "ai-usage-estimated" }>[]
+) {
+  const expiries = records.map((record) => record.occurredAtMs + 60_000);
+  if (expiries.length === 0 || expiries.some((expiry) => !Number.isFinite(expiry))) {
+    throw new CommentTranslatorUsageRecoveryAuthorityError();
+  }
+
+  return Math.min(...expiries);
 }
 
 export function createCommentTranslatorAdminSafeAggregateMetrics({
@@ -376,6 +422,7 @@ export function createCommentTranslatorAdminSafeAggregateMetrics({
     totalProviderRequestEstimate: providerEstimate.requestEstimateCount,
     totalProviderQuotaUnitEstimate: providerEstimate.quotaUnitEstimate,
     totalAiTranslatedMessageEstimate: aiEstimate.translatedMessageEstimate,
+    totalAiProviderInputCharacterEstimate: aiEstimate.providerInputCharacterEstimate,
     totalAiTranslatedCharacterEstimate: aiEstimate.translatedCharacterEstimate,
     totalAiCostEstimateMicros: aiEstimate.estimatedCostMicros,
     quotaBudgetStopCounts: {
@@ -431,12 +478,15 @@ function aggregateAiUsageEstimate(records: readonly CommentTranslatorUsageLedger
     .reduce(
       (total, record) => ({
         translatedMessageEstimate: total.translatedMessageEstimate + Math.max(0, record.translatedMessageEstimate),
+        providerInputCharacterEstimate:
+          total.providerInputCharacterEstimate + Math.max(0, record.providerInputCharacterEstimate),
         translatedCharacterEstimate: total.translatedCharacterEstimate + Math.max(0, record.translatedCharacterEstimate),
         estimatedCostMicros: total.estimatedCostMicros + Math.max(0, record.estimatedCostMicros),
         rawCommentText: "never-recorded-by-design"
       }),
       {
         translatedMessageEstimate: 0,
+        providerInputCharacterEstimate: 0,
         translatedCharacterEstimate: 0,
         estimatedCostMicros: 0,
         rawCommentText: "never-recorded-by-design"
@@ -480,4 +530,8 @@ function mapStopReasonToQuotaBudgetCategory(
 
 function dayBucket(nowMs: number) {
   return new Date(nowMs).toISOString().slice(0, 10);
+}
+
+function monthBucket(nowMs: number) {
+  return new Date(nowMs).toISOString().slice(0, 7);
 }

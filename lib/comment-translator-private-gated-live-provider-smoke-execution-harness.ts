@@ -41,7 +41,47 @@ export type Task27TranslationProviderResult = {
   providerUnavailableSkippedCount: number;
   recoverableErrorCount: number;
   terminalErrorCount: number;
+  terminalErrorCodeCounts: Task27TerminalErrorCodeCounts;
+  feedPersistencePathLabel?: "not-run-direct-provider-execution-harness" | "executed-f10-feed-persistence-path";
+  durableFeedPersistResultLabel?:
+    | "not-run"
+    | "durable-feed-persisted"
+    | "durable-feed-store-unavailable"
+    | "durable-feed-persist-failed"
+    | "active-session-context-unavailable";
+  durableFeedStoreReadyLabel?: "ready" | "unavailable";
+  durableFeedTableShapeLabel?: "available" | "missing-or-unavailable" | "column-shape-mismatch" | "conflict-shape-mismatch" | "unknown";
+  durableFeedPersistOperationLabel?: "upsert-select-single" | "not-run";
+  durableFeedPersistFailureBucketLabel?:
+    | "none"
+    | "store-unavailable"
+    | "table-shape-missing-or-unavailable"
+    | "column-shape-mismatch"
+    | "conflict-shape-mismatch"
+    | "policy-or-permission-denied"
+    | "owner-session-key-rejected"
+    | "safe-feed-shape-rejected"
+    | "row-write-not-confirmed"
+    | "durable-store-operation-failed";
+  durableFeedRowsTouchedCount?: number;
+  durableFeedReadbackLabel?:
+    | "readback-ready"
+    | "readback-missing"
+    | "readback-shape-mismatch"
+    | "readback-failed"
+    | "not-run-persist-failed"
+    | "not-run-store-unavailable";
+  feedDisplayRowCount?: number;
+  sourceAttributionAvailabilityLabel?: "available" | "not-produced-by-provider-harness" | "requires-ui-feed-confirmation" | "unavailable";
   stopReason: Task27LiveProviderSmokeStopReason | null;
+};
+
+export type Task27TerminalErrorCodeCounts = {
+  invalidRequest: number;
+  unsupportedLanguage: number;
+  providerNotConfigured: number;
+  credentialMissing: number;
+  policyBlocked: number;
 };
 
 export type Task27LiveProviderSmokeStopReason =
@@ -110,6 +150,17 @@ export type CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessResult
         providerUnavailableSkippedCount: number;
         recoverableErrorCount: number;
         terminalErrorCount: number;
+        terminalErrorCodeCounts: Task27TerminalErrorCodeCounts;
+        feedPersistencePathLabel?: Task27TranslationProviderResult["feedPersistencePathLabel"];
+        durableFeedPersistResultLabel?: Task27TranslationProviderResult["durableFeedPersistResultLabel"];
+        durableFeedStoreReadyLabel?: Task27TranslationProviderResult["durableFeedStoreReadyLabel"];
+        durableFeedTableShapeLabel?: Task27TranslationProviderResult["durableFeedTableShapeLabel"];
+        durableFeedPersistOperationLabel?: Task27TranslationProviderResult["durableFeedPersistOperationLabel"];
+        durableFeedPersistFailureBucketLabel?: Task27TranslationProviderResult["durableFeedPersistFailureBucketLabel"];
+        durableFeedRowsTouchedCount?: number;
+        durableFeedReadbackLabel?: Task27TranslationProviderResult["durableFeedReadbackLabel"];
+        feedDisplayRowCount?: number;
+        sourceAttributionAvailabilityLabel?: Task27TranslationProviderResult["sourceAttributionAvailabilityLabel"];
         stopReason: Task27LiveProviderSmokeStopReason | null;
       };
       tokenValue: "never-returned-by-design";
@@ -243,6 +294,59 @@ export async function runCommentTranslatorPrivateGatedLiveProviderSmokeExecution
     });
   }
 
+  const evidence: Extract<
+    CommentTranslatorPrivateGatedLiveProviderSmokeExecutionHarnessResult,
+    { status: "task-27-live-provider-smoke-sanitized-result" }
+  >["evidence"] = {
+    providerTargetLookup: "executed-presence-only",
+    liveChatPollingSmoke: "executed-bounded-readonly-one-step",
+    translationProviderExecution: "executed-server-only-provider",
+    returnedItemCount: nonNegativeInteger(polling.returnedItemCount),
+    eligibleCommentCount: nonNegativeInteger(polling.eligibleCommentCount),
+    providerRequestCount: nonNegativeInteger(translation.providerRequestCount),
+    providerCallCount: nonNegativeInteger(translation.providerCallCount),
+    translatedCount: nonNegativeInteger(translation.translatedCount),
+    skippedCount: nonNegativeInteger(polling.skippedCommentCount) + nonNegativeInteger(translation.skippedCount),
+    languagePolicySkippedCount: nonNegativeInteger(translation.languagePolicySkippedCount),
+    perMinuteSkippedCount: nonNegativeInteger(translation.perMinuteSkippedCount),
+    providerUnavailableSkippedCount: nonNegativeInteger(translation.providerUnavailableSkippedCount),
+    recoverableErrorCount: nonNegativeInteger(translation.recoverableErrorCount),
+    terminalErrorCount: nonNegativeInteger(translation.terminalErrorCount),
+    terminalErrorCodeCounts: sanitizeTerminalErrorCodeCounts(translation.terminalErrorCodeCounts),
+    stopReason: translation.stopReason ?? polling.stopReason
+  };
+
+  if (translation.feedPersistencePathLabel) {
+    evidence.feedPersistencePathLabel = translation.feedPersistencePathLabel;
+  }
+  if (translation.durableFeedPersistResultLabel) {
+    evidence.durableFeedPersistResultLabel = translation.durableFeedPersistResultLabel;
+  }
+  if (translation.durableFeedStoreReadyLabel) {
+    evidence.durableFeedStoreReadyLabel = translation.durableFeedStoreReadyLabel;
+  }
+  if (translation.durableFeedTableShapeLabel) {
+    evidence.durableFeedTableShapeLabel = translation.durableFeedTableShapeLabel;
+  }
+  if (translation.durableFeedPersistOperationLabel) {
+    evidence.durableFeedPersistOperationLabel = translation.durableFeedPersistOperationLabel;
+  }
+  if (translation.durableFeedPersistFailureBucketLabel) {
+    evidence.durableFeedPersistFailureBucketLabel = translation.durableFeedPersistFailureBucketLabel;
+  }
+  if (typeof translation.durableFeedRowsTouchedCount === "number") {
+    evidence.durableFeedRowsTouchedCount = nonNegativeInteger(translation.durableFeedRowsTouchedCount);
+  }
+  if (translation.durableFeedReadbackLabel) {
+    evidence.durableFeedReadbackLabel = translation.durableFeedReadbackLabel;
+  }
+  if (typeof translation.feedDisplayRowCount === "number") {
+    evidence.feedDisplayRowCount = nonNegativeInteger(translation.feedDisplayRowCount);
+  }
+  if (translation.sourceAttributionAvailabilityLabel) {
+    evidence.sourceAttributionAvailabilityLabel = translation.sourceAttributionAvailabilityLabel;
+  }
+
   return {
     status: "task-27-live-provider-smoke-sanitized-result",
     command: "task-27-private-gated-live-provider-smoke-execution-harness",
@@ -250,23 +354,7 @@ export async function runCommentTranslatorPrivateGatedLiveProviderSmokeExecution
     credentialReferenceId: request.credentialReferenceId,
     liveProviderExecution: "approved-bounded-execution",
     translatorPipelineWiring: "implemented-sanitized-summary-only",
-    evidence: {
-      providerTargetLookup: "executed-presence-only",
-      liveChatPollingSmoke: "executed-bounded-readonly-one-step",
-      translationProviderExecution: "executed-server-only-provider",
-      returnedItemCount: nonNegativeInteger(polling.returnedItemCount),
-      eligibleCommentCount: nonNegativeInteger(polling.eligibleCommentCount),
-      providerRequestCount: nonNegativeInteger(translation.providerRequestCount),
-      providerCallCount: nonNegativeInteger(translation.providerCallCount),
-      translatedCount: nonNegativeInteger(translation.translatedCount),
-      skippedCount: nonNegativeInteger(polling.skippedCommentCount) + nonNegativeInteger(translation.skippedCount),
-      languagePolicySkippedCount: nonNegativeInteger(translation.languagePolicySkippedCount),
-      perMinuteSkippedCount: nonNegativeInteger(translation.perMinuteSkippedCount),
-      providerUnavailableSkippedCount: nonNegativeInteger(translation.providerUnavailableSkippedCount),
-      recoverableErrorCount: nonNegativeInteger(translation.recoverableErrorCount),
-      terminalErrorCount: nonNegativeInteger(translation.terminalErrorCount),
-      stopReason: translation.stopReason ?? polling.stopReason
-    },
+    evidence,
     tokenValue: "never-returned-by-design",
     refreshTokenValue: "never-returned-by-design",
     authorizationHeaderValue: "never-returned-by-design",
@@ -352,7 +440,21 @@ function nonNegativeInteger(value: number) {
 }
 
 function mapOperatorLocalTargetLookupResult(result: Record<string, unknown>): Task27ProviderTargetLookupResult {
-  if (result.status === "live-chat-target-lookup-sanitized-result" && result.liveChatTarget === "present") {
+  const status = readLabel(result.status ?? result.statusLabel ?? result.targetLookupStatus ?? result.targetLookupStatusLabel);
+  const liveChatTarget = readLabel(
+    result.liveChatTarget ?? result.liveChatTargetLabel ?? result.targetLookupLiveChatTarget ?? result.targetLookupLiveChatTargetLabel
+  );
+  const liveChatTargetLookup = readLabel(
+    result.liveChatTargetLookup ??
+      result.liveChatTargetLookupLabel ??
+      result.targetLookupLiveChatTargetLookup ??
+      result.targetLookupLiveChatTargetLookupLabel
+  );
+  const providerAccess = readLabel(
+    result.providerAccess ?? result.providerAccessLabel ?? result.targetLookupProviderAccess ?? result.targetLookupProviderAccessLabel
+  );
+
+  if (status === "live-chat-target-lookup-sanitized-result" && liveChatTarget === "present") {
     return {
       status: "target-present",
       providerTargetLookup: "executed-presence-only",
@@ -360,7 +462,7 @@ function mapOperatorLocalTargetLookupResult(result: Record<string, unknown>): Ta
     };
   }
 
-  if (typeof result.status === "string" && result.status.includes("failed")) {
+  if (status.includes("failed")) {
     return {
       status: "target-lookup-failed",
       providerTargetLookup: "failed-sanitized",
@@ -371,7 +473,11 @@ function mapOperatorLocalTargetLookupResult(result: Record<string, unknown>): Ta
 
   return {
     status: "target-absent",
-    providerTargetLookup: result.liveChatTargetLookup === "executed-bounded-readonly-one-step" ? "executed-presence-only" : "not-run",
+    providerTargetLookup:
+      liveChatTargetLookup === "executed-bounded-readonly-one-step" ||
+      providerAccess === "liveBroadcasts-list-target-lookup-only"
+        ? "executed-presence-only"
+        : "not-run",
     liveChatTarget: "absent",
     stopReason: "stream-unavailable"
   };
@@ -428,6 +534,17 @@ function mapOperatorLocalTranslationResult(result: Record<string, unknown>): Tas
       providerUnavailableSkippedCount: readCount(asRecord(result.skipsByReason).providerUnavailable),
       recoverableErrorCount: readCount(asRecord(result.errorCounts).recoverable),
       terminalErrorCount: readCount(asRecord(result.errorCounts).terminal),
+      terminalErrorCodeCounts: readTerminalErrorCodeCounts(result.terminalErrorCodeCounts),
+      feedPersistencePathLabel: readFeedPersistencePathLabel(result.feedPersistencePathLabel),
+      durableFeedPersistResultLabel: readDurableFeedPersistResultLabel(result.durableFeedPersistResultLabel),
+      durableFeedStoreReadyLabel: readDurableFeedStoreReadyLabel(result.durableFeedStoreReadyLabel),
+      durableFeedTableShapeLabel: readDurableFeedTableShapeLabel(result.durableFeedTableShapeLabel),
+      durableFeedPersistOperationLabel: readDurableFeedPersistOperationLabel(result.durableFeedPersistOperationLabel),
+      durableFeedPersistFailureBucketLabel: readDurableFeedPersistFailureBucketLabel(result.durableFeedPersistFailureBucketLabel),
+      durableFeedRowsTouchedCount: readCount(result.durableFeedRowsTouchedCount),
+      durableFeedReadbackLabel: readDurableFeedReadbackLabel(result.durableFeedReadbackLabel),
+      feedDisplayRowCount: readCount(result.feedDisplayRowCount),
+      sourceAttributionAvailabilityLabel: readSourceAttributionAvailabilityLabel(result.sourceAttributionAvailabilityLabel),
       stopReason: mapStopReason(result.stopReason)
     };
   }
@@ -444,6 +561,17 @@ function mapOperatorLocalTranslationResult(result: Record<string, unknown>): Tas
       providerUnavailableSkippedCount: readCount(asRecord(result.skipsByReason).providerUnavailable),
       recoverableErrorCount: readCount(asRecord(result.errorCounts).recoverable),
       terminalErrorCount: readCount(asRecord(result.errorCounts).terminal),
+      terminalErrorCodeCounts: readTerminalErrorCodeCounts(result.terminalErrorCodeCounts),
+      feedPersistencePathLabel: readFeedPersistencePathLabel(result.feedPersistencePathLabel),
+      durableFeedPersistResultLabel: readDurableFeedPersistResultLabel(result.durableFeedPersistResultLabel),
+      durableFeedStoreReadyLabel: readDurableFeedStoreReadyLabel(result.durableFeedStoreReadyLabel),
+      durableFeedTableShapeLabel: readDurableFeedTableShapeLabel(result.durableFeedTableShapeLabel),
+      durableFeedPersistOperationLabel: readDurableFeedPersistOperationLabel(result.durableFeedPersistOperationLabel),
+      durableFeedPersistFailureBucketLabel: readDurableFeedPersistFailureBucketLabel(result.durableFeedPersistFailureBucketLabel),
+      durableFeedRowsTouchedCount: readCount(result.durableFeedRowsTouchedCount),
+      durableFeedReadbackLabel: readDurableFeedReadbackLabel(result.durableFeedReadbackLabel),
+      feedDisplayRowCount: readCount(result.feedDisplayRowCount),
+      sourceAttributionAvailabilityLabel: readSourceAttributionAvailabilityLabel(result.sourceAttributionAvailabilityLabel),
       stopReason: "translated-message-cap"
     };
   }
@@ -459,12 +587,118 @@ function mapOperatorLocalTranslationResult(result: Record<string, unknown>): Tas
     providerUnavailableSkippedCount: readCount(asRecord(result.skipsByReason).providerUnavailable),
     recoverableErrorCount: readCount(asRecord(result.errorCounts).recoverable),
     terminalErrorCount: readCount(asRecord(result.errorCounts).terminal),
+    terminalErrorCodeCounts: readTerminalErrorCodeCounts(result.terminalErrorCodeCounts),
+    feedPersistencePathLabel: readFeedPersistencePathLabel(result.feedPersistencePathLabel),
+    durableFeedPersistResultLabel: readDurableFeedPersistResultLabel(result.durableFeedPersistResultLabel),
+    durableFeedStoreReadyLabel: readDurableFeedStoreReadyLabel(result.durableFeedStoreReadyLabel),
+    durableFeedTableShapeLabel: readDurableFeedTableShapeLabel(result.durableFeedTableShapeLabel),
+    durableFeedPersistOperationLabel: readDurableFeedPersistOperationLabel(result.durableFeedPersistOperationLabel),
+    durableFeedPersistFailureBucketLabel: readDurableFeedPersistFailureBucketLabel(result.durableFeedPersistFailureBucketLabel),
+    durableFeedRowsTouchedCount: readCount(result.durableFeedRowsTouchedCount),
+    durableFeedReadbackLabel: readDurableFeedReadbackLabel(result.durableFeedReadbackLabel),
+    feedDisplayRowCount: readCount(result.feedDisplayRowCount),
+    sourceAttributionAvailabilityLabel: readSourceAttributionAvailabilityLabel(result.sourceAttributionAvailabilityLabel),
     stopReason: mapStopReason(result.stopReason) ?? "terminal-provider-error"
+  };
+}
+
+function readTerminalErrorCodeCounts(value: unknown): Task27TerminalErrorCodeCounts {
+  return sanitizeTerminalErrorCodeCounts(asRecord(value));
+}
+
+function sanitizeTerminalErrorCodeCounts(value: Partial<Task27TerminalErrorCodeCounts> | Record<string, unknown>): Task27TerminalErrorCodeCounts {
+  return {
+    invalidRequest: readCount(value.invalidRequest),
+    unsupportedLanguage: readCount(value.unsupportedLanguage),
+    providerNotConfigured: readCount(value.providerNotConfigured),
+    credentialMissing: readCount(value.credentialMissing),
+    policyBlocked: readCount(value.policyBlocked)
   };
 }
 
 function readCount(value: unknown) {
   return typeof value === "number" && Number.isInteger(value) && value > 0 ? value : 0;
+}
+
+function readLabel(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function readFeedPersistencePathLabel(value: unknown): Task27TranslationProviderResult["feedPersistencePathLabel"] | undefined {
+  return value === "not-run-direct-provider-execution-harness" || value === "executed-f10-feed-persistence-path"
+    ? value
+    : undefined;
+}
+
+function readDurableFeedPersistResultLabel(
+  value: unknown
+): Task27TranslationProviderResult["durableFeedPersistResultLabel"] | undefined {
+  return value === "not-run" ||
+    value === "durable-feed-persisted" ||
+    value === "durable-feed-store-unavailable" ||
+    value === "durable-feed-persist-failed" ||
+    value === "active-session-context-unavailable"
+    ? value
+    : undefined;
+}
+
+function readDurableFeedStoreReadyLabel(value: unknown): Task27TranslationProviderResult["durableFeedStoreReadyLabel"] | undefined {
+  return value === "ready" || value === "unavailable" ? value : undefined;
+}
+
+function readDurableFeedTableShapeLabel(value: unknown): Task27TranslationProviderResult["durableFeedTableShapeLabel"] | undefined {
+  return value === "available" ||
+    value === "missing-or-unavailable" ||
+    value === "column-shape-mismatch" ||
+    value === "conflict-shape-mismatch" ||
+    value === "unknown"
+    ? value
+    : undefined;
+}
+
+function readDurableFeedPersistOperationLabel(
+  value: unknown
+): Task27TranslationProviderResult["durableFeedPersistOperationLabel"] | undefined {
+  return value === "upsert-select-single" || value === "not-run" ? value : undefined;
+}
+
+function readDurableFeedPersistFailureBucketLabel(
+  value: unknown
+): Task27TranslationProviderResult["durableFeedPersistFailureBucketLabel"] | undefined {
+  return value === "none" ||
+    value === "store-unavailable" ||
+    value === "table-shape-missing-or-unavailable" ||
+    value === "column-shape-mismatch" ||
+    value === "conflict-shape-mismatch" ||
+    value === "policy-or-permission-denied" ||
+    value === "owner-session-key-rejected" ||
+    value === "safe-feed-shape-rejected" ||
+    value === "row-write-not-confirmed" ||
+    value === "durable-store-operation-failed"
+    ? value
+    : undefined;
+}
+
+function readDurableFeedReadbackLabel(value: unknown): Task27TranslationProviderResult["durableFeedReadbackLabel"] | undefined {
+  return value === "readback-ready" ||
+    value === "readback-missing" ||
+    value === "readback-shape-mismatch" ||
+    value === "readback-failed" ||
+    value === "not-run-persist-failed" ||
+    value === "not-run-store-unavailable"
+    ? value
+    : undefined;
+}
+
+function readSourceAttributionAvailabilityLabel(
+  value: unknown
+): Task27TranslationProviderResult["sourceAttributionAvailabilityLabel"] | undefined {
+  return value === "available" ||
+    value === "not-produced-by-provider-harness" ||
+    value === "requires-ui-feed-confirmation" ||
+    value === "unavailable"
+    ? value
+    : undefined;
 }
 
 function mapStopReason(value: unknown): Task27LiveProviderSmokeStopReason | null {

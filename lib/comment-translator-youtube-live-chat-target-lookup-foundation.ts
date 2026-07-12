@@ -21,7 +21,8 @@ export type YouTubeLiveChatTargetLookupCommandFoundationContract = {
   httpMethod: "GET";
   query: {
     part: "id,snippet,status";
-    mine: "true";
+    broadcastStatus: "active";
+    broadcastType: "all";
     fields: "items(id,snippet(liveChatId),status(lifeCycleStatus,privacyStatus)),pageInfo(totalResults,resultsPerPage)";
   };
   outputPolicy: "sanitized-metadata-only";
@@ -153,10 +154,33 @@ export type YouTubeLiveChatTargetLookupResponseMetadata = {
   activeOwnedBroadcast: "present";
   liveChatTarget: "present";
   returnedItemCount: number;
+  usableTargetCount: number;
   pageInfoTotalResults: number | null;
+  selectedTargetSourceLabel: "first-live-owned-broadcast-with-live-chat-target";
+  selectedTargetRankLabel: `rank-${number}`;
+  selectedTargetPresenceLabel: "present";
+  lifecycleStatusDistribution: Partial<Record<YouTubeLiveChatTargetLookupLifecycleStatusLabel, number>>;
+  privacyStatusDistribution: Partial<Record<YouTubeLiveChatTargetLookupPrivacyStatusLabel, number>>;
   broadcastLifecycleStatus: "present" | "absent";
   privacyStatus: "present" | "absent";
   targetIdValue: "not-returned-by-design";
+};
+
+type YouTubeLiveChatTargetLookupLifecycleStatusLabel =
+  | "live"
+  | "ready"
+  | "testing"
+  | "complete"
+  | "revoked"
+  | "unknown"
+  | "other";
+
+type YouTubeLiveChatTargetLookupPrivacyStatusLabel = "public" | "unlisted" | "private" | "unknown" | "other";
+
+type YouTubeLiveChatTargetLookupUsableCandidate = {
+  item: Record<string, unknown>;
+  index: number;
+  serverOnlyLiveTarget: string;
 };
 
 export type YouTubeLiveChatTargetLookupFailureMetadata = {
@@ -196,6 +220,11 @@ export type YouTubeLiveChatTargetLookupFoundationResult =
       failureMetadata?: YouTubeLiveChatTargetLookupFailureMetadata;
     });
 
+export type YouTubeLiveChatTargetLookupSameProcessPollingDiagnosticFoundationResult = {
+  sanitizedTargetLookupResult: YouTubeLiveChatTargetLookupFoundationResult;
+  serverOnlyLiveTargetForPolling: string | null;
+};
+
 export type YouTubeLiveChatTargetLookupCommandRuntimeWiringRequest =
   YouTubeOwnerVerificationSmokeCommandRuntimeWiringRequest;
 
@@ -212,7 +241,8 @@ export type YouTubeLiveChatTargetLookupCommandRuntimeWiring = {
 const providerUrl = "https://www.googleapis.com/youtube/v3/liveBroadcasts" as const;
 const query = {
   part: "id,snippet,status",
-  mine: "true",
+  broadcastStatus: "active",
+  broadcastType: "all",
   fields: "items(id,snippet(liveChatId),status(lifeCycleStatus,privacyStatus)),pageInfo(totalResults,resultsPerPage)"
 } as const;
 
@@ -372,20 +402,33 @@ export async function assessYouTubeLiveChatTargetLookupTokenMaterialAvailability
 export async function runYouTubeLiveChatTargetLookupFoundation(
   request: YouTubeLiveChatTargetLookupFoundationRequest
 ): Promise<YouTubeLiveChatTargetLookupFoundationResult> {
+  const sameProcessResult = await runYouTubeLiveChatTargetLookupSameProcessPollingDiagnosticFoundation(request);
+  return sameProcessResult.sanitizedTargetLookupResult;
+}
+
+export async function runYouTubeLiveChatTargetLookupSameProcessPollingDiagnosticFoundation(
+  request: YouTubeLiveChatTargetLookupFoundationRequest
+): Promise<YouTubeLiveChatTargetLookupSameProcessPollingDiagnosticFoundationResult> {
   const readiness = await assessYouTubeLiveChatTargetLookupReadinessGate(request);
   if (readiness.status !== "owner-binding-verified-before-live-chat-target-lookup") {
-    return readiness;
+    return {
+      sanitizedTargetLookupResult: readiness,
+      serverOnlyLiveTargetForPolling: null
+    };
   }
 
   if (request.ownerAuthorization.status !== "authorized") {
-    return unresolvedLookup(
-      request,
-      "blocked-owner-authorization",
-      "not-checked",
-      "not-run",
-      "not-run",
-      "owner authorization is not confirmed"
-    );
+    return {
+      sanitizedTargetLookupResult: unresolvedLookup(
+        request,
+        "blocked-owner-authorization",
+        "not-checked",
+        "not-run",
+        "not-run",
+        "owner authorization is not confirmed"
+      ),
+      serverOnlyLiveTargetForPolling: null
+    };
   }
 
   const tokenMaterial = await request.tokenMaterialResolver.resolveServerOnlyTokenMaterial({
@@ -395,14 +438,17 @@ export async function runYouTubeLiveChatTargetLookupFoundation(
   });
 
   if (tokenMaterial.status !== "available") {
-    return unresolvedLookup(
-      request,
-      tokenMaterial.status,
-      "verified-before-live-chat-target-lookup",
-      "not-run",
-      "not-run",
-      tokenMaterial.reason
-    );
+    return {
+      sanitizedTargetLookupResult: unresolvedLookup(
+        request,
+        tokenMaterial.status,
+        "verified-before-live-chat-target-lookup",
+        "not-run",
+        "not-run",
+        tokenMaterial.reason
+      ),
+      serverOnlyLiveTargetForPolling: null
+    };
   }
 
   let providerResponse: YouTubeLiveChatTargetLookupFetchResult;
@@ -413,35 +459,44 @@ export async function runYouTubeLiveChatTargetLookupFoundation(
       })
     );
   } catch {
-    return unresolvedLookup(
-      request,
-      "live-chat-target-lookup-failed-sanitized",
-      "verified-before-live-chat-target-lookup",
-      "failed-bounded-readonly-one-step",
-      "liveBroadcasts-list-target-lookup-only",
-      "provider-fetch-failed",
-      "absent",
-      createSanitizedFailureMetadata("fetch-exception", null),
-      "not-returned-by-design"
-    );
+    return {
+      sanitizedTargetLookupResult: unresolvedLookup(
+        request,
+        "live-chat-target-lookup-failed-sanitized",
+        "verified-before-live-chat-target-lookup",
+        "failed-bounded-readonly-one-step",
+        "liveBroadcasts-list-target-lookup-only",
+        "provider-fetch-failed",
+        "absent",
+        createSanitizedFailureMetadata("fetch-exception", null),
+        "not-returned-by-design"
+      ),
+      serverOnlyLiveTargetForPolling: null
+    };
   }
 
   if (!providerResponse.ok) {
-    return unresolvedProviderResponse(request, providerResponse);
+    return {
+      sanitizedTargetLookupResult: unresolvedProviderResponse(request, providerResponse),
+      serverOnlyLiveTargetForPolling: null
+    };
   }
 
   const body = asRecord(providerResponse.body);
   const items = Array.isArray(body.items) ? body.items : [];
   if (items.length < 1) {
-    return unresolvedLookup(
-      request,
-      "blocked-no-active-owned-broadcast",
-      "verified-before-live-chat-target-lookup",
-      "lookup-completed-no-usable-target",
-      "liveBroadcasts-list-target-lookup-only",
-      "no active owned broadcast was returned by target lookup",
-      "absent"
-    );
+    return {
+      sanitizedTargetLookupResult: unresolvedLookup(
+        request,
+        "blocked-no-active-owned-broadcast",
+        "verified-before-live-chat-target-lookup",
+        "lookup-completed-no-usable-target",
+        "liveBroadcasts-list-target-lookup-only",
+        "no active owned broadcast was returned by target lookup",
+        "absent"
+      ),
+      serverOnlyLiveTargetForPolling: null
+    };
   }
 
   const activeItems = items.filter((item) => {
@@ -449,43 +504,51 @@ export async function runYouTubeLiveChatTargetLookupFoundation(
     return status.lifeCycleStatus === "live";
   });
   if (activeItems.length < 1) {
-    return unresolvedLookup(
-      request,
-      "blocked-no-active-owned-broadcast",
-      "verified-before-live-chat-target-lookup",
-      "lookup-completed-no-usable-target",
-      "liveBroadcasts-list-target-lookup-only",
-      "no active owned broadcast was returned by target lookup",
-      "absent"
-    );
+    return {
+      sanitizedTargetLookupResult: unresolvedLookup(
+        request,
+        "blocked-no-active-owned-broadcast",
+        "verified-before-live-chat-target-lookup",
+        "lookup-completed-no-usable-target",
+        "liveBroadcasts-list-target-lookup-only",
+        "no active owned broadcast was returned by target lookup",
+        "absent"
+      ),
+      serverOnlyLiveTargetForPolling: null
+    };
   }
 
-  const firstItem = asRecord(activeItems[0]);
-  const snippet = asRecord(firstItem.snippet);
-  const target = typeof snippet.liveChatId === "string" ? snippet.liveChatId.trim() : "";
+  const usableTargets = createUsableTargetCandidates(items);
+  const selectedTarget = usableTargets[0] ?? null;
 
-  if (!target) {
-    return unresolvedLookup(
-      request,
-      "blocked-missing-or-disabled-live-chat-target",
-      "verified-before-live-chat-target-lookup",
-      "lookup-completed-no-usable-target",
-      "liveBroadcasts-list-target-lookup-only",
-      "active owned broadcast did not include an enabled live chat target",
-      "absent"
-    );
+  if (!selectedTarget) {
+    return {
+      sanitizedTargetLookupResult: unresolvedLookup(
+        request,
+        "blocked-missing-or-disabled-live-chat-target",
+        "verified-before-live-chat-target-lookup",
+        "lookup-completed-no-usable-target",
+        "liveBroadcasts-list-target-lookup-only",
+        "active owned broadcast did not include an enabled live chat target",
+        "absent"
+      ),
+      serverOnlyLiveTargetForPolling: null
+    };
   }
 
   return {
-    ...createBaseResult(request.credentialReferenceId),
-    status: "live-chat-target-lookup-sanitized-result",
-    ownerBinding: "verified-before-live-chat-target-lookup",
-    liveChatTarget: "present",
-    liveChatTargetLookup: "executed-bounded-readonly-one-step",
-    providerAccess: "liveBroadcasts-list-target-lookup-only",
-    authorizationHandling: "server-only-header-consumed-never-returned",
-    serverFetchBinding: "resolved-for-server-fetch",
-    responseMetadata: createSanitizedTargetLookupResponseMetadata(providerResponse)
+    sanitizedTargetLookupResult: {
+      ...createBaseResult(request.credentialReferenceId),
+      status: "live-chat-target-lookup-sanitized-result",
+      ownerBinding: "verified-before-live-chat-target-lookup",
+      liveChatTarget: "present",
+      liveChatTargetLookup: "executed-bounded-readonly-one-step",
+      providerAccess: "liveBroadcasts-list-target-lookup-only",
+      authorizationHandling: "server-only-header-consumed-never-returned",
+      serverFetchBinding: "resolved-for-server-fetch",
+      responseMetadata: createSanitizedTargetLookupResponseMetadata(providerResponse)
+    },
+    serverOnlyLiveTargetForPolling: selectedTarget.serverOnlyLiveTarget
   };
 }
 
@@ -633,14 +696,9 @@ function createSanitizedTargetLookupResponseMetadata(
 ): YouTubeLiveChatTargetLookupResponseMetadata {
   const body = asRecord(providerResponse.body);
   const items = Array.isArray(body.items) ? body.items : [];
-  const firstItem = asRecord(
-    items.find((item) => {
-      const status = asRecord(asRecord(item).status);
-      return status.lifeCycleStatus === "live";
-    }) ?? items[0]
-  );
-  const firstSnippet = asRecord(firstItem.snippet);
-  const firstStatus = asRecord(firstItem.status);
+  const usableTargets = createUsableTargetCandidates(items);
+  const selectedTarget = usableTargets[0] ?? { item: asRecord(items[0]), index: 0 };
+  const selectedStatus = asRecord(selectedTarget.item.status);
   const pageInfo = asRecord(body.pageInfo);
   const pageInfoTotalResults =
     typeof pageInfo.totalResults === "number" && Number.isFinite(pageInfo.totalResults)
@@ -653,11 +711,94 @@ function createSanitizedTargetLookupResponseMetadata(
     activeOwnedBroadcast: "present",
     liveChatTarget: "present",
     returnedItemCount: items.length,
+    usableTargetCount: usableTargets.length,
     pageInfoTotalResults,
-    broadcastLifecycleStatus: typeof firstStatus.lifeCycleStatus === "string" ? "present" : "absent",
-    privacyStatus: typeof firstStatus.privacyStatus === "string" ? "present" : "absent",
+    selectedTargetSourceLabel: "first-live-owned-broadcast-with-live-chat-target",
+    selectedTargetRankLabel: `rank-${selectedTarget.index + 1}`,
+    selectedTargetPresenceLabel: "present",
+    lifecycleStatusDistribution: createLifecycleStatusDistribution(items),
+    privacyStatusDistribution: createPrivacyStatusDistribution(items),
+    broadcastLifecycleStatus: typeof selectedStatus.lifeCycleStatus === "string" ? "present" : "absent",
+    privacyStatus: typeof selectedStatus.privacyStatus === "string" ? "present" : "absent",
     targetIdValue: "not-returned-by-design"
   };
+}
+
+function createUsableTargetCandidates(items: unknown[]): YouTubeLiveChatTargetLookupUsableCandidate[] {
+  const candidates: YouTubeLiveChatTargetLookupUsableCandidate[] = [];
+
+  items.forEach((item, index) => {
+    const record = asRecord(item);
+    const snippet = asRecord(record.snippet);
+    const status = asRecord(record.status);
+    const target = typeof snippet.liveChatId === "string" ? snippet.liveChatId.trim() : "";
+
+    if (status.lifeCycleStatus === "live" && target) {
+      candidates.push({ item: record, index, serverOnlyLiveTarget: target });
+    }
+  });
+
+  return candidates;
+}
+
+function createLifecycleStatusDistribution(
+  items: unknown[]
+): Partial<Record<YouTubeLiveChatTargetLookupLifecycleStatusLabel, number>> {
+  const distribution: Partial<Record<YouTubeLiveChatTargetLookupLifecycleStatusLabel, number>> = {};
+
+  for (const item of items) {
+    const label = sanitizeLifecycleStatusLabel(asRecord(asRecord(item).status).lifeCycleStatus);
+    distribution[label] = (distribution[label] ?? 0) + 1;
+  }
+
+  return distribution;
+}
+
+function createPrivacyStatusDistribution(
+  items: unknown[]
+): Partial<Record<YouTubeLiveChatTargetLookupPrivacyStatusLabel, number>> {
+  const distribution: Partial<Record<YouTubeLiveChatTargetLookupPrivacyStatusLabel, number>> = {};
+
+  for (const item of items) {
+    const label = sanitizePrivacyStatusLabel(asRecord(asRecord(item).status).privacyStatus);
+    distribution[label] = (distribution[label] ?? 0) + 1;
+  }
+
+  return distribution;
+}
+
+function sanitizeLifecycleStatusLabel(value: unknown): YouTubeLiveChatTargetLookupLifecycleStatusLabel {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return "unknown";
+  }
+
+  const normalized = value.trim();
+  switch (normalized) {
+    case "live":
+    case "ready":
+    case "testing":
+    case "complete":
+    case "revoked":
+      return normalized;
+    default:
+      return "other";
+  }
+}
+
+function sanitizePrivacyStatusLabel(value: unknown): YouTubeLiveChatTargetLookupPrivacyStatusLabel {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return "unknown";
+  }
+
+  const normalized = value.trim();
+  switch (normalized) {
+    case "public":
+    case "unlisted":
+    case "private":
+      return normalized;
+    default:
+      return "other";
+  }
 }
 
 function extractProviderReason(body: unknown): string {

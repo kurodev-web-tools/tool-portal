@@ -93,7 +93,7 @@ export const legalDocuments = {
           "Kuro Live Comment Translator は、初期公開版では YouTube を優先対象とし、利用者が明示的に翻訳セッションを開始した場合に限り、コメント取得、API利用、AI翻訳処理を行います。YouTube アカウントを接続しただけでは、バックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
           "Free plan は Azure Translator を主な翻訳 provider として利用します。Paid plan は OpenAI mini model を主な翻訳 provider とし、復帰可能な provider error の場合のみ Azure Translator fallback を使います。",
           "DeepL、Gemini Flash/Lite、Cloudflare Workers AI は初期公開時点の production translation provider ではありません。品質・費用・地域・データ利用条件の比較対象として扱い、production routing には含めません。",
-          "無料利用枠の初期目安は、1日30分、1セッション30分、同時に1セッション、1分あたり30翻訳メッセージです。有料プラン、上限緩和、決済連携は準備中であり、提供開始時に画面上で条件を明示します。",
+          "無料利用枠の初期上限は、1日最大30分、1セッション最大30分、同時に1セッション、30翻訳メッセージ/分、月20,000入力文字です。月間上限は翻訳 provider に送る入力/ソース文字を基準に扱います。有料プラン、上限緩和、決済連携は準備中であり、提供開始時に画面上で条件を明示します。",
           "外部プラットフォームやAI翻訳サービスの仕様変更、クォータ、通信状態、配信状態、認証状態、利用上限により、セッションを開始できない、または途中で停止する場合があります。"
         ]
       },

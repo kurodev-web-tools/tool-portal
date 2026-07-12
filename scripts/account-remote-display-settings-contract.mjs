@@ -40,20 +40,26 @@ assertIncludes(
   applier,
   [
     '"use client"',
+    "AccountSessionBrowserSafeViewModel",
     "remotePreferences",
     "readLocalPreferenceSnapshot",
     "writeLocalLocalePreference",
     "writeLocalThemePreference",
+    "writeLocalTimeZonePreference",
     "themePreferenceChangeEvent",
     "setLocale",
     'auth") === "signed-in"',
-    "document.documentElement.classList.toggle"
+    "document.documentElement.classList.toggle",
+    "timeZone"
   ],
   "remote display settings applier"
 );
 assertExcludes(
   applier,
   [
+    "AccountSessionState",
+    "user?.id",
+    "user.id",
     "@supabase/ssr",
     "@supabase/supabase-js",
     "SUPABASE_SECRET_KEY",
@@ -68,43 +74,56 @@ assertExcludes(
 
 assertIncludes(
   portalShell,
-  ["AccountRemoteDisplaySettingsApplier", "accountStatus={accountStatus}"],
-  "PortalShell applies remote display settings from the shared account session"
+  [
+    "createBrowserSafeAccountSessionViewModel",
+    "const browserSafeAccountStatus = createBrowserSafeAccountSessionViewModel(accountStatus);",
+    "AccountRemoteDisplaySettingsApplier",
+    "accountStatus={browserSafeAccountStatus}"
+  ],
+  "PortalShell applies remote display settings from the browser-safe account session view model"
 );
 assert.match(
   portalShell,
-  /<AccountRemoteDisplaySettingsApplier accountStatus=\{accountStatus\} \/>[\s\S]*<PortalSidebar/,
-  "PortalShell applies remote display settings before shared navigation controls render"
+  /<AccountRemoteDisplaySettingsApplier accountStatus=\{browserSafeAccountStatus\} \/>[\s\S]*<PortalSidebar/,
+  "PortalShell applies browser-safe remote display settings before shared navigation controls render"
+);
+assert.match(
+  portalShell,
+  /browserSafeAccountStatus\.authStatus === "signed-in"[\s\S]*<AccountRemoteDisplaySettingsApplier accountStatus=\{browserSafeAccountStatus\} \/>[\s\S]*: null/,
+  "PortalShell mounts the remote display settings applier only for signed-in accounts"
 );
 
 assertIncludes(
   accountPage,
-  ["<PortalShell>", "authMessage={authMessage}", "authStatus={accountSession}"],
+  ["<PortalShell>", "authMessage={authMessage}", "authStatus={browserSafeAccountSession}"],
   "/account still uses the shared PortalShell and account shell"
 );
 assertIncludes(
   sessionSource,
-  [".from(\"user_preferences\")", ".select(\"locale,theme,updated_at\")", "normalizeLocale", "normalizeThemePreference"],
-  "server session already limits remote preference read to locale/theme"
+  [".from(\"user_preferences\")", ".select(\"locale,theme,time_zone,updated_at\")", "normalizeLocale", "normalizeThemePreference", "normalizeTimeZonePreference"],
+  "server session limits remote preference read to shared display settings"
 );
 assertIncludes(
   localPreferenceAdapter,
   [
     'locale: localePreferenceStorageKey',
     'theme: themePreferenceStorageKey',
-    'themePreferenceStorageKey = "v-streamer-tools-theme"'
+    'timeZone: timeZonePreferenceStorageKey',
+    'themePreferenceStorageKey = "v-streamer-tools-theme"',
+    'timeZonePreferenceStorageKey = "v-streamer-tools-time-zone"'
   ],
-  "existing local preference keys stay unchanged"
+  "shared local preference keys are explicit"
 );
 
 assertIncludes(
   task,
   [
-    "account remote display settings apply",
+    "Browser-safe account session view model",
+    "node scripts/account-browser-safe-session-view-model-contract.mjs",
     "node scripts/account-remote-display-settings-contract.mjs",
-    "次の CTA 強化 PR"
+    "npx tsc --noEmit --pretty false"
   ],
-  "task handoff documents implementation, verification, and next CTA follow-up"
+  "task handoff documents implementation and verification"
 );
 
 console.log("account remote display settings contract checks passed");

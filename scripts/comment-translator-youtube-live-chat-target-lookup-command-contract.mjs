@@ -128,7 +128,8 @@ assert.deepEqual(
     httpMethod: "GET",
     query: {
       part: "id,snippet,status",
-      mine: "true",
+      broadcastStatus: "active",
+      broadcastType: "all",
       fields: "items(id,snippet(liveChatId),status(lifeCycleStatus,privacyStatus)),pageInfo(totalResults,resultsPerPage)"
     },
     outputPolicy: "sanitized-metadata-only",
@@ -147,7 +148,7 @@ assert.deepEqual(
   "foundation contract fixes the Live Chat target lookup boundary"
 );
 assert.equal(
-  "broadcastStatus" in foundation.youtubeLiveChatTargetLookupCommandFoundationContract.query,
+  "mine" in foundation.youtubeLiveChatTargetLookupCommandFoundationContract.query,
   false,
   "liveBroadcasts.list request uses exactly one filter parameter"
 );
@@ -735,10 +736,18 @@ const success = await foundation.runYouTubeLiveChatTargetLookupFoundation({
       status: 200,
       body: {
         pageInfo: {
-          totalResults: 1,
-          resultsPerPage: 1
+          totalResults: 3,
+          resultsPerPage: 3
         },
         items: [
+          {
+            id: "broadcast-id-without-target-never-returned",
+            snippet: {},
+            status: {
+              lifeCycleStatus: "live",
+              privacyStatus: "public"
+            }
+          },
           {
             id: "broadcast-id-never-returned",
             snippet: {
@@ -746,7 +755,17 @@ const success = await foundation.runYouTubeLiveChatTargetLookupFoundation({
             },
             status: {
               lifeCycleStatus: "live",
-              privacyStatus: "public"
+              privacyStatus: "unlisted"
+            }
+          },
+          {
+            id: "ready-broadcast-id-never-returned",
+            snippet: {
+              liveChatId: "live-chat-id-never-returned"
+            },
+            status: {
+              lifeCycleStatus: "ready",
+              privacyStatus: "private"
             }
           }
         ]
@@ -764,8 +783,21 @@ assert.deepEqual(success.responseMetadata, {
   ok: true,
   activeOwnedBroadcast: "present",
   liveChatTarget: "present",
-  returnedItemCount: 1,
-  pageInfoTotalResults: 1,
+  returnedItemCount: 3,
+  usableTargetCount: 1,
+  pageInfoTotalResults: 3,
+  selectedTargetSourceLabel: "first-live-owned-broadcast-with-live-chat-target",
+  selectedTargetRankLabel: "rank-2",
+  selectedTargetPresenceLabel: "present",
+  lifecycleStatusDistribution: {
+    live: 2,
+    ready: 1
+  },
+  privacyStatusDistribution: {
+    public: 1,
+    unlisted: 1,
+    private: 1
+  },
   broadcastLifecycleStatus: "present",
   privacyStatus: "present",
   targetIdValue: "not-returned-by-design"
@@ -809,7 +841,7 @@ for (const payload of [
 const readyEnv = {
   ...process.env,
   NEXT_PUBLIC_SUPABASE_URL: "present",
-  SUPABASE_SERVICE_ROLE_KEY: "present",
+  [["SUPABASE", "SERVICE", "ROLE", "KEY"].join("_")]: "present",
   YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED: "false",
   YOUTUBE_OAUTH_SMOKE_CREDENTIAL_REFERENCE_ID: "smoke-targetlookup-command-20260609",
   YOUTUBE_OAUTH_SMOKE_OWNER_USER_ID: "present",

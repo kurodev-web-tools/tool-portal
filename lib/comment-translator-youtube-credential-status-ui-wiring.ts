@@ -3,7 +3,9 @@ import type { YouTubeOAuthNewClientPayloadCredentialReferenceSource } from "./co
 export type YouTubeOAuthCredentialStatusUiStateId =
   | "available"
   | "reconnect-required"
+  | "disconnected"
   | "unavailable"
+  | "error"
   | "credential-resolution-disabled";
 
 type YouTubeReadOnlyScope = "https://www.googleapis.com/auth/youtube.readonly";
@@ -41,10 +43,25 @@ type YouTubeOAuthCredentialStatusUiUnavailableInput = {
   provider: "youtube";
   reason:
     | "trusted-adapter-not-wired"
-    | "trusted-adapter-query-failed"
+    | "credential-reference-env-missing"
     | "auth-unavailable"
     | "caller-not-authenticated"
     | "private-launch-gated";
+  reconnectRequired: true;
+};
+
+type YouTubeOAuthCredentialStatusUiDisconnectedInput = {
+  status: "disconnected";
+  credentialReferenceId: string;
+  provider: "youtube";
+  reconnectRequired: false;
+};
+
+type YouTubeOAuthCredentialStatusUiErrorInput = {
+  status: "error";
+  credentialReferenceId: string;
+  provider: "youtube";
+  reason: "trusted-adapter-query-failed";
   reconnectRequired: true;
 };
 
@@ -58,7 +75,9 @@ type YouTubeOAuthCredentialStatusUiDisabledInput = {
 export type YouTubeOAuthCredentialStatusUiWiringInput =
   | YouTubeOAuthCredentialStatusUiAvailableInput
   | YouTubeOAuthCredentialStatusUiReconnectRequiredInput
+  | YouTubeOAuthCredentialStatusUiDisconnectedInput
   | YouTubeOAuthCredentialStatusUiUnavailableInput
+  | YouTubeOAuthCredentialStatusUiErrorInput
   | YouTubeOAuthCredentialStatusUiDisabledInput;
 
 export type YouTubeOAuthCredentialStatusUiWiringViewModel = {
@@ -69,7 +88,11 @@ export type YouTubeOAuthCredentialStatusUiWiringViewModel = {
   providerChannelId: string | null;
   scopeLabel: "youtube.readonly" | null;
   expiresAtIso: string | null;
-  reason: YouTubeOAuthCredentialStatusUiUnavailableInput["reason"] | YouTubeOAuthCredentialStatusUiReconnectRequiredInput["reason"] | null;
+  reason:
+    | YouTubeOAuthCredentialStatusUiUnavailableInput["reason"]
+    | YouTubeOAuthCredentialStatusUiReconnectRequiredInput["reason"]
+    | YouTubeOAuthCredentialStatusUiErrorInput["reason"]
+    | null;
   clientPayloadBoundary: "sanitized-credential-status-metadata-only";
 };
 
@@ -339,7 +362,7 @@ export type YouTubeOAuthCredentialStatusDisplayWidthReviewPostPr355Evidence =
 export const youtubeOAuthCredentialStatusUiWiringContract = {
   implementationStage: "credential-status-display-ui-wiring-implemented",
   clientReadableInput: "sanitized-credential-status-metadata-only",
-  uiStates: ["available", "reconnect-required", "unavailable", "credential-resolution-disabled"],
+  uiStates: ["available", "reconnect-required", "disconnected", "unavailable", "error", "credential-resolution-disabled"],
   serverAction: "getYouTubeOAuthCredentialStatusAction",
   credentialReferenceClientPayload: "new-client-payload-credentialReferenceId-source",
   displayWiringStage: "display-ui-wiring-implemented-after-pr321-readiness",
@@ -381,6 +404,24 @@ export function createYouTubeOAuthCredentialStatusUiWiring(
 
   if (input.status === "unavailable") {
     return createBaseUiWiring(input, "unavailable", {
+      providerChannelId: null,
+      scopeLabel: null,
+      expiresAtIso: null,
+      reason: input.reason
+    });
+  }
+
+  if (input.status === "disconnected") {
+    return createBaseUiWiring(input, "disconnected", {
+      providerChannelId: null,
+      scopeLabel: null,
+      expiresAtIso: null,
+      reason: null
+    });
+  }
+
+  if (input.status === "error") {
+    return createBaseUiWiring(input, "error", {
       providerChannelId: null,
       scopeLabel: null,
       expiresAtIso: null,

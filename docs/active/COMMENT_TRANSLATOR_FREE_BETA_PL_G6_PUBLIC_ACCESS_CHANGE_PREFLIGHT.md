@@ -8,7 +8,7 @@ Public access change, public gate flip, production/main deploy/upload, productio
 
 Repository runtime support for the approved login-only policy is implemented behind an exact server-owned activation control. Unset, malformed, or non-exact state retains the private-launch SHA-256 owner allowlist. Merging the implementation does not activate login-only access in preview or production; environment apply and the public gate flip remain separate exact approval-gated operations.
 
-This document is the execution preflight and approval surface for PL-G6 after PL-G5 recorded `release_owner_decision_status=blocked-no-approval`. It identifies the exact approval and command boundaries still needed before any public access change or promotion operation can run. It is not approval to execute PL-G6, not a Cloudflare mutation, not a deploy/upload, not a production smoke, and not a public capability decision.
+This document is the execution preflight and approval surface for PL-G6 after PL-G5 recorded `release_owner_decision_status=accepted-promotion-readiness-only`. It identifies the exact approval and command boundaries still needed before any public access change or promotion operation can run. It is not approval to execute PL-G6, not a Cloudflare mutation, not a deploy/upload, not a production smoke, and not a public capability decision.
 
 ## Preflight Labels
 
@@ -33,9 +33,9 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | `operator_start_to_translation_smoke_status` | `pass-production-main-domain-private-launch` |
 | `live_provider_execution_status` | `pass-operator-provided-private-launch-smoke` |
 | `main_promotion_status` | `not-run` |
-| `release_owner_decision_status` | `blocked-no-approval` |
-| `release_owner_exact_approval_status` | `absent` |
-| `release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks` |
+| `release_owner_decision_status` | `accepted-promotion-readiness-only` |
+| `release_owner_exact_approval_status` | `present-promotion-readiness-only` |
+| `release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification` |
 | `operator_remaining_external_verification_status` | `action-required` |
 | `operator_production_harness_block_status` | `pass-production-404` |
 | `operator_production_api_managed_challenge_status` | `not-selected` |
@@ -58,6 +58,10 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | `support_response_status` | `pending` |
 | `risk_acceptance_scope` | `future-public-object-default-privileges-only` |
 | `new_public_db_object_review_status` | `required-before-work` |
+| `post_pr_637_runtime_status` | `implemented-not-activated` |
+| `integration_to_main_promotion_readiness_status` | `ready-after-exact-approvals` |
+| `main_connected_deployment_activation_state` | `unset-required` |
+| `post_deploy_private_default_verification_status` | `not-run-approval-gated` |
 
 ## Required Same-Thread Approval Surface
 
@@ -98,6 +102,26 @@ The later public gate flip is a separate remote operation and must not be inferr
 > I approve the PL-G6 public gate flip for the Kuro Stream Kit / Comment Translator Free public beta integration line in the Cloudflare production environment only, after login-only activation and the named sanitized operator checks pass or are explicitly accepted. Run the flip only after same-process sanitized preflight passes. Keep evidence to labels/counts/pass-fail/status only. Do not expose or persist secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, hashes, activation values, provider metadata, liveChatId, Cloudflare ids, support ids, raw SQL, or raw provider payloads. Do not run deploy/upload, unrelated Cloudflare mutation, production browser smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe action, paid/Creator runtime, OBS runtime, Google Auth publishing, or main promotion unless separately named in this same-thread approval.
 
 Latest activation attempt status: same-process local preflight passed for reviewed revision, reviewed branch, private-launch default, exact server-owned control, and production harness block. Activation apply stopped before remote mutation because Cloudflare requires a new Worker version/deployment to make the binding active while the approval explicitly prohibited deploy/upload. Cloudflare auth references and the local Wrangler runtime were also unavailable in the same process. Sanitized result: `activation_apply_status=blocked-deploy-upload-not-approved`, `remote_mutation_count=0`, `deploy_upload_count=0`, `public_gate_flip_count=0`.
+
+## Integration-To-Main Promotion Sequence
+
+The operational order is fixed:
+
+1. merge the integration branch to `main` through a separate promotion PR;
+2. allow the main-connected automatic production deployment with login-only activation unset;
+3. separately verify that the main domain remains healthy and private-allowlist by default;
+4. only afterward consider a separate production deployment that activates login-only runtime access;
+5. keep the public gate flip as a still-later separate operation.
+
+Paste-ready promotion approval:
+
+> I approve creating and merging the integration-to-main promotion PR for the reviewed Kuro Stream Kit / Comment Translator Free public beta integration tip, and I approve the resulting main-connected automatic production deployment only. Keep the login-only activation control unset, retain the private-launch allowlist as the production default, keep public_release_capable=no, and do not flip the public gate. Keep evidence to labels/counts/pass-fail/status only. Do not expose or persist secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, hashes, activation values, provider metadata, liveChatId, Cloudflare ids, support ids, raw SQL, or raw provider payloads. Do not run environment apply, login-only activation, public gate flip, production browser smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe action, paid/Creator runtime, OBS runtime, Google Auth publishing, or branch deletion.
+
+Paste-ready post-deploy private-default verification approval:
+
+> I approve post-deploy private-default production verification for the main-connected deployment only. Confirm the main domain is healthy, unauthorized access remains blocked by the private allowlist, the production route/API harness returns 404, and browser-visible output remains sanitized. Record labels/counts/pass-fail/status only. Do not expose or persist secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, hashes, activation values, provider metadata, liveChatId, Cloudflare ids, support ids, raw SQL, or raw provider payloads. Do not run environment apply, login-only activation, public gate flip, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe action, paid/Creator runtime, OBS runtime, Google Auth publishing, or branch deletion.
+
+Approval for the promotion does not approve the post-deploy verification. Approval for the verification does not approve login-only activation. Login-only activation does not approve the later public gate flip.
 
 ## Smallest Safe First Operational Target
 

@@ -130,6 +130,7 @@ for (const section of [
   "## Blocking Labels Before Public Capability",
   "## Operator Checks Still Required",
   "## PL-G6 Boundary",
+  "## Post-PR 637 Promotion Decision",
   "## Sanitized Evidence Shape",
   "## Completion Verification"
 ]) {
@@ -138,13 +139,13 @@ for (const section of [
 
 for (const fragment of [
   "Status: PL-G5 release-owner public launch decision recorded. Public-release capable: no.",
-  "Current execution result: release-owner-decision=blocked-no-approval / public_release_capable=no.",
+  "Current execution result: release-owner-decision=accepted-promotion-readiness-only / public_release_capable=no.",
   "`pl_g5_release_owner_decision_preflight_doc_status` | `complete`",
   "`pl_g5_release_owner_decision_record_status` | `complete`",
   "`pl_g5_release_owner_decision_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`",
-  "`release_owner_decision_status` | `blocked-no-approval`",
-  "`release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks`",
-  "`release_owner_exact_approval_status` | `absent`",
+  "`release_owner_decision_status` | `accepted-promotion-readiness-only`",
+  "`release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification`",
+  "`release_owner_exact_approval_status` | `present-promotion-readiness-only`",
   "`public_release_capable` | `no`",
   "`support_response_status` | `pending`",
   "`remote_default_privileges_status` | `fail-accepted-risk`",
@@ -172,6 +173,10 @@ for (const fragment of [
   "Production API Managed Challenge remains `not-selected`.",
   "Production route/API harness blocking/removal remains `action-required-before-production`.",
   "PL-G6 public access change / promotion remains approval-gated and not-run.",
+  "`post_pr_637_runtime_status` | `implemented-not-activated`",
+  "`integration_to_main_promotion_readiness_status` | `ready-after-exact-approvals`",
+  "Promotion to `main` must not set the login-only activation control and must not flip the public gate.",
+  "I accept the PL-G5 residual risk limited to future public-object default privileges",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
   "counts/status/pass-fail labels only",
   "UI/browser width QA skipped because this slice changes only docs, deterministic contracts, and `task.md`."
@@ -183,9 +188,9 @@ for (const fragment of [
   "`pl_g5_release_owner_decision_preflight_doc_status` | `complete`",
   "`pl_g5_release_owner_decision_record_status` | `complete`",
   "`pl_g5_release_owner_decision_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`",
-  "`release_owner_decision_status` | `blocked-no-approval`",
-  "`release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks`",
-  "`release_owner_exact_approval_status` | `absent`",
+  "`release_owner_decision_status` | `accepted-promotion-readiness-only`",
+  "`release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification`",
+  "`release_owner_exact_approval_status` | `present-promotion-readiness-only`",
   "`public_release_capable_status` | `no`"
 ]) {
   assertIncludes(taskBoard, fragment, `task board records ${fragment}`);
@@ -221,7 +226,7 @@ for (const [label, source, fragment] of [
   [
     operatorChecklistPath,
     operatorChecklist,
-    "`operator_external_verification_status` | `partial-pass-preview-browser`"
+    "`operator_external_verification_status` | `partial-pass-preview-and-production-private-launch-browser`"
   ],
   [trafficBackingPath, trafficBacking, "`public_traffic_rate_limit_backing_selected` | `cloudflare-edge`"],
   [

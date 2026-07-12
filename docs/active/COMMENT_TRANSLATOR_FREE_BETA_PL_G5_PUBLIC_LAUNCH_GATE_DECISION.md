@@ -2,7 +2,7 @@
 
 Status: PL-G5 release-owner public launch decision recorded. Public-release capable: no.
 
-Current execution result: release-owner-decision=blocked-no-approval / public_release_capable=no.
+Current execution result: release-owner-decision=accepted-promotion-readiness-only / public_release_capable=no.
 
 Public launch gate unchanged. Limited public beta open: not-run / approval-gated. Public launch gate flip: not-run / approval-gated. PL-G6 public access change / promotion: not-run / approval-gated.
 
@@ -17,9 +17,9 @@ This slice does not run Supabase Support follow-up, remote Supabase query, remot
 | `pl_g5_release_owner_decision_preflight_doc_status` | `complete` |
 | `pl_g5_release_owner_decision_record_status` | `complete` |
 | `pl_g5_release_owner_decision_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md` |
-| `release_owner_decision_status` | `blocked-no-approval` |
-| `release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks` |
-| `release_owner_exact_approval_status` | `absent` |
+| `release_owner_decision_status` | `accepted-promotion-readiness-only` |
+| `release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification` |
+| `release_owner_exact_approval_status` | `present-promotion-readiness-only` |
 | `public_release_capable` | `no` |
 | `public_gate_flip_status` | `not-run` |
 | `limited_public_beta_open_status` | `not-run-approval-gated` |
@@ -45,6 +45,10 @@ This slice does not run Supabase Support follow-up, remote Supabase query, remot
 | `operator_production_api_managed_challenge_status` | `not-selected` |
 | `operator_production_harness_block_status` | `action-required-before-production` |
 | `codex_local_verification_status` | `pass` |
+| `post_pr_637_runtime_status` | `implemented-not-activated` |
+| `post_pr_637_runtime_default` | `private-launch-sha256-owner-allowlist` |
+| `integration_to_main_promotion_readiness_status` | `ready-after-exact-approvals` |
+| `promotion_activation_requirement` | `activation-unset` |
 
 ## Decision Inputs
 
@@ -153,6 +157,36 @@ Codex should not run these checks from this docs/contract slice.
 PL-G6 is a separate approval-gated operation. It may include public access change, deploy/upload, production domain cutover, public gate flip, integration-to-main promotion, or final production smoke only after a release owner explicitly approves the exact operation with sanitized output expectations.
 
 This PL-G5 document must remain valid even if the release owner later approves PL-G6. PL-G6 should update its own evidence and should not retroactively convert this decision record into an executed gate flip.
+
+## Post-PR 637 Promotion Decision
+
+PR #637 is contained in the current Free public beta integration tip. The repository runtime is `implemented-not-activated`; unset, malformed, or non-exact activation state retains the private-launch SHA-256 owner allowlist. Promotion to `main` must not set the login-only activation control and must not flip the public gate.
+
+Required before an integration-to-main promotion PR may be created:
+
+- same-thread release-owner acceptance of the existing future `public` object default-privileges residual risk and the remaining-check disposition below;
+- same-thread approval naming the integration-to-main promotion PR, merge, and the resulting main-connected automatic production deployment while activation remains unset;
+- confirmation that the promotion diff contains the reviewed integration tip and does not include an activation value, environment apply, public gate flip, or unrelated runtime expansion.
+
+Required after the automatic production deployment and before any login-only activation operation:
+
+- a separately approved production verification confirming private-allowlist default, healthy main-domain behavior, production route/API harness 404, and sanitized browser output;
+- stop if the private default or health check fails. Do not proceed to login-only activation or public gate flip.
+
+Checks that may be explicitly accepted from deterministic fixture evidence for this promotion decision:
+
+- burst behavior for 30 translated messages/min;
+- 30-minute session behavior from fake-clock/session contracts;
+- monthly 20,000 provider-input-character boundary behavior;
+- another Start-to-translation live/provider run, because sanitized private-launch production evidence is already recorded.
+
+Production Cloudflare edge activation is required before broad public exposure, but it is not required to merge the implemented-not-activated runtime to `main` while the private allowlist remains the production default. Login-only activation and the later public gate flip remain separate production deployments/operations after the post-deploy private-default verification.
+
+Paste-ready PL-G5 acceptance:
+
+> I accept the PL-G5 residual risk limited to future public-object default privileges, with current-table RLS and explicit-grant posture still required to pass and every new public object still requiring object-level review. I accept deterministic fixture evidence for the 30 translated messages/min, 30-minute session, and monthly 20,000 provider-input-character checks, and I accept the existing sanitized private-launch Start-to-translation evidence without another live/provider run. This acceptance authorizes only promotion readiness; keep public_release_capable=no, login-only activation unset, the private allowlist default active, Cloudflare edge activation not-run, and the public gate unchanged. It does not approve a promotion PR, merge, deploy, production verification, activation, or public gate flip.
+
+Acceptance result: `accepted-promotion-readiness-only`. The remaining approval scope is `promotion-operation-and-post-deploy-verification`. No promotion PR, merge, deployment, production verification, activation, or public gate flip is approved by this decision.
 
 ## Sanitized Evidence Shape
 

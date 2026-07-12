@@ -18,7 +18,7 @@ The operator QA checklist update is a documentation/contract slice only. It sepa
 
 The Cloudflare custom-rule operations update is a documentation/contract slice only. `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md` records Free public launch, Creator/Paid transition, API-vs-HTML Managed Challenge boundaries, Turnstile / Pre-clearance treatment, Rate Limiting preference, traffic-growth response ladder, release-operator checks, and non-actions. It does not run Cloudflare mutation, deploy/upload, public gate flip, live/provider execution, paid entitlement runtime, or main promotion.
 
-The PL-G5 release-owner decision record is a documentation/contract slice only. `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md` records the current launch-decision surface, carries the accepted future default-privileges risk label, records `release_owner_decision_status=blocked-no-approval`, and keeps public-release capable as no. It does not run support follow-up, Cloudflare mutation, Supabase query/mutation, deploy/upload, public gate flip, live/provider execution, paid entitlement runtime, OBS overlay runtime, or main promotion.
+The PL-G5 release-owner decision record is a documentation/contract slice only. `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md` records the current launch-decision surface, carries the accepted future default-privileges risk label, records `release_owner_decision_status=accepted-promotion-readiness-only`, and keeps public-release capable as no. It does not run support follow-up, Cloudflare mutation, Supabase query/mutation, deploy/upload, public gate flip, live/provider execution, paid entitlement runtime, OBS overlay runtime, or main promotion.
 
 The PL-G6 public access change preflight records separate exact same-thread approval surfaces for production login-only runtime activation and the later public gate flip, including same-process sanitized preflight and post-activation operator checks. It keeps `public_release_capable=no`, `pl_g6_public_access_change_status=not-run-approval-gated`, login-only activation, public gate flip, public access change, and main promotion not-run. The PL-G6C update records operator-provided production/main-domain env readiness plus private-launch-only production smoke evidence without exposing values or raw comments.
 
@@ -60,9 +60,9 @@ Sanitization boundary: this document records only task labels, status labels, an
 | `pl_g5_release_owner_decision_preflight_doc_status` | `complete` |
 | `pl_g5_release_owner_decision_record_status` | `complete` |
 | `pl_g5_release_owner_decision_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md` |
-| `release_owner_decision_status` | `blocked-no-approval` |
-| `release_owner_missing_approval_scope` | `public-capability-risk-acceptance-and-remaining-operator-checks` |
-| `release_owner_exact_approval_status` | `absent` |
+| `release_owner_decision_status` | `accepted-promotion-readiness-only` |
+| `release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification` |
+| `release_owner_exact_approval_status` | `present-promotion-readiness-only` |
 | `pl_g6_public_access_change_preflight_status` | `complete` |
 | `pl_g6_public_access_change_preflight_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | `pl_g6_public_access_change_status` | `not-run-approval-gated` |
@@ -79,6 +79,9 @@ Sanitization boundary: this document records only task labels, status labels, an
 | `public_release_capable_status` | `no` |
 | `public_gate_flip_status` | `not-run` |
 | `main_promotion_status` | `not-run` |
+| `post_pr_637_runtime_status` | `implemented-not-activated` |
+| `integration_to_main_promotion_readiness_status` | `ready-after-exact-approvals` |
+| `post_deploy_private_default_verification_status` | `not-run-approval-gated` |
 
 ## Remaining Public Launch Task Order
 
@@ -91,11 +94,15 @@ Sanitization boundary: this document records only task labels, status labels, an
 7. `Supabase default privileges support response or risk acceptance`: complete. Supabase Support response remains pending, and the known future `public` object default-privileges risk is accepted for PL-G5 evaluation. Current-table/RLS/current-grant pass posture is not part of the accepted risk.
 8. `Public launch operator QA checklist`: complete. User-owned external checks and Codex-owned deterministic checks are separated in `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md`; preview Cloudflare/browser checks are partially passed by operator report, while production edge activation, production harness blocking, live/provider checks, deploy/upload, public gate flip, and main promotion remain action-required / approval-gated.
 9. `Cloudflare custom-rule operations doc`: complete. The operational guide is `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`; it records Free public launch defaults, Creator/Paid transition handling, API-vs-HTML Managed Challenge boundary, Rate Limiting preference, Turnstile Pre-clearance as later improvement, traffic-growth response ladder, release-operator checks, and non-actions.
-10. `PL-G5 release-owner decision`: decision recorded in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`; release-owner decision is `blocked-no-approval`, public release capable remains no, and all accepted residual risks / remaining action-required checks are carried forward.
+10. `PL-G5 release-owner decision`: decision recorded in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`; release-owner decision is `accepted-promotion-readiness-only`, public release capable remains no, and promotion operation plus post-deploy verification remain separately approval-gated.
 11. `PL-G6 public access change preflight`: complete in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`; exact same-thread approval remains absent, public release capable remains no, and public access change / promotion remains not-run / approval-gated.
 12. `PL-G6C production/main-domain env readiness and smoke approval gate`: recorded in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`; env apply readiness confirmation approval is present, production env readiness is `confirmed-ready-operator-provided`, production/main-domain private-launch smoke is `pass-operator-provided-private-launch-browser`, Start-to-translation smoke is `pass-production-main-domain-private-launch`, and public access change remains approval-gated.
 13. `PL-G6 public access change / promotion`: approval-gated public gate flip, production domain cutover, deploy/upload, or integration-to-main promotion.
 14. `Final production smoke`: approval-gated final production/main-domain smoke with sanitized pass/fail/count/status evidence only.
+15. `Post-PR #637 integration-to-main promotion`: first obtain PL-G5 residual-risk/remaining-check acceptance, then separately approve promotion PR creation/merge plus the main-connected automatic production deployment with login-only activation unset.
+16. `Post-deploy private-default verification`: separately approve and confirm main-domain health, private-allowlist default, production harness 404, and sanitized output. Stop on failure.
+17. `Login-only activation`: only after the private-default deployment verification passes, run as a separate approval-gated production deployment.
+18. `Public gate flip`: still later and separately approval-gated; do not infer it from promotion or login-only activation.
 
 ## Public-Before-Paid Boundary
 

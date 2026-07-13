@@ -38,6 +38,8 @@ Sanitization boundary: record only status labels, route-class labels, pass/fail,
 9. Managed Challenge is reserved for HTML route protection, targeted suspicious traffic, or temporary emergency response.
 10. Cloudflare clearance is not an entitlement, session, quota, or paid-plan boundary.
 
+Cloudflare edge protection is a separate approval-gated operation and is not the final public gate declaration itself. The final release declaration does not create or change a Worker binding and must not be used to bundle an otherwise unapproved edge-rule mutation.
+
 ## Phase Guidance
 
 ### Preview Period

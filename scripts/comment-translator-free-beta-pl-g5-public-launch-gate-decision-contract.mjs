@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -32,9 +32,49 @@ function assertIncludes(source, fragment, label) {
   assert.match(source, new RegExp(escaped(fragment), "i"), label);
 }
 
+function isAncestor(ancestor, descendant) {
+  try {
+    execFileSync("git", ["merge-base", "--is-ancestor", ancestor, descendant], {
+      cwd: root,
+      stdio: "ignore"
+    });
+    return true;
+  } catch (error) {
+    if (error && typeof error === "object" && error.status === 1) return false;
+    throw error;
+  }
+}
+
+function selectCommittedDiffBase(integrationIsPromoted, branchContainsMain, integrationDiffBase) {
+  return integrationIsPromoted && branchContainsMain ? "origin/main" : integrationDiffBase;
+}
+
 function changedFiles() {
+  const integrationDiffBase = "origin/codex/comment-translator-free-public-beta-integration";
+  assert.equal(
+    selectCommittedDiffBase(false, true, integrationDiffBase),
+    integrationDiffBase,
+    "a pre-promotion integration branch retains the integration diff base"
+  );
+  assert.equal(
+    selectCommittedDiffBase(true, false, integrationDiffBase),
+    integrationDiffBase,
+    "a branch not containing promoted main retains the integration diff base"
+  );
+  assert.equal(
+    selectCommittedDiffBase(true, true, integrationDiffBase),
+    "origin/main",
+    "a post-promotion branch based on main uses the main diff base"
+  );
+  const integrationIsPromoted = isAncestor(integrationDiffBase, "origin/main");
+  const branchContainsMain = isAncestor("origin/main", "HEAD");
+  const committedDiffBase = selectCommittedDiffBase(
+    integrationIsPromoted,
+    branchContainsMain,
+    integrationDiffBase
+  );
   const committedDiff = execSync(
-    "git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD",
+    `git diff --name-only ${committedDiffBase}...HEAD`,
     {
       cwd: root,
       encoding: "utf8",
@@ -123,14 +163,14 @@ const combinedDocs = [
 for (const section of [
   "## Decision Labels",
   "## Decision Inputs",
-  "## What PL-G5 Can Decide",
-  "## What PL-G5 Cannot Decide",
+  "## Decision-Time PL-G5 Scope",
+  "## Decision-Time Non-Authorization Boundary",
   "## Accepted Residual Risks",
-  "## Missing Approval For Public Capability",
-  "## Blocking Labels Before Public Capability",
-  "## Operator Checks Still Required",
+  "## Decision-Time Missing Approval For Public Capability",
+  "## Decision-Time Blocking Labels",
+  "## Current Post-Decision Operator Actions",
   "## PL-G6 Boundary",
-  "## Post-PR 637 Promotion Decision",
+  "## Decision-Time Post-PR 637 Promotion Plan",
   "## Sanitized Evidence Shape",
   "## Completion Verification"
 ]) {
@@ -139,7 +179,7 @@ for (const section of [
 
 for (const fragment of [
   "Status: PL-G5 release-owner public launch decision recorded. Public-release capable: no.",
-  "Current execution result: release-owner-decision=accepted-promotion-readiness-only / public_release_capable=no.",
+  "Decision-time result: release-owner-decision=accepted-promotion-readiness-only / public_release_capable=no.",
   "`pl_g5_release_owner_decision_preflight_doc_status` | `complete`",
   "`pl_g5_release_owner_decision_record_status` | `complete`",
   "`pl_g5_release_owner_decision_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`",
@@ -165,14 +205,14 @@ for (const fragment of [
   "Future `public` object default-privileges risk is accepted for PL-G5 evaluation only.",
   "Existing current-table/RLS/current-grant pass posture is not accepted as drift.",
   "No new `public` database object work may proceed without explicit object-level grant/RLS/default-privileges review.",
-  "The current source-thread approval is approval to start this PL-G5 decision slice only.",
-  "To change `public_release_capable` to `yes`, a later same-thread release-owner approval must explicitly accept or close all of these surfaces:",
-  "PL-G5 can record the current release-owner decision surface.",
+  "The source-thread approval at the PL-G5 checkpoint was approval to run that decision slice only.",
+  "The decision-time record required a later release-owner approval to close or accept these then-open surfaces:",
+  "PL-G5 recorded the release-owner decision surface available at that decision-time checkpoint.",
   "PL-G5 cannot flip the public gate, change public access, deploy/upload, promote to `main`, mutate Cloudflare, mutate Supabase, run live/provider flows, run OAuth live flows, run Google target lookup, run Stripe live actions, implement paid entitlement runtime, or add OBS overlay route/token runtime.",
   "Cloudflare custom-rule operations doc from PR #624 is the operational reference.",
   "Production API Managed Challenge remains `not-selected`.",
-  "Production route/API harness blocking/removal remains `action-required-before-production`.",
-  "PL-G6 public access change / promotion remains approval-gated and not-run.",
+  "At decision time, production route/API harness blocking/removal was `action-required-before-production`.",
+  "At decision time, PL-G6 public access change / promotion was approval-gated and not-run.",
   "`post_pr_637_runtime_status` | `implemented-not-activated`",
   "`integration_to_main_promotion_readiness_status` | `ready-after-exact-approvals`",
   "Promotion to `main` must not set the login-only activation control and must not flip the public gate.",
@@ -226,7 +266,7 @@ for (const [label, source, fragment] of [
   [
     operatorChecklistPath,
     operatorChecklist,
-    "`operator_external_verification_status` | `partial-pass-preview-and-production-private-launch-browser`"
+    "`operator_external_verification_status` | `pass-post-activation-browser-11-of-11`"
   ],
   [trafficBackingPath, trafficBacking, "`public_traffic_rate_limit_backing_selected` | `cloudflare-edge`"],
   [
@@ -266,6 +306,7 @@ for (const [label, source] of [
 const allowedChangedFiles = new Set([
   plG5DocPath,
   plG6DocPath,
+  cloudflareOperationsPath,
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
   operatorChecklistPath,
   taskBoardPath,

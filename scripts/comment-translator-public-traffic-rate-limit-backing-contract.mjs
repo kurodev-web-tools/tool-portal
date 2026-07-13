@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import fs from "node:fs";
 import Module from "node:module";
 import path from "node:path";
@@ -72,8 +72,48 @@ function loadTsModule(relativePath) {
   }
 }
 
+function isAncestor(ancestor, descendant) {
+  try {
+    execFileSync("git", ["merge-base", "--is-ancestor", ancestor, descendant], {
+      cwd: root,
+      stdio: "ignore"
+    });
+    return true;
+  } catch (error) {
+    if (error && typeof error === "object" && error.status === 1) return false;
+    throw error;
+  }
+}
+
+function selectCommittedDiffBase(integrationIsPromoted, branchContainsMain, integrationDiffBase) {
+  return integrationIsPromoted && branchContainsMain ? "origin/main" : integrationDiffBase;
+}
+
 function changedFiles() {
-  const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD", {
+  const integrationDiffBase = "origin/codex/comment-translator-free-public-beta-integration";
+  assert.equal(
+    selectCommittedDiffBase(false, true, integrationDiffBase),
+    integrationDiffBase,
+    "a pre-promotion integration branch retains the integration diff base"
+  );
+  assert.equal(
+    selectCommittedDiffBase(true, false, integrationDiffBase),
+    integrationDiffBase,
+    "a branch not containing promoted main retains the integration diff base"
+  );
+  assert.equal(
+    selectCommittedDiffBase(true, true, integrationDiffBase),
+    "origin/main",
+    "a post-promotion branch based on main uses the main diff base"
+  );
+  const integrationIsPromoted = isAncestor(integrationDiffBase, "origin/main");
+  const branchContainsMain = isAncestor("origin/main", "HEAD");
+  const committedDiffBase = selectCommittedDiffBase(
+    integrationIsPromoted,
+    branchContainsMain,
+    integrationDiffBase
+  );
+  const committedDiff = execSync(`git diff --name-only ${committedDiffBase}...HEAD`, {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"]

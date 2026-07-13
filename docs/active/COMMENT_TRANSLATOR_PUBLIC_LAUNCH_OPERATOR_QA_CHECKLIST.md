@@ -13,44 +13,56 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `public_release_capable_status` | `no` |
 | `public_beta_access_gate_selected` | `login-only` |
 | `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
-| `login_only_runtime_implementation_status` | `implemented-not-activated` |
-| `login_only_runtime_activation_status` | `not-run-approval-gated` |
-| `login_only_runtime_activation_preflight_status` | `prepared-local-only` |
+| `login_only_runtime_implementation_status` | `activated-login-only` |
+| `login_only_runtime_activation_status` | `complete-production-worker-deployment` |
+| `login_only_runtime_activation_preflight_status` | `pass` |
 | `login_only_runtime_activation_target` | `cloudflare-production-worker-runtime` |
 | `preview_rate_limit_smoke_tester_boundary` | `private-launch-allowlisted-tester-only` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
 | `edge_activation_status` | `not-run-approval-gated` |
-| `operator_external_verification_status` | `partial-pass-preview-and-production-private-launch-browser` |
-| `operator_remaining_external_verification_status` | `action-required` |
+| `edge_protection_readiness_status` | `blocked-activation-or-confirmation-required` |
+| `operator_external_verification_status` | `pass-post-activation-browser-11-of-11` |
+| `operator_remaining_external_verification_status` | `action-required-google-edge-final-smoke` |
 | `operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge` |
 | `operator_cloudflare_env_reference_status` | `present-enabled-label` |
-| `operator_free_beta_login_browser_smoke_status` | `pass-preview-browser` |
-| `operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser` |
+| `operator_free_beta_login_browser_smoke_status` | `pass-post-activation-production-browser` |
+| `operator_waitlist_boundary_browser_smoke_status` | `pass-post-activation-production-browser` |
 | `operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-and-production-browser` |
 | `operator_production_api_managed_challenge_status` | `not-selected` |
 | `operator_production_harness_block_status` | `pass-production-404` |
+| `google_auth_verification_status` | `submitted-pending` |
+| `final_public_gate_target` | `free-public-beta-release-declaration` |
+| `final_public_gate_mutation_target` | `none` |
+| `login_only_runtime_binding_action` | `unchanged` |
+| `edge_protection_operation_boundary` | `separate-approval-if-activation-required` |
+| `optional_limit_proof_disposition` | `accepted-deterministic-evidence` |
+| `post_activation_browser_verification_status` | `pass-11-of-11` |
+| `post_activation_browser_failure_count` | `0` |
 | `cloudflare_custom_rule_operations_doc_status` | `complete` |
 | `cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md` |
 | `api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only` |
 | `supabase_future_default_privileges_risk` | `accepted-for-pl-g5-evaluation` |
 | `public_gate_flip_status` | `not-run` |
-| `deploy_upload_status` | `complete-auto-preview-after-merge` |
+| `deploy_upload_status` | `complete-main-connected-and-activation-deployments` |
 | `deploy_upload_evidence_source` | `operator-provided` |
 | `preview_deployment_target` | `cloudflare-preview-domain` |
 | `preview_deployment_status` | `deployed-operator-provided` |
-| `production_env_apply_status` | `confirmed-ready-operator-provided` |
-| `production_main_domain_smoke_status` | `pass-operator-provided-private-launch-browser` |
-| `pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated` |
-| `pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only` |
+| `production_env_apply_status` | `applied-login-only-runtime` |
+| `production_main_domain_smoke_status` | `pass-post-activation-browser-11-of-11` |
+| `pl_g6c_production_main_domain_env_readiness_status` | `complete` |
+| `pl_g6c_production_env_operator_action_status` | `complete-for-login-only-activation` |
 | `pl_g6c_production_env_apply_readiness_confirmation_approval_status` | `present` |
-| `pl_g6c_production_env_apply_readiness_confirmation_status` | `recorded-no-mutation` |
+| `pl_g6c_production_env_apply_readiness_confirmation_status` | `complete-before-activation` |
 | `pl_g6c_production_smoke_approval_status` | `present` |
 | `live_provider_execution_status` | `pass-operator-provided-private-launch-smoke` |
 | `pl_g6_public_access_change_preflight_status` | `complete` |
 | `pl_g6_public_access_change_status` | `not-run-approval-gated` |
-| `post_pr_637_runtime_status` | `implemented-not-activated` |
-| `integration_to_main_promotion_readiness_status` | `ready-after-exact-approvals` |
-| `post_deploy_private_default_verification_status` | `not-run-approval-gated` |
+| `main_promotion_status` | `complete-pr-640-merged-main-contained` |
+| `main_connected_deployment_status` | `pass` |
+| `main_connected_workers_build_status` | `success` |
+| `post_pr_637_runtime_status` | `activated-login-only` |
+| `integration_to_main_promotion_readiness_status` | `complete-promoted` |
+| `post_deploy_private_default_verification_status` | `pass-before-activation` |
 | `release_owner_decision_status` | `accepted-promotion-readiness-only` |
 | `release_owner_exact_approval_status` | `present-promotion-readiness-only` |
 | `release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification` |
@@ -106,7 +118,15 @@ The release operator reported production/main-domain private-launch-only browser
 | `unauthorized_translator_access_status` | `pass-blocked-for-non-allowed-account` |
 | `transient_unavailable_reason_observed` | `live-provider-polling-not-approved` before translated comment evidence; final Start-to-translation evidence is pass |
 
-Public release remains blocked because `public_release_capable_status=no`, `pl_g6_public_access_change_status=not-run-approval-gated`, `public_gate_flip_status=not-run`, `edge_activation_status=not-run-approval-gated`, and `main_promotion_status=not-run`.
+At the 2026-07-10 private-launch update, main promotion and login-only activation were still not-run. The 2026-07-13 reconciliation below supersedes those operational labels; public release remains blocked because `public_release_capable_status=no`, Google OAuth verification is pending, and edge readiness still requires activation or confirmation.
+
+The final public gate is a release declaration rather than a Worker binding mutation. Keep the existing login-only runtime binding unchanged. The declaration remains blocked while Google OAuth verification is `submitted-pending`; production edge protection readiness and the production route/API harness 404 must be rechecked before declaration, and final production/main-domain smoke remains a later separately approved task.
+
+## Operator Update 2026-07-13
+
+The separately approved login-only production Worker activation completed. Post-activation production browser verification passed 11/11 with zero failures. Main-domain health, fail-closed unauthenticated/auth-unavailable behavior, authenticated Free access, existing tester parity, tester-only preview override, unchanged privileged boundaries, YouTube-connect no-autostart behavior, production harness 404, and sanitized browser output all passed by status label.
+
+No public release declaration, Cloudflare edge mutation, Google Auth publishing, final production smoke, Start, provider/live execution, target lookup, Supabase action, Stripe action, paid/Creator runtime, or OBS runtime was run by that verification.
 
 ## User-Owned External Checks
 
@@ -114,7 +134,7 @@ These checks require browser access, Cloudflare dashboard/account access, or app
 
 The current PL-G6 execution preflight is `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`. It prepares the approval surface only; it does not approve or run the checks below.
 
-Before login-only activation, the release operator must preserve this order: promotion to `main`, main-connected automatic production deployment with activation unset, separately approved private-default production verification, then a separately approved login-only activation deployment. The public gate flip remains later and separate.
+The completed operation order was: promotion to `main`, main-connected automatic production deployment with activation unset, separately approved private-default production verification, then a separately approved login-only activation deployment. The final public release declaration remains later and separate.
 
 | Check | Owner | When | Evidence to record |
 | --- | --- | --- | --- |
@@ -215,20 +235,23 @@ Required closeout labels:
 - `public_launch_operator_qa_checklist_status=complete`
 - `cloudflare_custom_rule_operations_doc_status=complete`
 - `codex_local_verification_status=pass`
-- `operator_external_verification_status=partial-pass-preview-and-production-private-launch-browser`
-- `operator_remaining_external_verification_status=action-required`
+- `operator_external_verification_status=pass-post-activation-browser-11-of-11`
+- `operator_remaining_external_verification_status=action-required-google-edge-final-smoke`
 - `edge_activation_status=not-run-approval-gated`
 - `public_gate_flip_status=not-run`
-- `deploy_upload_status=complete-auto-preview-after-merge`
+- `deploy_upload_status=complete-main-connected-and-activation-deployments`
 - `deploy_upload_evidence_source=operator-provided`
 - `preview_deployment_target=cloudflare-preview-domain`
 - `preview_deployment_status=deployed-operator-provided`
-- `production_env_apply_status=confirmed-ready-operator-provided`
-- `production_main_domain_smoke_status=pass-operator-provided-private-launch-browser`
-- `pl_g6c_production_main_domain_env_readiness_status=prepared-approval-gated`
-- `pl_g6c_production_env_operator_action_status=action-required-sanitized-instructions-only`
+- `production_env_apply_status=applied-login-only-runtime`
+- `production_main_domain_smoke_status=pass-post-activation-browser-11-of-11`
+- `pl_g6c_production_main_domain_env_readiness_status=complete`
+- `pl_g6c_production_env_operator_action_status=complete-for-login-only-activation`
 - `pl_g6c_production_env_apply_readiness_confirmation_approval_status=present`
-- `pl_g6c_production_env_apply_readiness_confirmation_status=recorded-no-mutation`
+- `pl_g6c_production_env_apply_readiness_confirmation_status=complete-before-activation`
+- `login_only_runtime_activation_status=complete-production-worker-deployment`
+- `post_activation_browser_verification_status=pass-11-of-11`
+- `post_activation_browser_failure_count=0`
 - `pl_g6c_production_smoke_approval_status=present`
 - `live_provider_execution_status=pass-operator-provided-private-launch-smoke`
 - `public_release_capable_status=no`

@@ -27,7 +27,7 @@ for (const marker of [
   "`risk_acceptance_scope` | `future-public-object-default-privileges-only`",
   "`public_release_capable_status` | `no`",
   "`public_gate_flip_status` | `not-run`",
-  "`main_promotion_status` | `not-run`",
+  "`main_promotion_status` | `complete-pr-640-merged-main-contained`",
   "`obs_dock_display_name_policy_status` | `complete`",
   "`public_beta_access_gate_decision_status` | `complete`",
   "`public_beta_access_gate_selected` | `login-only`",
@@ -36,17 +36,17 @@ for (const marker of [
   "`public_traffic_rate_limit_backing_selected` | `cloudflare-edge`",
   "`edge_activation_status` | `not-run-approval-gated`",
   "`public_launch_operator_qa_checklist_status` | `complete`",
-  "`operator_external_verification_status` | `partial-pass-preview-and-production-private-launch-browser`",
-  "`operator_remaining_external_verification_status` | `action-required`",
+  "`operator_external_verification_status` | `pass-post-activation-browser-11-of-11`",
+  "`operator_remaining_external_verification_status` | `action-required-google-edge-final-smoke`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_cloudflare_env_reference_status` | `present-enabled-label`",
-  "`operator_free_beta_login_browser_smoke_status` | `pass-preview-browser`",
-  "`operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser`",
+  "`operator_free_beta_login_browser_smoke_status` | `pass-post-activation-production-browser`",
+  "`operator_waitlist_boundary_browser_smoke_status` | `pass-post-activation-production-browser`",
   "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-and-production-browser`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
   "`operator_production_harness_block_status` | `pass-production-404`",
-  "`production_env_apply_status` | `confirmed-ready-operator-provided`",
-  "`production_main_domain_smoke_status` | `pass-operator-provided-private-launch-browser`",
+  "`production_env_apply_status` | `applied-login-only-runtime`",
+  "`production_main_domain_smoke_status` | `pass-post-activation-browser-11-of-11`",
   "`operator_start_to_translation_smoke_status` | `pass-production-main-domain-private-launch`",
   "`live_provider_execution_status` | `pass-operator-provided-private-launch-smoke`",
   "`cloudflare_custom_rule_operations_doc_status` | `complete`",
@@ -69,7 +69,7 @@ for (const marker of [
   "`Supabase default privileges support response or risk acceptance`",
   "`Public launch operator QA checklist`",
   "`PL-G5 release-owner decision`",
-  "`PL-G6 public access change / promotion`",
+  "`PL-G6 final release declaration readiness`",
   "The Step 8 update is a policy/UI/contract slice only.",
   "The Step 9 policy selected `login-only` for Free public beta access",
   "The Step 10 update is a policy/contract/documentation slice only.",
@@ -82,9 +82,9 @@ for (const marker of [
   "Public beta access gate behavior: decision only.",
   "Public traffic rate-limit backing behavior: decision only.",
   "Supabase default privileges risk acceptance: decision only.",
-  "Public launch operator QA checklist: complete for docs/contract separation and 2026-07-09 / 2026-07-10 sanitized operator updates.",
+  "Public launch operator QA checklist: complete for docs/contract separation and the 2026-07-09 / 2026-07-10 / 2026-07-13 sanitized operator updates.",
   "Cloudflare custom-rule operations: complete for docs/contract guidance only.",
-  "PL-G5 release-owner decision record: complete for docs/contract guidance only.",
+  "PL-G5 release-owner decision record: complete as a decision-time audit record.",
   "Supabase default privileges remediation/apply: not run."
 ]) {
   assert.ok(doc.includes(marker), `launch remaining task board doc records ${marker}`);
@@ -152,7 +152,7 @@ const taskOrder = [
   "Public launch operator QA checklist",
   "Cloudflare custom-rule operations doc",
   "PL-G5 release-owner decision",
-  "PL-G6 public access change / promotion"
+  "PL-G6 final release declaration readiness"
 ];
 
 const taskOrderSection = doc.slice(doc.indexOf("## Remaining Public Launch Task Order"));

@@ -49,6 +49,13 @@ export default function CommentTranslatorPublicInformationPage() {
               >
                 Kuro Stream Kit ホーム
               </Link>
+              <Link
+                href="/privacy"
+                data-google-oauth-review-link="privacy-policy"
+                className="inline-flex min-h-11 items-center justify-center rounded-base border border-border bg-surface px-5 py-2.5 text-sm font-black text-primary-strong underline decoration-primary/40 underline-offset-4 transition hover:border-primary/60 hover:decoration-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                プライバシーポリシー
+              </Link>
             </div>
           </header>
 
@@ -102,6 +109,44 @@ export default function CommentTranslatorPublicInformationPage() {
                 </ul>
               </div>
             </div>
+          </section>
+
+          <section aria-labelledby="youtube-access-removal" className="panel p-6 sm:p-8">
+            <h2 id="youtube-access-removal" className="text-xl font-black tracking-tight text-foreground sm:text-2xl">
+              YouTube連携の解除と<wbr />
+              <span className="whitespace-nowrap">Googleアクセス権の取り消し</span>
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-muted sm:text-base">
+              Kuro Stream Kit側の接続と、Googleアカウント側で許可したアクセス権は別々に管理されます。
+              完全に解除する場合は、次の2つを順番に確認してください。
+            </p>
+            <ol className="mt-5 grid gap-4 text-sm leading-7 text-muted md:grid-cols-2">
+              <li className="rounded-base border border-border bg-surface-muted p-5">
+                <h3 className="font-black text-foreground">1. Kuro Stream Kit側の接続を切る</h3>
+                <p className="mt-3">
+                  ログイン後に
+                  <Link href="/account/integrations" className="mx-1 font-black text-primary-strong underline decoration-primary/40 underline-offset-4 hover:decoration-primary">
+                    アカウント連携
+                  </Link>
+                  を開き、YouTubeの「切断」を実行します。この操作はserver-only credential referenceを無効化しますが、
+                  Google側で許可したアクセス権は取り消しません。
+                </p>
+              </li>
+              <li className="rounded-base border border-border bg-surface-muted p-5">
+                <h3 className="font-black text-foreground">2. Google側のアクセス権を取り消す</h3>
+                <p className="mt-3">
+                  Googleアカウントの「サードパーティとの接続」で Kuro Live Comment Translator を確認し、アクセス権を削除します。
+                </p>
+                <a
+                  href="https://support.google.com/accounts/answer/13533235?hl=ja"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-base border border-border bg-surface px-4 py-2.5 font-black text-primary-strong underline decoration-primary/40 underline-offset-4 transition hover:border-primary/60 hover:decoration-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  Google公式の接続管理手順を確認する
+                </a>
+              </li>
+            </ol>
           </section>
 
           <section aria-labelledby="policies" className="panel p-6 sm:p-8">

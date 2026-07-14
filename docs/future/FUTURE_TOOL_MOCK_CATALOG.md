@@ -92,11 +92,23 @@ This pass lists 10 additional unimplemented tool candidates that do not duplicat
 
 この推奨は優先順位判断の材料であり、実装仕様や route 追加を確定するものではない。
 
+## Current Selected Tool
+
+2026-07-15のユーザー選定により、次の無料MVPは **配信カンペボード（Viewer Engagement Prompt Board）** とする。
+
+比較時点のRecommended Next Candidateは履歴として保持する。現在の選定は、無料・ログイン不要・browser-onlyで開始できること、配信中のカンペ用途が明確であること、次回・次々回・日付未定のアイデアを先行準備できることを優先した結果である。
+
+MVPは`localStorage`とversioned JSONによるbrowser-local保存に限定する。AI、YouTube/live chat、OAuth、cloud sync、共同編集、OBS連携は含めない。Schedule Calendarは将来の独立adapter候補であり、MVPでは実連携しない。
+
+現在は選定・ガバナンス段階で、route、component、storageその他のruntime未実装である。実装はガバナンスPRが`main`へマージされた後、専用preview branchでtaskごとに進める。
+
 ## Validation Note
 
 - Existing generated image count: 5 candidates x 3 viewports = 15 files.
 - New generated image count: 5 candidates x 3 viewports = 15 files.
 - Total mocked image count in this catalog: 10 candidates x 3 viewports = 30 files.
+- Approved selected-tool UI reference count: 2 final files covering 3 MVP screens.
+- Total image count after selected-tool finalization: 32 files.
 - Filename contract: each mocked candidate README and this catalog reference `desktop.png`, `tablet-landscape.png`, and `mobile.png`.
 - Lint / build / width checks are intentionally not run for this mock-only PR because it adds no route, component, CSS, JavaScript, schema, storage, auth, billing, quota, OAuth, API call, OBS integration, video processing, external posting, or runtime behavior. `git diff --check` is still required.
 - The generated UI text is illustrative and does not lock product copy or exact specifications.

@@ -2,6 +2,18 @@
 
 このファイルは現在の運用タスクだけを置く。完了済みの詳細ログ、比較メモ、長い経緯、古い next-session prompt は `docs/archive` に寄せる。
 
+## Current Task Index
+
+| Priority | Tool / work | Current status | Detail authority |
+| --- | --- | --- | --- |
+| P0 | Comment Translator Free public beta | Google OAuth verification remains `submitted-pending`; public release remains separately gated and `public_release_capable=no`. Production issues and Google review follow-up interrupt P1 work. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md` |
+| P1 | 配信カンペボード | Selected as the next free, login-free tool. The three-screen UI direction and shared Portal workspace sidebar (`expanded` / `rail` / `hidden`) are approved and recorded; runtime implementation and preview branch creation have not started. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
+| Workflow | New-tool preview development | Task PRs target a tool-specific preview branch; promotion to `main` occurs only after MVP readiness. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
+
+- Current governance branch: `codex/next-tool-governance`, based on the latest `origin/main` after PR #643.
+- P1 implementation starts only after this governance change is merged to `main` and `codex/viewer-engagement-prompt-board-preview` is created from the updated main tip.
+- New detailed status belongs in the linked active authority. Do not append new long-form task history to the compatibility ledger below.
+
 ## Current Premises
 
 - 作業は `main` 直ではなく feature branch / worktree で行う。
@@ -11,6 +23,10 @@
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
 - secret / service_role key / private credential / OAuth token / authorization code / owner id / provider target metadata / liveChatId は表示・要求・保存しない。
 - Provider target metadata and liveChatId are consumed only through server-only boundaries and must not appear in output, docs, PR bodies, browser storage, or handoff payloads.
+
+## Legacy Contract Compatibility Ledger
+
+The historical entries below remain temporarily because 169 existing contract scripts reference `task.md`. This governance slice adds the current index without removing those markers. Contract references should move incrementally to canonical active authorities before this ledger is archived; do not add new long-form task history here.
 
 ## Current Branch
 

@@ -117,6 +117,16 @@ const invalidCases = [
       ]
     })
   ],
+  [
+    "multiple live plans",
+    JSON.stringify({
+      ...validData,
+      streamPlans: [
+        { ...validData.streamPlans[0], status: "live" },
+        { ...validData.streamPlans[0], id: "plan-01JZ1000000000000000000000", status: "live", promptCards: [] }
+      ]
+    })
+  ],
   ["sensitive top-level field", JSON.stringify({ ...validData, account: { id: "private" } })],
   [
     "sensitive nested field",

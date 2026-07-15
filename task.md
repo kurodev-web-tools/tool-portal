@@ -7,11 +7,11 @@
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
 | P0 | Comment Translator Free public beta | Google OAuth verification remains `submitted-pending`; public release remains separately gated and `public_release_capable=no`. Production issues and Google review follow-up interrupt P1 work. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md` |
-| P1 | 配信カンペボード | Selected as the next free, login-free tool. The three-screen UI direction and shared Portal workspace sidebar (`expanded` / `rail` / `hidden`) are approved and recorded; runtime implementation and preview branch creation have not started. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
+| P1 | 配信カンペボード | Shared Portal workspace sidebar (`expanded` / `rail` / `hidden`) is locally implemented and browser-verified on the first task branch. The prompt-board route and tool runtime remain unimplemented. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview branch; promotion to `main` occurs only after MVP readiness. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
-- Current governance branch: `codex/next-tool-governance`, based on the latest `origin/main` after PR #643.
-- P1 implementation starts only after this governance change is merged to `main` and `codex/viewer-engagement-prompt-board-preview` is created from the updated main tip.
+- Current P1 task branch: `codex/viewer-engagement-prompt-board-portal-sidebar`, based on local preview branch `codex/viewer-engagement-prompt-board-preview` at updated `origin/main` commit `064da6b6bca1b03397eeceebb016a326bfec5d28`.
+- The preview branch and task branch are local-only. Commit, push, and the preview-targeted PR remain separate approval-gated actions.
 - New detailed status belongs in the linked active authority. Do not append new long-form task history to the compatibility ledger below.
 
 ## Current Premises

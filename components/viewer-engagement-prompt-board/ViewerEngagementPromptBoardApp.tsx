@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { StreamPlanEditor } from "@/components/viewer-engagement-prompt-board/StreamPlanEditor";
 import { StreamPlanList } from "@/components/viewer-engagement-prompt-board/StreamPlanList";
 import { PromptCardWorkspace } from "@/components/viewer-engagement-prompt-board/PromptCardWorkspace";
+import { LiveModeWorkspace } from "@/components/viewer-engagement-prompt-board/LiveModeWorkspace";
 import {
   createEmptyPromptBoardData,
   loadPromptBoardData,
@@ -33,7 +34,7 @@ import {
 
 type Notice = Readonly<{ kind: "success" | "error"; message: string }>;
 type EditorState = { readonly kind: "create" } | { readonly kind: "edit"; readonly planId: string } | null;
-type ActiveSection = "plans" | "cards";
+type ActiveSection = "plans" | "cards" | "live";
 
 function createMutationContext(): StreamPlanMutationContext {
   return {
@@ -133,6 +134,12 @@ export function ViewerEngagementPromptBoardApp() {
     persistMutation(deleteStreamPlan(data, planId), "配信プランを削除しました。", editor?.kind === "edit" && editor.planId === planId);
   };
 
+  const showCardEditor = (planId: string) => {
+    setRequestedCardPlanId(planId);
+    setActiveSection("cards");
+    setNotice(null);
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-background" data-viewer-engagement-prompt-board={activeSection}>
       <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur-sm">
@@ -156,11 +163,14 @@ export function ViewerEngagementPromptBoardApp() {
             </button> : null}
           </div>
           <nav className="flex gap-1" aria-label="配信カンペボード内ナビゲーション">
-            <button type="button" aria-current={activeSection === "plans" ? "page" : undefined} className={activeSection === "plans" ? "border-b-2 border-primary px-3 py-2 text-sm font-black text-primary-strong" : "border-b-2 border-transparent px-3 py-2 text-sm font-bold text-muted hover:text-foreground"} onClick={() => setActiveSection("plans")}>
+            <button type="button" aria-current={activeSection === "plans" ? "page" : undefined} className={activeSection === "plans" ? "min-h-11 border-b-2 border-primary px-3 py-2 text-sm font-black text-primary-strong" : "min-h-11 border-b-2 border-transparent px-3 py-2 text-sm font-bold text-muted hover:text-foreground"} onClick={() => setActiveSection("plans")}>
               配信プラン
             </button>
-            <button type="button" aria-current={activeSection === "cards" ? "page" : undefined} className={activeSection === "cards" ? "border-b-2 border-primary px-3 py-2 text-sm font-black text-primary-strong" : "border-b-2 border-transparent px-3 py-2 text-sm font-bold text-muted hover:text-foreground"} onClick={() => setActiveSection("cards")}>
+            <button type="button" aria-current={activeSection === "cards" ? "page" : undefined} className={activeSection === "cards" ? "min-h-11 border-b-2 border-primary px-3 py-2 text-sm font-black text-primary-strong" : "min-h-11 border-b-2 border-transparent px-3 py-2 text-sm font-bold text-muted hover:text-foreground"} onClick={() => setActiveSection("cards")}>
               カンペ編集
+            </button>
+            <button type="button" aria-current={activeSection === "live" ? "page" : undefined} className={activeSection === "live" ? "min-h-11 border-b-2 border-primary px-3 py-2 text-sm font-black text-primary-strong" : "min-h-11 border-b-2 border-transparent px-3 py-2 text-sm font-bold text-muted hover:text-foreground"} onClick={() => setActiveSection("live")}>
+              配信中
             </button>
           </nav>
         </div>
@@ -169,8 +179,8 @@ export function ViewerEngagementPromptBoardApp() {
       <main className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black text-foreground">{activeSection === "plans" ? "配信プラン一覧" : "配信プラン編集"}</h2>
-            <p className="mt-1 text-sm text-muted [word-break:auto-phrase]">{activeSection === "plans" ? "日時順と手動表示順から、次の配信を自動で並べます。" : "配信プランを選び、カンペカードの内容と順番を整えます。"}</p>
+            <h2 className="text-xl font-black text-foreground">{activeSection === "plans" ? "配信プラン一覧" : activeSection === "cards" ? "配信プラン編集" : "配信中ワークスペース"}</h2>
+            <p className="mt-1 text-sm text-muted [word-break:auto-phrase]">{activeSection === "plans" ? "日時順と手動表示順から、次の配信を自動で並べます。" : activeSection === "cards" ? "配信プランを選び、カンペカードの内容と順番を整えます。" : "現在の配信で読むカンペを、大きく見やすく表示します。"}</p>
           </div>
           <p className="text-sm font-bold text-muted" aria-live="polite">{loaded ? activeSection === "plans" ? `${data.streamPlans.length}件のプラン` : `${data.streamPlans.reduce((count, plan) => count + plan.promptCards.length, 0)}枚のカンペ` : "保存データを確認中"}</p>
         </div>
@@ -208,12 +218,9 @@ export function ViewerEngagementPromptBoardApp() {
           onComplete={(planId) => persistMutation(completeStreamPlan(data, planId, createMutationContext()), "配信プランを完了にしました。")}
           onPrepare={(planId) => persistMutation(moveIdeaToPreparing(data, planId, createMutationContext()), "アイデアを準備中へ移しました。")}
           onDelete={deletePlan}
-          onEditCards={(planId) => {
-            setRequestedCardPlanId(planId);
-            setActiveSection("cards");
-            setNotice(null);
-          }}
-        /> : (
+          onEditCards={showCardEditor}
+        /> : null}
+        {activeSection === "cards" ? (
           <PromptCardWorkspace
             data={data}
             selectedPlanId={selectedCardPlanId}
@@ -221,7 +228,14 @@ export function ViewerEngagementPromptBoardApp() {
             onShowPlans={() => setActiveSection("plans")}
             onMutation={persistMutation}
           />
-        )}
+        ) : null}
+        {activeSection === "live" ? (
+          <LiveModeWorkspace
+            data={data}
+            onShowPlans={() => setActiveSection("plans")}
+            onEditCards={showCardEditor}
+          />
+        ) : null}
       </main>
     </div>
   );

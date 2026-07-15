@@ -12,7 +12,7 @@ Date: 2026-07-15
 | `comment_translator_priority` | `P0` |
 | `mvp_price` | `free` |
 | `login_requirement` | `none` |
-| `runtime_implementation_status` | `prompt-cards-local-complete-verification-and-production-browser-qa-pass` |
+| `runtime_implementation_status` | `live-mode-local-complete-verification-and-production-browser-qa-pass` |
 | `preview_branch` | `codex/viewer-engagement-prompt-board-preview` |
 | `promotion_target` | `main-after-mvp-readiness` |
 | `shared_portal_sidebar_scope` | `workspace-common-expanded-rail-hidden` |
@@ -131,7 +131,7 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 
 ### Stream Plans Implementation Checkpoint
 
-- `implementation_status`: `local-complete-verification-and-production-browser-qa-pass`
+- `implementation_status`: `merged-preview-pr-648`
 - `task_branch`: `codex/viewer-engagement-prompt-board-stream-plans`
 - `preview_base`: `origin/codex/viewer-engagement-prompt-board-preview` at `cb1b3299e12d5ac79ffcf22d74e5155b82115ff2`
 - `rendered_route`: `/tools/viewer-engagement-prompt-board`、`PortalShell mode="workspace"`と既存共通workspace sidebarを利用し、tool固有の第2左sidebarは追加しない
@@ -155,7 +155,7 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 
 - `implementation_status`: `local-complete-verification-and-production-browser-qa-pass`
 - `task_branch`: `codex/viewer-engagement-prompt-board-prompt-cards`
-- `preview_base`: `origin/codex/viewer-engagement-prompt-board-preview` at PR #647 merge commit `dc12e0390b543b38aaeb46334ec813f96ecb8b5a`
+- `preview_merge`: `origin/codex/viewer-engagement-prompt-board-preview` at PR #648 merge commit `6a29dc31bd2d949a627b61d7efa91a4b10dfab10`
 - `rendered_route`: `/tools/viewer-engagement-prompt-board`、`PortalShell mode="workspace"`と既存共通workspace sidebarを利用し、tool固有の第2左sidebarは追加しない
 - `local_navigation`: main content上部に実動作する`配信プラン`と`カンペ編集`だけを表示する。配信プランの各行から対象planを選んでカンペ編集へ移動でき、live modeとデータ管理のplaceholder navigationは追加しない
 - `domain_owner`: `lib/viewer-engagement-prompt-board-prompt-cards.ts`
@@ -174,6 +174,26 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 - `runtime_audit`: (1) cross-plan moveでorder/identity/timestampがdriftする仮説はstable ID/content、両plan同一updatedAt、source/destinationのorder 0を同時観測して否定、(2) write failureでcurrentまたは保存済みdatasetを置換する仮説は強制setItem failure後も画面と保存内容が直前値を維持しeditorが開いたままであることから否定、(3) reload、選択plan削除、破損/未知schemaで選択またはcurrent dataを失う仮説はdeterministic fallbackとsanitized alert、last valid dataset維持で否定
 - `independent_review`: design integrityとCJK/accessibilityのread-only visual reviewで、delete/move後focus復帰と編集中card移動時のstale editorを検出して修正。goal/constraints、QA、code quality、security/privacy、context/historyのbounded read-only reviewを実施し、actionable findingを解消した
 - `out_of_scope_unchanged`: live-mode大表示/前後/現在位置/copy、JSON backup/restore UI、Schedule Calendar連携/ID、login/account sync、Supabase、Stripe、OAuth、external API、provider/live execution、analytics/telemetry、Cloudflare、deploy/public release、Comment Translator runtime/release gate
+
+### Live Mode Implementation Checkpoint
+
+- `implementation_status`: `local-complete-verification-and-production-browser-qa-pass`
+- `task_branch`: `codex/viewer-engagement-prompt-board-live-mode`
+- `preview_base`: `origin/codex/viewer-engagement-prompt-board-preview` at merged PR #648 commit `6a29dc31bd2d949a627b61d7efa91a4b10dfab10`
+- `rendered_route`: `/tools/viewer-engagement-prompt-board`、`PortalShell mode="workspace"`と既存共通workspace sidebarを利用し、tool固有の第2左sidebarは追加しない
+- `local_navigation`: 実動作する`配信プラン`、`カンペ編集`、`配信中`をmain content上部に表示し、未実装の`データ管理`は非表示のまま維持する
+- `domain_owner`: `lib/viewer-engagement-prompt-board-live-mode.ts`がlive plan解決、stable card IDと直前indexによるUI-only selection、前後境界、clipboard resultを所有し、表示順は既存`orderPromptCardsForDisplay`へ委譲する
+- `ui_owner`: `components/viewer-engagement-prompt-board/LiveModeWorkspace.tsx`がno-live、zero-card、readyの3状態、大表示、位置、前後、exact body copy、sanitized copy feedback、editor returnをread-onlyで提供する
+- `selection_contract`: 初回とreloadは最初のordered card、現在dataset内のreorderではstable card IDを維持し、missing/deleted cardは直前indexを有効範囲へclampする。zero/one/first/last境界はdisabled deterministic no-opとし、選択、位置、copy状態を保存しない
+- `clipboard_contract`: successはexact bodyだけを書き込み、Clipboard API unavailableとpermission/write failureは本文を含まない利用者向けmessageを表示する。成功/失敗とも選択、dataset、timestamp、storageを変更しない
+- `accessibility_behavior`: keyboard操作後も押したcontrolへfocusを維持し、position/copyを`aria-live`またはroleで通知する。全local/live controlは44px以上、CJK本文は改行を維持しviewport内で折り返す
+- `focused_red_green`: live-mode domain owner未実装を理由とするREDを確認後、live-plan解決、no-live、zero/one/many、ordering、initial/reload、previous/next、first/last、stable identity、missing/deleted fallback、editor context、clipboard success/failure atomicity、UI-only exclusionをGREEN化した
+- `verification_current`: focused live-mode contract、既存prompt-card/stream-plan/storage/governance/Portal workspace sidebar regression contracts、`npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`はpass。build warningは既存middleware deprecationのみ
+- `dependency_boundary`: `npm ci`/`npm install`は実行せず、同一lockfile hashを確認した既存dependency treeをfresh worktree内へローカルコピーした。lockfile/package metadataは変更していない
+- `production_browser_qa`: no-live、zero、one、manyを390 / 820 / 1024 / 1280 / 1366pxの全20組で確認。前後/first/last、位置、exact copy、forced failure/unavailable feedback、editor return、reload-first、keyboard focus、aria-live、長いCJK、44px control、horizontal overflow 0、console error 0がpass
+- `runtime_audit`: (1) reordered/missing cardのidentity/position driftはstable ID追従とindex clamp、reload-firstで否定、(2) clipboard failureのposition/content mutationは位置、本文、保存JSON不変で否定、(3) no-live/empty planのinvalid navigation/stale editor contextは専用empty stateとlive plan IDを維持したeditor returnで否定
+- `independent_review`: goal/constraints、code quality、security/privacy、context/historyのbounded read-only reviewと、必須20画面＋補助4画面のdesign integrity / CJK accessibility reviewを実施し、findingsなしでPASS
+- `out_of_scope_unchanged`: JSON backup/restore UIとデータ管理、Schedule Calendar連携/ID、login/account sync、Supabase、Stripe、OAuth、AI/provider/live execution、viewer/comment/moderation/OBS、analytics/telemetry、Cloudflare、deploy/public release、Comment Translator runtime/release gate
 
 ## MVP対象外
 

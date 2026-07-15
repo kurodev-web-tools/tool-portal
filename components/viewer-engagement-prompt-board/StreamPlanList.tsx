@@ -24,7 +24,8 @@ function StreamPlanCard({
   onMakeCurrent,
   onComplete,
   onPrepare,
-  onDelete
+  onDelete,
+  onEditCards
 }: {
   readonly plan: StreamPlan;
   readonly derivedLabel: string | null;
@@ -37,6 +38,7 @@ function StreamPlanCard({
   readonly onComplete: (planId: string) => void;
   readonly onPrepare: (planId: string) => void;
   readonly onDelete: (planId: string) => void;
+  readonly onEditCards: (planId: string) => void;
 }) {
   const statusLabel = plan.status === "live" ? "配信中" : plan.status === "preparing" ? "準備中" : plan.status === "idea" ? "アイデア" : "完了";
   return (
@@ -62,6 +64,7 @@ function StreamPlanCard({
       {plan.notes.trim().length === 0 ? null : <p className="mt-3 whitespace-pre-wrap break-words rounded-base bg-surface-muted px-3 py-2 text-sm leading-6 text-muted">{plan.notes}</p>}
 
       <div className="mt-4 flex flex-wrap gap-2" aria-label={`${plan.title}の操作`}>
+        <button type="button" className="flat-control min-h-10 px-3 py-2" onClick={() => onEditCards(plan.id)}>カンペ編集</button>
         <button type="button" className="flat-control min-h-10 px-3 py-2" onClick={() => onDuplicate(plan.id)}>複製</button>
         <button type="button" className="flat-control min-h-10 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-40" disabled={!canMoveUp} onClick={() => onMove(plan.id, "up")}>上へ</button>
         <button type="button" className="flat-control min-h-10 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-40" disabled={!canMoveDown} onClick={() => onMove(plan.id, "down")}>下へ</button>
@@ -128,7 +131,8 @@ export function StreamPlanList({
   onMakeCurrent,
   onComplete,
   onPrepare,
-  onDelete
+  onDelete,
+  onEditCards
 }: {
   readonly groups: StreamPlanGroups;
   readonly onEdit: (plan: StreamPlan) => void;
@@ -138,8 +142,9 @@ export function StreamPlanList({
   readonly onComplete: (planId: string) => void;
   readonly onPrepare: (planId: string) => void;
   readonly onDelete: (planId: string) => void;
+  readonly onEditCards: (planId: string) => void;
 }) {
-  const actions = { onEdit, onDuplicate, onMove, onMakeCurrent, onComplete, onPrepare, onDelete };
+  const actions = { onEdit, onDuplicate, onMove, onMakeCurrent, onComplete, onPrepare, onDelete, onEditCards };
   return (
     <div className="grid gap-4">
       <PlanGroup id="current" title="現在の配信" description="同時に1件だけ。切り替えると以前の配信は準備中へ戻ります。" plans={groups.current} emptyMessage="現在の配信はありません。" getDerivedLabel={() => "現在"} actions={actions} />

@@ -12,7 +12,7 @@ Date: 2026-07-15
 | `comment_translator_priority` | `P0` |
 | `mvp_price` | `free` |
 | `login_requirement` | `none` |
-| `runtime_implementation_status` | `stream-plans-local-complete-verification-and-production-browser-qa-pass` |
+| `runtime_implementation_status` | `prompt-cards-local-complete-verification-and-production-browser-qa-pass` |
 | `preview_branch` | `codex/viewer-engagement-prompt-board-preview` |
 | `promotion_target` | `main-after-mvp-readiness` |
 | `shared_portal_sidebar_scope` | `workspace-common-expanded-rail-hidden` |
@@ -150,6 +150,30 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 - `runtime_audit`: (1) scheduledAt/manualOrderとsingle-current遷移がdriftする仮説は、予定順と旧liveのpreparing復帰/対象だけliveを同時観測して否定、(2) write failureでcurrentまたは保存済みdatasetを置換する仮説は双方の参照維持で否定、(3) duplicateがplan/card identityや参照を共有する仮説はfresh plan/card IDとarray/object分離で否定
 - `independent_review`: goal/constraints、QA、code quality、security/privacy、context/historyの5 laneと、design integrity / CJK accessibilityの2 visual laneを実施。日時境界reorder、複数live保存、manualOrder空欄、editor focus復元、schema owner、CTA contrast/CJK wrapの指摘を修正し、fix verificationとvisual再レビューはPASS
 - `out_of_scope_unchanged`: prompt-card編集/並べ替え/plan間移動、live-mode大表示/前後/copy、Schedule Calendar連携、login/account sync、Supabase、Stripe、OAuth、external API、provider/live execution、analytics/telemetry、Cloudflare、deploy/public release、Comment Translator runtime/release gate
+
+### Prompt Cards Implementation Checkpoint
+
+- `implementation_status`: `local-complete-verification-and-production-browser-qa-pass`
+- `task_branch`: `codex/viewer-engagement-prompt-board-prompt-cards`
+- `preview_base`: `origin/codex/viewer-engagement-prompt-board-preview` at PR #647 merge commit `dc12e0390b543b38aaeb46334ec813f96ecb8b5a`
+- `rendered_route`: `/tools/viewer-engagement-prompt-board`、`PortalShell mode="workspace"`と既存共通workspace sidebarを利用し、tool固有の第2左sidebarは追加しない
+- `local_navigation`: main content上部に実動作する`配信プラン`と`カンペ編集`だけを表示する。配信プランの各行から対象planを選んでカンペ編集へ移動でき、live modeとデータ管理のplaceholder navigationは追加しない
+- `domain_owner`: `lib/viewer-engagement-prompt-board-prompt-cards.ts`
+- `ui_owners`: `components/viewer-engagement-prompt-board/PromptCardWorkspace.tsx`、`PromptCardEditor.tsx`、`PromptCardList.tsx`、`PromptCardPlanSelector.tsx`、既存`ViewerEngagementPromptBoardApp.tsx`と`StreamPlanList.tsx`
+- `implemented_behavior`: stable local card ID、body、category、segment、tone、safetyNotes、orderだけを扱い、追加、編集、削除、上下の手動並べ替え、別planへの移動を提供する
+- `strict_enums`: category=`talking-point / question / announcement / reminder / other`、segment=`opening / main / intermission / closing / anytime`、tone=`neutral / casual / energetic / calm / serious`。空本文、未知enum、存在しないplan/card IDはmutation前に拒否する
+- `ordering_contract`: 表示と操作境界は保存配列順ではなくdomain ownerの`order`、同値時stable ID順を使う。add/delete/reorder/move後は影響するplan内を0始まりの連続orderへ正規化する。先頭の上移動と末尾の下移動、既に正規化済みの同一plan moveはtimestampを変えないno-opとし、非正規化状態の同一plan moveは対象plan、空planへの移動を含むcross-plan moveはsource/destinationを同一timestampで更新する
+- `identity_and_copy_contract`: cross-plan moveはstable card IDと全contentを維持し、source/destinationのplan、promptCards配列、card objectを共有しない。template/provider/external metadataは追加しない
+- `selection_context`: plan選択と編集対象はUI-only stateとして扱いprompt-board contentへ保存しない。reload時と選択planの欠落/削除時はlive、preparing、idea、completedの安定順で存在するplanへfallbackし、planがなければempty stateにする
+- `persistence_boundary`: 全mutationは既存`lib/viewer-engagement-prompt-board-storage.ts`のsave/loadだけを経由する。破損、未知schema、storage unavailable、write failureはsanitized messageを表示し、永続化成功前にlast valid current datasetを置換しない。失敗時はeditorを閉じない
+- `accessibility_behavior`: editor開始時は本文へfocusし、cancel/save/delete/moveで対象controlが消える場合は`カンペを追加`へfocusを復帰する。CJK本文と長いplan titleはviewport内で折り返す
+- `focused_red_green`: domain owner未実装のRED後、add/edit/delete/reorder/move、strict enum/input validation、連続order、missing ID、first/last boundary、empty plan、canonical same-plan no-op、stable identity、deep-copy、persistence/reload、write-failure atomicityをGREEN化。独立reviewで検出したdelete/move後focus、編集中card移動時のstale editor、保存配列順と`order`が異なるreload表示、非正規化same-plan moveを追加契約でRED確認後に修正しGREEN化した
+- `verification_current`: prompt-card focused contract、既存stream-plan/storage/governance/Portal workspace sidebar regression contracts、file-size gate、`npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check`、changed-files high-confidence secret scan、TypeScript suppression scanはpass。build warningは既存middleware deprecationとwebpack cache serializationのみ
+- `dependency_boundary`: 明示承認後にこのfresh worktreeで`npm ci`を実行し、lockfile/package metadataを変更せず依存を復元した
+- `production_browser_qa`: `/tools/viewer-engagement-prompt-board`をproduction serverで390 / 820 / 1024 / 1280 / 1366px確認。plan選択、empty/populated、追加、metadata編集、削除、上下移動、cross-plan move、reload復元、保存配列が逆順でも`order`順表示と境界一致、削除planからのfallback、editor/focus、CJK wrap、horizontal overflow 0、console error 0を確認
+- `runtime_audit`: (1) cross-plan moveでorder/identity/timestampがdriftする仮説はstable ID/content、両plan同一updatedAt、source/destinationのorder 0を同時観測して否定、(2) write failureでcurrentまたは保存済みdatasetを置換する仮説は強制setItem failure後も画面と保存内容が直前値を維持しeditorが開いたままであることから否定、(3) reload、選択plan削除、破損/未知schemaで選択またはcurrent dataを失う仮説はdeterministic fallbackとsanitized alert、last valid dataset維持で否定
+- `independent_review`: design integrityとCJK/accessibilityのread-only visual reviewで、delete/move後focus復帰と編集中card移動時のstale editorを検出して修正。goal/constraints、QA、code quality、security/privacy、context/historyのbounded read-only reviewを実施し、actionable findingを解消した
+- `out_of_scope_unchanged`: live-mode大表示/前後/現在位置/copy、JSON backup/restore UI、Schedule Calendar連携/ID、login/account sync、Supabase、Stripe、OAuth、external API、provider/live execution、analytics/telemetry、Cloudflare、deploy/public release、Comment Translator runtime/release gate
 
 ## MVP対象外
 

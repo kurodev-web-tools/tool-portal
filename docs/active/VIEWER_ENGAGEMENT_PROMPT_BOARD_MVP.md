@@ -12,7 +12,7 @@ Date: 2026-07-15
 | `comment_translator_priority` | `P0` |
 | `mvp_price` | `free` |
 | `login_requirement` | `none` |
-| `runtime_implementation_status` | `not-started-governance-first` |
+| `runtime_implementation_status` | `portal-sidebar-local-complete-tool-runtime-not-started` |
 | `preview_branch` | `codex/viewer-engagement-prompt-board-preview` |
 | `promotion_target` | `main-after-mvp-readiness` |
 | `shared_portal_sidebar_scope` | `workspace-common-expanded-rail-hidden` |
@@ -83,6 +83,22 @@ MVPの画面フローは次の3画面を正式なUI方向性とする。
 `hidden`でも常に再表示buttonを残す。状態はbrowser-localに保存し、Schedule Calendar、Thumbnail Editor、SNS Split Image Maker、Comment Translator、配信カンペボードで共有する。
 
 mobileは既存drawerを維持し、desktopのhidden状態を適用しない。home、tools index、account、legalなどdefault modeの画面は対象外とする。toggleはkeyboard操作、focus、`aria-expanded`または同等の状態通知、開く/閉じるlabelを持つ。
+
+### Portal Workspace Sidebar Implementation Checkpoint
+
+- `implementation_status`: `local-complete-awaiting-commit-push-pr-approval`
+- `task_branch`: `codex/viewer-engagement-prompt-board-portal-sidebar`
+- `preview_base`: `codex/viewer-engagement-prompt-board-preview` at `064da6b6bca1b03397eeceebb016a326bfec5d28`
+- `state_owner`: `components/portal/PortalWorkspaceSidebarState.ts`
+- `browser_storage`: dedicated versioned preference key containing only `version` and `state`; account、session、admin、credential、tool contentは保存しない
+- `desktop_behavior`: `expanded` 288px、`rail` 80px、`hidden` 0pxと左下の再表示button
+- `isolation`: mobile header/drawerと`mode="default"`はdesktop workspace保存状態から分離
+- `focused_red_green`: state owner未実装でREDを確認後、3状態、version/fallback、永続化、keyboard/aria、mobile/default分離、既存workspace routeの契約がGREEN
+- `verification`: focused contract、TypeScript、lint、production build、`git diff --check`、high-confidence secret scan、production browser QAを実施
+- `browser_qa`: `390 / 820 / 1024 / 1280 / 1366px`でoverflow 0、console error 0。desktopはexpanded、rail、hidden、keyboard reopen、hidden後のreopenへのfocus移送、再表示後のexpanded controlへのfocus復帰、reload後のrail復元、workspace tool間共有を確認し、mobileは保存値hiddenでもdrawerをkeyboardで開けることを確認
+- `runtime_audit`: (1) unknown versionでsidebarが消える仮説はversion 999からexpandedへfallbackして否定、(2) desktop hiddenがmobile navigationも隠す仮説は390/820pxのheader/drawer操作で否定、(3) reload/route遷移で共有状態が失われる仮説はreloadと既存workspace 6 routeのrail維持で否定
+- `regression_routes`: Schedule Calendar、Thumbnail Editor、SNS Split Image Maker、Comment Translator、`/admin`、`/admin/comment-translator`で共通railとoverflow 0を確認
+- `out_of_scope_unchanged`: 配信カンペボードroute/data model/content storage/JSON import-export、Schedule Calendar連携、Comment Translator runtime/public gate、Google Auth、Cloudflare、deploy/public release
 
 ## Browser Storage And Backup
 

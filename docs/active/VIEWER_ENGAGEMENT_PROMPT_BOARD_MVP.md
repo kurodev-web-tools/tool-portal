@@ -12,7 +12,7 @@ Date: 2026-07-15
 | `comment_translator_priority` | `P0` |
 | `mvp_price` | `free` |
 | `login_requirement` | `none` |
-| `runtime_implementation_status` | `portal-sidebar-local-complete-tool-runtime-not-started` |
+| `runtime_implementation_status` | `storage-foundation-local-implemented-ui-not-started` |
 | `preview_branch` | `codex/viewer-engagement-prompt-board-preview` |
 | `promotion_target` | `main-after-mvp-readiness` |
 | `shared_portal_sidebar_scope` | `workspace-common-expanded-rail-hidden` |
@@ -86,9 +86,9 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 
 ### Portal Workspace Sidebar Implementation Checkpoint
 
-- `implementation_status`: `local-complete-awaiting-commit-push-pr-approval`
+- `implementation_status`: `merged-preview-pr-645`
 - `task_branch`: `codex/viewer-engagement-prompt-board-portal-sidebar`
-- `preview_base`: `codex/viewer-engagement-prompt-board-preview` at `064da6b6bca1b03397eeceebb016a326bfec5d28`
+- `preview_base`: `codex/viewer-engagement-prompt-board-preview` at merge commit `689342ecc8b75c93d160d19ca502dcdc2a97856c`
 - `state_owner`: `components/portal/PortalWorkspaceSidebarState.ts`
 - `browser_storage`: dedicated versioned preference key containing only `version` and `state`; account、session、admin、credential、tool contentは保存しない
 - `desktop_behavior`: `expanded` 288px、`rail` 80px、`hidden` 0pxと左下の再表示button
@@ -110,6 +110,24 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 - 秘密情報や保存したカンペ本文をconsoleやtelemetryへ出力しない。
 
 将来のSchedule Calendar連携は、配信プランの安定したIDと予定日時を受け渡す独立adapterとして追加する。MVPではSchedule Calendar固有ID、同期状態、外部予定データを保存しない。
+
+### Storage Foundation Implementation Checkpoint
+
+- `implementation_status`: `local-complete-commit-push-pr-approved`
+- `task_branch`: `codex/viewer-engagement-prompt-board-storage-foundation`
+- `preview_base`: `origin/codex/viewer-engagement-prompt-board-preview` at `689342ecc8b75c93d160d19ca502dcdc2a97856c`
+- `domain_storage_owner`: `lib/viewer-engagement-prompt-board-storage.ts`
+- `storage_contract`: schema version `1`、専用key `v-streamer-tools-viewer-engagement-prompt-board`、配信プランとカンペカードだけを含むstrict JSON
+- `plan_model`: local ID、title、optional scheduledAt、`idea / preparing / live / completed`、manualOrder、notes、promptCards、createdAt、updatedAt
+- `card_model`: local ID、body、category、segment、tone、safetyNotes、order
+- `card_enums`: category=`talking-point / question / announcement / reminder / other`、segment=`opening / main / intermission / closing / anytime`、tone=`neutral / casual / energetic / calm / serious`
+- `boundary_behavior`: malformed JSON、unknown schema、required/nested/enum/order/timestamp/duplicate ID/extra field不正をreplacement前に拒否する。read/write/storage access失敗時もlast valid in-memory/current datasetを返し、importは永続化成功後だけreplacementを返す
+- `sensitive_field_boundary`: account、session、admin、credential、provider、viewer、telemetry、external-service metadataはschema外であり、extra fieldとしてimport/export/save boundaryで拒否する
+- `focused_red_green`: owner未実装を理由とするREDを観測後、model/version/parse/import atomicity/storage failure/sensitive-field exclusion contractがGREEN
+- `verification`: focused/governance/sidebar regression contracts、`npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check`、changed-files secret/suppression scanを実施。build warningは既存middleware deprecationとwebpack cache serializationのみ
+- `runtime_audit`: (1) unknown schemaでcurrent datasetを失う仮説、(2) sensitive extra fieldが保存を置換する仮説、(3) quota failure後にcurrent/storageが置換される仮説をsanitized driverで否定
+- `ui_qa`: route/component/rendered UIを変更していないため、このtaskではwidth/browser QAは非該当
+- `out_of_scope_unchanged`: stream-plan/card UI、live mode、Schedule Calendar連携、login/account sync、Supabase、Stripe、OAuth、external API、telemetry、Comment Translator runtime/release gate、deploy/public release
 
 ## MVP対象外
 

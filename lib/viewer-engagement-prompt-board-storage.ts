@@ -189,7 +189,8 @@ export function parsePromptBoardValue(value: unknown): PromptBoardParseResult {
   }
   const planIds = new Set(streamPlans.map((plan) => plan.id));
   const cardIds = streamPlans.flatMap((plan) => plan.promptCards.map((card) => card.id));
-  if (planIds.size !== streamPlans.length || new Set(cardIds).size !== cardIds.length) {
+  const livePlanCount = streamPlans.filter((plan) => plan.status === "live").length;
+  if (planIds.size !== streamPlans.length || new Set(cardIds).size !== cardIds.length || livePlanCount > 1) {
     return { ok: false, reason: "invalid-data" };
   }
 

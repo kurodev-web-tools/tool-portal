@@ -7,11 +7,11 @@
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
 | P0 | Comment Translator Free public beta | Google OAuth verification remains `submitted-pending`; public release remains separately gated and `public_release_capable=no`. Production issues and Google review follow-up interrupt P1 work. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md` |
-| P1 | 配信カンペボード | Portal workspace sidebar is merged into the preview line. The second task, browser-only storage foundation, is locally implemented and broadly verified; UI tasks remain unimplemented. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
+| P1 | 配信カンペボード | Portal workspace sidebar and browser-only storage foundation are merged into the preview line. The third task, stream-plan list and local CRUD/status flows, is locally complete with deterministic contracts, full local verification, runtime audit, and five-width production browser QA passing. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview branch; promotion to `main` occurs only after MVP readiness. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
-- Current P1 task branch: `codex/viewer-engagement-prompt-board-storage-foundation`, based on `origin/codex/viewer-engagement-prompt-board-preview` at PR #645 merge commit `689342ecc8b75c93d160d19ca502dcdc2a97856c`.
-- Commit, push, and the preview-targeted PR are approved for this storage-foundation slice. Merge remains separately approval-gated.
+- Current P1 task branch: `codex/viewer-engagement-prompt-board-stream-plans`, based on `origin/codex/viewer-engagement-prompt-board-preview` at PR #646 merge commit `cb1b3299e12d5ac79ffcf22d74e5155b82115ff2`.
+- Commit, push, preview-targeted PR creation, merge, deploy, and public release remain separately approval-gated and are not approved for this stream-plans slice.
 - New detailed status belongs in the linked active authority. Do not append new long-form task history to the compatibility ledger below.
 
 ## Current Premises

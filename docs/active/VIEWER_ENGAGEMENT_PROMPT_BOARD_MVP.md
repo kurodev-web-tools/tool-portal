@@ -12,7 +12,7 @@ Date: 2026-07-16
 | `comment_translator_priority` | `P0` |
 | `mvp_price` | `free` |
 | `login_requirement` | `none` |
-| `runtime_implementation_status` | `task-7-local-complete-promotion-ready-yes` |
+| `runtime_implementation_status` | `task-7-merged-preview-post-merge-preflight-green` |
 | `preview_branch` | `codex/viewer-engagement-prompt-board-preview` |
 | `promotion_target` | `main-after-mvp-readiness` |
 | `shared_portal_sidebar_scope` | `workspace-common-expanded-rail-hidden` |
@@ -220,23 +220,24 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 
 ### Promotion Readiness Checkpoint
 
-- `implementation_status`: `local-complete-promotion-ready-yes`
-- `task_branch`: `codex/viewer-engagement-prompt-board-promotion-readiness`
-- `preview_tip`: `origin/codex/viewer-engagement-prompt-board-preview` at PR #650 merge commit `4055f7f862ec5c180efcc357108cad4a91e1e83e`
-- `merged_task_evidence`: PR #645 / #646 / #647 / #648 / #649 / #650 are merged into the preview line; feature commits `361204d` / `c5ed855` / `cd96239` / `080225e` / `075be35` / `78e648b` are all ancestors of the current preview tip
-- `preview_to_main_scope`: 27 files、3,956 additions / 27 deletions。配信カンペボードroute/components/domain owners、共有`PortalSidebar`/workspace state、直接のcopy/docs/contractsだけで、Schedule Calendar連携、account sync、Supabase、Stripe、OAuth、provider/live execution、analytics、Comment Translator runtime/release gateは含まない
-- `merge_risk`: PR #650時点のpreview HEADに対する`git merge-tree --write-tree origin/main HEAD`はconflictなしでtree `035566818b132f9be0c96b9686685ab1eeb6dc59`を生成。main/previewへのmerge、rebase、mutationは実行していない。Task 7 merge後の新preview tipではpromotion PR作成前に再取得する
-- `verification_current`: prompt-board storage / stream-plan / prompt-card / live-mode / MVP-QA / governance / Portal workspace sidebarの7 focused contract、`npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check`がpass。package metadata/lockfileは無変更
-- `existing_contract_distinction`: `tool-portal-entry`、`portal-locale-foundation`、`portal-tools-copy-locale`、`comment-translator-portal-admin-navigation`、`comment-translator-account-integrations-entry`はpreview差分外の既存copy/locale/allowlist/symbol期待値でfailする。失敗対象のComment Translator/account/locale実装と契約はこのpreviewで変更しておらず、`account-preferences-shell`、`account-browser-safe-session-view-model`、`workers-route-smoke-account-nav`はpassするため、Task 7由来のunresolved P0 regressionではなく既存stale contractとして分離する
-- `production_browser_qa`: merged preview tipのproduction buildを390 / 820 / 1024 / 1280 / 1366pxで確認。plan作成、card追加とfocus復帰、single-current、live前後/exact copy、reload persistence、JSON download、valid restore/reload、malformed/unknown/write-failure atomicity、keyboard/ARIA、CJK navigation 1行、horizontal overflow 0、console/page error 0がpass
+- `implementation_status`: `task-7-merged-preview-post-merge-preflight-green`
+- `readiness_branch`: `codex/viewer-engagement-prompt-board-promotion-readiness`; `authority_reconciliation_branch`: `codex/viewer-engagement-prompt-board-post-merge-authority-reconciliation`
+- `preview_tip`: `origin/codex/viewer-engagement-prompt-board-preview` at PR #651 merge commit `419a71e141cc93179ec9488d9dcdb7116fd936f2`
+- `merged_task_evidence`: PR #645 / #646 / #647 / #648 / #649 / #650 / #651 are merged into the preview line; feature commits `361204d` / `c5ed855` / `cd96239` / `080225e` / `075be35` / `78e648b` / `2ea1ded` are all ancestors of the current preview tip
+- `preview_to_main_scope`: 27 files、4,018 additions / 27 deletions。配信カンペボードroute/components/domain owners、共有`PortalSidebar`/workspace state、直接のcopy/docs/contractsだけで、Schedule Calendar連携、account sync、Supabase、Stripe、OAuth、provider/live execution、analytics、Comment Translator runtime/release gateは含まない
+- `merge_risk`: PR #651 merge後のpreview tipに対する`git merge-tree --write-tree --messages origin/main origin/codex/viewer-engagement-prompt-board-preview`はconflictなしでtree `51d70de6097a1d06334dd6e51cfd565f8405a760`を生成。main/previewへのmerge、rebase、mutationは実行していない。authority reconciliation merge後はpromotion PR作成前にexact preview ref、diff、merge-treeを再取得する
+- `verification_current`: post-PR #651 preview tipでprompt-board storage / stream-plan / prompt-card / live-mode / MVP-QA / governance / Portal workspace sidebarの7 focused contract、`npx --no-install tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check`がfresh pass。package metadata/lockfileは無変更
+- `existing_contract_distinction`: `tool-portal-entry`、`portal-locale-foundation`、`portal-tools-copy-locale`、`comment-translator-portal-admin-navigation`、`comment-translator-account-integrations-entry`はdependency-backedでfreshに実行し、既存copy/locale/allowlist/symbol期待値のstale assertionを再現した。該当contractとComment Translator/account/localeの対象実装はprompt-board runtime差分外で、`account-preferences-shell`、`account-browser-safe-session-view-model`、`workers-route-smoke-account-nav`はfresh passするため、PR #651由来のunresolved P0 regressionではなく既存stale contractとして分離する
+- `production_browser_qa`: Task 7 commit `2ea1ded94e0fd100a6e7faa22de2470dae5b6641`とPR #651 merge commitのtreeがともに`51d70de6097a1d06334dd6e51cfd565f8405a760`でdiff 0と確認できたため、Task 7の390 / 820 / 1024 / 1280 / 1366px production-browser evidenceを継承した。post-merge preflightでbrowser QAは再実行していない
 - `portal_regression`: 390/820px mobile drawer isolation、1024/1280/1366px expanded=288 / rail=80 / hidden=0 / reopen focus、rail reload/route共有、unknown-version fallback、`mode="default"`分離、既存workspace 6 routesのoverflow 0とconsole error 0がpass
 - `security_and_ownership`: high-confidence secret/token/private-key match 0。private identifier名はschema exclusion/negative assertionだけ、raw logging hitはcontract pass lineだけ。TypeScript suppression 0。storage/stream-plan/prompt-card/live ownersを維持し、第2sidebar、重複schema/storage owner、external integrationを追加していない。product ownerは最大300行、domain ownerは最大277行
 - `runtime_audit`: (1) malformed/unknown/write-failure restoreがcurrent/persisted dataを置換する仮説は両方のexact JSON不変で否定、(2) valid restoreが永続化前にUIを置換またはreloadでdriftする仮説は保存JSONとreload後title一致で否定、(3) 第4navigation/desktop sidebar stateがmobile/default/CJK/既存routeを壊す仮説は5幅＋6 route、focus、ARIA、overflow 0で否定
 - `red_green`: 初回Visual/CJK reviewで390px時に4つの短い意味句が不自然に分断されるreadiness gapを検出。focused contractへ意味句単位のspan要件を追加してREDを確認し、既存owner内の2 componentだけを最小修正した後、契約GREEN、production build、5幅で各意味句1行かつviewport内、overflow 0を再確認した
 - `independent_review`: semantic/security/constraint reviewとVisual/CJK reviewをread-onlyで実施。初回Visual/CJKのREVISE findingを上記RED/GREENで解消し、更新後の最終reviewでPASSを確認した
-- `residual_risk`: QAはlocal production buildとsynthetic browser-local dataによる。27 files / 3,956 additionsとmerge-treeはPR #650時点のpreview HEADに対する証拠のため、Task 7 merge後の新preview tipでpromotion PR作成前に再取得する。promotion PR上のGitHub review/checks、main merge、connected deploy、deployed browser、activation/public releaseは未実施で、後続の独立承認境界に残る
-- `verdict`: `promotion-ready=yes`
-- `next_approval`: まずTask 7 branchのcommit/pushと`codex/viewer-engagement-prompt-board-preview`向けPR作成。Task 7 PRのreview/merge後、previewから`main`へのpromotion PR作成を別途承認する。いずれのmerge、deploy、activation、public releaseも各PR作成承認には含めない
+- `authority_reconciliation`: post-PR #651 evidenceとapproval boundaryをこの文書と`task.md`だけへ反映するdocs-only branch。2ファイル限定の更新、focused verification、commit、push、preview向けPR作成まで承認済み。PR mergeは未承認で、preview-to-main promotion PR作成前に別途承認を得てpreviewへmergeし、その後のexact ref/diff/merge-tree refreshが必要
+- `residual_risk`: QAはlocal production buildとsynthetic browser-local dataによる。promotion PR上のGitHub review/checks、main merge、connected deploy、deployed browser、activation/public releaseは未実施で、後続の独立承認境界に残る
+- `verdict`: `promotion-ready=yes-after-authority-reconciliation-merge-and-final-ref-refresh`
+- `next_approval`: 現在承認済みなのはauthority reconciliation branchのcommit/pushと`codex/viewer-engagement-prompt-board-preview`向けdocs-only PR作成まで。次に必要な未承認actionはこのPRのmerge。merge後にexact preview ref、diff、merge-treeをrefreshし、previewから`main`へのpromotion PR作成を別途承認する。promotion PR merge、deploy、activation、public releaseも後続の独立承認境界とする
 
 #### MVP Completion Criteria Verdict
 
@@ -260,7 +261,7 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 
 | Gate | Verdict | Evidence / boundary |
 | --- | --- | --- |
-| active MVP tasks complete | pass | PR #645-#650とfeature commit包含 |
+| active MVP tasks complete | pass | PR #645-#651とfeature commit包含 |
 | focused contracts / lint / typecheck / build | pass | focused 7、lint、tsc、production build |
 | required viewport browser QA | pass | 5幅production browser QA |
 | accessibility / storage failure | pass | keyboard/focus/ARIAと5 failure paths |

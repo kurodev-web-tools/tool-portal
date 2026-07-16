@@ -166,8 +166,13 @@ assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.step,
 assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.selectedBacking, "cloudflare-edge");
 assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.rejectedBacking, "supabase-durable-rate-limit-table");
 assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.riskAcceptance, "not-selected");
-assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.currentInAppGuardRole, "defense-in-depth");
-assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.edgeActivationStatus, "not-run-approval-gated");
+assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.currentInAppGuardRole, "enforcement-authority");
+assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.appEnforcementAuthority, "durable-quotas-session-caps-rate-guards");
+assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.edgeControlReferenceRuntimeRole, "control-reference-label-not-parsed-behavior-flag");
+assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.edgeActivationStatus, "deferred-not-required-for-free-public-beta");
+assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.edgeProtectionReadinessStatus, "pass-with-optional-edge-control-deferred");
+assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.edgeRateLimitingDisposition, "deferred-existing-free-slot-reserved-for-leaked-credential-protection");
+assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.cloudflareFreeRateLimitingSlotStatus, "occupied-leaked-credential-protection");
 assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.deployUpload, "not-run");
 assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.remoteMutation, "not-run");
 assert.equal(policy.commentTranslatorPublicTrafficRateLimitBackingContract.publicReleaseCapable, "no");
@@ -178,8 +183,11 @@ for (const marker of [
   "public_traffic_rate_limit_backing_selected=cloudflare-edge",
   "supabase_rate_limit_table_status=not-created",
   "rate_limit_risk_acceptance_status=not-selected",
-  "edge_activation_status=not-run-approval-gated",
-  "in_app_rate_limit_guard_role=defense-in-depth",
+  "edge_activation_status=deferred-not-required-for-free-public-beta",
+  "edge_protection_readiness_status=pass-with-optional-edge-control-deferred",
+  "edge_rate_limiting_disposition=deferred-existing-free-slot-reserved-for-leaked-credential-protection",
+  "cloudflare_free_rate_limiting_slot_status=occupied-leaked-credential-protection",
+  "app_enforcement_authority=durable-quotas-session-caps-rate-guards",
   "public_release_capable=no",
   "public_gate_flip_status=not-run",
   "deploy/upload: not-run",
@@ -215,6 +223,7 @@ const allowedChangedFiles = new Set([
   decisionDocPath,
   operationsDocPath,
   checklistPath,
+  "docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
@@ -223,12 +232,14 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
   "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-oauth-public-info-page-contract.mjs",
   "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
+  "scripts/viewer-engagement-prompt-board-governance-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md"
 ]);
 

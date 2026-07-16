@@ -178,7 +178,7 @@ for (const section of [
   "## Current Decision Labels",
   "## Operator Update 2026-07-09",
   "## User-Owned External Checks",
-  "### Cloudflare Edge Rate-Limit Check",
+  "### Deferred Cloudflare Edge Rate-Limit Check",
   "### Browser Smoke Check",
   "### Limit Behavior Checks",
   "## Codex-Owned Local Checks",
@@ -191,7 +191,18 @@ for (const fragment of [
   "`operator_cloudflare_edge_rate_limit_activation_status`",
   "`operator_cloudflare_env_reference_status`",
   "`operator_external_verification_status` | `pass-post-activation-browser-11-of-11`",
-  "`operator_remaining_external_verification_status` | `action-required-google-edge-final-smoke`",
+  "`operator_remaining_external_verification_status` | `action-required-final-smoke`",
+  "`final_public_release_declaration_status` | `complete`",
+  "`final_public_release_declaration_preflight_status` | `pass`",
+  "`final_production_smoke_status` | `not-run-approval-gated`",
+  "`google_auth_verification_status` | `approved`",
+  "`unverified_app_warning_status` | `not-observed-after-fresh-reconnect`",
+  "`oauth_reconnect_verification_status` | `pass`",
+  "`edge_activation_status` | `deferred-not-required-for-free-public-beta`",
+  "`edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred`",
+  "`edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection`",
+  "`cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection`",
+  "`app_enforcement_authority` | `durable-quotas-session-caps-rate-guards`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_cloudflare_preview_rule_scope` | `preview-host-translator-integrations-comment-translator-api-route-classes`",
   "`operator_cloudflare_env_reference_status` | `present-enabled-label`",
@@ -207,7 +218,7 @@ for (const fragment of [
   "`cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`",
   "`api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only`",
   "`pl_g6_public_access_change_preflight_status` | `complete`",
-  "`pl_g6_public_access_change_status` | `not-run-approval-gated`",
+  "`pl_g6_public_access_change_status` | `declared-free-public-beta`",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
   "`operator_start_to_translation_smoke_status`",
   "`operator_burst_comment_smoke_status`",
@@ -227,7 +238,7 @@ for (const fragment of [
   "public_launch_operator_qa_checklist_status=complete",
   "cloudflare_custom_rule_operations_doc_status=complete",
   "operator_external_verification_status=pass-post-activation-browser-11-of-11",
-  "operator_remaining_external_verification_status=action-required-google-edge-final-smoke",
+  "operator_remaining_external_verification_status=action-required-final-smoke",
   "public_release_capable_status=no"
 ]) {
   assertIncludes(checklist, fragment, `checklist records ${fragment}`);
@@ -236,7 +247,7 @@ for (const fragment of [
 for (const fragment of [
   "`public_launch_operator_qa_checklist_status` | `complete`",
   "`operator_external_verification_status` | `pass-post-activation-browser-11-of-11`",
-  "`operator_remaining_external_verification_status` | `action-required-google-edge-final-smoke`",
+  "`operator_remaining_external_verification_status` | `action-required-final-smoke`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_cloudflare_env_reference_status` | `present-enabled-label`",
   "`operator_free_beta_login_browser_smoke_status` | `pass-post-activation-production-browser`",
@@ -253,7 +264,7 @@ for (const fragment of [
   "`Public launch operator QA checklist`",
   "`Cloudflare custom-rule operations doc`",
   "post-activation production browser verification passed 11/11",
-  "Google OAuth approval, production edge readiness, the final release declaration, and final production smoke remain action-required / approval-gated",
+  "post-activation production browser verification passed 11/11, Google OAuth is approved, optional edge-control deferral is reconciled, and the final release declaration is complete. The final production smoke remains approval-gated.",
   "not-run / approval-gated"
 ]) {
   assertIncludes(taskBoard, fragment, `task board records ${fragment}`);
@@ -300,7 +311,7 @@ for (const fragment of [
   "optional 30-minute session smoke",
   "monthly 20,000 provider-input-character fixture/live proof",
   "COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md",
-  "Remaining public launch operator actions are limited to Google OAuth verification approval",
+  "The release declaration is complete; final production smoke remains a separate approval-gated task.",
   "COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md"
 ]) {
   assertIncludes(task, fragment, `task.md records ${fragment}`);
@@ -346,7 +357,7 @@ assert.match(requirements, /30 min\/session/, "requirements keep public session 
 
 assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?yes`?/i);
 assert.doesNotMatch(combinedDocs, /edge_activation_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
-assert.doesNotMatch(combinedDocs, /public_gate_flip_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
+assert.doesNotMatch(combinedDocs, /final_public_gate_mutation_target[=|]\s*`?(?!none)/i);
 
 for (const [label, source] of [
   [checklistPath, checklist],
@@ -366,6 +377,8 @@ const allowedChangedFiles = new Set([
   taskPath,
   rateLimitDecisionPath,
   operationsDocPath,
+  "docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md",
+  "lib/comment-translator-public-traffic-rate-limit-backing-policy.ts",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
   plG6PreflightPath,
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
@@ -374,11 +387,13 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2a-server-action-route-api-harness-contract.mjs",
   "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-oauth-public-info-page-contract.mjs",
   "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/viewer-engagement-prompt-board-governance-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md"
 ]);
 

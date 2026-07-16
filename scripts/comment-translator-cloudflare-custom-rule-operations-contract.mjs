@@ -168,7 +168,12 @@ for (const fragment of [
   "`cloudflare_custom_rule_operations_doc_status` | `complete`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
-  "`operator_production_harness_block_status` | `action-required-before-production`",
+  "`operator_production_harness_block_status` | `pass-production-404`",
+  "`cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection`",
+  "`edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection`",
+  "`edge_activation_status` | `deferred-not-required-for-free-public-beta`",
+  "`edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred`",
+  "`app_enforcement_authority` | `durable-quotas-session-caps-rate-guards`",
   "`comment_translator_edge_rate_limiting_reference` | `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING`",
   "`comment_translator_edge_rate_limiting_runtime_role` | `control-reference-label-not-parsed-behavior-flag`",
   "`free_public_launch_default` | `login-turnstile-app-quotas-no-constant-ordinary-route-challenge`",
@@ -182,7 +187,7 @@ for (const fragment of [
   "YouTube connection alone must not start monitoring, polling, translation, target lookup, or quota consumption.",
   "Start is the first provider-affecting action.",
   "Normal Free public launch should not challenge every ordinary route constantly.",
-  "Production route/API harness exposure must be blocked or removed before production exposure.",
+  "Production route/API harness remains blocked with HTTP 404.",
   "API Managed Challenge can break fetch, heartbeat, credential-status, OAuth, and server-action-like traffic",
   "Cloudflare Rate Limiting Rules are preferred for API load shedding when available.",
   "Managed Challenge is reserved for HTML route protection, targeted suspicious traffic, or temporary emergency response.",
@@ -263,7 +268,11 @@ assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?ye
 assert.doesNotMatch(combinedDocs, /operator_production_api_managed_challenge_status[=|]\s*`?(?:selected|enabled|complete|completed)`?/i);
 assert.doesNotMatch(combinedDocs, /edge_activation_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
 assert.doesNotMatch(combinedDocs, /live_provider_execution_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
-assert.doesNotMatch(combinedDocs, /public_gate_flip_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
+assertIncludes(
+  combinedDocs,
+  "public_gate_flip_status` | `complete-release-declaration-no-mutation`",
+  "release declaration completes without a Cloudflare mutation"
+);
 assert.doesNotMatch(combinedDocs, /paid entitlement runtime: complete|paid_entitlement_runtime_status[=|]\s*`?(?:complete|completed|enabled)`?/i);
 
 for (const [label, source] of [
@@ -283,6 +292,8 @@ const allowedChangedFiles = new Set([
   taskBoardPath,
   checklistPath,
   rateLimitDecisionPath,
+  "docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md",
+  "lib/comment-translator-public-traffic-rate-limit-backing-policy.ts",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
   plG6PreflightPath,
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
@@ -291,11 +302,13 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
   "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-oauth-public-info-page-contract.mjs",
   "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/viewer-engagement-prompt-board-governance-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md"
 ]);
 

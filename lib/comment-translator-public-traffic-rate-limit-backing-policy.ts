@@ -6,11 +6,16 @@ export const commentTranslatorPublicTrafficRateLimitBackingContract = {
   rejectedBacking: "supabase-durable-rate-limit-table",
   riskAcceptance: "not-selected",
   decisionReason:
-    "Public Free beta traffic should be throttled before application and provider boundaries; the existing in-app guard remains defense-in-depth.",
-  currentInAppGuardRole: "defense-in-depth",
+    "Cloudflare edge remains the preferred optional outer load-shedding backing, but the available Free rule slot stays reserved for leaked-credential protection and Translator-specific activation is deferred until traffic or revenue justifies it.",
+  currentInAppGuardRole: "enforcement-authority",
+  appEnforcementAuthority: "durable-quotas-session-caps-rate-guards",
   edgeControlReference: "COMMENT_TRANSLATOR_EDGE_RATE_LIMITING",
-  edgeActivationStatus: "not-run-approval-gated",
-  activationRequires: "separate-reviewed-cloudflare-edge-change-before-pl-g6",
+  edgeControlReferenceRuntimeRole: "control-reference-label-not-parsed-behavior-flag",
+  edgeActivationStatus: "deferred-not-required-for-free-public-beta",
+  edgeProtectionReadinessStatus: "pass-with-optional-edge-control-deferred",
+  edgeRateLimitingDisposition: "deferred-existing-free-slot-reserved-for-leaked-credential-protection",
+  cloudflareFreeRateLimitingSlotStatus: "occupied-leaked-credential-protection",
+  activationRequires: "later-separate-approval-after-traffic-or-revenue-review",
   supabaseRateLimitTableStatus: "not-created",
   durableStoreMutation: "not-run",
   deployUpload: "not-run",
@@ -25,10 +30,7 @@ export const commentTranslatorPublicTrafficRateLimitBackingContract = {
     "session-status",
     "session-heartbeat",
     "credential-status",
-    "credential-disconnect",
-    "translation-provider-boundary",
-    "private-launch-denial-retry",
-    "billing-action-boundary"
+    "translation-action"
   ],
   forbiddenReadableOutput: [
     "oauth-token-value",

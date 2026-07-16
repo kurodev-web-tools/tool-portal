@@ -19,10 +19,13 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `login_only_runtime_activation_target` | `cloudflare-production-worker-runtime` |
 | `preview_rate_limit_smoke_tester_boundary` | `private-launch-allowlisted-tester-only` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
-| `edge_activation_status` | `not-run-approval-gated` |
-| `edge_protection_readiness_status` | `blocked-activation-or-confirmation-required` |
+| `edge_activation_status` | `deferred-not-required-for-free-public-beta` |
+| `edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred` |
+| `edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection` |
+| `cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection` |
+| `app_enforcement_authority` | `durable-quotas-session-caps-rate-guards` |
 | `operator_external_verification_status` | `pass-post-activation-browser-11-of-11` |
-| `operator_remaining_external_verification_status` | `action-required-google-edge-final-smoke` |
+| `operator_remaining_external_verification_status` | `action-required-final-smoke` |
 | `operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge` |
 | `operator_cloudflare_env_reference_status` | `present-enabled-label` |
 | `operator_free_beta_login_browser_smoke_status` | `pass-post-activation-production-browser` |
@@ -30,11 +33,17 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-and-production-browser` |
 | `operator_production_api_managed_challenge_status` | `not-selected` |
 | `operator_production_harness_block_status` | `pass-production-404` |
-| `google_auth_verification_status` | `submitted-pending` |
+| `google_auth_verification_status` | `approved` |
+| `unverified_app_warning_status` | `not-observed-after-fresh-reconnect` |
+| `oauth_reconnect_verification_status` | `pass` |
 | `final_public_gate_target` | `free-public-beta-release-declaration` |
 | `final_public_gate_mutation_target` | `none` |
 | `login_only_runtime_binding_action` | `unchanged` |
-| `edge_protection_operation_boundary` | `separate-approval-if-activation-required` |
+| `edge_protection_operation_boundary` | `optional-control-deferred-no-activation-required-for-free-beta` |
+| `final_public_release_declaration_approval_status` | `present-in-thread` |
+| `final_public_release_declaration_preflight_status` | `pass` |
+| `final_public_release_declaration_status` | `complete` |
+| `final_production_smoke_status` | `not-run-approval-gated` |
 | `optional_limit_proof_disposition` | `accepted-deterministic-evidence` |
 | `post_activation_browser_verification_status` | `pass-11-of-11` |
 | `post_activation_browser_failure_count` | `0` |
@@ -42,7 +51,7 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md` |
 | `api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only` |
 | `supabase_future_default_privileges_risk` | `accepted-for-pl-g5-evaluation` |
-| `public_gate_flip_status` | `not-run` |
+| `public_gate_flip_status` | `complete-release-declaration-no-mutation` |
 | `deploy_upload_status` | `complete-main-connected-and-activation-deployments` |
 | `deploy_upload_evidence_source` | `operator-provided` |
 | `preview_deployment_target` | `cloudflare-preview-domain` |
@@ -56,7 +65,7 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `pl_g6c_production_smoke_approval_status` | `present` |
 | `live_provider_execution_status` | `pass-operator-provided-private-launch-smoke` |
 | `pl_g6_public_access_change_preflight_status` | `complete` |
-| `pl_g6_public_access_change_status` | `not-run-approval-gated` |
+| `pl_g6_public_access_change_status` | `declared-free-public-beta` |
 | `main_promotion_status` | `complete-pr-640-merged-main-contained` |
 | `main_connected_deployment_status` | `pass` |
 | `main_connected_workers_build_status` | `success` |
@@ -118,9 +127,9 @@ The release operator reported production/main-domain private-launch-only browser
 | `unauthorized_translator_access_status` | `pass-blocked-for-non-allowed-account` |
 | `transient_unavailable_reason_observed` | `live-provider-polling-not-approved` before translated comment evidence; final Start-to-translation evidence is pass |
 
-At the 2026-07-10 private-launch update, main promotion and login-only activation were still not-run. The 2026-07-13 reconciliation below supersedes those operational labels; public release remains blocked because `public_release_capable_status=no`, Google OAuth verification is pending, and edge readiness still requires activation or confirmation.
+At the 2026-07-10 private-launch update, main promotion and login-only activation were still not-run. The 2026-07-13 and 2026-07-16 reconciliations below supersede those operational labels. The final release declaration is complete; `public_release_capable_status=no` remains until final production/main-domain smoke passes.
 
-The final public gate is a release declaration rather than a Worker binding mutation. Keep the existing login-only runtime binding unchanged. The declaration remains blocked while Google OAuth verification is `submitted-pending`; production edge protection readiness and the production route/API harness 404 must be rechecked before declaration, and final production/main-domain smoke remains a later separately approved task.
+The final public gate completed as a release declaration rather than a Worker binding mutation. The existing login-only runtime binding remains unchanged. Google OAuth approval and optional edge-control deferral are reconciled; the declaration preflight rechecked the production route/API harness as HTTP 404. Final production/main-domain smoke remains a later separately approved task.
 
 ## Operator Update 2026-07-13
 
@@ -128,17 +137,25 @@ The separately approved login-only production Worker activation completed. Post-
 
 No public release declaration, Cloudflare edge mutation, Google Auth publishing, final production smoke, Start, provider/live execution, target lookup, Supabase action, Stripe action, paid/Creator runtime, or OBS runtime was run by that verification.
 
+## Operator Update 2026-07-16
+
+Google OAuth verification is approved. After the operator revoked the prior app access and completed a fresh reconnect, the unverified-app warning was not observed and reconnect verification passed. Evidence remains limited to `google_auth_verification_status=approved`, `unverified_app_warning_status=not-observed-after-fresh-reconnect`, and `oauth_reconnect_verification_status=pass`.
+
+The available Free Cloudflare Rate Limiting rule slot remains reserved for leaked-credential protection. The release owner selected `edge_rate_limiting_disposition=deferred-existing-free-slot-reserved-for-leaked-credential-protection`; Translator-specific Rate Limiting is deferred until traffic or revenue justifies a separately approved operation. This does not weaken or replace the existing leaked-credential control. App-side durable quotas, session caps, and rate guards remain the enforcement authority. No Cloudflare rule, environment, secret, binding, or deployment mutation was run.
+
+The release owner then approved the final public release declaration in this thread. The operator confirmed the latest main build succeeded and its active deployment matched; the same-process read-only declaration preflight returned HTTP 404 for the production route/API harness. `final_public_release_declaration_status=complete`, `public_gate_flip_status=complete-release-declaration-no-mutation`, and `operator_remaining_external_verification_status=action-required-final-smoke`. No final production smoke or external mutation was run.
+
 ## User-Owned External Checks
 
 These checks require browser access, Cloudflare dashboard/account access, or approved live/provider operation. They should not be run by Codex without same-thread approval and a ready preflight.
 
 The current PL-G6 execution preflight is `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`. It prepares the approval surface only; it does not approve or run the checks below.
 
-The completed operation order was: promotion to `main`, main-connected automatic production deployment with activation unset, separately approved private-default production verification, then a separately approved login-only activation deployment. The final public release declaration remains later and separate.
+The completed operation order was: promotion to `main`, main-connected automatic production deployment with activation unset, separately approved private-default production verification, a separately approved login-only activation deployment, then the separately approved final public release declaration. Final production smoke remains later and separate.
 
 | Check | Owner | When | Evidence to record |
 | --- | --- | --- | --- |
-| `operator_cloudflare_edge_rate_limit_activation_status` | Release operator | Before PL-G6 public exposure | `not-run`, `configured`, or `blocked`; protected route classes; pass/fail/count only |
+| `operator_cloudflare_edge_rate_limit_activation_status` | Release operator | Later traffic/revenue review only | `deferred`, `configured`, or `blocked`; protected route classes; pass/fail/count only |
 | `operator_cloudflare_env_reference_status` | Release operator | With edge activation | whether `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` is present for the intended environment; no value |
 | `pl_g6c_production_main_domain_env_readiness_status` | Release operator | Before production/main-domain smoke | required/optional/smoke-only production labels are present or blocked; no values |
 | `production_env_apply_status` | Release operator | Only after exact approval | `not-run-approval-gated`, `confirmed-ready`, `applied`, or `blocked`; no values |
@@ -154,12 +171,12 @@ The completed operation order was: promotion to `main`, main-connected automatic
 | `operator_session_30_min_smoke_status` | Release operator | Optional late smoke after fake-clock contract | session stops or refuses continuation with sanitized `session-time-limit` state |
 | `operator_monthly_20000_character_limit_smoke_status` | Release operator | Prefer fixture; live smoke only with explicit approval | fixture proves 19,999 / 20,000 / over-limit states; do not burn real quota by default |
 
-### Cloudflare Edge Rate-Limit Check
+### Deferred Cloudflare Edge Rate-Limit Check
 
-Minimum operator check:
+This is not a Free public beta release prerequisite. Run it only after a later separately approved traffic/revenue review:
 
 1. Confirm the selected public backing remains `cloudflare-edge`.
-2. Confirm edge rate limiting protects the translator public route/action classes before broad public traffic reaches the app.
+2. Confirm the existing leaked-credential protection remains unchanged before considering a Translator-specific rule.
 3. Confirm `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` is present as a safe control reference in the intended Cloudflare environment if the deployment path uses it.
 4. Run only a small synthetic burst against an approved preview or production target after approval.
 5. Confirm production API Managed Challenge remains `not-selected` unless a temporary emergency exception is explicitly recorded.
@@ -236,9 +253,15 @@ Required closeout labels:
 - `cloudflare_custom_rule_operations_doc_status=complete`
 - `codex_local_verification_status=pass`
 - `operator_external_verification_status=pass-post-activation-browser-11-of-11`
-- `operator_remaining_external_verification_status=action-required-google-edge-final-smoke`
-- `edge_activation_status=not-run-approval-gated`
-- `public_gate_flip_status=not-run`
+- `operator_remaining_external_verification_status=action-required-final-smoke`
+- `final_public_release_declaration_status=complete`
+- `final_public_release_declaration_preflight_status=pass`
+- `final_production_smoke_status=not-run-approval-gated`
+- `edge_activation_status=deferred-not-required-for-free-public-beta`
+- `edge_protection_readiness_status=pass-with-optional-edge-control-deferred`
+- `edge_rate_limiting_disposition=deferred-existing-free-slot-reserved-for-leaked-credential-protection`
+- `app_enforcement_authority=durable-quotas-session-caps-rate-guards`
+- `public_gate_flip_status=complete-release-declaration-no-mutation`
 - `deploy_upload_status=complete-main-connected-and-activation-deployments`
 - `deploy_upload_evidence_source=operator-provided`
 - `preview_deployment_target=cloudflare-preview-domain`

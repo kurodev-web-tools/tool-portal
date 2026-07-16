@@ -8,9 +8,9 @@ Rejected option: `supabase-durable-rate-limit-table`.
 
 Risk acceptance: `rate_limit_risk_acceptance_status=not-selected`.
 
-Current application guard: `in_app_rate_limit_guard_role=defense-in-depth`.
+Current application authority: `app_enforcement_authority=durable-quotas-session-caps-rate-guards`.
 
-Cloudflare edge activation: not-run / approval-gated. Deploy/upload: not-run. Remote mutation: not-run. Public gate flip: not-run.
+Cloudflare Translator edge activation: deferred and not required for Free public beta. Deploy/upload: not-run. Remote mutation: not-run. Public gate flip: not-run.
 
 ## Purpose
 
@@ -25,15 +25,18 @@ Step 10 selects the distributed public-traffic abuse-control backing before PL-G
 | `public_traffic_rate_limit_backing_rejected` | `supabase-durable-rate-limit-table` |
 | `rate_limit_risk_acceptance_status` | `not-selected` |
 | `edge_control_reference` | `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` |
-| `edge_activation_status` | `not-run-approval-gated` |
-| `in_app_rate_limit_guard_role` | `defense-in-depth` |
+| `edge_activation_status` | `deferred-not-required-for-free-public-beta` |
+| `edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred` |
+| `edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection` |
+| `cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection` |
+| `app_enforcement_authority` | `durable-quotas-session-caps-rate-guards` |
 | `supabase_rate_limit_table_status` | `not-created` |
 | `public_release_capable` | `no` |
 | `public_gate_flip_status` | `not-run` |
 | `deploy_upload_status` | `not-run` |
 | `remote_mutation_status` | `not-run` |
 
-`cloudflare-edge` is selected because public Free beta should reject broad abusive traffic before it reaches application routes, provider execution, billing boundaries, or durable accounting. The existing server-only in-app abuse/rate-limit guard remains defense-in-depth for route/action/provider boundaries.
+`cloudflare-edge` remains the preferred optional outer load-shedding backing. The available Free Rate Limiting rule slot remains reserved for leaked-credential protection, so the Translator-specific rule is deferred until traffic or revenue justifies a separately approved operation. App-side durable quotas, session caps, and rate guards remain the enforcement authority for route, action, session, and provider-cost boundaries.
 
 Supabase durable rate-limit state is rejected for this launch step because Step 11 still carries Supabase default-privileges support/risk acceptance work, and this slice should not introduce a new public-facing database object.
 
@@ -41,22 +44,22 @@ Explicit abuse-control risk acceptance is not selected.
 
 ## Protected Traffic Classes
 
-The selected edge backing should cover public traffic classes before public exposure:
+If a later traffic/revenue review approves Translator-specific edge activation, the optional edge backing should cover:
 
 - session start;
 - session status and heartbeat polling;
-- credential status and disconnect calls;
-- translation/provider boundary attempts;
-- private launch denial retry traffic while the runtime gate remains closed;
-- billing action boundary traffic.
+- credential-status reads;
+- Free translation action attempts before provider execution.
+
+That later optional operation must exclude Creator/Paid, billing/webhook, admin, privileged, Supabase, Stripe, OBS, OAuth callback/reconnect, provider/live, and Google Auth mutation classes. It must not replace or weaken the existing leaked-credential protection.
 
 ## Boundary
 
 This slice does not create or modify Cloudflare rules, Cloudflare WAF/rate-limit settings, Cloudflare environment variables, DNS/domain settings, deploy/upload state, production domain routing, Supabase tables, migrations, remote database state, public gate behavior, provider/live execution, OAuth live flow, Google target lookup, Stripe/billing live actions, Product/Price creation, Checkout/Portal redirect, webhook registration, or main promotion.
 
-The current app-level in-memory guard remains only a local defense-in-depth mechanism until a separate reviewed operation activates the selected Cloudflare edge control.
+The current app-side durable quota, session-cap, and rate-guard surfaces remain authoritative without a Translator-specific Cloudflare rule. The optional edge layer can be added later without changing those authorities.
 
-Operational handling for Cloudflare Custom Rules, Turnstile, API-vs-HTML Managed Challenge boundaries, Creator/Paid transition, and traffic-growth response is recorded in `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`. That operational guide does not change the Step 10 decision: Cloudflare edge backing remains selected, Cloudflare edge activation remains not-run / approval-gated, and API Managed Challenge is not the production default.
+Operational handling for Cloudflare Custom Rules, Turnstile, API-vs-HTML Managed Challenge boundaries, Creator/Paid transition, and traffic-growth response is recorded in `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`. Cloudflare edge remains the preferred optional outer layer, Translator-specific activation is deferred, the existing leaked-credential protection remains unchanged, and API Managed Challenge is not the production default.
 
 ## Sanitized Evidence Shape
 

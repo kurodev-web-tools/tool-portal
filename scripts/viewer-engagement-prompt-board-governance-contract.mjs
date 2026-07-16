@@ -136,7 +136,7 @@ for (const marker of [
 }
 
 for (const marker of [
-  "`google_auth_verification_status` | `submitted-pending`",
+  "`google_auth_verification_status` | `approved`",
   "`public_release_capable_status` | `no`"
 ]) {
   assert.ok(translatorBoard.includes(marker), `${translatorBoardPath} preserves ${marker}`);

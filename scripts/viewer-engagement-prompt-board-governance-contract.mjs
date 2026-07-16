@@ -155,5 +155,5 @@ for (const pattern of [
 }
 
 console.log(
-  "viewer engagement prompt board governance contract passed (translator_priority=P0, next_tool_priority=P1, storage_foundation=yes, ui_implemented=no)"
+  "viewer engagement prompt board governance contract passed (translator_priority=P0, next_tool_priority=P1, storage_foundation=yes, ui_implemented=yes, mvp_qa=local-complete)"
 );

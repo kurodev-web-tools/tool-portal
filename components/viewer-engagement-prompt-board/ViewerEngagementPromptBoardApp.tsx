@@ -6,11 +6,14 @@ import { StreamPlanList } from "@/components/viewer-engagement-prompt-board/Stre
 import { PromptCardWorkspace } from "@/components/viewer-engagement-prompt-board/PromptCardWorkspace";
 import { LiveModeWorkspace } from "@/components/viewer-engagement-prompt-board/LiveModeWorkspace";
 import {
+  DataManagementWorkspace,
+  getPromptBoardStorageFailureMessage
+} from "@/components/viewer-engagement-prompt-board/DataManagementWorkspace";
+import {
   createEmptyPromptBoardData,
   loadPromptBoardData,
   savePromptBoardData,
   type PromptBoardData,
-  type PromptBoardStorageFailureReason,
   type StreamPlan
 } from "@/lib/viewer-engagement-prompt-board-storage";
 import {
@@ -34,28 +37,13 @@ import {
 
 type Notice = Readonly<{ kind: "success" | "error"; message: string }>;
 type EditorState = { readonly kind: "create" } | { readonly kind: "edit"; readonly planId: string } | null;
-type ActiveSection = "plans" | "cards" | "live";
+type ActiveSection = "plans" | "cards" | "live" | "data";
 
 function createMutationContext(): StreamPlanMutationContext {
   return {
     now: new Date().toISOString(),
     createId: (kind) => `${kind}-${crypto.randomUUID()}`
   };
-}
-
-function getStorageFailureMessage(reason: PromptBoardStorageFailureReason): string {
-  switch (reason) {
-    case "malformed-json":
-    case "corrupt-data":
-    case "invalid-data":
-      return "保存データが破損しているため読み込めませんでした。現在のデータは置き換えていません。";
-    case "unsupported-schema":
-      return "この保存データは未対応のバージョンです。現在のデータは置き換えていません。";
-    case "storage-unavailable":
-      return "ブラウザ保存を利用できません。タブを閉じる前に設定を確認してください。";
-    case "write-failed":
-      return "保存に失敗しました。直前までのデータを維持しています。ブラウザの空き容量を確認してください。";
-  }
 }
 
 export function ViewerEngagementPromptBoardApp() {
@@ -84,7 +72,7 @@ export function ViewerEngagementPromptBoardApp() {
     if (result.kind === "loaded") {
       setNotice({ kind: "success", message: "ブラウザに保存した配信プランを復元しました。" });
     } else if (result.kind === "failure") {
-      setNotice({ kind: "error", message: getStorageFailureMessage(result.reason) });
+      setNotice({ kind: "error", message: getPromptBoardStorageFailureMessage(result.reason) });
     }
     setLoaded(true);
   }, []);
@@ -102,7 +90,7 @@ export function ViewerEngagementPromptBoardApp() {
     const saved = savePromptBoardData(result.data, data);
     setData(saved.data);
     if (saved.kind === "failure") {
-      setNotice({ kind: "error", message: getStorageFailureMessage(saved.reason) });
+      setNotice({ kind: "error", message: getPromptBoardStorageFailureMessage(saved.reason) });
       return false;
     }
     setNotice({ kind: "success", message: successMessage });
@@ -162,15 +150,18 @@ export function ViewerEngagementPromptBoardApp() {
               新しい配信プラン
             </button> : null}
           </div>
-          <nav className="flex gap-1" aria-label="配信カンペボード内ナビゲーション">
-            <button type="button" aria-current={activeSection === "plans" ? "page" : undefined} className={activeSection === "plans" ? "min-h-11 border-b-2 border-primary px-3 py-2 text-sm font-black text-primary-strong" : "min-h-11 border-b-2 border-transparent px-3 py-2 text-sm font-bold text-muted hover:text-foreground"} onClick={() => setActiveSection("plans")}>
+          <nav className="grid grid-cols-4 gap-0 sm:flex sm:gap-1" aria-label="配信カンペボード内ナビゲーション">
+            <button type="button" aria-current={activeSection === "plans" ? "page" : undefined} className={activeSection === "plans" ? "min-h-11 whitespace-nowrap border-b-2 border-primary px-1 py-2 text-xs font-black text-primary-strong sm:px-3 sm:text-sm" : "min-h-11 whitespace-nowrap border-b-2 border-transparent px-1 py-2 text-xs font-bold text-muted hover:text-foreground sm:px-3 sm:text-sm"} onClick={() => setActiveSection("plans")}>
               配信プラン
             </button>
-            <button type="button" aria-current={activeSection === "cards" ? "page" : undefined} className={activeSection === "cards" ? "min-h-11 border-b-2 border-primary px-3 py-2 text-sm font-black text-primary-strong" : "min-h-11 border-b-2 border-transparent px-3 py-2 text-sm font-bold text-muted hover:text-foreground"} onClick={() => setActiveSection("cards")}>
+            <button type="button" aria-current={activeSection === "cards" ? "page" : undefined} className={activeSection === "cards" ? "min-h-11 whitespace-nowrap border-b-2 border-primary px-1 py-2 text-xs font-black text-primary-strong sm:px-3 sm:text-sm" : "min-h-11 whitespace-nowrap border-b-2 border-transparent px-1 py-2 text-xs font-bold text-muted hover:text-foreground sm:px-3 sm:text-sm"} onClick={() => setActiveSection("cards")}>
               カンペ編集
             </button>
-            <button type="button" aria-current={activeSection === "live" ? "page" : undefined} className={activeSection === "live" ? "min-h-11 border-b-2 border-primary px-3 py-2 text-sm font-black text-primary-strong" : "min-h-11 border-b-2 border-transparent px-3 py-2 text-sm font-bold text-muted hover:text-foreground"} onClick={() => setActiveSection("live")}>
+            <button type="button" aria-current={activeSection === "live" ? "page" : undefined} className={activeSection === "live" ? "min-h-11 whitespace-nowrap border-b-2 border-primary px-1 py-2 text-xs font-black text-primary-strong sm:px-3 sm:text-sm" : "min-h-11 whitespace-nowrap border-b-2 border-transparent px-1 py-2 text-xs font-bold text-muted hover:text-foreground sm:px-3 sm:text-sm"} onClick={() => setActiveSection("live")}>
               配信中
+            </button>
+            <button type="button" aria-current={activeSection === "data" ? "page" : undefined} className={activeSection === "data" ? "min-h-11 whitespace-nowrap border-b-2 border-primary px-1 py-2 text-xs font-black text-primary-strong sm:px-3 sm:text-sm" : "min-h-11 whitespace-nowrap border-b-2 border-transparent px-1 py-2 text-xs font-bold text-muted hover:text-foreground sm:px-3 sm:text-sm"} onClick={() => setActiveSection("data")}>
+              データ管理
             </button>
           </nav>
         </div>
@@ -179,8 +170,8 @@ export function ViewerEngagementPromptBoardApp() {
       <main className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black text-foreground">{activeSection === "plans" ? "配信プラン一覧" : activeSection === "cards" ? "配信プラン編集" : "配信中ワークスペース"}</h2>
-            <p className="mt-1 text-sm text-muted [word-break:auto-phrase]">{activeSection === "plans" ? "日時順と手動表示順から、次の配信を自動で並べます。" : activeSection === "cards" ? "配信プランを選び、カンペカードの内容と順番を整えます。" : "現在の配信で読むカンペを、大きく見やすく表示します。"}</p>
+            <h2 className="text-xl font-black text-foreground">{activeSection === "plans" ? "配信プラン一覧" : activeSection === "cards" ? "配信プラン編集" : activeSection === "live" ? "配信中ワークスペース" : "データ管理"}</h2>
+            <p className="mt-1 text-sm text-muted [word-break:auto-phrase]">{activeSection === "plans" ? "日時順と手動表示順から、次の配信を自動で並べます。" : activeSection === "cards" ? "配信プランを選び、カンペカードの内容と順番を整えます。" : activeSection === "live" ? "現在の配信で読むカンペを、大きく見やすく表示します。" : "ブラウザ内の配信プランとカンペをJSONでバックアップ・復元します。"}</p>
           </div>
           <p className="text-sm font-bold text-muted" aria-live="polite">{loaded ? activeSection === "plans" ? `${data.streamPlans.length}件のプラン` : `${data.streamPlans.reduce((count, plan) => count + plan.promptCards.length, 0)}枚のカンペ` : "保存データを確認中"}</p>
         </div>
@@ -236,6 +227,7 @@ export function ViewerEngagementPromptBoardApp() {
             onEditCards={showCardEditor}
           />
         ) : null}
+        {activeSection === "data" ? <DataManagementWorkspace data={data} onRestore={setData} /> : null}
       </main>
     </div>
   );

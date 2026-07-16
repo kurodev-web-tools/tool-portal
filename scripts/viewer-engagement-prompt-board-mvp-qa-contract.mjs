@@ -121,6 +121,10 @@ assert.match(workspaceSource, /aria-describedby="prompt-board-restore-help"/, "r
 assert.match(workspaceSource, /role=\{notice\.kind === "error" \? "alert" : "status"\}/, "sanitized restore feedback is announced");
 assert.match(workspaceSource, /\[overflow-wrap:anywhere\]|break-words/, "long CJK and JSON text stay inside the viewport");
 assert.match(workspaceSource, /className="block">形式とバージョンを検証します。<\/span>/, "restore guidance keeps semantic Japanese clauses together");
+assert.match(appSource, /className="whitespace-nowrap">まずプラン単位で整理します。<\/span>/, "prompt-board summary keeps its compact semantic phrase together");
+assert.match(appSource, /className="whitespace-nowrap">JSONでバックアップ・復元します。<\/span>/, "data-management summary keeps its compact semantic phrase together");
+assert.match(workspaceSource, /className="whitespace-nowrap">JSONファイルとして保存します。<\/span>/, "backup guidance keeps its compact semantic phrase together");
+assert.match(workspaceSource, /className="whitespace-nowrap">現在のデータを置き換えます。<\/span>/, "restore guidance keeps its final semantic phrase together");
 assert.doesNotMatch(
   appSource + workspaceSource,
   /console\.(?:log|info|warn|error)|fetch\s*\(|XMLHttpRequest|WebSocket|EventSource|supabase|stripe|oauth|accountId|sessionId|liveChatId/i,

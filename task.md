@@ -7,11 +7,12 @@
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
 | P0 | Comment Translator Free public beta | Google OAuth verification remains `submitted-pending`; public release remains separately gated and `public_release_capable=no`. Production issues and Google review follow-up interrupt P1 work. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md` |
-| P1 | 配信カンペボード | Tasks 1-5 through live mode are merged into the preview line at PR #649. Task 6 MVP QA is locally complete: the real data-management destination exposes browser-only JSON backup/restore with atomic failure handling, and the full prompt-board/Portal regression plus five-width production browser QA passes. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
+| P1 | 配信カンペボード | Tasks 1-6 are verified merged into the preview line through PR #650 at `4055f7f862ec5c180efcc357108cad4a91e1e83e`. Task 7 promotion-readiness closure passes locally with current-preview contracts, typecheck, lint, production build, five-width browser QA, runtime-boundary scans, and independent review. `promotion-ready=yes` on the Task 7 branch; the readiness fix/evidence must first land through a Task 7 PR to preview, then preview-to-main promotion PR creation remains a separate approval. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview branch; promotion to `main` occurs only after MVP readiness. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
-- Current P1 task branch: `codex/viewer-engagement-prompt-board-mvp-qa`, based on `origin/codex/viewer-engagement-prompt-board-preview` at merged PR #649 commit `a3416de848d54b08fef0d4268f54a50b46787bee`.
-- Task 6 commit, push, and preview-targeted Draft PR creation are approved. Merge, branch/worktree deletion, deploy, promotion, and public release remain separately approval-gated and are not approved.
+- Current P1 task branch: `codex/viewer-engagement-prompt-board-promotion-readiness`, based on `origin/codex/viewer-engagement-prompt-board-preview` at merged PR #650 commit `4055f7f862ec5c180efcc357108cad4a91e1e83e`.
+- Task 7 is approved for local readiness reconciliation and verification only. Commit, push, Task 7 PR, preview-to-main promotion PR, merge, branch/worktree deletion, deploy, activation, and public release remain separately approval-gated and are not approved.
+- Promotion readiness is not promotion approval: the immediate approval boundary is commit/push and creation of a Task 7 PR targeting the preview branch. After that PR is reviewed and merged, creation of a preview-to-main promotion PR targeting `main` is the next independent approval; each merge, deploy, activation, and public release remains a later independent decision.
 - New detailed status belongs in the linked active authority. Do not append new long-form task history to the compatibility ledger below.
 
 ## Current Premises

@@ -1,14 +1,14 @@
 # Kuro Live Comment Translator Free Beta PL-G6 Public Access Change Preflight
 
-Status: promotion, main-connected production deployment, login-only runtime activation, 11/11 post-activation browser verification, Google OAuth approval, edge deferral reconciliation, and the final public release declaration are complete. Final production/main-domain smoke remains separately approval-gated. Public-release capable: no.
+Status: promotion, main-connected production deployment, login-only runtime activation, 11/11 post-activation browser verification, Google OAuth approval, edge deferral reconciliation, final public release declaration, and final production/main-domain smoke are complete. Public-release capable: yes.
 
 PL-G6C production/main-domain env readiness is confirmed by operator-provided labels, and production/main-domain private-launch-only smoke is pass by operator-provided browser evidence.
 
-The final public release declaration is complete. The later final production/main-domain smoke remains separate and approval-gated. Translator-specific Cloudflare Rate Limiting is an optional later load-shedding control, not a Free public beta release prerequisite.
+The final public release declaration and separately approved final production/main-domain smoke are complete. Translator-specific Cloudflare Rate Limiting is an optional later load-shedding control, not a Free public beta release prerequisite.
 
 Repository runtime support for the approved login-only policy is active through the separately approved production Worker deployment. The private-launch SHA-256 owner allowlist remains the compatibility path for existing allowed testers. The final public release declaration does not change this binding.
 
-This document is the reconciled readiness, declaration, and approval surface after PL-G5, completed promotion, login-only activation, post-activation verification, and the final public release declaration. It identifies the remaining final-smoke approval boundary. It is not approval to mutate Cloudflare, deploy/upload, run final production smoke, or mark public capability complete.
+This document is the reconciled readiness and completion surface after PL-G5, completed promotion, login-only activation, post-activation verification, final public release declaration, and final production/main-domain smoke. It does not approve any new Cloudflare, deployment, OAuth, database, billing, paid/Creator, admin, privileged, or OBS operation.
 
 ## Preflight Labels
 
@@ -17,7 +17,7 @@ This document is the reconciled readiness, declaration, and approval surface aft
 | `pl_g6_public_access_change_preflight_status` | `complete` |
 | `pl_g6_public_access_change_preflight_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | `pl_g6_public_access_change_status` | `declared-free-public-beta` |
-| `public_release_capable` | `no` |
+| `public_release_capable` | `yes` |
 | `public_gate_flip_status` | `complete-release-declaration-no-mutation` |
 | `deploy_upload_status` | `complete-main-connected-and-activation-deployments` |
 | `deploy_upload_evidence_source` | `operator-provided` |
@@ -39,7 +39,7 @@ This document is the reconciled readiness, declaration, and approval surface aft
 | `release_owner_decision_status` | `accepted-promotion-readiness-only` |
 | `release_owner_exact_approval_status` | `present-promotion-readiness-only` |
 | `release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification` |
-| `operator_remaining_external_verification_status` | `action-required-final-smoke` |
+| `operator_remaining_external_verification_status` | `complete` |
 | `operator_production_harness_block_status` | `pass-production-404` |
 | `operator_production_api_managed_challenge_status` | `not-selected` |
 | `google_auth_verification_status` | `approved` |
@@ -51,7 +51,15 @@ This document is the reconciled readiness, declaration, and approval surface aft
 | `final_public_release_declaration_preflight_status` | `pass` |
 | `final_public_release_declaration_status` | `complete` |
 | `final_public_release_declaration_evidence_source` | `operator-confirmed-main-build-active-deployment-and-read-only-harness` |
-| `final_production_smoke_status` | `not-run-approval-gated` |
+| `final_production_smoke_status` | `pass` |
+| `final_production_smoke_execution_source` | `user-operated-existing-authenticated-browser` |
+| `final_production_smoke_comment_observed_count` | `3` |
+| `final_production_smoke_cache_hit_count` | `1` |
+| `final_production_smoke_provider_translation_count` | `2` |
+| `final_production_smoke_usage_delta_status` | `expected` |
+| `final_production_smoke_stop_status` | `pass` |
+| `final_production_smoke_unsanitized_output_status` | `not-shared` |
+| `final_production_smoke_stop_reason` | `none` |
 | `login_only_runtime_binding_action` | `unchanged` |
 | `edge_protection_operation_boundary` | `optional-control-deferred-no-activation-required-for-free-beta` |
 | `edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection` |
@@ -108,7 +116,7 @@ No public release declaration, edge-rule mutation, Google Auth publishing, final
 
 The final public release declaration received exact same-thread approval naming the declaration target, prerequisites, evidence shape, and non-actions. Its declaration preflight passed.
 
-The exact paste-ready approval text is recorded under `Final Public Gate Definition`. It did not approve edge activation, deployment, final smoke, or any already completed operation to be rerun. Keep `public_release_capable=no` until the separately approved final production/main-domain smoke passes.
+The exact paste-ready approval text is recorded under `Final Public Gate Definition`. It did not approve edge activation, deployment, final smoke, or any already completed operation to be rerun. Its `public_release_capable=no` condition remained in force until the later separately approved final production/main-domain smoke passed; that condition is now satisfied.
 
 ## Final Public Release Declaration 2026-07-16
 
@@ -123,11 +131,34 @@ Declaration result:
 - `public_gate_flip_status=complete-release-declaration-no-mutation`;
 - `final_public_gate_mutation_target=none`;
 - `login_only_runtime_binding_action=unchanged`;
-- `operator_remaining_external_verification_status=action-required-final-smoke`;
-- `final_production_smoke_status=not-run-approval-gated`;
-- `public_release_capable=no`.
+- declaration-time `operator_remaining_external_verification_status=action-required-final-smoke`;
+- declaration-time `final_production_smoke_status=not-run-approval-gated`;
+- declaration-time `public_release_capable=no`.
 
-The declaration created no Cloudflare rule, binding, environment, secret, version, deployment, database, billing, OAuth, provider/live, paid/Creator, admin, or OBS mutation. Evidence remains labels/counts/pass-fail/status only. The only current unrun release operation in this chain is the final production/main-domain smoke.
+The declaration created no Cloudflare rule, binding, environment, secret, version, deployment, database, billing, OAuth, provider/live, paid/Creator, admin, or OBS mutation. Evidence remains labels/counts/pass-fail/status only. At declaration time, the only unrun release operation in this chain was the separately approved final production/main-domain smoke; the result below supersedes that declaration-time state.
+
+## Final Production/Main-Domain Smoke 2026-07-16
+
+The release owner approved `target final-production-main-domain-smoke` in the same thread after the read-only preflight passed. The final browser execution was user-operated in an existing authenticated production session with an existing YouTube connection. No login, credential request, OAuth revoke/reconnect, Google Auth Platform mutation, Cloudflare mutation, environment/binding/deployment change, Supabase action, Stripe action, paid/Creator runtime, admin/privileged action, or OBS action was performed.
+
+Sanitized result:
+
+- `final_production_smoke_status=pass`;
+- `authenticated_free_access_status=pass`;
+- `youtube_connection_status=connected`;
+- `no_autostart_status=pass`;
+- `start_status=pass`;
+- `final_production_smoke_comment_observed_count=3`;
+- `final_production_smoke_cache_hit_count=1`;
+- `final_production_smoke_provider_translation_count=2`;
+- `final_production_smoke_usage_delta_status=expected`;
+- `final_production_smoke_stop_status=pass`;
+- `final_production_smoke_unsanitized_output_status=not-shared`;
+- `final_production_smoke_stop_reason=none`;
+- `operator_remaining_external_verification_status=complete`;
+- `public_release_capable=yes`.
+
+The Google result remains recorded only as `google_auth_verification_status=approved`, `unverified_app_warning_status=not-observed-after-fresh-reconnect`, and `oauth_reconnect_verification_status=pass`. No raw comments, account metadata, provider target metadata, identifiers, browser storage, response payloads, or screenshot contents are recorded.
 
 ## Completed Login-Only Runtime Activation And Later Final Public Release Declaration
 
@@ -167,11 +198,11 @@ Cloudflare production edge protection activation or confirmation remains a separ
 
 The final public gate is a release declaration after the separately approved login-only activation and required post-activation checks are recorded pass, Google OAuth verification is approved, production edge protection is confirmed ready, and the production route/API harness remains blocked with HTTP 404. Google OAuth verification is approved, production edge readiness passes, the active deployment matches the latest successful main build, and the same-process production route/API harness recheck returned HTTP 404. The final release declaration is complete.
 
-Final production/main-domain smoke remains a later separate approval-gated task after the release declaration. The declaration alone keeps `public_release_capable` at `no`; that status can change only after the separately approved final smoke passes and no stop condition is observed.
+Final production/main-domain smoke was a later separate approval-gated task after the release declaration. The declaration alone kept `public_release_capable` at `no`; the separately approved final smoke has now passed with no stop condition, so the current status is `yes`.
 
 ## Completed Integration-To-Main Promotion Sequence
 
-This sequence is retained as a historical audit trail. All promotion, main-connected deployment, private-default verification, login-only activation, and final release declaration steps below are complete; only final production/main-domain smoke remains later and separate.
+This sequence is retained as a historical audit trail. Promotion, main-connected deployment, private-default verification, login-only activation, and final release declaration completed before the later separately approved final production/main-domain smoke, which is now also complete.
 
 The operational order is fixed:
 
@@ -319,7 +350,7 @@ Do not run Cloudflare mutation, production/main deploy/upload, production env ap
 
 ## Public Capability Result
 
-Public capability can remain `no` through this preflight. The preflight result is:
+Public capability is `yes` after the separately approved final production/main-domain smoke passed. The reconciled result is:
 
 - PR #640 promotion and main-connected production deployment complete;
 - main-connected Workers Build completed successfully;
@@ -329,16 +360,16 @@ Public capability can remain `no` through this preflight. The preflight result i
 - Translator-specific Cloudflare Rate Limiting is deferred because the available Free rule slot remains reserved for leaked-credential protection;
 - app-side durable quotas, session caps, and rate guards remain the enforcement authority;
 - production edge readiness passes with the optional edge control deferred;
-- production route/API harness remains verified as 404 and must be rechecked in the final-declaration preflight;
+- production route/API harness remained verified as HTTP 404 in the final-smoke preflight;
 - final public release declaration complete with no mutation target;
-- final production/main-domain smoke remains later and separately approval-gated;
-- `public_release_capable=no`.
+- final production/main-domain smoke passed with 3 observed comments, including 1 cache hit and 2 provider translations, expected usage delta, and successful Stop;
+- `public_release_capable=yes`.
 
 ## Operator Checks Still Required
 
-The release owner closed the declaration surfaces: same-thread approval was present, the active deployment matched the latest successful main build, the production route/API harness returned HTTP 404 in the declaration preflight, and production API Managed Challenge remained `not-selected`.
+The release owner closed the declaration and final-smoke surfaces: same-thread approvals were present, the active deployment matched the latest successful main build, the production route/API harness returned HTTP 404, production API Managed Challenge remained `not-selected`, and the bounded final production/main-domain Start-to-translation-to-Stop smoke passed.
 
-Start-to-translation evidence and deterministic burst, 30-minute session, and monthly 20,000 provider-input-character proof are already accepted. Final production/main-domain smoke is the only remaining release-chain operation and remains separately approval-gated.
+Start-to-translation evidence and deterministic burst, 30-minute session, and monthly 20,000 provider-input-character proof remain accepted. No release-chain operation remains open.
 
 No new `public` database object work may proceed without explicit object-level grant/RLS/default-privileges review.
 

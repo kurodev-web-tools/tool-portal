@@ -20,7 +20,7 @@ The Cloudflare custom-rule operations update is a documentation/contract slice o
 
 The PL-G5 release-owner decision record is a documentation/contract slice only. `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md` records the current launch-decision surface, carries the accepted future default-privileges risk label, records `release_owner_decision_status=accepted-promotion-readiness-only`, and keeps public-release capable as no. It does not run support follow-up, Cloudflare mutation, Supabase query/mutation, deploy/upload, public gate flip, live/provider execution, paid entitlement runtime, OBS overlay runtime, or main promotion.
 
-The PL-G6 record now reconciles the completed PR #640 promotion, main-connected production deployment, separately approved login-only activation, 11/11 post-activation browser verification, Google OAuth approval, optional edge-control deferral, and the completed final public release declaration. It keeps `public_release_capable=no`; final production smoke remains a separate gate.
+The PL-G6 record now reconciles the completed PR #640 promotion, main-connected production deployment, separately approved login-only activation, 11/11 post-activation browser verification, Google OAuth approval, optional edge-control deferral, completed final public release declaration, and separately approved final production/main-domain smoke. `public_release_capable=yes`.
 
 Sanitization boundary: this document records only task labels, status labels, and public file/path references. It does not include project identifiers, support ticket ids, raw support text, private owner role values, raw SQL output, raw stdout/stderr, raw response bodies, account identity values, tokens, secrets, credential values, connection strings, headers, browser storage, owner ids, internal user ids, provider private identifiers, raw comments, or raw account metadata.
 
@@ -48,7 +48,7 @@ Sanitization boundary: this document records only task labels, status labels, an
 | `app_enforcement_authority` | `durable-quotas-session-caps-rate-guards` |
 | `public_launch_operator_qa_checklist_status` | `complete` |
 | `operator_external_verification_status` | `pass-post-activation-browser-11-of-11` |
-| `operator_remaining_external_verification_status` | `action-required-final-smoke` |
+| `operator_remaining_external_verification_status` | `complete` |
 | `operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge` |
 | `operator_cloudflare_env_reference_status` | `present-enabled-label` |
 | `operator_free_beta_login_browser_smoke_status` | `pass-post-activation-production-browser` |
@@ -64,7 +64,12 @@ Sanitization boundary: this document records only task labels, status labels, an
 | `final_public_release_declaration_approval_status` | `present-in-thread` |
 | `final_public_release_declaration_preflight_status` | `pass` |
 | `final_public_release_declaration_status` | `complete` |
-| `final_production_smoke_status` | `not-run-approval-gated` |
+| `final_production_smoke_status` | `pass` |
+| `final_production_smoke_comment_observed_count` | `3` |
+| `final_production_smoke_cache_hit_count` | `1` |
+| `final_production_smoke_provider_translation_count` | `2` |
+| `final_production_smoke_usage_delta_status` | `expected` |
+| `final_production_smoke_stop_status` | `pass` |
 | `login_only_runtime_binding_action` | `unchanged` |
 | `edge_protection_operation_boundary` | `optional-control-deferred-no-activation-required-for-free-beta` |
 | `optional_limit_proof_disposition` | `accepted-deterministic-evidence` |
@@ -95,7 +100,7 @@ Sanitization boundary: this document records only task labels, status labels, an
 | `operator_start_to_translation_smoke_status` | `pass-production-main-domain-private-launch` |
 | `live_provider_execution_status` | `pass-operator-provided-private-launch-smoke` |
 | `codex_local_verification_status` | `pass` |
-| `public_release_capable_status` | `no` |
+| `public_release_capable_status` | `yes` |
 | `public_gate_flip_status` | `complete-release-declaration-no-mutation` |
 | `main_promotion_status` | `complete-pr-640-merged-main-contained` |
 | `main_connected_deployment_status` | `pass` |
@@ -113,17 +118,17 @@ Sanitization boundary: this document records only task labels, status labels, an
 5. `Public beta access gate decision`: complete. Free public beta access is selected as `login-only` and is active through the separately approved production Worker deployment; waitlist approval remains for Creator/paid beta access, and the private-launch tester path remains for parity.
 6. `Public traffic rate-limit backing`: complete. `cloudflare-edge` remains the preferred optional outer load-shedding layer; no Supabase durable rate-limit table is created. Translator-specific Rate Limiting is deferred while the available Free rule slot remains reserved for leaked-credential protection, and app-side durable controls remain authoritative.
 7. `Supabase default privileges support response or risk acceptance`: complete. Supabase Support response remains pending, and the known future `public` object default-privileges risk is accepted for PL-G5 evaluation. Current-table/RLS/current-grant pass posture is not part of the accepted risk.
-8. `Public launch operator QA checklist`: complete. User-owned external checks and Codex-owned deterministic checks are separated in `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md`; post-activation production browser verification passed 11/11, Google OAuth is approved, optional edge-control deferral is reconciled, and the final release declaration is complete. The final production smoke remains approval-gated.
+8. `Public launch operator QA checklist`: complete. User-owned external checks and Codex-owned deterministic checks are separated in `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md`; post-activation production browser verification passed 11/11, Google OAuth is approved, optional edge-control deferral is reconciled, and the final release declaration and final production/main-domain smoke are complete.
 9. `Cloudflare custom-rule operations doc`: complete. The operational guide is `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`; it records Free public launch defaults, Creator/Paid transition handling, API-vs-HTML Managed Challenge boundary, Rate Limiting preference, Turnstile Pre-clearance as later improvement, traffic-growth response ladder, release-operator checks, and non-actions.
-10. `PL-G5 release-owner decision`: decision-time audit record in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`; its `accepted-promotion-readiness-only` result preceded the now-complete promotion and post-deploy verification. Public release capable remains no.
-11. `PL-G6 public access change preflight`: complete in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`; PR #640 promotion, main-connected deployment, login-only activation, and 11/11 post-activation verification are complete. Public release capable remains no.
+10. `PL-G5 release-owner decision`: decision-time audit record in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md`; its historical `accepted-promotion-readiness-only` and `public_release_capable=no` result preceded, and is superseded operationally by, the completed promotion, activation, release declaration, and final smoke.
+11. `PL-G6 public access change preflight`: complete in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`; PR #640 promotion, main-connected deployment, login-only activation, 11/11 post-activation verification, release declaration, and final smoke are complete. Current public release capable is `yes`.
 12. `PL-G6C production/main-domain env readiness and smoke approval gate`: complete as the historical env-readiness and private-launch smoke trail in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`; the later login-only activation and 11/11 post-activation verification are also complete.
 13. `PL-G6 final release declaration`: complete after same-thread approval, operator-confirmed successful main build and matching active deployment, and the same-process production route/API harness HTTP 404 recheck. The declaration changed no Worker binding or external configuration.
-14. `Final production smoke`: approval-gated final production/main-domain smoke with sanitized pass/fail/count/status evidence only.
+14. `Final production smoke`: complete after exact same-thread approval. User-operated evidence records authenticated Free access, existing YouTube connection, no-autostart, Start, 3 observed comments with 1 cache hit and 2 provider translations, expected usage delta, Stop pass, no shared unsanitized output, and no stop reason.
 15. `Post-PR #637 integration-to-main promotion`: complete through PR #640; reviewed merge is contained in main and the main-connected deployment passed.
 16. `Post-deploy private-default verification`: complete before activation; main-domain health, fail-closed private default, production harness 404, and sanitized output passed.
 17. `Login-only activation`: complete through the separately approved production Worker deployment; post-activation browser verification passed 11/11 with zero failures.
-18. `Public gate flip`: complete as `free-public-beta-release-declaration`, not a second Worker binding mutation. The existing login-only runtime binding remains unchanged. Final production/main-domain smoke remains later and separately approval-gated.
+18. `Public gate flip`: complete as `free-public-beta-release-declaration`, not a second Worker binding mutation. The existing login-only runtime binding remains unchanged. The separately approved final production/main-domain smoke is complete.
 
 ## Public-Before-Paid Boundary
 
@@ -145,10 +150,10 @@ Paid/Creator entitlement work remains later work unless explicitly pulled into p
 - Private launch gate behavior: not changed in this task-board slice.
 - Edge/durable rate-limit control: app-side durable quotas, session caps, and rate guards remain authoritative; optional Translator-specific Cloudflare activation is deferred.
 - Supabase default privileges remediation/apply: not run.
-- Public launch operator QA checklist: complete for docs/contract separation and the sanitized operator updates. Promotion, main-connected deployment, login-only activation, 11/11 post-activation verification, Google OAuth approval, edge deferral reconciliation, and the final release declaration are complete. Optional burst, 30-minute, and monthly cap proof is accepted from deterministic evidence. Only final production smoke remains outstanding.
+- Public launch operator QA checklist: complete for docs/contract separation and sanitized operator updates. Promotion, main-connected deployment, login-only activation, 11/11 post-activation verification, Google OAuth approval, edge deferral reconciliation, final release declaration, and final production/main-domain smoke are complete. Optional burst, 30-minute, and monthly cap proof remains accepted from deterministic evidence.
 - Cloudflare custom-rule operations: complete for docs/contract guidance only. Free public launch defaults to login Turnstile plus app-side quotas/session limits without constant ordinary-route challenge; production API Managed Challenge remains not-selected; Cloudflare Rate Limiting Rules are preferred for API load shedding where available; Managed Challenge remains HTML-route or emergency/temporary control; paid/Creator entitlement stays app-side; traffic-growth response ladder is documented. No Cloudflare mutation, deploy/upload, public gate flip, live/provider execution, paid entitlement runtime, or main promotion was run.
-- PL-G5 release-owner decision record: complete as a decision-time audit record. Its promotion-readiness approval and historical not-run labels do not override the later completed promotion/activation evidence. Public release capable remains `no`, and the accepted Supabase risk boundary remains unchanged.
-- PL-G6 public access change preflight: complete for docs/contract guidance and sanitized evidence recording. The preflight doc reconciles the completed promotion, deployment, login-only activation, and 11/11 verification, while keeping the final release declaration and `public_release_capable=no` separate. This evidence-record slice does not itself run a Cloudflare mutation, public release declaration, final production smoke, Supabase action, Stripe action, paid entitlement runtime, or OBS runtime.
+- PL-G5 release-owner decision record: complete as a decision-time audit record. Its promotion-readiness approval and historical `public_release_capable=no` / not-run labels do not override the later completed promotion, activation, declaration, and final-smoke evidence. Current public release capable is `yes`, and the accepted Supabase risk boundary remains unchanged.
+- PL-G6 public access change preflight: complete for docs/contract guidance and sanitized evidence recording. The preflight doc reconciles the completed promotion, deployment, login-only activation, 11/11 verification, final release declaration, and separately approved final production/main-domain smoke. This local evidence reconciliation does not itself run a Cloudflare mutation, deployment, OAuth action, Supabase action, Stripe action, paid entitlement runtime, admin/privileged action, or OBS runtime.
 - Remote Supabase migration apply, `db push`, repair, reset, deploy/upload, live/provider/OAuth/Stripe actions, row mutation, current-table grant/policy rewrite, raw response capture, browser storage capture, credential exposure, and promotion to `main`: not run. The public gate completed only as a no-mutation release declaration.
 
 ## Verification

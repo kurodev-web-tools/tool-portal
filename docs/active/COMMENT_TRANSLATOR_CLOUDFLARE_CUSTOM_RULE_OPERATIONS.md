@@ -1,6 +1,6 @@
 # Comment Translator Cloudflare Custom Rule Operations
 
-Status: active operational guidance for Free public launch and later Creator/Paid launch. Public-release capable: no.
+Status: active operational guidance for Free public launch and later Creator/Paid launch. Public-release capable: yes after the completed final production/main-domain smoke.
 
 This document records how to operate Cloudflare Custom Rules, Turnstile, and Rate Limiting around Kuro Live Comment Translator. It is a docs/contract slice only. It does not approve or perform Cloudflare dashboard changes, environment mutation, deploy/upload, public gate flip, live/provider execution, OAuth live flow, Google target lookup, remote Supabase mutation, Stripe live action, paid entitlement runtime, or main promotion.
 
@@ -28,7 +28,7 @@ Sanitization boundary: record only status labels, route-class labels, pass/fail,
 | `managed_challenge_passage_guidance` | `about-45-minutes-if-html-managed-challenge-is-used` |
 | `paid_creator_boundary_authority` | `app-side-entitlement-session-usage-quota-not-cloudflare-clearance` |
 | `traffic_growth_response_ladder_status` | `documented` |
-| `public_release_capable_status` | `no` |
+| `public_release_capable_status` | `yes` |
 
 ## Operating Principles
 

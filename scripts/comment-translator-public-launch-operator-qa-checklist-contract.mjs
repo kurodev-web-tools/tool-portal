@@ -191,10 +191,18 @@ for (const fragment of [
   "`operator_cloudflare_edge_rate_limit_activation_status`",
   "`operator_cloudflare_env_reference_status`",
   "`operator_external_verification_status` | `pass-post-activation-browser-11-of-11`",
-  "`operator_remaining_external_verification_status` | `action-required-final-smoke`",
+  "`operator_remaining_external_verification_status` | `complete`",
   "`final_public_release_declaration_status` | `complete`",
   "`final_public_release_declaration_preflight_status` | `pass`",
-  "`final_production_smoke_status` | `not-run-approval-gated`",
+  "`final_production_smoke_status` | `pass`",
+  "`final_production_smoke_execution_source` | `user-operated-existing-authenticated-browser`",
+  "`final_production_smoke_comment_observed_count` | `3`",
+  "`final_production_smoke_cache_hit_count` | `1`",
+  "`final_production_smoke_provider_translation_count` | `2`",
+  "`final_production_smoke_usage_delta_status` | `expected`",
+  "`final_production_smoke_stop_status` | `pass`",
+  "`final_production_smoke_unsanitized_output_status` | `not-shared`",
+  "`final_production_smoke_stop_reason` | `none`",
   "`google_auth_verification_status` | `approved`",
   "`unverified_app_warning_status` | `not-observed-after-fresh-reconnect`",
   "`oauth_reconnect_verification_status` | `pass`",
@@ -238,8 +246,8 @@ for (const fragment of [
   "public_launch_operator_qa_checklist_status=complete",
   "cloudflare_custom_rule_operations_doc_status=complete",
   "operator_external_verification_status=pass-post-activation-browser-11-of-11",
-  "operator_remaining_external_verification_status=action-required-final-smoke",
-  "public_release_capable_status=no"
+  "operator_remaining_external_verification_status=complete",
+  "public_release_capable_status=yes"
 ]) {
   assertIncludes(checklist, fragment, `checklist records ${fragment}`);
 }
@@ -247,7 +255,7 @@ for (const fragment of [
 for (const fragment of [
   "`public_launch_operator_qa_checklist_status` | `complete`",
   "`operator_external_verification_status` | `pass-post-activation-browser-11-of-11`",
-  "`operator_remaining_external_verification_status` | `action-required-final-smoke`",
+  "`operator_remaining_external_verification_status` | `complete`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_cloudflare_env_reference_status` | `present-enabled-label`",
   "`operator_free_beta_login_browser_smoke_status` | `pass-post-activation-production-browser`",
@@ -264,8 +272,8 @@ for (const fragment of [
   "`Public launch operator QA checklist`",
   "`Cloudflare custom-rule operations doc`",
   "post-activation production browser verification passed 11/11",
-  "post-activation production browser verification passed 11/11, Google OAuth is approved, optional edge-control deferral is reconciled, and the final release declaration is complete. The final production smoke remains approval-gated.",
-  "not-run / approval-gated"
+  "post-activation production browser verification passed 11/11, Google OAuth is approved, optional edge-control deferral is reconciled, and the final release declaration and final production/main-domain smoke are complete.",
+  "the final release declaration and final production/main-domain smoke are complete"
 ]) {
   assertIncludes(taskBoard, fragment, `task board records ${fragment}`);
 }
@@ -311,7 +319,11 @@ for (const fragment of [
   "optional 30-minute session smoke",
   "monthly 20,000 provider-input-character fixture/live proof",
   "COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md",
-  "The release declaration is complete; final production smoke remains a separate approval-gated task.",
+  "The declaration and separately approved final production/main-domain smoke are complete; `public_release_capable=yes`.",
+  "final_production_smoke_status=pass",
+  "final_production_smoke_comment_observed_count=3",
+  "final_production_smoke_cache_hit_count=1",
+  "final_production_smoke_provider_translation_count=2",
   "COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md"
 ]) {
   assertIncludes(task, fragment, `task.md records ${fragment}`);
@@ -355,7 +367,7 @@ assert.match(
 assert.match(requirements, /30 translated messages\/min/, "requirements keep public per-minute limit");
 assert.match(requirements, /30 min\/session/, "requirements keep public session limit");
 
-assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?yes`?/i);
+assert.match(checklist, /`public_release_capable_status` \| `yes`/);
 assert.doesNotMatch(combinedDocs, /edge_activation_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
 assert.doesNotMatch(combinedDocs, /final_public_gate_mutation_target[=|]\s*`?(?!none)/i);
 
@@ -404,5 +416,5 @@ for (const file of changedFiles()) {
 }
 
 console.log(
-  "comment translator public launch operator QA checklist contract passed (operator_external_verification=pass-post-activation-browser-11-of-11, public_release_capable=no, secret_scan=pass)"
+  "comment translator public launch operator QA checklist contract passed (operator_external_verification=complete-final-production-smoke, public_release_capable=yes, secret_scan=pass)"
 );

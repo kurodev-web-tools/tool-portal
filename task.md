@@ -7,11 +7,11 @@
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
 | P0 | Comment Translator Free public beta | Google OAuth verification remains `submitted-pending`; public release remains separately gated and `public_release_capable=no`. Production issues and Google review follow-up interrupt P1 work. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md` |
-| P1 | 配信カンペボード | Portal workspace sidebar, browser-only storage foundation, stream-plan flows, and prompt-card flows through PR #648 are merged into the preview line. The fifth task, live-mode large-card display/navigation/position/copy UI, is locally complete with deterministic contracts, full local verification, runtime audit, and five-width production browser QA passing. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
+| P1 | 配信カンペボード | Tasks 1-5 through live mode are merged into the preview line at PR #649. Task 6 MVP QA is locally complete: the real data-management destination exposes browser-only JSON backup/restore with atomic failure handling, and the full prompt-board/Portal regression plus five-width production browser QA passes. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview branch; promotion to `main` occurs only after MVP readiness. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
-- Current P1 task branch: `codex/viewer-engagement-prompt-board-live-mode`, based on `origin/codex/viewer-engagement-prompt-board-preview` at merged PR #648 commit `6a29dc31bd2d949a627b61d7efa91a4b10dfab10`.
-- Commit, push, and preview-targeted Draft PR creation are approved for this live-mode slice. Merge, deploy, and public release remain separately approval-gated and are not approved.
+- Current P1 task branch: `codex/viewer-engagement-prompt-board-mvp-qa`, based on `origin/codex/viewer-engagement-prompt-board-preview` at merged PR #649 commit `a3416de848d54b08fef0d4268f54a50b46787bee`.
+- Task 6 commit, push, and preview-targeted Draft PR creation are approved. Merge, branch/worktree deletion, deploy, promotion, and public release remain separately approval-gated and are not approved.
 - New detailed status belongs in the linked active authority. Do not append new long-form task history to the compatibility ledger below.
 
 ## Current Premises

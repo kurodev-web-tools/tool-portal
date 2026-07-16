@@ -1,6 +1,6 @@
 # 配信カンペボード MVP Task Board
 
-Date: 2026-07-15
+Date: 2026-07-16
 
 ## Current Selection
 
@@ -12,7 +12,7 @@ Date: 2026-07-15
 | `comment_translator_priority` | `P0` |
 | `mvp_price` | `free` |
 | `login_requirement` | `none` |
-| `runtime_implementation_status` | `live-mode-local-complete-verification-and-production-browser-qa-pass` |
+| `runtime_implementation_status` | `mvp-qa-local-complete-verification-and-production-browser-qa-pass` |
 | `preview_branch` | `codex/viewer-engagement-prompt-board-preview` |
 | `promotion_target` | `main-after-mvp-readiness` |
 | `shared_portal_sidebar_scope` | `workspace-common-expanded-rail-hidden` |
@@ -153,7 +153,7 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 
 ### Prompt Cards Implementation Checkpoint
 
-- `implementation_status`: `local-complete-verification-and-production-browser-qa-pass`
+- `implementation_status`: `merged-preview-pr-649`
 - `task_branch`: `codex/viewer-engagement-prompt-board-prompt-cards`
 - `preview_merge`: `origin/codex/viewer-engagement-prompt-board-preview` at PR #648 merge commit `6a29dc31bd2d949a627b61d7efa91a4b10dfab10`
 - `rendered_route`: `/tools/viewer-engagement-prompt-board`、`PortalShell mode="workspace"`と既存共通workspace sidebarを利用し、tool固有の第2左sidebarは追加しない
@@ -181,7 +181,7 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 - `task_branch`: `codex/viewer-engagement-prompt-board-live-mode`
 - `preview_base`: `origin/codex/viewer-engagement-prompt-board-preview` at merged PR #648 commit `6a29dc31bd2d949a627b61d7efa91a4b10dfab10`
 - `rendered_route`: `/tools/viewer-engagement-prompt-board`、`PortalShell mode="workspace"`と既存共通workspace sidebarを利用し、tool固有の第2左sidebarは追加しない
-- `local_navigation`: 実動作する`配信プラン`、`カンペ編集`、`配信中`をmain content上部に表示し、未実装の`データ管理`は非表示のまま維持する
+- `local_navigation`: 実動作する`配信プラン`、`カンペ編集`、`配信中`をmain content上部に表示し、Task 6より実装済みの`データ管理`も同じlocal navigationへ追加する
 - `domain_owner`: `lib/viewer-engagement-prompt-board-live-mode.ts`がlive plan解決、stable card IDと直前indexによるUI-only selection、前後境界、clipboard resultを所有し、表示順は既存`orderPromptCardsForDisplay`へ委譲する
 - `ui_owner`: `components/viewer-engagement-prompt-board/LiveModeWorkspace.tsx`がno-live、zero-card、readyの3状態、大表示、位置、前後、exact body copy、sanitized copy feedback、editor returnをread-onlyで提供する
 - `selection_contract`: 初回とreloadは最初のordered card、現在dataset内のreorderではstable card IDを維持し、missing/deleted cardは直前indexを有効範囲へclampする。zero/one/first/last境界はdisabled deterministic no-opとし、選択、位置、copy状態を保存しない
@@ -194,6 +194,27 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 - `runtime_audit`: (1) reordered/missing cardのidentity/position driftはstable ID追従とindex clamp、reload-firstで否定、(2) clipboard failureのposition/content mutationは位置、本文、保存JSON不変で否定、(3) no-live/empty planのinvalid navigation/stale editor contextは専用empty stateとlive plan IDを維持したeditor returnで否定
 - `independent_review`: goal/constraints、code quality、security/privacy、context/historyのbounded read-only reviewと、必須20画面＋補助4画面のdesign integrity / CJK accessibility reviewを実施し、findingsなしでPASS
 - `out_of_scope_unchanged`: JSON backup/restore UIとデータ管理、Schedule Calendar連携/ID、login/account sync、Supabase、Stripe、OAuth、AI/provider/live execution、viewer/comment/moderation/OBS、analytics/telemetry、Cloudflare、deploy/public release、Comment Translator runtime/release gate
+
+### MVP QA Implementation Checkpoint
+
+- `implementation_status`: `local-complete-verification-and-production-browser-qa-pass`
+- `task_branch`: `codex/viewer-engagement-prompt-board-mvp-qa`
+- `preview_base`: `origin/codex/viewer-engagement-prompt-board-preview` at merged PR #649 commit `a3416de848d54b08fef0d4268f54a50b46787bee`
+- `data_management_ui_owner`: `components/viewer-engagement-prompt-board/DataManagementWorkspace.tsx`。既存`lib/viewer-engagement-prompt-board-storage.ts`の`exportPromptBoardJson` / `importPromptBoardJson`だけを使用し、schema/storage ownerを重複させない
+- `implemented_behavior`: 実動作する`データ管理`local-navigation destination、canonical pretty JSON download、JSON paste restore、sanitized success/error feedbackを提供する。backup/restore、active section、card/live selectionはbrowser-localで、server/API/account/sessionへ送らない
+- `atomic_restore_boundary`: malformed JSON、unknown schema、invalid data、storage unavailable、write failureをreplacement前または永続化時に拒否し、last valid current/persisted datasetを維持する。親UI stateは`imported`返却後だけ更新する
+- `accessibility_and_cjk`: `aria-current`、restore helpの`aria-describedby`、success=`status` / error=`alert`、空入力時disabled、44px controlを確認。390pxで見つけたlocal-navigationの不自然なCJK分断を4列・nowrap・mobile文字サイズ/paddingで修正し、data-management説明文も意味単位のblockへ分割した
+- `focused_red_green`: data-management workspace未実装でfocused REDを確認後、backup/restore owner利用、exact JSON、5失敗系atomicity、browser-only境界をGREEN化。QAで見つけた390px CJK navigation分断と、独立reviewで見つけた説明文の意味句分断も追加契約で各RED後に修正しGREEN化した
+- `verification_current`: focused MVP QA、storage、stream-plan、prompt-card、live-mode、governance、Portal workspace sidebarの7 contract、`npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`はpass。最終build warningは既存middleware deprecationのみ
+- `dependency_boundary`: `npm ci` / `npm install`は未実行。同一lockfile hashの既存dependency treeをfresh worktreeへローカルコピーした。cross-drive junctionはwebpackが不正なrelative module pathとして解決したため使用せず、package metadata/lockfileは変更していない
+- `production_browser_qa`: 390 / 820 / 1024 / 1280 / 1366pxでplan single-current切替、card追加/focus復帰、live前後/exact copy、exact JSON download、valid restore/reload、malformed/unknown/invalid、storage unavailable/write failure atomicity、keyboard/ARIA、長いCJK、horizontal overflow 0、console/page error 0を確認
+- `portal_regression`: 390/820pxのmobile drawer isolation、1024/1280/1366pxのexpanded=288 / rail=80 / hidden=0、hidden/reopen focus transfer、rail reload/route共有、unknown-version fallback、`mode=\"default\"`分離、既存workspace 6 routesのoverflow 0とconsole error 0を確認
+- `runtime_audit`: (1) 不正restoreまたはstorage failureがcurrent/persisted datasetを置換する仮説は5失敗系の双方不変で否定、(2) valid restoreが永続化前にUIを置換またはreloadでdriftする仮説はexact persisted JSONとreload後titleで否定、(3) 第4navigation追加がCJK/sidebar/mobile/default modeを壊す仮説は初回390pxでCJK分断を確認して修正し、fresh 5幅＋Portal harness再実行で否定
+- `independent_review`: semantic/security/constraint/documentationのread-only reviewはfindingなしでPASS。Visual/CJK reviewの2 findingsは意味単位blockと簡潔なcopyで修正し、focused RED/GREENと5幅overflow 0、820/1024/1280/1366pxの全説明span単一行、390pxの意味ブロック維持を再確認してPASS
+- `publication_boundary`: Task 6 branchへのcommit、push、preview-targeted Draft PR作成は承認済み。merge、branch/worktree削除、deploy、promotion、public releaseは未承認
+- `remaining_risk`: QAはlocal production buildとsynthetic browser-local fixtureによる。preview branchへのmerge、preview環境確認、promotion-readiness判定はまだ実行していない
+- `next_candidate`: Task 7 `promotion-readiness`。PR #649後のpreview lineへTask 6を統合した時点でMVP completion criteriaを再評価する候補であり、promotion PR、merge、deploy、public releaseは承認しない
+- `out_of_scope_unchanged`: preview-to-main promotion、deploy/public release、Schedule Calendar連携/ID、login/account sync、Supabase、Stripe、OAuth、AI/provider/live execution、viewer/comment/moderation/OBS、analytics/telemetry、Comment Translator runtime/release gate
 
 ## MVP対象外
 

@@ -158,6 +158,7 @@ for (const section of [
   "## Preflight Labels",
   "## Required Same-Thread Approval Surface",
   "## Completed Login-Only Runtime Activation And Later Final Public Release Declaration",
+  "## Final Production/Main-Domain Smoke 2026-07-16",
   "## Final Public Gate Definition",
   "## Completed Integration-To-Main Promotion Sequence",
   "## Execution Boundary",
@@ -171,12 +172,12 @@ for (const section of [
 }
 
 for (const fragment of [
-  "Status: promotion, main-connected production deployment, login-only runtime activation, 11/11 post-activation browser verification, Google OAuth approval, edge deferral reconciliation, and the final public release declaration are complete. Final production/main-domain smoke remains separately approval-gated. Public-release capable: no.",
+  "Status: promotion, main-connected production deployment, login-only runtime activation, 11/11 post-activation browser verification, Google OAuth approval, edge deferral reconciliation, final public release declaration, and final production/main-domain smoke are complete. Public-release capable: yes.",
   "PL-G6C production/main-domain env readiness is confirmed by operator-provided labels, and production/main-domain private-launch-only smoke is pass by operator-provided browser evidence.",
   "`pl_g6_public_access_change_preflight_status` | `complete`",
   "`pl_g6_public_access_change_preflight_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`",
   "`pl_g6_public_access_change_status` | `declared-free-public-beta`",
-  "`public_release_capable` | `no`",
+  "`public_release_capable` | `yes`",
   "`deploy_upload_status` | `complete-main-connected-and-activation-deployments`",
   "`deploy_upload_evidence_source` | `operator-provided`",
   "`preview_deployment_target` | `cloudflare-preview-domain`",
@@ -193,7 +194,7 @@ for (const fragment of [
   "`release_owner_decision_status` | `accepted-promotion-readiness-only`",
   "`release_owner_exact_approval_status` | `present-promotion-readiness-only`",
   "`release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification`",
-  "`operator_remaining_external_verification_status` | `action-required-final-smoke`",
+  "`operator_remaining_external_verification_status` | `complete`",
   "`operator_production_harness_block_status` | `pass-production-404`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
   "`google_auth_verification_status` | `approved`",
@@ -205,7 +206,15 @@ for (const fragment of [
   "`final_public_release_declaration_preflight_status` | `pass`",
   "`final_public_release_declaration_status` | `complete`",
   "`public_gate_flip_status` | `complete-release-declaration-no-mutation`",
-  "`final_production_smoke_status` | `not-run-approval-gated`",
+  "`final_production_smoke_status` | `pass`",
+  "`final_production_smoke_execution_source` | `user-operated-existing-authenticated-browser`",
+  "`final_production_smoke_comment_observed_count` | `3`",
+  "`final_production_smoke_cache_hit_count` | `1`",
+  "`final_production_smoke_provider_translation_count` | `2`",
+  "`final_production_smoke_usage_delta_status` | `expected`",
+  "`final_production_smoke_stop_status` | `pass`",
+  "`final_production_smoke_unsanitized_output_status` | `not-shared`",
+  "`final_production_smoke_stop_reason` | `none`",
   "`login_only_runtime_binding_action` | `unchanged`",
   "`edge_protection_operation_boundary` | `optional-control-deferred-no-activation-required-for-free-beta`",
   "`edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection`",
@@ -252,7 +261,7 @@ for (const fragment of [
   "PL-G6C env apply readiness confirmation approval is present for readiness confirmation only.",
   "This confirmation records operator-action instructions and approval status only; it does not apply production env vars or confirm values.",
   "I approve PL-G6C production/main-domain smoke for the Free public beta integration line only after production env apply readiness is confirmed.",
-  "Keep `public_release_capable=no` until the separately approved final production/main-domain smoke passes.",
+  "Its `public_release_capable=no` condition remained in force until the later separately approved final production/main-domain smoke passed; that condition is now satisfied.",
   "The separately approved production Worker activation is complete.",
   "I approve the login-only runtime activation environment apply for the Kuro Stream Kit / Comment Translator Free public beta integration line in the Cloudflare production Worker environment only.",
   "I approve the PL-G6 final public release declaration for the Kuro Stream Kit / Comment Translator Free public beta integration line only after the separately approved login-only runtime activation and required post-activation checks are recorded pass",
@@ -261,7 +270,7 @@ for (const fragment of [
   "Cloudflare production edge protection activation or confirmation remains a separate approval-gated operation when required.",
   "The final public gate is a release declaration after the separately approved login-only activation and required post-activation checks are recorded pass, Google OAuth verification is approved, production edge protection is confirmed ready, and the production route/API harness remains blocked with HTTP 404.",
   "Google OAuth verification is approved, production edge readiness passes, the active deployment matches the latest successful main build, and the same-process production route/API harness recheck returned HTTP 404.",
-  "Final production/main-domain smoke remains a later separate approval-gated task after the release declaration.",
+  "Final production/main-domain smoke was a later separate approval-gated task after the release declaration.",
   "`main_promotion_status` | `complete-pr-640-merged-main-contained`",
   "`main_connected_deployment_status` | `pass`",
   "`main_connected_workers_build_status` | `success`",
@@ -286,7 +295,7 @@ for (const fragment of [
   "activation_apply_status=blocked-deploy-upload-not-approved",
   "remote_mutation_count=0",
   "Do not run Cloudflare mutation, production/main deploy/upload, production env apply, public gate flip, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, or main promotion from this preflight slice.",
-  "The only current unrun release operation in this chain is the final production/main-domain smoke.",
+  "At declaration time, the only unrun release operation in this chain was the separately approved final production/main-domain smoke; the result below supersedes that declaration-time state.",
   "`main_connected_deployment_activation_state` | `login-only-active`",
   "I approve creating and merging the integration-to-main promotion PR",
   "I approve post-deploy private-default production verification for the main-connected deployment only.",
@@ -295,6 +304,30 @@ for (const fragment of [
 ]) {
   assertIncludes(plG6Doc, fragment, `PL-G6 doc records ${fragment}`);
 }
+
+function numericTableValue(source, label) {
+  const match = source.match(new RegExp("\\| `" + escaped(label) + "` \\| `(\\d+)` \\|"));
+  assert.ok(match, `${label} is present as a numeric table value`);
+  return Number(match[1]);
+}
+
+const finalSmokeObservedCount = numericTableValue(
+  plG6Doc,
+  "final_production_smoke_comment_observed_count"
+);
+const finalSmokeCacheHitCount = numericTableValue(
+  plG6Doc,
+  "final_production_smoke_cache_hit_count"
+);
+const finalSmokeProviderTranslationCount = numericTableValue(
+  plG6Doc,
+  "final_production_smoke_provider_translation_count"
+);
+assert.equal(
+  finalSmokeObservedCount,
+  finalSmokeCacheHitCount + finalSmokeProviderTranslationCount,
+  "final smoke observed comments equal cache hits plus provider translations"
+);
 
 for (const fragment of [
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
@@ -340,7 +373,7 @@ for (const fragment of [
   "post_activation_browser_failure_count=0",
   "edge_protection_readiness_status=pass-with-optional-edge-control-deferred",
   "edge_activation_status=deferred-not-required-for-free-public-beta",
-  "public_release_capable=no"
+  "public_release_capable=yes"
 ]) {
   assertIncludes(task, fragment, `task.md records ${fragment}`);
 }
@@ -378,7 +411,7 @@ for (const fragment of [
   "`edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred`",
   "`edge_activation_status` | `deferred-not-required-for-free-public-beta`",
   "`edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection`",
-  "`public_release_capable_status` | `no`"
+  "`public_release_capable_status` | `yes`"
 ]) {
   assertIncludes(taskBoard, fragment, `task board records ${fragment}`);
 }
@@ -393,7 +426,7 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "operator_remaining_external_verification_status` | `action-required-final-smoke`",
+  "operator_remaining_external_verification_status` | `complete`",
   "operator_production_harness_block_status` | `pass-production-404`",
   "google_auth_verification_status` | `approved`",
   "final_public_gate_mutation_target` | `none`"
@@ -423,7 +456,7 @@ assertIncludes(
   "Cloudflare operations separates edge protection from the final release declaration"
 );
 
-assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?yes`?/i);
+assert.match(plG6Doc, /`public_release_capable` \| `yes`/);
 assert.doesNotMatch(combinedDocs, /final_public_gate_mutation_target[=|]\s*`?(?!none)/i);
 
 for (const [label, source] of [

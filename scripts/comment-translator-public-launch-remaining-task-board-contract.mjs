@@ -25,7 +25,7 @@ for (const marker of [
   "`remote_default_privileges_posture_status` | `fail`",
   "`risk_acceptance_status` | `accepted`",
   "`risk_acceptance_scope` | `future-public-object-default-privileges-only`",
-  "`public_release_capable_status` | `no`",
+  "`public_release_capable_status` | `yes`",
   "`public_gate_flip_status` | `complete-release-declaration-no-mutation`",
   "`main_promotion_status` | `complete-pr-640-merged-main-contained`",
   "`obs_dock_display_name_policy_status` | `complete`",
@@ -41,10 +41,15 @@ for (const marker of [
   "`app_enforcement_authority` | `durable-quotas-session-caps-rate-guards`",
   "`public_launch_operator_qa_checklist_status` | `complete`",
   "`operator_external_verification_status` | `pass-post-activation-browser-11-of-11`",
-  "`operator_remaining_external_verification_status` | `action-required-final-smoke`",
+  "`operator_remaining_external_verification_status` | `complete`",
   "`final_public_release_declaration_status` | `complete`",
   "`final_public_release_declaration_preflight_status` | `pass`",
-  "`final_production_smoke_status` | `not-run-approval-gated`",
+  "`final_production_smoke_status` | `pass`",
+  "`final_production_smoke_comment_observed_count` | `3`",
+  "`final_production_smoke_cache_hit_count` | `1`",
+  "`final_production_smoke_provider_translation_count` | `2`",
+  "`final_production_smoke_usage_delta_status` | `expected`",
+  "`final_production_smoke_stop_status` | `pass`",
   "`google_auth_verification_status` | `approved`",
   "`unverified_app_warning_status` | `not-observed-after-fresh-reconnect`",
   "`oauth_reconnect_verification_status` | `pass`",
@@ -92,7 +97,7 @@ for (const marker of [
   "Public beta access gate behavior: decision only.",
   "Public traffic rate-limit backing behavior: `cloudflare-edge` remains the preferred optional outer load-shedding layer",
   "Supabase default privileges risk acceptance: decision only.",
-  "Public launch operator QA checklist: complete for docs/contract separation and the sanitized operator updates.",
+  "Public launch operator QA checklist: complete for docs/contract separation and sanitized operator updates.",
   "Cloudflare custom-rule operations: complete for docs/contract guidance only.",
   "PL-G5 release-owner decision record: complete as a decision-time audit record.",
   "Supabase default privileges remediation/apply: not run."
@@ -145,7 +150,7 @@ for (const marker of [
   "remote_default_privileges_status=fail-accepted-risk",
   "risk_acceptance_status=accepted",
   "risk_acceptance_scope=future-public-object-default-privileges-only",
-  "public_release_capable=no",
+  "public_release_capable=yes",
   "COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
   "COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md"
 ]) {
@@ -165,7 +170,49 @@ const taskOrder = [
   "PL-G6 final release declaration"
 ];
 
-const taskOrderSection = doc.slice(doc.indexOf("## Remaining Public Launch Task Order"));
+function sectionBetween(source, startMarker, endMarker, label) {
+  const start = source.indexOf(startMarker);
+  const end = source.indexOf(endMarker);
+  assert.notEqual(start, -1, `${label} start marker exists`);
+  assert.notEqual(end, -1, `${label} end marker exists`);
+  assert.ok(end > start, `${label} markers are in order`);
+  return source.slice(start, end);
+}
+
+function sectionFrom(source, startMarker, label) {
+  const start = source.indexOf(startMarker);
+  assert.notEqual(start, -1, `${label} start marker exists`);
+  return source.slice(start);
+}
+
+const taskOrderSection = sectionFrom(
+  doc,
+  "## Remaining Public Launch Task Order",
+  "launch task order"
+);
+const currentTaskOrderSection = sectionBetween(
+  doc,
+  "## Remaining Public Launch Task Order",
+  "## Public-Before-Paid Boundary",
+  "current launch task order"
+);
+assert.doesNotMatch(
+  currentTaskOrderSection,
+  /Public release capable remains no|Final production\/main-domain smoke remains later/i,
+  "current launch task order has no stale pre-smoke release state"
+);
+
+const currentResidualRiskSection = sectionFrom(
+  task,
+  "## Current Blockers / Residual Risks",
+  "current task residual risks"
+);
+assert.doesNotMatch(
+  currentResidualRiskSection,
+  /Public-release capable remains `no`|Final production\/main-domain smoke remains separately approval-gated|next public-capability decision point is the final release declaration/i,
+  "current task residual risks have no stale pre-smoke release state"
+);
+
 let previousIndex = -1;
 for (const taskLabel of taskOrder) {
   const index = taskOrderSection.indexOf(taskLabel);
@@ -190,5 +237,5 @@ for (const pattern of sensitivePatterns) {
 }
 
 console.log(
-  "comment translator public launch remaining task board contract passed (public_release_capable=no, support=pending, risk_acceptance=accepted, secret_scan=pass)"
+  "comment translator public launch remaining task board contract passed (public_release_capable=yes, support=pending, risk_acceptance=accepted, secret_scan=pass)"
 );

@@ -1,6 +1,6 @@
 # Comment Translator Public Launch Operator QA Checklist
 
-Status: active public-launch verification split. Public-release capable: no.
+Status: public-launch verification complete through final production/main-domain smoke. Public-release capable: yes.
 
 This checklist separates operator-owned external checks from Codex-owned local deterministic checks before PL-G5 and PL-G6. It does not approve Cloudflare changes, deploy/upload, public gate flip, live/provider execution, OAuth live flow, Google target lookup, remote Supabase mutation, Stripe live action, or main promotion.
 
@@ -10,7 +10,7 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 
 | Item | Status |
 | --- | --- |
-| `public_release_capable_status` | `no` |
+| `public_release_capable_status` | `yes` |
 | `public_beta_access_gate_selected` | `login-only` |
 | `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
 | `login_only_runtime_implementation_status` | `activated-login-only` |
@@ -25,7 +25,7 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection` |
 | `app_enforcement_authority` | `durable-quotas-session-caps-rate-guards` |
 | `operator_external_verification_status` | `pass-post-activation-browser-11-of-11` |
-| `operator_remaining_external_verification_status` | `action-required-final-smoke` |
+| `operator_remaining_external_verification_status` | `complete` |
 | `operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge` |
 | `operator_cloudflare_env_reference_status` | `present-enabled-label` |
 | `operator_free_beta_login_browser_smoke_status` | `pass-post-activation-production-browser` |
@@ -43,7 +43,15 @@ Sanitization boundary: record only labels, route paths, pass/fail, counts, stop 
 | `final_public_release_declaration_approval_status` | `present-in-thread` |
 | `final_public_release_declaration_preflight_status` | `pass` |
 | `final_public_release_declaration_status` | `complete` |
-| `final_production_smoke_status` | `not-run-approval-gated` |
+| `final_production_smoke_status` | `pass` |
+| `final_production_smoke_execution_source` | `user-operated-existing-authenticated-browser` |
+| `final_production_smoke_comment_observed_count` | `3` |
+| `final_production_smoke_cache_hit_count` | `1` |
+| `final_production_smoke_provider_translation_count` | `2` |
+| `final_production_smoke_usage_delta_status` | `expected` |
+| `final_production_smoke_stop_status` | `pass` |
+| `final_production_smoke_unsanitized_output_status` | `not-shared` |
+| `final_production_smoke_stop_reason` | `none` |
 | `optional_limit_proof_disposition` | `accepted-deterministic-evidence` |
 | `post_activation_browser_verification_status` | `pass-11-of-11` |
 | `post_activation_browser_failure_count` | `0` |
@@ -127,9 +135,9 @@ The release operator reported production/main-domain private-launch-only browser
 | `unauthorized_translator_access_status` | `pass-blocked-for-non-allowed-account` |
 | `transient_unavailable_reason_observed` | `live-provider-polling-not-approved` before translated comment evidence; final Start-to-translation evidence is pass |
 
-At the 2026-07-10 private-launch update, main promotion and login-only activation were still not-run. The 2026-07-13 and 2026-07-16 reconciliations below supersede those operational labels. The final release declaration is complete; `public_release_capable_status=no` remains until final production/main-domain smoke passes.
+At the 2026-07-10 private-launch update, main promotion and login-only activation were still not-run. The 2026-07-13 and 2026-07-16 reconciliations below supersede those operational labels. The later final production/main-domain smoke passed, so `public_release_capable_status=yes`.
 
-The final public gate completed as a release declaration rather than a Worker binding mutation. The existing login-only runtime binding remains unchanged. Google OAuth approval and optional edge-control deferral are reconciled; the declaration preflight rechecked the production route/API harness as HTTP 404. Final production/main-domain smoke remains a later separately approved task.
+The final public gate completed as a release declaration rather than a Worker binding mutation. The existing login-only runtime binding remains unchanged. Google OAuth approval and optional edge-control deferral are reconciled; the declaration preflight rechecked the production route/API harness as HTTP 404. The later separately approved final production/main-domain smoke is complete.
 
 ## Operator Update 2026-07-13
 
@@ -143,7 +151,9 @@ Google OAuth verification is approved. After the operator revoked the prior app 
 
 The available Free Cloudflare Rate Limiting rule slot remains reserved for leaked-credential protection. The release owner selected `edge_rate_limiting_disposition=deferred-existing-free-slot-reserved-for-leaked-credential-protection`; Translator-specific Rate Limiting is deferred until traffic or revenue justifies a separately approved operation. This does not weaken or replace the existing leaked-credential control. App-side durable quotas, session caps, and rate guards remain the enforcement authority. No Cloudflare rule, environment, secret, binding, or deployment mutation was run.
 
-The release owner then approved the final public release declaration in this thread. The operator confirmed the latest main build succeeded and its active deployment matched; the same-process read-only declaration preflight returned HTTP 404 for the production route/API harness. `final_public_release_declaration_status=complete`, `public_gate_flip_status=complete-release-declaration-no-mutation`, and `operator_remaining_external_verification_status=action-required-final-smoke`. No final production smoke or external mutation was run.
+The release owner then approved the final public release declaration in this thread. The operator confirmed the latest main build succeeded and its active deployment matched; the same-process read-only declaration preflight returned HTTP 404 for the production route/API harness. At declaration time, `final_public_release_declaration_status=complete`, `public_gate_flip_status=complete-release-declaration-no-mutation`, and `operator_remaining_external_verification_status=action-required-final-smoke`. No final production smoke or external mutation was run by that declaration.
+
+The release owner later approved `target final-production-main-domain-smoke`. User-operated sanitized evidence records authenticated Free access pass, existing YouTube connection, no-autostart pass, Start pass, 3 observed comments with 1 cache hit and 2 provider translations, expected usage delta, Stop pass, no shared unsanitized output, and no stop reason. `final_production_smoke_status=pass`, `operator_remaining_external_verification_status=complete`, and `public_release_capable_status=yes`.
 
 ## User-Owned External Checks
 
@@ -151,7 +161,7 @@ These checks require browser access, Cloudflare dashboard/account access, or app
 
 The current PL-G6 execution preflight is `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`. It prepares the approval surface only; it does not approve or run the checks below.
 
-The completed operation order was: promotion to `main`, main-connected automatic production deployment with activation unset, separately approved private-default production verification, a separately approved login-only activation deployment, then the separately approved final public release declaration. Final production smoke remains later and separate.
+The completed operation order was: promotion to `main`, main-connected automatic production deployment with activation unset, separately approved private-default production verification, a separately approved login-only activation deployment, separately approved final public release declaration, then separately approved final production/main-domain smoke.
 
 | Check | Owner | When | Evidence to record |
 | --- | --- | --- | --- |
@@ -253,10 +263,10 @@ Required closeout labels:
 - `cloudflare_custom_rule_operations_doc_status=complete`
 - `codex_local_verification_status=pass`
 - `operator_external_verification_status=pass-post-activation-browser-11-of-11`
-- `operator_remaining_external_verification_status=action-required-final-smoke`
+- `operator_remaining_external_verification_status=complete`
 - `final_public_release_declaration_status=complete`
 - `final_public_release_declaration_preflight_status=pass`
-- `final_production_smoke_status=not-run-approval-gated`
+- `final_production_smoke_status=pass`
 - `edge_activation_status=deferred-not-required-for-free-public-beta`
 - `edge_protection_readiness_status=pass-with-optional-edge-control-deferred`
 - `edge_rate_limiting_disposition=deferred-existing-free-slot-reserved-for-leaked-credential-protection`
@@ -277,4 +287,4 @@ Required closeout labels:
 - `post_activation_browser_failure_count=0`
 - `pl_g6c_production_smoke_approval_status=present`
 - `live_provider_execution_status=pass-operator-provided-private-launch-smoke`
-- `public_release_capable_status=no`
+- `public_release_capable_status=yes`

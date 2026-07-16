@@ -182,7 +182,7 @@ for (const fragment of [
   "`managed_challenge_passage_guidance` | `about-45-minutes-if-html-managed-challenge-is-used`",
   "`paid_creator_boundary_authority` | `app-side-entitlement-session-usage-quota-not-cloudflare-clearance`",
   "`traffic_growth_response_ladder_status` | `documented`",
-  "`public_release_capable_status` | `no`",
+  "`public_release_capable_status` | `yes`",
   "Free public beta access is `login-only`",
   "YouTube connection alone must not start monitoring, polling, translation, target lookup, or quota consumption.",
   "Start is the first provider-affecting action.",
@@ -264,7 +264,7 @@ for (const fragment of [
   assertIncludes(checklist, fragment, `operator checklist records ${fragment}`);
 }
 
-assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?yes`?/i);
+assert.match(operationsDoc, /`public_release_capable_status` \| `yes`/);
 assert.doesNotMatch(combinedDocs, /operator_production_api_managed_challenge_status[=|]\s*`?(?:selected|enabled|complete|completed)`?/i);
 assert.doesNotMatch(combinedDocs, /edge_activation_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
 assert.doesNotMatch(combinedDocs, /live_provider_execution_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
@@ -319,5 +319,5 @@ for (const file of changedFiles()) {
 }
 
 console.log(
-  "comment translator Cloudflare custom-rule operations contract passed (doc=complete, api_managed_challenge=not-selected, public_release_capable=no, secret_scan=pass)"
+  "comment translator Cloudflare custom-rule operations contract passed (doc=complete, api_managed_challenge=not-selected, public_release_capable=yes, secret_scan=pass)"
 );

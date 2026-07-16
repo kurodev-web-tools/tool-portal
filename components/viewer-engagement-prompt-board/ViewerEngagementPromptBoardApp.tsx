@@ -136,7 +136,9 @@ export function ViewerEngagementPromptBoardApp() {
             <div>
               <p className="text-xs font-black uppercase tracking-wide text-primary-strong">Kuro Stream Kit</p>
               <h1 className="mt-1 text-xl font-black text-foreground sm:text-2xl">配信カンペボード</h1>
-              <p className="mt-1 text-sm text-muted [word-break:auto-phrase]">配信ごとの話題と注意事項を、まずプラン単位で整理します。</p>
+              <p className="mt-1 text-sm text-muted [word-break:auto-phrase]">
+                配信ごとの話題と注意事項を、<span className="whitespace-nowrap">まずプラン単位で整理します。</span>
+              </p>
             </div>
             {activeSection === "plans" ? <button
               ref={createButtonRef}
@@ -171,7 +173,9 @@ export function ViewerEngagementPromptBoardApp() {
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-xl font-black text-foreground">{activeSection === "plans" ? "配信プラン一覧" : activeSection === "cards" ? "配信プラン編集" : activeSection === "live" ? "配信中ワークスペース" : "データ管理"}</h2>
-            <p className="mt-1 text-sm text-muted [word-break:auto-phrase]">{activeSection === "plans" ? "日時順と手動表示順から、次の配信を自動で並べます。" : activeSection === "cards" ? "配信プランを選び、カンペカードの内容と順番を整えます。" : activeSection === "live" ? "現在の配信で読むカンペを、大きく見やすく表示します。" : "ブラウザ内の配信プランとカンペをJSONでバックアップ・復元します。"}</p>
+            <p className="mt-1 text-sm text-muted [word-break:auto-phrase]">
+              {activeSection === "plans" ? "日時順と手動表示順から、次の配信を自動で並べます。" : activeSection === "cards" ? "配信プランを選び、カンペカードの内容と順番を整えます。" : activeSection === "live" ? "現在の配信で読むカンペを、大きく見やすく表示します。" : <>ブラウザ内の配信プランとカンペを<span className="whitespace-nowrap">JSONでバックアップ・復元します。</span></>}
+            </p>
           </div>
           <p className="text-sm font-bold text-muted" aria-live="polite">{loaded ? activeSection === "plans" ? `${data.streamPlans.length}件のプラン` : `${data.streamPlans.reduce((count, plan) => count + plan.promptCards.length, 0)}枚のカンペ` : "保存データを確認中"}</p>
         </div>

@@ -78,7 +78,7 @@ export function DataManagementWorkspace({
       <section className="panel min-w-0 p-4 sm:p-5" aria-labelledby="prompt-board-backup-title">
         <h3 id="prompt-board-backup-title" className="text-lg font-black text-foreground">JSONバックアップ</h3>
         <p className="mt-2 max-w-3xl text-sm text-muted [word-break:auto-phrase]">
-          <span className="block">配信プランとカンペカードをJSONファイルとして保存します。</span>
+          <span className="block">配信プランとカンペカードを<span className="whitespace-nowrap">JSONファイルとして保存します。</span></span>
           <span className="block">アカウントや外部サービスの情報は含みません。</span>
         </p>
         <button
@@ -95,7 +95,7 @@ export function DataManagementWorkspace({
         <p id="prompt-board-restore-help" className="mt-2 max-w-3xl text-sm text-muted [word-break:auto-phrase]">
           <span className="block">バックアップJSONを貼り付けて復元します。</span>
           <span className="block">形式とバージョンを検証します。</span>
-          <span className="block">ブラウザへの保存後に、現在のデータを置き換えます。</span>
+          <span className="block">ブラウザへの保存後に、<span className="whitespace-nowrap">現在のデータを置き換えます。</span></span>
         </p>
         <label htmlFor="prompt-board-restore-json" className="mt-4 block text-sm font-black text-foreground">
           バックアップJSON

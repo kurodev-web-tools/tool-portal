@@ -82,6 +82,12 @@ export function ViewerEngagementPromptBoardApp() {
     requestAnimationFrame(() => createButtonRef.current?.focus());
   };
 
+  const restoreData = (restoredData: PromptBoardData) => {
+    setData(restoredData);
+    setEditor(null);
+    setRequestedCardPlanId(null);
+  };
+
   const persistMutation = (result: StreamPlanMutationResult | PromptCardMutationResult, successMessage: string, shouldCloseEditor = false): boolean => {
     if (!result.ok) {
       setNotice({ kind: "error", message: result.reason === "invalid-input" ? "入力内容を確認してください。" : "対象の配信プランを更新できませんでした。" });
@@ -231,7 +237,7 @@ export function ViewerEngagementPromptBoardApp() {
             onEditCards={showCardEditor}
           />
         ) : null}
-        {activeSection === "data" ? <DataManagementWorkspace data={data} onRestore={setData} /> : null}
+        {activeSection === "data" ? <DataManagementWorkspace data={data} onRestore={restoreData} /> : null}
       </main>
     </div>
   );

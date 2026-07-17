@@ -110,6 +110,12 @@ assert.equal(successfulStorage.read(), JSON.stringify(restoredData), "valid rest
 
 assert.match(appSource, /type ActiveSection = "plans" \| "cards" \| "live" \| "data"/, "data management is a real app section");
 assert.match(appSource, /<DataManagementWorkspace/, "the app renders the data-management workspace");
+assert.match(appSource, /onRestore=\{restoreData\}/, "successful restore uses the app-level state reset owner");
+assert.match(
+  appSource,
+  /const restoreData = \(restoredData: PromptBoardData\) => \{[\s\S]*?setData\(restoredData\);[\s\S]*?setEditor\(null\);[\s\S]*?\};/,
+  "successful restore closes stale plan editor state"
+);
 assert.match(appSource, /データ管理/, "tool-local navigation exposes the implemented data-management destination");
 assert.match(appSource, /grid-cols-4/, "four local destinations share the mobile width evenly");
 assert.match(appSource, /whitespace-nowrap/, "Japanese local-navigation labels do not split mid-phrase");

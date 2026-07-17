@@ -50,6 +50,26 @@ function selectCommittedDiffBase(integrationIsPromoted, branchContainsMain, inte
   return integrationIsPromoted && branchContainsMain ? "origin/main" : integrationDiffBase;
 }
 
+function mergeInProgressIncludesMain() {
+  try {
+    return execSync("git rev-parse --verify MERGE_HEAD", { cwd: root, encoding: "utf8" }).trim()
+      === execSync("git rev-parse origin/main", { cwd: root, encoding: "utf8" }).trim();
+  } catch {
+    return false;
+  }
+}
+
+function contractScopedChangedFiles(files, isCommentTranslatorBranch) {
+  if (isCommentTranslatorBranch) return files;
+  return files.filter((file) => {
+    const normalizedFile = file.toLowerCase();
+    return file === taskPath
+      || normalizedFile.includes("comment-translator")
+      || normalizedFile.includes("comment_translator")
+      || file === "scripts/viewer-engagement-prompt-board-governance-contract.mjs";
+  });
+}
+
 function changedFiles() {
   const integrationDiffBase = "origin/codex/comment-translator-free-public-beta-integration";
   assert.equal(
@@ -68,7 +88,7 @@ function changedFiles() {
     "a post-promotion branch based on main uses the main diff base"
   );
   const integrationIsPromoted = isAncestor(integrationDiffBase, "origin/main");
-  const branchContainsMain = isAncestor("origin/main", "HEAD");
+  const branchContainsMain = isAncestor("origin/main", "HEAD") || mergeInProgressIncludesMain();
   const committedDiffBase = selectCommittedDiffBase(
     integrationIsPromoted,
     branchContainsMain,
@@ -87,6 +107,13 @@ function changedFiles() {
   })
     .split(/\r?\n/)
     .filter(Boolean);
+  const stagedDiff = execSync("git diff --cached --name-only HEAD", {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"]
+  })
+    .split(/\r?\n/)
+    .filter(Boolean);
   const untracked = execSync("git ls-files --others --exclude-standard", {
     cwd: root,
     encoding: "utf8",
@@ -95,7 +122,7 @@ function changedFiles() {
     .split(/\r?\n/)
     .filter(Boolean);
 
-  return [...new Set([...committedDiff, ...uncommittedDiff, ...untracked])].map((file) =>
+  return [...new Set([...committedDiff, ...stagedDiff, ...uncommittedDiff, ...untracked])].map((file) =>
     file.replace(/\\/g, "/")
   );
 }
@@ -129,6 +156,8 @@ for (const requiredPath of [
   taskBoardPath,
   operatorChecklistPath,
   cloudflareOperationsPath,
+  "docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_TRAFFIC_RATE_LIMIT_BACKING_DECISION.md",
   taskPath,
   routeHarnessPath
 ]) {
@@ -156,6 +185,7 @@ for (const section of [
   "## Preflight Labels",
   "## Required Same-Thread Approval Surface",
   "## Completed Login-Only Runtime Activation And Later Final Public Release Declaration",
+  "## Final Production/Main-Domain Smoke 2026-07-16",
   "## Final Public Gate Definition",
   "## Completed Integration-To-Main Promotion Sequence",
   "## Execution Boundary",
@@ -169,12 +199,12 @@ for (const section of [
 }
 
 for (const fragment of [
-  "Status: promotion, main-connected production deployment, login-only runtime activation, and 11/11 post-activation browser verification are complete. Final public release declaration remains blocked. Public-release capable: no.",
+  "Status: promotion, main-connected production deployment, login-only runtime activation, 11/11 post-activation browser verification, Google OAuth approval, edge deferral reconciliation, final public release declaration, and final production/main-domain smoke are complete. Public-release capable: yes.",
   "PL-G6C production/main-domain env readiness is confirmed by operator-provided labels, and production/main-domain private-launch-only smoke is pass by operator-provided browser evidence.",
   "`pl_g6_public_access_change_preflight_status` | `complete`",
   "`pl_g6_public_access_change_preflight_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`",
-  "`pl_g6_public_access_change_status` | `not-run-approval-gated`",
-  "`public_release_capable` | `no`",
+  "`pl_g6_public_access_change_status` | `declared-free-public-beta`",
+  "`public_release_capable` | `yes`",
   "`deploy_upload_status` | `complete-main-connected-and-activation-deployments`",
   "`deploy_upload_evidence_source` | `operator-provided`",
   "`preview_deployment_target` | `cloudflare-preview-domain`",
@@ -191,14 +221,32 @@ for (const fragment of [
   "`release_owner_decision_status` | `accepted-promotion-readiness-only`",
   "`release_owner_exact_approval_status` | `present-promotion-readiness-only`",
   "`release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification`",
-  "`operator_remaining_external_verification_status` | `action-required-google-edge-final-smoke`",
+  "`operator_remaining_external_verification_status` | `complete`",
   "`operator_production_harness_block_status` | `pass-production-404`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
-  "`google_auth_verification_status` | `submitted-pending`",
+  "`google_auth_verification_status` | `approved`",
+  "`unverified_app_warning_status` | `not-observed-after-fresh-reconnect`",
+  "`oauth_reconnect_verification_status` | `pass`",
   "`final_public_gate_target` | `free-public-beta-release-declaration`",
   "`final_public_gate_mutation_target` | `none`",
+  "`final_public_release_declaration_approval_status` | `present-in-thread`",
+  "`final_public_release_declaration_preflight_status` | `pass`",
+  "`final_public_release_declaration_status` | `complete`",
+  "`public_gate_flip_status` | `complete-release-declaration-no-mutation`",
+  "`final_production_smoke_status` | `pass`",
+  "`final_production_smoke_execution_source` | `user-operated-existing-authenticated-browser`",
+  "`final_production_smoke_comment_observed_count` | `3`",
+  "`final_production_smoke_cache_hit_count` | `1`",
+  "`final_production_smoke_provider_translation_count` | `2`",
+  "`final_production_smoke_usage_delta_status` | `expected`",
+  "`final_production_smoke_stop_status` | `pass`",
+  "`final_production_smoke_unsanitized_output_status` | `not-shared`",
+  "`final_production_smoke_stop_reason` | `none`",
   "`login_only_runtime_binding_action` | `unchanged`",
-  "`edge_protection_operation_boundary` | `separate-approval-if-activation-required`",
+  "`edge_protection_operation_boundary` | `optional-control-deferred-no-activation-required-for-free-beta`",
+  "`edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection`",
+  "`cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection`",
+  "`app_enforcement_authority` | `durable-quotas-session-caps-rate-guards`",
   "`public_beta_access_gate_selected` | `login-only`",
   "`public_beta_waitlist_boundary` | `creator-paid-beta-only`",
   "`login_only_runtime_activation_preflight_status` | `pass`",
@@ -240,7 +288,7 @@ for (const fragment of [
   "PL-G6C env apply readiness confirmation approval is present for readiness confirmation only.",
   "This confirmation records operator-action instructions and approval status only; it does not apply production env vars or confirm values.",
   "I approve PL-G6C production/main-domain smoke for the Free public beta integration line only after production env apply readiness is confirmed.",
-  "Keep `public_release_capable=no` through this preflight and declaration task.",
+  "Its `public_release_capable=no` condition remained in force until the later separately approved final production/main-domain smoke passed; that condition is now satisfied.",
   "The separately approved production Worker activation is complete.",
   "I approve the login-only runtime activation environment apply for the Kuro Stream Kit / Comment Translator Free public beta integration line in the Cloudflare production Worker environment only.",
   "I approve the PL-G6 final public release declaration for the Kuro Stream Kit / Comment Translator Free public beta integration line only after the separately approved login-only runtime activation and required post-activation checks are recorded pass",
@@ -248,8 +296,8 @@ for (const fragment of [
   "`COMMENT_TRANSLATOR_FREE_BETA_RUNTIME_ACCESS` remains unchanged at the separately activated login-only runtime policy.",
   "Cloudflare production edge protection activation or confirmation remains a separate approval-gated operation when required.",
   "The final public gate is a release declaration after the separately approved login-only activation and required post-activation checks are recorded pass, Google OAuth verification is approved, production edge protection is confirmed ready, and the production route/API harness remains blocked with HTTP 404.",
-  "Google OAuth verification is currently submitted and pending, so the final release declaration remains blocked.",
-  "Final production/main-domain smoke remains a later separate approval-gated task after the release declaration.",
+  "Google OAuth verification is approved, production edge readiness passes, the active deployment matches the latest successful main build, and the same-process production route/API harness recheck returned HTTP 404.",
+  "Final production/main-domain smoke was a later separate approval-gated task after the release declaration.",
   "`main_promotion_status` | `complete-pr-640-merged-main-contained`",
   "`main_connected_deployment_status` | `pass`",
   "`main_connected_workers_build_status` | `success`",
@@ -268,12 +316,13 @@ for (const fragment of [
   "`production_route_api_harness_status` | `pass-404`",
   "`browser_output_sanitization_status` | `pass`",
   "`optional_limit_proof_disposition` | `accepted-deterministic-evidence`",
-  "`edge_protection_readiness_status` | `blocked-activation-or-confirmation-required`",
+  "`edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred`",
+  "`edge_activation_status` | `deferred-not-required-for-free-public-beta`",
   "existing allowed tester allowed; preview 5/min override tester-only; Creator/paid waitlist, billing, admin, and privileged surfaces unchanged",
   "activation_apply_status=blocked-deploy-upload-not-approved",
   "remote_mutation_count=0",
   "Do not run Cloudflare mutation, production/main deploy/upload, production env apply, public gate flip, production/main-domain smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe live action, paid entitlement runtime, OBS overlay route/token runtime, or main promotion from this preflight slice.",
-  "The only current unrun release operation in this chain is the final public release declaration.",
+  "At declaration time, the only unrun release operation in this chain was the separately approved final production/main-domain smoke; the result below supersedes that declaration-time state.",
   "`main_connected_deployment_activation_state` | `login-only-active`",
   "I approve creating and merging the integration-to-main promotion PR",
   "I approve post-deploy private-default production verification for the main-connected deployment only.",
@@ -283,10 +332,34 @@ for (const fragment of [
   assertIncludes(plG6Doc, fragment, `PL-G6 doc records ${fragment}`);
 }
 
+function numericTableValue(source, label) {
+  const match = source.match(new RegExp("\\| `" + escaped(label) + "` \\| `(\\d+)` \\|"));
+  assert.ok(match, `${label} is present as a numeric table value`);
+  return Number(match[1]);
+}
+
+const finalSmokeObservedCount = numericTableValue(
+  plG6Doc,
+  "final_production_smoke_comment_observed_count"
+);
+const finalSmokeCacheHitCount = numericTableValue(
+  plG6Doc,
+  "final_production_smoke_cache_hit_count"
+);
+const finalSmokeProviderTranslationCount = numericTableValue(
+  plG6Doc,
+  "final_production_smoke_provider_translation_count"
+);
+assert.equal(
+  finalSmokeObservedCount,
+  finalSmokeCacheHitCount + finalSmokeProviderTranslationCount,
+  "final smoke observed comments equal cache hits plus provider translations"
+);
+
 for (const fragment of [
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
   "pl_g6_public_access_change_preflight_status=complete",
-  "pl_g6_public_access_change_status=not-run-approval-gated",
+  "pl_g6_public_access_change_status=declared-free-public-beta",
   "pl_g6_first_operational_target=production-route-api-harness-block-removal",
   "pl_g6_first_operational_target_status=complete-repository-side-not-deployed",
   "pl_g6_first_operational_target_approval_status=approved-in-thread",
@@ -309,19 +382,25 @@ for (const fragment of [
   "short_reaction_filter_status=pass-operator-provided-private-launch-browser",
   "unauthorized_admin_visibility_status=pass-hidden-for-non-admin-account",
   "unauthorized_translator_access_status=pass-blocked-for-non-allowed-account",
-  "google_auth_verification_status=submitted-pending",
+  "google_auth_verification_status=approved",
+  "unverified_app_warning_status=not-observed-after-fresh-reconnect",
+  "oauth_reconnect_verification_status=pass",
   "final_public_gate_target=free-public-beta-release-declaration",
   "final_public_gate_mutation_target=none",
   "login_only_runtime_binding_action=unchanged",
-  "edge_protection_operation_boundary=separate-approval-if-activation-required",
+  "edge_protection_operation_boundary=optional-control-deferred-no-activation-required-for-free-beta",
+  "edge_rate_limiting_disposition=deferred-existing-free-slot-reserved-for-leaked-credential-protection",
+  "cloudflare_free_rate_limiting_slot_status=occupied-leaked-credential-protection",
+  "app_enforcement_authority=durable-quotas-session-caps-rate-guards",
   "main_promotion_status=complete-pr-640-merged-main-contained",
   "main_connected_deployment_status=pass",
   "main_connected_workers_build_status=success",
   "login_only_runtime_activation_status=complete-production-worker-deployment",
   "post_activation_browser_verification_status=pass-11-of-11",
   "post_activation_browser_failure_count=0",
-  "edge_protection_readiness_status=blocked-activation-or-confirmation-required",
-  "public_release_capable=no"
+  "edge_protection_readiness_status=pass-with-optional-edge-control-deferred",
+  "edge_activation_status=deferred-not-required-for-free-public-beta",
+  "public_release_capable=yes"
 ]) {
   assertIncludes(task, fragment, `task.md records ${fragment}`);
 }
@@ -345,17 +424,21 @@ assert.match(
 for (const fragment of [
   "`pl_g6_public_access_change_preflight_status` | `complete`",
   "`pl_g6_public_access_change_preflight_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`",
-  "`pl_g6_public_access_change_status` | `not-run-approval-gated`",
+  "`pl_g6_public_access_change_status` | `declared-free-public-beta`",
   "`pl_g6c_production_main_domain_env_readiness_status` | `complete`",
-  "`google_auth_verification_status` | `submitted-pending`",
+  "`google_auth_verification_status` | `approved`",
+  "`unverified_app_warning_status` | `not-observed-after-fresh-reconnect`",
+  "`oauth_reconnect_verification_status` | `pass`",
   "`final_public_gate_target` | `free-public-beta-release-declaration`",
   "`final_public_gate_mutation_target` | `none`",
   "`main_promotion_status` | `complete-pr-640-merged-main-contained`",
   "`main_connected_workers_build_status` | `success`",
   "`login_only_runtime_activation_status` | `complete-production-worker-deployment`",
   "`post_activation_browser_verification_status` | `pass-11-of-11`",
-  "`edge_protection_readiness_status` | `blocked-activation-or-confirmation-required`",
-  "`public_release_capable_status` | `no`"
+  "`edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred`",
+  "`edge_activation_status` | `deferred-not-required-for-free-public-beta`",
+  "`edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection`",
+  "`public_release_capable_status` | `yes`"
 ]) {
   assertIncludes(taskBoard, fragment, `task board records ${fragment}`);
 }
@@ -370,9 +453,9 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "operator_remaining_external_verification_status` | `action-required-google-edge-final-smoke`",
+  "operator_remaining_external_verification_status` | `complete`",
   "operator_production_harness_block_status` | `pass-production-404`",
-  "google_auth_verification_status` | `submitted-pending`",
+  "google_auth_verification_status` | `approved`",
   "final_public_gate_mutation_target` | `none`"
 ]) {
   assertIncludes(operatorChecklist, fragment, `operator checklist keeps ${fragment}`);
@@ -384,14 +467,14 @@ for (const fragment of [
   "post_activation_browser_failure_count` | `0`",
   "main_promotion_status` | `complete-pr-640-merged-main-contained`",
   "main_connected_workers_build_status` | `success`",
-  "edge_protection_readiness_status` | `blocked-activation-or-confirmation-required`"
+  "edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred`"
 ]) {
   assertIncludes(operatorChecklist, fragment, `operator checklist reconciles current activation ${fragment}`);
 }
 
 assertIncludes(
   cloudflareOperations,
-  "Production route/API harness exposure must be blocked or removed before production exposure.",
+  "Production route/API harness remains blocked with HTTP 404.",
   "Cloudflare operations keeps production harness boundary"
 );
 assertIncludes(
@@ -400,9 +483,8 @@ assertIncludes(
   "Cloudflare operations separates edge protection from the final release declaration"
 );
 
-assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?yes`?/i);
-assert.doesNotMatch(combinedDocs, /pl_g6_public_access_change_status[=|]\s*`?(?:configured|complete|completed|done|run)`?/i);
-assert.doesNotMatch(combinedDocs, /public_gate_flip_status[=|]\s*`?(?:configured|complete|completed|done|run)`?/i);
+assert.match(plG6Doc, /`public_release_capable` \| `yes`/);
+assert.doesNotMatch(combinedDocs, /final_public_gate_mutation_target[=|]\s*`?(?!none)/i);
 
 for (const [label, source] of [
   [plG6DocPath, plG6Doc],
@@ -438,6 +520,9 @@ const allowedChangedFiles = new Set([
   taskBoardPath,
   operatorChecklistPath,
   cloudflareOperationsPath,
+  "docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md",
+  "docs/active/COMMENT_TRANSLATOR_PUBLIC_TRAFFIC_RATE_LIMIT_BACKING_DECISION.md",
+  "lib/comment-translator-public-traffic-rate-limit-backing-policy.ts",
   taskPath,
   routeHarnessPath,
   "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
@@ -445,14 +530,25 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
   "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-oauth-public-info-page-contract.mjs",
   "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
+  "scripts/viewer-engagement-prompt-board-governance-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md"
 ]);
 
-for (const file of changedFiles()) {
+const isCommentTranslatorBranch = execSync("git branch --show-current", { cwd: root, encoding: "utf8" })
+  .trim()
+  .includes("comment-translator");
+assert.deepEqual(
+  contractScopedChangedFiles(["app/tools/viewer-engagement-prompt-board/page.tsx", taskBoardPath, taskPath], false),
+  [taskBoardPath, taskPath],
+  "cross-feature promotion scopes the contract allowlist to Comment Translator authority"
+);
+
+for (const file of contractScopedChangedFiles(changedFiles(), isCommentTranslatorBranch)) {
   assert.ok(allowedChangedFiles.has(file), `PL-G6 preflight change stays in allowed files: ${file}`);
   if (file.endsWith(".mjs")) continue;
   assertNoSensitiveValues(read(file), `changed file ${file}`);

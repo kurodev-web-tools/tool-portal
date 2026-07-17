@@ -46,6 +46,26 @@ function selectCommittedDiffBase(integrationIsPromoted, branchContainsMain, inte
   return integrationIsPromoted && branchContainsMain ? "origin/main" : integrationDiffBase;
 }
 
+function mergeInProgressIncludesMain() {
+  try {
+    return execSync("git rev-parse --verify MERGE_HEAD", { cwd: root, encoding: "utf8" }).trim()
+      === execSync("git rev-parse origin/main", { cwd: root, encoding: "utf8" }).trim();
+  } catch {
+    return false;
+  }
+}
+
+function contractScopedChangedFiles(files, isCommentTranslatorBranch) {
+  if (isCommentTranslatorBranch) return files;
+  return files.filter((file) => {
+    const normalizedFile = file.toLowerCase();
+    return file === taskPath
+      || normalizedFile.includes("comment-translator")
+      || normalizedFile.includes("comment_translator")
+      || file === "scripts/viewer-engagement-prompt-board-governance-contract.mjs";
+  });
+}
+
 function changedFiles() {
   const integrationDiffBase = "origin/codex/comment-translator-free-public-beta-integration";
   assert.equal(
@@ -64,7 +84,7 @@ function changedFiles() {
     "a post-promotion branch based on main uses the main diff base"
   );
   const integrationIsPromoted = isAncestor(integrationDiffBase, "origin/main");
-  const branchContainsMain = isAncestor("origin/main", "HEAD");
+  const branchContainsMain = isAncestor("origin/main", "HEAD") || mergeInProgressIncludesMain();
   const committedDiffBase = selectCommittedDiffBase(
     integrationIsPromoted,
     branchContainsMain,
@@ -87,6 +107,13 @@ function changedFiles() {
   })
     .split(/\r?\n/)
     .filter(Boolean);
+  const stagedDiff = execSync("git diff --cached --name-only HEAD", {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"]
+  })
+    .split(/\r?\n/)
+    .filter(Boolean);
   const untracked = execSync("git ls-files --others --exclude-standard", {
     cwd: root,
     encoding: "utf8",
@@ -95,7 +122,7 @@ function changedFiles() {
     .split(/\r?\n/)
     .filter(Boolean);
 
-  return [...new Set([...committedDiff, ...uncommittedDiff, ...untracked])].map((file) =>
+  return [...new Set([...committedDiff, ...stagedDiff, ...uncommittedDiff, ...untracked])].map((file) =>
     file.replace(/\\/g, "/")
   );
 }
@@ -178,7 +205,7 @@ for (const section of [
   "## Current Decision Labels",
   "## Operator Update 2026-07-09",
   "## User-Owned External Checks",
-  "### Cloudflare Edge Rate-Limit Check",
+  "### Deferred Cloudflare Edge Rate-Limit Check",
   "### Browser Smoke Check",
   "### Limit Behavior Checks",
   "## Codex-Owned Local Checks",
@@ -191,7 +218,26 @@ for (const fragment of [
   "`operator_cloudflare_edge_rate_limit_activation_status`",
   "`operator_cloudflare_env_reference_status`",
   "`operator_external_verification_status` | `pass-post-activation-browser-11-of-11`",
-  "`operator_remaining_external_verification_status` | `action-required-google-edge-final-smoke`",
+  "`operator_remaining_external_verification_status` | `complete`",
+  "`final_public_release_declaration_status` | `complete`",
+  "`final_public_release_declaration_preflight_status` | `pass`",
+  "`final_production_smoke_status` | `pass`",
+  "`final_production_smoke_execution_source` | `user-operated-existing-authenticated-browser`",
+  "`final_production_smoke_comment_observed_count` | `3`",
+  "`final_production_smoke_cache_hit_count` | `1`",
+  "`final_production_smoke_provider_translation_count` | `2`",
+  "`final_production_smoke_usage_delta_status` | `expected`",
+  "`final_production_smoke_stop_status` | `pass`",
+  "`final_production_smoke_unsanitized_output_status` | `not-shared`",
+  "`final_production_smoke_stop_reason` | `none`",
+  "`google_auth_verification_status` | `approved`",
+  "`unverified_app_warning_status` | `not-observed-after-fresh-reconnect`",
+  "`oauth_reconnect_verification_status` | `pass`",
+  "`edge_activation_status` | `deferred-not-required-for-free-public-beta`",
+  "`edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred`",
+  "`edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection`",
+  "`cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection`",
+  "`app_enforcement_authority` | `durable-quotas-session-caps-rate-guards`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_cloudflare_preview_rule_scope` | `preview-host-translator-integrations-comment-translator-api-route-classes`",
   "`operator_cloudflare_env_reference_status` | `present-enabled-label`",
@@ -207,7 +253,7 @@ for (const fragment of [
   "`cloudflare_custom_rule_operations_doc` | `docs/active/COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md`",
   "`api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only`",
   "`pl_g6_public_access_change_preflight_status` | `complete`",
-  "`pl_g6_public_access_change_status` | `not-run-approval-gated`",
+  "`pl_g6_public_access_change_status` | `declared-free-public-beta`",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md",
   "`operator_start_to_translation_smoke_status`",
   "`operator_burst_comment_smoke_status`",
@@ -227,8 +273,8 @@ for (const fragment of [
   "public_launch_operator_qa_checklist_status=complete",
   "cloudflare_custom_rule_operations_doc_status=complete",
   "operator_external_verification_status=pass-post-activation-browser-11-of-11",
-  "operator_remaining_external_verification_status=action-required-google-edge-final-smoke",
-  "public_release_capable_status=no"
+  "operator_remaining_external_verification_status=complete",
+  "public_release_capable_status=yes"
 ]) {
   assertIncludes(checklist, fragment, `checklist records ${fragment}`);
 }
@@ -236,7 +282,7 @@ for (const fragment of [
 for (const fragment of [
   "`public_launch_operator_qa_checklist_status` | `complete`",
   "`operator_external_verification_status` | `pass-post-activation-browser-11-of-11`",
-  "`operator_remaining_external_verification_status` | `action-required-google-edge-final-smoke`",
+  "`operator_remaining_external_verification_status` | `complete`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_cloudflare_env_reference_status` | `present-enabled-label`",
   "`operator_free_beta_login_browser_smoke_status` | `pass-post-activation-production-browser`",
@@ -253,8 +299,8 @@ for (const fragment of [
   "`Public launch operator QA checklist`",
   "`Cloudflare custom-rule operations doc`",
   "post-activation production browser verification passed 11/11",
-  "Google OAuth approval, production edge readiness, the final release declaration, and final production smoke remain action-required / approval-gated",
-  "not-run / approval-gated"
+  "post-activation production browser verification passed 11/11, Google OAuth is approved, optional edge-control deferral is reconciled, and the final release declaration and final production/main-domain smoke are complete.",
+  "the final release declaration and final production/main-domain smoke are complete"
 ]) {
   assertIncludes(taskBoard, fragment, `task board records ${fragment}`);
 }
@@ -300,7 +346,11 @@ for (const fragment of [
   "optional 30-minute session smoke",
   "monthly 20,000 provider-input-character fixture/live proof",
   "COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md",
-  "Remaining public launch operator actions are limited to Google OAuth verification approval",
+  "The declaration and separately approved final production/main-domain smoke are complete; `public_release_capable=yes`.",
+  "final_production_smoke_status=pass",
+  "final_production_smoke_comment_observed_count=3",
+  "final_production_smoke_cache_hit_count=1",
+  "final_production_smoke_provider_translation_count=2",
   "COMMENT_TRANSLATOR_PUBLIC_LAUNCH_OPERATOR_QA_CHECKLIST.md"
 ]) {
   assertIncludes(task, fragment, `task.md records ${fragment}`);
@@ -344,9 +394,9 @@ assert.match(
 assert.match(requirements, /30 translated messages\/min/, "requirements keep public per-minute limit");
 assert.match(requirements, /30 min\/session/, "requirements keep public session limit");
 
-assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?yes`?/i);
+assert.match(checklist, /`public_release_capable_status` \| `yes`/);
 assert.doesNotMatch(combinedDocs, /edge_activation_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
-assert.doesNotMatch(combinedDocs, /public_gate_flip_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
+assert.doesNotMatch(combinedDocs, /final_public_gate_mutation_target[=|]\s*`?(?!none)/i);
 
 for (const [label, source] of [
   [checklistPath, checklist],
@@ -366,6 +416,8 @@ const allowedChangedFiles = new Set([
   taskPath,
   rateLimitDecisionPath,
   operationsDocPath,
+  "docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md",
+  "lib/comment-translator-public-traffic-rate-limit-backing-policy.ts",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
   plG6PreflightPath,
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
@@ -374,20 +426,31 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g2a-server-action-route-api-harness-contract.mjs",
   "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-oauth-public-info-page-contract.mjs",
   "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/viewer-engagement-prompt-board-governance-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md"
 ]);
 
-for (const file of changedFiles()) {
+const isCommentTranslatorBranch = execSync("git branch --show-current", { cwd: root, encoding: "utf8" })
+  .trim()
+  .includes("comment-translator");
+assert.deepEqual(
+  contractScopedChangedFiles(["app/tools/viewer-engagement-prompt-board/page.tsx", taskBoardPath, taskPath], false),
+  [taskBoardPath, taskPath],
+  "cross-feature promotion scopes the contract allowlist to Comment Translator authority"
+);
+
+for (const file of contractScopedChangedFiles(changedFiles(), isCommentTranslatorBranch)) {
   assert.ok(allowedChangedFiles.has(file), `operator QA checklist change stays in allowed files: ${file}`);
   if (file.endsWith(".mjs")) continue;
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 
 console.log(
-  "comment translator public launch operator QA checklist contract passed (operator_external_verification=pass-post-activation-browser-11-of-11, public_release_capable=no, secret_scan=pass)"
+  "comment translator public launch operator QA checklist contract passed (operator_external_verification=complete-final-production-smoke, public_release_capable=yes, secret_scan=pass)"
 );

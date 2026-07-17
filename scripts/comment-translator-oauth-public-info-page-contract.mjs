@@ -49,7 +49,9 @@ for (const requiredLegalText of [
 }
 
 for (const requiredPacketText of [
-  "google_auth_verification_status=submitted-pending",
+  "google_auth_verification_status=approved",
+  "unverified_app_warning_status=not-observed-after-fresh-reconnect",
+  "oauth_reconnect_verification_status=pass",
   "public_release_capable=no",
   "youtube.readonly",
   "/tools/comment-translator/about/",

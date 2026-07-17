@@ -136,8 +136,8 @@ for (const marker of [
 }
 
 for (const marker of [
-  "`google_auth_verification_status` | `submitted-pending`",
-  "`public_release_capable_status` | `no`"
+  "`google_auth_verification_status` | `approved`",
+  "`public_release_capable_status` | `yes`"
 ]) {
   assert.ok(translatorBoard.includes(marker), `${translatorBoardPath} preserves ${marker}`);
 }
@@ -155,5 +155,5 @@ for (const pattern of [
 }
 
 console.log(
-  "viewer engagement prompt board governance contract passed (translator_priority=P0, next_tool_priority=P1, storage_foundation=yes, ui_implemented=yes, mvp_qa=local-complete)"
+  "viewer engagement prompt board governance contract passed (translator_priority=P0, translator_public_release_capable=yes, next_tool_priority=P1, storage_foundation=yes, ui_implemented=yes, mvp_qa=local-complete)"
 );

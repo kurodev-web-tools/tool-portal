@@ -2,11 +2,11 @@
 
 import { useSyncExternalStore } from "react";
 
-export const workspaceSidebarStates = ["expanded", "rail", "hidden"] as const;
+export const workspaceSidebarStates = ["expanded", "rail"] as const;
 export type PortalWorkspaceSidebarState = (typeof workspaceSidebarStates)[number];
 
 export const portalWorkspaceSidebarStorageKey = "v-streamer-tools-portal-workspace-sidebar";
-export const portalWorkspaceSidebarStorageVersion = 1;
+export const portalWorkspaceSidebarStorageVersion = 2;
 export const defaultPortalWorkspaceSidebarState: PortalWorkspaceSidebarState = "expanded";
 
 const listeners = new Set<() => void>();
@@ -23,14 +23,19 @@ export function parsePortalWorkspaceSidebarState(raw: string | null): PortalWork
 
   try {
     const payload: unknown = JSON.parse(raw);
-    if (
-      typeof payload !== "object" ||
-      payload === null ||
-      !("version" in payload) ||
-      payload.version !== portalWorkspaceSidebarStorageVersion ||
-      !("state" in payload) ||
-      !isPortalWorkspaceSidebarState(payload.state)
-    ) {
+    if (typeof payload !== "object" || payload === null || !("version" in payload) || !("state" in payload)) {
+      return defaultPortalWorkspaceSidebarState;
+    }
+
+    if (payload.version === 1) {
+      if (payload.state === "hidden") {
+        return "rail";
+      }
+
+      return isPortalWorkspaceSidebarState(payload.state) ? payload.state : defaultPortalWorkspaceSidebarState;
+    }
+
+    if (payload.version !== portalWorkspaceSidebarStorageVersion || !isPortalWorkspaceSidebarState(payload.state)) {
       return defaultPortalWorkspaceSidebarState;
     }
 

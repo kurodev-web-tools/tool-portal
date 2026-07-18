@@ -134,6 +134,13 @@ export function ViewerEngagementPromptBoardApp() {
     setNotice(null);
   };
 
+  const showLivePlan = (planId: string) => {
+    if (data.streamPlans.some((plan) => plan.id === planId && plan.status === "live")) {
+      setActiveSection("live");
+      setNotice(null);
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-background" data-viewer-engagement-prompt-board={activeSection}>
       <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur-sm">
@@ -220,6 +227,7 @@ export function ViewerEngagementPromptBoardApp() {
           onPrepare={(planId) => persistMutation(moveIdeaToPreparing(data, planId, createMutationContext()), "アイデアを準備中へ移しました。")}
           onDelete={deletePlan}
           onEditCards={showCardEditor}
+          onShowLive={showLivePlan}
         /> : null}
         {activeSection === "cards" ? (
           <PromptCardWorkspace

@@ -25,7 +25,8 @@ function StreamPlanCard({
   onComplete,
   onPrepare,
   onDelete,
-  onEditCards
+  onEditCards,
+  onShowLive
 }: {
   readonly plan: StreamPlan;
   readonly derivedLabel: string | null;
@@ -39,6 +40,7 @@ function StreamPlanCard({
   readonly onPrepare: (planId: string) => void;
   readonly onDelete: (planId: string) => void;
   readonly onEditCards: (planId: string) => void;
+  readonly onShowLive: (planId: string) => void;
 }) {
   const statusLabel = plan.status === "live" ? "配信中" : plan.status === "preparing" ? "準備中" : plan.status === "idea" ? "アイデア" : "完了";
   return (
@@ -49,7 +51,27 @@ function StreamPlanCard({
             {derivedLabel === null ? null : <span className="rounded-base bg-primary-soft px-2 py-1 text-xs font-black text-primary-strong">{derivedLabel}</span>}
             <span className="rounded-base border border-border bg-surface-muted px-2 py-1 text-xs font-bold text-muted">{statusLabel}</span>
           </div>
-          <h3 className="mt-2 break-words text-base font-black text-foreground">{plan.title}</h3>
+          {plan.status === "live" ? (
+            <h3 className="mt-2">
+              <button
+                type="button"
+                className="group flex min-h-11 max-w-full flex-col items-start gap-1 rounded-base border border-primary/30 bg-primary-soft/55 px-3 py-2 text-left text-base font-black text-primary-strong transition hover:border-primary hover:bg-primary-soft sm:flex-row sm:items-center sm:gap-2"
+                aria-label={`${plan.title}の配信中ボードを開く`}
+                data-open-live-plan={plan.id}
+                onClick={() => onShowLive(plan.id)}
+              >
+                <span className="min-w-0 break-words [word-break:auto-phrase]">{plan.title}</span>
+                <span className="flex shrink-0 items-center gap-1 text-xs font-black">
+                  配信中を開く
+                  <svg viewBox="0 0 16 16" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" />
+                  </svg>
+                </span>
+              </button>
+            </h3>
+          ) : (
+            <h3 className="mt-2 break-words text-base font-black text-foreground">{plan.title}</h3>
+          )}
         </div>
         <button type="button" className="flat-control min-h-10 px-3 py-2" onClick={() => onEdit(plan)} aria-label={`${plan.title}を編集`}>
           編集
@@ -132,7 +154,8 @@ export function StreamPlanList({
   onComplete,
   onPrepare,
   onDelete,
-  onEditCards
+  onEditCards,
+  onShowLive
 }: {
   readonly groups: StreamPlanGroups;
   readonly onEdit: (plan: StreamPlan) => void;
@@ -143,8 +166,9 @@ export function StreamPlanList({
   readonly onPrepare: (planId: string) => void;
   readonly onDelete: (planId: string) => void;
   readonly onEditCards: (planId: string) => void;
+  readonly onShowLive: (planId: string) => void;
 }) {
-  const actions = { onEdit, onDuplicate, onMove, onMakeCurrent, onComplete, onPrepare, onDelete, onEditCards };
+  const actions = { onEdit, onDuplicate, onMove, onMakeCurrent, onComplete, onPrepare, onDelete, onEditCards, onShowLive };
   return (
     <div className="grid gap-4">
       <PlanGroup id="current" title="現在の配信" description="同時に1件だけ。切り替えると以前の配信は準備中へ戻ります。" plans={groups.current} emptyMessage="現在の配信はありません。" getDerivedLabel={() => "現在"} actions={actions} />

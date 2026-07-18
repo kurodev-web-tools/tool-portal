@@ -9,8 +9,9 @@ import { PortalSettingsPanel } from "@/components/portal/PortalSettingsPanel";
 import { SiteTipsDialog } from "@/components/portal/SiteTipsDialog";
 import { ThemeToggle } from "@/components/portal/ThemeToggle";
 import type { CommentTranslatorAdminShortcutState } from "@/lib/comment-translator-admin-shortcut-shared";
-import { portalCopy } from "@/lib/portal-copy";
+import { getToolCopy, portalCopy } from "@/lib/portal-copy";
 import type { AccountSessionBrowserSafeViewModel } from "@/lib/supabase/session";
+import { sidebarTools } from "@/lib/tools";
 
 type NavigationCopy = (typeof portalCopy)["ja"]["navigation"] | (typeof portalCopy)["en"]["navigation"];
 
@@ -178,6 +179,36 @@ export function PortalHeader({
                   </Link>
                 );
               })}
+              <section data-portal-mobile-implemented-tools="shared-sidebar-tools" className="pt-4">
+                <div className="mb-2 flex items-center gap-2 px-1">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="shrink-0 text-[11px] font-bold text-muted">{copy.availableTools}</span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+                <div className="space-y-2">
+                  {sidebarTools.map((tool) => {
+                    const active = pathname === tool.href || pathname.startsWith(`${tool.href}/`);
+                    return (
+                      <Link
+                        key={tool.id}
+                        href={tool.href}
+                        onClick={() => setDrawerOpen(false)}
+                        className={[
+                          "flex items-center gap-3 rounded-base border px-3 py-2.5 text-sm font-bold transition",
+                          active
+                            ? "border-primary bg-primary-soft text-primary-strong"
+                            : "border-border bg-surface-muted text-foreground hover:bg-surface"
+                        ].join(" ")}
+                      >
+                        <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-base bg-surface text-xs font-bold text-primary-strong">
+                          {tool.icon}
+                        </span>
+                        <span className="min-w-0 leading-5">{getToolCopy(tool.id, locale).name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
               {adminShortcutAvailable ? (
                 <Link
                   href={adminShortcut.href}

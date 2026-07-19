@@ -65,7 +65,7 @@ describe("prompt board video timeline contract", () => {
       return;
     }
 
-    const { visualStateAt, visualStateKind } = implementation;
+    const { visualStateAt } = implementation;
 
     expect(visualStateAt(519)).toEqual({ kind: "live", selectedPromptId: "prompt-weekly-recap" });
     expect(visualStateAt(520)).toEqual({
@@ -79,7 +79,10 @@ describe("prompt board video timeline contract", () => {
       pressed: false,
     });
     expect(visualStateAt(534)).toEqual({ kind: "live", selectedPromptId: "prompt-current-favorite" });
-    expect(visualStateKind(visualStateAt(749))).toBe("live");
+    expect(visualStateAt(749)).toEqual({
+      kind: "live",
+      selectedPromptId: "prompt-current-favorite",
+    });
   });
 
   test("keeps the live workspace unselected until prompt one is selected", async () => {
@@ -91,6 +94,9 @@ describe("prompt board video timeline contract", () => {
 
     const { visualStateAt } = implementation;
 
+    expect(visualStateAt(419)).toEqual({ kind: "make-current", settled: false });
+    expect(visualStateAt(420)).toEqual({ kind: "make-current", settled: true });
+    expect(visualStateAt(449)).toEqual({ kind: "make-current", settled: true });
     expect(visualStateAt(450)).toEqual({ kind: "live", selectedPromptId: null });
     expect(visualStateAt(473)).toEqual({ kind: "live", selectedPromptId: null });
     expect(visualStateAt(474)).toEqual({

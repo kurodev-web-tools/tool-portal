@@ -126,21 +126,3 @@ export function visualStateAt(frame: number): PromptBoardVisualState {
   }
   return { kind: "live", selectedPromptId: "prompt-current-favorite" };
 }
-
-export function assertNever(value: never): never {
-  throw new Error(`Unexpected visual state: ${String(value)}`);
-}
-
-export function visualStateKind(state: PromptBoardVisualState): PromptBoardVisualState["kind"] {
-  switch (state.kind) {
-    case "plan-editor":
-    case "plan-created":
-    case "cards":
-    case "make-current":
-    case "live":
-    case "next-prompt":
-      return state.kind;
-    default:
-      return assertNever(state);
-  }
-}

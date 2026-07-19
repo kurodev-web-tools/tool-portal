@@ -1,16 +1,6 @@
+/// <reference types="vite/client" />
+
 import { describe, expect, test } from "vitest";
-
-type RawModuleOptions = {
-  readonly eager?: boolean;
-  readonly import?: string;
-  readonly query?: string;
-};
-
-declare global {
-  interface ImportMeta {
-    readonly glob: (pattern: string, options: RawModuleOptions) => Readonly<Record<string, string>>;
-  }
-}
 
 describe("Japanese Stage A composition contract", () => {
   test("registers one Japanese composition with locked video metadata", async () => {

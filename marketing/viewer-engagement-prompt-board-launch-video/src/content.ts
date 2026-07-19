@@ -1,16 +1,31 @@
 export type PromptCategory = "talking-point" | "question";
 export type PromptSegment = "main" | "closing";
 export type PromptTone = "casual";
+export const PROMPT_IDS = [
+  "prompt-weekly-recap",
+  "prompt-current-favorite",
+  "prompt-weekend-question",
+] as const;
+export type PromptId = (typeof PROMPT_IDS)[number];
+export type PromptOrder = 1 | 2 | 3;
 
-export type PromptCardFixture = {
-  readonly id: string;
+export type PromptCardFixture<Id extends PromptId, Order extends PromptOrder> = {
+  readonly id: Id;
   readonly body: string;
   readonly category: PromptCategory;
   readonly segment: PromptSegment;
   readonly tone: PromptTone;
   readonly safetyNotes: "";
-  readonly order: number;
+  readonly order: Order;
 };
+
+export type PromptFixtures = readonly [
+  PromptCardFixture<(typeof PROMPT_IDS)[0], 1>,
+  PromptCardFixture<(typeof PROMPT_IDS)[1], 2>,
+  PromptCardFixture<(typeof PROMPT_IDS)[2], 3>,
+];
+
+export type PromptBoardCaptions = readonly [string, string, string, string, string, string, string, string];
 
 export type PromptBoardVisualState =
   | { readonly kind: "plan-editor"; readonly typedCharacters: number }
@@ -19,11 +34,11 @@ export type PromptBoardVisualState =
   | { readonly kind: "make-current"; readonly settled: boolean }
   | {
       readonly kind: "live";
-      readonly selectedPromptId: "prompt-weekly-recap" | "prompt-current-favorite" | null;
+      readonly selectedPromptId: PromptId | null;
     }
   | {
       readonly kind: "next-prompt";
-      readonly selectedPromptId: "prompt-weekly-recap";
+      readonly selectedPromptId: PromptId;
       readonly pressed: boolean;
     };
 
@@ -62,8 +77,8 @@ export type PromptBoardVideoContent = {
     readonly id: "plan-weekend-chat";
     readonly title: "週末雑談";
   };
-  readonly prompts: readonly PromptCardFixture[];
-  readonly captions: readonly string[];
+  readonly prompts: PromptFixtures;
+  readonly captions: PromptBoardCaptions;
 };
 
 const UI_LABELS = {
@@ -109,7 +124,7 @@ export const JA_CONTENT = {
       segment: "main",
       tone: "casual",
       safetyNotes: "",
-      order: 0,
+      order: 1,
     },
     {
       id: "prompt-current-favorite",
@@ -118,7 +133,7 @@ export const JA_CONTENT = {
       segment: "main",
       tone: "casual",
       safetyNotes: "",
-      order: 1,
+      order: 2,
     },
     {
       id: "prompt-weekend-question",
@@ -127,7 +142,7 @@ export const JA_CONTENT = {
       segment: "closing",
       tone: "casual",
       safetyNotes: "",
-      order: 2,
+      order: 3,
     },
   ],
   captions: [

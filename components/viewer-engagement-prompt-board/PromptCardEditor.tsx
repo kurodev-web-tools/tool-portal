@@ -25,6 +25,11 @@ function readTone(value: string): PromptCardTone {
   return promptCardTones.find((tone) => tone === value) ?? "neutral";
 }
 
+function focusAndReveal(element: HTMLElement | null) {
+  element?.focus({ preventScroll: true });
+  element?.scrollIntoView({ block: "center", inline: "nearest" });
+}
+
 export function PromptCardEditor({
   card,
   onSubmit,
@@ -44,14 +49,14 @@ export function PromptCardEditor({
   const [bodyError, setBodyError] = useState(false);
 
   useEffect(() => {
-    bodyRef.current?.focus();
+    focusAndReveal(bodyRef.current);
   }, []);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (body.trim().length === 0) {
       setBodyError(true);
-      bodyRef.current?.focus();
+      focusAndReveal(bodyRef.current);
       return;
     }
     setBodyError(false);

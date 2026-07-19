@@ -28,6 +28,11 @@ function formatScheduledAt(value: string, locale: string, placeholder: string): 
     : placeholder;
 }
 
+function focusAndReveal(element: HTMLElement | null) {
+  element?.focus({ preventScroll: true });
+  element?.scrollIntoView({ block: "center", inline: "nearest" });
+}
+
 export function StreamPlanEditor({
   plan,
   defaultManualOrder,
@@ -49,7 +54,7 @@ export function StreamPlanEditor({
   const [error, setError] = useState<"title" | "order" | "date" | null>(null);
 
   useEffect(() => {
-    titleRef.current?.focus();
+    focusAndReveal(titleRef.current);
   }, []);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -59,7 +64,7 @@ export function StreamPlanEditor({
     const scheduledDate = scheduledAt === "" ? null : new Date(scheduledAt);
     if (normalizedTitle.length === 0) {
       setError("title");
-      titleRef.current?.focus();
+      focusAndReveal(titleRef.current);
       return;
     }
     if (manualOrder.trim() === "" || !Number.isSafeInteger(parsedOrder) || parsedOrder < 0) {

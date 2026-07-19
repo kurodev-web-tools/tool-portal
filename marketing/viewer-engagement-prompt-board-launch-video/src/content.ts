@@ -7,7 +7,7 @@ export const PROMPT_IDS = [
   "prompt-weekend-question",
 ] as const;
 export type PromptId = (typeof PROMPT_IDS)[number];
-export type PromptOrder = 1 | 2 | 3;
+export type PromptOrder = 0 | 1 | 2;
 
 export type PromptCardFixture<Id extends PromptId, Order extends PromptOrder> = {
   readonly id: Id;
@@ -20,9 +20,9 @@ export type PromptCardFixture<Id extends PromptId, Order extends PromptOrder> = 
 };
 
 export type PromptFixtures = readonly [
-  PromptCardFixture<(typeof PROMPT_IDS)[0], 1>,
-  PromptCardFixture<(typeof PROMPT_IDS)[1], 2>,
-  PromptCardFixture<(typeof PROMPT_IDS)[2], 3>,
+  PromptCardFixture<(typeof PROMPT_IDS)[0], 0>,
+  PromptCardFixture<(typeof PROMPT_IDS)[1], 1>,
+  PromptCardFixture<(typeof PROMPT_IDS)[2], 2>,
 ];
 
 export type PromptBoardCaptions = readonly [string, string, string, string, string, string, string, string];
@@ -34,11 +34,11 @@ export type PromptBoardVisualState =
   | { readonly kind: "make-current"; readonly settled: boolean }
   | {
       readonly kind: "live";
-      readonly selectedPromptId: PromptId | null;
+      readonly selectedPromptId: (typeof PROMPT_IDS)[0] | (typeof PROMPT_IDS)[1] | null;
     }
   | {
       readonly kind: "next-prompt";
-      readonly selectedPromptId: PromptId;
+      readonly selectedPromptId: (typeof PROMPT_IDS)[0];
       readonly pressed: boolean;
     };
 
@@ -124,7 +124,7 @@ export const JA_CONTENT = {
       segment: "main",
       tone: "casual",
       safetyNotes: "",
-      order: 1,
+      order: 0,
     },
     {
       id: "prompt-current-favorite",
@@ -133,7 +133,7 @@ export const JA_CONTENT = {
       segment: "main",
       tone: "casual",
       safetyNotes: "",
-      order: 2,
+      order: 1,
     },
     {
       id: "prompt-weekend-question",
@@ -142,7 +142,7 @@ export const JA_CONTENT = {
       segment: "closing",
       tone: "casual",
       safetyNotes: "",
-      order: 3,
+      order: 2,
     },
   ],
   captions: [

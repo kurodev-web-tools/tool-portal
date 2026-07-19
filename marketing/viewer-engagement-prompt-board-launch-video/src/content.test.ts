@@ -1,5 +1,9 @@
 import { describe, expect, expectTypeOf, test } from "vitest";
-import type { PromptBoardVideoContent, PromptId } from "./content";
+import type { PromptBoardVideoContent, PromptBoardVisualState, PromptId, PromptOrder } from "./content";
+
+type PromptIds = typeof import("./content").PROMPT_IDS;
+type LiveVisualState = Extract<PromptBoardVisualState, { readonly kind: "live" }>;
+type NextPromptVisualState = Extract<PromptBoardVisualState, { readonly kind: "next-prompt" }>;
 
 describe("Japanese prompt board video content contract", () => {
   test("provides the locked weekend-chat fixture and Japanese captions", async () => {
@@ -20,7 +24,7 @@ describe("Japanese prompt board video content contract", () => {
         segment: "main",
         tone: "casual",
         safetyNotes: "",
-        order: 1,
+        order: 0,
       },
       {
         id: "prompt-current-favorite",
@@ -29,7 +33,7 @@ describe("Japanese prompt board video content contract", () => {
         segment: "main",
         tone: "casual",
         safetyNotes: "",
-        order: 2,
+        order: 1,
       },
       {
         id: "prompt-weekend-question",
@@ -38,7 +42,7 @@ describe("Japanese prompt board video content contract", () => {
         segment: "closing",
         tone: "casual",
         safetyNotes: "",
-        order: 3,
+        order: 2,
       },
     ]);
     expect(JA_CONTENT.captions).toEqual([
@@ -54,20 +58,23 @@ describe("Japanese prompt board video content contract", () => {
     expectTypeOf<PromptId>().toEqualTypeOf<
       "prompt-weekly-recap" | "prompt-current-favorite" | "prompt-weekend-question"
     >();
+    expectTypeOf<PromptOrder>().toEqualTypeOf<0 | 1 | 2>();
     expectTypeOf<PromptBoardVideoContent["prompts"]["length"]>().toEqualTypeOf<3>();
     expectTypeOf<PromptBoardVideoContent["prompts"][0]>().toExtend<{
       readonly id: "prompt-weekly-recap";
-      readonly order: 1;
+      readonly order: 0;
     }>();
     expectTypeOf<PromptBoardVideoContent["prompts"][1]>().toExtend<{
       readonly id: "prompt-current-favorite";
-      readonly order: 2;
+      readonly order: 1;
     }>();
     expectTypeOf<PromptBoardVideoContent["prompts"][2]>().toExtend<{
       readonly id: "prompt-weekend-question";
-      readonly order: 3;
+      readonly order: 2;
     }>();
     expectTypeOf<PromptBoardVideoContent["captions"]["length"]>().toEqualTypeOf<8>();
+    expectTypeOf<LiveVisualState["selectedPromptId"]>().toEqualTypeOf<PromptIds[0] | PromptIds[1] | null>();
+    expectTypeOf<NextPromptVisualState["selectedPromptId"]>().toEqualTypeOf<PromptIds[0]>();
   });
 
   test("keeps every video-visible label Japanese and URL-free", async () => {
@@ -138,6 +145,9 @@ describe("Japanese prompt board video content contract", () => {
       ...JA_CONTENT.captions,
       ...STATIC_UI_COUNTER_TEXT,
     ];
+    const expectedGlyphCorpus = Array.from(new Set(visibleContentFields.join("")))
+      .sort((left, right) => (left.codePointAt(0) ?? 0) - (right.codePointAt(0) ?? 0))
+      .join("");
 
     expect(VIDEO_VISIBLE_TEXT).toContain("リンクは投稿本文へ");
     expect(VIDEO_VISIBLE_TEXT.join("\n")).not.toContain(JA_POST_COPY);
@@ -150,10 +160,6 @@ describe("Japanese prompt board video content contract", () => {
 
 #VTuber #配信者向けツール`);
     expect(STATIC_UI_COUNTER_TEXT).toEqual(["#1", "#2", "#3", "1 / 2", "2 / 2", "3件"]);
-    for (const text of visibleContentFields) {
-      for (const character of text) {
-        expect(FONT_GLYPH_TEXT).toContain(character);
-      }
-    }
+    expect(FONT_GLYPH_TEXT).toBe(expectedGlyphCorpus);
   });
 });

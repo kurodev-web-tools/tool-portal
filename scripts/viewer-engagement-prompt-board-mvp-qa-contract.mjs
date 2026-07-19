@@ -7,11 +7,13 @@ const root = process.cwd();
 const appPath = path.join(root, "components/viewer-engagement-prompt-board/ViewerEngagementPromptBoardApp.tsx");
 const workspacePath = path.join(root, "components/viewer-engagement-prompt-board/DataManagementWorkspace.tsx");
 const storagePath = path.join(root, "lib/viewer-engagement-prompt-board-storage.ts");
+const copyPath = path.join(root, "lib/viewer-engagement-prompt-board-copy.ts");
 
 assert.ok(fs.existsSync(workspacePath), "data-management workspace owner exists before navigation is exposed");
 
 const appSource = fs.readFileSync(appPath, "utf8");
 const workspaceSource = fs.readFileSync(workspacePath, "utf8");
+const copySource = fs.readFileSync(copyPath, "utf8");
 const storage = await import(pathToFileURL(storagePath).href);
 
 const currentData = {
@@ -116,7 +118,8 @@ assert.match(
   /const restoreData = \(restoredData: PromptBoardData\) => \{[\s\S]*?setData\(restoredData\);[\s\S]*?setEditor\(null\);[\s\S]*?\};/,
   "successful restore closes stale plan editor state"
 );
-assert.match(appSource, /データ管理/, "tool-local navigation exposes the implemented data-management destination");
+assert.match(appSource, /copy\.app\.tabs\.data/, "tool-local navigation exposes the localized data-management destination");
+assert.match(copySource, /tabs: \{ plans:/, "the locale owner defines all tool-local destinations");
 assert.match(appSource, /grid-cols-4/, "four local destinations share the mobile width evenly");
 assert.match(appSource, /whitespace-nowrap/, "Japanese local-navigation labels do not split mid-phrase");
 assert.match(appSource, /px-1 py-2 text-xs/, "mobile local navigation fits without shrinking the touch target");
@@ -126,11 +129,9 @@ assert.match(workspaceSource, /onRestore\(result\.data\)/, "current UI state cha
 assert.match(workspaceSource, /aria-describedby="prompt-board-restore-help"/, "restore input has accessible instructions");
 assert.match(workspaceSource, /role=\{notice\.kind === "error" \? "alert" : "status"\}/, "sanitized restore feedback is announced");
 assert.match(workspaceSource, /\[overflow-wrap:anywhere\]|break-words/, "long CJK and JSON text stay inside the viewport");
-assert.match(workspaceSource, /className="block">形式とバージョンを検証します。<\/span>/, "restore guidance keeps semantic Japanese clauses together");
-assert.match(appSource, /className="whitespace-nowrap">まずプラン単位で整理します。<\/span>/, "prompt-board summary keeps its compact semantic phrase together");
-assert.match(appSource, /className="whitespace-nowrap">JSONでバックアップ・復元します。<\/span>/, "data-management summary keeps its compact semantic phrase together");
-assert.match(workspaceSource, /className="whitespace-nowrap">JSONファイルとして保存します。<\/span>/, "backup guidance keeps its compact semantic phrase together");
-assert.match(workspaceSource, /className="whitespace-nowrap">現在のデータを置き換えます。<\/span>/, "restore guidance keeps its final semantic phrase together");
+assert.match(appSource, /\[word-break:auto-phrase\]/, "localized prompt-board summaries keep natural phrase wrapping");
+assert.match(workspaceSource, /copy\.data\.restoreValidation/, "restore guidance comes from the shared locale owner");
+assert.match(workspaceSource, /copy\.data\.backupDescription/, "backup guidance comes from the shared locale owner");
 assert.doesNotMatch(
   appSource + workspaceSource,
   /console\.(?:log|info|warn|error)|fetch\s*\(|XMLHttpRequest|WebSocket|EventSource|supabase|stripe|oauth|accountId|sessionId|liveChatId/i,

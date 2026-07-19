@@ -5,8 +5,6 @@ import {
   LivePromptDetailDialog,
   LivePromptInlineDetail,
   LivePromptPhraseText,
-  livePromptCategoryLabels,
-  livePromptSegmentLabels,
   type LivePromptCopyNotice
 } from "@/components/viewer-engagement-prompt-board/LivePromptDetail";
 import {
@@ -14,6 +12,7 @@ import {
   type LiveModeView
 } from "@/lib/viewer-engagement-prompt-board-live-mode";
 import type { PromptCardCategory } from "@/lib/viewer-engagement-prompt-board-storage";
+import { useViewerEngagementPromptBoardCopy } from "@/lib/viewer-engagement-prompt-board-copy";
 
 type ReadyLiveModeView = Extract<LiveModeView, { readonly kind: "ready" }>;
 
@@ -38,6 +37,7 @@ export function LiveModeBoard({
   readonly onMove: (direction: "previous" | "next") => void;
   readonly onCopy: () => void;
 }) {
+  const copy = useViewerEngagementPromptBoardCopy();
   const [openCategory, setOpenCategory] = useState<PromptCardCategory | null>(view.groups[0]?.category ?? null);
 
   useEffect(() => {
@@ -52,15 +52,15 @@ export function LiveModeBoard({
 
   return (
     <>
-      <section className="hidden min-w-0 gap-4 lg:grid lg:grid-cols-2 xl:grid-cols-3" aria-label="カテゴリ別カンペボード" data-live-mode-layout="signboard">
+      <section className="hidden min-w-0 gap-4 lg:grid lg:grid-cols-2 xl:grid-cols-3" aria-label={copy.liveBoard.boardLabel} data-live-mode-layout="signboard">
         {view.groups.map((group) => (
           <section key={group.category} className="min-w-0 rounded-base border border-border bg-surface-muted/45 p-3" aria-labelledby={`live-category-${group.category}`}>
             <div className="mb-3 flex items-center justify-between gap-3 border-b border-border pb-3">
               <h3 id={`live-category-${group.category}`} className="text-sm font-black text-foreground">
-                {livePromptCategoryLabels[group.category]}
+                {copy.category[group.category]}
               </h3>
               <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-black text-primary-strong">
-                {group.cards.length}枚
+                {copy.liveBoard.cardCount(group.cards.length)}
               </span>
             </div>
             <div className="grid gap-3">
@@ -70,20 +70,20 @@ export function LiveModeBoard({
                   type="button"
                   className="group min-h-36 min-w-0 rounded-base border border-border bg-gradient-to-br from-surface to-primary-soft/30 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:shadow-panel"
                   aria-haspopup="dialog"
-                  aria-label={`${livePromptCategoryLabels[card.category]} ${index + 1}枚目の詳細を開く`}
+                  aria-label={copy.liveBoard.openDetailLabel(copy.category[card.category], index + 1)}
                   data-live-prompt-signboard={card.id}
                   onClick={(event) => onSelectCard(card.id, event.currentTarget)}
                 >
                   <span className="flex items-center justify-between gap-2">
                     <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-black text-slate-950">
-                      {livePromptSegmentLabels[card.segment]}
+                      {copy.segment[card.segment]}
                     </span>
                     <span className="text-xs font-black text-muted">{index + 1} / {group.cards.length}</span>
                   </span>
                   <span className="mt-4 block break-words text-pretty text-base font-black leading-7 text-foreground [overflow-wrap:anywhere] [word-break:auto-phrase]" data-live-prompt-summary>
                     <LivePromptPhraseText text={summarizeLivePromptCardBody(card.body)} />
                   </span>
-                  <span className="mt-3 block text-xs font-black text-primary-strong group-hover:underline">全文を開く</span>
+                  <span className="mt-3 block text-xs font-black text-primary-strong group-hover:underline">{copy.liveBoard.openFull}</span>
                 </button>
               ))}
             </div>
@@ -91,7 +91,7 @@ export function LiveModeBoard({
         ))}
       </section>
 
-      <section className="grid min-w-0 gap-3 lg:hidden" aria-label="カテゴリ別カンペ一覧" data-live-mode-layout="accordion">
+      <section className="grid min-w-0 gap-3 lg:hidden" aria-label={copy.liveBoard.listLabel} data-live-mode-layout="accordion">
         {view.groups.map((group) => {
           const expanded = openCategory === group.category;
           const controlsId = `mobile-live-category-${group.category}`;
@@ -108,9 +108,9 @@ export function LiveModeBoard({
                     onClearSelection();
                   }}
                 >
-                  <span>{livePromptCategoryLabels[group.category]}</span>
+                  <span>{copy.category[group.category]}</span>
                   <span className="flex items-center gap-2">
-                    <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs text-primary-strong">{group.cards.length}枚</span>
+                    <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs text-primary-strong">{copy.liveBoard.cardCount(group.cards.length)}</span>
                     <span aria-hidden="true" className="text-lg text-primary-strong">{expanded ? "−" : "+"}</span>
                   </span>
                 </button>
@@ -131,7 +131,7 @@ export function LiveModeBoard({
                     >
                       <span className="flex min-w-0 items-center justify-between gap-3">
                         <span className="rounded-full bg-surface-muted px-2 py-1 text-xs font-black text-primary-strong">
-                          {livePromptSegmentLabels[card.segment]}
+                          {copy.segment[card.segment]}
                         </span>
                         <span className="text-xs font-black text-muted">{index + 1} / {group.cards.length}</span>
                       </span>

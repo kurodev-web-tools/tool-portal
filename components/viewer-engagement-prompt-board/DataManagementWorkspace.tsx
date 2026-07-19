@@ -7,22 +7,25 @@ import {
   type PromptBoardData,
   type PromptBoardStorageFailureReason
 } from "@/lib/viewer-engagement-prompt-board-storage";
+import { useViewerEngagementPromptBoardCopy } from "@/lib/viewer-engagement-prompt-board-copy";
 
 type Notice = Readonly<{ kind: "success" | "error"; message: string }> | null;
 
-export function getPromptBoardStorageFailureMessage(reason: PromptBoardStorageFailureReason): string {
+type StorageFailureMessages = ReturnType<typeof useViewerEngagementPromptBoardCopy>["data"]["failures"];
+
+export function getPromptBoardStorageFailureMessage(reason: PromptBoardStorageFailureReason, messages: StorageFailureMessages): string {
   switch (reason) {
     case "malformed-json":
-      return "JSONの形式を確認してください。現在のデータは置き換えていません。";
+      return messages.invalidJson;
     case "corrupt-data":
     case "invalid-data":
-      return "復元データの内容が正しくありません。現在のデータは置き換えていません。";
+      return messages.invalidData;
     case "unsupported-schema":
-      return "このバックアップは未対応のバージョンです。現在のデータは置き換えていません。";
+      return messages.unsupportedVersion;
     case "storage-unavailable":
-      return "ブラウザ保存を利用できません。現在のデータは置き換えていません。";
+      return messages.unavailable;
     case "write-failed":
-      return "保存に失敗しました。直前までのデータを維持しています。ブラウザの空き容量を確認してください。";
+      return messages.writeFailed;
   }
 }
 
@@ -33,13 +36,14 @@ export function DataManagementWorkspace({
   readonly data: PromptBoardData;
   readonly onRestore: (restoredData: PromptBoardData) => void;
 }) {
+  const copy = useViewerEngagementPromptBoardCopy();
   const [restoreJson, setRestoreJson] = useState("");
   const [notice, setNotice] = useState<Notice>(null);
 
   const createBackup = () => {
     const result = exportPromptBoardJson(data);
     if (!result.ok) {
-      setNotice({ kind: "error", message: "現在のデータをバックアップできませんでした。データ内容を確認してください。" });
+      setNotice({ kind: "error", message: copy.data.backupFailed });
       return;
     }
     const objectUrl = URL.createObjectURL(new Blob([result.json], { type: "application/json" }));
@@ -48,18 +52,18 @@ export function DataManagementWorkspace({
     download.download = "viewer-engagement-prompt-board-backup.json";
     download.click();
     URL.revokeObjectURL(objectUrl);
-    setNotice({ kind: "success", message: "JSONバックアップを作成しました。" });
+    setNotice({ kind: "success", message: copy.data.backupCreated });
   };
 
   const restoreBackup = () => {
     const result = importPromptBoardJson(restoreJson, data);
     if (result.kind === "failure") {
-      setNotice({ kind: "error", message: getPromptBoardStorageFailureMessage(result.reason) });
+      setNotice({ kind: "error", message: getPromptBoardStorageFailureMessage(result.reason, copy.data.failures) });
       return;
     }
     onRestore(result.data);
     setRestoreJson("");
-    setNotice({ kind: "success", message: "JSONバックアップを復元しました。" });
+    setNotice({ kind: "success", message: copy.data.restored });
   };
 
   return (
@@ -76,29 +80,29 @@ export function DataManagementWorkspace({
       )}
 
       <section className="panel min-w-0 p-4 sm:p-5" aria-labelledby="prompt-board-backup-title">
-        <h3 id="prompt-board-backup-title" className="text-lg font-black text-foreground">JSONバックアップ</h3>
+        <h3 id="prompt-board-backup-title" className="text-lg font-black text-foreground">{copy.data.backupTitle}</h3>
         <p className="mt-2 max-w-3xl text-sm text-muted [word-break:auto-phrase]">
-          <span className="block">配信プランとカンペカードを<span className="whitespace-nowrap">JSONファイルとして保存します。</span></span>
-          <span className="block">アカウントや外部サービスの情報は含みません。</span>
+          <span className="block">{copy.data.backupDescription}</span>
+          <span className="block">{copy.data.backupPrivacy}</span>
         </p>
         <button
           type="button"
           className="mt-4 min-h-11 rounded-base bg-primary px-4 py-2 text-sm font-black text-slate-950 transition hover:bg-primary-strong"
           onClick={createBackup}
         >
-          JSONバックアップを作成
+          {copy.data.createBackup}
         </button>
       </section>
 
       <section className="panel min-w-0 p-4 sm:p-5" aria-labelledby="prompt-board-restore-title">
-        <h3 id="prompt-board-restore-title" className="text-lg font-black text-foreground">JSONから復元</h3>
+        <h3 id="prompt-board-restore-title" className="text-lg font-black text-foreground">{copy.data.restoreTitle}</h3>
         <p id="prompt-board-restore-help" className="mt-2 max-w-3xl text-sm text-muted [word-break:auto-phrase]">
-          <span className="block">バックアップJSONを貼り付けて復元します。</span>
-          <span className="block">形式とバージョンを検証します。</span>
-          <span className="block">ブラウザへの保存後に、<span className="whitespace-nowrap">現在のデータを置き換えます。</span></span>
+          <span className="block">{copy.data.restoreDescription}</span>
+          <span className="block">{copy.data.restoreValidation}</span>
+          <span className="block">{copy.data.restoreReplacement}</span>
         </p>
         <label htmlFor="prompt-board-restore-json" className="mt-4 block text-sm font-black text-foreground">
-          バックアップJSON
+          {copy.data.restoreLabel}
         </label>
         <textarea
           id="prompt-board-restore-json"
@@ -114,7 +118,7 @@ export function DataManagementWorkspace({
           disabled={restoreJson.trim().length === 0}
           onClick={restoreBackup}
         >
-          JSONから復元
+          {copy.data.restore}
         </button>
       </section>
     </div>

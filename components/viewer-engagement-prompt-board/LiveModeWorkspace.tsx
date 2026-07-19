@@ -13,15 +13,7 @@ import {
 } from "@/lib/viewer-engagement-prompt-board-live-mode";
 import { orderPromptCardsForDisplay } from "@/lib/viewer-engagement-prompt-board-prompt-cards";
 import type { PromptBoardData } from "@/lib/viewer-engagement-prompt-board-storage";
-
-function getCopyNotice(result: LiveModeCopyResult): LivePromptCopyNotice {
-  if (result.ok) {
-    return { kind: "success", message: "カンペ本文をコピーしました。" };
-  }
-  return result.reason === "clipboard-unavailable"
-    ? { kind: "error", message: "このブラウザではコピー機能を利用できません。本文を選択してコピーしてください。" }
-    : { kind: "error", message: "コピーできませんでした。ブラウザの権限設定を確認してください。" };
-}
+import { useViewerEngagementPromptBoardCopy } from "@/lib/viewer-engagement-prompt-board-copy";
 
 function useDesktopLiveDetail(): boolean {
   const [desktop, setDesktop] = useState(false);
@@ -44,6 +36,7 @@ export function LiveModeWorkspace({
   readonly onShowPlans: () => void;
   readonly onEditCards: (planId: string) => void;
 }) {
+  const copy = useViewerEngagementPromptBoardCopy();
   const [selection, setSelection] = useState<LiveModeSelection>(null);
   const [copyNotice, setCopyNotice] = useState<LivePromptCopyNotice>(null);
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -69,10 +62,10 @@ export function LiveModeWorkspace({
   if (view.kind === "no-live") {
     return (
       <section className="panel min-w-0 px-4 py-12 text-center sm:px-6" data-live-mode-state="no-live">
-        <p className="text-xs font-black uppercase tracking-wide text-primary-strong">配信中</p>
-        <h3 className="mt-2 text-xl font-black text-foreground [word-break:auto-phrase]">現在の配信はありません</h3>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-muted [word-break:auto-phrase]">配信プランを「現在の配信」に切り替えると、ここでカンペをカテゴリ別に表示できます。</p>
-        <button type="button" className="mt-5 min-h-11 rounded-base bg-primary px-4 py-2 text-sm font-black text-slate-950" onClick={onShowPlans}>配信プランへ</button>
+        <p className="text-xs font-black uppercase tracking-wide text-primary-strong">{copy.liveWorkspace.live}</p>
+        <h3 className="mt-2 text-xl font-black text-foreground [word-break:auto-phrase]">{copy.liveWorkspace.noCurrentTitle}</h3>
+        <p className="mx-auto mt-2 max-w-xl text-sm text-muted [word-break:auto-phrase]">{copy.liveWorkspace.noCurrentDescription}</p>
+        <button type="button" className="mt-5 min-h-11 rounded-base bg-primary px-4 py-2 text-sm font-black text-slate-950" onClick={onShowPlans}>{copy.liveWorkspace.plans}</button>
       </section>
     );
   }
@@ -80,10 +73,10 @@ export function LiveModeWorkspace({
   if (view.kind === "empty") {
     return (
       <section className="panel min-w-0 px-4 py-12 text-center sm:px-6" data-live-mode-state="empty">
-        <p className="text-xs font-black uppercase tracking-wide text-primary-strong">現在の配信</p>
+        <p className="text-xs font-black uppercase tracking-wide text-primary-strong">{copy.liveWorkspace.current}</p>
         <h3 className="mx-auto mt-2 max-w-2xl break-words text-xl font-black text-foreground [word-break:auto-phrase]">{view.plan.title}</h3>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-muted [word-break:auto-phrase]">この配信プランにはカンペがありません。カンペ編集で最初の1枚を追加してください。</p>
-        <button type="button" className="mt-5 min-h-11 rounded-base bg-primary px-4 py-2 text-sm font-black text-slate-950" onClick={() => onEditCards(view.plan.id)}>このプランのカンペを編集</button>
+        <p className="mx-auto mt-2 max-w-xl text-sm text-muted [word-break:auto-phrase]">{copy.liveWorkspace.noCardsDescription}</p>
+        <button type="button" className="mt-5 min-h-11 rounded-base bg-primary px-4 py-2 text-sm font-black text-slate-950" onClick={() => onEditCards(view.plan.id)}>{copy.liveWorkspace.editThisPlan}</button>
       </section>
     );
   }
@@ -99,7 +92,12 @@ export function LiveModeWorkspace({
   };
   const copyCurrentCard = async () => {
     const clipboard = navigator.clipboard === undefined ? null : navigator.clipboard;
-    setCopyNotice(getCopyNotice(await copyLivePromptCardBody(view.currentCard.body, clipboard)));
+    const result: LiveModeCopyResult = await copyLivePromptCardBody(view.currentCard.body, clipboard);
+    setCopyNotice(result.ok
+      ? { kind: "success", message: copy.liveWorkspace.copied }
+      : result.reason === "clipboard-unavailable"
+        ? { kind: "error", message: copy.liveWorkspace.clipboardUnavailable }
+        : { kind: "error", message: copy.liveWorkspace.copyFailed });
   };
 
   return (
@@ -107,11 +105,11 @@ export function LiveModeWorkspace({
       <section className="panel min-w-0 p-4 sm:p-5">
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-wide text-primary-strong">現在の配信</p>
+            <p className="text-xs font-black uppercase tracking-wide text-primary-strong">{copy.liveWorkspace.current}</p>
             <h3 className="mt-1 break-words text-xl font-black text-foreground [word-break:auto-phrase]">{view.plan.title}</h3>
-            <p className="mt-2 text-sm text-muted [word-break:auto-phrase]">カテゴリからカンペを選び、全文と同じカテゴリ内の前後を確認できます。</p>
+            <p className="mt-2 text-sm text-muted [word-break:auto-phrase]">{copy.liveWorkspace.description}</p>
           </div>
-          <button type="button" className="min-h-11 rounded-base border border-border bg-surface px-4 py-2 text-sm font-black text-foreground hover:border-primary" onClick={() => onEditCards(view.plan.id)}>カンペ編集へ戻る</button>
+          <button type="button" className="min-h-11 rounded-base border border-border bg-surface px-4 py-2 text-sm font-black text-foreground hover:border-primary" onClick={() => onEditCards(view.plan.id)}>{copy.liveWorkspace.backToEdit}</button>
         </div>
       </section>
 

@@ -58,6 +58,10 @@ export function PortalHeader({
       return copy.toolTitles["schedule-calendar"];
     }
 
+    if (pathname.startsWith("/tools/viewer-engagement-prompt-board")) {
+      return copy.toolTitles["viewer-engagement-prompt-board"];
+    }
+
     if (pathname.startsWith("/tools/comment-translator")) {
       return copy.toolTitles["comment-translator"];
     }

@@ -5,26 +5,7 @@ import {
   splitLivePromptTextPhrases,
   type LiveModeView
 } from "@/lib/viewer-engagement-prompt-board-live-mode";
-import type {
-  PromptCardCategory,
-  PromptCardSegment
-} from "@/lib/viewer-engagement-prompt-board-storage";
-
-export const livePromptCategoryLabels: Readonly<Record<PromptCardCategory, string>> = {
-  "talking-point": "トークポイント",
-  question: "質問",
-  announcement: "お知らせ",
-  reminder: "注意・確認",
-  other: "その他"
-};
-
-export const livePromptSegmentLabels: Readonly<Record<PromptCardSegment, string>> = {
-  opening: "オープニング",
-  main: "本編",
-  intermission: "中休み",
-  closing: "クロージング",
-  anytime: "いつでも"
-};
+import { useViewerEngagementPromptBoardCopy } from "@/lib/viewer-engagement-prompt-board-copy";
 
 export type LivePromptCopyNotice = Readonly<{
   kind: "success" | "error";
@@ -63,23 +44,24 @@ function LivePromptDetailContent({
   readonly onMove: (direction: "previous" | "next") => void;
   readonly onCopy: () => void;
 }) {
+  const copy = useViewerEngagementPromptBoardCopy();
   return (
     <div className="min-w-0" data-live-prompt-detail={view.currentCard.id}>
       <div className="flex min-w-0 items-start justify-between gap-4 border-b border-border bg-primary-soft/50 px-4 py-4 sm:px-6">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-base border border-primary/30 bg-surface px-2 py-1 text-xs font-black text-primary-strong">
-              {livePromptCategoryLabels[view.currentCard.category]}
+              {copy.category[view.currentCard.category]}
             </span>
             <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-black text-slate-950">
-              {livePromptSegmentLabels[view.currentCard.segment]}
+              {copy.segment[view.currentCard.segment]}
             </span>
           </div>
           <h3 id="live-prompt-detail-title" className="mt-3 break-words text-lg font-black text-foreground [word-break:auto-phrase]">
-            カンペ詳細
+            {copy.liveDetail.title}
           </h3>
           <p className="mt-1 text-sm font-bold text-muted" aria-live="polite" aria-atomic="true">
-            {view.currentIndex + 1} / {view.total} · {livePromptCategoryLabels[view.currentCard.category]}
+            {view.currentIndex + 1} / {view.total} · {copy.category[view.currentCard.category]}
           </p>
         </div>
         <button
@@ -98,7 +80,7 @@ function LivePromptDetailContent({
         </p>
         {view.currentCard.safetyNotes.length === 0 ? null : (
           <aside className="mt-6 rounded-base border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
-            <p className="font-black">注意メモ</p>
+            <p className="font-black">{copy.liveDetail.safetyNotes}</p>
             <p className="mt-1 whitespace-pre-wrap break-words leading-6 [overflow-wrap:anywhere] [word-break:auto-phrase]">
               {view.currentCard.safetyNotes}
             </p>
@@ -106,17 +88,17 @@ function LivePromptDetailContent({
         )}
       </div>
 
-      <div className="grid gap-3 border-t border-border bg-surface-muted/60 px-4 py-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:px-6" aria-label="カテゴリ内のカンペ操作">
+      <div className="grid gap-3 border-t border-border bg-surface-muted/60 px-4 py-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:px-6" aria-label={copy.liveDetail.controlsLabel}>
         <button
           type="button"
           className="flat-control min-h-12 px-4 py-3 font-black disabled:cursor-not-allowed disabled:opacity-40"
           disabled={!view.canPrevious}
           onClick={() => onMove("previous")}
         >
-          前のカンペ
+          {copy.liveDetail.previous}
         </button>
         <button type="button" className="min-h-12 rounded-base bg-primary px-5 py-3 text-sm font-black text-slate-950 hover:bg-primary-strong" onClick={onCopy}>
-          本文をコピー
+          {copy.liveDetail.copy}
         </button>
         <button
           type="button"
@@ -124,11 +106,11 @@ function LivePromptDetailContent({
           disabled={!view.canNext}
           onClick={() => onMove("next")}
         >
-          次のカンペ
+          {copy.liveDetail.next}
         </button>
       </div>
       <p className="sr-only" aria-live="polite" aria-atomic="true">
-        {livePromptCategoryLabels[view.currentCard.category]}の{view.currentIndex + 1}枚目、全{view.total}枚
+        {copy.liveDetail.promptPosition(copy.category[view.currentCard.category], view.currentIndex + 1, view.total)}
       </p>
       {copyNotice === null ? null : (
         <p
@@ -143,6 +125,7 @@ function LivePromptDetailContent({
 }
 
 export function LivePromptInlineDetail(props: Omit<Parameters<typeof LivePromptDetailContent>[0], "closeLabel" | "focusCloseOnMount">) {
+  const copy = useViewerEngagementPromptBoardCopy();
   const detailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -151,7 +134,7 @@ export function LivePromptInlineDetail(props: Omit<Parameters<typeof LivePromptD
 
   return (
     <div ref={detailRef} className="mt-3 scroll-mt-44 overflow-hidden rounded-base border border-primary/30 bg-surface shadow-panel" id="mobile-live-prompt-detail">
-      <LivePromptDetailContent {...props} closeLabel="一覧に戻る" focusCloseOnMount={false} />
+      <LivePromptDetailContent {...props} closeLabel={copy.liveDetail.back} focusCloseOnMount={false} />
     </div>
   );
 }
@@ -163,6 +146,7 @@ export function LivePromptDetailDialog({
   onMove,
   onCopy
 }: Omit<Parameters<typeof LivePromptDetailContent>[0], "closeLabel" | "focusCloseOnMount">) {
+  const copy = useViewerEngagementPromptBoardCopy();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -191,7 +175,7 @@ export function LivePromptDetailDialog({
       <LivePromptDetailContent
         view={view}
         copyNotice={copyNotice}
-        closeLabel="閉じる"
+        closeLabel={copy.liveDetail.close}
         focusCloseOnMount={true}
         onClose={onClose}
         onMove={onMove}

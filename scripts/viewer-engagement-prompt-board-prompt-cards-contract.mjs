@@ -222,7 +222,7 @@ const appSource = fs.readFileSync(appPath, "utf8");
 const workspaceSource = fs.readFileSync(workspacePath, "utf8");
 const listSource = fs.readFileSync(listPath, "utf8");
 assert.match(appSource, /PromptCardWorkspace/, "the app exposes the real prompt-card workspace");
-assert.match(appSource, /カンペ編集/, "tool-local navigation exposes the real card editor");
+assert.match(appSource, /copy\.app\.tabs\.cards/, "tool-local navigation exposes the localized real card editor");
 assert.match(workspaceSource, /focusAfterListMutation/, "successful row removal restores focus to a stable card action");
 assert.match(workspaceSource, /editor\?\.kind === "edit" && editor\.cardId === cardId/, "moving the edited card closes stale editor state only after save");
 assert.match(workspaceSource, /panel min-w-0 p-4 sm:p-5/, "workspace panels can shrink below native select intrinsic width on mobile");

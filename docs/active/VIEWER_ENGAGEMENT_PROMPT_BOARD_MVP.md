@@ -1,6 +1,6 @@
 # 配信カンペボード MVP Task Board
 
-Date: 2026-07-17
+Date: 2026-07-18
 
 ## Current Selection
 
@@ -12,10 +12,10 @@ Date: 2026-07-17
 | `comment_translator_priority` | `P0` |
 | `mvp_price` | `free` |
 | `login_requirement` | `none` |
-| `runtime_implementation_status` | `tasks-1-7-and-pr-652-merged-preview-final-promotion-preflight-local-gates-pass` |
+| `runtime_implementation_status` | `pr-657-merged-preview-public-entry-local-production-verified` |
 | `preview_branch` | `codex/viewer-engagement-prompt-board-preview` |
 | `promotion_target` | `main-after-mvp-readiness` |
-| `shared_portal_sidebar_scope` | `workspace-common-expanded-rail-hidden` |
+| `shared_portal_sidebar_scope` | `workspace-common-expanded-rail` |
 
 Comment Translator FreeはGoogle OAuth承認、edge readiness reconciliation、no-mutation final public release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`である。この文書と配信カンペボードのlocal integrationはComment Translatorのruntime、release gate、Google Auth、Cloudflare、Worker binding、環境変数、deploy、public release declarationを変更しない。
 
@@ -241,6 +241,24 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 - `verdict`: `promotion-ready=yes-for-preview-targeted-reconciliation-publication`
 - `next_approval`: 次に必要なのは、このbranchのnormal merge commit作成、直後の4 current-release contractsを含むfinal bundle再確認、push、`codex/viewer-engagement-prompt-board-preview`向けreconciliation PR作成を許可する明示承認。post-commit rerunがgreenでなければpush/PR前に停止する。reconciliation PR merge、preview-to-main Promotion PR作成/merge、deploy、activation、public releaseは後続の独立承認境界とする
 
+### MVP Public Entry Checkpoint
+
+- `implementation_status`: `local-production-verified-human-review-ready`
+- `task_branch`: `codex/viewer-engagement-prompt-board-public-entry`
+- `preview_base`: `origin/codex/viewer-engagement-prompt-board-preview` at PR #657 merge commit `19d43894f009b8757bd010b458ee12ba8e9043c1`; this slice does not claim a later preview merge commit
+- `registry_owner`: `lib/tools.ts`。配信カンペボードをroute `/tools/viewer-engagement-prompt-board`、category `stream`、suite `stream-workflow`、status `available`、shared sidebar `true`、icon `PB`で登録する
+- `copy_owners`: `lib/portal-copy.ts`の日本語/英語tool copy、Home hero/panel/summary/footer、Tools index、Stream Workflow description/tags/navigation titleと、hard-coded public tool setを持つ`lib/portal-metadata.ts`を5 tool導線へ更新する。`lib/suites.ts`はsuite statusと一致するtoolだけをcountし、公開中5 toolと準備中候補を混同しない
+- `derived_ui_boundary`: Tools index、desktop expanded/rail sidebar、mobile drawerは既存`tools` / `sidebarTools` / `getToolCopy`から導出する。独立reviewで判明したmobile workspace headerの`Tools` fallbackだけを既存`toolTitles` ownerへ接続し、layout、sidebar state owner、mobile/default-mode behavior、prompt-board route/data/live UXは変更しない。現行workspace sidebar contractはhidden/reopen状態を削除済みであり、このsliceで再導入しない
+- `focused_red_green`: registry entry欠落でRED、suite countのplanned混入で追加RED、独立visual review後にmobile header title fallback、Home heroの日本語語中改行、英語segment間隔欠落で追加REDを確認後、localized header titleとphrase-safe title segments / visible English gapを追加し、public-entry、Portal entry/locale、governance、MVP-QA、workspace sidebar、live-mode contractsをGREEN化した
+- `dependency_boundary`: 明示承認に基づき、同一`package-lock.json` hashかつ参照元`npm ls --depth=0` passの再利用可能なlocal dependency treeへjunctionを作成した。current worktreeの`npm ls --depth=0 --silent`もpassし、package metadata / lockfile /参照元dependency treeは変更していない
+- `verification_current`: public-entry、Portal entry/locale、prompt-board governance/MVP-QA、workspace sidebar、live-modeの7 focused contracts、`npx --no-install tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、contract syntax、`git diff --check`、changed-file high-confidence secret/private-identifier scan、TypeScript suppression scanはpass
+- `production_browser_qa`: 最終source editとproduction rebuild後、Home、Tools index、direct routeを日本語/英語で390 / 820 / 1024 / 1280 / 1366px fresh capture。phrase-safe Home hero、Tools `5 / 12`、Stream Workflow `5 tools`、新規toolと既存4 tool、390 / 820px mobile drawer、mobile headerの日英tool title、1024px 80px fixed rail、1280 / 1366px expanded 288px、1280px expanded -> rail 80px -> re-expand focus、live detailと`本文をコピー` controlを確認した。最終48 captureはviewport JPEGを正しい`.jpg`拡張子と指定幅一致で保存し、全capture horizontal overflow 0、console error 0。現行contractどおりhidden/reopen controlは存在しない
+- `tool_localization_follow_up`: PortalのlocaleをENへ切り替えてもtool本体が日本語固定だったため、tool chrome専用の日英copy ownerを追加し、plan/card/live/dataの全workspace、validation/confirm/notice、status/category/segment/tone、ARIAを既存`LocaleProvider`へ接続した。browser-only storage schema、plan/card user content、live selection/copy state、responsive sidebar behaviorは不変。focused locale contractはcopy owner未実装のRED後にGREEN、旧日本語literalをassertしていたMVP-QA/live-mode/prompt-card contractsはlocalized owner wiringのassertへ更新した。production browserでvisible SettingsのJA / EN切替、390 / 820 / 1024 / 1280 / 1366pxの4 workspace、390px mobile drawer、1280px live detail / prompt editor / stream-plan editorを確認し、全幅overflow 0、console warning / error 0。日本語を含む既存plan/card本文はuser-authored dataとして保持した
+- `localized_editor_validation_follow_up`: 初回独立reviewでnative required bubbleとOS locale由来の日時placeholderが日本語になる経路を検出。両editorをlocalized application validationへ統一し、日時pickerは保持しながらcopy owner由来のplaceholder / formatted valueを表示する。production browserでstream-plan `Enter a title.`、prompt `Enter prompt text.`、invalid input focus、Cancel後の起点focus return、EN日時表示を確認した
+- `human_review_server`: production buildを`http://localhost:3000/tools/viewer-engagement-prompt-board/`で起動したまま維持する
+- `publication_boundary`: stage / commit / push / PR作成・merge、shared preview / main mutation、deploy、activation、public release declaration、environment change、external mutationは未実施
+- `out_of_scope_unchanged`: browser-only prompt-board data model、既存route/live UX、Schedule Calendar連携/ID、login/account sync、Supabase、Stripe、OAuth、AI/provider/viewer/comment/moderation/OBS、analytics/telemetry、Comment Translator runtime/release gate
+
 #### MVP Completion Criteria Verdict
 
 | Criterion | Verdict | Current-preview evidence |
@@ -295,6 +313,7 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 5. `live-mode`: 大表示、前後移動、位置表示、copy
 6. `mvp-qa`: responsive、accessibility、error handling、regression
 7. `promotion-readiness`: previewから`main`へ送る前のMVP完了判定
+8. `public-entry`: Tools index、Home、Stream Workflow、shared sidebarから通常公開導線を追加
 
 各taskはfresh worktreeと短命branchを使い、PR targetを`codex/viewer-engagement-prompt-board-preview`にする。
 

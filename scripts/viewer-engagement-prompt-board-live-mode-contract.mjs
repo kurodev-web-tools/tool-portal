@@ -224,7 +224,7 @@ const boardSource = fs.readFileSync(boardPath, "utf8");
 const detailSource = fs.readFileSync(detailPath, "utf8");
 const planListSource = fs.readFileSync(planListPath, "utf8");
 assert.match(appSource, /LiveModeWorkspace/, "the app renders the real live-mode workspace");
-assert.match(appSource, /配信中/, "tool-local navigation exposes live mode only with real behavior");
+assert.match(appSource, /copy\.app\.tabs\.live/, "tool-local navigation exposes localized live mode only with real behavior");
 assert.match(appSource, /min-h-11 whitespace-nowrap border-b-2 border-primary/, "tool-local live navigation remains touch-safe without splitting CJK labels");
 assert.match(appSource, /DataManagementWorkspace/, "implemented data management remains a separate real workspace");
 assert.match(appSource, /onShowLive=\{showLivePlan\}/, "the current plan title routes directly to live mode");
@@ -241,7 +241,7 @@ assert.match(boardSource, /aria-expanded=\{expanded\}/, "mobile category accordi
 assert.match(boardSource, /expanded \? "grid min-w-0 gap-2 border-t border-border p-3" : "hidden"/, "collapsed mobile categories remove their card lists from layout and accessibility flow");
 assert.match(boardSource, /summarizeLivePromptCardBody\(card\.body\)/, "signboards and compact lists render concise summaries");
 assert.match(boardSource, /LivePromptPhraseText/, "summary cards render semantic CJK phrase groups");
-assert.match(boardSource, /livePromptSegmentLabels\[card\.segment\]/, "every summary card carries a stream-segment badge");
+assert.match(boardSource, /copy\.segment\[card\.segment\]/, "every summary card carries a localized stream-segment badge");
 assert.match(detailSource, /dialog\.showModal\(\)/, "desktop details use a real modal dialog");
 assert.match(detailSource, /onCancel=\{\(event\) =>/, "Escape closes the modal through the native cancel path");
 assert.match(detailSource, /event\.target === event\.currentTarget/, "clicking the modal backdrop closes it");

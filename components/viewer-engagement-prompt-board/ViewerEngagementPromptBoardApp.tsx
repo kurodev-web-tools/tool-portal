@@ -34,6 +34,7 @@ import {
   resolvePromptCardPlanId,
   type PromptCardMutationResult
 } from "@/lib/viewer-engagement-prompt-board-prompt-cards";
+import { useViewerEngagementPromptBoardCopy } from "@/lib/viewer-engagement-prompt-board-copy";
 
 type Notice = Readonly<{ kind: "success" | "error"; message: string }>;
 type EditorState = { readonly kind: "create" } | { readonly kind: "edit"; readonly planId: string } | null;
@@ -47,7 +48,9 @@ function createMutationContext(): StreamPlanMutationContext {
 }
 
 export function ViewerEngagementPromptBoardApp() {
+  const copy = useViewerEngagementPromptBoardCopy();
   const createButtonRef = useRef<HTMLButtonElement>(null);
+  const previousCopyRef = useRef(copy);
   const [data, setData] = useState<PromptBoardData>(createEmptyPromptBoardData);
   const [editor, setEditor] = useState<EditorState>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -70,12 +73,19 @@ export function ViewerEngagementPromptBoardApp() {
     const result = loadPromptBoardData(createEmptyPromptBoardData());
     setData(result.data);
     if (result.kind === "loaded") {
-      setNotice({ kind: "success", message: "ブラウザに保存した配信プランを復元しました。" });
+      setNotice({ kind: "success", message: copy.app.restoredSavedPlans });
     } else if (result.kind === "failure") {
-      setNotice({ kind: "error", message: getPromptBoardStorageFailureMessage(result.reason) });
+      setNotice({ kind: "error", message: getPromptBoardStorageFailureMessage(result.reason, copy.data.failures) });
     }
     setLoaded(true);
-  }, []);
+  }, [copy.app.restoredSavedPlans, copy.data.failures]);
+
+  useEffect(() => {
+    if (previousCopyRef.current !== copy) {
+      setNotice(null);
+      previousCopyRef.current = copy;
+    }
+  }, [copy]);
 
   const closeEditorAndRestoreFocus = () => {
     setEditor(null);
@@ -90,13 +100,13 @@ export function ViewerEngagementPromptBoardApp() {
 
   const persistMutation = (result: StreamPlanMutationResult | PromptCardMutationResult, successMessage: string, shouldCloseEditor = false): boolean => {
     if (!result.ok) {
-      setNotice({ kind: "error", message: result.reason === "invalid-input" ? "入力内容を確認してください。" : "対象の配信プランを更新できませんでした。" });
+      setNotice({ kind: "error", message: result.reason === "invalid-input" ? copy.app.invalidInput : copy.app.updateFailed });
       return false;
     }
     const saved = savePromptBoardData(result.data, data);
     setData(saved.data);
     if (saved.kind === "failure") {
-      setNotice({ kind: "error", message: getPromptBoardStorageFailureMessage(saved.reason) });
+      setNotice({ kind: "error", message: getPromptBoardStorageFailureMessage(saved.reason, copy.data.failures) });
       return false;
     }
     setNotice({ kind: "success", message: successMessage });
@@ -109,10 +119,10 @@ export function ViewerEngagementPromptBoardApp() {
   const submitEditor = (input: StreamPlanMetadataInput) => {
     const context = createMutationContext();
     if (editor?.kind === "edit") {
-      persistMutation(updateStreamPlanMetadata(data, editor.planId, input, context), "配信プランを更新しました。", true);
+      persistMutation(updateStreamPlanMetadata(data, editor.planId, input, context), copy.app.planUpdated, true);
       return;
     }
-    persistMutation(createStreamPlan(data, input, context), "配信プランを作成しました。", true);
+    persistMutation(createStreamPlan(data, input, context), copy.app.planCreated, true);
   };
 
   const editPlan = (plan: StreamPlan) => {
@@ -122,10 +132,10 @@ export function ViewerEngagementPromptBoardApp() {
 
   const deletePlan = (planId: string) => {
     const plan = data.streamPlans.find((candidate) => candidate.id === planId);
-    if (plan === undefined || !window.confirm(`「${plan.title}」を削除しますか？この操作は元に戻せません。`)) {
+    if (plan === undefined || !window.confirm(copy.app.deletePlanConfirm(plan.title))) {
       return;
     }
-    persistMutation(deleteStreamPlan(data, planId), "配信プランを削除しました。", editor?.kind === "edit" && editor.planId === planId);
+    persistMutation(deleteStreamPlan(data, planId), copy.app.planDeleted, editor?.kind === "edit" && editor.planId === planId);
   };
 
   const showCardEditor = (planId: string) => {
@@ -148,9 +158,9 @@ export function ViewerEngagementPromptBoardApp() {
           <div className="flex flex-wrap items-start justify-between gap-3 pb-4">
             <div>
               <p className="text-xs font-black uppercase tracking-wide text-primary-strong">Kuro Stream Kit</p>
-              <h1 className="mt-1 text-xl font-black text-foreground sm:text-2xl">配信カンペボード</h1>
+              <h1 className="mt-1 text-xl font-black text-foreground sm:text-2xl">{copy.app.title}</h1>
               <p className="mt-1 text-sm text-muted [word-break:auto-phrase]">
-                配信ごとの話題と注意事項を、<span className="whitespace-nowrap">まずプラン単位で整理します。</span>
+                {copy.app.description}
               </p>
             </div>
             {activeSection === "plans" ? <button
@@ -162,21 +172,21 @@ export function ViewerEngagementPromptBoardApp() {
                 setNotice(null);
               }}
             >
-              新しい配信プラン
+              {copy.app.newPlan}
             </button> : null}
           </div>
-          <nav className="grid grid-cols-4 gap-0 sm:flex sm:gap-1" aria-label="配信カンペボード内ナビゲーション">
+          <nav className="grid grid-cols-4 gap-0 sm:flex sm:gap-1" aria-label={copy.app.navigationLabel}>
             <button type="button" aria-current={activeSection === "plans" ? "page" : undefined} className={activeSection === "plans" ? "min-h-11 whitespace-nowrap border-b-2 border-primary px-1 py-2 text-xs font-black text-primary-strong sm:px-3 sm:text-sm" : "min-h-11 whitespace-nowrap border-b-2 border-transparent px-1 py-2 text-xs font-bold text-muted hover:text-foreground sm:px-3 sm:text-sm"} onClick={() => setActiveSection("plans")}>
-              配信プラン
+              {copy.app.tabs.plans}
             </button>
             <button type="button" aria-current={activeSection === "cards" ? "page" : undefined} className={activeSection === "cards" ? "min-h-11 whitespace-nowrap border-b-2 border-primary px-1 py-2 text-xs font-black text-primary-strong sm:px-3 sm:text-sm" : "min-h-11 whitespace-nowrap border-b-2 border-transparent px-1 py-2 text-xs font-bold text-muted hover:text-foreground sm:px-3 sm:text-sm"} onClick={() => setActiveSection("cards")}>
-              カンペ編集
+              {copy.app.tabs.cards}
             </button>
             <button type="button" aria-current={activeSection === "live" ? "page" : undefined} className={activeSection === "live" ? "min-h-11 whitespace-nowrap border-b-2 border-primary px-1 py-2 text-xs font-black text-primary-strong sm:px-3 sm:text-sm" : "min-h-11 whitespace-nowrap border-b-2 border-transparent px-1 py-2 text-xs font-bold text-muted hover:text-foreground sm:px-3 sm:text-sm"} onClick={() => setActiveSection("live")}>
-              配信中
+              {copy.app.tabs.live}
             </button>
             <button type="button" aria-current={activeSection === "data" ? "page" : undefined} className={activeSection === "data" ? "min-h-11 whitespace-nowrap border-b-2 border-primary px-1 py-2 text-xs font-black text-primary-strong sm:px-3 sm:text-sm" : "min-h-11 whitespace-nowrap border-b-2 border-transparent px-1 py-2 text-xs font-bold text-muted hover:text-foreground sm:px-3 sm:text-sm"} onClick={() => setActiveSection("data")}>
-              データ管理
+              {copy.app.tabs.data}
             </button>
           </nav>
         </div>
@@ -185,12 +195,12 @@ export function ViewerEngagementPromptBoardApp() {
       <main className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black text-foreground">{activeSection === "plans" ? "配信プラン一覧" : activeSection === "cards" ? "配信プラン編集" : activeSection === "live" ? "配信中ワークスペース" : "データ管理"}</h2>
+            <h2 className="text-xl font-black text-foreground">{copy.app.sectionTitles[activeSection]}</h2>
             <p className="mt-1 text-sm text-muted [word-break:auto-phrase]">
-              {activeSection === "plans" ? "日時順と手動表示順から、次の配信を自動で並べます。" : activeSection === "cards" ? "配信プランを選び、カンペカードの内容と順番を整えます。" : activeSection === "live" ? "現在の配信で読むカンペを、大きく見やすく表示します。" : <>ブラウザ内の配信プランとカンペを<span className="whitespace-nowrap">JSONでバックアップ・復元します。</span></>}
+              {copy.app.sectionDescriptions[activeSection]}
             </p>
           </div>
-          <p className="text-sm font-bold text-muted" aria-live="polite">{loaded ? activeSection === "plans" ? `${data.streamPlans.length}件のプラン` : `${data.streamPlans.reduce((count, plan) => count + plan.promptCards.length, 0)}枚のカンペ` : "保存データを確認中"}</p>
+          <p className="text-sm font-bold text-muted" aria-live="polite">{loaded ? activeSection === "plans" ? copy.app.planCount(data.streamPlans.length) : copy.app.cardCount(data.streamPlans.reduce((count, plan) => count + plan.promptCards.length, 0)) : copy.app.checkingSavedData}</p>
         </div>
 
         {notice === null ? null : (
@@ -220,11 +230,11 @@ export function ViewerEngagementPromptBoardApp() {
         {activeSection === "plans" ? <StreamPlanList
           groups={groups}
           onEdit={editPlan}
-          onDuplicate={(planId) => persistMutation(duplicateStreamPlan(data, planId, createMutationContext()), "配信プランを複製しました。")}
-          onMove={(planId, direction) => persistMutation(reorderStreamPlan(data, planId, direction, createMutationContext()), "表示順を更新しました。")}
-          onMakeCurrent={(planId) => persistMutation(switchCurrentStreamPlan(data, planId, createMutationContext()), "現在の配信を切り替えました。")}
-          onComplete={(planId) => persistMutation(completeStreamPlan(data, planId, createMutationContext()), "配信プランを完了にしました。")}
-          onPrepare={(planId) => persistMutation(moveIdeaToPreparing(data, planId, createMutationContext()), "アイデアを準備中へ移しました。")}
+          onDuplicate={(planId) => persistMutation(duplicateStreamPlan(data, planId, createMutationContext()), copy.app.planDuplicated)}
+          onMove={(planId, direction) => persistMutation(reorderStreamPlan(data, planId, direction, createMutationContext()), copy.app.orderUpdated)}
+          onMakeCurrent={(planId) => persistMutation(switchCurrentStreamPlan(data, planId, createMutationContext()), copy.app.currentSwitched)}
+          onComplete={(planId) => persistMutation(completeStreamPlan(data, planId, createMutationContext()), copy.app.planCompleted)}
+          onPrepare={(planId) => persistMutation(moveIdeaToPreparing(data, planId, createMutationContext()), copy.app.ideaPrepared)}
           onDelete={deletePlan}
           onEditCards={showCardEditor}
           onShowLive={showLivePlan}

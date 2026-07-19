@@ -20,6 +20,30 @@ const ACTIVE_TAB = {
   live: "live",
   "next-prompt": "live",
 } as const satisfies Record<PromptBoardVisualState["kind"], keyof PromptBoardVideoContent["ui"]["tabs"]>;
+const PRIMARY_LABEL_STYLE: CSSProperties = {
+  color: TOKENS.primaryStrong,
+  fontSize: TOKENS.semanticLabelFontSize,
+  fontWeight: 900,
+};
+const MUTED_LABEL_STYLE: CSSProperties = {
+  color: TOKENS.muted,
+  fontSize: TOKENS.semanticLabelFontSize,
+  fontWeight: 700,
+};
+
+function actionStyle(pressed: boolean, active: boolean, marginTop: number): CSSProperties {
+  return {
+    marginTop,
+    padding: "20px 32px",
+    borderRadius: TOKENS.radius,
+    background: active || pressed ? TOKENS.primaryStrong : TOKENS.primary,
+    color: TOKENS.background,
+    fontSize: TOKENS.semanticLabelFontSize,
+    fontWeight: 900,
+    textAlign: "center",
+    transform: `scale(${pressed ? 0.97 : 1})`,
+  };
+}
 
 function PromptCard({
   content,
@@ -50,19 +74,23 @@ function PromptCard({
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
-        <span
-          style={{ color: TOKENS.primaryStrong, fontSize: TOKENS.semanticLabelFontSize, fontWeight: 900 }}
-        >
-          #{prompt.order + 1}
-        </span>
-        <span style={{ color: TOKENS.muted, fontSize: TOKENS.semanticLabelFontSize, fontWeight: 700 }}>
-          {categoryLabels[prompt.category]}
-        </span>
+        <span style={PRIMARY_LABEL_STYLE}>#{prompt.order + 1}</span>
+        <span style={MUTED_LABEL_STYLE}>{categoryLabels[prompt.category]}</span>
       </div>
       <h3 style={{ margin: "24px 0 0", fontSize: 36, lineHeight: 1.4 }}>{prompt.body}</h3>
-      <p style={{ margin: "20px 0 0", color: TOKENS.muted, fontSize: TOKENS.semanticLabelFontSize }}>
-        {segmentLabels[prompt.segment]} · {content.ui.toneLabels[prompt.tone]}
-      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          marginTop: 20,
+          ...MUTED_LABEL_STYLE,
+        }}
+      >
+        <span>{segmentLabels[prompt.segment]}</span>
+        <span aria-hidden="true" style={{ width: 2, height: 24, background: TOKENS.border }} />
+        <span>{content.ui.toneLabels[prompt.tone]}</span>
+      </div>
     </article>
   );
 }
@@ -123,26 +151,11 @@ function PlanPanel({
         <article style={{ padding: 32, border: `2px solid ${TOKENS.border}`, borderRadius: TOKENS.radius }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
             <h2 style={{ margin: 0, fontSize: 40 }}>{content.plan.title}</h2>
-            <span
-              style={{ color: TOKENS.primaryStrong, fontSize: TOKENS.semanticLabelFontSize, fontWeight: 900 }}
-            >
+            <span style={PRIMARY_LABEL_STYLE}>
               {presentation.settled ? content.ui.planStatusLabels.live : content.ui.planStatusLabels.idea}
             </span>
           </div>
-          <div
-            style={{
-              marginTop: 56,
-              padding: "20px 32px",
-              borderRadius: TOKENS.radius,
-              background:
-                presentation.settled || presentation.pressed ? TOKENS.primaryStrong : TOKENS.primary,
-              color: TOKENS.background,
-              fontSize: TOKENS.semanticLabelFontSize,
-              fontWeight: 900,
-              textAlign: "center",
-              transform: `scale(${presentation.pressed ? 0.97 : 1})`,
-            }}
-          >
+          <div style={actionStyle(presentation.pressed, presentation.settled, 56)}>
             {content.ui.makeCurrent}
           </div>
         </article>
@@ -177,6 +190,7 @@ function LivePanel({
         ))}
       </aside>
       <div
+        data-current-prompt-id={selectedPrompt?.id ?? ""}
         style={{
           minHeight: 448,
           padding: 48,
@@ -185,23 +199,12 @@ function LivePanel({
           background: TOKENS.surfaceMuted,
         }}
       >
-        <div style={{ color: TOKENS.primaryStrong, fontSize: TOKENS.semanticLabelFontSize, fontWeight: 900 }}>
-          {content.ui.planStatusLabels.live}
-        </div>
+        <div style={PRIMARY_LABEL_STYLE}>{content.ui.planStatusLabels.live}</div>
         <h2 style={{ margin: "48px 0 0", fontSize: 56, lineHeight: 1.35 }}>{selectedPrompt?.body}</h2>
         {showNext ? (
           <div
-            style={{
-              marginTop: 72,
-              padding: "20px 32px",
-              borderRadius: TOKENS.radius,
-              background: nextPressed ? TOKENS.primaryStrong : TOKENS.primary,
-              color: TOKENS.background,
-              fontSize: TOKENS.semanticLabelFontSize,
-              fontWeight: 900,
-              textAlign: "center",
-              transform: `scale(${nextPressed ? 0.97 : 1})`,
-            }}
+            data-next-action-state={nextPressed ? "pressed" : "idle"}
+            style={actionStyle(nextPressed, false, 72)}
           >
             {content.ui.nextPrompt}
           </div>

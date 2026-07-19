@@ -1,4 +1,12 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test, vi } from "vitest";
+import { Caption } from "./components/Caption";
+import { Cursor } from "./components/Cursor";
+import { EndCard } from "./components/EndCard";
+import { MemoHook } from "./components/MemoHook";
+import { PromptBoardMock } from "./components/PromptBoardMock";
+import { FONT_GLYPH_TEXT, JA_CONTENT, type PromptBoardVisualState } from "./content";
 
 vi.mock("./fonts", () => ({ PROMPT_BOARD_FONT_FAMILY: "test-font" }));
 
@@ -10,16 +18,41 @@ const COMPONENT_PATHS = [
   "./components/EndCard.tsx",
 ] as const;
 
-const COMPONENT_SOURCES = import.meta.glob(
-  [
-    "./components/MemoHook.tsx",
-    "./components/PromptBoardMock.tsx",
-    "./components/Cursor.tsx",
-    "./components/Caption.tsx",
-    "./components/EndCard.tsx",
-  ],
-  { eager: true, import: "default", query: "?raw" },
-);
+const COMPONENT_SOURCES = import.meta.glob("./components/**/*.{ts,tsx}", {
+  eager: true,
+  import: "default",
+  query: "?raw",
+});
+
+const VISUAL_STATES = [
+  { kind: "plan-editor", typedCharacters: 1 },
+  { kind: "plan-created" },
+  { kind: "cards", visibleCards: 1 },
+  { kind: "cards", visibleCards: 2 },
+  { kind: "cards", visibleCards: 3 },
+  { kind: "make-current", settled: false },
+  { kind: "make-current", settled: true },
+  { kind: "live", selectedPromptId: null },
+  { kind: "live", selectedPromptId: JA_CONTENT.prompts[0].id },
+  { kind: "live", selectedPromptId: JA_CONTENT.prompts[1].id },
+  { kind: "next-prompt", selectedPromptId: JA_CONTENT.prompts[0].id, pressed: false },
+  { kind: "next-prompt", selectedPromptId: JA_CONTENT.prompts[0].id, pressed: true },
+] as const satisfies readonly PromptBoardVisualState[];
+
+const renderBoard = (state: PromptBoardVisualState): string =>
+  renderToStaticMarkup(
+    createElement(PromptBoardMock, { content: JA_CONTENT, state, opacity: 1, scale: 1, translateY: 0 }),
+  );
+
+function renderedText(markup: string): string {
+  return markup
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'");
+}
 
 const PRODUCT_LITERAL_PATTERN =
   /[\u3040-\u30ff\u3400-\u9fff]|Live Prompt Board|stream plan|talking point|next prompt|link in this post|free to use/i;
@@ -35,6 +68,9 @@ describe("prompt board video component copy boundary", () => {
     // Then: a callable owner exists, so the source scan cannot pass vacuously.
     expect(implementation).toBeDefined();
     expect(typeof implementation?.PromptBoardMock).toBe("function");
+    expect(
+      [MemoHook, PromptBoardMock, Cursor, Caption, EndCard].every((owner) => typeof owner === "function"),
+    ).toBe(true);
   });
 
   test("keeps locale copy and production state outside every component", async () => {
@@ -45,7 +81,7 @@ describe("prompt board video component copy boundary", () => {
     const sources = Object.entries(COMPONENT_SOURCES);
 
     // Then: all five exist and none owns product copy or production runtime/storage access.
-    expect(sources.map(([path]) => path).sort()).toEqual(expectedPaths.sort());
+    expect(sources.map(([path]) => path)).toEqual(expect.arrayContaining(expectedPaths));
     for (const [, source] of sources) {
       expect(typeof source).toBe("string");
       if (typeof source !== "string") {
@@ -54,5 +90,88 @@ describe("prompt board video component copy boundary", () => {
       expect(source).not.toMatch(PRODUCT_LITERAL_PATTERN);
       expect(source).not.toMatch(PRODUCTION_DEPENDENCY_PATTERN);
     }
+  });
+
+  test("renders every visual-state boundary with its meaningful content", () => {
+    // Given: each locked PromptBoardVisualState boundary from planning through live operation.
+    const renderedStates = VISUAL_STATES.map((state) => ({ state, markup: renderBoard(state) }));
+
+    // When: every boundary is rendered through the real reconstructed component.
+    const cards = renderedStates.filter(({ state }) => state.kind === "cards");
+    const unsettled = renderBoard({ kind: "make-current", settled: false });
+    const settled = renderBoard({ kind: "make-current", settled: true });
+    const liveEmpty = renderBoard({ kind: "live", selectedPromptId: null });
+
+    // Then: plans, incremental cards, both activation states, and an initially empty live detail remain meaningful.
+    expect(renderedStates.every(({ markup }) => markup.includes(JA_CONTENT.ui.productTitle))).toBe(true);
+    expect(renderBoard({ kind: "plan-editor", typedCharacters: 1 })).toContain(
+      JA_CONTENT.plan.title.slice(0, 1),
+    );
+    expect(renderBoard({ kind: "plan-created" })).toContain(JA_CONTENT.plan.title);
+    expect(
+      cards.map(({ markup }) => JA_CONTENT.prompts.filter(({ body }) => markup.includes(body)).length),
+    ).toEqual([1, 2, 3]);
+    expect(unsettled).toContain(JA_CONTENT.ui.planStatusLabels.idea);
+    expect(settled).toContain(JA_CONTENT.ui.planStatusLabels.live);
+    expect(liveEmpty).toContain('data-current-prompt-id=""');
+  });
+
+  test("switches directly from prompt one to prompt two without completion UI", () => {
+    // Given: prompt one, prompt two, and both next-action feedback boundaries.
+    const promptOne = renderBoard({ kind: "live", selectedPromptId: JA_CONTENT.prompts[0].id });
+    const nextIdle = renderBoard({
+      kind: "next-prompt",
+      selectedPromptId: JA_CONTENT.prompts[0].id,
+      pressed: false,
+    });
+    const nextPressed = renderBoard({
+      kind: "next-prompt",
+      selectedPromptId: JA_CONTENT.prompts[0].id,
+      pressed: true,
+    });
+    const promptTwo = renderBoard({ kind: "live", selectedPromptId: JA_CONTENT.prompts[1].id });
+
+    // When: the next action advances from the first current prompt.
+    const renderedFlow = [promptOne, nextIdle, nextPressed, promptTwo].join("\n");
+
+    // Then: both feedback states exist, prompt two replaces prompt one directly, and no completion copy appears.
+    expect(promptOne).toContain(JA_CONTENT.ui.nextPrompt);
+    expect(promptOne).toContain(`data-current-prompt-id="${JA_CONTENT.prompts[0].id}"`);
+    expect(nextIdle).toContain('data-next-action-state="idle"');
+    expect(nextPressed).toContain('data-next-action-state="pressed"');
+    expect(nextIdle).toContain(JA_CONTENT.prompts[0].body);
+    expect(nextPressed).toContain(JA_CONTENT.prompts[0].body);
+    expect(promptTwo).toContain(JA_CONTENT.prompts[1].body);
+    expect(promptTwo).toContain(`data-current-prompt-id="${JA_CONTENT.prompts[1].id}"`);
+    expect(promptTwo).not.toContain(JA_CONTENT.ui.nextPrompt);
+    expect(renderedFlow).not.toMatch(/完了|completed/i);
+  });
+
+  test("covers every rendered component text codepoint with the package-local font corpus", () => {
+    // Given: all board states plus every text-bearing leaf component.
+    const markup = [
+      ...VISUAL_STATES.map(renderBoard),
+      renderToStaticMarkup(
+        createElement(MemoHook, {
+          headline: JA_CONTENT.captions[0],
+          notes: JA_CONTENT.prompts.map(({ body }) => body),
+          opacity: 1,
+          translateY: 0,
+        }),
+      ),
+      renderToStaticMarkup(
+        createElement(Caption, { text: JA_CONTENT.captions[4], opacity: 1, translateY: 0 }),
+      ),
+      renderToStaticMarkup(createElement(EndCard, { content: JA_CONTENT, opacity: 1, translateY: 0 })),
+    ].join("\n");
+
+    // When: HTML markup is removed and React's possible text entities are decoded.
+    const visibleCodepoints = new Set(
+      Array.from(renderedText(markup)).filter((character) => !/\s/u.test(character)),
+    );
+    const allowedCodepoints = new Set(Array.from(FONT_GLYPH_TEXT));
+
+    // Then: no implementation-owned visible glyph can fall through to a system font.
+    expect([...visibleCodepoints].filter((character) => !allowedCodepoints.has(character))).toEqual([]);
   });
 });

@@ -13,6 +13,7 @@ export function PortalHeroSummary({ accountStatus }: { accountStatus: AccountSes
   const { locale } = useLocale();
   const copy = portalCopy[locale].home.hero;
   const accountHref = accountStatus.authStatus === "signed-in" ? "/account" : "/login";
+  const accountNoteParts = copy.accountNote.split(copy.accountNoteNoBreakPhrase);
   const summaryItems = [
     {
       label: copy.summary.availableTools.label,
@@ -30,12 +31,21 @@ export function PortalHeroSummary({ accountStatus }: { accountStatus: AccountSes
   ];
 
   return (
-    <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_30rem] lg:items-center">
+    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_30rem] xl:items-center">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary-strong sm:text-4xl">
-          {copy.title}
+        <h1
+          className={[
+            "flex flex-wrap text-3xl font-bold tracking-tight text-primary-strong sm:text-4xl",
+            locale === "en" ? "gap-x-[0.28em]" : ""
+          ].join(" ")}
+        >
+          {copy.titleSegments.map((segment) => (
+            <span key={segment} className="inline-block whitespace-nowrap">
+              {segment}
+            </span>
+          ))}
         </h1>
-        <p className="mt-5 max-w-3xl text-base leading-8 text-foreground">
+        <p className={["mt-5 max-w-3xl text-base leading-8 text-foreground", locale === "ja" ? "xl:break-keep" : ""].join(" ")}>
           {copy.paragraphs.map((paragraph) => (
             <span key={paragraph} className="block">
               {paragraph}
@@ -45,19 +55,19 @@ export function PortalHeroSummary({ accountStatus }: { accountStatus: AccountSes
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/tools"
-            className="inline-flex items-center justify-center rounded-base bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-strong"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-base bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-strong"
           >
             {copy.primaryCta}
           </Link>
           <Link
             href="/tools/schedule-calendar"
-            className="inline-flex items-center justify-center rounded-base border border-primary/50 px-4 py-2 text-sm font-bold text-primary-strong transition hover:bg-primary-soft/50"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-base border border-primary/50 px-4 py-2 text-sm font-bold text-primary-strong transition hover:bg-primary-soft/50"
           >
             {copy.secondaryCta}
           </Link>
         </div>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">
-          {copy.accountNote}
+        <p className={["mt-4 max-w-2xl text-sm leading-7 text-muted", locale === "ja" ? "xl:break-keep" : ""].join(" ")}>
+          {accountNoteParts[0]}<span className="whitespace-nowrap">{copy.accountNoteNoBreakPhrase}</span>{accountNoteParts[1]}
           <Link href={accountHref} className="ml-2 font-bold text-primary-strong underline-offset-4 hover:underline">
             {copy.accountCta}
           </Link>

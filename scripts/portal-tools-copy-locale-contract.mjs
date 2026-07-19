@@ -59,15 +59,24 @@ const streamWorkflowJa = portalCopy.getSuiteCopy("stream-workflow", "ja");
 const streamWorkflowEn = portalCopy.getSuiteCopy("stream-workflow", "en");
 assert.equal(streamWorkflowJa.name, "配信ワークフロー", "Japanese suite name stays unchanged");
 assert.equal(streamWorkflowEn.name, "Stream Workflow", "English suite name is available");
-assert.deepEqual(streamWorkflowEn.tags, ["Schedule Calendar", "Comment Translator", "Thumbnail Editor", "SNS Split Image Maker"], "English suite tags keep the public flow");
+assert.deepEqual(streamWorkflowEn.tags, ["Schedule Calendar", "Stream Prompt Board", "Comment Translator", "Thumbnail Editor", "SNS Split Image Maker"], "English suite tags keep the public flow");
+
+const promptBoardJa = portalCopy.getToolCopy("viewer-engagement-prompt-board", "ja");
+const promptBoardEn = portalCopy.getToolCopy("viewer-engagement-prompt-board", "en");
+assert.equal(promptBoardJa.name, "配信カンペボード", "Japanese prompt board name is available");
+assert.equal(promptBoardEn.name, "Stream Prompt Board", "English prompt board name is available");
+assert.match(promptBoardJa.description, /配信プラン/, "Japanese prompt board copy explains plan-based preparation");
+assert.match(promptBoardJa.description, /このブラウザに保存/, "Japanese prompt board copy keeps the browser-only boundary");
+assert.match(promptBoardEn.description, /focused live view/, "English prompt board copy explains live viewing");
+assert.match(promptBoardEn.description, /Data stays in this browser/, "English prompt board copy keeps the browser-only boundary");
 
 const commentTranslatorJa = portalCopy.getToolCopy("comment-translator", "ja");
 const commentTranslatorEn = portalCopy.getToolCopy("comment-translator", "en");
 assert.equal(commentTranslatorJa.name, "Kuro Live Comment Translator", "Japanese comment translator name is available");
 assert.equal(commentTranslatorEn.name, "Kuro Live Comment Translator", "English comment translator name is available");
 assert.match(commentTranslatorJa.description, /YouTube/, "Japanese comment translator description is YouTube-first");
-assert.match(commentTranslatorJa.description, /読み取り専用OBS Dock/, "Japanese comment translator description keeps read-only dock scope");
-assert.match(commentTranslatorEn.description, /YouTube-first read-only OBS Dock/, "English comment translator description keeps read-only dock scope");
+assert.match(commentTranslatorJa.description, /明示Start/, "Japanese comment translator description keeps explicit-start scope");
+assert.match(commentTranslatorEn.description, /explicitly started session/, "English comment translator description keeps explicit-start scope");
 assert.doesNotMatch(commentTranslatorEn.description, /OAuth|API key|billing|Stripe|GA4/, "English comment translator copy does not promise out-of-scope integration");
 
 const snsJa = portalCopy.getToolCopy("sns-split-image-maker", "ja");
@@ -100,6 +109,8 @@ assert.match(statusBadgeSource, /getStatusLabel\(status,\s*locale\)/, "status ba
 assert.equal(metadataCopy.portalMetadata.ja.root.title, "Kuro Stream Kit", "metadata copy keeps Japanese-rooted public name");
 assert.match(metadataCopy.portalMetadata.ja.root.description, /VTuber向け/, "metadata copy keeps the current Japanese root description");
 assert.match(metadataCopy.portalMetadata.en.root.description, /tool portal for VTubers/i, "metadata copy prepares English root description");
+assert.match(metadataCopy.portalMetadata.ja.root.description, /配信カンペボード/, "Japanese root metadata includes the prompt board");
+assert.match(metadataCopy.portalMetadata.en.root.description, /Stream Prompt Board/, "English root metadata includes the prompt board");
 assert.match(appLayoutSource, /portalMetadata\.en\.root/, "root static metadata uses conservative English copy for EN support");
 assert.match(homePageSource, /portalMetadata\.en\.home/, "home static metadata uses conservative English copy for EN support");
 assert.match(toolsPageSource, /portalMetadata\.en\.tools/, "tools static metadata uses conservative English copy for EN support");

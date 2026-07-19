@@ -37,6 +37,26 @@ function selectCommittedDiffBase(integrationIsPromoted, branchContainsMain, inte
   return integrationIsPromoted && branchContainsMain ? "origin/main" : integrationDiffBase;
 }
 
+function mergeInProgressIncludesMain() {
+  try {
+    return execSync("git rev-parse --verify MERGE_HEAD", { cwd: root, encoding: "utf8" }).trim()
+      === execSync("git rev-parse origin/main", { cwd: root, encoding: "utf8" }).trim();
+  } catch {
+    return false;
+  }
+}
+
+function contractScopedChangedFiles(files, isCommentTranslatorBranch) {
+  if (isCommentTranslatorBranch) return files;
+  return files.filter((file) => {
+    const normalizedFile = file.toLowerCase();
+    return file === taskPath
+      || normalizedFile.includes("comment-translator")
+      || normalizedFile.includes("comment_translator")
+      || file === "scripts/viewer-engagement-prompt-board-governance-contract.mjs";
+  });
+}
+
 function changedFiles() {
   const integrationDiffBase = "origin/codex/comment-translator-free-public-beta-integration";
   assert.equal(
@@ -55,7 +75,7 @@ function changedFiles() {
     "a post-promotion branch based on main uses the main diff base"
   );
   const integrationIsPromoted = isAncestor(integrationDiffBase, "origin/main");
-  const branchContainsMain = isAncestor("origin/main", "HEAD");
+  const branchContainsMain = isAncestor("origin/main", "HEAD") || mergeInProgressIncludesMain();
   const committedDiffBase = selectCommittedDiffBase(
     integrationIsPromoted,
     branchContainsMain,
@@ -78,6 +98,13 @@ function changedFiles() {
   })
     .split(/\r?\n/)
     .filter(Boolean);
+  const stagedDiff = execSync("git diff --cached --name-only HEAD", {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"]
+  })
+    .split(/\r?\n/)
+    .filter(Boolean);
   const untracked = execSync("git ls-files --others --exclude-standard", {
     cwd: root,
     encoding: "utf8",
@@ -86,7 +113,7 @@ function changedFiles() {
     .split(/\r?\n/)
     .filter(Boolean);
 
-  return [...new Set([...committedDiff, ...uncommittedDiff, ...untracked])].map((file) =>
+  return [...new Set([...committedDiff, ...stagedDiff, ...uncommittedDiff, ...untracked])].map((file) =>
     file.replace(/\\/g, "/")
   );
 }
@@ -304,6 +331,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
   "scripts/comment-translator-oauth-public-info-page-contract.mjs",
   "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-portal-admin-navigation-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
@@ -312,7 +340,16 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md"
 ]);
 
-for (const file of changedFiles()) {
+const isCommentTranslatorBranch = execSync("git branch --show-current", { cwd: root, encoding: "utf8" })
+  .trim()
+  .includes("comment-translator");
+assert.deepEqual(
+  contractScopedChangedFiles(["app/tools/viewer-engagement-prompt-board/page.tsx", taskBoardPath, taskPath], false),
+  [taskBoardPath, taskPath],
+  "cross-feature promotion scopes the contract allowlist to Comment Translator authority"
+);
+
+for (const file of contractScopedChangedFiles(changedFiles(), isCommentTranslatorBranch)) {
   assert.ok(allowedChangedFiles.has(file), `Cloudflare custom-rule operations change stays in allowed files: ${file}`);
   if (file.endsWith(".mjs")) continue;
   assertNoSensitiveValues(read(file), `changed file ${file}`);

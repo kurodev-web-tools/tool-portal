@@ -17,7 +17,10 @@ export type PromptBoardVisualState =
   | { readonly kind: "plan-created" }
   | { readonly kind: "cards"; readonly visibleCards: 1 | 2 | 3 }
   | { readonly kind: "make-current"; readonly settled: boolean }
-  | { readonly kind: "live"; readonly selectedPromptId: "prompt-weekly-recap" | "prompt-current-favorite" }
+  | {
+      readonly kind: "live";
+      readonly selectedPromptId: "prompt-weekly-recap" | "prompt-current-favorite" | null;
+    }
   | {
       readonly kind: "next-prompt";
       readonly selectedPromptId: "prompt-weekly-recap";

@@ -82,6 +82,23 @@ describe("prompt board video timeline contract", () => {
     expect(visualStateKind(visualStateAt(749))).toBe("live");
   });
 
+  test("keeps the live workspace unselected until prompt one is selected", async () => {
+    const implementation = await import("./timeline").catch(() => undefined);
+    expect(implementation).toBeDefined();
+    if (!implementation) {
+      return;
+    }
+
+    const { visualStateAt } = implementation;
+
+    expect(visualStateAt(450)).toEqual({ kind: "live", selectedPromptId: null });
+    expect(visualStateAt(473)).toEqual({ kind: "live", selectedPromptId: null });
+    expect(visualStateAt(474)).toEqual({
+      kind: "live",
+      selectedPromptId: "prompt-weekly-recap",
+    });
+  });
+
   test("freezes exact dark visual tokens and semantic minimums", async () => {
     const implementation = await import("./tokens").catch(() => undefined);
     expect(implementation).toBeDefined();

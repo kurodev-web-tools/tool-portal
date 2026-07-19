@@ -32,15 +32,19 @@ describe("Japanese Stage A composition contract", () => {
     expect(Object.keys(COMPOSITION_EXPORTS)).toEqual(["ja"]);
   });
 
-  test("keeps the forbidden English composition ID out of production source", () => {
+  test("keeps the forbidden English composition ID out of recursive production source", () => {
     const forbiddenId = ["ViewerEngagementPromptBoardLaunch", "En"].join("");
-    const productionSource = Object.entries(
-      import.meta.glob("./*.{ts,tsx}", { eager: true, import: "default", query: "?raw" }),
-    )
-      .filter(([fileName]) => !/\.test\.tsx?$/.test(fileName))
-      .map(([, source]) => source)
-      .join("\n");
+    const sourceModules = import.meta.glob("./**/*.{ts,tsx}", {
+      eager: true,
+      import: "default",
+      query: "?raw",
+    });
+    const productionModules = Object.entries(sourceModules).filter(
+      ([fileName]) => !/\.test\.tsx?$/.test(fileName),
+    );
+    const productionSource = productionModules.map(([, source]) => source).join("\n");
 
+    expect(productionModules.map(([fileName]) => fileName)).toContain("./compositions.ts");
     expect(productionSource).not.toContain(forbiddenId);
   });
 });

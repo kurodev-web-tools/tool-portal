@@ -111,6 +111,9 @@ export function visualStateAt(frame: number): PromptBoardVisualState {
   if (currentFrame < TIMELINE.live.openLiveWorkspace) {
     return { kind: "make-current", settled: true };
   }
+  if (currentFrame < TIMELINE.live.promptOneSelected) {
+    return { kind: "live", selectedPromptId: null };
+  }
   if (currentFrame < TIMELINE.live.nextPromptClick) {
     return { kind: "live", selectedPromptId: "prompt-weekly-recap" };
   }

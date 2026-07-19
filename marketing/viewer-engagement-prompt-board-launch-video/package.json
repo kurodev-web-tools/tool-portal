@@ -1,0 +1,34 @@
+{
+  "name": "@kuro-stream-kit/viewer-engagement-prompt-board-launch-video",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "check": "npm run test && npm run typecheck && npm run lint && npm run compositions && npm run fonts:verify",
+    "compositions": "remotion compositions src/index.ts",
+    "fonts:fetch": "node scripts/fetch-font-source.mjs",
+    "fonts:build": "node scripts/build-font-subsets.mjs",
+    "fonts:verify": "node scripts/verify-font-coverage.mjs",
+    "lint": "biome check src scripts",
+    "render:ja:preview": "remotion render src/index.ts ViewerEngagementPromptBoardLaunchJa out/.tmp/ja-preview.mp4 --codec h264 --crf 18 --pixel-format yuv420p --muted --concurrency=1 --gl=swiftshader --overwrite --timeout=60000 --log=error",
+    "review:ja": "node scripts/render-review-stills.mjs",
+    "artifact:ja": "node scripts/build-ja-artifacts.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.490",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "remotion": "4.0.490"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.4",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "fontkit": "2.0.4",
+    "subset-font": "2.5.0",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  }
+}

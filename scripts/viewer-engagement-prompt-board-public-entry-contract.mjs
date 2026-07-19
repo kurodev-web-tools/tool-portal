@@ -92,7 +92,13 @@ assert.match(
   "Japanese hero heading exposes phrase-safe segments"
 );
 assert.match(portalHeroSummarySource, /copy\.titleSegments\.map/, "home hero renders localized title segments");
-assert.match(portalHeroSummarySource, /className="inline-block"/, "home hero keeps each title phrase together");
+assert.match(portalHeroSummarySource, /className="inline-block whitespace-nowrap"/, "home hero keeps each title phrase together at intermediate widths");
+assert.match(portalHeroSummarySource, /xl:grid-cols-\[minmax\(0,1fr\)_30rem\]/, "home hero delays the fixed summary column until the content width can support it");
+assert.match(portalHeroSummarySource, /locale === "ja" \? "xl:break-keep" : ""/, "Japanese hero copy avoids breaking inside tool names and words only in the constrained two-column layout");
+assert.match(portalHeroSummarySource, /whitespace-nowrap rounded-base bg-primary/, "home hero primary CTA avoids orphaned words");
+assert.match(portalHeroSummarySource, /whitespace-nowrap rounded-base border border-primary\/50/, "home hero secondary CTA avoids orphaned words");
+assert.match(portalCopySource, /accountNoteNoBreakPhrase: "handoff payload は"/, "Japanese account note exposes the particle-bound phrase through the copy owner");
+assert.match(portalHeroSummarySource, /whitespace-nowrap">\{copy\.accountNoteNoBreakPhrase\}<\/span>/, "home hero keeps the account-note phrase and particle on one line");
 assert.match(portalHeroSummarySource, /locale === "en" \? "gap-x-\[0\.28em\]" : ""/, "English hero title preserves visible spacing between segments");
 assert.doesNotMatch(portalHeroSummarySource, /\{segment\}\{locale === "en" \? " " : null\}/, "English spacing is not hidden inside an inline-block segment");
 

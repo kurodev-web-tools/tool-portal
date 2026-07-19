@@ -262,6 +262,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
   "scripts/comment-translator-oauth-public-info-page-contract.mjs",
   "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-portal-admin-navigation-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
   "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",

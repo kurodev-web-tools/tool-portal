@@ -16,9 +16,9 @@ const suiteSeeds: Array<Omit<SuiteDefinition, "toolCount">> = [
   {
     key: "stream-workflow",
     name: "配信ワークフロー",
-    description: "予定管理、コメント翻訳確認、サムネ作成、SNS投稿画像づくりまで、配信準備と配信中の確認を支えるツール群",
+    description: "予定管理、カンペ準備、コメント翻訳確認、サムネ作成、SNS投稿画像づくりまで、配信準備と配信中の確認を支えるツール群",
     icon: "▶",
-    tags: ["Schedule Calendar", "Comment Translator", "Thumbnail Editor", "SNS分割画像"],
+    tags: ["Schedule Calendar", "配信カンペボード", "Comment Translator", "Thumbnail Editor", "SNS分割画像"],
     status: "available"
   },
   {
@@ -49,7 +49,7 @@ const suiteSeeds: Array<Omit<SuiteDefinition, "toolCount">> = [
 
 export const suites: SuiteDefinition[] = suiteSeeds.map((suite) => ({
   ...suite,
-  toolCount: tools.filter((tool) => tool.suite === suite.key).length
+  toolCount: tools.filter((tool) => tool.suite === suite.key && tool.status === suite.status).length
 }));
 
 export const suiteLabels = Object.fromEntries(

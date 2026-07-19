@@ -71,9 +71,18 @@ assert.ok(!fs.existsSync(path.join(root, "app", "icon.svg")), "old placeholder s
 const availableToolIds = toolsLib.availableTools.map((tool) => tool.id);
 assert.deepEqual(
   availableToolIds,
-  ["schedule-calendar", "comment-translator", "thumbnail-editor", "sns-split-image-maker"],
+  ["schedule-calendar", "viewer-engagement-prompt-board", "comment-translator", "thumbnail-editor", "sns-split-image-maker"],
   "portal available tools stay aligned with the preview tool set"
 );
+
+const promptBoardTool = toolsLib.tools.find((tool) => tool.id === "viewer-engagement-prompt-board");
+assert.ok(promptBoardTool, "prompt board tool entry exists");
+assert.equal(promptBoardTool.suite, "stream-workflow", "prompt board belongs to Stream Workflow");
+assert.equal(promptBoardTool.category, "stream", "prompt board uses the stream category");
+assert.equal(promptBoardTool.status, "available", "prompt board is publicly discoverable");
+assert.equal(promptBoardTool.href, "/tools/viewer-engagement-prompt-board", "prompt board route is registered");
+assert.equal(promptBoardTool.sidebar, true, "prompt board is available in the workspace sidebar");
+assert.equal(promptBoardTool.icon, "PB", "prompt board uses the approved short icon label");
 
 const commentTranslatorTool = toolsLib.tools.find((tool) => tool.id === "comment-translator");
 assert.ok(commentTranslatorTool, "comment translator tool entry exists");
@@ -82,7 +91,8 @@ assert.equal(commentTranslatorTool.category, "stream", "comment translator keeps
 assert.equal(commentTranslatorTool.href, "/tools/comment-translator", "comment translator route is registered");
 assert.equal(commentTranslatorTool.sidebar, true, "comment translator is available in the workspace sidebar");
 assert.match(commentTranslatorTool.description, /YouTube/, "comment translator entry is YouTube-first");
-assert.match(commentTranslatorTool.description, /読み取り専用OBS Dock/, "comment translator entry keeps read-only broadcaster dock scope");
+assert.match(commentTranslatorTool.description, /明示Start/, "comment translator entry keeps explicit-start scope");
+assert.match(commentTranslatorTool.description, /接続だけでは監視やAI翻訳を開始しません/, "comment translator entry keeps no-autostart scope");
 
 const thumbnailTool = toolsLib.tools.find((tool) => tool.id === "thumbnail-editor");
 assert.ok(thumbnailTool, "thumbnail editor tool entry exists");
@@ -110,8 +120,8 @@ const streamWorkflowAvailableToolIds = toolsLib.tools
   .map((tool) => tool.id);
 assert.deepEqual(
   streamWorkflowAvailableToolIds,
-  ["schedule-calendar", "comment-translator", "thumbnail-editor", "sns-split-image-maker"],
-  "stream workflow keeps the public tool flow in schedule -> comment -> thumbnail -> sns order"
+  ["schedule-calendar", "viewer-engagement-prompt-board", "comment-translator", "thumbnail-editor", "sns-split-image-maker"],
+  "stream workflow keeps the public tool flow in schedule -> prompt -> comment -> thumbnail -> sns order"
 );
 
 const suiteKeysFromTools = Array.from(new Set(toolsLib.tools.map((tool) => tool.suite))).sort();
@@ -119,8 +129,8 @@ const suiteKeysFromSuites = Array.from(suitesSource.matchAll(/key: "([^"]+)"/g),
 assert.deepEqual(suiteKeysFromSuites, suiteKeysFromTools, "suite definitions cover the same suite keys as tool data");
 assert.match(
   suitesSource,
-  /toolCount: tools\.filter\(\(tool\) => tool\.suite === suite\.key\)\.length/,
-  "suite tool count is derived from tool data"
+  /toolCount: tools\.filter\(\(tool\) => tool\.suite === suite\.key && tool\.status === suite\.status\)\.length/,
+  "suite card count is derived from the matching public or planned status"
 );
 assert.match(
   suitesSource,
@@ -132,26 +142,26 @@ for (const source of [portalHomeSource, portalHeroSource, portalToolsIndexSource
   assert.doesNotMatch(source, /Schedule Calendar (?:を最小セット|です。その他は準備中|です。準備中|と準備中)/, "portal copy does not say Schedule Calendar is the only available tool");
 }
 
-assert.match(portalMetadataSource, /Schedule Calendar, Kuro Live Comment Translator, Thumbnail Editor, and SNS Split Image Maker/, "root metadata prepares an English available tool set");
+assert.match(portalMetadataSource, /Schedule Calendar, Stream Prompt Board, Kuro Live Comment Translator, Thumbnail Editor, and SNS Split Image Maker/, "root metadata prepares the English available tool set");
 assert.match(portalMetadataSource, /title:\s*"Kuro Stream Kit"/, "root metadata uses the public product name");
 assert.match(appLayoutSource, /default:\s*rootMetadata\.title/, "root metadata uses centralized public product name");
 assert.match(appLayoutSource, /template:\s*`%s \| \$\{rootMetadata\.title\}`/, "root metadata title template uses the centralized public product name");
 assert.match(appLayoutSource, /title:\s*rootMetadata\.title/, "open graph metadata uses the centralized public product name");
 assert.match(portalMetadataSource, /public minimum set in Kuro Stream Kit/, "home metadata has conservative English copy");
-assert.match(portalMetadataSource, /Schedule Calendar, Kuro Live Comment Translator, Thumbnail Editor, and SNS Split Image Maker/, "home metadata names the available tool set in English");
-assert.match(portalCopySource, /Schedule Calendar \/ Kuro Live Comment Translator \/ Thumbnail Editor \/ SNS分割画像メーカー/, "tools index names the available tool set");
+assert.match(portalMetadataSource, /Schedule Calendar, Stream Prompt Board, Kuro Live Comment Translator, Thumbnail Editor, and SNS Split Image Maker/, "home metadata names the available tool set in English");
+assert.match(portalCopySource, /Schedule Calendar \/ 配信カンペボード \/ Kuro Live Comment Translator \/ Thumbnail Editor \/ SNS分割画像メーカー/, "tools index names the available tool set");
 assert.match(portalMetadataSource, /Kuro Stream Kit tool index/, "tools page metadata uses conservative English copy");
 assert.match(portalMetadataSource, /currently available tools and planned candidates/, "tools page metadata describes the index in English");
 assert.match(schedulePageSource, /public Kuro Stream Kit tool/, "schedule page metadata uses conservative English copy");
-assert.match(commentTranslatorPageSource, /fixture-only Kuro Stream Kit tool shell/, "comment translator page metadata keeps mock-only scope");
-assert.match(commentTranslatorPageSource, /YouTube-first read-only broadcaster dock/, "comment translator page metadata keeps YouTube read-only scope");
+assert.match(commentTranslatorPageSource, /YouTube-first comment translation preview/, "comment translator page metadata keeps YouTube-first scope");
+assert.match(commentTranslatorPageSource, /behind explicit session start/, "comment translator page metadata keeps explicit-start scope");
 assert.match(thumbnailPageSource, /purpose-built presets/, "thumbnail page metadata keeps preset-first scope in English");
 assert.match(thumbnailPageSource, /standee images/, "thumbnail page metadata keeps standee replacement scope in English");
 assert.match(thumbnailPageSource, /Kuro Stream Kit tool/, "thumbnail page metadata uses conservative English copy");
 assert.match(snsPageSource, /2-, 3-, and 4-split images/, "sns page metadata lists all split presets in English");
 assert.match(snsPageSource, /Kuro Stream Kit tool/, "sns page metadata uses conservative English copy");
 assert.match(suitesSource, /key: "fan-brand"[\s\S]*?status: "planned"/, "fan-brand suite stays planned until it has a public tool");
-assert.match(portalCopySource, /"stream-workflow"[\s\S]*?Schedule Calendar[\s\S]*?Comment Translator[\s\S]*?Thumbnail Editor[\s\S]*?SNS分割画像/, "stream workflow suite tags present the public tool flow");
+assert.match(portalCopySource, /"stream-workflow"[\s\S]*?Schedule Calendar[\s\S]*?配信カンペボード[\s\S]*?Comment Translator[\s\S]*?Thumbnail Editor[\s\S]*?SNS分割画像/, "stream workflow suite tags present the public tool flow");
 assert.match(portalCopySource, /"fan-brand"[\s\S]*?ファン交流[\s\S]*?プロフィール整備[\s\S]*?ブランド素材/, "fan-brand suite tags focus on fan and brand work");
 assert.doesNotMatch(portalCopySource.match(/"fan-brand"[\s\S]*?ブランド素材[\s\S]*?\+ その他"/)?.[0] ?? "", /Thumbnail Editor|SNS分割画像|サムネイル作成|分割画像づくり/, "fan-brand suite copy does not claim thumbnail or sns split creation");
 assert.doesNotMatch(portalCopySource, /開発中のツール/, "hero summary does not foreground the number of planned tools before launch");

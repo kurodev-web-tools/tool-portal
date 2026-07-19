@@ -32,8 +32,17 @@ export function PortalHeroSummary({ accountStatus }: { accountStatus: AccountSes
   return (
     <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_30rem] lg:items-center">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-primary-strong sm:text-4xl">
-          {copy.title}
+        <h1
+          className={[
+            "flex flex-wrap text-3xl font-bold tracking-tight text-primary-strong sm:text-4xl",
+            locale === "en" ? "gap-x-[0.28em]" : ""
+          ].join(" ")}
+        >
+          {copy.titleSegments.map((segment) => (
+            <span key={segment} className="inline-block">
+              {segment}
+            </span>
+          ))}
         </h1>
         <p className="mt-5 max-w-3xl text-base leading-8 text-foreground">
           {copy.paragraphs.map((paragraph) => (

@@ -5,13 +5,24 @@ const remotion = vi.hoisted(() => ({
   continueRender: vi.fn(),
   delayRender: vi.fn(() => 73),
   staticFile: vi.fn((path: string) => `/static/${path}`),
+  useDelayRender: vi.fn(),
+}));
+
+const reactHooks = vi.hoisted(() => ({
+  useEffect: vi.fn((effect: () => void) => effect()),
+  useState: vi.fn((initialize: () => number) => [initialize()]),
 }));
 
 vi.mock("remotion", () => remotion);
+vi.mock("react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react")>()),
+  useEffect: reactHooks.useEffect,
+  useState: reactHooks.useState,
+}));
 
 type LoadedFace = {
   readonly family: string;
-  readonly source: string;
+  readonly source: string | ArrayBuffer;
   readonly descriptors: FontFaceDescriptors;
 };
 
@@ -22,13 +33,17 @@ type LoadControl = {
 
 const constructedFaces: LoadedFace[] = [];
 const loadControls = new Map<string, LoadControl>();
+const fontBytes = {
+  "700": new Uint8Array([7, 0, 0]).buffer,
+  "900": new Uint8Array([9, 0, 0]).buffer,
+} as const;
 
 class TestFontFace {
   readonly family: string;
-  readonly source: string;
+  readonly source: string | ArrayBuffer;
   readonly descriptors: FontFaceDescriptors;
 
-  constructor(family: string, source: string, descriptors: FontFaceDescriptors) {
+  constructor(family: string, source: string | ArrayBuffer, descriptors: FontFaceDescriptors) {
     this.family = family;
     this.source = source;
     this.descriptors = descriptors;
@@ -49,9 +64,21 @@ describe("prompt-board package fonts", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    remotion.useDelayRender.mockReturnValue({
+      cancelRender: remotion.cancelRender,
+      continueRender: remotion.continueRender,
+      delayRender: remotion.delayRender,
+    });
     constructedFaces.length = 0;
     loadControls.clear();
     vi.stubGlobal("FontFace", TestFontFace);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => ({
+        ok: true,
+        arrayBuffer: async () => (url.includes("700") ? fontBytes["700"] : fontBytes["900"]),
+      })),
+    );
     vi.stubGlobal("document", {
       fonts: {
         add: vi.fn(),
@@ -69,25 +96,23 @@ describe("prompt-board package fonts", () => {
   it("continues rendering only after both exact package-local weights load", async () => {
     const module = await import("./fonts");
 
-    expect(remotion.delayRender).toHaveBeenCalledOnce();
-    expect(remotion.continueRender).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    const loading = module.loadPromptBoardFonts();
+    await vi.waitFor(() => expect(constructedFaces).toHaveLength(2));
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenNthCalledWith(1, "/static/fonts/noto-sans-jp-700-promo-v1.woff2");
+    expect(fetch).toHaveBeenNthCalledWith(2, "/static/fonts/noto-sans-jp-900-promo-v1.woff2");
     expect(constructedFaces.map(({ descriptors }) => descriptors.weight)).toEqual(["700", "900"]);
-    expect(constructedFaces.map(({ source }) => source)).toEqual([
-      'url("/static/fonts/noto-sans-jp-700-promo-v1.woff2")',
-      'url("/static/fonts/noto-sans-jp-900-promo-v1.woff2")',
-    ]);
+    expect(constructedFaces.map(({ source }) => source)).toEqual([fontBytes["700"], fontBytes["900"]]);
 
     loadControls.get("700")?.resolve();
     await Promise.resolve();
     expect(document.fonts.add).not.toHaveBeenCalled();
-    expect(remotion.continueRender).not.toHaveBeenCalled();
 
     loadControls.get("900")?.resolve();
-    await module.PROMPT_BOARD_FONTS_READY;
+    await loading;
 
     expect(document.fonts.add).toHaveBeenCalledTimes(2);
-    expect(remotion.continueRender).toHaveBeenCalledExactlyOnceWith(73);
-    expect(remotion.cancelRender).not.toHaveBeenCalled();
   });
 
   it.each(["700", "900"])(
@@ -95,13 +120,46 @@ describe("prompt-board package fonts", () => {
     async (failedWeight) => {
       const module = await import("./fonts");
       const otherWeight = failedWeight === "700" ? "900" : "700";
+      const loading = module.loadPromptBoardFonts();
+
+      await vi.waitFor(() => expect(loadControls.size).toBe(2));
 
       loadControls.get(otherWeight)?.resolve();
       loadControls.get(failedWeight)?.reject(new Error(`font ${failedWeight} rejected`));
-      await module.PROMPT_BOARD_FONTS_READY;
+      await expect(loading).rejects.toThrow(`font ${failedWeight} rejected`);
 
-      expect(remotion.cancelRender).toHaveBeenCalledExactlyOnceWith(expect.any(Error));
-      expect(remotion.continueRender).not.toHaveBeenCalled();
+      expect(document.fonts.add).not.toHaveBeenCalled();
     },
   );
+
+  it("owns readiness in the composition gate and cancels a failed package response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        status: 404,
+      })),
+    );
+    const module = await import("./fonts");
+
+    expect(module.PromptBoardFontGate()).toBeNull();
+    expect(remotion.delayRender).toHaveBeenCalledExactlyOnceWith("Loading package-local prompt-board fonts");
+    await vi.waitFor(() => expect(remotion.cancelRender).toHaveBeenCalledExactlyOnceWith(expect.any(Error)));
+    expect(remotion.continueRender).not.toHaveBeenCalled();
+  });
+
+  it("continues the composition gate exactly once after both weights load", async () => {
+    const module = await import("./fonts");
+
+    expect(module.PromptBoardFontGate()).toBeNull();
+    await vi.waitFor(() => expect(loadControls.size).toBe(2));
+    expect(remotion.continueRender).not.toHaveBeenCalled();
+
+    loadControls.get("700")?.resolve();
+    loadControls.get("900")?.resolve();
+
+    await vi.waitFor(() => expect(remotion.continueRender).toHaveBeenCalledExactlyOnceWith(73));
+    expect(document.fonts.add).toHaveBeenCalledTimes(2);
+    expect(remotion.cancelRender).not.toHaveBeenCalled();
+  });
 });

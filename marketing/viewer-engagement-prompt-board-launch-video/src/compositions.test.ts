@@ -8,7 +8,10 @@ import { TOKENS } from "./tokens";
 
 const remotionState = vi.hoisted(() => ({ frame: 0 }));
 
-vi.mock("./fonts", () => ({ PROMPT_BOARD_FONT_FAMILY: "test-font" }));
+vi.mock("./fonts", () => ({
+  PROMPT_BOARD_FONT_FAMILY: "test-font",
+  PromptBoardFontGate: () => null,
+}));
 vi.mock("remotion", () => ({
   AbsoluteFill: ({ children }: { readonly children?: React.ReactNode }) =>
     createElement("div", null, children),
@@ -97,20 +100,17 @@ describe("Japanese Stage A composition contract", () => {
     expect(markup).toContain('data-component="PromptBoardLaunch"');
   });
 
-  test("loads fonts exactly once from the Remotion entry path", () => {
+  test("owns font readiness inside the rendered composition", () => {
     const sourceModules = import.meta.glob("./**/*.{ts,tsx}", {
       eager: true,
       import: "default",
       query: "?raw",
     });
     const entrySource = sourceModules["./index.ts"];
-    const productionSource = Object.entries(sourceModules)
-      .filter(([fileName]) => !/\.test\.tsx?$/.test(fileName))
-      .map(([, source]) => source)
-      .join("\n");
+    const compositionSource = sourceModules["./PromptBoardLaunch.tsx"];
 
-    expect(entrySource).toContain('import "./fonts";');
-    expect(productionSource.match(/import\s+["']\.\/fonts["']/g)).toHaveLength(1);
+    expect(entrySource).not.toContain('import "./fonts";');
+    expect(compositionSource).toContain("<PromptBoardFontGate />");
   });
 
   test("targets the visible next-prompt action at its pressed frame", async () => {

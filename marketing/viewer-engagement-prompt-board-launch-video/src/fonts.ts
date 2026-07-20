@@ -1,4 +1,5 @@
-import { cancelRender, continueRender, delayRender, staticFile } from "remotion";
+import { useEffect, useState } from "react";
+import { staticFile, useDelayRender } from "remotion";
 
 export const PROMPT_BOARD_FONT_FAMILY = "Prompt Board Noto Sans JP";
 
@@ -15,28 +16,51 @@ class PromptBoardFontLoadError extends Error {
   }
 }
 
+class PromptBoardFontResponseError extends Error {
+  readonly name = "PromptBoardFontResponseError";
+
+  constructor(path: string, status: number) {
+    super(`Package-local prompt-board font request failed (${status}): ${path}`);
+  }
+}
+
 const normalizeFontLoadError = (error: unknown): Error =>
   error instanceof Error ? error : new PromptBoardFontLoadError(error);
 
-const fontRenderHandle = delayRender("Loading package-local prompt-board fonts");
+const fetchFontBytes = async (path: string): Promise<ArrayBuffer> => {
+  const response = await fetch(staticFile(path));
+  if (!response.ok) {
+    throw new PromptBoardFontResponseError(path, response.status);
+  }
+  return response.arrayBuffer();
+};
 
-const loadPromptBoardFonts = async (): Promise<void> => {
-  try {
-    const faces = FONT_ASSETS.map(
-      ({ path, weight }) =>
-        new FontFace(PROMPT_BOARD_FONT_FAMILY, `url("${staticFile(path)}")`, {
-          style: "normal",
-          weight,
-        }),
-    );
-    const loadedFaces = await Promise.all(faces.map((face) => face.load()));
-    for (const face of loadedFaces) {
-      document.fonts.add(face);
-    }
-    continueRender(fontRenderHandle);
-  } catch (error: unknown) {
-    cancelRender(normalizeFontLoadError(error));
+export const loadPromptBoardFonts = async (): Promise<void> => {
+  const faces = await Promise.all(
+    FONT_ASSETS.map(async ({ path, weight }) => {
+      const bytes = await fetchFontBytes(path);
+      return new FontFace(PROMPT_BOARD_FONT_FAMILY, bytes, {
+        style: "normal",
+        weight,
+      });
+    }),
+  );
+  const loadedFaces = await Promise.all(faces.map((face) => face.load()));
+  for (const face of loadedFaces) {
+    document.fonts.add(face);
   }
 };
 
-export const PROMPT_BOARD_FONTS_READY = loadPromptBoardFonts();
+export function PromptBoardFontGate(): null {
+  const { cancelRender, continueRender, delayRender } = useDelayRender();
+  const [fontRenderHandle] = useState(() => delayRender("Loading package-local prompt-board fonts"));
+
+  useEffect(() => {
+    loadPromptBoardFonts().then(
+      () => continueRender(fontRenderHandle),
+      (error: unknown) => cancelRender(normalizeFontLoadError(error)),
+    );
+  }, [cancelRender, continueRender, fontRenderHandle]);
+
+  return null;
+}

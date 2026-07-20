@@ -108,9 +108,10 @@ export const buildRgbaDecodeArgs = (path) => [
   "rgba",
   "-",
 ];
+export const RGBA_DECODE_OPTIONS = Object.freeze({ encoding: null });
 
 const decodeRgba = async (path) => {
-  const { stdout } = await execute(FFMPEG, buildRgbaDecodeArgs(path));
+  const { stdout } = await execute(FFMPEG, buildRgbaDecodeArgs(path), RGBA_DECODE_OPTIONS);
   return stdout;
 };
 

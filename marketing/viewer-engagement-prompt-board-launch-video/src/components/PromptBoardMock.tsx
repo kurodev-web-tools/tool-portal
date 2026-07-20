@@ -107,7 +107,6 @@ function PlanPanel({
 }) {
   const editing = state.kind === "plan-editor";
   const settled = state.kind === "make-current" && state.settled;
-  const pressed = state.kind === "make-current" && !state.settled;
   const title = editing ? content.plan.title.slice(0, state.typedCharacters) : content.plan.title;
   const gridTemplateColumns = editing ? "1fr" : "0.82fr 1.18fr";
   return (
@@ -137,7 +136,7 @@ function PlanPanel({
               {settled ? content.ui.planStatusLabels.live : content.ui.planStatusLabels.idea}
             </span>
           </div>
-          <div style={actionStyle(pressed, settled, 56)}>{content.ui.makeCurrent}</div>
+          <div style={actionStyle(false, settled, 56)}>{content.ui.makeCurrent}</div>
         </article>
       )}
     </div>

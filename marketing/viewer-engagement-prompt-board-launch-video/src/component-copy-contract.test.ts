@@ -128,6 +128,12 @@ describe("prompt board video component copy boundary", () => {
     ).toEqual([1, 2, 3]);
     expect(unsettled).toContain(JA_CONTENT.ui.planStatusLabels.idea);
     expect(settled).toContain(JA_CONTENT.ui.planStatusLabels.live);
+    expect(actionStyleFor(unsettled, JA_CONTENT.ui.makeCurrent)).toContain(`background:${TOKENS.primary}`);
+    expect(actionStyleFor(unsettled, JA_CONTENT.ui.makeCurrent)).toContain("transform:scale(1)");
+    expect(actionStyleFor(settled, JA_CONTENT.ui.makeCurrent)).toContain(
+      `background:${TOKENS.primaryStrong}`,
+    );
+    expect(actionStyleFor(settled, JA_CONTENT.ui.makeCurrent)).toContain("transform:scale(1)");
     expect(detailHeadingText(liveEmpty)).toBe("");
   });
 

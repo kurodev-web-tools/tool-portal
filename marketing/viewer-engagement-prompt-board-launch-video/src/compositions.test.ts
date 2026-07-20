@@ -2,8 +2,11 @@
 
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { COMPOSITION_IDS, VIDEO_METADATA } from "./compositions";
+import { TOKENS } from "./tokens";
+
+const remotionState = vi.hoisted(() => ({ frame: 0 }));
 
 vi.mock("./fonts", () => ({ PROMPT_BOARD_FONT_FAMILY: "test-font" }));
 vi.mock("remotion", () => ({
@@ -34,8 +37,12 @@ vi.mock("remotion", () => ({
     }),
   interpolate: () => 1,
   registerRoot: vi.fn(),
-  useCurrentFrame: () => 0,
+  useCurrentFrame: () => remotionState.frame,
 }));
+
+afterEach(() => {
+  remotionState.frame = 0;
+});
 
 describe("Japanese Stage A composition contract", () => {
   test("registers one Japanese composition with locked video metadata", async () => {
@@ -104,5 +111,18 @@ describe("Japanese Stage A composition contract", () => {
 
     expect(entrySource).toContain('import "./fonts";');
     expect(productionSource.match(/import\s+["']\.\/fonts["']/g)).toHaveLength(1);
+  });
+
+  test("targets the visible next-prompt action at its pressed frame", async () => {
+    remotionState.frame = 520;
+    const { PromptBoardLaunch } = await import("./PromptBoardLaunch");
+    const markup = renderToStaticMarkup(createElement(PromptBoardLaunch));
+    const pressedCursor = /translate3d\([^,]+px,\s*([\d.]+)px,\s*0\) scale\(0\.86\)/.exec(markup);
+
+    expect(pressedCursor).not.toBeNull();
+    const cursorY = Number(pressedCursor?.[1]);
+    expect(cursorY).toBeGreaterThanOrEqual(500);
+    expect(cursorY).toBeLessThanOrEqual(560);
+    expect(markup).toContain(`border:4px solid ${TOKENS.primaryStrong}`);
   });
 });

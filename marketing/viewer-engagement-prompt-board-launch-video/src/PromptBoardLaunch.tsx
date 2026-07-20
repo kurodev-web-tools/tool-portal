@@ -20,7 +20,7 @@ type SceneLayerProps = {
 const MAKE_CURRENT_START = { x: 1040, y: 720 } as const satisfies Point;
 const MAKE_CURRENT_TARGET = { x: 1370, y: 390 } as const satisfies Point;
 const PROMPT_ONE_TARGET = { x: 430, y: 350 } as const satisfies Point;
-const NEXT_PROMPT_TARGET = { x: 1360, y: 650 } as const satisfies Point;
+const NEXT_PROMPT_TARGET = { x: 1360, y: 520 } as const satisfies Point;
 
 function between(frame: number, from: number, to: number): number {
   return interpolate(frame, [from, to], [0, 1], {

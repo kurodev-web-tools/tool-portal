@@ -78,8 +78,15 @@ export const buildMediaChecks = ({ video, duration, audioCount, decodePassed }) 
   check("full-decode", decodePassed, decodePassed ? "exit 0" : "non-zero exit"),
 ];
 
-export const verifyJaRender = async ({ outputRoot, sourceCommit, sourceTree, clean }) => {
-  const videoPath = join(outputRoot, MP4_NAME);
+export const verifyRender = async ({
+  outputRoot,
+  sourceCommit,
+  sourceTree,
+  clean,
+  compositionId,
+  mp4Name,
+}) => {
+  const videoPath = join(outputRoot, mp4Name);
   const probe = await probeVideo(videoPath);
   const streams = Array.isArray(probe.streams) ? probe.streams : [];
   const video = streams.find((stream) => stream.codec_type === "video");
@@ -110,7 +117,7 @@ export const verifyJaRender = async ({ outputRoot, sourceCommit, sourceTree, cle
     sourceTree,
     clean: clean ? "PASS" : "FAIL",
     composition: {
-      id: "ViewerEngagementPromptBoardLaunchJa",
+      id: compositionId,
       width: 1920,
       height: 1080,
       fps: 30,
@@ -133,3 +140,10 @@ export const verifyJaRender = async ({ outputRoot, sourceCommit, sourceTree, cle
   }
   return receipt;
 };
+
+export const verifyJaRender = (options) =>
+  verifyRender({
+    ...options,
+    compositionId: "ViewerEngagementPromptBoardLaunchJa",
+    mp4Name: MP4_NAME,
+  });

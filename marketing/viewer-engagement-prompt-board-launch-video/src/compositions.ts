@@ -5,7 +5,10 @@ export type VideoMetadata = {
   readonly durationInFrames: 750;
 };
 
-export const COMPOSITION_IDS = ["ViewerEngagementPromptBoardLaunchJa"] as const;
+export const COMPOSITION_IDS = [
+  "ViewerEngagementPromptBoardLaunchJa",
+  "ViewerEngagementPromptBoardLaunchEn",
+] as const;
 
 export const VIDEO_METADATA = {
   width: 1920,
@@ -16,4 +19,5 @@ export const VIDEO_METADATA = {
 
 export const COMPOSITION_EXPORTS = {
   ja: COMPOSITION_IDS[0],
+  en: COMPOSITION_IDS[1],
 } as const;

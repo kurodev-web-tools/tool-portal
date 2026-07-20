@@ -5,7 +5,7 @@ type PromptIds = typeof import("./content").PROMPT_IDS;
 type LiveVisualState = Extract<PromptBoardVisualState, { readonly kind: "live" }>;
 type NextPromptVisualState = Extract<PromptBoardVisualState, { readonly kind: "next-prompt" }>;
 
-describe("Japanese prompt board video content contract", () => {
+describe("bilingual prompt board video content contract", () => {
   test("provides the locked weekend-chat fixture and Japanese captions", async () => {
     const implementation = await import("./content").catch(() => undefined);
     expect(implementation).toBeDefined();
@@ -77,18 +77,18 @@ describe("Japanese prompt board video content contract", () => {
     expectTypeOf<NextPromptVisualState["selectedPromptId"]>().toEqualTypeOf<PromptIds[0]>();
   });
 
-  test("keeps every video-visible label Japanese and URL-free", async () => {
+  test("keeps every Japanese video-visible label localized and URL-free", async () => {
     const implementation = await import("./content").catch(() => undefined);
     expect(implementation).toBeDefined();
     if (!implementation) {
       return;
     }
 
-    const { JA_CONTENT, VIDEO_VISIBLE_TEXT } = implementation;
-    const visibleText = VIDEO_VISIBLE_TEXT.join("\n");
+    const { JA_CONTENT, JA_VIDEO_VISIBLE_TEXT } = implementation;
+    const visibleText = JA_VIDEO_VISIBLE_TEXT.join("\n");
 
     expect(JA_CONTENT.ui.productTitle).toBe("配信カンペボード");
-    expect(VIDEO_VISIBLE_TEXT).toEqual(
+    expect(JA_VIDEO_VISIBLE_TEXT).toEqual(
       expect.arrayContaining([
         "配信カンペボード",
         "配信プラン",
@@ -121,6 +121,44 @@ describe("Japanese prompt board video content contract", () => {
     expect(JA_CONTENT.ui.toneLabels).toEqual({ casual: "カジュアル" });
   });
 
+  test("provides complete English UI, fixture, captions, and structurally identical prompt metadata", async () => {
+    const implementation = await import("./content");
+    const { EN_CONTENT, EN_VIDEO_VISIBLE_TEXT, JA_CONTENT } = implementation;
+
+    expect(EN_CONTENT.plan).toEqual({ id: "plan-weekend-chat", title: "Weekend Chat" });
+    expect(EN_CONTENT.prompts.map(({ body }) => body)).toEqual([
+      "What happened this week",
+      "What I’m into lately",
+      "Ask about everyone’s weekend plans",
+    ]);
+    expect(EN_CONTENT.captions).toEqual([
+      "Ever lose track of what to say next?",
+      "Start with a stream plan",
+      "Organize your talking points",
+      "Stay focused on the current topic",
+      "From prep to live, keep every talking point in one place.",
+      "Free to use",
+      "Live Prompt Board",
+      "Link in this post",
+    ]);
+    expect(EN_CONTENT.ui).toEqual({
+      productTitle: "Live Prompt Board",
+      tabs: { plans: "Stream Plans", cards: "Prompt Cards", live: "Live Mode" },
+      newPlan: "New Stream Plan",
+      makeCurrent: "Use for Current Stream",
+      nextPrompt: "Next Prompt",
+      planStatusLabels: { idea: "Idea", preparing: "Preparing", live: "Live" },
+      promptStatusLabels: { talkingPoint: "Talking Point", question: "Question" },
+      segmentLabels: { main: "Main", closing: "Closing" },
+      toneLabels: { casual: "Casual" },
+    });
+    expect(EN_CONTENT.prompts.map(({ body: _body, ...prompt }) => prompt)).toEqual(
+      JA_CONTENT.prompts.map(({ body: _body, ...prompt }) => prompt),
+    );
+    expect(EN_VIDEO_VISIBLE_TEXT.join("\n")).not.toMatch(/[\u3040-\u30ff\u3400-\u9fff]/u);
+    expect(EN_VIDEO_VISIBLE_TEXT.join("\n")).not.toContain("https://");
+  });
+
   test("keeps public post copy separate from video-visible text and locks glyph inputs", async () => {
     const implementation = await import("./content").catch(() => undefined);
     expect(implementation).toBeDefined();
@@ -128,8 +166,15 @@ describe("Japanese prompt board video content contract", () => {
       return;
     }
 
-    const { FONT_GLYPH_TEXT, JA_CONTENT, JA_POST_COPY, STATIC_UI_COUNTER_TEXT, VIDEO_VISIBLE_TEXT } =
-      implementation;
+    const {
+      EN_CONTENT,
+      EN_POST_COPY,
+      FONT_GLYPH_TEXT,
+      JA_CONTENT,
+      JA_POST_COPY,
+      STATIC_UI_COUNTER_TEXT,
+      VIDEO_VISIBLE_TEXT,
+    } = implementation;
     const visibleContentFields = [
       JA_CONTENT.ui.productTitle,
       ...Object.values(JA_CONTENT.ui.tabs),
@@ -143,6 +188,18 @@ describe("Japanese prompt board video content contract", () => {
       JA_CONTENT.plan.title,
       ...JA_CONTENT.prompts.map(({ body }) => body),
       ...JA_CONTENT.captions,
+      EN_CONTENT.ui.productTitle,
+      ...Object.values(EN_CONTENT.ui.tabs),
+      EN_CONTENT.ui.newPlan,
+      EN_CONTENT.ui.makeCurrent,
+      EN_CONTENT.ui.nextPrompt,
+      ...Object.values(EN_CONTENT.ui.planStatusLabels),
+      ...Object.values(EN_CONTENT.ui.promptStatusLabels),
+      ...Object.values(EN_CONTENT.ui.segmentLabels),
+      ...Object.values(EN_CONTENT.ui.toneLabels),
+      EN_CONTENT.plan.title,
+      ...EN_CONTENT.prompts.map(({ body }) => body),
+      ...EN_CONTENT.captions,
       ...STATIC_UI_COUNTER_TEXT,
     ];
     const expectedGlyphCorpus = Array.from(new Set(visibleContentFields.join("")))
@@ -150,6 +207,7 @@ describe("Japanese prompt board video content contract", () => {
       .join("");
 
     expect(VIDEO_VISIBLE_TEXT).toContain("リンクは投稿本文へ");
+    expect(VIDEO_VISIBLE_TEXT).toContain("Link in this post");
     expect(VIDEO_VISIBLE_TEXT.join("\n")).not.toContain(JA_POST_COPY);
     expect(JA_POST_COPY).toBe(`配信中に「次、何を話そう？」となる前に。
 
@@ -159,6 +217,14 @@ describe("Japanese prompt board video content contract", () => {
 🔗 https://streamer-tools.kuro-lab.com/tools/viewer-engagement-prompt-board/
 
 #VTuber #配信者向けツール`);
+    expect(EN_POST_COPY).toBe(`Never wonder what to talk about next during a stream.
+
+Create a stream plan, organize your talking points, and keep the current prompt visible while you’re live—all in your browser.
+
+Live Prompt Board is free to use.
+🔗 https://streamer-tools.kuro-lab.com/tools/viewer-engagement-prompt-board/
+
+#VTuber #StreamerTools`);
     expect(STATIC_UI_COUNTER_TEXT).toEqual(["#1", "#2", "#3", "1 / 2", "2 / 2", "3件"]);
     expect(FONT_GLYPH_TEXT).toBe(expectedGlyphCorpus);
   });

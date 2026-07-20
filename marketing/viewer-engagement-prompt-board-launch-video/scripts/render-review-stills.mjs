@@ -7,7 +7,8 @@ import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENTRY_POINT = join(PACKAGE_ROOT, "src", "index.ts");
-const COMPOSITION_ID = "ViewerEngagementPromptBoardLaunchJa";
+export const JA_COMPOSITION_ID = "ViewerEngagementPromptBoardLaunchJa";
+export const EN_COMPOSITION_ID = "ViewerEngagementPromptBoardLaunchEn";
 const REMOTION_CLI = join(PACKAGE_ROOT, "node_modules", "@remotion", "cli", "remotion-cli.js");
 
 export const REVIEW_FRAMES = Object.freeze([30, 105, 180, 270, 420, 510, 600, 690, 749]);
@@ -34,7 +35,11 @@ const runRemotion = async (args) => {
   }
 };
 
-export const renderReviewStills = async ({ outputRoot, runner = runRemotion }) => {
+export const renderReviewStills = async ({
+  outputRoot,
+  compositionId = JA_COMPOSITION_ID,
+  runner = runRemotion,
+}) => {
   const reviewRoot = join(outputRoot, "review");
   await mkdir(reviewRoot, { recursive: true });
   for (const [index, frame] of REVIEW_FRAMES.entries()) {
@@ -45,7 +50,7 @@ export const renderReviewStills = async ({ outputRoot, runner = runRemotion }) =
     await runner([
       "still",
       ENTRY_POINT,
-      COMPOSITION_ID,
+      compositionId,
       join(outputRoot, relativeOutput),
       `--frame=${frame}`,
       "--concurrency=1",

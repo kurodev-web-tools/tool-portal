@@ -5,7 +5,7 @@ import { Cursor, type CursorPhase } from "./components/Cursor";
 import { EndCard } from "./components/EndCard";
 import { MemoHook } from "./components/MemoHook";
 import { PromptBoardMock } from "./components/PromptBoardMock";
-import { JA_CONTENT } from "./content";
+import { EN_CONTENT, JA_CONTENT, type PromptBoardVideoContent } from "./content";
 import { PromptBoardFontGate } from "./fonts";
 import { TIMELINE, TRANSITIONS, visualStateAt } from "./timeline";
 import { TOKENS } from "./tokens";
@@ -103,7 +103,11 @@ function cursorAt(frame: number): { readonly point: Point; readonly phase: Curso
   return { point: NEXT_PROMPT_TARGET, phase: "settled" };
 }
 
-export function PromptBoardLaunch() {
+export type PromptBoardLaunchProps = {
+  readonly content: PromptBoardVideoContent;
+};
+
+export function PromptBoardLaunch({ content }: PromptBoardLaunchProps) {
   const frame = useCurrentFrame();
   const [hookToPlan, planToCards, cardsToLive, liveToValue, valueToCta] = TRANSITIONS;
   const hookOpacity = 1 - between(frame, hookToPlan.from, hookToPlan.to);
@@ -126,57 +130,65 @@ export function PromptBoardLaunch() {
       <AbsoluteFill style={{ background: TOKENS.background, overflow: "hidden" }}>
         <SceneLayer opacity={hookOpacity} translateY={between(frame, 70, 90) * -16}>
           <MemoHook
-            headline={JA_CONTENT.captions[0]}
-            notes={JA_CONTENT.prompts.map(({ body }) => body)}
+            headline={content.captions[0]}
+            notes={content.prompts.map(({ body }) => body)}
             opacity={1}
             translateY={0}
           />
         </SceneLayer>
         <SceneLayer opacity={planOpacity} translateY={(1 - planOpacity) * 16}>
           <PromptBoardMock
-            content={JA_CONTENT}
+            content={content}
             state={visualStateAt(Math.max(frame, TIMELINE.plan.from))}
             opacity={1}
             scale={1}
             translateY={0}
           />
-          <Caption text={JA_CONTENT.captions[1]} opacity={1} translateY={0} />
+          <Caption text={content.captions[1]} opacity={1} translateY={0} />
         </SceneLayer>
         <SceneLayer opacity={cardsOpacity} translateY={(1 - cardsOpacity) * 16}>
           <PromptBoardMock
-            content={JA_CONTENT}
+            content={content}
             state={visualStateAt(Math.max(frame, TIMELINE.cards.from))}
             opacity={1}
             scale={1}
             translateY={0}
           />
-          <Caption text={JA_CONTENT.captions[2]} opacity={1} translateY={0} />
+          <Caption text={content.captions[2]} opacity={1} translateY={0} />
         </SceneLayer>
         <SceneLayer opacity={liveOpacity} translateY={(1 - liveOpacity) * 16}>
           <PromptBoardMock
-            content={JA_CONTENT}
+            content={content}
             state={visualStateAt(Math.max(frame, TIMELINE.live.from))}
             opacity={1}
             scale={1}
             translateY={0}
           />
-          <Caption text={JA_CONTENT.captions[3]} opacity={1} translateY={0} />
+          <Caption text={content.captions[3]} opacity={1} translateY={0} />
           {cursor ? <Cursor x={cursor.point.x} y={cursor.point.y} opacity={1} phase={cursor.phase} /> : null}
         </SceneLayer>
         <SceneLayer opacity={valueOpacity} scale={0.9} translateY={(1 - valueOpacity) * 12}>
           <PromptBoardMock
-            content={JA_CONTENT}
-            state={{ kind: "live", selectedPromptId: JA_CONTENT.prompts[1].id }}
+            content={content}
+            state={{ kind: "live", selectedPromptId: content.prompts[1].id }}
             opacity={1}
             scale={1}
             translateY={0}
           />
-          <Caption text={JA_CONTENT.captions[4]} opacity={1} translateY={0} align="center" />
+          <Caption text={content.captions[4]} opacity={1} translateY={0} align="center" />
         </SceneLayer>
         <SceneLayer opacity={ctaOpacity} translateY={(1 - ctaOpacity) * 16}>
-          <EndCard content={JA_CONTENT} opacity={1} translateY={0} />
+          <EndCard content={content} opacity={1} translateY={0} />
         </SceneLayer>
       </AbsoluteFill>
     </>
   );
+}
+
+export function PromptBoardLaunchJa() {
+  return <PromptBoardLaunch content={JA_CONTENT} />;
+}
+
+export function PromptBoardLaunchEn() {
+  return <PromptBoardLaunch content={EN_CONTENT} />;
 }

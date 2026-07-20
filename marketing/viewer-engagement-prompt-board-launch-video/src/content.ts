@@ -71,17 +71,17 @@ export type PromptBoardUiLabels = {
 };
 
 export type PromptBoardVideoContent = {
-  readonly locale: "ja";
+  readonly locale: "ja" | "en";
   readonly ui: PromptBoardUiLabels;
   readonly plan: {
     readonly id: "plan-weekend-chat";
-    readonly title: "週末雑談";
+    readonly title: string;
   };
   readonly prompts: PromptFixtures;
   readonly captions: PromptBoardCaptions;
 };
 
-const UI_LABELS = {
+const JA_UI_LABELS = {
   productTitle: "配信カンペボード",
   tabs: {
     plans: "配信プラン",
@@ -111,7 +111,7 @@ const UI_LABELS = {
 
 export const JA_CONTENT = {
   locale: "ja",
-  ui: UI_LABELS,
+  ui: JA_UI_LABELS,
   plan: {
     id: "plan-weekend-chat",
     title: "週末雑談",
@@ -157,10 +157,86 @@ export const JA_CONTENT = {
   ],
 } as const satisfies PromptBoardVideoContent;
 
+const EN_UI_LABELS = {
+  productTitle: "Live Prompt Board",
+  tabs: {
+    plans: "Stream Plans",
+    cards: "Prompt Cards",
+    live: "Live Mode",
+  },
+  newPlan: "New Stream Plan",
+  makeCurrent: "Use for Current Stream",
+  nextPrompt: "Next Prompt",
+  planStatusLabels: {
+    idea: "Idea",
+    preparing: "Preparing",
+    live: "Live",
+  },
+  promptStatusLabels: {
+    talkingPoint: "Talking Point",
+    question: "Question",
+  },
+  segmentLabels: {
+    main: "Main",
+    closing: "Closing",
+  },
+  toneLabels: {
+    casual: "Casual",
+  },
+} as const satisfies PromptBoardUiLabels;
+
+export const EN_CONTENT = {
+  locale: "en",
+  ui: EN_UI_LABELS,
+  plan: {
+    id: "plan-weekend-chat",
+    title: "Weekend Chat",
+  },
+  prompts: [
+    {
+      id: "prompt-weekly-recap",
+      body: "What happened this week",
+      category: "talking-point",
+      segment: "main",
+      tone: "casual",
+      safetyNotes: "",
+      order: 0,
+    },
+    {
+      id: "prompt-current-favorite",
+      body: "What I’m into lately",
+      category: "talking-point",
+      segment: "main",
+      tone: "casual",
+      safetyNotes: "",
+      order: 1,
+    },
+    {
+      id: "prompt-weekend-question",
+      body: "Ask about everyone’s weekend plans",
+      category: "question",
+      segment: "closing",
+      tone: "casual",
+      safetyNotes: "",
+      order: 2,
+    },
+  ],
+  captions: [
+    "Ever lose track of what to say next?",
+    "Start with a stream plan",
+    "Organize your talking points",
+    "Stay focused on the current topic",
+    "From prep to live, keep every talking point in one place.",
+    "Free to use",
+    "Live Prompt Board",
+    "Link in this post",
+  ],
+} as const satisfies PromptBoardVideoContent;
+
 export const PRODUCT_TITLE = JA_CONTENT.ui.productTitle;
 export const UI_LABELS_FOR_VIDEO = JA_CONTENT.ui;
 
-export const VIDEO_VISIBLE_TEXT = [
+export const JA_VIDEO_VISIBLE_TEXT = [
   JA_CONTENT.ui.productTitle,
   JA_CONTENT.ui.tabs.plans,
   JA_CONTENT.ui.tabs.cards,
@@ -181,6 +257,29 @@ export const VIDEO_VISIBLE_TEXT = [
   ...JA_CONTENT.captions,
 ] as const;
 
+export const EN_VIDEO_VISIBLE_TEXT = [
+  EN_CONTENT.ui.productTitle,
+  EN_CONTENT.ui.tabs.plans,
+  EN_CONTENT.ui.tabs.cards,
+  EN_CONTENT.ui.tabs.live,
+  EN_CONTENT.ui.newPlan,
+  EN_CONTENT.ui.makeCurrent,
+  EN_CONTENT.ui.nextPrompt,
+  EN_CONTENT.ui.planStatusLabels.idea,
+  EN_CONTENT.ui.planStatusLabels.preparing,
+  EN_CONTENT.ui.planStatusLabels.live,
+  EN_CONTENT.ui.promptStatusLabels.talkingPoint,
+  EN_CONTENT.ui.promptStatusLabels.question,
+  EN_CONTENT.ui.segmentLabels.main,
+  EN_CONTENT.ui.segmentLabels.closing,
+  EN_CONTENT.ui.toneLabels.casual,
+  EN_CONTENT.plan.title,
+  ...EN_CONTENT.prompts.map(({ body }) => body),
+  ...EN_CONTENT.captions,
+] as const;
+
+export const VIDEO_VISIBLE_TEXT = [...JA_VIDEO_VISIBLE_TEXT, ...EN_VIDEO_VISIBLE_TEXT] as const;
+
 export const JA_POST_COPY = `配信中に「次、何を話そう？」となる前に。
 
 配信プランの作成から、話題の整理、配信中のカンペ表示まで、ブラウザだけでまとめて管理できます。
@@ -189,6 +288,15 @@ export const JA_POST_COPY = `配信中に「次、何を話そう？」となる
 🔗 https://streamer-tools.kuro-lab.com/tools/viewer-engagement-prompt-board/
 
 #VTuber #配信者向けツール`;
+
+export const EN_POST_COPY = `Never wonder what to talk about next during a stream.
+
+Create a stream plan, organize your talking points, and keep the current prompt visible while you’re live—all in your browser.
+
+Live Prompt Board is free to use.
+🔗 https://streamer-tools.kuro-lab.com/tools/viewer-engagement-prompt-board/
+
+#VTuber #StreamerTools`;
 
 export const STATIC_UI_COUNTER_TEXT = ["#1", "#2", "#3", "1 / 2", "2 / 2", "3件"] as const;
 

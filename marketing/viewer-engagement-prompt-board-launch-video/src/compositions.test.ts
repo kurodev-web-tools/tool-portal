@@ -47,8 +47,8 @@ afterEach(() => {
   remotionState.frame = 0;
 });
 
-describe("Japanese Stage A composition contract", () => {
-  test("registers one Japanese composition with locked video metadata", async () => {
+describe("bilingual Stage B composition contract", () => {
+  test("registers Japanese and English compositions with locked video metadata", async () => {
     const implementation = await import("./compositions").catch(() => undefined);
     expect(implementation).toBeDefined();
     if (!implementation) {
@@ -57,33 +57,23 @@ describe("Japanese Stage A composition contract", () => {
 
     const { COMPOSITION_EXPORTS, COMPOSITION_IDS, VIDEO_METADATA } = implementation;
 
-    expect(COMPOSITION_IDS).toEqual(["ViewerEngagementPromptBoardLaunchJa"]);
+    expect(COMPOSITION_IDS).toEqual([
+      "ViewerEngagementPromptBoardLaunchJa",
+      "ViewerEngagementPromptBoardLaunchEn",
+    ]);
     expect(VIDEO_METADATA).toEqual({
       width: 1920,
       height: 1080,
       fps: 30,
       durationInFrames: 750,
     });
-    expect(Object.keys(COMPOSITION_EXPORTS)).toEqual(["ja"]);
-  });
-
-  test("keeps the forbidden English composition ID out of recursive production source", () => {
-    const forbiddenId = ["ViewerEngagementPromptBoardLaunch", "En"].join("");
-    const sourceModules = import.meta.glob("./**/*.{ts,tsx}", {
-      eager: true,
-      import: "default",
-      query: "?raw",
+    expect(COMPOSITION_EXPORTS).toEqual({
+      ja: "ViewerEngagementPromptBoardLaunchJa",
+      en: "ViewerEngagementPromptBoardLaunchEn",
     });
-    const productionModules = Object.entries(sourceModules).filter(
-      ([fileName]) => !/\.test\.tsx?$/.test(fileName),
-    );
-    const productionSource = productionModules.map(([, source]) => source).join("\n");
-
-    expect(productionModules.map(([fileName]) => fileName)).toContain("./compositions.ts");
-    expect(productionSource).not.toContain(forbiddenId);
   });
 
-  test("registers exactly one Root composition owned by PromptBoardLaunch", async () => {
+  test("registers exactly two locale wrappers owned by the shared PromptBoardLaunch", async () => {
     const implementation = await import("./Root").catch(() => undefined);
     expect(implementation).toBeDefined();
     if (!implementation) {
@@ -91,13 +81,15 @@ describe("Japanese Stage A composition contract", () => {
     }
 
     const markup = renderToStaticMarkup(createElement(implementation.Root));
-    expect(markup.match(/data-id=/g)).toHaveLength(1);
+    expect(markup.match(/data-id=/g)).toHaveLength(2);
     expect(markup).toContain(`data-id="${COMPOSITION_IDS[0]}"`);
+    expect(markup).toContain(`data-id="${COMPOSITION_IDS[1]}"`);
     expect(markup).toContain(`data-width="${VIDEO_METADATA.width}"`);
     expect(markup).toContain(`data-height="${VIDEO_METADATA.height}"`);
     expect(markup).toContain(`data-fps="${VIDEO_METADATA.fps}"`);
     expect(markup).toContain(`data-duration="${VIDEO_METADATA.durationInFrames}"`);
-    expect(markup).toContain('data-component="PromptBoardLaunch"');
+    expect(markup).toContain('data-component="PromptBoardLaunchJa"');
+    expect(markup).toContain('data-component="PromptBoardLaunchEn"');
   });
 
   test("owns font readiness inside the rendered composition", () => {
@@ -113,10 +105,23 @@ describe("Japanese Stage A composition contract", () => {
     expect(compositionSource).toContain("<PromptBoardFontGate />");
   });
 
+  test("renders the English composition with English-only locale copy", async () => {
+    const { PromptBoardLaunchEn } = await import("./PromptBoardLaunch");
+    remotionState.frame = 420;
+    const markup = renderToStaticMarkup(createElement(PromptBoardLaunchEn));
+
+    expect(markup).toContain("Live Prompt Board");
+    expect(markup).toContain("Weekend Chat");
+    expect(markup).toContain("Use for Current Stream");
+    expect(markup).toContain("Stay focused on the current topic");
+    expect(markup).not.toMatch(/[\u3040-\u30ff\u3400-\u9fff]/u);
+  });
+
   test("targets the visible next-prompt action at its pressed frame", async () => {
     remotionState.frame = 520;
     const { PromptBoardLaunch } = await import("./PromptBoardLaunch");
-    const markup = renderToStaticMarkup(createElement(PromptBoardLaunch));
+    const { JA_CONTENT } = await import("./content");
+    const markup = renderToStaticMarkup(createElement(PromptBoardLaunch, { content: JA_CONTENT }));
     const pressedCursor = /translate3d\([^,]+px,\s*([\d.]+)px,\s*0\) scale\(0\.86\)/.exec(markup);
 
     expect(pressedCursor).not.toBeNull();

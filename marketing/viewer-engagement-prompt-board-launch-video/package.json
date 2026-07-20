@@ -11,8 +11,11 @@
     "fonts:verify": "node scripts/verify-font-coverage.mjs",
     "lint": "biome check src scripts",
     "render:ja:preview": "remotion render src/index.ts ViewerEngagementPromptBoardLaunchJa out/.tmp/ja-preview.mp4 --codec h264 --crf 18 --pixel-format yuv420p --muted --concurrency=1 --gl=swiftshader --overwrite --timeout=60000 --log=error",
+    "render:en:preview": "remotion render src/index.ts ViewerEngagementPromptBoardLaunchEn out/.tmp/en-preview.mp4 --codec h264 --crf 18 --pixel-format yuv420p --muted --concurrency=1 --gl=swiftshader --overwrite --timeout=60000 --log=error",
     "review:ja": "node scripts/render-review-stills.mjs",
     "artifact:ja": "node scripts/build-ja-artifacts.mjs",
+    "verify:ja-preservation": "node scripts/verify-ja-preservation.mjs",
+    "artifact:en": "node scripts/build-en-artifacts.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

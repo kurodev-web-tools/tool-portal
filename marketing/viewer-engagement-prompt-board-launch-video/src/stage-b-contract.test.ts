@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 const buildEnUrl = new URL("../scripts/build-en-artifacts.mjs", import.meta.url).href;
 const preservationUrl = new URL("../scripts/verify-ja-preservation.mjs", import.meta.url).href;
 const { EN_ARTIFACT_MANIFEST_PATHS } = await import(buildEnUrl);
-const { assertApprovalShape, countPixelMismatches } = await import(preservationUrl);
+const { assertApprovalShape, buildRgbaDecodeArgs, countPixelMismatches } = await import(preservationUrl);
 
 const GIT_SHA = "a".repeat(40);
 const FILE_SHA256 = "b".repeat(64);
@@ -49,5 +49,23 @@ describe("English Stage B artifact contract", () => {
     expect(countPixelMismatches(approved, new Uint8Array(approved))).toBe(0);
     expect(countPixelMismatches(approved, new Uint8Array([1, 2, 3, 255, 4, 9, 6, 255]))).toBe(1);
     expect(() => countPixelMismatches(approved, new Uint8Array([1, 2, 3, 255]))).toThrow(/dimensions/i);
+  });
+
+  it("decodes exactly one RGBA frame through the bundled image2pipe muxer", () => {
+    expect(buildRgbaDecodeArgs("frame.png")).toEqual([
+      "-v",
+      "error",
+      "-i",
+      "frame.png",
+      "-frames:v",
+      "1",
+      "-f",
+      "image2pipe",
+      "-vcodec",
+      "rawvideo",
+      "-pix_fmt",
+      "rgba",
+      "-",
+    ]);
   });
 });

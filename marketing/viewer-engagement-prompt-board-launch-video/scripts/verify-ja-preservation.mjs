@@ -93,12 +93,24 @@ export const countPixelMismatches = (approvedRgba, candidateRgba) => {
   return mismatchCount;
 };
 
+export const buildRgbaDecodeArgs = (path) => [
+  "-v",
+  "error",
+  "-i",
+  path,
+  "-frames:v",
+  "1",
+  "-f",
+  "image2pipe",
+  "-vcodec",
+  "rawvideo",
+  "-pix_fmt",
+  "rgba",
+  "-",
+];
+
 const decodeRgba = async (path) => {
-  const { stdout } = await execute(
-    FFMPEG,
-    ["-v", "error", "-i", path, "-f", "rawvideo", "-pix_fmt", "rgba", "-"],
-    { encoding: "buffer" },
-  );
+  const { stdout } = await execute(FFMPEG, buildRgbaDecodeArgs(path));
   return stdout;
 };
 

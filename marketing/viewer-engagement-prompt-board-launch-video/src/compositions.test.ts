@@ -1,6 +1,41 @@
 /// <reference types="vite/client" />
 
-import { describe, expect, test } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, test, vi } from "vitest";
+import { COMPOSITION_IDS, VIDEO_METADATA } from "./compositions";
+
+vi.mock("./fonts", () => ({ PROMPT_BOARD_FONT_FAMILY: "test-font" }));
+vi.mock("remotion", () => ({
+  AbsoluteFill: ({ children }: { readonly children?: React.ReactNode }) =>
+    createElement("div", null, children),
+  Composition: ({
+    component,
+    durationInFrames,
+    fps,
+    height,
+    id,
+    width,
+  }: {
+    readonly component: { readonly name: string };
+    readonly durationInFrames: number;
+    readonly fps: number;
+    readonly height: number;
+    readonly id: string;
+    readonly width: number;
+  }) =>
+    createElement("div", {
+      "data-component": component.name,
+      "data-duration": durationInFrames,
+      "data-fps": fps,
+      "data-height": height,
+      "data-id": id,
+      "data-width": width,
+    }),
+  interpolate: () => 1,
+  registerRoot: vi.fn(),
+  useCurrentFrame: () => 0,
+}));
 
 describe("Japanese Stage A composition contract", () => {
   test("registers one Japanese composition with locked video metadata", async () => {
@@ -36,5 +71,38 @@ describe("Japanese Stage A composition contract", () => {
 
     expect(productionModules.map(([fileName]) => fileName)).toContain("./compositions.ts");
     expect(productionSource).not.toContain(forbiddenId);
+  });
+
+  test("registers exactly one Root composition owned by PromptBoardLaunch", async () => {
+    const implementation = await import("./Root").catch(() => undefined);
+    expect(implementation).toBeDefined();
+    if (!implementation) {
+      return;
+    }
+
+    const markup = renderToStaticMarkup(createElement(implementation.Root));
+    expect(markup.match(/data-id=/g)).toHaveLength(1);
+    expect(markup).toContain(`data-id="${COMPOSITION_IDS[0]}"`);
+    expect(markup).toContain(`data-width="${VIDEO_METADATA.width}"`);
+    expect(markup).toContain(`data-height="${VIDEO_METADATA.height}"`);
+    expect(markup).toContain(`data-fps="${VIDEO_METADATA.fps}"`);
+    expect(markup).toContain(`data-duration="${VIDEO_METADATA.durationInFrames}"`);
+    expect(markup).toContain('data-component="PromptBoardLaunch"');
+  });
+
+  test("loads fonts exactly once from the Remotion entry path", () => {
+    const sourceModules = import.meta.glob("./**/*.{ts,tsx}", {
+      eager: true,
+      import: "default",
+      query: "?raw",
+    });
+    const entrySource = sourceModules["./index.ts"];
+    const productionSource = Object.entries(sourceModules)
+      .filter(([fileName]) => !/\.test\.tsx?$/.test(fileName))
+      .map(([, source]) => source)
+      .join("\n");
+
+    expect(entrySource).toContain('import "./fonts";');
+    expect(productionSource.match(/import\s+["']\.\/fonts["']/g)).toHaveLength(1);
   });
 });

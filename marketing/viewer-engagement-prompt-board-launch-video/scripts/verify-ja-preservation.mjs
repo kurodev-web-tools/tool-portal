@@ -21,6 +21,7 @@ const APPROVED_ROOT = join(OUT_ROOT, "ja");
 const REGRESSION_ROOT = join(OUT_ROOT, ".tmp", "ja-regression");
 const FFMPEG = join(PACKAGE_ROOT, "node_modules", "@remotion", "compositor-win32-x64-msvc", "ffmpeg.exe");
 const JA_MP4_NAME = "viewer-engagement-prompt-board-launch-ja.mp4";
+const GIT_SHA_PATTERN = /^[a-f0-9]{40}$/;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 
 export class JapanesePreservationError extends Error {
@@ -52,8 +53,8 @@ export const assertApprovalShape = (approval) => {
   if (
     approval?.schemaVersion !== 1 ||
     approval?.compositionId !== JA_COMPOSITION_ID ||
-    !SHA256_PATTERN.test(approval?.sourceCommit ?? "") ||
-    !SHA256_PATTERN.test(approval?.sourceTree ?? "") ||
+    !GIT_SHA_PATTERN.test(approval?.sourceCommit ?? "") ||
+    !GIT_SHA_PATTERN.test(approval?.sourceTree ?? "") ||
     !SHA256_PATTERN.test(approval?.mp4Sha256 ?? "") ||
     Number.isNaN(Date.parse(approval?.approvedAt ?? "")) ||
     !Array.isArray(approval?.reviewFrames) ||

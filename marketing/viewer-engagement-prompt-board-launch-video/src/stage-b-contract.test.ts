@@ -5,19 +5,20 @@ const preservationUrl = new URL("../scripts/verify-ja-preservation.mjs", import.
 const { EN_ARTIFACT_MANIFEST_PATHS } = await import(buildEnUrl);
 const { assertApprovalShape, countPixelMismatches } = await import(preservationUrl);
 
-const SHA = "a".repeat(64);
+const GIT_SHA = "a".repeat(40);
+const FILE_SHA256 = "b".repeat(64);
 const REVIEW_FRAMES = [30, 105, 180, 270, 420, 510, 600, 690, 749] as const;
 const approval = {
   schemaVersion: 1,
   compositionId: "ViewerEngagementPromptBoardLaunchJa",
-  sourceCommit: SHA,
-  sourceTree: SHA,
+  sourceCommit: GIT_SHA,
+  sourceTree: GIT_SHA,
   approvedAt: "2026-07-20T12:00:00.000Z",
-  mp4Sha256: SHA,
+  mp4Sha256: FILE_SHA256,
   reviewFrames: REVIEW_FRAMES.map((frame) => ({
     frame,
     path: `review/frame-${String(frame).padStart(4, "0")}.png`,
-    stillSha256: SHA,
+    stillSha256: FILE_SHA256,
   })),
 };
 

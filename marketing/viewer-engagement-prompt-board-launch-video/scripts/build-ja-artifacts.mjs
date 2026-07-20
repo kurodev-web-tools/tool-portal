@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { JA_POST_COPY } from "../src/content.ts";
 import { REVIEW_OUTPUTS, renderReviewStills } from "./render-review-stills.mjs";
-import { probeVideo, verifyJaRender } from "./verify-ja-render.mjs";
+import { needsNormalization, probeVideo, verifyJaRender } from "./verify-ja-render.mjs";
 
 const execFileAsync = promisify(execFile);
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -94,10 +94,10 @@ const renderMp4 = async (outputPath) => {
   ]);
 };
 
-const normalizePixelFormat = async (videoPath) => {
+export const normalizePixelFormat = async (videoPath) => {
   const probe = await probeVideo(videoPath);
   const video = probe.streams?.find((stream) => stream.codec_type === "video");
-  if (video?.pix_fmt === "yuv420p") return;
+  if (!needsNormalization(video)) return;
   const normalized = `${videoPath}.normalized.mp4`;
   await execute(FFMPEG, [
     "-y",
@@ -106,7 +106,7 @@ const normalizePixelFormat = async (videoPath) => {
     "-i",
     videoPath,
     "-vf",
-    "scale=in_range=pc:out_range=tv,format=yuv420p",
+    "scale=in_range=auto:out_range=tv,format=yuv420p",
     "-c:v",
     "libx264",
     "-crf",
@@ -121,11 +121,18 @@ const normalizePixelFormat = async (videoPath) => {
     "bt709",
     "-color_range",
     "tv",
+    "-x264-params",
+    "colorprim=bt709:transfer=bt709:colormatrix=bt709:range=tv",
     "-an",
     normalized,
   ]);
   await rm(videoPath);
   await rename(normalized, videoPath);
+  const normalizedProbe = await probeVideo(videoPath);
+  const normalizedVideo = normalizedProbe.streams?.find((stream) => stream.codec_type === "video");
+  if (needsNormalization(normalizedVideo)) {
+    throw new ArtifactBuildError("Bundled ffmpeg normalization did not produce exact yuv420p bt709 metadata");
+  }
 };
 
 const sha256 = async (path) =>

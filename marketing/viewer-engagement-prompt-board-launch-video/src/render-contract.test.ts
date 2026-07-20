@@ -6,7 +6,7 @@ const verifyContractUrl = new URL("../scripts/verify-ja-render.mjs", import.meta
 const { ARTIFACT_MANIFEST_PATHS, assertApprovalExcluded, assertArtifactSourceClean, createManifestLines } =
   await import(buildContractUrl);
 const { REVIEW_OUTPUTS } = await import(reviewContractUrl);
-const { SCHEMA_VERSION } = await import(verifyContractUrl);
+const { SCHEMA_VERSION, buildMediaChecks, needsNormalization } = await import(verifyContractUrl);
 
 describe("Japanese artifact contract", () => {
   it("uses the exact review and video paths", () => {
@@ -52,5 +52,46 @@ describe("Japanese artifact contract", () => {
       ),
     ).toThrow(/dirty/i);
     expect(() => assertArtifactSourceClean("")).not.toThrow();
+  });
+
+  it("requires 750 decoded frames and exact limited-range bt709 metadata", () => {
+    const exactVideo = {
+      codec_type: "video",
+      codec_name: "h264",
+      width: 1920,
+      height: 1080,
+      pix_fmt: "yuv420p",
+      color_range: "tv",
+      color_space: "bt709",
+      color_transfer: "bt709",
+      color_primaries: "bt709",
+      r_frame_rate: "30/1",
+      avg_frame_rate: "30/1",
+      nb_frames: "750",
+      nb_read_frames: "750",
+    };
+    expect(
+      buildMediaChecks({ video: exactVideo, duration: 25, audioCount: 0, decodePassed: true }),
+    ).toSatisfy((checks: readonly { readonly verdict: string }[]) =>
+      checks.every(({ verdict }) => verdict === "PASS"),
+    );
+    const missingReadCount = { ...exactVideo, nb_read_frames: undefined };
+    expect(
+      buildMediaChecks({ video: missingReadCount, duration: 25, audioCount: 0, decodePassed: true }),
+    ).toContainEqual(expect.objectContaining({ name: "decoded-frame-count", verdict: "FAIL" }));
+  });
+
+  it("normalizes unless pixel format and all four color fields are exact", () => {
+    const exactVideo = {
+      pix_fmt: "yuv420p",
+      color_range: "tv",
+      color_space: "bt709",
+      color_transfer: "bt709",
+      color_primaries: "bt709",
+    };
+    expect(needsNormalization(exactVideo)).toBe(false);
+    for (const key of Object.keys(exactVideo)) {
+      expect(needsNormalization({ ...exactVideo, [key]: "unknown" })).toBe(true);
+    }
   });
 });

@@ -7,6 +7,7 @@ import { EndCard } from "./components/EndCard";
 import { MemoHook } from "./components/MemoHook";
 import { PromptBoardMock } from "./components/PromptBoardMock";
 import { FONT_GLYPH_TEXT, JA_CONTENT, type PromptBoardVisualState } from "./content";
+import { TOKENS } from "./tokens";
 
 vi.mock("./fonts", () => ({ PROMPT_BOARD_FONT_FAMILY: "test-font" }));
 
@@ -54,10 +55,23 @@ function renderedText(markup: string): string {
     .replace(/&#x27;/g, "'");
 }
 
+function detailHeadingText(markup: string): string {
+  const heading = /<h2[^>]*>(.*?)<\/h2>/s.exec(markup);
+  return renderedText(heading?.[1] ?? "");
+}
+
+function actionStyleFor(markup: string, label: string): string {
+  const action = Array.from(markup.matchAll(/<div style="([^"]*)">([^<]*)<\/div>/g)).find(
+    (match) => renderedText(match[2] ?? "") === label,
+  );
+  return action?.[1] ?? "";
+}
+
 const PRODUCT_LITERAL_PATTERN =
   /[\u3040-\u30ff\u3400-\u9fff]|Live Prompt Board|stream plan|talking point|next prompt|link in this post|free to use/i;
 const PRODUCTION_DEPENDENCY_PATTERN =
   /(?:from\s*|import\s*\()["'][^"']*(?:\/src\/(?:app|components|lib)\/|runtime|storage)[^"']*["']|\b(?:localStorage|sessionStorage|indexedDB)\b/;
+const TEST_ONLY_ATTRIBUTE_PATTERN = /data-(?:current-prompt-id|next-action-state|cursor-phase)/;
 
 describe("prompt board video component copy boundary", () => {
   test("exports the reconstructed prompt-board owner", async () => {
@@ -89,6 +103,7 @@ describe("prompt board video component copy boundary", () => {
       }
       expect(source).not.toMatch(PRODUCT_LITERAL_PATTERN);
       expect(source).not.toMatch(PRODUCTION_DEPENDENCY_PATTERN);
+      expect(source).not.toMatch(TEST_ONLY_ATTRIBUTE_PATTERN);
     }
   });
 
@@ -113,7 +128,7 @@ describe("prompt board video component copy boundary", () => {
     ).toEqual([1, 2, 3]);
     expect(unsettled).toContain(JA_CONTENT.ui.planStatusLabels.idea);
     expect(settled).toContain(JA_CONTENT.ui.planStatusLabels.live);
-    expect(liveEmpty).toContain('data-current-prompt-id=""');
+    expect(detailHeadingText(liveEmpty)).toBe("");
   });
 
   test("switches directly from prompt one to prompt two without completion UI", () => {
@@ -136,15 +151,42 @@ describe("prompt board video component copy boundary", () => {
 
     // Then: both feedback states exist, prompt two replaces prompt one directly, and no completion copy appears.
     expect(promptOne).toContain(JA_CONTENT.ui.nextPrompt);
-    expect(promptOne).toContain(`data-current-prompt-id="${JA_CONTENT.prompts[0].id}"`);
-    expect(nextIdle).toContain('data-next-action-state="idle"');
-    expect(nextPressed).toContain('data-next-action-state="pressed"');
-    expect(nextIdle).toContain(JA_CONTENT.prompts[0].body);
-    expect(nextPressed).toContain(JA_CONTENT.prompts[0].body);
-    expect(promptTwo).toContain(JA_CONTENT.prompts[1].body);
-    expect(promptTwo).toContain(`data-current-prompt-id="${JA_CONTENT.prompts[1].id}"`);
+    expect(detailHeadingText(promptOne)).toBe(JA_CONTENT.prompts[0].body);
+    expect(detailHeadingText(nextIdle)).toBe(JA_CONTENT.prompts[0].body);
+    expect(detailHeadingText(nextPressed)).toBe(JA_CONTENT.prompts[0].body);
+    expect(detailHeadingText(promptTwo)).toBe(JA_CONTENT.prompts[1].body);
+    expect(actionStyleFor(nextIdle, JA_CONTENT.ui.nextPrompt)).toContain(`background:${TOKENS.primary}`);
+    expect(actionStyleFor(nextIdle, JA_CONTENT.ui.nextPrompt)).toContain("transform:scale(1)");
+    expect(actionStyleFor(nextPressed, JA_CONTENT.ui.nextPrompt)).toContain(
+      `background:${TOKENS.primaryStrong}`,
+    );
+    expect(actionStyleFor(nextPressed, JA_CONTENT.ui.nextPrompt)).toContain("transform:scale(0.97)");
     expect(promptTwo).not.toContain(JA_CONTENT.ui.nextPrompt);
     expect(renderedFlow).not.toMatch(/完了|completed/i);
+  });
+
+  test("renders all cursor phases through SVG shape, transform, and press ring", () => {
+    // Given: all four deterministic cursor phases at one fixed position.
+    const cursorMarkup = {
+      idle: renderToStaticMarkup(createElement(Cursor, { x: 120, y: 240, opacity: 1, phase: "idle" })),
+      moving: renderToStaticMarkup(createElement(Cursor, { x: 120, y: 240, opacity: 1, phase: "moving" })),
+      pressed: renderToStaticMarkup(createElement(Cursor, { x: 120, y: 240, opacity: 1, phase: "pressed" })),
+      settled: renderToStaticMarkup(createElement(Cursor, { x: 120, y: 240, opacity: 1, phase: "settled" })),
+    } as const;
+
+    // When: each phase is rendered without a mirrored phase attribute.
+    const pressRing = `border:4px solid ${TOKENS.primaryStrong}`;
+
+    // Then: SVG remains present, motion scales differ, and only the pressed phase owns the feedback ring.
+    expect(Object.values(cursorMarkup).every((markup) => markup.includes("<svg"))).toBe(true);
+    expect(cursorMarkup.idle).toContain("scale(1)");
+    expect(cursorMarkup.moving).toContain("scale(1.04)");
+    expect(cursorMarkup.pressed).toContain("scale(0.86)");
+    expect(cursorMarkup.settled).toContain("scale(1)");
+    expect(cursorMarkup.pressed).toContain(pressRing);
+    expect(cursorMarkup.idle).not.toContain(pressRing);
+    expect(cursorMarkup.moving).not.toContain(pressRing);
+    expect(cursorMarkup.settled).not.toContain(pressRing);
   });
 
   test("covers every rendered component text codepoint with the package-local font corpus", () => {

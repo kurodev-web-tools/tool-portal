@@ -32,7 +32,7 @@ export function Cursor({ x, y, opacity, phase }: CursorProps) {
   };
 
   return (
-    <div data-cursor-phase={phase} style={rootStyle}>
+    <div style={rootStyle}>
       {phase === "pressed" ? (
         <div
           style={{

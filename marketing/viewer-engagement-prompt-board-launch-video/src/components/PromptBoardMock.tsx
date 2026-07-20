@@ -105,31 +105,13 @@ function PlanPanel({
     { readonly kind: "plan-editor" | "plan-created" | "make-current" }
   >;
 }) {
-  const presentation = (() => {
-    switch (state.kind) {
-      case "plan-editor":
-        return {
-          title: content.plan.title.slice(0, state.typedCharacters),
-          editing: true,
-          settled: false,
-          pressed: false,
-        };
-      case "plan-created":
-        return { title: content.plan.title, editing: false, settled: false, pressed: false };
-      case "make-current":
-        return { title: content.plan.title, editing: false, settled: state.settled, pressed: !state.settled };
-      default:
-        return unreachable(state);
-    }
-  })();
+  const editing = state.kind === "plan-editor";
+  const settled = state.kind === "make-current" && state.settled;
+  const pressed = state.kind === "make-current" && !state.settled;
+  const title = editing ? content.plan.title.slice(0, state.typedCharacters) : content.plan.title;
+  const gridTemplateColumns = editing ? "1fr" : "0.82fr 1.18fr";
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: presentation.editing ? "1fr" : "0.82fr 1.18fr",
-        gap: 32,
-      }}
-    >
+    <div style={{ display: "grid", gridTemplateColumns, gap: 32 }}>
       <div style={{ padding: 32, border: `2px solid ${TOKENS.border}`, borderRadius: TOKENS.radius }}>
         <div style={{ fontSize: TOKENS.semanticLabelFontSize, fontWeight: 900 }}>{content.ui.newPlan}</div>
         <div
@@ -144,20 +126,18 @@ function PlanPanel({
             fontWeight: 700,
           }}
         >
-          {presentation.title}
+          {title}
         </div>
       </div>
-      {presentation.editing ? null : (
+      {editing ? null : (
         <article style={{ padding: 32, border: `2px solid ${TOKENS.border}`, borderRadius: TOKENS.radius }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
             <h2 style={{ margin: 0, fontSize: 40 }}>{content.plan.title}</h2>
             <span style={PRIMARY_LABEL_STYLE}>
-              {presentation.settled ? content.ui.planStatusLabels.live : content.ui.planStatusLabels.idea}
+              {settled ? content.ui.planStatusLabels.live : content.ui.planStatusLabels.idea}
             </span>
           </div>
-          <div style={actionStyle(presentation.pressed, presentation.settled, 56)}>
-            {content.ui.makeCurrent}
-          </div>
+          <div style={actionStyle(pressed, settled, 56)}>{content.ui.makeCurrent}</div>
         </article>
       )}
     </div>
@@ -190,7 +170,6 @@ function LivePanel({
         ))}
       </aside>
       <div
-        data-current-prompt-id={selectedPrompt?.id ?? ""}
         style={{
           minHeight: 448,
           padding: 48,
@@ -201,14 +180,7 @@ function LivePanel({
       >
         <div style={PRIMARY_LABEL_STYLE}>{content.ui.planStatusLabels.live}</div>
         <h2 style={{ margin: "48px 0 0", fontSize: 56, lineHeight: 1.35 }}>{selectedPrompt?.body}</h2>
-        {showNext ? (
-          <div
-            data-next-action-state={nextPressed ? "pressed" : "idle"}
-            style={actionStyle(nextPressed, false, 72)}
-          >
-            {content.ui.nextPrompt}
-          </div>
-        ) : null}
+        {showNext ? <div style={actionStyle(nextPressed, false, 72)}>{content.ui.nextPrompt}</div> : null}
       </div>
     </div>
   );
@@ -237,7 +209,6 @@ function panelFor(content: PromptBoardVideoContent, state: PromptBoardVisualStat
 }
 
 export function PromptBoardMock({ content, state, opacity, scale, translateY }: PromptBoardMockProps) {
-  const activeTab = ACTIVE_TAB[state.kind];
   const rootStyle: CSSProperties = {
     position: "absolute",
     inset: TOKENS.uiInset,
@@ -269,8 +240,8 @@ export function PromptBoardMock({ content, state, opacity, scale, translateY }: 
               key={key}
               style={{
                 padding: "12px 20px",
-                borderBottom: `4px solid ${key === activeTab ? TOKENS.primaryStrong : "transparent"}`,
-                color: key === activeTab ? TOKENS.foreground : TOKENS.muted,
+                borderBottom: `4px solid ${key === ACTIVE_TAB[state.kind] ? TOKENS.primaryStrong : "transparent"}`,
+                color: key === ACTIVE_TAB[state.kind] ? TOKENS.foreground : TOKENS.muted,
                 fontSize: TOKENS.semanticLabelFontSize,
                 fontWeight: 900,
               }}

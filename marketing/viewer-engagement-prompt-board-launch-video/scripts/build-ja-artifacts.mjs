@@ -5,6 +5,7 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { JA_POST_COPY } from "../src/content.ts";
+import { promoteArtifactDirectory, withExclusiveBuildLock } from "./artifact-promotion.mjs";
 import { REVIEW_OUTPUTS, renderReviewStills } from "./render-review-stills.mjs";
 import { needsNormalization, probeVideo, verifyJaRender } from "./verify-ja-render.mjs";
 
@@ -156,35 +157,43 @@ export const writeManifest = async (outputRoot) => {
   await writeFile(join(outputRoot, "manifest.sha256"), `${lines.join("\n")}\n`, "utf8");
 };
 
-const promoteOwnedArtifacts = async (temporaryRoot, finalRoot) => {
-  for (const relativePath of [...ARTIFACT_MANIFEST_PATHS, "manifest.sha256"]) {
-    const source = join(temporaryRoot, relativePath);
-    const destination = join(finalRoot, relativePath);
-    await mkdir(dirname(destination), { recursive: true });
-    await rm(destination, { force: true });
-    await rename(source, destination);
-  }
-};
-
 export const buildJaArtifacts = async () => {
   const outRoot = join(PACKAGE_ROOT, "out");
   const temporaryRoot = join(outRoot, ".tmp", "ja");
   const finalRoot = join(outRoot, "ja");
-  await ensureApprovalAbsent(finalRoot);
-  assertApprovalExcluded(ARTIFACT_MANIFEST_PATHS);
-  const provenance = await readProvenance();
-  await rm(temporaryRoot, { recursive: true, force: true });
-  await mkdir(temporaryRoot, { recursive: true });
-  await renderReviewStills({ outputRoot: temporaryRoot });
-  const videoPath = join(temporaryRoot, MP4_NAME);
-  await renderMp4(videoPath);
-  await normalizePixelFormat(videoPath);
-  await verifyJaRender({ outputRoot: temporaryRoot, ...provenance });
-  await writeFile(join(temporaryRoot, "post.txt"), `${JA_POST_COPY}\n`, "utf8");
-  await writeManifest(temporaryRoot);
-  await promoteOwnedArtifacts(temporaryRoot, finalRoot);
-  await rm(temporaryRoot, { recursive: true, force: true });
-  return { ...provenance, outputRoot: relative(REPO_ROOT, finalRoot).replaceAll(sep, "/") };
+  const candidateRoot = join(outRoot, ".tmp", "ja-promotion-candidate");
+  const backupRoot = join(outRoot, ".tmp", "ja-promotion-backup");
+  const lockPath = join(outRoot, ".tmp", "ja-artifact-build.lock");
+  return withExclusiveBuildLock({
+    lockPath,
+    run: async () => {
+      await ensureApprovalAbsent(finalRoot);
+      assertApprovalExcluded(ARTIFACT_MANIFEST_PATHS);
+      const provenance = await readProvenance();
+      await rm(temporaryRoot, { recursive: true, force: true });
+      await mkdir(temporaryRoot, { recursive: true });
+      await renderReviewStills({ outputRoot: temporaryRoot });
+      const videoPath = join(temporaryRoot, MP4_NAME);
+      await renderMp4(videoPath);
+      await normalizePixelFormat(videoPath);
+      await verifyJaRender({ outputRoot: temporaryRoot, ...provenance });
+      await writeFile(join(temporaryRoot, "post.txt"), `${JA_POST_COPY}\n`, "utf8");
+      await writeManifest(temporaryRoot);
+      await ensureApprovalAbsent(finalRoot);
+      await promoteArtifactDirectory({
+        outRoot,
+        temporaryArtifactRoot: temporaryRoot,
+        finalRoot,
+        candidateRoot,
+        backupRoot,
+        ownedPaths: [...ARTIFACT_MANIFEST_PATHS, "manifest.sha256"],
+        capturedProvenance: provenance,
+        readProvenance,
+      });
+      await rm(temporaryRoot, { recursive: true, force: true });
+      return { ...provenance, outputRoot: relative(REPO_ROOT, finalRoot).replaceAll(sep, "/") };
+    },
+  });
 };
 
 const isMain = process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url);

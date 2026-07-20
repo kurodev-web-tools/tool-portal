@@ -3,10 +3,37 @@ import { describe, expect, it } from "vitest";
 const buildContractUrl = new URL("../scripts/build-ja-artifacts.mjs", import.meta.url).href;
 const reviewContractUrl = new URL("../scripts/render-review-stills.mjs", import.meta.url).href;
 const verifyContractUrl = new URL("../scripts/verify-ja-render.mjs", import.meta.url).href;
+const promotionContractUrl = new URL("../scripts/artifact-promotion.mjs", import.meta.url).href;
 const { ARTIFACT_MANIFEST_PATHS, assertApprovalExcluded, assertArtifactSourceClean, createManifestLines } =
   await import(buildContractUrl);
 const { REVIEW_OUTPUTS } = await import(reviewContractUrl);
 const { SCHEMA_VERSION, buildMediaChecks, needsNormalization } = await import(verifyContractUrl);
+const { assertProvenanceUnchanged, promoteArtifactDirectory, withExclusiveBuildLock } = await import(
+  promotionContractUrl
+);
+const { mkdir, readFile, rm, writeFile } = await import(["node:fs", "promises"].join("/"));
+const { dirname, join } = await import(["node:path"].join(""));
+const { fileURLToPath } = await import(["node:url"].join(""));
+
+const PROMOTION_TEST_ROOT = fileURLToPath(
+  new URL("../out/.tmp/task6-promotion-contract-test/", import.meta.url),
+);
+const TEST_OWNED_PATHS = ["video.mp4", "review/frame.png", "manifest.sha256"] as const;
+
+const writeTree = async (root: string, values: Readonly<Record<string, string>>) => {
+  for (const [relativePath, value] of Object.entries(values)) {
+    const path = join(root, relativePath);
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, value, "utf8");
+  }
+};
+
+const readTree = async (root: string, paths: readonly string[]) =>
+  Object.fromEntries(
+    await Promise.all(
+      paths.map(async (relativePath) => [relativePath, await readFile(join(root, relativePath), "utf8")]),
+    ),
+  );
 
 describe("Japanese artifact contract", () => {
   it("uses the exact review and video paths", () => {
@@ -93,5 +120,135 @@ describe("Japanese artifact contract", () => {
     for (const key of Object.keys(exactVideo)) {
       expect(needsNormalization({ ...exactVideo, [key]: "unknown" })).toBe(true);
     }
+  });
+
+  it("refuses changed provenance before promotion without mutating final", async () => {
+    const captured = { sourceCommit: "a".repeat(40), sourceTree: "b".repeat(40), clean: true };
+    expect(() => assertProvenanceUnchanged(captured, captured)).not.toThrow();
+    expect(() => assertProvenanceUnchanged(captured, { ...captured, sourceTree: "c".repeat(40) })).toThrow(
+      /provenance changed/i,
+    );
+    const root = join(PROMOTION_TEST_ROOT, "provenance-mismatch");
+    const finalRoot = join(root, "ja");
+    const temporaryRoot = join(root, ".tmp", "rendered");
+    await rm(root, { recursive: true, force: true });
+    await writeTree(finalRoot, { "video.mp4": "old-video" });
+    await writeTree(temporaryRoot, {
+      "video.mp4": "new-video",
+      "review/frame.png": "new-frame",
+      "manifest.sha256": "new-manifest",
+    });
+    await expect(
+      promoteArtifactDirectory({
+        outRoot: root,
+        temporaryArtifactRoot: temporaryRoot,
+        finalRoot,
+        candidateRoot: join(root, ".tmp", "candidate"),
+        backupRoot: join(root, ".tmp", "backup"),
+        ownedPaths: TEST_OWNED_PATHS,
+        capturedProvenance: captured,
+        readProvenance: async () => ({ ...captured, sourceTree: "c".repeat(40) }),
+      }),
+    ).rejects.toThrow(/provenance changed/i);
+    expect(await readFile(join(finalRoot, "video.mp4"), "utf8")).toBe("old-video");
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it.each(["after-backup-rename", "after-candidate-rename"])(
+    "rolls back the complete existing final tree on injected %s failure",
+    async (failurePhase) => {
+      const root = join(PROMOTION_TEST_ROOT, failurePhase);
+      const finalRoot = join(root, "ja");
+      const temporaryRoot = join(root, ".tmp", "rendered");
+      const candidateRoot = join(root, ".tmp", "candidate");
+      const backupRoot = join(root, ".tmp", "backup");
+      await rm(root, { recursive: true, force: true });
+      await writeTree(finalRoot, {
+        "video.mp4": "old-video",
+        "review/frame.png": "old-frame",
+        "unknown.txt": "keep",
+      });
+      await writeTree(temporaryRoot, {
+        "video.mp4": "new-video",
+        "review/frame.png": "new-frame",
+        "manifest.sha256": "new-manifest",
+      });
+      const provenance = { sourceCommit: "a".repeat(40), sourceTree: "b".repeat(40), clean: true };
+      await expect(
+        promoteArtifactDirectory({
+          outRoot: root,
+          temporaryArtifactRoot: temporaryRoot,
+          finalRoot,
+          candidateRoot,
+          backupRoot,
+          ownedPaths: TEST_OWNED_PATHS,
+          capturedProvenance: provenance,
+          readProvenance: async () => provenance,
+          injectFailure: (phase: string) => {
+            if (phase === failurePhase) throw new Error(`injected ${phase}`);
+          },
+        }),
+      ).rejects.toThrow(/promotion failed/i);
+      expect(await readTree(finalRoot, ["video.mp4", "review/frame.png", "unknown.txt"])).toEqual({
+        "video.mp4": "old-video",
+        "review/frame.png": "old-frame",
+        "unknown.txt": "keep",
+      });
+      await expect(readFile(candidateRoot)).rejects.toThrow();
+      await expect(readFile(backupRoot)).rejects.toThrow();
+      await rm(root, { recursive: true, force: true });
+    },
+  );
+
+  it("refuses approval appearing after the initial check without swapping final", async () => {
+    const root = join(PROMOTION_TEST_ROOT, "approval-race");
+    const finalRoot = join(root, "ja");
+    const temporaryRoot = join(root, ".tmp", "rendered");
+    await rm(root, { recursive: true, force: true });
+    await writeTree(finalRoot, { "video.mp4": "old-video" });
+    await writeTree(temporaryRoot, {
+      "video.mp4": "new-video",
+      "review/frame.png": "new-frame",
+      "manifest.sha256": "new-manifest",
+    });
+    const provenance = { sourceCommit: "a".repeat(40), sourceTree: "b".repeat(40), clean: true };
+    await expect(
+      promoteArtifactDirectory({
+        outRoot: root,
+        temporaryArtifactRoot: temporaryRoot,
+        finalRoot,
+        candidateRoot: join(root, ".tmp", "candidate"),
+        backupRoot: join(root, ".tmp", "backup"),
+        ownedPaths: TEST_OWNED_PATHS,
+        capturedProvenance: provenance,
+        readProvenance: async () => provenance,
+        injectFailure: async (phase: string) => {
+          if (phase === "before-final-approval-recheck") {
+            await writeFile(join(finalRoot, "approval.json"), "approved", "utf8");
+          }
+        },
+      }),
+    ).rejects.toThrow(/approval\.json/i);
+    expect(await readFile(join(finalRoot, "video.mp4"), "utf8")).toBe("old-video");
+    expect(await readFile(join(finalRoot, "approval.json"), "utf8")).toBe("approved");
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("holds an exclusive package-local build lock and releases it", async () => {
+    const root = join(PROMOTION_TEST_ROOT, "exclusive-lock");
+    const lockPath = join(root, "artifact.lock");
+    await rm(root, { recursive: true, force: true });
+    const result = await withExclusiveBuildLock({
+      lockPath,
+      run: async () => {
+        await expect(withExclusiveBuildLock({ lockPath, run: async () => "unexpected" })).rejects.toThrow(
+          /lock is already present/i,
+        );
+        return "complete";
+      },
+    });
+    expect(result).toBe("complete");
+    await expect(readFile(lockPath, "utf8")).rejects.toThrow();
+    await rm(root, { recursive: true, force: true });
   });
 });

@@ -11,7 +11,7 @@ const { SCHEMA_VERSION, buildMediaChecks, needsNormalization } = await import(ve
 const { assertProvenanceUnchanged, promoteArtifactDirectory, withExclusiveBuildLock } = await import(
   promotionContractUrl
 );
-const { mkdir, readFile, rm, writeFile } = await import(["node:fs", "promises"].join("/"));
+const { access, mkdir, readFile, rm, stat, writeFile } = await import(["node:fs", "promises"].join("/"));
 const { dirname, join } = await import(["node:path"].join(""));
 const { fileURLToPath } = await import(["node:url"].join(""));
 
@@ -19,6 +19,7 @@ const PROMOTION_TEST_ROOT = fileURLToPath(
   new URL("../out/.tmp/task6-promotion-contract-test/", import.meta.url),
 );
 const TEST_OWNED_PATHS = ["video.mp4", "review/frame.png", "manifest.sha256"] as const;
+const TEST_PROVENANCE = { sourceCommit: "a".repeat(40), sourceTree: "b".repeat(40), clean: true };
 
 const writeTree = async (root: string, values: Readonly<Record<string, string>>) => {
   for (const [relativePath, value] of Object.entries(values)) {
@@ -34,6 +35,51 @@ const readTree = async (root: string, paths: readonly string[]) =>
       paths.map(async (relativePath) => [relativePath, await readFile(join(root, relativePath), "utf8")]),
     ),
   );
+
+const expectEnoent = async (path: string) => {
+  try {
+    await access(path);
+    throw new Error(`Expected missing path: ${path}`);
+  } catch (error: unknown) {
+    expect(error).toMatchObject({ code: "ENOENT" });
+  }
+};
+
+const createPromotionFixture = async (name: string) => {
+  const root = join(PROMOTION_TEST_ROOT, name);
+  const fixture = {
+    root,
+    finalRoot: join(root, "ja"),
+    temporaryRoot: join(root, ".tmp", "rendered"),
+    candidateRoot: join(root, ".tmp", "candidate"),
+    backupRoot: join(root, ".tmp", "backup"),
+  };
+  await rm(root, { recursive: true, force: true });
+  await writeTree(fixture.finalRoot, {
+    "video.mp4": "old-video",
+    "review/frame.png": "old-frame",
+    "unknown.txt": "keep",
+  });
+  await writeTree(fixture.temporaryRoot, {
+    "video.mp4": "new-video",
+    "review/frame.png": "new-frame",
+    "manifest.sha256": "new-manifest",
+  });
+  return fixture;
+};
+
+const promoteFixture = (fixture: Awaited<ReturnType<typeof createPromotionFixture>>, overrides = {}) =>
+  promoteArtifactDirectory({
+    outRoot: fixture.root,
+    temporaryArtifactRoot: fixture.temporaryRoot,
+    finalRoot: fixture.finalRoot,
+    candidateRoot: fixture.candidateRoot,
+    backupRoot: fixture.backupRoot,
+    ownedPaths: TEST_OWNED_PATHS,
+    capturedProvenance: TEST_PROVENANCE,
+    readProvenance: async () => TEST_PROVENANCE,
+    ...overrides,
+  });
 
 describe("Japanese artifact contract", () => {
   it("uses the exact review and video paths", () => {
@@ -123,115 +169,56 @@ describe("Japanese artifact contract", () => {
   });
 
   it("refuses changed provenance before promotion without mutating final", async () => {
-    const captured = { sourceCommit: "a".repeat(40), sourceTree: "b".repeat(40), clean: true };
-    expect(() => assertProvenanceUnchanged(captured, captured)).not.toThrow();
-    expect(() => assertProvenanceUnchanged(captured, { ...captured, sourceTree: "c".repeat(40) })).toThrow(
-      /provenance changed/i,
-    );
-    const root = join(PROMOTION_TEST_ROOT, "provenance-mismatch");
-    const finalRoot = join(root, "ja");
-    const temporaryRoot = join(root, ".tmp", "rendered");
-    await rm(root, { recursive: true, force: true });
-    await writeTree(finalRoot, { "video.mp4": "old-video" });
-    await writeTree(temporaryRoot, {
-      "video.mp4": "new-video",
-      "review/frame.png": "new-frame",
-      "manifest.sha256": "new-manifest",
-    });
+    expect(() => assertProvenanceUnchanged(TEST_PROVENANCE, TEST_PROVENANCE)).not.toThrow();
+    expect(() =>
+      assertProvenanceUnchanged(TEST_PROVENANCE, { ...TEST_PROVENANCE, sourceTree: "c".repeat(40) }),
+    ).toThrow(/provenance changed/i);
+    const fixture = await createPromotionFixture("provenance-mismatch");
     await expect(
-      promoteArtifactDirectory({
-        outRoot: root,
-        temporaryArtifactRoot: temporaryRoot,
-        finalRoot,
-        candidateRoot: join(root, ".tmp", "candidate"),
-        backupRoot: join(root, ".tmp", "backup"),
-        ownedPaths: TEST_OWNED_PATHS,
-        capturedProvenance: captured,
-        readProvenance: async () => ({ ...captured, sourceTree: "c".repeat(40) }),
+      promoteFixture(fixture, {
+        readProvenance: async () => ({ ...TEST_PROVENANCE, sourceTree: "c".repeat(40) }),
       }),
     ).rejects.toThrow(/provenance changed/i);
-    expect(await readFile(join(finalRoot, "video.mp4"), "utf8")).toBe("old-video");
-    await rm(root, { recursive: true, force: true });
+    expect(await readFile(join(fixture.finalRoot, "video.mp4"), "utf8")).toBe("old-video");
+    await rm(fixture.root, { recursive: true, force: true });
   });
 
   it.each(["after-backup-rename", "after-candidate-rename"])(
     "rolls back the complete existing final tree on injected %s failure",
     async (failurePhase) => {
-      const root = join(PROMOTION_TEST_ROOT, failurePhase);
-      const finalRoot = join(root, "ja");
-      const temporaryRoot = join(root, ".tmp", "rendered");
-      const candidateRoot = join(root, ".tmp", "candidate");
-      const backupRoot = join(root, ".tmp", "backup");
-      await rm(root, { recursive: true, force: true });
-      await writeTree(finalRoot, {
-        "video.mp4": "old-video",
-        "review/frame.png": "old-frame",
-        "unknown.txt": "keep",
-      });
-      await writeTree(temporaryRoot, {
-        "video.mp4": "new-video",
-        "review/frame.png": "new-frame",
-        "manifest.sha256": "new-manifest",
-      });
-      const provenance = { sourceCommit: "a".repeat(40), sourceTree: "b".repeat(40), clean: true };
+      const fixture = await createPromotionFixture(failurePhase);
       await expect(
-        promoteArtifactDirectory({
-          outRoot: root,
-          temporaryArtifactRoot: temporaryRoot,
-          finalRoot,
-          candidateRoot,
-          backupRoot,
-          ownedPaths: TEST_OWNED_PATHS,
-          capturedProvenance: provenance,
-          readProvenance: async () => provenance,
+        promoteFixture(fixture, {
           injectFailure: (phase: string) => {
             if (phase === failurePhase) throw new Error(`injected ${phase}`);
           },
         }),
       ).rejects.toThrow(/promotion failed/i);
-      expect(await readTree(finalRoot, ["video.mp4", "review/frame.png", "unknown.txt"])).toEqual({
+      expect(await readTree(fixture.finalRoot, ["video.mp4", "review/frame.png", "unknown.txt"])).toEqual({
         "video.mp4": "old-video",
         "review/frame.png": "old-frame",
         "unknown.txt": "keep",
       });
-      await expect(readFile(candidateRoot)).rejects.toThrow();
-      await expect(readFile(backupRoot)).rejects.toThrow();
-      await rm(root, { recursive: true, force: true });
+      await expectEnoent(fixture.candidateRoot);
+      await expectEnoent(fixture.backupRoot);
+      await rm(fixture.root, { recursive: true, force: true });
     },
   );
 
   it("refuses approval appearing after the initial check without swapping final", async () => {
-    const root = join(PROMOTION_TEST_ROOT, "approval-race");
-    const finalRoot = join(root, "ja");
-    const temporaryRoot = join(root, ".tmp", "rendered");
-    await rm(root, { recursive: true, force: true });
-    await writeTree(finalRoot, { "video.mp4": "old-video" });
-    await writeTree(temporaryRoot, {
-      "video.mp4": "new-video",
-      "review/frame.png": "new-frame",
-      "manifest.sha256": "new-manifest",
-    });
-    const provenance = { sourceCommit: "a".repeat(40), sourceTree: "b".repeat(40), clean: true };
+    const fixture = await createPromotionFixture("approval-race");
     await expect(
-      promoteArtifactDirectory({
-        outRoot: root,
-        temporaryArtifactRoot: temporaryRoot,
-        finalRoot,
-        candidateRoot: join(root, ".tmp", "candidate"),
-        backupRoot: join(root, ".tmp", "backup"),
-        ownedPaths: TEST_OWNED_PATHS,
-        capturedProvenance: provenance,
-        readProvenance: async () => provenance,
+      promoteFixture(fixture, {
         injectFailure: async (phase: string) => {
           if (phase === "before-final-approval-recheck") {
-            await writeFile(join(finalRoot, "approval.json"), "approved", "utf8");
+            await writeFile(join(fixture.finalRoot, "approval.json"), "approved", "utf8");
           }
         },
       }),
     ).rejects.toThrow(/approval\.json/i);
-    expect(await readFile(join(finalRoot, "video.mp4"), "utf8")).toBe("old-video");
-    expect(await readFile(join(finalRoot, "approval.json"), "utf8")).toBe("approved");
-    await rm(root, { recursive: true, force: true });
+    expect(await readFile(join(fixture.finalRoot, "video.mp4"), "utf8")).toBe("old-video");
+    expect(await readFile(join(fixture.finalRoot, "approval.json"), "utf8")).toBe("approved");
+    await rm(fixture.root, { recursive: true, force: true });
   });
 
   it("holds an exclusive package-local build lock and releases it", async () => {
@@ -248,7 +235,29 @@ describe("Japanese artifact contract", () => {
       },
     });
     expect(result).toBe("complete");
-    await expect(readFile(lockPath, "utf8")).rejects.toThrow();
+    await expectEnoent(lockPath);
     await rm(root, { recursive: true, force: true });
+  });
+
+  it("keeps the promoted final and residual backup when committed cleanup fails", async () => {
+    const fixture = await createPromotionFixture("committed-cleanup-failure");
+    await expect(
+      promoteFixture(fixture, {
+        injectFailure: async (phase: string) => {
+          if (phase === "before-backup-delete") {
+            await rm(join(fixture.backupRoot, "video.mp4"));
+            throw new Error("injected cleanup failure");
+          }
+        },
+      }),
+    ).rejects.toThrow(/promotion succeeded.*final preserved.*backup cleanup failed|backup retained/i);
+    expect(await readTree(fixture.finalRoot, [...TEST_OWNED_PATHS, "unknown.txt"])).toEqual({
+      "video.mp4": "new-video",
+      "review/frame.png": "new-frame",
+      "manifest.sha256": "new-manifest",
+      "unknown.txt": "keep",
+    });
+    expect((await stat(fixture.backupRoot)).isDirectory()).toBe(true);
+    await rm(fixture.root, { recursive: true, force: true });
   });
 });

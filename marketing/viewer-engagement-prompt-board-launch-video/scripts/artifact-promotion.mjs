@@ -144,8 +144,6 @@ export const promoteArtifactDirectory = async ({
     await assertApprovalAbsent(finalRoot, "Promoted artifact directory");
     if (finalMoved) await assertApprovalAbsent(backupRoot, "Backup artifact directory");
     assertProvenanceUnchanged(capturedProvenance, await readProvenance());
-    await injectFailure("before-backup-delete");
-    if (finalMoved) await rm(backupRoot, { recursive: true });
   } catch (cause) {
     try {
       await rollbackSwap({ finalRoot, candidateRoot, backupRoot, finalMoved, candidateInstalled });
@@ -163,5 +161,16 @@ export const promoteArtifactDirectory = async ({
     throw new ArtifactPromotionError(`Artifact promotion failed; original final restored${detail}`, {
       cause,
     });
+  }
+  if (finalMoved) {
+    try {
+      await injectFailure("before-backup-delete");
+      await rm(backupRoot, { recursive: true });
+    } catch (cause) {
+      throw new ArtifactPromotionError(
+        "Artifact promotion succeeded; final preserved; backup cleanup failed and backup retained",
+        { cause },
+      );
+    }
   }
 };

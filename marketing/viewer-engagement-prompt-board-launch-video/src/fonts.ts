@@ -33,7 +33,6 @@ const loadPromptBoardFonts = async (): Promise<void> => {
     for (const face of loadedFaces) {
       document.fonts.add(face);
     }
-    await document.fonts.ready;
     continueRender(fontRenderHandle);
   } catch (error: unknown) {
     cancelRender(normalizeFontLoadError(error));

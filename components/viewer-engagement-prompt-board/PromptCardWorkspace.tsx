@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { PromptCardEditor } from "@/components/viewer-engagement-prompt-board/PromptCardEditor";
 import { PromptCardList } from "@/components/viewer-engagement-prompt-board/PromptCardList";
 import { PromptCardPlanSelector } from "@/components/viewer-engagement-prompt-board/PromptCardPlanSelector";
+import { DeleteConfirmationDialog } from "@/components/viewer-engagement-prompt-board/DeleteConfirmationDialog";
 import {
   createPromptCard,
   deletePromptCard,
@@ -43,6 +44,7 @@ export function PromptCardWorkspace({
   const copy = useViewerEngagementPromptBoardCopy();
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const [editor, setEditor] = useState<CardEditorState>(null);
+  const [pendingDeleteCardId, setPendingDeleteCardId] = useState<string | null>(null);
   const selectedPlan = selectedPlanId === null
     ? null
     : data.streamPlans.find((plan) => plan.id === selectedPlanId) ?? null;
@@ -73,17 +75,26 @@ export function PromptCardWorkspace({
   };
 
   const deleteCard = (card: PromptCard) => {
-    if (selectedPlan === null || !window.confirm(copy.cardWorkspace.deleteConfirm)) {
+    if (selectedPlan === null) {
+      return;
+    }
+    setPendingDeleteCardId(card.id);
+  };
+
+  const confirmDeleteCard = () => {
+    const cardId = pendingDeleteCardId;
+    setPendingDeleteCardId(null);
+    if (selectedPlan === null || cardId === null) {
       return;
     }
     const saved = onMutation(
-      deletePromptCard(data, { planId: selectedPlan.id, cardId: card.id }, createMutationContext()),
+      deletePromptCard(data, { planId: selectedPlan.id, cardId }, createMutationContext()),
       copy.cardWorkspace.deleted
     );
     if (!saved) {
       return;
     }
-    if (editor?.kind === "edit" && editor.cardId === card.id) {
+    if (editor?.kind === "edit" && editor.cardId === cardId) {
       closeEditor();
       return;
     }
@@ -182,6 +193,13 @@ export function PromptCardWorkspace({
             />
           </section>
         </>
+      )}
+      {pendingDeleteCardId === null ? null : (
+        <DeleteConfirmationDialog
+          message={copy.cardWorkspace.deleteConfirm}
+          onCancel={() => setPendingDeleteCardId(null)}
+          onConfirm={confirmDeleteCard}
+        />
       )}
     </div>
   );

@@ -9,6 +9,7 @@ const ja = {
   category: { "talking-point": "トークポイント", question: "質問", announcement: "お知らせ", reminder: "注意・確認", other: "その他" },
   segment: { opening: "オープニング", main: "本編", intermission: "中休み", closing: "クロージング", anytime: "いつでも" },
   tone: { neutral: "ニュートラル", casual: "カジュアル", energetic: "元気", calm: "落ち着き", serious: "真剣" },
+  deleteDialog: { eyebrow: "削除の確認", title: "この内容を削除しますか？", confirm: "削除する", cancel: "キャンセル" },
   app: {
     title: "配信カンペボード",
     description: "配信ごとの話題と注意事項を、まずプラン単位で整理します。",
@@ -111,6 +112,7 @@ const en: PromptBoardCopy = {
   category: { "talking-point": "Talking point", question: "Question", announcement: "Announcement", reminder: "Reminder", other: "Other" },
   segment: { opening: "Opening", main: "Main", intermission: "Intermission", closing: "Closing", anytime: "Anytime" },
   tone: { neutral: "Neutral", casual: "Casual", energetic: "Energetic", calm: "Calm", serious: "Serious" },
+  deleteDialog: { eyebrow: "Confirm deletion", title: "Delete this item?", confirm: "Delete", cancel: "Cancel" },
   app: {
     title: "Live Prompt Board", description: "Organize topics and reminders for each stream, starting with a stream plan.", newPlan: "New stream plan",
     navigationLabel: "Live Prompt Board navigation", tabs: { plans: "Stream plans", cards: "Edit prompts", live: "Live mode", data: "Data" },

@@ -19,6 +19,7 @@ This record is local QA and launch-gate evidence only. It does not approve deplo
 - Merge commit: `0c394b95dfb3873aa337436a590a92e73d8bea6d`.
 - Git containment: merge commit is contained in `origin/codex/comment-translator-preview`.
 - GitHub metadata: base `codex/comment-translator-preview`, head `codex/comment-translator-stripe-paid-plan-integration-post-pr417`, merged at `2026-06-11T07:08:15Z`.
+- Legacy preview archive: the historical preview tip `1a30609376c0573685463cbd4a4a2e8c2c190620` is preserved by the annotated tag `archive/comment-translator-preview-2026-07-21` before branch retirement. The PR #418 base and containment labels above remain historical merge evidence and are not rewritten as current branch authority.
 - Check rollup at merge review: Cloudflare Pages: FAILURE; Workers Builds: SUCCESS.
 - Interpretation: Cloudflare Pages failure alone is not treated as a fresh regression without local/deployed symptoms; Workers result and local verification are tracked separately.
 

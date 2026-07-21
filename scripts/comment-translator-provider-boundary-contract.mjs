@@ -15,7 +15,7 @@ function exists(relativePath) {
 
 function changedFiles() {
   try {
-    const committedDiff = execSync("git diff --name-only origin/codex/comment-translator-preview...HEAD", {
+    const committedDiff = execSync("git diff --name-only archive/comment-translator-preview-2026-07-21...HEAD", {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"]

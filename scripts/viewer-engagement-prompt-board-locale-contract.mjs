@@ -14,6 +14,7 @@ assert.match(copySource, /useLocale\(\)/);
 
 const componentNames = [
   "ViewerEngagementPromptBoardApp.tsx",
+  "DeleteConfirmationDialog.tsx",
   "StreamPlanList.tsx",
   "StreamPlanEditor.tsx",
   "PromptCardPlanSelector.tsx",

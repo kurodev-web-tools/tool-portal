@@ -5,6 +5,8 @@ import { StreamPlanEditor } from "@/components/viewer-engagement-prompt-board/St
 import { StreamPlanList } from "@/components/viewer-engagement-prompt-board/StreamPlanList";
 import { PromptCardWorkspace } from "@/components/viewer-engagement-prompt-board/PromptCardWorkspace";
 import { LiveModeWorkspace } from "@/components/viewer-engagement-prompt-board/LiveModeWorkspace";
+import { DeleteConfirmationDialog } from "@/components/viewer-engagement-prompt-board/DeleteConfirmationDialog";
+import { PromptBoardNotice, type PromptBoardNoticeValue } from "@/components/viewer-engagement-prompt-board/PromptBoardNotice";
 import {
   DataManagementWorkspace,
   getPromptBoardStorageFailureMessage
@@ -36,7 +38,6 @@ import {
 } from "@/lib/viewer-engagement-prompt-board-prompt-cards";
 import { useViewerEngagementPromptBoardCopy } from "@/lib/viewer-engagement-prompt-board-copy";
 
-type Notice = Readonly<{ kind: "success" | "error"; message: string }>;
 type EditorState = { readonly kind: "create" } | { readonly kind: "edit"; readonly planId: string } | null;
 type ActiveSection = "plans" | "cards" | "live" | "data";
 
@@ -53,10 +54,11 @@ export function ViewerEngagementPromptBoardApp() {
   const previousCopyRef = useRef(copy);
   const [data, setData] = useState<PromptBoardData>(createEmptyPromptBoardData);
   const [editor, setEditor] = useState<EditorState>(null);
-  const [notice, setNotice] = useState<Notice | null>(null);
+  const [notice, setNotice] = useState<PromptBoardNoticeValue | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [activeSection, setActiveSection] = useState<ActiveSection>("plans");
   const [requestedCardPlanId, setRequestedCardPlanId] = useState<string | null>(null);
+  const [pendingPlanDeletion, setPendingPlanDeletion] = useState<Readonly<{ planId: string; title: string }> | null>(null);
   const groups = useMemo(() => groupStreamPlans(data.streamPlans), [data.streamPlans]);
   const selectedCardPlanId = useMemo(
     () => resolvePromptCardPlanId(data, requestedCardPlanId),
@@ -132,10 +134,25 @@ export function ViewerEngagementPromptBoardApp() {
 
   const deletePlan = (planId: string) => {
     const plan = data.streamPlans.find((candidate) => candidate.id === planId);
-    if (plan === undefined || !window.confirm(copy.app.deletePlanConfirm(plan.title))) {
+    if (plan === undefined) {
       return;
     }
-    persistMutation(deleteStreamPlan(data, planId), copy.app.planDeleted, editor?.kind === "edit" && editor.planId === planId);
+    setPendingPlanDeletion({ planId, title: plan.title });
+  };
+
+  const confirmDeletePlan = () => {
+    const request = pendingPlanDeletion;
+    setPendingPlanDeletion(null);
+    if (request !== null) {
+      const deleted = persistMutation(
+        deleteStreamPlan(data, request.planId),
+        copy.app.planDeleted,
+        editor?.kind === "edit" && editor.planId === request.planId
+      );
+      if (deleted) {
+        requestAnimationFrame(() => createButtonRef.current?.focus());
+      }
+    }
   };
 
   const showCardEditor = (planId: string) => {
@@ -203,19 +220,7 @@ export function ViewerEngagementPromptBoardApp() {
           <p className="text-sm font-bold text-muted" aria-live="polite">{loaded ? activeSection === "plans" ? copy.app.planCount(data.streamPlans.length) : copy.app.cardCount(data.streamPlans.reduce((count, plan) => count + plan.promptCards.length, 0)) : copy.app.checkingSavedData}</p>
         </div>
 
-        {notice === null ? null : (
-          <div
-            role={notice.kind === "error" ? "alert" : "status"}
-            className={[
-              "mb-5 rounded-base border px-4 py-3 text-sm font-bold",
-              notice.kind === "error"
-                ? "border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
-                : "border-primary/30 bg-primary-soft/70 text-primary-strong"
-            ].join(" ")}
-          >
-            {notice.message}
-          </div>
-        )}
+        <PromptBoardNotice notice={notice} />
 
         {activeSection === "plans" && editor !== null ? (
           <StreamPlanEditor
@@ -257,6 +262,13 @@ export function ViewerEngagementPromptBoardApp() {
         ) : null}
         {activeSection === "data" ? <DataManagementWorkspace data={data} onRestore={restoreData} /> : null}
       </main>
+      {pendingPlanDeletion === null ? null : (
+        <DeleteConfirmationDialog
+          message={copy.app.deletePlanConfirm(pendingPlanDeletion.title)}
+          onCancel={() => setPendingPlanDeletion(null)}
+          onConfirm={confirmDeletePlan}
+        />
+      )}
     </div>
   );
 }

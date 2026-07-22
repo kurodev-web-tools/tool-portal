@@ -6,13 +6,13 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0 | Comment Translator Creator closed beta | C1 durable paid entitlement storeはlocal contractで実装確認済み。merge / integration verification待ちで、C3 paid usage and monthly resetはそれまでblocked。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
+| P0 | Comment Translator Creator closed beta | C1はPR #668 / `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`でmerge・integration verified。C3 paid usage/reset boundaryはlocal verifiedでpublication approval待ち。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
 | Completed | Comment Translator Free public beta | Google OAuth approval、login-only activation、final release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1 | 配信カンペボード | PR #660とdelete-dialog follow-up PR #663は`main`へmerge済み。MVPは完了し、post-MVP開発候補はactive authorityで継続する。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` remains separately approval-gated. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
 - Current priority: P0 Creator closed beta.
-- First implementation sequence: C1 -> C3.
+- First implementation sequence: C1 -> C3 is locally implemented; C3 publication and integration verification are the next gate.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 
 ## Current Premises
@@ -29,8 +29,8 @@
 - Free public betaはGoogle OAuth approval、login-only production activation、edge readiness reconciliation、no-mutation final release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`。
 - Cloudflare production control authority remains `codex/comment-translator-free-public-beta-integration`; Creator task PRs target that integration branch from short-lived branches.
 - Creator closed betaのcurrent authorityは`docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md`。
-- C1 local implementation now establishes durable server-owned paid entitlement rows from signed billing evidence with sanitized output and safe Free / paid-inactive fallback; merge / integration verification and remote migration apply remain incomplete.
-- C3 paid usage counters and monthly reset remain blocked until C1 is merged and verified.
+- C1 establishes durable server-owned paid entitlement rows from signed billing evidence with sanitized output and safe Free / paid-inactive fallback; PR #668 is merged and integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`, while remote migration apply remains incomplete.
+- C3 locally adds service-role-only paid counters, private event deduplication, and atomic reset only when signed entitlement evidence advances its period end. It does not infer paid quota values, reset day/timezone, billing interval, or provider charging semantics.
 - C2/C4は別承認gate、C5-C11はentitlement/usage foundation後のuser-visible sequence、C12はclosed-beta final QAとする。
 - Free Azure translation route remains current; Creator/Paid routes to an OpenAI mini model first with Azure fallback only for recoverable provider errors.
 
@@ -42,15 +42,15 @@
 - Enforcement happens before Start, while the session is active, during status/heartbeat/feed usage checks, and before provider translation execution.
 - If durable usage/session state is unavailable or unreadable, the safe behavior is fail closed with sanitized stop/status output.
 - Free beta usage accounting uses a fixed UTC quota day for enforcement and ledger accounting. UI timestamp display can use local/JST preference, but quota/rate-limit reset authority stays UTC until an explicitly approved policy change.
-- Paid access after C1/C3 is controlled by signed Stripe webhook evidence, durable paid entitlement rows, paid usage counters, monthly reset state, and server-owned fallback/stop reasons.
+- Paid access after C1/C3 is controlled by signed Stripe webhook evidence, durable paid entitlement rows, paid usage counters, signed-period reset state, and server-owned fallback/stop reasons. Missing/incomplete/stale usage state fails closed; actual monthly cadence remains unclaimed until C2 supplies approved live billing evidence.
 - Paid entitlement fallback: missing / unreadable / incomplete / inactive -> Free / paid-inactive.
 
 ## Approval-Gated Actions
 
 Do not perform live/external operations without same-thread ready preflight, sanitized output review, and exact explicit approval.
 
-- C1 in this branch is limited to local schema/runtime/contracts; remote migration apply and production data access remain approval-gated and were not run.
-- Out of scope: C3 implementation. Start C3 only after C1 is merged and the exact integration result is verified.
+- C1 merge / integration verification is complete at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; remote migration apply and production data access remain approval-gated and were not run.
+- C3 is locally verified only; commit, push, PR, merge, remote migration apply, and integration verification remain separate approval-gated steps.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.
@@ -107,9 +107,9 @@ These items stay visible but are not current release blockers unless explicitly 
 
 | ID | Task | Status |
 | --- | --- | --- |
-| C1 | Durable paid entitlement store | local verified / merge verification pending |
+| C1 | Durable paid entitlement store | merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995` |
 | C2 | Stripe live Checkout / Portal / webhook closed-beta gate | pending / gated |
-| C3 | Paid usage and monthly reset | pending |
+| C3 | Paid usage and monthly reset | local verified / publication approval pending |
 | C4 | AI natural translation provider route | pending / gated |
 | C5 | OBS overlay token runtime | pending |
 | C6 | OBS overlay UI route | pending |

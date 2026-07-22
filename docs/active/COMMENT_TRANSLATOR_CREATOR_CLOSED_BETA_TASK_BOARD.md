@@ -4,9 +4,9 @@
 
 - Free public beta is complete.
 - Current priority: P0 Creator closed beta.
-- First implementation sequence: C1 -> C3. C1 is local verified and still awaits merge / integration verification.
-- Dependency order: C1 → C3. C3 remains blocked until C1 is merged and the exact integration result is verified.
-- C2 and C4 are separately approval-gated work and do not bypass the C1 → C3 dependency.
+- First implementation sequence: C1 -> C3 is locally implemented; C3 publication and integration verification are the next gate.
+- C1 is merged through PR #668 at exact integration commit `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; its merge tree matches C1 head `baf8bf57dd570c3dca6bc29c880f47b7f7444fac`.
+- C2 and C4 remain separately approval-gated and do not bypass C3 publication / integration verification.
 - C5 through C11 are the user-visible closed-beta capability sequence after the entitlement and usage foundations; C12 is the ending final-QA gate.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 - PRs target `codex/comment-translator-free-public-beta-integration` from short-lived feature branches.
@@ -22,27 +22,45 @@ C1 is accepted only when all of the following are verified:
 
 - Paid entitlement fallback: missing / unreadable / incomplete / inactive -> Free / paid-inactive.
 
-### Verified C1 Local Evidence
+### Verified C1 Merge Evidence
 
 - `comment_translator_creator_c1_paid_entitlement_store_contract=pass` verifies signed-evidence-only persistence, durable reads, atomic stale/replay rejection, unexpected-price rejection, sanitized webhook output, and Free / paid-inactive fallback.
 - The server-owned store targets `comment_translator_paid_entitlements` through the existing trusted service-role boundary; anon and authenticated table access are revoked in the local migration.
 - Billing access reads no longer use process-local paid entitlement state. Missing store configuration, unreadable rows, incomplete active evidence, inactive state, and expired active periods do not activate Paid.
 - Browser-readable billing state omits billing references and provider metadata; webhook output is limited to sanitized status, plan, billing state, or reason labels.
+- PR #668 is merged into `codex/comment-translator-free-public-beta-integration` at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; the focused C1 entitlement contract and Creator authority contract were verified at that integration state.
 
-### Residual Risk And C3 Handoff
+## C3 Acceptance Boundary
+
+- Paid usage is entered only through the server-derived billing-user reference and a readable C1 `paid-active` entitlement derived from signed Stripe webhook evidence.
+- A trusted trigger creates the zero counter and resets it only when signed entitlement evidence advances `current_period_end`; repeated evidence for the same period preserves usage and an older period cannot roll the counter back.
+- The trusted RPC rechecks paid-active state and the exact signed period, serializes the counter row, and deduplicates a private server-derived usage-event reference before incrementing.
+- C3 counts only already-established provider-executed translated-message, provider-input-character, and estimated-cost fields. It does not invent a paid quota amount, reset day, timezone, plan interval, token multiplier, or provider charging rule.
+- Missing, unreadable, incomplete, expired, paid-inactive, stale-period, or missing-counter state fails closed to a sanitized Free / paid-inactive result.
+- Browser / operator output contains counts and status labels only; owner ids, billing identifiers, provider metadata, credentials, raw payloads, event references, and private reset/counter keys remain server-only.
+
+### Verified C3 Local Evidence
+
+- `comment_translator_creator_c3_paid_usage_counter_contract=pass` verifies concurrent duplicate counting exactly once, signed-period rollover to zero, old/future timestamp rejection, entitlement downgrade, incomplete/unreadable entitlement and usage state, missing-counter fail-closed behavior, and sanitized output.
+- The local migration defines service-role-only `comment_translator_paid_usage_counters` and private deduplication events plus an entitlement-triggered reset and entitlement-gated atomic RPC.
+- No UI files changed, so browser / width QA is not applicable to C3.
+
+### Residual Risk And Next Handoff
 
 - Remote Supabase query, migration apply, schema mutation, and production data access were not run. Until an explicitly approved migration apply exists, deployed reads safely return Free / paid-inactive.
 - Stripe live Product, Price, Checkout, Portal, and webhook operations were not run. Local verifier fixtures are not live billing evidence.
-- C3 remains blocked until this C1 change is merged into `codex/comment-translator-free-public-beta-integration` and the exact integration commit passes the focused C1 contract plus the applicable build checks.
-- C3 must add paid usage counters and monthly reset without weakening the C1 signed-evidence and safe-fallback boundary.
+- Actual monthly cadence is not claimed until separately approved C2 billing evidence establishes the configured Price / subscription interval; C3 follows only signed period-boundary advances.
+- C3 provides the server-only paid accounting boundary; wiring a paid provider execution path into it remains C4 scope and was not implemented or executed here.
+- Fresh worktree dependencies are absent and install is prohibited in this task, so repository lint, typecheck, build, and dependency-backed historical C1 contract reruns remain unchecked locally.
+- Next handoff requires separate approval for commit / push / PR. After merge, the exact integration result must pass focused C1, C3, and Creator authority contracts before C2 or C4 begins under its own approval gate.
 
 ## Creator Closed Beta / Before Creator Public Paid
 
 | ID | Task | Status |
 | --- | --- | --- |
-| C1 | Durable paid entitlement store | local verified / merge verification pending |
+| C1 | Durable paid entitlement store | merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995` |
 | C2 | Stripe live Checkout / Portal / webhook closed-beta gate | pending / gated |
-| C3 | Paid usage and monthly reset | pending |
+| C3 | Paid usage and monthly reset | local verified / publication approval pending |
 | C4 | AI natural translation provider route | pending / gated |
 | C5 | OBS overlay token runtime | pending |
 | C6 | OBS overlay UI route | pending |
@@ -78,8 +96,8 @@ C1 is accepted only when all of the following are verified:
 
 This authority is a task board only. Every gated operation requires a separate, same-thread preflight and explicit approval.
 
-- C1 scope is local implementation and verification only; remote migration apply remains approval-gated.
-- Out of scope: C3 implementation until the C1 merge / integration verification condition is met.
+- C1 is merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; remote migration apply remains approval-gated.
+- C3 is locally verified only; publication, remote migration apply, and exact integration verification remain approval-gated.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.

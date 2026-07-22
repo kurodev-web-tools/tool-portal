@@ -70,4 +70,11 @@ This authority is a task board only. Every gated operation requires a separate, 
 - Out of scope: provider mutation.
 - Out of scope: manual deploy.
 
+The following operations are not performed in this task-board authority slice:
+
+- Any Stripe live action, including live Checkout, Customer Portal, or webhook operations.
+- Translation-provider execution.
+- Any Cloudflare mutation, configuration change, binding change, or environment change.
+- Any production gate change, activation, or public release action.
+
 No secrets, private identifiers, provider metadata, or credentials belong in this board, its verification evidence, PR body, or handoff.

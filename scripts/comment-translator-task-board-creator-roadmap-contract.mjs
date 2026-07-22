@@ -18,8 +18,8 @@ const creatorRows = [
   "| C3 | Paid usage and monthly reset | merged / integration verified at `5fc3cca2730a58f35279098ec0b2f5c804ce0076` |",
   "| C4 | AI natural translation provider route | merged / integration verified at `fa0d5582a296c2164bd3945c37cbec746315f357` |",
   "| C5 | OBS overlay token runtime | merged / integration verified at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8` |",
-  "| C6 | OBS overlay UI route | local focused contract and fail-closed browser QA verified / authenticated feed QA pending |",
-  "| C7 | Moderator share token runtime | pending |",
+  "| C6 | OBS overlay UI route | merged / integration verified at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; authenticated feed QA pending / gated |",
+  "| C7 | Moderator share token runtime | local focused runtime/store contracts verified / PR creation approved / merge approval pending |",
   "| C8 | Moderator share UI route | pending |",
   "| C9 | Custom dictionary minimum | pending |",
   "| C10 | Priority display polish | pending |",
@@ -46,7 +46,7 @@ const publicAfterP1Rows = [
 
 const taskPriorityLines = [
   "- Current priority: P0 Creator closed beta.",
-  "- C1/C2/C3/C4/C5 are merged / integration verified; C6 focused contracts and fail-closed browser QA are locally verified while authenticated-feed QA remains pending.",
+  "- C1-C6 are merged / integration verified; C7 moderator share token runtime and durable-store focused contracts are locally verified, PR creation is approved in the current thread, and merge remains approval-gated.",
   "- P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.",
 ];
 

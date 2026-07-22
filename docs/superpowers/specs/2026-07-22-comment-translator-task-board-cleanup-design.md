@@ -137,9 +137,9 @@ ID比較元はintegration baseの `task.md` にある `Later Work / Post-MVP Roa
 
 1. 整理前の互換台帳をarchiveへ保存する。
 2. 現在の運用判断に必要な記述は `task.md` または新しいactive authorityに置く。
-3. contractが過去の実装証拠だけを `task.md` に要求している場合は、archiveまたは既存canonical active docを読むよう限定的に更新する。
-4. runtime挙動、security boundary、fail-closed条件を検証するassertionは削除・弱体化しない。
-5. contract移行が大きくなる場合は、互換anchorを `task.md` に残し、別cleanupへ延期する。
+3. exact base `e465e6b99a4c9082cd5f95b96ba585c15c37ab4a` でPASSしたcontractだけをcleanup regression gateの対象とする。
+4. baseでFAILした127本はpre-existing baseline failureとしてpath単位で記録し、成功証拠として扱わず、このcleanupでは変更しない。
+5. base-pass contractの回帰は、truthfulな互換anchorを `task.md` またはcurrent canonical authorityへ戻して解消する。assertionの削除・弱体化または既存contract scriptの変更が必要ならcompaction範囲を縮小する。
 
 ## Archive And Deletion Policy
 
@@ -154,11 +154,13 @@ ID比較元はintegration baseの `task.md` にある `Later Work / Post-MVP Roa
 
 - C1-C12、CP1-CP2、P1-1-P1-9が整理後も全件存在することを機械的に確認する。
 - `task.md` から配信カンペボードactive authorityへ到達でき、将来候補が保持されていることを確認する。
-- base commit `e465e6b99a4c9082cd5f95b96ba585c15c37ab4a` では `rg -l 'task\.md' scripts --glob '*.mjs'` が170本を返す。実装直前に対象集合を再取得し、増減があれば理由と対象を記録する。
-- 再取得した `task.md` 参照contract scriptをすべて実行し、PR作成前に全件exit 0とする。170本のままなら合格条件は170 / 170である。
-- `current regression` は必ずblockする。
-- `stale historical assertion` は失敗したまま許容しない。archiveまたはcurrent canonical authorityへの同等assertionに更新し、そのscriptが成功した場合だけ解消扱いにする。
-- `environment limitation` により1本でも実行できない場合はPRを作成しない。互換anchorを残して変更範囲を縮小し、全件実行可能な形へ戻す。
+- exact base `e465e6b99a4c9082cd5f95b96ba585c15c37ab4a` のtask-reading setは170本で、同一dependency/runtime条件で43 PASS / 127 FAILだった。
+- baseline manifestには170本のscript pathとPASS/FAIL分類だけを保存し、stdout、stderr、payload、identifier、provider metadataは保存しない。
+- focused preservation contractは必ずPASSする。
+- base-pass 43本はpre-compactionとpost-compactionの両方で43 / 43 PASSを必須とし、PASSからFAILへのregressionを1本も許容しない。
+- 新規にdiscovery対象となったcontractは明示的に分類し、focused contractを含め全件PASSさせる。
+- base-fail 127本は既知成功として扱わず、このcleanupで修正・変更しない。自然にPASSへ改善した場合はrecoveredとして記録してよい。
+- exact-base比較を同一条件で実行できないenvironment limitation、baseline pathの欠落、未分類の追加script、base-pass regressionはPR作成をblockする。
 - 変更したcontract scriptは `node --check` を通す。
 - `git diff --check` を通す。
 - changed-file secret / private identifier scanを通す。
@@ -168,7 +170,9 @@ ID比較元はintegration baseの `task.md` にある `Later Work / Post-MVP Roa
 
 - 必須ID、カンペ将来候補、fail-closed方針のいずれかが欠落した場合はPRを作成しない。
 - contract互換のために大幅なruntime/script refactorが必要になった場合は、`task.md` の互換anchorを残して整理範囲を縮小する。
-- contract失敗を既知問題として残したままPR作成またはmergeへ進まない。
+- exact baseで確認済みの127 baseline failuresだけではPRをblockしないが、成功またはcleanup検証済みとは表現しない。
+- focused contract failure、base-pass regression、未分類のnew failure、baseline manifest不一致はPR作成またはmergeをblockする。
+- baseline-fail contract fileをこのcleanupで変更しない。変更対象とのintersectionが1件でもあればblockする。
 - merge conflictまたはintegration tipの変化があれば、最新integrationを再取得して差分を再監査する。
 - Cloudflare preview checkが失敗した場合、task整理PRのdiffと無関係と断定せず、check evidenceを確認してmergeを止める。
 
@@ -184,6 +188,6 @@ ID比較元はintegration baseの `task.md` にある `Later Work / Post-MVP Roa
 
 ## Completion Boundary
 
-task整理PRは、再取得した全 `task.md` 参照contract、changed contract syntax、`git diff --check`、sanitized scanが成功し、GitHub required checksも成功した場合だけ、今回の明示承認範囲でintegrationへmergeする。merge commitがintegrationに包含され、Cloudflare previewの自動build結果を読み取り確認したらこのcleanupは完了する。手動deployまたは外部mutationは行わない。
+task整理PRは、focused preservation contract PASS、base-pass 43 / 43 preserved、regressions=0、new_failures=0、baseline-fail contract変更=0、changed contract syntax、`git diff --check`、sanitized scan、GitHub required checksが成功した場合だけ、今回の明示承認範囲でintegrationへmergeする。merge commitがintegrationに包含され、Cloudflare previewの自動build結果を読み取り確認したらこのcleanupは完了する。手動deployまたは外部mutationは行わない。
 
 次のCodex taskは、最新integration tipからC1 durable paid entitlement storeの設計・実装を開始する。

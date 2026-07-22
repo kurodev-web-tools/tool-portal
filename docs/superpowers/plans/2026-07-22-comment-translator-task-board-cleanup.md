@@ -4,7 +4,7 @@
 
 **Goal:** Replace the stale operational surface in `task.md` with a compact Creator closed-beta roadmap while preserving every required paid/post-MVP ID, the Prompt Board future flow, historical evidence, and all existing contract guarantees.
 
-**Architecture:** Copy the pre-cleanup `task.md` intact into a dated archive, introduce one active Creator closed-beta authority, and rebuild `task.md` as the short current index plus explicit compatibility anchors. A focused governance contract protects the user-required IDs and Prompt Board future material; the complete set of scripts that reference `task.md` must remain green before publication.
+**Architecture:** Copy the pre-cleanup `task.md` intact into a dated archive, introduce one active Creator closed-beta authority, and rebuild `task.md` as the short current index plus explicit compatibility anchors. A focused governance contract protects the user-required IDs and Prompt Board future material; the exact-base passing set must remain green and no new failure may be introduced before publication.
 
 **Tech Stack:** Markdown governance documents, Node.js `.mjs` contract scripts, Git/GitHub PR workflow, Cloudflare-connected integration branch checks.
 
@@ -23,6 +23,7 @@
 **Files:**
 - Create: `scripts/comment-translator-task-board-creator-roadmap-contract.mjs`
 - Create: `scripts/comment-translator-task-board-contract-suite.mjs`
+- Create: `scripts/fixtures/comment-translator-task-board-contract-baseline.json`
 - Read: `task.md`
 - Read: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`
 - Later create: `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md`
@@ -76,17 +77,18 @@ Assert each exact row appears once in both `task.md` and the Creator authority. 
 - incomplete, missing, unreadable, or inactive Paid entitlement degrades to Free / paid-inactive.
 - the cleanup docs state that C1/C3 implementation, Stripe/Supabase/provider mutation, and manual deploy are out of scope.
 
-- [ ] **Step 2: Create the sanitized complete-suite runner**
+- [ ] **Step 2: Create the sanitized baseline-comparator runner**
 
-The runner must:
+The runner and manifest must:
 
 - recursively discover `scripts/*.mjs` files whose text contains `task` + `.md`;
 - exclude only itself;
 - sort paths deterministically;
+- validate the manifest's exact 170 base paths, including 43 base-pass and 127 base-fail classifications;
 - execute each file with `process.execPath` and a bounded timeout;
-- output only `PASS <path>` or `FAIL <path> exit=<code>` without stdout/stderr/body values;
-- finish with `task_contracts total=<n> passed=<n> failed=<n>`;
-- exit non-zero when any script fails or times out.
+- classify results as `PRESERVED_PASS`, `REGRESSION`, `BASELINE_FAIL`, `RECOVERED`, `NEW_PASS`, or `NEW_FAIL` without stdout/stderr/body values;
+- finish with `baseline_total=170 baseline_pass=43 preserved_pass=<n> regressions=<n> baseline_fail=<n> new_pass=<n> new_fail=<n>`;
+- exit non-zero for a focused contract failure, regression, missing baseline path, manifest mismatch, baseline-fail-script change, or new failure.
 
 - [ ] **Step 3: Run the focused contract and confirm RED**
 
@@ -140,9 +142,9 @@ The active board must contain:
 
 Before removing any historical text, add only the new current index, Creator sequence, authority links, and approval boundaries above the existing `Legacy Contract Compatibility Ledger`. Keep the entire old ledger body and its existing single copies of all 23 roadmap rows in `task.md` during this phase. Do not add duplicate roadmap tables until compaction replaces the legacy ledger; this keeps the focused contract's exact-row count at one before and after compaction.
 
-Run the focused preservation contract and the complete suite runner. Expected after adding the new preservation contract: every discovered script passes; if the only count change from the 170-file base is the new focused contract, the summary is `task_contracts total=171 passed=171 failed=0`.
+Run the focused preservation contract and the baseline-comparator runner. Expected: focused PASS, `preserved_pass=43`, `regressions=0`, `new_pass=1`, and `new_fail=0`. The 127 exact-base failures remain explicitly classified as pre-existing and are not reported as successful.
 
-- [ ] **Step 2: Compact the current `task.md` only after the first all-green suite**
+- [ ] **Step 2: Compact the current `task.md` only after the first baseline-aware no-regression gate**
 
 Use this heading order:
 
@@ -186,15 +188,15 @@ node scripts/comment-translator-task-board-creator-roadmap-contract.mjs
 node scripts/comment-translator-task-board-contract-suite.mjs
 ```
 
-Expected: the focused contract exits 0 with one success marker and the suite reports every discovered contract passed. This second full run is mandatory after legacy duplication is removed.
+Expected: the focused contract exits 0 with one success marker and the comparator reports `preserved_pass=43`, `regressions=0`, and `new_fail=0`. This second baseline-aware run is mandatory after legacy duplication is removed.
 
-### Task 4: Restore complete task-board contract compatibility
+### Task 4: Eliminate exact-base regressions
 
 **Files:**
-- Modify only if required: task-reading `scripts/*.mjs`
 - Prefer modifying: `task.md` compatibility anchors
 - Read: `docs/archive/TASK_LEGACY_CONTRACT_LEDGER_2026-07-22.md`
 - Read: current canonical `docs/active/*.md`
+- Read-only: the existing 170 task-reading `scripts/*.mjs`
 
 - [ ] **Step 1: Recompute and execute the task-reading contract set**
 
@@ -204,18 +206,18 @@ Run:
 node scripts/comment-translator-task-board-contract-suite.mjs
 ```
 
-Expected base before adding the focused contract: 170 references. Expected final result: all dynamically discovered scripts exit 0. No stale historical assertion or environment-limited failure may remain.
+Expected: the exact base manifest remains 170 paths with 43 PASS / 127 FAIL, all 43 base-pass contracts remain PASS, no new contract fails, and no baseline-fail script is modified.
 
 - [ ] **Step 2: Fix failures using the smallest safe compatibility path**
 
-For each failure, use this order:
+For each regression from the 43 exact-base passing contracts, use this order:
 
 1. restore a short truthful compatibility anchor in `task.md` when it remains an active invariant;
-2. for purely historical evidence, update that contract to read the dated archive or existing canonical active authority while preserving an equivalent assertion;
+2. keep all existing 170 contract scripts read-only, including the 127 baseline-fail files;
 3. never remove or weaken runtime, secret, server-only, fail-closed, quota, billing, provider, or approval-boundary assertions;
-4. if migration requires a broad script refactor, retain the needed anchor and defer that migration.
+4. if a regression cannot be resolved with a truthful anchor or current canonical authority, shrink compaction and retain the required source text.
 
-After each change, rerun the affected contract. After all focused fixes, rerun the complete discovered set from the final working tree.
+After each change, rerun the affected base-pass contract. After all focused fixes, rerun the baseline comparator from the final working tree.
 
 - [ ] **Step 3: Validate any changed contract scripts**
 
@@ -301,7 +303,7 @@ Fetch origin, confirm the branch still contains the latest integration tip, and 
 
 - [ ] **Step 2: Push the cleanup branch and create the PR**
 
-Create a ready PR targeting `codex/comment-translator-free-public-beta-integration`. The body must list preservation guarantees, final contract count, checks run, archive path, no runtime/UI change, and excluded external operations.
+Create a ready PR targeting `codex/comment-translator-free-public-beta-integration`. The body must list preservation guarantees, `43/43` base-pass preserved, `regressions=0`, `127` pre-existing baseline failures, `baseline-fail scripts modified=0`, checks run, archive path, no runtime/UI change, and excluded external operations. Do not claim that all historical contracts passed.
 
 - [ ] **Step 3: Verify GitHub checks and mergeability**
 

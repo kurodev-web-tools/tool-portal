@@ -14,6 +14,12 @@ import {
   type CommentTranslatorObsOverlayTokenUnavailableResult,
   type CommentTranslatorObsOverlayTokenValidationResult
 } from "./comment-translator-obs-overlay-token-types";
+import { resolveCommentTranslatorObsOverlayTokenPrivateAuthorization } from "./comment-translator-obs-overlay-token-private-authorization";
+
+export {
+  resolveCommentTranslatorObsOverlayTokenPrivateAuthorization,
+  validateCommentTranslatorObsOverlayTokenPrivateAuthorization
+} from "./comment-translator-obs-overlay-token-private-authorization";
 
 export const commentTranslatorObsOverlayTokenContract = {
   implementationStage: "creator-closed-beta-c5-obs-overlay-token-runtime",
@@ -113,30 +119,15 @@ export async function validateCommentTranslatorObsOverlayToken({
   readonly tokenStore: CommentTranslatorObsOverlayTokenStore | null;
   readonly nowMs: number;
 }): Promise<CommentTranslatorObsOverlayTokenValidationResult> {
-  if (!isOpaqueToken(presentedToken)) return denied("invalid-token", false);
-  if (!tokenStore) return denied("overlay-unavailable", true);
-
-  try {
-    const record = await tokenStore.readByDigest({
-      tokenDigest: digestToken(presentedToken),
-      scope: commentTranslatorObsOverlayScope
-    });
-    if (!record || record.revokedAtIso || Date.parse(record.expiresAtIso) <= nowMs) {
-      return denied("invalid-token", false);
-    }
-    const session = await sessionAuthority.readCurrentForOwner(record.ownerUserId);
-    if (session.status === "unavailable") {
-      return session.reason === "session-authority-unavailable"
-        ? denied("overlay-unavailable", true)
-        : denied("invalid-token", false);
-    }
-    if (session.sessionReferenceId !== record.sessionReferenceId || session.expiresAtMs <= nowMs) {
-      return denied("invalid-token", false);
-    }
-    return { status: "authorized", scope: commentTranslatorObsOverlayScope, access: "read-only" };
-  } catch {
-    return denied("overlay-unavailable", true);
-  }
+  const result = await resolveCommentTranslatorObsOverlayTokenPrivateAuthorization({
+    presentedToken,
+    sessionAuthority,
+    tokenStore,
+    nowMs
+  });
+  return result.status === "authorized"
+    ? { status: "authorized", scope: commentTranslatorObsOverlayScope, access: "read-only" }
+    : result;
 }
 
 async function writeToken(

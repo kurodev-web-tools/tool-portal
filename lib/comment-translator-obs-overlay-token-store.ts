@@ -78,7 +78,10 @@ export function createTrustedCommentTranslatorObsOverlayTokenSupabaseStore({
   readonly createSupabaseClient?: (url: string, serviceRoleKey: string) => CommentTranslatorObsOverlayTokenSupabaseClient;
   readonly nowIso?: () => string;
 } = {}): CommentTranslatorObsOverlayTokenStoreFactoryResult {
-  const trustedEnv = env ?? process.env;
+  const trustedEnv: Partial<Record<CommentTranslatorObsOverlayTokenStoreFactoryEnvName, string | undefined>> = env ?? {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY
+  };
   const url = readTrustedEnv(trustedEnv, "NEXT_PUBLIC_SUPABASE_URL");
   const serviceRoleKey = readTrustedEnv(trustedEnv, "SUPABASE_SERVICE_ROLE_KEY");
   const missingEnvReferences: CommentTranslatorObsOverlayTokenStoreFactoryEnvName[] = [];
@@ -207,7 +210,37 @@ function createTrustedSupabaseServiceRoleClient(
 ): CommentTranslatorObsOverlayTokenSupabaseClient {
   const client = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
   return {
-    from(tableName) { return client.from(tableName); },
-    async rpc(functionName, params) { return client.rpc(functionName, params); }
+    from(tableName) {
+      let selectedColumns = commentTranslatorObsOverlayTokenStoreContract.trustedSelectColumns;
+      const filters: Array<{ column: "owner_user_id" | "scope" | "token_digest"; value: string }> = [];
+      const filterQuery: SupabaseFilterQuery = {
+        eq(column, value) {
+          filters.push({ column, value });
+          return filterQuery;
+        },
+        async single() {
+          let query = client.from(tableName).select(selectedColumns);
+          for (const filter of filters) query = query.eq(filter.column, filter.value);
+          const result = await query.single();
+          return {
+            data: result.data,
+            error: result.error ? { code: result.error.code, message: result.error.message } : null
+          };
+        }
+      };
+      return {
+        select(columns) {
+          selectedColumns = columns;
+          return filterQuery;
+        }
+      };
+    },
+    async rpc(functionName, params) {
+      const result = await client.rpc(functionName, params);
+      return {
+        data: typeof result.data === "string" ? result.data : null,
+        error: result.error ? { code: result.error.code, message: result.error.message } : null
+      };
+    }
   };
 }

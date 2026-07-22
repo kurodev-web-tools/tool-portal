@@ -6,13 +6,13 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0 | Comment Translator Creator closed beta | C1/C2/C3/C4はmerge・integration verified。C5 OBS overlay token runtimeはlocal verifiedでpublication approval待ち。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
+| P0 | Comment Translator Creator closed beta | C1/C2/C3/C4/C5はmerge・integration verified。C6はfocused contractとfail-closed browser QA verified、authenticated feed QA待ち。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
 | Completed | Comment Translator Free public beta | Google OAuth approval、login-only activation、final release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1 | 配信カンペボード | PR #660とdelete-dialog follow-up PR #663は`main`へmerge済み。MVPは完了し、post-MVP開発候補はactive authorityで継続する。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` remains separately approval-gated. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
 - Current priority: P0 Creator closed beta.
-- C1/C2/C3/C4 are merged / integration verified; C5 is locally verified and its publication is the next gate.
+- C1/C2/C3/C4/C5 are merged / integration verified; C6 focused contracts and fail-closed browser QA are locally verified while authenticated-feed QA remains pending.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 
 ## Current Premises
@@ -33,8 +33,9 @@
 - C3 adds service-role-only paid counters, private event deduplication, and atomic reset only when signed entitlement evidence advances its period end; PR #669 is merged and integration verified at `5fc3cca2730a58f35279098ec0b2f5c804ce0076` with C3 head `85fa39896f63e223463a85000eb8e02f538754d4` contained in integration.
 - C2 is merged through PR #670 at exact integration commit `4486c180f68369d6620b9f8f3df33518b7cadc38`; the integration tree matches C2 head `761f503f276a5a7e095c79be5f3ca31c26fe6fff`. Stripe live activation remains separately approval-gated.
 - C4 is merged through PR #671 at exact integration commit `fa0d5582a296c2164bd3945c37cbec746315f357`; C4 head `5be49c1995f484145e5989384f0bfd36bbcbe1bb` is contained in integration and both trees are `414ad101c5bdaa56fe205a967a3e63bbb1e5f1b9`.
-- C5 locally adds a server-only OBS overlay read token runtime with authenticated issue/read/rotate/revoke, opaque 32-byte tokens, SHA-256 digest-only durable persistence, one-current-token semantics, authoritative owner/session/expiry binding, and sanitized fail-closed validation. C6 remains the separate browser-visible overlay route.
-- C4 live provider execution and C5 publication/remote migration apply remain separate approval gates; C6-C11 are the remaining user-visible sequence and C12 is closed-beta final QA.
+- C5 is merged through PR #672 at exact integration commit `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; C5 head `609786cca868c976bf33ee197fe069cf22b9ec40` is contained in integration and both trees are `2c5c762a99ac85343f1521c13aec81ede6a661f1`.
+- C6 locally adds a stable browser-visible overlay route with POST-only C5 token redemption into a separate HttpOnly browser capability. Only the browser capability digest is persisted; the C5 token is not placed in a path, query, fragment, browser storage, log, document, or evidence. Every overlay read rechecks the C5 current token version, session binding, expiry, and revocation before reading the existing server-owned safe feed.
+- C6 remains read-only and does not query providers, start sessions, mutate comments, execute translation, or invent a polling interval or live-binding mechanism. C7-C11 remain later closed-beta slices and C12 is final QA.
 - Free Azure translation route remains current; Creator/Paid routes to an OpenAI mini model first with Azure fallback only for recoverable provider errors.
 
 ## Account Limits / Entitlement Control
@@ -56,7 +57,8 @@ Do not perform live/external operations without same-thread ready preflight, san
 - C3 merge / integration verification is complete through PR #669 at `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; remote migration apply remains approval-gated.
 - C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; Stripe live action and activation remain separate approval-gated steps.
 - C4 merge / integration verification is complete through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains separately approval-gated.
-- C5 is locally verified only; commit, push, PR, merge, remote migration apply, Cloudflare configuration, deploy, activation, and exact integration verification remain separate approval-gated steps.
+- C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains separately approval-gated.
+- C6 commit, push, PR, merge, remote migration apply, Cloudflare configuration, deploy, activation, and deployed authenticated-feed browser verification remain separate approval-gated steps.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.
@@ -117,8 +119,8 @@ These items stay visible but are not current release blockers unless explicitly 
 | C2 | Stripe live Checkout / Portal / webhook closed-beta gate | merged / integration verified at `4486c180f68369d6620b9f8f3df33518b7cadc38` |
 | C3 | Paid usage and monthly reset | merged / integration verified at `5fc3cca2730a58f35279098ec0b2f5c804ce0076` |
 | C4 | AI natural translation provider route | merged / integration verified at `fa0d5582a296c2164bd3945c37cbec746315f357` |
-| C5 | OBS overlay token runtime | local verified / publication approval pending |
-| C6 | OBS overlay UI route | pending |
+| C5 | OBS overlay token runtime | merged / integration verified at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8` |
+| C6 | OBS overlay UI route | local focused contract and fail-closed browser QA verified / authenticated feed QA pending |
 | C7 | Moderator share token runtime | pending |
 | C8 | Moderator share UI route | pending |
 | C9 | Custom dictionary minimum | pending |

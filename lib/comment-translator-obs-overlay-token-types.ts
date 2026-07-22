@@ -120,3 +120,15 @@ export type CommentTranslatorObsOverlayTokenValidationResult =
       readonly reason: "invalid-token" | "overlay-unavailable";
       readonly retryable: boolean;
     };
+
+export type CommentTranslatorObsOverlayTokenPrivateAuthorization = {
+  readonly status: "authorized";
+  readonly ownerUserId: string;
+  readonly sessionReferenceId: string;
+  readonly tokenVersion: number;
+  readonly expiresAtIso: string;
+};
+
+export type CommentTranslatorObsOverlayTokenPrivateAuthorizationResult =
+  | CommentTranslatorObsOverlayTokenPrivateAuthorization
+  | Extract<CommentTranslatorObsOverlayTokenValidationResult, { status: "denied" }>;
